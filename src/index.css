@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0e0e14;
+  --color-surface: #1a1a24;
+  --color-fg: #f5f5fa;
+  --color-muted: #a8a8bc;
+  --color-border: #33334a;
+  --color-accent: #9b7fff;
+}
+
+* { box-sizing: border-box; }
+
+.playmat-wrapper {
+  --card-w: clamp(
+    28px,
+    min(calc((100vh - 94px) / 7), calc((100vw - 192px) / 7.2)),
+    140px
+  );
+  --card-h: calc(var(--card-w) * 1.4);
+  --hand-h: calc(var(--card-h) + 14px);
+  --pile-pad: 6px;
+  --slot-gap: 8px;
+  --side-gap: clamp(10px, calc(var(--card-w) * 0.4), 56px);
+  --prize-w: calc(var(--card-w) * 0.55);
+  --prize-h: calc(var(--prize-w) * 1.4);
+  --prize-gap-x: 6px;
+  --prize-gap-y: 6px;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
