@@ -439,63 +439,183 @@ function TurnBanner({
   );
 }
 
-interface LogEntry {
-  who: "you" | "opponent" | "system";
+type LogSource = "you" | "opponent" | "system";
+
+type LogSegmentTone = "default" | "strong" | "energy" | "damage";
+
+interface LogSegment {
   text: string;
-  turn?: number;
+  tone?: LogSegmentTone;
 }
 
+interface LogActionEntry {
+  kind: "action";
+  who: LogSource;
+  elapsed: string;
+  segments: LogSegment[];
+}
+
+interface LogTurnDivider {
+  kind: "turn";
+  turn: number;
+}
+
+type LogEntry = LogActionEntry | LogTurnDivider;
+
 const gameLog: LogEntry[] = [
-  { who: "system", text: "Turn 7 begins", turn: 7 },
-  { who: "you", text: "Drew a card", turn: 7 },
-  { who: "you", text: "Attached Water to Mega Starmie ex", turn: 7 },
-  { who: "you", text: "Played Rosa's Encouragement", turn: 7 },
-  { who: "opponent", text: "Retreated Yveltal ex", turn: 6 },
-  { who: "opponent", text: "Mega Zygarde ex used Land Crush — 60 dmg", turn: 6 },
-  { who: "system", text: "Turn 6 ended", turn: 6 },
-  { who: "you", text: "Benched Decidueye ex", turn: 6 },
+  {
+    kind: "action",
+    who: "you",
+    elapsed: "+02:14",
+    segments: [
+      { text: "attached " },
+      { text: "Water", tone: "energy" },
+      { text: " → " },
+      { text: "Mega Starmie ex", tone: "strong" },
+    ],
+  },
+  {
+    kind: "action",
+    who: "you",
+    elapsed: "+02:08",
+    segments: [
+      { text: "played " },
+      { text: "Rosa's Encouragement", tone: "strong" },
+    ],
+  },
+  { kind: "turn", turn: 7 },
+  {
+    kind: "action",
+    who: "opponent",
+    elapsed: "+01:42",
+    segments: [
+      { text: "Mega Zygarde ex", tone: "strong" },
+      { text: " used Land Crush · " },
+      { text: "-60", tone: "damage" },
+    ],
+  },
+  {
+    kind: "action",
+    who: "opponent",
+    elapsed: "+01:30",
+    segments: [
+      { text: "retreated " },
+      { text: "Yveltal ex", tone: "strong" },
+    ],
+  },
+  {
+    kind: "action",
+    who: "system",
+    elapsed: "+01:24",
+    segments: [
+      { text: "Lillie", tone: "strong" },
+      { text: " drew a prize card" },
+    ],
+  },
 ];
 
-function GameLog({ entries }: { entries: LogEntry[] }) {
-  const [open, setOpen] = useState(false);
-  const dot = (who: LogEntry["who"]) =>
-    who === "you" ? "bg-sky-400" : who === "opponent" ? "bg-rose-400" : "bg-white/40";
+function SourceBadge({ who }: { who: LogSource }) {
+  const label = who === "you" ? "YOU" : who === "opponent" ? "OPP" : "SYS";
+  const style =
+    who === "you"
+      ? "bg-sky-400/95 text-white"
+      : who === "opponent"
+        ? "bg-rose-500/95 text-white"
+        : "border border-dashed border-white/20 bg-white/[0.035] text-white/45";
+
+  return (
+    <span
+      className={`inline-flex h-[18px] min-w-[24px] items-center justify-center self-center rounded-[5px] px-1 text-[9px] font-extrabold leading-none tracking-[0.04em] ${style}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function LogMessage({ segments }: { segments: LogSegment[] }) {
+  const toneClass: Record<LogSegmentTone, string> = {
+    default: "text-white/72",
+    strong: "font-semibold text-white/92",
+    energy: "font-semibold text-sky-200",
+    damage: "font-extrabold text-rose-200",
+  };
+
+  return (
+    <span className="min-w-0 flex-1 self-center text-[11.5px] leading-[1.35]">
+      {segments.map((segment, index) => (
+        <span key={index} className={toneClass[segment.tone ?? "default"]}>
+          {segment.text}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function GameLog({
+  entries,
+  turn,
+}: {
+  entries: LogEntry[];
+  turn: number;
+}) {
+  const [open, setOpen] = useState(true);
   return (
     <div className="absolute z-30" style={{ left: 12, bottom: 12 }}>
       {open && (
-        <div
-          className="absolute flex flex-col rounded-xl bg-gradient-to-b from-black/80 to-black/65 backdrop-blur-md ring-1 ring-white/9 shadow-[0_18px_48px_rgba(0,0,0,0.55)] overflow-hidden"
-          style={{ left: 0, bottom: 48, width: 280, height: 460 }}
+        <section
+          aria-label="Game log"
+          className="absolute flex flex-col overflow-hidden rounded-[22px] bg-white/[0.045] backdrop-blur-md ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]"
+          style={{ left: 0, bottom: 52, width: 360, height: "min(420px, calc(100vh - 112px))" }}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/9">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-white/55 font-semibold">
+          <div className="relative flex items-center justify-between px-4 pb-2.5 pt-3.5 border-b border-white/[0.07]">
+            <span className="text-[10px] font-black uppercase tracking-[0.26em] text-white/72">
               Game log
             </span>
-            <span className="text-[10px] text-white/40">{entries.length} events</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/48">
+              T{turn}
+            </span>
           </div>
-          <div className="relative flex-1 overflow-y-auto">
-            <div className="absolute left-[14px] top-0 bottom-0 w-px bg-white/10" />
-            <div className="flex flex-col-reverse px-3 py-2 gap-2 text-xs text-white/85">
-              {entries.map((e, i) => (
-                <div key={i} className="relative flex items-start gap-3 pl-3">
-                  <span
-                    className={`absolute left-0 top-1.5 w-2 h-2 rounded-full ring-2 ring-black/60 ${dot(e.who)}`}
-                  />
-                  <span className="leading-snug flex-1">{e.text}</span>
-                  {e.turn !== undefined && (
-                    <span className="text-[9px] text-white/35 tabular-nums mt-0.5">T{e.turn}</span>
-                  )}
+          <div className="relative flex-1 overflow-y-auto px-3 py-2">
+            {entries.map((entry, index) => {
+              if (entry.kind === "turn") {
+                return (
+                  <div
+                    key={`turn-${entry.turn}-${index}`}
+                    className="-mx-3 flex items-center gap-2 border-y border-white/[0.055] bg-black/18 px-3 py-2"
+                  >
+                    <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/12 to-white/4" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.26em] text-white/62">
+                      Turn {entry.turn}
+                    </span>
+                    <span className="h-px flex-1 bg-gradient-to-r from-white/4 via-white/12 to-transparent" />
+                  </div>
+                );
+              }
+
+              const nextEntry = entries[index + 1];
+              const hideBottomBorder = nextEntry?.kind === "turn";
+
+              return (
+                <div
+                  key={`${entry.who}-${entry.elapsed}-${index}`}
+                  className={`flex items-center gap-2.5 px-0.5 py-2.5 ${hideBottomBorder ? "" : "border-b border-white/[0.055] last:border-b-0"}`}
+                >
+                  <SourceBadge who={entry.who} />
+                  <LogMessage segments={entry.segments} />
+                  <span className="shrink-0 self-center font-mono text-[10px] leading-none text-white/36">
+                    {entry.elapsed}
+                  </span>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        </div>
+        </section>
       )}
       <button
         type="button"
         aria-label={open ? "Hide game log" : "Show game log"}
         onClick={() => setOpen(!open)}
-        className={`relative w-10 h-10 flex cursor-pointer items-center justify-center rounded-full backdrop-blur-md ring-1 ring-inset ring-white/9 transition-all active:scale-95 bg-white/[0.045] hover:bg-white/[0.06] text-white/70 hover:text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]`}
+        className="relative w-10 h-10 flex cursor-pointer items-center justify-center rounded-full backdrop-blur-md ring-1 ring-inset ring-white/9 transition-all active:scale-95 bg-white/[0.045] hover:bg-white/[0.06] text-white/70 hover:text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 6h16M4 12h16M4 18h10" />
@@ -635,7 +755,7 @@ export function PlaymatBody() {
       <TurnControls onPassTurn={passTurn} />
       <SettingsButton />
       <TurnBanner info={info} passAnimationKey={passAnimationKey} />
-      <GameLog entries={gameLog} />
+      <GameLog entries={gameLog} turn={info.turn} />
     </>
   );
 }
