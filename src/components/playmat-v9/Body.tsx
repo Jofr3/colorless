@@ -124,7 +124,11 @@ function PrizeGridCompact({
                   height: "var(--prize-h)",
                 }}
               >
-                {present && <CardBackAtSize tone={backTone} size="prize" />}
+                {present && (
+                  <BalatroHoverCard back={backTone}>
+                    <CardBackAtSize tone={backTone} size="prize" />
+                  </BalatroHoverCard>
+                )}
               </div>
             ))}
           </div>

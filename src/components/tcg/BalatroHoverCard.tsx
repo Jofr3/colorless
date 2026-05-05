@@ -1,6 +1,135 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import CardImage from "./CardImage";
+
+type CardBackTone = "blue" | "red";
+
+const CARD_BACK_PALETTES: Record<CardBackTone, {
+  high: string; mid: string; low: string; rim: string; inner: string;
+}> = {
+  blue: { high: "#1f3d73", mid: "#172b55", low: "#101a35", rim: "#254578", inner: "rgba(48,78,133,0.88)" },
+  red:  { high: "#6b1e34", mid: "#481627", low: "#2a0d18", rim: "#7d1f31", inner: "rgba(130,40,57,0.88)" },
+};
+
+const BACK_TEXTURE_PREFIX = "__back__";
+
+function roundedRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  ctx.lineTo(x + rr, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+  ctx.lineTo(x, y + rr);
+  ctx.quadraticCurveTo(x, y, x + rr, y);
+  ctx.closePath();
+}
+
+// Replicates the .card-back CSS (rim border, 155deg gradient body, inset rim,
+// horizontal side shading, bottom darkening) into a CanvasTexture so the same
+// look can render through the WebGL hover pipeline.
+function createBackTexture(tone: CardBackTone): THREE.CanvasTexture {
+  // 5:7 ratio matching CSS card aspect; oversampled so prize-sized cards stay crisp.
+  const W = 500;
+  const H = 700;
+  const cnv = document.createElement("canvas");
+  cnv.width = W;
+  cnv.height = H;
+  const ctx = cnv.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(cnv);
+
+  const p = CARD_BACK_PALETTES[tone];
+  const radius = 28; // ~5.6% of W (CSS uses clamp(2..7px) on prize-w ≈ 65 → ~5%)
+  const rimWidth = 12; // outer border thickness (CSS clamp(1..3px) on prize ≈ 4%)
+  const innerInset = 28; // inset of inner rim
+  const innerRadius = 12;
+  const innerBorder = 7;
+
+  // Outer rounded rect filled with rim color (acts as outer border).
+  roundedRectPath(ctx, 0, 0, W, H, radius);
+  ctx.fillStyle = p.rim;
+  ctx.fill();
+
+  // Inner surface gradient.
+  ctx.save();
+  roundedRectPath(ctx, rimWidth, rimWidth, W - 2 * rimWidth, H - 2 * rimWidth, radius - rimWidth * 0.5);
+  ctx.clip();
+
+  const a = (155 * Math.PI) / 180;
+  const dx = Math.sin(a);
+  const dy = -Math.cos(a);
+  const len = Math.hypot(W, H);
+  const cx = W / 2;
+  const cy = H / 2;
+  const grad = ctx.createLinearGradient(
+    cx - dx * len * 0.5,
+    cy - dy * len * 0.5,
+    cx + dx * len * 0.5,
+    cy + dy * len * 0.5,
+  );
+  grad.addColorStop(0, p.high);
+  grad.addColorStop(0.44, p.mid);
+  grad.addColorStop(1, p.low);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Horizontal side shading.
+  const side = ctx.createLinearGradient(0, 0, W, 0);
+  side.addColorStop(0, "rgba(0,0,0,0.24)");
+  side.addColorStop(0.28, "rgba(0,0,0,0)");
+  side.addColorStop(0.74, "rgba(0,0,0,0)");
+  side.addColorStop(1, "rgba(0,0,0,0.18)");
+  ctx.fillStyle = side;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle bottom darkening (CSS inset 0 -36px 60px rgba(0,0,0,0.18)).
+  const bottom = ctx.createLinearGradient(0, H * 0.7, 0, H);
+  bottom.addColorStop(0, "rgba(0,0,0,0)");
+  bottom.addColorStop(1, "rgba(0,0,0,0.14)");
+  ctx.fillStyle = bottom;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.restore();
+
+  // Inner inset rim border.
+  ctx.save();
+  ctx.strokeStyle = p.inner;
+  ctx.lineWidth = innerBorder;
+  roundedRectPath(
+    ctx,
+    innerInset + innerBorder * 0.5,
+    innerInset + innerBorder * 0.5,
+    W - 2 * (innerInset + innerBorder * 0.5),
+    H - 2 * (innerInset + innerBorder * 0.5),
+    innerRadius,
+  );
+  ctx.stroke();
+
+  // Inner-rim top highlight.
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(innerInset + innerRadius, innerInset + 1);
+  ctx.lineTo(W - innerInset - innerRadius, innerInset + 1);
+  ctx.stroke();
+  ctx.restore();
+
+  // Outer top highlight.
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.fillRect(rimWidth, rimWidth, W - 2 * rimWidth, 2);
+  ctx.restore();
+
+  const texture = new THREE.CanvasTexture(cnv);
+  // Leave colorSpace at NoColorSpace default — our raw ShaderMaterial doesn't
+  // apply the matching linear->sRGB encode on output, so flagging the texture
+  // sRGB would crush midtones / boost contrast vs the CSS pipeline.
+  texture.needsUpdate = true;
+  return texture;
+}
 
 // Values copied from Balatro's Card/Moveable/Sprite hover path:
 // - globals.lua: CARD_W = 2.4*35/41
@@ -10,7 +139,7 @@ import CardImage from "./CardImage";
 // - moveable.lua: hover zoom adds 0.05, scale easing exp(-60*dt), rotation easing exp(-190*dt)
 const BALATRO_CARD_W = (2.4 * 35) / 41;
 const BALATRO_CARD_BASE_SCALE = 0.95;
-const BALATRO_HOVER_ZOOM = 0.05;
+const BALATRO_HOVER_ZOOM = 0.04;
 const BALATRO_JUICE_DURATION = 0.4;
 const BALATRO_JUICE_SCALE_AMT = 0.05 * 0.4;
 const BALATRO_JUICE_ROT_AMT = 0.03 * 0.4;
@@ -76,11 +205,13 @@ const FRAGMENT_SHADER = /* glsl */ `
 `;
 
 interface BalatroHoverCardProps {
-  cardId: string;
-  renderedWidth: number;
-  alt: string;
+  cardId?: string;
+  back?: CardBackTone;
+  renderedWidth?: number;
+  alt?: string;
   priority?: boolean;
   className?: string;
+  children?: ReactNode;
 }
 
 interface PendingCard {
@@ -291,9 +422,20 @@ class BalatroCardHoverRenderer {
       card.mouseClient.y - rootRect.top,
     );
     card.material.uniforms.uHover.value = card.targetHover;
-    card.material.uniforms.uScreenScale.value = Math.max(1, rect.width / BALATRO_CARD_W);
+    // Use the regular card width as the global pixel-per-game-unit reference so
+    // smaller cards (prizes) get proportionally smaller mouseOffset and thus a
+    // weaker bend — matching Balatro, where screen_scale is global, not per-card.
+    const referenceWidth = this.referenceCardWidth() ?? rect.width;
+    card.material.uniforms.uScreenScale.value = Math.max(1, referenceWidth / BALATRO_CARD_W);
     card.material.uniforms.uCardSize.value.set(rect.width, rect.height);
     card.material.uniforms.uCornerRadius.value = Math.min(8, Math.max(3, rect.width * 0.043));
+  }
+
+  private referenceCardWidth(): number | null {
+    if (!this.root) return null;
+    const raw = getComputedStyle(this.root).getPropertyValue("--card-w");
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
   private loadTexture(cardId: string) {
@@ -304,11 +446,20 @@ class BalatroCardHoverRenderer {
       return Promise.reject(new Error("WebGL renderer is unavailable"));
     }
 
+    if (cardId.startsWith(BACK_TEXTURE_PREFIX)) {
+      const tone = cardId.slice(BACK_TEXTURE_PREFIX.length) as CardBackTone;
+      const texture = createBackTexture(tone);
+      texture.anisotropy = Math.min(4, this.renderer?.capabilities.getMaxAnisotropy() ?? 1);
+      const promise = Promise.resolve(texture);
+      this.textures.set(cardId, promise);
+      return promise;
+    }
+
     const texturePromise = new Promise<THREE.Texture>((resolve, reject) => {
       this.loader.load(
         `/cards/${cardId}-400.jpg`,
         (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace;
+          // Leave colorSpace at NoColorSpace default — see createBackTexture comment.
           texture.anisotropy = Math.min(4, this.renderer?.capabilities.getMaxAnisotropy() ?? 1);
           texture.needsUpdate = true;
           resolve(texture);
@@ -343,7 +494,9 @@ class BalatroCardHoverRenderer {
         preserveDrawingBuffer: true,
       });
       this.renderer.setClearColor(0x000000, 0);
-      this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+      // Bypass THREE's color-space management — textures and shader output flow
+      // through verbatim so the canvas matches the CSS image rendering pipeline.
+      this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
       this.prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -431,14 +584,25 @@ class BalatroCardHoverRenderer {
         continue;
       }
 
+      // Scale juice/rotation amplitude by card size relative to a regular card,
+      // so smaller cards (prizes) jiggle less. Quadratic falloff so a 55%-sized
+      // prize gets ~30% of the juice (felt more proportional than linear).
+      const referenceWidth = this.referenceCardWidth();
+      const rect = card.surface.getBoundingClientRect();
+      const sizeRatio =
+        referenceWidth && rect.width > 0 ? Math.min(1, rect.width / referenceWidth) : 1;
+      const sizeFactor = sizeRatio * sizeRatio;
+      const juiceScaleAmt = BALATRO_JUICE_SCALE_AMT * sizeFactor;
+      const juiceRotAmt = BALATRO_JUICE_ROT_AMT * sizeFactor;
+
       const juiceT = now - card.juiceStart;
       const juiceAlive = juiceT >= 0 && juiceT < BALATRO_JUICE_DURATION;
       const juiceRemaining = juiceAlive ? (BALATRO_JUICE_DURATION - juiceT) / BALATRO_JUICE_DURATION : 0;
       const juiceScale = juiceAlive
-        ? BALATRO_JUICE_SCALE_AMT * Math.sin(50.8 * juiceT) * Math.pow(juiceRemaining, 3)
+        ? juiceScaleAmt * Math.sin(50.8 * juiceT) * Math.pow(juiceRemaining, 3)
         : 0;
       const juiceRotation = juiceAlive
-        ? card.juiceSign * BALATRO_JUICE_ROT_AMT * Math.sin(40.8 * juiceT) * Math.pow(juiceRemaining, 2)
+        ? card.juiceSign * juiceRotAmt * Math.sin(40.8 * juiceT) * Math.pow(juiceRemaining, 2)
         : 0;
 
       const desiredScale = this.prefersReducedMotion
@@ -512,21 +676,24 @@ function getBalatroCardHoverRenderer() {
 
 export default function BalatroHoverCard({
   cardId,
+  back,
   renderedWidth,
   alt,
   priority = false,
   className,
+  children,
 }: BalatroHoverCardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const effectiveCardId = back ? `${BACK_TEXTURE_PREFIX}${back}` : cardId;
 
   useEffect(() => {
     const host = hostRef.current;
     const surface = surfaceRef.current;
-    if (!host || !surface) return;
+    if (!host || !surface || !effectiveCardId) return;
 
     const renderer = getBalatroCardHoverRenderer();
-    renderer.register(cardId, host, surface);
+    renderer.register(effectiveCardId, host, surface);
 
     const handlePointerEnter = (event: PointerEvent) => {
       renderer.hover(host, event);
@@ -548,18 +715,24 @@ export default function BalatroHoverCard({
       host.removeEventListener("pointerleave", handlePointerLeave);
       renderer.unregister(host);
     };
-  }, [cardId]);
+  }, [effectiveCardId]);
+
+  const placeholder =
+    children ??
+    (cardId && renderedWidth && alt ? (
+      <CardImage
+        cardId={cardId}
+        renderedWidth={renderedWidth}
+        alt={alt}
+        priority={priority}
+        className="balatro-hover-card__image"
+      />
+    ) : null);
 
   return (
     <div ref={hostRef} className={`balatro-hover-card ${className ?? ""}`.trim()}>
       <div ref={surfaceRef} className="balatro-hover-card__surface">
-        <CardImage
-          cardId={cardId}
-          renderedWidth={renderedWidth}
-          alt={alt}
-          priority={priority}
-          className="balatro-hover-card__image"
-        />
+        {placeholder}
       </div>
     </div>
   );
