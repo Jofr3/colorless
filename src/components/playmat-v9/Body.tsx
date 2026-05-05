@@ -155,6 +155,13 @@ interface PokeState {
   cardId?: string;
 }
 
+type PlayerId = "you" | "opponent";
+type SidePosition = "top" | "bottom";
+
+function otherPlayer(player: PlayerId): PlayerId {
+  return player === "you" ? "opponent" : "you";
+}
+
 const opponentActive: PokeState = {
   name: "Mega Zygarde ex",
   hp: 340,
@@ -278,30 +285,37 @@ function IconButton({
   children,
   ariaLabel,
   size = "md",
+  onClick,
 }: {
   children: ReactNode;
   ariaLabel: string;
   size?: "sm" | "md" | "lg";
+  onClick?: () => void;
 }) {
   const base =
     "relative flex cursor-pointer items-center justify-center rounded-full backdrop-blur-md ring-1 ring-inset transition-all active:scale-95";
   const variant =
-    "bg-white/[0.07] hover:bg-white/[0.07] text-white/70 hover:text-white/85 ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]";
+    "bg-white/[0.045] hover:bg-white/[0.06] text-white/70 hover:text-white/85 ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]";
   const sizeCls = size === "lg" ? "w-20 h-20" : size === "sm" ? "w-9 h-9" : "w-10 h-10";
   return (
-    <button type="button" aria-label={ariaLabel} className={`${base} ${variant} ${sizeCls}`}>
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onClick}
+      className={`${base} ${variant} ${sizeCls}`}
+    >
       {children}
     </button>
   );
 }
 
-function TurnControls() {
+function TurnControls({ onPassTurn }: { onPassTurn: () => void }) {
   return (
     <div
       className="absolute z-20 flex flex-col items-center gap-1"
       style={{ right: 24, top: "50%", transform: "translateY(-50%)" }}
     >
-      <IconButton size="lg" ariaLabel="End turn">
+      <IconButton size="lg" ariaLabel="Pass turn" onClick={onPassTurn}>
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12h13" />
           <path d="M13 6l6 6-6 6" />
@@ -338,7 +352,7 @@ function SettingsButton() {
 
 interface TurnInfo {
   turn: number;
-  activePlayer: "you" | "opponent";
+  activePlayer: PlayerId;
   youName: string;
   opponentName: string;
 }
@@ -355,27 +369,31 @@ function PlayerChip({
   color,
   active,
   align,
+  passAnimationKey,
 }: {
   name: string;
   color: "rose" | "sky";
   active: boolean;
   align: "left" | "right";
+  passAnimationKey: number;
 }) {
   const circleRing =
     color === "rose"
       ? active
-        ? "shadow-[0_0_18px_rgba(244,114,182,0.55)]"
-        : ""
+        ? "ring-2 ring-rose-300/80 shadow-[0_0_18px_rgba(244,114,182,0.55)]"
+        : "ring-2 ring-white/9"
       : active
         ? "ring-2 ring-sky-300/80 shadow-[0_0_18px_rgba(56,189,248,0.55)]"
         : "ring-2 ring-white/9";
   const dot = color === "sky" ? "bg-sky-500" : "bg-rose-500";
+  const animateIndicator = active && passAnimationKey > 0;
   return (
     <div
-      className={`flex items-center gap-2 ${align === "right" ? "flex-row-reverse" : ""} ${active ? "" : "opacity-55"}`}
+      className={`relative flex items-center gap-2 ${align === "right" ? "flex-row-reverse" : ""} ${active ? "" : "opacity-55"}`}
     >
       <div
-        className={`w-7 h-7 rounded-full ${dot} ${circleRing} flex items-center justify-center text-[12px] font-bold transition-all`}
+        key={animateIndicator ? passAnimationKey : "idle"}
+        className={`w-7 h-7 rounded-full ${dot} ${circleRing} ${animateIndicator ? "turn-chip-pass" : ""} flex items-center justify-center text-[12px] font-bold transition-all`}
       >
         {name[0]}
       </div>
@@ -384,21 +402,39 @@ function PlayerChip({
   );
 }
 
-function TurnBanner({ info }: { info: TurnInfo }) {
+function TurnBanner({
+  info,
+  passAnimationKey,
+}: {
+  info: TurnInfo;
+  passAnimationKey: number;
+}) {
   const yours = info.activePlayer === "you";
   return (
     <div
       className="absolute z-20 flex items-center gap-3 pl-2 pr-2 py-1.5 rounded-full bg-white/[0.07] backdrop-blur-md ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_28px_rgba(0,0,0,0.45)]"
       style={{ top: 16, left: 16 }}
     >
-      <PlayerChip name={info.opponentName} color="rose" active={!yours} align="left" />
+      <PlayerChip
+        name={info.opponentName}
+        color="rose"
+        active={!yours}
+        align="left"
+        passAnimationKey={passAnimationKey}
+      />
       <div className="flex flex-col items-center px-3 border-x border-white/9">
         <span className="text-[9px] uppercase tracking-[0.25em] text-white/45">Turn</span>
         <span className="text-sm font-bold text-white/85 tabular-nums leading-tight">
           {String(info.turn).padStart(2, "0")}
         </span>
       </div>
-      <PlayerChip name={info.youName} color="sky" active={yours} align="right" />
+      <PlayerChip
+        name={info.youName}
+        color="sky"
+        active={yours}
+        align="right"
+        passAnimationKey={passAnimationKey}
+      />
     </div>
   );
 }
@@ -459,7 +495,7 @@ function GameLog({ entries }: { entries: LogEntry[] }) {
         type="button"
         aria-label={open ? "Hide game log" : "Show game log"}
         onClick={() => setOpen(!open)}
-        className={`relative w-10 h-10 flex cursor-pointer items-center justify-center rounded-full backdrop-blur-md ring-1 ring-inset ring-white/9 transition-all active:scale-95 bg-white/[0.07] hover:bg-white/[0.07] text-white/70 hover:text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]`}
+        className={`relative w-10 h-10 flex cursor-pointer items-center justify-center rounded-full backdrop-blur-md ring-1 ring-inset ring-white/9 transition-all active:scale-95 bg-white/[0.045] hover:bg-white/[0.06] text-white/70 hover:text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]`}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 6h16M4 12h16M4 18h10" />
@@ -479,10 +515,20 @@ function StadiumCard() {
   );
 }
 
-function PlayerSide({ flip = false, isActive = false }: { flip?: boolean; isActive?: boolean }) {
-  const active = flip ? opponentActive : playerActive;
-  const bench = flip ? opponentBench : playerBench;
-  const deckCount = flip ? 42 : 38;
+function PlayerSide({
+  owner,
+  position,
+  isActive = false,
+}: {
+  owner: PlayerId;
+  position: SidePosition;
+  isActive?: boolean;
+}) {
+  const isTop = position === "top";
+  const active = owner === "opponent" ? opponentActive : playerActive;
+  const bench = owner === "opponent" ? opponentBench : playerBench;
+  const deckCount = owner === "opponent" ? 42 : 38;
+  const prizesRemaining = owner === "opponent" ? 5 : 4;
   const benchRow = (
     <div className="relative">
       <Bench slots={bench} />
@@ -490,7 +536,7 @@ function PlayerSide({ flip = false, isActive = false }: { flip?: boolean; isActi
         className="absolute top-1/2"
         style={{
           transform: "translateY(calc(-50% + 2px))",
-          ...(flip
+          ...(isTop
             ? { right: "100%", marginRight: "var(--side-gap)" }
             : { left: "100%", marginLeft: "var(--side-gap)" }),
         }}
@@ -499,7 +545,7 @@ function PlayerSide({ flip = false, isActive = false }: { flip?: boolean; isActi
           <DiscardPileSized />
           <div
             className="absolute left-0"
-            style={flip ? { top: "100%", marginTop: 8 } : { bottom: "100%", marginBottom: 8 }}
+            style={isTop ? { top: "100%", marginTop: 8 } : { bottom: "100%", marginBottom: 8 }}
           >
             <DeckPileSized count={deckCount} />
           </div>
@@ -508,12 +554,12 @@ function PlayerSide({ flip = false, isActive = false }: { flip?: boolean; isActi
       <div
         className="absolute"
         style={
-          flip
+          isTop
             ? { top: 0, left: "100%", marginLeft: "var(--side-gap)" }
             : { bottom: 0, right: "100%", marginRight: "var(--side-gap)" }
         }
       >
-        <PrizeGridCompact remaining={flip ? 5 : 4} flip={flip} />
+        <PrizeGridCompact remaining={prizesRemaining} flip={isTop} />
       </div>
     </div>
   );
@@ -527,10 +573,12 @@ function PlayerSide({ flip = false, isActive = false }: { flip?: boolean; isActi
 
   return (
     <div
-      className={`flex-1 min-h-0 px-6 flex flex-col items-center gap-2 relative ${flip ? "justify-start" : "justify-end"}`}
-      style={{ paddingTop: flip ? 16 : 4, paddingBottom: 4 }}
+      data-player-owner={owner}
+      data-side-position={position}
+      className={`flex-1 min-h-0 px-6 flex flex-col items-center gap-2 relative ${isTop ? "justify-start" : "justify-end"}`}
+      style={{ paddingTop: isTop ? 16 : 4, paddingBottom: 4 }}
     >
-      {flip ? (
+      {isTop ? (
         <>
           {benchRow}
           {activeNode}
@@ -546,11 +594,33 @@ function PlayerSide({ flip = false, isActive = false }: { flip?: boolean; isActi
 }
 
 export function PlaymatBody() {
-  const yours = turnInfo.activePlayer === "you";
+  const [info, setInfo] = useState(turnInfo);
+  const [passAnimationKey, setPassAnimationKey] = useState(0);
+  const bottomOwner = info.activePlayer;
+  const topOwner = otherPlayer(bottomOwner);
+
+  function passTurn() {
+    setPassAnimationKey((key) => key + 1);
+    setInfo((current) => ({
+      ...current,
+      turn: current.turn + 1,
+      activePlayer: otherPlayer(current.activePlayer),
+    }));
+  }
+
   return (
     <>
-      <PlayerSide flip isActive={!yours} />
-      <PlayerSide isActive={yours} />
+      <span className="sr-only" data-perspective-player={bottomOwner} aria-hidden="true" />
+      <PlayerSide
+        owner={topOwner}
+        position="top"
+        isActive={info.activePlayer === topOwner}
+      />
+      <PlayerSide
+        owner={bottomOwner}
+        position="bottom"
+        isActive={info.activePlayer === bottomOwner}
+      />
       <Hand cards={playerHand} />
       <div
         className="absolute z-10 pointer-events-none"
@@ -562,9 +632,9 @@ export function PlaymatBody() {
       >
         <StadiumCard />
       </div>
-      <TurnControls />
+      <TurnControls onPassTurn={passTurn} />
       <SettingsButton />
-      <TurnBanner info={turnInfo} />
+      <TurnBanner info={info} passAnimationKey={passAnimationKey} />
       <GameLog entries={gameLog} />
     </>
   );

@@ -9,6 +9,18 @@
   --color-accent: #9b7fff;
 }
 
+@property --blue-glow-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
+@property --red-glow-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
 * { box-sizing: border-box; }
 
 .playmat-wrapper {
@@ -28,12 +40,22 @@
   --prize-gap-y: 6px;
   --cursor-x: -9999px;
   --cursor-y: -9999px;
+  --blue-glow-y: 100%;
+  --red-glow-y: 0%;
   isolation: isolate;
   background:
-    radial-gradient(ellipse 85% 55% at 50% 100%, rgba(38, 149, 255, 0.16) 0%, rgba(38, 149, 255, 0.08) 36%, rgba(38, 149, 255, 0) 72%),
-    radial-gradient(ellipse 85% 55% at 50% 0%, rgba(255, 52, 86, 0.13) 0%, rgba(255, 52, 86, 0.07) 36%, rgba(255, 52, 86, 0) 72%),
+    radial-gradient(ellipse 85% 55% at 50% var(--blue-glow-y), rgba(38, 149, 255, 0.16) 0%, rgba(38, 149, 255, 0.08) 36%, rgba(38, 149, 255, 0) 72%),
+    radial-gradient(ellipse 85% 55% at 50% var(--red-glow-y), rgba(255, 52, 86, 0.13) 0%, rgba(255, 52, 86, 0.07) 36%, rgba(255, 52, 86, 0) 72%),
     var(--color-bg);
   background-repeat: no-repeat;
+  transition:
+    --blue-glow-y 760ms cubic-bezier(0.22, 1, 0.36, 1),
+    --red-glow-y 760ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.playmat-wrapper:has([data-perspective-player="opponent"]) {
+  --blue-glow-y: 0%;
+  --red-glow-y: 100%;
 }
 
 .playmat-wrapper::before,
@@ -52,16 +74,16 @@
 .playmat-wrapper::before {
   opacity: 0.34;
   -webkit-mask-image:
-    radial-gradient(ellipse 85% 55% at 50% 100%, black 0%, black 34%, transparent 72%),
-    radial-gradient(ellipse 85% 55% at 50% 0%, black 0%, black 34%, transparent 72%),
+    radial-gradient(ellipse 85% 55% at 50% var(--blue-glow-y), black 0%, black 34%, transparent 72%),
+    radial-gradient(ellipse 85% 55% at 50% var(--red-glow-y), black 0%, black 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 180px at 50% 50%, black 0%, rgba(0, 0, 0, 0.66) 36%, transparent 74%);
   mask-image:
-    radial-gradient(ellipse 85% 55% at 50% 100%, black 0%, black 34%, transparent 72%),
-    radial-gradient(ellipse 85% 55% at 50% 0%, black 0%, black 34%, transparent 72%),
+    radial-gradient(ellipse 85% 55% at 50% var(--blue-glow-y), black 0%, black 34%, transparent 72%),
+    radial-gradient(ellipse 85% 55% at 50% var(--red-glow-y), black 0%, black 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
@@ -82,4 +104,23 @@ body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.turn-chip-pass {
+  animation: turn-chip-pass 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes turn-chip-pass {
+  0% {
+    filter: brightness(1.45);
+    transform: scale(0.86) rotate(-8deg);
+  }
+  62% {
+    filter: brightness(1.2);
+    transform: scale(1.12) rotate(3deg);
+  }
+  100% {
+    filter: brightness(1);
+    transform: scale(1) rotate(0deg);
+  }
 }
