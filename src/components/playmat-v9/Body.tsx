@@ -9,7 +9,7 @@ export const WRAPPER_CLASSES =
 const CENTER_LINE_TOP = "calc((100vh - var(--hand-h)) / 2)";
 
 const SLOT_BASE =
-  "relative rounded-xl bg-gradient-to-b from-white/[0.10] to-white/[0.04] backdrop-blur-[3px] ring-1 ring-inset ring-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_4px_18px_rgba(0,0,0,0.35)]";
+  "relative rounded-xl bg-white/[0.045] backdrop-blur-[3px] ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]";
 
 function CardBackAtSize() {
   return (
@@ -236,17 +236,16 @@ function Bench({ slots }: { slots: (PokeState | null)[] }) {
       }}
     >
       <div className="flex items-start" style={{ gap: "var(--slot-gap)" }}>
-        {slots.map((p, i) =>
-          p && p.cardId ? (
-            <CardBox key={i} cardId={p.cardId} alt={p.name} />
-          ) : (
-            <div
-              key={i}
-              className="rounded-md ring-1 ring-dashed ring-white/15"
-              style={{ width: "var(--card-w)", height: "var(--card-h)" }}
-            />
-          ),
-        )}
+        {slots.map((p, i) => (
+          <div
+            key={i}
+            className="relative rounded-md"
+            style={{ width: "var(--card-w)", height: "var(--card-h)" }}
+          >
+            {p && p.cardId ? <CardBox cardId={p.cardId} alt={p.name} /> : null}
+            <div className="absolute inset-0 rounded-md border border-dashed border-white/9 pointer-events-none" />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -285,10 +284,10 @@ function IconButton({
   size?: "sm" | "md" | "lg";
 }) {
   const base =
-    "relative flex items-center justify-center rounded-full backdrop-blur-md ring-1 transition-all active:scale-95";
+    "relative flex cursor-pointer items-center justify-center rounded-full backdrop-blur-md ring-1 ring-inset transition-all active:scale-95";
   const variant =
-    "bg-gradient-to-b from-white/20 to-white/8 hover:from-white/30 hover:to-white/14 text-white ring-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]";
-  const sizeCls = size === "lg" ? "w-16 h-16" : size === "sm" ? "w-9 h-9" : "w-10 h-10";
+    "bg-white/[0.07] hover:bg-white/[0.07] text-white/70 hover:text-white/85 ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]";
+  const sizeCls = size === "lg" ? "w-20 h-20" : size === "sm" ? "w-9 h-9" : "w-10 h-10";
   return (
     <button type="button" aria-label={ariaLabel} className={`${base} ${variant} ${sizeCls}`}>
       {children}
@@ -299,16 +298,16 @@ function IconButton({
 function TurnControls() {
   return (
     <div
-      className="absolute z-20 flex flex-col items-center gap-3"
+      className="absolute z-20 flex flex-col items-center gap-1"
       style={{ right: 24, top: "50%", transform: "translateY(-50%)" }}
     >
       <IconButton size="lg" ariaLabel="End turn">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12h13" />
           <path d="M13 6l6 6-6 6" />
         </svg>
       </IconButton>
-      <div className="flex gap-2 mt-1">
+      <div className="flex gap-2">
         <IconButton size="sm" ariaLabel="Previous">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 6l-6 6 6 6" />
@@ -328,7 +327,7 @@ function SettingsButton() {
   return (
     <div className="absolute z-20" style={{ right: 16, bottom: 16 }}>
       <IconButton ariaLabel="Settings">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="opacity-75" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
         </svg>
@@ -362,18 +361,21 @@ function PlayerChip({
   active: boolean;
   align: "left" | "right";
 }) {
-  const ring = active
-    ? color === "sky"
-      ? "ring-sky-300/80 shadow-[0_0_18px_rgba(56,189,248,0.55)]"
-      : "ring-rose-300/80 shadow-[0_0_18px_rgba(244,114,182,0.55)]"
-    : "ring-white/20";
+  const circleRing =
+    color === "rose"
+      ? active
+        ? "shadow-[0_0_18px_rgba(244,114,182,0.55)]"
+        : ""
+      : active
+        ? "ring-2 ring-sky-300/80 shadow-[0_0_18px_rgba(56,189,248,0.55)]"
+        : "ring-2 ring-white/9";
   const dot = color === "sky" ? "bg-sky-500" : "bg-rose-500";
   return (
     <div
       className={`flex items-center gap-2 ${align === "right" ? "flex-row-reverse" : ""} ${active ? "" : "opacity-55"}`}
     >
       <div
-        className={`w-7 h-7 rounded-full ${dot} ring-2 ${ring} flex items-center justify-center text-[12px] font-bold transition-all`}
+        className={`w-7 h-7 rounded-full ${dot} ${circleRing} flex items-center justify-center text-[12px] font-bold transition-all`}
       >
         {name[0]}
       </div>
@@ -386,11 +388,11 @@ function TurnBanner({ info }: { info: TurnInfo }) {
   const yours = info.activePlayer === "you";
   return (
     <div
-      className="absolute z-20 flex items-center gap-3 pl-2 pr-2 py-1.5 rounded-full bg-gradient-to-b from-black/70 to-black/55 backdrop-blur-md ring-1 ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_28px_rgba(0,0,0,0.45)]"
+      className="absolute z-20 flex items-center gap-3 pl-2 pr-2 py-1.5 rounded-full bg-white/[0.07] backdrop-blur-md ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_28px_rgba(0,0,0,0.45)]"
       style={{ top: 16, left: 16 }}
     >
       <PlayerChip name={info.opponentName} color="rose" active={!yours} align="left" />
-      <div className="flex flex-col items-center px-3 border-x border-white/10">
+      <div className="flex flex-col items-center px-3 border-x border-white/9">
         <span className="text-[9px] uppercase tracking-[0.25em] text-white/45">Turn</span>
         <span className="text-sm font-bold text-white/85 tabular-nums leading-tight">
           {String(info.turn).padStart(2, "0")}
@@ -426,10 +428,10 @@ function GameLog({ entries }: { entries: LogEntry[] }) {
     <div className="absolute z-30" style={{ left: 12, bottom: 12 }}>
       {open && (
         <div
-          className="absolute flex flex-col rounded-xl bg-gradient-to-b from-black/80 to-black/65 backdrop-blur-md ring-1 ring-white/20 shadow-[0_18px_48px_rgba(0,0,0,0.55)] overflow-hidden"
+          className="absolute flex flex-col rounded-xl bg-gradient-to-b from-black/80 to-black/65 backdrop-blur-md ring-1 ring-white/9 shadow-[0_18px_48px_rgba(0,0,0,0.55)] overflow-hidden"
           style={{ left: 0, bottom: 48, width: 280, height: 460 }}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-white/9">
             <span className="text-[10px] uppercase tracking-[0.25em] text-white/55 font-semibold">
               Game log
             </span>
@@ -457,7 +459,7 @@ function GameLog({ entries }: { entries: LogEntry[] }) {
         type="button"
         aria-label={open ? "Hide game log" : "Show game log"}
         onClick={() => setOpen(!open)}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full backdrop-blur-md ring-1 ring-white/25 transition-all active:scale-95 ${open ? "bg-gradient-to-b from-white/30 to-white/15 text-white" : "bg-gradient-to-b from-white/20 to-white/8 hover:from-white/30 hover:to-white/14 text-white"} shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]`}
+        className={`relative w-10 h-10 flex cursor-pointer items-center justify-center rounded-full backdrop-blur-md ring-1 ring-inset ring-white/9 transition-all active:scale-95 bg-white/[0.07] hover:bg-white/[0.07] text-white/70 hover:text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]`}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 6h16M4 12h16M4 18h10" />
@@ -526,7 +528,7 @@ function PlayerSide({ flip = false, isActive = false }: { flip?: boolean; isActi
   return (
     <div
       className={`flex-1 min-h-0 px-6 flex flex-col items-center gap-2 relative ${flip ? "justify-start" : "justify-end"}`}
-      style={{ paddingTop: 4, paddingBottom: 4 }}
+      style={{ paddingTop: flip ? 16 : 4, paddingBottom: 4 }}
     >
       {flip ? (
         <>
