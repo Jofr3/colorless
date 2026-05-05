@@ -11,15 +11,25 @@ const CENTER_LINE_TOP = "calc((100vh - var(--hand-h)) / 2)";
 const SLOT_BASE =
   "relative rounded-xl bg-white/[0.045] backdrop-blur-[3px] ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]";
 
-function CardBackAtSize() {
+type CardBackTone = "blue" | "red";
+
+type CardBackSize = "card" | "prize";
+
+function CardBackAtSize({
+  tone,
+  size = "card",
+}: {
+  tone: CardBackTone;
+  size?: CardBackSize;
+}) {
   return (
     <div
-      className="rounded-md shadow-[0_4px_14px_rgba(0,0,0,0.55)] bg-cover bg-center ring-1 ring-black/40"
+      className={`card-back card-back--${size}`}
+      data-card-back-tone={tone}
+      aria-hidden="true"
       style={{
-        width: "var(--card-w)",
-        height: "var(--card-h)",
-        backgroundColor: "#2a3a8a",
-        backgroundImage: "url(/cards/back.jpg)",
+        width: size === "prize" ? "var(--prize-w)" : "var(--card-w)",
+        height: size === "prize" ? "var(--prize-h)" : "var(--card-h)",
       }}
     />
   );
@@ -47,25 +57,11 @@ function PileFrame({
   );
 }
 
-function DeckPileSized({ count }: { count: number }) {
-  const layers = Math.min(4, Math.max(0, Math.floor(count / 15)));
+function DeckPileSized({ backTone }: { backTone: CardBackTone }) {
   return (
     <div className="relative inline-block">
       <PileFrame>
-        <div className="relative" style={{ width: "var(--card-w)", height: "var(--card-h)" }}>
-          {Array.from({ length: layers }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute inset-0"
-              style={{ transform: `translate(${i * -1.5}px, ${i * -1.5}px)` }}
-            >
-              <CardBackAtSize />
-            </div>
-          ))}
-          <div className="relative">
-            <CardBackAtSize />
-          </div>
-        </div>
+        <CardBackAtSize tone={backTone} />
       </PileFrame>
     </div>
   );
@@ -83,9 +79,11 @@ function DiscardPileSized() {
 
 function PrizeGridCompact({
   remaining,
+  backTone,
   flip = false,
 }: {
   remaining: number;
+  backTone: CardBackTone;
   flip?: boolean;
 }) {
   const total = 6;
@@ -126,17 +124,7 @@ function PrizeGridCompact({
                   height: "var(--prize-h)",
                 }}
               >
-                {present && (
-                  <div
-                    className="rounded-md shadow-[0_3px_10px_rgba(0,0,0,0.55)] bg-cover bg-center ring-1 ring-black/40"
-                    style={{
-                      width: "var(--prize-w)",
-                      height: "var(--prize-h)",
-                      backgroundColor: "#2a3a8a",
-                      backgroundImage: "url(/cards/back.jpg)",
-                    }}
-                  />
-                )}
+                {present && <CardBackAtSize tone={backTone} size="prize" />}
               </div>
             ))}
           </div>
@@ -157,6 +145,10 @@ interface PokeState {
 
 type PlayerId = "you" | "opponent";
 type SidePosition = "top" | "bottom";
+
+function playerBackTone(player: PlayerId): CardBackTone {
+  return player === "you" ? "blue" : "red";
+}
 
 function otherPlayer(player: PlayerId): PlayerId {
   return player === "you" ? "opponent" : "you";
@@ -647,8 +639,8 @@ function PlayerSide({
   const isTop = position === "top";
   const active = owner === "opponent" ? opponentActive : playerActive;
   const bench = owner === "opponent" ? opponentBench : playerBench;
-  const deckCount = owner === "opponent" ? 42 : 38;
   const prizesRemaining = owner === "opponent" ? 5 : 4;
+  const backTone = playerBackTone(owner);
   const benchRow = (
     <div className="relative">
       <Bench slots={bench} />
@@ -667,7 +659,7 @@ function PlayerSide({
             className="absolute left-0"
             style={isTop ? { top: "100%", marginTop: 8 } : { bottom: "100%", marginBottom: 8 }}
           >
-            <DeckPileSized count={deckCount} />
+            <DeckPileSized backTone={backTone} />
           </div>
         </div>
       </div>
@@ -679,7 +671,7 @@ function PlayerSide({
             : { bottom: 0, right: "100%", marginRight: "var(--side-gap)" }
         }
       >
-        <PrizeGridCompact remaining={prizesRemaining} flip={isTop} />
+        <PrizeGridCompact remaining={prizesRemaining} backTone={backTone} flip={isTop} />
       </div>
     </div>
   );
