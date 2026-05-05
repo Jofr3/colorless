@@ -163,6 +163,54 @@
   --card-back-inner: rgba(130, 40, 57, 0.88);
 }
 
+.balatro-hover-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 3.5;
+  border-radius: clamp(3px, calc(var(--card-w) * 0.043), 8px);
+}
+
+.balatro-hover-card__surface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+  outline: 1px solid rgba(0, 0, 0, 0.3);
+  outline-offset: -1px;
+}
+
+.balatro-hover-card picture,
+.balatro-hover-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.balatro-hover-card__image {
+  object-fit: cover;
+}
+
+.balatro-hover-card[data-balatro-active="true"] .balatro-hover-card__surface {
+  visibility: hidden;
+}
+
+.balatro-webgl-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  visibility: hidden;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.55));
+}
+
+.balatro-webgl-overlay[data-active="true"] {
+  visibility: visible;
+}
+
 html, body, #root { height: 100%; }
 body {
   margin: 0;

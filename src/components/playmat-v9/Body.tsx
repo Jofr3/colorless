@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import CardImage from "../tcg/CardImage";
+import BalatroHoverCard from "../tcg/BalatroHoverCard";
 import type { EnergyType } from "../tcg/EnergyIcon";
 
 export const CARD_W = 140;
@@ -207,16 +207,13 @@ function CardBox({
   priority?: boolean;
 }) {
   return (
-    <div
-      className="rounded-md shadow-[0_6px_16px_rgba(0,0,0,0.55)] overflow-hidden ring-1 ring-black/30"
-      style={{ width: "var(--card-w)" }}
-    >
-      <CardImage
+    <div style={{ width: "var(--card-w)" }}>
+      <BalatroHoverCard
         cardId={cardId}
         renderedWidth={CARD_W}
         alt={alt}
         priority={priority}
-        className="w-full h-auto block"
+        className="w-full"
       />
     </div>
   );
