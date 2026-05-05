@@ -193,7 +193,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 2.5 / 3.5;
-  border-radius: clamp(3px, calc(var(--card-w) * 0.043), 8px);
+  border-radius: max(3px, calc(var(--card-w) * 0.06));
   pointer-events: auto;
 }
 

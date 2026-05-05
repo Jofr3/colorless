@@ -185,6 +185,7 @@ const FRAGMENT_SHADER = /* glsl */ `
   uniform sampler2D uTexture;
   uniform vec2 uCardSize;
   uniform float uCornerRadius;
+  uniform float uTextureZoom;
 
   varying vec2 vUv;
 
@@ -193,11 +194,20 @@ const FRAGMENT_SHADER = /* glsl */ `
     vec2 local = (uv - 0.5) * uCardSize;
     vec2 q = abs(local) - (halfSize - vec2(uCornerRadius));
     float signedDistance = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - uCornerRadius;
-    return 1.0 - smoothstep(0.0, 1.0, signedDistance);
+    // 1-screen-pixel anti-aliased edge — matches CSS border-radius smoothing
+    // regardless of mesh scale or card size.
+    float aa = max(fwidth(signedDistance), 1e-4);
+    return 1.0 - smoothstep(-aa, aa, signedDistance);
   }
 
   void main() {
-    vec4 texel = texture2D(uTexture, vUv);
+    // Zoom UV to crop the outermost pixels of the source texture.
+    // Pokemon TCG JPEGs have a black margin (~3.5% of width) outside the
+    // actual card art; without cropping, linear filtering bleeds black into
+    // the AA mask edge and shows as a dark sliver. Procedural back textures
+    // pass through with uTextureZoom = 1.0.
+    vec2 sampleUv = (vUv - 0.5) * uTextureZoom + 0.5;
+    vec4 texel = texture2D(uTexture, sampleUv);
     texel.a *= roundedCardMask(vUv);
     if (texel.a < 0.01) discard;
     gl_FragColor = texel;
@@ -348,6 +358,7 @@ class BalatroCardHoverRenderer {
       card.juiceStart = performance.now() / 1000;
     }
 
+    const isBackTexture = card.cardId.startsWith(BACK_TEXTURE_PREFIX);
     const material = new THREE.ShaderMaterial({
       uniforms: {
         uTexture: { value: texture },
@@ -357,6 +368,10 @@ class BalatroCardHoverRenderer {
         uScreenScale: { value: 1 },
         uCardSize: { value: new THREE.Vector2(1, 1) },
         uCornerRadius: { value: 6 },
+        // Crop ~3.5% off each side of image cards to skip the JPEG's black
+        // outer margin. Procedural backs draw to the canvas edge already, so
+        // they pass through at 1.0.
+        uTextureZoom: { value: isBackTexture ? 1.0 : 1 },
       },
       vertexShader: VERTEX_SHADER,
       fragmentShader: FRAGMENT_SHADER,
@@ -428,14 +443,23 @@ class BalatroCardHoverRenderer {
     const referenceWidth = this.referenceCardWidth() ?? rect.width;
     card.material.uniforms.uScreenScale.value = Math.max(1, referenceWidth / BALATRO_CARD_W);
     card.material.uniforms.uCardSize.value.set(rect.width, rect.height);
-    card.material.uniforms.uCornerRadius.value = Math.min(8, Math.max(3, rect.width * 0.043));
+    // Match CSS `border-radius: calc(var(--card-w) * 0.06)`. Larger than the
+    // JPEG's natural 3.5% corner so the AA mask edge samples brighter card art
+    // rather than the dark Pokemon card frame.
+    const radiusBase = referenceWidth * 0.06;
+    card.material.uniforms.uCornerRadius.value = Math.max(3, radiusBase);
   }
 
   private referenceCardWidth(): number | null {
-    if (!this.root) return null;
-    const raw = getComputedStyle(this.root).getPropertyValue("--card-w");
-    const parsed = parseFloat(raw);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    // --card-w is defined via clamp() so getPropertyValue returns the unresolved
+    // expression. Track the max width of registered cards instead — full-size
+    // cards (hand/active/stadium) yield the live --card-w in pixels.
+    let maxWidth = 0;
+    for (const card of this.active.values()) {
+      const w = card.surface.getBoundingClientRect().width;
+      if (w > maxWidth) maxWidth = w;
+    }
+    return maxWidth > 0 ? maxWidth : null;
   }
 
   private loadTexture(cardId: string) {
@@ -584,14 +608,14 @@ class BalatroCardHoverRenderer {
         continue;
       }
 
-      // Scale juice/rotation amplitude by card size relative to a regular card,
-      // so smaller cards (prizes) jiggle less. Quadratic falloff so a 55%-sized
-      // prize gets ~30% of the juice (felt more proportional than linear).
+      // Scale juice/rotation amplitude by card size relative to a regular card.
+      // Linear falloff so prize cards still feel snappy (a 55%-sized prize gets
+      // ~55% of the juice rather than 30% from quadratic).
       const referenceWidth = this.referenceCardWidth();
       const rect = card.surface.getBoundingClientRect();
       const sizeRatio =
         referenceWidth && rect.width > 0 ? Math.min(1, rect.width / referenceWidth) : 1;
-      const sizeFactor = sizeRatio * sizeRatio;
+      const sizeFactor = sizeRatio;
       const juiceScaleAmt = BALATRO_JUICE_SCALE_AMT * sizeFactor;
       const juiceRotAmt = BALATRO_JUICE_ROT_AMT * sizeFactor;
 
