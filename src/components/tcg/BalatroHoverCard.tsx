@@ -454,9 +454,6 @@ class BalatroCardHoverRenderer {
       card.rotationVelocity = rotationEase * card.rotationVelocity + (1 - rotationEase) * (desiredRotation - card.rotation);
       card.rotation += card.rotationVelocity;
 
-      // Hovered cards float above siblings to match Balatro stacking.
-      card.mesh.renderOrder = card.targetHover > 0 || juiceAlive ? 10000 + card.token : card.token;
-
       this.applyCardTransform(card);
 
       const restScale = 1;

@@ -257,9 +257,8 @@ function Hand({ cards }: { cards: { cardId: string; alt: string }[] }) {
       {cards.map((c, i) => (
         <div
           key={i}
-          className="transition-transform hover:-translate-y-3"
           style={{
-            marginLeft: i === 0 ? 0 : "calc(var(--card-w) * -0.3714285714)",
+            marginLeft: i === 0 ? 0 : "calc(var(--card-w) * -0.2)",
             zIndex: count - i,
           }}
         >
