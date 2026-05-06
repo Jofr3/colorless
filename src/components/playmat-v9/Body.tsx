@@ -1,5 +1,13 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import BalatroHoverCard from "../tcg/BalatroHoverCard";
+import {
+  BALATRO_HOVER_TUNING_DEFAULTS,
+  getBalatroHoverTuning,
+  resetBalatroHoverTuning,
+  setBalatroHoverTuning,
+  subscribeBalatroHoverTuning,
+  type BalatroHoverTuning,
+} from "../tcg/balatroTuning";
 import type { EnergyType } from "../tcg/EnergyIcon";
 
 export const CARD_W = 140;
@@ -329,15 +337,130 @@ function TurnControls({ onPassTurn }: { onPassTurn: () => void }) {
   );
 }
 
-function SettingsButton() {
+function SettingsButton({
+  active,
+  onClick,
+}: {
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
-    <div className="absolute z-20" style={{ right: 16, bottom: 16 }}>
-      <IconButton ariaLabel="Settings">
+    <div className="absolute" style={{ right: 16, bottom: 16, zIndex: 1001 }}>
+      <IconButton ariaLabel={active ? "Close animation tuning" : "Open animation tuning"} onClick={onClick}>
         <svg className="opacity-75" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
         </svg>
       </IconButton>
+    </div>
+  );
+}
+
+type TuningSliderKey = keyof BalatroHoverTuning;
+
+interface TuningSliderConfig {
+  key: TuningSliderKey;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+}
+
+const TUNING_SLIDERS: TuningSliderConfig[] = [
+  { key: "hoverZoom", label: "Hover zoom", min: 0, max: 0.14, step: 0.005 },
+  { key: "juiceDuration", label: "Juice duration", min: 0.08, max: 1.2, step: 0.01 },
+  { key: "juiceScaleAmount", label: "Juice scale", min: 0, max: 0.08, step: 0.001 },
+  { key: "juiceRotationAmount", label: "Juice rotation", min: 0, max: 0.05, step: 0.001 },
+  { key: "scaleEase", label: "Scale spring ease", min: 5, max: 160, step: 1 },
+  { key: "rotationEase", label: "Rotation spring ease", min: 20, max: 360, step: 1 },
+  { key: "bendBase", label: "Perspective bend", min: 0, max: 0.1, step: 0.001 },
+  { key: "bendCenterBoost", label: "Center bend boost", min: 0, max: 1, step: 0.01 },
+  { key: "bendCenterRadius", label: "Center boost radius", min: 0, max: 0.8, step: 0.01 },
+  { key: "minPerspectiveW", label: "Perspective clamp", min: 0.05, max: 0.8, step: 0.01 },
+];
+
+function formatSliderValue(value: number, step: number) {
+  if (step >= 1) return value.toFixed(0);
+  if (step >= 0.01) return value.toFixed(2);
+  return value.toFixed(3);
+}
+
+function AnimationTuningPanel({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [tuning, setTuningState] = useState(getBalatroHoverTuning);
+
+  useEffect(() => {
+    return subscribeBalatroHoverTuning(() => setTuningState(getBalatroHoverTuning()));
+  }, []);
+
+  if (!open) return null;
+
+  function updateSlider(key: TuningSliderKey, value: number) {
+    setBalatroHoverTuning({ [key]: value } as Partial<BalatroHoverTuning>);
+  }
+
+  return (
+    <div
+      className="absolute w-[340px] max-h-[calc(100vh-110px)] overflow-y-auto rounded-2xl border border-white/10 bg-[#10121b]/90 p-4 text-white shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+      style={{ right: 16, bottom: 64, zIndex: 1000 }}
+    >
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/65">Animation tuning</div>
+          <p className="mt-1 text-xs leading-4 text-white/45">Hover a card while dragging sliders. Values are saved locally.</p>
+        </div>
+        <button
+          type="button"
+          aria-label="Close animation tuning"
+          onClick={onClose}
+          className="rounded-full px-2 py-1 text-sm text-white/55 transition hover:bg-white/10 hover:text-white"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {TUNING_SLIDERS.map((slider) => {
+          const value = tuning[slider.key];
+          const defaultValue = BALATRO_HOVER_TUNING_DEFAULTS[slider.key];
+          return (
+            <label key={slider.key} className="block rounded-xl bg-white/[0.035] p-3 ring-1 ring-inset ring-white/7">
+              <div className="mb-2 flex items-center justify-between gap-2 text-xs">
+                <span className="font-semibold text-white/75">{slider.label}</span>
+                <span className="font-mono text-white/55">{formatSliderValue(value, slider.step)}</span>
+              </div>
+              <input
+                type="range"
+                aria-label={slider.label}
+                min={slider.min}
+                max={slider.max}
+                step={slider.step}
+                value={value}
+                onChange={(event) => updateSlider(slider.key, Number(event.currentTarget.value))}
+                className="w-full accent-sky-300"
+              />
+              <div className="mt-1 flex justify-between font-mono text-[10px] text-white/35">
+                <span>{formatSliderValue(slider.min, slider.step)}</span>
+                <span>default {formatSliderValue(defaultValue, slider.step)}</span>
+                <span>{formatSliderValue(slider.max, slider.step)}</span>
+              </div>
+            </label>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={resetBalatroHoverTuning}
+        className="mt-4 w-full rounded-xl bg-white/[0.06] px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/70 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.10] hover:text-white"
+      >
+        Reset to tuned defaults
+      </button>
     </div>
   );
 }
@@ -708,6 +831,7 @@ function PlayerSide({
 export function PlaymatBody() {
   const [info, setInfo] = useState(turnInfo);
   const [passAnimationKey, setPassAnimationKey] = useState(0);
+  const [tuningOpen, setTuningOpen] = useState(false);
   const bottomOwner = info.activePlayer;
   const topOwner = otherPlayer(bottomOwner);
 
@@ -745,7 +869,8 @@ export function PlaymatBody() {
         <StadiumCard />
       </div>
       <TurnControls onPassTurn={passTurn} />
-      <SettingsButton />
+      <AnimationTuningPanel open={tuningOpen} onClose={() => setTuningOpen(false)} />
+      <SettingsButton active={tuningOpen} onClick={() => setTuningOpen((open) => !open)} />
       <TurnBanner info={info} passAnimationKey={passAnimationKey} />
       <GameLog entries={gameLog} turn={info.turn} />
     </>

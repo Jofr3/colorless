@@ -1,135 +1,12 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import * as THREE from "three";
+import { gsap } from "gsap";
 import CardImage from "./CardImage";
+import {
+  getBalatroHoverTuning,
+  subscribeBalatroHoverTuning,
+} from "./balatroTuning";
 
 type CardBackTone = "blue" | "red";
-
-const CARD_BACK_PALETTES: Record<CardBackTone, {
-  high: string; mid: string; low: string; rim: string; inner: string;
-}> = {
-  blue: { high: "#1f3d73", mid: "#172b55", low: "#101a35", rim: "#254578", inner: "rgba(48,78,133,0.88)" },
-  red:  { high: "#6b1e34", mid: "#481627", low: "#2a0d18", rim: "#7d1f31", inner: "rgba(130,40,57,0.88)" },
-};
-
-const BACK_TEXTURE_PREFIX = "__back__";
-
-function roundedRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  const rr = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + rr, y);
-  ctx.lineTo(x + w - rr, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
-  ctx.lineTo(x + w, y + h - rr);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
-  ctx.lineTo(x + rr, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
-  ctx.lineTo(x, y + rr);
-  ctx.quadraticCurveTo(x, y, x + rr, y);
-  ctx.closePath();
-}
-
-// Replicates the .card-back CSS (rim border, 155deg gradient body, inset rim,
-// horizontal side shading, bottom darkening) into a CanvasTexture so the same
-// look can render through the WebGL hover pipeline.
-function createBackTexture(tone: CardBackTone): THREE.CanvasTexture {
-  // 5:7 ratio matching CSS card aspect; oversampled so prize-sized cards stay crisp.
-  const W = 500;
-  const H = 700;
-  const cnv = document.createElement("canvas");
-  cnv.width = W;
-  cnv.height = H;
-  const ctx = cnv.getContext("2d");
-  if (!ctx) return new THREE.CanvasTexture(cnv);
-
-  const p = CARD_BACK_PALETTES[tone];
-  const radius = 28; // ~5.6% of W (CSS uses clamp(2..7px) on prize-w ≈ 65 → ~5%)
-  const rimWidth = 12; // outer border thickness (CSS clamp(1..3px) on prize ≈ 4%)
-  const innerInset = 28; // inset of inner rim
-  const innerRadius = 12;
-  const innerBorder = 7;
-
-  // Outer rounded rect filled with rim color (acts as outer border).
-  roundedRectPath(ctx, 0, 0, W, H, radius);
-  ctx.fillStyle = p.rim;
-  ctx.fill();
-
-  // Inner surface gradient.
-  ctx.save();
-  roundedRectPath(ctx, rimWidth, rimWidth, W - 2 * rimWidth, H - 2 * rimWidth, radius - rimWidth * 0.5);
-  ctx.clip();
-
-  const a = (155 * Math.PI) / 180;
-  const dx = Math.sin(a);
-  const dy = -Math.cos(a);
-  const len = Math.hypot(W, H);
-  const cx = W / 2;
-  const cy = H / 2;
-  const grad = ctx.createLinearGradient(
-    cx - dx * len * 0.5,
-    cy - dy * len * 0.5,
-    cx + dx * len * 0.5,
-    cy + dy * len * 0.5,
-  );
-  grad.addColorStop(0, p.high);
-  grad.addColorStop(0.44, p.mid);
-  grad.addColorStop(1, p.low);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Horizontal side shading.
-  const side = ctx.createLinearGradient(0, 0, W, 0);
-  side.addColorStop(0, "rgba(0,0,0,0.24)");
-  side.addColorStop(0.28, "rgba(0,0,0,0)");
-  side.addColorStop(0.74, "rgba(0,0,0,0)");
-  side.addColorStop(1, "rgba(0,0,0,0.18)");
-  ctx.fillStyle = side;
-  ctx.fillRect(0, 0, W, H);
-
-  // Subtle bottom darkening (CSS inset 0 -36px 60px rgba(0,0,0,0.18)).
-  const bottom = ctx.createLinearGradient(0, H * 0.7, 0, H);
-  bottom.addColorStop(0, "rgba(0,0,0,0)");
-  bottom.addColorStop(1, "rgba(0,0,0,0.14)");
-  ctx.fillStyle = bottom;
-  ctx.fillRect(0, 0, W, H);
-
-  ctx.restore();
-
-  // Inner inset rim border.
-  ctx.save();
-  ctx.strokeStyle = p.inner;
-  ctx.lineWidth = innerBorder;
-  roundedRectPath(
-    ctx,
-    innerInset + innerBorder * 0.5,
-    innerInset + innerBorder * 0.5,
-    W - 2 * (innerInset + innerBorder * 0.5),
-    H - 2 * (innerInset + innerBorder * 0.5),
-    innerRadius,
-  );
-  ctx.stroke();
-
-  // Inner-rim top highlight.
-  ctx.strokeStyle = "rgba(255,255,255,0.07)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(innerInset + innerRadius, innerInset + 1);
-  ctx.lineTo(W - innerInset - innerRadius, innerInset + 1);
-  ctx.stroke();
-  ctx.restore();
-
-  // Outer top highlight.
-  ctx.save();
-  ctx.fillStyle = "rgba(255,255,255,0.06)";
-  ctx.fillRect(rimWidth, rimWidth, W - 2 * rimWidth, 2);
-  ctx.restore();
-
-  const texture = new THREE.CanvasTexture(cnv);
-  // Leave colorSpace at NoColorSpace default — our raw ShaderMaterial doesn't
-  // apply the matching linear->sRGB encode on output, so flagging the texture
-  // sRGB would crush midtones / boost contrast vs the CSS pipeline.
-  texture.needsUpdate = true;
-  return texture;
-}
 
 // Values copied from Balatro's Card/Moveable/Sprite hover path:
 // - globals.lua: CARD_W = 2.4*35/41
@@ -137,82 +14,11 @@ function createBackTexture(tone: CardBackTone): THREE.CanvasTexture {
 // - card.lua: Card:juice_up() multiplies both inputs by 0.4
 // - card.lua: Card:init() sets T.scale = 0.95 and zoom = true
 // - moveable.lua: hover zoom adds 0.05, scale easing exp(-60*dt), rotation easing exp(-190*dt)
+// - resources/shaders/dissolve.fs: hover bend adjusts clip-space w by the
+//   mouse distance from each vertex, with an extra boost near screen center.
 const BALATRO_CARD_W = (2.4 * 35) / 41;
 const BALATRO_CARD_BASE_SCALE = 0.95;
-const BALATRO_HOVER_ZOOM = 0.04;
-const BALATRO_JUICE_DURATION = 0.4;
-const BALATRO_JUICE_SCALE_AMT = 0.05 * 0.4;
-const BALATRO_JUICE_ROT_AMT = 0.03 * 0.4;
-const BALATRO_SCALE_EASE = 60;
-const BALATRO_ROTATION_EASE = 190;
-
-const VERTEX_SHADER = /* glsl */ `
-  uniform vec2 uResolution;
-  uniform vec2 uMouse;
-  uniform float uHover;
-  uniform float uScreenScale;
-
-  varying vec2 vUv;
-
-  void main() {
-    vUv = uv;
-
-    vec4 clipPosition = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-
-    if (uHover > 0.0) {
-      vec2 ndc = clipPosition.xy / clipPosition.w;
-      vec2 screenPosition = vec2(
-        (ndc.x * 0.5 + 0.5) * uResolution.x,
-        (-ndc.y * 0.5 + 0.5) * uResolution.y
-      );
-
-      float midDist = length(screenPosition - 0.5 * uResolution) / length(uResolution);
-      vec2 mouseOffset = (screenPosition - uMouse) / max(uScreenScale, 1.0);
-      // Adapted from Balatro's resources/shaders/dissolve.fs vertex bend.
-      // Center boost dropped — every card bends the same regardless of
-      // position within the container.
-      float scale = 0.2*(-0.03)
-        * uHover*(length(mouseOffset)*length(mouseOffset))/(2.0-midDist);
-
-      clipPosition.w += scale;
-    }
-
-    gl_Position = clipPosition;
-  }
-`;
-
-const FRAGMENT_SHADER = /* glsl */ `
-  uniform sampler2D uTexture;
-  uniform vec2 uCardSize;
-  uniform float uCornerRadius;
-  uniform float uTextureZoom;
-
-  varying vec2 vUv;
-
-  float roundedCardMask(vec2 uv) {
-    vec2 halfSize = 0.5 * uCardSize;
-    vec2 local = (uv - 0.5) * uCardSize;
-    vec2 q = abs(local) - (halfSize - vec2(uCornerRadius));
-    float signedDistance = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - uCornerRadius;
-    // 1-screen-pixel anti-aliased edge — matches CSS border-radius smoothing
-    // regardless of mesh scale or card size.
-    float aa = max(fwidth(signedDistance), 1e-4);
-    return 1.0 - smoothstep(-aa, aa, signedDistance);
-  }
-
-  void main() {
-    // Zoom UV to crop the outermost pixels of the source texture.
-    // Pokemon TCG JPEGs have a black margin (~3.5% of width) outside the
-    // actual card art; without cropping, linear filtering bleeds black into
-    // the AA mask edge and shows as a dark sliver. Procedural back textures
-    // pass through with uTextureZoom = 1.0.
-    vec2 sampleUv = (vUv - 0.5) * uTextureZoom + 0.5;
-    vec4 texel = texture2D(uTexture, sampleUv);
-    texel.a *= roundedCardMask(vUv);
-    if (texel.a < 0.01) discard;
-    gl_FragColor = texel;
-  }
-`;
+const MATRIX_EPSILON = 1e-8;
 
 interface BalatroHoverCardProps {
   cardId?: string;
@@ -224,404 +30,286 @@ interface BalatroHoverCardProps {
   children?: ReactNode;
 }
 
-interface PendingCard {
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface DomCard {
   token: number;
-  cardId: string;
   host: HTMLElement;
   surface: HTMLElement;
-  mouseClient: THREE.Vector2;
+  mouseClient: Point;
   targetHover: number;
   juiceStart: number;
   juiceSign: number;
-}
-
-interface ActiveCard extends PendingCard {
-  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
-  material: THREE.ShaderMaterial;
   visibleScale: number;
   scaleVelocity: number;
   rotation: number;
   rotationVelocity: number;
 }
 
-class BalatroCardHoverRenderer {
-  private renderer: THREE.WebGLRenderer | null = null;
-  private scene: THREE.Scene | null = null;
-  private camera: THREE.OrthographicCamera | null = null;
-  private canvas: HTMLCanvasElement | null = null;
-  private root: HTMLElement | null = null;
-  private resizeObserver: ResizeObserver | null = null;
-  private readonly geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-  private readonly loader = new THREE.TextureLoader();
-  private readonly textures = new Map<string, Promise<THREE.Texture>>();
-  private readonly pending = new Map<HTMLElement, PendingCard>();
-  private readonly active = new Map<HTMLElement, ActiveCard>();
-  private raf: number | null = null;
-  private lastTime = 0;
+function finite(value: number, fallback = 0) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function formatMatrixNumber(value: number) {
+  const safe = Math.abs(value) < MATRIX_EPSILON ? 0 : finite(value);
+  return Number.isInteger(safe) ? String(safe) : safe.toFixed(8);
+}
+
+function matrix3dFromQuad(width: number, height: number, quad: [Point, Point, Point, Point]) {
+  const [p0, p1, p2, p3] = quad;
+
+  // Projective transform from the element's pixel rectangle to the projected
+  // quad. CSS matrix3d stores a 2D homography as:
+  // x' = (a*x + c*y + e) / (g*x + h*y + 1)
+  // y' = (b*x + d*y + f) / (g*x + h*y + 1)
+  const sx = p0.x - p1.x + p2.x - p3.x;
+  const sy = p0.y - p1.y + p2.y - p3.y;
+
+  let a: number;
+  let b: number;
+  let c: number;
+  let d: number;
+  let e: number;
+  let f: number;
+  let g: number;
+  let h: number;
+
+  if (Math.abs(sx) < MATRIX_EPSILON && Math.abs(sy) < MATRIX_EPSILON) {
+    a = p1.x - p0.x;
+    b = p1.y - p0.y;
+    c = p3.x - p0.x;
+    d = p3.y - p0.y;
+    e = p0.x;
+    f = p0.y;
+    g = 0;
+    h = 0;
+  } else {
+    const dx1 = p1.x - p2.x;
+    const dx2 = p3.x - p2.x;
+    const dy1 = p1.y - p2.y;
+    const dy2 = p3.y - p2.y;
+    const determinant = dx1 * dy2 - dx2 * dy1;
+
+    if (Math.abs(determinant) < MATRIX_EPSILON) {
+      a = p1.x - p0.x;
+      b = p1.y - p0.y;
+      c = p3.x - p0.x;
+      d = p3.y - p0.y;
+      e = p0.x;
+      f = p0.y;
+      g = 0;
+      h = 0;
+    } else {
+      g = (sx * dy2 - dx2 * sy) / determinant;
+      h = (dx1 * sy - sx * dy1) / determinant;
+      a = p1.x - p0.x + g * p1.x;
+      b = p1.y - p0.y + g * p1.y;
+      c = p3.x - p0.x + h * p3.x;
+      d = p3.y - p0.y + h * p3.y;
+      e = p0.x;
+      f = p0.y;
+    }
+  }
+
+  const safeWidth = Math.max(width, 1);
+  const safeHeight = Math.max(height, 1);
+  const m11 = a / safeWidth;
+  const m12 = b / safeWidth;
+  const m14 = g / safeWidth;
+  const m21 = c / safeHeight;
+  const m22 = d / safeHeight;
+  const m24 = h / safeHeight;
+
+  return `matrix3d(${[
+    m11, m12, 0, m14,
+    m21, m22, 0, m24,
+    0, 0, 1, 0,
+    e, f, 0, 1,
+  ].map(formatMatrixNumber).join(",")})`;
+}
+
+class BalatroDomCardAnimator {
+  private readonly cards = new Map<HTMLElement, DomCard>();
   private token = 0;
-  private available = true;
+  private root: HTMLElement | null = null;
+  private ticking = false;
+  private lastTime = 0;
   private prefersReducedMotion = false;
-  private width = 0;
-  private height = 0;
+  private reduceMotionQuery: MediaQueryList | null = null;
+  private unsubscribeTuning: (() => void) | null = null;
 
-  register(cardId: string, host: HTMLElement, surface: HTMLElement) {
-    if (!this.available) return;
+  register(host: HTMLElement, surface: HTMLElement) {
+    this.watchReducedMotion();
+    this.watchTuning();
     this.setRootFrom(host);
-    if (this.active.has(host) || this.pending.has(host)) return;
+    if (this.cards.has(host)) return;
 
-    const token = ++this.token;
-    const pendingCard: PendingCard = {
-      token,
-      cardId,
+    const card: DomCard = {
+      token: ++this.token,
       host,
       surface,
-      mouseClient: new THREE.Vector2(),
+      mouseClient: { x: 0, y: 0 },
       targetHover: 0,
       juiceStart: Number.NEGATIVE_INFINITY,
       juiceSign: 1,
+      visibleScale: 1,
+      scaleVelocity: 0,
+      rotation: 0,
+      rotationVelocity: 0,
     };
-    this.pending.set(host, pendingCard);
 
-    this.loadTexture(cardId)
-      .then((texture) => {
-        if (this.pending.get(host)?.token !== token || !host.isConnected) return;
-        this.pending.delete(host);
-        this.activate(pendingCard, texture);
-      })
-      .catch(() => {
-        if (this.pending.get(host)?.token === token) this.pending.delete(host);
-      });
+    this.cards.set(host, card);
+    gsap.set(surface, { "--balatro-transform": "none" });
   }
 
   unregister(host: HTMLElement) {
-    this.pending.delete(host);
-    const card = this.active.get(host);
-    if (card) this.removeActive(host, card);
-    if (this.active.size === 0 && this.pending.size === 0) {
-      this.setOverlayActive(false);
+    const card = this.cards.get(host);
+    if (!card) return;
+
+    this.cards.delete(host);
+    card.host.removeAttribute("data-balatro-hovered");
+    gsap.set(card.host, { clearProps: "zIndex" });
+    gsap.set(card.surface, { "--balatro-transform": "none" });
+
+    if (this.cards.size === 0) {
+      this.unsubscribeTuning?.();
+      this.unsubscribeTuning = null;
+      this.stopTicker();
     }
   }
 
   hover(host: HTMLElement, event: PointerEvent) {
-    if (!this.available) return;
-    const now = performance.now() / 1000;
-    const sign = Math.random() > 0.5 ? 1 : -1;
+    const card = this.cards.get(host);
+    if (!card) return;
 
-    const pending = this.pending.get(host);
-    if (pending) {
-      pending.targetHover = this.prefersReducedMotion ? 0 : 1;
-      pending.mouseClient.set(event.clientX, event.clientY);
-      pending.juiceStart = this.prefersReducedMotion ? Number.NEGATIVE_INFINITY : now;
-      pending.juiceSign = sign;
+    card.mouseClient.x = event.clientX;
+    card.mouseClient.y = event.clientY;
+
+    if (this.prefersReducedMotion) {
+      card.targetHover = 0;
+      card.juiceStart = Number.NEGATIVE_INFINITY;
+      this.clearCardTransform(card);
       return;
     }
 
-    const card = this.active.get(host);
-    if (!card) return;
-
-    card.targetHover = this.prefersReducedMotion ? 0 : 1;
-    card.mouseClient.set(event.clientX, event.clientY);
-    card.juiceStart = this.prefersReducedMotion ? Number.NEGATIVE_INFINITY : now;
-    card.juiceSign = sign;
-    if (!this.prefersReducedMotion) {
-      // Match Moveable:juice_up — snap VT.scale to pop value, leave velocity.
-      card.visibleScale = (1 - 0.6 * BALATRO_JUICE_SCALE_AMT) / BALATRO_CARD_BASE_SCALE;
-    }
-    this.requestFrame();
+    const tuning = getBalatroHoverTuning();
+    card.targetHover = 1;
+    card.juiceStart = performance.now() / 1000;
+    card.juiceSign = Math.random() > 0.5 ? 1 : -1;
+    // Match Moveable:juice_up — snap VT.scale to pop value, leave velocity.
+    card.visibleScale = (1 - 0.6 * tuning.juiceScaleAmount) / BALATRO_CARD_BASE_SCALE;
+    card.host.setAttribute("data-balatro-hovered", "true");
+    gsap.set(card.host, { zIndex: 30 + card.token });
+    this.startTicker();
   }
 
   unhover(host: HTMLElement) {
-    const pending = this.pending.get(host);
-    if (pending) {
-      pending.targetHover = 0;
-      return;
-    }
-    const card = this.active.get(host);
+    const card = this.cards.get(host);
     if (!card) return;
+
     card.targetHover = 0;
-    this.requestFrame();
+    card.host.removeAttribute("data-balatro-hovered");
+    this.startTicker();
   }
 
   move(host: HTMLElement, event: PointerEvent) {
-    const card = this.active.get(host) ?? this.pending.get(host);
-    if (!card) return;
-    card.mouseClient.set(event.clientX, event.clientY);
-    if (this.active.has(host)) this.requestFrame();
-  }
-
-  private activate(card: PendingCard, texture: THREE.Texture) {
-    if (!this.ensureRenderer()) return;
-
-    // Refresh juiceStart so juice plays from when card actually pops in,
-    // even if texture load delayed activation past pointer enter.
-    if (!this.prefersReducedMotion && card.targetHover > 0) {
-      card.juiceStart = performance.now() / 1000;
-    }
-
-    const isBackTexture = card.cardId.startsWith(BACK_TEXTURE_PREFIX);
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        uTexture: { value: texture },
-        uResolution: { value: new THREE.Vector2(Math.max(this.width, 1), Math.max(this.height, 1)) },
-        uMouse: { value: new THREE.Vector2() },
-        uHover: { value: 0 },
-        uScreenScale: { value: 1 },
-        uCardSize: { value: new THREE.Vector2(1, 1) },
-        uCornerRadius: { value: 6 },
-        // Crop ~3.5% off each side of image cards to skip the JPEG's black
-        // outer margin. Procedural backs draw to the canvas edge already, so
-        // they pass through at 1.0.
-        uTextureZoom: { value: isBackTexture ? 1.0 : 1 },
-      },
-      vertexShader: VERTEX_SHADER,
-      fragmentShader: FRAGMENT_SHADER,
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
-    });
-
-    const mesh = new THREE.Mesh(this.geometry, material);
-    mesh.frustumCulled = false;
-    mesh.renderOrder = card.token;
-
-    this.scene?.add(mesh);
-
-    const hoveredAtActivate = !this.prefersReducedMotion && card.targetHover > 0;
-    this.active.set(card.host, {
-      ...card,
-      mesh,
-      material,
-      visibleScale: hoveredAtActivate
-        ? (1 - 0.6 * BALATRO_JUICE_SCALE_AMT) / BALATRO_CARD_BASE_SCALE
-        : 1, // rest = absolute 0.95 / baseScale 0.95 = 1.0 (=CSS size)
-      scaleVelocity: 0,
-      rotation: 0,
-      rotationVelocity: 0,
-    });
-
-    // Sync render once before unhiding canvas — avoids 1-frame flash of stale
-    // buffer. Render-only (no physics) so dt on next rAF stays correct.
-    this.renderInitial(card.host);
-    card.host.setAttribute("data-balatro-active", "true");
-    this.setOverlayActive(true);
-    this.requestFrame();
-  }
-
-  private renderInitial(host: HTMLElement) {
-    if (!this.renderer || !this.scene || !this.camera || !this.root) return;
-    const card = this.active.get(host);
+    const card = this.cards.get(host);
     if (!card) return;
 
-    this.resizeToRoot();
-    this.applyCardTransform(card);
-    this.renderer.clear();
-    this.renderer.render(this.scene, this.camera);
+    card.mouseClient.x = event.clientX;
+    card.mouseClient.y = event.clientY;
+    if (card.targetHover > 0) this.startTicker();
   }
 
-  private applyCardTransform(card: ActiveCard) {
-    if (!this.root) return;
-    const rootRect = this.root.getBoundingClientRect();
-    const rect = card.surface.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
+  private watchReducedMotion() {
+    if (this.reduceMotionQuery || typeof window === "undefined") return;
 
-    const x = rect.left - rootRect.left;
-    const y = rect.top - rootRect.top;
+    this.reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.prefersReducedMotion = this.reduceMotionQuery.matches;
 
-    card.mesh.position.set(x + rect.width / 2, this.height - (y + rect.height / 2), 0);
-    card.mesh.scale.set(rect.width * card.visibleScale, rect.height * card.visibleScale, 1);
-    card.mesh.rotation.z = card.rotation;
+    const updatePreference = () => {
+      this.prefersReducedMotion = this.reduceMotionQuery?.matches ?? false;
+      if (this.prefersReducedMotion) {
+        for (const card of this.cards.values()) {
+          card.targetHover = 0;
+          card.visibleScale = 1;
+          card.scaleVelocity = 0;
+          card.rotation = 0;
+          card.rotationVelocity = 0;
+          card.juiceStart = Number.NEGATIVE_INFINITY;
+          card.host.removeAttribute("data-balatro-hovered");
+          gsap.set(card.host, { clearProps: "zIndex" });
+          this.clearCardTransform(card);
+        }
+        this.stopTicker();
+      }
+    };
 
-    card.material.uniforms.uResolution.value.set(this.width, this.height);
-    card.material.uniforms.uMouse.value.set(
-      card.mouseClient.x - rootRect.left,
-      card.mouseClient.y - rootRect.top,
-    );
-    card.material.uniforms.uHover.value = card.targetHover;
-    // Use the regular card width as the global pixel-per-game-unit reference so
-    // smaller cards (prizes) get proportionally smaller mouseOffset and thus a
-    // weaker bend — matching Balatro, where screen_scale is global, not per-card.
-    const referenceWidth = this.referenceCardWidth() ?? rect.width;
-    card.material.uniforms.uScreenScale.value = Math.max(1, referenceWidth / BALATRO_CARD_W);
-    card.material.uniforms.uCardSize.value.set(rect.width, rect.height);
-    // Match CSS `border-radius: calc(var(--card-w) * 0.06)`. Larger than the
-    // JPEG's natural 3.5% corner so the AA mask edge samples brighter card art
-    // rather than the dark Pokemon card frame.
-    const radiusBase = referenceWidth * 0.06;
-    card.material.uniforms.uCornerRadius.value = Math.max(3, radiusBase);
+    this.reduceMotionQuery.addEventListener("change", updatePreference);
   }
 
-  private referenceCardWidth(): number | null {
-    // --card-w is defined via clamp() so getPropertyValue returns the unresolved
-    // expression. Track the max width of registered cards instead — full-size
-    // cards (hand/active/stadium) yield the live --card-w in pixels.
-    let maxWidth = 0;
-    for (const card of this.active.values()) {
-      const w = card.surface.getBoundingClientRect().width;
-      if (w > maxWidth) maxWidth = w;
-    }
-    return maxWidth > 0 ? maxWidth : null;
-  }
-
-  private loadTexture(cardId: string) {
-    const cached = this.textures.get(cardId);
-    if (cached) return cached;
-
-    if (!this.ensureRenderer()) {
-      return Promise.reject(new Error("WebGL renderer is unavailable"));
-    }
-
-    if (cardId.startsWith(BACK_TEXTURE_PREFIX)) {
-      const tone = cardId.slice(BACK_TEXTURE_PREFIX.length) as CardBackTone;
-      const texture = createBackTexture(tone);
-      texture.anisotropy = Math.min(4, this.renderer?.capabilities.getMaxAnisotropy() ?? 1);
-      const promise = Promise.resolve(texture);
-      this.textures.set(cardId, promise);
-      return promise;
-    }
-
-    const texturePromise = new Promise<THREE.Texture>((resolve, reject) => {
-      this.loader.load(
-        `/cards/${cardId}-400.jpg`,
-        (texture) => {
-          // Leave colorSpace at NoColorSpace default — see createBackTexture comment.
-          texture.anisotropy = Math.min(4, this.renderer?.capabilities.getMaxAnisotropy() ?? 1);
-          texture.needsUpdate = true;
-          resolve(texture);
-        },
-        undefined,
-        reject,
-      );
-    });
-
-    this.textures.set(cardId, texturePromise);
-    return texturePromise;
-  }
-
-  private ensureRenderer() {
-    if (!this.available) return null;
-    if (this.renderer) return this.renderer;
-
-    try {
-      this.scene = new THREE.Scene();
-      this.camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000);
-      this.camera.position.z = 100;
-      this.canvas = document.createElement("canvas");
-      this.canvas.className = "balatro-webgl-overlay";
-      this.canvas.setAttribute("aria-hidden", "true");
-      this.canvas.setAttribute("data-active", "false");
-
-      this.renderer = new THREE.WebGLRenderer({
-        canvas: this.canvas,
-        alpha: true,
-        antialias: true,
-        powerPreference: "high-performance",
-        preserveDrawingBuffer: true,
-      });
-      this.renderer.setClearColor(0x000000, 0);
-      // Bypass THREE's color-space management — textures and shader output flow
-      // through verbatim so the canvas matches the CSS image rendering pipeline.
-      this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-
-      this.prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      const onLayoutChange = () => this.requestFrame();
-      window.addEventListener("resize", onLayoutChange, { passive: true });
-      window.addEventListener("scroll", onLayoutChange, { passive: true, capture: true });
-
-      this.attachCanvas();
-      this.resizeToRoot();
-    } catch {
-      this.available = false;
-      this.renderer = null;
-      this.scene = null;
-      this.camera = null;
-      this.canvas = null;
-    }
-
-    return this.renderer;
+  private watchTuning() {
+    if (this.unsubscribeTuning) return;
+    this.unsubscribeTuning = subscribeBalatroHoverTuning(() => this.startTicker());
   }
 
   private setRootFrom(element: HTMLElement) {
-    const nextRoot = element.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
-    if (this.root === nextRoot) return;
-
-    this.root = nextRoot;
-
-    if (this.resizeObserver) this.resizeObserver.disconnect();
-    this.resizeObserver = new ResizeObserver(() => this.requestFrame());
-    this.resizeObserver.observe(this.root);
-
-    this.attachCanvas();
-    this.resizeToRoot();
+    this.root = element.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
   }
 
-  private attachCanvas() {
-    if (!this.canvas || !this.root) return;
-    if (this.canvas.parentElement !== this.root) this.root.appendChild(this.canvas);
+  private startTicker() {
+    if (this.ticking) return;
+    this.ticking = true;
+    this.lastTime = 0;
+    gsap.ticker.add(this.frame);
   }
 
-  private resizeToRoot() {
-    if (!this.renderer || !this.camera || !this.root) return;
-
-    const rect = this.root.getBoundingClientRect();
-    const nextWidth = Math.max(1, Math.round(rect.width));
-    const nextHeight = Math.max(1, Math.round(rect.height));
-
-    if (nextWidth === this.width && nextHeight === this.height) return;
-
-    this.width = nextWidth;
-    this.height = nextHeight;
-
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    this.renderer.setSize(nextWidth, nextHeight, false);
-
-    this.camera.left = 0;
-    this.camera.right = nextWidth;
-    this.camera.top = nextHeight;
-    this.camera.bottom = 0;
-    this.camera.updateProjectionMatrix();
+  private stopTicker() {
+    if (!this.ticking) return;
+    gsap.ticker.remove(this.frame);
+    this.ticking = false;
+    this.lastTime = 0;
   }
 
-  private requestFrame() {
-    if (this.raf !== null || !this.available) return;
-    this.raf = requestAnimationFrame(this.frame);
-  }
+  private readonly frame = () => {
+    if (this.cards.size === 0 || this.prefersReducedMotion) {
+      this.stopTicker();
+      return;
+    }
 
-  private readonly frame = (timeMs: number) => {
-    this.raf = null;
-    if (!this.renderer || !this.scene || !this.camera || !this.root) return;
-
-    this.resizeToRoot();
-
-    const now = timeMs / 1000;
-    // Clamp non-negative — guards against clock skew between performance.now()
-    // (used by sync renderInitial) and rAF timestamps.
+    const now = performance.now() / 1000;
+    // Clamp non-negative — mirrors the old WebGL renderer's physics step.
     const dt = this.lastTime > 0 ? Math.max(0, Math.min(0.05, now - this.lastTime)) : 1 / 60;
     this.lastTime = now;
 
-    const removeQueue: Array<[HTMLElement, ActiveCard]> = [];
+    const tuning = getBalatroHoverTuning();
+    const referenceWidth = this.referenceCardWidth();
+    const staleCards: HTMLElement[] = [];
     let needsAnotherFrame = false;
 
-    for (const [host, card] of this.active) {
+    for (const [host, card] of this.cards) {
       if (!host.isConnected || !card.surface.isConnected) {
-        removeQueue.push([host, card]);
+        staleCards.push(host);
         continue;
       }
+
+      const rect = host.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
 
       // Scale juice/rotation amplitude by card size relative to a regular card.
       // Linear falloff so prize cards still feel snappy (a 55%-sized prize gets
       // ~55% of the juice rather than 30% from quadratic).
-      const referenceWidth = this.referenceCardWidth();
-      const rect = card.surface.getBoundingClientRect();
-      const sizeRatio =
-        referenceWidth && rect.width > 0 ? Math.min(1, rect.width / referenceWidth) : 1;
+      const sizeRatio = referenceWidth && rect.width > 0 ? Math.min(1, rect.width / referenceWidth) : 1;
       const sizeFactor = sizeRatio;
-      const juiceScaleAmt = BALATRO_JUICE_SCALE_AMT * sizeFactor;
-      const juiceRotAmt = BALATRO_JUICE_ROT_AMT * sizeFactor;
+      const juiceScaleAmt = tuning.juiceScaleAmount * sizeFactor;
+      const juiceRotAmt = tuning.juiceRotationAmount * sizeFactor;
 
       const juiceT = now - card.juiceStart;
-      const juiceAlive = juiceT >= 0 && juiceT < BALATRO_JUICE_DURATION;
-      const juiceRemaining = juiceAlive ? (BALATRO_JUICE_DURATION - juiceT) / BALATRO_JUICE_DURATION : 0;
+      const juiceAlive = juiceT >= 0 && juiceT < tuning.juiceDuration;
+      const juiceRemaining = juiceAlive ? (tuning.juiceDuration - juiceT) / tuning.juiceDuration : 0;
       const juiceScale = juiceAlive
         ? juiceScaleAmt * Math.sin(50.8 * juiceT) * Math.pow(juiceRemaining, 3)
         : 0;
@@ -629,20 +317,20 @@ class BalatroCardHoverRenderer {
         ? card.juiceSign * juiceRotAmt * Math.sin(40.8 * juiceT) * Math.pow(juiceRemaining, 2)
         : 0;
 
-      const desiredScale = this.prefersReducedMotion
-        ? 1
-        : (BALATRO_CARD_BASE_SCALE + card.targetHover * BALATRO_HOVER_ZOOM + juiceScale) /
-          BALATRO_CARD_BASE_SCALE;
-      const scaleEase = Math.exp(-BALATRO_SCALE_EASE * dt);
+      const desiredScale =
+        (BALATRO_CARD_BASE_SCALE + card.targetHover * tuning.hoverZoom + juiceScale) /
+        BALATRO_CARD_BASE_SCALE;
+      const scaleEase = Math.exp(-tuning.scaleEase * dt);
       card.scaleVelocity = scaleEase * card.scaleVelocity + (1 - scaleEase) * (desiredScale - card.visibleScale);
       card.visibleScale += card.scaleVelocity;
 
-      const desiredRotation = this.prefersReducedMotion ? 0 : juiceRotation * 2;
-      const rotationEase = Math.exp(-BALATRO_ROTATION_EASE * dt);
-      card.rotationVelocity = rotationEase * card.rotationVelocity + (1 - rotationEase) * (desiredRotation - card.rotation);
+      const desiredRotation = juiceRotation * 2;
+      const rotationEase = Math.exp(-tuning.rotationEase * dt);
+      card.rotationVelocity =
+        rotationEase * card.rotationVelocity + (1 - rotationEase) * (desiredRotation - card.rotation);
       card.rotation += card.rotationVelocity;
 
-      this.applyCardTransform(card);
+      this.applyCardTransform(card, rect, referenceWidth ?? rect.width, tuning);
 
       const restScale = 1;
       const scaleStillMoving =
@@ -656,51 +344,113 @@ class BalatroCardHoverRenderer {
         !rotationStillMoving &&
         Math.abs(card.visibleScale - restScale) < 0.001;
 
-      if (!atRest) needsAnotherFrame = true;
+      if (atRest) {
+        card.visibleScale = 1;
+        card.scaleVelocity = 0;
+        card.rotation = 0;
+        card.rotationVelocity = 0;
+        card.juiceStart = Number.NEGATIVE_INFINITY;
+        gsap.set(card.host, { clearProps: "zIndex" });
+        this.clearCardTransform(card);
+      } else {
+        needsAnotherFrame = true;
+      }
     }
 
-    this.renderer.clear();
-    this.renderer.render(this.scene, this.camera);
+    for (const host of staleCards) this.unregister(host);
 
-    for (const [host, card] of removeQueue) this.removeActive(host, card);
-
-    if (this.active.size === 0) {
-      this.lastTime = 0;
-      this.setOverlayActive(false);
-      return;
-    }
-
-    if (needsAnotherFrame) {
-      this.requestFrame();
-    } else {
-      // All cards settled; canvas keeps its last frame via preserveDrawingBuffer.
-      this.lastTime = 0;
-    }
+    if (!needsAnotherFrame) this.stopTicker();
   };
 
-  private removeActive(host: HTMLElement, card: ActiveCard) {
-    this.scene?.remove(card.mesh);
-    card.material.dispose();
-    this.active.delete(host);
-    host.removeAttribute("data-balatro-active");
+  private referenceCardWidth(): number | null {
+    // --card-w is defined via clamp() so getPropertyValue returns the unresolved
+    // expression. Track the max width of registered cards instead — full-size
+    // cards (hand/active/stadium) yield the live --card-w in pixels.
+    let maxWidth = 0;
+    for (const card of this.cards.values()) {
+      const width = card.host.getBoundingClientRect().width;
+      if (width > maxWidth) maxWidth = width;
+    }
+    return maxWidth > 0 ? maxWidth : null;
   }
 
-  private setOverlayActive(active: boolean) {
-    if (!this.canvas) return;
-    this.canvas.setAttribute("data-active", String(active));
+  private applyCardTransform(
+    card: DomCard,
+    rect: DOMRect,
+    referenceWidth: number,
+    tuning = getBalatroHoverTuning(),
+  ) {
+    const root = this.root ?? card.host.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
+    const rootRect = root.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    if (width <= 0 || height <= 0 || rootRect.width <= 0 || rootRect.height <= 0) return;
+
+    const originX = rect.left - rootRect.left;
+    const originY = rect.top - rootRect.top;
+    const centerX = originX + width / 2;
+    const centerY = originY + height / 2;
+    const rootCenterX = rootRect.width / 2;
+    const rootCenterY = rootRect.height / 2;
+    const rootDiagonal = Math.hypot(rootRect.width, rootRect.height) || 1;
+    const screenScale = Math.max(1, referenceWidth / BALATRO_CARD_W);
+    const mouseX = card.mouseClient.x - rootRect.left;
+    const mouseY = card.mouseClient.y - rootRect.top;
+    const cos = Math.cos(card.rotation);
+    const sin = Math.sin(card.rotation);
+
+    const projectCorner = (localX: number, localY: number): Point => {
+      const dx = (localX - width / 2) * card.visibleScale;
+      const dy = (localY - height / 2) * card.visibleScale;
+
+      // Three.js rendered in a y-up world; CSS is y-down. This sign pattern
+      // matches the visual z-rotation from the old WebGL mesh.
+      let x = centerX + dx * cos + dy * sin;
+      let y = centerY - dx * sin + dy * cos;
+
+      if (card.targetHover > 0) {
+        const midDist = Math.hypot(x - rootCenterX, y - rootCenterY) / rootDiagonal;
+        const mouseOffsetX = (x - mouseX) / screenScale;
+        const mouseOffsetY = (y - mouseY) / screenScale;
+        const bendStrength =
+          0.2 * (-tuning.bendBase - tuning.bendCenterBoost * Math.max(0, tuning.bendCenterRadius - midDist));
+        const bend =
+          bendStrength *
+          card.targetHover *
+          (mouseOffsetX * mouseOffsetX + mouseOffsetY * mouseOffsetY) /
+          Math.max(0.001, 2 - midDist);
+        const clipW = Math.max(tuning.minPerspectiveW, 1 + bend);
+        x = rootCenterX + (x - rootCenterX) / clipW;
+        y = rootCenterY + (y - rootCenterY) / clipW;
+      }
+
+      return { x: x - originX, y: y - originY };
+    };
+
+    const matrix = matrix3dFromQuad(width, height, [
+      projectCorner(0, 0),
+      projectCorner(width, 0),
+      projectCorner(width, height),
+      projectCorner(0, height),
+    ]);
+
+    gsap.set(card.surface, { "--balatro-transform": matrix });
+  }
+
+  private clearCardTransform(card: DomCard) {
+    gsap.set(card.surface, { "--balatro-transform": "none" });
   }
 }
 
-let sharedRenderer: BalatroCardHoverRenderer | null = null;
+let sharedAnimator: BalatroDomCardAnimator | null = null;
 
-function getBalatroCardHoverRenderer() {
-  sharedRenderer ??= new BalatroCardHoverRenderer();
-  return sharedRenderer;
+function getBalatroDomCardAnimator() {
+  sharedAnimator ??= new BalatroDomCardAnimator();
+  return sharedAnimator;
 }
 
 export default function BalatroHoverCard({
   cardId,
-  back,
   renderedWidth,
   alt,
   priority = false,
@@ -709,24 +459,23 @@ export default function BalatroHoverCard({
 }: BalatroHoverCardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
-  const effectiveCardId = back ? `${BACK_TEXTURE_PREFIX}${back}` : cardId;
 
   useEffect(() => {
     const host = hostRef.current;
     const surface = surfaceRef.current;
-    if (!host || !surface || !effectiveCardId) return;
+    if (!host || !surface) return;
 
-    const renderer = getBalatroCardHoverRenderer();
-    renderer.register(effectiveCardId, host, surface);
+    const animator = getBalatroDomCardAnimator();
+    animator.register(host, surface);
 
     const handlePointerEnter = (event: PointerEvent) => {
-      renderer.hover(host, event);
+      animator.hover(host, event);
     };
     const handlePointerMove = (event: PointerEvent) => {
-      renderer.move(host, event);
+      animator.move(host, event);
     };
     const handlePointerLeave = () => {
-      renderer.unhover(host);
+      animator.unhover(host);
     };
 
     host.addEventListener("pointerenter", handlePointerEnter);
@@ -737,9 +486,9 @@ export default function BalatroHoverCard({
       host.removeEventListener("pointerenter", handlePointerEnter);
       host.removeEventListener("pointermove", handlePointerMove);
       host.removeEventListener("pointerleave", handlePointerLeave);
-      renderer.unregister(host);
+      animator.unregister(host);
     };
-  }, [effectiveCardId]);
+  }, []);
 
   const placeholder =
     children ??
