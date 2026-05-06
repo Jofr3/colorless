@@ -8,16 +8,22 @@ import {
 
 type CardBackTone = "blue" | "red";
 
-// Values copied from Balatro's Card/Moveable/Sprite hover path:
+// Values copied/adapted from Balatro's Card/Moveable/Sprite path:
 // - globals.lua: CARD_W = 2.4*35/41
+// - card.lua: Card:init() sets ambient_tilt = 0.2, T.scale = 0.95, zoom = true
+// - card.lua: Card:draw() drives idle tilt with
+//   G.TIMERS.REAL*(1.56 + (ID/1.14212)%1) + ID/1.35122
 // - card.lua: Card:hover() -> juice_up(0.05, 0.03)
 // - card.lua: Card:juice_up() multiplies both inputs by 0.4
-// - card.lua: Card:init() sets T.scale = 0.95 and zoom = true
 // - moveable.lua: hover zoom adds 0.05, scale easing exp(-60*dt), rotation easing exp(-190*dt)
-// - resources/shaders/dissolve.fs: hover bend adjusts clip-space w by the
-//   mouse distance from each vertex, with an extra boost near screen center.
+// - resources/shaders/dissolve.fs: bend adjusts clip-space w by the
+//   mouse/idle-tilt distance from each vertex, with an extra boost near screen center.
 const BALATRO_CARD_W = (2.4 * 35) / 41;
 const BALATRO_CARD_BASE_SCALE = 0.95;
+const BALATRO_CARD_AMBIENT_TILT = 0.2;
+const BALATRO_IDLE_TILT_BASE_SPEED = 1.56;
+const BALATRO_IDLE_TILT_ID_SPEED_DIVISOR = 1.14212;
+const BALATRO_IDLE_TILT_ID_PHASE_DIVISOR = 1.35122;
 const MATRIX_EPSILON = 1e-8;
 
 interface BalatroHoverCardProps {
@@ -48,6 +54,7 @@ interface DomCard {
   scaleVelocity: number;
   rotation: number;
   rotationVelocity: number;
+  ambientTilt: number;
   bendCenterBoost?: number;
 }
 
@@ -151,6 +158,7 @@ class BalatroDomCardAnimator {
     const existingCard = this.cards.get(host);
     if (existingCard) {
       existingCard.bendCenterBoost = bendCenterBoost;
+      if (!this.prefersReducedMotion) this.startTicker();
       return;
     }
 
@@ -166,11 +174,13 @@ class BalatroDomCardAnimator {
       scaleVelocity: 0,
       rotation: 0,
       rotationVelocity: 0,
+      ambientTilt: BALATRO_CARD_AMBIENT_TILT,
       bendCenterBoost,
     };
 
     this.cards.set(host, card);
     gsap.set(surface, { "--balatro-transform": "none" });
+    if (!this.prefersReducedMotion) this.startTicker();
   }
 
   unregister(host: HTMLElement) {
@@ -253,6 +263,8 @@ class BalatroDomCardAnimator {
           this.clearCardTransform(card);
         }
         this.stopTicker();
+      } else if (this.cards.size > 0) {
+        this.startTicker();
       }
     };
 
@@ -338,7 +350,7 @@ class BalatroDomCardAnimator {
         rotationEase * card.rotationVelocity + (1 - rotationEase) * (desiredRotation - card.rotation);
       card.rotation += card.rotationVelocity;
 
-      this.applyCardTransform(card, rect, referenceWidth ?? rect.width, tuning);
+      this.applyCardTransform(card, rect, referenceWidth ?? rect.width, tuning, now);
 
       const restScale = 1;
       const scaleStillMoving =
@@ -358,11 +370,12 @@ class BalatroDomCardAnimator {
         card.rotation = 0;
         card.rotationVelocity = 0;
         card.juiceStart = Number.NEGATIVE_INFINITY;
-        gsap.set(card.host, { clearProps: "zIndex" });
-        this.clearCardTransform(card);
-      } else {
-        needsAnotherFrame = true;
+        if (card.host.style.zIndex) gsap.set(card.host, { clearProps: "zIndex" });
       }
+
+      // Balatro keeps sending the idle tilt pseudo-cursor every draw, so cards
+      // never truly go transform-idle unless reduced motion is active.
+      needsAnotherFrame = true;
     }
 
     for (const host of staleCards) this.unregister(host);
@@ -387,6 +400,7 @@ class BalatroDomCardAnimator {
     rect: DOMRect,
     referenceWidth: number,
     tuning = getBalatroHoverTuning(),
+    now = performance.now() / 1000,
   ) {
     const root = this.root ?? card.host.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
     const rootRect = root.getBoundingClientRect();
@@ -402,8 +416,16 @@ class BalatroDomCardAnimator {
     const rootCenterY = rootRect.height / 2;
     const rootDiagonal = Math.hypot(rootRect.width, rootRect.height) || 1;
     const screenScale = Math.max(1, referenceWidth / BALATRO_CARD_W);
-    const mouseX = card.mouseClient.x - rootRect.left;
-    const mouseY = card.mouseClient.y - rootRect.top;
+    const ambientTilt = card.ambientTilt;
+    const idleTiltAngle =
+      now * (BALATRO_IDLE_TILT_BASE_SPEED + (card.token / BALATRO_IDLE_TILT_ID_SPEED_DIVISOR) % 1) +
+      card.token / BALATRO_IDLE_TILT_ID_PHASE_DIVISOR;
+    const mouseX = card.targetHover > 0
+      ? card.mouseClient.x - rootRect.left
+      : originX + (0.5 + 0.5 * ambientTilt * Math.cos(idleTiltAngle)) * width;
+    const mouseY = card.targetHover > 0
+      ? card.mouseClient.y - rootRect.top
+      : originY + (0.5 + 0.5 * ambientTilt * Math.sin(idleTiltAngle)) * height;
     const cos = Math.cos(card.rotation);
     const sin = Math.sin(card.rotation);
     const bendCenterBoost = card.bendCenterBoost ?? tuning.bendCenterBoost;
@@ -417,7 +439,7 @@ class BalatroDomCardAnimator {
       let x = centerX + dx * cos + dy * sin;
       let y = centerY - dx * sin + dy * cos;
 
-      if (card.targetHover > 0) {
+      if (card.targetHover > 0 || ambientTilt > 0) {
         const midDist = Math.hypot(x - rootCenterX, y - rootCenterY) / rootDiagonal;
         const mouseOffsetX = (x - mouseX) / screenScale;
         const mouseOffsetY = (y - mouseY) / screenScale;
@@ -425,7 +447,6 @@ class BalatroDomCardAnimator {
           0.2 * (-tuning.bendBase - bendCenterBoost * Math.max(0, tuning.bendCenterRadius - midDist));
         const bend =
           bendStrength *
-          card.targetHover *
           (mouseOffsetX * mouseOffsetX + mouseOffsetY * mouseOffsetY) /
           Math.max(0.001, 2 - midDist);
         const clipW = Math.max(tuning.minPerspectiveW, 1 + bend);
@@ -436,12 +457,28 @@ class BalatroDomCardAnimator {
       return { x: x - originX, y: y - originY };
     };
 
-    const matrix = matrix3dFromQuad(width, height, [
+    const projectedQuad: [Point, Point, Point, Point] = [
       projectCorner(0, 0),
       projectCorner(width, 0),
       projectCorner(width, height),
       projectCorner(0, height),
-    ]);
+    ];
+
+    if (card.targetHover <= 0 && ambientTilt > 0) {
+      // Balatro's shader bends vertices without affecting game-space layout.
+      // Our CSS homography would otherwise pull idle cards toward screen center,
+      // so re-center idle-only quads. Hover keeps the full displacement/pop.
+      const projectedCenterX = projectedQuad.reduce((sum, point) => sum + point.x, 0) / projectedQuad.length;
+      const projectedCenterY = projectedQuad.reduce((sum, point) => sum + point.y, 0) / projectedQuad.length;
+      const recenterX = width / 2 - projectedCenterX;
+      const recenterY = height / 2 - projectedCenterY;
+      for (const point of projectedQuad) {
+        point.x += recenterX;
+        point.y += recenterY;
+      }
+    }
+
+    const matrix = matrix3dFromQuad(width, height, projectedQuad);
 
     gsap.set(card.surface, { "--balatro-transform": matrix });
   }
