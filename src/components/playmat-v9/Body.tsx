@@ -69,7 +69,9 @@ function DeckPileSized({ backTone }: { backTone: CardBackTone }) {
   return (
     <div className="relative inline-block">
       <PileFrame>
-        <CardBackAtSize tone={backTone} />
+        <BalatroHoverCard back={backTone}>
+          <CardBackAtSize tone={backTone} />
+        </BalatroHoverCard>
       </PileFrame>
     </div>
   );
