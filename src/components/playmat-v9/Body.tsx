@@ -213,10 +213,12 @@ function CardBox({
   cardId,
   alt,
   priority,
+  bendCenterBoost,
 }: {
   cardId: string;
   alt: string;
   priority?: boolean;
+  bendCenterBoost?: number;
 }) {
   return (
     <div style={{ width: "var(--card-w)" }}>
@@ -225,6 +227,7 @@ function CardBox({
         renderedWidth={CARD_W}
         alt={alt}
         priority={priority}
+        bendCenterBoost={bendCenterBoost}
         className="w-full"
       />
     </div>
@@ -274,7 +277,7 @@ function Hand({ cards }: { cards: { cardId: string; alt: string }[] }) {
             zIndex: count - i,
           }}
         >
-          <CardBox cardId={c.cardId} alt={c.alt} priority />
+          <CardBox cardId={c.cardId} alt={c.alt} priority bendCenterBoost={0} />
         </div>
       ))}
     </div>

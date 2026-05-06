@@ -27,6 +27,7 @@ interface BalatroHoverCardProps {
   alt?: string;
   priority?: boolean;
   className?: string;
+  bendCenterBoost?: number;
   children?: ReactNode;
 }
 
@@ -47,6 +48,7 @@ interface DomCard {
   scaleVelocity: number;
   rotation: number;
   rotationVelocity: number;
+  bendCenterBoost?: number;
 }
 
 function finite(value: number, fallback = 0) {
@@ -141,11 +143,16 @@ class BalatroDomCardAnimator {
   private reduceMotionQuery: MediaQueryList | null = null;
   private unsubscribeTuning: (() => void) | null = null;
 
-  register(host: HTMLElement, surface: HTMLElement) {
+  register(host: HTMLElement, surface: HTMLElement, bendCenterBoost?: number) {
     this.watchReducedMotion();
     this.watchTuning();
     this.setRootFrom(host);
-    if (this.cards.has(host)) return;
+
+    const existingCard = this.cards.get(host);
+    if (existingCard) {
+      existingCard.bendCenterBoost = bendCenterBoost;
+      return;
+    }
 
     const card: DomCard = {
       token: ++this.token,
@@ -159,6 +166,7 @@ class BalatroDomCardAnimator {
       scaleVelocity: 0,
       rotation: 0,
       rotationVelocity: 0,
+      bendCenterBoost,
     };
 
     this.cards.set(host, card);
@@ -398,6 +406,7 @@ class BalatroDomCardAnimator {
     const mouseY = card.mouseClient.y - rootRect.top;
     const cos = Math.cos(card.rotation);
     const sin = Math.sin(card.rotation);
+    const bendCenterBoost = card.bendCenterBoost ?? tuning.bendCenterBoost;
 
     const projectCorner = (localX: number, localY: number): Point => {
       const dx = (localX - width / 2) * card.visibleScale;
@@ -413,7 +422,7 @@ class BalatroDomCardAnimator {
         const mouseOffsetX = (x - mouseX) / screenScale;
         const mouseOffsetY = (y - mouseY) / screenScale;
         const bendStrength =
-          0.2 * (-tuning.bendBase - tuning.bendCenterBoost * Math.max(0, tuning.bendCenterRadius - midDist));
+          0.2 * (-tuning.bendBase - bendCenterBoost * Math.max(0, tuning.bendCenterRadius - midDist));
         const bend =
           bendStrength *
           card.targetHover *
@@ -455,6 +464,7 @@ export default function BalatroHoverCard({
   alt,
   priority = false,
   className,
+  bendCenterBoost,
   children,
 }: BalatroHoverCardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -466,7 +476,7 @@ export default function BalatroHoverCard({
     if (!host || !surface) return;
 
     const animator = getBalatroDomCardAnimator();
-    animator.register(host, surface);
+    animator.register(host, surface, bendCenterBoost);
 
     const handlePointerEnter = (event: PointerEvent) => {
       animator.hover(host, event);
@@ -488,7 +498,7 @@ export default function BalatroHoverCard({
       host.removeEventListener("pointerleave", handlePointerLeave);
       animator.unregister(host);
     };
-  }, []);
+  }, [bendCenterBoost]);
 
   const placeholder =
     children ??
