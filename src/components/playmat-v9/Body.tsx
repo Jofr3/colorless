@@ -133,7 +133,7 @@ function PrizeGridCompact({
                 }}
               >
                 {present && (
-                  <BalatroHoverCard back={backTone}>
+                  <BalatroHoverCard back={backTone} className="balatro-hover-card--prize">
                     <CardBackAtSize tone={backTone} size="prize" />
                   </BalatroHoverCard>
                 )}
