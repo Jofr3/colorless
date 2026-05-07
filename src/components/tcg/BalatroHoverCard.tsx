@@ -525,6 +525,31 @@ function getBalatroDomCardAnimator() {
   return sharedAnimator;
 }
 
+const CARD_DRAG_INTERACTION_EVENT = "tcg-card-drag-start";
+
+function isCardHoverSuppressed(event?: PointerEvent) {
+  if (typeof document === "undefined") return false;
+  if (document.body.dataset.cardDragging === "true") return true;
+
+  const suppressedUntil = Number(document.body.dataset.cardHoverSuppressedUntil);
+  if (!Number.isFinite(suppressedUntil)) return false;
+
+  if (performance.now() >= suppressedUntil) {
+    delete document.body.dataset.cardHoverSuppressedUntil;
+    return false;
+  }
+
+  // Suppress only the synthetic/no-movement hover that can fire immediately
+  // after a drop. If the user actually moves the pointer, hover should work.
+  const pointerMoved = event && Math.hypot(event.movementX, event.movementY) > 0.5;
+  if (pointerMoved) {
+    delete document.body.dataset.cardHoverSuppressedUntil;
+    return false;
+  }
+
+  return true;
+}
+
 export default function BalatroHoverCard({
   cardId,
   renderedWidth,
@@ -546,23 +571,38 @@ export default function BalatroHoverCard({
     animator.register(host, surface, bendCenterBoost);
 
     const handlePointerEnter = (event: PointerEvent) => {
+      if (isCardHoverSuppressed(event)) {
+        animator.unhover(host);
+        return;
+      }
+
       animator.hover(host, event);
     };
     const handlePointerMove = (event: PointerEvent) => {
+      if (isCardHoverSuppressed(event)) {
+        animator.unhover(host);
+        return;
+      }
+
       animator.move(host, event);
     };
     const handlePointerLeave = () => {
+      animator.unhover(host);
+    };
+    const handleCardDragStart = () => {
       animator.unhover(host);
     };
 
     host.addEventListener("pointerenter", handlePointerEnter);
     host.addEventListener("pointermove", handlePointerMove);
     host.addEventListener("pointerleave", handlePointerLeave);
+    document.addEventListener(CARD_DRAG_INTERACTION_EVENT, handleCardDragStart);
 
     return () => {
       host.removeEventListener("pointerenter", handlePointerEnter);
       host.removeEventListener("pointermove", handlePointerMove);
       host.removeEventListener("pointerleave", handlePointerLeave);
+      document.removeEventListener(CARD_DRAG_INTERACTION_EVENT, handleCardDragStart);
       animator.unregister(host);
     };
   }, [bendCenterBoost]);

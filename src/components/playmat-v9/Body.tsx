@@ -226,6 +226,23 @@ type ReleaseRectsRef = { current: Map<string, DragRect> };
 
 const BENCH_LIMIT = 5;
 const BALATRO_LAYOUT_DURATION = 0.42;
+const CARD_DRAG_HOVER_SUPPRESSION_MS = 600;
+const CARD_DRAG_INTERACTION_EVENT = "tcg-card-drag-start";
+
+function setCardDragInteractionLock(active: boolean) {
+  if (typeof document === "undefined") return;
+
+  if (active) {
+    delete document.body.dataset.cardHoverSuppressedUntil;
+    document.body.dataset.cardDragging = "true";
+    document.dispatchEvent(new CustomEvent(CARD_DRAG_INTERACTION_EVENT));
+  } else {
+    delete document.body.dataset.cardDragging;
+    document.body.dataset.cardHoverSuppressedUntil = String(
+      performance.now() + CARD_DRAG_HOVER_SUPPRESSION_MS,
+    );
+  }
+}
 
 function playerBackTone(player: PlayerId): CardBackTone {
   return player === "you" ? "blue" : "red";
@@ -1647,6 +1664,10 @@ export function PlaymatBody() {
   const topOwner = otherPlayer(bottomOwner);
   const draggingCard = dragState?.card ?? null;
 
+  useEffect(() => {
+    return () => setCardDragInteractionLock(false);
+  }, []);
+
   function passTurn() {
     setPassAnimationKey((key) => key + 1);
     setInfo((current) => ({
@@ -1656,26 +1677,12 @@ export function PlaymatBody() {
     }));
   }
 
-  function setDropPreviewIfChanged(nextPreview: RowDropPreview | null) {
-    setDropPreview((currentPreview) => {
-      const samePreview =
-        currentPreview?.kind === nextPreview?.kind &&
-        currentPreview?.owner === nextPreview?.owner &&
-        currentPreview?.index === nextPreview?.index;
-      return samePreview ? currentPreview : nextPreview;
-    });
-  }
-
-  function getRowDropPreview(event: DragMoveEvent | DragEndEvent) {
-    const dragData = event.active.data.current;
-    const dropData = event.over?.data.current;
-
-    if (!isDragCardData(dragData) || !isDropTargetData(dropData)) return null;
-    if (dropData.target.kind !== "hand" && dropData.target.kind !== "bench") return null;
-
-    const resolvedTarget = resolveDropTargetIndex(dropData.target, event);
+  function indexedRowTarget(
+    target: Extract<DropTarget, { kind: "hand" | "bench" }>,
+    event: DragMoveEvent | DragEndEvent,
+  ): RowDropPreview | null {
+    const resolvedTarget = resolveDropTargetIndex(target, event);
     if (resolvedTarget.kind !== "hand" && resolvedTarget.kind !== "bench") return null;
-    if (!canPreviewRowDrop(board, dragData.location, resolvedTarget, info.activePlayer)) return null;
 
     return {
       ...resolvedTarget,
@@ -1683,7 +1690,41 @@ export function PlaymatBody() {
     };
   }
 
+  function getRowDropPreview(event: DragMoveEvent | DragEndEvent) {
+    const dragData = event.active.data.current;
+    const dropData = event.over?.data.current;
+
+    if (!isDragCardData(dragData)) return null;
+
+    if (isDropTargetData(dropData) && (dropData.target.kind === "hand" || dropData.target.kind === "bench")) {
+      const hoveredPreview = indexedRowTarget(dropData.target, event);
+      if (hoveredPreview && canPreviewRowDrop(board, dragData.location, hoveredPreview, info.activePlayer)) {
+        return hoveredPreview;
+      }
+    }
+
+    // Balatro keeps the dragged card in its source card area while it is far
+    // from valid release targets, so the source row keeps a live space and
+    // continues sorting by X. It only transfers areas if released over a target.
+    if (dragData.location.kind === "hand" || dragData.location.kind === "bench") {
+      const sourcePreview = {
+        kind: dragData.location.kind,
+        owner: dragData.location.owner,
+      } satisfies Extract<DropTarget, { kind: "hand" | "bench" }>;
+
+      if (canPreviewRowDrop(board, dragData.location, sourcePreview, info.activePlayer)) {
+        return indexedRowTarget(sourcePreview, event) ?? {
+          ...sourcePreview,
+          index: dragData.location.index,
+        };
+      }
+    }
+
+    return null;
+  }
+
   function clearDragState() {
+    setCardDragInteractionLock(false);
     setDragState(null);
     setDropPreview(null);
   }
@@ -1705,6 +1746,7 @@ export function PlaymatBody() {
           }
         : null;
 
+    setCardDragInteractionLock(true);
     setDragState({ card: data.card, rect: dragRectFromEvent(event) });
     setDropPreview(
       sourceRowPreview && canPreviewRowDrop(board, data.location, sourceRowPreview, info.activePlayer)
@@ -1714,15 +1756,31 @@ export function PlaymatBody() {
   }
 
   function handleDragMove(event: DragMoveEvent) {
-    setDropPreviewIfChanged(getRowDropPreview(event));
+    setDropPreview((currentPreview) => {
+      const nextPreview = getRowDropPreview(event);
+      const samePreview =
+        currentPreview?.kind === nextPreview?.kind &&
+        currentPreview?.owner === nextPreview?.owner &&
+        currentPreview?.index === nextPreview?.index;
+      return samePreview ? currentPreview : nextPreview;
+    });
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const dragData = event.active.data.current;
     const dropData = event.over?.data.current;
-    const resolvedTarget = isDropTargetData(dropData)
+    const hoveredTarget = isDropTargetData(dropData)
       ? resolveDropTargetIndex(dropData.target, event)
       : null;
+    const sourceAreaPreview =
+      isDragCardData(dragData) &&
+      dropPreview &&
+      (dragData.location.kind === "hand" || dragData.location.kind === "bench") &&
+      dropPreview.kind === dragData.location.kind &&
+      dropPreview.owner === dragData.location.owner
+        ? dropPreview
+        : null;
+    const resolvedTarget = hoveredTarget ?? sourceAreaPreview;
 
     if (isDragCardData(dragData)) {
       releaseRectsRef.current.set(dragData.card.id, dragRectAtRelease(event, dragState?.rect));
