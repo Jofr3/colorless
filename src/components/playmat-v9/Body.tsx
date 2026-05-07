@@ -222,6 +222,8 @@ interface DragState {
   rect: DragRect;
 }
 
+type ReleaseRectsRef = { current: Map<string, DragRect> };
+
 const BENCH_LIMIT = 5;
 const BALATRO_LAYOUT_DURATION = 0.42;
 
@@ -493,15 +495,38 @@ function resolveDropTargetIndex(target: DropTarget, event: DragMoveEvent | DragE
   };
 }
 
+function toDragRect(rect: { left: number; top: number; width: number; height: number }): DragRect {
+  return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+}
+
+function fallbackDragRect() {
+  return { left: 0, top: 0, width: CARD_W, height: CARD_W * 1.4 };
+}
+
 function dragRectFromEvent(event: DragStartEvent): DragRect {
   const rect = event.active.rect.current.initial;
-  if (rect) return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+  if (rect) return toDragRect(rect);
 
   const element = document.querySelector<HTMLElement>(`[data-draggable-card-id="${event.active.id}"]`);
   const elementRect = element?.getBoundingClientRect();
-  return elementRect
-    ? { left: elementRect.left, top: elementRect.top, width: elementRect.width, height: elementRect.height }
-    : { left: 0, top: 0, width: CARD_W, height: CARD_W * 1.4 };
+  return elementRect ? toDragRect(elementRect) : fallbackDragRect();
+}
+
+function dragRectAtRelease(event: DragEndEvent, fallback?: DragRect): DragRect {
+  const translatedRect = event.active.rect.current.translated;
+  if (translatedRect) return toDragRect(translatedRect);
+
+  const initialRect = event.active.rect.current.initial;
+  if (initialRect) {
+    return {
+      left: initialRect.left + event.delta.x,
+      top: initialRect.top + event.delta.y,
+      width: initialRect.width,
+      height: initialRect.height,
+    };
+  }
+
+  return fallback ?? fallbackDragRect();
 }
 
 function overlayCardStyle(rect: DragRect | undefined): CSSProperties | undefined {
@@ -535,7 +560,68 @@ function hiddenDraggedCardStyle(rect: DragRect | undefined): CSSProperties {
   };
 }
 
-function useBalatroRowAnimation(layoutKey: string) {
+function releaseRotationFromDelta(dx: number) {
+  // Balatro's Moveable:move_r uses horizontal velocity to feed a small
+  // temporary rotation: des_r = T.r + 0.015 * vel.x / dt.
+  return Math.max(-8, Math.min(8, dx * 0.035));
+}
+
+function animateReleaseToElement(
+  element: HTMLElement,
+  releaseRect: DragRect,
+  onComplete?: () => void,
+) {
+  const targetRect = element.getBoundingClientRect();
+  const dx = releaseRect.left - targetRect.left;
+  const dy = releaseRect.top - targetRect.top;
+  const scaleX = releaseRect.width / Math.max(targetRect.width, 1);
+  const scaleY = releaseRect.height / Math.max(targetRect.height, 1);
+
+  gsap.fromTo(
+    element,
+    {
+      x: dx,
+      y: dy,
+      scaleX,
+      scaleY,
+      rotation: releaseRotationFromDelta(dx),
+      transformOrigin: "center center",
+    },
+    {
+      x: 0,
+      y: 0,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      duration: 0.48,
+      ease: "power3.out",
+      overwrite: "auto",
+      onComplete,
+    },
+  );
+}
+
+function useBalatroReleaseAnimation(
+  cardId: string | undefined,
+  releaseRectsRef?: ReleaseRectsRef,
+  releaseAnimationKey = 0,
+) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!cardId || !releaseRectsRef) return;
+
+    const releaseRect = releaseRectsRef.current.get(cardId);
+    const element = ref.current;
+    if (!releaseRect || !element) return;
+
+    animateReleaseToElement(element, releaseRect, () => releaseRectsRef.current.delete(cardId));
+  }, [cardId, releaseRectsRef, releaseAnimationKey]);
+
+  return ref;
+}
+
+function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRectsRef) {
   const rowRef = useRef<HTMLDivElement>(null);
   const previousRectsRef = useRef(new Map<string, DOMRect>());
   const hasMeasuredRef = useRef(false);
@@ -574,19 +660,25 @@ function useBalatroRowAnimation(layoutKey: string) {
       if (!nextRect) continue;
 
       if (!previousRect) {
-        gsap.fromTo(
-          element,
-          { opacity: 0, scale: 0.9, y: 12, rotation: -2 },
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            rotation: 0,
-            duration: 0.32,
-            ease: "back.out(1.7)",
-            overwrite: "auto",
-          },
-        );
+        const releaseRect = releaseRectsRef?.current.get(id);
+
+        if (releaseRect) {
+          animateReleaseToElement(element, releaseRect, () => releaseRectsRef?.current.delete(id));
+        } else {
+          gsap.fromTo(
+            element,
+            { opacity: 0, scale: 0.9, y: 12, rotation: -2 },
+            {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              rotation: 0,
+              duration: 0.32,
+              ease: "back.out(1.7)",
+              overwrite: "auto",
+            },
+          );
+        }
         continue;
       }
 
@@ -596,7 +688,7 @@ function useBalatroRowAnimation(layoutKey: string) {
 
       // Balatro's Moveable keeps a visible transform (VT) springing toward the
       // target transform (T), with horizontal velocity feeding a tiny rotation.
-      const rotation = Math.max(-7, Math.min(7, dx * 0.035));
+      const rotation = releaseRotationFromDelta(dx);
       gsap.fromTo(
         element,
         { x: dx, y: dy, rotation },
@@ -612,7 +704,7 @@ function useBalatroRowAnimation(layoutKey: string) {
     }
 
     previousRectsRef.current = nextRects;
-  }, [layoutKey]);
+  }, [layoutKey, releaseRectsRef]);
 
   return rowRef;
 }
@@ -718,6 +810,22 @@ function DraggableCard({
   );
 }
 
+function ReleasedCard({
+  cardId,
+  releaseRectsRef,
+  releaseAnimationKey,
+  children,
+}: {
+  cardId?: string;
+  releaseRectsRef?: ReleaseRectsRef;
+  releaseAnimationKey?: number;
+  children: ReactNode;
+}) {
+  const ref = useBalatroReleaseAnimation(cardId, releaseRectsRef, releaseAnimationKey);
+
+  return <div ref={ref}>{children}</div>;
+}
+
 function Bench({
   cards,
   owner,
@@ -725,6 +833,7 @@ function Bench({
   draggingCardId,
   draggingRect,
   dropPreview,
+  releaseRectsRef,
 }: {
   cards: PokeState[];
   owner: PlayerId;
@@ -732,6 +841,7 @@ function Bench({
   draggingCardId?: string;
   draggingRect?: DragRect;
   dropPreview?: RowDropPreview | null;
+  releaseRectsRef?: ReleaseRectsRef;
 }) {
   const target: DropTarget = { kind: "bench", owner };
   const { setNodeRef, isOver } = useDroppable({
@@ -745,6 +855,7 @@ function Bench({
     : null;
   const rowRef = useBalatroRowAnimation(
     `bench-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
+    releaseRectsRef,
   );
   const draggedCard = cards.find((card) => card.id === draggingCardId);
 
@@ -816,12 +927,14 @@ function Hand({
   draggingCardId,
   draggingRect,
   dropPreview,
+  releaseRectsRef,
 }: {
   cards: PokeState[];
   owner: PlayerId;
   draggingCardId?: string;
   draggingRect?: DragRect;
   dropPreview?: RowDropPreview | null;
+  releaseRectsRef?: ReleaseRectsRef;
 }) {
   const target: DropTarget = { kind: "hand", owner };
   const { setNodeRef } = useDroppable({
@@ -834,6 +947,7 @@ function Hand({
     : null;
   const rowRef = useBalatroRowAnimation(
     `hand-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
+    releaseRectsRef,
   );
   const draggedCard = cards.find((card) => card.id === draggingCardId);
   let renderedIndex = 0;
@@ -1373,12 +1487,26 @@ function GameLog({
   );
 }
 
-function StadiumCard({ card }: { card: PokeState | null }) {
+function StadiumCard({
+  card,
+  releaseRectsRef,
+  releaseAnimationKey,
+}: {
+  card: PokeState | null;
+  releaseRectsRef?: ReleaseRectsRef;
+  releaseAnimationKey?: number;
+}) {
   return (
     <div className="relative">
       <DropTargetPileFrame target={{ kind: "stadium" }}>
         {card ? (
-          <CardBox cardId={card.cardId} alt={card.name} priority />
+          <ReleasedCard
+            cardId={card.id}
+            releaseRectsRef={releaseRectsRef}
+            releaseAnimationKey={releaseAnimationKey}
+          >
+            <CardBox cardId={card.cardId} alt={card.name} priority />
+          </ReleasedCard>
         ) : (
           <div style={{ width: "var(--card-w)", height: "var(--card-h)" }} />
         )}
@@ -1394,6 +1522,8 @@ function PlayerSide({
   draggingCardId,
   draggingRect,
   dropPreview,
+  releaseRectsRef,
+  releaseAnimationKey,
   isActive = false,
 }: {
   owner: PlayerId;
@@ -1402,6 +1532,8 @@ function PlayerSide({
   draggingCardId?: string;
   draggingRect?: DragRect;
   dropPreview?: RowDropPreview | null;
+  releaseRectsRef?: ReleaseRectsRef;
+  releaseAnimationKey?: number;
   isActive?: boolean;
 }) {
   const isTop = position === "top";
@@ -1419,6 +1551,7 @@ function PlayerSide({
         draggingCardId={draggingCardId}
         draggingRect={draggingRect}
         dropPreview={dropPreview}
+        releaseRectsRef={releaseRectsRef}
       />
       <div
         className="absolute top-1/2"
@@ -1457,12 +1590,18 @@ function PlayerSide({
         <div
           style={active.id === draggingCardId ? hiddenDraggedCardStyle(draggingRect) : undefined}
         >
-          <DraggableCard
-            card={active}
-            location={{ kind: "active", owner }}
-            priority
-            disabled={!canInteract}
-          />
+          <ReleasedCard
+            cardId={active.id}
+            releaseRectsRef={releaseRectsRef}
+            releaseAnimationKey={releaseAnimationKey}
+          >
+            <DraggableCard
+              card={active}
+              location={{ kind: "active", owner }}
+              priority
+              disabled={!canInteract}
+            />
+          </ReleasedCard>
         </div>
       ) : null}
     </DropTargetPileFrame>
@@ -1495,8 +1634,10 @@ export function PlaymatBody() {
   const [board, setBoard] = useState<BoardState>(() => cloneBoard(initialBoard));
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [dropPreview, setDropPreview] = useState<RowDropPreview | null>(null);
+  const [releaseAnimationKey, setReleaseAnimationKey] = useState(0);
   const [passAnimationKey, setPassAnimationKey] = useState(0);
   const [tuningOpen, setTuningOpen] = useState(false);
+  const releaseRectsRef = useRef(new Map<string, DragRect>());
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -1583,6 +1724,11 @@ export function PlaymatBody() {
       ? resolveDropTargetIndex(dropData.target, event)
       : null;
 
+    if (isDragCardData(dragData)) {
+      releaseRectsRef.current.set(dragData.card.id, dragRectAtRelease(event, dragState?.rect));
+      setReleaseAnimationKey((key) => key + 1);
+    }
+
     clearDragState();
 
     if (!isDragCardData(dragData) || !resolvedTarget) return;
@@ -1611,6 +1757,8 @@ export function PlaymatBody() {
         draggingCardId={draggingCard?.id}
         draggingRect={dragState?.rect}
         dropPreview={dropPreview}
+        releaseRectsRef={releaseRectsRef}
+        releaseAnimationKey={releaseAnimationKey}
         isActive={info.activePlayer === topOwner}
       />
       <PlayerSide
@@ -1620,6 +1768,8 @@ export function PlaymatBody() {
         draggingCardId={draggingCard?.id}
         draggingRect={dragState?.rect}
         dropPreview={dropPreview}
+        releaseRectsRef={releaseRectsRef}
+        releaseAnimationKey={releaseAnimationKey}
         isActive={info.activePlayer === bottomOwner}
       />
       <Hand
@@ -1628,6 +1778,7 @@ export function PlaymatBody() {
         draggingCardId={draggingCard?.id}
         draggingRect={dragState?.rect}
         dropPreview={dropPreview}
+        releaseRectsRef={releaseRectsRef}
       />
       <div
         className="absolute z-10"
@@ -1637,7 +1788,11 @@ export function PlaymatBody() {
           transform: "translate(calc(-150% - var(--side-gap) - 24px), -50%)",
         }}
       >
-        <StadiumCard card={board.stadium} />
+        <StadiumCard
+          card={board.stadium}
+          releaseRectsRef={releaseRectsRef}
+          releaseAnimationKey={releaseAnimationKey}
+        />
       </div>
       <TurnControls onPassTurn={passTurn} />
       <AnimationTuningPanel open={tuningOpen} onClose={() => setTuningOpen(false)} />
