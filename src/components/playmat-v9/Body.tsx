@@ -1,4 +1,18 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  pointerWithin,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragMoveEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { gsap } from "gsap";
 import BalatroHoverCard from "../tcg/BalatroHoverCard";
 import {
   BALATRO_HOVER_TUNING_DEFAULTS,
@@ -149,16 +163,67 @@ function PrizeGridCompact({
 }
 
 interface PokeState {
+  id: string;
   name: string;
-  hp: number;
-  type: EnergyType;
-  attachedEnergy: EnergyType[];
+  cardId: string;
+  hp?: number;
+  type?: EnergyType;
+  attachedEnergy?: EnergyType[];
   damage?: number;
-  cardId?: string;
 }
 
 type PlayerId = "you" | "opponent";
 type SidePosition = "top" | "bottom";
+
+interface PlayerBoardState {
+  active: PokeState | null;
+  bench: PokeState[];
+  prizesRemaining: number;
+}
+
+interface BoardState {
+  hand: PokeState[];
+  stadium: PokeState | null;
+  you: PlayerBoardState;
+  opponent: PlayerBoardState;
+}
+
+type CardLocation =
+  | { kind: "hand"; owner: PlayerId; index: number }
+  | { kind: "bench"; owner: PlayerId; index: number }
+  | { kind: "active"; owner: PlayerId };
+
+type DropTarget =
+  | { kind: "hand"; owner: PlayerId; index?: number }
+  | { kind: "bench"; owner: PlayerId; index?: number }
+  | { kind: "active"; owner: PlayerId }
+  | { kind: "stadium" };
+
+interface DragCardData {
+  card: PokeState;
+  location: CardLocation;
+}
+
+interface DropTargetData {
+  target: DropTarget;
+}
+
+type RowDropPreview = Extract<DropTarget, { kind: "hand" | "bench" }> & { index: number };
+
+interface DragRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+interface DragState {
+  card: PokeState;
+  rect: DragRect;
+}
+
+const BENCH_LIMIT = 5;
+const BALATRO_LAYOUT_DURATION = 0.42;
 
 function playerBackTone(player: PlayerId): CardBackTone {
   return player === "you" ? "blue" : "red";
@@ -169,6 +234,7 @@ function otherPlayer(player: PlayerId): PlayerId {
 }
 
 const opponentActive: PokeState = {
+  id: "opponent-active-mega-zygarde",
   name: "Mega Zygarde ex",
   hp: 340,
   type: "fighting",
@@ -177,15 +243,13 @@ const opponentActive: PokeState = {
   cardId: "me3-47",
 };
 
-const opponentBench: (PokeState | null)[] = [
-  { name: "Yveltal ex", hp: 270, type: "darkness", attachedEnergy: [], cardId: "me3-53" },
-  { name: "Meowth ex", hp: 200, type: "colorless", attachedEnergy: ["colorless"], cardId: "me3-62" },
-  null,
-  null,
-  null,
+const opponentBench: PokeState[] = [
+  { id: "opponent-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", attachedEnergy: [], cardId: "me3-53" },
+  { id: "opponent-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", attachedEnergy: ["colorless"], cardId: "me3-62" },
 ];
 
 const playerActive: PokeState = {
+  id: "you-active-mega-starmie",
   name: "Mega Starmie ex",
   hp: 300,
   type: "water",
@@ -194,22 +258,364 @@ const playerActive: PokeState = {
   cardId: "me3-21",
 };
 
-const playerBench: (PokeState | null)[] = [
-  { name: "Decidueye ex", hp: 280, type: "grass", attachedEnergy: ["grass"], cardId: "sv3-15" },
-  { name: "Yveltal ex", hp: 270, type: "darkness", attachedEnergy: ["darkness", "darkness"], cardId: "me3-53" },
-  { name: "Meowth ex", hp: 200, type: "colorless", attachedEnergy: [], cardId: "me3-62" },
-  null,
-  null,
+const playerBench: PokeState[] = [
+  { id: "you-bench-decidueye", name: "Decidueye ex", hp: 280, type: "grass", attachedEnergy: ["grass"], cardId: "sv3-15" },
+  { id: "you-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", attachedEnergy: ["darkness", "darkness"], cardId: "me3-53" },
+  { id: "you-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", attachedEnergy: [], cardId: "me3-62" },
 ];
 
-const playerHand: { cardId: string; alt: string }[] = [
-  { cardId: "sv3-15", alt: "Decidueye ex" },
-  { cardId: "me3-62", alt: "Meowth ex" },
-  { cardId: "me3-123", alt: "Rosa's Encouragement" },
-  { cardId: "me3-70", alt: "Core Memory" },
-  { cardId: "me3-53", alt: "Yveltal ex" },
-  { cardId: "me3-123", alt: "Rosa's Encouragement" },
+const initialStadium: PokeState = {
+  id: "stadium-lumiose-city",
+  name: "Lumiose City",
+  cardId: "me3-111",
+};
+
+const playerHand: PokeState[] = [
+  { id: "hand-decidueye", cardId: "sv3-15", name: "Decidueye ex" },
+  { id: "hand-meowth", cardId: "me3-62", name: "Meowth ex" },
+  { id: "hand-rosa-1", cardId: "me3-123", name: "Rosa's Encouragement" },
+  { id: "hand-core-memory", cardId: "me3-70", name: "Core Memory" },
+  { id: "hand-yveltal", cardId: "me3-53", name: "Yveltal ex" },
+  { id: "hand-rosa-2", cardId: "me3-123", name: "Rosa's Encouragement" },
 ];
+
+const initialBoard: BoardState = {
+  hand: playerHand,
+  stadium: initialStadium,
+  you: {
+    active: playerActive,
+    bench: playerBench,
+    prizesRemaining: 4,
+  },
+  opponent: {
+    active: opponentActive,
+    bench: opponentBench,
+    prizesRemaining: 5,
+  },
+};
+
+function dropTargetId(target: DropTarget) {
+  switch (target.kind) {
+    case "hand":
+      return `drop-${target.owner}-hand`;
+    case "bench":
+      return `drop-${target.owner}-bench`;
+    case "active":
+      return `drop-${target.owner}-active`;
+    case "stadium":
+      return "drop-stadium";
+  }
+}
+
+function cloneBoard(board: BoardState): BoardState {
+  return {
+    hand: [...board.hand],
+    stadium: board.stadium,
+    you: {
+      ...board.you,
+      bench: [...board.you.bench],
+    },
+    opponent: {
+      ...board.opponent,
+      bench: [...board.opponent.bench],
+    },
+  };
+}
+
+function getSingleCardTarget(board: BoardState, target: Extract<DropTarget, { kind: "active" | "stadium" }>) {
+  return target.kind === "active" ? board[target.owner].active : board.stadium;
+}
+
+function setSingleCardTarget(
+  board: BoardState,
+  target: Extract<DropTarget, { kind: "active" | "stadium" }>,
+  card: PokeState | null,
+) {
+  if (target.kind === "active") {
+    board[target.owner].active = card;
+  } else {
+    board.stadium = card;
+  }
+}
+
+function clampInsertIndex(index: number | undefined, length: number) {
+  return Math.max(0, Math.min(length, index ?? length));
+}
+
+function insertCardAt(cards: PokeState[], index: number | undefined, card: PokeState) {
+  cards.splice(clampInsertIndex(index, cards.length), 0, card);
+}
+
+function sourceBelongsToPlayer(source: CardLocation, player: PlayerId) {
+  return source.owner === player;
+}
+
+function targetBelongsToPlayer(target: DropTarget, player: PlayerId) {
+  return target.kind === "stadium" || target.owner === player;
+}
+
+function canActivePlayerMove(source: CardLocation, target: DropTarget, activePlayer: PlayerId) {
+  return sourceBelongsToPlayer(source, activePlayer) && targetBelongsToPlayer(target, activePlayer);
+}
+
+function canPreviewRowDrop(
+  board: BoardState,
+  source: CardLocation,
+  target: Extract<DropTarget, { kind: "hand" | "bench" }>,
+  activePlayer: PlayerId,
+) {
+  if (!canActivePlayerMove(source, target, activePlayer)) return false;
+
+  if (target.kind === "hand") {
+    return source.kind === "hand" && source.owner === target.owner;
+  }
+
+  if (source.kind === "hand") {
+    return board[target.owner].bench.length < BENCH_LIMIT;
+  }
+
+  if (source.kind === "bench") {
+    return source.owner === target.owner;
+  }
+
+  if (source.kind === "active") {
+    return source.owner === target.owner && board[target.owner].bench.length < BENCH_LIMIT;
+  }
+
+  return false;
+}
+
+function moveCard(board: BoardState, source: CardLocation, target: DropTarget): BoardState {
+  if (source.kind === "hand" && target.kind === "hand" && source.owner === target.owner) {
+    const next = cloneBoard(board);
+    const [sourceCard] = next.hand.splice(source.index, 1);
+    if (!sourceCard) return board;
+    insertCardAt(next.hand, target.index, sourceCard);
+    return next;
+  }
+
+  if (source.kind === "hand") {
+    const sourceCard = board.hand[source.index];
+    if (!sourceCard) return board;
+
+    const next = cloneBoard(board);
+    next.hand.splice(source.index, 1);
+
+    if (target.kind === "bench") {
+      if (next[target.owner].bench.length >= BENCH_LIMIT) return board;
+      insertCardAt(next[target.owner].bench, target.index, sourceCard);
+      return next;
+    }
+
+    if (target.kind === "active" || target.kind === "stadium") {
+      const displacedCard = getSingleCardTarget(next, target);
+      setSingleCardTarget(next, target, sourceCard);
+      if (displacedCard) insertCardAt(next.hand, source.index, displacedCard);
+      return next;
+    }
+
+    return board;
+  }
+
+  if (source.kind === "bench" && target.kind === "bench" && source.owner === target.owner) {
+    const next = cloneBoard(board);
+    const [sourceCard] = next[source.owner].bench.splice(source.index, 1);
+    if (!sourceCard) return board;
+    insertCardAt(next[source.owner].bench, target.index, sourceCard);
+    return next;
+  }
+
+  if (source.kind === "bench" && target.kind === "active" && source.owner === target.owner) {
+    const next = cloneBoard(board);
+    const [sourceCard] = next[source.owner].bench.splice(source.index, 1);
+    if (!sourceCard) return board;
+
+    const displacedActive = next[source.owner].active;
+    next[source.owner].active = sourceCard;
+    if (displacedActive) insertCardAt(next[source.owner].bench, source.index, displacedActive);
+    return next;
+  }
+
+  if (source.kind === "active" && target.kind === "bench" && source.owner === target.owner) {
+    if (board[source.owner].bench.length >= BENCH_LIMIT) return board;
+
+    const next = cloneBoard(board);
+    const sourceCard = next[source.owner].active;
+    if (!sourceCard) return board;
+
+    next[source.owner].active = null;
+    insertCardAt(next[source.owner].bench, target.index, sourceCard);
+    return next;
+  }
+
+  return board;
+}
+
+function isDragCardData(data: unknown): data is DragCardData {
+  return Boolean(data && typeof data === "object" && "card" in data && "location" in data);
+}
+
+function isDropTargetData(data: unknown): data is DropTargetData {
+  return Boolean(data && typeof data === "object" && "target" in data);
+}
+
+function cardRowKey(kind: "hand" | "bench", owner: PlayerId) {
+  return `${kind}-${owner}`;
+}
+
+function getDragCenterX(event: DragMoveEvent | DragEndEvent) {
+  const rect = event.active.rect.current.translated ?? event.active.rect.current.initial;
+  return rect ? rect.left + rect.width / 2 : null;
+}
+
+function getInsertIndexFromRow(row: HTMLElement, centerX: number | null) {
+  const cards = Array.from(row.querySelectorAll<HTMLElement>("[data-layout-card]"));
+  if (centerX === null) return cards.length;
+
+  const index = cards.findIndex((element) => {
+    const rect = element.getBoundingClientRect();
+    return centerX < rect.left + rect.width / 2;
+  });
+
+  return index === -1 ? cards.length : index;
+}
+
+function resolveDropTargetIndex(target: DropTarget, event: DragMoveEvent | DragEndEvent): DropTarget {
+  if (target.kind !== "hand" && target.kind !== "bench") return target;
+  if (typeof document === "undefined") return target;
+
+  const row = document.querySelector<HTMLElement>(`[data-card-row="${cardRowKey(target.kind, target.owner)}"]`);
+  if (!row) return target;
+
+  return {
+    ...target,
+    index: getInsertIndexFromRow(row, getDragCenterX(event)),
+  };
+}
+
+function dragRectFromEvent(event: DragStartEvent): DragRect {
+  const rect = event.active.rect.current.initial;
+  if (rect) return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+
+  const element = document.querySelector<HTMLElement>(`[data-draggable-card-id="${event.active.id}"]`);
+  const elementRect = element?.getBoundingClientRect();
+  return elementRect
+    ? { left: elementRect.left, top: elementRect.top, width: elementRect.width, height: elementRect.height }
+    : { left: 0, top: 0, width: CARD_W, height: CARD_W * 1.4 };
+}
+
+function overlayCardStyle(rect: DragRect | undefined): CSSProperties | undefined {
+  if (!rect) return undefined;
+
+  return {
+    "--card-w": `${rect.width}px`,
+    "--card-h": `${rect.height}px`,
+  } as CSSProperties;
+}
+
+function hiddenDraggedCardStyle(rect: DragRect | undefined): CSSProperties {
+  if (!rect) {
+    return {
+      position: "absolute",
+      width: "var(--card-w)",
+      visibility: "hidden",
+      pointerEvents: "none",
+    };
+  }
+
+  return {
+    position: "fixed",
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+    visibility: "hidden",
+    pointerEvents: "none",
+    zIndex: -1,
+  };
+}
+
+function useBalatroRowAnimation(layoutKey: string) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const previousRectsRef = useRef(new Map<string, DOMRect>());
+  const hasMeasuredRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+
+    const elements = Array.from(row.querySelectorAll<HTMLElement>("[data-layout-card]"));
+    const previousRects = previousRectsRef.current;
+    const nextRects = new Map<string, DOMRect>();
+
+    for (const element of elements) {
+      gsap.killTweensOf(element);
+      gsap.set(element, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1 });
+    }
+
+    for (const element of elements) {
+      const id = element.dataset.layoutCard;
+      if (!id) continue;
+      nextRects.set(id, element.getBoundingClientRect());
+    }
+
+    if (!hasMeasuredRef.current) {
+      previousRectsRef.current = nextRects;
+      hasMeasuredRef.current = true;
+      return;
+    }
+
+    for (const element of elements) {
+      const id = element.dataset.layoutCard;
+      if (!id) continue;
+
+      const previousRect = previousRects.get(id);
+      const nextRect = nextRects.get(id);
+      if (!nextRect) continue;
+
+      if (!previousRect) {
+        gsap.fromTo(
+          element,
+          { opacity: 0, scale: 0.9, y: 12, rotation: -2 },
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            rotation: 0,
+            duration: 0.32,
+            ease: "back.out(1.7)",
+            overwrite: "auto",
+          },
+        );
+        continue;
+      }
+
+      const dx = previousRect.left - nextRect.left;
+      const dy = previousRect.top - nextRect.top;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) continue;
+
+      // Balatro's Moveable keeps a visible transform (VT) springing toward the
+      // target transform (T), with horizontal velocity feeding a tiny rotation.
+      const rotation = Math.max(-7, Math.min(7, dx * 0.035));
+      gsap.fromTo(
+        element,
+        { x: dx, y: dy, rotation },
+        {
+          x: 0,
+          y: 0,
+          rotation: 0,
+          duration: BALATRO_LAYOUT_DURATION,
+          ease: "power3.out",
+          overwrite: "auto",
+        },
+      );
+    }
+
+    previousRectsRef.current = nextRects;
+  }, [layoutKey]);
+
+  return rowRef;
+}
 
 function CardBox({
   cardId,
@@ -236,52 +642,274 @@ function CardBox({
   );
 }
 
-function Bench({ slots }: { slots: (PokeState | null)[] }) {
-  const total = slots.length;
+function DropTargetPileFrame({
+  target,
+  children,
+  active = false,
+  disabled = false,
+}: {
+  target: DropTarget;
+  children: ReactNode;
+  active?: boolean;
+  disabled?: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: dropTargetId(target),
+    data: { target } satisfies DropTargetData,
+    disabled,
+  });
+
   return (
     <div
+      ref={setNodeRef}
       data-slot
-      className={SLOT_BASE}
+      data-drop-target={target.kind}
+      data-drop-owner={"owner" in target ? target.owner : undefined}
+      data-drop-disabled={disabled || undefined}
+      className={`${SLOT_BASE} transition-all ${active ? "ring-amber-300/60 shadow-[0_0_0_1px_rgba(252,211,77,0.45),0_0_28px_rgba(252,211,77,0.30),inset_0_1px_0_rgba(255,255,255,0.15)]" : ""} ${isOver ? "ring-2 ring-emerald-300/90 shadow-[0_0_0_1px_rgba(110,231,183,0.55),0_0_34px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.18)]" : ""}`}
       style={{
-        width: `calc(var(--card-w) * ${total} + var(--slot-gap) * ${total - 1} + 12px)`,
+        width: "calc(var(--card-w) + 12px)",
         height: "calc(var(--card-h) + 12px)",
         padding: "var(--pile-pad)",
       }}
     >
-      <div className="flex items-start" style={{ gap: "var(--slot-gap)" }}>
-        {slots.map((p, i) => (
-          <div
-            key={i}
-            className="relative rounded-md"
-            style={{ width: "var(--card-w)", height: "var(--card-h)" }}
-          >
-            {p && p.cardId ? <CardBox cardId={p.cardId} alt={p.name} /> : null}
-            <div className="absolute inset-0 rounded-md border border-dashed border-white/9 pointer-events-none" />
-          </div>
+      {children}
+    </div>
+  );
+}
+
+function DraggableCard({
+  card,
+  location,
+  priority,
+  bendCenterBoost,
+  disabled = false,
+}: {
+  card: PokeState;
+  location: CardLocation;
+  priority?: boolean;
+  bendCenterBoost?: number;
+  disabled?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: card.id,
+    data: { card, location } satisfies DragCardData,
+    disabled,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...(!disabled ? listeners : {})}
+      aria-label={`Drag ${card.name}`}
+      aria-disabled={disabled || undefined}
+      data-draggable-card-id={card.id}
+      className="relative touch-none select-none"
+      style={{ touchAction: "none" }}
+    >
+      <CardBox
+        cardId={card.cardId}
+        alt={card.name}
+        priority={priority}
+        bendCenterBoost={bendCenterBoost}
+      />
+    </div>
+  );
+}
+
+function Bench({
+  cards,
+  owner,
+  disabled = false,
+  draggingCardId,
+  draggingRect,
+  dropPreview,
+}: {
+  cards: PokeState[];
+  owner: PlayerId;
+  disabled?: boolean;
+  draggingCardId?: string;
+  draggingRect?: DragRect;
+  dropPreview?: RowDropPreview | null;
+}) {
+  const target: DropTarget = { kind: "bench", owner };
+  const { setNodeRef, isOver } = useDroppable({
+    id: dropTargetId(target),
+    data: { target } satisfies DropTargetData,
+    disabled,
+  });
+  const visibleCards = cards.filter((card) => card.id !== draggingCardId);
+  const previewIndex = dropPreview?.kind === "bench" && dropPreview.owner === owner
+    ? clampInsertIndex(dropPreview.index, visibleCards.length)
+    : null;
+  const rowRef = useBalatroRowAnimation(
+    `bench-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
+  );
+  const draggedCard = cards.find((card) => card.id === draggingCardId);
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-slot
+      data-drop-target="bench"
+      data-drop-owner={owner}
+      data-drop-disabled={disabled || undefined}
+      className={`${SLOT_BASE} transition-all ${isOver ? "ring-2 ring-emerald-300/90 shadow-[0_0_0_1px_rgba(110,231,183,0.55),0_0_34px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.18)]" : ""}`}
+      style={{
+        width: `calc(var(--card-w) * ${BENCH_LIMIT} + var(--slot-gap) * ${BENCH_LIMIT - 1} + 12px)`,
+        height: "calc(var(--card-h) + 12px)",
+        padding: "var(--pile-pad)",
+      }}
+    >
+      <div
+        ref={rowRef}
+        data-card-row={cardRowKey("bench", owner)}
+        className="relative flex h-full w-full items-center justify-center"
+        style={{ gap: "var(--slot-gap)" }}
+      >
+        {visibleCards.map((card, visibleIndex) => (
+          <Fragment key={`bench-entry-${card.id}`}>
+            {previewIndex === visibleIndex ? (
+              <div
+                key={`bench-gap-${owner}-${visibleIndex}`}
+                aria-hidden="true"
+                style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
+              />
+            ) : null}
+            <div
+              key={card.id}
+              data-layout-card={card.id}
+              style={{ width: "var(--card-w)", zIndex: visibleCards.length - visibleIndex }}
+            >
+              <DraggableCard
+                card={card}
+                location={{ kind: "bench", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
+                disabled={disabled}
+              />
+            </div>
+          </Fragment>
         ))}
+        {previewIndex === visibleCards.length ? (
+          <div
+            aria-hidden="true"
+            style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
+          />
+        ) : null}
+        {draggedCard ? (
+          <div style={hiddenDraggedCardStyle(draggingRect)}>
+            <DraggableCard
+              card={draggedCard}
+              location={{ kind: "bench", owner, index: cards.findIndex((card) => card.id === draggedCard.id) }}
+              disabled={disabled}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function Hand({ cards }: { cards: { cardId: string; alt: string }[] }) {
-  const count = cards.length;
+function Hand({
+  cards,
+  owner,
+  draggingCardId,
+  draggingRect,
+  dropPreview,
+}: {
+  cards: PokeState[];
+  owner: PlayerId;
+  draggingCardId?: string;
+  draggingRect?: DragRect;
+  dropPreview?: RowDropPreview | null;
+}) {
+  const target: DropTarget = { kind: "hand", owner };
+  const { setNodeRef } = useDroppable({
+    id: dropTargetId(target),
+    data: { target } satisfies DropTargetData,
+  });
+  const visibleCards = cards.filter((card) => card.id !== draggingCardId);
+  const previewIndex = dropPreview?.kind === "hand" && dropPreview.owner === owner
+    ? clampInsertIndex(dropPreview.index, visibleCards.length)
+    : null;
+  const rowRef = useBalatroRowAnimation(
+    `hand-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
+  );
+  const draggedCard = cards.find((card) => card.id === draggingCardId);
+  let renderedIndex = 0;
+
   return (
     <div
+      ref={setNodeRef}
+      data-drop-target="hand"
+      data-drop-owner={owner}
       className="flex justify-center items-end px-6 relative z-10"
       style={{ height: "var(--hand-h)", paddingBottom: 8 }}
     >
-      {cards.map((c, i) => (
-        <div
-          key={i}
-          style={{
-            marginLeft: i === 0 ? 0 : "calc(var(--card-w) * -0.2)",
-            zIndex: count - i,
-          }}
-        >
-          <CardBox cardId={c.cardId} alt={c.alt} priority bendCenterBoost={0} />
-        </div>
-      ))}
+      <div
+        ref={rowRef}
+        data-card-row={cardRowKey("hand", owner)}
+        className="relative flex h-full items-end justify-center"
+      >
+        {visibleCards.map((card, visibleIndex) => {
+          const cardRenderIndex = renderedIndex++;
+          const gapBefore = previewIndex === visibleIndex;
+
+          return (
+            <Fragment key={`hand-entry-${card.id}`}>
+              {gapBefore ? (
+                <div
+                  key={`hand-gap-${owner}-${visibleIndex}`}
+                  aria-hidden="true"
+                  style={{
+                    flex: "0 0 var(--card-w)",
+                    height: "var(--card-h)",
+                    marginLeft: cardRenderIndex === 0 ? 0 : "calc(var(--card-w) * -0.2)",
+                    width: "var(--card-w)",
+                  }}
+                />
+              ) : null}
+              <div
+                key={card.id}
+                data-layout-card={card.id}
+                style={{
+                  marginLeft: (gapBefore ? cardRenderIndex + 1 : cardRenderIndex) === 0 ? 0 : "calc(var(--card-w) * -0.2)",
+                  width: "var(--card-w)",
+                  zIndex: visibleCards.length - visibleIndex,
+                }}
+              >
+                <DraggableCard
+                  card={card}
+                  location={{ kind: "hand", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
+                  priority
+                  bendCenterBoost={0}
+                />
+              </div>
+            </Fragment>
+          );
+        })}
+        {previewIndex === visibleCards.length ? (
+          <div
+            aria-hidden="true"
+            style={{
+              flex: "0 0 var(--card-w)",
+              height: "var(--card-h)",
+              marginLeft: visibleCards.length === 0 ? 0 : "calc(var(--card-w) * -0.2)",
+              width: "var(--card-w)",
+            }}
+          />
+        ) : null}
+        {draggedCard ? (
+          <div style={hiddenDraggedCardStyle(draggingRect)}>
+            <DraggableCard
+              card={draggedCard}
+              location={{ kind: "hand", owner, index: cards.findIndex((card) => card.id === draggedCard.id) }}
+              priority
+              bendCenterBoost={0}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -745,12 +1373,16 @@ function GameLog({
   );
 }
 
-function StadiumCard() {
+function StadiumCard({ card }: { card: PokeState | null }) {
   return (
     <div className="relative">
-      <PileFrame>
-        <CardBox cardId="me3-111" alt="Lumiose City" priority />
-      </PileFrame>
+      <DropTargetPileFrame target={{ kind: "stadium" }}>
+        {card ? (
+          <CardBox cardId={card.cardId} alt={card.name} priority />
+        ) : (
+          <div style={{ width: "var(--card-w)", height: "var(--card-h)" }} />
+        )}
+      </DropTargetPileFrame>
     </div>
   );
 }
@@ -758,20 +1390,36 @@ function StadiumCard() {
 function PlayerSide({
   owner,
   position,
+  player,
+  draggingCardId,
+  draggingRect,
+  dropPreview,
   isActive = false,
 }: {
   owner: PlayerId;
   position: SidePosition;
+  player: PlayerBoardState;
+  draggingCardId?: string;
+  draggingRect?: DragRect;
+  dropPreview?: RowDropPreview | null;
   isActive?: boolean;
 }) {
   const isTop = position === "top";
-  const active = owner === "opponent" ? opponentActive : playerActive;
-  const bench = owner === "opponent" ? opponentBench : playerBench;
-  const prizesRemaining = owner === "opponent" ? 5 : 4;
+  const active = player.active;
+  const bench = player.bench;
+  const prizesRemaining = player.prizesRemaining;
+  const canInteract = isActive;
   const backTone = playerBackTone(owner);
   const benchRow = (
     <div className="relative">
-      <Bench slots={bench} />
+      <Bench
+        cards={bench}
+        owner={owner}
+        disabled={!canInteract}
+        draggingCardId={draggingCardId}
+        draggingRect={draggingRect}
+        dropPreview={dropPreview}
+      />
       <div
         className="absolute top-1/2"
         style={{
@@ -804,11 +1452,20 @@ function PlayerSide({
     </div>
   );
   const activeNode = (
-    <PileFrame active={isActive}>
-      {active.cardId ? (
-        <CardBox cardId={active.cardId} alt={active.name} priority />
+    <DropTargetPileFrame target={{ kind: "active", owner }} active={isActive} disabled={!canInteract}>
+      {active ? (
+        <div
+          style={active.id === draggingCardId ? hiddenDraggedCardStyle(draggingRect) : undefined}
+        >
+          <DraggableCard
+            card={active}
+            location={{ kind: "active", owner }}
+            priority
+            disabled={!canInteract}
+          />
+        </div>
       ) : null}
-    </PileFrame>
+    </DropTargetPileFrame>
   );
 
   return (
@@ -835,10 +1492,19 @@ function PlayerSide({
 
 export function PlaymatBody() {
   const [info, setInfo] = useState(turnInfo);
+  const [board, setBoard] = useState<BoardState>(() => cloneBoard(initialBoard));
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const [dropPreview, setDropPreview] = useState<RowDropPreview | null>(null);
   const [passAnimationKey, setPassAnimationKey] = useState(0);
   const [tuningOpen, setTuningOpen] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+  );
   const bottomOwner = info.activePlayer;
   const topOwner = otherPlayer(bottomOwner);
+  const draggingCard = dragState?.card ?? null;
 
   function passTurn() {
     setPassAnimationKey((key) => key + 1);
@@ -849,35 +1515,147 @@ export function PlaymatBody() {
     }));
   }
 
+  function setDropPreviewIfChanged(nextPreview: RowDropPreview | null) {
+    setDropPreview((currentPreview) => {
+      const samePreview =
+        currentPreview?.kind === nextPreview?.kind &&
+        currentPreview?.owner === nextPreview?.owner &&
+        currentPreview?.index === nextPreview?.index;
+      return samePreview ? currentPreview : nextPreview;
+    });
+  }
+
+  function getRowDropPreview(event: DragMoveEvent | DragEndEvent) {
+    const dragData = event.active.data.current;
+    const dropData = event.over?.data.current;
+
+    if (!isDragCardData(dragData) || !isDropTargetData(dropData)) return null;
+    if (dropData.target.kind !== "hand" && dropData.target.kind !== "bench") return null;
+
+    const resolvedTarget = resolveDropTargetIndex(dropData.target, event);
+    if (resolvedTarget.kind !== "hand" && resolvedTarget.kind !== "bench") return null;
+    if (!canPreviewRowDrop(board, dragData.location, resolvedTarget, info.activePlayer)) return null;
+
+    return {
+      ...resolvedTarget,
+      index: resolvedTarget.index ?? 0,
+    };
+  }
+
+  function clearDragState() {
+    setDragState(null);
+    setDropPreview(null);
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    const data = event.active.data.current;
+
+    if (!isDragCardData(data) || !sourceBelongsToPlayer(data.location, info.activePlayer)) {
+      clearDragState();
+      return;
+    }
+
+    const sourceRowPreview =
+      data.location.kind === "hand" || data.location.kind === "bench"
+        ? {
+            kind: data.location.kind,
+            owner: data.location.owner,
+            index: data.location.index,
+          }
+        : null;
+
+    setDragState({ card: data.card, rect: dragRectFromEvent(event) });
+    setDropPreview(
+      sourceRowPreview && canPreviewRowDrop(board, data.location, sourceRowPreview, info.activePlayer)
+        ? sourceRowPreview
+        : null,
+    );
+  }
+
+  function handleDragMove(event: DragMoveEvent) {
+    setDropPreviewIfChanged(getRowDropPreview(event));
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const dragData = event.active.data.current;
+    const dropData = event.over?.data.current;
+    const resolvedTarget = isDropTargetData(dropData)
+      ? resolveDropTargetIndex(dropData.target, event)
+      : null;
+
+    clearDragState();
+
+    if (!isDragCardData(dragData) || !resolvedTarget) return;
+
+    setBoard((current) =>
+      canActivePlayerMove(dragData.location, resolvedTarget, info.activePlayer)
+        ? moveCard(current, dragData.location, resolvedTarget)
+        : current,
+    );
+  }
+
   return (
-    <>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragEnd={handleDragEnd}
+      onDragCancel={clearDragState}
+    >
       <span className="sr-only" data-perspective-player={bottomOwner} aria-hidden="true" />
       <PlayerSide
         owner={topOwner}
+        player={board[topOwner]}
         position="top"
+        draggingCardId={draggingCard?.id}
+        draggingRect={dragState?.rect}
+        dropPreview={dropPreview}
         isActive={info.activePlayer === topOwner}
       />
       <PlayerSide
         owner={bottomOwner}
+        player={board[bottomOwner]}
         position="bottom"
+        draggingCardId={draggingCard?.id}
+        draggingRect={dragState?.rect}
+        dropPreview={dropPreview}
         isActive={info.activePlayer === bottomOwner}
       />
-      <Hand cards={playerHand} />
+      <Hand
+        cards={board.hand}
+        owner={bottomOwner}
+        draggingCardId={draggingCard?.id}
+        draggingRect={dragState?.rect}
+        dropPreview={dropPreview}
+      />
       <div
-        className="absolute z-10 pointer-events-none"
+        className="absolute z-10"
         style={{
           left: "50%",
           top: CENTER_LINE_TOP,
           transform: "translate(calc(-150% - var(--side-gap) - 24px), -50%)",
         }}
       >
-        <StadiumCard />
+        <StadiumCard card={board.stadium} />
       </div>
       <TurnControls onPassTurn={passTurn} />
       <AnimationTuningPanel open={tuningOpen} onClose={() => setTuningOpen(false)} />
       <SettingsButton active={tuningOpen} onClick={() => setTuningOpen((open) => !open)} />
       <TurnBanner info={info} passAnimationKey={passAnimationKey} />
       <GameLog entries={gameLog} turn={info.turn} />
-    </>
+      <DragOverlay dropAnimation={null}>
+        {draggingCard ? (
+          <div className="pointer-events-none" style={overlayCardStyle(dragState?.rect)}>
+            <CardBox
+              cardId={draggingCard.cardId}
+              alt={draggingCard.name}
+              priority
+              bendCenterBoost={0}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
