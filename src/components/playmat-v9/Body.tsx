@@ -235,6 +235,8 @@ type ReleaseRectsRef = { current: Map<string, DragRect> };
 
 const BENCH_LIMIT = 5;
 const BALATRO_LAYOUT_DURATION = 0.42;
+const RELEASE_ANIMATION_Z_INDEX = 1100;
+const DRAG_OVERLAY_Z_INDEX = 1200;
 const CARD_DRAG_HOVER_SUPPRESSION_MS = 600;
 const CARD_DRAG_INTERACTION_EVENT = "tcg-card-drag-start";
 
@@ -575,9 +577,11 @@ function hiddenDraggedCardStyle(rect: DragRect | undefined): CSSProperties {
   }
 
   return {
-    position: "fixed",
-    left: rect.left,
-    top: rect.top,
+    // Avoid position: fixed here. Slot frames use backdrop-filter, which creates
+    // a containing block for fixed descendants and can double-offset the hidden
+    // source node. Keep the node mounted/in-place for dnd-kit measurement, but
+    // remove it from layout and visibility.
+    position: "absolute",
     width: rect.width,
     height: rect.height,
     visibility: "hidden",
@@ -598,11 +602,52 @@ function layoutRotationFromDelta(dx: number) {
   return Math.max(-3, Math.min(3, dx * 0.012));
 }
 
+function liftReleaseAnimationStack(element: HTMLElement) {
+  const lifted: Array<{
+    element: HTMLElement;
+    position: string;
+    zIndex: string;
+    pointerEvents: string;
+  }> = [];
+  const root = element.closest<HTMLElement>(".playmat-wrapper");
+  let current: HTMLElement | null = element;
+
+  while (current && current !== root && current !== document.body) {
+    const computed = getComputedStyle(current);
+    lifted.push({
+      element: current,
+      position: current.style.position,
+      zIndex: current.style.zIndex,
+      pointerEvents: current.style.pointerEvents,
+    });
+
+    if (computed.position === "static") current.style.position = "relative";
+    current.style.zIndex = String(RELEASE_ANIMATION_Z_INDEX);
+    if (current === element) current.style.pointerEvents = "none";
+
+    current = current.parentElement;
+  }
+
+  let restored = false;
+  return () => {
+    if (restored) return;
+    restored = true;
+
+    for (let index = lifted.length - 1; index >= 0; index -= 1) {
+      const item = lifted[index];
+      item.element.style.position = item.position;
+      item.element.style.zIndex = item.zIndex;
+      item.element.style.pointerEvents = item.pointerEvents;
+    }
+  };
+}
+
 function animateReleaseToElement(
   element: HTMLElement,
   releaseRect: DragRect,
   onComplete?: () => void,
 ) {
+  const restoreReleaseStack = liftReleaseAnimationStack(element);
   const targetRect = element.getBoundingClientRect();
   const dx = releaseRect.left - targetRect.left;
   const dy = releaseRect.top - targetRect.top;
@@ -628,7 +673,11 @@ function animateReleaseToElement(
       duration: 0.48,
       ease: "power3.out",
       overwrite: "auto",
-      onComplete,
+      onComplete: () => {
+        restoreReleaseStack();
+        onComplete?.();
+      },
+      onInterrupt: restoreReleaseStack,
     },
   );
 }
@@ -934,7 +983,7 @@ function Bench({
     disabled,
   });
   const visibleCards = cards.filter((card) => card.id !== draggingCardId);
-  const previewIndex = dropPreview?.kind === "bench" && dropPreview.owner === owner
+  const previewIndex = draggingCardId && dropPreview?.kind === "bench" && dropPreview.owner === owner
     ? clampInsertIndex(dropPreview.index, visibleCards.length)
     : null;
   const rowRef = useBalatroRowAnimation(
@@ -1026,7 +1075,7 @@ function Hand({
     data: { target } satisfies DropTargetData,
   });
   const visibleCards = cards.filter((card) => card.id !== draggingCardId);
-  const previewIndex = dropPreview?.kind === "hand" && dropPreview.owner === owner
+  const previewIndex = draggingCardId && dropPreview?.kind === "hand" && dropPreview.owner === owner
     ? clampInsertIndex(dropPreview.index, visibleCards.length)
     : null;
   const rowRef = useBalatroRowAnimation(
@@ -1722,6 +1771,7 @@ export function PlaymatBody() {
   const [passAnimationKey, setPassAnimationKey] = useState(0);
   const [tuningOpen, setTuningOpen] = useState(false);
   const releaseRectsRef = useRef(new Map<string, DragRect>());
+  const activeDragIdRef = useRef<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 1 },
@@ -1791,6 +1841,7 @@ export function PlaymatBody() {
   }
 
   function clearDragState() {
+    activeDragIdRef.current = null;
     setCardDragInteractionLock(false);
     setDragState(null);
     setDropPreview(null);
@@ -1813,6 +1864,7 @@ export function PlaymatBody() {
           }
         : null;
 
+    activeDragIdRef.current = data.card.id;
     setCardDragInteractionLock(true);
     setDragState({ card: data.card, rect: dragRectFromEvent(event) });
     setDropPreview(
@@ -1823,6 +1875,8 @@ export function PlaymatBody() {
   }
 
   function handleDragMove(event: DragMoveEvent) {
+    if (activeDragIdRef.current !== String(event.active.id)) return;
+
     setDropPreview((currentPreview) => {
       const nextPreview = getRowDropPreview(event);
       const samePreview =
@@ -1924,7 +1978,7 @@ export function PlaymatBody() {
       <SettingsButton active={tuningOpen} onClick={() => setTuningOpen((open) => !open)} />
       <TurnBanner info={info} passAnimationKey={passAnimationKey} />
       <GameLog entries={gameLog} turn={info.turn} />
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={null} zIndex={DRAG_OVERLAY_Z_INDEX}>
         {draggingCard ? (
           <div className="pointer-events-none" style={overlayCardStyle(dragState?.rect)}>
             <CardBox
