@@ -758,25 +758,31 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
 
 function CardBox({
   cardId,
+  instanceId,
   alt,
   priority,
   bendCenterBoost,
+  pressed = false,
   dragging = false,
 }: {
   cardId: string;
+  instanceId?: string;
   alt: string;
   priority?: boolean;
   bendCenterBoost?: number;
+  pressed?: boolean;
   dragging?: boolean;
 }) {
   return (
     <div style={{ width: "var(--card-w)" }}>
       <BalatroHoverCard
         cardId={cardId}
+        instanceId={instanceId}
         renderedWidth={CARD_W}
         alt={alt}
         priority={priority}
         bendCenterBoost={bendCenterBoost}
+        pressed={pressed}
         dragging={dragging}
         className="w-full"
       />
@@ -878,10 +884,11 @@ function DraggableCard({
     >
       <CardBox
         cardId={card.cardId}
+        instanceId={card.id}
         alt={card.name}
         priority={priority}
         bendCenterBoost={bendCenterBoost}
-        dragging={pressing}
+        pressed={pressing}
       />
     </div>
   );
@@ -1582,7 +1589,7 @@ function StadiumCard({
             releaseRectsRef={releaseRectsRef}
             releaseAnimationKey={releaseAnimationKey}
           >
-            <CardBox cardId={card.cardId} alt={card.name} priority />
+            <CardBox cardId={card.cardId} instanceId={card.id} alt={card.name} priority />
           </ReleasedCard>
         ) : (
           <div style={{ width: "var(--card-w)", height: "var(--card-h)" }} />
@@ -1922,6 +1929,7 @@ export function PlaymatBody() {
           <div className="pointer-events-none" style={overlayCardStyle(dragState?.rect)}>
             <CardBox
               cardId={draggingCard.cardId}
+              instanceId={draggingCard.id}
               alt={draggingCard.name}
               priority
               bendCenterBoost={0}
