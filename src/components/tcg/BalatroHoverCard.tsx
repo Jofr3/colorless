@@ -67,7 +67,8 @@ interface DomCard {
   mouseClient: Point;
   targetHover: number;
   targetDrag: number;
-  lastDragCenterX: number | null;
+  dragTargetOffsetPx: number;
+  dragVisibleOffsetX: number | null;
   dragVelocityX: number;
   juiceStart: number;
   juiceSign: number;
@@ -203,7 +204,8 @@ class BalatroDomCardAnimator {
       mouseClient: { x: 0, y: 0 },
       targetHover: 0,
       targetDrag: 0,
-      lastDragCenterX: null,
+      dragTargetOffsetPx: 0,
+      dragVisibleOffsetX: null,
       dragVelocityX: 0,
       juiceStart: Number.NEGATIVE_INFINITY,
       juiceSign: 1,
@@ -278,23 +280,30 @@ class BalatroDomCardAnimator {
     const wasDragging = card.targetDrag > 0;
     card.targetDrag = dragging ? 1 : 0;
     if (dragging) {
-      if (!wasDragging && !this.prefersReducedMotion) {
-        const tuning = getBalatroHoverTuning();
-        card.juiceStart = performance.now() / 1000;
-        card.juiceSign = Math.random() > 0.5 ? 1 : -1;
-        card.visibleScale = Math.max(
-          card.visibleScale,
-          (1 - 0.6 * tuning.juiceScaleAmount) / BALATRO_CARD_BASE_SCALE,
-        );
+      if (!wasDragging) {
+        card.dragTargetOffsetPx = 0;
+        card.dragVisibleOffsetX = null;
+        card.dragVelocityX = 0;
       }
       card.targetHover = 0;
       card.host.removeAttribute("data-balatro-hovered");
       card.host.setAttribute("data-balatro-dragged", "true");
       gsap.set(card.host, { zIndex: 60 + card.token });
     } else {
+      card.dragTargetOffsetPx = 0;
+      card.dragVisibleOffsetX = null;
+      card.dragVelocityX = 0;
       card.host.removeAttribute("data-balatro-dragged");
       if (!card.targetHover) gsap.set(card.host, { clearProps: "zIndex" });
     }
+    this.startTicker();
+  }
+
+  dragMove(host: HTMLElement, deltaClientX: number) {
+    const card = this.cards.get(host);
+    if (!card || card.targetDrag <= 0 || !Number.isFinite(deltaClientX)) return;
+
+    card.dragTargetOffsetPx += deltaClientX;
     this.startTicker();
   }
 
@@ -324,7 +333,8 @@ class BalatroDomCardAnimator {
         for (const card of this.cards.values()) {
           card.targetHover = 0;
           card.targetDrag = 0;
-          card.lastDragCenterX = null;
+          card.dragTargetOffsetPx = 0;
+          card.dragVisibleOffsetX = null;
           card.dragVelocityX = 0;
           card.visibleScale = 1;
           card.scaleVelocity = 0;
@@ -398,27 +408,25 @@ class BalatroDomCardAnimator {
       // ~55% of the juice rather than 30% from quadratic).
       const sizeRatio = referenceWidth && rect.width > 0 ? Math.min(1, rect.width / referenceWidth) : 1;
       const sizeFactor = sizeRatio;
-      const dragCenterX = rect.left + rect.width / 2;
+      const screenScale = Math.max(1, (referenceWidth ?? rect.width) / BALATRO_CARD_W);
+      const dragTargetOffsetX = card.dragTargetOffsetPx / screenScale;
+      const safeDt = Math.max(dt, 1 / 1000);
       const dragVelocityEase = Math.exp(-BALATRO_CARD_DRAG_XY_EASE * dt);
       if (card.targetDrag > 0) {
-        const rawDragVelocityX = card.lastDragCenterX === null
-          ? 0
-          : (dragCenterX - card.lastDragCenterX) / Math.max(dt, 1 / 120);
+        if (card.dragVisibleOffsetX === null) card.dragVisibleOffsetX = dragTargetOffsetX;
         card.dragVelocityX =
-          dragVelocityEase * card.dragVelocityX + (1 - dragVelocityEase) * rawDragVelocityX;
-        card.lastDragCenterX = dragCenterX;
+          dragVelocityEase * card.dragVelocityX +
+          (1 - dragVelocityEase) * (dragTargetOffsetX - card.dragVisibleOffsetX) * 35 * dt;
+        const maxDragVelocity = BALATRO_CARD_DRAG_MAX_VELOCITY * dt;
+        card.dragVelocityX = Math.max(-maxDragVelocity, Math.min(maxDragVelocity, card.dragVelocityX));
+        card.dragVisibleOffsetX += card.dragVelocityX;
       } else {
-        card.lastDragCenterX = null;
-        card.dragVelocityX *= dragVelocityEase;
-        if (Math.abs(card.dragVelocityX) < 0.01) card.dragVelocityX = 0;
+        card.dragTargetOffsetPx = 0;
+        card.dragVisibleOffsetX = null;
+        card.dragVelocityX = 0;
       }
-      const screenScale = Math.max(1, (referenceWidth ?? rect.width) / BALATRO_CARD_W);
-      const dragVelocityUnitsPerSecond = Math.max(
-        -BALATRO_CARD_DRAG_MAX_VELOCITY,
-        Math.min(BALATRO_CARD_DRAG_MAX_VELOCITY, card.dragVelocityX / screenScale),
-      );
       const dragRotation = card.targetDrag > 0
-        ? -BALATRO_CARD_DRAG_SWAY * dragVelocityUnitsPerSecond
+        ? -BALATRO_CARD_DRAG_SWAY * (card.dragVelocityX / safeDt)
         : 0;
       const juiceScaleAmt = tuning.juiceScaleAmount * sizeFactor;
       const juiceRotAmt = tuning.juiceRotationAmount * sizeFactor;
@@ -469,7 +477,8 @@ class BalatroDomCardAnimator {
       if (atRest) {
         card.visibleScale = 1;
         card.scaleVelocity = 0;
-        card.lastDragCenterX = null;
+        card.dragTargetOffsetPx = 0;
+        card.dragVisibleOffsetX = null;
         card.dragVelocityX = 0;
         card.rotation = 0;
         card.rotationVelocity = 0;
@@ -700,6 +709,19 @@ export default function BalatroHoverCard({
 
     const animator = getBalatroDomCardAnimator();
     animator.setDragging(host, dragging);
+    if (!dragging) return;
+
+    let lastClientX: number | null = null;
+    const handleDragPointerMove = (event: PointerEvent) => {
+      const deltaX = lastClientX === null ? event.movementX : event.clientX - lastClientX;
+      lastClientX = event.clientX;
+      animator.dragMove(host, deltaX);
+    };
+
+    window.addEventListener("pointermove", handleDragPointerMove, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", handleDragPointerMove);
+    };
   }, [dragging]);
 
   const placeholder =

@@ -592,6 +592,12 @@ function releaseRotationFromDelta(dx: number) {
   return Math.max(-8, Math.min(8, dx * 0.035));
 }
 
+function layoutRotationFromDelta(dx: number) {
+  // Row previews can retarget several times during one drag. Keep their sway
+  // gentler than a release throw so re-sorts slide instead of twitching.
+  return Math.max(-3, Math.min(3, dx * 0.012));
+}
+
 function animateReleaseToElement(
   element: HTMLElement,
   releaseRect: DragRect,
@@ -658,7 +664,19 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
 
     const elements = Array.from(row.querySelectorAll<HTMLElement>("[data-layout-card]"));
     const previousRects = previousRectsRef.current;
+    const liveRects = new Map<string, { rect: DOMRect; isAnimating: boolean; rotation: number }>();
     const nextRects = new Map<string, DOMRect>();
+
+    for (const element of elements) {
+      const id = element.dataset.layoutCard;
+      if (!id) continue;
+      const transform = element.style.transform;
+      liveRects.set(id, {
+        rect: element.getBoundingClientRect(),
+        isAnimating: gsap.isTweening(element) || Boolean(transform && transform !== "none"),
+        rotation: Number(gsap.getProperty(element, "rotation")) || 0,
+      });
+    }
 
     for (const element of elements) {
       gsap.killTweensOf(element);
@@ -708,13 +726,16 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
         continue;
       }
 
-      const dx = previousRect.left - nextRect.left;
-      const dy = previousRect.top - nextRect.top;
+      const liveRect = liveRects.get(id);
+      const fromRect = liveRect?.isAnimating ? liveRect.rect : previousRect;
+      const dx = fromRect.left - nextRect.left;
+      const dy = fromRect.top - nextRect.top;
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) continue;
 
       // Balatro's Moveable keeps a visible transform (VT) springing toward the
-      // target transform (T), with horizontal velocity feeding a tiny rotation.
-      const rotation = releaseRotationFromDelta(dx);
+      // target transform (T). If a preview retargets mid-animation, continue
+      // from the current visual rect instead of snapping back to the old slot.
+      const rotation = liveRect?.isAnimating ? liveRect.rotation : layoutRotationFromDelta(dx);
       gsap.fromTo(
         element,
         { x: dx, y: dy, rotation },
