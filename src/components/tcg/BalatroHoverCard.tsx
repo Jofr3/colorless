@@ -23,6 +23,10 @@ const BALATRO_CARD_BASE_SCALE = 0.95;
 const BALATRO_CARD_AMBIENT_TILT = 0.2;
 const BALATRO_CARD_DRAG_ZOOM = 0.1;
 const BALATRO_CARD_DRAG_SCALE_EASE = 60;
+const BALATRO_CARD_DRAG_XY_EASE = 50;
+// game.lua caps Moveable velocity at 70*move_dt, then move_r uses vel.x/dt.
+const BALATRO_CARD_DRAG_MAX_VELOCITY = 70;
+const BALATRO_CARD_DRAG_SWAY = 0.015;
 const BALATRO_IDLE_TILT_BASE_SPEED = 1.56;
 const BALATRO_IDLE_TILT_ID_SPEED_DIVISOR = 1.14212;
 const BALATRO_IDLE_TILT_ID_PHASE_DIVISOR = 1.35122;
@@ -63,6 +67,8 @@ interface DomCard {
   mouseClient: Point;
   targetHover: number;
   targetDrag: number;
+  lastDragCenterX: number | null;
+  dragVelocityX: number;
   juiceStart: number;
   juiceSign: number;
   visibleScale: number;
@@ -197,6 +203,8 @@ class BalatroDomCardAnimator {
       mouseClient: { x: 0, y: 0 },
       targetHover: 0,
       targetDrag: 0,
+      lastDragCenterX: null,
+      dragVelocityX: 0,
       juiceStart: Number.NEGATIVE_INFINITY,
       juiceSign: 1,
       visibleScale: 1,
@@ -316,6 +324,8 @@ class BalatroDomCardAnimator {
         for (const card of this.cards.values()) {
           card.targetHover = 0;
           card.targetDrag = 0;
+          card.lastDragCenterX = null;
+          card.dragVelocityX = 0;
           card.visibleScale = 1;
           card.scaleVelocity = 0;
           card.rotation = 0;
@@ -388,6 +398,28 @@ class BalatroDomCardAnimator {
       // ~55% of the juice rather than 30% from quadratic).
       const sizeRatio = referenceWidth && rect.width > 0 ? Math.min(1, rect.width / referenceWidth) : 1;
       const sizeFactor = sizeRatio;
+      const dragCenterX = rect.left + rect.width / 2;
+      const dragVelocityEase = Math.exp(-BALATRO_CARD_DRAG_XY_EASE * dt);
+      if (card.targetDrag > 0) {
+        const rawDragVelocityX = card.lastDragCenterX === null
+          ? 0
+          : (dragCenterX - card.lastDragCenterX) / Math.max(dt, 1 / 120);
+        card.dragVelocityX =
+          dragVelocityEase * card.dragVelocityX + (1 - dragVelocityEase) * rawDragVelocityX;
+        card.lastDragCenterX = dragCenterX;
+      } else {
+        card.lastDragCenterX = null;
+        card.dragVelocityX *= dragVelocityEase;
+        if (Math.abs(card.dragVelocityX) < 0.01) card.dragVelocityX = 0;
+      }
+      const screenScale = Math.max(1, (referenceWidth ?? rect.width) / BALATRO_CARD_W);
+      const dragVelocityUnitsPerSecond = Math.max(
+        -BALATRO_CARD_DRAG_MAX_VELOCITY,
+        Math.min(BALATRO_CARD_DRAG_MAX_VELOCITY, card.dragVelocityX / screenScale),
+      );
+      const dragRotation = card.targetDrag > 0
+        ? -BALATRO_CARD_DRAG_SWAY * dragVelocityUnitsPerSecond
+        : 0;
       const juiceScaleAmt = tuning.juiceScaleAmount * sizeFactor;
       const juiceRotAmt = tuning.juiceRotationAmount * sizeFactor;
 
@@ -412,7 +444,8 @@ class BalatroDomCardAnimator {
       card.scaleVelocity = scaleEase * card.scaleVelocity + (1 - scaleEase) * (desiredScale - card.visibleScale);
       card.visibleScale += card.scaleVelocity;
 
-      const desiredRotation = juiceRotation * 2;
+      // Balatro Moveable:move_r: des_r = T.r + 0.015 * vel.x / dt + juice.r * 2.
+      const desiredRotation = dragRotation + juiceRotation * 2;
       const rotationEase = Math.exp(-tuning.rotationEase * dt);
       card.rotationVelocity =
         rotationEase * card.rotationVelocity + (1 - rotationEase) * (desiredRotation - card.rotation);
@@ -436,6 +469,8 @@ class BalatroDomCardAnimator {
       if (atRest) {
         card.visibleScale = 1;
         card.scaleVelocity = 0;
+        card.lastDragCenterX = null;
+        card.dragVelocityX = 0;
         card.rotation = 0;
         card.rotationVelocity = 0;
         card.juiceStart = Number.NEGATIVE_INFINITY;
