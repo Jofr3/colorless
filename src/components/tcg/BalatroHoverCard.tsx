@@ -47,6 +47,11 @@ interface Point {
   y: number;
 }
 
+interface PointerPosition {
+  clientX: number;
+  clientY: number;
+}
+
 interface DomCard {
   token: number;
   idleSeed: number;
@@ -218,7 +223,7 @@ class BalatroDomCardAnimator {
     }
   }
 
-  hover(host: HTMLElement, event: PointerEvent) {
+  hover(host: HTMLElement, event: PointerPosition) {
     const card = this.cards.get(host);
     if (!card) return;
 
@@ -252,13 +257,18 @@ class BalatroDomCardAnimator {
     this.startTicker();
   }
 
-  move(host: HTMLElement, event: PointerEvent) {
+  move(host: HTMLElement, event: PointerPosition) {
     const card = this.cards.get(host);
     if (!card) return;
 
+    if (card.targetHover <= 0) {
+      this.hover(host, event);
+      return;
+    }
+
     card.mouseClient.x = event.clientX;
     card.mouseClient.y = event.clientY;
-    if (card.targetHover > 0) this.startTicker();
+    this.startTicker();
   }
 
   private watchReducedMotion() {
