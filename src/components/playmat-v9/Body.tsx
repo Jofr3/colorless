@@ -226,12 +226,25 @@ interface DragRect {
   height: number;
 }
 
+interface ReleaseMotion {
+  rect: DragRect;
+  velocityX: number;
+  velocityY: number;
+}
+
+interface DragMotionSample {
+  rect: DragRect;
+  time: number;
+  velocityX: number;
+  velocityY: number;
+}
+
 interface DragState {
   card: PokeState;
   rect: DragRect;
 }
 
-type ReleaseRectsRef = { current: Map<string, DragRect> };
+type ReleaseRectsRef = { current: Map<string, ReleaseMotion> };
 
 const BENCH_LIMIT = 5;
 const BALATRO_LAYOUT_DURATION = 0.42;
@@ -239,6 +252,21 @@ const RELEASE_ANIMATION_Z_INDEX = 1100;
 const DRAG_OVERLAY_Z_INDEX = 1200;
 const CARD_DRAG_HOVER_SUPPRESSION_MS = 600;
 const CARD_DRAG_INTERACTION_EVENT = "tcg-card-drag-start";
+
+// Balatro source mapping for a card released with no new release_on target:
+// Controller clears states.drag.is, CardArea:align_cards immediately gives the
+// card a target transform (T), then Moveable:move lets the visible transform
+// (VT) spring back with velocity-fed rotation.
+const BALATRO_RELEASE_CARD_W = (2.4 * 35) / 41;
+const BALATRO_RELEASE_XY_EASE = 50;
+const BALATRO_RELEASE_SCALE_EASE = 60;
+const BALATRO_RELEASE_ROTATION_EASE = 190;
+const BALATRO_RELEASE_XY_ACCEL = 35;
+const BALATRO_RELEASE_MAX_VELOCITY = 70;
+const BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY = 0.015;
+const BALATRO_RELEASE_INITIAL_VELOCITY_DT = 1 / 60;
+const DRAG_MOTION_VELOCITY_SMOOTHING = 0.65;
+const DRAG_MOTION_STALE_MS = 120;
 
 function setCardDragInteractionLock(active: boolean) {
   if (typeof document === "undefined") return;
@@ -540,7 +568,7 @@ function dragRectFromEvent(event: DragStartEvent): DragRect {
   return elementRect ? toDragRect(elementRect) : fallbackDragRect();
 }
 
-function dragRectAtRelease(event: DragEndEvent, fallback?: DragRect): DragRect {
+function dragRectAtRelease(event: DragMoveEvent | DragEndEvent, fallback?: DragRect): DragRect {
   const translatedRect = event.active.rect.current.translated;
   if (translatedRect) return toDragRect(translatedRect);
 
@@ -555,6 +583,55 @@ function dragRectAtRelease(event: DragEndEvent, fallback?: DragRect): DragRect {
   }
 
   return fallback ?? fallbackDragRect();
+}
+
+function sampleDragMotion(samples: Map<string, DragMotionSample>, cardId: string, rect: DragRect) {
+  const now = performance.now();
+  const previous = samples.get(cardId);
+  if (!previous) {
+    samples.set(cardId, { rect, time: now, velocityX: 0, velocityY: 0 });
+    return;
+  }
+
+  const dt = Math.max((now - previous.time) / 1000, 1 / 1000);
+  const instantVelocityX = (rect.left - previous.rect.left) / dt;
+  const instantVelocityY = (rect.top - previous.rect.top) / dt;
+
+  samples.set(cardId, {
+    rect,
+    time: now,
+    velocityX:
+      previous.velocityX * DRAG_MOTION_VELOCITY_SMOOTHING +
+      instantVelocityX * (1 - DRAG_MOTION_VELOCITY_SMOOTHING),
+    velocityY:
+      previous.velocityY * DRAG_MOTION_VELOCITY_SMOOTHING +
+      instantVelocityY * (1 - DRAG_MOTION_VELOCITY_SMOOTHING),
+  });
+}
+
+function releaseMotionFromDragSample(
+  samples: Map<string, DragMotionSample>,
+  cardId: string,
+  rect: DragRect,
+): ReleaseMotion {
+  const sample = samples.get(cardId);
+  if (!sample) return { rect, velocityX: 0, velocityY: 0 };
+
+  const ageMs = performance.now() - sample.time;
+  let velocityX = sample.velocityX;
+  let velocityY = sample.velocityY;
+
+  if (ageMs > 8 && ageMs <= DRAG_MOTION_STALE_MS) {
+    const dt = Math.max(ageMs / 1000, 1 / 1000);
+    velocityX = 0.5 * velocityX + 0.5 * ((rect.left - sample.rect.left) / dt);
+    velocityY = 0.5 * velocityY + 0.5 * ((rect.top - sample.rect.top) / dt);
+  } else if (ageMs > DRAG_MOTION_STALE_MS) {
+    const fade = Math.max(0, 1 - (ageMs - DRAG_MOTION_STALE_MS) / DRAG_MOTION_STALE_MS);
+    velocityX *= fade;
+    velocityY *= fade;
+  }
+
+  return { rect, velocityX, velocityY };
 }
 
 function overlayCardStyle(rect: DragRect | undefined): CSSProperties | undefined {
@@ -590,10 +667,30 @@ function hiddenDraggedCardStyle(rect: DragRect | undefined): CSSProperties {
   };
 }
 
-function releaseRotationFromDelta(dx: number) {
-  // Balatro's Moveable:move_r uses horizontal velocity to feed a small
-  // temporary rotation: des_r = T.r + 0.015 * vel.x / dt.
-  return Math.max(-8, Math.min(8, dx * 0.035));
+function finiteNumber(value: number, fallback = 0) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function clampVectorMagnitude(x: number, y: number, maxMagnitude: number) {
+  const magnitude = Math.hypot(x, y);
+  if (magnitude <= maxMagnitude || magnitude <= 0) return { x, y };
+
+  return {
+    x: (x / magnitude) * maxMagnitude,
+    y: (y / magnitude) * maxMagnitude,
+  };
+}
+
+function radiansToDegrees(radians: number) {
+  return (radians * 180) / Math.PI;
+}
+
+function prefersReducedMotion() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function layoutRotationFromDelta(dx: number) {
@@ -642,44 +739,136 @@ function liftReleaseAnimationStack(element: HTMLElement) {
   };
 }
 
+const releaseAnimationCleanups = new WeakMap<HTMLElement, () => void>();
+
+function stopBalatroReleaseAnimation(element: HTMLElement) {
+  releaseAnimationCleanups.get(element)?.();
+}
+
 function animateReleaseToElement(
   element: HTMLElement,
-  releaseRect: DragRect,
+  releaseMotion: ReleaseMotion,
   onComplete?: () => void,
 ) {
-  const restoreReleaseStack = liftReleaseAnimationStack(element);
-  const targetRect = element.getBoundingClientRect();
-  const dx = releaseRect.left - targetRect.left;
-  const dy = releaseRect.top - targetRect.top;
-  const scaleX = releaseRect.width / Math.max(targetRect.width, 1);
-  const scaleY = releaseRect.height / Math.max(targetRect.height, 1);
+  stopBalatroReleaseAnimation(element);
 
-  gsap.fromTo(
-    element,
-    {
-      x: dx,
-      y: dy,
+  const releaseRect = releaseMotion.rect;
+  const targetRect = element.getBoundingClientRect();
+  if (targetRect.width <= 0 || targetRect.height <= 0 || prefersReducedMotion()) {
+    releaseAnimationCleanups.delete(element);
+    onComplete?.();
+    return;
+  }
+
+  const restoreReleaseStack = liftReleaseAnimationStack(element);
+  const unit = Math.max(1, targetRect.width / BALATRO_RELEASE_CARD_W);
+  const targetCenterX = targetRect.left + targetRect.width / 2;
+  const targetCenterY = targetRect.top + targetRect.height / 2;
+  const releaseCenterX = releaseRect.left + releaseRect.width / 2;
+  const releaseCenterY = releaseRect.top + releaseRect.height / 2;
+  let x = finiteNumber((releaseCenterX - targetCenterX) / unit);
+  let y = finiteNumber((releaseCenterY - targetCenterY) / unit);
+  let scaleX = finiteNumber(releaseRect.width / Math.max(targetRect.width, 1), 1);
+  let scaleY = finiteNumber(releaseRect.height / Math.max(targetRect.height, 1), 1);
+  let scaleVelocityX = 0;
+  let scaleVelocityY = 0;
+
+  const initialVelocity = clampVectorMagnitude(
+    finiteNumber((releaseMotion.velocityX / unit) * BALATRO_RELEASE_INITIAL_VELOCITY_DT),
+    finiteNumber((releaseMotion.velocityY / unit) * BALATRO_RELEASE_INITIAL_VELOCITY_DT),
+    BALATRO_RELEASE_MAX_VELOCITY * BALATRO_RELEASE_INITIAL_VELOCITY_DT,
+  );
+  let velocityX = initialVelocity.x;
+  let velocityY = initialVelocity.y;
+  let rotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * (velocityX / BALATRO_RELEASE_INITIAL_VELOCITY_DT);
+  let rotationVelocity = 0;
+  let lastTime = performance.now() / 1000;
+  const startTime = lastTime;
+  let settledFrames = 0;
+  let active = true;
+
+  const applyTransform = () => {
+    gsap.set(element, {
+      x: x * unit,
+      y: y * unit,
       scaleX,
       scaleY,
-      rotation: releaseRotationFromDelta(dx),
+      rotation: radiansToDegrees(rotation),
       transformOrigin: "center center",
-    },
-    {
-      x: 0,
-      y: 0,
-      scaleX: 1,
-      scaleY: 1,
-      rotation: 0,
-      duration: 0.48,
-      ease: "power3.out",
-      overwrite: "auto",
-      onComplete: () => {
-        restoreReleaseStack();
-        onComplete?.();
-      },
-      onInterrupt: restoreReleaseStack,
-    },
-  );
+      force3D: true,
+      willChange: "transform",
+    });
+  };
+
+  const cleanup = (clearTransform: boolean, completeRelease = false) => {
+    if (!active) return;
+    active = false;
+    gsap.ticker.remove(tick);
+    releaseAnimationCleanups.delete(element);
+    restoreReleaseStack();
+    if (clearTransform) gsap.set(element, { clearProps: "transform,transformOrigin,willChange" });
+    if (completeRelease) onComplete?.();
+  };
+
+  const finish = () => {
+    cleanup(false);
+    gsap.set(element, { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, clearProps: "transform,transformOrigin,willChange" });
+    onComplete?.();
+  };
+
+  const tick = () => {
+    if (!element.isConnected) {
+      cleanup(false, true);
+      return;
+    }
+
+    const now = performance.now() / 1000;
+    const realDt = clampNumber(now - lastTime, 0, 0.05) || BALATRO_RELEASE_INITIAL_VELOCITY_DT;
+    const moveDt = Math.min(1 / 20, realDt);
+    const safeMoveDt = Math.max(moveDt, 1 / 1000);
+    lastTime = now;
+
+    const xyEase = Math.exp(-BALATRO_RELEASE_XY_EASE * realDt);
+    velocityX = xyEase * velocityX + (1 - xyEase) * (0 - x) * BALATRO_RELEASE_XY_ACCEL * moveDt;
+    velocityY = xyEase * velocityY + (1 - xyEase) * (0 - y) * BALATRO_RELEASE_XY_ACCEL * moveDt;
+
+    const maxVelocity = BALATRO_RELEASE_MAX_VELOCITY * moveDt;
+    const clampedVelocity = clampVectorMagnitude(velocityX, velocityY, maxVelocity);
+    velocityX = clampedVelocity.x;
+    velocityY = clampedVelocity.y;
+    x += velocityX;
+    y += velocityY;
+
+    const scaleEase = Math.exp(-BALATRO_RELEASE_SCALE_EASE * realDt);
+    scaleVelocityX = scaleEase * scaleVelocityX + (1 - scaleEase) * (1 - scaleX);
+    scaleVelocityY = scaleEase * scaleVelocityY + (1 - scaleEase) * (1 - scaleY);
+    scaleX += scaleVelocityX;
+    scaleY += scaleVelocityY;
+
+    // Moveable:move_r in balatro-source/engine/moveable.lua:
+    // des_r = self.T.r + 0.015*vel.x/dt + juice.r*2
+    const desiredRotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * (velocityX / safeMoveDt);
+    const rotationEase = Math.exp(-BALATRO_RELEASE_ROTATION_EASE * realDt);
+    rotationVelocity = rotationEase * rotationVelocity + (1 - rotationEase) * (desiredRotation - rotation);
+    rotation += rotationVelocity;
+
+    applyTransform();
+
+    const positionSettled = Math.hypot(x, y) * unit < 0.45 && Math.hypot(velocityX, velocityY) * unit < 0.18;
+    const scaleSettled =
+      Math.abs(scaleX - 1) < 0.0015 &&
+      Math.abs(scaleY - 1) < 0.0015 &&
+      Math.abs(scaleVelocityX) < 0.0015 &&
+      Math.abs(scaleVelocityY) < 0.0015;
+    const rotationSettled = Math.abs(rotation) < 0.0015 && Math.abs(rotationVelocity) < 0.0015;
+    settledFrames = positionSettled && scaleSettled && rotationSettled ? settledFrames + 1 : 0;
+
+    if (settledFrames >= 2 || now - startTime > 1.4) finish();
+  };
+
+  releaseAnimationCleanups.set(element, () => cleanup(true, true));
+  applyTransform();
+  gsap.ticker.add(tick);
 }
 
 function useBalatroReleaseAnimation(
@@ -692,11 +881,11 @@ function useBalatroReleaseAnimation(
   useLayoutEffect(() => {
     if (!cardId || !releaseRectsRef) return;
 
-    const releaseRect = releaseRectsRef.current.get(cardId);
+    const releaseMotion = releaseRectsRef.current.get(cardId);
     const element = ref.current;
-    if (!releaseRect || !element) return;
+    if (!releaseMotion || !element) return;
 
-    animateReleaseToElement(element, releaseRect, () => releaseRectsRef.current.delete(cardId));
+    animateReleaseToElement(element, releaseMotion, () => releaseRectsRef.current.delete(cardId));
   }, [cardId, releaseRectsRef, releaseAnimationKey]);
 
   return ref;
@@ -728,6 +917,7 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
     }
 
     for (const element of elements) {
+      stopBalatroReleaseAnimation(element);
       gsap.killTweensOf(element);
       gsap.set(element, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1 });
     }
@@ -753,10 +943,10 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
       if (!nextRect) continue;
 
       if (!previousRect) {
-        const releaseRect = releaseRectsRef?.current.get(id);
+        const releaseMotion = releaseRectsRef?.current.get(id);
 
-        if (releaseRect) {
-          animateReleaseToElement(element, releaseRect, () => releaseRectsRef?.current.delete(id));
+        if (releaseMotion) {
+          animateReleaseToElement(element, releaseMotion, () => releaseRectsRef?.current.delete(id));
         } else {
           gsap.fromTo(
             element,
@@ -1770,7 +1960,8 @@ export function PlaymatBody() {
   const [releaseAnimationKey, setReleaseAnimationKey] = useState(0);
   const [passAnimationKey, setPassAnimationKey] = useState(0);
   const [tuningOpen, setTuningOpen] = useState(false);
-  const releaseRectsRef = useRef(new Map<string, DragRect>());
+  const releaseRectsRef = useRef(new Map<string, ReleaseMotion>());
+  const dragMotionRef = useRef(new Map<string, DragMotionSample>());
   const activeDragIdRef = useRef<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1841,6 +2032,7 @@ export function PlaymatBody() {
   }
 
   function clearDragState() {
+    if (activeDragIdRef.current) dragMotionRef.current.delete(activeDragIdRef.current);
     activeDragIdRef.current = null;
     setCardDragInteractionLock(false);
     setDragState(null);
@@ -1864,9 +2056,11 @@ export function PlaymatBody() {
           }
         : null;
 
+    const dragRect = dragRectFromEvent(event);
     activeDragIdRef.current = data.card.id;
+    sampleDragMotion(dragMotionRef.current, data.card.id, dragRect);
     setCardDragInteractionLock(true);
-    setDragState({ card: data.card, rect: dragRectFromEvent(event) });
+    setDragState({ card: data.card, rect: dragRect });
     setDropPreview(
       sourceRowPreview && canPreviewRowDrop(board, data.location, sourceRowPreview, info.activePlayer)
         ? sourceRowPreview
@@ -1876,6 +2070,11 @@ export function PlaymatBody() {
 
   function handleDragMove(event: DragMoveEvent) {
     if (activeDragIdRef.current !== String(event.active.id)) return;
+
+    const dragData = event.active.data.current;
+    if (isDragCardData(dragData)) {
+      sampleDragMotion(dragMotionRef.current, dragData.card.id, dragRectAtRelease(event, dragState?.rect));
+    }
 
     setDropPreview((currentPreview) => {
       const nextPreview = getRowDropPreview(event);
@@ -1904,7 +2103,11 @@ export function PlaymatBody() {
     const resolvedTarget = hoveredTarget ?? sourceAreaPreview;
 
     if (isDragCardData(dragData)) {
-      releaseRectsRef.current.set(dragData.card.id, dragRectAtRelease(event, dragState?.rect));
+      const releaseRect = dragRectAtRelease(event, dragState?.rect);
+      releaseRectsRef.current.set(
+        dragData.card.id,
+        releaseMotionFromDragSample(dragMotionRef.current, dragData.card.id, releaseRect),
+      );
       setReleaseAnimationKey((key) => key + 1);
     }
 
