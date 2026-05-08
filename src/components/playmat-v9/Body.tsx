@@ -1,4 +1,13 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import {
   DndContext,
   DragOverlay,
@@ -731,11 +740,13 @@ function CardBox({
   alt,
   priority,
   bendCenterBoost,
+  dragging = false,
 }: {
   cardId: string;
   alt: string;
   priority?: boolean;
   bendCenterBoost?: number;
+  dragging?: boolean;
 }) {
   return (
     <div style={{ width: "var(--card-w)" }}>
@@ -745,6 +756,7 @@ function CardBox({
         alt={alt}
         priority={priority}
         bendCenterBoost={bendCenterBoost}
+        dragging={dragging}
         className="w-full"
       />
     </div>
@@ -800,11 +812,36 @@ function DraggableCard({
   bendCenterBoost?: number;
   disabled?: boolean;
 }) {
+  const [pressing, setPressing] = useState(false);
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: card.id,
     data: { card, location } satisfies DragCardData,
     disabled,
   });
+
+  useEffect(() => {
+    if (!disabled) return;
+    setPressing(false);
+  }, [disabled]);
+
+  useEffect(() => {
+    if (!pressing) return;
+
+    const stopPressing = () => setPressing(false);
+    window.addEventListener("pointerup", stopPressing);
+    window.addEventListener("pointercancel", stopPressing);
+    window.addEventListener("blur", stopPressing);
+    return () => {
+      window.removeEventListener("pointerup", stopPressing);
+      window.removeEventListener("pointercancel", stopPressing);
+      window.removeEventListener("blur", stopPressing);
+    };
+  }, [pressing]);
+
+  const handlePointerDownCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (disabled || event.button !== 0) return;
+    setPressing(true);
+  };
 
   return (
     <div
@@ -816,12 +853,14 @@ function DraggableCard({
       data-draggable-card-id={card.id}
       className="relative touch-none select-none"
       style={{ touchAction: "none" }}
+      onPointerDownCapture={handlePointerDownCapture}
     >
       <CardBox
         cardId={card.cardId}
         alt={card.name}
         priority={priority}
         bendCenterBoost={bendCenterBoost}
+        dragging={pressing}
       />
     </div>
   );
@@ -1657,7 +1696,7 @@ export function PlaymatBody() {
   const releaseRectsRef = useRef(new Map<string, DragRect>());
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 6 },
+      activationConstraint: { distance: 1 },
     }),
   );
   const bottomOwner = info.activePlayer;
@@ -1865,6 +1904,7 @@ export function PlaymatBody() {
               alt={draggingCard.name}
               priority
               bendCenterBoost={0}
+              dragging
             />
           </div>
         ) : null}

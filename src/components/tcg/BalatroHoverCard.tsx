@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { gsap } from "gsap";
 import CardImage from "./CardImage";
 import {
@@ -21,6 +21,8 @@ type CardBackTone = "blue" | "red";
 const BALATRO_CARD_W = (2.4 * 35) / 41;
 const BALATRO_CARD_BASE_SCALE = 0.95;
 const BALATRO_CARD_AMBIENT_TILT = 0.2;
+const BALATRO_CARD_DRAG_ZOOM = 0.1;
+const BALATRO_CARD_DRAG_SCALE_EASE = 60;
 const BALATRO_IDLE_TILT_BASE_SPEED = 1.56;
 const BALATRO_IDLE_TILT_ID_SPEED_DIVISOR = 1.14212;
 const BALATRO_IDLE_TILT_ID_PHASE_DIVISOR = 1.35122;
@@ -39,6 +41,7 @@ interface BalatroHoverCardProps {
   priority?: boolean;
   className?: string;
   bendCenterBoost?: number;
+  dragging?: boolean;
   children?: ReactNode;
 }
 
@@ -59,6 +62,7 @@ interface DomCard {
   surface: HTMLElement;
   mouseClient: Point;
   targetHover: number;
+  targetDrag: number;
   juiceStart: number;
   juiceSign: number;
   visibleScale: number;
@@ -192,6 +196,7 @@ class BalatroDomCardAnimator {
       surface,
       mouseClient: { x: 0, y: 0 },
       targetHover: 0,
+      targetDrag: 0,
       juiceStart: Number.NEGATIVE_INFINITY,
       juiceSign: 1,
       visibleScale: 1,
@@ -213,6 +218,7 @@ class BalatroDomCardAnimator {
 
     this.cards.delete(host);
     card.host.removeAttribute("data-balatro-hovered");
+    card.host.removeAttribute("data-balatro-dragged");
     gsap.set(card.host, { clearProps: "zIndex" });
     gsap.set(card.surface, { "--balatro-transform": "none" });
 
@@ -257,6 +263,33 @@ class BalatroDomCardAnimator {
     this.startTicker();
   }
 
+  setDragging(host: HTMLElement, dragging: boolean) {
+    const card = this.cards.get(host);
+    if (!card) return;
+
+    const wasDragging = card.targetDrag > 0;
+    card.targetDrag = dragging ? 1 : 0;
+    if (dragging) {
+      if (!wasDragging && !this.prefersReducedMotion) {
+        const tuning = getBalatroHoverTuning();
+        card.juiceStart = performance.now() / 1000;
+        card.juiceSign = Math.random() > 0.5 ? 1 : -1;
+        card.visibleScale = Math.max(
+          card.visibleScale,
+          (1 - 0.6 * tuning.juiceScaleAmount) / BALATRO_CARD_BASE_SCALE,
+        );
+      }
+      card.targetHover = 0;
+      card.host.removeAttribute("data-balatro-hovered");
+      card.host.setAttribute("data-balatro-dragged", "true");
+      gsap.set(card.host, { zIndex: 60 + card.token });
+    } else {
+      card.host.removeAttribute("data-balatro-dragged");
+      if (!card.targetHover) gsap.set(card.host, { clearProps: "zIndex" });
+    }
+    this.startTicker();
+  }
+
   move(host: HTMLElement, event: PointerPosition) {
     const card = this.cards.get(host);
     if (!card) return;
@@ -282,12 +315,14 @@ class BalatroDomCardAnimator {
       if (this.prefersReducedMotion) {
         for (const card of this.cards.values()) {
           card.targetHover = 0;
+          card.targetDrag = 0;
           card.visibleScale = 1;
           card.scaleVelocity = 0;
           card.rotation = 0;
           card.rotationVelocity = 0;
           card.juiceStart = Number.NEGATIVE_INFINITY;
           card.host.removeAttribute("data-balatro-hovered");
+          card.host.removeAttribute("data-balatro-dragged");
           gsap.set(card.host, { clearProps: "zIndex" });
           this.clearCardTransform(card);
         }
@@ -367,9 +402,13 @@ class BalatroDomCardAnimator {
         : 0;
 
       const desiredScale =
-        (BALATRO_CARD_BASE_SCALE + card.targetHover * tuning.hoverZoom + juiceScale) /
+        (BALATRO_CARD_BASE_SCALE +
+          card.targetHover * tuning.hoverZoom +
+          card.targetDrag * BALATRO_CARD_DRAG_ZOOM +
+          juiceScale) /
         BALATRO_CARD_BASE_SCALE;
-      const scaleEase = Math.exp(-tuning.scaleEase * dt);
+      const scaleEaseStrength = card.targetDrag > 0 ? BALATRO_CARD_DRAG_SCALE_EASE : tuning.scaleEase;
+      const scaleEase = Math.exp(-scaleEaseStrength * dt);
       card.scaleVelocity = scaleEase * card.scaleVelocity + (1 - scaleEase) * (desiredScale - card.visibleScale);
       card.visibleScale += card.scaleVelocity;
 
@@ -388,6 +427,7 @@ class BalatroDomCardAnimator {
         Math.abs(card.rotation - desiredRotation) > 0.0005 || Math.abs(card.rotationVelocity) > 0.0005;
       const atRest =
         card.targetHover === 0 &&
+        card.targetDrag === 0 &&
         !juiceAlive &&
         !scaleStillMoving &&
         !rotationStillMoving &&
@@ -567,18 +607,20 @@ export default function BalatroHoverCard({
   priority = false,
   className,
   bendCenterBoost,
+  dragging = false,
   children,
 }: BalatroHoverCardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const host = hostRef.current;
     const surface = surfaceRef.current;
     if (!host || !surface) return;
 
     const animator = getBalatroDomCardAnimator();
     animator.register(host, surface, bendCenterBoost);
+    animator.setDragging(host, dragging);
 
     const handlePointerEnter = (event: PointerEvent) => {
       if (isCardHoverSuppressed(event)) {
@@ -616,6 +658,14 @@ export default function BalatroHoverCard({
       animator.unregister(host);
     };
   }, [bendCenterBoost]);
+
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const animator = getBalatroDomCardAnimator();
+    animator.setDragging(host, dragging);
+  }, [dragging]);
 
   const placeholder =
     children ??
