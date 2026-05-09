@@ -199,6 +199,25 @@
   z-index: 30;
 }
 
+/*
+ * liftReleaseAnimationStack toggles these classes during a Balatro-style card
+ * release animation so the released card and its ancestors visually cover the
+ * rest of the playmat. Classes are used instead of inline styles so React
+ * reconciles cleanly between lift and restore — restoring inline styles can
+ * race with React clearing them, which previously wiped dnd-kit state.
+ */
+.balatro-release-lift {
+  z-index: 1100;
+}
+
+.balatro-release-lift--needs-relative {
+  position: relative;
+}
+
+.balatro-release-lift--leaf {
+  pointer-events: none;
+}
+
 .balatro-hover-card .card-back--prize,
 .balatro-hover-card .card-back--prize:hover {
   transform: none;

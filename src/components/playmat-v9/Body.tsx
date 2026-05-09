@@ -248,7 +248,9 @@ type ReleaseRectsRef = { current: Map<string, ReleaseMotion> };
 
 const BENCH_LIMIT = 5;
 const BALATRO_LAYOUT_DURATION = 0.42;
-const RELEASE_ANIMATION_Z_INDEX = 1100;
+// The release-animation z-index lives in index.css (.balatro-release-lift)
+// rather than as a JS constant — the lift uses class toggles instead of
+// inline-style writes for React-reconciliation safety.
 const DRAG_OVERLAY_Z_INDEX = 1200;
 const CARD_DRAG_HOVER_SUPPRESSION_MS = 600;
 const CARD_DRAG_INTERACTION_EVENT = "tcg-card-drag-start";
@@ -700,28 +702,30 @@ function layoutRotationFromDelta(dx: number) {
 }
 
 function liftReleaseAnimationStack(element: HTMLElement) {
+  // Toggle CSS classes (defined in index.css) instead of mutating inline
+  // styles. React can re-render between lift and restore; the previous
+  // inline-restore approach captured `current.style.position` (often empty
+  // because positioning came from a CSS class) and wrote it back, which —
+  // if React or dnd-kit had set inline styles in the interim — would wipe
+  // those styles. Class toggles are idempotent and survive reconciliation.
   const lifted: Array<{
     element: HTMLElement;
-    position: string;
-    zIndex: string;
-    pointerEvents: string;
+    isLeaf: boolean;
+    addedRelative: boolean;
   }> = [];
   const root = element.closest<HTMLElement>(".playmat-wrapper");
   let current: HTMLElement | null = element;
 
   while (current && current !== root && current !== document.body) {
     const computed = getComputedStyle(current);
-    lifted.push({
-      element: current,
-      position: current.style.position,
-      zIndex: current.style.zIndex,
-      pointerEvents: current.style.pointerEvents,
-    });
+    const needsRelative = computed.position === "static";
+    const isLeaf = current === element;
 
-    if (computed.position === "static") current.style.position = "relative";
-    current.style.zIndex = String(RELEASE_ANIMATION_Z_INDEX);
-    if (current === element) current.style.pointerEvents = "none";
+    current.classList.add("balatro-release-lift");
+    if (needsRelative) current.classList.add("balatro-release-lift--needs-relative");
+    if (isLeaf) current.classList.add("balatro-release-lift--leaf");
 
+    lifted.push({ element: current, isLeaf, addedRelative: needsRelative });
     current = current.parentElement;
   }
 
@@ -732,9 +736,13 @@ function liftReleaseAnimationStack(element: HTMLElement) {
 
     for (let index = lifted.length - 1; index >= 0; index -= 1) {
       const item = lifted[index];
-      item.element.style.position = item.position;
-      item.element.style.zIndex = item.zIndex;
-      item.element.style.pointerEvents = item.pointerEvents;
+      item.element.classList.remove("balatro-release-lift");
+      if (item.addedRelative) {
+        item.element.classList.remove("balatro-release-lift--needs-relative");
+      }
+      if (item.isLeaf) {
+        item.element.classList.remove("balatro-release-lift--leaf");
+      }
     }
   };
 }
