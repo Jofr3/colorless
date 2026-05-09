@@ -5,6 +5,10 @@ import {
   getBalatroHoverTuning,
   subscribeBalatroHoverTuning,
 } from "./balatroTuning";
+import {
+  prefersReducedMotion as readPrefersReducedMotion,
+  subscribePrefersReducedMotion,
+} from "./prefersReducedMotion";
 
 type CardBackTone = "blue" | "red";
 
@@ -196,7 +200,7 @@ class BalatroDomCardAnimator {
   private ticking = false;
   private lastTime = 0;
   private prefersReducedMotion = false;
-  private reduceMotionQuery: MediaQueryList | null = null;
+  private unsubscribeReducedMotion: (() => void) | null = null;
   private unsubscribeTuning: (() => void) | null = null;
 
   register(host: HTMLElement, surface: HTMLElement, bendCenterBoost?: number, instanceId?: string) {
@@ -255,6 +259,8 @@ class BalatroDomCardAnimator {
     if (this.cards.size === 0) {
       this.unsubscribeTuning?.();
       this.unsubscribeTuning = null;
+      this.unsubscribeReducedMotion?.();
+      this.unsubscribeReducedMotion = null;
       this.stopTicker();
     }
   }
@@ -390,14 +396,13 @@ class BalatroDomCardAnimator {
   }
 
   private watchReducedMotion() {
-    if (this.reduceMotionQuery || typeof window === "undefined") return;
+    if (this.unsubscribeReducedMotion || typeof window === "undefined") return;
 
-    this.reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    this.prefersReducedMotion = this.reduceMotionQuery.matches;
+    this.prefersReducedMotion = readPrefersReducedMotion();
 
-    const updatePreference = () => {
-      this.prefersReducedMotion = this.reduceMotionQuery?.matches ?? false;
-      if (this.prefersReducedMotion) {
+    this.unsubscribeReducedMotion = subscribePrefersReducedMotion((value) => {
+      this.prefersReducedMotion = value;
+      if (value) {
         for (const card of this.cards.values()) {
           card.targetHover = 0;
           card.targetPress = 0;
@@ -419,9 +424,7 @@ class BalatroDomCardAnimator {
       } else if (this.cards.size > 0) {
         this.startTicker();
       }
-    };
-
-    this.reduceMotionQuery.addEventListener("change", updatePreference);
+    });
   }
 
   private watchTuning() {

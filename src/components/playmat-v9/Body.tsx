@@ -31,6 +31,7 @@ import {
   subscribeBalatroHoverTuning,
   type BalatroHoverTuning,
 } from "../tcg/balatroTuning";
+import { prefersReducedMotion } from "../tcg/prefersReducedMotion";
 import type { EnergyType } from "../tcg/EnergyIcon";
 
 export const CARD_W = 140;
@@ -689,10 +690,6 @@ function clampVectorMagnitude(x: number, y: number, maxMagnitude: number) {
 
 function radiansToDegrees(radians: number) {
   return (radians * 180) / Math.PI;
-}
-
-function prefersReducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function layoutRotationFromDelta(dx: number) {
