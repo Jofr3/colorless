@@ -745,6 +745,10 @@ function stopBalatroReleaseAnimation(element: HTMLElement) {
   releaseAnimationCleanups.get(element)?.();
 }
 
+function hasActiveReleaseAnimation(element: HTMLElement) {
+  return releaseAnimationCleanups.has(element);
+}
+
 function animateReleaseToElement(
   element: HTMLElement,
   releaseMotion: ReleaseMotion,
@@ -923,6 +927,14 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
     const previousRects = previousRectsRef.current;
     const liveRects = new Map<string, { rect: DOMRect; isAnimating: boolean; rotation: number }>();
     const nextRects = new Map<string, DOMRect>();
+    // Cards mid-release should not have their tween killed/cleared by the row
+    // layout pass — that would fire the release's onComplete (deleting its
+    // entry from releaseRectsRef) and then the new-mount path below would find
+    // nothing to read, falling back to the back.out(1.7) snap.
+    const releasingElements = new Set<HTMLElement>();
+    for (const element of elements) {
+      if (hasActiveReleaseAnimation(element)) releasingElements.add(element);
+    }
 
     for (const element of elements) {
       const id = element.dataset.layoutCard;
@@ -936,6 +948,7 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
     }
 
     for (const element of elements) {
+      if (releasingElements.has(element)) continue;
       stopBalatroReleaseAnimation(element);
       gsap.killTweensOf(element);
       gsap.set(element, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1 });
@@ -944,6 +957,15 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
     for (const element of elements) {
       const id = element.dataset.layoutCard;
       if (!id) continue;
+      // Releasing cards keep their in-flight transform; recording their
+      // bounding rect post-tween would corrupt the FLIP "next" rect for the
+      // surrounding cards. Use the layout-target rect implied by previousRect
+      // (which was measured at the previous layout) instead.
+      if (releasingElements.has(element)) {
+        const cached = previousRects.get(id);
+        if (cached) nextRects.set(id, cached);
+        continue;
+      }
       nextRects.set(id, element.getBoundingClientRect());
     }
 
@@ -956,6 +978,9 @@ function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRect
     for (const element of elements) {
       const id = element.dataset.layoutCard;
       if (!id) continue;
+      // Cards mid-release continue toward their original target. Don't kick
+      // off a competing FLIP tween or the back.out fallback for them.
+      if (releasingElements.has(element)) continue;
 
       const previousRect = previousRects.get(id);
       const nextRect = nextRects.get(id);
