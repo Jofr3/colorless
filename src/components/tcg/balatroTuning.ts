@@ -67,11 +67,18 @@ function hasOwn<T extends object>(object: T, key: PropertyKey): key is keyof T {
   return Object.prototype.hasOwnProperty.call(object, key);
 }
 
-function sanitizeTuning(value: Partial<BalatroHoverTuning>): BalatroHoverTuning {
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function sanitizeTuning(value: Record<string, unknown>): BalatroHoverTuning {
   const next = { ...BALATRO_HOVER_TUNING_DEFAULTS };
 
   for (const rawKey of Object.keys(next)) {
     if (!hasOwn(next, rawKey)) continue;
+    // Filter unknown keys (rawKey is constrained to defaults' keys above) and
+    // coerce only when the value is a finite number; everything else falls
+    // back to the default for that field.
     const valueAtKey = value[rawKey];
     if (typeof valueAtKey === "number" && Number.isFinite(valueAtKey)) {
       next[rawKey] = valueAtKey;
@@ -87,7 +94,18 @@ function loadStoredTuning() {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) return BALATRO_HOVER_TUNING_DEFAULTS;
-    return sanitizeTuning(JSON.parse(stored));
+    // JSON.parse returns unknown — validate the shape at the storage boundary
+    // before letting sanitizeTuning iterate it. A malformed entry (string,
+    // array, null, primitive) falls back to defaults with a single warn so
+    // we don't spam the console on every load.
+    const parsed: unknown = JSON.parse(stored);
+    if (!isObject(parsed)) {
+      console.warn(
+        "[balatroTuning] ignoring malformed stored tuning (not a plain object); resetting to defaults",
+      );
+      return BALATRO_HOVER_TUNING_DEFAULTS;
+    }
+    return sanitizeTuning(parsed);
   } catch {
     return BALATRO_HOVER_TUNING_DEFAULTS;
   }
