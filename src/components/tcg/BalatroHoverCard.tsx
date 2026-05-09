@@ -459,19 +459,42 @@ class BalatroDomCardAnimator {
     this.lastTime = now;
 
     const tuning = getBalatroHoverTuning();
-    const referenceWidth = this.referenceCardWidth();
     const staleCards: HTMLElement[] = [];
     let needsAnotherFrame = false;
 
+    // PHASE 1: batch all DOM reads up front so subsequent gsap.set writes
+    // do not invalidate layout between cards. Previously we measured each
+    // card twice per frame (referenceCardWidth() pre-pass + an in-loop
+    // getBoundingClientRect()) and read root.getBoundingClientRect()
+    // inside applyCardTransform after writes had already been queued.
+    interface FrameRead {
+      host: HTMLElement;
+      card: DomCard;
+      rect: DOMRect;
+    }
+    const reads: FrameRead[] = [];
+    let referenceWidthValue = 0;
+    let rootElement: HTMLElement | null = this.root;
     for (const [host, card] of this.cards) {
       if (!host.isConnected || !card.surface.isConnected) {
         staleCards.push(host);
         continue;
       }
-
       const rect = host.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) continue;
+      if (rect.width > referenceWidthValue) referenceWidthValue = rect.width;
+      if (!rootElement) {
+        rootElement = host.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
+      }
+      reads.push({ host, card, rect });
+    }
+    const referenceWidth: number | null = referenceWidthValue > 0 ? referenceWidthValue : null;
+    const rootRect = rootElement ? rootElement.getBoundingClientRect() : null;
 
+    // PHASE 2 + 3: integrate spring state and apply transforms. All DOM
+    // reads have already happened in Phase 1; remaining DOM access is
+    // restricted to gsap.set writes.
+    for (const { card, rect } of reads) {
       // Scale juice/rotation amplitude by card size relative to a regular card.
       // Linear falloff so prize cards still feel snappy (a 55%-sized prize gets
       // ~55% of the juice rather than 30% from quadratic).
@@ -539,7 +562,7 @@ class BalatroDomCardAnimator {
         ((1 - rotationEase) / safeDt) * (desiredRotation - card.rotation);
       card.rotation += card.rotationVelocity * dt;
 
-      this.applyCardTransform(card, rect, referenceWidth ?? rect.width, tuning, now);
+      this.applyCardTransform(card, rect, referenceWidth ?? rect.width, tuning, now, rootRect);
       if (card.instanceId) {
         this.visualStateByInstance.set(card.instanceId, {
           visibleScale: card.visibleScale,
@@ -595,27 +618,22 @@ class BalatroDomCardAnimator {
     if (!needsAnotherFrame) this.stopTicker();
   };
 
-  private referenceCardWidth(): number | null {
-    // --card-w is defined via clamp() so getPropertyValue returns the unresolved
-    // expression. Track the max width of registered cards instead — full-size
-    // cards (hand/active/stadium) yield the live --card-w in pixels.
-    let maxWidth = 0;
-    for (const card of this.cards.values()) {
-      const width = card.host.getBoundingClientRect().width;
-      if (width > maxWidth) maxWidth = width;
-    }
-    return maxWidth > 0 ? maxWidth : null;
-  }
-
   private applyCardTransform(
     card: DomCard,
     rect: DOMRect,
     referenceWidth: number,
     tuning = getBalatroHoverTuning(),
     now = performance.now() / 1000,
+    rootRectOverride: DOMRect | null = null,
   ) {
-    const root = this.root ?? card.host.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
-    const rootRect = root.getBoundingClientRect();
+    // rootRectOverride is supplied by frame() so the per-frame batch already
+    // measured the playmat root. Fall back to a fresh read for callers that
+    // don't pre-measure (e.g. one-off hover invalidations).
+    let rootRect = rootRectOverride;
+    if (!rootRect) {
+      const root = this.root ?? card.host.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
+      rootRect = root.getBoundingClientRect();
+    }
     const width = rect.width;
     const height = rect.height;
     if (width <= 0 || height <= 0 || rootRect.width <= 0 || rootRect.height <= 0) return;
