@@ -805,8 +805,21 @@ export default function BalatroHoverCard({
     animator.setDragging(host, dragging);
     if (!dragging) return;
 
+    // Scope pointer tracking per-pointerId so a second touch on the screen
+    // (e.g. a second card being dragged or any unrelated touch) cannot
+    // corrupt this card's drag delta. We lock onto the first pointer that
+    // emits a move while this card is dragging and ignore moves from any
+    // other pointerId until the drag ends.
+    let trackedPointerId: number | null = null;
     let lastClientX: number | null = null;
     const handleDragPointerMove = (event: PointerEvent) => {
+      if (trackedPointerId === null) {
+        trackedPointerId = event.pointerId;
+        lastClientX = event.clientX;
+        return;
+      }
+
+      if (event.pointerId !== trackedPointerId) return;
       if (lastClientX === null) {
         lastClientX = event.clientX;
         return;
