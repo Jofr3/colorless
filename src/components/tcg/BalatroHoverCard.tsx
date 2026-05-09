@@ -25,12 +25,12 @@ type CardBackTone = "blue" | "red";
 const BALATRO_CARD_W = (2.4 * 35) / 41;
 const BALATRO_CARD_BASE_SCALE = 0.95;
 const BALATRO_CARD_AMBIENT_TILT = 0.2;
-const BALATRO_CARD_PRESS_ZOOM = 0.1;
-const BALATRO_CARD_DRAG_SCALE_EASE = 60;
-const BALATRO_CARD_DRAG_XY_EASE = 50;
+// pressZoom / dragScaleEase / dragXyEase / dragSway live on the tuning panel
+// (see balatroTuning.ts) so the panel can dial them at runtime.
 // game.lua caps Moveable velocity at 70*move_dt, then move_r uses vel.x/dt.
+// MAX_VELOCITY is part of the engine physics math (paired with REFERENCE_DT)
+// rather than a feel knob, so it stays as a code constant.
 const BALATRO_CARD_DRAG_MAX_VELOCITY = 70;
-const BALATRO_CARD_DRAG_SWAY = 0.015;
 // Balatro caps to 60Hz; we keep 1/60 as the reference frame timestep for
 // translating Balatro's per-frame constants (e.g. velocity caps) into
 // per-second values that survive non-60Hz browser tick rates.
@@ -506,7 +506,7 @@ class BalatroDomCardAnimator {
       const screenScale = Math.max(1, (referenceWidth ?? rect.width) / BALATRO_CARD_W);
       const dragTargetOffsetX = card.dragTargetOffsetPx / screenScale;
       const safeDt = Math.max(dt, 1 / 1000);
-      const dragVelocityEase = Math.exp(-BALATRO_CARD_DRAG_XY_EASE * dt);
+      const dragVelocityEase = Math.exp(-tuning.dragXyEase * dt);
       if (card.targetDrag > 0) {
         if (card.dragVisibleOffsetX === null) card.dragVisibleOffsetX = dragTargetOffsetX;
         // dragVelocityX is now in card-units/second. Balatro's source uses
@@ -526,7 +526,7 @@ class BalatroDomCardAnimator {
       }
       // dragVelocityX is already in card-units/sec (no extra /dt needed).
       const dragRotation = card.targetDrag > 0
-        ? -BALATRO_CARD_DRAG_SWAY * card.dragVelocityX
+        ? -tuning.dragSway * card.dragVelocityX
         : 0;
       const juiceScaleAmt = tuning.juiceScaleAmount * sizeFactor;
       const juiceRotAmt = tuning.juiceRotationAmount * sizeFactor;
@@ -544,10 +544,10 @@ class BalatroDomCardAnimator {
       const desiredScale =
         (BALATRO_CARD_BASE_SCALE +
           card.targetHover * tuning.hoverZoom +
-          Math.max(card.targetPress, card.targetDrag) * BALATRO_CARD_PRESS_ZOOM +
+          Math.max(card.targetPress, card.targetDrag) * tuning.pressZoom +
           juiceScale) /
         BALATRO_CARD_BASE_SCALE;
-      const scaleEaseStrength = Math.max(card.targetPress, card.targetDrag) > 0 ? BALATRO_CARD_DRAG_SCALE_EASE : tuning.scaleEase;
+      const scaleEaseStrength = Math.max(card.targetPress, card.targetDrag) > 0 ? tuning.dragScaleEase : tuning.scaleEase;
       const scaleEase = Math.exp(-scaleEaseStrength * dt);
       // Framerate-independent semi-implicit Euler. scaleVelocity is in
       // scale-units/second; (1 - ease) / dt converts the dt-encoded blend into a

@@ -9,6 +9,24 @@ export interface BalatroHoverTuning {
   bendCenterBoost: number;
   bendCenterRadius: number;
   minPerspectiveW: number;
+  // Drag tuning (consumed by BalatroHoverCard while a card is pressed/dragged).
+  // pressZoom is the extra scale added on top of base while pressed/dragging.
+  // dragScaleEase / dragXyEase are exp(-k*dt) spring eases. dragSway maps the
+  // dragged card's per-second X velocity to a rotation (radians per unit/sec).
+  pressZoom: number;
+  dragScaleEase: number;
+  dragXyEase: number;
+  dragSway: number;
+  // Release tuning (consumed by Body.tsx animateReleaseToElement).
+  // releaseXyEase / releaseScaleEase / releaseRotationEase are exp(-k*dt)
+  // spring eases. releaseXyAccel scales the position spring's restoring
+  // force per-frame (matching Balatro Moveable.move). releaseRotationFromXVelocity
+  // maps per-second X velocity to a rotation target (radians per unit/sec).
+  releaseXyEase: number;
+  releaseScaleEase: number;
+  releaseRotationEase: number;
+  releaseXyAccel: number;
+  releaseRotationFromXVelocity: number;
 }
 
 export const BALATRO_HOVER_TUNING_DEFAULTS: BalatroHoverTuning = {
@@ -23,9 +41,24 @@ export const BALATRO_HOVER_TUNING_DEFAULTS: BalatroHoverTuning = {
   bendCenterBoost: 0.2,
   bendCenterRadius: 0.3,
   minPerspectiveW: 0.15,
+  // Drag defaults match the previous inline constants in BalatroHoverCard.tsx.
+  pressZoom: 0.1,
+  dragScaleEase: 60,
+  dragXyEase: 50,
+  dragSway: 0.015,
+  // Release defaults match the previous inline constants in Body.tsx.
+  releaseXyEase: 50,
+  releaseScaleEase: 60,
+  releaseRotationEase: 190,
+  releaseXyAccel: 35,
+  releaseRotationFromXVelocity: 0.015,
 };
 
-const STORAGE_KEY = "luminous-ui-balatro-hover-tuning-v2";
+// Bumped from -v2 → -v3 because the schema gained drag/release fields.
+// sanitizeTuning still merges additively over defaults, so the bump is a
+// belt-and-braces guard: any pre-v3 entries simply pick up the new defaults
+// for the new keys without warning.
+const STORAGE_KEY = "luminous-ui-balatro-hover-tuning-v3";
 const listeners = new Set<() => void>();
 
 let currentTuning = loadStoredTuning();

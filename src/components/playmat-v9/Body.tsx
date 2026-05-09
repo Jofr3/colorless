@@ -260,13 +260,13 @@ const CARD_DRAG_INTERACTION_EVENT = "tcg-card-drag-start";
 // Controller clears states.drag.is, CardArea:align_cards immediately gives the
 // card a target transform (T), then Moveable:move lets the visible transform
 // (VT) spring back with velocity-fed rotation.
+//
+// XY/scale/rotation eases, the XY accel, and the rotation-from-velocity factor
+// live in balatroTuning (BALATRO_HOVER_TUNING_DEFAULTS) so the runtime tuning
+// panel can dial them. CARD_W and MAX_VELOCITY are part of the engine physics
+// math (paired with REFERENCE_DT) rather than feel knobs, so they stay here.
 const BALATRO_RELEASE_CARD_W = (2.4 * 35) / 41;
-const BALATRO_RELEASE_XY_EASE = 50;
-const BALATRO_RELEASE_SCALE_EASE = 60;
-const BALATRO_RELEASE_ROTATION_EASE = 190;
-const BALATRO_RELEASE_XY_ACCEL = 35;
 const BALATRO_RELEASE_MAX_VELOCITY = 70;
-const BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY = 0.015;
 const BALATRO_RELEASE_INITIAL_VELOCITY_DT = 1 / 60;
 const DRAG_MOTION_VELOCITY_SMOOTHING = 0.65;
 const DRAG_MOTION_STALE_MS = 120;
@@ -769,6 +769,9 @@ function animateReleaseToElement(
     return;
   }
 
+  // Capture tuning at start; release animations are short-lived so it's fine
+  // to use a snapshot rather than re-reading every tick.
+  const tuning = getBalatroHoverTuning();
   const restoreReleaseStack = liftReleaseAnimationStack(element);
   const unit = Math.max(1, targetRect.width / BALATRO_RELEASE_CARD_W);
   const targetCenterX = targetRect.left + targetRect.width / 2;
@@ -793,8 +796,9 @@ function animateReleaseToElement(
   );
   let velocityX = initialVelocity.x;
   let velocityY = initialVelocity.y;
-  // velocityX is already px/sec, so 0.015 * velocityX matches Balatro's 0.015 * vel.x/dt.
-  let rotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * velocityX;
+  // velocityX is already px/sec, so tuning.releaseRotationFromXVelocity * velocityX
+  // matches Balatro's 0.015 * vel.x/dt.
+  let rotation = tuning.releaseRotationFromXVelocity * velocityX;
   let rotationVelocity = 0;
   let lastTime = performance.now() / 1000;
   const startTime = lastTime;
@@ -850,8 +854,8 @@ function animateReleaseToElement(
     // card-units/sec (or radians/sec); (1 - ease) / dt converts the dt-encoded
     // exponential blend into a per-second spring gain.
     const safeRealDt = Math.max(realDt, 1 / 1000);
-    const xyEase = Math.exp(-BALATRO_RELEASE_XY_EASE * realDt);
-    const xySpringStep = ((1 - xyEase) / safeRealDt) * BALATRO_RELEASE_XY_ACCEL * moveDt;
+    const xyEase = Math.exp(-tuning.releaseXyEase * realDt);
+    const xySpringStep = ((1 - xyEase) / safeRealDt) * tuning.releaseXyAccel * moveDt;
     velocityX = xyEase * velocityX + xySpringStep * (0 - x);
     velocityY = xyEase * velocityY + xySpringStep * (0 - y);
 
@@ -862,7 +866,7 @@ function animateReleaseToElement(
     x += velocityX * realDt;
     y += velocityY * realDt;
 
-    const scaleEase = Math.exp(-BALATRO_RELEASE_SCALE_EASE * realDt);
+    const scaleEase = Math.exp(-tuning.releaseScaleEase * realDt);
     const scaleSpringGain = (1 - scaleEase) / safeRealDt;
     scaleVelocityX = scaleEase * scaleVelocityX + scaleSpringGain * (1 - scaleX);
     scaleVelocityY = scaleEase * scaleVelocityY + scaleSpringGain * (1 - scaleY);
@@ -871,9 +875,10 @@ function animateReleaseToElement(
 
     // Moveable:move_r in balatro-source/engine/moveable.lua:
     // des_r = self.T.r + 0.015*vel.x/dt + juice.r*2
-    // velocityX is already in units/sec, so 0.015 * velocityX matches.
-    const desiredRotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * velocityX;
-    const rotationEase = Math.exp(-BALATRO_RELEASE_ROTATION_EASE * realDt);
+    // velocityX is already in units/sec, so tuning.releaseRotationFromXVelocity *
+    // velocityX matches Balatro's 0.015 * vel.x/dt with the user-tunable factor.
+    const desiredRotation = tuning.releaseRotationFromXVelocity * velocityX;
+    const rotationEase = Math.exp(-tuning.releaseRotationEase * realDt);
     rotationVelocity =
       rotationEase * rotationVelocity +
       ((1 - rotationEase) / safeRealDt) * (desiredRotation - rotation);
@@ -1511,6 +1516,15 @@ const TUNING_SLIDERS: TuningSliderConfig[] = [
   { key: "bendCenterBoost", label: "Center bend boost", min: 0, max: 1, step: 0.01 },
   { key: "bendCenterRadius", label: "Center boost radius", min: 0, max: 0.8, step: 0.01 },
   { key: "minPerspectiveW", label: "Perspective clamp", min: 0.05, max: 0.8, step: 0.01 },
+  { key: "pressZoom", label: "Press/drag zoom", min: 0, max: 0.3, step: 0.005 },
+  { key: "dragScaleEase", label: "Drag scale ease", min: 5, max: 160, step: 1 },
+  { key: "dragXyEase", label: "Drag XY ease", min: 5, max: 160, step: 1 },
+  { key: "dragSway", label: "Drag sway", min: 0, max: 0.06, step: 0.001 },
+  { key: "releaseXyEase", label: "Release XY ease", min: 5, max: 160, step: 1 },
+  { key: "releaseScaleEase", label: "Release scale ease", min: 5, max: 160, step: 1 },
+  { key: "releaseRotationEase", label: "Release rotation ease", min: 20, max: 360, step: 1 },
+  { key: "releaseXyAccel", label: "Release XY accel", min: 5, max: 120, step: 1 },
+  { key: "releaseRotationFromXVelocity", label: "Release sway", min: 0, max: 0.06, step: 0.001 },
 ];
 
 function formatSliderValue(value: number, step: number) {
