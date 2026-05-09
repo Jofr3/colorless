@@ -742,6 +742,7 @@ export default function BalatroHoverCard({
 }: BalatroHoverCardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(dragging);
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -798,13 +799,24 @@ export default function BalatroHoverCard({
   }, [pressed]);
 
   useLayoutEffect(() => {
+    draggingRef.current = dragging;
+    const host = hostRef.current;
+    if (!host) return;
+
+    getBalatroDomCardAnimator().setDragging(host, dragging);
+  }, [dragging]);
+
+  useLayoutEffect(() => {
     const host = hostRef.current;
     if (!host) return;
 
     const animator = getBalatroDomCardAnimator();
-    animator.setDragging(host, dragging);
-    if (!dragging) return;
 
+    // Register once at mount and gate behavior on draggingRef inside the
+    // handler. Re-binding the listener on every dragging re-render dropped
+    // the first delta after each re-render (lastClientX reset to null),
+    // producing a one-frame velocity gap that showed up as a sway hitch.
+    //
     // Scope pointer tracking per-pointerId so a second touch on the screen
     // (e.g. a second card being dragged or any unrelated touch) cannot
     // corrupt this card's drag delta. We lock onto the first pointer that
@@ -812,7 +824,20 @@ export default function BalatroHoverCard({
     // other pointerId until the drag ends.
     let trackedPointerId: number | null = null;
     let lastClientX: number | null = null;
+    let wasDragging = false;
+
     const handleDragPointerMove = (event: PointerEvent) => {
+      const isDragging = draggingRef.current;
+      if (!isDragging) {
+        if (wasDragging) {
+          trackedPointerId = null;
+          lastClientX = null;
+          wasDragging = false;
+        }
+        return;
+      }
+
+      wasDragging = true;
       if (trackedPointerId === null) {
         trackedPointerId = event.pointerId;
         lastClientX = event.clientX;
@@ -834,7 +859,7 @@ export default function BalatroHoverCard({
     return () => {
       window.removeEventListener("pointermove", handleDragPointerMove);
     };
-  }, [dragging]);
+  }, []);
 
   const placeholder =
     children ??
