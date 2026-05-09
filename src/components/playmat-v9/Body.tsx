@@ -2017,7 +2017,10 @@ export function PlaymatBody() {
   const activeDragIdRef = useRef<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 1 },
+      // 6px is dnd-kit's common default for touch and sits comfortably above
+      // the touch-noise floor on most devices. distance: 1 was below that
+      // floor and could trigger drags from sub-pixel finger drift.
+      activationConstraint: { distance: 6 },
     }),
   );
   const bottomOwner = info.activePlayer;
