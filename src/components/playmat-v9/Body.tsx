@@ -32,7 +32,19 @@ import {
   type BalatroHoverTuning,
 } from "../tcg/balatroTuning";
 import { prefersReducedMotion } from "../tcg/prefersReducedMotion";
-import type { EnergyType } from "../tcg/EnergyIcon";
+
+type EnergyType =
+  | "grass"
+  | "fire"
+  | "water"
+  | "lightning"
+  | "psychic"
+  | "fighting"
+  | "darkness"
+  | "metal"
+  | "fairy"
+  | "dragon"
+  | "colorless";
 
 export const CARD_W = 140;
 export const WRAPPER_CLASSES =
@@ -178,7 +190,6 @@ interface PokeState {
   cardId: string;
   hp?: number;
   type?: EnergyType;
-  attachedEnergy?: EnergyType[];
   damage?: number;
 }
 
@@ -299,14 +310,13 @@ const opponentActive: PokeState = {
   name: "Mega Zygarde ex",
   hp: 340,
   type: "fighting",
-  attachedEnergy: ["fighting", "fighting"],
   damage: 40,
   cardId: "me3-47",
 };
 
 const opponentBench: PokeState[] = [
-  { id: "opponent-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", attachedEnergy: [], cardId: "me3-53" },
-  { id: "opponent-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", attachedEnergy: ["colorless"], cardId: "me3-62" },
+  { id: "opponent-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", cardId: "me3-53" },
+  { id: "opponent-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", cardId: "me3-62" },
 ];
 
 const playerActive: PokeState = {
@@ -314,15 +324,14 @@ const playerActive: PokeState = {
   name: "Mega Starmie ex",
   hp: 300,
   type: "water",
-  attachedEnergy: ["water", "water", "water"],
   damage: 20,
   cardId: "me3-21",
 };
 
 const playerBench: PokeState[] = [
-  { id: "you-bench-decidueye", name: "Decidueye ex", hp: 280, type: "grass", attachedEnergy: ["grass"], cardId: "sv3-15" },
-  { id: "you-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", attachedEnergy: ["darkness", "darkness"], cardId: "me3-53" },
-  { id: "you-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", attachedEnergy: [], cardId: "me3-62" },
+  { id: "you-bench-decidueye", name: "Decidueye ex", hp: 280, type: "grass", cardId: "sv3-15" },
+  { id: "you-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", cardId: "me3-53" },
+  { id: "you-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", cardId: "me3-62" },
 ];
 
 const initialStadium: PokeState = {
