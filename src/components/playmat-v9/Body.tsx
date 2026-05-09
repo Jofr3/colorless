@@ -698,6 +698,48 @@ function layoutRotationFromDelta(dx: number) {
   return Math.max(-3, Math.min(3, dx * 0.012));
 }
 
+// Refcount lift toggles per ancestor. Two concurrent releases on cards in the
+// same row used to flicker because the first one's restore would strip the
+// shared ancestor's lift class while the second was still mid-flight. We now
+// increment on add and only remove the class once the count drops to zero.
+//
+// The leaf flag is genuinely per-card (only the dragged card needs
+// pointer-events:none), so it stays owned by each lift's own restore.
+const liftRefcounts = new Map<HTMLElement, number>();
+const liftRelativeRefcounts = new Map<HTMLElement, number>();
+
+function addLift(element: HTMLElement) {
+  const count = (liftRefcounts.get(element) ?? 0) + 1;
+  liftRefcounts.set(element, count);
+  if (count === 1) element.classList.add("balatro-release-lift");
+}
+
+function removeLift(element: HTMLElement) {
+  const count = (liftRefcounts.get(element) ?? 0) - 1;
+  if (count <= 0) {
+    liftRefcounts.delete(element);
+    element.classList.remove("balatro-release-lift");
+  } else {
+    liftRefcounts.set(element, count);
+  }
+}
+
+function addLiftRelative(element: HTMLElement) {
+  const count = (liftRelativeRefcounts.get(element) ?? 0) + 1;
+  liftRelativeRefcounts.set(element, count);
+  if (count === 1) element.classList.add("balatro-release-lift--needs-relative");
+}
+
+function removeLiftRelative(element: HTMLElement) {
+  const count = (liftRelativeRefcounts.get(element) ?? 0) - 1;
+  if (count <= 0) {
+    liftRelativeRefcounts.delete(element);
+    element.classList.remove("balatro-release-lift--needs-relative");
+  } else {
+    liftRelativeRefcounts.set(element, count);
+  }
+}
+
 function liftReleaseAnimationStack(element: HTMLElement) {
   // Toggle CSS classes (defined in index.css) instead of mutating inline
   // styles. React can re-render between lift and restore; the previous
@@ -714,12 +756,20 @@ function liftReleaseAnimationStack(element: HTMLElement) {
   let current: HTMLElement | null = element;
 
   while (current && current !== root && current !== document.body) {
+    // Read computed.position BEFORE addLift so we don't see this lift's own
+    // applied class. Use raw classList to detect a sibling lift that already
+    // applied --needs-relative (which would otherwise leave the second lift
+    // thinking the element is "naturally" relative and skip the refcount
+    // increment, breaking the symmetry between add and remove).
+    const alreadyNeedsRelative = current.classList.contains(
+      "balatro-release-lift--needs-relative",
+    );
     const computed = getComputedStyle(current);
-    const needsRelative = computed.position === "static";
+    const needsRelative = alreadyNeedsRelative || computed.position === "static";
     const isLeaf = current === element;
 
-    current.classList.add("balatro-release-lift");
-    if (needsRelative) current.classList.add("balatro-release-lift--needs-relative");
+    addLift(current);
+    if (needsRelative) addLiftRelative(current);
     if (isLeaf) current.classList.add("balatro-release-lift--leaf");
 
     lifted.push({ element: current, isLeaf, addedRelative: needsRelative });
@@ -733,10 +783,8 @@ function liftReleaseAnimationStack(element: HTMLElement) {
 
     for (let index = lifted.length - 1; index >= 0; index -= 1) {
       const item = lifted[index];
-      item.element.classList.remove("balatro-release-lift");
-      if (item.addedRelative) {
-        item.element.classList.remove("balatro-release-lift--needs-relative");
-      }
+      removeLift(item.element);
+      if (item.addedRelative) removeLiftRelative(item.element);
       if (item.isLeaf) {
         item.element.classList.remove("balatro-release-lift--leaf");
       }
