@@ -32,32 +32,41 @@ import {
   type BalatroHoverTuning,
 } from "../tcg/balatroTuning";
 import { prefersReducedMotion } from "../tcg/prefersReducedMotion";
+import {
+  BALATRO_LAYOUT_DURATION,
+  BENCH_LIMIT,
+  CARD_DRAG_HOVER_SUPPRESSION_MS,
+  CARD_DRAG_INTERACTION_EVENT,
+  CARD_W,
+  CENTER_LINE_TOP,
+  DRAG_OVERLAY_Z_INDEX,
+  SLOT_BASE,
+  WRAPPER_CLASSES,
+  type BoardState,
+  type CardBackSize,
+  type CardBackTone,
+  type CardLocation,
+  type DragCardData,
+  type DragMotionSample,
+  type DragRect,
+  type DragState,
+  type DropTarget,
+  type DropTargetData,
+  type LogEntry,
+  type LogSegment,
+  type LogSegmentTone,
+  type LogSource,
+  type PlayerBoardState,
+  type PlayerId,
+  type PokeState,
+  type ReleaseMotion,
+  type ReleaseRectsRef,
+  type RowDropPreview,
+  type SidePosition,
+  type TurnInfo,
+} from "./types";
 
-type EnergyType =
-  | "grass"
-  | "fire"
-  | "water"
-  | "lightning"
-  | "psychic"
-  | "fighting"
-  | "darkness"
-  | "metal"
-  | "fairy"
-  | "dragon"
-  | "colorless";
-
-export const CARD_W = 140;
-export const WRAPPER_CLASSES =
-  "playmat-wrapper w-full h-screen flex flex-col text-white relative overflow-hidden";
-
-const CENTER_LINE_TOP = "calc((100vh - var(--hand-h)) / 2)";
-
-const SLOT_BASE =
-  "relative rounded-xl bg-white/[0.045] backdrop-blur-[3px] ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]";
-
-type CardBackTone = "blue" | "red";
-
-type CardBackSize = "card" | "prize";
+export { CARD_W, WRAPPER_CLASSES };
 
 function CardBackAtSize({
   tone,
@@ -183,89 +192,6 @@ function PrizeGridCompact({
     </div>
   );
 }
-
-interface PokeState {
-  id: string;
-  name: string;
-  cardId: string;
-  hp?: number;
-  type?: EnergyType;
-  damage?: number;
-}
-
-type PlayerId = "you" | "opponent";
-type SidePosition = "top" | "bottom";
-
-interface PlayerBoardState {
-  active: PokeState | null;
-  bench: PokeState[];
-  prizesRemaining: number;
-}
-
-interface BoardState {
-  hand: PokeState[];
-  stadium: PokeState | null;
-  you: PlayerBoardState;
-  opponent: PlayerBoardState;
-}
-
-type CardLocation =
-  | { kind: "hand"; owner: PlayerId; index: number }
-  | { kind: "bench"; owner: PlayerId; index: number }
-  | { kind: "active"; owner: PlayerId };
-
-type DropTarget =
-  | { kind: "hand"; owner: PlayerId; index?: number }
-  | { kind: "bench"; owner: PlayerId; index?: number }
-  | { kind: "active"; owner: PlayerId }
-  | { kind: "stadium" };
-
-interface DragCardData {
-  card: PokeState;
-  location: CardLocation;
-}
-
-interface DropTargetData {
-  target: DropTarget;
-}
-
-type RowDropPreview = Extract<DropTarget, { kind: "hand" | "bench" }> & { index: number };
-
-interface DragRect {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
-
-interface ReleaseMotion {
-  rect: DragRect;
-  velocityX: number;
-  velocityY: number;
-}
-
-interface DragMotionSample {
-  rect: DragRect;
-  time: number;
-  velocityX: number;
-  velocityY: number;
-}
-
-interface DragState {
-  card: PokeState;
-  rect: DragRect;
-}
-
-type ReleaseRectsRef = { current: Map<string, ReleaseMotion> };
-
-const BENCH_LIMIT = 5;
-const BALATRO_LAYOUT_DURATION = 0.42;
-// The release-animation z-index lives in index.css (.balatro-release-lift)
-// rather than as a JS constant — the lift uses class toggles instead of
-// inline-style writes for React-reconciliation safety.
-const DRAG_OVERLAY_Z_INDEX = 1200;
-const CARD_DRAG_HOVER_SUPPRESSION_MS = 600;
-const CARD_DRAG_INTERACTION_EVENT = "tcg-card-drag-start";
 
 // Balatro source mapping for a card released with no new release_on target:
 // Controller clears states.drag.is, CardArea:align_cards immediately gives the
@@ -1686,13 +1612,6 @@ function AnimationTuningPanel({
   );
 }
 
-interface TurnInfo {
-  turn: number;
-  activePlayer: PlayerId;
-  youName: string;
-  opponentName: string;
-}
-
 const turnInfo: TurnInfo = {
   turn: 7,
   activePlayer: "you",
@@ -1774,29 +1693,6 @@ function TurnBanner({
     </div>
   );
 }
-
-type LogSource = "you" | "opponent" | "system";
-
-type LogSegmentTone = "default" | "strong" | "energy" | "damage";
-
-interface LogSegment {
-  text: string;
-  tone?: LogSegmentTone;
-}
-
-interface LogActionEntry {
-  kind: "action";
-  who: LogSource;
-  elapsed: string;
-  segments: LogSegment[];
-}
-
-interface LogTurnDivider {
-  kind: "turn";
-  turn: number;
-}
-
-type LogEntry = LogActionEntry | LogTurnDivider;
 
 const gameLog: LogEntry[] = [
   {
