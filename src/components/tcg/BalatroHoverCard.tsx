@@ -535,10 +535,15 @@ class BalatroDomCardAnimator {
       }
 
       const restScale = 1;
+      // Velocities are now per-second (Fix 1), so the legacy per-frame thresholds
+      // (0.0005) need to scale up by ~60 to match the same visual settling speed.
+      const VELOCITY_REST_THRESHOLD = 0.0005 / BALATRO_REFERENCE_DT;
       const scaleStillMoving =
-        Math.abs(card.visibleScale - desiredScale) > 0.0005 || Math.abs(card.scaleVelocity) > 0.0005;
+        Math.abs(card.visibleScale - desiredScale) > 0.0005 ||
+        Math.abs(card.scaleVelocity) > VELOCITY_REST_THRESHOLD;
       const rotationStillMoving =
-        Math.abs(card.rotation - desiredRotation) > 0.0005 || Math.abs(card.rotationVelocity) > 0.0005;
+        Math.abs(card.rotation - desiredRotation) > 0.0005 ||
+        Math.abs(card.rotationVelocity) > VELOCITY_REST_THRESHOLD;
       const atRest =
         card.targetHover === 0 &&
         card.targetPress === 0 &&
@@ -560,9 +565,14 @@ class BalatroDomCardAnimator {
         if (card.host.style.zIndex) gsap.set(card.host, { clearProps: "zIndex" });
       }
 
-      // Balatro keeps sending the idle tilt pseudo-cursor every draw, so cards
-      // never truly go transform-idle unless reduced motion is active.
-      needsAnotherFrame = true;
+      // Cards that opt into ambient idle tilt (ambientTilt > 0) request
+      // perpetual frames so the matrix continues to bend; cards whose
+      // ambientTilt was zeroed out and whose springs have fully settled allow
+      // the ticker to sleep until the next pointer event re-arms it.
+      const wantsIdleTilt = card.ambientTilt > 1e-4;
+      if (!atRest || wantsIdleTilt) {
+        needsAnotherFrame = true;
+      }
     }
 
     for (const host of staleCards) this.unregister(host);
