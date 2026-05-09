@@ -566,7 +566,14 @@ function dragRectFromEvent(event: DragStartEvent): DragRect {
   const rect = event.active.rect.current.initial;
   if (rect) return toDragRect(rect);
 
-  const element = document.querySelector<HTMLElement>(`[data-draggable-card-id="${event.active.id}"]`);
+  // Both the visible source and the hidden in-place clone (used by Hand/Bench
+  // to keep dnd-kit's measurement node in the layout while it animates the
+  // dragged card via DragOverlay) carry data-draggable-card-id. The hidden
+  // clone is marked with data-drag-source-clone="true" — exclude it so we
+  // never measure a visibility:hidden, position:absolute, zero-laid-out node.
+  const element = document.querySelector<HTMLElement>(
+    `[data-draggable-card-id="${event.active.id}"]:not([data-drag-source-clone="true"])`,
+  );
   const elementRect = element?.getBoundingClientRect();
   return elementRect ? toDragRect(elementRect) : fallbackDragRect();
 }
@@ -1188,12 +1195,14 @@ function DraggableCard({
   priority,
   bendCenterBoost,
   disabled = false,
+  sourceClone = false,
 }: {
   card: PokeState;
   location: CardLocation;
   priority?: boolean;
   bendCenterBoost?: number;
   disabled?: boolean;
+  sourceClone?: boolean;
 }) {
   const [pressing, setPressing] = useState(false);
   const { attributes, listeners, setNodeRef } = useDraggable({
@@ -1234,6 +1243,11 @@ function DraggableCard({
       aria-label={`Drag ${card.name}`}
       aria-disabled={disabled || undefined}
       data-draggable-card-id={card.id}
+      // Hidden in-place clone (rendered alongside the visible card while it
+      // is in flight via DragOverlay). Marked so dragRectFromEvent's
+      // querySelector fallback can exclude it and never measure a
+      // visibility:hidden zero-area node.
+      data-drag-source-clone={sourceClone || undefined}
       className="relative touch-none select-none"
       style={{ touchAction: "none" }}
       onPointerDownCapture={handlePointerDownCapture}
@@ -1353,6 +1367,7 @@ function Bench({
               card={draggedCard}
               location={{ kind: "bench", owner, index: cards.findIndex((card) => card.id === draggedCard.id) }}
               disabled={disabled}
+              sourceClone
             />
           </div>
         ) : null}
@@ -1460,6 +1475,7 @@ function Hand({
               location={{ kind: "hand", owner, index: cards.findIndex((card) => card.id === draggedCard.id) }}
               priority
               bendCenterBoost={0}
+              sourceClone
             />
           </div>
         ) : null}
