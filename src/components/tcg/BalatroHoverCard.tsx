@@ -353,6 +353,21 @@ class BalatroDomCardAnimator {
     this.startTicker();
   }
 
+  resetDragOffset(host: HTMLElement) {
+    const card = this.cards.get(host);
+    if (!card) return;
+
+    // Used when the surrounding layout changes mid-drag (window resize,
+    // virtual keyboard, etc). dragTargetOffsetPx is in client px and is
+    // divided by screenScale at frame time; if the layout shifts, that
+    // ratio becomes stale and the sway snaps. Resetting the accumulator
+    // re-zeros the sway and lets the next pointer delta rebuild cleanly.
+    card.dragTargetOffsetPx = 0;
+    card.dragVisibleOffsetX = null;
+    card.dragVelocityX = 0;
+    this.startTicker();
+  }
+
   move(host: HTMLElement, event: PointerPosition) {
     const card = this.cards.get(host);
     if (!card) return;
@@ -855,9 +870,23 @@ export default function BalatroHoverCard({
       animator.dragMove(host, deltaX);
     };
 
+    // dragTargetOffsetPx is accumulated in client pixels and divided by
+    // screenScale (which depends on the current layout) at frame time. If
+    // the window resizes, the virtual keyboard opens, or the layout
+    // otherwise shifts mid-drag, that ratio becomes stale and the sway
+    // snaps. Recompute by resetting the accumulator and forcing the
+    // pointer tracker to re-seed from the next move.
+    const handleResize = () => {
+      if (!draggingRef.current) return;
+      animator.resetDragOffset(host);
+      lastClientX = null;
+    };
+
     window.addEventListener("pointermove", handleDragPointerMove, { passive: true });
+    window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("pointermove", handleDragPointerMove);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
