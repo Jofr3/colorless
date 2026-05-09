@@ -805,15 +805,16 @@ function animateReleaseToElement(
   let active = true;
 
   const applyTransform = () => {
+    // Per-tick writes only — transformOrigin/willChange/force3D are static
+    // for the lifetime of this tween and are set once below before the
+    // ticker starts. Setting them every frame churns style invalidation
+    // for no behavioral change.
     gsap.set(element, {
       x: x * unit,
       y: y * unit,
       scaleX,
       scaleY,
       rotation: radiansToDegrees(rotation),
-      transformOrigin: "center center",
-      force3D: true,
-      willChange: "transform",
     });
   };
 
@@ -824,6 +825,10 @@ function animateReleaseToElement(
     releaseAnimationCleanups.delete(element);
     restoreReleaseStack();
     if (clearTransform) gsap.set(element, { clearProps: "transform,transformOrigin,willChange" });
+    // The non-clearing path is reached only via finish(), which then writes
+    // its own reset transform with clearProps "transform,transformOrigin,
+    // willChange" — so willChange is always cleaned up regardless of which
+    // branch we take here.
     if (completeRelease) onComplete?.();
   };
 
@@ -898,6 +903,16 @@ function animateReleaseToElement(
   };
 
   releaseAnimationCleanups.set(element, () => cleanup(true, true));
+  // Set static transform hints (transformOrigin / force3D / willChange) once
+  // before the tween starts. Previously the per-tick applyTransform() wrote
+  // these every frame; they don't change for the lifetime of the release
+  // tween and re-writing them just churns style invalidation. cleanup()'s
+  // clearProps still wipes them on interrupt or finish.
+  gsap.set(element, {
+    transformOrigin: "center center",
+    force3D: true,
+    willChange: "transform",
+  });
   applyTransform();
   gsap.ticker.add(tick);
 }
