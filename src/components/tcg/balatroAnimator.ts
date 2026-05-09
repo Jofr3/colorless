@@ -469,6 +469,12 @@ class BalatroDomCardAnimator {
     // card twice per frame (referenceCardWidth() pre-pass + an in-loop
     // getBoundingClientRect()) and read root.getBoundingClientRect()
     // inside applyCardTransform after writes had already been queued.
+    //
+    // The shared reference width must come from layout size, not the visual
+    // bounding box. Row cards can rotate/spring while an empty drag slot moves;
+    // their getBoundingClientRect().width briefly balloons, which changes the
+    // dragged overlay's screenScale and makes the held card twitch. offsetWidth
+    // is stable under transforms and matches Balatro's card-width units.
     interface FrameRead {
       host: HTMLElement;
       card: DomCard;
@@ -484,7 +490,8 @@ class BalatroDomCardAnimator {
       }
       const rect = host.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) continue;
-      if (rect.width > referenceWidthValue) referenceWidthValue = rect.width;
+      const layoutWidth = host.offsetWidth || rect.width;
+      if (layoutWidth > referenceWidthValue) referenceWidthValue = layoutWidth;
       if (!rootElement) {
         rootElement = host.closest<HTMLElement>(".playmat-wrapper") ?? document.body;
       }

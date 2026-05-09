@@ -42,9 +42,16 @@ function getInsertIndexFromRow(row: HTMLElement, centerX: number | null) {
   const cards = Array.from(row.querySelectorAll<HTMLElement>("[data-layout-card]"));
   if (centerX === null) return cards.length;
 
+  const rowRect = row.getBoundingClientRect();
   const index = cards.findIndex((element) => {
-    const rect = element.getBoundingClientRect();
-    return centerX < rect.left + rect.width / 2;
+    // Use layout centers rather than getBoundingClientRect() on each card.
+    // The row animator applies spring transforms while the empty drag slot
+    // moves; transformed visual rects make the insert threshold chase the
+    // animation and can cause a small retarget/twitch under the held card.
+    // offsetLeft/offsetWidth stay pinned to the target flex layout, matching
+    // Balatro's sort against card.T.x instead of the in-flight VT.x.
+    const layoutCenterX = rowRect.left + element.offsetLeft + element.offsetWidth / 2;
+    return centerX < layoutCenterX;
   });
 
   return index === -1 ? cards.length : index;

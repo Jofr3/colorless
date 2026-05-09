@@ -1,8 +1,8 @@
 // Bench row: a horizontal slot with up to BENCH_LIMIT cards. Wraps the
 // cards in a useBalatroRowAnimation row so add/remove/reorder transitions
-// (including the drop-preview gap) tween via FLIP rather than snapping.
+// (including the drop-preview gap) spring with Balatro Moveable-style motion.
 
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   BENCH_LIMIT,
@@ -17,6 +17,7 @@ import {
 } from "../types";
 import { cardRowKey, clampInsertIndex, dropTargetId } from "../state/board";
 import { hiddenDraggedCardStyle } from "../physics/dragGeometry";
+import { balatroBenchFan } from "../physics/balatroFan";
 import { useBalatroRowAnimation } from "../physics/rowAnimation";
 import { DraggableCard } from "./Card";
 
@@ -52,6 +53,15 @@ export function Bench({
     releaseRectsRef,
   );
   const draggedCard = cards.find((card) => card.id === draggingCardId);
+  const totalSlots = visibleCards.length + (previewIndex !== null ? 1 : 0);
+
+  function fanStyle(visualIndex: number): CSSProperties {
+    const fan = balatroBenchFan(visualIndex, totalSlots);
+    return {
+      "--balatro-row-lift": `${fan.liftPx}px`,
+      "--balatro-row-rotation": `${fan.rotationDeg}deg`,
+    } as CSSProperties;
+  }
 
   return (
     <div
@@ -73,28 +83,38 @@ export function Bench({
         className="relative flex h-full w-full items-center justify-center"
         style={{ gap: "var(--slot-gap)" }}
       >
-        {visibleCards.map((card, visibleIndex) => (
-          <Fragment key={`bench-entry-${card.id}`}>
-            {previewIndex === visibleIndex ? (
+        {visibleCards.map((card, visibleIndex) => {
+          const visualIndex = visibleIndex + (previewIndex !== null && visibleIndex >= previewIndex ? 1 : 0);
+
+          return (
+            <Fragment key={`bench-entry-${card.id}`}>
+              {previewIndex === visibleIndex ? (
+                <div
+                  key={`bench-gap-${owner}-${visibleIndex}`}
+                  aria-hidden="true"
+                  style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
+                />
+              ) : null}
               <div
-                key={`bench-gap-${owner}-${visibleIndex}`}
-                aria-hidden="true"
-                style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
-              />
-            ) : null}
-            <div
-              key={card.id}
-              data-layout-card={card.id}
-              style={{ width: "var(--card-w)", zIndex: visibleCards.length - visibleIndex }}
-            >
-              <DraggableCard
-                card={card}
-                location={{ kind: "bench", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
-                disabled={disabled}
-              />
-            </div>
-          </Fragment>
-        ))}
+                key={card.id}
+                data-layout-card={card.id}
+                style={{ width: "var(--card-w)", zIndex: visibleCards.length - visibleIndex }}
+              >
+                <div
+                  className="balatro-row-card-face"
+                  data-balatro-release-target
+                  style={fanStyle(visualIndex)}
+                >
+                  <DraggableCard
+                    card={card}
+                    location={{ kind: "bench", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
+                    disabled={disabled}
+                  />
+                </div>
+              </div>
+            </Fragment>
+          );
+        })}
         {previewIndex === visibleCards.length ? (
           <div
             aria-hidden="true"

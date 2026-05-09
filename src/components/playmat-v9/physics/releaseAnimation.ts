@@ -162,7 +162,11 @@ export function animateReleaseToElement(
   stopBalatroReleaseAnimation(element);
 
   const releaseRect = releaseMotion.rect;
-  const targetRect = element.getBoundingClientRect();
+  // Row cards can carry their Balatro fan/arc on a nested transformed face.
+  // Use that visual face as the release target so a card released into a
+  // lifted/rotated hand slot starts and settles at the same rendered center.
+  const targetElement = element.querySelector<HTMLElement>("[data-balatro-release-target]") ?? element;
+  const targetRect = targetElement.getBoundingClientRect();
   if (targetRect.width <= 0 || targetRect.height <= 0 || prefersReducedMotion()) {
     releaseAnimationCleanups.delete(element);
     onComplete?.();
@@ -327,6 +331,10 @@ export function useBalatroReleaseAnimation(
   const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
+    // releaseAnimationKey intentionally retriggers this effect when a drop
+    // reuses the same card id/target but has a fresh release rect.
+    void releaseAnimationKey;
+
     if (!cardId || !releaseRectsRef) return;
 
     const releaseMotion = releaseRectsRef.current.get(cardId);

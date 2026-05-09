@@ -2,7 +2,7 @@
 // of the playmat. Each card uses bendCenterBoost={0} (so the perspective
 // bend tracks the cursor without an extra center-of-screen pull).
 
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import type {
   DragRect,
@@ -15,6 +15,7 @@ import type {
 } from "../types";
 import { cardRowKey, clampInsertIndex, dropTargetId } from "../state/board";
 import { hiddenDraggedCardStyle } from "../physics/dragGeometry";
+import { balatroHandFan } from "../physics/balatroFan";
 import { useBalatroRowAnimation } from "../physics/rowAnimation";
 import { DraggableCard } from "./Card";
 
@@ -47,7 +48,15 @@ export function Hand({
     releaseRectsRef,
   );
   const draggedCard = cards.find((card) => card.id === draggingCardId);
-  let renderedIndex = 0;
+  const totalSlots = visibleCards.length + (previewIndex !== null ? 1 : 0);
+
+  function fanStyle(visualIndex: number): CSSProperties {
+    const fan = balatroHandFan(visualIndex, totalSlots);
+    return {
+      "--balatro-row-lift": `${fan.liftPx}px`,
+      "--balatro-row-rotation": `${fan.rotationDeg}deg`,
+    } as CSSProperties;
+  }
 
   return (
     <div
@@ -63,8 +72,8 @@ export function Hand({
         className="relative flex h-full items-end justify-center"
       >
         {visibleCards.map((card, visibleIndex) => {
-          const cardRenderIndex = renderedIndex++;
           const gapBefore = previewIndex === visibleIndex;
+          const visualIndex = visibleIndex + (previewIndex !== null && visibleIndex >= previewIndex ? 1 : 0);
 
           return (
             <Fragment key={`hand-entry-${card.id}`}>
@@ -75,7 +84,7 @@ export function Hand({
                   style={{
                     flex: "0 0 var(--card-w)",
                     height: "var(--card-h)",
-                    marginLeft: cardRenderIndex === 0 ? 0 : "calc(var(--card-w) * -0.2)",
+                    marginLeft: visibleIndex === 0 ? 0 : "calc(var(--card-w) * -0.2)",
                     width: "var(--card-w)",
                   }}
                 />
@@ -84,17 +93,23 @@ export function Hand({
                 key={card.id}
                 data-layout-card={card.id}
                 style={{
-                  marginLeft: (gapBefore ? cardRenderIndex + 1 : cardRenderIndex) === 0 ? 0 : "calc(var(--card-w) * -0.2)",
+                  marginLeft: visualIndex === 0 ? 0 : "calc(var(--card-w) * -0.2)",
                   width: "var(--card-w)",
                   zIndex: visibleCards.length - visibleIndex,
                 }}
               >
-                <DraggableCard
-                  card={card}
-                  location={{ kind: "hand", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
-                  priority
-                  bendCenterBoost={0}
-                />
+                <div
+                  className="balatro-row-card-face"
+                  data-balatro-release-target
+                  style={fanStyle(visualIndex)}
+                >
+                  <DraggableCard
+                    card={card}
+                    location={{ kind: "hand", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
+                    priority
+                    bendCenterBoost={0}
+                  />
+                </div>
               </div>
             </Fragment>
           );
