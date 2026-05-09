@@ -1,5 +1,4 @@
 import {
-  Fragment,
   useEffect,
   useRef,
   useState,
@@ -10,7 +9,6 @@ import {
   DragOverlay,
   PointerSensor,
   pointerWithin,
-  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -26,18 +24,15 @@ import {
   type BalatroHoverTuning,
 } from "../tcg/balatroTuning";
 import {
-  BENCH_LIMIT,
   CARD_W,
   CENTER_LINE_TOP,
   DRAG_OVERLAY_Z_INDEX,
-  SLOT_BASE,
   WRAPPER_CLASSES,
   type BoardState,
   type DragMotionSample,
   type DragRect,
   type DragState,
   type DropTarget,
-  type DropTargetData,
   type LogEntry,
   type LogSegment,
   type LogSegmentTone,
@@ -55,10 +50,7 @@ import { gameLog, initialBoard, turnInfo } from "./fixtures";
 import {
   canActivePlayerMove,
   canPreviewRowDrop,
-  cardRowKey,
-  clampInsertIndex,
   cloneBoard,
-  dropTargetId,
   isDragCardData,
   isDropTargetData,
   moveCard,
@@ -76,7 +68,6 @@ import {
   sampleDragMotion,
   setCardDragInteractionLock,
 } from "./physics/dragGeometry";
-import { useBalatroRowAnimation } from "./physics/rowAnimation";
 import {
   DeckPileSized,
   DiscardPileSized,
@@ -88,213 +79,11 @@ import {
   DropTargetPileFrame,
   ReleasedCard,
 } from "./components/Card";
+import { Bench } from "./components/Bench";
+import { Hand } from "./components/Hand";
 
 export { CARD_W, WRAPPER_CLASSES };
 
-
-function Bench({
-  cards,
-  owner,
-  disabled = false,
-  draggingCardId,
-  draggingRect,
-  dropPreview,
-  releaseRectsRef,
-}: {
-  cards: PokeState[];
-  owner: PlayerId;
-  disabled?: boolean;
-  draggingCardId?: string;
-  draggingRect?: DragRect;
-  dropPreview?: RowDropPreview | null;
-  releaseRectsRef?: ReleaseRectsRef;
-}) {
-  const target: DropTarget = { kind: "bench", owner };
-  const { setNodeRef, isOver } = useDroppable({
-    id: dropTargetId(target),
-    data: { target } satisfies DropTargetData,
-    disabled,
-  });
-  const visibleCards = cards.filter((card) => card.id !== draggingCardId);
-  const previewIndex = draggingCardId && dropPreview?.kind === "bench" && dropPreview.owner === owner
-    ? clampInsertIndex(dropPreview.index, visibleCards.length)
-    : null;
-  const rowRef = useBalatroRowAnimation(
-    `bench-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
-    releaseRectsRef,
-  );
-  const draggedCard = cards.find((card) => card.id === draggingCardId);
-
-  return (
-    <div
-      ref={setNodeRef}
-      data-slot
-      data-drop-target="bench"
-      data-drop-owner={owner}
-      data-drop-disabled={disabled || undefined}
-      className={`${SLOT_BASE} transition-all ${isOver ? "ring-2 ring-emerald-300/90 shadow-[0_0_0_1px_rgba(110,231,183,0.55),0_0_34px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.18)]" : ""}`}
-      style={{
-        width: `calc(var(--card-w) * ${BENCH_LIMIT} + var(--slot-gap) * ${BENCH_LIMIT - 1} + 12px)`,
-        height: "calc(var(--card-h) + 12px)",
-        padding: "var(--pile-pad)",
-      }}
-    >
-      <div
-        ref={rowRef}
-        data-card-row={cardRowKey("bench", owner)}
-        className="relative flex h-full w-full items-center justify-center"
-        style={{ gap: "var(--slot-gap)" }}
-      >
-        {visibleCards.map((card, visibleIndex) => (
-          <Fragment key={`bench-entry-${card.id}`}>
-            {previewIndex === visibleIndex ? (
-              <div
-                key={`bench-gap-${owner}-${visibleIndex}`}
-                aria-hidden="true"
-                style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
-              />
-            ) : null}
-            <div
-              key={card.id}
-              data-layout-card={card.id}
-              style={{ width: "var(--card-w)", zIndex: visibleCards.length - visibleIndex }}
-            >
-              <DraggableCard
-                card={card}
-                location={{ kind: "bench", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
-                disabled={disabled}
-              />
-            </div>
-          </Fragment>
-        ))}
-        {previewIndex === visibleCards.length ? (
-          <div
-            aria-hidden="true"
-            style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
-          />
-        ) : null}
-        {draggedCard ? (
-          <div style={hiddenDraggedCardStyle(draggingRect)}>
-            <DraggableCard
-              card={draggedCard}
-              location={{ kind: "bench", owner, index: cards.findIndex((card) => card.id === draggedCard.id) }}
-              disabled={disabled}
-              sourceClone
-            />
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function Hand({
-  cards,
-  owner,
-  draggingCardId,
-  draggingRect,
-  dropPreview,
-  releaseRectsRef,
-}: {
-  cards: PokeState[];
-  owner: PlayerId;
-  draggingCardId?: string;
-  draggingRect?: DragRect;
-  dropPreview?: RowDropPreview | null;
-  releaseRectsRef?: ReleaseRectsRef;
-}) {
-  const target: DropTarget = { kind: "hand", owner };
-  const { setNodeRef } = useDroppable({
-    id: dropTargetId(target),
-    data: { target } satisfies DropTargetData,
-  });
-  const visibleCards = cards.filter((card) => card.id !== draggingCardId);
-  const previewIndex = draggingCardId && dropPreview?.kind === "hand" && dropPreview.owner === owner
-    ? clampInsertIndex(dropPreview.index, visibleCards.length)
-    : null;
-  const rowRef = useBalatroRowAnimation(
-    `hand-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
-    releaseRectsRef,
-  );
-  const draggedCard = cards.find((card) => card.id === draggingCardId);
-  let renderedIndex = 0;
-
-  return (
-    <div
-      ref={setNodeRef}
-      data-drop-target="hand"
-      data-drop-owner={owner}
-      className="flex justify-center items-end px-6 relative z-10"
-      style={{ height: "var(--hand-h)", paddingBottom: 8 }}
-    >
-      <div
-        ref={rowRef}
-        data-card-row={cardRowKey("hand", owner)}
-        className="relative flex h-full items-end justify-center"
-      >
-        {visibleCards.map((card, visibleIndex) => {
-          const cardRenderIndex = renderedIndex++;
-          const gapBefore = previewIndex === visibleIndex;
-
-          return (
-            <Fragment key={`hand-entry-${card.id}`}>
-              {gapBefore ? (
-                <div
-                  key={`hand-gap-${owner}-${visibleIndex}`}
-                  aria-hidden="true"
-                  style={{
-                    flex: "0 0 var(--card-w)",
-                    height: "var(--card-h)",
-                    marginLeft: cardRenderIndex === 0 ? 0 : "calc(var(--card-w) * -0.2)",
-                    width: "var(--card-w)",
-                  }}
-                />
-              ) : null}
-              <div
-                key={card.id}
-                data-layout-card={card.id}
-                style={{
-                  marginLeft: (gapBefore ? cardRenderIndex + 1 : cardRenderIndex) === 0 ? 0 : "calc(var(--card-w) * -0.2)",
-                  width: "var(--card-w)",
-                  zIndex: visibleCards.length - visibleIndex,
-                }}
-              >
-                <DraggableCard
-                  card={card}
-                  location={{ kind: "hand", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
-                  priority
-                  bendCenterBoost={0}
-                />
-              </div>
-            </Fragment>
-          );
-        })}
-        {previewIndex === visibleCards.length ? (
-          <div
-            aria-hidden="true"
-            style={{
-              flex: "0 0 var(--card-w)",
-              height: "var(--card-h)",
-              marginLeft: visibleCards.length === 0 ? 0 : "calc(var(--card-w) * -0.2)",
-              width: "var(--card-w)",
-            }}
-          />
-        ) : null}
-        {draggedCard ? (
-          <div style={hiddenDraggedCardStyle(draggingRect)}>
-            <DraggableCard
-              card={draggedCard}
-              location={{ kind: "hand", owner, index: cards.findIndex((card) => card.id === draggedCard.id) }}
-              priority
-              bendCenterBoost={0}
-              sourceClone
-            />
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
 
 function IconButton({
   children,
