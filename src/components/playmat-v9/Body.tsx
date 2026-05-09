@@ -2203,9 +2203,16 @@ export function PlaymatBody() {
       <DragOverlay dropAnimation={null} zIndex={DRAG_OVERLAY_Z_INDEX}>
         {draggingCard ? (
           <div className="pointer-events-none" style={overlayCardStyle(dragState?.rect)}>
+            {/*
+              Use a distinct instanceId for the overlay copy so it does not
+              collide with the still-mounted (but hidden) source DraggableCard
+              inside its row. Both register with the module-level
+              BalatroDomCardAnimator, which keys visual state by instanceId
+              and would otherwise have them stomp each other every frame.
+            */}
             <CardBox
               cardId={draggingCard.cardId}
-              instanceId={draggingCard.id}
+              instanceId={`${draggingCard.id}-overlay`}
               alt={draggingCard.name}
               priority
               bendCenterBoost={0}
