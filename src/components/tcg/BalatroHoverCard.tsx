@@ -27,6 +27,10 @@ const BALATRO_CARD_DRAG_XY_EASE = 50;
 // game.lua caps Moveable velocity at 70*move_dt, then move_r uses vel.x/dt.
 const BALATRO_CARD_DRAG_MAX_VELOCITY = 70;
 const BALATRO_CARD_DRAG_SWAY = 0.015;
+// Balatro caps to 60Hz; we keep 1/60 as the reference frame timestep for
+// translating Balatro's per-frame constants (e.g. velocity caps) into
+// per-second values that survive non-60Hz browser tick rates.
+const BALATRO_REFERENCE_DT = 1 / 60;
 const BALATRO_IDLE_TILT_BASE_SPEED = 1.56;
 const BALATRO_IDLE_TILT_ID_SPEED_DIVISOR = 1.14212;
 const BALATRO_IDLE_TILT_ID_PHASE_DIVISOR = 1.35122;
@@ -464,19 +468,24 @@ class BalatroDomCardAnimator {
       const dragVelocityEase = Math.exp(-BALATRO_CARD_DRAG_XY_EASE * dt);
       if (card.targetDrag > 0) {
         if (card.dragVisibleOffsetX === null) card.dragVisibleOffsetX = dragTargetOffsetX;
+        // dragVelocityX is now in card-units/second. Balatro's source uses
+        // vel = (1-ease) * delta * 35 * dt as a per-frame step; we drop the *dt
+        // to get a per-second velocity, then integrate with x += v * dt below.
         card.dragVelocityX =
           dragVelocityEase * card.dragVelocityX +
-          (1 - dragVelocityEase) * (dragTargetOffsetX - card.dragVisibleOffsetX) * 35 * dt;
-        const maxDragVelocity = BALATRO_CARD_DRAG_MAX_VELOCITY * dt;
+          (1 - dragVelocityEase) * (dragTargetOffsetX - card.dragVisibleOffsetX) * 35;
+        // Original cap was 70*dt per-frame ≈ 70/REF_DT per-second (REF_DT = 1/60).
+        const maxDragVelocity = BALATRO_CARD_DRAG_MAX_VELOCITY / BALATRO_REFERENCE_DT;
         card.dragVelocityX = Math.max(-maxDragVelocity, Math.min(maxDragVelocity, card.dragVelocityX));
-        card.dragVisibleOffsetX += card.dragVelocityX;
+        card.dragVisibleOffsetX += card.dragVelocityX * dt;
       } else {
         card.dragTargetOffsetPx = 0;
         card.dragVisibleOffsetX = null;
         card.dragVelocityX = 0;
       }
+      // dragVelocityX is already in card-units/sec (no extra /dt needed).
       const dragRotation = card.targetDrag > 0
-        ? -BALATRO_CARD_DRAG_SWAY * (card.dragVelocityX / safeDt)
+        ? -BALATRO_CARD_DRAG_SWAY * card.dragVelocityX
         : 0;
       const juiceScaleAmt = tuning.juiceScaleAmount * sizeFactor;
       const juiceRotAmt = tuning.juiceRotationAmount * sizeFactor;
@@ -499,15 +508,21 @@ class BalatroDomCardAnimator {
         BALATRO_CARD_BASE_SCALE;
       const scaleEaseStrength = Math.max(card.targetPress, card.targetDrag) > 0 ? BALATRO_CARD_DRAG_SCALE_EASE : tuning.scaleEase;
       const scaleEase = Math.exp(-scaleEaseStrength * dt);
-      card.scaleVelocity = scaleEase * card.scaleVelocity + (1 - scaleEase) * (desiredScale - card.visibleScale);
-      card.visibleScale += card.scaleVelocity;
+      // Framerate-independent semi-implicit Euler. scaleVelocity is in
+      // scale-units/second; (1 - ease) / dt converts the dt-encoded blend into a
+      // per-second spring gain so x += v * dt remains stable across framerates.
+      card.scaleVelocity =
+        scaleEase * card.scaleVelocity +
+        ((1 - scaleEase) / safeDt) * (desiredScale - card.visibleScale);
+      card.visibleScale += card.scaleVelocity * dt;
 
       // Balatro Moveable:move_r: des_r = T.r + 0.015 * vel.x / dt + juice.r * 2.
       const desiredRotation = dragRotation + juiceRotation * 2;
       const rotationEase = Math.exp(-tuning.rotationEase * dt);
       card.rotationVelocity =
-        rotationEase * card.rotationVelocity + (1 - rotationEase) * (desiredRotation - card.rotation);
-      card.rotation += card.rotationVelocity;
+        rotationEase * card.rotationVelocity +
+        ((1 - rotationEase) / safeDt) * (desiredRotation - card.rotation);
+      card.rotation += card.rotationVelocity * dt;
 
       this.applyCardTransform(card, rect, referenceWidth ?? rect.width, tuning, now);
       if (card.instanceId) {

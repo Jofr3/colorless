@@ -773,14 +773,19 @@ function animateReleaseToElement(
   let scaleVelocityX = 0;
   let scaleVelocityY = 0;
 
+  // Velocities are in card-units / second (framerate-independent). The legacy
+  // form pre-multiplied by 1/60 dt to mimic Balatro's per-frame step; we now
+  // integrate with x += v * dt instead.
+  const maxReleaseVelocityPerSec = BALATRO_RELEASE_MAX_VELOCITY / BALATRO_RELEASE_INITIAL_VELOCITY_DT;
   const initialVelocity = clampVectorMagnitude(
-    finiteNumber((releaseMotion.velocityX / unit) * BALATRO_RELEASE_INITIAL_VELOCITY_DT),
-    finiteNumber((releaseMotion.velocityY / unit) * BALATRO_RELEASE_INITIAL_VELOCITY_DT),
-    BALATRO_RELEASE_MAX_VELOCITY * BALATRO_RELEASE_INITIAL_VELOCITY_DT,
+    finiteNumber(releaseMotion.velocityX / unit),
+    finiteNumber(releaseMotion.velocityY / unit),
+    maxReleaseVelocityPerSec,
   );
   let velocityX = initialVelocity.x;
   let velocityY = initialVelocity.y;
-  let rotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * (velocityX / BALATRO_RELEASE_INITIAL_VELOCITY_DT);
+  // velocityX is already px/sec, so 0.015 * velocityX matches Balatro's 0.015 * vel.x/dt.
+  let rotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * velocityX;
   let rotationVelocity = 0;
   let lastTime = performance.now() / 1000;
   const startTime = lastTime;
@@ -825,42 +830,56 @@ function animateReleaseToElement(
     const now = performance.now() / 1000;
     const realDt = clampNumber(now - lastTime, 0, 0.05) || BALATRO_RELEASE_INITIAL_VELOCITY_DT;
     const moveDt = Math.min(1 / 20, realDt);
-    const safeMoveDt = Math.max(moveDt, 1 / 1000);
     lastTime = now;
 
+    // Framerate-independent semi-implicit Euler. Velocities live in
+    // card-units/sec (or radians/sec); (1 - ease) / dt converts the dt-encoded
+    // exponential blend into a per-second spring gain.
+    const safeRealDt = Math.max(realDt, 1 / 1000);
     const xyEase = Math.exp(-BALATRO_RELEASE_XY_EASE * realDt);
-    velocityX = xyEase * velocityX + (1 - xyEase) * (0 - x) * BALATRO_RELEASE_XY_ACCEL * moveDt;
-    velocityY = xyEase * velocityY + (1 - xyEase) * (0 - y) * BALATRO_RELEASE_XY_ACCEL * moveDt;
+    const xySpringStep = ((1 - xyEase) / safeRealDt) * BALATRO_RELEASE_XY_ACCEL * moveDt;
+    velocityX = xyEase * velocityX + xySpringStep * (0 - x);
+    velocityY = xyEase * velocityY + xySpringStep * (0 - y);
 
-    const maxVelocity = BALATRO_RELEASE_MAX_VELOCITY * moveDt;
+    const maxVelocity = BALATRO_RELEASE_MAX_VELOCITY / BALATRO_RELEASE_INITIAL_VELOCITY_DT;
     const clampedVelocity = clampVectorMagnitude(velocityX, velocityY, maxVelocity);
     velocityX = clampedVelocity.x;
     velocityY = clampedVelocity.y;
-    x += velocityX;
-    y += velocityY;
+    x += velocityX * realDt;
+    y += velocityY * realDt;
 
     const scaleEase = Math.exp(-BALATRO_RELEASE_SCALE_EASE * realDt);
-    scaleVelocityX = scaleEase * scaleVelocityX + (1 - scaleEase) * (1 - scaleX);
-    scaleVelocityY = scaleEase * scaleVelocityY + (1 - scaleEase) * (1 - scaleY);
-    scaleX += scaleVelocityX;
-    scaleY += scaleVelocityY;
+    const scaleSpringGain = (1 - scaleEase) / safeRealDt;
+    scaleVelocityX = scaleEase * scaleVelocityX + scaleSpringGain * (1 - scaleX);
+    scaleVelocityY = scaleEase * scaleVelocityY + scaleSpringGain * (1 - scaleY);
+    scaleX += scaleVelocityX * realDt;
+    scaleY += scaleVelocityY * realDt;
 
     // Moveable:move_r in balatro-source/engine/moveable.lua:
     // des_r = self.T.r + 0.015*vel.x/dt + juice.r*2
-    const desiredRotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * (velocityX / safeMoveDt);
+    // velocityX is already in units/sec, so 0.015 * velocityX matches.
+    const desiredRotation = BALATRO_RELEASE_ROTATION_FROM_X_VELOCITY * velocityX;
     const rotationEase = Math.exp(-BALATRO_RELEASE_ROTATION_EASE * realDt);
-    rotationVelocity = rotationEase * rotationVelocity + (1 - rotationEase) * (desiredRotation - rotation);
-    rotation += rotationVelocity;
+    rotationVelocity =
+      rotationEase * rotationVelocity +
+      ((1 - rotationEase) / safeRealDt) * (desiredRotation - rotation);
+    rotation += rotationVelocity * realDt;
 
     applyTransform();
 
-    const positionSettled = Math.hypot(x, y) * unit < 0.45 && Math.hypot(velocityX, velocityY) * unit < 0.18;
+    // Velocity thresholds scaled from per-frame (legacy 60Hz) to per-second so
+    // the spring still settles after the integrator switch (multiply ~60x).
+    const positionSettled =
+      Math.hypot(x, y) * unit < 0.45 &&
+      Math.hypot(velocityX, velocityY) * unit < (0.18 / BALATRO_RELEASE_INITIAL_VELOCITY_DT);
     const scaleSettled =
       Math.abs(scaleX - 1) < 0.0015 &&
       Math.abs(scaleY - 1) < 0.0015 &&
-      Math.abs(scaleVelocityX) < 0.0015 &&
-      Math.abs(scaleVelocityY) < 0.0015;
-    const rotationSettled = Math.abs(rotation) < 0.0015 && Math.abs(rotationVelocity) < 0.0015;
+      Math.abs(scaleVelocityX) < 0.0015 / BALATRO_RELEASE_INITIAL_VELOCITY_DT &&
+      Math.abs(scaleVelocityY) < 0.0015 / BALATRO_RELEASE_INITIAL_VELOCITY_DT;
+    const rotationSettled =
+      Math.abs(rotation) < 0.0015 &&
+      Math.abs(rotationVelocity) < 0.0015 / BALATRO_RELEASE_INITIAL_VELOCITY_DT;
     settledFrames = positionSettled && scaleSettled && rotationSettled ? settledFrames + 1 : 0;
 
     if (settledFrames >= 2 || now - startTime > 1.4) finish();
