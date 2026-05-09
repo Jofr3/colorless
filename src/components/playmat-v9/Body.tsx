@@ -30,20 +30,14 @@ import {
   WRAPPER_CLASSES,
   type BoardState,
   type DragMotionSample,
-  type DragRect,
   type DragState,
   type DropTarget,
   type LogEntry,
   type LogSegment,
   type LogSegmentTone,
   type LogSource,
-  type PlayerBoardState,
-  type PlayerId,
-  type PokeState,
   type ReleaseMotion,
-  type ReleaseRectsRef,
   type RowDropPreview,
-  type SidePosition,
   type TurnInfo,
 } from "./types";
 import { gameLog, initialBoard, turnInfo } from "./fixtures";
@@ -55,32 +49,20 @@ import {
   isDropTargetData,
   moveCard,
   otherPlayer,
-  playerBackTone,
   sourceBelongsToPlayer,
 } from "./state/board";
 import {
   dragRectAtRelease,
   dragRectFromEvent,
-  hiddenDraggedCardStyle,
   overlayCardStyle,
   releaseMotionFromDragSample,
   resolveDropTargetIndex,
   sampleDragMotion,
   setCardDragInteractionLock,
 } from "./physics/dragGeometry";
-import {
-  DeckPileSized,
-  DiscardPileSized,
-  PrizeGridCompact,
-} from "./components/Piles";
-import {
-  CardBox,
-  DraggableCard,
-  DropTargetPileFrame,
-  ReleasedCard,
-} from "./components/Card";
-import { Bench } from "./components/Bench";
+import { CardBox } from "./components/Card";
 import { Hand } from "./components/Hand";
+import { PlayerSide, StadiumCard } from "./components/PlayerSide";
 
 export { CARD_W, WRAPPER_CLASSES };
 
@@ -460,148 +442,6 @@ function GameLog({
           <path d="M4 6h16M4 12h16M4 18h10" />
         </svg>
       </button>
-    </div>
-  );
-}
-
-function StadiumCard({
-  card,
-  releaseRectsRef,
-  releaseAnimationKey,
-}: {
-  card: PokeState | null;
-  releaseRectsRef?: ReleaseRectsRef;
-  releaseAnimationKey?: number;
-}) {
-  return (
-    <div className="relative">
-      <DropTargetPileFrame target={{ kind: "stadium" }}>
-        {card ? (
-          <ReleasedCard
-            cardId={card.id}
-            releaseRectsRef={releaseRectsRef}
-            releaseAnimationKey={releaseAnimationKey}
-          >
-            <CardBox cardId={card.cardId} instanceId={card.id} alt={card.name} priority />
-          </ReleasedCard>
-        ) : (
-          <div style={{ width: "var(--card-w)", height: "var(--card-h)" }} />
-        )}
-      </DropTargetPileFrame>
-    </div>
-  );
-}
-
-function PlayerSide({
-  owner,
-  position,
-  player,
-  draggingCardId,
-  draggingRect,
-  dropPreview,
-  releaseRectsRef,
-  releaseAnimationKey,
-  isActive = false,
-}: {
-  owner: PlayerId;
-  position: SidePosition;
-  player: PlayerBoardState;
-  draggingCardId?: string;
-  draggingRect?: DragRect;
-  dropPreview?: RowDropPreview | null;
-  releaseRectsRef?: ReleaseRectsRef;
-  releaseAnimationKey?: number;
-  isActive?: boolean;
-}) {
-  const isTop = position === "top";
-  const active = player.active;
-  const bench = player.bench;
-  const prizesRemaining = player.prizesRemaining;
-  const canInteract = isActive;
-  const backTone = playerBackTone(owner);
-  const benchRow = (
-    <div className="relative">
-      <Bench
-        cards={bench}
-        owner={owner}
-        disabled={!canInteract}
-        draggingCardId={draggingCardId}
-        draggingRect={draggingRect}
-        dropPreview={dropPreview}
-        releaseRectsRef={releaseRectsRef}
-      />
-      <div
-        className="absolute top-1/2"
-        style={{
-          transform: "translateY(calc(-50% + 2px))",
-          ...(isTop
-            ? { right: "100%", marginRight: "var(--side-gap)" }
-            : { left: "100%", marginLeft: "var(--side-gap)" }),
-        }}
-      >
-        <div className="relative">
-          <DiscardPileSized />
-          <div
-            className="absolute left-0"
-            style={isTop ? { top: "100%", marginTop: 8 } : { bottom: "100%", marginBottom: 8 }}
-          >
-            <DeckPileSized backTone={backTone} />
-          </div>
-        </div>
-      </div>
-      <div
-        className="absolute"
-        style={
-          isTop
-            ? { top: 0, left: "100%", marginLeft: "var(--side-gap)" }
-            : { bottom: 0, right: "100%", marginRight: "var(--side-gap)" }
-        }
-      >
-        <PrizeGridCompact remaining={prizesRemaining} backTone={backTone} flip={isTop} />
-      </div>
-    </div>
-  );
-  const activeNode = (
-    <DropTargetPileFrame target={{ kind: "active", owner }} active={isActive} disabled={!canInteract}>
-      {active ? (
-        <div
-          style={active.id === draggingCardId ? hiddenDraggedCardStyle(draggingRect) : undefined}
-        >
-          <ReleasedCard
-            cardId={active.id}
-            releaseRectsRef={releaseRectsRef}
-            releaseAnimationKey={releaseAnimationKey}
-          >
-            <DraggableCard
-              card={active}
-              location={{ kind: "active", owner }}
-              priority
-              disabled={!canInteract}
-            />
-          </ReleasedCard>
-        </div>
-      ) : null}
-    </DropTargetPileFrame>
-  );
-
-  return (
-    <div
-      data-player-owner={owner}
-      data-side-position={position}
-      className={`flex-1 min-h-0 px-6 flex flex-col items-center gap-2 relative ${isTop ? "justify-start" : "justify-end"}`}
-      style={{ paddingTop: isTop ? 16 : 4, paddingBottom: 4 }}
-    >
-      {isTop ? (
-        <>
-          {benchRow}
-          {activeNode}
-        </>
-      ) : (
-        <>
-          {activeNode}
-          {benchRow}
-        </>
-      )}
     </div>
   );
 }
