@@ -256,6 +256,23 @@ class BalatroDomCardAnimator {
     gsap.set(card.host, { clearProps: "zIndex" });
     gsap.set(card.surface, { "--balatro-transform": "none" });
 
+    // Evict the persisted visual state so a long session with many distinct
+    // cards (e.g. cards moved permanently to discard) does not grow the map
+    // unboundedly. Defer to a microtask so a synchronous re-register for the
+    // same instanceId (StrictMode double-invoke, instant remount during a
+    // React commit) inherits its prior visualScale/rotation seamlessly — if
+    // the instanceId is back in this.cards by the time the microtask runs we
+    // skip the eviction.
+    const evictableInstanceId = card.instanceId;
+    if (evictableInstanceId) {
+      queueMicrotask(() => {
+        for (const liveCard of this.cards.values()) {
+          if (liveCard.instanceId === evictableInstanceId) return;
+        }
+        this.visualStateByInstance.delete(evictableInstanceId);
+      });
+    }
+
     if (this.cards.size === 0) {
       this.unsubscribeTuning?.();
       this.unsubscribeTuning = null;
