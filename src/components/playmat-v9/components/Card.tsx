@@ -186,5 +186,9 @@ export function ReleasedCard({
 }) {
   const ref = useBalatroReleaseAnimation(cardId, releaseRectsRef, releaseAnimationKey);
 
-  return <div ref={ref}>{children}</div>;
+  return (
+    <div ref={ref} data-release-card-id={cardId}>
+      {children}
+    </div>
+  );
 }

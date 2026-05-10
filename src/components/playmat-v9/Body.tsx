@@ -16,6 +16,7 @@ import {
   DRAG_OVERLAY_Z_INDEX,
   WRAPPER_CLASSES,
   type BoardState,
+  type CardLocation,
   type DragMotionSample,
   type DragState,
   type DropTarget,
@@ -51,6 +52,64 @@ import { GameLog } from "./components/GameLog";
 
 export { CARD_W, WRAPPER_CLASSES };
 
+function getSingleCardAtTarget(
+  board: BoardState,
+  target: Extract<DropTarget, { kind: "active" | "stadium" }>,
+) {
+  return target.kind === "active" ? board[target.owner].active : board.stadium;
+}
+
+function getSwapDisplacedCard(board: BoardState, source: CardLocation, target: DropTarget) {
+  if (source.kind === "hand" && (target.kind === "active" || target.kind === "stadium")) {
+    return getSingleCardAtTarget(board, target);
+  }
+
+  if (source.kind === "bench" && target.kind === "active" && source.owner === target.owner) {
+    return board[source.owner].active;
+  }
+
+  return null;
+}
+
+function escapeAttributeSelectorValue(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function getCardReleaseElement(cardId: string) {
+  if (typeof document === "undefined") return null;
+
+  const escapedCardId = escapeAttributeSelectorValue(cardId);
+  return (
+    document.querySelector<HTMLElement>(
+      `[data-release-card-id="${escapedCardId}"] [data-balatro-release-target]`,
+    ) ??
+    document.querySelector<HTMLElement>(`[data-release-card-id="${escapedCardId}"]`) ??
+    document.querySelector<HTMLElement>(
+      `[data-layout-card="${escapedCardId}"] [data-balatro-release-target]`,
+    ) ??
+    document.querySelector<HTMLElement>(`[data-layout-card="${escapedCardId}"]`) ??
+    document.querySelector<HTMLElement>(
+      `[data-draggable-card-id="${escapedCardId}"]:not([data-drag-source-clone="true"])`,
+    )
+  );
+}
+
+function releaseMotionFromCardElement(cardId: string): ReleaseMotion | null {
+  const element = getCardReleaseElement(cardId);
+  const rect = element?.getBoundingClientRect();
+  if (!rect || rect.width <= 0 || rect.height <= 0) return null;
+
+  return {
+    rect: {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+    },
+    velocityX: 0,
+    velocityY: 0,
+  };
+}
 
 export function PlaymatBody() {
   const [info, setInfo] = useState(turnInfo);
@@ -134,6 +193,14 @@ export function PlaymatBody() {
     return null;
   }
 
+  function recordSwapReleaseAnimation(source: CardLocation, target: DropTarget, draggedCardId: string) {
+    const displacedCard = getSwapDisplacedCard(board, source, target);
+    if (!displacedCard || displacedCard.id === draggedCardId) return;
+
+    const displacedReleaseMotion = releaseMotionFromCardElement(displacedCard.id);
+    if (displacedReleaseMotion) releaseRectsRef.current.set(displacedCard.id, displacedReleaseMotion);
+  }
+
   function clearDragState() {
     if (activeDragIdRef.current) dragMotionRef.current.delete(activeDragIdRef.current);
     activeDragIdRef.current = null;
@@ -205,12 +272,20 @@ export function PlaymatBody() {
         : null;
     const resolvedTarget = hoveredTarget ?? sourceAreaPreview;
 
+    const canMove =
+      isDragCardData(dragData) &&
+      resolvedTarget !== null &&
+      canActivePlayerMove(dragData.location, resolvedTarget, info.activePlayer);
+
     if (isDragCardData(dragData)) {
       const releaseRect = dragRectAtRelease(event, dragState?.rect);
       releaseRectsRef.current.set(
         dragData.card.id,
         releaseMotionFromDragSample(dragMotionRef.current, dragData.card.id, releaseRect),
       );
+      if (canMove && resolvedTarget) {
+        recordSwapReleaseAnimation(dragData.location, resolvedTarget, dragData.card.id);
+      }
       setReleaseAnimationKey((key) => key + 1);
     }
 

@@ -2,7 +2,7 @@
 // cards in a useBalatroRowAnimation row so add/remove/reorder transitions
 // (including the drop-preview gap) spring with Balatro Moveable-style motion.
 
-import { Fragment, type CSSProperties } from "react";
+import { Fragment } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   BENCH_LIMIT,
@@ -17,7 +17,6 @@ import {
 } from "../types";
 import { cardRowKey, clampInsertIndex, dropTargetId } from "../state/board";
 import { hiddenDraggedCardStyle } from "../physics/dragGeometry";
-import { balatroBenchFan } from "../physics/balatroFan";
 import { useBalatroRowAnimation } from "../physics/rowAnimation";
 import { DraggableCard } from "./Card";
 
@@ -53,15 +52,6 @@ export function Bench({
     releaseRectsRef,
   );
   const draggedCard = cards.find((card) => card.id === draggingCardId);
-  const totalSlots = visibleCards.length + (previewIndex !== null ? 1 : 0);
-
-  function fanStyle(visualIndex: number): CSSProperties {
-    const fan = balatroBenchFan(visualIndex, totalSlots);
-    return {
-      "--balatro-row-lift": `${fan.liftPx}px`,
-      "--balatro-row-rotation": `${fan.rotationDeg}deg`,
-    } as CSSProperties;
-  }
 
   return (
     <div
@@ -84,8 +74,6 @@ export function Bench({
         style={{ gap: "var(--slot-gap)" }}
       >
         {visibleCards.map((card, visibleIndex) => {
-          const visualIndex = visibleIndex + (previewIndex !== null && visibleIndex >= previewIndex ? 1 : 0);
-
           return (
             <Fragment key={`bench-entry-${card.id}`}>
               {previewIndex === visibleIndex ? (
@@ -100,11 +88,7 @@ export function Bench({
                 data-layout-card={card.id}
                 style={{ width: "var(--card-w)", zIndex: visibleCards.length - visibleIndex }}
               >
-                <div
-                  className="balatro-row-card-face"
-                  data-balatro-release-target
-                  style={fanStyle(visualIndex)}
-                >
+                <div className="balatro-row-card-face" data-balatro-release-target>
                   <DraggableCard
                     card={card}
                     location={{ kind: "bench", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
