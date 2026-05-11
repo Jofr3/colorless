@@ -25,7 +25,7 @@ import {
 } from "./types";
 import { gameLog, initialBoard, turnInfo } from "./fixtures";
 import {
-  canActivePlayerMove,
+  canActivePlayerMoveCard,
   canPreviewRowDrop,
   cloneBoard,
   isDragCardData,
@@ -43,7 +43,7 @@ import {
   sampleDragMotion,
   setCardDragInteractionLock,
 } from "./physics/dragGeometry";
-import { CardBox } from "./components/Card";
+import { CardWithAttachments } from "./components/Card";
 import { Hand } from "./components/Hand";
 import { PlayerSide, StadiumCard } from "./components/PlayerSide";
 import { SettingsButton, TurnBanner, TurnControls } from "./components/Hud";
@@ -168,7 +168,7 @@ export function PlaymatBody() {
 
     if (isDropTargetData(dropData) && (dropData.target.kind === "hand" || dropData.target.kind === "bench")) {
       const hoveredPreview = indexedRowTarget(dropData.target, event);
-      if (hoveredPreview && canPreviewRowDrop(board, dragData.location, hoveredPreview, info.activePlayer)) {
+      if (hoveredPreview && canPreviewRowDrop(board, dragData.card, dragData.location, hoveredPreview, info.activePlayer)) {
         return hoveredPreview;
       }
     }
@@ -182,7 +182,7 @@ export function PlaymatBody() {
         owner: dragData.location.owner,
       } satisfies Extract<DropTarget, { kind: "hand" | "bench" }>;
 
-      if (canPreviewRowDrop(board, dragData.location, sourcePreview, info.activePlayer)) {
+      if (canPreviewRowDrop(board, dragData.card, dragData.location, sourcePreview, info.activePlayer)) {
         return indexedRowTarget(sourcePreview, event) ?? {
           ...sourcePreview,
           index: dragData.location.index,
@@ -232,7 +232,7 @@ export function PlaymatBody() {
     setCardDragInteractionLock(true);
     setDragState({ card: data.card, rect: dragRect });
     setDropPreview(
-      sourceRowPreview && canPreviewRowDrop(board, data.location, sourceRowPreview, info.activePlayer)
+      sourceRowPreview && canPreviewRowDrop(board, data.card, data.location, sourceRowPreview, info.activePlayer)
         ? sourceRowPreview
         : null,
     );
@@ -275,15 +275,22 @@ export function PlaymatBody() {
     const canMove =
       isDragCardData(dragData) &&
       resolvedTarget !== null &&
-      canActivePlayerMove(dragData.location, resolvedTarget, info.activePlayer);
+      canActivePlayerMoveCard(board, dragData.card, dragData.location, resolvedTarget, info.activePlayer);
 
     if (isDragCardData(dragData)) {
       const releaseRect = dragRectAtRelease(event, dragState?.rect);
-      releaseRectsRef.current.set(
-        dragData.card.id,
-        releaseMotionFromDragSample(dragMotionRef.current, dragData.card.id, releaseRect),
-      );
-      if (canMove && resolvedTarget) {
+      const attachingToPokemon = canMove && resolvedTarget?.kind === "pokemon";
+
+      if (!attachingToPokemon) {
+        releaseRectsRef.current.set(
+          dragData.card.id,
+          releaseMotionFromDragSample(dragMotionRef.current, dragData.card.id, releaseRect),
+        );
+      } else {
+        releaseRectsRef.current.delete(dragData.card.id);
+      }
+
+      if (canMove && resolvedTarget && resolvedTarget.kind !== "pokemon") {
         recordSwapReleaseAnimation(dragData.location, resolvedTarget, dragData.card.id);
       }
       setReleaseAnimationKey((key) => key + 1);
@@ -294,7 +301,7 @@ export function PlaymatBody() {
     if (!isDragCardData(dragData) || !resolvedTarget) return;
 
     setBoard((current) =>
-      canActivePlayerMove(dragData.location, resolvedTarget, info.activePlayer)
+      canActivePlayerMoveCard(current, dragData.card, dragData.location, resolvedTarget, info.activePlayer)
         ? moveCard(current, dragData.location, resolvedTarget)
         : current,
     );
@@ -315,6 +322,7 @@ export function PlaymatBody() {
         player={board[topOwner]}
         position="top"
         draggingCardId={draggingCard?.id}
+        draggingCard={draggingCard}
         draggingRect={dragState?.rect}
         dropPreview={dropPreview}
         releaseRectsRef={releaseRectsRef}
@@ -326,6 +334,7 @@ export function PlaymatBody() {
         player={board[bottomOwner]}
         position="bottom"
         draggingCardId={draggingCard?.id}
+        draggingCard={draggingCard}
         draggingRect={dragState?.rect}
         dropPreview={dropPreview}
         releaseRectsRef={releaseRectsRef}
@@ -333,7 +342,7 @@ export function PlaymatBody() {
         isActive={info.activePlayer === bottomOwner}
       />
       <Hand
-        cards={board.hand}
+        cards={board[bottomOwner].hand}
         owner={bottomOwner}
         draggingCardId={draggingCard?.id}
         draggingRect={dragState?.rect}
@@ -350,6 +359,7 @@ export function PlaymatBody() {
       >
         <StadiumCard
           card={board.stadium}
+          draggingCard={draggingCard}
           releaseRectsRef={releaseRectsRef}
           releaseAnimationKey={releaseAnimationKey}
         />
@@ -369,10 +379,9 @@ export function PlaymatBody() {
               BalatroDomCardAnimator, which keys visual state by instanceId
               and would otherwise have them stomp each other every frame.
             */}
-            <CardBox
-              cardId={draggingCard.cardId}
+            <CardWithAttachments
+              card={draggingCard}
               instanceId={`${draggingCard.id}-overlay`}
-              alt={draggingCard.name}
               priority
               bendCenterBoost={0}
               dragging

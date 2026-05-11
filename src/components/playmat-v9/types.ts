@@ -30,26 +30,32 @@ export type CardBackTone = "blue" | "red";
 
 export type CardBackSize = "card" | "prize";
 
+export type CardKind = "pokemon" | "energy" | "tool" | "stadium" | "supporter" | "item";
+
 export interface PokeState {
   id: string;
   name: string;
   cardId: string;
+  cardType: CardKind;
+  imageUrl?: string;
   hp?: number;
   type?: EnergyType;
   damage?: number;
+  attachedEnergy?: PokeState[];
+  attachedTool?: PokeState | null;
 }
 
 export type PlayerId = "you" | "opponent";
 export type SidePosition = "top" | "bottom";
 
 export interface PlayerBoardState {
+  hand: PokeState[];
   active: PokeState | null;
   bench: PokeState[];
   prizesRemaining: number;
 }
 
 export interface BoardState {
-  hand: PokeState[];
   stadium: PokeState | null;
   you: PlayerBoardState;
   opponent: PlayerBoardState;
@@ -64,6 +70,8 @@ export type DropTarget =
   | { kind: "hand"; owner: PlayerId; index?: number }
   | { kind: "bench"; owner: PlayerId; index?: number }
   | { kind: "active"; owner: PlayerId }
+  | { kind: "pokemon"; owner: PlayerId; slot: "active" }
+  | { kind: "pokemon"; owner: PlayerId; slot: "bench"; index: number }
   | { kind: "stadium" };
 
 export interface DragCardData {

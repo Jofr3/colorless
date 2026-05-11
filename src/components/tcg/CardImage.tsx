@@ -4,6 +4,7 @@ const CARD_IMAGE_WIDTH = 600;
 
 export interface CardImageProps {
   cardId: string;
+  imageUrl?: string;
   renderedWidth: number;
   alt: string;
   priority?: boolean;
@@ -12,6 +13,7 @@ export interface CardImageProps {
 
 export default function CardImage({
   cardId,
+  imageUrl,
   renderedWidth,
   alt,
   priority = false,
@@ -19,10 +21,11 @@ export default function CardImage({
 }: CardImageProps) {
   const intrinsicWidth = Math.round(renderedWidth);
   const intrinsicHeight = Math.round(renderedWidth * (ASPECT_H / ASPECT_W));
+  const src = imageUrl ?? `/cards/${cardId}-${CARD_IMAGE_WIDTH}.jpg`;
 
   return (
     <img
-      src={`/cards/${cardId}-${CARD_IMAGE_WIDTH}.jpg`}
+      src={src}
       alt={alt}
       width={intrinsicWidth}
       height={intrinsicHeight}

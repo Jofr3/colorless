@@ -3,11 +3,33 @@
 // component files (Hand, Bench, GameLog) can read them without a circular
 // dependency on Body.tsx.
 
-import type { BoardState, LogEntry, PokeState, TurnInfo } from "./types";
+import type { BoardState, CardKind, LogEntry, PokeState, TurnInfo } from "./types";
+
+const apiCardImages = {
+  "me3-70": "https://images.scrydex.com/pokemon/me3-70/large",
+  "me3-86": "https://images.scrydex.com/pokemon/me3-86/large",
+  "me3-87": "https://images.scrydex.com/pokemon/me3-87/large",
+  "me3-88": "https://images.scrydex.com/pokemon/me3-88/large",
+  "sv1-169": "https://images.pokemontcg.io/sv1/169_hires.png",
+  "sv1-174": "https://images.pokemontcg.io/sv1/174_hires.png",
+  "sv2-173": "https://images.pokemontcg.io/sv2/173_hires.png",
+  "sve-7": "https://images.pokemontcg.io/sve/7_hires.png",
+} as const;
+
+function apiCard(id: string, cardId: keyof typeof apiCardImages, name: string, cardType: CardKind): PokeState {
+  return {
+    id,
+    cardId,
+    name,
+    cardType,
+    imageUrl: apiCardImages[cardId],
+  };
+}
 
 const opponentActive: PokeState = {
   id: "opponent-active-mega-zygarde",
   name: "Mega Zygarde ex",
+  cardType: "pokemon",
   hp: 340,
   type: "fighting",
   damage: 40,
@@ -15,13 +37,35 @@ const opponentActive: PokeState = {
 };
 
 const opponentBench: PokeState[] = [
-  { id: "opponent-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", cardId: "me3-53" },
-  { id: "opponent-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", cardId: "me3-62" },
+  {
+    id: "opponent-bench-yveltal",
+    name: "Yveltal ex",
+    cardType: "pokemon",
+    hp: 270,
+    type: "darkness",
+    cardId: "me3-53",
+  },
+  {
+    id: "opponent-bench-meowth",
+    name: "Meowth ex",
+    cardType: "pokemon",
+    hp: 200,
+    type: "colorless",
+    cardId: "me3-62",
+  },
+];
+
+const opponentHand: PokeState[] = [
+  apiCard("opponent-hand-telepathic-psychic-energy", "me3-88", "Telepathic Psychic Energy", "energy"),
+  apiCard("opponent-hand-basic-darkness-energy", "sve-7", "Basic Darkness Energy", "energy"),
+  apiCard("opponent-hand-defiance-band", "sv1-169", "Defiance Band", "tool"),
+  apiCard("opponent-hand-core-memory", "me3-70", "Core Memory", "tool"),
 ];
 
 const playerActive: PokeState = {
   id: "you-active-mega-starmie",
   name: "Mega Starmie ex",
+  cardType: "pokemon",
   hp: 300,
   type: "water",
   damage: 20,
@@ -29,35 +73,62 @@ const playerActive: PokeState = {
 };
 
 const playerBench: PokeState[] = [
-  { id: "you-bench-decidueye", name: "Decidueye ex", hp: 280, type: "grass", cardId: "sv3-15" },
-  { id: "you-bench-yveltal", name: "Yveltal ex", hp: 270, type: "darkness", cardId: "me3-53" },
-  { id: "you-bench-meowth", name: "Meowth ex", hp: 200, type: "colorless", cardId: "me3-62" },
+  {
+    id: "you-bench-decidueye",
+    name: "Decidueye ex",
+    cardType: "pokemon",
+    hp: 280,
+    type: "grass",
+    cardId: "sv3-15",
+  },
+  {
+    id: "you-bench-yveltal",
+    name: "Yveltal ex",
+    cardType: "pokemon",
+    hp: 270,
+    type: "darkness",
+    cardId: "me3-53",
+  },
+  {
+    id: "you-bench-meowth",
+    name: "Meowth ex",
+    cardType: "pokemon",
+    hp: 200,
+    type: "colorless",
+    cardId: "me3-62",
+  },
 ];
 
 const initialStadium: PokeState = {
   id: "stadium-lumiose-city",
   name: "Lumiose City",
+  cardType: "stadium",
   cardId: "me3-111",
 };
 
 const playerHand: PokeState[] = [
-  { id: "hand-decidueye", cardId: "sv3-15", name: "Decidueye ex" },
-  { id: "hand-meowth", cardId: "me3-62", name: "Meowth ex" },
-  { id: "hand-rosa-1", cardId: "me3-123", name: "Rosa's Encouragement" },
-  { id: "hand-core-memory", cardId: "me3-70", name: "Core Memory" },
-  { id: "hand-yveltal", cardId: "me3-53", name: "Yveltal ex" },
-  { id: "hand-rosa-2", cardId: "me3-123", name: "Rosa's Encouragement" },
+  { id: "hand-decidueye", cardId: "sv3-15", name: "Decidueye ex", cardType: "pokemon" },
+  { id: "hand-meowth", cardId: "me3-62", name: "Meowth ex", cardType: "pokemon" },
+  { id: "hand-rosa-1", cardId: "me3-123", name: "Rosa's Encouragement", cardType: "supporter" },
+  { id: "hand-core-memory", cardId: "me3-70", name: "Core Memory", cardType: "tool" },
+  { id: "hand-yveltal", cardId: "me3-53", name: "Yveltal ex", cardType: "pokemon" },
+  { id: "hand-rosa-2", cardId: "me3-123", name: "Rosa's Encouragement", cardType: "supporter" },
+  apiCard("hand-growing-grass-energy", "me3-86", "Growing Grass Energy", "energy"),
+  apiCard("hand-rocky-fighting-energy", "me3-87", "Rocky Fighting Energy", "energy"),
+  apiCard("hand-bravery-charm", "sv2-173", "Bravery Charm", "tool"),
+  apiCard("hand-exp-share", "sv1-174", "Exp. Share", "tool"),
 ];
 
 export const initialBoard: BoardState = {
-  hand: playerHand,
   stadium: initialStadium,
   you: {
+    hand: playerHand,
     active: playerActive,
     bench: playerBench,
     prizesRemaining: 4,
   },
   opponent: {
+    hand: opponentHand,
     active: opponentActive,
     bench: opponentBench,
     prizesRemaining: 5,

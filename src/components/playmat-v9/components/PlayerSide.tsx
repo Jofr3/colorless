@@ -13,12 +13,13 @@ import type {
   RowDropPreview,
   SidePosition,
 } from "../types";
-import { playerBackTone } from "../state/board";
+import { canDropCardOnTarget, playerBackTone } from "../state/board";
 import { hiddenDraggedCardStyle } from "../physics/dragGeometry";
 import {
   CardBox,
   DraggableCard,
   DropTargetPileFrame,
+  PokemonCardDropTarget,
   ReleasedCard,
 } from "./Card";
 import { Bench } from "./Bench";
@@ -26,23 +27,35 @@ import { DeckPileSized, DiscardPileSized, PrizeGridCompact } from "./Piles";
 
 export function StadiumCard({
   card,
+  draggingCard,
   releaseRectsRef,
   releaseAnimationKey,
 }: {
   card: PokeState | null;
+  draggingCard?: PokeState | null;
   releaseRectsRef?: ReleaseRectsRef;
   releaseAnimationKey?: number;
 }) {
   return (
     <div className="relative">
-      <DropTargetPileFrame target={{ kind: "stadium" }}>
+      <DropTargetPileFrame
+        target={{ kind: "stadium" }}
+        disabled={!canDropCardOnTarget(draggingCard, { kind: "stadium" })}
+      >
         {card ? (
           <ReleasedCard
             cardId={card.id}
             releaseRectsRef={releaseRectsRef}
             releaseAnimationKey={releaseAnimationKey}
           >
-            <CardBox cardId={card.cardId} instanceId={card.id} alt={card.name} priority />
+            <CardBox
+              cardId={card.cardId}
+              cardType={card.cardType}
+              imageUrl={card.imageUrl}
+              instanceId={card.id}
+              alt={card.name}
+              priority
+            />
           </ReleasedCard>
         ) : (
           <div style={{ width: "var(--card-w)", height: "var(--card-h)" }} />
@@ -57,6 +70,7 @@ export function PlayerSide({
   position,
   player,
   draggingCardId,
+  draggingCard,
   draggingRect,
   dropPreview,
   releaseRectsRef,
@@ -67,6 +81,7 @@ export function PlayerSide({
   position: SidePosition;
   player: PlayerBoardState;
   draggingCardId?: string;
+  draggingCard?: PokeState | null;
   draggingRect?: DragRect;
   dropPreview?: RowDropPreview | null;
   releaseRectsRef?: ReleaseRectsRef;
@@ -79,13 +94,17 @@ export function PlayerSide({
   const prizesRemaining = player.prizesRemaining;
   const canInteract = isActive;
   const backTone = playerBackTone(owner);
+  const benchDropDisabled = !canInteract || !canDropCardOnTarget(draggingCard, { kind: "bench", owner });
+  const activeDropDisabled = !canInteract || !canDropCardOnTarget(draggingCard, { kind: "active", owner });
   const benchRow: ReactNode = (
     <div className="relative">
       <Bench
         cards={bench}
         owner={owner}
-        disabled={!canInteract}
+        disabled={benchDropDisabled}
+        attachmentDisabled={!canInteract}
         draggingCardId={draggingCardId}
+        draggingCard={draggingCard}
         draggingRect={draggingRect}
         dropPreview={dropPreview}
         releaseRectsRef={releaseRectsRef}
@@ -122,22 +141,27 @@ export function PlayerSide({
     </div>
   );
   const activeNode: ReactNode = (
-    <DropTargetPileFrame target={{ kind: "active", owner }} active={isActive} disabled={!canInteract}>
+    <DropTargetPileFrame target={{ kind: "active", owner }} active={isActive} disabled={activeDropDisabled}>
       {active ? (
-        <div
-          style={active.id === draggingCardId ? hiddenDraggedCardStyle(draggingRect) : undefined}
-        >
+        <div style={active.id === draggingCardId ? hiddenDraggedCardStyle(draggingRect) : undefined}>
           <ReleasedCard
             cardId={active.id}
             releaseRectsRef={releaseRectsRef}
             releaseAnimationKey={releaseAnimationKey}
           >
-            <DraggableCard
-              card={active}
-              location={{ kind: "active", owner }}
-              priority
+            <PokemonCardDropTarget
+              target={{ kind: "pokemon", owner, slot: "active" }}
+              pokemon={active}
+              draggingCard={draggingCard}
               disabled={!canInteract}
-            />
+            >
+              <DraggableCard
+                card={active}
+                location={{ kind: "active", owner }}
+                priority
+                disabled={!canInteract}
+              />
+            </PokemonCardDropTarget>
           </ReleasedCard>
         </div>
       ) : null}

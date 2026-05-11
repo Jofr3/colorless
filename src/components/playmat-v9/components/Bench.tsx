@@ -18,13 +18,21 @@ import {
 import { cardRowKey, clampInsertIndex, dropTargetId } from "../state/board";
 import { hiddenDraggedCardStyle } from "../physics/dragGeometry";
 import { useBalatroRowAnimation } from "../physics/rowAnimation";
-import { DraggableCard } from "./Card";
+import {
+  cardAttachmentExtraWidthFactor,
+  cardAttachmentFootprintWidth,
+  cardAttachmentLeftOffset,
+  DraggableCard,
+  PokemonCardDropTarget,
+} from "./Card";
 
 export function Bench({
   cards,
   owner,
   disabled = false,
+  attachmentDisabled = false,
   draggingCardId,
+  draggingCard,
   draggingRect,
   dropPreview,
   releaseRectsRef,
@@ -32,7 +40,9 @@ export function Bench({
   cards: PokeState[];
   owner: PlayerId;
   disabled?: boolean;
+  attachmentDisabled?: boolean;
   draggingCardId?: string;
+  draggingCard?: PokeState | null;
   draggingRect?: DragRect;
   dropPreview?: RowDropPreview | null;
   releaseRectsRef?: ReleaseRectsRef;
@@ -47,11 +57,21 @@ export function Bench({
   const previewIndex = draggingCardId && dropPreview?.kind === "bench" && dropPreview.owner === owner
     ? clampInsertIndex(dropPreview.index, visibleCards.length)
     : null;
+  const attachmentLayoutKey = visibleCards
+    .map(
+      (card) =>
+        `${card.id}:${card.attachedTool?.id ?? "none"}:${card.attachedEnergy?.map((energy) => energy.id).join(",") ?? "none"}`,
+    )
+    .join("|");
   const rowRef = useBalatroRowAnimation(
-    `bench-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
+    `bench-${owner}:${attachmentLayoutKey}:gap-${previewIndex ?? "none"}`,
     releaseRectsRef,
   );
   const draggedCard = cards.find((card) => card.id === draggingCardId);
+  const previewGapWidth = cardAttachmentFootprintWidth(draggingCard);
+  const benchExtraWidth =
+    visibleCards.reduce((extraWidth, card) => extraWidth + cardAttachmentExtraWidthFactor(card), 0) +
+    (previewIndex !== null ? cardAttachmentExtraWidthFactor(draggingCard) : 0);
 
   return (
     <div
@@ -62,7 +82,7 @@ export function Bench({
       data-drop-disabled={disabled || undefined}
       className={`${SLOT_BASE} transition-all ${isOver ? "ring-2 ring-emerald-300/90 shadow-[0_0_0_1px_rgba(110,231,183,0.55),0_0_34px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.18)]" : ""}`}
       style={{
-        width: `calc(var(--card-w) * ${BENCH_LIMIT} + var(--slot-gap) * ${BENCH_LIMIT - 1} + 12px)`,
+        width: `calc(var(--card-w) * ${BENCH_LIMIT + benchExtraWidth} + var(--slot-gap) * ${BENCH_LIMIT - 1} + 12px)`,
         height: "calc(var(--card-h) + 12px)",
         padding: "var(--pile-pad)",
       }}
@@ -74,26 +94,40 @@ export function Bench({
         style={{ gap: "var(--slot-gap)" }}
       >
         {visibleCards.map((card, visibleIndex) => {
+          const cardIndex = cards.findIndex((candidate) => candidate.id === card.id);
+          const footprintWidth = cardAttachmentFootprintWidth(card);
+
           return (
             <Fragment key={`bench-entry-${card.id}`}>
               {previewIndex === visibleIndex ? (
                 <div
                   key={`bench-gap-${owner}-${visibleIndex}`}
                   aria-hidden="true"
-                  style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
+                  style={{ flex: `0 0 ${previewGapWidth}`, width: previewGapWidth, height: "var(--card-h)" }}
                 />
               ) : null}
               <div
                 key={card.id}
                 data-layout-card={card.id}
-                style={{ width: "var(--card-w)", zIndex: visibleCards.length - visibleIndex }}
+                style={{ width: footprintWidth, zIndex: visibleCards.length - visibleIndex }}
               >
-                <div className="balatro-row-card-face" data-balatro-release-target>
-                  <DraggableCard
-                    card={card}
-                    location={{ kind: "bench", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}
-                    disabled={disabled}
-                  />
+                <div
+                  className="balatro-row-card-face"
+                  data-balatro-release-target
+                  style={{ marginLeft: cardAttachmentLeftOffset(card), width: "var(--card-w)" }}
+                >
+                  <PokemonCardDropTarget
+                    target={{ kind: "pokemon", owner, slot: "bench", index: cardIndex }}
+                    pokemon={card}
+                    draggingCard={draggingCard}
+                    disabled={attachmentDisabled}
+                  >
+                    <DraggableCard
+                      card={card}
+                      location={{ kind: "bench", owner, index: cardIndex }}
+                      disabled={disabled}
+                    />
+                  </PokemonCardDropTarget>
                 </div>
               </div>
             </Fragment>
@@ -102,7 +136,7 @@ export function Bench({
         {previewIndex === visibleCards.length ? (
           <div
             aria-hidden="true"
-            style={{ flex: "0 0 var(--card-w)", width: "var(--card-w)", height: "var(--card-h)" }}
+            style={{ flex: `0 0 ${previewGapWidth}`, width: previewGapWidth, height: "var(--card-h)" }}
           />
         ) : null}
         {draggedCard ? (

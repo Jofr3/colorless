@@ -18,6 +18,7 @@ import BalatroHoverCard from "../../tcg/BalatroHoverCard";
 import {
   CARD_W,
   SLOT_BASE,
+  type CardKind,
   type CardLocation,
   type DragCardData,
   type DropTarget,
@@ -25,11 +26,13 @@ import {
   type PokeState,
   type ReleaseRectsRef,
 } from "../types";
-import { dropTargetId } from "../state/board";
+import { canAttachCardToPokemon, dropTargetId } from "../state/board";
 import { useBalatroReleaseAnimation } from "../physics/releaseAnimation";
 
 export function CardBox({
   cardId,
+  cardType,
+  imageUrl,
   instanceId,
   alt,
   priority,
@@ -38,6 +41,8 @@ export function CardBox({
   dragging = false,
 }: {
   cardId: string;
+  cardType?: CardKind;
+  imageUrl?: string;
   instanceId?: string;
   alt: string;
   priority?: boolean;
@@ -46,9 +51,10 @@ export function CardBox({
   dragging?: boolean;
 }) {
   return (
-    <div style={{ width: "var(--card-w)" }}>
+    <div data-card-type={cardType} style={{ width: "var(--card-w)" }}>
       <BalatroHoverCard
         cardId={cardId}
+        imageUrl={imageUrl}
         instanceId={instanceId}
         renderedWidth={CARD_W}
         alt={alt}
@@ -67,11 +73,13 @@ export function DropTargetPileFrame({
   children,
   active = false,
   disabled = false,
+  width,
 }: {
   target: DropTarget;
   children: ReactNode;
   active?: boolean;
   disabled?: boolean;
+  width?: string;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: dropTargetId(target),
@@ -88,12 +96,203 @@ export function DropTargetPileFrame({
       data-drop-disabled={disabled || undefined}
       className={`${SLOT_BASE} transition-all ${active ? "ring-amber-300/60 shadow-[0_0_0_1px_rgba(252,211,77,0.45),0_0_28px_rgba(252,211,77,0.30),inset_0_1px_0_rgba(255,255,255,0.15)]" : ""} ${isOver ? "ring-2 ring-emerald-300/90 shadow-[0_0_0_1px_rgba(110,231,183,0.55),0_0_34px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.18)]" : ""}`}
       style={{
-        width: "calc(var(--card-w) + 12px)",
+        width: width ?? "calc(var(--card-w) + 12px)",
         height: "calc(var(--card-h) + 12px)",
         padding: "var(--pile-pad)",
       }}
     >
       {children}
+    </div>
+  );
+}
+
+export function PokemonCardDropTarget({
+  target,
+  pokemon,
+  draggingCard,
+  disabled: forceDisabled = false,
+  children,
+}: {
+  target: Extract<DropTarget, { kind: "pokemon" }>;
+  pokemon: PokeState;
+  draggingCard?: PokeState | null;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  const disabled = forceDisabled || !canAttachCardToPokemon(draggingCard, pokemon);
+  const { setNodeRef, isOver } = useDroppable({
+    id: dropTargetId(target),
+    data: { target } satisfies DropTargetData,
+    disabled,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-drop-target="pokemon"
+      data-drop-owner={target.owner}
+      data-drop-slot={target.slot}
+      data-drop-index={target.slot === "bench" ? target.index : undefined}
+      data-drop-disabled={disabled || undefined}
+      className={`relative rounded-[max(3px,calc(var(--card-w)*0.06))] transition-all ${isOver ? "ring-2 ring-cyan-300/95 shadow-[0_0_0_1px_rgba(103,232,249,0.55),0_0_30px_rgba(34,211,238,0.38)]" : ""}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+const ATTACHED_CARD_SCALE = 0.90;
+const ROTATED_ATTACHED_CARD_WIDTH_FACTOR = 1.4 * ATTACHED_CARD_SCALE;
+const ATTACHED_TOOL_PEEK = 0.30;
+const ATTACHED_ENERGY_PEEK = 0.30;
+const ATTACHED_ENERGY_VERTICAL_STEP = 0.15;
+
+function attachmentMetrics(card?: PokeState | null) {
+  if (!card || card.cardType !== "pokemon") return { left: 0, right: 0 };
+
+  const energyCount = card.attachedEnergy?.length ?? 0;
+  return {
+    left: card.attachedTool ? ATTACHED_TOOL_PEEK : 0,
+    right: energyCount > 0 ? ATTACHED_ENERGY_PEEK : 0,
+  };
+}
+
+function factorToCardWidth(factor: number) {
+  return factor === 0 ? "0px" : `calc(var(--card-w) * ${factor.toFixed(2)})`;
+}
+
+function scaledAttachedCardWidth() {
+  return `calc(var(--card-h) * ${ATTACHED_CARD_SCALE.toFixed(2)})`;
+}
+
+function scaledAttachedCardHeight() {
+  return `calc(var(--card-w) * ${ATTACHED_CARD_SCALE.toFixed(2)})`;
+}
+
+function energyAttachmentTop(index: number) {
+  return `calc(var(--card-h) - var(--card-w) * ${ATTACHED_CARD_SCALE.toFixed(2)} - var(--card-w) * ${(index * ATTACHED_ENERGY_VERTICAL_STEP).toFixed(2)})`;
+}
+
+export function cardAttachmentLeftOffset(card?: PokeState | null) {
+  return factorToCardWidth(attachmentMetrics(card).left);
+}
+
+export function cardAttachmentFootprintWidth(card?: PokeState | null) {
+  const { left, right } = attachmentMetrics(card);
+  return `calc(var(--card-w) * ${(1 + left + right).toFixed(2)})`;
+}
+
+export function cardAttachmentExtraWidthFactor(card?: PokeState | null) {
+  const { left, right } = attachmentMetrics(card);
+  return left + right;
+}
+
+function AttachedCardLayer({ card, instanceId }: { card: PokeState; instanceId?: string }) {
+  if (card.cardType !== "pokemon") return null;
+
+  const energyCards = card.attachedEnergy ?? [];
+  const toolCard = card.attachedTool;
+  if (!toolCard && energyCards.length === 0) return null;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-visible" aria-hidden="true">
+      {toolCard ? (
+        <div
+          className="absolute opacity-95 drop-shadow-[0_5px_10px_rgba(0,0,0,0.45)]"
+          style={{
+            left: factorToCardWidth(-ATTACHED_TOOL_PEEK),
+            top: 0,
+            width: scaledAttachedCardWidth(),
+            height: scaledAttachedCardHeight(),
+          }}
+        >
+          <div
+            className="absolute left-1/2 top-1/2"
+            style={{
+              width: "var(--card-w)",
+              transform: `translate(-50%, -50%) rotate(-90deg) scale(${ATTACHED_CARD_SCALE})`,
+              transformOrigin: "center center",
+            }}
+          >
+            <CardBox
+              cardId={toolCard.cardId}
+              cardType={toolCard.cardType}
+              imageUrl={toolCard.imageUrl}
+              instanceId={`${instanceId ?? card.id}-attached-tool-${toolCard.id}`}
+              alt={toolCard.name}
+            />
+          </div>
+        </div>
+      ) : null}
+      {energyCards.map((energyCard, index) => {
+        const left = 1 + ATTACHED_ENERGY_PEEK - ROTATED_ATTACHED_CARD_WIDTH_FACTOR;
+
+        return (
+          <div
+            key={energyCard.id}
+            className="absolute opacity-95 drop-shadow-[0_5px_10px_rgba(0,0,0,0.45)]"
+            style={{
+              left: factorToCardWidth(left),
+              top: energyAttachmentTop(index),
+              width: scaledAttachedCardWidth(),
+              height: scaledAttachedCardHeight(),
+              zIndex: index,
+            }}
+          >
+            <div
+              className="absolute left-1/2 top-1/2"
+              style={{
+                width: "var(--card-w)",
+                transform: `translate(-50%, -50%) rotate(90deg) scale(${ATTACHED_CARD_SCALE})`,
+                transformOrigin: "center center",
+              }}
+            >
+              <CardBox
+                cardId={energyCard.cardId}
+                cardType={energyCard.cardType}
+                imageUrl={energyCard.imageUrl}
+                instanceId={`${instanceId ?? card.id}-attached-energy-${energyCard.id}`}
+                alt={energyCard.name}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function CardWithAttachments({
+  card,
+  instanceId,
+  priority,
+  bendCenterBoost,
+  pressed = false,
+  dragging = false,
+}: {
+  card: PokeState;
+  instanceId?: string;
+  priority?: boolean;
+  bendCenterBoost?: number;
+  pressed?: boolean;
+  dragging?: boolean;
+}) {
+  return (
+    <div className="relative overflow-visible" style={{ width: "var(--card-w)" }}>
+      <AttachedCardLayer card={card} instanceId={instanceId} />
+      <div className="relative z-10">
+        <CardBox
+          cardId={card.cardId}
+          cardType={card.cardType}
+          imageUrl={card.imageUrl}
+          instanceId={instanceId}
+          alt={card.name}
+          priority={priority}
+          bendCenterBoost={bendCenterBoost}
+          pressed={pressed}
+          dragging={dragging}
+        />
+      </div>
     </div>
   );
 }
@@ -161,10 +360,9 @@ export function DraggableCard({
       style={{ touchAction: "none" }}
       onPointerDownCapture={handlePointerDownCapture}
     >
-      <CardBox
-        cardId={card.cardId}
+      <CardWithAttachments
+        card={card}
         instanceId={card.id}
-        alt={card.name}
         priority={priority}
         bendCenterBoost={bendCenterBoost}
         pressed={pressing}

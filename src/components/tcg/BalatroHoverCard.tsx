@@ -10,6 +10,7 @@ type CardBackTone = "blue" | "red";
 
 interface BalatroHoverCardProps {
   cardId?: string;
+  imageUrl?: string;
   back?: CardBackTone;
   instanceId?: string;
   renderedWidth?: number;
@@ -24,6 +25,7 @@ interface BalatroHoverCardProps {
 
 export default function BalatroHoverCard({
   cardId,
+  imageUrl,
   instanceId,
   renderedWidth,
   alt,
@@ -174,6 +176,7 @@ export default function BalatroHoverCard({
     (cardId && renderedWidth && alt ? (
       <CardImage
         cardId={cardId}
+        imageUrl={imageUrl}
         renderedWidth={renderedWidth}
         alt={alt}
         priority={priority}
