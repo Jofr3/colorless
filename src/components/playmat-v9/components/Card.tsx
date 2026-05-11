@@ -29,6 +29,8 @@ import {
 import { canAttachCardToPokemon, dropTargetId } from "../state/board";
 import { useBalatroReleaseAnimation } from "../physics/releaseAnimation";
 
+type HoverPoint = { clientX: number; clientY: number };
+
 export function CardBox({
   cardId,
   cardType,
@@ -39,6 +41,9 @@ export function CardBox({
   bendCenterBoost,
   pressed = false,
   dragging = false,
+  interactive = true,
+  hoverPoint = null,
+  disableTilt = false,
 }: {
   cardId: string;
   cardType?: CardKind;
@@ -49,6 +54,9 @@ export function CardBox({
   bendCenterBoost?: number;
   pressed?: boolean;
   dragging?: boolean;
+  interactive?: boolean;
+  hoverPoint?: HoverPoint | null;
+  disableTilt?: boolean;
 }) {
   return (
     <div data-card-type={cardType} style={{ width: "var(--card-w)" }}>
@@ -62,6 +70,9 @@ export function CardBox({
         bendCenterBoost={bendCenterBoost}
         pressed={pressed}
         dragging={dragging}
+        interactive={interactive}
+        hoverPoint={hoverPoint}
+        disableTilt={disableTilt}
         className="w-full"
       />
     </div>
@@ -120,7 +131,7 @@ export function PokemonCardDropTarget({
   children: ReactNode;
 }) {
   const disabled = forceDisabled || !canAttachCardToPokemon(draggingCard, pokemon);
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef } = useDroppable({
     id: dropTargetId(target),
     data: { target } satisfies DropTargetData,
     disabled,
@@ -134,7 +145,7 @@ export function PokemonCardDropTarget({
       data-drop-slot={target.slot}
       data-drop-index={target.slot === "bench" ? target.index : undefined}
       data-drop-disabled={disabled || undefined}
-      className={`relative rounded-[max(3px,calc(var(--card-w)*0.06))] transition-all ${isOver ? "ring-2 ring-cyan-300/95 shadow-[0_0_0_1px_rgba(103,232,249,0.55),0_0_30px_rgba(34,211,238,0.38)]" : ""}`}
+      className="relative rounded-[max(3px,calc(var(--card-w)*0.06))]"
     >
       {children}
     </div>
@@ -187,7 +198,15 @@ export function cardAttachmentExtraWidthFactor(card?: PokeState | null) {
   return left + right;
 }
 
-function AttachedCardLayer({ card, instanceId }: { card: PokeState; instanceId?: string }) {
+function AttachedCardLayer({
+  card,
+  instanceId,
+  hoverPoint,
+}: {
+  card: PokeState;
+  instanceId?: string;
+  hoverPoint?: HoverPoint | null;
+}) {
   if (card.cardType !== "pokemon") return null;
 
   const energyCards = card.attachedEnergy ?? [];
@@ -198,7 +217,7 @@ function AttachedCardLayer({ card, instanceId }: { card: PokeState; instanceId?:
     <div className="pointer-events-none absolute inset-0 z-0 overflow-visible" aria-hidden="true">
       {toolCard ? (
         <div
-          className="absolute opacity-95 drop-shadow-[0_5px_10px_rgba(0,0,0,0.45)]"
+          className="attached-card attached-card--tool absolute opacity-95 drop-shadow-[0_5px_10px_rgba(0,0,0,0.45)]"
           style={{
             left: factorToCardWidth(-ATTACHED_TOOL_PEEK),
             top: 0,
@@ -220,6 +239,9 @@ function AttachedCardLayer({ card, instanceId }: { card: PokeState; instanceId?:
               imageUrl={toolCard.imageUrl}
               instanceId={`${instanceId ?? card.id}-attached-tool-${toolCard.id}`}
               alt={toolCard.name}
+              interactive={false}
+              hoverPoint={hoverPoint}
+              disableTilt
             />
           </div>
         </div>
@@ -230,7 +252,7 @@ function AttachedCardLayer({ card, instanceId }: { card: PokeState; instanceId?:
         return (
           <div
             key={energyCard.id}
-            className="absolute opacity-95 drop-shadow-[0_5px_10px_rgba(0,0,0,0.45)]"
+            className="attached-card attached-card--energy absolute opacity-95 drop-shadow-[0_5px_10px_rgba(0,0,0,0.45)]"
             style={{
               left: factorToCardWidth(left),
               top: energyAttachmentTop(index),
@@ -253,6 +275,9 @@ function AttachedCardLayer({ card, instanceId }: { card: PokeState; instanceId?:
                 imageUrl={energyCard.imageUrl}
                 instanceId={`${instanceId ?? card.id}-attached-energy-${energyCard.id}`}
                 alt={energyCard.name}
+                interactive={false}
+                hoverPoint={hoverPoint}
+                disableTilt
               />
             </div>
           </div>
@@ -277,9 +302,24 @@ export function CardWithAttachments({
   pressed?: boolean;
   dragging?: boolean;
 }) {
+  const hasAttachments = card.cardType === "pokemon" && Boolean(card.attachedTool || card.attachedEnergy?.length);
+  const [attachmentHoverPoint, setAttachmentHoverPoint] = useState<HoverPoint | null>(null);
+
+  function updateAttachmentHoverPoint(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!hasAttachments) return;
+    setAttachmentHoverPoint({ clientX: event.clientX, clientY: event.clientY });
+  }
+
   return (
-    <div className="relative overflow-visible" style={{ width: "var(--card-w)" }}>
-      <AttachedCardLayer card={card} instanceId={instanceId} />
+    <div
+      className="pokemon-card-with-attachments relative overflow-visible"
+      data-has-attachments={hasAttachments || undefined}
+      style={{ width: "var(--card-w)" }}
+      onPointerEnter={updateAttachmentHoverPoint}
+      onPointerMove={updateAttachmentHoverPoint}
+      onPointerLeave={() => setAttachmentHoverPoint(null)}
+    >
+      <AttachedCardLayer card={card} instanceId={instanceId} hoverPoint={attachmentHoverPoint} />
       <div className="relative z-10">
         <CardBox
           cardId={card.cardId}

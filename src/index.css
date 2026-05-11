@@ -245,6 +245,16 @@
   object-fit: cover;
 }
 
+.pokemon-card-with-attachments[data-has-attachments="true"]:hover,
+.pokemon-card-with-attachments[data-has-attachments="true"]:has(.balatro-hover-card[data-balatro-hovered="true"]) {
+  z-index: 1400;
+}
+
+[data-layout-card]:has(.pokemon-card-with-attachments[data-has-attachments="true"]:hover),
+[data-layout-card]:has(.pokemon-card-with-attachments[data-has-attachments="true"] .balatro-hover-card[data-balatro-hovered="true"]) {
+  z-index: 1400 !important;
+}
+
 html, body, #root { height: 100%; }
 body {
   margin: 0;

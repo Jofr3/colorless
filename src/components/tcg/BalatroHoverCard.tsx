@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import CardImage from "./CardImage";
 import {
   CARD_DRAG_INTERACTION_EVENT,
@@ -7,6 +7,8 @@ import {
 } from "./balatroAnimator";
 
 type CardBackTone = "blue" | "red";
+
+type HoverPoint = { clientX: number; clientY: number };
 
 interface BalatroHoverCardProps {
   cardId?: string;
@@ -20,6 +22,9 @@ interface BalatroHoverCardProps {
   bendCenterBoost?: number;
   pressed?: boolean;
   dragging?: boolean;
+  interactive?: boolean;
+  hoverPoint?: HoverPoint | null;
+  disableTilt?: boolean;
   children?: ReactNode;
 }
 
@@ -34,11 +39,15 @@ export default function BalatroHoverCard({
   bendCenterBoost,
   pressed = false,
   dragging = false,
+  interactive = true,
+  hoverPoint = null,
+  disableTilt = false,
   children,
 }: BalatroHoverCardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(dragging);
+  const proxyHoverActiveRef = useRef(false);
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -46,46 +55,51 @@ export default function BalatroHoverCard({
     if (!host || !surface) return;
 
     const animator = getBalatroDomCardAnimator();
-    animator.register(host, surface, bendCenterBoost, instanceId);
+    animator.register(host, surface, bendCenterBoost, instanceId, { disableTilt });
     animator.setPressed(host, pressed);
     animator.setDragging(host, dragging);
 
-    const handlePointerEnter = (event: PointerEvent) => {
-      if (isCardHoverSuppressed(event)) {
+    if (interactive) {
+      const handlePointerEnter = (event: PointerEvent) => {
+        if (isCardHoverSuppressed(event)) {
+          animator.unhover(host);
+          return;
+        }
+
+        animator.hover(host, event);
+      };
+      const handlePointerMove = (event: PointerEvent) => {
+        if (isCardHoverSuppressed(event)) {
+          animator.unhover(host);
+          return;
+        }
+
+        animator.move(host, event);
+      };
+      const handlePointerLeave = () => {
         animator.unhover(host);
-        return;
-      }
-
-      animator.hover(host, event);
-    };
-    const handlePointerMove = (event: PointerEvent) => {
-      if (isCardHoverSuppressed(event)) {
+      };
+      const handleCardDragStart = () => {
         animator.unhover(host);
-        return;
-      }
+      };
 
-      animator.move(host, event);
-    };
-    const handlePointerLeave = () => {
-      animator.unhover(host);
-    };
-    const handleCardDragStart = () => {
-      animator.unhover(host);
-    };
+      host.addEventListener("pointerenter", handlePointerEnter);
+      host.addEventListener("pointermove", handlePointerMove);
+      host.addEventListener("pointerleave", handlePointerLeave);
+      document.addEventListener(CARD_DRAG_INTERACTION_EVENT, handleCardDragStart);
 
-    host.addEventListener("pointerenter", handlePointerEnter);
-    host.addEventListener("pointermove", handlePointerMove);
-    host.addEventListener("pointerleave", handlePointerLeave);
-    document.addEventListener(CARD_DRAG_INTERACTION_EVENT, handleCardDragStart);
+      return () => {
+        host.removeEventListener("pointerenter", handlePointerEnter);
+        host.removeEventListener("pointermove", handlePointerMove);
+        host.removeEventListener("pointerleave", handlePointerLeave);
+        document.removeEventListener(CARD_DRAG_INTERACTION_EVENT, handleCardDragStart);
+        animator.unregister(host);
+      };
+    }
 
-    return () => {
-      host.removeEventListener("pointerenter", handlePointerEnter);
-      host.removeEventListener("pointermove", handlePointerMove);
-      host.removeEventListener("pointerleave", handlePointerLeave);
-      document.removeEventListener(CARD_DRAG_INTERACTION_EVENT, handleCardDragStart);
-      animator.unregister(host);
-    };
-  }, [bendCenterBoost, instanceId]);
+    animator.unhover(host);
+    return () => animator.unregister(host);
+  }, [bendCenterBoost, instanceId, interactive, disableTilt]);
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -93,6 +107,27 @@ export default function BalatroHoverCard({
 
     getBalatroDomCardAnimator().setPressed(host, pressed);
   }, [pressed]);
+
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const animator = getBalatroDomCardAnimator();
+    if (!hoverPoint || isCardHoverSuppressed()) {
+      if (proxyHoverActiveRef.current) {
+        animator.unhover(host);
+        proxyHoverActiveRef.current = false;
+      }
+      return;
+    }
+
+    if (proxyHoverActiveRef.current) {
+      animator.move(host, hoverPoint);
+    } else {
+      animator.hover(host, hoverPoint);
+      proxyHoverActiveRef.current = true;
+    }
+  }, [hoverPoint]);
 
   useLayoutEffect(() => {
     draggingRef.current = dragging;
@@ -184,8 +219,15 @@ export default function BalatroHoverCard({
       />
     ) : null);
 
+  const hostStyle: CSSProperties | undefined = interactive ? undefined : { pointerEvents: "none" };
+
   return (
-    <div ref={hostRef} className={`balatro-hover-card ${className ?? ""}`.trim()}>
+    <div
+      ref={hostRef}
+      className={`balatro-hover-card ${className ?? ""}`.trim()}
+      data-balatro-interactive={interactive || undefined}
+      style={hostStyle}
+    >
       <div ref={surfaceRef} className="balatro-hover-card__surface">
         {placeholder}
       </div>

@@ -96,6 +96,7 @@ export function Bench({
         {visibleCards.map((card, visibleIndex) => {
           const cardIndex = cards.findIndex((candidate) => candidate.id === card.id);
           const footprintWidth = cardAttachmentFootprintWidth(card);
+          const hasAttachments = Boolean(card.attachedTool || card.attachedEnergy?.length);
 
           return (
             <Fragment key={`bench-entry-${card.id}`}>
@@ -109,7 +110,11 @@ export function Bench({
               <div
                 key={card.id}
                 data-layout-card={card.id}
-                style={{ width: footprintWidth, zIndex: visibleCards.length - visibleIndex }}
+                style={{
+                  position: "relative",
+                  width: footprintWidth,
+                  zIndex: visibleCards.length - visibleIndex + (hasAttachments ? 100 : 0),
+                }}
               >
                 <div
                   className="balatro-row-card-face"

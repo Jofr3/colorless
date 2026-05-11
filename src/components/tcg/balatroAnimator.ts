@@ -55,6 +55,7 @@ interface DomCard {
   token: number;
   idleSeed: number;
   instanceId?: string;
+  disableTilt: boolean;
   host: HTMLElement;
   surface: HTMLElement;
   mouseClient: Point;
@@ -72,6 +73,10 @@ interface DomCard {
   rotationVelocity: number;
   ambientTilt: number;
   bendCenterBoost?: number;
+}
+
+interface RegisterCardOptions {
+  disableTilt?: boolean;
 }
 
 interface VisualCardState {
@@ -185,15 +190,28 @@ class BalatroDomCardAnimator {
   private unsubscribeReducedMotion: (() => void) | null = null;
   private unsubscribeTuning: (() => void) | null = null;
 
-  register(host: HTMLElement, surface: HTMLElement, bendCenterBoost?: number, instanceId?: string) {
+  register(
+    host: HTMLElement,
+    surface: HTMLElement,
+    bendCenterBoost?: number,
+    instanceId?: string,
+    options: RegisterCardOptions = {},
+  ) {
     this.watchReducedMotion();
     this.watchTuning();
     this.setRootFrom(host);
 
+    const disableTilt = Boolean(options.disableTilt);
     const existingCard = this.cards.get(host);
     if (existingCard) {
       existingCard.bendCenterBoost = bendCenterBoost;
       existingCard.instanceId = instanceId;
+      existingCard.disableTilt = disableTilt;
+      existingCard.ambientTilt = BALATRO_CARD_AMBIENT_TILT;
+      if (disableTilt) {
+        existingCard.rotation = 0;
+        existingCard.rotationVelocity = 0;
+      }
       if (!this.prefersReducedMotion) this.startTicker();
       return;
     }
@@ -204,6 +222,7 @@ class BalatroDomCardAnimator {
       token,
       idleSeed: makeBalatroIdleSeed(token),
       instanceId,
+      disableTilt,
       host,
       surface,
       mouseClient: { x: 0, y: 0 },
@@ -217,8 +236,8 @@ class BalatroDomCardAnimator {
       juiceSign: 1,
       visibleScale: inheritedState?.visibleScale ?? 1,
       scaleVelocity: inheritedState?.scaleVelocity ?? 0,
-      rotation: inheritedState?.rotation ?? 0,
-      rotationVelocity: inheritedState?.rotationVelocity ?? 0,
+      rotation: disableTilt ? 0 : (inheritedState?.rotation ?? 0),
+      rotationVelocity: disableTilt ? 0 : (inheritedState?.rotationVelocity ?? 0),
       ambientTilt: BALATRO_CARD_AMBIENT_TILT,
       bendCenterBoost,
     };
@@ -531,7 +550,7 @@ class BalatroDomCardAnimator {
         card.dragVelocityX = 0;
       }
       // dragVelocityX is already in card-units/sec (no extra /dt needed).
-      const dragRotation = card.targetDrag > 0
+      const dragRotation = card.targetDrag > 0 && !card.disableTilt
         ? -tuning.dragSway * card.dragVelocityX
         : 0;
       const juiceScaleAmt = tuning.juiceScaleAmount * sizeFactor;
@@ -564,7 +583,7 @@ class BalatroDomCardAnimator {
       card.visibleScale += card.scaleVelocity * dt;
 
       // Balatro Moveable:move_r: des_r = T.r + 0.015 * vel.x / dt + juice.r * 2.
-      const desiredRotation = dragRotation + juiceRotation * 2;
+      const desiredRotation = card.disableTilt ? 0 : dragRotation + juiceRotation * 2;
       const rotationEase = Math.exp(-tuning.rotationEase * dt);
       card.rotationVelocity =
         rotationEase * card.rotationVelocity +
@@ -655,7 +674,7 @@ class BalatroDomCardAnimator {
     const rootCenterY = rootRect.height / 2;
     const rootDiagonal = Math.hypot(rootRect.width, rootRect.height) || 1;
     const screenScale = Math.max(1, referenceWidth / BALATRO_CARD_W);
-    const isHovered = card.targetHover > 0;
+    const isHovered = !card.disableTilt && card.targetHover > 0;
     const ambientTilt = card.ambientTilt;
     const idleTiltAngle =
       now * (BALATRO_IDLE_TILT_BASE_SPEED + (card.idleSeed / BALATRO_IDLE_TILT_ID_SPEED_DIVISOR) % 1) +
