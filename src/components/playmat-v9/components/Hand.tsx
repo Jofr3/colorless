@@ -1,8 +1,8 @@
-// Hand row: a fanned, overlap-margin row of cards anchored to the bottom
-// of the playmat. Each card uses bendCenterBoost={0} (so the perspective
-// bend tracks the cursor without an extra center-of-screen pull).
+// Hand row: an overlap-margin row of cards anchored to the bottom of the
+// playmat. Each card uses bendCenterBoost={0} (so the perspective bend tracks
+// the cursor without an extra center-of-screen pull).
 
-import { Fragment, type CSSProperties } from "react";
+import { Fragment } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import type {
   DragRect,
@@ -15,9 +15,11 @@ import type {
 } from "../types";
 import { cardRowKey, clampInsertIndex, dropTargetId } from "../state/board";
 import { hiddenDraggedCardStyle } from "../physics/dragGeometry";
-import { balatroHandFan } from "../physics/balatroFan";
 import { useBalatroRowAnimation } from "../physics/rowAnimation";
 import { DraggableCard } from "./Card";
+
+const HAND_RESHUFFLE_STAGGER_MS = 30;
+const HAND_RESHUFFLE_MAX_STAGGER_MS = 210;
 
 export function Hand({
   cards,
@@ -46,17 +48,13 @@ export function Hand({
   const rowRef = useBalatroRowAnimation(
     `hand-${owner}:${visibleCards.map((card) => card.id).join("|")}:gap-${previewIndex ?? "none"}`,
     releaseRectsRef,
+    {
+      layoutStaggerMs: HAND_RESHUFFLE_STAGGER_MS,
+      layoutStaggerMaxMs: HAND_RESHUFFLE_MAX_STAGGER_MS,
+      layoutStaggerOriginIndex: previewIndex,
+    },
   );
   const draggedCard = cards.find((card) => card.id === draggingCardId);
-  const totalSlots = visibleCards.length + (previewIndex !== null ? 1 : 0);
-
-  function fanStyle(visualIndex: number): CSSProperties {
-    const fan = balatroHandFan(visualIndex, totalSlots);
-    return {
-      "--balatro-row-lift": `${fan.liftPx}px`,
-      "--balatro-row-rotation": `${fan.rotationDeg}deg`,
-    } as CSSProperties;
-  }
 
   return (
     <div
@@ -98,11 +96,7 @@ export function Hand({
                   zIndex: visibleCards.length - visibleIndex,
                 }}
               >
-                <div
-                  className="balatro-row-card-face"
-                  data-balatro-release-target
-                  style={fanStyle(visualIndex)}
-                >
+                <div className="balatro-row-card-face" data-balatro-release-target>
                   <DraggableCard
                     card={card}
                     location={{ kind: "hand", owner, index: cards.findIndex((candidate) => candidate.id === card.id) }}

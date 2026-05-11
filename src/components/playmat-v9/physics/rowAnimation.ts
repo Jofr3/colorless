@@ -43,12 +43,22 @@ interface BalatroLayoutMotion {
   rotationVelocity?: number;
 }
 
+interface BalatroRowAnimationOptions {
+  layoutStaggerMs?: number;
+  layoutStaggerMaxMs?: number;
+  layoutStaggerOriginIndex?: number | null;
+}
+
 function finiteNumber(value: number | undefined, fallback = 0) {
   return value !== undefined && Number.isFinite(value) ? value : fallback;
 }
 
 function clampNumber(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+function normalizeStaggerOriginIndex(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : null;
 }
 
 function clampVectorMagnitude(x: number, y: number, maxMagnitude: number) {
@@ -80,7 +90,11 @@ function stopBalatroLayoutAnimation(element: HTMLElement, clearTransform = false
   layoutAnimationCleanups.get(element)?.(clearTransform);
 }
 
-function animateBalatroLayoutToElement(element: HTMLElement, motion: BalatroLayoutMotion) {
+function animateBalatroLayoutToElement(
+  element: HTMLElement,
+  motion: BalatroLayoutMotion,
+  startDelayMs = 0,
+) {
   stopBalatroLayoutAnimation(element);
 
   const targetRect = element.getBoundingClientRect();
@@ -102,8 +116,9 @@ function animateBalatroLayoutToElement(element: HTMLElement, motion: BalatroLayo
     rotationVelocity: finiteNumber(motion.rotationVelocity),
     unit,
   };
-  let lastTime = performance.now() / 1000;
-  const startTime = lastTime;
+  const startDelaySeconds = Math.max(0, finiteNumber(startDelayMs) / 1000);
+  const startTime = performance.now() / 1000 + startDelaySeconds;
+  let lastTime = startTime;
   let settledFrames = 0;
   let active = true;
 
@@ -136,6 +151,8 @@ function animateBalatroLayoutToElement(element: HTMLElement, motion: BalatroLayo
     }
 
     const now = performance.now() / 1000;
+    if (now < startTime) return;
+
     const realDt = clampNumber(now - lastTime, 0, 0.05) || BALATRO_LAYOUT_INITIAL_DT;
     const moveDt = Math.min(1 / 20, realDt);
     lastTime = now;
@@ -189,20 +206,51 @@ function animateBalatroLayoutToElement(element: HTMLElement, motion: BalatroLayo
   gsap.ticker.add(tick);
 }
 
-export function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: ReleaseRectsRef) {
+export function useBalatroRowAnimation(
+  layoutKey: string,
+  releaseRectsRef?: ReleaseRectsRef,
+  options?: BalatroRowAnimationOptions,
+) {
   const rowRef = useRef<HTMLDivElement>(null);
   const previousRectsRef = useRef(new Map<string, DOMRect>());
+  const previousStaggerOriginIndexRef = useRef<number | null>(null);
   const hasMeasuredRef = useRef(false);
+  const layoutStaggerMs = Math.max(0, finiteNumber(options?.layoutStaggerMs, 0));
+  const layoutStaggerMaxMs = Math.max(
+    0,
+    finiteNumber(options?.layoutStaggerMaxMs, Number.POSITIVE_INFINITY),
+  );
+  const layoutStaggerOriginIndex = normalizeStaggerOriginIndex(options?.layoutStaggerOriginIndex);
 
   useLayoutEffect(() => {
     // layoutKey intentionally acts as a React-trigger token for a fresh DOM
     // measurement pass; read it so hook linters don't treat it as accidental.
     void layoutKey;
 
+    const rememberStaggerOrigin = () => {
+      previousStaggerOriginIndexRef.current = layoutStaggerOriginIndex;
+    };
     const row = rowRef.current;
-    if (!row) return;
+    if (!row) {
+      rememberStaggerOrigin();
+      return;
+    }
 
     const elements = Array.from(row.querySelectorAll<HTMLElement>("[data-layout-card]"));
+    const effectiveStaggerOriginIndex = previousStaggerOriginIndexRef.current ?? layoutStaggerOriginIndex;
+    const elementIndexes = new Map(elements.map((element, index) => [element, index]));
+    const layoutStaggerDelayForElement = (element: HTMLElement) => {
+      if (layoutStaggerMs <= 0 || effectiveStaggerOriginIndex === null) return 0;
+
+      const elementIndex = elementIndexes.get(element);
+      if (elementIndex === undefined) return 0;
+
+      const distanceFromGap =
+        elementIndex >= effectiveStaggerOriginIndex
+          ? elementIndex - effectiveStaggerOriginIndex
+          : effectiveStaggerOriginIndex - elementIndex - 1;
+      return Math.min(Math.max(0, distanceFromGap) * layoutStaggerMs, layoutStaggerMaxMs);
+    };
     const previousRects = previousRectsRef.current;
     const liveRects = new Map<
       string,
@@ -266,6 +314,7 @@ export function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: Rele
     if (!hasMeasuredRef.current) {
       previousRectsRef.current = nextRects;
       hasMeasuredRef.current = true;
+      rememberStaggerOrigin();
       return;
     }
 
@@ -326,18 +375,23 @@ export function useBalatroRowAnimation(layoutKey: string, releaseRectsRef?: Rele
         continue;
       }
 
-      animateBalatroLayoutToElement(element, {
-        xPx: dx,
-        yPx: dy,
-        velocityXPx,
-        velocityYPx,
-        rotation,
-        rotationVelocity,
-      });
+      animateBalatroLayoutToElement(
+        element,
+        {
+          xPx: dx,
+          yPx: dy,
+          velocityXPx,
+          velocityYPx,
+          rotation,
+          rotationVelocity,
+        },
+        layoutStaggerDelayForElement(element),
+      );
     }
 
     previousRectsRef.current = nextRects;
-  }, [layoutKey, releaseRectsRef]);
+    rememberStaggerOrigin();
+  }, [layoutKey, releaseRectsRef, layoutStaggerMs, layoutStaggerMaxMs, layoutStaggerOriginIndex]);
 
   return rowRef;
 }
