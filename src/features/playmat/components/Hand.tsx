@@ -8,6 +8,9 @@ export function Hand({ cards }: { cards: CardModel[] }) {
     <div
       className="relative z-10 flex items-end justify-center px-6"
       style={{ height: "var(--hand-h)", paddingBottom: 8 }}
+      data-card-drop-zone="true"
+      data-card-owner="you"
+      data-card-zone="hand"
     >
       <div className="relative flex h-full items-end justify-center">
         {cards.map((card, index) => (
@@ -18,6 +21,10 @@ export function Hand({ cards }: { cards: CardModel[] }) {
               width: "var(--card-w)",
               zIndex: cards.length - index,
             }}
+            data-card-drop-zone="true"
+            data-card-owner="you"
+            data-card-zone="hand"
+            data-card-index={index}
           >
             <PlaymatCard card={card} priority />
           </div>

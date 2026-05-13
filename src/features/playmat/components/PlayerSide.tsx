@@ -8,14 +8,18 @@ import { DeckPile, DiscardPile, PrizeGrid } from "./Piles";
 function ActiveCardSlot({
   card,
   active,
+  owner,
 }: {
   card: CardModel | null;
   active: boolean;
+  owner: PlayerId;
 }) {
   return (
-    <CardSlot highlighted={active}>
-      {card ? <PlaymatCard card={card} priority /> : <div style={CARD_SIZE_STYLE} />}
-    </CardSlot>
+    <div data-card-drop-zone="true" data-card-owner={owner} data-card-zone="active">
+      <CardSlot highlighted={active}>
+        {card ? <PlaymatCard card={card} priority /> : <div style={CARD_SIZE_STYLE} />}
+      </CardSlot>
+    </div>
   );
 }
 
@@ -77,7 +81,7 @@ function BenchArea({
 }) {
   return (
     <div className="relative">
-      <Bench cards={player.bench} />
+      <Bench cards={player.bench} owner={owner} />
       <SidePiles owner={owner} prizesRemaining={player.prizesRemaining} side={side} />
     </div>
   );
@@ -95,7 +99,7 @@ export function PlayerSide({
   activeTurn?: boolean;
 }) {
   const isTop = side === "top";
-  const activeSlot = <ActiveCardSlot card={player.active} active={activeTurn} />;
+  const activeSlot = <ActiveCardSlot card={player.active} active={activeTurn} owner={owner} />;
   const bench = <BenchArea owner={owner} player={player} side={side} />;
 
   return (

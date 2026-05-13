@@ -1,8 +1,8 @@
 import { BENCH_LIMIT, FRAME_CLASS } from "../constants";
-import type { CardModel } from "../types";
+import type { CardModel, PlayerId } from "../types";
 import { PlaymatCard } from "./Card";
 
-export function Bench({ cards }: { cards: CardModel[] }) {
+export function Bench({ cards, owner }: { cards: CardModel[]; owner: PlayerId }) {
   return (
     <div
       className={FRAME_CLASS}
@@ -11,6 +11,9 @@ export function Bench({ cards }: { cards: CardModel[] }) {
         height: "calc(var(--card-h) + 12px)",
         padding: "var(--pile-pad)",
       }}
+      data-card-drop-zone="true"
+      data-card-owner={owner}
+      data-card-zone="bench"
     >
       <div
         className="relative flex h-full w-full items-center justify-center"
@@ -24,6 +27,10 @@ export function Bench({ cards }: { cards: CardModel[] }) {
               width: "var(--card-w)",
               zIndex: cards.length - index,
             }}
+            data-card-drop-zone="true"
+            data-card-owner={owner}
+            data-card-zone="bench"
+            data-card-index={index}
           >
             <PlaymatCard card={card} />
           </div>

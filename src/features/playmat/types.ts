@@ -3,10 +3,28 @@ export type SidePosition = "top" | "bottom";
 export type CardBackTone = "blue" | "red";
 export type CardBackSize = "card" | "prize";
 
+export type CardOwner = PlayerId | "global";
+export type CardZone = "hand" | "active" | "bench" | "stadium";
+
+export interface CardPlacement {
+  owner: CardOwner;
+  zone: CardZone;
+  index?: number;
+}
+
+export interface CardMoveRequest {
+  cardId: string;
+  from: CardPlacement;
+  to: CardPlacement;
+}
+
+export type CardType = "pokemon" | "trainer" | "energy" | "stadium";
+
 export interface CardModel {
   id: string;
   name: string;
   cardId: string;
+  type: CardType;
   imageUrl?: string;
 }
 

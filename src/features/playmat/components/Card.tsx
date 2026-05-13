@@ -32,7 +32,13 @@ export function PlaymatCard({
   priority?: boolean;
 }) {
   return (
-    <div className="relative select-none" aria-label={card.name} style={{ width: "var(--card-w)" }}>
+    <div
+      className="relative select-none"
+      aria-label={card.name}
+      style={{ width: "var(--card-w)" }}
+      data-card-anchor="true"
+      data-card-id={card.id}
+    >
       <div className="static-card w-full">
         <div className="static-card__surface">
           <CardImage

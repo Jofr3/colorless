@@ -1,12 +1,15 @@
-import { useState, type PointerEvent } from "react";
+import { useCallback, useRef, useState, type PointerEvent } from "react";
 import "./playmat.css";
 import { CENTER_LINE_TOP, HIDDEN_CURSOR_POSITION, PLAYMAT_WRAPPER_CLASS } from "./constants";
 import { gameLog, initialBoard, initialTurn } from "./data/mockPlaymat";
+import { AnimatedCardsLayer } from "./components/AnimatedCardsLayer";
 import { GameLog } from "./components/GameLog";
 import { Hand } from "./components/Hand";
 import { PlayerSide } from "./components/PlayerSide";
 import { StadiumSlot } from "./components/StadiumSlot";
 import { TurnBanner, TurnControls } from "./components/TurnHud";
+import type { CardMoveRequest } from "./types";
+import { moveCardOnBoard } from "./utils/cardMovement";
 import { opponentOf } from "./utils/players";
 
 function setCursorPosition(element: HTMLDivElement, x: number, y: number) {
@@ -26,6 +29,8 @@ function hideCursorDots(event: PointerEvent<HTMLDivElement>) {
 export function Playmat() {
   const [turn, setTurn] = useState(initialTurn);
   const [passAnimationKey, setPassAnimationKey] = useState(0);
+  const [board, setBoard] = useState(initialBoard);
+  const playmatRef = useRef<HTMLDivElement>(null);
 
   const bottomPlayer = turn.activePlayer;
   const topPlayer = opponentOf(bottomPlayer);
@@ -39,26 +44,31 @@ export function Playmat() {
     }));
   }
 
+  const handleMoveCard = useCallback((req: CardMoveRequest) => {
+    setBoard((b) => moveCardOnBoard(b, req));
+  }, []);
+
   return (
     <div
-      className={PLAYMAT_WRAPPER_CLASS}
+      ref={playmatRef}
+      className={`${PLAYMAT_WRAPPER_CLASS} has-pixi-cards`}
       onPointerMove={updateCursorPosition}
       onPointerLeave={hideCursorDots}
     >
       <span className="sr-only" data-perspective-player={bottomPlayer} aria-hidden="true" />
       <PlayerSide
         owner={topPlayer}
-        player={initialBoard[topPlayer]}
+        player={board[topPlayer]}
         side="top"
         activeTurn={turn.activePlayer === topPlayer}
       />
       <PlayerSide
         owner={bottomPlayer}
-        player={initialBoard[bottomPlayer]}
+        player={board[bottomPlayer]}
         side="bottom"
         activeTurn={turn.activePlayer === bottomPlayer}
       />
-      <Hand cards={initialBoard[bottomPlayer].hand} />
+      <Hand cards={board[bottomPlayer].hand} />
       <div
         className="absolute z-10"
         style={{
@@ -67,11 +77,17 @@ export function Playmat() {
           transform: "translate(calc(-150% - var(--side-gap) - 24px), -50%)",
         }}
       >
-        <StadiumSlot card={initialBoard.stadium} />
+        <StadiumSlot card={board.stadium} />
       </div>
       <TurnControls onPassTurn={passTurn} />
       <TurnBanner info={turn} passAnimationKey={passAnimationKey} />
       <GameLog entries={gameLog} turn={turn.turn} />
+      <AnimatedCardsLayer
+        board={board}
+        perspectivePlayer={bottomPlayer}
+        playmatRef={playmatRef}
+        onMoveCard={handleMoveCard}
+      />
     </div>
   );
 }
