@@ -311,6 +311,11 @@ export function AnimatedCardsLayer({
 
       measuredCardIds.add(cardId);
 
+      // setPlaymatSize feeds the hover-offset math in CardView. Cheap to
+      // call every measure pass and keeps the direction live across
+      // resizes even for hovered cards.
+      view.setPlaymatSize(rootRect.width, rootRect.height);
+
       if (view.isDragging) {
         continue;
       }

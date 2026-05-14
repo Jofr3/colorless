@@ -86,6 +86,12 @@ const TILT_VERTICES_Y = 24;
 // frequency time*(1.56 + ID factor). ambient_tilt = 0.2 in Balatro.
 const AMBIENT_TILT = 0.2;
 
+// Directional hover lift — how far an edge card slides outward when
+// hovered. Cards near the playmat centre barely move; cards at the
+// corners reach this magnitude in screen pixels. Hand cards opt out
+// (computeHoverOffset returns {0,0} for them).
+const HOVER_LIFT_MAX_PX = 12;
+
 const textureCache = new Map<string, Promise<Texture>>();
 
 export interface CardViewTarget {
@@ -217,6 +223,8 @@ export class CardView {
 
   private juiceState: JuiceState | null = null;
 
+  private playmatSize = { width: 0, height: 0 };
+
   constructor(options: CardViewOptions) {
     this.id = options.id;
     this.seed = options.seed;
@@ -341,6 +349,10 @@ export class CardView {
 
   hide() {
     this.container.visible = false;
+  }
+
+  setPlaymatSize(width: number, height: number) {
+    this.playmatSize = { width, height };
   }
 
   setHovered(hovered: boolean) {
@@ -715,20 +727,48 @@ export class CardView {
 
   private applyEmphasisTween() {
     // Balatro adds +0.05 scale on hover, +0.10 on drag (moveable.lua:424),
-    // so 1.05 / 1.10 are the canonical values. Lift Y is our addition
-    // (Balatro stays in-plane); kept modest to read as "card raised".
-    const liftY = this.dragging ? -14 : this.hovered ? -8 : 0;
-    const scale = this.dragging ? 1.1 : this.hovered ? 1.05 : 1;
+    // so 1.05 / 1.10 are the canonical values. The lift offset is our
+    // addition: instead of a constant upward nudge, board cards slide
+    // outward radially from the playmat centre so a corner card pushes
+    // toward its corner. Hand cards are exempt (computeHoverOffset
+    // returns 0/0 for them).
+    const offset = this.computeHoverOffset();
+    const liftX = this.dragging ? 0 : this.hovered ? offset.x : 0;
+    const liftY = this.dragging ? -14 : this.hovered ? offset.y : 0;
+    const scale = this.dragging ? 1.1 : this.hovered ? 1.03 : 1;
     gsap.to(this.lift, {
       duration: this.reducedMotion ? 0 : 0.16,
       ease: "power3.out",
-      pixi: { y: liftY },
+      pixi: { x: liftX, y: liftY },
     });
     gsap.to(this.emphasisScale, {
       duration: this.reducedMotion ? 0 : 0.16,
       ease: "power3.out",
       pixi: { scale },
     });
+  }
+
+  private computeHoverOffset(): { x: number; y: number } {
+    if (!this.target || this.target.placement.zone === "hand") {
+      return { x: 0, y: 0 };
+    }
+    const { width, height } = this.playmatSize;
+    if (width <= 0 || height <= 0) {
+      return { x: 0, y: 0 };
+    }
+    // Linear radial scaling from playmat centre. A card sitting exactly
+    // at the centre gets zero offset; a card at the far edge gets
+    // HOVER_LIFT_MAX_PX in its direction. Half-size in each axis is the
+    // natural normaliser so the offset reads symmetrically regardless of
+    // playmat aspect ratio.
+    const halfW = width / 2;
+    const halfH = height / 2;
+    const dx = this.target.x - halfW;
+    const dy = this.target.y - halfH;
+    return {
+      x: (dx / halfW) * HOVER_LIFT_MAX_PX,
+      y: (dy / halfH) * HOVER_LIFT_MAX_PX,
+    };
   }
 
   private startHoldTween() {
