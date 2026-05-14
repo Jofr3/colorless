@@ -92,16 +92,27 @@
 }
 
 .playmat-wrapper::after {
+  /* Override the shared ::before, ::after rule's `inset: 0`; this spotlight is a small layer, not full-screen. */
+  inset: auto;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 300px;
+  /* Move on the GPU compositor instead of re-rasterizing a viewport-sized mask every pointermove. */
+  transform: translate3d(calc(var(--cursor-x) - 150px), calc(var(--cursor-y) - 150px), 0);
+  will-change: transform;
   opacity: 0.62;
   background-image: radial-gradient(circle, rgba(245, 250, 255, 0.32) 1px, transparent 1.35px);
+  /* Keep the dot grid in phase with ::before (which is viewport-anchored) despite our local translate. */
+  background-position: calc(50vw - var(--cursor-x) + 150px) calc(50vh - var(--cursor-y) + 150px);
   -webkit-mask-image: radial-gradient(
-    circle 150px at var(--cursor-x) var(--cursor-y),
+    circle 150px at 50% 50%,
     black 0%,
     rgba(0, 0, 0, 0.82) 38%,
     transparent 74%
   );
   mask-image: radial-gradient(
-    circle 150px at var(--cursor-x) var(--cursor-y),
+    circle 150px at 50% 50%,
     black 0%,
     rgba(0, 0, 0, 0.82) 38%,
     transparent 74%
