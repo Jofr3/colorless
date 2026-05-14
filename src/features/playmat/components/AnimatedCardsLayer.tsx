@@ -53,10 +53,15 @@ interface DragState {
   velocity: ReleaseVelocity;
   moved: boolean;
   // Insertion index produced by the live reorder preview while the card
-  // moves across siblings in the source zone (hand or bench). When the
-  // user releases inside the source zone, this is used as the destination
-  // index so the drop matches what was previewed.
+  // moves across siblings in whichever zone the cursor is hovering over
+  // (hand or bench). On release this overrides the drop-zone's own index
+  // when the cursor is still inside `previewZone`, so the landing slot
+  // matches what the user just saw.
   reorderIndex: number | null;
+  // Which zone the live reorder preview is currently applied to. Tracked
+  // so we can snap the previously previewed zone back to canonical layout
+  // when the cursor moves to a different zone.
+  previewZone: { owner: PlayerId; zone: "hand" | "bench" } | null;
 }
 
 interface SlotAnchor {
@@ -479,6 +484,7 @@ export function AnimatedCardsLayer({
       velocity: { x: 0, y: 0 },
       moved: false,
       reorderIndex: null,
+      previewZone: null,
     };
 
     root.classList.add("is-card-dragging");
@@ -524,34 +530,87 @@ export function AnimatedCardsLayer({
     drag.moved = drag.moved || Math.hypot(point.x - drag.startX, point.y - drag.startY) > 5;
 
     view.dragTo(point.x - drag.offsetX, point.y - drag.offsetY);
-    applyReorderPreview(drag);
+
+    const nextPreviewZone = detectPreviewZone(drag, point);
+
+    // If the preview zone changed (or vanished), snap the previously
+    // previewed zone back to its canonical DOM layout. Without this the
+    // hand stays "open" with a gap after the cursor moves to the bench,
+    // and vice versa.
+    if (
+      drag.previewZone &&
+      (!nextPreviewZone ||
+        nextPreviewZone.owner !== drag.previewZone.owner ||
+        nextPreviewZone.zone !== drag.previewZone.zone)
+    ) {
+      resyncZoneCards(drag.previewZone.owner, drag.previewZone.zone);
+    }
+
+    if (nextPreviewZone) {
+      applyReorderPreview(drag, nextPreviewZone.owner, nextPreviewZone.zone);
+    } else {
+      drag.reorderIndex = null;
+    }
+    drag.previewZone = nextPreviewZone;
+  }
+
+  function detectPreviewZone(
+    drag: DragState,
+    point: { x: number; y: number },
+  ): { owner: PlayerId; zone: "hand" | "bench" } | null {
+    const board = boardRef.current;
+    // Iterate smallest-first so we prefer the most specific slot drop zone
+    // when slot zones nest inside a wider zone container.
+    const candidates = dropZonesRef.current
+      .filter((dz) => isPointerOverZone(point, dz))
+      .sort((a, b) => a.area - b.area);
+
+    for (const dz of candidates) {
+      const zone = dz.placement.zone;
+      if (zone !== "hand" && zone !== "bench") continue;
+      const owner = dz.placement.owner;
+      if (owner !== "you" && owner !== "opponent") continue;
+      // Source-zone reorder is always allowed (it's just rearranging).
+      // External insertion requires the drop to be legal at all.
+      const isSourceZone = drag.from.owner === owner && drag.from.zone === zone;
+      if (!isSourceZone && !canPlace(board, drag.from, dz.placement, drag.cardType)) {
+        continue;
+      }
+      return { owner, zone };
+    }
+    return null;
   }
 
   // Balatro's CardArea:align_cards (cardarea.lua:410-465) reorders cards by
   // sorting `self.cards` on their current x position each frame. We mirror
-  // that: while a hand/bench card is dragged, sort it against its siblings
-  // by current x, then move each sibling's target to the slot at its new
-  // index. The CardView spring carries them.
-  function applyReorderPreview(drag: DragState) {
+  // that: while a card is dragged across a hand/bench zone — its own source
+  // zone OR a destination it could legally land in — sort that zone's cards
+  // against the dragged card by current x, then move each into the slot at
+  // its new index. The CardView spring carries them.
+  function applyReorderPreview(
+    drag: DragState,
+    previewOwner: PlayerId,
+    previewZone: "hand" | "bench",
+  ) {
     const root = playmatRef.current;
     if (!root) return;
-    if (drag.from.zone !== "hand" && drag.from.zone !== "bench") {
-      drag.reorderIndex = null;
-      return;
-    }
-    if (drag.from.owner !== "you" && drag.from.owner !== "opponent") return;
 
-    const zone = drag.from.zone;
-    const owner = drag.from.owner;
     const draggedView = viewsRef.current.get(drag.cardId);
     if (!draggedView) return;
 
+    const isSourceZone =
+      drag.from.owner === previewOwner && drag.from.zone === previewZone;
+
+    // For a source-zone preview the dragged card is one of the siblings and
+    // must be excluded so it doesn't try to occupy its own virtual slot.
+    // For an external preview the dragged card isn't in this zone yet, so
+    // every card counts as a sibling.
     const siblings = [...descriptorsRef.current.values()]
       .filter(
         (d) =>
-          d.placement.zone === zone &&
-          d.placement.owner === owner &&
-          d.card.id !== drag.cardId,
+          d.placement.zone === previewZone &&
+          d.placement.owner === previewOwner &&
+          (!isSourceZone || d.card.id !== drag.cardId),
       )
       .map((d) => {
         const view = viewsRef.current.get(d.card.id);
@@ -577,7 +636,12 @@ export function AnimatedCardsLayer({
     }
     drag.reorderIndex = insertIdx;
 
-    const slots = getZoneSlots(zone, owner);
+    // siblings + 1 = the virtual layout we want: every existing card needs
+    // a slot, plus one extra for the dragged card's gap. For source-zone
+    // reorder this matches the DOM count exactly (N cards → N anchors).
+    // For external insertion (hand → bench) we'll be one short on the DOM
+    // side and getZoneSlots falls through to computing a centred layout.
+    const slots = getZoneSlots(previewZone, previewOwner, siblings.length + 1);
     if (slots.length === 0) return;
 
     const zoneSize = slots.length;
@@ -587,7 +651,11 @@ export function AnimatedCardsLayer({
       if (!slot) continue;
 
       const sibling = siblings[j];
-      const placement: CardPlacement = { owner, zone, index: virtualIndex };
+      const placement: CardPlacement = {
+        owner: previewOwner,
+        zone: previewZone,
+        index: virtualIndex,
+      };
       sibling.view.setTarget({
         x: slot.x,
         y: slot.y,
@@ -600,12 +668,48 @@ export function AnimatedCardsLayer({
     }
   }
 
-  function getZoneSlots(zone: "hand" | "bench", owner: PlayerId): SlotAnchor[] {
+  // Reset the cards in a zone back to the targets implied by the current
+  // DOM layout (the canonical board-state positions). Used when the live
+  // preview zone changes so the old zone snaps closed.
+  function resyncZoneCards(owner: PlayerId, zone: "hand" | "bench") {
+    const root = playmatRef.current;
+    if (!root) return;
+    const rootRect = root.getBoundingClientRect();
+
+    for (const descriptor of descriptorsRef.current.values()) {
+      if (descriptor.placement.zone !== zone) continue;
+      if (descriptor.placement.owner !== owner) continue;
+      const view = viewsRef.current.get(descriptor.card.id);
+      if (!view || view.isDragging) continue;
+
+      const element = root.querySelector<HTMLElement>(
+        `[data-card-anchor="true"][data-card-id="${descriptor.card.id}"]`,
+      );
+      if (!element) continue;
+
+      const rect = element.getBoundingClientRect();
+      view.setTarget({
+        x: rect.left - rootRect.left + rect.width / 2,
+        y: rect.top - rootRect.top + rect.height / 2,
+        width: rect.width,
+        height: rect.height,
+        rotation: baseRotationForPlacement(descriptor.placement, descriptor.zoneSize),
+        zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize),
+        placement: descriptor.placement,
+      });
+    }
+  }
+
+  function getZoneSlots(
+    zone: "hand" | "bench",
+    owner: PlayerId,
+    slotCount: number,
+  ): SlotAnchor[] {
     const root = playmatRef.current;
     if (!root) return [];
     const rootRect = root.getBoundingClientRect();
     const selector = `[data-card-drop-zone="true"][data-card-owner="${owner}"][data-card-zone="${zone}"][data-card-index]`;
-    return [...root.querySelectorAll<HTMLElement>(selector)]
+    const domSlots = [...root.querySelectorAll<HTMLElement>(selector)]
       .map((el) => {
         const index = Number(el.dataset.cardIndex);
         if (!Number.isFinite(index)) return null;
@@ -620,6 +724,63 @@ export function AnimatedCardsLayer({
       })
       .filter((slot): slot is SlotAnchor => slot !== null)
       .sort((a, b) => a.index - b.index);
+
+    // Source-zone reorders need exactly as many slots as the DOM already
+    // renders (one per card) — return those directly. The dynamic path
+    // below is for the hand→bench external case, where we need one extra
+    // slot (the virtual gap for the incoming card) and the bench needs to
+    // visually re-center around N+1 cards instead of N.
+    if (domSlots.length >= slotCount) {
+      return domSlots;
+    }
+
+    // We need more slots than the DOM has rendered. Compute a centred
+    // layout for `slotCount` cards inside the zone's outer container so
+    // existing cards animate from "N centred" to "N+1 centred", leaving
+    // the dragged card's slot empty at the cursor's insertion point.
+    const outerEl = root.querySelector<HTMLElement>(
+      `[data-card-drop-zone="true"][data-card-owner="${owner}"][data-card-zone="${zone}"]:not([data-card-index])`,
+    );
+    if (!outerEl) return domSlots;
+    const outerRect = outerEl.getBoundingClientRect();
+
+    let cardW = 0;
+    let cardH = 0;
+    let gap = 0;
+    if (domSlots.length > 0) {
+      cardW = domSlots[0].width;
+      cardH = domSlots[0].height;
+      if (domSlots.length > 1) {
+        gap = domSlots[1].x - domSlots[0].x - cardW;
+      } else {
+        gap = Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--slot-gap"),
+        ) || 0;
+      }
+    } else {
+      const rootStyles = getComputedStyle(document.documentElement);
+      cardW = Number.parseFloat(rootStyles.getPropertyValue("--card-w")) || 0;
+      cardH = Number.parseFloat(rootStyles.getPropertyValue("--card-h")) || 0;
+      gap = Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
+    }
+    if (cardW === 0 || cardH === 0) return domSlots;
+
+    const totalWidth = slotCount * cardW + (slotCount - 1) * gap;
+    const centerX = outerRect.left + outerRect.width / 2 - rootRect.left;
+    const centerY = outerRect.top + outerRect.height / 2 - rootRect.top;
+    const startX = centerX - totalWidth / 2 + cardW / 2;
+
+    const slots: SlotAnchor[] = [];
+    for (let i = 0; i < slotCount; i += 1) {
+      slots.push({
+        x: startX + i * (cardW + gap),
+        y: centerY,
+        width: cardW,
+        height: cardH,
+        index: i,
+      });
+    }
+    return slots;
   }
 
   function handlePointerUp(event: PointerEvent) {
@@ -636,14 +797,17 @@ export function AnimatedCardsLayer({
     const dropZone = drag.moved ? findDropZone(point, drag.from, drag.cardType) : undefined;
     let toPlacement: CardPlacement | undefined = dropZone?.placement;
 
-    // When the drop lands inside the source zone, prefer the live
-    // reorder index the user previewed over whichever per-slot drop
-    // zone the pointer happens to overlap.
+    // When the drop lands inside the zone we were previewing, prefer the
+    // live reorder index the user just saw over whichever per-slot drop
+    // zone the pointer happens to overlap. Works for source-zone reorders
+    // (hand → hand, bench → bench) and for cross-zone insertions
+    // (hand → bench).
     if (
       toPlacement &&
       drag.reorderIndex != null &&
-      toPlacement.zone === drag.from.zone &&
-      toPlacement.owner === drag.from.owner
+      drag.previewZone &&
+      toPlacement.zone === drag.previewZone.zone &&
+      toPlacement.owner === drag.previewZone.owner
     ) {
       toPlacement = { ...toPlacement, index: drag.reorderIndex };
     }
