@@ -523,7 +523,7 @@ export function AnimatedCardsLayer({
     drag.lastTime = now;
     drag.moved = drag.moved || Math.hypot(point.x - drag.startX, point.y - drag.startY) > 5;
 
-    view.dragTo(point.x - drag.offsetX, point.y - drag.offsetY, drag.velocity);
+    view.dragTo(point.x - drag.offsetX, point.y - drag.offsetY);
     applyReorderPreview(drag);
   }
 

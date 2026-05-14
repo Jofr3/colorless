@@ -39,13 +39,25 @@ const IDLE_FLOAT_AMOUNT = 1.6;
 // Spring damping coefficients (moveable.lua + game.lua:2618-2624).
 const SPRING_C_XY = 50;
 const SPRING_C_SCALE = 60;
-const SPRING_C_ROT = 190;
+// Rotation: Balatro runs this at 190 (essentially critically damped) so the
+// drag tilt never overshoots. We want overshoot — fast drag then sudden
+// stop should swing past 0 before settling. 20 leaves the spring underdamped
+// enough that the residual angular velocity carries the rotation past
+// neutral when the input collapses, then it springs back.
+const SPRING_C_ROT = 20;
 // Spring stiffness (moveable.lua:408 — the *35 factor).
 const SPRING_K_XY = 35;
 // max_vel per frame (moveable.lua:410 + game.lua:2624 — 70*dt).
 const SPRING_MAX_VEL = 70;
-// Drag rotation tilt coefficient (moveable.lua:448 — 0.015*vel.x/dt).
-const DRAG_ROTATION_FACTOR = 0.015;
+// Drag rotation tilt — Balatro uses a linear `0.015*vel.x/dt` (moveable.lua
+// 448). On our scale linear gave too much constant tilt at low speeds, but
+// fully quadratic made slow drags read as "not tilting at all". A power of
+// 1.3 (slightly above linear) is the sweet spot: low speeds still get a
+// real-but-subtle tilt, fast throws still ramp hard to the 0.22 rad cap.
+// DRAG_VEL_REF is the spring velocity (in px/s) at which tilt reaches that
+// cap.
+const DRAG_VEL_REF = 1200;
+const DRAG_TILT_EXPONENT = 1.3;
 
 // Juice (moveable.lua:250-276). 0.4s duration with sinusoidal decay.
 const JUICE_DURATION = 0.4;
@@ -433,19 +445,20 @@ export class CardView {
     }
   }
 
-  dragTo(x: number, y: number, pointerVelocity: ReleaseVelocity) {
+  dragTo(x: number, y: number) {
     if (!this.target) {
       return;
     }
 
-    // Drag rotation: Balatro uses 0.015*vel/dt directly (moveable.lua:448);
-    // we receive pointer velocity in px/s, so map roughly to that scale.
-    this.target = {
-      ...this.target,
-      x,
-      y,
-      rotation: clamp(pointerVelocity.x * 0.0003, -0.22, 0.22),
-    };
+    // Drag rotation comes entirely from `velocityRotation` in update() —
+    // i.e. the position spring's own velocity, the way Balatro does it
+    // (moveable.lua:448: 0.015*vel.x/dt). Feeding raw pointer velocity
+    // straight into target.rotation made slow drags shake (the per-event
+    // velocity is noisy at low cursor speeds), and the smooth decay of
+    // that buffered value left no impulse for the rotation spring to
+    // overshoot on. Holding rotation at 0 means the rotation comes only
+    // from real spring momentum.
+    this.target = { ...this.target, x, y, rotation: 0 };
   }
 
   release(velocity: ReleaseVelocity, accepted: boolean) {
@@ -512,15 +525,22 @@ export class CardView {
     // velocity capped at 70*dt. Same model whether dragging or settling.
     this.current.x = this.springXY(this.current.x, desired.x, "x", clampedDt);
     this.current.y = this.springXY(this.current.y, desired.y, "y", clampedDt);
-    this.clampXyVelocity(clampedDt);
 
     // Rotation spring — Balatro: T.r + 0.015*vel.x/dt drives drag tilt
-    // (moveable.lua:448). Damping coefficient 190 makes it nearly instant.
+    // (moveable.lua:448). Read the *uncapped* velocity from springXY before
+    // clampXyVelocity squashes it down to ~1.17 px/frame — that clamp keeps
+    // the position spring's momentum bounded across frames, but reading the
+    // clamped value left rotation pegged at <2° regardless of drag speed.
+    // Power curve (see DRAG_VEL_REF / DRAG_TILT_EXPONENT up top) keeps slow
+    // drags subtle but still visible while fast drags pin to the cap.
+    const velSec = this.velocity.x / Math.max(clampedDt, 0.001);
+    const ratio = Math.abs(velSec) / DRAG_VEL_REF;
     const velocityRotation = clamp(
-      (this.velocity.x / Math.max(clampedDt, 0.001)) * DRAG_ROTATION_FACTOR * 0.012,
+      Math.sign(velSec) * Math.pow(ratio, DRAG_TILT_EXPONENT) * 0.22,
       -0.22,
       0.22,
     );
+    this.clampXyVelocity(clampedDt);
     this.current.rotation = this.springScalar(
       this.current.rotation,
       desired.rotation + velocityRotation,
