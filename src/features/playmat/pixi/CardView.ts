@@ -13,10 +13,19 @@
 //   - card.lua:4333-4338  Card override: scale*0.4 and rot*0.4 of defaults.
 //   - card.lua:16  ambient_tilt = 0.2, drives subtle idle tilt at the
 //     frequency time*(1.56 + per-card factor).
+//   - card.lua:4370-4383  pointer-driven tilt feeds the virtual cursor
+//     (tilt_var.mx/my) to the vertex shader.
+//   - resources/shaders/dissolve.fs:74-85  vertex shader modifies clip-space
+//     W by scale = 0.2*F*hovering*|mouse_offset|²/D where F ≈ -0.06 and
+//     D ≈ 1.8 for a card near the screen center; |mouse_offset| is the
+//     per-vertex distance to the cursor, divided by one tile size. The
+//     resulting perspective divide displaces each corner radially outward
+//     from the projection origin, with the corner farthest from the cursor
+//     moving the most — that's the "lean away from cursor" feel.
 //   - engine/moveable.lua:424  hover adds +0.05 scale, drag +0.10 → 1.05/1.10.
 //   - game.lua:2618-2624  exp_times constants (50/60/190) driving move_xy,
 //     move_scale, move_r damping respectively.
-import { Container, Graphics, ImageSource, Sprite, Texture } from "pixi.js";
+import { Container, Graphics, ImageSource, PerspectiveMesh, Texture } from "pixi.js";
 import { gsap } from "../../../lib/animation/gsapPixi";
 import type { CardPlacement } from "../types";
 
@@ -45,6 +54,37 @@ const JUICE_ROT_FREQ = 40.8;
 const JUICE_INITIAL_SQUISH = 0.6; // VT.scale = 1 - 0.6*amount
 
 const SPRING_MAX_DT = 1 / 30;
+
+// Perspective tilt — Balatro's vertex shader (resources/shaders/dissolve.fs)
+// modifies clip-space W by:
+//   scale = 0.2*F*hovering*|mouse_offset|²/(2 - mid_dist)
+// with F = -0.03 - 0.3*max(0, 0.3 - mid_dist). For a card whose centre sits
+// in the busy middle of the screen, mid_dist ≈ 0.1–0.3 → F ≈ −0.07 and the
+// denominator ≈ 1.8, so the constant gain works out to ~−0.0078. We bake
+// those into a single K below and scale by intensity (1 when actively
+// hovered, smaller while idle). |mouse_offset| is the per-corner pixel
+// distance to the cursor, divided by one "tile size" (= one card width in
+// Balatro). The displacement is radial: each corner moves outward from the
+// projection origin by `1/(1+scale_i)`, so the corner farthest from the
+// cursor moves the most.
+const TILT_F = -0.07;
+const TILT_D = 1.8;
+const TILT_K = (0.2 * TILT_F) / TILT_D; // ≈ -0.0078, matches Balatro near centre
+
+// Mesh subdivision — Balatro's quad uses GPU-side perspective-correct
+// interpolation across 4 vertices, but Pixi's PerspectiveMesh approximates
+// the homography by tessellating into a grid and doing affine interp inside
+// each cell. Too few cells (e.g. 8×8) leaves visible cell seams that swim
+// around the texture as the warp updates ("watery" feel); 24×24 makes the
+// seams imperceptibly small at the cost of ~600 vertices per card. We
+// still pay only one homography solve + per-vertex matmul per frame.
+const TILT_VERTICES_X = 24;
+const TILT_VERTICES_Y = 24;
+
+// Ambient tilt — card.lua:16/4380-4383. The virtual cursor orbits inside
+// the card at radius 0.5*ambient_tilt*card_size, animated at the per-card
+// frequency time*(1.56 + ID factor). ambient_tilt = 0.2 in Balatro.
+const AMBIENT_TILT = 0.2;
 
 const textureCache = new Map<string, Promise<Texture>>();
 
@@ -139,13 +179,11 @@ export class CardView {
 
   private readonly juice = new Container();
 
-  private readonly tilt = new Container();
-
   private readonly cardLayer = new Container();
 
   private readonly placeholder = new Graphics();
 
-  private readonly sprite = new Sprite(Texture.EMPTY);
+  private readonly cardMesh: PerspectiveMesh;
 
   private readonly seed: number;
 
@@ -184,20 +222,37 @@ export class CardView {
     this.seed = options.seed;
     this.reducedMotion = options.reducedMotion;
 
+    this.cardMesh = new PerspectiveMesh({
+      texture: Texture.WHITE,
+      verticesX: TILT_VERTICES_X,
+      verticesY: TILT_VERTICES_Y,
+      // Centred on (0,0) in card-local space so container transforms (lift,
+      // scale, juice, rotation) apply symmetrically. updateMeshCorners
+      // overrides these every frame once a target is set.
+      x0: -50,
+      y0: -targetAspectHeight(100) / 2,
+      x1: 50,
+      y1: -targetAspectHeight(100) / 2,
+      x2: 50,
+      y2: targetAspectHeight(100) / 2,
+      x3: -50,
+      y3: targetAspectHeight(100) / 2,
+    });
+    // roundPixels was great for the old Sprite (whole-pixel raster cleanup
+    // for the idle float), but on a per-frame-warped mesh it snaps every
+    // vertex to integer pixels and that quantisation drifts as corners
+    // move sub-pixel amounts → that's the "watery" shimmer. Let the GPU
+    // handle sub-pixel sampling; the texture's linear filter + mipmaps
+    // give clean rendering even at non-integer offsets.
+    this.cardMesh.roundPixels = false;
+    this.cardMesh.alpha = 0;
+
     this.container.addChild(this.lift);
     this.lift.addChild(this.emphasisScale);
     this.emphasisScale.addChild(this.pressSquash);
     this.pressSquash.addChild(this.juice);
-    this.juice.addChild(this.tilt);
-    this.tilt.addChild(this.cardLayer);
-    this.cardLayer.addChild(this.placeholder, this.sprite);
-
-    this.sprite.anchor.set(0.5);
-    this.sprite.alpha = 0;
-    // Snap rasterization to whole device pixels — the idle float runs at
-    // sub-pixel amplitudes, and without this the linear filter blurs the
-    // image every frame.
-    this.sprite.roundPixels = true;
+    this.juice.addChild(this.cardLayer);
+    this.cardLayer.addChild(this.placeholder, this.cardMesh);
 
     this.setTextureUrl(options.textureUrl);
     this.redrawCard(options.name, 100, targetAspectHeight(100));
@@ -227,7 +282,7 @@ export class CardView {
     this.textureUrl = textureUrl;
     this.loaded = false;
     this.placeholder.visible = true;
-    this.sprite.alpha = 0;
+    this.cardMesh.alpha = 0;
     const loadId = ++this.textureLoadId;
 
     loadTexture(textureUrl)
@@ -236,10 +291,15 @@ export class CardView {
           return;
         }
 
-        this.sprite.texture = texture;
+        this.cardMesh.texture = texture;
+        // The texture swap auto-refreshes the geometry's source dimensions
+        // (PerspectiveMesh.textureUpdated). Re-apply our current corners so
+        // the warp stays put across the swap rather than snapping to the
+        // texture's native pixel rect.
+        this.refreshMeshCornersAfterTextureSwap();
         this.loaded = true;
         this.placeholder.visible = false;
-        gsap.to(this.sprite, {
+        gsap.to(this.cardMesh, {
           duration: this.reducedMotion ? 0 : 0.16,
           ease: "power2.out",
           pixi: { alpha: 1 },
@@ -470,7 +530,7 @@ export class CardView {
 
     this.applyCurrentTransform();
     this.applyJuiceTransform(juice);
-    this.updateTilt(time);
+    this.updateMeshCorners(time);
   }
 
   hitTest(point: { x: number; y: number }) {
@@ -502,8 +562,7 @@ export class CardView {
       this.emphasisScale,
       this.pressSquash,
       this.juice,
-      this.tilt,
-      this.sprite,
+      this.cardMesh,
     ]);
     this.container.destroy({ children: true });
   }
@@ -574,35 +633,84 @@ export class CardView {
     this.container.scale.set(this.current.scale);
   }
 
-  private updateTilt(time: number) {
-    if (!this.target || this.reducedMotion) {
-      this.tilt.rotation = 0;
-      this.tilt.skew.set(0, 0);
+  private updateMeshCorners(time: number) {
+    if (!this.target) {
       return;
     }
 
-    if (this.hoverPoint && this.hovered) {
-      // Pointer-driven pseudo-3D tilt. Balatro uses a vertex shader
-      // (card.lua:4374-4378) with tilt_factor = 0.3 that rotates the card
-      // plane around the perpendicular to the cursor-from-center vector.
-      // The 2D equivalent is a pure skew: skew.x leans verticals, skew.y
-      // leans horizontals — together they read as a plane tilting toward
-      // the cursor edge. No rotation/axial twist (that's the part that
-      // felt wrong).
-      const dx = clamp((this.hoverPoint.x - this.current.x) / (this.target.width / 2), -1, 1);
-      const dy = clamp((this.hoverPoint.y - this.current.y) / (this.target.height / 2), -1, 1);
-      const tiltFactor = 0.18;
-      this.tilt.rotation = 0;
-      this.tilt.skew.set(dy * tiltFactor, -dx * tiltFactor);
+    const halfW = this.target.width / 2;
+    const halfH = this.target.height / 2;
+
+    if (this.reducedMotion) {
+      this.cardMesh.setCorners(-halfW, -halfH, halfW, -halfH, halfW, halfH, -halfW, halfH);
       return;
     }
 
-    // Ambient tilt — Balatro uses ambient_tilt = 0.2 with frequency
-    // time*(1.56 + per-card ID factor), card.lua:16 + 4380.
-    const ambient = 0.2;
-    const angle = time * (1.56 + this.seed) + this.seed * 9.7;
-    this.tilt.rotation = ambient * 0.018 * Math.sin(angle);
-    this.tilt.skew.set(ambient * 0.018 * Math.cos(angle), ambient * 0.014 * Math.sin(angle * 0.83));
+    // Balatro's screen_scale (sprite.lua:97) is one TILESIZE * TILESCALE.
+    // From globals.lua:269-274, TILESIZE = 20 and CARD_W = 2.049 tiles, so
+    // screen_scale ≈ card_width / 2.05 — i.e. roughly half the card width.
+    // Using full card width here makes the |mouse_offset|² term ~4x too
+    // small and the tilt nearly invisible on our card sizes.
+    const screenScale = this.target.width * 0.5;
+
+    // Virtual cursor position in card-local space (origin at card centre).
+    // Hover → real cursor. Idle → ambient orbit inside the card (card.lua
+    // 4380-4383: 0.5 + 0.5*ambient_tilt*cos(angle) of the card's own size).
+    let cursorX: number;
+    let cursorY: number;
+    let intensity: number;
+
+    if (this.hovered && this.hoverPoint) {
+      cursorX = this.hoverPoint.x - this.current.x;
+      cursorY = this.hoverPoint.y - this.current.y;
+      intensity = 1;
+    } else {
+      const angle = time * (1.56 + this.seed) + this.seed * 9.7;
+      cursorX = AMBIENT_TILT * Math.cos(angle) * halfW;
+      cursorY = AMBIENT_TILT * Math.sin(angle) * halfH;
+      // Balatro keeps `hovering = 1` in the shader even at rest (card.lua
+      // 4343), and the visible idle warp comes purely from the cursor
+      // orbiting through the card. Cut intensity a hair so the idle effect
+      // reads as quieter than an active hover.
+      intensity = 0.6;
+    }
+
+    const K = TILT_K * intensity;
+
+    // For each corner: scale_i = K * |corner - cursor|² / screenScale². New
+    // local position = corner / (1 + scale_i). Scale is negative so the
+    // factor (1+scale)⁻¹ > 1 and the corner pushes outward — most for the
+    // corner farthest from the cursor, which is what creates the "lean
+    // away from cursor" feel.
+    const project = (lx: number, ly: number) => {
+      const ox = (lx - cursorX) / screenScale;
+      const oy = (ly - cursorY) / screenScale;
+      const s = K * (ox * ox + oy * oy);
+      const factor = 1 / (1 + s);
+      return [lx * factor, ly * factor] as const;
+    };
+
+    const [x0, y0] = project(-halfW, -halfH);
+    const [x1, y1] = project(halfW, -halfH);
+    const [x2, y2] = project(halfW, halfH);
+    const [x3, y3] = project(-halfW, halfH);
+
+    this.cardMesh.setCorners(x0, y0, x1, y1, x2, y2, x3, y3);
+  }
+
+  private refreshMeshCornersAfterTextureSwap() {
+    // PerspectiveMesh.textureUpdated re-runs `updateProjection` against the
+    // current corners. If we just swapped textures (1×1 white → real card
+    // texture), the geometry now has the right source dimensions but the
+    // last per-frame corners are still valid in destination space — the
+    // next `update` will overwrite them, but until then we want a sensible
+    // default so the card doesn't flash at a stale size.
+    if (!this.target) {
+      return;
+    }
+    const halfW = this.target.width / 2;
+    const halfH = this.target.height / 2;
+    this.cardMesh.setCorners(-halfW, -halfH, halfW, -halfH, halfW, halfH, -halfW, halfH);
   }
 
   private applyEmphasisTween() {
@@ -695,8 +803,9 @@ export class CardView {
 
   private redrawCard(label: string, width: number, height: number) {
     const radius = Math.max(3, width * 0.055);
-    this.sprite.width = width;
-    this.sprite.height = height;
+
+    // The mesh's destination corners are set every frame by
+    // updateMeshCorners — no need to size it here.
 
     this.placeholder
       .clear()
