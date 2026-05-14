@@ -113,6 +113,13 @@ const AMBIENT_TILT = 0.2;
 // (computeHoverOffset returns {0,0} for them).
 const HOVER_LIFT_MAX_PX = 12;
 
+// Back-card placements (deck pile + prize cards) live at the far edges
+// of the playmat, which would push them out the full HOVER_LIFT_MAX_PX.
+// That made them feel showier than the playable cards, which mostly sit
+// closer to centre. Scale their radial lift down so the magnitude reads
+// in the same register as the bench cards.
+const BACK_HOVER_LIFT_SCALE = 0.4;
+
 const textureCache = new Map<string, Promise<Texture>>();
 
 export interface CardViewTarget {
@@ -805,9 +812,12 @@ export class CardView {
     const halfH = height / 2;
     const dx = this.target.x - halfW;
     const dy = this.target.y - halfH;
+    const isBack =
+      this.target.placement.zone === "stadium" && this.target.placement.owner !== "global";
+    const scale = isBack ? BACK_HOVER_LIFT_SCALE : 1;
     return {
-      x: (dx / halfW) * HOVER_LIFT_MAX_PX,
-      y: (dy / halfH) * HOVER_LIFT_MAX_PX,
+      x: (dx / halfW) * HOVER_LIFT_MAX_PX * scale,
+      y: (dy / halfH) * HOVER_LIFT_MAX_PX * scale,
     };
   }
 
