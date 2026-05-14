@@ -626,7 +626,7 @@ export class CardView {
   }
 
   private idleOffset(time: number) {
-    if (this.reducedMotion || this.dragging) {
+    if (this.reducedMotion) {
       return { y: 0, rotation: 0 };
     }
 
@@ -772,7 +772,11 @@ export class CardView {
   }
 
   private startHoldTween() {
-    if (!this.pressed || this.reducedMotion) {
+    // Skip the breathing yoyo while the card is actively being dragged —
+    // pointerdown sets both `pressed` and `dragging`, and the user reads
+    // that subtle wobble as the card "fidgeting" in their hand instead
+    // of following the cursor cleanly.
+    if (!this.pressed || this.dragging || this.reducedMotion) {
       return;
     }
 
