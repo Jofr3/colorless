@@ -44,7 +44,15 @@ const SPRING_C_SCALE = 60;
 // stop should swing past 0 before settling. 20 leaves the spring underdamped
 // enough that the residual angular velocity carries the rotation past
 // neutral when the input collapses, then it springs back.
-const SPRING_C_ROT = 20;
+const SPRING_C_ROT_DRAG = 20;
+// While idle/reordering we still want some give — siblings sliding into new
+// slots should react with a little tilt — but less wobble than a full drag.
+// Sits between Balatro's drag value (20) and a critically damped settle.
+const SPRING_C_ROT_IDLE = 45;
+// Scale factor on velocity-driven tilt for non-dragged cards. Reorder
+// shifts have just as much X-velocity as a drag, but we want the resulting
+// tilt to be a hint, not a swing.
+const IDLE_VELOCITY_TILT_SCALE = 0.35;
 // Spring stiffness (moveable.lua:408 — the *35 factor).
 const SPRING_K_XY = 35;
 // max_vel per frame (moveable.lua:410 + game.lua:2624 — 70*dt).
@@ -535,8 +543,11 @@ export class CardView {
     // drags subtle but still visible while fast drags pin to the cap.
     const velSec = this.velocity.x / Math.max(clampedDt, 0.001);
     const ratio = Math.abs(velSec) / DRAG_VEL_REF;
+    // Drag tilts fully; siblings shifting during a reorder tilt at a
+    // fraction of that so they still react to the slide without wobbling.
+    const tiltScale = this.dragging ? 1 : IDLE_VELOCITY_TILT_SCALE;
     const velocityRotation = clamp(
-      Math.sign(velSec) * Math.pow(ratio, DRAG_TILT_EXPONENT) * 0.22,
+      Math.sign(velSec) * Math.pow(ratio, DRAG_TILT_EXPONENT) * 0.22 * tiltScale,
       -0.22,
       0.22,
     );
@@ -546,7 +557,7 @@ export class CardView {
       desired.rotation + velocityRotation,
       "rotation",
       clampedDt,
-      SPRING_C_ROT,
+      this.dragging ? SPRING_C_ROT_DRAG : SPRING_C_ROT_IDLE,
       1,
     );
 
