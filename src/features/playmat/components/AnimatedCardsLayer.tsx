@@ -537,20 +537,58 @@ export function AnimatedCardsLayer({
     // previewed zone back to its canonical DOM layout. Without this the
     // hand stays "open" with a gap after the cursor moves to the bench,
     // and vice versa.
-    if (
-      drag.previewZone &&
-      (!nextPreviewZone ||
+    const isOldSource =
+      !!drag.previewZone &&
+      drag.previewZone.owner === drag.from.owner &&
+      drag.previewZone.zone === drag.from.zone;
+    const isNewSource =
+      !!nextPreviewZone &&
+      nextPreviewZone.owner === drag.from.owner &&
+      nextPreviewZone.zone === drag.from.zone;
+
+    // Resync the previously previewed *external* zone if the cursor has
+    // moved off it. The source zone is re-applied below in either reorder
+    // or compact mode every frame, so it doesn't need to be resynced.
+    if (drag.previewZone && !isOldSource) {
+      const externalChanged =
+        !nextPreviewZone ||
         nextPreviewZone.owner !== drag.previewZone.owner ||
-        nextPreviewZone.zone !== drag.previewZone.zone)
-    ) {
-      resyncZoneCards(drag.previewZone.owner, drag.previewZone.zone);
+        nextPreviewZone.zone !== drag.previewZone.zone;
+      if (externalChanged) {
+        resyncZoneCards(drag.previewZone.owner, drag.previewZone.zone);
+      }
     }
 
-    if (nextPreviewZone) {
-      applyReorderPreview(drag, nextPreviewZone.owner, nextPreviewZone.zone);
-    } else {
-      drag.reorderIndex = null;
+    drag.reorderIndex = null;
+
+    // Source-zone preview is applied every frame for any hand/bench drag.
+    // "reorder" leaves the dragged card's slot empty inside the source so
+    // the user can slide it back into place. "compact" closes the gap when
+    // the cursor leaves the source — the hand should look like it has one
+    // fewer card while the player is staging a play onto the bench.
+    if (
+      (drag.from.zone === "hand" || drag.from.zone === "bench") &&
+      (drag.from.owner === "you" || drag.from.owner === "opponent")
+    ) {
+      applyReorderPreview(
+        drag,
+        drag.from.owner,
+        drag.from.zone,
+        isNewSource ? "reorder" : "compact",
+      );
     }
+
+    // External zone preview: only when the cursor is over a different
+    // reorderable zone (e.g. dragging a hand card across the bench).
+    if (nextPreviewZone && !isNewSource) {
+      applyReorderPreview(
+        drag,
+        nextPreviewZone.owner,
+        nextPreviewZone.zone,
+        "reorder",
+      );
+    }
+
     drag.previewZone = nextPreviewZone;
   }
 
@@ -591,6 +629,7 @@ export function AnimatedCardsLayer({
     drag: DragState,
     previewOwner: PlayerId,
     previewZone: "hand" | "bench",
+    mode: "reorder" | "compact",
   ) {
     const root = playmatRef.current;
     if (!root) return;
@@ -618,8 +657,46 @@ export function AnimatedCardsLayer({
       })
       .filter((s): s is { descriptor: CardDescriptor; view: CardView } => s !== null);
 
+    // "reorder": siblings + 1 slots, the extra one is the gap for the
+    // dragged card at insertIdx. "compact": exactly `siblings.length`
+    // slots, no gap — used to close up the source zone when the cursor
+    // leaves it.
+    const slotCount =
+      mode === "reorder" ? siblings.length + 1 : siblings.length;
+
     if (siblings.length === 0) {
-      drag.reorderIndex = 0;
+      if (mode === "reorder") {
+        drag.reorderIndex = 0;
+      }
+      return;
+    }
+
+    const slots = getZoneSlots(previewZone, previewOwner, slotCount);
+    if (slots.length === 0) return;
+    const zoneSize = slots.length;
+
+    if (mode === "compact") {
+      // Place each sibling at slot[j] of the (N-1)-card layout. No gap is
+      // reserved, so the source zone looks like the dragged card has been
+      // taken out.
+      for (let j = 0; j < siblings.length; j += 1) {
+        const slot = slots[j];
+        if (!slot) continue;
+        const placement: CardPlacement = {
+          owner: previewOwner,
+          zone: previewZone,
+          index: j,
+        };
+        siblings[j].view.setTarget({
+          x: slot.x,
+          y: slot.y,
+          width: slot.width,
+          height: slot.height,
+          rotation: baseRotationForPlacement(placement, zoneSize),
+          zIndex: zIndexForPlacement(placement, zoneSize),
+          placement,
+        });
+      }
       return;
     }
 
@@ -636,15 +713,6 @@ export function AnimatedCardsLayer({
     }
     drag.reorderIndex = insertIdx;
 
-    // siblings + 1 = the virtual layout we want: every existing card needs
-    // a slot, plus one extra for the dragged card's gap. For source-zone
-    // reorder this matches the DOM count exactly (N cards → N anchors).
-    // For external insertion (hand → bench) we'll be one short on the DOM
-    // side and getZoneSlots falls through to computing a centred layout.
-    const slots = getZoneSlots(previewZone, previewOwner, siblings.length + 1);
-    if (slots.length === 0) return;
-
-    const zoneSize = slots.length;
     for (let j = 0; j < siblings.length; j += 1) {
       const virtualIndex = j < insertIdx ? j : j + 1;
       const slot = slots[virtualIndex];
@@ -725,19 +793,16 @@ export function AnimatedCardsLayer({
       .filter((slot): slot is SlotAnchor => slot !== null)
       .sort((a, b) => a.index - b.index);
 
-    // Source-zone reorders need exactly as many slots as the DOM already
-    // renders (one per card) — return those directly. The dynamic path
-    // below is for the hand→bench external case, where we need one extra
-    // slot (the virtual gap for the incoming card) and the bench needs to
-    // visually re-center around N+1 cards instead of N.
-    if (domSlots.length >= slotCount) {
+    // DOM positions match the canonical layout for N rendered cards. Use
+    // them directly when the requested count matches — that keeps source-
+    // zone reorder pixel-perfect against the DOM. For any other count
+    // (compact = N-1, external insertion = N+1) we compute a fresh
+    // centred layout below, inferring card width and per-slot step from
+    // existing DOM slots so hand overlap and bench gap both work.
+    if (domSlots.length === slotCount) {
       return domSlots;
     }
 
-    // We need more slots than the DOM has rendered. Compute a centred
-    // layout for `slotCount` cards inside the zone's outer container so
-    // existing cards animate from "N centred" to "N+1 centred", leaving
-    // the dragged card's slot empty at the cursor's insertion point.
     const outerEl = root.querySelector<HTMLElement>(
       `[data-card-drop-zone="true"][data-card-owner="${owner}"][data-card-zone="${zone}"]:not([data-card-index])`,
     );
@@ -746,26 +811,43 @@ export function AnimatedCardsLayer({
 
     let cardW = 0;
     let cardH = 0;
-    let gap = 0;
-    if (domSlots.length > 0) {
+    // Per-slot step = card_w + gap (bench) or card_w + overlap (hand,
+    // overlap negative so step < card_w). Read from two adjacent DOM
+    // slots when available; otherwise fall back to CSS-derived defaults
+    // for that zone.
+    let step = 0;
+    if (domSlots.length >= 2) {
       cardW = domSlots[0].width;
       cardH = domSlots[0].height;
-      if (domSlots.length > 1) {
-        gap = domSlots[1].x - domSlots[0].x - cardW;
+      step = domSlots[1].x - domSlots[0].x;
+    } else if (domSlots.length === 1) {
+      cardW = domSlots[0].width;
+      cardH = domSlots[0].height;
+      if (zone === "hand") {
+        // Hand.tsx: marginLeft = -0.2 * card-w
+        step = cardW * 0.8;
       } else {
-        gap = Number.parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue("--slot-gap"),
-        ) || 0;
+        const gap =
+          Number.parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue("--slot-gap"),
+          ) || 0;
+        step = cardW + gap;
       }
     } else {
       const rootStyles = getComputedStyle(document.documentElement);
       cardW = Number.parseFloat(rootStyles.getPropertyValue("--card-w")) || 0;
       cardH = Number.parseFloat(rootStyles.getPropertyValue("--card-h")) || 0;
-      gap = Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
+      if (zone === "hand") {
+        step = cardW * 0.8;
+      } else {
+        const gap =
+          Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
+        step = cardW + gap;
+      }
     }
     if (cardW === 0 || cardH === 0) return domSlots;
 
-    const totalWidth = slotCount * cardW + (slotCount - 1) * gap;
+    const totalWidth = cardW + (slotCount - 1) * step;
     const centerX = outerRect.left + outerRect.width / 2 - rootRect.left;
     const centerY = outerRect.top + outerRect.height / 2 - rootRect.top;
     const startX = centerX - totalWidth / 2 + cardW / 2;
@@ -773,7 +855,7 @@ export function AnimatedCardsLayer({
     const slots: SlotAnchor[] = [];
     for (let i = 0; i < slotCount; i += 1) {
       slots.push({
-        x: startX + i * (cardW + gap),
+        x: startX + i * step,
         y: centerY,
         width: cardW,
         height: cardH,
