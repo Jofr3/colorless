@@ -52,7 +52,7 @@ function SidePiles({
             className="absolute left-0"
             style={isTop ? { top: "100%", marginTop: 8 } : { bottom: "100%", marginBottom: 8 }}
           >
-            <DeckPile tone={cardBackTone} />
+            <DeckPile owner={owner} tone={cardBackTone} />
           </div>
         </div>
       </div>
@@ -64,7 +64,12 @@ function SidePiles({
             : { bottom: 0, right: "100%", marginRight: "var(--side-gap)" }
         }
       >
-        <PrizeGrid remaining={prizesRemaining} tone={cardBackTone} flipped={isTop} />
+        <PrizeGrid
+          owner={owner}
+          remaining={prizesRemaining}
+          tone={cardBackTone}
+          flipped={isTop}
+        />
       </div>
     </>
   );

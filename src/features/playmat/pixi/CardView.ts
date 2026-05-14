@@ -28,6 +28,7 @@
 import { Container, Graphics, ImageSource, PerspectiveMesh, Texture } from "pixi.js";
 import { gsap } from "../../../lib/animation/gsapPixi";
 import type { CardPlacement } from "../types";
+import { cardBackTexture, parseBackUrl } from "./cardBackTexture";
 
 const CARD_ASPECT_RATIO = 3.5 / 2.5;
 
@@ -155,6 +156,14 @@ async function fetchBitmap(textureUrl: string): Promise<ImageBitmap> {
 }
 
 function loadTexture(textureUrl: string) {
+  // Synthetic card-back URLs (`back://blue` / `back://red`) bypass the
+  // fetch→blob→createImageBitmap path because createImageBitmap on SVG blobs
+  // is unreliable; cardBackTexture decodes via an <img> instead.
+  const backTone = parseBackUrl(textureUrl);
+  if (backTone) {
+    return cardBackTexture(backTone);
+  }
+
   const cached = textureCache.get(textureUrl);
 
   if (cached) {

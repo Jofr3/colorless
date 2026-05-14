@@ -12,8 +12,11 @@ import type {
   CardZone,
   PlayerId,
 } from "../types";
+import { cardBackImageUrl } from "../pixi/cardBackTexture";
 import { CardView, type CardViewTarget, type ReleaseVelocity } from "../pixi/CardView";
 import { canPlace } from "../utils/cardMovement";
+import { PRIZE_COUNT, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
+import { cardBackToneFor } from "../utils/players";
 
 interface AnimatedCardsLayerProps {
   board: BoardState;
@@ -132,6 +135,45 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
         });
       }
     }
+
+    // Synthetic back-card descriptors: the deck pile and each still-present
+    // prize slot. Routed through the same CardView pipeline as playable cards
+    // so they pick up the spring physics, mesh tilt, juice pop, and radial
+    // hover lift for free. zone "stadium" with a player owner (vs. the real
+    // stadium's owner "global") routes them to the low-z fallback in
+    // zIndexForPlacement so they sit beneath the playable cards.
+    const tone = cardBackToneFor(owner);
+    const backImageUrl = cardBackImageUrl(tone);
+
+    descriptors.push({
+      card: {
+        id: deckBackId(owner),
+        cardId: `back-${tone}`,
+        name: `${owner} deck`,
+        type: "trainer",
+        imageUrl: backImageUrl,
+      },
+      placement: { owner, zone: "stadium" },
+      draggable: false,
+      zoneSize: 1,
+    });
+
+    const slots = prizeSlots(player.prizesRemaining, owner !== perspectivePlayer);
+    for (let i = 0; i < PRIZE_COUNT; i += 1) {
+      if (!slots[i]) continue;
+      descriptors.push({
+        card: {
+          id: prizeBackId(owner, i),
+          cardId: `back-${tone}`,
+          name: `${owner} prize ${i}`,
+          type: "trainer",
+          imageUrl: backImageUrl,
+        },
+        placement: { owner, zone: "stadium" },
+        draggable: false,
+        zoneSize: 1,
+      });
+    }
   }
 
   if (board.stadium) {
@@ -164,22 +206,6 @@ function pointFromEvent(root: HTMLElement, event: PointerEvent) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
-function handRotation(index: number, count: number) {
-  if (count <= 1) {
-    return 0;
-  }
-
-  return (0.2 * (-count / 2 - 0.5 + index + 1)) / count;
-}
-
-function baseRotationForPlacement(placement: CardPlacement, zoneSize: number) {
-  if (placement.zone === "hand") {
-    return handRotation(placement.index ?? 0, zoneSize);
-  }
-
-  return 0;
-}
-
 function zIndexForPlacement(placement: CardPlacement, zoneSize: number) {
   if (placement.zone === "hand") {
     return 80 + zoneSize - (placement.index ?? 0);
@@ -191,6 +217,12 @@ function zIndexForPlacement(placement: CardPlacement, zoneSize: number) {
 
   if (placement.zone === "bench") {
     return 35 + (placement.index ?? 0);
+  }
+
+  // Synthetic back cards (deck/prize) ride the "stadium" zone with a player
+  // owner; the real stadium is owner "global" and keeps the original z=42.
+  if (placement.zone === "stadium" && placement.owner !== "global") {
+    return 20;
   }
 
   return 42;
@@ -331,7 +363,7 @@ export function AnimatedCardsLayer({
         y: rect.top - rootRect.top + rect.height / 2,
         width: rect.width,
         height: rect.height,
-        rotation: baseRotationForPlacement(descriptor.placement, descriptor.zoneSize),
+        rotation: 0,
         zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize),
         placement: descriptor.placement,
       };
@@ -692,7 +724,7 @@ export function AnimatedCardsLayer({
           y: slot.y,
           width: slot.width,
           height: slot.height,
-          rotation: baseRotationForPlacement(placement, zoneSize),
+          rotation: 0,
           zIndex: zIndexForPlacement(placement, zoneSize),
           placement,
         });
@@ -729,7 +761,7 @@ export function AnimatedCardsLayer({
         y: slot.y,
         width: slot.width,
         height: slot.height,
-        rotation: baseRotationForPlacement(placement, zoneSize),
+        rotation: 0,
         zIndex: zIndexForPlacement(placement, zoneSize),
         placement,
       });
@@ -761,7 +793,7 @@ export function AnimatedCardsLayer({
         y: rect.top - rootRect.top + rect.height / 2,
         width: rect.width,
         height: rect.height,
-        rotation: baseRotationForPlacement(descriptor.placement, descriptor.zoneSize),
+        rotation: 0,
         zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize),
         placement: descriptor.placement,
       });

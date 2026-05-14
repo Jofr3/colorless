@@ -1,21 +1,28 @@
 import type { ReactNode } from "react";
 import { CARD_SIZE_STYLE, CARD_SLOT_STYLE, FRAME_CLASS, PRIZE_GRID_STYLE } from "../constants";
-import type { CardBackSize, CardBackTone } from "../types";
-
-const PRIZE_COUNT = 6;
-const PRIZE_COLUMNS = 2;
-const PRIZE_ROWS = 3;
+import type { CardBackSize, CardBackTone, PlayerId } from "../types";
+import {
+  PRIZE_COLUMNS,
+  PRIZE_ROWS,
+  deckBackId,
+  prizeBackId,
+  prizeSlots,
+} from "../utils/piles";
 
 function CardBack({
   tone,
   size = "card",
+  anchorId,
 }: {
   tone: CardBackTone;
   size?: CardBackSize;
+  anchorId: string;
 }) {
   return (
     <div
       className={`card-back card-back--${size}`}
+      data-card-anchor="true"
+      data-card-id={anchorId}
       data-card-back-tone={tone}
       aria-hidden="true"
       style={{
@@ -34,18 +41,11 @@ function PileFrame({ children }: { children: ReactNode }) {
   );
 }
 
-function prizeSlots(remaining: number, flipped: boolean) {
-  const taken = Math.max(0, Math.min(PRIZE_COUNT, PRIZE_COUNT - remaining));
-  return Array.from({ length: PRIZE_COUNT }, (_, index) =>
-    flipped ? index >= taken : index < PRIZE_COUNT - taken,
-  );
-}
-
-export function DeckPile({ tone }: { tone: CardBackTone }) {
+export function DeckPile({ owner, tone }: { owner: PlayerId; tone: CardBackTone }) {
   return (
     <div className="relative inline-block">
       <PileFrame>
-        <CardBack tone={tone} />
+        <CardBack tone={tone} anchorId={deckBackId(owner)} />
       </PileFrame>
     </div>
   );
@@ -62,10 +62,12 @@ export function DiscardPile() {
 }
 
 export function PrizeGrid({
+  owner,
   remaining,
   tone,
   flipped = false,
 }: {
+  owner: PlayerId;
   remaining: number;
   tone: CardBackTone;
   flipped?: boolean;
@@ -83,19 +85,28 @@ export function PrizeGrid({
           >
             {slots
               .slice(rowIndex * PRIZE_COLUMNS, rowIndex * PRIZE_COLUMNS + PRIZE_COLUMNS)
-              .map((present, columnIndex) => (
-                <div
-                  key={columnIndex}
-                  style={{
-                    marginLeft: columnIndex === 0 ? 0 : "var(--prize-gap-x)",
-                    zIndex: rowIndex * PRIZE_COLUMNS + columnIndex,
-                    width: "var(--prize-w)",
-                    height: "var(--prize-h)",
-                  }}
-                >
-                  {present && <CardBack tone={tone} size="prize" />}
-                </div>
-              ))}
+              .map((present, columnIndex) => {
+                const slotIndex = rowIndex * PRIZE_COLUMNS + columnIndex;
+                return (
+                  <div
+                    key={columnIndex}
+                    style={{
+                      marginLeft: columnIndex === 0 ? 0 : "var(--prize-gap-x)",
+                      zIndex: slotIndex,
+                      width: "var(--prize-w)",
+                      height: "var(--prize-h)",
+                    }}
+                  >
+                    {present && (
+                      <CardBack
+                        tone={tone}
+                        size="prize"
+                        anchorId={prizeBackId(owner, slotIndex)}
+                      />
+                    )}
+                  </div>
+                );
+              })}
           </div>
         ))}
       </div>
