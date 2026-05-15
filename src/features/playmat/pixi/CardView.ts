@@ -132,12 +132,18 @@ export interface CardViewTarget {
   placement: CardPlacement;
 }
 
+export type HoverMode = "full" | "juice-only";
+
 export interface CardViewOptions {
   id: string;
   name: string;
   textureUrl: string;
   seed: number;
   reducedMotion: boolean;
+  // "juice-only" suppresses the emphasis scale, radial lift, and mesh tilt
+  // when hovered, keeping just the juice pop. Used for attached tool/energy
+  // cards, where the host Pokémon already owns the hover gesture.
+  hoverMode?: HoverMode;
 }
 
 export interface ReleaseVelocity {
@@ -231,6 +237,8 @@ export class CardView {
 
   private readonly reducedMotion: boolean;
 
+  private readonly hoverMode: HoverMode;
+
   private current = { x: 0, y: 0, rotation: 0, scale: 1 };
 
   private velocity = { x: 0, y: 0, rotation: 0, scale: 0 };
@@ -265,6 +273,7 @@ export class CardView {
     this.id = options.id;
     this.seed = options.seed;
     this.reducedMotion = options.reducedMotion;
+    this.hoverMode = options.hoverMode ?? "full";
 
     this.cardMesh = new PerspectiveMesh({
       texture: Texture.WHITE,
@@ -401,7 +410,12 @@ export class CardView {
       this.hoverPoint = null;
     }
 
-    this.applyEmphasisTween();
+    // juice-only suppresses lift/scale/tilt entirely (attached tools/energies
+    // shouldn't fight their host for the hover gesture). Only the juice
+    // pop fires below.
+    if (this.hoverMode !== "juice-only") {
+      this.applyEmphasisTween();
+    }
 
     if (hovered && !this.reducedMotion) {
       // Balatro card.lua:4307 — hover juice_up(0.05, 0.03), which becomes
@@ -411,7 +425,7 @@ export class CardView {
   }
 
   updateHoverPoint(point: { x: number; y: number }) {
-    if (this.hovered) {
+    if (this.hovered && this.hoverMode !== "juice-only") {
       this.hoverPoint = point;
     }
   }

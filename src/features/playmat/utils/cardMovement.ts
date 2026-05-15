@@ -1,5 +1,6 @@
 import { BENCH_LIMIT } from "../constants";
 import type {
+  AttachedCards,
   BoardState,
   CardModel,
   CardMoveRequest,
@@ -12,11 +13,31 @@ import type {
 
 const PLAYER_IDS: PlayerId[] = ["you", "opponent"];
 
+function cloneCard(card: CardModel): CardModel {
+  // Always return a fresh object: callers may mutate `card.attached` on the
+  // clone (e.g., during attach), and returning the same reference for
+  // un-attached cards lets that mutation leak back into the previous board
+  // state. Under React StrictMode the updater fires twice — the second
+  // fire then re-clones the now-mutated source and appends a duplicate
+  // energy, producing the off-baseline "stack=1" you'd see for a Pokémon
+  // that should only have a single energy attached.
+  return {
+    ...card,
+    attached: card.attached
+      ? {
+          tools: [...card.attached.tools],
+          energies: [...card.attached.energies],
+        }
+      : undefined,
+  };
+}
+
 function clonePlayerBoard(player: PlayerBoard): PlayerBoard {
   return {
     ...player,
     hand: [...player.hand],
-    bench: [...player.bench],
+    bench: player.bench.map(cloneCard),
+    active: player.active ? cloneCard(player.active) : null,
   };
 }
 
@@ -95,7 +116,20 @@ export function canPlace(
   // Everything else requires same player and player ownership.
   if (!isPlayerOwner(source.owner) || source.owner !== target.owner) return false;
 
-  // Bench / active only accept Pokémon.
+  // Tool / energy → attach onto an existing Pokémon at the target slot.
+  // Trainers (non-tool) and stadiums cannot be attached.
+  if (sourceType === "tool" || sourceType === "energy") {
+    if (target.zone !== "active" && target.zone !== "bench") return false;
+    if (source.zone !== "hand") return false;
+    const player = board[target.owner];
+    if (target.zone === "active") {
+      return player.active != null;
+    }
+    const idx = target.index;
+    return idx != null && player.bench[idx] != null;
+  }
+
+  // Bench / active only accept Pokémon (after the attach branch).
   if ((target.zone === "active" || target.zone === "bench") && sourceType !== "pokemon") {
     return false;
   }
@@ -238,6 +272,35 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
   if (!canPlace(board, source, request.to, card.type)) return board;
 
   const next = cloneBoard(board);
+
+  // Tool / energy attach: take the card from its source and slip it onto
+  // the Pokémon at the target slot. Tools replace any existing tool (TCG
+  // rule: one tool per Pokémon); energies append.
+  if (card.type === "tool" || card.type === "energy") {
+    if (!isPlayerOwner(request.to.owner)) return board;
+    const player = next[request.to.owner];
+    const host =
+      request.to.zone === "active"
+        ? player.active
+        : request.to.zone === "bench" && request.to.index != null
+          ? player.bench[request.to.index] ?? null
+          : null;
+    if (!host) return board;
+
+    const taken = removeCard(next, source, request.cardId);
+    if (!taken) return board;
+
+    const attached: AttachedCards = host.attached
+      ? { tools: [...host.attached.tools], energies: [...host.attached.energies] }
+      : { tools: [], energies: [] };
+    if (card.type === "tool") {
+      attached.tools = [taken];
+    } else {
+      attached.energies = [...attached.energies, taken];
+    }
+    host.attached = attached;
+    return next;
+  }
 
   // Bench → active: atomic swap.
   if (source.zone === "bench" && request.to.zone === "active") {

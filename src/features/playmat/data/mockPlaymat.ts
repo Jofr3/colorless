@@ -11,9 +11,9 @@ const cardCatalog = {
   "me3-88": { type: "energy" },
   "me3-111": { type: "stadium" },
   "me3-123": { type: "trainer" },
-  "sv1-169": { type: "trainer" },
-  "sv1-174": { type: "trainer" },
-  "sv2-173": { type: "trainer" },
+  "sv1-169": { type: "tool" },
+  "sv1-174": { type: "tool" },
+  "sv2-173": { type: "tool" },
   "sv3-15": { type: "pokemon" },
   "sve-7": { type: "energy" },
 } as const satisfies Record<string, { type: CardType }>;

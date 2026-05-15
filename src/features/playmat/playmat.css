@@ -151,6 +151,51 @@
   visibility: hidden;
 }
 
+/* Attached cards (tools, energies). The anchor div has the card's UNROTATED
+   dimensions (scaled by --attached-scale) and is positioned so that after
+   the Pixi layer rotates it ±90° about its centre, the visible card sits
+   in the desired spot: tools to the left, top-aligned; energies to the
+   right, bottom-aligned. `--attached-stick` is the fraction of the rotated
+   card's long axis (= card-h * scale) that sticks past the host edge —
+   bigger value, more visible strip. Multiple energies stack with
+   `--attached-stack` (set per-card inline). */
+.playmat-card__attached {
+  --attached-scale: 0.92;
+  --attached-stick: 0.22;
+  --attached-stack: 0;
+  position: absolute;
+  width: calc(var(--card-w) * var(--attached-scale));
+  height: calc(var(--card-h) * var(--attached-scale));
+  pointer-events: none;
+  visibility: hidden; /* visual is drawn by the pixi layer */
+}
+
+.playmat-card__attached--tool {
+  top: calc((var(--card-w) - var(--card-h)) * var(--attached-scale) * 0.5);
+  left: calc(
+    var(--card-h) * var(--attached-scale) * (0.5 - var(--attached-stick))
+    - var(--card-w) * var(--attached-scale) * 0.5
+  );
+}
+
+.playmat-card__attached--energy {
+  /* The first energy on every Pokémon (stack=0) sits at the same baseline —
+     bottom-aligned, with no offset — so a Pokémon with 1 energy lines up
+     across the bench regardless of how many energies its neighbours have.
+     Additional energies on the SAME host fan vertically up from there. */
+  top: calc(
+    var(--card-h)
+    - var(--card-w) * var(--attached-scale) * 0.5
+    - var(--card-h) * var(--attached-scale) * 0.5
+    - var(--card-w) * 0.22 * var(--attached-stack)
+  );
+  left: calc(
+    var(--card-w)
+    + var(--card-h) * var(--attached-scale) * (var(--attached-stick) - 0.5)
+    - var(--card-w) * var(--attached-scale) * 0.5
+  );
+}
+
 .pixi-cards-layer {
   position: absolute;
   inset: 0;

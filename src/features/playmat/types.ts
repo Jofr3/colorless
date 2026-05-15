@@ -4,7 +4,7 @@ export type CardBackTone = "blue" | "red";
 export type CardBackSize = "card" | "prize";
 
 export type CardOwner = PlayerId | "global";
-export type CardZone = "hand" | "active" | "bench" | "stadium";
+export type CardZone = "hand" | "active" | "bench" | "stadium" | "attached";
 
 export interface CardPlacement {
   owner: CardOwner;
@@ -18,7 +18,12 @@ export interface CardMoveRequest {
   to: CardPlacement;
 }
 
-export type CardType = "pokemon" | "trainer" | "energy" | "stadium";
+export type CardType = "pokemon" | "trainer" | "tool" | "energy" | "stadium";
+
+export interface AttachedCards {
+  tools: CardModel[];
+  energies: CardModel[];
+}
 
 export interface CardModel {
   id: string;
@@ -26,6 +31,7 @@ export interface CardModel {
   cardId: string;
   type: CardType;
   imageUrl?: string;
+  attached?: AttachedCards;
 }
 
 export interface PlayerBoard {

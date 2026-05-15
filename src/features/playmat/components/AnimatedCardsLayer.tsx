@@ -100,6 +100,30 @@ function descriptorKey(descriptor: CardDescriptor) {
   return descriptor.card.id;
 }
 
+function pushAttachedDescriptors(
+  descriptors: CardDescriptor[],
+  host: CardModel,
+  owner: PlayerId,
+) {
+  if (!host.attached) return;
+  for (const [index, tool] of host.attached.tools.entries()) {
+    descriptors.push({
+      card: tool,
+      placement: { owner, zone: "attached", index },
+      draggable: false,
+      zoneSize: 1,
+    });
+  }
+  for (const [index, energy] of host.attached.energies.entries()) {
+    descriptors.push({
+      card: energy,
+      placement: { owner, zone: "attached", index },
+      draggable: false,
+      zoneSize: 1,
+    });
+  }
+}
+
 function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId): CardDescriptor[] {
   const descriptors: CardDescriptor[] = [];
 
@@ -114,6 +138,7 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
         draggable: owner === perspectivePlayer,
         zoneSize: 1,
       });
+      pushAttachedDescriptors(descriptors, active, owner);
     }
 
     for (const [index, card] of player.bench.entries()) {
@@ -123,6 +148,7 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
         draggable: owner === perspectivePlayer,
         zoneSize: player.bench.length,
       });
+      pushAttachedDescriptors(descriptors, card, owner);
     }
 
     if (owner === perspectivePlayer) {
@@ -206,7 +232,7 @@ function pointFromEvent(root: HTMLElement, event: PointerEvent) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
-function zIndexForPlacement(placement: CardPlacement, zoneSize: number) {
+function zIndexForPlacement(placement: CardPlacement, zoneSize: number, cardType?: CardType) {
   if (placement.zone === "hand") {
     return 80 + zoneSize - (placement.index ?? 0);
   }
@@ -217,6 +243,13 @@ function zIndexForPlacement(placement: CardPlacement, zoneSize: number) {
 
   if (placement.zone === "bench") {
     return 35 + (placement.index ?? 0);
+  }
+
+  // Attached tool/energy ride below their host Pokémon (active=55, bench=35+).
+  // Tools sit a hair above energies so the tool stripe reads cleanly.
+  if (placement.zone === "attached") {
+    if (cardType === "tool") return 32;
+    return 28 + (placement.index ?? 0);
   }
 
   // Synthetic back cards (deck/prize) ride the "stadium" zone with a player
@@ -358,13 +391,14 @@ export function AnimatedCardsLayer({
       }
 
       const rect = element.getBoundingClientRect();
+      const rotation = Number(element.dataset.cardRotation ?? "0") || 0;
       const target: CardViewTarget = {
         x: rect.left - rootRect.left + rect.width / 2,
         y: rect.top - rootRect.top + rect.height / 2,
         width: rect.width,
         height: rect.height,
-        rotation: 0,
-        zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize),
+        rotation,
+        zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize, descriptor.card.type),
         placement: descriptor.placement,
       };
 
@@ -442,6 +476,7 @@ export function AnimatedCardsLayer({
         textureUrl,
         seed: cardSeed(descriptor.card.id),
         reducedMotion: reducedMotionRef.current,
+        hoverMode: descriptor.placement.zone === "attached" ? "juice-only" : "full",
       });
       viewsRef.current.set(cardId, view);
       scene.addChild(view.container);
@@ -628,6 +663,12 @@ export function AnimatedCardsLayer({
     drag: DragState,
     point: { x: number; y: number },
   ): { owner: PlayerId; zone: "hand" | "bench" } | null {
+    // Tools/energies attach to an existing Pokémon at the destination slot;
+    // they aren't inserted as a new sibling, so the reorder preview must not
+    // shuffle the bench around them. Skipping detection here also keeps the
+    // pointer-up reorderIndex override from rewriting the drop's slot index
+    // to an insertion position.
+    if (drag.cardType === "tool" || drag.cardType === "energy") return null;
     const board = boardRef.current;
     // Iterate smallest-first so we prefer the most specific slot drop zone
     // when slot zones nest inside a wider zone container.
@@ -794,7 +835,7 @@ export function AnimatedCardsLayer({
         width: rect.width,
         height: rect.height,
         rotation: 0,
-        zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize),
+        zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize, descriptor.card.type),
         placement: descriptor.placement,
       });
     }

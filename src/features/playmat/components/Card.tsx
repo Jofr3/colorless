@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ACTIVE_SLOT_CLASS, CARD_RENDER_WIDTH, CARD_SLOT_STYLE, FRAME_CLASS } from "../constants";
 import type { CardModel } from "../types";
 import { CardImage } from "./CardImage";
@@ -31,6 +31,9 @@ export function PlaymatCard({
   card: CardModel;
   priority?: boolean;
 }) {
+  const tools = card.attached?.tools ?? [];
+  const energies = card.attached?.energies ?? [];
+
   return (
     <div
       className="relative select-none"
@@ -51,6 +54,27 @@ export function PlaymatCard({
           />
         </div>
       </div>
+      {tools.map((tool) => (
+        <div
+          key={tool.id}
+          className="playmat-card__attached playmat-card__attached--tool"
+          data-card-anchor="true"
+          data-card-id={tool.id}
+          data-card-rotation={-Math.PI / 2}
+          aria-hidden="true"
+        />
+      ))}
+      {energies.map((energy, index) => (
+        <div
+          key={energy.id}
+          className="playmat-card__attached playmat-card__attached--energy"
+          data-card-anchor="true"
+          data-card-id={energy.id}
+          data-card-rotation={Math.PI / 2}
+          aria-hidden="true"
+          style={{ "--attached-stack": String(index) } as CSSProperties}
+        />
+      ))}
     </div>
   );
 }
