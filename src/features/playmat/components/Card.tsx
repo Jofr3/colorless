@@ -24,6 +24,20 @@ export function EmptyCardSpace() {
   return <div style={{ width: "var(--card-w)", height: "var(--card-h)" }} />;
 }
 
+const BASE_ATTACHED_ENERGY_STEP = 0.2;
+const ATTACHED_ENERGY_STEP_SHRINK = 0.03;
+const MIN_ATTACHED_ENERGY_STEP = 0.07;
+const MAX_ATTACHED_ENERGY_SPREAD = 0.42;
+
+function energyStepForStackSize(cardCount: number) {
+  const denseStep = Math.max(
+    MIN_ATTACHED_ENERGY_STEP,
+    BASE_ATTACHED_ENERGY_STEP - Math.max(0, cardCount - 2) * ATTACHED_ENERGY_STEP_SHRINK,
+  );
+  const containedStep = cardCount > 1 ? MAX_ATTACHED_ENERGY_SPREAD / (cardCount - 1) : denseStep;
+  return Math.min(denseStep, containedStep).toFixed(3);
+}
+
 export function PlaymatCard({
   card,
   priority = false,
@@ -33,6 +47,7 @@ export function PlaymatCard({
 }) {
   const tools = card.attached?.tools ?? [];
   const energies = card.attached?.energies ?? [];
+  const energyStep = energyStepForStackSize(energies.length);
 
   return (
     <div
@@ -72,7 +87,12 @@ export function PlaymatCard({
           data-card-id={energy.id}
           data-card-rotation={Math.PI / 2}
           aria-hidden="true"
-          style={{ "--attached-stack": String(index) } as CSSProperties}
+          style={
+            {
+              "--attached-stack": String(index),
+              "--attached-energy-step": energyStep,
+            } as CSSProperties
+          }
         />
       ))}
     </div>

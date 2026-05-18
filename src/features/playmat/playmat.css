@@ -164,6 +164,7 @@
   --attached-stick: 0.22;
   --attached-edge-gap: max(3px, calc(var(--card-w) * 0.035));
   --attached-stack: 0;
+  --attached-energy-step: 0.22;
   position: absolute;
   width: calc(var(--card-w) * var(--attached-scale));
   height: calc(var(--card-h) * var(--attached-scale));
@@ -188,7 +189,7 @@
     var(--card-h)
     - var(--card-w) * var(--attached-scale) * 0.5
     - var(--card-h) * var(--attached-scale) * 0.5
-    - var(--card-w) * 0.22 * var(--attached-stack)
+    - var(--card-w) * var(--attached-energy-step) * var(--attached-stack)
     - var(--attached-edge-gap)
   );
   left: calc(

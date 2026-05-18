@@ -122,11 +122,15 @@ export function canPlace(
     if (target.zone !== "active" && target.zone !== "bench") return false;
     if (source.zone !== "hand") return false;
     const player = board[target.owner];
-    if (target.zone === "active") {
-      return player.active != null;
-    }
-    const idx = target.index;
-    return idx != null && player.bench[idx] != null;
+    const host =
+      target.zone === "active"
+        ? player.active
+        : target.index != null
+          ? player.bench[target.index] ?? null
+          : null;
+    if (!host) return false;
+    if (sourceType === "tool" && (host.attached?.tools.length ?? 0) > 0) return false;
+    return true;
   }
 
   // Bench / active only accept Pokémon (after the attach branch).
@@ -274,8 +278,8 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
   const next = cloneBoard(board);
 
   // Tool / energy attach: take the card from its source and slip it onto
-  // the Pokémon at the target slot. Tools replace any existing tool (TCG
-  // rule: one tool per Pokémon); energies append.
+  // the Pokémon at the target slot. Tools can only attach to Pokémon that
+  // do not already have a tool; energies append.
   if (card.type === "tool" || card.type === "energy") {
     if (!isPlayerOwner(request.to.owner)) return board;
     const player = next[request.to.owner];
@@ -294,6 +298,7 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
       ? { tools: [...host.attached.tools], energies: [...host.attached.energies] }
       : { tools: [], energies: [] };
     if (card.type === "tool") {
+      if (attached.tools.length > 0) return board;
       attached.tools = [taken];
     } else {
       attached.energies = [...attached.energies, taken];
