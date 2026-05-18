@@ -94,10 +94,13 @@ interface SlotAnchor {
 }
 
 const CARD_TEXTURE_WIDTH = 600;
-// Slightly larger than the CSS protrusion (0.22): the host Pokémon still
-// covers the extra painted area, but the attached card no longer looks overly
-// sliced off at the inner edge.
+const ATTACHED_CARD_SCALE = 0.92;
+const ATTACHED_VISIBLE_STICK = 0.22;
+// Slightly larger than the CSS protrusion: the host Pokémon still covers the
+// extra painted area, but the attached card no longer looks overly sliced off
+// at the inner edge.
 const ATTACHED_CLIP_FRACTION = 0.3;
+const ATTACHED_STRIP_FRACTION = ATTACHED_CARD_SCALE * ATTACHED_VISIBLE_STICK;
 const PLAYER_IDS: PlayerId[] = ["opponent", "you"];
 const INTERACTIVE_SELECTOR =
   "button, a, input, select, textarea, [role='button'], [aria-label='Game log']";
@@ -607,6 +610,37 @@ export function AnimatedCardsLayer({
     }
   }
 
+  function setCardTargetWithAttached(
+    descriptor: CardDescriptor,
+    view: CardView,
+    target: CardViewTarget,
+  ) {
+    const previousHostTarget = view.getTargetSnapshot();
+    view.setTarget(target);
+
+    if (!previousHostTarget) {
+      return;
+    }
+
+    for (const attachedDescriptor of descriptorsRef.current.values()) {
+      if (attachedDescriptor.attachedTo !== descriptor.card.id) {
+        continue;
+      }
+
+      const attachedView = viewsRef.current.get(attachedDescriptor.card.id);
+      const previousAttachedTarget = attachedView?.getTargetSnapshot();
+      if (!attachedView || !previousAttachedTarget || attachedView.isDragging) {
+        continue;
+      }
+
+      attachedView.setTarget({
+        ...previousAttachedTarget,
+        x: target.x + previousAttachedTarget.x - previousHostTarget.x,
+        y: target.y + previousAttachedTarget.y - previousHostTarget.y,
+      });
+    }
+  }
+
   function startAttachedCardsDrag(drag: DragState, hostX: number, hostY: number) {
     moveAttachedCardsWithHost(drag, hostX, hostY);
 
@@ -864,11 +898,16 @@ export function AnimatedCardsLayer({
       return;
     }
 
-    const slots = getZoneSlots(previewZone, previewOwner, slotCount);
-    if (slots.length === 0) return;
-    const zoneSize = slots.length;
-
     if (mode === "compact") {
+      const slots = getPreviewSlots(
+        previewZone,
+        previewOwner,
+        siblings.length,
+        siblings.map((s) => s.descriptor),
+      );
+      if (slots.length === 0) return;
+      const zoneSize = slots.length;
+
       // Place each sibling at slot[j] of the (N-1)-card layout. No gap is
       // reserved, so the source zone looks like the dragged card has been
       // taken out.
@@ -880,7 +919,7 @@ export function AnimatedCardsLayer({
           zone: previewZone,
           index: j,
         };
-        siblings[j].view.setTarget({
+        setCardTargetWithAttached(siblings[j].descriptor, siblings[j].view, {
           x: slot.x,
           y: slot.y,
           width: slot.width,
@@ -906,6 +945,21 @@ export function AnimatedCardsLayer({
     }
     drag.reorderIndex = insertIdx;
 
+    const draggedDescriptor = descriptorsRef.current.get(drag.cardId);
+    const virtualDescriptors = siblings.map((s) => s.descriptor);
+    if (draggedDescriptor) {
+      virtualDescriptors.splice(insertIdx, 0, draggedDescriptor);
+    }
+
+    const slots = getPreviewSlots(
+      previewZone,
+      previewOwner,
+      slotCount,
+      virtualDescriptors.length === slotCount ? virtualDescriptors : undefined,
+    );
+    if (slots.length === 0) return;
+    const zoneSize = slots.length;
+
     for (let j = 0; j < siblings.length; j += 1) {
       const virtualIndex = j < insertIdx ? j : j + 1;
       const slot = slots[virtualIndex];
@@ -917,7 +971,7 @@ export function AnimatedCardsLayer({
         zone: previewZone,
         index: virtualIndex,
       };
-      sibling.view.setTarget({
+      setCardTargetWithAttached(sibling.descriptor, sibling.view, {
         x: slot.x,
         y: slot.y,
         width: slot.width,
@@ -949,7 +1003,7 @@ export function AnimatedCardsLayer({
       if (!element) continue;
 
       const rect = element.getBoundingClientRect();
-      view.setTarget({
+      setCardTargetWithAttached(descriptor, view, {
         x: rect.left - rootRect.left + rect.width / 2,
         y: rect.top - rootRect.top + rect.height / 2,
         width: rect.width,
@@ -959,6 +1013,89 @@ export function AnimatedCardsLayer({
         placement: descriptor.placement,
       });
     }
+  }
+
+  function getPreviewSlots(
+    zone: "hand" | "bench",
+    owner: PlayerId,
+    slotCount: number,
+    orderedDescriptors?: CardDescriptor[],
+  ): SlotAnchor[] {
+    if (zone === "bench" && orderedDescriptors?.length === slotCount) {
+      const attachmentAwareSlots = getBenchSlotsForOrder(owner, orderedDescriptors);
+      if (attachmentAwareSlots.length > 0) {
+        return attachmentAwareSlots;
+      }
+    }
+
+    return getZoneSlots(zone, owner, slotCount);
+  }
+
+  function getBenchSlotsForOrder(owner: PlayerId, orderedDescriptors: CardDescriptor[]) {
+    const root = playmatRef.current;
+    if (!root || orderedDescriptors.length === 0) return [];
+
+    const outerEl = root.querySelector<HTMLElement>(
+      `[data-card-drop-zone="true"][data-card-owner="${owner}"][data-card-zone="bench"]:not([data-card-index])`,
+    );
+    if (!outerEl) return [];
+
+    const rootRect = root.getBoundingClientRect();
+    const outerRect = outerEl.getBoundingClientRect();
+    const rootStyles = getComputedStyle(root);
+    const gap = Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
+
+    let cardW = 0;
+    let cardH = 0;
+    for (const descriptor of orderedDescriptors) {
+      const target = viewsRef.current.get(descriptor.card.id)?.getTargetSnapshot();
+      if (target) {
+        cardW = target.width;
+        cardH = target.height;
+        break;
+      }
+    }
+    if (cardW === 0 || cardH === 0) {
+      const slot = root.querySelector<HTMLElement>(
+        `[data-card-drop-zone="true"][data-card-owner="${owner}"][data-card-zone="bench"][data-card-index]`,
+      );
+      const rect = slot?.getBoundingClientRect();
+      cardW = rect?.width ?? 0;
+      cardH = rect?.height ?? 0;
+    }
+    if (cardW === 0 || cardH === 0) return [];
+
+    const attachedStrip = cardH * ATTACHED_STRIP_FRACTION;
+    const margins = orderedDescriptors.map((descriptor, index) => {
+      const hasTool = (descriptor.card.attached?.tools.length ?? 0) > 0;
+      const hasEnergy = (descriptor.card.attached?.energies.length ?? 0) > 0;
+      return {
+        left: hasTool && index > 0 ? attachedStrip : 0,
+        right: hasEnergy && index < orderedDescriptors.length - 1 ? attachedStrip : 0,
+      };
+    });
+
+    const totalWidth =
+      cardW * orderedDescriptors.length +
+      gap * Math.max(0, orderedDescriptors.length - 1) +
+      margins.reduce((sum, margin) => sum + margin.left + margin.right, 0);
+    const centerX = outerRect.left + outerRect.width / 2 - rootRect.left;
+    const centerY = outerRect.top + outerRect.height / 2 - rootRect.top;
+    let cursorX = centerX - totalWidth / 2;
+
+    return orderedDescriptors.map((_descriptor, index) => {
+      const margin = margins[index];
+      cursorX += margin.left;
+      const x = cursorX + cardW / 2;
+      cursorX += cardW + margin.right + gap;
+      return {
+        x,
+        y: centerY,
+        width: cardW,
+        height: cardH,
+        index,
+      } satisfies SlotAnchor;
+    });
   }
 
   function getZoneSlots(
