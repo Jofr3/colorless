@@ -95,6 +95,12 @@ interface DragState {
   previewZone: { owner: PlayerId; zone: "hand" | "bench" } | null;
 }
 
+interface PressRevealState {
+  pointerId: number;
+  revealedCardIds: Set<string>;
+  pressedViewId?: string;
+}
+
 interface SlotAnchor {
   x: number;
   y: number;
@@ -109,8 +115,8 @@ const CARD_TEXTURE_WIDTH = 600;
 // at the inner edge.
 const ATTACHED_CLIP_FRACTION = 0.3;
 const TOOL_BEHIND_PEEK = 0.12;
-const TOOL_BEHIND_HOVER_PEEK = 0.18;
-// Larger than the hover peek so tool labels don't get clipped by
+const TOOL_BEHIND_PRESS_PEEK = 0.18;
+// Larger than the press peek so tool labels don't get clipped by
 // sub-pixel/perspective movement. The host Pokémon still sits above the
 // tool, hiding the extra masked area behind it.
 const TOOL_BEHIND_CLIP_FRACTION = 0.24;
@@ -416,6 +422,7 @@ export function AnimatedCardsLayer({
   const descriptorsRef = useRef(new Map<string, CardDescriptor>());
   const dropZonesRef = useRef<DropZoneSnapshot[]>([]);
   const dragRef = useRef<DragState | null>(null);
+  const pressedRevealRef = useRef<PressRevealState | null>(null);
   const hoveredCardIdRef = useRef<string | null>(null);
   const hoveredCardIdsRef = useRef(new Set<string>());
   const rafRef = useRef<number | null>(null);
@@ -470,7 +477,7 @@ export function AnimatedCardsLayer({
     return ids;
   }
 
-  function hoverRevealOffsetForAttached(descriptor: CardDescriptor) {
+  function pressRevealOffsetForAttached(descriptor: CardDescriptor) {
     if (descriptor.placement.zone !== "attached") {
       return { x: 0, y: 0 };
     }
@@ -484,7 +491,7 @@ export function AnimatedCardsLayer({
     if (descriptor.card.type === "tool" && descriptor.attachedPresentation === "behind") {
       const hostCardHeight = target.height / ATTACHED_CARD_SCALE;
       const direction = descriptor.attachedSide === "top" ? 1 : -1;
-      return { x: 0, y: direction * hostCardHeight * (TOOL_BEHIND_HOVER_PEEK - TOOL_BEHIND_PEEK) };
+      return { x: 0, y: direction * hostCardHeight * (TOOL_BEHIND_PRESS_PEEK - TOOL_BEHIND_PEEK) };
     }
 
     if (
@@ -508,7 +515,6 @@ export function AnimatedCardsLayer({
       if (!nextHoveredCardIds.has(cardId)) {
         const view = viewsRef.current.get(cardId);
         view?.setHovered(false);
-        view?.setHoverRevealOffset({ x: 0, y: 0 });
       }
     }
 
@@ -517,14 +523,67 @@ export function AnimatedCardsLayer({
       if (!previousHoveredCardIds.has(cardId)) {
         view?.setHovered(true);
       }
-
-      const descriptor = descriptorsRef.current.get(cardId);
-      view?.setHoverRevealOffset(
-        descriptor ? hoverRevealOffsetForAttached(descriptor) : { x: 0, y: 0 },
-      );
     }
 
     hoveredCardIdsRef.current = nextHoveredCardIds;
+  }
+
+  function startPressedReveal(hostCardId: string, pointerId: number, pressedViewId?: string) {
+    const revealEntries: Array<{
+      cardId: string;
+      view: CardView;
+      offset: { x: number; y: number };
+    }> = [];
+
+    for (const descriptor of descriptorsRef.current.values()) {
+      if (descriptor.attachedTo !== hostCardId) {
+        continue;
+      }
+
+      const view = viewsRef.current.get(descriptor.card.id);
+      if (!view) {
+        continue;
+      }
+
+      const offset = pressRevealOffsetForAttached(descriptor);
+      if (offset.x === 0 && offset.y === 0) {
+        continue;
+      }
+
+      revealEntries.push({ cardId: descriptor.card.id, view, offset });
+    }
+
+    if (revealEntries.length === 0) {
+      return false;
+    }
+
+    stopPressedReveal();
+
+    const revealedCardIds = new Set<string>();
+    for (const entry of revealEntries) {
+      entry.view.setRevealOffset(entry.offset);
+      revealedCardIds.add(entry.cardId);
+    }
+
+    pressedRevealRef.current = { pointerId, revealedCardIds, pressedViewId };
+    return true;
+  }
+
+  function stopPressedReveal(pointerId?: number) {
+    const state = pressedRevealRef.current;
+    if (!state || (pointerId !== undefined && state.pointerId !== pointerId)) {
+      return;
+    }
+
+    for (const cardId of state.revealedCardIds) {
+      viewsRef.current.get(cardId)?.setRevealOffset({ x: 0, y: 0 });
+    }
+
+    if (state.pressedViewId) {
+      viewsRef.current.get(state.pressedViewId)?.stopPress();
+    }
+
+    pressedRevealRef.current = null;
   }
 
   function clearHover() {
@@ -837,11 +896,26 @@ export function AnimatedCardsLayer({
     }
 
     const point = pointFromEvent(root, event);
-    const view = hitTest(point, true);
+    const view = hitTest(point, false);
     const descriptor = view ? descriptorsRef.current.get(view.id) : undefined;
     const placement = view?.placement;
 
-    if (!view || !descriptor?.draggable || !placement) {
+    if (!view || !descriptor || !placement) {
+      return;
+    }
+
+    const revealHostCardId =
+      descriptor.placement.zone === "attached" ? descriptor.attachedTo : view.id;
+
+    if (!descriptor.draggable) {
+      if (!revealHostCardId || !startPressedReveal(revealHostCardId, event.pointerId, view.id)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      clearHover();
+      view.startPress();
       return;
     }
 
@@ -876,6 +950,7 @@ export function AnimatedCardsLayer({
     view.startPress();
     view.startDrag();
     startAttachedCardsDrag(dragState, viewPosition.x, viewPosition.y);
+    startPressedReveal(revealHostCardId ?? view.id, event.pointerId);
   }
 
   function handlePointerMove(event: PointerEvent) {
@@ -888,6 +963,11 @@ export function AnimatedCardsLayer({
     const drag = dragRef.current;
 
     if (!drag) {
+      if (pressedRevealRef.current?.pointerId === event.pointerId) {
+        event.preventDefault();
+        return;
+      }
+
       updateHover(point, event);
       return;
     }
@@ -1373,7 +1453,20 @@ export function AnimatedCardsLayer({
     const root = playmatRef.current;
     const drag = dragRef.current;
 
-    if (!root || !drag || event.pointerId !== drag.pointerId) {
+    if (!root) {
+      return;
+    }
+
+    if (!drag) {
+      if (pressedRevealRef.current?.pointerId === event.pointerId) {
+        event.preventDefault();
+        stopPressedReveal(event.pointerId);
+        setCursor("");
+      }
+      return;
+    }
+
+    if (event.pointerId !== drag.pointerId) {
       return;
     }
 
@@ -1407,6 +1500,7 @@ export function AnimatedCardsLayer({
       }
     }
     releaseAttachedCards(drag, Boolean(toPlacement), !drag.moved);
+    stopPressedReveal(event.pointerId);
 
     if (toPlacement) {
       onMoveCardRef.current({ cardId: drag.cardId, from: drag.from, to: toPlacement });
@@ -1424,13 +1518,26 @@ export function AnimatedCardsLayer({
     const root = playmatRef.current;
     const drag = dragRef.current;
 
-    if (!root || !drag || event.pointerId !== drag.pointerId) {
+    if (!root) {
+      return;
+    }
+
+    if (!drag) {
+      if (pressedRevealRef.current?.pointerId === event.pointerId) {
+        stopPressedReveal(event.pointerId);
+        setCursor("");
+      }
+      return;
+    }
+
+    if (event.pointerId !== drag.pointerId) {
       return;
     }
 
     viewsRef.current.get(drag.cardId)?.stopPress();
     viewsRef.current.get(drag.cardId)?.release(drag.velocity, false);
     releaseAttachedCards(drag, false);
+    stopPressedReveal(event.pointerId);
     dragRef.current = null;
     requestAnimationFrame(measureCards);
     root.classList.remove("is-card-dragging");

@@ -283,7 +283,7 @@ export class CardView {
 
   private hoverPoint: { x: number; y: number } | null = null;
 
-  private hoverRevealOffset = { x: 0, y: 0 };
+  private revealOffset = { x: 0, y: 0 };
 
   private holdTween: gsap.core.Tween | null = null;
 
@@ -482,8 +482,8 @@ export class CardView {
     }
   }
 
-  setHoverRevealOffset(offset: { x: number; y: number }) {
-    this.hoverRevealOffset = offset;
+  setRevealOffset(offset: { x: number; y: number }) {
+    this.revealOffset = offset;
   }
 
   startPress() {
@@ -634,8 +634,8 @@ export class CardView {
     const idle = this.idleOffset(time);
     const juice = this.evaluateJuice(time);
     const desired = {
-      x: this.target.x + this.hoverRevealOffset.x,
-      y: this.target.y + this.hoverRevealOffset.y + idle.y,
+      x: this.target.x + this.revealOffset.x,
+      y: this.target.y + this.revealOffset.y + idle.y,
       rotation: this.target.rotation + idle.rotation,
       scale: 1,
     };
