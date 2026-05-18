@@ -36,6 +36,7 @@ interface CardDescriptor {
   draggable: boolean;
   zoneSize: number;
   attachedTo?: string;
+  attachedPresentation?: "side" | "behind";
 }
 
 interface DropZoneSnapshot {
@@ -101,6 +102,7 @@ const ATTACHED_VISIBLE_STICK = 0.22;
 // at the inner edge.
 const ATTACHED_CLIP_FRACTION = 0.3;
 const ATTACHED_STRIP_FRACTION = ATTACHED_CARD_SCALE * ATTACHED_VISIBLE_STICK;
+const TOOL_BEHIND_BENCH_THRESHOLD = 5;
 const PLAYER_IDS: PlayerId[] = ["opponent", "you"];
 const INTERACTIVE_SELECTOR =
   "button, a, input, select, textarea, [role='button'], [aria-label='Game log']";
@@ -115,9 +117,10 @@ function cardTextureUrl(card: CardModel) {
 
 function cardPresentationOptions(descriptor: CardDescriptor): CardViewPresentationOptions {
   const isAttached = descriptor.placement.zone === "attached";
+  const isBehindAttachment = descriptor.attachedPresentation === "behind";
   return {
     hoverMode: isAttached ? "juice-only" : "full",
-    clipTopFraction: isAttached ? ATTACHED_CLIP_FRACTION : null,
+    clipTopFraction: isAttached && !isBehindAttachment ? ATTACHED_CLIP_FRACTION : null,
   };
 }
 
@@ -137,6 +140,7 @@ function pushAttachedDescriptors(
   descriptors: CardDescriptor[],
   host: CardModel,
   owner: PlayerId,
+  attachedPresentation: "side" | "behind" = "side",
 ) {
   if (!host.attached) return;
   for (const [index, tool] of host.attached.tools.entries()) {
@@ -146,6 +150,7 @@ function pushAttachedDescriptors(
       draggable: false,
       zoneSize: 1,
       attachedTo: host.id,
+      attachedPresentation,
     });
   }
   for (const [index, energy] of host.attached.energies.entries()) {
@@ -183,7 +188,12 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
         draggable: owner === perspectivePlayer,
         zoneSize: player.bench.length,
       });
-      pushAttachedDescriptors(descriptors, card, owner);
+      pushAttachedDescriptors(
+        descriptors,
+        card,
+        owner,
+        player.bench.length > TOOL_BEHIND_BENCH_THRESHOLD ? "behind" : "side",
+      );
     }
 
     if (owner === perspectivePlayer) {

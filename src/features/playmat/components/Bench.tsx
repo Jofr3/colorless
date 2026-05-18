@@ -1,5 +1,5 @@
 import { BENCH_LIMIT, FRAME_CLASS } from "../constants";
-import type { CardModel, PlayerId } from "../types";
+import type { CardModel, PlayerId, SidePosition } from "../types";
 import { PlaymatCard } from "./Card";
 
 // Mirrors the visible-strip math in playmat.css `.playmat-card__attached`
@@ -7,8 +7,17 @@ import { PlaymatCard } from "./Card";
 // inter-slot margin when a bench card has an attachment that would
 // otherwise be covered by its neighbour.
 const ATTACHED_STRIP = "calc(var(--card-h) * 0.92 * 0.22)";
+const TOOL_BEHIND_BENCH_THRESHOLD = 5;
 
-export function Bench({ cards, owner }: { cards: CardModel[]; owner: PlayerId }) {
+export function Bench({
+  cards,
+  owner,
+  side,
+}: {
+  cards: CardModel[];
+  owner: PlayerId;
+  side: SidePosition;
+}) {
   return (
     <div
       className={FRAME_CLASS}
@@ -28,10 +37,13 @@ export function Bench({ cards, owner }: { cards: CardModel[]; owner: PlayerId })
         {cards.map((card, index) => {
           const hasTool = (card.attached?.tools.length ?? 0) > 0;
           const hasEnergy = (card.attached?.energies.length ?? 0) > 0;
+          const toolBehind = hasTool && cards.length > TOOL_BEHIND_BENCH_THRESHOLD;
           // Only widen the gap when there's actually a neighbour on that
           // side that would otherwise cover the attached strip — the first
           // card has nothing to its left, the last nothing to its right.
-          const needsLeftGap = hasTool && index > 0;
+          // Crowded benches tuck tools vertically behind the Pokémon instead
+          // of reserving horizontal strip space.
+          const needsLeftGap = hasTool && !toolBehind && index > 0;
           const needsRightGap = hasEnergy && index < cards.length - 1;
           return (
             <div
@@ -48,7 +60,11 @@ export function Bench({ cards, owner }: { cards: CardModel[]; owner: PlayerId })
               data-card-zone="bench"
               data-card-index={index}
             >
-              <PlaymatCard card={card} />
+              <PlaymatCard
+                card={card}
+                toolAttachmentPlacement={toolBehind ? "behind" : "side"}
+                toolAttachmentSide={side}
+              />
             </div>
           );
         })}

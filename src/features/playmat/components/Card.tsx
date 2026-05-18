@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { ACTIVE_SLOT_CLASS, CARD_RENDER_WIDTH, CARD_SLOT_STYLE, FRAME_CLASS } from "../constants";
-import type { CardModel } from "../types";
+import type { CardModel, SidePosition } from "../types";
 import { CardImage } from "./CardImage";
 
 export function CardSlot({
@@ -38,12 +38,18 @@ function energyStepForStackSize(cardCount: number) {
   return Math.min(denseStep, containedStep).toFixed(3);
 }
 
+type ToolAttachmentPlacement = "side" | "behind";
+
 export function PlaymatCard({
   card,
   priority = false,
+  toolAttachmentPlacement = "side",
+  toolAttachmentSide = "bottom",
 }: {
   card: CardModel;
   priority?: boolean;
+  toolAttachmentPlacement?: ToolAttachmentPlacement;
+  toolAttachmentSide?: SidePosition;
 }) {
   const tools = card.attached?.tools ?? [];
   const energies = card.attached?.energies ?? [];
@@ -69,16 +75,23 @@ export function PlaymatCard({
           />
         </div>
       </div>
-      {tools.map((tool) => (
-        <div
-          key={tool.id}
-          className="playmat-card__attached playmat-card__attached--tool"
-          data-card-anchor="true"
-          data-card-id={tool.id}
-          data-card-rotation={-Math.PI / 2}
-          aria-hidden="true"
-        />
-      ))}
+      {tools.map((tool) => {
+        const isBehind = toolAttachmentPlacement === "behind";
+        return (
+          <div
+            key={tool.id}
+            className={`playmat-card__attached ${
+              isBehind
+                ? `playmat-card__attached--tool-behind playmat-card__attached--tool-behind-${toolAttachmentSide}`
+                : "playmat-card__attached--tool"
+            }`}
+            data-card-anchor="true"
+            data-card-id={tool.id}
+            data-card-rotation={isBehind ? 0 : -Math.PI / 2}
+            aria-hidden="true"
+          />
+        );
+      })}
       {energies.map((energy, index) => (
         <div
           key={energy.id}

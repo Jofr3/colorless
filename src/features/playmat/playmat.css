@@ -180,6 +180,19 @@
   );
 }
 
+.playmat-card__attached--tool-behind {
+  --attached-behind-peek: 0.12;
+  left: calc(var(--card-w) * (1 - var(--attached-scale)) * 0.5);
+}
+
+.playmat-card__attached--tool-behind-bottom {
+  top: calc(var(--card-h) * var(--attached-behind-peek) * -1);
+}
+
+.playmat-card__attached--tool-behind-top {
+  top: calc(var(--card-h) * (1 - var(--attached-scale) + var(--attached-behind-peek)));
+}
+
 .playmat-card__attached--energy {
   /* The first energy on every Pokémon (stack=0) sits at the same baseline —
      bottom-aligned, with no offset — so a Pokémon with 1 energy lines up

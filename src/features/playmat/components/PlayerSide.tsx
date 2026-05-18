@@ -86,7 +86,7 @@ function BenchArea({
 }) {
   return (
     <div className="relative">
-      <Bench cards={player.bench} owner={owner} />
+      <Bench cards={player.bench} owner={owner} side={side} />
       <SidePiles owner={owner} prizesRemaining={player.prizesRemaining} side={side} />
     </div>
   );
