@@ -13,7 +13,12 @@ import type {
   PlayerId,
 } from "../types";
 import { cardBackImageUrl } from "../pixi/cardBackTexture";
-import { CardView, type CardViewTarget, type ReleaseVelocity } from "../pixi/CardView";
+import {
+  CardView,
+  type CardViewPresentationOptions,
+  type CardViewTarget,
+  type ReleaseVelocity,
+} from "../pixi/CardView";
 import { canPlace } from "../utils/cardMovement";
 import { PRIZE_COUNT, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
 import { cardBackToneFor } from "../utils/players";
@@ -30,6 +35,7 @@ interface CardDescriptor {
   placement: CardPlacement;
   draggable: boolean;
   zoneSize: number;
+  attachedTo?: string;
 }
 
 interface DropZoneSnapshot {
@@ -39,6 +45,17 @@ interface DropZoneSnapshot {
   width: number;
   height: number;
   area: number;
+}
+
+interface AttachedDragTarget {
+  cardId: string;
+  offsetX: number;
+  offsetY: number;
+  width: number;
+  height: number;
+  rotation: number;
+  zIndex: number;
+  placement: CardPlacement;
 }
 
 interface DragState {
@@ -55,6 +72,7 @@ interface DragState {
   lastTime: number;
   velocity: ReleaseVelocity;
   moved: boolean;
+  attachedCards: AttachedDragTarget[];
   // Insertion index produced by the live reorder preview while the card
   // moves across siblings in whichever zone the cursor is hovering over
   // (hand or bench). On release this overrides the drop-zone's own index
@@ -76,6 +94,10 @@ interface SlotAnchor {
 }
 
 const CARD_TEXTURE_WIDTH = 600;
+// Slightly larger than the CSS protrusion (0.22): the host Pokémon still
+// covers the extra painted area, but the attached card no longer looks overly
+// sliced off at the inner edge.
+const ATTACHED_CLIP_FRACTION = 0.3;
 const PLAYER_IDS: PlayerId[] = ["opponent", "you"];
 const INTERACTIVE_SELECTOR =
   "button, a, input, select, textarea, [role='button'], [aria-label='Game log']";
@@ -86,6 +108,14 @@ function localCardTexturePath(cardId: string) {
 
 function cardTextureUrl(card: CardModel) {
   return card.imageUrl ?? localCardTexturePath(card.cardId);
+}
+
+function cardPresentationOptions(descriptor: CardDescriptor): CardViewPresentationOptions {
+  const isAttached = descriptor.placement.zone === "attached";
+  return {
+    hoverMode: isAttached ? "juice-only" : "full",
+    clipTopFraction: isAttached ? ATTACHED_CLIP_FRACTION : null,
+  };
 }
 
 function cardSeed(cardId: string) {
@@ -112,6 +142,7 @@ function pushAttachedDescriptors(
       placement: { owner, zone: "attached", index },
       draggable: false,
       zoneSize: 1,
+      attachedTo: host.id,
     });
   }
   for (const [index, energy] of host.attached.energies.entries()) {
@@ -120,6 +151,7 @@ function pushAttachedDescriptors(
       placement: { owner, zone: "attached", index },
       draggable: false,
       zoneSize: 1,
+      attachedTo: host.id,
     });
   }
 }
@@ -230,6 +262,11 @@ function parsePlacement(element: HTMLElement): CardPlacement | null {
 function pointFromEvent(root: HTMLElement, event: PointerEvent) {
   const rect = root.getBoundingClientRect();
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
+function zIndexForDraggedAttachment(descriptor: CardDescriptor) {
+  if (descriptor.card.type === "tool") return 9_999;
+  return 9_998 + (descriptor.placement.index ?? 0) * 0.01;
 }
 
 function zIndexForPlacement(placement: CardPlacement, zoneSize: number, cardType?: CardType) {
@@ -465,8 +502,11 @@ export function AnimatedCardsLayer({
       const existingView = viewsRef.current.get(cardId);
       const textureUrl = cardTextureUrl(descriptor.card);
 
+      const presentationOptions = cardPresentationOptions(descriptor);
+
       if (existingView) {
         existingView.setTextureUrl(textureUrl);
+        existingView.setPresentationOptions(presentationOptions);
         continue;
       }
 
@@ -476,7 +516,7 @@ export function AnimatedCardsLayer({
         textureUrl,
         seed: cardSeed(descriptor.card.id),
         reducedMotion: reducedMotionRef.current,
-        hoverMode: descriptor.placement.zone === "attached" ? "juice-only" : "full",
+        ...presentationOptions,
       });
       viewsRef.current.set(cardId, view);
       scene.addChild(view.container);
@@ -515,6 +555,80 @@ export function AnimatedCardsLayer({
     setCursor("");
   }
 
+  function collectAttachedDragTargets(
+    hostCardId: string,
+    hostPosition: { x: number; y: number },
+  ): AttachedDragTarget[] {
+    const attachedCards: AttachedDragTarget[] = [];
+
+    for (const descriptor of descriptorsRef.current.values()) {
+      if (descriptor.attachedTo !== hostCardId) {
+        continue;
+      }
+
+      const attachedView = viewsRef.current.get(descriptor.card.id);
+      const target = attachedView?.getTargetSnapshot();
+      if (!attachedView || !target) {
+        continue;
+      }
+
+      const position = attachedView.getPosition();
+      attachedCards.push({
+        cardId: descriptor.card.id,
+        offsetX: position.x - hostPosition.x,
+        offsetY: position.y - hostPosition.y,
+        width: target.width,
+        height: target.height,
+        rotation: target.rotation,
+        zIndex: zIndexForDraggedAttachment(descriptor),
+        placement: target.placement,
+      });
+    }
+
+    return attachedCards;
+  }
+
+  function moveAttachedCardsWithHost(drag: DragState, hostX: number, hostY: number) {
+    for (const attached of drag.attachedCards) {
+      const view = viewsRef.current.get(attached.cardId);
+      if (!view) {
+        continue;
+      }
+
+      view.setTarget({
+        x: hostX + attached.offsetX,
+        y: hostY + attached.offsetY,
+        width: attached.width,
+        height: attached.height,
+        rotation: attached.rotation,
+        zIndex: attached.zIndex,
+        placement: attached.placement,
+      });
+    }
+  }
+
+  function startAttachedCardsDrag(drag: DragState, hostX: number, hostY: number) {
+    moveAttachedCardsWithHost(drag, hostX, hostY);
+
+    for (const attached of drag.attachedCards) {
+      viewsRef.current.get(attached.cardId)?.startLinkedDrag(attached.zIndex);
+    }
+  }
+
+  function releaseAttachedCards(drag: DragState, accepted: boolean, clicked = false) {
+    for (const attached of drag.attachedCards) {
+      const view = viewsRef.current.get(attached.cardId);
+      if (!view) {
+        continue;
+      }
+
+      view.releaseLinkedDrag(drag.velocity, accepted);
+      if (clicked) {
+        view.clickPunch();
+      }
+    }
+  }
+
   function handlePointerDown(event: PointerEvent) {
     const root = playmatRef.current;
     if (!root || event.button !== 0 || shouldIgnorePointer(event)) {
@@ -535,8 +649,8 @@ export function AnimatedCardsLayer({
     clearHover();
 
     const viewPosition = view.getPosition();
-
-    dragRef.current = {
+    const attachedCards = collectAttachedDragTargets(view.id, viewPosition);
+    const dragState: DragState = {
       pointerId: event.pointerId,
       cardId: view.id,
       cardType: descriptor.card.type,
@@ -550,14 +664,17 @@ export function AnimatedCardsLayer({
       lastTime: performance.now(),
       velocity: { x: 0, y: 0 },
       moved: false,
+      attachedCards,
       reorderIndex: null,
       previewZone: null,
     };
+    dragRef.current = dragState;
 
     root.classList.add("is-card-dragging");
     setCursor("grabbing");
     view.startPress();
     view.startDrag();
+    startAttachedCardsDrag(dragState, viewPosition.x, viewPosition.y);
   }
 
   function handlePointerMove(event: PointerEvent) {
@@ -596,7 +713,10 @@ export function AnimatedCardsLayer({
     drag.lastTime = now;
     drag.moved = drag.moved || Math.hypot(point.x - drag.startX, point.y - drag.startY) > 5;
 
-    view.dragTo(point.x - drag.offsetX, point.y - drag.offsetY);
+    const draggedX = point.x - drag.offsetX;
+    const draggedY = point.y - drag.offsetY;
+    view.dragTo(draggedX, draggedY);
+    moveAttachedCardsWithHost(drag, draggedX, draggedY);
 
     const nextPreviewZone = detectPreviewZone(drag, point);
 
@@ -975,6 +1095,7 @@ export function AnimatedCardsLayer({
         view.clickPunch();
       }
     }
+    releaseAttachedCards(drag, Boolean(toPlacement), !drag.moved);
 
     if (toPlacement) {
       onMoveCardRef.current({ cardId: drag.cardId, from: drag.from, to: toPlacement });
@@ -998,6 +1119,7 @@ export function AnimatedCardsLayer({
 
     viewsRef.current.get(drag.cardId)?.stopPress();
     viewsRef.current.get(drag.cardId)?.release(drag.velocity, false);
+    releaseAttachedCards(drag, false);
     dragRef.current = null;
     requestAnimationFrame(measureCards);
     root.classList.remove("is-card-dragging");

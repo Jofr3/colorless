@@ -154,14 +154,15 @@
 /* Attached cards (tools, energies). The anchor div has the card's UNROTATED
    dimensions (scaled by --attached-scale) and is positioned so that after
    the Pixi layer rotates it ±90° about its centre, the visible card sits
-   in the desired spot: tools to the left, top-aligned; energies to the
-   right, bottom-aligned. `--attached-stick` is the fraction of the rotated
-   card's long axis (= card-h * scale) that sticks past the host edge —
-   bigger value, more visible strip. Multiple energies stack with
-   `--attached-stack` (set per-card inline). */
+   in the desired spot: tools to the left with a small top inset; energies
+   to the right with a small bottom inset. `--attached-stick` is the fraction
+   of the rotated card's long axis (= card-h * scale) that sticks past the
+   host edge — bigger value, more visible strip.
+   Multiple energies stack with `--attached-stack` (set per-card inline). */
 .playmat-card__attached {
   --attached-scale: 0.92;
   --attached-stick: 0.22;
+  --attached-edge-gap: max(3px, calc(var(--card-w) * 0.035));
   --attached-stack: 0;
   position: absolute;
   width: calc(var(--card-w) * var(--attached-scale));
@@ -171,7 +172,7 @@
 }
 
 .playmat-card__attached--tool {
-  top: calc((var(--card-w) - var(--card-h)) * var(--attached-scale) * 0.5);
+  top: calc((var(--card-w) - var(--card-h)) * var(--attached-scale) * 0.5 + var(--attached-edge-gap));
   left: calc(
     var(--card-h) * var(--attached-scale) * (0.5 - var(--attached-stick))
     - var(--card-w) * var(--attached-scale) * 0.5
@@ -188,6 +189,7 @@
     - var(--card-w) * var(--attached-scale) * 0.5
     - var(--card-h) * var(--attached-scale) * 0.5
     - var(--card-w) * 0.22 * var(--attached-stack)
+    - var(--attached-edge-gap)
   );
   left: calc(
     var(--card-w)

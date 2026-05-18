@@ -134,16 +134,24 @@ export interface CardViewTarget {
 
 export type HoverMode = "full" | "juice-only";
 
-export interface CardViewOptions {
+export interface CardViewPresentationOptions {
+  // "juice-only" suppresses the emphasis scale, radial lift, and mesh tilt
+  // when hovered, keeping just the juice pop. Used for attached tool/energy
+  // cards, where the host Pokémon already owns the hover gesture.
+  hoverMode?: HoverMode;
+  // Clips the card to a strip at the top of its own local card space. Since
+  // attached cards are rotated ±90°, this crops away the part that should be
+  // hidden behind the host Pokémon instead of relying on the host texture to
+  // cover it perfectly at corners/warped edges.
+  clipTopFraction?: number | null;
+}
+
+export interface CardViewOptions extends CardViewPresentationOptions {
   id: string;
   name: string;
   textureUrl: string;
   seed: number;
   reducedMotion: boolean;
-  // "juice-only" suppresses the emphasis scale, radial lift, and mesh tilt
-  // when hovered, keeping just the juice pop. Used for attached tool/energy
-  // cards, where the host Pokémon already owns the hover gesture.
-  hoverMode?: HoverMode;
 }
 
 export interface ReleaseVelocity {
@@ -231,13 +239,17 @@ export class CardView {
 
   private readonly placeholder = new Graphics();
 
+  private readonly clipMask = new Graphics();
+
   private readonly cardMesh: PerspectiveMesh;
 
   private readonly seed: number;
 
   private readonly reducedMotion: boolean;
 
-  private readonly hoverMode: HoverMode;
+  private hoverMode: HoverMode;
+
+  private clipTopFraction: number | null;
 
   private current = { x: 0, y: 0, rotation: 0, scale: 1 };
 
@@ -259,6 +271,8 @@ export class CardView {
 
   private dragging = false;
 
+  private linkedDragging = false;
+
   private hoverPoint: { x: number; y: number } | null = null;
 
   private holdTween: gsap.core.Tween | null = null;
@@ -274,6 +288,7 @@ export class CardView {
     this.seed = options.seed;
     this.reducedMotion = options.reducedMotion;
     this.hoverMode = options.hoverMode ?? "full";
+    this.clipTopFraction = options.clipTopFraction ?? null;
 
     this.cardMesh = new PerspectiveMesh({
       texture: Texture.WHITE,
@@ -305,7 +320,7 @@ export class CardView {
     this.emphasisScale.addChild(this.pressSquash);
     this.pressSquash.addChild(this.juice);
     this.juice.addChild(this.cardLayer);
-    this.cardLayer.addChild(this.placeholder, this.cardMesh);
+    this.cardLayer.addChild(this.placeholder, this.cardMesh, this.clipMask);
 
     this.setTextureUrl(options.textureUrl);
     this.redrawCard(options.name, 100, targetAspectHeight(100));
@@ -320,11 +335,31 @@ export class CardView {
   }
 
   get isDragging() {
-    return this.dragging;
+    return this.dragging || this.linkedDragging;
   }
 
   getPosition() {
     return { x: this.current.x, y: this.current.y };
+  }
+
+  getTargetSnapshot(): CardViewTarget | null {
+    return this.target
+      ? { ...this.target, placement: { ...this.target.placement } }
+      : null;
+  }
+
+  setPresentationOptions(options: CardViewPresentationOptions) {
+    this.hoverMode = options.hoverMode ?? "full";
+
+    const nextClipTopFraction = options.clipTopFraction ?? null;
+    if (this.clipTopFraction === nextClipTopFraction) {
+      return;
+    }
+
+    this.clipTopFraction = nextClipTopFraction;
+    const width = this.target?.width ?? 100;
+    const height = this.target?.height ?? targetAspectHeight(width);
+    this.updateClipMask(width, height);
   }
 
   setTextureUrl(textureUrl: string) {
@@ -401,7 +436,7 @@ export class CardView {
   }
 
   setHovered(hovered: boolean) {
-    if (this.hovered === hovered || this.dragging) {
+    if (this.hovered === hovered || this.isDragging) {
       return;
     }
 
@@ -483,6 +518,20 @@ export class CardView {
     }
   }
 
+  startLinkedDrag(zIndex: number) {
+    this.linkedDragging = true;
+    this.hovered = false;
+    this.hoverPoint = null;
+    this.zIndexReturnTween?.kill();
+    this.container.zIndex = zIndex;
+    this.startPress();
+    this.applyEmphasisTween();
+
+    if (!this.reducedMotion) {
+      this.juiceUp(0.04, 0.02);
+    }
+  }
+
   dragTo(x: number, y: number) {
     if (!this.target) {
       return;
@@ -503,7 +552,27 @@ export class CardView {
     this.dragging = false;
     this.hovered = false;
     this.hoverPoint = null;
+    this.applyReleaseMotion(velocity, accepted);
+  }
 
+  releaseLinkedDrag(velocity: ReleaseVelocity, accepted: boolean) {
+    this.linkedDragging = false;
+    this.hovered = false;
+    this.hoverPoint = null;
+    this.stopPress();
+    this.applyReleaseMotion(velocity, accepted);
+  }
+
+  clickPunch() {
+    if (!this.reducedMotion) {
+      // Click pop — toned down from Balatro's raw 0.11 default. With the
+      // press squash + hover scale already stacking on the click frame, a
+      // small juice pulse is enough to register without overshooting.
+      this.juiceUp(0.05, (this.seed > 0.5 ? 1 : -1) * 0.08);
+    }
+  }
+
+  private applyReleaseMotion(velocity: ReleaseVelocity, accepted: boolean) {
     if (accepted) {
       // Accepted drop: tiny velocity nudge gives a little overshoot before
       // the spring settles into the new slot.
@@ -529,19 +598,10 @@ export class CardView {
 
     this.zIndexReturnTween?.kill();
     this.zIndexReturnTween = gsap.delayedCall(this.reducedMotion ? 0 : 0.28, () => {
-      if (!this.dragging && this.target) {
+      if (!this.isDragging && this.target) {
         this.container.zIndex = this.target.zIndex;
       }
     });
-  }
-
-  clickPunch() {
-    if (!this.reducedMotion) {
-      // Click pop — toned down from Balatro's raw 0.11 default. With the
-      // press squash + hover scale already stacking on the click frame, a
-      // small juice pulse is enough to register without overshooting.
-      this.juiceUp(0.05, (this.seed > 0.5 ? 1 : -1) * 0.08);
-    }
   }
 
   update(dt: number, time: number) {
@@ -575,7 +635,7 @@ export class CardView {
     const ratio = Math.abs(velSec) / DRAG_VEL_REF;
     // Drag tilts fully; siblings shifting during a reorder tilt at a
     // fraction of that so they still react to the slide without wobbling.
-    const tiltScale = this.dragging ? 1 : IDLE_VELOCITY_TILT_SCALE;
+    const tiltScale = this.isDragging ? 1 : IDLE_VELOCITY_TILT_SCALE;
     const velocityRotation = clamp(
       Math.sign(velSec) * Math.pow(ratio, DRAG_TILT_EXPONENT) * 0.22 * tiltScale,
       -0.22,
@@ -587,7 +647,7 @@ export class CardView {
       desired.rotation + velocityRotation,
       "rotation",
       clampedDt,
-      this.dragging ? SPRING_C_ROT_DRAG : SPRING_C_ROT_IDLE,
+      this.isDragging ? SPRING_C_ROT_DRAG : SPRING_C_ROT_IDLE,
       1,
     );
 
@@ -794,9 +854,11 @@ export class CardView {
     // toward its corner. Hand cards are exempt (computeHoverOffset
     // returns 0/0 for them).
     const offset = this.computeHoverOffset();
-    const liftX = this.dragging ? 0 : this.hovered ? offset.x : 0;
-    const liftY = this.dragging ? -14 : this.hovered ? offset.y : 0;
-    const scale = this.dragging ? 1.1 : this.hovered ? 1.03 : 1;
+    const isPickedUp = this.isDragging;
+    const dragLift = this.computeDragLiftOffset();
+    const liftX = isPickedUp ? dragLift.x : this.hovered ? offset.x : 0;
+    const liftY = isPickedUp ? dragLift.y : this.hovered ? offset.y : 0;
+    const scale = isPickedUp ? 1.1 : this.hovered ? 1.03 : 1;
     gsap.to(this.lift, {
       duration: this.reducedMotion ? 0 : 0.16,
       ease: "power3.out",
@@ -807,6 +869,18 @@ export class CardView {
       ease: "power3.out",
       pixi: { scale },
     });
+  }
+
+  private computeDragLiftOffset(): { x: number; y: number } {
+    // `lift` lives inside the rotating card container. Convert the desired
+    // screen-space pickup lift (straight up) into card-local coordinates so
+    // sideways attached cards pop upward with their host instead of sliding
+    // sideways along their own rotated axis.
+    const rotation = this.target?.rotation ?? 0;
+    return {
+      x: -14 * Math.sin(rotation),
+      y: -14 * Math.cos(rotation),
+    };
   }
 
   private computeHoverOffset(): { x: number; y: number } {
@@ -840,7 +914,7 @@ export class CardView {
     // pointerdown sets both `pressed` and `dragging`, and the user reads
     // that subtle wobble as the card "fidgeting" in their hand instead
     // of following the cursor cleanly.
-    if (!this.pressed || this.dragging || this.reducedMotion) {
+    if (!this.pressed || this.isDragging || this.reducedMotion) {
       return;
     }
 
@@ -921,6 +995,29 @@ export class CardView {
       .fill({ color: 0x161621, alpha: this.loaded ? 0 : 0.92 })
       .stroke({ color: 0xffffff, alpha: 0.08, width: 1 });
 
+    this.updateClipMask(width, height);
     this.cardLayer.label = label;
+  }
+
+  private updateClipMask(width: number, height: number) {
+    const fraction = this.clipTopFraction;
+
+    if (fraction == null) {
+      this.placeholder.mask = null;
+      this.cardMesh.mask = null;
+      this.clipMask.clear();
+      return;
+    }
+
+    // A 1px pad avoids a sub-pixel seam along the cropped edge while still
+    // leaving the visible strip effectively the same size as the CSS offset.
+    const pad = 1;
+    const clipHeight = height * clamp(fraction, 0, 1);
+    this.clipMask
+      .clear()
+      .rect(-width / 2 - pad, -height / 2 - pad, width + pad * 2, clipHeight + pad * 2)
+      .fill({ color: 0xffffff, alpha: 1 });
+    this.placeholder.mask = this.clipMask;
+    this.cardMesh.mask = this.clipMask;
   }
 }
