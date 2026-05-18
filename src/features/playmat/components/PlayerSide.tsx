@@ -1,9 +1,12 @@
-import { CARD_SIZE_STYLE } from "../constants";
+import { BENCH_LIMIT, CARD_SIZE_STYLE } from "../constants";
 import type { CardModel, PlayerBoard, PlayerId, SidePosition } from "../types";
 import { cardBackToneFor } from "../utils/players";
 import { Bench } from "./Bench";
 import { CardSlot, PlaymatCard } from "./Card";
 import { DeckPile, DiscardPile, PrizeGrid } from "./Piles";
+
+const SIDE_PILE_STACK_GAP = "calc(var(--slot-gap) + 4px)";
+const SIDE_PILES_BENCH_GAP = BENCH_LIMIT >= 8 ? SIDE_PILE_STACK_GAP : "var(--side-gap)";
 
 function ActiveCardSlot({
   card,
@@ -42,15 +45,19 @@ function SidePiles({
         style={{
           transform: "translateY(calc(-50% + 2px))",
           ...(isTop
-            ? { right: "100%", marginRight: "var(--side-gap)" }
-            : { left: "100%", marginLeft: "var(--side-gap)" }),
+            ? { right: "100%", marginRight: SIDE_PILES_BENCH_GAP }
+            : { left: "100%", marginLeft: SIDE_PILES_BENCH_GAP }),
         }}
       >
-        <div className="relative">
+        <div className="relative" style={{ lineHeight: 0 }}>
           <DiscardPile />
           <div
             className="absolute left-0"
-            style={isTop ? { top: "100%", marginTop: 8 } : { bottom: "100%", marginBottom: 8 }}
+            style={
+              isTop
+                ? { top: "100%", marginTop: SIDE_PILE_STACK_GAP }
+                : { bottom: "100%", marginBottom: SIDE_PILE_STACK_GAP }
+            }
           >
             <DeckPile owner={owner} tone={cardBackTone} />
           </div>
@@ -60,8 +67,8 @@ function SidePiles({
         className="absolute"
         style={
           isTop
-            ? { top: 0, left: "100%", marginLeft: "var(--side-gap)" }
-            : { bottom: 0, right: "100%", marginRight: "var(--side-gap)" }
+            ? { top: 0, left: "100%", marginLeft: SIDE_PILES_BENCH_GAP }
+            : { bottom: 0, right: "100%", marginRight: SIDE_PILES_BENCH_GAP }
         }
       >
         <PrizeGrid

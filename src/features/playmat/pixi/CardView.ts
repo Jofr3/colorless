@@ -139,6 +139,9 @@ export interface CardViewPresentationOptions {
   // when hovered, keeping just the juice pop. Used for attached tool/energy
   // cards, where the host Pokémon already owns the hover gesture.
   hoverMode?: HoverMode;
+  // Keep cards that have visible DOM slots (deck/prizes) squarely aligned to
+  // those slots instead of applying idle float/rotation or mesh warp.
+  slotLocked?: boolean;
   // Clips the card to a strip at the top of its own local card space. Since
   // attached cards are rotated ±90°, this crops away the part that should be
   // hidden behind the host Pokémon instead of relying on the host texture to
@@ -249,6 +252,8 @@ export class CardView {
 
   private hoverMode: HoverMode;
 
+  private slotLocked: boolean;
+
   private clipTopFraction: number | null;
 
   private current = { x: 0, y: 0, rotation: 0, scale: 1 };
@@ -288,6 +293,7 @@ export class CardView {
     this.seed = options.seed;
     this.reducedMotion = options.reducedMotion;
     this.hoverMode = options.hoverMode ?? "full";
+    this.slotLocked = options.slotLocked ?? false;
     this.clipTopFraction = options.clipTopFraction ?? null;
 
     this.cardMesh = new PerspectiveMesh({
@@ -350,6 +356,7 @@ export class CardView {
 
   setPresentationOptions(options: CardViewPresentationOptions) {
     this.hoverMode = options.hoverMode ?? "full";
+    this.slotLocked = options.slotLocked ?? false;
 
     const nextClipTopFraction = options.clipTopFraction ?? null;
     if (this.clipTopFraction === nextClipTopFraction) {
@@ -409,17 +416,18 @@ export class CardView {
     this.redrawCard(this.id, target.width, target.height);
 
     if (isFirstTarget) {
-      const introOffset = this.reducedMotion ? 0 : Math.min(100, target.height * 0.55);
+      const skipIntroMotion = this.reducedMotion || this.slotLocked;
+      const introOffset = skipIntroMotion ? 0 : Math.min(100, target.height * 0.55);
       this.current = {
         x: target.x,
         y: target.y + introOffset,
-        rotation: target.rotation + (this.reducedMotion ? 0 : 0.16),
-        scale: this.reducedMotion ? 1 : 0.86,
+        rotation: target.rotation + (skipIntroMotion ? 0 : 0.16),
+        scale: skipIntroMotion ? 1 : 0.86,
       };
       this.velocity = { x: 0, y: 0, rotation: 0, scale: 0 };
       this.applyCurrentTransform();
 
-      if (!this.reducedMotion) {
+      if (!skipIntroMotion) {
         // Subtle entrance pop — matches Balatro's hover juice register
         // (card.lua:4307 -> 0.02 scale_amt after Card scaling).
         gsap.delayedCall(0.04 + this.seed * 0.08, () => this.juiceUp(0.02, 0.012));
@@ -452,7 +460,7 @@ export class CardView {
       this.applyEmphasisTween();
     }
 
-    if (hovered && !this.reducedMotion) {
+    if (hovered && !this.reducedMotion && !this.slotLocked) {
       // Balatro card.lua:4307 — hover juice_up(0.05, 0.03), which becomes
       // scale_amt 0.02, rot_amt 0.012 after card.lua:4333-4338 scaling.
       this.juiceUp(0.02, 0.012);
@@ -747,7 +755,7 @@ export class CardView {
   }
 
   private idleOffset(time: number) {
-    if (this.reducedMotion) {
+    if (this.reducedMotion || this.slotLocked) {
       return { y: 0, rotation: 0 };
     }
 
@@ -774,7 +782,7 @@ export class CardView {
     const halfW = this.target.width / 2;
     const halfH = this.target.height / 2;
 
-    if (this.reducedMotion) {
+    if (this.reducedMotion || this.slotLocked) {
       this.cardMesh.setCorners(-halfW, -halfH, halfW, -halfH, halfW, halfH, -halfW, halfH);
       return;
     }

@@ -95,10 +95,10 @@ export function GameLog({
   entries: LogEntry[];
   turn: number;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="absolute z-30" style={{ left: 12, bottom: 12 }}>
+    <div className="absolute z-[70]" style={{ left: 12, bottom: 12 }}>
       {open && (
         <section
           aria-label="Game log"

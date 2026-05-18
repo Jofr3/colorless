@@ -118,9 +118,11 @@ function cardTextureUrl(card: CardModel) {
 function cardPresentationOptions(descriptor: CardDescriptor): CardViewPresentationOptions {
   const isAttached = descriptor.placement.zone === "attached";
   const isBehindAttachment = descriptor.attachedPresentation === "behind";
+  const isSlotBack = descriptor.placement.zone === "stadium" && descriptor.placement.owner !== "global";
   return {
-    hoverMode: isAttached ? "juice-only" : "full",
+    hoverMode: isAttached || isSlotBack ? "juice-only" : "full",
     clipTopFraction: isAttached && !isBehindAttachment ? ATTACHED_CLIP_FRACTION : null,
+    slotLocked: isSlotBack,
   };
 }
 
