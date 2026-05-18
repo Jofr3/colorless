@@ -176,10 +176,19 @@
 }
 
 .playmat-card__attached--tool {
-  top: calc((var(--card-w) - var(--card-h)) * var(--attached-scale) * 0.5 + var(--attached-edge-gap));
+  top: calc(
+    (var(--card-w) - var(--card-h)) *
+    var(--attached-scale) *
+    0.5 +
+    var(--attached-edge-gap)
+  );
   left: calc(
-    var(--card-h) * var(--attached-scale) * (0.5 - var(--attached-stick))
-    - var(--card-w) * var(--attached-scale) * 0.5
+    var(--card-h) *
+    var(--attached-scale) *
+    (0.5 - var(--attached-stick)) -
+    var(--card-w) *
+    var(--attached-scale) *
+    0.5
   );
 }
 
@@ -202,16 +211,26 @@
      across the bench regardless of how many energies its neighbours have.
      Additional energies on the SAME host fan vertically up from there. */
   top: calc(
-    var(--card-h)
-    - var(--card-w) * var(--attached-scale) * 0.5
-    - var(--card-h) * var(--attached-scale) * 0.5
-    - var(--card-w) * var(--attached-energy-step) * var(--attached-stack)
-    - var(--attached-edge-gap)
+    var(--card-h) -
+    var(--card-w) *
+    var(--attached-scale) *
+    0.5 -
+    var(--card-h) *
+    var(--attached-scale) *
+    0.5 -
+    var(--card-w) *
+    var(--attached-energy-step) *
+    var(--attached-stack) -
+    var(--attached-edge-gap)
   );
   left: calc(
-    var(--card-w)
-    + var(--card-h) * var(--attached-scale) * (var(--attached-stick) - 0.5)
-    - var(--card-w) * var(--attached-scale) * 0.5
+    var(--card-w) +
+    var(--card-h) *
+    var(--attached-scale) *
+    (var(--attached-stick) - 0.5) -
+    var(--card-w) *
+    var(--attached-scale) *
+    0.5
   );
 }
 

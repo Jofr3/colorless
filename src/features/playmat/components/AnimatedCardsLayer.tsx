@@ -11,6 +11,7 @@ import type {
   CardType,
   CardZone,
   PlayerId,
+  SidePosition,
 } from "../types";
 import { cardBackImageUrl } from "../pixi/cardBackTexture";
 import {
@@ -21,6 +22,12 @@ import {
 } from "../pixi/CardView";
 import { canPlace } from "../utils/cardMovement";
 import { PRIZE_COUNT, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
+import {
+  ATTACHED_CARD_SCALE,
+  CROWDED_BENCH_ATTACHED_ENERGY_STICK,
+  CROWDED_BENCH_THRESHOLD,
+  DEFAULT_ATTACHED_VISIBLE_STICK,
+} from "../constants";
 import { cardBackToneFor } from "../utils/players";
 
 interface AnimatedCardsLayerProps {
@@ -36,7 +43,9 @@ interface CardDescriptor {
   draggable: boolean;
   zoneSize: number;
   attachedTo?: string;
+  attachedHostPlacement?: CardPlacement;
   attachedPresentation?: "side" | "behind";
+  attachedSide?: SidePosition;
 }
 
 interface DropZoneSnapshot {
@@ -95,14 +104,16 @@ interface SlotAnchor {
 }
 
 const CARD_TEXTURE_WIDTH = 600;
-const ATTACHED_CARD_SCALE = 0.92;
-const ATTACHED_VISIBLE_STICK = 0.22;
 // Slightly larger than the CSS protrusion: the host Pokémon still covers the
 // extra painted area, but the attached card no longer looks overly sliced off
 // at the inner edge.
 const ATTACHED_CLIP_FRACTION = 0.3;
-const ATTACHED_STRIP_FRACTION = ATTACHED_CARD_SCALE * ATTACHED_VISIBLE_STICK;
-const TOOL_BEHIND_BENCH_THRESHOLD = 5;
+const TOOL_BEHIND_PEEK = 0.12;
+const TOOL_BEHIND_HOVER_PEEK = 0.18;
+// Larger than the hover peek so tool labels don't get clipped by
+// sub-pixel/perspective movement. The host Pokémon still sits above the
+// tool, hiding the extra masked area behind it.
+const TOOL_BEHIND_CLIP_FRACTION = 0.24;
 const PLAYER_IDS: PlayerId[] = ["opponent", "you"];
 const INTERACTIVE_SELECTOR =
   "button, a, input, select, textarea, [role='button'], [aria-label='Game log']";
@@ -118,10 +129,20 @@ function cardTextureUrl(card: CardModel) {
 function cardPresentationOptions(descriptor: CardDescriptor): CardViewPresentationOptions {
   const isAttached = descriptor.placement.zone === "attached";
   const isBehindAttachment = descriptor.attachedPresentation === "behind";
-  const isSlotBack = descriptor.placement.zone === "stadium" && descriptor.placement.owner !== "global";
+  const isBehindTool = isBehindAttachment && descriptor.card.type === "tool";
+  const isSlotBack =
+    descriptor.placement.zone === "stadium" && descriptor.placement.owner !== "global";
   return {
     hoverMode: isAttached || isSlotBack ? "juice-only" : "full",
-    clipTopFraction: isAttached && !isBehindAttachment ? ATTACHED_CLIP_FRACTION : null,
+    clipTopFraction: isBehindTool
+      ? descriptor.attachedSide === "bottom"
+        ? TOOL_BEHIND_CLIP_FRACTION
+        : null
+      : isAttached && !isBehindAttachment
+        ? ATTACHED_CLIP_FRACTION
+        : null,
+    clipBottomFraction:
+      isBehindTool && descriptor.attachedSide === "top" ? TOOL_BEHIND_CLIP_FRACTION : null,
     slotLocked: isSlotBack,
   };
 }
@@ -142,6 +163,9 @@ function pushAttachedDescriptors(
   descriptors: CardDescriptor[],
   host: CardModel,
   owner: PlayerId,
+  hostPlacement: CardPlacement,
+  hostZoneSize: number,
+  attachedSide: SidePosition,
   attachedPresentation: "side" | "behind" = "side",
 ) {
   if (!host.attached) return;
@@ -150,9 +174,11 @@ function pushAttachedDescriptors(
       card: tool,
       placement: { owner, zone: "attached", index },
       draggable: false,
-      zoneSize: 1,
+      zoneSize: hostZoneSize,
       attachedTo: host.id,
+      attachedHostPlacement: { ...hostPlacement },
       attachedPresentation,
+      attachedSide,
     });
   }
   for (const [index, energy] of host.attached.energies.entries()) {
@@ -160,8 +186,10 @@ function pushAttachedDescriptors(
       card: energy,
       placement: { owner, zone: "attached", index },
       draggable: false,
-      zoneSize: 1,
+      zoneSize: hostZoneSize,
       attachedTo: host.id,
+      attachedHostPlacement: { ...hostPlacement },
+      attachedSide,
     });
   }
 }
@@ -172,21 +200,24 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
   for (const owner of PLAYER_IDS) {
     const player = board[owner];
     const active = player.active;
+    const side: SidePosition = owner === perspectivePlayer ? "bottom" : "top";
 
     if (active) {
+      const placement: CardPlacement = { owner, zone: "active" };
       descriptors.push({
         card: active,
-        placement: { owner, zone: "active" },
+        placement,
         draggable: owner === perspectivePlayer,
         zoneSize: 1,
       });
-      pushAttachedDescriptors(descriptors, active, owner);
+      pushAttachedDescriptors(descriptors, active, owner, placement, 1, side);
     }
 
     for (const [index, card] of player.bench.entries()) {
+      const placement: CardPlacement = { owner, zone: "bench", index };
       descriptors.push({
         card,
-        placement: { owner, zone: "bench", index },
+        placement,
         draggable: owner === perspectivePlayer,
         zoneSize: player.bench.length,
       });
@@ -194,7 +225,10 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
         descriptors,
         card,
         owner,
-        player.bench.length > TOOL_BEHIND_BENCH_THRESHOLD ? "behind" : "side",
+        placement,
+        player.bench.length,
+        side,
+        player.bench.length > CROWDED_BENCH_THRESHOLD ? "behind" : "side",
       );
     }
 
@@ -294,14 +328,14 @@ function zIndexForPlacement(placement: CardPlacement, zoneSize: number, cardType
   }
 
   if (placement.zone === "bench") {
-    return 35 + (placement.index ?? 0);
+    return 57 + zoneSize - (placement.index ?? 0);
   }
 
-  // Attached tool/energy ride below their host Pokémon (active=55, bench=35+).
-  // Tools sit a hair above energies so the tool stripe reads cleanly.
+  // Fallback for attached cards without host metadata. Normal rendering uses
+  // zIndexForDescriptor for host-relative tool/energy layering.
   if (placement.zone === "attached") {
-    if (cardType === "tool") return 32;
-    return 28 + (placement.index ?? 0);
+    if (cardType === "tool") return 54.9 + (placement.index ?? 0) * 0.01;
+    return 54.8 + (placement.index ?? 0) * 0.01;
   }
 
   // Synthetic back cards (deck/prize) ride the "stadium" zone with a player
@@ -311,6 +345,46 @@ function zIndexForPlacement(placement: CardPlacement, zoneSize: number, cardType
   }
 
   return 42;
+}
+
+function zIndexForAttached(hostPlacement: CardPlacement, hostZoneSize: number, stackIndex: number) {
+  const hostZIndex = zIndexForPlacement(hostPlacement, hostZoneSize);
+  return hostZIndex - 0.2 + Math.min(stackIndex, 9) * 0.01;
+}
+
+function zIndexForAttachedTool(hostPlacement: CardPlacement, hostZoneSize: number, index: number) {
+  return zIndexForAttached(hostPlacement, hostZoneSize, index) + 0.1;
+}
+
+function zIndexForAttachedEnergy(
+  hostPlacement: CardPlacement,
+  hostZoneSize: number,
+  index: number,
+) {
+  return zIndexForAttached(hostPlacement, hostZoneSize, index);
+}
+
+function zIndexForDescriptor(descriptor: CardDescriptor) {
+  if (descriptor.placement.zone === "attached") {
+    const hostPlacement = descriptor.attachedHostPlacement;
+    if (hostPlacement && descriptor.card.type === "tool") {
+      return zIndexForAttachedTool(
+        hostPlacement,
+        descriptor.zoneSize,
+        descriptor.placement.index ?? 0,
+      );
+    }
+
+    if (hostPlacement && descriptor.card.type === "energy") {
+      return zIndexForAttachedEnergy(
+        hostPlacement,
+        descriptor.zoneSize,
+        descriptor.placement.index ?? 0,
+      );
+    }
+  }
+
+  return zIndexForPlacement(descriptor.placement, descriptor.zoneSize, descriptor.card.type);
 }
 
 // Drop legality is delegated to canPlace in utils/cardMovement, so the UI
@@ -343,6 +417,7 @@ export function AnimatedCardsLayer({
   const dropZonesRef = useRef<DropZoneSnapshot[]>([]);
   const dragRef = useRef<DragState | null>(null);
   const hoveredCardIdRef = useRef<string | null>(null);
+  const hoveredCardIdsRef = useRef(new Set<string>());
   const rafRef = useRef<number | null>(null);
   const reducedMotionRef = useRef(false);
   const onMoveCardRef = useRef(onMoveCard);
@@ -372,12 +447,91 @@ export function AnimatedCardsLayer({
     }
   }
 
-  function clearHover() {
-    const hoveredCardId = hoveredCardIdRef.current;
-    if (hoveredCardId) {
-      viewsRef.current.get(hoveredCardId)?.setHovered(false);
-      hoveredCardIdRef.current = null;
+  function hoverGroupForCard(cardId: string | null) {
+    const ids = new Set<string>();
+    if (!cardId) return ids;
+
+    ids.add(cardId);
+
+    // When a Pokémon is hovered, the attached cards should share the hover
+    // juice. If the pointer is directly over an attached strip, keep that as
+    // the primary hover instead of lifting/tilting the host Pokémon.
+    const descriptor = descriptorsRef.current.get(cardId);
+    if (!descriptor || descriptor.placement.zone === "attached") {
+      return ids;
     }
+
+    for (const attachedDescriptor of descriptorsRef.current.values()) {
+      if (attachedDescriptor.attachedTo === cardId) {
+        ids.add(attachedDescriptor.card.id);
+      }
+    }
+
+    return ids;
+  }
+
+  function hoverRevealOffsetForAttached(descriptor: CardDescriptor) {
+    if (descriptor.placement.zone !== "attached") {
+      return { x: 0, y: 0 };
+    }
+
+    const view = viewsRef.current.get(descriptor.card.id);
+    const target = view?.getTargetSnapshot();
+    if (!target) {
+      return { x: 0, y: 0 };
+    }
+
+    if (descriptor.card.type === "tool" && descriptor.attachedPresentation === "behind") {
+      const hostCardHeight = target.height / ATTACHED_CARD_SCALE;
+      const direction = descriptor.attachedSide === "top" ? 1 : -1;
+      return { x: 0, y: direction * hostCardHeight * (TOOL_BEHIND_HOVER_PEEK - TOOL_BEHIND_PEEK) };
+    }
+
+    if (
+      descriptor.card.type === "energy" &&
+      descriptor.attachedHostPlacement?.zone === "bench" &&
+      descriptor.zoneSize > CROWDED_BENCH_THRESHOLD
+    ) {
+      return {
+        x: target.height * (DEFAULT_ATTACHED_VISIBLE_STICK - CROWDED_BENCH_ATTACHED_ENERGY_STICK),
+        y: 0,
+      };
+    }
+
+    return { x: 0, y: 0 };
+  }
+
+  function applyHoveredCards(nextHoveredCardIds: Set<string>) {
+    const previousHoveredCardIds = hoveredCardIdsRef.current;
+
+    for (const cardId of previousHoveredCardIds) {
+      if (!nextHoveredCardIds.has(cardId)) {
+        const view = viewsRef.current.get(cardId);
+        view?.setHovered(false);
+        view?.setHoverRevealOffset({ x: 0, y: 0 });
+      }
+    }
+
+    for (const cardId of nextHoveredCardIds) {
+      const view = viewsRef.current.get(cardId);
+      if (!previousHoveredCardIds.has(cardId)) {
+        view?.setHovered(true);
+      }
+
+      const descriptor = descriptorsRef.current.get(cardId);
+      view?.setHoverRevealOffset(
+        descriptor ? hoverRevealOffsetForAttached(descriptor) : { x: 0, y: 0 },
+      );
+    }
+
+    hoveredCardIdsRef.current = nextHoveredCardIds;
+  }
+
+  function clearHover() {
+    if (hoveredCardIdsRef.current.size > 0) {
+      applyHoveredCards(new Set());
+    }
+    hoveredCardIdRef.current = null;
     setCursor("");
   }
 
@@ -403,8 +557,7 @@ export function AnimatedCardsLayer({
     return dropZonesRef.current
       .filter(
         (zone) =>
-          isPointerOverZone(point, zone) &&
-          canPlace(board, source, zone.placement, sourceType),
+          isPointerOverZone(point, zone) && canPlace(board, source, zone.placement, sourceType),
       )
       .sort((a, b) => a.area - b.area)[0];
   }
@@ -450,7 +603,7 @@ export function AnimatedCardsLayer({
         width: rect.width,
         height: rect.height,
         rotation,
-        zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize, descriptor.card.type),
+        zIndex: zIndexForDescriptor(descriptor),
         placement: descriptor.placement,
       };
 
@@ -550,14 +703,8 @@ export function AnimatedCardsLayer({
     const nextHoveredCardId = view?.id ?? null;
 
     if (hoveredCardIdRef.current !== nextHoveredCardId) {
-      if (hoveredCardIdRef.current) {
-        viewsRef.current.get(hoveredCardIdRef.current)?.setHovered(false);
-      }
-
       hoveredCardIdRef.current = nextHoveredCardId;
-      if (view) {
-        view.setHovered(true);
-      }
+      applyHoveredCards(hoverGroupForCard(nextHoveredCardId));
     }
 
     if (view) {
@@ -645,10 +792,18 @@ export function AnimatedCardsLayer({
         continue;
       }
 
+      const zIndex =
+        attachedDescriptor.card.type === "tool"
+          ? target.zIndex - 0.1 + Math.min(attachedDescriptor.placement.index ?? 0, 9) * 0.01
+          : attachedDescriptor.card.type === "energy"
+            ? target.zIndex - 0.2 + Math.min(attachedDescriptor.placement.index ?? 0, 9) * 0.01
+            : previousAttachedTarget.zIndex;
+
       attachedView.setTarget({
         ...previousAttachedTarget,
         x: target.x + previousAttachedTarget.x - previousHostTarget.x,
         y: target.y + previousAttachedTarget.y - previousHostTarget.y,
+        zIndex,
       });
     }
   }
@@ -814,12 +969,7 @@ export function AnimatedCardsLayer({
     // External zone preview: only when the cursor is over a different
     // reorderable zone (e.g. dragging a hand card across the bench).
     if (nextPreviewZone && !isNewSource) {
-      applyReorderPreview(
-        drag,
-        nextPreviewZone.owner,
-        nextPreviewZone.zone,
-        "reorder",
-      );
+      applyReorderPreview(drag, nextPreviewZone.owner, nextPreviewZone.zone, "reorder");
     }
 
     drag.previewZone = nextPreviewZone;
@@ -876,8 +1026,7 @@ export function AnimatedCardsLayer({
     const draggedView = viewsRef.current.get(drag.cardId);
     if (!draggedView) return;
 
-    const isSourceZone =
-      drag.from.owner === previewOwner && drag.from.zone === previewZone;
+    const isSourceZone = drag.from.owner === previewOwner && drag.from.zone === previewZone;
 
     // For a source-zone preview the dragged card is one of the siblings and
     // must be excluded so it doesn't try to occupy its own virtual slot.
@@ -900,8 +1049,7 @@ export function AnimatedCardsLayer({
     // dragged card at insertIdx. "compact": exactly `siblings.length`
     // slots, no gap — used to close up the source zone when the cursor
     // leaves it.
-    const slotCount =
-      mode === "reorder" ? siblings.length + 1 : siblings.length;
+    const slotCount = mode === "reorder" ? siblings.length + 1 : siblings.length;
 
     if (siblings.length === 0) {
       if (mode === "reorder") {
@@ -1021,7 +1169,7 @@ export function AnimatedCardsLayer({
         width: rect.width,
         height: rect.height,
         rotation: 0,
-        zIndex: zIndexForPlacement(descriptor.placement, descriptor.zoneSize, descriptor.card.type),
+        zIndex: zIndexForDescriptor(descriptor),
         placement: descriptor.placement,
       });
     }
@@ -1057,9 +1205,15 @@ export function AnimatedCardsLayer({
     const rootStyles = getComputedStyle(root);
     const gap = Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
 
+    const isCrowdedBench = orderedDescriptors.length > CROWDED_BENCH_THRESHOLD;
+
     let cardW = 0;
     let cardH = 0;
     for (const descriptor of orderedDescriptors) {
+      if (descriptor.placement.zone !== "bench" || descriptor.placement.owner !== owner) {
+        continue;
+      }
+
       const target = viewsRef.current.get(descriptor.card.id)?.getTargetSnapshot();
       if (target) {
         cardW = target.width;
@@ -1077,13 +1231,26 @@ export function AnimatedCardsLayer({
     }
     if (cardW === 0 || cardH === 0) return [];
 
-    const attachedStrip = cardH * ATTACHED_STRIP_FRACTION;
+    const attachedStrip = cardH * ATTACHED_CARD_SCALE * DEFAULT_ATTACHED_VISIBLE_STICK;
+    const crowdedEnergyStrip = cardH * ATTACHED_CARD_SCALE * CROWDED_BENCH_ATTACHED_ENERGY_STICK;
     const margins = orderedDescriptors.map((descriptor, index) => {
       const hasTool = (descriptor.card.attached?.tools.length ?? 0) > 0;
       const hasEnergy = (descriptor.card.attached?.energies.length ?? 0) > 0;
+      const previousHasEnergy =
+        (orderedDescriptors[index - 1]?.card.attached?.energies.length ?? 0) > 0;
       return {
-        left: hasTool && index > 0 ? attachedStrip : 0,
-        right: hasEnergy && index < orderedDescriptors.length - 1 ? attachedStrip : 0,
+        left:
+          isCrowdedBench && previousHasEnergy
+            ? -crowdedEnergyStrip
+            : hasTool && !isCrowdedBench && index > 0
+              ? attachedStrip
+              : 0,
+        right:
+          hasEnergy && index < orderedDescriptors.length - 1
+            ? isCrowdedBench
+              ? crowdedEnergyStrip
+              : attachedStrip
+            : 0,
       };
     });
 
@@ -1110,11 +1277,7 @@ export function AnimatedCardsLayer({
     });
   }
 
-  function getZoneSlots(
-    zone: "hand" | "bench",
-    owner: PlayerId,
-    slotCount: number,
-  ): SlotAnchor[] {
+  function getZoneSlots(zone: "hand" | "bench", owner: PlayerId, slotCount: number): SlotAnchor[] {
     const root = playmatRef.current;
     if (!root) return [];
     const rootRect = root.getBoundingClientRect();
@@ -1182,8 +1345,7 @@ export function AnimatedCardsLayer({
       if (zone === "hand") {
         step = cardW * 0.8;
       } else {
-        const gap =
-          Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
+        const gap = Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
         step = cardW + gap;
       }
     }

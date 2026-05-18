@@ -45,11 +45,13 @@ export function PlaymatCard({
   priority = false,
   toolAttachmentPlacement = "side",
   toolAttachmentSide = "bottom",
+  energyAttachmentStick,
 }: {
   card: CardModel;
   priority?: boolean;
   toolAttachmentPlacement?: ToolAttachmentPlacement;
   toolAttachmentSide?: SidePosition;
+  energyAttachmentStick?: number;
 }) {
   const tools = card.attached?.tools ?? [];
   const energies = card.attached?.energies ?? [];
@@ -92,22 +94,27 @@ export function PlaymatCard({
           />
         );
       })}
-      {energies.map((energy, index) => (
-        <div
-          key={energy.id}
-          className="playmat-card__attached playmat-card__attached--energy"
-          data-card-anchor="true"
-          data-card-id={energy.id}
-          data-card-rotation={Math.PI / 2}
-          aria-hidden="true"
-          style={
-            {
-              "--attached-stack": String(index),
-              "--attached-energy-step": energyStep,
-            } as CSSProperties
-          }
-        />
-      ))}
+      {energies.map((energy, index) => {
+        const style = {
+          "--attached-stack": String(index),
+          "--attached-energy-step": energyStep,
+          ...(energyAttachmentStick == null
+            ? {}
+            : { "--attached-stick": String(energyAttachmentStick) }),
+        } as CSSProperties;
+
+        return (
+          <div
+            key={energy.id}
+            className="playmat-card__attached playmat-card__attached--energy"
+            data-card-anchor="true"
+            data-card-id={energy.id}
+            data-card-rotation={Math.PI / 2}
+            aria-hidden="true"
+            style={style}
+          />
+        );
+      })}
     </div>
   );
 }

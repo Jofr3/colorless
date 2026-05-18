@@ -142,11 +142,12 @@ export interface CardViewPresentationOptions {
   // Keep cards that have visible DOM slots (deck/prizes) squarely aligned to
   // those slots instead of applying idle float/rotation or mesh warp.
   slotLocked?: boolean;
-  // Clips the card to a strip at the top of its own local card space. Since
-  // attached cards are rotated ±90°, this crops away the part that should be
-  // hidden behind the host Pokémon instead of relying on the host texture to
-  // cover it perfectly at corners/warped edges.
+  // Clips the card to a strip at the top/bottom of its own local card space.
+  // This crops away the part that should be hidden behind the host Pokémon
+  // instead of relying on the host texture to cover it perfectly at
+  // corners/warped edges.
   clipTopFraction?: number | null;
+  clipBottomFraction?: number | null;
 }
 
 export interface CardViewOptions extends CardViewPresentationOptions {
@@ -256,6 +257,8 @@ export class CardView {
 
   private clipTopFraction: number | null;
 
+  private clipBottomFraction: number | null;
+
   private current = { x: 0, y: 0, rotation: 0, scale: 1 };
 
   private velocity = { x: 0, y: 0, rotation: 0, scale: 0 };
@@ -280,6 +283,8 @@ export class CardView {
 
   private hoverPoint: { x: number; y: number } | null = null;
 
+  private hoverRevealOffset = { x: 0, y: 0 };
+
   private holdTween: gsap.core.Tween | null = null;
 
   private zIndexReturnTween: gsap.core.Tween | null = null;
@@ -295,6 +300,7 @@ export class CardView {
     this.hoverMode = options.hoverMode ?? "full";
     this.slotLocked = options.slotLocked ?? false;
     this.clipTopFraction = options.clipTopFraction ?? null;
+    this.clipBottomFraction = options.clipBottomFraction ?? null;
 
     this.cardMesh = new PerspectiveMesh({
       texture: Texture.WHITE,
@@ -349,9 +355,7 @@ export class CardView {
   }
 
   getTargetSnapshot(): CardViewTarget | null {
-    return this.target
-      ? { ...this.target, placement: { ...this.target.placement } }
-      : null;
+    return this.target ? { ...this.target, placement: { ...this.target.placement } } : null;
   }
 
   setPresentationOptions(options: CardViewPresentationOptions) {
@@ -359,11 +363,16 @@ export class CardView {
     this.slotLocked = options.slotLocked ?? false;
 
     const nextClipTopFraction = options.clipTopFraction ?? null;
-    if (this.clipTopFraction === nextClipTopFraction) {
+    const nextClipBottomFraction = options.clipBottomFraction ?? null;
+    if (
+      this.clipTopFraction === nextClipTopFraction &&
+      this.clipBottomFraction === nextClipBottomFraction
+    ) {
       return;
     }
 
     this.clipTopFraction = nextClipTopFraction;
+    this.clipBottomFraction = nextClipBottomFraction;
     const width = this.target?.width ?? 100;
     const height = this.target?.height ?? targetAspectHeight(width);
     this.updateClipMask(width, height);
@@ -471,6 +480,10 @@ export class CardView {
     if (this.hovered && this.hoverMode !== "juice-only") {
       this.hoverPoint = point;
     }
+  }
+
+  setHoverRevealOffset(offset: { x: number; y: number }) {
+    this.hoverRevealOffset = offset;
   }
 
   startPress() {
@@ -621,8 +634,8 @@ export class CardView {
     const idle = this.idleOffset(time);
     const juice = this.evaluateJuice(time);
     const desired = {
-      x: this.target.x,
-      y: this.target.y + idle.y,
+      x: this.target.x + this.hoverRevealOffset.x,
+      y: this.target.y + this.hoverRevealOffset.y + idle.y,
       rotation: this.target.rotation + idle.rotation,
       scale: 1,
     };
@@ -710,7 +723,8 @@ export class CardView {
 
   private springXY(current: number, desired: number, key: "x" | "y", dt: number) {
     const damping = Math.exp(-SPRING_C_XY * dt);
-    this.velocity[key] = damping * this.velocity[key] + (1 - damping) * (desired - current) * SPRING_K_XY * dt;
+    this.velocity[key] =
+      damping * this.velocity[key] + (1 - damping) * (desired - current) * SPRING_K_XY * dt;
     const next = current + this.velocity[key];
 
     if (Math.abs(next - desired) < 0.01 && Math.abs(this.velocity[key]) < 0.01) {
@@ -743,7 +757,8 @@ export class CardView {
     stiffness: number,
   ) {
     const damping = Math.exp(-coefficient * dt);
-    this.velocity[key] = damping * this.velocity[key] + (1 - damping) * (desired - current) * stiffness;
+    this.velocity[key] =
+      damping * this.velocity[key] + (1 - damping) * (desired - current) * stiffness;
     const next = current + this.velocity[key];
 
     if (Math.abs(next - desired) < 0.001 && Math.abs(this.velocity[key]) < 0.001) {
@@ -1008,9 +1023,10 @@ export class CardView {
   }
 
   private updateClipMask(width: number, height: number) {
-    const fraction = this.clipTopFraction;
+    const topFraction = this.clipTopFraction;
+    const bottomFraction = this.clipBottomFraction;
 
-    if (fraction == null) {
+    if (topFraction == null && bottomFraction == null) {
       this.placeholder.mask = null;
       this.cardMesh.mask = null;
       this.clipMask.clear();
@@ -1020,10 +1036,12 @@ export class CardView {
     // A 1px pad avoids a sub-pixel seam along the cropped edge while still
     // leaving the visible strip effectively the same size as the CSS offset.
     const pad = 1;
-    const clipHeight = height * clamp(fraction, 0, 1);
+    const fraction = clamp(topFraction ?? bottomFraction ?? 1, 0, 1);
+    const clipHeight = height * fraction;
+    const y = topFraction != null ? -height / 2 - pad : height / 2 - clipHeight - pad;
     this.clipMask
       .clear()
-      .rect(-width / 2 - pad, -height / 2 - pad, width + pad * 2, clipHeight + pad * 2)
+      .rect(-width / 2 - pad, y, width + pad * 2, clipHeight + pad * 2)
       .fill({ color: 0xffffff, alpha: 1 });
     this.placeholder.mask = this.clipMask;
     this.cardMesh.mask = this.clipMask;

@@ -3,6 +3,10 @@ import type { CSSProperties } from "react";
 export const CARD_RENDER_WIDTH = 140;
 export const BENCH_LIMIT = 8;
 export const HIDDEN_CURSOR_POSITION = -9999;
+export const ATTACHED_CARD_SCALE = 0.92;
+export const DEFAULT_ATTACHED_VISIBLE_STICK = 0.22;
+export const CROWDED_BENCH_ATTACHED_ENERGY_STICK = 0.14;
+export const CROWDED_BENCH_THRESHOLD = 5;
 
 export const PLAYMAT_WRAPPER_CLASS =
   "playmat-wrapper w-full h-screen flex flex-col text-white relative overflow-hidden";
