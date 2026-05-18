@@ -60,6 +60,7 @@ const playerCards = {
     remoteCard("hand-meowth", "me3-62", "Meowth ex"),
     remoteCard("hand-yveltal", "me3-53", "Yveltal ex"),
     remoteCard("hand-mega-starmie", "me3-21", "Mega Starmie ex"),
+    remoteCard("hand-mega-zygarde", "me3-47", "Mega Zygarde ex"),
     remoteCard("hand-growing-grass-energy-1", "me3-86", "Growing Grass Energy"),
     remoteCard("hand-growing-grass-energy-2", "me3-86", "Growing Grass Energy"),
     remoteCard("hand-rocky-fighting-energy-1", "me3-87", "Rocky Fighting Energy"),
