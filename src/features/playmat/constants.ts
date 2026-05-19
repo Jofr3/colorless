@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 
 export const CARD_RENDER_WIDTH = 140;
-export const BENCH_LIMIT = 8;
+export const BENCH_LIMIT = 5;
+export const BENCH_EXTRA_CARD_WIDTH = 0.85;
 export const HIDDEN_CURSOR_POSITION = -9999;
 export const ATTACHED_CARD_SCALE = 0.92;
 export const DEFAULT_ATTACHED_VISIBLE_STICK = 0.22;

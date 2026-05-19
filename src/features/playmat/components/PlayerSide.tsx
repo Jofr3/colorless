@@ -6,7 +6,7 @@ import { CardSlot, PlaymatCard } from "./Card";
 import { DeckPile, DiscardPile, PrizeGrid } from "./Piles";
 
 const SIDE_PILE_STACK_GAP = "calc(var(--slot-gap) + 4px)";
-const SIDE_PILES_BENCH_GAP = BENCH_LIMIT >= 8 ? SIDE_PILE_STACK_GAP : "var(--side-gap)";
+const SIDE_PILES_BENCH_GAP = BENCH_LIMIT >= 8 ? SIDE_PILE_STACK_GAP : SIDE_PILE_STACK_GAP;
 
 function ActiveCardSlot({
   card,
@@ -41,13 +41,12 @@ function SidePiles({
   return (
     <>
       <div
-        className="absolute top-1/2"
-        style={{
-          transform: "translateY(calc(-50% + 2px))",
-          ...(isTop
-            ? { right: "100%", marginRight: SIDE_PILES_BENCH_GAP }
-            : { left: "100%", marginLeft: SIDE_PILES_BENCH_GAP }),
-        }}
+        className="absolute"
+        style={
+          isTop
+            ? { top: 0, right: "100%", marginRight: SIDE_PILES_BENCH_GAP }
+            : { bottom: 0, left: "100%", marginLeft: SIDE_PILES_BENCH_GAP }
+        }
       >
         <div className="relative" style={{ lineHeight: 0 }}>
           <DiscardPile />

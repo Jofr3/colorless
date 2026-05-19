@@ -1,18 +1,18 @@
 import {
   ATTACHED_CARD_SCALE,
+  BENCH_EXTRA_CARD_WIDTH,
   BENCH_LIMIT,
   CROWDED_BENCH_ATTACHED_ENERGY_STICK,
-  CROWDED_BENCH_THRESHOLD,
   DEFAULT_ATTACHED_VISIBLE_STICK,
   FRAME_CLASS,
 } from "../constants";
 import type { CardModel, PlayerId, SidePosition } from "../types";
+import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
 import { PlaymatCard } from "./Card";
 
 // Mirrors the visible-strip math in playmat.css `.playmat-card__attached`
-// (card-h * scale * stick). Kept here so we can reserve the same width as
-// inter-slot margin when a bench card has an attachment that would
-// otherwise be covered by its neighbour.
+// (card-h * scale * stick). Kept here so we can reserve that space in
+// layout margins while there is enough fixed bench room.
 const ATTACHED_STRIP = `calc(var(--card-h) * ${ATTACHED_CARD_SCALE} * ${DEFAULT_ATTACHED_VISIBLE_STICK})`;
 const CROWDED_BENCH_ENERGY_STRIP = `calc(var(--card-h) * ${ATTACHED_CARD_SCALE} * ${CROWDED_BENCH_ATTACHED_ENERGY_STICK})`;
 
@@ -25,14 +25,14 @@ export function Bench({
   owner: PlayerId;
   side: SidePosition;
 }) {
-  const isCrowdedBench = cards.length > CROWDED_BENCH_THRESHOLD;
-  const crowdedBenchOverlap = `calc(var(--card-h) * ${ATTACHED_CARD_SCALE} * -${CROWDED_BENCH_ATTACHED_ENERGY_STICK})`;
+  const shouldCollapseAttachments = shouldCollapseBenchAttachments(cards);
+  const collapsedBenchOverlap = `calc(var(--card-h) * ${ATTACHED_CARD_SCALE} * -${CROWDED_BENCH_ATTACHED_ENERGY_STICK})`;
 
   return (
     <div
       className={FRAME_CLASS}
       style={{
-        width: `calc(var(--card-w) * ${BENCH_LIMIT} + var(--slot-gap) * ${BENCH_LIMIT - 1} + 12px)`,
+        width: `calc(var(--card-w) * (${BENCH_LIMIT} + ${BENCH_EXTRA_CARD_WIDTH}) + var(--slot-gap) * ${BENCH_LIMIT - 1} + 12px)`,
         height: "calc(var(--card-h) + 12px)",
         padding: "var(--pile-pad)",
       }}
@@ -48,17 +48,15 @@ export function Bench({
           const hasTool = (card.attached?.tools.length ?? 0) > 0;
           const hasEnergy = (card.attached?.energies.length ?? 0) > 0;
           const previousHasEnergy = (cards[index - 1]?.attached?.energies.length ?? 0) > 0;
-          const toolBehind = hasTool && isCrowdedBench;
-          const energyStrip = isCrowdedBench ? CROWDED_BENCH_ENERGY_STRIP : ATTACHED_STRIP;
-          // Only widen the gap when there's actually a neighbour on that
-          // side that would otherwise cover the attached strip — the first
-          // card has nothing to its left, the last nothing to its right.
-          // Crowded benches tuck tools vertically behind the Pokémon and let
-          // the next Pokémon overlap the previous energy strip instead of
-          // shrinking the bench cards.
-          const needsLeftGap = hasTool && !toolBehind && index > 0;
-          const needsRightGap = hasEnergy && index < cards.length - 1;
-          const overlapPreviousEnergy = isCrowdedBench && previousHasEnergy;
+          const toolBehind = hasTool && shouldCollapseAttachments;
+          const energyStrip = shouldCollapseAttachments ? CROWDED_BENCH_ENERGY_STRIP : ATTACHED_STRIP;
+          // Reserve layout space for side attachments while the fixed bench
+          // has natural room. Once it runs out, tuck tools behind Pokémon and
+          // overlap energy strips instead of resizing the bench.
+          const needsLeftGap = hasTool && !toolBehind;
+          const needsRightGap =
+            hasEnergy && (!shouldCollapseAttachments || index < cards.length - 1);
+          const overlapPreviousEnergy = shouldCollapseAttachments && previousHasEnergy;
           return (
             <div
               key={card.id}
@@ -67,7 +65,7 @@ export function Bench({
                 width: "var(--card-w)",
                 zIndex: cards.length - index,
                 marginLeft: overlapPreviousEnergy
-                  ? crowdedBenchOverlap
+                  ? collapsedBenchOverlap
                   : needsLeftGap
                     ? ATTACHED_STRIP
                     : undefined,
@@ -83,7 +81,7 @@ export function Bench({
                 toolAttachmentPlacement={toolBehind ? "behind" : "side"}
                 toolAttachmentSide={side}
                 energyAttachmentStick={
-                  isCrowdedBench ? CROWDED_BENCH_ATTACHED_ENERGY_STICK : undefined
+                  shouldCollapseAttachments ? CROWDED_BENCH_ATTACHED_ENERGY_STICK : undefined
                 }
               />
             </div>

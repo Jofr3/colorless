@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import { Container, type Application, type Ticker } from "pixi.js";
 import { ensureGsapPixi } from "../../../lib/animation/gsapPixi";
 import { createPixiApplication } from "../../../lib/pixi/createPixiApplication";
@@ -21,11 +21,11 @@ import {
   type ReleaseVelocity,
 } from "../pixi/CardView";
 import { canPlace } from "../utils/cardMovement";
+import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
 import { PRIZE_COUNT, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
 import {
   ATTACHED_CARD_SCALE,
   CROWDED_BENCH_ATTACHED_ENERGY_STICK,
-  CROWDED_BENCH_THRESHOLD,
   DEFAULT_ATTACHED_VISIBLE_STICK,
 } from "../constants";
 import { cardBackToneFor } from "../utils/players";
@@ -46,6 +46,7 @@ interface CardDescriptor {
   attachedHostPlacement?: CardPlacement;
   attachedPresentation?: "side" | "behind";
   attachedSide?: SidePosition;
+  attachedCollapsed?: boolean;
 }
 
 interface DropZoneSnapshot {
@@ -173,6 +174,7 @@ function pushAttachedDescriptors(
   hostZoneSize: number,
   attachedSide: SidePosition,
   attachedPresentation: "side" | "behind" = "side",
+  attachedCollapsed = false,
 ) {
   if (!host.attached) return;
   for (const [index, tool] of host.attached.tools.entries()) {
@@ -185,6 +187,7 @@ function pushAttachedDescriptors(
       attachedHostPlacement: { ...hostPlacement },
       attachedPresentation,
       attachedSide,
+      attachedCollapsed,
     });
   }
   for (const [index, energy] of host.attached.energies.entries()) {
@@ -196,6 +199,7 @@ function pushAttachedDescriptors(
       attachedTo: host.id,
       attachedHostPlacement: { ...hostPlacement },
       attachedSide,
+      attachedCollapsed,
     });
   }
 }
@@ -219,6 +223,8 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
       pushAttachedDescriptors(descriptors, active, owner, placement, 1, side);
     }
 
+    const collapseBenchAttachments = shouldCollapseBenchAttachments(player.bench);
+
     for (const [index, card] of player.bench.entries()) {
       const placement: CardPlacement = { owner, zone: "bench", index };
       descriptors.push({
@@ -234,7 +240,8 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
         placement,
         player.bench.length,
         side,
-        player.bench.length > CROWDED_BENCH_THRESHOLD ? "behind" : "side",
+        collapseBenchAttachments ? "behind" : "side",
+        collapseBenchAttachments,
       );
     }
 
@@ -497,7 +504,7 @@ export function AnimatedCardsLayer({
     if (
       descriptor.card.type === "energy" &&
       descriptor.attachedHostPlacement?.zone === "bench" &&
-      descriptor.zoneSize > CROWDED_BENCH_THRESHOLD
+      descriptor.attachedCollapsed
     ) {
       return {
         x: target.height * (DEFAULT_ATTACHED_VISIBLE_STICK - CROWDED_BENCH_ATTACHED_ENERGY_STICK),
@@ -1285,7 +1292,9 @@ export function AnimatedCardsLayer({
     const rootStyles = getComputedStyle(root);
     const gap = Number.parseFloat(rootStyles.getPropertyValue("--slot-gap")) || 0;
 
-    const isCrowdedBench = orderedDescriptors.length > CROWDED_BENCH_THRESHOLD;
+    const shouldCollapseAttachments = shouldCollapseBenchAttachments(
+      orderedDescriptors.map((descriptor) => descriptor.card),
+    );
 
     let cardW = 0;
     let cardH = 0;
@@ -1320,14 +1329,14 @@ export function AnimatedCardsLayer({
         (orderedDescriptors[index - 1]?.card.attached?.energies.length ?? 0) > 0;
       return {
         left:
-          isCrowdedBench && previousHasEnergy
+          shouldCollapseAttachments && previousHasEnergy
             ? -crowdedEnergyStrip
-            : hasTool && !isCrowdedBench && index > 0
+            : hasTool && !shouldCollapseAttachments
               ? attachedStrip
               : 0,
         right:
-          hasEnergy && index < orderedDescriptors.length - 1
-            ? isCrowdedBench
+          hasEnergy && (!shouldCollapseAttachments || index < orderedDescriptors.length - 1)
+            ? shouldCollapseAttachments
               ? crowdedEnergyStrip
               : attachedStrip
             : 0,
@@ -1545,8 +1554,9 @@ export function AnimatedCardsLayer({
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: sync/measurement functions read mutable Pixi refs and should only react to descriptor changes.
-  useEffect(() => {
+  useLayoutEffect(() => {
     syncViews(descriptors);
+    measureCards();
     scheduleMeasure();
   }, [descriptors]);
 
@@ -1617,23 +1627,46 @@ export function AnimatedCardsLayer({
       return undefined;
     }
 
-    root.addEventListener("pointerdown", handlePointerDown);
-    root.addEventListener("pointermove", handlePointerMove);
+    const rootElement = root;
+
+    rootElement.addEventListener("pointerdown", handlePointerDown);
+    rootElement.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
     window.addEventListener("pointercancel", handlePointerCancel);
     window.addEventListener("resize", scheduleMeasure);
 
-    const observer = new ResizeObserver(scheduleMeasure);
-    observer.observe(root);
+    const observedElements = new Set<Element>();
+    const resizeObserver = new ResizeObserver(scheduleMeasure);
+
+    function observeElement(element: Element) {
+      if (observedElements.has(element)) return;
+      resizeObserver.observe(element);
+      observedElements.add(element);
+    }
+
+    function observeMeasurementTargets() {
+      observeElement(rootElement);
+      for (const element of rootElement.querySelectorAll<HTMLElement>(
+        '[data-card-anchor="true"], [data-card-drop-zone="true"]',
+      )) {
+        observeElement(element);
+      }
+      scheduleMeasure();
+    }
+
+    const mutationObserver = new MutationObserver(observeMeasurementTargets);
+    observeMeasurementTargets();
+    mutationObserver.observe(rootElement, { childList: true, subtree: true });
 
     return () => {
-      root.removeEventListener("pointerdown", handlePointerDown);
-      root.removeEventListener("pointermove", handlePointerMove);
+      rootElement.removeEventListener("pointerdown", handlePointerDown);
+      rootElement.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerCancel);
       window.removeEventListener("resize", scheduleMeasure);
-      observer.disconnect();
-      root.classList.remove("is-card-dragging");
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
+      rootElement.classList.remove("is-card-dragging");
       setCursor("");
     };
   }, [playmatRef]);

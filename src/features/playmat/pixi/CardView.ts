@@ -441,6 +441,18 @@ export class CardView {
         // (card.lua:4307 -> 0.02 scale_amt after Card scaling).
         gsap.delayedCall(0.04 + this.seed * 0.08, () => this.juiceUp(0.02, 0.012));
       }
+    } else if (this.slotLocked) {
+      // Deck/prize backs are visual stand-ins for fixed DOM slots. They
+      // should stay glued to those slots during layout changes instead of
+      // springing from their previous measurement like draggable cards do.
+      this.current = {
+        x: target.x,
+        y: target.y,
+        rotation: target.rotation,
+        scale: 1,
+      };
+      this.velocity = { x: 0, y: 0, rotation: 0, scale: 0 };
+      this.applyCurrentTransform();
     }
   }
 
