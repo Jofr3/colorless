@@ -25,6 +25,7 @@ import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
 import { PRIZE_COUNT, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
 import {
   ATTACHED_CARD_SCALE,
+  benchLimitFor,
   CROWDED_BENCH_ATTACHED_ENERGY_STICK,
   DEFAULT_ATTACHED_VISIBLE_STICK,
 } from "../constants";
@@ -33,7 +34,7 @@ import { cardBackToneFor } from "../utils/players";
 interface AnimatedCardsLayerProps {
   board: BoardState;
   perspectivePlayer: PlayerId;
-  playmatRef: RefObject<HTMLDivElement | null>;
+  playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
 }
 
@@ -110,7 +111,6 @@ interface SlotAnchor {
   index: number;
 }
 
-const CARD_TEXTURE_WIDTH = 600;
 // Slightly larger than the CSS protrusion: the host Pokémon still covers the
 // extra painted area, but the attached card no longer looks overly sliced off
 // at the inner edge.
@@ -125,12 +125,11 @@ const PLAYER_IDS: PlayerId[] = ["opponent", "you"];
 const INTERACTIVE_SELECTOR =
   "button, a, input, select, textarea, [role='button'], [aria-label='Game log']";
 
-function localCardTexturePath(cardId: string) {
-  return `/cards/${cardId}-${CARD_TEXTURE_WIDTH}.webp`;
-}
-
 function cardTextureUrl(card: CardModel) {
-  return card.imageUrl ?? localCardTexturePath(card.cardId);
+  // Card faces come from remote image URLs; backs use the synthetic `back://`
+  // scheme. Every descriptor sets one, so the empty fallback is never hit in
+  // practice — it just keeps the type total.
+  return card.imageUrl ?? "";
 }
 
 function cardPresentationOptions(descriptor: CardDescriptor): CardViewPresentationOptions {
@@ -206,6 +205,7 @@ function pushAttachedDescriptors(
 
 function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId): CardDescriptor[] {
   const descriptors: CardDescriptor[] = [];
+  const benchLimit = benchLimitFor(board);
 
   for (const owner of PLAYER_IDS) {
     const player = board[owner];
@@ -223,7 +223,7 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
       pushAttachedDescriptors(descriptors, active, owner, placement, 1, side);
     }
 
-    const collapseBenchAttachments = shouldCollapseBenchAttachments(player.bench);
+    const collapseBenchAttachments = shouldCollapseBenchAttachments(player.bench, benchLimit);
 
     for (const [index, card] of player.bench.entries()) {
       const placement: CardPlacement = { owner, zone: "bench", index };
@@ -308,17 +308,56 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
   return descriptors;
 }
 
-function parsePlacement(element: HTMLElement): CardPlacement | null {
-  const owner = element.dataset.cardOwner as CardOwner | undefined;
-  const zone = element.dataset.cardZone as CardZone | undefined;
+function isCardOwner(value: string): value is CardOwner {
+  return value === "you" || value === "opponent" || value === "global";
+}
 
-  if (!owner || !zone) {
+function isPlayerId(value: string): value is PlayerId {
+  return value === "you" || value === "opponent";
+}
+
+function isCardZone(value: string): value is CardZone {
+  return (
+    value === "hand" ||
+    value === "active" ||
+    value === "bench" ||
+    value === "stadium" ||
+    value === "attached"
+  );
+}
+
+function parsePlacement(element: HTMLElement): CardPlacement | null {
+  const owner = element.dataset.cardOwner;
+  const zone = element.dataset.cardZone;
+
+  // Validate the DOM strings against the known literal sets rather than
+  // blindly casting — a typo'd data-card-* attribute now fails loudly here
+  // instead of flowing a garbage placement into the move logic.
+  if (!owner || !zone || !isCardOwner(owner) || !isCardZone(zone)) {
     return null;
   }
 
-  const index = element.dataset.cardIndex ? Number(element.dataset.cardIndex) : undefined;
+  const rawIndex = element.dataset.cardIndex;
+  const index = rawIndex !== undefined ? Number(rawIndex) : undefined;
+  // A present-but-unparseable index is malformed → reject. A MISSING index is
+  // legitimate: the bench frame / hand wrapper container drop zones carry no
+  // index and mean "anywhere in this zone" (the move logic appends to the end).
+  if (rawIndex !== undefined && !Number.isFinite(index)) {
+    return null;
+  }
 
-  return Number.isFinite(index) ? { owner, zone, index } : { owner, zone };
+  if (zone === "hand" || zone === "bench" || zone === "attached") {
+    if (!isPlayerId(owner)) return null;
+    return index !== undefined ? { owner, zone, index } : { owner, zone };
+  }
+
+  if (zone === "active") {
+    if (!isPlayerId(owner)) return null;
+    return { owner, zone };
+  }
+
+  // stadium — may be the shared global slot or a player's synthetic back.
+  return { owner, zone };
 }
 
 function pointFromEvent(root: HTMLElement, event: PointerEvent) {
@@ -326,9 +365,17 @@ function pointFromEvent(root: HTMLElement, event: PointerEvent) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
+// Reads the array index off a placement that may or may not carry one
+// (active/stadium never do; bench/hand/attached may omit it for a whole-zone
+// container drop), for host-relative attachment stacking.
+function placementIndex(placement: CardPlacement): number {
+  if (placement.zone === "active" || placement.zone === "stadium") return 0;
+  return placement.index ?? 0;
+}
+
 function zIndexForDraggedAttachment(descriptor: CardDescriptor) {
   if (descriptor.card.type === "tool") return 9_999;
-  return 9_998 + (descriptor.placement.index ?? 0) * 0.01;
+  return 9_998 + placementIndex(descriptor.placement) * 0.01;
 }
 
 function zIndexForPlacement(placement: CardPlacement, zoneSize: number, cardType?: CardType) {
@@ -451,7 +498,18 @@ export function AnimatedCardsLayer({
   }, [board]);
 
   useEffect(() => {
-    reducedMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    reducedMotionRef.current = query.matches;
+    // Keep the preference live: propagate runtime OS toggles to every existing
+    // card so motion is muted/restored without a reload.
+    const handleChange = (event: MediaQueryListEvent) => {
+      reducedMotionRef.current = event.matches;
+      for (const view of viewsRef.current.values()) {
+        view.setReducedMotion(event.matches);
+      }
+    };
+    query.addEventListener("change", handleChange);
+    return () => query.removeEventListener("change", handleChange);
   }, []);
 
   function setCursor(cursor: string) {
@@ -604,14 +662,21 @@ export function AnimatedCardsLayer({
   function hitTest(point: { x: number; y: number }, requireDraggable: boolean) {
     const descriptorsById = descriptorsRef.current;
 
-    return [...viewsRef.current.values()]
-      .filter((view) => {
-        const descriptor = descriptorsById.get(view.id);
-        return Boolean(
-          descriptor && (!requireDraggable || descriptor.draggable) && view.hitTest(point),
-        );
-      })
-      .sort((a, b) => b.zIndex - a.zIndex)[0];
+    // Runs on every pointermove — keep it a single linear pass tracking the
+    // top-most hit instead of spreading the Map, filtering, and sorting (which
+    // allocated an array + closures per move).
+    let best: CardView | undefined;
+    for (const view of viewsRef.current.values()) {
+      const descriptor = descriptorsById.get(view.id);
+      if (!descriptor || (requireDraggable && !descriptor.draggable) || !view.hitTest(point)) {
+        continue;
+      }
+      if (!best || view.zIndex > best.zIndex) {
+        best = view;
+      }
+    }
+
+    return best;
   }
 
   function findDropZone(
@@ -858,11 +923,12 @@ export function AnimatedCardsLayer({
         continue;
       }
 
+      const attachedIndex = placementIndex(attachedDescriptor.placement);
       const zIndex =
         attachedDescriptor.card.type === "tool"
-          ? target.zIndex - 0.1 + Math.min(attachedDescriptor.placement.index ?? 0, 9) * 0.01
+          ? target.zIndex - 0.1 + Math.min(attachedIndex, 9) * 0.01
           : attachedDescriptor.card.type === "energy"
-            ? target.zIndex - 0.2 + Math.min(attachedDescriptor.placement.index ?? 0, 9) * 0.01
+            ? target.zIndex - 0.2 + Math.min(attachedIndex, 9) * 0.01
             : previousAttachedTarget.zIndex;
 
       attachedView.setTarget({
@@ -1294,6 +1360,7 @@ export function AnimatedCardsLayer({
 
     const shouldCollapseAttachments = shouldCollapseBenchAttachments(
       orderedDescriptors.map((descriptor) => descriptor.card),
+      benchLimitFor(boardRef.current),
     );
 
     let cardW = 0;
@@ -1651,11 +1718,28 @@ export function AnimatedCardsLayer({
       )) {
         observeElement(element);
       }
-      scheduleMeasure();
     }
 
-    const mutationObserver = new MutationObserver(observeMeasurementTargets);
+    // Coalesce the full-subtree discovery scan to once per frame. The DOM
+    // mutates in bursts during a board change/reorder; previously the
+    // querySelectorAll above ran once per MutationObserver batch. scheduleMeasure
+    // is already rAF-coalesced, so now both the scan and the measure run at
+    // most once per frame.
+    let observeRaf: number | null = null;
+    function scheduleObserveTargets() {
+      if (observeRaf !== null) return;
+      observeRaf = requestAnimationFrame(() => {
+        observeRaf = null;
+        observeMeasurementTargets();
+      });
+    }
+
+    const mutationObserver = new MutationObserver(() => {
+      scheduleObserveTargets();
+      scheduleMeasure();
+    });
     observeMeasurementTargets();
+    scheduleMeasure();
     mutationObserver.observe(rootElement, { childList: true, subtree: true });
 
     return () => {
@@ -1664,6 +1748,9 @@ export function AnimatedCardsLayer({
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerCancel);
       window.removeEventListener("resize", scheduleMeasure);
+      if (observeRaf !== null) {
+        cancelAnimationFrame(observeRaf);
+      }
       mutationObserver.disconnect();
       resizeObserver.disconnect();
       rootElement.classList.remove("is-card-dragging");

@@ -1,13 +1,28 @@
 import type { CSSProperties } from "react";
+import type { BoardState } from "./types";
 
 export const CARD_RENDER_WIDTH = 140;
-export const BENCH_LIMIT = 5;
+
+// Bench capacity is normally 5, but a bench-expanding stadium (e.g. Lumiose
+// City) raises it to 8 for both players while it is in play. `benchLimitFor`
+// is the single source of truth: the move logic (cardMovement) and the layout
+// (Bench/PlayerSide/benchLayout) all derive the active limit from the board.
+export const DEFAULT_BENCH_LIMIT = 5;
+export const EXPANDED_BENCH_LIMIT = 8;
+export const BENCH_EXPANDING_STADIUM_CARD_IDS: ReadonlySet<string> = new Set(["me3-111"]);
+
+export function benchLimitFor(board: BoardState): number {
+  const stadiumCardId = board.stadium?.cardId;
+  return stadiumCardId && BENCH_EXPANDING_STADIUM_CARD_IDS.has(stadiumCardId)
+    ? EXPANDED_BENCH_LIMIT
+    : DEFAULT_BENCH_LIMIT;
+}
+
 export const BENCH_EXTRA_CARD_WIDTH = 0.85;
 export const HIDDEN_CURSOR_POSITION = -9999;
 export const ATTACHED_CARD_SCALE = 0.92;
 export const DEFAULT_ATTACHED_VISIBLE_STICK = 0.22;
 export const CROWDED_BENCH_ATTACHED_ENERGY_STICK = 0.14;
-export const CROWDED_BENCH_THRESHOLD = 5;
 
 export const PLAYMAT_WRAPPER_CLASS =
   "playmat-wrapper w-full h-screen flex flex-col text-white relative overflow-hidden";

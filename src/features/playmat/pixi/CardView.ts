@@ -249,7 +249,7 @@ export class CardView {
 
   private readonly seed: number;
 
-  private readonly reducedMotion: boolean;
+  private reducedMotion: boolean;
 
   private hoverMode: HoverMode;
 
@@ -289,9 +289,17 @@ export class CardView {
 
   private zIndexReturnTween: gsap.core.Tween | null = null;
 
+  private introCall: gsap.core.Tween | null = null;
+
   private juiceState: JuiceState | null = null;
 
   private playmatSize = { width: 0, height: 0 };
+
+  private lastDrawWidth = -1;
+
+  private lastDrawHeight = -1;
+
+  private lastDrawLoaded = false;
 
   constructor(options: CardViewOptions) {
     this.id = options.id;
@@ -439,7 +447,9 @@ export class CardView {
       if (!skipIntroMotion) {
         // Subtle entrance pop — matches Balatro's hover juice register
         // (card.lua:4307 -> 0.02 scale_amt after Card scaling).
-        gsap.delayedCall(0.04 + this.seed * 0.08, () => this.juiceUp(0.02, 0.012));
+        this.introCall = gsap.delayedCall(0.04 + this.seed * 0.08, () =>
+          this.juiceUp(0.02, 0.012),
+        );
       }
     } else if (this.slotLocked) {
       // Deck/prize backs are visual stand-ins for fixed DOM slots. They
@@ -462,6 +472,10 @@ export class CardView {
 
   setPlaymatSize(width: number, height: number) {
     this.playmatSize = { width, height };
+  }
+
+  setReducedMotion(reducedMotion: boolean) {
+    this.reducedMotion = reducedMotion;
   }
 
   setHovered(hovered: boolean) {
@@ -721,6 +735,7 @@ export class CardView {
     this.destroyed = true;
     this.holdTween?.kill();
     this.zIndexReturnTween?.kill();
+    this.introCall?.kill();
     this.juiceState = null;
     gsap.killTweensOf([
       this.container,
@@ -965,6 +980,9 @@ export class CardView {
   }
 
   private juiceUp(amount: number, rotationAmount: number) {
+    if (this.destroyed) {
+      return;
+    }
     // Match Balatro's move_juice envelope (moveable.lua:267-276):
     //   scale = scale_amt * sin(50.8*t) * (remaining/total)^3
     //   rot   = r_amt    * sin(40.8*t) * (remaining/total)^2
@@ -1019,6 +1037,25 @@ export class CardView {
   }
 
   private redrawCard(label: string, width: number, height: number) {
+    this.cardLayer.label = label;
+
+    // The placeholder geometry only depends on size + load state, and
+    // setTarget calls redrawCard on every layout/drag frame. Card size is
+    // constant except on resize, so skip the roundRect re-tessellation and
+    // clip-mask rebuild when nothing changed — for loaded cards this is
+    // almost always a no-op. (Clip-fraction-only changes go through
+    // setPresentationOptions -> updateClipMask directly, not through here.)
+    if (
+      width === this.lastDrawWidth &&
+      height === this.lastDrawHeight &&
+      this.loaded === this.lastDrawLoaded
+    ) {
+      return;
+    }
+    this.lastDrawWidth = width;
+    this.lastDrawHeight = height;
+    this.lastDrawLoaded = this.loaded;
+
     const radius = Math.max(3, width * 0.055);
 
     // The mesh's destination corners are set every frame by
@@ -1031,7 +1068,6 @@ export class CardView {
       .stroke({ color: 0xffffff, alpha: 0.08, width: 1 });
 
     this.updateClipMask(width, height);
-    this.cardLayer.label = label;
   }
 
   private updateClipMask(width: number, height: number) {

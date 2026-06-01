@@ -6,11 +6,16 @@ export type CardBackSize = "card" | "prize";
 export type CardOwner = PlayerId | "global";
 export type CardZone = "hand" | "active" | "bench" | "stadium" | "attached";
 
-export interface CardPlacement {
-  owner: CardOwner;
-  zone: CardZone;
-  index?: number;
-}
+// Discriminated on `zone` so illegal placements are unrepresentable: active
+// never carries an index, and stadium is the only zone that may be globally
+// owned (the shared stadium slot) or player-owned (synthetic deck/prize backs
+// routed through the same pipeline). hand/bench/attached usually carry an array
+// index, but it is optional: a whole-zone container drop target (the bench
+// frame / hand wrapper) has no index and means "append to the end".
+export type CardPlacement =
+  | { owner: PlayerId; zone: "hand" | "bench" | "attached"; index?: number }
+  | { owner: PlayerId; zone: "active" }
+  | { owner: CardOwner; zone: "stadium" };
 
 export interface CardMoveRequest {
   cardId: string;

@@ -280,3 +280,18 @@
     transform: scale(1) rotate(0deg);
   }
 }
+
+/* Reduced motion --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Mute the animated background glow sweep and the turn-pass chip pop. The
+     Pixi/GSAP card motion is muted separately via CardView's reducedMotion
+     flag (kept live via a matchMedia subscription in AnimatedCardsLayer). */
+  .playmat-wrapper {
+    transition: none;
+  }
+
+  .turn-chip-pass {
+    animation: none;
+  }
+}

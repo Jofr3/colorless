@@ -1,7 +1,6 @@
 import {
   ATTACHED_CARD_SCALE,
   BENCH_EXTRA_CARD_WIDTH,
-  BENCH_LIMIT,
   CROWDED_BENCH_ATTACHED_ENERGY_STICK,
   DEFAULT_ATTACHED_VISIBLE_STICK,
   FRAME_CLASS,
@@ -20,19 +19,21 @@ export function Bench({
   cards,
   owner,
   side,
+  benchLimit,
 }: {
   cards: CardModel[];
   owner: PlayerId;
   side: SidePosition;
+  benchLimit: number;
 }) {
-  const shouldCollapseAttachments = shouldCollapseBenchAttachments(cards);
+  const shouldCollapseAttachments = shouldCollapseBenchAttachments(cards, benchLimit);
   const collapsedBenchOverlap = `calc(var(--card-h) * ${ATTACHED_CARD_SCALE} * -${CROWDED_BENCH_ATTACHED_ENERGY_STICK})`;
 
   return (
     <div
       className={FRAME_CLASS}
       style={{
-        width: `calc(var(--card-w) * (${BENCH_LIMIT} + ${BENCH_EXTRA_CARD_WIDTH}) + var(--slot-gap) * ${BENCH_LIMIT - 1} + 12px)`,
+        width: `calc(var(--card-w) * (${benchLimit} + ${BENCH_EXTRA_CARD_WIDTH}) + var(--slot-gap) * ${benchLimit - 1} + 12px)`,
         height: "calc(var(--card-h) + 12px)",
         padding: "var(--pile-pad)",
       }}

@@ -1,4 +1,4 @@
-import * as PIXI from "pixi.js";
+import { Container, Graphics, Sprite, Texture } from "pixi.js";
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
 
@@ -10,7 +10,12 @@ export function ensureGsapPixi() {
   }
 
   gsap.registerPlugin(PixiPlugin);
-  PixiPlugin.registerPIXI(PIXI);
+  // Register only the Pixi classes PixiPlugin may dereference (it reads
+  // `_PIXI.Graphics` for color tweens and `_PIXI.filters` for filter tweens —
+  // neither of which we use; we only tween x/y/scale/rotation/alpha). Passing
+  // a curated object instead of `import * as PIXI` lets the bundler tree-shake
+  // the unused Pixi subsystems out of the production build.
+  PixiPlugin.registerPIXI({ Container, Graphics, Sprite, Texture });
   registered = true;
 }
 

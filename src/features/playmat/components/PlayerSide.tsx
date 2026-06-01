@@ -1,4 +1,4 @@
-import { BENCH_LIMIT, CARD_SIZE_STYLE } from "../constants";
+import { CARD_SIZE_STYLE } from "../constants";
 import type { CardModel, PlayerBoard, PlayerId, SidePosition } from "../types";
 import { cardBackToneFor } from "../utils/players";
 import { Bench } from "./Bench";
@@ -6,7 +6,9 @@ import { CardSlot, PlaymatCard } from "./Card";
 import { DeckPile, DiscardPile, PrizeGrid } from "./Piles";
 
 const SIDE_PILE_STACK_GAP = "calc(var(--slot-gap) + 4px)";
-const SIDE_PILES_BENCH_GAP = BENCH_LIMIT >= 8 ? SIDE_PILE_STACK_GAP : SIDE_PILE_STACK_GAP;
+// Side piles sit at the bench frame's edges (left/right: 100%), so they track
+// the bench width automatically as the bench-limit grows — no per-limit gap.
+const SIDE_PILES_BENCH_GAP = SIDE_PILE_STACK_GAP;
 
 function ActiveCardSlot({
   card,
@@ -85,14 +87,16 @@ function BenchArea({
   owner,
   player,
   side,
+  benchLimit,
 }: {
   owner: PlayerId;
   player: PlayerBoard;
   side: SidePosition;
+  benchLimit: number;
 }) {
   return (
     <div className="relative">
-      <Bench cards={player.bench} owner={owner} side={side} />
+      <Bench cards={player.bench} owner={owner} side={side} benchLimit={benchLimit} />
       <SidePiles owner={owner} prizesRemaining={player.prizesRemaining} side={side} />
     </div>
   );
@@ -103,15 +107,17 @@ export function PlayerSide({
   side,
   player,
   activeTurn = false,
+  benchLimit,
 }: {
   owner: PlayerId;
   side: SidePosition;
   player: PlayerBoard;
   activeTurn?: boolean;
+  benchLimit: number;
 }) {
   const isTop = side === "top";
   const activeSlot = <ActiveCardSlot card={player.active} active={activeTurn} owner={owner} />;
-  const bench = <BenchArea owner={owner} player={player} side={side} />;
+  const bench = <BenchArea owner={owner} player={player} side={side} benchLimit={benchLimit} />;
 
   return (
     <div

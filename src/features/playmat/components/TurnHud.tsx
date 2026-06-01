@@ -163,6 +163,11 @@ export function TurnBanner({
       className="absolute z-20 flex items-center gap-3 rounded-full bg-white/[0.07] py-1.5 pl-2 pr-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_28px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/9 backdrop-blur-md"
       style={{ top: 16, left: 16 }}
     >
+      <output className="sr-only">
+        {`Turn ${info.turn}. ${
+          isYourTurn ? `${info.youName}'s turn` : `${info.opponentName}'s turn`
+        }`}
+      </output>
       <PlayerChip
         name={info.opponentName}
         tone="rose"

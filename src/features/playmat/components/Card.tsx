@@ -68,7 +68,6 @@ export function PlaymatCard({
       <div className="static-card w-full">
         <div className="static-card__surface">
           <CardImage
-            cardId={card.cardId}
             imageUrl={card.imageUrl}
             renderedWidth={CARD_RENDER_WIDTH}
             alt={card.name}

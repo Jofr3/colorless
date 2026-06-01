@@ -1,4 +1,4 @@
-import type { CardModel } from "../types";
+import type { CardModel, PlayerId } from "../types";
 import { PlaymatCard } from "./Card";
 
 const BASE_HAND_CARD_OVERLAP = 0.2;
@@ -13,7 +13,7 @@ function overlapForHandSize(cardCount: number) {
   return `calc(var(--card-w) * -${overlap.toFixed(3)})`;
 }
 
-export function Hand({ cards }: { cards: CardModel[] }) {
+export function Hand({ cards, owner }: { cards: CardModel[]; owner: PlayerId }) {
   const handCardOverlap = overlapForHandSize(cards.length);
 
   return (
@@ -21,7 +21,7 @@ export function Hand({ cards }: { cards: CardModel[] }) {
       className="relative z-10 flex items-end justify-center px-6"
       style={{ height: "var(--hand-h)", paddingBottom: 8 }}
       data-card-drop-zone="true"
-      data-card-owner="you"
+      data-card-owner={owner}
       data-card-zone="hand"
     >
       <div className="relative flex h-full items-end justify-center">
@@ -34,7 +34,7 @@ export function Hand({ cards }: { cards: CardModel[] }) {
               zIndex: cards.length - index,
             }}
             data-card-drop-zone="true"
-            data-card-owner="you"
+            data-card-owner={owner}
             data-card-zone="hand"
             data-card-index={index}
           >

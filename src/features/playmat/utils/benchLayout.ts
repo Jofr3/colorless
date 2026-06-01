@@ -1,7 +1,6 @@
 import {
   ATTACHED_CARD_SCALE,
   BENCH_EXTRA_CARD_WIDTH,
-  BENCH_LIMIT,
   DEFAULT_ATTACHED_VISIBLE_STICK,
 } from "../constants";
 import type { CardModel } from "../types";
@@ -19,7 +18,10 @@ export function visibleBenchSideAttachmentCount(cards: Pick<CardModel, "attached
   }, 0);
 }
 
-export function shouldCollapseBenchAttachments(cards: Pick<CardModel, "attached">[]) {
+export function shouldCollapseBenchAttachments(
+  cards: Pick<CardModel, "attached">[],
+  benchLimit: number,
+) {
   if (cards.length === 0) return false;
 
   const naturalWidth =
@@ -27,7 +29,7 @@ export function shouldCollapseBenchAttachments(cards: Pick<CardModel, "attached"
     Math.max(0, cards.length - 1) * SLOT_GAP_CARD_WIDTH_ESTIMATE +
     visibleBenchSideAttachmentCount(cards) * ATTACHED_STRIP_CARD_WIDTH;
   const fixedBenchWidth =
-    BENCH_LIMIT + Math.max(0, BENCH_LIMIT - 1) * SLOT_GAP_CARD_WIDTH_ESTIMATE + BENCH_EXTRA_CARD_WIDTH;
+    benchLimit + Math.max(0, benchLimit - 1) * SLOT_GAP_CARD_WIDTH_ESTIMATE + BENCH_EXTRA_CARD_WIDTH;
 
   return naturalWidth > fixedBenchWidth;
 }

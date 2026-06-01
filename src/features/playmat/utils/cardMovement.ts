@@ -1,4 +1,4 @@
-import { BENCH_LIMIT } from "../constants";
+import { benchLimitFor } from "../constants";
 import type {
   AttachedCards,
   BoardState,
@@ -54,7 +54,10 @@ function isPlayerOwner(owner: CardOwner): owner is PlayerId {
 }
 
 function samePlacement(a: CardPlacement, b: CardPlacement) {
-  return a.owner === b.owner && a.zone === b.zone && (a.index ?? -1) === (b.index ?? -1);
+  if (a.owner !== b.owner || a.zone !== b.zone) return false;
+  const aIndex = a.zone === "active" || a.zone === "stadium" ? undefined : a.index;
+  const bIndex = b.zone === "active" || b.zone === "stadium" ? undefined : b.index;
+  return (aIndex ?? -1) === (bIndex ?? -1);
 }
 
 function findCardPlacement(board: BoardState, cardId: string): CardPlacement | null {
@@ -129,6 +132,10 @@ export function canPlace(
           ? player.bench[target.index] ?? null
           : null;
     if (!host) return false;
+    // Only Pokémon can host tools/energies (the comment above promises this;
+    // enforce it so a trainer/energy that somehow occupies a slot can't be
+    // stacked onto).
+    if (host.type !== "pokemon") return false;
     if (sourceType === "tool" && (host.attached?.tools.length ?? 0) > 0) return false;
     return true;
   }
@@ -145,7 +152,7 @@ export function canPlace(
 
   // Bench occupancy — only matters when adding a new card to the bench.
   if (target.zone === "bench" && source.zone !== "bench") {
-    if (player.bench.length >= BENCH_LIMIT) return false;
+    if (player.bench.length >= benchLimitFor(board)) return false;
   }
 
   // Active occupancy — hand → active only when active is empty (no swap-out
@@ -168,8 +175,13 @@ function swapBenchAndActive(player: PlayerBoard, benchIndex: number, benchCard: 
   }
 }
 
-function retreatActiveToBench(player: PlayerBoard, activeCard: CardModel, requestedIndex?: number) {
-  if (player.bench.length >= BENCH_LIMIT) return false;
+function retreatActiveToBench(
+  player: PlayerBoard,
+  activeCard: CardModel,
+  benchLimit: number,
+  requestedIndex?: number,
+) {
+  if (player.bench.length >= benchLimit) return false;
   player.active = null;
   const insertIdx =
     requestedIndex != null
@@ -204,6 +216,13 @@ function placeCard(board: BoardState, placement: CardPlacement, card: CardModel)
   if (!isPlayerOwner(placement.owner)) return false;
   const player = board[placement.owner];
 
+  // Active and bench hold Pokémon only — a model-level invariant mirrored by
+  // canPlace. Guarding here too means any future move path that reaches
+  // placeCard directly (e.g. a swap helper) can't corrupt the board.
+  if ((placement.zone === "active" || placement.zone === "bench") && card.type !== "pokemon") {
+    return false;
+  }
+
   if (placement.zone === "active") {
     if (player.active) return false;
     player.active = card;
@@ -211,7 +230,7 @@ function placeCard(board: BoardState, placement: CardPlacement, card: CardModel)
   }
 
   if (placement.zone === "bench") {
-    if (player.bench.length >= BENCH_LIMIT) return false;
+    if (player.bench.length >= benchLimitFor(board)) return false;
     const insertIdx =
       placement.index != null
         ? Math.max(0, Math.min(placement.index, player.bench.length))
@@ -290,6 +309,7 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
           ? player.bench[request.to.index] ?? null
           : null;
     if (!host) return board;
+    if (host.type !== "pokemon") return board;
 
     const taken = removeCard(next, source, request.cardId);
     if (!taken) return board;
@@ -324,7 +344,8 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
     const player = next[source.owner];
     const activeCard = player.active;
     if (!activeCard || activeCard.id !== request.cardId) return board;
-    if (!retreatActiveToBench(player, activeCard, request.to.index)) return board;
+    if (!retreatActiveToBench(player, activeCard, benchLimitFor(next), request.to.index))
+      return board;
     return next;
   }
 
