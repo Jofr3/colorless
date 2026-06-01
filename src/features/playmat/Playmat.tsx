@@ -95,6 +95,7 @@ export function Playmat() {
       <AnimatedCardsLayer
         board={board}
         perspectivePlayer={bottomPlayer}
+        backDesign="twilight"
         playmatRef={playmatRef}
         onMoveCard={handleMoveCard}
       />

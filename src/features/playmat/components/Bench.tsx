@@ -50,7 +50,9 @@ export function Bench({
           const hasEnergy = (card.attached?.energies.length ?? 0) > 0;
           const previousHasEnergy = (cards[index - 1]?.attached?.energies.length ?? 0) > 0;
           const toolBehind = hasTool && shouldCollapseAttachments;
-          const energyStrip = shouldCollapseAttachments ? CROWDED_BENCH_ENERGY_STRIP : ATTACHED_STRIP;
+          const energyStrip = shouldCollapseAttachments
+            ? CROWDED_BENCH_ENERGY_STRIP
+            : ATTACHED_STRIP;
           // Reserve layout space for side attachments while the fixed bench
           // has natural room. Once it runs out, tuck tools behind Pokémon and
           // overlap energy strips instead of resizing the bench.

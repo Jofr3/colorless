@@ -29,7 +29,9 @@ export function shouldCollapseBenchAttachments(
     Math.max(0, cards.length - 1) * SLOT_GAP_CARD_WIDTH_ESTIMATE +
     visibleBenchSideAttachmentCount(cards) * ATTACHED_STRIP_CARD_WIDTH;
   const fixedBenchWidth =
-    benchLimit + Math.max(0, benchLimit - 1) * SLOT_GAP_CARD_WIDTH_ESTIMATE + BENCH_EXTRA_CARD_WIDTH;
+    benchLimit +
+    Math.max(0, benchLimit - 1) * SLOT_GAP_CARD_WIDTH_ESTIMATE +
+    BENCH_EXTRA_CARD_WIDTH;
 
   return naturalWidth > fixedBenchWidth;
 }

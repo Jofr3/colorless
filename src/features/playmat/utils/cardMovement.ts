@@ -87,10 +87,10 @@ function cardAt(board: BoardState, placement: CardPlacement): CardModel | null {
   const player = board[placement.owner];
   if (placement.zone === "active") return player.active;
   if (placement.zone === "bench") {
-    return placement.index != null ? player.bench[placement.index] ?? null : null;
+    return placement.index != null ? (player.bench[placement.index] ?? null) : null;
   }
   if (placement.zone === "hand") {
-    return placement.index != null ? player.hand[placement.index] ?? null : null;
+    return placement.index != null ? (player.hand[placement.index] ?? null) : null;
   }
   return null;
 }
@@ -129,7 +129,7 @@ export function canPlace(
       target.zone === "active"
         ? player.active
         : target.index != null
-          ? player.bench[target.index] ?? null
+          ? (player.bench[target.index] ?? null)
           : null;
     if (!host) return false;
     // Only Pokémon can host tools/energies (the comment above promises this;
@@ -199,9 +199,7 @@ function reorderBench(
 ) {
   player.bench.splice(fromIndex, 1);
   const insertIdx =
-    toIndex != null
-      ? Math.max(0, Math.min(toIndex, player.bench.length))
-      : player.bench.length;
+    toIndex != null ? Math.max(0, Math.min(toIndex, player.bench.length)) : player.bench.length;
   player.bench.splice(insertIdx, 0, card);
 }
 
@@ -285,7 +283,7 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
   const source: CardPlacement =
     cardAtFrom?.id === request.cardId
       ? request.from
-      : findCardPlacement(board, request.cardId) ?? request.from;
+      : (findCardPlacement(board, request.cardId) ?? request.from);
 
   const card = cardAt(board, source);
   if (!card || card.id !== request.cardId) return board;
@@ -306,7 +304,7 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
       request.to.zone === "active"
         ? player.active
         : request.to.zone === "bench" && request.to.index != null
-          ? player.bench[request.to.index] ?? null
+          ? (player.bench[request.to.index] ?? null)
           : null;
     if (!host) return board;
     if (host.type !== "pokemon") return board;

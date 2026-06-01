@@ -72,12 +72,7 @@ function SidePiles({
             : { bottom: 0, right: "100%", marginRight: SIDE_PILES_BENCH_GAP }
         }
       >
-        <PrizeGrid
-          owner={owner}
-          remaining={prizesRemaining}
-          tone={cardBackTone}
-          flipped={isTop}
-        />
+        <PrizeGrid owner={owner} remaining={prizesRemaining} tone={cardBackTone} flipped={isTop} />
       </div>
     </>
   );

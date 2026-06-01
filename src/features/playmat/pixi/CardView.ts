@@ -181,12 +181,12 @@ async function fetchBitmap(textureUrl: string): Promise<ImageBitmap> {
 }
 
 function loadTexture(textureUrl: string) {
-  // Synthetic card-back URLs (`back://blue` / `back://red`) bypass the
-  // fetch→blob→createImageBitmap path because createImageBitmap on SVG blobs
-  // is unreliable; cardBackTexture decodes via an <img> instead.
-  const backTone = parseBackUrl(textureUrl);
-  if (backTone) {
-    return cardBackTexture(backTone);
+  // Synthetic card-back URLs (`back://<design>/<tone>`, e.g. `back://rays/blue`)
+  // bypass the fetch→blob→createImageBitmap path because createImageBitmap on
+  // SVG blobs is unreliable; cardBackTexture decodes via an <img> instead.
+  const back = parseBackUrl(textureUrl);
+  if (back) {
+    return cardBackTexture(back.design, back.tone);
   }
 
   const cached = textureCache.get(textureUrl);
@@ -391,6 +391,12 @@ export class CardView {
       return;
     }
 
+    // Swapping the texture on an already-loaded card (e.g. cycling the card-back
+    // design) earns a gentle juice pop on top of the alpha fade, reusing the
+    // exact juice primitive normal cards use — so the change reads as an
+    // intentional "flip" rather than a silent repaint. First loads don't pop.
+    const isSwap = this.loaded;
+
     this.textureUrl = textureUrl;
     this.loaded = false;
     this.placeholder.visible = true;
@@ -416,6 +422,9 @@ export class CardView {
           ease: "power2.out",
           pixi: { alpha: 1 },
         });
+        if (isSwap && !this.reducedMotion) {
+          this.juiceUp(0.03, (this.seed > 0.5 ? 1 : -1) * 0.05);
+        }
       })
       .catch(() => {
         if (!this.destroyed) {

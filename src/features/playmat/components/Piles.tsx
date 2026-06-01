@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 import { CARD_SIZE_STYLE, CARD_SLOT_STYLE, FRAME_CLASS, PRIZE_GRID_STYLE } from "../constants";
 import type { CardBackSize, CardBackTone, PlayerId } from "../types";
-import {
-  PRIZE_COLUMNS,
-  PRIZE_ROWS,
-  deckBackId,
-  prizeBackId,
-  prizeSlots,
-} from "../utils/piles";
+import { PRIZE_COLUMNS, PRIZE_ROWS, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
 
 function CardBack({
   tone,
@@ -98,11 +92,7 @@ export function PrizeGrid({
                     }}
                   >
                     {present && (
-                      <CardBack
-                        tone={tone}
-                        size="prize"
-                        anchorId={prizeBackId(owner, slotIndex)}
-                      />
+                      <CardBack tone={tone} size="prize" anchorId={prizeBackId(owner, slotIndex)} />
                     )}
                   </div>
                 );

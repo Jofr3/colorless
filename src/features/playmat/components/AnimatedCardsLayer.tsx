@@ -14,6 +14,7 @@ import type {
   SidePosition,
 } from "../types";
 import { cardBackImageUrl } from "../pixi/cardBackTexture";
+import type { CardBackDesign } from "../pixi/cardBackDesigns";
 import {
   CardView,
   type CardViewPresentationOptions,
@@ -34,6 +35,7 @@ import { cardBackToneFor } from "../utils/players";
 interface AnimatedCardsLayerProps {
   board: BoardState;
   perspectivePlayer: PlayerId;
+  backDesign: CardBackDesign;
   playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
 }
@@ -136,10 +138,15 @@ function cardPresentationOptions(descriptor: CardDescriptor): CardViewPresentati
   const isAttached = descriptor.placement.zone === "attached";
   const isBehindAttachment = descriptor.attachedPresentation === "behind";
   const isBehindTool = isBehindAttachment && descriptor.card.type === "tool";
-  const isSlotBack =
-    descriptor.placement.zone === "stadium" && descriptor.placement.owner !== "global";
+  // Deck/prize backs deliberately get the FULL treatment now — idle float,
+  // ambient mesh tilt, and hover lift/scale/tilt — so they animate exactly like
+  // playable cards. (Their radial hover lift is already damped by
+  // BACK_HOVER_LIFT_SCALE in CardView.) Only attached tool/energy cards stay
+  // juice-only, since their host Pokémon owns the hover gesture. They are also
+  // no longer slot-locked: locking is what suppressed idle float + mesh warp,
+  // and their slots are static so springing to them looks identical at rest.
   return {
-    hoverMode: isAttached || isSlotBack ? "juice-only" : "full",
+    hoverMode: isAttached ? "juice-only" : "full",
     clipTopFraction: isBehindTool
       ? descriptor.attachedSide === "bottom"
         ? TOOL_BEHIND_CLIP_FRACTION
@@ -149,7 +156,7 @@ function cardPresentationOptions(descriptor: CardDescriptor): CardViewPresentati
         : null,
     clipBottomFraction:
       isBehindTool && descriptor.attachedSide === "top" ? TOOL_BEHIND_CLIP_FRACTION : null,
-    slotLocked: isSlotBack,
+    slotLocked: false,
   };
 }
 
@@ -203,7 +210,11 @@ function pushAttachedDescriptors(
   }
 }
 
-function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId): CardDescriptor[] {
+function collectCardDescriptors(
+  board: BoardState,
+  perspectivePlayer: PlayerId,
+  backDesign: CardBackDesign,
+): CardDescriptor[] {
   const descriptors: CardDescriptor[] = [];
   const benchLimit = benchLimitFor(board);
 
@@ -263,7 +274,7 @@ function collectCardDescriptors(board: BoardState, perspectivePlayer: PlayerId):
     // stadium's owner "global") routes them to the low-z fallback in
     // zIndexForPlacement so they sit beneath the playable cards.
     const tone = cardBackToneFor(owner);
-    const backImageUrl = cardBackImageUrl(tone);
+    const backImageUrl = cardBackImageUrl(backDesign, tone);
 
     descriptors.push({
       card: {
@@ -466,6 +477,7 @@ function shouldIgnorePointer(event: PointerEvent) {
 export function AnimatedCardsLayer({
   board,
   perspectivePlayer,
+  backDesign,
   playmatRef,
   onMoveCard,
 }: AnimatedCardsLayerProps) {
@@ -485,8 +497,8 @@ export function AnimatedCardsLayer({
   const boardRef = useRef(board);
 
   const descriptors = useMemo(
-    () => collectCardDescriptors(board, perspectivePlayer),
-    [board, perspectivePlayer],
+    () => collectCardDescriptors(board, perspectivePlayer, backDesign),
+    [board, perspectivePlayer, backDesign],
   );
 
   useEffect(() => {
