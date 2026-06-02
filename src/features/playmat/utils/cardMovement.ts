@@ -122,6 +122,10 @@ export function canPlace(
   // Tool / energy → attach onto an existing Pokémon at the target slot.
   // Trainers (non-tool) and stadiums cannot be attached.
   if (sourceType === "tool" || sourceType === "energy") {
+    // Reordering within the hand: a tool/energy is just an ordinary hand card
+    // there, not an attachment, so it shuffles like any other card. (Same
+    // index is already rejected by samePlacement above.)
+    if (source.zone === "hand" && target.zone === "hand") return true;
     if (target.zone !== "active" && target.zone !== "bench") return false;
     if (source.zone !== "hand") return false;
     const player = board[target.owner];
@@ -201,6 +205,18 @@ function reorderBench(
   const insertIdx =
     toIndex != null ? Math.max(0, Math.min(toIndex, player.bench.length)) : player.bench.length;
   player.bench.splice(insertIdx, 0, card);
+}
+
+function reorderHand(
+  player: PlayerBoard,
+  fromIndex: number,
+  toIndex: number | undefined,
+  card: CardModel,
+) {
+  player.hand.splice(fromIndex, 1);
+  const insertIdx =
+    toIndex != null ? Math.max(0, Math.min(toIndex, player.hand.length)) : player.hand.length;
+  player.hand.splice(insertIdx, 0, card);
 }
 
 function placeCard(board: BoardState, placement: CardPlacement, card: CardModel): boolean {
@@ -293,6 +309,20 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
   if (!canPlace(board, source, request.to, card.type)) return board;
 
   const next = cloneBoard(board);
+
+  // Hand → hand: reorder within the hand. Handled before the tool/energy
+  // attach branch because while a card sits in the hand it is an ordinary
+  // card regardless of type — energies and tools rearrange like Pokémon and
+  // must not be intercepted as attachments here.
+  if (source.zone === "hand" && request.to.zone === "hand" && source.owner === request.to.owner) {
+    if (!isPlayerOwner(source.owner)) return board;
+    const player = next[source.owner];
+    const fromIdx = source.index ?? -1;
+    const handCard = player.hand[fromIdx];
+    if (!handCard || handCard.id !== request.cardId) return board;
+    reorderHand(player, fromIdx, request.to.index, handCard);
+    return next;
+  }
 
   // Tool / energy attach: take the card from its source and slip it onto
   // the Pokémon at the target slot. Tools can only attach to Pokémon that

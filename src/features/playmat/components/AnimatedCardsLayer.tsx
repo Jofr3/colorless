@@ -1144,13 +1144,14 @@ export function AnimatedCardsLayer({
     drag: DragState,
     point: { x: number; y: number },
   ): { owner: PlayerId; zone: "hand" | "bench" } | null {
-    // Tools/energies attach to an existing Pokémon at the destination slot;
-    // they aren't inserted as a new sibling, so the reorder preview must not
-    // shuffle the bench around them. Skipping detection here also keeps the
-    // pointer-up reorderIndex override from rewriting the drop's slot index
-    // to an insertion position.
-    if (drag.cardType === "tool" || drag.cardType === "energy") return null;
     const board = boardRef.current;
+    // Tools/energies attach to an existing Pokémon when dropped on the
+    // bench/active — they aren't inserted as a new sibling there, so the
+    // reorder preview must not shuffle a board zone around them (which would
+    // also let the pointer-up reorderIndex override rewrite the attach slot to
+    // an insertion position). Inside the hand they're ordinary cards and
+    // rearrange like any other, so only board zones are skipped for them.
+    const attachesOnBoard = drag.cardType === "tool" || drag.cardType === "energy";
     // Iterate smallest-first so we prefer the most specific slot drop zone
     // when slot zones nest inside a wider zone container.
     const candidates = dropZonesRef.current
@@ -1160,6 +1161,7 @@ export function AnimatedCardsLayer({
     for (const dz of candidates) {
       const zone = dz.placement.zone;
       if (zone !== "hand" && zone !== "bench") continue;
+      if (attachesOnBoard && zone !== "hand") continue;
       const owner = dz.placement.owner;
       if (owner !== "you" && owner !== "opponent") continue;
       // Source-zone reorder is always allowed (it's just rearranging).
