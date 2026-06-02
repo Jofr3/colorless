@@ -18,7 +18,11 @@ export function benchLimitFor(board: BoardState): number {
     : DEFAULT_BENCH_LIMIT;
 }
 
-export const BENCH_EXTRA_CARD_WIDTH = 0.85;
+// Slack (in card widths) the bench frame reserves beyond its `benchLimit`
+// slots. Kept at 0 so a full bench hugs its cards with no empty gap at the
+// start/end — when attachments need side room, `shouldCollapseBenchAttachments`
+// tucks tools behind and overlaps energy strips instead of widening the frame.
+export const BENCH_EXTRA_CARD_WIDTH = 0;
 export const HIDDEN_CURSOR_POSITION = -9999;
 export const ATTACHED_CARD_SCALE = 0.92;
 export const DEFAULT_ATTACHED_VISIBLE_STICK = 0.22;
