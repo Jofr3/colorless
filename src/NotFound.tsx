@@ -6,10 +6,10 @@ export function NotFound() {
       <p className="text-6xl font-bold text-accent">404</p>
       <h1 className="text-xl font-medium">This page doesn&apos;t exist</h1>
       <Link
-        to="/simulator"
+        to="/"
         className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg transition-colors hover:border-accent hover:text-accent"
       >
-        Go to the simulator
+        Back to home
       </Link>
     </main>
   );

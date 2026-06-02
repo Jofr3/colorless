@@ -1,0 +1,99 @@
+/* Shared full-screen backdrop for non-game pages (home, placeholders).
+   Replicates the playmat surface (see features/playmat/playmat.css): a blue
+   glow along the bottom and a red glow across the top, a dot-grid revealed
+   inside those glows (::before), and a cursor-tracking spotlight that lights up
+   a brighter patch of dots under the pointer (::after). Glows are static —
+   there's no turn to swap them for. */
+
+.app-backdrop {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  /* Clip the cursor spotlight (a 300px ::after layer) so it can't extend past
+     the page edges and spawn a phantom scrollbar — same as the playmat wrapper.
+     Normal-flow content still sizes the backdrop and scrolls via the page. */
+  overflow: hidden;
+  isolation: isolate;
+  --cursor-x: -9999px;
+  --cursor-y: -9999px;
+  background: radial-gradient(
+      ellipse 85% 55% at 50% 100%,
+      rgba(38, 149, 255, 0.16) 0%,
+      rgba(38, 149, 255, 0.08) 36%,
+      rgba(38, 149, 255, 0) 72%
+    ),
+    radial-gradient(
+      ellipse 85% 55% at 50% 0%,
+      rgba(255, 52, 86, 0.13) 0%,
+      rgba(255, 52, 86, 0.07) 36%,
+      rgba(255, 52, 86, 0) 72%
+    ), var(--color-bg);
+  background-repeat: no-repeat;
+}
+
+/* Shared dot grid for the static texture (::before) and the cursor spotlight
+   (::after). */
+.app-backdrop::before,
+.app-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(245, 250, 255, 0.26) 1px, transparent 1.35px);
+  background-position: center;
+  background-size: 24px 24px;
+  mix-blend-mode: screen;
+}
+
+/* Base texture: dots revealed inside the two glows, plus the corners and centre. */
+.app-backdrop::before {
+  opacity: 0.34;
+  -webkit-mask-image: radial-gradient(
+      ellipse 85% 55% at 50% 100%,
+      black 0%,
+      black 34%,
+      transparent 72%
+    ), radial-gradient(ellipse 85% 55% at 50% 0%, black 0%, black 34%, transparent 72%),
+    radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 190px at 100% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 180px at 50% 50%, black 0%, rgba(0, 0, 0, 0.66) 36%, transparent 74%);
+  mask-image: radial-gradient(ellipse 85% 55% at 50% 100%, black 0%, black 34%, transparent 72%),
+    radial-gradient(ellipse 85% 55% at 50% 0%, black 0%, black 34%, transparent 72%),
+    radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 190px at 100% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(circle 180px at 50% 50%, black 0%, rgba(0, 0, 0, 0.66) 36%, transparent 74%);
+}
+
+/* Cursor spotlight: a 300×300 patch of brighter dots the pointer drags around
+   on the GPU compositor, softly masked to a ~150px circle. */
+.app-backdrop::after {
+  inset: auto;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 300px;
+  opacity: 0.62;
+  transform: translate3d(calc(var(--cursor-x) - 150px), calc(var(--cursor-y) - 150px), 0);
+  will-change: transform;
+  background-image: radial-gradient(circle, rgba(245, 250, 255, 0.32) 1px, transparent 1.35px);
+  /* Keep the spotlight's dots in phase with ::before, which is viewport-anchored
+     via `background-position: center`; subtract half a 24px tile (138 = 150-12). */
+  background-position: calc(50vw - var(--cursor-x) + 138px) calc(50vh - var(--cursor-y) + 138px);
+  -webkit-mask-image: radial-gradient(
+    circle 150px at 50% 50%,
+    black 0%,
+    rgba(0, 0, 0, 0.82) 38%,
+    transparent 74%
+  );
+  mask-image: radial-gradient(
+    circle 150px at 50% 50%,
+    black 0%,
+    rgba(0, 0, 0, 0.82) 38%,
+    transparent 74%
+  );
+}
