@@ -124,8 +124,8 @@ body {
       rgba(255, 52, 86, 0) 72%
     ), var(--color-bg);
   background-repeat: no-repeat;
-  transition: --glow-angle 760ms cubic-bezier(0.22, 1, 0.36, 1), --glow-flip 760ms
-    cubic-bezier(0.22, 1, 0.36, 1), --glow-w 760ms cubic-bezier(0.22, 1, 0.36, 1), --glow-h 760ms
+  transition: --glow-angle 1000ms cubic-bezier(0.22, 1, 0.36, 1), --glow-flip 1000ms
+    cubic-bezier(0.22, 1, 0.36, 1), --glow-w 1000ms cubic-bezier(0.22, 1, 0.36, 1), --glow-h 1000ms
     cubic-bezier(0.22, 1, 0.36, 1);
 }
 
