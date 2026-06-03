@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
-import { DecksIcon, LobbyIcon, SettingsIcon } from "./components/icons";
+import { DecksIcon, SettingsIcon, SwordsIcon } from "./components/icons";
 import { PlaceholderPage } from "./components/PlaceholderPage";
 import { RootLayout } from "./components/RootLayout";
 import { Home } from "./features/home";
@@ -14,7 +14,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "/simulator", element: <Playmat /> },
-      { path: "/lobby/create", element: <PlaceholderPage title="Online" Icon={LobbyIcon} /> },
+      { path: "/lobby/create", element: <PlaceholderPage title="Online" Icon={SwordsIcon} /> },
       { path: "/decks", element: <PlaceholderPage title="Decks" Icon={DecksIcon} /> },
       { path: "/settings", element: <PlaceholderPage title="Settings" Icon={SettingsIcon} /> },
       { path: "*", element: <NotFound /> },
