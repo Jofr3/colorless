@@ -19,9 +19,153 @@ body,
   height: 100%;
 }
 
+/* Shared background glow ---------------------------------------------------
+
+   The blue/red glow is a single persistent layer on <body> so it survives
+   route changes and animates between layouts. The two glows sit at opposite
+   ends of a diameter through the viewport centre; --glow-angle rotates that
+   diameter, so changing layout sweeps them around the centre on an elliptical
+   arc (a rotation) rather than sliding straight from A to B. Blue/red positions
+   are derived from the angle with cos()/sin(), and --glow-flip (+1/-1) mirrors
+   only the vertical axis — giving the playmat's perspective swap a clean
+   top/bottom flip without spinning the whole diameter.
+
+   `data-glow` (set per route in RootLayout) picks the layout — `sides` on the
+   home dashboard, `stacked` (top/bottom) everywhere else. `data-perspective`
+   (set by Playmat) drives the flip on the opponent's turn. Page surfaces
+   (app-backdrop, playmat-wrapper) are transparent so this shows through; their
+   dot-grids read the same derived variables so the texture tracks the glow. */
+@property --glow-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 90deg;
+}
+@property --glow-flip {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --glow-bulge {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 14%;
+}
+@property --glow-w {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 85%;
+}
+@property --glow-h {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 55%;
+}
+@property --blue-glow-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+@property --blue-glow-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+@property --red-glow-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+@property --red-glow-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
 body {
   margin: 0;
-  background: var(--color-bg);
   color: var(--color-fg);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Orbit radius swells by --glow-bulge toward the 45° mid-points (sin(2*angle)
+     peaks there) and is exactly 50% on the axes — so the rest positions stay
+     pinned to the edges while the travel path bows out toward the corners,
+     giving a rounded, circular sweep instead of a flat A->B arc. */
+  --blue-glow-x: calc(
+    50% +
+    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
+    cos(var(--glow-angle))
+  );
+  --blue-glow-y: calc(
+    50% +
+    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
+    sin(var(--glow-angle)) *
+    var(--glow-flip)
+  );
+  --red-glow-x: calc(
+    50% -
+    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
+    cos(var(--glow-angle))
+  );
+  --red-glow-y: calc(
+    50% -
+    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
+    sin(var(--glow-angle)) *
+    var(--glow-flip)
+  );
+  background: radial-gradient(
+      ellipse var(--glow-w) var(--glow-h) at var(--blue-glow-x) var(--blue-glow-y),
+      rgba(38, 149, 255, 0.16) 0%,
+      rgba(38, 149, 255, 0.08) 36%,
+      rgba(38, 149, 255, 0) 72%
+    ),
+    radial-gradient(
+      ellipse var(--glow-w) var(--glow-h) at var(--red-glow-x) var(--red-glow-y),
+      rgba(255, 52, 86, 0.13) 0%,
+      rgba(255, 52, 86, 0.07) 36%,
+      rgba(255, 52, 86, 0) 72%
+    ), var(--color-bg);
+  background-repeat: no-repeat;
+  transition: --glow-angle 760ms cubic-bezier(0.22, 1, 0.36, 1), --glow-flip 760ms
+    cubic-bezier(0.22, 1, 0.36, 1), --glow-w 760ms cubic-bezier(0.22, 1, 0.36, 1), --glow-h 760ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Home dashboard: diameter horizontal — blue hugs the left, red the right. */
+body[data-glow="sides"] {
+  --glow-angle: 180deg;
+  --glow-w: 52%;
+  --glow-h: 96%;
+}
+
+/* Every other page: diameter vertical — blue along the bottom, red the top. */
+body[data-glow="stacked"] {
+  --glow-angle: 90deg;
+  --glow-w: 85%;
+  --glow-h: 55%;
+}
+
+/* Playmat only: the opponent's turn mirrors the glow top-to-bottom. */
+body[data-perspective="opponent"] {
+  --glow-flip: -1;
+}
+
+/* Routed content fades in on navigation (the glow itself slides via the body
+   transition above). Keyed by pathname in RootLayout so it replays each time. */
+.route-view {
+  animation: route-view-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes route-view-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+
+  .route-view {
+    animation: none;
+  }
 }

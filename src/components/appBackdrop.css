@@ -1,9 +1,10 @@
 /* Shared full-screen backdrop for non-game pages (home, placeholders).
-   Replicates the playmat surface (see features/playmat/playmat.css): a blue
-   glow along the bottom and a red glow across the top, a dot-grid revealed
-   inside those glows (::before), and a cursor-tracking spotlight that lights up
-   a brighter patch of dots under the pointer (::after). Glows are static —
-   there's no turn to swap them for. */
+   The blue/red glow itself is the persistent <body> layer (see index.css); this
+   surface is transparent so it shows through. What this file adds is the
+   dot-grid texture: a base layer revealed inside the glow + corners + centre
+   (::before), and a cursor-tracking spotlight of brighter dots (::after). The
+   ::before reveal reads the shared --*-glow-* variables, so the texture tracks
+   the glow as it slides between the side and top/bottom layouts. */
 
 .app-backdrop {
   position: relative;
@@ -16,19 +17,6 @@
   isolation: isolate;
   --cursor-x: -9999px;
   --cursor-y: -9999px;
-  background: radial-gradient(
-      ellipse 85% 55% at 50% 100%,
-      rgba(38, 149, 255, 0.16) 0%,
-      rgba(38, 149, 255, 0.08) 36%,
-      rgba(38, 149, 255, 0) 72%
-    ),
-    radial-gradient(
-      ellipse 85% 55% at 50% 0%,
-      rgba(255, 52, 86, 0.13) 0%,
-      rgba(255, 52, 86, 0.07) 36%,
-      rgba(255, 52, 86, 0) 72%
-    ), var(--color-bg);
-  background-repeat: no-repeat;
 }
 
 /* Shared dot grid for the static texture (::before) and the cursor spotlight
@@ -46,23 +34,38 @@
   mix-blend-mode: screen;
 }
 
-/* Base texture: dots revealed inside the two glows, plus the corners and centre. */
+/* Base texture: dots revealed inside the two glows (tracking the shared glow
+   variables), plus the corners and centre. */
 .app-backdrop::before {
   opacity: 0.34;
   -webkit-mask-image: radial-gradient(
-      ellipse 85% 55% at 50% 100%,
+      ellipse var(--glow-w) var(--glow-h) at var(--blue-glow-x) var(--blue-glow-y),
       black 0%,
       black 34%,
       transparent 72%
-    ), radial-gradient(ellipse 85% 55% at 50% 0%, black 0%, black 34%, transparent 72%),
-    radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    ),
+    radial-gradient(
+      ellipse var(--glow-w) var(--glow-h) at var(--red-glow-x) var(--red-glow-y),
+      black 0%,
+      black 34%,
+      transparent 72%
+    ), radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 180px at 50% 50%, black 0%, rgba(0, 0, 0, 0.66) 36%, transparent 74%);
-  mask-image: radial-gradient(ellipse 85% 55% at 50% 100%, black 0%, black 34%, transparent 72%),
-    radial-gradient(ellipse 85% 55% at 50% 0%, black 0%, black 34%, transparent 72%),
-    radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+  mask-image: radial-gradient(
+      ellipse var(--glow-w) var(--glow-h) at var(--blue-glow-x) var(--blue-glow-y),
+      black 0%,
+      black 34%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse var(--glow-w) var(--glow-h) at var(--red-glow-x) var(--red-glow-y),
+      black 0%,
+      black 34%,
+      transparent 72%
+    ), radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),

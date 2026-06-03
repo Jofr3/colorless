@@ -1,16 +1,10 @@
-@property --blue-glow-y {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 100%;
-}
+/* Playmat surface ---------------------------------------------------------
 
-@property --red-glow-y {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 0%;
-}
-
-/* Playmat surface --------------------------------------------------------- */
+   The blue/red glow is the shared <body> layer (see index.css); on this route
+   it uses the `stacked` layout and flips with `data-perspective` on the
+   opponent's turn. The wrapper is transparent so that glow shows through behind
+   the cards; the ::before dot-grid below reads the same --*-glow-* variables so
+   the texture stays inside the glow. */
 
 .playmat-wrapper {
   --card-w: clamp(28px, min(calc((100vh - 110px) / 7), calc((100vw - 192px) / 7.2)), 140px);
@@ -25,29 +19,7 @@
   --prize-gap-y: 6px;
   --cursor-x: -9999px;
   --cursor-y: -9999px;
-  --blue-glow-y: 100%;
-  --red-glow-y: 0%;
   isolation: isolate;
-  background: radial-gradient(
-      ellipse 85% 55% at 50% var(--blue-glow-y),
-      rgba(38, 149, 255, 0.16) 0%,
-      rgba(38, 149, 255, 0.08) 36%,
-      rgba(38, 149, 255, 0) 72%
-    ),
-    radial-gradient(
-      ellipse 85% 55% at 50% var(--red-glow-y),
-      rgba(255, 52, 86, 0.13) 0%,
-      rgba(255, 52, 86, 0.07) 36%,
-      rgba(255, 52, 86, 0) 72%
-    ), var(--color-bg);
-  background-repeat: no-repeat;
-  transition: --blue-glow-y 760ms cubic-bezier(0.22, 1, 0.36, 1), --red-glow-y 760ms
-    cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.playmat-wrapper:has([data-perspective-player="opponent"]) {
-  --blue-glow-y: 0%;
-  --red-glow-y: 100%;
 }
 
 .playmat-wrapper::before,
@@ -66,25 +38,33 @@
 .playmat-wrapper::before {
   opacity: 0.34;
   -webkit-mask-image: radial-gradient(
-      ellipse 85% 55% at 50% var(--blue-glow-y),
+      ellipse var(--glow-w) var(--glow-h) at var(--blue-glow-x) var(--blue-glow-y),
       black 0%,
       black 34%,
       transparent 72%
     ),
-    radial-gradient(ellipse 85% 55% at 50% var(--red-glow-y), black 0%, black 34%, transparent 72%),
-    radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(
+      ellipse var(--glow-w) var(--glow-h) at var(--red-glow-x) var(--red-glow-y),
+      black 0%,
+      black 34%,
+      transparent 72%
+    ), radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 180px at 50% 50%, black 0%, rgba(0, 0, 0, 0.66) 36%, transparent 74%);
   mask-image: radial-gradient(
-      ellipse 85% 55% at 50% var(--blue-glow-y),
+      ellipse var(--glow-w) var(--glow-h) at var(--blue-glow-x) var(--blue-glow-y),
       black 0%,
       black 34%,
       transparent 72%
     ),
-    radial-gradient(ellipse 85% 55% at 50% var(--red-glow-y), black 0%, black 34%, transparent 72%),
-    radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
+    radial-gradient(
+      ellipse var(--glow-w) var(--glow-h) at var(--red-glow-x) var(--red-glow-y),
+      black 0%,
+      black 34%,
+      transparent 72%
+    ), radial-gradient(circle 190px at 0% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 0%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 0% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
     radial-gradient(circle 190px at 100% 100%, black 0%, rgba(0, 0, 0, 0.72) 34%, transparent 72%),
@@ -281,17 +261,47 @@
   }
 }
 
+/* Leave-simulator confirmation dialog ------------------------------------ */
+
+.leave-dialog::backdrop {
+  background: rgba(6, 7, 12, 0.62);
+  backdrop-filter: blur(4px);
+}
+
+.leave-dialog[open] {
+  animation: leave-dialog-pop 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.leave-dialog[open]::backdrop {
+  animation: leave-dialog-fade 200ms ease;
+}
+
+@keyframes leave-dialog-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+@keyframes leave-dialog-fade {
+  from {
+    opacity: 0;
+  }
+}
+
 /* Reduced motion --------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  /* Mute the animated background glow sweep and the turn-pass chip pop. The
-     Pixi/GSAP card motion is muted separately via CardView's reducedMotion
-     flag (kept live via a matchMedia subscription in AnimatedCardsLayer). */
-  .playmat-wrapper {
-    transition: none;
+  /* Mute the turn-pass chip pop. The shared glow sweep is muted on <body> in
+     index.css; the Pixi/GSAP card motion is muted separately via CardView's
+     reducedMotion flag (kept live via a matchMedia subscription in
+     AnimatedCardsLayer). */
+  .turn-chip-pass {
+    animation: none;
   }
 
-  .turn-chip-pass {
+  .leave-dialog[open],
+  .leave-dialog[open]::backdrop {
     animation: none;
   }
 }

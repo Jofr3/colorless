@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import "./playmat.css";
 import {
   benchLimitFor,
@@ -8,6 +8,7 @@ import {
 } from "./constants";
 import { gameLog, initialBoard, initialTurn } from "./data/mockPlaymat";
 import { AnimatedCardsLayer } from "./components/AnimatedCardsLayer";
+import { BackToMenu } from "./components/BackToMenu";
 import { GameLog } from "./components/GameLog";
 import { Hand } from "./components/Hand";
 import { PlayerSide } from "./components/PlayerSide";
@@ -42,6 +43,15 @@ export function Playmat() {
   // A bench-expanding stadium lifts the cap to 8 for both players.
   const benchLimit = benchLimitFor(board);
 
+  // Mirror the active player onto <body> so the shared background glow
+  // (index.css) flips blue/red top-to-bottom on the opponent's turn.
+  useEffect(() => {
+    document.body.dataset.perspective = bottomPlayer;
+    return () => {
+      delete document.body.dataset.perspective;
+    };
+  }, [bottomPlayer]);
+
   function passTurn() {
     setPassAnimationKey((key) => key + 1);
     setTurn((current) => ({
@@ -63,7 +73,6 @@ export function Playmat() {
       onPointerMove={updateCursorPosition}
       onPointerLeave={hideCursorDots}
     >
-      <span className="sr-only" data-perspective-player={bottomPlayer} aria-hidden="true" />
       <PlayerSide
         owner={topPlayer}
         player={board[topPlayer]}
@@ -91,6 +100,7 @@ export function Playmat() {
       </div>
       <TurnControls onPassTurn={passTurn} />
       <TurnBanner info={turn} passAnimationKey={passAnimationKey} />
+      <BackToMenu />
       <GameLog entries={gameLog} turn={turn.turn} />
       <AnimatedCardsLayer
         board={board}
