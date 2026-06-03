@@ -23,11 +23,42 @@ function IconBase({ children, ...props }: IconProps & { children: ReactNode }) {
   );
 }
 
-/** Chess pieces (Font Awesome fa-chess, solid) — the battle/playmat simulator. */
+/** Two chess pieces — a taller king and a shorter pawn — for the battle/playmat
+    simulator. Drawn in the same 24×24, 1.5-stroke, rounded-cap style as
+    {@link SwordsIcon}: a thin line outline over solid fills. */
 export function SimulatorIcon(props: IconProps) {
   return (
-    <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" {...props}>
-      <path d="M144 16c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 16L96 32c-8.8 0-16 7.2-16 16s7.2 16 16 16l16 0 0 32L60.2 96C49.1 96 40 105.1 40 116.2c0 2.5 .5 4.9 1.3 7.3L73.8 208 72 208c-13.3 0-24 10.7-24 24s10.7 24 24 24l4 0L60 384l136 0L180 256l4 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-1.8 0 32.5-84.5c.9-2.3 1.3-4.8 1.3-7.3c0-11.2-9.1-20.2-20.2-20.2L144 96l0-32 16 0c8.8 0 16-7.2 16-16s-7.2-16-16-16l-16 0 0-16zM48 416L4.8 473.6C1.7 477.8 0 482.8 0 488c0 13.3 10.7 24 24 24l208 0c13.3 0 24-10.7 24-24c0-5.2-1.7-10.2-4.8-14.4L208 416 48 416zm288 0l-43.2 57.6c-3.1 4.2-4.8 9.2-4.8 14.4c0 13.3 10.7 24 24 24l176 0c13.3 0 24-10.7 24-24c0-5.2-1.7-10.2-4.8-14.4L464 416l-128 0zM304 208l0 51.9c0 7.8 2.8 15.3 8 21.1L339.2 312 337 384l125.5 0-3.3-72 28.3-30.8c5.4-5.9 8.5-13.6 8.5-21.7l0-51.5c0-8.8-7.2-16-16-16l-16 0c-8.8 0-16 7.2-16 16l0 16-24 0 0-16c0-8.8-7.2-16-16-16l-16 0c-8.8 0-16 7.2-16 16l0 16-24 0 0-16c0-8.8-7.2-16-16-16l-16 0c-8.8 0-16 7.2-16 16zm80 96c0-8.8 7.2-16 16-16s16 7.2 16 16l0 32-32 0 0-32z" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      {/* King (left). Cross finial. */}
+      <path
+        fill="currentColor"
+        d="M6.65 2.5h1.6v1.1h1v1.4h-1v1.1h-1.6V5h-1V3.6h1Z"
+      />
+      {/* King crowned head, neck and flared body. */}
+      <path
+        fill="currentColor"
+        d="M4.95 8.3c0-1.4 1.1-2.2 2.5-2.2s2.5.8 2.5 2.2c0 1.1-.6 1.8-1.3 2.3l2.55 7.9H3.7l2.55-7.9C5.55 10.1 4.95 9.4 4.95 8.3Z"
+      />
+      {/* King base. */}
+      <rect x="3.7" y="18.5" width="7.5" height="2.6" rx="1" fill="currentColor" />
+      {/* Pawn (right). Round head. */}
+      <circle cx="16.75" cy="10" r="2.2" fill="currentColor" />
+      {/* Pawn neck and flared body. */}
+      <path
+        fill="currentColor"
+        d="M15.15 11.9c-.6.7-.45 1.3.1 1.8l-1.35 4.8h5.7l-1.35-4.8c.55-.5.7-1.1.1-1.8Z"
+      />
+      {/* Pawn base. */}
+      <rect x="13.5" y="18.5" width="6.5" height="2.6" rx="1" fill="currentColor" />
     </svg>
   );
 }
@@ -82,20 +113,45 @@ export function SwordsIcon(props: IconProps) {
   );
 }
 
-/** Stacked layers (Font Awesome fa-layer-group, solid) — your decks. */
+/** Stacked layers (Lucide-style) — your decks. Same 24×24, 1.5-stroke, rounded
+    look as {@link SwordsIcon}: a solid top card over thin stacking lines. */
 export function DecksIcon(props: IconProps) {
   return (
-    <svg viewBox="0 0 576 512" fill="currentColor" aria-hidden="true" {...props}>
-      <path d="M264.5 5.2c14.9-6.9 32.1-6.9 47 0l218.6 101c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 149.8C37.4 145.8 32 137.3 32 128s5.4-17.9 13.9-21.8L264.5 5.2zM476.9 209.6l53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 277.8C37.4 273.8 32 265.3 32 256s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0l152-70.2zm-152 198.2l152-70.2 53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 405.8C37.4 401.8 32 393.3 32 384s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0z" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      {/* Solid top card. */}
+      <path fill="currentColor" d="M12 2 2 7l10 5 10-5-10-5Z" />
+      {/* Cards stacked underneath. */}
+      <path d="m2 12 10 5 10-5" />
+      <path d="m2 17 10 5 10-5" />
     </svg>
   );
 }
 
-/** Gear (Font Awesome fa-gear, solid) — user settings. */
+/** Gear (Lucide-style) — user settings. Same 24×24, 1.5-stroke, rounded look as
+    {@link SwordsIcon}: a thin line cog rather than a heavy solid silhouette. */
 export function SettingsIcon(props: IconProps) {
   return (
-    <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" {...props}>
-      <path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }
