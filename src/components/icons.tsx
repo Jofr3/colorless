@@ -229,9 +229,14 @@ export function SettingsIcon(props: IconProps) {
   // their inner edges as well as the outer silhouette.
   //
   // `place` tucks the tool into the cog's bottom-right corner: scale it down
-  // about the icon centre, rotate 45°, then push it down-right.
+  // about the icon centre, rotate 45°, then push it down-right. The whole
+  // composition (gear + wrench) is then shrunk by `fit` so this corner tuck
+  // clears the 24u frame instead of clipping out of it.
   const place =
-    "translate(4.5 4.5) rotate(45 12 12) translate(12 12) scale(0.82) translate(-12 -12)";
+    "translate(4.5 4.5) rotate(45 12 12) translate(12 12) scale(0.92) translate(-12 -12)";
+  // Shrink gear + wrench together ~10% about the centre so the bottom-right jaw
+  // (with its halo) stays inside the frame, keeping their relative arrangement.
+  const fit = "translate(12 12) scale(0.9) translate(-12 -12)";
   const spanner = (color: string, width: number) => (
     <g transform={place} fill={color} stroke={color} strokeWidth={width}>
       <path d={jawPath(3, 1)} />
@@ -255,12 +260,17 @@ export function SettingsIcon(props: IconProps) {
         <rect x="0" y="0" width="24" height="24" fill="white" />
         {/* Center hole */}
         <circle cx="12" cy="12" r="5" fill="black" />
-        {/* Halo gap around the spanner (open jaws → gear shows through the mouths) */}
-        {spanner("black", 2.8)}
+        {/* Halo gap around the spanner (open jaws → gear shows through the mouths).
+            Drawn inside the place + fit scaling (≈0.83 combined), so the width is
+            bumped to ~4.5 to keep the ~1.25u outline gap the other icons get from
+            a 4u halo over a 1.5u foreground. */}
+        {spanner("black", 4.5)}
       </mask>
 
-      <path mask="url(#settings-hole)" d={gearPath(8, 10.4, 8.4)} />
-      {spanner("currentColor", 1.5)}
+      <g transform={fit}>
+        <path mask="url(#settings-hole)" d={gearPath(8, 10.4, 8.4)} />
+        {spanner("currentColor", 1.5)}
+      </g>
     </svg>
   );
 }
