@@ -24,13 +24,13 @@ function IconBase({ children, ...props }: IconProps & { children: ReactNode }) {
 }
 
 /** Two chess pieces — a taller king and a shorter pawn — for the battle/playmat
-    simulator. Drawn in the same 24×24, 1.5-stroke, rounded-cap style as
-    {@link SwordsIcon}: a thin line outline over solid fills. */
+    simulator. Redrawn in a geometric, filled style with a halo overlap to
+    match {@link SwordsIcon}. */
 export function SimulatorIcon(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="none"
+      fill="currentColor"
       stroke="currentColor"
       strokeWidth={1.5}
       strokeLinecap="round"
@@ -38,27 +38,30 @@ export function SimulatorIcon(props: IconProps) {
       aria-hidden="true"
       {...props}
     >
-      {/* King (left). Cross finial. */}
-      <path
-        fill="currentColor"
-        d="M6.65 2.5h1.6v1.1h1v1.4h-1v1.1h-1.6V5h-1V3.6h1Z"
-      />
-      {/* King crowned head, neck and flared body. */}
-      <path
-        fill="currentColor"
-        d="M4.95 8.3c0-1.4 1.1-2.2 2.5-2.2s2.5.8 2.5 2.2c0 1.1-.6 1.8-1.3 2.3l2.55 7.9H3.7l2.55-7.9C5.55 10.1 4.95 9.4 4.95 8.3Z"
-      />
-      {/* King base. */}
-      <rect x="3.7" y="18.5" width="7.5" height="2.6" rx="1" fill="currentColor" />
-      {/* Pawn (right). Round head. */}
-      <circle cx="16.75" cy="10" r="2.2" fill="currentColor" />
-      {/* Pawn neck and flared body. */}
-      <path
-        fill="currentColor"
-        d="M15.15 11.9c-.6.7-.45 1.3.1 1.8l-1.35 4.8h5.7l-1.35-4.8c.55-.5.7-1.1.1-1.8Z"
-      />
-      {/* Pawn base. */}
-      <rect x="13.5" y="18.5" width="6.5" height="2.6" rx="1" fill="currentColor" />
+      <mask id="simulator-pawn-halo" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+        <rect x="0" y="0" width="24" height="24" fill="white" />
+        {/* Pawn halo (knockout from King) */}
+        <path
+          d="M14.5 9a3 3 0 0 0-3 3c0 1.2.7 2.2 1.7 2.7l-1.7 5.3h6l-1.7-5.3c1-.5 1.7-1.5 1.7-2.7a3 3 0 0 0-3-3Z"
+          fill="black"
+          stroke="black"
+          strokeWidth={4}
+        />
+      </mask>
+
+      {/* King (back piece, masked by pawn halo) */}
+      <g mask="url(#simulator-pawn-halo)">
+        {/* Cross finial */}
+        <path d="M7 2v3M5.5 3.5h3" fill="none" />
+        {/* Body */}
+        <path d="M7 5c-1.5 0-3 1-3 3 0 1.5 1 2.5 1.5 3L3.5 18h7l-2-7c.5-.5 1.5-1.5 1.5-3 0-2-1.5-3-3-3Z" />
+        {/* Base */}
+        <rect x="3" y="18" width="8" height="2.5" rx="1" />
+      </g>
+
+      {/* Pawn (front piece) */}
+      <path d="M14.5 9a3 3 0 0 0-3 3c0 1.2.7 2.2 1.7 2.7l-1.7 5.3h6l-1.7-5.3c1-.5 1.7-1.5 1.7-2.7a3 3 0 0 0-3-3Z" />
+      <rect x="11.5" y="18" width="6" height="2.5" rx="1" />
     </svg>
   );
 }
@@ -113,13 +116,13 @@ export function SwordsIcon(props: IconProps) {
   );
 }
 
-/** Stacked layers (Lucide-style) — your decks. Same 24×24, 1.5-stroke, rounded
-    look as {@link SwordsIcon}: a solid top card over thin stacking lines. */
+/** Stacked layers (Lucide-style) — your decks. Redrawn as geometric isometric
+    rectangles with halo overlaps to match {@link SwordsIcon}. */
 export function DecksIcon(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="none"
+      fill="currentColor"
       stroke="currentColor"
       strokeWidth={1.5}
       strokeLinecap="round"
@@ -127,22 +130,60 @@ export function DecksIcon(props: IconProps) {
       aria-hidden="true"
       {...props}
     >
-      {/* Solid top card. */}
-      <path fill="currentColor" d="M12 2 2 7l10 5 10-5-10-5Z" />
-      {/* Cards stacked underneath. */}
-      <path d="m2 12 10 5 10-5" />
-      <path d="m2 17 10 5 10-5" />
+      <mask id="decks-halo-1" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+        <rect x="0" y="0" width="24" height="24" fill="white" />
+        {/* Top card halo */}
+        <path d="M12 2 2 7l10 5 10-5-10-5Z" fill="black" stroke="black" strokeWidth={4} />
+      </mask>
+      <mask id="decks-halo-2" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+        <rect x="0" y="0" width="24" height="24" fill="white" />
+        {/* Middle card halo */}
+        <path d="m2 12 10 5 10-5-10-5-10 5Z" fill="black" stroke="black" strokeWidth={4} />
+      </mask>
+
+      {/* Bottom card */}
+      <path d="m2 17 10 5 10-5-10-5-10 5Z" mask="url(#decks-halo-2)" />
+      {/* Middle card */}
+      <path d="m2 12 10 5 10-5-10-5-10 5Z" mask="url(#decks-halo-1)" />
+      {/* Top card */}
+      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
     </svg>
   );
 }
 
-/** Gear (Lucide-style) — user settings. Same 24×24, 1.5-stroke, rounded look as
-    {@link SwordsIcon}: a thin line cog rather than a heavy solid silhouette. */
+// Build a crisp cog outline: `teeth` sharp, tapered teeth around a hub. Each
+// tooth is a trapezoid that narrows from a wide root to a thin tip, and the
+// valleys between teeth sit at the root radius — giving an angular, pointed
+// look rather than soft rounded nubs.
+function gearPath(teeth: number, rTip: number, rRoot: number) {
+  const cx = 12;
+  const cy = 12;
+  const slot = 360 / teeth;
+  const flank = slot * 0.18; // angular width of each sloped tooth side
+  const tip = slot * 0.2; // angular width of the (narrow) flat tip
+  const at = (r: number, deg: number) => {
+    const a = ((deg - 90) * Math.PI) / 180;
+    return `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
+  };
+  const pts: string[] = [];
+  for (let k = 0; k < teeth; k++) {
+    const start = k * slot - (flank + tip / 2); // centre one tooth at the top
+    pts.push(at(rRoot, start));
+    pts.push(at(rTip, start + flank));
+    pts.push(at(rTip, start + flank + tip));
+    pts.push(at(rRoot, start + flank * 2 + tip));
+  }
+  return `M${pts.join("L")}Z`;
+}
+
+/** Gear — user settings. An eight-tooth cog with sharp, tapered teeth drawn in
+    the geometric filled style of {@link SwordsIcon}, with a large central hole
+    knocked out of the body. */
 export function SettingsIcon(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="none"
+      fill="currentColor"
       stroke="currentColor"
       strokeWidth={1.5}
       strokeLinecap="round"
@@ -150,8 +191,13 @@ export function SettingsIcon(props: IconProps) {
       aria-hidden="true"
       {...props}
     >
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-      <circle cx="12" cy="12" r="3" />
+      <mask id="settings-hole" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+        <rect x="0" y="0" width="24" height="24" fill="white" />
+        {/* Center hole */}
+        <circle cx="12" cy="12" r="5" fill="black" />
+      </mask>
+
+      <path mask="url(#settings-hole)" d={gearPath(8, 10.4, 8.4)} />
     </svg>
   );
 }
