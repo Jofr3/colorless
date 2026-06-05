@@ -23,9 +23,9 @@ function IconBase({ children, ...props }: IconProps & { children: ReactNode }) {
   );
 }
 
-/** Two chess pieces — a taller king and a shorter pawn — for the battle/playmat
-    simulator. Redrawn in a geometric, filled style with a halo overlap to
-    match {@link SwordsIcon}. */
+/** Two chess pieces — a taller king in front and a shorter rook behind — for
+    the battle/playmat simulator. Drawn in a faceted, filled style with a halo
+    overlap to match {@link SwordsIcon}. */
 export function SimulatorIcon(props: IconProps) {
   return (
     <svg
@@ -38,30 +38,33 @@ export function SimulatorIcon(props: IconProps) {
       aria-hidden="true"
       {...props}
     >
-      <mask id="simulator-pawn-halo" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+      <mask id="simulator-king-halo" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
         <rect x="0" y="0" width="24" height="24" fill="white" />
-        {/* Pawn halo (knockout from King) */}
+        {/* King halo (knockout from the rook behind it) */}
         <path
-          d="M14.5 9a3 3 0 0 0-3 3c0 1.2.7 2.2 1.7 2.7l-1.7 5.3h6l-1.7-5.3c1-.5 1.7-1.5 1.7-2.7a3 3 0 0 0-3-3Z"
+          d="M6.5 5 9.5 5 10.3 7.8 9.3 9.4 11.4 18 4.6 18 6.7 9.4 5.7 7.8Z"
           fill="black"
           stroke="black"
           strokeWidth={4}
         />
+        <rect x="4" y="18" width="8" height="2.5" rx="0.6" fill="black" stroke="black" strokeWidth={4} />
       </mask>
 
-      {/* King (back piece, masked by pawn halo) */}
-      <g mask="url(#simulator-pawn-halo)">
-        {/* Cross finial */}
-        <path d="M7 2v3M5.5 3.5h3" fill="none" />
-        {/* Body */}
-        <path d="M7 5c-1.5 0-3 1-3 3 0 1.5 1 2.5 1.5 3L3.5 18h7l-2-7c.5-.5 1.5-1.5 1.5-3 0-2-1.5-3-3-3Z" />
+      {/* Rook (back piece, masked by the king's halo) */}
+      <g mask="url(#simulator-king-halo)">
+        {/* Crenellated tower — wide, deep notches over an overhanging lip */}
+        <path d="M11 6.9 12 6.9 12 9.8 13.5 9.8 13.5 6.9 14.5 6.9 14.5 9.8 16 9.8 16 6.9 17 6.9 17 10.6 16.2 10.6 16 11.7 16.6 18 11.4 18 12 11.7 11.8 10.6 11 10.6Z" />
         {/* Base */}
-        <rect x="3" y="18" width="8" height="2.5" rx="1" />
+        <rect x="11" y="18" width="6" height="2.5" rx="0.6" />
       </g>
 
-      {/* Pawn (front piece) */}
-      <path d="M14.5 9a3 3 0 0 0-3 3c0 1.2.7 2.2 1.7 2.7l-1.7 5.3h6l-1.7-5.3c1-.5 1.7-1.5 1.7-2.7a3 3 0 0 0-3-3Z" />
-      <rect x="11.5" y="18" width="6" height="2.5" rx="1" />
+      {/* King (front piece) */}
+      {/* Cross finial — sits on a short neck rising from the head */}
+      <path d="M8 1.6v3.6M6.5 3h3" fill="none" />
+      {/* Faceted body — defined head, pinched neck, flared base */}
+      <path d="M6.5 5 9.5 5 10.3 7.8 9.3 9.4 11.4 18 4.6 18 6.7 9.4 5.7 7.8Z" />
+      {/* Base */}
+      <rect x="4" y="18" width="8" height="2.5" rx="0.6" />
     </svg>
   );
 }
