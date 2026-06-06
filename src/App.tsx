@@ -1,9 +1,10 @@
 import { createBrowserRouter } from "react-router-dom";
-import { DecksIcon, SettingsIcon, SwordsIcon } from "./components/icons";
+import { DecksIcon, SwordsIcon } from "./components/icons";
 import { PlaceholderPage } from "./components/PlaceholderPage";
 import { RootLayout } from "./components/RootLayout";
 import { Home } from "./features/home";
 import { Playmat } from "./features/playmat";
+import { Settings } from "./features/settings";
 import { NotFound } from "./NotFound";
 
 // Data router with a persistent RootLayout shell so the shared background glow
@@ -16,7 +17,7 @@ export const router = createBrowserRouter([
       { path: "/simulator", element: <Playmat /> },
       { path: "/lobby/create", element: <PlaceholderPage title="Online" Icon={SwordsIcon} /> },
       { path: "/decks", element: <PlaceholderPage title="Decks" Icon={DecksIcon} /> },
-      { path: "/settings", element: <PlaceholderPage title="Settings" Icon={SettingsIcon} /> },
+      { path: "/settings", element: <Settings /> },
       { path: "*", element: <NotFound /> },
     ],
   },

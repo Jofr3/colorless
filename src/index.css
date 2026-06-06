@@ -84,7 +84,9 @@ body,
 body {
   margin: 0;
   color: var(--color-fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Default app font. The runtime choice from Settings (FontProvider) overrides
+     this with an inline font-family on <body>; this keeps first paint flash-free. */
+  font-family: "Rajdhani", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   /* Orbit radius swells by --glow-bulge toward the 45° mid-points (sin(2*angle)
      peaks there) and is exactly 50% on the axes — so the rest positions stay
      pinned to the edges while the travel path bows out toward the corners,
