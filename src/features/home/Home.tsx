@@ -149,10 +149,30 @@ function MenuCard({ item }: { item: MenuItem }) {
           transition: "transform 140ms cubic-bezier(0.22,0.61,0.36,1)",
           willChange: "transform",
         }}
-        className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl bg-white/[0.045] p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10 backdrop-blur-md focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+        className="relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl p-5 text-center shadow-[0_8px_30px_rgba(0,0,0,0.40)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
       >
+        {/* Frosted surface on its own clipped layer. backdrop-filter leaves a
+            faint bright rim where its blur kernel clamps at the element edge,
+            and on fractional device-pixel grids (display scaling / browser zoom)
+            a recompositing neighbour can flash a hairline along it. Oversizing
+            the blur by 1px and clipping it to the exact rounded rect pushes that
+            fringe outside the visible area, so it's trimmed away. The card's
+            drop shadow and focus ring stay on the Link, where clipping can't
+            reach them. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -z-10 inset-0 overflow-hidden rounded-2xl"
+        >
+          <span className="absolute -inset-px bg-white/[0.045] backdrop-blur-md" />
+        </span>
         <Icon className="h-8 w-8 opacity-80" />
         <span className="text-base font-semibold text-white/60">{label}</span>
+        {/* Edge highlight + inner ring, painted above the frost so the blur
+            can't wash them out. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+        />
       </Link>
     </div>
   );
