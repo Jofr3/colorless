@@ -1,5 +1,6 @@
 import { useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { SettingsButton } from "./SettingsButton";
 
 // Persistent shell around every route. It maps the current path to the
 // `data-glow` layout on <body> — `sides` on the home dashboard, `stacked`
@@ -16,8 +17,13 @@ export function RootLayout() {
   }, [pathname]);
 
   return (
-    <div key={pathname} className="route-view">
-      <Outlet />
-    </div>
+    <>
+      {/* Keyed wrapper replays the fade-in on each navigation. */}
+      <div key={pathname} className="route-view">
+        <Outlet />
+      </div>
+      {/* Persistent across navigations; redundant on the settings page itself. */}
+      {pathname !== "/settings" && <SettingsButton />}
+    </>
   );
 }

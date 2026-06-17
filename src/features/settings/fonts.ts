@@ -13,8 +13,7 @@ export type FontOption = {
   family: string;
 };
 
-export const SYSTEM_STACK =
-  'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
+export const SYSTEM_STACK = 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
 
 // A spread of clean geometric sans + a few techy/sci-fi faces that suit a
 // dark, glowing trading-card-game UI. Rajdhani is the default.

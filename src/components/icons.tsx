@@ -47,7 +47,16 @@ export function SimulatorIcon(props: IconProps) {
           stroke="black"
           strokeWidth={4}
         />
-        <rect x="4" y="18" width="8" height="2.5" rx="0.6" fill="black" stroke="black" strokeWidth={4} />
+        <rect
+          x="4"
+          y="18"
+          width="8"
+          height="2.5"
+          rx="0.6"
+          fill="black"
+          stroke="black"
+          strokeWidth={4}
+        />
       </mask>
 
       {/* Rook (back piece, masked by the king's halo) */}
@@ -179,72 +188,9 @@ function gearPath(teeth: number, rTip: number, rRoot: number) {
   return `M${pts.join("L")}Z`;
 }
 
-// One open-end jaw of the double-ended spanner: a chamfered head with a faceted
-// slot mouth at the `tipY` end, tapering to the handle at the neck. `sign` is +1
-// for a head pointing up (toward smaller y), -1 for one pointing down.
-function jawPath(tipY: number, sign: 1 | -1) {
-  const X = 12;
-  const W = 3.0; // head half-width
-  const g = 1.7; // slot (mouth) half-width — wide so the open jaw reads clearly
-  const slot = 3.1; // mouth depth (deep, leaving two prong-like jaws)
-  const shoulder = 2.9; // length of the straight outer flank
-  const len = 3.6; // head length, tip → neck
-  const hw = 1.1; // handle half-width at the neck
-  const ch = 0.6; // chamfer on the outer tip corners
-  const ich = 0.9; // deeper chamfer on the inner slot-bottom corners, so the
-  // mouth's negative space reads as faceted rather than a plain square slot.
-  const y = (d: number) => tipY + sign * d;
-  const mouth: Array<[number, number]> = [
-    [X - W + ch, y(0)],
-    [X - g, y(0)],
-    [X - g, y(slot - ich)],
-    [X - g + ich, y(slot)],
-    [X + g - ich, y(slot)],
-    [X + g, y(slot - ich)],
-    [X + g, y(0)],
-    [X + W - ch, y(0)],
-  ];
-  const pts: Array<[number, number]> = [
-    [X - W, y(ch)],
-    ...mouth,
-    [X + W, y(ch)],
-    [X + W, y(shoulder)],
-    [X + hw, y(len)],
-    [X - hw, y(len)],
-    [X - W, y(shoulder)],
-  ];
-  return `M${pts.map(([a, b]) => `${a.toFixed(2)} ${b.toFixed(2)}`).join("L")}Z`;
-}
-
-/** Gear with a wrench — user settings / tools. An eight-tooth cog (geometry in
-    {@link gearPath}) with a double-ended open spanner tucked into the cog's
-    bottom-right corner: a wide open jaw at each end of a stout handle, with
-    the cog showing through their open mouths. The tool is knocked out of the
-    gear body by a halo — which traces the inner mouths too — so it reads as
-    lying on top, the trick used by {@link SwordsIcon}. */
+/** Gear — user settings. An eight-tooth cog (geometry in {@link gearPath}) with
+    a hollow centre punched out by a mask so the background shows through. */
 export function SettingsIcon(props: IconProps) {
-  // The spanner is drawn twice: fattened in black to carve a halo gap out of the
-  // gear, then in the foreground colour on top. The halo uses the same open jaws
-  // (not filled heads), so the gear shows through the mouths and the gap traces
-  // their inner edges as well as the outer silhouette.
-  //
-  // `place` tucks the tool into the cog's bottom-right corner: scale it down
-  // about the icon centre, rotate 45°, then push it down-right. The whole
-  // composition (gear + wrench) is then shrunk by `fit` so this corner tuck
-  // clears the 24u frame instead of clipping out of it.
-  const place =
-    "translate(4.5 4.5) rotate(45 12 12) translate(12 12) scale(0.92) translate(-12 -12)";
-  // Shrink gear + wrench together ~10% about the centre so the bottom-right jaw
-  // (with its halo) stays inside the frame, keeping their relative arrangement.
-  const fit = "translate(12 12) scale(0.9) translate(-12 -12)";
-  const spanner = (color: string, width: number) => (
-    <g transform={place} fill={color} stroke={color} strokeWidth={width}>
-      <path d={jawPath(3, 1)} />
-      <path d={jawPath(21, -1)} />
-      <rect x="10.9" y="6.5" width="2.2" height="11" rx="0.4" />
-    </g>
-  );
-
   return (
     <svg
       viewBox="0 0 24 24"
@@ -260,17 +206,9 @@ export function SettingsIcon(props: IconProps) {
         <rect x="0" y="0" width="24" height="24" fill="white" />
         {/* Center hole */}
         <circle cx="12" cy="12" r="5" fill="black" />
-        {/* Halo gap around the spanner (open jaws → gear shows through the mouths).
-            Drawn inside the place + fit scaling (≈0.83 combined), so the width is
-            bumped to ~4.5 to keep the ~1.25u outline gap the other icons get from
-            a 4u halo over a 1.5u foreground. */}
-        {spanner("black", 4.5)}
       </mask>
 
-      <g transform={fit}>
-        <path mask="url(#settings-hole)" d={gearPath(8, 10.4, 8.4)} />
-        {spanner("currentColor", 1.5)}
-      </g>
+      <path mask="url(#settings-hole)" d={gearPath(8, 10.4, 8.4)} />
     </svg>
   );
 }

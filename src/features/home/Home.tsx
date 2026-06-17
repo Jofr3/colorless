@@ -2,7 +2,7 @@ import type { ComponentType, PointerEvent as ReactPointerEvent, SVGProps } from 
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
-import { DecksIcon, SettingsIcon, SimulatorIcon, SwordsIcon } from "../../components/icons";
+import { DecksIcon, SimulatorIcon, SwordsIcon } from "../../components/icons";
 
 type MenuItem = {
   to: string;
@@ -14,7 +14,6 @@ const MENU_ITEMS: MenuItem[] = [
   { to: "/simulator", label: "Simulator", Icon: SimulatorIcon },
   { to: "/lobby/create", label: "Online", Icon: SwordsIcon },
   { to: "/decks", label: "Decks", Icon: DecksIcon },
-  { to: "/settings", label: "Settings", Icon: SettingsIcon },
 ];
 
 // Balatro hover/tilt port for the DOM menu cards. The simulator cards do this
@@ -152,7 +151,7 @@ function MenuCard({ item }: { item: MenuItem }) {
         }}
         className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl bg-white/[0.045] p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10 backdrop-blur-md focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
       >
-        <Icon className="h-11 w-11 opacity-80" />
+        <Icon className="h-8 w-8 opacity-80" />
         <span className="text-base font-semibold text-white/60">{label}</span>
       </Link>
     </div>
@@ -163,7 +162,7 @@ export function Home() {
   return (
     <AppBackdrop>
       <main className="mx-auto flex min-h-svh w-full max-w-lg flex-col items-center justify-center px-6 py-12">
-        <nav aria-label="Main menu" className="grid w-full grid-cols-2 gap-4">
+        <nav aria-label="Main menu" className="grid w-full grid-cols-3 gap-4">
           {MENU_ITEMS.map((item) => (
             <MenuCard key={item.to} item={item} />
           ))}

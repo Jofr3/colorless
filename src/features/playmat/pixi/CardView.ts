@@ -456,9 +456,7 @@ export class CardView {
       if (!skipIntroMotion) {
         // Subtle entrance pop — matches Balatro's hover juice register
         // (card.lua:4307 -> 0.02 scale_amt after Card scaling).
-        this.introCall = gsap.delayedCall(0.04 + this.seed * 0.08, () =>
-          this.juiceUp(0.02, 0.012),
-        );
+        this.introCall = gsap.delayedCall(0.04 + this.seed * 0.08, () => this.juiceUp(0.02, 0.012));
       }
     } else if (this.slotLocked) {
       // Deck/prize backs are visual stand-ins for fixed DOM slots. They
