@@ -171,7 +171,7 @@ function MenuCard({ item }: { item: MenuItem }) {
           transition: "transform 140ms cubic-bezier(0.22,0.61,0.36,1)",
           willChange: "transform",
         }}
-        className="relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl p-5 text-center shadow-[0_8px_30px_rgba(0,0,0,0.40)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+        className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl p-5 text-center shadow-[0_8px_30px_rgba(0,0,0,0.40)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
       >
         {/* Frosted surface on its own clipped layer. backdrop-filter leaves a
             faint bright rim where its blur kernel clamps at the element edge,
@@ -196,8 +196,13 @@ function MenuCard({ item }: { item: MenuItem }) {
           aria-hidden
           className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
         />
-        <Icon className="h-8 w-8 opacity-80" />
-        <span className="text-base font-semibold text-white/60">{label}</span>
+        {/* Icon + label brighten and pick up a soft glow on hover. The base
+            state carries a zero-radius shadow so the blur grows in smoothly
+            rather than snapping on. */}
+        <Icon className="h-8 w-8 opacity-80 drop-shadow-[0_0_0_rgba(255,255,255,0)] transition duration-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.30)]" />
+        <span className="text-base font-semibold text-white/60 [text-shadow:0_0_0_rgba(255,255,255,0)] transition-all duration-100 group-hover:text-white/90 group-hover:[text-shadow:0_0_6px_rgba(255,255,255,0.22)]">
+          {label}
+        </span>
         {/* Edge highlight + inner ring, painted above the frost so the blur
             can't wash them out. */}
         <span

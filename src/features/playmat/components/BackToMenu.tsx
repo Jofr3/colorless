@@ -7,13 +7,13 @@ const HOME_PATH = "/";
 // Glass control styling shared with the rest of the playmat HUD
 // (mirrors TurnHud's CIRCLE_BUTTON_BASE_CLASS and GameLog's toggle).
 const BACK_BUTTON_CLASS =
-  "absolute z-20 flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white/[0.045] pl-2.5 pr-3.5 text-[13px] font-medium tracking-wide text-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white/9 backdrop-blur-md transition-all hover:bg-white/[0.06] hover:text-white/85 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300";
+  "absolute z-20 flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white/[0.045] pl-2.5 pr-3.5 text-[13px] font-medium tracking-wide text-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white/9 backdrop-blur-md transition-all hover:bg-white/[0.06] hover:text-white/85 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 const DIALOG_GHOST_BUTTON_CLASS =
-  "cursor-pointer rounded-full bg-white/[0.05] px-4 py-2 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/12 transition-all hover:bg-white/[0.09] hover:text-white active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300";
+  "cursor-pointer rounded-full bg-white/[0.05] px-4 py-2 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/12 transition-all hover:bg-white/[0.09] hover:text-white active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 const DIALOG_PRIMARY_BUTTON_CLASS =
-  "cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300";
+  "cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 export function BackToMenu() {
   const navigate = useNavigate();

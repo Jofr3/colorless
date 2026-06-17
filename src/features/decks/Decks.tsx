@@ -14,16 +14,18 @@ import {
 } from "../../components/icons";
 import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
 
-// Glow is derived from --color-accent via color-mix, so re-theming the accent
-// in index.css carries the button's glow with it — no hardcoded colour here.
+// The accent button is the inverse of the app's glass buttons: a light accent
+// fill with dark text, instead of translucent-white-on-dark with light text.
+// The fill is slightly translucent (frosted via backdrop-blur) under a pure
+// white border. Accent colour lives in --color-accent (index.css).
 const PRIMARY_BUTTON_CLASS =
-  "inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-[0_6px_20px_color-mix(in_srgb,var(--color-accent),transparent_65%),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-inset ring-white/20 transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300";
+  "inline-flex items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-[0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 const GHOST_BUTTON_CLASS =
-  "inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300";
+  "inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 const NAME_INPUT_CLASS =
-  "pointer-events-auto block w-full min-w-0 truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-amber-300/70";
+  "pointer-events-auto block w-full min-w-0 truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
@@ -109,7 +111,7 @@ function IconButton({
         e.stopPropagation();
         onClick();
       }}
-      className="flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-black/45 hover:text-white focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber-300"
+      className="flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-black/45 hover:text-white focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
     >
       {children}
     </button>
@@ -206,7 +208,7 @@ function FolderCard({
           type="button"
           aria-label={`Open ${folder.name}`}
           onClick={onOpen}
-          className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber-300"
+          className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
         />
       )}
       <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
@@ -346,7 +348,7 @@ export function Decks() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search decks and folders"
               aria-label="Search decks and folders"
-              className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             />
           </div>
           <div className="flex gap-2">
@@ -368,7 +370,7 @@ export function Decks() {
             <button
               type="button"
               onClick={() => setOpenFolderId(null)}
-              className="group inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/[0.07] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+              className="group inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/[0.07] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
             >
               <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               All decks
