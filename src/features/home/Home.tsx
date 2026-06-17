@@ -21,7 +21,7 @@ function MenuCard({ item }: { item: MenuItem }) {
   return (
     <Link
       to={to}
-      className="group flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl bg-white/[0.045] p-5 text-center shadow-[0_8px_30px_rgba(0,0,0,0.40)] backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07] hover:shadow-[0_14px_40px_rgba(0,0,0,0.50)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 active:scale-[0.98]"
+      className="group flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl bg-white/[0.045] p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.08] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_14px_40px_rgba(0,0,0,0.50)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 active:scale-[0.98]"
     >
       <Icon className="h-11 w-11 opacity-80 transition-opacity duration-200 group-hover:opacity-100" />
       <span className="text-base font-semibold text-white/60">{label}</span>

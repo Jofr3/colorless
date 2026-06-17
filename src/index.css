@@ -33,8 +33,7 @@ body,
    `data-glow` (set per route in RootLayout) picks the layout — `sides` on the
    home dashboard, `stacked` (top/bottom) everywhere else. `data-perspective`
    (set by Playmat) drives the flip on the opponent's turn. Page surfaces
-   (app-backdrop, playmat-wrapper) are transparent so this shows through; their
-   dot-grids read the same derived variables so the texture tracks the glow. */
+   (app-backdrop, playmat-wrapper) are transparent so this glow shows through. */
 @property --glow-angle {
   syntax: "<angle>";
   inherits: true;

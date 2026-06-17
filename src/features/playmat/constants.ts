@@ -23,7 +23,6 @@ export function benchLimitFor(board: BoardState): number {
 // start/end — when attachments need side room, `shouldCollapseBenchAttachments`
 // tucks tools behind and overlaps energy strips instead of widening the frame.
 export const BENCH_EXTRA_CARD_WIDTH = 0;
-export const HIDDEN_CURSOR_POSITION = -9999;
 export const ATTACHED_CARD_SCALE = 0.92;
 export const DEFAULT_ATTACHED_VISIBLE_STICK = 0.22;
 export const CROWDED_BENCH_ATTACHED_ENERGY_STICK = 0.14;

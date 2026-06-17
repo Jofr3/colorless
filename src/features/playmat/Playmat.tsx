@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./playmat.css";
-import {
-  benchLimitFor,
-  CENTER_LINE_TOP,
-  HIDDEN_CURSOR_POSITION,
-  PLAYMAT_WRAPPER_CLASS,
-} from "./constants";
+import { benchLimitFor, CENTER_LINE_TOP, PLAYMAT_WRAPPER_CLASS } from "./constants";
 import { gameLog, initialBoard, initialTurn } from "./data/mockPlaymat";
 import { AnimatedCardsLayer } from "./components/AnimatedCardsLayer";
 import { BackToMenu } from "./components/BackToMenu";
@@ -17,20 +12,6 @@ import { TurnBanner, TurnControls } from "./components/TurnHud";
 import type { CardMoveRequest } from "./types";
 import { moveCardOnBoard } from "./utils/cardMovement";
 import { opponentOf } from "./utils/players";
-
-function setCursorPosition(element: HTMLElement, x: number, y: number) {
-  element.style.setProperty("--cursor-x", `${x}px`);
-  element.style.setProperty("--cursor-y", `${y}px`);
-}
-
-function updateCursorPosition(event: PointerEvent<HTMLElement>) {
-  const rect = event.currentTarget.getBoundingClientRect();
-  setCursorPosition(event.currentTarget, event.clientX - rect.left, event.clientY - rect.top);
-}
-
-function hideCursorDots(event: PointerEvent<HTMLElement>) {
-  setCursorPosition(event.currentTarget, HIDDEN_CURSOR_POSITION, HIDDEN_CURSOR_POSITION);
-}
 
 export function Playmat() {
   const [turn, setTurn] = useState(initialTurn);
@@ -70,8 +51,6 @@ export function Playmat() {
       ref={playmatRef}
       className={`${PLAYMAT_WRAPPER_CLASS} has-pixi-cards`}
       aria-label="Trading card game playmat"
-      onPointerMove={updateCursorPosition}
-      onPointerLeave={hideCursorDots}
     >
       <PlayerSide
         owner={topPlayer}
