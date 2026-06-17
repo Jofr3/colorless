@@ -94,6 +94,7 @@ function MenuCard({ item }: { item: MenuItem }) {
 
   const handleEnter = () => {
     cardRef.current?.style.setProperty("--s", `${HOVER_SCALE}`);
+    cardRef.current?.style.setProperty("--g", "1");
     juiceRunner.current(HOVER_JUICE.amount, HOVER_JUICE.rotation);
   };
 
@@ -110,6 +111,12 @@ function MenuCard({ item }: { item: MenuItem }) {
       // back (+rotateY), pointer near the top tips the top edge back (+rotateX).
       el.style.setProperty("--rx", `${-offY * 2 * MAX_TILT_DEG}deg`);
       el.style.setProperty("--ry", `${offX * 2 * MAX_TILT_DEG}deg`);
+      // Drive the sheen's hot-spot to the pointer (0..100% across the card). The
+      // glare layer lives inside the tilted Link, so this position moves *and*
+      // the whole highlight leans with the 3D tilt — a cheap stand-in for the
+      // simulator's specular vertex shader.
+      el.style.setProperty("--mx", `${(offX + 0.5) * 100}%`);
+      el.style.setProperty("--my", `${(offY + 0.5) * 100}%`);
     });
   };
 
@@ -120,6 +127,7 @@ function MenuCard({ item }: { item: MenuItem }) {
     el.style.setProperty("--rx", "0deg");
     el.style.setProperty("--ry", "0deg");
     el.style.setProperty("--s", "1");
+    el.style.setProperty("--g", "0");
   };
 
   const handleDown = () => juiceRunner.current(PRESS_JUICE.amount, PRESS_JUICE.rotation);
@@ -165,6 +173,23 @@ function MenuCard({ item }: { item: MenuItem }) {
         >
           <span className="absolute -inset-px bg-white/[0.045] backdrop-blur-md" />
         </span>
+        {/* Pointer-tracked sheen — a tight white specular core over a soft
+            cyan→amber iridescent band, both anchored at --mx/--my. screen blend
+            lets it read as light skating across the glass; opacity (--g) fades
+            it in on hover. Sits above the frost but below the icon so it glows
+            through without washing the label. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+          style={{
+            opacity: "var(--g,0)",
+            transition: "opacity 200ms ease",
+            mixBlendMode: "screen",
+            background:
+              "radial-gradient(55% 55% at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.30), transparent 70%)," +
+              "radial-gradient(120% 120% at var(--mx,50%) var(--my,50%), rgba(120,200,255,0.12), rgba(255,180,110,0.12) 55%, transparent 80%)",
+          }}
+        />
         <Icon className="h-8 w-8 opacity-80" />
         <span className="text-base font-semibold text-white/60">{label}</span>
         {/* Edge highlight + inner ring, painted above the frost so the blur
