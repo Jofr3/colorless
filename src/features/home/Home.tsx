@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { DecksIcon, SimulatorIcon, SwordsIcon } from "../../components/icons";
+import { CardSheen } from "./CardSheen";
 
 type MenuItem = {
   to: string;
@@ -43,10 +44,25 @@ function MenuCard({ item }: { item: MenuItem }) {
   const { to, label, Icon } = item;
   const cardRef = useRef<HTMLAnchorElement>(null);
   const juiceLayerRef = useRef<HTMLDivElement>(null);
+  const sheenMountRef = useRef<HTMLSpanElement>(null);
+  const sheenRef = useRef<CardSheen | null>(null);
   const tiltFrame = useRef<number | null>(null);
   const juiceFrame = useRef<number | null>(null);
   const juiceState = useRef<{ amount: number; rotation: number; start: number } | null>(null);
   const juiceRunner = useRef<(amount: number, rotation: number) => void>(() => {});
+
+  // Mount the Pixi sheen shader into its own layer inside the (CSS-tilted) card.
+  useEffect(() => {
+    const mount = sheenMountRef.current;
+    if (!mount) return;
+    const sheen = new CardSheen();
+    sheenRef.current = sheen;
+    sheen.mount(mount);
+    return () => {
+      sheenRef.current = null;
+      sheen.destroy();
+    };
+  }, []);
 
   // Per-frame juice loop. Writes --js (scale) / --jr (rotation) on the inner
   // layer with no CSS transition, so the fast oscillation isn't smeared by the
@@ -94,7 +110,7 @@ function MenuCard({ item }: { item: MenuItem }) {
 
   const handleEnter = () => {
     cardRef.current?.style.setProperty("--s", `${HOVER_SCALE}`);
-    cardRef.current?.style.setProperty("--g", "1");
+    sheenRef.current?.setHover(true);
     juiceRunner.current(HOVER_JUICE.amount, HOVER_JUICE.rotation);
   };
 
@@ -105,18 +121,16 @@ function MenuCard({ item }: { item: MenuItem }) {
     // px/py: 0..1 across the card; off*: -0.5..0.5 from centre.
     const offX = (event.clientX - rect.left) / rect.width - 0.5;
     const offY = (event.clientY - rect.top) / rect.height - 0.5;
+    // Feed the pointer (0..1) to the Pixi sheen. The shader mirrors it through
+    // the centre so the glint sits on the edge opposite the cursor — the face
+    // the card tilts toward via the 3D transform set below.
+    sheenRef.current?.setPointer(offX + 0.5, offY + 0.5);
     if (tiltFrame.current !== null) cancelAnimationFrame(tiltFrame.current);
     tiltFrame.current = requestAnimationFrame(() => {
       // Lean away from the cursor: pointer on the right tips the right edge
       // back (+rotateY), pointer near the top tips the top edge back (+rotateX).
       el.style.setProperty("--rx", `${-offY * 2 * MAX_TILT_DEG}deg`);
       el.style.setProperty("--ry", `${offX * 2 * MAX_TILT_DEG}deg`);
-      // Drive the sheen's hot-spot to the pointer (0..100% across the card). The
-      // glare layer lives inside the tilted Link, so this position moves *and*
-      // the whole highlight leans with the 3D tilt — a cheap stand-in for the
-      // simulator's specular vertex shader.
-      el.style.setProperty("--mx", `${(offX + 0.5) * 100}%`);
-      el.style.setProperty("--my", `${(offY + 0.5) * 100}%`);
     });
   };
 
@@ -127,7 +141,7 @@ function MenuCard({ item }: { item: MenuItem }) {
     el.style.setProperty("--rx", "0deg");
     el.style.setProperty("--ry", "0deg");
     el.style.setProperty("--s", "1");
-    el.style.setProperty("--g", "0");
+    sheenRef.current?.setHover(false);
   };
 
   const handleDown = () => juiceRunner.current(PRESS_JUICE.amount, PRESS_JUICE.rotation);
@@ -173,22 +187,14 @@ function MenuCard({ item }: { item: MenuItem }) {
         >
           <span className="absolute -inset-px bg-white/[0.045] backdrop-blur-md" />
         </span>
-        {/* Pointer-tracked sheen — a tight white specular core over a soft
-            cyan→amber iridescent band, both anchored at --mx/--my. screen blend
-            lets it read as light skating across the glass; opacity (--g) fades
-            it in on hover. Sits above the frost but below the icon so it glows
-            through without washing the label. */}
+        {/* Pixi.js sheen shader, mounted on its own layer above the frost but
+            below the icon so it glazes through the glass without washing the
+            label. The canvas inherits the card's CSS 3D tilt, so the shader's
+            pointer-tracked glint leans with the surface. */}
         <span
+          ref={sheenMountRef}
           aria-hidden
           className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
-          style={{
-            opacity: "var(--g,0)",
-            transition: "opacity 200ms ease",
-            mixBlendMode: "screen",
-            background:
-              "radial-gradient(55% 55% at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.30), transparent 70%)," +
-              "radial-gradient(120% 120% at var(--mx,50%) var(--my,50%), rgba(120,200,255,0.12), rgba(255,180,110,0.12) 55%, transparent 80%)",
-          }}
         />
         <Icon className="h-8 w-8 opacity-80" />
         <span className="text-base font-semibold text-white/60">{label}</span>

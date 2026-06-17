@@ -222,6 +222,92 @@ export function ChevronRightIcon(props: IconProps) {
   );
 }
 
+/** Magnifying glass — the deck library search field. */
+export function SearchIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </IconBase>
+  );
+}
+
+/** Plus — "new deck" / create affordances. */
+export function PlusIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </IconBase>
+  );
+}
+
+/** Folder with a tab — groups that hold decks. */
+export function FolderIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 6a1 1 0 0 1 1-1h4l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6Z" />
+    </IconBase>
+  );
+}
+
+/** Pencil — rename a deck or folder in place. */
+export function PencilIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z" />
+      <path d="M13.5 6.5l3 3" />
+    </IconBase>
+  );
+}
+
+/** Trash can — delete a deck or folder. */
+export function TrashIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 7h16" />
+      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+    </IconBase>
+  );
+}
+
+/** House — return to the home dashboard. Filled to match the gear in
+    {@link SettingsIcon}, with the doorway punched out by a mask so the
+    background shows through (same treatment as the gear's centre hole). Sized
+    to pair with the corner settings button (see SettingsButton / HomeButton). */
+export function HomeIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <mask id="home-door" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+        <rect x="0" y="0" width="24" height="24" fill="white" />
+        {/* Doorway knockout */}
+        <path
+          d="M9.5 20.6V15.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4.8Z"
+          fill="black"
+          stroke="black"
+          strokeWidth={1}
+        />
+      </mask>
+
+      {/* Roof + walls as one solid silhouette */}
+      <path
+        mask="url(#home-door)"
+        d="M12 3.4 21 11v8.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11Z"
+      />
+    </svg>
+  );
+}
+
 /** Left arrow — "back" navigation. */
 export function ArrowLeftIcon(props: IconProps) {
   return (
