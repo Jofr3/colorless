@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
-import { DecksIcon, SwordsIcon } from "./components/icons";
+import { AppBackdrop } from "./components/AppBackdrop";
+import { SwordsIcon } from "./components/icons";
 import { PlaceholderPage } from "./components/PlaceholderPage";
 import { RootLayout } from "./components/RootLayout";
 import { Home } from "./features/home";
@@ -16,7 +17,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <Home /> },
       { path: "/simulator", element: <Playmat /> },
       { path: "/lobby/create", element: <PlaceholderPage title="Online" Icon={SwordsIcon} /> },
-      { path: "/decks", element: <PlaceholderPage title="Decks" Icon={DecksIcon} /> },
+      { path: "/decks", element: <AppBackdrop /> },
       { path: "/settings", element: <Settings /> },
       { path: "*", element: <NotFound /> },
     ],
