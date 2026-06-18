@@ -1,11 +1,10 @@
-import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from "react";
+import type { HTMLAttributes, ReactNode, Ref } from "react";
 import { useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
 import {
   ArrowLeftIcon,
-  BrandGlyph,
   DecksIcon,
   FolderIcon,
   PencilIcon,
@@ -13,6 +12,7 @@ import {
   SearchIcon,
   TrashIcon,
 } from "../../components/icons";
+import { CardBackStack } from "./CardBackStack";
 import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
 
 // The accent button is the inverse of the app's glass buttons: a light accent
@@ -29,17 +29,6 @@ const NAME_INPUT_CLASS =
   "pointer-events-auto block w-full min-w-0 truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
-
-// Cover gradient for a deck tile, derived from its hue so the grid reads
-// colourful without bundling any art. A bright hot-spot in the top-left over a
-// diagonal hue shift gives each tile a little depth.
-function coverStyle(tint: number): CSSProperties {
-  return {
-    background:
-      `radial-gradient(120% 140% at 22% 12%, hsl(${tint} 85% 62% / 0.45), transparent 60%),` +
-      `linear-gradient(135deg, hsl(${tint} 70% 50% / 0.30), hsl(${(tint + 50) % 360} 70% 45% / 0.12))`,
-  };
-}
 
 /** Name that swaps to an inline text field while it's being edited. Enter or
     blur commits, Escape reverts; an empty value falls back to the old name. */
@@ -174,9 +163,7 @@ function DeckCard({
   return (
     <CardShell className="transition-transform duration-200 will-change-transform hover:-translate-y-0.5">
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
-      <div className="relative h-20 overflow-hidden" style={coverStyle(deck.tint)}>
-        <BrandGlyph className="absolute -bottom-3 -right-2 h-20 w-20 -rotate-12 text-white/10 transition-colors group-hover:text-white/20" />
-      </div>
+      <CardBackStack count={deck.cardCount} />
       <div className="p-3.5">
         <NameField
           editing={editing}

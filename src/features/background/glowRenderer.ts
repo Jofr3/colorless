@@ -24,10 +24,10 @@ import { CustomEase } from "gsap/CustomEase";
 
 gsap.registerPlugin(CustomEase);
 
-// Slow-fast-slow, but biased to leave the start quickly and settle slowly at
-// the end (only a brief easing-in, a long easing-out). The same curve drives
-// the CSS fallback: cubic-bezier(0.3, 0, 0.35, 1).
-const GLOW_EASE = CustomEase.create("glowSweep", "M0,0 C0.3,0 0.35,1 1,1");
+// Quick start, fast middle, gentle settle. The control points cross over
+// (x1 > x2) to steepen the mid-sweep while y2=1 keeps a soft landing. The same
+// curve drives the CSS fallback: cubic-bezier(0.4, 0, 0.3, 1).
+const GLOW_EASE = CustomEase.create("glowSweep", "M0,0 C0.4,0 0.3,1 1,1");
 
 export type GlowLayout = "sides" | "stacked";
 
