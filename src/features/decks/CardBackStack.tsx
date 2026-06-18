@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cardBackSvgDataUrl } from "../playmat/pixi/cardBackSvg";
 
 // The deck preview's centrepiece: a faux-3D pile of cards whose top card is the
@@ -8,60 +8,58 @@ import { cardBackSvgDataUrl } from "../playmat/pixi/cardBackSvg";
 const BLUE_BACK = cardBackSvgDataUrl("twilight", "blue");
 
 // One card in the pile, ordered back-to-front (later layers paint on top).
-// `dim` darkens the cards behind so the stack recedes into shadow; the spread
-// deltas (sx/sy/srot) are added — scaled by --spread — when the tile is hovered,
-// so the pile fans open with a little life.
+// Offsets are PERCENTAGES of the card's own size (CSS translate %), so the pile
+// scales with the card. `dim` darkens the cards behind so the stack recedes.
 type Layer = {
   tx: number;
   ty: number;
   rot: number;
   scale: number;
   dim: number;
-  sx: number;
-  sy: number;
-  srot: number;
 };
 
 const LAYERS: Layer[] = [
-  { tx: -9, ty: 11, rot: -8, scale: 0.955, dim: 0.42, sx: -14, sy: 3, srot: -6 }, // back-left
-  { tx: 8, ty: 6, rot: 5.5, scale: 0.978, dim: 0.2, sx: 14, sy: 3, srot: 6 }, // mid-right
-  { tx: 0, ty: 0, rot: -1.5, scale: 1, dim: 0, sx: 0, sy: -8, srot: -2 }, // top
+  // Squared-up stack: no rotation, no left/right stagger — the cards sit flush
+  // and simply peek straight down behind the top one.
+  { tx: 0, ty: 5, rot: 0, scale: 1, dim: 0.42 }, // back
+  { tx: 0, ty: 2.5, rot: 0, scale: 1, dim: 0.2 }, // mid
+  { tx: 0, ty: 0, rot: 0, scale: 1, dim: 0 }, // top
 ];
 
 function layerStyle(l: Layer): CSSProperties {
   return {
     backgroundImage: `url("${BLUE_BACK}")`,
     // Cards behind are darkened (brightness < 1) so the stack recedes — folded
-    // into the element itself so each card stays a single, childless node.
+    // into the element itself so each card stays a single node.
     filter: l.dim > 0 ? `brightness(${1 - l.dim})` : undefined,
-    transform:
-      `translate(calc(${l.tx}px + var(--spread) * ${l.sx}px), calc(${l.ty}px + var(--spread) * ${l.sy}px)) ` +
-      `rotate(calc(${l.rot}deg + var(--spread) * ${l.srot}deg)) scale(${l.scale})`,
+    transform: `translate(${l.tx}%, ${l.ty}%) rotate(${l.rot}deg) scale(${l.scale})`,
   };
 }
 
-/** Layered card-back pile shown as a deck's cover art. An empty deck shows a
-    single faded back; a stocked deck shows the full three-card stack.
-
-    A single container is the minimum the pile needs: the cards are absolutely
-    layered (inset-0) so they overlap, so they need one sized, positioned parent.
-    It sizes itself to one card, centres in the tile (mx-auto), and tips back in
-    perspective so the stack reads as 3D rather than a flat sticker. --spread
-    (0→1 on hover) fans the cards out; each card transitions its own transform. */
-export function CardBackStack({ count }: { count: number }) {
+/** Layered card-back pile that fills its container. The top card carries the
+    `label` (deck name + count), printed into its lower edge. An empty deck shows
+    a single back; a stocked deck shows the full three-card stack. The cards are
+    absolutely layered (inset-0) so they overlap, so this one sized container is
+    the minimum the pile needs. */
+export function CardBackStack({ count, label }: { count: number; label?: ReactNode }) {
   const empty = count === 0;
   const layers = empty ? LAYERS.slice(-1) : LAYERS;
   return (
-    <div
-      className={`pointer-events-none relative mx-auto my-5 aspect-[5/7] w-[5.25rem] [--spread:0] [transform:perspective(900px)_rotateX(8deg)] group-hover:[--spread:1]${empty ? " opacity-50" : ""}`}
-    >
-      {layers.map((l, i) => (
-        <div
-          key={i}
-          style={layerStyle(l)}
-          className="absolute inset-0 overflow-hidden rounded-[6px] bg-cover bg-center shadow-[0_5px_14px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 transition-transform duration-300 ease-out"
-        />
-      ))}
+    <div className="pointer-events-none relative aspect-[5/7] w-full">
+      {layers.map((l, i) => {
+        const isTop = i === layers.length - 1;
+        return (
+          <div
+            key={i}
+            style={layerStyle(l)}
+            className="absolute inset-0 overflow-hidden rounded-[7px] bg-cover bg-center shadow-[0_6px_16px_rgba(0,0,0,0.55)]"
+          >
+            {isTop && label && (
+              <div className="absolute inset-x-0 bottom-0 px-5 pb-5">{label}</div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

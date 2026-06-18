@@ -161,27 +161,33 @@ function DeckCard({
   onDelete: () => void;
 }) {
   return (
-    <CardShell className="transition-transform duration-200 will-change-transform hover:-translate-y-0.5">
+    // No tile shell — the deck is just the floating card stack, filling its
+    // column. `group` drives the hover reveal of the rename/delete actions.
+    <div className="group relative">
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
-      <CardBackStack count={deck.cardCount} />
-      <div className="p-3.5">
-        <NameField
-          editing={editing}
-          value={deck.name}
-          onCommit={onCommit}
-          className="block truncate text-sm font-semibold text-white/90"
-        />
-        <p className="mt-1 text-xs text-white/45">
-          {deck.cardCount === 0 ? "Empty" : pluralize(deck.cardCount, "card")}
-        </p>
-        {folderLabel && (
-          <span className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-white/50">
-            <FolderIcon className="h-3 w-3 shrink-0" />
-            <span className="truncate">{folderLabel}</span>
-          </span>
-        )}
-      </div>
-    </CardShell>
+      <CardBackStack
+        count={deck.cardCount}
+        label={
+          <>
+            {folderLabel && (
+              <span className="mb-1 inline-flex max-w-full items-center gap-1 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-medium text-white/85 backdrop-blur-sm">
+                <FolderIcon className="h-2.5 w-2.5 shrink-0" />
+                <span className="truncate">{folderLabel}</span>
+              </span>
+            )}
+            <NameField
+              editing={editing}
+              value={deck.name}
+              onCommit={onCommit}
+              className="block truncate text-sm font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]"
+            />
+            <p className="mt-0.5 text-xs text-white/65">
+              {deck.cardCount === 0 ? "Empty" : pluralize(deck.cardCount, "card")}
+            </p>
+          </>
+        }
+      />
+    </div>
   );
 }
 
