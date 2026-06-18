@@ -171,7 +171,7 @@ function MenuCard({ item }: { item: MenuItem }) {
           transition: "transform 140ms cubic-bezier(0.22,0.61,0.36,1)",
           willChange: "transform",
         }}
-        className="group relative flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl p-5 text-center shadow-[0_8px_30px_rgba(0,0,0,0.40)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+        className="group relative flex aspect-square w-full select-none flex-col items-center justify-center gap-3 rounded-2xl p-5 text-center shadow-[0_8px_30px_rgba(0,0,0,0.40)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
       >
         {/* Frosted surface on its own clipped layer. backdrop-filter leaves a
             faint bright rim where its blur kernel clamps at the element edge,
