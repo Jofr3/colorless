@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background:
+      radial-gradient(ellipse 52% 96% at 0% 50%, rgba(38,149,255,0.22) 0%, rgba(38,149,255,0.10) 36%, rgba(38,149,255,0) 72%),
+      radial-gradient(ellipse 52% 96% at 100% 50%, rgba(255,52,86,0.18) 0%, rgba(255,52,86,0.09) 36%, rgba(255,52,86,0) 72%),
+      #0e0e14;
+    background-repeat: no-repeat;
+  }
+
+  .app-backdrop {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    isolation: isolate;
+    /* spotlight parked under the centre card (page is 600x600) */
+    --cursor-x: 300px;
+    --cursor-y: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  /* Shared dot grid */
+  .app-backdrop::before,
+  .app-backdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(245,250,255,0.26) 1px, transparent 1.35px);
+    background-position: center;
+    background-size: 24px 24px;
+    mix-blend-mode: screen;
+  }
+
+  /* Static texture — simplified mask: reveal everywhere so we can see it. */
+  .app-backdrop::before {
+    opacity: 0.34;
+  }
+
+  /* Cursor spotlight: brighter dots, promoted to its own GPU layer. */
+  .app-backdrop::after {
+    inset: auto;
+    left: 0;
+    top: 0;
+    width: 300px;
+    height: 300px;
+    opacity: 0.62;
+    transform: translate3d(calc(var(--cursor-x) - 150px), calc(var(--cursor-y) - 150px), 0);
+    will-change: transform;
+    background-image: radial-gradient(circle, rgba(245,250,255,0.32) 1px, transparent 1.35px);
+    background-position: calc(50vw - var(--cursor-x) + 138px) calc(50vh - var(--cursor-y) + 138px);
+    -webkit-mask-image: radial-gradient(circle 150px at 50% 50%, black 0%, rgba(0,0,0,0.82) 38%, transparent 74%);
+    mask-image: radial-gradient(circle 150px at 50% 50%, black 0%, rgba(0,0,0,0.82) 38%, transparent 74%);
+  }
+
+  .card {
+    width: 180px;
+    height: 180px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.045);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.40);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.6);
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="app-backdrop">
+    <div class="card">card (spotlight under)</div>
+  </div>
+</body>
+</html>

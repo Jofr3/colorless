@@ -118,24 +118,18 @@ function IconButton({
   );
 }
 
-/** Rename + delete controls, revealed on hover/focus in a tile's top-right.
-    `className` sets the positioning so callers can clear their own chrome (the
-    folder tile, for instance, drops them below its tab). */
+/** Rename + delete controls, revealed on hover/focus in a tile's top-right. */
 function CardActions({
   label,
   onRename,
   onDelete,
-  className = "absolute right-2 top-2 z-10",
 }: {
   label: string;
   onRename: () => void;
   onDelete: () => void;
-  className?: string;
 }) {
   return (
-    <div
-      className={`${className} flex gap-1 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100`}
-    >
+    <div className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100">
       <IconButton label={`Rename ${label}`} onClick={onRename}>
         <PencilIcon className="h-3.5 w-3.5" />
       </IconButton>
@@ -188,10 +182,6 @@ function DeckCard({
   );
 }
 
-/** A folder tile: a frosted body with a flap flush to the top-right. The flap
-    is layered over the body's top edge (no bottom border of its own), so it
-    hides the border beneath it and the two read as one continuous folder with
-    no seam between them. */
 function FolderCard({
   folder,
   deckCount,
@@ -210,46 +200,33 @@ function FolderCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="group relative">
-      {/* Whole-folder open target. Above the panels but below the action
-          buttons; hidden while renaming so the name input stays usable. */}
+    <CardShell>
+      {/* Full-card click target sits behind the content and actions. Hidden
+          while renaming so the input below stays usable. */}
       {!editing && (
         <button
           type="button"
           aria-label={`Open ${folder.name}`}
           onClick={onOpen}
-          className="absolute inset-0 z-20 cursor-pointer rounded-xl focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
+          className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
         />
       )}
-      <CardActions
-        label={folder.name}
-        onRename={onRename}
-        onDelete={onDelete}
-        className="absolute right-2.5 top-6 z-30"
-      />
-
-      {/* pt-3 leaves room for the flap to rise above the body's top edge. */}
-      <div className="relative pt-3 transition-transform duration-200 will-change-transform group-hover:-translate-y-0.5">
-        {/* Body first, so the flap below can paint over its top border. */}
-        <div className="rounded-b-xl rounded-tl-xl border border-white/12 bg-white/[0.05] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.40)] backdrop-blur-md transition-colors group-hover:border-white/20">
+      <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
+      <div className="pointer-events-none relative flex items-center gap-3 p-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-accent ring-1 ring-inset ring-white/10">
+          <FolderIcon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
           <NameField
             editing={editing}
             value={folder.name}
             onCommit={onCommit}
             className="block truncate text-sm font-semibold text-white/90"
           />
-          <p className="mt-0.5 text-xs text-white/45">
-            {deckCount === 0 ? "Empty" : pluralize(deckCount, "deck")}
-          </p>
+          <p className="mt-0.5 text-xs text-white/45">{pluralize(deckCount, "deck")}</p>
         </div>
-        {/* Flap, flush to the right edge and sitting over the body's top edge.
-            No bottom border, so its fill flows straight into the body. */}
-        <div
-          aria-hidden
-          className="absolute right-0 top-0 h-4 w-2/5 rounded-t-lg border border-b-0 border-white/12 bg-white/[0.05] backdrop-blur-md transition-colors group-hover:border-white/20"
-        />
       </div>
-    </div>
+    </CardShell>
   );
 }
 

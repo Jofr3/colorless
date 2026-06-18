@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0e0e14; font-family: sans-serif; }
+  .row { display: flex; gap: 18px; padding: 14px 18px; align-items: center; }
+  .tag { width: 150px; color: #8ff; font-size: 12px; }
+
+  /* OUTER = stand-in for <body>: holds the glow, is NOT a backdrop root
+     (plain background, no isolation/filter/opacity). */
+  .outer {
+    position: relative; width: 560px; height: 150px; overflow: hidden;
+    background:
+      radial-gradient(ellipse 60% 90% at 20% 50%, rgba(38,149,255,0.45), transparent 70%),
+      radial-gradient(ellipse 60% 90% at 80% 50%, rgba(255,52,86,0.40), transparent 70%);
+  }
+
+  /* BACKDROP = .app-backdrop: transparent surface that shows the outer glow. */
+  .backdrop {
+    position: absolute; inset: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .backdrop.current { isolation: isolate; }                 /* real app today */
+  .backdrop.fixZ    { position: absolute; z-index: 0; }     /* stacking ctx, NOT a backdrop root */
+  .backdrop.fixNone { }                                     /* no stacking ctx at all */
+
+  /* dots, behind content */
+  .backdrop::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(circle, rgba(245,250,255,0.5) 1px, transparent 1.4px);
+    background-size: 16px 16px; opacity: 0.6;
+  }
+
+  .card {
+    width: 360px; height: 96px; border-radius: 14px;
+    background: rgba(255,255,255,0.045);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.75); font-size: 13px;
+  }
+</style>
+</head>
+<body>
+  <div class="row"><div class="tag">CURRENT<br>(isolation: isolate)</div>
+    <div class="outer"><div class="backdrop current"><div class="card">frosted? glow + dots behind me</div></div></div></div>
+
+  <div class="row"><div class="tag">FIX: z-index:0<br>(stacking, no backdrop root)</div>
+    <div class="outer"><div class="backdrop fixZ"><div class="card">frosted? glow + dots behind me</div></div></div></div>
+
+  <div class="row"><div class="tag">FIX: no isolation<br>(no stacking ctx)</div>
+    <div class="outer"><div class="backdrop fixNone"><div class="card">frosted? glow + dots behind me</div></div></div></div>
+</body>
+</html>

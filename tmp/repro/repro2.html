@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: #0e0e14; }
+  .stage { display: flex; gap: 16px; padding: 16px; }
+
+  .app-backdrop {
+    position: relative; width: 380px; height: 380px;
+    overflow: hidden; isolation: isolate;
+    --cursor-x: 190px; --cursor-y: 190px;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(38,149,255,0.14), transparent 70%);
+  }
+  .app-backdrop::before, .app-backdrop::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(circle, rgba(245,250,255,0.30) 1px, transparent 1.35px);
+    background-position: center; background-size: 22px 22px;
+  }
+  .app-backdrop::before { opacity: 0.5; }
+  .app-backdrop::after {
+    inset: auto; left: 0; top: 0; width: 300px; height: 300px; opacity: 0.95;
+    transform: translate3d(calc(var(--cursor-x) - 150px), calc(var(--cursor-y) - 150px), 0);
+    will-change: transform;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.9) 1.4px, transparent 1.9px);
+    background-position: calc(190px - var(--cursor-x)) calc(190px - var(--cursor-y));
+    -webkit-mask-image: radial-gradient(circle 150px at 50% 50%, black 0%, rgba(0,0,0,0.82) 38%, transparent 74%);
+    mask-image: radial-gradient(circle 150px at 50% 50%, black 0%, rgba(0,0,0,0.82) 38%, transparent 74%);
+  }
+  /* CURRENT: blended dots (excluded from backdrop-filter) */
+  .current::before, .current::after { mix-blend-mode: screen; }
+
+  .card {
+    width: 200px; height: 200px; border-radius: 16px;
+    background: rgba(255,255,255,0.045);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.40);
+    display:flex; align-items:center; justify-content:center;
+    color: rgba(255,255,255,0.7); font: 13px sans-serif;
+  }
+  .tag { position:absolute; top:8px; left:10px; z-index:5; color:#fff; font:12px sans-serif; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="app-backdrop current"><div class="tag">CURRENT (screen blend)</div><div class="card">card</div></div>
+    <div class="app-backdrop fixed"><div class="tag">FIXED (no blend)</div><div class="card">card</div></div>
+  </div>
+</body>
+</html>
