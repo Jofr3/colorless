@@ -22,10 +22,16 @@ body,
   height: 100%;
 }
 
-/* Shared background glow ---------------------------------------------------
+/* Shared background glow (no-WebGL fallback) -------------------------------
 
-   The blue/red glow is a single persistent layer on <body> so it survives
-   route changes and animates between layouts. The two glows sit at opposite
+   The blue/red glow is normally rendered by the WebGL GlowBackground component
+   (src/features/background/), which computes it in float precision and dithers
+   away the 8-bit banding. This CSS version is the fallback: it paints on <body>
+   behind the opaque glow canvas, so it only shows during the canvas's async
+   init (avoiding a flash of flat colour) or when WebGL is unavailable. The
+   shader mirrors these exact angles/sizes/colours, so the handoff is seamless.
+
+   The two glows sit at opposite
    ends of a diameter through the viewport centre; --glow-angle rotates that
    diameter, so changing layout sweeps them around the centre on an elliptical
    arc (a rotation) rather than sliding straight from A to B. Blue/red positions
@@ -115,17 +121,32 @@ body {
     sin(var(--glow-angle)) *
     var(--glow-flip)
   );
+  /* Falloff follows a raised-cosine curve (the same one the shader uses): ease
+     in at the centre, out at the tail with zero slope at both ends, so the glow
+     feathers in with no hard edge. As the fallback this can still band slightly
+     in 8-bit — the WebGL path is what dithers it away — but it stays close
+     enough that the canvas handoff is invisible. */
   background: radial-gradient(
       ellipse var(--glow-w) var(--glow-h) at var(--blue-glow-x) var(--blue-glow-y),
       rgba(38, 149, 255, 0.16) 0%,
-      rgba(38, 149, 255, 0.08) 36%,
-      rgba(38, 149, 255, 0) 72%
+      rgba(38, 149, 255, 0.151) 12%,
+      rgba(38, 149, 255, 0.127) 24%,
+      rgba(38, 149, 255, 0.092) 36%,
+      rgba(38, 149, 255, 0.055) 48%,
+      rgba(38, 149, 255, 0.023) 60%,
+      rgba(38, 149, 255, 0.004) 72%,
+      rgba(38, 149, 255, 0) 80%
     ),
     radial-gradient(
       ellipse var(--glow-w) var(--glow-h) at var(--red-glow-x) var(--red-glow-y),
       rgba(255, 52, 86, 0.13) 0%,
-      rgba(255, 52, 86, 0.07) 36%,
-      rgba(255, 52, 86, 0) 72%
+      rgba(255, 52, 86, 0.123) 12%,
+      rgba(255, 52, 86, 0.103) 24%,
+      rgba(255, 52, 86, 0.075) 36%,
+      rgba(255, 52, 86, 0.045) 48%,
+      rgba(255, 52, 86, 0.019) 60%,
+      rgba(255, 52, 86, 0.003) 72%,
+      rgba(255, 52, 86, 0) 80%
     ), var(--color-bg);
   background-repeat: no-repeat;
   transition: --glow-angle 1000ms cubic-bezier(0.22, 1, 0.36, 1), --glow-flip 1000ms
@@ -137,13 +158,13 @@ body {
 body[data-glow="sides"] {
   --glow-angle: 180deg;
   --glow-w: 52%;
-  --glow-h: 96%;
+  --glow-h: 120%;
 }
 
 /* Every other page: diameter vertical — blue along the bottom, red the top. */
 body[data-glow="stacked"] {
   --glow-angle: 90deg;
-  --glow-w: 85%;
+  --glow-w: 120%;
   --glow-h: 55%;
 }
 

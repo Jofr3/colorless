@@ -1,0 +1,18 @@
+/* Full-viewport host for the WebGL glow canvas. Fixed and pinned at z-index:-1
+   so it sits above the <body> background (the CSS gradient fallback) but behind
+   all routed content — exactly where the gradient used to be. Page surfaces are
+   transparent, so the glow shows through, and because nothing here forms an
+   isolated backdrop root, the menu cards' backdrop-filter still frosts it. */
+.glow-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.glow-bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

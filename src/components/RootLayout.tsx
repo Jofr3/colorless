@@ -1,12 +1,14 @@
 import { useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { GlowBackground } from "../features/background/GlowBackground";
 import { SettingsButton } from "./SettingsButton";
 
 // Persistent shell around every route. It maps the current path to the
 // `data-glow` layout on <body> — `sides` on the home dashboard, `stacked`
-// (top/bottom) everywhere else — so the shared glow defined in index.css
-// slides between layouts as you navigate. The keyed wrapper replays the
-// content fade-in on each navigation.
+// (top/bottom) everywhere else. The WebGL GlowBackground renders the shared
+// blue/red glow (the `data-glow` attribute still drives the index.css gradient
+// kept as a no-WebGL fallback). The keyed wrapper replays the content fade-in
+// on each navigation.
 export function RootLayout() {
   const { pathname } = useLocation();
 
@@ -18,6 +20,8 @@ export function RootLayout() {
 
   return (
     <>
+      {/* Shared blue/red glow, behind every route and persistent across them. */}
+      <GlowBackground />
       {/* Keyed wrapper replays the fade-in on each navigation. */}
       <div key={pathname} className="route-view">
         <Outlet />
