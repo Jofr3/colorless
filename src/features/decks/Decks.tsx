@@ -19,10 +19,10 @@ import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
 // The fill is slightly translucent (frosted via backdrop-blur) under a pure
 // white border. Accent colour lives in --color-accent (index.css).
 const PRIMARY_BUTTON_CLASS =
-  "inline-flex items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-[0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-[0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 const GHOST_BUTTON_CLASS =
-  "inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 const NAME_INPUT_CLASS =
   "pointer-events-auto block w-full min-w-0 truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
@@ -111,7 +111,7 @@ function IconButton({
         e.stopPropagation();
         onClick();
       }}
-      className="flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-black/45 hover:text-white focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
+      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-black/45 hover:text-white focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
     >
       {children}
     </button>
@@ -213,9 +213,7 @@ function FolderCard({
       )}
       <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
       <div className="pointer-events-none relative flex items-center gap-3 p-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-accent ring-1 ring-inset ring-white/10">
-          <FolderIcon className="h-5 w-5" />
-        </div>
+        <FolderIcon className="h-9 w-9 shrink-0 text-accent" fill="currentColor" />
         <div className="min-w-0">
           <NameField
             editing={editing}
@@ -354,7 +352,7 @@ export function Decks() {
           <div className="flex gap-2">
             {!openFolder && (
               <button type="button" onClick={handleNewFolder} className={GHOST_BUTTON_CLASS}>
-                <FolderIcon className="h-4 w-4" />
+                <FolderIcon className="h-4 w-4" fill="currentColor" />
                 New folder
               </button>
             )}
