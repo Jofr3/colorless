@@ -1,7 +1,8 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from "react";
 import { useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
+import { useTiltJuice } from "../../components/useTiltJuice";
 import {
   ArrowLeftIcon,
   BrandGlyph,
@@ -77,10 +78,25 @@ function NameField({
 
 /** Frosted-glass card surface shared by deck and folder tiles. The blurred
     layer is oversized by 1px and clipped by the shell's overflow-hidden, the
-    same trick the home menu cards use to trim backdrop-filter's edge fringe. */
-function CardShell({ children }: { children: ReactNode }) {
+    same trick the home menu cards use to trim backdrop-filter's edge fringe.
+    Motion (the deck tiles' hover lift, the folder tiles' tilt) is left to the
+    caller via `className`/`style`, so the shell itself stays presentational. */
+function CardShell({
+  children,
+  className,
+  innerRef,
+  ...rest
+}: {
+  children: ReactNode;
+  className?: string;
+  innerRef?: Ref<HTMLDivElement>;
+} & Omit<HTMLAttributes<HTMLDivElement>, "children" | "className">) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.40)] transition-transform duration-200 will-change-transform hover:-translate-y-0.5">
+    <div
+      ref={innerRef}
+      className={`group relative overflow-hidden rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.40)]${className ? ` ${className}` : ""}`}
+      {...rest}
+    >
       <span
         aria-hidden
         className="pointer-events-none absolute -inset-px bg-white/[0.045] backdrop-blur-md"
@@ -156,7 +172,7 @@ function DeckCard({
   onDelete: () => void;
 }) {
   return (
-    <CardShell>
+    <CardShell className="transition-transform duration-200 will-change-transform hover:-translate-y-0.5">
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
       <div className="relative h-20 overflow-hidden" style={coverStyle(deck.tint)}>
         <BrandGlyph className="absolute -bottom-3 -right-2 h-20 w-20 -rotate-12 text-white/10 transition-colors group-hover:text-white/20" />
@@ -199,32 +215,38 @@ function FolderCard({
   onRename: () => void;
   onDelete: () => void;
 }) {
+  // Folder tiles get the home menu cards' Balatro tilt + juice (no glow/sheen).
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
+    useTiltJuice<HTMLDivElement>();
   return (
-    <CardShell>
-      {/* Full-card click target sits behind the content and actions. Hidden
-          while renaming so the input below stays usable. */}
-      {!editing && (
-        <button
-          type="button"
-          aria-label={`Open ${folder.name}`}
-          onClick={onOpen}
-          className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
-        />
-      )}
-      <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
-      <div className="pointer-events-none relative flex items-center gap-3 p-4">
-        <FolderIcon className="h-9 w-9 shrink-0 text-accent" fill="currentColor" />
-        <div className="min-w-0">
-          <NameField
-            editing={editing}
-            value={folder.name}
-            onCommit={onCommit}
-            className="block truncate text-sm font-semibold text-white/90"
+    // Outer layer carries the transient juice (whole-card squash + wobble).
+    <div ref={juiceLayerRef} style={juiceStyle}>
+      <CardShell innerRef={tiltRef} style={tiltStyle} {...handlers}>
+        {/* Full-card click target sits behind the content and actions. Hidden
+            while renaming so the input below stays usable. */}
+        {!editing && (
+          <button
+            type="button"
+            aria-label={`Open ${folder.name}`}
+            onClick={onOpen}
+            className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
           />
-          <p className="mt-0.5 text-xs text-white/45">{pluralize(deckCount, "deck")}</p>
+        )}
+        <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
+        <div className="pointer-events-none relative flex items-center gap-3 p-4">
+          <FolderIcon className="h-9 w-9 shrink-0 text-accent" fill="currentColor" />
+          <div className="min-w-0">
+            <NameField
+              editing={editing}
+              value={folder.name}
+              onCommit={onCommit}
+              className="block truncate text-sm font-semibold text-white/90"
+            />
+            <p className="mt-0.5 text-xs text-white/45">{pluralize(deckCount, "deck")}</p>
+          </div>
         </div>
-      </div>
-    </CardShell>
+      </CardShell>
+    </div>
   );
 }
 

@@ -214,8 +214,9 @@ export class GlowRenderer {
     gsap.to(this.state, {
       ...vars,
       duration: TWEEN_DURATION,
-      // Strong ease-out; visual match for the CSS cubic-bezier(0.22,1,0.36,1).
-      ease: "power4.out",
+      // Slow-fast-slow ease-in-out: the glows ease away from one edge, sweep
+      // briskly across the middle, and settle gently onto the next.
+      ease: "power3.inOut",
       overwrite: "auto",
       onUpdate: this.apply,
     });
