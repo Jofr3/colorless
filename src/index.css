@@ -149,11 +149,11 @@ body {
       rgba(255, 52, 86, 0) 80%
     ), var(--color-bg);
   background-repeat: no-repeat;
-  /* Slow-fast-slow ease-in-out cubic (mirrors the shader's power3.inOut): the
-     glows ease off one edge, sweep briskly across, and settle onto the next. */
-  transition: --glow-angle 1000ms cubic-bezier(0.65, 0, 0.35, 1), --glow-flip 1000ms
-    cubic-bezier(0.65, 0, 0.35, 1), --glow-w 1000ms cubic-bezier(0.65, 0, 0.35, 1), --glow-h 1000ms
-    cubic-bezier(0.65, 0, 0.35, 1);
+  /* Quick start, brisk middle, gentle settle (mirrors the shader's GLOW_EASE):
+     only a brief easing-in off one edge, then a long easing-out onto the next. */
+  transition: --glow-angle 1000ms cubic-bezier(0.3, 0, 0.35, 1), --glow-flip 1000ms
+    cubic-bezier(0.3, 0, 0.35, 1), --glow-w 1000ms cubic-bezier(0.3, 0, 0.35, 1), --glow-h 1000ms
+    cubic-bezier(0.3, 0, 0.35, 1);
 }
 
 /* Home dashboard: diameter horizontal — blue hugs the left, red the right. */

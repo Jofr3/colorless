@@ -20,6 +20,14 @@ import {
   UniformGroup,
 } from "pixi.js";
 import { gsap } from "gsap";
+import { CustomEase } from "gsap/CustomEase";
+
+gsap.registerPlugin(CustomEase);
+
+// Slow-fast-slow, but biased to leave the start quickly and settle slowly at
+// the end (only a brief easing-in, a long easing-out). The same curve drives
+// the CSS fallback: cubic-bezier(0.3, 0, 0.35, 1).
+const GLOW_EASE = CustomEase.create("glowSweep", "M0,0 C0.3,0 0.35,1 1,1");
 
 export type GlowLayout = "sides" | "stacked";
 
@@ -214,9 +222,8 @@ export class GlowRenderer {
     gsap.to(this.state, {
       ...vars,
       duration: TWEEN_DURATION,
-      // Slow-fast-slow ease-in-out: the glows ease away from one edge, sweep
-      // briskly across the middle, and settle gently onto the next.
-      ease: "power3.inOut",
+      // Quick start, brisk middle, gentle settle — see GLOW_EASE.
+      ease: GLOW_EASE,
       overwrite: "auto",
       onUpdate: this.apply,
     });
