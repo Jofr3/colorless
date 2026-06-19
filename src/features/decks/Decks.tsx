@@ -406,7 +406,7 @@ export function Decks() {
             custom thumb in the right gutter, so the grid keeps its full width and
             never reflows for the bar. -mx-3/px-3 keeps the cells aligned to the
             column edge while giving card edges clip room. */}
-        <ScrollArea className="-mx-3 px-3 pb-4" outerClassName="mt-2" trackTop={16} trackBottom={16}>
+        <ScrollArea className="-mx-3 px-3 pb-12" outerClassName="mt-2" trackTop={16} trackBottom={16}>
           {isEmpty ? (
             <EmptyState
               title={
