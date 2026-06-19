@@ -250,12 +250,6 @@ function FolderCard({
   );
 }
 
-function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <h2 className="text-xs font-medium uppercase tracking-wider text-white/40">{children}</h2>
-  );
-}
-
 function EmptyState({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 px-6 py-16 text-center">
@@ -424,7 +418,8 @@ export function Decks() {
           <div className="flex flex-col gap-6">
             {visibleFolders.length > 0 && (
               <section className="flex flex-col gap-3">
-                <SectionLabel>Folders</SectionLabel>
+                {/* Small breathing room where the "Folders" label used to sit. */}
+                <div aria-hidden className="h-1" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {visibleFolders.map((folder) => (
                     <FolderCard
@@ -444,7 +439,8 @@ export function Decks() {
 
             {visibleDecks.length > 0 && (
               <section className="flex flex-col gap-3">
-                {visibleFolders.length > 0 && <SectionLabel>Decks</SectionLabel>}
+                {/* Small breathing room where the "Decks" label used to sit. */}
+                {visibleFolders.length > 0 && <div aria-hidden className="h-1" />}
                 <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
                   {visibleDecks.map((deck) => (
                     <DeckCard
