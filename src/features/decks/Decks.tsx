@@ -166,7 +166,6 @@ function DeckCard({
     <div className="group relative">
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
       <CardBackStack
-        count={deck.cardCount}
         label={
           <>
             {folderLabel && (
@@ -435,7 +434,7 @@ export function Decks() {
             {visibleDecks.length > 0 && (
               <section className="flex flex-col gap-3">
                 {visibleFolders.length > 0 && <SectionLabel>Decks</SectionLabel>}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
                   {visibleDecks.map((deck) => (
                     <DeckCard
                       key={deck.id}

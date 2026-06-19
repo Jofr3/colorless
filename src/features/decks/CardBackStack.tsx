@@ -40,17 +40,16 @@ function layerStyle(l: Layer): CSSProperties {
 }
 
 /** Layered card-back pile that fills its container. The top card carries the
-    `label` (deck name + count), printed into its lower edge. An empty deck shows
-    a single back; a stocked deck shows the full three-card stack. The cards are
-    absolutely layered (inset-0) so they overlap, so this one sized container is
-    the minimum the pile needs. */
-export function CardBackStack({ count, label }: { count: number; label?: ReactNode }) {
-  const empty = count === 0;
-  const layers = empty ? LAYERS.slice(-1) : LAYERS;
+    `label` (deck name + count), printed into its lower edge; the cards beneath
+    peek out below it to form the pile. Every deck — even a brand-new empty one —
+    shows the full pile so each tile reads as a deck; the label is what tells
+    empty from stocked. The cards are absolutely layered (inset-0) so they
+    overlap, so this one sized container is the minimum the pile needs. */
+export function CardBackStack({ label }: { label?: ReactNode }) {
   return (
     <div className="pointer-events-none relative aspect-[5/7] w-full">
-      {layers.map((l, i) => {
-        const isTop = i === layers.length - 1;
+      {LAYERS.map((l, i) => {
+        const isTop = i === LAYERS.length - 1;
         return (
           <div
             key={i}
