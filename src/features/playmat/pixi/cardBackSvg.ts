@@ -62,8 +62,15 @@ const GEOM: BackGeom = (() => {
   };
 })();
 
-/** Build the full card-back SVG markup for a design + tone. */
-export function buildCardBackSvg(design: CardBackDesign, tone: CardBackTone): string {
+/** Build the full card-back SVG markup for a design + tone. `squared` drops the
+    outer corner radius for DOM surfaces that clip the SVG to their own rounded
+    rect (the decks preview), so the SVG's corners can't peek past that clip; the
+    simulator leaves it rounded. */
+export function buildCardBackSvg(
+  design: CardBackDesign,
+  tone: CardBackTone,
+  squared = false,
+): string {
   const p = PALETTE[tone];
   const g = GEOM;
   const { w, h, innerInset, innerBorder, radius, innerRadius, innerW, innerH } = g;
@@ -75,7 +82,7 @@ export function buildCardBackSvg(design: CardBackDesign, tone: CardBackTone): st
   // The inner framing line is drawn thinner + translucent so it reads as a
   // soft seam rather than a hard border.
   const innerLineWidth = Math.max(1.5, innerBorder * 0.5);
-  const edge = `x="0" y="0" width="${w}" height="${h}" rx="${radius}"`;
+  const edge = `x="0" y="0" width="${w}" height="${h}" rx="${squared ? 0 : radius}"`;
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`,
@@ -115,6 +122,10 @@ export function buildCardBackSvg(design: CardBackDesign, tone: CardBackTone): st
 }
 
 /** A `data:` URL of the card back, usable as a CSS background-image or img src. */
-export function cardBackSvgDataUrl(design: CardBackDesign, tone: CardBackTone): string {
-  return `data:image/svg+xml;utf8,${encodeURIComponent(buildCardBackSvg(design, tone))}`;
+export function cardBackSvgDataUrl(
+  design: CardBackDesign,
+  tone: CardBackTone,
+  squared = false,
+): string {
+  return `data:image/svg+xml;utf8,${encodeURIComponent(buildCardBackSvg(design, tone, squared))}`;
 }

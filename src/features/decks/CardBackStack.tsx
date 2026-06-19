@@ -6,36 +6,40 @@ import { cardBackSvgDataUrl } from "../playmat/pixi/cardBackSvg";
 // exact blue "twilight" back the simulator renders. We reuse the simulator's
 // SVG builder (pixi-free, see cardBackSvg.ts) so the two stay in lockstep, and
 // paint it straight into the DOM as a data URL — built once at module load.
-const BLUE_BACK = cardBackSvgDataUrl("twilight", "blue");
+// Squared corners: the card div clips to rounded-[7px], so the SVG fills all the
+// way to its corners and lets that clip do the rounding — otherwise the SVG's own
+// rounded corners leave a crescent at each corner that shows the div's background.
+const BLUE_BACK = cardBackSvgDataUrl("twilight", "blue", true);
 
 // One card in the pile, ordered back-to-front (later layers paint on top).
 // Offsets are PERCENTAGES of the card's own size (CSS translate %), so the pile
-// scales with the card. `dim` darkens the cards behind so the stack recedes.
+// scales with the card.
 type Layer = {
   tx: number;
   ty: number;
   rot: number;
   scale: number;
-  dim: number;
 };
 
 const LAYERS: Layer[] = [
   // Squared-up stack: no rotation, no left/right stagger — the cards sit flush
-  // and simply peek straight down behind the top one, darkening toward the back
-  // so the deeper cards read as a receding pile.
-  { tx: 0, ty: 8, rot: 0, scale: 1, dim: 0.3 }, // back
-  { tx: 0, ty: 6, rot: 0, scale: 1, dim: 0.22 },
-  { tx: 0, ty: 4, rot: 0, scale: 1, dim: 0.14 },
-  { tx: 0, ty: 2, rot: 0, scale: 1, dim: 0.07 }, // mid
-  { tx: 0, ty: 0, rot: 0, scale: 1, dim: 0 }, // top
+  // and simply peek straight down behind the top one.
+  { tx: 0, ty: 8, rot: 0, scale: 1 }, // back
+  { tx: 0, ty: 6, rot: 0, scale: 1 },
+  { tx: 0, ty: 4, rot: 0, scale: 1 },
+  { tx: 0, ty: 2, rot: 0, scale: 1 }, // mid
+  { tx: 0, ty: 0, rot: 0, scale: 1 }, // top
 ];
+
+// The cards under the top one show only their bottom edge peeking out, so they
+// don't carry the blue back at all — they're a flat light blue matching the
+// card back's inner border, so the slivers read as the cards' framed edges.
+// Only the top card paints the real back over this.
+const EDGE_COLOR = "#28345a";
 
 function layerStyle(l: Layer): CSSProperties {
   return {
-    backgroundImage: `url("${BLUE_BACK}")`,
-    // Cards behind are darkened (brightness < 1) so the stack recedes — folded
-    // into the element itself so each card stays a single node.
-    filter: l.dim > 0 ? `brightness(${1 - l.dim})` : undefined,
+    backgroundColor: EDGE_COLOR,
     transform: `translate(${l.tx}%, ${l.ty}%) rotate(${l.rot}deg) scale(${l.scale})`,
   };
 }
@@ -44,6 +48,9 @@ function layerStyle(l: Layer): CSSProperties {
 // so each card lifts a touch off the one behind it.
 const CARD_CLASS =
   "absolute inset-0 overflow-hidden rounded-[7px] bg-cover bg-center shadow-[0_2px_6px_rgba(0,0,0,0.35)]";
+
+// The top card sits a hair larger than the pile beneath it.
+const TOP_CARD_SCALE = 1.01;
 
 /** Layered card-back pile that fills its container. The top card carries the
     `label` (deck name + count), printed into its lower edge; the cards beneath
@@ -75,11 +82,16 @@ export function CardBackStack({
         return (
           // Outer layer carries the transient juice (squash + wobble); the inner
           // card carries the pointer tilt and is the lone interactive surface.
-          <div key={i} ref={juiceLayerRef} style={juiceStyle} className="absolute inset-0">
+          <div
+            key={i}
+            ref={juiceLayerRef}
+            style={{ ...juiceStyle, transform: `scale(${TOP_CARD_SCALE}) ${juiceStyle.transform}` }}
+            className="absolute inset-0"
+          >
             <div
               ref={tiltRef}
               {...handlers}
-              style={{ ...layerStyle(l), ...tiltStyle }}
+              style={{ backgroundImage: `url("${BLUE_BACK}")`, ...tiltStyle }}
               className={`pointer-events-auto cursor-pointer select-none ${CARD_CLASS}`}
             >
               {label && <div className="absolute inset-x-0 bottom-0 px-6 pb-6">{label}</div>}
