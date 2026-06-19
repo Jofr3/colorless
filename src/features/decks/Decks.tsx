@@ -214,33 +214,38 @@ function FolderCard({
   const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
     useTiltJuice<HTMLDivElement>();
   return (
-    // Outer layer carries the transient juice (whole-card squash + wobble).
-    <div ref={juiceLayerRef} style={juiceStyle}>
-      <CardShell innerRef={tiltRef} style={tiltStyle} {...handlers}>
-        {/* Full-card click target sits behind the content and actions. Hidden
-            while renaming so the input below stays usable. */}
-        {!editing && (
-          <button
-            type="button"
-            aria-label={`Open ${folder.name}`}
-            onClick={onOpen}
-            className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
-          />
-        )}
-        <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
-        <div className="pointer-events-none relative flex items-center gap-3 p-4">
-          <FolderIcon className="h-9 w-9 shrink-0 text-accent" fill="currentColor" />
-          <div className="min-w-0">
-            <NameField
-              editing={editing}
-              value={folder.name}
-              onCommit={onCommit}
-              className="block truncate text-sm font-semibold text-white/90"
+    // `group relative` wrapper holds the actions still while the card tilts.
+    // The actions sit outside the juice + tilt layers so they don't move with
+    // the card (matching DeckCard).
+    <div className="group relative">
+      <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
+      {/* Outer layer carries the transient juice (whole-card squash + wobble). */}
+      <div ref={juiceLayerRef} style={juiceStyle}>
+        <CardShell innerRef={tiltRef} style={tiltStyle} {...handlers}>
+          {/* Full-card click target sits behind the content and actions. Hidden
+              while renaming so the input below stays usable. */}
+          {!editing && (
+            <button
+              type="button"
+              aria-label={`Open ${folder.name}`}
+              onClick={onOpen}
+              className="absolute inset-0 z-0 cursor-pointer focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
             />
-            <p className="mt-0.5 text-xs text-white/45">{pluralize(deckCount, "deck")}</p>
+          )}
+          <div className="pointer-events-none relative flex items-center gap-3 p-4">
+            <FolderIcon className="h-9 w-9 shrink-0 text-accent" fill="currentColor" />
+            <div className="min-w-0">
+              <NameField
+                editing={editing}
+                value={folder.name}
+                onCommit={onCommit}
+                className="block truncate text-sm font-semibold text-white/90"
+              />
+              <p className="mt-0.5 text-xs text-white/45">{pluralize(deckCount, "deck")}</p>
+            </div>
           </div>
-        </div>
-      </CardShell>
+        </CardShell>
+      </div>
     </div>
   );
 }
