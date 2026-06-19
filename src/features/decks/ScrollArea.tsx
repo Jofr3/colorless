@@ -6,17 +6,14 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronRightIcon } from "../../components/icons";
 
 const MIN_THUMB = 32; // px — keep the thumb grabbable on very long lists
-const ARROW_H = 16; // px — height reserved at each track end for an arrow button
-const STEP = 48; // px scrolled per arrow tap / hold tick
 
 /** A vertical scroll box whose scrollbar is a custom overlay rendered OUTSIDE
-    the scrolling content — an up arrow, a draggable thumb, and a down arrow,
-    floating in the right gutter. Because it's absolutely positioned the native
-    bar is hidden (`.scrollbar-none` in decks.css) and the content never reflows
-    to make room for it. Wheel/trackpad/keyboard still drive the real overflow. */
+    the scrolling content — a single draggable thumb floating in the right
+    gutter. Because it's absolutely positioned the native bar is hidden
+    (`.scrollbar-none` in decks.css) and the content never reflows to make room
+    for it. Wheel/trackpad/keyboard still drive the real overflow. */
 export function ScrollArea({
   children,
   className,
@@ -39,11 +36,10 @@ export function ScrollArea({
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ pointerY: number; scrollTop: number } | null>(null);
-  const hold = useRef<number | null>(null);
   const [thumb, setThumb] = useState({ height: 0, top: 0, shown: false });
 
   // Recompute the thumb's size/offset (relative to the rail) from scroll metrics.
-  // Thumb travel lives between the two arrow zones inside the inset track.
+  // The thumb travels the full inset track — flush to the top, no arrow zones.
   const measure = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -52,9 +48,9 @@ export function ScrollArea({
       setThumb((t) => (t.shown ? { ...t, shown: false } : t));
       return;
     }
-    const travel = Math.max(clientHeight - trackTop - trackBottom - 2 * ARROW_H, MIN_THUMB);
+    const travel = Math.max(clientHeight - trackTop - trackBottom, MIN_THUMB);
     const height = Math.max((clientHeight / scrollHeight) * travel, MIN_THUMB);
-    const top = ARROW_H + (scrollTop / (scrollHeight - clientHeight)) * (travel - height);
+    const top = (scrollTop / (scrollHeight - clientHeight)) * (travel - height);
     setThumb({ height, top, shown: true });
   }, [trackTop, trackBottom]);
 
@@ -81,7 +77,7 @@ export function ScrollArea({
       const el = scrollRef.current;
       if (!d || !el) return;
       const { scrollHeight, clientHeight } = el;
-      const travel = Math.max(clientHeight - trackTop - trackBottom - 2 * ARROW_H, MIN_THUMB);
+      const travel = Math.max(clientHeight - trackTop - trackBottom, MIN_THUMB);
       const height = Math.max((clientHeight / scrollHeight) * travel, MIN_THUMB);
       const trackRange = travel - height;
       if (trackRange <= 0) return;
@@ -108,24 +104,6 @@ export function ScrollArea({
     document.body.style.userSelect = "none";
   };
 
-  // Arrow press: jump one step, then repeat while held.
-  const stopHold = useCallback(() => {
-    if (hold.current !== null) {
-      clearInterval(hold.current);
-      hold.current = null;
-    }
-  }, []);
-  const startHold = (dir: 1 | -1) => (e: ReactPointerEvent) => {
-    e.preventDefault();
-    scrollRef.current?.scrollBy({ top: dir * STEP });
-    stopHold();
-    hold.current = window.setInterval(() => scrollRef.current?.scrollBy({ top: dir * STEP }), 50);
-  };
-  useEffect(() => stopHold, [stopHold]);
-
-  const arrowClass =
-    "pointer-events-auto absolute inset-x-0 flex h-4 cursor-pointer items-center justify-center text-white/45 transition-colors hover:text-white/75";
-
   return (
     <div className={`relative min-h-0 flex-1${outerClassName ? ` ${outerClassName}` : ""}`}>
       <div
@@ -136,39 +114,19 @@ export function ScrollArea({
       </div>
       {/* Scrollbar rail in the right gutter — outside the scroll box, so it never
           eats content width. Inset to the track span so it lines up with the
-          content; arrows bookend the thumb's travel. */}
+          content; a single thumb fills it, starting flush at the top. */}
       <div
         style={{ top: trackTop, bottom: trackBottom }}
         className={`pointer-events-none absolute -right-5 w-3 transition-opacity duration-150 ${
           thumb.shown ? "opacity-100" : "opacity-0"
         }`}
       >
-        <button
-          type="button"
-          aria-label="Scroll up"
-          onPointerDown={startHold(-1)}
-          onPointerUp={stopHold}
-          onPointerLeave={stopHold}
-          className={`${arrowClass} top-0`}
-        >
-          <ChevronRightIcon className="h-3 w-3 -rotate-90" />
-        </button>
         <div
           aria-hidden
           onPointerDown={startDrag}
           style={{ height: thumb.height, transform: `translate(-50%, ${thumb.top}px)` }}
           className="pointer-events-auto absolute left-1/2 top-0 w-1.5 cursor-grab rounded-full bg-white/20 transition-colors duration-150 hover:bg-white/30 active:cursor-grabbing active:bg-white/40"
         />
-        <button
-          type="button"
-          aria-label="Scroll down"
-          onPointerDown={startHold(1)}
-          onPointerUp={stopHold}
-          onPointerLeave={stopHold}
-          className={`${arrowClass} bottom-0`}
-        >
-          <ChevronRightIcon className="h-3 w-3 rotate-90" />
-        </button>
       </div>
     </div>
   );
