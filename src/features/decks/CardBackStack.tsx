@@ -55,7 +55,7 @@ export function CardBackStack({ count, label }: { count: number; label?: ReactNo
             className="absolute inset-0 overflow-hidden rounded-[7px] bg-cover bg-center shadow-[0_6px_16px_rgba(0,0,0,0.55)]"
           >
             {isTop && label && (
-              <div className="absolute inset-x-0 bottom-0 px-5 pb-5">{label}</div>
+              <div className="absolute inset-x-0 bottom-0 px-6 pb-6">{label}</div>
             )}
           </div>
         );
