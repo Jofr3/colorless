@@ -66,7 +66,7 @@ const GEOM: BackGeom = (() => {
 export function buildCardBackSvg(design: CardBackDesign, tone: CardBackTone): string {
   const p = PALETTE[tone];
   const g = GEOM;
-  const { w, h, rim, innerInset, innerBorder, radius, innerRadius, innerW, innerH } = g;
+  const { w, h, innerInset, innerBorder, radius, innerRadius, innerW, innerH } = g;
 
   // The decorative pattern is composited between the background and the inner
   // border, clipped to the inner rounded rect so it never spills onto the rim.
@@ -75,7 +75,7 @@ export function buildCardBackSvg(design: CardBackDesign, tone: CardBackTone): st
   // The inner framing line is drawn thinner + translucent so it reads as a
   // soft seam rather than a hard border.
   const innerLineWidth = Math.max(1.5, innerBorder * 0.5);
-  const edge = `x="${rim / 2}" y="${rim / 2}" width="${w - rim}" height="${h - rim}" rx="${radius}"`;
+  const edge = `x="0" y="0" width="${w}" height="${h}" rx="${radius}"`;
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`,
@@ -102,13 +102,6 @@ export function buildCardBackSvg(design: CardBackDesign, tone: CardBackTone): st
     `<stop offset="0.6" stop-color="${p.low}" stop-opacity="0"/>`,
     `<stop offset="1" stop-color="${p.low}" stop-opacity="0.55"/>`,
     "</radialGradient>",
-    // Soft rim bevel (top highlight → bottom shadow) replacing the old hard
-    // saturated ring, so the card edge melts into the background.
-    '<linearGradient id="rim-grad" x1="0" y1="0" x2="0" y2="1">',
-    `<stop offset="0" stop-color="${p.high}" stop-opacity="0.55"/>`,
-    `<stop offset="0.5" stop-color="${p.rim}" stop-opacity="0.32"/>`,
-    `<stop offset="1" stop-color="${p.low}" stop-opacity="0.6"/>`,
-    "</linearGradient>",
     `<clipPath id="back-inner-clip"><rect x="${innerInset}" y="${innerInset}" width="${innerW}" height="${innerH}" rx="${innerRadius}"/></clipPath>`,
     "</defs>",
     `<rect ${edge} fill="url(#bg)"/>`,
@@ -117,7 +110,6 @@ export function buildCardBackSvg(design: CardBackDesign, tone: CardBackTone): st
     pattern ? `<g clip-path="url(#back-inner-clip)">${pattern}</g>` : "",
     `<rect ${edge} fill="url(#edge-fade)"/>`,
     `<rect x="${innerInset}" y="${innerInset}" width="${w - innerInset * 2}" height="${h - innerInset * 2}" rx="${innerRadius}" fill="none" stroke="${p.inner}" stroke-opacity="0.5" stroke-width="${innerLineWidth}"/>`,
-    `<rect ${edge} fill="none" stroke="url(#rim-grad)" stroke-width="${rim}"/>`,
     "</svg>",
   ].join("");
 }

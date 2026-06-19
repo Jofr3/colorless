@@ -20,9 +20,12 @@ type Layer = {
 
 const LAYERS: Layer[] = [
   // Squared-up stack: no rotation, no left/right stagger — the cards sit flush
-  // and simply peek straight down behind the top one.
-  { tx: 0, ty: 5, rot: 0, scale: 1, dim: 0.42 }, // back
-  { tx: 0, ty: 2.5, rot: 0, scale: 1, dim: 0.2 }, // mid
+  // and simply peek straight down behind the top one, darkening toward the back
+  // so the deeper cards read as a receding pile.
+  { tx: 0, ty: 8, rot: 0, scale: 1, dim: 0.3 }, // back
+  { tx: 0, ty: 6, rot: 0, scale: 1, dim: 0.22 },
+  { tx: 0, ty: 4, rot: 0, scale: 1, dim: 0.14 },
+  { tx: 0, ty: 2, rot: 0, scale: 1, dim: 0.07 }, // mid
   { tx: 0, ty: 0, rot: 0, scale: 1, dim: 0 }, // top
 ];
 
@@ -52,7 +55,7 @@ export function CardBackStack({ count, label }: { count: number; label?: ReactNo
           <div
             key={i}
             style={layerStyle(l)}
-            className="absolute inset-0 overflow-hidden rounded-[7px] bg-cover bg-center shadow-[0_6px_16px_rgba(0,0,0,0.55)]"
+            className="absolute inset-0 overflow-hidden rounded-[7px] bg-cover bg-center shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
           >
             {isTop && label && (
               <div className="absolute inset-x-0 bottom-0 px-6 pb-6">{label}</div>
