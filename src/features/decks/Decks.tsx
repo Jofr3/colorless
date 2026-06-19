@@ -13,7 +13,9 @@ import {
   TrashIcon,
 } from "../../components/icons";
 import { CardBackStack } from "./CardBackStack";
+import { ScrollArea } from "./ScrollArea";
 import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
+import "./decks.css";
 
 // The accent button is the inverse of the app's glass buttons: a light accent
 // fill with dark text, instead of translucent-white-on-dark with light text.
@@ -354,9 +356,11 @@ export function Decks() {
   return (
     <AppBackdrop>
       <HomeButton />
-      {/* pt-16 keeps the toolbar clear of the floating top-right home button. */}
-      <main className="mx-auto flex min-h-svh w-full max-w-4xl flex-col gap-6 px-6 pb-12 pt-16">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      {/* pt-16 keeps the toolbar clear of the floating top-right home button.
+          Fixed to the viewport height (h-svh + overflow-hidden) so only the card
+          grid below scrolls — the toolbar and breadcrumb stay put. */}
+      <main className="mx-auto flex h-svh w-full max-w-4xl flex-col gap-6 overflow-hidden px-6 pt-16">
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative w-full sm:flex-1">
             <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <input
@@ -383,7 +387,7 @@ export function Decks() {
         </div>
 
         {openFolder && !searching && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex shrink-0 items-center gap-2 text-sm">
             <button
               type="button"
               onClick={() => setOpenFolderId(null)}
@@ -397,68 +401,75 @@ export function Decks() {
           </div>
         )}
 
-        {isEmpty ? (
-          <EmptyState
-            title={
-              searching
-                ? `No results for "${trimmed}"`
-                : openFolder
-                  ? "This folder is empty"
-                  : "No decks yet"
-            }
-            hint={
-              searching
-                ? "Try a different name."
-                : openFolder
-                  ? "Create a deck to fill it up."
-                  : "Create your first deck or folder to get started."
-            }
-          />
-        ) : (
-          <div className="flex flex-col gap-6">
-            {visibleFolders.length > 0 && (
-              <section className="flex flex-col gap-3">
-                {/* Small breathing room where the "Folders" label used to sit. */}
-                <div aria-hidden className="h-1" />
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleFolders.map((folder) => (
-                    <FolderCard
-                      key={folder.id}
-                      folder={folder}
-                      deckCount={deckCountOf(folder.id)}
-                      editing={editingId === folder.id}
-                      onOpen={() => openFolderById(folder.id)}
-                      onCommit={(name) => commitFolder(folder.id, name)}
-                      onRename={() => setEditingId(folder.id)}
-                      onDelete={() => deleteFolder(folder.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+        {/* Internal scroll area: the folders + decks scroll here while the
+            toolbar above stays fixed. ScrollArea hides the native bar and draws a
+            custom thumb in the right gutter, so the grid keeps its full width and
+            never reflows for the bar. -mx-3/px-3 keeps the cells aligned to the
+            column edge while giving card edges clip room. */}
+        <ScrollArea className="-mx-3 px-3 pb-4" outerClassName="mt-2" trackTop={16} trackBottom={16}>
+          {isEmpty ? (
+            <EmptyState
+              title={
+                searching
+                  ? `No results for "${trimmed}"`
+                  : openFolder
+                    ? "This folder is empty"
+                    : "No decks yet"
+              }
+              hint={
+                searching
+                  ? "Try a different name."
+                  : openFolder
+                    ? "Create a deck to fill it up."
+                    : "Create your first deck or folder to get started."
+              }
+            />
+          ) : (
+            <div className="flex flex-col gap-6">
+              {visibleFolders.length > 0 && (
+                <section className="flex flex-col gap-3">
+                  {/* Small breathing room where the "Folders" label used to sit. */}
+                  <div aria-hidden className="h-1" />
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {visibleFolders.map((folder) => (
+                      <FolderCard
+                        key={folder.id}
+                        folder={folder}
+                        deckCount={deckCountOf(folder.id)}
+                        editing={editingId === folder.id}
+                        onOpen={() => openFolderById(folder.id)}
+                        onCommit={(name) => commitFolder(folder.id, name)}
+                        onRename={() => setEditingId(folder.id)}
+                        onDelete={() => deleteFolder(folder.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
 
-            {visibleDecks.length > 0 && (
-              <section className="flex flex-col gap-3">
-                {/* Small breathing room where the "Decks" label used to sit. */}
-                {visibleFolders.length > 0 && <div aria-hidden className="h-1" />}
-                <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
-                  {visibleDecks.map((deck) => (
-                    <DeckCard
-                      key={deck.id}
-                      deck={deck}
-                      editing={editingId === deck.id}
-                      folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
-                      juiceOnMount={deck.id === justCreatedDeckId}
-                      onCommit={(name) => commitDeck(deck.id, name)}
-                      onRename={() => setEditingId(deck.id)}
-                      onDelete={() => deleteDeck(deck.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-        )}
+              {visibleDecks.length > 0 && (
+                <section className="flex flex-col gap-3">
+                  {/* Small breathing room where the "Decks" label used to sit. */}
+                  {visibleFolders.length > 0 && <div aria-hidden className="h-1" />}
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+                    {visibleDecks.map((deck) => (
+                      <DeckCard
+                        key={deck.id}
+                        deck={deck}
+                        editing={editingId === deck.id}
+                        folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
+                        juiceOnMount={deck.id === justCreatedDeckId}
+                        onCommit={(name) => commitDeck(deck.id, name)}
+                        onRename={() => setEditingId(deck.id)}
+                        onDelete={() => deleteDeck(deck.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+        </ScrollArea>
       </main>
     </AppBackdrop>
   );
