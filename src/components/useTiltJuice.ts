@@ -22,6 +22,8 @@ const RAD_TO_DEG = 180 / Math.PI;
 // a touch so it reads on a large button); a press gives a stronger pop.
 const HOVER_JUICE = { amount: 0.03, rotation: 0.018 };
 const PRESS_JUICE = { amount: 0.05, rotation: 0.025 };
+// A stronger pop fired when a card first appears (e.g. a freshly created deck).
+const SPAWN_JUICE = { amount: 0.08, rotation: 0.035 };
 
 // Outer layer carries the transient juice (whole-card squash + wobble), driven
 // per-frame with no transition so the fast oscillation stays crisp.
@@ -45,6 +47,9 @@ export type TiltJuiceOptions = {
   onPointerMove?: (px: number, py: number) => void;
   /** Fires on pointer enter (true) and leave (false). */
   onHoverChange?: (hovering: boolean) => void;
+  /** Fire the juice once the moment the card first mounts — e.g. a freshly
+      created card popping into place. */
+  juiceOnMount?: boolean;
 };
 
 /** Wires the Balatro tilt + juice onto a card: attach `tiltRef`/`tiltStyle` and
@@ -97,10 +102,27 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
     juiceRunner.current = fireJuice;
 
     return () => {
-      if (juiceFrame.current !== null) cancelAnimationFrame(juiceFrame.current);
-      if (tiltFrame.current !== null) cancelAnimationFrame(tiltFrame.current);
+      // Null the handles after cancelling, not just cancel them: a juice fired
+      // during mount (juiceOnMount) starts a frame that StrictMode's mount →
+      // cleanup → remount cancels here; if the handle stayed non-null, fireJuice
+      // would think a loop was still running and never restart it on remount.
+      if (juiceFrame.current !== null) {
+        cancelAnimationFrame(juiceFrame.current);
+        juiceFrame.current = null;
+      }
+      if (tiltFrame.current !== null) {
+        cancelAnimationFrame(tiltFrame.current);
+        tiltFrame.current = null;
+      }
     };
   }, []);
+
+  // Pop the card with a juice bounce the moment it first appears, if asked. The
+  // juice runner is wired by the effect above, which runs first on mount.
+  const { juiceOnMount } = options;
+  useEffect(() => {
+    if (juiceOnMount) juiceRunner.current(SPAWN_JUICE.amount, SPAWN_JUICE.rotation);
+  }, [juiceOnMount]);
 
   const handlePointerEnter = () => {
     tiltRef.current?.style.setProperty("--s", `${HOVER_SCALE}`);

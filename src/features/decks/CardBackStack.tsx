@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useTiltJuice } from "../../components/useTiltJuice";
 import { cardBackSvgDataUrl } from "../playmat/pixi/cardBackSvg";
 
 // The deck preview's centrepiece: a faux-3D pile of cards whose top card is the
@@ -39,26 +40,50 @@ function layerStyle(l: Layer): CSSProperties {
   };
 }
 
+// Shared card styling for every layer in the pile, including a small drop shadow
+// so each card lifts a touch off the one behind it.
+const CARD_CLASS =
+  "absolute inset-0 overflow-hidden rounded-[7px] bg-cover bg-center shadow-[0_2px_6px_rgba(0,0,0,0.35)]";
+
 /** Layered card-back pile that fills its container. The top card carries the
     `label` (deck name + count), printed into its lower edge; the cards beneath
     peek out below it to form the pile. Every deck — even a brand-new empty one —
     shows the full pile so each tile reads as a deck; the label is what tells
     empty from stocked. The cards are absolutely layered (inset-0) so they
-    overlap, so this one sized container is the minimum the pile needs. */
-export function CardBackStack({ label }: { label?: ReactNode }) {
+    overlap, so this one sized container is the minimum the pile needs.
+
+    The top card carries the shared Balatro tilt + juice (the same hook the home
+    menu and folder tiles use): it leans toward the pointer and pops on press
+    while the pile beneath stays put, like lifting the top card off the deck. */
+export function CardBackStack({
+  label,
+  juiceOnMount,
+}: {
+  label?: ReactNode;
+  /** Pop the top card with a juice bounce when it first appears (new decks). */
+  juiceOnMount?: boolean;
+}) {
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
+    useTiltJuice<HTMLDivElement>({ juiceOnMount });
   return (
     <div className="pointer-events-none relative aspect-[5/7] w-full">
       {LAYERS.map((l, i) => {
-        const isTop = i === LAYERS.length - 1;
+        // The back cards are static; only the top card is interactive.
+        if (i !== LAYERS.length - 1) {
+          return <div key={i} style={layerStyle(l)} className={CARD_CLASS} />;
+        }
         return (
-          <div
-            key={i}
-            style={layerStyle(l)}
-            className="absolute inset-0 overflow-hidden rounded-[7px] bg-cover bg-center shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-          >
-            {isTop && label && (
-              <div className="absolute inset-x-0 bottom-0 px-6 pb-6">{label}</div>
-            )}
+          // Outer layer carries the transient juice (squash + wobble); the inner
+          // card carries the pointer tilt and is the lone interactive surface.
+          <div key={i} ref={juiceLayerRef} style={juiceStyle} className="absolute inset-0">
+            <div
+              ref={tiltRef}
+              {...handlers}
+              style={{ ...layerStyle(l), ...tiltStyle }}
+              className={`pointer-events-auto cursor-pointer select-none ${CARD_CLASS}`}
+            >
+              {label && <div className="absolute inset-x-0 bottom-0 px-6 pb-6">{label}</div>}
+            </div>
           </div>
         );
       })}

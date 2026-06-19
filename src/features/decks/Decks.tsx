@@ -26,7 +26,7 @@ const GHOST_BUTTON_CLASS =
   "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 const NAME_INPUT_CLASS =
-  "pointer-events-auto block w-full min-w-0 truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
+  "pointer-events-auto block w-full min-w-0 select-text truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
@@ -149,6 +149,7 @@ function DeckCard({
   deck,
   editing,
   folderLabel,
+  juiceOnMount,
   onCommit,
   onRename,
   onDelete,
@@ -156,6 +157,7 @@ function DeckCard({
   deck: Deck;
   editing: boolean;
   folderLabel?: string | null;
+  juiceOnMount?: boolean;
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
@@ -166,6 +168,7 @@ function DeckCard({
     <div className="group relative">
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
       <CardBackStack
+        juiceOnMount={juiceOnMount}
         label={
           <>
             {folderLabel && (
@@ -268,6 +271,8 @@ export function Decks() {
   const [query, setQuery] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // The most recently created deck — its tile pops with a juice bounce on mount.
+  const [justCreatedDeckId, setJustCreatedDeckId] = useState<string | null>(null);
   const idCounter = useRef(0);
 
   const genId = (prefix: string) => {
@@ -307,6 +312,7 @@ export function Decks() {
     ]);
     setQuery("");
     setEditingId(id);
+    setJustCreatedDeckId(id);
   };
 
   const handleNewFolder = () => {
@@ -441,6 +447,7 @@ export function Decks() {
                       deck={deck}
                       editing={editingId === deck.id}
                       folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
+                      juiceOnMount={deck.id === justCreatedDeckId}
                       onCommit={(name) => commitDeck(deck.id, name)}
                       onRename={() => setEditingId(deck.id)}
                       onDelete={() => deleteDeck(deck.id)}
