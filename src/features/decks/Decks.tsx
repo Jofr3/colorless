@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode, Ref } from "react";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
@@ -174,8 +174,8 @@ function DeckCard({
         label={
           <>
             {folderLabel && (
-              <span className="mb-1 inline-flex max-w-full items-center gap-1 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-medium text-white/85 backdrop-blur-sm">
-                <FolderIcon className="h-2.5 w-2.5 shrink-0" />
+              <span className="mb-1 inline-flex max-w-full items-center gap-1 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white/85 backdrop-blur-sm">
+                <FolderIcon className="h-2.5 w-2.5 shrink-0" fill="currentColor" />
                 <span className="truncate">{folderLabel}</span>
               </span>
             )}
@@ -197,7 +197,7 @@ function DeckCard({
 
 function FolderCard({
   folder,
-  deckCount,
+  summary,
   editing,
   onOpen,
   onCommit,
@@ -205,7 +205,7 @@ function FolderCard({
   onDelete,
 }: {
   folder: Folder;
-  deckCount: number;
+  summary: string;
   editing: boolean;
   onOpen: () => void;
   onCommit: (name: string) => void;
@@ -243,7 +243,7 @@ function FolderCard({
                 onCommit={onCommit}
                 className="block truncate text-sm font-semibold text-white/90"
               />
-              <p className="mt-0.5 text-xs text-white/45">{pluralize(deckCount, "deck")}</p>
+              <p className="mt-0.5 text-xs text-white/45">{summary}</p>
             </div>
           </div>
         </CardShell>
@@ -252,16 +252,11 @@ function FolderCard({
   );
 }
 
-function EmptyState({ title, hint }: { title: string; hint: string }) {
+function EmptyState({ title }: { title: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 px-6 py-16 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.04] text-white/40 ring-1 ring-inset ring-white/10">
-        <DecksIcon className="h-6 w-6" />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-white/80">{title}</p>
-        <p className="mt-1 text-sm text-muted">{hint}</p>
-      </div>
+    <div className="flex flex-col items-center justify-center gap-3 px-6 pb-16 pt-36 text-center">
+      <DecksIcon className="h-6 w-6 text-white/20" />
+      <p className="text-sm font-medium text-white/40">{title}</p>
     </div>
   );
 }
@@ -288,19 +283,45 @@ export function Decks() {
 
   const folderNameOf = (id: string | null) =>
     id ? (folders.find((f) => f.id === id)?.name ?? null) : null;
-  const deckCountOf = (id: string) => decks.filter((d) => d.folderId === id).length;
+
+  // A folder's one-line subtitle: its direct subfolders and decks, or "Empty".
+  const folderSummaryOf = (id: string) => {
+    const subfolders = folders.filter((f) => f.parentId === id).length;
+    const childDecks = decks.filter((d) => d.folderId === id).length;
+    const parts: string[] = [];
+    if (subfolders) parts.push(pluralize(subfolders, "folder"));
+    if (childDecks) parts.push(pluralize(childDecks, "deck"));
+    return parts.length > 0 ? parts.join(" · ") : "Empty";
+  };
+
+  // Ancestor chain (root-most first) for the open folder, used by the
+  // breadcrumb. The visited guard keeps a stray cycle from looping forever.
+  const folderPath = (id: string): Folder[] => {
+    const path: Folder[] = [];
+    const seen = new Set<string>();
+    let current = folders.find((f) => f.id === id);
+    while (current && !seen.has(current.id)) {
+      seen.add(current.id);
+      path.unshift(current);
+      const parentId = current.parentId;
+      current = parentId ? folders.find((f) => f.id === parentId) : undefined;
+    }
+    return path;
+  };
 
   // What the current view shows: search spans the whole library; otherwise it's
-  // the open folder's decks, or the root (folders + loose decks).
+  // the open folder's subfolders + decks, or the root (top-level folders + loose
+  // decks).
   let visibleFolders: Folder[] = [];
   let visibleDecks: Deck[] = [];
   if (searching) {
     visibleFolders = folders.filter((f) => f.name.toLowerCase().includes(q));
     visibleDecks = decks.filter((d) => d.name.toLowerCase().includes(q));
   } else if (openFolder) {
+    visibleFolders = folders.filter((f) => f.parentId === openFolder.id);
     visibleDecks = decks.filter((d) => d.folderId === openFolder.id);
   } else {
-    visibleFolders = folders;
+    visibleFolders = folders.filter((f) => f.parentId === null);
     visibleDecks = decks.filter((d) => d.folderId === null);
   }
 
@@ -318,7 +339,7 @@ export function Decks() {
 
   const handleNewFolder = () => {
     const id = genId("folder");
-    setFolders((prev) => [{ id, name: "New Folder" }, ...prev]);
+    setFolders((prev) => [{ id, name: "New Folder", parentId: openFolder?.id ?? null }, ...prev]);
     setQuery("");
     setEditingId(id);
   };
@@ -339,10 +360,16 @@ export function Decks() {
   };
 
   const deleteFolder = (id: string) => {
-    // Don't strand the decks inside — return them to the library root.
-    setDecks((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)));
-    setFolders((prev) => prev.filter((f) => f.id !== id));
-    if (openFolderId === id) setOpenFolderId(null);
+    // Don't strand what's inside — lift the folder's direct decks and subfolders
+    // up one level (to its own parent) instead of orphaning them.
+    const parentId = folders.find((f) => f.id === id)?.parentId ?? null;
+    setDecks((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: parentId } : d)));
+    setFolders((prev) =>
+      prev
+        .filter((f) => f.id !== id)
+        .map((f) => (f.parentId === id ? { ...f, parentId } : f)),
+    );
+    if (openFolderId === id) setOpenFolderId(parentId);
     if (editingId === id) setEditingId(null);
   };
 
@@ -373,12 +400,10 @@ export function Decks() {
             />
           </div>
           <div className="flex gap-2">
-            {!openFolder && (
-              <button type="button" onClick={handleNewFolder} className={GHOST_BUTTON_CLASS}>
-                <FolderIcon className="h-4 w-4" fill="currentColor" />
-                New folder
-              </button>
-            )}
+            <button type="button" onClick={handleNewFolder} className={GHOST_BUTTON_CLASS}>
+              <FolderIcon className="h-4 w-4" fill="currentColor" />
+              New folder
+            </button>
             <button type="button" onClick={handleNewDeck} className={PRIMARY_BUTTON_CLASS}>
               <PlusIcon className="h-4 w-4" />
               New deck
@@ -387,18 +412,53 @@ export function Decks() {
         </div>
 
         {openFolder && !searching && (
-          <div className="flex shrink-0 items-center gap-2 text-sm">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex shrink-0 flex-wrap items-center gap-2 text-sm"
+          >
+            {/* Steps up one level — to the parent folder, or back to the root. */}
+            <button
+              type="button"
+              onClick={() => setOpenFolderId(openFolder.parentId)}
+              aria-label="Up one level"
+              className="group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/[0.07] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+            >
+              <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            </button>
             <button
               type="button"
               onClick={() => setOpenFolderId(null)}
-              className="group inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/[0.07] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+              className="cursor-pointer rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
             >
-              <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               All decks
             </button>
-            <span className="text-white/30">/</span>
-            <span className="font-medium text-white/80">{openFolder.name}</span>
-          </div>
+            {folderPath(openFolder.id).map((folder, i, path) => {
+              const isCurrent = i === path.length - 1;
+              return (
+                <Fragment key={folder.id}>
+                  <span aria-hidden className="text-white/30">
+                    /
+                  </span>
+                  {isCurrent ? (
+                    <span
+                      aria-current="page"
+                      className="max-w-[12rem] truncate font-medium text-white/80"
+                    >
+                      {folder.name}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setOpenFolderId(folder.id)}
+                      className="max-w-[12rem] cursor-pointer truncate rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+                    >
+                      {folder.name}
+                    </button>
+                  )}
+                </Fragment>
+              );
+            })}
+          </nav>
         )}
 
         {/* Internal scroll area: the folders + decks scroll here while the
@@ -406,7 +466,7 @@ export function Decks() {
             custom thumb in the right gutter, so the grid keeps its full width and
             never reflows for the bar. -mx-3/px-3 keeps the cells aligned to the
             column edge while giving card edges clip room. */}
-        <ScrollArea className="-mx-3 px-3 pb-12" outerClassName="mt-2" trackTop={16} trackBottom={16}>
+        <ScrollArea className="-mx-3 px-3 pb-12" trackTop={16} trackBottom={16}>
           {isEmpty ? (
             <EmptyState
               title={
@@ -415,13 +475,6 @@ export function Decks() {
                   : openFolder
                     ? "This folder is empty"
                     : "No decks yet"
-              }
-              hint={
-                searching
-                  ? "Try a different name."
-                  : openFolder
-                    ? "Create a deck to fill it up."
-                    : "Create your first deck or folder to get started."
               }
             />
           ) : (
@@ -435,7 +488,7 @@ export function Decks() {
                       <FolderCard
                         key={folder.id}
                         folder={folder}
-                        deckCount={deckCountOf(folder.id)}
+                        summary={folderSummaryOf(folder.id)}
                         editing={editingId === folder.id}
                         onOpen={() => openFolderById(folder.id)}
                         onCommit={(name) => commitFolder(folder.id, name)}
@@ -449,8 +502,10 @@ export function Decks() {
 
               {visibleDecks.length > 0 && (
                 <section className="flex flex-col gap-3">
-                  {/* Small breathing room where the "Decks" label used to sit. */}
-                  {visibleFolders.length > 0 && <div aria-hidden className="h-1" />}
+                  {/* Breathing room where the "Decks" label used to sit — also the
+                      first row's clip room, so the top card's tilt/juice doesn't
+                      get cut off by the scroll box when no folders sit above it. */}
+                  <div aria-hidden className="h-1" />
                   <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
                     {visibleDecks.map((deck) => (
                       <DeckCard
