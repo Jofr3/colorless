@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode, Ref } from "react";
+import type { DragEvent, HTMLAttributes, ReactNode, Ref } from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
@@ -92,6 +92,20 @@ function readStoredSortKey(): SortKey {
 }
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
+
+/** A library entry mid-drag, tracked while a drag-and-drop reorg is in flight. */
+type DragItem = { type: "deck" | "folder"; id: string };
+
+/** Drop-target highlight key for the library root (the breadcrumb "All decks"). */
+const ROOT_DROP = "@root";
+
+/** The drag event handlers a drop zone spreads onto its element. */
+type DropZoneHandlers = {
+  onDragOver: (e: DragEvent<HTMLElement>) => void;
+  onDragEnter: (e: DragEvent<HTMLElement>) => void;
+  onDragLeave: (e: DragEvent<HTMLElement>) => void;
+  onDrop: (e: DragEvent<HTMLElement>) => void;
+};
 
 /** Name that swaps to an inline text field while it's being edited. Enter or
     blur commits, Escape reverts; an empty value falls back to the old name. */
@@ -298,22 +312,40 @@ function DeckCard({
   editing,
   folderLabel,
   juiceOnMount,
+  dragging,
   onCommit,
   onRename,
   onDelete,
+  onDragStart,
+  onDragEnd,
 }: {
   deck: Deck;
   editing: boolean;
   folderLabel?: string | null;
   juiceOnMount?: boolean;
+  dragging: boolean;
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }) {
   return (
     // No tile shell — the deck is just the floating card stack, filling its
     // column. `group` drives the hover reveal of the rename/delete actions.
-    <div className="group relative">
+    // Draggable (unless mid-rename) so it can be dropped into a folder, and dims
+    // while it's the entry being dragged.
+    <div
+      draggable={!editing}
+      onDragStart={(e) => {
+        // Firefox won't start a drag unless some data is set on the transfer.
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", deck.id);
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+      className={`group relative${editing ? "" : " cursor-grab active:cursor-grabbing"}${dragging ? " opacity-40" : ""}`}
+    >
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
       <CardBackStack
         juiceOnMount={juiceOnMount}
@@ -345,18 +377,28 @@ function FolderCard({
   folder,
   summary,
   editing,
+  dragging,
+  isDropTarget,
   onOpen,
   onCommit,
   onRename,
   onDelete,
+  onDragStart,
+  onDragEnd,
+  dropProps,
 }: {
   folder: Folder;
   summary: string;
   editing: boolean;
+  dragging: boolean;
+  isDropTarget: boolean;
   onOpen: () => void;
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  dropProps: DropZoneHandlers;
 }) {
   // Folder tiles get the home menu cards' Balatro tilt + juice (no glow/sheen).
   const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
@@ -364,8 +406,19 @@ function FolderCard({
   return (
     // `group relative` wrapper holds the actions still while the card tilts.
     // The actions sit outside the juice + tilt layers so they don't move with
-    // the card (matching DeckCard).
-    <div className="group relative">
+    // the card (matching DeckCard). It doubles as the drag source and a drop
+    // zone: drop a deck or folder here to move it inside this folder.
+    <div
+      draggable={!editing}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", folder.id);
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+      {...dropProps}
+      className={`group relative${editing ? "" : " cursor-grab active:cursor-grabbing"}${dragging ? " opacity-40" : ""}`}
+    >
       <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
       {/* Outer layer carries the transient juice (whole-card squash + wobble). */}
       <div ref={juiceLayerRef} style={juiceStyle}>
@@ -394,6 +447,14 @@ function FolderCard({
           </div>
         </CardShell>
       </div>
+      {/* Accent ring + wash shown while this folder is a live drop target. Fades
+          via opacity so it never nudges the card's layout. */}
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 z-20 rounded-2xl bg-accent/10 ring-2 ring-inset ring-accent transition-opacity duration-150 ${
+          isDropTarget ? "opacity-100" : "opacity-0"
+        }`}
+      />
     </div>
   );
 }
@@ -419,6 +480,13 @@ export function Decks() {
   const [showFilter, setShowFilter] = useState<ShowFilter>(readStoredShowFilter);
   const [sortKey, setSortKey] = useState<SortKey>(readStoredSortKey);
   const [filterOpen, setFilterOpen] = useState(readStoredFilterOpen);
+  // Drag-and-drop reorg state. `dragItem`/`dropTarget` drive the visuals (the
+  // dragged tile dims, the hovered target highlights). The authoritative dragged
+  // entry also lives in a ref so the drop logic never depends on a re-render
+  // landing between dragstart and drop — the closures read the ref, not state.
+  const [dragItem, setDragItem] = useState<DragItem | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const dragItemRef = useRef<DragItem | null>(null);
   const idCounter = useRef(0);
 
   // Persist the rail's open/closed state and the chosen filters so a refresh
@@ -561,6 +629,87 @@ export function Decks() {
     setQuery("");
   };
 
+  // --- Drag-and-drop: move decks/folders between folders. --------------------
+
+  const moveDeck = (deckId: string, folderId: string | null) =>
+    setDecks((prev) => prev.map((d) => (d.id === deckId ? { ...d, folderId } : d)));
+
+  const moveFolder = (folderId: string, parentId: string | null) =>
+    setFolders((prev) => prev.map((f) => (f.id === folderId ? { ...f, parentId } : f)));
+
+  // True when `candidateId` sits anywhere inside `ancestorId`'s subtree. Used to
+  // stop a folder being dropped into one of its own descendants, which would cut
+  // that branch loose into a cycle. The visited guard is belt-and-suspenders.
+  const isDescendantOf = (candidateId: string, ancestorId: string): boolean => {
+    const seen = new Set<string>();
+    let current = folders.find((f) => f.id === candidateId);
+    while (current && !seen.has(current.id)) {
+      if (current.parentId === ancestorId) return true;
+      seen.add(current.id);
+      current = current.parentId ? folders.find((f) => f.id === current?.parentId) : undefined;
+    }
+    return false;
+  };
+
+  const beginDrag = (item: DragItem) => {
+    dragItemRef.current = item;
+    setDragItem(item);
+  };
+
+  // Whether the in-flight drag may land in `targetFolderId` (null = root). Blocks
+  // no-op moves (already there) and folder-into-itself/own-descendant cycles.
+  const canDropOn = (targetFolderId: string | null): boolean => {
+    const item = dragItemRef.current;
+    if (!item) return false;
+    if (item.type === "folder") {
+      if (item.id === targetFolderId) return false;
+      if (targetFolderId && isDescendantOf(targetFolderId, item.id)) return false;
+      return (folders.find((f) => f.id === item.id)?.parentId ?? null) !== targetFolderId;
+    }
+    return (decks.find((d) => d.id === item.id)?.folderId ?? null) !== targetFolderId;
+  };
+
+  const endDrag = () => {
+    dragItemRef.current = null;
+    setDragItem(null);
+    setDropTarget(null);
+  };
+
+  const performDrop = (targetFolderId: string | null) => {
+    const item = dragItemRef.current;
+    if (item && canDropOn(targetFolderId)) {
+      if (item.type === "folder") moveFolder(item.id, targetFolderId);
+      else moveDeck(item.id, targetFolderId);
+    }
+    endDrag();
+  };
+
+  // Drop-zone handlers for a target, keyed by `key` for highlight tracking.
+  // `targetFolderId` is where the dragged entry lands (null = library root).
+  const dropZone = (key: string, targetFolderId: string | null): DropZoneHandlers => ({
+    onDragOver: (e) => {
+      // Cancelling the default is what lets a drop happen at all (and shows the
+      // move cursor); skip it for invalid targets so they read as "no drop".
+      if (!canDropOn(targetFolderId)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    },
+    onDragEnter: () => {
+      if (canDropOn(targetFolderId)) setDropTarget(key);
+    },
+    onDragLeave: (e) => {
+      // Ignore enter/leave churn between child nodes — only clear once the
+      // pointer truly leaves this zone for something outside it.
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        setDropTarget((current) => (current === key ? null : current));
+      }
+    },
+    onDrop: (e) => {
+      e.preventDefault();
+      performDrop(targetFolderId);
+    },
+  });
+
   const isEmpty = visibleFolders.length === 0 && visibleDecks.length === 0;
 
   return (
@@ -650,14 +799,24 @@ export function Decks() {
                 type="button"
                 onClick={() => setOpenFolderId(openFolder.parentId)}
                 aria-label="Up one level"
-                className="group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/[0.07] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+                {...dropZone("@up", openFolder.parentId)}
+                className={`group inline-flex cursor-pointer items-center rounded-full p-1.5 ring-1 ring-inset transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                  dropTarget === "@up"
+                    ? "bg-accent/20 text-white ring-accent"
+                    : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.07] hover:text-white/90"
+                }`}
               >
                 <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               </button>
               <button
                 type="button"
                 onClick={() => setOpenFolderId(null)}
-                className="cursor-pointer rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+                {...dropZone(ROOT_DROP, null)}
+                className={`cursor-pointer rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                  dropTarget === ROOT_DROP
+                    ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
+                    : "text-white/55 hover:text-white/85"
+                }`}
               >
                 All decks
               </button>
@@ -679,7 +838,12 @@ export function Decks() {
                       <button
                         type="button"
                         onClick={() => setOpenFolderId(folder.id)}
-                        className="max-w-[12rem] cursor-pointer truncate rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+                        {...dropZone(`bc:${folder.id}`, folder.id)}
+                        className={`max-w-[12rem] cursor-pointer truncate rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                          dropTarget === `bc:${folder.id}`
+                            ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
+                            : "text-white/55 hover:text-white/85"
+                        }`}
                       >
                         {folder.name}
                       </button>
@@ -719,10 +883,15 @@ export function Decks() {
                           folder={folder}
                           summary={folderSummaryOf(folder.id)}
                           editing={editingId === folder.id}
+                          dragging={dragItem?.type === "folder" && dragItem.id === folder.id}
+                          isDropTarget={dropTarget === folder.id}
                           onOpen={() => openFolderById(folder.id)}
                           onCommit={(name) => commitFolder(folder.id, name)}
                           onRename={() => setEditingId(folder.id)}
                           onDelete={() => deleteFolder(folder.id)}
+                          onDragStart={() => beginDrag({ type: "folder", id: folder.id })}
+                          onDragEnd={endDrag}
+                          dropProps={dropZone(folder.id, folder.id)}
                         />
                       ))}
                     </div>
@@ -743,9 +912,12 @@ export function Decks() {
                           editing={editingId === deck.id}
                           folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
                           juiceOnMount={deck.id === justCreatedDeckId}
+                          dragging={dragItem?.type === "deck" && dragItem.id === deck.id}
                           onCommit={(name) => commitDeck(deck.id, name)}
                           onRename={() => setEditingId(deck.id)}
                           onDelete={() => deleteDeck(deck.id)}
+                          onDragStart={() => beginDrag({ type: "deck", id: deck.id })}
+                          onDragEnd={endDrag}
                         />
                       ))}
                     </div>
