@@ -6,14 +6,7 @@
 // together read as light skating across a tilted glass surface.
 //
 // Kept deliberately faint (peak intensity ~0.06) — it's a glaze, not a flare.
-import {
-  Application,
-  defaultFilterVert,
-  Filter,
-  GlProgram,
-  Graphics,
-  UniformGroup,
-} from "pixi.js";
+import { Application, defaultFilterVert, Filter, GlProgram, Graphics, UniformGroup } from "pixi.js";
 
 // rounded-2xl on the card (1rem). The quad is drawn in CSS px (autoDensity),
 // so this matches the DOM corner radius directly.

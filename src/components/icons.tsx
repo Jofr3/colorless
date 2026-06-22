@@ -232,6 +232,28 @@ export function SearchIcon(props: IconProps) {
   );
 }
 
+/** Sliders — open the deck library's filter & sort menu. Two tracks, each with
+    a filled knob at a different position. */
+export function FilterIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <line x1="3" y1="7.5" x2="21" y2="7.5" />
+      <line x1="3" y1="16.5" x2="21" y2="16.5" />
+      <circle cx="15" cy="7.5" r="2.6" fill="currentColor" />
+      <circle cx="9" cy="16.5" r="2.6" fill="currentColor" />
+    </IconBase>
+  );
+}
+
+/** Check — marks the selected option in the filter menu. */
+export function CheckIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M20 6 9 17l-5-5" />
+    </IconBase>
+  );
+}
+
 /** Plus — "new deck" / create affordances. */
 export function PlusIcon(props: IconProps) {
   return (
@@ -300,10 +322,7 @@ export function HomeIcon(props: IconProps) {
       </mask>
 
       {/* Roof + walls as one solid silhouette */}
-      <path
-        mask="url(#home-door)"
-        d="M12 3.4 21 11v8.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11Z"
-      />
+      <path mask="url(#home-door)" d="M12 3.4 21 11v8.6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11Z" />
     </svg>
   );
 }

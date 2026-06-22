@@ -35,8 +35,7 @@ const JUICE_STYLE: CSSProperties = {
 // Inner layer carries the pointer tilt; its own perspective() makes the 3D
 // transform self-contained, so it composes with the juice on the layer above.
 const TILT_STYLE: CSSProperties = {
-  transform:
-    "perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))",
+  transform: "perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))",
   transition: "transform 140ms cubic-bezier(0.22,0.61,0.36,1)",
   willChange: "transform",
 };

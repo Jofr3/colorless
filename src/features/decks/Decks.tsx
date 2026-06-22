@@ -1,11 +1,13 @@
 import type { HTMLAttributes, ReactNode, Ref } from "react";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
 import {
   ArrowLeftIcon,
+  CheckIcon,
   DecksIcon,
+  FilterIcon,
   FolderIcon,
   PencilIcon,
   PlusIcon,
@@ -29,6 +31,65 @@ const GHOST_BUTTON_CLASS =
 
 const NAME_INPUT_CLASS =
   "pointer-events-auto block w-full min-w-0 select-text truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
+
+// Filter toggle, sized to match the search field's height (p-2.5 + a 20px glyph
+// ≈ the input's py-2.5 + text-sm line). Shares the search bar's glass surface.
+const FILTER_BUTTON_CLASS =
+  "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2.5 ring-1 ring-inset backdrop-blur-md transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+
+/** Which kinds of library entries the grid shows. */
+type ShowFilter = "all" | "decks" | "folders";
+/** Order the grid is sorted in; "default" keeps the natural (newest-first) order. */
+type SortKey = "default" | "name-asc" | "name-desc" | "cards-desc";
+
+const SHOW_OPTIONS: { value: ShowFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "decks", label: "Decks only" },
+  { value: "folders", label: "Folders only" },
+];
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "name-asc", label: "Name (A–Z)" },
+  { value: "name-desc", label: "Name (Z–A)" },
+  { value: "cards-desc", label: "Most cards" },
+];
+
+// The filter rail's state persists across refreshes via localStorage. Each
+// reader validates what it finds and falls back to the default, so a missing or
+// stale value (e.g. an option that no longer exists) can't leave the grid in a
+// broken state.
+const FILTER_OPEN_STORAGE_KEY = "decks.filterOpen";
+const SHOW_FILTER_STORAGE_KEY = "decks.showFilter";
+const SORT_KEY_STORAGE_KEY = "decks.sortKey";
+
+function readStoredFilterOpen(): boolean {
+  try {
+    return localStorage.getItem(FILTER_OPEN_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function readStoredShowFilter(): ShowFilter {
+  try {
+    const value = localStorage.getItem(SHOW_FILTER_STORAGE_KEY);
+    if (SHOW_OPTIONS.some((option) => option.value === value)) return value as ShowFilter;
+  } catch {
+    // ignore — fall back to the default below
+  }
+  return "all";
+}
+
+function readStoredSortKey(): SortKey {
+  try {
+    const value = localStorage.getItem(SORT_KEY_STORAGE_KEY);
+    if (SORT_OPTIONS.some((option) => option.value === value)) return value as SortKey;
+  } catch {
+    // ignore — fall back to the default below
+  }
+  return "default";
+}
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
@@ -122,6 +183,91 @@ function IconButton({
     >
       {children}
     </button>
+  );
+}
+
+/** A single checkable row in the filter section. */
+function FilterRow({
+  label,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onSelect}
+      className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-white/[0.07] focus:outline-none focus-visible:bg-white/[0.07] ${selected ? "text-white" : "text-white/70 hover:text-white/90"}`}
+    >
+      {label}
+      {selected && <CheckIcon className="h-4 w-4 shrink-0" />}
+    </button>
+  );
+}
+
+/** Glass side panel that filters the grid by entry type and sets its sort order.
+    Rendered inline as a rail beside the grid rather than as a floating popover. */
+function FilterSection({
+  show,
+  sort,
+  onShowChange,
+  onSortChange,
+  onReset,
+  canReset,
+}: {
+  show: ShowFilter;
+  sort: SortKey;
+  onShowChange: (value: ShowFilter) => void;
+  onSortChange: (value: SortKey) => void;
+  onReset: () => void;
+  canReset: boolean;
+}) {
+  return (
+    <div className="w-full rounded-2xl bg-white/[0.045] p-3 ring-1 ring-inset ring-white/10 backdrop-blur-md">
+      <div>
+        <p className="px-2.5 pb-1 pt-1 text-[0.7rem] font-semibold uppercase tracking-wider text-white/35">
+          Show
+        </p>
+        {SHOW_OPTIONS.map((option) => (
+          <FilterRow
+            key={option.value}
+            label={option.label}
+            selected={show === option.value}
+            onSelect={() => onShowChange(option.value)}
+          />
+        ))}
+      </div>
+      <div className="my-2 h-px bg-white/10" />
+      <div>
+        <p className="px-2.5 pb-1 pt-1 text-[0.7rem] font-semibold uppercase tracking-wider text-white/35">
+          Sort by
+        </p>
+        {SORT_OPTIONS.map((option) => (
+          <FilterRow
+            key={option.value}
+            label={option.label}
+            selected={sort === option.value}
+            onSelect={() => onSortChange(option.value)}
+          />
+        ))}
+      </div>
+      {canReset && (
+        <>
+          <div className="my-2 h-px bg-white/10" />
+          <button
+            type="button"
+            onClick={onReset}
+            className="w-full cursor-pointer rounded-lg px-2.5 py-1.5 text-left text-sm text-white/55 transition-colors hover:bg-white/[0.07] hover:text-white/85 focus:outline-none focus-visible:bg-white/[0.07]"
+          >
+            Reset filters
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -269,7 +415,26 @@ export function Decks() {
   const [editingId, setEditingId] = useState<string | null>(null);
   // The most recently created deck — its tile pops with a juice bounce on mount.
   const [justCreatedDeckId, setJustCreatedDeckId] = useState<string | null>(null);
+  // Filter & sort, shown as a side rail toggled by the button left of the search.
+  const [showFilter, setShowFilter] = useState<ShowFilter>(readStoredShowFilter);
+  const [sortKey, setSortKey] = useState<SortKey>(readStoredSortKey);
+  const [filterOpen, setFilterOpen] = useState(readStoredFilterOpen);
   const idCounter = useRef(0);
+
+  // Persist the rail's open/closed state and the chosen filters so a refresh
+  // restores them. Writes can fail (private mode, quota) — the controls still
+  // work for the session, they just won't be remembered.
+  useEffect(() => {
+    try {
+      localStorage.setItem(FILTER_OPEN_STORAGE_KEY, filterOpen ? "1" : "0");
+      localStorage.setItem(SHOW_FILTER_STORAGE_KEY, showFilter);
+      localStorage.setItem(SORT_KEY_STORAGE_KEY, sortKey);
+    } catch {
+      // ignore — persistence is best-effort
+    }
+  }, [filterOpen, showFilter, sortKey]);
+
+  const filterActive = showFilter !== "all" || sortKey !== "default";
 
   const genId = (prefix: string) => {
     idCounter.current += 1;
@@ -325,6 +490,26 @@ export function Decks() {
     visibleDecks = decks.filter((d) => d.folderId === null);
   }
 
+  // Apply the filter menu's "Show" choice on top of the current view.
+  if (showFilter === "decks") visibleFolders = [];
+  else if (showFilter === "folders") visibleDecks = [];
+
+  // …and its sort order. "Most cards" only meaningfully orders decks, so
+  // folders fall back to name there. Each branch sorts copies, never the state.
+  if (sortKey !== "default") {
+    const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+    if (sortKey === "name-desc") {
+      visibleFolders = [...visibleFolders].sort((a, b) => byName(b, a));
+      visibleDecks = [...visibleDecks].sort((a, b) => byName(b, a));
+    } else if (sortKey === "cards-desc") {
+      visibleFolders = [...visibleFolders].sort(byName);
+      visibleDecks = [...visibleDecks].sort((a, b) => b.cardCount - a.cardCount || byName(a, b));
+    } else {
+      visibleFolders = [...visibleFolders].sort(byName);
+      visibleDecks = [...visibleDecks].sort(byName);
+    }
+  }
+
   const handleNewDeck = () => {
     const id = genId("deck");
     const tint = (idCounter.current * 47) % 360;
@@ -365,9 +550,7 @@ export function Decks() {
     const parentId = folders.find((f) => f.id === id)?.parentId ?? null;
     setDecks((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: parentId } : d)));
     setFolders((prev) =>
-      prev
-        .filter((f) => f.id !== id)
-        .map((f) => (f.parentId === id ? { ...f, parentId } : f)),
+      prev.filter((f) => f.id !== id).map((f) => (f.parentId === id ? { ...f, parentId } : f)),
     );
     if (openFolderId === id) setOpenFolderId(parentId);
     if (editingId === id) setEditingId(null);
@@ -386,146 +569,193 @@ export function Decks() {
       {/* pt-16 keeps the toolbar clear of the floating top-right home button.
           Fixed to the viewport height (h-svh + overflow-hidden) so only the card
           grid below scrolls — the toolbar and breadcrumb stay put. */}
-      <main className="mx-auto flex h-svh w-full max-w-4xl flex-col gap-6 overflow-hidden px-6 pt-16">
-        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:flex-1">
-            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search decks and folders"
-              aria-label="Search decks and folders"
-              className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={handleNewFolder} className={GHOST_BUTTON_CLASS}>
-              <FolderIcon className="h-4 w-4" fill="currentColor" />
-              New folder
-            </button>
-            <button type="button" onClick={handleNewDeck} className={PRIMARY_BUTTON_CLASS}>
-              <PlusIcon className="h-4 w-4" />
-              New deck
-            </button>
-          </div>
-        </div>
-
-        {openFolder && !searching && (
-          <nav
-            aria-label="Breadcrumb"
-            className="flex shrink-0 flex-wrap items-center gap-2 text-sm"
+      <div className="relative mx-auto flex h-svh w-full max-w-4xl flex-col gap-6 px-6 pt-16">
+        {/* Filter rail — the toggle button and, when open, the options panel
+            beneath it. From min-[1380px] up (where the centred column leaves a
+            wide enough margin) it's lifted out of flow — absolute, pinned just
+            left of the column via right-full — so it never shifts the toolbar or
+            grid. Below that it falls back to stacking above them. */}
+        <aside
+          aria-label="Filter and sort"
+          className="flex w-full shrink-0 flex-col items-end gap-3 sm:w-56 min-[1380px]:absolute min-[1380px]:right-full min-[1380px]:top-16 min-[1380px]:-mr-2 min-[1380px]:gap-4"
+        >
+          <button
+            type="button"
+            aria-label="Filter and sort"
+            aria-expanded={filterOpen}
+            onClick={() => setFilterOpen((open) => !open)}
+            className={`${FILTER_BUTTON_CLASS} ${
+              filterOpen || filterActive
+                ? "bg-white/[0.09] text-white ring-white/25"
+                : "bg-white/[0.045] text-white/70 ring-white/10 hover:bg-white/[0.08] hover:text-white/90"
+            }`}
           >
-            {/* Steps up one level — to the parent folder, or back to the root. */}
-            <button
-              type="button"
-              onClick={() => setOpenFolderId(openFolder.parentId)}
-              aria-label="Up one level"
-              className="group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/[0.07] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
-            >
-              <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpenFolderId(null)}
-              className="cursor-pointer rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
-            >
-              All decks
-            </button>
-            {folderPath(openFolder.id).map((folder, i, path) => {
-              const isCurrent = i === path.length - 1;
-              return (
-                <Fragment key={folder.id}>
-                  <span aria-hidden className="text-white/30">
-                    /
-                  </span>
-                  {isCurrent ? (
-                    <span
-                      aria-current="page"
-                      className="max-w-[12rem] truncate font-medium text-white/80"
-                    >
-                      {folder.name}
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setOpenFolderId(folder.id)}
-                      className="max-w-[12rem] cursor-pointer truncate rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
-                    >
-                      {folder.name}
-                    </button>
-                  )}
-                </Fragment>
-              );
-            })}
-          </nav>
-        )}
+            <FilterIcon className="h-5 w-5" />
+            {filterActive && (
+              <span
+                aria-hidden
+                className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-[#0e0e14]"
+              />
+            )}
+          </button>
+          {filterOpen && (
+            <FilterSection
+              show={showFilter}
+              sort={sortKey}
+              onShowChange={setShowFilter}
+              onSortChange={setSortKey}
+              canReset={filterActive}
+              onReset={() => {
+                setShowFilter("all");
+                setSortKey("default");
+              }}
+            />
+          )}
+        </aside>
+        {/* No overflow clip here: the ScrollArea below clips/scrolls itself, and
+            its -mx-3 gutter gives the cards horizontal room for their tilt/juice.
+            Clipping x here would cut that off right at the card edge. */}
+        <main className="flex min-w-0 flex-1 flex-col">
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative w-full min-w-0 sm:flex-1">
+              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search decks and folders"
+                aria-label="Search decks and folders"
+                className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={handleNewFolder} className={GHOST_BUTTON_CLASS}>
+                <FolderIcon className="h-4 w-4" fill="currentColor" />
+                New folder
+              </button>
+              <button type="button" onClick={handleNewDeck} className={PRIMARY_BUTTON_CLASS}>
+                <PlusIcon className="h-4 w-4" />
+                New deck
+              </button>
+            </div>
+          </div>
 
-        {/* Internal scroll area: the folders + decks scroll here while the
+          {openFolder && !searching && (
+            <nav
+              aria-label="Breadcrumb"
+              className="mt-3 flex shrink-0 flex-wrap items-center gap-2 text-sm"
+            >
+              {/* Steps up one level — to the parent folder, or back to the root. */}
+              <button
+                type="button"
+                onClick={() => setOpenFolderId(openFolder.parentId)}
+                aria-label="Up one level"
+                className="group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/[0.07] hover:text-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+              >
+                <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpenFolderId(null)}
+                className="cursor-pointer rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+              >
+                All decks
+              </button>
+              {folderPath(openFolder.id).map((folder, i, path) => {
+                const isCurrent = i === path.length - 1;
+                return (
+                  <Fragment key={folder.id}>
+                    <span aria-hidden className="text-white/30">
+                      /
+                    </span>
+                    {isCurrent ? (
+                      <span
+                        aria-current="page"
+                        className="max-w-[12rem] truncate font-medium text-white/80"
+                      >
+                        {folder.name}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setOpenFolderId(folder.id)}
+                        className="max-w-[12rem] cursor-pointer truncate rounded text-white/55 transition-colors hover:text-white/85 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+                      >
+                        {folder.name}
+                      </button>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </nav>
+          )}
+
+          {/* Internal scroll area: the folders + decks scroll here while the
             toolbar above stays fixed. ScrollArea hides the native bar and draws a
             custom thumb in the right gutter, so the grid keeps its full width and
             never reflows for the bar. -mx-3/px-3 keeps the cells aligned to the
             column edge while giving card edges clip room. */}
-        <ScrollArea className="-mx-3 px-3 pb-12" trackTop={16} trackBottom={16}>
-          {isEmpty ? (
-            <EmptyState
-              title={
-                searching
-                  ? `No results for "${trimmed}"`
-                  : openFolder
-                    ? "This folder is empty"
-                    : "No decks yet"
-              }
-            />
-          ) : (
-            <div className="flex flex-col gap-6">
-              {visibleFolders.length > 0 && (
-                <section className="flex flex-col gap-3">
-                  {/* Small breathing room where the "Folders" label used to sit. */}
-                  <div aria-hidden className="h-1" />
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {visibleFolders.map((folder) => (
-                      <FolderCard
-                        key={folder.id}
-                        folder={folder}
-                        summary={folderSummaryOf(folder.id)}
-                        editing={editingId === folder.id}
-                        onOpen={() => openFolderById(folder.id)}
-                        onCommit={(name) => commitFolder(folder.id, name)}
-                        onRename={() => setEditingId(folder.id)}
-                        onDelete={() => deleteFolder(folder.id)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
+          <ScrollArea className="-mx-3 px-3 pb-12" trackTop={16} trackBottom={16}>
+            {isEmpty ? (
+              <EmptyState
+                title={
+                  searching
+                    ? `No results for "${trimmed}"`
+                    : openFolder
+                      ? "This folder is empty"
+                      : "No decks yet"
+                }
+              />
+            ) : (
+              <div className="flex flex-col">
+                {visibleFolders.length > 0 && (
+                  <section className="flex flex-col gap-3">
+                    {/* Small breathing room where the "Folders" label used to sit. */}
+                    <div aria-hidden className="h-1" />
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {visibleFolders.map((folder) => (
+                        <FolderCard
+                          key={folder.id}
+                          folder={folder}
+                          summary={folderSummaryOf(folder.id)}
+                          editing={editingId === folder.id}
+                          onOpen={() => openFolderById(folder.id)}
+                          onCommit={(name) => commitFolder(folder.id, name)}
+                          onRename={() => setEditingId(folder.id)}
+                          onDelete={() => deleteFolder(folder.id)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
 
-              {visibleDecks.length > 0 && (
-                <section className="flex flex-col gap-3">
-                  {/* Breathing room where the "Decks" label used to sit — also the
+                {visibleDecks.length > 0 && (
+                  <section className="flex flex-col gap-3">
+                    {/* Breathing room where the "Decks" label used to sit — also the
                       first row's clip room, so the top card's tilt/juice doesn't
                       get cut off by the scroll box when no folders sit above it. */}
-                  <div aria-hidden className="h-1" />
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
-                    {visibleDecks.map((deck) => (
-                      <DeckCard
-                        key={deck.id}
-                        deck={deck}
-                        editing={editingId === deck.id}
-                        folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
-                        juiceOnMount={deck.id === justCreatedDeckId}
-                        onCommit={(name) => commitDeck(deck.id, name)}
-                        onRename={() => setEditingId(deck.id)}
-                        onDelete={() => deleteDeck(deck.id)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          )}
-        </ScrollArea>
-      </main>
+                    <div aria-hidden className="h-1" />
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+                      {visibleDecks.map((deck) => (
+                        <DeckCard
+                          key={deck.id}
+                          deck={deck}
+                          editing={editingId === deck.id}
+                          folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
+                          juiceOnMount={deck.id === justCreatedDeckId}
+                          onCommit={(name) => commitDeck(deck.id, name)}
+                          onRename={() => setEditingId(deck.id)}
+                          onDelete={() => deleteDeck(deck.id)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+        </main>
+      </div>
     </AppBackdrop>
   );
 }

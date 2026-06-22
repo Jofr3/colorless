@@ -70,8 +70,9 @@ export function CardBackStack({
   /** Pop the top card with a juice bounce when it first appears (new decks). */
   juiceOnMount?: boolean;
 }) {
-  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
-    useTiltJuice<HTMLDivElement>({ juiceOnMount });
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLDivElement>({
+    juiceOnMount,
+  });
   return (
     <div className="pointer-events-none relative aspect-[5/7] w-full">
       {LAYERS.map((l, i) => {
