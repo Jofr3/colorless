@@ -1,0 +1,458 @@
+import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
+
+// Pointer-driven drag for the decks library, ported from the simulator's card
+// drag (features/playmat/pixi/CardView.ts). Native HTML5 drag-and-drop can only
+// dim the source and let the browser drag a frozen ghost image; here we lift a
+// live clone of the tile into a body-level overlay and run the simulator's exact
+// spring + juice on it, so a folder/deck "picks up", spring-follows the cursor
+// with a velocity-driven tilt, and pops into its target (or wobbles back home).
+//
+// Spring + juice constants below are copied verbatim from CardView so the two
+// drags feel identical; see that file for the Balatro source references.
+
+/** A library entry mid-drag. */
+export type DragItem = { type: "deck" | "folder"; id: string };
+
+interface UseDeckDragOptions {
+  /** Whether `item` may land in `targetFolderId` (null = library root). */
+  canDrop: (item: DragItem, targetFolderId: string | null) => boolean;
+  /** Commit an accepted drop. */
+  onDrop: (item: DragItem, targetFolderId: string | null) => void;
+}
+
+// --- Spring (CardView.ts: SPRING_C_XY / SPRING_K_XY / SPRING_MAX_VEL etc.) ---
+const SPRING_C_XY = 50;
+const SPRING_K_XY = 35;
+const SPRING_MAX_VEL = 70;
+const SPRING_MAX_DT = 1 / 30;
+const SPRING_C_ROT_DRAG = 20;
+
+// Velocity-driven drag tilt (CardView.ts: DRAG_VEL_REF / DRAG_TILT_EXPONENT).
+const DRAG_VEL_REF = 1200;
+const DRAG_TILT_EXPONENT = 1.3;
+const TILT_CAP = 0.22;
+
+// Juice envelope (CardView.ts: evaluateJuice — Balatro move_juice).
+const JUICE_DURATION = 0.4;
+const JUICE_SCALE_FREQ = 50.8;
+const JUICE_ROT_FREQ = 40.8;
+
+// Emphasis while picked up: +0.10 scale and a small upward lift, matching
+// CardView.applyEmphasisTween (drag scale 1.1) + computeDragLiftOffset (14px).
+const PICKUP_SCALE = 1.1;
+const PICKUP_LIFT_PX = 14;
+const ACCEPTED_LAND_SCALE = 0.55;
+
+// Pickup / land / reject pops (CardView.startDrag / applyReleaseMotion).
+const PICKUP_JUICE = { amount: 0.04, rotation: 0.02 };
+const LAND_JUICE = { amount: 0.07, rotation: 0 };
+const REJECT_JUICE = { amount: 0.025, rotation: 0.18 };
+
+// How far the pointer must travel before a press becomes a drag (vs. a click).
+const DRAG_THRESHOLD_PX = 5;
+// Release fly-out / spring-home duration before the ghost is removed.
+const RELEASE_MS = 300;
+
+const RAD_TO_DEG = 180 / Math.PI;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+interface Vel {
+  x: number;
+  y: number;
+  rot: number;
+}
+
+interface Juice {
+  scaleAmt: number;
+  rotAmt: number;
+  start: number;
+}
+
+// CardView.springXY: exp(-50dt) damping, *35dt stiffness.
+function springXY(current: number, desired: number, dt: number, vel: Vel, key: "x" | "y") {
+  const damping = Math.exp(-SPRING_C_XY * dt);
+  vel[key] = damping * vel[key] + (1 - damping) * (desired - current) * SPRING_K_XY * dt;
+  const next = current + vel[key];
+  if (Math.abs(next - desired) < 0.01 && Math.abs(vel[key]) < 0.01) {
+    vel[key] = 0;
+    return desired;
+  }
+  return next;
+}
+
+// CardView.springScalar: exp(-c·dt) damping, no dt on the stiffness term.
+function springScalar(current: number, desired: number, dt: number, c: number, vel: Vel) {
+  const damping = Math.exp(-c * dt);
+  vel.rot = damping * vel.rot + (1 - damping) * (desired - current);
+  const next = current + vel.rot;
+  if (Math.abs(next - desired) < 0.001 && Math.abs(vel.rot) < 0.001) {
+    vel.rot = 0;
+    return desired;
+  }
+  return next;
+}
+
+function clampXYVel(vel: Vel, dt: number) {
+  const maxVel = SPRING_MAX_VEL * dt;
+  const magSq = vel.x * vel.x + vel.y * vel.y;
+  if (magSq > maxVel * maxVel) {
+    const mag = Math.sqrt(magSq);
+    vel.x = (vel.x / mag) * maxVel;
+    vel.y = (vel.y / mag) * maxVel;
+  }
+}
+
+function evalJuice(juice: Juice | null, nowSec: number) {
+  if (!juice) return null;
+  const elapsed = nowSec - juice.start;
+  const remaining = (JUICE_DURATION - elapsed) / JUICE_DURATION;
+  if (remaining <= 0) return null;
+  return {
+    scale: juice.scaleAmt * Math.sin(JUICE_SCALE_FREQ * elapsed) * remaining ** 3,
+    rotation: juice.rotAmt * Math.sin(JUICE_ROT_FREQ * elapsed) * remaining ** 2,
+  };
+}
+
+interface Drag {
+  item: DragItem;
+  sourceEl: HTMLElement;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  // Set once the pointer crosses the drag threshold; until then it's a click.
+  started: boolean;
+  pointer: { x: number; y: number };
+  // Offset from the ghost centre to the grab point, so that point stays under
+  // the cursor.
+  grab: { x: number; y: number };
+  cur: { x: number; y: number; rot: number };
+  vel: Vel;
+  emph: number;
+  lift: number;
+  opacity: number;
+  juice: Juice | null;
+  reduced: boolean;
+  halfW: number;
+  halfH: number;
+  wrapper: HTMLElement | null;
+  raf: number | null;
+  lastFrame: number;
+  // Live drop target under the cursor (only set when canDrop allows it).
+  dropFolderId: string | null;
+  dropTargetEl: HTMLElement | null;
+  dropOk: boolean;
+  lastDropKey: string | null;
+  // Release phase.
+  releasing: boolean;
+  releaseStart: number;
+  releaseCenter: { x: number; y: number };
+  accepted: boolean;
+  pendingFolderId: string | null;
+}
+
+function centerOf(el: HTMLElement) {
+  const rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+// Build the floating clone. Tilt/juice CSS vars are stripped so the lifted card
+// reads as a clean, upright tile rather than freezing whatever hover lean it
+// had at grab time.
+function makeGhost(source: HTMLElement, rect: DOMRect) {
+  const clone = source.cloneNode(true) as HTMLElement;
+  const resetVars = (el: HTMLElement) => {
+    for (const prop of ["--rx", "--ry", "--s", "--js", "--jr"]) {
+      el.style.removeProperty(prop);
+    }
+  };
+  resetVars(clone);
+  for (const el of clone.querySelectorAll<HTMLElement>("[style]")) resetVars(el);
+  clone.style.width = `${rect.width}px`;
+  clone.style.height = `${rect.height}px`;
+  clone.style.margin = "0";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "deck-drag-ghost";
+  wrapper.style.width = `${rect.width}px`;
+  wrapper.style.height = `${rect.height}px`;
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+  return wrapper;
+}
+
+export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
+  const [dragItem, setDragItem] = useState<DragItem | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const dragRef = useRef<Drag | null>(null);
+  // Keep the latest callbacks reachable from the stable handlers below.
+  const optsRef = useRef({ canDrop, onDrop });
+  optsRef.current = { canDrop, onDrop };
+
+  const finalize = useCallback(() => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    if (drag.raf !== null) cancelAnimationFrame(drag.raf);
+    drag.wrapper?.remove();
+    document.body.style.cursor = "";
+    document.body.classList.remove("decks-dragging");
+    const { item, accepted, pendingFolderId } = drag;
+    dragRef.current = null;
+    // Commit the move before un-hiding the source so the tile re-renders in its
+    // new spot in one pass — no flash of the entry back in its old slot.
+    if (accepted) optsRef.current.onDrop(item, pendingFolderId);
+    setDragItem(null);
+    setDropTarget(null);
+  }, []);
+
+  const tick = useCallback(() => {
+    const drag = dragRef.current;
+    if (!drag || !drag.wrapper) return;
+
+    const now = performance.now();
+    const dt = Math.min((now - drag.lastFrame) / 1000, SPRING_MAX_DT);
+    drag.lastFrame = now;
+
+    const desired = drag.releasing
+      ? drag.releaseCenter
+      : { x: drag.pointer.x - drag.grab.x, y: drag.pointer.y - drag.grab.y };
+
+    drag.cur.x = springXY(drag.cur.x, desired.x, dt, drag.vel, "x");
+    drag.cur.y = springXY(drag.cur.y, desired.y, dt, drag.vel, "y");
+
+    // Drag tilt comes from the position spring's own velocity (CardView does
+    // the same) — quiet at low speed, ramping to the cap on a fast throw.
+    let velTilt = 0;
+    if (!drag.reduced && !drag.releasing) {
+      const velSec = drag.vel.x / Math.max(dt, 0.001);
+      const ratio = Math.abs(velSec) / DRAG_VEL_REF;
+      velTilt = clamp(
+        Math.sign(velSec) * ratio ** DRAG_TILT_EXPONENT * TILT_CAP,
+        -TILT_CAP,
+        TILT_CAP,
+      );
+    }
+    clampXYVel(drag.vel, dt);
+    drag.cur.rot = springScalar(drag.cur.rot, velTilt, dt, SPRING_C_ROT_DRAG, drag.vel);
+
+    // Emphasis scale, lift and opacity ease toward their phase targets.
+    const emphTarget = drag.releasing ? (drag.accepted ? ACCEPTED_LAND_SCALE : 1) : PICKUP_SCALE;
+    const liftTarget = drag.releasing ? 0 : PICKUP_LIFT_PX;
+    const opacityTarget = drag.releasing && drag.accepted ? 0 : 1;
+    const ease = drag.reduced ? 1 : 1 - Math.exp(-14 * dt);
+    drag.emph += (emphTarget - drag.emph) * ease;
+    drag.lift += (liftTarget - drag.lift) * ease;
+    drag.opacity += (opacityTarget - drag.opacity) * (drag.reduced ? 1 : 1 - Math.exp(-12 * dt));
+
+    const juice = drag.reduced ? null : evalJuice(drag.juice, now / 1000);
+    if (!juice) drag.juice = null;
+    const juiceScale = juice ? juice.scale : 0;
+    // *2 matches move_r's juice multiplier (CardView.applyJuiceTransform).
+    const juiceRot = juice ? juice.rotation * 2 : 0;
+
+    const scale = Math.max(0.01, drag.emph * (1 + juiceScale));
+    const rotDeg = (drag.cur.rot + juiceRot) * RAD_TO_DEG;
+    const cx = drag.cur.x;
+    const cy = drag.cur.y - drag.lift;
+    drag.wrapper.style.transform = `translate(${cx - drag.halfW}px, ${cy - drag.halfH}px) rotate(${rotDeg}deg) scale(${scale})`;
+    drag.wrapper.style.opacity = `${drag.opacity}`;
+
+    if (drag.releasing && now - drag.releaseStart >= (drag.reduced ? 0 : RELEASE_MS)) {
+      finalize();
+      return;
+    }
+    drag.raf = requestAnimationFrame(tick);
+  }, [finalize]);
+
+  // A click fires right after a real drag (pointerup → click). Swallow that one
+  // click so dragging a folder onto a target doesn't also "open" it.
+  const suppressNextClick = useCallback(() => {
+    const handler = (event: Event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      window.removeEventListener("click", handler, true);
+    };
+    window.addEventListener("click", handler, true);
+    window.setTimeout(() => window.removeEventListener("click", handler, true), 350);
+  }, []);
+
+  const updateDropTarget = useCallback((x: number, y: number) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const hit = document.elementFromPoint(x, y);
+    const targetEl = hit?.closest<HTMLElement>("[data-drop-key]") ?? null;
+    let key: string | null = null;
+    let folderId: string | null = null;
+    let ok = false;
+    if (targetEl) {
+      key = targetEl.dataset.dropKey ?? null;
+      const raw = targetEl.dataset.dropFolder ?? "";
+      folderId = raw === "" ? null : raw;
+      ok = optsRef.current.canDrop(drag.item, folderId);
+    }
+    drag.dropOk = ok;
+    drag.dropFolderId = ok ? folderId : null;
+    drag.dropTargetEl = ok ? targetEl : null;
+    const nextKey = ok ? key : null;
+    if (drag.lastDropKey !== nextKey) {
+      drag.lastDropKey = nextKey;
+      setDropTarget(nextKey);
+    }
+  }, []);
+
+  const beginDrag = useCallback(
+    (drag: Drag) => {
+      const rect = drag.sourceEl.getBoundingClientRect();
+      drag.wrapper = makeGhost(drag.sourceEl, rect);
+      drag.halfW = rect.width / 2;
+      drag.halfH = rect.height / 2;
+      const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      drag.cur = { x: center.x, y: center.y, rot: 0 };
+      drag.vel = { x: 0, y: 0, rot: 0 };
+      // Lock the grab point so the spot the user grabbed stays under the cursor.
+      drag.grab = { x: drag.startX - center.x, y: drag.startY - center.y };
+      drag.emph = 1;
+      drag.lift = 0;
+      drag.opacity = 1;
+      drag.started = true;
+      drag.lastFrame = performance.now();
+      if (!drag.reduced) {
+        drag.juice = {
+          scaleAmt: PICKUP_JUICE.amount,
+          rotAmt: PICKUP_JUICE.rotation,
+          start: performance.now() / 1000,
+        };
+      }
+      suppressNextClick();
+      document.body.style.cursor = "grabbing";
+      document.body.classList.add("decks-dragging");
+      setDragItem(drag.item);
+      drag.raf = requestAnimationFrame(tick);
+    },
+    [suppressNextClick, tick],
+  );
+
+  const onPointerMove = useCallback(
+    (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      if (!drag.started) {
+        if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) <= DRAG_THRESHOLD_PX) {
+          return;
+        }
+        beginDrag(drag);
+      }
+      event.preventDefault();
+      drag.pointer = { x: event.clientX, y: event.clientY };
+      updateDropTarget(event.clientX, event.clientY);
+    },
+    [beginDrag, updateDropTarget],
+  );
+
+  const onPointerUp = useCallback(
+    (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      if (!drag.started) {
+        // Never crossed the threshold — a plain click; let it through.
+        dragRef.current = null;
+        return;
+      }
+      const accepted = drag.dropOk && !!drag.dropTargetEl;
+      drag.accepted = accepted;
+      drag.pendingFolderId = accepted ? drag.dropFolderId : null;
+      drag.releasing = true;
+      drag.releaseStart = performance.now();
+      drag.releaseCenter = centerOf(accepted ? (drag.dropTargetEl as HTMLElement) : drag.sourceEl);
+      if (!drag.reduced) {
+        const pop = accepted ? LAND_JUICE : REJECT_JUICE;
+        const sign = drag.startX % 2 < 1 ? 1 : -1;
+        drag.juice = {
+          scaleAmt: pop.amount,
+          rotAmt: pop.rotation * (accepted ? 1 : sign),
+          start: performance.now() / 1000,
+        };
+      }
+      // The release fly-out + commit normally finishes inside the rAF tick. rAF
+      // is paused while the tab is hidden, so back the commit with a timer too:
+      // whichever fires first wins (finalize is idempotent), and the move never
+      // hangs if the user tabs away mid-drag. The identity guard stops a stale
+      // timer from finalizing a later drag.
+      const releasing = drag;
+      window.setTimeout(
+        () => {
+          if (dragRef.current === releasing) finalize();
+        },
+        (drag.reduced ? 0 : RELEASE_MS) + 80,
+      );
+    },
+    [finalize, onPointerMove],
+  );
+
+  const startDrag = useCallback(
+    (item: DragItem, event: ReactPointerEvent<HTMLElement>) => {
+      if (event.button !== 0 || dragRef.current) return;
+      // Don't start a drag from the rename/delete actions or an inline editor.
+      if ((event.target as HTMLElement).closest("[data-card-actions], input")) return;
+      const sourceEl = event.currentTarget;
+      dragRef.current = {
+        item,
+        sourceEl,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        started: false,
+        pointer: { x: event.clientX, y: event.clientY },
+        grab: { x: 0, y: 0 },
+        cur: { x: 0, y: 0, rot: 0 },
+        vel: { x: 0, y: 0, rot: 0 },
+        emph: 1,
+        lift: 0,
+        opacity: 1,
+        juice: null,
+        reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        halfW: 0,
+        halfH: 0,
+        wrapper: null,
+        raf: null,
+        lastFrame: 0,
+        dropFolderId: null,
+        dropTargetEl: null,
+        dropOk: false,
+        lastDropKey: null,
+        releasing: false,
+        releaseStart: 0,
+        releaseCenter: { x: 0, y: 0 },
+        accepted: false,
+        pendingFolderId: null,
+      };
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
+    },
+    [onPointerMove, onPointerUp],
+  );
+
+  // Tear down a drag still in flight if the component unmounts mid-gesture.
+  useEffect(() => {
+    return () => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (drag.raf !== null) cancelAnimationFrame(drag.raf);
+      drag.wrapper?.remove();
+      document.body.style.cursor = "";
+      document.body.classList.remove("decks-dragging");
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      dragRef.current = null;
+    };
+  }, [onPointerMove, onPointerUp]);
+
+  return { dragItem, dropTarget, startDrag };
+}

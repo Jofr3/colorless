@@ -1,4 +1,4 @@
-import type { DragEvent, HTMLAttributes, ReactNode, Ref } from "react";
+import type { HTMLAttributes, PointerEvent as ReactPointerEvent, ReactNode, Ref } from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
@@ -17,6 +17,7 @@ import {
 import { CardBackStack } from "./CardBackStack";
 import { ScrollArea } from "./ScrollArea";
 import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
+import { type DragItem, useDeckDrag } from "./useDeckDrag";
 import "./decks.css";
 
 // The accent button is the inverse of the app's glass buttons: a light accent
@@ -93,19 +94,17 @@ function readStoredSortKey(): SortKey {
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
-/** A library entry mid-drag, tracked while a drag-and-drop reorg is in flight. */
-type DragItem = { type: "deck" | "folder"; id: string };
-
 /** Drop-target highlight key for the library root (the breadcrumb "All decks"). */
 const ROOT_DROP = "@root";
 
-/** The drag event handlers a drop zone spreads onto its element. */
-type DropZoneHandlers = {
-  onDragOver: (e: DragEvent<HTMLElement>) => void;
-  onDragEnter: (e: DragEvent<HTMLElement>) => void;
-  onDragLeave: (e: DragEvent<HTMLElement>) => void;
-  onDrop: (e: DragEvent<HTMLElement>) => void;
-};
+/** Data attributes that mark an element as a drop target for the pointer drag
+    (useDeckDrag hit-tests these via elementFromPoint). `key` drives the live
+    highlight; `folderId` is where a dropped entry lands (null = library root,
+    encoded as an empty string). */
+const dropAttrs = (key: string, folderId: string | null) => ({
+  "data-drop-key": key,
+  "data-drop-folder": folderId ?? "",
+});
 
 /** Name that swaps to an inline text field while it's being edited. Enter or
     blur commits, Escape reverts; an empty value falls back to the old name. */
@@ -296,7 +295,10 @@ function CardActions({
   onDelete: () => void;
 }) {
   return (
-    <div className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100">
+    <div
+      data-card-actions
+      className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100"
+    >
       <IconButton label={`Rename ${label}`} onClick={onRename}>
         <PencilIcon className="h-3.5 w-3.5" />
       </IconButton>
@@ -316,8 +318,7 @@ function DeckCard({
   onCommit,
   onRename,
   onDelete,
-  onDragStart,
-  onDragEnd,
+  onPointerDown,
 }: {
   deck: Deck;
   editing: boolean;
@@ -327,24 +328,16 @@ function DeckCard({
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
+  onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
 }) {
   return (
     // No tile shell — the deck is just the floating card stack, filling its
     // column. `group` drives the hover reveal of the rename/delete actions.
-    // Draggable (unless mid-rename) so it can be dropped into a folder, and dims
-    // while it's the entry being dragged.
+    // A pointer-press drags it into a folder (useDeckDrag); while it's the entry
+    // being dragged the original is hidden, so only the floating clone shows.
     <div
-      draggable={!editing}
-      onDragStart={(e) => {
-        // Firefox won't start a drag unless some data is set on the transfer.
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", deck.id);
-        onDragStart();
-      }}
-      onDragEnd={onDragEnd}
-      className={`group relative${editing ? "" : " cursor-grab active:cursor-grabbing"}${dragging ? " opacity-40" : ""}`}
+      onPointerDown={editing ? undefined : onPointerDown}
+      className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
     >
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
       <CardBackStack
@@ -383,9 +376,7 @@ function FolderCard({
   onCommit,
   onRename,
   onDelete,
-  onDragStart,
-  onDragEnd,
-  dropProps,
+  onPointerDown,
 }: {
   folder: Folder;
   summary: string;
@@ -396,9 +387,7 @@ function FolderCard({
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  dropProps: DropZoneHandlers;
+  onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
 }) {
   // Folder tiles get the home menu cards' Balatro tilt + juice (no glow/sheen).
   const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
@@ -407,17 +396,13 @@ function FolderCard({
     // `group relative` wrapper holds the actions still while the card tilts.
     // The actions sit outside the juice + tilt layers so they don't move with
     // the card (matching DeckCard). It doubles as the drag source and a drop
-    // zone: drop a deck or folder here to move it inside this folder.
+    // zone (the data-drop-* attrs): drop a deck or folder here to move it
+    // inside this folder. While it's the entry being dragged the original is
+    // hidden so only the floating clone shows.
     <div
-      draggable={!editing}
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", folder.id);
-        onDragStart();
-      }}
-      onDragEnd={onDragEnd}
-      {...dropProps}
-      className={`group relative${editing ? "" : " cursor-grab active:cursor-grabbing"}${dragging ? " opacity-40" : ""}`}
+      onPointerDown={editing ? undefined : onPointerDown}
+      {...dropAttrs(folder.id, folder.id)}
+      className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
     >
       <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
       {/* Outer layer carries the transient juice (whole-card squash + wobble). */}
@@ -480,13 +465,6 @@ export function Decks() {
   const [showFilter, setShowFilter] = useState<ShowFilter>(readStoredShowFilter);
   const [sortKey, setSortKey] = useState<SortKey>(readStoredSortKey);
   const [filterOpen, setFilterOpen] = useState(readStoredFilterOpen);
-  // Drag-and-drop reorg state. `dragItem`/`dropTarget` drive the visuals (the
-  // dragged tile dims, the hovered target highlights). The authoritative dragged
-  // entry also lives in a ref so the drop logic never depends on a re-render
-  // landing between dragstart and drop — the closures read the ref, not state.
-  const [dragItem, setDragItem] = useState<DragItem | null>(null);
-  const [dropTarget, setDropTarget] = useState<string | null>(null);
-  const dragItemRef = useRef<DragItem | null>(null);
   const idCounter = useRef(0);
 
   // Persist the rail's open/closed state and the chosen filters so a refresh
@@ -651,16 +629,9 @@ export function Decks() {
     return false;
   };
 
-  const beginDrag = (item: DragItem) => {
-    dragItemRef.current = item;
-    setDragItem(item);
-  };
-
-  // Whether the in-flight drag may land in `targetFolderId` (null = root). Blocks
-  // no-op moves (already there) and folder-into-itself/own-descendant cycles.
-  const canDropOn = (targetFolderId: string | null): boolean => {
-    const item = dragItemRef.current;
-    if (!item) return false;
+  // Whether `item` may land in `targetFolderId` (null = root). Blocks no-op
+  // moves (already there) and folder-into-itself/own-descendant cycles.
+  const canDrop = (item: DragItem, targetFolderId: string | null): boolean => {
     if (item.type === "folder") {
       if (item.id === targetFolderId) return false;
       if (targetFolderId && isDescendantOf(targetFolderId, item.id)) return false;
@@ -669,46 +640,17 @@ export function Decks() {
     return (decks.find((d) => d.id === item.id)?.folderId ?? null) !== targetFolderId;
   };
 
-  const endDrag = () => {
-    dragItemRef.current = null;
-    setDragItem(null);
-    setDropTarget(null);
+  const handleDrop = (item: DragItem, targetFolderId: string | null) => {
+    if (!canDrop(item, targetFolderId)) return;
+    if (item.type === "folder") moveFolder(item.id, targetFolderId);
+    else moveDeck(item.id, targetFolderId);
   };
 
-  const performDrop = (targetFolderId: string | null) => {
-    const item = dragItemRef.current;
-    if (item && canDropOn(targetFolderId)) {
-      if (item.type === "folder") moveFolder(item.id, targetFolderId);
-      else moveDeck(item.id, targetFolderId);
-    }
-    endDrag();
-  };
-
-  // Drop-zone handlers for a target, keyed by `key` for highlight tracking.
-  // `targetFolderId` is where the dragged entry lands (null = library root).
-  const dropZone = (key: string, targetFolderId: string | null): DropZoneHandlers => ({
-    onDragOver: (e) => {
-      // Cancelling the default is what lets a drop happen at all (and shows the
-      // move cursor); skip it for invalid targets so they read as "no drop".
-      if (!canDropOn(targetFolderId)) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    },
-    onDragEnter: () => {
-      if (canDropOn(targetFolderId)) setDropTarget(key);
-    },
-    onDragLeave: (e) => {
-      // Ignore enter/leave churn between child nodes — only clear once the
-      // pointer truly leaves this zone for something outside it.
-      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-        setDropTarget((current) => (current === key ? null : current));
-      }
-    },
-    onDrop: (e) => {
-      e.preventDefault();
-      performDrop(targetFolderId);
-    },
-  });
+  // Pointer-driven drag (useDeckDrag) — lifts a live clone of the tile and runs
+  // the simulator's spring + juice on it, so a folder/deck picks up, follows
+  // the cursor, and pops into its target. `dragItem` hides the source while
+  // it's lifted; `dropTarget` is the highlight key under the cursor.
+  const { dragItem, dropTarget, startDrag } = useDeckDrag({ canDrop, onDrop: handleDrop });
 
   const isEmpty = visibleFolders.length === 0 && visibleDecks.length === 0;
 
@@ -799,7 +741,7 @@ export function Decks() {
                 type="button"
                 onClick={() => setOpenFolderId(openFolder.parentId)}
                 aria-label="Up one level"
-                {...dropZone("@up", openFolder.parentId)}
+                {...dropAttrs("@up", openFolder.parentId)}
                 className={`group inline-flex cursor-pointer items-center rounded-full p-1.5 ring-1 ring-inset transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
                   dropTarget === "@up"
                     ? "bg-accent/20 text-white ring-accent"
@@ -811,7 +753,7 @@ export function Decks() {
               <button
                 type="button"
                 onClick={() => setOpenFolderId(null)}
-                {...dropZone(ROOT_DROP, null)}
+                {...dropAttrs(ROOT_DROP, null)}
                 className={`cursor-pointer rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
                   dropTarget === ROOT_DROP
                     ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
@@ -838,7 +780,7 @@ export function Decks() {
                       <button
                         type="button"
                         onClick={() => setOpenFolderId(folder.id)}
-                        {...dropZone(`bc:${folder.id}`, folder.id)}
+                        {...dropAttrs(`bc:${folder.id}`, folder.id)}
                         className={`max-w-[12rem] cursor-pointer truncate rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
                           dropTarget === `bc:${folder.id}`
                             ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
@@ -889,9 +831,7 @@ export function Decks() {
                           onCommit={(name) => commitFolder(folder.id, name)}
                           onRename={() => setEditingId(folder.id)}
                           onDelete={() => deleteFolder(folder.id)}
-                          onDragStart={() => beginDrag({ type: "folder", id: folder.id })}
-                          onDragEnd={endDrag}
-                          dropProps={dropZone(folder.id, folder.id)}
+                          onPointerDown={(e) => startDrag({ type: "folder", id: folder.id }, e)}
                         />
                       ))}
                     </div>
@@ -916,8 +856,7 @@ export function Decks() {
                           onCommit={(name) => commitDeck(deck.id, name)}
                           onRename={() => setEditingId(deck.id)}
                           onDelete={() => deleteDeck(deck.id)}
-                          onDragStart={() => beginDrag({ type: "deck", id: deck.id })}
-                          onDragEnd={endDrag}
+                          onPointerDown={(e) => startDrag({ type: "deck", id: deck.id }, e)}
                         />
                       ))}
                     </div>
