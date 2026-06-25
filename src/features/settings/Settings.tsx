@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { ArrowLeftIcon, SettingsIcon } from "../../components/icons";
-import { GLASS_GHOST_BUTTON } from "../../lib/glass";
+import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../../lib/glass";
 import { useFont } from "./FontProvider";
 import { FONT_OPTIONS, fontFamilyValue } from "./fonts";
 
@@ -12,7 +12,7 @@ export function Settings() {
     <AppBackdrop>
       <main className="mx-auto flex min-h-svh w-full max-w-lg flex-col justify-center gap-6 px-6 py-12">
         <header className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05] text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10">
+          <div className={`h-12 w-12 ${GLASS_ICON_TILE}`}>
             <SettingsIcon className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-white/90">Settings</h1>

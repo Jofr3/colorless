@@ -32,3 +32,8 @@ export const GLASS_DIALOG_GHOST_BUTTON = `cursor-pointer rounded-full bg-white/[
     site since it differs: 22rem vs 24rem). */
 export const GLASS_DIALOG_PANEL =
   "rounded-3xl bg-[#16161f]/85 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/10 backdrop-blur-xl";
+
+/** Accent icon tile (the rounded square that holds a feature icon on the
+    Settings header and placeholder pages). Size (h-/w-) stays at the call site. */
+export const GLASS_ICON_TILE =
+  "flex items-center justify-center rounded-2xl bg-white/[0.05] text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10";

@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 import { Link } from "react-router-dom";
-import { GLASS_GHOST_BUTTON } from "../lib/glass";
+import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../lib/glass";
 import { AppBackdrop } from "./AppBackdrop";
 import { ArrowLeftIcon } from "./icons";
 
@@ -15,7 +15,7 @@ export function PlaceholderPage({
   return (
     <AppBackdrop>
       <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-6 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/[0.05] text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10">
+        <div className={`h-20 w-20 ${GLASS_ICON_TILE}`}>
           <Icon className="h-9 w-9" />
         </div>
         <div className="space-y-2">
