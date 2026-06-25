@@ -4,6 +4,7 @@ import { benchLimitFor, CENTER_LINE_TOP, PLAYMAT_WRAPPER_CLASS } from "./constan
 import { gameLog, initialBoard, initialTurn } from "./data/mockPlaymat";
 import { AnimatedCardsLayer } from "./components/AnimatedCardsLayer";
 import { BackToMenu } from "./components/BackToMenu";
+import { BoardSummary } from "./components/BoardSummary";
 import { GameLog } from "./components/GameLog";
 import { Hand } from "./components/Hand";
 import { PlayerSide } from "./components/PlayerSide";
@@ -52,6 +53,8 @@ export function Playmat() {
       className={`${PLAYMAT_WRAPPER_CLASS} has-pixi-cards`}
       aria-label="Trading card game playmat"
     >
+      {/* Screen-reader-only mirror of the board (the canvas is aria-hidden). */}
+      <BoardSummary board={board} perspectivePlayer={bottomPlayer} />
       <PlayerSide
         owner={topPlayer}
         player={board[topPlayer]}
