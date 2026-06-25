@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { Suspense, useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { GlowBackground } from "../features/background/GlowBackground";
 import { SettingsButton } from "./SettingsButton";
@@ -22,9 +22,13 @@ export function RootLayout() {
     <>
       {/* Shared blue/red glow, behind every route and persistent across them. */}
       <GlowBackground />
-      {/* Keyed wrapper replays the fade-in on each navigation. */}
+      {/* Keyed wrapper replays the fade-in on each navigation. The Suspense
+          boundary covers the lazily-loaded route leaves (Playmat, Decks); the
+          glow behind it stays visible while a route chunk loads. */}
       <div key={pathname} className="route-view">
-        <Outlet />
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
       </div>
       {/* Persistent across navigations; redundant on the settings page itself. */}
       {pathname !== "/settings" && <SettingsButton />}
