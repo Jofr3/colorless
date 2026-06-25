@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { readPersisted, writePersisted } from "../../lib/persistedState";
 import { DEFAULT_FONT_ID, FONT_STORAGE_KEY, fontFamilyFor } from "./fonts";
 
 type FontContextValue = {
@@ -16,13 +17,9 @@ type FontContextValue = {
 
 const FontContext = createContext<FontContextValue | null>(null);
 
-function readStoredFontId(): string {
-  try {
-    return localStorage.getItem(FONT_STORAGE_KEY) ?? DEFAULT_FONT_ID;
-  } catch {
-    return DEFAULT_FONT_ID;
-  }
-}
+// Any stored string is accepted; fontFamilyFor defaults gracefully on an
+// unknown id, so validation isn't needed here.
+const readStoredFontId = () => readPersisted(FONT_STORAGE_KEY, (raw) => raw, DEFAULT_FONT_ID);
 
 // Holds the app-wide font choice, persists it, and applies it as an inline
 // font-family on <body> (which every element inherits). Mounted above the
@@ -39,12 +36,7 @@ export function FontProvider({ children }: { children: ReactNode }) {
 
   const setFontId = useCallback((id: string) => {
     setFontIdState(id);
-    try {
-      localStorage.setItem(FONT_STORAGE_KEY, id);
-    } catch {
-      // Storage can fail (private mode, quota) — the choice still applies for
-      // this session, it just won't persist.
-    }
+    writePersisted(FONT_STORAGE_KEY, id);
   }, []);
 
   const value = useMemo(() => ({ fontId, setFontId }), [fontId, setFontId]);

@@ -3,6 +3,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
+import { readPersisted, writePersisted } from "../../lib/persistedState";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -64,33 +65,22 @@ const FILTER_OPEN_STORAGE_KEY = "decks.filterOpen";
 const SHOW_FILTER_STORAGE_KEY = "decks.showFilter";
 const SORT_KEY_STORAGE_KEY = "decks.sortKey";
 
-function readStoredFilterOpen(): boolean {
-  try {
-    return localStorage.getItem(FILTER_OPEN_STORAGE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
+const readStoredFilterOpen = () =>
+  readPersisted(FILTER_OPEN_STORAGE_KEY, (raw) => raw === "1", false);
 
-function readStoredShowFilter(): ShowFilter {
-  try {
-    const value = localStorage.getItem(SHOW_FILTER_STORAGE_KEY);
-    if (SHOW_OPTIONS.some((option) => option.value === value)) return value as ShowFilter;
-  } catch {
-    // ignore — fall back to the default below
-  }
-  return "all";
-}
+const readStoredShowFilter = (): ShowFilter =>
+  readPersisted(
+    SHOW_FILTER_STORAGE_KEY,
+    (raw) => (SHOW_OPTIONS.some((option) => option.value === raw) ? (raw as ShowFilter) : undefined),
+    "all",
+  );
 
-function readStoredSortKey(): SortKey {
-  try {
-    const value = localStorage.getItem(SORT_KEY_STORAGE_KEY);
-    if (SORT_OPTIONS.some((option) => option.value === value)) return value as SortKey;
-  } catch {
-    // ignore — fall back to the default below
-  }
-  return "default";
-}
+const readStoredSortKey = (): SortKey =>
+  readPersisted(
+    SORT_KEY_STORAGE_KEY,
+    (raw) => (SORT_OPTIONS.some((option) => option.value === raw) ? (raw as SortKey) : undefined),
+    "default",
+  );
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
@@ -471,13 +461,9 @@ export function Decks() {
   // restores them. Writes can fail (private mode, quota) — the controls still
   // work for the session, they just won't be remembered.
   useEffect(() => {
-    try {
-      localStorage.setItem(FILTER_OPEN_STORAGE_KEY, filterOpen ? "1" : "0");
-      localStorage.setItem(SHOW_FILTER_STORAGE_KEY, showFilter);
-      localStorage.setItem(SORT_KEY_STORAGE_KEY, sortKey);
-    } catch {
-      // ignore — persistence is best-effort
-    }
+    writePersisted(FILTER_OPEN_STORAGE_KEY, filterOpen ? "1" : "0");
+    writePersisted(SHOW_FILTER_STORAGE_KEY, showFilter);
+    writePersisted(SORT_KEY_STORAGE_KEY, sortKey);
   }, [filterOpen, showFilter, sortKey]);
 
   const filterActive = showFilter !== "all" || sortKey !== "default";
