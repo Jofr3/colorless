@@ -1,5 +1,5 @@
 import type { HTMLAttributes, PointerEvent as ReactPointerEvent, ReactNode, Ref } from "react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
@@ -508,39 +508,44 @@ export function Decks() {
 
   // What the current view shows: search spans the whole library; otherwise it's
   // the open folder's subfolders + decks, or the root (top-level folders + loose
-  // decks).
-  let visibleFolders: Folder[] = [];
-  let visibleDecks: Deck[] = [];
-  if (searching) {
-    visibleFolders = folders.filter((f) => f.name.toLowerCase().includes(q));
-    visibleDecks = decks.filter((d) => d.name.toLowerCase().includes(q));
-  } else if (openFolder) {
-    visibleFolders = folders.filter((f) => f.parentId === openFolder.id);
-    visibleDecks = decks.filter((d) => d.folderId === openFolder.id);
-  } else {
-    visibleFolders = folders.filter((f) => f.parentId === null);
-    visibleDecks = decks.filter((d) => d.folderId === null);
-  }
-
-  // Apply the filter menu's "Show" choice on top of the current view.
-  if (showFilter === "decks") visibleFolders = [];
-  else if (showFilter === "folders") visibleDecks = [];
-
-  // …and its sort order. "Most cards" only meaningfully orders decks, so
-  // folders fall back to name there. Each branch sorts copies, never the state.
-  if (sortKey !== "default") {
-    const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
-    if (sortKey === "name-desc") {
-      visibleFolders = [...visibleFolders].sort((a, b) => byName(b, a));
-      visibleDecks = [...visibleDecks].sort((a, b) => byName(b, a));
-    } else if (sortKey === "cards-desc") {
-      visibleFolders = [...visibleFolders].sort(byName);
-      visibleDecks = [...visibleDecks].sort((a, b) => b.cardCount - a.cardCount || byName(a, b));
+  // decks). Memoised so drag-driven re-renders (setDropTarget fires on every
+  // hovered target) don't re-filter and re-sort the whole library each time.
+  const { visibleFolders, visibleDecks } = useMemo(() => {
+    let vFolders: Folder[];
+    let vDecks: Deck[];
+    if (searching) {
+      vFolders = folders.filter((f) => f.name.toLowerCase().includes(q));
+      vDecks = decks.filter((d) => d.name.toLowerCase().includes(q));
+    } else if (openFolder) {
+      vFolders = folders.filter((f) => f.parentId === openFolder.id);
+      vDecks = decks.filter((d) => d.folderId === openFolder.id);
     } else {
-      visibleFolders = [...visibleFolders].sort(byName);
-      visibleDecks = [...visibleDecks].sort(byName);
+      vFolders = folders.filter((f) => f.parentId === null);
+      vDecks = decks.filter((d) => d.folderId === null);
     }
-  }
+
+    // Apply the filter menu's "Show" choice on top of the current view.
+    if (showFilter === "decks") vFolders = [];
+    else if (showFilter === "folders") vDecks = [];
+
+    // …and its sort order. "Most cards" only meaningfully orders decks, so
+    // folders fall back to name there. Each branch sorts copies, never the state.
+    if (sortKey !== "default") {
+      const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+      if (sortKey === "name-desc") {
+        vFolders = [...vFolders].sort((a, b) => byName(b, a));
+        vDecks = [...vDecks].sort((a, b) => byName(b, a));
+      } else if (sortKey === "cards-desc") {
+        vFolders = [...vFolders].sort(byName);
+        vDecks = [...vDecks].sort((a, b) => b.cardCount - a.cardCount || byName(a, b));
+      } else {
+        vFolders = [...vFolders].sort(byName);
+        vDecks = [...vDecks].sort(byName);
+      }
+    }
+
+    return { visibleFolders: vFolders, visibleDecks: vDecks };
+  }, [folders, decks, q, searching, openFolder, showFilter, sortKey]);
 
   const handleNewDeck = () => {
     const id = genId("deck");
