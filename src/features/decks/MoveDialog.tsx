@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from "react";
+import { FOCUS_RING_INSET, GLASS_DIALOG_GHOST_BUTTON, GLASS_DIALOG_PANEL } from "../../lib/glass";
 import type { MoveDestination } from "./tree";
 
 // Keyboard-accessible "Move to…" picker. Dragging a tile into a folder is the
@@ -6,11 +7,9 @@ import type { MoveDestination } from "./tree";
 // <dialog> + showModal() (like BackToMenu) for free focus trapping, Escape, and
 // focus restoration; it renders in the top layer above the grid.
 
-const DESTINATION_BUTTON_CLASS =
-  "w-full cursor-pointer rounded-lg bg-white/[0.04] px-3 py-2 text-left text-sm text-white/80 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50";
+const DESTINATION_BUTTON_CLASS = `w-full cursor-pointer rounded-lg bg-white/[0.04] px-3 py-2 text-left text-sm text-white/80 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.08] hover:text-white ${FOCUS_RING_INSET}`;
 
-const CANCEL_BUTTON_CLASS =
-  "cursor-pointer rounded-full bg-white/[0.05] px-4 py-2 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/12 transition-all hover:bg-white/[0.09] hover:text-white active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+const CANCEL_BUTTON_CLASS = GLASS_DIALOG_GHOST_BUTTON;
 
 export function MoveDialog({
   open,
@@ -49,7 +48,7 @@ export function MoveDialog({
       }}
       className="leave-dialog m-auto border-0 bg-transparent p-0 text-white"
     >
-      <div className="w-[min(24rem,calc(100vw-2.5rem))] rounded-3xl bg-[#16161f]/85 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/10 backdrop-blur-xl">
+      <div className={`w-[min(24rem,calc(100vw-2.5rem))] ${GLASS_DIALOG_PANEL}`}>
         <h2 id={titleId} className="text-lg font-semibold text-white">
           Move “{itemName}” to…
         </h2>

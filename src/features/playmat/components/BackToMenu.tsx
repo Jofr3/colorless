@@ -1,16 +1,15 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "../../../components/icons";
+import { GLASS_DIALOG_GHOST_BUTTON, GLASS_DIALOG_PANEL, GLASS_HUD_BUTTON } from "../../../lib/glass";
 
 const HOME_PATH = "/";
 
 // Glass control styling shared with the rest of the playmat HUD
 // (mirrors TurnHud's CIRCLE_BUTTON_BASE_CLASS and GameLog's toggle).
-const BACK_BUTTON_CLASS =
-  "absolute z-20 flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white/[0.045] pl-2.5 pr-3.5 text-[13px] font-medium tracking-wide text-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white/9 backdrop-blur-md transition-all hover:bg-white/[0.06] hover:text-white/85 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+const BACK_BUTTON_CLASS = `absolute z-20 flex h-9 cursor-pointer items-center gap-1.5 rounded-full pl-2.5 pr-3.5 text-[13px] font-medium tracking-wide ${GLASS_HUD_BUTTON}`;
 
-const DIALOG_GHOST_BUTTON_CLASS =
-  "cursor-pointer rounded-full bg-white/[0.05] px-4 py-2 text-sm font-medium text-white/75 ring-1 ring-inset ring-white/12 transition-all hover:bg-white/[0.09] hover:text-white active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+const DIALOG_GHOST_BUTTON_CLASS = GLASS_DIALOG_GHOST_BUTTON;
 
 const DIALOG_PRIMARY_BUTTON_CLASS =
   "cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
@@ -81,7 +80,7 @@ function ConfirmLeaveDialog({
       }}
       className="leave-dialog m-auto border-0 bg-transparent p-0 text-white"
     >
-      <div className="w-[min(22rem,calc(100vw-2.5rem))] rounded-3xl bg-[#16161f]/85 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/10 backdrop-blur-xl">
+      <div className={`w-[min(22rem,calc(100vw-2.5rem))] ${GLASS_DIALOG_PANEL}`}>
         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 ring-1 ring-inset ring-white/10">
           <ArrowLeftIcon className="h-5 w-5" />
         </div>
