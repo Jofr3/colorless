@@ -980,6 +980,14 @@ export function AnimatedCardsLayer({
       return;
     }
 
+    // A drag is already in flight (e.g. a second touch on a multitouch screen).
+    // Ignore the extra pointer — otherwise it would overwrite dragRef with the
+    // new pointerId, and the first card's pointerup (carrying the old id) would
+    // be dropped by handlePointerUp's id guard, stranding it in a dragging state.
+    if (dragRef.current) {
+      return;
+    }
+
     const point = pointFromEvent(root, event);
     const view = hitTest(point, false);
     const descriptor = view ? descriptorsRef.current.get(view.id) : undefined;
@@ -1664,7 +1672,21 @@ export function AnimatedCardsLayer({
     };
 
     async function start() {
-      app = await createPixiApplication(mount);
+      let created: Application;
+      try {
+        created = await createPixiApplication(mount);
+      } catch (error) {
+        // WebGL is unavailable/blocked or the context failed to create. Drop the
+        // class that hides the static DOM card faces so the playmat degrades to
+        // those instead of rendering nothing (mirrors GlowRenderer's fallback).
+        console.error(
+          "Pixi cards layer failed to initialise; falling back to static DOM cards.",
+          error,
+        );
+        playmatRef.current?.classList.remove("has-pixi-cards");
+        return;
+      }
+      app = created;
 
       if (disposed) {
         app.destroy({ removeView: true }, { children: true });

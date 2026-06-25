@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { SwordsIcon } from "./components/icons";
 import { PlaceholderPage } from "./components/PlaceholderPage";
 import { RootLayout } from "./components/RootLayout";
+import { RouteError } from "./components/RouteError";
 import { Decks } from "./features/decks";
 import { Home } from "./features/home";
 import { Playmat } from "./features/playmat";
@@ -13,6 +14,7 @@ import { NotFound } from "./NotFound";
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: <RouteError />,
     children: [
       { path: "/", element: <Home /> },
       { path: "/simulator", element: <Playmat /> },

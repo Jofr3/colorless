@@ -5,3 +5,4 @@ dist
 .vite
 *.tsbuildinfo
 .claude/
+tmp/

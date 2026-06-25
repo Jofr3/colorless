@@ -363,7 +363,11 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
         dragRef.current = null;
         return;
       }
-      const accepted = drag.dropOk && !!drag.dropTargetEl;
+      // A pointercancel (OS/scroll/palm-rejection takeover) is an interrupted
+      // gesture, not a completed drop — never commit a move on cancel; fly the
+      // ghost back to the source instead.
+      const cancelled = event.type === "pointercancel";
+      const accepted = !cancelled && drag.dropOk && !!drag.dropTargetEl;
       drag.accepted = accepted;
       drag.pendingFolderId = accepted ? drag.dropFolderId : null;
       drag.releasing = true;

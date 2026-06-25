@@ -9,7 +9,12 @@ import { FontProvider } from "./features/settings";
 // from the default; RootLayout keeps it in sync on later navigations.
 document.body.dataset.glow = window.location.pathname === "/" ? "sides" : "stacked";
 
-createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error('Root element "#root" was not found in the document.');
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <FontProvider>
       <RouterProvider router={router} />

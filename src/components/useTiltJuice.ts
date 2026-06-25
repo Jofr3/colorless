@@ -61,6 +61,21 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
   const juiceFrame = useRef<number | null>(null);
   const juiceState = useRef<{ amount: number; rotation: number; start: number } | null>(null);
   const juiceRunner = useRef<(amount: number, rotation: number) => void>(() => {});
+  const reducedMotionRef = useRef(false);
+
+  // Honor prefers-reduced-motion: when set, the oscillating juice and the 3D
+  // pointer tilt are skipped (only the static hover scale remains). Kept live
+  // via the matchMedia 'change' subscription so an OS toggle applies without a
+  // reload, matching CardView/glowRenderer/CardSheen.
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    reducedMotionRef.current = query.matches;
+    const handleChange = (event: MediaQueryListEvent) => {
+      reducedMotionRef.current = event.matches;
+    };
+    query.addEventListener("change", handleChange);
+    return () => query.removeEventListener("change", handleChange);
+  }, []);
 
   // Per-frame juice loop. Writes --js (scale) / --jr (rotation) on the juice
   // layer with no CSS transition, so the fast oscillation isn't smeared by the
@@ -93,6 +108,12 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
     const fireJuice = (amount: number, rotation: number) => {
       const layer = juiceLayerRef.current;
       if (!layer) return;
+      if (reducedMotionRef.current) {
+        // Reduced motion: no squash/wobble. Pin the layer to its resting values.
+        layer.style.setProperty("--js", "1");
+        layer.style.setProperty("--jr", "0deg");
+        return;
+      }
       juiceState.current = { amount, rotation, start: performance.now() / 1000 };
       // Apply the initial squish synchronously so frame one already looks pressed.
       layer.style.setProperty("--js", `${1 - JUICE_INITIAL_SQUISH * amount}`);
@@ -137,6 +158,9 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
     const offX = (event.clientX - rect.left) / rect.width - 0.5;
     const offY = (event.clientY - rect.top) / rect.height - 0.5;
     options.onPointerMove?.(offX + 0.5, offY + 0.5);
+    // Reduced motion: track the pointer for callers (e.g. the sheen) but skip
+    // the 3D perspective tilt entirely, leaving --rx/--ry at rest.
+    if (reducedMotionRef.current) return;
     if (tiltFrame.current !== null) cancelAnimationFrame(tiltFrame.current);
     tiltFrame.current = requestAnimationFrame(() => {
       // Lean away from the cursor: pointer on the right tips the right edge back
