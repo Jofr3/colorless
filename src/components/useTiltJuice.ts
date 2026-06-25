@@ -1,5 +1,6 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useRef } from "react";
+import { evaluateJuice, initialSquish, type JuiceState, startJuice } from "../lib/animation/juice";
 
 // Balatro hover/tilt port for DOM cards. On hover the card leans *away* from the
 // cursor — the corner farthest from the pointer is displaced most — plus a steady
@@ -9,14 +10,9 @@ import { useEffect, useRef } from "react";
 const MAX_TILT_DEG = 12; // peak lean at the card edges
 const HOVER_SCALE = 1.045; // Balatro's steady +0.05 hover scale (moveable.lua:424)
 
-// Juice envelope, ported verbatim from CardView.evaluateJuice (Balatro
-// moveable.lua:250-276): an initial squish, then a decaying oscillation —
-// sin(50.8·t) on scale under a cubic envelope, sin(40.8·t) on rotation under a
-// squared envelope, over 0.4s. fireJuice(amount, rotation) seeds it.
-const JUICE_DURATION = 0.4;
-const JUICE_SCALE_FREQ = 50.8;
-const JUICE_ROT_FREQ = 40.8;
-const JUICE_INITIAL_SQUISH = 0.6; // VT.scale = 1 - 0.6*amount
+// The juice envelope lives in lib/animation/juice (shared with CardView and the
+// decks drag). fireJuice(amount, rotation) seeds it; the per-frame loop applies
+// the raw oscillation to the --js/--jr CSS vars (scale → 1 + value, rotation ×2).
 const RAD_TO_DEG = 180 / Math.PI;
 // Hover fires Balatro's card hover juice (card.lua:4307 → 0.02/0.012, nudged up
 // a touch so it reads on a large button); a press gives a stronger pop.
@@ -59,7 +55,7 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
   const juiceLayerRef = useRef<HTMLDivElement>(null);
   const tiltFrame = useRef<number | null>(null);
   const juiceFrame = useRef<number | null>(null);
-  const juiceState = useRef<{ amount: number; rotation: number; start: number } | null>(null);
+  const juiceState = useRef<JuiceState | null>(null);
   const juiceRunner = useRef<(amount: number, rotation: number) => void>(() => {});
   const reducedMotionRef = useRef(false);
 
@@ -83,25 +79,19 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
   useEffect(() => {
     const tickJuice = () => {
       const layer = juiceLayerRef.current;
-      const state = juiceState.current;
-      if (!layer || !state) {
-        juiceFrame.current = null;
-        return;
-      }
-      const elapsed = performance.now() / 1000 - state.start;
-      const remaining = (JUICE_DURATION - elapsed) / JUICE_DURATION;
-      if (remaining <= 0) {
+      const value = evaluateJuice(juiceState.current, performance.now() / 1000);
+      if (!layer || !value) {
+        // No layer, or the envelope has elapsed — settle to rest and stop.
         juiceState.current = null;
-        layer.style.setProperty("--js", "1");
-        layer.style.setProperty("--jr", "0deg");
+        layer?.style.setProperty("--js", "1");
+        layer?.style.setProperty("--jr", "0deg");
         juiceFrame.current = null;
         return;
       }
-      const scale = 1 + state.amount * Math.sin(JUICE_SCALE_FREQ * elapsed) * remaining ** 3;
-      // *2 matches move_r's juice multiplier (juice.r*2, moveable.lua:448).
-      const rotation = state.rotation * Math.sin(JUICE_ROT_FREQ * elapsed) * remaining ** 2 * 2;
-      layer.style.setProperty("--js", `${scale}`);
-      layer.style.setProperty("--jr", `${(rotation * RAD_TO_DEG).toFixed(3)}deg`);
+      // scale → 1 + value; rotation ×2 matches move_r's juice multiplier
+      // (juice.r*2, moveable.lua:448), then to degrees for the CSS var.
+      layer.style.setProperty("--js", `${1 + value.scale}`);
+      layer.style.setProperty("--jr", `${(value.rotation * 2 * RAD_TO_DEG).toFixed(3)}deg`);
       juiceFrame.current = requestAnimationFrame(tickJuice);
     };
 
@@ -114,9 +104,9 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
         layer.style.setProperty("--jr", "0deg");
         return;
       }
-      juiceState.current = { amount, rotation, start: performance.now() / 1000 };
+      juiceState.current = startJuice(amount, rotation, performance.now() / 1000);
       // Apply the initial squish synchronously so frame one already looks pressed.
-      layer.style.setProperty("--js", `${1 - JUICE_INITIAL_SQUISH * amount}`);
+      layer.style.setProperty("--js", `${initialSquish(amount)}`);
       if (juiceFrame.current === null) juiceFrame.current = requestAnimationFrame(tickJuice);
     };
     juiceRunner.current = fireJuice;

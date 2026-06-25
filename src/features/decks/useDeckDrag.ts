@@ -1,4 +1,13 @@
 import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
+import { evaluateJuice, type JuiceState, startJuice } from "../../lib/animation/juice";
+import {
+  clampVelocity,
+  dragTiltFromVelocity,
+  SPRING_C_ROT_DRAG,
+  SPRING_MAX_DT,
+  stepSpringScalar,
+  stepSpringXY,
+} from "../../lib/animation/spring";
 
 // Pointer-driven drag for the decks library, ported from the simulator's card
 // drag (features/playmat/pixi/CardView.ts). Native HTML5 drag-and-drop can only
@@ -20,22 +29,8 @@ interface UseDeckDragOptions {
   onDrop: (item: DragItem, targetFolderId: string | null) => void;
 }
 
-// --- Spring (CardView.ts: SPRING_C_XY / SPRING_K_XY / SPRING_MAX_VEL etc.) ---
-const SPRING_C_XY = 50;
-const SPRING_K_XY = 35;
-const SPRING_MAX_VEL = 70;
-const SPRING_MAX_DT = 1 / 30;
-const SPRING_C_ROT_DRAG = 20;
-
-// Velocity-driven drag tilt (CardView.ts: DRAG_VEL_REF / DRAG_TILT_EXPONENT).
-const DRAG_VEL_REF = 1200;
-const DRAG_TILT_EXPONENT = 1.3;
-const TILT_CAP = 0.22;
-
-// Juice envelope (CardView.ts: evaluateJuice — Balatro move_juice).
-const JUICE_DURATION = 0.4;
-const JUICE_SCALE_FREQ = 50.8;
-const JUICE_ROT_FREQ = 40.8;
+// Spring + juice physics are shared with the simulator card layer — see
+// lib/animation/{spring,juice}. The constants below are decks-drag specific.
 
 // Emphasis while picked up: +0.10 scale and a small upward lift, matching
 // CardView.applyEmphasisTween (drag scale 1.1) + computeDragLiftOffset (14px).
@@ -55,65 +50,10 @@ const RELEASE_MS = 300;
 
 const RAD_TO_DEG = 180 / Math.PI;
 
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
 interface Vel {
   x: number;
   y: number;
   rot: number;
-}
-
-interface Juice {
-  scaleAmt: number;
-  rotAmt: number;
-  start: number;
-}
-
-// CardView.springXY: exp(-50dt) damping, *35dt stiffness.
-function springXY(current: number, desired: number, dt: number, vel: Vel, key: "x" | "y") {
-  const damping = Math.exp(-SPRING_C_XY * dt);
-  vel[key] = damping * vel[key] + (1 - damping) * (desired - current) * SPRING_K_XY * dt;
-  const next = current + vel[key];
-  if (Math.abs(next - desired) < 0.01 && Math.abs(vel[key]) < 0.01) {
-    vel[key] = 0;
-    return desired;
-  }
-  return next;
-}
-
-// CardView.springScalar: exp(-c·dt) damping, no dt on the stiffness term.
-function springScalar(current: number, desired: number, dt: number, c: number, vel: Vel) {
-  const damping = Math.exp(-c * dt);
-  vel.rot = damping * vel.rot + (1 - damping) * (desired - current);
-  const next = current + vel.rot;
-  if (Math.abs(next - desired) < 0.001 && Math.abs(vel.rot) < 0.001) {
-    vel.rot = 0;
-    return desired;
-  }
-  return next;
-}
-
-function clampXYVel(vel: Vel, dt: number) {
-  const maxVel = SPRING_MAX_VEL * dt;
-  const magSq = vel.x * vel.x + vel.y * vel.y;
-  if (magSq > maxVel * maxVel) {
-    const mag = Math.sqrt(magSq);
-    vel.x = (vel.x / mag) * maxVel;
-    vel.y = (vel.y / mag) * maxVel;
-  }
-}
-
-function evalJuice(juice: Juice | null, nowSec: number) {
-  if (!juice) return null;
-  const elapsed = nowSec - juice.start;
-  const remaining = (JUICE_DURATION - elapsed) / JUICE_DURATION;
-  if (remaining <= 0) return null;
-  return {
-    scale: juice.scaleAmt * Math.sin(JUICE_SCALE_FREQ * elapsed) * remaining ** 3,
-    rotation: juice.rotAmt * Math.sin(JUICE_ROT_FREQ * elapsed) * remaining ** 2,
-  };
 }
 
 interface Drag {
@@ -133,7 +73,7 @@ interface Drag {
   emph: number;
   lift: number;
   opacity: number;
-  juice: Juice | null;
+  juice: JuiceState | null;
   reduced: boolean;
   halfW: number;
   halfH: number;
@@ -219,23 +159,14 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
       ? drag.releaseCenter
       : { x: drag.pointer.x - drag.grab.x, y: drag.pointer.y - drag.grab.y };
 
-    drag.cur.x = springXY(drag.cur.x, desired.x, dt, drag.vel, "x");
-    drag.cur.y = springXY(drag.cur.y, desired.y, dt, drag.vel, "y");
+    drag.cur.x = stepSpringXY(drag.cur.x, desired.x, dt, drag.vel, "x");
+    drag.cur.y = stepSpringXY(drag.cur.y, desired.y, dt, drag.vel, "y");
 
     // Drag tilt comes from the position spring's own velocity (CardView does
     // the same) — quiet at low speed, ramping to the cap on a fast throw.
-    let velTilt = 0;
-    if (!drag.reduced && !drag.releasing) {
-      const velSec = drag.vel.x / Math.max(dt, 0.001);
-      const ratio = Math.abs(velSec) / DRAG_VEL_REF;
-      velTilt = clamp(
-        Math.sign(velSec) * ratio ** DRAG_TILT_EXPONENT * TILT_CAP,
-        -TILT_CAP,
-        TILT_CAP,
-      );
-    }
-    clampXYVel(drag.vel, dt);
-    drag.cur.rot = springScalar(drag.cur.rot, velTilt, dt, SPRING_C_ROT_DRAG, drag.vel);
+    const velTilt = !drag.reduced && !drag.releasing ? dragTiltFromVelocity(drag.vel.x, dt) : 0;
+    clampVelocity(drag.vel, dt);
+    drag.cur.rot = stepSpringScalar(drag.cur.rot, velTilt, dt, SPRING_C_ROT_DRAG, drag.vel, "rot");
 
     // Emphasis scale, lift and opacity ease toward their phase targets.
     const emphTarget = drag.releasing ? (drag.accepted ? ACCEPTED_LAND_SCALE : 1) : PICKUP_SCALE;
@@ -246,7 +177,7 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
     drag.lift += (liftTarget - drag.lift) * ease;
     drag.opacity += (opacityTarget - drag.opacity) * (drag.reduced ? 1 : 1 - Math.exp(-12 * dt));
 
-    const juice = drag.reduced ? null : evalJuice(drag.juice, now / 1000);
+    const juice = drag.reduced ? null : evaluateJuice(drag.juice, now / 1000);
     if (!juice) drag.juice = null;
     const juiceScale = juice ? juice.scale : 0;
     // *2 matches move_r's juice multiplier (CardView.applyJuiceTransform).
@@ -319,11 +250,7 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
       drag.started = true;
       drag.lastFrame = performance.now();
       if (!drag.reduced) {
-        drag.juice = {
-          scaleAmt: PICKUP_JUICE.amount,
-          rotAmt: PICKUP_JUICE.rotation,
-          start: performance.now() / 1000,
-        };
+        drag.juice = startJuice(PICKUP_JUICE.amount, PICKUP_JUICE.rotation, performance.now() / 1000);
       }
       suppressNextClick();
       document.body.style.cursor = "grabbing";
@@ -376,11 +303,7 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
       if (!drag.reduced) {
         const pop = accepted ? LAND_JUICE : REJECT_JUICE;
         const sign = drag.startX % 2 < 1 ? 1 : -1;
-        drag.juice = {
-          scaleAmt: pop.amount,
-          rotAmt: pop.rotation * (accepted ? 1 : sign),
-          start: performance.now() / 1000,
-        };
+        drag.juice = startJuice(pop.amount, pop.rotation * (accepted ? 1 : sign), performance.now() / 1000);
       }
       // The release fly-out + commit normally finishes inside the rAF tick. rAF
       // is paused while the tab is hidden, so back the commit with a timer too:

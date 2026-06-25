@@ -27,6 +27,20 @@
 //     move_scale, move_r damping respectively.
 import { Container, Graphics, ImageSource, PerspectiveMesh, Texture } from "pixi.js";
 import { gsap } from "../../../lib/animation/gsapPixi";
+import {
+  evaluateJuice as evaluateJuiceEnvelope,
+  initialSquish,
+  type JuiceState,
+  startJuice,
+} from "../../../lib/animation/juice";
+import {
+  clampVelocity,
+  dragTiltFromVelocity,
+  SPRING_C_ROT_DRAG,
+  SPRING_MAX_DT,
+  stepSpringScalar,
+  stepSpringXY,
+} from "../../../lib/animation/spring";
 import type { CardPlacement } from "../types";
 import { cardBackTexture, parseBackUrl } from "./cardBackTexture";
 
@@ -37,44 +51,16 @@ const CARD_ASPECT_RATIO = 3.5 / 2.5;
 const IDLE_ROTATION_AMOUNT = 0.012;
 const IDLE_FLOAT_AMOUNT = 1.6;
 
-// Spring damping coefficients (moveable.lua + game.lua:2618-2624).
-const SPRING_C_XY = 50;
-const SPRING_C_SCALE = 60;
-// Rotation: Balatro runs this at 190 (essentially critically damped) so the
-// drag tilt never overshoots. We want overshoot — fast drag then sudden
-// stop should swing past 0 before settling. 20 leaves the spring underdamped
-// enough that the residual angular velocity carries the rotation past
-// neutral when the input collapses, then it springs back.
-const SPRING_C_ROT_DRAG = 20;
-// While idle/reordering we still want some give — siblings sliding into new
-// slots should react with a little tilt — but less wobble than a full drag.
-// Sits between Balatro's drag value (20) and a critically damped settle.
+// The spring + juice physics live in lib/animation/{spring,juice} (shared with
+// the decks drag). These three are CardView-specific tuning layered on top.
+const SPRING_C_SCALE = 60; // scale-spring damping (game.lua:2619)
+// Idle/reorder rotation damping — between Balatro's drag value (20) and a
+// critically damped settle, so siblings sliding into new slots tilt with less
+// wobble than a full drag.
 const SPRING_C_ROT_IDLE = 45;
-// Scale factor on velocity-driven tilt for non-dragged cards. Reorder
-// shifts have just as much X-velocity as a drag, but we want the resulting
-// tilt to be a hint, not a swing.
+// Velocity-driven tilt is damped for non-dragged cards: a reorder shift has as
+// much X-velocity as a drag, but should read as a hint, not a swing.
 const IDLE_VELOCITY_TILT_SCALE = 0.35;
-// Spring stiffness (moveable.lua:408 — the *35 factor).
-const SPRING_K_XY = 35;
-// max_vel per frame (moveable.lua:410 + game.lua:2624 — 70*dt).
-const SPRING_MAX_VEL = 70;
-// Drag rotation tilt — Balatro uses a linear `0.015*vel.x/dt` (moveable.lua
-// 448). On our scale linear gave too much constant tilt at low speeds, but
-// fully quadratic made slow drags read as "not tilting at all". A power of
-// 1.3 (slightly above linear) is the sweet spot: low speeds still get a
-// real-but-subtle tilt, fast throws still ramp hard to the 0.22 rad cap.
-// DRAG_VEL_REF is the spring velocity (in px/s) at which tilt reaches that
-// cap.
-const DRAG_VEL_REF = 1200;
-const DRAG_TILT_EXPONENT = 1.3;
-
-// Juice (moveable.lua:250-276). 0.4s duration with sinusoidal decay.
-const JUICE_DURATION = 0.4;
-const JUICE_SCALE_FREQ = 50.8;
-const JUICE_ROT_FREQ = 40.8;
-const JUICE_INITIAL_SQUISH = 0.6; // VT.scale = 1 - 0.6*amount
-
-const SPRING_MAX_DT = 1 / 30;
 
 // Perspective tilt — Balatro's vertex shader (resources/shaders/dissolve.fs)
 // modifies clip-space W by:
@@ -217,13 +203,6 @@ function loadTexture(textureUrl: string) {
     textureCache.delete(textureUrl);
     throw error;
   });
-}
-
-interface JuiceState {
-  scaleAmt: number;
-  rotAmt: number;
-  startTime: number;
-  endTime: number;
 }
 
 export class CardView {
@@ -679,22 +658,13 @@ export class CardView {
     this.current.y = this.springXY(this.current.y, desired.y, "y", clampedDt);
 
     // Rotation spring — Balatro: T.r + 0.015*vel.x/dt drives drag tilt
-    // (moveable.lua:448). Read the *uncapped* velocity from springXY before
-    // clampXyVelocity squashes it down to ~1.17 px/frame — that clamp keeps
-    // the position spring's momentum bounded across frames, but reading the
-    // clamped value left rotation pegged at <2° regardless of drag speed.
-    // Power curve (see DRAG_VEL_REF / DRAG_TILT_EXPONENT up top) keeps slow
-    // drags subtle but still visible while fast drags pin to the cap.
-    const velSec = this.velocity.x / Math.max(clampedDt, 0.001);
-    const ratio = Math.abs(velSec) / DRAG_VEL_REF;
-    // Drag tilts fully; siblings shifting during a reorder tilt at a
-    // fraction of that so they still react to the slide without wobbling.
+    // (moveable.lua:448). dragTiltFromVelocity (lib/animation/spring) reads the
+    // *uncapped* velocity before clampXyVelocity squashes it — reading the
+    // clamped value would peg rotation at <2° regardless of drag speed. Drag
+    // tilts fully; reorder siblings tilt at a fraction (IDLE_VELOCITY_TILT_SCALE)
+    // so they react to the slide without wobbling.
     const tiltScale = this.isDragging ? 1 : IDLE_VELOCITY_TILT_SCALE;
-    const velocityRotation = clamp(
-      Math.sign(velSec) * Math.pow(ratio, DRAG_TILT_EXPONENT) * 0.22 * tiltScale,
-      -0.22,
-      0.22,
-    );
+    const velocityRotation = dragTiltFromVelocity(this.velocity.x, clampedDt, tiltScale);
     this.clampXyVelocity(clampedDt);
     this.current.rotation = this.springScalar(
       this.current.rotation,
@@ -756,30 +726,11 @@ export class CardView {
   }
 
   private springXY(current: number, desired: number, key: "x" | "y", dt: number) {
-    const damping = Math.exp(-SPRING_C_XY * dt);
-    this.velocity[key] =
-      damping * this.velocity[key] + (1 - damping) * (desired - current) * SPRING_K_XY * dt;
-    const next = current + this.velocity[key];
-
-    if (Math.abs(next - desired) < 0.01 && Math.abs(this.velocity[key]) < 0.01) {
-      this.velocity[key] = 0;
-      return desired;
-    }
-
-    return next;
+    return stepSpringXY(current, desired, dt, this.velocity, key);
   }
 
   private clampXyVelocity(dt: number) {
-    const maxVel = SPRING_MAX_VEL * dt;
-    const vx = this.velocity.x;
-    const vy = this.velocity.y;
-    const magSq = vx * vx + vy * vy;
-
-    if (magSq > maxVel * maxVel) {
-      const mag = Math.sqrt(magSq);
-      this.velocity.x = (vx / mag) * maxVel;
-      this.velocity.y = (vy / mag) * maxVel;
-    }
+    clampVelocity(this.velocity, dt);
   }
 
   private springScalar(
@@ -790,17 +741,7 @@ export class CardView {
     coefficient: number,
     stiffness: number,
   ) {
-    const damping = Math.exp(-coefficient * dt);
-    this.velocity[key] =
-      damping * this.velocity[key] + (1 - damping) * (desired - current) * stiffness;
-    const next = current + this.velocity[key];
-
-    if (Math.abs(next - desired) < 0.001 && Math.abs(this.velocity[key]) < 0.001) {
-      this.velocity[key] = 0;
-      return desired;
-    }
-
-    return next;
+    return stepSpringScalar(current, desired, dt, coefficient, this.velocity, key, stiffness);
   }
 
   private idleOffset(time: number) {
@@ -996,40 +937,19 @@ export class CardView {
     // Initial squish: VT.scale = 1 - 0.6*amount (moveable.lua:264).
     const now = performance.now() / 1000;
     const fallbackRot = this.seed > 0.5 ? amount * 0.6 : -amount * 0.6;
-    this.juiceState = {
-      scaleAmt: amount,
-      rotAmt: rotationAmount || fallbackRot,
-      startTime: now,
-      endTime: now + JUICE_DURATION,
-    };
+    this.juiceState = startJuice(amount, rotationAmount || fallbackRot, now);
     // Apply the initial squish synchronously so the first frame already
     // looks pressed; the oscillating decay takes over from there.
-    this.juice.scale.set(1 - JUICE_INITIAL_SQUISH * amount);
+    this.juice.scale.set(initialSquish(amount));
     this.juice.rotation = 0;
   }
 
   private evaluateJuice(time: number) {
-    const state = this.juiceState;
-    if (!state) {
-      return null;
-    }
-
-    if (time >= state.endTime) {
+    const value = evaluateJuiceEnvelope(this.juiceState, time);
+    if (!value) {
       this.juiceState = null;
-      return null;
     }
-
-    const elapsed = time - state.startTime;
-    const total = state.endTime - state.startTime;
-    const remaining = Math.max(0, (state.endTime - time) / total);
-
-    const scaleEnvelope = remaining * remaining * remaining;
-    const rotEnvelope = remaining * remaining;
-
-    return {
-      scale: state.scaleAmt * Math.sin(JUICE_SCALE_FREQ * elapsed) * scaleEnvelope,
-      rotation: state.rotAmt * Math.sin(JUICE_ROT_FREQ * elapsed) * rotEnvelope,
-    };
+    return value;
   }
 
   private applyJuiceTransform(juice: { scale: number; rotation: number } | null) {
