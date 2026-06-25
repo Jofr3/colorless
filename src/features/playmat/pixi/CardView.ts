@@ -158,7 +158,12 @@ function targetAspectHeight(width: number) {
 }
 
 async function fetchBitmap(textureUrl: string): Promise<ImageBitmap> {
-  const response = await fetch(textureUrl, { mode: "cors", credentials: "omit" });
+  const response = await fetch(textureUrl, {
+    mode: "cors",
+    credentials: "omit",
+    // Don't leak the app URL to the third-party card-image CDN.
+    referrerPolicy: "no-referrer",
+  });
   if (!response.ok) {
     throw new Error(`Unable to load card texture: ${textureUrl} (${response.status})`);
   }
@@ -405,10 +410,13 @@ export class CardView {
           this.juiceUp(0.03, (this.seed > 0.5 ? 1 : -1) * 0.05);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (!this.destroyed) {
           this.loaded = false;
           this.placeholder.visible = true;
+          // Keep the graceful grey placeholder, but make the failure observable
+          // instead of swallowing it (a CDN/CORS outage is otherwise invisible).
+          console.warn(`CardView: texture failed to load for "${this.id}" (${textureUrl})`, error);
         }
       });
   }

@@ -1,14 +1,11 @@
 import { Application } from "pixi.js";
 
-const MAX_RENDER_RESOLUTION = 2;
-
-// Render at minimum 2× the device pixel ratio so the card art is
-// supersampled at non-hi-DPI displays. Cards scale up dramatically on
-// hover/drag — at DPR 1 alone, a 140 CSS px source rendered at the
-// canvas's 1× backing store loses too much detail.
-function renderResolution() {
-  return Math.min(Math.max(window.devicePixelRatio || 1, 2), MAX_RENDER_RESOLUTION);
-}
+// Render at a fixed 2× the CSS pixel grid. Cards scale up dramatically on
+// hover/drag, so a 1× backing store (at DPR 1) loses too much detail from the
+// ~140 CSS px source; 2× supersamples cleanly. Deliberately a constant rather
+// than the raw devicePixelRatio — capping at 2× bounds fill cost on hi-DPI /
+// retina displays, where 3×+ would be far heavier for little visible gain.
+const RENDER_RESOLUTION = 2;
 
 export async function createPixiApplication(resizeTo: HTMLElement) {
   const app = new Application();
@@ -18,7 +15,7 @@ export async function createPixiApplication(resizeTo: HTMLElement) {
     backgroundAlpha: 0,
     antialias: true,
     autoDensity: true,
-    resolution: renderResolution(),
+    resolution: RENDER_RESOLUTION,
   });
 
   app.canvas.className = "pixi-cards-canvas";
