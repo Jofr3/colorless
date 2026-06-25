@@ -27,10 +27,12 @@ export const ATTACHED_CARD_SCALE = 0.92;
 export const DEFAULT_ATTACHED_VISIBLE_STICK = 0.22;
 export const CROWDED_BENCH_ATTACHED_ENERGY_STICK = 0.14;
 
+// h-dvh (dynamic viewport height), not h-screen (100vh): on mobile browsers
+// 100vh sits behind the address bar, clipping the hand off the bottom edge.
 export const PLAYMAT_WRAPPER_CLASS =
-  "playmat-wrapper w-full h-screen flex flex-col text-white relative overflow-hidden";
+  "playmat-wrapper w-full h-dvh flex flex-col text-white relative overflow-hidden";
 
-export const CENTER_LINE_TOP = "calc((100vh - var(--hand-h)) / 2)";
+export const CENTER_LINE_TOP = "calc((100dvh - var(--hand-h)) / 2)";
 
 export const FRAME_CLASS =
   "relative rounded-xl bg-white/[0.045] backdrop-blur-[3px] ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]";

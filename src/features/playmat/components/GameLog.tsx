@@ -104,7 +104,13 @@ export function GameLog({
         <section
           aria-label="Game log"
           className="absolute flex flex-col overflow-hidden rounded-[22px] bg-white/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white/9 backdrop-blur-md"
-          style={{ left: 0, bottom: 52, width: 360, height: "min(420px, calc(100vh - 112px))" }}
+          style={{
+            left: 0,
+            bottom: 52,
+            // Clamp to the viewport so the panel doesn't overflow narrow screens.
+            width: "min(360px, calc(100vw - 24px))",
+            height: "min(420px, calc(100dvh - 112px))",
+          }}
         >
           <div className="relative flex items-center justify-between border-b border-white/[0.07] px-4 pb-2.5 pt-3.5">
             <span className="text-[10px] font-black uppercase tracking-[0.26em] text-white/72">
