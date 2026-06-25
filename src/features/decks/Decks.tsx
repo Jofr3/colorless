@@ -707,6 +707,7 @@ export function Decks() {
             its -mx-3 gutter gives the cards horizontal room for their tilt/juice.
             Clipping x here would cut that off right at the card edge. */}
         <main className="flex min-w-0 flex-1 flex-col">
+          <h1 className="sr-only">Decks</h1>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full min-w-0 sm:flex-1">
               <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />

@@ -9,6 +9,17 @@ import { SettingsButton } from "./SettingsButton";
 // blue/red glow (the `data-glow` attribute still drives the index.css gradient
 // kept as a no-WebGL fallback). The keyed wrapper replays the content fade-in
 // on each navigation.
+const APP_NAME = "Luminous";
+
+// Per-route browser/tab/screen-reader title. Home ("/") and anything unmapped
+// fall back to the bare app name.
+const PAGE_TITLES: Record<string, string> = {
+  "/simulator": "Simulator",
+  "/decks": "Decks",
+  "/settings": "Settings",
+  "/lobby/create": "Online",
+};
+
 export function RootLayout() {
   const { pathname } = useLocation();
 
@@ -16,16 +27,26 @@ export function RootLayout() {
   // paint — the glow transition starts on the first frame, with no extra delay.
   useLayoutEffect(() => {
     document.body.dataset.glow = pathname === "/" ? "sides" : "stacked";
+    const page = PAGE_TITLES[pathname];
+    document.title = page ? `${page} · ${APP_NAME}` : APP_NAME;
   }, [pathname]);
 
   return (
     <>
+      {/* First focusable element: lets keyboard users jump past the persistent
+          corner controls straight to the route content. */}
+      <a
+        href="#main-content"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:rounded-md focus-visible:bg-surface focus-visible:px-4 focus-visible:py-2 focus-visible:text-sm focus-visible:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50"
+      >
+        Skip to main content
+      </a>
       {/* Shared blue/red glow, behind every route and persistent across them. */}
       <GlowBackground />
       {/* Keyed wrapper replays the fade-in on each navigation. The Suspense
           boundary covers the lazily-loaded route leaves (Playmat, Decks); the
           glow behind it stays visible while a route chunk loads. */}
-      <div key={pathname} className="route-view">
+      <div key={pathname} id="main-content" tabIndex={-1} className="route-view outline-none">
         <Suspense fallback={null}>
           <Outlet />
         </Suspense>

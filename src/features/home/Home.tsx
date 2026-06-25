@@ -104,6 +104,7 @@ export function Home() {
   return (
     <AppBackdrop>
       <main className="mx-auto flex min-h-svh w-full max-w-lg flex-col items-center justify-center px-6 py-12">
+        <h1 className="sr-only">Luminous — main menu</h1>
         <nav aria-label="Main menu" className="grid w-full grid-cols-3 gap-4">
           {MENU_ITEMS.map((item) => (
             <MenuCard key={item.to} item={item} />
