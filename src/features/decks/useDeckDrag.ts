@@ -1,4 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { evaluateJuice, type JuiceState, startJuice } from "../../lib/animation/juice";
 import {
   clampVelocity,
@@ -135,16 +136,25 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
     const drag = dragRef.current;
     if (!drag) return;
     if (drag.raf !== null) cancelAnimationFrame(drag.raf);
-    drag.wrapper?.remove();
     document.body.style.cursor = "";
     document.body.classList.remove("decks-dragging");
-    const { item, accepted, pendingFolderId } = drag;
+    const { item, accepted, pendingFolderId, wrapper } = drag;
     dragRef.current = null;
-    // Commit the move before un-hiding the source so the tile re-renders in its
-    // new spot in one pass — no flash of the entry back in its old slot.
-    if (accepted) optsRef.current.onDrop(item, pendingFolderId);
-    setDragItem(null);
-    setDropTarget(null);
+    // Un-hide the source (and, when accepted, commit the move) *before* removing
+    // the ghost. finalize runs from a timer/rAF, where React's concurrent
+    // scheduler would defer this state commit to a later frame — so a plain
+    // `setDragItem(null)` paints the source un-hidden one frame *after* the ghost
+    // is gone, leaving a one-frame gap where neither shows: the "flash" on
+    // release. flushSync forces the un-hide to land in this same task, so the
+    // restored source and the removed ghost paint together. Committing the move
+    // here also re-renders the tile into its new spot in one pass — no flash of
+    // the entry back in its old slot.
+    flushSync(() => {
+      if (accepted) optsRef.current.onDrop(item, pendingFolderId);
+      setDragItem(null);
+      setDropTarget(null);
+    });
+    wrapper?.remove();
   }, []);
 
   const tick = useCallback(() => {
