@@ -346,3 +346,64 @@ export function BrandGlyph(props: IconProps) {
     </IconBase>
   );
 }
+
+/** Minus — decrement a card's count in the deck. */
+export function MinusIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M5 12h14" />
+    </IconBase>
+  );
+}
+
+/** X — close a dialog / remove a line. */
+export function XIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </IconBase>
+  );
+}
+
+/** Clipboard — copy the exported decklist. */
+export function ClipboardIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <rect x="8" y="3" width="8" height="4" rx="1" />
+      <path d="M9 5H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-3" />
+    </IconBase>
+  );
+}
+
+/** Arrows in/out of a tray — import & export a decklist. */
+export function ImportExportIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 14v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+      <path d="M8 8 12 4l4 4" />
+      <path d="M12 4v11" />
+    </IconBase>
+  );
+}
+
+/** Triangle with a bang — a deck-legality warning/error. */
+export function AlertTriangleIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M10.3 4.3 2.6 17.5a1.5 1.5 0 0 0 1.3 2.3h16.2a1.5 1.5 0 0 0 1.3-2.3L13.7 4.3a1.5 1.5 0 0 0-2.6 0Z" />
+      <path d="M12 9v4" />
+      <path d="M12 16.5h.01" />
+    </IconBase>
+  );
+}
+
+/** Circle with a tick — a legal, complete deck. */
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.5 12 2.5 2.5 5-5" />
+    </IconBase>
+  );
+}

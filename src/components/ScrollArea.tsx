@@ -6,14 +6,15 @@ import {
   useRef,
   useState,
 } from "react";
+import "./scrollArea.css";
 
 const MIN_THUMB = 32; // px — keep the thumb grabbable on very long lists
 
 /** A vertical scroll box whose scrollbar is a custom overlay rendered OUTSIDE
     the scrolling content — a single draggable thumb floating in the right
     gutter. Because it's absolutely positioned the native bar is hidden
-    (`.scrollbar-none` in decks.css) and the content never reflows to make room
-    for it. Wheel/trackpad/keyboard still drive the real overflow. */
+    (`.scrollbar-none` in scrollArea.css) and the content never reflows to make
+    room for it. Wheel/trackpad/keyboard still drive the real overflow. */
 export function ScrollArea({
   children,
   className,

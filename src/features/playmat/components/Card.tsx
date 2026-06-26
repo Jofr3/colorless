@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
+import { CardImage } from "../../../components/CardImage";
 import { ACTIVE_SLOT_CLASS, CARD_RENDER_WIDTH, CARD_SLOT_STYLE, FRAME_CLASS } from "../constants";
 import type { CardModel, SidePosition } from "../types";
-import { CardImage } from "./CardImage";
 
 export function CardSlot({
   children,

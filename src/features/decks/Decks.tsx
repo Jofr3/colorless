@@ -1,5 +1,6 @@
 import type { HTMLAttributes, PointerEvent as ReactPointerEvent, ReactNode, Ref } from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
@@ -16,8 +17,8 @@ import {
   SearchIcon,
   TrashIcon,
 } from "../../components/icons";
+import { ScrollArea } from "../../components/ScrollArea";
 import { CardBackStack } from "./CardBackStack";
-import { ScrollArea } from "./ScrollArea";
 import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
 import { applyReorder, previewOrder, sameOrder } from "./reorder";
 import { canDrop as canDropTo, folderPath as folderPathOf } from "./tree";
@@ -336,6 +337,7 @@ function DeckCard({
   onCommit,
   onRename,
   onDelete,
+  onOpen,
   onPointerDown,
 }: {
   deck: Deck;
@@ -348,20 +350,26 @@ function DeckCard({
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
+  /** Open the deck in the builder (a plain click; a real drag suppresses it). */
+  onOpen: () => void;
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
 }) {
   return (
     // No tile shell — the deck is just the floating card stack, filling its
     // column. `group` drives the hover reveal of the rename/delete actions.
     // A pointer-press drags it to reorder among decks or into a folder
-    // (useDeckDrag); while it's the entry being dragged the original is hidden,
+    // (useDeckDrag); a plain click (no drag threshold crossed) opens it in the
+    // builder — the drag hook swallows the click after a real drag, so the two
+    // never collide. While it's the entry being dragged the original is hidden,
     // so only the floating clone shows. data-reorder-* marks it a reorder
     // sibling; data-flip-id lets the grid slide it aside (useFlip).
+    // biome-ignore lint/a11y/useKeyWithClickEvents: a pointer-first drag tile (its reorder/nest gestures are pointer-only too); the click-to-open is a mouse convenience, not the sole path to a deck.
     <div
       data-reorder-id={deck.id}
       data-reorder-group="deck"
       data-flip-id={deck.id}
       onPointerDown={editing ? undefined : onPointerDown}
+      onClick={editing ? undefined : onOpen}
       className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
     >
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
@@ -489,6 +497,7 @@ function EmptyState({ title }: { title: string }) {
 }
 
 export function Decks() {
+  const navigate = useNavigate();
   const [folders, setFolders] = useState<Folder[]>(SEED_FOLDERS);
   const [decks, setDecks] = useState<Deck[]>(SEED_DECKS);
   const [query, setQuery] = useState("");
@@ -513,9 +522,14 @@ export function Decks() {
 
   const filterActive = showFilter !== "all" || sortKey !== "manual";
 
+  // The counter still rotates the new deck's cover tint, but the id itself is a
+  // UUID: the builder persists each deck's contents under `builder.deck.<id>`,
+  // and a counter that resets on every remount (route swap) would hand the first
+  // deck of each visit the same id (`deck-new-1`), leaking a prior deck's saved
+  // contents into a fresh one.
   const genId = (prefix: string) => {
     idCounter.current += 1;
-    return `${prefix}-new-${idCounter.current}`;
+    return `${prefix}-${crypto.randomUUID()}`;
   };
 
   const trimmed = query.trim();
@@ -925,6 +939,7 @@ export function Decks() {
                           onCommit={(name) => commitDeck(deck.id, name)}
                           onRename={() => setEditingId(deck.id)}
                           onDelete={() => deleteDeck(deck.id)}
+                          onOpen={() => navigate(`/decks/${deck.id}/edit`, { state: { name: deck.name } })}
                           onPointerDown={(e) => startDrag({ type: "deck", id: deck.id }, e)}
                         />
                       ))}

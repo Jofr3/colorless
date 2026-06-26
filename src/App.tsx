@@ -15,6 +15,9 @@ import { Settings } from "./features/settings";
 // first visited. RootLayout provides the Suspense boundary.
 const Playmat = lazy(() => import("./features/playmat").then((m) => ({ default: m.Playmat })));
 const Decks = lazy(() => import("./features/decks").then((m) => ({ default: m.Decks })));
+const DeckBuilder = lazy(() =>
+  import("./features/builder").then((m) => ({ default: m.DeckBuilder })),
+);
 
 // Data router with a persistent RootLayout shell so the shared background glow
 // (index.css) survives navigations and slides between route layouts.
@@ -27,6 +30,7 @@ export const router = createBrowserRouter([
       { path: "/simulator", element: <Playmat /> },
       { path: "/lobby/create", element: <PlaceholderPage title="Online" Icon={SwordsIcon} /> },
       { path: "/decks", element: <Decks /> },
+      { path: "/decks/:deckId/edit", element: <DeckBuilder /> },
       { path: "/settings", element: <Settings /> },
       { path: "*", element: <NotFound /> },
     ],

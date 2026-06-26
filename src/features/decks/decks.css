@@ -1,15 +1,3 @@
-/* The decks/folders scroll area hides its native scrollbar so the grid keeps
-   its full width and never reflows to make room for the bar. A custom overlay
-   thumb (ScrollArea.tsx) is drawn in the right gutter instead — fully outside
-   the scrolling content. */
-.scrollbar-none {
-  scrollbar-width: none; /* Firefox */
-}
-
-.scrollbar-none::-webkit-scrollbar {
-  display: none; /* WebKit / Blink */
-}
-
 /* The floating clone that follows the cursor while a deck/folder is dragged
    (useDeckDrag.ts). Lives at the body root so it roams the whole viewport,
    clear of the scroll area's clip. Pointer-events off so it never intercepts
