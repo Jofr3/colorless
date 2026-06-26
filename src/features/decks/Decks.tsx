@@ -615,11 +615,13 @@ export function Decks() {
   };
 
   const deleteDeck = (id: string) => {
+    setFlipPulse(true);
     setDecks((prev) => prev.filter((d) => d.id !== id));
     if (editingId === id) setEditingId(null);
   };
 
   const deleteFolder = (id: string) => {
+    setFlipPulse(true);
     // Don't strand what's inside — lift the folder's direct decks and subfolders
     // up one level (to its own parent) instead of orphaning them.
     const parentId = folders.find((f) => f.id === id)?.parentId ?? null;
@@ -704,10 +706,20 @@ export function Decks() {
   const previewFolders = withReorderPreview(visibleFolders, dragItem, reorder, "folder");
   const previewDecks = withReorderPreview(visibleDecks, dragItem, reorder, "deck");
 
-  // FLIP refs animate each grid's tiles between slots as the preview order
-  // changes. Active only for the kind being dragged (the other grid is static).
-  const foldersFlipRef = useFlip<HTMLDivElement>(dragItem?.type === "folder");
-  const decksFlipRef = useFlip<HTMLDivElement>(dragItem?.type === "deck");
+  // A one-shot pulse that turns the FLIP on for the single render a deletion
+  // causes, so the surviving tiles slide up to fill the gap instead of snapping.
+  // It self-clears next tick; that follow-up render finds no movement, so the
+  // in-flight slide (a transform animation) is left running untouched.
+  const [flipPulse, setFlipPulse] = useState(false);
+  useEffect(() => {
+    if (flipPulse) setFlipPulse(false);
+  }, [flipPulse]);
+
+  // FLIP refs animate each grid's tiles between slots — continuously while that
+  // kind is being dragged (the live reorder preview), and for the one render a
+  // deletion reflows the grid (the other grid simply finds nothing moved).
+  const foldersFlipRef = useFlip<HTMLDivElement>(dragItem?.type === "folder" || flipPulse);
+  const decksFlipRef = useFlip<HTMLDivElement>(dragItem?.type === "deck" || flipPulse);
 
   const isEmpty = visibleFolders.length === 0 && visibleDecks.length === 0;
 
