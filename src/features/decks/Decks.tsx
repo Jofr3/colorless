@@ -161,11 +161,13 @@ function NameField({
   );
 }
 
-/** Frosted-glass card surface shared by deck and folder tiles. The blurred
-    layer is oversized by 1px and clipped by the shell's overflow-hidden, the
-    same trick the home menu cards use to trim backdrop-filter's edge fringe.
-    Motion (the deck tiles' hover lift, the folder tiles' tilt) is left to the
-    caller via `className`/`style`, so the shell itself stays presentational. */
+/** Frosted-glass surface for the folder tiles. The blurred layer is oversized
+    by 1px and clipped by the shell's overflow-hidden, the same trick the home
+    menu cards use to trim backdrop-filter's edge fringe. The blur is heavy
+    (blur-xl) so that while a folder is dragged its live clone visibly frosts
+    whatever it floats over — at rest it just smooths the dark backdrop. Motion
+    (the folder tiles' tilt) is left to the caller via `className`/`style`, so
+    the shell itself stays presentational. */
 function CardShell({
   children,
   className,
@@ -184,7 +186,7 @@ function CardShell({
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute -inset-px bg-white/[0.045] backdrop-blur-md"
+        className="pointer-events-none absolute -inset-px bg-white/[0.06] backdrop-blur-xl"
       />
       <div className="relative">{children}</div>
       <span

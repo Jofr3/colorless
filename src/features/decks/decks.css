@@ -15,7 +15,13 @@
    clear of the scroll area's clip. Pointer-events off so it never intercepts
    the elementFromPoint hit-test that finds the drop target beneath it.
    transform-origin centred so the spring's rotate/scale pivot the card middle;
-   the per-frame transform is written imperatively. */
+   the per-frame transform is written imperatively.
+
+   will-change lists *only* transform: hinting `opacity` here would make the
+   wrapper a backdrop root, which clips a dragged folder's inner backdrop-blur to
+   the (empty) ghost instead of the page — so the folder glass wouldn't frost
+   what it floats over. Opacity is still animated imperatively; it just isn't
+   promoted. */
 .deck-drag-ghost {
   position: fixed;
   top: 0;
@@ -23,7 +29,7 @@
   z-index: 9999;
   pointer-events: none;
   transform-origin: center center;
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 /* The clone carries the tile's own interactive bits (the deck's pointer-events
