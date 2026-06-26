@@ -115,6 +115,11 @@ interface Drag {
   // are snapshotted once at pickup so the make-room shift never feeds back into
   // the index math. Null when this item can't be reordered (e.g. searching).
   baseSiblings: ReorderRect[] | null;
+  // Top of the group's first row (min sibling top). Reorder is only previewed at
+  // or below this — once the pointer rises above the section (into the gap or the
+  // other section on the way to a folder), reordering is suppressed so the group
+  // doesn't reshuffle and snap back.
+  baseTop: number;
   reorderIndex: number | null;
   lastReorder: ReorderPreview | null;
   // Release phase.
@@ -305,8 +310,15 @@ export function useDeckDrag({ canDrop, onDrop, canReorder, onReorder }: UseDeckD
       setDropTarget(nestKey);
     }
 
-    // 2. Otherwise, a reorder insertion among the same-kind siblings.
-    const nextIndex = !nestEl && drag.baseSiblings ? insertionIndex(drag.baseSiblings, x, y) : null;
+    // 2. Otherwise, a reorder insertion among the same-kind siblings — but only
+    // while the pointer is within the group's own section. Above its first row
+    // (y < baseTop) the dragged tile is leaving for the other section (e.g. a
+    // deck heading up to a folder), so reordering is suppressed: otherwise it
+    // would reshuffle to the front and then snap back once a folder is hovered.
+    const nextIndex =
+      !nestEl && drag.baseSiblings && y >= drag.baseTop
+        ? insertionIndex(drag.baseSiblings, x, y)
+        : null;
     drag.reorderIndex = nextIndex;
     const nextReorder = nextIndex === null ? null : { group: drag.item.type, index: nextIndex };
     if (drag.lastReorder?.index !== nextReorder?.index) {
@@ -331,6 +343,7 @@ export function useDeckDrag({ canDrop, onDrop, canReorder, onReorder }: UseDeckD
             const r = el.getBoundingClientRect();
             return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
           });
+        for (const s of drag.baseSiblings) drag.baseTop = Math.min(drag.baseTop, s.top);
       }
       drag.wrapper = makeGhost(drag.sourceEl, rect);
       drag.halfW = rect.width / 2;
@@ -458,6 +471,7 @@ export function useDeckDrag({ canDrop, onDrop, canReorder, onReorder }: UseDeckD
         dropOk: false,
         lastDropKey: null,
         baseSiblings: null,
+        baseTop: Number.POSITIVE_INFINITY,
         reorderIndex: null,
         lastReorder: null,
         releasing: false,
