@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Deck, Folder } from "./data";
-import { canDrop, folderPath, isDescendantOf, moveDestinations } from "./tree";
+import { canDrop, folderPath, isDescendantOf } from "./tree";
 
 // A (root) > A1 > A2 ; B (root). Decks: d1 in A, d2 at root.
 const folders: Folder[] = [
@@ -64,26 +64,5 @@ describe("canDrop", () => {
     expect(canDrop(folders, decks, deck("d1"), "B")).toBe(true);
     expect(canDrop(folders, decks, deck("d1"), null)).toBe(true);
     expect(canDrop(folders, decks, deck("d2"), null)).toBe(false); // already at root
-  });
-});
-
-describe("moveDestinations", () => {
-  it("lists root + every droppable folder with path labels, excluding invalid ones", () => {
-    // A1 (parent A): root allowed; A is its parent (no-op), A1 itself, A2 its
-    // descendant — all excluded; only B remains.
-    const dests = moveDestinations(folders, decks, folder("A1"));
-    expect(dests).toEqual([
-      { id: null, label: "Library root" },
-      { id: "B", label: "B" },
-    ]);
-  });
-
-  it("labels nested folders with their full path", () => {
-    // A deck at root can move into any folder; A2's label is its full path.
-    const dests = moveDestinations(folders, decks, deck("d2"));
-    const a2 = dests.find((d) => d.id === "A2");
-    expect(a2?.label).toBe("A / A1 / A2");
-    // d2 is already at root, so root is not offered.
-    expect(dests.some((d) => d.id === null)).toBe(false);
   });
 });

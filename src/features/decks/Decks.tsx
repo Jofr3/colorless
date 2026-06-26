@@ -17,15 +17,10 @@ import {
   TrashIcon,
 } from "../../components/icons";
 import { CardBackStack } from "./CardBackStack";
-import { MoveDialog } from "./MoveDialog";
 import { ScrollArea } from "./ScrollArea";
 import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
 import { applyReorder, previewOrder, sameOrder } from "./reorder";
-import {
-  canDrop as canDropTo,
-  folderPath as folderPathOf,
-  moveDestinations as moveDestinationsFor,
-} from "./tree";
+import { canDrop as canDropTo, folderPath as folderPathOf } from "./tree";
 import { type DragItem, type ReorderPreview, useDeckDrag } from "./useDeckDrag";
 import { useFlip } from "./useFlip";
 import "./decks.css";
@@ -311,21 +306,16 @@ function CardActions({
   label,
   onRename,
   onDelete,
-  onMove,
 }: {
   label: string;
   onRename: () => void;
   onDelete: () => void;
-  onMove: () => void;
 }) {
   return (
     <div
       data-card-actions
       className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100"
     >
-      <IconButton label={`Move ${label}`} onClick={onMove}>
-        <FolderIcon className="h-3.5 w-3.5" fill="currentColor" />
-      </IconButton>
       <IconButton label={`Rename ${label}`} onClick={onRename}>
         <PencilIcon className="h-3.5 w-3.5" />
       </IconButton>
@@ -346,7 +336,6 @@ function DeckCard({
   onCommit,
   onRename,
   onDelete,
-  onMove,
   onPointerDown,
 }: {
   deck: Deck;
@@ -359,7 +348,6 @@ function DeckCard({
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
-  onMove: () => void;
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
 }) {
   return (
@@ -376,7 +364,7 @@ function DeckCard({
       onPointerDown={editing ? undefined : onPointerDown}
       className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
     >
-      <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} onMove={onMove} />
+      <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
       <CardBackStack
         juiceOnMount={juiceOnMount}
         dragActive={dragActive}
@@ -415,7 +403,6 @@ function FolderCard({
   onCommit,
   onRename,
   onDelete,
-  onMove,
   onPointerDown,
 }: {
   folder: Folder;
@@ -429,7 +416,6 @@ function FolderCard({
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
-  onMove: () => void;
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
 }) {
   // Folder tiles get the home menu cards' Balatro tilt + juice (no glow/sheen),
@@ -453,7 +439,7 @@ function FolderCard({
       {...dropAttrs(folder.id, folder.id)}
       className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
     >
-      <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} onMove={onMove} />
+      <CardActions label={folder.name} onRename={onRename} onDelete={onDelete} />
       {/* Outer layer carries the transient juice (whole-card squash + wobble). */}
       <div ref={juiceLayerRef} style={juiceStyle}>
         <CardShell innerRef={tiltRef} style={tiltStyle} {...handlers}>
@@ -508,8 +494,6 @@ export function Decks() {
   const [query, setQuery] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  // The item whose keyboard "Move to…" picker is open, or null.
-  const [movingItem, setMovingItem] = useState<DragItem | null>(null);
   // The most recently created deck — its tile pops with a juice bounce on mount.
   const [justCreatedDeckId, setJustCreatedDeckId] = useState<string | null>(null);
   // Filter & sort, shown as a side rail toggled by the button left of the search.
@@ -660,15 +644,6 @@ export function Decks() {
 
   const canDrop = (item: DragItem, targetFolderId: string | null) =>
     canDropTo(folders, decks, item, targetFolderId);
-
-  // Valid keyboard "Move to…" destinations for an item (root + droppable folders).
-  const moveDestinations = (item: DragItem) => moveDestinationsFor(folders, decks, item);
-
-  const movingName = movingItem
-    ? ((movingItem.type === "folder"
-        ? folders.find((f) => f.id === movingItem.id)?.name
-        : decks.find((d) => d.id === movingItem.id)?.name) ?? "")
-    : "";
 
   const handleDrop = (item: DragItem, targetFolderId: string | null) => {
     if (!canDrop(item, targetFolderId)) return;
@@ -921,7 +896,6 @@ export function Decks() {
                           onCommit={(name) => commitFolder(folder.id, name)}
                           onRename={() => setEditingId(folder.id)}
                           onDelete={() => deleteFolder(folder.id)}
-                          onMove={() => setMovingItem({ type: "folder", id: folder.id })}
                           onPointerDown={(e) => startDrag({ type: "folder", id: folder.id }, e)}
                         />
                       ))}
@@ -951,7 +925,6 @@ export function Decks() {
                           onCommit={(name) => commitDeck(deck.id, name)}
                           onRename={() => setEditingId(deck.id)}
                           onDelete={() => deleteDeck(deck.id)}
-                          onMove={() => setMovingItem({ type: "deck", id: deck.id })}
                           onPointerDown={(e) => startDrag({ type: "deck", id: deck.id }, e)}
                         />
                       ))}
@@ -963,16 +936,6 @@ export function Decks() {
           </ScrollArea>
         </main>
       </div>
-      <MoveDialog
-        open={movingItem !== null}
-        itemName={movingName}
-        destinations={movingItem ? moveDestinations(movingItem) : []}
-        onSelect={(folderId) => {
-          if (movingItem) handleDrop(movingItem, folderId);
-          setMovingItem(null);
-        }}
-        onClose={() => setMovingItem(null)}
-      />
     </AppBackdrop>
   );
 }

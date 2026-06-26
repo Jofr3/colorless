@@ -6,13 +6,6 @@ import type { DragItem } from "./useDeckDrag";
 // wrong answer detaches a branch into a cycle) is unit-testable without
 // rendering the whole component. Each takes the current folders/decks as args.
 
-export interface MoveDestination {
-  /** Target folder id, or null for the library root. */
-  id: string | null;
-  /** Full path label for disambiguation, e.g. "Standard / Aggro". */
-  label: string;
-}
-
 /** Ancestor chain (root-most first) for a folder. The visited guard keeps a
     stray parent-cycle in the data from looping forever. */
 export function folderPath(folders: Folder[], id: string): Folder[] {
@@ -55,24 +48,4 @@ export function canDrop(
     return (folders.find((f) => f.id === item.id)?.parentId ?? null) !== targetFolderId;
   }
   return (decks.find((d) => d.id === item.id)?.folderId ?? null) !== targetFolderId;
-}
-
-/** Valid move destinations for `item`: the library root (when allowed) plus
-    every folder it may drop into, each labelled with its full path. */
-export function moveDestinations(folders: Folder[], decks: Deck[], item: DragItem): MoveDestination[] {
-  const destinations: MoveDestination[] = [];
-  if (canDrop(folders, decks, item, null)) {
-    destinations.push({ id: null, label: "Library root" });
-  }
-  for (const folder of folders) {
-    if (canDrop(folders, decks, item, folder.id)) {
-      destinations.push({
-        id: folder.id,
-        label: folderPath(folders, folder.id)
-          .map((f) => f.name)
-          .join(" / "),
-      });
-    }
-  }
-  return destinations;
 }
