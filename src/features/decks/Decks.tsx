@@ -342,6 +342,7 @@ function DeckCard({
   folderLabel,
   juiceOnMount,
   dragging,
+  dragActive,
   onCommit,
   onRename,
   onDelete,
@@ -353,6 +354,8 @@ function DeckCard({
   folderLabel?: string | null;
   juiceOnMount?: boolean;
   dragging: boolean;
+  /** A drag (this tile or another) is in flight — suppresses the hover tilt. */
+  dragActive: boolean;
   onCommit: (name: string) => void;
   onRename: () => void;
   onDelete: () => void;
@@ -376,6 +379,7 @@ function DeckCard({
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} onMove={onMove} />
       <CardBackStack
         juiceOnMount={juiceOnMount}
+        dragActive={dragActive}
         label={
           <>
             {folderLabel && (
@@ -405,6 +409,7 @@ function FolderCard({
   summary,
   editing,
   dragging,
+  dragActive,
   isDropTarget,
   onOpen,
   onCommit,
@@ -417,6 +422,8 @@ function FolderCard({
   summary: string;
   editing: boolean;
   dragging: boolean;
+  /** A drag (this tile or another) is in flight — suppresses the hover tilt. */
+  dragActive: boolean;
   isDropTarget: boolean;
   onOpen: () => void;
   onCommit: (name: string) => void;
@@ -425,9 +432,12 @@ function FolderCard({
   onMove: () => void;
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
 }) {
-  // Folder tiles get the home menu cards' Balatro tilt + juice (no glow/sheen).
-  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
-    useTiltJuice<HTMLDivElement>();
+  // Folder tiles get the home menu cards' Balatro tilt + juice (no glow/sheen),
+  // suppressed while a drag is in flight so a folder the ghost floats over
+  // doesn't lean.
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLDivElement>({
+    disabled: dragActive,
+  });
   return (
     // `group relative` wrapper holds the actions still while the card tilts.
     // The actions sit outside the juice + tilt layers so they don't move with
@@ -662,6 +672,10 @@ export function Decks() {
 
   const handleDrop = (item: DragItem, targetFolderId: string | null) => {
     if (!canDrop(item, targetFolderId)) return;
+    // The item leaves the current view, so the rest of the grid reflows to close
+    // its gap — pulse the FLIP so that settle is animated (the drag commit clears
+    // dragItem in the same flushSync, so the drag's own FLIP gate is already off).
+    setFlipPulse(true);
     if (item.type === "folder") moveFolder(item.id, targetFolderId);
     else moveDeck(item.id, targetFolderId);
   };
@@ -901,6 +915,7 @@ export function Decks() {
                           summary={folderSummaryOf(folder.id)}
                           editing={editingId === folder.id}
                           dragging={dragItem?.type === "folder" && dragItem.id === folder.id}
+                          dragActive={dragItem !== null}
                           isDropTarget={dropTarget === folder.id}
                           onOpen={() => openFolderById(folder.id)}
                           onCommit={(name) => commitFolder(folder.id, name)}
@@ -932,6 +947,7 @@ export function Decks() {
                           folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
                           juiceOnMount={deck.id === justCreatedDeckId}
                           dragging={dragItem?.type === "deck" && dragItem.id === deck.id}
+                          dragActive={dragItem !== null}
                           onCommit={(name) => commitDeck(deck.id, name)}
                           onRename={() => setEditingId(deck.id)}
                           onDelete={() => deleteDeck(deck.id)}

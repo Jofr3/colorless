@@ -45,6 +45,11 @@ export type TiltJuiceOptions = {
   /** Fire the juice once the moment the card first mounts — e.g. a freshly
       created card popping into place. */
   juiceOnMount?: boolean;
+  /** Suppress the pointer tilt/juice while true, and reset the card to rest.
+      Used during a decks drag: the floating ghost is pointer-events:none so it
+      can hit-test drop targets, which means hover events fall *through* it to the
+      tile underneath — without this that tile would lean as the ghost passes. */
+  disabled?: boolean;
 };
 
 /** Wires the Balatro tilt + juice onto a card: attach `tiltRef`/`tiltStyle` and
@@ -129,12 +134,24 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
 
   // Pop the card with a juice bounce the moment it first appears, if asked. The
   // juice runner is wired by the effect above, which runs first on mount.
-  const { juiceOnMount } = options;
+  const { juiceOnMount, disabled } = options;
   useEffect(() => {
     if (juiceOnMount) juiceRunner.current(SPAWN_JUICE.amount, SPAWN_JUICE.rotation);
   }, [juiceOnMount]);
 
+  // When tilt is disabled (a drag is in flight), snap the card flat in case it
+  // was mid-lean when the drag began, and below the handlers no-op so it stays
+  // put while the ghost floats over it.
+  useEffect(() => {
+    const el = tiltRef.current;
+    if (!disabled || !el) return;
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+    el.style.setProperty("--s", "1");
+  }, [disabled]);
+
   const handlePointerEnter = () => {
+    if (disabled) return;
     tiltRef.current?.style.setProperty("--s", `${HOVER_SCALE}`);
     options.onHoverChange?.(true);
     juiceRunner.current(HOVER_JUICE.amount, HOVER_JUICE.rotation);
@@ -142,7 +159,7 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
     const el = tiltRef.current;
-    if (!el) return;
+    if (!el || disabled) return;
     const rect = el.getBoundingClientRect();
     // off*: -0.5..0.5 from the card centre.
     const offX = (event.clientX - rect.left) / rect.width - 0.5;
@@ -170,7 +187,10 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
     options.onHoverChange?.(false);
   };
 
-  const handlePointerDown = () => juiceRunner.current(PRESS_JUICE.amount, PRESS_JUICE.rotation);
+  const handlePointerDown = () => {
+    if (disabled) return;
+    juiceRunner.current(PRESS_JUICE.amount, PRESS_JUICE.rotation);
+  };
 
   return {
     tiltRef,

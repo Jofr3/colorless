@@ -65,13 +65,17 @@ const TOP_CARD_SCALE = 1.01;
 export function CardBackStack({
   label,
   juiceOnMount,
+  dragActive,
 }: {
   label?: ReactNode;
   /** Pop the top card with a juice bounce when it first appears (new decks). */
   juiceOnMount?: boolean;
+  /** Suppress the hover tilt while a drag is in flight (see useTiltJuice). */
+  dragActive?: boolean;
 }) {
   const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLDivElement>({
     juiceOnMount,
+    disabled: dragActive,
   });
   return (
     <div className="pointer-events-none relative aspect-[5/7] w-full">
