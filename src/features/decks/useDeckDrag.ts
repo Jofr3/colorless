@@ -9,6 +9,7 @@ import {
   stepSpringScalar,
   stepSpringXY,
 } from "../../lib/animation/spring";
+import { insertionIndex, type ReorderRect } from "./reorder";
 
 // Pointer-driven drag for the decks library, ported from the simulator's card
 // drag (features/playmat/pixi/CardView.ts). Native HTML5 drag-and-drop can only
@@ -17,17 +18,40 @@ import {
 // spring + juice on it, so a folder/deck "picks up", spring-follows the cursor
 // with a velocity-driven tilt, and pops into its target (or wobbles back home).
 //
+// Two drop outcomes share this gesture:
+//   • nest    — drop a deck/folder onto a folder (or the breadcrumb/root) to
+//               move it inside; the ghost shrinks and fades into the target.
+//   • reorder — drop among same-kind siblings to rearrange them (decks among
+//               decks, folders among folders), like the simulator bench. The
+//               ghost springs to its new slot and the siblings slide aside
+//               (the FLIP in useFlip). Folders are both nestable and orderable,
+//               so a folder dragged over another folder nests only when over its
+//               centre and reorders past its edges (see updateTarget).
+//
 // Spring + juice constants below are copied verbatim from CardView so the two
 // drags feel identical; see that file for the Balatro source references.
 
 /** A library entry mid-drag. */
 export type DragItem = { type: "deck" | "folder"; id: string };
 
+/** Live reorder preview: where the dragged item currently sits among its
+    same-kind siblings, so the grid can render that order and slide tiles aside. */
+export interface ReorderPreview {
+  group: "deck" | "folder";
+  /** Insertion index among the siblings (the visible group minus the dragged). */
+  index: number;
+}
+
 interface UseDeckDragOptions {
   /** Whether `item` may land in `targetFolderId` (null = library root). */
   canDrop: (item: DragItem, targetFolderId: string | null) => boolean;
-  /** Commit an accepted drop. */
+  /** Commit an accepted nest (move into a folder / the root). */
   onDrop: (item: DragItem, targetFolderId: string | null) => void;
+  /** Whether `item` may be drag-reordered right now (false e.g. while searching,
+      where the list isn't a stable orderable view). */
+  canReorder: (item: DragItem) => boolean;
+  /** Commit a reorder: place `item` at insertion `index` among its siblings. */
+  onReorder: (item: DragItem, index: number) => void;
 }
 
 // Spring + juice physics are shared with the simulator card layer — see
@@ -81,17 +105,28 @@ interface Drag {
   wrapper: HTMLElement | null;
   raf: number | null;
   lastFrame: number;
-  // Live drop target under the cursor (only set when canDrop allows it).
+  // Live nest target under the cursor (only set when canDrop allows it).
   dropFolderId: string | null;
   dropTargetEl: HTMLElement | null;
   dropOk: boolean;
   lastDropKey: string | null;
+  // Reorder: the same-kind siblings' frozen start rects (visible order, minus
+  // the dragged tile), and the live insertion index computed against them. Rects
+  // are snapshotted once at pickup so the make-room shift never feeds back into
+  // the index math. Null when this item can't be reordered (e.g. searching).
+  baseSiblings: ReorderRect[] | null;
+  reorderIndex: number | null;
+  lastReorder: ReorderPreview | null;
   // Release phase.
   releasing: boolean;
   releaseStart: number;
   releaseCenter: { x: number; y: number };
+  // accepted === a committed nest (ghost shrinks into the folder). A reorder is
+  // not "accepted" — it springs back to its slot like a return-home but commits
+  // the new index via reorderCommitIndex.
   accepted: boolean;
   pendingFolderId: string | null;
+  reorderCommitIndex: number | null;
 }
 
 function centerOf(el: HTMLElement) {
@@ -124,13 +159,14 @@ function makeGhost(source: HTMLElement, rect: DOMRect) {
   return wrapper;
 }
 
-export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
+export function useDeckDrag({ canDrop, onDrop, canReorder, onReorder }: UseDeckDragOptions) {
   const [dragItem, setDragItem] = useState<DragItem | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [reorder, setReorder] = useState<ReorderPreview | null>(null);
   const dragRef = useRef<Drag | null>(null);
   // Keep the latest callbacks reachable from the stable handlers below.
-  const optsRef = useRef({ canDrop, onDrop });
-  optsRef.current = { canDrop, onDrop };
+  const optsRef = useRef({ canDrop, onDrop, canReorder, onReorder });
+  optsRef.current = { canDrop, onDrop, canReorder, onReorder };
 
   const finalize = useCallback(() => {
     const drag = dragRef.current;
@@ -138,21 +174,24 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
     if (drag.raf !== null) cancelAnimationFrame(drag.raf);
     document.body.style.cursor = "";
     document.body.classList.remove("decks-dragging");
-    const { item, accepted, pendingFolderId, wrapper } = drag;
+    const { item, accepted, pendingFolderId, reorderCommitIndex, wrapper } = drag;
     dragRef.current = null;
-    // Un-hide the source (and, when accepted, commit the move) *before* removing
-    // the ghost. finalize runs from a timer/rAF, where React's concurrent
-    // scheduler would defer this state commit to a later frame — so a plain
+    // Un-hide the source (and commit the nest/reorder) *before* removing the
+    // ghost. finalize runs from a timer/rAF, where React's concurrent scheduler
+    // would defer this state commit to a later frame — so a plain
     // `setDragItem(null)` paints the source un-hidden one frame *after* the ghost
     // is gone, leaving a one-frame gap where neither shows: the "flash" on
     // release. flushSync forces the un-hide to land in this same task, so the
-    // restored source and the removed ghost paint together. Committing the move
-    // here also re-renders the tile into its new spot in one pass — no flash of
-    // the entry back in its old slot.
+    // restored source and the removed ghost paint together. Committing here also
+    // re-renders the tile into its new spot in one pass — no flash of the entry
+    // back in its old slot. The committed order matches the live preview, so the
+    // tile stays put as the preview state clears.
     flushSync(() => {
       if (accepted) optsRef.current.onDrop(item, pendingFolderId);
+      else if (reorderCommitIndex !== null) optsRef.current.onReorder(item, reorderCommitIndex);
       setDragItem(null);
       setDropTarget(null);
+      setReorder(null);
     });
     wrapper?.remove();
   }, []);
@@ -219,33 +258,80 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
     window.setTimeout(() => window.removeEventListener("click", handler, true), 350);
   }, []);
 
-  const updateDropTarget = useCallback((x: number, y: number) => {
+  // The central fraction of a folder tile that nests rather than reorders, on
+  // each axis. Outside this box (the tile's border region) a dragged folder
+  // reorders past it instead — "centre = nest, edges = reorder".
+  const NEST_BAND = 0.25;
+
+  const updateTarget = useCallback((x: number, y: number) => {
     const drag = dragRef.current;
     if (!drag) return;
+
+    // 1. Nest target under the cursor (folder tile, breadcrumb, root, or up).
     const hit = document.elementFromPoint(x, y);
     const targetEl = hit?.closest<HTMLElement>("[data-drop-key]") ?? null;
-    let key: string | null = null;
-    let folderId: string | null = null;
-    let ok = false;
+    let nestKey: string | null = null;
+    let nestFolderId: string | null = null;
+    let nestEl: HTMLElement | null = null;
     if (targetEl) {
-      key = targetEl.dataset.dropKey ?? null;
       const raw = targetEl.dataset.dropFolder ?? "";
-      folderId = raw === "" ? null : raw;
-      ok = optsRef.current.canDrop(drag.item, folderId);
+      const folderId = raw === "" ? null : raw;
+      if (optsRef.current.canDrop(drag.item, folderId)) {
+        // Folder grid tiles carry data-reorder-id (they're reorder siblings too);
+        // the breadcrumb/root/up targets don't and always nest. A *folder*
+        // dropped onto another folder tile only nests over the tile's centre, so
+        // its edges stay free to reorder past. A deck always nests onto a folder
+        // (decks don't reorder among folders).
+        const isTile = targetEl.dataset.reorderId !== undefined;
+        let nest = true;
+        if (isTile && drag.item.type === "folder") {
+          const r = targetEl.getBoundingClientRect();
+          const fx = (x - r.left) / r.width;
+          const fy = (y - r.top) / r.height;
+          nest = fx > NEST_BAND && fx < 1 - NEST_BAND && fy > NEST_BAND && fy < 1 - NEST_BAND;
+        }
+        if (nest) {
+          nestKey = targetEl.dataset.dropKey ?? null;
+          nestFolderId = folderId;
+          nestEl = targetEl;
+        }
+      }
     }
-    drag.dropOk = ok;
-    drag.dropFolderId = ok ? folderId : null;
-    drag.dropTargetEl = ok ? targetEl : null;
-    const nextKey = ok ? key : null;
-    if (drag.lastDropKey !== nextKey) {
-      drag.lastDropKey = nextKey;
-      setDropTarget(nextKey);
+    drag.dropOk = nestEl !== null;
+    drag.dropFolderId = nestEl ? nestFolderId : null;
+    drag.dropTargetEl = nestEl;
+    if (drag.lastDropKey !== nestKey) {
+      drag.lastDropKey = nestKey;
+      setDropTarget(nestKey);
+    }
+
+    // 2. Otherwise, a reorder insertion among the same-kind siblings.
+    const nextIndex = !nestEl && drag.baseSiblings ? insertionIndex(drag.baseSiblings, x, y) : null;
+    drag.reorderIndex = nextIndex;
+    const nextReorder = nextIndex === null ? null : { group: drag.item.type, index: nextIndex };
+    if (drag.lastReorder?.index !== nextReorder?.index) {
+      drag.lastReorder = nextReorder;
+      setReorder(nextReorder);
     }
   }, []);
 
   const beginDrag = useCallback(
     (drag: Drag) => {
       const rect = drag.sourceEl.getBoundingClientRect();
+      // Snapshot the same-kind siblings' start positions for reorder hit-testing
+      // (frozen, so the make-room shift can't feed back). Taken before the source
+      // is hidden below, while the grid is still in its resting layout.
+      if (optsRef.current.canReorder(drag.item)) {
+        const tiles = document.querySelectorAll<HTMLElement>(
+          `[data-reorder-group="${drag.item.type}"]`,
+        );
+        drag.baseSiblings = Array.from(tiles)
+          .filter((el) => el.dataset.reorderId !== drag.item.id)
+          .map((el) => {
+            const r = el.getBoundingClientRect();
+            return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
+          });
+      }
       drag.wrapper = makeGhost(drag.sourceEl, rect);
       drag.halfW = rect.width / 2;
       drag.halfH = rect.height / 2;
@@ -283,9 +369,9 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
       }
       event.preventDefault();
       drag.pointer = { x: event.clientX, y: event.clientY };
-      updateDropTarget(event.clientX, event.clientY);
+      updateTarget(event.clientX, event.clientY);
     },
-    [beginDrag, updateDropTarget],
+    [beginDrag, updateTarget],
   );
 
   const onPointerUp = useCallback(
@@ -301,19 +387,28 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
         return;
       }
       // A pointercancel (OS/scroll/palm-rejection takeover) is an interrupted
-      // gesture, not a completed drop — never commit a move on cancel; fly the
-      // ghost back to the source instead.
+      // gesture, not a completed drop — never commit on cancel; fly the ghost
+      // back to the source instead. Otherwise the outcome is a nest (a live
+      // folder target), else a reorder (an insertion index among siblings), else
+      // a plain return-home.
       const cancelled = event.type === "pointercancel";
-      const accepted = !cancelled && drag.dropOk && !!drag.dropTargetEl;
-      drag.accepted = accepted;
-      drag.pendingFolderId = accepted ? drag.dropFolderId : null;
+      const nesting = !cancelled && drag.dropOk && !!drag.dropTargetEl;
+      const reordering = !cancelled && !nesting && drag.reorderIndex !== null;
+      drag.accepted = nesting;
+      drag.pendingFolderId = nesting ? drag.dropFolderId : null;
+      drag.reorderCommitIndex = reordering ? drag.reorderIndex : null;
       drag.releasing = true;
       drag.releaseStart = performance.now();
-      drag.releaseCenter = centerOf(accepted ? (drag.dropTargetEl as HTMLElement) : drag.sourceEl);
+      // Nest: shrink into the folder. Reorder / return-home: spring to the source
+      // tile, which the live preview has already parked at the insertion slot.
+      drag.releaseCenter = centerOf(nesting ? (drag.dropTargetEl as HTMLElement) : drag.sourceEl);
       if (!drag.reduced) {
-        const pop = accepted ? LAND_JUICE : REJECT_JUICE;
+        // A settle pop on a landing (nest or reorder); a sideways wobble on a
+        // return-home so it reads as "bounced back".
+        const landing = nesting || reordering;
+        const pop = landing ? LAND_JUICE : REJECT_JUICE;
         const sign = drag.startX % 2 < 1 ? 1 : -1;
-        drag.juice = startJuice(pop.amount, pop.rotation * (accepted ? 1 : sign), performance.now() / 1000);
+        drag.juice = startJuice(pop.amount, pop.rotation * (landing ? 1 : sign), performance.now() / 1000);
       }
       // The release fly-out + commit normally finishes inside the rAF tick. rAF
       // is paused while the tab is hidden, so back the commit with a timer too:
@@ -362,11 +457,15 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
         dropTargetEl: null,
         dropOk: false,
         lastDropKey: null,
+        baseSiblings: null,
+        reorderIndex: null,
+        lastReorder: null,
         releasing: false,
         releaseStart: 0,
         releaseCenter: { x: 0, y: 0 },
         accepted: false,
         pendingFolderId: null,
+        reorderCommitIndex: null,
       };
       window.addEventListener("pointermove", onPointerMove);
       window.addEventListener("pointerup", onPointerUp);
@@ -391,5 +490,5 @@ export function useDeckDrag({ canDrop, onDrop }: UseDeckDragOptions) {
     };
   }, [onPointerMove, onPointerUp]);
 
-  return { dragItem, dropTarget, startDrag };
+  return { dragItem, dropTarget, reorder, startDrag };
 }

@@ -20,12 +20,14 @@ import { CardBackStack } from "./CardBackStack";
 import { MoveDialog } from "./MoveDialog";
 import { ScrollArea } from "./ScrollArea";
 import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
+import { applyReorder, previewOrder, sameOrder } from "./reorder";
 import {
   canDrop as canDropTo,
   folderPath as folderPathOf,
   moveDestinations as moveDestinationsFor,
 } from "./tree";
-import { type DragItem, useDeckDrag } from "./useDeckDrag";
+import { type DragItem, type ReorderPreview, useDeckDrag } from "./useDeckDrag";
+import { useFlip } from "./useFlip";
 import "./decks.css";
 
 // The accent button is the inverse of the app's glass buttons: a light accent
@@ -47,8 +49,9 @@ const FILTER_BUTTON_CLASS =
 
 /** Which kinds of library entries the grid shows. */
 type ShowFilter = "all" | "decks" | "folders";
-/** Order the grid is sorted in; "default" keeps the natural (newest-first) order. */
-type SortKey = "default" | "name-asc" | "name-desc" | "cards-desc";
+/** Order the grid is sorted in; "manual" keeps the hand-arranged array order
+    (the drag-reorder order, newest-first until the user rearranges). */
+type SortKey = "manual" | "name-asc" | "name-desc" | "cards-desc";
 
 const SHOW_OPTIONS: { value: ShowFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -57,7 +60,7 @@ const SHOW_OPTIONS: { value: ShowFilter; label: string }[] = [
 ];
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "default", label: "Default" },
+  { value: "manual", label: "Manual" },
   { value: "name-asc", label: "Name (A–Z)" },
   { value: "name-desc", label: "Name (Z–A)" },
   { value: "cards-desc", label: "Most cards" },
@@ -85,7 +88,7 @@ const readStoredSortKey = (): SortKey =>
   readPersisted(
     SORT_KEY_STORAGE_KEY,
     (raw) => (SORT_OPTIONS.some((option) => option.value === raw) ? (raw as SortKey) : undefined),
-    "default",
+    "manual",
   );
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -101,6 +104,27 @@ const dropAttrs = (key: string, folderId: string | null) => ({
   "data-drop-key": key,
   "data-drop-folder": folderId ?? "",
 });
+
+/** The visible group reordered to reflect the live drag preview — the dragged
+    tile moved to its insertion slot so the rest visibly make room. Returns the
+    list unchanged unless this group's own item is being reorder-dragged. */
+function withReorderPreview<T extends { id: string }>(
+  visible: T[],
+  dragItem: DragItem | null,
+  reorder: ReorderPreview | null,
+  group: "deck" | "folder",
+): T[] {
+  if (!dragItem || dragItem.type !== group || reorder?.group !== group) return visible;
+  if (!visible.some((entry) => entry.id === dragItem.id)) return visible;
+  const byId = new Map(visible.map((entry) => [entry.id, entry] as const));
+  return previewOrder(
+    visible.map((entry) => entry.id),
+    dragItem.id,
+    reorder.index,
+  )
+    .map((id) => byId.get(id))
+    .filter((entry): entry is T => entry !== undefined);
+}
 
 /** Name that swaps to an inline text field while it's being edited. Enter or
     blur commits, Escape reverts; an empty value falls back to the old name. */
@@ -336,9 +360,14 @@ function DeckCard({
   return (
     // No tile shell — the deck is just the floating card stack, filling its
     // column. `group` drives the hover reveal of the rename/delete actions.
-    // A pointer-press drags it into a folder (useDeckDrag); while it's the entry
-    // being dragged the original is hidden, so only the floating clone shows.
+    // A pointer-press drags it to reorder among decks or into a folder
+    // (useDeckDrag); while it's the entry being dragged the original is hidden,
+    // so only the floating clone shows. data-reorder-* marks it a reorder
+    // sibling; data-flip-id lets the grid slide it aside (useFlip).
     <div
+      data-reorder-id={deck.id}
+      data-reorder-group="deck"
+      data-flip-id={deck.id}
       onPointerDown={editing ? undefined : onPointerDown}
       className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
     >
@@ -405,6 +434,9 @@ function FolderCard({
     // inside this folder. While it's the entry being dragged the original is
     // hidden so only the floating clone shows.
     <div
+      data-reorder-id={folder.id}
+      data-reorder-group="folder"
+      data-flip-id={folder.id}
       onPointerDown={editing ? undefined : onPointerDown}
       {...dropAttrs(folder.id, folder.id)}
       className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
@@ -483,7 +515,7 @@ export function Decks() {
     writePersisted(SORT_KEY_STORAGE_KEY, sortKey);
   }, [filterOpen, showFilter, sortKey]);
 
-  const filterActive = showFilter !== "all" || sortKey !== "default";
+  const filterActive = showFilter !== "all" || sortKey !== "manual";
 
   const genId = (prefix: string) => {
     idCounter.current += 1;
@@ -535,7 +567,8 @@ export function Decks() {
 
     // …and its sort order. "Most cards" only meaningfully orders decks, so
     // folders fall back to name there. Each branch sorts copies, never the state.
-    if (sortKey !== "default") {
+    // "manual" applies no comparator — the array order *is* the order.
+    if (sortKey !== "manual") {
       const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
       if (sortKey === "name-desc") {
         vFolders = [...vFolders].sort((a, b) => byName(b, a));
@@ -629,11 +662,52 @@ export function Decks() {
     else moveDeck(item.id, targetFolderId);
   };
 
+  // --- Drag-to-reorder: rearrange decks/folders within the current view. ------
+  // Reorder is only sensible over a stable list, so it's off while searching
+  // (results span the whole library). Dragging to reorder also switches the sort
+  // to "manual", since any computed sort would otherwise override the new order.
+  const canReorder = () => !searching;
+
+  const reorderItems = (item: DragItem, index: number) => {
+    const visible = item.type === "folder" ? visibleFolders : visibleDecks;
+    const ids = visible.map((entry) => entry.id);
+    if (!ids.includes(item.id)) return;
+    const nextIds = previewOrder(ids, item.id, index);
+    // Picked up and dropped back in place — don't churn the array or flip the
+    // sort to manual for a no-op.
+    if (sameOrder(nextIds, ids)) return;
+    const parentId = openFolder?.id ?? null;
+    if (item.type === "folder") {
+      setFolders((prev) => applyReorder(prev, (f) => f.parentId === parentId, nextIds));
+    } else {
+      setDecks((prev) => applyReorder(prev, (d) => d.folderId === parentId, nextIds));
+    }
+    // Reordering from a computed sort bakes the on-screen order in (the visible
+    // order is what `nextIds` was built from), then hands control to manual.
+    setSortKey("manual");
+  };
+
   // Pointer-driven drag (useDeckDrag) — lifts a live clone of the tile and runs
-  // the simulator's spring + juice on it, so a folder/deck picks up, follows
-  // the cursor, and pops into its target. `dragItem` hides the source while
-  // it's lifted; `dropTarget` is the highlight key under the cursor.
-  const { dragItem, dropTarget, startDrag } = useDeckDrag({ canDrop, onDrop: handleDrop });
+  // the simulator's spring + juice on it, so a folder/deck picks up, follows the
+  // cursor, and either pops into a folder or reorders among its siblings.
+  // `dragItem` hides the source while it's lifted; `dropTarget` is the nest-
+  // highlight key under the cursor; `reorder` is the live insertion slot.
+  const { dragItem, dropTarget, reorder, startDrag } = useDeckDrag({
+    canDrop,
+    onDrop: handleDrop,
+    canReorder,
+    onReorder: reorderItems,
+  });
+
+  // While a tile is dragged, show its group in the live insertion order so the
+  // siblings visibly make room (useFlip slides them). Other states pass through.
+  const previewFolders = withReorderPreview(visibleFolders, dragItem, reorder, "folder");
+  const previewDecks = withReorderPreview(visibleDecks, dragItem, reorder, "deck");
+
+  // FLIP refs animate each grid's tiles between slots as the preview order
+  // changes. Active only for the kind being dragged (the other grid is static).
+  const foldersFlipRef = useFlip<HTMLDivElement>(dragItem?.type === "folder");
+  const decksFlipRef = useFlip<HTMLDivElement>(dragItem?.type === "deck");
 
   const isEmpty = visibleFolders.length === 0 && visibleDecks.length === 0;
 
@@ -681,7 +755,7 @@ export function Decks() {
               canReset={filterActive}
               onReset={() => {
                 setShowFilter("all");
-                setSortKey("default");
+                setSortKey("manual");
               }}
             />
           )}
@@ -802,8 +876,11 @@ export function Decks() {
                   <section className="flex flex-col gap-3">
                     {/* Small breathing room where the "Folders" label used to sit. */}
                     <div aria-hidden className="h-1" />
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {visibleFolders.map((folder) => (
+                    <div
+                      ref={foldersFlipRef}
+                      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                    >
+                      {previewFolders.map((folder) => (
                         <FolderCard
                           key={folder.id}
                           folder={folder}
@@ -829,8 +906,11 @@ export function Decks() {
                       first row's clip room, so the top card's tilt/juice doesn't
                       get cut off by the scroll box when no folders sit above it. */}
                     <div aria-hidden className="h-1" />
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
-                      {visibleDecks.map((deck) => (
+                    <div
+                      ref={decksFlipRef}
+                      className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5"
+                    >
+                      {previewDecks.map((deck) => (
                         <DeckCard
                           key={deck.id}
                           deck={deck}
