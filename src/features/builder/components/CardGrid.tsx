@@ -1,5 +1,7 @@
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { CardImage } from "../../../components/CardImage";
 import { DecksIcon } from "../../../components/icons";
+import { useTiltJuice } from "../../../components/useTiltJuice";
 import { FOCUS_RING_INSET } from "../../../lib/glass";
 import { type BuilderCard, cardImageUrl } from "../cards";
 
@@ -16,9 +18,21 @@ export interface CardGridProps {
   remainingOf: (card: BuilderCard) => number;
   onAdd: (card: BuilderCard) => void;
   onRemove: (card: BuilderCard) => void;
+  /** Suppress the pointer tilt while any drag is in flight. */
+  dragActive?: boolean;
+  /** Begin a drag of this card (to drop on the deck). */
+  onDragStart?: (card: BuilderCard, event: ReactPointerEvent<HTMLElement>) => void;
 }
 
-function CardTile({ card, countOf, remainingOf, onAdd, onRemove }: { card: BuilderCard } & Omit<CardGridProps, "cards">) {
+function CardTile({
+  card,
+  countOf,
+  remainingOf,
+  onAdd,
+  onRemove,
+  dragActive,
+  onDragStart,
+}: { card: BuilderCard } & Omit<CardGridProps, "cards">) {
   const count = countOf(card);
   const inDeck = count > 0;
   const remaining = remainingOf(card);
@@ -26,9 +40,15 @@ function CardTile({ card, countOf, remainingOf, onAdd, onRemove }: { card: Build
   // The gallery shows each card's remaining supply: a full pile of four behind
   // the top card by default, thinning as copies are drafted into the deck.
   const pile = Math.min(remaining, 4);
+  // Balatro tilt + press juice on the top card, like the decks-page tiles.
+  // Suppressed while a drag is in flight, and on maxed cards (which can't take
+  // another copy, so they're not interactive).
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLButtonElement>({
+    disabled: dragActive || maxed,
+  });
 
   return (
-    <li className="relative">
+    <li className="relative transition-[z-index] hover:z-10">
       {/* Pile — the copies still available to add, peeking out the bottom as
           card-back edges. */}
       {Array.from({ length: pile }, (_, i) => (
@@ -39,35 +59,45 @@ function CardTile({ card, countOf, remainingOf, onAdd, onRemove }: { card: Build
           className="absolute inset-0 rounded-xl shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
         />
       ))}
-      {/* Full-cover add target. Click adds a copy; right-click removes one (the
-          browser menu is suppressed) — the card itself carries no hover UI. */}
-      <button
-        type="button"
-        aria-label={
-          maxed
-            ? `${card.name}, maximum copies reached`
-            : inDeck
-              ? `Add ${card.name}, ${count} in deck`
-              : `Add ${card.name}`
-        }
-        onClick={() => onAdd(card)}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          if (inDeck) onRemove(card);
-        }}
-        className={`relative block w-full cursor-pointer overflow-hidden rounded-xl ring-inset ${FOCUS_RING_INSET} ${
-          maxed ? "cursor-not-allowed" : inDeck ? "ring-1 ring-accent/70" : "ring-1 ring-white/10"
-        }`}
-      >
-        <div className={`aspect-[2.5/3.5] w-full ${maxed ? "opacity-45 saturate-[0.7]" : ""}`}>
-          <CardImage
-            fill
-            imageUrl={cardImageUrl(card.cardId)}
-            alt={card.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
-      </button>
+      {/* Outer layer carries the squash/wobble juice; the button beneath it
+          carries the pointer tilt and is the full-cover add target. Click adds a
+          copy; right-click removes one (the browser menu is suppressed). */}
+      <div ref={juiceLayerRef} style={juiceStyle}>
+        <button
+          ref={tiltRef}
+          type="button"
+          {...handlers}
+          onPointerDown={(e) => {
+            handlers.onPointerDown();
+            if (!maxed) onDragStart?.(card, e);
+          }}
+          style={tiltStyle}
+          aria-label={
+            maxed
+              ? `${card.name}, maximum copies reached`
+              : inDeck
+                ? `Add ${card.name}, ${count} in deck`
+                : `Add ${card.name}`
+          }
+          onClick={() => onAdd(card)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            if (inDeck) onRemove(card);
+          }}
+          className={`relative block w-full cursor-pointer overflow-hidden rounded-xl ring-inset ${FOCUS_RING_INSET} ${
+            maxed ? "cursor-not-allowed" : inDeck ? "ring-1 ring-accent/70" : "ring-1 ring-white/10"
+          }`}
+        >
+          <div className={`aspect-[2.5/3.5] w-full ${maxed ? "opacity-45 saturate-[0.7]" : ""}`}>
+            <CardImage
+              fill
+              imageUrl={cardImageUrl(card.cardId)}
+              alt={card.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </button>
+      </div>
     </li>
   );
 }
@@ -86,7 +116,7 @@ export function CardGrid({ cards, ...handlers }: CardGridProps) {
     );
   }
   return (
-    <ul className="grid grid-cols-2 gap-x-3 gap-y-6 pb-4 md:grid-cols-3 lg:grid-cols-5">
+    <ul className="grid grid-cols-2 gap-x-3 gap-y-6 pb-4 pt-4 md:grid-cols-3 lg:grid-cols-5">
       {cards.map((card) => (
         <CardTile key={card.cardId} card={card} {...handlers} />
       ))}

@@ -6,8 +6,11 @@ import {
   PlusIcon,
   TrashIcon,
 } from "../../../components/icons";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { ScrollArea } from "../../../components/ScrollArea";
+import { useTiltJuice } from "../../../components/useTiltJuice";
 import { FOCUS_RING, FOCUS_RING_INSET } from "../../../lib/glass";
+import { useFlip } from "../../decks/useFlip";
 import { type BuilderCard, cardImageUrl, type Format, SUPERTYPES } from "../cards";
 import { countsBySupertype, type Deck, type DeckValidation } from "../deckMath";
 
@@ -28,6 +31,10 @@ export interface DeckPanelProps {
   onRemove: (card: BuilderCard) => void;
   onClear: () => void;
   onImportExport: () => void;
+  /** Suppress the pointer tilt while any drag is in flight. */
+  dragActive?: boolean;
+  /** Begin a drag of a deck card (to drop off the deck = remove a copy). */
+  onDragStart?: (card: BuilderCard, event: ReactPointerEvent<HTMLElement>) => void;
 }
 
 type Status = "legal" | "error" | "building";
@@ -54,16 +61,26 @@ function DeckCardTile({
   canAdd,
   onAdd,
   onRemove,
+  dragActive,
+  onDragStart,
 }: {
   card: BuilderCard;
   quantity: number;
   canAdd: boolean;
   onAdd: () => void;
   onRemove: () => void;
+  /** Suppress the pointer tilt while any drag is in flight. */
+  dragActive?: boolean;
+  /** Begin a drag of this card (to drop off the deck = remove a copy). */
+  onDragStart?: (event: ReactPointerEvent<HTMLElement>) => void;
 }) {
   const pile = Math.min(quantity - 1, 3);
+  // Balatro tilt + press juice on the top card, like the decks-page tiles.
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLButtonElement>({
+    disabled: dragActive,
+  });
   return (
-    <li className="relative">
+    <li data-flip-id={card.cardId} className="relative transition-[z-index] hover:z-10">
       {/* Pile — one card-back edge per extra copy, peeking out the bottom; the
           back-most sits lowest. */}
       {Array.from({ length: pile }, (_, i) => (
@@ -74,23 +91,34 @@ function DeckCardTile({
           className="absolute inset-0 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
         />
       ))}
-      <button
-        type="button"
-        aria-label={`Add one ${card.name}, ${quantity} in deck`}
-        onClick={onAdd}
-        disabled={!canAdd}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onRemove();
-        }}
-        className={`relative block w-full overflow-hidden rounded-lg ring-1 ring-inset ring-accent/70 ${FOCUS_RING_INSET} ${
-          canAdd ? "cursor-pointer" : "cursor-not-allowed"
-        }`}
-      >
-        <div className="aspect-[2.5/3.5] w-full">
-          <CardImage fill imageUrl={cardImageUrl(card.cardId)} alt={card.name} className="h-full w-full object-cover" />
-        </div>
-      </button>
+      {/* Outer layer carries the juice; the button beneath carries the tilt.
+          Click adds a copy; right-click removes one. Not disabled when maxed so
+          you can still remove/drag (the add is guarded upstream). */}
+      <div ref={juiceLayerRef} style={juiceStyle}>
+        <button
+          ref={tiltRef}
+          type="button"
+          {...handlers}
+          onPointerDown={(e) => {
+            handlers.onPointerDown();
+            onDragStart?.(e);
+          }}
+          style={tiltStyle}
+          aria-label={`Add one ${card.name}, ${quantity} in deck`}
+          onClick={onAdd}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            onRemove();
+          }}
+          className={`relative block w-full overflow-hidden rounded-lg ring-1 ring-inset ring-accent/70 ${FOCUS_RING_INSET} ${
+            canAdd ? "cursor-pointer" : "cursor-not-allowed"
+          }`}
+        >
+          <div className="aspect-[2.5/3.5] w-full">
+            <CardImage fill imageUrl={cardImageUrl(card.cardId)} alt={card.name} className="h-full w-full object-cover" />
+          </div>
+        </button>
+      </div>
 
       {/* Copy count — a dark glass pill nudged past the top-right corner so it
           overflows the card a little. */}
@@ -193,12 +221,16 @@ export function DeckPanel({
   onRemove,
   onClear,
   onImportExport,
+  dragActive,
+  onDragStart,
 }: DeckPanelProps) {
   const status = deckStatus(validation);
   const fill = Math.min(1, validation.total / validation.deckSize);
+  // Animate the grid reflow when cards are added/removed (decks-page FLIP).
+  const deckFlipRef = useFlip<HTMLUListElement>(true);
 
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div data-drop-zone="deck" className="flex h-full flex-col gap-3">
       {/* Header: editable name + count out of the deck size. */}
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
@@ -228,7 +260,7 @@ export function DeckPanel({
       <DeckStats deck={deck} />
 
       {/* The grouped decklist scrolls; everything above and the footer stay put. */}
-      <ScrollArea className="-mr-1 pr-1" outerClassName="mt-0.5">
+      <ScrollArea className="-mx-3 px-3 py-2" outerClassName="mt-0.5">
         {deck.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 pb-10 pt-16 text-center">
             <PlusIcon className="h-5 w-5 text-white/20" />
@@ -239,7 +271,7 @@ export function DeckPanel({
           // Energy) but without the per-type section headers. The roomy row gap
           // (plus pt-2 / pb-3) leaves space for the count pills overflowing the
           // top corner and the card pile peeking out the bottom.
-          <ul className="grid grid-cols-3 gap-x-2 gap-y-5 pb-3 pt-2">
+          <ul ref={deckFlipRef} className="grid grid-cols-3 gap-x-2 gap-y-5 pb-3 pt-2">
             {SUPERTYPES.flatMap((supertype) =>
               deck.filter((e) => e.card.supertype === supertype),
             ).map(({ card, quantity }) => (
@@ -250,6 +282,8 @@ export function DeckPanel({
                 canAdd={remainingOf(card) > 0}
                 onAdd={() => onAdd(card)}
                 onRemove={() => onRemove(card)}
+                dragActive={dragActive}
+                onDragStart={(e) => onDragStart?.(card, e)}
               />
             ))}
           </ul>

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
@@ -15,6 +15,7 @@ import { ImportExportDialog } from "./components/ImportExportDialog";
 import { type Deck, remainingAllowedFor, totalCount, validateDeck } from "./deckMath";
 import { formatDecklist, parseDecklist } from "./decklistText";
 import { DEFAULT_FILTERS, type Filters, filterPool, filtersActive } from "./poolFilter";
+import { useCardDrag } from "./useCardDrag";
 
 const POOL_BY_ID = new Map(CARD_POOL.map((c) => [c.cardId, c] as const));
 
@@ -183,6 +184,13 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
   // The search query lives in the header, not the panel, so it doesn't count.
   const filterActive = filtersActive({ ...filters, query: "" });
 
+  // Drag a card between the gallery and the deck: drop a gallery card on the
+  // deck to add a copy, drag a deck card off the deck to remove one.
+  const { dragging, startDrag } = useCardDrag({
+    onAddToDeck: addCard,
+    onRemoveFromDeck: removeCard,
+  });
+
   const railProps = {
     filters,
     onChange: setFilters,
@@ -202,6 +210,9 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
     onRemove: removeCard,
     onClear: clearDeck,
     onImportExport: () => setDialogOpen(true),
+    dragActive: dragging,
+    onDragStart: (card: BuilderCard, e: ReactPointerEvent<HTMLElement>) =>
+      startDrag({ card, source: "deck" }, e),
   };
 
   return (
@@ -265,8 +276,11 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
           <DeckPanel {...deckPanelProps} />
         </aside>
 
-        {/* Centre: search header + the card grid. */}
-        <main className="flex min-w-0 flex-1 flex-col gap-3">
+        {/* Centre: search header + the card grid. Also the "gallery" drop zone —
+            dragging a deck card here removes a copy. No flex gap: the scroll area
+            starts right under the search bar (like /decks) and the gap lives
+            inside it as the grid's top padding, so it doubles as tilt clip room. */}
+        <main data-drop-zone="gallery" className="flex min-w-0 flex-1 flex-col">
           <div className="flex shrink-0 items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
@@ -299,18 +313,18 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
             </button>
           </div>
 
-          <div className="flex items-center justify-between px-0.5 text-xs text-white/55">
-            <span>{filtered.length} cards</span>
-            <span className="hidden sm:inline">Click to add · right-click to remove</span>
-          </div>
-
-          <ScrollArea className="-mr-1 pr-1">
+          {/* -mx-3/px-3 keep the cells aligned to the column edge while giving
+              the hover tilt/scale horizontal clip room. pb-3 does the same below;
+              no top padding so the grid sits tight under the search bar. */}
+          <ScrollArea className="-mx-3 px-3 pb-3">
             <CardGrid
               cards={filtered}
               countOf={countOf}
               remainingOf={remainingOf}
               onAdd={addCard}
               onRemove={removeCard}
+              dragActive={dragging}
+              onDragStart={(card, e) => startDrag({ card, source: "gallery" }, e)}
             />
           </ScrollArea>
         </main>
