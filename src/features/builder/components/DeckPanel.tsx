@@ -1,10 +1,8 @@
-import type { ReactNode } from "react";
 import { CardImage } from "../../../components/CardImage";
 import {
   AlertTriangleIcon,
   CheckCircleIcon,
   ImportExportIcon,
-  MinusIcon,
   PlusIcon,
   TrashIcon,
 } from "../../../components/icons";
@@ -12,7 +10,6 @@ import { ScrollArea } from "../../../components/ScrollArea";
 import { FOCUS_RING, FOCUS_RING_INSET } from "../../../lib/glass";
 import { type BuilderCard, cardImageUrl, type Format, SUPERTYPES } from "../cards";
 import { countsBySupertype, type Deck, type DeckValidation } from "../deckMath";
-import { cardSetLabel } from "../decklistText";
 
 export interface DeckPanelProps {
   deckName: string;
@@ -42,32 +39,10 @@ function deckStatus(validation: DeckValidation): Status {
   return "building";
 }
 
-/** Small round +/- control used on each deck line. */
-function StepButton({
-  label,
-  onClick,
-  disabled,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/75 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.12] hover:text-white disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS_RING_INSET}`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function DeckLine({
+/** A deck-view card tile — image-forward like the centre gallery, just smaller,
+    with the copy count in the corner. No hover UI: clicking the card adds a copy
+    and right-clicking removes one (mouse parity with the gallery). */
+function DeckCardTile({
   card,
   quantity,
   canAdd,
@@ -81,23 +56,33 @@ function DeckLine({
   onRemove: () => void;
 }) {
   return (
-    <li className="flex items-center gap-2 rounded-lg px-1 py-1 transition-colors hover:bg-white/[0.04]">
-      <div className="aspect-[2.5/3.5] w-7 shrink-0 overflow-hidden rounded ring-1 ring-inset ring-white/10">
-        <CardImage fill imageUrl={cardImageUrl(card.cardId)} alt={card.name} className="h-full w-full object-cover" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-white/90">{card.name}</p>
-        <p className="truncate text-[11px] text-white/55">{cardSetLabel(card)}</p>
-      </div>
-      <div className="flex items-center gap-1">
-        <StepButton label={`Remove one ${card.name}`} onClick={onRemove}>
-          {quantity === 1 ? <TrashIcon className="h-3 w-3" /> : <MinusIcon className="h-3.5 w-3.5" />}
-        </StepButton>
-        <span className="w-5 text-center text-sm font-bold tabular-nums text-white">{quantity}</span>
-        <StepButton label={`Add one ${card.name}`} onClick={onAdd} disabled={!canAdd}>
-          <PlusIcon className="h-3.5 w-3.5" />
-        </StepButton>
-      </div>
+    <li className="relative">
+      <button
+        type="button"
+        aria-label={`Add one ${card.name}, ${quantity} in deck`}
+        onClick={onAdd}
+        disabled={!canAdd}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onRemove();
+        }}
+        className={`relative block w-full overflow-hidden rounded-lg ring-1 ring-inset ring-accent/70 ${FOCUS_RING_INSET} ${
+          canAdd ? "cursor-pointer" : "cursor-not-allowed"
+        }`}
+      >
+        <div className="aspect-[2.5/3.5] w-full">
+          <CardImage fill imageUrl={cardImageUrl(card.cardId)} alt={card.name} className="h-full w-full object-cover" />
+        </div>
+      </button>
+
+      {/* Copy count — a dark glass pill nudged past the top-right corner so it
+          overflows the card a little. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-1.5 -top-1.5 z-10 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-black/70 px-1.5 text-xs font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/20 backdrop-blur-md"
+      >
+        {quantity}
+      </span>
     </li>
   );
 }
@@ -233,33 +218,23 @@ export function DeckPanel({
             <p className="text-sm text-white/55">Click cards to add them to your deck</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {SUPERTYPES.map((supertype) => {
-              const group = deck.filter((e) => e.card.supertype === supertype);
-              if (group.length === 0) return null;
-              const subtotal = group.reduce((sum, e) => sum + e.quantity, 0);
-              return (
-                <section key={supertype}>
-                  <p className="mb-1 flex items-baseline justify-between px-1 text-[0.7rem] font-semibold uppercase tracking-wider text-white/50">
-                    {supertype}
-                    <span className="tabular-nums text-white/45">{subtotal}</span>
-                  </p>
-                  <ul className="flex flex-col">
-                    {group.map(({ card, quantity }) => (
-                      <DeckLine
-                        key={card.cardId}
-                        card={card}
-                        quantity={quantity}
-                        canAdd={remainingOf(card) > 0}
-                        onAdd={() => onAdd(card)}
-                        onRemove={() => onRemove(card)}
-                      />
-                    ))}
-                  </ul>
-                </section>
-              );
-            })}
-          </div>
+          // One flat gallery, ordered by card type (Pokémon → Trainer →
+          // Energy) but without the per-type section headers. pt-2 leaves room
+          // for the count pills, which overflow each card's top-right corner.
+          <ul className="grid grid-cols-3 gap-2 pt-2">
+            {SUPERTYPES.flatMap((supertype) =>
+              deck.filter((e) => e.card.supertype === supertype),
+            ).map(({ card, quantity }) => (
+              <DeckCardTile
+                key={card.cardId}
+                card={card}
+                quantity={quantity}
+                canAdd={remainingOf(card) > 0}
+                onAdd={() => onAdd(card)}
+                onRemove={() => onRemove(card)}
+              />
+            ))}
+          </ul>
         )}
       </ScrollArea>
 
