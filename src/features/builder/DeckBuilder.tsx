@@ -197,14 +197,33 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
         Decks
       </Link>
 
-      <div className="mx-auto flex h-svh w-full max-w-[1700px] gap-4 px-4 pb-4 pt-16">
+      {/* The card gallery is the centred max-w-4xl column — same width as the
+          decks page. The filter rail and deck panel are lifted out of flow,
+          pinned just left and right of it, so the gallery itself stays the
+          clean centred column. They fall back to slide-over drawers once the
+          side margins get too tight to hold them. */}
+      <div className="relative mx-auto flex h-svh w-full max-w-4xl flex-col gap-3 px-6 pb-4 pt-16">
         <h1 className="sr-only">Deck builder — {deckName}</h1>
 
-        {/* Left rail — static column at xl, a drawer below. */}
-        <aside className="hidden w-56 shrink-0 xl:block">
+        {/* Filter rail — pinned just left of the column from 1380px up (where the
+            margin clears its width, mirroring /decks); a drawer below. */}
+        <aside
+          aria-label="Filters"
+          className="absolute bottom-4 right-full top-16 mr-2 hidden w-56 flex-col min-[1380px]:flex"
+        >
           <ScrollArea className="pr-1">
             <FilterRail {...railProps} />
           </ScrollArea>
+        </aside>
+
+        {/* Deck panel — pinned just right of the column from 1600px up; the
+            wider panel needs more margin than the filter rail, so it drops to a
+            drawer earlier. */}
+        <aside
+          aria-label="Your deck"
+          className="absolute bottom-4 left-full top-16 ml-2 hidden w-80 flex-col min-[1600px]:flex"
+        >
+          <DeckPanel {...deckPanelProps} />
         </aside>
 
         {/* Centre: search header + the card grid. */}
@@ -226,7 +245,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
               type="button"
               onClick={() => setRailOpen(true)}
               aria-label="Filters"
-              className={`inline-flex shrink-0 items-center justify-center rounded-full p-2.5 ring-1 ring-inset bg-white/[0.045] text-white/70 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 xl:hidden ${FOCUS_RING}`}
+              className={`inline-flex shrink-0 items-center justify-center rounded-full p-2.5 ring-1 ring-inset bg-white/[0.045] text-white/70 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 min-[1380px]:hidden ${FOCUS_RING}`}
             >
               <FilterIcon className="h-5 w-5" />
             </button>
@@ -234,7 +253,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
             <button
               type="button"
               onClick={() => setDeckOpen(true)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2.5 text-sm font-semibold ring-1 ring-inset bg-white/[0.045] text-white/80 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 lg:hidden ${FOCUS_RING}`}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2.5 text-sm font-semibold ring-1 ring-inset bg-white/[0.045] text-white/80 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 min-[1600px]:hidden ${FOCUS_RING}`}
             >
               <DecksIcon className="h-4 w-4" />
               <span className="tabular-nums">{total}</span>
@@ -256,11 +275,6 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
             />
           </ScrollArea>
         </main>
-
-        {/* Right deck panel — static column at lg, a drawer below. */}
-        <aside className="hidden w-80 shrink-0 lg:flex lg:flex-col 2xl:w-96">
-          <DeckPanel {...deckPanelProps} />
-        </aside>
       </div>
 
       {/* Mobile drawers — native <dialog>s, rendered always and toggled by

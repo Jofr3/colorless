@@ -128,8 +128,10 @@ function CardTile({ card, countOf, remainingOf, onAdd, onRemove }: { card: Build
   );
 }
 
-/** The centre pane's card grid. Responsive fixed-ish columns; tiles are
-    image-forward with a hover caption, a count badge, and a +/- stepper. */
+/** The centre pane's card grid. Column counts mirror the decks library grid so
+    a card here renders at the same size as a deck tile there (same width column,
+    same aspect). Tiles are image-forward with a hover caption, a count badge,
+    and a +/- stepper. */
 export function CardGrid({ cards, ...handlers }: CardGridProps) {
   if (cards.length === 0) {
     return (
@@ -140,7 +142,7 @@ export function CardGrid({ cards, ...handlers }: CardGridProps) {
     );
   }
   return (
-    <ul className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+    <ul className="grid grid-cols-2 gap-x-3 gap-y-3 md:grid-cols-3 lg:grid-cols-5">
       {cards.map((card) => (
         <CardTile key={card.cardId} card={card} {...handlers} />
       ))}
