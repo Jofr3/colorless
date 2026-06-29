@@ -50,6 +50,10 @@ export type TiltJuiceOptions = {
       can hit-test drop targets, which means hover events fall *through* it to the
       tile underneath — without this that tile would lean as the ghost passes. */
   disabled?: boolean;
+  /** Fire the juice pop whenever this value changes to a non-null value. Lets a
+      card shake in response to an external event — e.g. the deck builder pulses
+      both the gallery and deck tiles for a card when its copy count changes. */
+  pulse?: number | null;
 };
 
 /** Wires the Balatro tilt + juice onto a card: attach `tiltRef`/`tiltStyle` and
@@ -134,10 +138,18 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
 
   // Pop the card with a juice bounce the moment it first appears, if asked. The
   // juice runner is wired by the effect above, which runs first on mount.
-  const { juiceOnMount, disabled } = options;
+  const { juiceOnMount, disabled, pulse } = options;
   useEffect(() => {
     if (juiceOnMount) juiceRunner.current(SPAWN_JUICE.amount, SPAWN_JUICE.rotation);
   }, [juiceOnMount]);
+
+  // External pulse: shake whenever `pulse` changes to a non-null value. A null
+  // pulse (this card isn't the one that changed) is a no-op, including on mount,
+  // so the initial deck load doesn't shake every tile.
+  useEffect(() => {
+    if (pulse == null) return;
+    juiceRunner.current(PRESS_JUICE.amount, PRESS_JUICE.rotation);
+  }, [pulse]);
 
   // When tilt is disabled (a drag is in flight), snap the card flat in case it
   // was mid-lean when the drag began, and below the handlers no-op so it stays

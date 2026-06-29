@@ -35,6 +35,8 @@ export interface DeckPanelProps {
   dragActive?: boolean;
   /** Begin a drag of a deck card (to drop off the deck = remove a copy). */
   onDragStart?: (card: BuilderCard, event: ReactPointerEvent<HTMLElement>) => void;
+  /** When this points at a card id with a new nonce, that tile shakes. */
+  pulse?: { cardId: string; n: number } | null;
 }
 
 type Status = "legal" | "error" | "building";
@@ -63,6 +65,7 @@ function DeckCardTile({
   onRemove,
   dragActive,
   onDragStart,
+  pulse,
 }: {
   card: BuilderCard;
   quantity: number;
@@ -73,11 +76,14 @@ function DeckCardTile({
   dragActive?: boolean;
   /** Begin a drag of this card (to drop off the deck = remove a copy). */
   onDragStart?: (event: ReactPointerEvent<HTMLElement>) => void;
+  /** Shake when this changes to a non-null value (the copy count changed). */
+  pulse?: number | null;
 }) {
   const pile = Math.min(quantity - 1, 3);
   // Balatro tilt + press juice on the top card, like the decks-page tiles.
   const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLButtonElement>({
     disabled: dragActive,
+    pulse,
   });
   return (
     <li data-flip-id={card.cardId} className="relative transition-[z-index] hover:z-10">
@@ -223,6 +229,7 @@ export function DeckPanel({
   onImportExport,
   dragActive,
   onDragStart,
+  pulse,
 }: DeckPanelProps) {
   const status = deckStatus(validation);
   const fill = Math.min(1, validation.total / validation.deckSize);
@@ -284,6 +291,7 @@ export function DeckPanel({
                 onRemove={() => onRemove(card)}
                 dragActive={dragActive}
                 onDragStart={(e) => onDragStart?.(card, e)}
+                pulse={pulse && pulse.cardId === card.cardId ? pulse.n : null}
               />
             ))}
           </ul>

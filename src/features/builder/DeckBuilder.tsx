@@ -142,6 +142,13 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
   const announce = (verb: string, card: BuilderCard, nextTotal: number) =>
     setAnnouncement(`${verb} ${card.name}. Deck ${nextTotal} of ${format.deckSize}.`);
 
+  // Shake both the gallery and deck tiles for a card whenever its copy count
+  // changes. Keyed by id with an incrementing nonce so repeated add/removes of
+  // the same card retrigger the juice.
+  const [pulse, setPulse] = useState<{ cardId: string; n: number } | null>(null);
+  const pulseCard = (card: BuilderCard) =>
+    setPulse((p) => ({ cardId: card.cardId, n: (p?.n ?? 0) + 1 }));
+
   // --- Mutations -----------------------------------------------------------
   const addCard = (card: BuilderCard) => {
     if (remainingOf(card) <= 0) return;
@@ -151,6 +158,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
       next.set(card.cardId, (next.get(card.cardId) ?? 0) + 1);
       return next;
     });
+    pulseCard(card);
   };
 
   const removeCard = (card: BuilderCard) => {
@@ -163,6 +171,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
       else next.set(card.cardId, q);
       return next;
     });
+    pulseCard(card);
   };
 
   const clearDeck = () => {
@@ -213,6 +222,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
     dragActive: dragging,
     onDragStart: (card: BuilderCard, e: ReactPointerEvent<HTMLElement>) =>
       startDrag({ card, source: "deck" }, e),
+    pulse,
   };
 
   return (
@@ -325,6 +335,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
               onRemove={removeCard}
               dragActive={dragging}
               onDragStart={(card, e) => startDrag({ card, source: "gallery" }, e)}
+              pulse={pulse}
             />
           </ScrollArea>
         </main>

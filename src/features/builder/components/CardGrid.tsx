@@ -22,6 +22,8 @@ export interface CardGridProps {
   dragActive?: boolean;
   /** Begin a drag of this card (to drop on the deck). */
   onDragStart?: (card: BuilderCard, event: ReactPointerEvent<HTMLElement>) => void;
+  /** When this points at a card id with a new nonce, that tile shakes. */
+  pulse?: { cardId: string; n: number } | null;
 }
 
 function CardTile({
@@ -32,6 +34,7 @@ function CardTile({
   onRemove,
   dragActive,
   onDragStart,
+  pulse,
 }: { card: BuilderCard } & Omit<CardGridProps, "cards">) {
   const count = countOf(card);
   const inDeck = count > 0;
@@ -45,6 +48,7 @@ function CardTile({
   // another copy, so they're not interactive).
   const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLButtonElement>({
     disabled: dragActive || maxed,
+    pulse: pulse && pulse.cardId === card.cardId ? pulse.n : null,
   });
 
   return (
