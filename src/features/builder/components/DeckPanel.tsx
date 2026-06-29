@@ -266,8 +266,11 @@ export function DeckPanel({
 
       <DeckStats deck={deck} />
 
-      {/* The grouped decklist scrolls; everything above and the footer stay put. */}
-      <ScrollArea className="-mx-3 px-3 py-2" outerClassName="mt-0.5">
+      {/* The grouped decklist scrolls; everything above and the footer stay put.
+          -mt-2 pulls the list up so it sits one standard gap below the stats: the
+          grid's own pt-2 (pill clip room) then fills that gap instead of stacking
+          on top of it. */}
+      <ScrollArea className="-mx-3 px-3 pb-2" outerClassName="-mt-2">
         {deck.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 pb-10 pt-16 text-center">
             <PlusIcon className="h-5 w-5 text-white/20" />
