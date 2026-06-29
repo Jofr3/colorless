@@ -14,9 +14,18 @@ import { DeckPanel } from "./components/DeckPanel";
 import { ImportExportDialog } from "./components/ImportExportDialog";
 import { type Deck, remainingAllowedFor, totalCount, validateDeck } from "./deckMath";
 import { formatDecklist, parseDecklist } from "./decklistText";
-import { DEFAULT_FILTERS, type Filters, filterPool } from "./poolFilter";
+import { DEFAULT_FILTERS, type Filters, filterPool, filtersActive } from "./poolFilter";
 
 const POOL_BY_ID = new Map(CARD_POOL.map((c) => [c.cardId, c] as const));
+
+/** Round icon button for the floating filter rail — mirrors the decks page. */
+const FILTER_BUTTON_CLASS =
+  "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2.5 ring-1 ring-inset backdrop-blur-md transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+
+/** Whether the floating filter panel starts expanded — persisted like /decks. */
+const FILTER_OPEN_STORAGE_KEY = "builder.filterOpen";
+const readStoredFilterOpen = () =>
+  readPersisted(FILTER_OPEN_STORAGE_KEY, (raw) => raw === "1", false);
 
 // --- Persistence -----------------------------------------------------------
 // Each deck's contents live under its own key so the builder is a real editor
@@ -81,6 +90,9 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
   // Mobile drawers for the rail / deck panel (always-on columns at lg/xl).
   const [railOpen, setRailOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
+  // The floating filter panel (≥1380px) collapses behind its button like
+  // /decks; the open/closed choice persists across visits.
+  const [filterOpen, setFilterOpen] = useState(readStoredFilterOpen);
 
   const format = formatById(formatId);
 
@@ -96,6 +108,10 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
   useEffect(() => {
     document.title = `${deckName || "Untitled Deck"} · Luminous`;
   }, [deckName]);
+
+  useEffect(() => {
+    writePersisted(FILTER_OPEN_STORAGE_KEY, filterOpen ? "1" : "0");
+  }, [filterOpen]);
 
   // Derived deck (ordered DeckEntry[]), built from the entry map + pool lookup.
   const deck: Deck = useMemo(() => {
@@ -163,6 +179,10 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
 
   const resetFilters = () => setFilters(DEFAULT_FILTERS);
 
+  // Accent dot on the filter button when the panel holds non-default choices.
+  // The search query lives in the header, not the panel, so it doesn't count.
+  const filterActive = filtersActive({ ...filters, query: "" });
+
   const railProps = {
     filters,
     onChange: setFilters,
@@ -205,15 +225,34 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
       <div className="relative mx-auto flex h-svh w-full max-w-4xl flex-col gap-3 px-6 pb-4 pt-16">
         <h1 className="sr-only">Deck builder — {deckName}</h1>
 
-        {/* Filter rail — pinned just left of the column from 1380px up (where the
-            margin clears its width, mirroring /decks); a drawer below. */}
+        {/* Filter rail — a toggle button and, when open, the panel beneath it,
+            mirroring /decks. Pinned just left of the column from 1380px up
+            (right-full + -mr-2 — the same spacing as the decks page); a drawer
+            below. */}
         <aside
           aria-label="Filters"
-          className="absolute bottom-4 right-full top-16 mr-2 hidden w-56 flex-col min-[1380px]:flex"
+          className="absolute right-full top-16 -mr-2 hidden w-56 flex-col gap-4 min-[1380px]:flex"
         >
-          <ScrollArea className="pr-1">
-            <FilterRail {...railProps} />
-          </ScrollArea>
+          <button
+            type="button"
+            aria-label="Filters"
+            aria-expanded={filterOpen}
+            onClick={() => setFilterOpen((open) => !open)}
+            className={`self-end ${FILTER_BUTTON_CLASS} ${
+              filterOpen || filterActive
+                ? "bg-white/[0.09] text-white ring-white/25"
+                : "bg-white/[0.045] text-white/70 ring-white/10 hover:bg-white/[0.08] hover:text-white/90"
+            }`}
+          >
+            <FilterIcon className="h-5 w-5" />
+            {filterActive && (
+              <span
+                aria-hidden
+                className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-[#0e0e14]"
+              />
+            )}
+          </button>
+          {filterOpen && <FilterRail {...railProps} />}
         </aside>
 
         {/* Deck panel — pinned just right of the column from 1600px up; the

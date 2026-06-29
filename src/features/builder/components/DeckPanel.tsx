@@ -10,19 +10,8 @@ import {
 } from "../../../components/icons";
 import { ScrollArea } from "../../../components/ScrollArea";
 import { FOCUS_RING, FOCUS_RING_INSET } from "../../../lib/glass";
-import {
-  type BuilderCard,
-  cardImageUrl,
-  ENERGY_TYPE_META,
-  type Format,
-  SUPERTYPES,
-} from "../cards";
-import {
-  countsBySupertype,
-  type Deck,
-  type DeckValidation,
-  pokemonTypeDistribution,
-} from "../deckMath";
+import { type BuilderCard, cardImageUrl, type Format, SUPERTYPES } from "../cards";
+import { countsBySupertype, type Deck, type DeckValidation } from "../deckMath";
 import { cardSetLabel } from "../decklistText";
 
 export interface DeckPanelProps {
@@ -113,78 +102,76 @@ function DeckLine({
   );
 }
 
-/** The Pokémon / Trainer / Energy split and the type-distribution bar. */
+/** The Pokémon / Trainer / Energy split. */
 function DeckStats({ deck }: { deck: Deck }) {
   const counts = countsBySupertype(deck);
-  const dist = pokemonTypeDistribution(deck);
-  const distTotal = dist.reduce((sum, e) => sum + e.count, 0);
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <div className="grid grid-cols-3 gap-2">
-        {SUPERTYPES.map((s) => (
-          <div
-            key={s}
-            className="rounded-lg bg-white/[0.04] px-2 py-1.5 text-center ring-1 ring-inset ring-white/10"
-          >
-            <p className="text-base font-bold tabular-nums text-white">{counts[s]}</p>
-            <p className="text-[10px] uppercase tracking-wide text-white/55">{s}</p>
-          </div>
-        ))}
-      </div>
-      {distTotal > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex h-2 overflow-hidden rounded-full bg-white/[0.06]">
-            {dist.map((e) => (
-              <span
-                key={e.type}
-                title={`${e.type}: ${e.count}`}
-                style={{ backgroundColor: ENERGY_TYPE_META[e.type].color, width: `${(e.count / distTotal) * 100}%` }}
-              />
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-x-2.5 gap-y-1">
-            {dist.map((e) => (
-              <span key={e.type} className="flex items-center gap-1 text-[11px] text-white/55">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: ENERGY_TYPE_META[e.type].color }}
-                />
-                {e.type} {e.count}
-              </span>
-            ))}
-          </div>
+    <div className="grid grid-cols-3 gap-2">
+      {SUPERTYPES.map((s) => (
+        <div
+          key={s}
+          className="rounded-lg bg-white/[0.04] px-2 py-1.5 text-center ring-1 ring-inset ring-white/10"
+        >
+          <p className="text-base font-bold tabular-nums text-white">{counts[s]}</p>
+          <p className="text-[10px] uppercase tracking-wide text-white/55">{s}</p>
         </div>
-      )}
+      ))}
     </div>
   );
 }
 
-/** Legality feedback — a green all-clear when complete and legal, otherwise the
-    error/warning list straight from validateDeck. */
-function ValidationSummary({ validation, format }: { validation: DeckValidation; format: Format }) {
-  if (validation.legal) {
-    return (
-      <div className="flex items-center gap-2 rounded-lg bg-[#5fcf80]/10 px-2.5 py-2 text-sm font-medium text-[#7fe39c] ring-1 ring-inset ring-[#5fcf80]/25">
-        <CheckCircleIcon className="h-4 w-4 shrink-0" />
-        Legal {format.name} deck
-      </div>
-    );
-  }
+/** Legality feedback condensed to a single status icon beside the deck count:
+    a green check when the deck is legal, otherwise an alert icon whose hover /
+    keyboard-focus popup lists the outstanding error/warning messages (which
+    used to sit inline under the header). */
+function DeckStatusBadge({ validation, format }: { validation: DeckValidation; format: Format }) {
+  const status = deckStatus(validation);
+  const Icon = validation.legal ? CheckCircleIcon : AlertTriangleIcon;
+
   return (
-    <ul className="flex flex-col gap-1">
-      {validation.issues.map((issue) => (
-        <li
-          key={issue.message}
-          className={`flex items-start gap-1.5 text-xs ${
-            issue.level === "error" ? "text-[#ff8a9b]" : "text-amber-300/80"
-          }`}
-        >
-          <AlertTriangleIcon className="mt-px h-3.5 w-3.5 shrink-0" />
-          <span>{issue.message}</span>
-        </li>
-      ))}
-    </ul>
+    <span className="group relative inline-flex">
+      <button
+        type="button"
+        aria-label={
+          validation.legal
+            ? `Legal ${format.name} deck`
+            : `Deck issues: ${validation.issues.map((i) => i.message).join("; ")}`
+        }
+        className={`inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full transition-colors hover:bg-white/10 ${FOCUS_RING}`}
+        style={{ color: STATUS_COLOR[status] }}
+      >
+        <Icon className="h-4 w-4" />
+      </button>
+
+      {/* Hover / keyboard-focus popup. Right-aligned so it never spills past the
+          panel's right edge. */}
+      <div
+        role="tooltip"
+        className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[15rem] origin-top-right scale-95 rounded-lg bg-[#14141c]/95 p-2.5 text-xs opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition duration-150 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100"
+      >
+        {validation.legal ? (
+          <p className="flex items-center gap-1.5 font-medium text-[#7fe39c]">
+            <CheckCircleIcon className="h-3.5 w-3.5 shrink-0" />
+            Legal {format.name} deck
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {validation.issues.map((issue) => (
+              <li
+                key={issue.message}
+                className={`flex items-start gap-1.5 ${
+                  issue.level === "error" ? "text-[#ff8a9b]" : "text-amber-300/80"
+                }`}
+              >
+                <AlertTriangleIcon className="mt-px h-3.5 w-3.5 shrink-0" />
+                <span>{issue.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </span>
   );
 }
 
@@ -220,10 +207,13 @@ export function DeckPanel({
             placeholder="Untitled Deck"
             className={`min-w-0 flex-1 truncate rounded-md bg-transparent text-lg font-semibold text-white outline-none transition-colors placeholder:text-white/30 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-inset focus:ring-white/30 ${FOCUS_RING}`}
           />
-          <span className="shrink-0 text-sm font-bold tabular-nums text-white/80">
-            <span style={{ color: STATUS_COLOR[status] }}>{validation.total}</span>
-            <span className="text-white/45"> / {validation.deckSize}</span>
-          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="text-sm font-bold tabular-nums text-white/80">
+              <span style={{ color: STATUS_COLOR[status] }}>{validation.total}</span>
+              <span className="text-white/45"> / {validation.deckSize}</span>
+            </span>
+            <DeckStatusBadge validation={validation} format={format} />
+          </div>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
           <div
@@ -234,7 +224,6 @@ export function DeckPanel({
       </div>
 
       <DeckStats deck={deck} />
-      <ValidationSummary validation={validation} format={format} />
 
       {/* The grouped decklist scrolls; everything above and the footer stay put. */}
       <ScrollArea className="-mr-1 pr-1" outerClassName="mt-0.5">
