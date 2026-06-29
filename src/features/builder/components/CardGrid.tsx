@@ -3,6 +3,11 @@ import { DecksIcon } from "../../../components/icons";
 import { FOCUS_RING_INSET } from "../../../lib/glass";
 import { type BuilderCard, cardImageUrl } from "../cards";
 
+// The pile cards peek out only their bottom edge, so — like the decks page's
+// deck stacks — they're a flat "card-edge" blue matching the card back's inner
+// border rather than the (darker-at-the-bottom) full back image.
+const CARD_EDGE = "#28345a";
+
 export interface CardGridProps {
   cards: BuilderCard[];
   /** Copies of a card currently in the deck. */
@@ -16,10 +21,24 @@ export interface CardGridProps {
 function CardTile({ card, countOf, remainingOf, onAdd, onRemove }: { card: BuilderCard } & Omit<CardGridProps, "cards">) {
   const count = countOf(card);
   const inDeck = count > 0;
-  const maxed = remainingOf(card) <= 0;
+  const remaining = remainingOf(card);
+  const maxed = remaining <= 0;
+  // The gallery shows each card's remaining supply: a full pile of four behind
+  // the top card by default, thinning as copies are drafted into the deck.
+  const pile = Math.min(remaining, 4);
 
   return (
     <li className="relative">
+      {/* Pile — the copies still available to add, peeking out the bottom as
+          card-back edges. */}
+      {Array.from({ length: pile }, (_, i) => (
+        <div
+          key={i}
+          aria-hidden
+          style={{ transform: `translateY(${(pile - i) * 4}px)`, backgroundColor: CARD_EDGE }}
+          className="absolute inset-0 rounded-xl shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+        />
+      ))}
       {/* Full-cover add target. Click adds a copy; right-click removes one (the
           browser menu is suppressed) — the card itself carries no hover UI. */}
       <button
@@ -36,9 +55,9 @@ function CardTile({ card, countOf, remainingOf, onAdd, onRemove }: { card: Build
           e.preventDefault();
           if (inDeck) onRemove(card);
         }}
-        className={`relative block w-full cursor-pointer overflow-hidden rounded-xl ring-1 ring-inset ${FOCUS_RING_INSET} ${
-          inDeck ? "ring-accent/70" : "ring-white/10"
-        } ${maxed ? "cursor-not-allowed" : ""}`}
+        className={`relative block w-full cursor-pointer overflow-hidden rounded-xl ring-inset ${FOCUS_RING_INSET} ${
+          maxed ? "cursor-not-allowed" : inDeck ? "ring-1 ring-accent/70" : "ring-1 ring-white/10"
+        }`}
       >
         <div className={`aspect-[2.5/3.5] w-full ${maxed ? "opacity-45 saturate-[0.7]" : ""}`}>
           <CardImage
@@ -49,25 +68,14 @@ function CardTile({ card, countOf, remainingOf, onAdd, onRemove }: { card: Build
           />
         </div>
       </button>
-
-      {/* "Max" pill — a redundant cue alongside the dimmed art, so the cap reads
-          without relying on colour/opacity alone. */}
-      {maxed && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md bg-black/75 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/90 ring-1 ring-inset ring-white/20"
-        >
-          Max
-        </span>
-      )}
     </li>
   );
 }
 
 /** The centre pane's card grid. Column counts mirror the decks library grid so
     a card here renders at the same size as a deck tile there (same width column,
-    same aspect). Tiles are image-forward with a hover caption, a count badge,
-    and a +/- stepper. */
+    same aspect). Each tile is a static card face; in-deck copies stack up as a
+    pile behind it (the wider row gap leaves room for that pile to peek out). */
 export function CardGrid({ cards, ...handlers }: CardGridProps) {
   if (cards.length === 0) {
     return (
@@ -78,7 +86,7 @@ export function CardGrid({ cards, ...handlers }: CardGridProps) {
     );
   }
   return (
-    <ul className="grid grid-cols-2 gap-x-3 gap-y-3 md:grid-cols-3 lg:grid-cols-5">
+    <ul className="grid grid-cols-2 gap-x-3 gap-y-6 pb-4 md:grid-cols-3 lg:grid-cols-5">
       {cards.map((card) => (
         <CardTile key={card.cardId} card={card} {...handlers} />
       ))}

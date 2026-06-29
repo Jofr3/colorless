@@ -11,6 +11,11 @@ import { FOCUS_RING, FOCUS_RING_INSET } from "../../../lib/glass";
 import { type BuilderCard, cardImageUrl, type Format, SUPERTYPES } from "../cards";
 import { countsBySupertype, type Deck, type DeckValidation } from "../deckMath";
 
+// The pile cards peek out only their bottom edge, so — like the decks page's
+// deck stacks — they're a flat "card-edge" blue matching the card back's inner
+// border rather than the (darker-at-the-bottom) full back image.
+const CARD_EDGE = "#28345a";
+
 export interface DeckPanelProps {
   deckName: string;
   onRename: (name: string) => void;
@@ -39,9 +44,10 @@ function deckStatus(validation: DeckValidation): Status {
   return "building";
 }
 
-/** A deck-view card tile — image-forward like the centre gallery, just smaller,
-    with the copy count in the corner. No hover UI: clicking the card adds a copy
-    and right-clicking removes one (mouse parity with the gallery). */
+/** A deck-view card tile rendered as a little pile, like the deck tiles on the
+    decks page: the card face on top with a stack of cards peeking out the bottom
+    — one per extra copy, capped at three (so four+ copies read the same). No
+    hover UI: click adds a copy, right-click removes one. */
 function DeckCardTile({
   card,
   quantity,
@@ -55,8 +61,19 @@ function DeckCardTile({
   onAdd: () => void;
   onRemove: () => void;
 }) {
+  const pile = Math.min(quantity - 1, 3);
   return (
     <li className="relative">
+      {/* Pile — one card-back edge per extra copy, peeking out the bottom; the
+          back-most sits lowest. */}
+      {Array.from({ length: pile }, (_, i) => (
+        <div
+          key={i}
+          aria-hidden
+          style={{ transform: `translateY(${(pile - i) * 4}px)`, backgroundColor: CARD_EDGE }}
+          className="absolute inset-0 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+        />
+      ))}
       <button
         type="button"
         aria-label={`Add one ${card.name}, ${quantity} in deck`}
@@ -219,9 +236,10 @@ export function DeckPanel({
           </div>
         ) : (
           // One flat gallery, ordered by card type (Pokémon → Trainer →
-          // Energy) but without the per-type section headers. pt-2 leaves room
-          // for the count pills, which overflow each card's top-right corner.
-          <ul className="grid grid-cols-3 gap-2 pt-2">
+          // Energy) but without the per-type section headers. The roomy row gap
+          // (plus pt-2 / pb-3) leaves space for the count pills overflowing the
+          // top corner and the card pile peeking out the bottom.
+          <ul className="grid grid-cols-3 gap-x-2 gap-y-5 pb-3 pt-2">
             {SUPERTYPES.flatMap((supertype) =>
               deck.filter((e) => e.card.supertype === supertype),
             ).map(({ card, quantity }) => (
