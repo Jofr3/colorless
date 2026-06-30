@@ -3,7 +3,6 @@ import {
   AlertTriangleIcon,
   CheckCircleIcon,
   ImportExportIcon,
-  PlusIcon,
   TrashIcon,
 } from "../../../components/icons";
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -12,7 +11,7 @@ import { useTiltJuice } from "../../../components/useTiltJuice";
 import { FOCUS_RING, FOCUS_RING_INSET } from "../../../lib/glass";
 import { useFlip } from "../../decks/useFlip";
 import { type BuilderCard, cardImageUrl, type Format, SUPERTYPES } from "../cards";
-import { countsBySupertype, type Deck, type DeckValidation } from "../deckMath";
+import { type Deck, type DeckValidation } from "../deckMath";
 
 // The pile cards peek out only their bottom edge, so — like the decks page's
 // deck stacks — they're a flat "card-edge" blue matching the card back's inner
@@ -138,35 +137,15 @@ function DeckCardTile({
   );
 }
 
-/** The Pokémon / Trainer / Energy split. */
-function DeckStats({ deck }: { deck: Deck }) {
-  const counts = countsBySupertype(deck);
-
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {SUPERTYPES.map((s) => (
-        <div
-          key={s}
-          className="rounded-lg bg-white/[0.04] px-2 py-1.5 text-center ring-1 ring-inset ring-white/10"
-        >
-          <p className="text-base font-bold tabular-nums text-white">{counts[s]}</p>
-          <p className="text-[10px] uppercase tracking-wide text-white/55">{s}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Legality feedback condensed to a single status icon beside the deck count:
-    a green check when the deck is legal, otherwise an alert icon whose hover /
-    keyboard-focus popup lists the outstanding error/warning messages (which
-    used to sit inline under the header). */
+/** Legality glyph shown next to the deck name: a green check when legal,
+    otherwise an alert icon whose hover / keyboard-focus popup lists the
+    outstanding issues. */
 function DeckStatusBadge({ validation, format }: { validation: DeckValidation; format: Format }) {
-  const status = deckStatus(validation);
+  const color = STATUS_COLOR[deckStatus(validation)];
   const Icon = validation.legal ? CheckCircleIcon : AlertTriangleIcon;
 
   return (
-    <span className="group relative inline-flex">
+    <span className="group relative inline-flex shrink-0">
       <button
         type="button"
         aria-label={
@@ -174,17 +153,17 @@ function DeckStatusBadge({ validation, format }: { validation: DeckValidation; f
             ? `Legal ${format.name} deck`
             : `Deck issues: ${validation.issues.map((i) => i.message).join("; ")}`
         }
-        className={`inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full transition-colors hover:bg-white/10 ${FOCUS_RING}`}
-        style={{ color: STATUS_COLOR[status] }}
+        className={`flex h-6 w-6 shrink-0 cursor-help items-center justify-center rounded-full transition-colors hover:bg-white/10 ${FOCUS_RING}`}
+        style={{ color }}
       >
         <Icon className="h-4 w-4" />
       </button>
 
-      {/* Hover / keyboard-focus popup. Right-aligned so it never spills past the
-          panel's right edge. */}
+      {/* Hover / keyboard-focus popup. Left-aligned so it opens rightward into
+          the panel from the name-side badge instead of spilling past the edge. */}
       <div
         role="tooltip"
-        className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[15rem] origin-top-right scale-95 rounded-lg bg-[#14141c]/95 p-2.5 text-xs opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition duration-150 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[15rem] origin-top-left scale-95 rounded-lg bg-[#14141c]/95 p-2.5 text-xs opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition duration-150 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100"
       >
         {validation.legal ? (
           <p className="flex items-center gap-1.5 font-medium text-[#7fe39c]">
@@ -232,56 +211,52 @@ export function DeckPanel({
   pulse,
 }: DeckPanelProps) {
   const status = deckStatus(validation);
-  const fill = Math.min(1, validation.total / validation.deckSize);
   // Animate the grid reflow when cards are added/removed (decks-page FLIP).
   const deckFlipRef = useFlip<HTMLUListElement>(true);
 
   return (
     <div data-drop-zone="deck" className="flex h-full flex-col gap-3">
-      {/* Header: editable name + count out of the deck size. */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-2">
+      {/* Header: a legality glyph leads the editable name; the card count sits on
+          the right. No progress bar. */}
+      <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {/* field-sizing:content shrink-wraps the input to the name text so the
+              badge hugs its right edge; max-w-full lets long names truncate. */}
           <input
             value={deckName}
             onChange={(e) => onRename(e.target.value)}
             aria-label="Deck name"
             placeholder="Untitled Deck"
-            className={`min-w-0 flex-1 truncate rounded-md bg-transparent text-lg font-semibold text-white outline-none transition-colors placeholder:text-white/30 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-inset focus:ring-white/30 ${FOCUS_RING}`}
+            className={`min-w-0 max-w-full truncate rounded-md bg-transparent text-lg font-semibold text-white outline-none transition-colors [field-sizing:content] placeholder:text-white/30 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-inset focus:ring-white/30 ${FOCUS_RING}`}
           />
-          <div className="flex shrink-0 items-center gap-1.5">
-            <span className="text-sm font-bold tabular-nums text-white/80">
-              <span style={{ color: STATUS_COLOR[status] }}>{validation.total}</span>
-              <span className="text-white/45"> / {validation.deckSize}</span>
-            </span>
-            <DeckStatusBadge validation={validation} format={format} />
-          </div>
+          <DeckStatusBadge validation={validation} format={format} />
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-          <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{ width: `${fill * 100}%`, backgroundColor: STATUS_COLOR[status] }}
-          />
-        </div>
+        <span className="shrink-0 text-base font-bold leading-none tabular-nums">
+          <span style={{ color: STATUS_COLOR[status] }}>{validation.total}</span>
+          <span className="text-white/40"> / {validation.deckSize}</span>
+        </span>
       </div>
 
-      <DeckStats deck={deck} />
-
-      {/* The grouped decklist scrolls; everything above and the footer stay put.
-          -mt-2 pulls the list up so it sits one standard gap below the stats: the
-          grid's own pt-2 (pill clip room) then fills that gap instead of stacking
-          on top of it. */}
-      <ScrollArea className="-mx-3 px-3 pb-2" outerClassName="-mt-2">
-        {deck.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 px-4 pb-10 pt-16 text-center">
-            <PlusIcon className="h-5 w-5 text-white/20" />
-            <p className="text-sm text-white/55">Click cards to add them to your deck</p>
-          </div>
-        ) : (
-          // One flat gallery, ordered by card type (Pokémon → Trainer →
-          // Energy) but without the per-type section headers. The roomy row gap
-          // (plus pt-2 / pb-3) leaves space for the count pills overflowing the
-          // top corner and the card pile peeking out the bottom.
-          <ul ref={deckFlipRef} className="grid grid-cols-3 gap-x-2 gap-y-5 pb-3 pt-2">
+      {deck.length === 0 ? (
+        // Empty state: centred in the panel's open space (no list to scroll, so
+        // it sits outside the ScrollArea and just fills the gap between the
+        // header and footer).
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 text-center">
+          <p className="text-sm text-white/35">Click cards to add them to your deck</p>
+        </div>
+      ) : (
+        // The grouped decklist scrolls; everything above and the footer stay put.
+        // -mt-2 pulls the list up so it sits one standard gap below the header. The
+        // grid's pt-5 then holds the first row down into the softer tail of the top
+        // fade so it reads crisp at rest and only dissolves once scrolled up under
+        // the header — the fade falls mostly in that top padding, not over the cards.
+        <ScrollArea className="-mx-3 px-3 pb-2" outerClassName="-mt-2" fadeTop={36} fadeBottom={36} maskRadius={16} trackTop={20}>
+          {/* One flat gallery, ordered by card type (Pokémon → Trainer → Energy)
+              but without the per-type section headers. The roomy row gap (plus
+              pt-5 / pb-3) leaves space for the top fade above the first row, the
+              count pills overflowing the top corner, and the pile peeking out the
+              bottom. */}
+          <ul ref={deckFlipRef} className="grid grid-cols-3 gap-x-2 gap-y-5 pb-3 pt-5">
             {SUPERTYPES.flatMap((supertype) =>
               deck.filter((e) => e.card.supertype === supertype),
             ).map(({ card, quantity }) => (
@@ -298,8 +273,8 @@ export function DeckPanel({
               />
             ))}
           </ul>
-        )}
-      </ScrollArea>
+        </ScrollArea>
+      )}
 
       {/* Footer actions. */}
       <div className="flex shrink-0 items-center gap-2 pt-1">

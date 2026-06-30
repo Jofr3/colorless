@@ -330,7 +330,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
               hard-cutting, and rounds the corners so the scroll box never clips on
               a sharp 90°. No bottom feather — the gallery should read as full to
               the bottom, not fading into empty space. */}
-          <ScrollArea className="-mx-3 px-3" fadeTop={36} maskRadius={16}>
+          <ScrollArea className="-mx-3 px-3" fadeTop={36} maskRadius={16} trackTop={16}>
             <CardGrid
               cards={filtered}
               countOf={countOf}
