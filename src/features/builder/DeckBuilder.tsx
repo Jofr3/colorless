@@ -243,7 +243,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
           pinned just left and right of it, so the gallery itself stays the
           clean centred column. They fall back to slide-over drawers once the
           side margins get too tight to hold them. */}
-      <div className="relative mx-auto flex h-svh w-full max-w-4xl flex-col gap-3 px-6 pb-4 pt-16">
+      <div className="relative mx-auto flex h-svh w-full max-w-4xl flex-col gap-3 px-6 pt-16">
         <h1 className="sr-only">Deck builder — {deckName}</h1>
 
         {/* Filter rail — a toggle button and, when open, the panel beneath it,
