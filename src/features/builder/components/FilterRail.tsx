@@ -1,18 +1,18 @@
 import type { ReactNode } from "react";
 import { FOCUS_RING } from "../../../lib/glass";
 import {
+  cardCategories,
   ENERGY_TYPE_META,
   ENERGY_TYPES,
-  ENERGY_SUBTYPES,
   type EnergyType,
   type Format,
   FORMATS,
-  POKEMON_STAGES,
+  RARITIES,
   type Supertype,
   SUPERTYPES,
-  TRAINER_SUBTYPES,
 } from "../cards";
 import { type Filters, filtersActive, type SortKey } from "../poolFilter";
+import { EnergyGlyph } from "./EnergyGlyph";
 
 export interface FilterRailProps {
   filters: Filters;
@@ -27,16 +27,6 @@ const SORTS: { value: SortKey; label: string }[] = [
   { value: "hp-desc", label: "HP" },
   { value: "set", label: "Set" },
 ];
-
-/** Dark vs light glyph for a coloured pip, by perceived luminance. */
-function readableInk(hex: string): string {
-  const n = Number.parseInt(hex.slice(1), 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? "#0e0e14" : "#ffffff";
-}
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
@@ -88,24 +78,16 @@ function TypePip({
       aria-label={meta.type}
       title={meta.type}
       onClick={onToggle}
-      style={{ backgroundColor: meta.color, color: readableInk(meta.color) }}
-      className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[11px] font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] transition ${FOCUS_RING} ${
+      style={{ backgroundColor: meta.color }}
+      className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] transition ${FOCUS_RING} ${
         selected
           ? "ring-2 ring-white ring-offset-2 ring-offset-[#15151d]"
           : "opacity-60 ring-1 ring-inset ring-black/30 hover:opacity-100"
       }`}
     >
-      {meta.code}
+      <EnergyGlyph type={type} className="h-4 w-4" />
     </button>
   );
-}
-
-/** The contextual subtypes for the chosen supertype (none when "all"). */
-function subtypeOptions(supertype: "all" | Supertype): readonly string[] {
-  if (supertype === "Pokémon") return POKEMON_STAGES;
-  if (supertype === "Trainer") return TRAINER_SUBTYPES;
-  if (supertype === "Energy") return ENERGY_SUBTYPES;
-  return [];
 }
 
 /** The deck builder's left rail: format, card type, energy type, subtype and
@@ -127,13 +109,20 @@ export function FilterRail({ filters, onChange, format, onFormatChange, onReset 
         : [...filters.subtypes, subtype],
     });
 
-  // Switching supertype clears subtypes that no longer apply.
+  const toggleRarity = (rarity: string) =>
+    set({
+      rarities: filters.rarities.includes(rarity)
+        ? filters.rarities.filter((r) => r !== rarity)
+        : [...filters.rarities, rarity],
+    });
+
+  // Switching supertype clears card-kind selections that no longer apply.
   const setSupertype = (supertype: "all" | Supertype) => {
-    const valid = new Set(subtypeOptions(supertype));
+    const valid = new Set(cardCategories(supertype).map((c) => c.label));
     set({ supertype, subtypes: filters.subtypes.filter((s) => valid.has(s)) });
   };
 
-  const subtypes = subtypeOptions(filters.supertype);
+  const categories = cardCategories(filters.supertype);
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl bg-white/[0.045] p-3.5 ring-1 ring-inset ring-white/10 backdrop-blur-md">
@@ -201,18 +190,33 @@ export function FilterRail({ filters, onChange, format, onFormatChange, onReset 
         </div>
       </div>
 
-      {subtypes.length > 0 && (
+      {categories.length > 0 && (
         <div>
-          <SectionLabel>{filters.supertype === "Pokémon" ? "Stage" : "Subtype"}</SectionLabel>
+          <SectionLabel>{filters.supertype === "Pokémon" ? "Pokémon" : "Subtype"}</SectionLabel>
           <div className="flex flex-wrap gap-1.5">
-            {subtypes.map((s) => (
-              <Chip key={s} selected={filters.subtypes.includes(s)} onClick={() => toggleSubtype(s)}>
-                {s}
+            {categories.map((c) => (
+              <Chip
+                key={c.label}
+                selected={filters.subtypes.includes(c.label)}
+                onClick={() => toggleSubtype(c.label)}
+              >
+                {c.label}
               </Chip>
             ))}
           </div>
         </div>
       )}
+
+      <div>
+        <SectionLabel>Rarity</SectionLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {RARITIES.map((r) => (
+            <Chip key={r} selected={filters.rarities.includes(r)} onClick={() => toggleRarity(r)}>
+              {r}
+            </Chip>
+          ))}
+        </div>
+      </div>
 
       <div className="h-px bg-white/10" />
 

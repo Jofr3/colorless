@@ -36,6 +36,10 @@ export const TRAINER_SUBTYPES = ["Item", "Supporter", "Stadium", "Pokémon Tool"
 /** Energy subtypes. */
 export const ENERGY_SUBTYPES = ["Basic Energy", "Special Energy"] as const;
 
+/** Card rarities present in the pool, ordered low → high tier. Drives the
+    rarity filter; the printed cards carry these exact strings. */
+export const RARITIES = ["Common", "Uncommon", "Rare", "Double Rare", "ACE SPEC Rare"] as const;
+
 /** A single browsable card. `cardId` is a Scrydex id (set code + number) used
     for the art; the rest is the metadata the filters, stats and validation read.
     Optional fields are absent for categories they don't apply to (a Trainer has
@@ -94,6 +98,51 @@ export function isLegalInFormat(card: BuilderCard, format: Format): boolean {
   if (!format.legalRegulationMarks) return true;
   if (!card.regulationMark) return true;
   return format.legalRegulationMarks.includes(card.regulationMark);
+}
+
+// --- Card-kind categories --------------------------------------------------
+// The rail's contextual filter offers card "kinds" once a supertype is chosen.
+// For Trainers/Energy these are just the printed subtypes, but Pokémon kinds are
+// partly derived: "Evolution" unions the two evolved stages, and "EX"/"Mega" are
+// read off the card name (the pool has no dedicated field for either).
+
+export interface CardCategory {
+  label: string;
+  match: (card: BuilderCard) => boolean;
+}
+
+const bySubtype = (subtype: string): CardCategory => ({
+  label: subtype,
+  match: (c) => c.subtype === subtype,
+});
+
+export const POKEMON_CATEGORIES: CardCategory[] = [
+  { label: "Basic", match: (c) => c.subtype === "Basic" },
+  { label: "Evolution", match: (c) => c.subtype === "Stage 1" || c.subtype === "Stage 2" },
+  { label: "EX", match: (c) => /\bex\b/i.test(c.name) },
+  { label: "Mega", match: (c) => /\bmega\b/i.test(c.name) },
+];
+
+export const TRAINER_CATEGORIES: CardCategory[] = TRAINER_SUBTYPES.map(bySubtype);
+
+export const ENERGY_CATEGORIES: CardCategory[] = ENERGY_SUBTYPES.map(bySubtype);
+
+/** The card-kind options offered for a chosen supertype ("all" → none). */
+export function cardCategories(supertype: "all" | Supertype): CardCategory[] {
+  if (supertype === "Pokémon") return POKEMON_CATEGORIES;
+  if (supertype === "Trainer") return TRAINER_CATEGORIES;
+  if (supertype === "Energy") return ENERGY_CATEGORIES;
+  return [];
+}
+
+const CATEGORY_BY_LABEL = new Map<string, CardCategory>(
+  [...POKEMON_CATEGORIES, ...TRAINER_CATEGORIES, ...ENERGY_CATEGORIES].map((c) => [c.label, c]),
+);
+
+/** OR within the card-kind dimension: keep a card if it matches any selected
+    label. Unknown labels match nothing. */
+export function cardMatchesCategories(card: BuilderCard, labels: string[]): boolean {
+  return labels.some((label) => CATEGORY_BY_LABEL.get(label)?.match(card) ?? false);
 }
 
 // --- Energy-type palette ---------------------------------------------------

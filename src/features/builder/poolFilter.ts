@@ -2,7 +2,7 @@
 // centre grid. Kept out of the component so it's unit-tested and so a heavy
 // pool can be memoised on the inputs without React in the way.
 
-import type { BuilderCard, EnergyType, Supertype } from "./cards";
+import { type BuilderCard, cardMatchesCategories, type EnergyType, type Supertype } from "./cards";
 
 export type SortKey = "name" | "hp-desc" | "set";
 
@@ -15,6 +15,8 @@ export interface Filters {
   types: EnergyType[];
   /** Selected subtypes (Basic / Stage 1 / Item / Supporter / …); empty = all. */
   subtypes: string[];
+  /** Selected rarities (Common / Uncommon / Double Rare / …); empty = all. */
+  rarities: string[];
   /** Hide cards illegal in the active format (by regulation mark). On by default
       so the grid can't be filled with rotated-out cards; only bites when the
       format actually restricts marks (Standard, not Expanded). */
@@ -27,6 +29,7 @@ export const DEFAULT_FILTERS: Filters = {
   supertype: "all",
   types: [],
   subtypes: [],
+  rarities: [],
   legalOnly: true,
   sort: "name",
 };
@@ -39,6 +42,7 @@ export function filtersActive(filters: Filters): boolean {
     filters.supertype !== "all" ||
     filters.types.length > 0 ||
     filters.subtypes.length > 0 ||
+    filters.rarities.length > 0 ||
     !filters.legalOnly
   );
 }
@@ -52,7 +56,9 @@ function matches(card: BuilderCard, filters: Filters, legalMarks?: string[]): bo
     if (!card.types?.some((t) => filters.types.includes(t))) return false;
   }
 
-  if (filters.subtypes.length > 0 && !filters.subtypes.includes(card.subtype)) return false;
+  if (filters.subtypes.length > 0 && !cardMatchesCategories(card, filters.subtypes)) return false;
+
+  if (filters.rarities.length > 0 && !filters.rarities.includes(card.rarity ?? "")) return false;
 
   // Format legality (only when the format restricts marks and the toggle is on).
   // An unmarked card (basic Energy) is always legal.
