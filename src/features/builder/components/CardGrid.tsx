@@ -120,7 +120,7 @@ export function CardGrid({ cards, ...handlers }: CardGridProps) {
     );
   }
   return (
-    <ul className="grid grid-cols-2 gap-x-3 gap-y-6 pb-4 pt-4 md:grid-cols-3 lg:grid-cols-5">
+    <ul className="grid grid-cols-2 gap-x-3 gap-y-6 pt-4 md:grid-cols-3 lg:grid-cols-5">
       {cards.map((card) => (
         <CardTile key={card.cardId} card={card} {...handlers} />
       ))}

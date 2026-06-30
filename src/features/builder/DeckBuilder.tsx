@@ -290,7 +290,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
             dragging a deck card here removes a copy. No flex gap: the scroll area
             starts right under the search bar (like /decks) and the gap lives
             inside it as the grid's top padding, so it doubles as tilt clip room. */}
-        <main data-drop-zone="gallery" className="flex min-w-0 flex-1 flex-col">
+        <main data-drop-zone="gallery" className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="flex shrink-0 items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
@@ -324,9 +324,13 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
           </div>
 
           {/* -mx-3/px-3 keep the cells aligned to the column edge while giving
-              the hover tilt/scale horizontal clip room. pb-3 does the same below;
-              no top padding so the grid sits tight under the search bar. */}
-          <ScrollArea className="-mx-3 px-3 pb-3">
+              the hover tilt/scale horizontal clip room. The edge mask is a
+              fragment shader (see scrollFadeMask): it feathers the top edge so
+              rows dissolve to transparent under the search bar instead of
+              hard-cutting, and rounds the corners so the scroll box never clips on
+              a sharp 90°. No bottom feather — the gallery should read as full to
+              the bottom, not fading into empty space. */}
+          <ScrollArea className="-mx-3 px-3" fadeTop={36} maskRadius={16}>
             <CardGrid
               cards={filtered}
               countOf={countOf}

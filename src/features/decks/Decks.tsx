@@ -780,7 +780,7 @@ export function Decks() {
         {/* No overflow clip here: the ScrollArea below clips/scrolls itself, and
             its -mx-3 gutter gives the cards horizontal room for their tilt/juice.
             Clipping x here would cut that off right at the card edge. */}
-        <main className="flex min-w-0 flex-1 flex-col">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col">
           <h1 className="sr-only">Decks</h1>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full min-w-0 sm:flex-1">

@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import "./scrollArea.css";
+import { fadeMaskDataUrl } from "./scrollFadeMask";
 
 const MIN_THUMB = 32; // px — keep the thumb grabbable on very long lists
 
@@ -21,6 +22,9 @@ export function ScrollArea({
   outerClassName,
   trackTop = 0,
   trackBottom = 0,
+  fadeTop = 0,
+  fadeBottom = 0,
+  maskRadius = 0,
 }: {
   children: ReactNode;
   /** Applied to the scrolling element (padding, negative margins, etc.). */
@@ -33,10 +37,23 @@ export function ScrollArea({
       padding) instead of spanning the raw scroll box. */
   trackTop?: number;
   trackBottom?: number;
+  /** Height (px) of a soft fade-out at the top edge, so content dissolves to
+      transparent as it scrolls up under whatever sits above (e.g. a search bar)
+      instead of hard-cutting. Rendered by a fragment shader (see
+      {@link fadeMaskDataUrl}) into the viewport's `mask-image`. */
+  fadeTop?: number;
+  /** Like {@link fadeTop}, but feathering the bottom edge. */
+  fadeBottom?: number;
+  /** Corner radius (px) of the masked viewport, so the scroll box clips on soft
+      rounded corners instead of a hard 90°. Pairs with the feather above. */
+  maskRadius?: number;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ pointerY: number; scrollTop: number } | null>(null);
+  // Last baked edge-mask signature (size + params) — so the shader only re-bakes
+  // when the box actually changes, never on every scroll event.
+  const maskKey = useRef("");
   const [thumb, setThumb] = useState({ height: 0, top: 0, shown: false });
 
   // Recompute the thumb's size/offset (relative to the rail) from scroll metrics.
@@ -44,7 +61,36 @@ export function ScrollArea({
   const measure = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const { scrollTop, scrollHeight, clientHeight } = el;
+    const { scrollTop, scrollHeight, clientHeight, clientWidth } = el;
+    // Edge mask (rounded corners + top/bottom feather), drawn by a fragment
+    // shader. It's pinned to the viewport — independent of scroll — so it only
+    // (re)bakes when the box size or params change, never per scroll frame.
+    if (fadeTop > 0 || fadeBottom > 0 || maskRadius > 0) {
+      const key = `${clientWidth}x${clientHeight}:${fadeTop},${fadeBottom},${maskRadius}`;
+      if (key !== maskKey.current && clientWidth > 0 && clientHeight > 0) {
+        maskKey.current = key;
+        const url = fadeMaskDataUrl({
+          width: clientWidth,
+          height: clientHeight,
+          fadeTop,
+          fadeBottom,
+          radius: maskRadius,
+        });
+        if (url) {
+          el.style.maskImage = `url("${url}")`;
+          el.style.setProperty("-webkit-mask-image", `url("${url}")`);
+          el.style.maskSize = "100% 100%";
+          el.style.setProperty("-webkit-mask-size", "100% 100%");
+          el.style.maskRepeat = "no-repeat";
+          el.style.setProperty("-webkit-mask-repeat", "no-repeat");
+        } else if (fadeTop > 0) {
+          // No WebGL — fall back to a plain CSS gradient top feather.
+          const grad = `linear-gradient(to bottom, transparent, #000 ${fadeTop}px)`;
+          el.style.maskImage = grad;
+          el.style.setProperty("-webkit-mask-image", grad);
+        }
+      }
+    }
     if (scrollHeight <= clientHeight + 1) {
       setThumb((t) => (t.shown ? { ...t, shown: false } : t));
       return;
@@ -53,7 +99,7 @@ export function ScrollArea({
     const height = Math.max((clientHeight / scrollHeight) * travel, MIN_THUMB);
     const top = (scrollTop / (scrollHeight - clientHeight)) * (travel - height);
     setThumb({ height, top, shown: true });
-  }, [trackTop, trackBottom]);
+  }, [trackTop, trackBottom, fadeTop, fadeBottom, maskRadius]);
 
   // Track scroll position and any size change (viewport or content growth).
   useEffect(() => {
