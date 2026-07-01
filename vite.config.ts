@@ -15,6 +15,10 @@ export default defineConfig({
   build: {
     // Match the TypeScript target so output isn't down-levelled further than needed.
     target: "es2022",
+    // Emit source maps but don't reference them from the bundles ("hidden"), so
+    // production stack traces stay resolvable (error reporting) without shipping
+    // a //# sourceMappingURL that exposes source in end-users' devtools.
+    sourcemap: "hidden",
     rollupOptions: {
       output: {
         // Split the large, rarely-changing vendor libs into their own chunks so

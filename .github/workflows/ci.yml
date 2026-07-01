@@ -16,10 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # No bun-version pin here: setup-bun@v2 reads .bun-version for a
+      # reproducible toolchain (matches the packageManager field too).
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+
+      # Cache Bun's global install cache (keyed on the lockfile) so unchanged
+      # deps don't re-download each run. Not node_modules — bun links from cache.
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
         with:
-          bun-version: latest
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
