@@ -71,8 +71,10 @@ function CardTile({
           ref={tiltRef}
           type="button"
           {...handlers}
+          // No press juice here: the copy-count `pulse` already shakes this tile
+          // when the click adds a copy, so firing on pointerDown too would
+          // double-shake (a press bounce on mouse-down, then the pulse on mouse-up).
           onPointerDown={(e) => {
-            handlers.onPointerDown();
             if (!maxed) onDragStart?.(card, e);
           }}
           style={tiltStyle}

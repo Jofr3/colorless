@@ -104,10 +104,10 @@ function DeckCardTile({
           ref={tiltRef}
           type="button"
           {...handlers}
-          onPointerDown={(e) => {
-            handlers.onPointerDown();
-            onDragStart?.(e);
-          }}
+          // No press juice here: the copy-count `pulse` already shakes this tile
+          // when the click adds a copy, so firing on pointerDown too would
+          // double-shake (a press bounce on mouse-down, then the pulse on mouse-up).
+          onPointerDown={(e) => onDragStart?.(e)}
           style={tiltStyle}
           aria-label={`Add one ${card.name}, ${quantity} in deck`}
           onClick={onAdd}
@@ -237,12 +237,21 @@ export function DeckPanel({
         </span>
       </div>
 
-      {/* The decklist lives in a soft glass box, kept whether empty or full. */}
-      <div className="mb-2 flex min-h-0 flex-1 flex-col rounded-2xl border border-white/10 bg-white/5 px-3">
+      {/* The decklist lives in a soft glass box, kept whether empty or full — a
+          dashed border while empty, solid once it holds cards. */}
+      <div
+        className={`mb-2 flex min-h-0 flex-1 flex-col rounded-2xl border border-white/10 bg-white/5 px-3 ${
+          deck.length === 0 ? "border-dashed" : "border-solid"
+        }`}
+      >
         {deck.length === 0 ? (
           // Empty state: centred in the box's open space between header and footer.
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
-            <p className="text-sm text-white/35">Click cards to add them to your deck</p>
+            <p className="text-sm text-white/25">
+              Click or drag cards
+              <br />
+              to add them to your deck
+            </p>
           </div>
         ) : (
           // The grouped decklist scrolls inside the box. -mx-3 lets the mask reach
