@@ -108,6 +108,7 @@ export class GlowRenderer {
   private uniforms: UniformGroup | null = null;
   private quad: Graphics | null = null;
   private host: HTMLElement | null = null;
+  private canvas: HTMLCanvasElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private destroyed = false;
   private ready = false;
@@ -173,6 +174,15 @@ export class GlowRenderer {
     app.canvas.className = "glow-bg-canvas";
     app.canvas.setAttribute("aria-hidden", "true");
     host.appendChild(app.canvas);
+
+    // After a GPU/context reset this on-demand canvas would stay blank (only the
+    // CSS gradient fallback in index.css shows through meanwhile) since nothing
+    // re-renders until the next layout tween or resize. Repaint once the browser
+    // restores the context — Pixi rebuilds its own GL resources on restore, so we
+    // just re-render on the next frame. No `webglcontextlost` handler: Pixi owns
+    // that, and calling preventDefault there would block the restore.
+    this.canvas = app.canvas;
+    app.canvas.addEventListener("webglcontextrestored", this.handleContextRestored);
 
     this.app = app;
     this.uniforms = uniforms;
@@ -263,8 +273,16 @@ export class GlowRenderer {
     this.apply();
   };
 
+  private readonly handleContextRestored = () => {
+    if (this.destroyed) return;
+    // Repaint after Pixi has rebuilt its GL state for the restored context.
+    requestAnimationFrame(this.apply);
+  };
+
   destroy() {
     this.destroyed = true;
+    this.canvas?.removeEventListener("webglcontextrestored", this.handleContextRestored);
+    this.canvas = null;
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     if (this.app) {
