@@ -1,10 +1,45 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { defineConfig, type Plugin } from "vite";
+
+// Content-Security-Policy for the production HTML only. It's injected at build
+// time (not kept in index.html) so it can't strangle the dev server, whose HMR
+// needs inline scripts, eval and a websocket. Allowlist: our own origin; the
+// Scrydex image CDN (card faces, loaded as <img> and Pixi textures); Google
+// Fonts (stylesheet on googleapis, files on gstatic); data:/blob: for the SVG
+// favicon, procedural card-back data-URLs and Pixi's bitmap decode. Inline
+// styles are load-bearing (every animated transform is a style attribute), so
+// style-src keeps 'unsafe-inline'; scripts do not (the build emits one external
+// module, no inline script), so script-src stays tight.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://images.scrydex.com",
+  "connect-src 'self' https://images.scrydex.com",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
+function cspPlugin(): Plugin {
+  return {
+    name: "html-csp",
+    apply: "build",
+    transformIndexHtml(html) {
+      return html.replace(
+        "<head>",
+        `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+      );
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), cspPlugin()],
   test: {
     // The current suites cover pure logic (the board reducer, prize math), so
     // the fast Node environment is enough. Switch to "jsdom" (and add the dep)
