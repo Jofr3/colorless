@@ -8,6 +8,21 @@ const SOURCE_LABELS: Record<LogSource, string> = {
   system: "SYS",
 };
 
+// Readable source words for the screen-reader announcement (vs. the terse badge).
+const SOURCE_ANNOUNCE: Record<LogSource, string> = {
+  you: "You",
+  opponent: "Opponent",
+  system: "",
+};
+
+/** A one-line spoken form of a log entry for the live region. */
+function announceEntry(entry: LogEntry): string {
+  if (entry.kind === "turn") return `Turn ${entry.turn}`;
+  const text = entry.segments.map((segment) => segment.text).join("");
+  const who = SOURCE_ANNOUNCE[entry.who];
+  return who ? `${who}: ${text}` : text;
+}
+
 const SOURCE_BADGE_CLASSES: Record<LogSource, string> = {
   you: "bg-sky-400/95 text-white",
   opponent: "bg-rose-500/95 text-white",
@@ -97,9 +112,15 @@ export function GameLog({
   turn: number;
 }) {
   const [open, setOpen] = useState(false);
+  const latest = entries[entries.length - 1];
 
   return (
     <div className="absolute z-[70]" style={{ left: 12, bottom: 12 }}>
+      {/* Always-mounted live region so a new entry is announced even while the
+          panel is collapsed (the panel itself unmounts when closed). */}
+      <div aria-live="polite" className="sr-only">
+        {latest ? announceEntry(latest) : ""}
+      </div>
       {open && (
         <section
           aria-label="Game log"
