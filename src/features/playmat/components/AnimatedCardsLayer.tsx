@@ -31,6 +31,12 @@ import {
   DEFAULT_ATTACHED_VISIBLE_STICK,
 } from "../constants";
 import { cardBackToneFor } from "../utils/players";
+import {
+  placementIndex,
+  zIndexForAttachedEnergy,
+  zIndexForAttachedTool,
+  zIndexForPlacement,
+} from "../utils/zIndex";
 
 interface AnimatedCardsLayerProps {
   board: BoardState;
@@ -376,63 +382,11 @@ function pointFromEvent(root: HTMLElement, event: PointerEvent) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
-// Reads the array index off a placement that may or may not carry one
-// (active/stadium never do; bench/hand/attached may omit it for a whole-zone
-// container drop), for host-relative attachment stacking.
-function placementIndex(placement: CardPlacement): number {
-  if (placement.zone === "active" || placement.zone === "stadium") return 0;
-  return placement.index ?? 0;
-}
-
+// Descriptor-aware z helpers stay here (they read CardDescriptor); the pure
+// placement math they build on lives in ../utils/zIndex (unit-tested).
 function zIndexForDraggedAttachment(descriptor: CardDescriptor) {
   if (descriptor.card.type === "tool") return 9_999;
   return 9_998 + placementIndex(descriptor.placement) * 0.01;
-}
-
-function zIndexForPlacement(placement: CardPlacement, zoneSize: number, cardType?: CardType) {
-  if (placement.zone === "hand") {
-    return 80 + zoneSize - (placement.index ?? 0);
-  }
-
-  if (placement.zone === "active") {
-    return 55;
-  }
-
-  if (placement.zone === "bench") {
-    return 57 + zoneSize - (placement.index ?? 0);
-  }
-
-  // Fallback for attached cards without host metadata. Normal rendering uses
-  // zIndexForDescriptor for host-relative tool/energy layering.
-  if (placement.zone === "attached") {
-    if (cardType === "tool") return 54.9 + (placement.index ?? 0) * 0.01;
-    return 54.8 + (placement.index ?? 0) * 0.01;
-  }
-
-  // Synthetic back cards (deck/prize) ride the "stadium" zone with a player
-  // owner; the real stadium is owner "global" and keeps the original z=42.
-  if (placement.zone === "stadium" && placement.owner !== "global") {
-    return 20;
-  }
-
-  return 42;
-}
-
-function zIndexForAttached(hostPlacement: CardPlacement, hostZoneSize: number, stackIndex: number) {
-  const hostZIndex = zIndexForPlacement(hostPlacement, hostZoneSize);
-  return hostZIndex - 0.2 + Math.min(stackIndex, 9) * 0.01;
-}
-
-function zIndexForAttachedTool(hostPlacement: CardPlacement, hostZoneSize: number, index: number) {
-  return zIndexForAttached(hostPlacement, hostZoneSize, index) + 0.1;
-}
-
-function zIndexForAttachedEnergy(
-  hostPlacement: CardPlacement,
-  hostZoneSize: number,
-  index: number,
-) {
-  return zIndexForAttached(hostPlacement, hostZoneSize, index);
 }
 
 function zIndexForDescriptor(descriptor: CardDescriptor) {
