@@ -97,13 +97,38 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
 
   const format = formatById(formatId);
 
-  // Persist on every change. Best-effort (writePersisted swallows failures).
+  // Persist on change, debounced so a burst of edits (e.g. typing the deck name)
+  // coalesces into a single write instead of re-serialising the whole deck on
+  // every keystroke. Best-effort — writePersisted swallows failures.
   useEffect(() => {
-    writePersisted(
-      storageKey(deckId),
-      JSON.stringify({ name: deckName, formatId, cards: [...entries] } satisfies StoredDeck),
-    );
+    const id = window.setTimeout(() => {
+      writePersisted(
+        storageKey(deckId),
+        JSON.stringify({ name: deckName, formatId, cards: [...entries] } satisfies StoredDeck),
+      );
+    }, 300);
+    return () => window.clearTimeout(id);
   }, [deckId, deckName, formatId, entries]);
+
+  // Flush the pending write on unmount so navigating away inside the debounce
+  // window doesn't drop the last edit. The ref tracks the current values so the
+  // once-bound cleanup writes what's on screen at unmount, not stale state.
+  const latestDeck = useRef({ deckId, deckName, formatId, entries });
+  latestDeck.current = { deckId, deckName, formatId, entries };
+  useEffect(
+    () => () => {
+      const deck = latestDeck.current;
+      writePersisted(
+        storageKey(deck.deckId),
+        JSON.stringify({
+          name: deck.deckName,
+          formatId: deck.formatId,
+          cards: [...deck.entries],
+        } satisfies StoredDeck),
+      );
+    },
+    [],
+  );
 
   // Tab title reflects the deck being edited.
   useEffect(() => {
