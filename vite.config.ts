@@ -41,9 +41,10 @@ function cspPlugin(): Plugin {
 export default defineConfig({
   plugins: [react(), tailwindcss(), cspPlugin()],
   test: {
-    // The current suites cover pure logic (the board reducer, prize math), so
-    // the fast Node environment is enough. Switch to "jsdom" (and add the dep)
-    // when component/DOM tests are introduced.
+    // Default to the fast Node environment for the pure-logic suites (reducers,
+    // deck/z-index math, parsing). Component/DOM tests opt into jsdom per file
+    // with a `// @vitest-environment jsdom` docblock — see the *.dom.test.tsx
+    // files (React Testing Library), so the many pure tests keep the lean env.
     environment: "node",
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
