@@ -1,20 +1,12 @@
-// Drag a card between the gallery and the deck. Reuses the decks-page drag feel
-// — a body-level ghost that springs after the pointer with velocity tilt, a lift
-// on pickup, and the Balatro juice pop — but instead of reordering/nesting it
-// only hit-tests two drop zones: drop a gallery card on the deck to add a copy,
-// drop a deck card off the deck to remove one. The spring/juice physics are the
-// shared primitives in lib/animation, identical to useDeckDrag and CardView.
-import type { PointerEvent as ReactPointerEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { evaluateJuice, type JuiceState, startJuice } from "../../lib/animation/juice";
-import {
-  clampVelocity,
-  dragTiltFromVelocity,
-  SPRING_C_ROT_DRAG,
-  SPRING_MAX_DT,
-  stepSpringScalar,
-  stepSpringXY,
-} from "../../lib/animation/spring";
+// Drag a card between the gallery and the deck. Reuses the shared ghost-drag
+// primitive (a body-level clone that spring-follows the pointer with velocity
+// tilt, a pickup lift, and the Balatro juice pop — see lib/animation/useGhostDrag
+// and CardView) but, instead of reordering/nesting, only hit-tests two drop
+// zones: drop a gallery card on the deck to add a copy, drop a deck card off the
+// deck to remove one.
+import { useState } from "react";
+import type { GhostFeel } from "../../lib/animation/ghostDrag";
+import { type ReleaseOutcome, useGhostDrag } from "../../lib/animation/useGhostDrag";
 import type { BuilderCard } from "./cards";
 
 export type DragSource = "gallery" | "deck";
@@ -30,42 +22,17 @@ interface Options {
   onRemoveFromDeck: (card: BuilderCard) => void;
 }
 
-const RAD_TO_DEG = 180 / Math.PI;
-const DRAG_THRESHOLD_PX = 5; // travel before a press becomes a drag
-const PICKUP_SCALE = 1.1;
-const PICKUP_LIFT_PX = 14;
-const ACCEPTED_SCALE = 0.5; // shrink as it lands in/leaves the deck
-const RELEASE_MS = 280;
-const PICKUP_JUICE = { amount: 0.05, rotation: 0.025 };
+const CARD_FEEL: GhostFeel = {
+  pickupScale: 1.1,
+  pickupLiftPx: 14,
+  acceptedScale: 0.5, // shrink as it lands in/leaves the deck
+  releaseMs: 280,
+  releaseSlackMs: 120,
+  pickupJuice: { amount: 0.05, rotation: 0.025 },
+  dragThresholdPx: 5, // travel before a press becomes a drag
+};
 const LAND_JUICE = { amount: 0.07, rotation: 0.03 };
 const REJECT_JUICE = { amount: 0.05, rotation: 0.04 };
-
-interface Drag {
-  item: CardDragItem;
-  sourceEl: HTMLElement;
-  pointerId: number;
-  startX: number;
-  startY: number;
-  started: boolean;
-  reduced: boolean;
-  pointer: { x: number; y: number };
-  grab: { x: number; y: number };
-  cur: { x: number; y: number; rot: number };
-  vel: { x: number; y: number; rot: number };
-  halfW: number;
-  halfH: number;
-  emph: number;
-  lift: number;
-  opacity: number;
-  juice: JuiceState | null;
-  releasing: boolean;
-  releaseStart: number;
-  releaseCenter: { x: number; y: number };
-  accepted: boolean;
-  wrapper: HTMLElement | null;
-  raf: number | null;
-  lastFrame: number;
-}
 
 function centerOf(el: HTMLElement) {
   const r = el.getBoundingClientRect();
@@ -113,125 +80,20 @@ function zoneAt(x: number, y: number): DragSource | null {
 }
 
 export function useCardDrag({ onAddToDeck, onRemoveFromDeck }: Options) {
-  const dragRef = useRef<Drag | null>(null);
   const [dragging, setDragging] = useState(false);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
-  const optsRef = useRef({ onAddToDeck, onRemoveFromDeck });
-  optsRef.current = { onAddToDeck, onRemoveFromDeck };
 
-  const finalize = useCallback(() => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    if (drag.raf !== null) cancelAnimationFrame(drag.raf);
-    drag.wrapper?.remove();
-    dragRef.current = null;
-    document.body.style.userSelect = "";
-    setDragging(false);
-    setDragSource(null);
-  }, []);
-
-  const tick = useCallback(() => {
-    const drag = dragRef.current;
-    if (!drag || !drag.wrapper) return;
-    const now = performance.now();
-    const dt = Math.min((now - drag.lastFrame) / 1000, SPRING_MAX_DT);
-    drag.lastFrame = now;
-
-    const desired = drag.releasing
-      ? drag.releaseCenter
-      : { x: drag.pointer.x - drag.grab.x, y: drag.pointer.y - drag.grab.y };
-    drag.cur.x = stepSpringXY(drag.cur.x, desired.x, dt, drag.vel, "x");
-    drag.cur.y = stepSpringXY(drag.cur.y, desired.y, dt, drag.vel, "y");
-
-    const velTilt = !drag.reduced && !drag.releasing ? dragTiltFromVelocity(drag.vel.x, dt) : 0;
-    clampVelocity(drag.vel, dt);
-    drag.cur.rot = stepSpringScalar(drag.cur.rot, velTilt, dt, SPRING_C_ROT_DRAG, drag.vel, "rot");
-
-    const ease = drag.reduced ? 1 : 1 - Math.exp(-14 * dt);
-    const emphTarget = drag.releasing ? (drag.accepted ? ACCEPTED_SCALE : 1) : PICKUP_SCALE;
-    drag.emph += (emphTarget - drag.emph) * ease;
-    const liftTarget = drag.releasing ? 0 : PICKUP_LIFT_PX;
-    drag.lift += (liftTarget - drag.lift) * ease;
-    const opacityTarget = drag.releasing && drag.accepted ? 0 : 1;
-    drag.opacity += (opacityTarget - drag.opacity) * (drag.reduced ? 1 : 1 - Math.exp(-12 * dt));
-
-    const juice = drag.reduced ? null : evaluateJuice(drag.juice, now / 1000);
-    if (!juice) drag.juice = null;
-    const juiceScale = juice ? juice.scale : 0;
-    const juiceRot = juice ? juice.rotation * 2 : 0;
-
-    const scale = Math.max(0.01, drag.emph * (1 + juiceScale));
-    const rotDeg = (drag.cur.rot + juiceRot) * RAD_TO_DEG;
-    const cx = drag.cur.x;
-    const cy = drag.cur.y - drag.lift;
-    drag.wrapper.style.transform = `translate(${cx - drag.halfW}px, ${cy - drag.halfH}px) rotate(${rotDeg}deg) scale(${scale})`;
-    drag.wrapper.style.opacity = `${drag.opacity}`;
-
-    if (drag.releasing && now - drag.releaseStart >= (drag.reduced ? 0 : RELEASE_MS)) {
-      finalize();
-      return;
-    }
-    drag.raf = requestAnimationFrame(tick);
-  }, [finalize]);
-
-  const beginDrag = useCallback(
-    (drag: Drag) => {
-      const rect = drag.sourceEl.getBoundingClientRect();
-      drag.wrapper = makeGhost(drag.sourceEl, rect);
-      drag.halfW = rect.width / 2;
-      drag.halfH = rect.height / 2;
-      const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      drag.cur = { x: center.x, y: center.y, rot: 0 };
-      drag.vel = { x: 0, y: 0, rot: 0 };
-      drag.grab = { x: drag.startX - center.x, y: drag.startY - center.y };
-      drag.emph = 1;
-      drag.lift = 0;
-      drag.opacity = 1;
-      drag.lastFrame = performance.now();
-      if (!drag.reduced) {
-        drag.juice = startJuice(PICKUP_JUICE.amount, PICKUP_JUICE.rotation, performance.now() / 1000);
-      }
+  const { startDrag } = useGhostDrag<CardDragItem, null>({
+    feel: CARD_FEEL,
+    createData: () => null,
+    createGhost: makeGhost,
+    onBegin: (drag) => {
       document.body.style.userSelect = "none";
       setDragging(true);
       setDragSource(drag.item.source);
-      drag.raf = requestAnimationFrame(tick);
     },
-    [tick],
-  );
-
-  const onPointerMove = useCallback(
-    (event: PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag || event.pointerId !== drag.pointerId) return;
-      if (!drag.started) {
-        if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) <= DRAG_THRESHOLD_PX) {
-          return;
-        }
-        drag.started = true;
-        beginDrag(drag);
-      }
-      event.preventDefault();
-      drag.pointer = { x: event.clientX, y: event.clientY };
-    },
-    [beginDrag],
-  );
-
-  const onPointerUp = useCallback(
-    (event: PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag || event.pointerId !== drag.pointerId) return;
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-
-      if (!drag.started) {
-        // Never crossed the threshold — a plain click; let onClick handle it.
-        dragRef.current = null;
-        document.body.style.userSelect = "";
-        return;
-      }
-
-      // Swallow the click that the browser fires after the drag so it can't also
+    resolveRelease: (event, drag): ReleaseOutcome => {
+      // Swallow the click the browser fires after the drag so it can't also
       // trigger the card's onClick (which would add an extra copy).
       const suppress = (e: Event) => e.stopPropagation();
       window.addEventListener("click", suppress, { capture: true, once: true });
@@ -240,87 +102,34 @@ export function useCardDrag({ onAddToDeck, onRemoveFromDeck }: Options) {
       // A pointercancel (OS gesture, context menu, focus loss) is an aborted
       // gesture, not a drop — bail so a deck card isn't silently removed when
       // `zone` collapses to null (`zone !== "deck"` would otherwise be true).
-      // Mirrors useDeckDrag.
       const cancelled = event.type === "pointercancel";
       const zone = cancelled ? null : zoneAt(event.clientX, event.clientY);
       const addAccepted = !cancelled && drag.item.source === "gallery" && zone === "deck";
       const removeAccepted = !cancelled && drag.item.source === "deck" && zone !== "deck";
       const accepted = addAccepted || removeAccepted;
-      if (addAccepted) optsRef.current.onAddToDeck(drag.item.card);
-      else if (removeAccepted) optsRef.current.onRemoveFromDeck(drag.item.card);
+      if (addAccepted) onAddToDeck(drag.item.card);
+      else if (removeAccepted) onRemoveFromDeck(drag.item.card);
 
-      drag.accepted = accepted;
-      drag.releasing = true;
-      drag.releaseStart = performance.now();
-      drag.releaseCenter = accepted ? { x: drag.cur.x, y: drag.cur.y } : centerOf(drag.sourceEl);
-      if (!drag.reduced) {
-        const pop = accepted ? LAND_JUICE : REJECT_JUICE;
-        drag.juice = startJuice(pop.amount, pop.rotation, performance.now() / 1000);
-      }
-      setDragSource(null);
-      // Back the cleanup with a timer in case rAF is paused (hidden tab).
-      window.setTimeout(
-        () => {
-          if (dragRef.current === drag) finalize();
-        },
-        (drag.reduced ? 0 : RELEASE_MS) + 120,
-      );
-    },
-    [onPointerMove, finalize],
-  );
-
-  const startDrag = useCallback(
-    (item: CardDragItem, event: ReactPointerEvent<HTMLElement>) => {
-      if (event.button !== 0 || dragRef.current) return;
-      dragRef.current = {
-        item,
-        sourceEl: event.currentTarget,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        started: false,
-        reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-        pointer: { x: event.clientX, y: event.clientY },
-        grab: { x: 0, y: 0 },
-        cur: { x: 0, y: 0, rot: 0 },
-        vel: { x: 0, y: 0, rot: 0 },
-        halfW: 0,
-        halfH: 0,
-        emph: 1,
-        lift: 0,
-        opacity: 1,
-        juice: null,
-        releasing: false,
-        releaseStart: 0,
-        releaseCenter: { x: 0, y: 0 },
-        accepted: false,
-        wrapper: null,
-        raf: null,
-        lastFrame: performance.now(),
+      return {
+        accepted,
+        releaseCenter: accepted ? { x: drag.cur.x, y: drag.cur.y } : centerOf(drag.sourceEl),
+        juice: accepted ? LAND_JUICE : REJECT_JUICE,
       };
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      window.addEventListener("pointercancel", onPointerUp);
     },
-    [onPointerMove, onPointerUp],
-  );
-
-  // Tear down a drag still in flight if the component unmounts mid-gesture,
-  // matching useDeckDrag — otherwise the window listeners, the body-level ghost
-  // node, and the rAF loop all leak past unmount.
-  useEffect(() => {
-    return () => {
-      const drag = dragRef.current;
-      if (!drag) return;
-      if (drag.raf !== null) cancelAnimationFrame(drag.raf);
-      drag.wrapper?.remove();
+    onReleaseStart: () => setDragSource(null),
+    finalize: (_drag, removeGhost) => {
+      removeGhost();
       document.body.style.userSelect = "";
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-      dragRef.current = null;
-    };
-  }, [onPointerMove, onPointerUp]);
+      setDragging(false);
+      setDragSource(null);
+    },
+    onClick: () => {
+      document.body.style.userSelect = "";
+    },
+    onUnmount: () => {
+      document.body.style.userSelect = "";
+    },
+  });
 
   return { dragging, dragSource, startDrag };
 }
