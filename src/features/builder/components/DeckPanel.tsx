@@ -237,44 +237,45 @@ export function DeckPanel({
         </span>
       </div>
 
-      {deck.length === 0 ? (
-        // Empty state: centred in the panel's open space (no list to scroll, so
-        // it sits outside the ScrollArea and just fills the gap between the
-        // header and footer).
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 text-center">
-          <p className="text-sm text-white/35">Click cards to add them to your deck</p>
-        </div>
-      ) : (
-        // The grouped decklist scrolls; everything above and the footer stay put.
-        // -mt-2 pulls the list up so it sits one standard gap below the header. The
-        // grid's pt-5 then holds the first row down into the softer tail of the top
-        // fade so it reads crisp at rest and only dissolves once scrolled up under
-        // the header — the fade falls mostly in that top padding, not over the cards.
-        <ScrollArea className="-mx-3 px-3 pb-2" outerClassName="-mt-2" fadeTop={36} fadeBottom={36} maskRadius={16} trackTop={20}>
-          {/* One flat gallery, ordered by card type (Pokémon → Trainer → Energy)
-              but without the per-type section headers. The roomy row gap (plus
-              pt-5 / pb-3) leaves space for the top fade above the first row, the
-              count pills overflowing the top corner, and the pile peeking out the
-              bottom. */}
-          <ul ref={deckFlipRef} className="grid grid-cols-3 gap-x-2 gap-y-5 pb-3 pt-5">
-            {SUPERTYPES.flatMap((supertype) =>
-              deck.filter((e) => e.card.supertype === supertype),
-            ).map(({ card, quantity }) => (
-              <DeckCardTile
-                key={card.cardId}
-                card={card}
-                quantity={quantity}
-                canAdd={remainingOf(card) > 0}
-                onAdd={() => onAdd(card)}
-                onRemove={() => onRemove(card)}
-                dragActive={dragActive}
-                onDragStart={(e) => onDragStart?.(card, e)}
-                pulse={pulse && pulse.cardId === card.cardId ? pulse.n : null}
-              />
-            ))}
-          </ul>
-        </ScrollArea>
-      )}
+      {/* The decklist lives in a soft glass box, kept whether empty or full. */}
+      <div className="mb-2 flex min-h-0 flex-1 flex-col rounded-2xl border border-white/10 bg-white/5 px-3">
+        {deck.length === 0 ? (
+          // Empty state: centred in the box's open space between header and footer.
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
+            <p className="text-sm text-white/35">Click cards to add them to your deck</p>
+          </div>
+        ) : (
+          // The grouped decklist scrolls inside the box. -mx-3 lets the mask reach
+          // the box's rounded border (both 16px, so the corners line up) while px-3
+          // keeps the cards inset. fadeTopOnScroll keeps the top row crisp and flush
+          // at rest (no gap) and only feathers it in as it scrolls up under the top
+          // edge; the bottom always feathers as the pile peeks out.
+          <ScrollArea className="-mx-3 px-3 pb-2" fadeTop={36} fadeBottom={36} maskRadius={16} trackTop={20} fadeTopOnScroll>
+            {/* One flat gallery, ordered by card type (Pokémon → Trainer → Energy)
+                but without the per-type section headers. pt-3 matches the box's
+                px-3 side inset (and clears the count pills poking above the top
+                row); the roomy row gap and pb-3 leave space for those pills
+                mid-list and the pile peeking out the bottom. */}
+            <ul ref={deckFlipRef} className="grid grid-cols-3 gap-x-2 gap-y-5 pb-3 pt-3">
+              {SUPERTYPES.flatMap((supertype) =>
+                deck.filter((e) => e.card.supertype === supertype),
+              ).map(({ card, quantity }) => (
+                <DeckCardTile
+                  key={card.cardId}
+                  card={card}
+                  quantity={quantity}
+                  canAdd={remainingOf(card) > 0}
+                  onAdd={() => onAdd(card)}
+                  onRemove={() => onRemove(card)}
+                  dragActive={dragActive}
+                  onDragStart={(e) => onDragStart?.(card, e)}
+                  pulse={pulse && pulse.cardId === card.cardId ? pulse.n : null}
+                />
+              ))}
+            </ul>
+          </ScrollArea>
+        )}
+      </div>
 
       {/* Footer actions. */}
       <div className="flex shrink-0 items-center gap-2 pt-1">
