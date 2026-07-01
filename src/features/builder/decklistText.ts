@@ -61,8 +61,8 @@ export function parseDecklist(text: string, pool: BuilderCard[]): ImportResult {
     const m = line.match(QTY_RE);
     // Not "<n> …" — a header, total, comment or blank-ish line. Skip it.
     if (!m) continue;
-    const quantity = Number.parseInt(m[1], 10);
-    const rest = m[2].trim();
+    const quantity = Number.parseInt(m[1] ?? "", 10);
+    const rest = (m[2] ?? "").trim();
     if (!Number.isFinite(quantity) || quantity <= 0 || !rest) continue;
 
     let card = byName.get(nameKey(rest));

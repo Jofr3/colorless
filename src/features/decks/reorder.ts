@@ -20,6 +20,7 @@ export interface ReorderRect {
 export function insertionIndex(siblings: ReorderRect[], x: number, y: number): number {
   for (let i = 0; i < siblings.length; i += 1) {
     const s = siblings[i];
+    if (!s) continue;
     if (y < s.top) return i;
     if (y <= s.bottom && x < (s.left + s.right) / 2) return i;
   }

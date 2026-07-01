@@ -34,8 +34,8 @@ describe("describeBoard", () => {
   it("orders opponent first, then the perspective player", () => {
     const summary = describeBoard(makeBoard(), "you");
     expect(summary.players.map((p) => p.player)).toEqual(["opponent", "you"]);
-    expect(summary.players[0].possessive).toBe("Opponent's");
-    expect(summary.players[1].possessive).toBe("Your");
+    expect(summary.players[0]?.possessive).toBe("Opponent's");
+    expect(summary.players[1]?.possessive).toBe("Your");
   });
 
   it("describes an empty board", () => {
@@ -52,14 +52,14 @@ describe("describeBoard", () => {
     const active = card("Pikachu", "pokemon", attached([card("Tool")], [card("E1"), card("E2")]));
     const summary = describeBoard(makeBoard({ you: { active } }), "you");
     const you = summary.players[1];
-    expect(you.active).toBe("Pikachu (1 tool, 2 energy)");
+    expect(you?.active).toBe("Pikachu (1 tool, 2 energy)");
   });
 
   it("omits attachment detail when there is none and singularizes 'tool'", () => {
     const oneTool = card("Snorlax", "pokemon", attached([card("Tool")]));
     const plain = card("Eevee");
     const summary = describeBoard(makeBoard({ you: { bench: [oneTool, plain] } }), "you");
-    expect(summary.players[1].bench).toEqual(["Snorlax (1 tool)", "Eevee"]);
+    expect(summary.players[1]?.bench).toEqual(["Snorlax (1 tool)", "Eevee"]);
   });
 
   it("reveals the perspective player's hand by name but only counts the opponent's", () => {
@@ -72,9 +72,9 @@ describe("describeBoard", () => {
     );
     const opponent = summary.players[0];
     const you = summary.players[1];
-    expect(you.hand).toEqual(["A", "B"]);
-    expect(opponent.hand).toBeNull();
-    expect(opponent.handCount).toBe(3);
+    expect(you?.hand).toEqual(["A", "B"]);
+    expect(opponent?.hand).toBeNull();
+    expect(opponent?.handCount).toBe(3);
   });
 
   it("names the stadium when one is in play", () => {
@@ -86,7 +86,7 @@ describe("describeBoard", () => {
     const summary = describeBoard(makeBoard({ you: { hand: [card("A")] } }), "opponent");
     expect(summary.players.map((p) => p.player)).toEqual(["you", "opponent"]);
     // From the opponent's perspective, your hand is hidden (counts only).
-    expect(summary.players[0].hand).toBeNull();
-    expect(summary.players[0].handCount).toBe(1);
+    expect(summary.players[0]?.hand).toBeNull();
+    expect(summary.players[0]?.handCount).toBe(1);
   });
 });

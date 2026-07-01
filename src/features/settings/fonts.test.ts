@@ -22,7 +22,8 @@ describe("fontFamilyFor", () => {
 
   it("falls back to the first option for an unknown id", () => {
     const fallback = FONT_OPTIONS[0];
-    expect(fontFamilyFor("does-not-exist")).toBe(fontFamilyValue(fallback.family));
+    expect(fallback).toBeDefined();
+    expect(fontFamilyFor("does-not-exist")).toBe(fontFamilyValue(fallback?.family ?? ""));
   });
 
   it("has a default id that maps to a real option", () => {

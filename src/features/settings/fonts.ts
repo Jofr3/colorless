@@ -45,5 +45,5 @@ export function fontFamilyValue(family: string): string {
 /** Resolve an option id to a CSS font-family string, defaulting gracefully. */
 export function fontFamilyFor(id: string): string {
   const option = FONT_OPTIONS.find((f) => f.id === id) ?? FONT_OPTIONS[0];
-  return fontFamilyValue(option.family);
+  return fontFamilyValue(option?.family ?? "");
 }

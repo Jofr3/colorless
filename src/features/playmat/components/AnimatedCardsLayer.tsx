@@ -1202,13 +1202,14 @@ export function AnimatedCardsLayer({
       // taken out.
       for (let j = 0; j < siblings.length; j += 1) {
         const slot = slots[j];
-        if (!slot) continue;
+        const sibling = siblings[j];
+        if (!slot || !sibling) continue;
         const placement: CardPlacement = {
           owner: previewOwner,
           zone: previewZone,
           index: j,
         };
-        setCardTargetWithAttached(siblings[j].descriptor, siblings[j].view, {
+        setCardTargetWithAttached(sibling.descriptor, sibling.view, {
           x: slot.x,
           y: slot.y,
           width: slot.width,
@@ -1255,6 +1256,7 @@ export function AnimatedCardsLayer({
       if (!slot) continue;
 
       const sibling = siblings[j];
+      if (!sibling) continue;
       const placement: CardPlacement = {
         owner: previewOwner,
         zone: previewZone,
@@ -1395,7 +1397,7 @@ export function AnimatedCardsLayer({
     let cursorX = centerX - totalWidth / 2;
 
     return orderedDescriptors.map((_descriptor, index) => {
-      const margin = margins[index];
+      const margin = margins[index] ?? { left: 0, right: 0 };
       cursorX += margin.left;
       const x = cursorX + cardW / 2;
       cursorX += cardW + margin.right + gap;
@@ -1453,13 +1455,15 @@ export function AnimatedCardsLayer({
     // slots when available; otherwise fall back to CSS-derived defaults
     // for that zone.
     let step = 0;
-    if (domSlots.length >= 2) {
-      cardW = domSlots[0].width;
-      cardH = domSlots[0].height;
-      step = domSlots[1].x - domSlots[0].x;
-    } else if (domSlots.length === 1) {
-      cardW = domSlots[0].width;
-      cardH = domSlots[0].height;
+    const first = domSlots[0];
+    const second = domSlots[1];
+    if (first && second) {
+      cardW = first.width;
+      cardH = first.height;
+      step = second.x - first.x;
+    } else if (first) {
+      cardW = first.width;
+      cardH = first.height;
       if (zone === "hand") {
         // Hand.tsx: marginLeft = -0.2 * card-w
         step = cardW * 0.8;

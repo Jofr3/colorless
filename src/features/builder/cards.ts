@@ -200,18 +200,23 @@ export interface Format {
 
 // Standard's legal regulation marks rotate each year; the set here is filled
 // from the rules research and is easy to bump when the next rotation lands.
+// Named (not FORMATS[0]) so DEFAULT_FORMAT is statically known to exist — under
+// noUncheckedIndexedAccess an index access would widen to `Format | undefined`
+// and ripple through everything that reads the default.
+const STANDARD_FORMAT: Format = {
+  id: "standard",
+  name: "Standard",
+  deckSize: 60,
+  maxCopiesByName: 4,
+  minBasicPokemon: 1,
+  // Legal marks after the April 2026 rotation (G rotated out); bump this list
+  // when the next rotation lands.
+  legalRegulationMarks: ["H", "I", "J"],
+  description: "Most recent sets — the default tournament format.",
+};
+
 export const FORMATS: Format[] = [
-  {
-    id: "standard",
-    name: "Standard",
-    deckSize: 60,
-    maxCopiesByName: 4,
-    minBasicPokemon: 1,
-    // Legal marks after the April 2026 rotation (G rotated out); bump this list
-    // when the next rotation lands.
-    legalRegulationMarks: ["H", "I", "J"],
-    description: "Most recent sets — the default tournament format.",
-  },
+  STANDARD_FORMAT,
   {
     id: "expanded",
     name: "Expanded",
@@ -222,7 +227,7 @@ export const FORMATS: Format[] = [
   },
 ];
 
-export const DEFAULT_FORMAT = FORMATS[0];
+export const DEFAULT_FORMAT = STANDARD_FORMAT;
 
 export function formatById(id: string): Format {
   return FORMATS.find((f) => f.id === id) ?? DEFAULT_FORMAT;
