@@ -25,6 +25,8 @@ import { applyReorder, previewOrder, sameOrder } from "./reorder";
 import { canDrop as canDropTo, folderPath as folderPathOf } from "./tree";
 import { type DragItem, type ReorderPreview, useDeckDrag } from "./useDeckDrag";
 import { useFlip } from "./useFlip";
+import { useKeyboardMove } from "./useKeyboardMove";
+import { MoveBanner } from "./MoveBanner";
 import "./decks.css";
 
 // The accent button is the inverse of the app's glass buttons: a light accent
@@ -43,11 +45,6 @@ const NAME_INPUT_CLASS =
 // ≈ the input's py-2.5 + text-sm line). Shares the search bar's glass surface.
 const FILTER_BUTTON_CLASS =
   "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2.5 ring-1 ring-inset backdrop-blur-md transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
-
-// Compact pills for the keyboard move-mode banner (Drop / Cancel / nest targets).
-const MOVE_ACTION_CLASS = `inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${GLASS_GHOST_BUTTON}`;
-const MOVE_PRIMARY_CLASS =
-  "inline-flex cursor-pointer items-center gap-1 rounded-full bg-accent/80 px-2.5 py-1 text-xs font-semibold text-zinc-950 ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 // Shared circular glass surface for a tile's top-right action buttons.
 const ICON_BUTTON_CLASS = `flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-black/45 hover:text-white ${FOCUS_RING_INSET}`;
@@ -782,37 +779,31 @@ export function Decks() {
     onReorder: reorderItems,
   });
 
-  // --- Keyboard move mode ----------------------------------------------------
-  // A pointer-free path to the same two operations the drag does: reorder a tile
-  // among its siblings (arrow keys) and nest it into / out of a folder (the
-  // banner's buttons). It reuses the pointer drag's live reorder preview by
-  // synthesising the same dragItem/reorder, so the tile slides to its pending
-  // slot exactly as a pointer drag would, and the commit reuses reorderItems /
-  // handleDrop. Reorder needs a stable list, so the Move handle is hidden while
-  // searching.
-  const [moving, setMoving] = useState<{
-    id: string;
-    type: "deck" | "folder";
-    index: number;
-  } | null>(null);
-  const [liveMessage, setLiveMessage] = useState("");
-  const dropButtonRef = useRef<HTMLButtonElement>(null);
-  const newDeckButtonRef = useRef<HTMLButtonElement>(null);
-  // What to focus once move mode ends: the tile's grip (reorder/cancel keeps it
-  // in view) or the New-deck button (a nest sends the item out of view).
-  const refocusRef = useRef<string | null>(null);
-
+  // Keyboard move mode: a pointer-free path to reorder a tile among its siblings
+  // (arrow keys) and nest it into / out of a folder (the MoveBanner buttons). It
+  // exposes a synthetic dragItem/reorder so the same live-preview machinery the
+  // pointer drag uses renders the pending order; see useKeyboardMove.
   const itemName = (item: DragItem) =>
     (item.type === "folder"
       ? folders.find((f) => f.id === item.id)?.name
       : decks.find((d) => d.id === item.id)?.name) ?? "item";
 
+  const move = useKeyboardMove({
+    visibleFolders,
+    visibleDecks,
+    searching,
+    openFolder,
+    folderNameOf,
+    itemName,
+    canDrop,
+    reorderItems,
+    handleDrop,
+  });
+
   // Pointer drag takes precedence; otherwise reflect the keyboard move so the
   // grid renders the pending order and the FLIP animates the shift.
-  const previewDragItem: DragItem | null =
-    dragItem ?? (moving ? { type: moving.type, id: moving.id } : null);
-  const previewReorder: ReorderPreview | null =
-    reorder ?? (moving ? { group: moving.type, index: moving.index } : null);
+  const previewDragItem: DragItem | null = dragItem ?? move.moveDragItem;
+  const previewReorder: ReorderPreview | null = reorder ?? move.moveReorder;
 
   // While a tile is dragged (pointer) or moved (keyboard), show its group in the
   // live insertion order so the siblings visibly make room (useFlip slides them).
@@ -823,91 +814,6 @@ export function Decks() {
     "folder",
   );
   const previewDecks = withReorderPreview(visibleDecks, previewDragItem, previewReorder, "deck");
-
-  const startMove = (item: DragItem) => {
-    if (searching) return;
-    const group = item.type === "folder" ? visibleFolders : visibleDecks;
-    const index = group.findIndex((entry) => entry.id === item.id);
-    if (index < 0) return;
-    setMoving({ id: item.id, type: item.type, index });
-    setLiveMessage(
-      `Moving ${itemName(item)}, position ${index + 1} of ${group.length}. Arrow keys reorder; Enter drops; Escape cancels.`,
-    );
-  };
-
-  const commitMove = () => {
-    if (!moving) return;
-    const item: DragItem = { type: moving.type, id: moving.id };
-    reorderItems(item, moving.index);
-    refocusRef.current = `handle:${moving.id}`;
-    setLiveMessage(`Dropped ${itemName(item)} at position ${moving.index + 1}.`);
-    setMoving(null);
-  };
-
-  const cancelMove = () => {
-    if (!moving) return;
-    refocusRef.current = `handle:${moving.id}`;
-    setLiveMessage(`Cancelled moving ${itemName({ type: moving.type, id: moving.id })}.`);
-    setMoving(null);
-  };
-
-  const nestMove = (targetFolderId: string | null, label: string) => {
-    if (!moving) return;
-    const item: DragItem = { type: moving.type, id: moving.id };
-    handleDrop(item, targetFolderId);
-    refocusRef.current = "newdeck";
-    setLiveMessage(`Moved ${itemName(item)} to ${label}.`);
-    setMoving(null);
-  };
-
-  // Arrow keys reorder the moving tile among its siblings; Escape cancels. The
-  // Drop button (focused below) handles Enter/Space. Inlined so the effect's
-  // dependencies stay exhaustive.
-  useEffect(() => {
-    if (!moving) return;
-    const group = moving.type === "folder" ? visibleFolders : visibleDecks;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        refocusRef.current = `handle:${moving.id}`;
-        setLiveMessage("Cancelled.");
-        setMoving(null);
-        return;
-      }
-      const delta =
-        event.key === "ArrowLeft" || event.key === "ArrowUp"
-          ? -1
-          : event.key === "ArrowRight" || event.key === "ArrowDown"
-            ? 1
-            : 0;
-      if (delta === 0) return;
-      event.preventDefault();
-      const next = Math.max(0, Math.min(moving.index + delta, group.length - 1));
-      if (next === moving.index) return;
-      setMoving({ ...moving, index: next });
-      setLiveMessage(`Position ${next + 1} of ${group.length}.`);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [moving, visibleFolders, visibleDecks]);
-
-  // Focus the Drop button when move mode opens; restore focus to the tile's grip
-  // (reorder/cancel) or the New-deck button (a nest sent the item away) when it
-  // closes.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on enter/exit (moving?.id) — refocusing on every index change would fight arrow-key reordering.
-  useEffect(() => {
-    if (moving) {
-      dropButtonRef.current?.focus();
-      return;
-    }
-    const target = refocusRef.current;
-    if (!target) return;
-    refocusRef.current = null;
-    if (target === "newdeck") newDeckButtonRef.current?.focus();
-    else if (target.startsWith("handle:")) {
-      document.querySelector<HTMLElement>(`[data-move-handle="${target.slice(7)}"]`)?.focus();
-    }
-  }, [moving?.id]);
 
   // A one-shot pulse that turns the FLIP on for the single render a deletion
   // causes, so the surviving tiles slide up to fill the gap instead of snapping.
@@ -923,19 +829,6 @@ export function Decks() {
   // deletion reflows the grid (the other grid simply finds nothing moved).
   const foldersFlipRef = useFlip<HTMLDivElement>(previewDragItem?.type === "folder" || flipPulse);
   const decksFlipRef = useFlip<HTMLDivElement>(previewDragItem?.type === "deck" || flipPulse);
-
-  const movingItem: DragItem | null = moving ? { type: moving.type, id: moving.id } : null;
-  const movingName = movingItem ? itemName(movingItem) : "";
-  // Folders in the current view this item can nest into (canDrop rejects no-ops
-  // and folder-into-itself/own-descendant cycles), plus the up-a-level target.
-  const nestFolders = movingItem ? visibleFolders.filter((f) => canDrop(movingItem, f.id)) : [];
-  const upTarget =
-    movingItem && openFolder && canDrop(movingItem, openFolder.parentId)
-      ? {
-          folderId: openFolder.parentId,
-          label: openFolder.parentId ? (folderNameOf(openFolder.parentId) ?? "parent") : "All decks",
-        }
-      : null;
 
   const isEmpty = visibleFolders.length === 0 && visibleDecks.length === 0;
 
@@ -996,7 +889,7 @@ export function Decks() {
           {/* Announces keyboard move-mode changes to assistive tech (<output>
               carries the implicit status role). */}
           <output aria-live="assertive" className="sr-only">
-            {liveMessage}
+            {move.liveMessage}
           </output>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full min-w-0 sm:flex-1">
@@ -1016,7 +909,7 @@ export function Decks() {
                 New folder
               </button>
               <button
-                ref={newDeckButtonRef}
+                ref={move.newDeckButtonRef}
                 type="button"
                 onClick={handleNewDeck}
                 className={PRIMARY_BUTTON_CLASS}
@@ -1092,47 +985,16 @@ export function Decks() {
             </nav>
           )}
 
-          {moving && (
-            <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2 rounded-xl bg-accent/10 px-3 py-2 text-sm ring-1 ring-inset ring-accent/40">
-              <span className="text-white/80">
-                Moving <span className="font-semibold text-white">{movingName}</span>
-              </span>
-              <span aria-hidden className="text-white/45">
-                · ← → reorder
-              </span>
-              <div className="ml-auto flex flex-wrap items-center gap-1.5">
-                <button
-                  ref={dropButtonRef}
-                  type="button"
-                  onClick={commitMove}
-                  className={MOVE_PRIMARY_CLASS}
-                >
-                  Drop here
-                </button>
-                <button type="button" onClick={cancelMove} className={MOVE_ACTION_CLASS}>
-                  Cancel
-                </button>
-                {upTarget && (
-                  <button
-                    type="button"
-                    onClick={() => nestMove(upTarget.folderId, upTarget.label)}
-                    className={MOVE_ACTION_CLASS}
-                  >
-                    Move to {upTarget.label}
-                  </button>
-                )}
-                {nestFolders.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => nestMove(f.id, f.name)}
-                    className={MOVE_ACTION_CLASS}
-                  >
-                    Into {f.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {move.moving && (
+            <MoveBanner
+              movingName={move.movingName}
+              upTarget={move.upTarget}
+              nestFolders={move.nestFolders}
+              dropButtonRef={move.dropButtonRef}
+              onDrop={move.commitMove}
+              onCancel={move.cancelMove}
+              onNest={move.nestMove}
+            />
           )}
 
           {/* Internal scroll area: the folders + decks scroll here while the
@@ -1170,11 +1032,11 @@ export function Decks() {
                           dragging={dragItem?.type === "folder" && dragItem.id === folder.id}
                           dragActive={dragItem !== null}
                           isDropTarget={dropTarget === folder.id}
-                          isMoving={moving?.type === "folder" && moving.id === folder.id}
+                          isMoving={move.moving?.type === "folder" && move.moving.id === folder.id}
                           onMove={
                             searching
                               ? undefined
-                              : () => startMove({ type: "folder", id: folder.id })
+                              : () => move.startMove({ type: "folder", id: folder.id })
                           }
                           onOpen={() => openFolderById(folder.id)}
                           onCommit={(name) => commitFolder(folder.id, name)}
@@ -1206,9 +1068,9 @@ export function Decks() {
                           juiceOnMount={deck.id === justCreatedDeckId}
                           dragging={dragItem?.type === "deck" && dragItem.id === deck.id}
                           dragActive={dragItem !== null}
-                          isMoving={moving?.type === "deck" && moving.id === deck.id}
+                          isMoving={move.moving?.type === "deck" && move.moving.id === deck.id}
                           onMove={
-                            searching ? undefined : () => startMove({ type: "deck", id: deck.id })
+                            searching ? undefined : () => move.startMove({ type: "deck", id: deck.id })
                           }
                           onCommit={(name) => commitDeck(deck.id, name)}
                           onRename={() => setEditingId(deck.id)}
