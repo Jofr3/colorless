@@ -7,6 +7,7 @@ import {
   type EnergyType,
   type Format,
   FORMATS,
+  type Rarity,
   RARITIES,
   type Supertype,
   SUPERTYPES,
@@ -109,7 +110,7 @@ export function FilterRail({ filters, onChange, format, onFormatChange, onReset 
         : [...filters.subtypes, subtype],
     });
 
-  const toggleRarity = (rarity: string) =>
+  const toggleRarity = (rarity: Rarity) =>
     set({
       rarities: filters.rarities.includes(rarity)
         ? filters.rarities.filter((r) => r !== rarity)

@@ -29,16 +29,25 @@ export const SUPERTYPES: Supertype[] = ["Pokémon", "Trainer", "Energy"];
 
 /** Pokémon stage labels (also the subtype values for Pokémon cards). */
 export const POKEMON_STAGES = ["Basic", "Stage 1", "Stage 2"] as const;
+export type PokemonStage = (typeof POKEMON_STAGES)[number];
 
 /** Trainer subtypes. "Pokémon Tool" is a Trainer in modern rules. */
 export const TRAINER_SUBTYPES = ["Item", "Supporter", "Stadium", "Pokémon Tool"] as const;
+export type TrainerSubtype = (typeof TRAINER_SUBTYPES)[number];
 
 /** Energy subtypes. */
 export const ENERGY_SUBTYPES = ["Basic Energy", "Special Energy"] as const;
+export type EnergySubtype = (typeof ENERGY_SUBTYPES)[number];
+
+/** Every printed card subtype — the union of the Pokémon-stage, Trainer and
+    Energy subtype tuples. Narrower than the deck-builder's card-"kind" filter
+    labels, which also include derived labels (Evolution / EX / Mega). */
+export type Subtype = PokemonStage | TrainerSubtype | EnergySubtype;
 
 /** Card rarities present in the pool, ordered low → high tier. Drives the
     rarity filter; the printed cards carry these exact strings. */
 export const RARITIES = ["Common", "Uncommon", "Rare", "Double Rare", "ACE SPEC Rare"] as const;
+export type Rarity = (typeof RARITIES)[number];
 
 /** A single browsable card. `cardId` is a Scrydex id (set code + number) used
     for the art; the rest is the metadata the filters, stats and validation read.
@@ -50,13 +59,13 @@ export interface BuilderCard {
   supertype: Supertype;
   /** Basic | Stage 1 | Stage 2 | Item | Supporter | Stadium | Pokémon Tool |
       Basic Energy | Special Energy. */
-  subtype: string;
+  subtype: Subtype;
   /** Energy type(s) — Pokémon (its type) and most Energy cards. */
   types?: EnergyType[];
   hp?: number;
   /** Regulation mark (e.g. "H", "I"), the basis of Standard-format legality. */
   regulationMark?: string;
-  rarity?: string;
+  rarity?: Rarity;
   setName?: string;
   /** Collector number within its set. */
   number?: string;

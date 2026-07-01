@@ -62,11 +62,87 @@ describe("filterPool", () => {
   });
 });
 
+describe("filterPool — format legality", () => {
+  // "H"/"I" are legal; "F" is a rotated-out mark. An unmarked card is always legal.
+  const legalMarks = ["H", "I"];
+  const legalityPool: BuilderCard[] = [
+    { cardId: "l-1", name: "Alpha", supertype: "Pokémon", subtype: "Basic", regulationMark: "H" },
+    { cardId: "l-2", name: "Bravo", supertype: "Pokémon", subtype: "Basic", regulationMark: "F" },
+    { cardId: "l-3", name: "Energy", supertype: "Energy", subtype: "Basic Energy" },
+  ];
+
+  it("drops cards whose regulation mark isn't legal, keeping unmarked cards", () => {
+    const out = filterPool(legalityPool, DEFAULT_FILTERS, legalMarks).map((c) => c.cardId);
+    expect(out).toEqual(["l-1", "l-3"]);
+  });
+
+  it("keeps illegal-mark cards when legalOnly is off", () => {
+    const out = filterPool(legalityPool, f({ legalOnly: false }), legalMarks).map((c) => c.cardId);
+    expect(out).toEqual(["l-1", "l-2", "l-3"]);
+  });
+
+  it("ignores marks entirely when the format supplies none (Expanded)", () => {
+    expect(filterPool(legalityPool, DEFAULT_FILTERS)).toHaveLength(3);
+  });
+});
+
+describe("filterPool — set sort", () => {
+  const setPool: BuilderCard[] = [
+    { cardId: "s-1", name: "Bravo", supertype: "Trainer", subtype: "Item", setName: "Alpha", number: "10" },
+    { cardId: "s-2", name: "Alpha", supertype: "Trainer", subtype: "Item", setName: "Alpha", number: "2" },
+    { cardId: "s-3", name: "Zulu", supertype: "Trainer", subtype: "Item", setName: "Beta", number: "1" },
+  ];
+
+  it("orders by set name, then collector number numerically, then name", () => {
+    // Within set "Alpha", #2 precedes #10 numerically (not lexically); "Beta" follows.
+    const out = filterPool(setPool, f({ sort: "set" })).map((c) => c.cardId);
+    expect(out).toEqual(["s-2", "s-1", "s-3"]);
+  });
+});
+
+describe("filterPool — rarity", () => {
+  const rarityPool: BuilderCard[] = [
+    { cardId: "r-1", name: "Common Mon", supertype: "Pokémon", subtype: "Basic", rarity: "Common" },
+    { cardId: "r-2", name: "Rare Mon", supertype: "Pokémon", subtype: "Basic", rarity: "Double Rare" },
+    { cardId: "r-3", name: "Plain Mon", supertype: "Pokémon", subtype: "Basic" },
+  ];
+
+  it("keeps only selected rarities, dropping cards with no rarity", () => {
+    const one = filterPool(rarityPool, f({ rarities: ["Double Rare"] })).map((c) => c.cardId);
+    expect(one).toEqual(["r-2"]);
+    const two = filterPool(rarityPool, f({ rarities: ["Common", "Double Rare"] })).map((c) => c.cardId);
+    expect(two).toEqual(["r-1", "r-2"]);
+  });
+});
+
+describe("filterPool — query targets", () => {
+  const queryPool: BuilderCard[] = [
+    { cardId: "swsh-123", name: "Pikachu", supertype: "Pokémon", subtype: "Basic", setName: "Vivid Voltage" },
+    { cardId: "sv-045", name: "Bulbasaur", supertype: "Pokémon", subtype: "Basic", setName: "Twilight" },
+  ];
+
+  it("matches on set name", () => {
+    expect(filterPool(queryPool, f({ query: "vivid" })).map((c) => c.cardId)).toEqual(["swsh-123"]);
+  });
+
+  it("matches on card id, full and partial", () => {
+    expect(filterPool(queryPool, f({ query: "sv-045" })).map((c) => c.cardId)).toEqual(["sv-045"]);
+    expect(filterPool(queryPool, f({ query: "045" })).map((c) => c.cardId)).toEqual(["sv-045"]);
+  });
+});
+
 describe("filtersActive", () => {
-  it("is false for defaults and true when any filter narrows", () => {
+  it("is false for defaults (sort alone doesn't count)", () => {
     expect(filtersActive(DEFAULT_FILTERS)).toBe(false);
+    expect(filtersActive(f({ sort: "hp-desc" }))).toBe(false);
+  });
+
+  it("is true when any narrowing dimension is set", () => {
     expect(filtersActive(f({ query: "x" }))).toBe(true);
+    expect(filtersActive(f({ supertype: "Trainer" }))).toBe(true);
     expect(filtersActive(f({ types: ["Fire"] }))).toBe(true);
-    expect(filtersActive(f({ sort: "hp-desc" }))).toBe(false); // sort alone isn't "active"
+    expect(filtersActive(f({ subtypes: ["Basic"] }))).toBe(true);
+    expect(filtersActive(f({ rarities: ["Common"] }))).toBe(true);
+    expect(filtersActive(f({ legalOnly: false }))).toBe(true);
   });
 });
