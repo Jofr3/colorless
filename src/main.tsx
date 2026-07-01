@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import "./index.css";
 import { router } from "./App";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { FontProvider } from "./features/settings";
 
 // Seed the glow layout before first paint so the home page doesn't slide in
@@ -16,8 +17,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <FontProvider>
-      <RouterProvider router={router} />
-    </FontProvider>
+    <ErrorBoundary>
+      <FontProvider>
+        <RouterProvider router={router} />
+      </FontProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
