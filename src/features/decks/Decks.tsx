@@ -363,7 +363,7 @@ function DeckCard({
     // never collide. While it's the entry being dragged the original is hidden,
     // so only the floating clone shows. data-reorder-* marks it a reorder
     // sibling; data-flip-id lets the grid slide it aside (useFlip).
-    // biome-ignore lint/a11y/useKeyWithClickEvents: a pointer-first drag tile (its reorder/nest gestures are pointer-only too); the click-to-open is a mouse convenience, not the sole path to a deck.
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the div's onClick is a mouse convenience routed through the pointer-events-auto top card; keyboard/AT users open via the nested "Open <deck>" button below (mirrors FolderCard).
     <div
       data-reorder-id={deck.id}
       data-reorder-group="deck"
@@ -373,6 +373,21 @@ function DeckCard({
       className={`group relative${editing ? "" : " cursor-grab touch-none select-none active:cursor-grabbing"}${dragging ? " pointer-events-none opacity-0" : ""}`}
     >
       <CardActions label={deck.name} onRename={onRename} onDelete={onDelete} />
+      {/* Keyboard / AT open path: a full-card button behind the pile (z-0, under
+          the z-10 actions). Mouse open still flows through the tile's onClick via
+          the pointer-events-auto top card; stopPropagation stops a keyboard Enter
+          from also bubbling into that onClick. Mirrors FolderCard. */}
+      {!editing && (
+        <button
+          type="button"
+          aria-label={`Open ${deck.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+          className="absolute inset-0 z-0 cursor-pointer rounded-[7px] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white/50"
+        />
+      )}
       <CardBackStack
         juiceOnMount={juiceOnMount}
         dragActive={dragActive}

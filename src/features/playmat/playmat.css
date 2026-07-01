@@ -6,7 +6,7 @@
    the cards. */
 
 .playmat-wrapper {
-  --card-w: clamp(28px, min(calc((100vh - 110px) / 7), calc((100vw - 192px) / 7.2)), 140px);
+  --card-w: clamp(28px, min(calc((100dvh - 110px) / 7), calc((100vw - 192px) / 7.2)), 140px);
   --card-h: calc(var(--card-w) * 1.4);
   --hand-h: calc(var(--card-h) + 14px);
   --pile-pad: 6px;

@@ -35,7 +35,7 @@ export function Settings() {
                   key={f.id}
                   value={f.id}
                   style={{ fontFamily: fontFamilyValue(f.family) }}
-                  className="bg-[#1a1a24] text-white"
+                  className="bg-surface text-white"
                 >
                   {f.label}
                 </option>

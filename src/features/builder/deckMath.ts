@@ -144,8 +144,11 @@ export function validateDeck(deck: Deck, format: Format): DeckValidation {
     }
   }
 
-  if (basicPokemonCount(deck) === 0) {
-    issues.push({ level: "error", message: "Add at least 1 Basic Pokémon." });
+  if (basicPokemonCount(deck) < format.minBasicPokemon) {
+    issues.push({
+      level: "error",
+      message: `Add at least ${format.minBasicPokemon} Basic Pokémon.`,
+    });
   }
 
   const aceTotal = aceSpecCount(deck);

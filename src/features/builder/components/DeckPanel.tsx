@@ -11,7 +11,7 @@ import { useTiltJuice } from "../../../components/useTiltJuice";
 import { FOCUS_RING, FOCUS_RING_INSET } from "../../../lib/glass";
 import { useFlip } from "../../decks/useFlip";
 import { type BuilderCard, cardImageUrl, type Format, SUPERTYPES } from "../cards";
-import { type Deck, type DeckValidation } from "../deckMath";
+import type { Deck, DeckValidation } from "../deckMath";
 
 // The pile cards peek out only their bottom edge, so — like the decks page's
 // deck stacks — they're a flat "card-edge" blue matching the card back's inner
@@ -162,7 +162,7 @@ function DeckStatusBadge({ validation, format }: { validation: DeckValidation; f
       {/* Hover / keyboard-focus popup. Left-aligned so it opens rightward into
           the panel from the name-side badge instead of spilling past the edge. */}
       <div
-        role="tooltip"
+        aria-hidden="true"
         className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[15rem] origin-top-left scale-95 rounded-lg bg-[#14141c]/95 p-2.5 text-xs opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition duration-150 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100"
       >
         {validation.legal ? (
@@ -247,7 +247,7 @@ export function DeckPanel({
         {deck.length === 0 ? (
           // Empty state: centred in the box's open space between header and footer.
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
-            <p className="text-sm text-white/25">
+            <p className="text-sm text-white/55">
               Click or drag cards
               <br />
               to add them to your deck

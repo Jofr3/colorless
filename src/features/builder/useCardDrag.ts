@@ -5,7 +5,7 @@
 // drop a deck card off the deck to remove one. The spring/juice physics are the
 // shared primitives in lib/animation, identical to useDeckDrag and CardView.
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { evaluateJuice, type JuiceState, startJuice } from "../../lib/animation/juice";
 import {
   clampVelocity,
@@ -237,9 +237,14 @@ export function useCardDrag({ onAddToDeck, onRemoveFromDeck }: Options) {
       window.addEventListener("click", suppress, { capture: true, once: true });
       window.setTimeout(() => window.removeEventListener("click", suppress, true), 400);
 
-      const zone = event.type === "pointercancel" ? null : zoneAt(event.clientX, event.clientY);
-      const addAccepted = drag.item.source === "gallery" && zone === "deck";
-      const removeAccepted = drag.item.source === "deck" && zone !== "deck";
+      // A pointercancel (OS gesture, context menu, focus loss) is an aborted
+      // gesture, not a drop — bail so a deck card isn't silently removed when
+      // `zone` collapses to null (`zone !== "deck"` would otherwise be true).
+      // Mirrors useDeckDrag.
+      const cancelled = event.type === "pointercancel";
+      const zone = cancelled ? null : zoneAt(event.clientX, event.clientY);
+      const addAccepted = !cancelled && drag.item.source === "gallery" && zone === "deck";
+      const removeAccepted = !cancelled && drag.item.source === "deck" && zone !== "deck";
       const accepted = addAccepted || removeAccepted;
       if (addAccepted) optsRef.current.onAddToDeck(drag.item.card);
       else if (removeAccepted) optsRef.current.onRemoveFromDeck(drag.item.card);
@@ -299,6 +304,23 @@ export function useCardDrag({ onAddToDeck, onRemoveFromDeck }: Options) {
     },
     [onPointerMove, onPointerUp],
   );
+
+  // Tear down a drag still in flight if the component unmounts mid-gesture,
+  // matching useDeckDrag — otherwise the window listeners, the body-level ghost
+  // node, and the rAF loop all leak past unmount.
+  useEffect(() => {
+    return () => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (drag.raf !== null) cancelAnimationFrame(drag.raf);
+      drag.wrapper?.remove();
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      dragRef.current = null;
+    };
+  }, [onPointerMove, onPointerUp]);
 
   return { dragging, dragSource, startDrag };
 }

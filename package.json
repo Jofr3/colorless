@@ -12,10 +12,11 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "biome lint src",
+    "lint:ci": "biome lint src --error-on-warnings",
     "format": "biome format src --write",
     "test": "vitest",
     "test:run": "vitest run",
-    "check": "tsc -b && biome lint src && vitest run"
+    "check": "tsc -b && biome lint src --error-on-warnings && vitest run"
   },
   "dependencies": {
     "gsap": "^3.15.0",

@@ -51,7 +51,7 @@ function loadStored(deckId: string): StoredDeck | null {
         (pair): pair is [string, number] =>
           Array.isArray(pair) &&
           typeof pair[0] === "string" &&
-          typeof pair[1] === "number" &&
+          Number.isInteger(pair[1]) &&
           pair[1] > 0 &&
           POOL_BY_ID.has(pair[0]),
       );
@@ -269,7 +269,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
             {filterActive && (
               <span
                 aria-hidden
-                className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-[#0e0e14]"
+                className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-bg"
               />
             )}
           </button>
@@ -300,7 +300,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
                 onChange={(e) => setFilters((f) => ({ ...f, query: e.target.value }))}
                 placeholder="Search cards"
                 aria-label="Search cards"
-                className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/50 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
               />
             </div>
             {/* Filters toggle — only below xl, where the rail is a drawer. */}

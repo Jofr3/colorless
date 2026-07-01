@@ -89,8 +89,8 @@ void main() {
 `;
 
 // Per-layout glow geometry, lifted straight from index.css:
-//   sides  -> --glow-angle:180deg; --glow-w:52%; --glow-h:96%  (blue left, red right)
-//   stacked-> --glow-angle:90deg;  --glow-w:85%; --glow-h:55%  (blue bottom, red top)
+//   sides  -> --glow-angle:180deg; --glow-w:52%;  --glow-h:120% (blue left, red right)
+//   stacked-> --glow-angle:90deg;  --glow-w:120%; --glow-h:55%  (blue bottom, red top)
 const LAYOUTS: Record<GlowLayout, { angle: number; w: number; h: number }> = {
   // Separation axis (sides=w, stacked=h) stays at the original tight value so
   // each glow hugs its edge; the long axis runs past 100% so it reaches the
