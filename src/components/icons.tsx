@@ -23,6 +23,17 @@ function IconBase({ children, ...props }: IconProps & { children: ReactNode }) {
   );
 }
 
+/** Four-way move arrows — the keyboard "reposition / move" affordance on a
+    decks-grid tile. */
+export function MoveIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 3v18M3 12h18" />
+      <path d="M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" />
+    </IconBase>
+  );
+}
+
 /** Two chess pieces — a taller king in front and a shorter rook behind — for
     the battle/playmat simulator. Drawn in a faceted, filled style with a halo
     overlap to match {@link SwordsIcon}. */
