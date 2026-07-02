@@ -37,11 +37,13 @@ function player(overrides: Partial<PlayerBoard> = {}): PlayerBoard {
   return { hand: [], active: null, bench: [], prizesRemaining: 6, ...overrides };
 }
 
-function makeBoard(opts: {
-  stadium?: CardModel | null;
-  you?: Partial<PlayerBoard>;
-  opponent?: Partial<PlayerBoard>;
-} = {}): BoardState {
+function makeBoard(
+  opts: {
+    stadium?: CardModel | null;
+    you?: Partial<PlayerBoard>;
+    opponent?: Partial<PlayerBoard>;
+  } = {},
+): BoardState {
   return {
     stadium: opts.stadium ?? null,
     you: player(opts.you),

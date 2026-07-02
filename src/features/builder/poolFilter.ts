@@ -73,7 +73,12 @@ function matches(card: BuilderCard, filters: Filters, legalMarks?: string[]): bo
 
   // Format legality (only when the format restricts marks and the toggle is on).
   // An unmarked card (basic Energy) is always legal.
-  if (filters.legalOnly && legalMarks && card.regulationMark && !legalMarks.includes(card.regulationMark)) {
+  if (
+    filters.legalOnly &&
+    legalMarks &&
+    card.regulationMark &&
+    !legalMarks.includes(card.regulationMark)
+  ) {
     return false;
   }
 

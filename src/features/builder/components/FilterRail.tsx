@@ -93,7 +93,13 @@ function TypePip({
 
 /** The deck builder's left rail: format, card type, energy type, subtype and
     sort. Pure-presentational — every change flows up through `onChange`. */
-export function FilterRail({ filters, onChange, format, onFormatChange, onReset }: FilterRailProps) {
+export function FilterRail({
+  filters,
+  onChange,
+  format,
+  onFormatChange,
+  onReset,
+}: FilterRailProps) {
   const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch });
 
   const toggleType = (type: EnergyType) =>
@@ -225,7 +231,11 @@ export function FilterRail({ filters, onChange, format, onFormatChange, onReset 
         <SectionLabel>Sort by</SectionLabel>
         <div className="flex flex-wrap gap-1.5">
           {SORTS.map((s) => (
-            <Chip key={s.value} selected={filters.sort === s.value} onClick={() => set({ sort: s.value })}>
+            <Chip
+              key={s.value}
+              selected={filters.sort === s.value}
+              onClick={() => set({ sort: s.value })}
+            >
               {s.label}
             </Chip>
           ))}

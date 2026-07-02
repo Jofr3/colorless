@@ -30,8 +30,7 @@ export function BoardSummary({
           </p>
           {side.hand ? (
             <p>
-              Your hand ({side.handCount}):{" "}
-              {side.hand.length > 0 ? side.hand.join("; ") : "empty"}.
+              Your hand ({side.handCount}): {side.hand.length > 0 ? side.hand.join("; ") : "empty"}.
             </p>
           ) : (
             <p>Opponent's hand: {side.handCount} cards.</p>

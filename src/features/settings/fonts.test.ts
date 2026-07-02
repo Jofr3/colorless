@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FONT_ID, FONT_OPTIONS, fontFamilyFor, fontFamilyValue, SYSTEM_STACK } from "./fonts";
+import {
+  DEFAULT_FONT_ID,
+  FONT_OPTIONS,
+  fontFamilyFor,
+  fontFamilyValue,
+  SYSTEM_STACK,
+} from "./fonts";
 
 describe("fontFamilyValue", () => {
   it("wraps a named family and appends the system stack as fallback", () => {

@@ -23,7 +23,11 @@ export function folderPath(folders: Folder[], id: string): Folder[] {
 
 /** True when `candidateId` sits anywhere inside `ancestorId`'s subtree. Used to
     stop a folder being dropped into one of its own descendants (a cycle). */
-export function isDescendantOf(folders: Folder[], candidateId: string, ancestorId: string): boolean {
+export function isDescendantOf(
+  folders: Folder[],
+  candidateId: string,
+  ancestorId: string,
+): boolean {
   const seen = new Set<string>();
   let current = folders.find((f) => f.id === candidateId);
   while (current && !seen.has(current.id)) {

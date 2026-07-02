@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { AttachedCards, BoardState, CardModel, PlayerBoard } from "../types";
 import { describeBoard } from "./boardSummary";
 
-const card = (id: string, type: CardModel["type"] = "pokemon", attached?: AttachedCards): CardModel => ({
+const card = (
+  id: string,
+  type: CardModel["type"] = "pokemon",
+  attached?: AttachedCards,
+): CardModel => ({
   id,
   name: id,
   cardId: id,
@@ -20,11 +24,13 @@ const player = (overrides: Partial<PlayerBoard> = {}): PlayerBoard => ({
   prizesRemaining: 6,
   ...overrides,
 });
-const makeBoard = (opts: {
-  stadium?: CardModel | null;
-  you?: Partial<PlayerBoard>;
-  opponent?: Partial<PlayerBoard>;
-} = {}): BoardState => ({
+const makeBoard = (
+  opts: {
+    stadium?: CardModel | null;
+    you?: Partial<PlayerBoard>;
+    opponent?: Partial<PlayerBoard>;
+  } = {},
+): BoardState => ({
   stadium: opts.stadium ?? null,
   you: player(opts.you),
   opponent: player(opts.opponent),

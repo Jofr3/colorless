@@ -40,9 +40,11 @@ export function useKeyboardMove({
   reorderItems,
   handleDrop,
 }: KeyboardMoveOptions) {
-  const [moving, setMoving] = useState<{ id: string; type: "deck" | "folder"; index: number } | null>(
-    null,
-  );
+  const [moving, setMoving] = useState<{
+    id: string;
+    type: "deck" | "folder";
+    index: number;
+  } | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
   const dropButtonRef = useRef<HTMLButtonElement>(null);
   const newDeckButtonRef = useRef<HTMLButtonElement>(null);
@@ -144,7 +146,9 @@ export function useKeyboardMove({
     movingItem && openFolder && canDrop(movingItem, openFolder.parentId)
       ? {
           folderId: openFolder.parentId,
-          label: openFolder.parentId ? (folderNameOf(openFolder.parentId) ?? "parent") : "All decks",
+          label: openFolder.parentId
+            ? (folderNameOf(openFolder.parentId) ?? "parent")
+            : "All decks",
         }
       : null;
 

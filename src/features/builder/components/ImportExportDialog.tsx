@@ -1,6 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ClipboardIcon, XIcon } from "../../../components/icons";
-import { FOCUS_RING_INSET, GLASS_DIALOG_GHOST_BUTTON, GLASS_DIALOG_PANEL } from "../../../lib/glass";
+import {
+  FOCUS_RING_INSET,
+  GLASS_DIALOG_GHOST_BUTTON,
+  GLASS_DIALOG_PANEL,
+} from "../../../lib/glass";
 import type { UnmatchedLine } from "../decklistText";
 
 export interface ImportExportDialogProps {

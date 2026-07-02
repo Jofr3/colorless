@@ -122,9 +122,9 @@ describe("counts", () => {
 describe("remainingAllowed", () => {
   it("caps non-energy at the format limit, counting by name", () => {
     expect(remainingAllowed([], charizard, standard)).toBe(4);
-    expect(remainingAllowed(deckOf([charizard, 2], [charizardReprint, 1]), charizard, standard)).toBe(
-      1,
-    );
+    expect(
+      remainingAllowed(deckOf([charizard, 2], [charizardReprint, 1]), charizard, standard),
+    ).toBe(1);
     expect(remainingAllowed(deckOf([charizard, 4]), charizard, standard)).toBe(0);
   });
 
@@ -182,7 +182,10 @@ describe("validateDeck", () => {
 
   it("requires at least one Basic Pokémon", () => {
     const result = validateDeck(deckOf([research, 4], [fireEnergy, 10]), standard);
-    expect(result.issues).toContainEqual({ level: "error", message: "Add at least 1 Basic Pokémon." });
+    expect(result.issues).toContainEqual({
+      level: "error",
+      message: "Add at least 1 Basic Pokémon.",
+    });
   });
 
   it("errors on more than one ACE SPEC in total", () => {

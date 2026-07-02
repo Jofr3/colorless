@@ -3,11 +3,38 @@ import type { BuilderCard } from "./cards";
 import { DEFAULT_FILTERS, type Filters, filterPool, filtersActive } from "./poolFilter";
 
 const pool: BuilderCard[] = [
-  { cardId: "a-1", name: "Charizard ex", supertype: "Pokémon", subtype: "Stage 2", types: ["Fire"], hp: 330 },
-  { cardId: "a-2", name: "Charmander", supertype: "Pokémon", subtype: "Basic", types: ["Fire"], hp: 70 },
-  { cardId: "a-3", name: "Squirtle", supertype: "Pokémon", subtype: "Basic", types: ["Water"], hp: 60 },
+  {
+    cardId: "a-1",
+    name: "Charizard ex",
+    supertype: "Pokémon",
+    subtype: "Stage 2",
+    types: ["Fire"],
+    hp: 330,
+  },
+  {
+    cardId: "a-2",
+    name: "Charmander",
+    supertype: "Pokémon",
+    subtype: "Basic",
+    types: ["Fire"],
+    hp: 70,
+  },
+  {
+    cardId: "a-3",
+    name: "Squirtle",
+    supertype: "Pokémon",
+    subtype: "Basic",
+    types: ["Water"],
+    hp: 60,
+  },
   { cardId: "a-4", name: "Iono", supertype: "Trainer", subtype: "Supporter" },
-  { cardId: "a-5", name: "Fire Energy", supertype: "Energy", subtype: "Basic Energy", types: ["Fire"] },
+  {
+    cardId: "a-5",
+    name: "Fire Energy",
+    supertype: "Energy",
+    subtype: "Basic Energy",
+    types: ["Fire"],
+  },
 ];
 
 const f = (over: Partial<Filters>): Filters => ({ ...DEFAULT_FILTERS, ...over });
@@ -51,9 +78,9 @@ describe("filterPool", () => {
   });
 
   it("sorts by HP descending", () => {
-    expect(filterPool(pool, f({ supertype: "Pokémon", sort: "hp-desc" })).map((c) => c.hp)).toEqual([
-      330, 70, 60,
-    ]);
+    expect(filterPool(pool, f({ supertype: "Pokémon", sort: "hp-desc" })).map((c) => c.hp)).toEqual(
+      [330, 70, 60],
+    );
   });
 
   it("combines filters", () => {
@@ -88,9 +115,30 @@ describe("filterPool — format legality", () => {
 
 describe("filterPool — set sort", () => {
   const setPool: BuilderCard[] = [
-    { cardId: "s-1", name: "Bravo", supertype: "Trainer", subtype: "Item", setName: "Alpha", number: "10" },
-    { cardId: "s-2", name: "Alpha", supertype: "Trainer", subtype: "Item", setName: "Alpha", number: "2" },
-    { cardId: "s-3", name: "Zulu", supertype: "Trainer", subtype: "Item", setName: "Beta", number: "1" },
+    {
+      cardId: "s-1",
+      name: "Bravo",
+      supertype: "Trainer",
+      subtype: "Item",
+      setName: "Alpha",
+      number: "10",
+    },
+    {
+      cardId: "s-2",
+      name: "Alpha",
+      supertype: "Trainer",
+      subtype: "Item",
+      setName: "Alpha",
+      number: "2",
+    },
+    {
+      cardId: "s-3",
+      name: "Zulu",
+      supertype: "Trainer",
+      subtype: "Item",
+      setName: "Beta",
+      number: "1",
+    },
   ];
 
   it("orders by set name, then collector number numerically, then name", () => {
@@ -103,22 +151,42 @@ describe("filterPool — set sort", () => {
 describe("filterPool — rarity", () => {
   const rarityPool: BuilderCard[] = [
     { cardId: "r-1", name: "Common Mon", supertype: "Pokémon", subtype: "Basic", rarity: "Common" },
-    { cardId: "r-2", name: "Rare Mon", supertype: "Pokémon", subtype: "Basic", rarity: "Double Rare" },
+    {
+      cardId: "r-2",
+      name: "Rare Mon",
+      supertype: "Pokémon",
+      subtype: "Basic",
+      rarity: "Double Rare",
+    },
     { cardId: "r-3", name: "Plain Mon", supertype: "Pokémon", subtype: "Basic" },
   ];
 
   it("keeps only selected rarities, dropping cards with no rarity", () => {
     const one = filterPool(rarityPool, f({ rarities: ["Double Rare"] })).map((c) => c.cardId);
     expect(one).toEqual(["r-2"]);
-    const two = filterPool(rarityPool, f({ rarities: ["Common", "Double Rare"] })).map((c) => c.cardId);
+    const two = filterPool(rarityPool, f({ rarities: ["Common", "Double Rare"] })).map(
+      (c) => c.cardId,
+    );
     expect(two).toEqual(["r-1", "r-2"]);
   });
 });
 
 describe("filterPool — query targets", () => {
   const queryPool: BuilderCard[] = [
-    { cardId: "swsh-123", name: "Pikachu", supertype: "Pokémon", subtype: "Basic", setName: "Vivid Voltage" },
-    { cardId: "sv-045", name: "Bulbasaur", supertype: "Pokémon", subtype: "Basic", setName: "Twilight" },
+    {
+      cardId: "swsh-123",
+      name: "Pikachu",
+      supertype: "Pokémon",
+      subtype: "Basic",
+      setName: "Vivid Voltage",
+    },
+    {
+      cardId: "sv-045",
+      name: "Bulbasaur",
+      supertype: "Pokémon",
+      subtype: "Basic",
+      setName: "Twilight",
+    },
   ];
 
   it("matches on set name", () => {

@@ -80,10 +80,11 @@ function DeckCardTile({
 }) {
   const pile = Math.min(quantity - 1, 3);
   // Balatro tilt + press juice on the top card, like the decks-page tiles.
-  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLButtonElement>({
-    disabled: dragActive,
-    pulse,
-  });
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
+    useTiltJuice<HTMLButtonElement>({
+      disabled: dragActive,
+      pulse,
+    });
   return (
     <li data-flip-id={card.cardId} className="relative transition-[z-index] hover:z-10">
       {/* Pile — one card-back edge per extra copy, peeking out the bottom; the
@@ -120,7 +121,12 @@ function DeckCardTile({
           }`}
         >
           <div className="aspect-[2.5/3.5] w-full">
-            <CardImage fill imageUrl={cardImageUrl(card.cardId)} alt={card.name} className="h-full w-full object-cover" />
+            <CardImage
+              fill
+              imageUrl={cardImageUrl(card.cardId)}
+              alt={card.name}
+              className="h-full w-full object-cover"
+            />
           </div>
         </button>
       </div>
@@ -259,7 +265,14 @@ export function DeckPanel({
           // keeps the cards inset. fadeTopOnScroll keeps the top row crisp and flush
           // at rest (no gap) and only feathers it in as it scrolls up under the top
           // edge; the bottom always feathers as the pile peeks out.
-          <ScrollArea className="-mx-3 px-3 pb-2" fadeTop={36} fadeBottom={36} maskRadius={16} trackTop={20} fadeTopOnScroll>
+          <ScrollArea
+            className="-mx-3 px-3 pb-2"
+            fadeTop={36}
+            fadeBottom={36}
+            maskRadius={16}
+            trackTop={20}
+            fadeTopOnScroll
+          >
             {/* One flat gallery, ordered by card type (Pokémon → Trainer → Energy)
                 but without the per-type section headers. pt-3 matches the box's
                 px-3 side inset (and clears the count pills poking above the top

@@ -1,7 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "../../../components/icons";
-import { GLASS_DIALOG_GHOST_BUTTON, GLASS_DIALOG_PANEL, GLASS_HUD_BUTTON } from "../../../lib/glass";
+import {
+  GLASS_DIALOG_GHOST_BUTTON,
+  GLASS_DIALOG_PANEL,
+  GLASS_HUD_BUTTON,
+} from "../../../lib/glass";
 
 const HOME_PATH = "/";
 

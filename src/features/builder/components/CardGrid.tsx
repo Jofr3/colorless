@@ -46,10 +46,11 @@ function CardTile({
   // Balatro tilt + press juice on the top card, like the decks-page tiles.
   // Suppressed while a drag is in flight, and on maxed cards (which can't take
   // another copy, so they're not interactive).
-  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } = useTiltJuice<HTMLButtonElement>({
-    disabled: dragActive || maxed,
-    pulse: pulse && pulse.cardId === card.cardId ? pulse.n : null,
-  });
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
+    useTiltJuice<HTMLButtonElement>({
+      disabled: dragActive || maxed,
+      pulse: pulse && pulse.cardId === card.cardId ? pulse.n : null,
+    });
 
   return (
     <li className="relative transition-[z-index] hover:z-10">

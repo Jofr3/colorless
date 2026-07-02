@@ -1,4 +1,11 @@
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
@@ -83,9 +90,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
   const [stored] = useState(() => loadStored(deckId));
   const [deckName, setDeckName] = useState(stored?.name ?? seededName ?? "Untitled Deck");
   const [formatId, setFormatId] = useState(stored?.formatId ?? DEFAULT_FORMAT.id);
-  const [entries, setEntries] = useState<Map<string, number>>(
-    () => new Map(stored?.cards ?? []),
-  );
+  const [entries, setEntries] = useState<Map<string, number>>(() => new Map(stored?.cards ?? []));
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Mobile drawers for the rail / deck panel (always-on columns at lg/xl).
@@ -375,7 +380,13 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
       <Drawer open={railOpen} side="left" title="Filters" onClose={() => setRailOpen(false)}>
         <FilterRail {...railProps} />
       </Drawer>
-      <Drawer open={deckOpen} side="right" title="Your deck" onClose={() => setDeckOpen(false)} fill>
+      <Drawer
+        open={deckOpen}
+        side="right"
+        title="Your deck"
+        onClose={() => setDeckOpen(false)}
+        fill
+      >
         <DeckPanel {...deckPanelProps} />
       </Drawer>
 

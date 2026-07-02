@@ -48,7 +48,9 @@ export function applyReorder<T extends { id: string }>(
   orderedIds: string[],
 ): T[] {
   const byId = new Map(all.map((item) => [item.id, item] as const));
-  const ordered = orderedIds.map((id) => byId.get(id)).filter((item): item is T => item !== undefined);
+  const ordered = orderedIds
+    .map((id) => byId.get(id))
+    .filter((item): item is T => item !== undefined);
   let cursor = 0;
   return all.map((item) => (inView(item) ? (ordered[cursor++] ?? item) : item));
 }

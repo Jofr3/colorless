@@ -4,7 +4,12 @@ import { evaluateJuice, initialSquish, JUICE_DURATION, startJuice } from "./juic
 describe("startJuice", () => {
   it("builds an end time one duration after the start", () => {
     const state = startJuice(0.05, 0.03, 10);
-    expect(state).toEqual({ scaleAmt: 0.05, rotAmt: 0.03, startTime: 10, endTime: 10 + JUICE_DURATION });
+    expect(state).toEqual({
+      scaleAmt: 0.05,
+      rotAmt: 0.03,
+      startTime: 10,
+      endTime: 10 + JUICE_DURATION,
+    });
   });
 });
 

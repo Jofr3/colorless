@@ -31,11 +31,12 @@ beforeAll(() => {
 
 afterEach(cleanup);
 
-const renderDecks = () => render(
-  <MemoryRouter>
-    <Decks />
-  </MemoryRouter>,
-);
+const renderDecks = () =>
+  render(
+    <MemoryRouter>
+      <Decks />
+    </MemoryRouter>,
+  );
 
 const deckOrder = (container: HTMLElement) =>
   [...container.querySelectorAll<HTMLElement>('[data-reorder-group="deck"]')].map(
