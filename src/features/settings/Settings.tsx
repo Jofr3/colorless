@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { ArrowLeftIcon, SettingsIcon } from "../../components/icons";
-import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../../lib/glass";
+import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE, GLASS_PANEL } from "../../lib/glass";
 import { useFont } from "./FontProvider";
 import { FONT_OPTIONS, fontFamilyValue } from "./fonts";
 
@@ -18,7 +18,7 @@ export function Settings() {
           <h1 className="text-2xl font-semibold tracking-tight text-white/90">Settings</h1>
         </header>
 
-        <section className="rounded-2xl bg-white/[0.045] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10 backdrop-blur-md">
+        <section className={`rounded-2xl p-5 ${GLASS_PANEL}`}>
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-white/90">Font</h2>

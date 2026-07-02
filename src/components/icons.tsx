@@ -418,3 +418,23 @@ export function CheckCircleIcon(props: IconProps) {
     </IconBase>
   );
 }
+
+/** Head + shoulders — a player slot in the online lobby. */
+export function UserIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20a8 8 0 0 1 16 0" />
+    </IconBase>
+  );
+}
+
+/** Three-quarter ring — a "connecting"/loading spinner. Pair with
+    `animate-spin` (Tailwind) so it rotates. */
+export function SpinnerIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 3a9 9 0 1 0 9 9" />
+    </IconBase>
+  );
+}

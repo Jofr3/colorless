@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
-import { FOCUS_RING_INSET, GLASS_GHOST_BUTTON } from "../../lib/glass";
+import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_GHOST_BUTTON } from "../../lib/glass";
 import { readPersisted, writePersisted } from "../../lib/persistedState";
 import {
   ArrowLeftIcon,
@@ -33,8 +33,7 @@ import "./decks.css";
 // fill with dark text, instead of translucent-white-on-dark with light text.
 // The fill is slightly translucent (frosted via backdrop-blur) under a pure
 // white border. Accent colour lives in --color-accent (index.css).
-const PRIMARY_BUTTON_CLASS =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-[0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+const PRIMARY_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`;
 
 const GHOST_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium ${GLASS_GHOST_BUTTON}`;
 
@@ -82,7 +81,8 @@ const readStoredFilterOpen = () =>
 const readStoredShowFilter = (): ShowFilter =>
   readPersisted(
     SHOW_FILTER_STORAGE_KEY,
-    (raw) => (SHOW_OPTIONS.some((option) => option.value === raw) ? (raw as ShowFilter) : undefined),
+    (raw) =>
+      SHOW_OPTIONS.some((option) => option.value === raw) ? (raw as ShowFilter) : undefined,
     "all",
   );
 
@@ -1070,12 +1070,16 @@ export function Decks() {
                           dragActive={dragItem !== null}
                           isMoving={move.moving?.type === "deck" && move.moving.id === deck.id}
                           onMove={
-                            searching ? undefined : () => move.startMove({ type: "deck", id: deck.id })
+                            searching
+                              ? undefined
+                              : () => move.startMove({ type: "deck", id: deck.id })
                           }
                           onCommit={(name) => commitDeck(deck.id, name)}
                           onRename={() => setEditingId(deck.id)}
                           onDelete={() => deleteDeck(deck.id)}
-                          onOpen={() => navigate(`/decks/${deck.id}/edit`, { state: { name: deck.name } })}
+                          onOpen={() =>
+                            navigate(`/decks/${deck.id}/edit`, { state: { name: deck.name } })
+                          }
                           onPointerDown={(e) => startDrag({ type: "deck", id: deck.id }, e)}
                         />
                       ))}

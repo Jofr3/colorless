@@ -1,7 +1,5 @@
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import { SwordsIcon } from "./components/icons";
-import { PlaceholderPage } from "./components/PlaceholderPage";
 import { RootLayout } from "./components/RootLayout";
 import { RouteError } from "./components/RouteError";
 import { Home } from "./features/home";
@@ -18,6 +16,10 @@ const Decks = lazy(() => import("./features/decks").then((m) => ({ default: m.De
 const DeckBuilder = lazy(() =>
   import("./features/builder").then((m) => ({ default: m.DeckBuilder })),
 );
+// The online lobby (BroadcastChannel transport + versus UI) is its own chunk,
+// loaded when a player first heads online.
+const OnlineHub = lazy(() => import("./features/online").then((m) => ({ default: m.OnlineHub })));
+const LobbyRoom = lazy(() => import("./features/online").then((m) => ({ default: m.LobbyRoom })));
 
 // Data router with a persistent RootLayout shell so the shared background glow
 // (index.css) survives navigations and slides between route layouts.
@@ -28,7 +30,8 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "/simulator", element: <Playmat /> },
-      { path: "/lobby/create", element: <PlaceholderPage title="Online" Icon={SwordsIcon} /> },
+      { path: "/lobby", element: <OnlineHub /> },
+      { path: "/lobby/:code", element: <LobbyRoom /> },
       { path: "/decks", element: <Decks /> },
       { path: "/decks/:deckId/edit", element: <DeckBuilder /> },
       { path: "/settings", element: <Settings /> },

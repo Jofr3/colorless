@@ -37,3 +37,19 @@ export const GLASS_DIALOG_PANEL =
     Settings header and placeholder pages). Size (h-/w-) stays at the call site. */
 export const GLASS_ICON_TILE =
   "flex items-center justify-center rounded-2xl bg-white/[0.05] text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10";
+
+/** Primary "accent" button paint — the inverse of the glass buttons: a light
+    accent fill with dark text under a pure white ring. Layout (flex/size/shape/
+    padding/gap) and any disabled: states stay at the call site. */
+export const GLASS_ACCENT_BUTTON = `bg-accent/80 text-zinc-950 shadow-[0_4px_18px_rgba(0,0,0,0.32)] ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 ${FOCUS_RING}`;
+
+/** Neutral filled-glass button paint (a heavier fill/ring than GLASS_GHOST_BUTTON),
+    used for secondary actions like "Join lobby" / "Cancel ready". Layout and
+    disabled: states stay at the call site. */
+export const GLASS_NEUTRAL_BUTTON = `bg-white/[0.06] text-white/85 ring-1 ring-inset ring-white/15 backdrop-blur-md transition-all hover:bg-white/[0.1] active:scale-95 ${FOCUS_RING}`;
+
+/** Elevated glass panel surface (the raised card used for Settings sections, the
+    lobby code card, and the online create/join panels). Radius + padding stay at
+    the call site (rounded-2xl vs 3xl, p-5 vs p-6). */
+export const GLASS_PANEL =
+  "bg-white/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10 backdrop-blur-md";

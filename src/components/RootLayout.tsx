@@ -17,8 +17,14 @@ const PAGE_TITLES: Record<string, string> = {
   "/simulator": "Simulator",
   "/decks": "Decks",
   "/settings": "Settings",
-  "/lobby/create": "Online",
 };
+
+// The title for a path: exact matches first, then the online lobby's dynamic
+// routes (/lobby and /lobby/:code) which share the "Online" title.
+function titleForPath(pathname: string): string | undefined {
+  if (pathname === "/lobby" || pathname.startsWith("/lobby/")) return "Online";
+  return PAGE_TITLES[pathname];
+}
 
 export function RootLayout() {
   const { pathname } = useLocation();
@@ -27,7 +33,7 @@ export function RootLayout() {
   // paint — the glow transition starts on the first frame, with no extra delay.
   useLayoutEffect(() => {
     document.body.dataset.glow = pathname === "/" ? "sides" : "stacked";
-    const page = PAGE_TITLES[pathname];
+    const page = titleForPath(pathname);
     document.title = page ? `${page} · ${APP_NAME}` : APP_NAME;
   }, [pathname]);
 

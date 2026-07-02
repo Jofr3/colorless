@@ -14,7 +14,7 @@ type MenuItem = {
 
 const MENU_ITEMS: MenuItem[] = [
   { to: "/simulator", label: "Simulator", Icon: SimulatorIcon },
-  { to: "/lobby/create", label: "Online", Icon: SwordsIcon },
+  { to: "/lobby", label: "Online", Icon: SwordsIcon },
   { to: "/decks", label: "Decks", Icon: DecksIcon },
 ];
 
