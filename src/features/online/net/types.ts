@@ -65,8 +65,9 @@ export type LobbyMessage =
   | { kind: "state"; snapshot: LobbySnapshot }
   /** guest → host: apply this change to my seat. */
   | { kind: "intent"; from: string; intent: LobbyIntent }
-  /** host → guest: your join was refused (the second seat is taken). */
-  | { kind: "reject"; to: string; reason: "full" }
+  /** host → guest: you're not welcome — the seat is taken ("full"), or the host
+      removed you ("kicked"). */
+  | { kind: "reject"; to: string; reason: "full" | "kicked" }
   /** either direction: a periodic keep-alive so the other side knows we're here. */
   | { kind: "heartbeat"; from: string; slot: LobbySlot }
   /** either direction: a graceful "I'm leaving" so the other side reacts at once

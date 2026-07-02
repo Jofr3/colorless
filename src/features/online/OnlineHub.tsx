@@ -162,7 +162,7 @@ export function OnlineHub() {
                 Joining…
               </>
             ) : (
-              "Join lobby"
+              "Join"
             )}
           </button>
         </form>

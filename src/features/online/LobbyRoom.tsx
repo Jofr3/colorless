@@ -2,8 +2,9 @@ import { type ReactNode, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
-import { ArrowLeftIcon, SpinnerIcon, SwordsIcon, UserIcon } from "../../components/icons";
+import { ArrowLeftIcon, SpinnerIcon, SwordsIcon, UserIcon, XIcon } from "../../components/icons";
 import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../../lib/glass";
+import { ConfirmDialog } from "./components/ConfirmDialog";
 import { DeckPickerDialog } from "./components/DeckPickerDialog";
 import { LeaveButton } from "./components/LeaveButton";
 import { LobbyCodeCard } from "./components/LobbyCodeCard";
@@ -80,7 +81,9 @@ function WaitingScreen({ code, onLeave }: { code: string; onLeave: () => void })
     countdown overlay once both lock in. */
 function VersusScreen({ lobby, onLeave }: { lobby: Lobby; onLeave: () => void }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [confirmingKick, setConfirmingKick] = useState(false);
   const { snapshot, self, opponent } = lobby;
+  const canKick = lobby.role === "host" && opponent !== null;
 
   const selfReady = self?.ready ?? false;
   const opponentPresent = opponent?.connected ?? false;
@@ -104,7 +107,12 @@ function VersusScreen({ lobby, onLeave }: { lobby: Lobby; onLeave: () => void })
         inert={countingDown}
         className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-4 px-6 py-16"
       >
-        <PlayerPanel side="red" player={opponent} isSelf={false} />
+        <PlayerPanel
+          side="red"
+          player={opponent}
+          isSelf={false}
+          onKick={canKick ? () => setConfirmingKick(true) : undefined}
+        />
 
         <div className="flex items-center gap-3 py-1 text-white/30">
           <span className="h-px flex-1 bg-white/10" />
@@ -136,6 +144,20 @@ function VersusScreen({ lobby, onLeave }: { lobby: Lobby; onLeave: () => void })
           setPickerOpen(false);
         }}
         onCancel={() => setPickerOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmingKick}
+        icon={<XIcon className="h-5 w-5" />}
+        danger
+        title={`Remove ${opponent?.name ?? "this player"}?`}
+        message="They'll be removed from the lobby. They can rejoin with the code."
+        confirmLabel="Remove"
+        onConfirm={() => {
+          lobby.kick();
+          setConfirmingKick(false);
+        }}
+        onCancel={() => setConfirmingKick(false)}
       />
 
       {countingDown && snapshot?.countdownStartedAt !== null && snapshot && (
@@ -192,6 +214,22 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
         icon={<SwordsIcon className="h-9 w-9" />}
         title="Lobby not found"
         message={`No open lobby with the code ${code}. Ask for a fresh code, or create your own.`}
+        actions={
+          <button type="button" onClick={() => leaveTo("/lobby")} className={GHOST_PILL_CLASS}>
+            <ArrowLeftIcon className="h-4 w-4" />
+            Back to online
+          </button>
+        }
+      />
+    );
+  }
+
+  if (status === "kicked") {
+    return (
+      <InfoScreen
+        icon={<XIcon className="h-9 w-9" />}
+        title="Removed from the lobby"
+        message="The host removed you from this lobby."
         actions={
           <button type="button" onClick={() => leaveTo("/lobby")} className={GHOST_PILL_CLASS}>
             <ArrowLeftIcon className="h-4 w-4" />

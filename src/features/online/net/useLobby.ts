@@ -20,8 +20,8 @@ import type { LobbyIntent, LobbySlot, LobbySnapshot } from "./types";
 
 /** How the guest's link to the host is faring. The host is always "connected"
     (it owns the state); "connecting" also covers a guest that lost the host and
-    is trying to reconnect. */
-export type LobbyStatus = "connecting" | "connected" | "not-found" | "full";
+    is trying to reconnect. "kicked" is a terminal state — the host removed us. */
+export type LobbyStatus = "connecting" | "connected" | "not-found" | "full" | "kicked";
 
 export type DeckChoice = { id: string; name: string };
 
@@ -45,6 +45,8 @@ export type Lobby = {
   setName: (name: string) => void;
   /** Announce a graceful departure. Unmounting does this too. */
   leave: () => void;
+  /** Host only: remove the guest from the lobby. No-op for a guest. */
+  kick: () => void;
 };
 
 type PlayerStateOrNull = LobbySnapshot["host"] | null;
@@ -240,9 +242,11 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           break;
         }
         case "reject": {
-          if (message.to === playerId && message.reason === "full") {
+          // Terminal for us: either the seat was already taken, or the host
+          // removed us. Stop the hello retries so we don't try to rejoin.
+          if (message.to === playerId) {
             rejected = true;
-            setStatus("full");
+            setStatus(message.reason === "kicked" ? "kicked" : "full");
           }
           break;
         }
@@ -332,6 +336,16 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     channelRef.current?.post({ kind: "bye", from: playerId, slot: role });
   }, [playerId, role]);
 
+  const kick = useCallback(() => {
+    if (!isHost) return;
+    const guestId = snapshotRef.current?.guest?.id;
+    if (!guestId) return;
+    // Tell the guest first (so it stops trying to rejoin), then free the seat
+    // and rebroadcast the now-empty (waiting) lobby.
+    channelRef.current?.post({ kind: "reject", to: guestId, reason: "kicked" });
+    hostApplyRef.current?.((s) => removeGuest(s));
+  }, [isHost]);
+
   const self: PlayerStateOrNull = snapshot ? (isHost ? snapshot.host : snapshot.guest) : null;
   const opponent: PlayerStateOrNull = snapshot ? (isHost ? snapshot.guest : snapshot.host) : null;
 
@@ -345,6 +359,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     setReady,
     setName,
     leave,
+    kick,
   };
 }
 

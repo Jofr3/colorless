@@ -1,4 +1,4 @@
-import { CheckCircleIcon, SpinnerIcon, UserIcon } from "../../../components/icons";
+import { CheckCircleIcon, SpinnerIcon, UserIcon, XIcon } from "../../../components/icons";
 import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_NEUTRAL_BUTTON } from "../../../lib/glass";
 import { CardBackStack } from "../../decks/CardBackStack";
 import type { PlayerState } from "../net/types";
@@ -16,18 +16,30 @@ const READY_BUTTON_CLASS = `${BUTTON_LAYOUT} disabled:cursor-not-allowed disable
 
 const UNREADY_BUTTON_CLASS = `${BUTTON_LAYOUT} ${GLASS_NEUTRAL_BUTTON}`;
 
-/** The small card-back cover for a chosen deck (or a dashed placeholder). */
-function DeckCover({ deckName, placeholder }: { deckName: string | null; placeholder?: string }) {
+/** The self panel's deck cover: a chosen deck's card back with its name printed
+    inside the card (as on the decks page and the deck picker), or a large dashed
+    outline that both prompts and labels the pick. Centered by its container. */
+function DeckCover({ deckName, placeholder }: { deckName: string | null; placeholder: string }) {
   if (!deckName) {
     return (
-      <div className="flex aspect-[5/7] w-16 shrink-0 items-center justify-center rounded-[7px] border border-dashed border-white/15 bg-white/[0.02] p-1 text-center text-[10px] leading-tight text-white/35">
-        {placeholder ?? "No deck"}
+      <div className="flex aspect-[5/7] w-36 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/[0.02] p-3 text-center text-sm font-medium text-white/70 transition-colors hover:border-white/40 hover:text-white/90">
+        {placeholder}
       </div>
     );
   }
   return (
-    <div className="w-16 shrink-0">
-      <CardBackStack />
+    // pb reserves the space the pile's peeking bottom edges overhang below the
+    // card box, so whatever sits below (the hint, the ready button) clears it.
+    <div className="w-36 pb-5">
+      <CardBackStack
+        label={
+          // text-left: the trigger is a <button>, which defaults to centered text
+          // — the decks page renders this name in a <div>, so left-aligned.
+          <span className="block truncate text-left text-xs font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
+            {deckName}
+          </span>
+        }
+      />
     </div>
   );
 }
@@ -49,6 +61,7 @@ export function PlayerPanel({
   onPickDeck,
   onToggleReady,
   onRename,
+  onKick,
 }: {
   side: Side;
   /** The seat's occupant, or null for an empty (unjoined) seat. */
@@ -62,6 +75,8 @@ export function PlayerPanel({
   onToggleReady?: () => void;
   /** Self-only: commit a new display name. */
   onRename?: (name: string) => void;
+  /** Host viewing the opponent: remove them from the lobby. */
+  onKick?: () => void;
 }) {
   const styles = SIDE_STYLES[side];
   const ready = player?.ready ?? false;
@@ -123,42 +138,41 @@ export function PlayerPanel({
             <p className="mt-0.5 truncate text-base font-semibold text-white">{player.name}</p>
           )}
         </div>
+        {onKick && (
+          <button
+            type="button"
+            onClick={onKick}
+            aria-haspopup="dialog"
+            aria-label={`Remove ${player.name} from the lobby`}
+            className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-white/45 ring-1 ring-inset ring-white/10 transition-colors hover:bg-[#ff3456]/10 hover:text-[#ff9aad] hover:ring-[#ff4d6a]/40 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+          >
+            <XIcon className="h-3.5 w-3.5" />
+            Kick
+          </button>
+        )}
       </div>
 
-      {/* Deck row — shown only for yourself; the opponent's deck stays hidden,
-          so you only see whether they're ready. Before readying, the whole row
-          is the picker trigger: a single persistent <button> that survives the
-          no-deck→deck change so the native <dialog>'s focus restoration returns
-          here after a pick (a swapped-out trigger would drop focus to <body>). */}
+      {/* Deck — shown only for yourself; the opponent's stays hidden, so you only
+          see whether they're ready. A big centered cover: before readying the
+          whole thing is the picker trigger, a single persistent <button> that
+          survives the no-deck→deck change so the native <dialog>'s focus
+          restoration returns here after a pick (a swapped-out trigger would drop
+          focus to <body>). */}
       {isSelf &&
         (onPickDeck && !ready ? (
           <button
             type="button"
             onClick={onPickDeck}
-            className={`-m-1 flex items-center gap-3 rounded-2xl p-1 text-left transition-colors hover:bg-white/[0.04] ${FOCUS_RING_INSET}`}
+            className={`flex cursor-pointer flex-col items-center gap-2 self-center rounded-2xl p-2 ${FOCUS_RING_INSET}`}
           >
-            <DeckCover deckName={player.deckName} placeholder="Pick" />
-            <div className="min-w-0 flex-1">
-              {player.deckName ? (
-                <>
-                  <p className="truncate text-sm font-semibold text-white/90">{player.deckName}</p>
-                  <p className="mt-0.5 text-xs font-medium text-white/50">Change deck</p>
-                </>
-              ) : (
-                <p className="text-sm font-medium text-white/70">Choose a deck</p>
-              )}
-            </div>
+            <DeckCover deckName={player.deckName} placeholder="Choose a deck" />
+            {player.deckName && (
+              <p className="text-xs font-medium text-white/50">Click to change deck</p>
+            )}
           </button>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="self-center">
             <DeckCover deckName={player.deckName} placeholder="No deck" />
-            <div className="min-w-0 flex-1">
-              {player.deckName ? (
-                <p className="truncate text-sm font-semibold text-white/90">{player.deckName}</p>
-              ) : (
-                <p className="text-sm text-white/40">No deck</p>
-              )}
-            </div>
           </div>
         ))}
 
