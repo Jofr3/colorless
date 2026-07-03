@@ -4,7 +4,7 @@ import { CardBackStack } from "../../decks/CardBackStack";
 import type { PlayerState } from "../net/types";
 import { type Side, SIDE_STYLES } from "../theme";
 
-// One seat in the versus layout: an avatar + (editable, for you) name, the deck
+// One seat in the versus layout: an avatar + name, the deck
 // they've chosen, and their ready state. The local player is blue, the opponent
 // red — echoing the background glow. It renders three ways: an empty seat
 // (opponent hasn't joined), a filled seat still choosing, and a locked-in seat.
@@ -60,7 +60,6 @@ export function PlayerPanel({
   emptyLabel = "Waiting for opponent…",
   onPickDeck,
   onToggleReady,
-  onRename,
   onKick,
 }: {
   side: Side;
@@ -73,8 +72,6 @@ export function PlayerPanel({
   onPickDeck?: () => void;
   /** Self-only: toggle your ready state. */
   onToggleReady?: () => void;
-  /** Self-only: commit a new display name. */
-  onRename?: (name: string) => void;
   /** Host viewing the opponent: remove them from the lobby. */
   onKick?: () => void;
 }) {
@@ -95,10 +92,10 @@ export function PlayerPanel({
   }
 
   return (
+    // The border stays constant whether or not the player is ready — the ready
+    // state reads from the "Ready" / "Cancel ready" row below, not the panel edge.
     <section
-      className={`flex flex-col gap-4 rounded-3xl p-5 backdrop-blur-md transition-shadow ${styles.wash} ring-1 ring-inset ${
-        ready ? styles.ring : "ring-white/10"
-      }`}
+      className={`flex flex-col gap-4 rounded-3xl p-5 backdrop-blur-md ${styles.wash} ring-1 ring-inset ring-white/10`}
     >
       {/* Identity row. */}
       <div className="flex items-center gap-3">
@@ -114,29 +111,7 @@ export function PlayerPanel({
               {isSelf ? "You" : "Opponent"}
             </span>
           </div>
-          {isSelf && onRename ? (
-            <input
-              key={player.id}
-              defaultValue={player.name}
-              aria-label="Your name"
-              maxLength={24}
-              onFocus={(e) => e.currentTarget.select()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") e.currentTarget.blur();
-              }}
-              onBlur={(e) => {
-                // Uncontrolled input with a stable key: reflect the resolved value
-                // back into the DOM so an empty/whitespace entry that falls back to
-                // the old name doesn't leave the field visually blank.
-                const next = e.currentTarget.value.trim() || player.name;
-                e.currentTarget.value = next;
-                onRename(next);
-              }}
-              className="mt-0.5 -mx-1 w-full min-w-0 truncate rounded-md bg-transparent px-1 text-base font-semibold text-white outline-none transition-colors hover:bg-white/[0.06] focus-visible:bg-white/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/40"
-            />
-          ) : (
-            <p className="mt-0.5 truncate text-base font-semibold text-white">{player.name}</p>
-          )}
+          <p className="mt-0.5 truncate text-base font-semibold text-white">{player.name}</p>
         </div>
         {onKick && (
           <button

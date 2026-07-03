@@ -9,7 +9,6 @@ import {
   seatGuest,
   setGuestConnected,
 } from "./lobbyReducer";
-import { savePlayerName } from "./session";
 import type { LobbyIntent, LobbySlot, LobbySnapshot } from "./types";
 
 // The React binding for the lobby: it wires the transport channel to the pure
@@ -42,7 +41,6 @@ export type Lobby = {
   status: LobbyStatus;
   selectDeck: (deck: DeckChoice) => void;
   setReady: (ready: boolean) => void;
-  setName: (name: string) => void;
   /** Announce a graceful departure. Unmounting does this too. */
   leave: () => void;
   /** Host only: remove the guest from the lobby. No-op for a guest. */
@@ -323,15 +321,6 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     [sendIntent, role],
   );
 
-  const setName = useCallback(
-    (next: string) => {
-      nameRef.current = next;
-      savePlayerName(next);
-      sendIntent({ type: "set-name", name: next }, role);
-    },
-    [sendIntent, role],
-  );
-
   const leave = useCallback(() => {
     channelRef.current?.post({ kind: "bye", from: playerId, slot: role });
   }, [playerId, role]);
@@ -357,7 +346,6 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     status,
     selectDeck,
     setReady,
-    setName,
     leave,
     kick,
   };

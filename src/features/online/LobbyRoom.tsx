@@ -126,7 +126,6 @@ function VersusScreen({ lobby, onLeave }: { lobby: Lobby; onLeave: () => void })
           isSelf
           onPickDeck={() => setPickerOpen(true)}
           onToggleReady={() => lobby.setReady(!selfReady)}
-          onRename={lobby.setName}
         />
 
         {status && (

@@ -1,11 +1,7 @@
-import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
-import { ArrowLeftIcon, FolderIcon, SearchIcon } from "../../../components/icons";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeftIcon, CheckIcon, FolderIcon, SearchIcon } from "../../../components/icons";
 import { ScrollArea } from "../../../components/ScrollArea";
-import {
-  FOCUS_RING_INSET,
-  GLASS_DIALOG_GHOST_BUTTON,
-  GLASS_DIALOG_PANEL,
-} from "../../../lib/glass";
+import { FOCUS_RING_INSET, GLASS_DIALOG_PANEL } from "../../../lib/glass";
 import { CardBackStack } from "../../decks/CardBackStack";
 import { type Deck, SEED_DECKS, SEED_FOLDERS } from "../../decks/data";
 import { folderPath } from "../../decks/tree";
@@ -69,42 +65,44 @@ function DeckOption({
   onSelect: () => void;
 }) {
   return (
+    // No tile shell — just the floating card stack, exactly like the /decks
+    // page: the deck name and card count are printed into the card back, not
+    // repeated below it. The button is the selection target; a corner "Selected"
+    // badge (not a ring) marks the current pick. rounded-[7px] matches the card
+    // corner so the focus ring hugs it.
     <button
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
-      className={`group relative flex flex-col rounded-2xl p-1.5 text-left transition-colors ${FOCUS_RING_INSET} ${
-        selected ? "bg-white/[0.08]" : "hover:bg-white/[0.05]"
-      }`}
+      className={`group relative rounded-[7px] text-left ${FOCUS_RING_INSET}`}
     >
-      <div className="relative">
-        <CardBackStack
-          label={
-            <span className="block truncate text-left text-xs font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
+      <CardBackStack
+        label={
+          <>
+            {folderLabel && (
+              <span className="mb-1 inline-flex max-w-full items-center gap-1 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white/85 backdrop-blur-sm">
+                <FolderIcon className="h-2.5 w-2.5 shrink-0" fill="currentColor" />
+                <span className="truncate">{folderLabel}</span>
+              </span>
+            )}
+            <span className="block truncate text-sm font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
               {deck.name}
             </span>
-          }
-        />
-        {selected && (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[7px] ring-2 ring-inset ring-accent"
-          />
-        )}
-      </div>
-      <div className="mt-2 min-w-0 px-1">
-        <p className="truncate text-sm font-medium text-white/85">{deck.name}</p>
-        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-white/45">
-          {folderLabel && (
-            <>
-              <FolderIcon className="h-3 w-3 shrink-0" fill="currentColor" />
-              <span className="truncate">{folderLabel}</span>
-              <span aria-hidden>·</span>
-            </>
-          )}
-          {deck.cardCount === 0 ? "Empty" : pluralize(deck.cardCount, "card")}
-        </p>
-      </div>
+            <p className="mt-0.5 text-xs text-white/65">
+              {deck.cardCount === 0 ? "Empty" : pluralize(deck.cardCount, "card")}
+            </p>
+          </>
+        }
+      />
+      {selected && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-950 shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
+        >
+          <CheckIcon className="h-3 w-3" />
+          Selected
+        </span>
+      )}
     </button>
   );
 }
@@ -121,7 +119,6 @@ export function DeckPickerDialog({
   onCancel: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
   const [query, setQuery] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
 
@@ -172,7 +169,7 @@ export function DeckPickerDialog({
     // biome-ignore lint/a11y/useKeyWithClickEvents: the native <dialog> handles Escape; this onClick only adds backdrop click-to-cancel for pointer users.
     <dialog
       ref={dialogRef}
-      aria-labelledby={titleId}
+      aria-label="Choose your deck"
       onClose={onCancel}
       onClick={(event) => {
         if (event.target === dialogRef.current) onCancel();
@@ -182,16 +179,7 @@ export function DeckPickerDialog({
       <div
         className={`flex max-h-[80vh] w-[min(44rem,calc(100vw-2.5rem))] flex-col ${GLASS_DIALOG_PANEL}`}
       >
-        <div className="flex items-center justify-between gap-4">
-          <h2 id={titleId} className="text-lg font-semibold text-white">
-            Choose your deck
-          </h2>
-          <button type="button" onClick={onCancel} className={GLASS_DIALOG_GHOST_BUTTON}>
-            Cancel
-          </button>
-        </div>
-
-        <div className="relative mt-4">
+        <div className="relative">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
           <input
             type="search"
@@ -249,7 +237,10 @@ export function DeckPickerDialog({
           </nav>
         )}
 
-        <ScrollArea className="-mx-2 mt-4 px-2" trackTop={8} trackBottom={8}>
+        {/* No top margin: the search bar → folders gap then equals the
+            folders → decks gap (both from each section's h-1 + gap-3), matching
+            the /decks page rhythm. */}
+        <ScrollArea className="-mx-2 px-2" trackTop={8} trackBottom={8}>
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
               <SearchIcon className="h-6 w-6 text-white/20" />
@@ -258,35 +249,45 @@ export function DeckPickerDialog({
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3 pb-1">
+            // Mirrors the /decks grid spacing: folder tiles at gap-3, and the
+            // deck cards at gap-x-3 gap-y-8 — the tall row gap leaves room for the
+            // pile peeking below each card. A thin spacer tops each section (as on
+            // /decks) so the first row's tilt/juice clears the scroll box edge.
+            <div className="flex flex-col pb-6">
               {visibleFolders.length > 0 && (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {visibleFolders.map((folder) => (
-                    <FolderTile
-                      key={folder.id}
-                      name={folder.name}
-                      summary={folderSummary(folder.id)}
-                      onOpen={() => openFolderById(folder.id)}
-                    />
-                  ))}
-                </div>
+                <section className="flex flex-col gap-3">
+                  <div aria-hidden className="h-1" />
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {visibleFolders.map((folder) => (
+                      <FolderTile
+                        key={folder.id}
+                        name={folder.name}
+                        summary={folderSummary(folder.id)}
+                        onOpen={() => openFolderById(folder.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
               )}
               {visibleDecks.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                  {visibleDecks.map((deck) => (
-                    <DeckOption
-                      key={deck.id}
-                      deck={deck}
-                      folderLabel={
-                        searching && deck.folderId
-                          ? (folderNameById.get(deck.folderId) ?? null)
-                          : null
-                      }
-                      selected={deck.id === selectedDeckId}
-                      onSelect={() => onSelect({ id: deck.id, name: deck.name })}
-                    />
-                  ))}
-                </div>
+                <section className="flex flex-col gap-3">
+                  <div aria-hidden className="h-1" />
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 md:grid-cols-4">
+                    {visibleDecks.map((deck) => (
+                      <DeckOption
+                        key={deck.id}
+                        deck={deck}
+                        folderLabel={
+                          searching && deck.folderId
+                            ? (folderNameById.get(deck.folderId) ?? null)
+                            : null
+                        }
+                        selected={deck.id === selectedDeckId}
+                        onSelect={() => onSelect({ id: deck.id, name: deck.name })}
+                      />
+                    ))}
+                  </div>
+                </section>
               )}
             </div>
           )}
