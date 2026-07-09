@@ -1,0 +1,151 @@
+import { describe, expect, it } from "vitest";
+import type { LobbySnapshot } from "./types";
+import {
+  lobbyClientMessageSchema,
+  lobbyClientMessageSchemaMatchesType,
+  lobbyClientMessagesAreLobbyMessages,
+  lobbyIntentSchema,
+  lobbyIntentSchemaMatchesType,
+  lobbyMessageSchema,
+  lobbyMessageSchemaMatchesType,
+  lobbyServerMessageSchema,
+  lobbyServerMessageSchemaMatchesType,
+  lobbySnapshotSchema,
+} from "./wire";
+
+// The real assertions here are the compile-time `…MatchesType` proofs in
+// wire.ts — if a schema drifts from its types.ts shape this file stops
+// compiling. The runtime cases below pin the validation behavior the Durable
+// Object depends on: what parses, what's refused, and that unknown keys are
+// stripped rather than forwarded.
+
+const SNAPSHOT: LobbySnapshot = {
+  code: "ABCD",
+  phase: "selecting",
+  host: { id: "h1", name: "Ana", deckId: "d1", deckName: "Sparks", ready: false, connected: true },
+  guest: { id: "g1", name: "Bo", deckId: null, deckName: null, ready: false, connected: true },
+  countdownStartedAt: null,
+};
+
+describe("compile-time schema/type equality proofs", () => {
+  it("hold (and double as documentation that they exist)", () => {
+    expect(lobbyIntentSchemaMatchesType).toBe(true);
+    expect(lobbyMessageSchemaMatchesType).toBe(true);
+    expect(lobbyClientMessageSchemaMatchesType).toBe(true);
+    expect(lobbyClientMessagesAreLobbyMessages).toBe(true);
+    expect(lobbyServerMessageSchemaMatchesType).toBe(true);
+  });
+});
+
+describe("lobbyIntentSchema", () => {
+  it("accepts each intent variant", () => {
+    expect(
+      lobbyIntentSchema.parse({ type: "select-deck", deckId: "d1", deckName: "Sparks" }),
+    ).toEqual({ type: "select-deck", deckId: "d1", deckName: "Sparks" });
+    expect(lobbyIntentSchema.parse({ type: "set-ready", ready: true })).toEqual({
+      type: "set-ready",
+      ready: true,
+    });
+    expect(lobbyIntentSchema.parse({ type: "set-name", name: "Ana" })).toEqual({
+      type: "set-name",
+      name: "Ana",
+    });
+  });
+
+  it("refuses unknown variants, missing fields and wrong types", () => {
+    expect(lobbyIntentSchema.safeParse({ type: "start-match" }).success).toBe(false);
+    expect(lobbyIntentSchema.safeParse({ type: "select-deck", deckId: "d1" }).success).toBe(false);
+    expect(lobbyIntentSchema.safeParse({ type: "set-ready", ready: "yes" }).success).toBe(false);
+  });
+});
+
+describe("lobbyClientMessageSchema (what the DO accepts)", () => {
+  it("accepts hello / intent / kick / bye", () => {
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "hello", from: "g1", name: "Bo" }).success,
+    ).toBe(true);
+    expect(
+      lobbyClientMessageSchema.safeParse({
+        kind: "intent",
+        from: "g1",
+        intent: { type: "set-ready", ready: true },
+      }).success,
+    ).toBe(true);
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "kicked" }).success,
+    ).toBe(true);
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "bye", from: "g1", slot: "guest" }).success,
+    ).toBe(true);
+  });
+
+  it("refuses server-only and fabricated frames", () => {
+    // state is the server's to send, never the client's.
+    expect(lobbyClientMessageSchema.safeParse({ kind: "state", snapshot: SNAPSHOT }).success).toBe(
+      false,
+    );
+    // a client can kick (the host's frame) but can never mint a "full".
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
+    ).toBe(false);
+    // heartbeats are not client frames — keepalive is the raw ping string.
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "heartbeat", from: "g1", slot: "guest" }).success,
+    ).toBe(false);
+    expect(lobbyClientMessageSchema.safeParse({ kind: "boom" }).success).toBe(false);
+    expect(lobbyClientMessageSchema.safeParse("hello").success).toBe(false);
+  });
+
+  it("strips unknown keys instead of forwarding them", () => {
+    const parsed = lobbyClientMessageSchema.parse({
+      kind: "hello",
+      from: "g1",
+      name: "Bo",
+      extra: "junk",
+    });
+    expect(parsed).toEqual({ kind: "hello", from: "g1", name: "Bo" });
+  });
+});
+
+describe("lobbyServerMessageSchema (what clients receive)", () => {
+  it("accepts state broadcasts and rejections", () => {
+    expect(lobbyServerMessageSchema.safeParse({ kind: "state", snapshot: SNAPSHOT }).success).toBe(
+      true,
+    );
+    expect(
+      lobbyServerMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
+    ).toBe(true);
+  });
+
+  it("refuses client-only frames", () => {
+    expect(
+      lobbyServerMessageSchema.safeParse({ kind: "hello", from: "g1", name: "Bo" }).success,
+    ).toBe(false);
+  });
+});
+
+describe("lobbySnapshotSchema", () => {
+  it("round-trips a full snapshot", () => {
+    expect(lobbySnapshotSchema.parse(SNAPSHOT)).toEqual(SNAPSHOT);
+  });
+
+  it("refuses an unknown phase", () => {
+    expect(lobbySnapshotSchema.safeParse({ ...SNAPSHOT, phase: "paused" }).success).toBe(false);
+  });
+});
+
+describe("lobbyMessageSchema (full channel vocabulary)", () => {
+  it("accepts every message kind", () => {
+    const messages = [
+      { kind: "hello", from: "g1", name: "Bo" },
+      { kind: "state", snapshot: SNAPSHOT },
+      { kind: "intent", from: "g1", intent: { type: "set-name", name: "Bo" } },
+      { kind: "reject", to: "g1", reason: "full" },
+      { kind: "heartbeat", from: "h1", slot: "host" },
+      { kind: "bye", from: "g1", slot: "guest" },
+    ];
+    for (const message of messages) {
+      expect(lobbyMessageSchema.safeParse(message).success).toBe(true);
+    }
+  });
+});

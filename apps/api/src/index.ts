@@ -9,8 +9,14 @@ import { authRoutes } from "./auth/routes";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes, folderRoutes } from "./decks/routes";
 import { appOrigin, type Env } from "./env";
+import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
 const app = new Hono<{ Bindings: Env }>();
+
+// The lobby WebSocket upgrade (§3.6) mounts BEFORE the CORS middleware:
+// WebSocket handshakes aren't subject to CORS, and hono/cors would throw
+// trying to mutate the 101 response's immutable headers.
+app.route("/lobby", lobbySocketRoutes);
 
 // CORS on everything: the web app lives on a DIFFERENT origin (§3.5) and
 // sends `credentials: "include"` so the SameSite=None session cookie rides
@@ -28,6 +34,10 @@ app.route("/assets", assetsRoutes);
 app.route("/decks", deckRoutes);
 app.route("/folders", folderRoutes);
 
+// Lobby creation (§3.6/§6): POST /lobby mints a code naming a LobbyDO. The
+// matching WebSocket route is mounted above, ahead of CORS.
+app.route("/lobby", lobbyRoutes);
+
 // Public catalog reads (KV-cached): /cards, /sets, /series.
 app.route("/", catalogRoutes);
 
@@ -41,5 +51,9 @@ app.get("/health", (c) => {
   // route will use for its inputs, so a schema drift fails loudly here.
   return c.json(healthResponseSchema.parse(payload));
 });
+
+// wrangler instantiates Durable Objects by the classes the entry module
+// exports; LobbyDO backs the LOBBY binding (wrangler.jsonc).
+export { LobbyDO } from "./lobby/lobbyDO";
 
 export default app;

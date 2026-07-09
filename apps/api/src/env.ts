@@ -1,6 +1,6 @@
 // Worker bindings + vars (wrangler.jsonc). `D1Database`/`R2Bucket`/
-// `KVNamespace` come from @cloudflare/workers-types, wired in via tsconfig
-// `types`. Extend as the other §3.3 bindings land (lobby Durable Object).
+// `KVNamespace`/`DurableObjectNamespace` come from @cloudflare/workers-types,
+// wired in via tsconfig `types`.
 
 export type Env = {
   DB: D1Database;
@@ -9,6 +9,9 @@ export type Env = {
   /** KV namespace — catalog response cache (src/catalog/cache.ts) + auth
       rate-limit counters (src/auth/rateLimit.ts). */
   CACHE: KVNamespace;
+  /** The lobby Durable Objects (§3.6) — one instance per lobby code,
+      addressed with `idFromName(code)` (src/lobby/). */
+  LOBBY: DurableObjectNamespace;
   /** The web app's origin — CORS allow-origin + OAuth post-login redirect
       target (§3.5). wrangler.jsonc `vars` sets the dev default; production
       overrides it when the web app's real origin exists. */

@@ -2,10 +2,19 @@
 // player reads out (or pastes) and the other types in to join, so it's built
 // from an unambiguous alphabet — no characters that look alike when read aloud
 // or in a terminal font.
+//
+// Shared vocabulary (P1 milestone 8): the api Worker mints codes with
+// `generateLobbyCode` (each one names a lobby Durable Object) while the web
+// app validates and normalizes typed input with the same alphabet.
+
+// `crypto` is ambient in every runtime this package targets (browsers,
+// Workers, Bun, Node ≥ 19) but absent from this package's platform-neutral
+// ES2022 lib — declare the one method we use rather than dragging DOM types in.
+declare const crypto: { getRandomValues(array: Uint32Array): Uint32Array };
 
 // 31 symbols: A–Z minus the look-alikes I/L/O (23 letters) plus 2–9 (8 digits).
 // Four of them give 31^4 ≈ 923k combinations — far more than enough for
-// concurrent local lobbies, while staying easy to say and type.
+// concurrent lobbies, while staying easy to say and type.
 export const LOBBY_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const LOBBY_CODE_LENGTH = 4;
 

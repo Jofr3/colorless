@@ -194,18 +194,60 @@ in-Worker; the big backfill stays a local script.
 
   For local dev put the same names in `apps/api/.dev.vars` (gitignored).
 
-### 3.6 Lobby Durable Object (D6)
+### 3.6 Lobby Durable Object (D6) — as built (P1 milestone 8, `apps/api/src/lobby/`)
 
-- One **Durable Object per lobby code**. It owns the authoritative
-  `LobbySnapshot` and runs the **existing `lobbyReducer`** server-side.
-- Clients connect over **WebSocket**; the DO validates each incoming
-  `LobbyIntent`, applies it via the reducer, and broadcasts the new snapshot —
-  exactly the host-authoritative model the client already assumes.
-- **Frontend change is minimal by design:** swap `net/channel.ts` from
-  `BroadcastChannel` to a WebSocket transport; the reducer, snapshot, and
-  message types are unchanged (now imported from `packages/schema`).
-- Handle reconnect (session id already exists on `PlayerState`), heartbeat, and
-  DO hibernation.
+- **One `LobbyDO` per lobby code** (`idFromName(code)`), exported from the
+  Worker entry; binding `LOBBY`, migration `v1 new_sqlite_classes`. It is the
+  server-side replacement for the BroadcastChannel model's authoritative
+  "host peer": it owns the one true `LobbySnapshot` in DO storage, applies
+  every change through the **shared, unchanged `lobbyReducer`**
+  (`packages/schema/src/lobby/`), and broadcasts `{kind:"state"}` to every
+  socket. Both players — host included — are now plain clients that send
+  intents; policies the old host hook enforced in `useLobby.ts` moved verbatim
+  into pure helpers (`lobby/logic.ts`: hello/seat-takeover rule, countdown
+  stamping, connectivity-drops-ready) with the DO a thin shell around them.
+- **Wire protocol** (`packages/schema/src/lobby/wire.ts`): hand-written Zod
+  schemas mirroring `types.ts`, with exported compile-time proofs that each
+  schema infers to EXACTLY the shared type. Client → server is
+  `LobbyClientMessage` = hello | intent | kick | bye — the kick being the same
+  `reject …"kicked"` frame the old host posted at its guest, narrowed so a
+  client can't fabricate "full". Server → client is `LobbyServerMessage` =
+  state | reject. **Every inbound frame is Zod-validated; junk and forged
+  `from` ids (socket attachment ≠ claimed id) are dropped.** Zod-free protocol
+  constants (`COUNTDOWN_MS`, ping/pong strings) live in `lobby/protocol.ts` so
+  the web bundle doesn't pull Zod in.
+- **Hibernation:** sockets accepted via `state.acceptWebSocket`
+  (hibernatable); per-socket player identity survives eviction in the socket
+  attachment (`ws.serializeAttachment`, `lobby/attachment.ts`); keepalive is a
+  raw `"ping"`/`"pong"` pair answered by `setWebSocketAutoResponse` without
+  waking the instance — an idle lobby burns no duration.
+- **Lifecycle (one alarm, three duties — earliest deadline wins):**
+  1. *Disconnect grace* — a socket dropping without a `bye` only marks its
+     seat disconnected after 5 s (the old model's `PRESENCE_TIMEOUT_MS`)
+     without a reconnect, so refreshes and the probe→room socket handoff never
+     flicker the opponent to "disconnected". Same session id always re-seats
+     with deck/ready intact (host id is pinned for the lobby's lifetime; a
+     *different* id may take over only an abandoned guest seat, pre-match —
+     the old host's exact rule).
+  2. *Countdown* — the DO stamps `countdownStartedAt` on entering the phase
+     and its alarm flips countdown → in-game after `COUNTDOWN_MS`, demoting
+     instead any seat whose player has no live socket (the old host's
+     liveness check). A guest `bye` frees the seat immediately; a host `bye`
+     just marks the seat disconnected (lobby survives, host can return).
+  3. *Empty-lobby expiry* — 10 min after the last socket goes (also arms at
+     create), `storage.deleteAll()` + `deleteAlarm()` wipe the lobby and free
+     the code; a socket upgrade for a never-created/expired code is refused
+     (404), which the client reads as silence → "not found".
+- **Anonymity:** lobbies stay account-less this phase, matching the client
+  model — players are lobby-scoped session ids minted by the browser
+  (`net/session.ts`), no auth cookie or user row involved.
+- **Frontend swap (done):** `net/channel.ts` is now a WebSocket transport with
+  the same `LobbyChannel` interface — reconnect with capped backoff (400 ms
+  doubling to 8 s), posts queued while down, server pongs surfaced as
+  heartbeat frames so the hook's presence math still works. `useLobby.ts` runs
+  one unified client path for both roles (the host seeds a local snapshot only
+  as first paint); `OnlineHub` creates via `POST /lobby` instead of minting a
+  code locally. `LobbyRoom.tsx` and all components are untouched.
 
 ### 3.7 Deployment
 
@@ -435,9 +477,17 @@ PATCH  /folders/:id      # rename and/or move; cycle guard walks the target
 DELETE /folders/:id      # 204 — subfolders cascade-delete with it; contained
                          #   decks fall to the library root (folder_id SET NULL)
 
-# Lobby (Durable Object)
-GET    /lobby/:code/ws           # WebSocket upgrade → the lobby's DO
-POST   /lobby                    # create a lobby (mint code, return it)
+# Lobby (Durable Object) — implemented (P1 m8, apps/api/src/lobby/; §3.6
+# as-built). Account-less: neither route reads the session cookie.
+POST   /lobby                    # mint an unused code (draw + claim via the DO,
+                                 #   retry on 409 collision) → 201 {code}; 503
+                                 #   after five straight collisions
+GET    /lobby/:code/ws           # strict code check (404) → upgrade check (426)
+                                 #   → forward to the code's LobbyDO; 404 from
+                                 #   the DO for never-created/expired lobbies.
+                                 #   Mounted BEFORE the CORS middleware: ws
+                                 #   handshakes aren't CORS-guarded and the 101
+                                 #   response's headers are immutable
 ```
 
 ---
@@ -449,10 +499,14 @@ POST   /lobby                    # create a lobby (mint code, return it)
 - Swap `CARD_POOL` for a fetched, paginated, server-filtered card search.
 - Point deck + folder persistence at the API (behind the `persistedState` seam);
   add **auth UI** (login/register, Discord/Google buttons, session state).
-- **Swap the lobby transport** `net/channel.ts` from `BroadcastChannel` to
-  WebSocket against the DO; import lobby types/reducer from `packages/schema`.
-- **Update the CSP** in `vite.config.ts`: replace `images.scrydex.com` with our
-  API origin, R2 image domain, and `wss:` for the lobby socket.
+- ✅ **Lobby transport swapped** (P1 m8): `net/channel.ts` is a WebSocket
+  channel against the DO; lobby types/reducer/codes come from
+  `packages/schema`. The api origin is read ONCE, in `src/lib/apiOrigin.ts`,
+  from **`VITE_API_ORIGIN`** (default `http://localhost:8787`; ws(s):// is
+  derived from it) — the M9 API client should reuse that module.
+- **Update the CSP** in `vite.config.ts` (still pending — M9): replace
+  `images.scrydex.com` with our API origin, R2 image domain, and the api
+  origin's `wss:` for the lobby socket (`connect-src`).
 
 ---
 
@@ -483,8 +537,10 @@ POST   /lobby                    # create a lobby (mint code, return it)
    (`apps/api/src/decks/`, §6 as-built; domain schemas in
    `packages/schema/src/decks/`; session gate extracted to
    `apps/api/src/auth/requireUser.ts`, now also backing `GET /auth/me`).
-8. **Lobby Durable Object** — WS server running the reducer; swap client
-   transport.
+8. ✅ **Lobby Durable Object** — `LobbyDO` WS server running the shared
+   reducer (hibernation + alarms, `apps/api/src/lobby/`, §3.6 as-built); wire
+   schemas + `lobbyCode` moved into `packages/schema/src/lobby/`; client
+   transport swapped to WebSocket (`net/channel.ts`, `VITE_API_ORIGIN`).
 9. **Frontend swap** — API client; replace `CARD_POOL`; auth UI; CSP update.
 10. **(stretch)** Cron Trigger to refresh new sets; widen ingest scope.
 

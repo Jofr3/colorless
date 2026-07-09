@@ -1,4 +1,4 @@
-import type { LobbySlot } from "@luminous/schema";
+import { isValidLobbyCode, type LobbySlot, normalizeLobbyCode } from "@luminous/schema";
 import { type ReactNode, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
@@ -12,7 +12,6 @@ import { LobbyCodeCard } from "./components/LobbyCodeCard";
 import { MatchPlaceholder } from "./components/MatchPlaceholder";
 import { PlayerPanel } from "./components/PlayerPanel";
 import { StartCountdown } from "./components/StartCountdown";
-import { isValidLobbyCode, normalizeLobbyCode } from "./net/lobbyCode";
 import { clearIdentity, resolveIdentity } from "./net/session";
 import { COUNTDOWN_MS, type Lobby, useLobby } from "./net/useLobby";
 

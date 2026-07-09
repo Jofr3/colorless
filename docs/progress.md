@@ -3,17 +3,20 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-09 — build session (P1 milestones 4–7 + full remote ingest).
+**Last updated:** 2026-07-09 — build session (P1 milestones 4–8 + full remote ingest).
 
 ## Resume point
-**M1–M6 are committed and live in production** (remote D1: 19 sets /
-3,698 cards; catalog, assets, and the full auth lifecycle all smoke-tested
-live — a throwaway `claude-smoke-test@example.com` account exists in prod).
-**M7 (decks/folders API) is built and verified locally** (400 tests),
-**uncommitted** on `backend` — next actions: commit M7, deploy, live-smoke a
-deck round-trip. Then **M8 — the lobby Durable Object** (§3.6, §8.8): WS
-server running the shared `lobbyReducer` from `packages/schema`, plus the
-client transport swap in `src/features/online/net/channel.ts`.
+**M1–M7 are committed and live in production** (remote D1: 19 sets /
+3,698 cards; catalog, assets, auth, and deck CRUD all smoke-tested live —
+two throwaway `claude-smoke-test*@example.com` accounts exist in prod).
+**M8 (lobby DO + WS transport) is committed and deployed** (451 tests,
+two-client e2e transcript; the deploy carried the DO migration `v1
+new_sqlite_classes:["LobbyDO"]`). Next concrete action:
+**M9 — frontend swap** (§7, §8.9): typed API client reusing
+`src/lib/apiOrigin.ts`, replace `CARD_POOL` fixtures with the server catalog,
+point deck/folder persistence at the API, auth UI, and the CSP update
+(replace `images.scrydex.com` with the API origin + `wss:`; set
+`VITE_API_ORIGIN` for prod builds).
 Still user-side: OAuth stays 503 until the Discord/Google apps are registered
 (redirect `https://luminous-api.jofrescari.workers.dev/auth/oauth/{provider}/callback`
 + localhost:8787 variants) and the four secrets set via `wrangler secret put`
@@ -22,7 +25,7 @@ from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | 🚧 M1–M7 done (M7 uncommitted; OAuth secrets pending); M8 (lobby DO) next |
+| backend-data | P1 | 🚧 M1–M8 done + deployed; M9 (frontend swap) next; OAuth secrets pending |
 | deck-builder | P2 | 📋 Specced + code-mapped (`workstreams/deck-builder.md`) — blocked on P1 |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
@@ -31,6 +34,21 @@ from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-09** (build) — **P1 milestone 8** (sub-agent): lobby Durable
+  Object + client WS transport. `LobbyDO` (hibernation API, per-socket
+  `serializeAttachment({playerId})`, auto ping/pong) runs the shared
+  `lobbyReducer` unchanged; zod wire schemas in
+  `packages/schema/src/lobby/wire.ts` with compile-time `Equals<>` proofs
+  against the TS types; `lobbyCode` moved into the package. One alarm serves
+  disconnect-grace (5 s), countdown→in-game, and empty-lobby TTL (10 min →
+  deleteAll). Client `channel.ts` now WebSocket (backoff 400 ms→8 s, send
+  queue, ping-as-heartbeat); `useLobby` internals rewritten (server is the
+  authority now) but public API + all UI components untouched; API origin
+  reader in `src/lib/apiOrigin.ts` (`VITE_API_ORIGIN`). Notable traps fixed:
+  zod split out of `protocol.ts` to keep it off the web online chunk
+  (97 kB→29 kB); WS route mounts BEFORE hono/cors (101 responses have
+  immutable headers). Two-client e2e transcript all green; suite 400→451.
+  M7 was committed + deployed + live-smoked this session (deck CRUD in prod).
 - **2026-07-09** (build) — **P1 milestone 7** (sub-agent): deck/folder
   persistence API. `packages/schema/src/decks/` (Deck/DeckSummary/Folder +
   create/patch requests); `apps/api/src/decks/` (map/validate/routes);

@@ -1,22 +1,20 @@
+import { isValidLobbyCode, LOBBY_CODE_LENGTH, normalizeLobbyCode } from "@luminous/schema";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { PlusIcon, SpinnerIcon } from "../../components/icons";
+import { apiUrl } from "../../lib/apiOrigin";
 import { GLASS_ACCENT_BUTTON, GLASS_NEUTRAL_BUTTON, GLASS_PANEL } from "../../lib/glass";
-import {
-  generateLobbyCode,
-  isValidLobbyCode,
-  LOBBY_CODE_LENGTH,
-  normalizeLobbyCode,
-} from "./net/lobbyCode";
 import { probeLobby } from "./net/probe";
 import { clearIdentity, stakeIdentity } from "./net/session";
 
 // The online entry point (/lobby): create a private lobby (get a code) or join
-// an existing one with a code. Creating routes straight into the room; joining
-// connects *here* first (a spinner in place) and only navigates once the host
-// has seated us, so a bad code surfaces as an inline error instead of bouncing
+// an existing one with a code. Creating asks the server to mint the code
+// (POST /lobby — the lobby now lives in a Durable Object, so the code must
+// name a real instance) and routes straight into the room; joining connects
+// *here* first (a spinner in place) and only navigates once the server has
+// seated us, so a bad code surfaces as an inline error instead of bouncing
 // through a separate "joining…"/"not found" page.
 
 const BUTTON_LAYOUT =
@@ -37,6 +35,8 @@ export function OnlineHub() {
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   const probeRef = useRef<ReturnType<typeof probeLobby> | null>(null);
@@ -51,10 +51,24 @@ export function OnlineHub() {
     };
   }, []);
 
-  const createLobby = () => {
-    const code = generateLobbyCode();
-    stakeIdentity(code, "host");
-    navigate(`/lobby/${code}`, { state: { role: "host" } });
+  const createLobby = async () => {
+    if (creating || joining) return;
+    setCreateError(null);
+    setCreating(true);
+    try {
+      const res = await fetch(apiUrl("/lobby"), { method: "POST" });
+      if (!res.ok) throw new Error(`create failed: ${res.status}`);
+      const body = (await res.json()) as { code?: unknown };
+      const code = typeof body.code === "string" && isValidLobbyCode(body.code) ? body.code : null;
+      if (code === null) throw new Error("malformed create response");
+      if (!mountedRef.current) return;
+      stakeIdentity(code, "host");
+      navigate(`/lobby/${code}`, { state: { role: "host" } });
+    } catch {
+      if (!mountedRef.current) return;
+      setCreating(false);
+      setCreateError("Couldn't reach the lobby server. Try again in a moment.");
+    }
   };
 
   const joinLobby = async () => {
@@ -102,12 +116,26 @@ export function OnlineHub() {
           <button
             type="button"
             onClick={createLobby}
-            disabled={joining}
+            disabled={joining || creating}
             className={PRIMARY_BUTTON_CLASS}
           >
-            <PlusIcon className="h-4 w-4" />
-            Create private lobby
+            {creating ? (
+              <>
+                <SpinnerIcon className="h-4 w-4 animate-spin" />
+                Creating…
+              </>
+            ) : (
+              <>
+                <PlusIcon className="h-4 w-4" />
+                Create private lobby
+              </>
+            )}
           </button>
+          {createError && (
+            <p className={`text-sm ${ERROR_TEXT}`} role="alert">
+              {createError}
+            </p>
+          )}
         </section>
 
         <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-white/30">
