@@ -143,17 +143,56 @@ subrequest limits, slow via CLI puts, and mostly assets nobody views.
 A future **Cron Trigger** (stretch) will run small incremental data deltas
 in-Worker; the big backfill stays a local script.
 
-### 3.5 Auth (D2 / D2a)
+### 3.5 Auth (D2 / D2a) — as built (P1 milestone 6, `apps/api/src/auth/`)
 
-- `users`, `oauth_identities`, `sessions` in D1; secure **http-only session
-  cookie** (server sessions, not stateless JWT — easy logout/rotation).
-- **Email + password:** hash with a Workers-compatible Argon2id/scrypt (WASM) or
-  PBKDF2 (WebCrypto). Include password-reset + email-verify flows.
-- **OAuth (Discord + Google):** standard authorization-code flow; on callback,
-  find-or-create a `user` and link an `oauth_identities` row. Requires app
-  registration + redirect URIs per environment; client secrets via
-  `wrangler secret`.
-- A single user may hold both a password and one or more OAuth identities.
+- **Server sessions** (not stateless JWT — easy logout/rotation) in D1
+  `sessions`. The browser holds a 256-bit random token in an http-only cookie
+  `session` (`Secure; SameSite=None; Path=/`, 30-day `Max-Age`); the DB row id
+  is **sha256(token)**, so a leaked dump authenticates nothing. Expiry is
+  enforced on read; expired rows are deleted lazily — no sweeper.
+  `SameSite=None` because the web app lives on a **different origin**: the
+  Worker runs `hono/cors` app-wide with `origin = APP_ORIGIN` (wrangler.jsonc
+  `vars`, dev default `http://localhost:5173`) and `credentials: true`, and
+  the client fetches with `credentials: "include"`.
+- **Email + password:** PBKDF2-SHA256 via WebCrypto (zero deps,
+  Workers-native), stored as `pbkdf2$<iterations>$<salt-b64url>$<hash-b64url>`
+  — verify reads the iteration count from the encoding, so raising the
+  default (currently 100k) upgrades hashes lazily on login. Constant-time
+  compare; login burns a dummy verify on unknown emails (timing parity) and
+  answers one uniform 401. *Caveat:* 100k iterations ≈ tens of ms CPU — if
+  free-plan Workers CPU limits 500 the auth routes in production, lower the
+  count or move to WASM Argon2. Register/login are rate-limited
+  10 attempts / 15 min per (IP, email) via approximate KV counters on `CACHE`.
+- **Password-reset + email-verify are 501 stubs** — they need an outbound
+  email provider, which is not chosen yet; no token plumbing exists until it
+  is (`POST /auth/verify-email`, `POST /auth/reset-password` explain this).
+- **OAuth (Discord + Google):** standard authorization-code flow; CSRF state
+  in a short-lived http-only cookie (also carrying the allowlisted relative
+  `?redirect=` path). On callback: verify state → exchange code → fetch
+  profile (Discord `identify email` scopes via `/api/users/@me`; Google
+  `openid email profile` via OIDC userinfo) → find-or-create: linked
+  `oauth_identities` row → that user; else user by **provider-verified**
+  email → link (unverified match ⇒ 409, no takeover); else create user
+  (`email_verified` from the provider) + identity. Then session + redirect to
+  `APP_ORIGIN`. A single user may hold both a password and OAuth identities.
+- **Providers activate by configuration alone** — with secrets absent the
+  routes answer `503 {"error":"provider not configured"}`. To activate, register
+  the apps (Discord: <https://discord.com/developers/applications> → OAuth2;
+  Google: <https://console.cloud.google.com/auth/clients>, Web application)
+  with BOTH redirect URIs per provider:
+  - `https://luminous-api.jofrescari.workers.dev/auth/oauth/{discord|google}/callback`
+  - `http://localhost:8787/auth/oauth/{discord|google}/callback` (wrangler dev)
+
+  then install the secrets (from `apps/api/`):
+
+  ```sh
+  wrangler secret put DISCORD_CLIENT_ID
+  wrangler secret put DISCORD_CLIENT_SECRET
+  wrangler secret put GOOGLE_CLIENT_ID
+  wrangler secret put GOOGLE_CLIENT_SECRET
+  ```
+
+  For local dev put the same names in `apps/api/.dev.vars` (gitignored).
 
 ### 3.6 Lobby Durable Object (D6)
 
@@ -350,14 +389,18 @@ GET    /series           # Serie[] = SerieBrief + nested SetBrief[]
 GET    /assets/cards/:cardId/:file   # high|low . webp|png|jpg (e.g. high.webp)
 GET    /assets/sets/:setId/:file     # logo|symbol . png|webp  (e.g. symbol.png)
 
-# Auth (D2a)
-POST   /auth/register            # email + password
-POST   /auth/login
-POST   /auth/logout
-GET    /auth/me
-GET    /auth/oauth/:provider     # discord | google — start
-GET    /auth/oauth/:provider/callback
+# Auth (D2a) — implemented (§3.5 as-built); bodies validated, users
+# boundary-parsed through @luminous/schema userSchema (never any hash field)
+POST   /auth/register            # {email, password, displayName?} → 201 user + session
+                                 #   cookie; 400 invalid body; 409 duplicate email; 429 rate-limited
+POST   /auth/login               # {email, password} → 200 user + session cookie;
+                                 #   uniform 401 on any failure; 429 rate-limited
+POST   /auth/logout              # deletes the session row, clears the cookie → 204
+GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
+GET    /auth/oauth/:provider     # discord | google — 302 to provider; 503 until secrets installed
+GET    /auth/oauth/:provider/callback  # state-checked code exchange → session, 302 to APP_ORIGIN
 POST   /auth/verify-email  ·  POST /auth/reset-password
+                                 # both 501 — blocked on choosing an email provider (§3.5)
 
 # Decks & folders (auth required)
 GET    /decks   ·  POST /decks   ·  GET/PATCH/DELETE /decks/:id
@@ -404,7 +447,9 @@ POST   /lobby                    # create a lobby (mint code, return it)
 5. ✅ **Catalog read API** — cards/sets/series with filtering/pagination + KV
    cache (`apps/api/src/catalog/`); canonical domain `Card` in
    `packages/schema/src/catalog/` (§5.2, §6).
-6. **Auth** — email/password + Discord/Google OAuth; sessions.
+6. ✅ **Auth** — email/password + sessions + Discord/Google OAuth
+   (`apps/api/src/auth/`, §3.5 as-built; email flows 501 pending provider;
+   OAuth 503 until the user sets the four `wrangler secret`s).
 7. **Deck persistence API** — decks/folders CRUD tied to user.
 8. **Lobby Durable Object** — WS server running the reducer; swap client
    transport.

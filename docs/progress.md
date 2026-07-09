@@ -3,27 +3,25 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-09 — build session (P1 milestone 5: catalog read API).
+**Last updated:** 2026-07-09 — build session (P1 milestones 4–6 + full remote ingest).
 
 ## Resume point
-**M5 is built and verified locally** (273 tests), **uncommitted** on `backend`.
-Loose ends, in order:
-1. **Remote migrations + ingest** (user must run/approve — the permission gate
-   blocks Claude): `bun run db:migrate:remote` from `apps/api` (remote D1 is
-   still on migration 0000; deployed `/assets/*` errors until then), then
-   `bun scripts/ingest.ts --serie sv --remote` (~20–25 min, idempotent;
-   19 sets / ~3.7k cards).
-2. **Commit** M5, **deploy** (the Worker needs a redeploy to serve the new
-   catalog routes + `CACHE` KV binding).
-Then start **milestone 6** (`workstreams/backend-data.md` §8): auth —
-email/password + Discord/Google OAuth, server sessions (§3.5). Needs OAuth app
-registrations (Discord + Google consoles) and `wrangler secret`s — user-side
-prerequisites to raise early.
+**M1–M5 are committed and live in production** (remote D1: 19 sets /
+3,698 cards; catalog + assets verified live). **M6 (auth, §3.5) is built and
+verified locally** (343 tests), **uncommitted** on `backend` — next actions:
+commit M6, deploy, then live-smoke register/login/me against production.
+OAuth stays 503 until the user registers the Discord/Google apps (redirect
+`https://luminous-api.jofrescari.workers.dev/auth/oauth/{provider}/callback`
++ localhost:8787 variants) and runs `wrangler secret put DISCORD_CLIENT_ID` /
+`DISCORD_CLIENT_SECRET` / `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` from
+`apps/api` (local dev: same names in the now-gitignored `apps/api/.dev.vars`).
+Then **M7 — deck/folder persistence API** (§6, §8.7), which builds directly
+on the session middleware in `apps/api/src/auth/`.
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | 🚧 M1–M5 done (remote ingest pending); M6 (auth) next |
+| backend-data | P1 | 🚧 M1–M6 done (M6 uncommitted; OAuth secrets pending); M7 (decks API) next |
 | deck-builder | P2 | 📋 Specced + code-mapped (`workstreams/deck-builder.md`) — blocked on P1 |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
@@ -32,6 +30,19 @@ prerequisites to raise early.
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-09** (build) — **P1 milestone 6** (sub-agent): auth. Email/password
+  + server sessions in `apps/api/src/auth/` — PBKDF2-SHA256 (WebCrypto,
+  self-describing `pbkdf2$iters$salt$hash`, dummy-verify timing parity),
+  session cookie `Secure; SameSite=None` with **sha256(token)** as the DB row
+  id, app-wide CORS (`APP_ORIGIN` var), KV fixed-window rate limits (429 +
+  Retry-After), Discord/Google OAuth (state cookie, account-takeover guard:
+  unverified-email match → 409; routes 503 until secrets set), verify-email /
+  reset-password are 501 pending an email-provider decision. No new
+  migration (M3 tables fit). Domain `User` + request schemas in
+  `packages/schema/src/auth/`. Suite 273→343. `.dev.vars` gitignored. §3.5
+  rewritten as-built. Also this session: **full remote ingest completed**
+  (19 sets / 3,698 cards, ~10 min) and M5 deployed + smoke-tested live
+  (catalog totals, KV hit, R2 asset miss→hit in production).
 - **2026-07-09** (build) — **P1 milestone 5** (sub-agent): public catalog read
   API + the **canonical domain `Card`** (D5) in `packages/schema/src/catalog/`
   (unprefixed names; flat shape, consumers narrow on `category`; `image` is
