@@ -327,6 +327,11 @@ model, and derive the two existing view shapes from it:
 Keep the existing `Deck` / `Folder` shapes (`src/features/decks/data.ts`) as the
 API's deck representation, extended with a card list.
 
+> **Status (M7):** the deck/folder domain schemas now live in
+> `packages/schema/src/decks/` — `Folder`, `Deck` (+ `cards: [{cardId, count}]`),
+> `DeckSummary` (cards replaced by the summed `cardCount`), and the
+> create/patch request schemas for both resources.
+
 ### 5.3 D1 relational schema
 
 Full-history-capable; SV-era rows only, for now. Implemented with Drizzle in
@@ -402,9 +407,33 @@ GET    /auth/oauth/:provider/callback  # state-checked code exchange → session
 POST   /auth/verify-email  ·  POST /auth/reset-password
                                  # both 501 — blocked on choosing an email provider (§3.5)
 
-# Decks & folders (auth required)
-GET    /decks   ·  POST /decks   ·  GET/PATCH/DELETE /decks/:id
-GET    /folders ·  POST /folders ·  GET/PATCH/DELETE /folders/:id
+# Decks & folders — implemented (P1 m7, apps/api/src/decks/). ALL routes need a
+# valid session cookie (requireUser, §3.5) → else 401; every :id lookup is
+# scoped WHERE user_id = ? so someone else's (or a missing) resource is the
+# SAME 404 — no existence leak; a folderId/parentId you don't own → 400. NO KV
+# cache: user data reads fresh. Responses boundary-parsed through the
+# @luminous/schema deck/folder schemas. Card lists: {cardId, count 1–99},
+# ≤200 distinct entries, duplicate cardIds → 400, ids absent from the catalog
+# → 400 `{"error":"unknown card id(s)","cardIds":[…]}` (checked with a chunked
+# IN query against `cards`, never the FK error text).
+GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
+                         #   updated, cardCount} — cardCount = summed copy counts
+GET    /decks/:id        # full Deck: summary shape minus cardCount, plus
+                         #   cards: [{cardId, count}]
+POST   /decks            # {name, tint 0–360, format?, folderId?, cards?}
+                         #   → 201 Deck (server-minted UUID id)
+PATCH  /decks/:id        # any of {name, tint, format?, folderId?} (null clears
+                         #   the nullable ones) AND/OR wholesale `cards`
+                         #   replacement (delete+reinsert in one db.batch);
+                         #   refreshes `updated`; empty patch → 400
+DELETE /decks/:id        # 204 (deck_cards cascade away)
+GET    /folders          # Folder[]: {id, name, parentId} — FLAT list, the
+                         #   client builds the tree
+POST   /folders          # {name, parentId?} → 201 Folder
+PATCH  /folders/:id      # rename and/or move; cycle guard walks the target
+                         #   parent's ancestor chain — self/descendant → 400
+DELETE /folders/:id      # 204 — subfolders cascade-delete with it; contained
+                         #   decks fall to the library root (folder_id SET NULL)
 
 # Lobby (Durable Object)
 GET    /lobby/:code/ws           # WebSocket upgrade → the lobby's DO
@@ -450,7 +479,10 @@ POST   /lobby                    # create a lobby (mint code, return it)
 6. ✅ **Auth** — email/password + sessions + Discord/Google OAuth
    (`apps/api/src/auth/`, §3.5 as-built; email flows 501 pending provider;
    OAuth 503 until the user sets the four `wrangler secret`s).
-7. **Deck persistence API** — decks/folders CRUD tied to user.
+7. ✅ **Deck persistence API** — decks/folders CRUD tied to the session user
+   (`apps/api/src/decks/`, §6 as-built; domain schemas in
+   `packages/schema/src/decks/`; session gate extracted to
+   `apps/api/src/auth/requireUser.ts`, now also backing `GET /auth/me`).
 8. **Lobby Durable Object** — WS server running the reducer; swap client
    transport.
 9. **Frontend swap** — API client; replace `CARD_POOL`; auth UI; CSP update.

@@ -3,25 +3,26 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-09 — build session (P1 milestones 4–6 + full remote ingest).
+**Last updated:** 2026-07-09 — build session (P1 milestones 4–7 + full remote ingest).
 
 ## Resume point
-**M1–M5 are committed and live in production** (remote D1: 19 sets /
-3,698 cards; catalog + assets verified live). **M6 (auth, §3.5) is built and
-verified locally** (343 tests), **uncommitted** on `backend` — next actions:
-commit M6, deploy, then live-smoke register/login/me against production.
-OAuth stays 503 until the user registers the Discord/Google apps (redirect
-`https://luminous-api.jofrescari.workers.dev/auth/oauth/{provider}/callback`
-+ localhost:8787 variants) and runs `wrangler secret put DISCORD_CLIENT_ID` /
-`DISCORD_CLIENT_SECRET` / `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` from
-`apps/api` (local dev: same names in the now-gitignored `apps/api/.dev.vars`).
-Then **M7 — deck/folder persistence API** (§6, §8.7), which builds directly
-on the session middleware in `apps/api/src/auth/`.
+**M1–M6 are committed and live in production** (remote D1: 19 sets /
+3,698 cards; catalog, assets, and the full auth lifecycle all smoke-tested
+live — a throwaway `claude-smoke-test@example.com` account exists in prod).
+**M7 (decks/folders API) is built and verified locally** (400 tests),
+**uncommitted** on `backend` — next actions: commit M7, deploy, live-smoke a
+deck round-trip. Then **M8 — the lobby Durable Object** (§3.6, §8.8): WS
+server running the shared `lobbyReducer` from `packages/schema`, plus the
+client transport swap in `src/features/online/net/channel.ts`.
+Still user-side: OAuth stays 503 until the Discord/Google apps are registered
+(redirect `https://luminous-api.jofrescari.workers.dev/auth/oauth/{provider}/callback`
++ localhost:8787 variants) and the four secrets set via `wrangler secret put`
+from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | 🚧 M1–M6 done (M6 uncommitted; OAuth secrets pending); M7 (decks API) next |
+| backend-data | P1 | 🚧 M1–M7 done (M7 uncommitted; OAuth secrets pending); M8 (lobby DO) next |
 | deck-builder | P2 | 📋 Specced + code-mapped (`workstreams/deck-builder.md`) — blocked on P1 |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
@@ -30,6 +31,19 @@ on the session middleware in `apps/api/src/auth/`.
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-09** (build) — **P1 milestone 7** (sub-agent): deck/folder
+  persistence API. `packages/schema/src/decks/` (Deck/DeckSummary/Folder +
+  create/patch requests); `apps/api/src/decks/` (map/validate/routes);
+  `requireUser` middleware extracted from `/auth/me` into
+  `apps/api/src/auth/requireUser.ts` (shared session gate). All 9 endpoints
+  session-gated; ownership scoping → 404 (no existence leaks); folder-cycle
+  guard; card lists validated against the catalog via chunked IN queries
+  (D1's 100-bound-params cap → 33-row insert chunks inside one `db.batch`);
+  wholesale cards replacement on PATCH; empty PATCH → 400. Suite 343→400.
+  M6 auth was committed + deployed + live-smoked this session (register/
+  login/me/logout all correct in prod). Note: local D1 had only 123 cards
+  (the sub-agent ingested sv01 locally to match test ids — local and remote
+  D1 contents drift by design).
 - **2026-07-09** (build) — **P1 milestone 6** (sub-agent): auth. Email/password
   + server sessions in `apps/api/src/auth/` — PBKDF2-SHA256 (WebCrypto,
   self-describing `pbkdf2$iters$salt$hash`, dummy-verify timing parity),

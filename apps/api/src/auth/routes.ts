@@ -35,6 +35,7 @@ import {
 } from "./oauth";
 import { DUMMY_PASSWORD_HASH, hashPassword, passwordNeedsRehash, verifyPassword } from "./password";
 import { checkRateLimit, type RateLimitScope, rateLimitKey } from "./rateLimit";
+import { requireUser } from "./requireUser";
 import {
   clearedSessionCookie,
   generateSessionToken,
@@ -196,32 +197,10 @@ authRoutes.post(
 
 // --- session ----------------------------------------------------------------
 
-authRoutes.get("/me", async (c) => {
-  const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);
-  if (token === null) {
-    return c.json({ error: "unauthorized" }, 401);
-  }
-  const sessionId = await hashSessionToken(token);
-  const db = drizzle(c.env.DB);
-  const row = await db
-    .select({ user: users, expiresAt: sessions.expiresAt })
-    .from(sessions)
-    .innerJoin(users, eq(sessions.userId, users.id))
-    .where(eq(sessions.id, sessionId))
-    .get();
-  if (row === undefined) {
-    c.header("Set-Cookie", clearedSessionCookie());
-    return c.json({ error: "unauthorized" }, 401);
-  }
-  // Expiry enforced on read; the dead row is deleted lazily right here —
-  // no background sweeper needed at this scale.
-  if (row.expiresAt.getTime() <= Date.now()) {
-    await db.delete(sessions).where(eq(sessions.id, sessionId));
-    c.header("Set-Cookie", clearedSessionCookie());
-    return c.json({ error: "unauthorized" }, 401);
-  }
-  return c.json(userSchema.parse(mapUserRow(row.user)));
-});
+// Session resolution (cookie → user, expiry-on-read, lazy dead-row delete)
+// lives in requireUser — shared with /decks and /folders (milestone 7); /me
+// is just "echo the resolved caller".
+authRoutes.get("/me", requireUser, (c) => c.json(userSchema.parse(mapUserRow(c.get("user")))));
 
 authRoutes.post("/logout", async (c) => {
   const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);

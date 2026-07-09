@@ -1,0 +1,37 @@
+// D1 row → deck-library domain mapping (P1 milestone 7, §5.2/§6) — the
+// catalog/map.ts pattern: pure functions from Drizzle rows to the shapes in
+// @luminous/schema/decks, so routes.ts owns queries and these unit-test flat.
+// `user_id` never crosses the boundary — ownership is a WHERE clause, not a
+// response field — and the epoch-ms `updated` column serializes to ISO here.
+
+import type { Deck, DeckCard, DeckSummary, Folder } from "@luminous/schema";
+import type { decks, folders } from "../db/schema";
+
+export type FolderRow = typeof folders.$inferSelect;
+export type DeckRow = typeof decks.$inferSelect;
+
+export function mapFolderRow(row: FolderRow): Folder {
+  return { id: row.id, name: row.name, parentId: row.parentId };
+}
+
+/** The shared (cards-free) projection of a deck row. */
+function mapDeckBase(row: DeckRow) {
+  return {
+    id: row.id,
+    name: row.name,
+    format: row.format,
+    tint: row.tint,
+    folderId: row.folderId,
+    updated: row.updated.toISOString(),
+  };
+}
+
+/** Full deck: the row plus its (already user-scoped) deck_cards entries. */
+export function mapDeckRow(row: DeckRow, cards: readonly DeckCard[]): Deck {
+  return { ...mapDeckBase(row), cards: cards.map(({ cardId, count }) => ({ cardId, count })) };
+}
+
+/** List row: `cardCount` is the SQL-side sum of the deck's copy counts. */
+export function mapDeckSummaryRow(row: DeckRow, cardCount: number): DeckSummary {
+  return { ...mapDeckBase(row), cardCount };
+}

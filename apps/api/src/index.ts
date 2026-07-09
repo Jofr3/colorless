@@ -7,6 +7,7 @@ import { cors } from "hono/cors";
 import { assetsRoutes } from "./assets/routes";
 import { authRoutes } from "./auth/routes";
 import { catalogRoutes } from "./catalog/routes";
+import { deckRoutes, folderRoutes } from "./decks/routes";
 import { appOrigin, type Env } from "./env";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -22,6 +23,10 @@ app.route("/auth", authRoutes);
 
 // Lazy R2 mirror for tcgdex images (D9): /assets/cards/…, /assets/sets/….
 app.route("/assets", assetsRoutes);
+
+// The authenticated deck library (§6): decks + folders CRUD, session-gated.
+app.route("/decks", deckRoutes);
+app.route("/folders", folderRoutes);
 
 // Public catalog reads (KV-cached): /cards, /sets, /series.
 app.route("/", catalogRoutes);
