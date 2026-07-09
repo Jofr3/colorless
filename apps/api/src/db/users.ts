@@ -1,0 +1,112 @@
+// User-data tables (read-write): accounts, auth and deck persistence.
+// Spec: docs/workstreams/backend-data.md §5.3 (schema) + §3.5 (auth model).
+//
+// Timestamps here are INTEGER epoch milliseconds (`mode: "timestamp_ms"`,
+// surfaced as Date by drizzle) — unlike the catalog, these are OUR clocks, so
+// nothing forces ISO text on us, and integers give unambiguous SQL comparison
+// (`expires_at < ?now` for session sweeps) with no string-format drift.
+// `created_at`-style columns default to `unixepoch() * 1000` in the DB so a
+// forgotten insert value can never produce a row without a timestamp.
+
+import { sql } from "drizzle-orm";
+import { foreignKey, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { cards } from "./catalog";
+
+/** DB-side default for epoch-ms timestamp columns. */
+const nowMs = sql`(unixepoch() * 1000)`;
+
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  /** Null for OAuth-only accounts (§3.5: password and OAuth can coexist). */
+  passwordHash: text("password_hash"),
+  emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(nowMs),
+});
+
+export const oauthIdentities = sqliteTable(
+  "oauth_identities",
+  {
+    /** "discord" | "google" (§ D2a); text so adding a provider is data-only. */
+    provider: text("provider").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.provider, t.providerId] }),
+    index("oauth_identities_user_id_idx").on(t.userId),
+  ],
+);
+
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(nowMs),
+  },
+  (t) => [index("sessions_user_id_idx").on(t.userId)],
+);
+
+export const folders = sqliteTable(
+  "folders",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Owning folder; null at the library root. Folders nest indefinitely. */
+    parentId: text("parent_id"),
+    name: text("name").notNull(),
+  },
+  (t) => [
+    index("folders_user_id_idx").on(t.userId),
+    // Self-reference declared here (not via .references()) to avoid the
+    // "column referenced in its own initializer" TS error. Deleting a folder
+    // deletes its subtree; decks inside fall back to the root via SET NULL.
+    foreignKey({
+      columns: [t.parentId],
+      foreignColumns: [t.id],
+      name: "folders_parent_id_fk",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const decks = sqliteTable(
+  "decks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    folderId: text("folder_id").references(() => folders.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    /** Play format ("standard" | "expanded" | …); free text until §5.2 lands. */
+    format: text("format"),
+    /** Base hue 0–360 for the deck cover gradient (web `Deck.tint`). */
+    tint: integer("tint").notNull(),
+    updated: integer("updated", { mode: "timestamp_ms" }).notNull().default(nowMs),
+  },
+  (t) => [index("decks_user_id_idx").on(t.userId), index("decks_folder_id_idx").on(t.folderId)],
+);
+
+export const deckCards = sqliteTable(
+  "deck_cards",
+  {
+    deckId: text("deck_id")
+      .notNull()
+      .references(() => decks.id, { onDelete: "cascade" }),
+    /** References the catalog; RESTRICT-by-default so ingest can't orphan decks. */
+    cardId: text("card_id")
+      .notNull()
+      .references(() => cards.id),
+    count: integer("count").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.deckId, t.cardId] })],
+);

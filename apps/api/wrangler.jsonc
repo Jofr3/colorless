@@ -5,5 +5,16 @@
   "compatibility_date": "2026-06-01",
   "observability": {
     "enabled": true
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "luminous",
+      "database_id": "735f0fb5-cdc3-494d-8b97-74a8ade0124a",
+      // drizzle-kit writes its generated SQL here (drizzle.config.ts `out`);
+      // pointing wrangler at the same dir makes `d1 migrations apply` pick
+      // them up directly — no copying step.
+      "migrations_dir": "drizzle"
+    }
+  ]
 }

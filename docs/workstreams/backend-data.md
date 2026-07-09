@@ -260,23 +260,24 @@ model, and derive the two existing view shapes from it:
 Keep the existing `Deck` / `Folder` shapes (`src/features/decks/data.ts`) as the
 API's deck representation, extended with a card list.
 
-### 5.3 D1 relational schema (draft)
+### 5.3 D1 relational schema
 
-Full-history-capable; SV-era rows only, for now.
+Full-history-capable; SV-era rows only, for now. Implemented with Drizzle in
+`apps/api/src/db/` (`catalog.ts` / `users.ts`); migrations in `apps/api/drizzle/`.
 
 ```sql
 -- Catalog (ingested; read-only to the app)
-series(id PK, name, logo_r2_url)
+series(id PK, name, release_date, logo_r2_url)
 sets(id PK, serie_id FK, name, logo_r2_url, symbol_r2_url,
      release_date, count_total, count_official, legal_standard, legal_expanded,
-     tcg_online, updated)
+     tcg_online)
 cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Energy
       illustrator, rarity, regulation_mark,
-      hp, stage, evolve_from, types_json,                -- Pokémon fields (nullable)
+      hp, stage, evolve_from, types_json, retreat,       -- Pokémon fields (nullable)
+      abilities_json, attacks_json, weaknesses_json, resistances_json,
       trainer_type, energy_type, effect,                 -- Trainer/Energy fields
       legal_standard, legal_expanded,
-      variants_json, image_r2_url, updated,
-      attacks_json, weaknesses_json, resistances_json, retreat)
+      variants_json, image_r2_url, updated)
 
 -- User data (read-write)
 users(id PK, email UNIQUE, display_name, password_hash?, email_verified, created_at)
@@ -286,6 +287,13 @@ folders(id PK, user_id FK, parent_id FK?, name)
 decks(id PK, user_id FK, folder_id FK?, name, format, tint, updated)
 deck_cards(deck_id FK, card_id FK, count, PRIMARY KEY(deck_id, card_id))
 ```
+
+Deltas from the first draft, per the live tcgdex shapes: `series.release_date`
+added; `sets.updated` dropped (tcgdex sets carry no `updated`);
+`cards.abilities_json` added. tcgdex `variants_detailed` (per-physical-print
+foil/stamp data), `pricing` and `boosters` are deliberately **not** persisted —
+rationale in `apps/api/src/db/catalog.ts`. Catalog dates/timestamps are ISO
+text verbatim from tcgdex; user-data timestamps are integer epoch ms.
 
 ---
 
@@ -344,7 +352,10 @@ POST   /lobby                    # create a lobby (mint code, return it)
    + 19 tests + live sweep via `bun packages/schema/scripts/validate-live.ts`,
    370 requests / 0 failures); lobby types/reducer moved to
    `packages/schema/src/lobby/`, web importers now use `@luminous/schema`.
-3. **D1 migrations** — catalog + user tables (Drizzle).
+3. ✅ **D1 migrations** — catalog + user tables via Drizzle
+   (`apps/api/src/db/`, migration `apps/api/drizzle/0000_tired_sentry.sql`,
+   scripts `db:generate` / `db:migrate:local` / `db:migrate:remote`). Applied
+   locally and remotely.
 4. **Ingest + R2 mirror** — traverse tcgdex (SV-era), upsert D1, stream images
    to R2; idempotent + re-runnable.
 5. **Catalog read API** — cards/sets/series with filtering/pagination + KV cache.

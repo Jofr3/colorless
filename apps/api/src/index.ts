@@ -3,8 +3,9 @@
 
 import { type HealthResponse, healthResponseSchema } from "@luminous/schema";
 import { Hono } from "hono";
+import type { Env } from "./env";
 
-const app = new Hono();
+const app = new Hono<{ Bindings: Env }>();
 
 app.get("/health", (c) => {
   const payload: HealthResponse = {

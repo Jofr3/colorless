@@ -3,21 +3,19 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-09 — build session (P1 milestone 2: schemas + lobby move).
+**Last updated:** 2026-07-09 — build session (P1 milestone 3: Drizzle + D1 migrations).
 
 ## Resume point
-P1 **milestone 2 is done** (built + verified, **uncommitted** on `backend`).
-Next concrete action: **milestone 3** (`workstreams/backend-data.md` §8) —
-D1 migrations with Drizzle for the catalog + user tables (§5.3). Remember the
-D8 follow-up: the `cards` table needs an `abilities_json` column (live tcgdex
-shape is `abilities: [{type, name, effect}]` — see the tcgdex schemas), and
-§5.3's `*_json` columns should be cross-checked against what the tcgdex
-schemas actually capture (e.g. `variants_detailed`).
+P1 **milestone 3 is done** — migration applied to **remote** D1 too (all 9
+tables verified live on `luminous`, id `735f0fb5-…`). Next: **milestone 4**
+(`workstreams/backend-data.md` §8): the tcgdex→D1 ingest + R2 image mirror
+(needs an R2 bucket created first; heed the M4 notes in the session log below —
+FK insert order, upsert-don't-delete, legal default).
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | 🚧 M1–M2 done; M3 (D1 migrations) next |
+| backend-data | P1 | 🚧 M1–M3 done; M4 (ingest+R2) next |
 | deck-builder | P2 | 📋 Specced + code-mapped (`workstreams/deck-builder.md`) — blocked on P1 |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
@@ -26,6 +24,20 @@ schemas actually capture (e.g. `variants_detailed`).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-09** (build) — **P1 milestone 3**: Drizzle schema + D1 migrations
+  (sub-agent). `apps/api/src/db/{catalog,users,schema}.ts` — 9 tables per
+  §5.3 (updated where reality differed: `series.release_date` added,
+  `sets.updated` dropped, `abilities_json` added; `variants_detailed`/
+  `pricing`/`boosters`/dp-era extras deliberately not persisted). Migration
+  `drizzle/0000_tired_sentry.sql` applied to **local** D1; FK enforcement
+  verified. D1 database `luminous` created on the account (EEUR,
+  id `735f0fb5-cdc3-494d-8b97-74a8ade0124a`); wrangler.jsonc binds it as `DB`
+  with `migrations_dir: "drizzle"`; remote apply verified (9 tables live).
+  **Notes for M4 (ingest):** insert series→sets→cards (FKs); upsert,
+  never delete+reinsert cards (`deck_cards.card_id` RESTRICT); missing
+  upstream `legal` → false/false; JSON columns are Drizzle `mode: "json"` —
+  pass raw objects, don't pre-stringify; catalog timestamps ISO text, user
+  timestamps epoch-ms integers.
 - **2026-07-09** (build) — **P1 milestone 2**, via two sequential sub-agents:
   (a) lobby vocabulary moved — `types.ts` + `lobbyReducer.ts` (+ its 11 tests)
   now live in `packages/schema/src/lobby/`, 7 web importers switched to
