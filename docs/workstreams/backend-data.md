@@ -323,8 +323,9 @@ POST   /lobby                    # create a lobby (mint code, return it)
 
 ## 8. Work plan (milestones)
 
-1. **Scaffold** `apps/api` (Hono + wrangler) + `packages/schema`; Bun
-   workspaces; `/health` deploys green.
+1. ✅ **Scaffold** `apps/api` (Hono + wrangler) + `packages/schema` (+ stub
+   `packages/engine`); Bun workspaces; `/health` deployed green at
+   `https://luminous-api.jofrescari.workers.dev/health`.
 2. **Schemas** — tcgdex Zod schemas, tested against live responses; move lobby
    types/reducer into `packages/schema`.
 3. **D1 migrations** — catalog + user tables (Drizzle).

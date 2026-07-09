@@ -46,7 +46,11 @@ export default defineConfig({
     // with a `// @vitest-environment jsdom` docblock — see the *.dom.test.tsx
     // files (React Testing Library), so the many pure tests keep the lean env.
     environment: "node",
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: [
+      "src/**/*.{test,spec}.{ts,tsx}",
+      "apps/*/src/**/*.{test,spec}.{ts,tsx}",
+      "packages/*/src/**/*.{test,spec}.{ts,tsx}",
+    ],
   },
   build: {
     // Match the TypeScript target so output isn't down-levelled further than needed.

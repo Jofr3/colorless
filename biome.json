@@ -6,8 +6,16 @@
     "useIgnoreFile": true
   },
   "files": {
-    "include": ["src/**"],
-    "ignore": ["node_modules", "dist", "public", "**/*.tsbuildinfo"]
+    "include": ["src/**", "apps/**", "packages/**"],
+    "ignore": [
+      "node_modules",
+      "**/node_modules",
+      "dist",
+      "**/dist",
+      "public",
+      "**/*.tsbuildinfo",
+      "**/.wrangler"
+    ]
   },
   "formatter": {
     "enabled": true,
