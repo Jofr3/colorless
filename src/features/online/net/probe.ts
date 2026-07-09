@@ -1,5 +1,5 @@
+import type { LobbyMessage } from "@luminous/schema";
 import { createLobbyChannel } from "./channel";
-import type { LobbyMessage } from "./types";
 
 // A one-shot "can I join?" probe used by the hub before it navigates into a room.
 // It runs the guest side of the handshake — hello (with retries) and wait for the

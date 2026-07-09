@@ -1,3 +1,4 @@
+import type { LobbySlot } from "@luminous/schema";
 import { type ReactNode, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
@@ -13,7 +14,6 @@ import { PlayerPanel } from "./components/PlayerPanel";
 import { StartCountdown } from "./components/StartCountdown";
 import { isValidLobbyCode, normalizeLobbyCode } from "./net/lobbyCode";
 import { clearIdentity, resolveIdentity } from "./net/session";
-import type { LobbySlot } from "./net/types";
 import { COUNTDOWN_MS, type Lobby, useLobby } from "./net/useLobby";
 
 // The lobby room (/lobby/:code): the create → join → ready → start flow rendered

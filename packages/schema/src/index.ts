@@ -5,3 +5,5 @@
 // docs/workstreams/backend-data.md §5.
 
 export * from "./health";
+export * from "./lobby";
+export * from "./tcgdex";

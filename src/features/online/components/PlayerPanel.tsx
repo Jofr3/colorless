@@ -1,7 +1,7 @@
+import type { PlayerState } from "@luminous/schema";
 import { CheckCircleIcon, SpinnerIcon, UserIcon, XIcon } from "../../../components/icons";
 import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_NEUTRAL_BUTTON } from "../../../lib/glass";
 import { CardBackStack } from "../../decks/CardBackStack";
-import type { PlayerState } from "../net/types";
 import { type Side, SIDE_STYLES } from "../theme";
 
 // One seat in the versus layout: an avatar + name, the deck

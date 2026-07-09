@@ -216,24 +216,38 @@ Researched from the official docs so the implementation can be exact.
 ### 5.1 tcgdex models (Zod, in `packages/schema`)
 
 Author Zod schemas + inferred types mirroring the API, then map onto our domain.
+Implemented in `packages/schema/src/tcgdex/` against live responses (verbatim
+fixtures in `__fixtures__/`; live sweep via `packages/schema/scripts/validate-live.ts`).
 
 - **Card** (full): `id, localId, name, image?, category ("Pokemon"|"Trainer"|
-  "Energy"), illustrator?, rarity?, set (SetBrief), variants {normal, reverse,
-  holo, firstEdition}, boosters?, pricing?, updated`
-  - **Pokémon** extras: `dexId?, hp?, types?, evolveFrom?, description?, level?,
-    stage?, suffix?, item? {name, effect}, attacks?, weaknesses?, resistances?,
-    retreat?, regulationMark?, legal? {standard, expanded}`
-  - **Trainer** extras: `effect, trainerType` · **Energy** extras: `effect,
-    energyType`
-  - Nested: **Attack** `{cost?: string[], name, effect?, damage?}`,
-    **WeakRes** `{type, value}`, **Variants**, **Legal**, **Pricing**
-    (TCGPlayer + Cardmarket), **Booster**.
-- **CardBrief / CardResume:** `{id, localId, name, image?}` (+ variants on lists).
-- **Set** (full): `id, name, logo?, symbol?, cardCount {total, official, reverse,
-  holo, firstEd}, serie (SerieBrief), tcgOnline?, releaseDate, legal {standard,
+  "Energy"), illustrator?, rarity?, set (SetBrief), variants? {normal, reverse,
+  holo, firstEdition, wPromo}, variants_detailed?, boosters?, pricing?,
+  regulationMark?, legal? {standard, expanded}, updated` — `updated` is an ISO
+  datetime mixing `Z` and `+HH:MM` offsets. Modeled as a discriminated union on
+  `category`.
+  - **Pokémon** extras: `dexId?, hp?, types?, evolveFrom?, description?, level?
+    (number|string), stage?, suffix?, abilities? [{type, name, effect}],
+    item? {name?, effect?}` (dp-era held item; live data serves `{}`),
+    `attacks?, weaknesses?, resistances?, retreat?`
+  - **Trainer** extras: `effect?, trainerType` · **Energy** extras: `effect?
+    (absent on basic energies), energyType ("Normal"|"Special")`
+  - Nested: **Attack** `{cost?: string[], name, effect?, damage?: number|string
+    ("60+")}`, **WeakRes** `{type, value ("×2"|"+20"|"-30")}`, **Variants**,
+    **VariantDetailed** `{type, size?, variantId?, foil?, stamp?, pricing?}`
+    (one entry per physical print), **Legal**, **Pricing** — `{cardmarket?,
+    tcgplayer?}`, either can be `null`; cardmarket = nullable EUR aggregates
+    (`avg/low/trend/avg1/avg7/avg30` + `-holo` twins), tcgplayer = `unit,
+    updated` + one `{productId, low/mid/high/market/directLowPrice}` block per
+    dynamic print-run key (`normal`, `holofoil`, `reverse-holofoil`, …),
+    **Booster** (documented upstream, not yet observed on live `en` payloads).
+- **CardBrief / CardResume:** `{id, localId, name, image?}`.
+- **Set** (full): `id, name, logo?, symbol?, cardCount {total, official, reverse?,
+  holo?, firstEd?, normal?}, serie (SerieBrief), abbreviation? {official,
+  localized?}, tcgOnline?, releaseDate (YYYY-MM-DD), legal {standard,
   expanded}, boosters?, cards: CardBrief[]`
 - **SetBrief:** `{id, name, logo?, symbol?, cardCount {total, official}}`
-- **Serie** (full): `{id, name, logo?, sets: SetBrief[]}` · **SerieBrief:** `{id, name}`
+- **Serie** (full): `{id, name, logo?, releaseDate?, firstSet?: SetBrief,
+  lastSet?: SetBrief, sets: SetBrief[]}` · **SerieBrief:** `{id, name, logo?}`
 
 ### 5.2 Canonical domain `Card` (D5 = unify)
 
@@ -326,8 +340,10 @@ POST   /lobby                    # create a lobby (mint code, return it)
 1. ✅ **Scaffold** `apps/api` (Hono + wrangler) + `packages/schema` (+ stub
    `packages/engine`); Bun workspaces; `/health` deployed green at
    `https://luminous-api.jofrescari.workers.dev/health`.
-2. **Schemas** — tcgdex Zod schemas, tested against live responses; move lobby
-   types/reducer into `packages/schema`.
+2. ✅ **Schemas** — tcgdex Zod schemas (`packages/schema/src/tcgdex/`, fixtures
+   + 19 tests + live sweep via `bun packages/schema/scripts/validate-live.ts`,
+   370 requests / 0 failures); lobby types/reducer moved to
+   `packages/schema/src/lobby/`, web importers now use `@luminous/schema`.
 3. **D1 migrations** — catalog + user tables (Drizzle).
 4. **Ingest + R2 mirror** — traverse tcgdex (SV-era), upsert D1, stream images
    to R2; idempotent + re-runnable.

@@ -1,4 +1,4 @@
-import type { LobbyMessage } from "./types";
+import type { LobbyMessage } from "@luminous/schema";
 
 // The transport the two peers talk over. The rest of the online feature depends
 // only on this interface — never on BroadcastChannel directly — so a real

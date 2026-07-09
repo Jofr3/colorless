@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createLobbyChannel, type LobbyChannel } from "./channel";
 import {
   applyIntent,
   bothReady,
   createSnapshot,
+  type LobbyIntent,
+  type LobbySlot,
+  type LobbySnapshot,
   makePlayer,
   removeGuest,
   seatGuest,
   setGuestConnected,
-} from "./lobbyReducer";
-import type { LobbyIntent, LobbySlot, LobbySnapshot } from "./types";
+} from "@luminous/schema";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createLobbyChannel, type LobbyChannel } from "./channel";
 
 // The React binding for the lobby: it wires the transport channel to the pure
 // reducer, runs the heartbeats and countdown that need real time, and hands the

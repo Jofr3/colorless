@@ -1,9 +1,9 @@
+import type { PlayerState } from "@luminous/schema";
 import { AppBackdrop } from "../../../components/AppBackdrop";
 import { HomeButton } from "../../../components/HomeButton";
 import { ArrowLeftIcon, SwordsIcon } from "../../../components/icons";
 import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../../../lib/glass";
 import { CardBackStack } from "../../decks/CardBackStack";
-import type { PlayerState } from "../net/types";
 import { type Side, SIDE_STYLES } from "../theme";
 
 // Stand-in for the real match. Both players are ready and the game "starts" —

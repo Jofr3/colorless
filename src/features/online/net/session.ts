@@ -1,5 +1,5 @@
+import type { LobbySlot } from "@luminous/schema";
 import { readPersisted, writePersisted } from "../../../lib/persistedState";
-import type { LobbySlot } from "./types";
 
 // Who you are, per lobby. Split across two stores on purpose:
 //   • the display name lives in localStorage, so it's remembered across visits;
