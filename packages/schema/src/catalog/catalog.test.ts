@@ -1,0 +1,111 @@
+import { describe, expect, it } from "vitest";
+import { cardBriefSchema, cardSchema } from "./card";
+import { paginatedSchema } from "./page";
+import { serieSchema } from "./serie";
+import { setWithCardsSchema } from "./set";
+
+// A full canonical Pokémon card — the mapped shape of the real ingested
+// sv06.5-001 row (Joltik, Shrouded Fable).
+const joltikCard = {
+  id: "sv06.5-001",
+  setId: "sv06.5",
+  localId: "001",
+  name: "Joltik",
+  category: "Pokemon",
+  image: "/assets/cards/sv06.5-001",
+  illustrator: "Naoyo Kimura",
+  rarity: "Common",
+  regulationMark: "H",
+  hp: 40,
+  stage: "Basic",
+  evolveFrom: null,
+  types: ["Grass"],
+  retreat: 1,
+  abilities: null,
+  attacks: [{ cost: ["Grass"], name: "Splashing Dodge", damage: 10 }],
+  weaknesses: [{ type: "Fire", value: "×2" }],
+  resistances: null,
+  trainerType: null,
+  energyType: null,
+  effect: null,
+  legal: { standard: true, expanded: true },
+  variants: { normal: true, reverse: true, holo: false, firstEdition: false, wPromo: false },
+};
+
+describe("catalog cardSchema", () => {
+  it("parses a full Pokémon card with nulled off-category fields", () => {
+    const card = cardSchema.parse(joltikCard);
+    expect(card.types).toEqual(["Grass"]);
+    expect(card.trainerType).toBeNull();
+  });
+
+  it("rejects a card whose image is not null but missing", () => {
+    const { image: _image, ...withoutImage } = joltikCard;
+    expect(cardSchema.safeParse(withoutImage).success).toBe(false);
+  });
+
+  it("rejects unknown categories", () => {
+    expect(cardSchema.safeParse({ ...joltikCard, category: "Pokémon" }).success).toBe(false);
+  });
+});
+
+describe("catalog set/serie schemas", () => {
+  const setBrief = {
+    id: "sv06.5",
+    serieId: "sv",
+    name: "Shrouded Fable",
+    logo: "/assets/sets/sv06.5",
+    symbol: "/assets/sets/sv06.5",
+    releaseDate: "2024-08-02",
+    cardCount: { total: 99, official: 64 },
+  };
+
+  it("parses a full set with its card briefs", () => {
+    const set = setWithCardsSchema.parse({
+      ...setBrief,
+      legal: { standard: true, expanded: true },
+      tcgOnline: null,
+      cards: [
+        {
+          id: "sv06.5-001",
+          name: "Joltik",
+          category: "Pokemon",
+          rarity: "Common",
+          image: "/assets/cards/sv06.5-001",
+          setId: "sv06.5",
+          localId: "001",
+        },
+      ],
+    });
+    expect(set.cards).toHaveLength(1);
+  });
+
+  it("rejects a releaseDate that is not a plain date", () => {
+    expect(
+      serieSchema.safeParse({
+        id: "sv",
+        name: "Scarlet & Violet",
+        releaseDate: "2023-03-31T00:00:00Z",
+        sets: [setBrief],
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("paginatedSchema", () => {
+  it("wraps an item schema into the list envelope", () => {
+    const envelope = paginatedSchema(cardBriefSchema).parse({
+      items: [],
+      page: 1,
+      pageSize: 50,
+      total: 0,
+    });
+    expect(envelope.items).toEqual([]);
+  });
+
+  it("rejects a 0-based page and negative totals", () => {
+    const schema = paginatedSchema(cardBriefSchema);
+    expect(schema.safeParse({ items: [], page: 0, pageSize: 50, total: 0 }).success).toBe(false);
+    expect(schema.safeParse({ items: [], page: 1, pageSize: 50, total: -1 }).success).toBe(false);
+  });
+});

@@ -3,22 +3,27 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-09 — build session (P1 milestone 4: ingest + R2 asset layer).
+**Last updated:** 2026-07-09 — build session (P1 milestone 5: catalog read API).
 
 ## Resume point
-**M4 is built, tested and deployed; M5 (catalog read API) is next/in flight.**
-Blocked loose end: the **remote** D1 is still on migration 0000 — the session's
-permission gate blocked applying 0001/0002 remotely, so the full remote ingest
-failed fast (`table series has no column named logo_url`) and was not retried.
-To finish: `bun run db:migrate:remote` from `apps/api` (user must run/approve),
-then `bun scripts/ingest.ts --serie sv --remote` (~20–25 min, idempotent, safe
-to rerun; expect 19 sets / ~3.7k cards). Until then the deployed `/assets/*`
-routes will error on D1 lookups (missing column) — `/health` is unaffected.
+**M5 is built and verified locally** (273 tests), **uncommitted** on `backend`.
+Loose ends, in order:
+1. **Remote migrations + ingest** (user must run/approve — the permission gate
+   blocks Claude): `bun run db:migrate:remote` from `apps/api` (remote D1 is
+   still on migration 0000; deployed `/assets/*` errors until then), then
+   `bun scripts/ingest.ts --serie sv --remote` (~20–25 min, idempotent;
+   19 sets / ~3.7k cards).
+2. **Commit** M5, **deploy** (the Worker needs a redeploy to serve the new
+   catalog routes + `CACHE` KV binding).
+Then start **milestone 6** (`workstreams/backend-data.md` §8): auth —
+email/password + Discord/Google OAuth, server sessions (§3.5). Needs OAuth app
+registrations (Discord + Google consoles) and `wrangler secret`s — user-side
+prerequisites to raise early.
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | 🚧 M1–M4 done (remote ingest pending); M5 (read API) next |
+| backend-data | P1 | 🚧 M1–M5 done (remote ingest pending); M6 (auth) next |
 | deck-builder | P2 | 📋 Specced + code-mapped (`workstreams/deck-builder.md`) — blocked on P1 |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
@@ -27,6 +32,19 @@ routes will error on D1 lookups (missing column) — `/health` is unaffected.
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-09** (build) — **P1 milestone 5** (sub-agent): public catalog read
+  API + the **canonical domain `Card`** (D5) in `packages/schema/src/catalog/`
+  (unprefixed names; flat shape, consumers narrow on `category`; `image` is
+  OUR asset base path `/assets/cards/{id}`, quality appended by clients).
+  Routes in `apps/api/src/catalog/`: `GET /cards` (name/category/type/rarity/
+  set/regulationMark/hpMin/hpMax/legal filters; page/pageSize≤100 envelope
+  with total), `/cards/:id`, `/sets[?serie=]`, `/sets/:id` (+its cards),
+  `/series`; all boundary-parsed through the domain schemas; KV cache-aside
+  (binding `CACHE`, TTL 3600, normalized keys, only 200s) with
+  `x-luminous-cache`. `@hono/zod-validator@0.8` works with zod 4 (hono range
+  bumped to ^4.12). Suite 242→273; wrangler-dev transcript against the real
+  123-card local D1 all correct. Uncommitted; deploy + remote ingest pending
+  → resume point.
 - **2026-07-09** (build) — **P1 milestone 4** (sub-agent) + **D9 logged**:
   ingest pipeline (`apps/api/src/ingest/` sql/map/upserts + 31 tests;
   CLI `apps/api/scripts/ingest.ts` — `--sets|--serie`, `--remote`, `--dry-run`)

@@ -274,6 +274,17 @@ model, and derive the two existing view shapes from it:
   math. Preserve the existing energy-type/subtype/rarity/format vocabulary.
 - **`CardModel`** view (`src/features/playmat/types.ts`) — in-play card.
 
+> **Status (M5):** the canonical domain now exists in
+> `packages/schema/src/catalog/` — unprefixed `Card`/`CardBrief`,
+> `Set`/`SetBrief`/`SetWithCards`, `Serie`/`SerieBrief` and the
+> `paginatedSchema` envelope. One flat object per card (nullability mirrors
+> the §5.3 columns; consumers narrow on `category`), and `image`/`logo`/
+> `symbol` are OUR asset **base paths** (`/assets/cards/{id}`,
+> `/assets/sets/{id}` — clients append `/{quality}.{ext}` / `/logo.{ext}` /
+> `/symbol.{ext}`), null when the row has no origin URL. The
+> `BuilderCard`/`CardModel` view projections remain future work
+> (M9 frontend swap / P2).
+
 Keep the existing `Deck` / `Folder` shapes (`src/features/decks/data.ts`) as the
 API's deck representation, extended with a card list.
 
@@ -323,12 +334,17 @@ from tcgdex; user-data timestamps are integer epoch ms.
 ```
 GET    /health
 
-# Catalog (public, KV-cached)
-GET    /cards            # search: name, types, hp, rarity, set, regulationMark, page…
-GET    /cards/:id
-GET    /sets
-GET    /sets/:id
-GET    /series
+# Catalog (public; KV cache-aside on every 200, 1h TTL, `x-luminous-cache: hit|miss`,
+# key = normalized path+sorted-query; invalid query params → terse 400 JSON)
+GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
+                         #   name (substring, case-insensitive), category, type,
+                         #   rarity, set, regulationMark, hpMin/hpMax (inclusive),
+                         #   legal=standard|expanded; page (1-based, default 1),
+                         #   pageSize (default 50, max 100); order: set_id, local_id
+GET    /cards/:id        # full canonical Card; 404 JSON if absent
+GET    /sets             # SetBrief[] (optional ?serie=), ordered by releaseDate
+GET    /sets/:id         # full Set + cards: CardBrief[] (ordered by local_id)
+GET    /series           # Serie[] = SerieBrief + nested SetBrief[]
 
 # Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists, else 404
 GET    /assets/cards/:cardId/:file   # high|low . webp|png|jpg (e.g. high.webp)
@@ -385,7 +401,9 @@ POST   /lobby                    # create a lobby (mint code, return it)
    upserts, idempotent, `--dry-run`) + lazy cache-aside `/assets/*` mirror (D9,
    §3.4). *Remote migrations 0001/0002 + full `--serie sv --remote` run pending
    user approval.*
-5. **Catalog read API** — cards/sets/series with filtering/pagination + KV cache.
+5. ✅ **Catalog read API** — cards/sets/series with filtering/pagination + KV
+   cache (`apps/api/src/catalog/`); canonical domain `Card` in
+   `packages/schema/src/catalog/` (§5.2, §6).
 6. **Auth** — email/password + Discord/Google OAuth; sessions.
 7. **Deck persistence API** — decks/folders CRUD tied to user.
 8. **Lobby Durable Object** — WS server running the reducer; swap client

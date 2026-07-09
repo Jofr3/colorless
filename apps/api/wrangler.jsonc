@@ -25,5 +25,14 @@
       "binding": "ASSETS",
       "bucket_name": "luminous-assets"
     }
+  ],
+  "kv_namespaces": [
+    {
+      // Response cache for the public catalog GETs (§3.3/§6): cache-aside,
+      // 1h TTL, keyed by normalized path+query. Simulated locally by
+      // `wrangler dev` under .wrangler/state.
+      "binding": "CACHE",
+      "id": "a3b270dcb3df4706be2f3273df342c0e"
+    }
   ]
 }
