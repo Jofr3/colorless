@@ -3,9 +3,13 @@
 
 import { type HealthResponse, healthResponseSchema } from "@luminous/schema";
 import { Hono } from "hono";
+import { assetsRoutes } from "./assets/routes";
 import type { Env } from "./env";
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Lazy R2 mirror for tcgdex images (D9): /assets/cards/…, /assets/sets/….
+app.route("/assets", assetsRoutes);
 
 app.get("/health", (c) => {
   const payload: HealthResponse = {

@@ -6,6 +6,7 @@
     "moduleResolution": "bundler",
     "moduleDetection": "force",
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
     "strict": true,

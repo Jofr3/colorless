@@ -115,18 +115,33 @@ luminous_ui/
 - **Durable Objects** — one instance **per lobby** (keyed by the join code);
   holds the authoritative `LobbySnapshot` and fans out over WebSocket.
 
-### 3.4 Ingest & image-sync pipeline
+### 3.4 Ingest & asset pipeline (D9: local data ingest, lazy image mirror)
 
-A separate entrypoint (not the request Worker), runnable on demand and later on
-a **Cron Trigger**:
+**Card data** is ingested by a local Bun script — `apps/api/scripts/ingest.ts`
+(`bun scripts/ingest.ts [--serie sv | --sets sv01,sv02] [--remote] [--dry-run]`,
+run from `apps/api/`) — not by the request Worker:
 
-1. Traverse series → sets → cards from tcgdex (**≈ assumption:** official
-   `@tcgdex/sdk`; validate each payload with our Zod schemas).
-2. **Filter to SV-era / Standard scope** (D3) on ingest, but store into the
-   **full-history-capable schema** so widening scope is data-only later.
-3. Upsert into D1 (idempotent by tcgdex `id`; skip unchanged via `updated`).
-4. Per asset: fetch `{image}/high.webp` (+ small), **stream into R2** under a
-   stable key, persist the R2 URL on the row.
+1. Traverse serie → sets → each card's full detail from the tcgdex REST API
+   (sequential, ~50ms spacing), validating every payload with the Zod schemas
+   in `@luminous/schema`; any card validation failure aborts that set with a
+   report.
+2. Map onto the §5.3 rows (missing `legal` → false/false; category-specific
+   fields NULL elsewhere; `*_url` columns keep the tcgdex **origin** base
+   URLs) and generate batched upsert SQL — `INSERT … ON CONFLICT(id) DO
+   UPDATE`, ≤100 cards per file (`apps/api/src/ingest/`, unit-tested).
+3. Apply in FK order (series → set → card chunks) via
+   `wrangler d1 execute luminous --local|--remote --file …`. Idempotent by
+   tcgdex `id` — rerunning is always safe; `--dry-run` writes SQL, applies
+   nothing.
+
+**Images are NOT mirrored at ingest time.** The Worker's `GET /assets/*`
+routes (§6) mirror lazily, cache-aside: R2 hit → serve; miss → resolve the
+origin base URL from D1, fetch the original from tcgdex, store it in R2,
+respond. Rationale: a full SV-era backfill is ~10k images — over Worker
+subrequest limits, slow via CLI puts, and mostly assets nobody views.
+
+A future **Cron Trigger** (stretch) will run small incremental data deltas
+in-Worker; the big backfill stays a local script.
 
 ### 3.5 Auth (D2 / D2a)
 
@@ -205,8 +220,10 @@ Researched from the official docs so the implementation can be exact.
   `https://assets.tcgdex.net/en/swsh/swsh3/136/high.png`
 - **Set logo/symbol:** `{logo}.{ext}` / `{symbol}.{ext}`.
 
-> We **mirror into R2 (D4)**: ingest resolves these tcgdex asset URLs, stores the
-> bytes in R2, and persists **our** R2 URL. tcgdex ids (`swsh3-136`) become our
+> We **mirror into R2 lazily (D4/D9)**: the catalog stores these extensionless
+> origin base URLs (`cards.image_url`, `sets.logo_url`/`symbol_url`,
+> `series.logo_url`), and the `/assets/*` routes (§3.4, §6) copy an asset into
+> R2 the first time it is requested. tcgdex ids (`swsh3-136`) become our
 > canonical id — no more Scrydex reconciliation.
 
 ---
@@ -267,8 +284,8 @@ Full-history-capable; SV-era rows only, for now. Implemented with Drizzle in
 
 ```sql
 -- Catalog (ingested; read-only to the app)
-series(id PK, name, release_date, logo_r2_url)
-sets(id PK, serie_id FK, name, logo_r2_url, symbol_r2_url,
+series(id PK, name, release_date, logo_url)
+sets(id PK, serie_id FK, name, logo_url, symbol_url,
      release_date, count_total, count_official, legal_standard, legal_expanded,
      tcg_online)
 cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Energy
@@ -277,7 +294,7 @@ cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Ener
       abilities_json, attacks_json, weaknesses_json, resistances_json,
       trainer_type, energy_type, effect,                 -- Trainer/Energy fields
       legal_standard, legal_expanded,
-      variants_json, image_r2_url, updated)
+      variants_json, image_url, updated)
 
 -- User data (read-write)
 users(id PK, email UNIQUE, display_name, password_hash?, email_verified, created_at)
@@ -290,10 +307,14 @@ deck_cards(deck_id FK, card_id FK, count, PRIMARY KEY(deck_id, card_id))
 
 Deltas from the first draft, per the live tcgdex shapes: `series.release_date`
 added; `sets.updated` dropped (tcgdex sets carry no `updated`);
-`cards.abilities_json` added. tcgdex `variants_detailed` (per-physical-print
-foil/stamp data), `pricing` and `boosters` are deliberately **not** persisted —
-rationale in `apps/api/src/db/catalog.ts`. Catalog dates/timestamps are ISO
-text verbatim from tcgdex; user-data timestamps are integer epoch ms.
+`cards.abilities_json` added. Per D9 (§3.4), the asset columns are the tcgdex
+**origin** base URLs — extensionless, per §4.4 — not R2 URLs: the original
+`*_r2_url` columns were replaced by `cards.image_url`, `sets.logo_url`/
+`symbol_url`, `series.logo_url` (migrations 0001/0002). tcgdex
+`variants_detailed` (per-physical-print foil/stamp data), `pricing` and
+`boosters` are deliberately **not** persisted — rationale in
+`apps/api/src/db/catalog.ts`. Catalog dates/timestamps are ISO text verbatim
+from tcgdex; user-data timestamps are integer epoch ms.
 
 ---
 
@@ -308,6 +329,10 @@ GET    /cards/:id
 GET    /sets
 GET    /sets/:id
 GET    /series
+
+# Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists, else 404
+GET    /assets/cards/:cardId/:file   # high|low . webp|png|jpg (e.g. high.webp)
+GET    /assets/sets/:setId/:file     # logo|symbol . png|webp  (e.g. symbol.png)
 
 # Auth (D2a)
 POST   /auth/register            # email + password
@@ -356,8 +381,10 @@ POST   /lobby                    # create a lobby (mint code, return it)
    (`apps/api/src/db/`, migration `apps/api/drizzle/0000_tired_sentry.sql`,
    scripts `db:generate` / `db:migrate:local` / `db:migrate:remote`). Applied
    locally and remotely.
-4. **Ingest + R2 mirror** — traverse tcgdex (SV-era), upsert D1, stream images
-   to R2; idempotent + re-runnable.
+4. ✅ **Ingest + R2 mirror** — local CLI `apps/api/scripts/ingest.ts` (validated
+   upserts, idempotent, `--dry-run`) + lazy cache-aside `/assets/*` mirror (D9,
+   §3.4). *Remote migrations 0001/0002 + full `--serie sv --remote` run pending
+   user approval.*
 5. **Catalog read API** — cards/sets/series with filtering/pagination + KV cache.
 6. **Auth** — email/password + Discord/Google OAuth; sessions.
 7. **Deck persistence API** — decks/folders CRUD tied to user.

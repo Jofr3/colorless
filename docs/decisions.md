@@ -12,10 +12,13 @@
 | D6 | Online lobby server | In scope — real Durable Object (WebSocket) lobby |
 | D7 | Game engine placement | Separate **`packages/engine`** (pure logic) — imported by both `apps/web` (local play) and `apps/api` (authoritative DO). *Why: the engine runs in two runtimes; an app can't import another app.* |
 | D8 | Card-effect modeling | **Composable, data-driven op programs** over shared archetype templates (not per-card functions); engine emits **semantic events** consumed by the animation layer. *Why: cards are minor variations on a few archetypes; keeps authoring + animation cheap. Detail in `workstreams/simulator.md`.* |
+| D9 | Image mirroring & ingest execution (refines D4/§3.4) | Images mirror into R2 **lazily** — a Worker route (`GET /assets/…`) serves from R2 and on miss fetches tcgdex origin, stores, streams; catalog rows keep tcgdex **origin** URLs. Card-data backfill runs as a **local Bun script** applying batched upsert SQL via `wrangler d1 execute`; a future cron does small in-Worker deltas only. *Why: a full SV backfill is ~10k images — over Worker subrequest limits in one shot and hours of CLI puts; cache-aside mirrors exactly what's viewed and stays within limits.* (2026-07-09) |
 
 ## Locked assumptions (override explicitly if they change)
 - Bun-workspace monorepo; API + Lobby DO on Cloudflare **Workers** via `wrangler`.
-- **Hono** + **Zod**; **Drizzle** over D1; official `@tcgdex/sdk` for ingest.
+- **Hono** + **Zod**; **Drizzle** over D1. Ingest uses **plain REST fetch +
+  our Zod schemas** — the official `@tcgdex/sdk` turned out unnecessary since
+  we validate every payload ourselves anyway (changed 2026-07-09, was: SDK).
 - Server **sessions** (http-only cookie), not stateless JWT.
 - Ingest filters to SV-era but writes the full-history schema.
 - attacks/weaknesses/resistances stored as JSON columns for now (promote to

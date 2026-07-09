@@ -3,19 +3,22 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-09 — build session (P1 milestone 3: Drizzle + D1 migrations).
+**Last updated:** 2026-07-09 — build session (P1 milestone 4: ingest + R2 asset layer).
 
 ## Resume point
-P1 **milestone 3 is done** — migration applied to **remote** D1 too (all 9
-tables verified live on `luminous`, id `735f0fb5-…`). Next: **milestone 4**
-(`workstreams/backend-data.md` §8): the tcgdex→D1 ingest + R2 image mirror
-(needs an R2 bucket created first; heed the M4 notes in the session log below —
-FK insert order, upsert-don't-delete, legal default).
+**M4 is built, tested and deployed; M5 (catalog read API) is next/in flight.**
+Blocked loose end: the **remote** D1 is still on migration 0000 — the session's
+permission gate blocked applying 0001/0002 remotely, so the full remote ingest
+failed fast (`table series has no column named logo_url`) and was not retried.
+To finish: `bun run db:migrate:remote` from `apps/api` (user must run/approve),
+then `bun scripts/ingest.ts --serie sv --remote` (~20–25 min, idempotent, safe
+to rerun; expect 19 sets / ~3.7k cards). Until then the deployed `/assets/*`
+routes will error on D1 lookups (missing column) — `/health` is unaffected.
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | 🚧 M1–M3 done; M4 (ingest+R2) next |
+| backend-data | P1 | 🚧 M1–M4 done (remote ingest pending); M5 (read API) next |
 | deck-builder | P2 | 📋 Specced + code-mapped (`workstreams/deck-builder.md`) — blocked on P1 |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
@@ -24,6 +27,20 @@ FK insert order, upsert-don't-delete, legal default).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-09** (build) — **P1 milestone 4** (sub-agent) + **D9 logged**:
+  ingest pipeline (`apps/api/src/ingest/` sql/map/upserts + 31 tests;
+  CLI `apps/api/scripts/ingest.ts` — `--sets|--serie`, `--remote`, `--dry-run`)
+  and the lazy R2 asset proxy (`/assets/cards/:id/:file`,
+  `/assets/sets/:id/:file`; cache-aside, `x-luminous-cache: hit|miss`).
+  Migrations 0001/0002 swap `*_r2_url` → origin `*_url` columns (two-step
+  drop-then-add avoids drizzle-kit's interactive rename prompt in non-TTY).
+  Local ingest of sve+sv06.5 (123 cards) verified incl. idempotent rerun and
+  FK integrity; wrangler-dev curl transcript confirms miss→hit mirroring and
+  the 404 allowlist. Suite 242 tests. R2 bucket `luminous-assets` + KV plans
+  per §8.5 next. **NixOS quirk:** `wrangler dev` needs
+  `SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` for workerd origin
+  fetches (production + node-side CLI unaffected). Worker deployed (bindings
+  DB + ASSETS live); remote migrations/ingest pending → resume point.
 - **2026-07-09** (build) — **P1 milestone 3**: Drizzle schema + D1 migrations
   (sub-agent). `apps/api/src/db/{catalog,users,schema}.ts` — 9 tables per
   §5.3 (updated where reality differed: `series.release_date` added,

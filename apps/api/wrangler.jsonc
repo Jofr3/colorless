@@ -16,5 +16,14 @@
       // them up directly — no copying step.
       "migrations_dir": "drizzle"
     }
+  ],
+  "r2_buckets": [
+    {
+      // Lazily-mirrored tcgdex assets (D9): populated cache-aside by the
+      // GET /assets/* routes, never by a backfill job. `wrangler dev`
+      // simulates the bucket locally under .wrangler/state.
+      "binding": "ASSETS",
+      "bucket_name": "luminous-assets"
+    }
   ]
 }

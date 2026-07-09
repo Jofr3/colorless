@@ -5,6 +5,9 @@
 //
 // Conventions:
 // - ids are tcgdex ids, stored as text PKs ("sv" / "sv01" / "sv01-001").
+// - `*_url` asset columns store the tcgdex ORIGIN base URLs, extensionless
+//   (§4.4) — NOT R2 URLs. Images are mirrored into R2 lazily by the
+//   `/assets/*` Worker routes (cache-aside), which use these bases on a miss.
 // - Catalog dates/timestamps stay ISO TEXT, verbatim from tcgdex ("YYYY-MM-DD"
 //   dates; `cards.updated` mixes `Z` and `+HH:MM` offsets). User-data tables
 //   use integer epoch ms instead — see ./users.ts.
@@ -29,7 +32,8 @@ export const series = sqliteTable("series", {
   name: text("name").notNull(),
   /** "YYYY-MM-DD"; optional upstream (used to order series chronologically). */
   releaseDate: text("release_date"),
-  logoR2Url: text("logo_r2_url"),
+  /** tcgdex origin logo base URL, extensionless (§4.4: append `.png`/`.webp`). */
+  logoUrl: text("logo_url"),
 });
 
 export const sets = sqliteTable(
@@ -40,8 +44,9 @@ export const sets = sqliteTable(
       .notNull()
       .references(() => series.id),
     name: text("name").notNull(),
-    logoR2Url: text("logo_r2_url"),
-    symbolR2Url: text("symbol_r2_url"),
+    /** tcgdex origin logo/symbol base URLs, extensionless (§4.4: append `.png`/`.webp`). */
+    logoUrl: text("logo_url"),
+    symbolUrl: text("symbol_url"),
     /** "YYYY-MM-DD", required upstream. */
     releaseDate: text("release_date").notNull(),
     countTotal: integer("count_total").notNull(),
@@ -91,7 +96,8 @@ export const cards = sqliteTable(
     legalExpanded: integer("legal_expanded", { mode: "boolean" }).notNull(),
     /** The 5 print-run flags {normal, reverse, holo, firstEdition, wPromo}. */
     variantsJson: text("variants_json", { mode: "json" }).$type<TcgdexVariants>(),
-    imageR2Url: text("image_r2_url"),
+    /** tcgdex origin image base URL, extensionless (§4.4: append `/high.webp` etc.). */
+    imageUrl: text("image_url"),
     /** tcgdex `updated` ISO timestamp, verbatim — ingest skips unchanged rows. */
     updated: text("updated"),
   },
