@@ -6,22 +6,23 @@
 **Last updated:** 2026-07-13 — build session (P1 milestone 9: frontend swap, committed).
 
 ## Resume point
-**M1–M9 are committed** (M1–M8 deployed earlier; the M9 commit also touches
-`apps/api` — the catalog extension needs an **`apps/api` deploy** if it hasn't
-happened: repeatable `type`/`rarity`, `sort`, extended `CardBrief`, KV keys
-`catalog:v2:`). The web app now runs fully on the API: server catalog in the
-builder, auth UI (register/login/OAuth buttons/account control), decks &
-folders CRUD with optimistic updates, deck saves as debounced PATCHes. E2E
-verified against local `wrangler dev` (see `.claude/skills/verify/SKILL.md`
-for the drive recipe — browse via `localhost:5173`, NOT 127.0.0.1: CORS).
-Next concrete action: **deploy `apps/api`** + prod-smoke the v2 catalog
-(`/cards?type=Fire&type=Water&sort=hp-desc` should return the extended
-brief), then pick up **P2 (deck-builder)** — its task list in
+**M1–M9 are committed and deployed** (M9 api deploy 2026-07-13, version
+`9838095a`, prod-smoked: repeatable `type`/`rarity` + `sort=hp-desc` return
+the extended `CardBrief` against the full 3,698-card catalog; KV
+`catalog:v2:` miss→hit verified). The web app now runs fully on the API:
+server catalog in the builder, auth UI (register/login/OAuth
+buttons/account control), decks & folders CRUD with optimistic updates,
+deck saves as debounced PATCHes. E2E verified against local `wrangler dev`
+(see `.claude/skills/verify/SKILL.md` for the drive recipe — browse via
+`localhost:5173`, NOT 127.0.0.1: CORS).
+Next concrete action: pick up **P2 (deck-builder)** — its task list in
 `workstreams/deck-builder.md` now carries an **M9 review backlog** (verified
 findings deferred out of M9) to fold into the P2 tasks.
 Web prod build/deploy story is still unset (`VITE_API_ORIGIN` must be set at
-build time; CSP derives from it). Still user-side: OAuth stays 503 until the
-Discord/Google apps are registered
+build time; CSP derives from it) — and note the deployed Worker's
+`APP_ORIGIN` var is still `http://localhost:5173`, so prod cookie-CORS only
+admits a local dev frontend until the web app has a real origin. Still
+user-side: OAuth stays 503 until the Discord/Google apps are registered
 (redirect `https://luminous-api.jofrescari.workers.dev/auth/oauth/{provider}/callback`
 + localhost:8787 variants) and the four secrets set via `wrangler secret put`
 from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
