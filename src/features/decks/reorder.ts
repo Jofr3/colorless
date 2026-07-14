@@ -38,21 +38,33 @@ export function previewOrder(visibleIds: string[], draggedId: string, index: num
 
 /** Rewrite a flat library array so the items matching `inView` take the order in
     `orderedIds`, while every out-of-view item keeps its exact slot. Only the
-    in-view items' relative order changes — they refill the same positions they
-    occupied. Ids in `orderedIds` with no matching item are skipped; in-view
-    slots left without an id keep their original item (defensive, shouldn't
-    happen when `orderedIds` is a permutation of the in-view ids). */
-export function applyReorder<T extends { id: string }>(
+    in-view items' relative order changes — they refill the same slots they
+    occupied, and each slot's occupant inherits the slot's server `position`
+    (the array is position-sorted, so array surgery and position rewrite are
+    the same permutation). `changes` lists exactly the rows whose position
+    changed — the reorder endpoint's payload. Ids in `orderedIds` with no
+    matching item are skipped; in-view slots left without an id keep their
+    original item (defensive, shouldn't happen when `orderedIds` is a
+    permutation of the in-view ids). */
+export function applyReorder<T extends { id: string; position: number }>(
   all: T[],
   inView: (item: T) => boolean,
   orderedIds: string[],
-): T[] {
+): { items: T[]; changes: { id: string; position: number }[] } {
   const byId = new Map(all.map((item) => [item.id, item] as const));
   const ordered = orderedIds
     .map((id) => byId.get(id))
     .filter((item): item is T => item !== undefined);
+  const changes: { id: string; position: number }[] = [];
   let cursor = 0;
-  return all.map((item) => (inView(item) ? (ordered[cursor++] ?? item) : item));
+  const items = all.map((item) => {
+    if (!inView(item)) return item;
+    const incoming = ordered[cursor++] ?? item;
+    if (incoming.id === item.id) return item;
+    changes.push({ id: incoming.id, position: item.position });
+    return { ...incoming, position: item.position };
+  });
+  return { items, changes };
 }
 
 /** Whether two id sequences are identical (same length, same order). Used to

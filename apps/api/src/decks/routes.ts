@@ -23,6 +23,8 @@ import {
   folderSchema,
   patchDeckRequestSchema,
   patchFolderRequestSchema,
+  type ReorderRequest,
+  reorderRequestSchema,
 } from "@luminous/schema";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
@@ -33,7 +35,7 @@ import { requireUser } from "../auth/requireUser";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
-import { chunk, createsCycle, D1_MAX_BOUND_PARAMS, unknownCardIds } from "./validate";
+import { chunk, createsCycle, D1_MAX_BOUND_PARAMS, unknownIds } from "./validate";
 
 export const deckRoutes = new Hono<{ Bindings: Env }>();
 export const folderRoutes = new Hono<{ Bindings: Env }>();
@@ -95,13 +97,64 @@ async function guardUnknownCards(
     db.select({ id: cards.id }).from(cards).where(inArray(cards.id, group)),
   );
   const results = (await db.batch(queries as Batch)) as { id: string }[][];
-  const unknown = unknownCardIds(
+  const unknown = unknownIds(
     ids,
     results.flat().map((row) => row.id),
   );
   return unknown.length === 0
     ? null
     : c.json({ error: "unknown card id(s)", cardIds: unknown }, 400);
+}
+
+/** The `position` a created deck/folder takes: one below the user's current
+    minimum, so new rows land FIRST in the position-ordered lists (the web
+    grid prepends creates). Two racing creates can tie — harmless, the id
+    tiebreak keeps the order stable. */
+async function nextPrependPosition(
+  db: Db,
+  table: typeof decks | typeof folders,
+  userId: string,
+): Promise<number> {
+  const row = await db
+    .select({ min: sql<number | null>`min(${table.position})` })
+    .from(table)
+    .where(eq(table.userId, userId))
+    .get();
+  return (row?.min ?? 1) - 1;
+}
+
+/** Both reorder routes: absolute position assignments, applied atomically in
+    one batch. Any id that isn't the CALLER's answers a 400 naming it (the
+    ids came from the request body, and a foreign id reads the same as a
+    missing one — no existence leak). */
+async function reorderRows(
+  c: Context,
+  db: Db,
+  table: typeof decks | typeof folders,
+  noun: "deck" | "folder",
+  userId: string,
+  positions: ReorderRequest["positions"],
+): Promise<Response> {
+  const ids = positions.map((entry) => entry.id);
+  const queries: BatchItem<"sqlite">[] = chunk(ids, D1_MAX_BOUND_PARAMS - 1).map((group) =>
+    db
+      .select({ id: table.id })
+      .from(table)
+      .where(and(eq(table.userId, userId), inArray(table.id, group))),
+  );
+  const owned = (await db.batch(queries as Batch)) as { id: string }[][];
+  const unknown = unknownIds(
+    ids,
+    owned.flat().map((row) => row.id),
+  );
+  if (unknown.length > 0) {
+    return c.json({ error: `unknown ${noun} id(s)`, ids: unknown }, 400);
+  }
+  const updates: BatchItem<"sqlite">[] = positions.map(({ id, position }) =>
+    db.update(table).set({ position }).where(eq(table.id, id)),
+  );
+  await db.batch(updates as Batch);
+  return c.body(null, 204);
 }
 
 /** Chunked `deck_cards` inserts for one deck (3 bound params per row). */
@@ -131,7 +184,7 @@ deckRoutes.get("/", requireUser, async (c) => {
     .leftJoin(deckCards, eq(deckCards.deckId, decks.id))
     .where(eq(decks.userId, c.get("user").id))
     .groupBy(decks.id)
-    .orderBy(asc(decks.name), asc(decks.id))
+    .orderBy(asc(decks.position), asc(decks.id))
     .all();
   return c.json(
     deckSummariesResponseSchema.parse(
@@ -176,6 +229,7 @@ deckRoutes.post("/", validateBody(createDeckRequestSchema), requireUser, async (
     name: body.name,
     format: body.format ?? null,
     tint: body.tint,
+    position: await nextPrependPosition(db, decks, user.id),
     updated: new Date(),
   };
   await db.batch([
@@ -237,6 +291,17 @@ deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, asyn
   return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
 });
 
+deckRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, async (c) => {
+  return reorderRows(
+    c,
+    drizzle(c.env.DB),
+    decks,
+    "deck",
+    c.get("user").id,
+    c.req.valid("json").positions,
+  );
+});
+
 deckRoutes.delete("/:id", requireUser, async (c) => {
   const deleted = await drizzle(c.env.DB)
     .delete(decks)
@@ -256,7 +321,7 @@ folderRoutes.get("/", requireUser, async (c) => {
     .select()
     .from(folders)
     .where(eq(folders.userId, c.get("user").id))
-    .orderBy(asc(folders.name), asc(folders.id))
+    .orderBy(asc(folders.position), asc(folders.id))
     .all();
   return c.json(foldersResponseSchema.parse(rows.map(mapFolderRow)));
 });
@@ -274,6 +339,7 @@ folderRoutes.post("/", validateBody(createFolderRequestSchema), requireUser, asy
     userId: user.id,
     parentId: body.parentId ?? null,
     name: body.name,
+    position: await nextPrependPosition(db, folders, user.id),
   };
   await db.insert(folders).values(row);
   return c.json(folderSchema.parse(mapFolderRow(row)), 201);
@@ -310,6 +376,17 @@ folderRoutes.patch("/:id", validateBody(patchFolderRequestSchema), requireUser, 
     .set({ name: next.name, parentId: next.parentId })
     .where(eq(folders.id, folderId));
   return c.json(folderSchema.parse(mapFolderRow(next)));
+});
+
+folderRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, async (c) => {
+  return reorderRows(
+    c,
+    drizzle(c.env.DB),
+    folders,
+    "folder",
+    c.get("user").id,
+    c.req.valid("json").positions,
+  );
 });
 
 folderRoutes.delete("/:id", requireUser, async (c) => {

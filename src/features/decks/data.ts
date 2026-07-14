@@ -17,6 +17,10 @@ export type Deck = {
   cardCount: number;
   /** Base hue (0–360) for the deck's cover gradient, so the grid reads colourful. */
   tint: number;
+  /** Manual sort slot (server-persisted, global per user). The library array
+      stays sorted by it — array order IS the manual order — so a reorder
+      rewrites both together (see reorder.ts applyReorder). */
+  position: number;
 };
 
 export type Folder = {
@@ -25,6 +29,8 @@ export type Folder = {
   /** Owning folder, or null when the folder lives at the library root. Folders
       nest indefinitely by pointing at a parent folder. */
   parentId: string | null;
+  /** Manual sort slot — same semantics as `Deck.position`. */
+  position: number;
 };
 
 /** A GET /decks list row as the grid renders it. */
@@ -35,6 +41,7 @@ export function fromDeckSummary(row: DeckSummary): Deck {
     folderId: row.folderId,
     cardCount: row.cardCount,
     tint: row.tint,
+    position: row.position,
   };
 }
 
@@ -48,6 +55,7 @@ export function fromDeck(resource: ApiDeck): Deck {
     folderId: resource.folderId,
     cardCount: resource.cards.reduce((sum, card) => sum + card.count, 0),
     tint: resource.tint,
+    position: resource.position,
   };
 }
 

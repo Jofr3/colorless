@@ -24,7 +24,9 @@ afterEach(() => {
 
 const UPDATED = "2026-01-02T00:00:00.000Z";
 
-const FOLDERS: Folder[] = [{ id: "folder-standard", name: "Standard", parentId: null }];
+const FOLDERS: Folder[] = [
+  { id: "folder-standard", name: "Standard", parentId: null, position: 0 },
+];
 
 const summary = (
   partial: Pick<DeckSummary, "id" | "name"> & Partial<DeckSummary>,
@@ -34,16 +36,22 @@ const summary = (
   folderId: null,
   updated: UPDATED,
   cardCount: 60,
+  position: 0,
   ...partial,
 });
 
-// GET /decks order = the grid's initial manual order. Pidgeot lives inside the
-// Standard folder, so the root shows the other three.
+// GET /decks order = the grid's initial manual order (position ascending).
+// Pidgeot lives inside the Standard folder, so the root shows the other three.
 const DECKS: DeckSummary[] = [
-  summary({ id: "deck-lugia", name: "Lugia Archeops" }),
-  summary({ id: "deck-miraidon", name: "Miraidon ex", cardCount: 58 }),
-  summary({ id: "deck-snorlax", name: "Snorlax Stall", cardCount: 0 }),
-  summary({ id: "deck-pidgeot", name: "Pidgeot Control", folderId: "folder-standard" }),
+  summary({ id: "deck-lugia", name: "Lugia Archeops", position: 0 }),
+  summary({ id: "deck-miraidon", name: "Miraidon ex", cardCount: 58, position: 1 }),
+  summary({ id: "deck-snorlax", name: "Snorlax Stall", cardCount: 0, position: 2 }),
+  summary({
+    id: "deck-pidgeot",
+    name: "Pidgeot Control",
+    folderId: "folder-standard",
+    position: 3,
+  }),
 ];
 
 /** The signed-in happy-path routes; spread and override per test. */
@@ -214,7 +222,10 @@ describe("Decks — server library", () => {
 
 describe("Decks — keyboard move mode", () => {
   it("reorders a deck among its siblings via the Move handle + arrow keys", async () => {
-    stubFetch(libraryRoutes());
+    const { impl, calls } = stubFetch({
+      ...libraryRoutes(),
+      "POST /decks/reorder": () => new Response(null, { status: 204 }),
+    });
     const { container } = await renderLoaded();
     expect(deckOrder(container)).toEqual(["deck-lugia", "deck-miraidon", "deck-snorlax"]);
 
@@ -224,11 +235,40 @@ describe("Decks — keyboard move mode", () => {
     fireEvent.keyDown(window, { key: "ArrowRight" });
     expect(deckOrder(container)).toEqual(["deck-miraidon", "deck-lugia", "deck-snorlax"]);
 
-    // Manual reorder is session-only (no server position field) — committing
-    // it fires no request, so no PATCH route is needed here.
     fireEvent.click(screen.getByRole("button", { name: "Drop here" }));
     expect(screen.queryByRole("button", { name: "Drop here" })).toBeNull();
     expect(deckOrder(container)).toEqual(["deck-miraidon", "deck-lugia", "deck-snorlax"]);
+
+    // The permuted rows persist their slot positions in one atomic call —
+    // snorlax kept its slot, so only the two moved rows go over the wire.
+    await waitFor(() => expect(calls).toContain("POST /decks/reorder"));
+    const reorderCall = impl.mock.calls.find(([url]) => String(url).endsWith("/decks/reorder"));
+    expect(JSON.parse(String(reorderCall?.[1]?.body))).toEqual({
+      positions: [
+        { id: "deck-miraidon", position: 0 },
+        { id: "deck-lugia", position: 1 },
+      ],
+    });
+  });
+
+  it("resyncs from the server when persisting a reorder fails", async () => {
+    stubFetch({
+      ...libraryRoutes(),
+      "POST /decks/reorder": () => json({ error: "boom" }, 500),
+    });
+    const { container } = await renderLoaded();
+
+    fireEvent.click(screen.getByRole("button", { name: "Move Lugia Archeops" }));
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    fireEvent.click(screen.getByRole("button", { name: "Drop here" }));
+    expect(deckOrder(container)).toEqual(["deck-miraidon", "deck-lugia", "deck-snorlax"]);
+
+    // The failure surfaces the pill and the refetched lists restore the
+    // server's order.
+    await screen.findByText("Couldn't save the new order — restored from the server.");
+    await waitFor(() =>
+      expect(deckOrder(container)).toEqual(["deck-lugia", "deck-miraidon", "deck-snorlax"]),
+    );
   });
 
   it("reverts on Escape without committing", async () => {

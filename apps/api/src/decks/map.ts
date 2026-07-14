@@ -11,7 +11,7 @@ export type FolderRow = typeof folders.$inferSelect;
 export type DeckRow = typeof decks.$inferSelect;
 
 export function mapFolderRow(row: FolderRow): Folder {
-  return { id: row.id, name: row.name, parentId: row.parentId };
+  return { id: row.id, name: row.name, parentId: row.parentId, position: row.position };
 }
 
 /** The shared (cards-free) projection of a deck row. */
@@ -22,6 +22,7 @@ function mapDeckBase(row: DeckRow) {
     format: row.format,
     tint: row.tint,
     folderId: row.folderId,
+    position: row.position,
     updated: row.updated.toISOString(),
   };
 }

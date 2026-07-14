@@ -25,9 +25,10 @@ export function createsCycle(parents: ParentById, folderId: string, newParentId:
   return false;
 }
 
-/** The requested card ids missing from `known` — the 400 payload's offenders.
+/** The requested ids missing from `known` — the 400 payload's offenders
+    (unknown cards on create/patch, unknown decks/folders on reorder).
     Preserves request order and reports each missing id once. */
-export function unknownCardIds(requested: string[], known: Iterable<string>): string[] {
+export function unknownIds(requested: string[], known: Iterable<string>): string[] {
   const knownSet = new Set(known);
   const missing: string[] = [];
   for (const id of requested) {

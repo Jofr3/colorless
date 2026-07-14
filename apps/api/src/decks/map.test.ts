@@ -9,6 +9,7 @@ const deckRow: DeckRow = {
   name: "Charizard ex",
   format: "standard",
   tint: 22,
+  position: -3,
   updated: new Date("2026-07-09T12:34:56.000Z"),
 };
 
@@ -21,6 +22,7 @@ describe("mapDeckRow", () => {
       format: "standard",
       tint: 22,
       folderId: "f1",
+      position: -3,
       updated: "2026-07-09T12:34:56.000Z",
       cards: [{ cardId: "sv01-001", count: 4 }],
     });
@@ -48,8 +50,14 @@ describe("mapDeckSummaryRow", () => {
 
 describe("mapFolderRow", () => {
   it("maps root and nested folders, dropping user_id", () => {
-    const row: FolderRow = { id: "f1", userId: "u1", parentId: null, name: "Standard" };
-    expect(mapFolderRow(row)).toEqual({ id: "f1", name: "Standard", parentId: null });
+    const row: FolderRow = {
+      id: "f1",
+      userId: "u1",
+      parentId: null,
+      name: "Standard",
+      position: 2,
+    };
+    expect(mapFolderRow(row)).toEqual({ id: "f1", name: "Standard", parentId: null, position: 2 });
     expect(mapFolderRow({ ...row, id: "f2", parentId: "f1" }).parentId).toBe("f1");
     expect(folderSchema.parse(mapFolderRow(row))).toEqual(mapFolderRow(row));
   });

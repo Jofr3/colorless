@@ -34,10 +34,12 @@ describe("401 gating without a session cookie (before any D1 access)", () => {
     ["/decks", jsonInit("POST", VALID_DECK)],
     ["/decks/d1", jsonInit("PATCH", { name: "Renamed" })],
     ["/decks/d1", { method: "DELETE" }],
+    ["/decks/reorder", jsonInit("POST", { positions: [{ id: "d1", position: 0 }] })],
     ["/folders", {}],
     ["/folders", jsonInit("POST", { name: "Standard" })],
     ["/folders/f1", jsonInit("PATCH", { name: "Renamed" })],
     ["/folders/f1", { method: "DELETE" }],
+    ["/folders/reorder", jsonInit("POST", { positions: [{ id: "f1", position: 0 }] })],
   ];
 
   it.each(requests)("%s %o → 401", async (path, init) => {
@@ -70,6 +72,19 @@ describe("body validation runs before auth and D1", () => {
     ["/decks/d1", "PATCH", {}],
     ["/folders", "POST", {}],
     ["/folders/f1", "PATCH", {}],
+    ["/decks/reorder", "POST", { positions: [] }],
+    ["/decks/reorder", "POST", { positions: [{ id: "d1", position: 0.5 }] }],
+    [
+      "/decks/reorder",
+      "POST",
+      {
+        positions: [
+          { id: "d1", position: 0 },
+          { id: "d1", position: 1 },
+        ],
+      },
+    ],
+    ["/folders/reorder", "POST", { positions: [] }],
   ];
 
   it.each(invalid)("%s %s %o → 400 invalid body", async (path, method, body) => {

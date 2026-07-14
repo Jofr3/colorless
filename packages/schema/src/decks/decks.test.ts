@@ -6,8 +6,10 @@ import {
   deckSummarySchema,
   folderSchema,
   MAX_DECK_CARD_ENTRIES,
+  MAX_REORDER_POSITIONS,
   patchDeckRequestSchema,
   patchFolderRequestSchema,
+  reorderRequestSchema,
 } from "./index";
 
 const card = (cardId: string, count = 1) => ({ cardId, count });
@@ -19,6 +21,7 @@ describe("deckSchema / deckSummarySchema", () => {
     format: null,
     tint: 22,
     folderId: null,
+    position: -2,
     updated: "2026-07-09T00:00:00.000Z",
   };
 
@@ -39,6 +42,8 @@ describe("deckSchema / deckSummarySchema", () => {
     ["count 0", { ...base, cards: [card("sv01-001", 0)] }],
     ["count 100", { ...base, cards: [card("sv01-001", 100)] }],
     ["non-ISO updated", { ...base, updated: "yesterday", cards: [] }],
+    ["fractional position", { ...base, position: 1.5, cards: [] }],
+    ["missing position", { ...(({ position, ...rest }) => rest)(base), cards: [] }],
   ])("rejects %s", (_label, value) => {
     expect(deckSchema.safeParse(value).success).toBe(false);
   });
@@ -46,8 +51,11 @@ describe("deckSchema / deckSummarySchema", () => {
 
 describe("folderSchema", () => {
   it("parses root and nested folders", () => {
-    expect(folderSchema.parse({ id: "f1", name: "Standard", parentId: null }).parentId).toBeNull();
-    expect(folderSchema.parse({ id: "f2", name: "Rogue", parentId: "f1" }).parentId).toBe("f1");
+    const root = { id: "f1", name: "Standard", parentId: null, position: 0 };
+    expect(folderSchema.parse(root).parentId).toBeNull();
+    expect(
+      folderSchema.parse({ id: "f2", name: "Rogue", parentId: "f1", position: -1 }).parentId,
+    ).toBe("f1");
   });
 });
 
@@ -118,5 +126,36 @@ describe("folder request schemas", () => {
   it("patch rejects an empty body but accepts a lone move-to-root", () => {
     expect(patchFolderRequestSchema.safeParse({}).success).toBe(false);
     expect(patchFolderRequestSchema.parse({ parentId: null }).parentId).toBeNull();
+  });
+});
+
+describe("reorderRequestSchema", () => {
+  const entry = (id: string, position = 0) => ({ id, position });
+
+  it("parses absolute assignments, negatives included", () => {
+    const parsed = reorderRequestSchema.parse({
+      positions: [entry("d1", -4), entry("d2", 0), entry("d3", 7)],
+    });
+    expect(parsed.positions).toHaveLength(3);
+  });
+
+  it("rejects duplicate ids, naming the offenders", () => {
+    const result = reorderRequestSchema.safeParse({
+      positions: [entry("d1"), entry("d2"), entry("d1", 5)],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.message.includes("d1"))).toBe(true);
+  });
+
+  it.each([
+    ["an empty list", { positions: [] }],
+    ["a fractional position", { positions: [{ id: "d1", position: 0.5 }] }],
+    ["a blank id", { positions: [{ id: "", position: 0 }] }],
+    [
+      `more than ${MAX_REORDER_POSITIONS} rows`,
+      { positions: Array.from({ length: MAX_REORDER_POSITIONS + 1 }, (_, i) => entry(`d${i}`)) },
+    ],
+  ])("rejects %s", (_label, body) => {
+    expect(reorderRequestSchema.safeParse(body).success).toBe(false);
   });
 });

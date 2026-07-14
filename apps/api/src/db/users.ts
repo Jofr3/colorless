@@ -64,6 +64,9 @@ export const folders = sqliteTable(
     /** Owning folder; null at the library root. Folders nest indefinitely. */
     parentId: text("parent_id"),
     name: text("name").notNull(),
+    /** Manual sort slot, global per user (see @luminous/schema Folder.position).
+        Lists order by it ascending; creates take min-1 so new rows prepend. */
+    position: integer("position").notNull().default(0),
   },
   (t) => [
     index("folders_user_id_idx").on(t.userId),
@@ -91,6 +94,8 @@ export const decks = sqliteTable(
     format: text("format"),
     /** Base hue 0–360 for the deck cover gradient (web `Deck.tint`). */
     tint: integer("tint").notNull(),
+    /** Manual sort slot, global per user (see @luminous/schema Deck.position). */
+    position: integer("position").notNull().default(0),
     updated: integer("updated", { mode: "timestamp_ms" }).notNull().default(nowMs),
   },
   (t) => [index("decks_user_id_idx").on(t.userId), index("decks_folder_id_idx").on(t.folderId)],

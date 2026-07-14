@@ -77,3 +77,31 @@ export const patchFolderRequestSchema = nonEmptyPatch({
   parentId: z.string().nullable().optional(),
 });
 export type PatchFolderRequest = z.infer<typeof patchFolderRequestSchema>;
+
+/** Cap on one reorder's row count — a manual drag permutes at most the rows
+    of one view, so this is generous while bounding request size. */
+export const MAX_REORDER_POSITIONS = 500;
+
+/** POST /decks/reorder + /folders/reorder: absolute `position` assignments,
+    applied atomically. Each id at most once; ids must all be the caller's
+    (unknown/foreign ids → 400 naming them). */
+export const reorderRequestSchema = z.object({
+  positions: z
+    .array(z.object({ id: z.string().min(1), position: z.number().int() }))
+    .min(1)
+    .max(MAX_REORDER_POSITIONS)
+    .superRefine((entries, ctx) => {
+      const seen = new Set<string>();
+      const duplicates = new Set<string>();
+      for (const { id } of entries) {
+        (seen.has(id) ? duplicates : seen).add(id);
+      }
+      if (duplicates.size > 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: `duplicate id(s): ${[...duplicates].join(", ")}`,
+        });
+      }
+    }),
+});
+export type ReorderRequest = z.infer<typeof reorderRequestSchema>;

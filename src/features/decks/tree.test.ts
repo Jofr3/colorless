@@ -4,14 +4,14 @@ import { canDrop, folderPath, isDescendantOf } from "./tree";
 
 // A (root) > A1 > A2 ; B (root). Decks: d1 in A, d2 at root.
 const folders: Folder[] = [
-  { id: "A", name: "A", parentId: null },
-  { id: "A1", name: "A1", parentId: "A" },
-  { id: "A2", name: "A2", parentId: "A1" },
-  { id: "B", name: "B", parentId: null },
+  { id: "A", name: "A", parentId: null, position: 0 },
+  { id: "A1", name: "A1", parentId: "A", position: 1 },
+  { id: "A2", name: "A2", parentId: "A1", position: 2 },
+  { id: "B", name: "B", parentId: null, position: 3 },
 ];
 const decks: Deck[] = [
-  { id: "d1", name: "d1", folderId: "A", cardCount: 1, tint: 0 },
-  { id: "d2", name: "d2", folderId: null, cardCount: 1, tint: 0 },
+  { id: "d1", name: "d1", folderId: "A", cardCount: 1, tint: 0, position: 0 },
+  { id: "d2", name: "d2", folderId: null, cardCount: 1, tint: 0, position: 1 },
 ];
 const folder = (id: string) => ({ type: "folder" as const, id });
 const deck = (id: string) => ({ type: "deck" as const, id });
@@ -24,8 +24,8 @@ describe("folderPath", () => {
 
   it("terminates on a corrupt parent cycle", () => {
     const cyclic: Folder[] = [
-      { id: "X", name: "X", parentId: "Y" },
-      { id: "Y", name: "Y", parentId: "X" },
+      { id: "X", name: "X", parentId: "Y", position: 0 },
+      { id: "Y", name: "Y", parentId: "X", position: 1 },
     ];
     expect(folderPath(cyclic, "X")).toHaveLength(2);
   });

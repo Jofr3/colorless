@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunk, createsCycle, type ParentById, unknownCardIds } from "./validate";
+import { chunk, createsCycle, type ParentById, unknownIds } from "./validate";
 
 describe("createsCycle", () => {
   // root ─ a ─ b ─ c (a chain), plus root-level sibling `s`.
@@ -44,17 +44,17 @@ describe("createsCycle", () => {
   });
 });
 
-describe("unknownCardIds", () => {
+describe("unknownIds", () => {
   it("returns the ids missing from the known set, in request order", () => {
-    expect(unknownCardIds(["a", "b", "c"], ["b"])).toEqual(["a", "c"]);
+    expect(unknownIds(["a", "b", "c"], ["b"])).toEqual(["a", "c"]);
   });
 
   it("returns [] when everything is known", () => {
-    expect(unknownCardIds(["a", "b"], ["b", "a", "extra"])).toEqual([]);
+    expect(unknownIds(["a", "b"], ["b", "a", "extra"])).toEqual([]);
   });
 
   it("reports each missing id once", () => {
-    expect(unknownCardIds(["a", "a", "b"], ["b"])).toEqual(["a"]);
+    expect(unknownIds(["a", "a", "b"], ["b"])).toEqual(["a"]);
   });
 });
 

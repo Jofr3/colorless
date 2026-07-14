@@ -18,7 +18,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const FOLDERS: Folder[] = [{ id: "folder-standard", name: "Standard", parentId: null }];
+const FOLDERS: Folder[] = [
+  { id: "folder-standard", name: "Standard", parentId: null, position: 0 },
+];
 
 const DECKS: DeckSummary[] = [
   {
@@ -27,6 +29,7 @@ const DECKS: DeckSummary[] = [
     format: null,
     tint: 205,
     folderId: null,
+    position: 0,
     updated: "2026-01-02T00:00:00.000Z",
     cardCount: 60,
   },

@@ -28,6 +28,11 @@ const deckBaseSchema = z.object({
   tint: z.number().int().min(0).max(360),
   /** Owning folder, or null when the deck lives at the library root. */
   folderId: z.string().nullable(),
+  /** Manual sort slot within the library — lists come back ordered by it
+      ascending. Global per user (not per folder): a nest move keeps the
+      deck's slot, exactly like the web grid's flat array. New decks take
+      min-1 (they prepend), so negatives are normal. */
+  position: z.number().int(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   updated: z.iso.datetime(),
 });

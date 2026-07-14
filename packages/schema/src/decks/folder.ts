@@ -11,5 +11,8 @@ export const folderSchema = z.object({
   /** Owning folder, or null when the folder lives at the library root.
       Folders nest indefinitely by pointing at a parent folder. */
   parentId: z.string().nullable(),
+  /** Manual sort slot within the library — same semantics as `Deck.position`
+      (global per user, ascending, new folders take min-1). */
+  position: z.number().int(),
 });
 export type Folder = z.infer<typeof folderSchema>;

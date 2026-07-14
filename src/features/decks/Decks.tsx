@@ -19,6 +19,8 @@ import {
   deleteDeck as apiDeleteDeck,
   patchDeck,
   patchFolder,
+  reorderDecks,
+  reorderFolders,
 } from "../../lib/api";
 import {
   ERROR_TEXT,
@@ -948,6 +950,20 @@ export function Decks() {
   // to "manual", since any computed sort would otherwise override the new order.
   const canReorder = () => !searching;
 
+  // The permuted rows' new positions go to the bulk reorder endpoint (it
+  // applies them atomically). No per-row rollback: on failure the grid
+  // resyncs to exactly what the server holds, like the folder delete.
+  const persistReorder = (
+    send: (positions: { id: string; position: number }[]) => Promise<void>,
+    changes: { id: string; position: number }[],
+  ) => {
+    if (changes.length === 0) return;
+    send(changes).catch((error: unknown) => {
+      fail(error, "Couldn't save the new order — restored from the server.");
+      void resyncOrWarn();
+    });
+  };
+
   const reorderItems = (item: DragItem, index: number) => {
     const visible = item.type === "folder" ? visibleFolders : visibleDecks;
     const ids = visible.map((entry) => entry.id);
@@ -957,17 +973,20 @@ export function Decks() {
     // sort to manual for a no-op.
     if (sameOrder(nextIds, ids)) return;
     const parentId = openFolder?.id ?? null;
+    // Computed from the same state snapshot `visible` (and so `nextIds`) came
+    // from — an updater-form setState could pair a newer array with stale ids.
     if (item.type === "folder") {
-      setFolders((prev) => applyReorder(prev, (f) => f.parentId === parentId, nextIds));
+      const { items, changes } = applyReorder(folders, (f) => f.parentId === parentId, nextIds);
+      setFolders(items);
+      persistReorder(reorderFolders, changes);
     } else {
-      setDecks((prev) => applyReorder(prev, (d) => d.folderId === parentId, nextIds));
+      const { items, changes } = applyReorder(decks, (d) => d.folderId === parentId, nextIds);
+      setDecks(items);
+      persistReorder(reorderDecks, changes);
     }
     // Reordering from a computed sort bakes the on-screen order in (the visible
     // order is what `nextIds` was built from), then hands control to manual.
     setSortKey("manual");
-    // Manual order is session-only: the server has no position field, so this
-    // is where the order would be persisted once the P2 position-field task
-    // lands (a PATCH per moved row, or a bulk reorder endpoint).
   };
 
   // Pointer-driven drag (useDeckDrag) — lifts a live clone of the tile and runs

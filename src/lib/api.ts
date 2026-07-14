@@ -24,6 +24,7 @@ import type {
   PatchDeckRequest,
   PatchFolderRequest,
   RegisterRequest,
+  ReorderRequest,
   Serie,
   SetBrief,
   SetWithCards,
@@ -309,6 +310,13 @@ export function deleteDeck(id: string): Promise<void> {
   return request(`/decks/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
+/** Persist a manual reorder: absolute `position` assignments, applied
+    atomically (all land or none do). An id that isn't mine → ApiError 400
+    naming it in `ids`. */
+export function reorderDecks(positions: ReorderRequest["positions"]): Promise<void> {
+  return request("/decks/reorder", { method: "POST", body: { positions } });
+}
+
 /** Every folder of mine as a FLAT list — the client builds the tree. */
 export function listFolders(): Promise<Folder[]> {
   return request("/folders");
@@ -326,4 +334,9 @@ export function patchFolder(id: string, body: PatchFolderRequest): Promise<Folde
 /** Subfolders cascade away; contained decks fall to the library root. */
 export function deleteFolder(id: string): Promise<void> {
   return request(`/folders/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** Folder twin of `reorderDecks` — same body, same atomicity, same 400. */
+export function reorderFolders(positions: ReorderRequest["positions"]): Promise<void> {
+  return request("/folders/reorder", { method: "POST", body: { positions } });
 }
