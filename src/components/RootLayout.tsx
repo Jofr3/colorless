@@ -1,5 +1,8 @@
 import { Suspense, useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+// Module path on purpose (not the features/auth barrel): the barrel also
+// exports the lazy login/register pages, and RootLayout is eager.
+import { AccountButton } from "../features/auth/AccountButton";
 import { GlowBackground } from "../features/background/GlowBackground";
 import { SettingsButton } from "./SettingsButton";
 
@@ -16,6 +19,8 @@ const APP_NAME = "Luminous";
 const PAGE_TITLES: Record<string, string> = {
   "/simulator": "Simulator",
   "/decks": "Decks",
+  "/login": "Sign in",
+  "/register": "Create account",
   "/settings": "Settings",
 };
 
@@ -59,6 +64,9 @@ export function RootLayout() {
       </div>
       {/* Persistent across navigations; redundant on the settings page itself. */}
       {pathname !== "/settings" && <SettingsButton />}
+      {/* Stacked directly above the settings button; redundant on the auth
+          pages themselves (they ARE the sign-in surface). */}
+      {pathname !== "/login" && pathname !== "/register" && <AccountButton />}
     </>
   );
 }

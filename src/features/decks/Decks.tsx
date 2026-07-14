@@ -1,10 +1,26 @@
 import type { HTMLAttributes, PointerEvent as ReactPointerEvent, ReactNode, Ref } from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { useTiltJuice } from "../../components/useTiltJuice";
-import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_GHOST_BUTTON } from "../../lib/glass";
+import {
+  ApiError,
+  createDeck as apiCreateDeck,
+  createFolder as apiCreateFolder,
+  deleteDeck as apiDeleteDeck,
+  deleteFolder as apiDeleteFolder,
+  listDecks,
+  listFolders,
+  patchDeck,
+  patchFolder,
+} from "../../lib/api";
+import {
+  FOCUS_RING_INSET,
+  GLASS_ACCENT_BUTTON,
+  GLASS_GHOST_BUTTON,
+  GLASS_PANEL,
+} from "../../lib/glass";
 import { readPersisted, writePersisted } from "../../lib/persistedState";
 import {
   ArrowLeftIcon,
@@ -16,11 +32,13 @@ import {
   PencilIcon,
   PlusIcon,
   SearchIcon,
+  SpinnerIcon,
   TrashIcon,
 } from "../../components/icons";
 import { ScrollArea } from "../../components/ScrollArea";
+import { useAuth } from "../auth/AuthProvider";
 import { CardBackStack } from "./CardBackStack";
-import { type Deck, type Folder, SEED_DECKS, SEED_FOLDERS } from "./data";
+import { type Deck, type Folder, fromDeck, fromDeckSummary } from "./data";
 import { applyReorder, previewOrder, sameOrder } from "./reorder";
 import { canDrop as canDropTo, folderPath as folderPathOf } from "./tree";
 import { type DragItem, type ReorderPreview, useDeckDrag } from "./useDeckDrag";
@@ -33,9 +51,12 @@ import "./decks.css";
 // fill with dark text, instead of translucent-white-on-dark with light text.
 // The fill is slightly translucent (frosted via backdrop-blur) under a pure
 // white border. Accent colour lives in --color-accent (index.css).
-const PRIMARY_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`;
+const PRIMARY_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${GLASS_ACCENT_BUTTON}`;
 
-const GHOST_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium ${GLASS_GHOST_BUTTON}`;
+const GHOST_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${GLASS_GHOST_BUTTON}`;
+
+// The app's shared error red (deck legality warnings, auth form errors).
+const ERROR_TEXT = "text-[#ff8a9b]";
 
 const NAME_INPUT_CLASS =
   "pointer-events-auto block w-full min-w-0 select-text truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
@@ -148,6 +169,7 @@ function NameField({
       autoFocus
       defaultValue={value}
       aria-label="Name"
+      maxLength={100}
       onFocus={(e) => e.currentTarget.select()}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
@@ -569,10 +591,45 @@ function EmptyState({ title }: { title: string }) {
   );
 }
 
+/** Centred glass panel for the page's non-grid states (sign-in prompt, load
+    failure) — the same surface language as the auth pages. */
+function StatusPanel({ children }: { children: ReactNode }) {
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center pb-24">
+      <section
+        className={`flex flex-col items-center gap-4 rounded-3xl p-8 text-center ${GLASS_PANEL}`}
+      >
+        {children}
+      </section>
+    </div>
+  );
+}
+
+/** Quiet full-area spinner while the session probe or library fetch runs. */
+function LoadingState() {
+  return (
+    <div className="flex flex-1 items-center justify-center pb-24" aria-label="Loading decks">
+      <SpinnerIcon className="h-6 w-6 animate-spin text-white/30" />
+    </div>
+  );
+}
+
 export function Decks() {
   const navigate = useNavigate();
-  const [folders, setFolders] = useState<Folder[]>(SEED_FOLDERS);
-  const [decks, setDecks] = useState<Deck[]>(SEED_DECKS);
+  const { status, refresh } = useAuth();
+  // The library, loaded from the api once the session resolves. Mutations are
+  // optimistic: state changes first, the api call follows, and a failure rolls
+  // the specific change back (announced via the sync live region below).
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [decks, setDecks] = useState<Deck[]>([]);
+  const [phase, setPhase] = useState<"loading" | "error" | "ready">("loading");
+  // Bumped by the error panel's Retry to re-run the load effect.
+  const [loadNonce, setLoadNonce] = useState(0);
+  // Which create call is awaiting the server (the server mints ids, so create
+  // can't be optimistic) — disables both create buttons meanwhile.
+  const [creating, setCreating] = useState<"deck" | "folder" | null>(null);
+  // Announced (aria-live) when an optimistic mutation fails and rolls back.
+  const [syncMessage, setSyncMessage] = useState("");
   const [query, setQuery] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -582,7 +639,8 @@ export function Decks() {
   const [showFilter, setShowFilter] = useState<ShowFilter>(readStoredShowFilter);
   const [sortKey, setSortKey] = useState<SortKey>(readStoredSortKey);
   const [filterOpen, setFilterOpen] = useState(readStoredFilterOpen);
-  const idCounter = useRef(0);
+  // Rotates each new deck's cover tint so consecutive creates read distinct.
+  const tintCounter = useRef(0);
 
   // Persist the rail's open/closed state and the chosen filters so a refresh
   // restores them. Writes can fail (private mode, quota) — the controls still
@@ -595,14 +653,61 @@ export function Decks() {
 
   const filterActive = showFilter !== "all" || sortKey !== "manual";
 
-  // The counter still rotates the new deck's cover tint, but the id itself is a
-  // UUID: the builder persists each deck's contents under `builder.deck.<id>`,
-  // and a counter that resets on every remount (route swap) would hand the first
-  // deck of each visit the same id (`deck-new-1`), leaking a prior deck's saved
-  // contents into a fresh one.
-  const genId = (prefix: string) => {
-    idCounter.current += 1;
-    return `${prefix}-${crypto.randomUUID()}`;
+  // A 401 mid-session means the cookie expired: re-probe the session, which
+  // resolves to "anonymous" and flips this page to the sign-in prompt. Any
+  // other failure is announced and (for optimistic mutations) rolled back by
+  // the caller.
+  const fail = (error: unknown, message: string) => {
+    if (error instanceof ApiError && error.status === 401) {
+      void refresh();
+      return;
+    }
+    setSyncMessage(message);
+  };
+
+  // Load the library once the session probe lands on "authenticated" (and on
+  // every Retry). Both lists fetch in parallel; a failure of either shows the
+  // error panel rather than a half-loaded grid.
+  useEffect(() => {
+    // loadNonce has no value of its own — reading it here is what lets the
+    // error panel's Retry re-run this effect.
+    void loadNonce;
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    setPhase("loading");
+    Promise.all([listDecks(), listFolders()]).then(
+      ([deckRows, folderRows]) => {
+        if (cancelled) return;
+        setDecks(deckRows.map(fromDeckSummary));
+        setFolders(folderRows);
+        setPhase("ready");
+      },
+      (error: unknown) => {
+        if (cancelled) return;
+        // 401 = the session expired — re-probe (flips the page to the sign-in
+        // prompt). The error phase still lands under the re-probe: if the 401
+        // was a one-off (the session survives), the Retry panel shows instead
+        // of an eternal spinner (nothing else would re-run this effect).
+        if (error instanceof ApiError && error.status === 401) void refresh();
+        setPhase("error");
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [status, loadNonce, refresh]);
+
+  // Honest recovery after a partially-applied compound mutation (folder
+  // delete): refetch both lists so the grid shows exactly what the server
+  // holds, whatever subset of the steps landed.
+  const resync = async () => {
+    try {
+      const [deckRows, folderRows] = await Promise.all([listDecks(), listFolders()]);
+      setDecks(deckRows.map(fromDeckSummary));
+      setFolders(folderRows);
+    } catch (error) {
+      fail(error, "Couldn't refresh the library — reload the page.");
+    }
   };
 
   const trimmed = query.trim();
@@ -668,52 +773,131 @@ export function Decks() {
     return { visibleFolders: vFolders, visibleDecks: vDecks };
   }, [folders, decks, q, searching, openFolder, showFilter, sortKey]);
 
-  const handleNewDeck = () => {
-    const id = genId("deck");
-    const tint = (idCounter.current * 47) % 360;
-    setDecks((prev) => [
-      { id, name: "Untitled Deck", folderId: openFolder?.id ?? null, cardCount: 0, tint },
-      ...prev,
-    ]);
-    setQuery("");
-    setEditingId(id);
-    setJustCreatedDeckId(id);
+  // Creates await the server — it mints the id — with the buttons held busy
+  // meanwhile; the new tile then enters inline rename, exactly as before.
+  const handleNewDeck = async () => {
+    if (creating) return;
+    setCreating("deck");
+    tintCounter.current += 1;
+    const tint = (tintCounter.current * 47) % 360;
+    try {
+      const created = await apiCreateDeck({
+        name: "Untitled Deck",
+        tint,
+        folderId: openFolder?.id ?? null,
+        cards: [],
+      });
+      setDecks((prev) => [fromDeck(created), ...prev]);
+      setQuery("");
+      setEditingId(created.id);
+      setJustCreatedDeckId(created.id);
+    } catch (error) {
+      fail(error, "Couldn't create the deck — try again.");
+    } finally {
+      setCreating(null);
+    }
   };
 
-  const handleNewFolder = () => {
-    const id = genId("folder");
-    setFolders((prev) => [{ id, name: "New Folder", parentId: openFolder?.id ?? null }, ...prev]);
-    setQuery("");
-    setEditingId(id);
+  const handleNewFolder = async () => {
+    if (creating) return;
+    setCreating("folder");
+    try {
+      const created = await apiCreateFolder({
+        name: "New Folder",
+        parentId: openFolder?.id ?? null,
+      });
+      setFolders((prev) => [created, ...prev]);
+      setQuery("");
+      setEditingId(created.id);
+    } catch (error) {
+      fail(error, "Couldn't create the folder — try again.");
+    } finally {
+      setCreating(null);
+    }
   };
 
   const commitDeck = (id: string, name: string) => {
-    setDecks((prev) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
     setEditingId(null);
+    const current = decks.find((d) => d.id === id);
+    if (!current || current.name === name) return;
+    const previousName = current.name;
+    setDecks((prev) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
+    patchDeck(id, { name }).catch((error: unknown) => {
+      setDecks((prev) => prev.map((d) => (d.id === id ? { ...d, name: previousName } : d)));
+      fail(error, `Couldn't rename ${previousName} — name restored.`);
+    });
   };
 
   const commitFolder = (id: string, name: string) => {
-    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)));
     setEditingId(null);
+    const current = folders.find((f) => f.id === id);
+    if (!current || current.name === name) return;
+    const previousName = current.name;
+    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)));
+    patchFolder(id, { name }).catch((error: unknown) => {
+      setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name: previousName } : f)));
+      fail(error, `Couldn't rename ${previousName} — name restored.`);
+    });
   };
 
   const deleteDeck = (id: string) => {
+    const index = decks.findIndex((d) => d.id === id);
+    const removed = decks[index];
+    if (!removed) return;
     setFlipPulse(true);
     setDecks((prev) => prev.filter((d) => d.id !== id));
     if (editingId === id) setEditingId(null);
+    apiDeleteDeck(id).catch((error: unknown) => {
+      // Put the tile back where it was (clamped — others may have moved).
+      setDecks((prev) => {
+        const next = prev.filter((d) => d.id !== id);
+        next.splice(Math.min(index, next.length), 0, removed);
+        return next;
+      });
+      fail(error, `Couldn't delete ${removed.name} — restored.`);
+    });
   };
 
-  const deleteFolder = (id: string) => {
+  const deleteFolder = async (id: string) => {
+    const folder = folders.find((f) => f.id === id);
+    if (!folder) return;
+    const parentId = folder.parentId;
+    // Today's UX, preserved: the folder's direct decks and subfolders lift up
+    // one level rather than following the server's cascade (which would delete
+    // subfolders and drop decks to the root). So: PATCH every direct child out
+    // first; by the time DELETE runs the folder is empty and the cascade is a
+    // no-op. Snapshot the children before the optimistic state change.
+    const childFolders = folders.filter((f) => f.parentId === id);
+    const childDecks = decks.filter((d) => d.folderId === id);
     setFlipPulse(true);
-    // Don't strand what's inside — lift the folder's direct decks and subfolders
-    // up one level (to its own parent) instead of orphaning them.
-    const parentId = folders.find((f) => f.id === id)?.parentId ?? null;
     setDecks((prev) => prev.map((d) => (d.folderId === id ? { ...d, folderId: parentId } : d)));
     setFolders((prev) =>
       prev.filter((f) => f.id !== id).map((f) => (f.parentId === id ? { ...f, parentId } : f)),
     );
     if (openFolderId === id) setOpenFolderId(parentId);
     if (editingId === id) setEditingId(null);
+    try {
+      // Sequenced, not parallel — a partial failure leaves a well-defined
+      // prefix applied, and the resync below squares the rest.
+      for (const child of childFolders) {
+        await patchFolder(child.id, { parentId });
+      }
+      for (const deck of childDecks) {
+        await patchDeck(deck.id, { folderId: parentId });
+      }
+      await apiDeleteFolder(id);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        // Session expired mid-sequence: re-probe, and resync too — if the 401
+        // was a one-off (the session survives), the grid must not keep showing
+        // a delete the server never finished.
+        void refresh();
+        void resync();
+        return;
+      }
+      setSyncMessage(`Couldn't delete ${folder.name} — restored from the server.`);
+      await resync();
+    }
   };
 
   const openFolderById = (id: string) => {
@@ -723,11 +907,31 @@ export function Decks() {
 
   // --- Drag-and-drop: move decks/folders between folders. --------------------
 
-  const moveDeck = (deckId: string, folderId: string | null) =>
+  const moveDeck = (deckId: string, folderId: string | null) => {
+    const current = decks.find((d) => d.id === deckId);
+    if (!current || current.folderId === folderId) return;
+    const previousFolderId = current.folderId;
     setDecks((prev) => prev.map((d) => (d.id === deckId ? { ...d, folderId } : d)));
+    patchDeck(deckId, { folderId }).catch((error: unknown) => {
+      setDecks((prev) =>
+        prev.map((d) => (d.id === deckId ? { ...d, folderId: previousFolderId } : d)),
+      );
+      fail(error, `Couldn't move ${current.name} — put back.`);
+    });
+  };
 
-  const moveFolder = (folderId: string, parentId: string | null) =>
+  const moveFolder = (folderId: string, parentId: string | null) => {
+    const current = folders.find((f) => f.id === folderId);
+    if (!current || current.parentId === parentId) return;
+    const previousParentId = current.parentId;
     setFolders((prev) => prev.map((f) => (f.id === folderId ? { ...f, parentId } : f)));
+    patchFolder(folderId, { parentId }).catch((error: unknown) => {
+      setFolders((prev) =>
+        prev.map((f) => (f.id === folderId ? { ...f, parentId: previousParentId } : f)),
+      );
+      fail(error, `Couldn't move ${current.name} — put back.`);
+    });
+  };
 
   const canDrop = (item: DragItem, targetFolderId: string | null) =>
     canDropTo(folders, decks, item, targetFolderId);
@@ -765,6 +969,9 @@ export function Decks() {
     // Reordering from a computed sort bakes the on-screen order in (the visible
     // order is what `nextIds` was built from), then hands control to manual.
     setSortKey("manual");
+    // Manual order is session-only: the server has no position field, so this
+    // is where the order would be persisted once the P2 position-field task
+    // lands (a PATCH per moved row, or a bulk reorder endpoint).
   };
 
   // Pointer-driven drag (useDeckDrag) — lifts a live clone of the tile and runs
@@ -832,6 +1039,44 @@ export function Decks() {
 
   const isEmpty = visibleFolders.length === 0 && visibleDecks.length === 0;
 
+  // Non-grid page states: the session probe / library fetch still running,
+  // signed out (the library is per-account), or the load failed. The toolbar
+  // and filter rail only render alongside the grid itself.
+  let pageState: ReactNode = null;
+  if (status === "loading" || (status === "authenticated" && phase === "loading")) {
+    pageState = <LoadingState />;
+  } else if (status === "anonymous") {
+    pageState = (
+      <StatusPanel>
+        <DecksIcon className="h-7 w-7 text-white/25" />
+        <div>
+          <h2 className="text-base font-semibold text-white/90">Sign in to see your decks</h2>
+          <p className="mt-1 text-sm text-muted">Your library lives with your account.</p>
+        </div>
+        <Link to="/login" state={{ from: "/decks" }} className={PRIMARY_BUTTON_CLASS}>
+          Sign in
+        </Link>
+      </StatusPanel>
+    );
+  } else if (phase === "error") {
+    pageState = (
+      <StatusPanel>
+        <DecksIcon className="h-7 w-7 text-white/25" />
+        <div>
+          <h2 className="text-base font-semibold text-white/90">Couldn't load your decks</h2>
+          <p className="mt-1 text-sm text-muted">Check your connection and try again.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setLoadNonce((nonce) => nonce + 1)}
+          className={GHOST_BUTTON_CLASS}
+        >
+          Retry
+        </button>
+      </StatusPanel>
+    );
+  }
+
   return (
     <AppBackdrop>
       <HomeButton />
@@ -839,257 +1084,284 @@ export function Decks() {
           Fixed to the viewport height (h-svh + overflow-hidden) so only the card
           grid below scrolls — the toolbar and breadcrumb stay put. */}
       <div className="relative mx-auto flex h-svh w-full max-w-4xl flex-col gap-6 px-6 pt-16">
-        {/* Filter rail — the toggle button and, when open, the options panel
+        {pageState !== null && <h1 className="sr-only">Decks</h1>}
+        {pageState}
+        {pageState === null && (
+          <>
+            {/* Filter rail — the toggle button and, when open, the options panel
             beneath it. From min-[1380px] up (where the centred column leaves a
             wide enough margin) it's lifted out of flow — absolute, pinned just
             left of the column via right-full — so it never shifts the toolbar or
             grid. Below that it falls back to stacking above them. */}
-        <aside
-          aria-label="Filter and sort"
-          className="flex w-full shrink-0 flex-col items-end gap-3 sm:w-56 min-[1380px]:absolute min-[1380px]:right-full min-[1380px]:top-16 min-[1380px]:-mr-2 min-[1380px]:gap-4"
-        >
-          <button
-            type="button"
-            aria-label="Filter and sort"
-            aria-expanded={filterOpen}
-            onClick={() => setFilterOpen((open) => !open)}
-            className={`${FILTER_BUTTON_CLASS} ${
-              filterOpen || filterActive
-                ? "bg-white/[0.09] text-white ring-white/25"
-                : "bg-white/[0.045] text-white/70 ring-white/10 hover:bg-white/[0.08] hover:text-white/90"
-            }`}
-          >
-            <FilterIcon className="h-5 w-5" />
-            {filterActive && (
-              <span
-                aria-hidden
-                className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-[#0e0e14]"
-              />
-            )}
-          </button>
-          {filterOpen && (
-            <FilterSection
-              show={showFilter}
-              sort={sortKey}
-              onShowChange={setShowFilter}
-              onSortChange={setSortKey}
-              canReset={filterActive}
-              onReset={() => {
-                setShowFilter("all");
-                setSortKey("manual");
-              }}
-            />
-          )}
-        </aside>
-        {/* No overflow clip here: the ScrollArea below clips/scrolls itself, and
+            <aside
+              aria-label="Filter and sort"
+              className="flex w-full shrink-0 flex-col items-end gap-3 sm:w-56 min-[1380px]:absolute min-[1380px]:right-full min-[1380px]:top-16 min-[1380px]:-mr-2 min-[1380px]:gap-4"
+            >
+              <button
+                type="button"
+                aria-label="Filter and sort"
+                aria-expanded={filterOpen}
+                onClick={() => setFilterOpen((open) => !open)}
+                className={`${FILTER_BUTTON_CLASS} ${
+                  filterOpen || filterActive
+                    ? "bg-white/[0.09] text-white ring-white/25"
+                    : "bg-white/[0.045] text-white/70 ring-white/10 hover:bg-white/[0.08] hover:text-white/90"
+                }`}
+              >
+                <FilterIcon className="h-5 w-5" />
+                {filterActive && (
+                  <span
+                    aria-hidden
+                    className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-[#0e0e14]"
+                  />
+                )}
+              </button>
+              {filterOpen && (
+                <FilterSection
+                  show={showFilter}
+                  sort={sortKey}
+                  onShowChange={setShowFilter}
+                  onSortChange={setSortKey}
+                  canReset={filterActive}
+                  onReset={() => {
+                    setShowFilter("all");
+                    setSortKey("manual");
+                  }}
+                />
+              )}
+            </aside>
+            {/* No overflow clip here: the ScrollArea below clips/scrolls itself, and
             its -mx-3 gutter gives the cards horizontal room for their tilt/juice.
             Clipping x here would cut that off right at the card edge. */}
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <h1 className="sr-only">Decks</h1>
-          {/* Announces keyboard move-mode changes to assistive tech (<output>
+            <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <h1 className="sr-only">Decks</h1>
+              {/* Announces keyboard move-mode changes to assistive tech (<output>
               carries the implicit status role). */}
-          <output aria-live="assertive" className="sr-only">
-            {move.liveMessage}
-          </output>
-          <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative w-full min-w-0 sm:flex-1">
-              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search decks and folders"
-                aria-label="Search decks and folders"
-                className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={handleNewFolder} className={GHOST_BUTTON_CLASS}>
-                <FolderIcon className="h-4 w-4" fill="currentColor" />
-                New folder
-              </button>
-              <button
-                ref={move.newDeckButtonRef}
-                type="button"
-                onClick={handleNewDeck}
-                className={PRIMARY_BUTTON_CLASS}
-              >
-                <PlusIcon className="h-4 w-4" />
-                New deck
-              </button>
-            </div>
-          </div>
-
-          {openFolder && !searching && (
-            <nav
-              aria-label="Breadcrumb"
-              className="mt-3 flex shrink-0 flex-wrap items-center gap-2 text-sm"
-            >
-              {/* Steps up one level — to the parent folder, or back to the root. */}
-              <button
-                type="button"
-                onClick={() => setOpenFolderId(openFolder.parentId)}
-                aria-label="Up one level"
-                {...dropAttrs("@up", openFolder.parentId)}
-                className={`group inline-flex cursor-pointer items-center rounded-full p-1.5 ring-1 ring-inset transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
-                  dropTarget === "@up"
-                    ? "bg-accent/20 text-white ring-accent"
-                    : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.07] hover:text-white/90"
-                }`}
-              >
-                <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setOpenFolderId(null)}
-                {...dropAttrs(ROOT_DROP, null)}
-                className={`cursor-pointer rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
-                  dropTarget === ROOT_DROP
-                    ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
-                    : "text-white/55 hover:text-white/85"
-                }`}
-              >
-                All decks
-              </button>
-              {folderPath(openFolder.id).map((folder, i, path) => {
-                const isCurrent = i === path.length - 1;
-                return (
-                  <Fragment key={folder.id}>
-                    <span aria-hidden className="text-white/30">
-                      /
-                    </span>
-                    {isCurrent ? (
-                      <span
-                        aria-current="page"
-                        className="max-w-[12rem] truncate font-medium text-white/80"
-                      >
-                        {folder.name}
-                      </span>
+              <output aria-live="assertive" className="sr-only">
+                {move.liveMessage}
+              </output>
+              {/* Announces failed/rolled-back mutations. Separate from the move
+              region so a move announcement never mixes with a stale error. */}
+              <output aria-live="assertive" className={`sr-only ${ERROR_TEXT}`}>
+                {syncMessage}
+              </output>
+              <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative w-full min-w-0 sm:flex-1">
+                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search decks and folders"
+                    aria-label="Search decks and folders"
+                    className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  {/* Both create buttons wait on the server (it mints the id); a
+                  spinner marks the one in flight and both disable meanwhile. */}
+                  <button
+                    type="button"
+                    onClick={() => void handleNewFolder()}
+                    disabled={creating !== null}
+                    className={GHOST_BUTTON_CLASS}
+                  >
+                    {creating === "folder" ? (
+                      <SpinnerIcon className="h-4 w-4 animate-spin" />
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => setOpenFolderId(folder.id)}
-                        {...dropAttrs(`bc:${folder.id}`, folder.id)}
-                        className={`max-w-[12rem] cursor-pointer truncate rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
-                          dropTarget === `bc:${folder.id}`
-                            ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
-                            : "text-white/55 hover:text-white/85"
-                        }`}
-                      >
-                        {folder.name}
-                      </button>
+                      <FolderIcon className="h-4 w-4" fill="currentColor" />
                     )}
-                  </Fragment>
-                );
-              })}
-            </nav>
-          )}
+                    New folder
+                  </button>
+                  <button
+                    ref={move.newDeckButtonRef}
+                    type="button"
+                    onClick={() => void handleNewDeck()}
+                    disabled={creating !== null}
+                    className={PRIMARY_BUTTON_CLASS}
+                  >
+                    {creating === "deck" ? (
+                      <SpinnerIcon className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <PlusIcon className="h-4 w-4" />
+                    )}
+                    New deck
+                  </button>
+                </div>
+              </div>
 
-          {move.moving && (
-            <MoveBanner
-              movingName={move.movingName}
-              upTarget={move.upTarget}
-              nestFolders={move.nestFolders}
-              dropButtonRef={move.dropButtonRef}
-              onDrop={move.commitMove}
-              onCancel={move.cancelMove}
-              onNest={move.nestMove}
-            />
-          )}
+              {openFolder && !searching && (
+                <nav
+                  aria-label="Breadcrumb"
+                  className="mt-3 flex shrink-0 flex-wrap items-center gap-2 text-sm"
+                >
+                  {/* Steps up one level — to the parent folder, or back to the root. */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenFolderId(openFolder.parentId)}
+                    aria-label="Up one level"
+                    {...dropAttrs("@up", openFolder.parentId)}
+                    className={`group inline-flex cursor-pointer items-center rounded-full p-1.5 ring-1 ring-inset transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                      dropTarget === "@up"
+                        ? "bg-accent/20 text-white ring-accent"
+                        : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.07] hover:text-white/90"
+                    }`}
+                  >
+                    <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenFolderId(null)}
+                    {...dropAttrs(ROOT_DROP, null)}
+                    className={`cursor-pointer rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                      dropTarget === ROOT_DROP
+                        ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
+                        : "text-white/55 hover:text-white/85"
+                    }`}
+                  >
+                    All decks
+                  </button>
+                  {folderPath(openFolder.id).map((folder, i, path) => {
+                    const isCurrent = i === path.length - 1;
+                    return (
+                      <Fragment key={folder.id}>
+                        <span aria-hidden className="text-white/30">
+                          /
+                        </span>
+                        {isCurrent ? (
+                          <span
+                            aria-current="page"
+                            className="max-w-[12rem] truncate font-medium text-white/80"
+                          >
+                            {folder.name}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setOpenFolderId(folder.id)}
+                            {...dropAttrs(`bc:${folder.id}`, folder.id)}
+                            className={`max-w-[12rem] cursor-pointer truncate rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                              dropTarget === `bc:${folder.id}`
+                                ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
+                                : "text-white/55 hover:text-white/85"
+                            }`}
+                          >
+                            {folder.name}
+                          </button>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </nav>
+              )}
 
-          {/* Internal scroll area: the folders + decks scroll here while the
+              {move.moving && (
+                <MoveBanner
+                  movingName={move.movingName}
+                  upTarget={move.upTarget}
+                  nestFolders={move.nestFolders}
+                  dropButtonRef={move.dropButtonRef}
+                  onDrop={move.commitMove}
+                  onCancel={move.cancelMove}
+                  onNest={move.nestMove}
+                />
+              )}
+
+              {/* Internal scroll area: the folders + decks scroll here while the
             toolbar above stays fixed. ScrollArea hides the native bar and draws a
             custom thumb in the right gutter, so the grid keeps its full width and
             never reflows for the bar. -mx-3/px-3 keeps the cells aligned to the
             column edge while giving card edges clip room. */}
-          <ScrollArea className="-mx-3 px-3 pb-12" trackTop={16} trackBottom={16}>
-            {isEmpty ? (
-              <EmptyState
-                title={
-                  searching
-                    ? `No results for "${trimmed}"`
-                    : openFolder
-                      ? "This folder is empty"
-                      : "No decks yet"
-                }
-              />
-            ) : (
-              <div className="flex flex-col">
-                {visibleFolders.length > 0 && (
-                  <section className="flex flex-col gap-3">
-                    {/* Small breathing room where the "Folders" label used to sit. */}
-                    <div aria-hidden className="h-1" />
-                    <div
-                      ref={foldersFlipRef}
-                      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                    >
-                      {previewFolders.map((folder) => (
-                        <FolderCard
-                          key={folder.id}
-                          folder={folder}
-                          summary={folderSummaryOf(folder.id)}
-                          editing={editingId === folder.id}
-                          dragging={dragItem?.type === "folder" && dragItem.id === folder.id}
-                          dragActive={dragItem !== null}
-                          isDropTarget={dropTarget === folder.id}
-                          isMoving={move.moving?.type === "folder" && move.moving.id === folder.id}
-                          onMove={
-                            searching
-                              ? undefined
-                              : () => move.startMove({ type: "folder", id: folder.id })
-                          }
-                          onOpen={() => openFolderById(folder.id)}
-                          onCommit={(name) => commitFolder(folder.id, name)}
-                          onRename={() => setEditingId(folder.id)}
-                          onDelete={() => deleteFolder(folder.id)}
-                          onPointerDown={(e) => startDrag({ type: "folder", id: folder.id }, e)}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                )}
+              <ScrollArea className="-mx-3 px-3 pb-12" trackTop={16} trackBottom={16}>
+                {isEmpty ? (
+                  <EmptyState
+                    title={
+                      searching
+                        ? `No results for "${trimmed}"`
+                        : openFolder
+                          ? "This folder is empty"
+                          : "No decks yet"
+                    }
+                  />
+                ) : (
+                  <div className="flex flex-col">
+                    {visibleFolders.length > 0 && (
+                      <section className="flex flex-col gap-3">
+                        {/* Small breathing room where the "Folders" label used to sit. */}
+                        <div aria-hidden className="h-1" />
+                        <div
+                          ref={foldersFlipRef}
+                          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                        >
+                          {previewFolders.map((folder) => (
+                            <FolderCard
+                              key={folder.id}
+                              folder={folder}
+                              summary={folderSummaryOf(folder.id)}
+                              editing={editingId === folder.id}
+                              dragging={dragItem?.type === "folder" && dragItem.id === folder.id}
+                              dragActive={dragItem !== null}
+                              isDropTarget={dropTarget === folder.id}
+                              isMoving={
+                                move.moving?.type === "folder" && move.moving.id === folder.id
+                              }
+                              onMove={
+                                searching
+                                  ? undefined
+                                  : () => move.startMove({ type: "folder", id: folder.id })
+                              }
+                              onOpen={() => openFolderById(folder.id)}
+                              onCommit={(name) => commitFolder(folder.id, name)}
+                              onRename={() => setEditingId(folder.id)}
+                              onDelete={() => void deleteFolder(folder.id)}
+                              onPointerDown={(e) => startDrag({ type: "folder", id: folder.id }, e)}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )}
 
-                {visibleDecks.length > 0 && (
-                  <section className="flex flex-col gap-3">
-                    {/* Breathing room where the "Decks" label used to sit — also the
+                    {visibleDecks.length > 0 && (
+                      <section className="flex flex-col gap-3">
+                        {/* Breathing room where the "Decks" label used to sit — also the
                       first row's clip room, so the top card's tilt/juice doesn't
                       get cut off by the scroll box when no folders sit above it. */}
-                    <div aria-hidden className="h-1" />
-                    <div
-                      ref={decksFlipRef}
-                      className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5"
-                    >
-                      {previewDecks.map((deck) => (
-                        <DeckCard
-                          key={deck.id}
-                          deck={deck}
-                          editing={editingId === deck.id}
-                          folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
-                          juiceOnMount={deck.id === justCreatedDeckId}
-                          dragging={dragItem?.type === "deck" && dragItem.id === deck.id}
-                          dragActive={dragItem !== null}
-                          isMoving={move.moving?.type === "deck" && move.moving.id === deck.id}
-                          onMove={
-                            searching
-                              ? undefined
-                              : () => move.startMove({ type: "deck", id: deck.id })
-                          }
-                          onCommit={(name) => commitDeck(deck.id, name)}
-                          onRename={() => setEditingId(deck.id)}
-                          onDelete={() => deleteDeck(deck.id)}
-                          onOpen={() =>
-                            navigate(`/decks/${deck.id}/edit`, { state: { name: deck.name } })
-                          }
-                          onPointerDown={(e) => startDrag({ type: "deck", id: deck.id }, e)}
-                        />
-                      ))}
-                    </div>
-                  </section>
+                        <div aria-hidden className="h-1" />
+                        <div
+                          ref={decksFlipRef}
+                          className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-5"
+                        >
+                          {previewDecks.map((deck) => (
+                            <DeckCard
+                              key={deck.id}
+                              deck={deck}
+                              editing={editingId === deck.id}
+                              folderLabel={searching ? folderNameOf(deck.folderId) : undefined}
+                              juiceOnMount={deck.id === justCreatedDeckId}
+                              dragging={dragItem?.type === "deck" && dragItem.id === deck.id}
+                              dragActive={dragItem !== null}
+                              isMoving={move.moving?.type === "deck" && move.moving.id === deck.id}
+                              onMove={
+                                searching
+                                  ? undefined
+                                  : () => move.startMove({ type: "deck", id: deck.id })
+                              }
+                              onCommit={(name) => commitDeck(deck.id, name)}
+                              onRename={() => setEditingId(deck.id)}
+                              onDelete={() => deleteDeck(deck.id)}
+                              onOpen={() => navigate(`/decks/${deck.id}/edit`)}
+                              onPointerDown={(e) => startDrag({ type: "deck", id: deck.id }, e)}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
-          </ScrollArea>
-        </main>
+              </ScrollArea>
+            </main>
+          </>
+        )}
       </div>
     </AppBackdrop>
   );

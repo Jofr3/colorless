@@ -58,7 +58,12 @@ export const variantsSchema = z.object({
 });
 export type Variants = z.infer<typeof variantsSchema>;
 
-/** List/search projection of a card — what GET /cards and `set.cards` serve. */
+/** List/search projection of a card — what GET /cards and `set.cards` serve.
+    Beyond identity + art it carries exactly the flat card-table columns the
+    deck builder's tiles and client-side "kind" filters read (M9): energy
+    types, hp, regulation mark and the per-category subtype discriminators.
+    No JSON blobs (attacks/abilities/…) and no set join — those stay on the
+    full Card / future projections. */
 export const cardBriefSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -68,6 +73,16 @@ export const cardBriefSchema = z.object({
   image: z.string().nullable(),
   setId: z.string(),
   localId: z.string(),
+  /** Energy types, e.g. ["Grass"] (Pokémon only). */
+  types: z.array(z.string()).nullable(),
+  hp: z.number().int().nullable(),
+  regulationMark: z.string().nullable(),
+  /** Pokémon stage, tcgdex vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
+  stage: z.string().nullable(),
+  /** Trainer subtype ("Item" | "Supporter" | "Stadium" | "Tool" | …). */
+  trainerType: z.string().nullable(),
+  /** Energy subtype ("Normal" | "Special"). */
+  energyType: z.string().nullable(),
 });
 export type CardBrief = z.infer<typeof cardBriefSchema>;
 

@@ -20,6 +20,11 @@ const DeckBuilder = lazy(() =>
 // loaded when a player first heads online.
 const OnlineHub = lazy(() => import("./features/online").then((m) => ({ default: m.OnlineHub })));
 const LobbyRoom = lazy(() => import("./features/online").then((m) => ({ default: m.LobbyRoom })));
+// The auth pages split off the first-paint path too — most sessions already
+// have a cookie and never visit them. (AuthProvider itself stays eager via
+// main.tsx's direct module import.)
+const Login = lazy(() => import("./features/auth").then((m) => ({ default: m.Login })));
+const Register = lazy(() => import("./features/auth").then((m) => ({ default: m.Register })));
 
 // Data router with a persistent RootLayout shell so the shared background glow
 // (index.css) survives navigations and slides between route layouts.
@@ -34,6 +39,8 @@ export const router = createBrowserRouter([
       { path: "/lobby/:code", element: <LobbyRoom /> },
       { path: "/decks", element: <Decks /> },
       { path: "/decks/:deckId/edit", element: <DeckBuilder /> },
+      { path: "/login", element: <Login /> },
+      { path: "/register", element: <Register /> },
       { path: "/settings", element: <Settings /> },
       { path: "*", element: <NotFound /> },
     ],

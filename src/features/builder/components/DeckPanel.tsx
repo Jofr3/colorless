@@ -8,10 +8,12 @@ import {
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { ScrollArea } from "../../../components/ScrollArea";
 import { useTiltJuice } from "../../../components/useTiltJuice";
+import { cardImageUrl } from "../../../lib/api";
 import { FOCUS_RING, FOCUS_RING_INSET } from "../../../lib/glass";
 import { useFlip } from "../../decks/useFlip";
-import { type BuilderCard, cardImageUrl, type Format, SUPERTYPES } from "../cards";
+import { type BuilderCard, type Format, SUPERTYPES } from "../cards";
 import type { Deck, DeckValidation } from "../deckMath";
+import type { SaveStatus } from "../deckSaver";
 
 // The pile cards peek out only their bottom edge, so — like the decks page's
 // deck stacks — they're a flat "card-edge" blue matching the card back's inner
@@ -21,7 +23,20 @@ const CARD_EDGE = "#28345a";
 export interface DeckPanelProps {
   deckName: string;
   onRename: (name: string) => void;
+  /** Server-save lifecycle for the quiet indicator under the name ("idle"
+      until the first edit). Visual only (aria-hidden) — the panel mounts
+      twice (aside + drawer), so failures are announced once by the builder's
+      own live region instead. */
+  saveStatus?: "idle" | SaveStatus;
+  /** The hydrated entries — cards the store already knows. */
   deck: Deck;
+  /** Entries whose card is still being fetched (or unknown to the catalog) —
+      rendered as pending tiles so a slow or failed hydration never DROPS a
+      deck entry. */
+  pending: { cardId: string; quantity: number }[];
+  /** Copies across ALL entries, hydrated + pending — what the header shows
+      (validation.total only counts hydrated cards). */
+  total: number;
   validation: DeckValidation;
   format: Format;
   /** Copies still addable for a card (0 = at the cap). */
@@ -121,9 +136,11 @@ function DeckCardTile({
           }`}
         >
           <div className="aspect-[2.5/3.5] w-full">
+            {/* Same thumbnail quality as the gallery tiles — the panel's cells
+                are even smaller; no URL when the catalog has no scan. */}
             <CardImage
               fill
-              imageUrl={cardImageUrl(card.cardId)}
+              imageUrl={card.hasImage ? cardImageUrl(card.cardId, "low") : undefined}
               alt={card.name}
               className="h-full w-full object-cover"
             />
@@ -133,6 +150,28 @@ function DeckCardTile({
 
       {/* Copy count — a dark glass pill nudged past the top-right corner so it
           overflows the card a little. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-1.5 -top-1.5 z-10 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-black/70 px-1.5 text-xs font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/20 backdrop-blur-md"
+      >
+        {quantity}
+      </span>
+    </li>
+  );
+}
+
+/** A deck entry whose card is still hydrating from the catalog (or unknown to
+    it): a neutral card-shaped shimmer with the copy count. Deliberately inert
+    — add/remove and drag need the card's identity rules, which arrive with
+    the card. The entry itself is safe in storage either way. */
+function PendingCardTile({ cardId, quantity }: { cardId: string; quantity: number }) {
+  return (
+    <li data-flip-id={cardId} className="relative">
+      <div
+        role="img"
+        aria-label="Loading card"
+        className="aspect-[2.5/3.5] w-full animate-pulse rounded-lg bg-white/[0.06] ring-1 ring-inset ring-white/10"
+      />
       <span
         aria-hidden
         className="pointer-events-none absolute -right-1.5 -top-1.5 z-10 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-black/70 px-1.5 text-xs font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/20 backdrop-blur-md"
@@ -204,7 +243,10 @@ const PANEL_BUTTON =
 export function DeckPanel({
   deckName,
   onRename,
+  saveStatus = "idle",
   deck,
+  pending,
+  total,
   validation,
   format,
   remainingOf,
@@ -217,6 +259,7 @@ export function DeckPanel({
   pulse,
 }: DeckPanelProps) {
   const status = deckStatus(validation);
+  const empty = deck.length === 0 && pending.length === 0;
   // Animate the grid reflow when cards are added/removed (decks-page FLIP).
   const deckFlipRef = useFlip<HTMLUListElement>(true);
 
@@ -227,30 +270,46 @@ export function DeckPanel({
       <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {/* field-sizing:content shrink-wraps the input to the name text so the
-              badge hugs its right edge; max-w-full lets long names truncate. */}
+              badge hugs its right edge; max-w-full lets long names truncate.
+              maxLength mirrors the server's name cap (decks/requests.ts
+              nameField: max 100) so typing can't outgrow what a PATCH accepts. */}
           <input
             value={deckName}
             onChange={(e) => onRename(e.target.value)}
             aria-label="Deck name"
             placeholder="Untitled Deck"
+            maxLength={100}
             className={`min-w-0 max-w-full truncate rounded-md bg-transparent text-lg font-semibold text-white outline-none transition-colors [field-sizing:content] placeholder:text-white/30 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-inset focus:ring-white/30 ${FOCUS_RING}`}
           />
           <DeckStatusBadge validation={validation} format={format} />
         </div>
         <span className="shrink-0 text-base font-bold leading-none tabular-nums">
-          <span style={{ color: STATUS_COLOR[status] }}>{validation.total}</span>
+          <span style={{ color: STATUS_COLOR[status] }}>{total}</span>
           <span className="text-white/40"> / {validation.deckSize}</span>
         </span>
       </div>
+
+      {/* Quiet save word under the name — appears with the first edit and then
+          just tracks the saver. Failures get their detail from the builder's
+          live region; here it stays one calm line. */}
+      {saveStatus !== "idle" && (
+        <p aria-hidden className="-mt-2 px-0.5 text-[11px] leading-none text-white/35">
+          {saveStatus === "saving" && "Saving…"}
+          {saveStatus === "saved" && "Saved"}
+          {saveStatus === "failed" && (
+            <span className="text-[#ff8a9b]">Couldn't save — retrying on your next change</span>
+          )}
+        </p>
+      )}
 
       {/* The decklist lives in a soft glass box, kept whether empty or full — a
           dashed border while empty, solid once it holds cards. */}
       <div
         className={`mb-2 flex min-h-0 flex-1 flex-col rounded-2xl border border-white/10 bg-white/5 px-3 ${
-          deck.length === 0 ? "border-dashed" : "border-solid"
+          empty ? "border-dashed" : "border-solid"
         }`}
       >
-        {deck.length === 0 ? (
+        {empty ? (
           // Empty state: centred in the box's open space between header and footer.
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
             <p className="text-sm text-white/55">
@@ -293,6 +352,11 @@ export function DeckPanel({
                   onDragStart={(e) => onDragStart?.(card, e)}
                   pulse={pulse && pulse.cardId === card.cardId ? pulse.n : null}
                 />
+              ))}
+              {/* Entries still hydrating trail the grouped list — they can't
+                  be grouped by supertype until their card arrives. */}
+              {pending.map(({ cardId, quantity }) => (
+                <PendingCardTile key={cardId} cardId={cardId} quantity={quantity} />
               ))}
             </ul>
           </ScrollArea>

@@ -1,8 +1,9 @@
-// Card model + metadata for the deck builder. The card *data* (the browsable
-// pool) lives in cardPool.ts; this module holds the types, the energy-type
-// palette, the format definitions, and small pure helpers shared across the
-// builder. Kept pixi-free and side-effect-free so the pure logic (deckMath,
-// decklistText) and their tests can import it freely.
+// Card model + metadata for the deck builder. The card *data* comes from the
+// live catalog api (fetched by useCardSearch, adapted in catalog.ts); this
+// module holds the types, the energy-type palette, the format definitions,
+// and small pure helpers shared across the builder. Kept pixi-free and
+// side-effect-free so the pure logic (deckMath, decklistText) and their
+// tests can import it freely.
 
 /** The Pokémon TCG energy types, in the canonical wheel order. */
 export const ENERGY_TYPES = [
@@ -39,43 +40,55 @@ export type TrainerSubtype = (typeof TRAINER_SUBTYPES)[number];
 export const ENERGY_SUBTYPES = ["Basic Energy", "Special Energy"] as const;
 export type EnergySubtype = (typeof ENERGY_SUBTYPES)[number];
 
-/** Every printed card subtype — the union of the Pokémon-stage, Trainer and
-    Energy subtype tuples. Narrower than the deck-builder's card-"kind" filter
-    labels, which also include derived labels (Evolution / EX / Mega). */
+/** The known printed card subtypes — the union of the Pokémon-stage, Trainer
+    and Energy subtype tuples. Narrower than the deck-builder's card-"kind"
+    filter labels, which also include derived labels (Evolution / EX / Mega).
+    A card's `subtype` is a plain string because the catalog's vocabulary is
+    open-ended; these tuples name the values the builder's predicates and
+    kind filters key on. */
 export type Subtype = PokemonStage | TrainerSubtype | EnergySubtype;
 
-/** Card rarities present in the pool, ordered low → high tier. Drives the
-    rarity filter; the printed cards carry these exact strings. */
-export const RARITIES = ["Common", "Uncommon", "Rare", "Double Rare", "ACE SPEC Rare"] as const;
+/** Rarity filter options — the exact strings the catalog stores (tcgdex
+    vocabulary, mixed casing and all, e.g. "Double rare"), because the rail's
+    chips feed the api's exact-match rarity filter. Ordered low → high tier. */
+export const RARITIES = [
+  "Common",
+  "Uncommon",
+  "Rare",
+  "Double rare",
+  "Ultra Rare",
+  "Illustration rare",
+  "Special illustration rare",
+  "Hyper rare",
+  "ACE SPEC Rare",
+] as const;
 export type Rarity = (typeof RARITIES)[number];
 
-/** A single browsable card. `cardId` is a Scrydex id (set code + number) used
-    for the art; the rest is the metadata the filters, stats and validation read.
-    Optional fields are absent for categories they don't apply to (a Trainer has
-    no `types`/`hp`, an Energy no `hp`, etc.). */
+/** A single browsable card — the builder's view of a catalog card (adapted
+    from the api shapes in catalog.ts). `cardId` is the tcgdex id ("sv06.5-001"),
+    also the key of the api's art mirror. Optional fields are absent for
+    categories they don't apply to (a Trainer has no `types`/`hp`, an Energy
+    no `hp`, etc.). */
 export interface BuilderCard {
   cardId: string;
   name: string;
   supertype: Supertype;
   /** Basic | Stage 1 | Stage 2 | Item | Supporter | Stadium | Pokémon Tool |
-      Basic Energy | Special Energy. */
-  subtype: Subtype;
+      Basic Energy | Special Energy — or a newer printed subtype the catalog
+      knows and this build's tuples don't. */
+  subtype: string;
   /** Energy type(s) — Pokémon (its type) and most Energy cards. */
   types?: EnergyType[];
   hp?: number;
   /** Regulation mark (e.g. "H", "I"), the basis of Standard-format legality. */
   regulationMark?: string;
-  rarity?: Rarity;
-  setName?: string;
-  /** Collector number within its set. */
+  /** Exact catalog rarity string, e.g. "Double rare". */
+  rarity?: string;
+  /** Collector number within its set (the catalog's localId, e.g. "081"). */
   number?: string;
-}
-
-/** Scrydex art for a card id, at the requested size. The image CDN serves every
-    Scarlet & Violet-era id; {@link CardImage} falls back to a neutral tile when
-    a particular id 404s, so a stale id never breaks layout. */
-export function cardImageUrl(cardId: string, size: "small" | "large" = "large"): string {
-  return `https://images.scrydex.com/pokemon/${cardId}/${size}`;
+  /** Whether the catalog has a scan for this card — when false, tiles render
+      the neutral fallback instead of requesting art that would 404. */
+  hasImage?: boolean;
 }
 
 /** True for a Basic Pokémon — the card a legal deck must contain at least one

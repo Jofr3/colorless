@@ -1,33 +1,32 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftIcon, CheckIcon, FolderIcon, SearchIcon } from "../../../components/icons";
+import { Link, useLocation } from "react-router-dom";
+import {
+  ArrowLeftIcon,
+  CheckIcon,
+  DecksIcon,
+  FolderIcon,
+  SearchIcon,
+  SpinnerIcon,
+} from "../../../components/icons";
 import { ScrollArea } from "../../../components/ScrollArea";
-import { FOCUS_RING_INSET, GLASS_DIALOG_PANEL } from "../../../lib/glass";
+import { ApiError, listDecks, listFolders } from "../../../lib/api";
+import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_DIALOG_PANEL } from "../../../lib/glass";
+import { useAuth } from "../../auth/AuthProvider";
 import { CardBackStack } from "../../decks/CardBackStack";
-import { type Deck, SEED_DECKS, SEED_FOLDERS } from "../../decks/data";
+import { type Deck, type Folder, fromDeckSummary } from "../../decks/data";
 import { folderPath } from "../../decks/tree";
 import type { DeckChoice } from "../net/useLobby";
 import "../online.css";
 
 // The lobby's deck picker: a read-only, selection-focused mirror of the /decks
-// library — the same seed decks and folders, browsable by folder (with a
-// breadcrumb) and searchable — so choosing a lobby deck feels like the decks
-// page. Picking a deck hands it back and closes; opening a folder drills in.
-// (The full Decks page also creates/renames/reorders, which a picker doesn't
-// need, so this recreates just the browse+select surface from the shared data.)
-
-const folderNameById = new Map(SEED_FOLDERS.map((folder) => [folder.id, folder.name]));
+// library — the same account decks and folders (fetched fresh from the api
+// each time it opens), browsable by folder (with a breadcrumb) and searchable
+// — so choosing a lobby deck feels like the decks page. Picking a deck hands
+// back its {id, name} and closes; opening a folder drills in. The lobby
+// itself is account-less, so an anonymous player gets a sign-in prompt here
+// rather than an empty grid.
 
 const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
-
-/** A folder's one-line subtitle: its direct subfolders and decks, or "Empty". */
-function folderSummary(id: string): string {
-  const subfolders = SEED_FOLDERS.filter((folder) => folder.parentId === id).length;
-  const decks = SEED_DECKS.filter((deck) => deck.folderId === id).length;
-  const parts: string[] = [];
-  if (subfolders) parts.push(pluralize(subfolders, "folder"));
-  if (decks) parts.push(pluralize(decks, "deck"));
-  return parts.length > 0 ? parts.join(" · ") : "Empty";
-}
 
 function FolderTile({
   name,
@@ -107,6 +106,15 @@ function DeckOption({
   );
 }
 
+/** Centred in-dialog message body (loading, sign-in prompt, load failure). */
+function DialogState({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+      {children}
+    </div>
+  );
+}
+
 export function DeckPickerDialog({
   open,
   selectedDeckId,
@@ -119,8 +127,17 @@ export function DeckPickerDialog({
   onCancel: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const { status, refresh } = useAuth();
+  const location = useLocation();
   const [query, setQuery] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
+  // The library, fetched fresh each time the dialog opens (decks may have
+  // changed since) — the lobby's read-only slice of /decks.
+  const [phase, setPhase] = useState<"loading" | "error" | "ready">("loading");
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [decks, setDecks] = useState<Deck[]>([]);
+  // Bumped by the error state's Retry to re-run the fetch effect.
+  const [loadNonce, setLoadNonce] = useState(0);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -135,11 +152,56 @@ export function DeckPickerDialog({
     }
   }, [open]);
 
+  useEffect(() => {
+    // loadNonce has no value of its own — reading it here is what lets the
+    // error state's Retry re-run this effect.
+    void loadNonce;
+    if (!open || status !== "authenticated") return;
+    let cancelled = false;
+    setPhase("loading");
+    Promise.all([listDecks(), listFolders()]).then(
+      ([deckRows, folderRows]) => {
+        if (cancelled) return;
+        setDecks(deckRows.map(fromDeckSummary));
+        setFolders(folderRows);
+        setPhase("ready");
+      },
+      (error: unknown) => {
+        if (cancelled) return;
+        // A 401 means the session lapsed mid-visit: re-probe it, which flips
+        // the auth status to "anonymous" and lands on the sign-in prompt. The
+        // error phase still lands under the re-probe: if the 401 was a one-off
+        // (the session survives), the Retry panel shows instead of an eternal
+        // spinner (nothing else would re-run this effect).
+        if (error instanceof ApiError && error.status === 401) void refresh();
+        setPhase("error");
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [open, status, loadNonce, refresh]);
+
+  const folderNameById = useMemo(
+    () => new Map(folders.map((folder) => [folder.id, folder.name])),
+    [folders],
+  );
+
+  /** A folder's one-line subtitle: its direct subfolders and decks, or "Empty". */
+  const folderSummary = (id: string): string => {
+    const subfolders = folders.filter((folder) => folder.parentId === id).length;
+    const childDecks = decks.filter((deck) => deck.folderId === id).length;
+    const parts: string[] = [];
+    if (subfolders) parts.push(pluralize(subfolders, "folder"));
+    if (childDecks) parts.push(pluralize(childDecks, "deck"));
+    return parts.length > 0 ? parts.join(" · ") : "Empty";
+  };
+
   const trimmed = query.trim();
   const q = trimmed.toLowerCase();
   const searching = q.length > 0;
   const openFolder = openFolderId
-    ? (SEED_FOLDERS.find((folder) => folder.id === openFolderId) ?? null)
+    ? (folders.find((folder) => folder.id === openFolderId) ?? null)
     : null;
 
   // Search spans the whole library; otherwise show the current folder's direct
@@ -147,16 +209,16 @@ export function DeckPickerDialog({
   const { visibleFolders, visibleDecks } = useMemo(() => {
     if (searching) {
       return {
-        visibleFolders: SEED_FOLDERS.filter((folder) => folder.name.toLowerCase().includes(q)),
-        visibleDecks: SEED_DECKS.filter((deck) => deck.name.toLowerCase().includes(q)),
+        visibleFolders: folders.filter((folder) => folder.name.toLowerCase().includes(q)),
+        visibleDecks: decks.filter((deck) => deck.name.toLowerCase().includes(q)),
       };
     }
     const parentId = openFolder?.id ?? null;
     return {
-      visibleFolders: SEED_FOLDERS.filter((folder) => folder.parentId === parentId),
-      visibleDecks: SEED_DECKS.filter((deck) => deck.folderId === parentId),
+      visibleFolders: folders.filter((folder) => folder.parentId === parentId),
+      visibleDecks: decks.filter((deck) => deck.folderId === parentId),
     };
-  }, [q, searching, openFolder]);
+  }, [folders, decks, q, searching, openFolder]);
 
   const openFolderById = (id: string) => {
     setOpenFolderId(id);
@@ -164,6 +226,7 @@ export function DeckPickerDialog({
   };
 
   const isEmpty = visibleFolders.length === 0 && visibleDecks.length === 0;
+  const browsing = status === "authenticated" && phase === "ready";
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: the native <dialog> handles Escape; this onClick only adds backdrop click-to-cancel for pointer users.
@@ -179,119 +242,164 @@ export function DeckPickerDialog({
       <div
         className={`flex max-h-[80vh] w-[min(44rem,calc(100vw-2.5rem))] flex-col ${GLASS_DIALOG_PANEL}`}
       >
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search decks and folders"
-            aria-label="Search decks and folders"
-            className="w-full rounded-full bg-white/[0.06] py-2.5 pl-10 pr-4 text-sm text-white/90 ring-1 ring-inset ring-white/10 outline-none transition-colors placeholder:text-white/35 focus-visible:ring-2 focus-visible:ring-white/50"
-          />
-        </div>
-
-        {openFolder && !searching && (
-          <nav aria-label="Breadcrumb" className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <button
-              type="button"
-              onClick={() => setOpenFolderId(openFolder.parentId)}
-              aria-label="Up one level"
-              className={`group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.07] hover:text-white/90 ${FOCUS_RING_INSET}`}
-            >
-              <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpenFolderId(null)}
-              className="cursor-pointer rounded px-1 text-white/55 transition-colors hover:text-white/85"
-            >
-              All decks
-            </button>
-            {folderPath(SEED_FOLDERS, openFolder.id).map((folder, i, path) => {
-              const isCurrent = i === path.length - 1;
-              return (
-                <Fragment key={folder.id}>
-                  <span aria-hidden className="text-white/30">
-                    /
-                  </span>
-                  {isCurrent ? (
-                    <span
-                      aria-current="page"
-                      className="max-w-[12rem] truncate font-medium text-white/80"
-                    >
-                      {folder.name}
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setOpenFolderId(folder.id)}
-                      className="max-w-[12rem] cursor-pointer truncate rounded px-1 text-white/55 transition-colors hover:text-white/85"
-                    >
-                      {folder.name}
-                    </button>
-                  )}
-                </Fragment>
-              );
-            })}
-          </nav>
+        {browsing && (
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search decks and folders"
+              aria-label="Search decks and folders"
+              className="w-full rounded-full bg-white/[0.06] py-2.5 pl-10 pr-4 text-sm text-white/90 ring-1 ring-inset ring-white/10 outline-none transition-colors placeholder:text-white/35 focus-visible:ring-2 focus-visible:ring-white/50"
+            />
+          </div>
         )}
 
-        {/* No top margin: the search bar → folders gap then equals the
-            folders → decks gap (both from each section's h-1 + gap-3), matching
-            the /decks page rhythm. */}
-        <ScrollArea className="-mx-2 px-2" trackTop={8} trackBottom={8}>
-          {isEmpty ? (
-            <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-              <SearchIcon className="h-6 w-6 text-white/20" />
-              <p className="text-sm font-medium text-white/40">
-                {searching ? `No results for "${trimmed}"` : "This folder is empty"}
-              </p>
-            </div>
-          ) : (
-            // Mirrors the /decks grid spacing: folder tiles at gap-3, and the
-            // deck cards at gap-x-3 gap-y-8 — the tall row gap leaves room for the
-            // pile peeking below each card. A thin spacer tops each section (as on
-            // /decks) so the first row's tilt/juice clears the scroll box edge.
-            <div className="flex flex-col pb-6">
-              {visibleFolders.length > 0 && (
-                <section className="flex flex-col gap-3">
-                  <div aria-hidden className="h-1" />
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {visibleFolders.map((folder) => (
-                      <FolderTile
-                        key={folder.id}
-                        name={folder.name}
-                        summary={folderSummary(folder.id)}
-                        onOpen={() => openFolderById(folder.id)}
-                      />
-                    ))}
-                  </div>
-                </section>
+        {status === "anonymous" ? (
+          // The lobby works without an account; the deck library doesn't.
+          <DialogState>
+            <DecksIcon className="h-6 w-6 text-white/20" />
+            <p className="text-sm font-medium text-white/40">Sign in to use your decks.</p>
+            <Link
+              to="/login"
+              state={{ from: location.pathname }}
+              className={`mt-1 inline-flex cursor-pointer items-center rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`}
+            >
+              Sign in
+            </Link>
+          </DialogState>
+        ) : status === "loading" || phase === "loading" ? (
+          <DialogState>
+            <SpinnerIcon
+              className="h-6 w-6 animate-spin text-white/30"
+              aria-label="Loading decks"
+            />
+          </DialogState>
+        ) : phase === "error" ? (
+          <DialogState>
+            <DecksIcon className="h-6 w-6 text-white/20" />
+            <p className="text-sm font-medium text-white/40">Couldn't load your decks.</p>
+            <button
+              type="button"
+              onClick={() => setLoadNonce((nonce) => nonce + 1)}
+              className={`mt-1 inline-flex cursor-pointer items-center rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`}
+            >
+              Retry
+            </button>
+          </DialogState>
+        ) : (
+          <>
+            {openFolder && !searching && (
+              <nav
+                aria-label="Breadcrumb"
+                className="mt-3 flex flex-wrap items-center gap-2 text-sm"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFolderId(openFolder.parentId)}
+                  aria-label="Up one level"
+                  className={`group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.07] hover:text-white/90 ${FOCUS_RING_INSET}`}
+                >
+                  <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpenFolderId(null)}
+                  className="cursor-pointer rounded px-1 text-white/55 transition-colors hover:text-white/85"
+                >
+                  All decks
+                </button>
+                {folderPath(folders, openFolder.id).map((folder, i, path) => {
+                  const isCurrent = i === path.length - 1;
+                  return (
+                    <Fragment key={folder.id}>
+                      <span aria-hidden className="text-white/30">
+                        /
+                      </span>
+                      {isCurrent ? (
+                        <span
+                          aria-current="page"
+                          className="max-w-[12rem] truncate font-medium text-white/80"
+                        >
+                          {folder.name}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setOpenFolderId(folder.id)}
+                          className="max-w-[12rem] cursor-pointer truncate rounded px-1 text-white/55 transition-colors hover:text-white/85"
+                        >
+                          {folder.name}
+                        </button>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </nav>
+            )}
+
+            {/* No top margin: the search bar → folders gap then equals the
+                folders → decks gap (both from each section's h-1 + gap-3), matching
+                the /decks page rhythm. */}
+            <ScrollArea className="-mx-2 px-2" trackTop={8} trackBottom={8}>
+              {isEmpty ? (
+                <DialogState>
+                  <SearchIcon className="h-6 w-6 text-white/20" />
+                  <p className="text-sm font-medium text-white/40">
+                    {searching
+                      ? `No results for "${trimmed}"`
+                      : openFolder
+                        ? "This folder is empty"
+                        : "No decks yet"}
+                  </p>
+                </DialogState>
+              ) : (
+                // Mirrors the /decks grid spacing: folder tiles at gap-3, and the
+                // deck cards at gap-x-3 gap-y-8 — the tall row gap leaves room for the
+                // pile peeking below each card. A thin spacer tops each section (as on
+                // /decks) so the first row's tilt/juice clears the scroll box edge.
+                <div className="flex flex-col pb-6">
+                  {visibleFolders.length > 0 && (
+                    <section className="flex flex-col gap-3">
+                      <div aria-hidden className="h-1" />
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {visibleFolders.map((folder) => (
+                          <FolderTile
+                            key={folder.id}
+                            name={folder.name}
+                            summary={folderSummary(folder.id)}
+                            onOpen={() => openFolderById(folder.id)}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                  {visibleDecks.length > 0 && (
+                    <section className="flex flex-col gap-3">
+                      <div aria-hidden className="h-1" />
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 md:grid-cols-4">
+                        {visibleDecks.map((deck) => (
+                          <DeckOption
+                            key={deck.id}
+                            deck={deck}
+                            folderLabel={
+                              searching && deck.folderId
+                                ? (folderNameById.get(deck.folderId) ?? null)
+                                : null
+                            }
+                            selected={deck.id === selectedDeckId}
+                            onSelect={() => onSelect({ id: deck.id, name: deck.name })}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </div>
               )}
-              {visibleDecks.length > 0 && (
-                <section className="flex flex-col gap-3">
-                  <div aria-hidden className="h-1" />
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 md:grid-cols-4">
-                    {visibleDecks.map((deck) => (
-                      <DeckOption
-                        key={deck.id}
-                        deck={deck}
-                        folderLabel={
-                          searching && deck.folderId
-                            ? (folderNameById.get(deck.folderId) ?? null)
-                            : null
-                        }
-                        selected={deck.id === selectedDeckId}
-                        onSelect={() => onSelect({ id: deck.id, name: deck.name })}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          )}
-        </ScrollArea>
+            </ScrollArea>
+          </>
+        )}
       </div>
     </dialog>
   );

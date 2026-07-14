@@ -70,16 +70,24 @@ export function aceSpecCount(deck: Deck): number {
   return deck.reduce((sum, e) => sum + (isAceSpec(e.card) ? e.quantity : 0), 0);
 }
 
+/** The server's per-entry copy cap (deckCardSchema: count ≤ 99) — the add
+    guard below and the decklist-import clamp both stop there, so the builder
+    can never assemble a deck whose PATCH the api rejects with a 400. */
+export const MAX_COPIES_PER_ENTRY = 99;
+
 /** Build a fast "how many more of this card may I add?" function bound to the
     current deck + format. Computes the per-name and ACE SPEC tallies once, so
     the grid can ask for every pool card without re-summing the deck each time.
-    Basic Energy is unlimited; ACE SPECs are capped at one *in total* across the
-    whole deck; everything else at the format's per-name limit. */
+    Basic Energy has no per-name game rule but stops at the server's 99-copy
+    cap; ACE SPECs are capped at one *in total* across the whole deck;
+    everything else at the format's per-name limit. */
 export function remainingAllowedFor(deck: Deck, format: Format): (card: BuilderCard) => number {
   const names = copiesByName(deck);
   const aceTotal = aceSpecCount(deck);
   return (card) => {
-    if (isBasicEnergy(card)) return Number.POSITIVE_INFINITY;
+    if (isBasicEnergy(card)) {
+      return Math.max(0, MAX_COPIES_PER_ENTRY - (names.get(card.name) ?? 0));
+    }
     const own = names.get(card.name) ?? 0;
     if (isAceSpec(card)) {
       // A different ACE SPEC already fills the single slot → none of this one.

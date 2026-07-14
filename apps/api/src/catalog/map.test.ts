@@ -129,6 +129,23 @@ describe("mapCardBriefRow", () => {
       image: "/assets/cards/sv06.5-001",
       setId: "sv06.5",
       localId: "001",
+      types: ["Grass"],
+      hp: 40,
+      regulationMark: "H",
+      stage: "Basic",
+      trainerType: null,
+      energyType: null,
+    });
+  });
+
+  it("keeps the off-category columns null (Energy row)", () => {
+    const brief = cardBriefSchema.parse(mapCardBriefRow(fireEnergyRow));
+    expect(brief).toMatchObject({
+      types: null,
+      hp: null,
+      stage: null,
+      trainerType: null,
+      energyType: "Normal",
     });
   });
 });

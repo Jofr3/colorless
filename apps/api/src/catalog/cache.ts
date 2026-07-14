@@ -15,19 +15,24 @@ import type { Env } from "../env";
     shows up without a manual purge. */
 const CACHE_TTL_SECONDS = 3600;
 
+/** Bump when a cached response SHAPE changes (e.g. the M9 CardBrief
+    extension) so stale KV entries from the previous deploy can't serve the
+    old shape for up to a TTL; old-version keys just expire. */
+const CACHE_VERSION = "v2";
+
 /**
- * KV key for a request URL: path + query, with the query keys (then values)
- * sorted so `?a=1&b=2` and `?b=2&a=1` share an entry. Keys are normalized at
- * the *request* level, not the resolved-filter level — `/cards` and
- * `/cards?page=1` cache separately even though they answer alike; duplicate
- * entries are harmless at this TTL.
+ * KV key for a request URL: version + path + query, with the query keys
+ * (then values) sorted so `?a=1&b=2` and `?b=2&a=1` share an entry. Keys are
+ * normalized at the *request* level, not the resolved-filter level —
+ * `/cards` and `/cards?page=1` cache separately even though they answer
+ * alike; duplicate entries are harmless at this TTL.
  */
 export function catalogCacheKey(url: URL): string {
   const entries = [...url.searchParams.entries()].sort(([keyA, valueA], [keyB, valueB]) =>
     keyA === keyB ? valueA.localeCompare(valueB) : keyA.localeCompare(keyB),
   );
   const query = new URLSearchParams(entries).toString();
-  return `catalog:${url.pathname}${query ? `?${query}` : ""}`;
+  return `catalog:${CACHE_VERSION}:${url.pathname}${query ? `?${query}` : ""}`;
 }
 
 export const catalogCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {

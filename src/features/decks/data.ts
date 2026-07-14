@@ -1,12 +1,18 @@
-// Seed library for the decks page. These stand in for persisted data until a
-// real store exists; the page treats them as the initial state and lets the
-// player create, rename and remove their own decks and folders on top.
+// The decks page's client-side shapes plus the mapping from the api's wire
+// types (M9 — the page loads the library from GET /decks + GET /folders
+// instead of seed fixtures). The web `Deck` keeps its original vocabulary;
+// `cardCount` is now the server-derived summed copy count, no longer a seed
+// stand-in. Imports from @luminous/schema are types-only so the web bundle
+// stays zod-free.
+
+import type { Deck as ApiDeck, DeckSummary } from "@luminous/schema";
 
 export type Deck = {
   id: string;
   name: string;
   /** Owning folder, or null when the deck lives at the library root. */
   folderId: string | null;
+  /** Summed copies across the deck's card list (server-derived). */
   cardCount: number;
   /** Base hue (0–360) for the deck's cover gradient, so the grid reads colourful. */
   tint: number;
@@ -20,37 +26,29 @@ export type Folder = {
   parentId: string | null;
 };
 
-export const SEED_FOLDERS: Folder[] = [
-  { id: "folder-standard", name: "Standard", parentId: null },
-  { id: "folder-expanded", name: "Expanded", parentId: null },
-  // A nested folder, to show folders can live inside other folders.
-  { id: "folder-rogue", name: "Rogue", parentId: "folder-standard" },
-];
+/** A GET /decks list row as the grid renders it. */
+export function fromDeckSummary(row: DeckSummary): Deck {
+  return {
+    id: row.id,
+    name: row.name,
+    folderId: row.folderId,
+    cardCount: row.cardCount,
+    tint: row.tint,
+  };
+}
 
-export const SEED_DECKS: Deck[] = [
-  {
-    id: "deck-charizard",
-    name: "Charizard ex",
-    folderId: "folder-standard",
-    cardCount: 60,
-    tint: 22,
-  },
-  {
-    id: "deck-gardevoir",
-    name: "Gardevoir ex",
-    folderId: "folder-standard",
-    cardCount: 60,
-    tint: 320,
-  },
-  {
-    id: "deck-pidgeot",
-    name: "Pidgeot Control",
-    folderId: "folder-rogue",
-    cardCount: 60,
-    tint: 95,
-  },
-  { id: "deck-lugia", name: "Lugia Archeops", folderId: null, cardCount: 60, tint: 205 },
-  { id: "deck-lostbox", name: "Lost Box", folderId: "folder-expanded", cardCount: 60, tint: 268 },
-  { id: "deck-miraidon", name: "Miraidon ex", folderId: null, cardCount: 60, tint: 52 },
-  { id: "deck-snorlax", name: "Snorlax Stall", folderId: null, cardCount: 58, tint: 135 },
-];
+/** A full deck resource (create/patch responses) as the grid renders it —
+    `cardCount` derived by summing the card list, matching the server's own
+    summary maths. */
+export function fromDeck(resource: ApiDeck): Deck {
+  return {
+    id: resource.id,
+    name: resource.name,
+    folderId: resource.folderId,
+    cardCount: resource.cards.reduce((sum, card) => sum + card.count, 0),
+    tint: resource.tint,
+  };
+}
+
+// The server `Folder` wire shape ({id, name, parentId}) is exactly the web
+// shape, so folders need no mapper — the api rows are used as-is.

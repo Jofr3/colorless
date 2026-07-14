@@ -421,12 +421,15 @@ from tcgdex; user-data timestamps are integer epoch ms.
 GET    /health
 
 # Catalog (public; KV cache-aside on every 200, 1h TTL, `x-luminous-cache: hit|miss`,
-# key = normalized path+sorted-query; invalid query params → terse 400 JSON)
+# key = `catalog:v2:` + normalized path+sorted-query — bump the version prefix
+# whenever a cached shape changes; invalid query params → terse 400 JSON)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
                          #   name (substring, case-insensitive), category, type,
                          #   rarity, set, regulationMark, hpMin/hpMax (inclusive),
-                         #   legal=standard|expanded; page (1-based, default 1),
-                         #   pageSize (default 50, max 100); order: set_id, local_id
+                         #   legal=standard|expanded; type & rarity are REPEATABLE
+                         #   (?type=Fire&type=Water — OR within the dimension, M9);
+                         #   sort=name|hp-desc|set (default set); page (1-based,
+                         #   default 1), pageSize (default 50, max 100)
 GET    /cards/:id        # full canonical Card; 404 JSON if absent
 GET    /sets             # SetBrief[] (optional ?serie=), ordered by releaseDate
 GET    /sets/:id         # full Set + cards: CardBrief[] (ordered by local_id)
@@ -504,9 +507,11 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
   `packages/schema`. The api origin is read ONCE, in `src/lib/apiOrigin.ts`,
   from **`VITE_API_ORIGIN`** (default `http://localhost:8787`; ws(s):// is
   derived from it) — the M9 API client should reuse that module.
-- **Update the CSP** in `vite.config.ts` (still pending — M9): replace
-  `images.scrydex.com` with our API origin, R2 image domain, and the api
-  origin's `wss:` for the lobby socket (`connect-src`).
+- ✅ **CSP updated** (M9): `vite.config.ts` derives it from `VITE_API_ORIGIN`
+  via `loadEnv` (img-src + connect-src get the api origin, connect-src also
+  its ws(s) twin; scrydex removed). NOTE: the config re-derives the origin —
+  it can't import `apiOrigin.ts` (`import.meta.env`); a shared env-free
+  module is on the M9 review backlog (deck-builder.md).
 
 ---
 
@@ -541,7 +546,14 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
    reducer (hibernation + alarms, `apps/api/src/lobby/`, §3.6 as-built); wire
    schemas + `lobbyCode` moved into `packages/schema/src/lobby/`; client
    transport swapped to WebSocket (`net/channel.ts`, `VITE_API_ORIGIN`).
-9. **Frontend swap** — API client; replace `CARD_POOL`; auth UI; CSP update.
+9. ✅ **Frontend swap (M9, 2026-07-13)** — typed zod-free client
+   `src/lib/api.ts`; builder on the server catalog (adapter
+   `src/features/builder/catalog.ts`, `useCardSearch`, `cardStore` deck
+   hydration; api gained repeatable type/rarity + sort + extended CardBrief —
+   D10, cache keys `catalog:v2:`); auth UI (`src/features/auth/`,
+   AuthProvider/AuthPage/AccountButton); decks & folders + deck contents on
+   the API (optimistic updates; localStorage deck store retired); CSP from
+   `VITE_API_ORIGIN`. Deferred items → deck-builder.md "M9 review backlog".
 10. **(stretch)** Cron Trigger to refresh new sets; widen ingest scope.
 
 ---

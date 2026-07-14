@@ -21,7 +21,7 @@ const charizard: BuilderCard = {
   regulationMark: "H",
 };
 // A second print of the same name — copies count by name, across prints.
-const charizardReprint: BuilderCard = { ...charizard, cardId: "mew-6", setName: "151" };
+const charizardReprint: BuilderCard = { ...charizard, cardId: "mew-6", number: "006" };
 const charmander: BuilderCard = {
   cardId: "obf-26",
   name: "Charmander",
@@ -128,10 +128,9 @@ describe("remainingAllowed", () => {
     expect(remainingAllowed(deckOf([charizard, 4]), charizard, standard)).toBe(0);
   });
 
-  it("never limits basic Energy", () => {
-    expect(remainingAllowed(deckOf([fireEnergy, 30]), fireEnergy, standard)).toBe(
-      Number.POSITIVE_INFINITY,
-    );
+  it("exempts basic Energy from the per-name rule but stops at the server's 99-copy cap", () => {
+    expect(remainingAllowed(deckOf([fireEnergy, 30]), fireEnergy, standard)).toBe(69);
+    expect(remainingAllowed(deckOf([fireEnergy, 99]), fireEnergy, standard)).toBe(0);
   });
 
   it("allows only one ACE SPEC in total across the deck", () => {

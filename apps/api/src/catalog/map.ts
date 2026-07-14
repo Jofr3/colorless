@@ -27,7 +27,9 @@ export type SetRow = typeof sets.$inferSelect;
 export type SerieRow = typeof series.$inferSelect;
 
 /** The card columns a CardBrief needs — pass to `db.select(...)` so list
-    queries never drag the JSON blobs off disk. */
+    queries never drag the BIG JSON blobs (attacks/abilities/…) off disk.
+    `types_json` rides along: it's a few quoted words, and the builder's
+    tiles and kind filters need it (M9). */
 export const cardBriefColumns = {
   id: cards.id,
   name: cards.name,
@@ -36,6 +38,12 @@ export const cardBriefColumns = {
   imageUrl: cards.imageUrl,
   setId: cards.setId,
   localId: cards.localId,
+  typesJson: cards.typesJson,
+  hp: cards.hp,
+  regulationMark: cards.regulationMark,
+  stage: cards.stage,
+  trainerType: cards.trainerType,
+  energyType: cards.energyType,
 };
 export type CardBriefRow = Pick<CardRow, keyof typeof cardBriefColumns>;
 
@@ -58,6 +66,12 @@ export function mapCardBriefRow(row: CardBriefRow): CardBrief {
     image: row.imageUrl !== null ? cardImagePath(row.id) : null,
     setId: row.setId,
     localId: row.localId,
+    types: row.typesJson,
+    hp: row.hp,
+    regulationMark: row.regulationMark,
+    stage: row.stage,
+    trainerType: row.trainerType,
+    energyType: row.energyType,
   };
 }
 

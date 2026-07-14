@@ -29,7 +29,15 @@ function envWith(kv: unknown): Env {
 describe("GET /cards param validation", () => {
   it("400s invalid params with a terse JSON error, before touching D1", async () => {
     const { kv } = fakeKv();
-    for (const query of ["pageSize=1000", "page=0", "hpMin=abc", "category=Pokémon", "legal=no"]) {
+    for (const query of [
+      "pageSize=1000",
+      "page=0",
+      "hpMin=abc",
+      "category=Pokémon",
+      "legal=no",
+      "sort=hp",
+      "type=Fire&type=", // a repeated value must still be non-empty
+    ]) {
       const res = await app.request(`/cards?${query}`, {}, envWith(kv));
       expect(res.status).toBe(400);
       const body = (await res.json()) as { error: string; issues: string[] };
@@ -48,12 +56,30 @@ describe("GET /cards param validation", () => {
 describe("catalog KV cache middleware", () => {
   it("serves a seeded key as a hit without touching D1", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
-    const { kv } = fakeKv({ "catalog:/cards?page=1&set=nope": cachedBody });
+    const { kv } = fakeKv({ "catalog:v2:/cards?page=1&set=nope": cachedBody });
     // Param order differs from the stored key — normalization must line up.
     const res = await app.request("/cards?set=nope&page=1", {}, envWith(kv));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-luminous-cache")).toBe("hit");
     expect(res.headers.get("content-type")).toBe("application/json");
     expect(await res.json()).toEqual({ items: [], page: 1, pageSize: 50, total: 0 });
+  });
+
+  it("normalizes repeated params into one key — reordered repeats share it", async () => {
+    const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
+    const { kv } = fakeKv({
+      "catalog:v2:/cards?rarity=Common&type=Fire&type=Water": cachedBody,
+    });
+    const res = await app.request("/cards?type=Water&type=Fire&rarity=Common", {}, envWith(kv));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-luminous-cache")).toBe("hit");
+  });
+
+  it("accepts repeated type/rarity params — hono hands them to zod as arrays", async () => {
+    const { kv } = fakeKv();
+    const res = await app.request("/cards?type=Water&type=Fire&rarity=Common", {}, envWith(kv));
+    // NOT a 400: validation passed and the request died later, at the
+    // deliberately-absent D1 stub (the full data path runs via wrangler dev).
+    expect(res.status).not.toBe(400);
   });
 });

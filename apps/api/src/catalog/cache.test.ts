@@ -4,16 +4,20 @@ import { catalogCacheKey } from "./cache";
 const key = (url: string) => catalogCacheKey(new URL(url));
 
 describe("catalogCacheKey", () => {
-  it("keys by path under the catalog: prefix", () => {
-    expect(key("http://api.test/cards")).toBe("catalog:/cards");
-    expect(key("http://api.test/cards/sv06.5-001")).toBe("catalog:/cards/sv06.5-001");
+  it("keys by path under the versioned catalog prefix", () => {
+    // The version segment guards cached SHAPES: bumping it (v1→v2 with the M9
+    // CardBrief extension) orphans every older entry instead of serving it.
+    expect(key("http://api.test/cards")).toBe("catalog:v2:/cards");
+    expect(key("http://api.test/cards/sv06.5-001")).toBe("catalog:v2:/cards/sv06.5-001");
   });
 
   it("normalizes query order — reordered params share a key", () => {
     expect(key("http://api.test/cards?set=sv06.5&page=2&pageSize=5")).toBe(
       key("http://api.test/cards?pageSize=5&set=sv06.5&page=2"),
     );
-    expect(key("http://api.test/cards?set=sv06.5&page=2")).toBe("catalog:/cards?page=2&set=sv06.5");
+    expect(key("http://api.test/cards?set=sv06.5&page=2")).toBe(
+      "catalog:v2:/cards?page=2&set=sv06.5",
+    );
   });
 
   it("sorts repeated keys by value, deterministically", () => {

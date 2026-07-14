@@ -74,6 +74,12 @@ describe("catalog set/serie schemas", () => {
           image: "/assets/cards/sv06.5-001",
           setId: "sv06.5",
           localId: "001",
+          types: ["Grass"],
+          hp: 40,
+          regulationMark: "H",
+          stage: "Basic",
+          trainerType: null,
+          energyType: null,
         },
       ],
     });
@@ -89,6 +95,37 @@ describe("catalog set/serie schemas", () => {
         sets: [setBrief],
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("catalog cardBriefSchema", () => {
+  const joltikBrief = {
+    id: "sv06.5-001",
+    name: "Joltik",
+    category: "Pokemon",
+    rarity: "Common",
+    image: "/assets/cards/sv06.5-001",
+    setId: "sv06.5",
+    localId: "001",
+    types: ["Grass"],
+    hp: 40,
+    regulationMark: "H",
+    stage: "Basic",
+    trainerType: null,
+    energyType: null,
+  };
+
+  it("carries the builder-facing columns (types/hp/mark/subtype discriminators)", () => {
+    const brief = cardBriefSchema.parse(joltikBrief);
+    expect(brief.types).toEqual(["Grass"]);
+    expect(brief.hp).toBe(40);
+    expect(brief.stage).toBe("Basic");
+  });
+
+  it("requires the M9 fields — nullable, never absent", () => {
+    const { types: _types, ...withoutTypes } = joltikBrief;
+    expect(cardBriefSchema.safeParse(withoutTypes).success).toBe(false);
+    expect(cardBriefSchema.safeParse({ ...joltikBrief, hp: undefined }).success).toBe(false);
   });
 });
 

@@ -83,6 +83,83 @@ matching**; unmatched lines aren't added.
 
 ---
 
+## M9 status (2026-07-13) — what the P1 frontend swap already covered
+
+M9 landed a large chunk of this plan; the code map above predates it (the
+biggest shifts: `cardPool.ts` is GONE — the pool is `useCardSearch` +
+`src/features/builder/catalog.ts` (adapter) + `cardStore.ts` (by-id session
+store); decks/folders/deck-contents live on the server; auth gates both pages).
+- ✅ Task 1 (api client `src/lib/api.ts` — env var is `VITE_API_ORIGIN`),
+  3 (art via `/assets/cards/{id}`, CSP swapped), 4 (paginated
+  `useCardSearch`, load-more), 6 (deck ids fetch via `GET /cards/:id` —
+  silent-drop fixed), 7 (server-matched import), 11 (deck load + debounced
+  PATCH via `deckSaver`/`useDeckSaver`), 14 (list shows server-derived
+  `cardCount`), 15 (decks/folders CRUD, optimistic + rollback), 16 (one id
+  everywhere, server-minted), 18 (auth-gated loading/empty/error states).
+- 🚧 Task 2 partial (`CardBrief` extended with types/hp/regulationMark/stage/
+  trainerType/energyType — D10; abilities/attacks/etc. still only on full
+  `Card`), 5 partial (`filtersToCardsQuery` exists; our API takes repeatable
+  params + `sort`, NOT tcgdex `like:`-prefix syntax — the doc's original
+  param sketch is obsolete), 19 partial (suite 528 green, fetch-stub style
+  established per-file).
+- 📋 Untouched: 8–10 (richer filters/real fields/API-fed options), 12
+  (counts/type bar), 13 (structured legality in validateDeck), 17 (position
+  field for manual order — see D11).
+
+### M9 review backlog (verified findings deferred out of M9)
+Correctness (all mechanism-confirmed; triggers need scale/drift/timing):
+- **Stale-snapshot rollback can clobber a newer successful edit** —
+  `commitDeck`/`commitFolder`/`moveDeck`/`moveFolder` (`Decks.tsx`) restore
+  the pre-PATCH value unconditionally; fix falls out of the
+  optimistic-helper dedup below (guard: only roll back if current === optimistic).
+- **`legalOnly` (server `legal.standard` flag) vs `validateDeck` (client
+  `['H','I','J']` marks) can disagree** → P2 task 13 (one source of truth).
+- **`stage: null` Pokémon maps to `subtype ""`** (`catalog.ts subtypeOf`) —
+  breaks `isBasicPokemon`/kind chips if such data ever ships; decide a
+  mapping or validate at ingest.
+- **`findCardByName` checks only the first 100 substring matches** — exact
+  name can miss once the catalog is large; needs paging or an exact-name param.
+- **Transient (non-404) hydration failures never self-retry** on an idle
+  builder (`cardStore.ts`) — entries shimmer until an unrelated change.
+- **404-known deck entries have no removal affordance** (inert pending tile;
+  Clear is disabled when nothing hydrated) — only reachable after
+  out-of-band catalog drift (FK RESTRICT protects normal flows).
+- **Mutation-failure feedback on /decks is `sr-only`** and `syncMessage`
+  never clears (an identical repeat isn't re-announced) — needs a visible,
+  re-announcing surface.
+- **Loading states hang `aria-label` on role-less divs** (builder, decks,
+  picker) — use `role="status"`/`aria-busy`.
+
+Cleanup / altitude (each names its fix):
+- 401→`refresh()` hand-rolled at 6 sites → one owner (api-client hook or
+  AuthProvider-registered observer).
+- Library-load effect ×3 (Decks, resync, DeckPicker) → `useDeckLibrary`.
+- Optimistic-mutation recipe ×4 → generic `patchWithRollback` helper.
+- Folder-delete lift-up policy lives in a component → data-layer helper (or
+  a server `?strategy=lift`); the PATCHes could be `Promise.all`ed (the
+  serialization was deliberate — see the code comment — but resync makes
+  parallel safe).
+- Deck hydration = N× `GET /cards/:id` → repeatable `?id=` filter on
+  `GET /cards` (the multiParam machinery is already there).
+- `RARITIES` hardcoded vocabulary → shared enum in `@luminous/schema` or a
+  facets endpoint (P2 task 10).
+- Kinds → server params for the stage/trainerType/energyType kinds (P2 tasks
+  8–9); the client-side gap forced `loadedCount`/`total` caption plumbing
+  into CardGrid.
+- CSP origin derivation duplicated (`vite.config.ts` vs `apiOrigin.ts`; the
+  config CAN'T import it — `import.meta.env`) → tiny env-free shared module.
+- Test plumbing (json/stubFetch/USER/jsdom shims) copied across ~7 files →
+  one `src/test/` helper.
+- Status-panel JSX ×5 (builder ×3, Decks, picker) → shared `StatusPanel`.
+- `unknownCardIdsOf` (400 body parser) in `DeckBuilder.tsx` → next to
+  `ApiError` in `src/lib/api.ts`.
+- Input/error-red Tailwind recipes re-declared ×5–6 → `glass.ts` constants;
+  `AccountButton` corner literals ×3 (+SettingsButton's copy) → shared consts.
+- `useDeckSaver` options object rebuilt every render (initial re-sorted per
+  render; `initialEntries` computed twice at mount) → memoize.
+
+---
+
 ## Task list (ordered)
 
 ### Phase 0 — Seams & shared types (do first)

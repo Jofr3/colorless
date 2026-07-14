@@ -66,7 +66,7 @@ catalogRoutes.get(
         .select(cardBriefColumns)
         .from(cards)
         .where(where)
-        .orderBy(...cardsOrder)
+        .orderBy(...cardsOrder(query.sort))
         .limit(query.pageSize)
         .offset((query.page - 1) * query.pageSize),
       db.select({ total: count() }).from(cards).where(where),

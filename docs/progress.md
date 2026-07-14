@@ -3,21 +3,25 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-09 — build session (P1 milestones 4–8 + full remote ingest).
+**Last updated:** 2026-07-13 — build session (P1 milestone 9: frontend swap, committed).
 
 ## Resume point
-**M1–M7 are committed and live in production** (remote D1: 19 sets /
-3,698 cards; catalog, assets, auth, and deck CRUD all smoke-tested live —
-two throwaway `claude-smoke-test*@example.com` accounts exist in prod).
-**M8 (lobby DO + WS transport) is committed and deployed** (451 tests,
-two-client e2e transcript; the deploy carried the DO migration `v1
-new_sqlite_classes:["LobbyDO"]`). Next concrete action:
-**M9 — frontend swap** (§7, §8.9): typed API client reusing
-`src/lib/apiOrigin.ts`, replace `CARD_POOL` fixtures with the server catalog,
-point deck/folder persistence at the API, auth UI, and the CSP update
-(replace `images.scrydex.com` with the API origin + `wss:`; set
-`VITE_API_ORIGIN` for prod builds).
-Still user-side: OAuth stays 503 until the Discord/Google apps are registered
+**M1–M9 are committed** (M1–M8 deployed earlier; the M9 commit also touches
+`apps/api` — the catalog extension needs an **`apps/api` deploy** if it hasn't
+happened: repeatable `type`/`rarity`, `sort`, extended `CardBrief`, KV keys
+`catalog:v2:`). The web app now runs fully on the API: server catalog in the
+builder, auth UI (register/login/OAuth buttons/account control), decks &
+folders CRUD with optimistic updates, deck saves as debounced PATCHes. E2E
+verified against local `wrangler dev` (see `.claude/skills/verify/SKILL.md`
+for the drive recipe — browse via `localhost:5173`, NOT 127.0.0.1: CORS).
+Next concrete action: **deploy `apps/api`** + prod-smoke the v2 catalog
+(`/cards?type=Fire&type=Water&sort=hp-desc` should return the extended
+brief), then pick up **P2 (deck-builder)** — its task list in
+`workstreams/deck-builder.md` now carries an **M9 review backlog** (verified
+findings deferred out of M9) to fold into the P2 tasks.
+Web prod build/deploy story is still unset (`VITE_API_ORIGIN` must be set at
+build time; CSP derives from it). Still user-side: OAuth stays 503 until the
+Discord/Google apps are registered
 (redirect `https://luminous-api.jofrescari.workers.dev/auth/oauth/{provider}/callback`
 + localhost:8787 variants) and the four secrets set via `wrangler secret put`
 from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
@@ -25,8 +29,8 @@ from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | 🚧 M1–M8 done + deployed; M9 (frontend swap) next; OAuth secrets pending |
-| deck-builder | P2 | 📋 Specced + code-mapped (`workstreams/deck-builder.md`) — blocked on P1 |
+| backend-data | P1 | ✅ M1–M9 done (M9 api-side deploy pending); OAuth secrets pending (user) |
+| deck-builder | P2 | 📋 Unblocked — M9 already covered tasks 1–7, 11, 14–16, 18; review backlog logged in the doc |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
@@ -34,6 +38,36 @@ from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-13** (build) — **P1 milestone 9** (four sub-agent slices +
+  multi-agent review): the frontend swap. (A) typed zod-free client
+  `src/lib/api.ts` (types-only `@luminous/schema` imports, ApiError,
+  `credentials:"include"` everywhere) + CSP now derived from
+  `VITE_API_ORIGIN` via `loadEnv` (scrydex gone repo-wide). (B) builder on
+  the server catalog: api gains repeatable `type`/`rarity` + `sort` +
+  extended `CardBrief` (D10; KV `catalog:v2:`); web adapter
+  `builder/catalog.ts`, paginated `useCardSearch`, session `cardStore` +
+  per-id deck hydration (silent-drop fixed), async server-matched import,
+  art via `/assets/cards/{id}` (playmat ids remapped to tcgdex scheme).
+  (C) auth: root `AuthProvider` (me() boot), /login + /register (glass form,
+  OAuth probe → friendly 503 copy), `AccountButton` corner control.
+  (D) decks/folders on the API: optimistic mutations with field-level
+  rollback, create-awaits-server, folder-delete lift-up (PATCHes then
+  DELETE), builder deck load + debounced serialized PATCH (`deckSaver`),
+  localStorage deck store retired; D11 scope trims. E2E-verified via
+  agent-browser against wrangler dev (recipe → `.claude/skills/verify/`);
+  verification caught two real bugs fixed in-session: **StrictMode
+  double-mount permanently disposed the ref-cached saver** (→ effect-owned
+  `useDeckSaver`, regression test) and the **register redirect race**
+  (render-time `<Navigate to="/">` outran `navigate(from)` — unified).
+  Then a 4-finder + 6-verifier + sweep review over the diff: 25+ confirmed
+  findings; the 10 serious ones fixed in-session (saver drop-on-unmount
+  during in-flight PATCH, name/count caps that could brick saves, auth
+  last-writer races, one-off-401 eternal spinner, import-dialog dismissal
+  race, `//` redirect guard, hasMore convergence, hydration remount race);
+  the rest logged as the **M9 review backlog** in
+  `workstreams/deck-builder.md`. Suite 451→528; `bun run check` green.
+  NixOS/dev traps: browse dev via `localhost:5173` (CORS `APP_ORIGIN`), the
+  cargo `agent-browser` binary is broken (use the Nix-profile one).
 - **2026-07-09** (build) — **P1 milestone 8** (sub-agent): lobby Durable
   Object + client WS transport. `LobbyDO` (hibernation API, per-socket
   `serializeAttachment({playerId})`, auto ping/pong) runs the shared
