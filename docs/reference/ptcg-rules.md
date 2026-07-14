@@ -83,9 +83,14 @@ Notes:
 4. Each player draws an **opening hand of 7 cards**.
 5. **Mulligan check**: a player whose opening hand contains **no Basic Pokémon** must
    reveal the hand, shuffle it back, and draw a new 7. Repeat until they have ≥1 Basic.
-   - **Mulligan compensation**: for **each** time an opponent mulligans, the
-     non-mulliganing player **may draw 1 extra card** (their choice) after both
-     players have a valid hand. Engine must count mulligans per player.
+   - **Mulligan compensation**: for **each** time a player mulligans, their **opponent**
+     **may draw 1 extra card** (their choice) after both players have a valid hand.
+     Engine must count mulligans per player.
+   - **Mulliganing yourself does NOT forfeit the compensation you are owed** — the
+     counts are independent, so if both players mulligan, **both** draw (each off the
+     other's count). *(Corrected 2026-07-14: this section previously said "the
+     non-mulliganing player", which reads as an exemption that does not exist; the
+     P3-M1 engine implemented the wrong rule from it before the review caught it.)*
 6. Both players place **1 Basic Pokémon face-down as their Active Pokémon**.
 7. Each player **may** place up to 5 additional Basic Pokémon face-down on their
    **Bench** (Basics only — no evolutions during setup).

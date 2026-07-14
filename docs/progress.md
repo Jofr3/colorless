@@ -3,32 +3,32 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-14 — build session #2 (P2-M1 e2e-driven in a real
-browser [PASS] + task 17 position persistence; committed, **api NOT yet
-deployed**).
+**Last updated:** 2026-07-14 — build session #3 (**P3-M1: the engine core**,
+built + xhigh-reviewed + committed `d34146c`; **api still NOT deployed** —
+blocked on a permission gate, see below).
 
 ## Resume point
-**P2 is functionally complete — all 19 deck-builder tasks closed.** This
-session: (a) the FilterRail got its browser pass (all P2-M1 surfaces verified
-live; the one scare — "Load more does nothing" — was an automation artifact,
-see the new `.claude/skills/verify/SKILL.md`); (b) **task 17 landed**:
-`position` on decks/folders (D13), bulk `POST /decks|folders/reorder`,
-web persistence with resync recovery, migration 0003 (+ name-order backfill),
-all e2e-verified locally (reorder → 204 → order survives reload; foreign id
-→ 400 naming it). Suite 623 green, `bun run check` green.
+**P3 has started: milestone 1 (the core state machine) is done and committed.**
+The engine is a pure, seedable, never-throwing reducer in `packages/engine`
+(D14) — setup with mulligans + compensation, the turn loop with its deck-out
+loss, energy attach, bench plays, retreat, pass. Suite 623 → 683, `bun run
+check` green.
 Next concrete actions:
-1. **Deploy the api** — blocked this session by the permission gate on
-   `bun run db:migrate:remote` (production D1). Run:
+1. **Deploy the api** — STILL blocked, twice now, by the permission gate on
+   `bun run db:migrate:remote` (production D1); it needs the user to approve
+   or run it. This is task 17's migration 0003 + the reorder endpoints —
+   **the deployed api is one migration behind the code**. Run:
    `cd apps/api && bun run db:migrate:remote && bun run deploy`, then
    prod-smoke: `GET /decks` rows carry `position` (backfilled name-order);
    a `POST /decks/reorder` with a foreign id → 400.
-2. Then **start P3 (simulator)** — ruleset ready (`reference/ptcg-rules.md`,
-   engine in `packages/engine` per D7/D8). The **P2-M1 follow-ups** in
-   `workstreams/deck-builder.md` (suffix-at-ingest for EX/Mega,
-   compareCardRows unification, per-resource facets degradation, …) plus one
-   new one from the e2e pass (cel25 ingest aborts on an upstream ability
-   with no `name` — one bad card blocks a whole set) are fodder for a
-   cleanup slice whenever.
+2. Then **P3-M2 (attacks: costs, damage, weakness/resistance, KO + prizes,
+   win check)**. Read the **"M1 as built"** section of
+   `workstreams/simulator.md` first — it lists the traps M2 walks straight
+   into (the fused turn tail that can't pause for KO/prize decisions; per-turn
+   allowances living on the phase object; `gameOver.winner` can't express a
+   tie; the hand-rolled retreat discard M2's KO needs to share). The
+   **engine → playmat projection** doesn't exist yet either; it's the natural
+   slice alongside M2 (nothing can render a game today).
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -39,13 +39,54 @@ Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 deployed; task-17 api (migration 0003 + reorder endpoints) awaits deploy; OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
+| simulator | P3 | 🚧 **M1 done** (core state machine, `packages/engine`, D14) — M2 (attacks/KO/prizes) next; no playmat projection yet |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-14** (build #3) — **P3 milestone 1: the engine core** (one build
+  sub-agent + a 10-angle review). `packages/engine` is now a real engine
+  (D14): pure JSON `GameState` with the mulberry32 `rngState` inside it,
+  `applyAction → {ok, state, events} | {ok:false, error}` that never throws
+  and never mutates, uid card instances over an injected `cardPool`, seats as
+  labels (coin winner *chooses* first), choices-are-actions with mandatory
+  steps auto-resolving, and semantic events as the animation/wire contract.
+  Surface: setup (shuffle, flip, hands, mulligans, compensation, placements,
+  prizes), turn loop + mandatory draw + deck-out loss, 1 energy/turn, Basics
+  to bench (cap 5), retreat (named energy pays the exact cost), pass.
+  Then an **xhigh review (10 finder angles)** — worth the cost, it found real
+  bugs the suite was green over:
+  (a) **wire-decoded string indices destroyed cards** — `bench["1"]` resolves
+  (string key!) so the guard passed, but `i === index` never matched: the
+  energy left the hand and attached to *nothing*; retreat's
+  `slice(index + 1)` string-concatenated to `slice("11")` and **deleted every
+  benched Pokémon** past the promoted slot. (b) an unvalidated `first` seat
+  landed in `firstPlayer` and threw inside `startTurn` *several actions
+  later*. (c) `applyAction` returned **undefined** for an unknown action type
+  — the never-throw contract P4 rests on didn't hold at the wire. Lesson,
+  now written into `simulator.md`: **TS types are not input validation.**
+  (d) **the mulligan-compensation RULE was wrong** — it paid only a player who
+  hadn't mulliganed. Each player draws 1 per *opponent* mulligan and
+  mulliganing yourself forfeits nothing, so **both** seats can be owed. The
+  error came from `reference/ptcg-rules.md` §3.5 itself ("the non-mulliganing
+  player") — **the reference doc was fixed at the source** (D15) and the draw
+  is now clamped so nobody can draw below their 6 prizes. (e) event payloads
+  **aliased state arrays** (PRIZES_SET *was* the state's prize array) and the
+  caller's action arrays; (f) `setupDrawExtra` advanced the phase emitting
+  **zero events** (an event-only P4 client would hang on the prompt forever);
+  (g) `shuffle` silently skipped swaps, biasing the permutation. All fixed +
+  regression-tested. Also folded in: the 4×-duplicated turn gate → one shared
+  `turnGate`, create/action errors → one `ErrorCode` union, poison modeled as
+  a counter amount (§12) not a bool, `RETREATED` now carries the bench
+  re-index (`promotedFrom`/`benchedTo`) so animators don't re-derive it.
+  Suite 623 → 683; `bun run check` green; committed `d34146c`.
+  **Session traps:** the Fable 5 usage limit killed the build agent mid-flight
+  and later 4 of 10 review finders — all resumed from transcript via
+  SendMessage with zero rework (same recovery as the 2026-07-14 build #1
+  session; this is now a reliable pattern). **The api deploy was blocked by
+  the permission gate for the SECOND session running** — it needs the user.
 - **2026-07-14** (build #2) — **P2-M1 e2e pass + task 17** (single-agent).
   (A) FilterRail browser-driven end-to-end (agent-browser vs wrangler dev +
   vite): facets-fed vocabularies, server kinds (`stage=Stage2`), the EX/Mega

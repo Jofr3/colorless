@@ -100,13 +100,89 @@ event stream.
 - The action/event log doubles as test fixtures and as the online wire format.
 
 ## Milestones
-1. Core state machine: setup, turn phases, draw, energy attach, retreat, pass.
+1. ✅ **Core state machine** — setup, turn phases, draw, energy attach, retreat,
+   pass. Built + reviewed 2026-07-14 (commit `d34146c`); as-built notes below.
 2. Attacks: costs, damage, weakness/resistance, KO + prize-taking, win check.
 3. Status conditions + Pokémon Checkup between turns.
 4. Evolution, Abilities, and the trainer/energy effect registry (staples first).
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
+
+---
+
+## M1 as built (`packages/engine`, 2026-07-14)
+
+**Shape.** `createGame({seed, decks, cardPool})` → `{ok, state, events}`;
+`applyAction(state, action)` → `{ok:true, state, events} | {ok:false, error}`.
+Pure, JSON-safe `GameState` (mulberry32 `rngState` lives *in* it), no classes,
+no wall clock. Illegal actions never throw and never mutate — the P4
+authoritative server rests on that. Modules: `rng · types · events · actions ·
+cards · setup · turn · index` (+ `testFixtures`). 60 tests.
+
+**Locked design (D14).** Seats `p1|p2` are labels, not turn order (the coin
+winner *chooses* via an action; `firstPlayer` records it). Every physical card
+gets a uid (`"p1#0"`); zones hold uids; `cardIdByUid` + `cardPool` resolve them.
+Choices are actions; anything with no choice (mulligan redraws, prize setting,
+the turn-start draw) auto-resolves inside the reducer. `Phase` is the
+discriminant every action validates against.
+
+**Wire-safety rule (learned the hard way).** TypeScript types are *not* input
+validation: P4 decodes actions from a client, so anything the engine reads off
+an action must be checked at runtime. The review found three live bugs of
+exactly this shape — a string `"1"` bench index passed `bench[index]` (string
+key!) but failed `i === index`, destroying the energy card; retreat's
+`slice(index + 1)` string-concatenated to `slice("11")` and deleted benched
+Pokémon; and an unvalidated `first` seat crashed several actions later inside
+`startTurn`. **Every new M2+ action must runtime-check its indices, seats and
+counts** (`isBenchIndex`, the `isSeat` guard in `applyAction`).
+
+**Event contract.** Events are values handed to consumers (animator, P4
+broadcast, persisted log): payload arrays are always **copies**, never the
+state's own arrays or the caller's action arrays. Every state change emits an
+event — including a phase advance with no other effect (`COMPENSATION_DECIDED`
+fires even when the player declines, or an event-only client hangs on the
+prompt).
+
+### Known gaps / traps for M2+
+- **The turn tail is fused.** `endTurn` does TURN_ENDED → `runCheckup` (an M3
+  no-op stub) → `startTurn(other)` in one reduction, and `runCheckup` is
+  `GameState → GameState` so it **cannot pause**. M2's KO resolution needs to
+  stop mid-sequence for decisions (which prize, which Pokémon to promote), and
+  M2's attack ends the turn through the same tail. Expect to restructure this
+  into a resumable/staged transition rather than fill in the stub.
+- **Per-turn allowances live on the `turn:action` phase object** ("replacing the
+  phase IS the reset"). Any mid-turn *interrupt* phase (targeting, prize pick,
+  search) destroys them. When M2 adds interrupts, lift the allowances to a
+  per-turn struct on `GameState` — where the supporter/stadium flags and the
+  per-Pokémon once-per-turn ability flags (§15.J) belong anyway.
+- **`gameOver.winner` is `Seat`** — §14 wants a `TIE`/`SUDDEN_DEATH` outcome
+  surfaced, not silently picked. Widen when M2 lands simultaneous KOs. Nothing
+  consumes the union yet, so it is still free to change.
+- **Retreat's energy-discard is hand-rolled.** M2's KO (whole stack + energy +
+  tools → discard) and the `DiscardEnergy` effect op need the same move — lift a
+  shared "attached cards → discard" primitive rather than a third copy.
+- **`retreatCostOf` maps `null` → 0 (free retreat).** In the real catalog `null`
+  is a *data gap*, not a printed 0 (ingest writes null when tcgdex omits it), so
+  a bad row silently becomes a free-retreat Pokémon. Fix belongs at ingest.
+- **`drawToHand` short-draws silently** when the deck is shallower than `count`.
+  M1's callers are safe (compensation is clamped so a player can never draw below
+  their 6 prizes), but M2 draw effects (Professor's Research…) must not assume.
+- **`resolveMulligans` has no iteration cap** — a legal 1-Basic deck loops until
+  it draws the Basic (expected ~9 rounds, exponential tail). Accepted: capping it
+  has no legal resolution.
+- **No `SETUP_REVEALED` payload, and no stadium / Lost Zone zones yet.** The
+  first matters for P4's hidden-info filter (the face-down placements are exactly
+  what gets redacted, and the reveal must say what became public); the second
+  lands with M4's trainers.
+- **No engine → playmat projection exists.** `GameState` (uids + pool
+  indirection) is deliberately not the playmat's `BoardState` (`CardModel[]`).
+  The web app cannot render a game until that adapter is written — it is the
+  natural next slice alongside M2.
+- **`isBasicPokemon` now exists twice** in the repo: the engine's (over the
+  canonical `Card.stage`) and the builder's (over `BuilderCard.subtype`, a
+  relabelled view). They read different vocabularies of the same data and can
+  drift. Lift one predicate into `@luminous/schema` when convenient.
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
