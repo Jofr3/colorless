@@ -111,8 +111,12 @@ panel/legality) closed most of what M9 left open. As-built:
   2026-07-14 progress.md entry). Deck hydration is now ONE batched
   `GET /cards?id=…` round (`cardStore.ts`); import matching uses `nameExact`
   (layered: stripped key → raw name → substring fallback).
-- 📋 Still open: task 17 (position field for manual order — D11), plus the
-  follow-ups below.
+- ✅ Task 17 (2026-07-14, same-day follow-up session): manual order persists —
+  `position` on decks + folders (D13: global per-user slots, min−1 prepend,
+  slot-permutation reorder), bulk `POST /decks/reorder` + `/folders/reorder`,
+  web `applyReorder` returns the changed pairs and `Decks.tsx` persists them
+  (failure → pill + resync). Migration 0003 backfills name-order. **All 19
+  numbered tasks are now closed** — only the follow-ups below remain.
 
 ### P2-M1 follow-ups (verified review findings deliberately deferred)
 - **Persist tcgdex `suffix` at ingest** (column + re-ingest) so EX/Mega become
@@ -276,9 +280,9 @@ Cleanup / altitude (each names its fix):
 16. **Unify deck identity:** make the list `Deck.id` the same id the builder
     persists under; `deleteDeck` also deletes contents server-side (removes
     today's orphaned `builder.deck.<id>`).
-17. **Persist order/structure:** add an `order`/position field to the schema;
+17. ~~**Persist order/structure:** add an `order`/position field to the schema;
     persist reorder + nest moves (`applyReorder`/`previewOrder` are in-memory
-    only today).
+    only today).~~ ✅ 2026-07-14 — see D13 and the P2-M1 status above.
 18. Add **auth-gated loading/empty/error states** to `Decks.tsx` and
     `DeckBuilder.tsx` (the API needs a session; today both assume sync fixtures).
 

@@ -3,25 +3,32 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-14 — build session (P2 milestone 1: filters + backlog fold-in; committed + api deployed).
+**Last updated:** 2026-07-14 — build session #2 (P2-M1 e2e-driven in a real
+browser [PASS] + task 17 position persistence; committed, **api NOT yet
+deployed**).
 
 ## Resume point
-**P2-M1 is committed (`b983170`, pushed) and the api is deployed**
-(2026-07-14, version `05d46657`, prod-smoked: `GET /facets` returns the
-vocabularies and KV-caches [2nd hit `hit`]; `?id=` batch returns briefs WITH
-`legal` and tags `x-luminous-cache: bypass`; `nameExact` whole-name matches).
-Suite 607 green; reviewed (10 verified findings, all fixed in-session).
+**P2 is functionally complete — all 19 deck-builder tasks closed.** This
+session: (a) the FilterRail got its browser pass (all P2-M1 surfaces verified
+live; the one scare — "Load more does nothing" — was an automation artifact,
+see the new `.claude/skills/verify/SKILL.md`); (b) **task 17 landed**:
+`position` on decks/folders (D13), bulk `POST /decks|folders/reorder`,
+web persistence with resync recovery, migration 0003 (+ name-order backfill),
+all e2e-verified locally (reorder → 204 → order survives reload; foreign id
+→ 400 naming it). Suite 623 green, `bun run check` green.
 Next concrete actions:
-1. Optional but recommended: an e2e drive of the new FilterRail (facets-fed
-   options, serie→set narrowing, HP bounds, text search) via
-   `.claude/skills/verify/SKILL.md` — P2-M1 was verified by unit/DOM tests
-   only, no browser pass.
-2. Then: P2 task 17 (position field for manual order) is the only numbered
-   task left; or start **P3 (simulator)** — ruleset ready
-   (`reference/ptcg-rules.md`, engine in `packages/engine` per D7/D8). The
-   **P2-M1 follow-ups** list in `workstreams/deck-builder.md`
-   (suffix-at-ingest for EX/Mega, compareCardRows unification, per-resource
-   facets degradation, …) is fodder for a cleanup slice whenever.
+1. **Deploy the api** — blocked this session by the permission gate on
+   `bun run db:migrate:remote` (production D1). Run:
+   `cd apps/api && bun run db:migrate:remote && bun run deploy`, then
+   prod-smoke: `GET /decks` rows carry `position` (backfilled name-order);
+   a `POST /decks/reorder` with a foreign id → 400.
+2. Then **start P3 (simulator)** — ruleset ready (`reference/ptcg-rules.md`,
+   engine in `packages/engine` per D7/D8). The **P2-M1 follow-ups** in
+   `workstreams/deck-builder.md` (suffix-at-ingest for EX/Mega,
+   compareCardRows unification, per-resource facets degradation, …) plus one
+   new one from the e2e pass (cel25 ingest aborts on an upstream ability
+   with no `name` — one bad card blocks a whole set) are fodder for a
+   cleanup slice whenever.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -30,8 +37,8 @@ Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | ✅ M1–M9 + P2-M1 api additions deployed; OAuth secrets pending (user) |
-| deck-builder | P2 | ✅ P2-M1 committed + deployed (tasks 8–10, 12–13 + M9 backlog cleared); only task 17 + follow-ups left |
+| backend-data | P1 | ✅ M1–M9 + P2-M1 deployed; task-17 api (migration 0003 + reorder endpoints) awaits deploy; OAuth secrets pending (user) |
+| deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
@@ -39,6 +46,36 @@ Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-14** (build #2) — **P2-M1 e2e pass + task 17** (single-agent).
+  (A) FilterRail browser-driven end-to-end (agent-browser vs wrangler dev +
+  vite): facets-fed vocabularies, server kinds (`stage=Stage2`), the EX/Mega
+  mixed-kind client remainder (wire drops the kind dim; "60 of 79 loaded"
+  caption; Load more → page 2), text search (`poison` → 8 right cards;
+  numbers aren't searched — damage lives outside the text fields), HP bounds
+  (+ inverted range → clean empty state), set + serie filters, **real**
+  serie→set narrowing (ingested swsh10.5 locally to get a 2nd serie),
+  legalOnly toggle, sort=hp-desc, DeckStats, the Radiant add-time guard
+  (deckWideRemaining blocks a 2nd Radiant), and structured legality
+  ("Radiant Blastoise is not legal in Standard"). **Verdict: PASS, zero app
+  bugs.** The "Load more is dead" scare was agent-browser: clicks DON'T
+  auto-scroll inner overflow containers (silent no-op), `fill ""` doesn't
+  clear — both now in the recreated `.claude/skills/verify/SKILL.md` (the M9
+  recipe was lost with a worktree). Real findings: cel25 ingest aborts
+  (cel25-17 ability lacks `name` upstream; all-or-nothing by design → logged
+  as follow-up); post-ingest /facets|/sets|/series stay KV-stale ≤1h (flush
+  recipe in the skill). (B) **Task 17**: `position` INTEGER on decks+folders
+  (D13 — global per-user slots; creates take min−1; nest moves keep the
+  slot), migration 0003 with name-order backfill, `GET` lists order by it,
+  bulk atomic `POST /decks/reorder` + `/folders/reorder` (≤500 absolute
+  assignments, foreign id → 400 naming it, `updated` NOT bumped),
+  `unknownCardIds`→`unknownIds`, api client `reorderDecks/Folders`, web
+  `applyReorder` now returns `{items, changes}` (slot-permutation keeps the
+  array position-sorted) and `Decks.tsx` persists via `persistReorder`
+  (failure → pill + resync, the folder-delete precedent). E2e-verified:
+  keyboard move → 204 → order survives reload (decks AND folders); probe
+  400 correct. Suite 607→623; `bun run check` green. **Api deploy pending**
+  — `db:migrate:remote` hit the session permission gate; deploy + smoke is
+  the resume point. Local D1 now also holds swsh10.5 (88 cards, serie swsh).
 - **2026-07-14** (build) — **P2 milestone 1** (four sub-agent slices + 8-angle
   review + fix pass; committed `b983170`, api deployed `05d46657` +
   prod-smoked same session): filters, panel stats, legality, and the
