@@ -3,28 +3,25 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-14 — build session (P2 milestone 1: filters + backlog fold-in, UNCOMMITTED).
+**Last updated:** 2026-07-14 — build session (P2 milestone 1: filters + backlog fold-in; committed + api deployed).
 
 ## Resume point
-**P2-M1 is done in the working tree but NOT committed** (suite 607 green,
-`bun run check` clean; reviewed — 10 verified findings, all fixed in-session).
-Next concrete actions, in order:
-1. **Commit P2-M1** (user go-ahead) — the whole working tree is one coherent
-   milestone on branch `backend`.
-2. **The api must be DEPLOYED before the web changes ship** — the builder now
-   calls `GET /facets`, batched `GET /cards?id=…`, `nameExact`, kind params
-   etc., which the deployed worker (pre-P2) 404s/ignores. Local `wrangler dev`
-   carries the new surface already. After deploy, smoke `GET /facets` and a
-   two-value `?id=` query (expect `x-luminous-cache: bypass`).
-3. Optional but recommended: an e2e drive of the new FilterRail (facets-fed
+**P2-M1 is committed (`b983170`, pushed) and the api is deployed**
+(2026-07-14, version `05d46657`, prod-smoked: `GET /facets` returns the
+vocabularies and KV-caches [2nd hit `hit`]; `?id=` batch returns briefs WITH
+`legal` and tags `x-luminous-cache: bypass`; `nameExact` whole-name matches).
+Suite 607 green; reviewed (10 verified findings, all fixed in-session).
+Next concrete actions:
+1. Optional but recommended: an e2e drive of the new FilterRail (facets-fed
    options, serie→set narrowing, HP bounds, text search) via
-   `.claude/skills/verify/SKILL.md` — this session verified by unit/DOM tests
-   only (607), no browser pass.
-4. Then: P2 task 17 (position field for manual order) is the only numbered
-   task left; or start **P3 (simulator)** — ruleset ready. The **P2-M1
-   follow-ups** list in `workstreams/deck-builder.md` (suffix-at-ingest for
-   EX/Mega, compareCardRows unification, per-resource facets degradation, …)
-   is fodder for a cleanup slice whenever.
+   `.claude/skills/verify/SKILL.md` — P2-M1 was verified by unit/DOM tests
+   only, no browser pass.
+2. Then: P2 task 17 (position field for manual order) is the only numbered
+   task left; or start **P3 (simulator)** — ruleset ready
+   (`reference/ptcg-rules.md`, engine in `packages/engine` per D7/D8). The
+   **P2-M1 follow-ups** list in `workstreams/deck-builder.md`
+   (suffix-at-ingest for EX/Mega, compareCardRows unification, per-resource
+   facets degradation, …) is fodder for a cleanup slice whenever.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -33,8 +30,8 @@ Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | ✅ M1–M9 done; P2-M1 api additions await deploy; OAuth secrets pending (user) |
-| deck-builder | P2 | 🚧 P2-M1 done uncommitted (tasks 8–10, 12–13 + M9 backlog cleared); only task 17 + follow-ups left |
+| backend-data | P1 | ✅ M1–M9 + P2-M1 api additions deployed; OAuth secrets pending (user) |
+| deck-builder | P2 | ✅ P2-M1 committed + deployed (tasks 8–10, 12–13 + M9 backlog cleared); only task 17 + follow-ups left |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
@@ -43,7 +40,8 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
 
 ## Session log
 - **2026-07-14** (build) — **P2 milestone 1** (four sub-agent slices + 8-angle
-  review + fix pass; all UNCOMMITTED): filters, panel stats, legality, and the
+  review + fix pass; committed `b983170`, api deployed `05d46657` +
+  prod-smoked same session): filters, panel stats, legality, and the
   full M9 backlog. (A) api: `GET /cards` gains repeatable `id` (≤100, one-call
   deck hydration; chunked IN + in-memory ordering twin), `nameExact`,
   repeatable `stage`/`trainerType`/`energyType`, `serie`, `illustrator`,
