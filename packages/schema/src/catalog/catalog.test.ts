@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cardBriefSchema, cardSchema } from "./card";
+import { catalogFacetsSchema } from "./facets";
 import { paginatedSchema } from "./page";
 import { serieSchema } from "./serie";
 import { setWithCardsSchema } from "./set";
@@ -80,6 +81,7 @@ describe("catalog set/serie schemas", () => {
           stage: "Basic",
           trainerType: null,
           energyType: null,
+          legal: { standard: true, expanded: true },
         },
       ],
     });
@@ -113,6 +115,7 @@ describe("catalog cardBriefSchema", () => {
     stage: "Basic",
     trainerType: null,
     energyType: null,
+    legal: { standard: true, expanded: true },
   };
 
   it("carries the builder-facing columns (types/hp/mark/subtype discriminators)", () => {
@@ -126,6 +129,39 @@ describe("catalog cardBriefSchema", () => {
     const { types: _types, ...withoutTypes } = joltikBrief;
     expect(cardBriefSchema.safeParse(withoutTypes).success).toBe(false);
     expect(cardBriefSchema.safeParse({ ...joltikBrief, hp: undefined }).success).toBe(false);
+  });
+
+  it("requires the P2 legal block — both flags, never absent", () => {
+    const { legal: _legal, ...withoutLegal } = joltikBrief;
+    expect(cardBriefSchema.safeParse(withoutLegal).success).toBe(false);
+    expect(cardBriefSchema.safeParse({ ...joltikBrief, legal: { standard: true } }).success).toBe(
+      false,
+    );
+    const brief = cardBriefSchema.parse(joltikBrief);
+    expect(brief.legal).toEqual({ standard: true, expanded: true });
+  });
+});
+
+describe("catalogFacetsSchema", () => {
+  const facets = {
+    rarities: ["Common", "Double rare"],
+    types: ["Fire", "Grass"],
+    stages: ["Basic", "Stage1"],
+    trainerTypes: ["Item", "Supporter"],
+    energyTypes: ["Normal", "Special"],
+    illustrators: ["5ban Graphics", "Naoyo Kimura"],
+    regulationMarks: ["G", "H"],
+  };
+
+  it("parses the seven vocabularies (empty lists included)", () => {
+    expect(catalogFacetsSchema.parse(facets)).toEqual(facets);
+    expect(catalogFacetsSchema.safeParse({ ...facets, illustrators: [] }).success).toBe(true);
+  });
+
+  it("rejects a missing vocabulary and non-string entries (nulls excluded by contract)", () => {
+    const { stages: _stages, ...withoutStages } = facets;
+    expect(catalogFacetsSchema.safeParse(withoutStages).success).toBe(false);
+    expect(catalogFacetsSchema.safeParse({ ...facets, rarities: [null] }).success).toBe(false);
   });
 });
 

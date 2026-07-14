@@ -135,6 +135,7 @@ describe("mapCardBriefRow", () => {
       stage: "Basic",
       trainerType: null,
       energyType: null,
+      legal: { standard: true, expanded: true },
     });
   });
 
@@ -147,6 +148,11 @@ describe("mapCardBriefRow", () => {
       trainerType: null,
       energyType: "Normal",
     });
+  });
+
+  it("folds the two legality flags into the P2 legal block", () => {
+    const brief = mapCardBriefRow({ ...joltikRow, legalStandard: false, legalExpanded: true });
+    expect(brief.legal).toEqual({ standard: false, expanded: true });
   });
 });
 

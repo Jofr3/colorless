@@ -2,6 +2,8 @@
 import type { CardBrief } from "@luminous/schema";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { json, stubFetchSequence } from "../../test/fetchStub";
+import { cardBrief } from "../../test/fixtures";
 import { DEFAULT_FORMAT } from "./cards";
 import { DEFAULT_FILTERS, type Filters } from "./poolFilter";
 import { type CardSearchOptions, useCardSearch } from "./useCardSearch";
@@ -10,41 +12,18 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const brief = (id: string, name: string): CardBrief => ({
-  id,
-  name,
-  category: "Pokemon",
-  rarity: "Common",
-  image: `/assets/cards/${id}`,
-  setId: "sv01",
-  localId: id.split("-")[1] ?? "000",
-  types: ["Grass"],
-  hp: 60,
-  regulationMark: "H",
-  stage: "Basic",
-  trainerType: null,
-  energyType: null,
-});
-
-function jsonResponse(body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { "content-type": "application/json" },
-  });
-}
+const brief = (id: string, name: string): CardBrief =>
+  cardBrief({ id, name, setId: "sv01", localId: id.split("-")[1] ?? "000", hp: 60 });
 
 /** Stub fetch with one canned envelope per successive call. */
 function stubPages(...pages: ({ items: CardBrief[]; total: number } | Error)[]) {
-  const mock = vi.fn();
-  for (const page of pages) {
-    if (page instanceof Error) mock.mockRejectedValueOnce(page);
-    else
-      mock.mockResolvedValueOnce(
-        jsonResponse({ items: page.items, page: 1, pageSize: 2, total: page.total }),
-      );
-  }
-  vi.stubGlobal("fetch", mock);
-  return mock;
+  return stubFetchSequence(
+    ...pages.map((page) =>
+      page instanceof Error
+        ? page
+        : json({ items: page.items, page: 1, pageSize: 2, total: page.total }),
+    ),
+  );
 }
 
 const options = { pageSize: 2, debounceMs: 0 };
@@ -87,11 +66,7 @@ describe("useCardSearch", () => {
     expect(result.current.loadingMore).toBe(true);
     await waitFor(() => expect(result.current.loadingMore).toBe(false));
 
-    expect(result.current.cards.map((c) => c.cardId)).toEqual([
-      "sv01-001",
-      "sv01-002",
-      "sv01-003",
-    ]);
+    expect(result.current.cards.map((c) => c.cardId)).toEqual(["sv01-001", "sv01-002", "sv01-003"]);
     expect(result.current.hasMore).toBe(false);
   });
 
@@ -124,7 +99,7 @@ describe("useCardSearch", () => {
       .fn()
       .mockReturnValueOnce(firstResponse) // slow initial search
       .mockResolvedValueOnce(
-        jsonResponse({ items: [brief("sv01-009", "Joltik")], page: 1, pageSize: 2, total: 1 }),
+        json({ items: [brief("sv01-009", "Joltik")], page: 1, pageSize: 2, total: 1 }),
       );
     vi.stubGlobal("fetch", mock);
 
@@ -133,9 +108,7 @@ describe("useCardSearch", () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     // The slow first response lands AFTER — it must not clobber the new search.
-    resolveFirst(
-      jsonResponse({ items: [brief("sv01-001", "A")], page: 1, pageSize: 2, total: 9 }),
-    );
+    resolveFirst(json({ items: [brief("sv01-001", "A")], page: 1, pageSize: 2, total: 9 }));
     await act(() => Promise.resolve());
 
     expect(result.current.cards.map((c) => c.cardId)).toEqual(["sv01-009"]);
@@ -161,6 +134,26 @@ describe("useCardSearch", () => {
     expect(mock).toHaveBeenCalledTimes(2);
     expect(mock.mock.calls[1]?.[0]).toBe(
       "http://localhost:8787/cards?name=joltik&legal=standard&sort=name&page=1&pageSize=2",
+    );
+  });
+
+  it("debounces the other free-typed fields in the same window — text + HP land together", async () => {
+    const mock = stubPages(
+      { items: [], total: 0 },
+      { items: [brief("sv01-005", "Discarder")], total: 1 },
+    );
+    const { result, rerender } = renderSearch(DEFAULT_FILTERS, { debounceMs: 30 });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // A burst across DIFFERENT free-text fields — one request at the end.
+    rerender({ filters: { ...DEFAULT_FILTERS, text: "discard" } });
+    rerender({ filters: { ...DEFAULT_FILTERS, text: "discard", hpMin: "1" } });
+    rerender({ filters: { ...DEFAULT_FILTERS, text: "discard", hpMin: "120" } });
+    await waitFor(() => expect(result.current.cards).toHaveLength(1));
+
+    expect(mock).toHaveBeenCalledTimes(2);
+    expect(mock.mock.calls[1]?.[0]).toBe(
+      "http://localhost:8787/cards?text=discard&hpMin=120&legal=standard&sort=name&page=1&pageSize=2",
     );
   });
 

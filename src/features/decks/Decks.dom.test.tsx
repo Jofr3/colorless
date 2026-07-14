@@ -1,35 +1,18 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { DeckSummary, Folder, User } from "@luminous/schema";
+import type { DeckSummary, Folder } from "@luminous/schema";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { installDomShims } from "../../test/domShims";
+import { json, stubFetch } from "../../test/fetchStub";
+import { USER } from "../../test/fixtures";
 import { AuthProvider } from "../auth/AuthProvider";
 import { Decks } from "./Decks";
 
-// jsdom doesn't implement these, and the tiles' tilt/scroll hooks probe them on
-// mount. The keyboard move mode under test is index-based (no real geometry), so
-// stubs are enough — no layout needed.
-beforeAll(() => {
-  if (!window.matchMedia) {
-    window.matchMedia = ((query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      addListener: () => {},
-      removeListener: () => {},
-      dispatchEvent: () => false,
-    })) as unknown as typeof window.matchMedia;
-  }
-  if (!window.ResizeObserver) {
-    window.ResizeObserver = class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    } as unknown as typeof window.ResizeObserver;
-  }
-});
+// The tiles' tilt/scroll hooks probe matchMedia/ResizeObserver on mount. The
+// keyboard move mode under test is index-based (no real geometry), so the
+// shims are enough — no layout needed.
+beforeAll(installDomShims);
 
 afterEach(() => {
   cleanup();
@@ -38,14 +21,6 @@ afterEach(() => {
 });
 
 // --- Server fixtures ---------------------------------------------------------
-
-const USER: User = {
-  id: "user-1",
-  email: "ash@example.com",
-  displayName: "Ash",
-  emailVerified: false,
-  createdAt: "2026-01-01T00:00:00.000Z",
-};
 
 const UPDATED = "2026-01-02T00:00:00.000Z";
 
@@ -70,29 +45,6 @@ const DECKS: DeckSummary[] = [
   summary({ id: "deck-snorlax", name: "Snorlax Stall", cardCount: 0 }),
   summary({ id: "deck-pidgeot", name: "Pidgeot Control", folderId: "folder-standard" }),
 ];
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-
-/** Stub fetch with a "METHOD /path" routing table; unrouted calls reject.
-    Returns the mock plus a log of the routed keys, in call order. */
-function stubFetch(routes: Record<string, () => Response | Promise<Response>>) {
-  const calls: string[] = [];
-  const impl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url =
-      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    const key = `${init?.method ?? "GET"} ${new URL(url).pathname}`;
-    const route = routes[key];
-    if (!route) throw new Error(`unstubbed fetch: ${key}`);
-    calls.push(key);
-    return route();
-  });
-  vi.stubGlobal("fetch", impl);
-  return { impl, calls };
-}
 
 /** The signed-in happy-path routes; spread and override per test. */
 const libraryRoutes = () => ({
@@ -161,10 +113,77 @@ describe("Decks — server library", () => {
     // Optimistic: the new name shows before the server answers…
     expect(screen.getByText("Lugia VSTAR")).toBeTruthy();
 
-    // …then the 500 rolls it back and announces the failure.
+    // …then the 500 rolls it back and shows the failure notice (a visible,
+    // dismissible role="alert" — not an sr-only whisper).
     await screen.findByText("Lugia Archeops");
     expect(screen.queryByText("Lugia VSTAR")).toBeNull();
-    expect(screen.getByText(/Couldn't rename Lugia Archeops/)).toBeTruthy();
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("Couldn't rename Lugia Archeops");
+
+    // Dismissing clears it.
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("rolls a session-expired PATCH back WITHOUT the failure pill", async () => {
+    // A 401 that survives the api client's re-probe-and-retry means the
+    // session is dead — AuthProvider handles the page flip, so the pill
+    // would only float misleadingly over the sign-in view. The rollback
+    // itself still runs.
+    stubFetch({
+      ...libraryRoutes(),
+      "PATCH /decks/deck-lugia": () => json({ error: "unauthorized" }, 401),
+    });
+    await renderLoaded();
+
+    fireEvent.click(screen.getByRole("button", { name: "Rename Lugia Archeops" }));
+    const input = screen.getByRole("textbox", { name: "Name" });
+    fireEvent.change(input, { target: { value: "Lugia VSTAR" } });
+    fireEvent.blur(input);
+
+    // Rolled back — but no role="alert" pill this time.
+    await screen.findByText("Lugia Archeops");
+    expect(screen.queryByText("Lugia VSTAR")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("does not roll a failed PATCH back over a newer edit that already succeeded", async () => {
+    // First rename hangs, second rename lands, THEN the first one fails: the
+    // stale snapshot must not clobber the newer, successful name.
+    let rejectFirst!: (reason: unknown) => void;
+    const firstPatch = new Promise<Response>((_, reject) => {
+      rejectFirst = reject;
+    });
+    let patchCalls = 0;
+    stubFetch({
+      ...libraryRoutes(),
+      "PATCH /decks/deck-lugia": () => {
+        patchCalls += 1;
+        return patchCalls === 1
+          ? firstPatch
+          : json({ ...summary({ id: "deck-lugia", name: "Lugia Third" }), cards: [] });
+      },
+    });
+    await renderLoaded();
+
+    const rename = (from: string, to: string) => {
+      fireEvent.click(screen.getByRole("button", { name: `Rename ${from}` }));
+      const input = screen.getByRole("textbox", { name: "Name" });
+      fireEvent.change(input, { target: { value: to } });
+      fireEvent.blur(input);
+    };
+
+    rename("Lugia Archeops", "Lugia Second");
+    rename("Lugia Second", "Lugia Third");
+    await waitFor(() => expect(patchCalls).toBe(2));
+
+    // The slow first PATCH now fails — its optimistic value ("Lugia Second")
+    // is no longer current, so the guarded rollback leaves the name alone.
+    rejectFirst(new TypeError("network down"));
+    await screen.findByRole("alert");
+    expect(screen.getByText("Lugia Third")).toBeTruthy();
+    expect(screen.queryByText("Lugia Second")).toBeNull();
+    expect(screen.queryByText("Lugia Archeops")).toBeNull();
   });
 
   it("empties a folder onto its parent before deleting it", async () => {

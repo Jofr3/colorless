@@ -5,7 +5,12 @@ import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { PlusIcon, SpinnerIcon } from "../../components/icons";
 import { apiUrl } from "../../lib/apiOrigin";
-import { GLASS_ACCENT_BUTTON, GLASS_NEUTRAL_BUTTON, GLASS_PANEL } from "../../lib/glass";
+import {
+  ERROR_TEXT,
+  GLASS_ACCENT_BUTTON,
+  GLASS_NEUTRAL_BUTTON,
+  GLASS_PANEL,
+} from "../../lib/glass";
 import { probeLobby } from "./net/probe";
 import { clearIdentity, stakeIdentity } from "./net/session";
 
@@ -26,8 +31,7 @@ const SECONDARY_BUTTON_CLASS = `${BUTTON_LAYOUT} ${GLASS_NEUTRAL_BUTTON}`;
 
 const PANEL_CLASS = `flex flex-col gap-4 rounded-3xl p-5 ${GLASS_PANEL}`;
 
-// The app's shared error red (matches the deck builder's legality warnings).
-const ERROR_TEXT = "text-[#ff8a9b]";
+// The join input's invalid ring, derived from the shared error red (glass.ts).
 const ERROR_RING = "ring-2 ring-[#ff8a9b]/60";
 
 export function OnlineHub() {

@@ -83,6 +83,61 @@ matching**; unmatched lines aren't added.
 
 ---
 
+## P2-M1 status (2026-07-14) — filters, panel stats, legality + backlog fold-in
+
+A four-slice session (api params/facets → backlog cleanup → richer filters →
+panel/legality) closed most of what M9 left open. As-built:
+- ✅ Tasks 8–10: `Filters` gained setId/serieId/illustrator/regulationMark/
+  hpMin/hpMax/text; kinds (stage/trainerType/energyType) filter **server-side**
+  with correct totals; options come from `GET /facets` + `/sets` + `/series`
+  via `useCatalogOptions` (`catalogOptions.ts`, session-cached, all-or-nothing
+  + retry). Hardcoded vocabularies deleted (`RARITIES`, stage/trainer/energy
+  subtype consts) — test fixtures live in `src/test/fixtures.ts`.
+  **Client-side remainder: EX/Mega only** (name regex; tcgdex `suffix` is NOT
+  persisted in D1). A selection containing a derived kind drops the whole kind
+  dimension from the wire and post-filters per page (`filterVisibleCards`) to
+  preserve OR-within-dimension; the loadedCount/total caption plumbing in
+  CardGrid survives for exactly this case.
+- ✅ Task 12: `DeckStats` in `DeckPanel.tsx` — per-supertype counts + the
+  type-distribution bar (ENERGY_TYPE_META palette, sr-only text alt).
+  Pending/unavailable entries are excluded from both figures.
+- ✅ Task 13: `Format.legalFlag` ("standard"/"expanded") drives BOTH
+  `isLegalInFormat` (structured `card.legal` verdict beats the printed mark;
+  mark check only for legal-less fixtures) and the `legalOnly` filter
+  (`legal=<flag>` param) — grid and validator now agree. Radiant = 1 per deck
+  total (official rule; supersedes per-name cap), Prism Star = 1 per name,
+  ACE SPEC unchanged (rarity string verified: "ACE SPEC Rare").
+- ✅ M9 review backlog: all items fixed (correctness + cleanup — see the
+  2026-07-14 progress.md entry). Deck hydration is now ONE batched
+  `GET /cards?id=…` round (`cardStore.ts`); import matching uses `nameExact`
+  (layered: stripped key → raw name → substring fallback).
+- 📋 Still open: task 17 (position field for manual order — D11), plus the
+  follow-ups below.
+
+### P2-M1 follow-ups (verified review findings deliberately deferred)
+- **Persist tcgdex `suffix` at ingest** (column + re-ingest) so EX/Mega become
+  a normal server param and the derived-kind client fallback disappears
+  (it currently makes mixed selections page badly: a 60-card page may render
+  nearly empty while total claims hundreds).
+- **`compareCardRows` (api query.ts) is a JS twin of the SQL ORDER BY** — the
+  id-hydration path sorts in memory; unify into one declarative sort spec (or
+  final in-SQL ORDER BY over the ≤100-row id set) before adding sort options.
+- **Facets bundle is all-or-nothing** (`useCatalogOptions` Promise.all): one
+  /series hiccup blanks the whole rail vocabulary; per-resource status would
+  degrade per dimension.
+- **Dual legality mechanisms**: `legalRegulationMarks` survives only as the
+  fixture fallback; consider a fixture factory that derives `legal` and delete
+  the mark list (rotation updates must currently touch both).
+- **401-recovery is gated by a `/auth/` path-prefix exclusion** (api.ts);
+  per-request opt-out would express intent at the call site.
+- **`text` search** covers ability/attack JSON only (Trainer/Energy `effect`
+  out of scope; JSON-key over-match documented in the api).
+- **Ingest data caveat**: cards whose upstream `legal` is missing ingest as
+  false/false — with `legalOnly` default-on they're hidden from the grid by
+  default; fine for the SV-era catalog, revisit if older sets get ingested.
+
+---
+
 ## M9 status (2026-07-13) — what the P1 frontend swap already covered
 
 M9 landed a large chunk of this plan; the code map above predates it (the
@@ -107,6 +162,9 @@ store); decks/folders/deck-contents live on the server; auth gates both pages).
   field for manual order — see D11).
 
 ### M9 review backlog (verified findings deferred out of M9)
+> **RESOLVED 2026-07-14 (P2-M1)** — every item below was fixed; kept for the
+> record only. See the P2-M1 section above for what replaced it.
+
 Correctness (all mechanism-confirmed; triggers need scale/drift/timing):
 - **Stale-snapshot rollback can clobber a newer successful edit** —
   `commitDeck`/`commitFolder`/`moveDeck`/`moveFolder` (`Decks.tsx`) restore

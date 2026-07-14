@@ -4,17 +4,15 @@ import { DEFAULT_FILTERS, type Filters, filtersActive, filterVisibleCards } from
 
 const f = (over: Partial<Filters>): Filters => ({ ...DEFAULT_FILTERS, ...over });
 
-// The kind chips are the ONE filter dimension still applied client-side
-// (poolFilter.filterVisibleCards docblock) — printed subtypes plus the
-// derived labels (Evolution, EX/Mega by name).
+// The kind chips filter server-side since P2 task 9 — filterVisibleCards is
+// only the client-side remainder for selections containing a DERIVED kind
+// (EX/Mega, read off the card name because tcgdex `suffix` isn't persisted).
 describe("filterVisibleCards", () => {
   const cards: BuilderCard[] = [
     { cardId: "a-1", name: "Charizard ex", supertype: "Pokémon", subtype: "Stage 2" },
     { cardId: "a-2", name: "Charmander", supertype: "Pokémon", subtype: "Basic" },
-    { cardId: "a-3", name: "Kirlia", supertype: "Pokémon", subtype: "Stage 1" },
+    { cardId: "a-3", name: "Mega Kangaskhan ex", supertype: "Pokémon", subtype: "Basic" },
     { cardId: "a-4", name: "Iono", supertype: "Trainer", subtype: "Supporter" },
-    { cardId: "a-5", name: "Rescue Board", supertype: "Trainer", subtype: "Pokémon Tool" },
-    { cardId: "a-6", name: "Fire Energy", supertype: "Energy", subtype: "Basic Energy" },
   ];
   const ids = (subtypes: string[]) => filterVisibleCards(cards, subtypes).map((c) => c.cardId);
 
@@ -22,20 +20,20 @@ describe("filterVisibleCards", () => {
     expect(filterVisibleCards(cards, [])).toBe(cards);
   });
 
-  it("keeps printed-subtype matches", () => {
-    expect(ids(["Basic"])).toEqual(["a-2"]);
-    expect(ids(["Supporter", "Pokémon Tool"])).toEqual(["a-4", "a-5"]);
-    expect(ids(["Basic Energy"])).toEqual(["a-6"]);
+  it("passes purely-printed selections through — those filtered server-side", () => {
+    expect(filterVisibleCards(cards, ["Basic"])).toBe(cards);
+    expect(filterVisibleCards(cards, ["Supporter", "Pokémon Tool"])).toBe(cards);
   });
 
-  it("resolves the derived kinds — Evolution unions stages, EX reads the name", () => {
-    expect(ids(["Evolution"])).toEqual(["a-1", "a-3"]);
-    expect(ids(["EX"])).toEqual(["a-1"]);
+  it("applies the whole selection per page once a derived kind is in it", () => {
+    expect(ids(["EX"])).toEqual(["a-1", "a-3"]);
+    expect(ids(["Mega"])).toEqual(["a-3"]);
+    // OR within the dimension: printed labels match by subtype equality.
+    expect(ids(["Stage 2", "Mega"])).toEqual(["a-1", "a-3"]);
   });
 
-  it("ORs within the dimension and ignores unknown labels", () => {
-    expect(ids(["Basic", "EX"])).toEqual(["a-1", "a-2"]);
-    expect(ids(["Mystery Kind"])).toEqual([]);
+  it("ignores unknown labels riding along with a derived kind", () => {
+    expect(ids(["Mega", "Mystery Kind"])).toEqual(["a-3"]);
   });
 });
 
@@ -51,6 +49,13 @@ describe("filtersActive", () => {
     expect(filtersActive(f({ types: ["Fire"] }))).toBe(true);
     expect(filtersActive(f({ subtypes: ["Basic"] }))).toBe(true);
     expect(filtersActive(f({ rarities: ["Common"] }))).toBe(true);
+    expect(filtersActive(f({ setId: "sv06" }))).toBe(true);
+    expect(filtersActive(f({ serieId: "sv" }))).toBe(true);
+    expect(filtersActive(f({ illustrator: "5ban Graphics" }))).toBe(true);
+    expect(filtersActive(f({ regulationMark: "H" }))).toBe(true);
+    expect(filtersActive(f({ hpMin: "120" }))).toBe(true);
+    expect(filtersActive(f({ hpMax: "200" }))).toBe(true);
+    expect(filtersActive(f({ text: "discard" }))).toBe(true);
     expect(filtersActive(f({ legalOnly: false }))).toBe(true);
   });
 });

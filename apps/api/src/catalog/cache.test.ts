@@ -5,10 +5,10 @@ const key = (url: string) => catalogCacheKey(new URL(url));
 
 describe("catalogCacheKey", () => {
   it("keys by path under the versioned catalog prefix", () => {
-    // The version segment guards cached SHAPES: bumping it (v1→v2 with the M9
-    // CardBrief extension) orphans every older entry instead of serving it.
-    expect(key("http://api.test/cards")).toBe("catalog:v2:/cards");
-    expect(key("http://api.test/cards/sv06.5-001")).toBe("catalog:v2:/cards/sv06.5-001");
+    // The version segment guards cached SHAPES: bumping it (v2→v3 with the P2
+    // CardBrief `legal` field) orphans every older entry instead of serving it.
+    expect(key("http://api.test/cards")).toBe("catalog:v3:/cards");
+    expect(key("http://api.test/cards/sv06.5-001")).toBe("catalog:v3:/cards/sv06.5-001");
   });
 
   it("normalizes query order — reordered params share a key", () => {
@@ -16,7 +16,7 @@ describe("catalogCacheKey", () => {
       key("http://api.test/cards?pageSize=5&set=sv06.5&page=2"),
     );
     expect(key("http://api.test/cards?set=sv06.5&page=2")).toBe(
-      "catalog:v2:/cards?page=2&set=sv06.5",
+      "catalog:v3:/cards?page=2&set=sv06.5",
     );
   });
 

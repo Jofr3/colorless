@@ -6,6 +6,7 @@
 // stays zod-free.
 
 import type { Deck as ApiDeck, DeckSummary } from "@luminous/schema";
+import { deleteFolder, patchDeck, patchFolder } from "../../lib/api";
 
 export type Deck = {
   id: string;
@@ -52,3 +53,25 @@ export function fromDeck(resource: ApiDeck): Deck {
 
 // The server `Folder` wire shape ({id, name, parentId}) is exactly the web
 // shape, so folders need no mapper — the api rows are used as-is.
+
+/** Delete a folder with the decks page's lift-up policy: its direct decks
+    and subfolders move up to `parentId` first (rather than following the
+    server's cascade, which would delete subfolders and drop decks to the
+    root), so by the time DELETE runs the folder is empty and the cascade is
+    a no-op. The child PATCHes fire in parallel — a partial failure leaves an
+    arbitrary subset applied, which is fine because the caller resyncs the
+    library from the server on ANY rejection here. */
+export async function deleteFolderLiftingChildren(args: {
+  folderId: string;
+  /** The deleted folder's own parent — where the children land. */
+  parentId: string | null;
+  childFolderIds: string[];
+  childDeckIds: string[];
+}): Promise<void> {
+  const { folderId, parentId, childFolderIds, childDeckIds } = args;
+  await Promise.all([
+    ...childFolderIds.map((id) => patchFolder(id, { parentId })),
+    ...childDeckIds.map((id) => patchDeck(id, { folderId: parentId })),
+  ]);
+  await deleteFolder(folderId);
+}

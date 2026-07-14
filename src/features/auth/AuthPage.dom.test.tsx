@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { User } from "@luminous/schema";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { json, stubFetch } from "../../test/fetchStub";
+import { USER } from "../../test/fixtures";
 import { Login } from "./AuthPage";
 import { AuthProvider } from "./AuthProvider";
 
@@ -10,34 +11,6 @@ import { AuthProvider } from "./AuthProvider";
 // email check, the 401 → friendly-copy mapping, the success → navigate path
 // (including an incoming `state.from`), the already-authenticated redirect,
 // and the OAuth 503 → "isn't set up yet" probe outcome.
-
-const USER: User = {
-  id: "user-1",
-  email: "ash@example.com",
-  displayName: "Ash",
-  emailVerified: false,
-  createdAt: "2026-01-01T00:00:00.000Z",
-};
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-
-/** Stub fetch with a "METHOD /path" routing table; unrouted calls reject. */
-function stubFetch(routes: Record<string, () => Response | Promise<Response>>) {
-  const impl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url =
-      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    const key = `${init?.method ?? "GET"} ${new URL(url).pathname}`;
-    const route = routes[key];
-    if (!route) throw new Error(`unstubbed fetch: ${key}`);
-    return route();
-  });
-  vi.stubGlobal("fetch", impl);
-  return impl;
-}
 
 const ANONYMOUS_ME = { "GET /auth/me": () => json({ error: "unauthorized" }, 401) };
 
@@ -84,7 +57,7 @@ describe("Login page", () => {
   });
 
   it("rejects a malformed email client-side without calling the server", async () => {
-    const impl = stubFetch(ANONYMOUS_ME);
+    const { impl } = stubFetch(ANONYMOUS_ME);
     renderLogin();
 
     fillAndSubmit("not-an-email", "pikapika1");

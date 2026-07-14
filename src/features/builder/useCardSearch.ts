@@ -1,11 +1,12 @@
 // The builder's server-side card search: Filters (+ the active format) in,
-// paginated BuilderCards out. Owns the text-query debounce, the page
+// paginated BuilderCards out. Owns the free-text debounce (name query,
+// ability/attack text, HP bounds — one shared window), the page
 // accumulation behind "load more", staleness (a filter change supersedes
 // in-flight responses) and the loading/error surface the grid renders.
 // Results keep showing while a narrowed search is in flight — standard
 // search UX, no blank flash between keystrokes.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type CardsQuery, getCards } from "../../lib/api";
 import type { BuilderCard, Format } from "./cards";
 import { filtersToCardsQuery, toBuilderCard } from "./catalog";
@@ -78,17 +79,36 @@ export function useCardSearch(
   const onCardsRef = useRef(options.onCards);
   onCardsRef.current = options.onCards;
 
-  // Debounce ONLY the text query — chip toggles apply instantly.
-  const [debouncedQuery, setDebouncedQuery] = useState(filters.query);
+  // Debounce ONLY the free-typed fields (name query, ability/attack text,
+  // the HP bounds) — chip and select changes apply instantly. One debounce
+  // window for the group: a keystroke in any of them re-arms the timer and
+  // the whole group lands together. `typed` (and the keys below) are
+  // memoised so unrelated renders neither churn the timer effect nor re-run
+  // the stringify pipeline.
+  const typed = useMemo(
+    () => ({
+      query: filters.query,
+      text: filters.text,
+      hpMin: filters.hpMin,
+      hpMax: filters.hpMax,
+    }),
+    [filters.query, filters.text, filters.hpMin, filters.hpMax],
+  );
+  const [debounced, setDebounced] = useState(typed);
+  const typedKey = useMemo(() => JSON.stringify(typed), [typed]);
+  const debouncedKey = useMemo(() => JSON.stringify(debounced), [debounced]);
   useEffect(() => {
-    if (filters.query === debouncedQuery) return undefined;
-    const id = window.setTimeout(() => setDebouncedQuery(filters.query), debounceMs);
+    if (typedKey === debouncedKey) return undefined;
+    const id = window.setTimeout(() => setDebounced(typed), debounceMs);
     return () => window.clearTimeout(id);
-  }, [filters.query, debouncedQuery, debounceMs]);
+  }, [typed, typedKey, debouncedKey, debounceMs]);
 
   // The serialized query IS the identity of a search — the fetch effect keys
   // on it and the response handler parses it back (self-contained deps).
-  const queryKey = JSON.stringify(filtersToCardsQuery({ ...filters, query: debouncedQuery }, format));
+  const queryKey = useMemo(
+    () => JSON.stringify(filtersToCardsQuery({ ...filters, ...debounced }, format)),
+    [filters, debounced, format],
+  );
 
   const [request, setRequest] = useState<Request>({ key: queryKey, page: 1, nonce: 0 });
   const [data, setData] = useState<Data>({

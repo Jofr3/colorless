@@ -1,7 +1,14 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { SpinnerIcon, UserIcon } from "../../components/icons";
-import { GLASS_DIALOG_GHOST_BUTTON, GLASS_HUD_BUTTON, GLASS_PANEL } from "../../lib/glass";
+import {
+  CORNER_ACCOUNT_POSITION,
+  CORNER_CONTROL_SHAPE,
+  ERROR_TEXT,
+  GLASS_DIALOG_GHOST_BUTTON,
+  GLASS_HUD_BUTTON,
+  GLASS_PANEL,
+} from "../../lib/glass";
 import { ApiError } from "../../lib/api";
 import { useAuth } from "./AuthProvider";
 
@@ -16,7 +23,7 @@ import { useAuth } from "./AuthProvider";
 // session probe is still running it renders nothing — the control is
 // position:fixed, so appearing late never shifts layout.
 
-const CORNER_BUTTON = `fixed bottom-[3.75rem] right-3 z-50 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full ${GLASS_HUD_BUTTON}`;
+const CORNER_BUTTON = `${CORNER_ACCOUNT_POSITION} ${CORNER_CONTROL_SHAPE} ${GLASS_HUD_BUTTON}`;
 
 export function AccountButton() {
   const { status, user, logout } = useAuth();
@@ -52,12 +59,7 @@ export function AccountButton() {
 
   if (status === "anonymous" || user === null) {
     return (
-      <Link
-        to="/login"
-        state={{ from: pathname }}
-        aria-label="Sign in"
-        className={CORNER_BUTTON}
-      >
+      <Link to="/login" state={{ from: pathname }} aria-label="Sign in" className={CORNER_BUTTON}>
         <UserIcon className="h-[18px] w-[18px]" />
       </Link>
     );
@@ -87,7 +89,7 @@ export function AccountButton() {
   };
 
   return (
-    <div ref={containerRef} className="fixed bottom-[3.75rem] right-3 z-50">
+    <div ref={containerRef} className={CORNER_ACCOUNT_POSITION}>
       <button
         ref={toggleRef}
         type="button"
@@ -95,7 +97,7 @@ export function AccountButton() {
         aria-expanded={open}
         aria-controls={popoverId}
         onClick={() => setOpen((prev) => !prev)}
-        className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-sm font-semibold ${GLASS_HUD_BUTTON}`}
+        className={`${CORNER_CONTROL_SHAPE} text-sm font-semibold ${GLASS_HUD_BUTTON}`}
       >
         <span aria-hidden="true">{initial}</span>
       </button>
@@ -108,7 +110,7 @@ export function AccountButton() {
           <p className="truncate text-sm font-semibold text-white/90">{label}</p>
           <p className="truncate text-xs text-white/45">{user.email}</p>
           <output className="block empty:hidden">
-            {signOutError && <p className="mt-2 text-xs text-[#ff8a9b]">{signOutError}</p>}
+            {signOutError && <p className={`mt-2 text-xs ${ERROR_TEXT}`}>{signOutError}</p>}
           </output>
           <button
             type="button"

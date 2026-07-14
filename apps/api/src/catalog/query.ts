@@ -3,9 +3,21 @@
 // builder. Pure — no Worker types — so filters unit-test as plain functions.
 
 import { cardCategorySchema } from "@luminous/schema";
-import { and, asc, desc, eq, gte, inArray, like, lte, or, type SQL } from "drizzle-orm";
+import {
+  and,
+  type AnyColumn,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  lte,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { z } from "zod";
-import { cards } from "../db/schema";
+import { cards, sets } from "../db/schema";
 
 /** A query-string field that must be non-empty when present. */
 const param = z.string().min(1);
@@ -18,20 +30,45 @@ const multiParam = z
   .union([param, z.array(param).min(1)])
   .transform((value) => (Array.isArray(value) ? value : [value]));
 
+/** Cap on repeatable `id` values. A deck holds ≤60 unique cards, so 100 is
+    generous headroom for the hydration use case; excess 400s. The cap bounds
+    the in-memory hydration path in routes.ts, which chunks the IN list under
+    D1's bound-parameter limit (a single 100-id statement plus LIMIT/OFFSET
+    binds would already exceed it). */
+export const MAX_ID_VALUES = 100;
+
 /**
  * GET /cards query params. Numbers arrive as strings, hence `z.coerce`;
  * unknown params are ignored (zod objects strip); empty values 400.
  */
 export const cardsQuerySchema = z.object({
+  /** Exact card id(s) for batched deck hydration, e.g. "sv06.5-001"
+      (repeatable, ≤ MAX_ID_VALUES). Composes with every other filter. */
+  id: multiParam.pipe(z.array(param).max(MAX_ID_VALUES)).optional(),
   /** Case-insensitive substring of the card name. */
   name: param.optional(),
+  /** Case-insensitive WHOLE-name equality — the import flow's "find this
+      exact card" lookup, distinct from the substring `name`. */
+  nameExact: param.optional(),
   category: cardCategorySchema.optional(),
   /** Energy type(s) the card must have one of, e.g. "Water" (repeatable). */
   type: multiParam.optional(),
   /** Exact rarity string(s), e.g. "Double rare" (repeatable). */
   rarity: multiParam.optional(),
+  /** Pokémon stage(s), e.g. "Basic" (repeatable, vocabulary: GET /facets). */
+  stage: multiParam.optional(),
+  /** Trainer subtype(s), e.g. "Item" (repeatable, vocabulary: GET /facets). */
+  trainerType: multiParam.optional(),
+  /** Energy subtype(s): "Normal" / "Special" (repeatable). */
+  energyType: multiParam.optional(),
   /** Set id, e.g. "sv06.5". */
   set: param.optional(),
+  /** Serie id, e.g. "sv" — cards whose set belongs to the serie. */
+  serie: param.optional(),
+  /** Exact illustrator (vocabulary: GET /facets). */
+  illustrator: param.optional(),
+  /** Case-insensitive substring over ability/attack names + text. */
+  text: param.optional(),
   /** Exact regulation mark, e.g. "H". */
   regulationMark: param.optional(),
   /** Inclusive HP bounds (Pokémon only — non-Pokémon have NULL hp and never match). */
@@ -54,37 +91,91 @@ export const setsQuerySchema = z.object({
 });
 export type SetsQuery = z.infer<typeof setsQuerySchema>;
 
+/** A user-supplied term made safe inside a LIKE pattern: `\`, `%` and `_`
+    escaped so they match literally. Pair with {@link likeEscaped}, whose
+    ESCAPE clause makes `\` the escape character. */
+function escapeLike(term: string): string {
+  return term.replace(/[\\%_]/g, "\\$&");
+}
+
+/** Drizzle's `like()` plus an `ESCAPE '\'` clause — the LIKE for patterns
+    built from user input (SQLite has no default escape character). */
+function likeEscaped(column: AnyColumn, pattern: string): SQL {
+  return sql`${column} like ${pattern} escape '\\'`;
+}
+
 /**
  * The Drizzle `where` for a validated /cards query; undefined = unfiltered.
  *
  * Tradeoffs, on purpose:
  * - `name` uses LIKE '%…%', which in SQLite is already case-insensitive for
- *   ASCII. `%`/`_` in the input act as extra wildcards — harmless in a
- *   read-only, parameterized catalog search, so they are not escaped.
+ *   ASCII. `%`/`_` in the input are escaped (with an ESCAPE '\' clause) so a
+ *   search like "50%" matches literally instead of acting as extra wildcards.
  * - `type` LIKEs for the quoted value inside the raw `types_json` text
  *   (e.g. '%"Water"%') instead of a json_each() join. Exact enough because
  *   no energy type is a substring of another *quoted* type; revisit if the
  *   vocabulary ever grows an overlapping name.
  * - repeated `type` / `rarity` values OR within their dimension (a card
  *   matches if it has ANY selected type / rarity); dimensions still AND.
+ * - `text` LIKEs over the raw abilities/attacks JSON blobs (names and effect
+ *   text live inside). Imprecise on purpose — it can also brush JSON keys or
+ *   cost values — but plenty for catalog search at ~3.7k rows. Trainer/Energy
+ *   rules text lives in `effect`, deliberately out of scope here.
+ * - `id` is NOT built here: the hydration path in routes.ts chunks the IN
+ *   list itself (D1 bound-parameter cap) and ANDs it with this where.
  */
 export function buildCardsWhere(query: CardsQuery): SQL | undefined {
   const conditions: SQL[] = [];
   if (query.name !== undefined) {
-    conditions.push(like(cards.name, `%${query.name}%`));
+    conditions.push(likeEscaped(cards.name, `%${escapeLike(query.name)}%`));
+  }
+  if (query.nameExact !== undefined) {
+    // lower() = lower() rather than a wildcard-less LIKE so `%`/`_` in the
+    // input can't act as wildcards — exact means exact. The same ASCII-only
+    // case folding as LIKE (SQLite semantics, both sides).
+    conditions.push(sql`lower(${cards.name}) = lower(${query.nameExact})`);
   }
   if (query.category !== undefined) {
     conditions.push(eq(cards.category, query.category));
   }
   if (query.type !== undefined) {
-    const anyType = or(...query.type.map((t) => like(cards.typesJson, `%"${t}"%`)));
+    const anyType = or(
+      ...query.type.map((t) => likeEscaped(cards.typesJson, `%"${escapeLike(t)}"%`)),
+    );
     if (anyType !== undefined) conditions.push(anyType);
   }
   if (query.rarity !== undefined) {
     conditions.push(inArray(cards.rarity, query.rarity));
   }
+  if (query.stage !== undefined) {
+    conditions.push(inArray(cards.stage, query.stage));
+  }
+  if (query.trainerType !== undefined) {
+    conditions.push(inArray(cards.trainerType, query.trainerType));
+  }
+  if (query.energyType !== undefined) {
+    conditions.push(inArray(cards.energyType, query.energyType));
+  }
   if (query.set !== undefined) {
     conditions.push(eq(cards.setId, query.set));
+  }
+  if (query.serie !== undefined) {
+    // Membership subquery instead of a join so the where stays composable
+    // with the page + count pair in routes.ts; a serie holds few sets.
+    conditions.push(
+      sql`${cards.setId} in (select ${sets.id} from ${sets} where ${sets.serieId} = ${query.serie})`,
+    );
+  }
+  if (query.illustrator !== undefined) {
+    conditions.push(eq(cards.illustrator, query.illustrator));
+  }
+  if (query.text !== undefined) {
+    const pattern = `%${escapeLike(query.text)}%`;
+    const anyText = or(
+      likeEscaped(cards.abilitiesJson, pattern),
+      likeEscaped(cards.attacksJson, pattern),
+    );
+    if (anyText !== undefined) conditions.push(anyText);
   }
   if (query.regulationMark !== undefined) {
     conditions.push(eq(cards.regulationMark, query.regulationMark));
@@ -121,4 +212,42 @@ export function cardsOrder(sort: CardsQuery["sort"]): SQL[] {
   if (sort === "name") return [asc(cards.name), ...collectorOrder];
   if (sort === "hp-desc") return [desc(cards.hp), ...collectorOrder];
   return collectorOrder;
+}
+
+/** The row fields the in-memory comparator reads — the id-hydration path
+    sorts its ≤ MAX_ID_VALUES rows in JS instead of paging in SQL. */
+export type CardOrderFields = {
+  name: string;
+  hp: number | null;
+  setId: string;
+  localId: string;
+};
+
+/**
+ * JS twin of `cardsOrder` for the id-hydration path: same keys, same
+ * directions, same NULL-hp-last rule, so both /cards paths page identically.
+ * `<` on JS strings (UTF-16 code units) matches SQLite's BINARY collation
+ * (UTF-8 bytes) for all BMP text — code-point order either way — which
+ * covers every card name and id in the catalog.
+ */
+export function compareCardRows(
+  sort: CardsQuery["sort"],
+  a: CardOrderFields,
+  b: CardOrderFields,
+): number {
+  if (sort === "name" && a.name !== b.name) {
+    return a.name < b.name ? -1 : 1;
+  }
+  if (sort === "hp-desc" && a.hp !== b.hp) {
+    if (a.hp === null) return 1;
+    if (b.hp === null) return -1;
+    return b.hp - a.hp;
+  }
+  if (a.setId !== b.setId) {
+    return a.setId < b.setId ? -1 : 1;
+  }
+  if (a.localId !== b.localId) {
+    return a.localId < b.localId ? -1 : 1;
+  }
+  return 0;
 }

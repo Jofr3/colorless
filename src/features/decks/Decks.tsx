@@ -1,25 +1,32 @@
-import type { HTMLAttributes, PointerEvent as ReactPointerEvent, ReactNode, Ref } from "react";
+import type {
+  Dispatch,
+  HTMLAttributes,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+  Ref,
+  SetStateAction,
+} from "react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
+import { StatusPanel, StatusSpinner } from "../../components/StatusPanel";
 import { useTiltJuice } from "../../components/useTiltJuice";
 import {
   ApiError,
   createDeck as apiCreateDeck,
   createFolder as apiCreateFolder,
   deleteDeck as apiDeleteDeck,
-  deleteFolder as apiDeleteFolder,
-  listDecks,
-  listFolders,
   patchDeck,
   patchFolder,
 } from "../../lib/api";
 import {
+  ERROR_TEXT,
   FOCUS_RING_INSET,
   GLASS_ACCENT_BUTTON,
+  GLASS_FILTER_TOGGLE,
   GLASS_GHOST_BUTTON,
-  GLASS_PANEL,
+  GLASS_INPUT,
 } from "../../lib/glass";
 import { readPersisted, writePersisted } from "../../lib/persistedState";
 import {
@@ -34,11 +41,13 @@ import {
   SearchIcon,
   SpinnerIcon,
   TrashIcon,
+  XIcon,
 } from "../../components/icons";
 import { ScrollArea } from "../../components/ScrollArea";
 import { useAuth } from "../auth/AuthProvider";
 import { CardBackStack } from "./CardBackStack";
-import { type Deck, type Folder, fromDeck, fromDeckSummary } from "./data";
+import { type Deck, deleteFolderLiftingChildren, type Folder, fromDeck } from "./data";
+import { useDeckLibrary } from "./useDeckLibrary";
 import { applyReorder, previewOrder, sameOrder } from "./reorder";
 import { canDrop as canDropTo, folderPath as folderPathOf } from "./tree";
 import { type DragItem, type ReorderPreview, useDeckDrag } from "./useDeckDrag";
@@ -55,16 +64,8 @@ const PRIMARY_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 ro
 
 const GHOST_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${GLASS_GHOST_BUTTON}`;
 
-// The app's shared error red (deck legality warnings, auth form errors).
-const ERROR_TEXT = "text-[#ff8a9b]";
-
 const NAME_INPUT_CLASS =
   "pointer-events-auto block w-full min-w-0 select-text truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
-
-// Filter toggle, sized to match the search field's height (p-2.5 + a 20px glyph
-// ≈ the input's py-2.5 + text-sm line). Shares the search bar's glass surface.
-const FILTER_BUTTON_CLASS =
-  "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2.5 ring-1 ring-inset backdrop-blur-md transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 // Shared circular glass surface for a tile's top-right action buttons.
 const ICON_BUTTON_CLASS = `flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-black/45 hover:text-white ${FOCUS_RING_INSET}`;
@@ -591,45 +592,77 @@ function EmptyState({ title }: { title: string }) {
   );
 }
 
-/** Centred glass panel for the page's non-grid states (sign-in prompt, load
-    failure) — the same surface language as the auth pages. */
-function StatusPanel({ children }: { children: ReactNode }) {
+/** Page-level centring wrapper around the shared StatusPanel (sign-in
+    prompt, load failure) — mirrors the auth pages' column. */
+function PageState({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center pb-24">
-      <section
-        className={`flex flex-col items-center gap-4 rounded-3xl p-8 text-center ${GLASS_PANEL}`}
-      >
-        {children}
-      </section>
+      {children}
     </div>
   );
 }
 
-/** Quiet full-area spinner while the session probe or library fetch runs. */
-function LoadingState() {
-  return (
-    <div className="flex flex-1 items-center justify-center pb-24" aria-label="Loading decks">
-      <SpinnerIcon className="h-6 w-6 animate-spin text-white/30" />
-    </div>
-  );
+/** The one optimistic-mutation recipe behind rename and move, deck and
+    folder alike: read the entry from the CURRENT list, apply the new field
+    value optimistically, PATCH, and on failure roll back — but only while
+    the field still holds THIS edit's value. Without that guard, a slow
+    failure restores a stale snapshot over a newer edit that already
+    succeeded. `message` builds the failure copy from the entry's pre-edit
+    name; `onError` is the page's visible error surface. */
+function patchWithRollback<T extends { id: string; name: string }, K extends keyof T & string>({
+  items,
+  setItems,
+  id,
+  field,
+  value,
+  send,
+  message,
+  onError,
+}: {
+  items: T[];
+  setItems: Dispatch<SetStateAction<T[]>>;
+  id: string;
+  field: K;
+  value: T[K];
+  send: (value: T[K]) => Promise<unknown>;
+  message: (name: string) => string;
+  onError: (error: unknown, message: string) => void;
+}): void {
+  const current = items.find((item) => item.id === id);
+  if (!current || current[field] === value) return;
+  const previous = current[field];
+  setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  send(value).catch((error: unknown) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id && item[field] === value ? { ...item, [field]: previous } : item,
+      ),
+    );
+    onError(error, message(current.name));
+  });
 }
+
+/** How long a sync-failure notice stays up before it clears itself. */
+const SYNC_ERROR_TTL_MS = 6_000;
 
 export function Decks() {
   const navigate = useNavigate();
-  const { status, refresh } = useAuth();
-  // The library, loaded from the api once the session resolves. Mutations are
-  // optimistic: state changes first, the api call follows, and a failure rolls
-  // the specific change back (announced via the sync live region below).
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [decks, setDecks] = useState<Deck[]>([]);
-  const [phase, setPhase] = useState<"loading" | "error" | "ready">("loading");
-  // Bumped by the error panel's Retry to re-run the load effect.
-  const [loadNonce, setLoadNonce] = useState(0);
+  const { status } = useAuth();
+  // The library, loaded from the api once the session resolves (useDeckLibrary
+  // owns the fetch/phase/retry). Mutations are optimistic: state changes first,
+  // the api call follows, and a failure rolls the specific change back
+  // (surfaced via the sync-error notice below).
+  const { decks, folders, setDecks, setFolders, phase, retry, resync } = useDeckLibrary(
+    status === "authenticated",
+  );
   // Which create call is awaiting the server (the server mints ids, so create
   // can't be optimistic) — disables both create buttons meanwhile.
   const [creating, setCreating] = useState<"deck" | "folder" | null>(null);
-  // Announced (aria-live) when an optimistic mutation fails and rolls back.
-  const [syncMessage, setSyncMessage] = useState("");
+  // Shown (and announced — the notice is a role="alert") when a mutation
+  // fails and rolls back. The nonce keys the notice element so an identical
+  // consecutive failure remounts it: assistive tech re-announces, and the
+  // self-expiry timer restarts.
+  const [syncError, setSyncError] = useState<{ message: string; nonce: number } | null>(null);
   const [query, setQuery] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -653,62 +686,31 @@ export function Decks() {
 
   const filterActive = showFilter !== "all" || sortKey !== "manual";
 
-  // A 401 mid-session means the cookie expired: re-probe the session, which
-  // resolves to "anonymous" and flips this page to the sign-in prompt. Any
-  // other failure is announced and (for optimistic mutations) rolled back by
-  // the caller.
+  // The page's mutation-failure surface. The api client already re-probes an
+  // unexpected 401 (retrying once when it was a one-off), so one that still
+  // reaches a catch means the session is dead and AuthProvider is flipping
+  // the page to the sign-in prompt — the rollback stands, but the notice is
+  // suppressed (a "couldn't rename" pill floating over the sign-in view
+  // would only mislead). Everything else shows the pill.
   const fail = (error: unknown, message: string) => {
-    if (error instanceof ApiError && error.status === 401) {
-      void refresh();
-      return;
-    }
-    setSyncMessage(message);
+    if (error instanceof ApiError && error.status === 401) return;
+    setSyncError((prev) => ({ message, nonce: (prev?.nonce ?? 0) + 1 }));
   };
 
-  // Load the library once the session probe lands on "authenticated" (and on
-  // every Retry). Both lists fetch in parallel; a failure of either shows the
-  // error panel rather than a half-loaded grid.
+  // Each notice clears itself; a repeat (new nonce) restarts the clock.
   useEffect(() => {
-    // loadNonce has no value of its own — reading it here is what lets the
-    // error panel's Retry re-run this effect.
-    void loadNonce;
-    if (status !== "authenticated") return;
-    let cancelled = false;
-    setPhase("loading");
-    Promise.all([listDecks(), listFolders()]).then(
-      ([deckRows, folderRows]) => {
-        if (cancelled) return;
-        setDecks(deckRows.map(fromDeckSummary));
-        setFolders(folderRows);
-        setPhase("ready");
-      },
-      (error: unknown) => {
-        if (cancelled) return;
-        // 401 = the session expired — re-probe (flips the page to the sign-in
-        // prompt). The error phase still lands under the re-probe: if the 401
-        // was a one-off (the session survives), the Retry panel shows instead
-        // of an eternal spinner (nothing else would re-run this effect).
-        if (error instanceof ApiError && error.status === 401) void refresh();
-        setPhase("error");
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [status, loadNonce, refresh]);
+    if (syncError === null) return;
+    const timer = setTimeout(() => setSyncError(null), SYNC_ERROR_TTL_MS);
+    return () => clearTimeout(timer);
+  }, [syncError]);
 
   // Honest recovery after a partially-applied compound mutation (folder
   // delete): refetch both lists so the grid shows exactly what the server
   // holds, whatever subset of the steps landed.
-  const resync = async () => {
-    try {
-      const [deckRows, folderRows] = await Promise.all([listDecks(), listFolders()]);
-      setDecks(deckRows.map(fromDeckSummary));
-      setFolders(folderRows);
-    } catch (error) {
-      fail(error, "Couldn't refresh the library — reload the page.");
-    }
-  };
+  const resyncOrWarn = () =>
+    resync().catch((error: unknown) =>
+      fail(error, "Couldn't refresh the library — reload the page."),
+    );
 
   const trimmed = query.trim();
   const q = trimmed.toLowerCase();
@@ -818,25 +820,29 @@ export function Decks() {
 
   const commitDeck = (id: string, name: string) => {
     setEditingId(null);
-    const current = decks.find((d) => d.id === id);
-    if (!current || current.name === name) return;
-    const previousName = current.name;
-    setDecks((prev) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
-    patchDeck(id, { name }).catch((error: unknown) => {
-      setDecks((prev) => prev.map((d) => (d.id === id ? { ...d, name: previousName } : d)));
-      fail(error, `Couldn't rename ${previousName} — name restored.`);
+    patchWithRollback({
+      items: decks,
+      setItems: setDecks,
+      id,
+      field: "name",
+      value: name,
+      send: (value) => patchDeck(id, { name: value }),
+      message: (previous) => `Couldn't rename ${previous} — name restored.`,
+      onError: fail,
     });
   };
 
   const commitFolder = (id: string, name: string) => {
     setEditingId(null);
-    const current = folders.find((f) => f.id === id);
-    if (!current || current.name === name) return;
-    const previousName = current.name;
-    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)));
-    patchFolder(id, { name }).catch((error: unknown) => {
-      setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name: previousName } : f)));
-      fail(error, `Couldn't rename ${previousName} — name restored.`);
+    patchWithRollback({
+      items: folders,
+      setItems: setFolders,
+      id,
+      field: "name",
+      value: name,
+      send: (value) => patchFolder(id, { name: value }),
+      message: (previous) => `Couldn't rename ${previous} — name restored.`,
+      onError: fail,
     });
   };
 
@@ -863,10 +869,9 @@ export function Decks() {
     if (!folder) return;
     const parentId = folder.parentId;
     // Today's UX, preserved: the folder's direct decks and subfolders lift up
-    // one level rather than following the server's cascade (which would delete
-    // subfolders and drop decks to the root). So: PATCH every direct child out
-    // first; by the time DELETE runs the folder is empty and the cascade is a
-    // no-op. Snapshot the children before the optimistic state change.
+    // one level rather than following the server's cascade — the data-layer
+    // helper owns that sequencing. Snapshot the children before the
+    // optimistic state change.
     const childFolders = folders.filter((f) => f.parentId === id);
     const childDecks = decks.filter((d) => d.folderId === id);
     setFlipPulse(true);
@@ -877,26 +882,17 @@ export function Decks() {
     if (openFolderId === id) setOpenFolderId(parentId);
     if (editingId === id) setEditingId(null);
     try {
-      // Sequenced, not parallel — a partial failure leaves a well-defined
-      // prefix applied, and the resync below squares the rest.
-      for (const child of childFolders) {
-        await patchFolder(child.id, { parentId });
-      }
-      for (const deck of childDecks) {
-        await patchDeck(deck.id, { folderId: parentId });
-      }
-      await apiDeleteFolder(id);
+      await deleteFolderLiftingChildren({
+        folderId: id,
+        parentId,
+        childFolderIds: childFolders.map((f) => f.id),
+        childDeckIds: childDecks.map((d) => d.id),
+      });
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        // Session expired mid-sequence: re-probe, and resync too — if the 401
-        // was a one-off (the session survives), the grid must not keep showing
-        // a delete the server never finished.
-        void refresh();
-        void resync();
-        return;
-      }
-      setSyncMessage(`Couldn't delete ${folder.name} — restored from the server.`);
-      await resync();
+      // Whatever subset of the lift-up landed, the resync squares the grid
+      // with what the server actually holds.
+      fail(error, `Couldn't delete ${folder.name} — restored from the server.`);
+      await resyncOrWarn();
     }
   };
 
@@ -908,28 +904,28 @@ export function Decks() {
   // --- Drag-and-drop: move decks/folders between folders. --------------------
 
   const moveDeck = (deckId: string, folderId: string | null) => {
-    const current = decks.find((d) => d.id === deckId);
-    if (!current || current.folderId === folderId) return;
-    const previousFolderId = current.folderId;
-    setDecks((prev) => prev.map((d) => (d.id === deckId ? { ...d, folderId } : d)));
-    patchDeck(deckId, { folderId }).catch((error: unknown) => {
-      setDecks((prev) =>
-        prev.map((d) => (d.id === deckId ? { ...d, folderId: previousFolderId } : d)),
-      );
-      fail(error, `Couldn't move ${current.name} — put back.`);
+    patchWithRollback({
+      items: decks,
+      setItems: setDecks,
+      id: deckId,
+      field: "folderId",
+      value: folderId,
+      send: (value) => patchDeck(deckId, { folderId: value }),
+      message: (name) => `Couldn't move ${name} — put back.`,
+      onError: fail,
     });
   };
 
   const moveFolder = (folderId: string, parentId: string | null) => {
-    const current = folders.find((f) => f.id === folderId);
-    if (!current || current.parentId === parentId) return;
-    const previousParentId = current.parentId;
-    setFolders((prev) => prev.map((f) => (f.id === folderId ? { ...f, parentId } : f)));
-    patchFolder(folderId, { parentId }).catch((error: unknown) => {
-      setFolders((prev) =>
-        prev.map((f) => (f.id === folderId ? { ...f, parentId: previousParentId } : f)),
-      );
-      fail(error, `Couldn't move ${current.name} — put back.`);
+    patchWithRollback({
+      items: folders,
+      setItems: setFolders,
+      id: folderId,
+      field: "parentId",
+      value: parentId,
+      send: (value) => patchFolder(folderId, { parentId: value }),
+      message: (name) => `Couldn't move ${name} — put back.`,
+      onError: fail,
     });
   };
 
@@ -1044,36 +1040,41 @@ export function Decks() {
   // and filter rail only render alongside the grid itself.
   let pageState: ReactNode = null;
   if (status === "loading" || (status === "authenticated" && phase === "loading")) {
-    pageState = <LoadingState />;
+    pageState = (
+      <StatusSpinner
+        label="Loading decks"
+        className="flex flex-1 items-center justify-center pb-24"
+      />
+    );
   } else if (status === "anonymous") {
     pageState = (
-      <StatusPanel>
-        <DecksIcon className="h-7 w-7 text-white/25" />
-        <div>
-          <h2 className="text-base font-semibold text-white/90">Sign in to see your decks</h2>
-          <p className="mt-1 text-sm text-muted">Your library lives with your account.</p>
-        </div>
-        <Link to="/login" state={{ from: "/decks" }} className={PRIMARY_BUTTON_CLASS}>
-          Sign in
-        </Link>
-      </StatusPanel>
+      <PageState>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Sign in to see your decks"
+          description="Your library lives with your account."
+          action={
+            <Link to="/login" state={{ from: "/decks" }} className={PRIMARY_BUTTON_CLASS}>
+              Sign in
+            </Link>
+          }
+        />
+      </PageState>
     );
   } else if (phase === "error") {
     pageState = (
-      <StatusPanel>
-        <DecksIcon className="h-7 w-7 text-white/25" />
-        <div>
-          <h2 className="text-base font-semibold text-white/90">Couldn't load your decks</h2>
-          <p className="mt-1 text-sm text-muted">Check your connection and try again.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setLoadNonce((nonce) => nonce + 1)}
-          className={GHOST_BUTTON_CLASS}
-        >
-          Retry
-        </button>
-      </StatusPanel>
+      <PageState>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Couldn't load your decks"
+          description="Check your connection and try again."
+          action={
+            <button type="button" onClick={retry} className={GHOST_BUTTON_CLASS}>
+              Retry
+            </button>
+          }
+        />
+      </PageState>
     );
   }
 
@@ -1102,7 +1103,7 @@ export function Decks() {
                 aria-label="Filter and sort"
                 aria-expanded={filterOpen}
                 onClick={() => setFilterOpen((open) => !open)}
-                className={`${FILTER_BUTTON_CLASS} ${
+                className={`${GLASS_FILTER_TOGGLE} ${
                   filterOpen || filterActive
                     ? "bg-white/[0.09] text-white ring-white/25"
                     : "bg-white/[0.045] text-white/70 ring-white/10 hover:bg-white/[0.08] hover:text-white/90"
@@ -1140,11 +1141,6 @@ export function Decks() {
               <output aria-live="assertive" className="sr-only">
                 {move.liveMessage}
               </output>
-              {/* Announces failed/rolled-back mutations. Separate from the move
-              region so a move announcement never mixes with a stale error. */}
-              <output aria-live="assertive" className={`sr-only ${ERROR_TEXT}`}>
-                {syncMessage}
-              </output>
               <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative w-full min-w-0 sm:flex-1">
                   <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
@@ -1154,7 +1150,7 @@ export function Decks() {
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search decks and folders"
                     aria-label="Search decks and folders"
-                    className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                    className={`${GLASS_INPUT} py-2.5 pl-10 pr-4 placeholder:text-white/35`}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -1363,6 +1359,30 @@ export function Decks() {
           </>
         )}
       </div>
+      {/* Failed/rolled-back mutation notice: a floating glass pill that
+          self-expires (or dismisses). role="alert" announces it assertively,
+          and keying on the nonce remounts it for an identical consecutive
+          failure — a live region whose text doesn't change re-announces
+          nothing. */}
+      {syncError && (
+        <div
+          key={syncError.nonce}
+          role="alert"
+          className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100vw-3rem)] -translate-x-1/2 items-center gap-2 rounded-full bg-[#16161f]/90 py-2 pl-4 pr-2 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl"
+        >
+          <span className={`min-w-0 truncate text-sm font-medium ${ERROR_TEXT}`}>
+            {syncError.message}
+          </span>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setSyncError(null)}
+            className={`flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`}
+          >
+            <XIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
     </AppBackdrop>
   );
 }

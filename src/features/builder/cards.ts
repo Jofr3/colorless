@@ -28,41 +28,11 @@ export type Supertype = "Pokémon" | "Trainer" | "Energy";
 
 export const SUPERTYPES: Supertype[] = ["Pokémon", "Trainer", "Energy"];
 
-/** Pokémon stage labels (also the subtype values for Pokémon cards). */
-export const POKEMON_STAGES = ["Basic", "Stage 1", "Stage 2"] as const;
-export type PokemonStage = (typeof POKEMON_STAGES)[number];
-
-/** Trainer subtypes. "Pokémon Tool" is a Trainer in modern rules. */
-export const TRAINER_SUBTYPES = ["Item", "Supporter", "Stadium", "Pokémon Tool"] as const;
-export type TrainerSubtype = (typeof TRAINER_SUBTYPES)[number];
-
-/** Energy subtypes. */
-export const ENERGY_SUBTYPES = ["Basic Energy", "Special Energy"] as const;
-export type EnergySubtype = (typeof ENERGY_SUBTYPES)[number];
-
-/** The known printed card subtypes — the union of the Pokémon-stage, Trainer
-    and Energy subtype tuples. Narrower than the deck-builder's card-"kind"
-    filter labels, which also include derived labels (Evolution / EX / Mega).
-    A card's `subtype` is a plain string because the catalog's vocabulary is
-    open-ended; these tuples name the values the builder's predicates and
-    kind filters key on. */
-export type Subtype = PokemonStage | TrainerSubtype | EnergySubtype;
-
-/** Rarity filter options — the exact strings the catalog stores (tcgdex
-    vocabulary, mixed casing and all, e.g. "Double rare"), because the rail's
-    chips feed the api's exact-match rarity filter. Ordered low → high tier. */
-export const RARITIES = [
-  "Common",
-  "Uncommon",
-  "Rare",
-  "Double rare",
-  "Ultra Rare",
-  "Illustration rare",
-  "Special illustration rare",
-  "Hyper rare",
-  "ACE SPEC Rare",
-] as const;
-export type Rarity = (typeof RARITIES)[number];
+// NOTE (P2 task 10): the printed-subtype and rarity vocabularies used to be
+// hardcoded tuples here (POKEMON_STAGES, TRAINER_SUBTYPES, RARITIES, …). They
+// now come from the live catalog — GET /facets via useCatalogOptions — so a
+// card's `subtype` and `rarity` stay plain strings and the rail's chips
+// reflect what is actually ingested.
 
 /** A single browsable card — the builder's view of a catalog card (adapted
     from the api shapes in catalog.ts). `cardId` is the tcgdex id ("sv06.5-001"),
@@ -89,6 +59,10 @@ export interface BuilderCard {
   /** Whether the catalog has a scan for this card — when false, tiles render
       the neutral fallback instead of requesting art that would 404. */
   hasImage?: boolean;
+  /** The catalog's structured format-legality verdict (P2) — present on every
+      api-adapted card; optional only for hand-built fixtures. Groundwork for
+      validateDeck to stop inferring legality from regulation marks. */
+  legal?: { standard: boolean; expanded: boolean };
 }
 
 /** True for a Basic Pokémon — the card a legal deck must contain at least one
@@ -108,63 +82,80 @@ export const ACE_SPEC_LIMIT = 1;
 
 /** True for an ACE SPEC card. A deck may contain only one ACE SPEC in total
     (across every name), enforced in {@link validateDeck}. Identified by rarity,
-    which is how the printed cards mark themselves. */
+    which is how the printed cards mark themselves — the catalog's exact string
+    is "ACE SPEC Rare" (verified against the live facets vocabulary); the
+    substring match keeps older fixture spellings working too. */
 export function isAceSpec(card: BuilderCard): boolean {
   return (card.rarity ?? "").includes("ACE SPEC");
 }
 
-/** Whether a card is legal in a format, by its printed regulation mark. Formats
-    with no `legalRegulationMarks` (Expanded) impose no mark cutoff; an unmarked
-    card (basic Energy) is always legal. */
+// Radiant and Prism Star are NAME-defined card classes — the game names every
+// member "Radiant X" / "X ◇" and hangs the deck rule off that name — so a name
+// check IS the structured detection, not a stand-in for missing data.
+
+/** The most Radiant Pokémon — across every name — a deck may hold. */
+export const RADIANT_LIMIT = 1;
+
+/** True for a Radiant Pokémon ("Radiant Greninja", …) — like ACE SPEC, a deck
+    may contain only one Radiant Pokémon in total, across every name
+    ({@link validateDeck}). */
+export function isRadiantPokemon(card: BuilderCard): boolean {
+  return card.supertype === "Pokémon" && card.name.startsWith("Radiant ");
+}
+
+/** True for a Prism Star card — tcgdex prints the "◇" suffix in the name
+    ("Diancie ◇"); the spelled-out form covers other decklist sources. Limited
+    to one copy of a given name per deck ({@link validateDeck}). */
+export function isPrismStar(card: BuilderCard): boolean {
+  return card.name.includes("◇") || card.name.endsWith(" Prism Star");
+}
+
+/** Whether a card is legal in a format. The catalog's structured verdict
+    (`card.legal`, keyed by the format's {@link Format.legalFlag}) is the
+    source of truth — every api-sourced card carries it. Cards without it
+    (hand-built fixtures, pre-P2 data) degrade to the printed regulation-mark
+    check: formats with no `legalRegulationMarks` impose no mark cutoff, and
+    an unmarked card (basic Energy) is always legal. */
 export function isLegalInFormat(card: BuilderCard, format: Format): boolean {
+  if (format.legalFlag === undefined) return true;
+  if (card.legal) return card.legal[format.legalFlag];
   if (!format.legalRegulationMarks) return true;
   if (!card.regulationMark) return true;
   return format.legalRegulationMarks.includes(card.regulationMark);
 }
 
-// --- Card-kind categories --------------------------------------------------
+// --- Card kinds --------------------------------------------------------------
 // The rail's contextual filter offers card "kinds" once a supertype is chosen.
-// For Trainers/Energy these are just the printed subtypes, but Pokémon kinds are
-// partly derived: "Evolution" unions the two evolved stages, and "EX"/"Mega" are
-// read off the card name (the pool has no dedicated field for either).
+// Printed kinds (stages / trainer subtypes / energy subtypes) come from the
+// catalog's facets and filter SERVER-side (catalog.filtersToCardsQuery maps
+// them to the stage/trainerType/energyType params). Only the DERIVED kinds
+// below stay client-side: they're read off the card NAME because tcgdex's
+// `suffix` field isn't persisted — there is no structured column to query.
 
-export interface CardCategory {
+export interface DerivedKind {
   label: string;
   match: (card: BuilderCard) => boolean;
 }
 
-const bySubtype = (subtype: string): CardCategory => ({
-  label: subtype,
-  match: (c) => c.subtype === subtype,
-});
-
-export const POKEMON_CATEGORIES: CardCategory[] = [
-  { label: "Basic", match: (c) => c.subtype === "Basic" },
-  { label: "Evolution", match: (c) => c.subtype === "Stage 1" || c.subtype === "Stage 2" },
+export const DERIVED_KINDS: DerivedKind[] = [
   { label: "EX", match: (c) => /\bex\b/i.test(c.name) },
   { label: "Mega", match: (c) => /\bmega\b/i.test(c.name) },
 ];
 
-export const TRAINER_CATEGORIES: CardCategory[] = TRAINER_SUBTYPES.map(bySubtype);
-
-export const ENERGY_CATEGORIES: CardCategory[] = ENERGY_SUBTYPES.map(bySubtype);
-
-/** The card-kind options offered for a chosen supertype ("all" → none). */
-export function cardCategories(supertype: "all" | Supertype): CardCategory[] {
-  if (supertype === "Pokémon") return POKEMON_CATEGORIES;
-  if (supertype === "Trainer") return TRAINER_CATEGORIES;
-  if (supertype === "Energy") return ENERGY_CATEGORIES;
-  return [];
+/** True for a kind label the server can't express (name-regex kinds). */
+export function isDerivedKind(label: string): boolean {
+  return DERIVED_KINDS.some((kind) => kind.label === label);
 }
 
-const CATEGORY_BY_LABEL = new Map<string, CardCategory>(
-  [...POKEMON_CATEGORIES, ...TRAINER_CATEGORIES, ...ENERGY_CATEGORIES].map((c) => [c.label, c]),
-);
-
-/** OR within the card-kind dimension: keep a card if it matches any selected
-    label. Unknown labels match nothing. */
-export function cardMatchesCategories(card: BuilderCard, labels: string[]): boolean {
-  return labels.some((label) => CATEGORY_BY_LABEL.get(label)?.match(card) ?? false);
+/** OR within the card-kind dimension: derived kinds match by name regex,
+    printed kinds by subtype equality (builder labels — "Stage 1", "Pokémon
+    Tool", …). Only consulted when a derived kind is selected; otherwise the
+    whole dimension filtered server-side (poolFilter.filterVisibleCards). */
+export function cardMatchesKinds(card: BuilderCard, labels: string[]): boolean {
+  return labels.some((label) => {
+    const derived = DERIVED_KINDS.find((kind) => kind.label === label);
+    return derived ? derived.match(card) : card.subtype === label;
+  });
 }
 
 // --- Energy-type palette ---------------------------------------------------
@@ -205,8 +196,15 @@ export interface Format {
   maxCopiesByName: number;
   /** Minimum Basic Pokémon a legal deck must contain. */
   minBasicPokemon: number;
-  /** Regulation marks legal in this format; undefined = no mark restriction
-      (Expanded spans far more sets than we model, so we don't gate on marks). */
+  /** The card-legality flag this format reads — the key into the catalog's
+      structured `card.legal` verdict, and the value of GET /cards' `legal`
+      param. Undefined = an unrestricted format (none modelled today). One
+      field feeds both the validator and the rail's legal-only filter, so the
+      two can't disagree (the P2 task 13 unification). */
+  legalFlag?: "standard" | "expanded";
+  /** Regulation marks legal in this format; undefined = no mark restriction.
+      FALLBACK ONLY — consulted for cards without the structured `legal` block
+      (hand-built fixtures); api-sourced cards always carry the verdict. */
   legalRegulationMarks?: string[];
   description: string;
 }
@@ -222,8 +220,9 @@ const STANDARD_FORMAT: Format = {
   deckSize: 60,
   maxCopiesByName: 4,
   minBasicPokemon: 1,
-  // Legal marks after the April 2026 rotation (G rotated out); bump this list
-  // when the next rotation lands.
+  legalFlag: "standard",
+  // Mark-check fallback for cards without `legal`: the marks after the April
+  // 2026 rotation (G rotated out); bump this list when the next rotation lands.
   legalRegulationMarks: ["H", "I", "J"],
   description: "Most recent sets — the default tournament format.",
 };
@@ -236,6 +235,9 @@ export const FORMATS: Format[] = [
     deckSize: 60,
     maxCopiesByName: 4,
     minBasicPokemon: 1,
+    // Structured legality only — no mark fallback (Expanded spans far more
+    // sets than the mark system covers), so a card without `legal` passes.
+    legalFlag: "expanded",
     description: "Black & White onward — a far wider card pool.",
   },
 ];

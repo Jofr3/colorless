@@ -6,9 +6,12 @@ import { describe, expect, it } from "vitest";
 import { cards } from "../db/schema";
 import {
   buildCardsWhere,
+  type CardOrderFields,
   type CardsQuery,
   cardsOrder,
   cardsQuerySchema,
+  compareCardRows,
+  MAX_ID_VALUES,
   setsQuerySchema,
 } from "./query";
 
@@ -65,6 +68,45 @@ describe("cardsQuerySchema", () => {
     expect(repeated.success && repeated.data.rarity).toEqual(["Common", "Double rare"]);
   });
 
+  it("normalizes the P2 kind params to arrays like type/rarity", () => {
+    const result = parseCards({
+      stage: "Basic",
+      trainerType: ["Item", "Supporter"],
+      energyType: "Special",
+    });
+    expect(result.success && result.data.stage).toEqual(["Basic"]);
+    expect(result.success && result.data.trainerType).toEqual(["Item", "Supporter"]);
+    expect(result.success && result.data.energyType).toEqual(["Special"]);
+  });
+
+  it("accepts the P2 scalar params (nameExact/serie/illustrator/text)", () => {
+    const result = parseCards({
+      nameExact: "Fezandipiti ex",
+      serie: "sv",
+      illustrator: "Naoyo Kimura",
+      text: "draw 3 cards",
+    });
+    expect(result.success && result.data).toMatchObject({
+      nameExact: "Fezandipiti ex",
+      serie: "sv",
+      illustrator: "Naoyo Kimura",
+      text: "draw 3 cards",
+    });
+  });
+
+  it("normalizes id to an array and caps it at MAX_ID_VALUES", () => {
+    const single = parseCards({ id: "sv06.5-001" });
+    expect(single.success && single.data.id).toEqual(["sv06.5-001"]);
+
+    const atCap = parseCards({ id: Array.from({ length: MAX_ID_VALUES }, (_, i) => `sv01-${i}`) });
+    expect(atCap.success).toBe(true);
+
+    const overCap = parseCards({
+      id: Array.from({ length: MAX_ID_VALUES + 1 }, (_, i) => `sv01-${i}`),
+    });
+    expect(overCap.success).toBe(false);
+  });
+
   it("accepts each sort value", () => {
     for (const sort of ["name", "hp-desc", "set"] as const) {
       const result = parseCards({ sort });
@@ -85,6 +127,14 @@ describe("cardsQuerySchema", () => {
       { name: "" },
       { sort: "hp" },
       { type: ["Fire", ""] }, // every repeated value must be non-empty
+      { id: ["sv01-001", ""] },
+      { nameExact: "" },
+      { stage: "" },
+      { trainerType: "" },
+      { energyType: "" },
+      { serie: "" },
+      { illustrator: "" },
+      { text: "" },
     ];
     for (const params of rejected) {
       expect(parseCards(params).success).toBe(false);
@@ -125,7 +175,9 @@ describe("buildCardsWhere", () => {
 
   it("ORs repeated types within the dimension", () => {
     const { sql, params } = render(defaults({ type: ["Fire", "Water"] }));
-    expect(sql).toContain('"cards"."types_json" like ? or "cards"."types_json" like ?');
+    expect(sql).toContain(
+      "\"cards\".\"types_json\" like ? escape '\\' or \"cards\".\"types_json\" like ? escape '\\'",
+    );
     expect(params).toEqual(['%"Fire"%', '%"Water"%']);
   });
 
@@ -157,6 +209,66 @@ describe("buildCardsWhere", () => {
     expect(sql).toContain('"cards"."regulation_mark" = ?');
     expect(params).toEqual(["H"]);
   });
+
+  it("matches nameExact with case-folded equality, not LIKE (no wildcards)", () => {
+    const { sql, params } = render(defaults({ nameExact: "100% Zygarde" }));
+    expect(sql).toContain('lower("cards"."name") = lower(?)');
+    expect(sql).not.toContain("like");
+    expect(params).toEqual(["100% Zygarde"]); // `%` stays literal
+  });
+
+  it("matches the P2 kind params with IN, like rarity", () => {
+    const { sql, params } = render(
+      defaults({ stage: ["Basic", "Stage1"], trainerType: ["Item"], energyType: ["Special"] }),
+    );
+    expect(sql).toContain('"cards"."stage" in (?, ?)');
+    expect(sql).toContain('"cards"."trainer_type" in (?)');
+    expect(sql).toContain('"cards"."energy_type" in (?)');
+    expect(params).toEqual(["Basic", "Stage1", "Item", "Special"]);
+  });
+
+  it("filters serie through a set-membership subquery", () => {
+    const { sql, params } = render(defaults({ serie: "sv" }));
+    expect(sql).toContain(
+      '"cards"."set_id" in (select "sets"."id" from "sets" where "sets"."serie_id" = ?)',
+    );
+    expect(params).toEqual(["sv"]);
+  });
+
+  it("filters illustrator exactly", () => {
+    const { sql, params } = render(defaults({ illustrator: "Naoyo Kimura" }));
+    expect(sql).toContain('"cards"."illustrator" = ?');
+    expect(params).toEqual(["Naoyo Kimura"]);
+  });
+
+  it("ORs text as substring LIKEs over the abilities and attacks JSON", () => {
+    const { sql, params } = render(defaults({ text: "Poison" }));
+    expect(sql).toContain(
+      "\"cards\".\"abilities_json\" like ? escape '\\' or \"cards\".\"attacks_json\" like ? escape '\\'",
+    );
+    expect(params).toEqual(["%Poison%", "%Poison%"]);
+  });
+
+  it("escapes LIKE wildcards in name/text so `%`/`_` match literally", () => {
+    // "50%" must not over-match everything containing 50 — the pattern
+    // escapes the wildcards and the LIKE carries an ESCAPE '\' clause.
+    const name = render(defaults({ name: "50%_off" }));
+    expect(name.sql).toContain("\"cards\".\"name\" like ? escape '\\'");
+    expect(name.params).toEqual(["%50\\%\\_off%"]);
+
+    const text = render(defaults({ text: "100% chance" }));
+    expect(text.sql).toContain("escape '\\'");
+    expect(text.params).toEqual(["%100\\% chance%", "%100\\% chance%"]);
+  });
+
+  it("escapes the quoted type patterns too — the escape char itself included", () => {
+    const { params } = render(defaults({ type: ["Fi%re", "Wa\\ter"] }));
+    expect(params).toEqual(['%"Fi\\%re"%', '%"Wa\\\\ter"%']);
+  });
+
+  it("ignores id — the hydration path in routes.ts ANDs the chunked IN itself", () => {
+    expect(buildCardsWhere(defaults({ id: ["sv06.5-001"] }))).toBeUndefined();
+  });
 });
 
 describe("cardsOrder", () => {
@@ -177,5 +289,30 @@ describe("cardsOrder", () => {
     expect(renderOrder("hp-desc")).toContain(
       'order by "cards"."hp" desc, "cards"."set_id" asc, "cards"."local_id" asc',
     );
+  });
+});
+
+describe("compareCardRows", () => {
+  // Deliberately shuffled; fields mirror the real ingested vocabulary.
+  const rows: CardOrderFields[] = [
+    { name: "Ultra Ball", hp: null, setId: "sv01", localId: "196" },
+    { name: "Joltik", hp: 40, setId: "sv06.5", localId: "001" },
+    { name: "Fezandipiti ex", hp: 210, setId: "sv06.5", localId: "038" },
+    { name: "Fire Energy", hp: null, setId: "sve", localId: "002" },
+    { name: "Joltik", hp: 30, setId: "sv01", localId: "066" },
+  ];
+  const sorted = (sort: CardsQuery["sort"]) =>
+    [...rows].sort((a, b) => compareCardRows(sort, a, b)).map((row) => row.localId);
+
+  it('mirrors SQL collector order for "set" — (set_id, local_id) ascending', () => {
+    expect(sorted("set")).toEqual(["066", "196", "001", "038", "002"]);
+  });
+
+  it('mirrors SQL "name" order with the collector tiebreak on equal names', () => {
+    expect(sorted("name")).toEqual(["038", "002", "066", "001", "196"]);
+  });
+
+  it('mirrors SQL "hp-desc" — NULL hp last, collector tiebreak among NULLs', () => {
+    expect(sorted("hp-desc")).toEqual(["038", "001", "066", "196", "002"]);
   });
 });

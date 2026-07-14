@@ -53,3 +53,35 @@ export const GLASS_NEUTRAL_BUTTON = `bg-white/[0.06] text-white/85 ring-1 ring-i
     the call site (rounded-2xl vs 3xl, p-5 vs p-6). */
 export const GLASS_PANEL =
   "bg-white/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_30px_rgba(0,0,0,0.40)] ring-1 ring-inset ring-white/10 backdrop-blur-md";
+
+/** Round filter-rail toggle beside a page's search field, sized to match the
+    field's height (p-2.5 + a 20px glyph ≈ the input's py-2.5 + text-sm line).
+    /decks and the builder share it byte-for-byte; the open/active vs idle
+    paint (bg/text/ring tints) stays at the call sites. */
+export const GLASS_FILTER_TOGGLE = `relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2.5 ring-1 ring-inset backdrop-blur-md transition-all active:scale-95 ${FOCUS_RING}`;
+
+/** Pill text-input paint (auth form fields, the decks/builder search bars).
+    Padding and placeholder tint stay at the call site (the builder's search
+    placeholder is deliberately lighter). The deck picker's in-dialog search
+    keeps its own heavier fill (bg-white/[0.06], no blur) — not standardised. */
+export const GLASS_INPUT =
+  "w-full rounded-full bg-white/[0.045] text-sm text-white/90 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
+
+/** The app's shared error red (deck legality warnings, auth/lobby form errors,
+    rolled-back mutation notices). */
+export const ERROR_TEXT = "text-[#ff8a9b]";
+
+// ---- Bottom-right corner controls -------------------------------------------
+// SettingsButton sits in the corner; AccountButton stacks directly above it.
+// The two share position column (right-3) and the round glass shape, so they
+// read as one column of matched controls.
+
+/** Round 40px corner-control shape (paint comes from GLASS_HUD_BUTTON). */
+export const CORNER_CONTROL_SHAPE =
+  "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full";
+
+/** Fixed position of the bottom corner control (SettingsButton). */
+export const CORNER_SETTINGS_POSITION = "fixed bottom-3 right-3 z-50";
+
+/** Fixed position of the control stacked above it (AccountButton). */
+export const CORNER_ACCOUNT_POSITION = "fixed bottom-[3.75rem] right-3 z-50";

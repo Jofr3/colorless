@@ -11,9 +11,9 @@
 // trusts the wire and casts to the shared types.
 
 import type {
-  Card,
   CardBrief,
   CardCategory,
+  CatalogFacets,
   CreateDeckRequest,
   CreateFolderRequest,
   Deck,
@@ -52,19 +52,76 @@ export class ApiError extends Error {
   }
 }
 
+/** The api's 400 `{error: "unknown card id(s)", cardIds}` payload, if that's
+    what an ApiError's `.body` is — the ids the catalog rejected. */
+export function unknownCardIdsOf(body: unknown): string[] | null {
+  if (typeof body !== "object" || body === null || !("cardIds" in body)) return null;
+  const ids = (body as { cardIds: unknown }).cardIds;
+  return Array.isArray(ids) && ids.every((id) => typeof id === "string") ? ids : null;
+}
+
+// ---- Session recovery (the ONE owner of 401 → re-probe → retry-once) --------
+// A mid-session 401 usually means the cookie expired, but it can also be a
+// one-off (a session rotated in another tab, a hiccup). Instead of every
+// feature hand-rolling "on 401, refresh() the auth context", the client owns
+// it: an unexpected 401 asks the installed handler to re-probe the session,
+// and if the session turns out to still be alive the failed request is
+// retried once. When the probe lands on signed-out, the handler's own state
+// change (AuthProvider → "anonymous") flips the UI; the 401 then propagates
+// to the caller as before.
+
+/** Re-probe the session; resolve true when it's still alive (retry the
+    request), false when the user is really signed out. */
+type SessionRecoveryHandler = () => Promise<boolean>;
+
+let recoverSession: SessionRecoveryHandler | null = null;
+/** In-flight probe, shared so a burst of parallel 401s asks once. */
+let recovery: Promise<boolean> | null = null;
+
+/** Installed by AuthProvider (null on teardown). One owner at a time. */
+export function setSessionRecoveryHandler(handler: SessionRecoveryHandler | null): void {
+  recoverSession = handler;
+}
+
+function attemptRecovery(): Promise<boolean> {
+  const handler = recoverSession;
+  if (handler === null) return Promise.resolve(false);
+  recovery ??= handler().then(
+    (alive) => {
+      recovery = null;
+      return alive;
+    },
+    () => {
+      recovery = null;
+      return false;
+    },
+  );
+  return recovery;
+}
+
 /** The one fetch wrapper every call goes through: cookie on every request,
-    JSON in/out, non-2xx → ApiError, 204 → undefined. */
+    JSON in/out, non-2xx → ApiError, 204 → undefined. A 401 anywhere but
+    /auth/* runs the session-recovery hook above and retries once — /auth is
+    excluded because there a 401 IS the answer (me() = signed out, login =
+    wrong credentials), and because the recovery probe itself is /auth/me. */
 async function request<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  let response = await send(path, init);
+  if (response.status === 401 && !path.startsWith("/auth/") && (await attemptRecovery())) {
+    response = await send(path, init);
+  }
+  if (!response.ok) throw new ApiError(response.status, await errorBody(response));
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
+}
+
+function send(path: string, init?: { method?: string; body?: unknown }): Promise<Response> {
   const hasBody = init?.body !== undefined;
-  const response = await fetch(apiUrl(path), {
+  return fetch(apiUrl(path), {
     method: init?.method ?? "GET",
     credentials: "include",
     headers: hasBody ? { "content-type": "application/json" } : undefined,
     body: hasBody ? JSON.stringify(init?.body) : undefined,
   });
-  if (!response.ok) throw new ApiError(response.status, await errorBody(response));
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
 }
 
 /** The parsed error payload, or undefined when it isn't JSON (proxies and
@@ -104,15 +161,36 @@ function queryString(params: Record<string, string | number | string[] | undefin
     package types the response envelope but not the query params. All
     optional; empties are omitted from the query string. */
 export type CardsQuery = {
+  /** Exact card id(s), e.g. "sv06.5-001" — batched deck hydration. Repeatable;
+      the server caps the list at 100 values (400 above), dedupes duplicates
+      and silently omits unknown ids. Composes with every other filter. */
+  id?: string[];
   /** Substring match, case-insensitive. */
   name?: string;
+  /** Case-insensitive WHOLE-name equality (no wildcards) — the import flow's
+      "find this exact card" lookup, distinct from the substring `name`. */
+  nameExact?: string;
   category?: CardCategory;
   /** Energy type(s), e.g. "Grass" — an array ORs within the dimension. */
   type?: string | string[];
   /** Exact rarity string(s), e.g. "Double rare" — an array ORs within the dimension. */
   rarity?: string | string[];
+  /** Pokémon stage(s), wire vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
+  stage?: string | string[];
+  /** Trainer subtype(s) ("Item" | "Supporter" | "Stadium" | "Tool" | …). */
+  trainerType?: string | string[];
+  /** Energy subtype(s): "Normal" | "Special". */
+  energyType?: string | string[];
   /** A set id, e.g. "sv06". */
   set?: string;
+  /** A serie id, e.g. "sv" — cards whose set belongs to the serie. */
+  serie?: string;
+  /** Exact illustrator, case-sensitive — values come verbatim from GET /facets. */
+  illustrator?: string;
+  /** Case-insensitive substring over ability/attack names + text. (Known
+      imprecision: matches inside the stored JSON blobs; Trainer/Energy
+      `effect` text is NOT covered.) */
+  text?: string;
   regulationMark?: string;
   /** Inclusive hp bounds. */
   hpMin?: number;
@@ -131,11 +209,6 @@ export function getCards(params: CardsQuery = {}): Promise<Paginated<CardBrief>>
   return request(`/cards${queryString(params)}`);
 }
 
-/** One full canonical card by tcgdex id, e.g. "sv06.5-001". */
-export function getCard(id: string): Promise<Card> {
-  return request(`/cards/${encodeURIComponent(id)}`);
-}
-
 /** Every set brief (optionally one serie's), ordered by release date. */
 export function getSets(serie?: string): Promise<SetBrief[]> {
   return request(`/sets${queryString({ serie })}`);
@@ -149,6 +222,12 @@ export function getSet(id: string): Promise<SetWithCards> {
 /** Every serie with its nested set briefs. */
 export function getSeries(): Promise<Serie[]> {
   return request("/series");
+}
+
+/** The catalog's filter vocabularies (each a sorted string[]) — what the
+    builder's option-driven filters offer instead of hardcoded constants. */
+export function getFacets(): Promise<CatalogFacets> {
+  return request("/facets");
 }
 
 // ---- Assets (plain URLs — these feed <img src>, not fetch) ------------------

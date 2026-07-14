@@ -15,6 +15,7 @@ import {
   logout as apiLogout,
   me as apiMe,
   register as apiRegister,
+  setSessionRecoveryHandler,
 } from "../../lib/api";
 
 /** Where the session stands. "loading" only during the mount-time `me()`
@@ -69,27 +70,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anonymous");
   }, []);
 
-  const refresh = useCallback(async () => {
+  // The `me()` probe behind both refresh() and the api client's session
+  // recovery. Returns whether the session is alive so the client knows to
+  // retry the request that 401'd; the auth state is updated as a side effect
+  // (unless a fresher operation has written meanwhile).
+  const probe = useCallback(async (): Promise<boolean> => {
     const op = ++opToken.current;
     try {
       const next = await apiMe();
-      if (op !== opToken.current) return; // superseded — a fresher op wrote already
-      applyUser(next);
+      if (op === opToken.current) applyUser(next);
+      return true;
     } catch (error) {
-      if (op !== opToken.current) return;
-      clearUser();
-      // A 401 is the clean "you're signed out" answer; anything else means
-      // the probe itself failed (network, api down) — same UI state, but
-      // distinguishable via the flag.
-      setProbeFailed(!(error instanceof ApiError && error.status === 401));
+      if (op === opToken.current) {
+        clearUser();
+        // A 401 is the clean "you're signed out" answer; anything else means
+        // the probe itself failed (network, api down) — same UI state, but
+        // distinguishable via the flag.
+        setProbeFailed(!(error instanceof ApiError && error.status === 401));
+      }
+      return false;
     }
   }, [applyUser, clearUser]);
+
+  const refresh = useCallback(async () => {
+    await probe();
+  }, [probe]);
 
   // The mount-time session probe. `refresh` never rejects, so no cleanup
   // race to guard beyond React batching the state updates.
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Own the api client's 401 recovery: an unexpected 401 on a session-gated
+  // route re-probes here — true (still signed in; the 401 was a one-off)
+  // makes the client retry the request once, false means the probe already
+  // flipped the whole app to signed-out.
+  useEffect(() => {
+    setSessionRecoveryHandler(probe);
+    return () => setSessionRecoveryHandler(null);
+  }, [probe]);
 
   const login = useCallback(
     async (body: LoginRequest) => {

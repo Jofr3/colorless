@@ -6,21 +6,12 @@
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { installDomShims } from "../../../test/domShims";
 import type { UnmatchedLine } from "../decklistText";
 import { ImportExportDialog } from "./ImportExportDialog";
 
-// jsdom's <dialog> lacks showModal/close; polyfill guardedly (mirrors the
-// DeckPickerDialog test) in case a newer jsdom grows them.
-beforeAll(() => {
-  if (!HTMLDialogElement.prototype.showModal) {
-    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
-      this.open = true;
-    };
-    HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
-      this.open = false;
-    };
-  }
-});
+// jsdom's <dialog> lacks showModal/close; the shared shims polyfill it.
+beforeAll(installDomShims);
 
 afterEach(cleanup);
 

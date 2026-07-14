@@ -15,28 +15,24 @@ import {
 } from "@luminous/schema";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
-import {
-  ArrowLeftIcon,
-  DecksIcon,
-  FilterIcon,
-  SearchIcon,
-  SpinnerIcon,
-  XIcon,
-} from "../../components/icons";
+import { ArrowLeftIcon, DecksIcon, FilterIcon, SearchIcon, XIcon } from "../../components/icons";
 import { ScrollArea } from "../../components/ScrollArea";
-import { ApiError, getDeck, patchDeck } from "../../lib/api";
+import { StatusPanel, StatusSpinner } from "../../components/StatusPanel";
+import { ApiError, getDeck, patchDeck, unknownCardIdsOf } from "../../lib/api";
 import {
   FOCUS_RING,
   FOCUS_RING_INSET,
   GLASS_ACCENT_BUTTON,
+  GLASS_FILTER_TOGGLE,
   GLASS_GHOST_BUTTON,
-  GLASS_PANEL,
+  GLASS_INPUT,
 } from "../../lib/glass";
 import { readPersisted, writePersisted } from "../../lib/persistedState";
 import { useAuth } from "../auth/AuthProvider";
 import { type BuilderCard, DEFAULT_FORMAT, formatById } from "./cards";
 import { useCardHydration, useCardStore } from "./cardStore";
 import { importDecklist } from "./catalog";
+import { useCatalogOptions } from "./catalogOptions";
 import type { SaveStatus } from "./deckSaver";
 import { useDeckSaver } from "./useDeckSaver";
 import { CardGrid } from "./components/CardGrid";
@@ -48,10 +44,6 @@ import { formatDecklist, type UnmatchedLine } from "./decklistText";
 import { DEFAULT_FILTERS, type Filters, filtersActive, filterVisibleCards } from "./poolFilter";
 import { useCardDrag } from "./useCardDrag";
 import { useCardSearch } from "./useCardSearch";
-
-/** Round icon button for the floating filter rail — mirrors the decks page. */
-const FILTER_BUTTON_CLASS =
-  "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2.5 ring-1 ring-inset backdrop-blur-md transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 /** Whether the floating filter panel starts expanded — persisted like /decks. */
 const FILTER_OPEN_STORAGE_KEY = "builder.filterOpen";
@@ -93,18 +85,9 @@ function toSnapshot(name: string, format: string, entries: Map<string, number>):
   };
 }
 
-/** The api's 400 `{error: "unknown card id(s)", cardIds}` payload, if that's
-    what this is. */
-function unknownCardIdsOf(body: unknown): string[] | null {
-  if (typeof body !== "object" || body === null || !("cardIds" in body)) return null;
-  const ids = (body as { cardIds: unknown }).cardIds;
-  return Array.isArray(ids) && ids.every((id) => typeof id === "string") ? ids : null;
-}
-
 // Back-to-decks pill, mirroring the fixed home button in the opposite corner.
 const BACK_PILL_CLASS = `group fixed left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`;
 
-const STATUS_PANEL_CLASS = `flex flex-col items-center gap-4 rounded-3xl p-8 text-center ${GLASS_PANEL}`;
 const STATUS_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`;
 
 /** Chrome for the builder's non-editor states (loading, signed out, missing
@@ -130,7 +113,7 @@ function BuilderScreen({ children }: { children: ReactNode }) {
     deck B. */
 export function DeckBuilder() {
   const { deckId = "" } = useParams();
-  const { status, refresh } = useAuth();
+  const { status } = useAuth();
   const location = useLocation();
   const [load, setLoad] = useState<
     | { phase: "loading" }
@@ -154,38 +137,36 @@ export function DeckBuilder() {
       },
       (error: unknown) => {
         if (cancelled) return;
-        // 404 = not mine / doesn't exist; 401 = the session expired — re-probe
-        // so the whole app (and this page) flips to signed-out. The error
-        // phase still lands under the re-probe: if the 401 was a one-off (the
-        // session survives), the Retry panel shows instead of an eternal
-        // spinner (nothing else would re-run this effect).
+        // 404 = not mine / doesn't exist. Session expiry needs no branch:
+        // the api client re-probes on an unexpected 401 (retrying once when
+        // it was a one-off), and a really-dead session flips the whole app —
+        // and this page — to signed-out via AuthProvider.
         if (error instanceof ApiError && error.status === 404) {
           setLoad({ phase: "notfound" });
           return;
         }
-        if (error instanceof ApiError && error.status === 401) void refresh();
         setLoad({ phase: "error" });
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [deckId, status, loadNonce, refresh]);
+  }, [deckId, status, loadNonce]);
 
   if (status === "anonymous") {
     return (
       <BuilderScreen>
         <h1 className="sr-only">Deck builder</h1>
-        <section className={STATUS_PANEL_CLASS}>
-          <DecksIcon className="h-7 w-7 text-white/25" />
-          <div>
-            <h2 className="text-base font-semibold text-white/90">Sign in to edit this deck</h2>
-            <p className="mt-1 text-sm text-muted">Your decks live with your account.</p>
-          </div>
-          <Link to="/login" state={{ from: location.pathname }} className={STATUS_BUTTON_CLASS}>
-            Sign in
-          </Link>
-        </section>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Sign in to edit this deck"
+          description="Your decks live with your account."
+          action={
+            <Link to="/login" state={{ from: location.pathname }} className={STATUS_BUTTON_CLASS}>
+              Sign in
+            </Link>
+          }
+        />
       </BuilderScreen>
     );
   }
@@ -194,9 +175,7 @@ export function DeckBuilder() {
     return (
       <BuilderScreen>
         <h1 className="sr-only">Deck builder</h1>
-        <div className="flex justify-center" aria-label="Loading deck">
-          <SpinnerIcon className="h-6 w-6 animate-spin text-white/30" />
-        </div>
+        <StatusSpinner label="Loading deck" />
       </BuilderScreen>
     );
   }
@@ -205,18 +184,16 @@ export function DeckBuilder() {
     return (
       <BuilderScreen>
         <h1 className="sr-only">Deck builder</h1>
-        <section className={STATUS_PANEL_CLASS}>
-          <DecksIcon className="h-7 w-7 text-white/25" />
-          <div>
-            <h2 className="text-base font-semibold text-white/90">Deck not found</h2>
-            <p className="mt-1 text-sm text-muted">
-              It may have been deleted, or the link isn't yours.
-            </p>
-          </div>
-          <Link to="/decks" className={STATUS_BUTTON_CLASS}>
-            Back to decks
-          </Link>
-        </section>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Deck not found"
+          description="It may have been deleted, or the link isn't yours."
+          action={
+            <Link to="/decks" className={STATUS_BUTTON_CLASS}>
+              Back to decks
+            </Link>
+          }
+        />
       </BuilderScreen>
     );
   }
@@ -225,20 +202,20 @@ export function DeckBuilder() {
     return (
       <BuilderScreen>
         <h1 className="sr-only">Deck builder</h1>
-        <section className={STATUS_PANEL_CLASS}>
-          <DecksIcon className="h-7 w-7 text-white/25" />
-          <div>
-            <h2 className="text-base font-semibold text-white/90">Couldn't load this deck</h2>
-            <p className="mt-1 text-sm text-muted">Check your connection and try again.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setLoadNonce((nonce) => nonce + 1)}
-            className={STATUS_BUTTON_CLASS}
-          >
-            Retry
-          </button>
-        </section>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Couldn't load this deck"
+          description="Check your connection and try again."
+          action={
+            <button
+              type="button"
+              onClick={() => setLoadNonce((nonce) => nonce + 1)}
+              className={STATUS_BUTTON_CLASS}
+            >
+              Retry
+            </button>
+          }
+        />
       </BuilderScreen>
     );
   }
@@ -247,10 +224,16 @@ export function DeckBuilder() {
 }
 
 function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDeck }) {
-  const { refresh } = useAuth();
   const [deckName, setDeckName] = useState(initial.name);
   const [formatId, setFormatId] = useState(initial.format ?? DEFAULT_FORMAT.id);
   const [entries, setEntries] = useState<Map<string, number>>(() => initialEntries(initial));
+  // The saver's no-op seed: the state this editor mounted with, computed once
+  // (a lazy initializer, reusing the just-built entries Map) instead of
+  // re-sorted on every render. `initial` never changes for a mounted editor —
+  // the route entry keys this component on the deck id.
+  const [initialSnapshot] = useState(() =>
+    toSnapshot(initial.name, initial.format ?? DEFAULT_FORMAT.id, entries),
+  );
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Mobile drawers for the rail / deck panel (always-on columns at lg/xl).
@@ -276,12 +259,9 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
   const handleSaveStatus = (status: SaveStatus, error?: unknown) => {
     setSaveStatus(status);
     if (status !== "failed") return;
-    if (error instanceof ApiError && error.status === 401) {
-      // The session expired mid-edit: re-probe it, flipping the app (and this
-      // page, via the route entry) to signed-out.
-      void refresh();
-      return;
-    }
+    // Session expiry needs no branch here: the api client re-probes on an
+    // unexpected 401 (retrying the PATCH once when it was a one-off), and a
+    // really-dead session flips this page to signed-out via AuthProvider.
     const cardIds =
       error instanceof ApiError && error.status === 400 ? unknownCardIdsOf(error.body) : null;
     setAnnouncement(
@@ -296,7 +276,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
   // double-mount). Seeded with the loaded state so the mount-time run of the
   // schedule effect below is a recognised no-op, not a save.
   const scheduleSave = useDeckSaver<DeckSnapshot>({
-    initial: toSnapshot(initial.name, initial.format ?? DEFAULT_FORMAT.id, initialEntries(initial)),
+    initial: initialSnapshot,
     save: (snapshot) => {
       // format + cards are always present, so the PATCH is never empty; an
       // all-whitespace name is omitted rather than sent (the server rejects
@@ -328,11 +308,13 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
   }, [filterOpen]);
 
   // The by-id card store every fetched card lands in (grid pages, decklist
-  // imports, per-id hydrations) — the deck's entries resolve against it, so
+  // imports, batched hydrations) — the deck's entries resolve against it, so
   // the deck no longer depends on which page the grid happens to show.
   const store = useCardStore();
-  // Any entry id the store doesn't know yet is fetched via GET /cards/:id.
+  // Entry ids the store doesn't know yet hydrate via one batched GET /cards.
   useCardHydration(entries, store);
+  // The rail's option vocabularies (facets + sets + series), session-cached.
+  const catalogOptions = useCatalogOptions();
 
   // Derived deck (ordered DeckEntry[]) of the HYDRATED entries; the rest
   // render as pending tiles in the panel instead of being dropped.
@@ -345,12 +327,15 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
     return list;
   }, [entries, store.byId]);
 
+  // Entries the store can't render yet: still hydrating (`unknown: false`) or
+  // disowned by the catalog (`unknown: true` — the panel shows an unavailable
+  // tile with a remove control so the entry isn't a dead end).
   const pendingEntries = useMemo(
     () =>
       [...entries]
         .filter(([cardId]) => !store.byId.has(cardId))
-        .map(([cardId, quantity]) => ({ cardId, quantity })),
-    [entries, store.byId],
+        .map(([cardId, quantity]) => ({ cardId, quantity, unknown: store.unknown.has(cardId) })),
+    [entries, store.byId, store.unknown],
   );
 
   // Validation runs over the hydrated cards; the header count spans ALL
@@ -366,11 +351,12 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
   const remainingOf = useMemo(() => remainingAllowedFor(deck, format), [deck, format]);
   const countOf = (card: BuilderCard) => entries.get(card.cardId) ?? 0;
 
-  // Server-side card search over the catalog (name/category/type/rarity/
-  // legality/sort + pagination)…
+  // Server-side card search over the catalog (name/category/type/kind/rarity/
+  // set/serie/illustrator/mark/HP/text/legality/sort + pagination)…
   const search = useCardSearch(filters, format, { onCards: store.register });
-  // …then the one client-side dimension: the card-kind chips (see the
-  // filterVisibleCards docblock for why this is per-page, not server-side).
+  // …then the one client-side remainder: kind selections containing a derived
+  // kind (EX/Mega — see the filterVisibleCards docblock). Purely-printed kind
+  // selections pass through untouched (they already filtered server-side).
   const visibleCards = useMemo(
     () => filterVisibleCards(search.cards, filters.subtypes),
     [search.cards, filters.subtypes],
@@ -413,6 +399,17 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
     setAnnouncement("Deck cleared.");
   };
 
+  // Remove a whole entry by id — the escape hatch for entries whose card the
+  // catalog disowned (no BuilderCard exists, so removeCard can't apply).
+  const removeEntry = (cardId: string) => {
+    setEntries((prev) => {
+      const next = new Map(prev);
+      next.delete(cardId);
+      return next;
+    });
+    setAnnouncement("Removed unavailable card from the deck.");
+  };
+
   const importText = async (text: string): Promise<UnmatchedLine[]> => {
     // Resolves names against the catalog; rejects (dialog reports it) on an
     // api failure, so a network blip can't half-replace the deck.
@@ -449,6 +446,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
     format,
     onFormatChange: setFormatId,
     onReset: resetFilters,
+    options: catalogOptions,
   };
 
   const deckPanelProps = {
@@ -463,6 +461,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
     remainingOf,
     onAdd: addCard,
     onRemove: removeCard,
+    onRemoveEntry: removeEntry,
     onClear: clearDeck,
     onImportExport: () => setDialogOpen(true),
     dragActive: dragging,
@@ -502,7 +501,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
             aria-label="Filters"
             aria-expanded={filterOpen}
             onClick={() => setFilterOpen((open) => !open)}
-            className={`self-end ${FILTER_BUTTON_CLASS} ${
+            className={`self-end ${GLASS_FILTER_TOGGLE} ${
               filterOpen || filterActive
                 ? "bg-white/[0.09] text-white ring-white/25"
                 : "bg-white/[0.045] text-white/70 ring-white/10 hover:bg-white/[0.08] hover:text-white/90"
@@ -543,7 +542,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
                 onChange={(e) => setFilters((f) => ({ ...f, query: e.target.value }))}
                 placeholder="Search cards"
                 aria-label="Search cards"
-                className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/50 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                className={`${GLASS_INPUT} py-2.5 pl-10 pr-4 placeholder:text-white/50`}
               />
             </div>
             {/* Filters toggle — only below xl, where the rail is a drawer. */}

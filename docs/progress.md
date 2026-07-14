@@ -3,35 +3,38 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-13 — build session (P1 milestone 9: frontend swap, committed).
+**Last updated:** 2026-07-14 — build session (P2 milestone 1: filters + backlog fold-in, UNCOMMITTED).
 
 ## Resume point
-**M1–M9 are committed and deployed** (M9 api deploy 2026-07-13, version
-`9838095a`, prod-smoked: repeatable `type`/`rarity` + `sort=hp-desc` return
-the extended `CardBrief` against the full 3,698-card catalog; KV
-`catalog:v2:` miss→hit verified). The web app now runs fully on the API:
-server catalog in the builder, auth UI (register/login/OAuth
-buttons/account control), decks & folders CRUD with optimistic updates,
-deck saves as debounced PATCHes. E2E verified against local `wrangler dev`
-(see `.claude/skills/verify/SKILL.md` for the drive recipe — browse via
-`localhost:5173`, NOT 127.0.0.1: CORS).
-Next concrete action: pick up **P2 (deck-builder)** — its task list in
-`workstreams/deck-builder.md` now carries an **M9 review backlog** (verified
-findings deferred out of M9) to fold into the P2 tasks.
-Web prod build/deploy story is still unset (`VITE_API_ORIGIN` must be set at
-build time; CSP derives from it) — and note the deployed Worker's
-`APP_ORIGIN` var is still `http://localhost:5173`, so prod cookie-CORS only
-admits a local dev frontend until the web app has a real origin. Still
-user-side: OAuth stays 503 until the Discord/Google apps are registered
-(redirect `https://luminous-api.jofrescari.workers.dev/auth/oauth/{provider}/callback`
-+ localhost:8787 variants) and the four secrets set via `wrangler secret put`
-from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
+**P2-M1 is done in the working tree but NOT committed** (suite 607 green,
+`bun run check` clean; reviewed — 10 verified findings, all fixed in-session).
+Next concrete actions, in order:
+1. **Commit P2-M1** (user go-ahead) — the whole working tree is one coherent
+   milestone on branch `backend`.
+2. **The api must be DEPLOYED before the web changes ship** — the builder now
+   calls `GET /facets`, batched `GET /cards?id=…`, `nameExact`, kind params
+   etc., which the deployed worker (pre-P2) 404s/ignores. Local `wrangler dev`
+   carries the new surface already. After deploy, smoke `GET /facets` and a
+   two-value `?id=` query (expect `x-luminous-cache: bypass`).
+3. Optional but recommended: an e2e drive of the new FilterRail (facets-fed
+   options, serie→set narrowing, HP bounds, text search) via
+   `.claude/skills/verify/SKILL.md` — this session verified by unit/DOM tests
+   only (607), no browser pass.
+4. Then: P2 task 17 (position field for manual order) is the only numbered
+   task left; or start **P3 (simulator)** — ruleset ready. The **P2-M1
+   follow-ups** list in `workstreams/deck-builder.md` (suffix-at-ingest for
+   EX/Mega, compareCardRows unification, per-resource facets degradation, …)
+   is fodder for a cleanup slice whenever.
+Unchanged user-side blockers: web prod build/deploy story unset
+(`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
+`APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
+Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | ✅ M1–M9 done (M9 api-side deploy pending); OAuth secrets pending (user) |
-| deck-builder | P2 | 📋 Unblocked — M9 already covered tasks 1–7, 11, 14–16, 18; review backlog logged in the doc |
+| backend-data | P1 | ✅ M1–M9 done; P2-M1 api additions await deploy; OAuth secrets pending (user) |
+| deck-builder | P2 | 🚧 P2-M1 done uncommitted (tasks 8–10, 12–13 + M9 backlog cleared); only task 17 + follow-ups left |
 | simulator | P3 | 📋 Ruleset ready (`reference/ptcg-rules.md`); engine not started |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
@@ -39,6 +42,39 @@ from `apps/api` (local dev: same names in the gitignored `apps/api/.dev.vars`).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-14** (build) — **P2 milestone 1** (four sub-agent slices + 8-angle
+  review + fix pass; all UNCOMMITTED): filters, panel stats, legality, and the
+  full M9 backlog. (A) api: `GET /cards` gains repeatable `id` (≤100, one-call
+  deck hydration; chunked IN + in-memory ordering twin), `nameExact`,
+  repeatable `stage`/`trainerType`/`energyType`, `serie`, `illustrator`,
+  `text`; new `GET /facets`; `CardBrief` += `legal`; KV → `catalog:v3:` with
+  bypass for >512-byte keys AND any `?id=` request. (B) M9 backlog cleared:
+  guarded `patchWithRollback`, `useDeckLibrary`, api-client-owned 401
+  recovery (`setSessionRecoveryHandler`, coalesced probe, retry-once),
+  data-layer folder lift-up (parallel PATCHes), visible self-expiring
+  error pill (nonce re-announce), `StatusPanel`/`StatusSpinner`, hydration
+  self-retry (1s→30s backoff, attempt-unbounded), unknown-id tiles with
+  Remove, `src/test/` helpers (fetchStub/fixtures/domShims), glass.ts consts.
+  (C) filters server-side with facets-fed options (`useCatalogOptions`);
+  kinds → wire params (EX/Mega-only client remainder); hardcoded
+  vocabularies deleted. (D) `DeckStats` (supertype counts + type bar) in
+  DeckPanel; `Format.legalFlag` unifies `legalOnly` + `isLegalInFormat`;
+  Radiant corrected to deck-wide 1 (official rule), Prism Star 1/name.
+  Then an 8-angle review (3 correctness, reuse/simplification/efficiency/
+  altitude/conventions) → 10 verified findings, ALL fixed in-session — the
+  serious two: a **dropped hydration retry** when a batch failed after its
+  effect run was disposed (fixed via module-level `liveHydrators` registry;
+  failure maps merged + leak fixed) and the **nameExact import regression**
+  for names with no print matching the stripped key (fixed: layered
+  key→raw→substring resolution). Also: 401 session-expiry no longer raises
+  the /decks error pill; LIKE `%`/`_` now escaped api-side; `?id=` requests
+  skip KV; dead `getCard` removed; FilterRail/useCardSearch/DeckPanel
+  memoized; ACE/Radiant dedup via `deckWideRemaining`. Deferred follow-ups →
+  "P2-M1 follow-ups" in `workstreams/deck-builder.md`; D11 revised + D12
+  added in `decisions.md`. Suite 528→607; `bun run check` green. NOT
+  e2e-driven; api deploy must precede/accompany the web ship (new endpoints).
+  Session trap: a usage-limit reset killed 7 review finders mid-flight —
+  resumed via SendMessage with zero rework.
 - **2026-07-13** (build) — **P1 milestone 9** (four sub-agent slices +
   multi-agent review): the frontend swap. (A) typed zod-free client
   `src/lib/api.ts` (types-only `@luminous/schema` imports, ApiError,

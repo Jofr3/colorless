@@ -5,7 +5,13 @@ import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { SpinnerIcon } from "../../components/icons";
 import { ApiError } from "../../lib/api";
-import { GLASS_ACCENT_BUTTON, GLASS_NEUTRAL_BUTTON, GLASS_PANEL } from "../../lib/glass";
+import {
+  ERROR_TEXT,
+  GLASS_ACCENT_BUTTON,
+  GLASS_INPUT,
+  GLASS_NEUTRAL_BUTTON,
+  GLASS_PANEL,
+} from "../../lib/glass";
 import { useAuth } from "./AuthProvider";
 import { type OAuthProvider, startOAuth } from "./startOAuth";
 
@@ -28,13 +34,9 @@ const PRIMARY_BUTTON_CLASS = `${BUTTON_LAYOUT} ${GLASS_ACCENT_BUTTON}`;
 const SECONDARY_BUTTON_CLASS = `${BUTTON_LAYOUT} ${GLASS_NEUTRAL_BUTTON}`;
 const PANEL_CLASS = `flex flex-col gap-4 rounded-3xl p-5 ${GLASS_PANEL}`;
 
-// The app's shared text-input recipe (Decks search, DeckPanel rename).
-const INPUT_CLASS =
-  "w-full rounded-full bg-white/[0.045] px-4 py-2.5 text-sm text-white/90 placeholder:text-white/35 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
+// The app's shared text-input recipe (glass.ts) with this form's spacing.
+const INPUT_CLASS = `${GLASS_INPUT} px-4 py-2.5 placeholder:text-white/35`;
 const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-white/55";
-
-// The app's shared error red (deck legality warnings, lobby join errors).
-const ERROR_TEXT = "text-[#ff8a9b]";
 
 // Deliberately loose — just "looks like an email". z.email() on the server
 // is the real gate; this only catches obvious slips before a round-trip.

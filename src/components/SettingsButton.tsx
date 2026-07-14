@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { GLASS_HUD_BUTTON } from "../lib/glass";
+import { CORNER_CONTROL_SHAPE, CORNER_SETTINGS_POSITION, GLASS_HUD_BUTTON } from "../lib/glass";
 import { SettingsIcon } from "./icons";
 
 // Round settings button anchored to the bottom-right of the viewport. Rendered
@@ -11,7 +11,7 @@ export function SettingsButton() {
     <Link
       to="/settings"
       aria-label="Settings"
-      className={`fixed bottom-3 right-3 z-50 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full ${GLASS_HUD_BUTTON}`}
+      className={`${CORNER_SETTINGS_POSITION} ${CORNER_CONTROL_SHAPE} ${GLASS_HUD_BUTTON}`}
     >
       <SettingsIcon className="h-[18px] w-[18px]" />
     </Link>

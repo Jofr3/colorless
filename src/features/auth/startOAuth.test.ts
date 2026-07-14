@@ -29,7 +29,10 @@ describe("startOAuth", () => {
   });
 
   it("reports 503 as unconfigured without navigating", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ type: "basic", status: 503 }) as Response));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ type: "basic", status: 503 }) as Response),
+    );
     const navigate = vi.fn();
 
     expect(await startOAuth("google", navigate)).toBe("unconfigured");
@@ -37,7 +40,10 @@ describe("startOAuth", () => {
   });
 
   it("reports unexpected statuses and network failures as failed", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ type: "basic", status: 500 }) as Response));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ type: "basic", status: 500 }) as Response),
+    );
     const navigate = vi.fn();
     expect(await startOAuth("google", navigate)).toBe("failed");
 

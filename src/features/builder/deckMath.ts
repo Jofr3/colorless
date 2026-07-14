@@ -12,6 +12,9 @@ import {
   isBasicEnergy,
   isBasicPokemon,
   isLegalInFormat,
+  isPrismStar,
+  isRadiantPokemon,
+  RADIANT_LIMIT,
   type Supertype,
 } from "./cards";
 
@@ -70,30 +73,42 @@ export function aceSpecCount(deck: Deck): number {
   return deck.reduce((sum, e) => sum + (isAceSpec(e.card) ? e.quantity : 0), 0);
 }
 
+/** Copies of all Radiant Pokémon combined — the deck may hold only one. */
+export function radiantCount(deck: Deck): number {
+  return deck.reduce((sum, e) => sum + (isRadiantPokemon(e.card) ? e.quantity : 0), 0);
+}
+
 /** The server's per-entry copy cap (deckCardSchema: count ≤ 99) — the add
     guard below and the decklist-import clamp both stop there, so the builder
     can never assemble a deck whose PATCH the api rejects with a 400. */
 export const MAX_COPIES_PER_ENTRY = 99;
 
+/** Remaining copies under a deck-wide single-slot rule (ACE SPEC, Radiant):
+    a DIFFERENT card already filling the slot blocks this one entirely;
+    otherwise the card's own copies count against the limit. */
+function deckWideRemaining(total: number, own: number, limit: number): number {
+  return total - own > 0 ? 0 : Math.max(0, limit - own);
+}
+
 /** Build a fast "how many more of this card may I add?" function bound to the
-    current deck + format. Computes the per-name and ACE SPEC tallies once, so
+    current deck + format. Computes the per-name and deck-wide tallies once, so
     the grid can ask for every pool card without re-summing the deck each time.
     Basic Energy has no per-name game rule but stops at the server's 99-copy
-    cap; ACE SPECs are capped at one *in total* across the whole deck;
-    everything else at the format's per-name limit. */
+    cap; ACE SPECs and Radiant Pokémon are each capped at one *in total* across
+    the whole deck; Prism Star cards at one per name; everything else at the
+    format's per-name limit. */
 export function remainingAllowedFor(deck: Deck, format: Format): (card: BuilderCard) => number {
   const names = copiesByName(deck);
   const aceTotal = aceSpecCount(deck);
+  const radiantTotal = radiantCount(deck);
   return (card) => {
     if (isBasicEnergy(card)) {
       return Math.max(0, MAX_COPIES_PER_ENTRY - (names.get(card.name) ?? 0));
     }
     const own = names.get(card.name) ?? 0;
-    if (isAceSpec(card)) {
-      // A different ACE SPEC already fills the single slot → none of this one.
-      if (aceTotal - own > 0) return 0;
-      return Math.max(0, ACE_SPEC_LIMIT - own);
-    }
+    if (isAceSpec(card)) return deckWideRemaining(aceTotal, own, ACE_SPEC_LIMIT);
+    if (isRadiantPokemon(card)) return deckWideRemaining(radiantTotal, own, RADIANT_LIMIT);
+    if (isPrismStar(card)) return Math.max(0, 1 - own);
     return Math.max(0, format.maxCopiesByName - own);
   };
 }
@@ -119,9 +134,10 @@ export interface DeckValidation {
 }
 
 /** Validate a deck against a format. Errors are hard illegalities (over the
-    size, over the copy limit, no Basic Pokémon, an out-of-format card); the
-    under-60 state is surfaced as a warning so a half-built deck doesn't scream
-    red while you work. `legal` requires completeness and zero errors. */
+    size, over the copy limit — 1 per Prism Star name, ACE SPEC and Radiant
+    each over their deck-wide slot, no Basic Pokémon, an out-of-format card);
+    the under-60 state is surfaced as a warning so a half-built deck doesn't
+    scream red while you work. `legal` requires completeness and zero errors. */
 export function validateDeck(deck: Deck, format: Format): DeckValidation {
   const total = totalCount(deck);
   const deckSize = format.deckSize;
@@ -138,13 +154,23 @@ export function validateDeck(deck: Deck, format: Format): DeckValidation {
   }
 
   for (const [name, count] of copiesByName(deck)) {
-    // Basic Energy is exempt from the per-name cap; ACE SPECs are governed by
-    // the deck-wide ACE SPEC rule below, so skip them here to avoid a redundant
-    // (and wrongly "max 4"-worded) message.
-    const isExempt = deck.some(
-      (e) => e.card.name === name && (isBasicEnergy(e.card) || isAceSpec(e.card)),
-    );
-    if (!isExempt && count > format.maxCopiesByName) {
+    // Any print of the name serves — the classes below are name-defined, so
+    // every print of a name shares them.
+    const card = deck.find((e) => e.card.name === name)?.card;
+    if (card === undefined) continue; // Unreachable: the name came from the deck.
+    // Basic Energy is exempt from the per-name cap; ACE SPECs and Radiant
+    // Pokémon are governed by their deck-wide rules below, so skip them here
+    // to avoid a redundant (and wrongly "max 4"-worded) message.
+    if (isBasicEnergy(card) || isAceSpec(card) || isRadiantPokemon(card)) continue;
+    // Prism Star: one copy of the name, superseding the format cap.
+    if (isPrismStar(card)) {
+      if (count > 1) {
+        issues.push({
+          level: "error",
+          message: `${count} copies of ${name} — Prism Star cards are limited to 1.`,
+        });
+      }
+    } else if (count > format.maxCopiesByName) {
       issues.push({
         level: "error",
         message: `${count} copies of ${name} — max ${format.maxCopiesByName}.`,
@@ -167,7 +193,17 @@ export function validateDeck(deck: Deck, format: Format): DeckValidation {
     });
   }
 
-  // Format legality by printed regulation mark (Expanded imposes none).
+  const radiantTotal = radiantCount(deck);
+  if (radiantTotal > RADIANT_LIMIT) {
+    issues.push({
+      level: "error",
+      message: `${radiantTotal} Radiant Pokémon — only ${RADIANT_LIMIT} is allowed.`,
+    });
+  }
+
+  // Format legality: the catalog's structured `card.legal` verdict (via the
+  // format's legalFlag), degrading to the printed-mark check for cards
+  // without one — see isLegalInFormat.
   const illegal = new Set<string>();
   for (const { card } of deck) {
     if (!isLegalInFormat(card, format)) illegal.add(card.name);

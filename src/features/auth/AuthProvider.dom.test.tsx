@@ -1,40 +1,14 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { User } from "@luminous/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { listDecks } from "../../lib/api";
+import { json, stubFetch } from "../../test/fetchStub";
+import { USER } from "../../test/fixtures";
 import { AuthProvider, useAuth } from "./AuthProvider";
 
 // The provider's whole job is turning api responses into auth state, so every
 // test stubs global fetch (the client builds absolute urls via apiOrigin) and
 // watches the state through a probe component.
-
-const USER: User = {
-  id: "user-1",
-  email: "ash@example.com",
-  displayName: "Ash",
-  emailVerified: false,
-  createdAt: "2026-01-01T00:00:00.000Z",
-};
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-
-/** Stub fetch with a "METHOD /path" routing table; unrouted calls reject. */
-function stubFetch(routes: Record<string, () => Response | Promise<Response>>) {
-  const impl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url =
-      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    const key = `${init?.method ?? "GET"} ${new URL(url).pathname}`;
-    const route = routes[key];
-    if (!route) throw new Error(`unstubbed fetch: ${key}`);
-    return route();
-  });
-  vi.stubGlobal("fetch", impl);
-  return impl;
-}
 
 function Probe() {
   const auth = useAuth();
@@ -163,5 +137,45 @@ describe("AuthProvider", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(() => render(<Probe />)).toThrow(/within <AuthProvider>/);
     spy.mockRestore();
+  });
+});
+
+describe("AuthProvider — session recovery (the api client's 401 owner)", () => {
+  it("re-probes on a session-gated 401 and the client retries once when the session survives", async () => {
+    // GET /decks 401s once (a one-off), then succeeds; me() stays green.
+    let decksCalls = 0;
+    const { calls } = stubFetch({
+      "GET /auth/me": () => json(USER),
+      "GET /decks": () => {
+        decksCalls += 1;
+        return decksCalls === 1 ? json({ error: "unauthorized" }, 401) : json([]);
+      },
+    });
+    renderProbe();
+    await expectStatus("authenticated");
+
+    // The provider-installed handler recovers the request transparently…
+    await expect(listDecks()).resolves.toEqual([]);
+    // …via exactly one extra me() probe (mount probe + recovery probe).
+    expect(calls.filter((key) => key === "GET /auth/me")).toHaveLength(2);
+    expect(decksCalls).toBe(2);
+    // The session survived, so the app stays signed in.
+    expect(screen.getByTestId("status").textContent).toBe("authenticated");
+  });
+
+  it("flips the app to anonymous when the recovery probe finds the session dead", async () => {
+    let sessionAlive = true;
+    stubFetch({
+      "GET /auth/me": () => (sessionAlive ? json(USER) : json({ error: "unauthorized" }, 401)),
+      "GET /decks": () => json({ error: "unauthorized" }, 401),
+    });
+    renderProbe();
+    await expectStatus("authenticated");
+
+    // The cookie expires server-side; the next session-gated call 401s, the
+    // recovery probe confirms it, and the 401 propagates without a retry.
+    sessionAlive = false;
+    await expect(listDecks()).rejects.toMatchObject({ status: 401 });
+    await expectStatus("anonymous");
   });
 });

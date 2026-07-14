@@ -15,10 +15,10 @@ import type { Env } from "../env";
     shows up without a manual purge. */
 const CACHE_TTL_SECONDS = 3600;
 
-/** Bump when a cached response SHAPE changes (e.g. the M9 CardBrief
-    extension) so stale KV entries from the previous deploy can't serve the
-    old shape for up to a TTL; old-version keys just expire. */
-const CACHE_VERSION = "v2";
+/** Bump when a cached response SHAPE changes (v2→v3: CardBrief grew `legal`
+    for the P2 deck builder) so stale KV entries from the previous deploy
+    can't serve the old shape for up to a TTL; old-version keys just expire. */
+const CACHE_VERSION = "v3";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys
@@ -35,8 +35,26 @@ export function catalogCacheKey(url: URL): string {
   return `catalog:${CACHE_VERSION}:${url.pathname}${query ? `?${query}` : ""}`;
 }
 
+/** KV rejects keys over 512 bytes. A normalized key that long (e.g. a
+    60-id hydration query) BYPASSES the cache instead of erroring the GET —
+    per-deck id lists barely repeat, so they'd be cache misses anyway. */
+const KV_MAX_KEY_BYTES = 512;
+
 export const catalogCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
-  const key = catalogCacheKey(new URL(c.req.url));
+  const url = new URL(c.req.url);
+  const key = catalogCacheKey(url);
+  // Guaranteed-miss shapes skip KV entirely (no read, no write): keys past
+  // the 512-byte cap (see above), and id-hydration requests — per-deck id
+  // sets that essentially never recur, so caching one is a wasted read plus
+  // a never-re-read write. URL paths and queries are percent-encoded
+  // (ASCII), so length == bytes.
+  if (key.length > KV_MAX_KEY_BYTES || url.searchParams.has("id")) {
+    await next();
+    if (c.res.status === 200) {
+      c.res.headers.set("x-luminous-cache", "bypass");
+    }
+    return;
+  }
   const cached = await c.env.CACHE.get(key);
   if (cached !== null) {
     return c.body(cached, 200, {

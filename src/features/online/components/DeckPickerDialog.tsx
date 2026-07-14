@@ -6,15 +6,15 @@ import {
   DecksIcon,
   FolderIcon,
   SearchIcon,
-  SpinnerIcon,
 } from "../../../components/icons";
 import { ScrollArea } from "../../../components/ScrollArea";
-import { ApiError, listDecks, listFolders } from "../../../lib/api";
+import { StatusPanel, StatusSpinner } from "../../../components/StatusPanel";
 import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_DIALOG_PANEL } from "../../../lib/glass";
 import { useAuth } from "../../auth/AuthProvider";
 import { CardBackStack } from "../../decks/CardBackStack";
-import { type Deck, type Folder, fromDeckSummary } from "../../decks/data";
+import type { Deck } from "../../decks/data";
 import { folderPath } from "../../decks/tree";
+import { useDeckLibrary } from "../../decks/useDeckLibrary";
 import type { DeckChoice } from "../net/useLobby";
 import "../online.css";
 
@@ -106,15 +106,6 @@ function DeckOption({
   );
 }
 
-/** Centred in-dialog message body (loading, sign-in prompt, load failure). */
-function DialogState({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-      {children}
-    </div>
-  );
-}
-
 export function DeckPickerDialog({
   open,
   selectedDeckId,
@@ -127,17 +118,14 @@ export function DeckPickerDialog({
   onCancel: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const { status, refresh } = useAuth();
+  const { status } = useAuth();
   const location = useLocation();
   const [query, setQuery] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   // The library, fetched fresh each time the dialog opens (decks may have
-  // changed since) — the lobby's read-only slice of /decks.
-  const [phase, setPhase] = useState<"loading" | "error" | "ready">("loading");
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [decks, setDecks] = useState<Deck[]>([]);
-  // Bumped by the error state's Retry to re-run the fetch effect.
-  const [loadNonce, setLoadNonce] = useState(0);
+  // changed since; useDeckLibrary refetches on each enabled false→true edge)
+  // — the lobby's read-only slice of /decks.
+  const { decks, folders, phase, retry } = useDeckLibrary(open && status === "authenticated");
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -151,36 +139,6 @@ export function DeckPickerDialog({
       dialog.close();
     }
   }, [open]);
-
-  useEffect(() => {
-    // loadNonce has no value of its own — reading it here is what lets the
-    // error state's Retry re-run this effect.
-    void loadNonce;
-    if (!open || status !== "authenticated") return;
-    let cancelled = false;
-    setPhase("loading");
-    Promise.all([listDecks(), listFolders()]).then(
-      ([deckRows, folderRows]) => {
-        if (cancelled) return;
-        setDecks(deckRows.map(fromDeckSummary));
-        setFolders(folderRows);
-        setPhase("ready");
-      },
-      (error: unknown) => {
-        if (cancelled) return;
-        // A 401 means the session lapsed mid-visit: re-probe it, which flips
-        // the auth status to "anonymous" and lands on the sign-in prompt. The
-        // error phase still lands under the re-probe: if the 401 was a one-off
-        // (the session survives), the Retry panel shows instead of an eternal
-        // spinner (nothing else would re-run this effect).
-        if (error instanceof ApiError && error.status === 401) void refresh();
-        setPhase("error");
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [open, status, loadNonce, refresh]);
 
   const folderNameById = useMemo(
     () => new Map(folders.map((folder) => [folder.id, folder.name])),
@@ -258,36 +216,40 @@ export function DeckPickerDialog({
 
         {status === "anonymous" ? (
           // The lobby works without an account; the deck library doesn't.
-          <DialogState>
-            <DecksIcon className="h-6 w-6 text-white/20" />
-            <p className="text-sm font-medium text-white/40">Sign in to use your decks.</p>
-            <Link
-              to="/login"
-              state={{ from: location.pathname }}
-              className={`mt-1 inline-flex cursor-pointer items-center rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`}
-            >
-              Sign in
-            </Link>
-          </DialogState>
+          <StatusPanel
+            variant="dialog"
+            icon={<DecksIcon className="h-6 w-6 text-white/20" />}
+            title="Sign in to use your decks."
+            action={
+              <Link
+                to="/login"
+                state={{ from: location.pathname }}
+                className={`mt-1 inline-flex cursor-pointer items-center rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`}
+              >
+                Sign in
+              </Link>
+            }
+          />
         ) : status === "loading" || phase === "loading" ? (
-          <DialogState>
-            <SpinnerIcon
-              className="h-6 w-6 animate-spin text-white/30"
-              aria-label="Loading decks"
-            />
-          </DialogState>
+          <StatusSpinner
+            label="Loading decks"
+            className="flex flex-col items-center justify-center px-6 py-16"
+          />
         ) : phase === "error" ? (
-          <DialogState>
-            <DecksIcon className="h-6 w-6 text-white/20" />
-            <p className="text-sm font-medium text-white/40">Couldn't load your decks.</p>
-            <button
-              type="button"
-              onClick={() => setLoadNonce((nonce) => nonce + 1)}
-              className={`mt-1 inline-flex cursor-pointer items-center rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`}
-            >
-              Retry
-            </button>
-          </DialogState>
+          <StatusPanel
+            variant="dialog"
+            icon={<DecksIcon className="h-6 w-6 text-white/20" />}
+            title="Couldn't load your decks."
+            action={
+              <button
+                type="button"
+                onClick={retry}
+                className={`mt-1 inline-flex cursor-pointer items-center rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`}
+              >
+                Retry
+              </button>
+            }
+          />
         ) : (
           <>
             {openFolder && !searching && (
@@ -344,16 +306,17 @@ export function DeckPickerDialog({
                 the /decks page rhythm. */}
             <ScrollArea className="-mx-2 px-2" trackTop={8} trackBottom={8}>
               {isEmpty ? (
-                <DialogState>
-                  <SearchIcon className="h-6 w-6 text-white/20" />
-                  <p className="text-sm font-medium text-white/40">
-                    {searching
+                <StatusPanel
+                  variant="dialog"
+                  icon={<SearchIcon className="h-6 w-6 text-white/20" />}
+                  title={
+                    searching
                       ? `No results for "${trimmed}"`
                       : openFolder
                         ? "This folder is empty"
-                        : "No decks yet"}
-                  </p>
-                </DialogState>
+                        : "No decks yet"
+                  }
+                />
               ) : (
                 // Mirrors the /decks grid spacing: folder tiles at gap-3, and the
                 // deck cards at gap-x-3 gap-y-8 — the tall row gap leaves room for the

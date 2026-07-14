@@ -71,7 +71,8 @@ const fireEnergy: BuilderCard = {
   subtype: "Basic Energy",
   types: ["Fire"],
 };
-// A rotated-out card — mark "F" is not in Standard's allow-list.
+// A rotated-out card — mark "F" is not in Standard's allow-list. No `legal`
+// block, so it exercises the printed-mark FALLBACK path.
 const rotated: BuilderCard = {
   cardId: "swsh1-1",
   name: "Snom",
@@ -80,6 +81,71 @@ const rotated: BuilderCard = {
   types: ["Water"],
   hp: 60,
   regulationMark: "F",
+};
+// Structured verdicts (P2): whenever `legal` is present it wins outright —
+// here the printed mark and the catalog's flags deliberately disagree.
+const promoOnlyExpanded: BuilderCard = {
+  cardId: "svp-001",
+  name: "Sprigatito",
+  supertype: "Pokémon",
+  subtype: "Basic",
+  types: ["Grass"],
+  hp: 70,
+  regulationMark: "H", // the mark alone would pass Standard
+  legal: { standard: false, expanded: true },
+};
+const oldMarkStillLegal: BuilderCard = {
+  cardId: "swsh1-2",
+  name: "Frosmoth",
+  supertype: "Pokémon",
+  subtype: "Stage 1",
+  types: ["Water"],
+  hp: 90,
+  regulationMark: "F", // the mark alone would fail Standard
+  legal: { standard: true, expanded: true },
+};
+const nowhereLegal: BuilderCard = {
+  cardId: "sm1-1",
+  name: "Forest of Giant Plants",
+  supertype: "Trainer",
+  subtype: "Stadium",
+  legal: { standard: false, expanded: false },
+};
+// The name-defined single-copy classes: Radiant Pokémon ("Radiant X") and
+// Prism Star (tcgdex "X ◇"; some sources spell out "X Prism Star").
+const radiantGreninja: BuilderCard = {
+  cardId: "swsh9-46",
+  name: "Radiant Greninja",
+  supertype: "Pokémon",
+  subtype: "Basic",
+  types: ["Water"],
+  hp: 130,
+  regulationMark: "F",
+};
+const radiantCharizard: BuilderCard = {
+  cardId: "swsh10.5-11",
+  name: "Radiant Charizard",
+  supertype: "Pokémon",
+  subtype: "Basic",
+  types: ["Fire"],
+  hp: 160,
+  regulationMark: "F",
+};
+const dittoPrism: BuilderCard = {
+  cardId: "sm9-154",
+  name: "Ditto ◇",
+  supertype: "Pokémon",
+  subtype: "Basic",
+  types: ["Colorless"],
+  hp: 40,
+};
+const lunalaPrismSpelled: BuilderCard = {
+  cardId: "sm5-62",
+  name: "Lunala Prism Star",
+  supertype: "Pokémon",
+  subtype: "Basic",
+  types: ["Psychic"],
+  hp: 160,
 };
 
 const standard = formatById("standard");
@@ -138,6 +204,20 @@ describe("remainingAllowed", () => {
     expect(remainingAllowed(deckOf([aceA, 1]), aceA, standard)).toBe(0);
     // A different ACE SPEC already occupies the single slot.
     expect(remainingAllowed(deckOf([aceA, 1]), aceB, standard)).toBe(0);
+  });
+
+  it("allows only one Radiant Pokémon in total across the deck", () => {
+    expect(remainingAllowed([], radiantGreninja, expanded)).toBe(1);
+    expect(remainingAllowed(deckOf([radiantGreninja, 1]), radiantGreninja, expanded)).toBe(0);
+    // Like ACE SPEC, a different Radiant already occupies the single slot.
+    expect(remainingAllowed(deckOf([radiantGreninja, 1]), radiantCharizard, expanded)).toBe(0);
+  });
+
+  it("caps Prism Star cards at one copy of the name", () => {
+    expect(remainingAllowed(deckOf([dittoPrism, 1]), dittoPrism, expanded)).toBe(0);
+    expect(remainingAllowed(deckOf([lunalaPrismSpelled, 1]), lunalaPrismSpelled, expanded)).toBe(0);
+    // Unlike Radiant/ACE SPEC, the limit is per NAME — another Prism still fits.
+    expect(remainingAllowed(deckOf([dittoPrism, 1]), lunalaPrismSpelled, expanded)).toBe(1);
   });
 });
 
@@ -198,13 +278,68 @@ describe("validateDeck", () => {
     expect(result.legal).toBe(false);
   });
 
-  it("flags cards out of the format's regulation marks", () => {
+  it("errors on more than one Radiant Pokémon in total", () => {
+    // Two copies of one name and one-each of two names are the same offence.
+    const sameName = validateDeck(deckOf([radiantGreninja, 2]), expanded);
+    expect(sameName.issues).toContainEqual({
+      level: "error",
+      message: "2 Radiant Pokémon — only 1 is allowed.",
+    });
+    const distinctNames = validateDeck(deckOf([radiantGreninja, 1], [radiantCharizard, 1]), expanded);
+    expect(distinctNames.issues).toContainEqual({
+      level: "error",
+      message: "2 Radiant Pokémon — only 1 is allowed.",
+    });
+    // The deck-wide message SUPERSEDES the per-name cap — never both.
+    const wayOver = validateDeck(deckOf([radiantGreninja, 5]), expanded);
+    expect(wayOver.issues.some((i) => i.message.includes("copies of"))).toBe(false);
+  });
+
+  it("errors past one copy of a Prism Star name, naming the class", () => {
+    const result = validateDeck(deckOf([dittoPrism, 3]), expanded);
+    expect(result.issues).toContainEqual({
+      level: "error",
+      message: "3 copies of Ditto ◇ — Prism Star cards are limited to 1.",
+    });
+    // The single-copy message SUPERSEDES the per-name cap — never both.
+    const wayOver = validateDeck(deckOf([dittoPrism, 5]), expanded);
+    expect(wayOver.issues.filter((i) => i.message.includes("copies of"))).toHaveLength(1);
+  });
+
+  it("accepts one Radiant plus one copy each of distinct Prism Star names", () => {
+    const deck = deckOf([radiantGreninja, 1], [dittoPrism, 1], [lunalaPrismSpelled, 1]);
+    const result = validateDeck(deck, expanded);
+    expect(result.issues.some((i) => i.message.includes("limited to 1"))).toBe(false);
+    expect(result.issues.some((i) => i.message.includes("only 1 is allowed"))).toBe(false);
+  });
+
+  it("judges legality by the catalog's legal flags when present, not the mark", () => {
+    // Mark H would pass Standard, but the catalog says standard: false.
+    const flagged = validateDeck(deckOf([promoOnlyExpanded, 1]), standard);
+    expect(flagged.issues).toContainEqual({
+      level: "error",
+      message: "Sprigatito is not legal in Standard.",
+    });
+    // Mark F would fail Standard, but the catalog says standard: true.
+    const cleared = validateDeck(deckOf([oldMarkStillLegal, 1]), standard);
+    expect(cleared.issues.some((i) => i.message.includes("not legal"))).toBe(false);
+  });
+
+  it("gates Expanded on legal.expanded (structured data only — no mark proxy)", () => {
+    const result = validateDeck(deckOf([nowhereLegal, 1]), expanded);
+    expect(result.issues).toContainEqual({
+      level: "error",
+      message: "Forest of Giant Plants is not legal in Expanded.",
+    });
+  });
+
+  it("falls back to the printed regulation mark for cards without a legal block", () => {
     const inStandard = validateDeck(deckOf([rotated, 1]), standard);
     expect(inStandard.issues).toContainEqual({
       level: "error",
       message: "Snom is not legal in Standard.",
     });
-    // Expanded has no mark restriction, so the same card raises no legality error.
+    // Expanded has no mark fallback, so the same card raises no legality error.
     const inExpanded = validateDeck(deckOf([rotated, 1]), expanded);
     expect(inExpanded.issues.some((i) => i.message.includes("not legal"))).toBe(false);
   });
@@ -214,5 +349,10 @@ describe("FORMATS", () => {
   it("exposes Standard and Expanded at 60 cards", () => {
     expect(FORMATS.map((f) => f.id)).toContain("standard");
     expect(FORMATS.every((f) => f.deckSize === 60)).toBe(true);
+  });
+
+  it("maps each format to its card.legal flag (validator + rail share it)", () => {
+    expect(formatById("standard").legalFlag).toBe("standard");
+    expect(formatById("expanded").legalFlag).toBe("expanded");
   });
 });

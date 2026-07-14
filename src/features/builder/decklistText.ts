@@ -32,8 +32,9 @@ export interface ImportResult {
 
 /** Collapse to a stable match key: lowercased, whitespace-collapsed, with the
     decorative bits that drift between exporters removed. Doubles as the
-    catalog search term for a line (the api's name match is an ASCII
-    case-insensitive substring, so the lowercasing is harmless there). */
+    catalog lookup term for a line (the api's `nameExact` match is ASCII
+    case-insensitive whole-name equality, so the lowercasing is harmless
+    there). */
 export function nameKey(name: string): string {
   return name
     .toLowerCase()

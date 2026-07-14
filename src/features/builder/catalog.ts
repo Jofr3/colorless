@@ -5,13 +5,15 @@
 // builder keeps speaking its own dialect (accented "Pokémon", "Stage 1",
 // "Pokémon Tool", …) unchanged.
 
-import type { Card, CardBrief, CardCategory } from "@luminous/schema";
+import type { Card, CardBrief, CardCategory, CatalogFacets } from "@luminous/schema";
 import { type CardsQuery, getCards } from "../../lib/api";
 import {
   type BuilderCard,
+  DERIVED_KINDS,
   ENERGY_TYPES,
   type EnergyType,
   type Format,
+  isDerivedKind,
   type Supertype,
 } from "./cards";
 import { type ImportResult, nameKey, parseDecklist, resolveDecklist } from "./decklistText";
@@ -43,6 +45,21 @@ const SUBTYPE_LABELS: Record<string, string> = {
   Special: "Special Energy",
 };
 
+/** A wire subtype value as the builder shows it. */
+function subtypeLabelOf(raw: string): string {
+  return SUBTYPE_LABELS[raw] ?? raw;
+}
+
+// The inverse map, for the rail's kind chips travelling back to the wire
+// (labels without a rename pass through verbatim, mirroring subtypeLabelOf).
+const WIRE_SUBTYPE_BY_LABEL = new Map(
+  Object.entries(SUBTYPE_LABELS).map(([wire, label]) => [label, wire]),
+);
+
+function wireSubtypeOf(label: string): string {
+  return WIRE_SUBTYPE_BY_LABEL.get(label) ?? label;
+}
+
 function isEnergyType(value: string): value is EnergyType {
   return (ENERGY_TYPES as readonly string[]).includes(value);
 }
@@ -56,7 +73,7 @@ function subtypeOf(card: CardBrief | Card): string {
         ? card.trainerType
         : card.energyType;
   if (raw === null) return "";
-  return SUBTYPE_LABELS[raw] ?? raw;
+  return subtypeLabelOf(raw);
 }
 
 /** A catalog card (brief or full — both carry the fields this view needs) as
@@ -76,39 +93,98 @@ export function toBuilderCard(card: CardBrief | Card): BuilderCard {
     rarity: card.rarity ?? undefined,
     number: card.localId,
     hasImage: card.image !== null,
+    legal: card.legal,
   };
 }
 
+/** The card-kind chip labels offered for a supertype: the matching facet
+    vocabulary (builder-labelled printed subtypes) plus, for Pokémon, the
+    derived name-regex kinds (EX/Mega). No facets (still loading, or the
+    fetch failed) degrades to just the derived kinds — the rail hides an
+    empty section. */
+export function kindOptions(supertype: "all" | Supertype, facets: CatalogFacets | null): string[] {
+  if (supertype === "Pokémon") {
+    return [...(facets?.stages ?? []).map(subtypeLabelOf), ...DERIVED_KINDS.map((k) => k.label)];
+  }
+  if (supertype === "Trainer") return (facets?.trainerTypes ?? []).map(subtypeLabelOf);
+  if (supertype === "Energy") return (facets?.energyTypes ?? []).map(subtypeLabelOf);
+  return [];
+}
+
+/** A rail HP bound as a wire param: "" (unset), non-numeric or negative
+    input maps to "no bound" rather than a query the server would 400. */
+function hpBound(value: string): number | undefined {
+  const n = Number.parseInt(value, 10);
+  return Number.isInteger(n) && n >= 0 ? n : undefined;
+}
+
 /** Translate the rail's Filters into a GET /cards query (page-less — the
-    search hook adds pagination). `subtypes` (card kinds) are deliberately
-    absent: kinds mix printed subtypes with derived labels (Evolution, EX/Mega
-    read off the name), which the server can't express as one OR — they stay
-    a client-side per-page filter (poolFilter.filterVisibleCards). */
+    search hook adds pagination). `subtypes` (card kinds) filter server-side
+    on the supertype's own subtype dimension (stage / trainerType /
+    energyType, P2 task 9) — UNLESS the selection contains a derived kind
+    (EX/Mega, name regexes the server can't express): then the whole
+    dimension is left off the wire and poolFilter.filterVisibleCards applies
+    it per page, preserving OR-within-dimension. */
 export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuery {
   const name = filters.query.trim();
+  const text = filters.text.trim();
+  const serverKinds =
+    filters.subtypes.length > 0 && !filters.subtypes.some(isDerivedKind)
+      ? filters.subtypes.map(wireSubtypeOf)
+      : undefined;
   return {
     name: name === "" ? undefined : name,
     category: filters.supertype === "all" ? undefined : CATEGORY_BY_SUPERTYPE[filters.supertype],
     type: filters.types.length > 0 ? [...filters.types] : undefined,
     rarity: filters.rarities.length > 0 ? [...filters.rarities] : undefined,
-    // `legalOnly` maps to the server's own Standard-legality flag — Standard
-    // is the only format whose toggle the rail shows (it alone restricts
-    // regulation marks). Any other format sends no legality filter.
-    legal: filters.legalOnly && format.id === "standard" ? "standard" : undefined,
+    // Kinds are only offered once a supertype is chosen, so the selection
+    // belongs to exactly that supertype's subtype dimension.
+    stage: filters.supertype === "Pokémon" ? serverKinds : undefined,
+    trainerType: filters.supertype === "Trainer" ? serverKinds : undefined,
+    energyType: filters.supertype === "Energy" ? serverKinds : undefined,
+    set: filters.setId === "" ? undefined : filters.setId,
+    serie: filters.serieId === "" ? undefined : filters.serieId,
+    illustrator: filters.illustrator === "" ? undefined : filters.illustrator,
+    text: text === "" ? undefined : text,
+    regulationMark: filters.regulationMark === "" ? undefined : filters.regulationMark,
+    hpMin: hpBound(filters.hpMin),
+    hpMax: hpBound(filters.hpMax),
+    // `legalOnly` maps to the ACTIVE format's legality flag — the same
+    // `card.legal` key validateDeck reads (cards.ts legalFlag), so the grid's
+    // "legal only" and the panel's verdict can't disagree. A format without a
+    // flag (none modelled today) sends no legality filter.
+    legal: filters.legalOnly ? format.legalFlag : undefined,
     sort: filters.sort,
   };
 }
 
-/** Resolve a decklist name against the catalog: substring-search the
-    normalized name, then keep only an exact (normalized) match — the first
-    hit in collector order wins, mirroring the old "first pool card with that
-    name" rule. */
+/** Resolve a decklist name against the catalog, in layers — each a server
+    query, stopping at the first hit (first in collector order, mirroring the
+    old "first pool card with that name" rule):
+    1. `nameExact` on the normalized key (nameKey strips a leading "Basic "
+       and collapses whitespace — the exporters' usual noise);
+    2. `nameExact` on the raw name (trimmed, whitespace-collapsed) when that
+       still differs from the key — a print STORED with the "Basic " prefix
+       can't equal the stripped key (case alone never warrants this retry:
+       nameExact ignores it either way);
+    3. the old substring search, for stored names neither equality can reach
+       (only nameKey-level normalization bridges e.g. a doubled space in the
+       stored name).
+    Every layer keeps only a normalized-key match, so a substring over-match
+    can't smuggle in the wrong card. */
 export async function findCardByName(name: string): Promise<BuilderCard | undefined> {
   const key = nameKey(name);
   if (key === "") return undefined;
-  const { items } = await getCards({ name: key, pageSize: 100 });
-  const exact = items.find((item) => nameKey(item.name) === key);
-  return exact === undefined ? undefined : toBuilderCard(exact);
+  const raw = name.replace(/\s+/g, " ").trim();
+  const queries: CardsQuery[] = [{ nameExact: key, pageSize: 100 }];
+  if (raw.toLowerCase() !== key) queries.push({ nameExact: raw, pageSize: 100 });
+  queries.push({ name: key, pageSize: 100 });
+  for (const query of queries) {
+    const { items } = await getCards(query);
+    const exact = items.find((item) => nameKey(item.name) === key);
+    if (exact !== undefined) return toBuilderCard(exact);
+  }
+  return undefined;
 }
 
 /** Parse + resolve a pasted decklist against the live catalog. Rejects on an
