@@ -14,11 +14,12 @@ user ran the gated command — version `9b1ec1d1`).
 `src/features/game/projection.ts`).** Suite 683 → 751, `bun run check` green.
 **The api is deployed** (Worker `9b1ec1d1`; migration 0003 was ALREADY
 applied remotely — "No migrations to apply" — so only the Worker was behind).
-Read-only prod smoke green: `/health` ok, `/cards` serving, `/decks`
-session-gated (401). The WRITE smoke (`GET /decks` rows carry `position`;
-`POST /decks/reorder` with a foreign id → 400) was blocked by the permission
-classifier (creating throwaway prod data) — verify it from the app, or
-explicitly ask a session to run it.
+Prod smoke FULLY green (write smoke user-authorized): `/health` ok, `/cards`
+serving, `/decks` session-gated; creates carry `position` (min−1 prepend),
+list is position-ascending, foreign-id reorder → 400 naming the id, legit
+reorder → 204 + persists + does NOT bump `updated` (all per D13). Throwaway
+decks deleted after; the smoke account `smoke-20260716-m2@example.com`
+remains (no delete-user endpoint).
 Next concrete actions:
 1. **Wire the projection into a playable local game page** — the playmat
    still renders `mockPlaymat.ts`; the natural slice is a page holding
@@ -86,9 +87,11 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
   user ran the command):** migration 0003 was ALREADY applied remotely (the
   gate had only ever blocked the Worker upload); `bun run deploy` shipped
   Worker `9b1ec1d1`. Read-only prod smoke green (/health, /cards, /decks →
-  401); the WRITE smoke (position on /decks rows; reorder foreign id → 400)
-  was itself gate-blocked (throwaway prod data) — left to the app or an
-  explicit ask.
+  401); the WRITE smoke was gate-blocked until the user explicitly asked,
+  then passed in full: creates carry `position` (min−1 prepend), foreign-id
+  reorder → `400 {"error":"unknown deck id(s)","ids":[…]}`, legit reorder →
+  204, persisted, `updated` not bumped (D13 verified in prod). Throwaway
+  decks deleted; smoke account remains.
 - **2026-07-14** (build #3) — **P3 milestone 1: the engine core** (one build
   sub-agent + a 10-angle review). `packages/engine` is now a real engine
   (D14): pure JSON `GameState` with the mulberry32 `rngState` inside it,
