@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, otherSeat, topCardOf, topUid } from "./index";
-import type { ErrorCode, GameAction, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   ALL_BASIC_DECK,
   MIXED_DECK,
+  attachFromDeck,
   driveSetup,
+  expectErr,
   handUid,
   handUids,
   must,
@@ -43,12 +45,6 @@ function costTwoBoard(): GameState {
     active: { p1: "fix-basic-2", p2: "fix-basic-1" },
     bench: { p1: ["fix-basic-0"] },
   });
-}
-
-function expectErr(state: GameState, action: GameAction, code: ErrorCode): void {
-  const result = applyAction(state, action);
-  expect(result.ok).toBe(false);
-  if (!result.ok) expect(result.error.code).toBe(code);
 }
 
 describe("attachEnergy", () => {
@@ -120,6 +116,20 @@ describe("attachEnergy", () => {
       { type: "attachEnergy", seat: "p1", uid, target: { spot: "bench", index: 3 } },
       "BAD_BENCH_INDEX",
     );
+  });
+
+  it("rejects a wire-garbled target without throwing", () => {
+    // The target is a wire value like every other: a null / non-object /
+    // unknown-spot shape must come back ok:false, never TypeError on `.spot`.
+    const state = costOneBoard();
+    const uid = handUid(state, "p1", "fix-energy");
+    for (const target of [null, "active", {}]) {
+      expectErr(
+        state,
+        { type: "attachEnergy", seat: "p1", uid, target: target as never },
+        "BAD_TARGET",
+      );
+    }
   });
 
   it("rejects the off-turn seat", () => {
@@ -282,6 +292,38 @@ describe("retreat", () => {
     );
   });
 
+  it("rejects a wire-garbled discardEnergy without throwing", () => {
+    // Array.isArray, not `.length`: a length-faking object passes the count
+    // check and then throws at `new Set`; a plain STRING is even sneakier —
+    // it is iterable, so it would sail past the Set into the membership scan.
+    const state = costOneBoard();
+    for (const bogus of [{ length: 1 }, undefined, "x"]) {
+      expectErr(
+        state,
+        { type: "retreat", seat: "p1", discardEnergy: bogus as never, promoteBenchIndex: 0 },
+        "RETREAT_COST_MISMATCH",
+      );
+    }
+  });
+
+  it("reports discarded energy in pile order, not the caller's order", () => {
+    // e1 attached before e2 (test surgery keeps attachment order), so the
+    // pile gains [e1, e2] no matter how the payment names them — and the
+    // event reports what the pile gained (§2 — ordered and public).
+    const state = attachFromDeck(costTwoBoard(), "p1", "fix-energy", 2);
+    const [e1, e2] = state.players.p1.active?.energy ?? [];
+    if (e1 === undefined || e2 === undefined) throw new Error("need 2 attached energy");
+    const { state: next, events } = mustApply(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [e2, e1],
+      promoteBenchIndex: 0,
+    });
+    expect(next.players.p1.discard).toEqual([e1, e2]);
+    const retreated = events.find((e) => e.type === "RETREATED");
+    expect(retreated?.type === "RETREATED" && retreated.discardedEnergy).toEqual([e1, e2]);
+  });
+
   it("rejects unattached or duplicated energy uids", () => {
     let state = costTwoBoard();
     const [attached, inHand] = handUids(state, "p1", "fix-energy", 2);
@@ -390,12 +432,8 @@ describe("endTurn", () => {
       "CARDS_DRAWN",
     ]);
     expect(next.turn).toBe(2);
-    expect(next.phase).toEqual({
-      kind: "turn:action",
-      seat: "p2",
-      energyAttached: false,
-      retreated: false,
-    });
+    expect(next.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(next.allowances).toEqual({ energyAttached: false, retreated: false });
     expect(next.players.p2.hand).toHaveLength(p2HandBefore + 1);
   });
 
@@ -414,16 +452,19 @@ describe("deck-out", () => {
       lastEvents = applied.events;
     }
     // p1 drew first, so p1's deck empties first: p2 wins by deck-out.
-    expect(state.phase).toEqual({ kind: "gameOver", winner: "p2", reason: "deckOut" });
+    expect(state.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p2", reason: "deckOut" },
+    });
     expect(state.players.p1.deck).toHaveLength(0);
     expect(lastEvents.map((e) => (e as { type: string }).type)).toEqual([
       "TURN_ENDED",
       "TURN_STARTED",
       "GAME_OVER", // no CARDS_DRAWN — the loss is checked at draw time
     ]);
-    const over = lastEvents.at(-1) as { winner: string; reason: string };
-    expect(over.winner).toBe("p2");
-    expect(over.reason).toBe("deckOut");
+    const over = lastEvents.at(-1) as { outcome: { winner: string; reason: string } };
+    expect(over.outcome.winner).toBe("p2");
+    expect(over.outcome.reason).toBe("deckOut");
   });
 
   it("a finished game rejects every further action", () => {

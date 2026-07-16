@@ -4,7 +4,7 @@
 // (plain throws) so any suite can use it.
 
 import type { Card } from "@luminous/schema";
-import type { ApplyResult, GameAction, GameEvent, GameState, Seat } from "./index";
+import type { ApplyResult, ErrorCode, GameAction, GameEvent, GameState, Seat } from "./index";
 import { SEATS, applyAction, cardOfUid, createGame, isBasicPokemon } from "./index";
 
 const blank: Omit<Card, "id" | "name" | "category"> = {
@@ -61,8 +61,32 @@ export function basicEnergy(id: string): Card {
   return { ...blank, id, name: id, category: "Energy", energyType: "Normal" };
 }
 
+/** A Basic Energy of a real type. The NAME is the datum ("Fire Energy"):
+    catalog basics carry no `types`, so the engine derives provision from it
+    (cards.ts energyProvidesOf) — the unnamed `basicEnergy` above therefore
+    provides Colorless, which the M1 suites rely on. */
+export function typedEnergy(id: string, type: string): Card {
+  return { ...blank, id, name: `${type} Energy`, category: "Energy", energyType: "Normal" };
+}
+
 export function itemTrainer(id: string): Card {
   return { ...blank, id, name: id, category: "Trainer", trainerType: "Item" };
+}
+
+/** A battle-ready Basic: a 60 HP Colorless body whose combat data (attacks,
+    types, hp, weakness/resistance) each M2 matchup overrides. */
+export function battler(id: string, overrides: Partial<Card> = {}): Card {
+  return {
+    ...blank,
+    id,
+    name: id,
+    category: "Pokemon",
+    stage: "Basic",
+    hp: 60,
+    types: ["Colorless"],
+    retreat: 1,
+    ...overrides,
+  };
 }
 
 export const FIXTURE_POOL: Record<string, Card> = {
@@ -72,6 +96,52 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-stage1": stage1Pokemon("fix-stage1"),
   "fix-energy": basicEnergy("fix-energy"),
   "fix-item": itemTrainer("fix-item"),
+  "fix-fire-energy": typedEnergy("fix-fire-energy", "Fire"),
+  "fix-water-energy": typedEnergy("fix-water-energy", "Water"),
+  // The M2 cast: one Fire attacker with a spread of printed-attack shapes,
+  // and defenders that exercise each §8.5 damage-pipeline branch.
+  "fix-attacker": battler("fix-attacker", {
+    types: ["Fire"],
+    hp: 120,
+    attacks: [
+      { cost: ["Colorless"], name: "Bite", damage: 30 },
+      { cost: ["Fire", "Colorless"], name: "Flame", damage: 60 },
+      { name: "Yawn", effect: "The Defending Pokémon is now Asleep." },
+      {
+        cost: ["Colorless"],
+        name: "Rage",
+        damage: "10+",
+        effect: "This attack does 10 more damage for each damage counter on this Pokémon.",
+      },
+    ],
+  }),
+  /** OHKO'd by Bite — the e2e prize-race fodder. No attacks of its own. */
+  "fix-victim": battler("fix-victim", { hp: 30 }),
+  /** Plain wall: no weakness, no resistance, survives several Bites. */
+  "fix-wall": battler("fix-wall", { hp: 120 }),
+  /** Weak to Fire — Bite hits for 60 and exactly KOs it. */
+  "fix-weak": battler("fix-weak", { hp: 60, weaknesses: [{ type: "Fire", value: "×2" }] }),
+  /** Resists Fire — Bite is floored to 0. */
+  "fix-tough": battler("fix-tough", {
+    hp: 120,
+    resistances: [{ type: "Fire", value: "-30" }],
+  }),
+  /** Both weak AND resistant to Fire — pins the §8.5 order:
+      (30 × 2) − 30 = 30, where the wrong order gives (30 − 30) × 2 = 0. */
+  "fix-weak-tough": battler("fix-weak-tough", {
+    hp: 120,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    resistances: [{ type: "Fire", value: "-30" }],
+  }),
+  /** Old-era ADDITIVE weakness (the dp5-4 print): Bite deals 30 + 20 = 50,
+      where a misread ×2 would deal 60. */
+  "fix-weak-plus": battler("fix-weak-plus", {
+    hp: 120,
+    weaknesses: [{ type: "Fire", value: "+20" }],
+  }),
+  /** hp printed as 0 — a catalog data gap schema/ingest let through, read as
+      null by hpOf: never KO'd (a KO requires printed hp > 0). */
+  "fix-zero-hp": battler("fix-zero-hp", { hp: 0 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -121,6 +191,20 @@ export function mustApply(
     throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   }
   return { state: result.state, events: result.events };
+}
+
+/** applyAction that must REJECT with exactly `code` — mustApply's negative
+    twin, shared by the suites' wire/validation tests. */
+export function expectErr(state: GameState, action: GameAction, code: ErrorCode): void {
+  const result = applyAction(state, action);
+  if (result.ok) {
+    throw new Error(`expected ${action.type} to be rejected with ${code}, but it applied`);
+  }
+  if (result.error.code !== code) {
+    throw new Error(
+      `expected ${action.type} to fail with ${code}, got ${result.error.code}: ${result.error.message}`,
+    );
+  }
 }
 
 export function handUid(state: GameState, seat: Seat, cardId: string): string {
@@ -199,6 +283,54 @@ export function driveSetup(
     state = must(applyAction(state, { type: "setupReady", seat }));
   }
   return state;
+}
+
+/** TEST SURGERY: move `count` copies of `cardId` from the seat's deck onto
+    the Active's energy, bypassing the one-attach-per-turn rule — attack
+    matchups need multi-energy boards without scripting N turns of attaches.
+    The result stays a legal-shaped state (every uid in exactly one zone). */
+export function attachFromDeck(
+  state: GameState,
+  seat: Seat,
+  cardId: string,
+  count: number,
+): GameState {
+  const side = state.players[seat];
+  if (side.active === null) throw new Error(`${seat} has no Active Pokémon`);
+  const uids = side.deck.filter((uid) => state.cardIdByUid[uid] === cardId).slice(0, count);
+  if (uids.length < count) {
+    throw new Error(`${seat} deck has ${uids.length} ${cardId}, needed ${count}`);
+  }
+  const taken = new Set(uids);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((uid) => !taken.has(uid)),
+        active: { ...side.active, energy: [...side.active.energy, ...uids] },
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: shrink a seat's prize row to `count`, returning the surplus
+    to the bottom of the deck (still legal-shaped) — win-condition tests need
+    "one prize from victory" boards without playing five KOs first. */
+export function setPrizes(state: GameState, seat: Seat, count: number): GameState {
+  const side = state.players[seat];
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        prizes: side.prizes.slice(0, count),
+        deck: [...side.deck, ...side.prizes.slice(count)],
+      },
+    },
+  };
 }
 
 /** Recursively freeze a value (strict mode makes any later mutation throw). */

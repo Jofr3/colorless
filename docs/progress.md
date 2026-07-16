@@ -3,32 +3,36 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-14 — build session #3 (**P3-M1: the engine core**,
-built + xhigh-reviewed + committed `d34146c`; **api still NOT deployed** —
-blocked on a permission gate, see below).
+**Last updated:** 2026-07-16 — build session #4 (**P3-M2: attacks/KO/prizes +
+the engine→playmat projection**, built + xhigh-reviewed + all confirmed
+findings fixed, uncommitted at write time — commit lands this session;
+**api still NOT deployed** — permission gate for the THIRD session, see below).
 
 ## Resume point
-**P3 has started: milestone 1 (the core state machine) is done and committed.**
-The engine is a pure, seedable, never-throwing reducer in `packages/engine`
-(D14) — setup with mulligans + compensation, the turn loop with its deck-out
-loss, energy attach, bench plays, retreat, pass. Suite 623 → 683, `bun run
-check` green.
+**P3-M2 is done: attacks, KO + prizes, win check (D16) and the per-viewer
+engine→playmat projection (D17, `src/features/game/projection.ts`).** Suite
+683 → 751, `bun run check` green.
 Next concrete actions:
-1. **Deploy the api** — STILL blocked, twice now, by the permission gate on
-   `bun run db:migrate:remote` (production D1); it needs the user to approve
-   or run it. This is task 17's migration 0003 + the reorder endpoints —
-   **the deployed api is one migration behind the code**. Run:
+1. **Deploy the api** — STILL blocked (three sessions running) by the
+   permission gate on `bun run db:migrate:remote` (production D1); the auto
+   classifier rejects it without the user explicitly naming the deploy. It
+   needs the user to run or approve:
    `cd apps/api && bun run db:migrate:remote && bun run deploy`, then
    prod-smoke: `GET /decks` rows carry `position` (backfilled name-order);
-   a `POST /decks/reorder` with a foreign id → 400.
-2. Then **P3-M2 (attacks: costs, damage, weakness/resistance, KO + prizes,
-   win check)**. Read the **"M1 as built"** section of
-   `workstreams/simulator.md` first — it lists the traps M2 walks straight
-   into (the fused turn tail that can't pause for KO/prize decisions; per-turn
-   allowances living on the phase object; `gameOver.winner` can't express a
-   tie; the hand-rolled retreat discard M2's KO needs to share). The
-   **engine → playmat projection** doesn't exist yet either; it's the natural
-   slice alongside M2 (nothing can render a game today).
+   a `POST /decks/reorder` with a foreign id → 400. **The deployed api is
+   one migration (0003) behind the code.**
+2. **Wire the projection into a playable local game page** — the playmat
+   still renders `mockPlaymat.ts`; the natural slice is a page holding
+   `GameState`, dispatching `applyAction`, rendering `projectGameState`
+   (consumption sketch in the projection module; gate input on `waitingOn`,
+   not `activePlayer` — see D17). Integration seams listed under
+   "Projection deferrals" in `workstreams/simulator.md`.
+3. Or **P3-M3 (status conditions + Pokémon Checkup)** — read "M2 as built"
+   in `workstreams/simulator.md` first: `runCheckup` is a stub but the
+   interrupt machinery is ready; lift a shared `knockOut` resolver out of
+   the attack handler rather than copying it (the traps list has the rest:
+   prizeValueOf=1 pending an ingest suffix column, name-derived energy
+   provision, the kept phase↔pending dual encoding).
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -39,13 +43,47 @@ Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 deployed; task-17 api (migration 0003 + reorder endpoints) awaits deploy; OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1 done** (core state machine, `packages/engine`, D14) — M2 (attacks/KO/prizes) next; no playmat projection yet |
+| simulator | P3 | 🚧 **M1+M2 done** (core + attacks/KO/prizes/win, D14/D16) + projection adapter (D17) — M3 (status/checkup) next; playmat not yet wired to the engine |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-16** (build #4) — **P3-M2 (attacks/KO/prizes/win, D16) + the
+  engine→playmat projection (D17)**, two parallel build agents then an xhigh
+  review (10 finder angles → 9 grouped verifiers → gap sweep; 15 findings
+  reported, every confirmed one fixed in-session by two fix agents).
+  (A) Engine M2: staged turn tail (`pending` queue + `advance()` in new
+  `flow.ts`; `ko:takePrizes`/`ko:promote` park phases, forced picks
+  auto-resolve), attack flow (typed costs w/ Colorless wildcards, §4
+  first-turn ban, §8.5 weakness→resistance order), KO cleanup via shared
+  `discardFromStack`, prize/promotion choice actions, `evaluateWin` →
+  `GameOutcome` win/tie. (B) Projection: per-viewer `GameProjection`
+  (drop-in playmat `BoardState` + piles/pokemon/waitingOn/pendingDecision/
+  outcome), structural hidden-info redaction, uid-keyed animation identity.
+  **Review headliners** (the xhigh pass paid a second time): two
+  never-throw violations in M1 code the M1 review missed (`attachEnergy`
+  `target:null` and retreat `discardEnergy:{length:1}` both THREW out of
+  `applyAction` — probe-proven); `energyProvidesOf` misparsing the
+  catalog's own "Basic Darkness/Metal Energy" prints → typed attacks
+  permanently unpayable; schema-documented `"+20"` additive weakness
+  silently applied as ×2 (→ `DamageModifier` model); `hp:0` rows
+  instant-KOing undamaged Pokémon; the projection guessing the wrong
+  actor during `ko:promote` + surfacing no pending decision/outcome/damage
+  (→ the `activePlayer`/`waitingOn` split). Also: `BASIC_ENERGY_TYPES`
+  hoisted to `@luminous/schema` (Fairy added; builder derives its palette),
+  win-check consolidated into shared resolve-and-resume helpers,
+  `turnTail()` extracted, `PHASE_DESYNC` cross-check hardening. Deferred
+  (traps list): stable opaque ids for opponent-hand backs (P4 design),
+  image-null → card-back mapping (wire-up slice), ingest columns for ex
+  suffix / energy provision / weakness normalization. Suite 683 → 751;
+  `bun run check` green. **Session traps:** the usage limit killed 7/10
+  finders and the engine fixer mid-flight — ALL resumed via SendMessage
+  with zero rework (third session this pattern holds). **The api deploy
+  permission gate fired for the THIRD session** — the auto classifier
+  rejects `db:migrate:remote` unless the user names the deploy explicitly;
+  it genuinely needs the user.
 - **2026-07-14** (build #3) — **P3 milestone 1: the engine core** (one build
   sub-agent + a 10-angle review). `packages/engine` is now a real engine
   (D14): pure JSON `GameState` with the mulberry32 `rngState` inside it,

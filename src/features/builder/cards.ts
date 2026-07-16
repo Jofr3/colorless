@@ -5,21 +5,23 @@
 // side-effect-free so the pure logic (deckMath, decklistText) and their
 // tests can import it freely.
 
-/** The Pokémon TCG energy types, in the canonical wheel order. */
-export const ENERGY_TYPES = [
-  "Grass",
-  "Fire",
-  "Water",
-  "Lightning",
-  "Psychic",
-  "Fighting",
-  "Darkness",
-  "Metal",
+import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
+
+/** The energy types the builder filters and paints, in the canonical wheel
+    order. Derived from the shared basic-energy vocabulary (@luminous/schema)
+    minus the retired Fairy — old Fairy prints keep adapting to typeless
+    tiles rather than growing a palette entry — plus Dragon (a Pokémon type
+    with no Basic Energy) and Colorless (a cost symbol), which exist only in
+    this UI palette. */
+export type EnergyType = Exclude<BasicEnergyType, "Fairy"> | "Dragon" | "Colorless";
+
+export const ENERGY_TYPES: readonly EnergyType[] = [
+  ...BASIC_ENERGY_TYPES.filter(
+    (type): type is Exclude<BasicEnergyType, "Fairy"> => type !== "Fairy",
+  ),
   "Dragon",
   "Colorless",
-] as const;
-
-export type EnergyType = (typeof ENERGY_TYPES)[number];
+];
 
 /** Top-level card category — drives the deck-list grouping (Pokémon / Trainer /
     Energy) and the right-panel split. Uses the accented "Pokémon" spelling the

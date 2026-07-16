@@ -11,8 +11,8 @@ import type {
 import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, isBasicPokemon } from "./cards";
 import type { GameEvent } from "./events";
+import { startTurn } from "./flow";
 import { flipCoin, shuffle } from "./rng";
-import { startTurn } from "./turn";
 import type { GameState, PlayerSide, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -21,6 +21,7 @@ import {
   PRIZE_COUNT,
   SEATS,
   drawToHand,
+  freshAllowances,
   makeInPlay,
   otherSeat,
   withSide,
@@ -120,6 +121,8 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     turn: 0,
     firstPlayer: null,
     phase: { kind: "setup:chooseFirst", coinWinner },
+    allowances: freshAllowances(),
+    pending: [],
     players: { p1: emptySide(decks.p1), p2: emptySide(decks.p2) },
     cardIdByUid,
     cardPool: pool,

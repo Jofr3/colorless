@@ -63,6 +63,30 @@ export interface RetreatAction {
   promoteBenchIndex: number;
 }
 
+export interface AttackAction {
+  type: "attack";
+  seat: Seat;
+  /** Index into the Active's printed attacks (the top card defines them,
+      §1.2). Runtime-checked — integer, in range — like every wire value. */
+  index: number;
+}
+
+export interface TakePrizesAction {
+  type: "takePrizes";
+  seat: Seat;
+  /** Exactly `count` (from the ko:takePrizes phase) distinct indices into
+      the actor's own face-down prize row — the KOing player picks which of
+      THEIR prizes to reveal into hand (§8.1). */
+  prizeIndices: number[];
+}
+
+export interface PromoteAction {
+  type: "promote";
+  seat: Seat;
+  /** Bench index of the Pokémon promoted into the empty Active spot (§8.1). */
+  benchIndex: number;
+}
+
 export interface EndTurnAction {
   type: "endTurn";
   seat: Seat;
@@ -77,6 +101,9 @@ export type GameAction =
   | AttachEnergyAction
   | PlayBasicToBenchAction
   | RetreatAction
+  | AttackAction
+  | TakePrizesAction
+  | PromoteAction
   | EndTurnAction;
 
 export type ErrorCode =
@@ -95,6 +122,9 @@ export type ErrorCode =
   | "BENCH_FULL"
   | "BENCH_EMPTY"
   | "BAD_BENCH_INDEX"
+  /** attachEnergy's `target` failed the wire shape check (null / not an
+      object / an unknown `spot`). */
+  | "BAD_TARGET"
   | "BAD_EXTRA_COUNT"
   | "ACTIVE_ALREADY_PLACED"
   | "ACTIVE_NOT_PLACED"
@@ -103,6 +133,16 @@ export type ErrorCode =
   | "ENERGY_NOT_ATTACHED"
   | "RETREAT_COST_MISMATCH"
   | "ALREADY_RETREATED"
+  /** §4 — the going-first player may not attack on turn 1. */
+  | "FIRST_TURN_ATTACK"
+  | "BAD_ATTACK_INDEX"
+  | "ATTACK_COST_UNMET"
+  | "BAD_PRIZE_COUNT"
+  | "BAD_PRIZE_INDEX"
+  /** A parked ko:* phase that disagrees with the head pending stage —
+      unreachable through the engine's own transitions (parking writes both
+      together); a crafted or corrupted snapshot (attack.ts). */
+  | "PHASE_DESYNC"
   // createGame rejections. They live in the SAME union as the action codes so
   // a host (the P4 Worker above all) has one `switch (error.code)` to write,
   // not two disjoint ones over two identical-looking envelopes.

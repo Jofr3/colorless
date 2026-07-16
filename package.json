@@ -24,6 +24,7 @@
     "api:deploy": "bun run --cwd apps/api deploy"
   },
   "dependencies": {
+    "@luminous/engine": "workspace:*",
     "@luminous/schema": "workspace:*",
     "gsap": "^3.15.0",
     "pixi.js": "^8.18.1",

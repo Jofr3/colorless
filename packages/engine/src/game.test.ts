@@ -348,8 +348,10 @@ describe("scripted end-to-end game", () => {
 
     expect(state.phase.kind).toBe("gameOver");
     if (state.phase.kind !== "gameOver") return;
-    expect(state.phase.reason).toBe("deckOut");
-    const loser = state.phase.winner === "p1" ? "p2" : "p1";
+    const outcome = state.phase.outcome;
+    if (outcome.result !== "win") throw new Error("expected a deck-out win, not a tie");
+    expect(outcome.reason).toBe("deckOut");
+    const loser = outcome.winner === "p1" ? "p2" : "p1";
     expect(state.players[loser].deck).toHaveLength(0);
 
     // Event census: the whole M1 surface was exercised, exactly once ended.

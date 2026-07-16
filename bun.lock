@@ -5,6 +5,7 @@
     "": {
       "name": "luminous_ui_v2",
       "dependencies": {
+        "@luminous/engine": "workspace:*",
         "@luminous/schema": "workspace:*",
         "gsap": "^3.15.0",
         "pixi.js": "^8.18.1",
@@ -46,7 +47,7 @@
     },
     "packages/engine": {
       "name": "@luminous/engine",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@luminous/schema": "workspace:*",
       },

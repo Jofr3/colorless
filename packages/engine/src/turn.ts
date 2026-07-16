@@ -8,22 +8,14 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, isEnergyCard, retreatCostOf, topUid } from "./cards";
-import type { GameEvent } from "./events";
-import type { GameState, InPlayPokemon, PlayerSide, Seat, TurnPhase } from "./types";
-import {
-  BENCH_MAX,
-  drawToHand,
-  makeInPlay,
-  noConditions,
-  otherSeat,
-  withSide,
-  without,
-} from "./types";
+import { advance, turnTail } from "./flow";
+import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
+import { BENCH_MAX, discardFromStack, makeInPlay, noConditions, withSide, without } from "./types";
 
-// The turn loop (rules §5, §16). Turn start is never a player decision, so
-// startTurn runs automatically off the previous turn's end (or off setup):
-// fresh allowances, TURN_STARTED, then the mandatory draw with its deck-out
-// loss check.
+// The in-turn actions (rules §5). Turn start/end mechanics live in flow.ts:
+// ending a turn seeds the staged tail (TURN_ENDED → checkup → the opponent's
+// startTurn) and `advance` drains it — attack.ts feeds the same tail with
+// the KO stages in front, which is why the tail is a queue and not a call.
 
 /** Bench slots are array indices, and the arrays are dense. The `Number` check
     guards the wire: TS says these are numbers, JSON does not, and a string
@@ -32,55 +24,40 @@ export function isBenchIndex(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0 && (value as number) < BENCH_MAX;
 }
 
-/** The gate every in-turn action shares: right phase, right seat. Returning
-    the narrowed phase (rather than re-narrowing in each handler) is what
-    keeps the four M1 actions — and M2's attack/evolve/trainer plays — from
-    each re-deriving the turn check. */
+/** The gate every in-turn action shares: right phase, right seat. Returns
+    the rejection, or null when the action may proceed (the same contract as
+    basicFromHandError) — no handler consumes the narrowed phase, they act on
+    the seat and the allowances alone. */
 export function turnGate(
   state: GameState,
   action: { type: GameAction["type"]; seat: Seat },
-): { phase: TurnPhase; reject?: undefined } | { phase?: undefined; reject: ApplyResult } {
+): ApplyResult | null {
   const phase = state.phase;
   if (phase.kind !== "turn:action") {
-    return { reject: err("BAD_PHASE", `${action.type} is not legal during ${phase.kind}`) };
+    return err("BAD_PHASE", `${action.type} is not legal during ${phase.kind}`);
   }
   if (phase.seat !== action.seat) {
-    return { reject: err("WRONG_SEAT", `it is ${phase.seat}'s turn`) };
+    return err("WRONG_SEAT", `it is ${phase.seat}'s turn`);
   }
-  return { phase };
+  return null;
 }
 
-/** Advance to `seat`'s turn. Building a fresh turn:action phase IS the
-    per-turn allowance reset. The first player DOES draw on turn 1 — the
-    start-of-turn draw is not skipped under current rules (§4). */
-export function startTurn(state: GameState, seat: Seat, events: GameEvent[]): ApplyResult {
-  const turn = state.turn + 1;
-  let next: GameState = {
-    ...state,
-    turn,
-    phase: { kind: "turn:action", seat, energyAttached: false, retreated: false },
-  };
-  events.push({ type: "TURN_STARTED", turn, seat });
-
-  // Draw step (§5.1): a player who must draw from an empty deck loses the
-  // game right here (§14.3 deck-out) — checked at draw time.
-  if (next.players[seat].deck.length === 0) {
-    const winner = otherSeat(seat);
-    next = { ...next, phase: { kind: "gameOver", winner, reason: "deckOut" } };
-    events.push({ type: "GAME_OVER", winner, reason: "deckOut" });
-    return ok(next, events);
-  }
-  next = drawToHand(next, seat, 1, "turnStart", events);
-  return ok(next, events);
+/** The attach target off the wire: a non-null object naming a legal `spot`.
+    Like every wire value (types are not validation) — a null or garbled
+    shape must reject, not throw on `.spot`. The bench index is checked at
+    the use site (isBenchIndex), same as every other wire index. */
+function isPokemonTarget(value: unknown): value is PokemonTarget {
+  if (typeof value !== "object" || value === null) return false;
+  const spot = (value as { spot?: unknown }).spot;
+  return spot === "active" || spot === "bench";
 }
 
 /** §6.2 — exactly one energy attachment per turn, from hand, onto any of
     the actor's Pokémon (Active or Bench). */
 export function attachEnergy(state: GameState, action: AttachEnergyAction): ApplyResult {
-  const gate = turnGate(state, action);
-  if (gate.reject) return gate.reject;
-  const phase = gate.phase;
-  if (phase.energyAttached) {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  if (state.allowances.energyAttached) {
     return err("ENERGY_ALREADY_ATTACHED", "only one energy attachment per turn (§6.2)");
   }
   const side = state.players[action.seat];
@@ -93,6 +70,9 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   }
   if (!isEnergyCard(card)) {
     return err("NOT_AN_ENERGY", `${card.name} is not an Energy card`);
+  }
+  if (!isPokemonTarget(action.target)) {
+    return err("BAD_TARGET", "attach target must name the Active spot or a bench index");
   }
 
   const hand = without(side.hand, action.uid);
@@ -122,7 +102,7 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   }
   const next: GameState = {
     ...withSide(state, action.seat, updated),
-    phase: { ...phase, energyAttached: true },
+    allowances: { ...state.allowances, energyAttached: true },
   };
   return ok(next, [
     // The target is copied: the action object belongs to the caller, and an
@@ -133,8 +113,8 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
 
 /** §5.2 — Basics to the bench, any number per turn, cap 5. */
 export function playBasicToBench(state: GameState, action: PlayBasicToBenchAction): ApplyResult {
-  const gate = turnGate(state, action);
-  if (gate.reject) return gate.reject;
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
   const side = state.players[action.seat];
   if (side.bench.length >= BENCH_MAX) {
     return err("BENCH_FULL", `the bench holds at most ${BENCH_MAX} Pokémon`);
@@ -142,7 +122,7 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   const invalid = basicFromHandError(state, action.seat, action.uid);
   if (invalid !== null) return invalid;
 
-  // makeInPlay records turnPlayed — M2's evolution timing ("not the turn it
+  // makeInPlay records turnPlayed — M4's evolution timing ("not the turn it
   // came into play", §10) reads it.
   const next = withSide(state, action.seat, {
     ...side,
@@ -153,9 +133,9 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
 }
 
 /** M3 hook — leaving the Active spot removes Special Conditions (§11/§12)
-    and will drop active-only markers. M1 conditions are always empty, so
-    this is the identity in practice; it exists so retreat (and M2's
-    KO-promotion) already route through the right place. */
+    and will drop active-only markers. Conditions are still always empty, so
+    this is the identity in practice; it exists so retreat already routes
+    through the right place. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return { ...pokemon, conditions: noConditions() };
 }
@@ -164,16 +144,16 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     cost (count must equal the top card's retreat cost exactly) and which
     benched Pokémon takes the Active spot. */
 export function retreat(state: GameState, action: RetreatAction): ApplyResult {
-  const gate = turnGate(state, action);
-  if (gate.reject) return gate.reject;
-  const phase = gate.phase;
-  if (phase.retreated) {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  if (state.allowances.retreated) {
     return err("ALREADY_RETREATED", "only one retreat per turn (§11)");
   }
   const side = state.players[action.seat];
   const active = side.active;
   if (active === null) {
-    // Unreachable in M1 — nothing removes the Active before KOs land in M2.
+    // Unreachable — KO promotion is forced before the next action, so the
+    // Active spot is never empty during turn:action.
     return err("NO_TARGET", "no Active Pokémon to retreat");
   }
   if (side.bench.length === 0) {
@@ -197,13 +177,14 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     return err("UNKNOWN_CARD", `no catalog card for uid ${activeTopUid}`);
   }
 
-  // The cheap bound check comes FIRST: discardEnergy is caller-supplied (a P4
-  // client controls it), so the O(n) membership scans below must never run on
-  // an unbounded list.
+  // The array-ness and the cheap bound check come FIRST: discardEnergy is
+  // caller-supplied (a P4 client controls it), so a non-array must never
+  // reach `new Set` below — a length-faking object throws there — and the
+  // O(n) membership scans must never run on an unbounded list.
   const cost = retreatCostOf(topCard);
   const chosen = action.discardEnergy;
-  if (chosen.length !== cost) {
-    return err("RETREAT_COST_MISMATCH", `retreat costs ${cost} energy, got ${chosen.length}`);
+  if (!Array.isArray(chosen) || chosen.length !== cost) {
+    return err("RETREAT_COST_MISMATCH", `retreat costs exactly ${cost} energy`);
   }
   const chosenSet = new Set(chosen);
   if (chosenSet.size !== chosen.length) {
@@ -215,10 +196,10 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     }
   }
 
-  const benched = clearOnLeavingActive({
-    ...active,
-    energy: active.energy.filter((uid) => !chosenSet.has(uid)),
-  });
+  // The cost payment is the shared "cards leave play for the discard" move
+  // (types.ts) — the same primitive KO cleanup uses.
+  const paid = discardFromStack(side, active, chosenSet);
+  const benched = clearOnLeavingActive(paid.pokemon);
   // The bench stays dense: the promoted Pokémon's slot closes up and the
   // retreater goes to the end. Both indices ride along on the event so
   // consumers never re-derive this rule (events.ts).
@@ -228,13 +209,8 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     benched,
   ];
   const next: GameState = {
-    ...withSide(state, action.seat, {
-      ...side,
-      discard: [...side.discard, ...chosen],
-      active: promoted,
-      bench,
-    }),
-    phase: { ...phase, retreated: true },
+    ...withSide(state, action.seat, { ...paid.side, active: promoted, bench }),
+    allowances: { ...state.allowances, retreated: true },
   };
   return ok(next, [
     {
@@ -244,24 +220,18 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       promoted: promotedTopUid,
       promotedFrom: promoteBenchIndex,
       benchedTo: bench.length - 1,
-      discardedEnergy: [...chosen],
+      // In PILE order (discardFromStack appends stack → energy → tools, so a
+      // cost payment lands in attachment order), NOT the caller's chosen
+      // order — the event reports what the public, ordered pile gained (§2),
+      // exactly like KNOCKED_OUT's `discarded`.
+      discardedEnergy: paid.discarded,
     },
   ]);
 }
 
-/** M3 stub — the Pokémon Checkup (§13: poison/burn/sleep/paralysis ticks,
-    KO + promotion, win checks) runs here between turns. M1 has none of
-    those, so the state passes through untouched. */
-function runCheckup(state: GameState, _events: GameEvent[]): GameState {
-  return state;
-}
-
-/** Pass: end the turn, run the between-turns hook, start the opponent's
-    turn (which advances the counter and resets the allowances). */
+/** Pass: seed the staged tail (flow.ts turnTail) and drain it. */
 export function endTurn(state: GameState, action: EndTurnAction): ApplyResult {
-  const gate = turnGate(state, action);
-  if (gate.reject) return gate.reject;
-  const events: GameEvent[] = [{ type: "TURN_ENDED", turn: state.turn, seat: action.seat }];
-  const next = runCheckup(state, events);
-  return startTurn(next, otherSeat(action.seat), events);
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  return advance({ ...state, pending: turnTail(action.seat) }, []);
 }

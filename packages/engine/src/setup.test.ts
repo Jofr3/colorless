@@ -402,11 +402,8 @@ describe("finishing setup", () => {
     expect(next.players.p2.deck).toHaveLength(47);
     expect(next.players.p1.hand).toHaveLength(HAND_SIZE - 1 + 1);
     expect(next.turn).toBe(1);
-    expect(next.phase).toEqual({
-      kind: "turn:action",
-      seat: "p1",
-      energyAttached: false,
-      retreated: false,
-    });
+    // The per-turn allowances live on state.allowances, not the phase (M2).
+    expect(next.phase).toEqual({ kind: "turn:action", seat: "p1" });
+    expect(next.allowances).toEqual({ energyAttached: false, retreated: false });
   });
 });

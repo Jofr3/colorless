@@ -2,7 +2,10 @@
 //
 // M1 surface: the setup sequence (shuffle, coin flip, hands + mulligans +
 // compensation, placements, prizes), the turn loop with its mandatory draw
-// and deck-out loss, energy attach, bench plays, retreat and pass. Spec:
+// and deck-out loss, energy attach, bench plays, retreat and pass. M2 adds
+// the attack step: costs, weakness/resistance damage, Knock Outs with prize
+// taking and forced promotion, and the full §14 win check — resolved through
+// a staged turn tail that can park on player decisions. Spec:
 // docs/workstreams/simulator.md; ruleset: docs/reference/ptcg-rules.md.
 // Everything is (state, action) → result: no classes, no wall clock, no
 // unseeded randomness — the same seed and actions replay identically. The
@@ -11,6 +14,7 @@
 
 import type { ApplyResult, GameAction } from "./actions";
 import { err } from "./actions";
+import { attack, promote, takePrizes } from "./attack";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -21,51 +25,68 @@ import {
 import { attachEnergy, endTurn, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M1 = core state machine). */
-export const engineVersion = "0.1.0";
+/** Engine milestone marker (M2 = attacks, KOs, prizes, win conditions). */
+export const engineVersion = "0.2.0";
 
 export type {
   ApplyResult,
   AttachEnergyAction,
+  AttackAction,
   ChooseFirstPlayerAction,
   EndTurnAction,
   EngineError,
   ErrorCode,
   GameAction,
   PlayBasicToBenchAction,
+  PromoteAction,
   RetreatAction,
   SetupDrawExtraAction,
   SetupPlaceActiveAction,
   SetupPlaceBenchAction,
   SetupReadyAction,
+  TakePrizesAction,
 } from "./actions";
 export {
+  applyDamageModifier,
+  attacksOf,
   basicFromHandError,
   cardOfUid,
+  energyProvidesOf,
+  hpOf,
   isBasicPokemon,
   isEnergyCard,
+  parseAttackDamage,
+  prizeValueOf,
+  resistanceOf,
   retreatCostOf,
   topCardOf,
   topUid,
+  weaknessOf,
 } from "./cards";
+export type { DamageModifier, ParsedDamage } from "./cards";
 export type { DrawReason, GameEvent } from "./events";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
 export { BENCH_MAX, DECK_SIZE, HAND_SIZE, PRIZE_COUNT, SEATS, otherSeat } from "./types";
 export type {
+  GameOutcome,
   GameOverReason,
   GameState,
   InPlayPokemon,
+  PendingStage,
   Phase,
   PlayerSide,
   PokemonTarget,
   Seat,
   SpecialConditions,
+  TurnAllowances,
   TurnPhase,
 } from "./types";
-/** Exported for M2: the shared turn gate every in-turn action runs first. */
+/** Exported for effect handlers: the shared turn gate every in-turn action
+    runs first, and the M2 cost matcher. */
 export { turnGate } from "./turn";
+export { costMet } from "./attack";
 
 /** The one reducer. Dispatches on action type; each handler validates the
     phase and acting seat itself and returns ok/err without ever throwing
@@ -78,7 +99,13 @@ export { turnGate } from "./turn";
 export function applyAction(state: GameState, action: GameAction): ApplyResult {
   // A finished game accepts nothing further.
   if (state.phase.kind === "gameOver") {
-    return err("GAME_OVER", `the game is over (${state.phase.winner} won: ${state.phase.reason})`);
+    const outcome = state.phase.outcome;
+    return err(
+      "GAME_OVER",
+      outcome.result === "win"
+        ? `the game is over (${outcome.winner} won: ${outcome.reason})`
+        : "the game is over (tie)",
+    );
   }
   if (!isSeat(action.seat)) {
     return err("UNKNOWN_SEAT", `"${String(action.seat)}" is not a seat`);
@@ -100,6 +127,12 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return playBasicToBench(state, action);
     case "retreat":
       return retreat(state, action);
+    case "attack":
+      return attack(state, action);
+    case "takePrizes":
+      return takePrizes(state, action);
+    case "promote":
+      return promote(state, action);
     case "endTurn":
       return endTurn(state, action);
     default:

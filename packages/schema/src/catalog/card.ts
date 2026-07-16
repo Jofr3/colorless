@@ -20,6 +20,26 @@ import { legalSchema } from "./common";
 export const cardCategorySchema = z.enum(["Pokemon", "Trainer", "Energy"]);
 export type CardCategory = z.infer<typeof cardCategorySchema>;
 
+/** The nine types Basic Energy cards have been printed for, in the canonical
+    wheel order — the one basic-energy vocabulary of the monorepo (the engine
+    derives energy provision from it, the deck builder its type palette).
+    Fairy is retired (Sword & Shield era) but its prints remain in the pool.
+    Dragon and Colorless are deliberately NOT here: both appear as cost/type
+    entries, but Dragon has no Basic Energy and Colorless is a cost symbol,
+    not an attachable basic type. */
+export const BASIC_ENERGY_TYPES = [
+  "Grass",
+  "Fire",
+  "Water",
+  "Lightning",
+  "Psychic",
+  "Fighting",
+  "Darkness",
+  "Metal",
+  "Fairy",
+] as const;
+export type BasicEnergyType = (typeof BASIC_ENERGY_TYPES)[number];
+
 // The nested blocks persist as JSON columns typed with the tcgdex shapes, so
 // these domain twins are structurally identical to their Tcgdex* namesakes —
 // stored JSON round-trips through them unchanged.

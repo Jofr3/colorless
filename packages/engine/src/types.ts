@@ -89,9 +89,51 @@ export interface PlayerSide {
 /** Where an action points on the actor's own board. */
 export type PokemonTarget = { spot: "active" } | { spot: "bench"; index: number };
 
-/** M1's only way to lose; M2 adds prize-out and no-Pokémon (plus the
-    simultaneous/tie outcome, §14). */
-export type GameOverReason = "deckOut";
+/** The §14 conditions in their precedence order: prizes taken (§14.1), the
+    opponent out of Pokémon (§14.2), deck-out at the draw (§14.3). */
+export type GameOverReason = "prizesTaken" | "noPokemon" | "deckOut";
+
+/** §14 — how a finished game ended. A win names the condition met; a TIE is
+    the simultaneous case (both players met one at the same instant), with
+    `reasons` naming each seat's. Official play breaks a tie with a
+    sudden-death game — the engine surfaces the tie and leaves playing that
+    out to the host (deferred; see evaluateWin in flow.ts). */
+export type GameOutcome =
+  | { result: "win"; winner: Seat; reason: GameOverReason }
+  | { result: "tie"; reasons: Record<Seat, GameOverReason> };
+
+/** Per-turn allowances (§5.2 caps, §15.J), reset by startTurn. They live on
+    GameState rather than on the turn:action phase so a mid-turn interrupt
+    phase (KO prize picks / promotions, M4's searches) can replace the phase
+    without destroying them. M4's supporter/stadium flags belong here too. */
+export interface TurnAllowances {
+  energyAttached: boolean;
+  retreated: boolean;
+}
+
+export function freshAllowances(): TurnAllowances {
+  return { energyAttached: false, retreated: false };
+}
+
+/** The staged turn tail. endTurn — and attack, which ends the turn through
+    the same tail (§5.3) — seed this queue; `advance` (flow.ts) drains it
+    stage by stage, PARKING on an interrupt phase whenever a stage needs a
+    player decision (which prize, which promotion) and resuming from the head
+    once the deciding action lands. This un-fuses M1's TURN_ENDED → checkup →
+    startTurn single reduction: every stage boundary is a legal place for the
+    game to wait. */
+export type PendingStage =
+  /** §8.1 — the KOing seat picks `count` face-down prizes (clamped to what
+      is left when processed; forced picks auto-resolve). */
+  | { kind: "takePrizes"; seat: Seat; count: number }
+  /** §8.1 — the KO'd seat promotes from the bench; an empty bench at this
+      point is the §14.2 loss. */
+  | { kind: "promote"; seat: Seat }
+  | { kind: "endTurn"; seat: Seat }
+  /** M3's Pokémon Checkup slot (§13) — a no-op stage until then, kept a
+      stage so its future KOs can park on the same ko:* interrupts. */
+  | { kind: "checkup" }
+  | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory
 // steps auto-resolve inside the reducer, so a distinct phase only exists
@@ -105,10 +147,17 @@ export type Phase =
       nobody is owed is never entered at all. */
   | { kind: "setup:drawExtra"; owed: Record<Seat, number>; decided: Record<Seat, boolean> }
   | { kind: "setup:place"; ready: Record<Seat, boolean> }
-  // Per-turn allowances live on the phase — replacing the phase object at
-  // turn start IS the allowance reset.
-  | { kind: "turn:action"; seat: Seat; energyAttached: boolean; retreated: boolean }
-  | { kind: "gameOver"; winner: Seat; reason: GameOverReason };
+  // Per-turn allowances live on GameState.allowances (NOT here) so the ko:*
+  // interrupts below can replace the phase mid-turn without destroying them.
+  | { kind: "turn:action"; seat: Seat }
+  /** KO resolution interrupt (§8.1): the KOing player picks `count` of their
+      own face-down prizes. Forced picks (count = prizes left) never park. */
+  | { kind: "ko:takePrizes"; seat: Seat; count: number }
+  /** KO resolution interrupt (§8.1): the KO'd player promotes a benched
+      Pokémon. A lone benched Pokémon auto-promotes; an empty bench is the
+      §14.2 loss (resolved before this phase is ever entered). */
+  | { kind: "ko:promote"; seat: Seat }
+  | { kind: "gameOver"; outcome: GameOutcome };
 
 /** The in-turn phase, narrowed — the shape every turn action is gated on. */
 export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
@@ -121,6 +170,11 @@ export interface GameState {
   /** Chosen by the coin winner; null only during setup:chooseFirst. */
   firstPlayer: Seat | null;
   phase: Phase;
+  /** Per-turn allowance flags — see TurnAllowances. */
+  allowances: TurnAllowances;
+  /** The staged turn-tail queue — see PendingStage. Empty except while a
+      tail is mid-resolution (parked on a ko:* interrupt). */
+  pending: PendingStage[];
   players: Record<Seat, PlayerSide>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;
@@ -137,6 +191,46 @@ export function withSide(state: GameState, seat: Seat, side: PlayerSide): GameSt
 /** Remove one card uid from a zone array (uids are unique by construction). */
 export function without(zone: readonly string[], uid: string): string[] {
   return zone.filter((entry) => entry !== uid);
+}
+
+/** The one "cards leave play for the discard pile" move — §11 retreat costs,
+    §8.1 KO cleanup and M4's DiscardEnergy op all funnel through here rather
+    than hand-rolling the same zone transfer. Strips `uids` ("all" = the whole
+    stack: evolution cards bottom→top, then energy, then tools — §2 keeps the
+    pile ordered) off the Pokémon and appends them to the side's discard.
+    Returns the stripped Pokémon (null when the entire stack left play) —
+    where whatever remains goes (bench, Active, nowhere) stays the caller's
+    business. */
+export function discardFromStack(
+  side: PlayerSide,
+  pokemon: InPlayPokemon,
+  uids: "all",
+): { side: PlayerSide; pokemon: null; discarded: string[] };
+export function discardFromStack(
+  side: PlayerSide,
+  pokemon: InPlayPokemon,
+  uids: ReadonlySet<string>,
+): { side: PlayerSide; pokemon: InPlayPokemon; discarded: string[] };
+export function discardFromStack(
+  side: PlayerSide,
+  pokemon: InPlayPokemon,
+  uids: "all" | ReadonlySet<string>,
+): { side: PlayerSide; pokemon: InPlayPokemon | null; discarded: string[] } {
+  const everything = [...pokemon.stack, ...pokemon.energy, ...pokemon.tools];
+  const discarded = uids === "all" ? everything : everything.filter((uid) => uids.has(uid));
+  const next = { ...side, discard: [...side.discard, ...discarded] };
+  if (uids === "all") return { side: next, pokemon: null, discarded };
+  const keep = (uid: string) => !uids.has(uid);
+  return {
+    side: next,
+    pokemon: {
+      ...pokemon,
+      stack: pokemon.stack.filter(keep),
+      energy: pokemon.energy.filter(keep),
+      tools: pokemon.tools.filter(keep),
+    },
+    discarded,
+  };
 }
 
 /** Move up to `count` cards deck-top → hand and record a CARDS_DRAWN event.

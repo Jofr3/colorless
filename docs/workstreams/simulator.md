@@ -102,7 +102,10 @@ event stream.
 ## Milestones
 1. ✅ **Core state machine** — setup, turn phases, draw, energy attach, retreat,
    pass. Built + reviewed 2026-07-14 (commit `d34146c`); as-built notes below.
-2. Attacks: costs, damage, weakness/resistance, KO + prize-taking, win check.
+2. ✅ **Attacks** — costs, damage, weakness/resistance, KO + prize-taking, win
+   check. Built + xhigh-reviewed + fixed 2026-07-16; as-built notes below. The
+   **engine → playmat projection** (D17, `src/features/game/projection.ts`)
+   landed alongside it.
 3. Status conditions + Pokémon Checkup between turns.
 4. Evolution, Abilities, and the trainer/energy effect registry (staples first).
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
@@ -183,6 +186,85 @@ prompt).
   canonical `Card.stage`) and the builder's (over `BuilderCard.subtype`, a
   relabelled view). They read different vocabularies of the same data and can
   drift. Lift one predicate into `@luminous/schema` when convenient.
+
+## M2 as built (2026-07-16) — attacks, KO/prizes, win check + the projection
+
+**Shape (D16).** The fused turn tail is gone: `GameState.pending` is a
+`PendingStage[]` queue drained by `advance()` in the new `flow.ts`. Decision
+stages **park** (phase becomes `ko:takePrizes`/`ko:promote`, prompt event
+fires) or **auto-resolve** when forced; `attack` seeds its KO stages ahead of
+the shared `turnTail(seat)` triple; `resolvePrizesAndResume`/
+`resolvePromotionAndResume` own the resolve → pop → **win-check** → resume
+sequence for BOTH the action handlers and advance's auto-resolves (the §14
+check runs in exactly one place). Per-turn allowances live on
+`GameState.allowances` (M4's supporter/stadium flags go there). `gameOver`
+carries `GameOutcome` (win/tie). New actions `attack`/`takePrizes`/`promote`;
+new events ATTACK_DECLARED, ATTACK_EFFECT_SKIPPED (the "not simulated" flag),
+DAMAGE_DEALT (with `DamageModifier` breakdown), KNOCKED_OUT, PRIZES_OWED/
+PRIZES_TAKEN, PROMOTION_REQUIRED/POKEMON_PROMOTED. The **projection** (D17)
+maps `GameState` → playmat `BoardState` per viewer: `activePlayer` (turn
+owner) vs `waitingOn` (who must act) are separate fields — during
+`ko:promote` they differ, and a HUD gating on turn ownership alone soft-locks.
+
+**M1 traps closed by M2:** the fused tail (staged queue), phase-object
+allowances (lifted to state), `gameOver.winner` (widened to `GameOutcome`),
+the hand-rolled retreat discard (shared `discardFromStack`, which returns the
+moved uids in **pile order** — events must report that order, it's the §2
+contract KNOCKED_OUT/RETREATED both follow now).
+
+**The xhigh review paid again** (10 finder angles + 9 verifiers + sweep; 15
+findings, all confirmed ones fixed in-session). The headline classes:
+- **Never-throw violations in M1 code the M1 review missed:** `attachEnergy`
+  read `action.target.spot` unguarded (a `null` target THREW out of
+  `applyAction` — probe-proven) and retreat's `discardEnergy` lacked
+  `Array.isArray` (`{length:1}` passed the length check then `new Set` threw).
+  Both now runtime-checked (`BAD_TARGET`; the takePrizes-style array guard).
+  Lesson repeated: **every object an action carries needs a shape check, not
+  just its leaves.**
+- **Name/format parsing vs real catalog data:** `energyProvidesOf` misparsed
+  the catalog's own "Basic Darkness/Metal Energy" prints (sv06.5-098/099) to
+  Colorless — typed attacks permanently unpayable on legal boards; and the
+  schema-documented additive weakness `"+20"` was silently applied as ×2
+  (dp5-4 fixture proves it). Fixes: optional "Basic " prefix + the canonical
+  `BASIC_ENERGY_TYPES` now lives in **`@luminous/schema`** (builder derives
+  its palette from it; Fairy added, Dragon correctly provides nothing), and
+  weakness/resistance parse to `DamageModifier` (×N/+N/−N).
+- **Data gaps must not guess:** `hp ≤ 0` now reads as the null data gap (a
+  literal 0 was instant-KOing undamaged Pokémon on 0-damage attacks).
+
+### Known gaps / traps for M3+
+- **`runCheckup` is still a stub.** The interrupt machinery it needs is built
+  (park/auto-resolve, `turnTail`), but the KO **detection block is
+  attack-private** (attack.ts: hp check → `discardFromStack` → KNOCKED_OUT →
+  stage seeding, Active-only). M3's poison/burn checkup KOs should lift a
+  shared `knockOut` resolver in flow.ts rather than copy it — and M4 bench
+  damage needs it to handle non-Active spots.
+- **`prizeValueOf` returns 1 for everything** — the canonical `Card` has no
+  ex/rule-box field because ingest deliberately drops tcgdex's `suffix`
+  (wrongly lumped with dp-era extras in `apps/api/src/db/catalog.ts`). The
+  multi-prize flow (validation, count clamp, taking N) is already built and
+  tested; persisting the suffix at ingest is the single point of change.
+- **Energy provision is still name-derived** (special energies conservatively
+  provide 1 Colorless). Real fix at ingest: provision as data on the Card.
+  Same for weakness/resistance value normalization (`DamageModifier` could be
+  computed at ingest) — engine parsing is documented debt.
+- **phase ↔ `pending[0]` dual encoding kept** (the parked phase mirrors the
+  queue head). Handlers cross-check and reject `PHASE_DESYNC` on mismatch;
+  unreachable via the public API today. M3 may collapse to a single encoding
+  (park by popping the stage into the phase) if it adds interrupt writers.
+- **Sudden death is surfaced, not played out** — simultaneous §14 wins return
+  `GameOutcome tie`; an actual sudden-death sub-game is future work.
+- **Projection deferrals:** opponent-hand backs use positional ids
+  (`opponent-hand-N`) that re-key when the hand shrinks — correct redaction,
+  wrong animation identity for opponent plays; fixing needs stable **opaque**
+  aliases designed together with P4's server-side filter. `image: null`
+  projects `imageUrl: undefined` → the playmat's grey placeholder; nothing
+  maps backs/undefined to a card-back texture yet (belongs to the wire-up
+  slice). Status conditions + lower stack cards have no CardModel slot.
+- **The playmat still renders `mockPlaymat.ts`** — the projection is built
+  and tested but nothing consumes it. The natural next slice: a local
+  play page holding `GameState`, dispatching `applyAction`, rendering
+  `projectGameState` (see D17's consumption sketch in the projection module).
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
