@@ -5,29 +5,28 @@
 
 **Last updated:** 2026-07-16 — build session #4 (**P3-M2: attacks/KO/prizes +
 the engine→playmat projection**, built + xhigh-reviewed + all confirmed
-findings fixed, uncommitted at write time — commit lands this session;
-**api still NOT deployed** — permission gate for the THIRD session, see below).
+findings fixed + committed `e7e7efa`; **api DEPLOYED** this session after the
+user ran the gated command — version `9b1ec1d1`).
 
 ## Resume point
-**P3-M2 is done: attacks, KO + prizes, win check (D16) and the per-viewer
-engine→playmat projection (D17, `src/features/game/projection.ts`).** Suite
-683 → 751, `bun run check` green.
+**P3-M2 is done and committed (`e7e7efa`): attacks, KO + prizes, win check
+(D16) and the per-viewer engine→playmat projection (D17,
+`src/features/game/projection.ts`).** Suite 683 → 751, `bun run check` green.
+**The api is deployed** (Worker `9b1ec1d1`; migration 0003 was ALREADY
+applied remotely — "No migrations to apply" — so only the Worker was behind).
+Read-only prod smoke green: `/health` ok, `/cards` serving, `/decks`
+session-gated (401). The WRITE smoke (`GET /decks` rows carry `position`;
+`POST /decks/reorder` with a foreign id → 400) was blocked by the permission
+classifier (creating throwaway prod data) — verify it from the app, or
+explicitly ask a session to run it.
 Next concrete actions:
-1. **Deploy the api** — STILL blocked (three sessions running) by the
-   permission gate on `bun run db:migrate:remote` (production D1); the auto
-   classifier rejects it without the user explicitly naming the deploy. It
-   needs the user to run or approve:
-   `cd apps/api && bun run db:migrate:remote && bun run deploy`, then
-   prod-smoke: `GET /decks` rows carry `position` (backfilled name-order);
-   a `POST /decks/reorder` with a foreign id → 400. **The deployed api is
-   one migration (0003) behind the code.**
-2. **Wire the projection into a playable local game page** — the playmat
+1. **Wire the projection into a playable local game page** — the playmat
    still renders `mockPlaymat.ts`; the natural slice is a page holding
    `GameState`, dispatching `applyAction`, rendering `projectGameState`
    (consumption sketch in the projection module; gate input on `waitingOn`,
    not `activePlayer` — see D17). Integration seams listed under
    "Projection deferrals" in `workstreams/simulator.md`.
-3. Or **P3-M3 (status conditions + Pokémon Checkup)** — read "M2 as built"
+2. Or **P3-M3 (status conditions + Pokémon Checkup)** — read "M2 as built"
    in `workstreams/simulator.md` first: `runCheckup` is a stub but the
    interrupt machinery is ready; lift a shared `knockOut` resolver out of
    the attack handler rather than copying it (the traps list has the rest:
@@ -41,7 +40,7 @@ Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
-| backend-data | P1 | ✅ M1–M9 + P2-M1 deployed; task-17 api (migration 0003 + reorder endpoints) awaits deploy; OAuth secrets pending (user) |
+| backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
 | simulator | P3 | 🚧 **M1+M2 done** (core + attacks/KO/prizes/win, D14/D16) + projection adapter (D17) — M3 (status/checkup) next; playmat not yet wired to the engine |
 | online | P4 | 📋 Specced — blocked on P3 |
@@ -83,7 +82,13 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
   with zero rework (third session this pattern holds). **The api deploy
   permission gate fired for the THIRD session** — the auto classifier
   rejects `db:migrate:remote` unless the user names the deploy explicitly;
-  it genuinely needs the user.
+  it genuinely needs the user. **Deploy resolution (same session, after the
+  user ran the command):** migration 0003 was ALREADY applied remotely (the
+  gate had only ever blocked the Worker upload); `bun run deploy` shipped
+  Worker `9b1ec1d1`. Read-only prod smoke green (/health, /cards, /decks →
+  401); the WRITE smoke (position on /decks rows; reorder foreign id → 400)
+  was itself gate-blocked (throwaway prod data) — left to the app or an
+  explicit ask.
 - **2026-07-14** (build #3) — **P3 milestone 1: the engine core** (one build
   sub-agent + a 10-angle review). `packages/engine` is now a real engine
   (D14): pure JSON `GameState` with the mulberry32 `rngState` inside it,
