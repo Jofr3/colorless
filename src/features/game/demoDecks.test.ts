@@ -78,4 +78,14 @@ describe("DEMO_DECKS", () => {
     // Slowpoke — Rest [C]: self-Asleep + heal 30, simulated since M3.
     expect(count(tidal, "sv01-042")).toBe(4);
   });
+
+  it("keeps a playable evolution line + its Basic in each deck (evolve reachable at /play, M4)", () => {
+    const [ember, tidal] = DEMO_DECKS;
+    if (ember === undefined || tidal === undefined) throw new Error("expected two decks");
+    const has = (deck: typeof ember, id: string) => deck.ids.includes(id);
+    // Ember: Fuecoco (Basic) → Crocalor (Stage 1) → Skeledirge (Stage 2).
+    expect(has(ember, "sv01-036") && has(ember, "sv01-037") && has(ember, "sv01-038")).toBe(true);
+    // Tidal: Buizel (Basic) → Floatzel (Stage 1).
+    expect(has(tidal, "sv01-046") && has(tidal, "sv01-047")).toBe(true);
+  });
 });

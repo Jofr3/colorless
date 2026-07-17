@@ -18,6 +18,16 @@ export function isBasicPokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Basic";
 }
 
+/** The NAME of the Pokémon this card evolves from (§10 — the evolution goes
+    on top of an in-play Pokémon whose top card has this name), or null when
+    the card is a Basic / non-Pokémon and therefore evolves nothing. This is
+    the discriminant for "is this an Evolution card": a non-null result. The
+    `stage` field is not consulted — `evolveFrom` is the operative datum, and
+    it is the one the ingest persists per catalog row. */
+export function evolveFromOf(card: Card): string | null {
+  return card.category === "Pokemon" ? (card.evolveFrom ?? null) : null;
+}
+
 /** Basic and Special energy both occupy the one attach per turn (§6.3);
     Special-energy rules text is M4+. */
 export function isEnergyCard(card: Card): boolean {

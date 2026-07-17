@@ -66,9 +66,23 @@ export function moveToAction(
         }
         return null;
       }
-      if (model.type === "pokemon" && to.zone === "bench") {
-        // The engine appends to its dense bench; the drop index is cosmetic.
-        return { type: "playBasicToBench", seat, uid: cardId };
+      if (model.type === "pokemon") {
+        // A Pokémon dropped ONTO an existing own Pokémon is an evolve attempt
+        // (§10) — the engine decides whether the card actually evolves from
+        // that target (EVOLVE_MISMATCH / NOT_AN_EVOLUTION / timing). A Pokémon
+        // dropped on the Active always aims at the occupant; on the bench it
+        // aims at an occupied indexed slot, and otherwise means "play a Basic
+        // to a new bench slot" (the dense bench appends, so the index is
+        // cosmetic there).
+        if (to.zone === "active") {
+          return { type: "evolve", seat, uid: cardId, target: { spot: "active" } };
+        }
+        if (to.zone === "bench") {
+          if (to.index !== undefined && ctx.board.you.bench[to.index]?.type === "pokemon") {
+            return { type: "evolve", seat, uid: cardId, target: { spot: "bench", index: to.index } };
+          }
+          return { type: "playBasicToBench", seat, uid: cardId };
+        }
       }
       return null;
     }

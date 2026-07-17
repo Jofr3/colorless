@@ -150,6 +150,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     case "POKEMON_BENCHED":
       return row(event.seat, [plain("benched "), strong(cardName(state, event.uid))]);
+    case "POKEMON_EVOLVED":
+      // `from` is still resolvable — it stays at the bottom of the evolved
+      // stack; `to` is the new top card.
+      return row(event.seat, [
+        plain("evolved "),
+        strong(cardName(state, event.from)),
+        plain(" → "),
+        strong(cardName(state, event.to)),
+      ]);
     case "COMPENSATION_DECIDED":
       // A draw already logged its own CARDS_DRAWN row; only the decline is
       // otherwise invisible.
@@ -260,6 +269,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           // Follows the RETREATED row; benching clears every condition at
           // once (§11/§12), so the list can name several.
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
+        case "evolved":
+          // Follows the POKEMON_EVOLVED row; evolving clears every condition
+          // at once (§10). `name` is the new top card.
+          return row(seat, [strong(name), plain(" shed "), strong(statuses), plain(" on evolving")]);
         default:
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
       }

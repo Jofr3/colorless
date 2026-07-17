@@ -17,14 +17,16 @@ import { applyAction } from "@luminous/engine";
 import { describe, expect, it } from "vitest";
 import {
   ALL_BASIC_DECK,
+  EVOLVE_DECK,
   MIXED_DECK,
   driveSetup,
+  handFromDeck,
   handUid,
   must,
   mustApply,
   mustCreate,
 } from "../../../packages/engine/src/testFixtures";
-import type { CardPlacement, CardType } from "../playmat/types";
+import type { BoardState, CardPlacement, CardType } from "../playmat/types";
 import { canPlace } from "../playmat/utils/cardMovement";
 import { moveToAction } from "./moveToAction";
 import { gamePlacementPredicate } from "./placement";
@@ -104,6 +106,21 @@ function benchFullTurnState(): GameState {
   );
 }
 
+/** turn:action on p1's turn 3 (past the §4 first-turn ban), fix-basic-1
+    Active, a matching fix-stage1 in hand — the one board where an evolve
+    gesture is actually engine-legal, so the sweep covers a drop that APPLIES,
+    not only ones the engine refuses. */
+function evolveTurnState(): GameState {
+  let state = driveSetup(
+    SEED,
+    { p1: EVOLVE_DECK, p2: EVOLVE_DECK },
+    { first: "p1", active: { p1: "fix-basic-1", p2: "fix-basic-1" } },
+  );
+  state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
+  state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+  return handFromDeck(state, "p1", "fix-stage1", 1);
+}
+
 // ---------------------------------------------------------------------------
 // The lockstep property.
 // ---------------------------------------------------------------------------
@@ -125,12 +142,28 @@ const TARGETS: CardPlacement[] = [
 ];
 
 /** The action type a predicate-allowed drop must translate to. */
-function expectedActionType(phase: Phase, sourceType: CardType, target: CardPlacement): string {
+function expectedActionType(
+  phase: Phase,
+  sourceType: CardType,
+  target: CardPlacement,
+  board: BoardState,
+): string {
   if (phase.kind === "setup:place") {
     return target.zone === "active" ? "setupPlaceActive" : "setupPlaceBench";
   }
   // turn:action — the only other phase the predicate allows drops in.
-  return sourceType === "energy" ? "attachEnergy" : "playBasicToBench";
+  if (sourceType === "energy") return "attachEnergy";
+  // A Pokémon dropped onto an occupied own slot (Active, or an occupied bench
+  // index) is an evolve gesture (§10); onto a free bench slot it is a Basic.
+  if (target.zone === "active") return "evolve";
+  if (
+    target.zone === "bench" &&
+    target.index !== undefined &&
+    board.you.bench[target.index]?.type === "pokemon"
+  ) {
+    return "evolve";
+  }
+  return "playBasicToBench";
 }
 
 /** Assert the contract over every own-hand card × TARGETS for one state and
@@ -153,7 +186,7 @@ function expectLockstep(state: GameState, viewerSeat: Seat, phase?: Phase): void
       if (allowed) {
         expect(action, label).not.toBeNull();
         if (action === null) continue; // narrow for TS; unreachable after the expect
-        expect(action.type, label).toBe(expectedActionType(stateAt.phase, model.type, to));
+        expect(action.type, label).toBe(expectedActionType(stateAt.phase, model.type, to, board));
       } else if (action !== null) {
         expect(applyAction(stateAt, action).ok, label).toBe(false);
       }
@@ -171,10 +204,11 @@ describe("gamePlacementPredicate ↔ moveToAction lockstep", () => {
     expectLockstep(benchFullPlacingState(), "p1");
   });
 
-  it("holds through turn:action (turn owner, off-turn seat, bench-capped)", () => {
+  it("holds through turn:action (turn owner, off-turn seat, bench-capped, evolvable)", () => {
     expectLockstep(turnState(), "p1");
     expectLockstep(turnState(), "p2"); // p1's turn: p2's drops all spring back
     expectLockstep(benchFullTurnState(), "p1");
+    expectLockstep(evolveTurnState(), "p1"); // a board where evolve is legal
   });
 
   it("holds in every never-drop phase (buttons and dialogs, not drags)", () => {
@@ -245,6 +279,27 @@ describe("gamePlacementPredicate — turn:action structure", () => {
     // Empty slot / index-less container: no host, structurally impossible.
     expect(predicate(board, from, { owner: "you", zone: "bench", index: 1 }, "energy")).toBe(false);
     expect(predicate(board, from, { owner: "you", zone: "bench" }, "energy")).toBe(false);
+  });
+
+  it("affords a Pokémon dropped on the Active as an evolve, and the routed action applies (§10)", () => {
+    const state = evolveTurnState();
+    const board = projectGameState(state, "p1").board;
+    const predicate = gamePlacementPredicate(state, "p1");
+    const stage1Uid = handUid(state, "p1", "fix-stage1");
+    const from: CardPlacement = {
+      owner: "you",
+      zone: "hand",
+      index: board.you.hand.findIndex((card) => card.id === stage1Uid),
+    };
+    const to: CardPlacement = { owner: "you", zone: "active" };
+    expect(predicate(board, from, to, "pokemon")).toBe(true);
+    const action = moveToAction(
+      { cardId: stage1Uid, from, to },
+      { phase: state.phase, viewerSeat: "p1", board },
+    );
+    expect(action).toEqual({ type: "evolve", seat: "p1", uid: stage1Uid, target: { spot: "active" } });
+    // The full chain lands a LEGAL evolve on this real turn-3 board.
+    expect(action === null ? false : applyAction(state, action).ok).toBe(true);
   });
 
   it("a Pokémon may aim at the bench (Basic-ness stays the engine's) but not a full one", () => {

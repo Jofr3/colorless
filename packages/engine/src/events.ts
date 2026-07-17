@@ -31,6 +31,19 @@ export type GameEvent =
   | { type: "POKEMON_PLACED"; seat: Seat; uid: string; spot: "active" | "bench" }
   /** In-turn Basic played to the bench (§5.2). */
   | { type: "POKEMON_BENCHED"; seat: Seat; uid: string }
+  /** §10 — an Evolution card (`to`, now the stack top) was placed on top of
+      the in-play Pokémon whose top card was `from`, at `target` on the
+      actor's own board. Damage, Energy and Tools carry over (they stay on the
+      stack); Special Conditions are removed — a separate STATUS_CLEARED with
+      reason "evolved" lists any that were, exactly as retreat announces its
+      "benched" clear. */
+  | {
+      type: "POKEMON_EVOLVED";
+      seat: Seat;
+      from: string;
+      to: string;
+      target: PokemonTarget;
+    }
   /** The compensation decision resolving (§3.5) — fires even when the owed
       player declines, because the phase advances either way and an
       event-only consumer must not be left waiting on the prompt. */
@@ -103,15 +116,17 @@ export type GameEvent =
       the overwritten one. */
   | { type: "STATUS_APPLIED"; seat: Seat; uid: string; status: StatusName; poisonDamage?: number }
   /** Conditions leaving a Pokémon: `statuses` lists every one that was
-      actually removed. "benched" = retreat cleared everything at once
-      (§11/§12); the other reasons are single-condition Checkup recoveries
-      (§13) and always carry exactly one entry. */
+      actually removed. "benched" (retreat, §11/§12) and "evolved" (§10) both
+      clear everything at once — the latter's `uid` is the NEW top card (the
+      evolution the conditions vanished under); the remaining reasons are
+      single-condition Checkup recoveries (§13) and always carry exactly one
+      entry. */
   | {
       type: "STATUS_CLEARED";
       seat: Seat;
       uid: string;
       statuses: StatusName[];
-      reason: "benched" | "wokeUp" | "burnCured" | "paralysisEnded";
+      reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded";
     }
   /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
       Checkup ticks, the confusion self-hit) — `amount` is HP of damage, and

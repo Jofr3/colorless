@@ -119,6 +119,27 @@ describe("logFromEvents — setup", () => {
   });
 });
 
+describe("logFromEvents — evolution (M4)", () => {
+  it("names the evolution from → to (both card names resolve)", () => {
+    const state = driveSetup(170, undefined, {
+      first: "p1",
+      active: { p1: "fix-basic-1", p2: "fix-basic-1" },
+    });
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("expected an active");
+    const from = active.stack[active.stack.length - 1] ?? "";
+    // Any uid mapping to fix-stage1 resolves its name (cardName reads the pool,
+    // not the zone) — MIXED_DECK carries copies.
+    const to = Object.keys(state.cardIdByUid).find((u) => state.cardIdByUid[u] === "fix-stage1");
+    if (to === undefined) throw new Error("expected a fix-stage1 uid in the game");
+    const rows = logFromEvents(
+      [{ type: "POKEMON_EVOLVED", seat: "p1", from, to, target: { spot: "active" } }],
+      ctx(state),
+    );
+    expect(texts(rows)).toEqual(["evolved fix-basic-1 → fix-stage1"]);
+  });
+});
+
 describe("logFromEvents — turns", () => {
   it("formats energy attach with the host Pokémon's name", () => {
     const state = driveSetup(170, undefined, {
@@ -273,13 +294,17 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     const { uid, name } = settled;
     const cleared = (
       statuses: ("asleep" | "paralyzed" | "confused" | "burned" | "poisoned")[],
-      reason: "benched" | "wokeUp" | "burnCured" | "paralysisEnded",
+      reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded",
     ) => line({ type: "STATUS_CLEARED", seat: "p1", uid, statuses, reason }).text;
     expect(cleared(["asleep"], "wokeUp")).toBe(`${name} woke up`);
     expect(cleared(["burned"], "burnCured")).toBe(`${name}'s Burn was cured`);
     expect(cleared(["paralyzed"], "paralysisEnded")).toBe(`${name}'s Paralysis wore off`);
     expect(cleared(["confused", "poisoned", "burned"], "benched")).toBe(
       `${name} recovered from Confused, Poisoned, Burned`,
+    );
+    // §10 — evolving sheds every condition at once (uid is the NEW top card).
+    expect(cleared(["asleep", "burned"], "evolved")).toBe(
+      `${name} shed Asleep, Burned on evolving`,
     );
   });
 

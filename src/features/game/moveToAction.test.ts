@@ -143,9 +143,10 @@ describe("moveToAction — turn:action", () => {
     expect(action).toBeNull();
   });
 
-  it("routes hand Pokémon → bench to playBasicToBench", () => {
+  it("routes hand Pokémon → a FREE bench slot to playBasicToBench", () => {
     const state = turnState();
     const uid = handUid(state, "p1", "fix-basic-1");
+    // bench[1] is empty (turnState benches only fix-basic-0 at index 0).
     const action = moveToAction(
       request(uid, fromHand(0), { owner: "you", zone: "bench", index: 1 }),
       contextOf(state, "p1"),
@@ -154,14 +155,31 @@ describe("moveToAction — turn:action", () => {
     expect(action === null ? false : applyAction(state, action).ok).toBe(true);
   });
 
-  it("does not route hand Pokémon → active (no such M2 action)", () => {
+  it("routes hand Pokémon → the Active (an evolve gesture, §10)", () => {
     const state = turnState();
     const uid = handUid(state, "p1", "fix-basic-1");
     const action = moveToAction(
       request(uid, fromHand(0), { owner: "you", zone: "active" }),
       contextOf(state, "p1"),
     );
-    expect(action).toBeNull();
+    // Routing only — the engine judges the evolution (here it would reject).
+    expect(action).toEqual({ type: "evolve", seat: "p1", uid, target: { spot: "active" } });
+  });
+
+  it("routes hand Pokémon → an OCCUPIED bench slot (an evolve gesture, §10)", () => {
+    const state = turnState();
+    const uid = handUid(state, "p1", "fix-basic-1");
+    // bench[0] holds fix-basic-0 — dropping onto it aims the evolution there.
+    const action = moveToAction(
+      request(uid, fromHand(0), { owner: "you", zone: "bench", index: 0 }),
+      contextOf(state, "p1"),
+    );
+    expect(action).toEqual({
+      type: "evolve",
+      seat: "p1",
+      uid,
+      target: { spot: "bench", index: 0 },
+    });
   });
 
   it("returns null when the phase belongs to the other seat", () => {

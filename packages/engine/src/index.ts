@@ -8,7 +8,10 @@
 // a staged turn tail that can park on player decisions. M3 adds the Special
 // Conditions (§12) with their attack/retreat gates and the confusion flip,
 // the Pokémon Checkup (§13) with its ticks, recoveries and KOs, and the
-// first text-derived attack effects (effects.ts). Spec:
+// first text-derived attack effects (effects.ts). M4 begins with evolution
+// (§10): an Evolution card placed on an in-play Pokémon whose top card it
+// evolves from, carrying over damage/energy/tools and clearing Special
+// Conditions, under the §4/§10 timing rules. Spec:
 // docs/workstreams/simulator.md; ruleset: docs/reference/ptcg-rules.md.
 // Everything is (state, action) → result: no classes, no wall clock, no
 // unseeded randomness — the same seed and actions replay identically. The
@@ -25,11 +28,11 @@ import {
   setupPlaceBench,
   setupReady,
 } from "./setup";
-import { attachEnergy, endTurn, playBasicToBench, retreat } from "./turn";
+import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M3 = special conditions + Pokémon Checkup). */
-export const engineVersion = "0.3.0";
+/** Engine milestone marker (M4 in progress; first slice = evolution). */
+export const engineVersion = "0.4.0";
 
 export type {
   ApplyResult,
@@ -39,6 +42,7 @@ export type {
   EndTurnAction,
   EngineError,
   ErrorCode,
+  EvolveAction,
   GameAction,
   PlayBasicToBenchAction,
   PromoteAction,
@@ -55,6 +59,7 @@ export {
   basicFromHandError,
   cardOfUid,
   energyProvidesOf,
+  evolveFromOf,
   hpOf,
   isBasicPokemon,
   isEnergyCard,
@@ -139,6 +144,8 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return attachEnergy(state, action);
     case "playBasicToBench":
       return playBasicToBench(state, action);
+    case "evolve":
+      return evolve(state, action);
     case "retreat":
       return retreat(state, action);
     case "attack":

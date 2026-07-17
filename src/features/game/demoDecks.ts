@@ -8,7 +8,10 @@
 // run different types — the Fire side is weak to Water, so the tide deck's
 // attacks show the ×2 weakness math. M3 makes special conditions reachable
 // in a real game: Numel Burns, Luvdisc puts to sleep, and Slowpoke's Rest
-// (self-Asleep + heal 30) now actually resolves.
+// (self-Asleep + heal 30) now actually resolves. M4 makes evolution reachable:
+// each deck carries a real line off a Basic it already runs — Ember's
+// Fuecoco→Crocalor→Skeledirge (a full Stage 2 chain) and Tidal's
+// Buizel→Floatzel — so a hot-seat game can evolve on turn 3+.
 
 import type { DeckCard } from "@luminous/schema";
 
@@ -27,7 +30,8 @@ export function expandDeck(cards: readonly DeckCard[]): string[] {
   return ids;
 }
 
-/** 24 Basic Fire Pokémon (sv01 + sv03) + 36 Basic Fire Energy (sv03-230). */
+/** 24 Basic Fire Pokémon (sv01 + sv03) + the Fuecoco→Crocalor→Skeledirge
+    evolution line (M4) + 31 Basic Fire Energy (sv03-230). */
 const EMBER_STARTERS: DemoDeck = {
   name: "Ember Starters",
   ids: expandDeck([
@@ -38,11 +42,14 @@ const EMBER_STARTERS: DemoDeck = {
     { cardId: "sv01-030", count: 4 }, // Growlithe 70 HP — Relentless Flames [F] 30×
     { cardId: "sv01-031", count: 1 }, // Growlithe 90 HP
     { cardId: "sv03-031", count: 3 }, // Numel 90 HP — Hot Magma [FC] 20: defender Burned (M3)
-    { cardId: "sv03-230", count: 36 }, // Basic Fire Energy
+    { cardId: "sv01-037", count: 3 }, // Crocalor — Stage 1, evolves from Fuecoco (M4)
+    { cardId: "sv01-038", count: 2 }, // Skeledirge — Stage 2, evolves from Crocalor (M4)
+    { cardId: "sv03-230", count: 31 }, // Basic Fire Energy
   ]),
 };
 
-/** 24 Basic Water Pokémon (sv01 + sv02) + 36 Basic Water Energy (sv02-279). */
+/** 24 Basic Water Pokémon (sv01 + sv02) + the Buizel→Floatzel evolution line
+    (M4) + 33 Basic Water Energy (sv02-279). */
 const TIDAL_SPLASH: DemoDeck = {
   name: "Tidal Splash",
   ids: expandDeck([
@@ -54,7 +61,8 @@ const TIDAL_SPLASH: DemoDeck = {
     { cardId: "sv02-047", count: 3 }, // Luvdisc 70 HP — Water Pulse [W] 20: defender Asleep (M3); Matching flagged
     { cardId: "sv01-051", count: 2 }, // Bruxish — Wave Splash [WC] 60
     { cardId: "sv01-061", count: 2 }, // Dondozo — Heavy Splash [WWCC] 120
-    { cardId: "sv02-279", count: 36 }, // Basic Water Energy
+    { cardId: "sv01-047", count: 3 }, // Floatzel — Stage 1, evolves from Buizel (M4)
+    { cardId: "sv02-279", count: 33 }, // Basic Water Energy
   ]),
 };
 

@@ -2,12 +2,20 @@ import type {
   ApplyResult,
   AttachEnergyAction,
   EndTurnAction,
+  EvolveAction,
   GameAction,
   PlayBasicToBenchAction,
   RetreatAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { basicFromHandError, cardOfUid, isEnergyCard, retreatCostOf, topUid } from "./cards";
+import {
+  basicFromHandError,
+  cardOfUid,
+  evolveFromOf,
+  isEnergyCard,
+  retreatCostOf,
+  topUid,
+} from "./cards";
 import type { GameEvent, StatusName } from "./events";
 import { advance, turnTail } from "./flow";
 import type {
@@ -146,6 +154,124 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
     bench: [...side.bench, makeInPlay(action.uid, state.turn)],
   });
   return ok(next, [{ type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid }]);
+}
+
+/** §10 — place an Evolution card from hand on top of one of your own in-play
+    Pokémon (Active or Bench) whose top card it evolves from. No per-turn cap
+    (each Pokémon may evolve once — enforced by turnPlayed, below), and it
+    consumes NONE of the energy/retreat allowances. */
+export function evolve(state: GameState, action: EvolveAction): ApplyResult {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+
+  // §4/§10 — neither player may evolve on their own first turn (every Pokémon
+  // in play then arrived this turn). firstPlayer takes the odd turns, so their
+  // first turn is turn 1 and the other seat's is turn 2; the gate already
+  // proved this is the acting seat's turn, so the counter names whether it is
+  // their first. (This is the turn/firstPlayer check turnPlayed cannot make —
+  // setup Pokémon carry turnPlayed 0, not the turn number, by design.)
+  const firstTurnOfSeat = action.seat === state.firstPlayer ? 1 : 2;
+  if (state.turn === firstTurnOfSeat) {
+    return err("FIRST_TURN_EVOLVE", "cannot evolve on your first turn (§4/§10)");
+  }
+
+  const side = state.players[action.seat];
+  if (!side.hand.includes(action.uid)) {
+    return err("CARD_NOT_IN_HAND", `${action.uid} is not in ${action.seat}'s hand`);
+  }
+  const card = cardOfUid(state, action.uid);
+  if (card === undefined) {
+    return err("UNKNOWN_CARD", `no catalog card for uid ${action.uid}`);
+  }
+  const evolvesFrom = evolveFromOf(card);
+  if (evolvesFrom === null) {
+    return err("NOT_AN_EVOLUTION", `${card.name} is not an Evolution Pokémon`);
+  }
+  // Wire shape check, same as attachEnergy: a null/garbled target must reject,
+  // not throw on `.spot`; the bench index is checked at the use site below.
+  if (!isPokemonTarget(action.target)) {
+    return err("BAD_TARGET", "evolve target must name the Active spot or a bench index");
+  }
+
+  // Resolve the in-play Pokémon being evolved.
+  let target: InPlayPokemon;
+  let benchIndex = -1;
+  if (action.target.spot === "active") {
+    if (side.active === null) {
+      return err("NO_TARGET", "no Active Pokémon to evolve");
+    }
+    target = side.active;
+  } else {
+    // Same wire-decode trap as attachEnergy/retreat: a string index would
+    // index the bench fine yet corrupt the write-back below.
+    benchIndex = action.target.index;
+    const benched = isBenchIndex(benchIndex) ? side.bench[benchIndex] : undefined;
+    if (benched === undefined) {
+      return err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(benchIndex)}`);
+    }
+    target = benched;
+  }
+
+  const targetTopUid = topUid(target);
+  const targetTopCard = targetTopUid === undefined ? undefined : cardOfUid(state, targetTopUid);
+  if (targetTopUid === undefined || targetTopCard === undefined) {
+    return err("UNKNOWN_CARD", "the target Pokémon has no resolvable top card");
+  }
+  // §10 — the evolution's `evolveFrom` must NAME the target's current top card.
+  if (targetTopCard.name !== evolvesFrom) {
+    return err("EVOLVE_MISMATCH", `${card.name} does not evolve from ${targetTopCard.name}`);
+  }
+  // §10 timing — a Pokémon cannot evolve the turn it came into play, nor twice
+  // in one turn (evolving stamps turnPlayed to the current turn, below), so a
+  // target already stamped this turn is too soon. Setup Pokémon carry 0 and
+  // clear this from turn 2 on; the first-turn ban above covers turns 1–2.
+  if (target.turnPlayed >= state.turn) {
+    return err(
+      "EVOLVE_TOO_SOON",
+      `${targetTopCard.name} came into play this turn — it cannot evolve yet (§10)`,
+    );
+  }
+
+  // §10 carry-over: damage, Energy and Tools STAY (they ride on the stack);
+  // Special Conditions and temporary markers are REMOVED. The evolution card
+  // becomes the new stack top, and turnPlayed resets so it cannot evolve again
+  // until a later turn.
+  const evolved: InPlayPokemon = {
+    ...target,
+    stack: [...target.stack, action.uid],
+    conditions: noConditions(),
+    markers: [],
+    turnPlayed: state.turn,
+  };
+  const hand = without(side.hand, action.uid);
+  const updated: PlayerSide =
+    action.target.spot === "active"
+      ? { ...side, hand, active: evolved }
+      : { ...side, hand, bench: side.bench.map((p, i) => (i === benchIndex ? evolved : p)) };
+
+  const events: GameEvent[] = [
+    {
+      type: "POKEMON_EVOLVED",
+      seat: action.seat,
+      from: targetTopUid,
+      to: action.uid,
+      // Copied: the action object belongs to the caller (events.ts).
+      target: { ...action.target },
+    },
+  ];
+  // §10/§12 — evolving removed the Pokémon's Special Conditions. Announced only
+  // when there was something to remove; `uid` is the NEW top (see events.ts).
+  const cleared = presentStatuses(target.conditions);
+  if (cleared.length > 0) {
+    events.push({
+      type: "STATUS_CLEARED",
+      seat: action.seat,
+      uid: action.uid,
+      statuses: cleared,
+      reason: "evolved",
+    });
+  }
+  return ok(withSide(state, action.seat, updated), events);
 }
 
 /** Leaving the Active spot removes Special Conditions (§11/§12) — M4 adds

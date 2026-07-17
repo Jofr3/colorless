@@ -66,6 +66,22 @@ export function stage1Pokemon(id: string): Card {
   };
 }
 
+/** A Stage 2 that evolves from `fix-stage1` — the top of the M4 evolution
+    chain (fix-basic-1 → fix-stage1 → fix-stage2). */
+export function stage2Pokemon(id: string): Card {
+  return {
+    ...blank,
+    id,
+    name: id,
+    category: "Pokemon",
+    stage: "Stage2",
+    hp: 140,
+    types: ["Colorless"],
+    retreat: 3,
+    evolveFrom: "fix-stage1",
+  };
+}
+
 export function basicEnergy(id: string): Card {
   return { ...blank, id, name: id, category: "Energy", energyType: "Normal" };
 }
@@ -103,6 +119,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-basic-1": basicPokemon("fix-basic-1", 1),
   "fix-basic-2": basicPokemon("fix-basic-2", 2),
   "fix-stage1": stage1Pokemon("fix-stage1"),
+  "fix-stage2": stage2Pokemon("fix-stage2"),
   "fix-energy": basicEnergy("fix-energy"),
   "fix-item": itemTrainer("fix-item"),
   "fix-fire-energy": typedEnergy("fix-fire-energy", "Fire"),
@@ -203,6 +220,17 @@ export const MIXED_DECK = deckOf({
   "fix-item": 4,
 });
 
+/** The full fix-basic-1 → fix-stage1 → fix-stage2 line for the M4 evolution
+    suite: 24 fix-basic-1 make a fix-basic-1 opening hand near-certain (so a
+    board can pin one as the Active), and the deck reliably still holds copies
+    of each evolution card for handFromDeck to pull post-setup. */
+export const EVOLVE_DECK = deckOf({
+  "fix-basic-1": 24,
+  "fix-stage1": 12,
+  "fix-stage2": 8,
+  "fix-energy": 16,
+});
+
 export function mustCreate(
   seed: number,
   decks: { p1: string[]; p2: string[] } = { p1: MIXED_DECK, p2: MIXED_DECK },
@@ -253,6 +281,15 @@ export function activeUid(state: GameState, seat: Seat): string {
   const active = state.players[seat].active;
   const uid = active === null ? undefined : topUid(active);
   if (uid === undefined) throw new Error(`${seat} has no Active Pokémon`);
+  return uid;
+}
+
+/** The stack-top uid of `seat`'s bench[index] — throws when the slot is
+    empty (the bench is dense, so a valid index always holds a Pokémon). */
+export function benchTopUid(state: GameState, seat: Seat, index: number): string {
+  const pokemon = state.players[seat].bench[index];
+  const uid = pokemon === undefined ? undefined : topUid(pokemon);
+  if (uid === undefined) throw new Error(`${seat} has no benched Pokémon at index ${index}`);
   return uid;
 }
 
@@ -359,6 +396,35 @@ export function attachFromDeck(
         ...side,
         deck: side.deck.filter((uid) => !taken.has(uid)),
         active: { ...side.active, energy: [...side.active.energy, ...uids] },
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: move `count` copies of `cardId` from the seat's deck into
+    their HAND — evolution/trainer tests need specific cards in hand without
+    hunting for a seed that deals them. Mirror of attachFromDeck; the result
+    stays legal-shaped (every uid in exactly one zone). */
+export function handFromDeck(
+  state: GameState,
+  seat: Seat,
+  cardId: string,
+  count: number,
+): GameState {
+  const side = state.players[seat];
+  const uids = side.deck.filter((uid) => state.cardIdByUid[uid] === cardId).slice(0, count);
+  if (uids.length < count) {
+    throw new Error(`${seat} deck has ${uids.length} ${cardId}, needed ${count}`);
+  }
+  const taken = new Set(uids);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((uid) => !taken.has(uid)),
+        hand: [...side.hand, ...uids],
       },
     },
   };

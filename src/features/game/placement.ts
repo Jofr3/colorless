@@ -10,14 +10,14 @@
 // or the routed action is structurally impossible from this board (attaching
 // to an empty slot, a second setup Active, a sixth bench slot). Fine-grained
 // legality — Basic-ness, the once-per-turn energy allowance, evolution
-// timing — stays with applyAction, whose rejection surfaces as the page's
-// error pill: the pill should only ever name a rule the user actually
-// gestured at. This keeps the predicate in LOCKSTEP with moveToAction:
-// every drop it allows translates to a non-null action of the expected
-// type, and every drop it rejects would have translated to null or to an
-// action the engine deterministically refuses (placement.test.ts enumerates
-// that pairing over real engine states — extend BOTH together, e.g. when
-// M4's evolve-by-drag and trainer plays land).
+// timing (§4/§10) and the name match — stays with applyAction, whose
+// rejection surfaces as the page's error pill: the pill should only ever name
+// a rule the user actually gestured at. This keeps the predicate in LOCKSTEP
+// with moveToAction: every drop it allows translates to a non-null action of
+// the expected type, and every drop it rejects would have translated to null
+// or to an action the engine deterministically refuses (placement.test.ts
+// enumerates that pairing over real engine states — extend BOTH together;
+// M4's evolve-by-drag now routes here, trainer plays are next).
 
 import type { GameState, Seat } from "@luminous/engine";
 import { benchLimitFor } from "../playmat/constants";
@@ -74,10 +74,18 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
           return false;
         }
         if (sourceType === "pokemon") {
-          // playBasicToBench — the engine appends to its dense bench, the
-          // drop index is cosmetic. The cap is structural; Basic-ness (and,
-          // come M4, evolve-onto-a-slot) stays the engine's.
-          return target.zone === "bench" && board.you.bench.length < benchLimitFor(board);
+          // A Pokémon dropped ONTO an own occupant is an evolve gesture (§10):
+          // the Active always hosts one, and a bench drop hosts one when the
+          // indexed slot is occupied. Whether the card actually evolves from
+          // that target (name match, timing) stays the engine's — the pill
+          // then names a rule the drop gestured at. A bench drop on a free
+          // slot is playBasicToBench (dense append; the index is cosmetic).
+          if (target.zone === "active") return board.you.active?.type === "pokemon";
+          if (target.zone !== "bench") return false;
+          if (target.index !== undefined && board.you.bench[target.index]?.type === "pokemon") {
+            return true; // evolve the benched Pokémon at this slot
+          }
+          return board.you.bench.length < benchLimitFor(board); // play a Basic
         }
         // Trainers / tools / stadiums have no drag action until M4.
         return false;

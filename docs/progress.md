@@ -3,36 +3,56 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-17 — build session #6 (**P3-M3: special conditions
-+ Pokémon Checkup + the text-derived effect deriver** — built, 8-finder/
-7-verifier reviewed with all 10 reported findings fixed, browser-verified
-end-to-end at /play).
+**Last updated:** 2026-07-17 — build session #7 (**P3-M4 slice 1:
+evolution** — the `evolve` action with §4/§10 timing + stack carry-over +
+drag routing, built and reviewed; suite 892 → 914, `bun run check` green).
 
 ## Resume point
-**Statuses are live.** The engine runs the full §12/§13 lifecycle (poison/
-burn ticks, wake + burn-cure flips, paralysis wear-off for the ended seat,
-confusion attack flips w/ self-KO, cures on benching), checkup KOs park on
-the same ko:* interrupts (prizes grouped before promotes; double-KO ties via
-speculative `evaluateWin` — §14 single-sourced), and attacks APPLY statuses
-through **D20's exact-sentence deriver** (5 anchored patterns → EffectStep
-programs; anything else keeps the loud skip flag; self-`Paralyzed` refused —
-official timing wording, rules doc corrected at the source, D15-style).
-Surface: **CardModel.battle** co-location (D21 — statuses side-table deleted),
-SLP/PAR/CNF/BRN/PSN chips, HUD gates via engine-exported `isImmobilized`,
-log rows for all 8 new events, projection `activeSeat: null` for
-between-turns KO parks. Demo decks carry real status attackers (Numel
-sv03-031, Luvdisc sv02-047). Suite 825 → **892**, `bun run check` green,
-e2e browser PASS (chips above Pixi, checkup lifecycles in the log, HUD
-lock while asleep, KO flows) with zero app bugs.
+**Evolution is live (P3-M4 slice 1).** The `evolve` action (turn.ts) places
+an Evolution card on the stack top of an own in-play Pokémon whose top card it
+`evolveFrom`s (name match, §10), carrying damage/energy/tools and clearing
+Special Conditions + markers (`POKEMON_EVOLVED` + a `STATUS_CLEARED`
+reason:"evolved"). Timing is TWO checks: `turnPlayed >= turn` (not the turn it
+arrived, nor twice a turn) + the §4/§10 first-turn ban (`turn === (seat ===
+firstPlayer ? 1 : 2)` — the check turnPlayed can't make). No KO on evolve.
+Every wire value runtime-checked (never-throw). **Web:** a Pokémon dropped
+onto an own occupant is an evolve gesture — `moveToAction`/
+`gamePlacementPredicate` route pokemon→Active and pokemon→occupied-bench to
+`evolve`, pokemon→a free bench slot stays `playBasicToBench` (the same
+indexed-vs-container disambiguation energy-attach uses); lockstep property
+extended over a real turn-3 evolvable board. Projection needed NO change (it
+already reads the stack top). Demo decks gained real lines
+(Ember Fuecoco→Crocalor→Skeledirge, Tidal Buizel→Floatzel). Suite **914**,
+`bun run check` green; reviewed (8 angles, no correctness bugs — the 3
+reported items are the bench-drop UX (confirmed a non-regression by reading
+the drop layer), the evolve projection-pop animation follow-up, and the demo
+line, now added). See "M4 slice 1 as built" + D22.
+**Browser integration smoke: PASSED** — local D1 (apps/api) had drifted to
+only sve/sv06.5/swsh10.5 (the demo decks' sv01/sv02/sv03 ids 404'd), so this
+session re-ingested sv01+sv02+sv03 (767 cards). Then live: /play loads, a demo
+game starts, ALL deck ids — including the new evolution cards sv01-037/038/047
+— fetch 200, and the board renders through the coin toss + setup with a clean
+console. The one part NOT yet driven is the actual **canvas drag** of an
+evolution card onto an in-play Pokémon on turn 3+ (the cards live in the Pixi
+canvas, not the a11y tree — coordinate drags are the flaky part the verify
+skill warns eats sessions). Everything below that Pixi gesture is
+unit/property-verified: the full drag→moveToAction→engine→apply chain over
+real states, the drop-layer disambiguation (read from `parsePlacement`), and
+18 engine evolution tests.
 Next concrete actions:
-1. **P3-M4 (evolution, Abilities, trainer/energy effect registry)** — read
-   "M3 as built" + its M4 traps in `workstreams/simulator.md` FIRST: the
-   registry goes ABOVE the deriver (`programFor(cardId) ?? derive(text)`),
-   the EffectStep interpreter must be restructured (not extracted) when M4's
-   ops land, paralysis needs an applied-turn stamp before any self-paralyze
-   effect, `knockOut` is Active-only, and markers will force the conditions
-   vocabulary into `@luminous/schema`.
-2. Or the remaining **"/play follow-ups"** (pile zones in the animation
+1. **Drive the evolve gesture at /play** (servers + data are ready) — drop a
+   Crocalor onto a Fuecoco on turn 3+, confirm the stack renders the evolved
+   card + the log row + carried damage. Canvas coordinate-drag; budget for the
+   agent-browser flakiness the verify skill documents.
+2. **P3-M4 next slices: Abilities + the trainer/energy effect registry** —
+   read "M3 as built" + "M4 slice 1 as built" + their traps in
+   `workstreams/simulator.md` FIRST: the registry goes ABOVE the deriver
+   (`programFor(cardId) ?? derive(text)`), the EffectStep interpreter must be
+   restructured (not extracted) when M4's ops land, paralysis needs an
+   applied-turn stamp before any self-paralyze effect, `knockOut` is
+   Active-only, and markers will force the conditions vocabulary into
+   `@luminous/schema`.
+3. Or the remaining **"/play follow-ups"** (pile zones in the animation
    layer, `useDeckLibrary` reuse, perf nits); the HUD-reads-raw-GameState
    blocker still belongs WITH P4.
 Unchanged user-side blockers: web prod build/deploy story unset
@@ -47,13 +67,54 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 done + playable at /play w/ statuses** (checkup + D20 deriver + D21 battle surface, 2026-07-17) — M4 (evolution/abilities/registry) next |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution done, playable at /play** (checkup + D20 deriver + D21 battle surface + D22 evolution, 2026-07-17) — M4 Abilities + trainer/energy registry next; evolve browser-verify pending |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-17** (build #7) — **P3-M4 slice 1: evolution** (built solo — full
+  context loaded — then an 8-angle high-effort review; no correctness bugs
+  found). Engine: the `evolve` action (turn.ts) uses the `stack`/`turnPlayed`/
+  `tools` fields M1 reserved for exactly this. It places an Evolution card
+  (`evolveFromOf(card) !== null`) on the stack top of an own in-play Pokémon
+  whose top card NAME equals the card's `evolveFrom` (§10), carrying
+  damage/energy/tools and clearing Special Conditions + markers
+  (`POKEMON_EVOLVED` + a `STATUS_CLEARED` reason:"evolved" on the new top). The
+  timing is deliberately **two** checks (D22): `turnPlayed >= state.turn`
+  (came into play this turn / already evolved this turn) PLUS the §4/§10
+  first-turn ban (`state.turn === (seat === firstPlayer ? 1 : 2)`) — turnPlayed
+  can't make the second because setup Pokémon carry 0. No KO check (evolving
+  never KOs). Every wire value runtime-checked (BAD_TARGET / BAD_BENCH_INDEX /
+  the string-index trap), purity-tested. 18 engine tests (happy active+bench,
+  Stage 2 chain, mismatch, not-an-evolution, both too-soon cases, both
+  first-turn bans, carry-over, allowances, wire-safety). **Web:** no projection
+  change (it already reads the stack top, so the evolved card + carried damage
+  render for free); `moveToAction`/`gamePlacementPredicate` route a Pokémon
+  dropped ONTO an own occupant to `evolve` (Active or occupied bench index),
+  keeping a free-bench drop as `playBasicToBench` — the SAME indexed-vs-frame
+  disambiguation energy-attach uses (confirmed by reading the drop layer's
+  `parsePlacement`: occupied slots carry `data-card-index`, the frame carries
+  none). Lockstep property extended over a real turn-3 evolvable board (a live
+  evolve applies OK end-to-end). `logFromEvents` rows for both events. Demo
+  decks gained real lines (Ember Fuecoco→Crocalor→Skeledirge, Tidal
+  Buizel→Floatzel) so /play can evolve. **Review (8 angles, high effort):** no
+  correctness bugs; 3 reported items — (a) a Basic dropped on an OCCUPIED bench
+  slot now routes to evolve→NOT_AN_EVOLUTION rather than benching, CONFIRMED a
+  non-regression by reading `parsePlacement` (the bench frame is a separate
+  index-less container, so "add to bench" still works); (b) the evolve
+  projection-identity pop (CardModel id changes basic-uid→evolution-uid → Pixi
+  remounts, not a morph) — animation follow-up, damage/conditions correct; (c)
+  no demo evolution line — now added. Suite 892 → **914**; `bun run check`
+  green (tsc + biome + vitest). **Session trap:** the `@luminous/engine`
+  workspace symlink was MISSING from node_modules (only schema linked) —
+  `bun install` restored it (cascade TS2307 across the web app until then).
+  And local D1 (apps/api) had drifted to sve/sv06.5/swsh10.5 ONLY (the
+  documented trap struck again) — the demo decks' sv01/sv02/sv03 ids 404 until
+  a re-ingest, which this session ran. **Browser e2e is the pending resume
+  step** (the change is otherwise fully unit-verified — the full
+  drag→route→engine→apply chain is property-tested over real states).
 - **2026-07-17** (build #6) — **P3-M3: special conditions + Pokémon Checkup +
   the text-derived effect deriver** (two sequential build agents — engine,
   then web against the as-built event contract — then an 8-finder/7-verifier

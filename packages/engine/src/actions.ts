@@ -53,6 +53,16 @@ export interface PlayBasicToBenchAction {
   uid: string;
 }
 
+export interface EvolveAction {
+  type: "evolve";
+  seat: Seat;
+  /** An Evolution Pokémon uid from the actor's hand (its `evolveFrom` names
+      the card it goes on top of, §10). */
+  uid: string;
+  /** Which of the actor's own in-play Pokémon to evolve (Active or Bench). */
+  target: PokemonTarget;
+}
+
 export interface RetreatAction {
   type: "retreat";
   seat: Seat;
@@ -100,6 +110,7 @@ export type GameAction =
   | SetupReadyAction
   | AttachEnergyAction
   | PlayBasicToBenchAction
+  | EvolveAction
   | RetreatAction
   | AttackAction
   | TakePrizesAction
@@ -117,6 +128,17 @@ export type ErrorCode =
   | "UNKNOWN_CARD"
   | "CARD_NOT_IN_HAND"
   | "NOT_A_BASIC_POKEMON"
+  /** §10 — the played card is a Basic / non-Pokémon (no `evolveFrom`), so it
+      cannot be placed on top of an in-play Pokémon as an evolution. */
+  | "NOT_AN_EVOLUTION"
+  /** §10 — the evolution's `evolveFrom` does not name the target's current
+      top card, so it does not evolve from it. */
+  | "EVOLVE_MISMATCH"
+  /** §10 — the target came into play (or was itself evolved) this turn; a
+      Pokémon evolves at most once per turn and never the turn it arrived. */
+  | "EVOLVE_TOO_SOON"
+  /** §4/§10 — neither player may evolve on their own first turn. */
+  | "FIRST_TURN_EVOLVE"
   | "NOT_AN_ENERGY"
   | "NO_TARGET"
   | "BENCH_FULL"

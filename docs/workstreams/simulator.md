@@ -111,7 +111,8 @@ event stream.
    7 verifiers, 10 reported findings all fixed) 2026-07-17; as-built notes
    below. Includes the first sliver of the effect system: the **text-derived
    status deriver** (D20).
-4. Evolution, Abilities, and the trainer/energy effect registry (staples first).
+4. 🚧 **Evolution done** (2026-07-17; as-built below). Abilities + the
+   trainer/energy effect registry are the remaining M4 slices.
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -406,6 +407,62 @@ Asleep); Slowpoke's Rest now actually simulates (self-Asleep + heal 30).
   energy provision, phase↔`pending[0]` dual encoding (checkup added no
   parked-phase writers, so it stands unchanged), opponent-hand/setup reveal
   re-key (P4 opaque-alias design).
+
+## M4 slice 1 as built (2026-07-17) — evolution
+
+**Shape.** New `evolve` action (turn.ts, alongside playBasicToBench/retreat;
+`EvolveAction {seat, uid, target: PokemonTarget}`). Places an Evolution card
+from hand on the **stack top** of one of the actor's own in-play Pokémon
+(Active or Bench). An Evolution card is `evolveFromOf(card) !== null`
+(cards.ts — `card.category === "Pokemon" ? card.evolveFrom : null`; `stage`
+is not consulted, `evolveFrom` is the ingested datum). Legality, in order:
+turnGate → **first-turn ban** → hand/uid → NOT_AN_EVOLUTION → wire target →
+resolve target → **EVOLVE_MISMATCH** (the evolution's `evolveFrom` must equal
+the target top card's NAME, §10) → **EVOLVE_TOO_SOON**. Carry-over (§10):
+damage, Energy, Tools STAY (they ride on the stack, untouched by the spread);
+Special Conditions + markers are cleared; `turnPlayed` resets to `state.turn`.
+Events: `POKEMON_EVOLVED {from, to, target}` + (iff the Active had conditions)
+`STATUS_CLEARED reason:"evolved"` whose `uid` is the NEW top. No KO check —
+evolving never KOs (HP only rises; §10 devolution, the one shrink, is
+effect-only and out of scope). New error codes NOT_AN_EVOLUTION /
+EVOLVE_MISMATCH / EVOLVE_TOO_SOON / FIRST_TURN_EVOLVE; new export
+`evolveFromOf`; engineVersion 0.4.0.
+
+**Timing is two checks, deliberately (§4/§10).** `turnPlayed >= state.turn`
+covers "not the turn it came into play, nor twice in one turn" (a setup
+Pokémon carries turnPlayed **0**, a benched/evolved one the turn it arrived).
+That alone can't express "no evolve on your own FIRST turn" — a setup
+Pokémon's 0 is < turn 1/2 — so a separate `state.turn === (seat ===
+firstPlayer ? 1 : 2)` ban fires first (firstPlayer plays odd turns, so their
+first turn is 1 and the other seat's is 2). This is the turn/firstPlayer check
+`InPlayPokemon.turnPlayed`'s M1 comment always reserved.
+
+**Surface (web).** No projection change — the projection already reads the
+stack **top**, so an evolved Pokémon renders its new card with carried damage
+(battle state) and cleared conditions automatically. Drag routing:
+`moveToAction`/`gamePlacementPredicate` treat a Pokémon dropped ONTO an own
+occupant as an evolve gesture — pokemon→Active and pokemon→**occupied** bench
+index → `evolve`; pokemon→a **free** bench slot (the index-less frame
+container) stays `playBasicToBench`. This is the SAME indexed-vs-container
+disambiguation energy-attach uses (confirmed against the drop layer's
+`parsePlacement`: occupied slots carry `data-card-index`, the bench frame
+carries none). Fine legality stays the engine's → the error pill (D19,
+lockstep property extended in placement.test.ts over a real turn-3 evolvable
+board). `logFromEvents` rows for POKEMON_EVOLVED ("evolved X → Y") and the
+"evolved" clear. Demo decks carry real lines
+(Ember Fuecoco→Crocalor→Skeledirge, Tidal Buizel→Floatzel). Suite 892 → 914.
+
+### Known gaps / traps for the rest of M4
+- **Projection identity pops on evolve.** The CardModel id keys off the
+  stack-top uid, so evolving swaps basic-uid → evolution-uid and the Pixi
+  layer remounts (pop, not a morph) — same class as the hidden-back re-key.
+  Animation-layer follow-up; damage/conditions are correct (battle state).
+- **The interpreter/registry are still untouched** (evolution is a board
+  action, no effect ops) — the D20 traps below stand for the next slices.
+- **Rare Candy** (Basic → Stage 2 skip) is an Item, so it waits for the
+  trainer registry; the `evolve` action only does adjacent-stage placement.
+- `presentStatuses`/first-turn logic are evolve-local; if Abilities add their
+  own "is it this seat's first turn" gate, lift a shared helper then.
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
