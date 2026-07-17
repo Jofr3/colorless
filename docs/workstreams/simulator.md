@@ -111,8 +111,11 @@ event stream.
    7 verifiers, 10 reported findings all fixed) 2026-07-17; as-built notes
    below. Includes the first sliver of the effect system: the **text-derived
    status deriver** (D20).
-4. 🚧 **Evolution done** (2026-07-17; as-built below). Abilities + the
-   trainer/energy effect registry are the remaining M4 slices.
+4. 🚧 **Evolution + Trainers + Abilities done** (2026-07-17; as-built below).
+   The effect-op interpreter/registry now drives real Item/Supporter Trainers
+   and activated + passive Abilities. Remaining: Stadium/Tool (persistent
+   zones), triggered abilities (on-play/on-KO/between-turns), special-energy
+   rules text, and Rare Candy.
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -464,7 +467,121 @@ board). `logFromEvents` rows for POKEMON_EVOLVED ("evolved X → Y") and the
 - `presentStatuses`/first-turn logic are evolve-local; if Abilities add their
   own "is it this seat's first turn" gate, lift a shared helper then.
 
+## M4 slice 2 as built (2026-07-17) — Trainers + Abilities + the effect interpreter
+
+**Shape (D23).** The M3 attack-private `runEffectSteps` is replaced by ONE
+shared, resumable interpreter (`interpreter.ts`): `runProgram(state, ops, ctx,
+events) → {kind:"done"|"parked"}`. `EffectStep` grew into `EffectOp` (effects.ts
+— applyStatus/heal/coinFlipGate PLUS drawCards/discardHand/shuffleDeck/
+searchDeck/switchActive/gust/healChosen); the deriver still emits the same ops.
+The **id-keyed registry** (`registry.ts`, `programFor(cardId)`) sits above the
+deriver at the one attack call site (`programFor(id)?.attack ?? derive(text)`)
+and IS the only source for Trainer/Ability programs (no text deriver for those
+— an unauthored card can't be played/used, loud not guessed).
+
+**Mid-effect parking.** A decision op (search a deck, gust/switch/heal a chosen
+Pokémon) PARKS: the interpreter returns `parked` with a prompt + a JSON
+continuation (`{pendingOp, rest, ctx}`), and the new **`effect:choose` Phase**
+stores it. `resolveEffect` validates the choice against the prompt (wire-safe —
+every uid/ref checked), applies the awaited op, and resumes the rest.
+Forced/empty decisions auto-resolve (searchDeck is "up to", so it parks whenever
+≥1 candidate; a mandatory target auto-resolves at exactly one). NO effect in
+scope KOs or ends the game, so the interpreter never touches the flow.ts tail —
+a future damaging op wires its KO check through the shared `knockOut` there.
+
+**New actions (cardplay.ts).** `playTrainer` (Item any number §7.1 / Supporter
+one/turn §7.2 + the §4 first-turn Supporter ban; the card leaves hand →
+discard up front, then the program runs — none references itself mid-effect;
+`trainerPlayable` rejects gust/switch with no legal target BEFORE committing).
+`useAbility` (activated only; §9 Active-only + the once-per-turn per-Pokémon
+flag `${uid}:${ability}` in `TurnAllowances.abilitiesUsed`, reset each turn).
+`resolveEffect` (the parked-decision resolver). New error codes
+NOT_A_TRAINER / TRAINER_TYPE_UNSUPPORTED / TRAINER_NOT_SIMULATED /
+SUPPORTER_ALREADY_PLAYED / FIRST_TURN_SUPPORTER / NO_LEGAL_TARGET /
+NO_SUCH_ABILITY / ABILITY_ACTIVE_ONLY / ABILITY_ALREADY_USED /
+BAD_EFFECT_CHOICE. New events TRAINER_PLAYED / ABILITY_USED / HAND_DISCARDED /
+DECK_SEARCHED / POKEMON_SWITCHED / EFFECT_PENDING (+ DrawReason "effect",
+DAMAGE_DEALT gained optional `reduction`).
+
+**Passive abilities are a pipeline HOOK, not the interpreter.** Bouffalant
+"Bouffer" (−20 damage AFTER Weakness/Resistance) is read in attack.ts's damage
+step from `programFor(defenderCard.id)?.passive?.damageReductionAfterWR`, floored
+at 0, surfaced as `DAMAGE_DEALT.reduction`. (Active-defender only for now —
+bench damage generalizes with the KO-target work.)
+
+**Surface (web).** Trainers/Abilities are HUD **buttons** in the TurnPanel
+(GameHud) — NOT board drags (the drag layer's `moveToAction`/
+`gamePlacementPredicate` already no-op on unknown phases, so `effect:choose`
+affords nothing); button gating mirrors §4/§7.2/§9 but the ENGINE owns fine
+legality (afford-then-reject pill for gust/switch preconditions, D19).
+`effect:choose` renders a chooseCards (multi-select up to max, "Take none") or
+choosePokemon dialog → `resolveEffect`. Projection maps the phase (activeSeat =
+waitingSeat = controller; `pendingDecision.effectChoose` carries the prompt) and
+its exhaustive switch caught the new phase at compile time. `logFromEvents` rows
+for all six new events. `presentStatuses` lifted to types.ts (shared by
+retreat/evolve/switch). Demo decks: both share the 6 Trainers, Tidal runs
+Chien-Pao ex, Ember runs Bouffalant. Suite 914 → **948**.
+
+**Representative set (real sv ids, verified live 2026-07-17):** Professor's
+Research (sv01-189, draw 7), Nest Ball (sv01-181, search→bench), Boss's Orders
+(sv02-172, gust), Switch (sv01-194), Potion (sv01-188, heal 30), Energy Search
+(sv01-172, search→hand); Chien-Pao ex (sv02-061, *Shivery Chill* — search 2
+Basic {W} Energy, activated once/turn Active-only), Bouffalant (sv03-174,
+*Bouffer* — passive). Broad SV-pool coverage is a later Workflow fan-out that
+just adds registry rows.
+
+**Review (high effort, 8 angles) + fixes:** no correctness bugs shipped; two
+findings fixed in-session — (a) `searchMove` removed all picked uids from the
+deck but benched only `slice(0, room)` (guarded today by the prompt's max
+clamp, but the removal/placement sets were computed independently — now
+clamped to bench space BEFORE anything leaves the deck, the M1 card-safety
+lesson), and (b) `presentStatuses` duplicated (turn.ts + interpreter.ts) →
+lifted to types.ts. Deferred (noted): the `effect:choose` prompt carries the
+search candidates (deck uids) unredacted in the projection — a P4-scoped
+hidden-info gap, unobservable in hot-seat (the HUD gates on `acting`), same
+class as the opponent-hand backs.
+
+**Verification.** `bun run check` green (tsc + biome + **948 tests**), incl. 28
+engine cardplay tests (every archetype + parking + forced auto-resolve +
+wire-safety + purity) and 5 DOM integration tests driving the REAL GameHud →
+engine → effect dialogs → resolveEffect. **Live browser (/play):** the game
+boots clean with the new decks (full 60-card cardPool incl. all Trainers +
+Chien-Pao + Bouffalant fetched from the live api, canvas renders, ZERO console
+errors); setup drags work; the **TurnPanel renders the new Trainer buttons live
+with correct §4/§7.2 gating** (Boss's Orders disabled on turn 1, enabled on p1's
+turn 2; Switch enabled as an unbounded Item). All 8 new card ids resolve through
+`GET /cards/:id` with the exact fields the engine reads. NOT driven to a fully
+RESOLVED effect in-browser — the demo hands dealt lacked the preconditions
+(opponent bench for gust, the right Item in hand) and the Pixi bench-drag
+coordinate hit-test is the documented session-eater; the effect-resolution path
+is exhaustively covered by the engine + DOM tests instead.
+
+### Known gaps / traps for the rest of M4
+- **Stadium + Tool** (persistent zones) are deferred: `playTrainer` rejects them
+  (TRAINER_TYPE_UNSUPPORTED). Stadium needs a shared board zone + the continuous
+  pipeline; Tool needs the attach + a continuous hook + KO-discard-with-tool
+  (the `InPlayPokemon.tools` slot exists but nothing attaches yet).
+- **Triggered abilities** (on-play / on-KO / between-turns) are deferred — they
+  need trigger scan points at many call sites (bench-play, evolve, checkup, KO),
+  a bigger surface best isolated. Only activated + passive shipped.
+- **Rare Candy** (Basic → Stage 2 skip) waits for the item registry's
+  hand-inspection + evolve reuse (its id sv01-191 is in the catalog).
+- **The passive hook is defender-Active-only** and reads unconditionally (no §9
+  ability-lock in scope). Bench damage + ability-lock generalize together.
+- **EffectContext is only `{seat}`** — an ability using a "self" op from the
+  BENCH would wrongly target the Active. No in-scope ability does (Chien-Pao is
+  Active-only); a bench-usable self-targeting ability needs the source uid in
+  ctx.
+- **P4 hidden info:** the `effect:choose` prompt (search candidates) and the
+  existing opponent-hand/setup backs all need the P4 opaque-alias/redaction
+  design — the projection is the same filter P4 will apply.
+- Still open from earlier: `prizeValueOf` = 1 (ingest suffix — Chien-Pao ex
+  currently gives 1 prize, not 2), name-derived energy provision, the
+  projection-identity pop on evolve/switch (Pixi remount, animation follow-up).
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
-launching one.
+launching one. The mechanics all live in `interpreter.ts` now, so a new card in
+a known family is a few lines of `EffectOp` data in `registry.ts` — the fan-out
+adds rows, not code.

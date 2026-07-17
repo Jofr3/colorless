@@ -3,53 +3,62 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-17 — build session #7 (**P3-M4 slice 1:
-evolution** — the `evolve` action with §4/§10 timing + stack carry-over +
-drag routing, built and reviewed; suite 892 → 914, `bun run check` green;
-evolve gesture browser-verified live at /play).
+**Last updated:** 2026-07-18 — build session #8 (**P3-M4 slice 2: Trainers +
+Abilities + the effect-op interpreter/registry** — the real first appearance of
+D8's op-program system; built solo, high-effort reviewed, 2 findings fixed;
+suite 914 → 948, `bun run check` green; /play boots clean with the new decks and
+the Trainer buttons render live with correct gating).
 
 ## Resume point
-**Evolution is live (P3-M4 slice 1).** The `evolve` action (turn.ts) places
-an Evolution card on the stack top of an own in-play Pokémon whose top card it
-`evolveFrom`s (name match, §10), carrying damage/energy/tools and clearing
-Special Conditions + markers (`POKEMON_EVOLVED` + a `STATUS_CLEARED`
-reason:"evolved"). Timing is TWO checks: `turnPlayed >= turn` (not the turn it
-arrived, nor twice a turn) + the §4/§10 first-turn ban (`turn === (seat ===
-firstPlayer ? 1 : 2)` — the check turnPlayed can't make). No KO on evolve.
-Every wire value runtime-checked (never-throw). **Web:** a Pokémon dropped
-onto an own occupant is an evolve gesture — `moveToAction`/
-`gamePlacementPredicate` route pokemon→Active and pokemon→occupied-bench to
-`evolve`, pokemon→a free bench slot stays `playBasicToBench` (the same
-indexed-vs-container disambiguation energy-attach uses); lockstep property
-extended over a real turn-3 evolvable board. Projection needed NO change (it
-already reads the stack top). Demo decks gained real lines
-(Ember Fuecoco→Crocalor→Skeledirge, Tidal Buizel→Floatzel). Suite **914**,
-`bun run check` green; reviewed (8 angles, no correctness bugs — the 3
-reported items are the bench-drop UX (confirmed a non-regression by reading
-the drop layer), the evolve projection-pop animation follow-up, and the demo
-line, now added). See "M4 slice 1 as built" + D22.
-**Browser e2e: PASSED (evolve driven live).** Local D1 (apps/api) had drifted
-to only sve/sv06.5/swsh10.5 (the demo decks' sv01/sv02/sv03 ids 404'd), so
-this session re-ingested sv01+sv02+sv03 (767 cards). Then a full live drive at
-/play: seed frozen (Date.now → 17, found offline so p1 opens with a Fuecoco to
-place + a Crocalor by turn 3), the drag SYNTHESIZED by dispatching real
-PointerEvents (down/move on the playmat root, up on window — the cards/drop
-zones are real DOM `[data-card-anchor]`/`[data-card-drop-zone]` elements even
-though the visuals are Pixi; hit-testing is by coordinate). Placed both
-Actives by drag, passed to turn 3, then **dropped Crocalor on Fuecoco →
-"YOU evolved Fuecoco → Crocalor"** in the log, the Active projected as Crocalor
-(HUD shows Crocalor 100 HP + its Bite/Rolling Tackle attacks), clean console.
-The full stack confirmed live: Pixi drop layer → moveToAction (pokemon→active =
-evolve) → gamePlacementPredicate → engine → projection → log.
+**Trainers + Abilities are live (P3-M4 slice 2, D23).** The M3 attack-private
+interpreter is replaced by ONE shared **resumable interpreter**
+(`packages/engine/src/interpreter.ts`) that attacks, Trainers and Abilities all
+run through. The **id-keyed registry** (`registry.ts`, `programFor(cardId)`)
+sits above the deriver at the one attack call site and IS the source for
+Trainer/Ability programs (unauthored → loud reject, never guessed). Mid-effect
+decisions PARK via a new **`effect:choose` Phase** carrying a JSON continuation
+(`{pendingOp, rest, ctx}`); `resolveEffect` wire-checks the choice and resumes.
+New actions **playTrainer** (Item unbounded §7.1 / Supporter 1/turn §7.2 + §4
+first-turn ban), **useAbility** (activated, once-per-turn per-Pokémon flag in
+`TurnAllowances.abilitiesUsed`, §9), **resolveEffect**. New ops drawCards /
+discardHand / shuffleDeck / searchDeck→(bench|hand) / switchActive / gust /
+healChosen. **Passive abilities are a pipeline HOOK** (Bouffalant "Bouffer":
+−20 after W/R, `DAMAGE_DEALT.reduction`). **Web:** Trainers/Abilities are HUD
+BUTTONS in the TurnPanel (not board drags — the drag layer no-ops on
+`effect:choose`), `effect:choose` renders a chooseCards/choosePokemon dialog;
+§4/§7.2/§9 gating on the buttons, ENGINE owns fine legality (afford-then-reject
+pill). Representative set: 6 Trainers (Professor's Research/Nest Ball/Boss's
+Orders/Switch/Potion/Energy Search) + 2 Abilities (Chien-Pao ex *Shivery Chill*
+activated, Bouffalant *Bouffer* passive), real sv01–sv03 ids in the demo decks.
+engineVersion 0.5.0. See "M4 slice 2 as built" + D23.
+**Review (8 angles, high effort):** no correctness bugs shipped; 2 fixed —
+`searchMove` bench clamp (removal set now equals placement set, before anything
+leaves the deck), and `presentStatuses` dedup (lifted to types.ts). Deferred:
+the `effect:choose` prompt's search candidates are unredacted in the projection
+(P4-scoped, unobservable in hot-seat).
+**Verification:** `bun run check` green (**948 tests** — 28 engine cardplay
+covering every archetype + parking + wire-safety + purity; 5 DOM integration
+tests driving the REAL GameHud → engine → effect dialogs → resolveEffect).
+**Live /play smoke:** boots clean with the new decks (full 60-card cardPool incl.
+all Trainers + Chien-Pao + Bouffalant fetched, canvas renders, ZERO console
+errors); setup drags work; the TurnPanel renders the new Trainer buttons live
+with correct §4/§7.2 gating (Boss's Orders disabled turn 1, enabled p1 turn 2;
+Switch enabled). All 8 new ids resolve via `GET /cards/:id`. NOT driven to a
+fully RESOLVED effect in-browser (the dealt hands lacked gust/search
+preconditions and the Pixi bench-drag hit-test is the documented session-eater;
+the resolution path is exhaustively unit/DOM-tested instead).
 Next concrete actions:
-2. **P3-M4 next slices: Abilities + the trainer/energy effect registry** —
-   read "M3 as built" + "M4 slice 1 as built" + their traps in
-   `workstreams/simulator.md` FIRST: the registry goes ABOVE the deriver
-   (`programFor(cardId) ?? derive(text)`), the EffectStep interpreter must be
-   restructured (not extracted) when M4's ops land, paralysis needs an
-   applied-turn stamp before any self-paralyze effect, `knockOut` is
-   Active-only, and markers will force the conditions vocabulary into
-   `@luminous/schema`.
+1. **P3-M4 remaining slices:** Stadium + Tool (persistent zones — a shared board
+   zone + continuous pipeline / attach + KO-discard-with-tool), triggered
+   abilities (on-play/on-KO/between-turns — trigger scan points at bench-play,
+   evolve, checkup, KO), special-energy rules text, Rare Candy. Read "M4 slice
+   2 as built" + its traps FIRST (the interpreter is the seam; passive is a
+   hook; EffectContext is only `{seat}`).
+2. Or the **coverage-expansion Workflow fan-out** (M5) — author `EffectOp`
+   registry rows across the SV pool, one agent per set/batch, each verified vs
+   the rules doc. Ask the user before launching one (it can spawn dozens of
+   agents). The mechanics all live in interpreter.ts now, so this adds rows,
+   not code.
 3. Or the remaining **"/play follow-ups"** (pile zones in the animation
    layer, `useDeckLibrary` reuse, perf nits); the HUD-reads-raw-GameState
    blocker still belongs WITH P4.
@@ -65,13 +74,61 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution done, evolve browser-verified at /play** (checkup + D20 deriver + D21 battle surface + D22 evolution, 2026-07-17) — M4 Abilities + trainer/energy registry next |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry driving Trainers + activated/passive Abilities, 2026-07-18) — remaining: Stadium/Tool, triggered abilities, special energy; then the coverage fan-out |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-18** (build #8) — **P3-M4 slice 2: Trainers + Abilities + the
+  effect-op interpreter/registry** (built solo — full context loaded — then a
+  high-effort 8-angle review; no correctness bugs, 2 findings fixed). The real
+  first appearance of D8's op-program system (D20's deriver was the sliver).
+  **Engine:** M3's attack-private `runEffectSteps` replaced by ONE shared
+  resumable interpreter (`interpreter.ts`, `runProgram → done|parked`);
+  `EffectStep`→`EffectOp` grew the board/deck ops (draw/discardHand/shuffle/
+  searchDeck→bench|hand/switchActive/gust/healChosen). The id-keyed **registry**
+  (`registry.ts`) sits above the deriver (`programFor(id)?.attack ??
+  derive(text)`) and is the sole Trainer/Ability source. Mid-effect decisions
+  PARK via a new **`effect:choose` Phase** with a JSON continuation
+  (`{pendingOp, rest, ctx}`) — replayable, outside the KO/win tail (no in-scope
+  effect KOs). New actions **playTrainer** (Item §7.1 / Supporter §7.2 + §4
+  first-turn ban; card discards up front; `trainerPlayable` rejects
+  no-legal-target gust/switch before committing), **useAbility** (activated;
+  §9 Active-only + once-per-turn per-Pokémon flag in
+  `TurnAllowances.abilitiesUsed`), **resolveEffect** (wire-checks every choice —
+  D14 never-throw extended to the effect layer). **Passive** abilities are a
+  pipeline hook, not the interpreter (Bouffalant "Bouffer" −20 after W/R →
+  `DAMAGE_DEALT.reduction`). 10 new error codes, 6 new events (+"effect"
+  DrawReason). **Web:** Trainers/Abilities are HUD buttons (the drag layer
+  no-ops on `effect:choose`), `effect:choose` → chooseCards/choosePokemon
+  dialog → resolveEffect; §4/§7.2/§9 gating mirrored, engine owns fine legality
+  (D19 pill); projection maps the new phase (exhaustive switch caught it at
+  compile time); `logFromEvents` rows for all six events; `presentStatuses`
+  lifted to types.ts (shared retreat/evolve/switch). **Representative set**
+  (real ids, live-verified): Professor's Research/Nest Ball/Boss's Orders/Switch/
+  Potion/Energy Search + Chien-Pao ex (*Shivery Chill*) + Bouffalant
+  (*Bouffer*); both demo decks share the Trainers, Tidal runs Chien-Pao, Ember
+  Bouffalant. Broad coverage = a later opt-in Workflow (user's call). **Review
+  fixes:** `searchMove` now clamps to bench space BEFORE removing from the deck
+  (removal set = placement set — the M1 card-safety lesson; was guarded but
+  fragile), and `presentStatuses` dedup. Deferred: the `effect:choose` search
+  candidates leak deck uids in the projection (P4 hidden-info, unobservable in
+  hot-seat). **Verification:** `bun run check` green (914 → **948 tests**: 28
+  engine cardplay incl. parking/forced-resolve/wire-safety/purity, 5 DOM
+  integration tests driving the real GameHud→engine→dialog→resolveEffect flow).
+  **Live /play smoke (agent-browser):** boots clean with the new decks — full
+  60-card cardPool (all Trainers + Chien-Pao + Bouffalant) fetched from the live
+  api, canvas renders, ZERO console errors across setup + two turns; setup drags
+  work; the **TurnPanel renders the Trainer buttons live with correct §4/§7.2
+  gating** (Boss's Orders disabled turn 1, enabled p1 turn 2; Switch enabled).
+  All 8 new ids resolve via `GET /cards/:id` with the exact fields the engine
+  reads. NOT driven to a fully resolved effect in-browser — the dealt hands
+  lacked gust/search preconditions and the Pixi bench-drag coordinate hit-test
+  is the documented session-eater; the resolution path is exhaustively
+  unit/DOM-tested. Local D1 already held sv01+sv02+sv03 (no re-ingest needed
+  this session). engineVersion 0.5.0.
 - **2026-07-17** (build #7) — **P3-M4 slice 1: evolution** (built solo — full
   context loaded — then an 8-angle high-effort review; no correctness bugs
   found). Engine: the `evolve` action (turn.ts) uses the `stack`/`turnPlayed`/
