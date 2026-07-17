@@ -28,6 +28,7 @@
 // turn-parity fallback named the wrong seat exactly when ko:promote parked.
 
 import type {
+  EffectPrompt,
   GameOutcome,
   GameOverReason,
   GameState,
@@ -65,7 +66,13 @@ export interface ProjectedPiles {
     this a projection-driven client soft-locks: the turn controls go dark
     during a ko:* park and nothing would say WHAT is being asked. Counts
     only — never card identity. */
-export type PendingDecision = { kind: "takePrizes"; count: number } | { kind: "promote" };
+export type PendingDecision =
+  | { kind: "takePrizes"; count: number }
+  | { kind: "promote" }
+  /** A parked mid-effect decision (§15.E/G): a Trainer/Ability search or
+      targeting the controller owes. `prompt` carries the legal options the HUD
+      renders (search candidates, gust/switch/heal targets). */
+  | { kind: "effectChoose"; prompt: EffectPrompt };
 
 /** The engine's GameOutcome with seats mapped into the viewer's vocabulary. */
 export type ProjectedOutcome =
@@ -374,6 +381,16 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
         activeSeat: koParkActiveSeat(state),
         waitingSeat: phase.seat,
         pendingDecision: { kind: "promote" },
+        outcome: null,
+      };
+    // effect:choose — a Trainer/Ability the turn owner played parked on a
+    // decision. The controller (phase.seat) both owns the turn and owes the
+    // decision, so activeSeat and waitingSeat are the same seat.
+    case "effect:choose":
+      return {
+        activeSeat: phase.seat,
+        waitingSeat: phase.seat,
+        pendingDecision: { kind: "effectChoose", prompt: phase.prompt },
         outcome: null,
       };
     case "gameOver":

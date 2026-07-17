@@ -12,8 +12,9 @@ import type { GameOutcome, PokemonTarget, Seat } from "./types";
 // the P4 broadcast, a persisted log), and a consumer that sorts or splices one
 // must not be able to reach back into game state or into a retained snapshot.
 
-/** Why cards moved deck → hand; lets the UI animate each draw differently. */
-export type DrawReason = "opening" | "mulligan" | "compensation" | "turnStart";
+/** Why cards moved deck → hand; lets the UI animate each draw differently.
+    "effect" covers any Trainer/Ability draw (Professor's Research, §15.E). */
+export type DrawReason = "opening" | "mulligan" | "compensation" | "turnStart" | "effect";
 
 /** The §12 Special Conditions as event vocabulary. The state stores them
     structurally (SpecialConditions: rotation / poisonDamage / burned) — the
@@ -103,6 +104,9 @@ export type GameEvent =
       base: number;
       weakness: DamageModifier | null;
       resistance: DamageModifier | null;
+      /** Flat HP a defender passive removed AFTER Weakness/Resistance
+          (Bouffalant "Bouffer", §15.B). Present only when it actually reduced. */
+      reduction?: number;
       dealt: number;
       damage: number;
     }
@@ -173,5 +177,31 @@ export type GameEvent =
   /** `uid` (top of its stack) moved bench → Active; the bench compacts the
       same way RETREATED describes. */
   | { type: "POKEMON_PROMOTED"; seat: Seat; uid: string; benchIndex: number }
+  // — M4 Trainer / Ability plays (§7/§9) and the effect ops they run (§15). —
+  /** `seat` played a Trainer `uid` (Item/Supporter) from hand; it discards
+      after its effect resolves (Stadium/Tool stay in play — future slices). */
+  | { type: "TRAINER_PLAYED"; seat: Seat; uid: string; trainerType: string }
+  /** `seat` used the Ability named `ability` on their in-play `uid`. */
+  | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
+  /** The controller's whole hand went to the discard (Professor's Research). */
+  | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
+  /** A deck search resolved: `uids` moved deck → `dest` (revealed, §15.E). */
+  | { type: "DECK_SEARCHED"; seat: Seat; dest: "bench" | "hand"; uids: string[] }
+  /** An effect switched `seat`'s Active with their benched `nowActive`
+      (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
+      bench from `fromBench`'s freed slot and landed at `toBench`; the bench
+      compacts like RETREATED. Conditions cleared on the outgoing Active are a
+      separate STATUS_CLEARED reason "benched". No energy is paid (not a retreat). */
+  | {
+      type: "POKEMON_SWITCHED";
+      seat: Seat;
+      wasActive: string;
+      nowActive: string;
+      fromBench: number;
+      toBench: number;
+    }
+  /** `seat` must resolve a mid-effect decision (the effect:choose prompt) —
+      the prompt twin of PRIZES_OWED, so an event-only client never hangs. */
+  | { type: "EFFECT_PENDING"; seat: Seat; note: string }
   | { type: "TURN_ENDED"; turn: number; seat: Seat }
   | { type: "GAME_OVER"; outcome: GameOutcome };

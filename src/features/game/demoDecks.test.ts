@@ -4,8 +4,8 @@
 // verified against the live catalog when authored (see demoDecks.ts).
 
 import { describe, expect, it } from "vitest";
-import { deriveAttackEffect } from "@luminous/engine";
-import { DEMO_DECKS, expandDeck } from "./demoDecks";
+import { deriveAttackEffect, programFor } from "@luminous/engine";
+import { DEMO_DECKS, SHARED_TRAINER_IDS, expandDeck } from "./demoDecks";
 
 describe("expandDeck", () => {
   it("expands {cardId, count} rows into a flat id list, order preserved", () => {
@@ -40,11 +40,28 @@ describe("DEMO_DECKS", () => {
     }
   });
 
-  it("the two decks share no card ids (distinct types by design)", () => {
+  it("the two decks share ONLY the type-neutral Trainer suite (distinct Pokémon/energy)", () => {
     const [ember, tidal] = DEMO_DECKS;
     if (ember === undefined || tidal === undefined) throw new Error("expected two decks");
     const tidalSet = new Set(tidal.ids);
-    expect(ember.ids.some((id) => tidalSet.has(id))).toBe(false);
+    const shared = new Set(SHARED_TRAINER_IDS);
+    // Every overlapping id must be one of the shared Trainers — the Pokémon
+    // and energy (the type identity that drives the weakness matchup) stay
+    // disjoint.
+    const overlap = [...new Set(ember.ids.filter((id) => tidalSet.has(id)))];
+    for (const id of overlap) expect(shared.has(id)).toBe(true);
+    expect(overlap.length).toBe(SHARED_TRAINER_IDS.length);
+  });
+
+  it("every shared Trainer + each deck's Ability card has an authored program (M4 tripwire)", () => {
+    // A re-ingest that changes an id, or a registry edit that drops one, must
+    // update both together — an unauthored Trainer can't be played at /play.
+    for (const id of SHARED_TRAINER_IDS) {
+      expect(programFor(id)?.trainer, `${id} should have a trainer program`).toBeDefined();
+    }
+    // Chien-Pao ex (Tidal) — activated Ability; Bouffalant (Ember) — passive.
+    expect(programFor("sv02-061")?.abilities?.[0]?.name).toBe("Shivery Chill");
+    expect(programFor("sv03-174")?.passive?.damageReductionAfterWR).toBe(20);
   });
 
   it("keeps the demo status attacks' printed sentences derivable (M3 tripwire)", () => {

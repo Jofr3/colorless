@@ -14,7 +14,7 @@ import type {
   SpecialConditions,
 } from "./index";
 import { SEATS, applyAction, cardOfUid, createGame, isBasicPokemon, topUid } from "./index";
-import { withActive } from "./types";
+import { makeInPlay, withActive } from "./types";
 
 const blank: Omit<Card, "id" | "name" | "category"> = {
   setId: "fix",
@@ -96,6 +96,13 @@ export function typedEnergy(id: string, type: string): Card {
 
 export function itemTrainer(id: string): Card {
   return { ...blank, id, name: id, category: "Trainer", trainerType: "Item" };
+}
+
+/** A Trainer of a given type. Used with the REAL catalog ids the M4 registry
+    authors (sv01-189, …) so `programFor(id)` finds the program — the `effect`
+    text is cosmetic here (the registry keys on the id, not the text). */
+export function trainerCard(id: string, trainerType: string, effect: string): Card {
+  return { ...blank, id, name: id, category: "Trainer", trainerType, effect };
 }
 
 /** A battle-ready Basic: a 60 HP Colorless body whose combat data (attacks,
@@ -195,6 +202,59 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** hp printed as 0 — a catalog data gap schema/ingest let through, read as
       null by hpOf: never KO'd (a KO requires printed hp > 0). */
   "fix-zero-hp": battler("fix-zero-hp", { hp: 0 }),
+
+  // — M4 slice 2: the representative Trainer/Ability cast (real catalog ids so
+  //   the registry finds their authored programs). —
+  "sv01-189": trainerCard("sv01-189", "Supporter", "Discard your hand and draw 7 cards."),
+  "sv01-181": trainerCard(
+    "sv01-181",
+    "Item",
+    "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+  ),
+  "sv02-172": trainerCard(
+    "sv02-172",
+    "Supporter",
+    "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+  ),
+  "sv01-194": trainerCard("sv01-194", "Item", "Switch your Active Pokémon with 1 of your Benched Pokémon."),
+  "sv01-188": trainerCard("sv01-188", "Item", "Heal 30 damage from 1 of your Pokémon."),
+  "sv01-172": trainerCard(
+    "sv01-172",
+    "Item",
+    "Search your deck for a Basic Energy card, reveal it, and put it into your hand. Then, shuffle your deck.",
+  ),
+  /** A Stadium — pins the TRAINER_TYPE_UNSUPPORTED reject (persistent zones are
+      a later slice). Not in the registry either. */
+  "fix-stadium": {
+    ...blank,
+    id: "fix-stadium",
+    name: "fix-stadium",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect: "A test Stadium.",
+  } satisfies Card,
+  /** Chien-Pao ex — a Water Basic whose registry entry carries the activated
+      "Shivery Chill" Ability (search up to 2 Basic {W} Energy → hand). */
+  "sv02-061": battler("sv02-061", {
+    name: "Chien-Pao ex",
+    types: ["Water"],
+    hp: 220,
+    retreat: 2,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    abilities: [{ type: "Ability", name: "Shivery Chill", effect: "…search for up to 2 Basic {W} Energy…" }],
+    attacks: [{ cost: ["Water", "Water"], name: "Hail Blade", damage: "60×", effect: "…discard {W} Energy…" }],
+  }),
+  /** Bouffalant — a Colorless Basic whose registry entry carries the passive
+      "Bouffer" (takes 20 less damage after Weakness/Resistance). */
+  "sv03-174": battler("sv03-174", {
+    name: "Bouffalant",
+    types: ["Colorless"],
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [{ type: "Ability", name: "Bouffer", effect: "This Pokémon takes 20 less damage…" }],
+    attacks: [{ cost: ["Colorless", "Colorless"], name: "Damage Rush", damage: "50+" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -230,6 +290,55 @@ export const EVOLVE_DECK = deckOf({
   "fix-stage2": 8,
   "fix-energy": 16,
 });
+
+/** M4 slice 2 Trainer suite: reliable fix-basic-1 openings + Nest Ball search
+    targets, every representative Trainer in multiples (handFromDeck pulls them
+    post-setup), and Water/Colorless energy for the search filters. */
+export const TRAINER_DECK = deckOf({
+  "fix-basic-1": 20,
+  "sv01-189": 2,
+  "sv01-181": 2,
+  "sv02-172": 2,
+  "sv01-194": 2,
+  "sv01-188": 2,
+  "sv01-172": 2,
+  "fix-water-energy": 20,
+  "fix-energy": 8,
+});
+
+/** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so
+    either can be an Active), plus Water energy for Shivery Chill to search. */
+export const ABILITY_DECK = deckOf({
+  "sv02-061": 4,
+  "sv03-174": 4,
+  "fix-basic-1": 12,
+  "fix-water-energy": 24,
+  "fix-energy": 16,
+});
+
+/** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)
+    the Active, sending the current Active (if any) to the bench end — Ability
+    tests need a specific Active without hunting for a setup seed. Bench must
+    have room; the result stays legal-shaped (every uid in exactly one zone). */
+export function setActiveFromDeck(state: GameState, seat: Seat, cardId: string): GameState {
+  const side = state.players[seat];
+  const uid = side.deck.find((u) => state.cardIdByUid[u] === cardId);
+  if (uid === undefined) throw new Error(`${seat} deck has no ${cardId}`);
+  const benched = side.active === null ? side.bench : [...side.bench, side.active];
+  if (benched.length > 5) throw new Error("no bench room to displace the current Active");
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        active: makeInPlay(uid, 0),
+        bench: benched,
+      },
+    },
+  };
+}
 
 export function mustCreate(
   seed: number,

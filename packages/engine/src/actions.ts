@@ -1,4 +1,5 @@
 import type { GameEvent } from "./events";
+import type { EffectChoice } from "./interpreter";
 import type { GameState, PokemonTarget, Seat } from "./types";
 
 // Player-decision actions. Everything with no choice in it (mulligan
@@ -97,6 +98,30 @@ export interface PromoteAction {
   benchIndex: number;
 }
 
+export interface PlayTrainerAction {
+  type: "playTrainer";
+  seat: Seat;
+  /** A Trainer uid from the actor's hand (Item/Supporter — §7.1/§7.2). */
+  uid: string;
+}
+
+export interface UseAbilityAction {
+  type: "useAbility";
+  seat: Seat;
+  /** Which of the actor's own in-play Pokémon carries the Ability. */
+  target: PokemonTarget;
+  /** The Ability's printed name (a card may have more than one). */
+  abilityName: string;
+}
+
+export interface ResolveEffectAction {
+  type: "resolveEffect";
+  seat: Seat;
+  /** The controller's answer to the parked effect:choose prompt — cards for a
+      search, a Pokémon ref for a switch/gust/heal (validated vs the prompt). */
+  choice: EffectChoice;
+}
+
 export interface EndTurnAction {
   type: "endTurn";
   seat: Seat;
@@ -113,6 +138,9 @@ export type GameAction =
   | EvolveAction
   | RetreatAction
   | AttackAction
+  | PlayTrainerAction
+  | UseAbilityAction
+  | ResolveEffectAction
   | TakePrizesAction
   | PromoteAction
   | EndTurnAction;
@@ -159,6 +187,29 @@ export type ErrorCode =
   | "FIRST_TURN_ATTACK"
   | "BAD_ATTACK_INDEX"
   | "ATTACK_COST_UNMET"
+  // — M4 Trainer / Ability plays (§7/§9). —
+  /** playTrainer on a non-Trainer card. */
+  | "NOT_A_TRAINER"
+  /** A Stadium or Tool — persistent-zone trainers, a later slice. */
+  | "TRAINER_TYPE_UNSUPPORTED"
+  /** The Trainer has no authored program (registry.ts) — unsimulated, so it
+      cannot be played rather than played as a no-op (coverage strategy). */
+  | "TRAINER_NOT_SIMULATED"
+  /** §7.2 — one Supporter per turn. */
+  | "SUPPORTER_ALREADY_PLAYED"
+  /** §4 — the going-first player may not play a Supporter on turn 1. */
+  | "FIRST_TURN_SUPPORTER"
+  /** The play has no legal target (gust with no opponent Bench, Switch with no
+      Bench) — a card that would do nothing cannot be played. */
+  | "NO_LEGAL_TARGET"
+  /** useAbility naming an Ability this Pokémon does not have (or none authored). */
+  | "NO_SUCH_ABILITY"
+  /** §9 — the Ability may only be used from the Active Spot. */
+  | "ABILITY_ACTIVE_ONLY"
+  /** §9/§15.J — this Pokémon already used a once-per-turn Ability this turn. */
+  | "ABILITY_ALREADY_USED"
+  /** resolveEffect's choice does not match the parked prompt (bad uid/ref/count). */
+  | "BAD_EFFECT_CHOICE"
   /** §12 — an Asleep or Paralyzed Active cannot attack. (Confusion does not
       block declaring — it flips at resolution, attack.ts.) */
   | "STATUS_PREVENTS_ATTACK"

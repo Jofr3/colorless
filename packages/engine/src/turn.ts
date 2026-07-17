@@ -16,22 +16,16 @@ import {
   retreatCostOf,
   topUid,
 } from "./cards";
-import type { GameEvent, StatusName } from "./events";
+import type { GameEvent } from "./events";
 import { advance, turnTail } from "./flow";
-import type {
-  GameState,
-  InPlayPokemon,
-  PlayerSide,
-  PokemonTarget,
-  Seat,
-  SpecialConditions,
-} from "./types";
+import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
   discardFromStack,
   isImmobilized,
   makeInPlay,
   noConditions,
+  presentStatuses,
   withSide,
   without,
 } from "./types";
@@ -69,8 +63,9 @@ export function turnGate(
 /** The attach target off the wire: a non-null object naming a legal `spot`.
     Like every wire value (types are not validation) — a null or garbled
     shape must reject, not throw on `.spot`. The bench index is checked at
-    the use site (isBenchIndex), same as every other wire index. */
-function isPokemonTarget(value: unknown): value is PokemonTarget {
+    the use site (isBenchIndex), same as every other wire index. Shared by the
+    attach/evolve/ability targets and the effect-choice Pokémon ref. */
+export function isPokemonTarget(value: unknown): value is PokemonTarget {
   if (typeof value !== "object" || value === null) return false;
   const spot = (value as { spot?: unknown }).spot;
   return spot === "active" || spot === "bench";
@@ -278,17 +273,6 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
     dropping active-only markers here too. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return { ...pokemon, conditions: noConditions() };
-}
-
-/** The conditions present, in the event vocabulary — what a "benched"
-    STATUS_CLEARED lists. Stable order: the rotation first, then poisoned,
-    then burned. */
-function presentStatuses(conditions: SpecialConditions): StatusName[] {
-  const statuses: StatusName[] = [];
-  if (conditions.rotation !== "none") statuses.push(conditions.rotation);
-  if (conditions.poisonDamage > 0) statuses.push("poisoned");
-  if (conditions.burned) statuses.push("burned");
-  return statuses;
 }
 
 /** §11 — once per turn: the player names WHICH attached energies pay the

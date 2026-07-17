@@ -8,7 +8,15 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Attack, BasicEnergyType, Card } from "@luminous/schema";
-import type { GameAction, GameState, InPlayPokemon, Seat } from "@luminous/engine";
+import type {
+  EffectPrompt,
+  GameAction,
+  GameState,
+  InPlayPokemon,
+  PokemonRef,
+  PokemonTarget,
+  Seat,
+} from "@luminous/engine";
 import {
   attacksOf,
   cardOfUid,
@@ -16,6 +24,7 @@ import {
   energyProvidesOf,
   isImmobilized,
   otherSeat,
+  programFor,
   retreatCostOf,
   topCardOf,
   topUid,
@@ -42,6 +51,74 @@ export interface GameHudProps {
 
 const ACCENT_BUTTON_CLASS = `cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-40 ${GLASS_ACCENT_BUTTON}`;
 const NEUTRAL_BUTTON_CLASS = `cursor-pointer rounded-full px-4 py-2 text-sm font-medium disabled:cursor-default disabled:opacity-40 ${GLASS_NEUTRAL_BUTTON}`;
+/** Compact left-aligned row button — the Trainer/Ability lists and the effect
+    picker share it (the same look as the attack rows). */
+const ROW_BUTTON_ENABLED =
+  "cursor-pointer bg-white/[0.06] text-white/90 ring-white/15 hover:bg-white/[0.1] active:scale-[0.98]";
+const ROW_BUTTON_DISABLED = "cursor-default bg-white/[0.03] text-white/40 ring-white/8";
+const ROW_BUTTON_BASE =
+  "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all";
+
+/** A Trainer playable from `seat`'s hand (Item/Supporter with a registry
+    program), deduped to one entry per distinct card. `disabled` mirrors the
+    engine's §4/§7.2 Supporter gate so the button greys out before the reject. */
+interface TrainerOption {
+  uid: string;
+  name: string;
+  disabled: boolean;
+}
+function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
+  const side = game.players[seat];
+  const seen = new Set<string>();
+  const out: TrainerOption[] = [];
+  for (const uid of side.hand) {
+    const card = cardOfUid(game, uid);
+    if (card === undefined || card.category !== "Trainer") continue;
+    if (programFor(card.id)?.trainer === undefined || seen.has(card.id)) continue;
+    seen.add(card.id);
+    const isSupporter = card.trainerType === "Supporter";
+    const disabled = isSupporter && (game.turn === 1 || game.allowances.supporterPlayed);
+    out.push({ uid, name: card.name, disabled });
+  }
+  return out;
+}
+
+/** An activated Ability on one of `seat`'s in-play Pokémon (passive abilities
+    are always-on and show no button). `disabled` mirrors the §9 Active-only /
+    once-per-turn gate. */
+interface AbilityOption {
+  target: PokemonTarget;
+  abilityName: string;
+  label: string;
+  disabled: boolean;
+}
+function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
+  const side = game.players[seat];
+  const out: AbilityOption[] = [];
+  const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {
+    if (pokemon === null) return;
+    const uid = topUid(pokemon);
+    const card = uid === undefined ? undefined : cardOfUid(game, uid);
+    if (uid === undefined || card === undefined) return;
+    for (const ability of programFor(card.id)?.abilities ?? []) {
+      const disabled =
+        (ability.activeOnly && target.spot !== "active") ||
+        (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`));
+      out.push({ target, abilityName: ability.name, label: `${ability.name} · ${card.name}`, disabled });
+    }
+  };
+  consider(side.active, { spot: "active" });
+  side.bench.forEach((pokemon, index) => consider(pokemon, { spot: "bench", index }));
+  return out;
+}
+
+/** A choose-Pokémon candidate's display name, resolved off the live board. */
+function refName(game: GameState, ref: PokemonRef): string {
+  const side = game.players[ref.seat];
+  const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+  if (pokemon == null) return "a Pokémon";
+  return topCardOf(game, pokemon)?.name ?? "a Pokémon";
+}
 
 /** §6.1 energy-symbol dot tints, from the shared app palette (one "Fire red"
     across builder + HUD). Keyed by the printed COST symbols: every basic
@@ -300,6 +377,11 @@ function TurnPanel(props: GameHudProps) {
     side.bench.length > 0 &&
     active.energy.length >= retreatCost;
 
+  // Trainer/Ability plays (§7/§9) — read off raw GameState like payability
+  // above (the acknowledged P4 blocker); the engine still owns fine legality.
+  const trainerOptions = playableTrainers(game, viewerSeat);
+  const abilityOptions = usableAbilities(game, viewerSeat);
+
   return (
     <>
       {/* Just above the hand, clear of the pass-turn control at right-center. */}
@@ -359,6 +441,55 @@ function TurnPanel(props: GameHudProps) {
           <p className="mt-2 text-[11px] text-white/45">
             Confused: attacking flips a coin — tails: 30 damage to itself, turn ends.
           </p>
+        )}
+        {abilityOptions.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Abilities
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {abilityOptions.map((opt) => (
+                <li key={`${opt.abilityName}-${opt.target.spot === "bench" ? opt.target.index : "active"}`}>
+                  <button
+                    type="button"
+                    disabled={opt.disabled}
+                    onClick={() =>
+                      dispatch({
+                        type: "useAbility",
+                        seat: viewerSeat,
+                        target: opt.target,
+                        abilityName: opt.abilityName,
+                      })
+                    }
+                    className={`${ROW_BUTTON_BASE} ${opt.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {trainerOptions.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Trainers
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {trainerOptions.map((opt) => (
+                <li key={opt.uid}>
+                  <button
+                    type="button"
+                    disabled={opt.disabled}
+                    onClick={() => dispatch({ type: "playTrainer", seat: viewerSeat, uid: opt.uid })}
+                    className={`${ROW_BUTTON_BASE} ${opt.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{opt.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         <div className="mt-3 flex items-center justify-between gap-2">
           <button
@@ -623,6 +754,115 @@ function PromoteDialog({ game, viewerSeat, names, dispatch }: GameHudProps) {
   );
 }
 
+/** effect:choose — a Trainer/Ability the viewer played parked on a decision
+    (§15.E/G). Dispatches resolveEffect. Mounted only while the decision is
+    parked on the viewer (the phase switch), so the sub-dialogs' useState is
+    the fresh-picks-per-decision reset. */
+function EffectChooseDialog(props: GameHudProps) {
+  const pending = props.projection.pendingDecision;
+  // Narrowing only — the phase switch mounts this exactly at effect:choose.
+  if (pending?.kind !== "effectChoose") return null;
+  const prompt = pending.prompt;
+  return prompt.kind === "chooseCards" ? (
+    <ChooseCardsDialog {...props} prompt={prompt} />
+  ) : (
+    <ChoosePokemonDialog {...props} prompt={prompt} />
+  );
+}
+
+/** "Up to N" deck search: multi-select up to max, or take none — the search
+    may always be declined (§15.E). */
+function ChooseCardsDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "chooseCards" }> }) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const toggle = (uid: string) => {
+    setPicked((prev) =>
+      prev.includes(uid)
+        ? prev.filter((u) => u !== uid)
+        : prev.length < prompt.max
+          ? [...prev, uid]
+          : prev,
+    );
+  };
+  return (
+    <HudDialog label="Search your deck">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <p className="mt-1.5 text-sm text-white/55">
+        Pick up to {prompt.max} ({picked.length}/{prompt.max}).
+      </p>
+      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((uid) => {
+          const selected = picked.includes(uid);
+          return (
+            <li key={uid}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={() => toggle(uid)}
+                className={`${ROW_BUTTON_BASE} ${
+                  selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                }`}
+              >
+                <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON_CLASS}
+          onClick={() =>
+            dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "cards", uids: picked } })
+          }
+        >
+          {picked.length === 0 ? "Take none" : `Take ${picked.length}`}
+        </button>
+      </div>
+    </HudDialog>
+  );
+}
+
+/** Choose exactly one Pokémon (switch / gust / heal). Picking is the whole
+    decision, so each row dispatches directly. */
+function ChoosePokemonDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "choosePokemon" }> }) {
+  return (
+    <HudDialog label="Choose a Pokémon">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {prompt.candidates.map((ref) => (
+          <li key={`${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "a"}`}>
+            <button
+              type="button"
+              onClick={() =>
+                dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "pokemon", ref } })
+              }
+              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+            >
+              <span className="truncate">{refName(game, ref)}</span>
+              {ref.seat !== viewerSeat && (
+                <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                  opponent
+                </span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </HudDialog>
+  );
+}
+
 function GameOverOverlay({ projection, viewerSeat, names, onPlayAgain }: GameHudProps) {
   const outcome = projection.outcome;
   if (outcome === null) return null;
@@ -687,6 +927,8 @@ export function GameHud(props: GameHudProps) {
       return acting ? <PrizeDialog key={`prizes:${seatKey}`} {...props} /> : null;
     case "ko:promote":
       return acting ? <PromoteDialog {...props} /> : null;
+    case "effect:choose":
+      return acting ? <EffectChooseDialog key={`effect:${seatKey}`} {...props} /> : null;
     case "gameOver":
       return <GameOverOverlay {...props} />;
   }

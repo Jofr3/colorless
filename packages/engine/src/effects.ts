@@ -1,33 +1,72 @@
-// The first sliver of M4's effect-op system: derive executable steps from
-// printed attack text. Deliberately CONSERVATIVE — only a handful of exact,
-// whole-effect sentence shapes (verified against real catalog rows) derive;
-// everything else returns null and stays on the loud ATTACK_EFFECT_SKIPPED
-// path (simulator.md coverage strategy: apply what is understood completely,
-// flag the rest rather than guess). Execution lives in attack.ts — this
-// module is pure text → steps.
+// The effect-op vocabulary (D8's "primitive ops authored as data") and the
+// conservative text→ops deriver. M3 shipped the first sliver — status/heal
+// ops derived from exact attack sentences. M4 grows the union with the board
+// and deck ops that Trainers and Abilities need (draw, search, switch, gust,
+// heal-a-chosen-Pokémon) and moves EXECUTION into a shared, resumable
+// interpreter (interpreter.ts) that both attacks and card plays run through.
+//
+// This module stays PURE data: the op union (below) plus `deriveAttackEffect`
+// (printed text → ops, unchanged from M3). It knows nothing about GameState —
+// interpreter.ts owns every state transition and the mid-effect decision
+// parking. Registry-authored programs (registry.ts) are the same op arrays,
+// just hand-written instead of text-derived, and sit ABOVE the deriver at the
+// one attack call site (`programFor(id).attack ?? deriveAttackEffect(text)`).
 
-/** One derived effect operation. The M4 system grows this union; M3 only
-    needs the Special-Condition slice (§12) plus the self-heal and coin-flip
-    gate that ride along on the same sentences. */
-export type EffectStep =
+import type { StatusName } from "./events";
+
+/** A declarative card predicate for deck searches (§15.E). Deliberately tiny
+    — the representative cards need only "a Basic Pokémon", "any Pokémon" and
+    "a Basic Energy [of a type]"; the union grows one entry per new shape. */
+export type CardFilter =
+  | { kind: "basicPokemon" }
+  | { kind: "anyPokemon" }
+  /** A basic Energy card; `energyType` (a BASIC_ENERGY_TYPES member) narrows
+      it to one type (Chien-Pao's "Basic {W} Energy"), else any basic energy. */
+  | { kind: "basicEnergy"; energyType?: string };
+
+/** One effect operation — the engine's instruction set (D8). Attack-derived
+    programs use the first three (targets are relative to the attacker: "self"
+    = the attacker's Active, "defender" = the Defending Pokémon); Trainer /
+    Ability programs use the rest (targets relative to the controller — the
+    seat playing the card — resolved by the interpreter). The whole union is
+    JSON-safe so a parked program (interpreter.ts) serializes into the phase. */
+export type EffectOp =
+  // — Attack ops (M3), attacker-relative. —
   | {
       op: "applyStatus";
       target: "defender" | "self";
-      status: "asleep" | "paralyzed" | "confused" | "burned" | "poisoned";
-      /** Only for "poisoned": HP placed per Checkup when the text raises it
-          above the default 10 ("put N damage counters … instead of 1"). */
+      status: StatusName;
+      /** Only for "poisoned": HP placed per Checkup when raised above 10. */
       poisonDamage?: number;
     }
   | { op: "heal"; target: "self"; amount: number }
   /** "Flip a coin. If heads, …" — `then` runs on heads only. */
-  | { op: "coinFlipGate"; then: EffectStep[] };
+  | { op: "coinFlipGate"; then: EffectOp[] }
+  // — Trainer / Ability ops (M4), controller-relative. —
+  /** Draw `count` from the top of the controller's deck (short-draws when the
+      deck is shallower — §14.3 deck-out is a turn-START rule only). */
+  | { op: "drawCards"; count: number }
+  /** Discard the controller's whole hand (Professor's Research precedes a draw). */
+  | { op: "discardHand" }
+  /** Shuffle the controller's deck (the tail of every search). */
+  | { op: "shuffleDeck" }
+  /** Search the controller's deck for up to `max` cards matching `filter` and
+      move them to `dest`. "Up to" — the player may take fewer (or none), so
+      this PARKS on a card choice unless the deck holds no candidate. */
+  | { op: "searchDeck"; filter: CardFilter; dest: "bench" | "hand"; max: number }
+  /** Switch the controller's Active with one of their Benched Pokémon (§G).
+      PARKS on the bench choice unless exactly one is benched. */
+  | { op: "switchActive" }
+  /** Gust: switch one of the OPPONENT's Benched Pokémon into their Active spot
+      (Boss's Orders). PARKS on the opponent-bench choice unless forced. */
+  | { op: "gust" }
+  /** Heal `amount` HP from one of the controller's own in-play Pokémon
+      (Potion). PARKS on the target choice unless only the Active is in play. */
+  | { op: "healChosen"; amount: number };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 
-const STATUS_OF_WORD: Record<
-  StatusWord,
-  "asleep" | "burned" | "confused" | "paralyzed" | "poisoned"
-> = {
+const STATUS_OF_WORD: Record<StatusWord, StatusName> = {
   Asleep: "asleep",
   Burned: "burned",
   Confused: "confused",
@@ -61,10 +100,10 @@ const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from i
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 
-/** Parse printed attack text into executable steps, or null when the text is
+/** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the five recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
-export function deriveAttackEffect(text: string): EffectStep[] | null {
+export function deriveAttackEffect(text: string): EffectOp[] | null {
   const effect = text.trim();
 
   // 1. "Your opponent's Active Pokémon is now {X}."
@@ -122,8 +161,6 @@ export function deriveAttackEffect(text: string): EffectStep[] | null {
 /** The matched status word, lowercased into the event vocabulary. The regex
     alternation guarantees the word; the fallback only satisfies
     noUncheckedIndexedAccess. */
-function statusOf(
-  word: string | undefined,
-): "asleep" | "burned" | "confused" | "paralyzed" | "poisoned" {
+function statusOf(word: string | undefined): StatusName {
   return STATUS_OF_WORD[(word ?? "Asleep") as StatusWord];
 }

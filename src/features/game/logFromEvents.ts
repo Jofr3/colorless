@@ -231,6 +231,9 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       if (event.resistance !== null) {
         segments.push(plain(modifierText("resistance", event.resistance)));
       }
+      // A defender passive (Bouffalant "Bouffer", §15.B) removed flat HP after
+      // Weakness/Resistance — show the math like the W/R steps.
+      if (event.reduction !== undefined) segments.push(plain(` · reduced ${event.reduction}`));
       return row(otherSeat(event.seat), segments);
     }
     // — M3 special conditions (§12) + the Pokémon Checkup (§13). Card names
@@ -357,6 +360,37 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain("promoted "),
         strong(cardName(state, event.uid)),
         plain(" to Active"),
+      ]);
+    // — M4 Trainer / Ability plays (§7/§9) and their effect ops (§15). —
+    case "TRAINER_PLAYED":
+      return row(event.seat, [plain("played "), strong(cardName(state, event.uid))]);
+    case "ABILITY_USED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" used "),
+        strong(event.ability),
+      ]);
+    case "HAND_DISCARDED": {
+      // Count only — the hand is otherwise hidden (module header), even though
+      // the discard pile itself is public.
+      const n = event.uids.length;
+      return row(event.seat, [plain(`discarded their hand (${n} card${n === 1 ? "" : "s"})`)]);
+    }
+    case "DECK_SEARCHED": {
+      const n = event.uids.length;
+      return row(
+        event.seat,
+        event.dest === "bench"
+          ? [plain(`searched their deck — benched ${n} Pokémon`)]
+          : [plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} in hand`)],
+      );
+    }
+    case "POKEMON_SWITCHED":
+      // Passive voice — the causing card (Switch / Boss's Orders) already
+      // logged its TRAINER_PLAYED row; `seat` owns the board that changed.
+      return row(event.seat, [
+        strong(cardName(state, event.nowActive)),
+        plain(" was switched to the Active spot"),
       ]);
     case "TURN_ENDED":
       return row(event.seat, [plain("ended their turn")]);

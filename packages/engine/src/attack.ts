@@ -18,7 +18,6 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
-import type { EffectStep } from "./effects";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import {
@@ -29,10 +28,12 @@ import {
   resolvePromotionAndResume,
   turnTail,
 } from "./flow";
+import { runProgram } from "./interpreter";
+import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, PendingStage, Phase, Seat } from "./types";
-import { DEFAULT_POISON_DAMAGE, isImmobilized, otherSeat, withActive, withSide } from "./types";
+import { isImmobilized, otherSeat, withActive, withSide } from "./types";
 
 // The attack step (§8) and the two KO-resolution decisions it can park on
 // (§8.1). Declaring an attack ends the turn (§5.3), so every path out of
@@ -164,14 +165,20 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // effect ops) is flagged loudly instead of guessed.
   const { base, modifier } = parseAttackDamage(declared.damage);
   const effect = declared.effect ?? null;
-  const steps = effect === null || effect === "" ? null : deriveAttackEffect(effect);
-  if (modifier !== null || (effect !== null && effect !== "" && steps === null)) {
+  // Registry ABOVE the deriver (D8): an authored attack program wins; else the
+  // text deriver; else null (unsimulated). None of the representative attacks
+  // are registry-authored, so this reads through to the deriver today — the
+  // seam is here for when they are.
+  const authored = programFor(attacker.id)?.attack ?? null;
+  const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
+  const program = authored ?? derived;
+  if (modifier !== null || (effect !== null && effect !== "" && program === null)) {
     events.push({
       type: "ATTACK_EFFECT_SKIPPED",
       seat: action.seat,
       attack: declared.name,
-      // Derived text IS simulated — only an underived one is skipped.
-      effect: steps === null ? effect : null,
+      // Authored/derived text IS simulated — only an unsimulated one is skipped.
+      effect: program === null ? effect : null,
       damageModifier: modifier,
     });
   }
@@ -179,11 +186,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   let defended = defender;
   if (base > 0) {
     // §8.5 damage pipeline, in printed order: base → Weakness (modern ×2,
-    // the old-era +20 prints add) → Resistance (−30), floored at 0. Both
-    // apply to the Defending Pokémon only.
+    // the old-era +20 prints add) → Resistance (−30) → the defender's
+    // continuous damage reduction (Bouffalant "Bouffer", §15.B), floored at 0.
+    // Weakness/Resistance apply to the Defending Pokémon only.
     const weakness = weaknessOf(attacker, defenderCard);
     const resistance = resistanceOf(attacker, defenderCard);
-    const dealt = Math.max(0, applyDamageModifier(applyDamageModifier(base, weakness), resistance));
+    const afterWR = Math.max(0, applyDamageModifier(applyDamageModifier(base, weakness), resistance));
+    const reduction = programFor(defenderCard.id)?.passive?.damageReductionAfterWR ?? 0;
+    const dealt = Math.max(0, afterWR - reduction);
     defended = { ...defender, damage: defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
     events.push({
@@ -193,16 +203,20 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       base,
       weakness,
       resistance,
+      // Present only when a passive actually reduced the post-W/R total.
+      reduction: reduction > 0 ? reduction : undefined,
       dealt,
       damage: defended.damage,
     });
   }
 
-  // §8 step 4 — the derived effect steps run AFTER the damage, in printed
-  // order: a defender-targeted status lands even when the damage above is
-  // lethal (the condition simply vanishes with the stack at the KO below).
-  if (steps !== null) {
-    next = runEffectSteps(next, steps, action.seat, events);
+  // §8 step 4 — the effect program runs AFTER the damage, in printed order: a
+  // defender-targeted status lands even when the damage above is lethal (the
+  // condition vanishes with the stack at the KO below). Attack programs are
+  // synchronous (status/heal/coin-flip) — a parked result would drop the
+  // remaining ops, which no in-scope program produces.
+  if (program !== null) {
+    next = runProgram(next, program, { seat: action.seat }, events).state;
   }
 
   // §8.1 Knock Out check on the defender, then the §5.3 turn end — the
@@ -234,70 +248,6 @@ function finishAttack(
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
   pending.push(...turnTail(attackerSeat));
   return advance({ ...next, pending }, events);
-}
-
-/** Execute derived effect steps (effects.ts) in order. "self" is the
-    attacker's Active, "defender" the Defending Pokémon. A rotation status
-    REPLACES any other rotation (§12 mutual exclusivity — no cleared event
-    for the overwritten one), re-poisoning overwrites the counter amount,
-    burn is idempotent, and healing clamps at the damage present (a no-op
-    heal emits nothing). */
-function runEffectSteps(
-  state: GameState,
-  steps: readonly EffectStep[],
-  attackerSeat: Seat,
-  events: GameEvent[],
-): GameState {
-  let next = state;
-  for (const step of steps) {
-    switch (step.op) {
-      case "applyStatus": {
-        const seat = step.target === "self" ? attackerSeat : otherSeat(attackerSeat);
-        const spot = activeTop(next, seat);
-        if (spot === null) break; // no one there to affect
-        const { active, uid } = spot;
-        if (step.status === "poisoned") {
-          const poisonDamage = step.poisonDamage ?? DEFAULT_POISON_DAMAGE;
-          next = withActive(next, seat, {
-            ...active,
-            conditions: { ...active.conditions, poisonDamage },
-          });
-          events.push({ type: "STATUS_APPLIED", seat, uid, status: "poisoned", poisonDamage });
-        } else if (step.status === "burned") {
-          next = withActive(next, seat, {
-            ...active,
-            conditions: { ...active.conditions, burned: true },
-          });
-          events.push({ type: "STATUS_APPLIED", seat, uid, status: "burned" });
-        } else {
-          next = withActive(next, seat, {
-            ...active,
-            conditions: { ...active.conditions, rotation: step.status },
-          });
-          events.push({ type: "STATUS_APPLIED", seat, uid, status: step.status });
-        }
-        break;
-      }
-      case "heal": {
-        const spot = activeTop(next, attackerSeat);
-        if (spot === null) break;
-        const { active, uid } = spot;
-        const amount = Math.min(step.amount, active.damage);
-        if (amount <= 0) break; // nothing to heal — no event
-        next = withActive(next, attackerSeat, { ...active, damage: active.damage - amount });
-        events.push({ type: "HEALED", seat: attackerSeat, uid, amount });
-        break;
-      }
-      case "coinFlipGate": {
-        const [face, rngState] = flipCoin(next.rngState);
-        next = { ...next, rngState };
-        events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: attackerSeat, result: face });
-        if (face === "heads") next = runEffectSteps(next, step.then, attackerSeat, events);
-        break;
-      }
-    }
-  }
-  return next;
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */

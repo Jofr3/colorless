@@ -21,6 +21,7 @@
 import type { ApplyResult, GameAction } from "./actions";
 import { err } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
+import { playTrainer, resolveEffect, useAbility } from "./cardplay";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -31,8 +32,9 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 in progress; first slice = evolution). */
-export const engineVersion = "0.4.0";
+/** Engine milestone marker (M4 slice 2: Trainers + Abilities + the effect
+    registry / resumable interpreter). */
+export const engineVersion = "0.5.0";
 
 export type {
   ApplyResult,
@@ -45,13 +47,16 @@ export type {
   EvolveAction,
   GameAction,
   PlayBasicToBenchAction,
+  PlayTrainerAction,
   PromoteAction,
+  ResolveEffectAction,
   RetreatAction,
   SetupDrawExtraAction,
   SetupPlaceActiveAction,
   SetupPlaceBenchAction,
   SetupReadyAction,
   TakePrizesAction,
+  UseAbilityAction,
 } from "./actions";
 export {
   applyDamageModifier,
@@ -73,7 +78,15 @@ export {
 } from "./cards";
 export type { DamageModifier, ParsedDamage } from "./cards";
 export { deriveAttackEffect } from "./effects";
-export type { EffectStep } from "./effects";
+export type { CardFilter, EffectOp } from "./effects";
+export type {
+  EffectChoice,
+  EffectContinuation,
+  EffectPrompt,
+  PokemonRef,
+} from "./interpreter";
+export type { AbilityProgram, CardProgram, PassiveEffects } from "./registry";
+export { programFor } from "./registry";
 export type { DrawReason, GameEvent, StatusName } from "./events";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
@@ -150,6 +163,12 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return retreat(state, action);
     case "attack":
       return attack(state, action);
+    case "playTrainer":
+      return playTrainer(state, action);
+    case "useAbility":
+      return useAbility(state, action);
+    case "resolveEffect":
+      return resolveEffect(state, action);
     case "takePrizes":
       return takePrizes(state, action);
     case "promote":

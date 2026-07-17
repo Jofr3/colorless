@@ -1,5 +1,6 @@
 import type { Card } from "@luminous/schema";
-import type { DrawReason, GameEvent } from "./events";
+import type { DrawReason, GameEvent, StatusName } from "./events";
+import type { EffectContinuation, EffectPrompt } from "./interpreter";
 
 // The whole GameState is a plain JSON-safe value — no classes, no Date, no
 // functions — so snapshots serialize, replay and structurally share. Nothing
@@ -48,6 +49,18 @@ export function noConditions(): SpecialConditions {
     The action handlers keep their own distinct error codes/messages. */
 export function isImmobilized(conditions: SpecialConditions): boolean {
   return conditions.rotation === "asleep" || conditions.rotation === "paralyzed";
+}
+
+/** The conditions present, in the event vocabulary — the stable order
+    (rotation, then poisoned, then burned) that a "benched"/"evolved"/switched
+    STATUS_CLEARED lists. Shared by retreat + evolve (turn.ts) and the effect
+    switch (interpreter.ts) so the ordering can't drift between them. */
+export function presentStatuses(conditions: SpecialConditions): StatusName[] {
+  const statuses: StatusName[] = [];
+  if (conditions.rotation !== "none") statuses.push(conditions.rotation);
+  if (conditions.poisonDamage > 0) statuses.push("poisoned");
+  if (conditions.burned) statuses.push("burned");
+  return statuses;
 }
 
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
@@ -116,15 +129,22 @@ export type GameOutcome =
 
 /** Per-turn allowances (§5.2 caps, §15.J), reset by startTurn. They live on
     GameState rather than on the turn:action phase so a mid-turn interrupt
-    phase (KO prize picks / promotions, M4's searches) can replace the phase
-    without destroying them. M4's supporter/stadium flags belong here too. */
+    phase (KO prize picks / promotions, effect:choose searches) can replace the
+    phase without destroying them. */
 export interface TurnAllowances {
   energyAttached: boolean;
   retreated: boolean;
+  /** §7.2 — at most one Supporter per turn. (Stadium's one-per-turn flag lands
+      with the stadium zone in a later slice.) */
+  supporterPlayed: boolean;
+  /** §9/§15.J — per-Pokémon once-per-turn Ability uses, `${uid}:${ability}`.
+      A list, not a bool: several Pokémon may each use a once-per-turn Ability
+      in the same turn. Reset each turn, so a plain array clears cleanly. */
+  abilitiesUsed: string[];
 }
 
 export function freshAllowances(): TurnAllowances {
-  return { energyAttached: false, retreated: false };
+  return { energyAttached: false, retreated: false, supporterPlayed: false, abilitiesUsed: [] };
 }
 
 /** The staged turn tail. endTurn — and attack, which ends the turn through
@@ -170,6 +190,13 @@ export type Phase =
       Pokémon. A lone benched Pokémon auto-promotes; an empty bench is the
       §14.2 loss (resolved before this phase is ever entered). */
   | { kind: "ko:promote"; seat: Seat }
+  /** Mid-effect decision interrupt (§15.E/G): a Trainer or Ability the acting
+      `seat` played parked on a choice (which card to search up, which Pokémon
+      to gust/switch/heal). `prompt` is the legal options; `cont` is the JSON
+      continuation the resolveEffect action replays. Effects in scope run only
+      during the controller's own turn, so resolving returns to their
+      turn:action — no tail interaction (interpreter.ts). */
+  | { kind: "effect:choose"; seat: Seat; prompt: EffectPrompt; cont: EffectContinuation }
   | { kind: "gameOver"; outcome: GameOutcome };
 
 /** The in-turn phase, narrowed — the shape every turn action is gated on. */
