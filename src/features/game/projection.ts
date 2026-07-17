@@ -8,8 +8,12 @@
 //     backs (count only — no card identity anywhere, not even in ids);
 //   - BOTH prize sets as counts only (prizes are face-down in the real game);
 //   - decks as counts; discard piles fully public (§2 — ordered and public);
-//   - in-play Pokémon (active/bench) public, with their attached cards and
-//     their damage/max HP (`pokemon` — damage counters sit on the table).
+//   - in-play Pokémon (active/bench) public once setup is over, with their
+//     attached cards and their damage/max HP (`pokemon` — damage counters
+//     sit on the table). DURING the setup:* phases (§3 — placements stay
+//     face-down until both players ready; the engine emits SETUP_REVEALED
+//     only then) the OPPONENT's active/bench project as anonymous positional
+//     backs with no `pokemon` rows; the viewer's OWN placements stay face-up.
 //
 // Public cards keep the engine uid as CardModel.id — the Pixi layer keys its
 // views off that id, so a card animates as ONE object as it moves between
@@ -65,8 +69,10 @@ export interface GameProjection {
   board: BoardState;
   /** Deck counts + public discards, per side, keyed like the board. */
   piles: Record<PlayerId, ProjectedPiles>;
-  /** Damage/HP for EVERY in-play Pokémon — actives + benches, BOTH sides
-      (public info) — keyed by CardModel.id. */
+  /** Damage/HP for every VISIBLE in-play Pokémon — actives + benches, both
+      sides once boards are public; during setup only the viewer's own side
+      (a row for a redacted stack would leak its uid — the key — and its
+      printed HP) — keyed by CardModel.id. */
   pokemon: Record<string, PokemonStatus>;
   /** 1-based turn counter; 0 while the game is still in setup. */
   turn: number;
@@ -89,18 +95,22 @@ export interface GameProjection {
 export function projectGameState(state: GameState, viewerSeat: Seat): GameProjection {
   const opponentSeat = otherSeat(viewerSeat);
   const view = phaseViewOf(state, viewerSeat);
+  // Setup placements are face-down until both players ready, so the
+  // opponent's in-play stacks (and their status rows) redact until then.
+  // The viewer's own placements stay face-up — they placed them.
+  const setup = inSetup(state);
   return {
     board: {
       // No stadium zone in the engine yet (lands with M4's trainers).
       stadium: null,
-      you: playerBoardOf(state, viewerSeat, /* faceUpHand */ true),
-      opponent: playerBoardOf(state, opponentSeat, /* faceUpHand */ false),
+      you: playerBoardOf(state, viewerSeat, { faceUpHand: true, faceUpInPlay: true }),
+      opponent: playerBoardOf(state, opponentSeat, { faceUpHand: false, faceUpInPlay: !setup }),
     },
     piles: {
       you: pilesOf(state, viewerSeat),
       opponent: pilesOf(state, opponentSeat),
     },
-    pokemon: pokemonStatusOf(state),
+    pokemon: pokemonStatusOf(state, setup ? [viewerSeat] : SEATS),
     turn: state.turn,
     activePlayer: asPlayerId(view.activeSeat, viewerSeat),
     waitingOn: asPlayerId(view.waitingSeat, viewerSeat),
@@ -109,19 +119,35 @@ export function projectGameState(state: GameState, viewerSeat: Seat): GameProjec
   };
 }
 
-function playerBoardOf(state: GameState, seat: Seat, faceUpHand: boolean): PlayerBoard {
+/** How much of a side the viewer may see. The two redactions are
+    independent: the opponent's HAND is always face-down, their IN-PLAY
+    stacks only during setup (see hiddenInPlayModel). The viewer's own side
+    is always fully face-up. */
+interface SideVisibility {
+  faceUpHand: boolean;
+  faceUpInPlay: boolean;
+}
+
+function playerBoardOf(state: GameState, seat: Seat, visibility: SideVisibility): PlayerBoard {
   const side = state.players[seat];
   return {
-    hand: faceUpHand
+    hand: visibility.faceUpHand
       ? side.hand.map((uid) => cardModelOf(state, uid))
       : hiddenHand(side.hand.length),
-    active: side.active === null ? null : inPlayModelOf(state, side.active),
+    active:
+      side.active === null
+        ? null
+        : visibility.faceUpInPlay
+          ? inPlayModelOf(state, side.active)
+          : hiddenInPlayModel("opponent-active-hidden"),
     // Index-stable: an (engine-impossible) empty stack projects as a slot
     // placeholder rather than vanishing — compacting the bench would desync
     // every index-addressed slot (promotions, drops) from the engine's.
-    bench: side.bench.map(
-      (pokemon, index) => inPlayModelOf(state, pokemon) ?? emptyStackModel(seat, index),
-    ),
+    bench: visibility.faceUpInPlay
+      ? side.bench.map(
+          (pokemon, index) => inPlayModelOf(state, pokemon) ?? emptyStackModel(seat, index),
+        )
+      : side.bench.map((_, index) => hiddenInPlayModel(`opponent-bench-${index}-hidden`)),
     // Count only — prizes are face-down for BOTH players (§3.8), so no uid or
     // catalog id of a prize card may appear anywhere in the projection.
     prizesRemaining: side.prizes.length,
@@ -136,13 +162,15 @@ function pilesOf(state: GameState, seat: Seat): ProjectedPiles {
   };
 }
 
-/** Damage/HP for both sides' in-play Pokémon — public info, identical from
-    either side of the table. An (engine-impossible) empty stack has no uid
-    to key, so it is the one in-play entry without a status row — its bench
-    placeholder carries no battle state either. */
-function pokemonStatusOf(state: GameState): Record<string, PokemonStatus> {
+/** Damage/HP for `seats`' in-play Pokémon — both seats once boards are
+    public (identical from either side of the table), only the viewer's own
+    during setup: a row for a redacted stack would leak its uid (the key) and
+    printed HP. An (engine-impossible) empty stack has no uid to key, so it
+    is the one in-play entry without a status row — its bench placeholder
+    carries no battle state either. */
+function pokemonStatusOf(state: GameState, seats: readonly Seat[]): Record<string, PokemonStatus> {
   const status: Record<string, PokemonStatus> = {};
-  for (const seat of SEATS) {
+  for (const seat of seats) {
     const side = state.players[seat];
     for (const pokemon of [side.active, ...side.bench]) {
       if (pokemon === null) continue;
@@ -208,6 +236,38 @@ function emptyStackModel(seat: Seat, index: number): CardModel {
   };
 }
 
+/** True until the engine reveals the boards: every setup:* phase. The engine
+    emits SETUP_REVEALED when the second player readies and transitions
+    straight into turn:action (packages/engine/src/setup.ts), so "phase is
+    setup" is exactly "placements are still face-down". */
+function inSetup(state: GameState): boolean {
+  switch (state.phase.kind) {
+    case "setup:chooseFirst":
+    case "setup:drawExtra":
+    case "setup:place":
+      return true;
+    default:
+      return false;
+  }
+}
+
+/** A face-down back for an opponent in-play stack during setup. Positional
+    id, NOT the engine uid — leaking the uid would let a client match the
+    stack against cards it later sees move (the same rule as hiddenHand).
+    When SETUP_REVEALED flips the board public the model re-keys from this
+    positional id to the real uid, so the reveal is a remount rather than a
+    flip animation — the same accepted trade as the opponent-hand backs.
+    Only opponent stacks ever redact, hence the fixed "opponent-" ids
+    (mirroring hiddenHand). */
+function hiddenInPlayModel(id: string): CardModel {
+  return {
+    id,
+    cardId: HIDDEN_CARD_ID,
+    name: HIDDEN_CARD_NAME,
+    type: "trainer", // neutral, mirrors the synthetic deck/prize backs
+  };
+}
+
 /** Face-down backs for the opponent's hand. Ids are positional (`opponent-
     hand-N`), NOT the engine uids: a uid is stable across zones, so leaking it
     here would let a client track a specific hidden card from the moment it
@@ -243,7 +303,7 @@ function asPlayerId(seat: Seat | null, viewerSeat: Seat): PlayerId | null {
 
 /** Everything the projection derives from the phase (engine seats — the
     caller maps them per viewer). */
-interface PhaseView {
+export interface PhaseView {
   /** Turn owner; null in setup and once the game is over. */
   activeSeat: Seat | null;
   /** The seat that must act; null once the game is over. */
@@ -253,13 +313,15 @@ interface PhaseView {
   outcome: GameOutcome | null;
 }
 
-/** ONE exhaustive switch over the Phase union. Exhaustive on purpose: M1's
-    defensive turn-parity fallback (written while M2's phases were still
-    landing) guessed the TURN OWNER, which is the wrong seat to wait on
-    exactly when ko:promote parks — the KO'd seat decides in the middle of
-    the attacker's turn. With the union complete in-tree, a future kind is a
-    compile error here instead of a wrong guess. */
-function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
+/** THE one exhaustive switch over the Phase union — exported so
+    useLocalGame's waitingSeatOf reuses it instead of duplicating the
+    phase→seat mapping. Exhaustive on purpose: M1's defensive turn-parity
+    fallback (written while M2's phases were still landing) guessed the TURN
+    OWNER, which is the wrong seat to wait on exactly when ko:promote parks —
+    the KO'd seat decides in the middle of the attacker's turn. With the
+    union complete in-tree, a future kind is a compile error here instead of
+    a wrong guess. */
+export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
   const none = { pendingDecision: null, outcome: null };
   const phase = state.phase;
   switch (phase.kind) {

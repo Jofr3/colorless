@@ -11,6 +11,7 @@
 // trusts the wire and casts to the shared types.
 
 import type {
+  Card,
   CardBrief,
   CardCategory,
   CatalogFacets,
@@ -208,6 +209,11 @@ export type CardsQuery = {
 /** Search the card catalog — a page of briefs plus the total match count. */
 export function getCards(params: CardsQuery = {}): Promise<Paginated<CardBrief>> {
   return request(`/cards${queryString(params)}`);
+}
+
+/** One full canonical card by tcgdex id, e.g. "sv06.5-001". Unknown id → 404. */
+export function getCard(id: string): Promise<Card> {
+  return request(`/cards/${encodeURIComponent(id)}`);
 }
 
 /** Every set brief (optionally one serie's), ordered by release date. */

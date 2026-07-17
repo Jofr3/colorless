@@ -34,8 +34,14 @@ export const PLAYMAT_WRAPPER_CLASS =
 
 export const CENTER_LINE_TOP = "calc((100dvh - var(--hand-h)) / 2)";
 
+// The backdrop blur lives on a ::before overlay, NOT on the frame element:
+// element-level backdrop-filter creates a stacking context, which would trap
+// z-indexed descendants (damage chips, the discard's top-card image) below
+// the Pixi canvas (z-60, playmat.css). The pseudo paints in the playmat
+// section's negative-z phase, under the frame's translucent tint — the same
+// composite as element-level blur, minus the stacking context.
 export const FRAME_CLASS =
-  "relative rounded-xl bg-white/[0.045] backdrop-blur-[3px] ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]";
+  "relative rounded-xl bg-white/[0.045] before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:backdrop-blur-[3px] ring-1 ring-inset ring-white/9 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_18px_rgba(0,0,0,0.32)]";
 
 export const ACTIVE_SLOT_CLASS =
   "ring-amber-300/60 shadow-[0_0_0_1px_rgba(252,211,77,0.45),0_0_28px_rgba(252,211,77,0.30),inset_0_1px_0_rgba(255,255,255,0.15)]";

@@ -88,6 +88,22 @@ describe("describeBoard", () => {
     expect(summary.stadium).toBe("Lumiose City");
   });
 
+  it("carries deck/discard counts when pile data is provided", () => {
+    const summary = describeBoard(makeBoard(), "you", {
+      you: { deckCount: 42, discard: [card("Burnt")] },
+      opponent: { deckCount: 51, discard: [] },
+    });
+    expect(summary.players[0]?.piles).toEqual({ deckCount: 51, discardCount: 0 });
+    expect(summary.players[1]?.piles).toEqual({ deckCount: 42, discardCount: 1 });
+  });
+
+  it("leaves pile counts null when pile data is absent (mock board)", () => {
+    const summary = describeBoard(makeBoard(), "you");
+    for (const side of summary.players) {
+      expect(side.piles).toBeNull();
+    }
+  });
+
   it("flips perspective so 'opponent' sees you as the opponent", () => {
     const summary = describeBoard(makeBoard({ you: { hand: [card("A")] } }), "opponent");
     expect(summary.players.map((p) => p.player)).toEqual(["you", "opponent"]);

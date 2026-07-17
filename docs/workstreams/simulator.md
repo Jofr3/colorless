@@ -105,7 +105,8 @@ event stream.
 2. ✅ **Attacks** — costs, damage, weakness/resistance, KO + prize-taking, win
    check. Built + xhigh-reviewed + fixed 2026-07-16; as-built notes below. The
    **engine → playmat projection** (D17, `src/features/game/projection.ts`)
-   landed alongside it.
+   landed alongside it. **Wire-up done 2026-07-17:** the projection drives a
+   playable local hot-seat game at `/play` ("Wire-up as built" below).
 3. Status conditions + Pokémon Checkup between turns.
 4. Evolution, Abilities, and the trainer/energy effect registry (staples first).
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
@@ -261,10 +262,73 @@ findings, all confirmed ones fixed in-session). The headline classes:
   projects `imageUrl: undefined` → the playmat's grey placeholder; nothing
   maps backs/undefined to a card-back texture yet (belongs to the wire-up
   slice). Status conditions + lower stack cards have no CardModel slot.
-- **The playmat still renders `mockPlaymat.ts`** — the projection is built
-  and tested but nothing consumes it. The natural next slice: a local
-  play page holding `GameState`, dispatching `applyAction`, rendering
-  `projectGameState` (see D17's consumption sketch in the projection module).
+- ~~The playmat still renders `mockPlaymat.ts`~~ — **closed by the /play
+  wire-up (2026-07-17, below).** (Historical note: D17/progress once cited a
+  "consumption sketch in the projection module" — no such code block ever
+  existed; the consumption guidance is the projection's inline comments.)
+
+## Wire-up as built (2026-07-17) — the playable local game page
+
+**Shape.** `/play` (`src/features/game/GamePage.tsx`) is a hot-seat local
+match: pregame (demo decks + saved decks when signed in) → `createGame` →
+`LocalMatch` renders **`PlaymatView`** (the presentational shell extracted
+from `Playmat.tsx`; the mock at `/simulator` — retitled "Sandbox" — is now a
+thin wrapper driver) purely from `projectGameState`. `useLocalGame` owns
+`GameState` via a pure reducer over `applyAction` (ok → replace state, append
+log via `logFromEvents`, clear `lastError`; err → nonce'd `lastError`); the
+hot-seat **viewer follows `waitingOn`** (device flip; `waitingSeatOf` ≡
+`phaseViewOf(state, seat).waitingSeat ?? seat` — ONE source, D17). Drags
+translate via `moveToAction` (gesture-class routing; the ENGINE is the
+authority) and drop affordances obey a **driver-supplied
+`PlacementPredicate`** (D19) built by `gamePlacementPredicate` in lockstep
+with the translator (property-tested: every afforded drop translates to a
+real action). `GameHud` is ONE exhaustive phase switch (coin toss, mulligan
+draw, placement, turn panel w/ engine-helper payability, prize/promote
+dialogs, game-over overlay), everything gated on `waitingOn === "you"`.
+`cardPool` (`src/features/game/cardPool.ts`) builds the engine pool via
+`GET /cards/:id` fan-out (D18 — CardBrief deliberately lacks combat blobs);
+module-level promise cache, 404s = stable `missing`. Demo decks: 60-card
+sv01+sve-era Fire vs Water lists, ids verified live. The **projection now
+redacts the opponent's in-play Pokémon during `setup:*`** (positional
+`-hidden` ids, no `pokemon` rows — the same filter P4's server applies;
+reveal re-keys, same trade as hand backs).
+
+**Browser-verified e2e** (recipe + agent-browser traps in
+`.claude/skills/verify/SKILL.md`): full game — setup drags, hot-seat flips
+with setup redaction, energy attach, payability gating, weakness ×2 math,
+KO → prize dialog → forced auto-promote, win-by-no-Pokémon overlay; damage
+chips confirmed painting above the Pixi canvas (stacking-context walk).
+
+**The React lesson of the session:** two fragment siblings shared
+`key={seatKey}` in GameHud — on key change React's `mapRemainingChildren`
+dedupes by key, the shadowed old fiber is NEVER deleted, and it stays
+mounted-but-orphaned: stale content, **live buttons dispatching real
+actions**, zero console errors. Keys among siblings must be unique across
+the WHOLE fragment child list, not per slot; the phase-switch composition now
+makes the collision structurally impossible. Regression-pinned in
+`LocalMatch.dom.test.tsx`.
+
+### /play follow-ups (from the 8-finder/6-verifier review — all verified)
+- **P4 blocker (do with P4, not before):** the HUD reads raw `GameState`
+  (allowances, `phase.owed`, energy uids — verbatim copies of
+  `attack.ts`/`turn.ts` internals for payability/retreat). Online clients
+  can never receive GameState; the fix is engine-exported preview predicates
+  or a projection "available actions" surface. Acknowledged in-code.
+- **Piles are a second render path:** discard-top is a DOM `<img>`; deck-empty
+  hides the Pixi back by dropping its anchor. Cards **teleport** to discard
+  (KO/retreat/M4 trainers) — needs pile zones in the animation layer's model.
+- `CardModel` carries no battle state (`statuses` side-table prop-drilled 5
+  hops; a projection-attached `battle?: {damage,hp}` would collapse it) —
+  revisit when M3 adds status-condition markers.
+- Perf (minor, verified): `viewLogEntries` re-maps the whole log per action
+  (O(n²)); overlay banner/pill timers re-render the board subtree (Pixi sync
+  is skipped via board identity — cost is reconciliation + payability
+  recompute); per-slot deck→pool fetch pipelining.
+- Pregame could reuse `useDeckLibrary` (hand-rolled listDecks effect swallows
+  failures silently; judgment call — the hook also fetches /folders).
+- Hidden-back re-key on reveal (opponent hand AND setup redaction) pops
+  instead of animating — needs the stable-opaque-alias design with P4's
+  server filter (pre-existing deferral, now with two call sites).
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per

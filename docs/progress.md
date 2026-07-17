@@ -3,54 +3,109 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-16 — build session #4 (**P3-M2: attacks/KO/prizes +
-the engine→playmat projection**, built + xhigh-reviewed + all confirmed
-findings fixed + committed `e7e7efa`; **api DEPLOYED** this session after the
-user ran the gated command — version `9b1ec1d1`).
+**Last updated:** 2026-07-17 — build session #5 (**P3 wire-up: the playable
+local hot-seat game at `/play`** — built, browser-verified end-to-end,
+high-effort reviewed, all 10 reported findings fixed, committed `6373a15`).
 
 ## Resume point
-**P3-M2 is done and committed (`e7e7efa`): attacks, KO + prizes, win check
-(D16) and the per-viewer engine→playmat projection (D17,
-`src/features/game/projection.ts`).** Suite 683 → 751, `bun run check` green.
-**The api is deployed** (Worker `9b1ec1d1`; migration 0003 was ALREADY
-applied remotely — "No migrations to apply" — so only the Worker was behind).
-Prod smoke FULLY green (write smoke user-authorized): `/health` ok, `/cards`
-serving, `/decks` session-gated; creates carry `position` (min−1 prepend),
-list is position-ascending, foreign-id reorder → 400 naming the id, legit
-reorder → 204 + persists + does NOT bump `updated` (all per D13). Throwaway
-decks deleted after; the smoke account `smoke-20260716-m2@example.com`
-remains (no delete-user endpoint).
+**The game is playable.** `/play` runs a full local hot-seat match on the real
+engine: pregame (demo decks + saved decks) → coin toss → setup placements by
+drag (opponent's face-down placements now REDACTED by the projection, D17
+rev) → turns (energy attach + bench by drag, engine-helper attack payability,
+retreat dialog) → KO interrupts (prize pick, forced auto-promote) → win
+overlay. `Playmat` split into presentational **`PlaymatView`** (mock
+`/simulator` = "Sandbox" wrapper); `useLocalGame` reducer owns `GameState`;
+viewer follows `waitingOn`; drop affordances via the driver-supplied
+placement predicate (D19); engine `cardPool` via `/cards/:id` fan-out with a
+module cache (D18 — no api change, so no gated deploy). Suite 751 → **825**,
+`bun run check` green, e2e browser-verified (damage-chip paint order included).
 Next concrete actions:
-1. **Wire the projection into a playable local game page** — the playmat
-   still renders `mockPlaymat.ts`; the natural slice is a page holding
-   `GameState`, dispatching `applyAction`, rendering `projectGameState`
-   (consumption sketch in the projection module; gate input on `waitingOn`,
-   not `activePlayer` — see D17). Integration seams listed under
-   "Projection deferrals" in `workstreams/simulator.md`.
-2. Or **P3-M3 (status conditions + Pokémon Checkup)** — read "M2 as built"
-   in `workstreams/simulator.md` first: `runCheckup` is a stub but the
-   interrupt machinery is ready; lift a shared `knockOut` resolver out of
-   the attack handler rather than copying it (the traps list has the rest:
-   prizeValueOf=1 pending an ingest suffix column, name-derived energy
-   provision, the kept phase↔pending dual encoding).
+1. **P3-M3 (status conditions + Pokémon Checkup)** — read "M2 as built" +
+   its M3 traps in `workstreams/simulator.md` first: `runCheckup` is a stub
+   but the interrupt machinery is ready; lift a shared `knockOut` resolver
+   out of the attack handler rather than copying it (prizeValueOf=1 pending
+   an ingest suffix column, name-derived energy provision, the kept
+   phase↔pending dual encoding). The HUD/playmat surface for conditions:
+   see "/play follow-ups" (CardModel.battle co-location is the natural
+   companion slice).
+2. Or the **"/play follow-ups"** list in `workstreams/simulator.md` (all
+   review-verified): pile zones in the animation layer (discard teleports),
+   `useDeckLibrary` reuse, perf nits. The P4-blocking one (HUD reads raw
+   GameState; needs engine preview predicates / a projection availability
+   surface) belongs WITH P4, not before.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
 Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
+A `?full` batch param on `GET /cards` is a logged follow-up to bundle with
+the next api deploy (D18).
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1+M2 done** (core + attacks/KO/prizes/win, D14/D16) + projection adapter (D17) — M3 (status/checkup) next; playmat not yet wired to the engine |
+| simulator | P3 | 🚧 **M1+M2 done + PLAYABLE at /play** (engine wired through PlaymatView, D17-rev/D18/D19, 2026-07-17) — M3 (status/checkup) next |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
-- **2026-07-16** (build #4) — **P3-M2 (attacks/KO/prizes/win, D16) + the
+- **2026-07-17** (build #5) — **P3 wire-up: the playable local hot-seat game
+  page** (two parallel build agents, then a browser e2e, then an 8-finder /
+  6-grouped-verifier review whose 10 reported findings were ALL fixed by four
+  parallel fix agents). (A) `getCard` re-added + `fetchCardPool` (D18:
+  `/cards/:id` fan-out — CardBrief lacks combat blobs; no api change so no
+  gated deploy). (B) `Playmat` → presentational `PlaymatView` (+ mock
+  wrapper at /simulator "Sandbox"); `/play` = pregame → `useLocalGame`
+  (pure reducer over `applyAction`, viewer follows `waitingOn`) →
+  phase-switch `GameHud` → `moveToAction` drag translation → `logFromEvents`;
+  demo decks (sv01 Fire vs Water, live-verified ids); damage chips + pile
+  counts threaded from the projection. **Browser e2e: a full game played to
+  the win overlay** (setup drags, hot-seat flips, payability gating,
+  weakness ×2, KO → prize dialog → forced auto-promote, no-Pokémon win).
+  **React bug of the session** (found live, root-caused in jsdom): TurnPanel
+  and PrizeDialog shared `key={seatKey}` as fragment siblings — on key
+  change React's `mapRemainingChildren` dedupes by key, so the shadowed old
+  fiber is never deleted: mounted-but-orphaned panels with stale content and
+  LIVE buttons dispatching real actions, zero console errors. Fixed with
+  panel-prefixed keys, then made structurally impossible by the phase-switch
+  composition; regression in `LocalMatch.dom.test.tsx`. **Review headliners
+  (all verifier-confirmed, all fixed):** damage chips painted BELOW the Pixi
+  canvas (`backdrop-blur` in FRAME_CLASS made every frame a stacking
+  context trapping z-61 under the z-60 canvas — blur moved to a `before:`
+  overlay; verified live via computed-style stacking walk); hot-seat setup
+  flip leaked the first player's face-down placements (redaction moved INTO
+  the projection, D17 rev — it's the same filter P4 will apply); rejection
+  pill survived the viewer flip (ok-actions now clear `lastError`);
+  phase-unaware `canPlace` afforded engine-impossible gestures → the
+  placement-predicate seam (D19, property-tested lockstep with
+  moveToAction); disabled pass-button styling was Tailwind
+  emission-order-dependent (probed with getClassOrder — two of three
+  conflicts resolved wrongly; now `disabled:` variants); stale saved-deck
+  slot after session expiry; `waitingSeatOf` deduped into the projection's
+  `phaseViewOf`; card-pool cache (rejects self-evict, 404s stable);
+  live-region pile chips silenced + deck/discard counts added to
+  BoardSummary; shared `TransientErrorPill` (+XIcon) for /play + /decks;
+  GameHud → exhaustive phase switch, dialogs mount==open, one retreat
+  derivation, shared `energyPalette`. One finding REFUTED: moveToAction's
+  "unreachable" owner guard is reachable via Stadium drops — guards kept.
+  Deferred (verified, in "/play follow-ups"): HUD-reads-raw-GameState (P4),
+  pile zones in the animation layer, CardModel.battle, O(n²) log remap,
+  overlay re-render memoization, useDeckLibrary, fetch pipelining. Suite
+  751 → 825; `bun run check` green. **Session traps:** the usage limit
+  killed agents TWICE (all 8 review finders, later all 4 fix agents) — all
+  12 resumed via SendMessage with zero rework (4th/5th time the pattern
+  holds); agent-browser clicks silently no-op'd after a page reload (eval
+  IIFE clicks are the fallback; one `drag` hung 120 s) → recipes written
+  into the verify skill; **local D1 had silently LOST sv01/swsh10.5** (only
+  sve+sv06.5 remained — `.wrangler` state wipe; the verify skill's set list
+  was stale) → re-ingested sv01+sv02+sv03 (767 cards, ~90 s) for the demo
+  decks, and the skill now says to check `d1 execute` instead of trusting
+  the doc; the "consumption sketch in the projection module" that D17/
+  progress cited never existed — citations fixed (guidance = inline
+  comments). — **P3-M2 (attacks/KO/prizes/win, D16) + the
   engine→playmat projection (D17)**, two parallel build agents then an xhigh
   review (10 finder angles → 9 grouped verifiers → gap sweep; 15 findings
   reported, every confirmed one fixed in-session by two fix agents).

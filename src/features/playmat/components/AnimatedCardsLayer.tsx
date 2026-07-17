@@ -21,7 +21,7 @@ import {
   type CardViewTarget,
   type ReleaseVelocity,
 } from "../pixi/CardView";
-import { canPlace } from "../utils/cardMovement";
+import { canPlace, type PlacementPredicate } from "../utils/cardMovement";
 import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
 import { PRIZE_COUNT, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
 import {
@@ -44,6 +44,12 @@ interface AnimatedCardsLayerProps {
   backDesign: CardBackDesign;
   playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
+  /** Drop-legality gate consulted for drop-zone filtering, the live reorder
+      previews and the accept/reject release animation. Defaults to the mock
+      sandbox's phase-unaware canPlace; a driver with real rules (/play)
+      supplies its own so affordance, preview and dispatch never promise a
+      drop the page's engine cannot express. */
+  placementPredicate?: PlacementPredicate;
 }
 
 interface CardDescriptor {
@@ -412,8 +418,10 @@ function zIndexForDescriptor(descriptor: CardDescriptor) {
   return zIndexForPlacement(descriptor.placement, descriptor.zoneSize, descriptor.card.type);
 }
 
-// Drop legality is delegated to canPlace in utils/cardMovement, so the UI
-// gating and the model-level guard stay in lockstep.
+// Drop legality is delegated to the placement predicate — canPlace in
+// utils/cardMovement by default (the mock sandbox), or a driver-supplied
+// phase-aware gate (/play's gamePlacementPredicate) — so the UI gating and
+// whatever actually judges the move stay in lockstep.
 
 function isPointerOverZone(point: { x: number; y: number }, zone: DropZoneSnapshot) {
   return (
@@ -434,6 +442,7 @@ export function AnimatedCardsLayer({
   backDesign,
   playmatRef,
   onMoveCard,
+  placementPredicate,
 }: AnimatedCardsLayerProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
@@ -449,6 +458,9 @@ export function AnimatedCardsLayer({
   const reducedMotionRef = useRef(false);
   const onMoveCardRef = useRef(onMoveCard);
   const boardRef = useRef(board);
+  // Read through a ref like onMoveCard/board: the pointer handlers are bound
+  // once (to the playmat node) and would otherwise capture a stale predicate.
+  const placementPredicateRef = useRef(placementPredicate ?? canPlace);
 
   const descriptors = useMemo(
     () => collectCardDescriptors(board, perspectivePlayer, backDesign),
@@ -462,6 +474,10 @@ export function AnimatedCardsLayer({
   useEffect(() => {
     boardRef.current = board;
   }, [board]);
+
+  useEffect(() => {
+    placementPredicateRef.current = placementPredicate ?? canPlace;
+  }, [placementPredicate]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -651,10 +667,11 @@ export function AnimatedCardsLayer({
     sourceType: CardType,
   ) {
     const board = boardRef.current;
+    const legalDrop = placementPredicateRef.current;
     return dropZonesRef.current
       .filter(
         (zone) =>
-          isPointerOverZone(point, zone) && canPlace(board, source, zone.placement, sourceType),
+          isPointerOverZone(point, zone) && legalDrop(board, source, zone.placement, sourceType),
       )
       .sort((a, b) => a.area - b.area)[0];
   }
@@ -1080,16 +1097,29 @@ export function AnimatedCardsLayer({
     // "reorder" leaves the dragged card's slot empty inside the source so
     // the user can slide it back into place. "compact" closes the gap when
     // the cursor leaves the source — the hand should look like it has one
-    // fewer card while the player is staging a play onto the bench.
+    // fewer card while the player is staging a play onto the bench. Whether
+    // sliding into a NEW slot is even possible is the predicate's call: the
+    // mock's canPlace allows hand/bench reorders, while /play's phase-aware
+    // gate rejects them (the engine owns zone order) — and previewing a
+    // reorder that can never dispatch would be a lie, so an illegal source
+    // reorder previews as "compact" too and the drop springs back.
     if (
       (drag.from.zone === "hand" || drag.from.zone === "bench") &&
       (drag.from.owner === "you" || drag.from.owner === "opponent")
     ) {
+      const sourceReorderLegal =
+        isNewSource &&
+        placementPredicateRef.current(
+          boardRef.current,
+          drag.from,
+          { owner: drag.from.owner, zone: drag.from.zone },
+          drag.cardType,
+        );
       applyReorderPreview(
         drag,
         drag.from.owner,
         drag.from.zone,
-        isNewSource ? "reorder" : "compact",
+        sourceReorderLegal ? "reorder" : "compact",
       );
     }
 
@@ -1126,10 +1156,14 @@ export function AnimatedCardsLayer({
       if (attachesOnBoard && zone !== "hand") continue;
       const owner = dz.placement.owner;
       if (owner !== "you" && owner !== "opponent") continue;
-      // Source-zone reorder is always allowed (it's just rearranging).
-      // External insertion requires the drop to be legal at all.
+      // Cursor over the source zone always yields a preview zone (whether it
+      // previews as a reorder or a compacted gap is the pointermove handler's
+      // predicate call). External insertion requires the drop to be legal.
       const isSourceZone = drag.from.owner === owner && drag.from.zone === zone;
-      if (!isSourceZone && !canPlace(board, drag.from, dz.placement, drag.cardType)) {
+      if (
+        !isSourceZone &&
+        !placementPredicateRef.current(board, drag.from, dz.placement, drag.cardType)
+      ) {
         continue;
       }
       return { owner, zone };

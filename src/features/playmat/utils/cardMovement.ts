@@ -96,9 +96,25 @@ function cardAt(board: BoardState, placement: CardPlacement): CardModel | null {
 }
 
 /**
+ * The shape of a drop-legality gate: canPlace's exact signature. The animation
+ * layer consults one of these everywhere it decides whether a drop is legal
+ * (zone filtering, live previews, the accept/reject release animation). It
+ * defaults to `canPlace` — the mock sandbox's phase-unaware predicate — and a
+ * driver with real rules (/play's gamePlacementPredicate) supplies its own,
+ * so affordance, preview and dispatch all obey the SAME rules as the page.
+ */
+export type PlacementPredicate = (
+  board: BoardState,
+  source: CardPlacement,
+  target: CardPlacement,
+  sourceType: CardType,
+) => boolean;
+
+/**
  * Whether the source card can be dropped on the target placement.
- * Single source of truth — used by the layer for cursor + filter, and
- * defended again by moveCardOnBoard before mutating.
+ * Single source of truth for the MOCK sandbox — used by the layer for
+ * cursor + filter (as its default PlacementPredicate), and defended again
+ * by moveCardOnBoard before mutating.
  */
 export function canPlace(
   board: BoardState,

@@ -23,13 +23,13 @@ import {
   reorderFolders,
 } from "../../lib/api";
 import {
-  ERROR_TEXT,
   FOCUS_RING_INSET,
   GLASS_ACCENT_BUTTON,
   GLASS_FILTER_TOGGLE,
   GLASS_GHOST_BUTTON,
   GLASS_INPUT,
 } from "../../lib/glass";
+import { TransientErrorPill } from "../../components/TransientErrorPill";
 import { readPersisted, writePersisted } from "../../lib/persistedState";
 import {
   ArrowLeftIcon,
@@ -43,7 +43,6 @@ import {
   SearchIcon,
   SpinnerIcon,
   TrashIcon,
-  XIcon,
 } from "../../components/icons";
 import { ScrollArea } from "../../components/ScrollArea";
 import { useAuth } from "../auth/AuthProvider";
@@ -1378,29 +1377,17 @@ export function Decks() {
           </>
         )}
       </div>
-      {/* Failed/rolled-back mutation notice: a floating glass pill that
-          self-expires (or dismisses). role="alert" announces it assertively,
-          and keying on the nonce remounts it for an identical consecutive
-          failure — a live region whose text doesn't change re-announces
-          nothing. */}
+      {/* Failed/rolled-back mutation notice: the shared pill self-expires
+          via the TTL effect above (or the dismiss button); its nonce keying
+          remounts the role="alert" so an identical consecutive failure
+          re-announces. */}
       {syncError && (
-        <div
-          key={syncError.nonce}
-          role="alert"
-          className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100vw-3rem)] -translate-x-1/2 items-center gap-2 rounded-full bg-[#16161f]/90 py-2 pl-4 pr-2 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl"
-        >
-          <span className={`min-w-0 truncate text-sm font-medium ${ERROR_TEXT}`}>
-            {syncError.message}
-          </span>
-          <button
-            type="button"
-            aria-label="Dismiss"
-            onClick={() => setSyncError(null)}
-            className={`flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`}
-          >
-            <XIcon className="h-3.5 w-3.5" />
-          </button>
-        </div>
+        <TransientErrorPill
+          message={syncError.message}
+          nonce={syncError.nonce}
+          onDismiss={() => setSyncError(null)}
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
+        />
       )}
     </AppBackdrop>
   );

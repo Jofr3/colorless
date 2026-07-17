@@ -1,7 +1,32 @@
 import type { CSSProperties, ReactNode } from "react";
 import { CardImage } from "../../../components/CardImage";
 import { ACTIVE_SLOT_CLASS, CARD_RENDER_WIDTH, CARD_SLOT_STYLE, FRAME_CLASS } from "../constants";
-import type { CardModel, SidePosition } from "../types";
+import type { CardModel, CardStatus, SidePosition } from "../types";
+
+/** Damage badge for an in-play Pokémon: "30" (+ "/70" max HP when known).
+    DOM-level on purpose (D17 wire-up: no Pixi involvement) — z-[61] floats it
+    just above the Pixi card canvas (z-60, playmat.css). Slot owners render it
+    as a SIBLING of the frame/card subtree, never inside it: no ancestor up to
+    the playmat section may create a stacking context (element backdrop-filter,
+    positioned z-index), or the z-[61] resolves too low and the canvas covers
+    it. `className` carries the placement offsets (they differ by anchor box).
+    Rendered only when damaged; aria-hidden — BoardSummary is the accessible
+    surface. */
+export function DamageChip({ status, className }: { status: CardStatus; className: string }) {
+  if (status.damage <= 0) return null;
+  return (
+    <div
+      className={`pointer-events-none absolute z-[61] flex items-center rounded-full bg-rose-600/95 px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white shadow-[0_2px_8px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/25 ${className}`}
+      aria-hidden="true"
+      data-damage-chip="true"
+    >
+      {status.damage}
+      {status.hp !== null && (
+        <span className="ml-0.5 font-semibold text-white/75">/{status.hp}</span>
+      )}
+    </div>
+  );
+}
 
 export function CardSlot({
   children,

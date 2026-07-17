@@ -1,4 +1,4 @@
-import type { BoardState, CardModel, PlayerId } from "../types";
+import type { BoardState, CardModel, PileState, PlayerId } from "../types";
 import { opponentOf } from "./players";
 
 // Builds a plain, screen-reader-oriented description of the board from state.
@@ -20,6 +20,8 @@ export interface PlayerBoardSummary {
   /** Hand size, always known even when the cards themselves are hidden. */
   handCount: number;
   prizesRemaining: number;
+  /** Deck/discard sizes (game page); null when pile data is absent (mock). */
+  piles: { deckCount: number; discardCount: number } | null;
 }
 
 export interface BoardSummary {
@@ -43,12 +45,17 @@ function describeCard(card: CardModel): string {
   return detail ? `${card.name} (${detail})` : card.name;
 }
 
-export function describeBoard(board: BoardState, perspectivePlayer: PlayerId): BoardSummary {
+export function describeBoard(
+  board: BoardState,
+  perspectivePlayer: PlayerId,
+  piles?: Record<PlayerId, PileState>,
+): BoardSummary {
   const order: PlayerId[] = [opponentOf(perspectivePlayer), perspectivePlayer];
   return {
     stadium: board.stadium?.name ?? null,
     players: order.map((player) => {
       const side = board[player];
+      const pile = piles?.[player];
       const isYou = player === perspectivePlayer;
       return {
         player,
@@ -58,6 +65,7 @@ export function describeBoard(board: BoardState, perspectivePlayer: PlayerId): B
         hand: isYou ? side.hand.map((card) => card.name) : null,
         handCount: side.hand.length,
         prizesRemaining: side.prizesRemaining,
+        piles: pile ? { deckCount: pile.deckCount, discardCount: pile.discard.length } : null,
       };
     }),
   };

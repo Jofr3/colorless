@@ -2,7 +2,12 @@ import type { ReactNode } from "react";
 import { GLASS_HUD_BUTTON } from "../../../lib/glass";
 import type { TurnInfo } from "../types";
 
-const CIRCLE_BUTTON_BASE_CLASS = `relative flex cursor-pointer items-center justify-center rounded-full ${GLASS_HUD_BUTTON}`;
+// The dead state rides on :disabled variants, NOT appended same-property
+// overrides: `.x:disabled(:hover)` outranks `.cursor-pointer`/`.x:hover` by
+// specificity, so the result cannot flip with Tailwind's emission order.
+// Values pin the GLASS_HUD_BUTTON rest paint (bg-white/[0.045], text-white/70)
+// so a disabled button neither brightens on hover nor invites a click.
+const CIRCLE_BUTTON_BASE_CLASS = `relative flex cursor-pointer items-center justify-center rounded-full disabled:cursor-default disabled:opacity-40 disabled:hover:bg-white/[0.045] disabled:hover:text-white/70 ${GLASS_HUD_BUTTON}`;
 
 const CIRCLE_BUTTON_SIZE_CLASS = {
   lg: "h-20 w-20",
@@ -24,17 +29,20 @@ function CircleIconButton({
   ariaLabel,
   size,
   onClick,
+  disabled = false,
 }: {
   children: ReactNode;
   ariaLabel: string;
   size: keyof typeof CIRCLE_BUTTON_SIZE_CLASS;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       aria-label={ariaLabel}
       onClick={onClick}
+      disabled={disabled}
       className={`${CIRCLE_BUTTON_BASE_CLASS} ${CIRCLE_BUTTON_SIZE_CLASS[size]}`}
     >
       {children}
@@ -42,9 +50,9 @@ function CircleIconButton({
   );
 }
 
-function PassTurnButton({ onClick }: { onClick: () => void }) {
+function PassTurnButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
-    <CircleIconButton ariaLabel="Pass turn" size="lg" onClick={onClick}>
+    <CircleIconButton ariaLabel="Pass turn" size="lg" onClick={onClick} disabled={disabled}>
       <svg
         width="34"
         height="34"
@@ -100,13 +108,19 @@ function ForwardButton() {
   );
 }
 
-export function TurnControls({ onPassTurn }: { onPassTurn: () => void }) {
+export function TurnControls({
+  onPassTurn,
+  passDisabled = false,
+}: {
+  onPassTurn: () => void;
+  passDisabled?: boolean;
+}) {
   return (
     <div
       className="absolute z-20 flex flex-col items-center gap-1"
       style={{ right: 24, top: "50%", transform: "translateY(-50%)" }}
     >
-      <PassTurnButton onClick={onPassTurn} />
+      <PassTurnButton onClick={onPassTurn} disabled={passDisabled} />
       <div className="flex gap-2">
         <PreviousButton />
         <ForwardButton />

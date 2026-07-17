@@ -4,6 +4,7 @@ import {
   ApiError,
   cardImageUrl,
   createDeck,
+  getCard,
   getCards,
   getSets,
   listDecks,
@@ -96,6 +97,16 @@ describe("request plumbing", () => {
   it("resolves 204 responses to undefined", async () => {
     stubFetch(new Response(null, { status: 204 }));
     await expect(logout()).resolves.toBeUndefined();
+  });
+
+  it("percent-encodes path ids (getCard)", async () => {
+    const mock = stubFetch(json({ id: "sv06.5-001" }));
+    await getCard("sv06.5-001");
+    expect(requestedUrl(mock)).toBe("http://localhost:8787/cards/sv06.5-001");
+
+    const encoded = stubFetch(json({ id: "odd/id" }));
+    await getCard("odd/id");
+    expect(requestedUrl(encoded)).toBe("http://localhost:8787/cards/odd%2Fid");
   });
 });
 

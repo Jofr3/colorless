@@ -34,6 +34,42 @@ function turnOneState(): GameState {
   });
 }
 
+/** setup:place with p1 fully placed (active + one bench) AND ready, p2 not
+    yet placed — exactly the hot-seat handoff moment the setup redaction
+    protects: the board is about to flip to p2 with p1's placements still
+    face-down on the table. */
+function placedNotRevealed(): GameState {
+  let state = mustCreate(SEED, DECKS).state;
+  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
+  state = mustApply(state, {
+    type: "chooseFirstPlayer",
+    seat: state.phase.coinWinner,
+    first: "p1",
+  }).state;
+  // Seed 170 deals no mulligans, so placement opens immediately.
+  if (state.phase.kind !== "setup:place") throw new Error("expected setup:place");
+  state = mustApply(state, {
+    type: "setupPlaceActive",
+    seat: "p1",
+    uid: handUid(state, "p1", "fix-basic-1"),
+  }).state;
+  state = mustApply(state, {
+    type: "setupPlaceBench",
+    seat: "p1",
+    uid: handUid(state, "p1", "fix-basic-0"),
+  }).state;
+  return mustApply(state, { type: "setupReady", seat: "p1" }).state;
+}
+
+/** Every uid p1 has in play (stack cards included) — what must never leak to
+    the p2 viewer while setup runs. */
+function p1InPlayUids(state: GameState): string[] {
+  const side = state.players.p1;
+  return [side.active, ...side.bench].flatMap((pokemon) =>
+    pokemon === null ? [] : [...pokemon.stack, ...pokemon.energy, ...pokemon.tools],
+  );
+}
+
 // KO drivers, mirroring the engine's attack.test.ts: seed 11 gives no
 // mulligans for these decks and p2's opening hand holds the bench copies.
 const KO_SEED = 11;
@@ -168,11 +204,11 @@ describe("projectGameState — zones", () => {
 
 describe("projectGameState — hidden information", () => {
   it("leaks no opponent-hand or prize uid anywhere in the projection", () => {
-    // Swept across the phases that populate every projection field: plain
-    // turn play, a parked KO interrupt (pendingDecision) and a finished game
-    // (outcome) — pendingDecision/outcome/pokemon must stay as clean as the
-    // board.
-    for (const state of [turnOneState(), parkedOnPrizes(1), wonGame()]) {
+    // Swept across the phases that populate every projection field: mid-
+    // setup (face-down placements), plain turn play, a parked KO interrupt
+    // (pendingDecision) and a finished game (outcome) — pendingDecision/
+    // outcome/pokemon must stay as clean as the board.
+    for (const state of [placedNotRevealed(), turnOneState(), parkedOnPrizes(1), wonGame()]) {
       for (const viewer of ["p1", "p2"] as const) {
         const json = JSON.stringify(projectGameState(state, viewer));
         const opponent = viewer === "p1" ? "p2" : "p1";
@@ -198,6 +234,85 @@ describe("projectGameState — hidden information", () => {
       expect(model.imageUrl).toBeUndefined();
       expect(model.attached).toBeUndefined();
     }
+  });
+});
+
+describe("projectGameState — setup redaction", () => {
+  it("hides the opponent's placements as positional backs during setup:place", () => {
+    // Images swapped in so a leak through imageUrl would be visible too.
+    const state = withImages(placedNotRevealed());
+    const projection = projectGameState(state, "p2");
+
+    // p1's active and bench are on the table but STILL FACE-DOWN (§3 — the
+    // engine emits SETUP_REVEALED only when both players ready): identity-
+    // free backs whose full model equality also pins "no imageUrl, no
+    // attached, no uid".
+    expect(projection.board.opponent.active).toEqual({
+      id: "opponent-active-hidden",
+      cardId: HIDDEN_CARD_ID,
+      name: HIDDEN_CARD_NAME,
+      type: "trainer",
+    });
+    expect(projection.board.opponent.bench).toEqual([
+      {
+        id: "opponent-bench-0-hidden",
+        cardId: HIDDEN_CARD_ID,
+        name: HIDDEN_CARD_NAME,
+        type: "trainer",
+      },
+    ]);
+
+    // No status rows for the redacted stacks either — an entry would leak
+    // the uid (the key) and the printed HP. p2 has nothing in play yet, so
+    // the record is empty outright.
+    expect(projection.pokemon).toEqual({});
+
+    // And no in-play uid of p1's escapes anywhere: board, pokemon or piles.
+    const json = JSON.stringify(projection);
+    const uids = p1InPlayUids(state);
+    expect(uids.length).toBeGreaterThanOrEqual(2); // active + bench really placed
+    for (const uid of uids) {
+      expect(sweepContains(json, uid)).toBe(false);
+    }
+  });
+
+  it("keeps the viewer's OWN placements face-up during setup:place", () => {
+    const state = placedNotRevealed();
+    const projection = projectGameState(state, "p1");
+
+    // p1 placed these — they see them, full identity and status included.
+    expect(projection.board.you.active?.cardId).toBe("fix-basic-1");
+    expect(projection.board.you.bench.map((card) => card.cardId)).toEqual(["fix-basic-0"]);
+    const activeUid = projection.board.you.active?.id;
+    if (activeUid === undefined) throw new Error("expected an active uid");
+    expect(projection.pokemon[activeUid]).toEqual({ damage: 0, hp: 60 });
+    // Only the viewer's own stacks carry status rows during setup.
+    expect(Object.keys(projection.pokemon).sort()).toEqual(
+      [activeUid, projection.board.you.bench[0]?.id ?? "?"].sort(),
+    );
+  });
+
+  it("reveals the opponent's board under its real uids once turn:action begins", () => {
+    let state = placedNotRevealed();
+    state = mustApply(state, {
+      type: "setupPlaceActive",
+      seat: "p2",
+      uid: handUid(state, "p2", "fix-basic-1"),
+    }).state;
+    state = mustApply(state, { type: "setupReady", seat: "p2" }).state;
+    expect(state.phase.kind).toBe("turn:action"); // SETUP_REVEALED happened
+
+    const projection = projectGameState(state, "p2");
+    const p1Active = state.players.p1.active;
+    if (p1Active === null) throw new Error("expected p1 active");
+    const p1ActiveUid = topUid(p1Active);
+    if (p1ActiveUid === undefined) throw new Error("expected a stacked active");
+    // Face-up now, keyed by the engine uid (the positional back re-keys away
+    // — the reveal is a remount, the accepted animation trade).
+    expect(projection.board.opponent.active?.id).toBe(p1ActiveUid);
+    expect(projection.board.opponent.active?.cardId).toBe("fix-basic-1");
+    // Status rows now cover BOTH sides again.
+    expect(projection.pokemon[p1ActiveUid]).toEqual({ damage: 0, hp: 60 });
   });
 });
 

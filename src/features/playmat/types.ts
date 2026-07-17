@@ -59,6 +59,23 @@ export interface TurnInfo {
   opponentName: string;
 }
 
+/** Public battle numbers for an in-play Pokémon, keyed by CardModel.id — the
+    shape the game projection's `pokemon` map already carries (damage in HP,
+    hp null = catalog data gap). CardModel has no damage slot on purpose; the
+    view threads this beside the board. */
+export interface CardStatus {
+  damage: number;
+  hp: number | null;
+}
+
+/** What BoardState cannot carry about a side's piles: the deck size and the
+    public discard (oldest → newest). Structurally the game projection's
+    ProjectedPiles; optional on the view so the mock board renders unchanged. */
+export interface PileState {
+  deckCount: number;
+  discard: CardModel[];
+}
+
 export type LogSource = PlayerId | "system";
 export type LogSegmentTone = "default" | "strong" | "energy" | "damage";
 

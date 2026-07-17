@@ -6,6 +6,7 @@
 // tests can import it freely.
 
 import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
+import { ENERGY_COLORS } from "../../lib/energyPalette";
 
 /** The energy types the builder filters and paints, in the canonical wheel
     order. Derived from the shared basic-energy vocabulary (@luminous/schema)
@@ -162,9 +163,10 @@ export function cardMatchesKinds(card: BuilderCard, labels: string[]): boolean {
 
 // --- Energy-type palette ---------------------------------------------------
 // One accent per type for the pips on Pokémon tiles and the type-distribution
-// bar in the deck stats. Tuned to read on the app's dark glass while staying
-// recognisably "Fire = red, Water = blue, …"; the one-letter `code` is the
-// game's own energy abbreviation (Grass G, Fire R, Water W, …).
+// bar in the deck stats. The hex values live in the shared app-wide palette
+// (src/lib/energyPalette.ts — also behind the game HUD's cost dots) so the
+// colors can't drift between features; the one-letter `code` is the game's
+// own energy abbreviation (Grass G, Fire R, Water W, …).
 
 export interface EnergyTypeMeta {
   type: EnergyType;
@@ -175,16 +177,16 @@ export interface EnergyTypeMeta {
 }
 
 export const ENERGY_TYPE_META: Record<EnergyType, EnergyTypeMeta> = {
-  Grass: { type: "Grass", code: "G", color: "#5bbd6b" },
-  Fire: { type: "Fire", code: "R", color: "#ef5a3c" },
-  Water: { type: "Water", code: "W", color: "#3ba3e6" },
-  Lightning: { type: "Lightning", code: "L", color: "#f1c640" },
-  Psychic: { type: "Psychic", code: "P", color: "#b964cc" },
-  Fighting: { type: "Fighting", code: "F", color: "#d07a3a" },
-  Darkness: { type: "Darkness", code: "D", color: "#5a6072" },
-  Metal: { type: "Metal", code: "M", color: "#9aa3b2" },
-  Dragon: { type: "Dragon", code: "N", color: "#caa12c" },
-  Colorless: { type: "Colorless", code: "C", color: "#cfcfda" },
+  Grass: { type: "Grass", code: "G", color: ENERGY_COLORS.Grass },
+  Fire: { type: "Fire", code: "R", color: ENERGY_COLORS.Fire },
+  Water: { type: "Water", code: "W", color: ENERGY_COLORS.Water },
+  Lightning: { type: "Lightning", code: "L", color: ENERGY_COLORS.Lightning },
+  Psychic: { type: "Psychic", code: "P", color: ENERGY_COLORS.Psychic },
+  Fighting: { type: "Fighting", code: "F", color: ENERGY_COLORS.Fighting },
+  Darkness: { type: "Darkness", code: "D", color: ENERGY_COLORS.Darkness },
+  Metal: { type: "Metal", code: "M", color: ENERGY_COLORS.Metal },
+  Dragon: { type: "Dragon", code: "N", color: ENERGY_COLORS.Dragon },
+  Colorless: { type: "Colorless", code: "C", color: ENERGY_COLORS.Colorless },
 };
 
 // --- Formats ---------------------------------------------------------------

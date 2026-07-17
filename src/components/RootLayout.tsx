@@ -17,7 +17,8 @@ const APP_NAME = "Luminous";
 // Per-route browser/tab/screen-reader title. Home ("/") and anything unmapped
 // fall back to the bare app name.
 const PAGE_TITLES: Record<string, string> = {
-  "/simulator": "Simulator",
+  "/play": "Play",
+  "/simulator": "Sandbox",
   "/decks": "Decks",
   "/login": "Sign in",
   "/register": "Create account",

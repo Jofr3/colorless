@@ -1,20 +1,26 @@
-import type { BoardState, PlayerId } from "../types";
+import type { BoardState, PileState, PlayerId } from "../types";
 import { describeBoard } from "../utils/boardSummary";
 
 // An off-screen, screen-reader-only mirror of the board. The Pixi canvas that
 // draws the cards is aria-hidden and the DOM card faces are visibility:hidden,
 // so without this a screen-reader user perceives nothing about the game. It
-// names every zone, card, and attachment from board state. Deliberately NOT a
+// names every zone, card, and attachment from board state — plus deck/discard
+// counts when the game page supplies piles (the visible pile chips are
+// aria-hidden, so this is their only accessible surface). Deliberately NOT a
 // live region — announcing on every drag would be noise; the TurnBanner handles
 // turn-change announcements, and this stays navigable on demand.
 export function BoardSummary({
   board,
   perspectivePlayer,
+  piles,
 }: {
   board: BoardState;
   perspectivePlayer: PlayerId;
+  /** Deck counts + public discards (game page); absent on the mock, whose
+      summary must render unchanged. */
+  piles?: Record<PlayerId, PileState>;
 }) {
-  const summary = describeBoard(board, perspectivePlayer);
+  const summary = describeBoard(board, perspectivePlayer, piles);
 
   return (
     <section className="sr-only" aria-label="Board state">
@@ -38,6 +44,16 @@ export function BoardSummary({
           <p>
             {side.possessive} prizes remaining: {side.prizesRemaining}.
           </p>
+          {side.piles && (
+            <>
+              <p>
+                {side.possessive} deck: {side.piles.deckCount} cards.
+              </p>
+              <p>
+                {side.possessive} discard pile: {side.piles.discardCount} cards.
+              </p>
+            </>
+          )}
         </section>
       ))}
     </section>
