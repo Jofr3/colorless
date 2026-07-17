@@ -5,7 +5,7 @@
 
 **Last updated:** 2026-07-17 — build session #5 (**P3 wire-up: the playable
 local hot-seat game at `/play`** — built, browser-verified end-to-end,
-high-effort reviewed, all 10 reported findings fixed, committed `6373a15`).
+high-effort reviewed, all 10 reported findings fixed, committed `1e4fcf4`).
 
 ## Resume point
 **The game is playable.** `/play` runs a full local hot-seat match on the real
