@@ -5,7 +5,8 @@
 
 **Last updated:** 2026-07-17 — build session #7 (**P3-M4 slice 1:
 evolution** — the `evolve` action with §4/§10 timing + stack carry-over +
-drag routing, built and reviewed; suite 892 → 914, `bun run check` green).
+drag routing, built and reviewed; suite 892 → 914, `bun run check` green;
+evolve gesture browser-verified live at /play).
 
 ## Resume point
 **Evolution is live (P3-M4 slice 1).** The `evolve` action (turn.ts) places
@@ -27,23 +28,20 @@ already reads the stack top). Demo decks gained real lines
 reported items are the bench-drop UX (confirmed a non-regression by reading
 the drop layer), the evolve projection-pop animation follow-up, and the demo
 line, now added). See "M4 slice 1 as built" + D22.
-**Browser integration smoke: PASSED** — local D1 (apps/api) had drifted to
-only sve/sv06.5/swsh10.5 (the demo decks' sv01/sv02/sv03 ids 404'd), so this
-session re-ingested sv01+sv02+sv03 (767 cards). Then live: /play loads, a demo
-game starts, ALL deck ids — including the new evolution cards sv01-037/038/047
-— fetch 200, and the board renders through the coin toss + setup with a clean
-console. The one part NOT yet driven is the actual **canvas drag** of an
-evolution card onto an in-play Pokémon on turn 3+ (the cards live in the Pixi
-canvas, not the a11y tree — coordinate drags are the flaky part the verify
-skill warns eats sessions). Everything below that Pixi gesture is
-unit/property-verified: the full drag→moveToAction→engine→apply chain over
-real states, the drop-layer disambiguation (read from `parsePlacement`), and
-18 engine evolution tests.
+**Browser e2e: PASSED (evolve driven live).** Local D1 (apps/api) had drifted
+to only sve/sv06.5/swsh10.5 (the demo decks' sv01/sv02/sv03 ids 404'd), so
+this session re-ingested sv01+sv02+sv03 (767 cards). Then a full live drive at
+/play: seed frozen (Date.now → 17, found offline so p1 opens with a Fuecoco to
+place + a Crocalor by turn 3), the drag SYNTHESIZED by dispatching real
+PointerEvents (down/move on the playmat root, up on window — the cards/drop
+zones are real DOM `[data-card-anchor]`/`[data-card-drop-zone]` elements even
+though the visuals are Pixi; hit-testing is by coordinate). Placed both
+Actives by drag, passed to turn 3, then **dropped Crocalor on Fuecoco →
+"YOU evolved Fuecoco → Crocalor"** in the log, the Active projected as Crocalor
+(HUD shows Crocalor 100 HP + its Bite/Rolling Tackle attacks), clean console.
+The full stack confirmed live: Pixi drop layer → moveToAction (pokemon→active =
+evolve) → gamePlacementPredicate → engine → projection → log.
 Next concrete actions:
-1. **Drive the evolve gesture at /play** (servers + data are ready) — drop a
-   Crocalor onto a Fuecoco on turn 3+, confirm the stack renders the evolved
-   card + the log row + carried damage. Canvas coordinate-drag; budget for the
-   agent-browser flakiness the verify skill documents.
 2. **P3-M4 next slices: Abilities + the trainer/energy effect registry** —
    read "M3 as built" + "M4 slice 1 as built" + their traps in
    `workstreams/simulator.md` FIRST: the registry goes ABOVE the deriver
@@ -67,7 +65,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution done, playable at /play** (checkup + D20 deriver + D21 battle surface + D22 evolution, 2026-07-17) — M4 Abilities + trainer/energy registry next; evolve browser-verify pending |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution done, evolve browser-verified at /play** (checkup + D20 deriver + D21 battle surface + D22 evolution, 2026-07-17) — M4 Abilities + trainer/energy registry next |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
@@ -112,9 +110,18 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
   `bun install` restored it (cascade TS2307 across the web app until then).
   And local D1 (apps/api) had drifted to sve/sv06.5/swsh10.5 ONLY (the
   documented trap struck again) — the demo decks' sv01/sv02/sv03 ids 404 until
-  a re-ingest, which this session ran. **Browser e2e is the pending resume
-  step** (the change is otherwise fully unit-verified — the full
-  drag→route→engine→apply chain is property-tested over real states).
+  a re-ingest, which this session ran. **Browser e2e PASSED (evolve driven
+  live):** with Date.now frozen to a seed found offline (p1 opens with a
+  Fuecoco + a Crocalor by turn 3), drags were synthesized as real PointerEvents
+  against the DOM `[data-card-anchor]`/`[data-card-drop-zone]` elements (the
+  Pixi visuals track them; hit-test is by coordinate) — placed both Actives,
+  passed to turn 3, dropped Crocalor on Fuecoco → "evolved Fuecoco → Crocalor"
+  in the log, the Active re-rendered as Crocalor (HUD shows its HP + attacks),
+  clean console. Traps for the next drive: /play's Pass/attach controls are
+  aria-label-only buttons (empty textContent — click by `aria-label`, not
+  text), and the seed is `Date.now()` (freeze it in-page for a reproducible
+  hand). The synthetic-PointerEvent drag recipe (down/move on the playmat root,
+  up on window) is the reliable way to drive the Pixi board.
 - **2026-07-17** (build #6) — **P3-M3: special conditions + Pokémon Checkup +
   the text-derived effect deriver** (two sequential build agents — engine,
   then web against the as-built event contract — then an 8-finder/7-verifier
