@@ -1,15 +1,8 @@
 import { CARD_SIZE_STYLE } from "../constants";
-import type {
-  CardModel,
-  CardStatus,
-  PileState,
-  PlayerBoard,
-  PlayerId,
-  SidePosition,
-} from "../types";
+import type { CardModel, PileState, PlayerBoard, PlayerId, SidePosition } from "../types";
 import { cardBackToneFor } from "../utils/players";
 import { Bench } from "./Bench";
-import { CardSlot, DamageChip, PlaymatCard } from "./Card";
+import { CardSlot, DamageChip, PlaymatCard, StatusChips } from "./Card";
 import { DeckPile, DiscardPile, PrizeGrid } from "./Piles";
 
 const SIDE_PILE_STACK_GAP = "calc(var(--slot-gap) + 4px)";
@@ -21,12 +14,10 @@ function ActiveCardSlot({
   card,
   active,
   owner,
-  status,
 }: {
   card: CardModel | null;
   active: boolean;
   owner: PlayerId;
-  status?: CardStatus;
 }) {
   return (
     <div
@@ -38,10 +29,14 @@ function ActiveCardSlot({
       <CardSlot highlighted={active}>
         {card ? <PlaymatCard card={card} priority /> : <div style={CARD_SIZE_STYLE} />}
       </CardSlot>
-      {/* Sibling of the frame, not inside it, so z-[61] clears the Pixi
+      {/* Siblings of the frame, not inside it, so z-[61] clears the Pixi
           canvas. right-0/top-0 on the frame box lands exactly where -1.5
-          offsets on the card box did (--pile-pad is the same 6px). */}
-      {status !== undefined && <DamageChip status={status} className="right-0 top-0" />}
+          offsets on the card box did (--pile-pad is the same 6px); the
+          status markers mirror it on the left corner, clear of the chip. */}
+      {card?.battle !== undefined && <DamageChip battle={card.battle} className="right-0 top-0" />}
+      {card?.battle?.conditions !== undefined && (
+        <StatusChips conditions={card.battle.conditions} className="left-0 top-0" />
+      )}
     </div>
   );
 }
@@ -103,25 +98,17 @@ function BenchArea({
   player,
   side,
   benchLimit,
-  statuses,
   pile,
 }: {
   owner: PlayerId;
   player: PlayerBoard;
   side: SidePosition;
   benchLimit: number;
-  statuses?: Record<string, CardStatus>;
   pile?: PileState;
 }) {
   return (
     <div className="relative">
-      <Bench
-        cards={player.bench}
-        owner={owner}
-        side={side}
-        benchLimit={benchLimit}
-        statuses={statuses}
-      />
+      <Bench cards={player.bench} owner={owner} side={side} benchLimit={benchLimit} />
       <SidePiles owner={owner} prizesRemaining={player.prizesRemaining} side={side} pile={pile} />
     </div>
   );
@@ -133,7 +120,6 @@ export function PlayerSide({
   player,
   activeTurn = false,
   benchLimit,
-  statuses,
   pile,
 }: {
   owner: PlayerId;
@@ -141,29 +127,13 @@ export function PlayerSide({
   player: PlayerBoard;
   activeTurn?: boolean;
   benchLimit: number;
-  /** Damage/HP per in-play CardModel.id (game page); absent on the mock. */
-  statuses?: Record<string, CardStatus>;
   /** Deck count + public discard (game page); absent on the mock. */
   pile?: PileState;
 }) {
   const isTop = side === "top";
-  const activeSlot = (
-    <ActiveCardSlot
-      card={player.active}
-      active={activeTurn}
-      owner={owner}
-      status={player.active ? statuses?.[player.active.id] : undefined}
-    />
-  );
+  const activeSlot = <ActiveCardSlot card={player.active} active={activeTurn} owner={owner} />;
   const bench = (
-    <BenchArea
-      owner={owner}
-      player={player}
-      side={side}
-      benchLimit={benchLimit}
-      statuses={statuses}
-      pile={pile}
-    />
+    <BenchArea owner={owner} player={player} side={side} benchLimit={benchLimit} pile={pile} />
   );
 
   return (

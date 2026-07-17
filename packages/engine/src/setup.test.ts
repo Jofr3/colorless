@@ -11,6 +11,7 @@ import {
   must,
   mustApply,
   mustCreate,
+  types,
 } from "./testFixtures";
 
 // Seeds found by deterministic scan (see the engine test conventions): the
@@ -58,7 +59,7 @@ describe("createGame", () => {
 
   it("shuffles both decks, flips the coin and waits on the winner", () => {
     const { state, events } = mustCreate(SEED_P2_WINS);
-    expect(events.map((e) => e.type)).toEqual(["SHUFFLE", "SHUFFLE", "COIN_FLIP"]);
+    expect(types(events)).toEqual(["SHUFFLE", "SHUFFLE", "COIN_FLIP"]);
     const flip = events[2];
     if (flip?.type !== "COIN_FLIP") throw new Error("expected COIN_FLIP");
     expect(state.phase).toEqual({ kind: "setup:chooseFirst", coinWinner: flip.winner });
@@ -386,7 +387,7 @@ describe("finishing setup", () => {
     state = must(applyAction(state, { type: "setupReady", seat: "p1" }));
     const { state: next, events } = mustApply(state, { type: "setupReady", seat: "p2" });
 
-    expect(events.map((e) => (e as { type: string }).type)).toEqual([
+    expect(types(events)).toEqual([
       "SETUP_READY",
       "PRIZES_SET",
       "PRIZES_SET",

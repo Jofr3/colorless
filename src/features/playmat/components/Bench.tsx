@@ -5,9 +5,9 @@ import {
   DEFAULT_ATTACHED_VISIBLE_STICK,
   FRAME_CLASS,
 } from "../constants";
-import type { CardModel, CardStatus, PlayerId, SidePosition } from "../types";
+import type { CardModel, PlayerId, SidePosition } from "../types";
 import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
-import { DamageChip, PlaymatCard } from "./Card";
+import { DamageChip, PlaymatCard, StatusChips } from "./Card";
 
 // Mirrors the visible-strip math in playmat.css `.playmat-card__attached`
 // (card-h * scale * stick). Kept here so we can reserve that space in
@@ -20,14 +20,11 @@ export function Bench({
   owner,
   side,
   benchLimit,
-  statuses,
 }: {
   cards: CardModel[];
   owner: PlayerId;
   side: SidePosition;
   benchLimit: number;
-  /** Damage/HP per CardModel.id (game page); absent on the mock board. */
-  statuses?: Record<string, CardStatus>;
 }) {
   const shouldCollapseAttachments = shouldCollapseBenchAttachments(cards, benchLimit);
   const collapsedBenchOverlap = `calc(var(--card-h) * ${ATTACHED_CARD_SCALE} * -${CROWDED_BENCH_ATTACHED_ENERGY_STICK})`;
@@ -63,7 +60,7 @@ export function Bench({
           const needsRightGap =
             hasEnergy && (!shouldCollapseAttachments || index < cards.length - 1);
           const overlapPreviousEnergy = shouldCollapseAttachments && previousHasEnergy;
-          const status = statuses?.[card.id];
+          const battle = card.battle;
           return (
             // Outer wrapper carries the slot's layout (width + attachment
             // margins) but NO z-index, so the damage chip's z-[61] resolves
@@ -106,8 +103,11 @@ export function Bench({
                   }
                 />
               </div>
-              {status !== undefined && (
-                <DamageChip status={status} className="-right-1.5 -top-1.5" />
+              {battle !== undefined && (
+                <DamageChip battle={battle} className="-right-1.5 -top-1.5" />
+              )}
+              {battle?.conditions !== undefined && (
+                <StatusChips conditions={battle.conditions} className="-left-1.5 -top-1.5" />
               )}
             </div>
           );

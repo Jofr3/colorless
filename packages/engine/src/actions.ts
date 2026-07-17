@@ -137,6 +137,11 @@ export type ErrorCode =
   | "FIRST_TURN_ATTACK"
   | "BAD_ATTACK_INDEX"
   | "ATTACK_COST_UNMET"
+  /** §12 — an Asleep or Paralyzed Active cannot attack. (Confusion does not
+      block declaring — it flips at resolution, attack.ts.) */
+  | "STATUS_PREVENTS_ATTACK"
+  /** §11/§12 — an Asleep or Paralyzed Active cannot retreat. */
+  | "STATUS_PREVENTS_RETREAT"
   | "BAD_PRIZE_COUNT"
   | "BAD_PRIZE_INDEX"
   /** A parked ko:* phase that disagrees with the head pending stage —

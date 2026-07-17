@@ -354,10 +354,24 @@ Notes:
 - **Amount of Poison/Burn** can be increased by card effects (e.g. "this Pokémon is
   now Poisoned; put 2 damage counters instead of 1"). Model poison as a per-condition
   counter amount, default 10.
-- **Paralysis timing** is the subtle one: a Pokémon paralyzed by the opponent stays
-  paralyzed through the paralyzed player's *entire next turn* (can't attack/retreat),
-  then recovers in the Checkup following that turn. Implement by only clearing
-  Paralysis for the Active of the **player whose turn just ended**.
+- **Paralysis timing** is the subtle one. The official rule (current rulebook:
+  "after its owner's next turn, it recovers during Pokémon Checkup"; SWSH precise
+  wording: remove Paralyzed during the between-turns step **if your Pokémon was
+  Paralyzed since the beginning of your last turn**) makes the recovery
+  **conditional**: it recovers at the Checkup after its owner's next turn — i.e.
+  it is cleared for the seat whose turn just ended **only if it was Paralyzed since
+  the beginning of that turn**. Opponent-inflicted paralysis always satisfies this
+  (it was applied before the owner's turn began); paralysis **self-inflicted during
+  the owner's own turn** (e.g. by their own attack, at their turn's end) does
+  **not** — it must survive the immediately-following Checkup and last through the
+  owner's whole next turn.
+- **Engine stance**: the engine clears Paralysis unconditionally for the ended
+  seat's Active — a simplification that is correct for **every opponent-inflicted
+  case**. The one wrong case (self-inflicted at the owner's own turn end) is kept
+  unreachable instead: the effect deriver (effects.ts) refuses "This Pokémon is now
+  Paralyzed." and leaves it on the loud ATTACK_EFFECT_SKIPPED path. Recording an
+  applied-this-turn stamp on the condition — which would let both cases run — is
+  future work.
 
 ---
 
@@ -372,7 +386,12 @@ turn starts. Both players' Active Pokémon are processed. **Order [current]:**
    Burned, then flips a coin; **heads ⇒ remove Burn**.
 3. **Asleep** — each player with an Asleep Active flips a coin; **heads ⇒ wake up**.
 4. **Paralyzed** — the Active of the **player who just finished their turn** recovers
-   from Paralysis (Paralysis removed for that player only).
+   from Paralysis (Paralysis removed for that player only), **only if it was
+   Paralyzed since the beginning of that turn**: opponent-inflicted paralysis always
+   was; paralysis self-inflicted during the turn that just ended survives this
+   Checkup and clears after the owner's *next* turn (see the §12 timing note — the
+   engine makes the self-inflicted case unreachable rather than modeling the
+   condition's application turn).
 
 Additional rules:
 - All Special-Condition checks are conceptually resolved **as one batch**; other

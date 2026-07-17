@@ -107,7 +107,10 @@ event stream.
    **engine → playmat projection** (D17, `src/features/game/projection.ts`)
    landed alongside it. **Wire-up done 2026-07-17:** the projection drives a
    playable local hot-seat game at `/play` ("Wire-up as built" below).
-3. Status conditions + Pokémon Checkup between turns.
+3. ✅ **Status conditions + Pokémon Checkup** — built + reviewed (8 finders /
+   7 verifiers, 10 reported findings all fixed) 2026-07-17; as-built notes
+   below. Includes the first sliver of the effect system: the **text-derived
+   status deriver** (D20).
 4. Evolution, Abilities, and the trainer/energy effect registry (staples first).
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
@@ -234,12 +237,10 @@ findings, all confirmed ones fixed in-session). The headline classes:
   literal 0 was instant-KOing undamaged Pokémon on 0-damage attacks).
 
 ### Known gaps / traps for M3+
-- **`runCheckup` is still a stub.** The interrupt machinery it needs is built
-  (park/auto-resolve, `turnTail`), but the KO **detection block is
-  attack-private** (attack.ts: hp check → `discardFromStack` → KNOCKED_OUT →
-  stage seeding, Active-only). M3's poison/burn checkup KOs should lift a
-  shared `knockOut` resolver in flow.ts rather than copy it — and M4 bench
-  damage needs it to handle non-Active spots.
+- ~~**`runCheckup` is still a stub.**~~ **Closed by M3** (2026-07-17): the
+  shared `knockOut` + `isLethallyDamaged` + `activeTop` now live in
+  flow.ts/cards.ts and both attack exits + the checkup use them. Still
+  Active-only — M4 bench damage must generalize `knockOut`'s target.
 - **`prizeValueOf` returns 1 for everything** — the canonical `Card` has no
   ex/rule-box field because ingest deliberately drops tcgdex's `suffix`
   (wrongly lumped with dp-era extras in `apps/api/src/db/catalog.ts`). The
@@ -317,9 +318,9 @@ makes the collision structurally impossible. Regression-pinned in
 - **Piles are a second render path:** discard-top is a DOM `<img>`; deck-empty
   hides the Pixi back by dropping its anchor. Cards **teleport** to discard
   (KO/retreat/M4 trainers) — needs pile zones in the animation layer's model.
-- `CardModel` carries no battle state (`statuses` side-table prop-drilled 5
-  hops; a projection-attached `battle?: {damage,hp}` would collapse it) —
-  revisit when M3 adds status-condition markers.
+- ~~`CardModel` carries no battle state~~ — **closed by M3** (D21): the
+  projection attaches `battle {damage, hp, conditions}`; the side-table and
+  its 5-hop prop chain are deleted.
 - Perf (minor, verified): `viewLogEntries` re-maps the whole log per action
   (O(n²)); overlay banner/pill timers re-render the board subtree (Pixi sync
   is skipped via board identity — cost is reconciliation + payability
@@ -329,6 +330,82 @@ makes the collision structurally impossible. Regression-pinned in
 - Hidden-back re-key on reveal (opponent hand AND setup redaction) pops
   instead of animating — needs the stable-opaque-alias design with P4's
   server filter (pre-existing deferral, now with two call sites).
+
+## M3 as built (2026-07-17) — special conditions, checkup, text-derived effects
+
+**Shape.** The M1-reserved `SpecialConditions` slot (`rotation` ∈
+none/asleep/paralyzed/confused, `poisonDamage` counter amount with 0 = not
+poisoned, `burned`) is now live on the Active only. The checkup runs entirely
+inside `advance`'s `checkup` stage (which now carries the ended `seat`) — **no
+new Phase members**: §13 order poison → burn(20 + cure flip) → asleep(wake
+flip) → paralysis(ended seat only), each step [endedSeat, other], all flips
+threading `rngState`, KOs resolved AFTER the whole batch via the shared
+**`knockOut(state, koedSeat, prizeSeat, events)`** (lifted from attack.ts;
+prize goes to the KO'd side's opponent) parking on the same ko:* interrupts as
+attack KOs — prize stages grouped before promote stages. Double-KO
+simultaneous wins resolve by **speculatively applying both KOs + owed prizes
+and asking `evaluateWin`** (§14 stays single-sourced) → tie. Gates:
+`isImmobilized` (engine-exported; asleep/paralyzed) blocks attack + retreat
+(`STATUS_PREVENTS_ATTACK`/`_RETREAT`); Confused attacks flip
+(CONFUSION_CHECK; tails → ATTACK_FAILED + 30 self-counters + possible
+self-KO prized to the defender + turn ends) through the same shared
+`finishAttack` epilogue as the normal exit. Retreat/benching cures (emits
+STATUS_CLEARED reason "benched"); a rotation status REPLACES the previous one
+with no clear event. Effects: **D20's `deriveAttackEffect`** (5 anchored
+sentence patterns → `EffectStep[]`: applyStatus/heal/coinFlipGate) executes
+after damage, before the KO check; underivable text keeps ATTACK_EFFECT_SKIPPED
+(whose `effect` is null when the text DID derive and only a damage marker was
+skipped — the log keys on that). New events: STATUS_APPLIED, STATUS_CLEARED,
+COUNTERS_PLACED (poison/burn/confusion), CHECKUP_COIN_FLIP, CONFUSION_CHECK,
+ATTACK_FAILED, HEALED, ATTACK_EFFECT_COIN_FLIP. Engine exports added:
+`isImmobilized`, `DEFAULT_POISON_DAMAGE`, `StatusName`, `EffectStep`,
+`deriveAttackEffect`; internal helpers `isLethallyDamaged` (owns the
+hp-null-is-a-data-gap rule) and `activeTop` (the 8×-repeated active/uid/card
+preamble).
+
+**Surface (D21).** `CardModel.battle {damage, hp, conditions}` attached by the
+projection; SLP/PAR/CNF/BRN/PSN chips (opposite corner from the damage chip;
+PSN shows the amount when raised above `DEFAULT_POISON_DAMAGE`); HUD disables
+attack+retreat via the engine's `isImmobilized` with a reason line, confusion
+gets a note; log rows for all 8 events (shared `STATUS_LABELS`, UI-side);
+checkup events ride INSIDE the attack/endTurn action's batch (TURN_ENDED →
+ticks/flips → TURN_STARTED in one list — animations must key off post-batch
+state, a recovery row can precede the same uid's KNOCKED_OUT). Projection
+reports `activeSeat: null` during **between-turns** ko parks (discriminator:
+the pending queue has drained the endTurn/checkup tail to bare startTurn);
+GamePage's `?? waitingOn` fallback highlights the prize picker. Demo decks:
+Numel sv03-031 ×3 (Fire, defender Burn), Luvdisc sv02-047 ×3 (Water, defender
+Asleep); Slowpoke's Rest now actually simulates (self-Asleep + heal 30).
+
+### Known gaps / traps for M4+
+- **Paralysis has no applied-turn stamp**, so the blanket ended-seat clear is
+  wrong for SELF-paralysis at your own turn's end (official wording: cleared
+  only if "Paralyzed since the beginning of your last turn"). The deriver
+  refuses self-`Paralyzed` (→ skip flag) to keep the wrong case unreachable;
+  §12/§13.4 in the rules doc now carry the real conditional. M4 effects that
+  self-paralyze need the stamp first.
+- **The `EffectStep` interpreter is attack-private by design** (runs after
+  damage, targets hardcoded to the two Actives). M4's registry goes ABOVE it
+  (`programFor(cardId) ?? deriveAttackEffect(text)` at the one call site) and
+  will need mid-effect decision parking, pre-damage `ModifyDamage`, and
+  non-Active targets — expect to restructure the interpreter then, not
+  extract it now (review adjudicated: premature today).
+- **Classic prints are deliberately underivable** ("The Defending Pokémon is
+  now …" — sv-era cards say "Your opponent's Active Pokémon"); they keep the
+  loud skip flag. Adding the classic pattern is a one-line M4 candidate once
+  someone checks the era's timing semantics match.
+- `knockOut`/checkup are **Active-only**; M4 bench damage (spread/snipes)
+  must generalize the target and revisit the double-KO guard's two-KO framing
+  (the speculative-apply shape generalizes; the old hand-rolled guard did
+  not).
+- `BattleConditions` structurally restates `SpecialConditions` (playmat stays
+  engine-free), pinned by a two-way assignability assert in `battleStateOf`.
+  When M4 markers widen conditions, **lift the vocabulary to
+  `@luminous/schema`** (the BASIC_ENERGY_TYPES precedent).
+- Still open from M2: `prizeValueOf` = 1 (ingest suffix column), name-derived
+  energy provision, phase↔`pending[0]` dual encoding (checkup added no
+  parked-phase writers, so it stands unchanged), opponent-hand/setup reveal
+  re-key (P4 opaque-alias design).
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per

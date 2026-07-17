@@ -15,6 +15,8 @@ import {
   handUid,
   mustApply,
   mustCreate,
+  setConditions,
+  setDamage,
   setPrizes,
 } from "../../../packages/engine/src/testFixtures";
 import { cardImageUrl } from "../../lib/api";
@@ -132,6 +134,11 @@ function sweepContains(projectionJson: string, value: string): boolean {
   return projectionJson.includes(JSON.stringify(value));
 }
 
+/** The battle row every pristine in-play fixture Pokémon projects. */
+function pristineBattle(hp: number) {
+  return { damage: 0, hp, conditions: { rotation: "none", poisonDamage: 0, burned: false } };
+}
+
 describe("projectGameState — zones", () => {
   it("projects every zone for the p1 viewer", () => {
     const state = turnOneState();
@@ -207,7 +214,7 @@ describe("projectGameState — hidden information", () => {
     // Swept across the phases that populate every projection field: mid-
     // setup (face-down placements), plain turn play, a parked KO interrupt
     // (pendingDecision) and a finished game (outcome) — pendingDecision/
-    // outcome/pokemon must stay as clean as the board.
+    // outcome/battle must stay as clean as the board.
     for (const state of [placedNotRevealed(), turnOneState(), parkedOnPrizes(1), wonGame()]) {
       for (const viewer of ["p1", "p2"] as const) {
         const json = JSON.stringify(projectGameState(state, viewer));
@@ -262,12 +269,10 @@ describe("projectGameState — setup redaction", () => {
       },
     ]);
 
-    // No status rows for the redacted stacks either — an entry would leak
-    // the uid (the key) and the printed HP. p2 has nothing in play yet, so
-    // the record is empty outright.
-    expect(projection.pokemon).toEqual({});
+    // The full-model equalities above also pin that the backs carry NO
+    // `battle` — a row would leak the printed HP of a face-down placement.
 
-    // And no in-play uid of p1's escapes anywhere: board, pokemon or piles.
+    // And no in-play uid of p1's escapes anywhere: board, battle or piles.
     const json = JSON.stringify(projection);
     const uids = p1InPlayUids(state);
     expect(uids.length).toBeGreaterThanOrEqual(2); // active + bench really placed
@@ -280,16 +285,11 @@ describe("projectGameState — setup redaction", () => {
     const state = placedNotRevealed();
     const projection = projectGameState(state, "p1");
 
-    // p1 placed these — they see them, full identity and status included.
+    // p1 placed these — they see them, full identity and battle included.
     expect(projection.board.you.active?.cardId).toBe("fix-basic-1");
     expect(projection.board.you.bench.map((card) => card.cardId)).toEqual(["fix-basic-0"]);
-    const activeUid = projection.board.you.active?.id;
-    if (activeUid === undefined) throw new Error("expected an active uid");
-    expect(projection.pokemon[activeUid]).toEqual({ damage: 0, hp: 60 });
-    // Only the viewer's own stacks carry status rows during setup.
-    expect(Object.keys(projection.pokemon).sort()).toEqual(
-      [activeUid, projection.board.you.bench[0]?.id ?? "?"].sort(),
-    );
+    expect(projection.board.you.active?.battle).toEqual(pristineBattle(60));
+    expect(projection.board.you.bench[0]?.battle).toEqual(pristineBattle(60));
   });
 
   it("reveals the opponent's board under its real uids once turn:action begins", () => {
@@ -311,8 +311,8 @@ describe("projectGameState — setup redaction", () => {
     // — the reveal is a remount, the accepted animation trade).
     expect(projection.board.opponent.active?.id).toBe(p1ActiveUid);
     expect(projection.board.opponent.active?.cardId).toBe("fix-basic-1");
-    // Status rows now cover BOTH sides again.
-    expect(projection.pokemon[p1ActiveUid]).toEqual({ damage: 0, hp: 60 });
+    // Battle state now rides on BOTH sides' in-play models again.
+    expect(projection.board.opponent.active?.battle).toEqual(pristineBattle(60));
   });
 });
 
@@ -434,6 +434,57 @@ describe("projectGameState — phase-derived fields", () => {
     expect(theirs.pendingDecision).toEqual({ kind: "promote" });
   });
 
+  /** A CHECKUP-origin park: p2's Active is lethally poisoned when p1 ends
+      turn 3, so the KO fires from the Pokémon Checkup — parking BETWEEN
+      turns (endTurn and checkup already drained; pending holds only the ko
+      stages + startTurn), unlike parkedOnPrizes' attack-KO park, where the
+      whole turn tail is still queued. Two benched defenders keep the later
+      promotion a real (parking) choice. */
+  function parkedAtCheckup(): GameState {
+    let state = matchup("fix-weak", 2);
+    state = setDamage(state, "p2", 50); // fix-weak prints 60 HP...
+    state = setConditions(state, "p2", { poisonDamage: 10 }); // ...lethal at the tick
+    return mustApply(state, { type: "endTurn", seat: "p1" }).state;
+  }
+
+  it("reports no turn owner while a checkup-origin KO parks between turns", () => {
+    const state = parkedAtCheckup();
+    expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
+    // The between-turns signature the projection keys on: no endTurn or
+    // checkup stage remains behind the parked ko stages.
+    expect(
+      state.pending.some((stage) => stage.kind === "endTurn" || stage.kind === "checkup"),
+    ).toBe(false);
+
+    const mine = projectGameState(state, "p1");
+    expect(mine.activePlayer).toBeNull(); // between turns nobody owns one...
+    expect(mine.waitingOn).toBe("you"); // ...but p1 owes the prize pick
+    expect(mine.pendingDecision).toEqual({ kind: "takePrizes", count: 1 });
+
+    const theirs = projectGameState(state, "p2");
+    expect(theirs.activePlayer).toBeNull();
+    expect(theirs.waitingOn).toBe("opponent");
+  });
+
+  it("keeps the checkup-origin promote park turn-owner-free, then resumes into p2's turn", () => {
+    const parked = parkedAtCheckup();
+    const state = mustApply(parked, { type: "takePrizes", seat: "p1", prizeIndices: [0] }).state;
+    expect(state.phase).toEqual({ kind: "ko:promote", seat: "p2" });
+
+    const mine = projectGameState(state, "p1");
+    expect(mine.activePlayer).toBeNull();
+    expect(mine.waitingOn).toBe("opponent");
+    expect(mine.pendingDecision).toEqual({ kind: "promote" });
+
+    // The promotion resumes the queue's startTurn(p2): turn 4 is p2's, and
+    // the owner comes back non-null.
+    const resumed = mustApply(state, { type: "promote", seat: "p2", benchIndex: 0 }).state;
+    const after = projectGameState(resumed, "p1");
+    expect(after.turn).toBe(4);
+    expect(after.activePlayer).toBe("opponent");
+    expect(after.pendingDecision).toBeNull();
+  });
+
   it("maps a win to each viewer and clears the acting fields", () => {
     const state = wonGame();
     expect(state.phase.kind).toBe("gameOver");
@@ -470,8 +521,8 @@ describe("projectGameState — phase-derived fields", () => {
   });
 });
 
-describe("projectGameState — damage and HP", () => {
-  it("covers every in-play Pokémon with damage taken and printed HP", () => {
+describe("projectGameState — battle state", () => {
+  it("carries damage taken and printed HP on every in-play model, nothing else", () => {
     // A Bite into the 120 HP wall: 30 damage, no KO, play moves on to p2.
     const before = matchup("fix-wall", 1);
     const defender = before.players.p2.active;
@@ -484,19 +535,50 @@ describe("projectGameState — damage and HP", () => {
 
     for (const viewer of ["p1", "p2"] as const) {
       const projection = projectGameState(state, viewer);
+      const p2Board = viewer === "p2" ? projection.board.you : projection.board.opponent;
+      const p1Board = viewer === "p1" ? projection.board.you : projection.board.opponent;
       // Damage is public info — identical from both sides of the table; hp
       // is the printed max from the pool card.
-      expect(projection.pokemon[defenderUid]).toEqual({ damage: 30, hp: 120 });
-      expect(projection.pokemon[attackerUid]).toEqual({ damage: 0, hp: 120 });
-      // The record covers exactly the in-play uids: actives + benches, both
-      // sides — and nothing else (no hand/deck/prize keys).
-      const inPlay = [state.players.p1, state.players.p2].flatMap((side) =>
-        [side.active, ...side.bench].flatMap((pokemon) =>
-          pokemon === null ? [] : [topUid(pokemon) ?? "?"],
-        ),
-      );
-      expect(Object.keys(projection.pokemon).sort()).toEqual([...inPlay].sort());
+      expect(p2Board.active?.id).toBe(defenderUid);
+      expect(p2Board.active?.battle).toEqual({
+        damage: 30,
+        hp: 120,
+        conditions: { rotation: "none", poisonDamage: 0, burned: false },
+      });
+      expect(p1Board.active?.battle).toEqual(pristineBattle(120));
+      // Battle rides on exactly the in-play top cards: every active/bench
+      // model has one; hand, discard and attached cards never do.
+      for (const board of [projection.board.you, projection.board.opponent]) {
+        for (const model of [board.active, ...board.bench]) {
+          expect(model?.battle).toBeDefined();
+          for (const attached of [
+            ...(model?.attached?.tools ?? []),
+            ...(model?.attached?.energies ?? []),
+          ]) {
+            expect(attached.battle).toBeUndefined();
+          }
+        }
+        for (const model of board.hand) expect(model.battle).toBeUndefined();
+      }
+      for (const piles of [projection.piles.you, projection.piles.opponent]) {
+        for (const model of piles.discard) expect(model.battle).toBeUndefined();
+      }
     }
+  });
+
+  it("copies special conditions into battle.conditions — a copy, never an alias", () => {
+    const conditioned = { rotation: "asleep", poisonDamage: 20, burned: true } as const;
+    const state = setConditions(turnOneState(), "p1", conditioned);
+
+    const mine = projectGameState(state, "p1");
+    expect(mine.board.you.active?.battle?.conditions).toEqual(conditioned);
+    // Conditions are table facts — the opponent sees the same ones.
+    const theirs = projectGameState(state, "p2");
+    expect(theirs.board.opponent.active?.battle?.conditions).toEqual(conditioned);
+
+    // A consumer mutating the projection must never reach the engine state:
+    // the projected object is a fresh copy, not the state's own reference.
+    expect(mine.board.you.active?.battle?.conditions).not.toBe(state.players.p1.active?.conditions);
   });
 });
 
@@ -523,9 +605,9 @@ describe("projectGameState — bench totality", () => {
       type: "trainer",
     });
     expect(projection.board.you.bench[1]?.id).toBe(realUid);
-    // The placeholder has no uid to key, so it is the one in-play entry
-    // without a status row; the real Pokémon keeps its own.
-    expect(projection.pokemon[realUid]).toEqual({ damage: 0, hp: 60 });
-    expect(Object.keys(projection.pokemon)).not.toContain("p1-bench-0-empty");
+    // The placeholder is the one in-play model without battle state (the
+    // full-model equality above pins the absence); the real Pokémon keeps
+    // its own.
+    expect(projection.board.you.bench[1]?.battle).toEqual(pristineBattle(60));
   });
 });

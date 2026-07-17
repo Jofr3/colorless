@@ -9,15 +9,7 @@ import { Hand } from "./components/Hand";
 import { PlayerSide } from "./components/PlayerSide";
 import { StadiumSlot } from "./components/StadiumSlot";
 import { TurnBanner, TurnControls } from "./components/TurnHud";
-import type {
-  BoardState,
-  CardMoveRequest,
-  CardStatus,
-  LogEntry,
-  PileState,
-  PlayerId,
-  TurnInfo,
-} from "./types";
+import type { BoardState, CardMoveRequest, LogEntry, PileState, PlayerId, TurnInfo } from "./types";
 import type { PlacementPredicate } from "./utils/cardMovement";
 import { opponentOf } from "./utils/players";
 
@@ -37,8 +29,6 @@ export interface PlaymatViewProps {
   passDisabled?: boolean;
   passAnimationKey?: number;
   logEntries: LogEntry[];
-  /** Damage/HP per in-play CardModel.id — the game projection's `pokemon`. */
-  statuses?: Record<string, CardStatus>;
   /** Deck counts + public discards — the game projection's `piles`. */
   piles?: Record<PlayerId, PileState>;
   /** Optional drag-legality gate, forwarded untouched to AnimatedCardsLayer;
@@ -62,7 +52,6 @@ export function PlaymatView({
   passDisabled = false,
   passAnimationKey = 0,
   logEntries,
-  statuses,
   piles,
   placementPredicate,
   children,
@@ -98,7 +87,6 @@ export function PlaymatView({
         side="top"
         activeTurn={turn.activePlayer === topPlayer}
         benchLimit={benchLimit}
-        statuses={statuses}
         pile={piles?.[topPlayer]}
       />
       <PlayerSide
@@ -107,7 +95,6 @@ export function PlaymatView({
         side="bottom"
         activeTurn={turn.activePlayer === bottomPlayer}
         benchLimit={benchLimit}
-        statuses={statuses}
         pile={piles?.[bottomPlayer]}
       />
       <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />

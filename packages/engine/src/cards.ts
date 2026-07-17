@@ -163,6 +163,24 @@ export function topCardOf(state: GameState, pokemon: InPlayPokemon): Card | unde
   return uid === undefined ? undefined : cardOfUid(state, uid);
 }
 
+/** A seat's Active with its stack-top uid and catalog card resolved in one
+    go, or null when the spot is empty (or the stack/catalog has a gap —
+    structurally impossible for engine-built states, but indexing has to
+    admit it). The one helper for the `active === null ? undefined :
+    topUid(active)` guard chain every Active-reading site was spelling out. */
+export function activeTop(
+  state: GameState,
+  seat: Seat,
+): { active: InPlayPokemon; uid: string; card: Card } | null {
+  const active = state.players[seat].active;
+  if (active === null) return null;
+  const uid = topUid(active);
+  if (uid === undefined) return null;
+  const card = cardOfUid(state, uid);
+  if (card === undefined) return null;
+  return { active, uid, card };
+}
+
 /** The "a Basic Pokémon out of your own hand" check shared by the two setup
     placements and the in-turn bench play (§3.6–§3.7, §5.2). Returns the
     rejection, or null when the play is legal. M2's evolution play adds its

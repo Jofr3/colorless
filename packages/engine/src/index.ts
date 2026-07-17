@@ -5,7 +5,10 @@
 // and deck-out loss, energy attach, bench plays, retreat and pass. M2 adds
 // the attack step: costs, weakness/resistance damage, Knock Outs with prize
 // taking and forced promotion, and the full §14 win check — resolved through
-// a staged turn tail that can park on player decisions. Spec:
+// a staged turn tail that can park on player decisions. M3 adds the Special
+// Conditions (§12) with their attack/retreat gates and the confusion flip,
+// the Pokémon Checkup (§13) with its ticks, recoveries and KOs, and the
+// first text-derived attack effects (effects.ts). Spec:
 // docs/workstreams/simulator.md; ruleset: docs/reference/ptcg-rules.md.
 // Everything is (state, action) → result: no classes, no wall clock, no
 // unseeded randomness — the same seed and actions replay identically. The
@@ -25,8 +28,8 @@ import {
 import { attachEnergy, endTurn, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M2 = attacks, KOs, prizes, win conditions). */
-export const engineVersion = "0.2.0";
+/** Engine milestone marker (M3 = special conditions + Pokémon Checkup). */
+export const engineVersion = "0.3.0";
 
 export type {
   ApplyResult,
@@ -64,11 +67,22 @@ export {
   weaknessOf,
 } from "./cards";
 export type { DamageModifier, ParsedDamage } from "./cards";
-export type { DrawReason, GameEvent } from "./events";
+export { deriveAttackEffect } from "./effects";
+export type { EffectStep } from "./effects";
+export type { DrawReason, GameEvent, StatusName } from "./events";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
-export { BENCH_MAX, DECK_SIZE, HAND_SIZE, PRIZE_COUNT, SEATS, otherSeat } from "./types";
+export {
+  BENCH_MAX,
+  DECK_SIZE,
+  DEFAULT_POISON_DAMAGE,
+  HAND_SIZE,
+  PRIZE_COUNT,
+  SEATS,
+  isImmobilized,
+  otherSeat,
+} from "./types";
 export type {
   GameOutcome,
   GameOverReason,

@@ -15,6 +15,11 @@ import type { GameOutcome, PokemonTarget, Seat } from "./types";
 /** Why cards moved deck → hand; lets the UI animate each draw differently. */
 export type DrawReason = "opening" | "mulligan" | "compensation" | "turnStart";
 
+/** The §12 Special Conditions as event vocabulary. The state stores them
+    structurally (SpecialConditions: rotation / poisonDamage / burned) — the
+    events name them flat, one word per condition. */
+export type StatusName = "asleep" | "paralyzed" | "confused" | "burned" | "poisoned";
+
 export type GameEvent =
   | { type: "SHUFFLE"; seat: Seat }
   | { type: "COIN_FLIP"; result: CoinFace; winner: Seat }
@@ -88,6 +93,53 @@ export type GameEvent =
       dealt: number;
       damage: number;
     }
+  // — M3 special conditions (§12) and the Pokémon Checkup (§13). `seat` on
+  //   STATUS_APPLIED / STATUS_CLEARED / COUNTERS_PLACED / HEALED always OWNS
+  //   the affected Pokémon; `uid` is the stack-top uid of its Active.
+  /** An attack effect inflicted `status` (§12). `poisonDamage` is present
+      iff status === "poisoned": the damage placed at each Checkup (10 unless
+      the attack raised it). A rotation status (asleep/paralyzed/confused)
+      REPLACES any previous rotation — no separate cleared event fires for
+      the overwritten one. */
+  | { type: "STATUS_APPLIED"; seat: Seat; uid: string; status: StatusName; poisonDamage?: number }
+  /** Conditions leaving a Pokémon: `statuses` lists every one that was
+      actually removed. "benched" = retreat cleared everything at once
+      (§11/§12); the other reasons are single-condition Checkup recoveries
+      (§13) and always carry exactly one entry. */
+  | {
+      type: "STATUS_CLEARED";
+      seat: Seat;
+      uid: string;
+      statuses: StatusName[];
+      reason: "benched" | "wokeUp" | "burnCured" | "paralysisEnded";
+    }
+  /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
+      Checkup ticks, the confusion self-hit) — `amount` is HP of damage, and
+      weakness/resistance never apply (§13). */
+  | {
+      type: "COUNTERS_PLACED";
+      seat: Seat;
+      uid: string;
+      amount: number;
+      source: "poison" | "burn" | "confusion";
+    }
+  /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
+      (§13.2) or asleep's wake flip (§13.3). Heads is followed by the
+      matching STATUS_CLEARED; tails, the condition stays. */
+  | { type: "CHECKUP_COIN_FLIP"; seat: Seat; status: "asleep" | "burned"; result: CoinFace }
+  /** The §8 step-3 confusion flip for the declared attack — tails is
+      followed by ATTACK_FAILED, heads by the normal resolution. */
+  | { type: "CONFUSION_CHECK"; seat: Seat; uid: string; result: CoinFace }
+  /** The declared attack did NOT resolve (confusion tails, §12): no damage
+      to the defender, no effects — the 30 self-damage follows as
+      COUNTERS_PLACED and the turn still ends. */
+  | { type: "ATTACK_FAILED"; seat: Seat; uid: string; reason: "confusion" }
+  /** Damage removed from `seat`'s Active by an attack effect; `amount` is
+      what actually healed (clamped at the damage present — never 0). */
+  | { type: "HEALED"; seat: Seat; uid: string; amount: number }
+  /** An attack effect's own "Flip a coin. If heads, …" gate (effects.ts):
+      heads runs the gated steps, tails skips them. `seat` is the attacker. */
+  | { type: "ATTACK_EFFECT_COIN_FLIP"; seat: Seat; result: CoinFace }
   /** §8.1 — `seat`'s `uid` was Knocked Out: the whole stack (evolution
       cards, energy, tools) left play for `seat`'s discard; `discarded` lists
       every uid that moved, in pile order. */

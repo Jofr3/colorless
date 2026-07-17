@@ -22,11 +22,16 @@ export const HAND_SIZE = 7;
 export const PRIZE_COUNT = 6;
 export const BENCH_MAX = 5;
 
+/** §12/§13.1 — the HP a Poisoned Pokémon takes at each Checkup unless the
+    inflicting effect raised it ("put N damage counters … instead of 1"). */
+export const DEFAULT_POISON_DAMAGE = 10;
+
 /** §12 condition shape: {Asleep, Paralyzed, Confused} are mutually exclusive
-    (one card rotation), Poisoned/Burned coexist. A placeholder until M3 —
-    M1 never sets anything, but the slot exists so states don't change shape.
-    Poison carries its counter amount rather than a bool because §12/§13.1
-    let effects raise it ("Poisoned; put 2 damage counters instead of 1"). */
+    (one card rotation — applying one REPLACES the others), Poisoned/Burned
+    coexist with each other and with the rotation. Set by M3's attack effects
+    (effects.ts), ticked by the Pokémon Checkup (flow.ts runCheckup). Poison
+    carries its counter amount rather than a bool because §12/§13.1 let
+    effects raise it ("Poisoned; put 2 damage counters instead of 1"). */
 export interface SpecialConditions {
   rotation: "none" | "asleep" | "paralyzed" | "confused";
   /** Damage placed on it at each Checkup while Poisoned; 0 = not Poisoned. */
@@ -36,6 +41,13 @@ export interface SpecialConditions {
 
 export function noConditions(): SpecialConditions {
   return { rotation: "none", poisonDamage: 0, burned: false };
+}
+
+/** §12 — Asleep and Paralyzed are the rotation states that prevent both
+    attacking (§8) and retreating (§11); Confused restricts neither gate.
+    The action handlers keep their own distinct error codes/messages. */
+export function isImmobilized(conditions: SpecialConditions): boolean {
+  return conditions.rotation === "asleep" || conditions.rotation === "paralyzed";
 }
 
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
@@ -130,9 +142,10 @@ export type PendingStage =
       point is the §14.2 loss. */
   | { kind: "promote"; seat: Seat }
   | { kind: "endTurn"; seat: Seat }
-  /** M3's Pokémon Checkup slot (§13) — a no-op stage until then, kept a
-      stage so its future KOs can park on the same ko:* interrupts. */
-  | { kind: "checkup" }
+  /** The Pokémon Checkup (§13) — `seat` is the player whose turn just ended,
+      which the §13.4 paralysis recovery keys on. Its KOs park on the same
+      ko:* interrupts the attack KOs use. */
+  | { kind: "checkup"; seat: Seat }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory
@@ -186,6 +199,13 @@ export interface GameState {
 
 export function withSide(state: GameState, seat: Seat, side: PlayerSide): GameState {
   return { ...state, players: { ...state.players, [seat]: side } };
+}
+
+/** withSide, one level deeper: replace a seat's Active Pokémon — the shape
+    every per-Active update (checkup ticks, status application, healing)
+    spells out otherwise. */
+export function withActive(state: GameState, seat: Seat, active: InPlayPokemon): GameState {
+  return withSide(state, seat, { ...state.players[seat], active });
 }
 
 /** Remove one card uid from a zone array (uids are unique by construction). */

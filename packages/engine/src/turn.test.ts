@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, otherSeat, topCardOf, topUid } from "./index";
-import type { GameState } from "./index";
+import type { GameEvent, GameState } from "./index";
 import {
   ALL_BASIC_DECK,
   MIXED_DECK,
@@ -11,6 +11,7 @@ import {
   handUids,
   must,
   mustApply,
+  types,
 } from "./testFixtures";
 
 // Seed found by deterministic scan: MIXED decks, no mulligans, and p1's
@@ -426,11 +427,7 @@ describe("endTurn", () => {
     const state = costOneBoard();
     const p2HandBefore = state.players.p2.hand.length;
     const { state: next, events } = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(events.map((e) => (e as { type: string }).type)).toEqual([
-      "TURN_ENDED",
-      "TURN_STARTED",
-      "CARDS_DRAWN",
-    ]);
+    expect(types(events)).toEqual(["TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
     expect(next.turn).toBe(2);
     expect(next.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(next.allowances).toEqual({ energyAttached: false, retreated: false });
@@ -445,7 +442,7 @@ describe("endTurn", () => {
 describe("deck-out", () => {
   it("the player who cannot draw at turn start loses", () => {
     let state = driveSetup(1, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK }, { first: "p1" });
-    let lastEvents: unknown[] = [];
+    let lastEvents: GameEvent[] = [];
     for (let guard = 0; guard < 200 && state.phase.kind === "turn:action"; guard++) {
       const applied = mustApply(state, { type: "endTurn", seat: state.phase.seat });
       state = applied.state;
@@ -457,14 +454,14 @@ describe("deck-out", () => {
       outcome: { result: "win", winner: "p2", reason: "deckOut" },
     });
     expect(state.players.p1.deck).toHaveLength(0);
-    expect(lastEvents.map((e) => (e as { type: string }).type)).toEqual([
+    expect(types(lastEvents)).toEqual([
       "TURN_ENDED",
       "TURN_STARTED",
       "GAME_OVER", // no CARDS_DRAWN — the loss is checked at draw time
     ]);
-    const over = lastEvents.at(-1) as { outcome: { winner: string; reason: string } };
-    expect(over.outcome.winner).toBe("p2");
-    expect(over.outcome.reason).toBe("deckOut");
+    const over = lastEvents.at(-1);
+    if (over?.type !== "GAME_OVER") throw new Error("expected GAME_OVER");
+    expect(over.outcome).toEqual({ result: "win", winner: "p2", reason: "deckOut" });
   });
 
   it("a finished game rejects every further action", () => {

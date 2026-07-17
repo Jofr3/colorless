@@ -4,6 +4,7 @@
 // verified against the live catalog when authored (see demoDecks.ts).
 
 import { describe, expect, it } from "vitest";
+import { deriveAttackEffect } from "@luminous/engine";
 import { DEMO_DECKS, expandDeck } from "./demoDecks";
 
 describe("expandDeck", () => {
@@ -44,5 +45,37 @@ describe("DEMO_DECKS", () => {
     if (ember === undefined || tidal === undefined) throw new Error("expected two decks");
     const tidalSet = new Set(tidal.ids);
     expect(ember.ids.some((id) => tidalSet.has(id))).toBe(false);
+  });
+
+  it("keeps the demo status attacks' printed sentences derivable (M3 tripwire)", () => {
+    // These sentences MIRROR the D1 catalog wording as ingested (verified
+    // live 2026-07-17, see demoDecks.ts header). A re-ingest that rewords
+    // any of them must update this test AND the deck rationale together —
+    // a documentation tripwire that the demo conditions still derive, not
+    // a live-D1 check.
+    const sentences = [
+      // Numel — Hot Magma
+      ["sv03-031", "Your opponent's Active Pokémon is now Burned."],
+      // Luvdisc — Water Pulse
+      ["sv02-047", "Your opponent's Active Pokémon is now Asleep."],
+      // Slowpoke — Rest
+      ["sv01-042", "This Pokémon is now Asleep. Heal 30 damage from it."],
+    ] as const;
+    for (const [cardId, sentence] of sentences) {
+      expect(deriveAttackEffect(sentence), `${cardId} effect should derive`).not.toBeNull();
+    }
+  });
+
+  it("keeps the M3 status attackers in the lists (conditions reachable at /play)", () => {
+    const [ember, tidal] = DEMO_DECKS;
+    if (ember === undefined || tidal === undefined) throw new Error("expected two decks");
+    const count = (deck: typeof ember, id: string) =>
+      deck.ids.filter((cardId) => cardId === id).length;
+    // Numel — Hot Magma [FC] 20: the defender is Burned.
+    expect(count(ember, "sv03-031")).toBe(3);
+    // Luvdisc — Water Pulse [W] 20: the defender is Asleep.
+    expect(count(tidal, "sv02-047")).toBe(3);
+    // Slowpoke — Rest [C]: self-Asleep + heal 30, simulated since M3.
+    expect(count(tidal, "sv01-042")).toBe(4);
   });
 });

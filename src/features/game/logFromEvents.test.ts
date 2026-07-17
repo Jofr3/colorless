@@ -5,7 +5,9 @@
 
 import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState, Seat } from "@luminous/engine";
+import { topCardOf } from "@luminous/engine";
 import {
+  MIXED_DECK,
   attachFromDeck,
   deckOf,
   driveSetup,
@@ -160,11 +162,53 @@ describe("logFromEvents — attacks and KOs", () => {
 
   it("flags a not-simulated attack effect as a system line", () => {
     const state = matchup("fix-wall", 1);
-    // Rage ("10+") carries both a damage modifier and effect text.
+    // Rage ("10+") carries both a damage modifier and an underived effect
+    // text — the combined wording.
     const applied = mustApply(state, { type: "attack", seat: "p1", index: 3 });
     const entries = logFromEvents(applied.events, ctx(applied.state));
     const lines = texts(entries);
     expect(lines).toContain('Rage — "+" damage and effect not simulated');
+  });
+
+  it("words a skipped damage marker WITHOUT claiming the effect was skipped", () => {
+    // Contract: effect null means the printed text DID derive and run (its
+    // STATUS_APPLIED rows are real, elsewhere in the batch) — only the
+    // damage marker went unsimulated, and the row must not say otherwise.
+    const state = mustCreate(170).state;
+    const entries = logFromEvents(
+      [
+        {
+          type: "ATTACK_EFFECT_SKIPPED",
+          seat: "p1",
+          attack: "Torrent Rush",
+          effect: null,
+          damageModifier: "×",
+        },
+      ],
+      ctx(state),
+    );
+    const lines = texts(entries);
+    expect(lines).toEqual(['Torrent Rush — "×" damage not simulated']);
+    expect(lines[0]).not.toContain("effect");
+  });
+
+  it("quotes the skipped sentence when only the effect went unsimulated", () => {
+    const state = mustCreate(170).state;
+    const entries = logFromEvents(
+      [
+        {
+          type: "ATTACK_EFFECT_SKIPPED",
+          seat: "p1",
+          attack: "Tail Whip",
+          effect: "The Defending Pokémon can't retreat during your opponent's next turn.",
+          damageModifier: null,
+        },
+      ],
+      ctx(state),
+    );
+    expect(texts(entries)).toEqual([
+      "Tail Whip — effect \"The Defending Pokémon can't retreat during your opponent's next turn.\" not simulated",
+    ]);
   });
 
   it("reports prize takes as counts only and the win with the deck name", () => {
@@ -179,6 +223,141 @@ describe("logFromEvents — attacks and KOs", () => {
     for (const line of lines) {
       expect(line).not.toMatch(/p[12]#\d+/); // prize identities stay hidden
     }
+  });
+});
+
+describe("logFromEvents — special conditions and the Checkup (M3)", () => {
+  /** A settled board whose active uids the synthetic events can name: p1's
+      Active is a real in-play stack, so cardName resolution is exercised. */
+  function board(): { state: GameState; uid: string; name: string } {
+    const state = driveSetup(170, undefined, {
+      first: "p1",
+      active: { p1: "fix-basic-1", p2: "fix-basic-1" },
+    });
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("expected an active");
+    const uid = active.stack[active.stack.length - 1];
+    if (uid === undefined) throw new Error("expected a stacked active");
+    return { state, uid, name: "fix-basic-1" };
+  }
+
+  const settled = board();
+
+  /** Format one synthetic event against the settled board. */
+  function line(event: GameEvent): { text: string; who: Seat | "system" } {
+    const entries = logFromEvents([event], ctx(settled.state));
+    const entry = entries[0];
+    if (entries.length !== 1 || entry === undefined || entry.kind !== "action") {
+      throw new Error(`expected exactly one action row, got ${JSON.stringify(entries)}`);
+    }
+    return { text: textOf(entry), who: entry.who };
+  }
+
+  it("names statuses as they land, with raised poison spelled out", () => {
+    const { uid, name } = settled;
+    expect(line({ type: "STATUS_APPLIED", seat: "p1", uid, status: "asleep" })).toEqual({
+      text: `${name} is now Asleep`,
+      who: "p1",
+    });
+    // The default 10-per-Checkup poison stays implicit…
+    expect(
+      line({ type: "STATUS_APPLIED", seat: "p1", uid, status: "poisoned", poisonDamage: 10 }).text,
+    ).toBe(`${name} is now Poisoned`);
+    // …a raised amount ("2 counters instead of 1") is called out.
+    expect(
+      line({ type: "STATUS_APPLIED", seat: "p1", uid, status: "poisoned", poisonDamage: 20 }).text,
+    ).toBe(`${name} is now Poisoned (20 damage per Checkup)`);
+  });
+
+  it("words each STATUS_CLEARED reason, listing every benched-away status", () => {
+    const { uid, name } = settled;
+    const cleared = (
+      statuses: ("asleep" | "paralyzed" | "confused" | "burned" | "poisoned")[],
+      reason: "benched" | "wokeUp" | "burnCured" | "paralysisEnded",
+    ) => line({ type: "STATUS_CLEARED", seat: "p1", uid, statuses, reason }).text;
+    expect(cleared(["asleep"], "wokeUp")).toBe(`${name} woke up`);
+    expect(cleared(["burned"], "burnCured")).toBe(`${name}'s Burn was cured`);
+    expect(cleared(["paralyzed"], "paralysisEnded")).toBe(`${name}'s Paralysis wore off`);
+    expect(cleared(["confused", "poisoned", "burned"], "benched")).toBe(
+      `${name} recovered from Confused, Poisoned, Burned`,
+    );
+  });
+
+  it("attributes Checkup ticks and the confusion self-hit to the system", () => {
+    const { uid, name } = settled;
+    const poison = line({
+      type: "COUNTERS_PLACED",
+      seat: "p1",
+      uid,
+      amount: 10,
+      source: "poison",
+    });
+    expect(poison).toEqual({ text: `Poison: 10 damage to ${name}`, who: "system" });
+    expect(
+      line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 20, source: "burn" }).text,
+    ).toBe(`Burn: 20 damage to ${name}`);
+    expect(
+      line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 30, source: "confusion" }).text,
+    ).toBe(`Confusion: ${name} hit itself for 30`);
+  });
+
+  it("formats the recovery, confusion and effect coin flips", () => {
+    const { uid, name } = settled;
+    const checkup = line({
+      type: "CHECKUP_COIN_FLIP",
+      seat: "p2",
+      status: "asleep",
+      result: "heads",
+    });
+    expect(checkup).toEqual({ text: "Checkup — Asleep flip for Tide: heads", who: "system" });
+    expect(
+      line({ type: "CHECKUP_COIN_FLIP", seat: "p1", status: "burned", result: "tails" }).text,
+    ).toBe("Checkup — Burned flip for Ember: tails");
+    expect(line({ type: "CONFUSION_CHECK", seat: "p1", uid, result: "tails" })).toEqual({
+      text: `${name} is Confused — flip: tails`,
+      who: "p1",
+    });
+    // seat = the ATTACKER on the effect gate flip.
+    expect(line({ type: "ATTACK_EFFECT_COIN_FLIP", seat: "p1", result: "heads" })).toEqual({
+      text: "flipped heads for the attack effect",
+      who: "p1",
+    });
+  });
+
+  it("formats the failed attack and the heal", () => {
+    const { uid, name } = settled;
+    expect(line({ type: "ATTACK_FAILED", seat: "p1", uid, reason: "confusion" })).toEqual({
+      text: `${name}'s attack failed — Confused`,
+      who: "p1",
+    });
+    expect(line({ type: "HEALED", seat: "p1", uid, amount: 30 })).toEqual({
+      text: `${name} healed 30 damage`,
+      who: "p1",
+    });
+  });
+
+  it("logs a real Hypnosis batch: attack, status, then the Checkup inside it", () => {
+    // p2's fix-statuser puts p1's Active to sleep on turn 2; the same
+    // action's batch then runs the Checkup, where the asleep Active flips.
+    let state = driveSetup(
+      170,
+      { p1: MIXED_DECK, p2: deckOf({ "fix-statuser": 40, "fix-energy": 20 }) },
+      { first: "p1", active: { p2: "fix-statuser" } },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+    const p1Active = state.players.p1.active;
+    if (p1Active === null) throw new Error("expected p1 active");
+    const defender = topCardOf(state, p1Active)?.name ?? "?";
+
+    const applied = mustApply(state, { type: "attack", seat: "p2", index: 0 });
+    const lines = texts(logFromEvents(applied.events, ctx(applied.state)));
+
+    expect(lines).toContain("fix-statuser used Hypnosis");
+    expect(lines).toContain(`${defender} is now Asleep`);
+    const flip = lines.find((text) => text.startsWith("Checkup — Asleep flip for Ember: "));
+    if (flip === undefined) throw new Error(`no checkup flip in ${JSON.stringify(lines)}`);
+    // Heads wakes the Pokémon in the SAME batch; tails leaves it asleep.
+    expect(lines.includes(`${defender} woke up`)).toBe(flip.endsWith("heads"));
   });
 });
 

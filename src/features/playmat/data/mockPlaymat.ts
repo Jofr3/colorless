@@ -1,5 +1,6 @@
 import { cardImageUrl } from "../../../lib/api";
-import type { BoardState, CardModel, CardType, LogEntry, TurnInfo } from "../types";
+import { NO_CONDITIONS } from "../types";
+import type { BattleState, BoardState, CardModel, CardType, LogEntry, TurnInfo } from "../types";
 
 // Fixture ids in the tcgdex scheme (zero-padded set codes, e.g. "sv01-169")
 // so the art resolves off the api's asset mirror — the CSP no longer allows
@@ -40,8 +41,25 @@ function remoteCard(id: string, cardId: RemoteCardId, name: string): CardModel {
   };
 }
 
+/** A remoteCard with mock battle state attached — exercises the damage chip
+    and the M3 status markers in the sandbox (the game page projects the real
+    thing onto the same CardModel.battle slot). */
+function battleCard(
+  id: string,
+  cardId: RemoteCardId,
+  name: string,
+  battle: BattleState,
+): CardModel {
+  return { ...remoteCard(id, cardId, name), battle };
+}
+
 const opponentCards = {
-  active: remoteCard("opponent-active-mega-zygarde", "me03-047", "Mega Zygarde ex"),
+  // Damaged, Asleep AND Burned — the marker stack beside the damage chip.
+  active: battleCard("opponent-active-mega-zygarde", "me03-047", "Mega Zygarde ex", {
+    damage: 120,
+    hp: 340,
+    conditions: { rotation: "asleep", poisonDamage: 0, burned: true },
+  }),
   bench: [
     remoteCard("opponent-bench-yveltal", "me03-053", "Yveltal ex"),
     remoteCard("opponent-bench-meowth", "me03-062", "Meowth ex"),
@@ -55,9 +73,20 @@ const opponentCards = {
 };
 
 const playerCards = {
-  active: remoteCard("you-active-mega-starmie", "me03-021", "Mega Starmie ex"),
+  // Raised poison (20 per Checkup) — the "PSN 20" amount variant.
+  active: battleCard("you-active-mega-starmie", "me03-021", "Mega Starmie ex", {
+    damage: 60,
+    hp: 300,
+    conditions: { rotation: "none", poisonDamage: 20, burned: false },
+  }),
   bench: [
-    remoteCard("you-bench-decidueye", "sv03-015", "Decidueye ex"),
+    // Damage only — bench Pokémon never carry conditions (engine invariant),
+    // stated explicitly now that BattleState requires the conditions object.
+    battleCard("you-bench-decidueye", "sv03-015", "Decidueye ex", {
+      damage: 30,
+      hp: 280,
+      conditions: NO_CONDITIONS,
+    }),
     remoteCard("you-bench-yveltal", "me03-053", "Yveltal ex"),
     remoteCard("you-bench-meowth", "me03-062", "Meowth ex"),
   ],

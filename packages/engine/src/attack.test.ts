@@ -13,6 +13,7 @@ import {
   must,
   mustApply,
   setPrizes,
+  types,
 } from "./testFixtures";
 
 // Seed found by deterministic scan: no mulligans for the deck pairs below,
@@ -70,10 +71,6 @@ function parkedOnPrizes(opts: MatchupOptions = { bench: 1 }): {
   return bite(matchup("fix-weak", opts));
 }
 
-function types(events: GameEvent[]): string[] {
-  return events.map((event) => event.type);
-}
-
 describe("attack costs (§6.4, §8.2)", () => {
   it("rejects an attack the attached energy cannot pay", () => {
     expectErr(
@@ -115,16 +112,15 @@ describe("attack costs (§6.4, §8.2)", () => {
     const { events } = mustApply(matchup("fix-wall", { fire: 0 }), {
       type: "attack",
       seat: "p1",
-      index: 2, // Yawn — no cost, no damage, only (skipped) text
+      index: 2, // Yawn — no cost, no damage, a derived sleep effect (M3)
     });
     expect(types(events)).not.toContain("DAMAGE_DEALT");
-    const skipped = events.find((e) => e.type === "ATTACK_EFFECT_SKIPPED");
-    expect(skipped).toEqual({
-      type: "ATTACK_EFFECT_SKIPPED",
-      seat: "p1",
-      attack: "Yawn",
-      effect: "The Defending Pokémon is now Asleep.",
-      damageModifier: null,
+    // The text derives (effects.ts), so nothing is skipped — the defender
+    // is actually put to sleep.
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(events.find((e) => e.type === "STATUS_APPLIED")).toMatchObject({
+      seat: "p2",
+      status: "asleep",
     });
   });
 

@@ -9,11 +9,13 @@
 //   - BOTH prize sets as counts only (prizes are face-down in the real game);
 //   - decks as counts; discard piles fully public (§2 — ordered and public);
 //   - in-play Pokémon (active/bench) public once setup is over, with their
-//     attached cards and their damage/max HP (`pokemon` — damage counters
-//     sit on the table). DURING the setup:* phases (§3 — placements stay
-//     face-down until both players ready; the engine emits SETUP_REVEALED
-//     only then) the OPPONENT's active/bench project as anonymous positional
-//     backs with no `pokemon` rows; the viewer's OWN placements stay face-up.
+//     attached cards and their battle state (`CardModel.battle` — damage/max
+//     HP and the §12 special conditions all sit face-up on the table).
+//     DURING the setup:* phases (§3 — placements stay face-down until both
+//     players ready; the engine emits SETUP_REVEALED only then) the
+//     OPPONENT's active/bench project as anonymous positional backs with no
+//     `battle` (a battle row would leak the printed HP); the viewer's OWN
+//     placements stay face-up.
 //
 // Public cards keep the engine uid as CardModel.id — the Pixi layer keys its
 // views off that id, so a card animates as ONE object as it moves between
@@ -25,11 +27,26 @@
 // compile error here rather than a silently wrong guess — M1's defensive
 // turn-parity fallback named the wrong seat exactly when ko:promote parked.
 
-import type { GameOutcome, GameOverReason, GameState, InPlayPokemon, Seat } from "@luminous/engine";
+import type {
+  GameOutcome,
+  GameOverReason,
+  GameState,
+  InPlayPokemon,
+  Seat,
+  SpecialConditions,
+} from "@luminous/engine";
 import { SEATS, cardOfUid, hpOf, otherSeat, topUid } from "@luminous/engine";
 import type { Card } from "@luminous/schema";
 import { cardImageUrl } from "../../lib/api";
-import type { BoardState, CardModel, CardType, PlayerBoard, PlayerId } from "../playmat/types";
+import type {
+  BattleConditions,
+  BattleState,
+  BoardState,
+  CardModel,
+  CardType,
+  PlayerBoard,
+  PlayerId,
+} from "../playmat/types";
 
 /** The `cardId` every hidden (face-down) card carries instead of a catalog id. */
 export const HIDDEN_CARD_ID = "hidden";
@@ -43,20 +60,11 @@ export interface ProjectedPiles {
   discard: CardModel[];
 }
 
-/** Public battle numbers for one in-play Pokémon. CardModel has no damage
-    slot, so — like deckCount/discard on ProjectedPiles — these ride outside
-    BoardState, keyed by CardModel.id (= the engine uid of the stack top). */
-export interface PokemonStatus {
-  /** HP of damage taken so far (counters × 10); 0 = pristine. */
-  damage: number;
-  /** Printed max HP of the stack's top card; null = catalog data gap (hpOf). */
-  hp: number | null;
-}
-
-/** A parked mid-turn interrupt (§8.1 KO resolution) awaiting `waitingOn`'s
-    decision. Without this a projection-driven client soft-locks: controls
-    gate on activePlayer, which a ko:* phase does NOT move. Counts only —
-    never card identity. */
+/** A parked KO interrupt (§8.1 resolution — mid-turn from an attack, or
+    between turns from the Checkup) awaiting `waitingOn`'s decision. Without
+    this a projection-driven client soft-locks: the turn controls go dark
+    during a ko:* park and nothing would say WHAT is being asked. Counts
+    only — never card identity. */
 export type PendingDecision = { kind: "takePrizes"; count: number } | { kind: "promote" };
 
 /** The engine's GameOutcome with seats mapped into the viewer's vocabulary. */
@@ -69,16 +77,12 @@ export interface GameProjection {
   board: BoardState;
   /** Deck counts + public discards, per side, keyed like the board. */
   piles: Record<PlayerId, ProjectedPiles>;
-  /** Damage/HP for every VISIBLE in-play Pokémon — actives + benches, both
-      sides once boards are public; during setup only the viewer's own side
-      (a row for a redacted stack would leak its uid — the key — and its
-      printed HP) — keyed by CardModel.id. */
-  pokemon: Record<string, PokemonStatus>;
   /** 1-based turn counter; 0 while the game is still in setup. */
   turn: number;
-  /** The TURN OWNER from the viewer's perspective — which a parked ko:*
-      interrupt does NOT change (the turn is still the attacker's). Null
-      during setup (turn 0, nobody owns a turn) and once the game is over. */
+  /** The TURN OWNER from the viewer's perspective. An ATTACK-origin ko:*
+      park does not change it (the turn is still the attacker's); a
+      CHECKUP-origin ko:* park sits BETWEEN turns, so it is null there —
+      just as during setup (turn 0) and once the game is over. */
   activePlayer: PlayerId | null;
   /** Who must act RIGHT NOW: the turn owner in turn:action, the decision
       owner in setup and ko:* phases — ko:promote belongs to the KO'd seat,
@@ -96,8 +100,8 @@ export function projectGameState(state: GameState, viewerSeat: Seat): GameProjec
   const opponentSeat = otherSeat(viewerSeat);
   const view = phaseViewOf(state, viewerSeat);
   // Setup placements are face-down until both players ready, so the
-  // opponent's in-play stacks (and their status rows) redact until then.
-  // The viewer's own placements stay face-up — they placed them.
+  // opponent's in-play stacks (their battle rows included) redact until
+  // then. The viewer's own placements stay face-up — they placed them.
   const setup = inSetup(state);
   return {
     board: {
@@ -110,7 +114,6 @@ export function projectGameState(state: GameState, viewerSeat: Seat): GameProjec
       you: pilesOf(state, viewerSeat),
       opponent: pilesOf(state, opponentSeat),
     },
-    pokemon: pokemonStatusOf(state, setup ? [viewerSeat] : SEATS),
     turn: state.turn,
     activePlayer: asPlayerId(view.activeSeat, viewerSeat),
     waitingOn: asPlayerId(view.waitingSeat, viewerSeat),
@@ -162,27 +165,6 @@ function pilesOf(state: GameState, seat: Seat): ProjectedPiles {
   };
 }
 
-/** Damage/HP for `seats`' in-play Pokémon — both seats once boards are
-    public (identical from either side of the table), only the viewer's own
-    during setup: a row for a redacted stack would leak its uid (the key) and
-    printed HP. An (engine-impossible) empty stack has no uid to key, so it
-    is the one in-play entry without a status row — its bench placeholder
-    carries no battle state either. */
-function pokemonStatusOf(state: GameState, seats: readonly Seat[]): Record<string, PokemonStatus> {
-  const status: Record<string, PokemonStatus> = {};
-  for (const seat of seats) {
-    const side = state.players[seat];
-    for (const pokemon of [side.active, ...side.bench]) {
-      if (pokemon === null) continue;
-      const uid = topUid(pokemon);
-      if (uid === undefined) continue;
-      const card = cardOfUid(state, uid);
-      status[uid] = { damage: pokemon.damage, hp: card === undefined ? null : hpOf(card) };
-    }
-  }
-  return status;
-}
-
 /** A public card: full identity, keyed by its engine uid. */
 function cardModelOf(state: GameState, uid: string): CardModel {
   const card = cardOfUid(state, uid);
@@ -206,20 +188,47 @@ function cardModelOf(state: GameState, uid: string): CardModel {
 }
 
 /** An in-play Pokémon: the top of the stack defines its identity (§1.2);
-    attached energy/tools ride along as face-up CardModels; its damage and
-    max HP surface through GameProjection.pokemon under the same id (the
-    playmat's CardModel has no damage slot). Special conditions and the lower
-    stack cards (evolution, M4) still have no projection surface — they stay
-    engine-side until the playmat can render them. */
+    attached energy/tools ride along as face-up CardModels; its battle state
+    (damage, max HP, §12 special conditions — all public table facts) rides
+    on the model as `battle`. Only in-play top cards ever carry `battle`, and
+    only face-up ones — the setup-phase hidden backs go through
+    hiddenInPlayModel instead, so redaction never leaks a printed HP. The
+    lower stack cards (evolution, M4) still have no projection surface. */
 function inPlayModelOf(state: GameState, pokemon: InPlayPokemon): CardModel | null {
   const uid = topUid(pokemon);
   if (uid === undefined) return null; // stacks are never empty, but stay total
+  const card = cardOfUid(state, uid);
   return {
     ...cardModelOf(state, uid),
+    battle: battleStateOf(pokemon, card),
     attached: {
       tools: pokemon.tools.map((toolUid) => cardModelOf(state, toolUid)),
       energies: pokemon.energy.map((energyUid) => cardModelOf(state, energyUid)),
     },
+  };
+}
+
+/** The playmat-facing battle row: a field-by-field COPY (never an alias) of
+    the engine values — a consumer mutating a projection must not reach back
+    into game state. The playmat restates the engine's SpecialConditions as
+    BattleConditions to stay engine-free; the copy alone would NOT pin that
+    restatement (a field added to SpecialConditions would just be dropped
+    here and silently never render), so the asserts below do. */
+function battleStateOf(pokemon: InPlayPokemon, card: Card | undefined): BattleState {
+  const { rotation, poisonDamage, burned } = pokemon.conditions;
+  // Mutual-assignability pin, both directions: `satisfies` = the rebuilt
+  // copy is still a COMPLETE SpecialConditions (an added engine field errors
+  // here); the annotation = it is an exact BattleConditions (playmat-side
+  // drift errors here).
+  const conditions: BattleConditions = {
+    rotation,
+    poisonDamage,
+    burned,
+  } satisfies SpecialConditions;
+  return {
+    damage: pokemon.damage,
+    hp: card === undefined ? null : hpOf(card),
+    conditions,
   };
 }
 
@@ -304,7 +313,8 @@ function asPlayerId(seat: Seat | null, viewerSeat: Seat): PlayerId | null {
 /** Everything the projection derives from the phase (engine seats — the
     caller maps them per viewer). */
 export interface PhaseView {
-  /** Turn owner; null in setup and once the game is over. */
+  /** Turn owner; null in setup, between turns (checkup-origin ko:* parks)
+      and once the game is over. */
   activeSeat: Seat | null;
   /** The seat that must act; null once the game is over. */
   waitingSeat: Seat | null;
@@ -350,18 +360,18 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
     case "turn:action":
       return { ...none, activeSeat: phase.seat, waitingSeat: phase.seat };
     // ko:* — phase.seat is the DECIDER (prize taker / promoter), not the
-    // turn owner: the turn is still the attacker's, recovered from the M1
-    // parity invariant "odd turns belong to firstPlayer".
+    // turn owner. Whether a turn is even in progress depends on the KO's
+    // ORIGIN, which the pending queue still records — see koParkActiveSeat.
     case "ko:takePrizes":
       return {
-        activeSeat: turnOwnerOf(state),
+        activeSeat: koParkActiveSeat(state),
         waitingSeat: phase.seat,
         pendingDecision: { kind: "takePrizes", count: phase.count },
         outcome: null,
       };
     case "ko:promote":
       return {
-        activeSeat: turnOwnerOf(state),
+        activeSeat: koParkActiveSeat(state),
         waitingSeat: phase.seat,
         pendingDecision: { kind: "promote" },
         outcome: null,
@@ -374,9 +384,23 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
   return phase satisfies never;
 }
 
-/** The turn-ownership invariant: odd turns belong to firstPlayer. Null only
-    before the first turn exists — never the case in the ko:* phases that
-    call this (a KO happens inside somebody's turn). */
+/** The turn a parked ko:* interrupt sits INSIDE — or null when it sits
+    BETWEEN turns. Attack-origin KOs park with the turn tail still queued
+    behind the ko stages (pending: [ko…, endTurn, checkup, startTurn]), so
+    the parity owner still owns the turn. Checkup-origin KOs park AFTER
+    endTurn and checkup have already drained (pending: [ko…, startTurn])
+    with the turn counter not yet bumped — parity would misreport the
+    JUST-ENDED seat as active — so those parks own no turn at all. */
+function koParkActiveSeat(state: GameState): Seat | null {
+  const inTurn = state.pending.some(
+    (stage) => stage.kind === "endTurn" || stage.kind === "checkup",
+  );
+  return inTurn ? turnOwnerOf(state) : null;
+}
+
+/** The turn-ownership invariant: odd turns belong to firstPlayer. Only
+    meaningful while a turn is actually in progress — koParkActiveSeat guards
+    the between-turns case, where this parity names the wrong seat. */
 function turnOwnerOf(state: GameState): Seat | null {
   if (state.turn < 1 || state.firstPlayer === null) return null;
   return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);

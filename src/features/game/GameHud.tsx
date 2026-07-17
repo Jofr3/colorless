@@ -14,6 +14,7 @@ import {
   cardOfUid,
   costMet,
   energyProvidesOf,
+  isImmobilized,
   otherSeat,
   retreatCostOf,
   topCardOf,
@@ -27,6 +28,7 @@ import {
   GLASS_NEUTRAL_BUTTON,
   GLASS_PANEL,
 } from "../../lib/glass";
+import { STATUS_LABELS } from "./logFromEvents";
 import type { GameProjection } from "./projection";
 
 export interface GameHudProps {
@@ -276,13 +278,27 @@ function TurnPanel(props: GameHudProps) {
   // §4 — turn 1 is by construction the going-first player's turn.
   const firstTurnBan = game.turn === 1;
 
+  // Battle state off the PROJECTED board (the viewer's Active is always
+  // board.you.active) — the surface online clients will have, unlike the raw
+  // GameState reads above (the acknowledged P4 blocker).
+  const battle = projection.board.you.active?.battle;
+  const conditions = battle?.conditions;
+  const rotation = conditions?.rotation ?? "none";
+  // The engine's own §12 gate (isImmobilized: asleep or paralyzed blocks
+  // attacking AND retreating; confusion blocks neither — it flips at
+  // resolution). Calling the engine predicate makes the mirror CODE-enforced
+  // rather than comment-enforced; the playmat-typed conditions fit because
+  // projection.ts pins BattleConditions ≡ SpecialConditions at compile time.
+  const immobilized = conditions !== undefined && isImmobilized(conditions);
+
   // THE retreat derivation site — RetreatDialog receives these as props, so
   // future cost modifiers (M3/M4) have exactly one place to land.
   const retreatCost = retreatCostOf(activeCard);
   const canRetreat =
-    !game.allowances.retreated && side.bench.length > 0 && active.energy.length >= retreatCost;
-
-  const status = projection.pokemon[topUid(active) ?? ""];
+    !immobilized &&
+    !game.allowances.retreated &&
+    side.bench.length > 0 &&
+    active.energy.length >= retreatCost;
 
   return (
     <>
@@ -290,9 +306,9 @@ function TurnPanel(props: GameHudProps) {
       <HudPanel label="Turn actions" className="bottom-[calc(var(--hand-h)+16px)] right-4 w-72">
         <div className="flex items-baseline justify-between">
           <span className="truncate text-sm font-semibold text-white">{activeCard.name}</span>
-          {status !== undefined && status.hp !== null && (
+          {battle !== undefined && battle.hp !== null && (
             <span className="ml-2 shrink-0 text-xs tabular-nums text-white/55">
-              {Math.max(0, status.hp - status.damage)}/{status.hp} HP
+              {Math.max(0, battle.hp - battle.damage)}/{battle.hp} HP
             </span>
           )}
         </div>
@@ -302,7 +318,7 @@ function TurnPanel(props: GameHudProps) {
           )}
           {attacks.map((attack: Attack, index: number) => {
             const payable = costMet(attack.cost ?? [], provided);
-            const disabled = !payable || firstTurnBan;
+            const disabled = !payable || firstTurnBan || immobilized;
             return (
               <li key={`${attack.name}-${index}`}>
                 <button
@@ -331,6 +347,18 @@ function TurnPanel(props: GameHudProps) {
         </ul>
         {firstTurnBan && (
           <p className="mt-2 text-[11px] text-white/45">No attacking on the first turn (§4).</p>
+        )}
+        {/* The extra !== "none" only narrows the type for the label lookup —
+            immobilized already guarantees an asleep/paralyzed rotation. */}
+        {immobilized && rotation !== "none" && (
+          <p className="mt-2 text-[11px] text-white/45">
+            {STATUS_LABELS[rotation]} — cannot attack or retreat.
+          </p>
+        )}
+        {rotation === "confused" && (
+          <p className="mt-2 text-[11px] text-white/45">
+            Confused: attacking flips a coin — tails: 30 damage to itself, turn ends.
+          </p>
         )}
         <div className="mt-3 flex items-center justify-between gap-2">
           <button

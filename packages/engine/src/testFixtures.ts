@@ -4,8 +4,17 @@
 // (plain throws) so any suite can use it.
 
 import type { Card } from "@luminous/schema";
-import type { ApplyResult, ErrorCode, GameAction, GameEvent, GameState, Seat } from "./index";
-import { SEATS, applyAction, cardOfUid, createGame, isBasicPokemon } from "./index";
+import type {
+  ApplyResult,
+  ErrorCode,
+  GameAction,
+  GameEvent,
+  GameState,
+  Seat,
+  SpecialConditions,
+} from "./index";
+import { SEATS, applyAction, cardOfUid, createGame, isBasicPokemon, topUid } from "./index";
+import { withActive } from "./types";
 
 const blank: Omit<Card, "id" | "name" | "category"> = {
   setId: "fix",
@@ -106,13 +115,40 @@ export const FIXTURE_POOL: Record<string, Card> = {
     attacks: [
       { cost: ["Colorless"], name: "Bite", damage: 30 },
       { cost: ["Fire", "Colorless"], name: "Flame", damage: 60 },
-      { name: "Yawn", effect: "The Defending Pokémon is now Asleep." },
+      // The canonical modern print — effects.ts derives it (M3), so Yawn
+      // actually puts the defender to sleep.
+      { name: "Yawn", effect: "Your opponent's Active Pokémon is now Asleep." },
       {
         cost: ["Colorless"],
         name: "Rage",
         damage: "10+",
         effect: "This attack does 10 more damage for each damage counter on this Pokémon.",
       },
+    ],
+  }),
+  /** The M3 cast: one derivable status sentence (effects.ts) per attack, on
+      a tanky costless body so self-inflicted conditions don't KO it. */
+  "fix-statuser": battler("fix-statuser", {
+    hp: 120,
+    attacks: [
+      { name: "Hypnosis", effect: "Your opponent's Active Pokémon is now Asleep." },
+      { name: "Confuse Ray", effect: "Your opponent's Active Pokémon is now Confused." },
+      {
+        name: "Numbing Bolt",
+        damage: 10,
+        effect: "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
+      },
+      { name: "Overheat", effect: "This Pokémon is now Burned." },
+      { name: "Rest", effect: "This Pokémon is now Asleep. Heal 30 damage from it." },
+      {
+        name: "Toxic",
+        effect:
+          "Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, put 2 damage counters on that Pokémon instead of 1.",
+      },
+      // The classic OLD-ERA phrasing effects.ts deliberately does NOT
+      // derive, with no damage and no modifier — pins the pure-text
+      // ATTACK_EFFECT_SKIPPED path.
+      { name: "Lullaby", effect: "The Defending Pokémon is now Asleep." },
     ],
   }),
   /** OHKO'd by Bite — the e2e prize-race fodder. No attacks of its own. */
@@ -205,6 +241,19 @@ export function expectErr(state: GameState, action: GameAction, code: ErrorCode)
       `expected ${action.type} to fail with ${code}, got ${result.error.code}: ${result.error.message}`,
     );
   }
+}
+
+/** Event log → its type names — the shape every suite's order pins assert. */
+export function types(events: GameEvent[]): string[] {
+  return events.map((event) => event.type);
+}
+
+/** The stack-top uid of `seat`'s Active — throws when the spot is empty. */
+export function activeUid(state: GameState, seat: Seat): string {
+  const active = state.players[seat].active;
+  const uid = active === null ? undefined : topUid(active);
+  if (uid === undefined) throw new Error(`${seat} has no Active Pokémon`);
+  return uid;
 }
 
 export function handUid(state: GameState, seat: Seat, cardId: string): string {
@@ -313,6 +362,31 @@ export function attachFromDeck(
       },
     },
   };
+}
+
+/** TEST SURGERY: overwrite fields of the Active's Special Conditions —
+    checkup tests need conditioned boards without scripting the status
+    attacks (and coin flips) that would inflict them. The null guard stays:
+    withActive takes a non-null Pokémon. */
+export function setConditions(
+  state: GameState,
+  seat: Seat,
+  conditions: Partial<SpecialConditions>,
+): GameState {
+  const active = state.players[seat].active;
+  if (active === null) throw new Error(`${seat} has no Active Pokémon`);
+  return withActive(state, seat, {
+    ...active,
+    conditions: { ...active.conditions, ...conditions },
+  });
+}
+
+/** TEST SURGERY: set the Active's damage outright — heal/lethality tests
+    need damaged boards without scripting the attacks that would place it. */
+export function setDamage(state: GameState, seat: Seat, damage: number): GameState {
+  const active = state.players[seat].active;
+  if (active === null) throw new Error(`${seat} has no Active Pokémon`);
+  return withActive(state, seat, { ...active, damage });
 }
 
 /** TEST SURGERY: shrink a seat's prize row to `count`, returning the surplus

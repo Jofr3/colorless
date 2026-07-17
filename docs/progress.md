@@ -3,36 +3,38 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-17 — build session #5 (**P3 wire-up: the playable
-local hot-seat game at `/play`** — built, browser-verified end-to-end,
-high-effort reviewed, all 10 reported findings fixed, committed `1e4fcf4`).
+**Last updated:** 2026-07-17 — build session #6 (**P3-M3: special conditions
++ Pokémon Checkup + the text-derived effect deriver** — built, 8-finder/
+7-verifier reviewed with all 10 reported findings fixed, browser-verified
+end-to-end at /play).
 
 ## Resume point
-**The game is playable.** `/play` runs a full local hot-seat match on the real
-engine: pregame (demo decks + saved decks) → coin toss → setup placements by
-drag (opponent's face-down placements now REDACTED by the projection, D17
-rev) → turns (energy attach + bench by drag, engine-helper attack payability,
-retreat dialog) → KO interrupts (prize pick, forced auto-promote) → win
-overlay. `Playmat` split into presentational **`PlaymatView`** (mock
-`/simulator` = "Sandbox" wrapper); `useLocalGame` reducer owns `GameState`;
-viewer follows `waitingOn`; drop affordances via the driver-supplied
-placement predicate (D19); engine `cardPool` via `/cards/:id` fan-out with a
-module cache (D18 — no api change, so no gated deploy). Suite 751 → **825**,
-`bun run check` green, e2e browser-verified (damage-chip paint order included).
+**Statuses are live.** The engine runs the full §12/§13 lifecycle (poison/
+burn ticks, wake + burn-cure flips, paralysis wear-off for the ended seat,
+confusion attack flips w/ self-KO, cures on benching), checkup KOs park on
+the same ko:* interrupts (prizes grouped before promotes; double-KO ties via
+speculative `evaluateWin` — §14 single-sourced), and attacks APPLY statuses
+through **D20's exact-sentence deriver** (5 anchored patterns → EffectStep
+programs; anything else keeps the loud skip flag; self-`Paralyzed` refused —
+official timing wording, rules doc corrected at the source, D15-style).
+Surface: **CardModel.battle** co-location (D21 — statuses side-table deleted),
+SLP/PAR/CNF/BRN/PSN chips, HUD gates via engine-exported `isImmobilized`,
+log rows for all 8 new events, projection `activeSeat: null` for
+between-turns KO parks. Demo decks carry real status attackers (Numel
+sv03-031, Luvdisc sv02-047). Suite 825 → **892**, `bun run check` green,
+e2e browser PASS (chips above Pixi, checkup lifecycles in the log, HUD
+lock while asleep, KO flows) with zero app bugs.
 Next concrete actions:
-1. **P3-M3 (status conditions + Pokémon Checkup)** — read "M2 as built" +
-   its M3 traps in `workstreams/simulator.md` first: `runCheckup` is a stub
-   but the interrupt machinery is ready; lift a shared `knockOut` resolver
-   out of the attack handler rather than copying it (prizeValueOf=1 pending
-   an ingest suffix column, name-derived energy provision, the kept
-   phase↔pending dual encoding). The HUD/playmat surface for conditions:
-   see "/play follow-ups" (CardModel.battle co-location is the natural
-   companion slice).
-2. Or the **"/play follow-ups"** list in `workstreams/simulator.md` (all
-   review-verified): pile zones in the animation layer (discard teleports),
-   `useDeckLibrary` reuse, perf nits. The P4-blocking one (HUD reads raw
-   GameState; needs engine preview predicates / a projection availability
-   surface) belongs WITH P4, not before.
+1. **P3-M4 (evolution, Abilities, trainer/energy effect registry)** — read
+   "M3 as built" + its M4 traps in `workstreams/simulator.md` FIRST: the
+   registry goes ABOVE the deriver (`programFor(cardId) ?? derive(text)`),
+   the EffectStep interpreter must be restructured (not extracted) when M4's
+   ops land, paralysis needs an applied-turn stamp before any self-paralyze
+   effect, `knockOut` is Active-only, and markers will force the conditions
+   vocabulary into `@luminous/schema`.
+2. Or the remaining **"/play follow-ups"** (pile zones in the animation
+   layer, `useDeckLibrary` reuse, perf nits); the HUD-reads-raw-GameState
+   blocker still belongs WITH P4.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -45,13 +47,57 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1+M2 done + PLAYABLE at /play** (engine wired through PlaymatView, D17-rev/D18/D19, 2026-07-17) — M3 (status/checkup) next |
+| simulator | P3 | 🚧 **M1–M3 done + playable at /play w/ statuses** (checkup + D20 deriver + D21 battle surface, 2026-07-17) — M4 (evolution/abilities/registry) next |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-17** (build #6) — **P3-M3: special conditions + Pokémon Checkup +
+  the text-derived effect deriver** (two sequential build agents — engine,
+  then web against the as-built event contract — then an 8-finder/7-verifier
+  review, three parallel fix agents, and a browser e2e). Engine: the
+  M1-reserved `SpecialConditions` slot is live (Active-only); checkup runs
+  inside `advance` (NO new phases) in §13 order with rng-threaded flips; KOs
+  resolve after the batch via the lifted shared `knockOut` (+
+  `isLethallyDamaged`, `activeTop`), parking on the existing ko:* interrupts;
+  double-KO ties via speculative evaluateWin (§14 single-sourced); asleep/
+  paralyzed gate attack+retreat (engine-exported `isImmobilized`), confusion
+  flips with self-KO through the shared `finishAttack` epilogue; benching
+  cures. **D20**: `deriveAttackEffect` — five anchored catalog sentences →
+  EffectStep programs (applyStatus/heal/coinFlipGate) executed post-damage;
+  everything else keeps ATTACK_EFFECT_SKIPPED. 8 new events. Web (**D21**):
+  CardModel.battle co-location (5-hop statuses side-table DELETED), status
+  chips opposite the damage chip, HUD reason lines, log rows for all events,
+  demo decks swapped (Numel sv03-031 ×3, Luvdisc sv02-047 ×3 — for Growlithe
+  031 / Cetoddle 058 copies). **Review headliners (10 reported, all fixed):**
+  the rules doc ITSELF was wrong on paralysis timing — official wording
+  clears only "Paralyzed since the beginning of your last turn", so
+  self-paralysis must survive its own checkup; deriver now refuses
+  self-Paralyzed + §12/§13.4 corrected at the source (the D15 pattern,
+  found by a verifier reading the actual rulebook PDFs). Also: the skip-event
+  log said "effect not simulated" for a case where it executed (renderer now
+  keys on `effect !== null`); stale activePlayer during between-turns KO
+  parks (pending-queue discriminator → activeSeat null); cloneCard aliased
+  `battle` + sandbox drags kept chips on the bench (cure-on-bench in the
+  mock path too); double-KO prompt order (prizes now before promotes); §14
+  tie-guard duplication (speculative-apply); immobilization/lethality
+  predicates deduped (3 copies each); the Yawn fixture rewrite had deleted
+  the only pure-text skip-payload test (restored via "Lullaby"). REFUTED
+  with proof: knockOut's null-guard (correct under never-throw), the
+  double-spread "efficiency" claim (wrong arithmetic), interpreter-seam
+  extraction (premature — M4 restructures it anyway). **E2e browser PASS,
+  zero app bugs:** both status flavors applied with chips + verbatim log
+  rows, full burn lifecycle (2 ticks, tails then heads cure, chip removed),
+  asleep lock (buttons disabled + reason line) through 3 tails flips to
+  wake-up, two KO→prize→promote flows, chips hit-tested above the Pixi
+  canvas on the live board, clean console. Suite 825 → **892**; `bun run
+  check` green. **Session traps:** the usage limit killed the web build
+  agent and 3 of 7 verifiers mid-flight — all resumed via SendMessage with
+  zero rework (6th session the pattern holds); /play promote+retreat are
+  DIALOGS not drags (drag reports done, no-ops), chips are
+  pointer-events:none (hit-tests skip them) → both in the verify skill.
 - **2026-07-17** (build #5) — **P3 wire-up: the playable local hot-seat game
   page** (two parallel build agents, then a browser e2e, then an 8-finder /
   6-grouped-verifier review whose 10 reported findings were ALL fixed by four

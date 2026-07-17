@@ -8,9 +8,25 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, isEnergyCard, retreatCostOf, topUid } from "./cards";
+import type { GameEvent, StatusName } from "./events";
 import { advance, turnTail } from "./flow";
-import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { BENCH_MAX, discardFromStack, makeInPlay, noConditions, withSide, without } from "./types";
+import type {
+  GameState,
+  InPlayPokemon,
+  PlayerSide,
+  PokemonTarget,
+  Seat,
+  SpecialConditions,
+} from "./types";
+import {
+  BENCH_MAX,
+  discardFromStack,
+  isImmobilized,
+  makeInPlay,
+  noConditions,
+  withSide,
+  without,
+} from "./types";
 
 // The in-turn actions (rules §5). Turn start/end mechanics live in flow.ts:
 // ending a turn seeds the staged tail (TURN_ENDED → checkup → the opponent's
@@ -132,12 +148,21 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   return ok(next, [{ type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid }]);
 }
 
-/** M3 hook — leaving the Active spot removes Special Conditions (§11/§12)
-    and will drop active-only markers. Conditions are still always empty, so
-    this is the identity in practice; it exists so retreat already routes
-    through the right place. */
+/** Leaving the Active spot removes Special Conditions (§11/§12) — M4 adds
+    dropping active-only markers here too. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return { ...pokemon, conditions: noConditions() };
+}
+
+/** The conditions present, in the event vocabulary — what a "benched"
+    STATUS_CLEARED lists. Stable order: the rotation first, then poisoned,
+    then burned. */
+function presentStatuses(conditions: SpecialConditions): StatusName[] {
+  const statuses: StatusName[] = [];
+  if (conditions.rotation !== "none") statuses.push(conditions.rotation);
+  if (conditions.poisonDamage > 0) statuses.push("poisoned");
+  if (conditions.burned) statuses.push("burned");
+  return statuses;
 }
 
 /** §11 — once per turn: the player names WHICH attached energies pay the
@@ -155,6 +180,15 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     // Unreachable — KO promotion is forced before the next action, so the
     // Active spot is never empty during turn:action.
     return err("NO_TARGET", "no Active Pokémon to retreat");
+  }
+  // §11/§12 — an Asleep or Paralyzed Active cannot retreat. (Confusion does
+  // not restrict retreating.)
+  const rotation = active.conditions.rotation;
+  if (isImmobilized(active.conditions)) {
+    return err(
+      "STATUS_PREVENTS_RETREAT",
+      `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot retreat (§11)`,
+    );
   }
   if (side.bench.length === 0) {
     return err("BENCH_EMPTY", "cannot retreat with an empty bench (§11)");
@@ -212,7 +246,7 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     ...withSide(state, action.seat, { ...paid.side, active: promoted, bench }),
     allowances: { ...state.allowances, retreated: true },
   };
-  return ok(next, [
+  const events: GameEvent[] = [
     {
       type: "RETREATED",
       seat: action.seat,
@@ -226,7 +260,21 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       // exactly like KNOCKED_OUT's `discarded`.
       discardedEnergy: paid.discarded,
     },
-  ]);
+  ];
+  // §11/§12 — benching removed the retreater's Special Conditions
+  // (clearOnLeavingActive above). Announced only when there was anything to
+  // remove; `statuses` lists exactly what was present.
+  const cleared = presentStatuses(active.conditions);
+  if (cleared.length > 0) {
+    events.push({
+      type: "STATUS_CLEARED",
+      seat: action.seat,
+      uid: activeTopUid,
+      statuses: cleared,
+      reason: "benched",
+    });
+  }
+  return ok(next, events);
 }
 
 /** Pass: seed the staged tail (flow.ts turnTail) and drain it. */

@@ -263,7 +263,8 @@ export function LocalMatch({
 
   const turnInfo: TurnInfo = {
     turn: projection.turn,
-    // During setup nobody owns a turn — light up whoever must act instead.
+    // During setup and the between-turns checkup-KO parks nobody owns a
+    // turn — light up whoever must act instead (the prize picker/promoter).
     activePlayer: projection.activePlayer ?? projection.waitingOn ?? "you",
     youName: names[viewerSeat],
     opponentName: names[otherSeat(viewerSeat)],
@@ -313,7 +314,6 @@ export function LocalMatch({
       passDisabled={passDisabled}
       passAnimationKey={projection.turn}
       logEntries={logEntries}
-      statuses={projection.pokemon}
       piles={projection.piles}
     >
       <GameHud

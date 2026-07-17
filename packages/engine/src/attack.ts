@@ -7,23 +7,32 @@ import type {
 } from "./actions";
 import { err } from "./actions";
 import {
+  activeTop,
   applyDamageModifier,
   attacksOf,
   cardOfUid,
   energyProvidesOf,
-  hpOf,
   parseAttackDamage,
-  prizeValueOf,
   resistanceOf,
   topCardOf,
   topUid,
   weaknessOf,
 } from "./cards";
+import type { EffectStep } from "./effects";
+import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
-import { advance, resolvePrizesAndResume, resolvePromotionAndResume, turnTail } from "./flow";
+import {
+  advance,
+  isLethallyDamaged,
+  knockOut,
+  resolvePrizesAndResume,
+  resolvePromotionAndResume,
+  turnTail,
+} from "./flow";
+import { flipCoin } from "./rng";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, PendingStage, Phase, Seat } from "./types";
-import { discardFromStack, otherSeat, withSide } from "./types";
+import { DEFAULT_POISON_DAMAGE, isImmobilized, otherSeat, withActive, withSide } from "./types";
 
 // The attack step (§8) and the two KO-resolution decisions it can park on
 // (§8.1). Declaring an attack ends the turn (§5.3), so every path out of
@@ -72,6 +81,15 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // Unreachable — promotion is forced before the next action.
     return err("NO_TARGET", "no Active Pokémon to attack with");
   }
+  // §8 step 1 / §12 — an Asleep or Paralyzed Active cannot attack at all.
+  // (Confusion does NOT block declaring — it flips at resolution, below.)
+  const rotation = active.conditions.rotation;
+  if (isImmobilized(active.conditions)) {
+    return err(
+      "STATUS_PREVENTS_ATTACK",
+      `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot attack (§12)`,
+    );
+  }
   const attackerUid = topUid(active);
   const attacker = topCardOf(state, active);
   if (attackerUid === undefined || attacker === undefined) {
@@ -98,34 +116,66 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   }
 
   const defenderSeat = otherSeat(action.seat);
-  const defender = state.players[defenderSeat].active;
-  const defenderUid = defender === null ? undefined : topUid(defender);
-  const defenderCard = defender === null ? undefined : topCardOf(state, defender);
-  if (defender === null || defenderUid === undefined || defenderCard === undefined) {
+  const defenderSpot = activeTop(state, defenderSeat);
+  if (defenderSpot === null) {
     // Unreachable — the KO'd side promotes (or loses) before play resumes.
     return err("NO_TARGET", "no Defending Pokémon");
   }
+  const { active: defender, uid: defenderUid, card: defenderCard } = defenderSpot;
 
   const events: GameEvent[] = [
     { type: "ATTACK_DECLARED", seat: action.seat, uid: attackerUid, attack: declared.name, index },
   ];
+  let next = state;
+
+  // §8 step 3 — the confusion flip, AFTER every gate and the cost check
+  // passed (§12): tails and the declared attack does not resolve at all —
+  // no damage, no effects — the attacker takes 30 itself (possibly a
+  // self-KO, prized to the defender) and the turn still ends.
+  if (rotation === "confused") {
+    const [face, rngState] = flipCoin(next.rngState);
+    next = { ...next, rngState };
+    events.push({ type: "CONFUSION_CHECK", seat: action.seat, uid: attackerUid, result: face });
+    if (face === "tails") {
+      events.push({
+        type: "ATTACK_FAILED",
+        seat: action.seat,
+        uid: attackerUid,
+        reason: "confusion",
+      });
+      const hurt = { ...active, damage: active.damage + 30 };
+      next = withActive(next, action.seat, hurt);
+      events.push({
+        type: "COUNTERS_PLACED",
+        seat: action.seat,
+        uid: attackerUid,
+        amount: 30,
+        source: "confusion",
+      });
+      // The self-hit can KO the attacker itself — prized to the DEFENDER.
+      return finishAttack(next, events, action.seat, action.seat, defenderSeat);
+    }
+  }
+
   // Coverage strategy (simulator.md): the mechanical part of the attack
-  // (numeric damage, weakness/resistance) is simulated; text effects and
-  // damage markers ("60+", "20×") are M4's effect ops — apply the number,
-  // flag the rest loudly instead of guessing.
+  // (numeric damage, weakness/resistance) is simulated, and effect text
+  // derives into executable steps for exactly the sentence shapes effects.ts
+  // recognizes — anything else (and every damage marker like "60+", M4's
+  // effect ops) is flagged loudly instead of guessed.
   const { base, modifier } = parseAttackDamage(declared.damage);
   const effect = declared.effect ?? null;
-  if (modifier !== null || (effect !== null && effect !== "")) {
+  const steps = effect === null || effect === "" ? null : deriveAttackEffect(effect);
+  if (modifier !== null || (effect !== null && effect !== "" && steps === null)) {
     events.push({
       type: "ATTACK_EFFECT_SKIPPED",
       seat: action.seat,
       attack: declared.name,
-      effect,
+      // Derived text IS simulated — only an underived one is skipped.
+      effect: steps === null ? effect : null,
       damageModifier: modifier,
     });
   }
 
-  let next = state;
   let defended = defender;
   if (base > 0) {
     // §8.5 damage pipeline, in printed order: base → Weakness (modern ×2,
@@ -148,28 +198,106 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     });
   }
 
-  // §8.1 Knock Out check: damage ≥ max HP. A KO puts the prize pick and the
-  // promotion in front of the turn tail; both are decision stages that can
-  // park the queue.
+  // §8 step 4 — the derived effect steps run AFTER the damage, in printed
+  // order: a defender-targeted status lands even when the damage above is
+  // lethal (the condition simply vanishes with the stack at the KO below).
+  if (steps !== null) {
+    next = runEffectSteps(next, steps, action.seat, events);
+  }
+
+  // §8.1 Knock Out check on the defender, then the §5.3 turn end — the
+  // shared epilogue with the confusion-tails exit above.
+  return finishAttack(next, events, action.seat, defenderSeat, action.seat);
+}
+
+/** The shared attack epilogue (§8.1 + §5.3), both exits out of `attack` (the
+    confusion-tails failure and the normal resolution): KO `koedSeat`'s
+    Active if lethally damaged — re-read off the state, since the effect
+    steps replace the Pokémon object — with the prize pick owed to
+    `prizeSeat`, then end `attackerSeat`'s turn through the staged tail, the
+    KO's decision stages in front of it. */
+function finishAttack(
+  state: GameState,
+  events: GameEvent[],
+  attackerSeat: Seat,
+  koedSeat: Seat,
+  prizeSeat: Seat,
+): ApplyResult {
+  let next = state;
   const pending: PendingStage[] = [];
-  const hp = hpOf(defenderCard);
-  if (hp !== null && defended.damage >= hp) {
-    const cleanup = discardFromStack(next.players[defenderSeat], defended, "all");
-    next = withSide(next, defenderSeat, { ...cleanup.side, active: null });
-    events.push({
-      type: "KNOCKED_OUT",
-      seat: defenderSeat,
-      uid: defenderUid,
-      discarded: cleanup.discarded,
-    });
-    pending.push(
-      { kind: "takePrizes", seat: action.seat, count: prizeValueOf(defenderCard) },
-      { kind: "promote", seat: defenderSeat },
-    );
+  const target = next.players[koedSeat].active;
+  if (target !== null && isLethallyDamaged(next, target)) {
+    const ko = knockOut(next, koedSeat, prizeSeat, events);
+    next = ko.state;
+    pending.push(...ko.stages);
   }
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
-  pending.push(...turnTail(action.seat));
+  pending.push(...turnTail(attackerSeat));
   return advance({ ...next, pending }, events);
+}
+
+/** Execute derived effect steps (effects.ts) in order. "self" is the
+    attacker's Active, "defender" the Defending Pokémon. A rotation status
+    REPLACES any other rotation (§12 mutual exclusivity — no cleared event
+    for the overwritten one), re-poisoning overwrites the counter amount,
+    burn is idempotent, and healing clamps at the damage present (a no-op
+    heal emits nothing). */
+function runEffectSteps(
+  state: GameState,
+  steps: readonly EffectStep[],
+  attackerSeat: Seat,
+  events: GameEvent[],
+): GameState {
+  let next = state;
+  for (const step of steps) {
+    switch (step.op) {
+      case "applyStatus": {
+        const seat = step.target === "self" ? attackerSeat : otherSeat(attackerSeat);
+        const spot = activeTop(next, seat);
+        if (spot === null) break; // no one there to affect
+        const { active, uid } = spot;
+        if (step.status === "poisoned") {
+          const poisonDamage = step.poisonDamage ?? DEFAULT_POISON_DAMAGE;
+          next = withActive(next, seat, {
+            ...active,
+            conditions: { ...active.conditions, poisonDamage },
+          });
+          events.push({ type: "STATUS_APPLIED", seat, uid, status: "poisoned", poisonDamage });
+        } else if (step.status === "burned") {
+          next = withActive(next, seat, {
+            ...active,
+            conditions: { ...active.conditions, burned: true },
+          });
+          events.push({ type: "STATUS_APPLIED", seat, uid, status: "burned" });
+        } else {
+          next = withActive(next, seat, {
+            ...active,
+            conditions: { ...active.conditions, rotation: step.status },
+          });
+          events.push({ type: "STATUS_APPLIED", seat, uid, status: step.status });
+        }
+        break;
+      }
+      case "heal": {
+        const spot = activeTop(next, attackerSeat);
+        if (spot === null) break;
+        const { active, uid } = spot;
+        const amount = Math.min(step.amount, active.damage);
+        if (amount <= 0) break; // nothing to heal — no event
+        next = withActive(next, attackerSeat, { ...active, damage: active.damage - amount });
+        events.push({ type: "HEALED", seat: attackerSeat, uid, amount });
+        break;
+      }
+      case "coinFlipGate": {
+        const [face, rngState] = flipCoin(next.rngState);
+        next = { ...next, rngState };
+        events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: attackerSeat, result: face });
+        if (face === "heads") next = runEffectSteps(next, step.then, attackerSeat, events);
+        break;
+      }
+    }
+  }
+  return next;
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */

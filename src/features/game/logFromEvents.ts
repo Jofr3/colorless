@@ -9,8 +9,8 @@
 // persists across viewer flips, so a named draw would leak one player's hand
 // to the other.
 
-import type { DamageModifier, GameEvent, GameState, Seat } from "@luminous/engine";
-import { cardOfUid, otherSeat, topCardOf } from "@luminous/engine";
+import type { DamageModifier, GameEvent, GameState, Seat, StatusName } from "@luminous/engine";
+import { DEFAULT_POISON_DAMAGE, cardOfUid, otherSeat, topCardOf } from "@luminous/engine";
 import type { LogEntry, LogSegment } from "../playmat/types";
 
 export type SeatLogEntry =
@@ -81,6 +81,17 @@ function modifierText(kind: "weakness" | "resistance", modifier: DamageModifier)
 const strong = (text: string): LogSegment => ({ text, tone: "strong" });
 const plain = (text: string): LogSegment => ({ text });
 
+/** Event vocabulary → the capitalized condition words the rules use (§12).
+    UI-side single source for the labels — GameHud's status copy reads this
+    map too, so the wording cannot drift between the log and the panels. */
+export const STATUS_LABELS: Record<StatusName, string> = {
+  asleep: "Asleep",
+  paralyzed: "Paralyzed",
+  confused: "Confused",
+  burned: "Burned",
+  poisoned: "Poisoned",
+};
+
 /** One event → its log rows (usually one), or null to skip it. The switch is
     deliberately NOT exhaustive-checked: a future engine event must fall out
     as "skipped", never as a crash (coverage doctrine, simulator.md). */
@@ -105,6 +116,11 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "CARDS_DRAWN": {
       // Counts only — never card identity (see module header).
       const n = event.uids.length;
+      // Hoisted for the default arm: with every DrawReason handled below,
+      // TS narrows `event` to never inside it (`reason` became a GameEvent
+      // discriminant when M3 events started carrying one) — the arm stays,
+      // per the doctrine above, for whatever reason ships next.
+      const seat = event.seat;
       switch (event.reason) {
         case "opening":
           return row(event.seat, [plain(`drew ${n} cards`)]);
@@ -115,7 +131,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         case "turnStart":
           return row(event.seat, [plain("drew a card")]);
         default:
-          return row(event.seat, [plain(`drew ${n} card${n === 1 ? "" : "s"}`)]);
+          return row(seat, [plain(`drew ${n} card${n === 1 ? "" : "s"}`)]);
       }
     }
     case "MULLIGAN_REVEALED":
@@ -173,15 +189,27 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" used "),
         strong(event.attack),
       ]);
-    case "ATTACK_EFFECT_SKIPPED":
-      return row("system", [
-        strong(event.attack),
-        plain(
-          event.damageModifier === null
-            ? " — effect not simulated"
-            : ` — "${event.damageModifier}" damage and effect not simulated`,
-        ),
-      ]);
+    case "ATTACK_EFFECT_SKIPPED": {
+      // The event contract (events.ts): `effect` carries the UNSIMULATED
+      // printed text — null means the text derived and ran (or there was
+      // none); `damageModifier` is the unsimulated damage marker — null
+      // means there was none. Each case claims ONLY what did not run: a
+      // derived effect may have executed in this very batch (its
+      // STATUS_APPLIED rows sit next to this one), so a marker-only skip
+      // must not say "effect not simulated".
+      const { effect, damageModifier } = event;
+      const wording =
+        damageModifier !== null && effect !== null
+          ? ` — "${damageModifier}" damage and effect not simulated`
+          : damageModifier !== null
+            ? ` — "${damageModifier}" damage not simulated`
+            : effect !== null
+              ? ` — effect "${effect}" not simulated`
+              : null;
+      // All-null skips are never emitted (attack.ts) — stay total anyway.
+      if (wording === null) return null;
+      return row("system", [strong(event.attack), plain(wording)]);
+    }
     case "DAMAGE_DEALT": {
       // The event's seat owns the DEFENDER; the line reads from the attacker.
       const segments: LogSegment[] = [
@@ -196,6 +224,102 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       }
       return row(otherSeat(event.seat), segments);
     }
+    // — M3 special conditions (§12) + the Pokémon Checkup (§13). Card names
+    //   resolve off the event's own uid, so a status that lands on a Pokémon
+    //   the same batch then KOs still names it correctly.
+    //   §13 batch semantics (for future animation authors): a Checkup batch
+    //   can hold recovery events that PRECEDE a KNOCKED_OUT for the SAME uid
+    //   — key animations off post-batch state, never a lone STATUS_CLEARED.
+    case "STATUS_APPLIED": {
+      const segments: LogSegment[] = [
+        strong(cardName(state, event.uid)),
+        plain(" is now "),
+        strong(STATUS_LABELS[event.status]),
+      ];
+      // Raised poison ("put 2 damage counters instead of 1") is worth
+      // spelling out; the engine default stays implicit like the rulebook's.
+      if (event.poisonDamage !== undefined && event.poisonDamage > DEFAULT_POISON_DAMAGE) {
+        segments.push(plain(` (${event.poisonDamage} damage per Checkup)`));
+      }
+      return row(event.seat, segments);
+    }
+    case "STATUS_CLEARED": {
+      // Hoisted for the default arm (the CARDS_DRAWN pattern): with every
+      // known reason handled, TS narrows `event` to never inside it.
+      const seat = event.seat;
+      const name = cardName(state, event.uid);
+      const statuses = event.statuses.map((status) => STATUS_LABELS[status]).join(", ");
+      switch (event.reason) {
+        case "wokeUp":
+          return row(seat, [strong(name), plain(" woke up")]);
+        case "burnCured":
+          return row(seat, [strong(name), plain("'s Burn was cured")]);
+        case "paralysisEnded":
+          return row(seat, [strong(name), plain("'s Paralysis wore off")]);
+        case "benched":
+          // Follows the RETREATED row; benching clears every condition at
+          // once (§11/§12), so the list can name several.
+          return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
+        default:
+          return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
+      }
+    }
+    case "COUNTERS_PLACED": {
+      // Checkup ticks and the confusion self-hit are the game's doing, not a
+      // player action — system rows, like the coin toss.
+      const seat = event.seat;
+      const name = cardName(state, event.uid);
+      const amount: LogSegment = { text: String(event.amount), tone: "damage" };
+      switch (event.source) {
+        case "poison":
+          return row("system", [plain("Poison: "), amount, plain(" damage to "), strong(name)]);
+        case "burn":
+          return row("system", [plain("Burn: "), amount, plain(" damage to "), strong(name)]);
+        case "confusion":
+          return row("system", [
+            plain("Confusion: "),
+            strong(name),
+            plain(" hit itself for "),
+            amount,
+          ]);
+        default:
+          return row(seat, [amount, plain(" damage to "), strong(name)]);
+      }
+    }
+    case "CHECKUP_COIN_FLIP":
+      // event.status is the "asleep" | "burned" subset of StatusName — the
+      // shared label map covers it.
+      return row("system", [
+        plain("Checkup — "),
+        strong(STATUS_LABELS[event.status]),
+        plain(` flip for ${names[event.seat]}: `),
+        strong(event.result),
+      ]);
+    case "CONFUSION_CHECK":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" is Confused — flip: "),
+        strong(event.result),
+      ]);
+    case "ATTACK_FAILED":
+      // reason is "confusion" (the only §12 attack-failure today): tails on
+      // the confusion check — the 30 self-damage follows as its own row.
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain("'s attack failed — Confused"),
+      ]);
+    case "HEALED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(` healed ${event.amount} damage`),
+      ]);
+    case "ATTACK_EFFECT_COIN_FLIP":
+      // seat is the ATTACKER — the flip gates their own attack's effect.
+      return row(event.seat, [
+        plain("flipped "),
+        strong(event.result),
+        plain(" for the attack effect"),
+      ]);
     case "KNOCKED_OUT":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
