@@ -3,63 +3,70 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-18 — build session #12 (**P3-M4 slice 6: triggered
-Abilities** (§9) — a `TriggeredAbility` registry entry + a `triggers.ts` runner
-at three scan points (on-play-to-Bench, on-evolve, between-turns/Checkup); board
-triggers PARK on the existing effect:choose (so the web needs no new dialog), the
-Checkup counter KOs through the existing sweep; built solo, 2-agent Opus review
-CUT SHORT by the usage limit — the rules agent confirmed 1 bug before dying
-(damageActive wrongly reduced its counter by Bouffer — fixed + regression-pinned)
-and the rest was self-verified; suite 1002 → 1019, `bun run check` green).
+**Last updated:** 2026-07-18 — build session #13 (**P3-M4 slice 7: Rare Candy**
+(§7.1) — the Basic→Stage 2 evolve-skip Item, a dedicated `rareCandy` action that
+reuses a shared `placeEvolution` extracted from `evolve` (so it inherits
+carry-over, the on-evolve trigger and the evolve-below-HP mid-turn KO); the
+Basic→Stage 2 link is resolved by BRIDGING through the Stage 1 name in the pool
+(documented gap: a Stage-1-absent deck can't resolve it); a `RareCandyDialog`
+picks the Basic + Stage 2, projection unchanged; built solo, 2-agent Opus review
+BOTH CLEAN — refactor proven byte-for-byte equivalent, no correctness bugs, 2 LOW
+UX/perf fixes + 3 coverage tests applied; suite 1019 → 1045, `bun run check`
+green, live /play boot smoke clean).
 
 ## Resume point
-**Triggered Abilities are live (P3-M4 slice 6, D27).** §9 Abilities that FIRE on
-a game event get a **`TriggeredAbility`** entry (`CardProgram.triggered`) run by
-a new **`triggers.ts`** at THREE scan points: **`onPlayToBench`** (turn.ts
-playBasicToBench — a turn play, not a setup placement), **`onEvolve`** (turn.ts
-evolve, after the evolve-below-HP KO check), **`betweenTurns`** (flow.ts
-runCheckup, after the §13 ticks, before the KO sweep). **Board triggers PARK on
-the existing `effect:choose`** and resume to turn:action via `resolveEffect` — so
-a Flamigo benched by a DRAG parks identically to a Trainer button and the **web
-needs no new dialog** (only two logFromEvents rows; `EffectChooseDialog` is now
-origin-agnostic). **`betweenTurns` triggers are NON-PARKING** and run inside the
-one Checkup reduction; Trevenant's counter that goes lethal is KO'd by the shared
-`collectKnockOuts` sweep. **Optional triggers AUTO-FIRE** (pure-upside set; "up
-to" searches still take none). New ops: **`healEach`**, **`damageActive`** (PUTS
-counters — NOT attack damage, so no W/R AND **no Bouffer-style reduction**, the
-poison/burn-tick rule); `healChosen.amount` widened to `number|"all"`; a `byName`
-search filter. New event `ABILITY_TRIGGERED`; `COUNTERS_PLACED` source
-`"ability"`. Representative set (real, verified vs local D1): **Flamigo**
-(sv02-170 Insta-Flock), **Arboliva** (sv01-023 Enriching Oil), **Garganacl**
-(sv02-123 Blessed Salt), **Trevenant** (sv03-012 Forest Miasma) — NOT in the demo
-decks (auto-fire would perturb the seed-tuned hands; test-covered, slice-4/5
-precedent). engineVersion 0.9.0. See "M4 slice 6 as built" + D27.
-**Review (2 Opus agents, CUT SHORT by the shared usage limit — reset pending):**
-partial. The rules agent CONFIRMED 1 bug before dying — `damageActive` applied
-the defender's damage-reduction passive, so Trevenant's counter on a Bouffalant
-(Bouffer −20) placed 0 → **fixed** (counters aren't attack damage; flat) +
-regression-pinned. Remaining areas SELF-verified (turn-gate ⇒ settleTrigger's
-done→turn:action; the §14 double-KO path is the unchanged shared sweep; the web
-viewer-follow + origin-agnostic dialog by reading useLocalGame/GameHud). **A
-`/code-review` re-run after the limit resets is the logged follow-up.**
-**Verification:** `bun run check` green (**1019 tests** — triggered.test.ts 16
-covering each scan point + parking + forced auto-resolve + setup-doesn't-trigger
-+ the Bouffer-counter regression + purity, + 1 log row). No live /play smoke this
-session (representatives not demo-reachable; the review's browser pass was cut).
+**Rare Candy is live (P3-M4 slice 7, D28).** The Basic→Stage 2 evolve-skip Item
+(§7.1) is a dedicated **`rareCandy` action** (cardplay.ts) `{seat, uid (the Rare
+Candy), target (the Basic), evolutionUid (the Stage 2)}` — NOT an interpreter op
+(it evolves, and flow.ts owns every Knock Out). The `evolve` tail was extracted
+into a shared **`placeEvolution`** (turn.ts) that both `evolve` and `rareCandy`
+call, so Rare Candy inherits §10 carry-over (damage/energy/tools stay,
+conditions/markers clear), the **on-evolve trigger**, and the **evolve-below-HP
+mid-turn KO** with zero new flow code (the refactor is behavior-equivalent —
+proven in review + the unchanged evolution suite). Timing mirrors `evolve` (§4
+first-turn ban + `turnPlayed >= turn`). **The Basic→Stage 2 link is resolved by
+BRIDGING**: the catalog stores only each card's immediate `evolveFrom`, so
+`stage2EvolvesFromBasic` checks the pool for a **Stage 1** named
+`stage2.evolveFrom` whose own `evolveFrom` is the target Basic (documented gap: a
+Stage-1-absent deck can't resolve it — ingest-debt, like `prizeValueOf`=1). A
+registry **marker** `CardProgram.rareCandy?: true` identifies it; `playTrainer`
+rejects it (`TRAINER_TYPE_UNSUPPORTED`). New error code `RARE_CANDY_NO_STAGE2`;
+no new event (`TRAINER_PLAYED` then `POKEMON_EVOLVED`). **Web:**
+**`rareCandyOptions(state, seat)`** (the engine authority) drives a bespoke
+**`RareCandyDialog`** (pick a Basic → pick a Stage 2, with Cancel/Back) opened
+from the Trainers list; the **projection is unchanged** (all three
+`placeEvolution` outcomes already handled). Demo: Rare Candy ×2 in Ember (Fire
+energy 14→12). engineVersion 0.9.0 (additive). See "M4 slice 7 as built" + D28.
+**Review (2 Opus agents — rules+engine / web+integration): BOTH CLEAN, no
+correctness bugs.** The rules agent proved the `placeEvolution` refactor
+byte-for-byte equivalent, the bridge sound, wire-safety airtight, purity held;
+the web agent confirmed the projection "no change", the dialog↔options lockstep,
+and the demo deck. Fixes applied from the LOW findings: a **Cancel** button, a
+**lazy** `rareCandyOptions` in playableTrainers, and 3 coverage tests (benched
+mid-turn KO, Tool carry-over, an Energy as the evolution card).
+**Verification:** `bun run check` green (**1045 tests** — 1019 → 1045: 24 engine
+`rareCandy.test.ts` + 2 DOM), production `vite build` green. **Live /play boot
+smoke** (agent-browser, seed 6, ZERO console errors): boots with the re-balanced
+Ember deck — all 75 cardPool fetches 200 (incl. sv01-191 Rare Candy), a clean
+7-card deal (no mulligan storm), and the live api confirms the real-catalog
+bridge (Skeledirge → Crocalor → Fuecoco). Rare Candy driven to resolution only in
+the engine + DOM tests (a live resolution needs a contrived seed + the Pixi
+hit-test session-eater; slice-4/5/6 precedent).
 Next concrete actions:
-1. **`/code-review` the slice** once the usage limit resets (the 2-agent review
-   was cut short — one confirmed bug fixed, the rest self-verified).
-2. **P3-M4 remaining:** **on-KO triggers** (fire during the OPPONENT's turn
-   mid-KO-sweep — the deferred hairy timing, needs a resume-the-tail
-   continuation); the **mid-turn-damage snipe** (Hawlucha sv01-118 choose-2 /
-   Meowscarada sv02-015 choose-1) — an on-play/on-evolve *damaging* trigger that
-   KOs mid-turn, needing a multi-Pokémon prompt + `settleRun`→
-   `resolveMidTurnKnockOuts`; **Rare Candy** (sv01-191 — hand-inspect + evolve
-   reuse).
-3. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics live in
+1. **P3-M4 remaining (2 items):** the **mid-turn-damage snipe** (Hawlucha
+   sv01-118 choose-2 / Meowscarada sv02-015 choose-1) — an on-play/on-evolve
+   *damaging* trigger that KOs mid-turn, needing a multi-Pokémon prompt +
+   `settleRun`→`resolveMidTurnKnockOuts` (reuses slice-4 + slice-6 machinery);
+   then **on-KO triggers** (fire during the OPPONENT's turn mid-KO-sweep — the
+   deferred hairy timing, needs a resume-the-tail continuation).
+2. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics live in
    interpreter.ts (op programs), continuous.ts (persistent zones + energy
-   provision), triggers.ts (scan points) and registry.ts (a new card in a known
-   family is a few rows). Ask the user before launching one.
+   provision), triggers.ts (scan points), cardplay.ts (Rare Candy) and
+   registry.ts (a new card in a known family is a few rows). Ask the user before
+   launching one.
+3. **Slice-6 follow-up (still open):** the slice-6 (triggered Abilities) review
+   was cut short by the usage limit — a `/code-review` re-run over commit
+   `a634b30` is logged (user opted to defer it while building slice 7).
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -72,13 +79,70 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy/triggered-Abilities done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities — three scan points, 2026-07-18) — remaining: on-KO triggers, the mid-turn-damage snipe, Rare Candy; then the coverage fan-out |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy/triggered-Abilities/Rare-Candy done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities + D28 Rare Candy — evolve-skip via shared placeEvolution, 2026-07-18) — remaining: the mid-turn-damage snipe, on-KO triggers; then the coverage fan-out |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-18** (build #13) — **P3-M4 slice 7: Rare Candy** (§7.1, D28; built
+  solo — full context loaded — then a 2-agent Opus review, BOTH CLEAN). Rare
+  Candy evolves a Basic straight to a **Stage 2** from hand, skipping the Stage 1
+  ("counts as evolving"). Because it evolves — and flow.ts owns every Knock Out
+  (the interpreter never KOs) — it is a dedicated **`rareCandy` action**
+  (cardplay.ts) `{seat, uid (the Rare Candy Item), target (the Basic),
+  evolutionUid (the Stage 2)}`, NOT an interpreter program. The `evolve` tail was
+  extracted into a shared **`placeEvolution`** (turn.ts) that both `evolve` and
+  `rareCandy` call, so Rare Candy inherits §10 carry-over (damage/energy/tools
+  stay, conditions/markers clear, turnPlayed resets), the **on-evolve triggered
+  Ability**, and the **evolve-below-HP mid-turn KO** (a Bravery Charm's Basic-only
+  +50 falling off) with zero new flow code. Timing mirrors `evolve` exactly (§4
+  first-turn ban + `turnPlayed >= turn` → FIRST_TURN_EVOLVE / EVOLVE_TOO_SOON);
+  the target must be a Basic (NOT_A_BASIC_POKEMON). **The Basic→Stage 2 link is
+  resolved by BRIDGING**: the catalog stores only each card's immediate
+  `evolveFrom` (a Stage 2 names its Stage 1, never the Basic), so
+  `stage2EvolvesFromBasic` checks the pool for a **Stage 1** named
+  `stage2.evolveFrom` whose own `evolveFrom` is the target Basic. **Documented
+  gap:** a deck running Rare Candy + a Stage 2 but ZERO copies of the Stage 1
+  can't resolve it (ingest-debt, like prizeValueOf=1); the demo Ember deck runs
+  Crocalor so it resolves (verified vs the live api: Skeledirge → Crocalor →
+  Fuecoco). A registry **marker** `CardProgram.rareCandy?: true` identifies it
+  (sv01-191/256); `playTrainer` on a Rare Candy uid rejects
+  TRAINER_TYPE_UNSUPPORTED (the Tool-routing precedent). New error code
+  RARE_CANDY_NO_STAGE2; no new event (TRAINER_PLAYED then POKEMON_EVOLVED). **Web:**
+  an engine helper **`rareCandyOptions(state, seat)`** (the authority) lists the
+  legal `{Basic, matching Stage 2s}` pairings; Rare Candy shows in the Trainers
+  list but its button opens a bespoke **`RareCandyDialog`** (pick a Basic → pick a
+  Stage 2, with Cancel/Back) rather than `playTrainer`. The **projection needs NO
+  change** — `placeEvolution` resolves to turn:action (done), a mid-turn KO park
+  (resumeTurn, already in-turn) or an on-evolve trigger park (effect:choose,
+  origin-agnostic), all already handled. Demo: Rare Candy ×2 in Ember (Fire energy
+  14→12; non-Basic for non-Basic keeps the Basic count / mulligan rate).
+  engineVersion 0.9.0 (unchanged — additive). **Review (2 Opus agents —
+  rules+engine / web+integration): BOTH CLEAN, no correctness bugs.** The rules
+  agent PROVED the `placeEvolution` refactor byte-for-byte equivalent to the old
+  `evolve` (state shape, event order, hand-removal timing, the from/target split),
+  the bridge sound (the intermediate is forced to be a Stage 1 — no realistic
+  false positive), wire-safety airtight, purity. The web agent confirmed the
+  projection "no change" across all three outcomes, the dialog↔options lockstep
+  (an enabled button can only ever produce a legal dispatch or a clean reject),
+  the demo deck (exactly 60, disjoint-except-shared-trainers intact, bridge
+  present), and the log rows. **Fixes applied** from the LOW findings: a **Cancel**
+  button on the dialog (Rare Candy is optional), `rareCandyOptions` made **lazy**
+  in playableTrainers (its cardPool scan only runs when a Rare Candy is in hand),
+  and 3 coverage tests (benched mid-turn KO, Tool carry-over, an Energy as the
+  evolution card). Documented (not defects): the bridge gap + the un-exercised
+  sv01-256 reprint. **Deferred:** the mid-turn-damage snipe (Hawlucha/Meowscarada)
+  + on-KO triggers remain the P3-M4 tail. **Verification:** `bun run check` green
+  (1019 → **1045**: 24 rareCandy.test.ts + 2 DOM), production `vite build` green.
+  **Live /play boot smoke** (agent-browser, seed 6, ZERO console errors): boots
+  with the re-balanced Ember deck — Pixi canvas renders, all 75 cardPool fetches
+  200 (incl. sv01-191 Rare Candy), the coin toss advances into a clean 7-card deal
+  (no mulligan storm). Files: actions.ts, registry.ts, turn.ts (placeEvolution),
+  cardplay.ts (rareCandy + bridge + rareCandyOptions), index.ts, testFixtures.ts,
+  rareCandy.test.ts (new) + GameHud.tsx, demoDecks.ts/.test.ts,
+  GameHud.cardplay.dom.test.tsx.
 - **2026-07-18** (build #12) — **P3-M4 slice 6: triggered Abilities** (§9, D27;
   built solo — full context loaded — then a 2-agent Opus review that the shared
   usage limit CUT SHORT). §9 Abilities that FIRE on a game event get a

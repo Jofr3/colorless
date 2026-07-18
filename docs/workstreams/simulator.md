@@ -123,8 +123,11 @@ event stream.
    (Jet Energy's switch); slice 6 added **triggered Abilities** (§9) at three
    scan points (on-play-to-Bench, on-evolve, between-turns/Checkup) — board
    triggers park on effect:choose, a between-turns counter KOs through the
-   Checkup sweep. Remaining: on-KO triggers, the mid-turn-damage snipe, Rare
-   Candy.
+   Checkup sweep; slice 7 added **Rare Candy** (§7.1) — the Basic→Stage 2
+   evolve-skip Item, a dedicated action reusing the extracted `placeEvolution`
+   (so it inherits carry-over, the on-evolve trigger and the mid-turn KO), with
+   the Basic→Stage 2 link resolved by bridging through the Stage 1 name in the
+   pool. Remaining: on-KO triggers, the mid-turn-damage snipe.
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -925,6 +928,90 @@ pass was cut by the usage limit); the mechanic is covered by the engine + web
 tests and the confirmed fix. Files: effects.ts, events.ts, registry.ts,
 interpreter.ts, triggers.ts (new), turn.ts, flow.ts, index.ts, testFixtures.ts,
 triggered.test.ts (new) + logFromEvents.ts/.test.ts, GameHud.tsx (comment).
+
+## M4 slice 7 as built (2026-07-18) — Rare Candy (§7.1)
+
+**Shape (D28).** Rare Candy evolves a Basic straight to a **Stage 2** from hand,
+skipping the Stage 1 ("counts as evolving"). Because it evolves — and flow.ts
+owns every Knock Out (the interpreter never KOs) — it is NOT an interpreter op
+program but a dedicated **`rareCandy` action** (cardplay.ts)
+`{seat, uid (the Rare Candy Item), target (the Basic), evolutionUid (the Stage
+2)}`. The `evolve` tail was extracted into a shared **`placeEvolution`**
+(turn.ts) that BOTH `evolve` and `rareCandy` call, so Rare Candy inherits §10
+carry-over (damage/energy/tools stay, conditions/markers clear, turnPlayed
+resets), the **on-evolve triggered Ability**, and the **evolve-below-HP mid-turn
+KO** (a Bravery Charm's Basic-only +50 falling off) with zero new flow code. The
+refactor is behavior-equivalent to the old `evolve` (proven in review + the
+unchanged evolution suite). Timing mirrors `evolve` exactly (§4 first-turn ban +
+`turnPlayed >= state.turn` "played this turn" ban → `FIRST_TURN_EVOLVE` /
+`EVOLVE_TOO_SOON`); the target must be a Basic in play (`NOT_A_BASIC_POKEMON`).
+
+**The Basic→Stage 2 bridge.** The catalog stores only each card's IMMEDIATE
+`evolveFrom` (a Stage 2 names its Stage 1, never the Basic), so
+`stage2EvolvesFromBasic` (cardplay.ts) resolves the link by BRIDGING: it checks
+that some card in `state.cardPool` is a **Stage 1** named `stage2.evolveFrom`
+whose own `evolveFrom` is the target Basic's name. **Documented gap:** a deck
+running Rare Candy + a Stage 2 but ZERO copies of the intervening Stage 1 can't
+resolve the link (the Stage 1 is absent from the pool) — the same ingest-debt
+class as `prizeValueOf` = 1 and name-derived energy; the fix is a persisted
+evolution family at ingest. The demo Ember deck runs Crocalor, so it resolves —
+**verified vs the live api**: sv01-038 Skeledirge (Stage2, evolveFrom Crocalor) →
+sv01-037 Crocalor (Stage1, evolveFrom Fuecoco) → sv01-036 Fuecoco (Basic).
+
+**Registry + routing.** A **marker** `CardProgram.rareCandy?: true` (not a
+program) identifies Rare Candy (sv01-191/256); `playTrainer` on a Rare Candy uid
+rejects `TRAINER_TYPE_UNSUPPORTED` (the Tool-routing precedent). New error code
+`RARE_CANDY_NO_STAGE2`. No new event — Rare Candy emits `TRAINER_PLAYED` (Item)
+then `POKEMON_EVOLVED`, both already logged.
+
+**Web.** An engine helper **`rareCandyOptions(state, seat)`** (the authority)
+lists the legal `{target Basic, matching Stage 2 uids}` pairings (mirroring the
+handler's Basic / turnPlayed / chain / first-turn checks). Rare Candy shows in
+the Trainers list but its button opens a bespoke **`RareCandyDialog`** (pick a
+Basic → pick a Stage 2 → dispatch `rareCandy`) rather than `playTrainer` — the
+one Trainer that carries a target isn't expressible through the generic button;
+it has a Cancel affordance (Rare Candy is optional) and a Back step when >1
+Basic. `playableTrainers` greys the button out when `rareCandyOptions` is empty
+(computed lazily — its cardPool scan only runs when a Rare Candy is in hand). The
+**projection needs NO change**: `placeEvolution` resolves to `turn:action`
+(done), a mid-turn KO park (`resumeTurn`, already in-turn per koParkActiveSeat),
+or an on-evolve trigger park (`effect:choose`, origin-agnostic) — all already
+handled. Demo: Rare Candy ×2 added to Ember (Fire energy 14→12; non-Basic for
+non-Basic keeps the Basic count / mulligan rate). engineVersion 0.9.0 (unchanged
+— additive). Suite 1019 → **1045**.
+
+**Review (2 Opus agents — rules+engine / web+integration): both clean, no
+correctness bugs.** The rules agent PROVED the `placeEvolution` refactor
+byte-for-byte equivalent to the old `evolve` (state shape, event order,
+hand-removal timing, the from/target split), the bridge sound (no realistic
+false positive — the intermediate is forced to be a Stage 1), wire-safety
+airtight (every index/uid/target checked; no throw or card-destruction), and
+purity. The web agent confirmed the projection "no change" claim across all three
+`placeEvolution` outcomes, the dialog/`rareCandyOptions` lockstep (an enabled
+button can only ever produce a legal dispatch or a clean reject), the demo deck
+(exactly 60, disjoint-except-shared-trainers intact, bridge present), and the log
+rows. Fixes applied from the LOW findings: a **Cancel** button on the dialog
+(optional play), `rareCandyOptions` made **lazy** in playableTrainers (perf), and
+three coverage tests added (benched mid-turn KO, Tool carry-over, an Energy as
+the evolution card). The documented bridge gap and the un-exercised sv01-256
+reprint id are noted, not defects.
+
+**Verification.** `bun run check` green (tsc + biome + **1045 tests** — 1019 →
+1045: 24 engine `rareCandy.test.ts` covering the skip (Active + bench),
+carry-over incl. Tools, both mid-turn KO paths, timing, the Basic/chain/Stage-2
+rejections, the playTrainer reject, `rareCandyOptions`, wire-safety, purity + 2
+DOM tests driving the real GameHud → RareCandyDialog → `rareCandy`). Production
+`vite build` green. **Live /play boot smoke (agent-browser, seed 6, ZERO console
+errors):** the game boots with the re-balanced Ember deck — Pixi canvas renders,
+**all 75 cardPool fetches succeed (incl. sv01-191 Rare Candy → 200)**, the coin
+toss advances into a clean 7-card deal (no mulligan storm from the energy swap),
+and the live api confirms the real-catalog bridge resolves. Driving Rare Candy to
+a live resolution needs a contrived seed + the Pixi hit-test session-eater, so it
+is covered by the engine + DOM tests + the two clean reviews (the slice-4/5/6
+precedent). Files: actions.ts, registry.ts, turn.ts (placeEvolution), cardplay.ts
+(rareCandy + bridge + rareCandyOptions), index.ts, testFixtures.ts,
+rareCandy.test.ts (new) + GameHud.tsx, demoDecks.ts/.test.ts,
+GameHud.cardplay.dom.test.tsx.
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
