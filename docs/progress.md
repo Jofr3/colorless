@@ -3,52 +3,63 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-18 — build session #11 (**P3-M4 slice 5: Special
-Energy** — provision as data (multi-unit + wildcard), a wildcard-aware cost
-matcher unifying the D18 payability, and on-attach effects (Jet Energy's switch);
-built solo, 2-agent Opus review — rules+matcher CLEAN (brute-force-verified),
-wire+web found 1 MEDIUM log-host bug (fixed + regression-pinned) + 2 low notes;
-suite 983 → 1002, `bun run check` green; /play boots clean, both special energies
-fetch 200).
+**Last updated:** 2026-07-18 — build session #12 (**P3-M4 slice 6: triggered
+Abilities** (§9) — a `TriggeredAbility` registry entry + a `triggers.ts` runner
+at three scan points (on-play-to-Bench, on-evolve, between-turns/Checkup); board
+triggers PARK on the existing effect:choose (so the web needs no new dialog), the
+Checkup counter KOs through the existing sweep; built solo, 2-agent Opus review
+CUT SHORT by the usage limit — the rules agent confirmed 1 bug before dying
+(damageActive wrongly reduced its counter by Bouffer — fixed + regression-pinned)
+and the rest was self-verified; suite 1002 → 1019, `bun run check` green).
 
 ## Resume point
-**Special Energy is live (P3-M4 slice 5, D26).** Special energies provisioned a
-name-derived 1 Colorless; slice 5 models their rules text. **`EnergyProgram`**
-(`CardProgram.energy`) gives `{provides, demoteWithOtherSpecial?, onAttach?}`;
-**`providedEnergy(state, pokemon)`** (continuous.ts) is the ONE provision read
-site (a basic energy → its type; an authored special → its units, incl. the
-`ANY_ENERGY` **wildcard** and Luminous's demote; an unauthored special → the
-Colorless fallback). **`costMet`** (attack.ts) now handles the wildcard
-(brute-force-verified optimal), and BOTH the engine cost check AND the HUD
-payability call `providedEnergy` — **the D18 duplication is gone**. **Jet
-Energy's on-attach switch** (attachEnergy → the exported `switchInto`) moves a
-benched holder to Active. Representative set: Jet (sv02-190) + Luminous
-(sv02-191) — no Double Turbo in the SV catalog, so multi-provide here is the
-wildcard kind. Demo decks: Ember runs Jet, Tidal Luminous (different per deck).
-engineVersion 0.8.0. See "M4 slice 5 as built" + D26.
-**Review (2 Opus agents, rules+matcher / wire+web):** rules CLEAN
-(brute-forced the matcher — 13,640 cases, 0 mismatches); wire found 1 MEDIUM —
-Jet's switch compacts the bench so the ENERGY_ATTACHED **log** named the wrong
-Pokémon (**fixed** — resolve the host by uid — + regression-pinned) — plus a LOW
-stale-JSDoc and a stale comment, both fixed.
-**Verification:** `bun run check` green (**1002 tests** — specialEnergy.test.ts
-16 + 2 HUD-DOM payability + a log host regression). **Live /play smoke** (seed 6,
-ZERO console errors): boots with the re-ingested decks, both special energies
-fetch 200; the attach gestures are the documented Pixi session-eater so covered
-by the engine + HUD-DOM + log tests + the reviews.
+**Triggered Abilities are live (P3-M4 slice 6, D27).** §9 Abilities that FIRE on
+a game event get a **`TriggeredAbility`** entry (`CardProgram.triggered`) run by
+a new **`triggers.ts`** at THREE scan points: **`onPlayToBench`** (turn.ts
+playBasicToBench — a turn play, not a setup placement), **`onEvolve`** (turn.ts
+evolve, after the evolve-below-HP KO check), **`betweenTurns`** (flow.ts
+runCheckup, after the §13 ticks, before the KO sweep). **Board triggers PARK on
+the existing `effect:choose`** and resume to turn:action via `resolveEffect` — so
+a Flamigo benched by a DRAG parks identically to a Trainer button and the **web
+needs no new dialog** (only two logFromEvents rows; `EffectChooseDialog` is now
+origin-agnostic). **`betweenTurns` triggers are NON-PARKING** and run inside the
+one Checkup reduction; Trevenant's counter that goes lethal is KO'd by the shared
+`collectKnockOuts` sweep. **Optional triggers AUTO-FIRE** (pure-upside set; "up
+to" searches still take none). New ops: **`healEach`**, **`damageActive`** (PUTS
+counters — NOT attack damage, so no W/R AND **no Bouffer-style reduction**, the
+poison/burn-tick rule); `healChosen.amount` widened to `number|"all"`; a `byName`
+search filter. New event `ABILITY_TRIGGERED`; `COUNTERS_PLACED` source
+`"ability"`. Representative set (real, verified vs local D1): **Flamigo**
+(sv02-170 Insta-Flock), **Arboliva** (sv01-023 Enriching Oil), **Garganacl**
+(sv02-123 Blessed Salt), **Trevenant** (sv03-012 Forest Miasma) — NOT in the demo
+decks (auto-fire would perturb the seed-tuned hands; test-covered, slice-4/5
+precedent). engineVersion 0.9.0. See "M4 slice 6 as built" + D27.
+**Review (2 Opus agents, CUT SHORT by the shared usage limit — reset pending):**
+partial. The rules agent CONFIRMED 1 bug before dying — `damageActive` applied
+the defender's damage-reduction passive, so Trevenant's counter on a Bouffalant
+(Bouffer −20) placed 0 → **fixed** (counters aren't attack damage; flat) +
+regression-pinned. Remaining areas SELF-verified (turn-gate ⇒ settleTrigger's
+done→turn:action; the §14 double-KO path is the unchanged shared sweep; the web
+viewer-follow + origin-agnostic dialog by reading useLocalGame/GameHud). **A
+`/code-review` re-run after the limit resets is the logged follow-up.**
+**Verification:** `bun run check` green (**1019 tests** — triggered.test.ts 16
+covering each scan point + parking + forced auto-resolve + setup-doesn't-trigger
++ the Bouffer-counter regression + purity, + 1 log row). No live /play smoke this
+session (representatives not demo-reachable; the review's browser pass was cut).
 Next concrete actions:
-1. **P3-M4 remaining slices:** triggered abilities (on-play/on-KO/between-turns
-   — trigger scan points at bench-play, evolve, checkup, KO); Rare Candy
-   (sv01-191 — hand-inspect + evolve reuse). A **snipe ability** (choose-1-
-   benched damage) reuses slice-4's `resolveMidTurnKnockOuts`.
-2. More special energies (the catalog has **Reversal** sv02-192 — prize/evolution-
-   conditional multi-type — and **Therapeutic** sv02-193 — {C} + status immunity);
-   a live sv card with a spread/snipe attack; a real multi-unit-same-type energy
-   when one enters the pool (the `provides` array + matcher already support it).
+1. **`/code-review` the slice** once the usage limit resets (the 2-agent review
+   was cut short — one confirmed bug fixed, the rest self-verified).
+2. **P3-M4 remaining:** **on-KO triggers** (fire during the OPPONENT's turn
+   mid-KO-sweep — the deferred hairy timing, needs a resume-the-tail
+   continuation); the **mid-turn-damage snipe** (Hawlucha sv01-118 choose-2 /
+   Meowscarada sv02-015 choose-1) — an on-play/on-evolve *damaging* trigger that
+   KOs mid-turn, needing a multi-Pokémon prompt + `settleRun`→
+   `resolveMidTurnKnockOuts`; **Rare Candy** (sv01-191 — hand-inspect + evolve
+   reuse).
 3. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics live in
    interpreter.ts (op programs), continuous.ts (persistent zones + energy
-   provision) and a whole-board KO flow; a new card in a known family is a few
-   registry rows. Ask the user before launching one.
+   provision), triggers.ts (scan points) and registry.ts (a new card in a known
+   family is a few rows). Ask the user before launching one.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -61,13 +72,56 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy — provision-as-data/wildcard matcher/on-attach, 2026-07-18) — remaining: triggered abilities, Rare Candy; then the coverage fan-out |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy/triggered-Abilities done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities — three scan points, 2026-07-18) — remaining: on-KO triggers, the mid-turn-damage snipe, Rare Candy; then the coverage fan-out |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-18** (build #12) — **P3-M4 slice 6: triggered Abilities** (§9, D27;
+  built solo — full context loaded — then a 2-agent Opus review that the shared
+  usage limit CUT SHORT). §9 Abilities that FIRE on a game event get a
+  **`TriggeredAbility`** entry (`CardProgram.triggered`: `{name, trigger, program,
+  optional?, activeOnly?}`) run through the shared interpreter by a new
+  **`triggers.ts`**, wired at THREE scan points: **`onPlayToBench`** (turn.ts
+  playBasicToBench — a turn play, not a setup placement), **`onEvolve`** (turn.ts
+  evolve, after the evolve-below-HP KO check), **`betweenTurns`** (flow.ts
+  runCheckup, after the §13 ticks, before the KO sweep). **Board triggers PARK on
+  the existing `effect:choose`** (settleTrigger ≡ cardplay settleRun) and resume
+  to turn:action via `resolveEffect` — so a Flamigo benched by a DRAG parks
+  identically to a Trainer button and the **web needs no new dialog**
+  (EffectChooseDialog is now origin-agnostic; only 2 logFromEvents rows added).
+  **`betweenTurns` triggers are NON-PARKING** (heal-each / a fixed counter) and
+  run synchronously in the one Checkup reduction; Trevenant's counter that goes
+  lethal is KO'd by the shared `collectKnockOuts` sweep (a double KO rides its
+  §14 tie guard). **Optional triggers AUTO-FIRE** (pure-upside set; "up to"
+  searches still take none). New ops: **`healEach`**, **`damageActive`** (PUTS
+  counters — NOT attack damage, so no W/R AND **no Bouffer-style reduction**);
+  `healChosen.amount` → `number|"all"`; a `byName` search filter. New event
+  `ABILITY_TRIGGERED`; `COUNTERS_PLACED` source `"ability"`. Representative set
+  (real, verified vs local D1): Flamigo (sv02-170 Insta-Flock, onPlayToBench),
+  Arboliva (sv01-023 Enriching Oil, onEvolve), Garganacl (sv02-123 Blessed Salt,
+  betweenTurns), Trevenant (sv03-012 Forest Miasma, betweenTurns Active-only) —
+  NOT in the demo decks (auto-fire would perturb the seed-tuned hands;
+  test-covered, slice-4/5 precedent). engineVersion 0.8.0 → 0.9.0. **Review (2
+  Opus agents — rules+flow / wire+web) CUT SHORT by the shared usage limit
+  (reset pending):** partial. Before dying the rules agent CONFIRMED 1 bug —
+  `damageActive` applied the defender's `damageReductionAfterWR`, so Trevenant's
+  counter on a Bouffalant (Bouffer −20) placed 0 → **fixed** (a PUT counter is
+  not attack damage, so it lands flat — the poison/burn-tick rule) +
+  regression-pinned (sv03-174 in TRIGGER_DECK). Remaining areas SELF-verified:
+  the turn-gate makes settleTrigger's done→turn:action always correct; the §14
+  double-KO path is the unchanged shared sweep; the web viewer-follow +
+  origin-agnostic dialog (read useLocalGame/GameHud). **A `/code-review` re-run
+  after the limit resets is the logged follow-up.** **Deferred:** on-KO triggers
+  (fire during the OPPONENT's turn mid-KO-sweep), parking mid-Checkup, the
+  multi-target snipe (Hawlucha/Meowscarada) + `settleRun`→`resolveMidTurnKnockOuts`.
+  **Verification:** `bun run check` green (1002 → **1019**: triggered.test.ts 16
+  + 1 log row). No live /play smoke (representatives not demo-reachable; the
+  review's browser pass was cut). Files: effects.ts, events.ts, registry.ts,
+  interpreter.ts, triggers.ts (new), turn.ts, flow.ts, index.ts, testFixtures.ts,
+  triggered.test.ts (new) + logFromEvents.ts/.test.ts, GameHud.tsx (comment).
 - **2026-07-18** (build #11) — **P3-M4 slice 5: Special Energy** (D26; built solo
   — full context loaded — then a 2-agent Opus review). Special energies
   provisioned a name-derived 1 Colorless; slice 5 models their rules text as

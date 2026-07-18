@@ -120,8 +120,11 @@ event stream.
    damage** and a **mid-turn KO that resumes the actor's turn** (closing the
    evolve-below-HP gap); slice 5 added **Special Energy** — provision as data
    (multi-unit + wildcard), a wildcard-aware cost matcher, and on-attach effects
-   (Jet Energy's switch). Remaining: triggered abilities
-   (on-play/on-KO/between-turns), Rare Candy.
+   (Jet Energy's switch); slice 6 added **triggered Abilities** (§9) at three
+   scan points (on-play-to-Bench, on-evolve, between-turns/Checkup) — board
+   triggers park on effect:choose, a between-turns counter KOs through the
+   Checkup sweep. Remaining: on-KO triggers, the mid-turn-damage snipe, Rare
+   Candy.
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -825,11 +828,110 @@ from the api (the cardPool resolves them). Driving the attach gestures to
 resolution live is the documented Pixi hit-test session-eater, so the mechanics
 are covered by the engine + HUD-DOM + log tests + the two reviews.
 
+## M4 slice 6 as built (2026-07-18) — triggered Abilities (§9)
+
+**Shape (D27).** Triggered Abilities — the ones that FIRE on a game event rather
+than being player-activated (§9) — get a **`TriggeredAbility`** entry on
+`CardProgram.triggered` (`{ name; trigger; program; optional?; activeOnly? }`,
+registry.ts) run through the shared interpreter by a small new module
+**`triggers.ts`**, wired at THREE scan points:
+
+- **`onPlayToBench`** — turn.ts `playBasicToBench`, on the freshly-benched
+  Pokémon (the last dense slot). A *turn* play only — a setup placement
+  (setupPlaceBench) is a different handler and not "during your turn", so it
+  never triggers.
+- **`onEvolve`** — turn.ts `evolve`, on the just-evolved Pokémon (at
+  `action.target`), AFTER the evolve-below-HP KO check (a Pokémon KO'd on
+  evolution left play, so its own "when you evolve" Ability does not fire).
+- **`betweenTurns`** — flow.ts `runCheckup`, over every in-play Pokémon in
+  `[endedSeat, other]` order (Active then Bench), AFTER the §13 condition ticks
+  and BEFORE the KO sweep.
+
+**Parking vs synchronous.** Board triggers (onPlayToBench/onEvolve) run during
+the controller's own turn, so a program needing a decision **PARKS on the
+existing `effect:choose` phase** (triggers.ts `settleTrigger` ≡ cardplay.ts
+`settleRun`) and resumes to turn:action via the same **`resolveEffect`** action
+— a parked trigger is byte-identical to a parked Trainer. `betweenTurns` triggers
+are **NON-PARKING by construction** (a heal-each / a fixed counter placement) and
+thread synchronously through the one Checkup reduction; a placed counter
+(Trevenant) that goes lethal is Knocked Out by the Checkup's own shared
+`collectKnockOuts` sweep (and a lethal-poison-vs-lethal-counter double KO rides
+its existing §14 tie guard). Representative cards carry ONE triggered Ability per
+timing, so `runBoardTrigger` runs at most one program (chaining several parking
+triggers on one card is a follow-up).
+
+**Optional ("you may") triggers AUTO-FIRE** — every representative is pure upside
+(search / heal / counter), and where the underlying op is "up to" (Insta-Flock's
+search) the player can still take none. A yes/no confirm for a *downside* trigger
+is the follow-up.
+
+**New ops (effects.ts/interpreter.ts).** `healEach` (heal N from EACH of the
+controller's own in-play Pokémon, one HEALED each, clamped); `damageActive` (PUT
+N damage counters on the opponent's Active). `damageActive` is a **counter
+placement, not attack damage** → no Weakness/Resistance AND **no
+damage-reduction passive**: Bouffalant's "Bouffer" reduces *"damage from
+attacks"*, which an Ability's counter is not (the same rule the poison/burn
+Checkup ticks follow) — distinct from `spreadDamage`, which IS an attack's damage
+and does take Bouffer. `healChosen.amount` widened to `number | "all"` (Arboliva
+heals all, Potion still 30); a `byName` search filter (Insta-Flock searches its
+own copies). New event `ABILITY_TRIGGERED`; `COUNTERS_PLACED` gained source
+`"ability"`. engineVersion 0.8.0 → 0.9.0.
+
+**Web.** The parked trigger reuses everything: the projection maps effect:choose
+(controller = waitingSeat, so the hot-seat viewer stays put), `EffectChooseDialog`
+mounts off the projected pending decision **origin-agnostically** (a bench-play/
+evolve *drag* park renders the same chooseCards/choosePokemon dialog a Trainer
+button does), and `resolveEffect` resolves it — **no new dialog, no projection
+change**. Only `logFromEvents` grew: an `ABILITY_TRIGGERED` row and a
+COUNTERS_PLACED `"ability"` (system) row.
+
+**Representative set (real sv01–03 ids, verified vs local D1 2026-07-18):**
+Flamigo "Insta-Flock" (sv02-170/227 — onPlayToBench, search up to 3 Flamigo →
+hand), Arboliva "Enriching Oil" (sv01-023 — onEvolve, heal all from 1 of yours),
+Garganacl "Blessed Salt" (sv02-123 — betweenTurns, heal 20 from each of yours),
+Trevenant "Forest Miasma" (sv03-012 — betweenTurns, Active-only, 1 counter on the
+opp's Active). NOT added to the seed-tuned demo decks (an auto-firing trigger
+would perturb the demo hands) — covered by engine + web tests, the slice-4/5
+precedent.
+
+**Review (2 Opus agents — rules+flow / wire+web).** Both agents were terminated
+early by the shared usage limit (reset pending), so the review is PARTIAL. Before
+dying the rules agent CONFIRMED one bug: `damageActive` was applying the
+defender's `damageReductionAfterWR`, so Trevenant's counter on a Bouffalant
+(Bouffer −20) reduced 10 → 0 and placed nothing — **fixed** (counters are not
+attack damage; placed flat) + regression-pinned (`sv03-174` in TRIGGER_DECK). The
+remaining risk areas were self-verified: the turn-gate makes `settleTrigger`'s
+done→turn:action always correct; the §14 double-KO path is the shared
+`collectKnockOuts` (unchanged, already tested for the checkup double-KO); the web
+lockstep holds (viewer-follow + origin-agnostic dialog, confirmed by reading
+useLocalGame/GameHud). A `/code-review` re-run after the limit resets is the
+logged follow-up.
+
+**Deferred (documented, not silent):** `onKnockOut` triggers (fire during the
+OPPONENT's turn mid-KO-sweep — need a resume-the-tail continuation, the hairiest
+timing); parking mid-Checkup (a betweenTurns Ability needing a decision); the
+multi-target **snipe** (Hawlucha "Flying Entry" choose-2 / Meowscarada "Bouquet
+Magic" choose-1) + the `settleRun`→`resolveMidTurnKnockOuts` reuse — an
+on-play/on-evolve *damaging* trigger that KOs mid-turn (needs a multi-Pokémon
+prompt + settleRun sweeping the board after a damaging program). These land with
+Rare Candy and the coverage fan-out.
+
+**Verification.** `bun run check` green (tsc + biome + **1019 tests** — 1002 →
+1019: 16 engine `triggered.test.ts` covering each scan point + parking + forced
+auto-resolve + the setup-doesn't-trigger scoping + the Bouffer-counter regression
++ purity, plus 1 `logFromEvents` row test). No live /play smoke driven this
+session (the representatives aren't in the demo decks and the review's browser
+pass was cut by the usage limit); the mechanic is covered by the engine + web
+tests and the confirmed fix. Files: effects.ts, events.ts, registry.ts,
+interpreter.ts, triggers.ts (new), turn.ts, flow.ts, index.ts, testFixtures.ts,
+triggered.test.ts (new) + logFromEvents.ts/.test.ts, GameHud.tsx (comment).
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
 launching one. The mechanics all live in `interpreter.ts` (op programs incl.
 spreadDamage), `continuous.ts` (persistent-zone modifiers + special-energy
-provision) and `registry.ts` (EnergyProgram, StadiumEffects, PassiveEffects, op
-programs), and the KO flow reaches the whole board, so a new card in a known
-family is a few lines of data in `registry.ts` — the fan-out adds rows, not code.
+provision), `triggers.ts` (triggered-Ability scan points) and `registry.ts`
+(EnergyProgram, StadiumEffects, PassiveEffects, TriggeredAbility, op programs),
+and the KO flow reaches the whole board, so a new card in a known family is a few
+lines of data in `registry.ts` — the fan-out adds rows, not code.
