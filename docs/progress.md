@@ -3,61 +3,52 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-18 — build session #10 (**P3-M4 slice 4: the Knock Out
-generalized off the Active** — bench spread/snipe damage + a mid-turn KO that
-resumes the actor's turn, closing the evolve-below-HP gap; built solo, 2-agent
-Opus review, both CLEAN — no correctness defects, 2 informational notes; suite
-974 → 983, `bun run check` green; /play boots clean with zero console errors).
+**Last updated:** 2026-07-18 — build session #11 (**P3-M4 slice 5: Special
+Energy** — provision as data (multi-unit + wildcard), a wildcard-aware cost
+matcher unifying the D18 payability, and on-attach effects (Jet Energy's switch);
+built solo, 2-agent Opus review — rules+matcher CLEAN (brute-force-verified),
+wire+web found 1 MEDIUM log-host bug (fixed + regression-pinned) + 2 low notes;
+suite 983 → 1002, `bun run check` green; /play boots clean, both special energies
+fetch 200).
 
 ## Resume point
-**The Knock Out is generalized off the Active (P3-M4 slice 4, D25).** It was
-Active-only + turn-ending; slice 4 makes bench spread/snipe damage AND a mid-turn
-KO both work. **`knockOut`** (flow.ts) now KOs any in-play Pokémon by its
-stack-top **uid** (a benched KO discards the stack, compacts the bench, owes a
-prize but NO promotion). **`collectKnockOuts`** is the ONE post-damage sweep
-(Active + Bench, prizes to `otherSeat`, stages **prizes-first**, the §14 tie
-guard runs only when both seats lost a Pokémon) — it replaced the inline KO
-blocks in `finishAttack` (now sweeps the defender's whole board) and
-`runCheckup`, so §14 stays single-sourced. A new **`PendingStage
-{kind:"resumeTurn"}`** + **`resolveMidTurnKnockOuts`** resolve a KO mid-turn then
-RESUME the actor's turn (allowances survive). **`evolve`** now runs the KO check
-→ closes D24's evolve-below-HP gap (a benched charmed Basic evolving below the
-new stage's HP is KO'd the instant it evolves — the characterization test now
-asserts it). A **`spreadDamage`** op (effects.ts/interpreter.ts) does flat damage
-to EACH opponent Benched Pokémon (no W/R on the bench, but a benched reduction
-passive/Tool still applies; the attacker's Active-only bonus does not); the
-interpreter only PLACES it, `finishAttack`'s sweep catches the bench KOs. Web:
-the ONLY change is `projection.ts koParkActiveSeat` treating `resumeTurn` as
-in-turn. engineVersion 0.7.0. See "M4 slice 4 as built" + D25.
-**Review (2 Opus agents, rules+flow / wire+web): BOTH CLEAN — no correctness
-defects.** Rules agent proved the §14 tie guard (`bothSeatsHit`) necessary +
-sufficient and verified prize attribution / multi-KO shift-safety / resume
-precedence / evolve / spread math; wire agent proved koParkActiveSeat across all
-three park origins, the untouched exhaustive `phaseViewOf`, the opponent's
-mid-turn prize-pick device flip, and spreadDamage purity. 2 informational notes
-(a future Active-only reduction passive would want an `activeOnly` gate; the
-`finishAttack` tie branch is a deliberate dead defensive branch).
-**Verification:** `bun run check` green (**983 tests** — 8 new `knockout.test.ts`
-+ a mid-turn-park projection test + the flipped characterization test). **Live
-/play smoke (agent-browser, seed 6, ZERO console errors):** boots with the
-re-ingested demo decks (Pixi canvas renders, all cardPool fetches succeed, the
-coin-toss action drives engine→projection→HUD clean). The new mechanics aren't
-demo-reachable (no spread card; the evolve-below-HP window needs a contrived
-board), so they're covered by the engine + web tests + the clean reviews (the
-slice-2 precedent).
+**Special Energy is live (P3-M4 slice 5, D26).** Special energies provisioned a
+name-derived 1 Colorless; slice 5 models their rules text. **`EnergyProgram`**
+(`CardProgram.energy`) gives `{provides, demoteWithOtherSpecial?, onAttach?}`;
+**`providedEnergy(state, pokemon)`** (continuous.ts) is the ONE provision read
+site (a basic energy → its type; an authored special → its units, incl. the
+`ANY_ENERGY` **wildcard** and Luminous's demote; an unauthored special → the
+Colorless fallback). **`costMet`** (attack.ts) now handles the wildcard
+(brute-force-verified optimal), and BOTH the engine cost check AND the HUD
+payability call `providedEnergy` — **the D18 duplication is gone**. **Jet
+Energy's on-attach switch** (attachEnergy → the exported `switchInto`) moves a
+benched holder to Active. Representative set: Jet (sv02-190) + Luminous
+(sv02-191) — no Double Turbo in the SV catalog, so multi-provide here is the
+wildcard kind. Demo decks: Ember runs Jet, Tidal Luminous (different per deck).
+engineVersion 0.8.0. See "M4 slice 5 as built" + D26.
+**Review (2 Opus agents, rules+matcher / wire+web):** rules CLEAN
+(brute-forced the matcher — 13,640 cases, 0 mismatches); wire found 1 MEDIUM —
+Jet's switch compacts the bench so the ENERGY_ATTACHED **log** named the wrong
+Pokémon (**fixed** — resolve the host by uid — + regression-pinned) — plus a LOW
+stale-JSDoc and a stale comment, both fixed.
+**Verification:** `bun run check` green (**1002 tests** — specialEnergy.test.ts
+16 + 2 HUD-DOM payability + a log host regression). **Live /play smoke** (seed 6,
+ZERO console errors): boots with the re-ingested decks, both special energies
+fetch 200; the attach gestures are the documented Pixi session-eater so covered
+by the engine + HUD-DOM + log tests + the reviews.
 Next concrete actions:
 1. **P3-M4 remaining slices:** triggered abilities (on-play/on-KO/between-turns
-   — trigger scan points at bench-play, evolve, checkup, KO), special-energy
-   rules text, Rare Candy (sv01-191 — the item's hand-inspect + evolve reuse).
-   With the KO flow now whole-board, a **snipe ability** (choose-1-benched
-   damage) is a natural next demonstrator — it reuses `resolveMidTurnKnockOuts`
-   (pass the OPPONENT's seat as the sweep set) + needs mid-effect targeting.
-2. A **live sv card with a spread/snipe attack** in the demo decks (the fixture
-   `fix-sniper` proves the engine; a real card makes it browser-drivable).
-3. Or the **coverage-expansion Workflow fan-out** (M5) — mechanics live in
-   interpreter.ts (op programs incl. spreadDamage), continuous.ts (persistent
-   zones) and a whole-board KO flow; a new card in a known family is a few lines
-   of registry data. Ask the user before launching one.
+   — trigger scan points at bench-play, evolve, checkup, KO); Rare Candy
+   (sv01-191 — hand-inspect + evolve reuse). A **snipe ability** (choose-1-
+   benched damage) reuses slice-4's `resolveMidTurnKnockOuts`.
+2. More special energies (the catalog has **Reversal** sv02-192 — prize/evolution-
+   conditional multi-type — and **Therapeutic** sv02-193 — {C} + status immunity);
+   a live sv card with a spread/snipe attack; a real multi-unit-same-type energy
+   when one enters the pool (the `provides` array + matcher already support it).
+3. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics live in
+   interpreter.ts (op programs), continuous.ts (persistent zones + energy
+   provision) and a whole-board KO flow; a new card in a known family is a few
+   registry rows. Ask the user before launching one.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -70,13 +61,44 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones + KO-off-the-Active done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active — bench spread/snipe + mid-turn KO, 2026-07-18) — remaining: triggered abilities, special energy, Rare Candy; then the coverage fan-out |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy — provision-as-data/wildcard matcher/on-attach, 2026-07-18) — remaining: triggered abilities, Rare Candy; then the coverage fan-out |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-18** (build #11) — **P3-M4 slice 5: Special Energy** (D26; built solo
+  — full context loaded — then a 2-agent Opus review). Special energies
+  provisioned a name-derived 1 Colorless; slice 5 models their rules text as
+  data. **`EnergyProgram`** (`CardProgram.energy`: `{provides,
+  demoteWithOtherSpecial?, onAttach?}`); **`providedEnergy(state, pokemon)`**
+  (continuous.ts) is the ONE provision read site — basic → its type, authored
+  special → its units (a concrete type, the `ANY_ENERGY` **wildcard**, or
+  several; Luminous demotes to {C} with another special attached), unauthored
+  special → the Colorless fallback. **`costMet`** (attack.ts) upgraded for the
+  wildcard (allocate to typed needs first, then Colorless — brute-force-verified
+  optimal). BOTH the engine cost check AND the HUD payability now call
+  `providedEnergy` → **the D18 duplicated payability is gone**. **Jet Energy's
+  on-attach switch** (attachEnergy → the newly-exported `switchInto`) moves a
+  benched holder to Active. Representative: Jet (sv02-190) + Luminous (sv02-191);
+  no Double Turbo in the SV catalog, so multi-provide here is the wildcard kind
+  (the `provides` array + matcher still support a future multi-unit energy).
+  Demo decks: Ember Jet, Tidal Luminous (different per deck). engineVersion 0.7.0
+  → 0.8.0. **Review:** rules+matcher agent CLEAN — brute-forced the matcher
+  (13,640 cases, 0 mismatches) and confirmed provision / the Luminous demote /
+  the Jet switch; wire+web agent found **1 MEDIUM** — Jet's switch compacts the
+  bench, so the ENERGY_ATTACHED **log** (host resolved by index) named the wrong
+  Pokémon → **fixed** (resolve by uid) + regression-pinned — plus a LOW
+  stale-JSDoc + a stale comment, both fixed. **Verification:** `bun run check`
+  green (983 → **1002**: 16 specialEnergy.test.ts + 2 HUD-DOM payability + a log
+  host regression). **Live /play smoke** (seed 6, ZERO console errors): boots
+  with the re-ingested decks, both special energies fetch 200; the attach
+  gestures are the Pixi session-eater so covered by the engine + HUD-DOM + log
+  tests + the reviews. Files: cards.ts, registry.ts, continuous.ts, attack.ts,
+  turn.ts, interpreter.ts, index.ts, testFixtures.ts, specialEnergy.test.ts +
+  GameHud.tsx, logFromEvents.ts/.test.ts, GameHud.cardplay.dom.test.tsx,
+  demoDecks.ts/.test.ts.
 - **2026-07-18** (build #10) — **P3-M4 slice 4: the Knock Out generalized off
   the Active** (D25; built solo — full context loaded — then a 2-agent Opus
   review, both CLEAN). Two reaches the Active-only + turn-ending KO flow could

@@ -118,8 +118,10 @@ event stream.
    **Tool** attachment with a **continuous-modifier pipeline** (continuous.ts);
    slice 4 generalized the Knock Out off the Active — **bench spread/snipe
    damage** and a **mid-turn KO that resumes the actor's turn** (closing the
-   evolve-below-HP gap). Remaining: triggered abilities
-   (on-play/on-KO/between-turns), special-energy rules text, Rare Candy.
+   evolve-below-HP gap); slice 5 added **Special Energy** — provision as data
+   (multi-unit + wildcard), a wildcard-aware cost matcher, and on-attach effects
+   (Jet Energy's switch). Remaining: triggered abilities
+   (on-play/on-KO/between-turns), Rare Candy.
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -758,10 +760,76 @@ so they are covered exhaustively by the engine + web tests + the two clean
 reviews — the slice-2 precedent for a mechanic whose live preconditions the demo
 hands don't deal.
 
+## M4 slice 5 as built (2026-07-18) — Special Energy (§6.1)
+
+**Shape (D26).** Special Energies provisioned a conservative 1 Colorless
+(name-derived); slice 5 models their rules text as data.
+
+- **`EnergyProgram`** on `CardProgram.energy` (registry.ts): `{ provides:
+  string[]; demoteWithOtherSpecial?: string[]; onAttach?: {kind:
+  "switchIfBenched"} }`. `provides` units may be a concrete type, the
+  **`ANY_ENERGY` wildcard** (cards.ts — "any 1 type"), or several (multi-unit).
+- **`providedEnergy(state, pokemon)`** (continuous.ts) is the ONE provision read
+  site: a basic energy gives its type; an authored special energy its
+  EnergyProgram units, evaluating Luminous's "demote to {C} if the holder has
+  any OTHER Special Energy attached" (two Luminous each see the other → BOTH
+  demote); an unauthored special energy falls back to one Colorless (graceful —
+  an energy always provides something, unlike an unsimulated Trainer's loud
+  reject). Pure, total, order-stable.
+- **`costMet`** (attack.ts) upgraded for the wildcard: `ANY_ENERGY` fills a typed
+  shortfall OR a Colorless slot — wildcards allocated to the (pickier) typed
+  needs first, then every remaining unit pays Colorless. Provably optimal
+  (Hall's theorem) and backward-compatible with all-concrete provision;
+  brute-forced in review against a bipartite matcher (13,640 cases, 0
+  mismatches).
+- **On-attach**: `attachEnergy` (turn.ts) runs `energy.onAttach` — Jet Energy's
+  `switchIfBenched` switches a benched holder to the Active Spot (reusing
+  `switchInto`, now exported from interpreter.ts), firing ENERGY_ATTACHED then
+  POKEMON_SWITCHED; nothing fires on an Active attach.
+
+**Web.** The engine's §8.2 cost check AND the HUD's payability preview both call
+`providedEnergy` — **the D18 duplicated payability is gone** (proven byte-for-byte
+in review). The log's ENERGY_ATTACHED row resolves its host by the energy's
+**uid**, not the target slot, so Jet's mid-batch bench compaction can't misname
+it. Demo decks run the two energies **different per deck** (Ember: Jet ×3,
+Tidal: Luminous ×3 — type-neutral, so the disjoint-energy rule keeps them
+split); both reachable in one Ember-vs-Tidal game. engineVersion 0.7.0 → 0.8.0.
+
+**Representative set:** Jet Energy (sv02-190) + Luminous Energy (sv02-191),
+verified vs local D1. The SV-era catalog has **no Double Turbo** (swsh-era), so
+the multi-provide case here is the wildcard kind; `provides` being an array still
+supports a future multi-unit-same-type energy as a one-row registry add (proven
+by the `costMet(["Colorless","Colorless"], ["Colorless","Colorless"])` test).
+
+**Review (2 Opus agents — rules+matcher / wire+web).** Rules agent: **no
+defects**, brute-force-verified the matcher, confirmed provision / the Luminous
+demote (incl. two-Luminous) / the Jet switch / the League HQ-surcharge
+interaction; suggested coverage pins (added). Wire agent: **one MEDIUM** — Jet's
+on-attach switch compacts the bench, so the ENERGY_ATTACHED **log row** (which
+resolved the host by index against the settled state) named the wrong Pokémon;
+**fixed** (resolve by uid) + regression-pinned in logFromEvents.test.ts. Plus a
+LOW stale-JSDoc (per-deck basic-energy counts) and a stale comment — both fixed.
+Everything else proven clean (attachEnergy never-throw, switchInto pure,
+providedEnergy pure, HUD lockstep).
+
+**Verification.** `bun run check` green (tsc + biome + **1002 tests** — 983 →
+1002: 16 engine cardplay in specialEnergy.test.ts (wildcard costMet incl.
+multi-wildcard + multi-unit + backward-compat, provision as data, the Luminous
+demote incl. two-Luminous + unauthored-special, Jet's bench switch vs Active
+no-switch, a real typed attack paid by a wildcard, purity) + 2 HUD-DOM payability
+tests (a Luminous wildcard enables a typed attack, a demoted Luminous disables
+it) + a log host regression test). **Live /play smoke (agent-browser, seed 6,
+ZERO console errors):** boots with the re-ingested demo decks — Pixi canvas
+renders and BOTH special energies (sv02-190 Jet, sv02-191 Luminous) fetch 200
+from the api (the cardPool resolves them). Driving the attach gestures to
+resolution live is the documented Pixi hit-test session-eater, so the mechanics
+are covered by the engine + HUD-DOM + log tests + the two reviews.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
 launching one. The mechanics all live in `interpreter.ts` (op programs incl.
-spreadDamage) and `continuous.ts` (persistent-zone modifiers) now, and the KO
-flow reaches the whole board, so a new card in a known family is a few lines of
-data in `registry.ts` — the fan-out adds rows, not code.
+spreadDamage), `continuous.ts` (persistent-zone modifiers + special-energy
+provision) and `registry.ts` (EnergyProgram, StadiumEffects, PassiveEffects, op
+programs), and the KO flow reaches the whole board, so a new card in a known
+family is a few lines of data in `registry.ts` — the fan-out adds rows, not code.
