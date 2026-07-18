@@ -20,6 +20,8 @@
 // (Tool). Slice 5 adds Special Energy, DIFFERENT per deck (type-neutral, so the
 // disjoint-energy rule keeps them split): Ember runs Jet Energy (switch-on-
 // bench-attach), Tidal runs Luminous Energy (a wildcard that pays any 1 type).
+// Slice 7 adds Rare Candy to Ember (it already runs the Fuecoco → Crocalor →
+// Skeledirge line): the Basic→Stage 2 evolve-skip is reachable off Fuecoco.
 
 import type { DeckCard } from "@luminous/schema";
 
@@ -56,9 +58,9 @@ const SHARED_TRAINERS: readonly DeckCard[] = [
 export const SHARED_TRAINER_IDS: readonly string[] = SHARED_TRAINERS.map((c) => c.cardId);
 
 /** Fire Pokémon (sv01 + sv03) incl. the Fuecoco→Crocalor→Skeledirge line
-    (M4) and Bouffalant (passive "Bouffer"), the shared Trainers, Beach Court
-    + Vitality Band (slice 3), Jet Energy ×3 (slice 5), and 14 Basic Fire
-    Energy (sv03-230). */
+    (M4) and Bouffalant (passive "Bouffer"), the shared Trainers, Rare Candy ×2
+    (slice 7 — the Fuecoco→Skeledirge skip), Beach Court + Vitality Band
+    (slice 3), Jet Energy ×3 (slice 5), and 12 Basic Fire Energy (sv03-230). */
 const EMBER_STARTERS: DemoDeck = {
   name: "Ember Starters",
   ids: expandDeck([
@@ -72,10 +74,11 @@ const EMBER_STARTERS: DemoDeck = {
     { cardId: "sv01-038", count: 2 }, // Skeledirge — Stage 2, evolves from Crocalor (M4)
     { cardId: "sv03-174", count: 2 }, // Bouffalant — passive "Bouffer": −20 damage after W/R (M4)
     ...SHARED_TRAINERS,
+    { cardId: "sv01-191", count: 2 }, // Rare Candy — Item: Fuecoco → Skeledirge, skip Crocalor (slice 7)
     { cardId: "sv01-167", count: 2 }, // Beach Court — Stadium: Basic retreat −1 (slice 3)
     { cardId: "sv01-197", count: 2 }, // Vitality Band — Tool: +10 damage before W/R (slice 3)
     { cardId: "sv02-190", count: 3 }, // Jet Energy — Special: {C} + switch on bench attach (slice 5)
-    { cardId: "sv03-230", count: 14 }, // Basic Fire Energy
+    { cardId: "sv03-230", count: 12 }, // Basic Fire Energy
   ]),
 };
 

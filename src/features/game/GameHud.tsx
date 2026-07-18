@@ -27,6 +27,7 @@ import {
   otherSeat,
   programFor,
   providedEnergy,
+  rareCandyOptions,
   topCardOf,
   topUid,
 } from "@luminous/engine";
@@ -69,25 +70,44 @@ interface TrainerOption {
   uid: string;
   name: string;
   disabled: boolean;
+  /** Rare Candy (§7.1) is a Trainer that EVOLVES — its button opens the Rare
+      Candy dialog (pick a Basic + a Stage 2) instead of dispatching playTrainer. */
+  rareCandy: boolean;
 }
 function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
   const side = game.players[seat];
   const inPlayStadium =
     game.stadium === null ? undefined : cardOfUid(game, game.stadium.uid)?.name;
+  // §7.1 legality (a Basic in play + a matching Stage 2 in hand + timing) is the
+  // engine's — greying Rare Candy out before the reject. Computed LAZILY (its
+  // cardPool scan is only worth paying when a Rare Candy is actually in hand).
+  let canRareCandy: boolean | null = null;
+  const rareCandyPlayable = (): boolean => {
+    if (canRareCandy === null) canRareCandy = rareCandyOptions(game, seat).length > 0;
+    return canRareCandy;
+  };
   const seen = new Set<string>();
   const out: TrainerOption[] = [];
   for (const uid of side.hand) {
     const card = cardOfUid(game, uid);
     if (card === undefined || card.category !== "Trainer" || seen.has(card.id)) continue;
     const program = programFor(card.id);
+    if (program === undefined) continue;
+    const isRareCandy = program.rareCandy === true;
     const isStadium = card.trainerType === "Stadium";
-    if (isStadium ? program?.stadium === undefined : program?.trainer === undefined) continue;
+    // A card with no play path (no program, no stadium, not Rare Candy) is not
+    // offered — the coverage strategy surfaces it as "not simulated" on attempt.
+    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {
+      continue;
+    }
     seen.add(card.id);
     const isSupporter = card.trainerType === "Supporter";
-    const disabled = isSupporter
-      ? game.turn === 1 || game.allowances.supporterPlayed
-      : isStadium && (game.allowances.stadiumPlayed || card.name === inPlayStadium);
-    out.push({ uid, name: card.name, disabled });
+    const disabled = isRareCandy
+      ? !rareCandyPlayable()
+      : isSupporter
+        ? game.turn === 1 || game.allowances.supporterPlayed
+        : isStadium && (game.allowances.stadiumPlayed || card.name === inPlayStadium);
+    out.push({ uid, name: card.name, disabled, rareCandy: isRareCandy });
   }
   return out;
 }
@@ -348,6 +368,8 @@ function PlacePanel({ projection, viewerSeat, dispatch }: GameHudProps) {
 function TurnPanel(props: GameHudProps) {
   const { game, projection, viewerSeat, dispatch } = props;
   const [retreatOpen, setRetreatOpen] = useState(false);
+  // The Rare Candy card uid whose dialog is open (§7.1), or null.
+  const [rareCandyUid, setRareCandyUid] = useState<string | null>(null);
 
   const side = game.players[viewerSeat];
   const active = side.active;
@@ -493,7 +515,11 @@ function TurnPanel(props: GameHudProps) {
                   <button
                     type="button"
                     disabled={opt.disabled}
-                    onClick={() => dispatch({ type: "playTrainer", seat: viewerSeat, uid: opt.uid })}
+                    onClick={() =>
+                      opt.rareCandy
+                        ? setRareCandyUid(opt.uid)
+                        : dispatch({ type: "playTrainer", seat: viewerSeat, uid: opt.uid })
+                    }
                     className={`${ROW_BUTTON_BASE} ${opt.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
                   >
                     <span className="truncate">{opt.name}</span>
@@ -530,7 +556,113 @@ function TurnPanel(props: GameHudProps) {
           onClose={() => setRetreatOpen(false)}
         />
       )}
+      {rareCandyUid !== null && (
+        <RareCandyDialog
+          game={game}
+          viewerSeat={viewerSeat}
+          dispatch={dispatch}
+          rareCandyUid={rareCandyUid}
+          onClose={() => setRareCandyUid(null)}
+        />
+      )}
     </>
+  );
+}
+
+/** §7.1 Rare Candy — evolve a Basic straight to a Stage 2, skipping the Stage 1.
+    A two-pick decision the engine can't express through effect:choose (it needs
+    a Basic in play AND a Stage 2 in hand), so it is its own dialog: the legal
+    pairings come from the engine's `rareCandyOptions` (the authority), and the
+    picked pair dispatches the `rareCandy` action. Mounted only while open, so
+    the useState is the fresh-picks-per-open reset. */
+function RareCandyDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  rareCandyUid,
+  onClose,
+}: {
+  game: GameState;
+  viewerSeat: Seat;
+  dispatch: (action: GameAction) => void;
+  /** The Rare Candy Item uid being played. */
+  rareCandyUid: string;
+  onClose: () => void;
+}) {
+  const options = rareCandyOptions(game, viewerSeat);
+  // Pre-select when there is only one Basic to evolve (skip straight to the
+  // Stage 2 pick); otherwise the player chooses the Basic first.
+  const [basicUid, setBasicUid] = useState<string | null>(
+    options.length === 1 ? (options[0]?.basicUid ?? null) : null,
+  );
+  const chosen = options.find((o) => o.basicUid === basicUid) ?? null;
+  const cardName = (uid: string) => cardOfUid(game, uid)?.name ?? uid;
+
+  return (
+    <HudDialog label="Rare Candy" onDismiss={onClose}>
+      <h2 className="text-lg font-semibold text-white">Rare Candy</h2>
+      {chosen === null ? (
+        <>
+          <p className="mt-1.5 text-sm text-white/55">
+            Choose a Basic Pokémon to evolve, skipping the Stage 1.
+          </p>
+          <ul className="mt-3 flex flex-col gap-1.5">
+            {options.map((option) => (
+              <li key={option.basicUid}>
+                <button
+                  type="button"
+                  onClick={() => setBasicUid(option.basicUid)}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{cardName(option.basicUid)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <p className="mt-1.5 text-sm text-white/55">
+            Put a Stage 2 onto <span className="text-white/80">{cardName(chosen.basicUid)}</span>:
+          </p>
+          <ul className="mt-3 flex flex-col gap-1.5">
+            {chosen.stage2Uids.map((uid) => (
+              <li key={uid}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    dispatch({
+                      type: "rareCandy",
+                      seat: viewerSeat,
+                      uid: rareCandyUid,
+                      target: chosen.target,
+                      evolutionUid: uid,
+                    });
+                    onClose();
+                  }}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{cardName(uid)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {/* Rare Candy is an optional play — always offer an on-screen dismiss (the
+          RetreatDialog pattern), and Back only when the Basic pick was a real
+          choice (>1 option). */}
+      <div className="mt-4 flex justify-between gap-2">
+        <button type="button" onClick={onClose} className={GLASS_DIALOG_GHOST_BUTTON}>
+          Cancel
+        </button>
+        {chosen !== null && options.length > 1 && (
+          <button type="button" onClick={() => setBasicUid(null)} className={GLASS_DIALOG_GHOST_BUTTON}>
+            ← Back
+          </button>
+        )}
+      </div>
+    </HudDialog>
   );
 }
 

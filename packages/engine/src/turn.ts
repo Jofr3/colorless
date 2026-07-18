@@ -251,61 +251,74 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
     );
   }
 
-  // §10 carry-over: damage, Energy and Tools STAY (they ride on the stack);
-  // Special Conditions and temporary markers are REMOVED. The evolution card
-  // becomes the new stack top, and turnPlayed resets so it cannot evolve again
-  // until a later turn.
+  // §10 — the evolution card leaves hand; the shared placement (below) puts it
+  // on the stack, carries over damage/energy/tools, clears conditions/markers,
+  // resets turnPlayed, and runs the evolve-below-HP KO check + the on-evolve
+  // trigger. Rare Candy (§7.1, cardplay.ts) reuses the SAME placement to skip
+  // the Stage 1 — the two card plays differ only in what they validate first.
+  const stateAfterHand = withSide(state, action.seat, { ...side, hand: without(side.hand, action.uid) });
+  return placeEvolution(stateAfterHand, action.seat, action.target, benchIndex, target, targetTopUid, action.uid, []);
+}
+
+/** §10/§7.1 — the shared evolution PLACEMENT, used by both `evolve` (adjacent
+    stage) and `rareCandy` (Basic→Stage 2 skip). The caller has ALREADY removed
+    the evolution card (and, for Rare Candy, the Rare Candy Item) from `state`'s
+    hand and validated the legality (name match / Basic-and-chain, timing); this
+    only does the placement + its consequences. `evolutionUid` becomes the new
+    stack top of `from` (the pre-evolution Pokémon at `target`, bench index
+    `benchIndex`, -1 for the Active). §10 carry-over: damage, Energy and Tools
+    STAY on the stack; Special Conditions and temporary markers are cleared;
+    turnPlayed resets so it cannot evolve again this turn. Then §8.1 — evolution
+    can LOWER effective max HP (a Bravery Charm's Basic-only +50 dropping off),
+    so a carried-damage Pokémon that now meets the new stage's HP is Knocked Out
+    the instant it evolves: a MID-TURN KO that resumes the actor's turn (flow.ts),
+    for a benched holder as much as an Active one. The KO check runs BEFORE the
+    trigger (a Pokémon KO'd on evolution left play, so its own "when you evolve"
+    Ability does not fire); otherwise the §9 on-evolve triggered Ability fires
+    (Arboliva's Enriching Oil), which may park on effect:choose. `events` is
+    seeded by the caller (empty for evolve; a TRAINER_PLAYED for Rare Candy)
+    and POKEMON_EVOLVED is appended here as the placement's own event. */
+export function placeEvolution(
+  state: GameState,
+  seat: Seat,
+  target: PokemonTarget,
+  benchIndex: number,
+  from: InPlayPokemon,
+  fromUid: string,
+  evolutionUid: string,
+  events: GameEvent[],
+): ApplyResult {
   const evolved: InPlayPokemon = {
-    ...target,
-    stack: [...target.stack, action.uid],
+    ...from,
+    stack: [...from.stack, evolutionUid],
     conditions: noConditions(),
     markers: [],
     turnPlayed: state.turn,
   };
-  const hand = without(side.hand, action.uid);
+  const side = state.players[seat];
   const updated: PlayerSide =
-    action.target.spot === "active"
-      ? { ...side, hand, active: evolved }
-      : { ...side, hand, bench: side.bench.map((p, i) => (i === benchIndex ? evolved : p)) };
-
-  const events: GameEvent[] = [
-    {
-      type: "POKEMON_EVOLVED",
-      seat: action.seat,
-      from: targetTopUid,
-      to: action.uid,
-      // Copied: the action object belongs to the caller (events.ts).
-      target: { ...action.target },
-    },
-  ];
+    target.spot === "active"
+      ? { ...side, active: evolved }
+      : { ...side, bench: side.bench.map((p, i) => (i === benchIndex ? evolved : p)) };
+  events.push({
+    type: "POKEMON_EVOLVED",
+    seat,
+    from: fromUid,
+    to: evolutionUid,
+    // Copied: the action object belongs to the caller (events.ts).
+    target: { ...target },
+  });
   // §10/§12 — evolving removed the Pokémon's Special Conditions. Announced only
   // when there was something to remove; `uid` is the NEW top (see events.ts).
-  const cleared = presentStatuses(target.conditions);
+  const cleared = presentStatuses(from.conditions);
   if (cleared.length > 0) {
-    events.push({
-      type: "STATUS_CLEARED",
-      seat: action.seat,
-      uid: action.uid,
-      statuses: cleared,
-      reason: "evolved",
-    });
+    events.push({ type: "STATUS_CLEARED", seat, uid: evolutionUid, statuses: cleared, reason: "evolved" });
   }
-  const next = withSide(state, action.seat, updated);
-  // §8.1 — evolution can LOWER effective max HP: a Bravery Charm's +50 is
-  // Basic-only (continuous.ts), so evolving off a Basic drops it. If the
-  // carried damage now meets the new stage's HP the Pokémon is Knocked Out the
-  // instant it evolves — a MID-TURN KO that resumes the actor's turn (flow.ts),
-  // for a benched holder as much as an Active one. (Evolution otherwise only
-  // raises HP, so without a Basic-only HP Tool this check never fires.) The KO
-  // check runs BEFORE the trigger: a Pokémon KO'd on evolution left play, so
-  // its own "when you evolve" Ability does not fire.
+  const next = withSide(state, seat, updated);
   if (isLethallyDamaged(next, evolved)) {
-    return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);
+    return resolveMidTurnKnockOuts(next, seat, [seat], events);
   }
-  // §9 — a "when you play this Pokémon to evolve during your turn" triggered
-  // Ability (Arboliva's Enriching Oil) fires now, on the just-evolved Pokémon.
-  // It may park on effect:choose.
-  return runBoardTrigger(next, action.seat, action.target, "onEvolve", events);
+  return runBoardTrigger(next, seat, target, "onEvolve", events);
 }
 
 /** Leaving the Active spot removes Special Conditions (§11/§12) — M4 adds

@@ -138,6 +138,16 @@ export interface CardProgram {
   stadium?: StadiumEffects;
   /** A Special Energy's rules text (§6.1). */
   energy?: EnergyProgram;
+  /** Marks the Rare Candy Item (§7.1): the Basic→Stage 2 evolve-skip. It runs
+      no op program (it evolves, which the interpreter must never do — flow.ts
+      owns every Knock Out), so it is NOT a `trainer` array; the dedicated
+      `rareCandy` action (cardplay.ts) carries the target Basic + the Stage 2,
+      reuses the shared evolution placement (turn.ts placeEvolution), and
+      resolves the mid-turn evolve-below-HP KO + the on-evolve trigger through
+      the same machinery as `evolve`. `programFor(id)?.rareCandy === true` is
+      how playTrainer rejects it (like a Tool) and how the HUD knows to open the
+      Rare Candy dialog instead of dispatching playTrainer. */
+  rareCandy?: true;
 }
 
 // ── The programs, authored from the printed text (verified vs the live
@@ -291,6 +301,15 @@ const TREVENANT: CardProgram = {
   ],
 };
 
+// ── M4 slice 7: Rare Candy (§7.1) — the Basic→Stage 2 evolve-skip Item. ──
+
+/** Rare Candy — "Choose 1 of your Basic Pokémon in play. If you have a Stage 2
+    card in your hand that evolves from that Pokémon, put that card onto the
+    Basic Pokémon to evolve it, skipping the Stage 1. You can't use this card
+    during your first turn or on a Basic Pokémon that was put into play this
+    turn." (Item) — a marker, not a program (see CardProgram.rareCandy). */
+const RARE_CANDY: CardProgram = { rareCandy: true };
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -344,6 +363,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-123": GARGANACL,
   // Trevenant — Forest Miasma (between-turns, Active-only: 1 counter on opp Active)
   "sv03-012": TREVENANT,
+  // — M4 slice 7: Rare Candy (verified vs local D1 2026-07-18). —
+  // Rare Candy — Basic→Stage 2 evolve-skip Item
+  "sv01-191": RARE_CANDY,
+  "sv01-256": RARE_CANDY,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

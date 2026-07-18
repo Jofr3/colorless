@@ -9,6 +9,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  RARE_CANDY_DECK,
   SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
@@ -128,6 +129,63 @@ describe("TurnPanel — Ability controls", () => {
       target: { spot: "active" },
       abilityName: "Shivery Chill",
     });
+  });
+});
+
+describe("TurnPanel — Rare Candy (§7.1)", () => {
+  const both = { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK };
+
+  /** p1 first, advanced to turn 3 (their SECOND turn — past the §4/§7.1
+      first-turn ban), with a setup fix-basic-1 Active (turnPlayed 0). */
+  function p1Turn3(seed: number): GameState {
+    let state = driveSetup(seed, both, {
+      first: "p1",
+      active: { p1: "fix-basic-1", p2: "fix-basic-1" },
+    });
+    while (state.turn < 3) {
+      if (state.phase.kind !== "turn:action") throw new Error(`unexpected phase ${state.phase.kind}`);
+      state = mustApply(state, { type: "endTurn", seat: state.phase.seat }).state;
+    }
+    return state;
+  }
+
+  it("opens the Rare Candy dialog (not playTrainer) and dispatches rareCandy", () => {
+    let state = p1Turn3(4);
+    state = handFromDeck(state, "p1", "sv01-191", 1); // Rare Candy
+    state = handFromDeck(state, "p1", "fix-stage2", 1); // the Stage 2
+    const rareUid = handUid(state, "p1", "sv01-191");
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    // Clicking Rare Candy opens the dialog — it must NOT dispatch playTrainer.
+    fireEvent.click(screen.getByRole("button", { name: "Rare Candy" }));
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog", { name: "Rare Candy" })).toBeTruthy();
+
+    // One Basic in play → the Stage 2 pick shows directly. Picking dispatches.
+    fireEvent.click(screen.getAllByRole("button", { name: "fix-stage2" })[0] as HTMLElement);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    expect(call).toMatchObject({
+      type: "rareCandy",
+      seat: "p1",
+      uid: rareUid,
+      target: { spot: "active" },
+    });
+    if (call.type === "rareCandy") expect(state.cardIdByUid[call.evolutionUid]).toBe("fix-stage2");
+  });
+
+  it("greys Rare Candy out when no Basic in play links to a Stage 2 in hand", () => {
+    // Evolve the Active off Basic (empty bench) → no legal Rare Candy target.
+    let state = p1Turn3(4);
+    state = handFromDeck(state, "p1", "fix-stage1", 1);
+    const stage1 = handUid(state, "p1", "fix-stage1");
+    state = mustApply(state, { type: "evolve", seat: "p1", uid: stage1, target: { spot: "active" } }).state;
+    state = handFromDeck(state, "p1", "sv01-191", 1);
+    renderHud(state, vi.fn());
+    expect((screen.getByRole("button", { name: "Rare Candy" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
   });
 });
 

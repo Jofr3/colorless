@@ -67,6 +67,10 @@ describe("DEMO_DECKS", () => {
     // unauthored special energy would silently degrade to plain Colorless.
     expect(programFor("sv02-190")?.energy?.onAttach?.kind).toBe("switchIfBenched");
     expect(programFor("sv02-191")?.energy?.provides).toEqual(["Any"]);
+    // Rare Candy (slice 7, Ember): the marker must be set — an unmarked Rare
+    // Candy would be unplayable (the HUD hides it and the rareCandy action
+    // rejects it as "not Rare Candy").
+    expect(programFor("sv01-191")?.rareCandy).toBe(true);
   });
 
   it("keeps the demo status attacks' printed sentences derivable (M3 tripwire)", () => {

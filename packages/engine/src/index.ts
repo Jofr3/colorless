@@ -21,7 +21,7 @@
 import type { ApplyResult, GameAction } from "./actions";
 import { err } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
-import { attachTool, playTrainer, resolveEffect, useAbility } from "./cardplay";
+import { attachTool, playTrainer, rareCandy, resolveEffect, useAbility } from "./cardplay";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -52,6 +52,7 @@ export type {
   PlayBasicToBenchAction,
   PlayTrainerAction,
   PromoteAction,
+  RareCandyAction,
   ResolveEffectAction,
   RetreatAction,
   SetupDrawExtraAction,
@@ -90,6 +91,8 @@ export {
   stadiumEffectsOf,
 } from "./continuous";
 export { deriveAttackEffect } from "./effects";
+export { rareCandyOptions } from "./cardplay";
+export type { RareCandyOption } from "./cardplay";
 export type { CardFilter, EffectOp } from "./effects";
 export type {
   EffectChoice,
@@ -181,6 +184,8 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return playBasicToBench(state, action);
     case "evolve":
       return evolve(state, action);
+    case "rareCandy":
+      return rareCandy(state, action);
     case "retreat":
       return retreat(state, action);
     case "attack":

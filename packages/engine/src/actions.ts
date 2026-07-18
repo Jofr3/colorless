@@ -64,6 +64,19 @@ export interface EvolveAction {
   target: PokemonTarget;
 }
 
+export interface RareCandyAction {
+  type: "rareCandy";
+  seat: Seat;
+  /** The Rare Candy Item uid from the actor's hand (§7.1). */
+  uid: string;
+  /** Which of the actor's own in-play Basic Pokémon to evolve (Active or
+      Bench) — Rare Candy skips the Stage 1. */
+  target: PokemonTarget;
+  /** The Stage 2 Pokémon uid from the actor's hand to place on the Basic (its
+      evolution line must trace through a Stage 1 back to the target's name). */
+  evolutionUid: string;
+}
+
 export interface RetreatAction {
   type: "retreat";
   seat: Seat;
@@ -146,6 +159,7 @@ export type GameAction =
   | AttachEnergyAction
   | PlayBasicToBenchAction
   | EvolveAction
+  | RareCandyAction
   | RetreatAction
   | AttackAction
   | PlayTrainerAction
@@ -176,8 +190,12 @@ export type ErrorCode =
   /** §10 — the target came into play (or was itself evolved) this turn; a
       Pokémon evolves at most once per turn and never the turn it arrived. */
   | "EVOLVE_TOO_SOON"
-  /** §4/§10 — neither player may evolve on their own first turn. */
+  /** §4/§10 — neither player may evolve on their own first turn (shared by
+      evolve and Rare Candy). */
   | "FIRST_TURN_EVOLVE"
+  /** §7.1 — Rare Candy: the chosen hand card is not a Stage 2 whose evolution
+      line traces (through its Stage 1) back to the chosen Basic Pokémon. */
+  | "RARE_CANDY_NO_STAGE2"
   | "NOT_AN_ENERGY"
   | "NO_TARGET"
   | "BENCH_FULL"

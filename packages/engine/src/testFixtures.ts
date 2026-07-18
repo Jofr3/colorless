@@ -347,6 +347,37 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** Trevenant — Forest Miasma (between-turns, Active-only: 1 counter on the
       opponent's Active). A Basic for the same reason. */
   "sv03-012": battler("sv03-012", { name: "Trevenant", hp: 140, retreat: 2 }),
+
+  // — M4 slice 7: Rare Candy (§7.1 — the Basic→Stage 2 evolve-skip). The real
+  //   catalog id so the registry marks it; the fixture line (fix-basic-1 →
+  //   fix-stage1 → fix-stage2) is what it skips THROUGH — the bridge Stage 1
+  //   (fix-stage1) is in the pool but need never be in hand. fix-stage2-frail is
+  //   a low-HP Stage 2 for the evolve-below-HP mid-turn KO (a Bravery Charm's
+  //   Basic-only +50 falling off drops the max below the carried damage). —
+  /** Rare Candy — the Basic→Stage 2 evolve-skip Item (registry marks it). */
+  "sv01-191": {
+    ...blank,
+    id: "sv01-191",
+    name: "Rare Candy",
+    category: "Trainer",
+    trainerType: "Item",
+    effect:
+      "Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card onto the Basic Pokémon to evolve it, skipping the Stage 1.",
+  } satisfies Card,
+  /** A frail Stage 2 (evolves from fix-stage1) — 80 HP so a charmed fix-basic-1
+      (60 + 50 = 110 max) damaged to 100 survives AS a Basic but is Knocked Out
+      the instant Rare Candy evolves it (the +50 falls off → 80 max ≤ 100). */
+  "fix-stage2-frail": {
+    ...blank,
+    id: "fix-stage2-frail",
+    name: "fix-stage2-frail",
+    category: "Pokemon",
+    stage: "Stage2",
+    hp: 80,
+    types: ["Colorless"],
+    retreat: 3,
+    evolveFrom: "fix-stage1",
+  } satisfies Card,
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -464,6 +495,23 @@ export const TRIGGER_DECK = deckOf({
   "fix-victim": 4,
   "sv03-174": 2, // Bouffalant — "Bouffer" reduces ATTACK damage only, NOT counters
   "fix-energy": 23,
+});
+
+/** M4 slice 7 Rare Candy suite: reliable fix-basic-1 openings (the evolve-skip
+    target), fix-basic-2 as a Basic OUTSIDE the fix-stage2 line (the chain-
+    mismatch reject), the fix-stage2 the skip places (+ fix-stage2-frail for the
+    evolve-below-HP KO), Rare Candy + Bravery Charm in multiples (surgery pulls
+    them), and energy. fix-stage1 is present but never needed in hand — the whole
+    point is skipping it. */
+export const RARE_CANDY_DECK = deckOf({
+  "fix-basic-1": 16,
+  "fix-basic-2": 2,
+  "fix-stage1": 4,
+  "fix-stage2": 6,
+  "fix-stage2-frail": 2,
+  "sv01-191": 4,
+  "sv02-173": 2, // Bravery Charm — the evolve-below-HP mid-turn KO tool
+  "fix-energy": 24,
 });
 
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so

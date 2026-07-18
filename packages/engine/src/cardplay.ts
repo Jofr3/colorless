@@ -1,18 +1,20 @@
+import type { Card } from "@luminous/schema";
 import type {
   ApplyResult,
   AttachToolAction,
   PlayTrainerAction,
+  RareCandyAction,
   ResolveEffectAction,
   UseAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { cardOfUid, topUid } from "./cards";
+import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import type { EffectChoice, EffectPrompt, PokemonRef, RunResult } from "./interpreter";
 import { resumeProgram, runProgram } from "./interpreter";
 import { programFor } from "./registry";
-import { isBenchIndex, isPokemonTarget, turnGate } from "./turn";
+import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import { otherSeat, withSide, without } from "./types";
 
@@ -42,6 +44,12 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   }
   if (card.category !== "Trainer") {
     return err("NOT_A_TRAINER", `${card.name} is not a Trainer card`);
+  }
+  if (programFor(card.id)?.rareCandy === true) {
+    // Rare Candy evolves (it carries a target Basic + a Stage 2), so it is not
+    // a program-running Trainer — it goes through the dedicated `rareCandy`
+    // action (the same shape as a Tool routing to attachTool).
+    return err("TRAINER_TYPE_UNSUPPORTED", "Rare Candy is played via the rareCandy action (§7.1)");
   }
   const trainerType = card.trainerType;
   if (trainerType === "Stadium") {
@@ -208,6 +216,162 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
     // The target is copied: the action object belongs to the caller (events.ts).
     { type: "TOOL_ATTACHED", seat: action.seat, uid: action.uid, target: { ...action.target } },
   ]);
+}
+
+/** §7.1 — Rare Candy: evolve one of the actor's own Basic Pokémon straight to a
+    Stage 2 from hand, skipping the Stage 1. An Item (unbounded per turn, no
+    allowance), but it EVOLVES rather than running an interpreter program — so it
+    reuses the shared evolution placement (turn.ts placeEvolution) and thus the
+    on-evolve triggered Ability + the evolve-below-HP mid-turn KO, exactly like
+    `evolve`. Timing mirrors evolve (§4 first-turn ban + not a Basic that came
+    into play this turn). Every wire value is runtime-checked (the D14 contract):
+    the target shape and index, both hand uids, and the Basic-and-chain link. */
+export function rareCandy(state: GameState, action: RareCandyAction): ApplyResult {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  // §7.1/§4 — no Rare Candy on your own first turn (the same ban evolve carries;
+  // firstPlayer takes odd turns, so their first turn is 1 and the other's is 2).
+  if (state.turn === (action.seat === state.firstPlayer ? 1 : 2)) {
+    return err("FIRST_TURN_EVOLVE", "cannot use Rare Candy on your first turn (§4/§7.1)");
+  }
+  const side = state.players[action.seat];
+  if (!side.hand.includes(action.uid)) {
+    return err("CARD_NOT_IN_HAND", `${action.uid} is not in ${action.seat}'s hand`);
+  }
+  const card = cardOfUid(state, action.uid);
+  if (card === undefined) {
+    return err("UNKNOWN_CARD", `no catalog card for uid ${action.uid}`);
+  }
+  if (card.category !== "Trainer") {
+    return err("NOT_A_TRAINER", `${card.name} is not a Trainer card`);
+  }
+  if (programFor(card.id)?.rareCandy !== true) {
+    return err("TRAINER_NOT_SIMULATED", `${card.name} is not Rare Candy`);
+  }
+  // Resolve the target Basic (the actor's own in-play) — wire shape check, then
+  // the string-index trap at the bench use site (same as attachEnergy/evolve).
+  if (!isPokemonTarget(action.target)) {
+    return err("BAD_TARGET", "Rare Candy target must name the Active spot or a bench index");
+  }
+  let target: InPlayPokemon;
+  let benchIndex = -1;
+  if (action.target.spot === "active") {
+    if (side.active === null) return err("NO_TARGET", "no Active Pokémon to evolve");
+    target = side.active;
+  } else {
+    benchIndex = action.target.index;
+    const benched = isBenchIndex(benchIndex) ? side.bench[benchIndex] : undefined;
+    if (benched === undefined) {
+      return err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(benchIndex)}`);
+    }
+    target = benched;
+  }
+  const fromUid = topUid(target);
+  const targetCard = fromUid === undefined ? undefined : cardOfUid(state, fromUid);
+  if (fromUid === undefined || targetCard === undefined) {
+    return err("UNKNOWN_CARD", "the target Pokémon has no resolvable top card");
+  }
+  // §7.1 — the target must be a BASIC in play, and not one that came into play
+  // this turn (the same window evolve rejects with EVOLVE_TOO_SOON).
+  if (!isBasicPokemon(targetCard)) {
+    return err("NOT_A_BASIC_POKEMON", "Rare Candy only evolves a Basic Pokémon (§7.1)");
+  }
+  if (target.turnPlayed >= state.turn) {
+    return err("EVOLVE_TOO_SOON", `${targetCard.name} came into play this turn — Rare Candy cannot evolve it (§7.1)`);
+  }
+  // §7.1 — the Stage 2 in hand that evolves (through its Stage 1) from that
+  // Basic. Distinct from the Rare Candy card itself, actually in hand, a valid
+  // chain (stage2EvolvesFromBasic bridges Basic→Stage 2 via the Stage 1 name).
+  if (action.evolutionUid === action.uid || !side.hand.includes(action.evolutionUid)) {
+    return err("CARD_NOT_IN_HAND", `${action.evolutionUid} is not in ${action.seat}'s hand`);
+  }
+  const stage2 = cardOfUid(state, action.evolutionUid);
+  if (stage2 === undefined) {
+    return err("UNKNOWN_CARD", `no catalog card for uid ${action.evolutionUid}`);
+  }
+  if (!stage2EvolvesFromBasic(state, stage2, targetCard.name)) {
+    return err(
+      "RARE_CANDY_NO_STAGE2",
+      `${stage2.name} is not a Stage 2 that evolves from ${targetCard.name} (§7.1)`,
+    );
+  }
+  // Play it: Rare Candy → discard, the Stage 2 leaves hand onto the stack. Both
+  // leave hand together (up front), then the shared placement runs the evolve +
+  // its on-evolve trigger + the evolve-below-HP mid-turn KO check.
+  const hand = without(without(side.hand, action.uid), action.evolutionUid);
+  const stateAfterHand = withSide(state, action.seat, {
+    ...side,
+    hand,
+    discard: [...side.discard, action.uid],
+  });
+  const events: GameEvent[] = [
+    { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Item" },
+  ];
+  return placeEvolution(
+    stateAfterHand,
+    action.seat,
+    action.target,
+    benchIndex,
+    target,
+    fromUid,
+    action.evolutionUid,
+    events,
+  );
+}
+
+/** Rare Candy (§7.1): does `stage2` (a card in the actor's hand) evolve —
+    through its Stage 1 — from a Basic named `basicName`? The catalog stores only
+    each card's IMMEDIATE `evolveFrom` (a Stage 2 names its Stage 1, never the
+    Basic), so we BRIDGE: `stage2.evolveFrom` names a Stage 1, and some card in
+    the pool with that Stage-1 name evolves from `basicName`. The bridge Stage 1
+    need not be in play or hand — only KNOWN to the card pool (the two decks'
+    cards). DOCUMENTED GAP: a deck that runs no copy of the Stage 1 at all cannot
+    resolve the link until the full evolution family is persisted at ingest (the
+    same ingest-debt class as prizeValueOf = 1 and name-derived energy). */
+function stage2EvolvesFromBasic(state: GameState, stage2: Card, basicName: string): boolean {
+  if (stage2.category !== "Pokemon" || stage2.stage !== "Stage2") return false;
+  const stage1Name = stage2.evolveFrom;
+  if (stage1Name === null) return false;
+  return Object.values(state.cardPool).some(
+    (c) => c.stage === "Stage1" && c.name === stage1Name && c.evolveFrom === basicName,
+  );
+}
+
+/** A legal Rare Candy play the HUD can offer (§7.1): one of the actor's Basics
+    in play that has ≥1 matching Stage 2 in hand. The engine authority the Rare
+    Candy dialog reads so it never offers an illegal pairing — the `rareCandy`
+    handler still re-validates every wire value. */
+export interface RareCandyOption {
+  /** The Basic's spot (Active or a bench index). */
+  target: PokemonTarget;
+  /** The Basic's stack-top uid (display / stable key). */
+  basicUid: string;
+  /** The matching Stage 2 uids in the actor's hand. */
+  stage2Uids: string[];
+}
+
+/** Every legal Rare Candy target for `seat` right now (empty on the first turn
+    — the §4 ban — or when no Basic-in-play links to a Stage 2 in hand). Mirrors
+    the handler's Basic / turnPlayed / chain checks, so an option here always
+    resolves to a legal `rareCandy` action. */
+export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[] {
+  if (state.turn === (seat === state.firstPlayer ? 1 : 2)) return [];
+  const side = state.players[seat];
+  const options: RareCandyOption[] = [];
+  const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {
+    if (pokemon === null || pokemon.turnPlayed >= state.turn) return;
+    const uid = topUid(pokemon);
+    const card = uid === undefined ? undefined : cardOfUid(state, uid);
+    if (uid === undefined || card === undefined || !isBasicPokemon(card)) return;
+    const stage2Uids = side.hand.filter((h) => {
+      const c = cardOfUid(state, h);
+      return c !== undefined && stage2EvolvesFromBasic(state, c, card.name);
+    });
+    if (stage2Uids.length > 0) options.push({ target, basicUid: uid, stage2Uids });
+  };
+  consider(side.active, { spot: "active" });
+  side.bench.forEach((pokemon, index) => consider(pokemon, { spot: "bench", index }));
+  return options;
 }
 
 /** §9 — use an in-play Pokémon's activated Ability. Does not cost energy, does
