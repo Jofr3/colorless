@@ -111,11 +111,14 @@ event stream.
    7 verifiers, 10 reported findings all fixed) 2026-07-17; as-built notes
    below. Includes the first sliver of the effect system: the **text-derived
    status deriver** (D20).
-4. 🚧 **Evolution + Trainers + Abilities done** (2026-07-17; as-built below).
-   The effect-op interpreter/registry now drives real Item/Supporter Trainers
-   and activated + passive Abilities. Remaining: Stadium/Tool (persistent
-   zones), triggered abilities (on-play/on-KO/between-turns), special-energy
-   rules text, and Rare Candy.
+4. 🚧 **Evolution + Trainers + Abilities + persistent zones done**
+   (2026-07-17/18; as-built below). The effect-op interpreter/registry drives
+   real Item/Supporter Trainers and activated + passive Abilities; slice 3
+   added the shared **Stadium** zone + Pokémon **Tool** attachment with a
+   **continuous-modifier pipeline** (continuous.ts). Remaining: triggered
+   abilities (on-play/on-KO/between-turns), special-energy rules text, Rare
+   Candy, and generalizing the KO check off the Active (bench spread damage +
+   the mid-turn evolve-below-HP gap).
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -579,9 +582,91 @@ is exhaustively covered by the engine + DOM tests instead.
   currently gives 1 prize, not 2), name-derived energy provision, the
   projection-identity pop on evolve/switch (Pixi remount, animation follow-up).
 
+## M4 slice 3 as built (2026-07-18) — persistent zones (Stadium + Tool)
+
+**Shape (D24).** The persistent-zone Trainers are NOT interpreter programs —
+their effects are **continuous**, so a new module
+(`packages/engine/src/continuous.ts`) is the ONE place a rule read consults
+them. It aggregates a Pokémon's printed passive (Bouffalant "Bouffer") WITH its
+attached Tools, and the shared Stadium's effects, and exposes:
+`effectiveRetreatCost` (turn.ts retreat — Beach Court's Basic −1),
+`effectiveAttackCost` (attack.ts §8.2 — League HQ's Basic +{C}),
+`effectiveMaxHp` (flow.ts `isLethallyDamaged` — the KO test — plus the web
+`battle.hp`; Bravery Charm's Basic +50), and `passivesOf` (attack.ts §8.5: the
+attacker's pre-W/R **bonus** (Vitality Band +10) and the defender's post-W/R
+**reduction** — now Bouffer AND a defending Tool, summed). Pure and total: a
+missing card/program/stadium contributes nothing.
+
+**Stadium (§7.3).** A single shared `GameState.stadium` `{uid, owner}`.
+`playTrainer` routes a Stadium to **`playStadium`**: one play per turn (a new
+`TurnAllowances.stadiumPlayed`), replace-on-play discards the predecessor to
+**its OWNER's** pile (`STADIUM_DISCARDED`, read off the post-hand-update state
+so self-replace still works), and the same-**NAME** ban compares `card.name`
+(the sv02-171/sv03-229 "Artazon" reprints can't self-replace). Allowed on turn
+1 (§4 bans only Supporters + attacking). Stays in play; its effects are
+continuous.
+
+**Tool (§7.4).** A new action **`attachTool` {seat, uid, target}** (Tools carry
+a target, so they do NOT go through playTrainer — routing a Tool there rejects
+`TRAINER_TYPE_UNSUPPORTED`). One Tool per Pokémon (`TOOL_ALREADY_ATTACHED`),
+uncapped per turn, consumes NO allowance, no detach — the `InPlayPokemon.tools`
+slot M1 reserved is finally populated. It rides the stack through evolution
+(the §10 spread preserves `tools`) and switch/gust (`switchInto` moves the whole
+object) and discards with a KO'd stack (`discardFromStack "all"` already
+included `tools`). New event `TOOL_ATTACHED`.
+
+**Coverage.** A Stadium with no `stadium` row / a Tool with no `passive` row
+reject **`TRAINER_NOT_SIMULATED`** (never a silent no-op). Representative set
+(verified vs local D1 2026-07-18): Beach Court (sv01-167), Pokémon League
+Headquarters (sv03-192), Vitality Band (sv01-197), Bravery Charm (sv02-173).
+`DAMAGE_DEALT` gained an optional `bonus`; 4 new error codes (NOT_A_TOOL /
+STADIUM_ALREADY_PLAYED / STADIUM_SAME_NAME / TOOL_ALREADY_ATTACHED). engine
+0.5.0 → 0.6.0.
+
+**Web.** Stadiums are BOTH a HUD button (TurnPanel, greyed by the §7.3
+once-per-turn + same-name gates) AND a drag onto the shared stadium slot —
+`moveToAction`/`gamePlacementPredicate` gained the one non-own drop target
+(`owner:"global" zone:"stadium"`); Tools attach by drag onto an own Pokémon
+(the energy-attach gesture, routed to `attachTool`). The projection renders the
+shared Stadium public (it can't exist during setup), `battle.hp` reads the
+continuous max HP (Bravery Charm shows live), and the HUD retreat cost / attack
+payability read the effective ones. `logFromEvents` rows for TOOL_ATTACHED /
+STADIUM_DISCARDED and a pre-W/R `· boosted +N` breadcrumb (ordered before
+weakness so the §8.5 math reads correctly). Both demo decks stay 60 cards
+(Ember: Beach Court + Vitality Band; Tidal: League HQ + Bravery Charm — DIFFERENT
+per deck so the replace path is reachable live). Suite 948 → **974**.
+
+**Review (2 Opus agents, rules+integration / wire-safety+web-lockstep) + fixes:**
+wire-safety proven clean (33 hostile `attachTool`/`playStadium` inputs — zero
+throws, zero mutation; every event payload a copy; continuous.ts total on real
+states). Two findings: (a) the `· boosted` log breadcrumb printed AFTER weakness
+though it applies before — reordered to pipeline order; (b) **the deferred
+evolve-below-HP KO gap** — Bravery Charm is the one effect that can LOWER
+effective max HP on evolution, so a damaged charmed Basic evolving below the new
+stage's HP should KO the instant it evolves (§8.1), but `evolve` runs no KO
+check and the engine's KO flow is Active-only + turn-ending. An Active in that
+state is cleaned up at the next Checkup; a benched one is NOT (the same
+Active-only KO limit bench spread damage carries). Deferred WITH the bench-KO
+generalization (a mid-turn KO that resumes the actor's turn is new flow
+machinery), documented at turn.ts/registry.ts and PINNED by a characterization
+test so a future fix flips it deliberately.
+
+**Verification.** `bun run check` green (tsc + biome + **974 tests** — 18 new
+engine cardplay covering Stadium replace/same-name/one-per-turn, the four
+continuous effects, Tool attach + carry-over + KO discard, wire-safety, purity;
+plus new projection/log/placement-lockstep/HUD-DOM tests). **Live /play smoke
+(agent-browser, seed frozen to 6, ZERO console errors):** DROVE the two new
+gestures to resolution — **Beach Court dragged onto the shared stadium slot**
+(board summary "Stadium: Beach Court", persisted through two turns + hot-seat
+flips) which **dropped Growlithe's retreat button from "Retreat (2)" to
+"Retreat (1)" live** (the continuous discount in the HUD), then **Vitality Band
+dragged onto Growlithe** ("Growlithe (1 tool)", log row "attached Vitality Band
+→ Growlithe"). The Stadium's shared zone, Tool attachment, projection, and the
+continuous retreat read all confirmed end-to-end on the real Pixi board.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
-launching one. The mechanics all live in `interpreter.ts` now, so a new card in
-a known family is a few lines of `EffectOp` data in `registry.ts` — the fan-out
-adds rows, not code.
+launching one. The mechanics all live in `interpreter.ts` (op programs) and
+`continuous.ts` (persistent-zone modifiers) now, so a new card in a known family
+is a few lines of data in `registry.ts` — the fan-out adds rows, not code.

@@ -3,65 +3,55 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-18 — build session #8 (**P3-M4 slice 2: Trainers +
-Abilities + the effect-op interpreter/registry** — the real first appearance of
-D8's op-program system; built solo, high-effort reviewed, 2 findings fixed;
-suite 914 → 948, `bun run check` green; /play boots clean with the new decks and
-the Trainer buttons render live with correct gating).
+**Last updated:** 2026-07-18 — build session #9 (**P3-M4 slice 3: persistent
+zones — the shared Stadium + Pokémon Tools via a continuous-modifier pipeline**;
+built solo, 2-agent Opus review, 2 findings handled (1 fixed, 1 documented +
+pinned); suite 948 → 974, `bun run check` green; /play browser-verified — both
+new gestures DRIVEN to resolution live with zero console errors).
 
 ## Resume point
-**Trainers + Abilities are live (P3-M4 slice 2, D23).** The M3 attack-private
-interpreter is replaced by ONE shared **resumable interpreter**
-(`packages/engine/src/interpreter.ts`) that attacks, Trainers and Abilities all
-run through. The **id-keyed registry** (`registry.ts`, `programFor(cardId)`)
-sits above the deriver at the one attack call site and IS the source for
-Trainer/Ability programs (unauthored → loud reject, never guessed). Mid-effect
-decisions PARK via a new **`effect:choose` Phase** carrying a JSON continuation
-(`{pendingOp, rest, ctx}`); `resolveEffect` wire-checks the choice and resumes.
-New actions **playTrainer** (Item unbounded §7.1 / Supporter 1/turn §7.2 + §4
-first-turn ban), **useAbility** (activated, once-per-turn per-Pokémon flag in
-`TurnAllowances.abilitiesUsed`, §9), **resolveEffect**. New ops drawCards /
-discardHand / shuffleDeck / searchDeck→(bench|hand) / switchActive / gust /
-healChosen. **Passive abilities are a pipeline HOOK** (Bouffalant "Bouffer":
-−20 after W/R, `DAMAGE_DEALT.reduction`). **Web:** Trainers/Abilities are HUD
-BUTTONS in the TurnPanel (not board drags — the drag layer no-ops on
-`effect:choose`), `effect:choose` renders a chooseCards/choosePokemon dialog;
-§4/§7.2/§9 gating on the buttons, ENGINE owns fine legality (afford-then-reject
-pill). Representative set: 6 Trainers (Professor's Research/Nest Ball/Boss's
-Orders/Switch/Potion/Energy Search) + 2 Abilities (Chien-Pao ex *Shivery Chill*
-activated, Bouffalant *Bouffer* passive), real sv01–sv03 ids in the demo decks.
-engineVersion 0.5.0. See "M4 slice 2 as built" + D23.
-**Review (8 angles, high effort):** no correctness bugs shipped; 2 fixed —
-`searchMove` bench clamp (removal set now equals placement set, before anything
-leaves the deck), and `presentStatuses` dedup (lifted to types.ts). Deferred:
-the `effect:choose` prompt's search candidates are unredacted in the projection
-(P4-scoped, unobservable in hot-seat).
-**Verification:** `bun run check` green (**948 tests** — 28 engine cardplay
-covering every archetype + parking + wire-safety + purity; 5 DOM integration
-tests driving the REAL GameHud → engine → effect dialogs → resolveEffect).
-**Live /play smoke:** boots clean with the new decks (full 60-card cardPool incl.
-all Trainers + Chien-Pao + Bouffalant fetched, canvas renders, ZERO console
-errors); setup drags work; the TurnPanel renders the new Trainer buttons live
-with correct §4/§7.2 gating (Boss's Orders disabled turn 1, enabled p1 turn 2;
-Switch enabled). All 8 new ids resolve via `GET /cards/:id`. NOT driven to a
-fully RESOLVED effect in-browser (the dealt hands lacked gust/search
-preconditions and the Pixi bench-drag hit-test is the documented session-eater;
-the resolution path is exhaustively unit/DOM-tested instead).
+**Persistent zones are live (P3-M4 slice 3, D24).** Stadiums (§7.3) and Pokémon
+Tools (§7.4) don't run interpreter programs — their effects are **continuous**,
+so a new module **`packages/engine/src/continuous.ts`** is the ONE place the
+rule reads consult them: `effectiveRetreatCost` (retreat), `effectiveAttackCost`
+(§8.2), `effectiveMaxHp` (the KO test in flow.ts + the web `battle.hp`), and
+`passivesOf` (§8.5 damage — a defender's post-W/R reduction now aggregates
+Bouffalant's passive WITH attached Tools; an attacker's pre-W/R bonus). The
+**shared `GameState.stadium` {uid, owner}** is played via `playStadium`
+(one/turn, replace-on-play to the OWNER's discard, same-NAME ban); **Tools**
+attach via a new **`attachTool`** action (one/Pokémon, uncapped, no allowance,
+rides the stack through evolution/switch, discards with a KO). Representative
+set: Beach Court (sv01-167) + Pokémon League HQ (sv03-192) + Vitality Band
+(sv01-197) + Bravery Charm (sv02-173). Web: Stadiums are a HUD button AND a drag
+onto the shared slot (the one non-own drop target); Tools are a drag onto an own
+Pokémon. engineVersion 0.6.0. See "M4 slice 3 as built" + D24.
+**Review (2 Opus agents):** wire-safety proven clean (33 hostile inputs, zero
+throws/mutation); log `· boosted` breadcrumb reordered before weakness (pipeline
+order); **deferred gap** — evolution can now LOWER effective max HP (Bravery
+Charm's Basic +50 dropping off), so a damaged charmed Basic evolving below the
+new stage's HP should KO (§8.1) but `evolve` runs no KO check (Active-only,
+turn-ending KO flow) — Active cleaned up at Checkup, benched one is not;
+documented + pinned by a characterization test, deferred with the bench-KO
+generalization.
+**Verification:** `bun run check` green (**974 tests**). **Live /play smoke
+(agent-browser, seed 6, ZERO console errors):** Beach Court DRAGGED onto the
+shared stadium slot → "Stadium: Beach Court" (persisted through 2 turns + flips)
+→ Growlithe's retreat button dropped 2 → 1 live (the continuous discount);
+Vitality Band DRAGGED onto Growlithe → "Growlithe (1 tool)", log "attached
+Vitality Band → Growlithe". Both new gestures + the shared zone + continuous
+reads confirmed end-to-end on the real Pixi board.
 Next concrete actions:
-1. **P3-M4 remaining slices:** Stadium + Tool (persistent zones — a shared board
-   zone + continuous pipeline / attach + KO-discard-with-tool), triggered
-   abilities (on-play/on-KO/between-turns — trigger scan points at bench-play,
-   evolve, checkup, KO), special-energy rules text, Rare Candy. Read "M4 slice
-   2 as built" + its traps FIRST (the interpreter is the seam; passive is a
-   hook; EffectContext is only `{seat}`).
-2. Or the **coverage-expansion Workflow fan-out** (M5) — author `EffectOp`
-   registry rows across the SV pool, one agent per set/batch, each verified vs
-   the rules doc. Ask the user before launching one (it can spawn dozens of
-   agents). The mechanics all live in interpreter.ts now, so this adds rows,
-   not code.
-3. Or the remaining **"/play follow-ups"** (pile zones in the animation
-   layer, `useDeckLibrary` reuse, perf nits); the HUD-reads-raw-GameState
-   blocker still belongs WITH P4.
+1. **P3-M4 remaining slices:** triggered abilities (on-play/on-KO/between-turns
+   — trigger scan points at bench-play, evolve, checkup, KO), special-energy
+   rules text, Rare Candy (sv01-191 — the item's hand-inspect + evolve reuse).
+2. **Generalize the KO check off the Active** (flow.ts `knockOut`/checkup are
+   Active-only) — this unblocks bench spread/snipe damage AND the deferred
+   evolve-below-HP KO (a mid-turn KO that RESUMES the actor's turn is the new
+   flow shape). Read D24's deferred-gap note + the characterization test first.
+3. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics now live
+   in interpreter.ts (op programs) AND continuous.ts (persistent-zone
+   modifiers), so a new card in a known family is a few lines of registry data.
+   Ask the user before launching one.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -74,13 +64,70 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry driving Trainers + activated/passive Abilities, 2026-07-18) — remaining: Stadium/Tool, triggered abilities, special energy; then the coverage fan-out |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline, 2026-07-18) — remaining: triggered abilities, special energy, Rare Candy, generalizing the KO off the Active; then the coverage fan-out |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-18** (build #9) — **P3-M4 slice 3: persistent zones — the shared
+  Stadium (§7.3) + Pokémon Tools (§7.4) via a continuous-modifier pipeline**
+  (built solo — full context loaded — then a 2-agent Opus review; the first
+  three Fable 5 review agents died on the usage limit mid-flight and were
+  re-spawned on Opus 4.8 after a `/model` switch, so the review is Opus's).
+  **Shape (D24):** persistent-zone Trainers are NOT interpreter programs —
+  their effects are CONTINUOUS, so a new `packages/engine/src/continuous.ts` is
+  the ONE place a rule read consults them: `effectiveRetreatCost` (retreat),
+  `effectiveAttackCost` (§8.2), `effectiveMaxHp` (the KO test `isLethallyDamaged`
+  in flow.ts + the web `battle.hp`), `passivesOf` (§8.5 — a defender's post-W/R
+  reduction now aggregates a printed passive WITH attached Tools; an attacker's
+  pre-W/R bonus). It unifies D23's passive hook (Tools + printed passives feed
+  one read site). **Stadium** = a single shared `GameState.stadium` {uid, owner}
+  played via `playStadium` (one/turn via `TurnAllowances.stadiumPlayed`;
+  replace-on-play discards the predecessor to its OWNER's pile; the same-NAME
+  ban compares names so the sv02-171/sv03-229 "Artazon" reprints can't
+  self-replace; allowed on turn 1). **Tool** = a new `attachTool` action (Tools
+  carry a target, so NOT playTrainer): one/Pokémon, uncapped, no allowance, no
+  detach — it rides the stack through evolution/switch and discards with a KO
+  (the `InPlayPokemon.tools` slot M1 reserved is finally populated). Unauthored
+  Stadium/Tool → loud `TRAINER_NOT_SIMULATED`. 4 new error codes, `DAMAGE_DEALT`
+  gained `bonus`, new events TOOL_ATTACHED / STADIUM_DISCARDED. **Web:**
+  Stadiums are BOTH a HUD button AND a drag onto the shared slot
+  (`moveToAction`/`gamePlacementPredicate` gained the one non-own drop target,
+  `owner:"global" zone:"stadium"`); Tools attach by drag onto an own Pokémon
+  (the energy-attach gesture); the projection renders the shared Stadium public,
+  `battle.hp` reads the continuous max HP, HUD retreat/attack costs read the
+  effective ones; new log rows + a pre-W/R `· boosted` breadcrumb. Representative
+  set (verified vs local D1): Beach Court (sv01-167) / Pokémon League HQ
+  (sv03-192) / Vitality Band (sv01-197) / Bravery Charm (sv02-173), DIFFERENT per
+  demo deck so the replace path is reachable live. engineVersion 0.5.0 → 0.6.0.
+  **Review (2 Opus agents — rules+integration / wire-safety+web-lockstep):**
+  wire-safety PROVEN clean (33 hostile `attachTool`/`playStadium` inputs — zero
+  throws, zero mutation; every event payload a copy; continuous.ts total on real
+  states); lockstep + HUD gating + demo-deck counts confirmed. Two findings: (a)
+  the `· boosted` log breadcrumb printed AFTER weakness though it applies BEFORE
+  — reordered to §8.5 pipeline order; (b) **the deferred evolve-below-HP KO gap**
+  — Bravery Charm is the one effect that can LOWER effective max HP on evolution,
+  so a damaged charmed Basic evolving below the new stage's HP should KO the
+  instant it evolves (§8.1), but `evolve` runs no KO check and the engine's KO
+  flow is Active-only + turn-ending. An Active in that state is cleaned up at the
+  next Checkup; a benched one is NOT. A mid-turn KO that RESUMES the actor's turn
+  is new flow machinery, so it is DEFERRED with the bench-KO generalization —
+  documented at turn.ts/registry.ts/simulator.md and PINNED by a characterization
+  test so a future fix flips it deliberately, not silently. **Verification:**
+  `bun run check` green (948 → **974 tests** — 18 new engine cardplay covering
+  Stadium replace/same-name/one-per-turn + the four continuous effects + Tool
+  attach/carry-over/KO-discard/wire-safety/purity, plus new projection/log/
+  placement-lockstep/HUD-DOM tests). **Live /play smoke (agent-browser, seed
+  frozen to 6, ZERO console errors):** DROVE both new gestures to resolution —
+  Beach Court DRAGGED onto the shared stadium slot ("Stadium: Beach Court",
+  persisted through two turns + hot-seat flips) which dropped Growlithe's retreat
+  button from "Retreat (2)" to "Retreat (1)" LIVE (the continuous discount in the
+  HUD), then Vitality Band DRAGGED onto Growlithe ("Growlithe (1 tool)", log row
+  "attached Vitality Band → Growlithe"). The shared zone, Tool attachment,
+  projection and continuous retreat read all confirmed end-to-end on the real
+  Pixi board. Local D1 already held sv01+sv02+sv03 (no re-ingest this session).
 - **2026-07-18** (build #8) — **P3-M4 slice 2: Trainers + Abilities + the
   effect-op interpreter/registry** (built solo — full context loaded — then a
   high-effort 8-angle review; no correctness bugs, 2 findings fixed). The real
