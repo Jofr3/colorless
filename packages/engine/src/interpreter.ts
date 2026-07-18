@@ -1,5 +1,6 @@
 import type { Card } from "@luminous/schema";
 import { energyProvidesOf, isBasicPokemon, isEnergyCard, topUid } from "./cards";
+import { passivesOf } from "./continuous";
 import type { CardFilter, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { flipCoin, shuffle } from "./rng";
@@ -24,9 +25,12 @@ import {
 // the whole continuation (`pendingOp` + the rest of the program + context) is
 // JSON so it stores in the `effect:choose` phase and replays identically.
 //
-// Effects in scope never deal damage, KO, or end the game, so the interpreter
-// does NOT touch the KO/win tail (flow.ts) — a future spread/snipe op will
-// route its KO check through the shared knockOut there.
+// The interpreter can PLACE damage (spreadDamage — an attack's spread hit on
+// the opponent's Bench) but never KOs or ends the game: the Knock Out check
+// stays in the attack epilogue (attack.ts finishAttack), which sweeps the
+// whole board through the shared collectKnockOuts (flow.ts) after the program
+// runs. So the interpreter still never touches the KO/win tail — it only moves
+// damage, and flow.ts owns every Knock Out.
 
 /** The controller of an effect (the seat playing the card). "self" ops target
     this seat's Active, "defender"/gust the opponent's. */
@@ -130,6 +134,8 @@ function stepOp(
       return { done: applyStatus(state, op, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
+    case "spreadDamage":
+      return { done: spreadDamage(state, op.amount, ctx, events) };
     case "drawCards":
       return { done: drawToHand(state, ctx.seat, op.count, "effect", events) };
     case "discardHand":
@@ -239,6 +245,47 @@ function applyStatus(
     ...active,
     conditions: { ...active.conditions, rotation: op.status },
   });
+}
+
+/** Spread damage: place `amount` HP on EACH of the opponent's Benched Pokémon
+    (§8.5 — Weakness/Resistance never apply on the Bench, so it is flat there).
+    A benched Pokémon's own continuous damage REDUCTION still applies though
+    (Bouffalant "Bouffer" / a defending Tool — the passive that is not
+    Active-only), floored at 0; the attacker's pre-W/R bonus (Vitality Band) is
+    Active-target-only and does NOT reach the Bench. One DAMAGE_DEALT per benched
+    Pokémon (seat/uid name the DEFENDER, as everywhere). Only raises damage — the
+    KO check runs in attack.ts's epilogue, so this never KOs or ends the game
+    (interpreter header). */
+function spreadDamage(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (amount <= 0) return state;
+  const opponent = otherSeat(ctx.seat);
+  const side = state.players[opponent];
+  if (side.bench.length === 0) return state;
+  const bench = side.bench.map((pokemon) => {
+    const uid = topUid(pokemon);
+    if (uid === undefined) return pokemon;
+    const reduction = passivesOf(state, pokemon).damageReductionAfterWR;
+    const dealt = Math.max(0, amount - reduction);
+    const damage = pokemon.damage + dealt;
+    events.push({
+      type: "DAMAGE_DEALT",
+      seat: opponent,
+      uid,
+      base: amount,
+      weakness: null,
+      resistance: null,
+      reduction: reduction > 0 ? reduction : undefined,
+      dealt,
+      damage,
+    });
+    return { ...pokemon, damage };
+  });
+  return withSide(state, opponent, { ...side, bench });
 }
 
 /** Heal the controller's own Active (attack "heal from it" op). */

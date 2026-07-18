@@ -182,6 +182,13 @@ export type PendingStage =
       which the §13.4 paralysis recovery keys on. Its KOs park on the same
       ko:* interrupts the attack KOs use. */
   | { kind: "checkup"; seat: Seat }
+  /** Hand the turn BACK to `seat` after a mid-turn Knock Out (M4) — an evolve
+      that drops a charmed Basic below its new stage's HP, or a future
+      spread/snipe ability. Unlike an attack KO (which ends the turn) or a
+      Checkup KO (between turns), the actor keeps playing once the KO's
+      prize/promotion decisions settle: this stage restores their turn:action
+      phase. Always the tail of a mid-turn KO's stages, so nothing follows it. */
+  | { kind: "resumeTurn"; seat: Seat }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory

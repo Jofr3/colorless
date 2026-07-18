@@ -40,9 +40,10 @@ export interface PassiveEffects {
   /** Max-HP added while the holder's TOP card is a Basic Pokémon (Bravery
       Charm — "The Basic Pokémon this card is attached to gets +50 HP");
       evolving the holder ends it, the Tool staying attached notwithstanding.
-      Note: because this is the one effect that can LOWER effective max HP on
-      evolution, it exposes the deferred "evolve runs no KO check" gap — see
-      turn.ts evolve. */
+      This is the one effect that can LOWER effective max HP on evolution: a
+      charmed Basic damaged into the window is Knocked Out the instant it
+      evolves (§8.1), which `evolve` now checks via the mid-turn KO flow (M4
+      slice 4 — turn.ts evolve → flow.ts resolveMidTurnKnockOuts). */
   basicHpBonus?: number;
 }
 

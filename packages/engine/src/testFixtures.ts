@@ -202,6 +202,22 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** hp printed as 0 — a catalog data gap schema/ingest let through, read as
       null by hpOf: never KO'd (a KO requires printed hp > 0). */
   "fix-zero-hp": battler("fix-zero-hp", { hp: 0 }),
+  /** M4 slice 4 — the spread attacker: Spread Shot does 30 to the Active AND
+      20 to EACH of the opponent's Benched Pokémon (the effect sentence the
+      deriver recognizes → the spreadDamage op). The card that proves the KO
+      generalization off the Active catches BENCH Knock Outs. */
+  "fix-sniper": battler("fix-sniper", {
+    types: ["Fire"],
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Spread Shot",
+        damage: 30,
+        effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
+      },
+    ],
+  }),
 
   // — M4 slice 2: the representative Trainer/Ability cast (real catalog ids so
   //   the registry finds their authored programs). —
@@ -354,6 +370,23 @@ export const STADIUM_TOOL_DECK = deckOf({
   "fix-energy": 16,
 });
 
+/** M4 slice 4 (KO generalized off the Active): the spread attacker (fix-sniper,
+    Spread Shot [C] 30 + 20 to each opponent Benched), small-HP bodies the
+    spread can finish (fix-victim 30 HP, fix-weak 60 HP), the fix-basic-1 →
+    fix-stage1 line + Bravery Charm for the evolve-below-HP mid-turn KO, and
+    energy. */
+export const KNOCKOUT_DECK = deckOf({
+  "fix-sniper": 10,
+  "fix-victim": 8,
+  "fix-weak": 4,
+  "fix-wall": 2,
+  "fix-basic-1": 8,
+  "fix-stage1": 4,
+  "sv02-173": 4,
+  "sv03-174": 2, // Bouffalant — passive "Bouffer" reduces spread on the bench too
+  "fix-energy": 18,
+});
+
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so
     either can be an Active), plus Water energy for Shivery Chill to search. */
 export const ABILITY_DECK = deckOf({
@@ -383,6 +416,52 @@ export function setActiveFromDeck(state: GameState, seat: Seat, cardId: string):
         deck: side.deck.filter((u) => u !== uid),
         active: makeInPlay(uid, 0),
         bench: benched,
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: put a fresh copy of `cardId` (pulled from the seat's deck)
+    on the seat's bench end — bench-damage / spread / KO tests need specific
+    benched Pokémon without scripting bench plays. Bench must have room; the
+    result stays legal-shaped (every uid in exactly one zone). Mirror of
+    setActiveFromDeck. */
+export function benchFromDeck(state: GameState, seat: Seat, cardId: string): GameState {
+  const side = state.players[seat];
+  const uid = side.deck.find((u) => state.cardIdByUid[u] === cardId);
+  if (uid === undefined) throw new Error(`${seat} deck has no ${cardId}`);
+  if (side.bench.length >= 5) throw new Error("no bench room");
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        bench: [...side.bench, makeInPlay(uid, 0)],
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: set bench[index]'s damage outright (setDamage's bench twin) —
+    spread/lethality tests need damaged benched Pokémon without scripting the
+    attacks that would place it. */
+export function setBenchDamage(
+  state: GameState,
+  seat: Seat,
+  index: number,
+  damage: number,
+): GameState {
+  const side = state.players[seat];
+  if (side.bench[index] === undefined) throw new Error(`${seat} has no benched Pokémon at ${index}`);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        bench: side.bench.map((pokemon, i) => (i === index ? { ...pokemon, damage } : pokemon)),
       },
     },
   };

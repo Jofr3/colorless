@@ -359,16 +359,13 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
     expect(effectiveMaxHp(state, evolved)).toBe(90); // printed only
   });
 
-  it("DEFERRED GAP: evolving a charmed Basic below the new stage's HP does NOT KO (documented)", () => {
+  it("evolving a charmed Basic below the new stage's HP Knocks it Out mid-turn (§8.1)", () => {
     // A Bravery Charm's +50 is Basic-only, so evolving drops it — the one way
     // evolution can LOWER effective max HP. A charmed Basic damaged into the
-    // window (survivable at +50, lethal at the printed stage HP) that evolves
-    // SHOULD be Knocked Out the instant it evolves (§8.1). The engine's KO
-    // check is Active-only and always turn-ending, and evolve runs none — so
-    // today the Pokémon stays in play lethally damaged. This test PINS that
-    // deferred behavior (turn.ts evolve + simulator.md) so a future fix flips
-    // it deliberately rather than silently. Uses the bench, where even the
-    // Checkup won't clean it up (Active-only).
+    // window (survivable at +50, lethal at the printed stage HP) is Knocked Out
+    // the instant it evolves (§8.1) — a MID-TURN KO that resumes the actor's
+    // turn (M4 slice 4 closed the former Active-only/turn-ending gap). Uses the
+    // BENCH, which the Checkup would never have cleaned up.
     let state = p1Turn2(7);
     state = setActiveFromDeck(state, "p1", "fix-basic-1"); // 60 HP Basic
     state = handFromDeck(state, "p1", "sv02-173", 1);
@@ -393,22 +390,37 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
       },
     };
     state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
+    // The Checkup left the charmed Basic alone — 90 damage < its 110 effective
+    // HP while still a Basic.
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     state = handFromDeck(state, "p1", "fix-stage1", 1);
     const stage1 = handUid(state, "p1", "fix-stage1");
+    const benchBefore = state.players.p1.bench.length;
     const { state: after, events } = mustApply(state, {
       type: "evolve",
       seat: "p1",
       uid: stage1,
       target: { spot: "bench", index: benched },
     });
-    // The gap: no KO despite damage (90) >= effective max HP (90).
-    const evolved = after.players.p1.bench[benched];
-    expect(evolved).toBeDefined();
-    if (evolved === undefined) throw new Error("unreachable");
-    expect(effectiveMaxHp(after, evolved)).toBe(90);
-    expect(evolved.damage).toBe(90);
-    expect(types(events)).not.toContain("KNOCKED_OUT");
+    // Evolved to fix-stage1 (90 HP), the carried 90 damage is now lethal → the
+    // Pokémon is Knocked Out and leaves the bench, its whole stack (the charm
+    // included) to p1's discard.
+    const ko = find(events, "KNOCKED_OUT");
+    expect(ko).toMatchObject({ seat: "p1", uid: stage1 });
+    expect(ko?.discarded).toContain(charm);
+    expect(after.players.p1.discard).toContain(charm);
+    expect(after.players.p1.discard).toContain(stage1);
+    expect(after.players.p1.bench.length).toBe(benchBefore - 1);
+    expect(after.players.p1.bench.some((p) => p.tools.includes(charm))).toBe(false);
+    // A p1 Pokémon was KO'd, so p2 takes the prize — mid-p1's-turn, with p1's
+    // turn queued to RESUME behind the interrupt (the new §8.1 flow shape).
+    expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
+    expect(after.pending.map((s) => s.kind)).toEqual(["takePrizes", "resumeTurn"]);
+    // Resolving the prize hands the turn BACK to p1 (turn:action) — the turn
+    // counter never moved.
+    const resumed = must(applyAction(after, { type: "takePrizes", seat: "p2", prizeIndices: [0] }));
+    expect(resumed.phase).toEqual({ kind: "turn:action", seat: "p1" });
+    expect(resumed.turn).toBe(after.turn);
   });
 
   it("the KO'd stack discards its Tool with it (§8.1)", () => {

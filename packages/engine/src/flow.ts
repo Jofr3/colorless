@@ -1,6 +1,6 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
-import { activeTop, prizeValueOf, topUid } from "./cards";
+import { activeTop, prizeValueOf, topCardOf, topUid } from "./cards";
 import { effectiveMaxHp } from "./continuous";
 import type { GameEvent } from "./events";
 import { flipCoin } from "./rng";
@@ -61,33 +61,172 @@ export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boo
   return hp !== null && pokemon.damage >= hp;
 }
 
-/** §8.1 KO cleanup, shared by the attack path and the Checkup: `koedSeat`'s
-    Active leaves play (its whole stack to the discard), KNOCKED_OUT fires,
-    and the resulting decision stages come back for the caller to queue —
-    the prize pick for `prizeSeat` (the attacker; on a Checkup or self-KO,
-    the opponent — no one attacked), then the promotion. Active-only for
-    M3; M4's bench snipes generalize the target. */
+/** §8.1 KO cleanup, generalized off the Active (M4): Knock Out the in-play
+    Pokémon whose stack-top is `koedUid` on `koedSeat`'s board — Active OR a
+    benched one. Its whole stack (evolution cards, energy, tools) leaves play
+    for `koedSeat`'s discard, KNOCKED_OUT fires, and the decision stages come
+    back for the caller to queue: the prize pick for `prizeSeat` (§8.1 — the
+    KO'd side's opponent), plus — for an ACTIVE KO only — the promotion that
+    refills the empty spot. A benched KO leaves no gap (the bench compacts),
+    so it owes no promotion. Addresses the Pokémon by uid, not index, so a
+    batch of KOs cannot shift a later target's bench slot out from under it. */
 export function knockOut(
   state: GameState,
   koedSeat: Seat,
+  koedUid: string,
   prizeSeat: Seat,
   events: GameEvent[],
 ): { state: GameState; stages: PendingStage[] } {
-  const spot = activeTop(state, koedSeat);
-  if (spot === null) {
-    // Unreachable — every caller just verified a lethally damaged Active.
-    return { state, stages: [] };
+  const side = state.players[koedSeat];
+  // The Active?
+  if (side.active !== null && topUid(side.active) === koedUid) {
+    const card = topCardOf(state, side.active);
+    const cleanup = discardFromStack(side, side.active, "all");
+    events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
+    return {
+      state: withSide(state, koedSeat, { ...cleanup.side, active: null }),
+      stages: [
+        { kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) },
+        { kind: "promote", seat: koedSeat },
+      ],
+    };
   }
-  const { active, uid, card } = spot;
-  const cleanup = discardFromStack(state.players[koedSeat], active, "all");
-  events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid, discarded: cleanup.discarded });
-  return {
-    state: withSide(state, koedSeat, { ...cleanup.side, active: null }),
-    stages: [
-      { kind: "takePrizes", seat: prizeSeat, count: prizeValueOf(card) },
-      { kind: "promote", seat: koedSeat },
-    ],
-  };
+  // A benched one? (§8.1 — no promotion; the bench stays dense.)
+  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === koedUid);
+  const benched = index === -1 ? undefined : side.bench[index];
+  if (benched !== undefined) {
+    const card = topCardOf(state, benched);
+    const cleanup = discardFromStack(side, benched, "all");
+    const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];
+    events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
+    return {
+      state: withSide(state, koedSeat, { ...cleanup.side, bench }),
+      stages: [{ kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) }],
+    };
+  }
+  // Not in play — unreachable (every caller just scanned it lethal). No-op.
+  return { state, stages: [] };
+}
+
+/** Every lethally-damaged in-play Pokémon on `seats` right now, Active first
+    then bench in index order, as stable {seat, top-uid} refs. By uid, because
+    resolving one KO compacts its bench — knockOut then finds each ref by uid,
+    immune to the shift (an index list would corrupt after the first removal). */
+function lethalRefs(state: GameState, seats: readonly Seat[]): { seat: Seat; uid: string }[] {
+  const refs: { seat: Seat; uid: string }[] = [];
+  for (const seat of seats) {
+    const side = state.players[seat];
+    if (side.active !== null && isLethallyDamaged(state, side.active)) {
+      const uid = topUid(side.active);
+      if (uid !== undefined) refs.push({ seat, uid });
+    }
+    for (const pokemon of side.bench) {
+      if (!isLethallyDamaged(state, pokemon)) continue;
+      const uid = topUid(pokemon);
+      if (uid !== undefined) refs.push({ seat, uid });
+    }
+  }
+  return refs;
+}
+
+/** The post-damage Knock Out sweep (§8.1), generalized off the Active (M4):
+    resolve EVERY lethally-damaged in-play Pokémon on `seats` at once — Active
+    and Bench — prizes to each KO'd side's opponent. The decision stages come
+    back grouped PRIZES-FIRST (all prizes are taken before any promotion
+    refills the board, §8.1/§13). When the batch would win for BOTH players at
+    the same instant it is the §14 TIE, detected by SPECULATIVELY resolving the
+    whole batch (KOs plus their owed prizes) into a throwaway state and asking
+    evaluateWin — so the §14 precedence core stays single-sourced. A tie can
+    only arise when both seats lost a Pokémon this batch (a one-sided batch
+    only ever wins for the one player who gains the prizes / faces the emptied
+    board), so the guard runs only then; every other case falls through to the
+    stage-by-stage resolution, whose defined §14 checks own it. `done` non-null
+    is that terminal tie; otherwise `stages` are the decisions to queue and
+    `state` is post-KO. Shared by the attack epilogue, the Checkup and the
+    mid-turn KO path. */
+export type KnockOutBatch =
+  | { done: GameOutcome; state: GameState }
+  | { done: null; state: GameState; stages: PendingStage[] };
+
+export function collectKnockOuts(
+  state: GameState,
+  seats: readonly Seat[],
+  events: GameEvent[],
+): KnockOutBatch {
+  const refs = lethalRefs(state, seats);
+  if (refs.length === 0) return { done: null, state, stages: [] };
+
+  const bothSeatsHit = new Set(refs.map((ref) => ref.seat)).size === 2;
+  if (bothSeatsHit) {
+    let speculative = state;
+    const scratch: GameEvent[] = []; // speculative events go nowhere
+    for (const ref of refs) {
+      const ko = knockOut(speculative, ref.seat, ref.uid, otherSeat(ref.seat), scratch);
+      speculative = ko.state;
+      for (const stage of ko.stages) {
+        if (stage.kind !== "takePrizes") continue;
+        // Deduct the owed prizes (which slots is immaterial to §14).
+        const side = speculative.players[stage.seat];
+        speculative = withSide(speculative, stage.seat, {
+          ...side,
+          prizes: side.prizes.slice(stage.count),
+        });
+      }
+    }
+    const outcome = evaluateWin(speculative);
+    if (outcome !== null && outcome.result === "tie") {
+      // Both KOs still happen FOR REAL (the cards leave play, the events
+      // fire) — only the prize/promotion stages are skipped for the tie.
+      let next = state;
+      for (const ref of refs) {
+        next = knockOut(next, ref.seat, ref.uid, otherSeat(ref.seat), events).state;
+      }
+      return { done: outcome, state: next };
+    }
+    // A one-sided (or no) win: discard the speculation and fall through.
+  }
+
+  // Apply each KO for real, grouping the stages PRIZES-FIRST (§8.1/§13) while
+  // preserving the ref order within each kind.
+  let next = state;
+  const prizeStages: PendingStage[] = [];
+  const promoteStages: PendingStage[] = [];
+  for (const ref of refs) {
+    const ko = knockOut(next, ref.seat, ref.uid, otherSeat(ref.seat), events);
+    next = ko.state;
+    for (const stage of ko.stages) {
+      (stage.kind === "takePrizes" ? prizeStages : promoteStages).push(stage);
+    }
+  }
+  return { done: null, state: next, stages: [...prizeStages, ...promoteStages] };
+}
+
+/** A Knock Out that happens DURING `actorSeat`'s turn and does NOT end it —
+    an evolve that drops a charmed Basic below its new stage's HP (§8.1, a
+    Bravery Charm's Basic-only bonus falling off), or a future spread/snipe
+    ability. Resolve every KO on `seats`, then RESUME the actor's turn: unlike
+    an attack KO (ends the turn) or a Checkup KO (between turns), the actor
+    keeps playing once the KO's prize/promotion decisions settle. Allowances
+    live on GameState, so they survive the interrupt untouched. A KO that hands
+    the actor's last Pokémon to the opponent — or that takes the opponent's
+    last prize — still ends the game at the resolve helpers' §14 check.
+    `seats` MUST be the set of boards the effect actually damaged: evolve passes
+    `[actorSeat]` (only the actor's own Pokémon can go lethal on evolution); a
+    future snipe ability damaging the opponent must pass THAT board (or both) so
+    the sweep — and the §14 double-KO tie guard — sees every KO. */
+export function resolveMidTurnKnockOuts(
+  state: GameState,
+  actorSeat: Seat,
+  seats: readonly Seat[],
+  events: GameEvent[],
+): ApplyResult {
+  const batch = collectKnockOuts(state, seats, events);
+  if (batch.done !== null) return finishGame(batch.state, batch.done, events);
+  if (batch.stages.length === 0) return ok(batch.state, events); // nothing KO'd
+  return advance(
+    { ...batch.state, pending: [...batch.stages, { kind: "resumeTurn", seat: actorSeat }] },
+    events,
+  );
 }
 
 /** The Pokémon Checkup (§13), run whole inside its stage — no player
@@ -169,68 +308,18 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
     }
   }
 
-  // The batch is done — NOW resolve its Knock Outs (§13), in the same seat
-  // order. hpOf's null (a catalog data gap) never KOs, as everywhere.
-  const koedSeats = order.filter((seat) => {
-    const active = next.players[seat].active;
-    return active !== null && isLethallyDamaged(next, active);
-  });
-
-  // Simultaneous-win guard: with BOTH Actives going down at once, the
-  // stage-by-stage resolution below would crown whoever's prize pick happens
-  // to resolve first — so when both players would win off this batch (the
-  // owed prizes empty their row, or the opponent's board empties), the game
-  // is the §14 TIE, decided here as one instant. Detected by SPECULATIVELY
-  // resolving the whole batch — both KOs plus their owed prize takes — into
-  // a throwaway state and asking evaluateWin, so the §14 precedence core is
-  // single-sourced rather than re-derived here. A single (or one-sided) KO
-  // keeps the normal path: the resolve helpers' §14 check owns it.
-  if (koedSeats.length === 2) {
-    let speculative = next;
-    const scratch: GameEvent[] = []; // speculative events go nowhere
-    for (const seat of koedSeats) {
-      const ko = knockOut(speculative, seat, otherSeat(seat), scratch);
-      speculative = ko.state;
-      for (const stage of ko.stages) {
-        if (stage.kind !== "takePrizes") continue;
-        // Deduct the owed prizes (which slots is immaterial to §14).
-        const side = speculative.players[stage.seat];
-        speculative = withSide(speculative, stage.seat, {
-          ...side,
-          prizes: side.prizes.slice(stage.count),
-        });
-      }
-    }
-    const outcome = evaluateWin(speculative);
-    if (outcome !== null && outcome.result === "tie") {
-      // Both KOs still happen FOR REAL (the cards leave play, the events
-      // fire) — only the prize/promotion stages are skipped for the tie.
-      for (const seat of koedSeats) {
-        next = knockOut(next, seat, otherSeat(seat), events).state;
-      }
-      return finishGame(next, outcome, events);
-    }
-    // A one-sided (or no) win: discard the speculation — the stage-by-stage
-    // resolution below reaches the same §14 verdict at its defined points.
-  }
-
-  // Group the KO stages PRIZES-FIRST (§8.1/§13: all prizes are taken before
-  // promotions refill the board), preserving the [endedSeat, other] KO order
-  // within each kind — a double KO seeds
-  // [takePrizes, takePrizes, promote, promote], not interleaved pairs.
-  const prizeStages: PendingStage[] = [];
-  const promoteStages: PendingStage[] = [];
-  for (const seat of koedSeats) {
-    const ko = knockOut(next, seat, otherSeat(seat), events);
-    next = ko.state;
-    for (const stage of ko.stages) {
-      (stage.kind === "takePrizes" ? prizeStages : promoteStages).push(stage);
-    }
-  }
+  // The batch is done — NOW resolve its Knock Outs (§13) through the shared
+  // sweep, in [endedSeat, other] order. Checkup damage only ever lands on the
+  // Actives (poison/burn), but the sweep scans full boards: a benched Pokémon
+  // is never lethal here (mid-turn KOs are resolved the instant they occur),
+  // so scanning it is a harmless superset that also keeps the §14 double-KO
+  // tie guard single-sourced with the attack and mid-turn paths.
+  const batch = collectKnockOuts(next, order, events);
+  if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // Pop the checkup stage, put the KO stages in front of what remains
   // (the startTurn) and keep draining — a decision stage parks as usual.
   return advance(
-    { ...next, pending: [...prizeStages, ...promoteStages, ...next.pending.slice(1)] },
+    { ...batch.state, pending: [...batch.stages, ...batch.state.pending.slice(1)] },
     events,
   );
 }
@@ -443,6 +532,15 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // runCheckup pops the stage itself: its KO stage-pairs go in front of
       // the remainder, and a double-KO tie ends the game outright.
       return runCheckup(state, stage.seat, events);
+    case "resumeTurn":
+      // A mid-turn KO (evolve-below-HP, a snipe ability) has resolved: hand the
+      // turn BACK to the actor rather than ending it. Allowances live on
+      // GameState, untouched by the KO flow, so the actor resumes exactly where
+      // they were. Always the last stage, so popping leaves an empty queue.
+      return ok(
+        { ...popStage(state), phase: { kind: "turn:action", seat: stage.seat } },
+        events,
+      );
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

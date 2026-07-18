@@ -40,6 +40,15 @@ export type EffectOp =
       poisonDamage?: number;
     }
   | { op: "heal"; target: "self"; amount: number }
+  /** Spread damage (§8.5): place `amount` HP of damage on EACH of the
+      opponent's Benched Pokémon. Weakness/Resistance NEVER apply to Benched
+      Pokémon, so this is flat. A SECONDARY damage clause, distinct from the
+      attack's main numeric damage; the interpreter only PLACES it (one
+      DAMAGE_DEALT per benched Pokémon) — the Knock Out check runs afterwards in
+      the attack epilogue (attack.ts finishAttack), which sweeps the whole
+      board, so the interpreter still never KOs or touches the flow tail. This
+      is what the M4 KO generalization off the Active exists to reach. */
+  | { op: "spreadDamage"; target: "opponentBench"; amount: number }
   /** "Flip a coin. If heads, …" — `then` runs on heads only. */
   | { op: "coinFlipGate"; then: EffectOp[] }
   // — Trainer / Ability ops (M4), controller-relative. —
@@ -99,6 +108,14 @@ const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
 const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
+// Spread damage — the whole effect sentence, with the era's optional
+// "(Don't apply Weakness and Resistance for Benched Pokémon.)" clarifier
+// (§8.5 makes it true regardless). The main numeric damage rides the attack's
+// own `damage` field; this clause is the secondary hit on the Bench.
+const SPREAD_EACH_BENCH = new RegExp(
+  `^This attack does (\\d+) damage to each of your opponent['’]s Benched Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the five recognized whole sentences (leading/trailing
@@ -153,6 +170,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         poisonDamage: Number(match[1]) * 10,
       },
     ];
+  }
+
+  // 6. "This attack does {N} damage to each of your opponent's Benched
+  //    Pokémon." — the spread hit that the M4 KO generalization reaches (a
+  //    benched Pokémon can now be Knocked Out). `damage` is HP, not counters.
+  match = SPREAD_EACH_BENCH.exec(effect);
+  if (match !== null) {
+    return [{ op: "spreadDamage", target: "opponentBench", amount: Number(match[1]) }];
   }
 
   return null;

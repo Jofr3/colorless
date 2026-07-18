@@ -468,6 +468,32 @@ describe("projectGameState — phase-derived fields", () => {
     expect(theirs.waitingOn).toBe("opponent");
   });
 
+  it("keeps a MID-TURN KO park owned by the actor whose turn will resume", () => {
+    // A mid-turn KO (evolve-below-HP; engine-tested in stadiumTool.test.ts)
+    // parks ko:takePrizes for the OPPONENT with a resumeTurn stage queued
+    // behind it — the actor's turn is still in progress. koParkActiveSeat must
+    // treat resumeTurn as in-turn (unlike the between-turns checkup park) so
+    // the board still shows an owner. Crafted like the tie test below; a real
+    // evolve produces this exact pending shape.
+    const base = turnOneState(); // turn 1 = p1's (firstPlayer), a real board
+    const state: GameState = {
+      ...base,
+      phase: { kind: "ko:takePrizes", seat: "p2", count: 1 },
+      pending: [
+        { kind: "takePrizes", seat: "p2", count: 1 },
+        { kind: "resumeTurn", seat: "p1" },
+      ],
+    };
+    const mine = projectGameState(state, "p1");
+    expect(mine.activePlayer).toBe("you"); // p1 still owns the turn...
+    expect(mine.waitingOn).toBe("opponent"); // ...but p2 owes the prize pick
+    expect(mine.pendingDecision).toEqual({ kind: "takePrizes", count: 1 });
+
+    const theirs = projectGameState(state, "p2");
+    expect(theirs.activePlayer).toBe("opponent");
+    expect(theirs.waitingOn).toBe("you");
+  });
+
   it("keeps the checkup-origin promote park turn-owner-free, then resumes into p2's turn", () => {
     const parked = parkedAtCheckup();
     const state = mustApply(parked, { type: "takePrizes", seat: "p1", prizeIndices: [0] }).state;

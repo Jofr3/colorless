@@ -406,13 +406,17 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
 /** The turn a parked ko:* interrupt sits INSIDE — or null when it sits
     BETWEEN turns. Attack-origin KOs park with the turn tail still queued
     behind the ko stages (pending: [ko…, endTurn, checkup, startTurn]), so
-    the parity owner still owns the turn. Checkup-origin KOs park AFTER
-    endTurn and checkup have already drained (pending: [ko…, startTurn])
-    with the turn counter not yet bumped — parity would misreport the
-    JUST-ENDED seat as active — so those parks own no turn at all. */
+    the parity owner still owns the turn. A MID-TURN KO (evolve-below-HP, a
+    snipe ability) parks with a resumeTurn stage queued behind it (pending:
+    [ko…, resumeTurn]) — still inside the actor's turn, so it counts too.
+    Checkup-origin KOs park AFTER endTurn and checkup have already drained
+    (pending: [ko…, startTurn]) with the turn counter not yet bumped — parity
+    would misreport the JUST-ENDED seat as active — so those parks own no turn
+    at all. */
 function koParkActiveSeat(state: GameState): Seat | null {
   const inTurn = state.pending.some(
-    (stage) => stage.kind === "endTurn" || stage.kind === "checkup",
+    (stage) =>
+      stage.kind === "endTurn" || stage.kind === "checkup" || stage.kind === "resumeTurn",
   );
   return inTurn ? turnOwnerOf(state) : null;
 }

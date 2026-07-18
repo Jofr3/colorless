@@ -23,8 +23,8 @@ import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import {
   advance,
-  isLethallyDamaged,
-  knockOut,
+  collectKnockOuts,
+  finishGame,
   resolvePrizesAndResume,
   resolvePromotionAndResume,
   turnTail,
@@ -155,8 +155,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         amount: 30,
         source: "confusion",
       });
-      // The self-hit can KO the attacker itself — prized to the DEFENDER.
-      return finishAttack(next, events, action.seat, action.seat, defenderSeat);
+      // The self-hit can KO the attacker itself — prized to the DEFENDER
+      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent).
+      return finishAttack(next, events, action.seat, action.seat);
     }
   }
 
@@ -230,35 +231,32 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     next = runProgram(next, program, { seat: action.seat }, events).state;
   }
 
-  // §8.1 Knock Out check on the defender, then the §5.3 turn end — the
+  // §8.1 Knock Out sweep on the defender's board, then the §5.3 turn end — the
   // shared epilogue with the confusion-tails exit above.
-  return finishAttack(next, events, action.seat, defenderSeat, action.seat);
+  return finishAttack(next, events, action.seat, defenderSeat);
 }
 
 /** The shared attack epilogue (§8.1 + §5.3), both exits out of `attack` (the
-    confusion-tails failure and the normal resolution): KO `koedSeat`'s
-    Active if lethally damaged — re-read off the state, since the effect
-    steps replace the Pokémon object — with the prize pick owed to
-    `prizeSeat`, then end `attackerSeat`'s turn through the staged tail, the
-    KO's decision stages in front of it. */
+    confusion-tails failure and the normal resolution): sweep `koedSeat`'s
+    WHOLE board for Knock Outs — the Active from the main damage AND any
+    Benched Pokémon a spread/snipe effect damaged (§8.1, generalized off the
+    Active) — prizes to the KO'd side's opponent, re-read off the state since
+    the effect ops replace the Pokémon objects. Then end `attackerSeat`'s turn
+    through the staged tail, the KO's decision stages in front of it. A
+    single-seat sweep can never tie (a §14 tie needs both boards to win at
+    once), but stay total — finishGame if one ever does. (A future recoil /
+    both-sides-damaging attack would sweep both seats here.) */
 function finishAttack(
   state: GameState,
   events: GameEvent[],
   attackerSeat: Seat,
   koedSeat: Seat,
-  prizeSeat: Seat,
 ): ApplyResult {
-  let next = state;
-  const pending: PendingStage[] = [];
-  const target = next.players[koedSeat].active;
-  if (target !== null && isLethallyDamaged(next, target)) {
-    const ko = knockOut(next, koedSeat, prizeSeat, events);
-    next = ko.state;
-    pending.push(...ko.stages);
-  }
+  const batch = collectKnockOuts(state, [koedSeat], events);
+  if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
-  pending.push(...turnTail(attackerSeat));
-  return advance({ ...next, pending }, events);
+  const pending: PendingStage[] = [...batch.stages, ...turnTail(attackerSeat)];
+  return advance({ ...batch.state, pending }, events);
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */

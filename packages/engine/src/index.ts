@@ -32,9 +32,10 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 slice 3: the persistent-zone Trainers —
-    the shared Stadium zone + Pokémon Tools with continuous effects). */
-export const engineVersion = "0.6.0";
+/** Engine milestone marker (M4 slice 4: the Knock Out generalized off the
+    Active — bench spread/snipe damage + the mid-turn KO that resumes the
+    actor's turn, closing the evolve-below-HP gap). */
+export const engineVersion = "0.7.0";
 
 export type {
   ApplyResult,

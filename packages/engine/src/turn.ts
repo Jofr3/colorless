@@ -17,7 +17,7 @@ import {
 } from "./cards";
 import { effectiveRetreatCost } from "./continuous";
 import type { GameEvent } from "./events";
-import { advance, turnTail } from "./flow";
+import { advance, isLethallyDamaged, resolveMidTurnKnockOuts, turnTail } from "./flow";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -231,17 +231,6 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   // Special Conditions and temporary markers are REMOVED. The evolution card
   // becomes the new stack top, and turnPlayed resets so it cannot evolve again
   // until a later turn.
-  //
-  // KNOWN GAP (M4 slice 3): evolution can now LOWER a Pokémon's effective max
-  // HP — a Bravery Charm's +50 is Basic-only (continuous.ts), so evolving off
-  // a Basic drops it. If carried damage then meets the new stage's HP the
-  // Pokémon is lethally damaged the instant it evolves (§8.1), but this action
-  // runs NO KO check (before slice 3 evolution could only raise HP). An
-  // Active in that state is cleaned up at the next Checkup (flow.ts reads the
-  // continuous max HP), but a BENCHED one is not — the same Active-only KO
-  // limit already documented for bench spread damage. A mid-turn KO that
-  // RESUMES the actor's turn is new flow machinery; deferred with that
-  // generalization (simulator.md).
   const evolved: InPlayPokemon = {
     ...target,
     stack: [...target.stack, action.uid],
@@ -277,7 +266,17 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
       reason: "evolved",
     });
   }
-  return ok(withSide(state, action.seat, updated), events);
+  const next = withSide(state, action.seat, updated);
+  // §8.1 — evolution can LOWER effective max HP: a Bravery Charm's +50 is
+  // Basic-only (continuous.ts), so evolving off a Basic drops it. If the
+  // carried damage now meets the new stage's HP the Pokémon is Knocked Out the
+  // instant it evolves — a MID-TURN KO that resumes the actor's turn (flow.ts),
+  // for a benched holder as much as an Active one. (Evolution otherwise only
+  // raises HP, so without a Basic-only HP Tool this check never fires.)
+  if (isLethallyDamaged(next, evolved)) {
+    return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);
+  }
+  return ok(next, events);
 }
 
 /** Leaving the Active spot removes Special Conditions (§11/§12) — M4 adds
