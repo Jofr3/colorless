@@ -1,3 +1,4 @@
+import { ANY_ENERGY } from "./cards";
 import type { EffectOp } from "./effects";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
@@ -61,6 +62,29 @@ export interface StadiumEffects {
   basicAttackCostSurcharge?: number;
 }
 
+/** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
+    from hand. Kept a tiny tagged union (not an EffectOp program) because these
+    read the ATTACH context, which the {seat}-only interpreter doesn't carry. */
+export type EnergyOnAttach =
+  /** Jet Energy: attaching to a Benched Pokémon switches it to the Active Spot. */
+  { kind: "switchIfBenched" };
+
+/** A Special Energy's rules text (§6.1), read while attached. `provides` is the
+    units it contributes to attack costs (a concrete type, or `ANY_ENERGY` for
+    a wildcard — Luminous "every type of Energy but 1 at a time"); multi-unit is
+    allowed. A Special Energy WITH this entry provisions through it; one WITHOUT
+    falls back to the conservative Colorless provider (cards.ts energyProvidesOf),
+    so an unauthored special energy stays playable (energy always provides
+    something) rather than loudly rejecting like a Trainer. */
+export interface EnergyProgram {
+  provides: string[];
+  /** Luminous: the units provided INSTEAD when the holder already has another
+      Special Energy attached ("this card provides {C} Energy instead"). */
+  demoteWithOtherSpecial?: string[];
+  /** Effect run on attach from hand (Jet's switch). */
+  onAttach?: EnergyOnAttach;
+}
+
 export interface CardProgram {
   /** Overrides the text-derived attack effect. Unused by the representative
       set (kept as the `programFor(id).attack ?? derive(text)` seam). */
@@ -76,6 +100,8 @@ export interface CardProgram {
   /** The Stadium's continuous effects (§7.3). A Stadium with this entry is
       playable; one without is "not simulated" (coverage strategy). */
   stadium?: StadiumEffects;
+  /** A Special Energy's rules text (§6.1). */
+  energy?: EnergyProgram;
 }
 
 // ── The programs, authored from the printed text (verified vs the live
@@ -153,6 +179,21 @@ const VITALITY_BAND: CardProgram = { passive: { damageBonusBeforeWR: 10 } };
     (Tool) */
 const BRAVERY_CHARM: CardProgram = { passive: { basicHpBonus: 50 } };
 
+// ── M4 slice 5: Special Energy (§6.1). ──
+
+/** Jet Energy — "provides {C} Energy. When you attach this card from your hand
+    to 1 of your Benched Pokémon, switch that Pokémon with your Active Pokémon." */
+const JET_ENERGY: CardProgram = {
+  energy: { provides: ["Colorless"], onAttach: { kind: "switchIfBenched" } },
+};
+
+/** Luminous Energy — "provides every type of Energy but provides only 1 Energy
+    at a time. If the Pokémon this card is attached to has any other Special
+    Energy attached, this card provides {C} Energy instead." */
+const LUMINOUS_ENERGY: CardProgram = {
+  energy: { provides: [ANY_ENERGY], demoteWithOtherSpecial: ["Colorless"] },
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -191,6 +232,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-197": VITALITY_BAND,
   // Bravery Charm (Tool)
   "sv02-173": BRAVERY_CHARM,
+  // — M4 slice 5: Special Energy (verified vs local D1 2026-07-18). —
+  // Jet Energy — {C} + switch-on-bench-attach
+  "sv02-190": JET_ENERGY,
+  // Luminous Energy — wildcard (any 1 type), {C} if another Special attached
+  "sv02-191": LUMINOUS_ENERGY,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

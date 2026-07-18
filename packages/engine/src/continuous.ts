@@ -1,4 +1,12 @@
-import { hpOf, isBasicPokemon, retreatCostOf, topCardOf } from "./cards";
+import {
+  cardOfUid,
+  energyProvidesOf,
+  hpOf,
+  isBasicPokemon,
+  isSpecialEnergy,
+  retreatCostOf,
+  topCardOf,
+} from "./cards";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { GameState, InPlayPokemon } from "./types";
@@ -62,6 +70,48 @@ export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number
   if (hp === null) return hp;
   const { hpBonus } = passivesOf(state, pokemon);
   return hp + hpBonus;
+}
+
+/** §6.3/§6.4 — the flat list of energy UNITS a Pokémon's attached energies
+    provide toward attack costs, evaluated per energy under its rules text:
+    - a basic energy provides its one type (cards.ts energyProvidesOf);
+    - an AUTHORED special energy provides its EnergyProgram's units (a concrete
+      type, or ANY_ENERGY for a wildcard, and multi-unit is allowed — Double
+      Turbo-likes), with Luminous's "{C} instead if another Special Energy is
+      attached" evaluated against the holder's OTHER energies;
+    - an UNAUTHORED special energy falls back to one Colorless (energyProvidesOf),
+      so it stays playable rather than rejecting.
+    The one provision read site: attack.ts's §8.2 cost check and the HUD's
+    payability preview both call it, so they cannot drift (the D18 duplication
+    is gone). costMet (attack.ts) consumes this flat list. */
+export function providedEnergy(state: GameState, pokemon: InPlayPokemon): string[] {
+  // Which attached energies are Special — for Luminous's "any OTHER Special
+  // Energy attached" condition. Resolved once against the live board.
+  const specialUids = pokemon.energy.filter((uid) => {
+    const card = cardOfUid(state, uid);
+    return card !== undefined && isSpecialEnergy(card);
+  });
+  const units: string[] = [];
+  for (const uid of pokemon.energy) {
+    const card = cardOfUid(state, uid);
+    if (card === undefined) {
+      units.push("Colorless"); // unresolved uid — the conservative unit
+      continue;
+    }
+    const program = programFor(card.id)?.energy;
+    if (program === undefined) {
+      // Basic energy → its type; an unauthored special energy → Colorless.
+      units.push(energyProvidesOf(card));
+      continue;
+    }
+    const demote = program.demoteWithOtherSpecial;
+    if (demote !== undefined && specialUids.some((other) => other !== uid)) {
+      units.push(...demote);
+    } else {
+      units.push(...program.provides);
+    }
+  }
+  return units;
 }
 
 /** §11 retreat cost under the in-play Stadium's continuous effects: Beach

@@ -7,18 +7,17 @@ import type {
 } from "./actions";
 import { err } from "./actions";
 import {
+  ANY_ENERGY,
   activeTop,
   applyDamageModifier,
   attacksOf,
-  cardOfUid,
-  energyProvidesOf,
   parseAttackDamage,
   resistanceOf,
   topCardOf,
   topUid,
   weaknessOf,
 } from "./cards";
-import { effectiveAttackCost, passivesOf } from "./continuous";
+import { effectiveAttackCost, passivesOf, providedEnergy } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import {
@@ -41,12 +40,14 @@ import { isImmobilized, otherSeat, withActive, withSide } from "./types";
 // here funnels into flow.ts's staged tail — the KO stages simply go in
 // front of it.
 
-/** §6.4 cost matching. Typed symbols need exactly that type; Colorless
-    slots take whatever is left over. Every attached energy provides exactly
-    ONE unit of ONE type in M2 (a basic energy its named type, the
-    special-energy fallback Colorless — cards.ts), so per-type counting is a
-    complete matcher; a real assignment search only becomes necessary with
-    M4's multi-unit / multi-type providers. */
+/** §6.4 cost matching. Typed symbols need exactly that type; Colorless slots
+    take whatever is left over. `provided` is the flat list of UNITS the
+    attached energies give (continuous.ts providedEnergy) — a basic energy one
+    unit of its type, a special energy its authored units, possibly several
+    (Double Turbo-likes) and possibly a WILDCARD (`ANY_ENERGY` — Luminous, "any
+    1 type"). A wildcard fills a typed shortfall or a Colorless slot; concrete
+    types are counted per type, wildcards allocated to the (pickier) typed needs
+    first, then everything left pays the Colorless slots. */
 export function costMet(cost: readonly string[], provided: readonly string[]): boolean {
   const needed = new Map<string, number>();
   let colorless = 0;
@@ -55,13 +56,24 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     else needed.set(symbol, (needed.get(symbol) ?? 0) + 1);
   }
   const counts = new Map<string, number>();
-  for (const type of provided) counts.set(type, (counts.get(type) ?? 0) + 1);
-  let spare = provided.length;
-  for (const [type, count] of needed) {
-    if ((counts.get(type) ?? 0) < count) return false;
-    spare -= count;
+  let wild = 0;
+  for (const unit of provided) {
+    if (unit === ANY_ENERGY) wild++;
+    else counts.set(unit, (counts.get(unit) ?? 0) + 1);
   }
-  return spare >= colorless;
+  let typedNeeds = 0;
+  for (const [type, count] of needed) {
+    typedNeeds += count;
+    const shortfall = count - (counts.get(type) ?? 0);
+    if (shortfall > 0) {
+      // Cover the typed shortfall with wildcards; run out and the cost is unmet.
+      if (shortfall > wild) return false;
+      wild -= shortfall;
+    }
+  }
+  // Each typed need consumed exactly one unit; everything else (surplus typed
+  // units, leftover wildcards, Colorless-provided units) pays the Colorless.
+  return provided.length - typedNeeds >= colorless;
 }
 
 /** §8 — declare one attack with the Active Pokémon; resolving it ends the
@@ -107,12 +119,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   if (declared === undefined) {
     return err("BAD_ATTACK_INDEX", `${attacker.name} has no attack at index ${String(index)}`);
   }
-  // §8.2 cost check against what the attached energy provides — under the
-  // in-play Stadium's continuous cost effects (League HQ's Basic surcharge).
-  const provided = active.energy.map((uid) => {
-    const card = cardOfUid(state, uid);
-    return card === undefined ? "Colorless" : energyProvidesOf(card);
-  });
+  // §8.2 cost check against what the attached energies provide (basic types,
+  // special-energy units incl. wildcards — continuous.ts providedEnergy),
+  // under the in-play Stadium's continuous cost effects (League HQ's Basic
+  // surcharge).
+  const provided = providedEnergy(state, active);
   const cost = effectiveAttackCost(state, active, declared.cost ?? []);
   if (!costMet(cost, provided)) {
     return err("ATTACK_COST_UNMET", `${declared.name} costs [${cost.join(", ")}]`);

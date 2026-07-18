@@ -359,8 +359,14 @@ function gust(state: GameState, ref: PokemonRef, ctx: EffectContext, events: Gam
 /** The shared switch move for `seat`'s board: `ref` (a bench index on that
     board) becomes Active; the old Active goes to the bench with its Special
     Conditions cleared. The bench stays dense (the promoted slot closes up, the
-    retreater lands at the end) — the same compaction retreat uses. */
-function switchInto(state: GameState, seat: Seat, ref: PokemonRef, events: GameEvent[]): GameState {
+    retreater lands at the end) — the same compaction retreat uses. Exported for
+    Jet Energy's on-attach switch (turn.ts attachEnergy). */
+export function switchInto(
+  state: GameState,
+  seat: Seat,
+  ref: PokemonRef,
+  events: GameEvent[],
+): GameState {
   const side = state.players[seat];
   const active = side.active;
   if (ref.spot.spot !== "bench" || active === null) return state;

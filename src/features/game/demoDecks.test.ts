@@ -62,6 +62,11 @@ describe("DEMO_DECKS", () => {
     // Chien-Pao ex (Tidal) — activated Ability; Bouffalant (Ember) — passive.
     expect(programFor("sv02-061")?.abilities?.[0]?.name).toBe("Shivery Chill");
     expect(programFor("sv03-174")?.passive?.damageReductionAfterWR).toBe(20);
+    // Special Energy (slice 5): Jet (Ember) switches on bench attach; Luminous
+    // (Tidal) provides a wildcard. Both need an authored EnergyProgram — an
+    // unauthored special energy would silently degrade to plain Colorless.
+    expect(programFor("sv02-190")?.energy?.onAttach?.kind).toBe("switchIfBenched");
+    expect(programFor("sv02-191")?.energy?.provides).toEqual(["Any"]);
   });
 
   it("keeps the demo status attacks' printed sentences derivable (M3 tripwire)", () => {

@@ -9,8 +9,10 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
+  attachFromDeck,
   driveSetup,
   handUid,
   handFromDeck,
@@ -174,5 +176,39 @@ describe("effect:choose — the target dialog (choosePokemon)", () => {
     const call = dispatch.mock.calls[0]?.[0] as GameAction;
     expect(call.type).toBe("resolveEffect");
     if (call.type === "resolveEffect") expect(call.choice.kind).toBe("pokemon");
+  });
+});
+
+describe("TurnPanel — special energy payability (§6.4)", () => {
+  const both = { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK };
+
+  /** fix-attacker's Flame is a typed cost ([Fire][Colorless], attack index 1);
+      Bite is [Colorless] (index 0). The HUD reads payability through the same
+      providedEnergy the engine checks — a Luminous wildcard should ENABLE Flame. */
+  function attackButton(name: string): HTMLButtonElement {
+    const button = screen.getByText(name).closest("button");
+    if (button === null) throw new Error(`no ${name} attack button`);
+    return button as HTMLButtonElement;
+  }
+
+  it("a Luminous wildcard enables a typed attack in the HUD (lockstep with the engine)", () => {
+    let state = p1Turn2(1, both);
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = attachFromDeck(state, "p1", "sv02-191", 1); // Luminous → the Fire
+    state = attachFromDeck(state, "p1", "fix-energy", 1); // Colorless → the [C]
+    renderHud(state, vi.fn());
+    expect(attackButton("Flame").disabled).toBe(false);
+  });
+
+  it("disables the typed attack when Luminous is demoted by another Special Energy", () => {
+    let state = p1Turn2(2, both);
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = attachFromDeck(state, "p1", "sv02-191", 1); // Luminous
+    state = attachFromDeck(state, "p1", "sv02-190", 1); // Jet — demotes Luminous to {C}
+    renderHud(state, vi.fn());
+    // Now [Colorless, Colorless]: Flame ([Fire][C]) is unpayable...
+    expect(attackButton("Flame").disabled).toBe(true);
+    // ...but Bite ([C]) is still enabled.
+    expect(attackButton("Bite").disabled).toBe(false);
   });
 });

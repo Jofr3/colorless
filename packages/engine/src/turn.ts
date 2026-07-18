@@ -18,6 +18,8 @@ import {
 import { effectiveRetreatCost } from "./continuous";
 import type { GameEvent } from "./events";
 import { advance, isLethallyDamaged, resolveMidTurnKnockOuts, turnTail } from "./flow";
+import { switchInto } from "./interpreter";
+import { programFor } from "./registry";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -119,15 +121,31 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     );
     updated = { ...side, hand, bench };
   }
-  const next: GameState = {
+  let next: GameState = {
     ...withSide(state, action.seat, updated),
     allowances: { ...state.allowances, energyAttached: true },
   };
-  return ok(next, [
+  const events: GameEvent[] = [
     // The target is copied: the action object belongs to the caller, and an
     // emitted event must not alias it (see events.ts).
     { type: "ENERGY_ATTACHED", seat: action.seat, uid: action.uid, target: { ...action.target } },
-  ]);
+  ];
+  // §6.1 — a Special Energy's on-attach effect. Jet Energy: attaching from hand
+  // to a BENCHED Pokémon switches it to the Active Spot (the energy just landed
+  // rides in with it). Nothing fires on an Active attach. Reuses the shared
+  // switch move (interpreter.ts), which clears the outgoing Active's conditions
+  // and emits POKEMON_SWITCHED — the bench index is still valid (attaching does
+  // not reorder the bench).
+  const onAttach = programFor(card.id)?.energy?.onAttach;
+  if (onAttach?.kind === "switchIfBenched" && action.target.spot === "bench") {
+    next = switchInto(
+      next,
+      action.seat,
+      { seat: action.seat, spot: { spot: "bench", index: action.target.index } },
+      events,
+    );
+  }
+  return ok(next, events);
 }
 
 /** §5.2 — Basics to the bench, any number per turn, cap 5. */

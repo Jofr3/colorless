@@ -32,10 +32,10 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 slice 4: the Knock Out generalized off the
-    Active — bench spread/snipe damage + the mid-turn KO that resumes the
-    actor's turn, closing the evolve-below-HP gap). */
-export const engineVersion = "0.7.0";
+/** Engine milestone marker (M4 slice 5: Special Energy — provision as data
+    (multi-unit + wildcard), the wildcard-aware cost matcher, and on-attach
+    effects (Jet Energy's switch)). */
+export const engineVersion = "0.8.0";
 
 export type {
   ApplyResult,
@@ -61,6 +61,7 @@ export type {
   UseAbilityAction,
 } from "./actions";
 export {
+  ANY_ENERGY,
   applyDamageModifier,
   attacksOf,
   basicFromHandError,
@@ -70,6 +71,7 @@ export {
   hpOf,
   isBasicPokemon,
   isEnergyCard,
+  isSpecialEnergy,
   parseAttackDamage,
   prizeValueOf,
   resistanceOf,
@@ -83,6 +85,7 @@ export {
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
+  providedEnergy,
   stadiumEffectsOf,
 } from "./continuous";
 export { deriveAttackEffect } from "./effects";
@@ -93,7 +96,14 @@ export type {
   EffectPrompt,
   PokemonRef,
 } from "./interpreter";
-export type { AbilityProgram, CardProgram, PassiveEffects, StadiumEffects } from "./registry";
+export type {
+  AbilityProgram,
+  CardProgram,
+  EnergyOnAttach,
+  EnergyProgram,
+  PassiveEffects,
+  StadiumEffects,
+} from "./registry";
 export { programFor } from "./registry";
 export type { DrawReason, GameEvent, StatusName } from "./events";
 export type { CoinFace } from "./rng";

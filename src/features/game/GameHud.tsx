@@ -23,10 +23,10 @@ import {
   costMet,
   effectiveAttackCost,
   effectiveRetreatCost,
-  energyProvidesOf,
   isImmobilized,
   otherSeat,
   programFor,
+  providedEnergy,
   topCardOf,
   topUid,
 } from "@luminous/engine";
@@ -354,12 +354,11 @@ function TurnPanel(props: GameHudProps) {
   const activeCard = active === null ? undefined : topCardOf(game, active);
   if (active === null || activeCard === undefined) return null;
 
-  // Payability, precomputed the way the engine will check it (§8.2): what
-  // the attached energies provide vs the printed cost.
-  const provided = active.energy.map((uid) => {
-    const card = cardOfUid(game, uid);
-    return card === undefined ? "Colorless" : energyProvidesOf(card);
-  });
+  // Payability, precomputed the way the engine checks it (§8.2): the units the
+  // attached energies provide (basic types + special-energy units incl.
+  // wildcards) vs the printed cost. ONE shared helper with the engine's own
+  // cost check (providedEnergy), so the HUD preview can't drift from it.
+  const provided = providedEnergy(game, active);
   const attacks = attacksOf(activeCard);
   // §4 — turn 1 is by construction the going-first player's turn.
   const firstTurnBan = game.turn === 1;

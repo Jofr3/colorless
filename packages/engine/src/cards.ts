@@ -28,11 +28,28 @@ export function evolveFromOf(card: Card): string | null {
   return card.category === "Pokemon" ? (card.evolveFrom ?? null) : null;
 }
 
-/** Basic and Special energy both occupy the one attach per turn (§6.3);
-    Special-energy rules text is M4+. */
+/** Basic and Special energy both occupy the one attach per turn (§6.3). */
 export function isEnergyCard(card: Card): boolean {
   return card.category === "Energy";
 }
+
+/** A Special Energy (§6.1) — the catalog tags them `energyType: "Special"`
+    (basic energies are "Normal"). Special energies carry rules text (provision,
+    on-attach effects, holder conditions), authored in the registry
+    (registry.ts EnergyProgram); an unauthored one degrades to a plain
+    Colorless provider (continuous.ts providedEnergy) rather than a loud reject,
+    since an energy always provides SOMETHING. */
+export function isSpecialEnergy(card: Card): boolean {
+  return card.category === "Energy" && card.energyType === "Special";
+}
+
+/** The provided-unit token for "any one type of Energy" (§6.4) — a WILDCARD
+    that can pay any single typed OR Colorless cost symbol (Luminous Energy's
+    "provides every type of Energy but only 1 at a time"). Distinct from
+    "Colorless" as a PROVIDED unit, which pays only Colorless slots. No basic
+    energy type is named this, so it is a safe sentinel in a provided list
+    (costMet in attack.ts is the only reader). */
+export const ANY_ENERGY = "Any";
 
 /** Printed retreat cost; null (nothing printed / non-Pokémon) = free (§11). */
 export function retreatCostOf(card: Card): number {
@@ -68,8 +85,10 @@ export function prizeValueOf(_card: Card): number {
     (sv06.5-098). The vocabulary is the shared BASIC_ENERGY_TYPES (§6.1,
     @luminous/schema) — INGEST DEBT: provision should become Card data at
     ingest; until then the name parse lives here. Anything unparseable
-    (special energy — its rules text is M4) conservatively provides 1
-    Colorless: it can pay colorless slots, never typed ones (§6.4). */
+    (a special energy's fancy name) conservatively provides 1 Colorless: it can
+    pay colorless slots, never typed ones (§6.4). This is the FALLBACK for an
+    UNAUTHORED special energy — an authored one provides through its registry
+    EnergyProgram instead (continuous.ts providedEnergy). */
 export function energyProvidesOf(card: Card): string {
   const named = /^(?:Basic )?(.+) Energy$/.exec(card.name)?.[1];
   if (

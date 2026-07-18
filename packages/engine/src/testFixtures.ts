@@ -98,6 +98,15 @@ export function itemTrainer(id: string): Card {
   return { ...blank, id, name: id, category: "Trainer", trainerType: "Item" };
 }
 
+/** A Special Energy (energyType "Special"). Used with the REAL catalog ids the
+    M4 slice-5 registry authors (sv02-190 Jet, sv02-191 Luminous) so
+    programFor(id) finds the EnergyProgram; the effect text is cosmetic (the
+    registry keys on the id). An unauthored one (fix-special) exercises the
+    Colorless fallback. */
+export function specialEnergy(id: string, name: string): Card {
+  return { ...blank, id, name, category: "Energy", energyType: "Special" };
+}
+
 /** A Trainer of a given type. Used with the REAL catalog ids the M4 registry
     authors (sv01-189, …) so `programFor(id)` finds the program — the `effect`
     text is cosmetic here (the registry keys on the id, not the text). */
@@ -299,6 +308,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "sv01-197": trainerCard("sv01-197", "Tool", "The attacks of the Pokémon this card is attached to do 10 more damage…"),
   /** Bravery Charm — Tool: the Basic holder gets +50 HP. */
   "sv02-173": trainerCard("sv02-173", "Tool", "The Basic Pokémon this card is attached to gets +50 HP."),
+
+  // — M4 slice 5: Special Energy (real catalog ids so the registry finds their
+  //   EnergyProgram; names are the REAL names, though provision keys on the id). —
+  /** Jet Energy — {C} + switch-on-bench-attach. */
+  "sv02-190": specialEnergy("sv02-190", "Jet Energy"),
+  /** Luminous Energy — wildcard (any 1 type), {C} if another Special attached. */
+  "sv02-191": specialEnergy("sv02-191", "Luminous Energy"),
+  /** An UNAUTHORED Special Energy — pins the Colorless provision fallback. */
+  "fix-special": specialEnergy("fix-special", "fix-special"),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -385,6 +403,21 @@ export const KNOCKOUT_DECK = deckOf({
   "sv02-173": 4,
   "sv03-174": 2, // Bouffalant — passive "Bouffer" reduces spread on the bench too
   "fix-energy": 18,
+});
+
+/** M4 slice 5 (Special Energy): the Fire attacker (Flame [Fire][Colorless] 60,
+    a typed cost a Luminous wildcard can help pay), benchable bodies for the Jet
+    switch, Jet + Luminous + an unauthored special (fallback), and basic Fire /
+    Colorless energy. */
+export const SPECIAL_ENERGY_DECK = deckOf({
+  "fix-attacker": 8,
+  "fix-basic-1": 12,
+  "fix-victim": 4,
+  "sv02-190": 6,
+  "sv02-191": 6,
+  "fix-special": 2,
+  "fix-fire-energy": 6,
+  "fix-energy": 16,
 });
 
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so

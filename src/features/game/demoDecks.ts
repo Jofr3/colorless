@@ -17,7 +17,9 @@
 // Slice 3 adds the persistent zones, DIFFERENT per deck so the §7.3 replace
 // path is reachable live: Ember runs Beach Court (Stadium) + Vitality Band
 // (Tool), Tidal runs Pokémon League Headquarters (Stadium) + Bravery Charm
-// (Tool).
+// (Tool). Slice 5 adds Special Energy, DIFFERENT per deck (type-neutral, so the
+// disjoint-energy rule keeps them split): Ember runs Jet Energy (switch-on-
+// bench-attach), Tidal runs Luminous Energy (a wildcard that pays any 1 type).
 
 import type { DeckCard } from "@luminous/schema";
 
@@ -55,7 +57,8 @@ export const SHARED_TRAINER_IDS: readonly string[] = SHARED_TRAINERS.map((c) => 
 
 /** Fire Pokémon (sv01 + sv03) incl. the Fuecoco→Crocalor→Skeledirge line
     (M4) and Bouffalant (passive "Bouffer"), the shared Trainers, Beach Court
-    + Vitality Band (slice 3), and 17 Basic Fire Energy (sv03-230). */
+    + Vitality Band (slice 3), Jet Energy ×3 (slice 5), and 14 Basic Fire
+    Energy (sv03-230). */
 const EMBER_STARTERS: DemoDeck = {
   name: "Ember Starters",
   ids: expandDeck([
@@ -71,14 +74,15 @@ const EMBER_STARTERS: DemoDeck = {
     ...SHARED_TRAINERS,
     { cardId: "sv01-167", count: 2 }, // Beach Court — Stadium: Basic retreat −1 (slice 3)
     { cardId: "sv01-197", count: 2 }, // Vitality Band — Tool: +10 damage before W/R (slice 3)
-    { cardId: "sv03-230", count: 17 }, // Basic Fire Energy
+    { cardId: "sv02-190", count: 3 }, // Jet Energy — Special: {C} + switch on bench attach (slice 5)
+    { cardId: "sv03-230", count: 14 }, // Basic Fire Energy
   ]),
 };
 
 /** Water Pokémon (sv01 + sv02) incl. the Buizel→Floatzel line (M4) and
     Chien-Pao ex (activated Ability "Shivery Chill"), the shared Trainers,
-    Pokémon League Headquarters + Bravery Charm (slice 3), and 20 Basic Water
-    Energy (sv02-279). */
+    Pokémon League Headquarters + Bravery Charm (slice 3), Luminous Energy ×3
+    (slice 5), and 17 Basic Water Energy (sv02-279). */
 const TIDAL_SPLASH: DemoDeck = {
   name: "Tidal Splash",
   ids: expandDeck([
@@ -93,7 +97,8 @@ const TIDAL_SPLASH: DemoDeck = {
     ...SHARED_TRAINERS,
     { cardId: "sv03-192", count: 2 }, // Pokémon League Headquarters — Stadium: Basic attacks +{C} (slice 3)
     { cardId: "sv02-173", count: 2 }, // Bravery Charm — Tool: Basic holder +50 HP (slice 3)
-    { cardId: "sv02-279", count: 20 }, // Basic Water Energy
+    { cardId: "sv02-191", count: 3 }, // Luminous Energy — Special: wildcard, any 1 type (slice 5)
+    { cardId: "sv02-279", count: 17 }, // Basic Water Energy
   ]),
 };
 

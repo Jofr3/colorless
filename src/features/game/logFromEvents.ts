@@ -61,7 +61,8 @@ function cardName(state: GameState, uid: string): string {
   return cardOfUid(state, uid)?.name ?? "a card";
 }
 
-/** The Pokémon an attach target points at, resolved from the post-state. */
+/** The Pokémon an attach target points at, resolved from the post-state. Safe
+    for a target whose host stays put (Tools — attachTool never moves it). */
 function targetName(
   state: GameState,
   seat: Seat,
@@ -71,6 +72,17 @@ function targetName(
   const pokemon = target.spot === "active" ? side.active : side.bench[target.index];
   if (pokemon == null) return target.spot === "active" ? "the Active spot" : "the Bench";
   return topCardOf(state, pokemon)?.name ?? "a Pokémon";
+}
+
+/** The Pokémon now carrying `energyUid`, resolved by uid rather than by the
+    attach target's slot — robust to an on-attach move (Jet Energy switches its
+    benched host to the Active Spot in the SAME batch, compacting the bench, so
+    the target index no longer names the host). Reads the post-state. */
+function energyHostName(state: GameState, seat: Seat, energyUid: string): string {
+  const side = state.players[seat];
+  const carriers = side.active === null ? side.bench : [side.active, ...side.bench];
+  const host = carriers.find((pokemon) => pokemon.energy.includes(energyUid));
+  return host === undefined ? "a Pokémon" : (topCardOf(state, host)?.name ?? "a Pokémon");
 }
 
 function modifierText(kind: "weakness" | "resistance", modifier: DamageModifier): string {
@@ -173,11 +185,14 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "TURN_STARTED":
       return [{ kind: "turn", turn: event.turn }];
     case "ENERGY_ATTACHED":
+      // Resolve the host by the energy's uid, NOT the target slot: Jet Energy's
+      // on-attach switch (§6.1) moves its benched host to the Active Spot in
+      // this same batch, so the target index would name the wrong Pokémon.
       return row(event.seat, [
         plain("attached "),
         { text: cardName(state, event.uid), tone: "energy" },
         plain(" → "),
-        strong(targetName(state, event.seat, event.target)),
+        strong(energyHostName(state, event.seat, event.uid)),
       ]);
     case "RETREATED": {
       const segments: LogSegment[] = [
@@ -404,8 +419,9 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       );
     }
     case "POKEMON_SWITCHED":
-      // Passive voice — the causing card (Switch / Boss's Orders) already
-      // logged its TRAINER_PLAYED row; `seat` owns the board that changed.
+      // Passive voice — the causing card already logged its own row (Switch /
+      // Boss's Orders a TRAINER_PLAYED, Jet Energy an ENERGY_ATTACHED); `seat`
+      // owns the board that changed.
       return row(event.seat, [
         strong(cardName(state, event.nowActive)),
         plain(" was switched to the Active spot"),

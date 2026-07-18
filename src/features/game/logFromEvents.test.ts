@@ -8,8 +8,10 @@ import type { GameEvent, GameState, Seat } from "@luminous/engine";
 import { topCardOf } from "@luminous/engine";
 import {
   MIXED_DECK,
+  SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
   attachFromDeck,
+  benchFromDeck,
   deckOf,
   driveSetup,
   handFromDeck,
@@ -489,5 +491,29 @@ describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
     const { state: next, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const rows = texts(logFromEvents(events, ctx(next)));
     expect(rows).toContain("dealt 40 damage to fix-basic-1 · boosted +10");
+  });
+});
+
+describe("ENERGY_ATTACHED — host resolved by uid, robust to Jet's switch (§6.1)", () => {
+  it("names the Pokémon the energy landed on even after Jet switches it Active", () => {
+    let state = driveSetup(7, { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // P1's turn 2
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    // A single, distinctly-named benched Pokémon at index 0.
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    state = benchFromDeck(state, "p1", "fix-victim");
+    state = handFromDeck(state, "p1", "sv02-190", 1); // Jet
+    const jet = handUid(state, "p1", "sv02-190");
+    const { state: next, events } = mustApply(state, {
+      type: "attachEnergy",
+      seat: "p1",
+      uid: jet,
+      target: { spot: "bench", index: 0 },
+    });
+    const rows = texts(logFromEvents(events, ctx(next)));
+    // The energy landed on fix-victim (now Active after the switch) — the old
+    // index-based lookup would have named fix-attacker (now benched at index 0).
+    expect(rows).toContain("attached Jet Energy → fix-victim");
+    expect(rows.some((r) => r === "attached Jet Energy → fix-attacker")).toBe(false);
   });
 });
