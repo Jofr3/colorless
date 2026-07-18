@@ -3,55 +3,61 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-18 — build session #9 (**P3-M4 slice 3: persistent
-zones — the shared Stadium + Pokémon Tools via a continuous-modifier pipeline**;
-built solo, 2-agent Opus review, 2 findings handled (1 fixed, 1 documented +
-pinned); suite 948 → 974, `bun run check` green; /play browser-verified — both
-new gestures DRIVEN to resolution live with zero console errors).
+**Last updated:** 2026-07-18 — build session #10 (**P3-M4 slice 4: the Knock Out
+generalized off the Active** — bench spread/snipe damage + a mid-turn KO that
+resumes the actor's turn, closing the evolve-below-HP gap; built solo, 2-agent
+Opus review, both CLEAN — no correctness defects, 2 informational notes; suite
+974 → 983, `bun run check` green; /play boots clean with zero console errors).
 
 ## Resume point
-**Persistent zones are live (P3-M4 slice 3, D24).** Stadiums (§7.3) and Pokémon
-Tools (§7.4) don't run interpreter programs — their effects are **continuous**,
-so a new module **`packages/engine/src/continuous.ts`** is the ONE place the
-rule reads consult them: `effectiveRetreatCost` (retreat), `effectiveAttackCost`
-(§8.2), `effectiveMaxHp` (the KO test in flow.ts + the web `battle.hp`), and
-`passivesOf` (§8.5 damage — a defender's post-W/R reduction now aggregates
-Bouffalant's passive WITH attached Tools; an attacker's pre-W/R bonus). The
-**shared `GameState.stadium` {uid, owner}** is played via `playStadium`
-(one/turn, replace-on-play to the OWNER's discard, same-NAME ban); **Tools**
-attach via a new **`attachTool`** action (one/Pokémon, uncapped, no allowance,
-rides the stack through evolution/switch, discards with a KO). Representative
-set: Beach Court (sv01-167) + Pokémon League HQ (sv03-192) + Vitality Band
-(sv01-197) + Bravery Charm (sv02-173). Web: Stadiums are a HUD button AND a drag
-onto the shared slot (the one non-own drop target); Tools are a drag onto an own
-Pokémon. engineVersion 0.6.0. See "M4 slice 3 as built" + D24.
-**Review (2 Opus agents):** wire-safety proven clean (33 hostile inputs, zero
-throws/mutation); log `· boosted` breadcrumb reordered before weakness (pipeline
-order); **deferred gap** — evolution can now LOWER effective max HP (Bravery
-Charm's Basic +50 dropping off), so a damaged charmed Basic evolving below the
-new stage's HP should KO (§8.1) but `evolve` runs no KO check (Active-only,
-turn-ending KO flow) — Active cleaned up at Checkup, benched one is not;
-documented + pinned by a characterization test, deferred with the bench-KO
-generalization.
-**Verification:** `bun run check` green (**974 tests**). **Live /play smoke
-(agent-browser, seed 6, ZERO console errors):** Beach Court DRAGGED onto the
-shared stadium slot → "Stadium: Beach Court" (persisted through 2 turns + flips)
-→ Growlithe's retreat button dropped 2 → 1 live (the continuous discount);
-Vitality Band DRAGGED onto Growlithe → "Growlithe (1 tool)", log "attached
-Vitality Band → Growlithe". Both new gestures + the shared zone + continuous
-reads confirmed end-to-end on the real Pixi board.
+**The Knock Out is generalized off the Active (P3-M4 slice 4, D25).** It was
+Active-only + turn-ending; slice 4 makes bench spread/snipe damage AND a mid-turn
+KO both work. **`knockOut`** (flow.ts) now KOs any in-play Pokémon by its
+stack-top **uid** (a benched KO discards the stack, compacts the bench, owes a
+prize but NO promotion). **`collectKnockOuts`** is the ONE post-damage sweep
+(Active + Bench, prizes to `otherSeat`, stages **prizes-first**, the §14 tie
+guard runs only when both seats lost a Pokémon) — it replaced the inline KO
+blocks in `finishAttack` (now sweeps the defender's whole board) and
+`runCheckup`, so §14 stays single-sourced. A new **`PendingStage
+{kind:"resumeTurn"}`** + **`resolveMidTurnKnockOuts`** resolve a KO mid-turn then
+RESUME the actor's turn (allowances survive). **`evolve`** now runs the KO check
+→ closes D24's evolve-below-HP gap (a benched charmed Basic evolving below the
+new stage's HP is KO'd the instant it evolves — the characterization test now
+asserts it). A **`spreadDamage`** op (effects.ts/interpreter.ts) does flat damage
+to EACH opponent Benched Pokémon (no W/R on the bench, but a benched reduction
+passive/Tool still applies; the attacker's Active-only bonus does not); the
+interpreter only PLACES it, `finishAttack`'s sweep catches the bench KOs. Web:
+the ONLY change is `projection.ts koParkActiveSeat` treating `resumeTurn` as
+in-turn. engineVersion 0.7.0. See "M4 slice 4 as built" + D25.
+**Review (2 Opus agents, rules+flow / wire+web): BOTH CLEAN — no correctness
+defects.** Rules agent proved the §14 tie guard (`bothSeatsHit`) necessary +
+sufficient and verified prize attribution / multi-KO shift-safety / resume
+precedence / evolve / spread math; wire agent proved koParkActiveSeat across all
+three park origins, the untouched exhaustive `phaseViewOf`, the opponent's
+mid-turn prize-pick device flip, and spreadDamage purity. 2 informational notes
+(a future Active-only reduction passive would want an `activeOnly` gate; the
+`finishAttack` tie branch is a deliberate dead defensive branch).
+**Verification:** `bun run check` green (**983 tests** — 8 new `knockout.test.ts`
++ a mid-turn-park projection test + the flipped characterization test). **Live
+/play smoke (agent-browser, seed 6, ZERO console errors):** boots with the
+re-ingested demo decks (Pixi canvas renders, all cardPool fetches succeed, the
+coin-toss action drives engine→projection→HUD clean). The new mechanics aren't
+demo-reachable (no spread card; the evolve-below-HP window needs a contrived
+board), so they're covered by the engine + web tests + the clean reviews (the
+slice-2 precedent).
 Next concrete actions:
 1. **P3-M4 remaining slices:** triggered abilities (on-play/on-KO/between-turns
    — trigger scan points at bench-play, evolve, checkup, KO), special-energy
    rules text, Rare Candy (sv01-191 — the item's hand-inspect + evolve reuse).
-2. **Generalize the KO check off the Active** (flow.ts `knockOut`/checkup are
-   Active-only) — this unblocks bench spread/snipe damage AND the deferred
-   evolve-below-HP KO (a mid-turn KO that RESUMES the actor's turn is the new
-   flow shape). Read D24's deferred-gap note + the characterization test first.
-3. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics now live
-   in interpreter.ts (op programs) AND continuous.ts (persistent-zone
-   modifiers), so a new card in a known family is a few lines of registry data.
-   Ask the user before launching one.
+   With the KO flow now whole-board, a **snipe ability** (choose-1-benched
+   damage) is a natural next demonstrator — it reuses `resolveMidTurnKnockOuts`
+   (pass the OPPONENT's seat as the sweep set) + needs mid-effect targeting.
+2. A **live sv card with a spread/snipe attack** in the demo decks (the fixture
+   `fix-sniper` proves the engine; a real card makes it browser-drivable).
+3. Or the **coverage-expansion Workflow fan-out** (M5) — mechanics live in
+   interpreter.ts (op programs incl. spreadDamage), continuous.ts (persistent
+   zones) and a whole-board KO flow; a new card in a known family is a few lines
+   of registry data. Ask the user before launching one.
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -64,13 +70,46 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline, 2026-07-18) — remaining: triggered abilities, special energy, Rare Candy, generalizing the KO off the Active; then the coverage fan-out |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones + KO-off-the-Active done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active — bench spread/snipe + mid-turn KO, 2026-07-18) — remaining: triggered abilities, special energy, Rare Candy; then the coverage fan-out |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-18** (build #10) — **P3-M4 slice 4: the Knock Out generalized off
+  the Active** (D25; built solo — full context loaded — then a 2-agent Opus
+  review, both CLEAN). Two reaches the Active-only + turn-ending KO flow could
+  not: **bench spread/snipe damage** and a **mid-turn KO that resumes the
+  actor's turn**. `knockOut` KOs any in-play Pokémon by uid (bench KO → discard
+  stack, compact bench, prize but no promotion); **`collectKnockOuts`** is the
+  ONE post-damage board sweep (prizes-first, §14 tie guard when both seats lost
+  a Pokémon) shared by `finishAttack` / `runCheckup` / the mid-turn path — §14
+  stays single-sourced. A new **`resumeTurn` PendingStage** + `resolveMidTurnKnockOuts`
+  resolve a KO mid-turn then hand the turn back to the actor. **`evolve`** now
+  runs the KO check → **closes D24's evolve-below-HP gap** (the pinned
+  characterization test flipped to assert the KO). A **`spreadDamage`** op
+  (interpreter, derived from a 6th anchored sentence) does flat damage to each
+  opponent Benched Pokémon — a benched reduction passive/Tool still applies
+  (Bouffer −20), the attacker's Active-only bonus does not — and the interpreter
+  only PLACES it, leaving every KO to flow.ts. Web: the sole source change is
+  `projection.ts koParkActiveSeat` treating `resumeTurn` as in-turn (the log/HUD
+  need nothing — a benched uid resolves the same, the opponent's mid-turn prize
+  pick rides the existing `waitingOn` flip). engineVersion 0.6.0 → 0.7.0.
+  **Review:** rules+flow agent PROVED the tie guard necessary + sufficient and
+  found no defects across 7 risk areas; wire+web agent found none either. 2
+  informational notes only (a future Active-only reduction passive; a deliberate
+  dead defensive branch). **Verification:** `bun run check` green (974 → **983**;
+  8 new `knockout.test.ts` + a mid-turn-park projection test + the flipped
+  characterization test). **Live /play smoke** (agent-browser, seed 6, ZERO
+  console errors): boots with the re-ingested sv01–03 demo decks — canvas
+  renders, all cardPool fetches succeed, the coin-toss action drives
+  engine→projection→HUD clean; the new mechanics aren't demo-reachable (no spread
+  card; the evolve-below-HP window needs a contrived board) so are covered by the
+  engine + web tests + the clean reviews (slice-2 precedent). Files: flow.ts
+  (knockOut/collectKnockOuts/resolveMidTurnKnockOuts/resumeTurn), types.ts,
+  attack.ts, turn.ts, effects.ts, interpreter.ts, registry.ts, testFixtures.ts,
+  knockout.test.ts, stadiumTool.test.ts + projection.ts/.test.ts.
 - **2026-07-18** (build #9) — **P3-M4 slice 3: persistent zones — the shared
   Stadium (§7.3) + Pokémon Tools (§7.4) via a continuous-modifier pipeline**
   (built solo — full context loaded — then a 2-agent Opus review; the first
