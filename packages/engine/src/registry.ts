@@ -14,7 +14,7 @@ import type { EffectOp } from "./effects";
 // lines of op data, exactly as D8 intended.
 
 /** A card's activated Ability (§9). Passive/continuous abilities are `passive`
-    below; triggered abilities (on-play/on-KO/between-turns) are a later slice. */
+    below; triggered abilities are `triggered` (TriggeredAbility). */
 export interface AbilityProgram {
   name: string;
   /** §9/§15.J — usable once per turn per Pokémon (tracked in TurnAllowances). */
@@ -24,6 +24,39 @@ export interface AbilityProgram {
   activeOnly: boolean;
   /** The op program `useAbility` runs (may park like a Trainer's). */
   program: EffectOp[];
+}
+
+/** When a triggered Ability (§9) fires. The three slice-6 scan points:
+    - `onPlayToBench` — a Basic played from hand onto the Bench during the
+      controller's turn (turn.ts playBasicToBench — NOT a setup placement);
+    - `onEvolve` — the controller evolved one of their Pokémon (turn.ts evolve);
+    - `betweenTurns` — the Pokémon Checkup (§13, flow.ts runCheckup).
+    on-KO ("when this Pokémon is Knocked Out") is the deferred fourth — it fires
+    during the OPPONENT's turn mid-KO-sweep, needing a resume-the-tail
+    continuation (see docs/workstreams/simulator.md). */
+export type TriggerTiming = "onPlayToBench" | "onEvolve" | "betweenTurns";
+
+/** A card's triggered Ability (§9) — one that FIRES on a game event rather than
+    being player-activated. The framework runs `program` through the shared
+    interpreter (triggers.ts): a board trigger (onPlayToBench/onEvolve, the
+    controller's turn) PARKS on effect:choose like a Trainer and resumes to
+    turn:action; a betweenTurns trigger is NON-PARKING by construction (a
+    heal-each / a fixed counter placement) and runs synchronously inside the
+    one Checkup reduction. */
+export interface TriggeredAbility {
+  name: string;
+  trigger: TriggerTiming;
+  /** The op program to run (interpreter EffectOps). */
+  program: EffectOp[];
+  /** "You may …": the trigger is optional. The framework currently AUTO-FIRES
+      optional triggers (every representative is pure upside — search / heal /
+      snipe — so declining is never strategically needed); where the underlying
+      op is "up to" (searchDeck), the player can still take none. A yes/no
+      confirm for a trigger with a downside is the follow-up. */
+  optional?: boolean;
+  /** Fires only while this Pokémon is in the Active Spot (Trevenant's "if this
+      Pokémon is in the Active Spot"). */
+  activeOnly?: boolean;
 }
 
 /** Continuous modifiers read by the pipeline while the Pokémon is in play.
@@ -93,6 +126,9 @@ export interface CardProgram {
   abilities?: AbilityProgram[];
   /** The Trainer's play effect (Item/Supporter — §7.1/§7.2). */
   trainer?: EffectOp[];
+  /** Triggered Abilities printed on this card (§9) — fire on a game event
+      (played to Bench / evolved / between turns), not player-activated. */
+  triggered?: TriggeredAbility[];
   /** Continuous/passive modifiers (a Pokémon's passive Ability, or a Tool's
       effect on its holder — read while in play). A Tool with this entry is
       attachable; one without is "not simulated" (coverage strategy). */
@@ -194,6 +230,67 @@ const LUMINOUS_ENERGY: CardProgram = {
   energy: { provides: [ANY_ENERGY], demoteWithOtherSpecial: ["Colorless"] },
 };
 
+// ── M4 slice 6: triggered Abilities (§9) — fire on a game event. ──
+
+/** Flamigo — "Insta-Flock": "When you play this Pokémon from your hand onto
+    your Bench during your turn, you may search your deck for up to 3 Flamigo,
+    reveal them, and put them into your hand. Then, shuffle your deck." */
+const FLAMIGO: CardProgram = {
+  triggered: [
+    {
+      name: "Insta-Flock",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [
+        { op: "searchDeck", filter: { kind: "byName", name: "Flamigo" }, dest: "hand", max: 3 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Arboliva — "Enriching Oil": "When you play this Pokémon from your hand to
+    evolve 1 of your Pokémon during your turn, you may heal all damage from 1 of
+    your Pokémon." */
+const ARBOLIVA: CardProgram = {
+  triggered: [
+    {
+      name: "Enriching Oil",
+      trigger: "onEvolve",
+      optional: true,
+      program: [{ op: "healChosen", amount: "all" }],
+    },
+  ],
+};
+
+/** Garganacl — "Blessed Salt": "During Pokémon Checkup, heal 20 damage from
+    each of your Pokémon." (mandatory; non-parking, so it fires from anywhere in
+    play — Active or Bench) */
+const GARGANACL: CardProgram = {
+  triggered: [
+    {
+      name: "Blessed Salt",
+      trigger: "betweenTurns",
+      program: [{ op: "healEach", amount: 20 }],
+    },
+  ],
+};
+
+/** Trevenant — "Forest Miasma": "During Pokémon Checkup, if this Pokémon is in
+    the Active Spot, put 1 damage counter on your opponent's Active Pokémon."
+    (mandatory; active-only; the placed counter can KO — the Checkup's own KO
+    sweep resolves it) */
+const TREVENANT: CardProgram = {
+  triggered: [
+    {
+      name: "Forest Miasma",
+      trigger: "betweenTurns",
+      activeOnly: true,
+      program: [{ op: "damageActive", amount: 10 }],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -237,6 +334,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-190": JET_ENERGY,
   // Luminous Energy — wildcard (any 1 type), {C} if another Special attached
   "sv02-191": LUMINOUS_ENERGY,
+  // — M4 slice 6: triggered Abilities (verified vs local D1 2026-07-18). —
+  // Flamigo — Insta-Flock (on-play-to-Bench: search up to 3 Flamigo)
+  "sv02-170": FLAMIGO,
+  "sv02-227": FLAMIGO,
+  // Arboliva — Enriching Oil (on-evolve: heal all from 1 of your Pokémon)
+  "sv01-023": ARBOLIVA,
+  // Garganacl — Blessed Salt (between-turns: heal 20 from each of your Pokémon)
+  "sv02-123": GARGANACL,
+  // Trevenant — Forest Miasma (between-turns, Active-only: 1 counter on opp Active)
+  "sv03-012": TREVENANT,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

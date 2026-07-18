@@ -15,14 +15,18 @@
 import type { StatusName } from "./events";
 
 /** A declarative card predicate for deck searches (§15.E). Deliberately tiny
-    — the representative cards need only "a Basic Pokémon", "any Pokémon" and
-    "a Basic Energy [of a type]"; the union grows one entry per new shape. */
+    — the representative cards need only "a Basic Pokémon", "any Pokémon", "a
+    Basic Energy [of a type]" and "a card named X"; the union grows one entry
+    per new shape. */
 export type CardFilter =
   | { kind: "basicPokemon" }
   | { kind: "anyPokemon" }
   /** A basic Energy card; `energyType` (a BASIC_ENERGY_TYPES member) narrows
       it to one type (Chien-Pao's "Basic {W} Energy"), else any basic energy. */
-  | { kind: "basicEnergy"; energyType?: string };
+  | { kind: "basicEnergy"; energyType?: string }
+  /** A card matched by exact NAME (Flamigo's "Insta-Flock" searches its own
+      copies — "search your deck for up to 3 Flamigo"). */
+  | { kind: "byName"; name: string };
 
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
@@ -40,6 +44,16 @@ export type EffectOp =
       poisonDamage?: number;
     }
   | { op: "heal"; target: "self"; amount: number }
+  /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
+      (Garganacl "Blessed Salt" — a between-turns triggered Ability). No target
+      choice, so it never parks; one HEALED per Pokémon that actually healed. */
+  | { op: "healEach"; amount: number }
+  /** Place `amount` HP of damage on the OPPONENT's Active Pokémon (Trevenant
+      "Forest Miasma" — 1 damage counter between turns). A COUNTER placement,
+      not attack damage: no Weakness/Resistance (§8.5), emitted as
+      COUNTERS_PLACED source "ability". Never parks; can KO — the caller sweeps
+      (the Checkup's KO sweep does, flow.ts). */
+  | { op: "damageActive"; amount: number }
   /** Spread damage (§8.5): place `amount` HP of damage on EACH of the
       opponent's Benched Pokémon. Weakness/Resistance NEVER apply to Benched
       Pokémon, so this is flat. A SECONDARY damage clause, distinct from the
@@ -69,9 +83,10 @@ export type EffectOp =
   /** Gust: switch one of the OPPONENT's Benched Pokémon into their Active spot
       (Boss's Orders). PARKS on the opponent-bench choice unless forced. */
   | { op: "gust" }
-  /** Heal `amount` HP from one of the controller's own in-play Pokémon
-      (Potion). PARKS on the target choice unless only the Active is in play. */
-  | { op: "healChosen"; amount: number };
+  /** Heal from one of the controller's own in-play Pokémon: `amount` HP, or
+      `"all"` its damage (Potion heals 30; Arboliva's "Enriching Oil" heals
+      all). PARKS on the target choice unless only the Active is in play. */
+  | { op: "healChosen"; amount: number | "all" };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

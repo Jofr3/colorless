@@ -766,10 +766,12 @@ function PromoteDialog({ game, viewerSeat, names, dispatch }: GameHudProps) {
   );
 }
 
-/** effect:choose — a Trainer/Ability the viewer played parked on a decision
-    (§15.E/G). Dispatches resolveEffect. Mounted only while the decision is
-    parked on the viewer (the phase switch), so the sub-dialogs' useState is
-    the fresh-picks-per-decision reset. */
+/** effect:choose — an effect the viewer's action set in motion parked on a
+    decision (§15.E/G): a Trainer/Ability the viewer played, OR a triggered
+    Ability that fired off a bench-play/evolve drag (M4 slice 6) — both reach
+    the SAME phase, so this dialog is origin-agnostic. Dispatches resolveEffect.
+    Mounted only while the decision is parked on the viewer (the phase switch),
+    so the sub-dialogs' useState is the fresh-picks-per-decision reset. */
 function EffectChooseDialog(props: GameHudProps) {
   const pending = props.projection.pendingDecision;
   // Narrowing only — the phase switch mounts this exactly at effect:choose.

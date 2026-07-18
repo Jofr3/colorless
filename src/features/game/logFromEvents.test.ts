@@ -329,6 +329,18 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     expect(
       line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 30, source: "confusion" }).text,
     ).toBe(`Confusion: ${name} hit itself for 30`);
+    // M4 slice 6 — a between-turns Ability counter (Trevenant) is a system row.
+    expect(line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 10, source: "ability" })).toEqual(
+      { text: `Ability: 10 damage to ${name}`, who: "system" },
+    );
+  });
+
+  it("names a triggered Ability firing on its own (M4 slice 6)", () => {
+    const { uid, name } = settled;
+    expect(line({ type: "ABILITY_TRIGGERED", seat: "p1", uid, ability: "Blessed Salt" })).toEqual({
+      text: `${name}'s Blessed Salt activated`,
+      who: "p1",
+    });
   });
 
   it("formats the recovery, confusion and effect coin flips", () => {

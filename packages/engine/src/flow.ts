@@ -4,6 +4,7 @@ import { activeTop, prizeValueOf, topCardOf, topUid } from "./cards";
 import { effectiveMaxHp } from "./continuous";
 import type { GameEvent } from "./events";
 import { flipCoin } from "./rng";
+import { runCheckupTriggers } from "./triggers";
 import type {
   GameOutcome,
   GameOverReason,
@@ -308,12 +309,22 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
     }
   }
 
+  // §9/§13 — between-turns triggered Abilities fire during the Checkup, after
+  // the condition ticks and before the KO sweep: a heal-each (Garganacl's
+  // Blessed Salt) and a fixed counter placement (Trevenant's Forest Miasma,
+  // which can lethally damage the opponent's Active — swept below). They are
+  // non-parking, so they thread straight through. The engine fires them in a
+  // fixed order ([endedSeat, other], Active then Bench); the official
+  // player-ordered Checkup is simplified to this deterministic order.
+  next = runCheckupTriggers(next, order, events);
+
   // The batch is done — NOW resolve its Knock Outs (§13) through the shared
-  // sweep, in [endedSeat, other] order. Checkup damage only ever lands on the
-  // Actives (poison/burn), but the sweep scans full boards: a benched Pokémon
-  // is never lethal here (mid-turn KOs are resolved the instant they occur),
-  // so scanning it is a harmless superset that also keeps the §14 double-KO
-  // tie guard single-sourced with the attack and mid-turn paths.
+  // sweep, in [endedSeat, other] order. Checkup damage lands on the Actives
+  // (poison/burn, Trevenant's between-turns counter), but the sweep scans full
+  // boards: a benched Pokémon is never lethal here (mid-turn KOs are resolved
+  // the instant they occur), so scanning it is a harmless superset that also
+  // keeps the §14 double-KO tie guard single-sourced with the attack and
+  // mid-turn paths.
   const batch = collectKnockOuts(next, order, events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // Pop the checkup stage, put the KO stages in front of what remains

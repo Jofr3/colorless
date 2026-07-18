@@ -317,6 +317,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "sv02-191": specialEnergy("sv02-191", "Luminous Energy"),
   /** An UNAUTHORED Special Energy — pins the Colorless provision fallback. */
   "fix-special": specialEnergy("fix-special", "fix-special"),
+
+  // — M4 slice 6: the triggered-Ability cast (real catalog ids so the registry
+  //   finds their programs; NAMES are the real card names — Flamigo's search
+  //   matches its own name, so a fixture name change would un-target it — but
+  //   the stages/evolveFrom are simplified to the fixture line for the tests
+  //   (the registry keys on the id, not the stage). —
+  /** Flamigo — Insta-Flock (on-play-to-Bench: search up to 3 Flamigo → hand).
+      A Basic so playBasicToBench places it; NAME "Flamigo" is what the byName
+      search matches, so every copy is a search target. */
+  "sv02-170": battler("sv02-170", { name: "Flamigo", hp: 110, retreat: 1 }),
+  /** Arboliva — Enriching Oil (on-evolve: heal all from 1 of your Pokémon).
+      evolveFrom fix-basic-1 (the fixture line) so a fix-basic-1 Active evolves
+      straight into it — the trigger fires on the evolve, not the stage. */
+  "sv01-023": {
+    ...blank,
+    id: "sv01-023",
+    name: "Arboliva",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 150,
+    types: ["Colorless"],
+    retreat: 2,
+    evolveFrom: "fix-basic-1",
+  } satisfies Card,
+  /** Garganacl — Blessed Salt (between-turns: heal 20 from EACH of your
+      Pokémon). A Basic so it sits Active or benched without an evolution. */
+  "sv02-123": battler("sv02-123", { name: "Garganacl", hp: 180, retreat: 2 }),
+  /** Trevenant — Forest Miasma (between-turns, Active-only: 1 counter on the
+      opponent's Active). A Basic for the same reason. */
+  "sv03-012": battler("sv03-012", { name: "Trevenant", hp: 140, retreat: 2 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -418,6 +448,22 @@ export const SPECIAL_ENERGY_DECK = deckOf({
   "fix-special": 2,
   "fix-fire-energy": 6,
   "fix-energy": 16,
+});
+
+/** M4 slice 6 triggered-Ability suite: fix-basic-1 bodies (Active/bench + the
+    Arboliva evolve target), Flamigo ×6 (Insta-Flock search targets — one
+    benched leaves ≥3 in deck), Arboliva/Garganacl/Trevenant in multiples
+    (surgery pulls them from the deck), low-HP fix-victim for Trevenant's KO,
+    and energy. */
+export const TRIGGER_DECK = deckOf({
+  "fix-basic-1": 16,
+  "sv02-170": 6,
+  "sv01-023": 3,
+  "sv02-123": 3,
+  "sv03-012": 3,
+  "fix-victim": 4,
+  "sv03-174": 2, // Bouffalant — "Bouffer" reduces ATTACK damage only, NOT counters
+  "fix-energy": 23,
 });
 
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so

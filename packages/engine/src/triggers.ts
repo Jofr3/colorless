@@ -1,0 +1,132 @@
+import type { ApplyResult } from "./actions";
+import { ok } from "./actions";
+import { topCardOf, topUid } from "./cards";
+import type { GameEvent } from "./events";
+import type { RunResult } from "./interpreter";
+import { runProgram } from "./interpreter";
+import { programFor } from "./registry";
+import type { TriggeredAbility, TriggerTiming } from "./registry";
+import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
+
+// Triggered Abilities (§9, M4 slice 6) — the Abilities that FIRE on a game
+// event rather than being player-activated. Three scan points are wired:
+//   • onPlayToBench — a Basic played from hand onto the Bench during the
+//     controller's turn (turn.ts playBasicToBench — NOT a setup placement,
+//     which is a different handler and not "during your turn");
+//   • onEvolve — the controller evolved one of their Pokémon (turn.ts evolve);
+//   • betweenTurns — the Pokémon Checkup (§13, flow.ts runCheckup).
+// on-KO is the deferred fourth: it fires during the OPPONENT's turn mid-KO
+// sweep, which needs a resume-the-tail continuation (see simulator.md).
+//
+// The board triggers (onPlayToBench/onEvolve) run during the controller's own
+// turn, so a program that needs a decision PARKS on effect:choose exactly like
+// a Trainer/Ability and RESUMES to turn:action via resolveEffect (cardplay.ts).
+// The betweenTurns triggers are NON-PARKING by construction (a heal-each / a
+// fixed counter placement), so they run synchronously inside the one Checkup
+// reduction — a between-turns Ability that needed a decision would be new
+// machinery (parking mid-Checkup), deferred with on-KO.
+
+/** The triggered Abilities on the top card of `pokemon` matching `timing`,
+    gated by each one's own `activeOnly` against whether the Pokémon is Active. */
+function triggersOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  timing: TriggerTiming,
+  isActive: boolean,
+): TriggeredAbility[] {
+  const card = topCardOf(state, pokemon);
+  if (card === undefined) return [];
+  return (programFor(card.id)?.triggered ?? []).filter(
+    (t) => t.trigger === timing && (t.activeOnly !== true || isActive),
+  );
+}
+
+/** The Pokémon at `target` on `seat`'s board, or undefined when the spot is
+    empty / the bench index is out of range (wire indices are checked upstream,
+    but stay total). */
+function pokemonAt(state: GameState, seat: Seat, target: PokemonTarget): InPlayPokemon | undefined {
+  const side = state.players[seat];
+  if (target.spot === "active") return side.active ?? undefined;
+  return side.bench[target.index];
+}
+
+/** Fold a runProgram result into an ApplyResult during a board trigger: DONE
+    returns to the controller's turn:action; PARKED sets the effect:choose
+    interrupt and announces it (EFFECT_PENDING) so an event-only client never
+    hangs — the SAME fold cardplay.ts's settleRun does for Trainers/Abilities
+    (a parked trigger resumes through the same resolveEffect path). */
+function settleTrigger(result: RunResult, controller: Seat, events: GameEvent[]): ApplyResult {
+  if (result.kind === "done") {
+    return ok({ ...result.state, phase: { kind: "turn:action", seat: controller } }, events);
+  }
+  events.push({ type: "EFFECT_PENDING", seat: controller, note: result.prompt.note });
+  return ok(
+    {
+      ...result.state,
+      phase: { kind: "effect:choose", seat: controller, prompt: result.prompt, cont: result.cont },
+    },
+    events,
+  );
+}
+
+/** Run the triggered Ability that fires when the actor's own Pokémon at
+    `target` was just played to the Bench / evolved (§9), and fold the result to
+    a phase. Returns ok(state) unchanged when nothing fires — the caller
+    (playBasicToBench / evolve) passes its board-action events straight through.
+    Representative cards carry ONE triggered Ability per timing, so at most one
+    program runs here; chaining several parking triggers on one card (a second
+    would have to wait for the first to resolve) is a follow-up. */
+export function runBoardTrigger(
+  state: GameState,
+  seat: Seat,
+  target: PokemonTarget,
+  timing: TriggerTiming,
+  events: GameEvent[],
+): ApplyResult {
+  const pokemon = pokemonAt(state, seat, target);
+  if (pokemon === undefined) return ok(state, events);
+  const ability = triggersOf(state, pokemon, timing, target.spot === "active")[0];
+  if (ability === undefined) return ok(state, events);
+  const uid = topUid(pokemon);
+  if (uid === undefined) return ok(state, events);
+  // Optional triggers auto-fire (see TriggeredAbility.optional) — the "up to"
+  // search still lets the player take none, and the other representatives are
+  // pure upside. A yes/no confirm for a downside trigger is the follow-up.
+  events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
+  return settleTrigger(runProgram(state, ability.program, { seat }, events), seat, events);
+}
+
+/** Run every betweenTurns triggered Ability in play during the Pokémon Checkup
+    (§13), in `order` (the ended seat first), Active then Bench per seat. These
+    are NON-PARKING by construction, so they apply synchronously and the state
+    threads straight through — the Checkup's own KO sweep (flow.ts) resolves any
+    Knock Out a placed counter caused. None changes the bench LENGTH (heal /
+    counter only), so a per-seat index walk over the current board is stable. */
+export function runCheckupTriggers(
+  state: GameState,
+  order: readonly Seat[],
+  events: GameEvent[],
+): GameState {
+  let next = state;
+  for (const seat of order) {
+    // Active, then each bench slot — re-reading the CURRENT board each step,
+    // since a heal/damage replaced the Pokémon object at that spot.
+    const targets: PokemonTarget[] = [{ spot: "active" }];
+    for (let index = 0; index < next.players[seat].bench.length; index++) {
+      targets.push({ spot: "bench", index });
+    }
+    for (const target of targets) {
+      const pokemon = pokemonAt(next, seat, target);
+      if (pokemon === undefined) continue;
+      const uid = topUid(pokemon);
+      if (uid === undefined) continue;
+      for (const ability of triggersOf(next, pokemon, "betweenTurns", target.spot === "active")) {
+        events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
+        // Non-parking by construction — a betweenTurns program returns done, so
+        // taking .state loses nothing (parking mid-Checkup is deferred).
+        next = runProgram(next, ability.program, { seat }, events).state;
+      }
+    }
+  }
+  return next;
+}

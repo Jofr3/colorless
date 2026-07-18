@@ -144,7 +144,7 @@ export type GameEvent =
       seat: Seat;
       uid: string;
       amount: number;
-      source: "poison" | "burn" | "confusion";
+      source: "poison" | "burn" | "confusion" | "ability";
     }
   /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
       (§13.2) or asleep's wake flip (§13.3). Heads is followed by the
@@ -198,6 +198,12 @@ export type GameEvent =
   | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
+  /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
+      reached its trigger condition — played to the Bench / evolved (during
+      that seat's turn), or the Pokémon Checkup (between turns). Unlike
+      ABILITY_USED it is not a player action; the ops it runs follow in the
+      same batch (and may park on effect:choose for a board trigger). */
+  | { type: "ABILITY_TRIGGERED"; seat: Seat; uid: string; ability: string }
   /** The controller's whole hand went to the discard (Professor's Research). */
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
   /** A deck search resolved: `uids` moved deck → `dest` (revealed, §15.E). */

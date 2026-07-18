@@ -20,6 +20,7 @@ import type { GameEvent } from "./events";
 import { advance, isLethallyDamaged, resolveMidTurnKnockOuts, turnTail } from "./flow";
 import { switchInto } from "./interpreter";
 import { programFor } from "./registry";
+import { runBoardTrigger } from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -166,7 +167,12 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
     hand: without(side.hand, action.uid),
     bench: [...side.bench, makeInPlay(action.uid, state.turn)],
   });
-  return ok(next, [{ type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid }]);
+  const events: GameEvent[] = [{ type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid }];
+  // §9 — a "when you play this Pokémon onto your Bench during your turn"
+  // triggered Ability (Flamigo's Insta-Flock) fires now, on the freshly
+  // benched Pokémon (the last, dense slot). It may park on effect:choose.
+  const benchIndex = next.players[action.seat].bench.length - 1;
+  return runBoardTrigger(next, action.seat, { spot: "bench", index: benchIndex }, "onPlayToBench", events);
 }
 
 /** §10 — place an Evolution card from hand on top of one of your own in-play
@@ -290,11 +296,16 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   // carried damage now meets the new stage's HP the Pokémon is Knocked Out the
   // instant it evolves — a MID-TURN KO that resumes the actor's turn (flow.ts),
   // for a benched holder as much as an Active one. (Evolution otherwise only
-  // raises HP, so without a Basic-only HP Tool this check never fires.)
+  // raises HP, so without a Basic-only HP Tool this check never fires.) The KO
+  // check runs BEFORE the trigger: a Pokémon KO'd on evolution left play, so
+  // its own "when you evolve" Ability does not fire.
   if (isLethallyDamaged(next, evolved)) {
     return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);
   }
-  return ok(next, events);
+  // §9 — a "when you play this Pokémon to evolve during your turn" triggered
+  // Ability (Arboliva's Enriching Oil) fires now, on the just-evolved Pokémon.
+  // It may park on effect:choose.
+  return runBoardTrigger(next, action.seat, action.target, "onEvolve", events);
 }
 
 /** Leaving the Active spot removes Special Conditions (§11/§12) — M4 adds

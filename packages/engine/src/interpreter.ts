@@ -4,7 +4,7 @@ import { passivesOf } from "./continuous";
 import type { CardFilter, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { flipCoin, shuffle } from "./rng";
-import type { GameState, PlayerSide, PokemonTarget, Seat } from "./types";
+import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
   DEFAULT_POISON_DAMAGE,
@@ -134,6 +134,10 @@ function stepOp(
       return { done: applyStatus(state, op, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
+    case "healEach":
+      return { done: healEach(state, op.amount, ctx, events) };
+    case "damageActive":
+      return { done: damageActive(state, op.amount, ctx, events) };
     case "spreadDamage":
       return { done: spreadDamage(state, op.amount, ctx, events) };
     case "drawCards":
@@ -288,6 +292,54 @@ function spreadDamage(
   return withSide(state, opponent, { ...side, bench });
 }
 
+/** Heal `amount` HP from EACH of the controller's own in-play Pokémon
+    (Garganacl "Blessed Salt", between turns). Each heal is clamped to the
+    Pokémon's damage and emits its own HEALED (an undamaged Pokémon heals 0 and
+    emits nothing). Active then bench, in index order. Never parks. */
+function healEach(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const healOne = (pokemon: InPlayPokemon): InPlayPokemon => {
+    const uid = topUid(pokemon);
+    const healed = Math.min(amount, pokemon.damage);
+    if (uid === undefined || healed <= 0) return pokemon;
+    events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
+    return { ...pokemon, damage: pokemon.damage - healed };
+  };
+  const active = side.active === null ? null : healOne(side.active);
+  const bench = side.bench.map(healOne);
+  return withSide(state, ctx.seat, { ...side, active, bench });
+}
+
+/** PUT `amount` HP of damage counters on the OPPONENT's Active Pokémon
+    (Trevenant "Forest Miasma"). "Put damage counters" is NOT attack damage: no
+    Weakness/Resistance (§8.5) AND no damage-reduction passive — Bouffalant's
+    "Bouffer" reduces "damage from attacks", which a counter placed by an
+    Ability is not (the same reason the poison/burn Checkup ticks place their
+    counters flat). So this is a flat placement, distinct from spreadDamage
+    (an ATTACK's damage, which Bouffer does reduce). Emitted as COUNTERS_PLACED
+    source "ability". Only raises damage; the KO check runs in the caller's
+    sweep (the Checkup's, flow.ts), so this never KOs. */
+function damageActive(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (amount <= 0) return state;
+  const opponent = otherSeat(ctx.seat);
+  const active = state.players[opponent].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
+  return withActive(state, opponent, { ...active, damage: active.damage + amount });
+}
+
 /** Heal the controller's own Active (attack "heal from it" op). */
 function healSelf(state: GameState, amount: number, ctx: EffectContext, events: GameEvent[]): GameState {
   const active = state.players[ctx.seat].active;
@@ -393,11 +445,12 @@ export function switchInto(
   return withSide(state, seat, { ...side, active: incoming, bench });
 }
 
-/** Heal `amount` from the controller's own in-play `ref` (Potion). */
+/** Heal from the controller's own in-play `ref`: `amount` HP, or all of its
+    damage when `amount` is "all" (Potion 30 / Arboliva's Enriching Oil). */
 function healChosen(
   state: GameState,
   ref: PokemonRef,
-  amount: number,
+  amount: number | "all",
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -407,7 +460,7 @@ function healChosen(
   if (pokemon === undefined || pokemon === null) return state;
   const uid = topUid(pokemon);
   if (uid === undefined) return state;
-  const healed = Math.min(amount, pokemon.damage);
+  const healed = amount === "all" ? pokemon.damage : Math.min(amount, pokemon.damage);
   if (healed <= 0) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
   const updated = { ...pokemon, damage: pokemon.damage - healed };
@@ -459,6 +512,8 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
         card.energyType === "Normal" &&
         (filter.energyType === undefined || energyProvidesOf(card) === filter.energyType)
       );
+    case "byName":
+      return card.name === filter.name;
   }
 }
 
@@ -468,9 +523,11 @@ function searchNote(filter: CardFilter, dest: "bench" | "hand", max: number): st
       ? "a Basic Pokémon"
       : filter.kind === "anyPokemon"
         ? "a Pokémon"
-        : filter.energyType === undefined
-          ? "a Basic Energy"
-          : `a Basic ${filter.energyType} Energy`;
+        : filter.kind === "byName"
+          ? filter.name
+          : filter.energyType === undefined
+            ? "a Basic Energy"
+            : `a Basic ${filter.energyType} Energy`;
   const where = dest === "bench" ? "onto your Bench" : "into your hand";
   return max > 1
     ? `Search your deck for up to ${max} ${what} ${where}.`

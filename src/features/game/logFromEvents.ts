@@ -316,6 +316,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             plain(" hit itself for "),
             amount,
           ]);
+        case "ability":
+          // A between-turns Ability counter (Trevenant's Forest Miasma) — a
+          // system row, the ABILITY_TRIGGERED row just before names the source.
+          return row("system", [plain("Ability: "), amount, plain(" damage to "), strong(name)]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);
       }
@@ -402,6 +406,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(" used "),
         strong(event.ability),
+      ]);
+    case "ABILITY_TRIGGERED":
+      // A triggered Ability firing on its own (played to Bench / evolved /
+      // between turns) — reads like ABILITY_USED but names it as automatic.
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain("'s "),
+        strong(event.ability),
+        plain(" activated"),
       ]);
     case "HAND_DISCARDED": {
       // Count only — the hand is otherwise hidden (module header), even though

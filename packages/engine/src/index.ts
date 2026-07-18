@@ -32,10 +32,11 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 slice 5: Special Energy — provision as data
-    (multi-unit + wildcard), the wildcard-aware cost matcher, and on-attach
-    effects (Jet Energy's switch)). */
-export const engineVersion = "0.8.0";
+/** Engine milestone marker (M4 slice 6: triggered Abilities (§9) — fire at
+    three scan points (on-play-to-Bench, on-evolve, between-turns/Checkup)
+    through the shared interpreter; board triggers park on effect:choose, a
+    between-turns counter can KO through the Checkup sweep). */
+export const engineVersion = "0.9.0";
 
 export type {
   ApplyResult,
@@ -103,6 +104,8 @@ export type {
   EnergyProgram,
   PassiveEffects,
   StadiumEffects,
+  TriggeredAbility,
+  TriggerTiming,
 } from "./registry";
 export { programFor } from "./registry";
 export type { DrawReason, GameEvent, StatusName } from "./events";
