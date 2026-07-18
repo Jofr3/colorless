@@ -18,6 +18,7 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
+import { effectiveAttackCost, passivesOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import {
@@ -106,12 +107,13 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   if (declared === undefined) {
     return err("BAD_ATTACK_INDEX", `${attacker.name} has no attack at index ${String(index)}`);
   }
-  // §8.2 cost check against what the attached energy provides.
+  // §8.2 cost check against what the attached energy provides — under the
+  // in-play Stadium's continuous cost effects (League HQ's Basic surcharge).
   const provided = active.energy.map((uid) => {
     const card = cardOfUid(state, uid);
     return card === undefined ? "Colorless" : energyProvidesOf(card);
   });
-  const cost = declared.cost ?? [];
+  const cost = effectiveAttackCost(state, active, declared.cost ?? []);
   if (!costMet(cost, provided)) {
     return err("ATTACK_COST_UNMET", `${declared.name} costs [${cost.join(", ")}]`);
   }
@@ -185,14 +187,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
 
   let defended = defender;
   if (base > 0) {
-    // §8.5 damage pipeline, in printed order: base → Weakness (modern ×2,
-    // the old-era +20 prints add) → Resistance (−30) → the defender's
-    // continuous damage reduction (Bouffalant "Bouffer", §15.B), floored at 0.
-    // Weakness/Resistance apply to the Defending Pokémon only.
+    // §8.5 damage pipeline, in printed order: base + the attacker's continuous
+    // pre-W/R bonus (Vitality Band) → Weakness (modern ×2, the old-era +20
+    // prints add) → Resistance (−30) → the defender's continuous damage
+    // reduction (Bouffalant "Bouffer" / a defending Tool, §15.B), floored at
+    // 0. Weakness/Resistance apply to the Defending Pokémon only, and both
+    // continuous reads aggregate printed passives WITH attached Tools
+    // (continuous.ts). The bonus rides only an attack that already does
+    // damage — this base > 0 branch is that rule.
+    const bonus = passivesOf(next, active).damageBonusBeforeWR;
     const weakness = weaknessOf(attacker, defenderCard);
     const resistance = resistanceOf(attacker, defenderCard);
-    const afterWR = Math.max(0, applyDamageModifier(applyDamageModifier(base, weakness), resistance));
-    const reduction = programFor(defenderCard.id)?.passive?.damageReductionAfterWR ?? 0;
+    const afterWR = Math.max(
+      0,
+      applyDamageModifier(applyDamageModifier(base + bonus, weakness), resistance),
+    );
+    const reduction = passivesOf(next, defender).damageReductionAfterWR;
     const dealt = Math.max(0, afterWR - reduction);
     defended = { ...defender, damage: defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
@@ -201,9 +211,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       seat: defenderSeat,
       uid: defenderUid,
       base,
+      // Present only when a continuous effect actually moved the total.
+      bonus: bonus > 0 ? bonus : undefined,
       weakness,
       resistance,
-      // Present only when a passive actually reduced the post-W/R total.
       reduction: reduction > 0 ? reduction : undefined,
       dealt,
       damage: defended.damage,

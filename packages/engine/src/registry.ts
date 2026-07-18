@@ -25,11 +25,39 @@ export interface AbilityProgram {
   program: EffectOp[];
 }
 
-/** Continuous modifiers read by the pipeline while the Pokémon is in play. */
+/** Continuous modifiers read by the pipeline while the Pokémon is in play.
+    Carried by a Pokémon's own printed passive Ability (Bouffalant) OR by an
+    attached Pokémon Tool (§7.4) — continuous.ts aggregates the top card's
+    entry with every attached Tool's, so both sources feed one read site. */
 export interface PassiveEffects {
   /** Flat HP subtracted from the attack damage this Pokémon TAKES, applied
       AFTER Weakness and Resistance (Bouffalant "Bouffer", §8.5/§15.B). */
   damageReductionAfterWR?: number;
+  /** Flat HP added to the attack damage this Pokémon DEALS to the opponent's
+      Active, applied BEFORE Weakness and Resistance (Vitality Band). Only
+      attacks that already do damage get it (a 0-damage attack stays 0). */
+  damageBonusBeforeWR?: number;
+  /** Max-HP added while the holder's TOP card is a Basic Pokémon (Bravery
+      Charm — "The Basic Pokémon this card is attached to gets +50 HP");
+      evolving the holder ends it, the Tool staying attached notwithstanding.
+      Note: because this is the one effect that can LOWER effective max HP on
+      evolution, it exposes the deferred "evolve runs no KO check" gap — see
+      turn.ts evolve. */
+  basicHpBonus?: number;
+}
+
+/** A Stadium's continuous effects (§7.3) — applied to BOTH players' boards
+    while the card sits in the shared zone (continuous.ts reads them off
+    `GameState.stadium`). Activated "once during each player's turn" Stadiums
+    (Artazon, Mesagoza, Town Store) are a later slice, with the triggered
+    abilities. */
+export interface StadiumEffects {
+  /** §11 retreat costs THIS much less for every Basic Pokémon in play
+      (Beach Court), floored at a free retreat. */
+  basicRetreatDiscount?: number;
+  /** Attacks of every Basic Pokémon in play cost this many {C} more
+      (Pokémon League Headquarters). */
+  basicAttackCostSurcharge?: number;
 }
 
 export interface CardProgram {
@@ -40,8 +68,13 @@ export interface CardProgram {
   abilities?: AbilityProgram[];
   /** The Trainer's play effect (Item/Supporter — §7.1/§7.2). */
   trainer?: EffectOp[];
-  /** Continuous/passive modifiers (read while in play). */
+  /** Continuous/passive modifiers (a Pokémon's passive Ability, or a Tool's
+      effect on its holder — read while in play). A Tool with this entry is
+      attachable; one without is "not simulated" (coverage strategy). */
   passive?: PassiveEffects;
+  /** The Stadium's continuous effects (§7.3). A Stadium with this entry is
+      playable; one without is "not simulated" (coverage strategy). */
+  stadium?: StadiumEffects;
 }
 
 // ── The programs, authored from the printed text (verified vs the live
@@ -100,6 +133,25 @@ const CHIEN_PAO: CardProgram = {
     (after applying Weakness and Resistance)." (passive) */
 const BOUFFALANT: CardProgram = { passive: { damageReductionAfterWR: 20 } };
 
+// ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
+
+/** Beach Court — "The Retreat Cost of each Basic Pokémon in play (both yours
+    and your opponent's) is {C} less." (Stadium) */
+const BEACH_COURT: CardProgram = { stadium: { basicRetreatDiscount: 1 } };
+
+/** Pokémon League Headquarters — "Attacks used by each Basic Pokémon in play
+    (both yours and your opponent's) cost {C} more." (Stadium) */
+const POKEMON_LEAGUE_HQ: CardProgram = { stadium: { basicAttackCostSurcharge: 1 } };
+
+/** Vitality Band — "The attacks of the Pokémon this card is attached to do 10
+    more damage to your opponent's Active Pokémon (before applying Weakness
+    and Resistance)." (Tool) */
+const VITALITY_BAND: CardProgram = { passive: { damageBonusBeforeWR: 10 } };
+
+/** Bravery Charm — "The Basic Pokémon this card is attached to gets +50 HP."
+    (Tool) */
+const BRAVERY_CHARM: CardProgram = { passive: { basicHpBonus: 50 } };
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -129,6 +181,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-274": CHIEN_PAO,
   // Bouffalant — Bouffer (passive)
   "sv03-174": BOUFFALANT,
+  // — M4 slice 3: Stadiums + Tools (verified vs local D1 2026-07-18). —
+  // Beach Court (Stadium)
+  "sv01-167": BEACH_COURT,
+  // Pokémon League Headquarters (Stadium)
+  "sv03-192": POKEMON_LEAGUE_HQ,
+  // Vitality Band (Tool)
+  "sv01-197": VITALITY_BAND,
+  // Bravery Charm (Tool)
+  "sv02-173": BRAVERY_CHARM,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

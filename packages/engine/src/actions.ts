@@ -101,8 +101,18 @@ export interface PromoteAction {
 export interface PlayTrainerAction {
   type: "playTrainer";
   seat: Seat;
-  /** A Trainer uid from the actor's hand (Item/Supporter — §7.1/§7.2). */
+  /** A Trainer uid from the actor's hand (Item §7.1 / Supporter §7.2 /
+      Stadium §7.3 — Tools attach through attachTool instead). */
   uid: string;
+}
+
+export interface AttachToolAction {
+  type: "attachTool";
+  seat: Seat;
+  /** A Pokémon Tool uid from the actor's hand (§7.4). */
+  uid: string;
+  /** Which of the actor's own in-play Pokémon wears it (one Tool each). */
+  target: PokemonTarget;
 }
 
 export interface UseAbilityAction {
@@ -139,6 +149,7 @@ export type GameAction =
   | RetreatAction
   | AttackAction
   | PlayTrainerAction
+  | AttachToolAction
   | UseAbilityAction
   | ResolveEffectAction
   | TakePrizesAction
@@ -190,11 +201,21 @@ export type ErrorCode =
   // — M4 Trainer / Ability plays (§7/§9). —
   /** playTrainer on a non-Trainer card. */
   | "NOT_A_TRAINER"
-  /** A Stadium or Tool — persistent-zone trainers, a later slice. */
+  /** attachTool on a card that is not a Pokémon Tool (§7.4). */
+  | "NOT_A_TOOL"
+  /** A trainerType the engine has no play path for (a null/garbled catalog
+      row; Tools go through attachTool, not playTrainer). */
   | "TRAINER_TYPE_UNSUPPORTED"
   /** The Trainer has no authored program (registry.ts) — unsimulated, so it
       cannot be played rather than played as a no-op (coverage strategy). */
   | "TRAINER_NOT_SIMULATED"
+  /** §7.3 — one Stadium play per turn. */
+  | "STADIUM_ALREADY_PLAYED"
+  /** §7.3 — a Stadium with the same name as the one in play cannot be
+      played (no self-replacing to reset it). */
+  | "STADIUM_SAME_NAME"
+  /** §7.4 — the target Pokémon already wears a Tool (one each). */
+  | "TOOL_ALREADY_ATTACHED"
   /** §7.2 — one Supporter per turn. */
   | "SUPPORTER_ALREADY_PLAYED"
   /** §4 — the going-first player may not play a Supporter on turn 1. */

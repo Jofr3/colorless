@@ -21,7 +21,7 @@
 import type { ApplyResult, GameAction } from "./actions";
 import { err } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
-import { playTrainer, resolveEffect, useAbility } from "./cardplay";
+import { attachTool, playTrainer, resolveEffect, useAbility } from "./cardplay";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -32,13 +32,14 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 slice 2: Trainers + Abilities + the effect
-    registry / resumable interpreter). */
-export const engineVersion = "0.5.0";
+/** Engine milestone marker (M4 slice 3: the persistent-zone Trainers —
+    the shared Stadium zone + Pokémon Tools with continuous effects). */
+export const engineVersion = "0.6.0";
 
 export type {
   ApplyResult,
   AttachEnergyAction,
+  AttachToolAction,
   AttackAction,
   ChooseFirstPlayerAction,
   EndTurnAction,
@@ -77,6 +78,12 @@ export {
   weaknessOf,
 } from "./cards";
 export type { DamageModifier, ParsedDamage } from "./cards";
+export {
+  effectiveAttackCost,
+  effectiveMaxHp,
+  effectiveRetreatCost,
+  stadiumEffectsOf,
+} from "./continuous";
 export { deriveAttackEffect } from "./effects";
 export type { CardFilter, EffectOp } from "./effects";
 export type {
@@ -85,7 +92,7 @@ export type {
   EffectPrompt,
   PokemonRef,
 } from "./interpreter";
-export type { AbilityProgram, CardProgram, PassiveEffects } from "./registry";
+export type { AbilityProgram, CardProgram, PassiveEffects, StadiumEffects } from "./registry";
 export { programFor } from "./registry";
 export type { DrawReason, GameEvent, StatusName } from "./events";
 export type { CoinFace } from "./rng";
@@ -112,6 +119,7 @@ export type {
   PokemonTarget,
   Seat,
   SpecialConditions,
+  StadiumInPlay,
   TurnAllowances,
   TurnPhase,
 } from "./types";
@@ -165,6 +173,8 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return attack(state, action);
     case "playTrainer":
       return playTrainer(state, action);
+    case "attachTool":
+      return attachTool(state, action);
     case "useAbility":
       return useAbility(state, action);
     case "resolveEffect":

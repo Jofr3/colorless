@@ -13,9 +13,9 @@ import {
   cardOfUid,
   evolveFromOf,
   isEnergyCard,
-  retreatCostOf,
   topUid,
 } from "./cards";
+import { effectiveRetreatCost } from "./continuous";
 import type { GameEvent } from "./events";
 import { advance, turnTail } from "./flow";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -231,6 +231,17 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   // Special Conditions and temporary markers are REMOVED. The evolution card
   // becomes the new stack top, and turnPlayed resets so it cannot evolve again
   // until a later turn.
+  //
+  // KNOWN GAP (M4 slice 3): evolution can now LOWER a Pokémon's effective max
+  // HP — a Bravery Charm's +50 is Basic-only (continuous.ts), so evolving off
+  // a Basic drops it. If carried damage then meets the new stage's HP the
+  // Pokémon is lethally damaged the instant it evolves (§8.1), but this action
+  // runs NO KO check (before slice 3 evolution could only raise HP). An
+  // Active in that state is cleaned up at the next Checkup (flow.ts reads the
+  // continuous max HP), but a BENCHED one is not — the same Active-only KO
+  // limit already documented for bench spread damage. A mid-turn KO that
+  // RESUMES the actor's turn is new flow machinery; deferred with that
+  // generalization (simulator.md).
   const evolved: InPlayPokemon = {
     ...target,
     stack: [...target.stack, action.uid],
@@ -324,8 +335,9 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // The array-ness and the cheap bound check come FIRST: discardEnergy is
   // caller-supplied (a P4 client controls it), so a non-array must never
   // reach `new Set` below — a length-faking object throws there — and the
-  // O(n) membership scans must never run on an unbounded list.
-  const cost = retreatCostOf(topCard);
+  // O(n) membership scans must never run on an unbounded list. The cost is
+  // the CONTINUOUS one (§7.3 — Beach Court discounts Basics).
+  const cost = effectiveRetreatCost(state, active);
   const chosen = action.discardEnergy;
   if (!Array.isArray(chosen) || chosen.length !== cost) {
     return err("RETREAT_COST_MISMATCH", `retreat costs exactly ${cost} energy`);

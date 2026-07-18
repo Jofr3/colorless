@@ -21,11 +21,12 @@ import {
   attacksOf,
   cardOfUid,
   costMet,
+  effectiveAttackCost,
+  effectiveRetreatCost,
   energyProvidesOf,
   isImmobilized,
   otherSeat,
   programFor,
-  retreatCostOf,
   topCardOf,
   topUid,
 } from "@luminous/engine";
@@ -59,9 +60,11 @@ const ROW_BUTTON_DISABLED = "cursor-default bg-white/[0.03] text-white/40 ring-w
 const ROW_BUTTON_BASE =
   "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all";
 
-/** A Trainer playable from `seat`'s hand (Item/Supporter with a registry
-    program), deduped to one entry per distinct card. `disabled` mirrors the
-    engine's §4/§7.2 Supporter gate so the button greys out before the reject. */
+/** A Trainer playable from `seat`'s hand (an Item/Supporter with a registry
+    program, or an authored Stadium — Tools are drag gestures, not buttons),
+    deduped to one entry per distinct card. `disabled` mirrors the engine's
+    coarse gates (§4/§7.2 Supporter, §7.3 Stadium once-per-turn + same-name)
+    so the button greys out before the reject. */
 interface TrainerOption {
   uid: string;
   name: string;
@@ -69,15 +72,21 @@ interface TrainerOption {
 }
 function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
   const side = game.players[seat];
+  const inPlayStadium =
+    game.stadium === null ? undefined : cardOfUid(game, game.stadium.uid)?.name;
   const seen = new Set<string>();
   const out: TrainerOption[] = [];
   for (const uid of side.hand) {
     const card = cardOfUid(game, uid);
-    if (card === undefined || card.category !== "Trainer") continue;
-    if (programFor(card.id)?.trainer === undefined || seen.has(card.id)) continue;
+    if (card === undefined || card.category !== "Trainer" || seen.has(card.id)) continue;
+    const program = programFor(card.id);
+    const isStadium = card.trainerType === "Stadium";
+    if (isStadium ? program?.stadium === undefined : program?.trainer === undefined) continue;
     seen.add(card.id);
     const isSupporter = card.trainerType === "Supporter";
-    const disabled = isSupporter && (game.turn === 1 || game.allowances.supporterPlayed);
+    const disabled = isSupporter
+      ? game.turn === 1 || game.allowances.supporterPlayed
+      : isStadium && (game.allowances.stadiumPlayed || card.name === inPlayStadium);
     out.push({ uid, name: card.name, disabled });
   }
   return out;
@@ -368,9 +377,10 @@ function TurnPanel(props: GameHudProps) {
   // projection.ts pins BattleConditions ≡ SpecialConditions at compile time.
   const immobilized = conditions !== undefined && isImmobilized(conditions);
 
-  // THE retreat derivation site — RetreatDialog receives these as props, so
-  // future cost modifiers (M3/M4) have exactly one place to land.
-  const retreatCost = retreatCostOf(activeCard);
+  // THE retreat derivation site — RetreatDialog receives these as props. The
+  // cost is the CONTINUOUS one (§7.3 — Beach Court discounts Basics), the
+  // same number the engine's retreat handler will check.
+  const retreatCost = effectiveRetreatCost(game, active);
   const canRetreat =
     !immobilized &&
     !game.allowances.retreated &&
@@ -399,7 +409,10 @@ function TurnPanel(props: GameHudProps) {
             <li className="text-xs text-white/45">This Pokémon has no attacks.</li>
           )}
           {attacks.map((attack: Attack, index: number) => {
-            const payable = costMet(attack.cost ?? [], provided);
+            // Payability under the Stadium's continuous cost effects (§7.3 —
+            // League HQ's Basic surcharge), exactly as the engine checks it;
+            // the dots still show the PRINTED cost.
+            const payable = costMet(effectiveAttackCost(game, active, attack.cost ?? []), provided);
             const disabled = !payable || firstTurnBan || immobilized;
             return (
               <li key={`${attack.name}-${index}`}>

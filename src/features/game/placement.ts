@@ -34,9 +34,13 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
     // Every translatable move starts in the viewer's own hand and lands on
     // their own board — moveToAction's first gate, mirrored here so a drag
     // that would translate to null never shows a legal-drop affordance.
-    // (Board-to-board drags — retreat, promotion — are dialog flows.)
+    // (Board-to-board drags — retreat, promotion — are dialog flows.) The
+    // one shared exception, also mirrored: a Stadium aimed at the global
+    // stadium slot (§7.3).
     if (source.owner !== "you" || source.zone !== "hand") return false;
-    if (target.owner !== "you") return false;
+    if (target.owner !== "you" && !(target.zone === "stadium" && target.owner === "global")) {
+      return false;
+    }
     // Hand → hand reorder: fine on the mock (its board owns hand order) but
     // rejected here — the ENGINE owns hand order and has no reorder action,
     // so previewing one would be a lie the projection immediately snaps back.
@@ -87,7 +91,24 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
           }
           return board.you.bench.length < benchLimitFor(board); // play a Basic
         }
-        // Trainers / tools / stadiums have no drag action until M4.
+        if (sourceType === "tool") {
+          // attachTool needs an existing own Pokémon host — the energy-attach
+          // affordance shape (§7.4). One-Tool-per-Pokémon is fine legality
+          // and stays the engine's (the pill).
+          if (target.zone === "active") return board.you.active?.type === "pokemon";
+          if (target.zone === "bench") {
+            if (target.index === undefined) return false;
+            return board.you.bench[target.index]?.type === "pokemon";
+          }
+          return false;
+        }
+        if (sourceType === "stadium") {
+          // A Stadium play aims at the shared slot (§7.3) — the global-owner
+          // exception let through above. Same-name / once-per-turn stay the
+          // engine's (the pill names the rule the drop gestured at).
+          return target.zone === "stadium" && target.owner === "global";
+        }
+        // Non-Tool/Stadium Trainers stay button plays, not drags.
         return false;
       }
       // chooseFirst / drawExtra / ko:* interrupts / gameOver: decisions are

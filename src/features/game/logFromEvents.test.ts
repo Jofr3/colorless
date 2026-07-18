@@ -8,12 +8,15 @@ import type { GameEvent, GameState, Seat } from "@luminous/engine";
 import { topCardOf } from "@luminous/engine";
 import {
   MIXED_DECK,
+  STADIUM_TOOL_DECK,
   attachFromDeck,
   deckOf,
   driveSetup,
+  handFromDeck,
   handUid,
   mustApply,
   mustCreate,
+  setActiveFromDeck,
   setPrizes,
 } from "../../../packages/engine/src/testFixtures";
 import {
@@ -409,5 +412,82 @@ describe("logFromEvents — resilience and viewer mapping", () => {
     expect(
       viewLogEntries(seatLog, "p2").map((e) => (e.kind === "action" ? e.who : e.turn)),
     ).toEqual(["opponent", "you", "system", 3]);
+  });
+});
+
+describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
+  /** p1 on turn 2 (p2 first, passed) with the slice-3 cards pulled to hand. */
+  function stadiumToolState(): GameState {
+    let state = driveSetup(
+      31,
+      { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-167", 1);
+    return handFromDeck(state, "p1", "sv01-197", 1);
+  }
+
+  it("names a Tool attach with its host, like an energy attach", () => {
+    const state = stadiumToolState();
+    const band = handUid(state, "p1", "sv01-197");
+    const hostName = (() => {
+      const active = state.players.p1.active;
+      if (active === null) throw new Error("expected an Active");
+      return topCardOf(state, active)?.name;
+    })();
+    const { state: next, events } = mustApply(state, {
+      type: "attachTool",
+      seat: "p1",
+      uid: band,
+      target: { spot: "active" },
+    });
+    const rows = texts(logFromEvents(events, ctx(next)));
+    expect(rows).toContain(`attached sv01-197 → ${hostName}`);
+  });
+
+  it("logs a Stadium replacement: the play row, then the system replaced row", () => {
+    let state = stadiumToolState();
+    const beachCourt = handUid(state, "p1", "sv01-167");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid: beachCourt }).state;
+    state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+    state = handFromDeck(state, "p2", "sv03-192", 1);
+    const leagueHq = handUid(state, "p2", "sv03-192");
+    const { state: next, events } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p2",
+      uid: leagueHq,
+    });
+    const rows = logFromEvents(events, ctx(next));
+    expect(texts(rows)).toEqual([
+      "played Pokémon League Headquarters",
+      "Beach Court left play — replaced",
+    ]);
+    expect(rows[1]?.kind === "action" && rows[1].who).toBe("system");
+  });
+
+  it("shows the Vitality Band boost in the damage math", () => {
+    // fix-attacker (Bite [C] 30) + Vitality Band vs a plain no-weakness Basic
+    // (fix-basic-1 — 8 copies, so the surgery finds one at any seed).
+    let state = driveSetup(
+      31,
+      { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = setActiveFromDeck(state, "p2", "fix-basic-1");
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = handFromDeck(state, "p1", "sv01-197", 1);
+    const band = handUid(state, "p1", "sv01-197");
+    state = mustApply(state, {
+      type: "attachTool",
+      seat: "p1",
+      uid: band,
+      target: { spot: "active" },
+    }).state;
+    const { state: next, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const rows = texts(logFromEvents(events, ctx(next)));
+    expect(rows).toContain("dealt 40 damage to fix-basic-1 · boosted +10");
   });
 });

@@ -407,11 +407,11 @@ describe("playTrainer / useAbility — validation", () => {
     expectErr(state, { type: "playTrainer", seat: "p1", uid: basicUid }, "NOT_A_TRAINER");
   });
 
-  it("rejects a Stadium (TRAINER_TYPE_UNSUPPORTED)", () => {
+  it("rejects an unauthored Stadium (TRAINER_NOT_SIMULATED)", () => {
     let state = p1Turn2(1, { p1: deckOf({ "fix-basic-1": 24, "fix-stadium": 4, "fix-energy": 32 }), p2: TRAINER_DECK });
     state = handFromDeck(state, "p1", "fix-stadium", 1);
     const uid = handUid(state, "p1", "fix-stadium");
-    expectErr(state, { type: "playTrainer", seat: "p1", uid }, "TRAINER_TYPE_UNSUPPORTED");
+    expectErr(state, { type: "playTrainer", seat: "p1", uid }, "TRAINER_NOT_SIMULATED");
   });
 
   it("rejects an unauthored Trainer (TRAINER_NOT_SIMULATED)", () => {

@@ -430,7 +430,7 @@ describe("endTurn", () => {
     expect(types(events)).toEqual(["TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
     expect(next.turn).toBe(2);
     expect(next.phase).toEqual({ kind: "turn:action", seat: "p2" });
-    expect(next.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, abilitiesUsed: [] });
+    expect(next.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, abilitiesUsed: [] });
     expect(next.players.p2.hand).toHaveLength(p2HandBefore + 1);
   });
 

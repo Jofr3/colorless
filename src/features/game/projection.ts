@@ -36,7 +36,7 @@ import type {
   Seat,
   SpecialConditions,
 } from "@luminous/engine";
-import { SEATS, cardOfUid, hpOf, otherSeat, topUid } from "@luminous/engine";
+import { SEATS, cardOfUid, effectiveMaxHp, otherSeat, topUid } from "@luminous/engine";
 import type { Card } from "@luminous/schema";
 import { cardImageUrl } from "../../lib/api";
 import type {
@@ -112,8 +112,9 @@ export function projectGameState(state: GameState, viewerSeat: Seat): GameProjec
   const setup = inSetup(state);
   return {
     board: {
-      // No stadium zone in the engine yet (lands with M4's trainers).
-      stadium: null,
+      // §7.3 — the one shared Stadium, public to both viewers (played face-up
+      // into a shared zone; there is nothing to redact).
+      stadium: state.stadium === null ? null : cardModelOf(state, state.stadium.uid),
       you: playerBoardOf(state, viewerSeat, { faceUpHand: true, faceUpInPlay: true }),
       opponent: playerBoardOf(state, opponentSeat, { faceUpHand: false, faceUpInPlay: !setup }),
     },
@@ -204,10 +205,9 @@ function cardModelOf(state: GameState, uid: string): CardModel {
 function inPlayModelOf(state: GameState, pokemon: InPlayPokemon): CardModel | null {
   const uid = topUid(pokemon);
   if (uid === undefined) return null; // stacks are never empty, but stay total
-  const card = cardOfUid(state, uid);
   return {
     ...cardModelOf(state, uid),
-    battle: battleStateOf(pokemon, card),
+    battle: battleStateOf(state, pokemon),
     attached: {
       tools: pokemon.tools.map((toolUid) => cardModelOf(state, toolUid)),
       energies: pokemon.energy.map((energyUid) => cardModelOf(state, energyUid)),
@@ -221,7 +221,7 @@ function inPlayModelOf(state: GameState, pokemon: InPlayPokemon): CardModel | nu
     BattleConditions to stay engine-free; the copy alone would NOT pin that
     restatement (a field added to SpecialConditions would just be dropped
     here and silently never render), so the asserts below do. */
-function battleStateOf(pokemon: InPlayPokemon, card: Card | undefined): BattleState {
+function battleStateOf(state: GameState, pokemon: InPlayPokemon): BattleState {
   const { rotation, poisonDamage, burned } = pokemon.conditions;
   // Mutual-assignability pin, both directions: `satisfies` = the rebuilt
   // copy is still a COMPLETE SpecialConditions (an added engine field errors
@@ -234,7 +234,9 @@ function battleStateOf(pokemon: InPlayPokemon, card: Card | undefined): BattleSt
   } satisfies SpecialConditions;
   return {
     damage: pokemon.damage,
-    hp: card === undefined ? null : hpOf(card),
+    // The CONTINUOUS max HP (printed + Tool bonuses — Bravery Charm), the
+    // same number the engine's KO check reads; null stays the data gap.
+    hp: effectiveMaxHp(state, pokemon),
     conditions,
   };
 }

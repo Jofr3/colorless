@@ -9,9 +9,11 @@ import {
   ALL_BASIC_DECK,
   FIXTURE_POOL,
   MIXED_DECK,
+  STADIUM_TOOL_DECK,
   attachFromDeck,
   deckOf,
   driveSetup,
+  handFromDeck,
   handUid,
   mustApply,
   mustCreate,
@@ -609,5 +611,52 @@ describe("projectGameState — bench totality", () => {
     // full-model equality above pins the absence); the real Pokémon keeps
     // its own.
     expect(projection.board.you.bench[1]?.battle).toEqual(pristineBattle(60));
+  });
+});
+
+describe("projectGameState — the persistent zones (M4 slice 3)", () => {
+  /** p1 on turn 2 (p2 went first, passed) holding Beach Court + Bravery
+      Charm via test surgery, on STADIUM_TOOL_DECK boards. */
+  function stadiumToolState(): GameState {
+    let state = driveSetup(
+      SEED,
+      { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-167", 1);
+    return handFromDeck(state, "p1", "sv02-173", 1);
+  }
+
+  it("projects no stadium until one is played, then the same public card for BOTH viewers", () => {
+    const state = stadiumToolState();
+    expect(projectGameState(state, "p1").board.stadium).toBeNull();
+    const uid = handUid(state, "p1", "sv01-167");
+    const played = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    for (const seat of ["p1", "p2"] as const) {
+      const stadium = projectGameState(played, seat).board.stadium;
+      expect(stadium?.id).toBe(uid); // engine uid = animation identity
+      expect(stadium?.cardId).toBe("sv01-167");
+      expect(stadium?.type).toBe("stadium");
+      expect(stadium?.name).toBe("Beach Court");
+    }
+  });
+
+  it("battle.hp reads the CONTINUOUS max HP: Bravery Charm raises a Basic's by 50", () => {
+    const state = stadiumToolState();
+    const before = projectGameState(state, "p1").board.you.active?.battle?.hp;
+    const charm = handUid(state, "p1", "sv02-173");
+    const attached = mustApply(state, {
+      type: "attachTool",
+      seat: "p1",
+      uid: charm,
+      target: { spot: "active" },
+    }).state;
+    const active = projectGameState(attached, "p1").board.you.active;
+    expect(before).not.toBeNull();
+    if (before == null) throw new Error("unreachable");
+    expect(active?.battle?.hp).toBe(before + 50);
+    // The Tool itself rides along as an attached face-up model.
+    expect(active?.attached?.tools.map((tool) => tool.id)).toEqual([charm]);
   });
 });

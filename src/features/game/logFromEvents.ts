@@ -227,12 +227,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" damage to "),
         strong(cardName(state, event.uid)),
       ];
+      // The breadcrumbs read in §8.5 PIPELINE order so the math reconstructs:
+      // the attacker's pre-W/R bonus (Vitality Band) FIRST, then Weakness,
+      // Resistance, then the defender's post-W/R reduction (Bouffalant
+      // "Bouffer" / a defending Tool) last.
+      if (event.bonus !== undefined) segments.push(plain(` · boosted +${event.bonus}`));
       if (event.weakness !== null) segments.push(plain(modifierText("weakness", event.weakness)));
       if (event.resistance !== null) {
         segments.push(plain(modifierText("resistance", event.resistance)));
       }
-      // A defender passive (Bouffalant "Bouffer", §15.B) removed flat HP after
-      // Weakness/Resistance — show the math like the W/R steps.
       if (event.reduction !== undefined) segments.push(plain(` · reduced ${event.reduction}`));
       return row(otherSeat(event.seat), segments);
     }
@@ -364,6 +367,21 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // — M4 Trainer / Ability plays (§7/§9) and their effect ops (§15). —
     case "TRAINER_PLAYED":
       return row(event.seat, [plain("played "), strong(cardName(state, event.uid))]);
+    case "TOOL_ATTACHED":
+      // The energy-attach row's shape — a Tool attaches the same way (§7.4).
+      return row(event.seat, [
+        plain("attached "),
+        strong(cardName(state, event.uid)),
+        plain(" → "),
+        strong(targetName(state, event.seat, event.target)),
+      ]);
+    case "STADIUM_DISCARDED":
+      // Follows the replacing Stadium's TRAINER_PLAYED row (§7.3); `seat` is
+      // the OWNER whose discard pile gained the old card.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(" left play — replaced"),
+      ]);
     case "ABILITY_USED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

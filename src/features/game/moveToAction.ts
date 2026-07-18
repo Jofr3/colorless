@@ -30,7 +30,10 @@ export function moveToAction(
   // (bench reorder, active swap) have no M2 action — retreat and promotion go
   // through their dialogs, where the cost/choice is explicit.
   if (from.owner !== "you" || from.zone !== "hand") return null;
-  if (to.owner !== "you") return null;
+  // The one non-own drop target: the SHARED stadium slot (owner "global" —
+  // §7.3, one zone for both players). Everything else must land on the
+  // viewer's own board.
+  if (to.owner !== "you" && !(to.zone === "stadium" && to.owner === "global")) return null;
   // Own-hand ids are engine uids by the projection contract; a card the
   // board does not know is a stale drag — never dispatch a guessed uid.
   const model = ctx.board.you.hand.find((card) => card.id === cardId);
@@ -83,6 +86,27 @@ export function moveToAction(
           }
           return { type: "playBasicToBench", seat, uid: cardId };
         }
+        return null;
+      }
+      if (model.type === "tool") {
+        // A Tool attaches like an energy: onto the Active, or onto an occupied
+        // indexed bench slot (§7.4). One-Tool-per-Pokémon stays the engine's.
+        if (to.zone === "active") {
+          return { type: "attachTool", seat, uid: cardId, target: { spot: "active" } };
+        }
+        if (to.zone === "bench" && to.index !== undefined) {
+          return { type: "attachTool", seat, uid: cardId, target: { spot: "bench", index: to.index } };
+        }
+        return null;
+      }
+      if (model.type === "stadium") {
+        // A Stadium dropped on the shared slot is a play (§7.3) — the one
+        // gesture that lands OUTSIDE the viewer's own board. Same-name /
+        // once-per-turn legality stays the engine's (the pill).
+        if (to.zone === "stadium" && to.owner === "global") {
+          return { type: "playTrainer", seat, uid: cardId };
+        }
+        return null;
       }
       return null;
     }

@@ -1,5 +1,6 @@
 import type {
   ApplyResult,
+  AttachToolAction,
   PlayTrainerAction,
   ResolveEffectAction,
   UseAbilityAction,
@@ -12,17 +13,22 @@ import type { EffectChoice, EffectPrompt, PokemonRef, RunResult } from "./interp
 import { resumeProgram, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, turnGate } from "./turn";
-import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
+import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import { otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
-// mid-effect decisions they park on (§15.E/G). All three orchestrate the same
-// shared interpreter (interpreter.ts): validate the play, announce it, run the
-// op program, and either finish (back to turn:action) or PARK on effect:choose.
+// mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
+// resolveEffect orchestrate the same shared interpreter (interpreter.ts):
+// validate the play, announce it, run the op program, and either finish (back
+// to turn:action) or PARK on effect:choose. The two persistent-zone plays are
+// different animals — a Stadium (§7.3) moves into the shared zone and a Tool
+// (§7.4, attachTool) onto a Pokémon, both with CONTINUOUS effects the
+// pipeline reads (continuous.ts) rather than programs the interpreter runs.
 
-/** §7.1/§7.2 — play a Trainer (Item any number, Supporter one per turn) from
-    hand: resolve its authored program, then the card is discarded. Stadium and
-    Tool (persistent zones) are a later slice. */
+/** §7.1–§7.3 — play a Trainer from hand: an Item (any number) or Supporter
+    (one per turn) resolves its authored program then discards; a Stadium (one
+    play per turn) replaces the shared zone's occupant — different names only —
+    and STAYS in play, its continuous effects live from this moment. */
 export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
@@ -38,6 +44,13 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     return err("NOT_A_TRAINER", `${card.name} is not a Trainer card`);
   }
   const trainerType = card.trainerType;
+  if (trainerType === "Stadium") {
+    return playStadium(state, action, card.id, card.name);
+  }
+  if (trainerType === "Tool") {
+    // Not a play — Tools attach (attachTool carries the required target).
+    return err("TRAINER_TYPE_UNSUPPORTED", "Pokémon Tools are attached via attachTool (§7.4)");
+  }
   if (trainerType !== "Item" && trainerType !== "Supporter") {
     return err("TRAINER_TYPE_UNSUPPORTED", `${trainerType ?? "this"} Trainers are not supported yet`);
   }
@@ -76,6 +89,125 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     next = { ...next, allowances: { ...next.allowances, supporterPlayed: true } };
   }
   return settleRun(runProgram(next, program, { seat: action.seat }, events), action.seat, events);
+}
+
+/** §7.3 — the Stadium play, split out of playTrainer's Item/Supporter path
+    (hand/uid/category already validated there): one play per turn, replaces a
+    DIFFERENT-named predecessor (which goes to its owner's discard), and the
+    card sits in the shared zone with no program to run — its authored effects
+    are continuous, read by the pipeline (continuous.ts) while it stays. */
+function playStadium(
+  state: GameState,
+  action: PlayTrainerAction,
+  cardId: string,
+  cardName: string,
+): ApplyResult {
+  if (programFor(cardId)?.stadium === undefined) {
+    // Coverage strategy, same as the Item/Supporter path: an unauthored
+    // Stadium cannot be played rather than sitting in the zone doing nothing.
+    return err("TRAINER_NOT_SIMULATED", `${cardName} is not simulated yet`);
+  }
+  if (state.allowances.stadiumPlayed) {
+    return err("STADIUM_ALREADY_PLAYED", "only one Stadium play per turn (§7.3)");
+  }
+  const current = state.stadium;
+  const currentCard = current === null ? undefined : cardOfUid(state, current.uid);
+  // §7.3 — the same NAME cannot replace itself (no resetting the zone);
+  // different prints of one Stadium share the name, so this compares names,
+  // not ids. An unresolvable occupant (structurally impossible) reads as
+  // replaceable — stay total.
+  if (currentCard !== undefined && currentCard.name === cardName) {
+    return err("STADIUM_SAME_NAME", `${cardName} is already in play (§7.3)`);
+  }
+
+  const events: GameEvent[] = [
+    { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Stadium" },
+  ];
+  const side = state.players[action.seat];
+  let next: GameState = withSide(state, action.seat, {
+    ...side,
+    hand: without(side.hand, action.uid),
+  });
+  if (current !== null) {
+    // The replaced Stadium goes to its OWNER's discard pile — read off `next`
+    // so an actor discarding their own earlier Stadium keeps the hand update.
+    const ownerSide = next.players[current.owner];
+    next = withSide(next, current.owner, {
+      ...ownerSide,
+      discard: [...ownerSide.discard, current.uid],
+    });
+    events.push({ type: "STADIUM_DISCARDED", seat: current.owner, uid: current.uid });
+  }
+  next = {
+    ...next,
+    stadium: { uid: action.uid, owner: action.seat },
+    allowances: { ...next.allowances, stadiumPlayed: true },
+  };
+  return ok(next, events);
+}
+
+/** §7.4 — attach a Pokémon Tool from hand to one of the actor's own in-play
+    Pokémon. Not capped per turn and consumes NO allowance (unlike energy);
+    one Tool per Pokémon at a time; there is no detach — it rides the stack
+    through evolution and leaves play only with a KO. Its effects are
+    continuous (continuous.ts), so nothing runs here. */
+export function attachTool(state: GameState, action: AttachToolAction): ApplyResult {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  const side = state.players[action.seat];
+  if (!side.hand.includes(action.uid)) {
+    return err("CARD_NOT_IN_HAND", `${action.uid} is not in ${action.seat}'s hand`);
+  }
+  const card = cardOfUid(state, action.uid);
+  if (card === undefined) {
+    return err("UNKNOWN_CARD", `no catalog card for uid ${action.uid}`);
+  }
+  if (card.category !== "Trainer" || card.trainerType !== "Tool") {
+    return err("NOT_A_TOOL", `${card.name} is not a Pokémon Tool card`);
+  }
+  if (programFor(card.id)?.passive === undefined) {
+    // Coverage strategy: an unauthored Tool would occupy the one Tool slot
+    // while doing nothing — reject loudly instead.
+    return err("TRAINER_NOT_SIMULATED", `${card.name} is not simulated yet`);
+  }
+  // Wire shape check (types are not validation), then the same indexed
+  // write-back attachEnergy uses — including its string-index trap.
+  if (!isPokemonTarget(action.target)) {
+    return err("BAD_TARGET", "tool target must name the Active spot or a bench index");
+  }
+
+  const hand = without(side.hand, action.uid);
+  let updated: PlayerSide;
+  if (action.target.spot === "active") {
+    if (side.active === null) {
+      return err("NO_TARGET", "no Active Pokémon to attach to");
+    }
+    if (side.active.tools.length > 0) {
+      return err("TOOL_ALREADY_ATTACHED", "one Tool per Pokémon (§7.4)");
+    }
+    updated = {
+      ...side,
+      hand,
+      active: { ...side.active, tools: [...side.active.tools, action.uid] },
+    };
+  } else {
+    const index = action.target.index;
+    const benched = isBenchIndex(index) ? side.bench[index] : undefined;
+    if (benched === undefined) {
+      return err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(index)}`);
+    }
+    if (benched.tools.length > 0) {
+      return err("TOOL_ALREADY_ATTACHED", "one Tool per Pokémon (§7.4)");
+    }
+    const bench = side.bench.map((pokemon, i) =>
+      i === index ? { ...pokemon, tools: [...pokemon.tools, action.uid] } : pokemon,
+    );
+    updated = { ...side, hand, bench };
+  }
+  return ok(withSide(state, action.seat, updated), [
+    // The target is copied: the action object belongs to the caller (events.ts).
+    { type: "TOOL_ATTACHED", seat: action.seat, uid: action.uid, target: { ...action.target } },
+  ]);
 }
 
 /** §9 — use an in-play Pokémon's activated Ability. Does not cost energy, does

@@ -14,6 +14,10 @@
 // Abilities: both decks share the SHARED_TRAINERS suite (draw / search / gust
 // / switch / heal), the Tidal deck runs Chien-Pao ex (activated Ability
 // "Shivery Chill"), and the Ember deck runs Bouffalant (passive "Bouffer").
+// Slice 3 adds the persistent zones, DIFFERENT per deck so the §7.3 replace
+// path is reachable live: Ember runs Beach Court (Stadium) + Vitality Band
+// (Tool), Tidal runs Pokémon League Headquarters (Stadium) + Bravery Charm
+// (Tool).
 
 import type { DeckCard } from "@luminous/schema";
 
@@ -50,8 +54,8 @@ const SHARED_TRAINERS: readonly DeckCard[] = [
 export const SHARED_TRAINER_IDS: readonly string[] = SHARED_TRAINERS.map((c) => c.cardId);
 
 /** Fire Pokémon (sv01 + sv03) incl. the Fuecoco→Crocalor→Skeledirge line
-    (M4) and Bouffalant (passive "Bouffer"), the shared Trainers, and 21 Basic
-    Fire Energy (sv03-230). */
+    (M4) and Bouffalant (passive "Bouffer"), the shared Trainers, Beach Court
+    + Vitality Band (slice 3), and 17 Basic Fire Energy (sv03-230). */
 const EMBER_STARTERS: DemoDeck = {
   name: "Ember Starters",
   ids: expandDeck([
@@ -65,13 +69,16 @@ const EMBER_STARTERS: DemoDeck = {
     { cardId: "sv01-038", count: 2 }, // Skeledirge — Stage 2, evolves from Crocalor (M4)
     { cardId: "sv03-174", count: 2 }, // Bouffalant — passive "Bouffer": −20 damage after W/R (M4)
     ...SHARED_TRAINERS,
-    { cardId: "sv03-230", count: 21 }, // Basic Fire Energy
+    { cardId: "sv01-167", count: 2 }, // Beach Court — Stadium: Basic retreat −1 (slice 3)
+    { cardId: "sv01-197", count: 2 }, // Vitality Band — Tool: +10 damage before W/R (slice 3)
+    { cardId: "sv03-230", count: 17 }, // Basic Fire Energy
   ]),
 };
 
 /** Water Pokémon (sv01 + sv02) incl. the Buizel→Floatzel line (M4) and
-    Chien-Pao ex (activated Ability "Shivery Chill"), the shared Trainers, and
-    24 Basic Water Energy (sv02-279). */
+    Chien-Pao ex (activated Ability "Shivery Chill"), the shared Trainers,
+    Pokémon League Headquarters + Bravery Charm (slice 3), and 20 Basic Water
+    Energy (sv02-279). */
 const TIDAL_SPLASH: DemoDeck = {
   name: "Tidal Splash",
   ids: expandDeck([
@@ -84,7 +91,9 @@ const TIDAL_SPLASH: DemoDeck = {
     { cardId: "sv01-047", count: 3 }, // Floatzel — Stage 1, evolves from Buizel (M4)
     { cardId: "sv02-061", count: 2 }, // Chien-Pao ex — Ability "Shivery Chill": search 2 Water Energy (M4)
     ...SHARED_TRAINERS,
-    { cardId: "sv02-279", count: 24 }, // Basic Water Energy
+    { cardId: "sv03-192", count: 2 }, // Pokémon League Headquarters — Stadium: Basic attacks +{C} (slice 3)
+    { cardId: "sv02-173", count: 2 }, // Bravery Charm — Tool: Basic holder +50 HP (slice 3)
+    { cardId: "sv02-279", count: 20 }, // Basic Water Energy
   ]),
 };
 

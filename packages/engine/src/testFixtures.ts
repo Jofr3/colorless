@@ -223,8 +223,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Item",
     "Search your deck for a Basic Energy card, reveal it, and put it into your hand. Then, shuffle your deck.",
   ),
-  /** A Stadium — pins the TRAINER_TYPE_UNSUPPORTED reject (persistent zones are
-      a later slice). Not in the registry either. */
+  /** An UNAUTHORED Stadium — pins the TRAINER_NOT_SIMULATED reject (an
+      unregistered Stadium cannot be played; coverage strategy). */
   "fix-stadium": {
     ...blank,
     id: "fix-stadium",
@@ -233,6 +233,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
     trainerType: "Stadium",
     effect: "A test Stadium.",
   } satisfies Card,
+  /** An UNAUTHORED Tool — the attachTool twin of fix-stadium. */
+  "fix-tool": trainerCard("fix-tool", "Tool", "A test Tool."),
   /** Chien-Pao ex — a Water Basic whose registry entry carries the activated
       "Shivery Chill" Ability (search up to 2 Basic {W} Energy → hand). */
   "sv02-061": battler("sv02-061", {
@@ -255,6 +257,32 @@ export const FIXTURE_POOL: Record<string, Card> = {
     abilities: [{ type: "Ability", name: "Bouffer", effect: "This Pokémon takes 20 less damage…" }],
     attacks: [{ cost: ["Colorless", "Colorless"], name: "Damage Rush", damage: "50+" }],
   }),
+
+  // — M4 slice 3: the persistent-zone cast (real catalog ids so the registry
+  //   finds their continuous effects; names are the REAL card names because
+  //   the §7.3 same-name rule compares names, not ids). —
+  /** Beach Court — Stadium: Basic retreat cost {C} less (both players). */
+  "sv01-167": {
+    ...blank,
+    id: "sv01-167",
+    name: "Beach Court",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect: "The Retreat Cost of each Basic Pokémon in play (both yours and your opponent's) is {C} less.",
+  } satisfies Card,
+  /** Pokémon League Headquarters — Stadium: Basic attacks cost {C} more. */
+  "sv03-192": {
+    ...blank,
+    id: "sv03-192",
+    name: "Pokémon League Headquarters",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect: "Attacks used by each Basic Pokémon in play (both yours and your opponent's) cost {C} more.",
+  } satisfies Card,
+  /** Vitality Band — Tool: attacks do 10 more damage (before W/R). */
+  "sv01-197": trainerCard("sv01-197", "Tool", "The attacks of the Pokémon this card is attached to do 10 more damage…"),
+  /** Bravery Charm — Tool: the Basic holder gets +50 HP. */
+  "sv02-173": trainerCard("sv02-173", "Tool", "The Basic Pokémon this card is attached to gets +50 HP."),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -304,6 +332,26 @@ export const TRAINER_DECK = deckOf({
   "sv01-172": 2,
   "fix-water-energy": 20,
   "fix-energy": 8,
+});
+
+/** M4 slice 3 Stadium/Tool suite: fix-attacker Basics to fight with (Fire
+    type, Bite [C] 30), the fix-basic-1 → fix-stage1 line for the Tool
+    carry-over, every representative Stadium/Tool in multiples (handFromDeck
+    pulls them post-setup), and the two unauthored rejects. */
+export const STADIUM_TOOL_DECK = deckOf({
+  "fix-attacker": 12,
+  "fix-basic-1": 8,
+  "fix-stage1": 4,
+  "fix-victim": 2,
+  "fix-weak": 2,
+  "fix-wall": 2,
+  "sv01-167": 3,
+  "sv03-192": 3,
+  "sv01-197": 3,
+  "sv02-173": 3,
+  "fix-stadium": 1,
+  "fix-tool": 1,
+  "fix-energy": 16,
 });
 
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so

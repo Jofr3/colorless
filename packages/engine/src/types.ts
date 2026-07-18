@@ -114,6 +114,15 @@ export interface PlayerSide {
 /** Where an action points on the actor's own board. */
 export type PokemonTarget = { spot: "active" } | { spot: "bench"; index: number };
 
+/** §7.3 — the single SHARED Stadium zone: at most one Stadium is in play for
+    both players. `owner` is the seat that played it — a replaced Stadium goes
+    to its OWNER's discard pile, and future "each player may…" Stadium effects
+    key their wording off it. */
+export interface StadiumInPlay {
+  uid: string;
+  owner: Seat;
+}
+
 /** The §14 conditions in their precedence order: prizes taken (§14.1), the
     opponent out of Pokémon (§14.2), deck-out at the draw (§14.3). */
 export type GameOverReason = "prizesTaken" | "noPokemon" | "deckOut";
@@ -134,9 +143,10 @@ export type GameOutcome =
 export interface TurnAllowances {
   energyAttached: boolean;
   retreated: boolean;
-  /** §7.2 — at most one Supporter per turn. (Stadium's one-per-turn flag lands
-      with the stadium zone in a later slice.) */
+  /** §7.2 — at most one Supporter per turn. */
   supporterPlayed: boolean;
+  /** §7.3 — at most one Stadium play per turn. */
+  stadiumPlayed: boolean;
   /** §9/§15.J — per-Pokémon once-per-turn Ability uses, `${uid}:${ability}`.
       A list, not a bool: several Pokémon may each use a once-per-turn Ability
       in the same turn. Reset each turn, so a plain array clears cleanly. */
@@ -144,7 +154,13 @@ export interface TurnAllowances {
 }
 
 export function freshAllowances(): TurnAllowances {
-  return { energyAttached: false, retreated: false, supporterPlayed: false, abilitiesUsed: [] };
+  return {
+    energyAttached: false,
+    retreated: false,
+    supporterPlayed: false,
+    stadiumPlayed: false,
+    abilitiesUsed: [],
+  };
 }
 
 /** The staged turn tail. endTurn — and attack, which ends the turn through
@@ -215,6 +231,9 @@ export interface GameState {
   /** The staged turn-tail queue — see PendingStage. Empty except while a
       tail is mid-resolution (parked on a ko:* interrupt). */
   pending: PendingStage[];
+  /** §7.3 — the one shared Stadium in play, or null. Its continuous effects
+      (continuous.ts) apply to BOTH players while it sits here. */
+  stadium: StadiumInPlay | null;
   players: Record<Seat, PlayerSide>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;

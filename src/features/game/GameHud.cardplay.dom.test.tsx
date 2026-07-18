@@ -9,6 +9,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  STADIUM_TOOL_DECK,
   TRAINER_DECK,
   driveSetup,
   handUid,
@@ -73,6 +74,40 @@ describe("TurnPanel — Trainer controls", () => {
     expect((screen.getByRole("button", { name: "sv01-189" }) as HTMLButtonElement).disabled).toBe(
       true,
     );
+  });
+
+  it("offers a Stadium as a button, greyed by the §7.3 gates (played / same name)", () => {
+    const decks = { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK };
+    let state = p1Turn2(1, decks);
+    state = handFromDeck(state, "p1", "sv01-167", 1); // Beach Court
+    const beachCourt = handUid(state, "p1", "sv01-167");
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "Beach Court" }));
+    expect(dispatch).toHaveBeenCalledWith({ type: "playTrainer", seat: "p1", uid: beachCourt });
+    cleanup();
+
+    // Played: a SAME-named copy is greyed (the engine would reject it)…
+    let played = mustApply(state, { type: "playTrainer", seat: "p1", uid: beachCourt }).state;
+    played = handFromDeck(played, "p1", "sv01-167", 1);
+    renderHud(played, vi.fn());
+    expect(
+      (screen.getByRole("button", { name: "Beach Court" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    cleanup();
+
+    // …and so is a DIFFERENT Stadium this turn (one Stadium play per turn).
+    const withOther = handFromDeck(played, "p1", "sv03-192", 1);
+    renderHud(withOther, vi.fn());
+    expect(
+      (screen.getByRole("button", { name: "Pokémon League Headquarters" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    // A Tool never becomes a button — attaching is a board drag.
+    const withTool = handFromDeck(withOther, "p1", "sv01-197", 1);
+    cleanup();
+    renderHud(withTool, vi.fn());
+    expect(screen.queryByRole("button", { name: "sv01-197" })).toBeNull();
   });
 });
 

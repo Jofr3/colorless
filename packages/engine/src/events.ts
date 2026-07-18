@@ -102,10 +102,14 @@ export type GameEvent =
       seat: Seat;
       uid: string;
       base: number;
+      /** Flat HP the attacker's continuous effects added BEFORE Weakness/
+          Resistance (Vitality Band, §15.B). Present only when it applied. */
+      bonus?: number;
       weakness: DamageModifier | null;
       resistance: DamageModifier | null;
-      /** Flat HP a defender passive removed AFTER Weakness/Resistance
-          (Bouffalant "Bouffer", §15.B). Present only when it actually reduced. */
+      /** Flat HP the defender's continuous effects removed AFTER Weakness/
+          Resistance (Bouffalant "Bouffer", a defending Tool — §15.B).
+          Present only when it actually reduced. */
       reduction?: number;
       dealt: number;
       damage: number;
@@ -178,9 +182,20 @@ export type GameEvent =
       same way RETREATED describes. */
   | { type: "POKEMON_PROMOTED"; seat: Seat; uid: string; benchIndex: number }
   // — M4 Trainer / Ability plays (§7/§9) and the effect ops they run (§15). —
-  /** `seat` played a Trainer `uid` (Item/Supporter) from hand; it discards
-      after its effect resolves (Stadium/Tool stay in play — future slices). */
+  /** `seat` played a Trainer `uid` from hand. Where the card LANDS follows
+      its `trainerType`: an Item/Supporter discards after its effect resolves,
+      a Stadium moves into the shared stadium zone (§7.3 — a replaced
+      predecessor announces its own STADIUM_DISCARDED). Tools are not played
+      through this event — attaching is TOOL_ATTACHED. */
   | { type: "TRAINER_PLAYED"; seat: Seat; uid: string; trainerType: string }
+  /** §7.4 — `seat` attached the Pokémon Tool `uid` from hand to their own
+      in-play Pokémon at `target`. It stays attached (rides the stack through
+      evolution, discards with a KO'd stack) — there is no detach in scope. */
+  | { type: "TOOL_ATTACHED"; seat: Seat; uid: string; target: PokemonTarget }
+  /** §7.3 — the Stadium `uid` left play for its OWNER `seat`'s discard pile,
+      replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in
+      the same batch). */
+  | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
   /** The controller's whole hand went to the discard (Professor's Research). */

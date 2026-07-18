@@ -123,6 +123,7 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     phase: { kind: "setup:chooseFirst", coinWinner },
     allowances: freshAllowances(),
     pending: [],
+    stadium: null,
     players: { p1: emptySide(decks.p1), p2: emptySide(decks.p2) },
     cardIdByUid,
     cardPool: pool,

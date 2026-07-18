@@ -19,12 +19,14 @@ import {
   ALL_BASIC_DECK,
   EVOLVE_DECK,
   MIXED_DECK,
+  STADIUM_TOOL_DECK,
   driveSetup,
   handFromDeck,
   handUid,
   must,
   mustApply,
   mustCreate,
+  setActiveFromDeck,
 } from "../../../packages/engine/src/testFixtures";
 import type { BoardState, CardPlacement, CardType } from "../playmat/types";
 import { canPlace } from "../playmat/utils/cardMovement";
@@ -106,6 +108,18 @@ function benchFullTurnState(): GameState {
   );
 }
 
+/** turn:action on p1's turn 2 with the slice-3 persistent-zone cards in hand
+    (a Stadium aimable at the global slot, a Tool aimable at own Pokémon) and
+    an occupied bench slot for the Tool to land on. */
+function stadiumToolTurnState(): GameState {
+  let state = driveSetup(SEED, { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK }, { first: "p2" });
+  state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+  // Displacing the Active benches it — an occupied bench index 0.
+  state = setActiveFromDeck(state, "p1", "fix-basic-1");
+  state = handFromDeck(state, "p1", "sv01-167", 1); // Beach Court (Stadium)
+  return handFromDeck(state, "p1", "sv01-197", 1); // Vitality Band (Tool)
+}
+
 /** turn:action on p1's turn 3 (past the §4 first-turn ban), fix-basic-1
     Active, a matching fix-stage1 in hand — the one board where an evolve
     gesture is actually engine-legal, so the sweep covers a drop that APPLIES,
@@ -153,6 +167,8 @@ function expectedActionType(
   }
   // turn:action — the only other phase the predicate allows drops in.
   if (sourceType === "energy") return "attachEnergy";
+  if (sourceType === "tool") return "attachTool";
+  if (sourceType === "stadium") return "playTrainer";
   // A Pokémon dropped onto an occupied own slot (Active, or an occupied bench
   // index) is an evolve gesture (§10); onto a free bench slot it is a Basic.
   if (target.zone === "active") return "evolve";
@@ -209,6 +225,8 @@ describe("gamePlacementPredicate ↔ moveToAction lockstep", () => {
     expectLockstep(turnState(), "p2"); // p1's turn: p2's drops all spring back
     expectLockstep(benchFullTurnState(), "p1");
     expectLockstep(evolveTurnState(), "p1"); // a board where evolve is legal
+    expectLockstep(stadiumToolTurnState(), "p1"); // Stadium/Tool gestures (§7.3/§7.4)
+    expectLockstep(stadiumToolTurnState(), "p2"); // ...all spring back off-turn
   });
 
   it("holds in every never-drop phase (buttons and dialogs, not drags)", () => {
@@ -300,6 +318,62 @@ describe("gamePlacementPredicate — turn:action structure", () => {
     expect(action).toEqual({ type: "evolve", seat: "p1", uid: stage1Uid, target: { spot: "active" } });
     // The full chain lands a LEGAL evolve on this real turn-3 board.
     expect(action === null ? false : applyAction(state, action).ok).toBe(true);
+  });
+
+  it("a Stadium dropped on the global slot routes to playTrainer and applies (§7.3)", () => {
+    const state = stadiumToolTurnState();
+    const board = projectGameState(state, "p1").board;
+    const predicate = gamePlacementPredicate(state, "p1");
+    const stadiumUid = handUid(state, "p1", "sv01-167");
+    const from: CardPlacement = {
+      owner: "you",
+      zone: "hand",
+      index: board.you.hand.findIndex((card) => card.id === stadiumUid),
+    };
+    const to: CardPlacement = { owner: "global", zone: "stadium" };
+    expect(predicate(board, from, to, "stadium")).toBe(true);
+    const action = moveToAction(
+      { cardId: stadiumUid, from, to },
+      { phase: state.phase, viewerSeat: "p1", board },
+    );
+    expect(action).toEqual({ type: "playTrainer", seat: "p1", uid: stadiumUid });
+    expect(action === null ? false : applyAction(state, action).ok).toBe(true);
+    // Aimed anywhere else, a Stadium affords nothing and translates to null.
+    const elsewhere: CardPlacement = { owner: "you", zone: "active" };
+    expect(predicate(board, from, elsewhere, "stadium")).toBe(false);
+    expect(
+      moveToAction({ cardId: stadiumUid, from, to: elsewhere }, { phase: state.phase, viewerSeat: "p1", board }),
+    ).toBeNull();
+  });
+
+  it("a Tool dropped on an own occupied Pokémon routes to attachTool and applies (§7.4)", () => {
+    const state = stadiumToolTurnState();
+    const board = projectGameState(state, "p1").board;
+    const predicate = gamePlacementPredicate(state, "p1");
+    const toolUid = handUid(state, "p1", "sv01-197");
+    const from: CardPlacement = {
+      owner: "you",
+      zone: "hand",
+      index: board.you.hand.findIndex((card) => card.id === toolUid),
+    };
+    for (const to of [
+      { owner: "you", zone: "active" } as const,
+      { owner: "you", zone: "bench", index: 0 } as const,
+    ]) {
+      expect(predicate(board, from, to, "tool")).toBe(true);
+      const action = moveToAction(
+        { cardId: toolUid, from, to },
+        { phase: state.phase, viewerSeat: "p1", board },
+      );
+      expect(action?.type).toBe("attachTool");
+      expect(action === null ? false : applyAction(state, action).ok).toBe(true);
+    }
+    // The index-less bench container has no host — no affordance, no action.
+    const container: CardPlacement = { owner: "you", zone: "bench" };
+    expect(predicate(board, from, container, "tool")).toBe(false);
+    expect(
+      moveToAction({ cardId: toolUid, from, to: container }, { phase: state.phase, viewerSeat: "p1", board }),
+    ).toBeNull();
   });
 
   it("a Pokémon may aim at the bench (Basic-ness stays the engine's) but not a full one", () => {

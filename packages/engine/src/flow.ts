@@ -1,6 +1,7 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
-import { activeTop, hpOf, prizeValueOf, topCardOf, topUid } from "./cards";
+import { activeTop, prizeValueOf, topUid } from "./cards";
+import { effectiveMaxHp } from "./continuous";
 import type { GameEvent } from "./events";
 import { flipCoin } from "./rng";
 import type {
@@ -51,12 +52,12 @@ export function startTurn(state: GameState, seat: Seat, events: GameEvent[]): Ap
   return ok(next, events);
 }
 
-/** The one "damage ≥ max HP" Knock Out test (§8.1/§13), owning the null-hp
-    rule: a missing/non-positive printed hp is a catalog data gap, and a data
-    gap never KOs (cards.ts hpOf). */
+/** The one "damage ≥ max HP" Knock Out test (§8.1/§13), reading the
+    CONTINUOUS max HP (printed + Tool bonuses — Bravery Charm) and owning the
+    null-hp rule: a missing/non-positive printed hp is a catalog data gap, and
+    a data gap never KOs (cards.ts hpOf via continuous.ts effectiveMaxHp). */
 export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boolean {
-  const card = topCardOf(state, pokemon);
-  const hp = card === undefined ? null : hpOf(card);
+  const hp = effectiveMaxHp(state, pokemon);
   return hp !== null && pokemon.damage >= hp;
 }
 
