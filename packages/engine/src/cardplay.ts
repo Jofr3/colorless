@@ -448,7 +448,9 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
       },
     };
   }
-  return settleProgram(runProgram(next, ability.program, { seat: action.seat }, events), action.seat, events);
+  return settleProgram(runProgram(next, ability.program, { seat: action.seat }, events), action.seat, events, {
+    endsTurn: ability.endsTurn === true,
+  });
 }
 
 /** The first Basic Energy card of `cost.energyType` in `seat`'s hand — what an
@@ -486,6 +488,9 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   // folding back to a turn. Absent for every other parked effect (turn:action).
   return settleProgram(resumeProgram(state, phase.cont, action.choice, events), phase.seat, events, {
     resumeTail: phase.resumeTail === true,
+    // endsTurn (Koraidon "Dino Cry"): the parked Ability ends the turn once its
+    // program finishes, threaded across re-parks by settleProgram.
+    endsTurn: phase.endsTurn === true,
   });
 }
 

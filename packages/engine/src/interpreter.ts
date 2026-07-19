@@ -595,9 +595,10 @@ export function attachEnergyTargets(
 ): PokemonRef[] {
   const side = state.players[seat];
   const eligible = (pokemon: InPlayPokemon): boolean => {
-    if (op.targetType !== undefined) {
+    if (op.targetType !== undefined || op.basicOnly === true) {
       const card = topCardOf(state, pokemon);
-      if (!(card?.types ?? []).includes(op.targetType)) return false;
+      if (op.targetType !== undefined && !(card?.types ?? []).includes(op.targetType)) return false;
+      if (op.basicOnly === true && (card === undefined || !isBasicPokemon(card))) return false;
     }
     if (op.notIfKO === true && op.bonusCounters !== undefined) {
       const hp = effectiveMaxHp(state, pokemon);

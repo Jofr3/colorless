@@ -349,7 +349,7 @@ export function settleProgram(
   result: RunResult,
   controller: Seat,
   events: GameEvent[],
-  opts: { resumeTail?: boolean } = {},
+  opts: { resumeTail?: boolean; endsTurn?: boolean } = {},
 ): ApplyResult {
   if (result.kind === "parked") {
     events.push({ type: "EFFECT_PENDING", seat: controller, note: result.prompt.note });
@@ -361,9 +361,11 @@ export function settleProgram(
           seat: controller,
           prompt: result.prompt,
           cont: result.cont,
-          // Carry resumeTail so resolveEffect resumes the KO tail (below), not a
-          // turn — a re-park mid-sweep stays a mid-sweep park.
+          // Carry the fold flags across a park so resolveEffect folds the same
+          // way once the (possibly re-parking) program finishes: resumeTail
+          // resumes the KO tail, endsTurn ends the controller's turn.
           ...(opts.resumeTail === true ? { resumeTail: true as const } : {}),
+          ...(opts.endsTurn === true ? { endsTurn: true as const } : {}),
         },
       },
       events,
@@ -372,6 +374,12 @@ export function settleProgram(
   // DONE. A mid-KO-sweep on-KO trigger hands control back to the sweep — its
   // prize/promotion stages are still queued behind it, so keep draining them.
   if (opts.resumeTail === true) return advance(result.state, events);
+  // An Ability that ends the turn (Koraidon "Dino Cry") seeds the turn tail
+  // instead of returning to turn:action. Its program does not damage, so no
+  // mid-turn KO sweep is owed — the tail's Checkup handles between-turns KOs.
+  if (opts.endsTurn === true) {
+    return advance({ ...result.state, pending: turnTail(controller) }, events);
+  }
   const resumed: GameState = { ...result.state, phase: { kind: "turn:action", seat: controller } };
   return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
 }

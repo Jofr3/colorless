@@ -32,12 +32,12 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: `attachEnergyFrom` RIDERS — the base
-    attach op grows `targetType` / `bonusCounters` / `notIfKO` riders, authoring
-    the marquee Gardevoir ex "Psychic Embrace" (attach a Basic {P} from discard to
-    a {P} Pokémon that would not be Knocked Out, + 2 damage counters, repeatable).
-    The base single-attach op (Quaquaval / Baxcalibur) landed in 0.12.0). */
-export const engineVersion = "0.13.0";
+/** Engine milestone marker (M5 op-slice: attachEnergyFrom MULTI-attach + endsTurn
+    — "attach up to N in any way" is N single-attach ops (the interpreter parks on
+    each in turn), and a new `AbilityProgram.endsTurn` folds the turn end via
+    settleProgram; authors Koraidon ex "Dino Cry" (up to 2 Basic {F} from discard
+    to your Basic {F} Pokémon, then your turn ends). Gardevoir's riders were 0.13.0). */
+export const engineVersion = "0.14.0";
 
 export type {
   ApplyResult,

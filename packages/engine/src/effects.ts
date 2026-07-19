@@ -109,21 +109,26 @@ export type EffectOp =
       fungible, so the ONLY decision is the TARGET: this PARKS on a choosePokemon
       unless exactly one Pokémon is in play, and a source holding no matching
       Energy is a no-op (programPlayable also blocks activating an Ability that
-      could only whiff). Single-energy — the "up to N" / deck-search / look-at-
-      top-N variants layer later ops on top of this attach primitive.
+      could only whiff). Single-energy — MULTI-attach ("attach up to N in any way
+      you like", Koraidon "Dino Cry") is just N of these ops in one program: the
+      interpreter parks on each attach's target in turn, and an op finding no more
+      matching Energy no-ops, so the program attaches min(N, available) — the
+      "may attach fewer" is auto-maxed (pure-upside, the auto-take doctrine). The
+      deck-search / look-at-top-N sources layer later ops on this primitive.
 
-      Riders (Gardevoir "Psychic Embrace"): `targetType` restricts the eligible
-      targets to the controller's own Pokémon whose top card is that type ({P});
+      Riders: `targetType` restricts the eligible targets to the controller's own
+      Pokémon whose top card is that type ({P}/{F}); `basicOnly` further requires
+      the target be a Basic Pokémon (Koraidon's "your Basic {F} Pokémon");
       `bonusCounters` puts that many HP of damage counters on the Pokémon just
-      attached to (2 counters = 20); `notIfKO` excludes any target the
-      bonusCounters would Knock Out ("you can't use this on a Pokémon that would
-      be Knocked Out"), so the placed counters are always non-lethal — this op
-      never KOs (a lethal-bonus variant would route through the KO sweep). */
+      attached to (Gardevoir's 2 = 20); `notIfKO` excludes any target the
+      bonusCounters would Knock Out ("can't use on a Pokémon that would be Knocked
+      Out"), so the placed counters are always non-lethal — this op never KOs. */
   | {
       op: "attachEnergyFrom";
       source: "hand" | "discard";
       energyType?: string;
       targetType?: string;
+      basicOnly?: true;
       bonusCounters?: number;
       notIfKO?: true;
     };

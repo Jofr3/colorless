@@ -459,6 +459,28 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-psychic-1": battler("fix-psychic-1", { name: "fix-psychic-1", types: ["Psychic"], hp: 60, retreat: 1 }),
   /** A Basic Psychic Energy — the Psychic Embrace attach source. */
   "fix-psychic-energy": typedEnergy("fix-psychic-energy", "Psychic"),
+
+  // — attachEnergyFrom multi + endsTurn: Koraidon ex "Dino Cry". —
+  /** Koraidon ex — "Dino Cry" (multi-attach up to 2 Basic {F} from discard to
+      Basic {F} Pokémon; then the turn ends). Basic Fighting, so it is its own
+      valid Basic {F} target. */
+  "sv01-125": battler("sv01-125", { name: "Koraidon ex", types: ["Fighting"], hp: 230, retreat: 1 }),
+  /** A Basic Fighting {F} Pokémon — a valid Dino Cry target. */
+  "fix-fighting-1": battler("fix-fighting-1", { name: "fix-fighting-1", types: ["Fighting"], hp: 70, retreat: 1 }),
+  /** A NON-Basic Fighting {F} Pokémon (Stage 2) — the right type but excluded by
+      `basicOnly` (Dino Cry targets only your Basic {F}). */
+  "fix-fighting-evo": {
+    ...blank,
+    id: "fix-fighting-evo",
+    name: "fix-fighting-evo",
+    category: "Pokemon",
+    stage: "Stage2",
+    hp: 150,
+    types: ["Fighting"],
+    retreat: 2,
+  } satisfies Card,
+  /** A Basic Fighting Energy — the Dino Cry attach source. */
+  "fix-fighting-energy": typedEnergy("fix-fighting-energy", "Fighting"),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -647,6 +669,19 @@ export const GARDEVOIR_DECK = deckOf({
   "fix-basic-1": 8,
   "fix-psychic-energy": 20,
   "fix-energy": 21,
+});
+
+/** M5 attachEnergyFrom multi + endsTurn (Koraidon ex "Dino Cry"): Koraidon ex
+    (Basic {F}, its own target), fix-fighting-1 Basic {F} bench targets,
+    fix-fighting-evo (Stage {F}, excluded by basicOnly), fix-basic-1 non-{F}
+    (excluded by targetType), Basic Fighting Energy (the discard source), filler. */
+export const KORAIDON_DECK = deckOf({
+  "sv01-125": 3,
+  "fix-fighting-1": 6,
+  "fix-fighting-evo": 2,
+  "fix-basic-1": 6,
+  "fix-fighting-energy": 20,
+  "fix-energy": 23,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

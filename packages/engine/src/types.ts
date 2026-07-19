@@ -238,6 +238,12 @@ export type Phase =
       prompt: EffectPrompt;
       cont: EffectContinuation;
       resumeTail?: true;
+      /** The Ability that parked here ENDS the controller's turn on completion
+          (Koraidon "Dino Cry"). Threaded through re-parks and read by
+          resolveEffect → settleProgram (flow.ts): the finished program seeds the
+          turn tail instead of returning to turn:action. Mutually exclusive with
+          `resumeTail` (an on-KO trigger runs on the opponent's turn). */
+      endsTurn?: true;
     }
   | { kind: "gameOver"; outcome: GameOutcome };
 

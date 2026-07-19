@@ -32,6 +32,11 @@ export interface AbilityProgram {
   activeOnly: boolean;
   /** A cost paid from hand to use it (Meowscarada's {G}-Energy discard). */
   cost?: AbilityCost;
+  /** The Ability ENDS the controller's turn once its program completes
+      (Koraidon "Dino Cry": "If you use this Ability, your turn ends."). Folded by
+      flow.ts settleProgram — instead of returning to turn:action, it seeds the
+      turn tail. Assumes the program does not damage (Koraidon attaches Energy). */
+  endsTurn?: true;
   /** The op program `useAbility` runs (may park like a Trainer's). */
   program: EffectOp[];
 }
@@ -494,6 +499,27 @@ const FIX_ATTACHER: CardProgram = {
   ],
 };
 
+/** Koraidon ex — "Dino Cry": "Once during your turn, you may attach up to 2 Basic
+    {F} Energy cards from your discard pile to your Basic {F} Pokémon in any way
+    you like. If you use this Ability, your turn ends." — MULTI-attach (up to 2) is
+    two attachEnergyFrom ops in a row (each parks on its own Basic {F} target; the
+    second no-ops if a single {F} was in the discard), and `endsTurn` folds the
+    turn end. once/turn, not Active-only. */
+const KORAIDON_EX: CardProgram = {
+  abilities: [
+    {
+      name: "Dino Cry",
+      oncePerTurn: true,
+      activeOnly: false,
+      endsTurn: true,
+      program: [
+        { op: "attachEnergyFrom", source: "discard", energyType: "Fighting", targetType: "Fighting", basicOnly: true },
+        { op: "attachEnergyFrom", source: "discard", energyType: "Fighting", targetType: "Fighting", basicOnly: true },
+      ],
+    },
+  ],
+};
+
 /** Gardevoir ex — "Psychic Embrace": "As often as you like during your turn, you
     may attach a Basic {P} Energy card from your discard pile to 1 of your {P}
     Pokémon. If you attached Energy to a Pokémon in this way, put 2 damage counters
@@ -603,6 +629,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-086": GARDEVOIR_EX, // Gardevoir ex — Psychic Embrace
   "sv01-228": GARDEVOIR_EX, // (reprint)
   "sv01-245": GARDEVOIR_EX, // (reprint)
+  // — attachEnergyFrom multi + endsTurn: Koraidon ex "Dino Cry" (the sv01 prints
+  //   carry the ability; sv03-124 is a different Koraidon ex without it). —
+  "sv01-125": KORAIDON_EX,
+  "sv01-231": KORAIDON_EX,
+  "sv01-247": KORAIDON_EX,
+  "sv01-254": KORAIDON_EX,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
