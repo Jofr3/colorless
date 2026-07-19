@@ -3,7 +3,14 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-19 — build session #15 (**P3-M4 slice 9: on-KO
+**Last updated:** 2026-07-19 — build session #16 (**P3-M5 coverage pass #1** — a
+classify→verify **Workflow fan-out** (10 agents) over the 140 un-authored sv01–03
+Trainers/Energy/Abilities found only **5 expressible with the current ops**
+(landed: Poké Ball, Pokémon Catcher, Nemona, Copperajah ex, Stonjourner) and
+**113 needing new ops** — coverage is op-bound, so the deliverable is the ranked
+**new-op backlog** (`docs/reference/coverage-backlog.md`) that sequences the next
+slices. Additive registry rows only — no engine change; 1080 → **1087** tests,
+`bun run check` + `vite build` green. Prior: build #15 = **P3-M4 slice 9: on-KO
 triggered Abilities** (§8.1) — a "when this Pokémon is Knocked Out" Ability fires
 mid-KO-sweep DURING the opponent's turn, **closing M4**. Two forms on
 `TriggeredAbility` (trigger `"onKnockOut"`): a coin-flip **Prize GUARD**
@@ -21,6 +28,39 @@ applied. Suite 1066 → **1080**, `bun run check` green, `vite build` green;
 engineVersion 0.10.0 → 0.11.0.).
 
 ## Resume point
+**M5 coverage pass #1 is done — the ranked new-op backlog is the roadmap.** A
+classify→verify **Workflow fan-out** (10 agents, 0 errors) classified the 140
+un-authored sv01–03 Trainers/Energy/Abilities against the current op vocabulary:
+**5 authorable now** (landed), **113 needs-op**, 22 already-authored. Coverage is
+**op-bound, not authoring-bound** (~4% expressible today), so the deliverable is
+BOTH the 5 landed registry rows AND the **new-op backlog**
+(`docs/reference/coverage-backlog.md`) ranked by cards-unlocked. **Landed:** Poké
+Ball (sv01-185, `coinFlipGate → [searchDeck anyPokemon→hand, shuffleDeck]`),
+Pokémon Catcher (sv01-187, `coinFlipGate → [gust]`), Nemona (sv01-180,
+`drawCards 3`), Copperajah ex (sv02-150, passive −30 after W/R), Stonjourner
+(sv01-121, passive −20). The fan-out mis-placed Poké Ball's shuffle outside the
+coin gate (tails would reorder the deck) — hand-fixed + test-pinned (the reason
+authorable programs are hand-verified before landing). First Trainers to use
+`coinFlipGate`, so the `ATTACK_EFFECT_COIN_FLIP` log copy was neutralized. No
+engine mechanism changed (additive data); engineVersion stays 0.11.0. Suite 1080
+→ **1087**; no 2-agent slice review (fan-out classify+verify + hand-verify +
+tests). See "M5 coverage pass #1 as built".
+**Next concrete actions (build the backlog, highest-unlock first):**
+1. **`attachEnergyFrom`** — the single biggest unlock (11 cards, and the engine
+   of most evolving-deck Abilities): an op that attaches Energy from a source
+   (deck/discard/hand) matching a filter to a chosen Pokémon. A normal engine
+   slice (new op + interpreter case + registry rows + tests + 2-agent review).
+2. Then **`discardPileRetrieval`** + extra **`CardFilter`** kinds (Item/Tool/
+   Evolution/no-rule-box), **`lookAtTopN`**, **`moveEnergy`**, the
+   **`conditionalPlay`/`conditionalGate`** family, and the **hand-refresh
+   Supporter family** (Iono/Judge/Marnie) — each turns dozens of "needs-op" rows
+   into data rows. Full sequencing in `docs/reference/coverage-backlog.md`.
+3. Or pivot to **P4 (online matches)** — the P3 engine is now broad enough to
+   play real games; the projection is already the per-viewer filter P4 applies.
+   (A further coverage pass can run in parallel or later.)
+
+---
+### Prior resume point (P3-M4 slice 9, kept for continuity)
 **on-KO triggered Abilities are live (P3-M4 slice 9, D30) — M4 IS COMPLETE.** A
 "when this Pokémon is Knocked Out" Ability (§8.1) fires mid-KO-sweep DURING the
 opponent's turn — the inverse of the slice-8 snipe (the KO fires the trigger).
@@ -93,13 +133,40 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 done + M4 COMPLETE** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities + D28 Rare Candy + D29 mid-turn-damage snipe + **D30 on-KO triggered Abilities — inline prize guard + resume-the-tail koTrigger stage, 2026-07-19**) — next: **M5 coverage-expansion fan-out** (ask first) or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 coverage pass #1 done** (M4: D22–D30, evolution→on-KO triggers; **M5 #1, 2026-07-19**: a classify→verify Workflow fan-out landed 5 existing-op cards + produced the ranked new-op backlog in `docs/reference/coverage-backlog.md`) — next: build the backlog ops (`attachEnergyFrom` first) or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-19** (build #16) — **P3-M5 coverage pass #1** (the coverage-expansion
+  fan-out). A classify→verify **Workflow fan-out** (10 agents: 5 batches ×
+  classify + adversarial verify, 0 errors, ~359k agent tokens) classified the
+  **140 un-authored sv01–03** Trainers (61) / Special Energies (4) / Pokémon
+  Abilities (75) against the current op vocabulary with the deriver doctrine
+  (exact map or flag). Result: **5 authorable now**, 113 needs-op, 22
+  already-authored — coverage is **op-bound, not authoring-bound** (~4%
+  expressible today). Deliverable is BOTH the 5 landed cards AND the ranked
+  **new-op backlog** (`docs/reference/coverage-backlog.md`): `attachEnergyFrom`
+  unlocks 11, `discardPileRetrieval` 6, `lookAtTopN`/`moveEnergy`/`conditionalPlay`
+  5 each, then a long tail that collapses into a few parameterized ops.
+  **Landed** (registry rows over existing ops, id-verified vs the local catalog,
+  each test-pinned): Poké Ball (sv01-185, coin-gated Pokémon search → hand),
+  Pokémon Catcher (sv01-187, coin-gated gust), Nemona (sv01-180, draw 3),
+  Copperajah ex (sv02-150, passive Bronze Body −30 after W/R), Stonjourner
+  (sv01-121, passive Exoskeleton −20). Hand-verification caught a fan-out bug —
+  Poké Ball's `shuffleDeck` was placed OUTSIDE the coin gate (a tails play would
+  reorder the deck); fixed to inside the gate + pinned by a "tails → NO shuffle"
+  test. Poké Ball / Catcher are the first Trainers to use `coinFlipGate`, so the
+  `ATTACK_EFFECT_COIN_FLIP` log copy was neutralized ("flipped X for the effect").
+  **No engine mechanism changed** (additive registry rows + fixtures + one
+  `coverage.test.ts` + the backlog doc), so no 2-agent slice review — the fan-out's
+  classify+verify already double-checked each program and each landed card is
+  hand-verified + tested. engineVersion unchanged (0.11.0). **1080 → 1087 tests**,
+  `bun run check` + `vite build` green. Files: registry.ts, testFixtures.ts,
+  coverage.test.ts (new), logFromEvents.ts/.test.ts + docs/reference/coverage-backlog.md
+  (new), simulator.md, progress.md, decisions.md.
 - **2026-07-19** (build #15) — **P3-M4 slice 9: on-KO triggered Abilities**
   (§8.1, D30; built solo — full context loaded — then a 2-agent Opus review,
   BOTH CLEAN — **this CLOSES M4**). A "when this Pokémon is Knocked Out" Ability

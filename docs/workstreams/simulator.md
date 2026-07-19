@@ -136,7 +136,13 @@ event stream.
    (Glimmora) resolved inline in the sweep, and a parking on-KO program run as a
    `koTrigger` stage that folds through `settleProgram` with `resumeTail` (park
    for a decision, then resume draining the KO's prize/promotion tail).
-5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
+5. 🚧 **Coverage-expansion pass(es) across the SV-era pool** — pass #1 done
+   (2026-07-19): a classify→verify Workflow fan-out over the 140 un-authored
+   sv01–03 Trainers/Energy/Abilities found only **5 expressible with the current
+   ops** (landed) and **113 needing new ops** — coverage is op-bound, so the
+   ranked **new-op backlog** (`docs/reference/coverage-backlog.md`) is the roadmap
+   for the next slices (`attachEnergyFrom` unlocks 11, `discardPileRetrieval` 6,
+   `lookAtTopN`/`moveEnergy`/`conditionalPlay` 5 each, …).
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
 
@@ -1196,6 +1202,40 @@ flow.ts (planPrizes / settleProgram+resumeTail / runKoTrigger / advance),
 registry.ts, triggers.ts, types.ts, events.ts, cardplay.ts, index.ts,
 testFixtures.ts, onKnockOut.test.ts (new) + projection.ts, logFromEvents.ts and
 their tests + GameHud.cardplay.dom.test.tsx.
+
+## M5 coverage pass #1 as built (2026-07-19) — the existing-op harvest + the backlog
+
+**Method.** A classify→verify **Workflow fan-out** (10 agents: 5 batches ×
+classify + adversarial verify) over the **140 un-authored sv01–03**
+Trainers (61) / Special Energies (4) / Pokémon Abilities (75), each judged
+against the current op vocabulary with the deriver doctrine (exact map or flag).
+Every authorable program was then hand-verified vs the local catalog.
+
+**Result.** **5 authorable now**, 113 needs-op, 22 already-authored. Coverage is
+**op-bound, not authoring-bound** (~4% of the un-authored pool is expressible
+today), so the deliverable is BOTH the 5 landed cards AND the ranked
+**new-op backlog** — `docs/reference/coverage-backlog.md` — which sequences the
+next slices (`attachEnergyFrom` unlocks 11 cards, `discardPileRetrieval` 6,
+`lookAtTopN`/`moveEnergy`/`conditionalPlay` 5 each, then a long tail that
+collapses into a few parameterized ops).
+
+**Landed (registry rows over the existing ops, id-verified, tested):** Poké Ball
+(sv01-185 — `coinFlipGate → [searchDeck anyPokemon→hand, shuffleDeck]`), Pokémon
+Catcher (sv01-187 — `coinFlipGate → [gust]`), Nemona (sv01-180 — `drawCards 3`),
+Copperajah ex (sv02-150 — passive `damageReductionAfterWR: 30`), Stonjourner
+(sv01-121 — passive `damageReductionAfterWR: 20`). The fan-out mis-placed Poké
+Ball's `shuffleDeck` OUTSIDE the coin gate (a tails play would reorder the deck);
+hand-fixed to inside the gate and pinned by a "tails → NO shuffle" test — the
+reason authorable programs are hand-verified, not merged raw. Poké Ball / Catcher
+are the FIRST Trainers to use `coinFlipGate`, so the `ATTACK_EFFECT_COIN_FLIP` log
+copy was neutralized ("flipped X for the effect", not "…for the attack effect");
+the event id keeps "ATTACK_" for back-compat (a rename is a later cleanup).
+
+**No engine mechanism changed** — this pass only adds registry rows + fixtures +
+one `coverage.test.ts` + the backlog doc, so no 2-agent slice review (the fan-out's
+classify+verify already double-checked each program, and each landed card is
+hand-verified + test-pinned). engineVersion unchanged (0.11.0 — additive data).
+Suite 1080 → **1087** (7 coverage tests). `bun run check` + `vite build` green.
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
