@@ -3,70 +3,79 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-18 — build session #13 (**P3-M4 slice 7: Rare Candy**
-(§7.1) — the Basic→Stage 2 evolve-skip Item, a dedicated `rareCandy` action that
-reuses a shared `placeEvolution` extracted from `evolve` (so it inherits
-carry-over, the on-evolve trigger and the evolve-below-HP mid-turn KO); the
-Basic→Stage 2 link is resolved by BRIDGING through the Stage 1 name in the pool
-(documented gap: a Stage-1-absent deck can't resolve it); a `RareCandyDialog`
-picks the Basic + Stage 2, projection unchanged; built solo, 2-agent Opus review
-BOTH CLEAN — refactor proven byte-for-byte equivalent, no correctness bugs, 2 LOW
-UX/perf fixes + 3 coverage tests applied; suite 1019 → 1045, `bun run check`
-green, live /play boot smoke clean).
+**Last updated:** 2026-07-19 — build session #14 (**P3-M4 slice 8: the
+mid-turn-damage snipe** (§9) — a `damageChosen` op puts damage counters on
+CHOSEN opponent Benched Pokémon (a new multi-Pokémon prompt `choosePokemonMulti`)
+and can Knock one Out MID-TURN through a **unified `settleProgram`** that
+collapses the two identical settle helpers and runs the slice-4
+`resolveMidTurnKnockOuts` sweep on any completed board program — so the actor
+keeps their turn; Meowscarada's "Bouquet Magic" adds the engine's FIRST **ability
+activation cost** (discard a {G} energy). Representatives Hawlucha (sv01-118,
+triggered choose-2) + Meowscarada ex (sv02-015/256, activated choose-1); built
+solo, **2-agent Opus review BOTH CLEAN — no HIGH/MED correctness bugs**, the one
+shared LOW is the by-design "you may" auto-take (documented as a conscious
+choice). Suite 1045 → **1066**, `bun run check` green, `vite build` green;
+engineVersion 0.9.0 → 0.10.0.).
 
 ## Resume point
-**Rare Candy is live (P3-M4 slice 7, D28).** The Basic→Stage 2 evolve-skip Item
-(§7.1) is a dedicated **`rareCandy` action** (cardplay.ts) `{seat, uid (the Rare
-Candy), target (the Basic), evolutionUid (the Stage 2)}` — NOT an interpreter op
-(it evolves, and flow.ts owns every Knock Out). The `evolve` tail was extracted
-into a shared **`placeEvolution`** (turn.ts) that both `evolve` and `rareCandy`
-call, so Rare Candy inherits §10 carry-over (damage/energy/tools stay,
-conditions/markers clear), the **on-evolve trigger**, and the **evolve-below-HP
-mid-turn KO** with zero new flow code (the refactor is behavior-equivalent —
-proven in review + the unchanged evolution suite). Timing mirrors `evolve` (§4
-first-turn ban + `turnPlayed >= turn`). **The Basic→Stage 2 link is resolved by
-BRIDGING**: the catalog stores only each card's immediate `evolveFrom`, so
-`stage2EvolvesFromBasic` checks the pool for a **Stage 1** named
-`stage2.evolveFrom` whose own `evolveFrom` is the target Basic (documented gap: a
-Stage-1-absent deck can't resolve it — ingest-debt, like `prizeValueOf`=1). A
-registry **marker** `CardProgram.rareCandy?: true` identifies it; `playTrainer`
-rejects it (`TRAINER_TYPE_UNSUPPORTED`). New error code `RARE_CANDY_NO_STAGE2`;
-no new event (`TRAINER_PLAYED` then `POKEMON_EVOLVED`). **Web:**
-**`rareCandyOptions(state, seat)`** (the engine authority) drives a bespoke
-**`RareCandyDialog`** (pick a Basic → pick a Stage 2, with Cancel/Back) opened
-from the Trainers list; the **projection is unchanged** (all three
-`placeEvolution` outcomes already handled). Demo: Rare Candy ×2 in Ember (Fire
-energy 14→12). engineVersion 0.9.0 (additive). See "M4 slice 7 as built" + D28.
+**The mid-turn-damage snipe is live (P3-M4 slice 8, D29).** A damaging Ability
+that puts damage counters on CHOSEN opponent Benched Pokémon and can Knock one
+Out **mid-turn** — the last deferred mid-turn-KO reach from slices 4/6. New op
+**`damageChosen` {target:"opponentBench", amount, count}** (effects.ts/
+interpreter.ts): flat counters (no W/R, no reduction passive — the `damageActive`
+rule, distinct from `spreadDamage`), parking on a NEW multi-select prompt
+**`choosePokemonMulti`** (choice `pokemonMulti {refs}`, 0..max "you may") when the
+opponent has >count Benched, forced (hits all) at ≤count, no-op at 0. **The KO
+reaches flow.ts through a unified `settleProgram`** (flow.ts) — the two identical
+local settle helpers (triggers.ts `settleTrigger`, cardplay.ts `settleRun`)
+collapse into one that, on a completed program, returns the controller to
+turn:action then runs the shared **`resolveMidTurnKnockOuts`** over both boards;
+behaviour-preserving for every non-damaging Trainer/Ability (the sweep is a
+no-op). Meowscarada ex adds the engine's first **ability activation cost**
+(`AbilityProgram.cost`; `useAbility` gates on `programPlayable` then discards a
+Basic {G} Energy — `ABILITY_COST_PAID` — or rejects `ABILITY_COST_UNMET`).
+Representatives Hawlucha (sv01-118) + Meowscarada ex (sv02-015/256), NOT in the
+demo decks (auto-fire/contrived preconditions; test-covered). **Web:** projection
+UNCHANGED (choosePokemonMulti rides effect:choose; the mid-turn KO park is
+`resumeTurn` = in-turn); one new `ChoosePokemonMultiDialog`; one new log row
+(`ABILITY_COST_PAID`). engineVersion 0.9.0 → 0.10.0. See "M4 slice 8 as built" +
+D29.
 **Review (2 Opus agents — rules+engine / web+integration): BOTH CLEAN, no
-correctness bugs.** The rules agent proved the `placeEvolution` refactor
-byte-for-byte equivalent, the bridge sound, wire-safety airtight, purity held;
-the web agent confirmed the projection "no change", the dialog↔options lockstep,
-and the demo deck. Fixes applied from the LOW findings: a **Cancel** button, a
-**lazy** `rareCandyOptions` in playableTrainers, and 3 coverage tests (benched
-mid-turn KO, Tool carry-over, an Energy as the evolution card).
-**Verification:** `bun run check` green (**1045 tests** — 1019 → 1045: 24 engine
-`rareCandy.test.ts` + 2 DOM), production `vite build` green. **Live /play boot
-smoke** (agent-browser, seed 6, ZERO console errors): boots with the re-balanced
-Ember deck — all 75 cardPool fetches 200 (incl. sv01-191 Rare Candy), a clean
-7-card deal (no mulligan storm), and the live api confirms the real-catalog
-bridge (Skeledirge → Crocalor → Fuecoco). Rare Candy driven to resolution only in
-the engine + DOM tests (a live resolution needs a contrived seed + the Pixi
-hit-test session-eater; slice-4/5/6 precedent).
+HIGH/MED correctness bugs.** The rules agent CONFIRMED (via probes) the settle
+unification behaviour-preserving, the SEATS sweep safe (§14 tie guard can't
+spuriously fire — `effectiveMaxHp` is position-independent), the mid-turn KO
+prize+resume + §14-win correct, the ability cost paid-once-across-park, the
+`programPlayable` gate non-regressive, the flat-counter rule, wire-safety
+double-guarded, the flow↔triggers cycle evaluation-safe, and purity. The web
+agent CONFIRMED the dialog keys/toggle/reset, the dialog↔engine lockstep (an
+enabled Confirm can only ever produce a legal dispatch), the projection + viewer-
+follow through the mid-turn KO, the afford-then-reject button, the log rows, and
+NO demo/`/play` regression. **The one shared LOW** — the forced (≤count) branch
+auto-takes rather than offering the "you may" decline (only the parked branch
+does) — is HARMLESS (pure upside) and the documented auto-fire doctrine; made a
+conscious choice in an interpreter.ts comment (a decline confirm rides with the
+deferred downside-trigger confirm). No code fixes needed.
+**Verification:** `bun run check` green (**1066 tests** — 1045 → 1066: 17 engine
+`snipe.test.ts` + 2 DOM + 1 projection + 1 log), production `vite build` green.
+No live /play smoke this session (representatives not demo-reachable; NO demo
+deck / projection path changed, so the demo boot is byte-identical to slice 7's —
+the slice-6 precedent).
 Next concrete actions:
-1. **P3-M4 remaining (2 items):** the **mid-turn-damage snipe** (Hawlucha
-   sv01-118 choose-2 / Meowscarada sv02-015 choose-1) — an on-play/on-evolve
-   *damaging* trigger that KOs mid-turn, needing a multi-Pokémon prompt +
-   `settleRun`→`resolveMidTurnKnockOuts` (reuses slice-4 + slice-6 machinery);
-   then **on-KO triggers** (fire during the OPPONENT's turn mid-KO-sweep — the
-   deferred hairy timing, needs a resume-the-tail continuation).
-2. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics live in
-   interpreter.ts (op programs), continuous.ts (persistent zones + energy
-   provision), triggers.ts (scan points), cardplay.ts (Rare Candy) and
-   registry.ts (a new card in a known family is a few rows). Ask the user before
-   launching one.
+1. **P3-M4 remaining (1 item): on-KO triggers** — a triggered Ability that fires
+   "when this Pokémon is Knocked Out", DURING the opponent's turn mid-KO-sweep
+   (the hairiest timing: needs a resume-the-tail continuation, so the KO sweep
+   can pause for a decision and then continue draining prizes/promotions). The
+   snipe just proved a completed board program can KO mid-turn via
+   `settleProgram`; on-KO is the inverse (the KO fires the trigger, not the
+   trigger firing the KO).
+2. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics all live
+   in interpreter.ts (op programs incl. `damageChosen`), continuous.ts,
+   triggers.ts, cardplay.ts and registry.ts (now incl. `AbilityProgram.cost`), so
+   a new card in a known family is a few registry rows. Ask the user first.
 3. **Slice-6 follow-up (still open):** the slice-6 (triggered Abilities) review
    was cut short by the usage limit — a `/code-review` re-run over commit
-   `a634b30` is logged (user opted to defer it while building slice 7).
+   `a634b30` is logged (user opted to defer it while building later slices).
+
 Unchanged user-side blockers: web prod build/deploy story unset
 (`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
 `APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
@@ -79,13 +88,81 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy/triggered-Abilities/Rare-Candy done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities + D28 Rare Candy — evolve-skip via shared placeEvolution, 2026-07-18) — remaining: the mid-turn-damage snipe, on-KO triggers; then the coverage fan-out |
+| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy/triggered-Abilities/Rare-Candy/mid-turn-snipe done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities + D28 Rare Candy + D29 mid-turn-damage snipe — damageChosen op + unified settleProgram KO sweep + first ability cost, 2026-07-19) — remaining: on-KO triggers; then the coverage fan-out |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-19** (build #14) — **P3-M4 slice 8: the mid-turn-damage snipe** (§9,
+  D29; built solo — full context loaded — then a 2-agent Opus review, BOTH
+  CLEAN). A damaging Ability that puts damage counters on CHOSEN opponent Benched
+  Pokémon and can Knock one Out **mid-turn** (the actor keeps their turn) — the
+  last deferred mid-turn-KO reach from slices 4/6. New op **`damageChosen`**
+  (`{op, target:"opponentBench", amount, count}`, effects.ts/interpreter.ts):
+  place `amount` HP of counters on `count` chosen opponent Benched Pokémon —
+  **flat** (no Weakness/Resistance, no reduction passive; a counter placed by an
+  Ability is not "damage from attacks" — the `damageActive`/poison-tick rule,
+  distinct from `spreadDamage` which IS attack damage). PARKS on a NEW
+  multi-Pokémon prompt **`choosePokemonMulti {candidates, max}`** / choice
+  `pokemonMulti {refs}` (the first multi-select Pokémon decision; "you may" +
+  "up to" → 0..max) when the opponent has >count Benched, is forced (hits all) at
+  ≤count, no-op at 0. **The KO reaches flow.ts via a unified `settleProgram`**
+  (flow.ts): the two IDENTICAL local settle helpers (triggers.ts `settleTrigger`,
+  cardplay.ts `settleRun`) collapse into ONE that, on a completed program,
+  returns the controller to turn:action then runs the shared
+  **`resolveMidTurnKnockOuts`** (slice-4 machinery) over both boards — so a snipe
+  that drops an opponent's Benched Pokémon resolves as a mid-turn KO handing the
+  turn back to the actor (the opponent's Pokémon prizes to the actor; a
+  game-winning KO ends the game). Behaviour-preserving for every non-damaging
+  program (the sweep is a no-op → straight back to turn:action). Meowscarada ex
+  "Bouquet Magic" adds the engine's FIRST **ability activation cost**
+  (`AbilityProgram.cost = {kind:"discardBasicEnergy", energyType}`): `useAbility`
+  gates on the shared **`programPlayable`** (renamed from `trainerPlayable`,
+  extended so the snipe needs an opponent Bench — a play that does nothing can't
+  be made, so the cost is never spent for no effect) then pays the cost (discard
+  a Basic {G} Energy from hand, `ABILITY_COST_PAID`) before running — an
+  unpayable cost rejects `ABILITY_COST_UNMET`, and the cost is paid ONCE before
+  parking, so a parked snipe resolving via `resolveEffect` never re-charges. New
+  error `ABILITY_COST_UNMET`; new event `ABILITY_COST_PAID`. Representatives
+  (verified vs the live api): **Hawlucha** (sv01-118, triggered onPlayToBench,
+  2×1 counter) and **Meowscarada ex** (sv02-015/256, activated, once/turn, not
+  Active-only, 1×3 counters); NOT added to the demo decks (auto-fire/contrived
+  preconditions — the slice-4/5/6/7 precedent). **Web:** projection UNCHANGED
+  (choosePokemonMulti rides the existing effect:choose; the mid-turn KO park is
+  `resumeTurn` = in-turn per koParkActiveSeat since slice 4); GameHud adds one
+  **`ChoosePokemonMultiDialog`** (multi-select up to max, Confirm/Take-none →
+  `resolveEffect` `{kind:"pokemonMulti", refs}`); Meowscarada's button uses the
+  D19 afford-then-reject (no special gate); `logFromEvents` adds one
+  `ABILITY_COST_PAID` row (the snipe's damage/KO/trigger rows already existed).
+  engineVersion 0.9.0 → **0.10.0** (additive). **Review (2 Opus agents —
+  rules+engine / web+integration): BOTH CLEAN, no HIGH/MED correctness bugs.**
+  The rules agent CONFIRMED (via probes) the settle unification behaviour-
+  preserving (no pre-slice-8 settle program placed damage), the SEATS sweep safe
+  (§14 tie guard can't spuriously fire — `effectiveMaxHp` is position-independent),
+  the mid-turn KO prize+resume + §14-win correct, the ability cost
+  paid-once-across-park, the `programPlayable` gate non-regressive (Chien-Pao's
+  search never blocked), the flat-counter rule, wire-safety double-guarded
+  (validateChoice AND placeSnipeCounters), the flow↔triggers cycle
+  evaluation-safe, and purity. The web agent CONFIRMED the dialog keys/toggle/
+  reset, the dialog↔engine lockstep (an enabled Confirm can only produce a legal
+  dispatch), the projection + hot-seat viewer-follow through the mid-turn KO, the
+  afford-then-reject button, the log rows, and NO demo/`/play` regression. **The
+  one shared LOW** — the forced (≤count) branch auto-takes rather than offering
+  the "you may" decline (only the parked branch does) — is HARMLESS (pure upside)
+  and the documented auto-fire doctrine; made a conscious choice in an
+  interpreter.ts comment (a decline confirm rides with the deferred
+  downside-trigger confirm). No code fixes needed. **Deferred:** on-KO triggers
+  (fire during the OPPONENT's turn mid-KO-sweep — the last M4 tail). **Verification:**
+  `bun run check` green (1045 → **1066**: 17 engine `snipe.test.ts` + 2 DOM + 1
+  projection + 1 log), production `vite build` green. No live /play smoke (the
+  representatives aren't demo-reachable and NO demo deck / projection path
+  changed — the demo boot is byte-identical to slice 7's, the slice-6 precedent).
+  Files: effects.ts, interpreter.ts, flow.ts, triggers.ts, cardplay.ts,
+  registry.ts, actions.ts, events.ts, index.ts, testFixtures.ts, snipe.test.ts
+  (new) + GameHud.tsx, logFromEvents.ts/.test.ts, GameHud.cardplay.dom.test.tsx,
+  projection.test.ts.
 - **2026-07-18** (build #13) — **P3-M4 slice 7: Rare Candy** (§7.1, D28; built
   solo — full context loaded — then a 2-agent Opus review, BOTH CLEAN). Rare
   Candy evolves a Basic straight to a **Stage 2** from hand, skipping the Stage 1

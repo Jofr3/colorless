@@ -127,7 +127,11 @@ event stream.
    evolve-skip Item, a dedicated action reusing the extracted `placeEvolution`
    (so it inherits carry-over, the on-evolve trigger and the mid-turn KO), with
    the Basic→Stage 2 link resolved by bridging through the Stage 1 name in the
-   pool. Remaining: on-KO triggers, the mid-turn-damage snipe.
+   pool; slice 8 added the **mid-turn-damage snipe** (§9) — a `damageChosen` op
+   that puts counters on chosen opponent Benched Pokémon (a multi-Pokémon prompt)
+   and KOs mid-turn through a unified `settleProgram` KO sweep, plus the engine's
+   first ability activation cost (Meowscarada's {G}-discard). Remaining: on-KO
+   triggers.
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -1013,12 +1017,105 @@ precedent). Files: actions.ts, registry.ts, turn.ts (placeEvolution), cardplay.t
 rareCandy.test.ts (new) + GameHud.tsx, demoDecks.ts/.test.ts,
 GameHud.cardplay.dom.test.tsx.
 
+## M4 slice 8 as built (2026-07-19) — the mid-turn-damage snipe (§9)
+
+**Shape (D29).** A damaging Ability that puts damage counters on CHOSEN
+opponent Benched Pokémon and can Knock one Out **mid-turn** (the actor keeps
+their turn). It closes the deferred "multi-target snipe + settleRun →
+resolveMidTurnKnockOuts" tail from slices 4/6.
+
+- **`damageChosen` op** (`{op:"damageChosen", target:"opponentBench", amount,
+  count}`, effects.ts) placed by the interpreter (`placeSnipeCounters`): put
+  `amount` HP of damage counters on `count` chosen Benched Pokémon of the
+  opponent. **A counter placement, not attack damage** — flat, no
+  Weakness/Resistance AND **no reduction passive** (Bouffalant's "Bouffer"
+  reduces *"damage from attacks"*, which an Ability's counter is not — the
+  damageActive / poison-burn-tick rule; **distinct from `spreadDamage`**, which
+  IS an attack's damage and does take Bouffer). One `COUNTERS_PLACED` source
+  `"ability"` per Pokémon. **Parks on a new multi-Pokémon prompt** when the
+  opponent has MORE than `count` Benched, is forced (hits all) at `count` or
+  fewer, and is a no-op with an empty opponent Bench. Only raises damage — the
+  KO check runs in the caller's sweep (below), so the interpreter still never
+  KOs or touches the flow tail.
+- **`choosePokemonMulti` prompt** (`{kind:"choosePokemonMulti", candidates,
+  max, note}`) + choice `{kind:"pokemonMulti", refs}` (interpreter.ts) — the
+  first MULTI-select Pokémon decision (choosePokemon was exactly-one). The snipe
+  is "you may" + "up to", so 0..max distinct refs is legal (the chooseCards
+  semantics, lifted to Pokémon refs); `validateChoice` (cardplay.ts) became a
+  switch with the new branch (max clamp, candidate membership, no duplicates).
+- **The KO reaches flow.ts through a unified `settleProgram`** (flow.ts). The
+  two IDENTICAL local settle helpers — triggers.ts `settleTrigger` and
+  cardplay.ts `settleRun` — collapse into one. On a PARKED program it sets
+  effect:choose + EFFECT_PENDING (unchanged); on a DONE program it returns the
+  controller to turn:action **then runs `resolveMidTurnKnockOuts(state,
+  controller, SEATS, events)`** (the slice-4 mid-turn machinery). So a snipe
+  that drops an opponent's Benched Pokémon resolves as a mid-turn KO: the
+  opponent's Pokémon prizes to the actor, the actor's turn resumes
+  (`resumeTurn`), and taking the actor's last prize ends the game at the shared
+  §14 check. It sweeps BOTH boards (a harmless superset — only the opponent's
+  board can be freshly lethal from an in-scope effect, the same total scan
+  runCheckup does), and is **behaviour-preserving for every non-damaging program**
+  (draw/search/switch/heal leave nothing lethal, so the sweep is a no-op back to
+  turn:action — proven by the unchanged 276-test engine suite). This is the
+  intentional flow↔triggers import cycle (both used only in function bodies): the
+  interpreter/triggers never KO, so completion is handed BACK to flow (the
+  KO/tail owner).
+- **The engine's first ability activation COST.** Meowscarada ex "Bouquet
+  Magic" — "You must discard a Basic {G} Energy card from your hand in order to
+  use this Ability." — adds `AbilityProgram.cost` (`{kind:"discardBasicEnergy",
+  energyType}`, registry.ts). `useAbility` (cardplay.ts) now gates on the shared
+  **`programPlayable`** (renamed from `trainerPlayable`, extended so the snipe
+  needs an opponent Bench — a play that does nothing can't be made, so the cost
+  is never spent for no effect) and then pays the cost (find + discard one Basic
+  {G} Energy from hand, `ABILITY_COST_PAID`) BEFORE running the program — an
+  unpayable cost rejects `ABILITY_COST_UNMET` with nothing spent. The cost is
+  paid once, before parking, so a parked snipe resolving via `resolveEffect`
+  never re-charges. New error `ABILITY_COST_UNMET`; new event `ABILITY_COST_PAID`.
+
+**Representative set (real ids, verified vs the live api 2026-07-19):**
+Hawlucha (sv01-118, "Flying Entry" — a TRIGGERED Ability, onPlayToBench, choose
+2 of the opponent's Benched Pokémon and 1 counter each = amount 10 count 2) and
+Meowscarada ex (sv02-015/256, "Bouquet Magic" — an ACTIVATED Ability with the
+{G}-discard cost, once/turn, not Active-only, 3 counters on 1 = amount 30 count
+1). NOT added to the seed-tuned demo decks (Hawlucha auto-fires on the bench
+play and both need an opponent Bench + Meowscarada a {G} in hand — a contrived
+board; covered by the engine + web tests, the slice-4/5/6/7 precedent).
+engineVersion 0.9.0 → 0.10.0 (additive).
+
+**Web.** The snipe reuses everything: the projection is **unchanged** (the
+effect:choose case passes `phase.prompt` through, so choosePokemonMulti rides
+the existing `pendingDecision.effectChoose`; the mid-turn KO park is `resumeTurn`
+= in-turn, already handled by koParkActiveSeat since slice 4). GameHud adds one
+**`ChoosePokemonMultiDialog`** (multi-select up to `max`, a Confirm/Take-none
+button dispatching `resolveEffect` with `{kind:"pokemonMulti", refs}` — the
+ChooseCardsDialog shape lifted to Pokémon rows). Meowscarada's button is NOT
+specially gated (the D19 afford-then-reject precedent — clicking with no {G} or
+no opponent Bench dispatches `useAbility` and the engine rejects with a pill).
+`logFromEvents` grows one row (`ABILITY_COST_PAID`); the snipe's damage
+(`COUNTERS_PLACED` "ability"), `ABILITY_TRIGGERED`/`ABILITY_USED` and the KO/prize
+rows already existed.
+
+**Verification.** `bun run check` green (tsc + biome + **1066 tests** — 1045 →
+1066: 17 engine `snipe.test.ts` covering park/forced/no-op/mid-turn-KO/§14-win/
+up-to/decline/wire-safety for Hawlucha and cost-pay/unmet/no-target/once-per-turn/
+bench-use/mid-turn-KO for Meowscarada + purity, plus 2 DOM multi-select tests, 1
+projection pass-through test and 1 log-row test). Production `vite build` green.
+No live /play smoke this session (the representatives aren't demo-reachable and
+NO demo deck / projection path changed — the demo boot is byte-identical to
+slice 7's, which was live-smoked; the slice-6 precedent). Files: effects.ts,
+interpreter.ts, flow.ts (settleProgram), triggers.ts, cardplay.ts (useAbility
+cost + programPlayable + validateChoice), registry.ts, actions.ts, events.ts,
+index.ts, testFixtures.ts, snipe.test.ts (new) + GameHud.tsx, logFromEvents.ts,
+GameHud.cardplay.dom.test.tsx, projection.test.ts, logFromEvents.test.ts.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
 launching one. The mechanics all live in `interpreter.ts` (op programs incl.
-spreadDamage), `continuous.ts` (persistent-zone modifiers + special-energy
-provision), `triggers.ts` (triggered-Ability scan points) and `registry.ts`
-(EnergyProgram, StadiumEffects, PassiveEffects, TriggeredAbility, op programs),
-and the KO flow reaches the whole board, so a new card in a known family is a few
-lines of data in `registry.ts` — the fan-out adds rows, not code.
+spreadDamage + the `damageChosen` snipe), `continuous.ts` (persistent-zone
+modifiers + special-energy provision), `triggers.ts` (triggered-Ability scan
+points) and `registry.ts` (EnergyProgram, StadiumEffects, PassiveEffects,
+TriggeredAbility, AbilityProgram incl. activation `cost`, op programs), and the
+KO flow reaches the whole board (attacks, the Checkup, and now a mid-turn snipe
+via the shared `settleProgram`), so a new card in a known family is a few lines
+of data in `registry.ts` — the fan-out adds rows, not code.
