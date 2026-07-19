@@ -3,16 +3,19 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-19 — build session #16 (**P3-M5 coverage pass #1** — a
-classify→verify **Workflow fan-out** (10 agents) over the 140 un-authored sv01–03
-Trainers/Energy/Abilities found only **5 expressible with the current ops**
-(landed: Poké Ball, Pokémon Catcher, Nemona, Copperajah ex, Stonjourner) and
-**113 needing new ops** — coverage is op-bound, so the deliverable is the ranked
-**new-op backlog** (`docs/reference/coverage-backlog.md`) that sequences the next
-slices. Additive registry rows only — no engine change; 1080 → **1087** tests,
-`bun run check` + `vite build` green. Prior: build #15 = **P3-M4 slice 9: on-KO
-triggered Abilities** (§8.1) — a "when this Pokémon is Knocked Out" Ability fires
-mid-KO-sweep DURING the opponent's turn, **closing M4**. Two forms on
+**Last updated:** 2026-07-19 — build session #17 (**P3-M5 op-slice:
+`attachEnergyFrom`** — the top coverage-backlog unlock. A new interpreter op
+attaches ONE Basic Energy from the controller's hand or discard pile onto a
+CHOSEN own Pokémon (§6 acceleration), reusing the existing choosePokemon park +
+ENERGY_ATTACHED (no new prompt/event/dialog — WEB UNCHANGED). Representatives
+**Quaquaval** (any Basic from hand, once/turn) + **Baxcalibur** ({W} from hand,
+repeatable) + a fixture for the discard branch. **2-agent Opus review BOTH CLEAN**
+(no card dup/loss, safe fungibility re-pick, wire-safety, purity; reuse verified
+through the real HUD); one INFO (programPlayable-before-cost, unreachable today).
+engineVersion 0.11.0 → 0.12.0; 1087 → **1095** tests, check + build green.
+Authors 2 of the op's 11 backlog cards (the other 9 layer riders). Prior: build
+#16 = **P3-M5 coverage pass #1** (a classify→verify Workflow fan-out over 140
+un-authored sv01–03 cards → 5 landed + the ranked new-op backlog). Two forms on
 `TriggeredAbility` (trigger `"onKnockOut"`): a coin-flip **Prize GUARD**
 (`onKoPrizeGuard` — Glimmora "Shattering Crystal", heads → the opponent takes no
 Prize for it) resolved INLINE in the KO sweep via a new `planPrizes` run UP FRONT
@@ -28,6 +31,44 @@ applied. Suite 1066 → **1080**, `bun run check` green, `vite build` green;
 engineVersion 0.10.0 → 0.11.0.).
 
 ## Resume point
+**`attachEnergyFrom` is live (P3-M5 op-slice, D32) — the first backlog op built.**
+A new interpreter op **`attachEnergyFrom`** (`{op, source:"hand"|"discard",
+energyType?}`) attaches ONE Basic Energy from the controller's hand or discard
+pile onto a CHOSEN own in-play Pokémon (§6 acceleration). Same-type Basic Energy
+is fungible → the only decision is the TARGET, reusing the existing `parkOrForce`
+→ `choosePokemon` prompt (re-finds the first matching energy at apply time —
+deterministic, source frozen while parked). A source with no matching energy is a
+no-op; **`programPlayable`** blocks activating an Ability that could only whiff
+(shared `firstAttachableEnergy`). Reuses `ENERGY_ATTACHED` (no allowance touched —
+it's the Ability's effect, not the §6.3 manual attach). Representatives
+**Quaquaval "Energy Carnival"** (sv01-054, any Basic from hand, once/turn) +
+**Baxcalibur "Super Cold"** (sv02-060/210, {W} from hand, **repeatable**
+oncePerTurn:false) + FIXTURE **fix-attacher** (discard branch). **Web UNCHANGED**
+(no new prompt/event/dialog; a repeatable-ability button stays enabled). engine
+0.11.0 → **0.12.0**. **Review (2 Opus agents): BOTH CLEAN** — no card dup/loss,
+safe re-pick, wire-safety, discard order preserved, purity; reuse verified through
+the real HUD. One INFO: `programPlayable` runs before an ability cost is paid, so
+a FUTURE cost+attach ability whose only match is the cost card could pass then
+no-op (wasted, never corrupt) — revisit with the discard-with-rider variants.
+Suite 1087 → **1095**; `bun run check` + `vite build` green. See "M5 op-slice:
+attachEnergyFrom as built" + D32.
+**Next concrete actions (keep building the backlog):**
+1. **The `attachEnergyFrom` RIDERS** — the other 9 of its 11 cards layer on the
+   primitive: multi-attach ("up to N"), +counters (Gardevoir "Psychic Embrace"),
+   "your turn ends" (Koraidon), self-KO (Forretress), deck-search source, and the
+   `onEvolve` search-attach (Charizard ex). Each is a small rider op + a registry
+   row. (Pawmot needs the SOURCE uid in EffectContext for attach-to-self — the
+   long-flagged gap; Gardevoir's cost-before-attach INFO note applies here.)
+2. Or the next backlog op by unlock count — **`discardPileRetrieval`** (6:
+   Energy Retrieval, Super Rod, Pal Pad, …), **`lookAtTopN`** (5), **`moveEnergy`**
+   (5), the **`conditionalPlay`/`conditionalGate`** family (5), or the
+   **hand-refresh Supporter family** (Iono/Judge/Marnie). See
+   `docs/reference/coverage-backlog.md`.
+3. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games; the projection is already P4's per-viewer filter.
+
+---
+### Prior resume point (P3-M5 coverage pass #1, kept for continuity)
 **M5 coverage pass #1 is done — the ranked new-op backlog is the roadmap.** A
 classify→verify **Workflow fan-out** (10 agents, 0 errors) classified the 140
 un-authored sv01–03 Trainers/Energy/Abilities against the current op vocabulary:
@@ -133,13 +174,54 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 coverage pass #1 done** (M4: D22–D30, evolution→on-KO triggers; **M5 #1, 2026-07-19**: a classify→verify Workflow fan-out landed 5 existing-op cards + produced the ranked new-op backlog in `docs/reference/coverage-backlog.md`) — next: build the backlog ops (`attachEnergyFrom` first) or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5, 2026-07-19**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0), 2 of its 11 cards) — next: the attachEnergyFrom riders / the next backlog op, or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-19** (build #17) — **P3-M5 op-slice: `attachEnergyFrom`** (D32; built
+  solo — full context — then a 2-agent Opus review, BOTH CLEAN). The first new op
+  built off the D31 coverage backlog (its top unlock, 11 cards). **`attachEnergyFrom`**
+  (`{op, source:"hand"|"discard", energyType?}`, effects.ts/interpreter.ts)
+  attaches ONE Basic Energy from the controller's hand or discard pile onto a
+  CHOSEN own in-play Pokémon (§6 acceleration). Key simplification: same-type
+  Basic Energy is FUNGIBLE, so there is no "which energy" choice — the op picks
+  the first match and the only decision is the TARGET, reusing the existing
+  `parkOrForce` → `choosePokemon` prompt; it re-finds the first matching energy at
+  APPLY time (deterministic — while parked on effect:choose only the controller's
+  `resolveEffect` is legal, so the source is frozen). A source with no matching
+  energy is a no-op, and **`programPlayable`** (cardplay.ts) blocks activating an
+  Ability whose attach could only whiff (the gust/snipe precedent — the shared
+  `firstAttachableEnergy`, exported). NOT the §6.3 one-per-turn manual attach — no
+  allowance touched; reuses `ENERGY_ATTACHED` (host by uid). Representatives:
+  **Quaquaval "Energy Carnival"** (sv01-054, any Basic from hand, oncePerTurn:true)
+  + **Baxcalibur "Super Cold"** (sv02-060/210, {W} from hand, **REPEATABLE**
+  oncePerTurn:false → the HUD button never locks out) + a FIXTURE **fix-attacher**
+  for the discard branch (the clean real discard cards carry riders needing later
+  ops). New test surgery `discardFromDeck`. **Web: UNCHANGED** — no new
+  EffectPrompt (choosePokemon), no new event (ENERGY_ATTACHED), no new phase; the
+  slice-2 Ability button + choosePokemon dialog + log row serve it as-is.
+  engineVersion 0.11.0 → **0.12.0**. **Review (2 Opus agents — engine+rules /
+  web+integration): BOTH CLEAN, no HIGH/MED/LOW correctness bugs.** Engine agent
+  (6 probes): no energy dup/loss (found-in / removed-from zones provably
+  identical), fungibility re-pick safe, wire-safety (hostile ref rejected, no
+  throw), ENERGY_ATTACHED contract (copied target, no allowance, emit-only),
+  discard order preserved, purity. Web agent (7 real-HUD probes): the reuse claim
+  holds (no `src/` change), the repeatable button never greys, the choosePokemon
+  dialog dispatches a legal controller-seat choice, the log row is source-agnostic,
+  the projection keeps the viewer on the controller, no demo/`/play` regression.
+  One INFO (unreachable today): `programPlayable` runs BEFORE an ability cost is
+  paid, so a future cost+hand-attach ability whose only match is the cost card
+  could pass the gate then no-op (wasted, never corrupt) — revisit with the
+  discard-with-rider variants. **Scope:** single-attach only — authors **2 of the
+  11** attachEnergyFrom backlog cards; the other 9 layer riders (multi/+counters/
+  ends-turn/self-KO/deck-search/`lookAtTopN`/attach-to-self/special-energy-by-name).
+  **1087 → 1095 tests**, `bun run check` + `vite build` green. Files: effects.ts,
+  interpreter.ts, cardplay.ts, registry.ts, index.ts, testFixtures.ts,
+  attachEnergyFrom.test.ts (new) + docs (D32, coverage-backlog.md, simulator.md,
+  progress.md).
 - **2026-07-19** (build #16) — **P3-M5 coverage pass #1** (the coverage-expansion
   fan-out). A classify→verify **Workflow fan-out** (10 agents: 5 batches ×
   classify + adversarial verify, 0 errors, ~359k agent tokens) classified the

@@ -142,7 +142,10 @@ event stream.
    ops** (landed) and **113 needing new ops** — coverage is op-bound, so the
    ranked **new-op backlog** (`docs/reference/coverage-backlog.md`) is the roadmap
    for the next slices (`attachEnergyFrom` unlocks 11, `discardPileRetrieval` 6,
-   `lookAtTopN`/`moveEnergy`/`conditionalPlay` 5 each, …).
+   `lookAtTopN`/`moveEnergy`/`conditionalPlay` 5 each, …). First backlog op built:
+   **`attachEnergyFrom`** (2026-07-19, engine 0.12.0) — the clean single-attach
+   core (Quaquaval, Baxcalibur); the remaining 9 of its 11 cards layer riders on
+   the primitive.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
 
@@ -1237,11 +1240,70 @@ classify+verify already double-checked each program, and each landed card is
 hand-verified + test-pinned). engineVersion unchanged (0.11.0 — additive data).
 Suite 1080 → **1087** (7 coverage tests). `bun run check` + `vite build` green.
 
+## M5 op-slice: attachEnergyFrom as built (2026-07-19) — the top backlog unlock
+
+**Shape (D32).** The first new op built off the coverage backlog. **`attachEnergyFrom`**
+(`{op, source:"hand"|"discard", energyType?}`, effects.ts) attaches ONE Basic
+Energy from the controller's hand or discard pile onto a CHOSEN own in-play
+Pokémon (§6 acceleration). The design simplification: same-type Basic Energy is
+FUNGIBLE, so there is no "which energy" choice — the op picks the first match and
+the ONLY decision is the TARGET, which reuses the existing `parkOrForce` →
+`choosePokemon` prompt (interpreter.ts). It re-finds the first matching energy at
+APPLY time (deterministic — while parked on effect:choose, only the controller's
+`resolveEffect` is legal, so the source zone is frozen). A source with no matching
+Basic Energy is a no-op, and **`programPlayable`** (cardplay.ts) blocks activating
+an Ability whose attach could only whiff (the gust/snipe "no legal target"
+precedent — the shared `firstAttachableEnergy` predicate, exported from
+interpreter.ts). It is NOT the §6.3 one-per-turn manual attach — no allowance is
+touched (it is the Ability's own effect); it reuses `ENERGY_ATTACHED` (host
+resolved by the energy uid).
+
+**Representatives** (verified vs the local catalog): **Quaquaval "Energy Carnival"**
+(sv01-054 — any Basic from hand, `oncePerTurn:true`) and **Baxcalibur "Super Cold"**
+(sv02-060/210 — a Basic {W} from hand, **REPEATABLE** `oncePerTurn:false`), plus a
+FIXTURE **fix-attacher "Recharge"** (discard-source + type-filter — the clean real
+discard cards Gardevoir/Koraidon carry riders that need later ops, the fix-onko
+demonstrator precedent). New test surgery `discardFromDeck`.
+
+**Web: UNCHANGED.** The op introduces no new EffectPrompt (reuses `choosePokemon`),
+no new event (reuses `ENERGY_ATTACHED`), no new phase — so the slice-2 Ability
+button + choosePokemon dialog + log row serve it as-is. A `oncePerTurn:false`
+ability correctly stays an ENABLED button (the HUD only greys `oncePerTurn:true`
+once used), and a no-energy activation is the D19 afford-then-reject.
+engineVersion 0.11.0 → **0.12.0**.
+
+**Review (2 Opus agents — engine+rules / web+integration): BOTH CLEAN, no
+HIGH/MED/LOW correctness bugs.** The engine agent proved (6 probes) no energy
+duplication/loss (found-in / removed-from zones provably identical), the
+fungibility re-pick safe (source frozen while parked), wire-safety (a hostile
+opponent/out-of-range ref rejected, the string-index trap caught, no throw),
+the ENERGY_ATTACHED contract (copied target, no allowance touched, emit-only),
+discard order preserved, and purity. The web agent verified the "no web change"
+reuse claim through the REAL GameHud/projection/log (7 probes): the repeatable
+button never greys, the choosePokemon dialog dispatches a legal controller-seat
+choice, the log row is source-agnostic, the projection keeps the viewer on the
+controller, and no demo/`/play` regression. **One INFO (unreachable today):**
+`programPlayable` runs BEFORE an ability cost is paid, so a future ability pairing
+a `cost` with a hand-source attach whose only match is the cost card could pass
+the gate then no-op (a wasted activation, never a corrupt state) — revisit when
+the discard-with-rider variants land.
+
+**Scope.** Single-attach only — authors **2 of the 11** `attachEnergyFrom`
+backlog cards; the other 9 layer riders (multi / +counters / ends-turn / self-KO
+/ deck-search / `lookAtTopN` / attach-to-self / special-energy-by-name) on this
+primitive. **Verification:** `bun run check` green (tsc + biome + **1095 tests** —
+1087 → 1095: 8 engine `attachEnergyFrom.test.ts`), production `vite build` green.
+No live /play smoke (representatives not demo-reachable; NO web/projection path
+changed — the demo boot is byte-identical). Files: effects.ts, interpreter.ts
+(op + `firstAttachableEnergy`), cardplay.ts (programPlayable), registry.ts,
+index.ts, testFixtures.ts (fixtures + ATTACH_DECK + discardFromDeck),
+attachEnergyFrom.test.ts (new).
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
 launching one. The mechanics all live in `interpreter.ts` (op programs incl.
-spreadDamage + the `damageChosen` snipe), `continuous.ts` (persistent-zone
+spreadDamage, the `damageChosen` snipe + `attachEnergyFrom`), `continuous.ts` (persistent-zone
 modifiers + special-energy provision), `triggers.ts` (triggered-Ability scan
 points — onPlayToBench/onEvolve/betweenTurns/**onKnockOut**) and `registry.ts`
 (EnergyProgram, StadiumEffects, PassiveEffects, TriggeredAbility incl. the on-KO
