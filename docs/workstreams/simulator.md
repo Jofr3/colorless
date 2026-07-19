@@ -144,10 +144,11 @@ event stream.
    for the next slices (`attachEnergyFrom` unlocks 11, `discardPileRetrieval` 6,
    `lookAtTopN`/`moveEnergy`/`conditionalPlay` 5 each, …). First backlog op built:
    **`attachEnergyFrom`** (2026-07-19) — the single-attach core (Quaquaval,
-   Baxcalibur; engine 0.12.0) + the **targetType/bonusCounters/notIfKO riders**
-   authoring the marquee **Gardevoir ex "Psychic Embrace"** (engine 0.13.0). 3 of
-   its 11 cards done; the other 8 need more ops (multi-attach, deck-search,
-   `lookAtTopN`, …).
+   Baxcalibur; engine 0.12.0), the **targetType/bonusCounters/notIfKO riders**
+   authoring **Gardevoir ex** (engine 0.13.0), and **multi-attach (= N ops) +
+   `basicOnly` + the `endsTurn` fold** authoring **Koraidon ex "Dino Cry"** (engine
+   0.14.0). 4 of its 11 cards done; the other 7 need a deck-search source /
+   `lookAtTopN` / self-KO / onEvolve / …
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
 
@@ -1342,6 +1343,58 @@ other 8 still need multi-attach ("up to N in any way"), a deck-search source,
 effects.ts, interpreter.ts (`attachEnergyTargets` + bonusCounters), cardplay.ts
 (programPlayable), registry.ts, index.ts, testFixtures.ts, psychicEmbrace.test.ts
 (new) + logFromEvents.ts (the one-line comment fix).
+
+## M5 op-slice: attachEnergyFrom multi + endsTurn as built (2026-07-19) — Koraidon ex
+
+**Shape (D34).** Authoring **Koraidon ex "Dino Cry"** (sv01-125/231/247/254 —
+attach up to 2 Basic {F} from discard to your Basic {F} Pokémon in any way, then
+your turn ends). Three ideas:
+- **MULTI-attach needs NO new op** — "attach up to N in any way you like" is just
+  **N `attachEnergyFrom` ops** in one program: the interpreter parks on each op's
+  target in turn (independent target per energy), and a later op that finds no
+  matching Energy no-ops, so the program attaches min(N, available). Koraidon's
+  program is TWO attach ops. The "may attach fewer when more are available" is
+  auto-maxed (the pure-upside auto-take doctrine).
+- **`basicOnly`** — a target-filter rider (the target must be `isBasicPokemon`,
+  combined with `targetType:"Fighting"` → "your Basic {F} Pokémon"), added to
+  `attachEnergyTargets`.
+- **`AbilityProgram.endsTurn`** — the Ability ENDS the controller's turn once its
+  program completes. Folded by **`settleProgram`** (flow.ts): on DONE it seeds
+  `turnTail(controller)` + advance (byte-for-byte the normal `endTurn` action),
+  instead of returning to turn:action; threaded across re-parks by a new
+  `endsTurn?: true` on the `effect:choose` Phase (parallel to `resumeTail`,
+  mutually exclusive). The DONE+endsTurn branch skips the mid-turn KO sweep
+  (Koraidon does not damage; the folded Checkup catches any KO regardless).
+
+**Web: UNCHANGED** — the two sequential parks + the turn-end transition ride the
+existing effect:choose/choosePokemon path + the viewer-follow (the device flips to
+the opponent when the turn ends), exactly like the on-KO `resumeTail` re-park.
+engineVersion 0.13.0 → **0.14.0**.
+
+**Review (2 Opus agents — engine+rules / web): BOTH CLEAN, no HIGH/MED/LOW bugs.**
+The engine agent proved the endsTurn fold consistent with the normal turn end
+(same `advance(turnTail)` shape → no stale-phase leak; the flag survives both
+re-parks and fires only on the final DONE), multi-attach via N ops has no
+double-attach / no over-reject (op #2 re-finds energy on the post-op-#1 state),
+`basicOnly` total (no throw on `types:null`/degenerate stack), and — as a bonus —
+probed poison-KOs during the folded Checkup, which resolve correctly. The web
+agent verified the reuse claim through the real web layer (133 tests + probe): the
+`endsTurn` Phase field doesn't break the exhaustive switch, both parks report the
+controller active/waiting, the turn-end flips the viewer to the opponent, the two
+sequential parks re-render cleanly (stable dialog key, no stale state), no demo
+regression. INFO only: a *damaging* endsTurn ability (none in scope) would resolve
+its KOs via the Checkup sweep with a timing difference; no visual cue on the button
+that Dino Cry ends the turn (by design — the HUD never previews side-effects).
+
+**Scope.** Authors Koraidon ex — **4 of the 11** attachEnergyFrom cards. The other
+7 still need a deck-search source (Forretress/Charizard/Geeta/Pawmot), `lookAtTopN`
+(Electric Generator/Hydreigon), or per-card riders (self-KO, onEvolve, can't-attack,
+attach-to-self, special-energy-by-name). **Verification:** `bun run check` green
+(tsc + biome + **1106 tests** — 1101 → 1106: 5 engine `dinoCry.test.ts`),
+production `vite build` green. Files: effects.ts (basicOnly), interpreter.ts
+(`attachEnergyTargets` basicOnly), registry.ts (`AbilityProgram.endsTurn` +
+Koraidon), types.ts (Phase endsTurn), flow.ts (settleProgram endsTurn fold),
+cardplay.ts (thread endsTurn), index.ts, testFixtures.ts, dinoCry.test.ts (new).
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per

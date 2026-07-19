@@ -3,19 +3,20 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-19 — build session #18 (**P3-M5 op-slice:
-`attachEnergyFrom` RIDERS** — the D32 attach op grows **targetType / bonusCounters
-/ notIfKO** riders authoring the marquee **Gardevoir ex "Psychic Embrace"** (attach
-a Basic {P} from discard to a {P} Pokémon that would not be Knocked Out, + 2
-counters, repeatable). New exported `attachEnergyTargets` (the filtered candidates)
-shared by the park + programPlayable. **Web UNCHANGED** (reuses choosePokemon +
-ENERGY_ATTACHED + the COUNTERS_PLACED "ability" row + the damage chip). **2-agent
-Opus review BOTH CLEAN** — notIfKO non-lethal guarantee proven airtight, no
-base-op regression, wire-safety, purity; reuse verified through the real HUD; one
-LOW (a stale log comment) fixed. engineVersion 0.12.0 → 0.13.0; 1095 → **1101**
-tests, check + build green. Authors 3 of the op's 11 backlog cards. Prior: build
-#17 = **P3-M5 op-slice `attachEnergyFrom`** (the single-attach core — Quaquaval,
-Baxcalibur, engine 0.12.0). Two forms on
+**Last updated:** 2026-07-19 — build session #19 (**P3-M5 op-slice:
+attachEnergyFrom MULTI-attach + endsTurn** — authoring **Koraidon ex "Dino Cry"**
+(attach up to 2 Basic {F} from discard to your Basic {F} Pokémon in any way, then
+your turn ends). Multi-attach needs NO new op — "up to N in any way" is N attach
+ops (the interpreter parks on each in turn); two small additions author the card:
+a **`basicOnly`** target filter and **`AbilityProgram.endsTurn`** (a flag folded by
+`settleProgram` — on DONE it seeds `turnTail` instead of turn:action, threaded
+across re-parks by a new `endsTurn` field on effect:choose, parallel to
+`resumeTail`). **Web UNCHANGED**. **2-agent Opus review BOTH CLEAN** — the endsTurn
+fold proven consistent with the normal turn end (no stale-phase leak), multi-attach
+no double-attach/over-reject, basicOnly total; reuse verified through the real web
+layer. engineVersion 0.13.0 → 0.14.0; 1101 → **1106** tests, check + build green.
+Authors 4 of the op's 11 backlog cards. Prior: build #18 = the attachEnergyFrom
+riders (Gardevoir ex, engine 0.13.0). Two forms on
 `TriggeredAbility` (trigger `"onKnockOut"`): a coin-flip **Prize GUARD**
 (`onKoPrizeGuard` — Glimmora "Shattering Crystal", heads → the opponent takes no
 Prize for it) resolved INLINE in the KO sweep via a new `planPrizes` run UP FRONT
@@ -31,8 +32,44 @@ applied. Suite 1066 → **1080**, `bun run check` green, `vite build` green;
 engineVersion 0.10.0 → 0.11.0.).
 
 ## Resume point
-**Gardevoir ex "Psychic Embrace" is live (P3-M5, D33) — the attachEnergyFrom
-RIDERS.** The D32 attach op grew three composable riders on `attachEnergyFrom`:
+**Koraidon ex "Dino Cry" is live (P3-M5, D34) — attachEnergyFrom MULTI-attach +
+endsTurn.** Three ideas: **multi-attach** ("attach up to N in any way") needs NO
+new op — it is **N `attachEnergyFrom` ops** in one program (the interpreter parks
+on each op's target in turn; a later op with no matching Energy no-ops → attaches
+min(N, available), auto-maxed); a **`basicOnly`** target-filter rider (target must
+be `isBasicPokemon`, with `targetType` → "your Basic {F} Pokémon"); and
+**`AbilityProgram.endsTurn`** — a flag that ENDS the controller's turn on program
+completion, folded by **`settleProgram`** (flow.ts: DONE seeds `turnTail(controller)`
++ advance — the normal `endTurn` shape — instead of turn:action), threaded across
+re-parks by a new `endsTurn?: true` on the effect:choose Phase (parallel to
+`resumeTail`, mutually exclusive). Koraidon: `{oncePerTurn:true, endsTurn:true,
+program:[attachEnergyFrom×2 {source:"discard", energyType:"Fighting",
+targetType:"Fighting", basicOnly:true}]}`. **Web UNCHANGED** (the two parks + the
+turn-end ride the existing effect:choose/choosePokemon + viewer-follow). engine
+0.13.0 → **0.14.0**. **Review (2 Opus agents): BOTH CLEAN** — endsTurn fold
+consistent with the normal turn end (no stale-phase leak, flag survives both
+re-parks), multi-attach no double-attach/over-reject, basicOnly total; even
+poison-KOs during the folded Checkup resolve correctly. INFO: a damaging endsTurn
+ability (none in scope) would resolve KOs via the Checkup sweep (timing only). See
+"M5 op-slice: attachEnergyFrom multi + endsTurn as built" + D34.
+**Next concrete actions (keep building the backlog):**
+1. **The remaining 7 `attachEnergyFrom` cards** — most now need a **deck-search
+   source** (Forretress, Charizard, Geeta, Pawmot) and/or **`lookAtTopN`** (Electric
+   Generator, Hydreigon), plus per-card riders (self-KO Forretress, `onEvolve`
+   Charizard ex, can't-attack Geeta, attach-to-self Pawmot [needs the source uid in
+   EffectContext], special-energy-by-name Wigglytuff). A **deck-search-attach**
+   source op unlocks the most.
+2. Or the next backlog op by unlock count — **`discardPileRetrieval`** (6),
+   **`lookAtTopN`** (5), **`moveEnergy`** (5), the **`conditionalPlay`** family (5),
+   or the **hand-refresh Supporter family** (Iono/Judge/Marnie). See
+   `docs/reference/coverage-backlog.md`.
+3. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games; the projection is already P4's per-viewer filter.
+
+---
+### Prior resume point (P3-M5 attachEnergyFrom riders, kept for continuity)
+**Gardevoir ex "Psychic Embrace" is live (D33) — the attachEnergyFrom RIDERS.**
+The D32 attach op grew three composable riders on `attachEnergyFrom`:
 **`targetType`** (eligible targets = the controller's own Pokémon whose top card
 is that type — {P}), **`bonusCounters`** (put N HP of counters on the just-
 attached Pokémon — 2 = 20, as COUNTERS_PLACED "ability"), **`notIfKO`** (exclude
@@ -184,13 +221,52 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5, 2026-07-19**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex "Psychic Embrace", engine 0.13.0), 3 of its 11 cards) — next: the remaining attachEnergyFrom cards (multi-attach / deck-search) / the next backlog op, or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5, 2026-07-19**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, engine 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex "Dino Cry", engine 0.14.0), 4 of its 11 cards) — next: the remaining attachEnergyFrom cards (deck-search source / `lookAtTopN`) / the next backlog op, or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-19** (build #19) — **P3-M5 op-slice: attachEnergyFrom MULTI-attach +
+  endsTurn** (D34; built solo — full context — then a 2-agent Opus review, BOTH
+  CLEAN). Authoring **Koraidon ex "Dino Cry"** (sv01-125/231/247/254 — attach up to
+  2 Basic {F} from discard to your Basic {F} Pokémon in any way, then your turn
+  ends). Three ideas: **(1) MULTI-attach needs NO new op** — "attach up to N in any
+  way you like" is just **N `attachEnergyFrom` ops** in one program (the interpreter
+  parks on each op's target in turn — independent target per energy — and a later op
+  that finds no matching Energy no-ops, so the program attaches min(N, available);
+  the "may attach fewer" is auto-maxed, the pure-upside doctrine); **(2)**
+  **`basicOnly`** — a target-filter rider (the target must be `isBasicPokemon`, with
+  `targetType:"Fighting"` → "your Basic {F} Pokémon"), added to
+  `attachEnergyTargets`; **(3)** **`AbilityProgram.endsTurn`** — a flag that ENDS
+  the controller's turn once the program completes, folded by **`settleProgram`**
+  (flow.ts: on DONE, seed `turnTail(controller)` + advance — byte-for-byte the
+  normal `endTurn` action — instead of returning to turn:action), threaded across
+  re-parks by a new **`endsTurn?: true`** on the `effect:choose` Phase (parallel to
+  `resumeTail`, mutually exclusive). The DONE+endsTurn branch skips the mid-turn KO
+  sweep (Koraidon does not damage; the folded Checkup catches any KO regardless).
+  **Web: UNCHANGED** — the two sequential parks + the turn-end transition ride the
+  existing effect:choose/choosePokemon path + the viewer-follow (the device flips to
+  the opponent when the turn ends), exactly like the on-KO `resumeTail` re-park.
+  engineVersion 0.13.0 → **0.14.0**. **Review (2 Opus agents — engine+rules / web):
+  BOTH CLEAN, no HIGH/MED/LOW bugs.** Engine agent: the endsTurn fold consistent
+  with the normal turn end (same `advance(turnTail)` shape → no stale-phase leak;
+  the flag survives both re-parks, fires only on the final DONE), multi-attach no
+  double-attach / no over-reject (op #2 re-finds energy on the post-op-#1 state),
+  basicOnly total (no throw on `types:null`), and — bonus — poison-KOs during the
+  folded Checkup resolve correctly. Web agent (real web-layer probe): the endsTurn
+  Phase field doesn't break the exhaustive switch, both parks report the controller
+  active/waiting, the turn-end flips the viewer to the opponent, the two parks
+  re-render cleanly (stable dialog key), no demo regression. INFO only: a *damaging*
+  endsTurn ability (none in scope) would resolve KOs via the Checkup sweep with a
+  timing difference; no button cue that Dino Cry ends the turn (by design). **Scope:**
+  authors Koraidon ex — **4 of the 11** attachEnergyFrom cards; the other 7 need a
+  deck-search source / `lookAtTopN` / self-KO / onEvolve / can't-attack /
+  attach-to-self / special-energy-by-name. **1101 → 1106 tests**, `bun run check` +
+  `vite build` green. Files: effects.ts, interpreter.ts, registry.ts, types.ts,
+  flow.ts, cardplay.ts, index.ts, testFixtures.ts, dinoCry.test.ts (new) + docs
+  (D34, coverage-backlog.md, simulator.md, progress.md).
 - **2026-07-19** (build #18) — **P3-M5 op-slice: `attachEnergyFrom` RIDERS**
   (D33; built solo — full context — then a 2-agent Opus review, BOTH CLEAN). The
   D32 attach op grew three composable RIDERS authoring the marquee **Gardevoir ex
