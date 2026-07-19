@@ -13,7 +13,7 @@ import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
-import { resumeProgram, runProgram } from "./interpreter";
+import { firstAttachableEnergy, resumeProgram, runProgram } from "./interpreter";
 import type { AbilityCost } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
@@ -499,6 +499,13 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
     if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
     if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;
     if (op.op === "switchActive" && state.players[seat].bench.length === 0) return false;
+    if (
+      op.op === "attachEnergyFrom" &&
+      firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined
+    ) {
+      // No matching Basic Energy in the source zone → the attach can only whiff.
+      return false;
+    }
   }
   return true;
 }

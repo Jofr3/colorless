@@ -15,6 +15,7 @@ import {
   presentStatuses,
   withActive,
   withSide,
+  without,
 } from "./types";
 
 // The shared effect interpreter (D8) — the one place a GameState changes under
@@ -198,6 +199,19 @@ function stepOp(
       return parkOrForce(state, oppBenchRefs(state, ctx.seat), (ref) => gust(state, ref, ctx, events), "Gust up which of the opponent's Benched Pokémon?");
     case "healChosen":
       return parkOrForce(state, ownInPlayRefs(state, ctx.seat), (ref) => healChosen(state, ref, op.amount, ctx, events), "Heal which of your Pokémon?");
+    case "attachEnergyFrom": {
+      // Same-type Basic Energy is fungible, so the ONLY decision is the target;
+      // a source with no matching Energy is a no-op (nothing to attach).
+      if (firstAttachableEnergy(state, ctx.seat, op.source, op.energyType) === undefined) {
+        return { done: state };
+      }
+      return parkOrForce(
+        state,
+        ownInPlayRefs(state, ctx.seat),
+        (ref) => attachEnergyFrom(state, op, ref, ctx, events),
+        "Attach the Energy to which of your Pokémon?",
+      );
+    }
     // coinFlipGate is handled in runProgram's queue loop (never reaches here).
     case "coinFlipGate":
       return { done: state };
@@ -246,6 +260,8 @@ export function applyChoice(
       return choice.kind === "pokemonMulti"
         ? placeSnipeCounters(state, choice.refs, op.amount, ctx, events)
         : state;
+    case "attachEnergyFrom":
+      return choice.kind === "pokemon" ? attachEnergyFrom(state, op, choice.ref, ctx, events) : state;
     default:
       // Synchronous ops never park, so never reach the choice path.
       return state;
@@ -537,6 +553,66 @@ function healChosen(
   if (ref.spot.spot === "active") return withActive(state, ctx.seat, updated);
   const bench = side.bench.map((p, i) => (i === (ref.spot as { index: number }).index ? updated : p));
   return withSide(state, ctx.seat, { ...side, bench });
+}
+
+/** The first Basic Energy uid in `seat`'s `source` zone (hand or discard)
+    matching `energyType` (any Basic Energy when undefined) — what
+    attachEnergyFrom moves onto a Pokémon. Same-type Basic Energy cards are
+    fungible, so the first match is as good as any (no WHICH-card choice).
+    Exported for programPlayable (cardplay.ts): an Ability whose attach could only
+    whiff can't be activated — the gust/snipe "no legal target" precedent. */
+export function firstAttachableEnergy(
+  state: GameState,
+  seat: Seat,
+  source: "hand" | "discard",
+  energyType: string | undefined,
+): string | undefined {
+  const zone = source === "hand" ? state.players[seat].hand : state.players[seat].discard;
+  return zone.find((uid) => {
+    const card = cardOf(state, uid);
+    return (
+      card !== undefined &&
+      isEnergyCard(card) &&
+      card.energyType === "Normal" && // "Normal" = a BASIC energy (Special is a special energy)
+      (energyType === undefined || energyProvidesOf(card) === energyType)
+    );
+  });
+}
+
+/** Attach the first matching Basic Energy from `op.source` (hand/discard) onto
+    the chosen own Pokémon `ref` (§6 energy acceleration). Re-finds the energy at
+    apply time — fungible, so the parked decision was only the TARGET. Moves the
+    card OUT of its source zone and onto the Pokémon's energy, emitting
+    ENERGY_ATTACHED (its host resolves by the energy uid, robust to any same-batch
+    move). This is not the §6.3 one-per-turn manual attach — no allowance is
+    touched; it is the Ability's own effect. */
+function attachEnergyFrom(
+  state: GameState,
+  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  ref: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (ref.seat !== ctx.seat) return state;
+  const energyUid = firstAttachableEnergy(state, ctx.seat, op.source, op.energyType);
+  if (energyUid === undefined) return state;
+  const side = state.players[ctx.seat];
+  const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+  if (pokemon === undefined || pokemon === null) return state;
+  if (topUid(pokemon) === undefined) return state;
+  const withEnergy: InPlayPokemon = { ...pokemon, energy: [...pokemon.energy, energyUid] };
+  // Remove the Energy from its source zone (hand or the public discard pile).
+  const base: PlayerSide =
+    op.source === "hand"
+      ? { ...side, hand: without(side.hand, energyUid) }
+      : { ...side, discard: without(side.discard, energyUid) };
+  events.push({ type: "ENERGY_ATTACHED", seat: ctx.seat, uid: energyUid, target: { ...ref.spot } });
+  if (ref.spot.spot === "active") return withSide(state, ctx.seat, { ...base, active: withEnergy });
+  const index = (ref.spot as { index: number }).index;
+  return withSide(state, ctx.seat, {
+    ...base,
+    bench: side.bench.map((p, i) => (i === index ? withEnergy : p)),
+  });
 }
 
 // ── Candidate builders + small shared helpers ──

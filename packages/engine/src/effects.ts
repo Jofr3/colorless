@@ -100,7 +100,19 @@ export type EffectOp =
   /** Heal from one of the controller's own in-play Pokémon: `amount` HP, or
       `"all"` its damage (Potion heals 30; Arboliva's "Enriching Oil" heals
       all). PARKS on the target choice unless only the Active is in play. */
-  | { op: "healChosen"; amount: number | "all" };
+  | { op: "healChosen"; amount: number | "all" }
+  /** Attach ONE Basic Energy from a SOURCE zone (the controller's hand or
+      discard pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration
+      Ability family (Quaquaval "Energy Carnival" from hand; Baxcalibur "Super
+      Cold" a {W} from hand). `energyType` restricts it to a Basic Energy of that
+      type (undefined = any Basic Energy). Same-type Basic Energy cards are
+      fungible, so the ONLY decision is the TARGET: this PARKS on a choosePokemon
+      unless exactly one Pokémon is in play, and a source holding no matching
+      Energy is a no-op (programPlayable also blocks activating an Ability that
+      could only whiff). Single-energy, chosen-target only — the "up to N" /
+      discard-with-rider / deck-search / look-at-top-N variants layer later ops
+      on top of this attach primitive. */
+  | { op: "attachEnergyFrom"; source: "hand" | "discard"; energyType?: string };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

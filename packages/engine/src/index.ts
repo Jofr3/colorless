@@ -32,13 +32,12 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 slice 9: on-KO triggered Abilities — a "when this
-    Pokémon is Knocked Out" Ability fires mid-KO-sweep during the opponent's turn.
-    A coin-flip Prize guard (Glimmora "Shattering Crystal") resolves inline in the
-    sweep; a parking on-KO program runs as a `koTrigger` stage that folds through
-    `settleProgram` with `resumeTail` — park for a decision, then resume draining
-    the KO's prize/promotion tail). */
-export const engineVersion = "0.11.0";
+/** Engine milestone marker (M5 op-slice: `attachEnergyFrom` — the top
+    coverage-backlog unlock. A new interpreter op attaches one Basic Energy from
+    the controller's hand or discard pile onto a chosen own Pokémon, parking on
+    the target choice; representatives Quaquaval "Energy Carnival" and Baxcalibur
+    "Super Cold". M4 slice 9 before it added on-KO triggered Abilities.). */
+export const engineVersion = "0.12.0";
 
 export type {
   ApplyResult,

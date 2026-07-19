@@ -448,6 +448,54 @@ const COPPERAJAH_EX: CardProgram = { passive: { damageReductionAfterWR: 30 } };
     (after applying Weakness and Resistance)." (passive) */
 const STONJOURNER: CardProgram = { passive: { damageReductionAfterWR: 20 } };
 
+// ── M5 op-slice: attachEnergyFrom (§6 energy acceleration) — the top backlog
+//    unlock; this slice covers the clean single-attach-from-hand core, the
+//    discard/deck/multi/rider variants layer later ops on top. ──
+
+/** Quaquaval — "Energy Carnival": "Once during your turn, you may attach a Basic
+    Energy card from your hand to 1 of your Pokémon." (activated, once/turn) */
+const QUAQUAVAL: CardProgram = {
+  abilities: [
+    {
+      name: "Energy Carnival",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "attachEnergyFrom", source: "hand" }],
+    },
+  ],
+};
+
+/** Baxcalibur — "Super Cold": "As often as you like during your turn, you may
+    attach a Basic {W} Energy card from your hand to 1 of your Pokémon."
+    (activated, REPEATABLE → oncePerTurn:false, so it never locks out). */
+const BAXCALIBUR: CardProgram = {
+  abilities: [
+    {
+      name: "Super Cold",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Water" }],
+    },
+  ],
+};
+
+/** FIXTURE (id fix-attacher): the DISCARD-source + type-filter branch of
+    attachEnergyFrom (attach a Basic Fire Energy from the discard pile to a chosen
+    Pokémon). The clean real discard-attach cards (Gardevoir "Psychic Embrace",
+    Koraidon "Dino Cry") carry riders (+2 counters / "your turn ends") that need
+    later ops, so a fixture exercises the primitive's discard branch now — the
+    fix-onko demonstrator precedent. */
+const FIX_ATTACHER: CardProgram = {
+  abilities: [
+    {
+      name: "Recharge",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Fire" }],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -522,6 +570,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
   "sv02-150": COPPERAJAH_EX, // Copperajah ex — Bronze Body (−30 after W/R)
   "sv01-121": STONJOURNER, // Stonjourner — Exoskeleton (−20 after W/R)
+  // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
+  "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
+  "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)
+  "sv02-210": BAXCALIBUR, // Baxcalibur (reprint)
+  "fix-attacher": FIX_ATTACHER, // FIXTURE — the discard-source attach branch
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

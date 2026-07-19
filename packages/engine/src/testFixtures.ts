@@ -442,6 +442,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "sv02-150": battler("sv02-150", { name: "Copperajah ex", types: ["Metal"], hp: 280, retreat: 3 }),
   /** Stonjourner — passive "Exoskeleton" (−20 damage after W/R). */
   "sv01-121": battler("sv01-121", { name: "Stonjourner", types: ["Fighting"], hp: 140, retreat: 2 }),
+
+  // — M5 op-slice: attachEnergyFrom (real ids so the registry finds the abilities;
+  //   Basic bodies here — surgery places them, the registry keys on the id). —
+  /** Quaquaval — "Energy Carnival" (attach a Basic Energy from hand to a chosen). */
+  "sv01-054": battler("sv01-054", { name: "Quaquaval", types: ["Water"], hp: 170, retreat: 2 }),
+  /** Baxcalibur — "Super Cold" (attach a Basic {W} from hand, repeatable). */
+  "sv02-060": battler("sv02-060", { name: "Baxcalibur", types: ["Water"], hp: 160, retreat: 2 }),
+  /** fix-attacher — FIXTURE for the DISCARD-source attach (a Basic Fire Energy). */
+  "fix-attacher": battler("fix-attacher", { name: "fix-attacher", hp: 120, retreat: 1 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -604,6 +613,20 @@ export const ONKO_DECK = deckOf({
   "fix-basic-1": 12,
   "fix-victim": 4,
   "fix-energy": 28,
+});
+
+/** M5 op-slice attachEnergyFrom: Quaquaval (any Basic from hand) + Baxcalibur
+    ({W} from hand, repeatable) + the fix-attacher discard demonstrator, fix-basic-1
+    bench bodies (attach targets), and Basic energy of three types — {W} for
+    Baxcalibur, Fire for fix-attacher's discard pull, Colorless as an any-Basic. */
+export const ATTACH_DECK = deckOf({
+  "sv01-054": 3,
+  "sv02-060": 3,
+  "fix-attacher": 3,
+  "fix-basic-1": 12,
+  "fix-water-energy": 20,
+  "fix-fire-energy": 6,
+  "fix-energy": 13,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to
@@ -895,6 +918,36 @@ export function handFromDeck(
         ...side,
         deck: side.deck.filter((uid) => !taken.has(uid)),
         hand: [...side.hand, ...uids],
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: move `count` copies of `cardId` from the seat's deck into their
+    DISCARD pile — the discard-source ops (attachEnergyFrom source:"discard") need
+    specific cards in the discard without scripting the KOs/discards that would
+    place them there. Mirror of handFromDeck; legal-shaped (every uid in exactly
+    one zone). */
+export function discardFromDeck(
+  state: GameState,
+  seat: Seat,
+  cardId: string,
+  count: number,
+): GameState {
+  const side = state.players[seat];
+  const uids = side.deck.filter((uid) => state.cardIdByUid[uid] === cardId).slice(0, count);
+  if (uids.length < count) {
+    throw new Error(`${seat} deck has ${uids.length} ${cardId}, needed ${count}`);
+  }
+  const taken = new Set(uids);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((uid) => !taken.has(uid)),
+        discard: [...side.discard, ...uids],
       },
     },
   };
