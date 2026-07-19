@@ -143,9 +143,11 @@ event stream.
    ranked **new-op backlog** (`docs/reference/coverage-backlog.md`) is the roadmap
    for the next slices (`attachEnergyFrom` unlocks 11, `discardPileRetrieval` 6,
    `lookAtTopN`/`moveEnergy`/`conditionalPlay` 5 each, …). First backlog op built:
-   **`attachEnergyFrom`** (2026-07-19, engine 0.12.0) — the clean single-attach
-   core (Quaquaval, Baxcalibur); the remaining 9 of its 11 cards layer riders on
-   the primitive.
+   **`attachEnergyFrom`** (2026-07-19) — the single-attach core (Quaquaval,
+   Baxcalibur; engine 0.12.0) + the **targetType/bonusCounters/notIfKO riders**
+   authoring the marquee **Gardevoir ex "Psychic Embrace"** (engine 0.13.0). 3 of
+   its 11 cards done; the other 8 need more ops (multi-attach, deck-search,
+   `lookAtTopN`, …).
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
 
@@ -1298,6 +1300,48 @@ changed — the demo boot is byte-identical). Files: effects.ts, interpreter.ts
 (op + `firstAttachableEnergy`), cardplay.ts (programPlayable), registry.ts,
 index.ts, testFixtures.ts (fixtures + ATTACH_DECK + discardFromDeck),
 attachEnergyFrom.test.ts (new).
+
+## M5 op-slice: attachEnergyFrom riders as built (2026-07-19) — Gardevoir ex
+
+**Shape (D33).** The D32 attach op grows three composable RIDERS to author the
+marquee **Gardevoir ex "Psychic Embrace"** (sv01-086/228/245): **`targetType`**
+(eligible targets = the controller's own Pokémon whose TOP card is that type —
+{P}); **`bonusCounters`** (put N HP of damage counters on the Pokémon just
+attached to — 2 = 20, as `COUNTERS_PLACED` source "ability"); **`notIfKO`**
+(exclude any target the bonusCounters would Knock Out — `damage + bonusCounters ≥
+effectiveMaxHp`, the exact complement of the KO test, so the counters are ALWAYS
+non-lethal and the op never KOs). The candidate filter is a new exported
+**`attachEnergyTargets`** (interpreter.ts) shared by the park AND `programPlayable`
+(which now also rejects when NO eligible target remains). Gardevoir's program:
+`{attachEnergyFrom, source:"discard", energyType:"Psychic", targetType:"Psychic",
+bonusCounters:20, notIfKO:true}`, `oncePerTurn:false` (repeatable).
+
+**Web: UNCHANGED** — reuses choosePokemon + ENERGY_ATTACHED + the COUNTERS_PLACED
+"ability" log row + the damage chip (the 2 self-counters render as damage).
+engineVersion 0.12.0 → **0.13.0**.
+
+**Review (2 Opus agents — engine+rules / web): BOTH CLEAN, no HIGH/MED bugs.**
+The engine agent proved the notIfKO non-lethal guarantee AIRTIGHT — a basic-energy
+attach cannot shift `damage`/`effectiveMaxHp` between park and apply (those read
+only the top card + tools, never energy), the exclusion `≥` boundary matches the
+KO test's, and `settleProgram`'s DONE sweep is a safety net regardless
+(empirically: Gardevoir stops at exactly 15 uses / 300 damage, never KO'd) — plus
+targetType/bonusCounters correctness, no base-op regression, wire-safety, purity.
+The web agent verified the reuse claim through the real HUD (133 tests + probe):
+the repeatable button never greys, the choosePokemon dialog dispatches a legal
+controller-seat choice, the self-counters render (`battle.damage` 20 → chip), the
+log reads sensibly, no soft-lock (a no-eligible-target Gardevoir rejects
+`NO_LEGAL_TARGET` before parking an empty dialog), no demo regression. One LOW (a
+stale COUNTERS_PLACED "ability" log comment — the render was correct) fixed.
+
+**Scope.** Authors Gardevoir ex — **3 of the 11** attachEnergyFrom cards. The
+other 8 still need multi-attach ("up to N in any way"), a deck-search source,
+`lookAtTopN`, "your turn ends", self-KO, `onEvolve`, or special-energy-by-name.
+**Verification:** `bun run check` green (tsc + biome + **1101 tests** — 1095 →
+1101: 6 engine `psychicEmbrace.test.ts`), production `vite build` green. Files:
+effects.ts, interpreter.ts (`attachEnergyTargets` + bonusCounters), cardplay.ts
+(programPlayable), registry.ts, index.ts, testFixtures.ts, psychicEmbrace.test.ts
+(new) + logFromEvents.ts (the one-line comment fix).
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per

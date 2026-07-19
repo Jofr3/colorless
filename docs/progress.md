@@ -3,19 +3,19 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-19 — build session #17 (**P3-M5 op-slice:
-`attachEnergyFrom`** — the top coverage-backlog unlock. A new interpreter op
-attaches ONE Basic Energy from the controller's hand or discard pile onto a
-CHOSEN own Pokémon (§6 acceleration), reusing the existing choosePokemon park +
-ENERGY_ATTACHED (no new prompt/event/dialog — WEB UNCHANGED). Representatives
-**Quaquaval** (any Basic from hand, once/turn) + **Baxcalibur** ({W} from hand,
-repeatable) + a fixture for the discard branch. **2-agent Opus review BOTH CLEAN**
-(no card dup/loss, safe fungibility re-pick, wire-safety, purity; reuse verified
-through the real HUD); one INFO (programPlayable-before-cost, unreachable today).
-engineVersion 0.11.0 → 0.12.0; 1087 → **1095** tests, check + build green.
-Authors 2 of the op's 11 backlog cards (the other 9 layer riders). Prior: build
-#16 = **P3-M5 coverage pass #1** (a classify→verify Workflow fan-out over 140
-un-authored sv01–03 cards → 5 landed + the ranked new-op backlog). Two forms on
+**Last updated:** 2026-07-19 — build session #18 (**P3-M5 op-slice:
+`attachEnergyFrom` RIDERS** — the D32 attach op grows **targetType / bonusCounters
+/ notIfKO** riders authoring the marquee **Gardevoir ex "Psychic Embrace"** (attach
+a Basic {P} from discard to a {P} Pokémon that would not be Knocked Out, + 2
+counters, repeatable). New exported `attachEnergyTargets` (the filtered candidates)
+shared by the park + programPlayable. **Web UNCHANGED** (reuses choosePokemon +
+ENERGY_ATTACHED + the COUNTERS_PLACED "ability" row + the damage chip). **2-agent
+Opus review BOTH CLEAN** — notIfKO non-lethal guarantee proven airtight, no
+base-op regression, wire-safety, purity; reuse verified through the real HUD; one
+LOW (a stale log comment) fixed. engineVersion 0.12.0 → 0.13.0; 1095 → **1101**
+tests, check + build green. Authors 3 of the op's 11 backlog cards. Prior: build
+#17 = **P3-M5 op-slice `attachEnergyFrom`** (the single-attach core — Quaquaval,
+Baxcalibur, engine 0.12.0). Two forms on
 `TriggeredAbility` (trigger `"onKnockOut"`): a coin-flip **Prize GUARD**
 (`onKoPrizeGuard` — Glimmora "Shattering Crystal", heads → the opponent takes no
 Prize for it) resolved INLINE in the KO sweep via a new `planPrizes` run UP FRONT
@@ -31,41 +31,51 @@ applied. Suite 1066 → **1080**, `bun run check` green, `vite build` green;
 engineVersion 0.10.0 → 0.11.0.).
 
 ## Resume point
-**`attachEnergyFrom` is live (P3-M5 op-slice, D32) — the first backlog op built.**
-A new interpreter op **`attachEnergyFrom`** (`{op, source:"hand"|"discard",
-energyType?}`) attaches ONE Basic Energy from the controller's hand or discard
-pile onto a CHOSEN own in-play Pokémon (§6 acceleration). Same-type Basic Energy
-is fungible → the only decision is the TARGET, reusing the existing `parkOrForce`
-→ `choosePokemon` prompt (re-finds the first matching energy at apply time —
-deterministic, source frozen while parked). A source with no matching energy is a
-no-op; **`programPlayable`** blocks activating an Ability that could only whiff
-(shared `firstAttachableEnergy`). Reuses `ENERGY_ATTACHED` (no allowance touched —
-it's the Ability's effect, not the §6.3 manual attach). Representatives
-**Quaquaval "Energy Carnival"** (sv01-054, any Basic from hand, once/turn) +
-**Baxcalibur "Super Cold"** (sv02-060/210, {W} from hand, **repeatable**
-oncePerTurn:false) + FIXTURE **fix-attacher** (discard branch). **Web UNCHANGED**
-(no new prompt/event/dialog; a repeatable-ability button stays enabled). engine
-0.11.0 → **0.12.0**. **Review (2 Opus agents): BOTH CLEAN** — no card dup/loss,
-safe re-pick, wire-safety, discard order preserved, purity; reuse verified through
-the real HUD. One INFO: `programPlayable` runs before an ability cost is paid, so
-a FUTURE cost+attach ability whose only match is the cost card could pass then
-no-op (wasted, never corrupt) — revisit with the discard-with-rider variants.
-Suite 1087 → **1095**; `bun run check` + `vite build` green. See "M5 op-slice:
-attachEnergyFrom as built" + D32.
+**Gardevoir ex "Psychic Embrace" is live (P3-M5, D33) — the attachEnergyFrom
+RIDERS.** The D32 attach op grew three composable riders on `attachEnergyFrom`:
+**`targetType`** (eligible targets = the controller's own Pokémon whose top card
+is that type — {P}), **`bonusCounters`** (put N HP of counters on the just-
+attached Pokémon — 2 = 20, as COUNTERS_PLACED "ability"), **`notIfKO`** (exclude
+any target the counters would Knock Out — `damage + bonusCounters ≥ effectiveMaxHp`,
+so the counters are ALWAYS non-lethal → the op still never KOs). The filtered
+candidates live in a new exported **`attachEnergyTargets`** (interpreter.ts),
+shared by the park AND `programPlayable` (now also rejecting when no eligible
+target remains). Gardevoir ex (sv01-086/228/245): `{attachEnergyFrom,
+source:"discard", energyType:"Psychic", targetType:"Psychic", bonusCounters:20,
+notIfKO:true}`, `oncePerTurn:false` (repeatable). **Web UNCHANGED** (reuses
+choosePokemon + ENERGY_ATTACHED + the COUNTERS_PLACED "ability" row + the damage
+chip). engine 0.12.0 → **0.13.0**. **Review (2 Opus agents): BOTH CLEAN** — the
+notIfKO non-lethal guarantee proven airtight (a basic-energy attach can't shift
+damage/effectiveMaxHp between park and apply; settleProgram's sweep is a safety
+net anyway), no base-op regression, wire-safety, purity; reuse verified through
+the real HUD; one LOW (a stale log comment) fixed. Suite 1095 → **1101**; check +
+build green. See "M5 op-slice: attachEnergyFrom riders as built" + D33.
 **Next concrete actions (keep building the backlog):**
-1. **The `attachEnergyFrom` RIDERS** — the other 9 of its 11 cards layer on the
-   primitive: multi-attach ("up to N"), +counters (Gardevoir "Psychic Embrace"),
-   "your turn ends" (Koraidon), self-KO (Forretress), deck-search source, and the
-   `onEvolve` search-attach (Charizard ex). Each is a small rider op + a registry
-   row. (Pawmot needs the SOURCE uid in EffectContext for attach-to-self — the
-   long-flagged gap; Gardevoir's cost-before-attach INFO note applies here.)
-2. Or the next backlog op by unlock count — **`discardPileRetrieval`** (6:
-   Energy Retrieval, Super Rod, Pal Pad, …), **`lookAtTopN`** (5), **`moveEnergy`**
-   (5), the **`conditionalPlay`/`conditionalGate`** family (5), or the
-   **hand-refresh Supporter family** (Iono/Judge/Marnie). See
+1. **The remaining `attachEnergyFrom` cards (8 of 11)** — each needs a MORE than
+   the single-attach+riders: **multi-attach** ("up to N in any way" — Koraidon,
+   Forretress, Charizard, Geeta, Electric Generator, Hydreigon), a **deck-search
+   source** (Forretress, Charizard, Geeta, Pawmot), **`lookAtTopN`** (Electric
+   Generator, Hydreigon), plus per-card riders ("your turn ends" Koraidon, self-KO
+   Forretress, `onEvolve` Charizard ex, "can't attack this turn" Geeta,
+   attach-to-self Pawmot [needs the source uid in EffectContext], special-energy-
+   by-name Wigglytuff). Pick one op (multi-attach is the biggest shared one).
+2. Or the next backlog op by unlock count — **`discardPileRetrieval`** (6),
+   **`lookAtTopN`** (5), **`moveEnergy`** (5), the **`conditionalPlay`** family (5),
+   or the **hand-refresh Supporter family** (Iono/Judge/Marnie). See
    `docs/reference/coverage-backlog.md`.
 3. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
    games; the projection is already P4's per-viewer filter.
+
+---
+### Prior resume point (P3-M5 op-slice `attachEnergyFrom`, kept for continuity)
+**`attachEnergyFrom` is live (D32) — the first backlog op.** A new interpreter op
+attaches ONE Basic Energy from the controller's hand or discard pile onto a CHOSEN
+own Pokémon (§6), reusing the choosePokemon park + ENERGY_ATTACHED. Same-type
+Basic Energy is fungible → the only decision is the TARGET. Representatives
+Quaquaval (any Basic from hand, once/turn) + Baxcalibur ({W} from hand, repeatable)
++ a fixture for the discard branch. Web unchanged. engine 0.11.0 → 0.12.0; both
+Opus reviews clean. One INFO: `programPlayable` runs before an ability cost is
+paid (unreachable today). See D32.
 
 ---
 ### Prior resume point (P3-M5 coverage pass #1, kept for continuity)
@@ -174,13 +184,51 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5, 2026-07-19**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0), 2 of its 11 cards) — next: the attachEnergyFrom riders / the next backlog op, or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5, 2026-07-19**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex "Psychic Embrace", engine 0.13.0), 3 of its 11 cards) — next: the remaining attachEnergyFrom cards (multi-attach / deck-search) / the next backlog op, or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-19** (build #18) — **P3-M5 op-slice: `attachEnergyFrom` RIDERS**
+  (D33; built solo — full context — then a 2-agent Opus review, BOTH CLEAN). The
+  D32 attach op grew three composable RIDERS authoring the marquee **Gardevoir ex
+  "Psychic Embrace"** (sv01-086/228/245): **`targetType`** (eligible targets = the
+  controller's own Pokémon whose TOP card is that type — {P}), **`bonusCounters`**
+  (put N HP of damage counters on the Pokémon just attached to — 2 = 20, as
+  `COUNTERS_PLACED` source "ability"), **`notIfKO`** (exclude any target the
+  bonusCounters would Knock Out — `damage + bonusCounters ≥ effectiveMaxHp`, the
+  exact complement of the KO test, so the counters are ALWAYS non-lethal and the
+  op still never KOs). The filtered candidate set is a new exported
+  **`attachEnergyTargets`** (interpreter.ts), shared by the park AND
+  `programPlayable` (which now also rejects when NO eligible target remains — a
+  play that does nothing can't be made). Gardevoir's program: `{attachEnergyFrom,
+  source:"discard", energyType:"Psychic", targetType:"Psychic", bonusCounters:20,
+  notIfKO:true}`, `oncePerTurn:false` (repeatable — "as often as you like").
+  **Web: UNCHANGED** — reuses the choosePokemon dialog + ENERGY_ATTACHED + the
+  COUNTERS_PLACED "ability" log row + the damage chip (the 2 self-counters render
+  as damage). engineVersion 0.12.0 → **0.13.0**. **Review (2 Opus agents —
+  engine+rules / web): BOTH CLEAN, no HIGH/MED bugs.** Engine agent proved the
+  notIfKO non-lethal guarantee AIRTIGHT (a basic-energy attach cannot shift
+  `damage`/`effectiveMaxHp` between park and apply — those read only the top card +
+  tools, never energy; the `≥` boundary matches the KO test; and settleProgram's
+  DONE sweep is a safety net regardless — empirically Gardevoir stops at exactly
+  15 uses / 300 damage, never KO'd), plus targetType/bonusCounters correctness, no
+  base-op regression, wire-safety, purity. Web agent verified the reuse claim
+  through the real HUD (133 tests + probe): the repeatable button never greys, the
+  choosePokemon dialog dispatches a legal controller-seat choice, the self-counters
+  render, the log reads sensibly, no soft-lock (a no-eligible-target Gardevoir
+  rejects `NO_LEGAL_TARGET` before parking an empty dialog), no demo regression.
+  One LOW (a stale COUNTERS_PLACED "ability" log COMMENT — the render was correct)
+  fixed. **Scope:** authors Gardevoir ex — **3 of the 11** attachEnergyFrom cards;
+  the other 8 need multi-attach / deck-search source / `lookAtTopN` / "turn ends" /
+  self-KO / onEvolve / special-energy-by-name. **1095 → 1101 tests**, `bun run
+  check` + `vite build` green. Files: effects.ts, interpreter.ts
+  (`attachEnergyTargets` + bonusCounters), cardplay.ts (programPlayable),
+  registry.ts, index.ts, testFixtures.ts, psychicEmbrace.test.ts (new),
+  logFromEvents.ts (comment fix) + docs (D33, coverage-backlog.md, simulator.md,
+  progress.md).
 - **2026-07-19** (build #17) — **P3-M5 op-slice: `attachEnergyFrom`** (D32; built
   solo — full context — then a 2-agent Opus review, BOTH CLEAN). The first new op
   built off the D31 coverage backlog (its top unlock, 11 cards). **`attachEnergyFrom`**
