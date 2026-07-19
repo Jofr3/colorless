@@ -1,6 +1,6 @@
 import type { Card } from "@luminous/schema";
-import { energyProvidesOf, isBasicPokemon, isEnergyCard, topUid } from "./cards";
-import { passivesOf } from "./continuous";
+import { energyProvidesOf, isBasicPokemon, isEnergyCard, topCardOf, topUid } from "./cards";
+import { effectiveMaxHp, passivesOf } from "./continuous";
 import type { CardFilter, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { flipCoin, shuffle } from "./rng";
@@ -201,13 +201,14 @@ function stepOp(
       return parkOrForce(state, ownInPlayRefs(state, ctx.seat), (ref) => healChosen(state, ref, op.amount, ctx, events), "Heal which of your Pokémon?");
     case "attachEnergyFrom": {
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
-      // a source with no matching Energy is a no-op (nothing to attach).
+      // a source with no matching Energy is a no-op (nothing to attach). The
+      // candidates are the eligible targets (targetType + notIfKO riders).
       if (firstAttachableEnergy(state, ctx.seat, op.source, op.energyType) === undefined) {
         return { done: state };
       }
       return parkOrForce(
         state,
-        ownInPlayRefs(state, ctx.seat),
+        attachEnergyTargets(state, ctx.seat, op),
         (ref) => attachEnergyFrom(state, op, ref, ctx, events),
         "Attach the Energy to which of your Pokémon?",
       );
@@ -579,13 +580,49 @@ export function firstAttachableEnergy(
   });
 }
 
+/** The controller's own in-play Pokémon that attachEnergyFrom may target, as
+    refs (Active first, then bench in index order), filtered by the riders:
+    `targetType` keeps only those whose TOP card is that type (Gardevoir's "your
+    {P} Pokémon"), and `notIfKO` drops any whose `bonusCounters` would Knock it
+    Out ("you can't use this on a Pokémon that would be Knocked Out"), so the
+    placed counters are always non-lethal. No riders → every own in-play Pokémon
+    (the base op's targets). Exported for programPlayable: an Ability with no
+    eligible target can't be activated (the gust/snipe precedent). */
+export function attachEnergyTargets(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+): PokemonRef[] {
+  const side = state.players[seat];
+  const eligible = (pokemon: InPlayPokemon): boolean => {
+    if (op.targetType !== undefined) {
+      const card = topCardOf(state, pokemon);
+      if (!(card?.types ?? []).includes(op.targetType)) return false;
+    }
+    if (op.notIfKO === true && op.bonusCounters !== undefined) {
+      const hp = effectiveMaxHp(state, pokemon);
+      if (hp !== null && pokemon.damage + op.bonusCounters >= hp) return false;
+    }
+    return true;
+  };
+  const refs: PokemonRef[] = [];
+  if (side.active !== null && eligible(side.active)) refs.push({ seat, spot: { spot: "active" } });
+  side.bench.forEach((pokemon, index) => {
+    if (eligible(pokemon)) refs.push({ seat, spot: { spot: "bench", index } });
+  });
+  return refs;
+}
+
 /** Attach the first matching Basic Energy from `op.source` (hand/discard) onto
     the chosen own Pokémon `ref` (§6 energy acceleration). Re-finds the energy at
     apply time — fungible, so the parked decision was only the TARGET. Moves the
     card OUT of its source zone and onto the Pokémon's energy, emitting
     ENERGY_ATTACHED (its host resolves by the energy uid, robust to any same-batch
     move). This is not the §6.3 one-per-turn manual attach — no allowance is
-    touched; it is the Ability's own effect. */
+    touched; it is the Ability's own effect. The `bonusCounters` rider then puts
+    that many HP of damage counters on the same Pokémon (Gardevoir's 2) — always
+    non-lethal, because attachEnergyTargets already excluded would-be-KO'd targets
+    (notIfKO), so this op never KOs and never touches the flow tail. */
 function attachEnergyFrom(
   state: GameState,
   op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
@@ -599,19 +636,30 @@ function attachEnergyFrom(
   const side = state.players[ctx.seat];
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
   if (pokemon === undefined || pokemon === null) return state;
-  if (topUid(pokemon) === undefined) return state;
-  const withEnergy: InPlayPokemon = { ...pokemon, energy: [...pokemon.energy, energyUid] };
+  const targetUid = topUid(pokemon);
+  if (targetUid === undefined) return state;
+  let updated: InPlayPokemon = { ...pokemon, energy: [...pokemon.energy, energyUid] };
   // Remove the Energy from its source zone (hand or the public discard pile).
   const base: PlayerSide =
     op.source === "hand"
       ? { ...side, hand: without(side.hand, energyUid) }
       : { ...side, discard: without(side.discard, energyUid) };
   events.push({ type: "ENERGY_ATTACHED", seat: ctx.seat, uid: energyUid, target: { ...ref.spot } });
-  if (ref.spot.spot === "active") return withSide(state, ctx.seat, { ...base, active: withEnergy });
+  if (op.bonusCounters !== undefined && op.bonusCounters > 0) {
+    updated = { ...updated, damage: updated.damage + op.bonusCounters };
+    events.push({
+      type: "COUNTERS_PLACED",
+      seat: ctx.seat,
+      uid: targetUid,
+      amount: op.bonusCounters,
+      source: "ability",
+    });
+  }
+  if (ref.spot.spot === "active") return withSide(state, ctx.seat, { ...base, active: updated });
   const index = (ref.spot as { index: number }).index;
   return withSide(state, ctx.seat, {
     ...base,
-    bench: side.bench.map((p, i) => (i === index ? withEnergy : p)),
+    bench: side.bench.map((p, i) => (i === index ? updated : p)),
   });
 }
 

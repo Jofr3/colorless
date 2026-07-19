@@ -32,12 +32,12 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: `attachEnergyFrom` — the top
-    coverage-backlog unlock. A new interpreter op attaches one Basic Energy from
-    the controller's hand or discard pile onto a chosen own Pokémon, parking on
-    the target choice; representatives Quaquaval "Energy Carnival" and Baxcalibur
-    "Super Cold". M4 slice 9 before it added on-KO triggered Abilities.). */
-export const engineVersion = "0.12.0";
+/** Engine milestone marker (M5 op-slice: `attachEnergyFrom` RIDERS — the base
+    attach op grows `targetType` / `bonusCounters` / `notIfKO` riders, authoring
+    the marquee Gardevoir ex "Psychic Embrace" (attach a Basic {P} from discard to
+    a {P} Pokémon that would not be Knocked Out, + 2 damage counters, repeatable).
+    The base single-attach op (Quaquaval / Baxcalibur) landed in 0.12.0). */
+export const engineVersion = "0.13.0";
 
 export type {
   ApplyResult,

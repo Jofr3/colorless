@@ -109,10 +109,24 @@ export type EffectOp =
       fungible, so the ONLY decision is the TARGET: this PARKS on a choosePokemon
       unless exactly one Pokémon is in play, and a source holding no matching
       Energy is a no-op (programPlayable also blocks activating an Ability that
-      could only whiff). Single-energy, chosen-target only — the "up to N" /
-      discard-with-rider / deck-search / look-at-top-N variants layer later ops
-      on top of this attach primitive. */
-  | { op: "attachEnergyFrom"; source: "hand" | "discard"; energyType?: string };
+      could only whiff). Single-energy — the "up to N" / deck-search / look-at-
+      top-N variants layer later ops on top of this attach primitive.
+
+      Riders (Gardevoir "Psychic Embrace"): `targetType` restricts the eligible
+      targets to the controller's own Pokémon whose top card is that type ({P});
+      `bonusCounters` puts that many HP of damage counters on the Pokémon just
+      attached to (2 counters = 20); `notIfKO` excludes any target the
+      bonusCounters would Knock Out ("you can't use this on a Pokémon that would
+      be Knocked Out"), so the placed counters are always non-lethal — this op
+      never KOs (a lethal-bonus variant would route through the KO sweep). */
+  | {
+      op: "attachEnergyFrom";
+      source: "hand" | "discard";
+      energyType?: string;
+      targetType?: string;
+      bonusCounters?: number;
+      notIfKO?: true;
+    };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

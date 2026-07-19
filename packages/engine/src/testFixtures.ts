@@ -451,6 +451,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "sv02-060": battler("sv02-060", { name: "Baxcalibur", types: ["Water"], hp: 160, retreat: 2 }),
   /** fix-attacher — FIXTURE for the DISCARD-source attach (a Basic Fire Energy). */
   "fix-attacher": battler("fix-attacher", { name: "fix-attacher", hp: 120, retreat: 1 }),
+  /** Gardevoir ex — "Psychic Embrace" (attachEnergyFrom riders: {P} from discard
+      + 2 counters + not-if-KO). Psychic type, so it is its own {P} target. */
+  "sv01-086": battler("sv01-086", { name: "Gardevoir ex", types: ["Psychic"], hp: 310, retreat: 2 }),
+  /** A Basic Psychic {P} Pokémon — a Psychic Embrace target; 60 HP so a damaged
+      one exercises the not-if-KO exclusion (50 + 20 counters ≥ 60). */
+  "fix-psychic-1": battler("fix-psychic-1", { name: "fix-psychic-1", types: ["Psychic"], hp: 60, retreat: 1 }),
+  /** A Basic Psychic Energy — the Psychic Embrace attach source. */
+  "fix-psychic-energy": typedEnergy("fix-psychic-energy", "Psychic"),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -627,6 +635,18 @@ export const ATTACH_DECK = deckOf({
   "fix-water-energy": 20,
   "fix-fire-energy": 6,
   "fix-energy": 13,
+});
+
+/** M5 attachEnergyFrom RIDERS (Gardevoir ex "Psychic Embrace"): Gardevoir ex
+    (Psychic, its own {P} target), fix-psychic-1 {P} bench targets, fix-basic-1
+    NON-{P} bodies (excluded from the {P}-only targets), Basic Psychic Energy (the
+    discard-attach source), and Colorless filler. */
+export const GARDEVOIR_DECK = deckOf({
+  "sv01-086": 3,
+  "fix-psychic-1": 8,
+  "fix-basic-1": 8,
+  "fix-psychic-energy": 20,
+  "fix-energy": 21,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

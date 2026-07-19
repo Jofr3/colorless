@@ -317,8 +317,11 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             amount,
           ]);
         case "ability":
-          // A between-turns Ability counter (Trevenant's Forest Miasma) — a
-          // system row, the ABILITY_TRIGGERED row just before names the source.
+          // Damage counters an Ability placed — a between-turns/on-play trigger
+          // (Trevenant's Forest Miasma, the snipe) OR a during-turn self-attach
+          // (Gardevoir's Psychic Embrace, +2 on the attached-to Pokémon). Always
+          // a system row; the ABILITY_TRIGGERED/ABILITY_USED row just before
+          // names the source.
           return row("system", [plain("Ability: "), amount, plain(" damage to "), strong(name)]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);

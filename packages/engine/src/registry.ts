@@ -481,10 +481,8 @@ const BAXCALIBUR: CardProgram = {
 
 /** FIXTURE (id fix-attacher): the DISCARD-source + type-filter branch of
     attachEnergyFrom (attach a Basic Fire Energy from the discard pile to a chosen
-    Pokémon). The clean real discard-attach cards (Gardevoir "Psychic Embrace",
-    Koraidon "Dino Cry") carry riders (+2 counters / "your turn ends") that need
-    later ops, so a fixture exercises the primitive's discard branch now — the
-    fix-onko demonstrator precedent. */
+    Pokémon). The clean real discard-attach card without extra riders; Koraidon
+    "Dino Cry" (multi + "your turn ends") still needs later ops. */
 const FIX_ATTACHER: CardProgram = {
   abilities: [
     {
@@ -492,6 +490,32 @@ const FIX_ATTACHER: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Fire" }],
+    },
+  ],
+};
+
+/** Gardevoir ex — "Psychic Embrace": "As often as you like during your turn, you
+    may attach a Basic {P} Energy card from your discard pile to 1 of your {P}
+    Pokémon. If you attached Energy to a Pokémon in this way, put 2 damage counters
+    on that Pokémon. You can't use this Ability on a Pokémon that would be Knocked
+    Out." — the attachEnergyFrom RIDERS: discard source + {P} energy + {P}-only
+    targets + 20 HP (2 counters) + the not-would-be-KO'd guard; REPEATABLE. */
+const GARDEVOIR_EX: CardProgram = {
+  abilities: [
+    {
+      name: "Psychic Embrace",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "discard",
+          energyType: "Psychic",
+          targetType: "Psychic",
+          bonusCounters: 20,
+          notIfKO: true,
+        },
+      ],
     },
   ],
 };
@@ -575,6 +599,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)
   "sv02-210": BAXCALIBUR, // Baxcalibur (reprint)
   "fix-attacher": FIX_ATTACHER, // FIXTURE — the discard-source attach branch
+  // — attachEnergyFrom riders: Gardevoir ex (targetType + bonusCounters + notIfKO). —
+  "sv01-086": GARDEVOIR_EX, // Gardevoir ex — Psychic Embrace
+  "sv01-228": GARDEVOIR_EX, // (reprint)
+  "sv01-245": GARDEVOIR_EX, // (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
