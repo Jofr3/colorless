@@ -130,8 +130,12 @@ event stream.
    pool; slice 8 added the **mid-turn-damage snipe** (§9) — a `damageChosen` op
    that puts counters on chosen opponent Benched Pokémon (a multi-Pokémon prompt)
    and KOs mid-turn through a unified `settleProgram` KO sweep, plus the engine's
-   first ability activation cost (Meowscarada's {G}-discard). Remaining: on-KO
-   triggers.
+   first ability activation cost (Meowscarada's {G}-discard); slice 9 **CLOSED
+   M4** with **on-KO triggered Abilities** (§8.1) — a "when Knocked Out" Ability
+   fires mid-KO-sweep during the opponent's turn: a coin-flip prize guard
+   (Glimmora) resolved inline in the sweep, and a parking on-KO program run as a
+   `koTrigger` stage that folds through `settleProgram` with `resumeTail` (park
+   for a decision, then resume draining the KO's prize/promotion tail).
 5. Coverage-expansion pass(es) across the SV-era pool; track % simulated.
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
@@ -1108,14 +1112,101 @@ cost + programPlayable + validateChoice), registry.ts, actions.ts, events.ts,
 index.ts, testFixtures.ts, snipe.test.ts (new) + GameHud.tsx, logFromEvents.ts,
 GameHud.cardplay.dom.test.tsx, projection.test.ts, logFromEvents.test.ts.
 
+## M4 slice 9 as built (2026-07-19) — on-KO triggered Abilities (§8.1)
+
+**Shape (D30).** Triggered Abilities that fire **"when this Pokémon is Knocked
+Out"** — the last M4 timing, and the inverse of the slice-8 snipe (the KO fires
+the trigger). It fires DURING the OPPONENT's turn, mid-KO-sweep, so a decision
+must PAUSE the sweep and then RESUME it (the resume-the-tail continuation the
+slice-6/8 deferral named). `TriggerTiming` gains **`"onKnockOut"`**; detection
+lives in triggers.ts **`onKnockOutTrigger(state, uid)`** (via `cardIdByUid →
+programFor`, valid AFTER the KO discarded the card — the id map is permanent),
+but the KO sweep in flow.ts DRIVES it. Two forms on `TriggeredAbility`, split by
+layer:
+
+- **Coin-flip Prize GUARD** (`onKoPrizeGuard: "coinFlipPrevent"` — Glimmora
+  "Shattering Crystal": flip; heads → the opponent takes NO Prize for it).
+  Resolved **inline in the KO sweep**, NOT the interpreter (it modifies the KO's
+  Prize, and "flow.ts owns every Knock Out; the interpreter never touches the
+  tail" is the D23 invariant). New **`planPrizes`** (flow.ts) resolves every
+  guard UP FRONT — before the §14 tie-guard speculation — threading rng once, so
+  the speculation AND the real KO share the post-flip count (the tie guard stays
+  EXACT) and the guard's own events (`ABILITY_TRIGGERED` → `ABILITY_COIN_FLIP` →
+  `PRIZE_PREVENTED`) fire in the real KO loop AFTER that KO's `KNOCKED_OUT`. A
+  heads guard queues no `takePrizes` stage — and, resolved before the §14 check,
+  it can DENY a game-winning prize (the game continues).
+- **Parking PROGRAM** — a general on-KO effect run as a new **`koTrigger`
+  PendingStage** `{seat, uid}` (JSON-safe). `advance`'s `koTrigger` case pops it
+  and calls **`runKoTrigger`**, which runs the program through the shared
+  interpreter and folds through **`settleProgram` with a new `resumeTail` flag**:
+  a decision PARKS on `effect:choose` (with `phase.seat` = the KO'd, NON-turn
+  player) and, on `resolveEffect`, the DONE branch just keeps DRAINING the KO's
+  queued prize/promotion tail (`advance`) instead of folding back to a turn.
+  `resolveEffect` passes `resumeTail` back so a re-park mid-sweep stays a
+  mid-sweep park.
+
+**Ordering.** `collectKnockOuts` groups the batch **PRIZES-first, then
+koTriggers, then promotions** (§8.1/§13 — all prizes taken before the board
+refills; a "when Knocked Out" Ability resolves between). A §14 game-ending prize
+(finishGame clears `pending`) skips the koTrigger program entirely. Fires from
+all three KO callers (attack epilogue, Checkup, mid-turn `resolveMidTurnKnockOuts`)
+since they all share `collectKnockOuts`. Behaviour-neutral for every Pokémon with
+no on-KO Ability (planPrizes plans its face-value Prize, no flip, no koTrigger —
+the whole prior suite passes unchanged).
+
+**Representatives.** **Glimmora** (sv02-126, real — verified vs the local
+catalog) for the guard, and **fix-onko** (a FIXTURE — "Last Wish" searches a
+Basic → hand, which parks) for the resume-the-tail path, because no real SV-era
+on-KO Ability requires a decision (Glimmora/Munkidori are a coin flip / a fixed
+condition) — the fix-sniper demonstrator precedent. Neither is in the demo decks.
+
+**Web.** The projection's `effect:choose` case reads the turn owner via
+**`koParkActiveSeat`** when `resumeTail` (so `activeSeat` ≠ `waitingSeat` — the
+KO'd non-turn player owes the decision mid-opponent-turn, exactly like the ko:*
+parks; the device flips to them and back). The parked decision reuses the
+existing `chooseCards` dialog (no new dialog). `logFromEvents` gains two rows
+(`ABILITY_COIN_FLIP`, `PRIZE_PREVENTED`). engineVersion 0.10.0 → **0.11.0**.
+
+**Review (2 Opus agents — engine+rules / web+integration): BOTH CLEAN, no
+HIGH/MED/LOW correctness bugs.** The engine agent enumerated the highest-risk
+claim — the §14 tie guard × prize denial — over ALL FOUR coin-flip combinations
+× 60 seeds and proved every win/tie/continue outcome exact (post-flip counts,
+one rng advance, no speculation/reality disagreement), and probed the
+resume-the-tail across all three KO callers (attack / checkup / mid-turn). The
+web agent drove the non-attack park origins through the real engine to confirm
+`koParkActiveSeat` names the right owner in each, the viewer-follow flips to the
+KO'd player, the dialog dispatches `resolveEffect` for the KO'd player's seat,
+and NO demo/`/play` regression (a non-`resumeTail` park is byte-identical). The
+one engine LOW (a seed-fragile / misframed §14 test of mine) was fixed: it now
+pins both guard branches (heads denies the win) and adds a deterministic fix-onko
+test for §14 skipping the koTrigger PROGRAM. The one web INFO is the pre-existing
+P4 hidden-info gap (the effect:choose prompt carries the actor's search
+candidates), not a slice-9 defect.
+
+**Verification.** `bun run check` green (tsc + biome + **1080 tests** — 1066 →
+1080: 11 engine `onKnockOut.test.ts` covering the guard heads/tails + the
+guard-denies-a-win branch, the checkup-KO scan point, the resume-the-tail park
+(owned by the KO'd non-turn player) + its promotion drain, §14 skipping the
+program, non-regression + purity; plus 1 projection pass-through, 1 log-row pair,
+1 GameHud DOM test driving the KO'd player's on-KO dialog). Production `vite
+build` green. No live /play smoke this session (the representatives aren't
+demo-reachable and NO demo deck / projection path for existing cards changed —
+the demo boot is byte-identical to slice 8's; the slice-6/8 precedent). Files:
+flow.ts (planPrizes / settleProgram+resumeTail / runKoTrigger / advance),
+registry.ts, triggers.ts, types.ts, events.ts, cardplay.ts, index.ts,
+testFixtures.ts, onKnockOut.test.ts (new) + projection.ts, logFromEvents.ts and
+their tests + GameHud.cardplay.dom.test.tsx.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
 launching one. The mechanics all live in `interpreter.ts` (op programs incl.
 spreadDamage + the `damageChosen` snipe), `continuous.ts` (persistent-zone
 modifiers + special-energy provision), `triggers.ts` (triggered-Ability scan
-points) and `registry.ts` (EnergyProgram, StadiumEffects, PassiveEffects,
-TriggeredAbility, AbilityProgram incl. activation `cost`, op programs), and the
-KO flow reaches the whole board (attacks, the Checkup, and now a mid-turn snipe
-via the shared `settleProgram`), so a new card in a known family is a few lines
-of data in `registry.ts` — the fan-out adds rows, not code.
+points — onPlayToBench/onEvolve/betweenTurns/**onKnockOut**) and `registry.ts`
+(EnergyProgram, StadiumEffects, PassiveEffects, TriggeredAbility incl. the on-KO
+`onKoPrizeGuard`, AbilityProgram incl. activation `cost`, op programs), and the
+KO flow reaches the whole board (attacks, the Checkup, a mid-turn snipe via the
+shared `settleProgram`, and now an on-KO trigger that can pause the sweep for a
+decision via the `koTrigger` stage + `resumeTail`), so a new card in a known
+family is a few lines of data in `registry.ts` — the fan-out adds rows, not code.

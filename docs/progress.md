@@ -3,75 +3,80 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-19 — build session #14 (**P3-M4 slice 8: the
-mid-turn-damage snipe** (§9) — a `damageChosen` op puts damage counters on
-CHOSEN opponent Benched Pokémon (a new multi-Pokémon prompt `choosePokemonMulti`)
-and can Knock one Out MID-TURN through a **unified `settleProgram`** that
-collapses the two identical settle helpers and runs the slice-4
-`resolveMidTurnKnockOuts` sweep on any completed board program — so the actor
-keeps their turn; Meowscarada's "Bouquet Magic" adds the engine's FIRST **ability
-activation cost** (discard a {G} energy). Representatives Hawlucha (sv01-118,
-triggered choose-2) + Meowscarada ex (sv02-015/256, activated choose-1); built
-solo, **2-agent Opus review BOTH CLEAN — no HIGH/MED correctness bugs**, the one
-shared LOW is the by-design "you may" auto-take (documented as a conscious
-choice). Suite 1045 → **1066**, `bun run check` green, `vite build` green;
-engineVersion 0.9.0 → 0.10.0.).
+**Last updated:** 2026-07-19 — build session #15 (**P3-M4 slice 9: on-KO
+triggered Abilities** (§8.1) — a "when this Pokémon is Knocked Out" Ability fires
+mid-KO-sweep DURING the opponent's turn, **closing M4**. Two forms on
+`TriggeredAbility` (trigger `"onKnockOut"`): a coin-flip **Prize GUARD**
+(`onKoPrizeGuard` — Glimmora "Shattering Crystal", heads → the opponent takes no
+Prize for it) resolved INLINE in the KO sweep via a new `planPrizes` run UP FRONT
+so the §14 tie guard stays exact; and a parking **PROGRAM** run as a new
+`koTrigger` PendingStage that folds through `settleProgram` with a new
+`resumeTail` flag — it PARKS on `effect:choose` (the KO'd, NON-turn player
+decides) and the sweep RESUMES draining the prize/promotion tail. Representatives
+Glimmora (sv02-126, real) + fix-onko (FIXTURE — no real SV on-KO Ability parks;
+the fix-sniper precedent); built solo, **2-agent Opus review BOTH CLEAN — no
+HIGH/MED/LOW correctness bugs** (the §14 tie guard × prize denial enumerated over
+all 4 coin-flip combos × 60 seeds, proven exact), one LOW test-framing fix
+applied. Suite 1066 → **1080**, `bun run check` green, `vite build` green;
+engineVersion 0.10.0 → 0.11.0.).
 
 ## Resume point
-**The mid-turn-damage snipe is live (P3-M4 slice 8, D29).** A damaging Ability
-that puts damage counters on CHOSEN opponent Benched Pokémon and can Knock one
-Out **mid-turn** — the last deferred mid-turn-KO reach from slices 4/6. New op
-**`damageChosen` {target:"opponentBench", amount, count}** (effects.ts/
-interpreter.ts): flat counters (no W/R, no reduction passive — the `damageActive`
-rule, distinct from `spreadDamage`), parking on a NEW multi-select prompt
-**`choosePokemonMulti`** (choice `pokemonMulti {refs}`, 0..max "you may") when the
-opponent has >count Benched, forced (hits all) at ≤count, no-op at 0. **The KO
-reaches flow.ts through a unified `settleProgram`** (flow.ts) — the two identical
-local settle helpers (triggers.ts `settleTrigger`, cardplay.ts `settleRun`)
-collapse into one that, on a completed program, returns the controller to
-turn:action then runs the shared **`resolveMidTurnKnockOuts`** over both boards;
-behaviour-preserving for every non-damaging Trainer/Ability (the sweep is a
-no-op). Meowscarada ex adds the engine's first **ability activation cost**
-(`AbilityProgram.cost`; `useAbility` gates on `programPlayable` then discards a
-Basic {G} Energy — `ABILITY_COST_PAID` — or rejects `ABILITY_COST_UNMET`).
-Representatives Hawlucha (sv01-118) + Meowscarada ex (sv02-015/256), NOT in the
-demo decks (auto-fire/contrived preconditions; test-covered). **Web:** projection
-UNCHANGED (choosePokemonMulti rides effect:choose; the mid-turn KO park is
-`resumeTurn` = in-turn); one new `ChoosePokemonMultiDialog`; one new log row
-(`ABILITY_COST_PAID`). engineVersion 0.9.0 → 0.10.0. See "M4 slice 8 as built" +
-D29.
-**Review (2 Opus agents — rules+engine / web+integration): BOTH CLEAN, no
-HIGH/MED correctness bugs.** The rules agent CONFIRMED (via probes) the settle
-unification behaviour-preserving, the SEATS sweep safe (§14 tie guard can't
-spuriously fire — `effectiveMaxHp` is position-independent), the mid-turn KO
-prize+resume + §14-win correct, the ability cost paid-once-across-park, the
-`programPlayable` gate non-regressive, the flat-counter rule, wire-safety
-double-guarded, the flow↔triggers cycle evaluation-safe, and purity. The web
-agent CONFIRMED the dialog keys/toggle/reset, the dialog↔engine lockstep (an
-enabled Confirm can only ever produce a legal dispatch), the projection + viewer-
-follow through the mid-turn KO, the afford-then-reject button, the log rows, and
-NO demo/`/play` regression. **The one shared LOW** — the forced (≤count) branch
-auto-takes rather than offering the "you may" decline (only the parked branch
-does) — is HARMLESS (pure upside) and the documented auto-fire doctrine; made a
-conscious choice in an interpreter.ts comment (a decline confirm rides with the
-deferred downside-trigger confirm). No code fixes needed.
-**Verification:** `bun run check` green (**1066 tests** — 1045 → 1066: 17 engine
-`snipe.test.ts` + 2 DOM + 1 projection + 1 log), production `vite build` green.
-No live /play smoke this session (representatives not demo-reachable; NO demo
-deck / projection path changed, so the demo boot is byte-identical to slice 7's —
-the slice-6 precedent).
+**on-KO triggered Abilities are live (P3-M4 slice 9, D30) — M4 IS COMPLETE.** A
+"when this Pokémon is Knocked Out" Ability (§8.1) fires mid-KO-sweep DURING the
+opponent's turn — the inverse of the slice-8 snipe (the KO fires the trigger).
+`TriggerTiming` += **`"onKnockOut"`**; detection is triggers.ts
+**`onKnockOutTrigger`** (via `cardIdByUid → programFor`, valid after the KO
+discarded the card), but flow.ts's KO sweep DRIVES it. Two forms on
+`TriggeredAbility`: (1) a coin-flip **Prize GUARD** (`onKoPrizeGuard:
+"coinFlipPrevent"` — Glimmora: heads → the opponent takes no Prize for it),
+resolved INLINE by a new **`planPrizes`** (flow.ts) run UP FRONT — before the §14
+tie-guard speculation — threading rng ONCE so the speculation and the real KO
+share the post-flip count (§14 stays exact), the guard's events firing after the
+`KNOCKED_OUT`; and (2) a general parking **PROGRAM** run as a new **`koTrigger`
+PendingStage** (`advance` → **`runKoTrigger`** → **`settleProgram` with a new
+`resumeTail`** flag): it PARKS on `effect:choose` (where `phase.seat` is the KO'd,
+NON-turn player) and, on `resolveEffect`, the sweep RESUMES draining the queued
+prize/promotion tail instead of folding back to a turn. Batch order:
+PRIZES-first, then koTriggers, then promotions; a §14 game-ending prize skips the
+program, while the guard (resolved earlier) can DENY a winning prize.
+Behaviour-neutral for every card with no on-KO Ability. Representatives Glimmora
+(sv02-126, real) + fix-onko (FIXTURE — no real SV on-KO Ability parks). **Web:**
+the projection's `effect:choose` case reads the turn owner via `koParkActiveSeat`
+when `resumeTail` (activeSeat ≠ waitingSeat — the KO'd player owes it
+mid-opponent-turn); the parked decision reuses the `chooseCards` dialog; two new
+log rows (`ABILITY_COIN_FLIP`, `PRIZE_PREVENTED`). engineVersion 0.10.0 → 0.11.0.
+See "M4 slice 9 as built" + D30.
+**Review (2 Opus agents — engine+rules / web+integration): BOTH CLEAN, no
+HIGH/MED/LOW correctness bugs.** The engine agent enumerated the §14 tie guard ×
+prize denial over ALL FOUR coin-flip combos × 60 seeds and proved every
+win/tie/continue outcome exact (post-flip counts, one rng advance), proved the
+no-ability path byte-equivalent, and probed the resume-the-tail across all three
+KO callers (attack / checkup / mid-turn). The web agent proved `koParkActiveSeat`
+names the right owner in each origin, the viewer-follow flips to the KO'd player
+and back, the dialog dispatches `resolveEffect` for the KO'd seat, and NO
+demo/`/play` regression (a non-`resumeTail` park is byte-identical). One engine
+LOW (a seed-fragile / misframed §14 test of mine) FIXED — it now pins both guard
+branches (heads denies the win) + a deterministic fix-onko §14-skips-the-program
+test; one web INFO is the pre-existing P4 hidden-info gap (not slice-9).
+**Verification:** `bun run check` green (**1080 tests** — 1066 → 1080: 11 engine
+`onKnockOut.test.ts` + 1 projection + 1 log + 1 DOM), production `vite build`
+green. No live /play smoke this session (representatives not demo-reachable; NO
+demo deck / projection path for existing cards changed — the demo boot is
+byte-identical to slice 8's; the slice-6/8 precedent).
 Next concrete actions:
-1. **P3-M4 remaining (1 item): on-KO triggers** — a triggered Ability that fires
-   "when this Pokémon is Knocked Out", DURING the opponent's turn mid-KO-sweep
-   (the hairiest timing: needs a resume-the-tail continuation, so the KO sweep
-   can pause for a decision and then continue draining prizes/promotions). The
-   snipe just proved a completed board program can KO mid-turn via
-   `settleProgram`; on-KO is the inverse (the KO fires the trigger, not the
-   trigger firing the KO).
-2. Or the **coverage-expansion Workflow fan-out** (M5) — the mechanics all live
-   in interpreter.ts (op programs incl. `damageChosen`), continuous.ts,
-   triggers.ts, cardplay.ts and registry.ts (now incl. `AbilityProgram.cost`), so
-   a new card in a known family is a few registry rows. Ask the user first.
+1. **P3 M4 is COMPLETE — the next milestone is M5, the coverage-expansion
+   Workflow fan-out** across the SV-era pool (track % simulated). Every mechanic
+   now lives as DATA in `registry.ts` (op programs, EnergyProgram, StadiumEffects,
+   PassiveEffects, TriggeredAbility incl. `onKoPrizeGuard`, AbilityProgram incl.
+   activation `cost`), and the KO flow reaches the whole board (attacks, Checkup,
+   the mid-turn snipe, and now an on-KO trigger that can pause the sweep), so a
+   new card in a known family is a few registry rows, not code. **Ask the user
+   before launching a fan-out** (large multi-agent run).
+2. Or begin **P4 (online matches)** — run the P3 engine authoritatively inside
+   the lobby DO. The projection is already the per-viewer filter P4 will apply;
+   the logged P4 blockers (the HUD reading raw GameState for payability; the
+   `effect:choose` prompt carrying the actor's search candidates unredacted; the
+   opponent-hand/setup opaque-alias re-key) are collected across the M2–M4 notes.
 3. **Slice-6 follow-up (still open):** the slice-6 (triggered Abilities) review
    was cut short by the usage limit — a `/code-review` re-run over commit
    `a634b30` is logged (user opted to defer it while building later slices).
@@ -88,13 +93,65 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 evolution/Trainers/Abilities/persistent-zones/KO-off-the-Active/Special-Energy/triggered-Abilities/Rare-Candy/mid-turn-snipe done** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities + D28 Rare Candy + D29 mid-turn-damage snipe — damageChosen op + unified settleProgram KO sweep + first ability cost, 2026-07-19) — remaining: on-KO triggers; then the coverage fan-out |
+| simulator | P3 | 🚧 **M1–M3 done + M4 COMPLETE** (checkup + D20 deriver + D21 battle surface + D22 evolution + D23 effect interpreter/registry + D24 Stadium/Tool continuous pipeline + D25 KO generalized off the Active + D26 Special Energy + D27 triggered Abilities + D28 Rare Candy + D29 mid-turn-damage snipe + **D30 on-KO triggered Abilities — inline prize guard + resume-the-tail koTrigger stage, 2026-07-19**) — next: **M5 coverage-expansion fan-out** (ask first) or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-19** (build #15) — **P3-M4 slice 9: on-KO triggered Abilities**
+  (§8.1, D30; built solo — full context loaded — then a 2-agent Opus review,
+  BOTH CLEAN — **this CLOSES M4**). A "when this Pokémon is Knocked Out" Ability
+  fires mid-KO-sweep DURING the opponent's turn — the inverse of the slice-8
+  snipe (the KO fires the trigger, not the trigger firing the KO), and the last
+  deferred mid-turn-KO timing. `TriggerTiming` += **`"onKnockOut"`**; detection
+  is triggers.ts **`onKnockOutTrigger`** (via `cardIdByUid → programFor`, valid
+  AFTER the KO discarded the card), driven by flow.ts's KO sweep. Two forms on
+  `TriggeredAbility`: **(1)** a coin-flip **Prize GUARD** (`onKoPrizeGuard:
+  "coinFlipPrevent"` — Glimmora "Shattering Crystal": heads → the opponent takes
+  no Prize for it), resolved INLINE by a new **`planPrizes`** run UP FRONT —
+  before the §14 tie-guard speculation — threading rng ONCE so the speculation
+  and the real KO share the post-flip count (§14 stays exact), the guard's events
+  (`ABILITY_TRIGGERED`/`ABILITY_COIN_FLIP`/`PRIZE_PREVENTED`) firing after the
+  `KNOCKED_OUT`; **(2)** a general parking **PROGRAM** run as a new **`koTrigger`
+  PendingStage** — `advance`'s `koTrigger` case → **`runKoTrigger`** →
+  **`settleProgram` with a new `resumeTail` flag**: the program PARKS on
+  `effect:choose` (where `phase.seat` is the KO'd, NON-turn player) and, on
+  `resolveEffect`, the DONE branch keeps DRAINING the queued prize/promotion tail
+  (`advance`) instead of folding back to a turn — the resume-the-tail
+  continuation the slice-6/8 deferral named. `collectKnockOuts` groups the batch
+  PRIZES-first, then koTriggers, then promotions; a §14 game-ending prize
+  (finishGame clears `pending`) skips the koTrigger program, while the guard
+  (resolved earlier) can DENY a game-winning prize. Fires from all three KO
+  callers (attack epilogue, Checkup, mid-turn `resolveMidTurnKnockOuts`) — they
+  share `collectKnockOuts`. Behaviour-neutral for every card with no on-KO
+  Ability (planPrizes plans its face-value Prize, no flip, no koTrigger — the
+  whole prior suite passes unchanged). Representatives: **Glimmora** (sv02-126,
+  real — verified vs the local catalog) for the guard, **fix-onko** (a FIXTURE —
+  "Last Wish" searches a Basic → hand, parking) for the resume-the-tail path (no
+  real SV-era on-KO Ability requires a decision; the fix-sniper precedent);
+  neither in the demo decks. New events `ABILITY_COIN_FLIP` / `PRIZE_PREVENTED`;
+  new `PendingStage` `koTrigger`; `Phase.effect:choose` += `resumeTail?: true`.
+  **Web:** the projection's `effect:choose` case reads the turn owner via
+  **`koParkActiveSeat`** when `resumeTail` (activeSeat ≠ waitingSeat — the KO'd
+  non-turn player owes it mid-opponent-turn, like the ko:* parks); the parked
+  decision reuses the existing `chooseCards` dialog (no new dialog); two
+  `logFromEvents` rows. engineVersion 0.10.0 → **0.11.0**. **Review (2 Opus
+  agents — engine+rules / web+integration): BOTH CLEAN, no HIGH/MED/LOW
+  correctness bugs.** The engine agent enumerated the §14 tie guard × prize
+  denial over ALL FOUR coin-flip combos × 60 seeds (every win/tie/continue exact,
+  one rng advance), proved the no-ability path byte-equivalent, and probed the
+  resume-the-tail across all three KO callers. The web agent proved
+  `koParkActiveSeat` correct per origin, the viewer-follow flip to the KO'd
+  player, the dialog dispatch for the KO'd seat, and NO demo/`/play` regression.
+  One engine LOW (a seed-fragile / misframed §14 test of mine) FIXED (both guard
+  branches pinned + a deterministic fix-onko §14-skips-the-program test); one web
+  INFO is the pre-existing P4 hidden-info gap. **1066 → 1080 tests**, `bun run
+  check` + `vite build` green. Files: flow.ts, registry.ts, triggers.ts,
+  types.ts, events.ts, cardplay.ts, index.ts, testFixtures.ts, onKnockOut.test.ts
+  (new) + projection.ts, logFromEvents.ts and their tests +
+  GameHud.cardplay.dom.test.tsx.
 - **2026-07-19** (build #14) — **P3-M4 slice 8: the mid-turn-damage snipe** (§9,
   D29; built solo — full context loaded — then a 2-agent Opus review, BOTH
   CLEAN). A damaging Ability that puts damage counters on CHOSEN opponent Benched
