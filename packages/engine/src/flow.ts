@@ -1,11 +1,12 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
-import { activeTop, prizeValueOf, topCardOf, topUid } from "./cards";
+import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
 import { effectiveMaxHp } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
+import { runProgram } from "./interpreter";
 import { flipCoin } from "./rng";
-import { runCheckupTriggers } from "./triggers";
+import { onKnockOutTrigger, runCheckupTriggers } from "./triggers";
 import type {
   GameOutcome,
   GameOverReason,
@@ -134,18 +135,27 @@ function lethalRefs(state: GameState, seats: readonly Seat[]): { seat: Seat; uid
 /** The post-damage Knock Out sweep (§8.1), generalized off the Active (M4):
     resolve EVERY lethally-damaged in-play Pokémon on `seats` at once — Active
     and Bench — prizes to each KO'd side's opponent. The decision stages come
-    back grouped PRIZES-FIRST (all prizes are taken before any promotion
-    refills the board, §8.1/§13). When the batch would win for BOTH players at
-    the same instant it is the §14 TIE, detected by SPECULATIVELY resolving the
-    whole batch (KOs plus their owed prizes) into a throwaway state and asking
-    evaluateWin — so the §14 precedence core stays single-sourced. A tie can
-    only arise when both seats lost a Pokémon this batch (a one-sided batch
-    only ever wins for the one player who gains the prizes / faces the emptied
-    board), so the guard runs only then; every other case falls through to the
-    stage-by-stage resolution, whose defined §14 checks own it. `done` non-null
-    is that terminal tie; otherwise `stages` are the decisions to queue and
-    `state` is post-KO. Shared by the attack epilogue, the Checkup and the
-    mid-turn KO path. */
+    back grouped PRIZES-first, then any on-KO triggered Abilities (koTrigger),
+    then PROMOTIONS (all prizes are taken before the board refills, §8.1/§13,
+    and a "when Knocked Out" Ability resolves between). When the batch would win
+    for BOTH players at the same instant it is the §14 TIE, detected by
+    SPECULATIVELY resolving the whole batch (KOs plus their owed prizes) into a
+    throwaway state and asking evaluateWin — so the §14 precedence core stays
+    single-sourced. A tie can only arise when both seats lost a Pokémon this
+    batch (a one-sided batch only ever wins for the one player who gains the
+    prizes / faces the emptied board), so the guard runs only then; every other
+    case falls through to the stage-by-stage resolution, whose defined §14 checks
+    own it. `done` non-null is that terminal tie; otherwise `stages` are the
+    decisions to queue and `state` is post-KO. Shared by the attack epilogue, the
+    Checkup and the mid-turn KO path.
+
+    §9 on-KO triggered Abilities (M4 slice 9) ride this sweep two ways: a
+    coin-flip Prize GUARD (Glimmora "Shattering Crystal") is resolved UP FRONT by
+    planPrizes — before the tie-guard speculation, so §14 sees the post-flip
+    counts and the rng advances once — and a parking on-KO PROGRAM is queued as a
+    koTrigger stage (advance runs it, resume-the-tail). Both are behaviour-neutral
+    for every Pokémon with no on-KO Ability (planPrizes plans its face-value
+    Prize with no flip and no koTrigger). */
 export type KnockOutBatch =
   | { done: GameOutcome; state: GameState }
   | { done: null; state: GameState; stages: PendingStage[] };
@@ -158,49 +168,121 @@ export function collectKnockOuts(
   const refs = lethalRefs(state, seats);
   if (refs.length === 0) return { done: null, state, stages: [] };
 
+  // Resolve each on-KO Prize guard (Glimmora) ONCE, up front: the flip's rng
+  // advance and its post-flip Prize `count` are then shared by the tie-guard
+  // speculation and the real KO alike (so §14 stays exact). The guard's own
+  // events fire in the real KO loop, after that KO's KNOCKED_OUT.
+  const plan = planPrizes(state, refs);
+  const startState = plan.state;
+
   const bothSeatsHit = new Set(refs.map((ref) => ref.seat)).size === 2;
   if (bothSeatsHit) {
-    let speculative = state;
+    let speculative = startState;
     const scratch: GameEvent[] = []; // speculative events go nowhere
-    for (const ref of refs) {
-      const ko = knockOut(speculative, ref.seat, ref.uid, otherSeat(ref.seat), scratch);
-      speculative = ko.state;
-      for (const stage of ko.stages) {
-        if (stage.kind !== "takePrizes") continue;
-        // Deduct the owed prizes (which slots is immaterial to §14).
-        const side = speculative.players[stage.seat];
-        speculative = withSide(speculative, stage.seat, {
-          ...side,
-          prizes: side.prizes.slice(stage.count),
-        });
-      }
+    for (const entry of plan.entries) {
+      speculative = knockOut(
+        speculative,
+        entry.ref.seat,
+        entry.ref.uid,
+        otherSeat(entry.ref.seat),
+        scratch,
+      ).state;
+      // Deduct the (post-guard) prize this KO grants (which slots is immaterial
+      // to §14; a guard-denied KO grants 0).
+      const prizeSeat = otherSeat(entry.ref.seat);
+      const side = speculative.players[prizeSeat];
+      speculative = withSide(speculative, prizeSeat, { ...side, prizes: side.prizes.slice(entry.count) });
     }
     const outcome = evaluateWin(speculative);
     if (outcome !== null && outcome.result === "tie") {
-      // Both KOs still happen FOR REAL (the cards leave play, the events
-      // fire) — only the prize/promotion stages are skipped for the tie.
-      let next = state;
-      for (const ref of refs) {
-        next = knockOut(next, ref.seat, ref.uid, otherSeat(ref.seat), events).state;
+      // Both KOs still happen FOR REAL (the cards leave play, the events fire —
+      // each guard's included) — only the prize/promotion stages are skipped.
+      let next = startState;
+      for (const entry of plan.entries) {
+        next = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events).state;
+        for (const guardEvent of entry.guardEvents) events.push(guardEvent);
       }
       return { done: outcome, state: next };
     }
     // A one-sided (or no) win: discard the speculation and fall through.
   }
 
-  // Apply each KO for real, grouping the stages PRIZES-FIRST (§8.1/§13) while
-  // preserving the ref order within each kind.
-  let next = state;
+  // Apply each KO for real, grouping the stages PRIZES-first, then on-KO
+  // triggers, then PROMOTIONS (§8.1/§13), preserving ref order within each
+  // kind. A guard-denied KO queues no prize; an on-KO PROGRAM queues a koTrigger.
+  let next = startState;
   const prizeStages: PendingStage[] = [];
+  const koTriggerStages: PendingStage[] = [];
   const promoteStages: PendingStage[] = [];
-  for (const ref of refs) {
-    const ko = knockOut(next, ref.seat, ref.uid, otherSeat(ref.seat), events);
+  for (const entry of plan.entries) {
+    const ko = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events);
     next = ko.state;
+    for (const guardEvent of entry.guardEvents) events.push(guardEvent);
     for (const stage of ko.stages) {
-      (stage.kind === "takePrizes" ? prizeStages : promoteStages).push(stage);
+      if (stage.kind === "takePrizes") {
+        if (entry.count > 0) prizeStages.push({ ...stage, count: entry.count });
+      } else {
+        promoteStages.push(stage);
+      }
+    }
+    if (entry.hasProgram) {
+      koTriggerStages.push({ kind: "koTrigger", seat: entry.ref.seat, uid: entry.ref.uid });
     }
   }
-  return { done: null, state: next, stages: [...prizeStages, ...promoteStages] };
+  return { done: null, state: next, stages: [...prizeStages, ...koTriggerStages, ...promoteStages] };
+}
+
+/** The per-KO Prize plan for a batch (§9 on-KO Abilities). Resolve each on-KO
+    Prize GUARD (Glimmora's coin flip) ONCE, up front, threading rng, so the §14
+    tie guard and the real KO agree on the counts and the flip happens a single
+    time. Per ref it records: the post-guard prize `count`, the guard's
+    `guardEvents` to emit in the real KO loop (right after that KO's
+    KNOCKED_OUT), and whether the card carries a parking on-KO `program` (→ a
+    koTrigger stage). A ref whose card has no on-KO Ability plans its face-value
+    prize with no flip and no events — behaviour-identical to the pre-slice-9
+    sweep, so the whole existing suite is unperturbed. */
+interface KoPrizePlan {
+  ref: { seat: Seat; uid: string };
+  count: number;
+  guardEvents: GameEvent[];
+  hasProgram: boolean;
+}
+
+function planPrizes(
+  state: GameState,
+  refs: readonly { seat: Seat; uid: string }[],
+): { state: GameState; entries: KoPrizePlan[] } {
+  let next = state;
+  const entries: KoPrizePlan[] = [];
+  for (const ref of refs) {
+    const card = cardOfUid(next, ref.uid);
+    const baseCount = card === undefined ? 1 : prizeValueOf(card);
+    const ability = onKnockOutTrigger(next, ref.uid);
+    const hasProgram = ability !== undefined && ability.program.length > 0;
+    if (ability?.onKoPrizeGuard !== "coinFlipPrevent") {
+      entries.push({ ref, count: baseCount, guardEvents: [], hasProgram });
+      continue;
+    }
+    const guardEvents: GameEvent[] = [
+      { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: ref.uid, ability: ability.name },
+    ];
+    const [face, rngState] = flipCoin(next.rngState);
+    next = { ...next, rngState };
+    guardEvents.push({
+      type: "ABILITY_COIN_FLIP",
+      seat: ref.seat,
+      uid: ref.uid,
+      ability: ability.name,
+      result: face,
+    });
+    if (face === "heads") {
+      guardEvents.push({ type: "PRIZE_PREVENTED", seat: ref.seat, uid: ref.uid });
+      entries.push({ ref, count: 0, guardEvents, hasProgram });
+    } else {
+      entries.push({ ref, count: baseCount, guardEvents, hasProgram });
+    }
+  }
+  return { state: next, entries };
 }
 
 /** A Knock Out that happens DURING `actorSeat`'s turn and does NOT end it —
@@ -250,6 +332,15 @@ export function resolveMidTurnKnockOuts(
       so routing them through here is behaviour-preserving — the KO sweep is a
       no-op that returns straight to turn:action.
 
+    `opts.resumeTail` marks a program that is ALREADY mid-KO-sweep — an on-KO
+    triggered Ability (runKoTrigger). It parks/finishes the same way, except the
+    DONE branch just keeps DRAINING the KO tail (advance) instead of folding back
+    to a turn: the prize/promotion stages the sweep queued still sit in
+    `pending` behind the koTrigger, and resolveEffect passes the flag back so a
+    parked on-KO decision resumes there too. (Its program is non-damaging, so it
+    would sweep to nothing anyway — the flag is about WHERE control returns, not
+    a second KO check.)
+
     This is the flow↔triggers mutual import the header notes: the interpreter and
     triggers never KO, so completion is handed BACK to flow (the KO/tail owner)
     to resolve. Both directions are used only inside function bodies, so the
@@ -258,19 +349,55 @@ export function settleProgram(
   result: RunResult,
   controller: Seat,
   events: GameEvent[],
+  opts: { resumeTail?: boolean } = {},
 ): ApplyResult {
   if (result.kind === "parked") {
     events.push({ type: "EFFECT_PENDING", seat: controller, note: result.prompt.note });
     return ok(
       {
         ...result.state,
-        phase: { kind: "effect:choose", seat: controller, prompt: result.prompt, cont: result.cont },
+        phase: {
+          kind: "effect:choose",
+          seat: controller,
+          prompt: result.prompt,
+          cont: result.cont,
+          // Carry resumeTail so resolveEffect resumes the KO tail (below), not a
+          // turn — a re-park mid-sweep stays a mid-sweep park.
+          ...(opts.resumeTail === true ? { resumeTail: true as const } : {}),
+        },
       },
       events,
     );
   }
+  // DONE. A mid-KO-sweep on-KO trigger hands control back to the sweep — its
+  // prize/promotion stages are still queued behind it, so keep draining them.
+  if (opts.resumeTail === true) return advance(result.state, events);
   const resumed: GameState = { ...result.state, phase: { kind: "turn:action", seat: controller } };
   return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
+}
+
+/** Run the on-KO triggered Ability of the just-Knocked-Out `uid` (owned by
+    `koedSeat`) — a koTrigger stage the KO sweep queued (advance below). Fires
+    during the OPPONENT's turn: the program runs through the shared interpreter
+    and folds through settleProgram with `resumeTail`, so a decision PARKS on
+    effect:choose (the KO'd player decides) and the sweep RESUMES the remaining
+    prize/promotion tail via resolveEffect. The Pokémon left play, but its program
+    targets `koedSeat`'s surviving Pokémon / its own deck (the KO'd player is the
+    controller), and cardIdByUid → programFor still resolves the card. A stage
+    with nothing to run (defensive — the guard-only Glimmora queues no koTrigger)
+    just keeps draining. */
+function runKoTrigger(
+  state: GameState,
+  koedSeat: Seat,
+  uid: string,
+  events: GameEvent[],
+): ApplyResult {
+  const ability = onKnockOutTrigger(state, uid);
+  if (ability === undefined || ability.program.length === 0) return advance(state, events);
+  events.push({ type: "ABILITY_TRIGGERED", seat: koedSeat, uid, ability: ability.name });
+  return settleProgram(runProgram(state, ability.program, { seat: koedSeat }, events), koedSeat, events, {
+    resumeTail: true,
+  });
 }
 
 /** The Pokémon Checkup (§13), run whole inside its stage — no player
@@ -595,6 +722,11 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
         { ...popStage(state), phase: { kind: "turn:action", seat: stage.seat } },
         events,
       );
+    case "koTrigger":
+      // §9 (M4) — the just-Knocked-Out Pokémon's on-KO Ability. Pop the stage
+      // first so the prize/promotion stages behind it are what resumes if the
+      // program parks (resume-the-tail); a done program just keeps draining.
+      return runKoTrigger(popStage(state), stage.seat, stage.uid, events);
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

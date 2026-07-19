@@ -409,12 +409,30 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     case "ABILITY_TRIGGERED":
       // A triggered Ability firing on its own (played to Bench / evolved /
-      // between turns) — reads like ABILITY_USED but names it as automatic.
+      // between turns / on Knock Out) — reads like ABILITY_USED but names it as
+      // automatic. The KO'd card name resolves off the event's own uid, so an
+      // on-KO Ability still names its Pokémon after it left play.
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain("'s "),
         strong(event.ability),
         plain(" activated"),
+      ]);
+    case "ABILITY_COIN_FLIP":
+      // §9 — a triggered Ability's own coin flip (Glimmora "Shattering Crystal"
+      // on Knock Out). Follows its ABILITY_TRIGGERED row.
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" flipped "),
+        strong(event.result),
+        plain(` for ${event.ability}`),
+      ]);
+    case "PRIZE_PREVENTED":
+      // §8.1 — an on-KO Ability (Glimmora heads) denied the opponent the Prize
+      // for the Knocked Out Pokémon; a system row, the flip above named it.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(" — no Prize card is taken for it"),
       ]);
     case "ABILITY_COST_PAID":
       // §9 activation cost (Meowscarada's Bouquet Magic) — follows the

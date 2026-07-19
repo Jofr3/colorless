@@ -36,15 +36,16 @@ export interface AbilityProgram {
   program: EffectOp[];
 }
 
-/** When a triggered Ability (§9) fires. The three slice-6 scan points:
+/** When a triggered Ability (§9) fires. The four scan points:
     - `onPlayToBench` — a Basic played from hand onto the Bench during the
       controller's turn (turn.ts playBasicToBench — NOT a setup placement);
     - `onEvolve` — the controller evolved one of their Pokémon (turn.ts evolve);
-    - `betweenTurns` — the Pokémon Checkup (§13, flow.ts runCheckup).
-    on-KO ("when this Pokémon is Knocked Out") is the deferred fourth — it fires
-    during the OPPONENT's turn mid-KO-sweep, needing a resume-the-tail
-    continuation (see docs/workstreams/simulator.md). */
-export type TriggerTiming = "onPlayToBench" | "onEvolve" | "betweenTurns";
+    - `betweenTurns` — the Pokémon Checkup (§13, flow.ts runCheckup);
+    - `onKnockOut` — this Pokémon was Knocked Out (§8.1, flow.ts KO sweep). It
+      fires during the OPPONENT's turn, mid-KO-sweep, which is why the program
+      folds through settleProgram with `resumeTail`: a decision PARKS and the
+      sweep RESUMES draining the remaining prize/promotion stages afterwards. */
+export type TriggerTiming = "onPlayToBench" | "onEvolve" | "betweenTurns" | "onKnockOut";
 
 /** A card's triggered Ability (§9) — one that FIRES on a game event rather than
     being player-activated. The framework runs `program` through the shared
@@ -65,8 +66,18 @@ export interface TriggeredAbility {
       confirm for a trigger with a downside is the follow-up. */
   optional?: boolean;
   /** Fires only while this Pokémon is in the Active Spot (Trevenant's "if this
-      Pokémon is in the Active Spot"). */
+      Pokémon is in the Active Spot"). Not consulted for `onKnockOut` — a
+      Knocked Out Pokémon has left play, so its "when Knocked Out" Ability fires
+      regardless of where it sat. */
   activeOnly?: boolean;
+  /** `onKnockOut` only — a coin-flip Prize denial (Glimmora "Shattering
+      Crystal": "flip a coin; if heads, your opponent can't take any Prize cards
+      for it"). Resolved by the KO sweep itself (flow.ts collectKnockOuts), NOT
+      the interpreter: it modifies the KO's Prize, and the prize/KO tail is
+      flow.ts's alone (the interpreter never touches it). Kept separate from
+      `program` (a general on-KO effect run as a koTrigger stage) — an on-KO
+      Ability carries at most one of the two in the representative set. */
+  onKoPrizeGuard?: "coinFlipPrevent";
 }
 
 /** Continuous modifiers read by the pipeline while the Pokémon is in play.
@@ -348,6 +359,45 @@ const MEOWSCARADA: CardProgram = {
   ],
 };
 
+// ── M4 slice 9: on-KO triggered Abilities (§9) — fire when Knocked Out. ──
+
+/** Glimmora — "Shattering Crystal": "When this Pokémon is Knocked Out, flip a
+    coin. If heads, your opponent can't take any Prize cards for it." A TRIGGERED
+    Ability firing on Knock Out (during the OPPONENT's turn, mid-KO-sweep). The
+    coin-flip Prize denial is `onKoPrizeGuard` (resolved by the KO sweep, not the
+    interpreter) — it has no op program, so no koTrigger stage is queued for it. */
+const GLIMMORA: CardProgram = {
+  triggered: [
+    {
+      name: "Shattering Crystal",
+      trigger: "onKnockOut",
+      program: [],
+      onKoPrizeGuard: "coinFlipPrevent",
+    },
+  ],
+};
+
+/** FIXTURE-ONLY demonstrator (id `fix-onko`) for the resume-the-tail on-KO
+    PARKING path: an on-KO Ability whose program needs a DECISION, so it parks
+    mid-KO-sweep on effect:choose (the KO'd player searches their deck) and the
+    sweep resumes draining prizes/promotions afterwards. No real SV-era on-KO
+    Ability requires a decision (Glimmora / Munkidori are a coin flip / a fixed
+    condition), so — like the fix-sniper spread demonstrator (slice 4) — a fixture
+    proves the machinery until a live card lands with the coverage fan-out. */
+const FIX_ONKO: CardProgram = {
+  triggered: [
+    {
+      name: "Last Wish",
+      trigger: "onKnockOut",
+      optional: true,
+      program: [
+        { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "hand", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 // ── M4 slice 7: Rare Candy (§7.1) — the Basic→Stage 2 evolve-skip Item. ──
 
 /** Rare Candy — "Choose 1 of your Basic Pokémon in play. If you have a Stage 2
@@ -420,6 +470,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // Meowscarada ex — Bouquet Magic (activated, {G}-discard cost: 3 counters on 1 opp Benched)
   "sv02-015": MEOWSCARADA,
   "sv02-256": MEOWSCARADA,
+  // — M4 slice 9: on-KO triggered Abilities (verified vs the live catalog 2026-07-19). —
+  // Glimmora — Shattering Crystal (on-KO: flip; heads → opponent takes no prize for it)
+  "sv02-126": GLIMMORA,
+  // fix-onko — FIXTURE demonstrator: an on-KO Ability that PARKS (resume-the-tail)
+  "fix-onko": FIX_ONKO,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

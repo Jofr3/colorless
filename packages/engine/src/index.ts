@@ -32,11 +32,13 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 slice 8: the mid-turn-damage snipe — a
-    `damageChosen` op puts counters on chosen opponent Benched Pokémon and can
-    Knock one Out MID-TURN, resolved through the shared `settleProgram` KO sweep;
-    Meowscarada's Bouquet Magic adds the first ability activation cost). */
-export const engineVersion = "0.10.0";
+/** Engine milestone marker (M4 slice 9: on-KO triggered Abilities — a "when this
+    Pokémon is Knocked Out" Ability fires mid-KO-sweep during the opponent's turn.
+    A coin-flip Prize guard (Glimmora "Shattering Crystal") resolves inline in the
+    sweep; a parking on-KO program runs as a `koTrigger` stage that folds through
+    `settleProgram` with `resumeTail` — park for a decision, then resume draining
+    the KO's prize/promotion tail). */
+export const engineVersion = "0.11.0";
 
 export type {
   ApplyResult,

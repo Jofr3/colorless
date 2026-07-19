@@ -481,7 +481,12 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   const invalid = validateChoice(phase.prompt, action.choice);
   if (invalid !== null) return invalid;
   const events: GameEvent[] = [];
-  return settleProgram(resumeProgram(state, phase.cont, action.choice, events), phase.seat, events);
+  // resumeTail (§9 on-KO trigger, flow.ts): this park was made MID-KO-SWEEP, so
+  // finishing the program resumes the remaining prize/promotion tail rather than
+  // folding back to a turn. Absent for every other parked effect (turn:action).
+  return settleProgram(resumeProgram(state, phase.cont, action.choice, events), phase.seat, events, {
+    resumeTail: phase.resumeTail === true,
+  });
 }
 
 /** A program whose only effect targets a zone that is empty does nothing, and a

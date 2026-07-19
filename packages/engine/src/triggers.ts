@@ -14,9 +14,13 @@ import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
 //     controller's turn (turn.ts playBasicToBench — NOT a setup placement,
 //     which is a different handler and not "during your turn");
 //   • onEvolve — the controller evolved one of their Pokémon (turn.ts evolve);
-//   • betweenTurns — the Pokémon Checkup (§13, flow.ts runCheckup).
-// on-KO is the deferred fourth: it fires during the OPPONENT's turn mid-KO
-// sweep, which needs a resume-the-tail continuation (see simulator.md).
+//   • betweenTurns — the Pokémon Checkup (§13, flow.ts runCheckup);
+//   • onKnockOut — this Pokémon was Knocked Out (§8.1, flow.ts KO sweep). It
+//     fires during the OPPONENT's turn, mid-KO-sweep. Its detection lives here
+//     (onKnockOutTrigger, below) but the KO sweep in flow.ts drives it — a
+//     coin-flip Prize guard (Glimmora) resolves inline in the sweep, and a
+//     program that needs a decision runs as a koTrigger stage that folds
+//     through settleProgram with `resumeTail` (park → resume the KO tail).
 //
 // The board triggers (onPlayToBench/onEvolve) run during the controller's own
 // turn, so they fold their program's result through the SHARED settleProgram
@@ -29,6 +33,18 @@ import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
 // reduction — their KOs are swept by the Checkup's own collectKnockOuts (a
 // between-turns Ability that needed a decision would be new machinery, parking
 // mid-Checkup, deferred with on-KO).
+
+/** The on-KO triggered Ability of the card `uid` names (§8.1), or undefined.
+    Resolved through cardIdByUid → programFor, which stays valid AFTER the KO
+    discarded the Pokémon (the id map is fixed for the whole game). Consulted by
+    the flow.ts KO sweep, both to resolve a coin-flip Prize guard (Glimmora) and
+    to run a parking on-KO program as a koTrigger stage. Representatives carry at
+    most one on-KO Ability, so the first match is it. */
+export function onKnockOutTrigger(state: GameState, uid: string): TriggeredAbility | undefined {
+  const cardId = state.cardIdByUid[uid];
+  if (cardId === undefined) return undefined;
+  return (programFor(cardId)?.triggered ?? []).find((t) => t.trigger === "onKnockOut");
+}
 
 /** The triggered Abilities on the top card of `pokemon` matching `timing`,
     gated by each one's own `activeOnly` against whether the Pokémon is Active. */

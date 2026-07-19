@@ -204,10 +204,21 @@ export type GameEvent =
   | { type: "ABILITY_COST_PAID"; seat: Seat; uid: string; energyType: string }
   /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
       reached its trigger condition — played to the Bench / evolved (during
-      that seat's turn), or the Pokémon Checkup (between turns). Unlike
-      ABILITY_USED it is not a player action; the ops it runs follow in the
-      same batch (and may park on effect:choose for a board trigger). */
+      that seat's turn), the Pokémon Checkup (between turns), or being Knocked
+      Out (during the OPPONENT's turn, mid-KO-sweep). Unlike ABILITY_USED it is
+      not a player action; the ops it runs follow in the same batch (and may
+      park on effect:choose for a board or on-KO trigger). */
   | { type: "ABILITY_TRIGGERED"; seat: Seat; uid: string; ability: string }
+  /** §9 — a triggered Ability's own "flip a coin" resolving (Glimmora
+      "Shattering Crystal", on Knock Out): `seat` owns `uid` (the Pokémon whose
+      Ability flipped). Distinct from the attack/Checkup coin-flip events —
+      those name their pipeline; this one names the Ability. */
+  | { type: "ABILITY_COIN_FLIP"; seat: Seat; uid: string; ability: string; result: CoinFace }
+  /** §8.1 — an on-KO Ability prevented the Prize card(s) for `seat`'s Knocked
+      Out `uid` (Glimmora "Shattering Crystal" heads): the opponent takes NO
+      prize for that Pokémon. Follows the ABILITY_COIN_FLIP row; the takePrizes
+      stage for that KO is simply never queued. */
+  | { type: "PRIZE_PREVENTED"; seat: Seat; uid: string }
   /** The controller's whole hand went to the discard (Professor's Research). */
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
   /** A deck search resolved: `uids` moved deck → `dest` (revealed, §15.E). */

@@ -385,12 +385,16 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
         pendingDecision: { kind: "promote" },
         outcome: null,
       };
-    // effect:choose — a Trainer/Ability the turn owner played parked on a
-    // decision. The controller (phase.seat) both owns the turn and owes the
-    // decision, so activeSeat and waitingSeat are the same seat.
+    // effect:choose — a Trainer/Ability parked on a decision. Normally the
+    // controller (phase.seat) both owns the turn and owes the decision, so
+    // activeSeat and waitingSeat are the same. The EXCEPTION is an on-KO trigger
+    // (resumeTail, §9): it parks MID-KO-SWEEP during the OPPONENT's turn, so
+    // phase.seat is the KO'd player (who owes the decision) while the turn owner
+    // is whoever the KO sweep sits inside — the same koParkActiveSeat the ko:*
+    // parks read (the attacker mid-turn, or null between turns from a Checkup KO).
     case "effect:choose":
       return {
-        activeSeat: phase.seat,
+        activeSeat: phase.resumeTail === true ? koParkActiveSeat(state) : phase.seat,
         waitingSeat: phase.seat,
         pendingDecision: { kind: "effectChoose", prompt: phase.prompt },
         outcome: null,

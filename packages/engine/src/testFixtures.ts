@@ -395,6 +395,31 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** A Basic Grass Energy — the discard Meowscarada's Bouquet Magic costs. The
       NAME "Grass Energy" is what energyProvidesOf derives "Grass" from. */
   "fix-grass-energy": typedEnergy("fix-grass-energy", "Grass"),
+
+  // — M4 slice 9: on-KO triggered Abilities (§9 — fire when Knocked Out). —
+  /** Glimmora — "Shattering Crystal" (on-KO: flip a coin; heads → opponent takes
+      no Prize for it). The real catalog id so the registry finds the program; a
+      Basic body here (surgery places it — the registry keys on the id, not the
+      stage) though the real card is a Stage 1. 30 HP so Bite (30) Knocks it Out
+      in one hit — the whole point is the KO, not the fight. */
+  "sv02-126": battler("sv02-126", {
+    name: "Glimmora",
+    types: ["Fighting"],
+    hp: 30,
+    retreat: 1,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Shattering Crystal",
+        effect: "When this Pokémon is Knocked Out, flip a coin. If heads, your opponent can't take any Prize cards for it.",
+      },
+    ],
+  }),
+  /** fix-onko — the FIXTURE on-KO PARKER (registry FIX_ONKO): "Last Wish" searches
+      the deck for a Basic Pokémon → hand when Knocked Out, so it PARKS mid-KO-
+      sweep (the resume-the-tail path no real SV on-KO Ability exercises). 30 HP
+      for a one-Bite KO. */
+  "fix-onko": battler("fix-onko", { name: "fix-onko", hp: 30 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -543,6 +568,20 @@ export const SNIPE_DECK = deckOf({
   "fix-victim": 6,
   "fix-grass-energy": 6,
   "fix-energy": 24,
+});
+
+/** M4 slice 9 (on-KO triggered Abilities): a Fire attacker to KO with (Bite [C]
+    30 one-shots the 30-HP on-KO bodies; Flame [Fire][C] 60 too), Glimmora ×4
+    (Shattering Crystal — the coin-flip Prize guard) and fix-onko ×4 (the parking
+    demonstrator), fix-basic-1 bodies (bench fodder / promote targets / the
+    Basic the fix-onko search finds), fix-victim fodder, and energy. */
+export const ONKO_DECK = deckOf({
+  "fix-attacker": 8,
+  "sv02-126": 4,
+  "fix-onko": 4,
+  "fix-basic-1": 12,
+  "fix-victim": 4,
+  "fix-energy": 28,
 });
 
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so

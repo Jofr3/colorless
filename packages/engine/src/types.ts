@@ -189,6 +189,14 @@ export type PendingStage =
       prize/promotion decisions settle: this stage restores their turn:action
       phase. Always the tail of a mid-turn KO's stages, so nothing follows it. */
   | { kind: "resumeTurn"; seat: Seat }
+  /** §9 (M4) — run the on-KO triggered Ability of the just-Knocked-Out `uid`
+      (owned by `seat`). Fires DURING the opponent's turn, mid-KO-sweep: its
+      program runs through the shared interpreter and may PARK on a decision
+      (effect:choose with `resumeTail`), after which the KO sweep RESUMES
+      draining the remaining prize/promotion stages behind it. Queued by
+      collectKnockOuts (flow.ts) after the prize stages, before the promotions.
+      `uid`'s card left play, but cardIdByUid → programFor still resolves it. */
+  | { kind: "koTrigger"; seat: Seat; uid: string }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory
@@ -216,10 +224,21 @@ export type Phase =
   /** Mid-effect decision interrupt (§15.E/G): a Trainer or Ability the acting
       `seat` played parked on a choice (which card to search up, which Pokémon
       to gust/switch/heal). `prompt` is the legal options; `cont` is the JSON
-      continuation the resolveEffect action replays. Effects in scope run only
-      during the controller's own turn, so resolving returns to their
-      turn:action — no tail interaction (interpreter.ts). */
-  | { kind: "effect:choose"; seat: Seat; prompt: EffectPrompt; cont: EffectContinuation }
+      continuation the resolveEffect action replays. Effects in scope normally
+      run during the controller's own turn, so resolving returns to their
+      turn:action — no tail interaction (interpreter.ts). The EXCEPTION is an
+      on-KO triggered Ability (§9, M4 slice 9): it parks MID-KO-SWEEP during the
+      OPPONENT's turn, and `resumeTail` marks that — resolveEffect then RESUMES
+      the KO's queued prize/promotion tail (flow.ts settleProgram) instead of
+      folding back to a turn, and `seat` is the KO'd player (not the turn owner),
+      so the projection reads the turn owner separately (koParkActiveSeat). */
+  | {
+      kind: "effect:choose";
+      seat: Seat;
+      prompt: EffectPrompt;
+      cont: EffectContinuation;
+      resumeTail?: true;
+    }
   | { kind: "gameOver"; outcome: GameOutcome };
 
 /** The in-turn phase, narrowed — the shape every turn action is gated on. */

@@ -9,6 +9,7 @@ import {
   ALL_BASIC_DECK,
   FIXTURE_POOL,
   MIXED_DECK,
+  ONKO_DECK,
   SNIPE_DECK,
   STADIUM_TOOL_DECK,
   attachFromDeck,
@@ -19,6 +20,7 @@ import {
   handUid,
   mustApply,
   mustCreate,
+  setActiveFromDeck,
   setConditions,
   setDamage,
   setPrizes,
@@ -463,6 +465,33 @@ describe("projectGameState — phase-derived fields", () => {
     expect(prompt.max).toBe(2);
     expect(prompt.candidates).toHaveLength(3);
     expect(projectGameState(state, "p2").waitingOn).toBe("opponent");
+  });
+
+  it("keeps an on-KO effect:choose park (resumeTail) owned by the turn owner, not the KO'd player", () => {
+    // P1 (second player, turn 2) attacks P2's fix-onko Active (30 HP) with Bite
+    // 30 → KO. The fix-onko's on-KO Ability parks AFTER P1 takes the prize —
+    // during P1's turn, on P2's (the KO'd, NON-turn player's) decision. The
+    // projection must read the turn owner via koParkActiveSeat, not phase.seat.
+    let state = driveSetup(9, { p1: ONKO_DECK, p2: ONKO_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → P1's turn 2
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = setActiveFromDeck(state, "p2", "fix-onko");
+    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state; // parks ko:takePrizes p1
+    state = mustApply(state, { type: "takePrizes", seat: "p1", prizeIndices: [0] }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(state.phase.seat).toBe("p2"); // the KO'd player owes it
+    expect(state.phase.resumeTail).toBe(true);
+
+    const mine = projectGameState(state, "p1"); // the attacker / turn owner
+    expect(mine.activePlayer).toBe("you"); // still P1's turn...
+    expect(mine.waitingOn).toBe("opponent"); // ...but P2 (KO'd) owes the on-KO decision
+    if (mine.pendingDecision?.kind !== "effectChoose") throw new Error("expected effectChoose");
+    expect(mine.pendingDecision.prompt.kind).toBe("chooseCards");
+
+    const theirs = projectGameState(state, "p2");
+    expect(theirs.activePlayer).toBe("opponent"); // P1 owns the turn (opponent, to p2)
+    expect(theirs.waitingOn).toBe("you"); // p2 must act
   });
 
   /** A CHECKUP-origin park: p2's Active is lethally poisoned when p1 ends

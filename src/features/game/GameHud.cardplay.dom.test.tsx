@@ -9,6 +9,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  ONKO_DECK,
   RARE_CANDY_DECK,
   SNIPE_DECK,
   SPECIAL_ENERGY_DECK,
@@ -321,5 +322,41 @@ describe("TurnPanel — special energy payability (§6.4)", () => {
     expect(attackButton("Flame").disabled).toBe(true);
     // ...but Bite ([C]) is still enabled.
     expect(attackButton("Bite").disabled).toBe(false);
+  });
+});
+
+describe("effect:choose — an on-KO trigger parks the KO'd, NON-turn player (M4 slice 9)", () => {
+  it("surfaces the on-KO search to the KO'd player (P2) and dispatches resolveEffect for them", () => {
+    // P1 (turn 2) Knocks Out P2's fix-onko Active; after P1 takes the prize, the
+    // fix-onko's on-KO Ability parks on P2's decision — mid-P1's-turn. The HUD
+    // renders for the WAITING player (P2), not the turn owner.
+    let state = p1Turn2(4, { p1: ONKO_DECK, p2: ONKO_DECK });
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = attachFromDeck(state, "p1", "fix-energy", 1); // pays Bite [C]
+    state = setActiveFromDeck(state, "p2", "fix-onko");
+    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    state = mustApply(state, { type: "takePrizes", seat: "p1", prizeIndices: [0] }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(state.phase.seat).toBe("p2");
+
+    // Render for P2 (the KO'd player who owes the decision), not P1.
+    const dispatch = vi.fn();
+    render(
+      <GameHud
+        game={state}
+        projection={projectGameState(state, "p2")}
+        viewerSeat="p2"
+        names={NAMES}
+        dispatch={dispatch}
+        onPlayAgain={() => {}}
+      />,
+    );
+    expect(screen.getByRole("dialog", { name: "Search your deck" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Take none" }));
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "cards", uids: [] },
+    });
   });
 });

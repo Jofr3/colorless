@@ -351,6 +351,18 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     });
   });
 
+  it("names an on-KO Ability's coin flip and its prize denial (M4 slice 9)", () => {
+    const { uid, name } = settled;
+    expect(
+      line({ type: "ABILITY_COIN_FLIP", seat: "p1", uid, ability: "Shattering Crystal", result: "heads" }),
+    ).toEqual({ text: `${name} flipped heads for Shattering Crystal`, who: "p1" });
+    // The prize denial is a system row (the flip above named the Ability).
+    expect(line({ type: "PRIZE_PREVENTED", seat: "p1", uid })).toEqual({
+      text: `${name} — no Prize card is taken for it`,
+      who: "system",
+    });
+  });
+
   it("formats the recovery, confusion and effect coin flips", () => {
     const { uid, name } = settled;
     const checkup = line({
