@@ -379,9 +379,9 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
       text: `${name} is Confused — flip: tails`,
       who: "p1",
     });
-    // seat = the ATTACKER on the effect gate flip.
+    // seat = the actor on the effect gate flip (attack OR Trainer, M5).
     expect(line({ type: "ATTACK_EFFECT_COIN_FLIP", seat: "p1", result: "heads" })).toEqual({
-      text: "flipped heads for the attack effect",
+      text: "flipped heads for the effect",
       who: "p1",
     });
   });

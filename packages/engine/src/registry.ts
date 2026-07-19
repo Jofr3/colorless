@@ -407,6 +407,47 @@ const FIX_ONKO: CardProgram = {
     turn." (Item) — a marker, not a program (see CardProgram.rareCandy). */
 const RARE_CANDY: CardProgram = { rareCandy: true };
 
+// ── M5 coverage pass #1 (2026-07-19): the cards across the SV01–03 pool whose
+//    printed text maps EXACTLY onto the existing op vocabulary — authored from a
+//    classify→verify Workflow fan-out (the 5 authorable of 140; the other 113
+//    need new ops, tracked in docs/reference/coverage-backlog.md). ──
+
+/** Poké Ball — "Flip a coin. If heads, search your deck for a Pokémon, reveal it,
+    and put it into your hand. Then, shuffle your deck." (Item) — the search AND
+    the shuffle are BOTH gated on heads (tails does nothing), so shuffleDeck sits
+    INSIDE the gate's `then`, not after it. */
+const POKE_BALL: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [
+        { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Pokémon Catcher — "Flip a coin. If heads, switch in 1 of your opponent's
+    Benched Pokémon to the Active Spot." (Item — a coin-gated gust). */
+const POKEMON_CATCHER: CardProgram = {
+  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+  trainer: [{ op: "coinFlipGate", then: [{ op: "gust" }] }],
+};
+
+/** Nemona — "Draw 3 cards." (Supporter) */
+const NEMONA: CardProgram = { trainer: [{ op: "drawCards", count: 3 }] };
+
+/** Copperajah ex — "Bronze Body": "This Pokémon takes 30 less damage from
+    attacks (after applying Weakness and Resistance)." (passive — the Bouffalant
+    "Bouffer" shape, a bigger flat reduction). */
+const COPPERAJAH_EX: CardProgram = { passive: { damageReductionAfterWR: 30 } };
+
+/** Stonjourner — "Exoskeleton": "This Pokémon takes 20 less damage from attacks
+    (after applying Weakness and Resistance)." (passive) */
+const STONJOURNER: CardProgram = { passive: { damageReductionAfterWR: 20 } };
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -475,6 +516,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-126": GLIMMORA,
   // fix-onko — FIXTURE demonstrator: an on-KO Ability that PARKS (resume-the-tail)
   "fix-onko": FIX_ONKO,
+  // — M5 coverage pass #1: existing-op cards (verified vs the local catalog 2026-07-19). —
+  "sv01-185": POKE_BALL, // Poké Ball — coin-gated search a Pokémon → hand
+  "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
+  "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
+  "sv02-150": COPPERAJAH_EX, // Copperajah ex — Bronze Body (−30 after W/R)
+  "sv01-121": STONJOURNER, // Stonjourner — Exoskeleton (−20 after W/R)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

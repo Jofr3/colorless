@@ -420,6 +420,28 @@ export const FIXTURE_POOL: Record<string, Card> = {
       sweep (the resume-the-tail path no real SV on-KO Ability exercises). 30 HP
       for a one-Bite KO. */
   "fix-onko": battler("fix-onko", { name: "fix-onko", hp: 30 }),
+
+  // — M5 coverage pass #1: cards authored from existing ops (real catalog ids so
+  //   the registry finds the programs; the effect/ability text is cosmetic). —
+  /** Poké Ball (Item) — coin-gated search a Pokémon → hand. */
+  "sv01-185": trainerCard(
+    "sv01-185",
+    "Item",
+    "Flip a coin. If heads, search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
+  ),
+  /** Pokémon Catcher (Item) — coin-gated gust. */
+  "sv01-187": trainerCard(
+    "sv01-187",
+    "Item",
+    "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+  ),
+  /** Nemona (Supporter) — draw 3. */
+  "sv01-180": trainerCard("sv01-180", "Supporter", "Draw 3 cards."),
+  /** Copperajah ex — passive "Bronze Body" (−30 damage after W/R). A tanky body
+      so an attack lands with the reduction visible without a KO. */
+  "sv02-150": battler("sv02-150", { name: "Copperajah ex", types: ["Metal"], hp: 280, retreat: 3 }),
+  /** Stonjourner — passive "Exoskeleton" (−20 damage after W/R). */
+  "sv01-121": battler("sv01-121", { name: "Stonjourner", types: ["Fighting"], hp: 140, retreat: 2 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -582,6 +604,21 @@ export const ONKO_DECK = deckOf({
   "fix-basic-1": 12,
   "fix-victim": 4,
   "fix-energy": 28,
+});
+
+/** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to
+    hit the passive defenders, the 5 authored cards, fix-basic-1 bodies (bench
+    targets for Catcher's gust + Pokémon in the deck for Poké Ball's search), and
+    energy. */
+export const COVERAGE_DECK = deckOf({
+  "fix-attacker": 8,
+  "sv01-185": 4,
+  "sv01-187": 4,
+  "sv01-180": 4,
+  "sv02-150": 3,
+  "sv01-121": 3,
+  "fix-basic-1": 11,
+  "fix-energy": 23,
 });
 
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so

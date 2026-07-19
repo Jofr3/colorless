@@ -352,12 +352,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(` healed ${event.amount} damage`),
       ]);
     case "ATTACK_EFFECT_COIN_FLIP":
-      // seat is the ATTACKER — the flip gates their own attack's effect.
-      return row(event.seat, [
-        plain("flipped "),
-        strong(event.result),
-        plain(" for the attack effect"),
-      ]);
+      // A coinFlipGate flip — an attack's effect OR a Trainer's (Poké Ball /
+      // Pokémon Catcher, M5); `seat` is the actor. The event id keeps "ATTACK_"
+      // for back-compat, but the copy stays neutral so a Trainer flip reads right.
+      return row(event.seat, [plain("flipped "), strong(event.result), plain(" for the effect")]);
     case "KNOCKED_OUT":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
