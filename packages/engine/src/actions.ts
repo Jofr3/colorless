@@ -247,6 +247,9 @@ export type ErrorCode =
   | "ABILITY_ACTIVE_ONLY"
   /** §9/§15.J — this Pokémon already used a once-per-turn Ability this turn. */
   | "ABILITY_ALREADY_USED"
+  /** §9 — the Ability's activation cost cannot be paid (Meowscarada's "Bouquet
+      Magic" needs a Basic {G} Energy in hand to discard). */
+  | "ABILITY_COST_UNMET"
   /** resolveEffect's choice does not match the parked prompt (bad uid/ref/count). */
   | "BAD_EFFECT_CHOICE"
   /** §12 — an Asleep or Paralyzed Active cannot attack. (Confusion does not

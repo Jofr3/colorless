@@ -911,6 +911,8 @@ function EffectChooseDialog(props: GameHudProps) {
   const prompt = pending.prompt;
   return prompt.kind === "chooseCards" ? (
     <ChooseCardsDialog {...props} prompt={prompt} />
+  ) : prompt.kind === "choosePokemonMulti" ? (
+    <ChoosePokemonMultiDialog {...props} prompt={prompt} />
   ) : (
     <ChoosePokemonDialog {...props} prompt={prompt} />
   );
@@ -1005,6 +1007,77 @@ function ChoosePokemonDialog({
           </li>
         ))}
       </ul>
+    </HudDialog>
+  );
+}
+
+/** "Up to N" snipe (§9): multi-select up to `max` opponent Pokémon, or take
+    none. The twin of ChoosePokemonDialog (exactly one) — picking is not the
+    whole decision here, so a confirm button dispatches every pick at once, the
+    ChooseCardsDialog shape lifted to Pokémon refs. Mounted only while the
+    decision is parked on the viewer, so useState resets per decision. */
+function ChoosePokemonMultiDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "choosePokemonMulti" }> }) {
+  const [picked, setPicked] = useState<PokemonRef[]>([]);
+  const keyOf = (ref: PokemonRef) =>
+    `${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
+  const pickedKeys = new Set(picked.map(keyOf));
+  const toggle = (ref: PokemonRef) => {
+    setPicked((prev) => {
+      const key = keyOf(ref);
+      if (prev.some((r) => keyOf(r) === key)) return prev.filter((r) => keyOf(r) !== key);
+      return prev.length < prompt.max ? [...prev, ref] : prev;
+    });
+  };
+  return (
+    <HudDialog label="Choose Pokémon">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <p className="mt-1.5 text-sm text-white/55">
+        Pick up to {prompt.max} ({picked.length}/{prompt.max}).
+      </p>
+      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((ref) => {
+          const selected = pickedKeys.has(keyOf(ref));
+          return (
+            <li key={keyOf(ref)}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={() => toggle(ref)}
+                className={`${ROW_BUTTON_BASE} ${
+                  selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                }`}
+              >
+                <span className="truncate">{refName(game, ref)}</span>
+                {ref.seat !== viewerSeat && (
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    opponent
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON_CLASS}
+          onClick={() =>
+            dispatch({
+              type: "resolveEffect",
+              seat: viewerSeat,
+              choice: { kind: "pokemonMulti", refs: picked },
+            })
+          }
+        >
+          {picked.length === 0 ? "Take none" : `Confirm ${picked.length}`}
+        </button>
+      </div>
     </HudDialog>
   );
 }

@@ -13,6 +13,14 @@ import type { EffectOp } from "./effects";
 // mechanics live in interpreter.ts, so a new card in a known family is a few
 // lines of op data, exactly as D8 intended.
 
+/** A cost paid to USE an activated Ability (§9) — checked and paid before the
+    program runs; an unpayable cost blocks the use (cardplay.ts useAbility).
+    Currently only Meowscarada ex "Bouquet Magic": "You must discard a Basic {G}
+    Energy card from your hand in order to use this Ability." A discard of a
+    basic Energy card of `energyType` from hand — its copies are fungible, so
+    there is no WHICH-card choice to make. */
+export type AbilityCost = { kind: "discardBasicEnergy"; energyType: string };
+
 /** A card's activated Ability (§9). Passive/continuous abilities are `passive`
     below; triggered abilities are `triggered` (TriggeredAbility). */
 export interface AbilityProgram {
@@ -22,6 +30,8 @@ export interface AbilityProgram {
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
+  /** A cost paid from hand to use it (Meowscarada's {G}-Energy discard). */
+  cost?: AbilityCost;
   /** The op program `useAbility` runs (may park like a Trainer's). */
   program: EffectOp[];
 }
@@ -301,6 +311,43 @@ const TREVENANT: CardProgram = {
   ],
 };
 
+// ── M4 slice 8: the mid-turn-damage snipe (§9). ──
+
+/** Hawlucha — "Flying Entry": "When you play this Pokémon from your hand onto
+    your Bench during your turn, you may choose 2 of your opponent's Benched
+    Pokémon and put 1 damage counter on each of them." A TRIGGERED Ability
+    (onPlayToBench); the placed counters are flat (not attack damage) and can
+    KO — triggers.ts folds the result through settleProgram, which sweeps the
+    board for a mid-turn Knock Out. */
+const HAWLUCHA: CardProgram = {
+  triggered: [
+    {
+      name: "Flying Entry",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [{ op: "damageChosen", target: "opponentBench", amount: 10, count: 2 }],
+    },
+  ],
+};
+
+/** Meowscarada ex — "Bouquet Magic": "You must discard a Basic {G} Energy card
+    from your hand in order to use this Ability. Once during your turn, you may
+    put 3 damage counters on 1 of your opponent's Benched Pokémon." An ACTIVATED
+    Ability with the engine's first activation COST (discard a Basic {G} Energy);
+    usable from anywhere in play (not Active-only), once per turn. The counters
+    are flat and can KO — useAbility folds through settleProgram's mid-turn sweep. */
+const MEOWSCARADA: CardProgram = {
+  abilities: [
+    {
+      name: "Bouquet Magic",
+      oncePerTurn: true,
+      activeOnly: false,
+      cost: { kind: "discardBasicEnergy", energyType: "Grass" },
+      program: [{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1 }],
+    },
+  ],
+};
+
 // ── M4 slice 7: Rare Candy (§7.1) — the Basic→Stage 2 evolve-skip Item. ──
 
 /** Rare Candy — "Choose 1 of your Basic Pokémon in play. If you have a Stage 2
@@ -367,6 +414,12 @@ const REGISTRY: Record<string, CardProgram> = {
   // Rare Candy — Basic→Stage 2 evolve-skip Item
   "sv01-191": RARE_CANDY,
   "sv01-256": RARE_CANDY,
+  // — M4 slice 8: the mid-turn-damage snipe (verified vs the live api 2026-07-19). —
+  // Hawlucha — Flying Entry (onPlayToBench: choose 2 opp Benched, 1 counter each)
+  "sv01-118": HAWLUCHA,
+  // Meowscarada ex — Bouquet Magic (activated, {G}-discard cost: 3 counters on 1 opp Benched)
+  "sv02-015": MEOWSCARADA,
+  "sv02-256": MEOWSCARADA,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

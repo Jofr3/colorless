@@ -416,6 +416,14 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(event.ability),
         plain(" activated"),
       ]);
+    case "ABILITY_COST_PAID":
+      // §9 activation cost (Meowscarada's Bouquet Magic) — follows the
+      // ABILITY_USED row; the card itself is public in the discard pile.
+      return row(event.seat, [
+        plain("discarded a "),
+        strong(`${event.energyType} Energy`),
+        plain(" for the Ability"),
+      ]);
     case "HAND_DISCARDED": {
       // Count only — the hand is otherwise hidden (module header), even though
       // the discard pile itself is public.

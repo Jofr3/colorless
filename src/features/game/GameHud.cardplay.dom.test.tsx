@@ -10,10 +10,12 @@ import type { GameAction, GameState } from "@luminous/engine";
 import {
   ABILITY_DECK,
   RARE_CANDY_DECK,
+  SNIPE_DECK,
   SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
   attachFromDeck,
+  benchFromDeck,
   driveSetup,
   handUid,
   handFromDeck,
@@ -234,6 +236,57 @@ describe("effect:choose — the target dialog (choosePokemon)", () => {
     const call = dispatch.mock.calls[0]?.[0] as GameAction;
     expect(call.type).toBe("resolveEffect");
     if (call.type === "resolveEffect") expect(call.choice.kind).toBe("pokemon");
+  });
+});
+
+describe("effect:choose — the snipe multi-target dialog (choosePokemonMulti)", () => {
+  const snipeDecks = { p1: SNIPE_DECK, p2: SNIPE_DECK };
+
+  /** p1's turn with a Hawlucha "Flying Entry" parked on its multi-snipe: 3
+      opponent Benched Pokémon (>2), so it parks on choosePokemonMulti (max 2). */
+  function parkedSnipe(seed: number): GameState {
+    let state = p1Turn2(seed, snipeDecks);
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = handFromDeck(state, "p1", "sv01-118", 1); // Hawlucha
+    const uid = handUid(state, "p1", "sv01-118");
+    state = mustApply(state, { type: "playBasicToBench", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    return state;
+  }
+
+  it("renders the parked targets and dispatches resolveEffect with multiple refs", () => {
+    const state = parkedSnipe(4);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    expect(screen.getByRole("dialog", { name: "Choose Pokémon" })).toBeTruthy();
+    // The 3 opponent Benched candidates are the only buttons besides Confirm.
+    const rows = screen.getAllByRole("button", { name: /fix-basic-1/ });
+    expect(rows.length).toBe(3);
+    fireEvent.click(rows[0] as HTMLElement);
+    fireEvent.click(rows[1] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "Confirm 2" }));
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    expect(call.type).toBe("resolveEffect");
+    if (call.type === "resolveEffect") {
+      expect(call.choice.kind).toBe("pokemonMulti");
+      if (call.choice.kind === "pokemonMulti") expect(call.choice.refs).toHaveLength(2);
+    }
+  });
+
+  it("can Take none (the snipe is 'you may')", () => {
+    const state = parkedSnipe(4);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "Take none" }));
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemonMulti", refs: [] },
+    });
   });
 });
 

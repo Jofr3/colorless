@@ -343,6 +343,14 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     });
   });
 
+  it("names an Ability activation cost paid from hand (M4 slice 8)", () => {
+    const { uid } = settled;
+    expect(line({ type: "ABILITY_COST_PAID", seat: "p1", uid, energyType: "Grass" })).toEqual({
+      text: "discarded a Grass Energy for the Ability",
+      who: "p1",
+    });
+  });
+
   it("formats the recovery, confusion and effect coin flips", () => {
     const { uid, name } = settled;
     const checkup = line({

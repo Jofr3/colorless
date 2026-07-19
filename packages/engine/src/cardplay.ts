@@ -8,11 +8,13 @@ import type {
   UseAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { cardOfUid, isBasicPokemon, topUid } from "./cards";
+import { cardOfUid, energyProvidesOf, isBasicPokemon, isEnergyCard, topUid } from "./cards";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import type { EffectChoice, EffectPrompt, PokemonRef, RunResult } from "./interpreter";
+import { settleProgram } from "./flow";
+import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import { resumeProgram, runProgram } from "./interpreter";
+import type { AbilityCost } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -78,7 +80,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
       return err("SUPPORTER_ALREADY_PLAYED", "only one Supporter per turn (§7.2)");
     }
   }
-  if (!trainerPlayable(state, program, action.seat)) {
+  if (!programPlayable(state, program, action.seat)) {
     return err("NO_LEGAL_TARGET", `${card.name} has no legal target`);
   }
 
@@ -96,7 +98,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (trainerType === "Supporter") {
     next = { ...next, allowances: { ...next.allowances, supporterPlayed: true } };
   }
-  return settleRun(runProgram(next, program, { seat: action.seat }, events), action.seat, events);
+  return settleProgram(runProgram(next, program, { seat: action.seat }, events), action.seat, events);
 }
 
 /** §7.3 — the Stadium play, split out of playTrainer's Item/Supporter path
@@ -400,18 +402,69 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   if (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(usedKey)) {
     return err("ABILITY_ALREADY_USED", `${ability.name} was already used this turn (§9)`);
   }
+  // A card that would do NOTHING cannot be used — the snipe needs an opponent
+  // Bench, exactly as a gust needs one (the shared programPlayable gate). This
+  // also guards Meowscarada's discard cost from being spent for no effect.
+  if (!programPlayable(state, ability.program, action.seat)) {
+    return err("NO_LEGAL_TARGET", `${ability.name} has no legal target`);
+  }
+  // §9 activation cost (Meowscarada's {G}-Energy discard) — find the card to
+  // pay it BEFORE committing anything; an unpayable cost blocks the use.
+  let costUid: string | undefined;
+  if (ability.cost !== undefined) {
+    costUid = findAbilityCostCard(state, action.seat, ability.cost);
+    if (costUid === undefined) {
+      return err(
+        "ABILITY_COST_UNMET",
+        `${ability.name} needs a Basic ${ability.cost.energyType} Energy in hand to discard (§9)`,
+      );
+    }
+  }
 
   const events: GameEvent[] = [{ type: "ABILITY_USED", seat: action.seat, uid, ability: ability.name }];
-  const next: GameState = ability.oncePerTurn
-    ? {
-        ...state,
-        allowances: {
-          ...state.allowances,
-          abilitiesUsed: [...state.allowances.abilitiesUsed, usedKey],
-        },
-      }
-    : state;
-  return settleRun(runProgram(next, ability.program, { seat: action.seat }, events), action.seat, events);
+  let next = state;
+  // Pay the cost: the Energy leaves hand for the discard pile (announced so an
+  // event-only client sees the payment) — costUid is set iff ability.cost is.
+  if (ability.cost !== undefined && costUid !== undefined) {
+    const side = next.players[action.seat];
+    next = withSide(next, action.seat, {
+      ...side,
+      hand: without(side.hand, costUid),
+      discard: [...side.discard, costUid],
+    });
+    events.push({
+      type: "ABILITY_COST_PAID",
+      seat: action.seat,
+      uid: costUid,
+      energyType: ability.cost.energyType,
+    });
+  }
+  if (ability.oncePerTurn) {
+    next = {
+      ...next,
+      allowances: {
+        ...next.allowances,
+        abilitiesUsed: [...next.allowances.abilitiesUsed, usedKey],
+      },
+    };
+  }
+  return settleProgram(runProgram(next, ability.program, { seat: action.seat }, events), action.seat, events);
+}
+
+/** The first Basic Energy card of `cost.energyType` in `seat`'s hand — what an
+    Ability activation cost (Meowscarada's Bouquet Magic) discards, or undefined
+    when the hand holds none (the cost is unpayable). Copies are fungible, so
+    the first match is as good as any (no WHICH-card choice). */
+function findAbilityCostCard(state: GameState, seat: Seat, cost: AbilityCost): string | undefined {
+  return state.players[seat].hand.find((uid) => {
+    const card = cardOfUid(state, uid);
+    return (
+      card !== undefined &&
+      isEnergyCard(card) &&
+      card.energyType === "Normal" &&
+      energyProvidesOf(card) === cost.energyType
+    );
+  });
 }
 
 /** Resolve the parked effect:choose decision: validate the choice against the
@@ -428,35 +481,18 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   const invalid = validateChoice(phase.prompt, action.choice);
   if (invalid !== null) return invalid;
   const events: GameEvent[] = [];
-  return settleRun(resumeProgram(state, phase.cont, action.choice, events), phase.seat, events);
+  return settleProgram(resumeProgram(state, phase.cont, action.choice, events), phase.seat, events);
 }
 
-/** Fold a runProgram/resumeProgram result into an ApplyResult: DONE returns to
-    the controller's turn:action (restoring it after a parked resolve); PARKED
-    sets the effect:choose interrupt and announces it (EFFECT_PENDING) so an
-    event-only client never hangs. No effect in scope KOs or wins, so there is
-    no tail/win interaction here — a future damaging op adds it. */
-function settleRun(result: RunResult, controller: Seat, events: GameEvent[]): ApplyResult {
-  if (result.kind === "done") {
-    return ok({ ...result.state, phase: { kind: "turn:action", seat: controller } }, events);
-  }
-  events.push({ type: "EFFECT_PENDING", seat: controller, note: result.prompt.note });
-  return ok(
-    {
-      ...result.state,
-      phase: { kind: "effect:choose", seat: controller, prompt: result.prompt, cont: result.cont },
-    },
-    events,
-  );
-}
-
-/** A Trainer whose only effect targets a zone that is empty does nothing, and a
-    card that would do nothing cannot be played (gust needs an opponent Bench,
-    Switch needs a Bench). Search/draw/heal are always "playable enough" (they
-    may whiff — fail a search, heal an undamaged Pokémon). */
-function trainerPlayable(state: GameState, program: readonly EffectOp[], seat: Seat): boolean {
+/** A program whose only effect targets a zone that is empty does nothing, and a
+    card/Ability that would do nothing cannot be played (gust and the snipe need
+    an opponent Bench, Switch needs your own Bench). Search/draw/heal are always
+    "playable enough" (they may whiff — fail a search, heal an undamaged
+    Pokémon). Shared by playTrainer and useAbility. */
+function programPlayable(state: GameState, program: readonly EffectOp[], seat: Seat): boolean {
   for (const op of program) {
     if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
+    if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;
     if (op.op === "switchActive" && state.players[seat].bench.length === 0) return false;
   }
   return true;
@@ -492,33 +528,56 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
   if (typeof choice !== "object" || choice === null) {
     return err("BAD_EFFECT_CHOICE", "choice must be an object");
   }
-  if (prompt.kind === "chooseCards") {
-    if (choice.kind !== "cards" || !Array.isArray(choice.uids)) {
-      return err("BAD_EFFECT_CHOICE", "expected a card choice");
-    }
-    if (choice.uids.length > prompt.max) {
-      return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} card(s)`);
-    }
-    const candidates = new Set(prompt.candidates);
-    const seen = new Set<string>();
-    for (const uid of choice.uids) {
-      if (typeof uid !== "string" || !candidates.has(uid)) {
-        return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a searchable card`);
+  switch (prompt.kind) {
+    case "chooseCards": {
+      if (choice.kind !== "cards" || !Array.isArray(choice.uids)) {
+        return err("BAD_EFFECT_CHOICE", "expected a card choice");
       }
-      if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
-      seen.add(uid);
+      if (choice.uids.length > prompt.max) {
+        return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} card(s)`);
+      }
+      const candidates = new Set(prompt.candidates);
+      const seen = new Set<string>();
+      for (const uid of choice.uids) {
+        if (typeof uid !== "string" || !candidates.has(uid)) {
+          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a searchable card`);
+        }
+        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
+        seen.add(uid);
+      }
+      return null;
     }
-    return null;
+    case "choosePokemonMulti": {
+      // Up to `max` DISTINCT offered refs (the snipe is "you may" + "up to", so
+      // fewer — or none — is legal, like chooseCards).
+      if (choice.kind !== "pokemonMulti" || !Array.isArray(choice.refs)) {
+        return err("BAD_EFFECT_CHOICE", "expected a Pokémon multi-choice");
+      }
+      if (choice.refs.length > prompt.max) {
+        return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} Pokémon`);
+      }
+      const seen = new Set<string>();
+      for (const ref of choice.refs) {
+        if (!isPokemonRef(ref) || !prompt.candidates.some((c) => refEquals(c, ref))) {
+          return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
+        }
+        const key = refKey(ref);
+        if (seen.has(key)) return err("BAD_EFFECT_CHOICE", "a Pokémon picked twice");
+        seen.add(key);
+      }
+      return null;
+    }
+    case "choosePokemon": {
+      // Exactly one of the offered refs.
+      if (choice.kind !== "pokemon" || !isPokemonRef(choice.ref)) {
+        return err("BAD_EFFECT_CHOICE", "expected a Pokémon choice");
+      }
+      if (!prompt.candidates.some((c) => refEquals(c, choice.ref))) {
+        return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
+      }
+      return null;
+    }
   }
-  // choosePokemon — exactly one of the offered refs.
-  if (choice.kind !== "pokemon" || !isPokemonRef(choice.ref)) {
-    return err("BAD_EFFECT_CHOICE", "expected a Pokémon choice");
-  }
-  const ref = choice.ref;
-  if (!prompt.candidates.some((c) => refEquals(c, ref))) {
-    return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
-  }
-  return null;
 }
 
 function isPokemonRef(value: unknown): value is PokemonRef {
@@ -526,6 +585,12 @@ function isPokemonRef(value: unknown): value is PokemonRef {
   const ref = value as { seat?: unknown; spot?: unknown };
   if (ref.seat !== "p1" && ref.seat !== "p2") return false;
   return isPokemonTarget(ref.spot);
+}
+
+/** A stable string key for de-duping picked refs (the multi-choice's "no
+    Pokémon twice" check). */
+function refKey(ref: PokemonRef): string {
+  return `${ref.seat}:${ref.spot.spot}:${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
 }
 
 function refEquals(a: PokemonRef, b: PokemonRef): boolean {

@@ -32,11 +32,11 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M4 slice 6: triggered Abilities (§9) — fire at
-    three scan points (on-play-to-Bench, on-evolve, between-turns/Checkup)
-    through the shared interpreter; board triggers park on effect:choose, a
-    between-turns counter can KO through the Checkup sweep). */
-export const engineVersion = "0.9.0";
+/** Engine milestone marker (M4 slice 8: the mid-turn-damage snipe — a
+    `damageChosen` op puts counters on chosen opponent Benched Pokémon and can
+    Knock one Out MID-TURN, resolved through the shared `settleProgram` KO sweep;
+    Meowscarada's Bouquet Magic adds the first ability activation cost). */
+export const engineVersion = "0.10.0";
 
 export type {
   ApplyResult,
@@ -101,6 +101,7 @@ export type {
   PokemonRef,
 } from "./interpreter";
 export type {
+  AbilityCost,
   AbilityProgram,
   CardProgram,
   EnergyOnAttach,

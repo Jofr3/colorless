@@ -9,8 +9,10 @@ import {
   ALL_BASIC_DECK,
   FIXTURE_POOL,
   MIXED_DECK,
+  SNIPE_DECK,
   STADIUM_TOOL_DECK,
   attachFromDeck,
+  benchFromDeck,
   deckOf,
   driveSetup,
   handFromDeck,
@@ -434,6 +436,33 @@ describe("projectGameState — phase-derived fields", () => {
     expect(theirs.activePlayer).toBe("opponent");
     expect(theirs.waitingOn).toBe("you");
     expect(theirs.pendingDecision).toEqual({ kind: "promote" });
+  });
+
+  it("passes an effect:choose multi-snipe prompt through unchanged (M4 slice 8)", () => {
+    let state = driveSetup(
+      4,
+      { p1: SNIPE_DECK, p2: SNIPE_DECK },
+      { first: "p1", active: { p1: "fix-basic-1", p2: "fix-basic-1" } },
+    );
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = benchFromDeck(state, "p2", "fix-basic-1"); // 3 → parks (max 2)
+    state = handFromDeck(state, "p1", "sv01-118", 1); // Hawlucha
+    const uid = handUid(state, "p1", "sv01-118");
+    state = mustApply(state, { type: "playBasicToBench", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    // The controller both owns the turn and owes the decision — the snipe prompt
+    // rides through the same effectChoose the search/heal prompts do.
+    const mine = projectGameState(state, "p1");
+    expect(mine.activePlayer).toBe("you");
+    expect(mine.waitingOn).toBe("you");
+    if (mine.pendingDecision?.kind !== "effectChoose") throw new Error("expected effectChoose");
+    const prompt = mine.pendingDecision.prompt;
+    if (prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
+    expect(prompt.max).toBe(2);
+    expect(prompt.candidates).toHaveLength(3);
+    expect(projectGameState(state, "p2").waitingOn).toBe("opponent");
   });
 
   /** A CHECKUP-origin park: p2's Active is lethally poisoned when p1 ends

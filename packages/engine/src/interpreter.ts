@@ -53,12 +53,17 @@ export type EffectPrompt =
   /** Pick 0..max deck-card uids to move to `dest` (searchDeck is "up to"). */
   | { kind: "chooseCards"; candidates: string[]; max: number; dest: "bench" | "hand"; note: string }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
-  | { kind: "choosePokemon"; candidates: PokemonRef[]; note: string };
+  | { kind: "choosePokemon"; candidates: PokemonRef[]; note: string }
+  /** Pick up to `max` in-play Pokémon — the multi-target snipe (damageChosen;
+      Hawlucha's "choose 2"). Distinct from choosePokemon (exactly one): a
+      multi-select the player may take fewer of, or decline (§9 "you may"). */
+  | { kind: "choosePokemonMulti"; candidates: PokemonRef[]; max: number; note: string };
 
 /** The controller's answer, off the resolveEffect action (wire-checked there). */
 export type EffectChoice =
   | { kind: "cards"; uids: string[] }
-  | { kind: "pokemon"; ref: PokemonRef };
+  | { kind: "pokemon"; ref: PokemonRef }
+  | { kind: "pokemonMulti"; refs: PokemonRef[] };
 
 /** The JSON continuation stored in the effect:choose phase: the op awaiting a
     choice, the ops after it, and the context. Replaying `applyChoice(pendingOp)
@@ -140,6 +145,27 @@ function stepOp(
       return { done: damageActive(state, op.amount, ctx, events) };
     case "spreadDamage":
       return { done: spreadDamage(state, op.amount, ctx, events) };
+    case "damageChosen": {
+      // The snipe (Hawlucha / Meowscarada): choose `count` of the opponent's
+      // Benched Pokémon and put counters on each. No candidate = no-op; the
+      // Bench holding `count` or fewer is forced (hit them all — "choose 2" of
+      // 2 is both); more than `count` PARKS on a multi-Pokémon choice.
+      // The forced branch AUTO-TAKES rather than offering the "you may" decline
+      // (only the parked branch does) — the deliberate pure-upside auto-fire
+      // doctrine (triggers.ts / TriggeredAbility.optional): every snipe in scope
+      // only damages the opponent, so declining is never wanted, and this
+      // matches the parkOrForce targeting family (gust/switch auto-resolve at
+      // one candidate). A yes/no decline is the same follow-up a downside
+      // trigger's confirm is.
+      const candidates = oppBenchRefs(state, ctx.seat);
+      if (candidates.length === 0) return { done: state };
+      if (candidates.length <= op.count) {
+        return { done: placeSnipeCounters(state, candidates, op.amount, ctx, events) };
+      }
+      return {
+        park: { kind: "choosePokemonMulti", candidates, max: op.count, note: snipeNote(op.amount, op.count) },
+      };
+    }
     case "drawCards":
       return { done: drawToHand(state, ctx.seat, op.count, "effect", events) };
     case "discardHand":
@@ -216,6 +242,10 @@ export function applyChoice(
       return choice.kind === "pokemon"
         ? healChosen(state, choice.ref, op.amount, ctx, events)
         : state;
+    case "damageChosen":
+      return choice.kind === "pokemonMulti"
+        ? placeSnipeCounters(state, choice.refs, op.amount, ctx, events)
+        : state;
     default:
       // Synchronous ops never park, so never reach the choice path.
       return state;
@@ -290,6 +320,46 @@ function spreadDamage(
     return { ...pokemon, damage };
   });
   return withSide(state, opponent, { ...side, bench });
+}
+
+/** Snipe: put `amount` HP of damage counters on the opponent's Benched Pokémon
+    named by `refs` (the forced set, or the ones the player chose — validated
+    upstream, so only refs that are the opponent's own bench slots land). Flat —
+    a counter placement, NOT attack damage, so no Weakness/Resistance and no
+    reduction passive (Bouffer reduces "damage from attacks", which a placed
+    counter is not — the damageActive rule). One COUNTERS_PLACED source "ability"
+    per Pokémon actually hit. Only raises damage; the KO check runs in the
+    caller's mid-turn sweep (flow.ts), so this never KOs. */
+function placeSnipeCounters(
+  state: GameState,
+  refs: readonly PokemonRef[],
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (amount <= 0) return state;
+  const opponent = otherSeat(ctx.seat);
+  const targeted = new Set<number>();
+  for (const ref of refs) {
+    if (ref.seat === opponent && ref.spot.spot === "bench") targeted.add(ref.spot.index);
+  }
+  if (targeted.size === 0) return state;
+  const side = state.players[opponent];
+  const bench = side.bench.map((pokemon, index) => {
+    if (!targeted.has(index)) return pokemon;
+    const uid = topUid(pokemon);
+    if (uid === undefined) return pokemon;
+    events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
+    return { ...pokemon, damage: pokemon.damage + amount };
+  });
+  return withSide(state, opponent, { ...side, bench });
+}
+
+/** The choosePokemonMulti prompt string — counters are the printed unit, so the
+    HP `amount` reads back as counters (one counter = 10 HP, §12). */
+function snipeNote(amount: number, count: number): string {
+  const counters = Math.round(amount / 10);
+  return `Choose up to ${count} of your opponent's Benched Pokémon (${counters} damage counter${counters === 1 ? "" : "s"} each).`;
 }
 
 /** Heal `amount` HP from EACH of the controller's own in-play Pokémon

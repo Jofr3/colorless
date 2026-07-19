@@ -378,6 +378,23 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 3,
     evolveFrom: "fix-stage1",
   } satisfies Card,
+
+  // — M4 slice 8: the mid-turn-damage snipe cast (real catalog ids so the
+  //   registry finds their programs; the opponent's Benched Pokémon are the
+  //   targets). —
+  /** Hawlucha — "Flying Entry" (onPlayToBench: choose 2 of the opponent's
+      Benched Pokémon, 1 counter each). A Basic so playBasicToBench places it and
+      fires the trigger; the registry carries the program (keyed by id). */
+  "sv01-118": battler("sv01-118", { name: "Hawlucha", types: ["Fighting"], hp: 70, retreat: 1 }),
+  /** Meowscarada ex — "Bouquet Magic" (activated, once/turn: discard a Basic
+      {G} Energy from hand, then 3 counters on 1 of the opponent's Benched
+      Pokémon). A Basic HERE (surgery places it as an Active/bench body — the
+      registry keys on the id, not the stage) though the real card is a Stage 2.
+      Not Active-only, so it fires from the Bench too. */
+  "sv02-015": battler("sv02-015", { name: "Meowscarada ex", types: ["Grass"], hp: 310, retreat: 2 }),
+  /** A Basic Grass Energy — the discard Meowscarada's Bouquet Magic costs. The
+      NAME "Grass Energy" is what energyProvidesOf derives "Grass" from. */
+  "fix-grass-energy": typedEnergy("fix-grass-energy", "Grass"),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -511,6 +528,20 @@ export const RARE_CANDY_DECK = deckOf({
   "fix-stage2-frail": 2,
   "sv01-191": 4,
   "sv02-173": 2, // Bravery Charm — the evolve-below-HP mid-turn KO tool
+  "fix-energy": 24,
+});
+
+/** M4 slice 8 (mid-turn-damage snipe): fix-basic-1 bodies for both boards (the
+    opponent's Bench are the snipe targets — surgery places them), Hawlucha ×6
+    (played from hand — the onPlayToBench snipe), Meowscarada ex ×4 (surgery-
+    placed — the activated snipe) with Basic {G} Energy ×6 for its discard cost,
+    low-HP fix-victim (30 HP) bench fodder for the mid-turn KO, and energy. */
+export const SNIPE_DECK = deckOf({
+  "fix-basic-1": 14,
+  "sv01-118": 6,
+  "sv02-015": 4,
+  "fix-victim": 6,
+  "fix-grass-energy": 6,
   "fix-energy": 24,
 });
 
@@ -788,6 +819,29 @@ export function handFromDeck(
         ...side,
         deck: side.deck.filter((uid) => !taken.has(uid)),
         hand: [...side.hand, ...uids],
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: return every copy of `cardId` from the seat's HAND to the
+    bottom of their deck — the inverse of handFromDeck, for tests that need a
+    card ABSENT from hand (Meowscarada's cost-unmet reject needs no {G} Energy
+    in hand, but the deck deals some). Legal-shaped: every uid stays in exactly
+    one zone. */
+export function handToDeck(state: GameState, seat: Seat, cardId: string): GameState {
+  const side = state.players[seat];
+  const moved = side.hand.filter((uid) => state.cardIdByUid[uid] === cardId);
+  if (moved.length === 0) return state;
+  const movedSet = new Set(moved);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        hand: side.hand.filter((uid) => !movedSet.has(uid)),
+        deck: [...side.deck, ...moved],
       },
     },
   };

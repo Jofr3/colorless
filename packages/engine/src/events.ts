@@ -198,6 +198,10 @@ export type GameEvent =
   | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
+  /** §9 — an activated Ability's cost was paid from hand: `uid` (a Basic
+      `energyType` Energy card) was discarded to use it (Meowscarada ex "Bouquet
+      Magic"). Follows the ABILITY_USED row in the same batch. */
+  | { type: "ABILITY_COST_PAID"; seat: Seat; uid: string; energyType: string }
   /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
       reached its trigger condition — played to the Bench / evolved (during
       that seat's turn), or the Pokémon Checkup (between turns). Unlike

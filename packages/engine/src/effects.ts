@@ -63,6 +63,20 @@ export type EffectOp =
       board, so the interpreter still never KOs or touches the flow tail. This
       is what the M4 KO generalization off the Active exists to reach. */
   | { op: "spreadDamage"; target: "opponentBench"; amount: number }
+  /** Put `amount` HP of damage counters on `count` CHOSEN Benched Pokémon of
+      the opponent (Hawlucha "Flying Entry" — 2 × 1 counter; Meowscarada ex
+      "Bouquet Magic" — 1 × 3 counters). "Put damage counters" is NOT attack
+      damage: no Weakness/Resistance AND no reduction passive — a counter placed
+      by an Ability is flat (the same rule damageActive / the poison-burn ticks
+      follow), so this is distinct from spreadDamage (an attack's damage, which
+      Bouffer reduces). PARKS on a multi-Pokémon choice (choosePokemonMulti, up
+      to `count`) when the opponent has MORE than `count` Benched Pokémon; hits
+      all of them when the Bench holds `count` or fewer (forced — "choose 2" with
+      2 available is both), and is a no-op with an empty opponent Bench. Only
+      raises damage; the Knock Out check runs in the CALLER'S sweep (flow.ts
+      settleProgram → resolveMidTurnKnockOuts), a MID-TURN KO that resumes the
+      actor's turn — so this, like every op, never KOs or touches the flow tail. */
+  | { op: "damageChosen"; target: "opponentBench"; amount: number; count: number }
   /** "Flip a coin. If heads, …" — `then` runs on heads only. */
   | { op: "coinFlipGate"; then: EffectOp[] }
   // — Trainer / Ability ops (M4), controller-relative. —

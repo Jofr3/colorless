@@ -2,7 +2,7 @@ import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
 import { topCardOf, topUid } from "./cards";
 import type { GameEvent } from "./events";
-import type { RunResult } from "./interpreter";
+import { settleProgram } from "./flow";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import type { TriggeredAbility, TriggerTiming } from "./registry";
@@ -19,12 +19,16 @@ import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
 // sweep, which needs a resume-the-tail continuation (see simulator.md).
 //
 // The board triggers (onPlayToBench/onEvolve) run during the controller's own
-// turn, so a program that needs a decision PARKS on effect:choose exactly like
-// a Trainer/Ability and RESUMES to turn:action via resolveEffect (cardplay.ts).
+// turn, so they fold their program's result through the SHARED settleProgram
+// (flow.ts) exactly like a Trainer/Ability: a decision PARKS on effect:choose
+// and RESUMES to turn:action via resolveEffect (cardplay.ts), and a completed
+// program that placed lethal damage (Hawlucha's "Flying Entry" snipe) resolves
+// its Knock Out as a MID-TURN KO that hands the turn back to the actor.
 // The betweenTurns triggers are NON-PARKING by construction (a heal-each / a
 // fixed counter placement), so they run synchronously inside the one Checkup
-// reduction — a between-turns Ability that needed a decision would be new
-// machinery (parking mid-Checkup), deferred with on-KO.
+// reduction — their KOs are swept by the Checkup's own collectKnockOuts (a
+// between-turns Ability that needed a decision would be new machinery, parking
+// mid-Checkup, deferred with on-KO).
 
 /** The triggered Abilities on the top card of `pokemon` matching `timing`,
     gated by each one's own `activeOnly` against whether the Pokémon is Active. */
@@ -48,25 +52,6 @@ function pokemonAt(state: GameState, seat: Seat, target: PokemonTarget): InPlayP
   const side = state.players[seat];
   if (target.spot === "active") return side.active ?? undefined;
   return side.bench[target.index];
-}
-
-/** Fold a runProgram result into an ApplyResult during a board trigger: DONE
-    returns to the controller's turn:action; PARKED sets the effect:choose
-    interrupt and announces it (EFFECT_PENDING) so an event-only client never
-    hangs — the SAME fold cardplay.ts's settleRun does for Trainers/Abilities
-    (a parked trigger resumes through the same resolveEffect path). */
-function settleTrigger(result: RunResult, controller: Seat, events: GameEvent[]): ApplyResult {
-  if (result.kind === "done") {
-    return ok({ ...result.state, phase: { kind: "turn:action", seat: controller } }, events);
-  }
-  events.push({ type: "EFFECT_PENDING", seat: controller, note: result.prompt.note });
-  return ok(
-    {
-      ...result.state,
-      phase: { kind: "effect:choose", seat: controller, prompt: result.prompt, cont: result.cont },
-    },
-    events,
-  );
 }
 
 /** Run the triggered Ability that fires when the actor's own Pokémon at
@@ -93,7 +78,7 @@ export function runBoardTrigger(
   // search still lets the player take none, and the other representatives are
   // pure upside. A yes/no confirm for a downside trigger is the follow-up.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
-  return settleTrigger(runProgram(state, ability.program, { seat }, events), seat, events);
+  return settleProgram(runProgram(state, ability.program, { seat }, events), seat, events);
 }
 
 /** Run every betweenTurns triggered Ability in play during the Pokémon Checkup

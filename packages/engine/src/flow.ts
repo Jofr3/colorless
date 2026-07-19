@@ -3,6 +3,7 @@ import { ok } from "./actions";
 import { activeTop, prizeValueOf, topCardOf, topUid } from "./cards";
 import { effectiveMaxHp } from "./continuous";
 import type { GameEvent } from "./events";
+import type { RunResult } from "./interpreter";
 import { flipCoin } from "./rng";
 import { runCheckupTriggers } from "./triggers";
 import type {
@@ -228,6 +229,48 @@ export function resolveMidTurnKnockOuts(
     { ...batch.state, pending: [...batch.stages, { kind: "resumeTurn", seat: actorSeat }] },
     events,
   );
+}
+
+/** Fold a completed / parked effect program back into `controller`'s turn —
+    the ONE place a Trainer, an Ability or a board trigger's program meets the
+    KO/turn tail. Shared by cardplay.ts (playTrainer / useAbility /
+    resolveEffect) and triggers.ts (runBoardTrigger); it unifies the two
+    identical settle helpers that predated the first DAMAGING effect op.
+    • PARKED — set the effect:choose interrupt and announce it (EFFECT_PENDING)
+      so an event-only client never hangs on an unseen prompt.
+    • DONE — return the controller to turn:action, but FIRST resolve any Knock
+      Out the program's damage caused, as a MID-TURN KO: the snipe (Hawlucha /
+      Meowscarada) can drop an opponent's Benched Pokémon, and the actor keeps
+      their turn (resumeTurn) while the opponent's KO'd Pokémon prizes to them —
+      a game-winning KO ends the game at the shared §14 check. The sweep scans
+      BOTH boards (SEATS): a harmless superset (only the opponent's board can be
+      freshly lethal from an in-scope effect — no program in scope damages the
+      controller's own side), the same total scan runCheckup does. Every
+      non-damaging program (draw / search / switch / heal) leaves nothing lethal,
+      so routing them through here is behaviour-preserving — the KO sweep is a
+      no-op that returns straight to turn:action.
+
+    This is the flow↔triggers mutual import the header notes: the interpreter and
+    triggers never KO, so completion is handed BACK to flow (the KO/tail owner)
+    to resolve. Both directions are used only inside function bodies, so the
+    cycle is evaluation-safe. */
+export function settleProgram(
+  result: RunResult,
+  controller: Seat,
+  events: GameEvent[],
+): ApplyResult {
+  if (result.kind === "parked") {
+    events.push({ type: "EFFECT_PENDING", seat: controller, note: result.prompt.note });
+    return ok(
+      {
+        ...result.state,
+        phase: { kind: "effect:choose", seat: controller, prompt: result.prompt, cont: result.cont },
+      },
+      events,
+    );
+  }
+  const resumed: GameState = { ...result.state, phase: { kind: "turn:action", seat: controller } };
+  return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
 }
 
 /** The Pokémon Checkup (§13), run whole inside its stage — no player
