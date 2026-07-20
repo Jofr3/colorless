@@ -158,7 +158,23 @@ export type EffectOp =
       Energy/Pokémon/Supporters, so none self-matches — but a future Supporter
       authored with `filter: {kind:"supporter"}` (or a card retrieving its own
       category) would need the played uid excluded first. */
-  | { op: "discardPileRetrieval"; filter: CardFilter; dest: "hand" | "deck"; max: number };
+  | { op: "discardPileRetrieval"; filter: CardFilter; dest: "hand" | "deck"; max: number }
+  /** Look at the top `n` cards of the controller's deck and put up to `max`
+      matching `filter` into their HAND (Great Ball: top 7, a Pokémon; Pokégear
+      3.0: top 7, a Supporter — "you may reveal … and put it into your hand").
+      The top-of-deck twin of `searchDeck`: like it this is "up to" (the player
+      may take fewer, or none), so it PARKS on the SAME chooseCards prompt — but
+      the candidates are only the cards matching `filter` among the top `n` (in
+      current deck order; index 0 is the top), NOT the whole deck. An empty top-`n`
+      match is a no-op. "Shuffle the other cards back into your deck" is NOT part
+      of this op — it is the trailing `shuffleDeck` op (the Nest Ball
+      search-then-shuffle authoring pattern), so a whiff still shuffles, exactly
+      as a whiffed search does. The taken cards are revealed (public) — the printed
+      "reveal" — so naming them (DECK_TOP_REVEALED) leaks nothing the opponent
+      would not see in paper. Reuses resolveEffect's chooseCards validation (the
+      candidate set is the top-`n` matches, so a client cannot reach a deeper card)
+      and the one vetted `shuffleDeck`. */
+  | { op: "lookAtTopN"; n: number; filter: CardFilter; max: number };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

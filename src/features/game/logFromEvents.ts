@@ -471,6 +471,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           : [plain(`shuffled ${n} card${n === 1 ? "" : "s"} from their discard pile into their deck`)],
       );
     }
+    case "DECK_TOP_REVEALED": {
+      // Great Ball / Pokégear 3.0 (lookAtTopN); only fires with ≥1 taken card (a
+      // "take none" moves nothing and emits no event). Honest about "looked at
+      // the top" rather than DECK_SEARCHED's "searched their deck"; count only,
+      // even though the taken cards are revealed — the row reads cleaner and a
+      // trailing SHUFFLE row follows.
+      const n = event.uids.length;
+      return row(event.seat, [
+        plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),
+      ]);
+    }
     case "POKEMON_SWITCHED":
       // Passive voice — the causing card already logged its own row (Switch /
       // Boss's Orders a TRAINER_PLAYED, Jet Energy an ENERGY_ATTACHED); `seat`

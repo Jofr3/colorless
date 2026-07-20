@@ -32,12 +32,12 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: attachEnergyFrom MULTI-attach + endsTurn
-    — "attach up to N in any way" is N single-attach ops (the interpreter parks on
-    each in turn), and a new `AbilityProgram.endsTurn` folds the turn end via
-    settleProgram; authors Koraidon ex "Dino Cry" (up to 2 Basic {F} from discard
-    to your Basic {F} Pokémon, then your turn ends). Gardevoir's riders were 0.13.0). */
-export const engineVersion = "0.15.0";
+/** Engine milestone marker (M5 op-slice: lookAtTopN — the top-of-deck twin of
+    searchDeck: look at the top N cards, put up to `max` matching a filter into
+    hand, then shuffle (the candidate set is the top-N matches alone). Authors
+    Great Ball (top 7 → a Pokémon) and Pokégear 3.0 (top 7 → a Supporter); the
+    from-the-top ATTACH variants layer a later op. discardPileRetrieval was 0.15.0). */
+export const engineVersion = "0.16.0";
 
 export type {
   ApplyResult,

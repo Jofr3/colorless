@@ -502,6 +502,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Item",
     "Shuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.",
   ),
+
+  // — M5 op-slice: lookAtTopN (real catalog ids so the registry finds the
+  //   programs; the effect text is cosmetic — the registry keys on the id). —
+  /** Great Ball (Item) — look at the top 7, reveal a Pokémon → hand (shuffle). */
+  "sv02-183": trainerCard(
+    "sv02-183",
+    "Item",
+    "Look at the top 7 cards of your deck. You may reveal a Pokémon you find there and put it into your hand. Shuffle the other cards back into your deck.",
+  ),
+  /** Pokégear 3.0 (Item) — look at the top 7, reveal a Supporter → hand (shuffle). */
+  "sv01-186": trainerCard(
+    "sv01-186",
+    "Item",
+    "Look at the top 7 cards of your deck. You may reveal a Supporter card you find there and put it into your hand. Shuffle the other cards back into your deck.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -721,6 +736,23 @@ export const DISCARD_RETRIEVAL_DECK = deckOf({
   "fix-fire-energy": 8,
   "fix-water-energy": 8,
   "fix-energy": 17,
+});
+
+/** M5 op-slice lookAtTopN (§15.E, Great Ball / Pokégear 3.0): reliable
+    fix-basic-1 openings that double as the Great Ball Pokémon candidates,
+    fix-basic-2 as a second Pokémon (a deep deck-top marker), the two Items in
+    multiples (handFromDeck pulls them), Professor's Research ×4 (the Supporter
+    Pokégear reveals) + fix-item (a non-Supporter Trainer the supporter filter
+    excludes), and abundant fix-energy filler (non-Pokémon, non-Supporter — used
+    with `toDeckTop` to fill the top N with non-candidates). */
+export const LOOK_AT_TOP_DECK = deckOf({
+  "fix-basic-1": 16,
+  "fix-basic-2": 4,
+  "sv02-183": 3,
+  "sv01-186": 3,
+  "sv01-189": 4,
+  "fix-item": 2,
+  "fix-energy": 28,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to
@@ -1042,6 +1074,37 @@ export function discardFromDeck(
         ...side,
         deck: side.deck.filter((uid) => !taken.has(uid)),
         discard: [...side.discard, ...uids],
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: move `count` copies of `cardId` to the TOP (front) of the
+    seat's deck — the lookAtTopN ops (Great Ball / Pokégear 3.0) look at the top
+    N, so a test needs known cards there without hunting for a seed. The cards
+    stay in the deck (index 0 = the top, per drawToHand); calls COMPOSE by
+    prepending, so seed the DEEPEST layer first and the shallowest last (push a
+    filler layer to bury a marker below the window, then push the top
+    candidates). Legal-shaped: every uid stays in exactly one zone. */
+export function toDeckTop(
+  state: GameState,
+  seat: Seat,
+  cardId: string,
+  count: number,
+): GameState {
+  const side = state.players[seat];
+  const uids = side.deck.filter((uid) => state.cardIdByUid[uid] === cardId).slice(0, count);
+  if (uids.length < count) {
+    throw new Error(`${seat} deck has ${uids.length} ${cardId}, needed ${count}`);
+  }
+  const taken = new Set(uids);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: [...uids, ...side.deck.filter((uid) => !taken.has(uid))],
       },
     },
   };

@@ -228,6 +228,12 @@ export type GameEvent =
       deck, where a trailing SHUFFLE then scrambles them). The discard pile is
       public, so naming the cards leaks nothing. */
   | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck"; uids: string[] }
+  /** A look-at-the-top-N resolved: `uids` moved deck → hand, REVEALED (the
+      printed "reveal a Pokémon/Supporter … put it into your hand" — Great Ball,
+      Pokégear 3.0). Only fires with ≥1 card (a "take none" moves nothing). The
+      other looked-at cards are shuffled back — a trailing SHUFFLE in the same
+      batch hides the deck order, so naming the taken (revealed) cards is safe. */
+  | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[] }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

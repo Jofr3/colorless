@@ -549,3 +549,18 @@ describe("ENERGY_ATTACHED — host resolved by uid, robust to Jet's switch (§6.
     expect(rows.some((r) => r === "attached Jet Energy → fix-attacker")).toBe(false);
   });
 });
+
+describe("logFromEvents — lookAtTopN (M5): DECK_TOP_REVEALED", () => {
+  it("logs an honest 'looked at the top' count-only row (singular + plural)", () => {
+    // Count-only, so a bare game state suffices — the row never resolves names.
+    const { state } = mustCreate(1);
+    const one: GameEvent = { type: "DECK_TOP_REVEALED", seat: "p1", uids: ["p1#0"] };
+    const many: GameEvent = { type: "DECK_TOP_REVEALED", seat: "p1", uids: ["p1#0", "p1#1"] };
+    expect(texts(logFromEvents([one], ctx(state)))).toEqual([
+      "looked at the top of their deck — put 1 card in hand",
+    ]);
+    expect(texts(logFromEvents([many], ctx(state)))).toEqual([
+      "looked at the top of their deck — put 2 cards in hand",
+    ]);
+  });
+});

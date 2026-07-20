@@ -216,6 +216,26 @@ function stepOp(
         },
       };
     }
+    case "lookAtTopN": {
+      // Look at the top n cards (index 0 = top); the candidates are those
+      // matching the filter, in deck order. "Up to"/declinable like searchDeck →
+      // parks whenever ≥1 candidate (the player may still take none); an empty
+      // top-n match is a no-op. The candidate set is the top-n matches ALONE, so
+      // resolveEffect's validateChoice (picks ⊆ candidates) already forbids a
+      // deeper card. "Shuffle the other cards back" is the trailing shuffleDeck op.
+      const top = state.players[ctx.seat].deck.slice(0, Math.max(0, op.n));
+      const candidates = top.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
+      if (candidates.length === 0 || op.max <= 0) return { done: state };
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates,
+          max: op.max,
+          dest: "hand",
+          note: lookNote(op.filter, op.n, op.max),
+        },
+      };
+    }
     case "switchActive":
       return parkOrForce(state, ownBenchRefs(state, ctx.seat), (ref) => switchOwn(state, ref, ctx, events), "Switch to which Benched Pokémon?");
     case "gust":
@@ -276,6 +296,8 @@ export function applyChoice(
       return choice.kind === "cards"
         ? retrieveMove(state, choice.uids, op.dest, ctx, events)
         : state;
+    case "lookAtTopN":
+      return choice.kind === "cards" ? revealFromTop(state, choice.uids, ctx, events) : state;
     case "switchActive":
       return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
     case "gust":
@@ -534,6 +556,28 @@ function retrieveMove(
       : { ...side, discard, deck: [...side.deck, ...moved] };
   events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest, uids: [...moved] });
   return withSide(state, ctx.seat, updated);
+}
+
+/** Move the chosen looked-at cards deck → hand (lookAtTopN — Great Ball /
+    Pokégear 3.0). Wire-safe like searchMove/retrieveMove: only uids actually in
+    the deck move, and resolveEffect already checked them against the candidate
+    set (the top-n matches), so a deeper card can never reach here. The cards are
+    REVEALED (the printed "reveal … put it into your hand"), so DECK_TOP_REVEALED
+    names them. The trailing shuffleDeck op then scrambles the deck (the top cards
+    were looked at), whether or not anything was taken. */
+function revealFromTop(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const moved = uids.filter((uid) => side.deck.includes(uid));
+  if (moved.length === 0) return state;
+  const picked = new Set(moved);
+  const deck = side.deck.filter((uid) => !picked.has(uid));
+  events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, uids: [...moved] });
+  return withSide(state, ctx.seat, { ...side, deck, hand: [...side.hand, ...moved] });
 }
 
 /** Switch the controller's Active with their benched `ref` (§G). The outgoing
@@ -806,6 +850,18 @@ function retrieveNote(filter: CardFilter, dest: "hand" | "deck", max: number): s
   return max > 1
     ? `${verb} up to ${max} ${plural} from your discard pile ${where}.`
     : `${verb} ${singular} from your discard pile ${where}.`;
+}
+
+/** The chooseCards note for a lookAtTopN (Great Ball / Pokégear 3.0) —
+    reproduces the printed "Look at the top N cards … and put a {noun} into your
+    hand." Both cards in scope take at most 1 (the singular), but the plural stays
+    total for a future look-at-top that takes several. Reuses retrieveNoun for the
+    filter's noun phrase (anyPokemon → "a Pokémon"; supporter → "a Supporter card"). */
+function lookNote(filter: CardFilter, n: number, max: number): string {
+  const { singular, plural } = retrieveNoun(filter);
+  return max > 1
+    ? `Look at the top ${n} cards of your deck and put up to ${max} ${plural} into your hand.`
+    : `Look at the top ${n} cards of your deck and put ${singular} into your hand.`;
 }
 
 /** The noun phrase (singular / plural) each filter reads as in a retrieval note. */

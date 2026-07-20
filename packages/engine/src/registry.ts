@@ -577,6 +577,34 @@ const SUPER_ROD: CardProgram = {
   ],
 };
 
+// ── M5 op-slice: lookAtTopN (§15.E deck-top look) — the top-of-deck twin of
+//    searchDeck; candidates are only the top-N matches, then shuffle. The clean
+//    "reveal → hand" cards land now; the from-the-top ATTACH variants (Electric
+//    Generator, Hydreigon) layer a later op. (verified vs the local catalog
+//    2026-07-20). ──
+
+/** Great Ball — "Look at the top 7 cards of your deck. You may reveal a Pokémon
+    you find there and put it into your hand. Shuffle the other cards back into
+    your deck." (Item) — lookAtTopN then the trailing shuffle (the Nest Ball
+    search-then-shuffle pattern; a whiff still shuffles). */
+const GREAT_BALL: CardProgram = {
+  trainer: [
+    { op: "lookAtTopN", n: 7, filter: { kind: "anyPokemon" }, max: 1 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Pokégear 3.0 — "Look at the top 7 cards of your deck. You may reveal a
+    Supporter card you find there and put it into your hand. Shuffle the other
+    cards back into your deck." (Item) — the `supporter` filter (added with
+    Pal Pad) narrows Great Ball's shape to Supporters. */
+const POKEGEAR: CardProgram = {
+  trainer: [
+    { op: "lookAtTopN", n: 7, filter: { kind: "supporter" }, max: 1 },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -671,6 +699,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-182": PAL_PAD, // Pal Pad — 2 Supporters from discard → deck (shuffle)
   "sv02-188": SUPER_ROD, // Super Rod — 3 Pokémon/Basic Energy from discard → deck (shuffle)
   "sv02-276": SUPER_ROD, // Super Rod (reprint)
+  // — M5 op-slice: lookAtTopN (verified vs the local catalog 2026-07-20). —
+  "sv02-183": GREAT_BALL, // Great Ball — look at top 7, reveal a Pokémon → hand (shuffle)
+  "sv01-186": POKEGEAR, // Pokégear 3.0 — look at top 7, reveal a Supporter → hand (shuffle)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
