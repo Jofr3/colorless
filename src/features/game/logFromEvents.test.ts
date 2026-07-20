@@ -564,3 +564,24 @@ describe("logFromEvents — lookAtTopN (M5): DECK_TOP_REVEALED", () => {
     ]);
   });
 });
+
+describe("logFromEvents — moveEnergy (M5): ENERGY_MOVED", () => {
+  it("names the source and destination Pokémon (both stay put — no compaction)", () => {
+    let state = driveSetup(7, { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // P1's turn 2
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    state = benchFromDeck(state, "p1", "fix-victim"); // a distinctly-named destination at index 0
+    const moved: GameEvent = {
+      type: "ENERGY_MOVED",
+      seat: "p1",
+      uids: ["p1#0", "p1#1"],
+      from: { spot: "active" },
+      to: { spot: "bench", index: 0 },
+    };
+    // The Pokémon don't move, so both targets resolve off the post-state.
+    expect(texts(logFromEvents([moved], ctx(state)))).toEqual([
+      "moved 2 energy from fix-attacker to fix-victim",
+    ]);
+  });
+});

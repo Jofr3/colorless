@@ -605,6 +605,25 @@ const POKEGEAR: CardProgram = {
   ],
 };
 
+// ── M5 op-slice: moveEnergy (§6 manual Energy movement) — move Energy between
+//    your own Pokémon. The clean own→own Trainers land now; the fixed-endpoint
+//    ({R} benched→Active, Armarouge) / opponent-side (Mismagius) / on-KO Tool
+//    (Exp. Share) riders layer later ops. (verified vs the local catalog
+//    2026-07-20). ──
+
+/** Energy Switch — "Move a Basic Energy from 1 of your Pokémon to another of
+    your Pokémon." (Item) — a single Basic Energy, own → own. */
+const ENERGY_SWITCH: CardProgram = {
+  trainer: [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1 }],
+};
+
+/** Poppy — "Move up to 2 Energy from 1 of your Pokémon to another of your
+    Pokémon." (Supporter) — up to 2 ANY Energy (Basic or Special → the anyEnergy
+    filter), both off the SAME source Pokémon, own → own. */
+const POPPY: CardProgram = {
+  trainer: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 2 }],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -702,6 +721,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M5 op-slice: lookAtTopN (verified vs the local catalog 2026-07-20). —
   "sv02-183": GREAT_BALL, // Great Ball — look at top 7, reveal a Pokémon → hand (shuffle)
   "sv01-186": POKEGEAR, // Pokégear 3.0 — look at top 7, reveal a Supporter → hand (shuffle)
+  // — M5 op-slice: moveEnergy (verified vs the local catalog 2026-07-20). —
+  "sv01-173": ENERGY_SWITCH, // Energy Switch — move a Basic Energy, own → own
+  "sv03-193": POPPY, // Poppy — move up to 2 any Energy, own → own (Supporter)
+  "sv03-220": POPPY, // Poppy (reprint)
+  "sv03-227": POPPY, // Poppy (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

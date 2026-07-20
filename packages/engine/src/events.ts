@@ -234,6 +234,12 @@ export type GameEvent =
       other looked-at cards are shuffled back — a trailing SHUFFLE in the same
       batch hides the deck order, so naming the taken (revealed) cards is safe. */
   | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[] }
+  /** An effect moved `uids` (Energy cards) from one of `seat`'s own in-play
+      Pokémon (`from`) to another (`to`) — the §6 manual Energy movement (Energy
+      Switch: a Basic Energy; Poppy: up to 2 any Energy). All moved Energy shares
+      the one source; the Pokémon stay put (no bench compaction), so both targets
+      resolve against the post-state. Own-board only — a public table fact. */
+  | { type: "ENERGY_MOVED"; seat: Seat; uids: string[]; from: PokemonTarget; to: PokemonTarget }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

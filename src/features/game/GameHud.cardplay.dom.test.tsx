@@ -9,12 +9,14 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  MOVE_ENERGY_DECK,
   ONKO_DECK,
   RARE_CANDY_DECK,
   SNIPE_DECK,
   SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
+  attachBenchFromDeck,
   attachFromDeck,
   benchFromDeck,
   driveSetup,
@@ -288,6 +290,90 @@ describe("effect:choose — the snipe multi-target dialog (choosePokemonMulti)",
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [] },
     });
+  });
+});
+
+describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
+  const moveDecks = { p1: MOVE_ENERGY_DECK, p2: MOVE_ENERGY_DECK };
+
+  /** p1's turn with Energy Switch parked: one Basic Energy on the Active (the
+      only source, so it auto-selects) and a distinctly-named benched destination. */
+  function parkedMove(seed: number): GameState {
+    let state = p1Turn2(seed, moveDecks);
+    state = benchFromDeck(state, "p1", "fix-basic-2"); // a distinct destination at index 0
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // one Basic Energy on the Active
+    state = handFromDeck(state, "p1", "sv01-173", 1); // Energy Switch
+    const uid = handUid(state, "p1", "sv01-173");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    return state;
+  }
+
+  it("moves the picked Energy to the chosen destination", () => {
+    const state = parkedMove(1);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    expect(screen.getByRole("dialog", { name: "Move Energy" })).toBeTruthy();
+    // The Active is the only source, so it auto-selects — its Energy + the
+    // destination render straight away.
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 1" }));
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    expect(call.type).toBe("resolveEffect");
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toHaveLength(1);
+    expect(call.choice.dest.spot).toEqual({ spot: "bench", index: 0 });
+  });
+
+  it("declines with 'Move none'", () => {
+    const state = parkedMove(2);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "Move none" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    expect(call.type).toBe("resolveEffect");
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toEqual([]);
+  });
+
+  it("with two sources, picks a source (the multi-source stage) then its Energy + a destination", () => {
+    let state = p1Turn2(3, moveDecks);
+    // Distinct-named source Pokémon: fix-basic-1 Active, fix-basic-2 benched.
+    state = setActiveFromDeck(state, "p1", "fix-basic-1");
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    state = benchFromDeck(state, "p1", "fix-basic-2");
+    // Poppy (any Energy) with Energy on BOTH → two sources, so the source picker shows.
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // on the Active (fix-basic-1)
+    state = attachBenchFromDeck(state, "p1", 0, "fix-water-energy", 1); // on the Bench (fix-basic-2)
+    state = handFromDeck(state, "p1", "sv03-193", 1); // Poppy
+    const uid = handUid(state, "p1", "sv03-193");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByRole("dialog", { name: "Move Energy" })).toBeTruthy();
+    // Stage A: two sources → pick the Active (fix-basic-1).
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-1" }));
+    // Stage B: its Energy (Fire) + the destination (the OTHER Pokémon, fix-basic-2).
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    expect(call.type).toBe("resolveEffect");
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toHaveLength(1);
+    // The destination is the benched fix-basic-2 (index 0), not the source Active.
+    expect(call.choice.dest.spot).toEqual({ spot: "bench", index: 0 });
   });
 });
 

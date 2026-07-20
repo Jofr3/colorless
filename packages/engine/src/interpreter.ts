@@ -61,13 +61,30 @@ export type EffectPrompt =
   /** Pick up to `max` in-play Pokémon — the multi-target snipe (damageChosen;
       Hawlucha's "choose 2"). Distinct from choosePokemon (exactly one): a
       multi-select the player may take fewer of, or decline (§9 "you may"). */
-  | { kind: "choosePokemonMulti"; candidates: PokemonRef[]; max: number; note: string };
+  | { kind: "choosePokemonMulti"; candidates: PokemonRef[]; max: number; note: string }
+  /** Move up to `max` Energy from ONE source Pokémon (all picks share a source)
+      to ONE destination — the compound moveEnergy decision (Energy Switch /
+      Poppy). `movable` pairs each takeable Energy uid with the Pokémon it sits
+      on (`from`); `destinations` are the eligible destination Pokémon (all the
+      controller's own in-play — the source-exclusion is per-pick, validated
+      against the chosen source). Declinable (pick none). */
+  | {
+      kind: "moveEnergy";
+      movable: { uid: string; from: PokemonRef }[];
+      destinations: PokemonRef[];
+      max: number;
+      note: string;
+    };
 
 /** The controller's answer, off the resolveEffect action (wire-checked there). */
 export type EffectChoice =
   | { kind: "cards"; uids: string[] }
   | { kind: "pokemon"; ref: PokemonRef }
-  | { kind: "pokemonMulti"; refs: PokemonRef[] };
+  | { kind: "pokemonMulti"; refs: PokemonRef[] }
+  /** The moveEnergy answer: up to `max` movable Energy uids (all sharing one
+      source) moved onto `dest` — the compound decision validateChoice checks
+      (same source, dest distinct from it). An empty `uids` is a decline. */
+  | { kind: "moveEnergy"; uids: string[]; dest: PokemonRef };
 
 /** The JSON continuation stored in the effect:choose phase: the op awaiting a
     choice, the ops after it, and the context. Replaying `applyChoice(pendingOp)
@@ -236,6 +253,20 @@ function stepOp(
         },
       };
     }
+    case "moveEnergy": {
+      // Move up to `max` Energy from ONE own Pokémon to ANOTHER (Energy Switch /
+      // Poppy). Two coupled decisions (which Energy + where), so it parks on the
+      // compound moveEnergy prompt and applies atomically on resolve. A no-op
+      // needs no movable Energy OR no distinct destination (fewer than two of the
+      // controller's Pokémon in play) — the programPlayable gate blocks the play,
+      // but stay a no-op here too (a mid-program board could reach it).
+      const movable = movableEnergies(state, ctx.seat, op.filter);
+      const destinations = ownInPlayRefs(state, ctx.seat);
+      if (movable.length === 0 || destinations.length < 2 || op.max <= 0) return { done: state };
+      return {
+        park: { kind: "moveEnergy", movable, destinations, max: op.max, note: moveNote(op.filter, op.max) },
+      };
+    }
     case "switchActive":
       return parkOrForce(state, ownBenchRefs(state, ctx.seat), (ref) => switchOwn(state, ref, ctx, events), "Switch to which Benched Pokémon?");
     case "gust":
@@ -312,6 +343,8 @@ export function applyChoice(
         : state;
     case "attachEnergyFrom":
       return choice.kind === "pokemon" ? attachEnergyFrom(state, op, choice.ref, ctx, events) : state;
+    case "moveEnergy":
+      return choice.kind === "moveEnergy" ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events) : state;
     default:
       // Synchronous ops never park, so never reach the choice path.
       return state;
@@ -760,7 +793,104 @@ function attachEnergyFrom(
   });
 }
 
+/** Move the chosen Energy `uids` off their source Pokémon onto the controller's
+    own `destRef` (Energy Switch / Poppy). validateChoice already proved every uid
+    is on ONE source Pokémon distinct from the destination; this re-finds each on
+    the live board (wire-safety, like searchMove/retrieveMove) and moves only those
+    actually attached to an own in-play Pokémon OTHER than the destination — a stale
+    or self-targeting uid is skipped, never duplicated. The Pokémon stay put (no
+    bench compaction), so the ENERGY_MOVED `from`/`to` targets are valid against
+    the post-state. Atomic: strip then re-attach in one reduction, so an Energy is
+    never left detached. */
+function moveEnergyApply(
+  state: GameState,
+  uids: readonly string[],
+  destRef: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (uids.length === 0 || destRef.seat !== ctx.seat) return state;
+  const side = state.players[ctx.seat];
+  const destSpot = destRef.spot;
+  const picks = new Set(uids);
+  // The one source target the moved Energy came from (validateChoice guarantees a
+  // single source) — recorded as the first non-destination Pokémon a pick sits on.
+  let from: PokemonTarget | undefined;
+  const moved: string[] = [];
+  const isDest = (target: PokemonTarget): boolean =>
+    destSpot.spot === target.spot &&
+    (destSpot.spot === "active" || destSpot.index === (target as { index: number }).index);
+  const strip = (pokemon: InPlayPokemon, target: PokemonTarget): InPlayPokemon => {
+    if (isDest(target)) return pokemon; // never strip the destination (no self-move)
+    const kept = pokemon.energy.filter((uid) => {
+      if (picks.has(uid)) {
+        moved.push(uid);
+        from ??= target;
+        return false;
+      }
+      return true;
+    });
+    return kept.length === pokemon.energy.length ? pokemon : { ...pokemon, energy: kept };
+  };
+  const activeStripped = side.active === null ? null : strip(side.active, { spot: "active" });
+  const benchStripped = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
+  if (moved.length === 0 || from === undefined) return state; // nothing actually moved
+  // Re-attach onto the destination, read off the stripped board (the destination
+  // was never stripped, so this can't drop a just-moved uid).
+  const addTo = (pokemon: InPlayPokemon): InPlayPokemon => ({
+    ...pokemon,
+    energy: [...pokemon.energy, ...moved],
+  });
+  let active = activeStripped;
+  let bench = benchStripped;
+  if (destSpot.spot === "active") {
+    if (active === null) return state;
+    active = addTo(active);
+  } else {
+    if (benchStripped[destSpot.index] === undefined) return state;
+    bench = benchStripped.map((pokemon, index) => (index === destSpot.index ? addTo(pokemon) : pokemon));
+  }
+  events.push({ type: "ENERGY_MOVED", seat: ctx.seat, uids: [...moved], from, to: { ...destSpot } });
+  return withSide(state, ctx.seat, { ...side, active, bench });
+}
+
 // ── Candidate builders + small shared helpers ──
+
+/** The controller's own in-play Energy that `filter` admits to move, each paired
+    with the Pokémon it currently sits on (Active first, then bench in index
+    order) — the moveEnergy candidate set (Energy Switch / Poppy). */
+function movableEnergies(
+  state: GameState,
+  seat: Seat,
+  filter: CardFilter,
+): { uid: string; from: PokemonRef }[] {
+  const side = state.players[seat];
+  const out: { uid: string; from: PokemonRef }[] = [];
+  const collect = (pokemon: InPlayPokemon, from: PokemonRef) => {
+    for (const uid of pokemon.energy) {
+      if (matchesFilter(cardOf(state, uid), filter)) out.push({ uid, from });
+    }
+  };
+  if (side.active !== null) collect(side.active, { seat, spot: { spot: "active" } });
+  side.bench.forEach((pokemon, index) => collect(pokemon, { seat, spot: { spot: "bench", index } }));
+  return out;
+}
+
+/** A moveEnergy op does something iff the controller has ≥1 Energy the filter
+    admits AND ≥2 of their own Pokémon in play (a source WITH a distinct
+    destination). Exported for programPlayable: a play that could only whiff can't
+    be made (the gust / attachEnergyFrom precedent). */
+export function moveEnergyPlayable(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "moveEnergy" }>,
+): boolean {
+  return (
+    op.max > 0 &&
+    ownInPlayRefs(state, seat).length >= 2 &&
+    movableEnergies(state, seat, op.filter).length > 0
+  );
+}
 
 function ownBenchRefs(state: GameState, seat: Seat): PokemonRef[] {
   return state.players[seat].bench.map((_, index) => ({ seat, spot: { spot: "bench", index } }));
@@ -814,6 +944,9 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
         card.category === "Pokemon" ||
         (isEnergyCard(card) && card.energyType === "Normal")
       );
+    case "anyEnergy":
+      // Any Energy card — Basic OR Special (Poppy moves "up to 2 Energy").
+      return isEnergyCard(card);
   }
 }
 
@@ -864,6 +997,17 @@ function lookNote(filter: CardFilter, n: number, max: number): string {
     : `Look at the top ${n} cards of your deck and put ${singular} into your hand.`;
 }
 
+/** The moveEnergy prompt string (Energy Switch / Poppy) — the printed "Move [up
+    to N] {noun} from 1 of your Pokémon to another of your Pokémon". Only the two
+    filters those cards use are spelled (Basic Energy / Energy); a future filter
+    falls back to the generic "Energy". */
+function moveNote(filter: CardFilter, max: number): string {
+  const noun = filter.kind === "basicEnergy" ? "Basic Energy" : "Energy";
+  return max > 1
+    ? `Move up to ${max} ${noun} from 1 of your Pokémon to another of your Pokémon.`
+    : `Move a ${noun} from 1 of your Pokémon to another of your Pokémon.`;
+}
+
 /** The noun phrase (singular / plural) each filter reads as in a retrieval note. */
 function retrieveNoun(filter: CardFilter): { singular: string; plural: string } {
   switch (filter.kind) {
@@ -873,6 +1017,8 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       return { singular: "a Supporter card", plural: "Supporter cards" };
     case "pokemonOrBasicEnergy":
       return { singular: "a Pokémon or Basic Energy card", plural: "Pokémon or Basic Energy cards" };
+    case "anyEnergy":
+      return { singular: "an Energy card", plural: "Energy cards" };
     case "byName":
       return { singular: filter.name, plural: filter.name };
     case "basicPokemon":

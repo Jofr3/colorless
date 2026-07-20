@@ -32,12 +32,13 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: lookAtTopN — the top-of-deck twin of
-    searchDeck: look at the top N cards, put up to `max` matching a filter into
-    hand, then shuffle (the candidate set is the top-N matches alone). Authors
-    Great Ball (top 7 → a Pokémon) and Pokégear 3.0 (top 7 → a Supporter); the
-    from-the-top ATTACH variants layer a later op. discardPileRetrieval was 0.15.0). */
-export const engineVersion = "0.16.0";
+/** Engine milestone marker (M5 op-slice: moveEnergy — move up to `max` Energy
+    from one of your Pokémon to another, own → own; the interpreter's first op
+    with two COUPLED decisions (which Energy + where), parked on a compound
+    moveEnergy prompt and applied atomically. Adds the `anyEnergy` CardFilter.
+    Authors Energy Switch (a Basic Energy) and Poppy (up to 2 any Energy); the
+    fixed-endpoint / opponent-side / on-KO riders layer later. lookAtTopN was 0.16.0). */
+export const engineVersion = "0.17.0";
 
 export type {
   ApplyResult,

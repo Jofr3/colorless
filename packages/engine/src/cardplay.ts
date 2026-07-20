@@ -13,7 +13,13 @@ import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
-import { attachEnergyTargets, firstAttachableEnergy, resumeProgram, runProgram } from "./interpreter";
+import {
+  attachEnergyTargets,
+  firstAttachableEnergy,
+  moveEnergyPlayable,
+  resumeProgram,
+  runProgram,
+} from "./interpreter";
 import type { AbilityCost } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
@@ -513,6 +519,11 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
       // (targetType / notIfKO riders) → the attach can only whiff.
       return false;
     }
+    if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op)) {
+      // No movable Energy, or fewer than two of your Pokémon in play (no distinct
+      // destination) → the move can only whiff (Energy Switch / Poppy).
+      return false;
+    }
   }
   return true;
 }
@@ -593,6 +604,42 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       if (!prompt.candidates.some((c) => refEquals(c, choice.ref))) {
         return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
+      }
+      return null;
+    }
+    case "moveEnergy": {
+      // Up to `max` movable Energy uids moved onto `dest` (Energy Switch / Poppy).
+      // The couplings the compound decision must hold: every picked uid is an
+      // offered movable Energy (distinct), all picks share ONE source Pokémon
+      // (the printed "from 1 of your Pokémon"), the destination is an offered one,
+      // and the source differs from the destination (no moving Energy onto itself).
+      // An empty pick is a legal decline.
+      if (choice.kind !== "moveEnergy" || !Array.isArray(choice.uids) || !isPokemonRef(choice.dest)) {
+        return err("BAD_EFFECT_CHOICE", "expected an energy-move choice");
+      }
+      if (choice.uids.length > prompt.max) {
+        return err("BAD_EFFECT_CHOICE", `move at most ${prompt.max} Energy`);
+      }
+      if (!prompt.destinations.some((d) => refEquals(d, choice.dest))) {
+        return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal destination");
+      }
+      const sourceOf = new Map(prompt.movable.map((m) => [m.uid, m.from]));
+      const seen = new Set<string>();
+      let source: PokemonRef | undefined;
+      for (const uid of choice.uids) {
+        const from = typeof uid === "string" ? sourceOf.get(uid) : undefined;
+        if (from === undefined) {
+          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a movable Energy`);
+        }
+        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
+        seen.add(uid);
+        if (source === undefined) source = from;
+        else if (!refEquals(source, from)) {
+          return err("BAD_EFFECT_CHOICE", "every Energy must come from the same Pokémon");
+        }
+      }
+      if (source !== undefined && refEquals(source, choice.dest)) {
+        return err("BAD_EFFECT_CHOICE", "cannot move a Pokémon's Energy onto itself");
       }
       return null;
     }

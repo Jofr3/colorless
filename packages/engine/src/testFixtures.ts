@@ -517,6 +517,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Item",
     "Look at the top 7 cards of your deck. You may reveal a Supporter card you find there and put it into your hand. Shuffle the other cards back into your deck.",
   ),
+
+  // — M5 op-slice: moveEnergy (real catalog ids so the registry finds the
+  //   programs; the effect text is cosmetic — the registry keys on the id). —
+  /** Energy Switch (Item) — move a Basic Energy, own → own. */
+  "sv01-173": trainerCard(
+    "sv01-173",
+    "Item",
+    "Move a Basic Energy from 1 of your Pokémon to another of your Pokémon.",
+  ),
+  /** Poppy (Supporter) — move up to 2 any Energy, own → own. */
+  "sv03-193": trainerCard(
+    "sv03-193",
+    "Supporter",
+    "Move up to 2 Energy from 1 of your Pokémon to another of your Pokémon.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -753,6 +768,23 @@ export const LOOK_AT_TOP_DECK = deckOf({
   "sv01-189": 4,
   "fix-item": 2,
   "fix-energy": 28,
+});
+
+/** M5 op-slice moveEnergy (Energy Switch / Poppy): fix-basic-1 Actives + fix-basic-2
+    bench bodies (distinct names for the source/destination refs), the two Trainers
+    in multiples (handFromDeck pulls them), and a spread of energy — basic Colorless
+    (fix-energy) / Fire / Water for the movable candidates, plus fix-special (a
+    Special Energy) so Energy Switch's `basicEnergy` filter can EXCLUDE it while
+    Poppy's `anyEnergy` includes it. */
+export const MOVE_ENERGY_DECK = deckOf({
+  "fix-basic-1": 12,
+  "fix-basic-2": 4,
+  "sv01-173": 3,
+  "sv03-193": 3,
+  "fix-energy": 20,
+  "fix-fire-energy": 6,
+  "fix-water-energy": 6,
+  "fix-special": 6,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to
@@ -1015,6 +1047,40 @@ export function attachFromDeck(
         ...side,
         deck: side.deck.filter((uid) => !taken.has(uid)),
         active: { ...side.active, energy: [...side.active.energy, ...uids] },
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: attach `count` copies of `cardId` from the seat's deck onto
+    their bench[index]'s energy — the moveEnergy tests need Energy on a BENCHED
+    Pokémon (an alternate source, or two sources for the same-source check), which
+    attachFromDeck (Active-only) can't set. Mirror of attachFromDeck; legal-shaped
+    (every uid in exactly one zone). */
+export function attachBenchFromDeck(
+  state: GameState,
+  seat: Seat,
+  index: number,
+  cardId: string,
+  count: number,
+): GameState {
+  const side = state.players[seat];
+  if (side.bench[index] === undefined) throw new Error(`${seat} has no benched Pokémon at ${index}`);
+  const uids = side.deck.filter((uid) => state.cardIdByUid[uid] === cardId).slice(0, count);
+  if (uids.length < count) {
+    throw new Error(`${seat} deck has ${uids.length} ${cardId}, needed ${count}`);
+  }
+  const taken = new Set(uids);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((uid) => !taken.has(uid)),
+        bench: side.bench.map((pokemon, i) =>
+          i === index ? { ...pokemon, energy: [...pokemon.energy, ...uids] } : pokemon,
+        ),
       },
     },
   };

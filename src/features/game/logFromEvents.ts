@@ -482,6 +482,18 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),
       ]);
     }
+    case "ENERGY_MOVED": {
+      // Energy Switch / Poppy (moveEnergy) — moved own-board Energy between two of
+      // the player's Pokémon. Both `from`/`to` name Pokémon on the seat's own
+      // board, which stayed put (no compaction), so targetName resolves them.
+      const n = event.uids.length;
+      return row(event.seat, [
+        plain(`moved ${n} energy from `),
+        strong(targetName(state, event.seat, event.from)),
+        plain(" to "),
+        strong(targetName(state, event.seat, event.to)),
+      ]);
+    }
     case "POKEMON_SWITCHED":
       // Passive voice — the causing card already logged its own row (Switch /
       // Boss's Orders a TRAINER_PLAYED, Jet Energy an ENERGY_ATTACHED); `seat`

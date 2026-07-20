@@ -33,7 +33,12 @@ export type CardFilter =
   /** A Pokémon OR a Basic Energy card — Super Rod's "any combination of Pokémon
       and Basic Energy cards" (a basic Energy is `energyType: "Normal"`; a
       Special Energy is excluded). */
-  | { kind: "pokemonOrBasicEnergy" };
+  | { kind: "pokemonOrBasicEnergy" }
+  /** Any Energy card — Basic OR Special (Poppy "Move up to 2 Energy", which
+      unlike Energy Switch's "a Basic Energy" moves either kind). Distinct from
+      `basicEnergy` (basics only) and `pokemonOrBasicEnergy` (which excludes
+      Special Energy and admits Pokémon). */
+  | { kind: "anyEnergy" };
 
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
@@ -174,7 +179,24 @@ export type EffectOp =
       would not see in paper. Reuses resolveEffect's chooseCards validation (the
       candidate set is the top-`n` matches, so a client cannot reach a deeper card)
       and the one vetted `shuffleDeck`. */
-  | { op: "lookAtTopN"; n: number; filter: CardFilter; max: number };
+  | { op: "lookAtTopN"; n: number; filter: CardFilter; max: number }
+  /** Move up to `max` Energy from ONE of the controller's own in-play Pokémon
+      to ANOTHER of their own in-play Pokémon — the §6 manual Energy-movement
+      family (Energy Switch: a Basic Energy; Poppy: up to 2 any Energy). `filter`
+      narrows which Energy may move (`basicEnergy` / `anyEnergy`). BOTH the taken
+      Energy AND the destination are the player's choice, and every taken Energy
+      comes from the SAME source Pokémon (the printed "from 1 of your Pokémon to
+      another"), so this is the interpreter's first op with two COUPLED decisions:
+      it PARKS on a compound `moveEnergy` prompt (the movable Energy tagged by its
+      source Pokémon + the eligible destinations) and applies ATOMICALLY on resolve
+      — a half-moved Energy (detached but not re-attached) is never a resting state,
+      so it never splits across two parks. "Up to"/declinable like searchDeck: the
+      player may move none. Not playable (programPlayable) when no Energy matches or
+      the controller has fewer than two Pokémon in play (no distinct destination) —
+      a play that could only whiff. Own→own only; the fixed-endpoint / opponent-side
+      / from-provided-type riders (Armarouge's benched→Active {R}, Mismagius's
+      opponent move) layer on later. */
+  | { op: "moveEnergy"; filter: CardFilter; max: number };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

@@ -913,6 +913,8 @@ function EffectChooseDialog(props: GameHudProps) {
     <ChooseCardsDialog {...props} prompt={prompt} />
   ) : prompt.kind === "choosePokemonMulti" ? (
     <ChoosePokemonMultiDialog {...props} prompt={prompt} />
+  ) : prompt.kind === "moveEnergy" ? (
+    <MoveEnergyDialog {...props} prompt={prompt} />
   ) : (
     <ChoosePokemonDialog {...props} prompt={prompt} />
   );
@@ -1079,6 +1081,185 @@ function ChoosePokemonMultiDialog({
         >
           {picked.length === 0 ? "Take none" : `Confirm ${picked.length}`}
         </button>
+      </div>
+    </HudDialog>
+  );
+}
+
+/** moveEnergy (§6) — move up to `max` Energy from ONE of your Pokémon to ANOTHER
+    (Energy Switch / Poppy). A compound decision the engine parks in one prompt
+    (which Energy + where), so it is a staged dialog like Rare Candy: pick the
+    source Pokémon (auto when only one has movable Energy), then its Energy and a
+    distinct destination, then Confirm — or Move none to decline ("up to"). The
+    engine re-validates the whole choice (same source, distinct destination).
+    Mounted only while parked on the viewer, so the useState is the per-decision
+    reset. */
+function MoveEnergyDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "moveEnergy" }> }) {
+  const keyOf = (ref: PokemonRef) =>
+    `${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
+  // The distinct source Pokémon (those that hold movable Energy), first-seen order.
+  const sources: PokemonRef[] = [];
+  const seenSource = new Set<string>();
+  for (const { from } of prompt.movable) {
+    const key = keyOf(from);
+    if (!seenSource.has(key)) {
+      seenSource.add(key);
+      sources.push(from);
+    }
+  }
+  // Pre-select when only one Pokémon can be the source (skip straight to the
+  // Energy + destination pick), otherwise the player chooses the source first.
+  const [sourceKey, setSourceKey] = useState<string | null>(
+    sources.length === 1 ? keyOf(sources[0] as PokemonRef) : null,
+  );
+  const [pickedUids, setPickedUids] = useState<string[]>([]);
+  const [destKey, setDestKey] = useState<string | null>(null);
+
+  const source = sources.find((ref) => keyOf(ref) === sourceKey) ?? null;
+  const sourceEnergies =
+    source === null ? [] : prompt.movable.filter(({ from }) => keyOf(from) === sourceKey);
+  // Destinations are the offered ones minus the chosen source (no self-move).
+  const dests = prompt.destinations.filter((ref) => keyOf(ref) !== sourceKey);
+  const dest = dests.find((ref) => keyOf(ref) === destKey) ?? null;
+  const declineDest = prompt.destinations[0];
+
+  const reset = () => {
+    setPickedUids([]);
+    setDestKey(null);
+  };
+  const togglePick = (uid: string) => {
+    setPickedUids((prev) =>
+      prev.includes(uid)
+        ? prev.filter((u) => u !== uid)
+        : prev.length < prompt.max
+          ? [...prev, uid]
+          : prev,
+    );
+  };
+  const ready = pickedUids.length > 0 && dest !== null;
+
+  return (
+    <HudDialog label="Move Energy">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {source === null ? (
+        <>
+          <p className="mt-1.5 text-sm text-white/55">Choose which Pokémon to move Energy from.</p>
+          <ul className="mt-3 flex flex-col gap-1.5">
+            {sources.map((ref) => (
+              <li key={keyOf(ref)}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceKey(keyOf(ref));
+                    reset();
+                  }}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{refName(game, ref)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <p className="mt-1.5 text-sm text-white/55">
+            From <span className="text-white/80">{refName(game, source)}</span> — pick up to{" "}
+            {prompt.max} ({pickedUids.length}/{prompt.max}):
+          </p>
+          <ul className="mt-2 flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+            {sourceEnergies.map(({ uid }) => {
+              const selected = pickedUids.includes(uid);
+              return (
+                <li key={uid}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => togglePick(uid)}
+                    className={`${ROW_BUTTON_BASE} ${
+                      selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                    }`}
+                  >
+                    <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-sm text-white/55">Move to:</p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {dests.map((ref) => {
+              const selected = destKey === keyOf(ref);
+              return (
+                <li key={keyOf(ref)}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setDestKey(keyOf(ref))}
+                    className={`${ROW_BUTTON_BASE} ${
+                      selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                    }`}
+                  >
+                    <span className="truncate">{refName(game, ref)}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+      <div className="mt-5 flex justify-between gap-2">
+        {declineDest !== undefined && (
+          <button
+            type="button"
+            className={GLASS_DIALOG_GHOST_BUTTON}
+            onClick={() =>
+              dispatch({
+                type: "resolveEffect",
+                seat: viewerSeat,
+                choice: { kind: "moveEnergy", uids: [], dest: declineDest },
+              })
+            }
+          >
+            Move none
+          </button>
+        )}
+        <div className="flex gap-2">
+          {source !== null && sources.length > 1 && (
+            <button
+              type="button"
+              className={GLASS_DIALOG_GHOST_BUTTON}
+              onClick={() => {
+                setSourceKey(null);
+                reset();
+              }}
+            >
+              ← Back
+            </button>
+          )}
+          {source !== null && (
+            <button
+              type="button"
+              className={ACCENT_BUTTON_CLASS}
+              disabled={!ready}
+              onClick={() => {
+                if (dest === null) return;
+                dispatch({
+                  type: "resolveEffect",
+                  seat: viewerSeat,
+                  choice: { kind: "moveEnergy", uids: pickedUids, dest },
+                });
+              }}
+            >
+              Move {pickedUids.length}
+            </button>
+          )}
+        </div>
       </div>
     </HudDialog>
   );
