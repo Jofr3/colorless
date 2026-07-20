@@ -53,12 +53,12 @@ unblocks. High-value ops first.
 | **`discardOpponentEnergy`** (discard an Energy from an opponent's Pokémon) | 4 | Crushing Hammer, Giacomo, Klawf ex, Mawile |
 | **`discardFromHandCost`** (pay "discard N cards from hand" to play) | 4 | Ultra Ball, Superior Energy Retrieval, Revavroom, Tinkaton |
 | **`onDamagedByAttack`** (a trigger firing when damaged by an attack, even if KO'd) | 4 | Cacnea, Cacturne, Armarouge, Klawf ex |
-| **`shuffleHandIntoDeck` (+ draw)** — the Iono/Judge/Marnie hand-refresh family | 3 | Brassius, Katy, Youngster |
+| ✅ **`shuffleHandIntoDeck` (+ draw)** — the Iono/Judge/Marnie hand-refresh family | 3 | **DONE, whole row + Judge** (engine 0.18.0, the `handRefresh` op — a fully-automatic op that can affect the OPPONENT): **Youngster** (draw 5), **Brassius** (draw hand+1), **Katy** (draw 8 + turn ends), **Judge** (both players shuffle+draw 4). Iono/Marnie remain: they put the hand on the BOTTOM of the deck (not shuffle) and draw by Prize count / an asymmetric split — a bottom-of-deck move + a `prizeCount`/split draw spec. |
 | **`stadiumActivatedAbility`** (a "once during each player's turn" Stadium) | 3 | Artazon, Mesagoza, Town Store |
 | **`damageAttacker`** (put counters on the attacking Pokémon) | 3 | Cacnea, Cacturne, Stunfisk |
 | **`disableAbilities`** (a continuous Ability-lock aura) | 3 | Klefki, Spiritomb, Ting-Lu ex |
 | `drawUntilHandSize` | 2 | Dendra, Grusha |
-| `endTurn` (a play that ends your turn) | 2 | Katy, Koraidon ex |
+| ✅ `endTurn` (a play that ends your turn) | 2 | **DONE**: Koraidon ex (the `AbilityProgram.endsTurn` fold, engine 0.14.0) + Katy (the same fold on the Trainer path via `trainerEndsTurn`, engine 0.18.0). |
 | `conditionalDamageBonus` (Tool: +N under a condition) | 2 | Choice Belt, Defiance Band |
 | `statusImmunity` / `preventDamageFromType` / `coinFlipDamagePrevention` / `drawUntil` / `canEvolveEarly` | 2 each | Dachsbun, Bellibolt, Jumpluff/Skiploom, Togekiss, Scatterbug/Spewpa |
 
@@ -92,9 +92,14 @@ is well under 70.
    (Exp. Share). Next candidates: the from-the-top **attach** variant (Electric
    Generator / Hydreigon, also 2 attachEnergyFrom cards), the **`conditionalPlay`**
    family (5), or the **hand-refresh Supporter family** (Iono/Judge/Marnie).
-5. **`conditionalPlay` / `conditionalGate`** as a family — unblocks a cluster of
-   Supporters and Abilities at once.
-6. The **hand-refresh Supporter family** (`shuffleHandIntoDeck` + draw variants:
-   Iono, Judge, Marnie-likes) — high play rate, one op + a couple of draw shapes.
+5. ✅ The **hand-refresh Supporter family** — **DONE** (engine 0.18.0, the
+   `handRefresh` op: the whole `shuffleHandIntoDeck` row — Youngster / Brassius /
+   Katy — **plus Judge**, the first op to affect the OPPONENT's hand/deck; and it
+   closes the `endTurn` row via the Trainer-path `trainerEndsTurn` fold). Iono/Marnie
+   layer later: a bottom-of-deck move + a Prize-count / asymmetric draw spec.
+6. **`conditionalPlay` / `conditionalGate`** as a family — unblocks a cluster of
+   Supporters and Abilities at once. Next candidates alongside it: the from-the-top
+   **attach** variant (Electric Generator / Hydreigon — also 2 attachEnergyFrom
+   cards), or `discardOpponentEnergy` (Crushing Hammer / Giacomo, 4).
 Each is a normal engine slice (new op + interpreter case + registry rows +
 tests + review), and each turns dozens of "needs-op" rows into a few data rows.

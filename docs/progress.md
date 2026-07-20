@@ -3,38 +3,99 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-20 — build session #22 (**P3-M5 op-slice:
-`moveEnergy`** — move Energy between your own Pokémon, the next backlog op by unlock
-count). A new op `{filter, max}` moves up to `max` Energy from ONE of your in-play
-Pokémon to ANOTHER — the interpreter's **first op with two COUPLED decisions** (which
-Energy AND where), so it introduces a **new compound prompt** (`movable` energies
-tagged by source ref + `destinations`) and a **new choice** `{uids, dest}` answering
-both at once, applied **ATOMICALLY** (`moveEnergyApply` strips off the source and
-appends to the dest in one write — a floating detached-Energy state never exists, so
-it is one compound park, not two sequential ones). "Up to"/declinable; always parks
-when playable. **`validateChoice`** enforces the couplings (uids ⊆ movable, distinct,
-ONE shared source, dest offered, **dest ≠ source**), so no illegal wire move applies;
-`moveEnergyApply` conserves cards (each uid off exactly one non-dest Pokémon, onto the
-dest once) and is pure. New **`programPlayable` gate** (`moveEnergyPlayable`: ≥1
-matching Energy AND ≥2 of your Pokémon in play) = the exact complement of stepOp's
-no-op → no wasted card, no soft-lock. One new `CardFilter` **`anyEnergy`** (Basic OR
-Special — Poppy) + one new event `ENERGY_MOVED {seat, uids, from, to}`. Lands **2
-COMPLETE real cards** (verified vs local D1): **Energy Switch** (sv01-173, Item — a
-Basic Energy), **Poppy** (sv03-193/220/227, Supporter — up to 2 any Energy). **Web (a
-new dialog):** `MoveEnergyDialog` — a staged pick (source → its Energy + a distinct
-destination, or **Move none**) that can only dispatch a validateChoice-accepted
-choice; + one `ENERGY_MOVED` log row. **This prompt leaks NOTHING** — its candidates
-are the controller's OWN face-up in-play Energy/Pokémon (public), so — uniquely — no
-P4 redaction is even needed (contrast searchDeck/lookAtTopN's deck-candidate INFO).
-**Adversarial review (engine+rules + web + an independent Opus pass): CLEAN, no
-HIGH/MED** (card conservation under every edge, illegal-payload rejection, gate ⇔
-no-op equivalence, purity, rules accuracy, dialog can't dispatch a rejected choice);
-one action — closed a DOM gap (the multi-source source-picker stage → a two-source
-Poppy DOM test). engineVersion 0.16.0 → **0.17.0**; 1126 → **1146** tests, `bun run
-check` + `vite build` green. INFO (not a bug): Energy Switch is not "you may", so
-allowing a decline is a minor documented deviation. See D37.
+**Last updated:** 2026-07-20 — build session #23 (**P3-M5 op-slice:
+`handRefresh`** — shuffle your hand into your deck, then draw; the Iono/Judge/Marnie
+hand-refresh Supporter family). New op `{who:"you"|"both", draw}` — the FIRST op in a
+new class: **fully AUTOMATIC** (no decision → it NEVER parks, like drawCards/
+discardHand/shuffleDeck) AND it can affect the **opponent** (`who:"both"`, Judge — the
+first op to reach the OPPONENT's hand/deck). Per affected seat (controller first, then
+— for `both` — the opponent) it captures the PRE-shuffle hand size, moves the whole
+hand into the deck, shuffles the combined pile (one rng advance), then draws per
+**`HandRefreshDraw`**: `{fixed count}` (Youngster 5, Judge 4, Katy 8) or `{handPlus
+delta}` (Brassius hand+1). **Card conservation** is a pure multiset move
+(`[...deck, ...hand]` → shuffle → draw back), invariant under every degenerate zone
+state; `rngState` is threaded fresh each iteration (the two-shuffle Judge has no stale
+reuse). Always playable (no gate); never damages/KOs. **Katy "your turn ends"** lands
+the `endsTurn` fold on the TRAINER path — a new CardProgram flag **`trainerEndsTurn`**
+that `playTrainer` passes to `settleProgram`, folded byte-for-byte like Koraidon's
+`AbilityProgram.endsTurn` (D34); non-Katy trainers pass `endsTurn:false` → byte-
+identical, no regression. One new count-only event **`HAND_SHUFFLED_INTO_DECK {seat,
+count}`** (the deck reorder is intrinsic — no separate `SHUFFLE`). Lands **4 COMPLETE
+real Supporters** (verified vs local D1): **Youngster** (sv01-198), **Judge**
+(sv01-176), **Brassius** (sv03-187), **Katy** (sv01-177/237). **Web: one log row, no
+dialog** — handRefresh never parks, so no new `EffectPrompt`/dialog (GameHud
+untouched); one count-only `HAND_SHUFFLED_INTO_DECK` row, the draw riding the existing
+count-only `CARDS_DRAWN`. **Hidden info (Judge — the first op to touch the opponent's
+hand): leaks NOTHING new** — the opponent's `CARDS_DRAWN` uids are the standard
+`drawToHand` contract; the log arms are count-only and the projection already redacts
+the opponent's hand to uid-less backs. **Adversarial review (engine+rules + web+
+integration): BOTH CLEAN, no HIGH/MED, NO code fixes** (card conservation over all
+four degenerate zone states, two-shuffle rng threading, handPlus timing, the Katy
+endsTurn fold with no regression across the full 374-test engine suite, purity, all
+four texts byte-matching the catalog, Judge hidden-info safe on both log + projection).
+engineVersion 0.17.0 → **0.18.0**; 1146 → **1156** tests, `bun run check` + `vite
+build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky — the
+`HAND_DISCARDED "(0 cards)"` precedent); no-separate-`SHUFFLE`-event is cosmetic with
+no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
+**`handRefresh` is live (P3-M5, D38) — shuffle your hand into your deck, then draw.**
+The Iono/Judge/Marnie hand-refresh Supporter family. New op `{who:"you"|"both", draw}`
+— the FIRST op in a new class: **fully AUTOMATIC** (no decision → it NEVER parks, like
+drawCards/discardHand/shuffleDeck) AND it can affect the **opponent** (`who:"both"`,
+Judge — the first op to reach the OPPONENT's hand/deck). Per affected seat (controller
+first, then — for `both` — the opponent) it captures the PRE-shuffle hand size, moves
+the whole hand into the deck, shuffles the combined pile (`shuffle([...deck, ...hand])`
+— one rng advance, threaded fresh each iteration so the two-shuffle Judge has no stale
+reuse), then draws per **`HandRefreshDraw`**: `{fixed count}` (Youngster 5, Judge 4,
+Katy 8) or `{handPlus delta}` (Brassius "draw that many cards plus 1"). **Card
+conservation** is a pure multiset move (`[...deck, ...hand]` → shuffle → draw back),
+invariant under empty-hand / empty-deck / hand==whole-deck / both-empty; the Supporter
+is discarded UP FRONT, so never shuffled back. **Always playable** (no `programPlayable`
+gate); never damages/KOs. **Katy "your turn ends"** lands the `endsTurn` fold on the
+TRAINER path — a new CardProgram flag **`trainerEndsTurn`** that `playTrainer` passes
+to `settleProgram`, folded byte-for-byte like Koraidon's `AbilityProgram.endsTurn`
+(D34); every non-Katy trainer passes `endsTurn:false` (byte-identical, no regression).
+One new count-only event **`HAND_SHUFFLED_INTO_DECK {seat, count}`** (the deck reorder
+is intrinsic — no separate `SHUFFLE`). Lands **4 COMPLETE real Supporters** (verified
+vs local D1): **Youngster** (sv01-198, draw 5), **Judge** (sv01-176, both draw 4),
+**Brassius** (sv03-187, draw hand+1), **Katy** (sv01-177/237, draw 8 + turn ends).
+**Web: one log row, no dialog** — handRefresh never parks, so no new `EffectPrompt`/
+dialog (GameHud untouched); one count-only `HAND_SHUFFLED_INTO_DECK` row, the draw
+riding the existing count-only `CARDS_DRAWN`. **Hidden info (Judge — the first op to
+touch the opponent's hand): leaks NOTHING new** — the opponent's `CARDS_DRAWN` uids are
+the standard `drawToHand` contract; the log arms are count-only and the projection
+already redacts the opponent's hand to uid-less backs. engine 0.17.0 → **0.18.0**.
+**Adversarial review (engine+rules + web+integration): BOTH CLEAN — no HIGH/MED, NO
+code fixes** (card conservation over all four degenerate zone states, two-shuffle rng
+threading, handPlus timing, the Katy endsTurn fold with no regression across the full
+374-test engine suite, purity against a recursive freeze, all four texts byte-matching
+the catalog / no missed reprint, Judge hidden-info safe on both log + projection). INFO
+(both, not bugs): an empty hand emits `count:0` (honest, non-leaky — the `HAND_DISCARDED
+"(0 cards)"` precedent); the no-separate-`SHUFFLE`-event choice is cosmetic with no
+consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See "M5 op-slice:
+handRefresh as built" + D38.
+**Next concrete actions (keep building the backlog):**
+1. **Iono / Marnie** layer on this primitive: they put the hand on the BOTTOM of the
+   deck (not shuffle) and draw by Prize count (Iono) / an asymmetric split (Marnie —
+   you 5, opponent 4) — a bottom-of-deck move + a `prizeCount`/split `HandRefreshDraw`.
+   High play rate; small additions on `handRefresh`.
+2. **The remaining `moveEnergy` cards** each layer a rider: **Armarouge** "Fire Off" (a
+   {R} Energy benched→Active — fixed-endpoint + provided-type filter, an Ability),
+   **Mismagius** "Magical Flick" (the OPPONENT's Energy on evolve — opponent-side +
+   onEvolve trigger), **Exp. Share** (an on-KO Tool trigger).
+3. **The next backlog op by unlock count** — the **`conditionalPlay`** family (5, a
+   "you can use this only if <board condition>" gate — but each card still needs its
+   effect op too), a **from-the-top attach** variant (Electric Generator / Hydreigon,
+   also 2 `attachEnergyFrom` cards), or **`discardOpponentEnergy`** (Crushing Hammer /
+   Giacomo, 4). See `docs/reference/coverage-backlog.md`.
+4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games;
+   the projection is already P4's per-viewer filter, and the deck-candidate INFO
+   (searchDeck/lookAtTopN) is exactly what its server-side redaction must cover
+   (`pendingDecision.prompt`) — `handRefresh`'s all-count-only events need none.
+
+---
+### Prior resume point (P3-M5 moveEnergy, kept for continuity)
 **`moveEnergy` is live (P3-M5, D37) — move Energy between your own Pokémon.** A new
 op `{filter, max}` moves up to `max` Energy from ONE of the controller's own in-play
 Pokémon to ANOTHER — the interpreter's **first op with two COUPLED decisions** (which
@@ -51,38 +112,12 @@ conserves cards and is pure. New **`programPlayable` gate** (`moveEnergyPlayable
 matching Energy AND ≥2 of your Pokémon in play) = the exact complement of stepOp's
 no-op (no wasted card, no soft-lock). One new `CardFilter` **`anyEnergy`** (Basic OR
 Special) + one new event `ENERGY_MOVED {seat, uids, from, to}`. Lands **Energy
-Switch** (sv01-173, Item — a Basic Energy) and **Poppy** (sv03-193/220/227, Supporter
-— up to 2 any Energy) — 2 of the op's 5 backlog cards. **Web (a new dialog):**
-`MoveEnergyDialog` — a staged pick (source → its Energy + a distinct destination, or
-**Move none**) that can only dispatch a validateChoice-accepted choice; + one
-`ENERGY_MOVED` log row. **This prompt leaks NOTHING** (its candidates are the
-controller's OWN face-up in-play Energy/Pokémon — public), so — uniquely among the
-parking ops — no P4 redaction is even needed for it. engine 0.16.0 → **0.17.0**.
-**Adversarial review (engine+rules + web + an independent Opus pass): CLEAN — no
-HIGH/MED** (card conservation under dest==source / dest-resident / stale-uid /
-two-source / bench-shift, illegal-payload rejection, gate ⇔ no-op equivalence, purity,
-rules accuracy, dialog can't dispatch a rejected choice); one action — closed a DOM
-gap (the multi-source source-picker stage → a two-source Poppy DOM test). INFO (not a
-bug): Energy Switch is not "you may", so allowing a decline is a minor documented
-deviation. See "M5 op-slice: moveEnergy as built" + D37.
-**Next concrete actions (keep building the backlog):**
-1. **The remaining `moveEnergy` cards** each layer a rider on this primitive:
-   **Armarouge** "Fire Off" (a {R} Energy benched→Active — fixed-endpoint +
-   provided-type filter, an Ability), **Mismagius** "Magical Flick" (the OPPONENT's
-   Energy on evolve — opponent-side + onEvolve trigger), **Exp. Share** (an on-KO Tool
-   trigger).
-2. **The next backlog op by unlock count** — a **from-the-top attach** variant
-   (lookAtTopN + a bench-attach-from-revealed) lands **Electric Generator** +
-   **Hydreigon** (also 2 of the remaining `attachEnergyFrom` cards; **Malamar** needs
-   an opponent-deck peek), the **`conditionalPlay`** family (5), or the **hand-refresh
-   Supporter family** (Iono/Judge/Marnie). See `docs/reference/coverage-backlog.md`.
-3. Or the remaining `attachEnergyFrom` cards via a **deck-search-attach** source op
-   (Forretress/Charizard/Geeta/Pawmot — each also needs a per-card rider: self-KO,
-   onEvolve, can't-attack, attach-to-self).
-4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games; the projection is already P4's per-viewer filter, and the deck-candidate
-   INFO (searchDeck/lookAtTopN) is exactly what its server-side redaction must cover
-   (`pendingDecision.prompt`) — `moveEnergy`'s all-public prompt needs none.
+Switch** (sv01-173) and **Poppy** (sv03-193/220/227) — 2 of the op's 5 backlog cards.
+**Web:** `MoveEnergyDialog` (a staged pick, or **Move none**) + one `ENERGY_MOVED` log
+row; the prompt leaks NOTHING (own face-up in-play Energy/Pokémon). engine 0.16.0 →
+**0.17.0**. Review (adversarial engine+rules + web + an independent Opus pass): CLEAN —
+no HIGH/MED; one action (a two-source Poppy DOM test). See "M5 op-slice: moveEnergy as
+built" + D37.
 
 ---
 ### Prior resume point (P3-M5 lookAtTopN, kept for continuity)
@@ -313,13 +348,76 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards)) — next: the remaining `moveEnergy` riders (Armarouge / Mismagius / Exp. Share), the next backlog op (from-the-top attach / `conditionalPlay` / hand-refresh Supporters), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows)) — next: Iono / Marnie (bottom-of-deck + prize-count draw, layer on `handRefresh`), the remaining `moveEnergy` riders (Armarouge / Mismagius / Exp. Share), the next backlog op (`conditionalPlay` / from-the-top attach / `discardOpponentEnergy`), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-20** (build #23) — **P3-M5 op-slice: `handRefresh`** (D38; built solo —
+  full context — then an adversarial engine+rules + web+integration review, BOTH
+  CLEAN, no code fixes). The Iono/Judge/Marnie **hand-refresh Supporter family** —
+  shuffle your hand into your deck, then draw — and the **highest-value clean unlock
+  left** (high-play-rate staples that land COMPLETE as a fully-automatic op).
+  Chosen over the from-the-top-attach compound (higher risk) and the `conditionalPlay`
+  family (each card still needs a second effect op). New op **`handRefresh`**
+  (`{op, who:"you"|"both", draw:HandRefreshDraw}`, effects.ts/interpreter.ts) — the
+  FIRST op in a new class: **fully AUTOMATIC** (no decision → it NEVER parks, like
+  drawCards/discardHand/shuffleDeck) AND it can affect the **opponent** (`who:"both"`,
+  Judge — the first op to reach the OPPONENT's hand/deck). Per affected seat (a fixed
+  order — controller first, then, for `both`, the opponent) it captures the PRE-shuffle
+  hand size, moves the whole hand into the deck, shuffles the combined pile
+  (`shuffle([...deck, ...hand])` — one rng advance; append-then-shuffle = "shuffle
+  into"), then draws per **`HandRefreshDraw`**: `{kind:"fixed", count}` (Youngster 5,
+  Judge 4, Katy 8) or `{kind:"handPlus", delta}` (Brassius "draw that many cards plus
+  1" = the pre-shuffle hand size + 1). **Card conservation** is a pure multiset move
+  (`combined = [...deck, ...hand]`, then `drawToHand` slices top `drawCount` → hand,
+  rest → deck — invariant under empty-hand / empty-deck / hand==whole-deck / both-empty,
+  all guarded); the played Supporter is discarded UP FRONT by `playTrainer`, so it is
+  never shuffled back. `rngState` is read fresh each iteration and written back into
+  `next`, so the two-shuffle Judge threads controller-then-opponent with no stale reuse
+  / no dropped advance (reuses rng.ts's single vetted Fisher–Yates). **Always playable**
+  (no `programPlayable` gate — you may always shuffle-and-draw, even from an empty
+  hand); never damages/KOs. **Katy "your turn ends"** lands the `endsTurn` fold on the
+  TRAINER path: a new CardProgram flag **`trainerEndsTurn?: true`** (parallel to
+  `rareCandy`) that `playTrainer` reads and passes to `settleProgram`, folded
+  **byte-for-byte like `AbilityProgram.endsTurn`** (the D34 Koraidon precedent — on
+  DONE it seeds `turnTail(controller)`); every non-Katy trainer passes `endsTurn:false`
+  and stays byte-identical to the old no-opts call — **no regression**. One new event
+  **`HAND_SHUFFLED_INTO_DECK {seat, count}`** — count-only (a shuffled hand card is
+  hidden); the deck reorder is intrinsic (no separate `SHUFFLE` event — none has an
+  engine-state consumer). Representatives (verified vs the local D1 catalog, all
+  Supporters): **Youngster** (sv01-198, draw 5), **Judge** (sv01-176, both draw 4),
+  **Brassius** (sv03-187, draw hand+1), **Katy** (sv01-177/237, draw 8 + turn ends).
+  **Web: one log row, no dialog** — handRefresh never parks, so NO new `EffectPrompt`/
+  dialog (GameHud untouched); `logFromEvents` gains one count-only
+  `HAND_SHUFFLED_INTO_DECK` row, the draw riding the existing count-only `CARDS_DRAWN`.
+  **Hidden info (Judge — the first op to touch the opponent's hand): leaks NOTHING
+  new** — the opponent's `CARDS_DRAWN` uids are the standard `drawToHand` contract every
+  draw uses; the log's CARDS_DRAWN + HAND_SHUFFLED_INTO_DECK arms are both count-only,
+  and the per-viewer projection already redacts the opponent's hand to uid-less
+  `hiddenHand` backs. Katy's turn-end needs no web change (rides the existing phase→seat
+  viewer-follow). engineVersion 0.17.0 → **0.18.0**. **Review (adversarial engine+rules
+  + web+integration): BOTH CLEAN, no HIGH/MED, NO code fixes.** Engine agent proved card
+  conservation over all four degenerate zone states, correct two-shuffle rng threading,
+  the handPlus timing (no off-by-one), the Katy endsTurn fold consistent with Koraidon
+  (full 374-test engine suite passes — no regression), purity against a recursive
+  freeze, and all four texts byte-matching the catalog (no missed reprint — Katy's
+  sv01-237 IS mapped; Iono/Marnie correctly deferred). Web agent proved the Judge
+  hidden-info safe on BOTH the log and projection paths, that no exhaustive web switch
+  breaks on the new event (the one `satisfies never` is over the Phase union, and Katy
+  adds no phase), and that Katy's turn-end needs no web handling. **INFO (both, not
+  bugs):** an empty hand emits `count:0` ("shuffled their hand (0 cards)…" — honest,
+  non-leaky, the `HAND_DISCARDED "(0 cards)"` precedent); the no-separate-`SHUFFLE`-event
+  choice is cosmetic with no downstream consumer. **Scope:** authors 4 COMPLETE
+  Supporters — the whole `shuffleHandIntoDeck` backlog row (Youngster / Brassius / Katy)
+  **plus Judge**, and closes the `endTurn` row (Katy joins Koraidon); Iono/Marnie layer
+  later (a bottom-of-deck move + a `prizeCount`/split draw spec). `bun run check` green
+  (tsc + biome + **1156 tests**, 1146 → 1156: 9 engine `handRefresh.test.ts` + 1
+  `logFromEvents.test.ts`), `vite build` green. Files: effects.ts, interpreter.ts,
+  events.ts, registry.ts, cardplay.ts, index.ts, testFixtures.ts, handRefresh.test.ts
+  (new); web: logFromEvents.ts + its test. See "M5 op-slice: handRefresh as built" + D38.
 - **2026-07-20** (build #22) — **P3-M5 op-slice: `moveEnergy`** (D37; built solo —
   full context — then an adversarial engine+rules + web review plus an independent
   Opus pass, CLEAN). The next backlog op by unlock count (5), and the interpreter's

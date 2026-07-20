@@ -1625,6 +1625,98 @@ for `anyEnergy`), events.ts (`ENERGY_MOVED`), cardplay.ts (`validateChoice` case
 moveEnergy.test.ts (new); web: GameHud.tsx (`MoveEnergyDialog` + branch),
 logFromEvents.ts (row) + its test, GameHud.cardplay.dom.test.tsx (3 dialog tests).
 
+## M5 op-slice: handRefresh as built (2026-07-20) — Youngster / Judge / Brassius / Katy
+
+**Shape (D38).** The Iono/Judge/Marnie hand-refresh Supporter family: **shuffle
+your hand into your deck, then draw**. New op **`handRefresh`** (`{op, who:"you"|
+"both", draw:HandRefreshDraw}`, effects.ts/interpreter.ts). It is the FIRST op in a
+new class — a **fully-automatic op** (no decision → it NEVER parks, like drawCards /
+discardHand / shuffleDeck) that can affect the **opponent** (Judge). Per affected
+seat, in a fixed order (the controller first, then — for `who:"both"` — the
+opponent), it: captures the PRE-shuffle hand size, moves the whole hand into the
+deck, shuffles the combined pile (`shuffle([...deck, ...hand])` — one rng advance;
+append-then-shuffle equals "shuffle into"), then draws (a constant, or the captured
+hand size + delta):
+- **`draw: {kind:"fixed", count}`** — Youngster 5, Judge 4, Katy 8.
+- **`draw: {kind:"handPlus", delta}`** — Brassius "draw that many cards plus 1"
+  (delta 1): draws `handCount + 1` off the PRE-shuffle hand, so the hand returns to
+  its pre-play size (net +1 vs after the Supporter left the hand).
+- **`who: "both"`** (Judge) is the **first op to reach the OPPONENT's hand/deck** —
+  each player shuffles-and-draws independently.
+
+**Card conservation + rng.** Per seat the op is a pure multiset move: `combined =
+[...deck, ...hand]`, `hand:[]`, then `drawToHand` slices `combined` into (top
+`drawCount` → hand, rest → deck) — total per side invariant under empty hand / empty
+deck / hand==whole-deck / both-empty (all guarded, no over-read, no crash). The
+Supporter itself is discarded UP FRONT by `playTrainer` (before the program runs),
+so it is never shuffled back. `rngState` is read fresh each iteration and written
+back inside `next`, so `who:"both"` threads controller-shuffle then opponent-shuffle
+with no stale reuse and no dropped advance (reuses rng.ts's single vetted
+Fisher–Yates). Always playable (no `programPlayable` gate — you may always
+shuffle-and-draw, even from an empty hand); never parks; never damages/KOs.
+
+**Katy "your turn ends" — the endsTurn fold reaches the Trainer path.** New
+CardProgram flag **`trainerEndsTurn?: true`** (parallel to the Rare Candy `rareCandy`
+flag); `playTrainer` reads it and passes `{ endsTurn }` to `settleProgram`, which
+folds it **byte-for-byte like `AbilityProgram.endsTurn`** (the D34 Koraidon
+precedent): on DONE it seeds `turnTail(controller)` and advances instead of returning
+to `turn:action`. handRefresh never parks, so Katy hits the DONE+endsTurn branch
+directly. Every non-Katy trainer passes `endsTurn:false`, and `settleProgram(...,
+{endsTurn:false})` is byte-identical to the old no-opts call (both branches gate on
+`=== true`) — no regression. This also **closes the `endTurn` backlog row** (Katy
+joins Koraidon).
+
+One new event **`HAND_SHUFFLED_INTO_DECK {seat, count}`** — **count-only** (a
+shuffled hand card is hidden). The deck reorder is intrinsic (no separate `SHUFFLE`
+event: no engine-state consumer depends on `SHUFFLE`, and there is no persistent
+known-deck-top in GameState for the reshuffle to invalidate). Representatives
+(verified vs the local D1 catalog, all Supporters): **Youngster** (sv01-198, draw 5),
+**Judge** (sv01-176, both draw 4), **Brassius** (sv03-187, draw hand+1), **Katy**
+(sv01-177/237, draw 8 + turn ends).
+
+**Web: one log row, nothing else.** handRefresh never parks, so there is NO new
+`EffectPrompt`/dialog — GameHud is untouched. `logFromEvents` gains one count-only
+`HAND_SHUFFLED_INTO_DECK` row ("shuffled their hand (N cards) into their deck"); the
+draw rides the existing count-only `CARDS_DRAWN` row. engineVersion 0.17.0 →
+**0.18.0**.
+
+**Hidden information (Judge — the first op to touch the opponent's hand): leaks
+NOTHING new.** The opponent's `CARDS_DRAWN {seat, uids}` carries their drawn uids —
+but this is the **standard `drawToHand` contract used by every draw** (turn-start,
+search), not a new leak. Both consumer boundaries are safe: the log's `CARDS_DRAWN`
+arm and `HAND_SHUFFLED_INTO_DECK` are both count-only, and the per-viewer projection
+already redacts the opponent's hand to uid-less `hiddenHand` backs (`opponent-hand-N`,
+`cardId:"hidden"`). Katy's turn-end needs no web change either — it rides the
+existing phase→seat viewer-follow (the device flips to the opponent on `turn:action`),
+exactly like a normal `endTurn`.
+
+**Review (adversarial — engine+rules + web+integration passes): BOTH CLEAN, no
+HIGH/MED, NO code fixes.** The engine agent proved card conservation over all four
+degenerate zone states, correct rng threading for the two-shuffle Judge, the handPlus
+timing (no off-by-one), the Katy endsTurn fold consistent with the Koraidon precedent
+(full 374-test engine suite incl. Koraidon passes — no regression), purity against a
+recursive freeze, and all four texts byte-matching the catalog (no missed reprint —
+Katy's sv01-237 IS mapped; Iono/Marnie correctly deferred). The web agent proved the
+Judge hidden-info safe on BOTH the log and projection paths, that no exhaustive web
+switch breaks on the new event (the one `satisfies never` is over the Phase union,
+and Katy adds no phase), and that Katy's turn-end needs no web handling. **INFO (both,
+not bugs):** an empty hand emits `count:0` ("shuffled their hand (0 cards)…") — honest
+and non-leaky, the `HAND_DISCARDED "(0 cards)"` precedent; and the no-separate-SHUFFLE
+choice is cosmetic with no downstream consumer.
+
+**Scope.** Authors 4 complete Supporters — the whole `shuffleHandIntoDeck` backlog row
+(Youngster / Brassius / Katy) **plus Judge** (the both-player refresh), and closes the
+`endTurn` row (Katy). The related disruptors layer MORE on this primitive:
+**Iono/Marnie** put the hand on the BOTTOM of the deck (not shuffle) and draw by Prize
+count / an asymmetric split — a `drawSpec:"prizeCount"` + a bottom-of-deck move.
+**Verification:** `bun run check` green (tsc + biome + **1156 tests** — 1146 → 1156:
+9 engine `handRefresh.test.ts` + 1 `logFromEvents.test.ts`), production `vite build`
+green. Files: effects.ts (op + `HandRefreshDraw`), interpreter.ts (stepOp case +
+`handRefresh`), events.ts (`HAND_SHUFFLED_INTO_DECK`), registry.ts (`trainerEndsTurn`
+field + 4 programs + 5 rows), cardplay.ts (`playTrainer` passes `endsTurn`), index.ts
+(0.18.0), testFixtures.ts (4 Supporter fixtures + `HAND_REFRESH_DECK`),
+handRefresh.test.ts (new); web: logFromEvents.ts (row) + its test.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
