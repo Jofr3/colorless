@@ -3,35 +3,66 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-19 — build session #19 (**P3-M5 op-slice:
-attachEnergyFrom MULTI-attach + endsTurn** — authoring **Koraidon ex "Dino Cry"**
-(attach up to 2 Basic {F} from discard to your Basic {F} Pokémon in any way, then
-your turn ends). Multi-attach needs NO new op — "up to N in any way" is N attach
-ops (the interpreter parks on each in turn); two small additions author the card:
-a **`basicOnly`** target filter and **`AbilityProgram.endsTurn`** (a flag folded by
-`settleProgram` — on DONE it seeds `turnTail` instead of turn:action, threaded
-across re-parks by a new `endsTurn` field on effect:choose, parallel to
-`resumeTail`). **Web UNCHANGED**. **2-agent Opus review BOTH CLEAN** — the endsTurn
-fold proven consistent with the normal turn end (no stale-phase leak), multi-attach
-no double-attach/over-reject, basicOnly total; reuse verified through the real web
-layer. engineVersion 0.13.0 → 0.14.0; 1101 → **1106** tests, check + build green.
-Authors 4 of the op's 11 backlog cards. Prior: build #18 = the attachEnergyFrom
-riders (Gardevoir ex, engine 0.13.0). Two forms on
-`TriggeredAbility` (trigger `"onKnockOut"`): a coin-flip **Prize GUARD**
-(`onKoPrizeGuard` — Glimmora "Shattering Crystal", heads → the opponent takes no
-Prize for it) resolved INLINE in the KO sweep via a new `planPrizes` run UP FRONT
-so the §14 tie guard stays exact; and a parking **PROGRAM** run as a new
-`koTrigger` PendingStage that folds through `settleProgram` with a new
-`resumeTail` flag — it PARKS on `effect:choose` (the KO'd, NON-turn player
-decides) and the sweep RESUMES draining the prize/promotion tail. Representatives
-Glimmora (sv02-126, real) + fix-onko (FIXTURE — no real SV on-KO Ability parks;
-the fix-sniper precedent); built solo, **2-agent Opus review BOTH CLEAN — no
-HIGH/MED/LOW correctness bugs** (the §14 tie guard × prize denial enumerated over
-all 4 coin-flip combos × 60 seeds, proven exact), one LOW test-framing fix
-applied. Suite 1066 → **1080**, `bun run check` green, `vite build` green;
-engineVersion 0.10.0 → 0.11.0.).
+**Last updated:** 2026-07-20 — build session #20 (**P3-M5 op-slice:
+`discardPileRetrieval`** — the recovery-Item family, the next-biggest backlog
+unlock after attachEnergyFrom (6 cards)). A near-exact **mirror of `searchDeck`**
+but source = the DISCARD pile, dest = hand or deck: retrieves up to `max` cards
+matching a `CardFilter`, "up to"/declinable, PARKS on the **same `chooseCards`
+prompt** (no new dialog), no-op on an empty match. `dest:"deck"` appends to the
+deck end, so "Shuffle … into your deck" is `[discardPileRetrieval(dest:deck),
+shuffleDeck]` (the Nest Ball pattern; a whiff still shuffles). Two new `CardFilter`
+kinds (**`supporter`**, **`pokemonOrBasicEnergy`**) + one new event
+(`DISCARD_RETRIEVED`, count-only in the log — the discard pile is public). Lands
+**3 COMPLETE real cards** (verified vs local D1): **Energy Retrieval** (2 Basic
+Energy → hand), **Pal Pad** (2 Supporters → deck), **Super Rod** (3 Pokémon/Basic
+Energy → deck). **Web:** a small honest touch — the shared card-pick dialog's label
+went "Search your deck" → "Choose cards" (now serves both a search and a retrieval;
+the accurate text is in `prompt.note`), the prompt `dest` union widened to include
+"deck" (inert everywhere), and one new log row. **2-agent Opus review BOTH CLEAN —
+no HIGH/MED bugs** (card conservation, filter semantics, no deck-order leak, no
+hidden-info leak all proven); one MED test-adequacy fix applied (the purity test
+now covers the actual `retrieveMove` mutation via a frozen parked state), plus LOW
+coverage tightening. engineVersion 0.14.0 → **0.15.0**; 1106 → **1117** tests,
+`bun run check` + `vite build` green. Chosen over the resume point's #1
+(deck-search-attach) because that op leaves every one of its 4 cards still blocked
+on a SECOND op, while this lands complete cards. See D35.
 
 ## Resume point
+**`discardPileRetrieval` is live (P3-M5, D35) — the recovery-Item family.** The
+discard-pile mirror of `searchDeck`: a new op `{filter, dest:"hand"|"deck", max}`
+retrieves up to `max` matching cards from the controller's discard pile, "up to"/
+declinable, reusing the `chooseCards` park (no new prompt/dialog/wire shape). Two
+new `CardFilter` kinds (`supporter`, `pokemonOrBasicEnergy`); `dest:"deck"` +
+trailing `shuffleDeck` is the "shuffle into your deck" idiom (whiff still shuffles,
+per the searchDeck convention); new event `DISCARD_RETRIEVED` (count-only log).
+Lands **Energy Retrieval** (sv01-171), **Pal Pad** (sv01-182), **Super Rod**
+(sv02-188/276) — 3 of the op's 6 backlog cards. **Web touched (small):** dialog
+label "Search your deck" → "Choose cards" (shared by both origins now; note carries
+the specifics), `chooseCards` prompt `dest` += "deck", one log row. engine 0.14.0 →
+**0.15.0**. **Review (2 Opus agents): BOTH CLEAN** — no HIGH/MED bugs; MED
+test-adequacy fix (purity test now hits `retrieveMove`) + LOW coverage/comment
+fixes applied. INFO: a FUTURE self-matching card (a Supporter authored on this op
+with `filter:supporter`) would offer itself as a candidate since `playTrainer`
+discards up front — flagged in the op's authoring note; the 3 Items are safe. See
+"M5 op-slice: discardPileRetrieval as built" + D35.
+**Next concrete actions (keep building the backlog):**
+1. **The next backlog op by unlock count** — **`lookAtTopN`** (5 — Great Ball,
+   Pokégear 3.0, Electric Generator, Hydreigon, Malamar; also unblocks 2 of the
+   remaining `attachEnergyFrom` cards), **`moveEnergy`** (5 — Energy Switch, Exp.
+   Share, Poppy…), the **`conditionalPlay`** family (5), or the **hand-refresh
+   Supporter family** (Iono/Judge/Marnie — `shuffleHandIntoDeck` + draw). See
+   `docs/reference/coverage-backlog.md`.
+2. Or the remaining `attachEnergyFrom` cards via a **deck-search-attach** source op
+   (Forretress/Charizard/Geeta/Pawmot — each also needs a per-card rider: self-KO,
+   onEvolve, can't-attack, attach-to-self).
+3. Or the remaining 3 `discardPileRetrieval` cards — Superior Energy Retrieval
+   (`discardFromHandCost`), Miriam (conditional "if you shuffled any, draw 3"),
+   Pelipper (an Ability).
+4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games; the projection is already P4's per-viewer filter.
+
+---
+### Prior resume point (P3-M5 attachEnergyFrom multi + endsTurn, kept for continuity)
 **Koraidon ex "Dino Cry" is live (P3-M5, D34) — attachEnergyFrom MULTI-attach +
 endsTurn.** Three ideas: **multi-attach** ("attach up to N in any way") needs NO
 new op — it is **N `attachEnergyFrom` ops** in one program (the interpreter parks
@@ -42,29 +73,9 @@ be `isBasicPokemon`, with `targetType` → "your Basic {F} Pokémon"); and
 completion, folded by **`settleProgram`** (flow.ts: DONE seeds `turnTail(controller)`
 + advance — the normal `endTurn` shape — instead of turn:action), threaded across
 re-parks by a new `endsTurn?: true` on the effect:choose Phase (parallel to
-`resumeTail`, mutually exclusive). Koraidon: `{oncePerTurn:true, endsTurn:true,
-program:[attachEnergyFrom×2 {source:"discard", energyType:"Fighting",
-targetType:"Fighting", basicOnly:true}]}`. **Web UNCHANGED** (the two parks + the
-turn-end ride the existing effect:choose/choosePokemon + viewer-follow). engine
-0.13.0 → **0.14.0**. **Review (2 Opus agents): BOTH CLEAN** — endsTurn fold
-consistent with the normal turn end (no stale-phase leak, flag survives both
-re-parks), multi-attach no double-attach/over-reject, basicOnly total; even
-poison-KOs during the folded Checkup resolve correctly. INFO: a damaging endsTurn
-ability (none in scope) would resolve KOs via the Checkup sweep (timing only). See
-"M5 op-slice: attachEnergyFrom multi + endsTurn as built" + D34.
-**Next concrete actions (keep building the backlog):**
-1. **The remaining 7 `attachEnergyFrom` cards** — most now need a **deck-search
-   source** (Forretress, Charizard, Geeta, Pawmot) and/or **`lookAtTopN`** (Electric
-   Generator, Hydreigon), plus per-card riders (self-KO Forretress, `onEvolve`
-   Charizard ex, can't-attack Geeta, attach-to-self Pawmot [needs the source uid in
-   EffectContext], special-energy-by-name Wigglytuff). A **deck-search-attach**
-   source op unlocks the most.
-2. Or the next backlog op by unlock count — **`discardPileRetrieval`** (6),
-   **`lookAtTopN`** (5), **`moveEnergy`** (5), the **`conditionalPlay`** family (5),
-   or the **hand-refresh Supporter family** (Iono/Judge/Marnie). See
-   `docs/reference/coverage-backlog.md`.
-3. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games; the projection is already P4's per-viewer filter.
+`resumeTail`, mutually exclusive). engine 0.13.0 → **0.14.0**. **Review (2 Opus
+agents): BOTH CLEAN.** See "M5 op-slice: attachEnergyFrom multi + endsTurn as
+built" + D34.
 
 ---
 ### Prior resume point (P3-M5 attachEnergyFrom riders, kept for continuity)
@@ -221,13 +232,61 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5, 2026-07-19**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, engine 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex "Dino Cry", engine 0.14.0), 4 of its 11 cards) — next: the remaining attachEnergyFrom cards (deck-search source / `lookAtTopN`) / the next backlog op, or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards)) — next: the next backlog op (`lookAtTopN` / `moveEnergy` / hand-refresh Supporters), the remaining attach/retrieval cards, or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-20** (build #20) — **P3-M5 op-slice: `discardPileRetrieval`** (D35;
+  built solo — full context — then a 2-agent Opus review, BOTH CLEAN). The
+  next-biggest backlog unlock after `attachEnergyFrom` (6 cards), and a near-exact
+  **mirror of the vetted `searchDeck` op** — source = the DISCARD pile, dest = hand
+  or deck. New op **`discardPileRetrieval`** `{filter, dest:"hand"|"deck", max}`
+  retrieves up to `max` matching cards, "up to"/declinable, PARKS on the **same
+  `chooseCards` prompt** (no new dialog/prompt/wire shape), no-op on empty match, no
+  bench-space clamp (hand/deck uncapped). `dest:"deck"` appends to the deck end, so
+  "Shuffle … into your deck" is authored `[discardPileRetrieval(dest:deck),
+  shuffleDeck]` (the Nest Ball search-then-shuffle pattern; a whiffed play still
+  shuffles — self-affecting only, never illegal). `retrieveMove` mirrors
+  `searchMove` (dedup Set, only in-discard uids move, wire-checked by the existing
+  `validateChoice`). Two new `CardFilter` kinds — **`supporter`** (Trainer +
+  "Supporter") and **`pokemonOrBasicEnergy`** (Pokémon OR a `Normal` basic Energy —
+  Special excluded) — and one new event **`DISCARD_RETRIEVED`** (count-only log; the
+  discard pile is public). Representatives (verified vs local D1, all Items):
+  **Energy Retrieval** (sv01-171 — 2 Basic Energy → hand), **Pal Pad** (sv01-182 — 2
+  Supporters → deck), **Super Rod** (sv02-188/276 — 3 Pokémon/Basic Energy → deck).
+  **Web (small honest touch, not "unchanged"):** the shared `ChooseCardsDialog`'s
+  accessible label changed **"Search your deck" → "Choose cards"** (it now serves a
+  deck search AND a discard retrieval; the accurate description rides `prompt.note`,
+  which reproduces the printed card text), the `chooseCards` prompt `dest` union
+  widened to include `"deck"` (inert at every consumer — the dialog never reads
+  `dest`), and `logFromEvents` gained one `DISCARD_RETRIEVED` row (2 dom assertions
+  updated). engineVersion 0.14.0 → **0.15.0**. **Review (2 Opus agents — engine+rules
+  / web+integration): BOTH CLEAN, no HIGH/MED correctness bugs.** Engine agent proved
+  card conservation (symmetric remove/append, no clamp needed), filter semantics
+  (Special Energy + Trainers excluded), park/resume with **no deck-order leak** (park
+  is before the move; the trailing `shuffleDeck` runs synchronously in the resume
+  batch, never dropped), self-reference + flow-tail safety. Web agent proved no
+  hidden-info leak (count-only log, both discard piles public in the projection) and
+  an inert `dest` widening. **Fixes applied:** one MED — the purity test froze the
+  PRE-park state and never reached `retrieveMove` (the mutation runs during the later
+  `resolveEffect`), strengthened to freeze the parked state and drive the resolve;
+  LOWs — pinned the `retrieveNote` strings, added the Super Rod degenerate-ends
+  (only-Pokémon / only-Energy) + a take-none-with-trailing-shuffle case. **INFO
+  (forward-looking, not triggered):** `playTrainer` discards the played card up
+  front, so a FUTURE self-matching card (a Supporter on this op with
+  `filter:supporter`) would offer itself as a candidate — flagged in the op's
+  authoring note; the 3 Items are all safe (no filter matches an Item). **Scope:**
+  authors 3 of the op's 6 backlog cards; the other 3 need `discardFromHandCost`
+  (Superior Energy Retrieval), a conditional draw (Miriam), or an Ability (Pelipper).
+  Chosen over the resume point's #1 (deck-search-attach) because that op leaves every
+  one of its 4 cards still blocked on a SECOND op, while this lands complete cards.
+  **1106 → 1117 tests**, `bun run check` + `vite build` green. Files: effects.ts,
+  interpreter.ts, events.ts, registry.ts, index.ts, testFixtures.ts,
+  discardRetrieval.test.ts (new); web: GameHud.tsx, logFromEvents.ts,
+  GameHud.cardplay.dom.test.tsx.
 - **2026-07-19** (build #19) — **P3-M5 op-slice: attachEnergyFrom MULTI-attach +
   endsTurn** (D34; built solo — full context — then a 2-agent Opus review, BOTH
   CLEAN). Authoring **Koraidon ex "Dino Cry"** (sv01-125/231/247/254 — attach up to

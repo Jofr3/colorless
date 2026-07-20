@@ -1396,6 +1396,71 @@ production `vite build` green. Files: effects.ts (basicOnly), interpreter.ts
 Koraidon), types.ts (Phase endsTurn), flow.ts (settleProgram endsTurn fold),
 cardplay.ts (thread endsTurn), index.ts, testFixtures.ts, dinoCry.test.ts (new).
 
+## M5 op-slice: discardPileRetrieval as built (2026-07-20) — the recovery Items
+
+**Shape (D35).** The next-biggest backlog unlock after `attachEnergyFrom` — and a
+near-exact **mirror of the vetted `searchDeck` op**, but source = the DISCARD pile
+and dest = hand or deck. **`discardPileRetrieval`** (`{op, filter:CardFilter,
+dest:"hand"|"deck", max}`, effects.ts/interpreter.ts) retrieves up to `max` cards
+matching `filter` from the controller's discard pile:
+- Like searchDeck it is **"up to"** (declinable) and PARKS on the **same
+  `chooseCards` prompt** — no new prompt/dialog. An empty match is a no-op; no
+  bench-space clamp (hand/deck are uncapped), so `max` is used as printed.
+- **`dest:"deck"`** appends to the deck end, so the printed "Shuffle … into your
+  deck" is authored as **`[discardPileRetrieval(dest:deck), shuffleDeck]`** (the
+  Nest Ball search-then-shuffle pattern). A whiffed Pal Pad/Super Rod therefore
+  still shuffles — self-affecting only, never illegal, consistent with a whiffed
+  search. **`dest:"hand"`** (Energy Retrieval) has no trailing shuffle.
+- `retrieveMove` mirrors `searchMove` (dedup Set, only in-discard uids move,
+  wire-checked by the existing `validateChoice`).
+
+Two new **`CardFilter`** kinds — **`supporter`** (Trainer + trainerType
+"Supporter") and **`pokemonOrBasicEnergy`** (category "Pokemon" OR a basic Energy
+`energyType:"Normal"` — Special Energy excluded) — and one new event
+**`DISCARD_RETRIEVED {seat, dest, uids}`** (count-only in the log; the discard pile
+is public). Representatives (verified vs the local D1 catalog, all Items):
+**Energy Retrieval** (sv01-171 — 2 Basic Energy → hand), **Pal Pad** (sv01-182 — 2
+Supporters → deck), **Super Rod** (sv02-188/276 — 3 Pokémon/Basic Energy → deck).
+
+**Web: a small honest touch (not "unchanged").** The shared `ChooseCardsDialog`'s
+accessible label went **"Search your deck" → "Choose cards"** (it now serves both a
+deck search and a discard retrieval; the accurate description rides `prompt.note`,
+which reproduces the printed card text). The `chooseCards` prompt `dest` union
+widened to include `"deck"` (inert at every consumer — the dialog never reads
+`dest`), and `logFromEvents` gained one `DISCARD_RETRIEVED` row. engineVersion
+0.14.0 → **0.15.0**.
+
+**Review (2 Opus agents — engine+rules / web+integration): BOTH CLEAN, no HIGH/MED
+correctness bugs.** The engine agent proved card conservation (symmetric
+remove/append, no clamp needed for the uncapped zones), filter semantics (Special
+Energy + Trainers correctly excluded), the park/resume flow with **no deck-order
+leak** (the park is BEFORE the move, and the trailing `shuffleDeck` runs
+synchronously in the resume batch — no window, never dropped), self-reference
+safety, and flow-tail safety (never damages/KOs). The web agent proved no
+hidden-info leak (count-only log, both discard piles public in the projection) and
+that the `dest` widening is inert at every consumer. **Fixes applied:** one MED —
+the purity test was freezing the PRE-park state and never reaching `retrieveMove`
+(the actual mutation runs during the later `resolveEffect`), so it was strengthened
+to freeze the parked state and drive the resolve; LOWs — pinned the `retrieveNote`
+strings and added the Super Rod degenerate-ends (only-Pokémon / only-Energy) and a
+take-none-with-trailing-shuffle case. **Forward-looking hazard documented (not
+triggered):** `playTrainer` discards the played card up front, so a FUTURE
+self-matching card (a Supporter authored on this op with `filter:supporter`) would
+offer itself as a candidate — flagged in the op's authoring note; the 3 Items here
+are all safe (no filter matches an Item).
+
+**Scope.** Authors 3 of the 6 `discardPileRetrieval` backlog cards. The other 3
+need `discardFromHandCost` (Superior Energy Retrieval), a conditional draw (Miriam —
+"if you shuffled any, draw 3"), or an Ability (Pelipper). **Verification:** `bun run
+check` green (tsc + biome + **1117 tests** — 1106 → 1117: 11 engine
+`discardRetrieval.test.ts`), production `vite build` green. Files: effects.ts (op +
+2 filter kinds), interpreter.ts (stepOp/applyChoice cases, `retrieveMove`,
+`matchesFilter` + `searchNote` guard, `retrieveNote`/`retrieveNoun`, widened
+`chooseCards` dest), events.ts (`DISCARD_RETRIEVED`), registry.ts (3 programs +
+rows), index.ts, testFixtures.ts (3 Item fixtures + `DISCARD_RETRIEVAL_DECK`),
+discardRetrieval.test.ts (new); web: GameHud.tsx (label), logFromEvents.ts (row),
+GameHud.cardplay.dom.test.tsx (2 assertions).
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
