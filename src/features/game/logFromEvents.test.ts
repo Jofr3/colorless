@@ -565,6 +565,22 @@ describe("logFromEvents — lookAtTopN (M5): DECK_TOP_REVEALED", () => {
   });
 });
 
+describe("logFromEvents — handRefresh (M5): HAND_SHUFFLED_INTO_DECK", () => {
+  it("logs a count-only 'shuffled their hand into their deck' row (singular + plural)", () => {
+    // Count-only, so a bare game state suffices — the row never resolves names,
+    // so it stays hidden even for the opponent's hand (Judge).
+    const { state } = mustCreate(1);
+    const one: GameEvent = { type: "HAND_SHUFFLED_INTO_DECK", seat: "p1", count: 1 };
+    const many: GameEvent = { type: "HAND_SHUFFLED_INTO_DECK", seat: "p2", count: 4 };
+    expect(texts(logFromEvents([one], ctx(state)))).toEqual([
+      "shuffled their hand (1 card) into their deck",
+    ]);
+    expect(texts(logFromEvents([many], ctx(state)))).toEqual([
+      "shuffled their hand (4 cards) into their deck",
+    ]);
+  });
+});
+
 describe("logFromEvents — moveEnergy (M5): ENERGY_MOVED", () => {
   it("names the source and destination Pokémon (both stay put — no compaction)", () => {
     let state = driveSetup(7, { p1: SPECIAL_ENERGY_DECK, p2: SPECIAL_ENERGY_DECK }, { first: "p2" });

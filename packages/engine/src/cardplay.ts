@@ -104,7 +104,12 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (trainerType === "Supporter") {
     next = { ...next, allowances: { ...next.allowances, supporterPlayed: true } };
   }
-  return settleProgram(runProgram(next, program, { seat: action.seat }, events), action.seat, events);
+  // Katy "your turn ends": a Trainer that ends the turn on completion, folded by
+  // settleProgram exactly like an Ability's endsTurn (the Koraidon precedent).
+  const endsTurn = programFor(card.id)?.trainerEndsTurn === true;
+  return settleProgram(runProgram(next, program, { seat: action.seat }, events), action.seat, events, {
+    endsTurn,
+  });
 }
 
 /** §7.3 — the Stadium play, split out of playTrainer's Item/Supporter path

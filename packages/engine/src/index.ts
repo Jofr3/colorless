@@ -32,13 +32,14 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: moveEnergy — move up to `max` Energy
-    from one of your Pokémon to another, own → own; the interpreter's first op
-    with two COUPLED decisions (which Energy + where), parked on a compound
-    moveEnergy prompt and applied atomically. Adds the `anyEnergy` CardFilter.
-    Authors Energy Switch (a Basic Energy) and Poppy (up to 2 any Energy); the
-    fixed-endpoint / opponent-side / on-KO riders layer later. lookAtTopN was 0.16.0). */
-export const engineVersion = "0.17.0";
+/** Engine milestone marker (M5 op-slice: handRefresh — shuffle your hand into
+    your deck, then draw; the Iono/Judge/Marnie hand-refresh Supporter family. A
+    fully-automatic op (never parks). `who: "both"` (Judge) is the first op to
+    reach the OPPONENT's hand/deck — count-only events keep every shuffled/drawn
+    card hidden. Authors Youngster (draw 5), Judge (both draw 4), Brassius (draw
+    hand+1), and Katy (draw 8 + the new Trainer-path `trainerEndsTurn` fold, the
+    Koraidon endsTurn precedent). moveEnergy was 0.17.0). */
+export const engineVersion = "0.18.0";
 
 export type {
   ApplyResult,

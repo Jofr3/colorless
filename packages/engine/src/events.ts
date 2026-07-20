@@ -240,6 +240,14 @@ export type GameEvent =
       the one source; the Pokémon stay put (no bench compaction), so both targets
       resolve against the post-state. Own-board only — a public table fact. */
   | { type: "ENERGY_MOVED"; seat: Seat; uids: string[]; from: PokemonTarget; to: PokemonTarget }
+  /** `seat` shuffled its whole hand (`count` cards) into its deck, then drew (a
+      separate CARDS_DRAWN) — the hand-refresh Supporter family (Youngster, Judge,
+      Brassius, Katy). COUNT-ONLY: a shuffled hand card is hidden, so the opponent
+      (and, for Judge's both-player refresh, the controller about the opponent)
+      learns only how many. The deck was reordered as part of this (no separate
+      SHUFFLE event). `count` may be 0 (an empty hand still "shuffles" — the deck
+      is reshuffled either way). */
+  | { type: "HAND_SHUFFLED_INTO_DECK"; seat: Seat; count: number }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

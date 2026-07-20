@@ -532,6 +532,33 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Move up to 2 Energy from 1 of your Pokémon to another of your Pokémon.",
   ),
+
+  // — M5 op-slice: handRefresh (real catalog ids so the registry finds the
+  //   programs; the effect text is cosmetic — the registry keys on the id). —
+  /** Youngster (Supporter) — shuffle hand into deck, draw 5. */
+  "sv01-198": trainerCard(
+    "sv01-198",
+    "Supporter",
+    "Shuffle your hand into your deck. Then, draw 5 cards.",
+  ),
+  /** Judge (Supporter) — each player shuffles hand into deck, draws 4. */
+  "sv01-176": trainerCard(
+    "sv01-176",
+    "Supporter",
+    "Each player shuffles their hand into their deck and draws 4 cards.",
+  ),
+  /** Brassius (Supporter) — shuffle hand into deck, draw (hand size + 1). */
+  "sv03-187": trainerCard(
+    "sv03-187",
+    "Supporter",
+    "Count the cards in your hand, shuffle those cards into your deck, then draw that many cards plus 1.",
+  ),
+  /** Katy (Supporter) — shuffle hand into deck, draw 8, your turn ends. */
+  "sv01-177": trainerCard(
+    "sv01-177",
+    "Supporter",
+    "Shuffle your hand into your deck. Then, draw 8 cards. Your turn ends.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -785,6 +812,19 @@ export const MOVE_ENERGY_DECK = deckOf({
   "fix-fire-energy": 6,
   "fix-water-energy": 6,
   "fix-special": 6,
+});
+
+/** M5 op-slice: handRefresh — the hand-refresh Supporter family. A Basic body to
+    lead (fix-basic-1) plus all four cards and enough bulk (energy) that the deck
+    stays deep after the setup draws, so the reshuffle-and-draw counts are exact.
+    Youngster / Judge / Brassius / Katy all read their program by id. */
+export const HAND_REFRESH_DECK = deckOf({
+  "fix-basic-1": 8,
+  "sv01-198": 3, // Youngster
+  "sv01-176": 3, // Judge
+  "sv03-187": 3, // Brassius
+  "sv01-177": 3, // Katy
+  "fix-energy": 40,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

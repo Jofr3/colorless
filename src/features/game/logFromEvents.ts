@@ -449,6 +449,16 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       const n = event.uids.length;
       return row(event.seat, [plain(`discarded their hand (${n} card${n === 1 ? "" : "s"})`)]);
     }
+    case "HAND_SHUFFLED_INTO_DECK": {
+      // The hand-refresh Supporter family (Youngster / Judge / Brassius / Katy).
+      // Count only — the hand is hidden (module header), so this names no card
+      // even when the op reaches the OPPONENT's hand (Judge). A separate
+      // CARDS_DRAWN row (count only too) follows for the draw.
+      const n = event.count;
+      return row(event.seat, [
+        plain(`shuffled their hand (${n} card${n === 1 ? "" : "s"}) into their deck`),
+      ]);
+    }
     case "DECK_SEARCHED": {
       const n = event.uids.length;
       return row(

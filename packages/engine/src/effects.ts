@@ -40,6 +40,14 @@ export type CardFilter =
       Special Energy and admits Pokémon). */
   | { kind: "anyEnergy" };
 
+/** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
+    `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
+    pre-shuffle hand size plus `delta` (Brassius "draw that many cards plus 1" =
+    delta 1), measured per affected player BEFORE their hand is shuffled in. */
+export type HandRefreshDraw =
+  | { kind: "fixed"; count: number }
+  | { kind: "handPlus"; delta: number };
+
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
     = the attacker's Active, "defender" = the Defending Pokémon); Trainer /
@@ -196,7 +204,26 @@ export type EffectOp =
       a play that could only whiff. Own→own only; the fixed-endpoint / opponent-side
       / from-provided-type riders (Armarouge's benched→Active {R}, Mismagius's
       opponent move) layer on later. */
-  | { op: "moveEnergy"; filter: CardFilter; max: number };
+  | { op: "moveEnergy"; filter: CardFilter; max: number }
+  /** Shuffle the affected player(s)' whole hand into their deck, then draw — the
+      Iono/Judge/Marnie hand-refresh Supporter family. `who: "you"` affects the
+      controller only (Youngster: draw 5; Katy: draw 8; Brassius: draw hand+1);
+      `who: "both"` affects BOTH players (Judge: "Each player shuffles their hand
+      into their deck and draws 4") — the first op to reach the OPPONENT's
+      hand/deck. `draw` is how many each affected player then draws, measured off
+      THAT player's OWN pre-shuffle hand (handPlus). Fully AUTOMATIC — there is no
+      decision, so it never parks (like drawCards / discardHand / shuffleDeck), and
+      it is always playable (you may always shuffle-and-draw, even from an empty
+      hand). The rng reorder is intrinsic (the combined pile is shuffled — there is
+      no separate `shuffleDeck` op). Emits count-only events
+      (HAND_SHUFFLED_INTO_DECK per affected seat + CARDS_DRAWN from the draw): a
+      shuffled or drawn card is hidden, so the opponent — and, for the both-player
+      Judge, the controller about the opponent — learns only counts. "Your turn
+      ends" (Katy) is NOT part of this op: it is the CardProgram `trainerEndsTurn`
+      flag folded by settleProgram (the Koraidon `endsTurn` precedent, on the
+      Trainer path). Own-deck reshuffle-and-draw only; the bottom-of-deck /
+      prize-count-draw variants (Iono, Marnie) layer on later. */
+  | { op: "handRefresh"; who: "you" | "both"; draw: HandRefreshDraw };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

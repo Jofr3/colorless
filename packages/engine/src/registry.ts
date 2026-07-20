@@ -174,6 +174,13 @@ export interface CardProgram {
       how playTrainer rejects it (like a Tool) and how the HUD knows to open the
       Rare Candy dialog instead of dispatching playTrainer. */
   rareCandy?: true;
+  /** The `trainer` play ENDS the controller's turn once its program completes
+      (Katy: "Shuffle your hand into your deck. Then, draw 8 cards. Your turn
+      ends."). playTrainer passes this to flow.ts settleProgram, which folds it
+      EXACTLY like AbilityProgram.endsTurn — instead of returning to turn:action it
+      seeds the turn tail. Only meaningful alongside `trainer`; assumes the program
+      does not damage (Katy only draws), so no mid-turn KO sweep is owed. */
+  trainerEndsTurn?: true;
 }
 
 // ── The programs, authored from the printed text (verified vs the live
@@ -624,6 +631,40 @@ const POPPY: CardProgram = {
   trainer: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 2 }],
 };
 
+// ── M5 op-slice: handRefresh (the Iono/Judge/Marnie hand-refresh Supporter
+//    family) — shuffle your hand into your deck, then draw. The clean
+//    reshuffle-and-draw Supporters land now; the bottom-of-deck / prize-count
+//    variants (Iono, Marnie) layer later. (verified vs the local catalog
+//    2026-07-20). ──
+
+/** Youngster — "Shuffle your hand into your deck. Then, draw 5 cards."
+    (Supporter) — the self-only fixed refresh. */
+const YOUNGSTER: CardProgram = {
+  trainer: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 5 } }],
+};
+
+/** Judge — "Each player shuffles their hand into their deck and draws 4 cards."
+    (Supporter) — the both-player refresh (the first op to reach the OPPONENT's
+    hand/deck; count-only events keep every shuffled/drawn card hidden). */
+const JUDGE: CardProgram = {
+  trainer: [{ op: "handRefresh", who: "both", draw: { kind: "fixed", count: 4 } }],
+};
+
+/** Brassius — "Count the cards in your hand, shuffle those cards into your deck,
+    then draw that many cards plus 1." (Supporter) — handPlus draws the PRE-shuffle
+    hand size + 1 (net +1 card, reshuffled). */
+const BRASSIUS: CardProgram = {
+  trainer: [{ op: "handRefresh", who: "you", draw: { kind: "handPlus", delta: 1 } }],
+};
+
+/** Katy — "Shuffle your hand into your deck. Then, draw 8 cards. Your turn ends."
+    (Supporter) — the fixed refresh + the `trainerEndsTurn` fold (the Koraidon
+    `endsTurn` precedent, now on the Trainer path). */
+const KATY: CardProgram = {
+  trainer: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+  trainerEndsTurn: true,
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -726,6 +767,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-193": POPPY, // Poppy — move up to 2 any Energy, own → own (Supporter)
   "sv03-220": POPPY, // Poppy (reprint)
   "sv03-227": POPPY, // Poppy (reprint)
+  // — M5 op-slice: handRefresh (the hand-refresh Supporter family; verified vs
+  //   the local catalog 2026-07-20). —
+  "sv01-198": YOUNGSTER, // Youngster — shuffle hand into deck, draw 5
+  "sv01-176": JUDGE, // Judge — each player shuffles hand into deck, draws 4
+  "sv03-187": BRASSIUS, // Brassius — shuffle hand into deck, draw (hand size + 1)
+  "sv01-177": KATY, // Katy — shuffle hand into deck, draw 8, your turn ends
+  "sv01-237": KATY, // Katy (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
