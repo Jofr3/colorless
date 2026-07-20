@@ -148,7 +148,11 @@ event stream.
    authoring **Gardevoir ex** (engine 0.13.0), and **multi-attach (= N ops) +
    `basicOnly` + the `endsTurn` fold** authoring **Koraidon ex "Dino Cry"** (engine
    0.14.0). 4 of its 11 cards done; the other 7 need a deck-search source /
-   `lookAtTopN` / self-KO / onEvolve / …
+   `lookAtTopN` / self-KO / onEvolve / …. Then **`discardPileRetrieval`** (2026-07-20,
+   engine 0.15.0 — the searchDeck mirror: Energy Retrieval / Pal Pad / Super Rod,
+   3 of 6) and **`lookAtTopN`** (2026-07-20, engine 0.16.0 — the deck-top twin:
+   Great Ball / Pokégear 3.0, 2 of 5; the from-the-top **attach** variant still
+   layers on for Electric Generator / Hydreigon).
 6. Harden for authoritative server use (P4): validation, hidden info, server-owned
    RNG seed.
 
@@ -1460,6 +1464,74 @@ check` green (tsc + biome + **1117 tests** — 1106 → 1117: 11 engine
 rows), index.ts, testFixtures.ts (3 Item fixtures + `DISCARD_RETRIEVAL_DECK`),
 discardRetrieval.test.ts (new); web: GameHud.tsx (label), logFromEvents.ts (row),
 GameHud.cardplay.dom.test.tsx (2 assertions).
+
+## M5 op-slice: lookAtTopN as built (2026-07-20) — Great Ball / Pokégear 3.0
+
+**Shape (D36).** The top-of-deck twin of `searchDeck`: **`lookAtTopN`** (`{op, n,
+filter:CardFilter, max}`, effects.ts/interpreter.ts) looks at the top `n` cards of
+the controller's deck (index 0 = the top, per `drawToHand`) and puts up to `max`
+matching `filter` into their HAND:
+- Like searchDeck it is **"up to"** (declinable) and PARKS on the **same
+  `chooseCards` prompt** — no new prompt/dialog. But the candidates are ONLY the
+  `filter` matches among the **top `n`**, in deck order — never a deeper card. An
+  empty top-`n` match is a no-op.
+- **Wire-safety is free:** the candidate set is the top-`n` matches, and
+  `resolveEffect`/`validateChoice` already rejects any pick not in the candidate
+  set (`BAD_EFFECT_CHOICE`), so a client cannot reach past the window. `revealFromTop`
+  (the deck→hand mover, mirroring `searchMove`/`retrieveMove`) keeps the
+  `deck.includes` secondary guard.
+- "Shuffle the other cards back into your deck" is **NOT part of the op** — it is
+  the trailing **`shuffleDeck`** op in the authored program (the Nest Ball
+  search-then-shuffle pattern), so a whiff OR a decline (take none) still shuffles.
+- **No new `CardFilter`** (Great Ball reuses `anyPokemon`, Pokégear reuses the
+  `supporter` filter added with Pal Pad in D35); **no `programPlayable` gate** (a
+  look-at-top is always playable — you look and shuffle even on a guaranteed whiff).
+
+One new event **`DECK_TOP_REVEALED {seat, uids}`** (count-only in the log — honest
+"looked at the top of their deck" rather than DECK_SEARCHED's "searched"; the taken
+cards are revealed/public per the printed "reveal", and the non-taken looked-at
+cards never enter any event). Representatives (verified vs the local D1 catalog,
+both Items): **Great Ball** (sv02-183 — top 7, reveal a Pokémon → hand),
+**Pokégear 3.0** (sv01-186 — top 7, reveal a Supporter → hand).
+
+**Web: one log row, nothing else.** The shared origin-agnostic `ChooseCardsDialog`
+(relabeled "Choose cards" in D35) renders the accurate `prompt.note` ("Look at the
+top 7 cards of your deck and put a Pokémon into your hand." / "…a Supporter card
+into your hand."); the projection forwards the `chooseCards`/`dest:"hand"` prompt
+with no change (nothing switches on `dest`). engineVersion 0.15.0 → **0.16.0**.
+
+**Review (2 Opus agents — engine+rules / web+integration): BOTH CLEAN, no HIGH/MED
+correctness bugs.** The engine agent (8-test suite + a 22-assertion probe) proved
+card conservation (symmetric deck→hand move + the shuffle permutation), candidate
+correctness = **exactly the top-`n` matches** (the window boundary pinned: a match
+at index 6 IS a candidate, one at index 7 is NOT; a shallow deck with `n` > length
+and `n ≤ 0` both handled by `slice`/`Math.max(0,n)` with no over-read), wire-safety
+(a deeper / duplicate / over-max / non-string pick all rejected), shuffle-always-
+fires (the trailing op lives in the continuation `rest`), no flow-tail/KO
+interaction, and purity (the freeze reaches `revealFromTop`). The web agent proved
+log honesty + count-only + correct hot-seat seat attribution, the projection
+"unchanged" claim (no `dest` switch, the event handled in the one web event
+switch), the dialog serves the note, and no demo regression. **No code fixes
+required.** **INFO (both agents, PRE-EXISTING P4 deferral — not this slice):** the
+parked `chooseCards` prompt carries the top-`n` candidate uids unredacted
+per-viewer — identical to `searchDeck`/`discardPileRetrieval`, unobservable in the
+local hot-seat (the dialog renders only for the acting viewer), and exactly what
+P4's server filter must redact for the non-acting viewer. A second INFO: `revealFromTop`
+does not dedup its input before the hand-append — unreachable via the public API
+(validateChoice rejects duplicates first) and the identical contract as the vetted
+`searchMove`/`retrieveMove`, kept consistent rather than singled out.
+
+**Scope.** Authors 2 of the op's 5 backlog cards. The other 3 need MORE: **Electric
+Generator** (sv01-170) and **Hydreigon** (sv02-140) attach the found Energy — a
+from-the-top **attach** variant (lookAtTopN + a bench-attach-from-revealed) that
+ALSO unblocks 2 of the remaining `attachEnergyFrom` cards; **Malamar** (sv03-138)
+peeks at the OPPONENT's deck top (a distinct info-only op). **Verification:** `bun
+run check` green (tsc + biome + **1126 tests** — 1117 → 1126: 8 engine
+`lookAtTopN.test.ts` + 1 `logFromEvents.test.ts`), production `vite build` green.
+Files: effects.ts (op), interpreter.ts (stepOp/applyChoice cases, `revealFromTop`,
+`lookNote`), events.ts (`DECK_TOP_REVEALED`), registry.ts (2 programs + rows),
+index.ts, testFixtures.ts (2 Item fixtures + `LOOK_AT_TOP_DECK` + the `toDeckTop`
+surgery), lookAtTopN.test.ts (new); web: logFromEvents.ts (row), logFromEvents.test.ts (row).
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per

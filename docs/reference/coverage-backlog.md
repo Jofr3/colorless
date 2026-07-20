@@ -47,7 +47,7 @@ unblocks. High-value ops first.
 |---|---:|---|
 | 🚧 **`attachEnergyFrom`** (attach Energy from hand/discard/deck to a chosen Pokémon) | 11 | **DONE 4/11: Quaquaval, Baxcalibur** (single attach from hand/discard, engine 0.12.0) + **Gardevoir ex** (the `targetType`/`bonusCounters`/`notIfKO` riders, engine 0.13.0) + **Koraidon ex "Dino Cry"** (multi-attach = N ops + `basicOnly` + the `endsTurn` fold, engine 0.14.0). Remaining 7 need MORE ops on top: Forretress ex (deck-search + self-KO), Charizard ex (onEvolve + deck-search-multi), Geeta (deck-search + can't-attack), Electric Generator/Hydreigon (need `lookAtTopN`), Pawmot (deck-search→self, needs the source uid in EffectContext), Wigglytuff (a Special Energy by name) |
 | ✅ **`discardPileRetrieval`** (put/shuffle cards from discard → hand/deck) | 6 | **DONE 3/6** (engine 0.15.0, the searchDeck mirror + `supporter`/`pokemonOrBasicEnergy` filters): **Energy Retrieval** (2 Basic Energy → hand), **Pal Pad** (2 Supporters → deck), **Super Rod** (3 Pokémon/Basic Energy → deck). Remaining 3 need MORE: Superior Energy Retrieval (`discardFromHandCost`), Miriam (a conditional "if you shuffled any, draw 3" — a new gate), Pelipper (an Ability, not a Trainer). |
-| **`lookAtTopN`** (reveal/take a matching card from the top N) | 5 | Great Ball, Pokégear 3.0, Electric Generator, Hydreigon, Malamar |
+| ✅ **`lookAtTopN`** (reveal/take a matching card from the top N) | 5 | **DONE 2/5** (engine 0.16.0, the top-of-deck twin of searchDeck: candidates are the top-N matches, then a trailing shuffle): **Great Ball** (top 7 → a Pokémon), **Pokégear 3.0** (top 7 → a Supporter). Remaining 3 need MORE: Electric Generator + Hydreigon attach the found Energy (a from-the-top **attach** variant — the 2 attachEnergyFrom cards this also unblocks), Malamar peeks at the OPPONENT's deck top (a distinct info-only op). |
 | **`moveEnergy`** (move an Energy between your Pokémon) | 5 | Energy Switch, Exp. Share, Poppy, Armarouge, Mismagius |
 | **`conditionalPlay`** (a "you can use this only if <board condition>" gate) | 5 | Fighting Au Lait, Letter of Encouragement, Dendra, Lunatone, Luxray |
 | **`discardOpponentEnergy`** (discard an Energy from an opponent's Pokémon) | 4 | Crushing Hammer, Giacomo, Klawf ex, Mawile |
@@ -82,7 +82,10 @@ is well under 70.
    + `supporter`/`pokemonOrBasicEnergy` filters: Energy Retrieval, Pal Pad, Super
    Rod). Extra `CardFilter` kinds (Item/Tool/Evolution/no-rule-box) still layer on
    for other searchers.
-3. **`lookAtTopN`** and **`moveEnergy`** — common Items/Abilities.
+3. ✅ **`lookAtTopN`** — **DONE 2/5** (engine 0.16.0: Great Ball, Pokégear 3.0 —
+   the reveal-to-hand core). A from-the-top **attach** variant then unblocks
+   Electric Generator / Hydreigon (also 2 of the remaining attachEnergyFrom
+   cards). Next: **`moveEnergy`** — common Items/Abilities.
 4. **`conditionalPlay` / `conditionalGate`** as a family — unblocks a cluster of
    Supporters and Abilities at once.
 5. The **hand-refresh Supporter family** (`shuffleHandIntoDeck` + draw variants:

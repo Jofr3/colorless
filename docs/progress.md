@@ -3,31 +3,71 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-20 — build session #20 (**P3-M5 op-slice:
-`discardPileRetrieval`** — the recovery-Item family, the next-biggest backlog
-unlock after attachEnergyFrom (6 cards)). A near-exact **mirror of `searchDeck`**
-but source = the DISCARD pile, dest = hand or deck: retrieves up to `max` cards
-matching a `CardFilter`, "up to"/declinable, PARKS on the **same `chooseCards`
-prompt** (no new dialog), no-op on an empty match. `dest:"deck"` appends to the
-deck end, so "Shuffle … into your deck" is `[discardPileRetrieval(dest:deck),
-shuffleDeck]` (the Nest Ball pattern; a whiff still shuffles). Two new `CardFilter`
-kinds (**`supporter`**, **`pokemonOrBasicEnergy`**) + one new event
-(`DISCARD_RETRIEVED`, count-only in the log — the discard pile is public). Lands
-**3 COMPLETE real cards** (verified vs local D1): **Energy Retrieval** (2 Basic
-Energy → hand), **Pal Pad** (2 Supporters → deck), **Super Rod** (3 Pokémon/Basic
-Energy → deck). **Web:** a small honest touch — the shared card-pick dialog's label
-went "Search your deck" → "Choose cards" (now serves both a search and a retrieval;
-the accurate text is in `prompt.note`), the prompt `dest` union widened to include
-"deck" (inert everywhere), and one new log row. **2-agent Opus review BOTH CLEAN —
-no HIGH/MED bugs** (card conservation, filter semantics, no deck-order leak, no
-hidden-info leak all proven); one MED test-adequacy fix applied (the purity test
-now covers the actual `retrieveMove` mutation via a frozen parked state), plus LOW
-coverage tightening. engineVersion 0.14.0 → **0.15.0**; 1106 → **1117** tests,
-`bun run check` + `vite build` green. Chosen over the resume point's #1
-(deck-search-attach) because that op leaves every one of its 4 cards still blocked
-on a SECOND op, while this lands complete cards. See D35.
+**Last updated:** 2026-07-20 — build session #21 (**P3-M5 op-slice:
+`lookAtTopN`** — the deck-top look family, the next backlog op by unlock count).
+The **top-of-deck twin of `searchDeck`**: a new op `{n, filter, max}` looks at the
+top `n` cards of the controller's deck and puts up to `max` matching a `CardFilter`
+into their HAND, "up to"/declinable, PARKS on the **same `chooseCards` prompt** (no
+new dialog) — but the candidates are ONLY the matches among the **top `n`**, never
+a deeper card (`validateChoice`'s "picks ⊆ candidates" guards the window, so
+wire-safety is free). An empty top-`n` match is a no-op; "Shuffle the other cards
+back" is the trailing `shuffleDeck` op (the Nest Ball pattern; a whiff or a decline
+still shuffles). New mover `revealFromTop` + one new event (`DECK_TOP_REVEALED`,
+count-only log — honest "looked at the top" not "searched"). **No new `CardFilter`**
+(Great Ball reuses `anyPokemon`, Pokégear reuses `supporter` from D35) and **no
+`programPlayable` gate** (always playable — you look and shuffle even on a whiff).
+Lands **2 COMPLETE real cards** (verified vs local D1, both Items): **Great Ball**
+(sv02-183 — top 7 → a Pokémon), **Pokégear 3.0** (sv01-186 — top 7 → a Supporter).
+**Web:** one new log row; the shared origin-agnostic card-pick dialog (relabeled in
+D35) renders the accurate `prompt.note` ("Look at the top 7 cards…"), the projection
+unchanged. **2-agent Opus review BOTH CLEAN — no HIGH/MED bugs, NO code fixes**
+(card conservation, the window boundary index-6-in/7-out, wire-safety, shuffle-
+always-fires, no flow-tail interaction, purity, log honesty all proven — an 8-test
+suite + a 22-assertion probe). engineVersion 0.15.0 → **0.16.0**; 1117 → **1126**
+tests, `bun run check` + `vite build` green. INFO (both agents, pre-existing P4
+deferral): the parked prompt carries the top-`n` candidate uids unredacted
+per-viewer — same as searchDeck, unobservable in hot-seat, the P4 filter's job.
+See D36.
 
 ## Resume point
+**`lookAtTopN` is live (P3-M5, D36) — the deck-top look family.** The top-of-deck
+twin of `searchDeck`: a new op `{n, filter, max}` looks at the top `n` cards of the
+controller's deck and puts up to `max` matching `filter` into their HAND, "up to"/
+declinable, reusing the `chooseCards` park (no new prompt/dialog/wire shape). The
+candidates are ONLY the `filter` matches among the **top `n`** (never a deeper
+card — `validateChoice`'s "picks ⊆ candidates" guards the window); "Shuffle the
+other cards back" is the trailing `shuffleDeck` op (the Nest Ball pattern, so a
+whiff or a decline still shuffles). New mover `revealFromTop` + one new event
+`DECK_TOP_REVEALED` (count-only log). **No new `CardFilter`** (Great Ball reuses
+`anyPokemon`, Pokégear reuses `supporter` from D35); **no `programPlayable` gate**.
+Lands **Great Ball** (sv02-183 — top 7 → a Pokémon) and **Pokégear 3.0** (sv01-186
+— top 7 → a Supporter) — 2 of the op's 5 backlog cards. **Web (small):** one
+`DECK_TOP_REVEALED` log row; the shared origin-agnostic `ChooseCardsDialog` (D35)
+renders the accurate `prompt.note` and the projection is unchanged. engine 0.15.0 →
+**0.16.0**. **Review (2 Opus agents): BOTH CLEAN — no HIGH/MED, NO code fixes**
+(card conservation, window boundary, wire-safety, shuffle-always-fires, no flow-tail
+interaction, purity, log honesty all proven). INFO (both, pre-existing P4 deferral):
+the parked prompt carries the top-`n` candidate uids unredacted per-viewer — same as
+`searchDeck`, unobservable in hot-seat, the P4 filter's job. See "M5 op-slice:
+lookAtTopN as built" + D36.
+**Next concrete actions (keep building the backlog):**
+1. **The next backlog op by unlock count** — **`moveEnergy`** (5 — Energy Switch,
+   Exp. Share, Poppy, Armarouge, Mismagius), the **`conditionalPlay`** family (5),
+   or the **hand-refresh Supporter family** (Iono/Judge/Marnie —
+   `shuffleHandIntoDeck` + draw). See `docs/reference/coverage-backlog.md`.
+2. A **from-the-top attach** variant (lookAtTopN + a bench-attach-from-revealed)
+   lands **Electric Generator** + **Hydreigon** — also 2 of the remaining
+   `attachEnergyFrom` cards; **Malamar** needs an opponent-deck peek (a distinct
+   info-only op).
+3. Or the remaining `attachEnergyFrom` cards via a **deck-search-attach** source op
+   (Forretress/Charizard/Geeta/Pawmot — each also needs a per-card rider: self-KO,
+   onEvolve, can't-attack, attach-to-self).
+4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games; the projection is already P4's per-viewer filter, and the INFO above is
+   exactly what its server-side redaction must cover (`pendingDecision.prompt`).
+
+---
+### Prior resume point (P3-M5 discardPileRetrieval, kept for continuity)
 **`discardPileRetrieval` is live (P3-M5, D35) — the recovery-Item family.** The
 discard-pile mirror of `searchDeck`: a new op `{filter, dest:"hand"|"deck", max}`
 retrieves up to `max` matching cards from the controller's discard pile, "up to"/
@@ -232,13 +272,68 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards)) — next: the next backlog op (`lookAtTopN` / `moveEnergy` / hand-refresh Supporters), the remaining attach/retrieval cards, or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards)) — next: the next backlog op (`moveEnergy` / `conditionalPlay` / hand-refresh Supporters), a from-the-top attach variant (Electric Generator / Hydreigon), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-20** (build #21) — **P3-M5 op-slice: `lookAtTopN`** (D36; built solo —
+  full context — then a 2-agent Opus review, BOTH CLEAN). The next backlog op by
+  unlock count, and the **top-of-deck twin of the vetted `searchDeck` op** — look
+  at the top `n` cards, put up to `max` matching a filter into HAND, then shuffle.
+  New op **`lookAtTopN`** `{n, filter, max}` looks at `deck.slice(0, n)` (index 0 =
+  the top, per `drawToHand`) and PARKS on the **same `chooseCards` prompt** (no new
+  dialog/prompt/wire shape) — but the candidates are ONLY the `filter` matches among
+  the **top `n`**, in deck order, never a deeper card. "Up to"/declinable → parks on
+  ≥1 candidate; an empty top-`n` match is a no-op. **Wire-safety is free:**
+  `resolveEffect`/`validateChoice` already rejects any pick not in the candidate set
+  (`BAD_EFFECT_CHOICE`), so a client cannot reach past the window; the new mover
+  **`revealFromTop`** (mirrors `searchMove`/`retrieveMove`) keeps the `deck.includes`
+  secondary guard. "Shuffle the other cards back into your deck" is the trailing
+  **`shuffleDeck`** op (the Nest Ball search-then-shuffle pattern), so a whiff OR a
+  decline still shuffles. **No new `CardFilter`** (Great Ball reuses `anyPokemon`,
+  Pokégear reuses the `supporter` filter added with Pal Pad in D35); **no
+  `programPlayable` gate** (a look-at-top is always playable — you look and shuffle
+  even on a guaranteed whiff, so it never soft-locks). One new event
+  **`DECK_TOP_REVEALED {seat, uids}`** (count-only in the log — honest "looked at the
+  top of their deck" rather than DECK_SEARCHED's "searched"; the taken cards are
+  revealed/public per the printed "reveal", and the non-taken looked-at cards never
+  enter any event). Representatives (verified vs the local D1 catalog, both Items):
+  **Great Ball** (sv02-183 — top 7, reveal a Pokémon → hand), **Pokégear 3.0**
+  (sv01-186 — top 7, reveal a Supporter → hand). **Web: one log row, nothing else** —
+  the shared origin-agnostic `ChooseCardsDialog` (relabeled "Choose cards" in D35)
+  renders the accurate `prompt.note` ("Look at the top 7 cards of your deck and put a
+  Pokémon into your hand." / "…a Supporter card into your hand."), and the projection
+  forwards the `chooseCards`/`dest:"hand"` prompt with no change (nothing switches on
+  `dest`). engineVersion 0.15.0 → **0.16.0**. **Review (2 Opus agents — engine+rules /
+  web+integration): BOTH CLEAN, no HIGH/MED correctness bugs, NO code fixes.** The
+  engine agent (8-test suite + a 22-assertion probe) proved card conservation
+  (symmetric deck→hand move + the shuffle permutation), candidate correctness =
+  **exactly the top-`n` matches** (the window boundary PINNED — a match at index 6 IS
+  a candidate, one at index 7 is NOT; a shallow deck with `n` > length and `n ≤ 0`
+  both handled by `slice`/`Math.max(0,n)` with no over-read), wire-safety (a deeper /
+  duplicate / over-max / non-string pick all rejected), shuffle-always-fires (the
+  trailing op lives in the continuation `rest`), no flow-tail/KO interaction, purity
+  (the freeze reaches `revealFromTop`), and program-vs-text. The web agent proved log
+  honesty + count-only + correct hot-seat seat attribution, the projection "unchanged"
+  claim (no `dest` switch; the event handled in the one web event switch), the dialog
+  serves the note, and no demo regression. **INFO (both agents, PRE-EXISTING P4
+  deferral — not this slice):** the parked `chooseCards` prompt carries the top-`n`
+  candidate uids unredacted per-viewer — identical to `searchDeck`/`discardPileRetrieval`,
+  unobservable in the local hot-seat (the dialog renders only for the acting viewer),
+  and exactly what P4's server filter must redact for the non-acting viewer; a second
+  INFO notes `revealFromTop` does not dedup its input before the hand-append
+  (unreachable — validateChoice rejects duplicates first — and the identical contract
+  as the vetted movers, kept consistent rather than singled out). **Scope:** authors
+  2 of the op's 5 backlog cards; the other 3 need a from-the-top **attach** variant
+  (Electric Generator sv01-170 / Hydreigon sv02-140 — which ALSO unblocks 2 of the
+  remaining attachEnergyFrom cards) or an opponent-deck peek (Malamar sv03-138).
+  **1117 → 1126 tests**, `bun run check` + `vite build` green. Files: effects.ts,
+  interpreter.ts, events.ts, registry.ts, index.ts, testFixtures.ts (2 Item fixtures
+  + `LOOK_AT_TOP_DECK` + the `toDeckTop` surgery), lookAtTopN.test.ts (new); web:
+  logFromEvents.ts, logFromEvents.test.ts.
 - **2026-07-20** (build #20) — **P3-M5 op-slice: `discardPileRetrieval`** (D35;
   built solo — full context — then a 2-agent Opus review, BOTH CLEAN). The
   next-biggest backlog unlock after `attachEnergyFrom` (6 cards), and a near-exact
