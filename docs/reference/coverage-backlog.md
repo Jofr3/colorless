@@ -48,7 +48,7 @@ unblocks. High-value ops first.
 | 🚧 **`attachEnergyFrom`** (attach Energy from hand/discard/deck to a chosen Pokémon) | 11 | **DONE 4/11: Quaquaval, Baxcalibur** (single attach from hand/discard, engine 0.12.0) + **Gardevoir ex** (the `targetType`/`bonusCounters`/`notIfKO` riders, engine 0.13.0) + **Koraidon ex "Dino Cry"** (multi-attach = N ops + `basicOnly` + the `endsTurn` fold, engine 0.14.0). Remaining 7 need MORE ops on top: Forretress ex (deck-search + self-KO), Charizard ex (onEvolve + deck-search-multi), Geeta (deck-search + can't-attack), Electric Generator/Hydreigon (need `lookAtTopN`), Pawmot (deck-search→self, needs the source uid in EffectContext), Wigglytuff (a Special Energy by name) |
 | ✅ **`discardPileRetrieval`** (put/shuffle cards from discard → hand/deck) | 6 | **DONE 3/6** (engine 0.15.0, the searchDeck mirror + `supporter`/`pokemonOrBasicEnergy` filters): **Energy Retrieval** (2 Basic Energy → hand), **Pal Pad** (2 Supporters → deck), **Super Rod** (3 Pokémon/Basic Energy → deck). Remaining 3 need MORE: Superior Energy Retrieval (`discardFromHandCost`), Miriam (a conditional "if you shuffled any, draw 3" — a new gate), Pelipper (an Ability, not a Trainer). |
 | ✅ **`lookAtTopN`** (reveal/take a matching card from the top N) | 5 | **DONE 2/5** (engine 0.16.0, the top-of-deck twin of searchDeck: candidates are the top-N matches, then a trailing shuffle): **Great Ball** (top 7 → a Pokémon), **Pokégear 3.0** (top 7 → a Supporter). Remaining 3 need MORE: Electric Generator + Hydreigon attach the found Energy (a from-the-top **attach** variant — the 2 attachEnergyFrom cards this also unblocks), Malamar peeks at the OPPONENT's deck top (a distinct info-only op). |
-| **`moveEnergy`** (move an Energy between your Pokémon) | 5 | Energy Switch, Exp. Share, Poppy, Armarouge, Mismagius |
+| ✅ **`moveEnergy`** (move an Energy between your Pokémon) | 5 | **DONE 2/5** (engine 0.17.0, the compound-park own→own op + the `anyEnergy` filter): **Energy Switch** (a Basic Energy, max 1), **Poppy** (up to 2 any Energy, max 2). Remaining 3 need MORE: Armarouge "Fire Off" (a {R} Energy benched→Active — fixed-endpoint + provided-type filter, an Ability), Mismagius "Magical Flick" (moves the OPPONENT's Energy on evolve — opponent-side + onEvolve trigger), Exp. Share (an on-KO Tool trigger). |
 | **`conditionalPlay`** (a "you can use this only if <board condition>" gate) | 5 | Fighting Au Lait, Letter of Encouragement, Dendra, Lunatone, Luxray |
 | **`discardOpponentEnergy`** (discard an Energy from an opponent's Pokémon) | 4 | Crushing Hammer, Giacomo, Klawf ex, Mawile |
 | **`discardFromHandCost`** (pay "discard N cards from hand" to play) | 4 | Ultra Ball, Superior Energy Retrieval, Revavroom, Tinkaton |
@@ -84,11 +84,17 @@ is well under 70.
    for other searchers.
 3. ✅ **`lookAtTopN`** — **DONE 2/5** (engine 0.16.0: Great Ball, Pokégear 3.0 —
    the reveal-to-hand core). A from-the-top **attach** variant then unblocks
-   Electric Generator / Hydreigon (also 2 of the remaining attachEnergyFrom
-   cards). Next: **`moveEnergy`** — common Items/Abilities.
-4. **`conditionalPlay` / `conditionalGate`** as a family — unblocks a cluster of
+   Electric Generator / Hydreigon (also 2 of the remaining attachEnergyFrom cards).
+4. ✅ **`moveEnergy`** — **DONE 2/5** (engine 0.17.0: Energy Switch, Poppy — the
+   own→own core, the interpreter's first compound-park op + the `anyEnergy` filter).
+   The remaining 3 layer riders on it: a fixed-endpoint provided-type move
+   (Armarouge), an opponent-side move on evolve (Mismagius), an on-KO Tool move
+   (Exp. Share). Next candidates: the from-the-top **attach** variant (Electric
+   Generator / Hydreigon, also 2 attachEnergyFrom cards), the **`conditionalPlay`**
+   family (5), or the **hand-refresh Supporter family** (Iono/Judge/Marnie).
+5. **`conditionalPlay` / `conditionalGate`** as a family — unblocks a cluster of
    Supporters and Abilities at once.
-5. The **hand-refresh Supporter family** (`shuffleHandIntoDeck` + draw variants:
+6. The **hand-refresh Supporter family** (`shuffleHandIntoDeck` + draw variants:
    Iono, Judge, Marnie-likes) — high play rate, one op + a couple of draw shapes.
 Each is a normal engine slice (new op + interpreter case + registry rows +
 tests + review), and each turns dozens of "needs-op" rows into a few data rows.

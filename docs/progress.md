@@ -3,33 +3,89 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-20 — build session #21 (**P3-M5 op-slice:
-`lookAtTopN`** — the deck-top look family, the next backlog op by unlock count).
-The **top-of-deck twin of `searchDeck`**: a new op `{n, filter, max}` looks at the
-top `n` cards of the controller's deck and puts up to `max` matching a `CardFilter`
-into their HAND, "up to"/declinable, PARKS on the **same `chooseCards` prompt** (no
-new dialog) — but the candidates are ONLY the matches among the **top `n`**, never
-a deeper card (`validateChoice`'s "picks ⊆ candidates" guards the window, so
-wire-safety is free). An empty top-`n` match is a no-op; "Shuffle the other cards
-back" is the trailing `shuffleDeck` op (the Nest Ball pattern; a whiff or a decline
-still shuffles). New mover `revealFromTop` + one new event (`DECK_TOP_REVEALED`,
-count-only log — honest "looked at the top" not "searched"). **No new `CardFilter`**
-(Great Ball reuses `anyPokemon`, Pokégear reuses `supporter` from D35) and **no
-`programPlayable` gate** (always playable — you look and shuffle even on a whiff).
-Lands **2 COMPLETE real cards** (verified vs local D1, both Items): **Great Ball**
-(sv02-183 — top 7 → a Pokémon), **Pokégear 3.0** (sv01-186 — top 7 → a Supporter).
-**Web:** one new log row; the shared origin-agnostic card-pick dialog (relabeled in
-D35) renders the accurate `prompt.note` ("Look at the top 7 cards…"), the projection
-unchanged. **2-agent Opus review BOTH CLEAN — no HIGH/MED bugs, NO code fixes**
-(card conservation, the window boundary index-6-in/7-out, wire-safety, shuffle-
-always-fires, no flow-tail interaction, purity, log honesty all proven — an 8-test
-suite + a 22-assertion probe). engineVersion 0.15.0 → **0.16.0**; 1117 → **1126**
-tests, `bun run check` + `vite build` green. INFO (both agents, pre-existing P4
-deferral): the parked prompt carries the top-`n` candidate uids unredacted
-per-viewer — same as searchDeck, unobservable in hot-seat, the P4 filter's job.
-See D36.
+**Last updated:** 2026-07-20 — build session #22 (**P3-M5 op-slice:
+`moveEnergy`** — move Energy between your own Pokémon, the next backlog op by unlock
+count). A new op `{filter, max}` moves up to `max` Energy from ONE of your in-play
+Pokémon to ANOTHER — the interpreter's **first op with two COUPLED decisions** (which
+Energy AND where), so it introduces a **new compound prompt** (`movable` energies
+tagged by source ref + `destinations`) and a **new choice** `{uids, dest}` answering
+both at once, applied **ATOMICALLY** (`moveEnergyApply` strips off the source and
+appends to the dest in one write — a floating detached-Energy state never exists, so
+it is one compound park, not two sequential ones). "Up to"/declinable; always parks
+when playable. **`validateChoice`** enforces the couplings (uids ⊆ movable, distinct,
+ONE shared source, dest offered, **dest ≠ source**), so no illegal wire move applies;
+`moveEnergyApply` conserves cards (each uid off exactly one non-dest Pokémon, onto the
+dest once) and is pure. New **`programPlayable` gate** (`moveEnergyPlayable`: ≥1
+matching Energy AND ≥2 of your Pokémon in play) = the exact complement of stepOp's
+no-op → no wasted card, no soft-lock. One new `CardFilter` **`anyEnergy`** (Basic OR
+Special — Poppy) + one new event `ENERGY_MOVED {seat, uids, from, to}`. Lands **2
+COMPLETE real cards** (verified vs local D1): **Energy Switch** (sv01-173, Item — a
+Basic Energy), **Poppy** (sv03-193/220/227, Supporter — up to 2 any Energy). **Web (a
+new dialog):** `MoveEnergyDialog` — a staged pick (source → its Energy + a distinct
+destination, or **Move none**) that can only dispatch a validateChoice-accepted
+choice; + one `ENERGY_MOVED` log row. **This prompt leaks NOTHING** — its candidates
+are the controller's OWN face-up in-play Energy/Pokémon (public), so — uniquely — no
+P4 redaction is even needed (contrast searchDeck/lookAtTopN's deck-candidate INFO).
+**Adversarial review (engine+rules + web + an independent Opus pass): CLEAN, no
+HIGH/MED** (card conservation under every edge, illegal-payload rejection, gate ⇔
+no-op equivalence, purity, rules accuracy, dialog can't dispatch a rejected choice);
+one action — closed a DOM gap (the multi-source source-picker stage → a two-source
+Poppy DOM test). engineVersion 0.16.0 → **0.17.0**; 1126 → **1146** tests, `bun run
+check` + `vite build` green. INFO (not a bug): Energy Switch is not "you may", so
+allowing a decline is a minor documented deviation. See D37.
 
 ## Resume point
+**`moveEnergy` is live (P3-M5, D37) — move Energy between your own Pokémon.** A new
+op `{filter, max}` moves up to `max` Energy from ONE of the controller's own in-play
+Pokémon to ANOTHER — the interpreter's **first op with two COUPLED decisions** (which
+Energy AND where). Unlike every prior op (which reused one existing prompt), it adds a
+**new compound prompt** `moveEnergy` (`movable`: each takeable Energy uid tagged with
+its source `PokemonRef`; `destinations`: all own in-play refs) and a **new choice**
+`{uids, dest}` answering both at once, applied **ATOMICALLY** by `moveEnergyApply`
+(strip the picks off their source, append to the dest in one `withSide` — a floating
+detached-Energy state never exists, which is why it is one compound park not two).
+"Up to"/declinable; always parks when playable. **`validateChoice`** enforces the
+couplings (each uid an offered `movable`, distinct, ALL sharing ONE source, dest
+offered, **dest ≠ source**), so no illegal wire move applies; `moveEnergyApply`
+conserves cards and is pure. New **`programPlayable` gate** (`moveEnergyPlayable`: ≥1
+matching Energy AND ≥2 of your Pokémon in play) = the exact complement of stepOp's
+no-op (no wasted card, no soft-lock). One new `CardFilter` **`anyEnergy`** (Basic OR
+Special) + one new event `ENERGY_MOVED {seat, uids, from, to}`. Lands **Energy
+Switch** (sv01-173, Item — a Basic Energy) and **Poppy** (sv03-193/220/227, Supporter
+— up to 2 any Energy) — 2 of the op's 5 backlog cards. **Web (a new dialog):**
+`MoveEnergyDialog` — a staged pick (source → its Energy + a distinct destination, or
+**Move none**) that can only dispatch a validateChoice-accepted choice; + one
+`ENERGY_MOVED` log row. **This prompt leaks NOTHING** (its candidates are the
+controller's OWN face-up in-play Energy/Pokémon — public), so — uniquely among the
+parking ops — no P4 redaction is even needed for it. engine 0.16.0 → **0.17.0**.
+**Adversarial review (engine+rules + web + an independent Opus pass): CLEAN — no
+HIGH/MED** (card conservation under dest==source / dest-resident / stale-uid /
+two-source / bench-shift, illegal-payload rejection, gate ⇔ no-op equivalence, purity,
+rules accuracy, dialog can't dispatch a rejected choice); one action — closed a DOM
+gap (the multi-source source-picker stage → a two-source Poppy DOM test). INFO (not a
+bug): Energy Switch is not "you may", so allowing a decline is a minor documented
+deviation. See "M5 op-slice: moveEnergy as built" + D37.
+**Next concrete actions (keep building the backlog):**
+1. **The remaining `moveEnergy` cards** each layer a rider on this primitive:
+   **Armarouge** "Fire Off" (a {R} Energy benched→Active — fixed-endpoint +
+   provided-type filter, an Ability), **Mismagius** "Magical Flick" (the OPPONENT's
+   Energy on evolve — opponent-side + onEvolve trigger), **Exp. Share** (an on-KO Tool
+   trigger).
+2. **The next backlog op by unlock count** — a **from-the-top attach** variant
+   (lookAtTopN + a bench-attach-from-revealed) lands **Electric Generator** +
+   **Hydreigon** (also 2 of the remaining `attachEnergyFrom` cards; **Malamar** needs
+   an opponent-deck peek), the **`conditionalPlay`** family (5), or the **hand-refresh
+   Supporter family** (Iono/Judge/Marnie). See `docs/reference/coverage-backlog.md`.
+3. Or the remaining `attachEnergyFrom` cards via a **deck-search-attach** source op
+   (Forretress/Charizard/Geeta/Pawmot — each also needs a per-card rider: self-KO,
+   onEvolve, can't-attack, attach-to-self).
+4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games; the projection is already P4's per-viewer filter, and the deck-candidate
+   INFO (searchDeck/lookAtTopN) is exactly what its server-side redaction must cover
+   (`pendingDecision.prompt`) — `moveEnergy`'s all-public prompt needs none.
+
+---
+### Prior resume point (P3-M5 lookAtTopN, kept for continuity)
 **`lookAtTopN` is live (P3-M5, D36) — the deck-top look family.** The top-of-deck
 twin of `searchDeck`: a new op `{n, filter, max}` looks at the top `n` cards of the
 controller's deck and puts up to `max` matching `filter` into their HAND, "up to"/
@@ -50,21 +106,6 @@ interaction, purity, log honesty all proven). INFO (both, pre-existing P4 deferr
 the parked prompt carries the top-`n` candidate uids unredacted per-viewer — same as
 `searchDeck`, unobservable in hot-seat, the P4 filter's job. See "M5 op-slice:
 lookAtTopN as built" + D36.
-**Next concrete actions (keep building the backlog):**
-1. **The next backlog op by unlock count** — **`moveEnergy`** (5 — Energy Switch,
-   Exp. Share, Poppy, Armarouge, Mismagius), the **`conditionalPlay`** family (5),
-   or the **hand-refresh Supporter family** (Iono/Judge/Marnie —
-   `shuffleHandIntoDeck` + draw). See `docs/reference/coverage-backlog.md`.
-2. A **from-the-top attach** variant (lookAtTopN + a bench-attach-from-revealed)
-   lands **Electric Generator** + **Hydreigon** — also 2 of the remaining
-   `attachEnergyFrom` cards; **Malamar** needs an opponent-deck peek (a distinct
-   info-only op).
-3. Or the remaining `attachEnergyFrom` cards via a **deck-search-attach** source op
-   (Forretress/Charizard/Geeta/Pawmot — each also needs a per-card rider: self-KO,
-   onEvolve, can't-attack, attach-to-self).
-4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games; the projection is already P4's per-viewer filter, and the INFO above is
-   exactly what its server-side redaction must cover (`pendingDecision.prompt`).
 
 ---
 ### Prior resume point (P3-M5 discardPileRetrieval, kept for continuity)
@@ -272,13 +313,68 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards)) — next: the next backlog op (`moveEnergy` / `conditionalPlay` / hand-refresh Supporters), a from-the-top attach variant (Electric Generator / Hydreigon), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards)) — next: the remaining `moveEnergy` riders (Armarouge / Mismagius / Exp. Share), the next backlog op (from-the-top attach / `conditionalPlay` / hand-refresh Supporters), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-20** (build #22) — **P3-M5 op-slice: `moveEnergy`** (D37; built solo —
+  full context — then an adversarial engine+rules + web review plus an independent
+  Opus pass, CLEAN). The next backlog op by unlock count (5), and the interpreter's
+  **first op with two COUPLED decisions** (which Energy AND where). New op
+  **`moveEnergy`** `{filter, max}` moves up to `max` Energy from ONE of the
+  controller's own in-play Pokémon to ANOTHER. Every op before this reused one
+  existing prompt; a two-endpoint move can't, so it adds a **new compound prompt**
+  `moveEnergy` (`movable`: each takeable Energy uid tagged with its source
+  `PokemonRef`; `destinations`: all own in-play refs) and a **new choice**
+  `{uids, dest}` answering both at once — applied **ATOMICALLY** by `moveEnergyApply`
+  (strip the picks off their source, append to the dest in one `withSide`; a floating
+  detached-Energy state never exists, which is why it is one compound park not two
+  sequential ones with a leaked intermediate). "Up to"/declinable; ALWAYS parks when
+  playable (never auto-resolves), the searchDeck/lookAtTopN family. **`validateChoice`
+  (cardplay.ts)** enforces every coupling the compound decision needs: each uid an
+  offered `movable` (distinct, non-string rejected), ALL picks share ONE source
+  Pokémon (the printed "from 1 of your Pokémon"), dest an offered ref, and **dest ≠
+  source** (no moving a Pokémon's Energy onto itself) — so a crafted P4 payload can't
+  apply an illegal move. **`moveEnergyApply` conserves cards** (each picked uid removed
+  from exactly one non-destination Pokémon, appended once to the dest; the dest is
+  never stripped → no self-move/dup; stale/dest-resident uids skipped) and is pure
+  like `searchMove` (the freeze test reaches the move). New **`programPlayable` gate**
+  (`moveEnergyPlayable`: ≥1 Energy the filter admits AND ≥2 of your Pokémon in play) =
+  the EXACT complement of `stepOp`'s no-op condition, so a gated card is never wasted
+  and a playable card always parks (no silent no-op, no soft-lock — ≥2 Pokémon
+  guarantees a legal source≠dest pair). One new `CardFilter` kind **`anyEnergy`**
+  (Basic OR Special — Poppy moves either; Energy Switch stays `basicEnergy`) + one new
+  event **`ENERGY_MOVED {seat, uids, from, to}`** (`from`/`to` are `PokemonTarget`
+  copies; no bench compaction, so both resolve post-state). Representatives (verified
+  vs the local D1 catalog): **Energy Switch** (sv01-173, Item — a Basic Energy, max 1),
+  **Poppy** (sv03-193/220/227, Supporter — up to 2 any Energy, max 2). **Web: a new
+  dialog + a log row** — `MoveEnergyDialog` is a staged pick like Rare Candy (source
+  → its Energy + a distinct destination → Confirm, or **Move none** to decline), which
+  can only ever dispatch a `validateChoice`-accepted choice (dest drawn from
+  destinations-minus-source; picks capped at `max`, all from the one selected source);
+  new `ENERGY_MOVED` log row ("moved N energy from X to Y"). **This prompt leaks
+  NOTHING** — its `movable`/`destinations` are entirely the controller's OWN face-up
+  in-play Energy/Pokémon (public table facts), so — uniquely among the parking ops so
+  far — no P4 redaction is even needed for it (contrast searchDeck/lookAtTopN, whose
+  deck-order candidate uids are the standing P4-deferral INFO). engineVersion 0.16.0 →
+  **0.17.0**. **Review: CLEAN, no HIGH/MED** — card conservation under dest==source /
+  dest-resident pick / stale uid / two-source pick / bench-index shift; every illegal
+  wire payload rejected; the gate ⇔ no-op equivalence; purity; rules accuracy (Poppy
+  moves Special too, Energy Switch basic-only, same-source enforced, no §6.3 attach
+  allowance touched); and the dialog can't dispatch a rejected choice. **One action:**
+  the auto-selected single-source path was tested but the **multi-source source-picker
+  stage** (and its Back/reset) was not — added a two-source Poppy DOM test. **INFO
+  (not a bug):** Energy Switch's text is not "you may", so allowing a decline is a
+  minor documented deviation (harmless — the player just wouldn't play the card),
+  consistent with the "up to"/declinable search family. **Scope:** authors 2 of the
+  op's 5 backlog cards (own→own); the other 3 layer riders — Armarouge "Fire Off" (a
+  {R} Energy benched→Active, an Ability), Mismagius "Magical Flick" (the OPPONENT's
+  Energy on evolve, an onEvolve trigger), Exp. Share (an on-KO Tool trigger). `bun run
+  check` green (tsc + biome + **1146 tests**, 1126 → 1146: 16 engine + 1 log + 3 DOM),
+  `vite build` green. See "M5 op-slice: moveEnergy as built" + D37.
 - **2026-07-20** (build #21) — **P3-M5 op-slice: `lookAtTopN`** (D36; built solo —
   full context — then a 2-agent Opus review, BOTH CLEAN). The next backlog op by
   unlock count, and the **top-of-deck twin of the vetted `searchDeck` op** — look

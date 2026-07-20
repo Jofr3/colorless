@@ -1533,6 +1533,98 @@ Files: effects.ts (op), interpreter.ts (stepOp/applyChoice cases, `revealFromTop
 index.ts, testFixtures.ts (2 Item fixtures + `LOOK_AT_TOP_DECK` + the `toDeckTop`
 surgery), lookAtTopN.test.ts (new); web: logFromEvents.ts (row), logFromEvents.test.ts (row).
 
+## M5 op-slice: moveEnergy as built (2026-07-20) — Energy Switch / Poppy
+
+**Shape (D37).** Move Energy between your own Pokémon: **`moveEnergy`** (`{op,
+filter:CardFilter, max}`, effects.ts/interpreter.ts) moves up to `max` Energy from
+ONE of the controller's own in-play Pokémon to ANOTHER of their own in-play Pokémon.
+This is the interpreter's **first op with two COUPLED decisions** — which Energy AND
+where — so it parks differently from every op before it:
+- A **new compound prompt** `moveEnergy` carries `movable` (each takeable Energy uid
+  tagged with its source `PokemonRef`) + `destinations` (all own in-play refs) +
+  `max` + `note`; the **new choice** `{kind:"moveEnergy", uids, dest}` answers both
+  at once. It applies **ATOMICALLY** on resolve (`moveEnergyApply`: strip the picked
+  uids off their source, append to the destination in one `withSide`) — a half-moved
+  Energy (detached but not re-attached) is never a resting state, so the move never
+  splits across two parks. This is why it is one compound park, not two sequential
+  ones (the two-park shape has no place to thread the first pick, and would leak a
+  floating-Energy intermediate).
+- **"Up to"/declinable** like searchDeck (the player may move none → a legal empty
+  pick). It ALWAYS parks when playable (never auto-resolves even when the source is
+  forced), matching the searchDeck/lookAtTopN "you may" family rather than the
+  parkOrForce targeting family.
+- **`validateChoice` (cardplay.ts)** enforces every coupling the compound decision
+  needs: each uid is an offered `movable` (distinct, non-string rejected), all picks
+  share ONE source Pokémon (the printed "from 1 of your Pokémon"), the dest is an
+  offered ref, and **dest ≠ source** (no moving a Pokémon's Energy onto itself). So a
+  crafted P4 wire payload cannot apply an illegal move.
+- **`moveEnergyApply` conserves cards:** each picked uid is removed from exactly one
+  non-destination Pokémon and appended once to the destination (the dest is never
+  stripped → no self-move / duplication; a stale or dest-resident uid is skipped, not
+  duplicated). The re-attach reads off the STRIPPED board. Pure like
+  `searchMove`/`retrieveMove` (copy, never splice; the freeze test reaches the move).
+- **`programPlayable` gate** (`moveEnergyPlayable`): playable iff ≥1 Energy the filter
+  admits AND **≥2 of your Pokémon in play** (a source with a distinct destination) —
+  the EXACT complement of `stepOp`'s no-op condition, so a gated card is never wasted
+  and a playable card always parks (no silent no-op, no soft-lock — ≥2 Pokémon
+  guarantees a legal source≠dest pair).
+
+One new `CardFilter` kind **`anyEnergy`** (Basic OR Special — Poppy moves "up to 2
+Energy", either kind; Energy Switch stays `basicEnergy`). One new event
+**`ENERGY_MOVED {seat, uids, from, to}`** (`from`/`to` are `PokemonTarget` copies;
+the Pokémon stay put — no bench compaction — so both resolve against the post-state).
+Representatives (verified vs the local D1 catalog): **Energy Switch** (sv01-173, Item
+— a Basic Energy, max 1), **Poppy** (sv03-193/220/227, Supporter — up to 2 any
+Energy, max 2).
+
+**Web: a new dialog + a log row.** `MoveEnergyDialog` (GameHud.tsx) is a staged pick
+like Rare Candy: choose the source Pokémon (auto-selected when only one holds movable
+Energy), then its Energy (up to `max`) and a distinct destination, then Confirm — or
+**Move none** to decline (dispatches an empty pick with any offered dest, which the
+engine accepts). The dialog can only ever dispatch a choice `validateChoice` accepts
+(dest drawn from destinations-minus-source; picks capped at `max` and all from the
+one selected source). New `ENERGY_MOVED` log row ("moved N energy from X to Y").
+engineVersion 0.16.0 → **0.17.0**.
+
+**Hidden information: this prompt leaks NOTHING.** Unlike `searchDeck`/`lookAtTopN`
+(whose parked prompt carries deck-order candidate uids — the standing P4 redaction
+INFO), `moveEnergy`'s `movable`/`destinations` are entirely the controller's OWN
+in-play Energy and Pokémon, which are already **public, face-up table facts**. So
+there is no new leak class here, and — uniquely among the parking ops so far — no P4
+redaction is even needed for this prompt.
+
+**Review (adversarial — engine+rules + web+integration passes, plus an independent
+Opus pass): CLEAN, no HIGH/MED bugs.** Verified: card conservation under
+dest==source / dest-resident pick / stale uid / two-source pick / bench-index shift
+(strip-then-reattach, dest never stripped); `validateChoice` rejects every illegal
+wire payload (opponent energy, dest==source, non-string/duplicate uid, >max,
+two-source); the gate ⇔ no-op equivalence (no wasted card, no soft-lock); purity;
+rules accuracy (Poppy moves Special too, Energy Switch basic-only, same-source
+enforced, no §6.3 attach-allowance touched); and that the dialog can never dispatch a
+rejected choice. The one action taken was closing a **DOM coverage gap** — the
+auto-selected single-source path was tested, but the **multi-source source-picker
+stage** (and its Back/reset) was not, so a two-source Poppy DOM test was added. **INFO
+(not a bug):** Energy Switch's text is not "you may", so allowing a decline is a
+minor, documented deviation (harmless — the player simply wouldn't play the card),
+consistent with the codebase's "up to"/declinable doctrine for the search family.
+
+**Scope.** Authors 2 of the op's 5 backlog cards (own→own). The other 3 need MORE ops
+layered on this primitive: **Armarouge** "Fire Off" (a {R} Energy from a BENCHED
+Pokémon to the ACTIVE — fixed-endpoint + provided-type-filter riders, an Ability),
+**Mismagius** "Magical Flick" (moves the OPPONENT's Energy on evolve — opponent-side
+targeting + an onEvolve trigger), **Exp. Share** (an on-KO Tool trigger that moves a
+Basic Energy off the KO'd Pokémon — needs Tool triggered-abilities). **Verification:**
+`bun run check` green (tsc + biome + **1146 tests** — 1126 → 1146: 16 engine
+`moveEnergy.test.ts` + 1 `logFromEvents.test.ts` + 3 `GameHud.cardplay.dom.test.tsx`),
+production `vite build` green. Files: effects.ts (op + `anyEnergy` filter),
+interpreter.ts (prompt/choice kinds, stepOp/applyChoice cases, `moveEnergyApply`,
+`movableEnergies`, `moveEnergyPlayable`, `moveNote`, `matchesFilter`/`retrieveNoun`
+for `anyEnergy`), events.ts (`ENERGY_MOVED`), cardplay.ts (`validateChoice` case +
+`programPlayable` gate), registry.ts (2 programs + 4 rows), index.ts, testFixtures.ts
+(2 Trainer fixtures + `MOVE_ENERGY_DECK` + the `attachBenchFromDeck` surgery),
+moveEnergy.test.ts (new); web: GameHud.tsx (`MoveEnergyDialog` + branch),
+logFromEvents.ts (row) + its test, GameHud.cardplay.dom.test.tsx (3 dialog tests).
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
