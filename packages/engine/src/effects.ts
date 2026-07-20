@@ -26,7 +26,14 @@ export type CardFilter =
   | { kind: "basicEnergy"; energyType?: string }
   /** A card matched by exact NAME (Flamigo's "Insta-Flock" searches its own
       copies — "search your deck for up to 3 Flamigo"). */
-  | { kind: "byName"; name: string };
+  | { kind: "byName"; name: string }
+  /** A Supporter Trainer card (Pal Pad shuffles Supporters from the discard
+      pile back into the deck). */
+  | { kind: "supporter" }
+  /** A Pokémon OR a Basic Energy card — Super Rod's "any combination of Pokémon
+      and Basic Energy cards" (a basic Energy is `energyType: "Normal"`; a
+      Special Energy is excluded). */
+  | { kind: "pokemonOrBasicEnergy" };
 
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
@@ -131,7 +138,27 @@ export type EffectOp =
       basicOnly?: true;
       bonusCounters?: number;
       notIfKO?: true;
-    };
+    }
+  /** Retrieve up to `max` cards matching `filter` from the controller's DISCARD
+      pile into `dest` (their hand or their deck) — the §7.1 recovery-Item family
+      (Energy Retrieval: 2 Basic Energy → hand; Pal Pad: 2 Supporters → deck;
+      Super Rod: 3 Pokémon/Basic Energy → deck). The discard-pile mirror of
+      `searchDeck`: like it this is "up to" (the player may take fewer, or none),
+      so it PARKS on the SAME chooseCards prompt unless the discard holds no
+      candidate (then it is a no-op). `dest: "deck"` appends the returned cards to
+      the deck — the printed "Shuffle … into your deck" is this op followed by a
+      `shuffleDeck` op (the Nest Ball search-then-shuffle authoring pattern), so a
+      whiffed retrieval still shuffles, exactly as a whiffed search does.
+      `dest: "hand"` just appends to hand. Reuses resolveEffect's chooseCards
+      validation and, for the deck destination, the one vetted `shuffleDeck`.
+
+      AUTHORING NOTE: `playTrainer` discards the played card UP FRONT (before its
+      program runs), so a card whose own `filter` MATCHES ITSELF would offer
+      itself as a retrieval candidate. Every card in scope is an Item retrieving
+      Energy/Pokémon/Supporters, so none self-matches — but a future Supporter
+      authored with `filter: {kind:"supporter"}` (or a card retrieving its own
+      category) would need the played uid excluded first. */
+  | { op: "discardPileRetrieval"; filter: CardFilter; dest: "hand" | "deck"; max: number };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

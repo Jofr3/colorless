@@ -481,6 +481,27 @@ export const FIXTURE_POOL: Record<string, Card> = {
   } satisfies Card,
   /** A Basic Fighting Energy — the Dino Cry attach source. */
   "fix-fighting-energy": typedEnergy("fix-fighting-energy", "Fighting"),
+
+  // — M5 op-slice: discardPileRetrieval (real catalog ids so the registry finds
+  //   the programs; the effect text is cosmetic — the registry keys on the id). —
+  /** Energy Retrieval (Item) — up to 2 Basic Energy from the discard → hand. */
+  "sv01-171": trainerCard(
+    "sv01-171",
+    "Item",
+    "Put up to 2 Basic Energy cards from your discard pile into your hand.",
+  ),
+  /** Pal Pad (Item) — up to 2 Supporter cards from the discard → deck (shuffle). */
+  "sv01-182": trainerCard(
+    "sv01-182",
+    "Item",
+    "Shuffle up to 2 Supporter cards from your discard pile into your deck.",
+  ),
+  /** Super Rod (Item) — up to 3 Pokémon/Basic Energy from the discard → deck. */
+  "sv02-188": trainerCard(
+    "sv02-188",
+    "Item",
+    "Shuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -682,6 +703,24 @@ export const KORAIDON_DECK = deckOf({
   "fix-basic-1": 6,
   "fix-fighting-energy": 20,
   "fix-energy": 23,
+});
+
+/** M5 op-slice discardPileRetrieval (§7.1 recovery Items): the three Items in
+    multiples (handFromDeck pulls them), Professor's Research ×4 (the Supporter
+    Pal Pad retrieves) + fix-item (a non-Supporter Trainer the supporter filter
+    excludes), basic Energy of two real types + Colorless (Energy Retrieval /
+    Super Rod sources; discardFromDeck seeds them), and fix-basic-1 bodies (both
+    the Active/bench and the Pokémon Super Rod retrieves). */
+export const DISCARD_RETRIEVAL_DECK = deckOf({
+  "fix-basic-1": 12,
+  "sv01-171": 3,
+  "sv01-182": 3,
+  "sv02-188": 3,
+  "sv01-189": 4,
+  "fix-item": 2,
+  "fix-fire-energy": 8,
+  "fix-water-energy": 8,
+  "fix-energy": 17,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

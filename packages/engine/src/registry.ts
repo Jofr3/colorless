@@ -546,6 +546,37 @@ const GARDEVOIR_EX: CardProgram = {
   ],
 };
 
+// ── M5 op-slice: discardPileRetrieval (§7.1 recovery Items) — the discard-pile
+//    mirror of searchDeck; the next-biggest new-op unlock after attachEnergyFrom.
+//    (verified vs the local catalog 2026-07-20). ──
+
+/** Energy Retrieval — "Put up to 2 Basic Energy cards from your discard pile
+    into your hand." (Item) — a single retrieval to hand, no shuffle. */
+const ENERGY_RETRIEVAL: CardProgram = {
+  trainer: [{ op: "discardPileRetrieval", filter: { kind: "basicEnergy" }, dest: "hand", max: 2 }],
+};
+
+/** Pal Pad — "Shuffle up to 2 Supporter cards from your discard pile into your
+    deck." (Item) — retrieve to deck, then shuffle (the Nest Ball
+    search-then-shuffle pattern; a whiff still shuffles, like a whiffed search). */
+const PAL_PAD: CardProgram = {
+  trainer: [
+    { op: "discardPileRetrieval", filter: { kind: "supporter" }, dest: "deck", max: 2 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Super Rod — "Shuffle up to 3 in any combination of Pokémon and Basic Energy
+    cards from your discard pile into your deck." (Item) — the pokemonOrBasicEnergy
+    filter is the "any combination" (each pick is independently a Pokémon or a
+    Basic Energy); retrieve to deck, then shuffle. */
+const SUPER_ROD: CardProgram = {
+  trainer: [
+    { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "deck", max: 3 },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -635,6 +666,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-231": KORAIDON_EX,
   "sv01-247": KORAIDON_EX,
   "sv01-254": KORAIDON_EX,
+  // — M5 op-slice: discardPileRetrieval (verified vs the local catalog 2026-07-20). —
+  "sv01-171": ENERGY_RETRIEVAL, // Energy Retrieval — 2 Basic Energy from discard → hand
+  "sv01-182": PAL_PAD, // Pal Pad — 2 Supporters from discard → deck (shuffle)
+  "sv02-188": SUPER_ROD, // Super Rod — 3 Pokémon/Basic Energy from discard → deck (shuffle)
+  "sv02-276": SUPER_ROD, // Super Rod (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

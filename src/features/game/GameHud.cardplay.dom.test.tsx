@@ -202,7 +202,7 @@ describe("effect:choose — the search dialog (chooseCards)", () => {
     const dispatch = vi.fn();
     renderHud(state, dispatch);
 
-    expect(screen.getByRole("dialog", { name: "Search your deck" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Choose cards" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Take none" }));
     expect(dispatch).toHaveBeenCalledWith({
       type: "resolveEffect",
@@ -351,7 +351,7 @@ describe("effect:choose — an on-KO trigger parks the KO'd, NON-turn player (M4
         onPlayAgain={() => {}}
       />,
     );
-    expect(screen.getByRole("dialog", { name: "Search your deck" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Choose cards" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Take none" }));
     expect(dispatch).toHaveBeenCalledWith({
       type: "resolveEffect",

@@ -37,7 +37,7 @@ import type { GameState, Seat } from "./types";
     each in turn), and a new `AbilityProgram.endsTurn` folds the turn end via
     settleProgram; authors Koraidon ex "Dino Cry" (up to 2 Basic {F} from discard
     to your Basic {F} Pokémon, then your turn ends). Gardevoir's riders were 0.13.0). */
-export const engineVersion = "0.14.0";
+export const engineVersion = "0.15.0";
 
 export type {
   ApplyResult,

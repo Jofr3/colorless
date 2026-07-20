@@ -223,6 +223,11 @@ export type GameEvent =
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
   /** A deck search resolved: `uids` moved deck → `dest` (revealed, §15.E). */
   | { type: "DECK_SEARCHED"; seat: Seat; dest: "bench" | "hand"; uids: string[] }
+  /** A discard-pile retrieval resolved: `uids` moved discard → `dest` — the §7.1
+      recovery Items (Energy Retrieval to hand; Pal Pad / Super Rod back into the
+      deck, where a trailing SHUFFLE then scrambles them). The discard pile is
+      public, so naming the cards leaks nothing. */
+  | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck"; uids: string[] }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

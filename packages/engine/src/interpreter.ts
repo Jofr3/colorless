@@ -51,8 +51,11 @@ export interface PokemonRef {
     human string for the prompt UI / log; the arrays are the legal options
     (a client that offers anything else is rejected by resolveEffect). */
 export type EffectPrompt =
-  /** Pick 0..max deck-card uids to move to `dest` (searchDeck is "up to"). */
-  | { kind: "chooseCards"; candidates: string[]; max: number; dest: "bench" | "hand"; note: string }
+  /** Pick 0..max card uids to move to `dest` — "up to", so the player may pick
+      fewer or none (searchDeck moves deck → bench/hand; discardPileRetrieval
+      moves the discard pile → hand/deck). `dest` is display metadata; the op
+      owns the actual move, and `note` carries the accurate prompt text. */
+  | { kind: "chooseCards"; candidates: string[]; max: number; dest: "bench" | "hand" | "deck"; note: string }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
   | { kind: "choosePokemon"; candidates: PokemonRef[]; note: string }
   /** Pick up to `max` in-play Pokémon — the multi-target snipe (damageChosen;
@@ -193,6 +196,26 @@ function stepOp(
         },
       };
     }
+    case "discardPileRetrieval": {
+      // The discard-pile twin of searchDeck (§7.1 recovery Items). Hand and deck
+      // have no capacity cap, so `max` is used as printed (no bench-space clamp).
+      // Also "up to" → parks on the SAME chooseCards prompt whenever ≥1 candidate
+      // (the player may still take none); an empty match is a no-op, and any
+      // trailing shuffleDeck op still fires — exactly like searchDeck's whiff.
+      const candidates = state.players[ctx.seat].discard.filter((uid) =>
+        matchesFilter(cardOf(state, uid), op.filter),
+      );
+      if (candidates.length === 0 || op.max <= 0) return { done: state };
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates,
+          max: op.max,
+          dest: op.dest,
+          note: retrieveNote(op.filter, op.dest, op.max),
+        },
+      };
+    }
     case "switchActive":
       return parkOrForce(state, ownBenchRefs(state, ctx.seat), (ref) => switchOwn(state, ref, ctx, events), "Switch to which Benched Pokémon?");
     case "gust":
@@ -248,6 +271,10 @@ export function applyChoice(
     case "searchDeck":
       return choice.kind === "cards"
         ? searchMove(state, choice.uids, op.dest, ctx, events)
+        : state;
+    case "discardPileRetrieval":
+      return choice.kind === "cards"
+        ? retrieveMove(state, choice.uids, op.dest, ctx, events)
         : state;
     case "switchActive":
       return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
@@ -484,6 +511,31 @@ function searchMove(
   return withSide(state, ctx.seat, updated);
 }
 
+/** Move the chosen retrieved cards discard → dest (§7.1 recovery Items): hand
+    appends; deck appends to the end, where a trailing `shuffleDeck` op then
+    scrambles them ("shuffle … into your deck"). Wire-safe like searchMove: only
+    uids actually in the discard pile move (resolveEffect already checked them
+    against the candidate set, and rejects a uid picked twice). */
+function retrieveMove(
+  state: GameState,
+  uids: readonly string[],
+  dest: "hand" | "deck",
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const moved = uids.filter((uid) => side.discard.includes(uid));
+  if (moved.length === 0) return state;
+  const picked = new Set(moved);
+  const discard = side.discard.filter((uid) => !picked.has(uid));
+  const updated: PlayerSide =
+    dest === "hand"
+      ? { ...side, discard, hand: [...side.hand, ...moved] }
+      : { ...side, discard, deck: [...side.deck, ...moved] };
+  events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest, uids: [...moved] });
+  return withSide(state, ctx.seat, updated);
+}
+
 /** Switch the controller's Active with their benched `ref` (§G). The outgoing
     Active loses its Special Conditions (§12 — it left the Active spot). */
 function switchOwn(state: GameState, ref: PokemonRef, ctx: EffectContext, events: GameEvent[]): GameState {
@@ -709,6 +761,15 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
       );
     case "byName":
       return card.name === filter.name;
+    case "supporter":
+      return card.category === "Trainer" && card.trainerType === "Supporter";
+    case "pokemonOrBasicEnergy":
+      // A basic Energy is `energyType: "Normal"` (Special is excluded, matching
+      // Super Rod's "Basic Energy"); a Pokémon is any category "Pokemon".
+      return (
+        card.category === "Pokemon" ||
+        (isEnergyCard(card) && card.energyType === "Normal")
+      );
   }
 }
 
@@ -720,11 +781,49 @@ function searchNote(filter: CardFilter, dest: "bench" | "hand", max: number): st
         ? "a Pokémon"
         : filter.kind === "byName"
           ? filter.name
-          : filter.energyType === undefined
-            ? "a Basic Energy"
-            : `a Basic ${filter.energyType} Energy`;
+          : filter.kind === "basicEnergy"
+            ? filter.energyType === undefined
+              ? "a Basic Energy"
+              : `a Basic ${filter.energyType} Energy`
+            : // supporter / pokemonOrBasicEnergy never reach searchDeck; stay total.
+              retrieveNoun(filter).singular;
   const where = dest === "bench" ? "onto your Bench" : "into your hand";
   return max > 1
     ? `Search your deck for up to ${max} ${what} ${where}.`
     : `Search your deck for ${what} ${where}.`;
+}
+
+/** The chooseCards note for a discard-pile retrieval — reproduces the printed
+    verb ("Put" into hand / "Shuffle" into deck) and a noun that reads like the
+    card text (Energy Retrieval / Pal Pad / Super Rod). Every retrieval Item in
+    scope has max ≥ 2, so the plural is what ships; the singular fallback stays
+    total. Nouns are spelled per kind rather than "+s" so "Pokémon" stays
+    invariant. */
+function retrieveNote(filter: CardFilter, dest: "hand" | "deck", max: number): string {
+  const { singular, plural } = retrieveNoun(filter);
+  const verb = dest === "hand" ? "Put" : "Shuffle";
+  const where = dest === "hand" ? "into your hand" : "into your deck";
+  return max > 1
+    ? `${verb} up to ${max} ${plural} from your discard pile ${where}.`
+    : `${verb} ${singular} from your discard pile ${where}.`;
+}
+
+/** The noun phrase (singular / plural) each filter reads as in a retrieval note. */
+function retrieveNoun(filter: CardFilter): { singular: string; plural: string } {
+  switch (filter.kind) {
+    case "anyPokemon":
+      return { singular: "a Pokémon", plural: "Pokémon" };
+    case "supporter":
+      return { singular: "a Supporter card", plural: "Supporter cards" };
+    case "pokemonOrBasicEnergy":
+      return { singular: "a Pokémon or Basic Energy card", plural: "Pokémon or Basic Energy cards" };
+    case "byName":
+      return { singular: filter.name, plural: filter.name };
+    case "basicPokemon":
+      return { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
+    case "basicEnergy": {
+      const kind = filter.energyType === undefined ? "Basic" : `Basic ${filter.energyType}`;
+      return { singular: `a ${kind} Energy card`, plural: `${kind} Energy cards` };
+    }
+  }
 }

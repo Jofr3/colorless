@@ -918,8 +918,10 @@ function EffectChooseDialog(props: GameHudProps) {
   );
 }
 
-/** "Up to N" deck search: multi-select up to max, or take none — the search
-    may always be declined (§15.E). */
+/** "Up to N" card pick: multi-select up to max, or take none — origin-agnostic
+    (a deck search, §15.E, or a discard-pile retrieval, §7.1), both always
+    declinable. The prompt's `note` says which; the candidate cards are public
+    either way (deck picks are revealed, the discard pile is open). */
 function ChooseCardsDialog({
   game,
   viewerSeat,
@@ -937,7 +939,7 @@ function ChooseCardsDialog({
     );
   };
   return (
-    <HudDialog label="Search your deck">
+    <HudDialog label="Choose cards">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       <p className="mt-1.5 text-sm text-white/55">
         Pick up to {prompt.max} ({picked.length}/{prompt.max}).

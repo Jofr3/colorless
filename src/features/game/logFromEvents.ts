@@ -458,6 +458,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           : [plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} in hand`)],
       );
     }
+    case "DISCARD_RETRIEVED": {
+      // The §7.1 recovery Items (Energy Retrieval / Pal Pad / Super Rod); only
+      // fires with ≥1 card (a "take none" moves nothing and emits no event). The
+      // discard pile is public, so a count would suffice, but it reads clearer
+      // as an action row like DECK_SEARCHED.
+      const n = event.uids.length;
+      return row(
+        event.seat,
+        event.dest === "hand"
+          ? [plain(`took ${n} card${n === 1 ? "" : "s"} from their discard pile`)]
+          : [plain(`shuffled ${n} card${n === 1 ? "" : "s"} from their discard pile into their deck`)],
+      );
+    }
     case "POKEMON_SWITCHED":
       // Passive voice — the causing card already logged its own row (Switch /
       // Boss's Orders a TRAINER_PLAYED, Jet Energy an ENERGY_ATTACHED); `seat`
