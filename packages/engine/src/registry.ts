@@ -808,6 +808,67 @@ const FIX_GATEDSUP: CardProgram = {
   trainer: [{ op: "drawCards", count: 1 }],
 };
 
+// ── M5 op-slice: discardEnergy (the §15 energy-removal "hammer" family) —
+//    discard Energy off the OPPONENT's Pokémon. All three `from` arms land with a
+//    real printed card; the SELF-discard attacks ("Discard an Energy from this
+//    Pokémon", ~13 cards) wait on attack programs being able to PARK, which
+//    attack.ts cannot do today (see the backlog). (verified vs the local catalog
+//    2026-07-21). ──
+
+/** Crushing Hammer — "Flip a coin. If heads, discard an Energy from 1 of your
+    opponent's Pokémon." (Item) — the coin-gated hammer, and the `opponentChosen`
+    arm: the controller picks the Energy, which IS picking the Pokémon (exactly one
+    comes off). The discard sits INSIDE the gate, so a tails play does nothing at
+    all — but the play into an Energy-LESS board is rejected outright, because
+    `programPlayable` descends into a coin gate's `then` (§7 / Compendium 906: the
+    flip is procedure, not effect, so it cannot make a target-less card playable). */
+const CRUSHING_HAMMER: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
+    },
+  ],
+};
+
+/** Giacomo — "Discard a Special Energy from each of your opponent's Pokémon."
+    (Supporter) — the `opponentEach` sweep: EVERY one of the opponent's in-play
+    Pokémon that holds a Special Energy loses exactly one (a Pokémon with none is
+    skipped, one carrying several is the player's choice — rare, and the only
+    reason this parks at all). A TOP-LEVEL op, so the whiff gate applies: with no
+    Special Energy anywhere on the opponent's board the play is rejected rather
+    than burning the turn's one Supporter. */
+const GIACOMO: CardProgram = {
+  trainer: [{ op: "discardEnergy", from: "opponentEach", filter: { kind: "specialEnergy" } }],
+};
+
+/** Mawile — "Special Eater": "When you play this Pokémon from your hand onto your
+    Bench during your turn, you may discard a Special Energy from your opponent's
+    Active Pokémon." — a TRIGGERED (onPlayToBench) Ability and the `opponentActive`
+    arm. Auto-fires like every optional trigger (pure upside — it only takes from
+    the opponent); with no Special Energy on their Active the op is a no-op, so the
+    ABILITY_TRIGGERED row stands alone (the Flamigo-into-an-empty-deck precedent). */
+const MAWILE: CardProgram = {
+  triggered: [
+    {
+      name: "Special Eater",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "specialEnergy" } }],
+    },
+  ],
+};
+
+/** fix-hammer — FIXTURE Item, no printed card: Crushing Hammer's `opponentChosen`
+    discard WITHOUT the coin gate. Every real card that reaches this arm is behind
+    a flip, so the fixture is what pins the arm's own behaviour — the park, the
+    forced auto-resolve and the `programPlayable` whiff gate — without threading a
+    seeded coin flip through each assertion. */
+const FIX_HAMMER: CardProgram = {
+  trainer: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -930,6 +991,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-condgate": FIX_CONDGATE, // FIXTURE — a parking op inside each gate arm
   "fix-gateorder": FIX_GATEORDER, // FIXTURE — gate timing, splice order, surviving tail
   "fix-gatedsup": FIX_GATEDSUP, // FIXTURE — a GATED Supporter (the allowance ordering)
+  // — M5 op-slice: discardEnergy (verified vs the local catalog 2026-07-21). —
+  "sv01-168": CRUSHING_HAMMER, // Crushing Hammer — coin-gated: an Energy off 1 opp Pokémon
+  "sv02-182": GIACOMO, // Giacomo — a Special Energy off EACH of the opponent's Pokémon
+  "sv02-252": GIACOMO, // Giacomo (reprint)
+  "sv02-267": GIACOMO, // Giacomo (reprint)
+  "sv03-143": MAWILE, // Mawile — Special Eater (on-bench: a Special Energy off their Active)
+  "fix-hammer": FIX_HAMMER, // FIXTURE — the opponentChosen arm without the coin gate
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

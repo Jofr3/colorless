@@ -595,6 +595,40 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** fix-gatedsup — FIXTURE Supporter (registry FIX_GATEDSUP): the only gated
       SUPPORTER, pinning that a rejected gate does not burn the §7.2 allowance. */
   "fix-gatedsup": trainerCard("fix-gatedsup", "Supporter", "Gated draw 1 (fixture)."),
+
+  // — M5 op-slice: discardEnergy (real catalog ids so the registry finds the
+  //   programs; Trainer effect text is cosmetic — the registry keys on the id). —
+  /** Crushing Hammer (Item) — coin-gated: an Energy off 1 of the opponent's. */
+  "sv01-168": trainerCard(
+    "sv01-168",
+    "Item",
+    "Flip a coin. If heads, discard an Energy from 1 of your opponent's Pokémon.",
+  ),
+  /** Giacomo (Supporter) — a Special Energy off EACH of the opponent's Pokémon. */
+  "sv02-182": trainerCard(
+    "sv02-182",
+    "Supporter",
+    "Discard a Special Energy from each of your opponent's Pokémon.",
+  ),
+  /** Mawile (Basic {M}, registry MAWILE) — "Special Eater", an onPlayToBench
+      trigger that discards a Special Energy from the opponent's Active. The
+      printed stats are the catalog's (90 HP, retreat 1, Sharp Fang 90); the
+      Ability lives in the registry, so the card needs no `abilities` here. */
+  "sv03-143": battler("sv03-143", {
+    name: "Mawile",
+    hp: 90,
+    types: ["Metal"],
+    retreat: 1,
+    attacks: [{ cost: ["Metal", "Colorless", "Colorless"], name: "Sharp Fang", damage: 90 }],
+  }),
+  /** fix-hammer — FIXTURE Item (registry FIX_HAMMER): the `opponentChosen` discard
+      WITHOUT Crushing Hammer's coin gate, so the arm's park / forced pick / whiff
+      gate are testable without threading a seeded flip. */
+  "fix-hammer": itemTrainer("fix-hammer"),
+  /** A second Special Energy print, so one Pokémon can carry TWO distinct Special
+      Energy cards — the only board on which Giacomo's per-Pokémon pick is a real
+      choice rather than a forced one. */
+  "fix-special-2": specialEnergy("fix-special-2", "fix-special-2"),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -879,6 +913,24 @@ export const BOARD_CONDITION_DECK = deckOf({
   "fix-gateorder": 3, // FIXTURE — gate timing, splice order, surviving tail
   "fix-gatedsup": 3, // FIXTURE — a gated Supporter (the §7.2 allowance ordering)
   "fix-energy": 31,
+});
+
+/** M5 op-slice: discardEnergy — the energy-removal family. Both seats run it, so
+    the OPPONENT's board can be dressed with the Energy to strip: basic
+    (fix-energy) for Crushing Hammer's `anyEnergy`, and two DISTINCT Special
+    Energy prints (fix-special / fix-special-2) so a single Pokémon can hold two
+    and make Giacomo's per-Pokémon pick a real choice. Mawile (sv03-143) is a Basic
+    body, benched from hand to fire its trigger. */
+export const DISCARD_ENERGY_DECK = deckOf({
+  "fix-basic-1": 6,
+  "fix-basic-2": 4, // distinct bench bodies, so the opponent's board can hold several
+  "sv01-168": 3, // Crushing Hammer
+  "sv02-182": 3, // Giacomo
+  "sv03-143": 4, // Mawile — Special Eater
+  "fix-hammer": 3, // FIXTURE — the opponentChosen arm, no coin gate
+  "fix-special": 6,
+  "fix-special-2": 6,
+  "fix-energy": 25,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

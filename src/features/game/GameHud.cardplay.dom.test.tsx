@@ -11,6 +11,7 @@ import { applyAction } from "@luminous/engine";
 import {
   ABILITY_DECK,
   BOARD_CONDITION_DECK,
+  DISCARD_ENERGY_DECK,
   MOVE_ENERGY_DECK,
   ONKO_DECK,
   RARE_CANDY_DECK,
@@ -506,5 +507,187 @@ describe("TurnPanel — a printed play gate greys the button out (M5 board condi
     expect((screen.getByRole("button", { name: "sv02-180" }) as HTMLButtonElement).disabled).toBe(
       false,
     );
+  });
+});
+
+describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () => {
+  const hammerDecks = { p1: DISCARD_ENERGY_DECK, p2: DISCARD_ENERGY_DECK };
+
+  it("picks one Energy off the opponent's board and dispatches it (scope 'one')", () => {
+    // fix-hammer is the opponentChosen arm without Crushing Hammer's coin gate.
+    // Two Energy on the opponent's Active makes WHICH a real question, so it parks.
+    let state = p1Turn2(1, hammerDecks);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+    state = handFromDeck(state, "p1", "fix-hammer", 1);
+    const uid = handUid(state, "p1", "fix-hammer");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByRole("dialog", { name: "Discard Energy" })).toBeTruthy();
+    // MANDATORY — there is no "Discard none", and Confirm is dead until a pick.
+    expect(screen.queryByRole("button", { name: /none/i })).toBeNull();
+    expect((screen.getByRole("button", { name: "Discard 0/1" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard 1/1" }));
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toHaveLength(1);
+    // Round-trips through the engine — the HUD's answer is one the engine accepts.
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("Giacomo's sweep asks for one per Pokémon, grouped by host (scope 'each')", () => {
+    let state = p1Turn2(7, hammerDecks);
+    // Distinctly-named hosts, so the two group headers can be told apart.
+    state = setActiveFromDeck(state, "p2", "fix-basic-1");
+    state = { ...state, players: { ...state.players, p2: { ...state.players.p2, bench: [] } } };
+    state = benchFromDeck(state, "p2", "fix-basic-2");
+    state = attachFromDeck(state, "p2", "fix-special", 1); // Active — forced
+    state = attachBenchFromDeck(state, "p2", 0, "fix-special", 1);
+    state = attachBenchFromDeck(state, "p2", 0, "fix-special-2", 1); // bench 0 — a choice
+    state = handFromDeck(state, "p1", "sv02-182", 1);
+    const uid = handUid(state, "p1", "sv02-182");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    // Two groups, three candidates; the confirm counts against the GROUPS.
+    // The legend carries the SPOT too, so two same-named hosts stay distinct.
+    expect(screen.getByRole("group", { name: "fix-basic-1 · Active" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "fix-basic-2 · Bench 1" })).toBeTruthy();
+    // The Active's group holds ONE candidate, so it is not a question — it comes
+    // PRE-ANSWERED, leaving only the two-Energy bench Pokémon to decide. Without
+    // that seeding the player would have to re-click a forced pick before Confirm
+    // could ever light up.
+    expect((screen.getByRole("button", { name: "Discard 1/2" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    const forced = screen.getAllByRole("button", { name: "fix-special" })[0] as HTMLElement;
+    expect(forced.getAttribute("aria-pressed")).toBe("true");
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-special-2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard 2/2" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toHaveLength(2);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("a second pick within one Pokémon REPLACES the first (never two off one host)", () => {
+    let state = p1Turn2(8, hammerDecks);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+    state = attachFromDeck(state, "p2", "fix-special-2", 1);
+    state = handFromDeck(state, "p1", "sv02-182", 1);
+    const uid = handUid(state, "p1", "sv02-182");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    fireEvent.click(screen.getByRole("button", { name: "fix-special-2" }));
+    // Still 1 of 1 — the second click swapped the pick rather than adding to it,
+    // which is the coupling the engine would otherwise reject on the wire.
+    fireEvent.click(screen.getByRole("button", { name: "Discard 1/1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toHaveLength(1);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("scope 'one': picking on a SECOND Pokémon clears the first group's pick", () => {
+    // The other half of the "one" rule — the previous test swaps WITHIN a group,
+    // this one ACROSS groups. Two uids would be two hosts, which the engine
+    // rejects ("discard exactly 1 Energy"), so the clear has to happen in the HUD.
+    let state = p1Turn2(1, hammerDecks);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = benchFromDeck(state, "p2", "fix-basic-2");
+    state = attachBenchFromDeck(state, "p2", 0, "fix-special", 1);
+    state = handFromDeck(state, "p1", "fix-hammer", 1);
+    const uid = handUid(state, "p1", "fix-hammer");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    const benchUid = state.players.p2.bench[0]?.energy[0] as string;
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    // Two hosts → two groups, each programmatically labelled by its Pokémon:
+    // every row reads "fix-…", so the header is the only disambiguator and it
+    // has to be exposed, not just painted above the list.
+    const bench = screen.getByRole("group", { name: "fix-basic-2 · Bench 1" });
+    expect(bench.querySelectorAll("button")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    // Still one pick — the first host's Energy was dropped, not kept alongside.
+    fireEvent.click(screen.getByRole("button", { name: "Discard 1/1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toEqual([benchUid]);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("clicking the picked Energy again clears it — Confirm goes dead, but re-picking works", () => {
+    // The decision is MANDATORY and Escape is swallowed, so a deselect that could
+    // not be undone would be a soft-lock: pin that the dialog always has a way out.
+    let state = p1Turn2(1, hammerDecks);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+    state = handFromDeck(state, "p1", "fix-hammer", 1);
+    const uid = handUid(state, "p1", "fix-hammer");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+
+    renderHud(state, vi.fn());
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    expect((screen.getByRole("button", { name: "Discard 0/1" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "fix-energy" }));
+    expect((screen.getByRole("button", { name: "Discard 1/1" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+  });
+
+  it("Mawile's on-bench Ability reaches the SAME dialog (ability origin, not a Trainer)", () => {
+    // discardEnergy's third arm (`opponentActive`) and its only non-Trainer
+    // origin: the dialog must mount off a bench-play trigger too.
+    let state = p1Turn2(3, hammerDecks);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+    state = attachFromDeck(state, "p2", "fix-special-2", 1);
+    state = handFromDeck(state, "p1", "sv03-143", 1);
+    const uid = handUid(state, "p1", "sv03-143");
+    state = mustApply(state, { type: "playBasicToBench", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByRole("dialog", { name: "Discard Energy" })).toBeTruthy();
+    expect(
+      screen.getByText("Discard a Special Energy from your opponent's Active Pokémon."),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "fix-special-2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard 1/1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    expect(applyAction(state, call).ok).toBe(true);
   });
 });

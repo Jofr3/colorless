@@ -32,15 +32,15 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: handRefresh — Iono, which CLOSES the
-    hand-refresh Supporter family. Three riders on the 0.18.0 op: `toBottom` (the
-    hand alone is shuffled and put UNDER the deck, so the deck's order — and the
-    next draws — survive, the whole strategic point of Iono over Judge), the
-    `prizeCount` draw (each player draws their own remaining Prizes, so the player
-    behind draws more), and `onlyIfAnyMoved` (with both hands empty, nobody draws).
-    The op now moves every affected hand BEFORE any draw, which that all-or-nothing
-    gate requires. Youngster/Judge/Brassius/Katy were 0.18.0). */
-export const engineVersion = "0.20.0";
+/** Engine milestone marker (M5 op-slice: `discardEnergy` — the energy-removal
+    "hammer" family. One op takes Energy off the OPPONENT's board, with `from`
+    naming both the eligible Pokémon and how many are hit: `opponentActive`
+    (Mawile), `opponentChosen` (Crushing Hammer) and `opponentEach` (Giacomo).
+    MANDATORY — exactly one Energy per affected Pokémon and no decline, so it
+    parks only when WHICH Energy is a real question; the discarded card goes to
+    its OWNER's pile. New `specialEnergy` CardFilter + one ENERGY_DISCARDED event
+    per affected Pokémon. Board conditions were 0.20.0; handRefresh/Iono 0.19.0). */
+export const engineVersion = "0.21.0";
 
 export type {
   ApplyResult,

@@ -38,7 +38,12 @@ export type CardFilter =
       unlike Energy Switch's "a Basic Energy" moves either kind). Distinct from
       `basicEnergy` (basics only) and `pokemonOrBasicEnergy` (which excludes
       Special Energy and admits Pokémon). */
-  | { kind: "anyEnergy" };
+  | { kind: "anyEnergy" }
+  /** A SPECIAL Energy card (§6.1 — the catalog's `energyType: "Special"`), the
+      exact complement of `basicEnergy` inside `anyEnergy`. The energy-removal
+      family's narrow arm: Giacomo and Mawile discard "a Special Energy", where
+      Crushing Hammer takes any. */
+  | { kind: "specialEnergy" };
 
 /** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
     `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
@@ -235,6 +240,37 @@ export type EffectOp =
       candidate set is the top-`n` matches, so a client cannot reach a deeper card)
       and the one vetted `shuffleDeck`. */
   | { op: "lookAtTopN"; n: number; filter: CardFilter; max: number }
+  /** Discard Energy attached to the OPPONENT's in-play Pokémon — the §15 energy
+      -removal ("hammer") family: Crushing Hammer, Giacomo, Mawile "Special
+      Eater". `filter` narrows which ATTACHED Energy may be taken (`anyEnergy` /
+      `specialEnergy`); the card goes to its OWNER's discard pile — the
+      opponent's, never the controller's.
+
+      `from` names both the eligible Pokémon and how many are hit, spelled the way
+      the cards are:
+        • **`opponentActive`** — the opponent's Active alone (Mawile: "discard a
+          Special Energy from your opponent's Active Pokémon");
+        • **`opponentChosen`** — one Energy off ONE of the opponent's in-play
+          Pokémon, the controller choosing both (Crushing Hammer: "…from 1 of your
+          opponent's Pokémon"). Taking exactly one Energy collapses the two-step
+          choice into one, so this is a single pick over the flat candidate list —
+          picking the Energy IS picking the Pokémon;
+        • **`opponentEach`** — one Energy off EVERY one of the opponent's in-play
+          Pokémon that has a match (Giacomo: "…from each of your opponent's
+          Pokémon"); a Pokémon holding none is simply skipped.
+
+      Exactly ONE Energy per affected Pokémon — every printed card in scope takes
+      one, and a "discard 2" / "discard all" count belongs to the attack-side
+      variants (which need attack programs to be able to park; see the backlog).
+      MANDATORY, not "up to": the only decision is WHICH Energy, never whether — so
+      unlike searchDeck / moveEnergy this park has NO decline. It parks only on a
+      genuine choice (an affected Pokémon holding 2+ matching Energy, or — for
+      `opponentChosen` — 2+ candidates across the board); a single forced candidate
+      auto-resolves, and an empty candidate set is a no-op (`programPlayable` also
+      blocks a top-level discard that could only whiff). Never damages, so it never
+      KOs. `from` is deliberately the extension seam: the self-discard attacks
+      ("Discard an Energy from this Pokémon") join as another member, not a rename. */
+  | { op: "discardEnergy"; from: "opponentActive" | "opponentChosen" | "opponentEach"; filter: CardFilter }
   /** Move up to `max` Energy from ONE of the controller's own in-play Pokémon
       to ANOTHER of their own in-play Pokémon — the §6 manual Energy-movement
       family (Energy Switch: a Basic Energy; Poppy: up to 2 any Energy). `filter`

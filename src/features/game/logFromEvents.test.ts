@@ -8,10 +8,12 @@ import type { GameEvent, GameState, Seat } from "@luminous/engine";
 import { topCardOf } from "@luminous/engine";
 import {
   BOARD_CONDITION_DECK,
+  DISCARD_ENERGY_DECK,
   HAND_REFRESH_DECK,
   MIXED_DECK,
   SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
+  attachBenchFromDeck,
   attachFromDeck,
   benchFromDeck,
   deckOf,
@@ -646,6 +648,117 @@ describe("logFromEvents — moveEnergy (M5): ENERGY_MOVED", () => {
     // The Pokémon don't move, so both targets resolve off the post-state.
     expect(texts(logFromEvents([moved], ctx(state)))).toEqual([
       "moved 2 energy from fix-attacker to fix-victim",
+    ]);
+  });
+});
+
+describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
+  /** P1's turn 2 on the discardEnergy deck (P2 went first and passed). */
+  function p1Turn2(seed: number): GameState {
+    const state = driveSetup(
+      seed,
+      { p1: DISCARD_ENERGY_DECK, p2: DISCARD_ENERGY_DECK },
+      { first: "p2" },
+    );
+    return mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  }
+
+  it("attributes the row to the CONTROLLER, not the seat that owns the Energy", () => {
+    // `seat` on the event names the victim (DAMAGE_DEALT's convention), so the
+    // line has to flip to the other seat — a row filed under p2 would read as if
+    // the opponent discarded their own Energy.
+    let state = p1Turn2(1);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    const energy = state.players.p2.active?.energy[0] as string;
+    const victim = topCardOf(state, state.players.p2.active as never)?.name as string;
+    const withCard = handFromDeck(state, "p1", "fix-hammer", 1);
+    const uid = handUid(withCard, "p1", "fix-hammer");
+    const { state: after, events } = mustApply(withCard, { type: "playTrainer", seat: "p1", uid });
+
+    expect(types(events)).toEqual(["TRAINER_PLAYED", "ENERGY_DISCARDED"]);
+    const rows = logFromEvents(events, ctx(after));
+    expect(texts(rows)).toEqual(["played fix-hammer", `discarded fix-energy from ${victim}`]);
+    expect(rows.map((e) => (e.kind === "turn" ? null : e.who))).toEqual(["p1", "p1"]);
+    // The card named really is the one that left the board.
+    expect(after.players.p2.discard).toContain(energy);
+  });
+
+  it("Giacomo's sweep logs ONE row per affected Pokémon, each naming its host", () => {
+    let state = p1Turn2(7);
+    state = benchFromDeck(state, "p2", "fix-basic-2");
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+    state = attachBenchFromDeck(state, "p2", 0, "fix-special-2", 1);
+    const activeName = topCardOf(state, state.players.p2.active as never)?.name as string;
+    const withCard = handFromDeck(state, "p1", "sv02-182", 1);
+    const uid = handUid(withCard, "p1", "sv02-182");
+    const { state: after, events } = mustApply(withCard, { type: "playTrainer", seat: "p1", uid });
+
+    expect(texts(logFromEvents(events, ctx(after)))).toEqual([
+      "played sv02-182",
+      `discarded fix-special from ${activeName}`,
+      "discarded fix-special-2 from fix-basic-2",
+    ]);
+  });
+
+  it("an ABILITY-origin discard (Mawile) is still the controller's row", () => {
+    // The other origin: the row above is an ABILITY_TRIGGERED, not a
+    // TRAINER_PLAYED — the attribution must not depend on which one it was.
+    let state = p1Turn2(3);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+    const victim = topCardOf(state, state.players.p2.active as never)?.name as string;
+    const withCard = handFromDeck(state, "p1", "sv03-143", 1);
+    const uid = handUid(withCard, "p1", "sv03-143");
+    const { state: after, events } = mustApply(withCard, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid,
+    });
+
+    expect(types(events)).toEqual(["POKEMON_BENCHED", "ABILITY_TRIGGERED", "ENERGY_DISCARDED"]);
+    const rows = logFromEvents(events, ctx(after));
+    expect(texts(rows)).toEqual([
+      "benched Mawile",
+      "Mawile's Special Eater activated",
+      `discarded fix-special from ${victim}`,
+    ]);
+    expect(rows.map((e) => (e.kind === "turn" ? null : e.who))).toEqual(["p1", "p1", "p1"]);
+  });
+
+  it("the row is seat-keyed, so a viewer flip re-reads it as the OPPONENT's", () => {
+    // The log outlives the hot-seat flip: the same entry must read "you" to the
+    // controller and "opponent" to the victim, never the other way round.
+    let state = p1Turn2(1);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    const withCard = handFromDeck(state, "p1", "fix-hammer", 1);
+    const uid = handUid(withCard, "p1", "fix-hammer");
+    const { state: after, events } = mustApply(withCard, { type: "playTrainer", seat: "p1", uid });
+    const rows = logFromEvents(events, ctx(after));
+
+    expect(viewLogEntries(rows, "p1").map((e) => (e.kind === "turn" ? null : e.who))).toEqual([
+      "you",
+      "you",
+    ]);
+    expect(viewLogEntries(rows, "p2").map((e) => (e.kind === "turn" ? null : e.who))).toEqual([
+      "opponent",
+      "opponent",
+    ]);
+  });
+
+  it("names the Energy with the ENERGY tone and the host with STRONG", () => {
+    // Both names sit next to each other in one row; rendering them identically
+    // (GameLog tints `energy` sky, `strong` white) would make the line unreadable.
+    let state = p1Turn2(1);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    const withCard = handFromDeck(state, "p1", "fix-hammer", 1);
+    const uid = handUid(withCard, "p1", "fix-hammer");
+    const { state: after, events } = mustApply(withCard, { type: "playTrainer", seat: "p1", uid });
+    const discardRow = logFromEvents(events, ctx(after))[1] as SeatLogEntry & { kind: "action" };
+
+    expect(discardRow.segments.map((s) => [s.text, s.tone ?? "default"])).toEqual([
+      ["discarded ", "default"],
+      ["fix-energy", "energy"],
+      [" from ", "default"],
+      [expect.any(String), "strong"],
     ]);
   });
 });

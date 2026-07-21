@@ -17,6 +17,7 @@ import {
   attachEnergyTargets,
   conditionHolds,
   conditionNote,
+  discardEnergyPlayable,
   firstAttachableEnergy,
   moveEnergyPlayable,
   resumeProgram,
@@ -519,9 +520,37 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
     card/Ability that would do nothing cannot be played (gust and the snipe need
     an opponent Bench, Switch needs your own Bench). Search/draw/heal are always
     "playable enough" (they may whiff — fail a search, heal an undamaged
-    Pokémon). Shared by playTrainer and useAbility. */
+    Pokémon), which also matches the rule's own limit: the deck is not public
+    knowledge, so "this search will find nothing" is not a fact the game state
+    establishes. Shared by playTrainer and useAbility. */
 function programPlayable(state: GameState, program: readonly EffectOp[], seat: Seat): boolean {
   for (const op of program) {
+    if (op.op === "coinFlipGate") {
+      // DESCEND INTO THE HEADS BRANCH. A coin gate has no `otherwise`, so its
+      // `then` is the only thing the card can ever do — tails does nothing at
+      // all. A heads branch that could only whiff therefore means the whole card
+      // could only whiff, and §7's "you cannot play a card if it has no valid
+      // target" applies: the flip is PROCEDURE, not effect (the rulebook's own
+      // attack sequence separates "flip a coin" from applying effects), so it
+      // cannot be the effect that makes the card playable. Compendium ruling/906
+      // ("you cannot play a card if it has no valid target", reconfirmed by the
+      // TPCi Rules Team 2025-06-26) with ruling/284 drawing the line this sits
+      // on: "playing a card for no effect happens when THE GAME STATE ITSELF
+      // prevents any effect from taking place". The apparent counter-precedent
+      // (Unown-E's Hidden Power forcing all flips tails, yet flip Trainers stay
+      // playable) is the OTHER branch of that same ruling — blocked by an effect
+      // in play, not by the board. Reaches Crushing Hammer (no Energy anywhere on
+      // the opponent's board) and Pokémon Catcher (an empty opponent Bench);
+      // Poké Ball is untouched, since a deck search is always playable enough.
+      //
+      // NOT extended to `conditionGate`: no printed sv01–03 card puts a
+      // whiff-able op inside one (Falkner and Grusha branch into draws), and
+      // deciding it properly means EVALUATING the condition here and scanning
+      // only the arm that will actually run — a bigger claim than this pure
+      // implication, and one no card needs yet.
+      if (!programPlayable(state, op.then, seat)) return false;
+      continue;
+    }
     if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
     if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;
     if (op.op === "switchActive" && state.players[seat].bench.length === 0) return false;
@@ -537,6 +566,14 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
     if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op)) {
       // No movable Energy, or fewer than two of your Pokémon in play (no distinct
       // destination) → the move can only whiff (Energy Switch / Poppy).
+      return false;
+    }
+    if (op.op === "discardEnergy" && !discardEnergyPlayable(state, seat, op)) {
+      // Nothing matching on the opponent's board → the discard can only whiff
+      // (Giacomo into a board with no Special Energy — rejected rather than
+      // spending the turn's one Supporter, §7.2). Only TOP-LEVEL ops are scanned,
+      // so Crushing Hammer's coin-GATED discard stays playable either way, which
+      // is how the printed card works (the flip happens regardless).
       return false;
     }
   }
@@ -655,6 +692,42 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       if (source !== undefined && refEquals(source, choice.dest)) {
         return err("BAD_EFFECT_CHOICE", "cannot move a Pokémon's Energy onto itself");
+      }
+      return null;
+    }
+    case "discardEnergy": {
+      // Crushing Hammer / Giacomo / Mawile. MANDATORY — an empty pick is NOT a
+      // decline here (unlike chooseCards / moveEnergy), so the count is exact:
+      // "one" takes exactly one Energy in total, "each" exactly one from EVERY
+      // Pokémon the prompt offered. Both are enforced by the same two rules —
+      // every uid was offered and distinct, no Pokémon gives up two — plus the
+      // required count, which for "each" is the number of distinct sources (so
+      // "one each, none skipped" follows by pigeonhole).
+      if (choice.kind !== "discardEnergy" || !Array.isArray(choice.uids)) {
+        return err("BAD_EFFECT_CHOICE", "expected an energy-discard choice");
+      }
+      const sourceOf = new Map(prompt.discardable.map((d) => [d.uid, d.from]));
+      const required =
+        prompt.scope === "one"
+          ? 1
+          : new Set(prompt.discardable.map((d) => refKey(d.from))).size;
+      if (choice.uids.length !== required) {
+        return err("BAD_EFFECT_CHOICE", `discard exactly ${required} Energy`);
+      }
+      const seen = new Set<string>();
+      const sources = new Set<string>();
+      for (const uid of choice.uids) {
+        const from = typeof uid === "string" ? sourceOf.get(uid) : undefined;
+        if (from === undefined) {
+          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a discardable Energy`);
+        }
+        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
+        seen.add(uid);
+        const key = refKey(from);
+        if (sources.has(key)) {
+          return err("BAD_EFFECT_CHOICE", "only one Energy per Pokémon");
+        }
+        sources.add(key);
       }
       return null;
     }

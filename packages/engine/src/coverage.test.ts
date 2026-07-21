@@ -117,6 +117,27 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
     expect(sawHeads && sawTails).toBe(true);
   });
 
+  it("Pokémon Catcher into an EMPTY opponent Bench is rejected, but Poké Ball is not", () => {
+    // Both are `coinFlipGate → [...]`, and `programPlayable` descends into the
+    // heads branch (a coin gate has no `otherwise`, so a whiff-only branch is a
+    // whiff-only card; §7 / Compendium 906 — the flip is procedure, not effect).
+    // They diverge on what the GAME STATE establishes: an empty opponent Bench is
+    // public, so Catcher provably does nothing…
+    let state = covBoard(1);
+    expect(state.players.p2.bench).toHaveLength(0);
+    state = handFromDeck(state, "p1", "sv01-187", 1);
+    const catcher = handUid(state, "p1", "sv01-187");
+    const rejected = applyAction(state, { type: "playTrainer", seat: "p1", uid: catcher });
+    expect(rejected.ok).toBe(false);
+    if (!rejected.ok) expect(rejected.error.code).toBe("NO_LEGAL_TARGET");
+    // …whereas a DECK is not public knowledge, so "this search will find nothing"
+    // is never a fact the state establishes — searchDeck stays "playable enough"
+    // and Poké Ball is legal no matter what the deck holds.
+    const withBall = handFromDeck(state, "p1", "sv01-185", 1);
+    const ball = handUid(withBall, "p1", "sv01-185");
+    expect(applyAction(withBall, { type: "playTrainer", seat: "p1", uid: ball }).ok).toBe(true);
+  });
+
   it("Copperajah ex's Bronze Body reduces attack damage by 30 (after W/R)", () => {
     let state = covBoard(2);
     state = setActiveFromDeck(state, "p1", "fix-attacker");

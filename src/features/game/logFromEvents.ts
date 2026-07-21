@@ -519,6 +519,24 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(targetName(state, event.seat, event.to)),
       ]);
     }
+    case "ENERGY_DISCARDED": {
+      // Crushing Hammer / Giacomo / Mawile (discardEnergy). `event.seat` owns the
+      // Pokémon that LOST the Energy, so — like DAMAGE_DEALT — the line reads
+      // from the other seat, the one whose card caused it (its TRAINER_PLAYED /
+      // ABILITY_TRIGGERED row sits just above and names the card). Both the
+      // attached Energy and the discard pile are public, so the cards are named.
+      // The Energy carries the `energy` tone (ENERGY_ATTACHED's) and the HOST
+      // `strong`, so the row's two names don't render identically — otherwise
+      // "discarded X from Y" gives the reader no cue which is the card and
+      // which is the Pokémon it came off.
+      const names_ = event.uids.map((uid) => cardName(state, uid)).join(", ");
+      return row(otherSeat(event.seat), [
+        plain("discarded "),
+        { text: names_, tone: "energy" },
+        plain(" from "),
+        strong(targetName(state, event.seat, event.from)),
+      ]);
+    }
     case "POKEMON_SWITCHED":
       // Passive voice — the causing card already logged its own row (Switch /
       // Boss's Orders a TRAINER_PLAYED, Jet Energy an ENERGY_ATTACHED); `seat`

@@ -948,6 +948,8 @@ function EffectChooseDialog(props: GameHudProps) {
     <ChoosePokemonMultiDialog {...props} prompt={prompt} />
   ) : prompt.kind === "moveEnergy" ? (
     <MoveEnergyDialog {...props} prompt={prompt} />
+  ) : prompt.kind === "discardEnergy" ? (
+    <DiscardEnergyDialog {...props} prompt={prompt} />
   ) : (
     <ChoosePokemonDialog {...props} prompt={prompt} />
   );
@@ -1293,6 +1295,126 @@ function MoveEnergyDialog({
             </button>
           )}
         </div>
+      </div>
+    </HudDialog>
+  );
+}
+
+/** discardEnergy (§15) — take Energy off the OPPONENT's board (Crushing Hammer /
+    Giacomo / Mawile). MANDATORY, so there is no decline button: the only question
+    is which Energy, and the engine only parks when that question is real (a
+    forced pick auto-resolved before the dialog could mount). Two shapes off the
+    prompt's `scope`: "one" is a single pick over every candidate, grouped under
+    the Pokémon it sits on so the choice reads as "which Pokémon, which Energy";
+    "each" (Giacomo) asks for exactly one per group, and Confirm stays disabled
+    until every group has its pick. Mounted only while parked on the viewer, so
+    the useState is the per-decision reset. */
+function DiscardEnergyDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "discardEnergy" }> }) {
+  const keyOf = (ref: PokemonRef) =>
+    `${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
+  // The candidates grouped by the Pokémon they sit on, first-seen (board) order —
+  // the same grouping `scope: "each"` counts against.
+  const groups: { key: string; ref: PokemonRef; uids: string[] }[] = [];
+  for (const { uid, from } of prompt.discardable) {
+    const key = keyOf(from);
+    const group = groups.find((g) => g.key === key);
+    if (group === undefined) groups.push({ key, ref: from, uids: [uid] });
+    else group.uids.push(uid);
+  }
+  // "each" (Giacomo) PRE-ANSWERS every group holding a single candidate: that
+  // group is not a question — the engine's own `forcedDiscards` would have
+  // auto-resolved the whole op if they all were (the M1 "a choice with no choice
+  // in it is not a choice" doctrine), and it is only the ONE Pokémon carrying two
+  // Special Energy that parks the play. Without this the player has to re-click
+  // every forced group before Confirm lights up. Same shape as MoveEnergyDialog
+  // pre-selecting a sole source. "one" starts empty — there the whole answer is
+  // a single uid, so nothing is forced unless the engine already resolved it.
+  const [picked, setPicked] = useState<string[]>(() =>
+    prompt.scope === "each"
+      ? groups.flatMap((group) => (group.uids.length === 1 ? [group.uids[0] as string] : []))
+      : [],
+  );
+  // One pick per Pokémon either way: a pick REPLACES that group's previous one
+  // rather than adding to it — exactly the rule the engine re-validates. In
+  // "one" scope a pick also clears every other group's, since the whole answer
+  // is a single uid; clicking the selected row again clears it.
+  const pick = (groupUids: readonly string[], uid: string) => {
+    setPicked((prev) => {
+      const others = prev.filter((u) => !groupUids.includes(u));
+      if (prev.includes(uid)) return prompt.scope === "each" ? others : [];
+      return prompt.scope === "each" ? [...others, uid] : [uid];
+    });
+  };
+  const required = prompt.scope === "one" ? 1 : groups.length;
+  const ready = picked.length === required;
+
+  return (
+    <HudDialog label="Discard Energy">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <p className="mt-1.5 text-sm text-white/55">
+        {prompt.scope === "each"
+          ? `Pick one Energy from each Pokémon (${picked.length}/${required}).`
+          : "Pick the Energy to discard."}
+      </p>
+      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+        {/* fieldset/legend, not a bare heading + list: this is the only HUD
+            dialog whose candidate rows are GROUPED, and every row reads
+            "Basic Energy" or the like, so without the host being part of the
+            group's accessible name a screen reader never says WHICH Pokémon
+            the Energy would come off. The flat-list siblings need nothing. */}
+        {groups.map((group) => (
+          <fieldset key={group.key} className="min-w-0">
+            {/* The SPOT rides the legend — unlike the flat sibling dialogs, which
+                name the Pokémon alone. Two copies of one Basic on the opponent's
+                board would otherwise give two identical legends over two identical
+                "Basic Energy" rows, and for a Crushing Hammer WHICH host loses the
+                Energy is the entire decision. */}
+            <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              {refName(game, group.ref)} ·{" "}
+              {group.ref.spot.spot === "active" ? "Active" : `Bench ${group.ref.spot.index + 1}`}
+            </legend>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {group.uids.map((uid) => {
+                const selected = picked.includes(uid);
+                return (
+                  <li key={uid}>
+                    <button
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => pick(group.uids, uid)}
+                      className={`${ROW_BUTTON_BASE} ${
+                        selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                      }`}
+                    >
+                      <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </fieldset>
+        ))}
+      </div>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON_CLASS}
+          disabled={!ready}
+          onClick={() =>
+            dispatch({
+              type: "resolveEffect",
+              seat: viewerSeat,
+              choice: { kind: "discardEnergy", uids: picked },
+            })
+          }
+        >
+          Discard {picked.length}/{required}
+        </button>
       </div>
     </HudDialog>
   );
