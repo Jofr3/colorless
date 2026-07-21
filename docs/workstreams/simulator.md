@@ -2122,6 +2122,10 @@ trigger-level yes/no confirm the doctrine already contemplates, which is a
 framework change, not a card one.
 
 ### The blocker this slice found — attack effect programs cannot PARK
+> **RESOLVED by the next slice** (engine 0.22.0) — see "M5 op-slice: attack
+> programs can PARK as built" below. Kept as written because it is the diagnosis
+> that produced the slice.
+
 Scoping the family turned up **~13 more sv01–03 cards on the same idea** that this
 op cannot reach, and the reason is not the op: `attack.ts` runs an attack's effect
 program as `runProgram(...).state`, so a **parked** result silently drops the
@@ -2139,6 +2143,99 @@ sweep + turn tail resume after the decision. It touches the §14 tie guard and t
 turn tail, so it is its own slice — now the top row of the backlog. (Pawmot and
 Raichu, "Discard ALL Energy", need only a `count: "all"` rider and would land
 without the park work, since "all" has no decision.)
+
+## M5 op-slice: attack programs can PARK as built (engine 0.22.0)
+The structural unlock the `discardEnergy` slice diagnosed, plus the card family
+that proves it. **What changed is one stage, not one op.**
+
+### `attackEpilogue` — the attack's tail, as a queued stage
+`attack.ts` used to end with two straight-line steps: run the effect program
+(`runProgram(...).state`), then `finishAttack` (the §8.1 KO sweep on the
+defender's board + the §5.3 turn tail). A **parked** program's prompt and every
+op behind it were simply thrown away by that `.state`.
+
+The fix inverts the order: **queue the tail first, then run the program.**
+- New `PendingStage` **`{kind:"attackEpilogue", seat, koedSeat}`** (types.ts).
+- **`finishAttack` MOVED from attack.ts into flow.ts** and is exported. It had to:
+  `advance` must reach it, and attack.ts already imports flow, so the handler
+  cannot sit on the far side of that edge. Its body is unchanged.
+- `attack()` seeds `pending: [epilogue]` and folds through
+  **`settleProgram(..., { resumeTail: true })`**. A DONE program drains straight
+  into the stage — behaviourally identical to the old inline call, one hop later.
+  A PARKED one leaves the stage in `pending` until `resolveEffect` finishes the
+  program (across any number of re-parks) and drains it then.
+- Seeding is safe because **`pending` is empty during `turn:action`** — the tail
+  only exists while a turn is ending. `advance`'s case pops the stage before
+  calling `finishAttack`, which writes its own queue.
+
+**`resumeTail` now has two meanings, and that is deliberate.** It was "this
+program is mid-KO-sweep (an on-KO Ability)"; it now reads "this program is
+mid-TAIL — the stages that finish the job are already queued behind it, so DONE
+means keep draining, not fold back to a turn". Both callers want exactly that,
+and neither wants `settleProgram`'s mid-turn KO sweep (the on-KO program does not
+damage; an attack's KOs are the epilogue's own job, and its sweep reads the
+POST-effect board, so a spread that KOs is still caught).
+
+The one place the two differ is the projection: an on-KO park has
+`phase.seat` ≠ the turn owner (the KO'd player decides during the opponent's
+turn), while an attack park has `phase.seat` **=** the turn owner. `koParkActiveSeat`
+(projection.ts) resolves both by reading the pending queue, so `attackEpilogue`
+joined `endTurn`/`checkup`/`resumeTurn` as an "in turn" marker — without it the
+board would show NO turn owner while the attacker is mid-decision.
+
+### The family that proves it — the §8 self-discard attack COST
+`discardEnergy` (D41) gained two things, both **DERIVED from printed text**
+(effects.ts rules 7/8) rather than authored per card — so the family lands with
+**zero registry rows**:
+- **`from: "yourActive"`** — the controller's own Active, which for an attack IS
+  the printed "this Pokémon" (§8: only the Active attacks). The only arm that
+  discards from the controller's board, and the reason `discardEnergyApply` reads
+  the victim seat off the op instead of hardcoding `otherSeat`.
+- **`count: "all"`** — take every match off every affected Pokémon. No decision,
+  so it never parks.
+
+Two anchored whole-sentence rules cover **11 catalog rows**:
+`"Discard an Energy from this Pokémon."` → Houndoom (sv01-034, sv03-133),
+Charcadet (sv01-039), Staraptor (sv01-150), Paldean Tauros (sv02-028), Dedenne ex
+(sv02-093/239), Bombirdier (sv02-147); `"Discard all Energy from this Pokémon."`
+→ Pawmot (sv01-076/209), Raichu (sv02-064/211).
+
+**Deliberately NOT derived** (each needs op vocabulary, not more park): the
+numeric counts ("Discard 2/3 Energy…" — Corviknight, Koraidon, Arcanine ex,
+Sandaconda, Slither Wing) need an exact-N park; the typed ones ("Discard a {L}
+Energy…" — Kilowattrel) need an energy-of-type filter, and `{L}` means an Energy
+that PROVIDES {L}, so Special Energy counts — a real rules subtlety, not a filter
+rename. Multi-sentence prints (Eiscue ex, Weavile, Kyurem) fail whole-sentence
+anchoring, which is the deriver's own doctrine: **exact map or flag**.
+
+### Interchangeable candidates collapse — the M1 doctrine, applied to cards
+The headline board (a Houndoom attacking with three {R} attached) would otherwise
+have asked "which of these three identical Fire Energy?". `interchangeableCandidates`
+(interpreter.ts) keeps ONE representative per **(host, card id)** class before the
+forced/park decision, so:
+- three copies of one print on one Pokémon → **one candidate → forced, no prompt**;
+- two different prints on one Pokémon → two candidates → **parks**;
+- two identical prints on two DIFFERENT Pokémon → **two candidates, still parks** —
+  WHICH Pokémon loses the Energy is never fungible, which is why the key includes
+  the host.
+
+The precedent is `attachEnergyFrom`'s "same-type Basic Energy is fungible, so the
+only decision is the TARGET", narrowed here to card-id equality (a strict subset,
+so it can never collapse a real choice). A uid with no catalog card collapses with
+nothing — park and ask rather than guess. `count: "all"` uses the UNcollapsed set:
+interchangeability is about which to pick, and there nothing is picked.
+
+**This changed shipped behaviour for the opponent arms too** (Crushing Hammer /
+Giacomo / Mawile): a Pokémon holding two copies of ONE Energy print now
+auto-resolves instead of parking. That is the improvement, not a regression — but
+it is why three D41 tests had to swap to two DISTINCT prints to keep testing a park.
+
+### `ENERGY_DISCARDED` gained `actor`
+`seat` names the victim (the DAMAGE_DEALT convention) and the log used to infer
+the actor as `otherSeat(seat)`. For a self-discard the two are the SAME seat, so
+that inference would credit Houndoom's own attack cost to its opponent. The event
+now carries `actor` and the row files under it — an inference the log should never
+have been making.
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per

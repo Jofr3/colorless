@@ -3,7 +3,41 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-21 — build session #26 (**P3-M5: `discardEnergy` — the
+**Last updated:** 2026-07-21 — build session #27 (**P3-M5: ATTACK EFFECT PROGRAMS
+CAN PARK — the `attackEpilogue` stage, and the §8 self-discard attack cost**). The
+top backlog row and the biggest remaining structural unlock, diagnosed by D41 and
+built as one STAGE, not one op. `attack.ts` ran an attack's effect program as
+`runProgram(...).state`, silently DROPPING a parked prompt and every op behind it.
+The fix **inverts the order — queue the tail first, then run the program**: new
+`PendingStage` **`{kind:"attackEpilogue", seat, koedSeat}`** carrying the §8.1 KO
+sweep + the §5.3 turn end, **`finishAttack` moved from attack.ts into flow.ts**
+(exported, so `advance` can reach it), and the fold goes through
+**`settleProgram(..., {resumeTail:true})`**. A DONE program drains straight into
+the stage (identical to the old inline call, one hop later); a PARKED one leaves it
+in `pending` until `resolveEffect` finishes the program — across any number of
+re-parks — and drains it then. **`resumeTail` is deliberately REDEFINED** from "this
+program is mid-KO-sweep" to "this program is mid-TAIL, the stages that finish the
+job are already queued behind it"; the only consumer that must tell the two apart is
+the projection (`koParkActiveSeat` gained `attackEpilogue` as an in-turn marker).
+**The family that proves it is DERIVED, not authored:** `discardEnergy` gained a
+**`yourActive`** arm and a **`count:"all"`** rider, and two anchored whole-sentence
+deriver rules land **12 catalog rows with ZERO registry rows** — Houndoom ×2,
+Charcadet, Staraptor, Paldean Tauros, Dedenne ex ×2, Bombirdier ("Discard an Energy
+from this Pokémon.") and Pawmot ×2, Raichu ×2 ("Discard all Energy…"). Third idea:
+**interchangeable candidates COLLAPSE** — one representative per (host, energy
+identity), so a Houndoom attacking with three {R} asks nothing. `ENERGY_DISCARDED`
+gained **`actor`** (victim and actor are the same seat for a self-discard).
+engineVersion 0.21.0 → **0.22.0**; 1227 → **1250** tests, `bun run check` +
+`vite build` green. **Review (adversarial engine+rules + web+integration): NO HIGH
+from either**; 56 mutants between them, **9 survivors, all now dead**. The sharpest
+catch: the collapse keyed on catalog **id**, but the real catalog prints Basic Fire
+Energy under three ids (sve-002/010/018) — an id key would have parked a real deck
+on a non-choice and broken the slice's own headline claim, so a Basic now keys on
+what it **provides**. See D42.
+
+---
+### Prior header (P3-M5 discardEnergy, kept for continuity)
+**Last updated (was):** 2026-07-21 — build session #26 (**P3-M5: `discardEnergy` — the
 energy-removal "hammer" family, and the coin-gate playability bug it exposed**). One
 new op takes Energy off the **OPPONENT's** in-play Pokémon; **`from` names both the
 eligible Pokémon and how many are hit** — `opponentActive` (Mawile), `opponentChosen`
@@ -129,6 +163,88 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
+**Attack effect programs can PARK (P3-M5, D42) — the `attackEpilogue` stage.** The
+top backlog row is done, and it is a MECHANISM, not a card family: every future
+attack effect may now hold a decision. `attack.ts` used to run an attack's effect
+program as `runProgram(...).state`, so a parked result dropped the prompt AND the
+remaining ops. Now the tail is **queued before the program runs** — a new
+`PendingStage` **`{kind:"attackEpilogue", seat, koedSeat}`** carrying the §8.1 KO
+sweep + the §5.3 turn end — and the fold goes through `settleProgram`'s
+**`resumeTail`**. `finishAttack` moved into flow.ts (exported) because `advance` must
+reach it and attack.ts already imports flow.
+**`resumeTail` now means "mid-TAIL", not "mid-KO-sweep"** — the stages that finish
+the job are queued behind the park, so DONE means keep draining. Its two producers
+differ only for the projection: an on-KO park's `phase.seat` is NOT the turn owner,
+an attack park's IS, and `koParkActiveSeat` resolves both off the pending queue
+(`attackEpilogue` joined `endTurn`/`checkup`/`resumeTurn` as an in-turn marker).
+**The first family is DERIVED, so it costs no registry rows:** `discardEnergy`
+gained **`from: "yourActive"`** (the controller's own Active — for an attack, the
+printed "this Pokémon", §8) and **`count: "all"`**, and two anchored whole-sentence
+deriver rules cover **12 catalog rows**: Houndoom (sv01-034, sv03-133), Charcadet,
+Staraptor, Paldean Tauros, Dedenne ex (×2), Bombirdier; Pawmot (×2), Raichu (×2).
+**Interchangeable candidates COLLAPSE** to one representative per (host, energy
+identity) — a Houndoom attacking with three {R} asks nothing (the M1 no-choice
+doctrine applied to card identity, via `attachEnergyFrom`'s fungibility precedent).
+A **Basic** Energy's identity is what it PROVIDES, not its catalog id: the real
+catalog prints Basic Fire Energy under sve-002/010/018, and an id key would park a
+real deck on a non-choice. This also CHANGED D41's hammer arms (two copies of one
+print on one Pokémon now auto-resolve — the improvement; three D41 tests moved to
+two DISTINCT prints to keep testing a park). `ENERGY_DISCARDED` gained **`actor`**,
+since victim and actor are the same seat for a self-discard and the log's old
+`otherSeat` inference would have credited Houndoom's own cost to its opponent.
+engineVersion 0.21.0 → **0.22.0**.
+**Review (adversarial engine+rules + web+integration): NO HIGH from either.** 56
+mutants, 9 survivors, ALL now dead. Fixes applied: the provision-vs-id key above; a
+**`PHASE_DESYNC` guard** on `resolveEffect` for a `resumeTail` park with an EMPTY
+queue (that fold writes no phase of its own, so it would loop forever);
+`finishAttack` now **COMPOSES** with the queue instead of overwriting it, which makes
+the epilogue's `popStage` load-bearing rather than redundant; the log row names the
+host's **OWNER** (a mirror match printed an identical row for both boards, and a
+pronoun cannot fix it — the `who` chip is viewer-relative while the segments are
+fixed text); the dialog legend carries the `opponent` marker its sibling already
+uses; `count:"all"` rows fold repeats into "×N"; and the effect:choose dialog is
+keyed on the PROMPT so two parks in one turn cannot inherit a stale pick.
+**Recorded, NOT fixed (loudly commented in flow.ts):** the epilogue sweeps ONE
+seat, so a KO an attack inflicts on the ATTACKER's own board is missed. Unreachable
+today, but **sv01-038 Skeledirge** ("This Pokémon also does 30 damage to itself.")
+is one deriver sentence away — and widening it to `SEATS` makes the §14 double-KO
+tie guard reachable from the attack path for the FIRST time, so it wants its own
+slice with its own tests. **Do that before landing any self-damaging attack text.**
+**Next concrete actions:**
+1. **The opponent-side attack twins, now unblocked** — **Pincurchin**, **Gumshoos**
+   ("Discard an Energy from your opponent's Active Pokémon") and **Dedenne /
+   Maschiff / Tympole** (the same behind a coin flip). One deriver sentence each on
+   the EXISTING `opponentActive` arm; the park machinery is already there. Cheapest
+   remaining work in the whole family.
+2. **The self-discard prints that need op vocabulary, not park work:** an
+   **exact-N** discard (Corviknight "discard 2", Koraidon "discard 3", Arcanine ex,
+   Sandaconda, Slither Wing — a mandatory park with an exact count > 1, which
+   `validateChoice` already almost expresses) and an **energy-of-type** filter
+   (Kilowattrel's "a {L} Energy" — careful: "{L}" means an Energy that PROVIDES {L},
+   so Special Energy counts; it is not `basicEnergy` + type).
+3. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
+   Vessel / Revavroom / Tinkaton). Shares the printed wording "You can use this card
+   only if…" but is NOT a `BoardCondition` — a COST with a card CHOICE, so it must
+   PARK before the effect runs.
+4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
+   PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra** (a
+   choose-from-hand → BOTTOM park, mandatory-exactly-one).
+5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat` (the
+   searchDeck deck-uid leak), and D40's `stadium.owner` + `prizesRemaining`
+   projection additions.
+**Carried forward (pre-existing, NOT this slice):** every authored Supporter still
+has `legal_standard=0` in the local ingest; `GameLog` announces only a batch's LAST
+row to screen readers, which this slice sharpens (a parked self-discard's row is
+always followed by TURN_ENDED/TURN_STARTED/CARDS_DRAWN, so the discard is never
+spoken); `GamePage`'s `passDisabled` phase check is untested; and Fighting Au Lait
+is still playable with nothing damaged anywhere. **New INFO worth a decision later:**
+during an attack park the KO sweep has not run, so a lethally-damaged defender is
+briefly renderable — the damage chip shows "120/30". Transient and arguably
+informative, but before this slice no such state was ever renderable.
+
+---
+### Prior resume point (P3-M5 discardEnergy, kept for continuity)
 **`discardEnergy` is live (P3-M5, D41) — the energy-removal "hammer" family.** ONE op
 takes Energy off the **OPPONENT's** in-play Pokémon, and **`from` names both the
 eligible Pokémon and how many are hit**, spelled the way the cards are:
