@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState, Seat } from "@luminous/engine";
 import { topCardOf } from "@luminous/engine";
 import {
+  BOARD_CONDITION_DECK,
   HAND_REFRESH_DECK,
   MIXED_DECK,
   SPECIAL_ENERGY_DECK,
@@ -21,6 +22,7 @@ import {
   mustCreate,
   setActiveFromDeck,
   setPrizes,
+  types,
 } from "../../../packages/engine/src/testFixtures";
 import {
   formatElapsed,
@@ -645,5 +647,70 @@ describe("logFromEvents — moveEnergy (M5): ENERGY_MOVED", () => {
     expect(texts(logFromEvents([moved], ctx(state)))).toEqual([
       "moved 2 energy from fix-attacker to fix-victim",
     ]);
+  });
+});
+
+describe("board-condition cards — the log rides existing rows (M5 board conditions)", () => {
+  /** P1's turn 2 on the board-condition deck (P2 went first and passed). */
+  function p1Turn2(seed: number): GameState {
+    const state = driveSetup(seed, { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK }, { first: "p2" });
+    return mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  }
+  function playFrom(state: GameState, cardId: string) {
+    const withCard = handFromDeck(state, "p1", cardId, 1);
+    const uid = handUid(withCard, "p1", cardId);
+    return mustApply(withCard, { type: "playTrainer", seat: "p1", uid });
+  }
+
+  it("pins Falkner's TWO draw rows — the gate is silent, the draws are not", () => {
+    // The gate itself emits nothing (a board condition is public — unlike a coin
+    // flip, which does get a row). The bonus draw is a SECOND drawCards op, so it
+    // shows as its own row; this is what the registry's two-op authoring buys, and
+    // merging them into one computed count would silently change the log.
+    let state = p1Turn2(3);
+    state = handFromDeck(state, "p1", "sv01-167", 1); // Beach Court
+    const court = handUid(state, "p1", "sv01-167");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid: court }).state;
+    const { state: after, events } = playFrom(state, "sv02-180");
+
+    expect(texts(logFromEvents(events, ctx(after)))).toEqual([
+      "played sv02-180",
+      "drew 2 cards",
+      "drew 2 cards",
+    ]);
+    // No coin-flip row and no bespoke "condition met" row — nothing announces the
+    // branch, because both players can read the Stadium zone off the board.
+    expect(types(events)).toEqual(["TRAINER_PLAYED", "CARDS_DRAWN", "CARDS_DRAWN"]);
+  });
+
+  it("Falkner with NO Stadium logs one draw row", () => {
+    const { state: after, events } = playFrom(p1Turn2(3), "sv02-180");
+    expect(texts(logFromEvents(events, ctx(after)))).toEqual(["played sv02-180", "drew 2 cards"]);
+  });
+
+  it("a Grusha into an already-full hand logs the PLAY only — no 'drew 0 cards' row", () => {
+    // drawUntilHandSize no-ops at count ≤ 0, so the Supporter is spent with a
+    // single row. Honest (the hand size is public and visibly unchanged) and the
+    // deliberate choice over a misleading zero-count draw row.
+    let state = p1Turn2(3);
+    const side = state.players.p1;
+    // Energy on the Active → the draw-to-5 arm; keep a hand of 5 so it draws none.
+    const energy = side.deck.find((u) => state.cardIdByUid[u] === "fix-energy") as string;
+    if (side.active === null) throw new Error("expected an Active");
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...side,
+          deck: side.deck.filter((u) => u !== energy),
+          active: { ...side.active, energy: [...side.active.energy, energy] },
+          hand: side.hand.slice(0, 5),
+          discard: [...side.discard, ...side.hand.slice(5)],
+        },
+      },
+    };
+    const { state: after, events } = playFrom(state, "sv02-184");
+    expect(texts(logFromEvents(events, ctx(after)))).toEqual(["played sv02-184"]);
   });
 });

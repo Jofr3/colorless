@@ -52,6 +52,41 @@ export type HandRefreshDraw =
   | { kind: "handPlus"; delta: number }
   | { kind: "prizeCount" };
 
+/** A board predicate read for ONE seat — the vocabulary behind both the printed
+    "You can use this card only if <condition>" play gates (CardProgram
+    `playableIf`) and the "if <condition>, …" mid-program branches (the
+    `conditionGate` op). Evaluated by `conditionHolds` (interpreter.ts) against
+    the state at the moment it is asked: a play gate before the card leaves hand,
+    a `conditionGate` at its own point in the program.
+
+    INVARIANT — every member reads only PUBLIC state (Prize COUNTS, the Stadium
+    zone's owner, Energy sitting face up on Pokémon). Both players can already
+    derive the answer off the board, which is why a gate emits no event, unlike
+    `coinFlipGate`, whose flip IS new information. Keep it that way: a condition
+    over hidden state (a hand's CONTENTS, a deck) would leak through the gate.
+
+    "Public" is about what a condition may DEPEND on, NOT about who can compute
+    it: `conditionHolds` takes a `GameState`, so only a host holding raw engine
+    state can run it (today's hot-seat HUD does). A P4 remote client holds a
+    projection, which does NOT carry the Stadium's owner and redacts the prize
+    arrays to counts — so the online client cannot evaluate these as written.
+    That gap is P4's to close (see docs/workstreams/simulator.md); note that a
+    redacted prize array still has a `.length`, so `morePrizesThanOpponent` would
+    fail SILENTLY rather than loudly if this were shipped online unchanged. */
+export type BoardCondition =
+  /** §14 — you have strictly MORE Prize cards remaining than your opponent, i.e.
+      you are BEHIND on Prizes taken (Fighting Au Lait's play gate; Defiance
+      Band, Luxray and Reversal Energy read the same condition and layer later). */
+  | { kind: "morePrizesThanOpponent" }
+  /** §7.3 — the Stadium in the shared zone is YOURS (you played it). "If you
+      have a Stadium in play" is about OWNERSHIP, not mere presence: the
+      opponent's Stadium sitting in the zone does not satisfy Falkner. */
+  | { kind: "yourStadiumInPlay" }
+  /** None of your in-play Pokémon (Active or Benched) has ANY Energy attached —
+      Basic or Special (Grusha's "if none of your Pokémon have any Energy
+      attached"). Vacuously true with nothing in play. */
+  | { kind: "noEnergyOnYourPokemon" };
+
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
     = the attacker's Active, "defender" = the Defending Pokémon); Trainer /
@@ -101,12 +136,20 @@ export type EffectOp =
       settleProgram → resolveMidTurnKnockOuts), a MID-TURN KO that resumes the
       actor's turn — so this, like every op, never KOs or touches the flow tail. */
   | { op: "damageChosen"; target: "opponentBench"; amount: number; count: number }
-  /** "Flip a coin. If heads, …" — `then` runs on heads only. */
+  /** "Flip a coin. If heads, …" — `then` runs on heads only. The other gate is
+      `conditionGate` (below, deterministic); both are spliced by runProgram. */
   | { op: "coinFlipGate"; then: EffectOp[] }
   // — Trainer / Ability ops (M4), controller-relative. —
   /** Draw `count` from the top of the controller's deck (short-draws when the
       deck is shallower — §14.3 deck-out is a turn-START rule only). */
   | { op: "drawCards"; count: number }
+  /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
+      `size − hand.length`, i.e. nothing at all when the hand already holds
+      `size` or more (a bigger hand is never trimmed). Fully automatic like
+      drawCards, and short-draws the same way on a shallow deck (§14.3 deck-out
+      is a turn-START rule). Distinct from drawCards because the count is read
+      off the CURRENT hand: two of these in a row is not two draws. */
+  | { op: "drawUntilHandSize"; size: number }
   /** Discard the controller's whole hand (Professor's Research precedes a draw). */
   | { op: "discardHand" }
   /** Shuffle the controller's deck (the tail of every search). */
@@ -259,7 +302,25 @@ export type EffectOp =
       toBottom?: true;
       /** Draw only if ≥1 affected player actually moved ≥1 card (Iono). */
       onlyIfAnyMoved?: true;
-    };
+    }
+  /** A BOARD-CONDITION branch: run `then` when `cond` holds for the controller,
+      else `otherwise` (nothing, if absent). The deterministic sibling of
+      `coinFlipGate`, and spliced into the work queue by runProgram exactly the
+      same way — so an op INSIDE a branch can still park, and a branch may hold
+      any ops including further gates.
+
+      One-armed is the common shape ("Draw 2 cards. If you have a Stadium in
+      play, draw 2 MORE cards" — Falkner: a plain drawCards followed by a gated
+      second one). `otherwise` exists for the printed "…instead", which is a real
+      if/ELSE: Grusha draws to 7 when no Energy is on its board and to 5 when
+      some is, and exactly ONE of those runs.
+
+      Emits NO event, unlike coinFlipGate. A coin flip is new information both
+      players must be told; a board condition is a fact they can already read off
+      the table (see BoardCondition's public-state invariant), and the branch's
+      own ops emit whatever actually happened. `cond` is evaluated against the
+      state AS OF this op — after every earlier op in the program has applied. */
+  | { op: "conditionGate"; cond: BoardCondition; then: EffectOp[]; otherwise?: EffectOp[] };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

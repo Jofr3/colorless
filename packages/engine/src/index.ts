@@ -40,7 +40,7 @@ import type { GameState, Seat } from "./types";
     behind draws more), and `onlyIfAnyMoved` (with both hands empty, nobody draws).
     The op now moves every affected hand BEFORE any draw, which that all-or-nothing
     gate requires. Youngster/Judge/Brassius/Katy were 0.18.0). */
-export const engineVersion = "0.19.0";
+export const engineVersion = "0.20.0";
 
 export type {
   ApplyResult,
@@ -97,7 +97,15 @@ export {
 export { deriveAttackEffect } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
-export type { CardFilter, EffectOp } from "./effects";
+export type { BoardCondition, CardFilter, EffectOp } from "./effects";
+/** The one BoardCondition evaluator + its printed-text describer. Exported so a
+    host holding raw engine state (today's hot-seat HUD) greys out a card whose
+    printed "only if" gate is unmet using the SAME logic playTrainer rejects it
+    by, and can say WHY. Both take a `GameState`: a P4 remote client holds a
+    projection instead, which does not carry the Stadium's owner and redacts the
+    prize arrays — see the P4 notes in docs/workstreams/simulator.md before
+    reusing these online. */
+export { conditionHolds, conditionNote } from "./interpreter";
 export type {
   EffectChoice,
   EffectContinuation,

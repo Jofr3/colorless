@@ -565,6 +565,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player draws a card for each of their remaining Prize cards.",
   ),
+
+  // — M5 op-slice: board conditions (real catalog ids so the registry finds the
+  //   programs; the effect text is cosmetic — the registry keys on the id). —
+  /** Fighting Au Lait (Item) — the printed PLAY GATE + heal 60. */
+  "sv02-181": trainerCard(
+    "sv02-181",
+    "Item",
+    "You can use this card only if you have more Prize cards remaining than your opponent. Heal 60 damage from 1 of your Pokémon.",
+  ),
+  /** Falkner (Supporter) — draw 2, +2 more if YOUR Stadium is in play. */
+  "sv02-180": trainerCard(
+    "sv02-180",
+    "Supporter",
+    "Draw 2 cards. If you have a Stadium in play, draw 2 more cards.",
+  ),
+  /** Grusha (Supporter) — draw to 5 in hand, to 7 instead if no Energy on your board. */
+  "sv02-184": trainerCard(
+    "sv02-184",
+    "Supporter",
+    "Draw cards until you have 5 cards in your hand. If none of your Pokémon have any Energy attached, draw cards until you have 7 cards in your hand instead.",
+  ),
+  /** fix-condgate — FIXTURE Item (registry FIX_CONDGATE): a conditionGate whose
+      BOTH arms hold a PARKING op, proving a branch can park like any other step. */
+  "fix-condgate": itemTrainer("fix-condgate"),
+  /** fix-gateorder — FIXTURE Item (registry FIX_GATEORDER): an attach BEFORE the
+      gate (so it flips the condition), a two-op arm, and an op AFTER the gate. */
+  "fix-gateorder": itemTrainer("fix-gateorder"),
+  /** fix-gatedsup — FIXTURE Supporter (registry FIX_GATEDSUP): the only gated
+      SUPPORTER, pinning that a rejected gate does not burn the §7.2 allowance. */
+  "fix-gatedsup": trainerCard("fix-gatedsup", "Supporter", "Gated draw 1 (fixture)."),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -832,6 +862,23 @@ export const HAND_REFRESH_DECK = deckOf({
   "sv01-177": 3, // Katy
   "sv02-185": 3, // Iono
   "fix-energy": 37,
+});
+
+/** M5 op-slice: board conditions. The three cards that read a BoardCondition,
+    plus Beach Court (sv01-167) so a Stadium can actually be put in play to swing
+    Falkner's gate — from EITHER seat, which is how the "the opponent's Stadium
+    does not count" case is built. Basic bodies to lead and bulk energy so the
+    deck stays deep enough for Grusha's draw-to-7 to be exact. */
+export const BOARD_CONDITION_DECK = deckOf({
+  "fix-basic-1": 8,
+  "sv02-181": 3, // Fighting Au Lait
+  "sv02-180": 3, // Falkner
+  "sv02-184": 3, // Grusha
+  "sv01-167": 3, // Beach Court (Stadium)
+  "fix-condgate": 3, // FIXTURE — a parking op inside each gate arm
+  "fix-gateorder": 3, // FIXTURE — gate timing, splice order, surviving tail
+  "fix-gatedsup": 3, // FIXTURE — a gated Supporter (the §7.2 allowance ordering)
+  "fix-energy": 31,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

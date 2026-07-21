@@ -1,5 +1,5 @@
 import { ANY_ENERGY } from "./cards";
-import type { EffectOp } from "./effects";
+import type { BoardCondition, EffectOp } from "./effects";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
 // It sits ABOVE the text deriver: attacks resolve `programFor(id)?.attack ??
@@ -152,6 +152,24 @@ export interface CardProgram {
   abilities?: AbilityProgram[];
   /** The Trainer's play effect (Item/Supporter — §7.1/§7.2). */
   trainer?: EffectOp[];
+  /** The printed "You can use this card only if <board condition>" legality gate
+      (Fighting Au Lait: "…only if you have more Prize cards remaining than your
+      opponent"). playTrainer checks it BEFORE the card leaves hand, so a failed
+      gate costs the player nothing — a printed RULE, categorically different
+      from `programPlayable`'s would-only-whiff heuristics (which are the
+      engine's judgement about ops that would do nothing, not text on the card).
+      The condition reads only public state (BoardCondition), so the HUD greys
+      the card out with the same evaluator instead of offering a dead button.
+
+      NAMED `trainer…` BECAUSE IT IS HONOURED ON EXACTLY ONE PATH — playTrainer's
+      Item/Supporter branch. `playStadium`, the `rareCandy` action, `attachTool`
+      and `useAbility` all return before it and would ignore it SILENTLY, so an
+      Ability-level gate (Luxray's "if you have more Prize cards remaining",
+      which also needs an in-hand Ability surface this engine does not have) must
+      NOT be authored here — it needs its own check on useAbility, sharing the
+      same `conditionHolds`. The `trainerEndsTurn` flag above is scoped the same
+      way for the same reason. */
+  trainerPlayableIf?: BoardCondition;
   /** Triggered Abilities printed on this card (§9) — fire on a game event
       (played to Bench / evolved / between turns), not player-activated. */
   triggered?: TriggeredAbility[];
@@ -684,6 +702,112 @@ const IONO: CardProgram = {
   ],
 };
 
+// ── M5 op-slice: board conditions (2026-07-21) — one BoardCondition vocabulary
+//    with two consumers: the printed PLAY GATE (`trainerPlayableIf`, checked before the
+//    card leaves hand) and the mid-program `conditionGate` branch. ──
+
+/** Fighting Au Lait — "You can use this card only if you have more Prize cards
+    remaining than your opponent. / Heal 60 damage from 1 of your Pokémon."
+    (Item) — the first `trainerPlayableIf` card. The condition is the card's printed
+    LEGALITY line, so it blocks the play outright (and greys the HUD button)
+    rather than letting the card be spent on nothing; the effect itself is the
+    Potion op at a bigger number. */
+const FIGHTING_AU_LAIT: CardProgram = {
+  trainerPlayableIf: { kind: "morePrizesThanOpponent" },
+  trainer: [{ op: "healChosen", amount: 60 }],
+};
+
+/** Falkner — "Draw 2 cards. If you have a Stadium in play, draw 2 more cards."
+    (Supporter) — a ONE-ARMED conditionGate: the base draw is unconditional and
+    the bonus is a SECOND drawCards inside the gate. Two ops rather than one
+    computed count, so the log shows the two draws exactly as they happen and
+    the gate is evaluated after the base draw (drawing cannot move a Stadium, so
+    the order is immaterial — but this is the order the card is written in). */
+const FALKNER: CardProgram = {
+  trainer: [
+    { op: "drawCards", count: 2 },
+    {
+      op: "conditionGate",
+      cond: { kind: "yourStadiumInPlay" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "drawCards", count: 2 }],
+    },
+  ],
+};
+
+/** Grusha — "Draw cards until you have 5 cards in your hand. If none of your
+    Pokémon have any Energy attached, draw cards until you have 7 cards in your
+    hand INSTEAD." (Supporter) — the printed "instead" is a genuine if/ELSE, so
+    this is the one card using the gate's `otherwise` arm: exactly one of the two
+    draws ever runs, and the condition is measured on the board as it stands
+    before any card is drawn (drawing to hand cannot attach Energy either way). */
+const GRUSHA: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "noEnergyOnYourPokemon" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "drawUntilHandSize", size: 7 }],
+      otherwise: [{ op: "drawUntilHandSize", size: 5 }],
+    },
+  ],
+};
+
+/** fix-condgate — FIXTURE demonstrator, no printed card: a conditionGate whose
+    BOTH arms hold a PARKING op. Neither real card needs this (Falkner and Grusha
+    branch into automatic draws only), but runProgram splices a branch into the
+    work queue precisely so an op inside one can still park — this is the fixture
+    that proves it, on both the `then` and the `otherwise` side. */
+const FIX_CONDGATE: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "morePrizesThanOpponent" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "healChosen", amount: 30 }],
+      otherwise: [{ op: "gust" }],
+    },
+  ],
+};
+
+/** fix-gateorder — FIXTURE demonstrator, no printed card. Pins the three claims
+    about the gate that no REAL card can exercise, because Falkner's gate is last
+    in its program, Grusha's gate IS its whole program, and neither arm holds
+    more than one op:
+      1. the gate is evaluated against the board AS OF the gate — the leading
+         attach BREAKS `noEnergyOnYourPokemon`, so the `otherwise` arm runs (a
+         gate reading the program's ENTRY state would take `then` instead);
+      2. an arm's ops are spliced to the FRONT of the queue (draw 1 then 4 come
+         before the trailing draw 2, not after it);
+      3. the ops AFTER the gate survive the splice (the trailing draw 2 fires).
+    Each claim shows up as a different CARDS_DRAWN sequence, so one assertion on
+    the ordered draw counts kills all three mutants. */
+const FIX_GATEORDER: CardProgram = {
+  trainer: [
+    { op: "attachEnergyFrom", source: "hand" },
+    {
+      op: "conditionGate",
+      cond: { kind: "noEnergyOnYourPokemon" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "drawCards", count: 3 }],
+      otherwise: [
+        { op: "drawCards", count: 1 },
+        { op: "drawCards", count: 4 },
+      ],
+    },
+    { op: "drawCards", count: 2 },
+  ],
+};
+
+/** fix-gatedsup — FIXTURE demonstrator: a gated SUPPORTER. Every real card with
+    a `trainerPlayableIf` is an Item, so nothing else pins that the gate is
+    checked BEFORE `allowances.supporterPlayed` is written — a rejected gated
+    Supporter must not burn the one-Supporter-per-turn allowance (§7.2). */
+const FIX_GATEDSUP: CardProgram = {
+  trainerPlayableIf: { kind: "morePrizesThanOpponent" },
+  trainer: [{ op: "drawCards", count: 1 }],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -796,6 +920,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-185": IONO, // Iono — each player's hand to the BOTTOM, draw their Prize count
   "sv02-254": IONO, // Iono (reprint)
   "sv02-269": IONO, // Iono (reprint)
+  // — M5 op-slice: board conditions (verified vs the local catalog 2026-07-21). —
+  "sv02-181": FIGHTING_AU_LAIT, // Fighting Au Lait — play gate: more Prizes left; heal 60
+  "sv02-180": FALKNER, // Falkner — draw 2, +2 more if YOUR Stadium is in play
+  "sv02-251": FALKNER, // Falkner (reprint)
+  "sv02-184": GRUSHA, // Grusha — draw until 5 in hand, until 7 if no Energy on your board
+  "sv02-253": GRUSHA, // Grusha (reprint)
+  "sv02-268": GRUSHA, // Grusha (reprint)
+  "fix-condgate": FIX_CONDGATE, // FIXTURE — a parking op inside each gate arm
+  "fix-gateorder": FIX_GATEORDER, // FIXTURE — gate timing, splice order, surviving tail
+  "fix-gatedsup": FIX_GATEDSUP, // FIXTURE — a GATED Supporter (the allowance ordering)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

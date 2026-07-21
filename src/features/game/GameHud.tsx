@@ -20,6 +20,8 @@ import type {
 import {
   attacksOf,
   cardOfUid,
+  conditionHolds,
+  conditionNote,
   costMet,
   effectiveAttackCost,
   effectiveRetreatCost,
@@ -73,6 +75,10 @@ interface TrainerOption {
   /** Rare Candy (§7.1) is a Trainer that EVOLVES — its button opens the Rare
       Candy dialog (pick a Basic + a Stage 2) instead of dispatching playTrainer. */
   rareCandy: boolean;
+  /** Why a printed `trainerPlayableIf` gate greyed this row out — the tooltip that
+      replaces the reject pill the player can no longer reach by clicking. Only
+      set for that gate; the coarse §4/§7.2/§7.3 ones are self-evident. */
+  reason?: string;
 }
 function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
   const side = game.players[seat];
@@ -102,12 +108,32 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     }
     seen.add(card.id);
     const isSupporter = card.trainerType === "Supporter";
-    const disabled = isRareCandy
-      ? !rareCandyPlayable()
-      : isSupporter
-        ? game.turn === 1 || game.allowances.supporterPlayed
-        : isStadium && (game.allowances.stadiumPlayed || card.name === inPlayStadium);
-    out.push({ uid, name: card.name, disabled, rareCandy: isRareCandy });
+    // The card's own printed "You can use this card only if …" gate (Fighting Au
+    // Lait) — evaluated with the engine's own predicate, so the button greys out
+    // EXACTLY when playTrainer would reject with PLAY_CONDITION_NOT_MET, and the
+    // reason rides along as the row's tooltip (a printed rule the player cannot
+    // otherwise read off the HUD, unlike "you already played a Supporter").
+    // Scoped to the Item/Supporter path on purpose: `trainerPlayableIf` sits on
+    // CardProgram, but cardplay.ts reads it ONLY in playTrainer's Item/Supporter
+    // branch — playStadium, the rareCandy action and useAbility all ignore it. A
+    // broader grey-out here would disagree with the engine (and a Stadium is
+    // droppable on the shared slot, bypassing this list entirely).
+    const gated = !isRareCandy && !isStadium ? program.trainerPlayableIf : undefined;
+    const gateUnmet = gated !== undefined && !conditionHolds(game, seat, gated);
+    const disabled =
+      gateUnmet ||
+      (isRareCandy
+        ? !rareCandyPlayable()
+        : isSupporter
+          ? game.turn === 1 || game.allowances.supporterPlayed
+          : isStadium && (game.allowances.stadiumPlayed || card.name === inPlayStadium));
+    out.push({
+      uid,
+      name: card.name,
+      disabled,
+      rareCandy: isRareCandy,
+      reason: gateUnmet && gated !== undefined ? `Only if ${conditionNote(gated)}` : undefined,
+    });
   }
   return out;
 }
@@ -511,7 +537,10 @@ function TurnPanel(props: GameHudProps) {
             </p>
             <ul className="mt-1.5 flex flex-col gap-1.5">
               {trainerOptions.map((opt) => (
-                <li key={opt.uid}>
+                // `title` sits on the LI, not the button: a disabled button is
+                // out of the tab order, so the row is the only place the reason
+                // stays reachable (the sr-only span carries it to a reader).
+                <li key={opt.uid} title={opt.reason}>
                   <button
                     type="button"
                     disabled={opt.disabled}
@@ -524,6 +553,10 @@ function TurnPanel(props: GameHudProps) {
                   >
                     <span className="truncate">{opt.name}</span>
                   </button>
+                  {/* Outside the button on purpose: inside, it would join the
+                      button's ACCESSIBLE NAME ("sv02-181 Only if…") rather than
+                      read as the separate explanation it is. */}
+                  {opt.reason !== undefined && <span className="sr-only">{opt.reason}</span>}
                 </li>
               ))}
             </ul>

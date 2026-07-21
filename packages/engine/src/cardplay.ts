@@ -15,6 +15,8 @@ import { settleProgram } from "./flow";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import {
   attachEnergyTargets,
+  conditionHolds,
+  conditionNote,
   firstAttachableEnergy,
   moveEnergyPlayable,
   resumeProgram,
@@ -53,7 +55,8 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (card.category !== "Trainer") {
     return err("NOT_A_TRAINER", `${card.name} is not a Trainer card`);
   }
-  if (programFor(card.id)?.rareCandy === true) {
+  const entry = programFor(card.id);
+  if (entry?.rareCandy === true) {
     // Rare Candy evolves (it carries a target Basic + a Stage 2), so it is not
     // a program-running Trainer — it goes through the dedicated `rareCandy`
     // action (the same shape as a Tool routing to attachTool).
@@ -70,7 +73,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (trainerType !== "Item" && trainerType !== "Supporter") {
     return err("TRAINER_TYPE_UNSUPPORTED", `${trainerType ?? "this"} Trainers are not supported yet`);
   }
-  const program = programFor(card.id)?.trainer;
+  const program = entry?.trainer;
   if (program === undefined) {
     // Coverage strategy: an unauthored Trainer surfaces loudly rather than
     // playing as a silent no-op that still costs the player the card.
@@ -85,6 +88,13 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     if (state.allowances.supporterPlayed) {
       return err("SUPPORTER_ALREADY_PLAYED", "only one Supporter per turn (§7.2)");
     }
+  }
+  // The card's own printed "You can use this card only if …" line (Fighting Au
+  // Lait). Checked HERE — before the card leaves hand below — so a rejected play
+  // costs nothing; and against `state`, the board the player is looking at.
+  const playGate = entry?.trainerPlayableIf;
+  if (playGate !== undefined && !conditionHolds(state, action.seat, playGate)) {
+    return err("PLAY_CONDITION_NOT_MET", `${card.name} can only be used if ${conditionNote(playGate)}`);
   }
   if (!programPlayable(state, program, action.seat)) {
     return err("NO_LEGAL_TARGET", `${card.name} has no legal target`);
@@ -106,7 +116,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   }
   // Katy "your turn ends": a Trainer that ends the turn on completion, folded by
   // settleProgram exactly like an Ability's endsTurn (the Koraidon precedent).
-  const endsTurn = programFor(card.id)?.trainerEndsTurn === true;
+  const endsTurn = entry?.trainerEndsTurn === true;
   return settleProgram(runProgram(next, program, { seat: action.seat }, events), action.seat, events, {
     endsTurn,
   });

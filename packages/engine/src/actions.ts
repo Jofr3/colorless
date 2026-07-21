@@ -241,6 +241,12 @@ export type ErrorCode =
   /** The play has no legal target (gust with no opponent Bench, Switch with no
       Bench) — a card that would do nothing cannot be played. */
   | "NO_LEGAL_TARGET"
+  /** The card's PRINTED "You can use this card only if <condition>" gate is not
+      met (Fighting Au Lait without a Prize lead). Checked before the card leaves
+      hand, so a rejected play costs the player nothing. Distinct from
+      NO_LEGAL_TARGET, which is the engine's would-only-whiff judgement rather
+      than a rule printed on the card. */
+  | "PLAY_CONDITION_NOT_MET"
   /** useAbility naming an Ability this Pokémon does not have (or none authored). */
   | "NO_SUCH_ABILITY"
   /** §9 — the Ability may only be used from the Active Spot. */

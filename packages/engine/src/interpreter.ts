@@ -1,7 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { energyProvidesOf, isBasicPokemon, isEnergyCard, topCardOf, topUid } from "./cards";
 import { effectiveMaxHp, passivesOf } from "./continuous";
-import type { CardFilter, EffectOp, HandRefreshDraw } from "./effects";
+import type { BoardCondition, CardFilter, EffectOp, HandRefreshDraw } from "./effects";
 import type { GameEvent } from "./events";
 import { flipCoin, shuffle } from "./rng";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -123,6 +123,15 @@ export function runProgram(
       if (face === "heads") queue.unshift(...op.then);
       continue;
     }
+    if (op.op === "conditionGate") {
+      // The deterministic gate (Falkner's Stadium, Grusha's "instead"), spliced
+      // like the coin flip so an op inside a branch can still park. Evaluated
+      // against `next` — the board AS OF this point, with every earlier op in
+      // the program applied. No event: the condition is public (BoardCondition),
+      // so unlike a coin flip it tells the opponent nothing they can't see.
+      queue.unshift(...(conditionHolds(next, ctx.seat, op.cond) ? op.then : (op.otherwise ?? [])));
+      continue;
+    }
     const stepped = stepOp(next, op, ctx, events);
     if ("park" in stepped) {
       // rest = the queue as it stands after shifting `op` — a plain EffectOp[].
@@ -189,6 +198,21 @@ function stepOp(
     }
     case "drawCards":
       return { done: drawToHand(state, ctx.seat, op.count, "effect", events) };
+    case "drawUntilHandSize":
+      // "Draw cards until you have N cards in your hand" (Grusha). Fully
+      // automatic. A hand already at or above `size` draws NOTHING — drawToHand
+      // no-ops at count ≤ 0 and emits no event, so a topped-up hand leaves no
+      // misleading "drew 0 cards" row; a shallow deck short-draws, like every
+      // other draw (§14.3 deck-out is checked at turn start, not here).
+      return {
+        done: drawToHand(
+          state,
+          ctx.seat,
+          op.size - state.players[ctx.seat].hand.length,
+          "effect",
+          events,
+        ),
+      };
     case "discardHand":
       return { done: discardHand(state, ctx, events) };
     case "shuffleDeck":
@@ -293,9 +317,44 @@ function stepOp(
         "Attach the Energy to which of your Pokémon?",
       );
     }
-    // coinFlipGate is handled in runProgram's queue loop (never reaches here).
+    // Both gates are spliced by runProgram's queue loop (never reach here).
     case "coinFlipGate":
+    case "conditionGate":
       return { done: state };
+  }
+}
+
+/** Evaluate a `BoardCondition` for `seat` — PURE, and reading only PUBLIC state
+    (Prize counts, the Stadium zone's owner, Energy sitting face up), so the
+    answer is one the opponent could derive too. The single evaluator behind all
+    three consumers: the `conditionGate` op above, the printed play gate
+    playTrainer checks before the card leaves hand (cardplay.ts `playableIf`),
+    and the HUD, which greys out a card whose condition is unmet rather than
+    offering a button that can only reject. */
+export function conditionHolds(state: GameState, seat: Seat, cond: BoardCondition): boolean {
+  switch (cond.kind) {
+    case "morePrizesThanOpponent":
+      return state.players[seat].prizes.length > state.players[otherSeat(seat)].prizes.length;
+    case "yourStadiumInPlay":
+      // §7.3 — presence is not enough; the Stadium must be the one YOU played.
+      return state.stadium !== null && state.stadium.owner === seat;
+    case "noEnergyOnYourPokemon": {
+      const side = state.players[seat];
+      return [side.active, ...side.bench].every((p) => p === null || p.energy.length === 0);
+    }
+  }
+}
+
+/** The condition as a printed-text fragment, for the reject message a failed
+    play gate returns ("<card> can only be used if <this>"). */
+export function conditionNote(cond: BoardCondition): string {
+  switch (cond.kind) {
+    case "morePrizesThanOpponent":
+      return "you have more Prize cards remaining than your opponent";
+    case "yourStadiumInPlay":
+      return "you have a Stadium in play";
+    case "noEnergyOnYourPokemon":
+      return "none of your Pokémon have any Energy attached";
   }
 }
 

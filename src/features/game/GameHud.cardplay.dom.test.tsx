@@ -7,8 +7,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState } from "@luminous/engine";
+import { applyAction } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  BOARD_CONDITION_DECK,
   MOVE_ENERGY_DECK,
   ONKO_DECK,
   RARE_CANDY_DECK,
@@ -25,6 +27,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  setPrizes,
 } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { GameHud } from "./GameHud";
@@ -444,5 +447,64 @@ describe("effect:choose — an on-KO trigger parks the KO'd, NON-turn player (M4
       seat: "p2",
       choice: { kind: "cards", uids: [] },
     });
+  });
+});
+
+describe("TurnPanel — a printed play gate greys the button out (M5 board conditions)", () => {
+  it("disables Fighting Au Lait until P1 is behind on Prizes, then enables it", () => {
+    // The engine rejects the play with PLAY_CONDITION_NOT_MET while the prize
+    // counts are level, so the HUD must not offer a button that can only fail —
+    // it evaluates the SAME BoardCondition (public state, safe client-side).
+    let state = p1Turn2(1, { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK });
+    state = handFromDeck(state, "p1", "sv02-181", 1); // Fighting Au Lait
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    const button = screen.getByRole("button", { name: "sv02-181" }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    fireEvent.click(button);
+    expect(dispatch).not.toHaveBeenCalled();
+
+    // P2 takes prizes → P1 is now behind, and the same card becomes playable.
+    cleanup();
+    const behind = setPrizes(state, "p2", 3);
+    const uid = handUid(behind, "p1", "sv02-181");
+    renderHud(behind, dispatch);
+    const enabled = screen.getByRole("button", { name: "sv02-181" }) as HTMLButtonElement;
+    expect(enabled.disabled).toBe(false);
+    fireEvent.click(enabled);
+    expect(dispatch).toHaveBeenCalledWith({ type: "playTrainer", seat: "p1", uid });
+    // "the button dispatched" is only half the claim — the engine must actually
+    // TAKE what an enabled button sends, or the grey-out is calibrated wrong.
+    expect(applyAction(behind, { type: "playTrainer", seat: "p1", uid }).ok).toBe(true);
+  });
+
+  it("explains the greyed row instead of silently disabling it", () => {
+    // Disabling the button removes the reject pill the player used to get on
+    // click, so the printed rule has to survive somewhere reachable: the row's
+    // tooltip and an sr-only line (a disabled button is out of the tab order).
+    let state = p1Turn2(1, { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK });
+    state = handFromDeck(state, "p1", "sv02-181", 1);
+    renderHud(state, vi.fn());
+    const reason = "Only if you have more Prize cards remaining than your opponent";
+    // Scoped to Fighting Au Lait's own row — the fixture gated Supporter in this
+    // deck greys out for the same reason, which is itself the right behaviour.
+    const button = screen.getByRole("button", { name: "sv02-181" });
+    const row = button.closest("li");
+    expect(row?.getAttribute("title")).toBe(reason);
+    expect(row?.textContent).toContain(reason);
+    // …and the reason stays OUT of the button's accessible name, which the other
+    // tests (and a screen reader announcing the control) match on exactly.
+    expect(button.textContent).toBe("sv02-181");
+  });
+
+  it("leaves an UNGATED Trainer alone (Falkner has no playableIf)", () => {
+    let state = p1Turn2(1, { p1: BOARD_CONDITION_DECK, p2: BOARD_CONDITION_DECK });
+    state = handFromDeck(state, "p1", "sv02-180", 1); // Falkner — no Stadium in play
+    renderHud(state, vi.fn());
+    // Falkner's Stadium condition gates a DRAW inside its program, not the play
+    // itself: the card is always legal and the button stays live.
+    expect((screen.getByRole("button", { name: "sv02-180" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
   });
 });
