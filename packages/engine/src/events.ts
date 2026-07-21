@@ -248,6 +248,15 @@ export type GameEvent =
       SHUFFLE event). `count` may be 0 (an empty hand still "shuffles" — the deck
       is reshuffled either way). */
   | { type: "HAND_SHUFFLED_INTO_DECK"; seat: Seat; count: number }
+  /** `seat` shuffled its whole hand (`count` cards) and put it on the BOTTOM of
+      its deck — the same hand-refresh family, other placement (Iono). Distinct
+      from HAND_SHUFFLED_INTO_DECK because the fact is different and publicly
+      observable: the deck's existing order is UNTOUCHED (only the hand is
+      randomized, underneath it), so the next draws are the same cards they would
+      have been. COUNT-ONLY for the same reason: a hidden hand's cards stay hidden
+      as they go under the deck. `count` may be 0 (an empty hand moves nothing —
+      Iono's draw gate reads exactly that). */
+  | { type: "HAND_TO_BOTTOM_OF_DECK"; seat: Seat; count: number }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

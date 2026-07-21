@@ -32,14 +32,15 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: handRefresh — shuffle your hand into
-    your deck, then draw; the Iono/Judge/Marnie hand-refresh Supporter family. A
-    fully-automatic op (never parks). `who: "both"` (Judge) is the first op to
-    reach the OPPONENT's hand/deck — count-only events keep every shuffled/drawn
-    card hidden. Authors Youngster (draw 5), Judge (both draw 4), Brassius (draw
-    hand+1), and Katy (draw 8 + the new Trainer-path `trainerEndsTurn` fold, the
-    Koraidon endsTurn precedent). moveEnergy was 0.17.0). */
-export const engineVersion = "0.18.0";
+/** Engine milestone marker (M5 op-slice: handRefresh — Iono, which CLOSES the
+    hand-refresh Supporter family. Three riders on the 0.18.0 op: `toBottom` (the
+    hand alone is shuffled and put UNDER the deck, so the deck's order — and the
+    next draws — survive, the whole strategic point of Iono over Judge), the
+    `prizeCount` draw (each player draws their own remaining Prizes, so the player
+    behind draws more), and `onlyIfAnyMoved` (with both hands empty, nobody draws).
+    The op now moves every affected hand BEFORE any draw, which that all-or-nothing
+    gate requires. Youngster/Judge/Brassius/Katy were 0.18.0). */
+export const engineVersion = "0.19.0";
 
 export type {
   ApplyResult,

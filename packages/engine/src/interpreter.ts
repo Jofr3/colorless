@@ -1,7 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { energyProvidesOf, isBasicPokemon, isEnergyCard, topCardOf, topUid } from "./cards";
 import { effectiveMaxHp, passivesOf } from "./continuous";
-import type { CardFilter, EffectOp } from "./effects";
+import type { CardFilter, EffectOp, HandRefreshDraw } from "./effects";
 import type { GameEvent } from "./events";
 import { flipCoin, shuffle } from "./rng";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -268,9 +268,10 @@ function stepOp(
       };
     }
     case "handRefresh":
-      // Shuffle the affected player(s)' hand into their deck, then draw (Youngster
-      // / Judge / Brassius / Katy). Fully automatic — no decision, so it never
-      // parks (like drawCards / discardHand / shuffleDeck).
+      // Put the affected player(s)' hand back into their deck — shuffled in
+      // (Youngster / Judge / Brassius / Katy) or under it (Iono) — then draw.
+      // Fully automatic — no decision, so it never parks (like drawCards /
+      // discardHand / shuffleDeck).
       return { done: handRefresh(state, op, ctx, events) };
     case "switchActive":
       return parkOrForce(state, ownBenchRefs(state, ctx.seat), (ref) => switchOwn(state, ref, ctx, events), "Switch to which Benched Pokémon?");
@@ -540,16 +541,26 @@ function shuffleDeck(state: GameState, ctx: EffectContext, events: GameEvent[]):
   return { ...withSide(state, ctx.seat, { ...side, deck }), rngState };
 }
 
-/** Shuffle the affected player(s)' whole hand into their deck, then draw
-    (Youngster / Judge / Brassius / Katy — the hand-refresh Supporter family).
-    Each affected seat, in a FIXED order (the controller first, then — for
-    `who: "both"`, Judge — the opponent), captures its PRE-shuffle hand size, moves
-    its whole hand into its deck, shuffles the combined pile (one rng advance per
-    non-trivial deck; append-then-shuffle fully randomizes, so it equals "shuffle
-    into"), then draws (a constant, or the captured hand size + delta). One
-    HAND_SHUFFLED_INTO_DECK per seat (count-only) plus the CARDS_DRAWN from
-    drawToHand — a shuffled or drawn card is hidden, so nothing leaks even when the
-    op reaches the OPPONENT's hand (Judge). Never parks (no decision), never KOs. */
+/** Put the affected player(s)' whole hand back into their deck, then draw
+    (Youngster / Judge / Brassius / Katy / Iono — the hand-refresh Supporter
+    family). Two passes over the affected seats, each in a FIXED order (the
+    controller first, then — for `who: "both"`: Judge, Iono — the opponent):
+
+    1. MOVE. Capture the seat's pre-move hand size, then either shuffle the hand
+       INTO the deck (default — append and shuffle the combined pile; the insert
+       position is irrelevant since the shuffle randomizes it all) or, with
+       `toBottom` (Iono), shuffle the HAND ALONE and append it UNDER the deck,
+       leaving the deck's own order — and so the very next draws — untouched.
+       One count-only event per seat.
+    2. DRAW. Each affected seat draws a constant, its captured hand size + delta,
+       or its own remaining Prize count. `onlyIfAnyMoved` (Iono's "if either player
+       put any cards on the bottom of their deck in this way") skips the whole pass
+       when no affected seat moved a card — an ALL-OR-NOTHING gate across the seats,
+       which is why every move happens before any draw.
+
+    A shuffled/bottomed or drawn card is hidden, so every event here is count-only
+    (the drawn uids ride drawToHand's standard contract) — nothing leaks even when
+    the op reaches the OPPONENT's hand. Never parks (no decision), never KOs. */
 function handRefresh(
   state: GameState,
   op: Extract<EffectOp, { op: "handRefresh" }>,
@@ -558,20 +569,51 @@ function handRefresh(
 ): GameState {
   const seats: Seat[] = op.who === "both" ? [ctx.seat, otherSeat(ctx.seat)] : [ctx.seat];
   let next = state;
+  // One entry per affected seat, in the same order — pass 2 zips over it, so the
+  // captured pre-move hand size can never go missing (no lookup, no default).
+  const moved: { seat: Seat; handCount: number }[] = [];
   for (const seat of seats) {
     const side = next.players[seat];
     const handCount = side.hand.length;
-    // Shuffle the whole hand into the deck: append then shuffle the combined pile
-    // (position of the insert is irrelevant — the shuffle randomizes it all). The
-    // deck is reordered even from an empty hand (count 0), so the following draw
-    // is off a freshly shuffled deck.
-    const [deck, rngState] = shuffle([...side.deck, ...side.hand], next.rngState);
-    events.push({ type: "HAND_SHUFFLED_INTO_DECK", seat, count: handCount });
-    next = { ...withSide(next, seat, { ...side, hand: [], deck }), rngState };
-    const drawCount = op.draw.kind === "fixed" ? op.draw.count : handCount + op.draw.delta;
-    next = drawToHand(next, seat, drawCount, "effect", events);
+    moved.push({ seat, handCount });
+    if (op.toBottom) {
+      // Only the hand is randomized; the deck keeps its order above it.
+      const [bottom, rngState] = shuffle(side.hand, next.rngState);
+      const deck = [...side.deck, ...bottom];
+      events.push({ type: "HAND_TO_BOTTOM_OF_DECK", seat, count: handCount });
+      next = { ...withSide(next, seat, { ...side, hand: [], deck }), rngState };
+    } else {
+      // The deck is reordered even from an empty hand (count 0), so the following
+      // draw is off a freshly shuffled deck either way.
+      const [deck, rngState] = shuffle([...side.deck, ...side.hand], next.rngState);
+      events.push({ type: "HAND_SHUFFLED_INTO_DECK", seat, count: handCount });
+      next = { ...withSide(next, seat, { ...side, hand: [], deck }), rngState };
+    }
+  }
+  if (op.onlyIfAnyMoved && !moved.some((m) => m.handCount > 0)) return next;
+  for (const { seat, handCount } of moved) {
+    const count = handRefreshDrawCount(next, seat, op.draw, handCount);
+    next = drawToHand(next, seat, count, "effect", events);
   }
   return next;
+}
+
+/** How many cards `seat` draws in a handRefresh: a constant, its own pre-move
+    hand size + delta (Brassius), or its own remaining Prize count (Iono). */
+function handRefreshDrawCount(
+  state: GameState,
+  seat: Seat,
+  draw: HandRefreshDraw,
+  handCount: number,
+): number {
+  switch (draw.kind) {
+    case "fixed":
+      return draw.count;
+    case "handPlus":
+      return handCount + draw.delta;
+    case "prizeCount":
+      return state.players[seat].prizes.length;
+  }
 }
 
 // (deck shuffling reuses rng.ts's vetted Fisher–Yates — the M1 review caught a

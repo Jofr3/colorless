@@ -43,10 +43,14 @@ export type CardFilter =
 /** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
     `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
     pre-shuffle hand size plus `delta` (Brassius "draw that many cards plus 1" =
-    delta 1), measured per affected player BEFORE their hand is shuffled in. */
+    delta 1), measured per affected player BEFORE their hand is shuffled in;
+    `prizeCount` draws one card per Prize card that player still has left (Iono
+    "each player draws a card for each of their remaining Prize cards" — the count
+    is that player's OWN prizes, and a Prize count is public, so it leaks nothing). */
 export type HandRefreshDraw =
   | { kind: "fixed"; count: number }
-  | { kind: "handPlus"; delta: number };
+  | { kind: "handPlus"; delta: number }
+  | { kind: "prizeCount" };
 
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
@@ -205,25 +209,57 @@ export type EffectOp =
       / from-provided-type riders (Armarouge's benched→Active {R}, Mismagius's
       opponent move) layer on later. */
   | { op: "moveEnergy"; filter: CardFilter; max: number }
-  /** Shuffle the affected player(s)' whole hand into their deck, then draw — the
-      Iono/Judge/Marnie hand-refresh Supporter family. `who: "you"` affects the
-      controller only (Youngster: draw 5; Katy: draw 8; Brassius: draw hand+1);
-      `who: "both"` affects BOTH players (Judge: "Each player shuffles their hand
-      into their deck and draws 4") — the first op to reach the OPPONENT's
-      hand/deck. `draw` is how many each affected player then draws, measured off
-      THAT player's OWN pre-shuffle hand (handPlus). Fully AUTOMATIC — there is no
-      decision, so it never parks (like drawCards / discardHand / shuffleDeck), and
-      it is always playable (you may always shuffle-and-draw, even from an empty
-      hand). The rng reorder is intrinsic (the combined pile is shuffled — there is
-      no separate `shuffleDeck` op). Emits count-only events
-      (HAND_SHUFFLED_INTO_DECK per affected seat + CARDS_DRAWN from the draw): a
-      shuffled or drawn card is hidden, so the opponent — and, for the both-player
-      Judge, the controller about the opponent — learns only counts. "Your turn
-      ends" (Katy) is NOT part of this op: it is the CardProgram `trainerEndsTurn`
-      flag folded by settleProgram (the Koraidon `endsTurn` precedent, on the
-      Trainer path). Own-deck reshuffle-and-draw only; the bottom-of-deck /
-      prize-count-draw variants (Iono, Marnie) layer on later. */
-  | { op: "handRefresh"; who: "you" | "both"; draw: HandRefreshDraw };
+  /** Put the affected player(s)' whole hand back into their deck, then draw — the
+      Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
+      only (Youngster: draw 5; Katy: draw 8; Brassius: draw hand+1); `who: "both"`
+      affects BOTH players (Judge: "Each player shuffles their hand into their deck
+      and draws 4"; Iono) — the ops that reach the OPPONENT's hand/deck. `draw` is
+      how many each affected player then draws, measured off THAT player's OWN
+      pre-move hand (handPlus) or Prize count (prizeCount).
+
+      Two PLACEMENTS, and the difference is the whole strategic point of the family:
+      by default the hand is shuffled INTO the deck (the combined pile is shuffled —
+      the deck's order is destroyed, Youngster/Judge/Brassius/Katy); with
+      `toBottom` the HAND ALONE is shuffled and placed UNDER the deck (Iono "shuffles
+      their hand and puts it on the bottom of their deck"), so the deck's existing
+      order — and therefore the next draws — survive untouched.
+
+      `onlyIfAnyMoved` gates the DRAW on at least one affected player having actually
+      moved a card (Iono: "If either player put any cards on the bottom of their deck
+      in this way, each player draws…"): with every affected hand empty, nobody draws.
+      It is an ALL-OR-NOTHING gate across the affected seats, which is why the moves
+      for every seat happen before any draw does.
+
+      Fully AUTOMATIC — there is no decision, so it never parks (like drawCards /
+      discardHand / shuffleDeck), and it is always playable: NO `programPlayable`
+      gate, deliberately. You may always put your hand back and draw, even from an
+      empty hand. The one state where the play does nothing at all — `onlyIfAnyMoved`
+      with EVERY affected hand empty — is left legal on purpose (see D39): the
+      digital clients allow it, it is self-inflicted and cannot soft-lock, and gating
+      it would have to reach into "playTrainer discards the played card up front"
+      (the controller's hand still holds it when the gate runs). The rng reorder is intrinsic
+      (the pile is shuffled here — there is no separate `shuffleDeck` op). Emits
+      count-only events (HAND_SHUFFLED_INTO_DECK / HAND_TO_BOTTOM_OF_DECK per
+      affected seat + CARDS_DRAWN from the draw): a hidden hand's cards stay hidden,
+      so the opponent — and, for a both-player refresh, the controller about the
+      opponent — learns only counts. "Your turn ends" (Katy) is NOT part of this op:
+      it is the CardProgram `trainerEndsTurn` flag folded by settleProgram (the
+      Koraidon `endsTurn` precedent, on the Trainer path).
+
+      AUTHORING NOTE: the two riders are independent optionals, so combinations no
+      printed card uses are representable (`onlyIfAnyMoved` without `toBottom` would
+      reshuffle both decks and then draw nothing; `toBottom` with `handPlus` matches
+      no card). The registry is the only author, so this is a caution, not a hole. */
+  | {
+      op: "handRefresh";
+      who: "you" | "both";
+      draw: HandRefreshDraw;
+      /** Shuffle the HAND alone and put it UNDER the deck, leaving the deck's own
+          order intact (Iono), instead of shuffling the hand into the deck. */
+      toBottom?: true;
+      /** Draw only if ≥1 affected player actually moved ≥1 card (Iono). */
+      onlyIfAnyMoved?: true;
+    };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

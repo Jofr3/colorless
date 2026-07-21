@@ -459,6 +459,21 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(`shuffled their hand (${n} card${n === 1 ? "" : "s"}) into their deck`),
       ]);
     }
+    case "HAND_TO_BOTTOM_OF_DECK": {
+      // The other placement in the same family (Iono) — count only for the same
+      // reason, but a distinct row because the deck's order SURVIVES here, which
+      // is what both players need to read off the log. It must still say
+      // "shuffled": the HAND is randomized on its way under the deck, so a player
+      // who watched those cards can't plan around their order (the sibling row
+      // above says "into their deck" — the contrast is the destination, not
+      // whether anything was shuffled).
+      const n = event.count;
+      return row(event.seat, [
+        plain(
+          `shuffled their hand (${n} card${n === 1 ? "" : "s"}) and put it on the bottom of their deck`,
+        ),
+      ]);
+    }
     case "DECK_SEARCHED": {
       const n = event.uids.length;
       return row(

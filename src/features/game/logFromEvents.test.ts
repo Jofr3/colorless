@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState, Seat } from "@luminous/engine";
 import { topCardOf } from "@luminous/engine";
 import {
+  HAND_REFRESH_DECK,
   MIXED_DECK,
   SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
@@ -565,7 +566,7 @@ describe("logFromEvents — lookAtTopN (M5): DECK_TOP_REVEALED", () => {
   });
 });
 
-describe("logFromEvents — handRefresh (M5): HAND_SHUFFLED_INTO_DECK", () => {
+describe("logFromEvents — handRefresh (M5): HAND_SHUFFLED_INTO_DECK / HAND_TO_BOTTOM_OF_DECK", () => {
   it("logs a count-only 'shuffled their hand into their deck' row (singular + plural)", () => {
     // Count-only, so a bare game state suffices — the row never resolves names,
     // so it stays hidden even for the opponent's hand (Judge).
@@ -578,6 +579,51 @@ describe("logFromEvents — handRefresh (M5): HAND_SHUFFLED_INTO_DECK", () => {
     expect(texts(logFromEvents([many], ctx(state)))).toEqual([
       "shuffled their hand (4 cards) into their deck",
     ]);
+  });
+
+  it("logs the BOTTOM placement as its own count-only row (Iono), 0 included", () => {
+    // The other placement in the family: the DESTINATION differs (under the deck,
+    // whose order survives), but the hand is still shuffled — the row has to say
+    // both, or a player who saw that hand would think its order is known. Count-only
+    // too — Iono reaches the opponent's hand.
+    const { state } = mustCreate(1);
+    const one: GameEvent = { type: "HAND_TO_BOTTOM_OF_DECK", seat: "p1", count: 1 };
+    const many: GameEvent = { type: "HAND_TO_BOTTOM_OF_DECK", seat: "p2", count: 5 };
+    const none: GameEvent = { type: "HAND_TO_BOTTOM_OF_DECK", seat: "p2", count: 0 };
+    expect(texts(logFromEvents([one], ctx(state)))).toEqual([
+      "shuffled their hand (1 card) and put it on the bottom of their deck",
+    ]);
+    expect(texts(logFromEvents([many], ctx(state)))).toEqual([
+      "shuffled their hand (5 cards) and put it on the bottom of their deck",
+    ]);
+    expect(texts(logFromEvents([none], ctx(state)))).toEqual([
+      "shuffled their hand (0 cards) and put it on the bottom of their deck",
+    ]);
+  });
+
+  it("pins the REAL Iono batch: both placements, THEN both draws, all count-only", () => {
+    // The engine moves every affected hand before anyone draws (the "if either
+    // player" gate needs it), so the rows group rather than alternate. Driven
+    // through playTrainer, not synthesized, so the order is the real one.
+    let state = driveSetup(9, { p1: HAND_REFRESH_DECK, p2: HAND_REFRESH_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // P1's turn 2
+    state = handFromDeck(state, "p1", "sv02-185", 1);
+    state = setPrizes(state, "p1", 2); // asymmetric: each draws their OWN count
+    state = setPrizes(state, "p2", 6);
+    const uid = handUid(state, "p1", "sv02-185");
+    const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
+
+    expect(texts(logFromEvents(events, ctx(after)))).toEqual([
+      "played sv02-185",
+      "shuffled their hand (7 cards) and put it on the bottom of their deck",
+      "shuffled their hand (7 cards) and put it on the bottom of their deck",
+      "drew 2 cards",
+      "drew 6 cards",
+    ]);
+    // No row names a card that went under a deck or came off one — Iono reaches
+    // the opponent's hand, so every row here has to stay a bare count.
+    const who = logFromEvents(events, ctx(after)).map((e) => (e.kind === "turn" ? null : e.who));
+    expect(who).toEqual(["p1", "p1", "p2", "p1", "p2"]);
   });
 });
 

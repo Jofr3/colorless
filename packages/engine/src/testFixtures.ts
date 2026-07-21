@@ -559,6 +559,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Shuffle your hand into your deck. Then, draw 8 cards. Your turn ends.",
   ),
+  /** Iono (Supporter) — each player's hand to the BOTTOM, draw their Prize count. */
+  "sv02-185": trainerCard(
+    "sv02-185",
+    "Supporter",
+    "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player draws a card for each of their remaining Prize cards.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -815,16 +821,17 @@ export const MOVE_ENERGY_DECK = deckOf({
 });
 
 /** M5 op-slice: handRefresh — the hand-refresh Supporter family. A Basic body to
-    lead (fix-basic-1) plus all four cards and enough bulk (energy) that the deck
-    stays deep after the setup draws, so the reshuffle-and-draw counts are exact.
-    Youngster / Judge / Brassius / Katy all read their program by id. */
+    lead (fix-basic-1) plus all five cards and enough bulk (energy) that the deck
+    stays deep after the setup draws, so the refresh-and-draw counts are exact.
+    Youngster / Judge / Brassius / Katy / Iono all read their program by id. */
 export const HAND_REFRESH_DECK = deckOf({
   "fix-basic-1": 8,
   "sv01-198": 3, // Youngster
   "sv01-176": 3, // Judge
   "sv03-187": 3, // Brassius
   "sv01-177": 3, // Katy
-  "fix-energy": 40,
+  "sv02-185": 3, // Iono
+  "fix-energy": 37,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

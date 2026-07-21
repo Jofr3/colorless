@@ -631,11 +631,11 @@ const POPPY: CardProgram = {
   trainer: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 2 }],
 };
 
-// ── M5 op-slice: handRefresh (the Iono/Judge/Marnie hand-refresh Supporter
-//    family) — shuffle your hand into your deck, then draw. The clean
-//    reshuffle-and-draw Supporters land now; the bottom-of-deck / prize-count
-//    variants (Iono, Marnie) layer later. (verified vs the local catalog
-//    2026-07-20). ──
+// ── M5 op-slice: handRefresh (the Iono/Judge hand-refresh Supporter family) —
+//    put your hand back into your deck, then draw. The reshuffle-and-draw
+//    Supporters landed first; Iono (the bottom-of-deck placement + the
+//    prize-count draw + the any-moved draw gate) closes the family — the SV-era
+//    catalog holds no Marnie. (verified vs the local catalog 2026-07-20/21). ──
 
 /** Youngster — "Shuffle your hand into your deck. Then, draw 5 cards."
     (Supporter) — the self-only fixed refresh. */
@@ -663,6 +663,25 @@ const BRASSIUS: CardProgram = {
 const KATY: CardProgram = {
   trainer: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
   trainerEndsTurn: true,
+};
+
+/** Iono — "Each player shuffles their hand and puts it on the bottom of their
+    deck. If either player put any cards on the bottom of their deck in this way,
+    each player draws a card for each of their remaining Prize cards." (Supporter)
+    — the both-player refresh that leaves BOTH decks' order intact (`toBottom`),
+    draws by each player's own remaining Prizes (`prizeCount` — so the player
+    behind on Prizes draws more), and draws nothing at all if both hands were
+    already empty (`onlyIfAnyMoved`). */
+const IONO: CardProgram = {
+  trainer: [
+    {
+      op: "handRefresh",
+      who: "both",
+      toBottom: true,
+      draw: { kind: "prizeCount" },
+      onlyIfAnyMoved: true,
+    },
+  ],
 };
 
 /** card id → program. Reprints of the same card (identical text) map to the
@@ -774,6 +793,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-187": BRASSIUS, // Brassius — shuffle hand into deck, draw (hand size + 1)
   "sv01-177": KATY, // Katy — shuffle hand into deck, draw 8, your turn ends
   "sv01-237": KATY, // Katy (reprint)
+  "sv02-185": IONO, // Iono — each player's hand to the BOTTOM, draw their Prize count
+  "sv02-254": IONO, // Iono (reprint)
+  "sv02-269": IONO, // Iono (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
