@@ -3,7 +3,37 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-20 — build session #23 (**P3-M5 op-slice:
+**Last updated:** 2026-07-21 — build session #24 (**P3-M5: Iono — the `handRefresh`
+riders that CLOSE the hand-refresh family**). The format's highest-play-rate Supporter
+needed **no new op**: three composable riders on the D38 op — **`toBottom`** (shuffle
+the **hand alone** and put it UNDER the deck, so the deck's order — and the next draws
+— SURVIVE; the whole strategic difference from Judge, pinned by a test asserting the
+drawn cards are exactly the pre-play deck top, in order), **`draw:{kind:"prizeCount"}`**
+(each player draws their OWN remaining Prizes — the player behind draws more; a public
+count, so no leak), and **`onlyIfAnyMoved`** (the draw fires only if ≥1 affected player
+moved a card — an all-or-nothing gate ACROSS seats, "if EITHER player…"). That
+cross-seat gate forced one structural change: `handRefresh` now runs **two passes**
+(all placements, then all draws) instead of interleaving per seat — **behaviour-
+preserving** for Youngster/Judge/Brassius/Katy (per-seat-disjoint zones + `drawToHand`
+consumes no rng ⇒ byte-identical states and rng, verified by reconstructing the old
+loop), the only change being Judge's event interleaving. One new count-only event
+**`HAND_TO_BOTTOM_OF_DECK`**; one log row; no dialog (the op still never parks); no
+projection change. engineVersion 0.18.0 → **0.19.0**; 1156 → **1164** tests, `bun run
+check` + `vite build` green. **Review (adversarial engine+rules + web+integration): no
+HIGH; 2 MED, both FIXED.** The engine MED came from **mutation testing** — deleting the
+hand shuffle left all 379 engine tests green (order-insensitive assertions, nothing
+asserted `rngState`) → added the two assertions that kill it. The web MED (raised
+independently by BOTH agents) was the log copy implying Iono does NOT shuffle → now
+says both verbs. LOWs applied: an Iono degenerate-deck test, a describe rename, and a
+real end-to-end log test pinning the grouped 5-row batch. **Deliberate deviation
+(recorded, not accidental):** Iono into two empty hands is a total no-op yet stays
+LEGAL — no `programPlayable` gate, because a gate would have to reach into "playTrainer
+discards the played card up front". **The family is CLOSED** (no Marnie in sv01–03).
+See D39.
+
+---
+### Prior header (P3-M5 handRefresh, kept for continuity)
+**2026-07-20** — build session #23 (**P3-M5 op-slice:
 `handRefresh`** — shuffle your hand into your deck, then draw; the Iono/Judge/Marnie
 hand-refresh Supporter family). New op `{who:"you"|"both", draw}` — the FIRST op in a
 new class: **fully AUTOMATIC** (no decision → it NEVER parks, like drawCards/
@@ -39,6 +69,70 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
+**Iono is live (P3-M5, D39) — the hand-refresh Supporter family is CLOSED.** The
+format's highest-play-rate Supporter needed **no new op**: three composable riders on
+the D38 `handRefresh` op. **`toBottom?: true`** — the PLACEMENT: shuffle the **hand
+alone** and append it UNDER the deck (`[...deck, ...shuffle(hand)]`) instead of
+shuffling it into the deck, so the deck's existing order — and therefore the very next
+draws — SURVIVE (the whole strategic point of Iono over Judge; pinned by a test
+asserting the drawn cards are EXACTLY the pre-play deck top, in order).
+**`draw:{kind:"prizeCount"}`** — each affected player draws their OWN remaining Prize
+count (the player behind draws more); a Prize count is public, so the draw size leaks
+nothing. **`onlyIfAnyMoved?: true`** — the draw clause fires only if ≥1 affected player
+actually moved ≥1 card: an **all-or-nothing gate ACROSS the seats** ("if EITHER
+player…"), not per-seat. That gate forced the op's one structural change: **two passes**
+over the affected seats (all placements, then all draws) instead of D38's interleaved
+move-then-draw — **behaviour-preserving** for Youngster/Judge/Brassius/Katy (per-seat
+disjoint zones + `drawToHand` consumes NO rng ⇒ byte-identical states and rng threading,
+verified by reconstructing the old loop and diffing at 3 seeds each); the only change is
+Judge's event INTERLEAVING (SHUFFLED p1, SHUFFLED p2, DRAWN p1, DRAWN p2 — which also
+reads truer to the printed sentence). `shuffle` consumes nothing for a length ≤ 1 input,
+so an Iono into two empty hands advances the rng ZERO times. One new count-only event
+**`HAND_TO_BOTTOM_OF_DECK {seat, count}`** — distinct from its sibling because the public
+fact differs (the deck's order is untouched, which both players must be able to read off
+the log). **Web: one log row, no dialog** (never parks, no projection change) — "shuffled
+their hand (N cards) and put it on the bottom of their deck": it must say BOTH verbs,
+since the hand IS randomized on its way under an unshuffled deck. Lands **Iono**
+(sv02-185/254/269, verified vs local D1). engine 0.18.0 → **0.19.0**.
+**Review (adversarial engine+rules + web+integration): no HIGH; 2 MED, both FIXED.** The
+engine MED was found by **mutation testing** — deleting the hand shuffle left all 379
+engine tests green (every bottom assertion was order-insensitive; nothing asserted
+`rngState`) → added `.not.toEqual(handOrder)` + `rngState` assertions on both the
+shuffled and the zero-randomness paths; the mutant now dies. The web MED (raised
+independently by BOTH agents) was the log copy implying Iono does NOT shuffle → fixed.
+LOWs applied: an Iono degenerate-deck test (deck shallower than the Prize count
+short-draws, no deck-out), a describe rename, and a real end-to-end log test pinning the
+grouped 5-row batch. **Deliberate deviation (recorded in D39, not accidental):** Iono
+with EVERY affected hand empty is a total no-op yet stays LEGAL (no `programPlayable`
+gate, unlike gust/switch/attach/moveEnergy) — the digital clients allow it, it cannot
+soft-lock, and a gate would have to reach into "playTrainer discards the played card up
+front" (the D35 leaky coupling). **The family is CLOSED** — no Marnie in the sv01–03
+catalog. See "M5 op-slice: handRefresh riders as built" + D39.
+**Next concrete actions (keep building the backlog):**
+1. **The `conditionalPlay` / board-condition gate family** (5 backlog cards) — and the
+   same primitive also unlocks **Falkner** ("if you have a Stadium in play, draw 2
+   more") and, with a `drawUntilHandSize` op, **Grusha**. The biggest remaining cluster.
+2. **The remaining `moveEnergy` cards** each layer a rider: **Armarouge** "Fire Off" (a
+   {R} Energy benched→Active — fixed-endpoint + provided-type filter, an Ability),
+   **Mismagius** "Magical Flick" (the OPPONENT's Energy on evolve — opponent-side +
+   onEvolve trigger), **Exp. Share** (an on-KO Tool trigger).
+3. **The from-the-top attach variant** (Electric Generator / Hydreigon) — also closes 2
+   of the remaining `attachEnergyFrom` cards — or **`discardOpponentEnergy`** (Crushing
+   Hammer / Giacomo, 4). See `docs/reference/coverage-backlog.md`.
+4. **Miriam** is the near-miss worth naming: its "if you shuffled any cards in this way,
+   draw 3" is `onlyIfAnyMoved`'s idea but BETWEEN ops and across a park — it needs an
+   op-result threaded through the interpreter's continuation, not a flag. Deferred.
+5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games;
+   the projection is already P4's per-viewer filter, and the standing deck-candidate
+   INFO (searchDeck/lookAtTopN `pendingDecision.prompt`) is exactly what its server-side
+   redaction must cover. Iono, like the rest of handRefresh, needs none of it.
+**Two pre-existing items the review surfaced (NOT this slice):** every authored
+Supporter has `legal_standard=0` in the local ingest, so none surface in the builder's
+default standard-legal search; and `GameLog` announces only the last entry to screen
+readers, so a 5-row batch is mostly silent (P5 polish).
+
+---
+### Prior resume point (P3-M5 handRefresh, kept for continuity)
 **`handRefresh` is live (P3-M5, D38) — shuffle your hand into your deck, then draw.**
 The Iono/Judge/Marnie hand-refresh Supporter family. New op `{who:"you"|"both", draw}`
 — the FIRST op in a new class: **fully AUTOMATIC** (no decision → it NEVER parks, like
@@ -348,13 +442,80 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows)) — next: Iono / Marnie (bottom-of-deck + prize-count draw, layer on `handRefresh`), the remaining `moveEnergy` riders (Armarouge / Mismagius / Exp. Share), the next backlog op (`conditionalPlay` / from-the-top attach / `discardOpponentEnergy`), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03)) — next: the `conditionalPlay` board-condition family (5, + Falkner/Grusha), the remaining `moveEnergy` riders (Armarouge / Mismagius / Exp. Share), the from-the-top attach variant or `discardOpponentEnergy`, or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-21** (build #24) — **P3-M5: Iono — the `handRefresh` riders that CLOSE the
+  hand-refresh family** (D39; built solo — full context — then an adversarial
+  engine+rules + web+integration review: no HIGH, 2 MED, both fixed). Chosen as the
+  resume point's #1: the format's **highest-play-rate Supporter**, and the last row of a
+  family already built and vetted, so it lands as small riders on a reviewed op rather
+  than a new mechanism. Verified against the local D1 catalog that **Marnie does not
+  exist in sv01–03**, so Iono closes the row outright. **No new op** — three composable
+  riders on D38's `handRefresh`: **`toBottom?: true`** (the PLACEMENT — shuffle the
+  **hand alone** and append it UNDER the deck, `[...deck, ...shuffle(hand)]`, instead of
+  shuffling it into the deck, so the deck's existing order and therefore the very next
+  draws SURVIVE — the whole strategic difference from Judge, pinned by a test asserting
+  the drawn cards are EXACTLY the pre-play deck top, in order); **`draw:{kind:
+  "prizeCount"}`** (each affected player draws their OWN remaining Prize count — the
+  player behind draws more; a Prize count is public, so the draw size leaks nothing);
+  **`onlyIfAnyMoved?: true`** (the draw clause fires only if ≥1 affected player actually
+  moved ≥1 card — an **all-or-nothing gate ACROSS the seats**, "if EITHER player…", not
+  per-seat). **The one structural change:** that cross-seat gate needs every placement
+  to happen before any draw, so `handRefresh` now runs **two passes** over the affected
+  seats instead of D38's interleaved move-then-draw. **Behaviour-preserving** for
+  Youngster/Judge/Brassius/Katy — per-seat zones are disjoint and `drawToHand` consumes
+  NO rng, so final states and rng threading are byte-identical (the engine reviewer
+  reconstructed the old loop and diffed hands/decks/`rngState` at 3 seeds each: identical;
+  Katy identical modulo the one turn-start draw its `trainerEndsTurn` fold causes). The
+  only change is Judge's event INTERLEAVING (SHUFFLED p1, SHUFFLED p2, DRAWN p1, DRAWN
+  p2), which also reads truer to "each player shuffles … and draws". `shuffle` consumes
+  nothing for a length ≤ 1 input, so **an Iono into two empty hands advances the rng ZERO
+  times** and reorders nothing. One new event **`HAND_TO_BOTTOM_OF_DECK {seat, count}`**
+  — count-only like its sibling, but **distinct** because the public fact differs (the
+  deck's order is untouched, which both players must be able to read off the log).
+  **Web: one log row, no dialog** (the op still never parks → no `EffectPrompt`, GameHud
+  and the projection untouched) — "shuffled their hand (N cards) and put it on the bottom
+  of their deck", which must say **both** verbs since the hand IS randomized on its way
+  under an unshuffled deck. engineVersion 0.18.0 → **0.19.0**. **Review: no HIGH; 2 MED,
+  both FIXED.** (1) Engine MED, found by **MUTATION testing** — deleting the hand shuffle
+  left all 379 engine tests green, because every bottom-of-deck assertion was
+  order-insensitive and **nothing in the repo asserted `rngState`**; fixed with two
+  assertions (the bottomed cards are NOT in hand order — measured stable across 12 seeds;
+  the both-empty play leaves `rngState` untouched) and the mutant re-run now fails. (2)
+  Web MED, raised **independently by both agents** — the log row said only "put their
+  hand … on the bottom", which against its sibling row reads as "Iono does not shuffle",
+  so a player who had seen that hand would think the deck's tail was known; copy fixed.
+  **LOWs applied:** an Iono degenerate-deck test (deck shallower than the Prize count
+  short-draws and does NOT deck out — §14.3 is a turn-START rule), the describe-title
+  rename, and a real end-to-end log test pinning the grouped 5-row batch (the two-pass
+  restructure was otherwise unpinned on the web side). Also tidied: the stale dispatch
+  comment, and the pass-2 lookup rebuilt as an ordered pair list so a captured hand size
+  can never silently default. **Verified clean:** card conservation over every degenerate
+  zone combination on both sides, exact rng advance counts (`(h1−1)+(h2−1)`), "Iono itself
+  is never bottomed" (playTrainer discards up front), gate semantics (the `every`,
+  per-seat, and opponent-prizes mutants each die to exactly one test), the projection
+  serializing ZERO opponent uids, no exhaustive-switch fall-through (`apps/api` doesn't
+  depend on the engine at all), HUD playability (enabled turn 2, §4-blocked turn 1, no
+  prompt path reachable), and no demo regression. **Deliberate deviation (recorded in
+  D39, at the reviewers' request):** Iono with EVERY affected hand empty is a total no-op
+  yet stays **legal** — no `programPlayable` gate, unlike every other could-only-whiff op
+  — because the digital clients allow it, it is self-inflicted and cannot soft-lock, and
+  a gate would have to reach into "playTrainer discards the played card up front" (the
+  D35 leaky coupling). **Two pre-existing items the review surfaced (NOT this slice):**
+  every authored Supporter (Iono, Judge, Katy, Youngster, Professor's Research) carries
+  `legal_standard=0` in the local ingest, so none surface in the deck builder's default
+  standard-legal search; and `GameLog` announces only the LAST entry to screen readers,
+  so a 5-row batch (Iono, Judge, any KO sweep) is mostly silent — a P5 polish item.
+  `bun run check` green (tsc + biome + **1164 tests**, 1156 → 1164: 6 engine
+  `handRefresh.test.ts` + 2 `logFromEvents.test.ts`), `vite build` green. Files:
+  effects.ts, interpreter.ts, events.ts, registry.ts, index.ts, testFixtures.ts,
+  handRefresh.test.ts; web: logFromEvents.ts + its test. See "M5 op-slice: handRefresh
+  riders as built" + D39.
 - **2026-07-20** (build #23) — **P3-M5 op-slice: `handRefresh`** (D38; built solo —
   full context — then an adversarial engine+rules + web+integration review, BOTH
   CLEAN, no code fixes). The Iono/Judge/Marnie **hand-refresh Supporter family** —

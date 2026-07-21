@@ -1717,6 +1717,102 @@ field + 4 programs + 5 rows), cardplay.ts (`playTrainer` passes `endsTurn`), ind
 (0.18.0), testFixtures.ts (4 Supporter fixtures + `HAND_REFRESH_DECK`),
 handRefresh.test.ts (new); web: logFromEvents.ts (row) + its test.
 
+## M5 op-slice: handRefresh riders as built (2026-07-21) — Iono (family closed)
+
+**Shape (D39).** **Iono** (sv02-185 + reprints sv02-254/269) — "Each player shuffles
+their hand and puts it on the bottom of their deck. If either player put any cards on
+the bottom of their deck in this way, each player draws a card for each of their
+remaining Prize cards." — is three composable riders on the D38 `handRefresh` op, no
+new op:
+- **`toBottom?: true`** — the **placement**. Default (D38) shuffles the hand INTO the
+  deck (`shuffle([...deck, ...hand])`, the deck's order destroyed). With `toBottom` the
+  **HAND ALONE** is shuffled and appended UNDER the deck (`[...deck, ...shuffle(hand)]`),
+  so the deck's existing order — and therefore the very next draws — **survive**. That
+  is the whole strategic difference between Iono and Judge, and it is pinned by a test
+  asserting the drawn cards are EXACTLY the pre-play deck top, in order.
+- **`draw: {kind:"prizeCount"}`** — each affected player draws their OWN remaining
+  Prize count (so the player behind on Prizes draws more). A Prize count is public, so
+  the draw size leaks nothing.
+- **`onlyIfAnyMoved?: true`** — the draw clause happens only if ≥1 affected player
+  actually moved ≥1 card; with every affected hand empty, NOBODY draws. It is an
+  **all-or-nothing gate across the seats** ("if EITHER player…"), not a per-seat one.
+
+**The two-pass restructure.** That cross-seat gate is why `handRefresh` now runs **two
+passes** over the affected seats (all placements, then all draws) instead of D38's
+interleaved move-then-draw per seat. Behaviour-preserving for Youngster / Judge /
+Brassius / Katy: the zones are per-seat disjoint and `drawToHand` consumes NO rng, so
+final states and rng threading are byte-identical; the only change is Judge's event
+INTERLEAVING (SHUFFLED p1, SHUFFLED p2, DRAWN p1, DRAWN p2 — which also reads truer to
+"each player shuffles … and draws"). Per-type order (controller first) is unchanged.
+
+**Rng.** `shuffle` consumes no randomness for a length ≤ 1 input, so an Iono played
+into two empty hands advances the rng ZERO times and reorders nothing — the correct
+"nothing happened" state. The played Supporter is discarded UP FRONT by `playTrainer`,
+so it is never one of the cards put on the bottom (and cannot open the gate by itself).
+
+One new event **`HAND_TO_BOTTOM_OF_DECK {seat, count}`** — count-only like its sibling,
+but a **distinct** event because the public fact is different: the deck's order is
+untouched, which both players can see and must be able to read off the log. `count: 0`
+is emitted honestly (the `HAND_DISCARDED "(0 cards)"` precedent).
+
+**Web: one log row, nothing else.** The op still never parks → no dialog, no prompt, no
+projection change. `logFromEvents` gains "put their hand (N cards) on the bottom of
+their deck". engineVersion 0.18.0 → **0.19.0**.
+
+**Deliberate deviation: the empty-hands no-op stays legal.** Iono played when EVERY
+affected hand is empty moves nothing, draws nothing and consumes no rng — a total
+no-op — and is still a **legal play** (no `programPlayable` gate), unlike every other
+could-only-whiff op (gust / switchActive / attachEnergyFrom / moveEnergy). Kept on
+purpose: the digital clients allow it; it is self-inflicted, cannot soft-lock, and
+only burns the player's own Supporter-per-turn allowance; and gating it would have to
+reach into "playTrainer discards the played card up front" (the controller's hand
+still holds Iono when the gate runs) — the leaky coupling D35 flagged. See D39.
+
+**Review (adversarial — engine+rules + web+integration): no HIGH; 2 MED, both fixed.**
+The engine agent found its MED by **mutation testing**: deleting the hand shuffle left
+all 379 engine tests green, because every bottom-of-deck assertion was order-insensitive
+and nothing in the repo asserted `rngState`. Fixed with two assertions — the bottomed
+cards are NOT in hand order (measured stable across 12 seeds), and the both-empty play
+leaves `rngState` untouched — and the mutant re-run now fails, as does the "hand to the
+top instead of the bottom" one. (Mutants for the gate's `every`-vs-`some`, a per-seat
+gate, and a `prizeCount` reading the opponent's prizes were each already caught by one
+test.) The web agent's MED — raised independently by BOTH agents — was the log copy:
+the row said only "put their hand … on the bottom", which against its sibling row reads
+as "Iono does not shuffle", so a player who had seen that hand would think the deck's
+tail was known; it now says both verbs. LOWs applied: an Iono degenerate-deck test
+(deck shallower than the Prize count short-draws and does NOT deck out — §14.3 is a
+turn-START rule), the describe-title rename, and a real end-to-end log test pinning the
+5-row grouped batch (the two-pass restructure was otherwise unpinned on the web side).
+Verified clean: card conservation over every degenerate zone combination on both sides,
+exact rng advance counts (`(h1−1)+(h2−1)`), "Iono itself is never bottomed", the
+projection serializing zero opponent uids, no exhaustive-switch fall-through, HUD
+playability (enabled turn 2, §4-blocked turn 1, no prompt path reachable), and no demo
+regression.
+
+**Scope.** Iono **closes the hand-refresh family** — the SV-era catalog (sv01–sv03)
+holds no Marnie, so the `shuffleHandIntoDeck` backlog row is fully done. The remaining
+bottom-of-deck cards need OTHER ops, not this one: **Dendra** (choose a card from hand
+→ bottom + `drawUntilHandSize` + a can't-play gate), **Ortega** (reveal the opponent's
+hand + choose from it). **Miriam**'s "if you shuffled any cards into your deck in this
+way, draw 3" is the same *conditional* idea as `onlyIfAnyMoved` but BETWEEN ops (and
+across a park), so it stays deferred — it needs an op-result thread through the
+interpreter, not a flag.
+
+**Verification.** `bun run check` green (tsc + biome + **1164 tests** — 1156 → 1164:
+6 engine `handRefresh.test.ts` + 2 `logFromEvents.test.ts`), production `vite build`
+green. Files: effects.ts (the two riders + `prizeCount` + the authoring note),
+interpreter.ts (the two-pass `handRefresh` + `handRefreshDrawCount`), events.ts
+(`HAND_TO_BOTTOM_OF_DECK`), registry.ts (`IONO` + 3 rows), index.ts (0.19.0),
+testFixtures.ts (the Iono catalog row + `HAND_REFRESH_DECK`), handRefresh.test.ts;
+web: logFromEvents.ts (row) + its test.
+
+**Carried forward (pre-existing, surfaced by this review — NOT this slice).** Every
+authored Supporter (Iono, Judge, Katy, Youngster, Professor's Research) carries
+`legal_standard=0` in the local ingest, so none of them surface in the deck builder's
+default standard-legal search — worth a look when the builder meets the simulator.
+And `GameLog` announces only the LAST entry to screen readers, so Iono's 5-row batch
+(like Judge's and any KO sweep) is mostly silent — a P5 polish item.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

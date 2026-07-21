@@ -53,7 +53,7 @@ unblocks. High-value ops first.
 | **`discardOpponentEnergy`** (discard an Energy from an opponent's Pokémon) | 4 | Crushing Hammer, Giacomo, Klawf ex, Mawile |
 | **`discardFromHandCost`** (pay "discard N cards from hand" to play) | 4 | Ultra Ball, Superior Energy Retrieval, Revavroom, Tinkaton |
 | **`onDamagedByAttack`** (a trigger firing when damaged by an attack, even if KO'd) | 4 | Cacnea, Cacturne, Armarouge, Klawf ex |
-| ✅ **`shuffleHandIntoDeck` (+ draw)** — the Iono/Judge/Marnie hand-refresh family | 3 | **DONE, whole row + Judge** (engine 0.18.0, the `handRefresh` op — a fully-automatic op that can affect the OPPONENT): **Youngster** (draw 5), **Brassius** (draw hand+1), **Katy** (draw 8 + turn ends), **Judge** (both players shuffle+draw 4). Iono/Marnie remain: they put the hand on the BOTTOM of the deck (not shuffle) and draw by Prize count / an asymmetric split — a bottom-of-deck move + a `prizeCount`/split draw spec. |
+| ✅ **`shuffleHandIntoDeck` (+ draw)** — the Iono/Judge hand-refresh family | 3 | **DONE — row CLOSED, +Judge +Iono** (the `handRefresh` op: engine 0.18.0 fully-automatic, reaches the OPPONENT): **Youngster** (draw 5), **Brassius** (draw hand+1), **Katy** (draw 8 + turn ends), **Judge** (both shuffle + draw 4), and **Iono** (engine 0.19.0 — the `toBottom` placement so the deck's ORDER survives, a `prizeCount` draw, and the `onlyIfAnyMoved` cross-seat draw gate). No Marnie exists in the sv01–03 catalog. The other bottom-of-deck cards need different ops: **Dendra** (a chosen card from hand → bottom + `drawUntilHandSize` + a can't-play gate), **Ortega** (reveal the opponent's hand + choose from it). |
 | **`stadiumActivatedAbility`** (a "once during each player's turn" Stadium) | 3 | Artazon, Mesagoza, Town Store |
 | **`damageAttacker`** (put counters on the attacking Pokémon) | 3 | Cacnea, Cacturne, Stunfisk |
 | **`disableAbilities`** (a continuous Ability-lock aura) | 3 | Klefki, Spiritomb, Ting-Lu ex |
@@ -92,14 +92,20 @@ is well under 70.
    (Exp. Share). Next candidates: the from-the-top **attach** variant (Electric
    Generator / Hydreigon, also 2 attachEnergyFrom cards), the **`conditionalPlay`**
    family (5), or the **hand-refresh Supporter family** (Iono/Judge/Marnie).
-5. ✅ The **hand-refresh Supporter family** — **DONE** (engine 0.18.0, the
+5. ✅ The **hand-refresh Supporter family** — **DONE, row CLOSED** (engine 0.18.0, the
    `handRefresh` op: the whole `shuffleHandIntoDeck` row — Youngster / Brassius /
    Katy — **plus Judge**, the first op to affect the OPPONENT's hand/deck; and it
-   closes the `endTurn` row via the Trainer-path `trainerEndsTurn` fold). Iono/Marnie
-   layer later: a bottom-of-deck move + a Prize-count / asymmetric draw spec.
+   closes the `endTurn` row via the Trainer-path `trainerEndsTurn` fold; then engine
+   0.19.0 added **Iono** as three riders — `toBottom` (deck order survives),
+   `prizeCount` draw, `onlyIfAnyMoved` gate). No Marnie in the sv01–03 catalog.
 6. **`conditionalPlay` / `conditionalGate`** as a family — unblocks a cluster of
-   Supporters and Abilities at once. Next candidates alongside it: the from-the-top
+   Supporters and Abilities at once, and a board-condition gate is also what
+   **Falkner** ("if you have a Stadium in play, draw 2 more") and **Grusha** (with
+   `drawUntilHandSize`) need. Next candidates alongside it: the from-the-top
    **attach** variant (Electric Generator / Hydreigon — also 2 attachEnergyFrom
-   cards), or `discardOpponentEnergy` (Crushing Hammer / Giacomo, 4).
+   cards), or `discardOpponentEnergy` (Crushing Hammer / Giacomo, 4). A related
+   deferral: **Miriam**'s "if you shuffled any cards in this way, draw 3" is
+   `onlyIfAnyMoved`'s idea BETWEEN ops and across a park — it needs an op-result
+   threaded through the interpreter's continuation, not a flag.
 Each is a normal engine slice (new op + interpreter case + registry rows +
 tests + review), and each turns dozens of "needs-op" rows into a few data rows.
