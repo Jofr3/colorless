@@ -22,7 +22,7 @@ import {
   cardOfUid,
   conditionHolds,
   conditionNote,
-  handCostPhrase,
+  handCostAction,
   handCostUnmet,
   costMet,
   effectiveAttackCost,
@@ -150,7 +150,7 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
         gateUnmet && gated !== undefined
           ? `Only if ${conditionNote(gated)}`
           : costUnmet !== null
-            ? `Only if you discard ${handCostPhrase(costUnmet, true)} from your hand`
+            ? `Only if you ${handCostAction(costUnmet, true)}`
             : undefined,
     });
   }
@@ -159,12 +159,22 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
 
 /** An activated Ability on one of `seat`'s in-play Pokémon (passive abilities
     are always-on and show no button). `disabled` mirrors the §9 Active-only /
-    once-per-turn gate. */
+    once-per-turn gate AND the §7.5 hand COST, the same printed rule the Trainer
+    row greys out on: "You must discard a card from your hand in order to use this
+    Ability" is a precondition for the use, so an Ability that cannot be paid for
+    is dead, and a dead row must say so rather than being clicked and refused
+    (`ABILITY_COST_UNMET`). `reason` carries the printed clause for the row's
+    tooltip + sr-only text, exactly as the Trainer list does.
+
+    `where` disambiguates two copies of the same card carrying the same Ability —
+    Skwovet ×2 is the first board that makes the labels identical, and DOM order
+    is not something a screen reader can read off a button. */
 interface AbilityOption {
   target: PokemonTarget;
   abilityName: string;
   label: string;
   disabled: boolean;
+  reason?: string;
 }
 function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
   const side = game.players[seat];
@@ -175,10 +185,22 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
     const card = uid === undefined ? undefined : cardOfUid(game, uid);
     if (uid === undefined || card === undefined) return;
     for (const ability of programFor(card.id)?.abilities ?? []) {
+      // No `excludeUid`: an Ability's card is on the BOARD, not in the hand it
+      // pays out of — which is why none of these cards prints the "other" that
+      // every Trainer in the family does.
+      const costUnmet = handCostUnmet(game, seat, ability.program);
       const disabled =
         (ability.activeOnly && target.spot !== "active") ||
-        (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`));
-      out.push({ target, abilityName: ability.name, label: `${ability.name} · ${card.name}`, disabled });
+        (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
+        costUnmet !== null;
+      const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
+      out.push({
+        target,
+        abilityName: ability.name,
+        label: `${ability.name} · ${card.name} (${where})`,
+        disabled,
+        reason: costUnmet === null ? undefined : `Only if you ${handCostAction(costUnmet, false)}`,
+      });
     }
   };
   consider(side.active, { spot: "active" });
@@ -528,7 +550,13 @@ function TurnPanel(props: GameHudProps) {
             </p>
             <ul className="mt-1.5 flex flex-col gap-1.5">
               {abilityOptions.map((opt) => (
-                <li key={`${opt.abilityName}-${opt.target.spot === "bench" ? opt.target.index : "active"}`}>
+                // Same shape as the Trainer rows below, and for the same reason:
+                // `title` on the LI (a disabled button is out of the tab order)
+                // with an sr-only twin, since the §7.5 cost can grey this row too.
+                <li
+                  key={`${opt.abilityName}-${opt.target.spot === "bench" ? opt.target.index : "active"}`}
+                  title={opt.reason}
+                >
                   <button
                     type="button"
                     disabled={opt.disabled}
@@ -544,6 +572,7 @@ function TurnPanel(props: GameHudProps) {
                   >
                     <span className="truncate">{opt.label}</span>
                   </button>
+                  {opt.reason !== undefined && <span className="sr-only">{opt.reason}</span>}
                 </li>
               ))}
             </ul>
@@ -977,10 +1006,11 @@ function EffectChooseDialog(props: GameHudProps) {
 }
 
 /** A card pick, origin-agnostic — a deck search (§15.E), a discard-pile
-    retrieval (§7.1), a look at the deck top, or a printed hand COST (§7/§9). The
-    prompt's `note` says which; the candidate cards are public in every case (deck
-    picks are revealed, the discard pile is open, and a cost is paid out of the
-    viewer's OWN hand).
+    retrieval (§7.1), a look at the deck top, or a printed hand COST (§7.5),
+    whether it is paid to the discard (Ultra Ball) or under the deck (Dendra).
+    The prompt's `note` says which; the candidate cards are public in every case
+    (deck picks are revealed, the discard pile is open, and a cost is paid out of
+    the viewer's OWN hand).
 
     `prompt.min` is the whole behavioural split, and it is the ENGINE's answer
     rather than this component's guess about the prompt's origin: at 0 the pick is
@@ -1073,11 +1103,16 @@ function ChooseCardsDialog({
           }
         >
           {mandatory
-            ? // A cost is DISCARDED, not taken — the verb has to match the card —
-              // and it carries the DENOMINATOR, because once Confirm is finally
+            ? // A cost is PAID, not taken — the verb has to match the card, and
+              // `dest` is the ENGINE's word for which payment this is: a discard,
+              // or Dendra's card going under the deck. (`"deckBottom"` is its own
+              // destination for exactly this reason — "under the deck" and
+              // "shuffled into the deck" are different promises, and deriving one
+              // from the other here would be the guess `min` exists to prevent.)
+              // It carries the DENOMINATOR too, because once Confirm is finally
               // focusable it is the only surface a keyboard user reaches that can
               // say what was required (the sibling's rule).
-              `Discard ${picked.length}/${prompt.min}`
+              `${prompt.dest === "deckBottom" ? "Put under deck" : "Discard"} ${picked.length}/${prompt.min}`
             : picked.length === 0
               ? "Take none"
               : `Take ${picked.length}`}
@@ -1122,11 +1157,19 @@ function ChoosePokemonDialog({
   );
 }
 
-/** "Up to N" snipe (§9): multi-select up to `max` opponent Pokémon, or take
-    none. The twin of ChoosePokemonDialog (exactly one) — picking is not the
-    whole decision here, so a confirm button dispatches every pick at once, the
-    ChooseCardsDialog shape lifted to Pokémon refs. Mounted only while the
-    decision is parked on the viewer, so useState resets per decision. */
+/** The snipe (§9): multi-select `min`..`max` opponent Pokémon. The twin of
+    ChoosePokemonDialog (exactly one) — picking is not the whole decision here, so
+    a confirm button dispatches every pick at once, the ChooseCardsDialog shape
+    lifted to Pokémon refs. Mounted only while the decision is parked on the
+    viewer, so useState resets per decision.
+
+    Confirm is live only on an answer the ENGINE will accept, which for this
+    prompt is not simply "≥ min": `declinable` adds the empty pick as a second
+    legal answer without making the ones between it and `min` legal (Hawlucha's
+    printed "you may choose 2" is 2 or none, never 1). So the button reads "Take
+    none" at zero and is disabled in the gap — the same doctrine as
+    ChooseCardsDialog, which is that a dispatch the engine would reject should
+    never be offered. */
 function ChoosePokemonMultiDialog({
   game,
   viewerSeat,
@@ -1144,23 +1187,49 @@ function ChoosePokemonMultiDialog({
       return prev.length < prompt.max ? [...prev, ref] : prev;
     });
   };
+  const exact = prompt.min === prompt.max;
+  // The gap between "some, but not enough" and a legal answer. An empty pick is
+  // legal iff the engine says so — `min: 0` (a printed "up to") or `declinable`
+  // (a printed "you may"), never inferred from the note.
+  const short = picked.length < prompt.min && !(prompt.declinable && picked.length === 0);
   return (
     <HudDialog label="Choose Pokémon">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
-      <p className="mt-1.5 text-sm text-white/55">
-        Pick up to {prompt.max} ({picked.length}/{prompt.max}).
-      </p>
+      {/* A live region for the same reason ChooseCardsDialog's is one: the
+          running total is otherwise unannounceable (`aria-pressed` is spoken only
+          for the focused row, and Confirm leaves the tab order while disabled),
+          and the transition that matters is short → satisfied. It also states the
+          two things the layout alone implies — that the pick is EXACT, and
+          whether taking none is allowed. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {`Pick ${exact ? prompt.min : `up to ${prompt.max}`} (${picked.length}/${prompt.max}).`}
+        {short
+          ? ` Pick ${prompt.min - picked.length} more${prompt.declinable ? ", or none at all." : "."}`
+          : prompt.declinable && picked.length === 0
+            ? " Taking none is allowed."
+            : ""}
+      </output>
       <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
         {prompt.candidates.map((ref) => {
           const selected = pickedKeys.has(keyOf(ref));
+          // At the cap a further click is REFUSED, and the row SAYS so — the one
+          // thing the live region above cannot announce, because clicking changes
+          // nothing (ChooseCardsDialog's rule; this dialog reaches the cap on
+          // every mandatory pick, since min === max).
+          const refused = !selected && picked.length >= prompt.max;
           return (
             <li key={keyOf(ref)}>
               <button
                 type="button"
                 aria-pressed={selected}
+                aria-disabled={refused || undefined}
                 onClick={() => toggle(ref)}
                 className={`${ROW_BUTTON_BASE} ${
-                  selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                  selected
+                    ? "bg-white/[0.12] text-white ring-white/40"
+                    : refused
+                      ? ROW_BUTTON_DISABLED
+                      : ROW_BUTTON_ENABLED
                 }`}
               >
                 <span className="truncate">{refName(game, ref)}</span>
@@ -1177,6 +1246,7 @@ function ChoosePokemonMultiDialog({
       <div className="mt-5 flex justify-end">
         <button
           type="button"
+          disabled={short}
           className={ACCENT_BUTTON_CLASS}
           onClick={() =>
             dispatch({
@@ -1186,7 +1256,16 @@ function ChoosePokemonMultiDialog({
             })
           }
         >
-          {picked.length === 0 ? "Take none" : `Confirm ${picked.length}`}
+          {/* "Take none" names the DECLINE, so it may only appear on a pick the
+              engine would accept as one; otherwise the button carries the
+              denominator, which is what a keyboard user reaches last. A printed
+              "up to" has no denominator to carry (`min` is 0 and every count up
+              to `max` is a legal answer), so it says only what is picked. */}
+          {picked.length === 0 && !short
+            ? "Take none"
+            : exact
+              ? `Confirm ${picked.length}/${prompt.min}`
+              : `Confirm ${picked.length}`}
         </button>
       </div>
     </HudDialog>
@@ -1837,6 +1916,16 @@ function promptKey(prompt: EffectPrompt): string {
       return `attach:${prompt.max}:${prompt.targets
         .map((t) => `${t.seat}-${t.spot.spot === "bench" ? t.spot.index : "active"}`)
         .join(",")}:${prompt.candidates.join(",")}`;
+    case "choosePokemonMulti":
+      // The CANDIDATES and the bounds ride the key, like every sibling above —
+      // the note alone was never enough, and it is now the least identifying
+      // part of the prompt (two snipes of the same size and amount print the
+      // same sentence). A stale pick here is not merely a wrong target: refs
+      // that are no longer offered are rejected on dispatch, and a mandatory
+      // prompt has no decline, so the dialog would be unescapable.
+      return `pokemonMulti:${prompt.min}:${prompt.max}:${prompt.declinable}:${prompt.candidates
+        .map((c) => `${c.seat}-${c.spot.spot === "bench" ? c.spot.index : "active"}`)
+        .join(",")}`;
     default:
       return `${prompt.kind}:${prompt.note}`;
   }

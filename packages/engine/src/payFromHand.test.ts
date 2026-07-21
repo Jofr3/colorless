@@ -15,7 +15,7 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: discardFromHandCost — the printed hand COST, which PARKS.
+// M5 op-slice: payFromHand — the printed hand COST, which PARKS.
 //
 // One mechanism under two printed wordings, and the wordings are not a style
 // split. TRAINERS say "You can use this card only if you discard 2 OTHER cards
@@ -94,7 +94,7 @@ const TINKATON = "sv02-105";
 const RADIANT_BLASTOISE = "swsh10.5-018";
 const MEOWSCARADA = "sv02-015";
 
-describe("discardFromHandCost — the printed cost PARKS, and it is mandatory", () => {
+describe("payFromHand — the printed cost PARKS, and it is mandatory", () => {
   it("Ultra Ball parks on an exact 2-card pick over the hand — min === max, no decline", () => {
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
@@ -269,7 +269,7 @@ describe("discardFromHandCost — the printed cost PARKS, and it is mandatory", 
   });
 });
 
-describe("discardFromHandCost — the play GATE is the card's own printed rule", () => {
+describe("payFromHand — the play GATE is the card's own printed rule", () => {
   it("refuses Ultra Ball on a hand with only 1 OTHER card — the off-by-one", () => {
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
@@ -354,7 +354,7 @@ describe("discardFromHandCost — the play GATE is the card's own printed rule",
   });
 });
 
-describe("discardFromHandCost — the ABILITY wording, and the order it fixes", () => {
+describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
   it("Revavroom pays FIRST, so the draw counts the hand after the payment", () => {
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", [REVAVROOM]);
@@ -629,7 +629,7 @@ describe("discardFromHandCost — the ABILITY wording, and the order it fixes", 
   });
 });
 
-describe("discardFromHandCost — the apply's wire guards and purity", () => {
+describe("payFromHand — the apply's wire guards and purity", () => {
   it("skips a uid that is not in hand rather than conjuring one", () => {
     // Driven through applyChoice directly: validateChoice makes this unreachable
     // through the action API, which is exactly why the guard needs its own test —
@@ -643,7 +643,7 @@ describe("discardFromHandCost — the apply's wire guards and purity", () => {
     const events: GameEvent[] = [];
     const next = applyChoice(
       state,
-      { op: "discardFromHandCost", count: 1 },
+      { op: "payFromHand", count: 1, to: "discard" },
       { kind: "cards", uids: [deckCard] },
       { seat: "p1" },
       events,
@@ -662,7 +662,7 @@ describe("discardFromHandCost — the apply's wire guards and purity", () => {
     const events: GameEvent[] = [];
     const next = applyChoice(
       state,
-      { op: "discardFromHandCost", count: 2 },
+      { op: "payFromHand", count: 2, to: "discard" },
       { kind: "cards", uids: [uid, uid] },
       { seat: "p1" },
       events,

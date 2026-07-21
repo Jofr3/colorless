@@ -199,14 +199,40 @@ export type EffectOp =
       damage: no Weakness/Resistance AND no reduction passive — a counter placed
       by an Ability is flat (the same rule damageActive / the poison-burn ticks
       follow), so this is distinct from spreadDamage (an attack's damage, which
-      Bouffer reduces). PARKS on a multi-Pokémon choice (choosePokemonMulti, up
-      to `count`) when the opponent has MORE than `count` Benched Pokémon; hits
-      all of them when the Bench holds `count` or fewer (forced — "choose 2" with
-      2 available is both), and is a no-op with an empty opponent Bench. Only
-      raises damage; the Knock Out check runs in the CALLER'S sweep (flow.ts
-      settleProgram → resolveMidTurnKnockOuts), a MID-TURN KO that resumes the
-      actor's turn — so this, like every op, never KOs or touches the flow tail. */
-  | { op: "damageChosen"; target: "opponentBench"; amount: number; count: number }
+      Bouffer reduces). PARKS on a multi-Pokémon choice (choosePokemonMulti) when
+      the opponent has MORE than `count` Benched Pokémon; hits all of them when
+      the Bench holds `count` or fewer (forced — "choose 2" with 2 available is
+      both), and is a no-op with an empty opponent Bench. Only raises damage; the
+      Knock Out check runs in the CALLER'S sweep (flow.ts settleProgram →
+      resolveMidTurnKnockOuts), a MID-TURN KO that resumes the actor's turn — so
+      this, like every op, never KOs or touches the flow tail.
+
+      **`count` IS EXACT — the printed number is a floor as well as a ceiling.**
+      "Put 3 damage counters on 1 of your opponent's Benched Pokémon" means one,
+      not "up to one": a card prints the words "up to" when a partial answer is
+      legal, and none of this op's consumers does. So the park asks for `count` on
+      the nose, and the interpreter's forced branch (a Bench no bigger than
+      `count`) is the same rule under §8.6 "do as much as you can". The floor is
+      what stops Meowscarada ex from paying its irreversible hand cost and then
+      placing nothing.
+
+      `optional` is the printed "**you may**" — and it only ever appears on a
+      TRIGGERED Ability, where the engine auto-fires the trigger (triggers.ts) and
+      the decline therefore has nowhere else to live but the pick. Hawlucha is the
+      one consumer: "you may choose 2 …" is all-or-nothing, so the prompt's legal
+      answers are exactly `count` refs or NONE — never one of two. Meowscarada ex
+      and Radiant Blastoise carry no such word on the placement (their "may" is the
+      Ability's own activation, spent by choosing to use it, and by then the cost
+      is paid), so their pick is mandatory. */
+  | {
+      op: "damageChosen";
+      target: "opponentBench";
+      amount: number;
+      count: number;
+      /** The printed "you may" of an auto-fired trigger: taking NONE is a legal
+          answer, but a partial pick still is not (Hawlucha). */
+      optional?: true;
+    }
   /** "Flip a coin. If heads, …" — `then` runs on heads only. The other gate is
       `conditionGate` (below, deterministic); both are spliced by runProgram. */
   | { op: "coinFlipGate"; then: EffectOp[] }
@@ -528,10 +554,11 @@ export type EffectOp =
       /** Draw only if ≥1 affected player actually moved ≥1 card (Iono). */
       onlyIfAnyMoved?: true;
     }
-  /** Pay a printed HAND-DISCARD COST: put `count` cards from the controller's
-      own hand into their discard pile before the rest of the program runs. The
-      §7/§9 "you can only do this if you pay" family, which prints in two
-      wordings that mean one thing:
+  /** Pay a printed HAND COST: spend `count` cards out of the controller's own
+      hand — `to: "discard"` into their discard pile, `to: "deckBottom"` under
+      their deck — before the rest of the program runs. The §7/§9 "you can only
+      do this if you pay" family, which prints in three wordings that mean one
+      thing:
 
         • **Trainers** — "You can use this card **only if** you discard 2
           **other** cards from your hand." (Ultra Ball, Earthen Vessel's
@@ -539,7 +566,24 @@ export type EffectOp =
         • **Abilities** — "You **must** discard a card from your hand **in order
           to use** this Ability." (Tinkaton "Gather Materials", Revavroom
           "Rumbling Engine", Meowscarada ex "Bouquet Magic", Radiant Blastoise
-          "Pump Shot").
+          "Pump Shot");
+        • **the payment that is not a discard** — "Put a card from your hand on
+          the bottom of your deck. **If you do**, draw cards until you have 5
+          cards in your hand. (If you have no other cards in your hand, you can't
+          use this card.)" (Dendra). Nothing is discarded and the sentence never
+          says "cost", yet every clause of the mechanism is here: "if you do"
+          makes the benefit conditional on the payment, and the parenthetical is
+          the same printed PLAY GATE the Trainers state as "only if". The
+          destination is the one thing that varies, so it is a field on the op and
+          not a second op — WIDEN, DON'T COPY (the D44/D45/D46 pattern).
+
+          "IF YOU DO" IS ENFORCED BY THE GATE, NOT BY THIS OP. The op pays what it
+          can and the ops after it run regardless (the short-hand branch below is
+          "do as much as you can"), so a program whose cost silently paid nothing
+          would still hand out the benefit. Dendra cannot reach that state — an
+          unpayable cost refuses the play outright — but a card that made the
+          payment optional would need the conditional expressed between ops, which
+          is the `EffectContext` op→op flow Superior Energy Retrieval also wants.
 
       `filter` narrows WHICH cards may pay it — absent is the printed bare "a
       card" (Tinkaton, and every Trainer in the family), `anyEnergy` is "an
@@ -565,10 +609,21 @@ export type EffectOp =
       card" is the general one. Both are this op now — one vocabulary, one
       payment, one event.
 
+      **THE EVENT FOLLOWS THE DESTINATION'S VISIBILITY.** One event kind
+      (HAND_COST_PAID) carries the payment either way, and its `to` is what a
+      reader needs: cards paid to the DISCARD become public the moment they land,
+      while cards put UNDER THE DECK go from one hidden zone to another and are
+      never seen again. So the log names a count for both but a different verb for
+      each, and P4's per-seat event filter has the destination to key on without
+      re-deriving it from the op.
+
       **ORDER IS OBSERVABLE, and the printed sentence puts the cost first on
       every card in the family.** Revavroom is the witness: "discard an Energy
       card … then draw cards until you have 6 in your hand" off a hand of 5 draws
       TWO, because the payment happens first; paying afterwards would draw one.
+      Dendra says the same thing about the other destination: the card put under
+      the deck has LEFT the hand before "draw until you have 5" counts it, so a
+      hand of 4 (Dendra included) pays 1 and draws 3.
       Tinkaton's is the quieter version — the card you discard comes from the
       pre-draw hand, so a card you are about to draw cannot pay for the draw.
 
@@ -594,13 +649,16 @@ export type EffectOp =
       `programPlayable` does not have (below).
 
       **"OTHER" IS NOT A FIELD ON THIS OP** — it is a consequence of where the
-      paying card sits, and the two printed wordings agree exactly: every Trainer
-      in the family says "other"/"another" and every Ability says neither, because
-      a Trainer is IN THE HAND it is about to pay out of and an Ability's card is
-      on the board. The apply never has to care (playTrainer moves the played card
-      to the discard BEFORE the program runs, so it is not a candidate), but the
-      GATE runs while it is still in hand — hence the played uid is excluded there,
-      and that exclusion is the printed word "other".
+      paying card sits, and the printed wordings agree exactly: every Trainer in
+      the family says "other"/"another" and every Ability says neither, because a
+      Trainer is IN THE HAND it is about to pay out of and an Ability's card is on
+      the board. Dendra is the correlation's third witness and the sharpest, since
+      it carries the word in its GATE rather than in its effect sentence — "(If you
+      have no OTHER cards in your hand, you can't use this card.)" — which is
+      exactly where the engine honours it. The apply never has to care (playTrainer
+      moves the played card to the discard BEFORE the program runs, so it is not a
+      candidate), but the GATE runs while it is still in hand — hence the played
+      uid is excluded there, and that exclusion is the printed word "other".
 
       AUTHORING NOTE — the gate lives on the two PLAY paths (`playTrainer`,
       `useAbility`), which is where the printed sentence lives too: a cost is the
@@ -611,7 +669,16 @@ export type EffectOp =
       because a trigger has no play to refuse. No printed card does that (nothing
       charges a hand cost for a trigger firing), and if one ever appears it needs a
       decision about what an unpayable trigger even means, not a gate copied here. */
-  | { op: "discardFromHandCost"; count: number; filter?: CardFilter }
+  | {
+      op: "payFromHand";
+      count: number;
+      /** Where the paid cards go — the printed verb. `"discard"` is the whole
+          discard family; `"deckBottom"` puts them UNDER the deck, in the order
+          picked (Dendra). Required rather than optional so every author states
+          it, the rule `chooseCards.min` set one slice earlier. */
+      to: "discard" | "deckBottom";
+      filter?: CardFilter;
+    }
   /** A BOARD-CONDITION branch: run `then` when `cond` holds for the controller,
       else `otherwise` (nothing, if absent). The deterministic sibling of
       `coinFlipGate`, and spliced into the work queue by runProgram exactly the

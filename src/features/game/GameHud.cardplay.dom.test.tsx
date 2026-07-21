@@ -14,6 +14,7 @@ import {
   ATTACK_DISCARD_DECK,
   ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
+  DECK_BOTTOM_DECK,
   DISCARD_ENERGY_DECK,
   HAND_COST_DECK,
   MOVE_ENERGY_DECK,
@@ -158,6 +159,73 @@ describe("TurnPanel — Ability controls", () => {
       target: { spot: "active" },
       abilityName: "Shivery Chill",
     });
+  });
+
+  it("greys an Ability whose printed hand COST cannot be paid, with the reason", () => {
+    // The §7.5 gate the Trainer rows have always mirrored, on the OTHER printed
+    // wording ("You must discard a Basic {G} Energy card from your hand in order
+    // to use this Ability"). Without it the row looks live, the click is refused
+    // with ABILITY_COST_UNMET, and the HUD never says why — the exact failure the
+    // Trainer list's own comment names.
+    let state = p1Turn2(3, { p1: SNIPE_DECK, p2: SNIPE_DECK });
+    state = setActiveFromDeck(state, "p1", "sv02-015"); // Meowscarada ex
+    state = benchFromDeck(state, "p2", "fix-basic-1"); // a legal snipe target
+    state = withHand(state, ["fix-basic-1"]); // no Basic {G} to pay with
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    const row = screen.getByRole("button", { name: /Bouquet Magic/ }) as HTMLButtonElement;
+    expect(row.disabled).toBe(true);
+    fireEvent.click(row);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Only if you discard a Basic Grass Energy card from your hand"),
+    ).toBeTruthy();
+  });
+
+  it("lights the same Ability once the cost is payable", () => {
+    let state = p1Turn2(3, { p1: SNIPE_DECK, p2: SNIPE_DECK });
+    state = setActiveFromDeck(state, "p1", "sv02-015");
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = withHand(state, ["fix-grass-energy"]);
+    renderHud(state, vi.fn());
+    expect(
+      (screen.getByRole("button", { name: /Bouquet Magic/ }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("names WHERE each copy sits, and greys only the one that used its Ability", () => {
+    // Skwovet ×2 is the first board with two identical Ability rows. The
+    // once-per-turn allowance is per Pokémon, so after one use exactly one row is
+    // dead — and DOM order is not something a screen reader reads off a button.
+    let state = p1Turn2(3, { p1: DECK_BOTTOM_DECK, p2: DECK_BOTTOM_DECK });
+    state = setActiveFromDeck(state, "p1", "sv01-151");
+    state = benchFromDeck(state, "p1", "sv01-151");
+    const benchLabel = `Nest Stash · Skwovet (Bench ${state.players.p1.bench.length})`;
+    renderHud(state, vi.fn());
+
+    const active = screen.getByRole("button", {
+      name: "Nest Stash · Skwovet (Active)",
+    }) as HTMLButtonElement;
+    const benched = screen.getByRole("button", { name: benchLabel }) as HTMLButtonElement;
+    expect(active.disabled).toBe(false);
+    expect(benched.disabled).toBe(false);
+
+    const used = mustApply(state, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Nest Stash",
+    }).state;
+    cleanup();
+    renderHud(used, vi.fn());
+    expect(
+      (screen.getByRole("button", { name: "Nest Stash · Skwovet (Active)" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect((screen.getByRole("button", { name: benchLabel }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
   });
 });
 
@@ -429,6 +497,73 @@ describe("effect:choose — the MANDATORY cost dialog (chooseCards min > 0)", ()
   });
 });
 
+describe("the hand cost paid UNDER THE DECK (Dendra, M5)", () => {
+  const deckBottomDecks = { p1: DECK_BOTTOM_DECK, p2: DECK_BOTTOM_DECK };
+
+  /** Dendra parked on its payment: the Supporter plus three DISTINGUISHABLE
+      others, so the pick is a real question rather than a collapse. */
+  function parkedDendra(): GameState {
+    let state = p1Turn2(1, deckBottomDecks);
+    state = withHand(state, ["sv02-179", "fix-item", "fix-grass-energy", "fix-water-energy"]);
+    const uid = handUid(state, "p1", "sv02-179");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected the payment to park");
+    return state;
+  }
+
+  it("says PUT UNDER DECK, not discard — the verb follows the destination", () => {
+    const state = parkedDendra();
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    // Same mandatory dialog as Ultra Ball's, one word apart: a player must be
+    // able to tell "this card is gone" from "this card is at the bottom of my
+    // deck", and the heading + button are where that lives.
+    expect(screen.getByText("Put a card from your hand on the bottom of your deck.")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe(
+      "Pick 1 (0/1). Pick 1 more — this cost must be paid.",
+    );
+    expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Discard/ })).toBeNull();
+    const confirm = screen.getByRole("button", { name: "Put under deck 0/1" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    fireEvent.click(confirm);
+    expect(dispatch).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-item" }));
+    const ready = screen.getByRole("button", { name: "Put under deck 1/1" }) as HTMLButtonElement;
+    expect(ready.disabled).toBe(false);
+    fireEvent.click(ready);
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [handUid(state, "p1", "fix-item")] },
+    });
+  });
+
+  it("greys the card out on a hand of nothing else, with the printed reason", () => {
+    // The HUD must mirror the engine's gate (the D46 doctrine): a Dendra alone in
+    // hand is dead, and it is dead at exactly the moment a player reaches for it.
+    let state = p1Turn2(1, deckBottomDecks);
+    state = withHand(state, ["sv02-179"]);
+    renderHud(state, vi.fn());
+    const button = screen.getByRole("button", { name: /sv02-179/ }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(
+      screen.getByText("Only if you put another card from your hand on the bottom of your deck"),
+    ).toBeTruthy();
+  });
+
+  it("lights the card up again the moment a second card is in hand", () => {
+    let state = p1Turn2(1, deckBottomDecks);
+    state = withHand(state, ["sv02-179", "fix-item"]);
+    renderHud(state, vi.fn());
+    expect((screen.getByRole("button", { name: /sv02-179/ }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+  });
+});
+
 describe("effect:choose — the target dialog (choosePokemon)", () => {
   it("renders the parked heal target and dispatches resolveEffect with a ref", () => {
     let state = p1Turn2(2, both);
@@ -484,15 +619,40 @@ describe("effect:choose — the snipe multi-target dialog (choosePokemonMulti)",
     const rows = screen.getAllByRole("button", { name: /fix-basic-1/ });
     expect(rows.length).toBe(3);
     fireEvent.click(rows[0] as HTMLElement);
-    fireEvent.click(rows[1] as HTMLElement);
-    fireEvent.click(screen.getByRole("button", { name: "Confirm 2" }));
+    fireEvent.click(rows[2] as HTMLElement);
+    // aria-pressed is the only per-row readback of what is selected.
+    expect(rows.map((r) => r.getAttribute("aria-pressed"))).toEqual(["true", "false", "true"]);
+    fireEvent.click(screen.getByRole("button", { name: "Confirm 2/2" }));
     expect(dispatch).toHaveBeenCalledTimes(1);
     const call = dispatch.mock.calls[0]?.[0] as GameAction;
     expect(call.type).toBe("resolveEffect");
-    if (call.type === "resolveEffect") {
-      expect(call.choice.kind).toBe("pokemonMulti");
-      if (call.choice.kind === "pokemonMulti") expect(call.choice.refs).toHaveLength(2);
-    }
+    if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");
+    if (call.choice.kind !== "pokemonMulti") throw new Error("expected pokemonMulti");
+    // WHICH Pokémon, not just how many: the counters land where the player
+    // clicked, so a dialog dispatching "the first `max` candidates" — which
+    // passes any length-only assertion — would damage the wrong bodies.
+    const prompt = state.phase.kind === "effect:choose" ? state.phase.prompt : null;
+    if (prompt?.kind !== "choosePokemonMulti") throw new Error("expected the snipe prompt");
+    expect(call.choice.refs).toEqual([prompt.candidates[0], prompt.candidates[2]]);
+  });
+
+  it("refuses a third pick at the cap, and SAYS the row is refused", () => {
+    // The cap is reached on every mandatory pick (min === max), so a silently
+    // inert row is not an edge case here — and a click that changes nothing is
+    // the one thing the live region cannot announce (ChooseCardsDialog's rule).
+    const state = parkedSnipe(4);
+    renderHud(state, vi.fn());
+    const rows = screen.getAllByRole("button", { name: /fix-basic-1/ });
+    fireEvent.click(rows[0] as HTMLElement);
+    fireEvent.click(rows[1] as HTMLElement);
+    const third = rows[2] as HTMLElement;
+    expect(third.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(third);
+    expect(third.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByRole("status").textContent).toBe("Pick 2 (2/2).");
+    // Deselecting frees the slot, and the refused row goes live again.
+    fireEvent.click(rows[0] as HTMLElement);
+    expect(third.getAttribute("aria-disabled")).toBeNull();
   });
 
   it("can Take none (the snipe is 'you may')", () => {
@@ -505,6 +665,79 @@ describe("effect:choose — the snipe multi-target dialog (choosePokemonMulti)",
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [] },
     });
+  });
+
+  it("refuses ONE of the two — 'you may choose 2' is all-or-nothing, not 'up to 2'", () => {
+    // The gap the engine rejects and the dialog must not offer: none is legal
+    // (the printed "you may"), two is legal, one is not. Confirm carries the
+    // denominator so the state is readable at the only surface a keyboard user
+    // reaches once it becomes focusable again.
+    const state = parkedSnipe(4);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    const rows = screen.getAllByRole("button", { name: /fix-basic-1/ });
+    fireEvent.click(rows[0] as HTMLElement);
+    const confirm = screen.getByRole("button", { name: "Confirm 1/2" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    fireEvent.click(confirm);
+    expect(dispatch).not.toHaveBeenCalled();
+    // The live region says both ways out — the count still needed, and the
+    // decline, which the absence of a button announces to nobody. It is ONE node
+    // that survives short → satisfied: a region that unmounts when the pick
+    // becomes legal says nothing at the only moment it had something to say.
+    const live = screen.getByRole("status");
+    expect(live.textContent).toBe("Pick 2 (1/2). Pick 1 more, or none at all.");
+    fireEvent.click(rows[1] as HTMLElement);
+    expect(screen.getByRole("status")).toBe(live);
+    expect(live.textContent).toBe("Pick 2 (2/2).");
+    // Deselecting both returns to the legal empty answer, "Take none" and all —
+    // and the region says the decline is allowed, which nothing else announces.
+    fireEvent.click(rows[0] as HTMLElement);
+    fireEvent.click(rows[1] as HTMLElement);
+    // At zero the empty answer is itself legal, so the region stops asking for
+    // more and says the decline is allowed — the state the missing button means.
+    expect(live.textContent).toBe("Pick 2 (0/2). Taking none is allowed.");
+    expect((screen.getByRole("button", { name: "Take none" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+  });
+
+  it("a MANDATORY snipe offers no decline at all (Meowscarada ex — the cost is paid)", () => {
+    // The same dialog under the other printed sentence: "put 3 damage counters on
+    // 1 of your opponent's Benched Pokémon" behind an irreversible {G}-discard
+    // cost. No "you may" on the placement, so there is no "Take none" — the
+    // failure this replaces is paying the cost and then placing nothing.
+    let state = p1Turn2(4, snipeDecks);
+    state = setActiveFromDeck(state, "p1", "sv02-015");
+    state = handFromDeck(state, "p1", "fix-grass-energy", 1);
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = mustApply(state, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Bouquet Magic",
+    }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected the snipe to park");
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    expect(screen.getByText("Choose 1 of your opponent's Benched Pokémon (3 damage counters each).")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Pick 1 (0/1). Pick 1 more.");
+    expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
+    const confirm = screen.getByRole("button", { name: "Confirm 0/1" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    fireEvent.click(confirm);
+    expect(dispatch).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /fix-basic-1/ })[0] as HTMLElement);
+    const ready = screen.getByRole("button", { name: "Confirm 1/1" }) as HTMLButtonElement;
+    expect(ready.disabled).toBe(false);
+    fireEvent.click(ready);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");
+    if (call.choice.kind !== "pokemonMulti") throw new Error("expected pokemonMulti");
+    expect(call.choice.refs).toHaveLength(1);
   });
 });
 
@@ -1516,7 +1749,10 @@ describe("the providesEnergy filter (M5) — the typed discard and Fire Off", ()
 
     const dispatch = vi.fn();
     renderHud(state, dispatch);
-    fireEvent.click(screen.getByRole("button", { name: "Fire Off · Armarouge" }));
+    // The row names WHERE the Pokémon is, not just which card it is: two copies
+    // of one card carry the same Ability name, and DOM order is not something a
+    // screen reader can read off a button (Skwovet ×2 is the first such board).
+    fireEvent.click(screen.getByRole("button", { name: `Fire Off · Armarouge (Bench ${index + 1})` }));
     const use = dispatch.mock.calls[0]?.[0] as GameAction;
     expect(use).toEqual({
       type: "useAbility",

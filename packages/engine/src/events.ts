@@ -198,17 +198,22 @@ export type GameEvent =
   | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
-  /** §7/§9 — a printed HAND-DISCARD cost was paid: `uids` went from `seat`'s hand
-      into their own discard pile to make a play legal (Ultra Ball's "only if you
-      discard 2 other cards", Tinkaton / Meowscarada ex's "you must discard … in
-      order to use this Ability"). Fires from the `discardFromHandCost` op, so it
-      follows TRAINER_PLAYED or ABILITY_USED in the same batch and PRECEDES
-      whatever the cost bought — the order the printed sentence is in.
+  /** §7/§9 — a printed HAND cost was paid: `uids` left `seat`'s hand to make a
+      play legal (Ultra Ball's "only if you discard 2 other cards", Tinkaton /
+      Meowscarada ex's "you must discard … in order to use this Ability", Dendra's
+      "put a card from your hand on the bottom of your deck. If you do, …").
+      Fires from the `payFromHand` op, so it follows TRAINER_PLAYED or
+      ABILITY_USED in the same batch and PRECEDES whatever the cost bought — the
+      order the printed sentence is in.
 
-      Names the cards, because they land in the public discard pile where the
-      opponent reads them anyway; the LOG still speaks in counts, since they came
-      out of a hidden hand (the HAND_DISCARDED precedent). */
-  | { type: "HAND_COST_PAID"; seat: Seat; uids: string[] }
+      `to` is where they went, and it is the difference between a payment the
+      opponent can read and one nobody ever sees again: `"discard"` lands them
+      face up in the public pile, `"deckBottom"` puts them UNDER the deck (hidden
+      zone → hidden zone). The LOG speaks in counts either way, since they came
+      out of a hidden hand (the HAND_DISCARDED precedent), but the verb it prints
+      differs — and a P4 per-seat filter keys on `to` rather than re-deriving the
+      destination from the op. */
+  | { type: "HAND_COST_PAID"; seat: Seat; uids: string[]; to: "discard" | "deckBottom" }
   /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
       reached its trigger condition — played to the Bench / evolved (during
       that seat's turn), the Pokémon Checkup (between turns), or being Knocked

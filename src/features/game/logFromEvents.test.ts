@@ -350,16 +350,32 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     });
   });
 
-  it("counts a printed hand-discard cost without naming the cards (M5 discardFromHandCost)", () => {
+  it("counts a printed hand-discard cost without naming the cards (M5 payFromHand)", () => {
     // Count only — the cards came out of a hidden HAND (the HAND_DISCARDED rule),
     // even though they land in the public discard pile. Both plurals pinned.
-    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1"] })).toEqual({
+    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1"], to: "discard" })).toEqual({
       text: "discarded 1 card from their hand to pay a cost",
       who: "p1",
     });
-    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1", "u2"] })).toEqual({
+    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1", "u2"], to: "discard" })).toEqual({
       text: "discarded 2 cards from their hand to pay a cost",
       who: "p1",
+    });
+  });
+
+  it("says PUT UNDER THE DECK for a cost paid there (M5 Dendra) — still count only", () => {
+    // Same event, same count-only rule, different VERB — and the verb is the only
+    // thing that distinguishes a payment both players can read afterwards (the
+    // discard pile) from one nobody ever sees again (under the deck).
+    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1"], to: "deckBottom" })).toEqual({
+      text: "put 1 card from their hand on the bottom of their deck",
+      who: "p1",
+    });
+    expect(
+      line({ type: "HAND_COST_PAID", seat: "p2", uids: ["u1", "u2"], to: "deckBottom" }),
+    ).toEqual({
+      text: "put 2 cards from their hand on the bottom of their deck",
+      who: "p2",
     });
   });
 

@@ -18,7 +18,7 @@ import type { BoardCondition, EffectOp } from "./effects";
 
     NOTE — there is no `cost` FIELD. The printed "You must discard … from your
     hand in order to use this Ability" is the first op of `program`
-    (`discardFromHandCost`), because the general form of that cost PARKS: a field
+    (`payFromHand`), because the general form of that cost PARKS: a field
     resolved before the program ran could only ever express the FUNGIBLE case
     (Meowscarada's Basic {G} Energy, where the copies are interchangeable and the
     first match is as good as any), and Tinkaton's "a card" is a real choice over
@@ -363,14 +363,21 @@ const TREVENANT: CardProgram = {
     Pokémon and put 1 damage counter on each of them." A TRIGGERED Ability
     (onPlayToBench); the placed counters are flat (not attack damage) and can
     KO — triggers.ts folds the result through settleProgram, which sweeps the
-    board for a mid-turn Knock Out. */
+    board for a mid-turn Knock Out.
+
+    The printed "you may" is on the op as well as on the trigger, and the two
+    spellings do different jobs: the TRIGGER's `optional` is what the framework
+    auto-fires past (every representative is pure upside), so the op's `optional`
+    is where the decline actually survives — take 2, or take none. It is the only
+    consumer of `damageChosen` that carries the word; the Ability-activated
+    snipes below spend their "may" on choosing to use the Ability. */
 const HAWLUCHA: CardProgram = {
   triggered: [
     {
       name: "Flying Entry",
       trigger: "onPlayToBench",
       optional: true,
-      program: [{ op: "damageChosen", target: "opponentBench", amount: 10, count: 2 }],
+      program: [{ op: "damageChosen", target: "opponentBench", amount: 10, count: 2, optional: true }],
     },
   ],
 };
@@ -394,7 +401,7 @@ const MEOWSCARADA: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "discardFromHandCost", count: 1, filter: { kind: "basicEnergy", energyType: "Grass" } },
+        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Grass" } },
         { op: "damageChosen", target: "opponentBench", amount: 30, count: 1 },
       ],
     },
@@ -428,7 +435,7 @@ const RADIANT_BLASTOISE: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "discardFromHandCost", count: 1, filter: { kind: "basicEnergy", energyType: "Water" } },
+        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Water" } },
         { op: "damageChosen", target: "opponentBench", amount: 20, count: 1 },
       ],
     },
@@ -452,7 +459,7 @@ const REVAVROOM: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "discardFromHandCost", count: 1, filter: { kind: "anyEnergy" } },
+        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "anyEnergy" } },
         { op: "drawUntilHandSize", size: 6 },
       ],
     },
@@ -471,7 +478,7 @@ const TINKATON: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "discardFromHandCost", count: 1 },
+        { op: "payFromHand", count: 1, to: "discard" },
         { op: "drawCards", count: 3 },
       ],
     },
@@ -490,7 +497,7 @@ const TINKATON: CardProgram = {
     search, then the Nest Ball trailing shuffle. */
 const ULTRA_BALL: CardProgram = {
   trainer: [
-    { op: "discardFromHandCost", count: 2 },
+    { op: "payFromHand", count: 2, to: "discard" },
     { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
     { op: "shuffleDeck" },
   ],
@@ -503,9 +510,72 @@ const ULTRA_BALL: CardProgram = {
     of "2 other cards", not a different rule — over a Basic Energy search. */
 const EARTHEN_VESSEL: CardProgram = {
   trainer: [
-    { op: "discardFromHandCost", count: 1 },
+    { op: "payFromHand", count: 1, to: "discard" },
     { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 2 },
     { op: "shuffleDeck" },
+  ],
+};
+
+/** Dendra (sv02-179) — "Put a card from your hand on the bottom of your deck. If
+    you do, draw cards until you have 5 cards in your hand. (If you have no other
+    cards in your hand, you can't use this card.)" (Supporter)
+
+    The hand cost whose destination is NOT the discard, and the card that proves
+    the mechanism is about the PAYMENT rather than the pile: nothing here is
+    discarded, the sentence never says "cost", and every clause still lands on the
+    same three pieces — a mandatory exact pick out of hand (`payFromHand`), a
+    benefit conditional on it ("if you do"), and the printed play gate, which
+    Dendra states as its contrapositive ("if you have no other cards … you can't
+    use this card") and which `handCostUnmet` already answers, "other" included.
+
+    The two ops must stay in this order for the same reason Revavroom's must: the
+    paid card leaves the hand BEFORE "until you have 5" counts it. Holding Dendra
+    + 3 others, the hand is 3 after the play, 2 after the payment, and the draw is
+    THREE. Ordering them the other way would draw two and end at 4 — an off-by-one
+    the printed sentence rules out by writing the payment first.
+
+    `drawUntilHandSize` never trims, so a hand already above 5 after paying simply
+    draws nothing (Grusha's rule, unchanged) — a real Dendra line late in a game,
+    and the only one where the Supporter is spent for a single card rotation. */
+const DENDRA: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 1, to: "deckBottom" },
+    { op: "drawUntilHandSize", size: 5 },
+  ],
+};
+
+/** Skwovet (sv01-151) — "Nest Stash": "Once during your turn, you may shuffle
+    your hand and put it on the bottom of your deck. If you put any cards on the
+    bottom of your deck in this way, draw a card."
+
+    Dendra's family member that needed NO new op: the same printed destination
+    reached by the WHOLE hand rather than one chosen card, which is `handRefresh`
+    with the riders Iono already built — `toBottom` (the hand alone is shuffled and
+    placed under the deck, so the deck's order survives) and `onlyIfAnyMoved` (the
+    printed "if you put any cards … in this way", which is the difference between
+    an empty hand drawing 1 and drawing 0). An ABILITY rather than a Supporter, so
+    it is the first `handRefresh` outside the Trainer path — and, being once per
+    turn per Pokémon, the first that can run twice in a turn off two copies.
+
+    Sits on the BENCH as happily as the Active (`activeOnly: false`, as printed).
+    An empty hand still spends the allowance for nothing, which is D39's recorded
+    call for this family: a hand refresh is always playable. */
+const SKWOVET: CardProgram = {
+  abilities: [
+    {
+      name: "Nest Stash",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "handRefresh",
+          who: "you",
+          draw: { kind: "fixed", count: 1 },
+          toBottom: true,
+          onlyIfAnyMoved: true,
+        },
+      ],
+    },
   ],
 };
 
@@ -1287,7 +1357,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M5 op-slice: attachFromTop (verified vs the local catalog 2026-07-21). —
   "sv01-170": ELECTRIC_GENERATOR, // Electric Generator — top 5, up to 2 Basic {L} → Benched {L}
   "sv02-140": HYDREIGON, // Hydreigon — Tri Howl (top 3, any Energy → your Pokémon, discard rest)
-  // — M5 op-slice: discardFromHandCost (verified vs the local catalog
+  // — M5 op-slice: payFromHand (verified vs the local catalog
   //   2026-07-21). Meowscarada ex is ABOVE (M4 slice 8) and migrated onto this
   //   op in place — the two printed wordings, "you must discard … in order to
   //   use this Ability" and "you can use this card only if you discard … other
@@ -1297,6 +1367,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-142": REVAVROOM, // Revavroom — Rumbling Engine (discard an Energy card, draw to 6)
   "sv02-105": TINKATON, // Tinkaton — Gather Materials (discard a card, draw 3)
   "swsh10.5-018": RADIANT_BLASTOISE, // Radiant Blastoise — Pump Shot (discard a {W}, 2 counters)
+  // — M5 op-slice: the hand cost that is NOT a discard (verified vs the local
+  //   catalog 2026-07-21). Dendra pays to the BOTTOM OF THE DECK — the same op,
+  //   one field wider; Skwovet reaches the same destination with the WHOLE hand
+  //   and needed no new op at all (Iono's handRefresh riders). —
+  "sv02-179": DENDRA, // Dendra — a card from hand → deck bottom, then draw to 5
+  "sv02-250": DENDRA, // Dendra (reprint)
+  "sv02-266": DENDRA, // Dendra (reprint)
+  "sv01-151": SKWOVET, // Skwovet — Nest Stash (hand → deck bottom, draw 1 if any moved)
+  "sv01-222": SKWOVET, // Skwovet (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

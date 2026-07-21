@@ -52,7 +52,7 @@ import type { GameState, Seat } from "./types";
     providesEnergy was 0.24.0; the discardEnergy attack arms 0.23.0;
     attackEpilogue/park 0.22.0; discardEnergy 0.21.0; board conditions 0.20.0).
 
-    **0.26.0 — `discardFromHandCost`, the printed COST that parks.** "You can use
+    **0.26.0 — `payFromHand`, the printed COST that parks.** "You can use
     this card only if you discard 2 OTHER cards from your hand" (Ultra Ball,
     Earthen Vessel) and "You must discard a card from your hand in order to use
     this Ability" (Tinkaton, Revavroom, Meowscarada ex, Radiant Blastoise) are ONE
@@ -63,8 +63,27 @@ import type { GameState, Seat } from "./types";
     size that counts the payment. MANDATORY and exact, so `chooseCards` gained a
     `min` (0 for every printed "up to", `count` here — the one park with no
     decline) and a `"discard"` destination; `AbilityProgram.cost` is GONE, its one
-    consumer migrated onto the op it was the fungible special case of. */
-export const engineVersion = "0.26.0";
+    consumer migrated onto the op it was the fungible special case of.
+
+    **0.27.0 — the printed number is a FLOOR, and the cost that is not a
+    discard.** Two mandatory-exactly-N fixes, one on each prompt that could
+    already say "up to". (1) `choosePokemonMulti` gained `min`/`max` +
+    `declinable`: "put 3 damage counters on **1** of your opponent's Benched
+    Pokémon" is not "up to 1", so Meowscarada ex / Radiant Blastoise can no longer
+    pay an irreversible hand cost and then place nothing, while Hawlucha's printed
+    "**you may** choose 2" stays all-or-nothing — 2 or none, never 1 of 2 — which
+    is a decline the framework's auto-fired triggers leave nowhere else to live.
+    (2) `discardFromHandCost` became **`payFromHand`** with a required
+    destination: `to: "deckBottom"` pays UNDER THE DECK, landing **Dendra** ×3
+    ("Put a card from your hand on the bottom of your deck. If you do, draw cards
+    until you have 5") — nothing is discarded, yet the mechanism is the same
+    mandatory pick, the same conditional benefit and the same printed play gate,
+    which Dendra states as its contrapositive. HAND_COST_PAID carries `to`,
+    because a payment to the discard becomes public and one to the deck never
+    does. **Skwovet** ×2 ("Nest Stash") reaches the same destination with the
+    WHOLE hand and needed no new op at all — `handRefresh` with Iono's `toBottom`
+    + `onlyIfAnyMoved`. */
+export const engineVersion = "0.27.0";
 
 export type {
   ApplyResult,
@@ -141,7 +160,7 @@ export { conditionHolds, conditionNote } from "./interpreter";
     Stadium's owner (see the P4 caveat above). Pass the played uid for a Trainer
     (the printed "OTHER cards"); omit it for an Ability, whose card is on the
     board. */
-export { handCostPhrase, handCostUnmet } from "./interpreter";
+export { handCostAction, handCostUnmet } from "./interpreter";
 export type {
   DiscardScope,
   EffectChoice,

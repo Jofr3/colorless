@@ -463,7 +463,12 @@ describe("projectGameState — phase-derived fields", () => {
     if (mine.pendingDecision?.kind !== "effectChoose") throw new Error("expected effectChoose");
     const prompt = mine.pendingDecision.prompt;
     if (prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
+    // The floor and the decline ride through too — the dialog's entire behaviour
+    // is read off these, so a projection that dropped either would silently turn
+    // an exact pick back into an "up to".
+    expect(prompt.min).toBe(2);
     expect(prompt.max).toBe(2);
+    expect(prompt.declinable).toBe(true);
     expect(prompt.candidates).toHaveLength(3);
     expect(projectGameState(state, "p2").waitingOn).toBe("opponent");
   });

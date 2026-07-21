@@ -450,18 +450,27 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" — no Prize card is taken for it"),
       ]);
     case "HAND_COST_PAID": {
-      // §7/§9 — the printed hand-discard cost (Ultra Ball's "only if you discard
-      // 2 other cards", Tinkaton / Meowscarada ex's "you must discard … in order
-      // to use this Ability"). Follows the TRAINER_PLAYED / ABILITY_USED row and
-      // PRECEDES whatever it bought, which is the printed sentence order.
+      // §7/§9 — the printed hand cost (Ultra Ball's "only if you discard 2 other
+      // cards", Tinkaton / Meowscarada ex's "you must discard … in order to use
+      // this Ability", Dendra's "put a card from your hand on the bottom of your
+      // deck"). Follows the TRAINER_PLAYED / ABILITY_USED row and PRECEDES
+      // whatever it bought, which is the printed sentence order.
       //
       // Count only, like every card leaving the hidden HAND (the HAND_DISCARDED
-      // rule) — the cards do land in the public discard pile, but the log's
+      // rule) — cards paid to the discard do land in a public pile, but the log's
       // convention is about the zone they came FROM, and a curious player can
-      // read the pile itself.
+      // read the pile itself. Cards paid to the DECK BOTTOM are hidden at both
+      // ends, so the count is all there is to say; the verb is what tells the two
+      // apart, and it matters — a discard is readable afterwards and a card under
+      // the deck never is.
       const n = event.uids.length;
+      const cards = `${n} card${n === 1 ? "" : "s"}`;
       return row(event.seat, [
-        plain(`discarded ${n} card${n === 1 ? "" : "s"} from their hand to pay a cost`),
+        plain(
+          event.to === "deckBottom"
+            ? `put ${cards} from their hand on the bottom of their deck`
+            : `discarded ${cards} from their hand to pay a cost`,
+        ),
       ]);
     }
     case "HAND_DISCARDED": {

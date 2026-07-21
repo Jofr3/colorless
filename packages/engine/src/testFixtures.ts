@@ -982,7 +982,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       (Kilowattrel, Pincurchin) carry attacks whose effects derive, which would put
       an unrelated discard in the middle of an attach test. */
   "fix-lightning-1": battler("fix-lightning-1", { types: ["Lightning"], hp: 70, retreat: 1 }),
-  // — M5 op-slice: discardFromHandCost. Every field below (name / stage /
+  // — M5 op-slice: payFromHand. Every field below (name / stage /
   //   evolveFrom / hp / retreat / type / trainerType and the whole attack and
   //   effect rows) is verified verbatim against the local catalog 2026-07-21.
   //   Printed WEAKNESS is omitted, as in the slices above — none of these is ever
@@ -1060,6 +1060,27 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: 170,
       },
     ],
+  }),
+  // — M5 op-slice: the hand cost that is NOT a discard. Both rows verified
+  //   verbatim against the local catalog 2026-07-21. —
+  /** Dendra (sv02-179, Supporter) — the payment that goes UNDER THE DECK, and the
+      printed play gate stated as its contrapositive. */
+  "sv02-179": trainerCard(
+    "sv02-179",
+    "Supporter",
+    "Put a card from your hand on the bottom of your deck. If you do, draw cards until you have 5 cards in your hand. (If you have no other cards in your hand, you can't use this card.)",
+  ),
+  /** Skwovet (sv01-151) — "Nest Stash": the same destination reached by the WHOLE
+      hand, which is `handRefresh` with Iono's two riders. Its printed attack is a
+      plain 20 with no effect text, so a Skwovet Active cannot put an unrelated
+      effect into an Ability test. */
+  "sv01-151": battler("sv01-151", {
+    name: "Skwovet",
+    hp: 60,
+    stage: "Basic",
+    types: ["Colorless"],
+    retreat: 1,
+    attacks: [{ cost: ["Colorless", "Colorless"], name: "Bite", damage: 20 }],
   }),
 };
 
@@ -1201,14 +1222,20 @@ export const RARE_CANDY_DECK = deckOf({
     opponent's Bench are the snipe targets — surgery places them), Hawlucha ×6
     (played from hand — the onPlayToBench snipe), Meowscarada ex ×4 (surgery-
     placed — the activated snipe) with Basic {G} Energy ×6 for its discard cost,
-    low-HP fix-victim (30 HP) bench fodder for the mid-turn KO, and energy. */
+    low-HP fix-victim (30 HP) bench fodder for the mid-turn KO, and energy.
+    Radiant Blastoise ×2 (+ Basic {W} ×4) joined for the exact-`count` floor: it
+    is the second card printing "on 1 of your opponent's Benched Pokémon" behind a
+    paid cost, so it is where "the floor is DATA, not Meowscarada's special case"
+    is asserted. */
 export const SNIPE_DECK = deckOf({
   "fix-basic-1": 14,
   "sv01-118": 6,
   "sv02-015": 4,
+  "swsh10.5-018": 2,
   "fix-victim": 6,
   "fix-grass-energy": 6,
-  "fix-energy": 24,
+  "fix-water-energy": 4,
+  "fix-energy": 18,
 });
 
 /** M4 slice 9 (on-KO triggered Abilities): a Fire attacker to KO with (Bite [C]
@@ -1470,7 +1497,7 @@ export const ATTACH_FROM_TOP_DECK = deckOf({
   "fix-item": 6, // non-Energy filler: window padding + Tri Howl's leftovers
 });
 
-/** M5 op-slice: discardFromHandCost — the printed hand COST, in both of its
+/** M5 op-slice: payFromHand — the printed hand COST, in both of its
     wordings. Carries all four newly authored cards plus Meowscarada ex (migrated
     onto the same op, and the FUNGIBLE end of its range).
 
@@ -1494,6 +1521,29 @@ export const HAND_COST_DECK = deckOf({
   "fix-water-energy": 8, // Radiant Blastoise's Basic {W}
   "fix-special": 6, // a SPECIAL Energy — anyEnergy only
   "fix-item": 6, // non-Energy filler for the unfiltered costs
+});
+
+/** M5 op-slice: the hand cost that is NOT a discard — Dendra (a chosen card from
+    hand → the deck's BOTTOM, then draw to 5) and Skwovet (the whole hand to the
+    same place, then draw 1).
+
+    The mix is what makes both destinations legible. `fix-item` and `fix-basic-1`
+    are the interchangeable bulk a hand pays with, so a hand of copies collapses
+    to one candidate and asks nothing; the three ENERGY rows exist to make the
+    other kind of hand — one where the pick is a real question — reachable without
+    surgery, and to be identifiable at the bottom of a deck afterwards (the whole
+    point of `to: "deckBottom"` is that the card is still in the deck, so a test
+    must be able to name it there). Skwovet doubles as an Active with a plain
+    attack; `fix-attacker` is the opponent body its Bench-side tests need. */
+export const DECK_BOTTOM_DECK = deckOf({
+  "sv02-179": 4, // Dendra (Supporter) — pay 1 to the bottom, draw to 5
+  "sv01-151": 4, // Skwovet — Nest Stash (the whole hand to the bottom, draw 1)
+  "fix-attacker": 4, // an opponent body / a second Pokémon in hand
+  "fix-basic-1": 12, // interchangeable bulk
+  "fix-item": 12, // more interchangeable bulk — the unfiltered cost's usual payer
+  "fix-grass-energy": 8, // a distinguishable class the pick can prefer
+  "fix-water-energy": 8, // a second one, so a hand can hold three classes
+  "fix-energy": 8, // Colorless basics — the filler that fills a deck out
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

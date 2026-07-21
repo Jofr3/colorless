@@ -19,7 +19,7 @@ import {
   conditionNote,
   discardEnergyPlayable,
   firstAttachableEnergy,
-  handCostPhrase,
+  handCostAction,
   handCostUnmet,
   moveEnergyPlayable,
   resumeProgram,
@@ -98,8 +98,10 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (playGate !== undefined && !conditionHolds(state, action.seat, playGate)) {
     return err("PLAY_CONDITION_NOT_MET", `${card.name} can only be used if ${conditionNote(playGate)}`);
   }
-  // The card's OTHER printed "only if" — a hand-discard COST rather than a board
-  // condition (Ultra Ball's "only if you discard 2 OTHER cards from your hand").
+  // The card's OTHER printed "only if" — a hand COST rather than a board
+  // condition (Ultra Ball's "only if you discard 2 OTHER cards from your hand";
+  // Dendra's "(If you have no OTHER cards in your hand, you can't use this
+  // card.)", the same gate stated as its contrapositive).
   // Checked beside the gate above because both are printed RULES, not
   // programPlayable's would-only-whiff heuristics; and checked with the played
   // uid EXCLUDED, which is exactly what the printed word "other" means — the card
@@ -109,7 +111,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (unpayable !== null) {
     return err(
       "PLAY_CONDITION_NOT_MET",
-      `${card.name} can only be used if you discard ${handCostPhrase(unpayable, true)} from your hand`,
+      `${card.name} can only be used if you ${handCostAction(unpayable, true)}`,
     );
   }
   if (!programPlayable(state, program, action.seat)) {
@@ -459,7 +461,10 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   if (unpayable !== null) {
     return err(
       "ABILITY_COST_UNMET",
-      `${ability.name} needs ${handCostPhrase(unpayable, false)} in hand to discard (§9)`,
+      // The VERB comes from the destination, like the Trainer path's message: no
+      // printed Ability pays anywhere but the discard today, and a message that
+      // hard-codes "discard" is the same latent bug the Trainer side just fixed.
+      `${ability.name} can only be used if you ${handCostAction(unpayable, false)} (§9)`,
     );
   }
 
@@ -567,7 +572,7 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
     // OTHER printed clause always resolves, which is precisely the case
     // ruling/284 (quoted above) excludes.
     //
-    // `discardFromHandCost` is not gated here either, for the opposite reason:
+    // `payFromHand` is not gated here either, for the opposite reason:
     // it DOES veto the whole card, but on the card's own printed authority
     // ("You can use this card only if…") rather than this function's judgement
     // about ops that would whiff — and the Trainer form needs the played uid
@@ -649,13 +654,23 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       return null;
     }
     case "choosePokemonMulti": {
-      // Up to `max` DISTINCT offered refs (the snipe is "you may" + "up to", so
-      // fewer — or none — is legal, like chooseCards).
+      // `min`..`max` DISTINCT offered refs — and the printed number is EXACT on
+      // every consumer today ("put 3 damage counters on 1 of your opponent's
+      // Benched Pokémon" is not "up to 1"), so the floor is what stops a player
+      // from paying an irreversible hand cost and then placing nothing.
+      //
+      // The empty answer is legal only where the card prints "you may"
+      // (`declinable` — Hawlucha, whose trigger the framework auto-fires, so the
+      // decline has nowhere else to live). It is ALL-OR-NOTHING: none, or the
+      // full `min`, never one of two.
       if (choice.kind !== "pokemonMulti" || !Array.isArray(choice.refs)) {
         return err("BAD_EFFECT_CHOICE", "expected a Pokémon multi-choice");
       }
       if (choice.refs.length > prompt.max) {
         return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} Pokémon`);
+      }
+      if (choice.refs.length < prompt.min && !(prompt.declinable && choice.refs.length === 0)) {
+        return err("BAD_EFFECT_CHOICE", `pick ${prompt.min} Pokémon`);
       }
       const seen = new Set<string>();
       for (const ref of choice.refs) {

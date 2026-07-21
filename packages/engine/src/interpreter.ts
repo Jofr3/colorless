@@ -76,22 +76,49 @@ export type EffectPrompt =
           hand/deck; lookAtTopN takes from the deck top). Taking none is a legal
           answer.
         • **`min === max === count`** — a MANDATORY exact pick, the printed hand
-          COST (`discardFromHandCost`, dest `"discard"`): the only decision is
+          COST (`payFromHand`, dest `"discard"` or `"deck"`): the only decision is
           WHICH cards, never whether, so there is no decline. */
   | {
       kind: "chooseCards";
       candidates: string[];
       min: number;
       max: number;
-      dest: "bench" | "hand" | "deck" | "discard";
+      /** Where the picked cards are going. `"deck"` is "into the deck", which for
+          every op that says it means SHUFFLED in (Pal Pad / Super Rod); the
+          bottom of the deck is its own member, because "put it under your deck"
+          and "shuffle it into your deck" are different promises to a player and
+          the destination is the ENGINE's to state — a client deriving one from
+          the other is the guess `min` exists to prevent. */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "discard";
       note: string;
     }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
   | { kind: "choosePokemon"; candidates: PokemonRef[]; note: string }
-  /** Pick up to `max` in-play Pokémon — the multi-target snipe (damageChosen;
-      Hawlucha's "choose 2"). Distinct from choosePokemon (exactly one): a
-      multi-select the player may take fewer of, or decline (§9 "you may"). */
-  | { kind: "choosePokemonMulti"; candidates: PokemonRef[]; max: number; note: string }
+  /** Pick `min`..`max` in-play Pokémon — the multi-target snipe (damageChosen:
+      Hawlucha's "choose 2", Meowscarada ex / Radiant Blastoise's "on 1 of your
+      opponent's Benched Pokémon"). Distinct from choosePokemon (exactly one) in
+      that the answer is a SET, dispatched in one go.
+
+      The printed number is EXACT unless the card says "up to", so today's
+      consumers all carry `min === max`; the range is here because the vocabulary
+      has to hold the "up to" print too (Janine's Secret Art's "up to 2 of your
+      {D} Pokémon" is the next one in).
+
+      `declinable` is the separate, printed "**you may**", and it is why a floor
+      alone cannot describe this prompt: Hawlucha's "you may choose 2" is
+      ALL-OR-NOTHING — 2 refs or none, never 1 of 2 — so the legal answers are
+      `min..max` PLUS the empty set. It exists only because the framework
+      auto-fires optional triggers (triggers.ts): the decline of a "you may" that
+      is never asked about anywhere else has to live in the pick it governs. A
+      prompt with `min: 0` is declinable by construction and does not set it. */
+  | {
+      kind: "choosePokemonMulti";
+      candidates: PokemonRef[];
+      min: number;
+      max: number;
+      declinable: boolean;
+      note: string;
+    }
   /** Move up to `max` Energy from ONE source Pokémon (all picks share a source)
       to ONE destination — the compound moveEnergy decision (Energy Switch /
       Poppy). `movable` pairs each takeable Energy uid with the Pokémon it sits
@@ -275,23 +302,40 @@ function stepOp(
       return { done: spreadDamage(state, op.amount, ctx, events) };
     case "damageChosen": {
       // The snipe (Hawlucha / Meowscarada): choose `count` of the opponent's
-      // Benched Pokémon and put counters on each. No candidate = no-op; the
-      // Bench holding `count` or fewer is forced (hit them all — "choose 2" of
-      // 2 is both); more than `count` PARKS on a multi-Pokémon choice.
-      // The forced branch AUTO-TAKES rather than offering the "you may" decline
-      // (only the parked branch does) — the deliberate pure-upside auto-fire
-      // doctrine (triggers.ts / TriggeredAbility.optional): every snipe in scope
-      // only damages the opponent, so declining is never wanted, and this
-      // matches the parkOrForce targeting family (gust/switch auto-resolve at
-      // one candidate). A yes/no decline is the same follow-up a downside
-      // trigger's confirm is.
+      // Benched Pokémon and put counters on each. An empty Bench is a no-op.
+      // The pick asks for `count` EXACTLY — the printed number is a floor as
+      // well as a ceiling (effects.ts) — clamped to the Bench by §8.6 "do as
+      // much as you can", which is the only thing that softens it.
+      //
+      // WHAT DECIDES BETWEEN A PROMPT AND AN AUTO-TAKE IS `optional`, NOT THE
+      // BENCH SIZE. A mandatory snipe over a Bench of `count` or fewer has no
+      // decision left in it, so it auto-takes (the M1 no-choice doctrine, and
+      // the parkOrForce family's rule at one candidate). A DECLINABLE one always
+      // has a decision left — "you may" — and it is the same decision on a Bench
+      // of 1 as on a Bench of 5, so it parks at every non-empty Bench. Auto-
+      // taking there would honour Hawlucha's printed "you may" only when the
+      // opponent has more than 2 Benched Pokémon, which is not what the card
+      // says: placing counters is not always wanted (it can KO a body the
+      // opponent is happy to lose, free a Bench slot, or fire an on-KO Ability).
+      // The framework auto-fires the TRIGGER (triggers.ts), so this pick is the
+      // only place that "may" can live at all.
       const candidates = oppBenchRefs(state, ctx.seat);
       if (candidates.length === 0) return { done: state };
-      if (candidates.length <= op.count) {
+      const declinable = op.optional === true;
+      // §8.6: with fewer Benched Pokémon than the printed number, take them all.
+      const take = Math.min(op.count, candidates.length);
+      if (!declinable && candidates.length <= op.count) {
         return { done: placeSnipeCounters(state, candidates, op.amount, ctx, events) };
       }
       return {
-        park: { kind: "choosePokemonMulti", candidates, max: op.count, note: snipeNote(op.amount, op.count) },
+        park: {
+          kind: "choosePokemonMulti",
+          candidates,
+          min: take,
+          max: take,
+          declinable,
+          note: snipeNote(op.amount, take, declinable),
+        },
       };
     }
     case "drawCards":
@@ -444,10 +488,11 @@ function stepOp(
         park: { kind: "discardEnergy", discardable: candidates, scope, note: discardNote(op) },
       };
     }
-    case "discardFromHandCost": {
-      // Pay the printed hand-discard cost (Ultra Ball / Earthen Vessel /
-      // Tinkaton / Revavroom / Meowscarada ex / Radiant Blastoise) — always the
-      // FIRST op of its program, so it runs before anything it buys.
+    case "payFromHand": {
+      // Pay the printed hand cost — to the DISCARD (Ultra Ball / Earthen Vessel /
+      // Tinkaton / Revavroom / Meowscarada ex / Radiant Blastoise) or to the
+      // BOTTOM OF THE DECK (Dendra) — always the FIRST op of its program, so it
+      // runs before anything it buys.
       //
       // MANDATORY and exact: the only decision is WHICH cards, so there is no
       // decline and the prompt asks for `count` on the nose. An offer no bigger
@@ -464,7 +509,7 @@ function stepOp(
       // rule this engine already applies to a short board (§8.6).
       const candidates = handCostCandidates(state, ctx.seat, op);
       if (candidates.length <= op.count) {
-        return { done: discardFromHandApply(state, candidates, ctx, events) };
+        return { done: payFromHandApply(state, candidates, op, ctx, events) };
       }
       // HIDDEN INFORMATION — the candidates are cards in the controller's own
       // HAND, and this prompt is the first that carries any. Do not reason from
@@ -474,6 +519,12 @@ function stepOp(
       // the third stays in hand with its identity given away. The collapse leaks
       // a second thing, the hand's DUPLICATE STRUCTURE: hand size is public but
       // `candidates.length` against it says how many cards are copies.
+      //
+      // `to: "deckBottom"` is the WORST case of the three and the reason this
+      // note is not softening: a card paid to the discard at least becomes
+      // public, while Dendra's goes hand → deck and is never seen again, so
+      // naming its uid gives away a card that is now hidden for the rest of the
+      // game (and, with a full hand offered, names every card in that hand).
       //
       // Safe today because the prompt is only ever shown to the seat that owns
       // it. It reaches a client through `projection.ts`'s `pendingDecision`,
@@ -488,8 +539,8 @@ function stepOp(
           // chooseCards park (every other consumer is a printed "up to").
           min: op.count,
           max: op.count,
-          dest: "discard",
-          note: `Discard ${handCostPhrase(op, false)} from your hand.`,
+          dest: op.to,
+          note: payFromHandNote(op),
         },
       };
     }
@@ -596,8 +647,8 @@ export function applyChoice(
         : state;
     case "lookAtTopN":
       return choice.kind === "cards" ? revealFromTop(state, choice.uids, ctx, events) : state;
-    case "discardFromHandCost":
-      return choice.kind === "cards" ? discardFromHandApply(state, choice.uids, ctx, events) : state;
+    case "payFromHand":
+      return choice.kind === "cards" ? payFromHandApply(state, choice.uids, op, ctx, events) : state;
     case "switchActive":
       return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
     case "gust":
@@ -732,10 +783,14 @@ function placeSnipeCounters(
 }
 
 /** The choosePokemonMulti prompt string — counters are the printed unit, so the
-    HP `amount` reads back as counters (one counter = 10 HP, §12). */
-function snipeNote(amount: number, count: number): string {
+    HP `amount` reads back as counters (one counter = 10 HP, §12). The heading
+    quotes the card: a bare "Choose 2" for the exact pick every consumer prints,
+    and "you may" only where the card says it (an optional trigger, whose decline
+    the dialog offers as taking none). Never "up to", which no consumer prints. */
+function snipeNote(amount: number, count: number, optional: boolean): string {
   const counters = Math.round(amount / 10);
-  return `Choose up to ${count} of your opponent's Benched Pokémon (${counters} damage counter${counters === 1 ? "" : "s"} each).`;
+  const verb = optional ? "You may choose" : "Choose";
+  return `${verb} ${count} of your opponent's Benched Pokémon (${counters} damage counter${counters === 1 ? "" : "s"} each).`;
 }
 
 /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
@@ -965,19 +1020,25 @@ function revealFromTop(
   return withSide(state, ctx.seat, { ...side, deck, hand: [...side.hand, ...moved] });
 }
 
-/** Pay a hand cost: move the chosen `uids` from the controller's hand into their
-    own discard pile (§7/§9 — Ultra Ball, Tinkaton, Meowscarada ex). Wire-safe in
-    the same way searchMove / retrieveMove are: only uids actually in the hand
-    move, and a uid repeated on the wire pays once, so a card is never duplicated
-    into the discard pile nor left in neither zone. Emits ONE event naming the
-    cards; they land in the public discard pile, so the uids leak nothing the
-    opponent will not see — the LOG still speaks in counts, because they came out
-    of a hidden hand (the HAND_DISCARDED precedent).
+/** Pay a hand cost: move the chosen `uids` out of the controller's hand — into
+    their own discard pile (§7/§9 — Ultra Ball, Tinkaton, Meowscarada ex) or
+    UNDER their own deck (Dendra). Wire-safe in the same way searchMove /
+    retrieveMove are: only uids actually in the hand move, and a uid repeated on
+    the wire pays once, so a card is never duplicated into the destination nor
+    left in neither zone. Emits ONE event naming the cards and where they went.
+
+    The paid cards keep the order they were PICKED IN when they go under the deck
+    — the printed sentence pays one card ("Put a card…"), so no card in the family
+    can tell a chosen order from any other, and preserving the pick is the answer
+    that needs no rng. Deck order is otherwise untouched: this is the placement
+    Iono exists for (`handRefresh` `toBottom`), which shuffles because it moves a
+    WHOLE hand and hiding its order is the point.
 
     Never damages, so it never KOs. */
-function discardFromHandApply(
+function payFromHandApply(
   state: GameState,
   uids: readonly string[],
+  op: Extract<EffectOp, { op: "payFromHand" }>,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -991,15 +1052,18 @@ function discardFromHandApply(
     paid.push(uid);
   }
   if (paid.length === 0) return state;
-  events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid] });
-  return withSide(state, ctx.seat, {
-    ...side,
-    hand: side.hand.filter((uid) => !spent.has(uid)),
-    discard: [...side.discard, ...paid],
-  });
+  events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to });
+  const hand = side.hand.filter((uid) => !spent.has(uid));
+  return withSide(
+    state,
+    ctx.seat,
+    op.to === "deckBottom"
+      ? { ...side, hand, deck: [...side.deck, ...paid] }
+      : { ...side, hand, discard: [...side.discard, ...paid] },
+  );
 }
 
-/** The cards in `seat`'s hand that may pay a `discardFromHandCost`, with
+/** The cards in `seat`'s hand that may pay a `payFromHand`, with
     INTERCHANGEABLE copies collapsed to at most `count` representatives each —
     the set the player is actually asked about, and the same set the play gate
     counts.
@@ -1020,7 +1084,7 @@ function discardFromHandApply(
 function handCostCandidates(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "discardFromHandCost" }>,
+  op: Extract<EffectOp, { op: "payFromHand" }>,
   excludeUid?: string,
 ): string[] {
   const kept = new Map<string, number>();
@@ -1039,7 +1103,7 @@ function handCostCandidates(
   return out;
 }
 
-/** The first top-level `discardFromHandCost` in `program` whose cost the seat
+/** The first top-level `payFromHand` in `program` whose cost the seat
     cannot pay, or null when every one of them can be. The printed "you can use
     this card only if …" / "you must discard … in order to use this Ability"
     gate, checked by BOTH action paths before anything is committed (cardplay.ts)
@@ -1067,9 +1131,9 @@ export function handCostUnmet(
   seat: Seat,
   program: readonly EffectOp[],
   excludeUid?: string,
-): Extract<EffectOp, { op: "discardFromHandCost" }> | null {
+): Extract<EffectOp, { op: "payFromHand" }> | null {
   for (const op of program) {
-    if (op.op !== "discardFromHandCost") continue;
+    if (op.op !== "payFromHand") continue;
     if (handCostCandidates(state, seat, op, excludeUid).length < op.count) return op;
   }
   return null;
@@ -1083,7 +1147,7 @@ export function handCostUnmet(
     the played card has already left the hand, so every offered card IS another
     one) and by both rejection messages (`other` as printed). */
 export function handCostPhrase(
-  op: Extract<EffectOp, { op: "discardFromHandCost" }>,
+  op: Extract<EffectOp, { op: "payFromHand" }>,
   other: boolean,
 ): string {
   const { singular, plural } =
@@ -1092,6 +1156,32 @@ export function handCostPhrase(
   // "a card" → "another card"; no printed card pairs `other` with a filter, but
   // the article strip keeps it reading correctly if one ever does.
   return other ? `another ${singular.replace(/^an? /, "")}` : singular;
+}
+
+/** The whole printed cost clause — the noun phrase above under the VERB its
+    destination prints: "discard 2 other cards from your hand" (Ultra Ball) /
+    "put another card from your hand on the bottom of your deck" (Dendra). One
+    string for the three readers that must agree on the wording: the park's
+    heading, both rejection messages (cardplay.ts) and the HUD's disabled-card
+    hint. Lower-case and verb-first, so a caller can say "can only be used if you
+    …", "Only if you …" or capitalize it into a sentence of its own. */
+export function handCostAction(
+  op: Extract<EffectOp, { op: "payFromHand" }>,
+  other: boolean,
+): string {
+  const phrase = handCostPhrase(op, other);
+  return op.to === "deckBottom"
+    ? `put ${phrase} from your hand on the bottom of your deck`
+    : `discard ${phrase} from your hand`;
+}
+
+/** The park's heading — the cost clause as an instruction ("Discard a card from
+    your hand." / "Put a card from your hand on the bottom of your deck."). The
+    played Trainer has already left the hand by the time this is asked, so every
+    offered card IS another one and the printed "other" is not repeated here. */
+function payFromHandNote(op: Extract<EffectOp, { op: "payFromHand" }>): string {
+  const action = handCostAction(op, false);
+  return `${action.charAt(0).toUpperCase()}${action.slice(1)}.`;
 }
 
 /** Switch the controller's Active with their benched `ref` (§G). The outgoing
