@@ -134,6 +134,30 @@ export type BoardCondition =
       attached"). Vacuously true with nothing in play. */
   | { kind: "noEnergyOnYourPokemon" };
 
+/** The riders that narrow which of the controller's own in-play Pokémon may
+    RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
+    interpreter.ts) because "is this Pokémon an eligible attach target" is ONE
+    rule with two op-shaped readers — `attachEnergyFrom` (hand / discard source)
+    and `attachFromTop` (the deck top). Each op declares only the riders its
+    printed cards use, and is structurally an `AttachTargetRiders`; an absent
+    rider is no restriction, so the base shape is "every own in-play Pokémon". */
+export interface AttachTargetRiders {
+  /** Only Pokémon whose TOP card is this type — Gardevoir ex's "your {P}
+      Pokémon", Electric Generator's "your Benched {L} Pokémon". */
+  targetType?: string;
+  /** Only BASIC Pokémon (Koraidon ex's "your Basic {F} Pokémon"). */
+  basicOnly?: true;
+  /** Only BENCHED Pokémon — the Active is not a target (Electric Generator's
+      "your **Benched** {L} Pokémon", where the attach is the whole point of
+      putting Energy somewhere the turn's manual attach cannot reach). */
+  benchOnly?: true;
+  /** Damage counters the attach itself places on the target (Gardevoir's 2). */
+  bonusCounters?: number;
+  /** Exclude any target `bonusCounters` would Knock Out ("you can't use this on
+      a Pokémon that would be Knocked Out"), so the placement is never lethal. */
+  notIfKO?: true;
+}
+
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
     = the attacker's Active, "defender" = the Defending Pokémon); Trainer /
@@ -282,6 +306,84 @@ export type EffectOp =
       candidate set is the top-`n` matches, so a client cannot reach a deeper card)
       and the one vetted `shuffleDeck`. */
   | { op: "lookAtTopN"; n: number; filter: CardFilter; max: number }
+  /** Look at the top `n` cards of the controller's deck and ATTACH the Energy
+      among them straight onto the controller's own in-play Pokémon — the
+      from-the-top variant of `attachEnergyFrom`, whose sources (hand, discard
+      pile) are zones the player can already see (Electric Generator: "Look at
+      the top 5 cards of your deck and attach up to 2 Basic {L} Energy cards you
+      find there to your Benched {L} Pokémon in any way you like"; Hydreigon
+      "Tri Howl": the top 3, any number of Energy, to your Pokémon).
+
+      **"IN ANY WAY YOU LIKE" is what makes this its own op.** `attachEnergyFrom`
+      attaches ONE fungible card and asks only where; here the cards are whatever
+      the top `n` happened to hold, and each attached card names its OWN
+      destination — so the answer is a MAP (card → Pokémon), not a list. That is
+      the `attachCards` prompt (interpreter.ts), the first whose answer pairs each
+      pick with a target of its own; moveEnergy's picks share one destination.
+
+      `filter` scans cards sitting in the DECK, so it is about the PRINT:
+      `basicEnergy` + `energyType` for Electric Generator's "Basic {L} Energy
+      CARDS", `anyEnergy` for Hydreigon's "Energy cards" (Basic or Special).
+      NEVER `providesEnergy` — provision is a while-ATTACHED property, so a card
+      in a pile provides nothing and `matchesFilter` answers false for it (§6.5).
+
+      `max` is the cap: a number is the printed "up to 2", `"any"` the printed
+      "any number" (the cap is then the whole candidate set — a card may not be
+      attached twice). Declinable EITHER way, like every "up to": attaching none
+      is a legal answer, so the op parks whenever there is anything to attach and
+      anywhere to put it rather than forcing a single-candidate board.
+
+      `targetType` / `benchOnly` narrow the eligible targets ("your **Benched**
+      **{L}** Pokémon"), through the same `attachEnergyTargets` reader
+      `attachEnergyFrom`'s own riders use — one rule for "which of your Pokémon
+      may receive an attach", two ops reading it.
+
+      `discardRest` is the printed "**Discard** the other cards" (Hydreigon).
+      Its sibling clause "**Shuffle** the other cards back into your deck"
+      (Electric Generator) is NOT a field: those cards never left the deck, so a
+      trailing `shuffleDeck` op — which knows nothing about the window — gets it
+      exactly right, the same Nest Ball search-then-shuffle pattern lookAtTopN
+      and searchDeck follow. A DISCARD cannot be expressed that way, because it
+      must name exactly the looked-at cards that were NOT attached, and only this
+      op knows which those were: after k are attached the window holds n − k, and
+      a "discard the top 3" op would eat k cards deeper in the deck. The
+      asymmetry is forced by what the two clauses have to know, not chosen.
+
+      The leftovers clause runs on EVERY path — including the whiff (no matching
+      Energy up there), the decline (attach none) and the board with no eligible
+      target at all — which is the same rule as "a whiffed search still
+      shuffles", except that here it is the difference between Tri Howl costing
+      three cards and costing nothing.
+
+      **NO `programPlayable` GATE, deliberately.** An earlier draft refused
+      Electric Generator when the controller had no Benched {L} Pokémon, by the
+      "an attach with no eligible target can only whiff" rule `attachEnergyFrom`
+      follows. That was wrong, and the review that caught it is worth preserving:
+      `programPlayable` is an AND over a program's ops, so vetoing on this op
+      vetoes the CARD — including its second printed sentence, "Shuffle the other
+      cards back into your deck", which always resolves. The ruling cardplay.ts
+      quotes (ruling/284) draws exactly that line: playing a card for no effect is
+      when the game state prevents ANY effect, and shuffling your deck after a
+      known-bad top is an effect players deliberately buy. Two in-repo precedents
+      agree — Great Ball and Pokégear (`lookAtTopN` + `shuffleDeck`) are
+      unconditionally playable, and so is Nest Ball into a full Bench. The
+      distinction from `attachEnergyFrom` is not the attach: it is that every card
+      carrying THIS op also carries a leftovers clause that always happens, so
+      "no target" is never "no effect". A future card where the attach is the
+      whole effect would want a gate — and would want it as "no op in this program
+      can do anything", not as a per-op veto.
+
+      Never damages, so it never KOs; and it is not the §6.3 manual attach, so no
+      allowance is touched. */
+  | {
+      op: "attachFromTop";
+      n: number;
+      filter: CardFilter;
+      max: number | "any";
+      targetType?: string;
+      benchOnly?: true;
+      discardRest?: true;
+    }
   /** Discard Energy attached to an in-play Pokémon — the §15 energy-removal
       ("hammer") family on the opponent's side (Crushing Hammer, Giacomo, Mawile
       "Special Eater") and the §8 self-discard attack COST on the controller's

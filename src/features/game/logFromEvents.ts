@@ -521,6 +521,18 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),
       ]);
     }
+    case "DECK_TOP_DISCARDED": {
+      // Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at cards
+      // that were NOT attached. Count only, like its DECK_TOP_REVEALED sibling:
+      // the pile is public, so a curious player can read the cards themselves,
+      // and what the LOG has to carry is that the look cost them. It fires even
+      // when nothing was attached (an empty look, or a declined one), which is
+      // exactly the case where this row is the whole story of the play.
+      const n = event.uids.length;
+      return row(event.seat, [
+        plain(`discarded ${n} looked-at card${n === 1 ? "" : "s"} from the top of their deck`),
+      ]);
+    }
     case "ENERGY_MOVED": {
       // Energy Switch / Poppy (moveEnergy) — moved own-board Energy between two of
       // the player's Pokémon. Both `from`/`to` name Pokémon on the seat's own

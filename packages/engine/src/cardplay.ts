@@ -574,6 +574,10 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
       // (targetType / notIfKO riders) → the attach can only whiff.
       return false;
     }
+    // `attachFromTop` is deliberately NOT gated — see the op's own doc
+    // (effects.ts). A gate here would be an AND over ops applied to a card whose
+    // OTHER printed clause always resolves, which is precisely the case
+    // ruling/284 (quoted above) excludes.
     if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op)) {
       // No movable Energy, or fewer than two of your Pokémon in play (no distinct
       // destination) → the move can only whiff (Energy Switch / Poppy).
@@ -750,6 +754,50 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
             return err("BAD_EFFECT_CHOICE", "only one Energy per Pokémon");
           }
           sources.add(key);
+        }
+      }
+      return null;
+    }
+    case "attachCards": {
+      // Electric Generator / Hydreigon — "attach … in any way you like", so each
+      // pick carries its OWN destination and the answer is a list of PAIRS rather
+      // than the flat uid list every other card prompt takes. Four couplings: at
+      // most `max` of them; every uid one the prompt offered (which is what keeps
+      // a client off a card DEEPER in the deck than the look reached — the
+      // lookAtTopN rule, and here it also keeps a hand card out of an attach that
+      // must come from the deck top); no uid twice, since one physical card cannot
+      // land on two Pokémon and the apply would otherwise be asked to duplicate
+      // it; and every destination an offered target (the printed "your Benched {L}
+      // Pokémon" — the opponent's board is never among them).
+      //
+      // An empty list is a legal DECLINE ("up to" / "any number"), and it is not
+      // the same as nothing happening: the op's leftovers clause still runs.
+      if (choice.kind !== "attachCards" || !Array.isArray(choice.assignments)) {
+        return err("BAD_EFFECT_CHOICE", "expected a card-attach choice");
+      }
+      if (choice.assignments.length > prompt.max) {
+        return err("BAD_EFFECT_CHOICE", `attach at most ${prompt.max} card(s)`);
+      }
+      const candidates = new Set(prompt.candidates);
+      const seen = new Set<string>();
+      // The entries come off the WIRE, so each is checked as an unknown shape
+      // (TypeScript's `{uid, to}` is a claim about the action, not about the JSON).
+      for (const entry of choice.assignments as readonly ({
+        uid?: unknown;
+        to?: unknown;
+      } | null)[]) {
+        if (typeof entry !== "object" || entry === null) {
+          return err("BAD_EFFECT_CHOICE", "each attachment must name a card and a Pokémon");
+        }
+        const uid = entry.uid;
+        if (typeof uid !== "string" || !candidates.has(uid)) {
+          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not an attachable card`);
+        }
+        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
+        seen.add(uid);
+        const to = entry.to;
+        if (!isPokemonRef(to) || !prompt.targets.some((t) => refEquals(t, to))) {
+          return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal attach target");
         }
       }
       return null;

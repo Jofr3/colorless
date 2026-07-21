@@ -234,6 +234,19 @@ export type GameEvent =
       other looked-at cards are shuffled back — a trailing SHUFFLE in the same
       batch hides the deck order, so naming the taken (revealed) cards is safe. */
   | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[] }
+  /** The looked-at top cards a from-the-top ATTACH did NOT attach went to
+      `seat`'s discard pile — Hydreigon "Tri Howl"'s printed "Discard the other
+      cards" (attachFromTop `discardRest`). `uids` is in deck order, top first,
+      which is the order the pile gained them (§2). The discard pile is public, so
+      naming them leaks nothing — and the cards that WERE attached are named by
+      their own ENERGY_ATTACHED rows, never here.
+
+      Only fires with ≥1 leftover, but it DOES fire when nothing was attached at
+      all (an empty look, or a declined one): the discard is a cost the card
+      charges regardless. The sibling clause "Shuffle the other cards back into
+      your deck" (Electric Generator) emits nothing of its own — those cards never
+      left the deck, and the trailing SHUFFLE row is the whole story. */
+  | { type: "DECK_TOP_DISCARDED"; seat: Seat; uids: string[] }
   /** An effect moved `uids` (Energy cards) from one of `seat`'s own in-play
       Pokémon (`from`) to another (`to`) — the §6 manual Energy movement (Energy
       Switch: a Basic Energy; Poppy: up to 2 any Energy). All moved Energy shares

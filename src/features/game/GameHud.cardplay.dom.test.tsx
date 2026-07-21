@@ -10,6 +10,7 @@ import type { GameAction, GameState } from "@luminous/engine";
 import { applyAction } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  ATTACH_FROM_TOP_DECK,
   ATTACK_DISCARD_DECK,
   ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
@@ -32,6 +33,7 @@ import {
   setActiveFromDeck,
   setDamage,
   setPrizes,
+  toDeckTop,
 } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { GameHud } from "./GameHud";
@@ -466,6 +468,233 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     }
     expect(call.choice.uids).toEqual([onBench]); // source B's Energy, not source A's
     expect(applyAction(state, call).ok).toBe(true);
+  });
+});
+
+describe("effect:choose — the attach-cards dialog (attachFromTop)", () => {
+  const attachDecks = { p1: ATTACH_FROM_TOP_DECK, p2: ATTACH_FROM_TOP_DECK };
+
+  /** Electric Generator parked: two benched {L} bodies (the only legal targets —
+      the Active is Colorless AND the card prints "Benched") and `candidates`
+      Basic {L} Energy seeded on top of the deck. */
+  function parkedAttach(seed: number, candidates: number): GameState {
+    let state = p1Turn2(seed, attachDecks);
+    state = setActiveFromDeck(state, "p1", "fix-basic-1");
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    state = benchFromDeck(state, "p1", "fix-lightning-1"); // Bench 1
+    state = benchFromDeck(state, "p1", "fix-lightning-1"); // Bench 2
+    state = handFromDeck(state, "p1", "sv01-170", 1);
+    // Fill the rest of the top 5 with non-candidates, spread over TWO ids so no
+    // single print has to survive the setup deal (deepest layer first).
+    const pad = 5 - candidates;
+    state = toDeckTop(state, "p1", "fix-item", Math.max(0, pad - 2));
+    state = toDeckTop(state, "p1", "fix-fire-energy", Math.min(2, pad));
+    state = toDeckTop(state, "p1", "fix-lightning-energy", candidates);
+    state = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", "sv01-170"),
+    }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    return state;
+  }
+
+  /** The candidate rows — two prints of one Energy, so they share a NAME and are
+      told apart only by position (which is the honest situation: they are two
+      physical cards off the deck top). */
+  const cardRows = () => screen.getAllByRole("button", { name: /Lightning Energy/ });
+
+  it("pairs each card with its OWN destination", () => {
+    // The shape that makes this dialog different from every sibling: the answer
+    // is a MAP. A dialog that collected one shared destination would pass a
+    // single-card test and quietly put both Energy on the same Pokémon here.
+    const state = parkedAttach(1, 2);
+    const [first, second] = state.players.p1.deck;
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByRole("dialog", { name: "Attach cards" })).toBeTruthy();
+    // No card is waiting for a destination yet, so no target list is mounted.
+    expect(screen.queryByRole("button", { name: "fix-lightning-1 · Bench 2" })).toBeNull();
+
+    fireEvent.click(cardRows()[0] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 2" }));
+    // The target list closes again — the loop is back to "pick a card".
+    expect(screen.queryByRole("button", { name: "fix-lightning-1 · Bench 2" })).toBeNull();
+    fireEvent.click(cardRows()[1] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Attach 2" }));
+
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "attachCards") {
+      throw new Error("expected an attachCards resolveEffect");
+    }
+    expect(call.choice.assignments).toEqual([
+      { uid: first, to: { seat: "p1", spot: { spot: "bench", index: 1 } } },
+      { uid: second, to: { seat: "p1", spot: { spot: "bench", index: 0 } } },
+    ]);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("clicking an assigned card takes it back", () => {
+    // The only undo: a parked decision cannot be dismissed, so a misplaced attach
+    // has to be reversible in the dialog or the player is stuck with it.
+    const state = parkedAttach(2, 2);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(cardRows()[0] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 1" }));
+    expect(screen.getByRole("button", { name: "Attach 1" })).toBeTruthy();
+    // Its row now names its destination — WITH the spot, since two benched
+    // Pokémon share the name and the readback is the only confirmation of which
+    // one was chosen. Asserted on the visible text as well as the accessible
+    // name, or a dialog that rendered empty buttons would pass this suite.
+    expect(screen.getByText("→ fix-lightning-1 · Bench 1")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Lightning Energy → fix-lightning-1 · Bench 1" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Attach none" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "attachCards") {
+      throw new Error("expected an attachCards resolveEffect");
+    }
+    expect(call.choice.assignments).toEqual([]);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("refuses a further card at the printed cap rather than silently ignoring it", () => {
+    // Three candidates, "up to 2": the third row must say it is closed off (the
+    // DiscardEnergyDialog rule) — and clicking it must not open a target list,
+    // which would let the player build an answer the engine then rejects.
+    const state = parkedAttach(3, 3);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(cardRows()).toHaveLength(3);
+    fireEvent.click(cardRows()[0] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 1" }));
+    fireEvent.click(cardRows()[1] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 2" }));
+
+    const third = cardRows()[2] as HTMLElement;
+    expect(third.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(third);
+    expect(screen.queryByRole("button", { name: "fix-lightning-1 · Bench 1" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Attach 2" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "attachCards") {
+      throw new Error("expected an attachCards resolveEffect");
+    }
+    expect(call.choice.assignments).toHaveLength(2);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("announces the count and the pending card, and says what to do at the cap", () => {
+    // The <output> live region is the only thing that announces the running count
+    // (aria-pressed is spoken for the focused row alone) and the only thing that
+    // announces the target list appearing. At the cap it must not tell the player
+    // to "pick a card" — that is precisely what a click then refuses.
+    const state = parkedAttach(4, 2);
+    renderHud(state, vi.fn());
+    expect(screen.getByText("Attaching 0/2. Pick a card, then where it goes.")).toBeTruthy();
+    fireEvent.click(cardRows()[0] as HTMLElement);
+    expect(screen.getByText("Attaching 0/2. Where does Lightning Energy go?")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 1" }));
+    fireEvent.click(cardRows()[1] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 2" }));
+    expect(screen.getByText("Attaching 2/2. Tap an attached card to move it.")).toBeTruthy();
+    // The prompt's own sentence is rendered, not a hardcoded heading.
+    expect(
+      screen.getByRole("heading", {
+        name:
+          state.phase.kind === "effect:choose" && state.phase.prompt.kind === "attachCards"
+            ? state.phase.prompt.note
+            : "",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("marks a card WAITING for a destination as current, not as pressed", () => {
+    // Confirm dispatches `assignments`, which does not hold the pending card — so
+    // announcing it `aria-pressed` would promise an attach that never happens.
+    // The two states must be distinguishable to AT, not just to the eye.
+    const state = parkedAttach(5, 2);
+    renderHud(state, vi.fn());
+    fireEvent.click(cardRows()[0] as HTMLElement);
+    const pendingRow = cardRows()[0] as HTMLElement;
+    expect(pendingRow.getAttribute("aria-pressed")).toBe("false");
+    expect(pendingRow.getAttribute("aria-current")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 1" }));
+    const assignedRow = screen.getByRole("button", {
+      name: "Lightning Energy → fix-lightning-1 · Bench 1",
+    });
+    expect(assignedRow.getAttribute("aria-pressed")).toBe("true");
+    expect(assignedRow.getAttribute("aria-current")).toBeNull();
+  });
+
+  it("releasing one card leaves another card's pending pick alone", () => {
+    const state = parkedAttach(6, 2);
+    renderHud(state, vi.fn());
+    fireEvent.click(cardRows()[0] as HTMLElement); // card A…
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 1" })); // …assigned
+    fireEvent.click(cardRows()[1] as HTMLElement); // card B — pending
+    // Release A. B is a different decision and must survive, target list included.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Lightning Energy → fix-lightning-1 · Bench 1" }),
+    );
+    expect(screen.getByText("Attaching 0/2. Where does Lightning Energy go?")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "fix-lightning-1 · Bench 2" })).toBeTruthy();
+  });
+
+  it("a SECOND park in the same turn starts empty (the prompt key remounts it)", () => {
+    // The dialog's picks are local state keyed on the prompt. If that key ever
+    // stopped discriminating, a stale uid would render no row (so it could not be
+    // released) while every dispatch — "Attach none" included — was rejected as
+    // not-offered, and the phase would never change: an unescapable dialog. This
+    // drives two real parks through one mounted GameHud.
+    const first = parkedAttach(7, 2);
+    const dispatch = vi.fn();
+    const { rerender } = render(
+      <GameHud
+        game={first}
+        projection={projectGameState(first, "p1")}
+        viewerSeat="p1"
+        names={NAMES}
+        dispatch={dispatch}
+        onPlayAgain={() => {}}
+      />,
+    );
+    fireEvent.click(cardRows()[0] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-lightning-1 · Bench 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Attach 1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+
+    // Resolve it for real, then play the SECOND Electric Generator.
+    let next = mustApply(first, call).state;
+    next = handFromDeck(next, "p1", "sv01-170", 1);
+    next = toDeckTop(next, "p1", "fix-fire-energy", 3);
+    next = toDeckTop(next, "p1", "fix-lightning-energy", 2);
+    next = mustApply(next, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(next, "p1", "sv01-170"),
+    }).state;
+    if (next.phase.kind !== "effect:choose") throw new Error("expected a second park");
+
+    rerender(
+      <GameHud
+        game={next}
+        projection={projectGameState(next, "p1")}
+        viewerSeat="p1"
+        names={NAMES}
+        dispatch={dispatch}
+        onPlayAgain={() => {}}
+      />,
+    );
+    // A fresh decision: nothing carried over from the first look.
+    expect(screen.getByRole("button", { name: "Attach none" })).toBeTruthy();
+    expect(screen.queryByText(/→ fix-lightning-1/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Attach none" }));
+    const second = dispatch.mock.calls[1]?.[0] as GameAction;
+    expect(applyAction(next, second).ok).toBe(true);
   });
 });
 

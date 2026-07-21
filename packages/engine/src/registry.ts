@@ -246,7 +246,12 @@ const CHIEN_PAO: CardProgram = {
       oncePerTurn: true,
       activeOnly: true,
       program: [
-        { op: "searchDeck", filter: { kind: "basicEnergy", energyType: "Water" }, dest: "hand", max: 2 },
+        {
+          op: "searchDeck",
+          filter: { kind: "basicEnergy", energyType: "Water" },
+          dest: "hand",
+          max: 2,
+        },
         { op: "shuffleDeck" },
       ],
     },
@@ -538,8 +543,20 @@ const KORAIDON_EX: CardProgram = {
       activeOnly: false,
       endsTurn: true,
       program: [
-        { op: "attachEnergyFrom", source: "discard", energyType: "Fighting", targetType: "Fighting", basicOnly: true },
-        { op: "attachEnergyFrom", source: "discard", energyType: "Fighting", targetType: "Fighting", basicOnly: true },
+        {
+          op: "attachEnergyFrom",
+          source: "discard",
+          energyType: "Fighting",
+          targetType: "Fighting",
+          basicOnly: true,
+        },
+        {
+          op: "attachEnergyFrom",
+          source: "discard",
+          energyType: "Fighting",
+          targetType: "Fighting",
+          basicOnly: true,
+        },
       ],
     },
   ],
@@ -630,6 +647,77 @@ const POKEGEAR: CardProgram = {
   ],
 };
 
+// ── M5 op-slice: attachFromTop (§15.E + §6) — the from-the-top ATTACH variant
+//    the lookAtTopN slice deferred: look at the deck top and attach the Energy
+//    you find there onto your own Pokémon, "in any way you like". Two consumers,
+//    an Item and an activated Ability, differing in every rider the op has.
+//    (verified vs the local catalog 2026-07-21). ──
+
+/** Electric Generator — "Look at the top 5 cards of your deck and attach up to 2
+    Basic {L} Energy cards you find there to your Benched {L} Pokémon in any way
+    you like. Shuffle the other cards back into your deck." (Item)
+
+    `basicEnergy` + `energyType`, NOT `providesEnergy`: the printed noun is "Basic
+    {L} Energy CARDS", and these cards are sitting in the DECK, attached to
+    nothing. Provision is a while-attached property (§6.5), so there is nothing to
+    read here but the PRINT — the Decidueye rule from the other side, and the one
+    filter choice this card could get wrong. (Authoring `providesEnergy` here
+    would be a loud no-op, never a wrong card: `matchesFilter` answers false for
+    it — see fix-pilescan.)
+
+    Two target riders off one printed phrase, "your **Benched** **{L}** Pokémon":
+    `benchOnly` (the Active is not a target, which is the card's whole point —
+    it reaches the Bench, where the turn's one manual attach usually cannot go)
+    and `targetType: "Lightning"`. The leftovers are the trailing `shuffleDeck`
+    op — they never left the deck, so a whiff still shuffles, exactly as a whiffed
+    search does (the Nest Ball pattern). */
+const ELECTRIC_GENERATOR: CardProgram = {
+  trainer: [
+    {
+      op: "attachFromTop",
+      n: 5,
+      filter: { kind: "basicEnergy", energyType: "Lightning" },
+      max: 2,
+      targetType: "Lightning",
+      benchOnly: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Hydreigon — "Tri Howl": "Once during your turn, you may look at the top 3
+    cards of your deck and attach any number of Energy cards you find there to
+    your Pokémon in any way you like. Discard the other cards."
+
+    The op's other three settings, each straight off the printed words:
+    - "Once during your turn" → `oncePerTurn`, and "you may" is the op's own
+      decline (attaching none is a legal answer to the park);
+    - "any number of **Energy cards**" → `max: "any"` with the `anyEnergy` filter,
+      so a Special Energy up there is attachable too — unlike Electric Generator,
+      which prints "Basic {L}";
+    - "to **your Pokémon**" → no target rider at all: the Active is a target, and
+      so is every benched one;
+    - "**Discard** the other cards" → `discardRest`. That clause is the card's
+      real cost, and it is charged on every path — including a whiffed look and a
+      declined attach — which is exactly why it lives on the op rather than in a
+      trailing op the way Electric Generator's shuffle does.
+
+    The text never says "if this Pokémon is in the Active Spot", so
+    `activeOnly: false` (§9 — Abilities work from the Bench unless the card says
+    otherwise). */
+const HYDREIGON: CardProgram = {
+  abilities: [
+    {
+      name: "Tri Howl",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "attachFromTop", n: 3, filter: { kind: "anyEnergy" }, max: "any", discardRest: true },
+      ],
+    },
+  ],
+};
+
 // ── M5 op-slice: moveEnergy (§6 manual Energy movement) — move Energy between
 //    your own Pokémon. The clean own→own Trainers land now; the fixed-endpoint
 //    ({R} benched→Active, Armarouge) / opponent-side (Mismagius) / on-KO Tool
@@ -678,7 +766,12 @@ const FIX_BLEND: CardProgram = {
     silently becoming a wrong match. */
 const FIX_PILESCAN: CardProgram = {
   trainer: [
-    { op: "searchDeck", filter: { kind: "providesEnergy", energyType: "Fire" }, dest: "hand", max: 1 },
+    {
+      op: "searchDeck",
+      filter: { kind: "providesEnergy", energyType: "Fire" },
+      dest: "hand",
+      max: 1,
+    },
     { op: "shuffleDeck" },
   ],
 };
@@ -1074,6 +1167,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-203": ARMAROUGE, // Armarouge (reprint)
   "fix-pilescan": FIX_PILESCAN, // FIXTURE — the filter handed to a DECK search: no match
   "fix-blend": FIX_BLEND, // FIXTURE — a Special providing TWO distinct types
+  // — M5 op-slice: attachFromTop (verified vs the local catalog 2026-07-21). —
+  "sv01-170": ELECTRIC_GENERATOR, // Electric Generator — top 5, up to 2 Basic {L} → Benched {L}
+  "sv02-140": HYDREIGON, // Hydreigon — Tri Howl (top 3, any Energy → your Pokémon, discard rest)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

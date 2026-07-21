@@ -32,26 +32,26 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: the **`providesEnergy` CardFilter** —
-    "an Energy that PROVIDES {X}", the last missing piece of the energy-discard
-    family and the first filter that a CARD alone cannot answer. `{L} Energy` is
-    not "a Basic Lightning card": a Special Energy providing {L} IS one, and
-    provision is a while-ATTACHED property that for Luminous Energy depends on
-    the holder's OTHER attachments. So the predicate reads what an Energy gives
-    ON ITS HOST, through the very code §8.2's cost matcher reads
-    (continuous.ts `unitsProvidedBy`) — pay a {L} cost with a card and the same
-    attack can discard it. `matchesFilter`, the deck/hand/discard scanner,
-    answers FALSE for it: a card in a pile is attached to nothing.
+/** Engine milestone marker (M5 op-slice: **`attachFromTop`** — the from-the-top
+    ATTACH the lookAtTopN slice deferred. Look at the top N of your own deck and
+    attach the Energy you find there straight onto your Pokémon, "**in any way you
+    like**" — so each attached card names its OWN destination, and the answer is a
+    MAP (card → Pokémon) rather than the flat list every other card prompt takes
+    (the new `attachCards` prompt). Two consumers differing in every rider the op
+    has: **Electric Generator** (Item — top 5, up to 2 Basic {L} Energy CARDS, onto
+    your BENCHED {L} Pokémon) and **Hydreigon "Tri Howl"** (Ability, once per turn
+    — top 3, ANY number of Energy cards, onto ANY of your Pokémon).
 
-    TWO consumers, one vocabulary (the D40 shape). `discardEnergy` gains the
-    TYPED self-discard, DERIVED from printed text in both notations — the modern
-    "{R}" and the swsh-era "Fire" — so 5 catalog rows land with ZERO registry
-    rows (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard). `moveEnergy` gains
-    the `route: "benchToActive"` rider its own slice deferred, authoring
-    Armarouge's "Fire Off" ({R} benched→Active, as often as you like).
-    discardEnergy's attack arms were 0.23.0; attackEpilogue/park 0.22.0;
-    discardEnergy 0.21.0; board conditions 0.20.0). */
-export const engineVersion = "0.24.0";
+    The leftovers clause is the design point: "Shuffle the other cards back" is a
+    trailing `shuffleDeck` op (those cards never left the deck), but "**Discard**
+    the other cards" must name exactly the looked-at cards that were not attached,
+    so it is `discardRest` ON the op — and it fires on the whiff and the decline
+    too, which is the difference between Tri Howl costing three cards and costing
+    nothing. The filter reads the PRINT (`basicEnergy` / `anyEnergy`), never
+    `providesEnergy`: these cards sit in a DECK, attached to nothing (§6.5).
+    providesEnergy was 0.24.0; the discardEnergy attack arms 0.23.0;
+    attackEpilogue/park 0.22.0; discardEnergy 0.21.0; board conditions 0.20.0). */
+export const engineVersion = "0.25.0";
 
 export type {
   ApplyResult,
@@ -108,7 +108,7 @@ export {
 export { deriveAttackEffect } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
-export type { BoardCondition, CardFilter, EffectOp } from "./effects";
+export type { AttachTargetRiders, BoardCondition, CardFilter, EffectOp } from "./effects";
 /** The one BoardCondition evaluator + its printed-text describer. Exported so a
     host holding raw engine state (today's hot-seat HUD) greys out a card whose
     printed "only if" gate is unmet using the SAME logic playTrainer rejects it

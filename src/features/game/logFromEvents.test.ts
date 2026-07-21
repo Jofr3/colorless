@@ -572,6 +572,31 @@ describe("logFromEvents — lookAtTopN (M5): DECK_TOP_REVEALED", () => {
   });
 });
 
+describe("logFromEvents — attachFromTop (M5): DECK_TOP_DISCARDED", () => {
+  it("logs a count-only 'discarded looked-at cards' row (singular + plural)", () => {
+    // The sibling of DECK_TOP_REVEALED, and count-only for the same reason — the
+    // discard pile is public, so what the row has to carry is that the look COST
+    // something (Hydreigon "Tri Howl": "Discard the other cards").
+    const { state } = mustCreate(1);
+    const line = (event: GameEvent) => {
+      const entry = logFromEvents([event], ctx(state))[0];
+      if (entry === undefined || entry.kind !== "action") throw new Error("expected an action row");
+      return { text: textOf(entry), who: entry.who };
+    };
+    // The SEAT rides the assertion, not just the text: the row belongs to the
+    // player whose deck was discarded from, and "infer the actor from the other
+    // seat" is a bug this log has already shipped once (see ENERGY_DISCARDED).
+    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p2", uids: ["p2#0"] })).toEqual({
+      text: "discarded 1 looked-at card from the top of their deck",
+      who: "p2",
+    });
+    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0", "p1#1"] })).toEqual({
+      text: "discarded 2 looked-at cards from the top of their deck",
+      who: "p1",
+    });
+  });
+});
+
 describe("logFromEvents — handRefresh (M5): HAND_SHUFFLED_INTO_DECK / HAND_TO_BOTTOM_OF_DECK", () => {
   it("logs a count-only 'shuffled their hand into their deck' row (singular + plural)", () => {
     // Count-only, so a bare game state suffices — the row never resolves names,

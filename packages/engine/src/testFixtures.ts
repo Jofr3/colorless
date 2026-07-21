@@ -949,6 +949,39 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+
+  // — M5 op-slice: attachFromTop (the from-the-top ATTACH). The Item's fixture
+  //   is a plain trainerCard (the registry keys on the id; its effect text is
+  //   cosmetic), and the Pokémon's name / stage / evolveFrom / hp / retreat /
+  //   type and whole attack row are verified verbatim against the local catalog
+  //   2026-07-21. Printed WEAKNESS is omitted, as in the two slices above —
+  //   Hydreigon is only ever the ATTACHER here, never a defender. —
+  /** Electric Generator (sv01-170, Item) — the top 5, up to 2 Basic {L} Energy
+      cards, onto your Benched {L} Pokémon; the leftovers shuffle back. */
+  "sv01-170": trainerCard(
+    "sv01-170",
+    "Item",
+    "Look at the top 5 cards of your deck and attach up to 2 Basic {L} Energy cards you find there to your Benched {L} Pokémon in any way you like. Shuffle the other cards back into your deck.",
+  ),
+  /** Hydreigon (sv02-140) — "Tri Howl" (Ability): the top 3, any number of Energy
+      cards, onto ANY of your Pokémon, and the other cards are DISCARDED. Its
+      printed attack rides along because a fixture Pokémon that cannot attack makes
+      an awkward Active — and Tri Howl is usable from the Bench, so the suites need
+      it in both spots. */
+  "sv02-140": battler("sv02-140", {
+    name: "Hydreigon",
+    hp: 180,
+    stage: "Stage2",
+    evolveFrom: "Zweilous",
+    types: ["Darkness"],
+    retreat: 3,
+    attacks: [{ cost: ["Darkness", "Darkness", "Colorless"], name: "Dark Cutter", damage: 160 }],
+  }),
+  /** FIXTURE — a Lightning-typed body, the target Electric Generator's printed
+      "your Benched {L} Pokémon" needs. The pool's other Lightning Pokémon
+      (Kilowattrel, Pincurchin) carry attacks whose effects derive, which would put
+      an unrelated discard in the middle of an attach test. */
+  "fix-lightning-1": battler("fix-lightning-1", { types: ["Lightning"], hp: 70, retreat: 1 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1334,6 +1367,28 @@ export const PROVIDES_ENERGY_DECK = deckOf({
   "sv02-191": 4, // Luminous Energy — the WILDCARD: provides every type
   "sv02-190": 2, // Jet Energy — a second Special, which demotes Luminous to {C}
   "fix-special": 2, // an UNAUTHORED Special — the Colorless fallback, never typed
+});
+
+/** M5 op-slice: attachFromTop (Electric Generator / Hydreigon "Tri Howl"). The
+    two authored cards, both target shapes (fix-lightning-1 bodies for the printed
+    "your Benched {L} Pokémon", fix-basic-1 Colorless ones that the same filter
+    must REFUSE), and an Energy spread that separates what each card may attach:
+    fix-lightning-energy is the only Basic {L} — so Electric Generator's candidate
+    set is exactly it, while fix-fire-energy / fix-energy / fix-special are the
+    three near-misses (wrong type, untyped Colorless, and a SPECIAL Energy, which
+    Hydreigon's `anyEnergy` takes and Electric Generator's `basicEnergy` does not).
+    fix-item is the non-Energy filler `toDeckTop` uses to fill a window with
+    non-candidates, and to be the "other cards" Tri Howl discards. */
+export const ATTACH_FROM_TOP_DECK = deckOf({
+  "sv01-170": 4, // Electric Generator (Item)
+  "sv02-140": 4, // Hydreigon — Tri Howl
+  "fix-lightning-1": 8, // the {L} bodies Electric Generator may attach to
+  "fix-basic-1": 8, // Colorless bodies — bench targets the {L} filter excludes
+  "fix-lightning-energy": 10, // the only Basic {L}: Electric Generator's candidates
+  "fix-fire-energy": 8, // a Basic of the WRONG type
+  "fix-energy": 6, // basic Colorless — a near-miss for the typed filter
+  "fix-special": 6, // a Special Energy — anyEnergy takes it, basicEnergy does not
+  "fix-item": 6, // non-Energy filler: window padding + Tri Howl's leftovers
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

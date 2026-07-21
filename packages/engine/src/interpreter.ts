@@ -8,7 +8,13 @@ import {
   topUid,
 } from "./cards";
 import { effectiveMaxHp, passivesOf, providesEnergyType } from "./continuous";
-import type { BoardCondition, CardFilter, EffectOp, HandRefreshDraw } from "./effects";
+import type {
+  AttachTargetRiders,
+  BoardCondition,
+  CardFilter,
+  EffectOp,
+  HandRefreshDraw,
+} from "./effects";
 import type { GameEvent } from "./events";
 import { flipCoin, shuffle } from "./rng";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -62,7 +68,13 @@ export type EffectPrompt =
       fewer or none (searchDeck moves deck → bench/hand; discardPileRetrieval
       moves the discard pile → hand/deck). `dest` is display metadata; the op
       owns the actual move, and `note` carries the accurate prompt text. */
-  | { kind: "chooseCards"; candidates: string[]; max: number; dest: "bench" | "hand" | "deck"; note: string }
+  | {
+      kind: "chooseCards";
+      candidates: string[];
+      max: number;
+      dest: "bench" | "hand" | "deck";
+      note: string;
+    }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
   | { kind: "choosePokemon"; candidates: PokemonRef[]; note: string }
   /** Pick up to `max` in-play Pokémon — the multi-target snipe (damageChosen;
@@ -108,6 +120,32 @@ export type EffectPrompt =
       discardable: { uid: string; from: PokemonRef }[];
       scope: DiscardScope;
       note: string;
+    }
+  /** Attach cards off the deck TOP onto the controller's own Pokémon, "in any way
+      you like" (Electric Generator / Hydreigon "Tri Howl" — the `attachFromTop`
+      op). The first prompt whose answer is a MAP rather than a list: every picked
+      card names its OWN destination, where moveEnergy's picks all share one.
+
+      `candidates` are the cards among the looked-at top N that the op's filter
+      admits, in deck order (index 0 was the top). They are HIDDEN information the
+      controller is being shown — that is what "look at the top N" means — so this
+      prompt goes to the controller alone, exactly like lookAtTopN's chooseCards;
+      the ones actually attached become public through ENERGY_ATTACHED, and the
+      ones left unattached stay unnamed unless `discardRest` puts them in the
+      (public) discard pile. `targets` are the eligible own Pokémon
+      (attachEnergyTargets, with the op's targetType/benchOnly riders); `max` is
+      how many may be attached — the printed "up to 2", or the whole candidate set
+      for "any number", already resolved to a number here so the dialog and the
+      wire validator both read one field.
+
+      DECLINABLE: attaching none is a legal answer ("up to" / "any number"), and
+      the op's leftovers clause still runs. */
+  | {
+      kind: "attachCards";
+      candidates: string[];
+      targets: PokemonRef[];
+      max: number;
+      note: string;
     };
 
 /** How many Energy a parked `discardEnergy` is asking for — a total across the
@@ -127,7 +165,13 @@ export type EffectChoice =
   /** The discardEnergy answer: the Energy uids to discard — exactly `count` in
       total (`{kind:"total"}`) or exactly one per offered source Pokémon
       (`{kind:"each"}`), as validateChoice enforces. Never empty (mandatory). */
-  | { kind: "discardEnergy"; uids: string[] };
+  | { kind: "discardEnergy"; uids: string[] }
+  /** The attachCards answer: each card to attach paired with the Pokémon it goes
+      on — "in any way you like", so the pairing IS the decision. Every uid was
+      offered and appears once (one physical card cannot land on two Pokémon), and
+      every `to` is an offered target, as validateChoice enforces. An empty list is
+      a legal decline. */
+  | { kind: "attachCards"; assignments: { uid: string; to: PokemonRef }[] };
 
 /** The JSON continuation stored in the effect:choose phase: the op awaiting a
     choice, the ops after it, and the context. Replaying `applyChoice(pendingOp)
@@ -320,6 +364,28 @@ function stepOp(
         },
       };
     }
+    case "attachFromTop": {
+      // Look at the top n (index 0 = the top) and attach the Energy among them
+      // onto your own Pokémon, "in any way you like" (Electric Generator /
+      // Hydreigon). Two coupled decisions PER CARD — which cards, and where each
+      // one goes — so it parks on the compound attachCards prompt and applies
+      // atomically on resolve.
+      //
+      // Every non-parking path goes through the SAME apply with no assignments,
+      // rather than returning `state`: the leftovers clause must fire whether the
+      // look found nothing, the board had nowhere to put it, or the player
+      // declined (Tri Howl discards the top 3 either way). Routing the empty
+      // cases through the one apply is what keeps a branch from forgetting it.
+      // The no-TARGET case is a live path, not a theoretical one: there is no
+      // `programPlayable` gate on this op (see effects.ts), so Electric Generator
+      // into a board with no Benched {L} Pokémon lands exactly here and resolves
+      // to its printed shuffle.
+      const { candidates, targets, max } = attachFromTopOffer(state, ctx.seat, op);
+      if (candidates.length === 0 || targets.length === 0 || max <= 0) {
+        return { done: attachFromTopApply(state, [], op, ctx, events) };
+      }
+      return { park: { kind: "attachCards", candidates, targets, max, note: attachNote(op) } };
+    }
     case "moveEnergy": {
       // Move up to `max` Energy from ONE own Pokémon to ANOTHER (Energy Switch /
       // Poppy). Two coupled decisions (which Energy + where), so it parks on the
@@ -480,7 +546,13 @@ export function applyChoice(
         ? placeSnipeCounters(state, choice.refs, op.amount, ctx, events)
         : state;
     case "attachEnergyFrom":
-      return choice.kind === "pokemon" ? attachEnergyFrom(state, op, choice.ref, ctx, events) : state;
+      return choice.kind === "pokemon"
+        ? attachEnergyFrom(state, op, choice.ref, ctx, events)
+        : state;
+    case "attachFromTop":
+      return choice.kind === "attachCards"
+        ? attachFromTopApply(state, choice.assignments, op, ctx, events)
+        : state;
     case "moveEnergy":
       return choice.kind === "moveEnergy" ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events) : state;
     case "discardEnergy":
@@ -896,7 +968,9 @@ function healChosen(
   events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
   const updated = { ...pokemon, damage: pokemon.damage - healed };
   if (ref.spot.spot === "active") return withActive(state, ctx.seat, updated);
-  const bench = side.bench.map((p, i) => (i === (ref.spot as { index: number }).index ? updated : p));
+  const bench = side.bench.map((p, i) =>
+    i === (ref.spot as { index: number }).index ? updated : p,
+  );
   return withSide(state, ctx.seat, { ...side, bench });
 }
 
@@ -924,38 +998,79 @@ export function firstAttachableEnergy(
   });
 }
 
-/** The controller's own in-play Pokémon that attachEnergyFrom may target, as
-    refs (Active first, then bench in index order), filtered by the riders:
-    `targetType` keeps only those whose TOP card is that type (Gardevoir's "your
-    {P} Pokémon"), and `notIfKO` drops any whose `bonusCounters` would Knock it
-    Out ("you can't use this on a Pokémon that would be Knocked Out"), so the
-    placed counters are always non-lethal. No riders → every own in-play Pokémon
-    (the base op's targets). Exported for programPlayable: an Ability with no
-    eligible target can't be activated (the gust/snipe precedent). */
+/** The controller's own in-play Pokémon an ATTACH may target, as refs (Active
+    first, then bench in index order), filtered by the printed riders
+    (AttachTargetRiders, effects.ts): `targetType` keeps only those whose TOP card
+    is that type (Gardevoir's "your {P} Pokémon"), `basicOnly` only Basics
+    (Koraidon's), `benchOnly` drops the Active outright (Electric Generator's
+    "your Benched {L} Pokémon"), and `notIfKO` drops any whose `bonusCounters`
+    would Knock it Out ("you can't use this on a Pokémon that would be Knocked
+    Out"), so the placed counters are always non-lethal. No riders → every own
+    in-play Pokémon (the base ops' targets).
+
+    ONE rule, two op-shaped readers — `attachEnergyFrom` (hand / discard source)
+    and `attachFromTop` (the deck top) — which is why the parameter is the riders
+    interface rather than either op type: an eligibility rule that drifted between
+    the two would make the same board legal for one attach and not the other.
+    Exported for programPlayable too: an attach with no eligible target can't be
+    played (the gust/snipe precedent). */
 export function attachEnergyTargets(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  riders: AttachTargetRiders,
 ): PokemonRef[] {
   const side = state.players[seat];
   const eligible = (pokemon: InPlayPokemon): boolean => {
-    if (op.targetType !== undefined || op.basicOnly === true) {
+    if (riders.targetType !== undefined || riders.basicOnly === true) {
       const card = topCardOf(state, pokemon);
-      if (op.targetType !== undefined && !(card?.types ?? []).includes(op.targetType)) return false;
-      if (op.basicOnly === true && (card === undefined || !isBasicPokemon(card))) return false;
+      if (riders.targetType !== undefined && !(card?.types ?? []).includes(riders.targetType)) {
+        return false;
+      }
+      if (riders.basicOnly === true && (card === undefined || !isBasicPokemon(card))) return false;
     }
-    if (op.notIfKO === true && op.bonusCounters !== undefined) {
+    if (riders.notIfKO === true && riders.bonusCounters !== undefined) {
       const hp = effectiveMaxHp(state, pokemon);
-      if (hp !== null && pokemon.damage + op.bonusCounters >= hp) return false;
+      if (hp !== null && pokemon.damage + riders.bonusCounters >= hp) return false;
     }
     return true;
   };
   const refs: PokemonRef[] = [];
-  if (side.active !== null && eligible(side.active)) refs.push({ seat, spot: { spot: "active" } });
+  if (riders.benchOnly !== true && side.active !== null && eligible(side.active)) {
+    refs.push({ seat, spot: { spot: "active" } });
+  }
   side.bench.forEach((pokemon, index) => {
     if (eligible(pokemon)) refs.push({ seat, spot: { spot: "bench", index } });
   });
   return refs;
+}
+
+/** What an `attachFromTop` op is offering: the cards among the looked-at top `n`
+    its filter admits (deck order, top first), the eligible targets, and the
+    resolved cap.
+
+    The cap is `min(printed, candidates.length)` for BOTH forms, which is what
+    makes `"any"` ("attach any number") just the degenerate case rather than a
+    branch: a card cannot be attached twice, so the whole candidate set is the
+    real ceiling either way. Clamping the printed number too is what keeps the
+    prompt honest — "up to 2" with one Basic {L} in the window is a pick of one,
+    and a prompt saying `max: 2` there would have the dialog count "0/2" over a
+    single row and invite a pick that does not exist.
+
+    NOTE — this reads the DECK, so it is only ever asked at the moment the op
+    runs. It is deliberately NOT a `programPlayable` input; see the op's own
+    doc (effects.ts) for why that gate does not exist. */
+function attachFromTopOffer(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "attachFromTop" }>,
+): { candidates: string[]; targets: PokemonRef[]; max: number } {
+  const top = state.players[seat].deck.slice(0, Math.max(0, op.n));
+  const candidates = top.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
+  return {
+    candidates,
+    targets: attachEnergyTargets(state, seat, op),
+    max: Math.min(op.max === "any" ? candidates.length : op.max, candidates.length),
+  };
 }
 
 /** Attach the first matching Basic Energy from `op.source` (hand/discard) onto
@@ -1005,6 +1120,81 @@ function attachEnergyFrom(
   return withSide(state, ctx.seat, {
     ...base,
     bench: side.bench.map((p, i) => (i === index ? updated : p)),
+  });
+}
+
+/** Apply a from-the-top attach (Electric Generator / Hydreigon "Tri Howl"): move
+    each assigned card off the deck TOP onto the Pokémon it was assigned to, then
+    settle the leftovers clause.
+
+    **`validateChoice` is the ONE gate** on what may be attached: it alone
+    enforces the cap, that every uid was offered (so the filter and the window
+    boundary hold), that no uid appears twice, and that every destination is an
+    offered target. This function re-derives nothing — duplicating those rules
+    here would be two readers that can drift, which is the shape this codebase
+    keeps collapsing. What it does carry is wire-safety of the same kind
+    searchMove / moveEnergyApply carry: the looked-at WINDOW is re-read off the
+    live deck and only uids actually sitting in it move, so a stale uid, a
+    repeated one, or a target that is not there is SKIPPED rather than conjured —
+    a card is never duplicated, and never lands in neither zone (drop the
+    bench-index check and an out-of-range target silently deletes a card: the
+    `bench.map` no-ops, the event fires, and the uid still leaves the deck). Each
+    attach emits its own ENERGY_ATTACHED, the same event the hand/discard attach
+    uses: the card lands face up on the board, so nothing else has to announce it.
+    The target rides the event REBUILT field by field, never spread off the
+    client's ref (the §2 copy contract — see moveEnergyApply).
+
+    The leftovers run LAST and on EVERY path, including the empty ones stepOp
+    routes here: `discardRest` (Hydreigon's "Discard the other cards") is a cost
+    the card charges whether or not the look found anything to attach, and one
+    apply is what keeps a branch from skipping it. `discardRest` absent (Electric
+    Generator) leaves the unattached cards exactly where they are — still on top
+    of the deck, for the trailing `shuffleDeck` op to scramble.
+
+    Never damages, so it never KOs and never touches the flow tail. */
+function attachFromTopApply(
+  state: GameState,
+  assignments: readonly { uid: string; to: PokemonRef }[],
+  op: Extract<EffectOp, { op: "attachFromTop" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const window = side.deck.slice(0, Math.max(0, op.n));
+  const inWindow = new Set(window);
+  let active = side.active;
+  let bench = side.bench;
+  const attached = new Set<string>();
+  for (const { uid, to } of assignments) {
+    if (!inWindow.has(uid) || attached.has(uid) || to.seat !== ctx.seat) continue;
+    if (to.spot.spot === "active") {
+      if (active === null) continue;
+      active = { ...active, energy: [...active.energy, uid] };
+    } else {
+      const index = to.spot.index;
+      if (bench[index] === undefined) continue;
+      bench = bench.map((p, i) => (i === index ? { ...p, energy: [...p.energy, uid] } : p));
+    }
+    attached.add(uid);
+    events.push({
+      type: "ENERGY_ATTACHED",
+      seat: ctx.seat,
+      uid,
+      target:
+        to.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: to.spot.index },
+    });
+  }
+  // Deck order, top first — the order the discard pile gains them (§2).
+  const rest = op.discardRest === true ? window.filter((uid) => !attached.has(uid)) : [];
+  if (attached.size === 0 && rest.length === 0) return state;
+  const removed = new Set([...attached, ...rest]);
+  if (rest.length > 0) events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, uids: [...rest] });
+  return withSide(state, ctx.seat, {
+    ...side,
+    active,
+    bench,
+    deck: side.deck.filter((uid) => !removed.has(uid)),
+    discard: rest.length === 0 ? side.discard : [...side.discard, ...rest],
   });
 }
 
@@ -1063,7 +1253,9 @@ function moveEnergyApply(
     active = addTo(active);
   } else {
     if (benchStripped[destSpot.index] === undefined) return state;
-    bench = benchStripped.map((pokemon, index) => (index === destSpot.index ? addTo(pokemon) : pokemon));
+    bench = benchStripped.map((pokemon, index) =>
+      index === destSpot.index ? addTo(pokemon) : pokemon,
+    );
   }
   // The destination is REBUILT field by field, never spread off `destSpot` — that
   // object came from the WIRE. `validateChoice` proves it `refEquals` an offered
@@ -1431,10 +1623,7 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
     case "pokemonOrBasicEnergy":
       // A basic Energy is `energyType: "Normal"` (Special is excluded, matching
       // Super Rod's "Basic Energy"); a Pokémon is any category "Pokemon".
-      return (
-        card.category === "Pokemon" ||
-        (isEnergyCard(card) && card.energyType === "Normal")
-      );
+      return card.category === "Pokemon" || (isEnergyCard(card) && card.energyType === "Normal");
     case "anyEnergy":
       // Any Energy card — Basic OR Special (Poppy moves "up to 2 Energy").
       return isEnergyCard(card);
@@ -1503,6 +1692,30 @@ function lookNote(filter: CardFilter, n: number, max: number): string {
   return max > 1
     ? `Look at the top ${n} cards of your deck and put up to ${max} ${plural} into your hand.`
     : `Look at the top ${n} cards of your deck and put ${singular} into your hand.`;
+}
+
+/** The attachCards prompt string (Electric Generator / Hydreigon "Tri Howl") —
+    the printed "Look at the top N cards of your deck and attach [up to N | any
+    number of] {noun} you find there to your [Benched] [{type}] Pokémon in any way
+    you like." Built from the OP, not from any text: Hydreigon's is an Ability,
+    whose printed sentence also carries the "Once during your turn, you may" and
+    the leftovers clause, neither of which belongs in a prompt asking what to
+    attach. The noun comes from retrieveNoun, so it reads as the PRINT the filter
+    scans for ("Basic Lightning Energy cards", "Energy cards"), matching the card
+    names in the rows below it; the target type spells out in full ("Lightning"),
+    the same choice energyNoun makes for the same reason.
+
+    The two clauses kept from the print earn their place: **"you find there"** is
+    what tells the player the rows are the window and not the deck at large, and
+    **"in any way you like"** is the only cue that both Energy may go on ONE
+    Pokémon — the misconception the dialog's shape otherwise invites (§15.E). */
+function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
+  const { plural } = retrieveNoun(op.filter);
+  const how = op.max === "any" ? "any number of" : `up to ${op.max}`;
+  const where = `${op.benchOnly === true ? "Benched " : ""}${
+    op.targetType === undefined ? "" : `${op.targetType} `
+  }Pokémon`;
+  return `Look at the top ${op.n} cards of your deck and attach ${how} ${plural} you find there to your ${where} in any way you like.`;
 }
 
 /** The moveEnergy prompt string (Energy Switch / Poppy) — the printed "Move [up

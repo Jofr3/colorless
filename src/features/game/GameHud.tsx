@@ -950,6 +950,8 @@ function EffectChooseDialog(props: GameHudProps) {
     <MoveEnergyDialog {...props} prompt={prompt} />
   ) : prompt.kind === "discardEnergy" ? (
     <DiscardEnergyDialog {...props} prompt={prompt} />
+  ) : prompt.kind === "attachCards" ? (
+    <AttachCardsDialog {...props} prompt={prompt} />
   ) : (
     <ChoosePokemonDialog {...props} prompt={prompt} />
   );
@@ -1499,6 +1501,191 @@ function DiscardEnergyDialog({
   );
 }
 
+/** attachFromTop (§15.E + §6) — attach cards found on the deck TOP onto your own
+    Pokémon, "in any way you like" (Electric Generator / Hydreigon "Tri Howl").
+    The one dialog whose answer is a MAP: each card carries its own destination,
+    where MoveEnergyDialog's picks share one. So it is a two-step LOOP rather than
+    a two-step wizard — pick a card, pick where it goes, repeat — and the target
+    list is mounted only while a card is waiting for one.
+    Clicking an already-assigned card TAKES IT BACK (there is no other way to undo
+    a misplaced attach, and the alternative — closing the dialog — is not offered
+    for a parked decision). Declinable with "Attach none", which is not the same as
+    doing nothing: the card's leftovers clause still runs (Tri Howl still discards
+    what it looked at). Mounted only while parked on the viewer, so the useState is
+    the per-decision reset. */
+function AttachCardsDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "attachCards" }> }) {
+  const keyOf = (ref: PokemonRef) =>
+    `${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
+  const [assignments, setAssignments] = useState<{ uid: string; to: PokemonRef }[]>([]);
+  /** The card waiting for a destination — the only reason the target list shows. */
+  const [pending, setPending] = useState<string | null>(null);
+  const destOf = (uid: string) => assignments.find((a) => a.uid === uid)?.to;
+  const atCap = assignments.length >= prompt.max;
+  const spotOf = (ref: PokemonRef) =>
+    ref.spot.spot === "active" ? "Active" : `Bench ${ref.spot.index + 1}`;
+  /** A row's readback: the Pokémon AND its spot, because `benchOnly` cards offer
+      several benched Pokémon that may share a name — "→ fix-lightning-1" alone
+      cannot tell the player which one they just chose, and releasing the
+      assignment to find out is the only alternative. */
+  const destLabel = (ref: PokemonRef) => `${refName(game, ref)} · ${spotOf(ref)}`;
+
+  const tapCard = (uid: string) => {
+    if (destOf(uid) !== undefined) {
+      // Releasing an assignment leaves any OTHER card's pending pick alone: the
+      // two are independent decisions, and clearing it would silently throw away
+      // a selection the player made and can still see highlighted.
+      setAssignments((prev) => prev.filter((a) => a.uid !== uid));
+      setPending((prev) => (prev === uid ? null : prev));
+      return;
+    }
+    setPending((prev) => (prev === uid ? null : atCap ? prev : uid));
+  };
+  const assign = (to: PokemonRef) => {
+    if (pending === null) return;
+    setAssignments((prev) => [...prev, { uid: pending, to }]);
+    setPending(null);
+  };
+  const pendingName = pending === null ? null : (cardOfUid(game, pending)?.name ?? pending);
+
+  return (
+    <HudDialog label="Attach cards">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* <output> — an implicit polite LIVE REGION, the house pattern its
+          MoveEnergy/DiscardEnergy siblings follow. It carries strictly more here:
+          the running count (unannounceable otherwise — `aria-pressed` is spoken
+          only for the focused row) and WHICH card is waiting for a destination,
+          since the target list appearing below is a silent change on its own.
+          It does NOT announce a refused click: `tapCard` returns the previous
+          state there, so React bails out and nothing re-renders — the same
+          honest limit DiscardEnergyDialog's own note records. That is why the
+          at-cap text says what you CAN do (release one) instead of repeating
+          "pick a card", which at the cap is exactly what you cannot do. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {pendingName === null
+          ? `Attaching ${assignments.length}/${prompt.max}. ${
+              atCap ? "Tap an attached card to move it." : "Pick a card, then where it goes."
+            }`
+          : `Attaching ${assignments.length}/${prompt.max}. Where does ${pendingName} go?`}
+      </output>
+      <ul className="mt-3 flex max-h-52 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((uid) => {
+          const dest = destOf(uid);
+          const selected = pending === uid;
+          const name = cardOfUid(game, uid)?.name ?? uid;
+          // A row the cap has closed off says so rather than silently ignoring
+          // the click — the DiscardEnergyDialog rule. aria-disabled, NOT
+          // `disabled`: the rows are how you read the offer, and an assigned row
+          // must stay reachable because clicking it is the only undo. (`selected`
+          // need not be excluded — a pending card only exists below the cap — but
+          // the guard is kept so the predicate reads without that invariant.)
+          const refused = dest === undefined && !selected && atCap;
+          return (
+            <li key={uid}>
+              <button
+                type="button"
+                // The state is spoken as part of the row's NAME rather than left
+                // to the adjacent span: separate elements are trimmed and
+                // concatenated by the accessible-name algorithm, so the visible
+                // "Lightning Energy → Pikachu" would otherwise be announced as one
+                // run-on word.
+                aria-label={
+                  dest === undefined
+                    ? selected
+                      ? `${name} — choosing where it goes`
+                      : name
+                    : `${name} → ${destLabel(dest)}`
+                }
+                // ONLY a committed assignment is "pressed". A pending card is NOT:
+                // Confirm dispatches `assignments`, which does not contain it, so
+                // announcing it as pressed would promise an attach that will not
+                // happen. `aria-current` is the honest state for "this is the one
+                // being worked on", and the ring/label carry it visually.
+                aria-pressed={dest !== undefined}
+                aria-current={selected || undefined}
+                aria-disabled={refused || undefined}
+                onClick={() => tapCard(uid)}
+                className={`${ROW_BUTTON_BASE} ${
+                  dest !== undefined
+                    ? "bg-white/[0.12] text-white ring-white/40"
+                    : selected
+                      ? "bg-white/[0.06] text-white ring-accent/70"
+                      : refused
+                        ? ROW_BUTTON_DISABLED
+                        : ROW_BUTTON_ENABLED
+                }`}
+              >
+                <span className="truncate">{name}</span>
+                {(dest !== undefined || selected) && (
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    {dest === undefined ? "choosing…" : `→ ${destLabel(dest)}`}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {pending !== null && (
+        <>
+          <p className="mt-3 text-sm text-white/55">Attach to:</p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {/* The SPOT rides every row (the DiscardEnergyDialog legend's rule):
+                `benchOnly` cards offer several benched Pokémon that may share a
+                name, and which one gets the Energy is the whole decision. */}
+            {prompt.targets.map((ref) => (
+              <li key={keyOf(ref)}>
+                <button
+                  type="button"
+                  aria-label={destLabel(ref)}
+                  onClick={() => assign(ref)}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{refName(game, ref)}</span>
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    {spotOf(ref)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON_CLASS}
+          onClick={() =>
+            dispatch({
+              type: "resolveEffect",
+              seat: viewerSeat,
+              choice: {
+                kind: "attachCards",
+                // Filtered against the OFFER at dispatch time. Today this is a
+                // no-op: the `promptKey` remount clears `assignments` between two
+                // parks, so every uid here was offered. It is here because the
+                // failure mode if that key ever stops discriminating is not a bad
+                // attach — it is an UNESCAPABLE dialog. A stale uid renders no row
+                // (the offer changed), so it cannot be released; every dispatch,
+                // "Attach none" included, is rejected as not-offered; the state
+                // never changes, so the prompt never changes, so the dialog never
+                // remounts. This one filter turns that soft-lock into a lost pick.
+                assignments: assignments.filter((a) => prompt.candidates.includes(a.uid)),
+              },
+            })
+          }
+        >
+          {assignments.length === 0 ? "Attach none" : `Attach ${assignments.length}`}
+        </button>
+      </div>
+    </HudDialog>
+  );
+}
+
 function GameOverOverlay({ projection, viewerSeat, names, onPlayAgain }: GameHudProps) {
   const outcome = projection.outcome;
   if (outcome === null) return null;
@@ -1562,6 +1749,15 @@ function promptKey(prompt: EffectPrompt): string {
       return `move:${prompt.max}:${prompt.destinations
         .map((d) => `${d.seat}-${d.spot.spot === "bench" ? d.spot.index : "active"}`)
         .join(",")}:${prompt.movable.map((m) => m.uid).join(",")}`;
+    case "attachCards":
+      // BOTH halves ride the key, because both are half of every answer: the
+      // cards on offer AND the Pokémon they may go on (`max` too, since it caps
+      // the pick). An as-often-as-you-like Ability makes this the likeliest
+      // dialog to park twice in one turn, and a second Tri Howl looking at three
+      // new cards must not inherit a pick keyed to the last three.
+      return `attach:${prompt.max}:${prompt.targets
+        .map((t) => `${t.seat}-${t.spot.spot === "bench" ? t.spot.index : "active"}`)
+        .join(",")}:${prompt.candidates.join(",")}`;
     default:
       return `${prompt.kind}:${prompt.note}`;
   }
