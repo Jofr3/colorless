@@ -32,20 +32,26 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: the discardEnergy op's ATTACK ARMS. No
-    new op — two extensions of D41/D42's `discardEnergy`, both DERIVED from the
-    printed sentence (effects.ts), so the slice adds ZERO registry rows. (1) The
-    hammer family's attack TWINS: "Discard an Energy from your opponent's Active
-    Pokémon", bare and behind a coin flip, on the existing `opponentActive` arm —
-    the first ops to park a decision about the OPPONENT's board mid-attack.
-    (2) The exact-N self-discard: `count` widens from `"all"` to any number
-    ("Discard 2 Energy from this Pokémon"), so the prompt's `scope` becomes
-    `{kind:"total",count} | {kind:"each"}` and the interchangeable-candidate
-    collapse keeps `count` representatives per class rather than one. A board
-    holding fewer than N gives up all of them (§ "do as much as you can").
-    attackEpilogue/park was 0.22.0; discardEnergy 0.21.0; board conditions
-    0.20.0; handRefresh/Iono 0.19.0). */
-export const engineVersion = "0.23.0";
+/** Engine milestone marker (M5 op-slice: the **`providesEnergy` CardFilter** —
+    "an Energy that PROVIDES {X}", the last missing piece of the energy-discard
+    family and the first filter that a CARD alone cannot answer. `{L} Energy` is
+    not "a Basic Lightning card": a Special Energy providing {L} IS one, and
+    provision is a while-ATTACHED property that for Luminous Energy depends on
+    the holder's OTHER attachments. So the predicate reads what an Energy gives
+    ON ITS HOST, through the very code §8.2's cost matcher reads
+    (continuous.ts `unitsProvidedBy`) — pay a {L} cost with a card and the same
+    attack can discard it. `matchesFilter`, the deck/hand/discard scanner,
+    answers FALSE for it: a card in a pile is attached to nothing.
+
+    TWO consumers, one vocabulary (the D40 shape). `discardEnergy` gains the
+    TYPED self-discard, DERIVED from printed text in both notations — the modern
+    "{R}" and the swsh-era "Fire" — so 5 catalog rows land with ZERO registry
+    rows (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard). `moveEnergy` gains
+    the `route: "benchToActive"` rider its own slice deferred, authoring
+    Armarouge's "Fire Off" ({R} benched→Active, as often as you like).
+    discardEnergy's attack arms were 0.23.0; attackEpilogue/park 0.22.0;
+    discardEnergy 0.21.0; board conditions 0.20.0). */
+export const engineVersion = "0.24.0";
 
 export type {
   ApplyResult,

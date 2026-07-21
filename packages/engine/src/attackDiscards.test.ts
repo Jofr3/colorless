@@ -135,11 +135,9 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
       // Sandaconda (sv01-120): the count is fine, the rider after it is not.
       "Discard 2 Energy from this Pokémon. If you discarded any Energy in this way, your opponent shuffles their Active Pokémon and all attached cards into their deck.",
-      // Arcanine ex / Kilowattrel / the Pokémon GO wording — all TYPED, and "{R}"
-      // means "provides {R}", which is not a filter this engine has.
-      "Discard 2 {R} Energy from this Pokémon.",
-      "Discard a {L} Energy from this Pokémon.",
-      "Discard a Fire Energy from this Pokémon.",
+      // (The TYPED sentences this list used to hold — Arcanine ex, Kilowattrel,
+      // the Pokémon GO wording — derive now, through the `providesEnergy` filter
+      // that reads what an Energy PROVIDES on its host. See providesEnergy.test.ts.)
       // Not a printed card, and a silent no-op is the worst possible derivation.
       "Discard 0 Energy from this Pokémon.",
       // The opponent's BOARD (Crushing Hammer's wording) is the Trainer arm, which

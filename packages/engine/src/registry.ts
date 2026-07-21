@@ -649,6 +649,74 @@ const POPPY: CardProgram = {
   trainer: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 2 }],
 };
 
+// ── M5 op-slice: the providesEnergy filter — "an Energy that PROVIDES {X}".
+//    Its second consumer (the first is the typed self-discard family, which is
+//    DERIVED and so has no rows here): the moveEnergy fixed-endpoint route the
+//    row above deferred. (verified vs the local catalog 2026-07-21). ──
+
+/** fix-blend — FIXTURE Special Energy, no printed card in the sv01–03 pool: one
+    that provides TWO DISTINCT concrete types ({R} and {W}), the multi-unit shape
+    `EnergyProgram.provides: string[]` has always promised and no authored card
+    has ever exercised. Both authored Special Energies today are single-valued
+    (Jet `["Colorless"]`, Luminous `[ANY_ENERGY]`), so without this the
+    `providesEnergy` predicate's "is this type among the units" would be
+    indistinguishable from "is it the FIRST unit" — a distinction that only starts
+    to matter with a Blend/Reversal-style print, and one nobody would notice
+    breaking. */
+const FIX_BLEND: CardProgram = {
+  energy: { provides: ["Fire", "Water"] },
+};
+
+/** fix-pilescan — FIXTURE Item, no printed card and none imaginable: a
+    `providesEnergy` filter handed to a DECK search, which is the one authoring
+    mistake this filter invites. Provision is a while-attached property, so a card
+    sitting in a deck provides nothing and matches nothing — the search finds no
+    candidates and the play is a loud no-op rather than a quiet grab of "a Basic
+    Fire Energy card", which is what guessing here would have taken. Pinned by a
+    fixture because a REGISTRY row is the only way to author it (the deriver never
+    emits this pairing), and an unpinned safety property is one refactor from
+    silently becoming a wrong match. */
+const FIX_PILESCAN: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "providesEnergy", energyType: "Fire" }, dest: "hand", max: 1 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Armarouge — "Fire Off": "As often as you like during your turn, you may move
+    a {R} Energy from 1 of your Benched Pokémon to your Active Pokémon."
+
+    THREE readings the flags encode, each from the printed words:
+    - "As often as you like" → NOT `oncePerTurn`, so the allowance is never
+      stamped and the Ability may be used again and again in one turn (each use
+      moves one Energy: `max: 1`);
+    - the text never says "if this Pokémon is in the Active Spot", so
+      `activeOnly: false` — Abilities work from the Bench unless the card says
+      otherwise (§9), and this one names its endpoints outright rather than
+      saying "this Pokémon", so a benched Armarouge moving its OWN {R} to the
+      Active is a legal and correct use (the EffectContext-has-no-source-uid gap
+      simply does not apply here);
+    - "a {R} Energy" is `providesEnergy`, not a Basic Fire print: a Luminous
+      Energy on the Bench provides every type and so IS a {R} Energy to move —
+      until another Special Energy beside it demotes it to {C}. */
+const ARMAROUGE: CardProgram = {
+  abilities: [
+    {
+      name: "Fire Off",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "providesEnergy", energyType: "Fire" },
+          max: 1,
+          route: "benchToActive",
+        },
+      ],
+    },
+  ],
+};
+
 // ── M5 op-slice: handRefresh (the Iono/Judge hand-refresh Supporter family) —
 //    put your hand back into your deck, then draw. The reshuffle-and-draw
 //    Supporters landed first; Iono (the bottom-of-deck placement + the
@@ -998,6 +1066,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-267": GIACOMO, // Giacomo (reprint)
   "sv03-143": MAWILE, // Mawile — Special Eater (on-bench: a Special Energy off their Active)
   "fix-hammer": FIX_HAMMER, // FIXTURE — the opponentChosen arm without the coin gate
+  // — M5 op-slice: the providesEnergy filter (verified vs the local catalog
+  //   2026-07-21). The typed self-discard family it also lands is DERIVED from
+  //   printed text (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard), so it
+  //   adds no rows here — these two are the filter's SECOND consumer. —
+  "sv01-041": ARMAROUGE, // Armarouge — Fire Off ({R} benched→Active, as often as you like)
+  "sv01-203": ARMAROUGE, // Armarouge (reprint)
+  "fix-pilescan": FIX_PILESCAN, // FIXTURE — the filter handed to a DECK search: no match
+  "fix-blend": FIX_BLEND, // FIXTURE — a Special providing TWO distinct types
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

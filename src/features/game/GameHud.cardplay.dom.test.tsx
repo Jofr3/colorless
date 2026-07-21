@@ -16,6 +16,7 @@ import {
   DISCARD_ENERGY_DECK,
   MOVE_ENERGY_DECK,
   ONKO_DECK,
+  PROVIDES_ENERGY_DECK,
   RARE_CANDY_DECK,
   SNIPE_DECK,
   SPECIAL_ENERGY_DECK,
@@ -380,6 +381,91 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     expect(call.choice.uids).toHaveLength(1);
     // The destination is the benched fix-basic-2 (index 0), not the source Active.
     expect(call.choice.dest.spot).toEqual({ spot: "bench", index: 0 });
+  });
+
+  it("with TWO destinations nothing is pre-chosen — the pick is the player's", () => {
+    // The other side of the sole-destination pre-select: it must fire ONLY when
+    // the destination is forced. Every other dialog test in this file leaves
+    // exactly one destination after the source is chosen, so without this a
+    // dialog that simply always took `dests[0]` would pass the whole suite while
+    // silently sending Energy to the wrong Pokémon on any 3-Pokémon board.
+    let state = p1Turn2(9, moveDecks);
+    state = setActiveFromDeck(state, "p1", "fix-basic-1");
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    state = benchFromDeck(state, "p1", "fix-basic-2"); // index 0
+    state = benchFromDeck(state, "p1", "fix-basic-1"); // index 1 — the one we want
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // the Active is the SOLE source
+    state = handFromDeck(state, "p1", "sv01-173", 1); // Energy Switch
+    state = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", "sv01-173"),
+    }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy" }));
+    // Energy picked, destination still open → Confirm must stay shut. (The Active
+    // is the source, so it is not among the destinations: the "fix-basic-1"
+    // button here is unambiguously the BENCHED one at index 1.)
+    expect((screen.getByRole("button", { name: "Move 1" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    expect(screen.getByRole("button", { name: "fix-basic-2" }).getAttribute("aria-pressed")).toBe(
+      "false",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    // Index 1, NOT the first offered destination.
+    expect(call.choice.dest.spot).toEqual({ spot: "bench", index: 1 });
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("'← Back' clears the previous source's pick, so the answer is never mixed", () => {
+    // The source picker is re-enterable, and `reset()` is what keeps that honest.
+    // Without its `setPickedUids([])`, going Back and choosing another source
+    // would dispatch the FIRST source's Energy — and the engine would ACCEPT it
+    // (validateChoice only requires one common source and dest ≠ source), so it
+    // is a silent wrong move rather than a rejection.
+    let state = p1Turn2(10, moveDecks);
+    state = setActiveFromDeck(state, "p1", "fix-basic-1");
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    state = benchFromDeck(state, "p1", "fix-basic-2");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // on the Active
+    state = attachBenchFromDeck(state, "p1", 0, "fix-water-energy", 1); // on the Bench
+    state = handFromDeck(state, "p1", "sv03-193", 1); // Poppy — two sources
+    state = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", "sv03-193"),
+    }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    const onBench = state.players.p1.bench[0]?.energy[0];
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-1" })); // source A: the Active
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy" })); // …and its Energy
+    fireEvent.click(screen.getByRole("button", { name: "← Back" }));
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-2" })); // source B: the Bench
+    // The count restarts at 0 — the Fire pick did not survive the change.
+    expect((screen.getByRole("button", { name: "Move 0" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toEqual([onBench]); // source B's Energy, not source A's
+    expect(applyAction(state, call).ok).toBe(true);
   });
 });
 
@@ -886,5 +972,91 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
     );
     expect(screen.queryByRole("dialog")).toBeNull(); // …and never rendered
     expect(dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe("the providesEnergy filter (M5) — the typed discard and Fire Off", () => {
+  const decks = { p1: PROVIDES_ENERGY_DECK, p2: PROVIDES_ENERGY_DECK };
+
+  it("the typed discard dialog names the TYPE, and offers only Energy that provides it", () => {
+    // Kilowattrel's "Discard a {L} Energy". The heading reads the full type name
+    // rather than the printed brace code, because the rows below it are card
+    // NAMES — heading and offer must speak one vocabulary. And the offer is the
+    // filter made visible: the Luminous is there (a wildcard PROVIDES {L}), the
+    // Fire Energy is not, though all three sit on the same Pokémon.
+    let state = p1Turn2(40, decks);
+    state = setActiveFromDeck(state, "p1", "sv01-079"); // Kilowattrel
+    state = setActiveFromDeck(state, "p2", "fix-titan"); // survives, so no KO tail
+    state = attachFromDeck(state, "p1", "fix-lightning-energy", 1);
+    state = attachFromDeck(state, "p1", "sv02-191", 1); // Luminous — the wildcard
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // never a candidate
+    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByText("Discard a Lightning Energy from this Pokémon.")).toBeTruthy();
+    const group = screen.getByRole("group", { name: "Kilowattrel · Active" });
+    expect(group.querySelectorAll("button")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Luminous Energy" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Fire Energy" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Luminous Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard 1/1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    const applied = applyAction(state, call);
+    if (!applied.ok) throw new Error("expected the engine to accept the HUD's answer");
+    expect(applied.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+  });
+
+  it("Fire Off is a TurnPanel button, and its move dialog pre-selects the sole destination", () => {
+    // The second consumer, end to end through the HUD. Two things are new here:
+    // the Ability is offered from the BENCH (it is not activeOnly), and the
+    // benchToActive route leaves exactly ONE destination — which the dialog
+    // treats as already chosen, so "Move 1" enables on the Energy pick alone.
+    // Without that, every use of an as-often-as-you-like Ability would cost a
+    // redundant click on the only legal target.
+    let state = p1Turn2(41, decks);
+    state = setActiveFromDeck(state, "p1", "fix-basic-1");
+    state = setActiveFromDeck(state, "p2", "fix-titan");
+    state = benchFromDeck(state, "p1", "sv01-041"); // Armarouge, benched
+    const index = state.players.p1.bench.length - 1;
+    state = attachBenchFromDeck(state, "p1", index, "fix-fire-energy", 1);
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "Fire Off · Armarouge" }));
+    const use = dispatch.mock.calls[0]?.[0] as GameAction;
+    expect(use).toEqual({
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "bench", index },
+      abilityName: "Fire Off",
+    });
+
+    const parked = applyAction(state, use);
+    if (!parked.ok) throw new Error("expected Fire Off to park");
+    cleanup();
+    const dispatch2 = vi.fn();
+    renderHud(parked.state, dispatch2);
+    expect(
+      screen.getByText("Move a Fire Energy from 1 of your Benched Pokémon to your Active Pokémon."),
+    ).toBeTruthy();
+    // The destination row renders as already selected — the player can see WHERE
+    // it goes, without having to confirm the only option.
+    expect(
+      screen.getByRole("button", { name: "fix-basic-1" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 1" }));
+    const call = dispatch2.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.dest.spot).toEqual({ spot: "active" });
+    expect(applyAction(parked.state, call).ok).toBe(true);
   });
 });

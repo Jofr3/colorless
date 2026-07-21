@@ -1,4 +1,5 @@
 import {
+  ANY_ENERGY,
   cardOfUid,
   energyProvidesOf,
   hpOf,
@@ -86,32 +87,62 @@ export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number
     is gone). costMet (attack.ts) consumes this flat list. */
 export function providedEnergy(state: GameState, pokemon: InPlayPokemon): string[] {
   // Which attached energies are Special — for Luminous's "any OTHER Special
-  // Energy attached" condition. Resolved once against the live board.
-  const specialUids = pokemon.energy.filter((uid) => {
+  // Energy attached" condition. Resolved once against the live board, then
+  // shared by every unit lookup below (the condition is about the HOLDER, so it
+  // is the same question for all of them).
+  const specialUids = specialEnergyUids(state, pokemon);
+  return pokemon.energy.flatMap((uid) => unitsOf(state, uid, specialUids));
+}
+
+/** The units ONE attached Energy provides, on the Pokémon it is attached to —
+    the per-card half of `providedEnergy` above, split out so the `providesEnergy`
+    CardFilter (interpreter.ts) reads provision through the SAME code the §8.2
+    cost matcher does. Two readers of one rule: an Energy that can pay a {L} cost
+    is exactly an Energy a "discard a {L} Energy" effect may take, and letting
+    those two drift would let a Kilowattrel pay {L} with a card the very same
+    attack then refuses to discard. */
+export function unitsProvidedBy(state: GameState, pokemon: InPlayPokemon, uid: string): string[] {
+  return unitsOf(state, uid, specialEnergyUids(state, pokemon));
+}
+
+/** Does `uid`, attached to `pokemon`, provide `energyType` (§6.3)? The
+    `providesEnergy` filter's predicate.
+
+    A WILDCARD provider matches every type: Luminous Energy "provides every type
+    of Energy but only 1 at a time", so it IS a {L} Energy for a card that asks
+    for one — the same ANY_ENERGY unit costMet lets fill any typed slot. And
+    because provision is read on the HOST, the answer genuinely moves with the
+    board: that same Luminous provides only {C} once another Special Energy joins
+    it, and stops being a {L} Energy at all. */
+export function providesEnergyType(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  uid: string,
+  energyType: string,
+): boolean {
+  const units = unitsProvidedBy(state, pokemon, uid);
+  return units.includes(energyType) || units.includes(ANY_ENERGY);
+}
+
+/** The attached Energy that are SPECIAL — the context Luminous's "any other
+    Special Energy attached" clause is evaluated against. */
+function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
+  return pokemon.energy.filter((uid) => {
     const card = cardOfUid(state, uid);
     return card !== undefined && isSpecialEnergy(card);
   });
-  const units: string[] = [];
-  for (const uid of pokemon.energy) {
-    const card = cardOfUid(state, uid);
-    if (card === undefined) {
-      units.push("Colorless"); // unresolved uid — the conservative unit
-      continue;
-    }
-    const program = programFor(card.id)?.energy;
-    if (program === undefined) {
-      // Basic energy → its type; an unauthored special energy → Colorless.
-      units.push(energyProvidesOf(card));
-      continue;
-    }
-    const demote = program.demoteWithOtherSpecial;
-    if (demote !== undefined && specialUids.some((other) => other !== uid)) {
-      units.push(...demote);
-    } else {
-      units.push(...program.provides);
-    }
-  }
-  return units;
+}
+
+function unitsOf(state: GameState, uid: string, specialUids: readonly string[]): string[] {
+  const card = cardOfUid(state, uid);
+  if (card === undefined) return ["Colorless"]; // unresolved uid — the conservative unit
+  const program = programFor(card.id)?.energy;
+  // Basic energy → its type; an unauthored special energy → Colorless.
+  if (program === undefined) return [energyProvidesOf(card)];
+  const demote = program.demoteWithOtherSpecial;
+  return demote !== undefined && specialUids.some((other) => other !== uid)
+    ? [...demote]
+    : [...program.provides];
 }
 
 /** §11 retreat cost under the in-play Stadium's continuous effects: Beach

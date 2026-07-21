@@ -73,15 +73,12 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     expect(deriveAttackEffect("Discard all Energy from this Pokémon.")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
     ]);
-    // A TYPED discard still needs an energy-of-type filter, and "{L}" means an
-    // Energy that PROVIDES {L} rather than a Basic Lightning card, so deriving it
-    // loosely would take the wrong card off a real board. (The NUMERIC counts and
-    // the opponent-side twins this list used to hold both derive now — see
-    // attackDiscards.test.ts.)
+    // What is left on the loud skipped path is a RIDER after the discard, or a
+    // gate this engine cannot express — never a shape of the discard itself.
+    // (Everything this list used to hold now derives: the NUMERIC counts and the
+    // opponent-side twins in attackDiscards.test.ts, the TYPED ones in
+    // providesEnergy.test.ts.)
     for (const text of [
-      "Discard 2 {R} Energy from this Pokémon.",
-      "Discard a {L} Energy from this Pokémon.",
-      "Discard a Fire Energy from this Pokémon.",
       // Whole-sentence anchoring: a rider after the discard is a different card.
       "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",

@@ -7,7 +7,7 @@ import {
   topCardOf,
   topUid,
 } from "./cards";
-import { effectiveMaxHp, passivesOf } from "./continuous";
+import { effectiveMaxHp, passivesOf, providesEnergyType } from "./continuous";
 import type { BoardCondition, CardFilter, EffectOp, HandRefreshDraw } from "./effects";
 import type { GameEvent } from "./events";
 import { flipCoin, shuffle } from "./rng";
@@ -327,11 +327,12 @@ function stepOp(
       // needs no movable Energy OR no distinct destination (fewer than two of the
       // controller's Pokémon in play) — the programPlayable gate blocks the play,
       // but stay a no-op here too (a mid-program board could reach it).
-      const movable = attachedEnergies(state, ctx.seat, op.filter);
-      const destinations = ownInPlayRefs(state, ctx.seat);
-      if (movable.length === 0 || destinations.length < 2 || op.max <= 0) return { done: state };
+      const { movable, destinations, needed } = moveEndpoints(state, ctx.seat, op);
+      if (movable.length === 0 || destinations.length < needed || op.max <= 0) {
+        return { done: state };
+      }
       return {
-        park: { kind: "moveEnergy", movable, destinations, max: op.max, note: moveNote(op.filter, op.max) },
+        park: { kind: "moveEnergy", movable, destinations, max: op.max, note: moveNote(op) },
       };
     }
     case "discardEnergy": {
@@ -1064,7 +1065,17 @@ function moveEnergyApply(
     if (benchStripped[destSpot.index] === undefined) return state;
     bench = benchStripped.map((pokemon, index) => (index === destSpot.index ? addTo(pokemon) : pokemon));
   }
-  events.push({ type: "ENERGY_MOVED", seat: ctx.seat, uids: [...moved], from, to: { ...destSpot } });
+  // The destination is REBUILT field by field, never spread off `destSpot` — that
+  // object came from the WIRE. `validateChoice` proves it `refEquals` an offered
+  // ref, but refEquals compares only seat/spot/index, so any extra key a client
+  // hangs on it (`{spot:"active", index:99, evil:"…"}`) rides the spread straight
+  // into an event that is handed to the animator, the log and, in P4, broadcast to
+  // both players. The state was always safe (the extra keys are inert); the EVENT
+  // is the §2 copy contract, and a copy of attacker-controlled data is not a copy
+  // of the engine's own value.
+  const to: PokemonTarget =
+    destSpot.spot === "active" ? { spot: "active" } : { spot: "bench", index: destSpot.index };
+  events.push({ type: "ENERGY_MOVED", seat: ctx.seat, uids: [...moved], from, to });
   return withSide(state, ctx.seat, { ...side, active, bench });
 }
 
@@ -1143,19 +1154,39 @@ function attachedEnergies(
   state: GameState,
   seat: Seat,
   filter: CardFilter,
-  activeOnly = false,
+  scope: "all" | "active" | "bench" = "all",
 ): { uid: string; from: PokemonRef }[] {
   const side = state.players[seat];
   const out: { uid: string; from: PokemonRef }[] = [];
   const collect = (pokemon: InPlayPokemon, from: PokemonRef) => {
     for (const uid of pokemon.energy) {
-      if (matchesFilter(cardOf(state, uid), filter)) out.push({ uid, from });
+      if (matchesAttached(state, pokemon, uid, filter)) out.push({ uid, from });
     }
   };
-  if (side.active !== null) collect(side.active, { seat, spot: { spot: "active" } });
-  if (activeOnly) return out;
+  if (side.active !== null && scope !== "bench") {
+    collect(side.active, { seat, spot: { spot: "active" } });
+  }
+  if (scope === "active") return out;
   side.bench.forEach((pokemon, index) => collect(pokemon, { seat, spot: { spot: "bench", index } }));
   return out;
+}
+
+/** Does the Energy `uid`, ATTACHED TO `pokemon`, match `filter`? The in-play
+    counterpart of `matchesFilter`, and the only place `providesEnergy` can be
+    answered: what an Energy provides is a property of the card ON ITS HOST (§6.3
+    — Luminous provides every type alone and only {C} beside another Special
+    Energy), so the card alone cannot decide it. Every other filter kind is a
+    pure card predicate and defers to `matchesFilter` unchanged. */
+function matchesAttached(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  uid: string,
+  filter: CardFilter,
+): boolean {
+  if (filter.kind === "providesEnergy") {
+    return providesEnergyType(state, pokemon, uid, filter.energyType);
+  }
+  return matchesFilter(cardOf(state, uid), filter);
 }
 
 /** The board a `discardEnergy` op takes Energy OFF: the controller's own for
@@ -1176,7 +1207,7 @@ export function discardableEnergies(
   op: Extract<EffectOp, { op: "discardEnergy" }>,
 ): { uid: string; from: PokemonRef }[] {
   const activeOnly = op.from === "opponentActive" || op.from === "yourActive";
-  return attachedEnergies(state, discardVictimSeat(seat, op), op.filter, activeOnly);
+  return attachedEnergies(state, discardVictimSeat(seat, op), op.filter, activeOnly ? "active" : "all");
 }
 
 /** What an attached Energy card IS, for the purpose of "would discarding this one
@@ -1195,10 +1226,11 @@ export function discardableEnergies(
     The `basic:` / `card:` prefixes keep the two spaces apart, so a Basic Fire and
     a Special Energy that happens to provide {R} never collapse into each other.
     A uid with no catalog card gets a key of its own — park and ask rather than
-    guess. (Unreachable today: `attachedEnergies` filters through `matchesFilter`,
-    which rejects an unresolvable card, so no such uid can enter the candidate
-    list. Kept because the fallback costs nothing and the alternative is a silent
-    collapse of things this function cannot actually compare.) */
+    guess. (Unreachable today: `attachedEnergies` filters through
+    `matchesAttached`, whose card-only arm rejects an unresolvable card and whose
+    `providesEnergy` arm reads that card's provision, so no such uid can enter the
+    candidate list. Kept because the fallback costs nothing and the alternative is
+    a silent collapse of things this function cannot actually compare.) */
 function energyIdentity(state: GameState, uid: string): string {
   const card = cardOf(state, uid);
   if (card === undefined) return `?${uid}`;
@@ -1294,11 +1326,46 @@ export function moveEnergyPlayable(
   seat: Seat,
   op: Extract<EffectOp, { op: "moveEnergy" }>,
 ): boolean {
-  return (
-    op.max > 0 &&
-    ownInPlayRefs(state, seat).length >= 2 &&
-    attachedEnergies(state, seat, op.filter).length > 0
-  );
+  const { movable, destinations, needed } = moveEndpoints(state, seat, op);
+  return op.max > 0 && movable.length > 0 && destinations.length >= needed;
+}
+
+/** What a `moveEnergy` op can take, where it can put it, and how many
+    destinations that route needs to be worth asking about — ONE rule with two
+    readers (the op's own no-op test and the `programPlayable` gate above), for
+    the same reason the filter reads provision through one helper: the play gate
+    and the play itself disagreeing is how a card becomes playable and then does
+    nothing, or is refused while a legal move existed.
+
+    The free route (Energy Switch / Poppy) takes from anywhere and needs TWO
+    Pokémon in play, because the source is also a candidate destination and a
+    Pokémon may not move Energy onto itself. `benchToActive` (Armarouge) takes
+    from the bench alone and its sole destination is the Active, so source and
+    destination are disjoint by construction and ONE destination is enough — a
+    bench source already had to exist for `movable` to be non-empty.
+
+    A vacant Active makes `destinations` empty and the route a no-op. That state
+    is not reachable through the action API today (the Active spot is only empty
+    during a `ko:promote` park, where `turnGate` refuses `useAbility` and
+    `playTrainer` outright), which is why it is asserted here rather than tested
+    from a board — but it is asserted in exactly one place now, so it cannot rot
+    in two of three copies. */
+function moveEndpoints(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "moveEnergy" }>,
+): { movable: { uid: string; from: PokemonRef }[]; destinations: PokemonRef[]; needed: number } {
+  const benchToActive = op.route === "benchToActive";
+  const active = state.players[seat].active;
+  return {
+    movable: attachedEnergies(state, seat, op.filter, benchToActive ? "bench" : "all"),
+    destinations: benchToActive
+      ? active === null
+        ? []
+        : [{ seat, spot: { spot: "active" } }]
+      : ownInPlayRefs(state, seat),
+    needed: benchToActive ? 1 : 2,
+  };
 }
 
 /** A discardEnergy op does something iff the victim's board (or, for the two
@@ -1375,6 +1442,19 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
       // A SPECIAL Energy only (Giacomo / Mawile) — the exact complement of
       // `basicEnergy` inside `anyEnergy`, off the catalog's own tag.
       return isSpecialEnergy(card);
+    case "providesEnergy":
+      // FALSE, always — and deliberately, not as a gap. This function scans
+      // cards in a DECK, HAND or DISCARD PILE (searchDeck / lookAtTopN /
+      // discardPileRetrieval), and provision is a while-ATTACHED property ("As
+      // long as this card is attached to a Pokémon, it provides…"): a card in a
+      // pile is attached to nothing and provides nothing. The in-play scanner
+      // `matchesAttached` is where this filter is answered, with the host it
+      // needs. So authoring `providesEnergy` into a pile-scanning op yields an
+      // empty candidate set — a loud no-op, never a wrong card — where guessing
+      // "a Basic Energy of that type" would silently take the wrong print
+      // (Decidueye's "Basic {G} Energy card from your hand" is the row that
+      // really wants `basicEnergy`, and it says CARD for exactly this reason).
+      return false;
   }
 }
 
@@ -1429,11 +1509,37 @@ function lookNote(filter: CardFilter, n: number, max: number): string {
     to N] {noun} from 1 of your Pokémon to another of your Pokémon". Only the two
     filters those cards use are spelled (Basic Energy / Energy); a future filter
     falls back to the generic "Energy". */
-function moveNote(filter: CardFilter, max: number): string {
-  const noun = filter.kind === "basicEnergy" ? "Basic Energy" : "Energy";
-  return max > 1
-    ? `Move up to ${max} ${noun} from 1 of your Pokémon to another of your Pokémon.`
-    : `Move a ${noun} from 1 of your Pokémon to another of your Pokémon.`;
+function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
+  const noun =
+    op.filter.kind === "basicEnergy"
+      ? `Basic ${op.filter.energyType === undefined ? "" : `${op.filter.energyType} `}Energy`
+      : energyNoun(op.filter);
+  const where =
+    op.route === "benchToActive"
+      ? "from 1 of your Benched Pokémon to your Active Pokémon"
+      : "from 1 of your Pokémon to another of your Pokémon";
+  // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
+  // the same rule discardNote applies. Unreachable at max 1 today (the only
+  // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is
+  // precisely why it read "Move a Energy" unnoticed.
+  const article = noun === "Energy" ? "an" : "a";
+  return op.max > 1 ? `Move up to ${op.max} ${noun} ${where}.` : `Move ${article} ${noun} ${where}.`;
+}
+
+/** How a filter's Energy reads inside a prompt sentence. Only the filters the
+    energy ops actually carry are spelled; anything else stays the generic
+    "Energy".
+
+    A TYPED one reads as its full type name ("a Fire Energy"), not the printed
+    brace code ("a {R} Energy"), even though two of the five cards in the family
+    print the code. The note is built from the OP, not from any text — Armarouge's
+    is an authored Ability with no printed attack sentence at all — and the rows
+    the player then clicks are card NAMES ("Fire Energy"), so the heading and the
+    offer speak one vocabulary. */
+function energyNoun(filter: CardFilter): string {
+  if (filter.kind === "specialEnergy") return "Special Energy";
+  if (filter.kind === "providesEnergy") return `${filter.energyType} Energy`;
+  return "Energy";
 }
 
 /** The discardEnergy prompt string — reproduced from the printed sentence, so
@@ -1444,7 +1550,7 @@ function moveNote(filter: CardFilter, max: number): string {
     generic "an Energy". `count: "all"` never reaches here — that arm asks
     nothing, so it has no prompt to caption. */
 function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
-  const noun = op.filter.kind === "specialEnergy" ? "Special Energy" : "Energy";
+  const noun = energyNoun(op.filter);
   // A numeric count is printed as the bare number ("Discard 2 Energy…"), where
   // one is printed as the article ("Discard an Energy…").
   const what =
@@ -1485,5 +1591,14 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       const kind = filter.energyType === undefined ? "Basic" : `Basic ${filter.energyType}`;
       return { singular: `a ${kind} Energy card`, plural: `${kind} Energy cards` };
     }
+    case "providesEnergy":
+      // Unreachable through a pile-scanning op (matchesFilter rejects this
+      // filter there, so such an op offers nothing to caption). Spelled anyway:
+      // the phrase is what the note builders below want, and an exhaustive
+      // switch that throws would be a worse answer than a correct sentence.
+      return {
+        singular: `a ${filter.energyType} Energy`,
+        plural: `${filter.energyType} Energy`,
+      };
   }
 }

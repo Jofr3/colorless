@@ -1160,7 +1160,16 @@ function MoveEnergyDialog({
     source === null ? [] : prompt.movable.filter(({ from }) => keyOf(from) === sourceKey);
   // Destinations are the offered ones minus the chosen source (no self-move).
   const dests = prompt.destinations.filter((ref) => keyOf(ref) !== sourceKey);
-  const dest = dests.find((ref) => keyOf(ref) === destKey) ?? null;
+  // A SOLE destination is already chosen — the same rule the source list above
+  // follows, for the same reason: a list of one is not a decision. It became
+  // worth stating when the benchToActive route (Armarouge's "Fire Off") made a
+  // single destination the NORMAL case rather than an edge one — otherwise every
+  // use of an as-often-as-you-like Ability costs a redundant click on the only
+  // legal target. Derived, not state: `dests` shifts when the source changes, and
+  // a stored key would have to be resynced.
+  const dest =
+    dests.find((ref) => keyOf(ref) === destKey) ??
+    (dests.length === 1 ? (dests[0] as PokemonRef) : null);
   const declineDest = prompt.destinations[0];
 
   const reset = () => {
@@ -1203,10 +1212,25 @@ function MoveEnergyDialog({
         </>
       ) : (
         <>
-          <p className="mt-1.5 text-sm text-white/55">
+          {/* <output> — an implicit polite LIVE REGION, the house pattern its
+              DiscardEnergyDialog sibling already follows, and the argument carries
+              over verbatim: `aria-pressed` is only spoken for the row that HAS
+              focus, and the Confirm button ("Move 1") is `disabled` until ready —
+              out of the tab order exactly while the count is what you need. It
+              also carries the destination, which is the part this dialog now
+              decides on the player's behalf when only one is legal: otherwise the
+              only way to learn where the Energy is going is to tab onto a row that
+              is already pressed without anyone having pressed it. */}
+          <output className="mt-1.5 block text-sm text-white/55">
             From <span className="text-white/80">{refName(game, source)}</span> — pick up to{" "}
-            {prompt.max} ({pickedUids.length}/{prompt.max}):
-          </p>
+            {prompt.max} ({pickedUids.length}/{prompt.max})
+            {dest !== null && (
+              <>
+                , moving to <span className="text-white/80">{refName(game, dest)}</span>
+              </>
+            )}
+            :
+          </output>
           <ul className="mt-2 flex max-h-40 flex-col gap-1.5 overflow-y-auto">
             {sourceEnergies.map(({ uid }) => {
               const selected = pickedUids.includes(uid);
@@ -1229,7 +1253,7 @@ function MoveEnergyDialog({
           <p className="mt-3 text-sm text-white/55">Move to:</p>
           <ul className="mt-2 flex flex-col gap-1.5">
             {dests.map((ref) => {
-              const selected = destKey === keyOf(ref);
+              const selected = dest !== null && keyOf(dest) === keyOf(ref);
               return (
                 <li key={keyOf(ref)}>
                   <button
@@ -1526,7 +1550,18 @@ function promptKey(prompt: EffectPrompt): string {
         .map((d) => d.uid)
         .join(",")}`;
     case "moveEnergy":
-      return `move:${prompt.movable.map((m) => m.uid).join(",")}`;
+      // The DESTINATIONS ride the key for the same reason the scope rides the one
+      // above — the dialog's `dest` is derived from them (a sole destination is
+      // pre-chosen), so the same movable set offered against a different
+      // destination set is a different question. `max` rides too, since it caps
+      // the pick. The one path that leaves `movable` untouched is the DECLINE
+      // ("Move none" moves nothing), so a program with two moveEnergy ops whose
+      // first was declined is exactly the case a movable-only key would let
+      // inherit a stale pick. No program has two today; the key's job is not to
+      // depend on that.
+      return `move:${prompt.max}:${prompt.destinations
+        .map((d) => `${d.seat}-${d.spot.spot === "bench" ? d.spot.index : "active"}`)
+        .join(",")}:${prompt.movable.map((m) => m.uid).join(",")}`;
     default:
       return `${prompt.kind}:${prompt.note}`;
   }

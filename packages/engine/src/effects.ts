@@ -12,6 +12,7 @@
 // just hand-written instead of text-derived, and sit ABOVE the deriver at the
 // one attack call site (`programFor(id).attack ?? deriveAttackEffect(text)`).
 
+import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
 import type { StatusName } from "./events";
 
 /** A declarative card predicate for deck searches (§15.E). Deliberately tiny
@@ -43,7 +44,48 @@ export type CardFilter =
       exact complement of `basicEnergy` inside `anyEnergy`. The energy-removal
       family's narrow arm: Giacomo and Mawile discard "a Special Energy", where
       Crushing Hammer takes any. */
-  | { kind: "specialEnergy" };
+  | { kind: "specialEnergy" }
+  /** An Energy that PROVIDES `energyType` (§6.3) — the printed "{L} Energy" of
+      the typed energy-removal and energy-movement families (Kilowattrel
+      "Discard a {L} Energy", Arcanine ex "Discard 2 {R} Energy", the swsh-era
+      spelled-out "a Fire Energy"; Armarouge's "move a {R} Energy"). Two things
+      make it its own kind rather than a rider on `basicEnergy`:
+
+      **PROVISION, NOT PRINT.** "{L} Energy" is not "a Basic Lightning Energy
+      card" — a Special Energy that provides {L} IS one for this purpose, and a
+      Special providing only {C} is not, however Lightning-flavoured its art. So
+      the predicate reads what the card GIVES on the board, which is exactly what
+      §8.2's cost matcher reads (continuous.ts `providedEnergy`); the two must
+      agree or a Pokémon could pay {L} with an Energy that "isn't {L}" when the
+      same attack tries to discard it. A WILDCARD provider matches every type
+      (Luminous Energy: "provides every type of Energy but only 1 at a time" —
+      the same ANY_ENERGY unit that fills any typed cost slot).
+
+      **IN-PLAY ONLY, and HOST-DEPENDENT.** Provision is a while-ATTACHED
+      property ("As long as this card is attached to a Pokémon, it provides…"),
+      and for Luminous it depends on the holder's OTHER attachments — the same
+      card provides every type alone and only {C} beside another Special Energy.
+      A card is therefore not enough to answer this filter: `attachedEnergies`
+      (interpreter.ts) evaluates it per Energy ON ITS HOST, and the card-only
+      `matchesFilter` — the deck / hand / discard scanner behind searchDeck,
+      lookAtTopN and discardPileRetrieval — answers **false** for it, because a
+      card in a pile is attached to nothing and provides nothing. Authoring it
+      into a pile-scanning op is therefore a loud no-op, never a wrong match; use
+      `basicEnergy` with an `energyType` for those (the printed "Basic {G} Energy
+      CARD from your hand" really is about the print).
+
+      `energyType` is a **`BasicEnergyType`**, not a bare string, so the one value
+      this filter must never carry is UNREPRESENTABLE rather than merely forbidden
+      by this comment (the `count?: never` precedent). Colorless is deliberately
+      not a member (§6.1): it is a cost symbol, no card prints "discard a {C}
+      Energy", and admitting it would be actively wrong — Colorless is the
+      conservative provision FALLBACK for every unauthored Special Energy, so a
+      `{C}` filter would quietly match cards nobody meant. The deriver cannot emit
+      one, but the REGISTRY authors this filter too (Armarouge), which is exactly
+      where a hand-written `"Colorless"` would otherwise have compiled.
+      (`basicEnergy.energyType` beside it is still a bare string — a wider,
+      pre-existing hole in a filter this slice did not touch.) */
+  | { kind: "providesEnergy"; energyType: BasicEnergyType };
 
 /** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
     `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
@@ -320,10 +362,19 @@ export type EffectOp =
       so it never splits across two parks. "Up to"/declinable like searchDeck: the
       player may move none. Not playable (programPlayable) when no Energy matches or
       the controller has fewer than two Pokémon in play (no distinct destination) —
-      a play that could only whiff. Own→own only; the fixed-endpoint / opponent-side
-      / from-provided-type riders (Armarouge's benched→Active {R}, Mismagius's
-      opponent move) layer on later. */
-  | { op: "moveEnergy"; filter: CardFilter; max: number }
+      a play that could only whiff.
+
+      `route` FIXES the endpoints instead of letting the player pick both:
+      `benchToActive` is Armarouge's "move a {R} Energy from 1 of your BENCHED
+      Pokémon to your ACTIVE Pokémon" — sources are the bench alone, the sole
+      destination is the Active. One decision survives (WHICH Energy), so it
+      parks on the very same compound prompt with a single-entry `destinations`;
+      the dialog and the wire validator both read the prompt, so neither needs to
+      know a route exists. Source and destination are disjoint by construction,
+      which is why the "two Pokémon in play" rule relaxes here to "an Active and
+      a benched source". Still own→own; the OPPONENT-side move (Mismagius's
+      on-evolve flick) layers on later. */
+  | { op: "moveEnergy"; filter: CardFilter; max: number; route?: "benchToActive" }
   /** Put the affected player(s)' whole hand back into their deck, then draw — the
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
       only (Youngster: draw 5; Katy: draw 8; Brassius: draw hand+1); `who: "both"`
@@ -467,9 +518,65 @@ const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
 const OPPONENT_ACTIVE_DISCARD = /^Discard an Energy from your opponent['’]s Active Pokémon\.$/;
 const FLIP_OPPONENT_ACTIVE_DISCARD =
   /^Flip a coin\. If heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
+// The printed energy-type notations, BOTH of them: the modern brace CODE
+// ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
+// the swsh-era prints carry ("Discard a Fire Energy" — Charmeleon, Charizard).
+// One map so the two can never drift, and so the accepted vocabulary is a
+// single list rather than a regex alternation somebody edits by hand.
+//
+// {C} and {N} are ABSENT, matching BASIC_ENERGY_TYPES' own rule (§6.1: Colorless
+// is a cost symbol, Dragon has no Basic Energy). No card prints "discard a {C}
+// Energy", and admitting one would be actively wrong: Colorless is the
+// conservative provision FALLBACK for every unauthored Special Energy, so a
+// {C} filter would quietly match cards nobody meant. Unmapped codes fall
+// through to the loud skipped path — energyTypesAreCanonical (the test) pins the
+// values to BASIC_ENERGY_TYPES so a re-ingest adding a type is caught here.
+export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = {
+  G: "Grass",
+  R: "Fire",
+  W: "Water",
+  L: "Lightning",
+  P: "Psychic",
+  F: "Fighting",
+  D: "Darkness",
+  M: "Metal",
+  Y: "Fairy",
+};
+/** The spelled-out notation, keyed straight off BASIC_ENERGY_TYPES rather than
+    re-listed — so the two notations cannot resolve to different vocabularies, and
+    a type added to the schema is admitted here by construction. */
+const ENERGY_TYPE_BY_NAME: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
+  BASIC_ENERGY_TYPES.map((type) => [type, type]),
+);
+// The TYPED self-discard: "Discard a|all|{N} {type} Energy from this Pokémon."
+// — the same §8 attack cost as its untyped siblings above, narrowed to one
+// energy type. Both notations in one pattern, and both alternations built FROM
+// the map, so the regex cannot admit a code or name the map won't resolve.
+//
+// The near-misses this must refuse are all real catalog rows, and every one of
+// them is refused by the whole-sentence anchoring rather than by the type part:
+// Pawmot ex "Discard 2 {L} Energy from this Pokémon. This attack does 220
+// damage to 1 of your opponent's Pokémon." (a rider clause), Bellibolt ex "YOU
+// MAY discard 2 {L} Energy…" (optional, not a cost), Mewtwo VSTAR "Discard UP TO
+// 3 Psychic Energy from YOUR POKÉMON." (the whole board, and declinable), and
+// Decidueye "Discard a Basic {G} Energy CARD FROM YOUR HAND." (a print in hand,
+// not provision on the board — the one row where `basicEnergy` would be right).
+// Do NOT add /i here, for the reason spelled out on the untyped family above: a
+// capitalised first word is half of what keeps a mid-sentence clause (Krookodile's
+// "…, discard an Energy…") off the derived path, and the anchors are the other
+// half. No catalog row false-positives under /i today, so this is latent — which
+// is exactly when a warning is worth writing down.
+//
+// The `all|a|\d+` ordering carries NO weight (backtracking makes `a|all` behave
+// identically, since `a` must be followed by a space); it reads
+// longest-first only for the human.
+const TYPED_SELF_DISCARD = new RegExp(
+  `^Discard (all|a|\\d+) (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\}` +
+    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")})) Energy from this Pokémon\\.$`,
+);
 
 /** Parse printed attack text into executable ops, or null when the text is
-    ANYTHING but one of the eleven recognized whole sentences (leading/trailing
+    ANYTHING but one of the twelve recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
 export function deriveAttackEffect(text: string): EffectOp[] | null {
   const effect = text.trim();
@@ -553,7 +660,40 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }];
   }
 
-  // 10/11. "Discard an Energy from your opponent's Active Pokémon.", bare and
+  // 10. "Discard a|all|{N} {type} Energy from this Pokémon." — the TYPED
+  //     self-discard, the same §8 cost narrowed to one energy type. `{L}` means
+  //     an Energy that PROVIDES {L}, not a Basic Lightning card, which is the
+  //     whole reason this needs `providesEnergy` rather than `basicEnergy`: a
+  //     Luminous Energy attached to Kilowattrel IS a {L} Energy (until another
+  //     Special Energy demotes it to {C}), and the attack that just paid its
+  //     {L} cost with it must be able to discard it.
+  match = TYPED_SELF_DISCARD.exec(effect);
+  if (match !== null) {
+    // Exactly one of the two notation groups matched; an unmapped brace code
+    // cannot reach here (the character class is built from the map's keys).
+    const energyType =
+      match[2] === undefined
+        ? ENERGY_TYPE_BY_NAME[match[3] ?? ""]
+        : ENERGY_TYPE_BY_CODE[match[2]];
+    const amount = match[1];
+    if (energyType !== undefined && amount !== undefined) {
+      const filter = { kind: "providesEnergy", energyType } as const;
+      if (amount === "all") {
+        return [{ op: "discardEnergy", from: "yourActive", filter, count: "all" }];
+      }
+      if (amount === "a") {
+        return [{ op: "discardEnergy", from: "yourActive", filter }];
+      }
+      const count = Number(amount);
+      // A printed 0 is not a real card and would derive to a silent no-op —
+      // the same guard the untyped exact-N rule carries.
+      if (count >= 1) {
+        return [{ op: "discardEnergy", from: "yourActive", filter, count }];
+      }
+    }
+  }
+
+  // 11/12. "Discard an Energy from your opponent's Active Pokémon.", bare and
   //        behind a coin flip — the hammer family's attack twins, the same op
   //        Mawile's Ability runs with a wider filter.
   if (OPPONENT_ACTIVE_DISCARD.test(effect)) {

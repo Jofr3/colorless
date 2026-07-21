@@ -800,6 +800,155 @@ export const FIXTURE_POOL: Record<string, Card> = {
       shape for the {F} attackers: same provision, different id, so a board can
       hold interchangeable copies whose collapse an exact-N pick must survive. */
   "fix-fighting-energy-alt": typedEnergy("fix-fighting-energy-alt", "Fighting"),
+
+  // — M5 op-slice: the providesEnergy filter (name / stage / evolveFrom / hp /
+  //   retreat / type and the WHOLE attack row verified verbatim against the
+  //   local catalog 2026-07-21). Unlike the slice above, these keep their REAL
+  //   stages — every one of them is an Evolution, and the suites place them by
+  //   surgery rather than by evolving, which reads the stack top and not the
+  //   stage. Two declared simplifications, the same two as above: printed
+  //   WEAKNESS is omitted (these cards only ATTACK here), and a card with two
+  //   printed attacks carries only the discarding one — so Kilowattrel's
+  //   `index: 0` is its SECOND printed attack. —
+  /** Kilowattrel (sv01-079) — "Thunder Blast" [L][C][C] 140: the typed
+      self-discard at count 1, in the modern brace notation. Its {L} cost is what
+      makes the Luminous case sharp — the same wildcard Energy can PAY the cost
+      and then be taken by the discard, which is the whole point of reading
+      provision rather than the print. */
+  "sv01-079": battler("sv01-079", {
+    name: "Kilowattrel",
+    hp: 120,
+    stage: "Stage1",
+    evolveFrom: "Wattrel",
+    types: ["Lightning"],
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless", "Colorless"],
+        name: "Thunder Blast",
+        damage: 140,
+        effect: "Discard a {L} Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Arcanine ex (sv01-032) — "Bright Flame" [R][R][R] 250: the typed discard at
+      an exact N (2), so the count and the type constrain the same pick. */
+  "sv01-032": battler("sv01-032", {
+    name: "Arcanine ex",
+    hp: 280,
+    stage: "Stage1",
+    evolveFrom: "Growlithe",
+    types: ["Fire"],
+    retreat: 3,
+    attacks: [
+      {
+        cost: ["Fire", "Fire", "Fire"],
+        name: "Bright Flame",
+        damage: 250,
+        effect: "Discard 2 {R} Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Charmeleon (swsh10.5-009) — "Flamethrower" [R][R][C][C] 100: the SPELLED-OUT
+      notation at count 1 ("a Fire Energy"), the swsh-era wording the same rule
+      has to read. */
+  "swsh10.5-009": battler("swsh10.5-009", {
+    name: "Charmeleon",
+    hp: 90,
+    stage: "Stage1",
+    evolveFrom: "Charmander",
+    types: ["Fire"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Fire", "Fire", "Colorless", "Colorless"],
+        name: "Flamethrower",
+        damage: 100,
+        effect: "Discard a Fire Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Charizard (swsh10.5-010) — "Flare Blitz" [R][R][C][C] 170: the spelled-out
+      notation at count "all". The typed "all" is the one that proves the filter
+      is doing work in the APPLY and not just the prompt — every Fire comes off
+      and everything else stays attached, where the untyped "all" strips the lot.
+
+      A THIRD simplification, beyond the two the header declares, and it is the
+      one worth knowing about: the printed **Ability "Burn Brightly"** ("Each
+      basic Fire Energy attached to your Pokémon provides {R}{R} Energy") is
+      dropped. It is unauthored in the registry either way, so the engine already
+      treats it as not-simulated — but it is itself a PROVISION modifier, and
+      `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what
+      attached Energy provides (provision is print + EnergyProgram only). Authoring
+      it would therefore widen the provision model that both this filter and §8.2's
+      cost matcher read, not just add a row. */
+  "swsh10.5-010": battler("swsh10.5-010", {
+    name: "Charizard",
+    hp: 170,
+    stage: "Stage2",
+    evolveFrom: "Charmeleon",
+    types: ["Fire"],
+    retreat: 3,
+    attacks: [
+      {
+        cost: ["Fire", "Fire", "Colorless", "Colorless"],
+        name: "Flare Blitz",
+        damage: 170,
+        effect: "Discard all Fire Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** FIXTURE — a typed discard whose type its own COST does not require, so the
+      "nothing of that type is attached" no-op is reachable at all. Every printed
+      card in this family discards a type it must already have paid with
+      (Kilowattrel's [L][C][C] discards {L}; Arcanine ex's [R][R][R] discards
+      {R}), so a real attack ALWAYS has at least one match — the mirror of the
+      fix-discard4 argument one slice earlier, and the reason both fixtures exist:
+      the rule is real even where the printed pool cannot reach it. [C] to attack,
+      "Discard a {W} Energy". */
+  "fix-typeddiscard": battler("fix-typeddiscard", {
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Rinse",
+        damage: 20,
+        effect: "Discard a {W} Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** FIXTURE Item — carries the registry's fix-pilescan program: a
+      `providesEnergy` filter handed to a DECK search, which must match nothing. */
+  "fix-pilescan": itemTrainer("fix-pilescan"),
+  /** FIXTURE Special Energy providing TWO distinct concrete types ({R} + {W}) —
+      the multi-unit EnergyProgram shape no authored card exercises. */
+  "fix-blend": specialEnergy("fix-blend", "fix-blend"),
+  /** FIXTURE — a defender that outlives every printed damage in this slice's deck
+      (Arcanine ex hits for 250, the biggest here). A survivor keeps the §8.1 KO
+      tail out of the way, so a test about WHICH Energy came off is only ever
+      about that. fix-wall (120) and fix-bigbody (200) both die to Bright Flame. */
+  "fix-titan": battler("fix-titan", { hp: 340, retreat: 4 }),
+  /** Armarouge (sv01-041) — the filter's SECOND consumer, and the only one with a
+      registry row: "Fire Off" (Ability) — "As often as you like during your turn,
+      you may move a {R} Energy from 1 of your Benched Pokémon to your Active
+      Pokémon." Its printed attack rides along because a fixture Pokémon that
+      cannot attack makes an awkward Active. */
+  "sv01-041": battler("sv01-041", {
+    name: "Armarouge",
+    hp: 130,
+    stage: "Stage1",
+    evolveFrom: "Charcadet",
+    types: ["Fire"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Fire", "Fire", "Colorless"],
+        name: "Flame Cannon",
+        damage: 90,
+        effect: "Your opponent's Active Pokémon is now Burned.",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1147,6 +1296,44 @@ export const ATTACK_DISCARD_DECK = deckOf({
   "fix-fighting-energy-alt": 4, // a second {F} print — same provision, different id
   "fix-special": 4, // a Special Energy — a distinct identity in the same pick
   "fix-energy": 8, // basic Colorless — the "different print" a mixed board needs
+});
+
+/** M5 op-slice: the `providesEnergy` filter. The four DERIVED typed attackers
+    (Kilowattrel {L}×1, Arcanine ex {R}×2, Charmeleon "a Fire", Charizard "all
+    Fire") plus Armarouge, whose Ability is the filter's second consumer.
+
+    The Energy list is the point of this deck: alongside the basics each cost
+    needs, it carries **Luminous** (sv02-191, the wildcard that PROVIDES every
+    type — so it is a {L} Energy on Kilowattrel and a {R} one on Armarouge's
+    bench), **Jet** (sv02-190, a second Special whose mere presence DEMOTES
+    Luminous to {C} and takes it back out of the offer), and an **unauthored**
+    Special (fix-special, the conservative Colorless fallback, which is therefore
+    never typed). Those three are what make the filter's answer depend on the
+    HOST rather than on the card. fix-fire-energy-alt is a second Fire print, so
+    an exact-N typed pick can face interchangeable copies; fix-water-energy and
+    fix-energy are the non-matching Energy every typed discard must leave alone.
+    fix-titan (340 HP) outlives every printed damage here — Arcanine ex's 250 goes
+    through both fix-wall (120) and fix-bigbody (200) — so the §8.1 KO tail never
+    crowds a test that is about which Energy came off. */
+export const PROVIDES_ENERGY_DECK = deckOf({
+  "sv01-079": 3, // Kilowattrel — Thunder Blast (a {L} Energy)
+  "sv01-032": 3, // Arcanine ex — Bright Flame (2 {R} Energy)
+  "swsh10.5-009": 3, // Charmeleon — Flamethrower (a Fire Energy, spelled out)
+  "swsh10.5-010": 3, // Charizard — Flare Blitz (all Fire Energy, spelled out)
+  "sv01-041": 3, // Armarouge — Fire Off (the moveEnergy consumer)
+  "fix-basic-1": 4, // plain bodies: bench sources for Fire Off, setup Basics
+  "fix-titan": 5, // 340 HP — survives every printed damage here
+  "fix-typeddiscard": 2, // FIXTURE — discards a type its own cost does not need
+  "fix-pilescan": 2, // FIXTURE — the filter in a DECK search: matches nothing
+  "fix-blend": 2, // FIXTURE — a Special providing TWO distinct types
+  "fix-lightning-energy": 4, // pays Thunder Blast's {L}
+  "fix-fire-energy": 8, // pays the three Fire costs
+  "fix-fire-energy-alt": 2, // a second Fire print — same provision, different id
+  "fix-water-energy": 3, // a typed NON-match, to be left attached
+  "fix-energy": 5, // basic Colorless — pays the {C} slots, never typed
+  "sv02-191": 4, // Luminous Energy — the WILDCARD: provides every type
+  "sv02-190": 2, // Jet Energy — a second Special, which demotes Luminous to {C}
+  "fix-special": 2, // an UNAUTHORED Special — the Colorless fallback, never typed
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to
