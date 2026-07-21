@@ -3,7 +3,45 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-21 — build session #28 (**P3-M5: the `discardEnergy`
+**Last updated:** 2026-07-21 — build session #29 (**P3-M5: the `providesEnergy`
+CardFilter — "an Energy that PROVIDES {X}"**). The energy-removal family's last
+missing piece, and the **first filter a CARD alone cannot answer**. Two claims:
+**PROVISION, NOT PRINT** — "{L} Energy" is not "a Basic Lightning card"; a Special
+providing {L} IS one, and a WILDCARD (Luminous) is an Energy of EVERY type; and
+**HOST, NOT CARD** — provision is a while-ATTACHED property that Luminous's own
+clause makes depend on the holder's other attachments, so the identical card is a
+{L} Energy on one board and not on another. `attachedEnergies` answers it per
+Energy ON ITS HOST; the card-only pile scanner `matchesFilter` answers **false**
+(a card in a pile is attached to nothing), making a mis-authored pile scan a LOUD
+NO-OP rather than a wrong card. `continuous.ts` was **split, not copied**, so the
+filter and §8.2's cost matcher share one `unitsOf` — **what can PAY a {L} cost is
+exactly what a "{L} Energy" effect can take**. **TWO consumers, one vocabulary**
+(the D40 shape, and the whole reason this is a filter rather than a field): the
+**typed self-discard**, DERIVED in both printed notations — the modern `{R}` and
+the swsh-era spelled-out `Fire` — landing **5 catalog rows with ZERO registry
+rows** (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard); and **`moveEnergy`'s
+new `benchToActive` route**, authoring **Armarouge ×2** ("Fire Off"). Written into
+`ptcg-rules.md` as **§6.5**. engineVersion 0.23.0 → **0.24.0**; 1268 → **1301**
+tests, `bun run check` + `vite build` green. **Review (2 adversarial agents,
+engine+rules with 49 mutants / web+integration): NO HIGH from either.** The engine
+agent ran the deriver over **all 1108 text surfaces of all 978 catalog rows**
+(exactly 5 matches, zero false positives, zero misses), threw **36 hostile
+`resolveEffect` inputs** at both new prompts (zero throws, zero mutation), and
+verified all five new fixtures byte-for-byte. Fixes applied: **`ENERGY_MOVED.to`
+no longer spreads the client's object** (a hostile `dest` smuggled arbitrary keys
+into an event the animator/log/P4-broadcast consume); `energyType` tightened to
+**`BasicEnergyType`** so the one forbidden value (Colorless — the fallback every
+unauthored Special provides) is unrepresentable; the route's "an Active exists"
+guard **collapsed from three untested copies to one**; a **`fix-blend`** fixture
+for a Special providing two distinct types (the predicate's `.includes` was
+indistinguishable from "first unit only"); plus `moveNote`'s article, an orphaned
+JSDoc, the web `promptKey`, a `<output>` live region, and **two DOM tests the web
+agent proved missing by mutations that passed all 1297 tests** (the
+multi-destination pick, and `reset()` on source change). See D44.
+
+---
+### Prior header (P3-M5 the discardEnergy ATTACK arms, kept for continuity)
+**Last updated (was):** 2026-07-21 — build session #28 (**P3-M5: the `discardEnergy`
 ATTACK arms — the opponent-side twins + the exact-N `count`**). No new op: two
 extensions of D41/D42's `discardEnergy`, both **DERIVED from printed text**, so
 **11 catalog rows land with ZERO registry rows**. (1) The hammer family's **attack
@@ -200,6 +238,56 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
+**The `providesEnergy` filter is live (P3-M5, D44) — engine 0.24.0.** "An Energy
+that PROVIDES {X}", read by TWO ops: the DERIVED typed self-discard (5 catalog
+rows, zero registry rows) and `moveEnergy`'s new `benchToActive` route (Armarouge).
+Provision is read **on the host**, through the same `unitsOf` §8.2's cost matcher
+reads, so what can pay a {L} cost is exactly what a "{L} Energy" effect can take;
+`matchesFilter` answers false for pile scans. **The energy-removal family is now
+FILTER-COMPLETE** — every card still unauthored in it is blocked by sentence
+STRUCTURE, not by a missing predicate.
+**Next concrete actions:**
+1. **The from-the-top attach variant** (Electric Generator / Hydreigon — also 2 of
+   the remaining `attachEnergyFrom` cards): `lookAtTopN` finds the Energy, and the
+   new variant ATTACHES it rather than putting it in hand.
+2. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
+   Vessel / Revavroom / Tinkaton). Shares the printed "You can use this card only
+   if…" wording but is NOT a `BoardCondition` — a COST with a card CHOICE, so it
+   must PARK before the effect runs.
+3. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
+   optional discard that BUYS an effect (Bellibolt ex), a variable count with
+   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
+   Eiscue ex, Weavile), a repeat count (Krookodile).
+4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
+   PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra**
+   (a choose-from-hand → BOTTOM park, mandatory-exactly-one).
+5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat` (the
+   searchDeck deck-uid leak), D40's `stadium.owner` + `prizesRemaining` projection
+   additions, and the **engine-exported preview predicates** the HUD needs (which
+   would also close the Ability-button gap below).
+**Recorded, NOT fixed (this slice):** the typed candidate set is SNAPSHOTTED, so
+discarding one Special cannot un-demote a survivor — unreachable today (a wildcard
+is only a candidate when it is the SOLE Special), and it activates with the first
+typed Special Energy authored. **Charizard's "Burn Brightly"** ("Each basic Fire
+Energy attached to your Pokémon provides {R}{R}") is itself a PROVISION modifier
+and `unitsOf` has no hook for a Pokémon Ability that changes provision — provision
+is print + `EnergyProgram` only, so authoring it widens the model BOTH this filter
+and the cost matcher read. **`usableAbilities` is the only HUD button family with
+no playability gate** (no `programPlayable`), so an as-often-as-you-like Ability's
+button never greys and the invited repeat click yields an error pill once the bench
+runs dry — pre-existing (Baxcalibur, Gardevoir ex), made routine by Armarouge.
+**Carried forward (pre-existing, NOT this slice):** every authored Supporter still
+has `legal_standard=0` in the local ingest; **`GameLog` announces only a batch's
+LAST row** to screen readers; `GamePage`'s `passDisabled` phase check is untested;
+Fighting Au Lait is still playable with nothing damaged anywhere; `validateChoice`
+does not pin a multi-count pick to a single host; and from D42 the attack epilogue
+sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is missed —
+**do that before landing any self-damaging attack text** (sv01-038 Skeledirge is
+one deriver sentence away).
+
+---
+### Prior resume point (P3-M5 the discardEnergy ATTACK arms, kept for continuity)
 **The `discardEnergy` ATTACK arms are live (P3-M5, D43) — engine 0.23.0.** Two
 extensions of one op, both derived, **11 catalog rows / zero registry rows**: the
 opponent-side **twins** (bare + coin-gated, on the existing `opponentActive` arm)
@@ -899,6 +987,33 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-21** (build #29) — **P3-M5: the `providesEnergy` CardFilter — "an
+  Energy that PROVIDES {X}"** (D44; built solo, then the usual 2-agent adversarial
+  review). The resume point's #1, and the ONE primitive the previous slice
+  diagnosed as all that stood between the engine and the rest of the
+  energy-removal family. It turned out to be more interesting than a parameter:
+  reading **provision instead of print** forces the predicate to be answered on
+  the **HOST** rather than on the card, because Luminous Energy provides every
+  type alone and only {C} beside another Special — the same physical card is a {L}
+  Energy on one board and not on another. That is what made it worth sharing with
+  a second op instead of bolting a field onto the first. `continuous.ts` was split
+  so the filter and §8.2's cost matcher read one `unitsOf`, giving the invariant
+  that **what can PAY a {L} cost is exactly what a "{L} Energy" effect can take**;
+  `matchesFilter` deliberately answers **false** for deck/hand/discard scans, so
+  the one authoring mistake this filter invites is a loud no-op. Two consumers, one
+  vocabulary (D40's shape): the typed self-discard DERIVED in both printed
+  notations (5 catalog rows, **zero registry rows**) and `moveEnergy`'s new
+  `benchToActive` route (Armarouge). Also **committed the previous session's D43
+  slice**, which was complete but uncommitted. 1268 → **1301** tests. **Both review
+  agents: NO HIGH.** Their value was in the net rather than the code — the engine
+  agent's 49 mutants found the route's Active guard asserted three times and tested
+  zero times, and the wildcard predicate's `.includes` indistinguishable from
+  "first unit only" (both unreachable today, both one authored card away); the web
+  agent proved two behaviours unpinned with mutations that passed all 1297 tests.
+  Everything actionable was fixed, including a genuine wire-hygiene hole beside the
+  slice (`ENERGY_MOVED.to` spreading the client's own object into an event). The
+  energy-removal family is now **filter-complete**: what remains is sentence
+  structure, not predicates.
 - **2026-07-21** (build #28) — **P3-M5: the `discardEnergy` ATTACK arms — the
   opponent-side twins + the exact-N `count`** (D43; built solo, then the usual
   2-agent adversarial review). The resume point's #1, widened to also take its #2's

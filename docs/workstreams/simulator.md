@@ -2383,17 +2383,165 @@ Recorded, not fixed: `validateChoice` does not pin a multi-count pick to one hos
 (the AUTHORING NOTE above — unreachable until a card prints it), and `GameLog`
 still announces only a batch's last row.
 
-### What is left of the family — one filter
-Everything still unauthored here is **TYPED**: Kilowattrel "a {L} Energy",
-Arcanine ex ×2 "2 {R} Energy", Pawmot ex, and the older spelled-out wording
-(Charmeleon "a Fire Energy", Charizard "all Fire Energy"). One
-**`providesEnergy` CardFilter** covers all of them — and it is NOT `basicEnergy` +
-type: "{L}" means an Energy that **PROVIDES** {L}, so a Special Energy providing
-{L} counts and one providing {C} does not. Its natural second consumer is
-`moveEnergy` (Armarouge's benched→Active {R}), the D40 two-consumers shape again.
-The rest of the family needs sentence STRUCTURE rather than filters: a rider clause
-after the discard (Sandaconda, Eiscue ex, Weavile) and Krookodile's flip-until-tails
-repeat count.
+### What was left of the family — one filter
+Everything still unauthored after this slice was **TYPED** (Kilowattrel "a {L}
+Energy", Arcanine ex ×2, Charmeleon, Charizard), and one `providesEnergy` filter
+covered all of it. **Built next — see the section below.**
+
+## M5 op-slice: the providesEnergy filter as built (engine 0.24.0)
+**2026-07-21.** A new `CardFilter` kind — `{kind:"providesEnergy"; energyType}`,
+"an Energy that **PROVIDES** {X}". It closes the energy-removal family's last gap
+and is the **first filter a CARD alone cannot answer**.
+
+### The two claims
+1. **PROVISION, NOT PRINT.** "{L} Energy" is not "a Basic Lightning Energy card".
+   A Special Energy providing {L} **is** one; a Special providing only {C} is not,
+   whatever its name or art; and a **wildcard** provider (Luminous Energy,
+   "provides every type of Energy but only 1 at a time") is an Energy of **every**
+   type. So the predicate reads what a card GIVES on the board.
+2. **HOST, NOT CARD.** Provision is a while-ATTACHED property ("As long as this
+   card is attached to a Pokémon, it provides…"), and Luminous's own text makes it
+   depend on the holder's OTHER attachments — it provides {C} instead "if the
+   Pokémon this card is attached to has any other Special Energy attached". The
+   identical physical card is therefore a {L} Energy on one board and not on
+   another, which no card-only predicate can express. `attachedEnergies` answers
+   the filter per Energy **on its host** (`matchesAttached`).
+
+The pair is written into `reference/ptcg-rules.md` as **§6.5**.
+
+### One provision rule, two readers
+`continuous.ts` was split rather than copied: `providedEnergy` (the §8.2 cost
+matcher's source, consumed by `costMet`) and the new `unitsProvidedBy` /
+`providesEnergyType` share one `unitsOf` helper. The invariant that buys: **an
+Energy that can PAY a {L} cost is exactly one a "{L} Energy" effect may take.**
+Kilowattrel makes it concrete — it can pay Thunder Blast's {L} with a Luminous and
+then discard that same Luminous, and a drift between the two readers would make
+that board either unattackable or a silent no-op. Pinned by its own test.
+
+**The pile scanner says NO.** `matchesFilter` — the deck / hand / discard scanner
+behind searchDeck, lookAtTopN and discardPileRetrieval — returns **false** for this
+filter kind, because a card in a pile is attached to nothing and provides nothing.
+Authoring it into a pile-scanning op is therefore a **loud no-op**, never a wrong
+card; guessing "a Basic Energy of that type" there would have taken the wrong
+print. (Decidueye's "Discard a Basic {G} Energy **card** from your hand" is the one
+row that really is about a print — and it says CARD for exactly this reason. That
+row is why `basicEnergy` still exists alongside this filter.) Pinned by a
+`fix-pilescan` fixture, since only a registry row can author the mistake.
+
+### Consumer 1 — the TYPED self-discard, derived (5 rows, no registry rows)
+One regex over **both printed notations**, built from one `ENERGY_TYPE_BY_CODE`
+map so the two spellings cannot drift: the modern brace code (`{R}`) and the
+swsh-era spelled-out name (`Fire`), at counts `a` / `N` / `all`.
+
+| Card | id | printed |
+|---|---|---|
+| Kilowattrel | sv01-079 | "Discard a **{L}** Energy from this Pokémon." |
+| Arcanine ex ×2 | sv01-032, sv01-224 | "Discard **2 {R}** Energy from this Pokémon." |
+| Charmeleon | swsh10.5-009 | "Discard a **Fire** Energy from this Pokémon." |
+| Charizard | swsh10.5-010 | "Discard **all Fire** Energy from this Pokémon." |
+
+The map's values are pinned to be **exactly `BASIC_ENERGY_TYPES`** — the monorepo's
+one basic-energy vocabulary. `{C}` and `{N}` are absent there on purpose (§6.1:
+Colorless is a cost symbol, Dragon has no Basic Energy) and their absence is
+load-bearing here rather than incidental: **Colorless is the conservative provision
+FALLBACK for every unauthored Special Energy**, so a `{C}` filter would quietly
+match cards nobody meant.
+
+The typed `"all"` is the arm that proves the filter does work in the APPLY and not
+only in the prompt — it never asks a question, so the filter is the only thing
+between Charizard's "all Fire Energy" and a board stripped bare.
+
+### Consumer 2 — `moveEnergy`'s `benchToActive` route (Armarouge)
+The fixed-endpoint rider the moveEnergy slice deferred: sources are the **bench
+alone**, the sole destination is the **Active**. Armarouge (sv01-041 / -203) "Fire
+Off" — *"As often as you like during your turn, you may move a {R} Energy from 1 of
+your Benched Pokémon to your Active Pokémon"* — reads as three flags off the
+printed words: `oncePerTurn: false` ("as often as you like", so no allowance is
+stamped), `activeOnly: false` (the card never says "this Pokémon", so a BENCHED
+Armarouge may move its own {R}), and the `providesEnergy` filter for "{R}".
+
+One decision survives (WHICH Energy), so it parks on the **same compound prompt**
+with a single-entry `destinations` — the dialog and the wire validator both read
+the prompt, so neither knows a route exists. Source and destination are disjoint by
+construction, which is why the free route's "needs two Pokémon in play" test
+relaxes here to "needs an Active and a benched source".
+
+### Web
+One behavioural change: `MoveEnergyDialog` now treats a **sole destination as
+already chosen** (the rule its source list already followed — a list of one is not
+a decision), because the route makes a single destination the NORMAL case rather
+than an edge one; otherwise every use of an as-often-as-you-like Ability costs a
+redundant click on the only legal target. The discard dialog needed nothing: the
+prompt carries the note and the offer. Prompt wording renders the **full type
+name** ("Discard a Lightning Energy from this Pokémon.") rather than the printed
+brace code, because the rows the player then clicks are card NAMES — the note is
+built from the OP, not from text, and Armarouge's has no printed attack sentence at
+all.
+
+### Verification
+`bun run check` green — tsc + biome + **1301 tests** (1268 → 1301) + `vite build`.
+The deriver was run over **all 1108 text surfaces of all 978 catalog rows**: it
+matches **exactly the 5 intended rows**, zero false positives, zero misses — and
+every typed row it does NOT match is refused for a stated reason (a rider clause —
+Pawmot ex; "you may" — Bellibolt ex; "up to"/"any amount" with damage scaling —
+Mewtwo VSTAR, Chien-Pao ex; a hand PRINT — Decidueye). All five new fixtures verify
+**byte-for-byte** against the catalog (name/hp/stage/evolveFrom/types/retreat and
+the whole attack row) — the defect class the previous slice's review caught.
+
+### Review (2 adversarial agents: engine+rules with 49 mutants / web+integration)
+**NO HIGH from either.** The engine agent threw **36 hostile `resolveEffect`
+inputs** at both new prompts (zero throws, zero input mutation), confirmed purity
+under `deepFreeze` across attack → park → resolve, verified the KO-tail
+interaction, and killed 36 of 49 mutants. Fixes applied from the two reports:
+- **`ENERGY_MOVED.to` no longer spreads the client's object.** `validateChoice`
+  proves the dest `refEquals` an offered ref, but refEquals compares only
+  seat/spot/index — so extra keys a client hung on it rode the spread into an event
+  handed to the animator, the log and (P4) the opponent. The state was always safe;
+  the EVENT is the §2 copy contract, and a copy of attacker-controlled data is not
+  a copy of the engine's own value. It is rebuilt field by field now.
+- **`energyType` tightened to `BasicEnergyType`** — see above.
+- **The route's "an Active exists" precondition collapsed from THREE copies to
+  one** shared `moveEndpoints`, which is the same "one rule, two readers" shape the
+  provision split uses. All three were untested, and one mutation left an
+  unrecoverable `effect:choose` (a park with no legal answer).
+- **A `fix-blend` fixture** — a Special providing TWO distinct types. Both authored
+  Special Energies are single-valued (Jet `["Colorless"]`, Luminous `[ANY_ENERGY]`),
+  so the predicate's "is the type AMONG the units" was indistinguishable from "is it
+  the FIRST unit" until a Blend/Reversal-style print arrived.
+- Smaller: `moveNote`'s article ("Move a Energy"), an orphaned Armarouge JSDoc, the
+  web `promptKey` (the move key ignored the `destinations` its `dest` now derives
+  from), and a `<output>` live region in the move dialog.
+- **Two DOM tests the web agent proved were missing**, both with mutations that
+  passed all 1297 tests: the **multi-destination pick** (a dialog that always took
+  `dests[0]` passed the suite while misrouting Energy on any 3-Pokémon board) and
+  **`reset()` on source change** (dropping its pick-clear dispatches the previous
+  source's Energy — and the engine ACCEPTS it, so a silent wrong move).
+
+**Recorded, NOT fixed:**
+- **The typed candidate set is SNAPSHOTTED**, so discarding one Special cannot
+  un-demote a survivor. Unreachable today: a wildcard is only ever a candidate when
+  it is the SOLE Special, so removing it un-demotes nothing. It activates with the
+  first typed Special Energy authored.
+- **Charizard's printed Ability "Burn Brightly"** ("Each basic Fire Energy attached
+  to your Pokémon provides {R}{R} Energy") is itself a PROVISION modifier, and
+  `unitsOf` has no hook for a Pokémon Ability that changes what attached Energy
+  provides — provision is print + `EnergyProgram` only. Authoring it would widen the
+  model BOTH this filter and §8.2's cost matcher read, not just add a row.
+- **The Abilities row is the only HUD button family with no playability gate**
+  (`usableAbilities` reads `activeOnly`/`oncePerTurn` but not `programPlayable`), so
+  an as-often-as-you-like Ability's button never greys and the repeat click the card
+  invites reliably yields an error pill once the bench runs dry. Pre-existing
+  (Baxcalibur, Gardevoir ex), made routine here. The fix wants the engine-exported
+  preview predicates P4 needs anyway.
+
+### What is left of the family
+**Filter-complete.** Every card still unauthored in the energy-removal family is
+blocked by sentence **STRUCTURE**, not by any missing predicate: an optional
+discard that BUYS an effect (Bellibolt ex), a variable count with damage scaling
+off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda, Eiscue ex,
+Weavile, Pawmot ex — whose rider wants "220 damage to 1 of your opponent's
+Pokémon", which `damageChosen` cannot express since it targets the Bench), and
+Krookodile's flip-until-tails repeat count.
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per

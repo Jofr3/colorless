@@ -183,6 +183,28 @@ symbol. **Fairy (Y) was discontinued** in the Sword & Shield era.
   energy (1 energy = 1 Colorless requirement). Typed requirements (e.g. `W`) must be
   paid by that type (Basic of that type, or a Special/effect that counts as it).
 
+### 6.5 "An {X} Energy" in card TEXT = an Energy that **provides** {X}
+When a card's *effect* names a type — "Discard a {L} Energy from this Pokémon"
+(Kilowattrel), "move a {R} Energy from 1 of your Benched Pokémon" (Armarouge) — it
+means an Energy that **provides that type while attached**, NOT a Basic Energy card
+of that type. Consequences:
+- A **Special Energy that provides {L} counts** as a {L} Energy; one that provides
+  only {C} does not, whatever its name or art.
+- A **wildcard** provider ("provides every type of Energy but only 1 at a time" —
+  Luminous Energy) counts as **every** type, so it satisfies any such reference.
+- The answer is read **on the host, at that moment**: provision is a while-attached
+  property ("As long as this card is attached to a Pokémon, it provides…"), and some
+  Special Energy changes what it provides according to the holder's other
+  attachments (Luminous provides {C} instead "if the Pokémon this card is attached
+  to has any other Special Energy attached"). The same physical card can therefore
+  be a {L} Energy on one board and not on another.
+- It is the SAME reading §6.4 uses to pay a typed cost, which is the practical
+  test: an Energy that can pay a card's {L} cost is exactly one its "{L} Energy"
+  text can take. A card in a **deck, hand or discard pile provides nothing** —
+  it is attached to nothing — so this phrasing only ever addresses Energy in play.
+- Contrast the deliberately different wording "a **Basic {G} Energy card** from your
+  hand" (Decidueye), which really is about the printed card and not about provision.
+
 ---
 
 ## 7. Trainer cards (by type)
