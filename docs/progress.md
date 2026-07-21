@@ -3,7 +3,40 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-21 — build session #24 (**P3-M5: Iono — the `handRefresh`
+**Last updated:** 2026-07-21 — build session #25 (**P3-M5: board conditions — one
+`BoardCondition` vocabulary with TWO consumers**). The `conditionalPlay` backlog
+family, built as a primitive rather than a per-card flag. **`BoardCondition`** is a
+predicate union evaluated for one seat — `morePrizesThanOpponent` (strict `>`),
+`yourStadiumInPlay`, `noEnergyOnYourPokemon` — behind one evaluator `conditionHolds`
++ a describer `conditionNote`. **Its invariant is the design:** every member reads only
+PUBLIC state, so **a gate emits NO event** (unlike `coinFlipGate`, whose flip IS new
+information — a board condition is a fact both players already see). Consumer A is the
+printed **PLAY GATE** `CardProgram.trainerPlayableIf`, checked BEFORE the card leaves
+hand (new `ErrorCode` `PLAY_CONDITION_NOT_MET`) — a rule PRINTED on the card, unlike
+`programPlayable`'s would-only-whiff heuristics. Consumer B is the mid-program
+**`conditionGate`** op `{cond, then, otherwise?}`, spliced into runProgram's queue
+exactly like `coinFlipGate` (so an op inside a branch can still park); `otherwise` is
+the printed "…**instead**", a genuine if/ELSE. Plus one tiny automatic op
+**`drawUntilHandSize`** — it DRAWS to a floor and never TRIMS a bigger hand, and
+no-ops with NO event at a count ≤ 0. Lands **3 COMPLETE real cards**: **Fighting Au
+Lait** (sv02-181), **Falkner** (sv02-180/251), **Grusha** (sv02-184/253/268).
+**Web: zero new events, prompts, dialogs or projection fields** — the only change is
+the HUD greying a gated Trainer out with the engine's own predicate, carrying
+`conditionNote` as the row tooltip (disabling the button REMOVES the reject pill that
+used to explain the printed rule). engineVersion 0.19.0 → **0.20.0**; 1164 → **1196**
+tests, `bun run check` + `vite build` green. **Review (adversarial engine+rules +
+web+integration): NO HIGH from either.** The engine agent verified the riskiest claim
+— `yourStadiumInPlay` is **OWNERSHIP, not presence** — against the Japanese printing
+of ハヤト (「場に**自分の**スタジアムが出ているなら」); an opponent's Stadium must not
+grant Falkner's +2. Its 24-mutant run left 5 survivors (1 equivalent), all
+test-adequacy, all now fixed and re-verified dead via two new fixtures
+(**fix-gateorder**, **fix-gatedsup**). The web agent's 4 MEDs are all addressed
+(engineVersion bump, log-row tests, a self-defeating P4 claim in a doc comment, and
+the HUD's opponent-`prizes` read → recorded as a P4 item). See D40.
+
+---
+### Prior header (P3-M5 Iono, kept for continuity)
+**2026-07-21** — build session #24 (**P3-M5: Iono — the `handRefresh`
 riders that CLOSE the hand-refresh family**). The format's highest-play-rate Supporter
 needed **no new op**: three composable riders on the D38 op — **`toBottom`** (shuffle
 the **hand alone** and put it UNDER the deck, so the deck's order — and the next draws
@@ -31,8 +64,6 @@ LEGAL — no `programPlayable` gate, because a gate would have to reach into "pl
 discards the played card up front". **The family is CLOSED** (no Marnie in sv01–03).
 See D39.
 
----
-### Prior header (P3-M5 handRefresh, kept for continuity)
 **2026-07-20** — build session #23 (**P3-M5 op-slice:
 `handRefresh`** — shuffle your hand into your deck, then draw; the Iono/Judge/Marnie
 hand-refresh Supporter family). New op `{who:"you"|"both", draw}` — the FIRST op in a
@@ -69,6 +100,91 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
+**Board conditions are live (P3-M5, D40) — one `BoardCondition` vocabulary, TWO
+consumers.** The `conditionalPlay` family, built as a primitive instead of a per-card
+flag. **`BoardCondition`** (effects.ts) is a predicate union evaluated for ONE seat —
+**`morePrizesThanOpponent`** (strict `>`: you are BEHIND on Prizes taken),
+**`yourStadiumInPlay`**, **`noEnergyOnYourPokemon`** (Active AND Bench, Basic or
+Special) — behind a single evaluator **`conditionHolds`** and a printed-text describer
+**`conditionNote`**. **The invariant IS the design: every member reads only PUBLIC
+state**, which is exactly why **a gate emits no event** — contrast `coinFlipGate`,
+whose flip is genuinely new information; a board condition is a fact both players can
+read off the table, and the branch's own ops emit whatever happened.
+**Consumer A — the printed PLAY GATE:** `CardProgram.trainerPlayableIf`, checked by
+`playTrainer` BEFORE the card leaves hand (new `ErrorCode` `PLAY_CONDITION_NOT_MET`),
+so a failed gate costs nothing. Categorically different from `programPlayable`'s
+would-only-whiff heuristics: this is a rule PRINTED on the card. Named `trainer…`
+because it is honoured on EXACTLY one path — `playStadium`/`rareCandy`/`attachTool`/
+`useAbility` all return before it and would ignore it SILENTLY (the `trainerEndsTurn`
+precedent; it is also why Luxray's Ability gate must NOT be authored here).
+**Consumer B — the mid-program branch:** the **`conditionGate`** op
+`{cond, then, otherwise?}`, spliced into runProgram's work queue exactly like
+`coinFlipGate` (an op inside a branch can still park, and a branch may hold further
+gates), evaluated against the board AS OF the gate. One-armed is the common shape
+(Falkner); `otherwise` is the printed "…**instead**", a real if/ELSE (Grusha).
+**One tiny new automatic op — `drawUntilHandSize`:** it DRAWS to a floor and never
+TRIMS a bigger hand, and at a count ≤ 0 it no-ops with NO event (no misleading "drew 0
+cards" row). Lands **3 COMPLETE real cards** (verified vs local D1): **Fighting Au
+Lait** (sv02-181 — the gate + heal 60), **Falkner** (sv02-180/251 — two draw ops, not
+one computed count, so the log shows both printed instructions), **Grusha**
+(sv02-184/253/268 — the `otherwise` arm; its hand count is measured AFTER the Supporter
+is discarded up front, the paper ruling for the hand-size family).
+**Web: zero new events, prompts, dialogs or projection fields.** The one change is the
+HUD greying a gated Trainer out with the engine's own `conditionHolds`, carrying
+`conditionNote` as the row's `title` + an `sr-only` line — load-bearing copy, because
+disabling the button REMOVES the reject pill that used to explain the printed rule.
+engineVersion 0.19.0 → **0.20.0**.
+**Review (adversarial engine+rules + web+integration): NO HIGH from either.** The
+engine agent verified the slice's riskiest claim — **`yourStadiumInPlay` is OWNERSHIP,
+not presence** — against the Japanese printing of ハヤト
+(「場に**自分の**スタジアムが出ているなら」) and Bulbapedia; an opponent's Stadium must
+not grant Falkner's +2. Its 24-mutant run left 5 survivors (1 equivalent), ALL
+test-adequacy, all now fixed and re-verified dead with two new fixtures:
+**fix-gateorder** (an attach BEFORE the gate that flips the condition, a two-op arm,
+and an op AFTER the gate — one ordered `CARDS_DRAWN` assertion kills the
+evaluate-against-entry-state, push-not-unshift and dropped-tail mutants at once) and
+**fix-gatedsup** (the only gated SUPPORTER, pinning that a rejected gate does not burn
+the §7.2 allowance). The web agent's 4 MEDs are all addressed: the missing
+`engineVersion` bump; unpinned log rows (3 tests, incl. Falkner's PAIR of draw rows and
+Grusha's zero-row case); a **self-defeating** doc claim that "a P4 client may evaluate
+one locally"; and the HUD's opponent-`prizes` read.
+**Recorded deviation (deliberate):** the HUD greys out a printed `trainerPlayableIf`
+gate while `programPlayable`'s whiff gates (Boss's Orders into an empty Bench) stay
+live and explain themselves via the reject pill — a rule printed on the card is
+knowable before clicking, an engine whiff-judgement is not; the tooltip is what makes
+the mixed standard coherent rather than a silent grey row.
+**P4 item recorded (NOT fixed):** `conditionHolds` takes a `GameState`, so only a
+raw-state host can run it — the projection does not carry `stadium.owner` and redacts
+the prize arrays to counts. The sharp edge: **a redacted prize array still has a
+`.length`**, so `morePrizesThanOpponent` would fail SILENTLY (not loudly) if shipped
+online unchanged. See "M5 op-slice: board conditions as built" + D40.
+**Next concrete actions:**
+1. **`discardOpponentEnergy`** (Crushing Hammer / Giacomo / Klawf ex / Mawile, 4) or
+   the **from-the-top attach** variant (Electric Generator / Hydreigon — which also
+   closes 2 of the remaining `attachEnergyFrom` cards). Both are clean op slices.
+2. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen Vessel,
+   4). Careful: it shares the printed wording "You can use this card only if…" but is
+   NOT a `BoardCondition` — it is a COST with a card CHOICE, so it must PARK. A
+   genuinely different shape from D40's gate, despite reading the same on the card.
+3. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
+   PASSIVE — the third consumer, gating `damageBonusBeforeWR` on
+   `morePrizesThanOpponent`; note `passivesOf` takes no seat today, so it needs one) and
+   **Dendra** (a choose-a-card-from-hand → BOTTOM park, mandatory-exactly-one — which
+   means a `min` on the chooseCards prompt + hiding the dialog's decline button).
+4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games.
+   D40 hands P4 two concrete, named jobs: add `stadium.owner` (or `mine`) to the
+   projection and route the prize comparison through `prizesRemaining`, plus the
+   standing deck-candidate INFO (searchDeck/lookAtTopN `pendingDecision.prompt`).
+**Carried forward (pre-existing, NOT this slice):** Fighting Au Lait is playable with
+nothing damaged anywhere (the Potion shape — `programPlayable` treats heal as "playable
+enough"), which this slice makes conspicuous by enforcing the card's printed legality
+line; `GameLog` announces only the batch's LAST row to screen readers, and a Falkner
+drawing 4 sharpens it (it announces "drew 2 cards", understating the play — and an
+unchanged live region announces nothing, so a second Falkner is silent); and every
+authored Supporter still has `legal_standard=0` in the local ingest.
+
+---
+### Prior resume point (P3-M5 Iono, kept for continuity)
 **Iono is live (P3-M5, D39) — the hand-refresh Supporter family is CLOSED.** The
 format's highest-play-rate Supporter needed **no new op**: three composable riders on
 the D38 `handRefresh` op. **`toBottom?: true`** — the PLACEMENT: shuffle the **hand
@@ -442,13 +558,95 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03)) — next: the `conditionalPlay` board-condition family (5, + Falkner/Grusha), the remaining `moveEnergy` riders (Armarouge / Mismagius / Exp. Share), the from-the-top attach variant or `discardOpponentEnergy`, or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece)) — next: `discardOpponentEnergy` (4) or the from-the-top attach variant, `discardFromHandCost` (4 — a COST that parks, NOT a BoardCondition), the cheap D40 readers (Defiance Band / Dendra), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-21** (build #25) — **P3-M5: board conditions — one `BoardCondition`
+  vocabulary with TWO consumers** (D40; built solo — full context — then an adversarial
+  engine+rules + web+integration review: **no HIGH from either**; 4 engine
+  test-adequacy survivors + 4 web MEDs, all addressed). Chosen as the resume point's
+  #1: the `conditionalPlay` family was the biggest remaining cluster. Built as **one
+  primitive rather than a per-card flag**, which is the whole point of the slice.
+  **`BoardCondition`** (effects.ts) is a predicate union evaluated for ONE seat —
+  **`morePrizesThanOpponent`** (strict `>`: you are BEHIND on Prizes taken),
+  **`yourStadiumInPlay`**, **`noEnergyOnYourPokemon`** (Active AND Bench, Basic or
+  Special) — behind a single evaluator **`conditionHolds`** and a printed-text
+  describer **`conditionNote`**. **The invariant IS the design: every member reads only
+  PUBLIC state**, which is exactly why **a gate emits NO event** — contrast
+  `coinFlipGate`, whose flip is genuinely new information; a board condition is a fact
+  both players can read off the table, and the branch's own ops emit what happened.
+  **Consumer A — the printed PLAY GATE:** `CardProgram.trainerPlayableIf`, checked by
+  `playTrainer` BEFORE the card leaves hand (new `ErrorCode` `PLAY_CONDITION_NOT_MET`),
+  so a failed gate costs nothing. Categorically distinct from `programPlayable`'s
+  would-only-whiff heuristics: this is a rule PRINTED on the card, not the engine's
+  judgement about ops that would do nothing. Named `trainer…` because it is honoured on
+  EXACTLY one path — `playStadium`, `rareCandy`, `attachTool` and `useAbility` all
+  return before it and would ignore it SILENTLY (the `trainerEndsTurn` precedent; also
+  why Luxray's Ability-level gate must NOT be authored on this field).
+  **Consumer B — the mid-program branch:** the **`conditionGate`** op
+  `{cond, then, otherwise?}`, spliced into runProgram's work queue exactly like
+  `coinFlipGate` — so an op inside a branch can still park, and a branch may hold
+  further gates — evaluated against the board AS OF the gate. One-armed is the common
+  shape (Falkner); **`otherwise`** exists for the printed "…**instead**", a genuine
+  if/ELSE (Grusha). **One tiny new automatic op — `drawUntilHandSize`:** it DRAWS to a
+  floor and never TRIMS a bigger hand, and at a count ≤ 0 it no-ops with NO event (no
+  misleading "drew 0 cards" row). **Lands 3 COMPLETE real cards** (verified vs the
+  local D1 catalog): **Fighting Au Lait** (sv02-181, Item — the gate + heal 60),
+  **Falkner** (sv02-180/251, Supporter — authored as TWO draw ops, not one computed
+  count, so the log shows both printed instructions), **Grusha** (sv02-184/253/268,
+  Supporter — the `otherwise` arm; its hand count is measured AFTER the Supporter is
+  discarded up front, which is the paper ruling for the hand-size family).
+  **Web: zero new events, prompts, dialogs or projection fields.** The one change is
+  the HUD greying a gated Trainer out with the engine's own `conditionHolds`, carrying
+  `conditionNote` as the row's `title` + an `sr-only` line — load-bearing copy, because
+  disabling the button REMOVES the reject pill that used to explain the printed rule,
+  and that rule is text the HUD never shows. engineVersion 0.19.0 → **0.20.0**.
+  **Review: NO HIGH from either agent.** The engine agent verified the slice's riskiest
+  claim — **`yourStadiumInPlay` is OWNERSHIP, not presence** — against the Japanese
+  printing of ハヤト (「場に**自分の**スタジアムが出ているなら」, "if **your** Stadium
+  is out on the field") and Bulbapedia's Stadium article; an opponent's Beach Court
+  must NOT grant Falkner's +2. Its **24-mutant** run left 5 survivors (1 equivalent),
+  ALL test-adequacy — the gate read against the program's ENTRY state, the arm pushed
+  to the BACK of the queue, the splice DROPPING the queue tail, a hand ABOVE the target
+  being trimmed, and `conditionNote` returning wrong text. All are now fixed and
+  **re-verified dead**, via two new fixtures: **fix-gateorder** (an attach BEFORE the
+  gate that flips the condition, a two-op arm, and an op AFTER the gate — one ordered
+  `CARDS_DRAWN` assertion kills three mutants at once) and **fix-gatedsup** (the only
+  gated SUPPORTER, pinning that a rejected gate does not burn the §7.2 allowance, since
+  every real gated card is an Item), plus a never-trims test and the first assertions
+  on `conditionNote`'s player-facing wording. The web agent's 4 MEDs, all addressed:
+  the missing `engineVersion` bump; unpinned log rows (3 tests added, incl. Falkner's
+  PAIR of identical draw rows and Grusha's zero-row case); a **self-defeating** doc
+  claim that "a P4 client may evaluate one locally"; and the HUD's opponent-`prizes`
+  read. It also confirmed the ternary restructure is behaviour-preserving for every
+  pre-existing card class, that no drag path bypasses the gate, that nothing outside
+  the engine switches over `EffectOp` (`apps/api` does not depend on the engine at
+  all), and that the error code is never rendered raw. **Recorded deviation
+  (deliberate):** the HUD greys out a printed `trainerPlayableIf` gate while
+  `programPlayable`'s whiff gates (Boss's Orders into an empty Bench) stay live and
+  explain themselves via the reject pill — a rule printed on the card is knowable
+  before clicking, an engine whiff-judgement is not; the tooltip is what makes the
+  mixed standard coherent rather than a silent grey row. **P4 item recorded (NOT
+  fixed):** `conditionHolds` takes a `GameState`, so only a raw-state host can run it —
+  the projection does not carry `stadium.owner` and redacts the prize arrays to counts.
+  The sharp edge: **a redacted prize array still has a `.length`**, so
+  `morePrizesThanOpponent` would fail SILENTLY rather than loudly if shipped online
+  unchanged. **Carried forward (pre-existing):** Fighting Au Lait is playable with
+  nothing damaged anywhere (the Potion shape), which this slice makes conspicuous by
+  enforcing the card's printed legality line; and `GameLog` announces only the batch's
+  LAST row to screen readers, which a Falkner drawing 4 sharpens (it announces "drew 2
+  cards", understating the play — and an unchanged live region announces nothing, so a
+  second Falkner is silent). **Not demo-reachable:** none of the three cards is in the
+  demo decks, so none of this is visible at `/play` without a deck change. `bun run
+  check` green (tsc + biome + **1196 tests**, 1164 → 1196: 26 engine
+  `boardCondition.test.ts` + 3 `logFromEvents.test.ts` + 3 HUD DOM), `vite build`
+  green. Files: effects.ts, interpreter.ts, registry.ts, cardplay.ts, actions.ts,
+  index.ts, testFixtures.ts, boardCondition.test.ts (new); web: GameHud.tsx + its DOM
+  test, logFromEvents.test.ts. See "M5 op-slice: board conditions as built" + D40.
 - **2026-07-21** (build #24) — **P3-M5: Iono — the `handRefresh` riders that CLOSE the
   hand-refresh family** (D39; built solo — full context — then an adversarial
   engine+rules + web+integration review: no HIGH, 2 MED, both fixed). Chosen as the

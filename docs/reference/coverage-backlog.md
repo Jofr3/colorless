@@ -49,7 +49,7 @@ unblocks. High-value ops first.
 | ✅ **`discardPileRetrieval`** (put/shuffle cards from discard → hand/deck) | 6 | **DONE 3/6** (engine 0.15.0, the searchDeck mirror + `supporter`/`pokemonOrBasicEnergy` filters): **Energy Retrieval** (2 Basic Energy → hand), **Pal Pad** (2 Supporters → deck), **Super Rod** (3 Pokémon/Basic Energy → deck). Remaining 3 need MORE: Superior Energy Retrieval (`discardFromHandCost`), Miriam (a conditional "if you shuffled any, draw 3" — a new gate), Pelipper (an Ability, not a Trainer). |
 | ✅ **`lookAtTopN`** (reveal/take a matching card from the top N) | 5 | **DONE 2/5** (engine 0.16.0, the top-of-deck twin of searchDeck: candidates are the top-N matches, then a trailing shuffle): **Great Ball** (top 7 → a Pokémon), **Pokégear 3.0** (top 7 → a Supporter). Remaining 3 need MORE: Electric Generator + Hydreigon attach the found Energy (a from-the-top **attach** variant — the 2 attachEnergyFrom cards this also unblocks), Malamar peeks at the OPPONENT's deck top (a distinct info-only op). |
 | ✅ **`moveEnergy`** (move an Energy between your Pokémon) | 5 | **DONE 2/5** (engine 0.17.0, the compound-park own→own op + the `anyEnergy` filter): **Energy Switch** (a Basic Energy, max 1), **Poppy** (up to 2 any Energy, max 2). Remaining 3 need MORE: Armarouge "Fire Off" (a {R} Energy benched→Active — fixed-endpoint + provided-type filter, an Ability), Mismagius "Magical Flick" (moves the OPPONENT's Energy on evolve — opponent-side + onEvolve trigger), Exp. Share (an on-KO Tool trigger). |
-| **`conditionalPlay`** (a "you can use this only if <board condition>" gate) | 5 | Fighting Au Lait, Letter of Encouragement, Dendra, Lunatone, Luxray |
+| ✅ **`conditionalPlay`** (a "you can use this only if <board condition>" gate) | 5 | **PRIMITIVE DONE, 1/5 cards** (engine 0.20.0 — the `BoardCondition` vocabulary + its two consumers: the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op): **Fighting Au Lait** (more Prizes left → heal 60). The same vocabulary also lands **Falkner** (Stadium → draw 2 more) and, with `drawUntilHandSize`, **Grusha** — 2 cards from other rows. Remaining 4 each need a SECOND missing piece: **Letter of Encouragement** (a "were any of your Pokémon KO'd during your opponent's LAST turn" state fact — new per-seat history + flow wiring), **Dendra** (a choose-a-card-from-hand → BOTTOM park, mandatory-exactly-one, + `drawUntilHandSize`), **Luxray** (an in-hand Ability surface — abilities are in-play only today), **Lunatone** (Stadium-effect prevention). Next reader of the same vocabulary: **Defiance Band** (a conditional PASSIVE — the third consumer). |
 | **`discardOpponentEnergy`** (discard an Energy from an opponent's Pokémon) | 4 | Crushing Hammer, Giacomo, Klawf ex, Mawile |
 | **`discardFromHandCost`** (pay "discard N cards from hand" to play) | 4 | Ultra Ball, Superior Energy Retrieval, Revavroom, Tinkaton |
 | **`onDamagedByAttack`** (a trigger firing when damaged by an attack, even if KO'd) | 4 | Cacnea, Cacturne, Armarouge, Klawf ex |
@@ -57,7 +57,7 @@ unblocks. High-value ops first.
 | **`stadiumActivatedAbility`** (a "once during each player's turn" Stadium) | 3 | Artazon, Mesagoza, Town Store |
 | **`damageAttacker`** (put counters on the attacking Pokémon) | 3 | Cacnea, Cacturne, Stunfisk |
 | **`disableAbilities`** (a continuous Ability-lock aura) | 3 | Klefki, Spiritomb, Ting-Lu ex |
-| `drawUntilHandSize` | 2 | Dendra, Grusha |
+| ✅ `drawUntilHandSize` | 2 | **DONE 1/2** (engine 0.20.0 — draws to a floor, never TRIMS a bigger hand; no event at a count ≤ 0): **Grusha** (to 5, or to 7 with no Energy on your board — the `conditionGate` `otherwise` arm). **Dendra** still needs the choose-from-hand → bottom-of-deck park. |
 | ✅ `endTurn` (a play that ends your turn) | 2 | **DONE**: Koraidon ex (the `AbilityProgram.endsTurn` fold, engine 0.14.0) + Katy (the same fold on the Trainer path via `trainerEndsTurn`, engine 0.18.0). |
 | `conditionalDamageBonus` (Tool: +N under a condition) | 2 | Choice Belt, Defiance Band |
 | `statusImmunity` / `preventDamageFromType` / `coinFlipDamagePrevention` / `drawUntil` / `canEvolveEarly` | 2 each | Dachsbun, Bellibolt, Jumpluff/Skiploom, Togekiss, Scatterbug/Spewpa |
@@ -98,14 +98,22 @@ is well under 70.
    closes the `endTurn` row via the Trainer-path `trainerEndsTurn` fold; then engine
    0.19.0 added **Iono** as three riders — `toBottom` (deck order survives),
    `prizeCount` draw, `onlyIfAnyMoved` gate). No Marnie in the sv01–03 catalog.
-6. **`conditionalPlay` / `conditionalGate`** as a family — unblocks a cluster of
-   Supporters and Abilities at once, and a board-condition gate is also what
-   **Falkner** ("if you have a Stadium in play, draw 2 more") and **Grusha** (with
-   `drawUntilHandSize`) need. Next candidates alongside it: the from-the-top
-   **attach** variant (Electric Generator / Hydreigon — also 2 attachEnergyFrom
-   cards), or `discardOpponentEnergy` (Crushing Hammer / Giacomo, 4). A related
-   deferral: **Miriam**'s "if you shuffled any cards in this way, draw 3" is
-   `onlyIfAnyMoved`'s idea BETWEEN ops and across a park — it needs an op-result
-   threaded through the interpreter's continuation, not a flag.
+6. ✅ **`conditionalPlay` / `conditionalGate`** — **PRIMITIVE DONE** (engine
+   0.20.0): one `BoardCondition` vocabulary with two consumers — the
+   `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus
+   `drawUntilHandSize`. Lands **Fighting Au Lait**, **Falkner** and **Grusha**.
+   Every remaining gated card needs a second missing piece (see the row above),
+   so the primitive is done but the row is not. Cheapest next readers of the same
+   vocabulary: **Defiance Band** (a conditional PASSIVE — the third consumer) and
+   **Dendra** (a choose-from-hand → bottom-of-deck park).
+7. **Next candidates:** the from-the-top **attach** variant (Electric Generator /
+   Hydreigon — also 2 attachEnergyFrom cards), `discardOpponentEnergy` (Crushing
+   Hammer / Giacomo, 4), or `discardFromHandCost` (Ultra Ball / Superior Energy
+   Retrieval / Earthen Vessel, 4). NOTE that last one shares the printed wording
+   "You can use this card only if…" but is NOT a `BoardCondition` — it is a COST
+   with a card CHOICE, so it has to park, which is a different shape entirely.
+   A related deferral: **Miriam**'s "if you shuffled any cards in this way, draw
+   3" is `onlyIfAnyMoved`'s idea BETWEEN ops and across a park — it needs an
+   op-result threaded through the interpreter's continuation, not a flag.
 Each is a normal engine slice (new op + interpreter case + registry rows +
 tests + review), and each turns dozens of "needs-op" rows into a few data rows.
