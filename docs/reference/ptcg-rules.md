@@ -500,6 +500,23 @@ card, targets, the game state, RNG for coin flips):
 **E. Search / shuffle / draw / deck manipulation**
 - Draw N; search deck for a card matching a predicate; reveal; move between zones;
   shuffle; put cards on top/bottom of deck; look at prizes; discard from deck/hand.
+- **"…in any way you like"** (Electric Generator, Hydreigon "Tri Howl", Dragonite
+  VSTAR "Draconic Star"): when an effect distributes several cards over several
+  Pokémon, each card is assigned **independently** — any split is legal, including
+  putting all of them on one Pokémon. It is not "one each", and the count taken is
+  still capped by the printed "up to N" / unbounded for "any number" (both of which
+  also permit taking **none**).
+- **The leftovers clause is part of the effect.** A look-at-the-top-N whose final
+  sentence says "Shuffle the other cards back into your deck" or "**Discard** the
+  other cards" performs that sentence **whether or not anything was taken** — a
+  whiffed look and a declined one both pay it. The two are not interchangeable:
+  the shuffle can be modelled as an independent following step (the cards never
+  left the deck, and a shuffle destroys order anyway), while the discard must name
+  exactly the looked-at cards that were not taken.
+- Only the cards actually TAKEN become public (they are revealed, or land on the
+  board / in the discard pile). The ones returned to the deck stay hidden — which
+  is why the shuffle matters: it removes what the controller learned about the
+  deck's order.
 
 **F. Energy effects**
 - Attach from hand (base 1/turn) or accelerate (extra attachments from effects).

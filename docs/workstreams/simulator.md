@@ -2543,6 +2543,209 @@ Weavile, Pawmot ex — whose rider wants "220 damage to 1 of your opponent's
 Pokémon", which `damageChosen` cannot express since it targets the Bench), and
 Krookodile's flip-until-tails repeat count.
 
+## M5 op-slice: attachFromTop as built (engine 0.25.0)
+**2026-07-21.** The from-the-top ATTACH the `lookAtTopN` slice explicitly
+deferred: look at the top N of your own deck and attach the Energy you find
+there **straight onto your Pokémon**, rather than putting a card in hand.
+
+### The op
+`{op:"attachFromTop"; n; filter; max: number|"any"; targetType?; benchOnly?;
+discardRest?}`. It is not a rider on `lookAtTopN` and not a rider on
+`attachEnergyFrom`, because the decision it parks on is a shape neither can
+express — see below. Two consumers, and they differ in **every** rider the op
+has, which is what made each one worth having:
+
+| | Electric Generator (sv01-170, Item) | Hydreigon (sv02-140) "Tri Howl" (Ability) |
+|---|---|---|
+| look at | top **5** | top **3** |
+| attach | **up to 2** Basic **{L}** Energy **cards** | **any number** of **Energy cards** |
+| onto | your **Benched {L}** Pokémon | your Pokémon (**any**, Active included) |
+| leftovers | **shuffle** back (a trailing op) | **discard** (`discardRest`) |
+| gate | Item, playable any number of times | **once per turn**, not Active-only |
+
+### "In any way you like" — the first prompt whose answer is a MAP
+`attachEnergyFrom` attaches ONE fungible card and asks only *where*; `moveEnergy`
+takes several Energy but they all land on ONE destination. Here the cards are
+whatever the top N happened to hold and **each attached card names its own
+destination**, so the answer is a set of (card → Pokémon) pairs. That is the new
+`attachCards` prompt (`candidates` / `targets` / `max`) and the new
+`{kind:"attachCards"; assignments}` choice. Consequences worth stating:
+
+- Any split is legal, **including all of them on one Pokémon** — "in any way you
+  like" is not "one each" (pinned by its own test, since a per-target-once rule
+  would look plausible and pass every single-card test).
+- The pairing is what `validateChoice` has to check: ≤ `max` assignments, every
+  uid one the prompt offered (which is what keeps a client off a card DEEPER in
+  the deck than the look reached), **no uid twice** — one physical card cannot
+  land on two Pokémon — and every destination an offered target.
+- Declinable, like every "up to": attaching none is a legal answer, so the op
+  parks whenever there is anything to attach and anywhere to put it. It does not
+  auto-resolve a one-candidate board (the searchDeck rule, not the gust rule).
+
+### The leftovers clause — why one arm is a field and the other is an op
+"Shuffle the other cards back into your deck" is the **trailing `shuffleDeck`
+op**, the Nest Ball search-then-shuffle pattern every pile op here already uses:
+those cards never left the deck, and a shuffle destroys order anyway, so a step
+that knows nothing about the window gets it exactly right.
+
+"**Discard** the other cards" cannot be expressed that way. It must name exactly
+the looked-at cards that were NOT attached, and only the op knows which those
+were — after k are attached the window holds n − k, so a "discard the top 3" step
+would eat k cards deeper in the deck. Hence `discardRest` ON the op. The
+asymmetry is forced by what each clause has to know, not chosen for style.
+
+And it is **charged on every path** — the whiff (no Energy up there), the decline
+(attach none), and the no-eligible-target board. Every non-parking branch of
+`stepOp` therefore routes through the SAME `attachFromTopApply` with an empty
+assignment list rather than returning `state`, which is what keeps a branch from
+forgetting it. For Electric Generator this is invisible (a whiffed search
+shuffles either way, as it always has); for Tri Howl it is the difference between
+the Ability costing three cards and costing nothing. New count-only-ish event
+**`DECK_TOP_DISCARDED {seat, uids}`**: the pile is public, so naming the cards
+leaks nothing, and the attached ones are named by their own `ENERGY_ATTACHED`.
+
+### The filter reads the PRINT — D44's rule, from the other side
+Electric Generator's "Basic **{L}** Energy **cards**" is `basicEnergy` +
+`energyType`, NOT `providesEnergy`. These cards sit in a DECK, attached to
+nothing, and provision is a while-attached property (§6.5) — so there is nothing
+to read but the print. This is the Decidueye row's argument used in the opposite
+direction, and it is the one filter choice these two cards could get wrong.
+Authoring `providesEnergy` here would be a loud no-op rather than a wrong card
+(`matchesFilter` answers false — the `fix-pilescan` fixture pins it).
+
+### One target rule, two op-shaped readers
+`attachEnergyTargets` was **widened, not copied**: it took an `attachEnergyFrom`
+op and now takes a shared **`AttachTargetRiders`** (`targetType` / `basicOnly` /
+`benchOnly` / `bonusCounters` / `notIfKO`, effects.ts), so "is this Pokémon an
+eligible attach target" is one rule both attach ops read. An eligibility rule
+that drifted between them would make the same board legal for one attach and not
+the other. `benchOnly` is the new member, and Electric Generator needs it
+literally — its Active may be a Lightning Pokémon and is still not a target.
+
+### There is NO play gate — and the draft that had one was the slice's one HIGH
+The first draft added `attachFromTopPlayable` to `programPlayable`, refusing
+Electric Generator when the controller had no Benched {L} Pokémon, by the "an
+attach with no eligible target can only whiff" rule `attachEnergyFrom` follows.
+The adversarial review killed it, correctly, and the argument is the useful part:
+
+- **`programPlayable` is an AND over a program's ops**, so vetoing on this op
+  vetoes the CARD — including Electric Generator's second printed sentence,
+  "Shuffle the other cards back into your deck", which always resolves.
+- The ruling `cardplay.ts` already quotes (ruling/284) draws exactly that line:
+  playing a card for no effect is when the game state prevents **any** effect.
+  Shuffling a known-bad deck top is an effect players deliberately buy — and the
+  §15.E note this same slice added says so in as many words.
+- Two in-repo precedents agree: Great Ball / Pokégear (`lookAtTopN` +
+  `shuffleDeck`) are unconditionally playable, and so is Nest Ball into a full
+  Bench. The attach variant behaving differently from the put-in-hand variant had
+  no printed justification.
+
+So the op is **ungated**, and the no-eligible-target board is a live path through
+`stepOp`'s empty branch: it attaches nothing and shuffles, exactly like a whiffed
+Great Ball. The distinction from `attachEnergyFrom` is not the attach — it is that
+every card carrying THIS op also carries a leftovers clause that always happens,
+so "no target" is never "no effect". A future card where the attach is the whole
+effect would want a gate expressed as "no op in this program can do anything",
+not as a per-op veto.
+
+The cap follows the same discipline: `max` is `min(printed, candidates.length)`
+for both forms, so `"any"` is the degenerate case rather than a branch, and "up to
+2" with one Basic {L} in the window is a pick of **one** — a prompt reporting 2
+there would have the dialog count "0/2" over a single row. The prompt's `note`
+still reads as PRINTED ("up to 2"), the discardNote doctrine: the sentence is the
+card's, the number is what you can do.
+
+### Web — one new dialog, one new log row
+`AttachCardsDialog` is a two-step **loop** rather than the two-step wizard
+`MoveEnergyDialog` is: pick a card, pick where it goes, repeat. The target list
+is mounted only while a card is waiting for one, and **clicking an assigned card
+takes it back** — the only undo, since a parked decision cannot be dismissed. A
+click at the cap is refused with `aria-disabled` (the DiscardEnergyDialog rule),
+and the `<output>` live region carries the running count, which card is waiting
+for a destination, and the fact that the cap is closed. Row names are set with
+`aria-label` because the accessible-name algorithm trims and concatenates
+adjacent elements — the visible "Lightning Energy → Pikachu" would otherwise be
+announced as one run-on word. `promptKey` gained an `attachCards` case carrying
+both the candidates AND the targets (both are half of every answer).
+
+### Review (2 adversarial agents: engine+rules with 50 mutants / web+integration)
+**One HIGH, from the engine agent — the play gate above, now removed.** The web
+agent found no HIGH: it could not produce a dispatch the engine rejects, a state
+where the player cannot complete or decline, or a leak this slice introduces.
+Between them, **65 mutations**; every survivor is now dead or recorded. Fixes
+applied beyond the HIGH:
+
+- **`max` clamped to the candidate count** (both agents, independently) + a test.
+- **The prompt keeps "you find there" and "in any way you like"** — the second is
+  the only cue that both Energy may go on ONE Pokémon, which is the misconception
+  the dialog's shape invites and the engine test at "…the SAME Pokémon" guards.
+- **Four engine test holes**, each a mutation that passed all 1323 tests: the
+  `max` cap was never the rule that rejected (every other board had
+  `max === candidates.length`, so the was-it-offered check fired first); attaching
+  onto an Active that **already holds Energy** was unpinned (a clobber survived);
+  the discard pile was **empty at every Tri Howl seed**, so append-vs-prepend was
+  unpinned; and the apply's four wire-safety guards were unreachable through the
+  action API — now driven directly through `applyChoice`, including the
+  out-of-range bench index, which without its guard **destroys a card** (the
+  `bench.map` no-ops while the uid still leaves the deck).
+- **The dialog's pending state is no longer `aria-pressed`.** Confirm dispatches
+  `assignments`, which does not contain the card waiting for a destination — so
+  announcing it as pressed promised an attach that would not happen. It is
+  `aria-current` now, with its own ring and a "choosing…" suffix.
+- **The assigned-row readback carries the SPOT** ("→ fix-lightning-1 · Bench 2").
+  Without it, two benched Pokémon sharing a name are indistinguishable and the
+  only way to check the choice is to undo it.
+- **Releasing an assignment no longer cancels an unrelated pending pick.**
+- **The at-cap live-region text says what you CAN do** ("Tap an attached card to
+  move it") instead of "Pick a card", which at the cap is exactly what a click
+  refuses — and the comment claiming the region announces a refused click was
+  removed, because it does not (React bails out on an unchanged state; the
+  DiscardEnergyDialog note is honest about the same limit).
+- **A dispatch-time filter against the offer.** Today a no-op — the `promptKey`
+  remount clears picks between parks — but the failure mode if that key ever stops
+  discriminating is not a bad attach, it is an **unescapable dialog**: a stale uid
+  renders no row so it cannot be released, every dispatch (including "Attach
+  none") is rejected as not-offered, and an unchanged state never remounts the
+  dialog. Now pinned by a DOM test that drives two real parks through one mounted
+  HUD, plus tests for the live region, the pending/committed distinction, the
+  independent release, and the visible row TEXT (every earlier assertion read the
+  accessible name, so deleting both `<span>` children rendered blank buttons and
+  passed).
+- **The log row asserts its SEAT**, not just its text — "infer the actor from the
+  other seat" is a bug this log has already shipped once (D43's `ENERGY_DISCARDED`).
+
+**Recorded, NOT fixed:**
+- **P4 hidden information.** `projection.ts` copies the parked prompt into
+  `pendingDecision` for BOTH seats, so an `attachCards` prompt carries the
+  controller's private deck-top uids. Pre-existing and already tracked for
+  `chooseCards` (D36), unobservable in the hot-seat build — but with one new
+  wrinkle worth the P4 filter's attention: for a **shuffle**-leftovers card the
+  unattached candidates go back into the deck and never become public by any other
+  route, where `DECK_TOP_REVEALED`'s non-taken cards are at least shuffled away.
+- **`GameLog` announces only a batch's LAST row**, and this slice is the first
+  where that row is a pure COST while the benefit is silent: Tri Howl's batch ends
+  in `DECK_TOP_DISCARDED` ("discarded 2 looked-at cards"), Electric Generator's in
+  `SHUFFLE`, so the attaches — the point of both cards — are never spoken. The fix
+  is a batch summary, not a re-ordering.
+- **Tri Howl on an empty deck** burns the once-per-turn allowance with only an
+  `ABILITY_USED` row to show for it. Consistent with "a look is always playable
+  enough"; a deck-size gate would be the one place that doctrine could bend, since
+  deck SIZE is public.
+- **Neither card is in a demo deck**, so the dialog is unreachable at `/play`
+  without a builder deck — as with every other M5 op-slice card. Hydreigon is
+  additionally a Stage 2 off Zweilous, so Tri Howl needs a full line or Rare Candy.
+
+### The family's third member, and why it is NOT authored
+**Dragonite VSTAR** (swsh10.5-050/-081) "Draconic Star" — "Look at the top 12
+cards of your deck and attach any number of **Water or Lightning** Energy cards
+you find there to your Pokémon in any way you like. Shuffle the other cards back
+into your deck. **(You can't use more than 1 VSTAR Power in a game.)**" — is the
+same op with two blockers, neither of them this op's: a **two-type filter** (no
+`CardFilter` member is a union of types), and the **VSTAR Power once-per-GAME**
+rule, which is a per-player allowance the engine has no vocabulary for (§15.J's
+allowances all reset each turn). Authoring it without the second would print a
+card that can be used every turn.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

@@ -3,7 +3,49 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-21 — build session #29 (**P3-M5: the `providesEnergy`
+**Last updated:** 2026-07-21 — build session #30 (**P3-M5: `attachFromTop` — the
+from-the-top ATTACH, and the play gate that had to be REMOVED**). The variant the
+`lookAtTopN` slice deferred: look at the top N of your own deck and attach the
+Energy you find there **straight onto your Pokémon**, "**in any way you like**".
+That phrase is why it is its own op — each attached card names its **own**
+destination, so the answer is a **MAP** (card → Pokémon), the first prompt whose
+answer pairs each pick with a target of its own (`attachCards`). Any split is
+legal, including both Energy on ONE Pokémon. Two consumers differing in **every**
+rider the op has: **Electric Generator** (sv01-170, Item — top 5, up to 2 Basic
+{L} Energy CARDS, onto your BENCHED {L} Pokémon, leftovers shuffled back) and
+**Hydreigon "Tri Howl"** (sv02-140, Ability, once per turn — top 3, ANY number of
+Energy cards, onto ANY of your Pokémon, leftovers **DISCARDED**). The **leftovers
+clause** is the design point: "shuffle the other cards back" is a trailing
+`shuffleDeck` op (they never left the deck, and a shuffle destroys order anyway),
+but "**discard** the other cards" must name exactly the looked-at cards that were
+not attached — so it is `discardRest` ON the op, and it is charged on **every**
+path (whiff, decline, no-target), which is the difference between Tri Howl costing
+three cards and costing nothing. New event `DECK_TOP_DISCARDED`. The filter reads
+the **PRINT** (`basicEnergy` + type, never `providesEnergy`): these cards sit in a
+DECK, attached to nothing — D44's §6.5 from the other side.
+`attachEnergyTargets` was **widened, not copied**, into a shared
+`AttachTargetRiders` (new member: `benchOnly`). Rules doc extended at **§15.E**.
+engineVersion 0.24.0 → **0.25.0**; 1301 → **1331** tests, `bun run check` +
+`vite build` green. **Review (2 adversarial agents, engine+rules with 50 mutants /
+web+integration; 65 mutations between them): ONE HIGH — the play gate.** The first
+draft refused Electric Generator with no Benched {L} Pokémon; but `programPlayable`
+is an **AND over ops**, so that vetoed the CARD including its second printed
+sentence, which always resolves — against the very ruling cardplay.ts quotes, and
+against Great Ball / Nest Ball in this same repo. The op is now **ungated** and
+the no-target board is a live path (attach nothing, shuffle). Also fixed: `max`
+clamped to `min(printed, candidates.length)`; the prompt keeps "you find there" /
+"in any way you like"; four engine test holes each proved by a mutation that
+passed all 1323 tests (the cap was never the rule that rejected; a clobber of
+Energy already on the Active; append-vs-prepend into a discard pile that was empty
+at every seed; and the apply's four wire guards, one of which **destroys a card**
+if removed — now driven directly through `applyChoice`); and five web fixes, the
+sharpest being that a **pending** pick was `aria-pressed` although Confirm does not
+dispatch it, and a dispatch-time filter against the offer, because a stale prompt
+key's failure mode is not a bad attach but an **unescapable dialog**. See D45.
+
+---
+### Prior header (P3-M5 the providesEnergy filter, kept for continuity)
+**Last updated (was):** 2026-07-21 — build session #29 (**P3-M5: the `providesEnergy`
 CardFilter — "an Energy that PROVIDES {X}"**). The energy-removal family's last
 missing piece, and the **first filter a CARD alone cannot answer**. Two claims:
 **PROVISION, NOT PRINT** — "{L} Energy" is not "a Basic Lightning card"; a Special
@@ -238,53 +280,56 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**The `providesEnergy` filter is live (P3-M5, D44) — engine 0.24.0.** "An Energy
-that PROVIDES {X}", read by TWO ops: the DERIVED typed self-discard (5 catalog
-rows, zero registry rows) and `moveEnergy`'s new `benchToActive` route (Armarouge).
-Provision is read **on the host**, through the same `unitsOf` §8.2's cost matcher
-reads, so what can pay a {L} cost is exactly what a "{L} Energy" effect can take;
-`matchesFilter` answers false for pile scans. **The energy-removal family is now
-FILTER-COMPLETE** — every card still unauthored in it is blocked by sentence
-STRUCTURE, not by a missing predicate.
+**`attachFromTop` is live (P3-M5, D45) — engine 0.25.0.** Look at the top N of
+your deck and attach the Energy you find there onto your own Pokémon, "in any way
+you like" — the first prompt whose answer is a **map** (card → Pokémon), landing
+**Electric Generator** and **Hydreigon "Tri Howl"**. The leftovers clause splits
+two ways on purpose: a shuffle is a following op, a **discard** is on the op, and
+it is charged on the whiff and the decline too. The op is **ungated** — the review
+proved a per-op `programPlayable` veto wrong for a card whose other printed clause
+always resolves.
 **Next concrete actions:**
-1. **The from-the-top attach variant** (Electric Generator / Hydreigon — also 2 of
-   the remaining `attachEnergyFrom` cards): `lookAtTopN` finds the Energy, and the
-   new variant ATTACHES it rather than putting it in hand.
-2. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
+1. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
    Vessel / Revavroom / Tinkaton). Shares the printed "You can use this card only
    if…" wording but is NOT a `BoardCondition` — a COST with a card CHOICE, so it
    must PARK before the effect runs.
-3. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
+2. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
    optional discard that BUYS an effect (Bellibolt ex), a variable count with
    damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
    Eiscue ex, Weavile), a repeat count (Krookodile).
-4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
+3. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
    PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra**
    (a choose-from-hand → BOTTOM park, mandatory-exactly-one).
+4. **The search-and-attach shape** — **Janine's Secret Art** (sv06.5-059/-088):
+   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck
+   for a Basic {D} Energy and attach it." A per-target search, which is neither
+   `attachFromTop` (no window) nor `attachEnergyFrom` (the source is the deck).
 5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat` (the
-   searchDeck deck-uid leak), D40's `stadium.owner` + `prizesRemaining` projection
-   additions, and the **engine-exported preview predicates** the HUD needs (which
-   would also close the Ability-button gap below).
-**Recorded, NOT fixed (this slice):** the typed candidate set is SNAPSHOTTED, so
-discarding one Special cannot un-demote a survivor — unreachable today (a wildcard
-is only a candidate when it is the SOLE Special), and it activates with the first
-typed Special Energy authored. **Charizard's "Burn Brightly"** ("Each basic Fire
-Energy attached to your Pokémon provides {R}{R}") is itself a PROVISION modifier
-and `unitsOf` has no hook for a Pokémon Ability that changes provision — provision
-is print + `EnergyProgram` only, so authoring it widens the model BOTH this filter
-and the cost matcher read. **`usableAbilities` is the only HUD button family with
-no playability gate** (no `programPlayable`), so an as-often-as-you-like Ability's
-button never greys and the invited repeat click yields an error pill once the bench
-runs dry — pre-existing (Baxcalibur, Gardevoir ex), made routine by Armarouge.
+   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
+   (the searchDeck / lookAtTopN / **attachCards** deck-uid leak — see below), D40's
+   `stadium.owner` + `prizesRemaining` projection additions, and the
+   **engine-exported preview predicates** the HUD needs.
+**Recorded, NOT fixed (this slice):** the **P4 `pendingDecision` leak** now carries
+a prompt whose unattached candidates go BACK into the deck and never become public
+by any other route (unlike `DECK_TOP_REVEALED`'s, which are at least shuffled
+away) — the P4 filter should know that. **`GameLog` announces only a batch's LAST
+row**, and this is the first slice where that row is a pure COST while the benefit
+is silent (Tri Howl ends in `DECK_TOP_DISCARDED`, Electric Generator in `SHUFFLE`,
+so the attaches are never spoken); the fix is a batch summary, not a re-ordering.
+**Tri Howl on an empty deck** burns its once-per-turn allowance with only an
+`ABILITY_USED` row — consistent with "a look is always playable enough", and the
+one place that doctrine could bend, since deck SIZE is public. **Dragonite VSTAR**
+"Draconic Star" is the family's third member and stays unauthored: it needs a
+two-type filter AND the **VSTAR Power once-per-GAME** rule, which is a per-player
+allowance the engine has no vocabulary for (§15.J's allowances all reset per turn).
 **Carried forward (pre-existing, NOT this slice):** every authored Supporter still
-has `legal_standard=0` in the local ingest; **`GameLog` announces only a batch's
-LAST row** to screen readers; `GamePage`'s `passDisabled` phase check is untested;
-Fighting Au Lait is still playable with nothing damaged anywhere; `validateChoice`
-does not pin a multi-count pick to a single host; and from D42 the attack epilogue
-sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is missed —
-**do that before landing any self-damaging attack text** (sv01-038 Skeledirge is
-one deriver sentence away).
+has `legal_standard=0` in the local ingest; `GamePage`'s `passDisabled` phase check
+is untested; Fighting Au Lait is still playable with nothing damaged anywhere;
+`validateChoice` does not pin a multi-count pick to a single host; `usableAbilities`
+is the only HUD button family with no playability gate; and from D42 the attack
+epilogue sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is
+missed — **do that before landing any self-damaging attack text** (sv01-038
+Skeledirge is one deriver sentence away).
 
 ---
 ### Prior resume point (P3-M5 the discardEnergy ATTACK arms, kept for continuity)
@@ -980,13 +1025,41 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher) + **D42 = attack effect programs can PARK** (the `attackEpilogue` PendingStage carries the §8.1 KO sweep + §5.3 turn end, seeded BEFORE the effect program and folded through `settleProgram`'s `resumeTail` — a MECHANISM, not a card family; its first readers are the §8 self-discard cost via `discardEnergy`'s `yourActive` arm + `count:"all"`, 12 catalog rows all DERIVED, engine 0.22.0) + **D43 = the `discardEnergy` ATTACK arms** (the opponent-side twins on the existing `opponentActive` arm, bare + coin-gated — Pincurchin / Gumshoos / Dragonite V ×2 / Dedenne / Maschiff / Tympole / Yveltal — and the exact-N `count` — Corviknight / Slither Wing / Koraidon: 11 more rows, again ZERO registry rows; the collapse is now CAPPED at `count` per class, and `forcedDiscards` folds the short board into the same comparison as the no-choice rule, i.e. the new §8.6 "do as much as you can"; engine 0.23.0)) — next: the **`providesEnergy` filter** (the ONE primitive left in the energy-discard family — Kilowattrel / Arcanine ex ×2 / Charmeleon / Charizard, and it also unblocks Armarouge on `moveEnergy`), `discardFromHandCost` (a COST that parks, NOT a BoardCondition), the from-the-top attach variant (Electric Generator / Hydreigon), the cheap D40 readers (Defiance Band / Dendra), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher) + **D42 = attack effect programs can PARK** (the `attackEpilogue` PendingStage carries the §8.1 KO sweep + §5.3 turn end, seeded BEFORE the effect program and folded through `settleProgram`'s `resumeTail` — a MECHANISM, not a card family; its first readers are the §8 self-discard cost via `discardEnergy`'s `yourActive` arm + `count:"all"`, 12 catalog rows all DERIVED, engine 0.22.0) + **D43 = the `discardEnergy` ATTACK arms** (the opponent-side twins on the existing `opponentActive` arm, bare + coin-gated — Pincurchin / Gumshoos / Dragonite V ×2 / Dedenne / Maschiff / Tympole / Yveltal — and the exact-N `count` — Corviknight / Slither Wing / Koraidon: 11 more rows, again ZERO registry rows; the collapse is now CAPPED at `count` per class, and `forcedDiscards` folds the short board into the same comparison as the no-choice rule, i.e. the new §8.6 "do as much as you can"; engine 0.23.0) + **D44 = the `providesEnergy` CardFilter** ("an Energy that PROVIDES {X}" — the first filter a CARD alone cannot answer, since provision is a while-ATTACHED property that Luminous makes depend on the holder's other attachments; read by TWO ops through one `unitsOf` shared with §8.2's cost matcher, so what can PAY a {L} cost is exactly what a "{L} Energy" effect can take: the DERIVED typed self-discard in both printed notations (5 rows, zero registry rows) and `moveEnergy`'s `benchToActive` route (Armarouge); §6.5, engine 0.24.0 — the energy-removal family is now FILTER-COMPLETE) + **D45 = `attachFromTop`** (look at the top N of your deck and attach the Energy you find there onto your own Pokémon, "in any way you like" — the first prompt whose answer is a MAP, card → Pokémon; Electric Generator / Hydreigon "Tri Howl", the two differing in every rider the op has, and the leftovers clause splitting two ways on purpose — a shuffle is a following op, a DISCARD is on the op and is charged on the whiff and the decline too; the review REMOVED the draft's play gate, since `programPlayable` is an AND over ops and would veto a card whose other printed clause always resolves; §15.E, engine 0.25.0)) — next: `discardFromHandCost` (a COST that parks, NOT a BoardCondition), the energy-removal family's remaining SENTENCE STRUCTURES (Bellibolt ex / Chien-Pao ex / Sandaconda / Krookodile), the cheap D40 readers (Defiance Band / Dendra), the search-and-attach shape (Janine's Secret Art), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-21** (build #30) — **P3-M5: `attachFromTop` — the from-the-top ATTACH,
+  and the play gate that had to be REMOVED** (D45; built solo, then the usual
+  2-agent adversarial review). The variant `lookAtTopN` deferred, and it turned out
+  not to be a rider on either op it sits between. **"In any way you like"** is a
+  different answer SHAPE — each attached card names its own destination, so the
+  prompt's answer is a MAP (card → Pokémon) rather than a list, and any split is
+  legal including both Energy on one Pokémon. The **leftovers clause** is two
+  mechanisms wearing one printed sentence: "shuffle the other cards back" is a
+  following op (they never left the deck, and a shuffle destroys order anyway),
+  while "**discard** the other cards" must name exactly the looked-at cards that
+  were not attached — so it lives ON the op, and it is charged on the whiff and the
+  decline as well, which is the difference between Tri Howl costing three cards and
+  costing nothing. Two consumers differing in every rider: **Electric Generator**
+  (Item) and **Hydreigon "Tri Howl"** (once-per-turn Ability). The filter reads the
+  PRINT, never `providesEnergy` — D44's §6.5 rule from the other side.
+  **The review's one HIGH is the entry's most useful half:** the first draft GATED
+  the play (no Benched {L} Pokémon → refused), but `programPlayable` is an **AND
+  over a program's ops**, so that vetoed the CARD including its second printed
+  sentence, which always resolves — against the ruling cardplay.ts itself quotes,
+  and against Great Ball / Nest Ball in this same repo. The gate is gone; the
+  general rule is recorded for the first card that needs one ("no op in this program
+  can do anything", not a per-op veto). Also fixed: `max` clamped to the candidate
+  count; the prompt keeps the printed "you find there" / "in any way you like"; four
+  engine test holes each proved by a mutation that passed all 1323 tests; and five
+  web fixes, the sharpest being that a **pending** pick was announced `aria-pressed`
+  although Confirm does not dispatch it, plus a dispatch-time filter against the
+  offer, because a stale prompt key's failure mode is an **unescapable dialog**
+  rather than a bad attach. engine 0.24.0 → **0.25.0**; 1301 → **1331** tests.
 - **2026-07-21** (build #29) — **P3-M5: the `providesEnergy` CardFilter — "an
   Energy that PROVIDES {X}"** (D44; built solo, then the usual 2-agent adversarial
   review). The resume point's #1, and the ONE primitive the previous slice
