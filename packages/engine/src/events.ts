@@ -242,14 +242,20 @@ export type GameEvent =
   | { type: "ENERGY_MOVED"; seat: Seat; uids: string[]; from: PokemonTarget; to: PokemonTarget }
   /** An effect discarded `uids` (Energy cards) off `seat`'s in-play Pokémon at
       `from`, into `seat`'s OWN discard pile — the §15 energy-removal family
-      (Crushing Hammer, Giacomo, Mawile). `seat` OWNS the Pokémon that lost the
-      Energy, i.e. the victim, exactly as DAMAGE_DEALT's seat names the defender;
-      the controller who caused it is named by the TRAINER_PLAYED /
-      ABILITY_TRIGGERED row in the same batch. One event per affected Pokémon (a
-      Giacomo sweep emits several), each naming its own spot; the Pokémon stay put
-      (no compaction), so `from` resolves against the post-state. Attached Energy
-      and the discard pile are both public, so naming the cards leaks nothing. */
-  | { type: "ENERGY_DISCARDED"; seat: Seat; uids: string[]; from: PokemonTarget }
+      (Crushing Hammer, Giacomo, Mawile) and the §8 self-discard attack cost
+      (Houndoom "Fire Blast", Pawmot "Electro Paws"). `seat` OWNS the Pokémon that
+      lost the Energy, i.e. the victim, exactly as DAMAGE_DEALT's seat names the
+      defender; `actor` is the controller whose card caused it.
+
+      The two are the SAME seat for a self-discard and opposite for a hammer,
+      which is why `actor` is carried rather than inferred: a consumer that read
+      it as "the other seat" (the log did, before the self arm existed) would
+      credit a Houndoom's own discard to its opponent. One event per affected
+      Pokémon (a Giacomo sweep emits several), each naming its own spot; the
+      Pokémon stay put (no compaction), so `from` resolves against the post-state.
+      Attached Energy and the discard pile are both public, so naming the cards
+      leaks nothing. */
+  | { type: "ENERGY_DISCARDED"; seat: Seat; actor: Seat; uids: string[]; from: PokemonTarget }
   /** `seat` shuffled its whole hand (`count` cards) into its deck, then drew (a
       separate CARDS_DRAWN) — the hand-refresh Supporter family (Youngster, Judge,
       Brassius, Katy). COUNT-ONLY: a shuffled hand card is hidden, so the opponent

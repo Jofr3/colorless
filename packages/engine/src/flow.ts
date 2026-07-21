@@ -313,6 +313,52 @@ export function resolveMidTurnKnockOuts(
   );
 }
 
+/** The shared attack epilogue (§8.1 + §5.3) — every exit out of `attack`
+    (attack.ts: the confusion-tails failure, an attack with no effect program,
+    and the attackEpilogue stage a PARKED effect program resumes into): sweep
+    `koedSeat`'s WHOLE board for Knock Outs — the Active from the main damage AND
+    any Benched Pokémon a spread/snipe effect damaged (§8.1, generalized off the
+    Active) — prizes to the KO'd side's opponent, re-read off the state since the
+    effect ops replace the Pokémon objects. Then end `attackerSeat`'s turn
+    through the staged tail, the KO's decision stages in front of it. A
+    single-seat sweep can never tie (a §14 tie needs both boards to win at once),
+    but stay total — finishGame if one ever does.
+
+    **The sweep is SINGLE-SEAT, and that is a live limit, not a nicety.** A Knock
+    Out an attack's own effect causes on the ATTACKER's board is missed here, and
+    `resumeTail` is precisely what skips settleProgram's both-boards
+    `resolveMidTurnKnockOuts`. Unreachable today — every deriver rule and every
+    authored attack program damages the opponent only — but the first
+    self-damaging attack text (sv01-038 Skeledirge's "This Pokémon also does 30
+    damage to itself.") is ONE deriver sentence away, and it must widen this to
+    `SEATS` (which also makes the §14 double-KO tie guard reachable from the
+    attack path for the first time, so it wants its own tests).
+
+    Lives in flow.ts rather than attack.ts because `advance` below must reach it:
+    attack.ts already imports flow, so the epilogue stage's handler cannot sit on
+    the other side of that edge. */
+export function finishAttack(
+  state: GameState,
+  events: GameEvent[],
+  attackerSeat: Seat,
+  koedSeat: Seat,
+): ApplyResult {
+  const batch = collectKnockOuts(state, [koedSeat], events);
+  if (batch.done !== null) return finishGame(batch.state, batch.done, events);
+  // §5.3 — attacking ends the turn, through the same staged tail as a pass.
+  // COMPOSES with whatever is still queued rather than overwriting it: both
+  // callers hand over an empty queue (turn:action never carries a tail, and the
+  // attackEpilogue case pops its own stage first), so this is behaviour-identical
+  // — but it makes that pop LOAD-BEARING instead of merely tidy. Overwriting hid
+  // a missing pop, which is exactly the kind of mistake the queue should surface.
+  const pending: PendingStage[] = [
+    ...batch.stages,
+    ...turnTail(attackerSeat),
+    ...batch.state.pending,
+  ];
+  return advance({ ...batch.state, pending }, events);
+}
+
 /** Fold a completed / parked effect program back into `controller`'s turn —
     the ONE place a Trainer, an Ability or a board trigger's program meets the
     KO/turn tail. Shared by cardplay.ts (playTrainer / useAbility /
@@ -332,14 +378,22 @@ export function resolveMidTurnKnockOuts(
       so routing them through here is behaviour-preserving — the KO sweep is a
       no-op that returns straight to turn:action.
 
-    `opts.resumeTail` marks a program that is ALREADY mid-KO-sweep — an on-KO
-    triggered Ability (runKoTrigger). It parks/finishes the same way, except the
-    DONE branch just keeps DRAINING the KO tail (advance) instead of folding back
-    to a turn: the prize/promotion stages the sweep queued still sit in
-    `pending` behind the koTrigger, and resolveEffect passes the flag back so a
-    parked on-KO decision resumes there too. (Its program is non-damaging, so it
-    would sweep to nothing anyway — the flag is about WHERE control returns, not
-    a second KO check.)
+    `opts.resumeTail` marks a program that is ALREADY mid-TAIL, with the stages
+    that finish the job sitting in `pending` behind it. It parks/finishes the
+    same way, except the DONE branch just keeps DRAINING that queue (advance)
+    instead of folding back to a turn, and resolveEffect passes the flag back so
+    a park RE-parks with it. Two callers:
+    • an on-KO triggered Ability (runKoTrigger) — the sweep's prize/promotion
+      stages are queued behind the koTrigger;
+    • an ATTACK's effect program (attack.ts, §8 step 4) — the attackEpilogue
+      stage is queued behind it, and draining it runs the KO sweep + turn end.
+    Neither wants the mid-turn KO sweep below: the on-KO program does not damage,
+    and an attack's KOs are the epilogue's own job — its sweep reads the
+    POST-effect board, so a spread that KOs the defender is still caught. Note the
+    epilogue sweeps ONE seat, so skipping the both-boards sweep here means a KO an
+    attack inflicts on the ATTACKER's own board is missed; see finishAttack above,
+    which owns that limit. The flag is about WHERE control returns, not a second
+    KO check.
 
     This is the flow↔triggers mutual import the header notes: the interpreter and
     triggers never KO, so completion is handed BACK to flow (the KO/tail owner)
@@ -371,8 +425,9 @@ export function settleProgram(
       events,
     );
   }
-  // DONE. A mid-KO-sweep on-KO trigger hands control back to the sweep — its
-  // prize/promotion stages are still queued behind it, so keep draining them.
+  // DONE. A mid-tail program hands control back to the queue behind it — the
+  // KO sweep's prize/promotion stages, or an attack's epilogue — so keep
+  // draining rather than folding to a turn.
   if (opts.resumeTail === true) return advance(result.state, events);
   // An Ability that ends the turn (Koraidon "Dino Cry") seeds the turn tail
   // instead of returning to turn:action. Its program does not damage, so no
@@ -735,6 +790,13 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // first so the prize/promotion stages behind it are what resumes if the
       // program parks (resume-the-tail); a done program just keeps draining.
       return runKoTrigger(popStage(state), stage.seat, stage.uid, events);
+    case "attackEpilogue":
+      // §8 step 4 has finished (the effect program ran to completion, possibly
+      // across one or more parks): sweep the defender's board and end the
+      // attacker's turn. The pop is REQUIRED — finishAttack composes with what is
+      // still queued, so leaving this stage on would re-queue the epilogue behind
+      // the turn tail and run the whole attack ending a second time.
+      return finishAttack(popStage(state), events, stage.seat, stage.koedSeat);
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

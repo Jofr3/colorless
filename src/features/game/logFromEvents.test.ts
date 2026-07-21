@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState, Seat } from "@luminous/engine";
 import { topCardOf } from "@luminous/engine";
 import {
+  ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
   DISCARD_ENERGY_DECK,
   HAND_REFRESH_DECK,
@@ -664,9 +665,9 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
   }
 
   it("attributes the row to the CONTROLLER, not the seat that owns the Energy", () => {
-    // `seat` on the event names the victim (DAMAGE_DEALT's convention), so the
-    // line has to flip to the other seat — a row filed under p2 would read as if
-    // the opponent discarded their own Energy.
+    // `seat` on the event names the victim (DAMAGE_DEALT's convention) and
+    // `actor` the controller, which is what the row files under — a row filed
+    // under p2 would read as if the opponent discarded their own Energy.
     let state = p1Turn2(1);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const energy = state.players.p2.active?.energy[0] as string;
@@ -677,7 +678,10 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
 
     expect(types(events)).toEqual(["TRAINER_PLAYED", "ENERGY_DISCARDED"]);
     const rows = logFromEvents(events, ctx(after));
-    expect(texts(rows)).toEqual(["played fix-hammer", `discarded fix-energy from ${victim}`]);
+    expect(texts(rows)).toEqual([
+      "played fix-hammer",
+      `discarded fix-energy from Tide's ${victim}`,
+    ]);
     expect(rows.map((e) => (e.kind === "turn" ? null : e.who))).toEqual(["p1", "p1"]);
     // The card named really is the one that left the board.
     expect(after.players.p2.discard).toContain(energy);
@@ -695,8 +699,8 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
 
     expect(texts(logFromEvents(events, ctx(after)))).toEqual([
       "played sv02-182",
-      `discarded fix-special from ${activeName}`,
-      "discarded fix-special-2 from fix-basic-2",
+      `discarded fix-special from Tide's ${activeName}`,
+      "discarded fix-special-2 from Tide's fix-basic-2",
     ]);
   });
 
@@ -719,9 +723,67 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
     expect(texts(rows)).toEqual([
       "benched Mawile",
       "Mawile's Special Eater activated",
-      `discarded fix-special from ${victim}`,
+      `discarded fix-special from Tide's ${victim}`,
     ]);
     expect(rows.map((e) => (e.kind === "turn" ? null : e.who))).toEqual(["p1", "p1", "p1"]);
+  });
+
+  it("a SELF-discard attack cost files under the attacker — victim and actor agree", () => {
+    // The case the old "read it off the other seat" rule got backwards: Paldean
+    // Tauros' Blaze Dash discards from ITS OWN Active, so `event.seat` is p1 and
+    // the row must stay p1. Inferring the actor would have filed it under p2.
+    let state = driveSetup(
+      5,
+      { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "sv02-028");
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 3);
+    const attacker = topCardOf(state, state.players.p1.active as never)?.name as string;
+
+    const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
+    // Three identical prints collapse to one candidate, so the discard resolves
+    // inside the attack — no park, one batch.
+    expect(types(events)).toEqual([
+      "ATTACK_DECLARED",
+      "DAMAGE_DEALT",
+      "ENERGY_DISCARDED",
+      "TURN_ENDED",
+      "TURN_STARTED",
+      "CARDS_DRAWN",
+    ]);
+    const rows = logFromEvents(events, ctx(after));
+    // Named by OWNER: "Ember's" (p1) here vs "Tide's" on every hammer row above —
+    // the disambiguation a mirror match needs. ONE Energy came off (scope "one"),
+    // even though three were attached, so no "×N".
+    expect(texts(rows)).toContain(`discarded Fire Energy from Ember's ${attacker}`);
+    const discardRow = rows.find(
+      (e) => e.kind === "action" && e.segments.some((s) => s.text === "discarded "),
+    ) as SeatLogEntry & { kind: "action" };
+    expect(discardRow.who).toBe("p1");
+  });
+
+  it("a count:'all' batch names EVERY card it discarded, repeats folded into ×N", () => {
+    // The first ENERGY_DISCARDED that can carry more than one uid — every earlier
+    // producer took exactly one Energy per affected Pokémon. A row that renders
+    // only the first card would under-report an attack that stripped three.
+    let state = driveSetup(6, { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "fix-alldiscard");
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 2);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+
+    const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const discarded = events.find((e) => e.type === "ENERGY_DISCARDED");
+    if (discarded?.type !== "ENERGY_DISCARDED") throw new Error("expected ENERGY_DISCARDED");
+    expect(discarded.uids).toHaveLength(3); // one event, three cards
+
+    expect(texts(logFromEvents(events, ctx(after)))).toContain(
+      "discarded Fire Energy ×2, fix-energy from Ember's fix-alldiscard",
+    );
   });
 
   it("the row is seat-keyed, so a viewer flip re-reads it as the OPPONENT's", () => {

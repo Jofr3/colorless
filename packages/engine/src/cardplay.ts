@@ -502,6 +502,26 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   if (phase.seat !== action.seat) {
     return err("WRONG_SEAT", `only ${phase.seat} resolves this effect`);
   }
+  // A resumeTail park is MID-TAIL: the stages that finish the job (the KO sweep's
+  // prizes/promotions, or an attack's epilogue) must still be queued behind it,
+  // because settleProgram's resumeTail branch hands control to `advance` and
+  // writes NO phase of its own — an empty queue there would return this very
+  // effect:choose phase again, with the same continuation, forever. Unreachable
+  // through the engine's own transitions (both producers queue before they run),
+  // so this is the ko:* handlers' crafted-snapshot guard (attack.ts) applied to
+  // the one fold that cannot recover on its own.
+
+  // A resumeTail park is MID-TAIL: the stages that finish the job (the KO sweep's
+  // prizes/promotions, or an attack's epilogue) must still be queued behind it,
+  // because settleProgram's resumeTail branch hands control to `advance` and
+  // writes NO phase of its own — an empty queue there would return this very
+  // effect:choose phase again, with the same continuation, forever. Unreachable
+  // through the engine's own transitions (both producers queue before they run),
+  // so this is the ko:* handlers' crafted-snapshot guard (attack.ts) applied to
+  // the one fold that cannot recover on its own.
+  if (phase.resumeTail === true && state.pending.length === 0) {
+    return err("PHASE_DESYNC", "a mid-tail effect park has no pending tail to resume");
+  }
   const invalid = validateChoice(phase.prompt, action.choice);
   if (invalid !== null) return invalid;
   const events: GameEvent[] = [];

@@ -629,6 +629,79 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Energy cards — the only board on which Giacomo's per-Pokémon pick is a real
       choice rather than a forced one. */
   "fix-special-2": specialEnergy("fix-special-2", "fix-special-2"),
+  /** M5 op-slice: attack effect programs can PARK. The self-discard attack cost
+      is a DERIVED effect (effects.ts reads the printed sentence — there is no
+      registry row), so unlike every registry-authored card above these two carry
+      their attack `effect` text VERBATIM from the catalog: change a character and
+      the derivation, and the test, correctly stops happening.
+
+      Both are real sv01–03 BASICS, so they reach the Active spot straight out of
+      setup with no evolution scaffolding. Printed stats verified against the
+      local D1 ingest, 2026-07-21. */
+  "sv02-028": battler("sv02-028", {
+    name: "Paldean Tauros",
+    hp: 130,
+    types: ["Fire"],
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      // "20+" — an unsimulated damage modifier, so this attack stays on the loud
+      // ATTACK_EFFECT_SKIPPED path. Kept so the card's real attack list is its own.
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Raging Horns",
+        damage: "20+",
+        effect: "This attack does 10 more damage for each damage counter on this Pokémon.",
+      },
+      {
+        cost: ["Fire", "Fire", "Colorless"],
+        name: "Blaze Dash",
+        damage: 120,
+        effect: "Discard an Energy from this Pokémon.",
+      },
+    ],
+  }),
+  "sv01-039": battler("sv01-039", {
+    name: "Charcadet",
+    hp: 60,
+    types: ["Fire"],
+    retreat: 1,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Ember",
+        damage: 30,
+        effect: "Discard an Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** FIXTURE — a SECOND catalog print of Fire Energy. The real catalog carries
+      Basic Fire Energy under three ids (sve-002 / sve-010 / sve-018), all
+      identical in play, so the interchangeability key must read what a Basic
+      PROVIDES rather than its id. Same name as fix-fire-energy, different id —
+      exactly that shape. */
+  "fix-fire-energy-alt": typedEnergy("fix-fire-energy-alt", "Fire"),
+  /** FIXTURE — a body big enough to SURVIVE Blaze Dash's 120, so the epilogue's
+      no-KO path (the plain §5.3 turn end) can be pinned separately from its KO
+      path. fix-wall's 120 HP is exactly lethal to it, which is the trap. */
+  "fix-bigbody": battler("fix-bigbody", { hp: 200 }),
+  /** FIXTURE — the "Discard all Energy from this Pokémon." arm on a BASIC body.
+      Every real print of that sentence is an evolution (Pawmot Stage 2, Raichu
+      Stage 1), and the arm has no decision to test, so the board case runs on a
+      fixture while the real cards' text is pinned by the deriver unit tests.
+      Costed {C} so it can attack holding any mix of Energy. */
+  "fix-alldiscard": battler("fix-alldiscard", {
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Full Discharge",
+        damage: 40,
+        effect: "Discard all Energy from this Pokémon.",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -931,6 +1004,26 @@ export const DISCARD_ENERGY_DECK = deckOf({
   "fix-special": 6,
   "fix-special-2": 6,
   "fix-energy": 25,
+});
+
+/** M5 op-slice: attack effect programs can PARK — the self-discard attack cost.
+    Two real Basics whose printed sentence derives to `discardEnergy yourActive`
+    (Paldean Tauros' Blaze Dash [R][R][C] 120, Charcadet's Ember [R] 30) plus the
+    "all" fixture, and THREE distinct Energy prints so the attacker can hold a mix
+    that is a genuine choice (two copies of one print collapse to a single
+    candidate). fix-victim / fix-wall give the defender both a KO and a survival
+    outcome, since the whole point is that the epilogue still runs after the park. */
+export const ATTACK_PARK_DECK = deckOf({
+  "sv02-028": 4, // Paldean Tauros — Blaze Dash
+  "sv01-039": 4, // Charcadet — Ember
+  "fix-alldiscard": 3,
+  "fix-victim": 3, // 30 HP — OHKO'd, so the epilogue's KO sweep runs
+  "fix-bigbody": 5, // 200 HP — survives, so the plain turn-end tail runs
+  "fix-basic-1": 3,
+  "fix-fire-energy": 14, // pays Blaze Dash's {R}{R} and Ember's {R}
+  "fix-fire-energy-alt": 4, // a second Fire print — same type, different id
+  "fix-special": 3, // a Special Energy, so the two identity spaces can be split
+  "fix-energy": 17, // a DIFFERENT print, so a mixed attach is a real choice
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

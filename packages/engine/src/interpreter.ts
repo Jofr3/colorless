@@ -83,13 +83,20 @@ export type EffectPrompt =
       note: string;
     }
   /** Discard exactly one Energy off each affected Pokémon — the energy-removal
-      family (Crushing Hammer / Giacomo / Mawile). `discardable` pairs each
-      takeable Energy uid with the OPPONENT Pokémon it sits on; `scope` says how
-      many to pick: **"one"** = exactly one uid in total (picking the Energy also
-      picks the Pokémon), **"each"** = exactly one uid from EVERY distinct `from`
+      family (Crushing Hammer / Giacomo / Mawile) and the §8 self-discard attack
+      cost (Houndoom / Charcadet / Paldean Tauros). `discardable` pairs each
+      takeable Energy uid with the Pokémon it sits on — the opponent's, or the
+      controller's own Active for the self-discard arm; `scope` says how many to
+      pick: **"one"** = exactly one uid in total (picking the Energy also picks
+      the Pokémon), **"each"** = exactly one uid from EVERY distinct `from`
       present. MANDATORY — there is NO decline, and the op only parks when a real
-      choice exists (a forced pick auto-resolves). Every candidate is Energy
-      sitting face up on the table, so the prompt leaks nothing. */
+      choice exists: `discardable` holds ONE representative per interchangeable
+      class (the same Energy on the same Pokémon — interpreter.ts
+      interchangeableCandidates), and a single surviving candidate auto-resolves
+      instead of parking. So a client can render every row as a distinct answer,
+      and validateChoice's "was it offered" check keys on this collapsed set.
+      Every candidate is Energy sitting face up on the table, so the prompt leaks
+      nothing. */
   | {
       kind: "discardEnergy";
       discardable: { uid: string; from: PokemonRef }[];
@@ -323,10 +330,20 @@ function stepOp(
       // auto-resolves (the parkOrForce doctrine), and anything else parks.
       const discardable = discardableEnergies(state, ctx.seat, op);
       if (discardable.length === 0) return { done: state };
+      // "Discard ALL Energy from this Pokémon" (Pawmot / Raichu) asks nothing —
+      // every match comes off, so it resolves inline like any automatic op. The
+      // FULL set, not the collapsed one: interchangeability is about which to
+      // pick, and here nothing is picked.
+      if (op.count === "all") {
+        return { done: discardEnergyApply(state, discardable.map((d) => d.uid), op, ctx, events) };
+      }
+      const candidates = interchangeableCandidates(state, discardable);
       const scope = op.from === "opponentEach" ? "each" : "one";
-      const forced = forcedDiscards(discardable, scope);
-      if (forced !== null) return { done: discardEnergyApply(state, forced, ctx, events) };
-      return { park: { kind: "discardEnergy", discardable, scope, note: discardNote(op) } };
+      const forced = forcedDiscards(candidates, scope);
+      if (forced !== null) return { done: discardEnergyApply(state, forced, op, ctx, events) };
+      return {
+        park: { kind: "discardEnergy", discardable: candidates, scope, note: discardNote(op) },
+      };
     }
     case "handRefresh":
       // Put the affected player(s)' hand back into their deck — shuffled in
@@ -448,7 +465,7 @@ export function applyChoice(
     case "moveEnergy":
       return choice.kind === "moveEnergy" ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events) : state;
     case "discardEnergy":
-      return choice.kind === "discardEnergy" ? discardEnergyApply(state, choice.uids, ctx, events) : state;
+      return choice.kind === "discardEnergy" ? discardEnergyApply(state, choice.uids, op, ctx, events) : state;
     default:
       // Synchronous ops never park, so never reach the choice path.
       return state;
@@ -1033,24 +1050,28 @@ function moveEnergyApply(
   return withSide(state, ctx.seat, { ...side, active, bench });
 }
 
-/** Discard the chosen Energy `uids` off the OPPONENT's Pokémon into the
-    OPPONENT's discard pile — the cards are theirs, so they go to their own pile
-    (the §8.1 KO cleanup rule, applied to a single Energy). validateChoice already
-    proved every uid was offered and that no Pokémon gives up two; this re-finds
-    each on the live board (wire-safety, like moveEnergyApply) and takes only
-    those actually attached, so a stale uid is skipped rather than conjured.
-    Emits ONE event per affected Pokémon (Giacomo hits several), in board order —
-    the Pokémon stay put (no bench compaction), so each `from` target resolves
-    against the post-state. Never damages, so it never KOs. */
+/** Discard the chosen Energy `uids` off the VICTIM's Pokémon into the VICTIM's
+    discard pile — the cards are the host owner's, so they go to that owner's own
+    pile (the §8.1 KO cleanup rule, applied to a single Energy). The victim is the
+    opponent for the hammer arms and the CONTROLLER for `yourActive` (the §8
+    self-discard cost), which is exactly why the pile is read off `op` rather than
+    hardcoded to the opponent. validateChoice already proved every uid was offered
+    and that no Pokémon gives up two; this re-finds each on the live board
+    (wire-safety, like moveEnergyApply) and takes only those actually attached, so
+    a stale uid is skipped rather than conjured. Emits ONE event per affected
+    Pokémon (Giacomo hits several), in board order — the Pokémon stay put (no
+    bench compaction), so each `from` target resolves against the post-state.
+    Never damages, so it never KOs. */
 function discardEnergyApply(
   state: GameState,
   uids: readonly string[],
+  op: Extract<EffectOp, { op: "discardEnergy" }>,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
   if (uids.length === 0) return state;
-  const opponent = otherSeat(ctx.seat);
-  const side = state.players[opponent];
+  const victim = discardVictimSeat(ctx.seat, op);
+  const side = state.players[victim];
   const picks = new Set(uids);
   // Per affected Pokémon: the spot it sits on and what came off it. Collected in
   // one pass so the events read Active-then-bench, the board's own order.
@@ -1074,12 +1095,13 @@ function discardEnergyApply(
     discarded.push(...entry.uids);
     events.push({
       type: "ENERGY_DISCARDED",
-      seat: opponent,
+      seat: victim,
+      actor: ctx.seat,
       uids: [...entry.uids],
       from: { ...entry.target },
     });
   }
-  return withSide(state, opponent, {
+  return withSide(state, victim, {
     ...side,
     active,
     bench,
@@ -1093,7 +1115,8 @@ function discardEnergyApply(
     the Pokémon it currently sits on — Active first, then bench in index order.
     `activeOnly` keeps just the Active (the discardEnergy `opponentActive` arm).
     Shared by the two Energy-picking ops: moveEnergy's movable set (the
-    controller's own board) and discardEnergy's discardable set (the opponent's). */
+    controller's own board) and discardEnergy's discardable set — the opponent's
+    board for the hammer arms, the controller's OWN Active for `yourActive`. */
 function attachedEnergies(
   state: GameState,
   seat: Seat,
@@ -1113,22 +1136,90 @@ function attachedEnergies(
   return out;
 }
 
-/** The opponent Energy a `discardEnergy` op may take, in board order —
-    `opponentActive` sees only their Active, the other two their whole board.
-    Exported for programPlayable: a top-level discard with nothing to take can
-    only whiff (the gust / moveEnergy precedent). */
+/** The board a `discardEnergy` op takes Energy OFF: the controller's own for
+    `yourActive` (the §8 self-discard attack cost), the opponent's for the three
+    hammer arms. One helper so the candidate scan and the apply can never
+    disagree about whose Pokémon is stripped and whose discard pile it lands in. */
+function discardVictimSeat(seat: Seat, op: Extract<EffectOp, { op: "discardEnergy" }>): Seat {
+  return op.from === "yourActive" ? seat : otherSeat(seat);
+}
+
+/** The Energy a `discardEnergy` op may take, in board order — the two `…Active`
+    arms see only that Active, the other two the whole victim board. Exported for
+    programPlayable: a top-level discard with nothing to take can only whiff (the
+    gust / moveEnergy precedent). */
 export function discardableEnergies(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "discardEnergy" }>,
 ): { uid: string; from: PokemonRef }[] {
-  return attachedEnergies(state, otherSeat(seat), op.filter, op.from === "opponentActive");
+  const activeOnly = op.from === "opponentActive" || op.from === "yourActive";
+  return attachedEnergies(state, discardVictimSeat(seat, op), op.filter, activeOnly);
+}
+
+/** What an attached Energy card IS, for the purpose of "would discarding this one
+    rather than that one make any difference?".
+
+    A **Basic** Energy has no in-play identity beyond the type it provides: the
+    catalog prints the very same Basic Fire Energy under several ids (sve-002 /
+    sve-010 / sve-018, identical in every field that matters), so keying on the id
+    would treat three interchangeable Fire Energy in one real deck as three
+    separate answers. This is exactly the fungibility `attachEnergyFrom` already
+    asserts ("same-type Basic Energy is fungible, so the only decision is the
+    TARGET"), read from the other end.
+
+    Everything else keys on the catalog **id**: two Special Energy prints carry
+    different rules text, so only two copies of the SAME print are interchangeable.
+    The `basic:` / `card:` prefixes keep the two spaces apart, so a Basic Fire and
+    a Special Energy that happens to provide {R} never collapse into each other.
+    A uid with no catalog card gets a key of its own — park and ask rather than
+    guess. (Unreachable today: `attachedEnergies` filters through `matchesFilter`,
+    which rejects an unresolvable card, so no such uid can enter the candidate
+    list. Kept because the fallback costs nothing and the alternative is a silent
+    collapse of things this function cannot actually compare.) */
+function energyIdentity(state: GameState, uid: string): string {
+  const card = cardOf(state, uid);
+  if (card === undefined) return `?${uid}`;
+  return isEnergyCard(card) && card.energyType === "Normal"
+    ? `basic:${energyProvidesOf(card)}`
+    : `card:${card.id}`;
+}
+
+/** The discardable Energy with INTERCHANGEABLE candidates collapsed to one
+    representative each, board order preserved — the set the player is actually
+    asked about.
+
+    Two candidates are interchangeable when they are the same Energy (above) on
+    the same Pokémon: discarding either leaves the identical board and puts an
+    identical card in the identical owner's discard pile, so offering both is one
+    question wearing two hats. WHICH POKÉMON loses the Energy is ALWAYS a real
+    choice, so the key includes the host: two identical Basic Energy on two
+    different Pokémon stay two candidates.
+
+    Collapsing here rather than at the park is what makes Houndoom's "Fire Blast"
+    with three {R} attached resolve with no prompt at all: one representative
+    remains, and the existing forced-pick rule below sees a single candidate. */
+function interchangeableCandidates(
+  state: GameState,
+  discardable: readonly { uid: string; from: PokemonRef }[],
+): { uid: string; from: PokemonRef }[] {
+  const seen = new Set<string>();
+  const out: { uid: string; from: PokemonRef }[] = [];
+  for (const candidate of discardable) {
+    const key = `${refKeyOf(candidate.from)}|${energyIdentity(state, candidate.uid)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(candidate);
+  }
+  return out;
 }
 
 /** The picks a discardEnergy makes with NO choice left in it (the M1 doctrine),
-    or null when the player must decide. "one": a single candidate. "each": every
-    affected Pokémon holds exactly one match — the common Giacomo board, where
-    "one Special Energy off each" names itself. */
+    or null when the player must decide. Runs over the COLLAPSED candidate set
+    above, so "a single candidate" already means "a single distinguishable one".
+    "one": one candidate left in total. "each": every affected Pokémon has exactly
+    one — the common Giacomo board, where "one Special Energy off each" names
+    itself. */
 function forcedDiscards(
   discardable: readonly { uid: string; from: PokemonRef }[],
   scope: "one" | "each",
@@ -1175,8 +1266,8 @@ export function moveEnergyPlayable(
   );
 }
 
-/** A discardEnergy op does something iff the opponent's board (or, for
-    `opponentActive`, their Active) holds ≥1 Energy the filter admits. Exported
+/** A discardEnergy op does something iff the victim's board (or, for the two
+    `…Active` arms, that Active) holds ≥1 Energy the filter admits. Exported
     for programPlayable — a play that could only whiff can't be made, so Giacomo
     into a board with no Special Energy is rejected rather than burning the turn's
     one Supporter (§7.2). Crushing Hammer is covered too: programPlayable descends
@@ -1324,6 +1415,9 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
       return `Discard ${what} from 1 of your opponent's Pokémon.`;
     case "opponentEach":
       return `Discard ${what} from each of your opponent's Pokémon.`;
+    case "yourActive":
+      // The printed attack sentence verbatim — "this Pokémon" is the Active (§8).
+      return `Discard ${what} from this Pokémon.`;
   }
 }
 

@@ -32,15 +32,19 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: `discardEnergy` — the energy-removal
-    "hammer" family. One op takes Energy off the OPPONENT's board, with `from`
-    naming both the eligible Pokémon and how many are hit: `opponentActive`
-    (Mawile), `opponentChosen` (Crushing Hammer) and `opponentEach` (Giacomo).
-    MANDATORY — exactly one Energy per affected Pokémon and no decline, so it
-    parks only when WHICH Energy is a real question; the discarded card goes to
-    its OWNER's pile. New `specialEnergy` CardFilter + one ENERGY_DISCARDED event
-    per affected Pokémon. Board conditions were 0.20.0; handRefresh/Iono 0.19.0). */
-export const engineVersion = "0.21.0";
+/** Engine milestone marker (M5 op-slice: ATTACK EFFECT PROGRAMS CAN PARK. A new
+    `attackEpilogue` PendingStage carries the §8.1 KO sweep + the §5.3 turn end,
+    seeded BEFORE the attack's effect program runs and folded through
+    settleProgram's `resumeTail` — so a program that stops for a decision no
+    longer has its prompt and remaining ops silently dropped. Its first readers
+    are the §8 self-discard attack COST: `discardEnergy` gains a `yourActive`
+    arm and a `count: "all"` rider, both DERIVED from the printed sentence
+    (effects.ts), and the op's candidates now collapse interchangeable Energy —
+    the same print on the same Pokémon — to one representative, so three {R} on a
+    Houndoom ask nothing. ENERGY_DISCARDED gains `actor`, since victim and
+    controller are the same seat here. discardEnergy was 0.21.0; board conditions
+    0.20.0; handRefresh/Iono 0.19.0). */
+export const engineVersion = "0.22.0";
 
 export type {
   ApplyResult,

@@ -810,10 +810,10 @@ const FIX_GATEDSUP: CardProgram = {
 
 // ── M5 op-slice: discardEnergy (the §15 energy-removal "hammer" family) —
 //    discard Energy off the OPPONENT's Pokémon. All three `from` arms land with a
-//    real printed card; the SELF-discard attacks ("Discard an Energy from this
-//    Pokémon", ~13 cards) wait on attack programs being able to PARK, which
-//    attack.ts cannot do today (see the backlog). (verified vs the local catalog
-//    2026-07-21). ──
+//    real printed card. The SELF-discard attacks ("Discard an Energy from this
+//    Pokémon") landed with the attackEpilogue slice (engine 0.22.0) and need NO
+//    registry row at all — effects.ts derives them from the printed sentence.
+//    (verified vs the local catalog 2026-07-21). ──
 
 /** Crushing Hammer — "Flip a coin. If heads, discard an Energy from 1 of your
     opponent's Pokémon." (Item) — the coin-gated hammer, and the `opponentChosen`

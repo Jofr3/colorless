@@ -74,6 +74,20 @@ function targetName(
   return topCardOf(state, pokemon)?.name ?? "a Pokémon";
 }
 
+/** Card names for a batch, repeats folded into "×N" in first-seen order —
+    "Fire Energy ×2, fix-energy" rather than "Fire Energy, Fire Energy,
+    fix-energy". A `count: "all"` discard is the first batch that can hold
+    several copies of one card (every earlier producer emitted one uid per
+    event), and a run of identical names reads as a stutter rather than a
+    quantity. */
+function countedNames(cardNames: readonly string[]): string {
+  const counts = new Map<string, number>();
+  for (const name of cardNames) counts.set(name, (counts.get(name) ?? 0) + 1);
+  return [...counts]
+    .map(([name, count]) => (count > 1 ? `${name} ×${count}` : name))
+    .join(", ");
+}
+
 /** The Pokémon now carrying `energyUid`, resolved by uid rather than by the
     attach target's slot — robust to an on-attach move (Jet Energy switches its
     benched host to the Active Spot in the SAME batch, compacting the bench, so
@@ -520,21 +534,35 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     }
     case "ENERGY_DISCARDED": {
-      // Crushing Hammer / Giacomo / Mawile (discardEnergy). `event.seat` owns the
-      // Pokémon that LOST the Energy, so — like DAMAGE_DEALT — the line reads
-      // from the other seat, the one whose card caused it (its TRAINER_PLAYED /
-      // ABILITY_TRIGGERED row sits just above and names the card). Both the
-      // attached Energy and the discard pile are public, so the cards are named.
+      // Crushing Hammer / Giacomo / Mawile (discardEnergy), and the self-discard
+      // attack cost (Houndoom "Fire Blast", Pawmot "Electro Paws"). `event.seat`
+      // owns the Pokémon that LOST the Energy; the line reads from `event.actor`,
+      // whose card caused it (its TRAINER_PLAYED / ABILITY_TRIGGERED /
+      // ATTACK_DECLARED row sits just above and names it). The two are the SAME
+      // seat for a self-discard — reading it as "the other seat", as this row did
+      // before that arm existed, would credit Houndoom's own cost to its
+      // opponent. Both the attached Energy and the discard pile are public, so
+      // the cards are named.
       // The Energy carries the `energy` tone (ENERGY_ATTACHED's) and the HOST
       // `strong`, so the row's two names don't render identically — otherwise
       // "discarded X from Y" gives the reader no cue which is the card and
       // which is the Pokémon it came off.
-      const names_ = event.uids.map((uid) => cardName(state, uid)).join(", ");
-      return row(otherSeat(event.seat), [
+      //
+      // "from" must say WHOSE Pokémon, and it names the OWNER outright. While the
+      // op only reached the opponent's board, a bare "from <name>" could only mean
+      // theirs; now that the same sentence serves a self-discard, a mirror match
+      // prints an identical row for "their Paldean Tauros" and "my Paldean Tauros"
+      // (unlike DAMAGE_DEALT's "dealt … to", which is directional on its own). A
+      // possessive pronoun cannot fix it: the `who` chip is VIEWER-relative
+      // ("you" / "opponent") while these segments are fixed text, so the only
+      // wording true from every seat is the player's own name — the coin-flip
+      // row's precedent.
+      const cards = event.uids.map((uid) => cardName(state, uid));
+      return row(event.actor, [
         plain("discarded "),
-        { text: names_, tone: "energy" },
+        { text: countedNames(cards), tone: "energy" },
         plain(" from "),
-        strong(targetName(state, event.seat, event.from)),
+        strong(`${names[event.seat]}'s ${targetName(state, event.seat, event.from)}`),
       ]);
     }
     case "POKEMON_SWITCHED":

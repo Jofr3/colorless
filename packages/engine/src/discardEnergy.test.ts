@@ -92,8 +92,45 @@ describe("M5 op-slice — discardEnergy", () => {
     // …and it lands on TOP of that pile (appended), the pile being ordered.
     expect(done.players.p2.discard.at(-1)).toBe(energyUid);
     const discarded = find(events, "ENERGY_DISCARDED");
-    expect(discarded).toMatchObject({ seat: "p2", uids: [energyUid] });
+    // `seat` is the VICTIM, `actor` the controller whose card did it — opposite
+    // seats for a hammer, the SAME seat for the self-discard attack cost.
+    expect(discarded).toMatchObject({ seat: "p2", actor: "p1", uids: [energyUid] });
     expect(discarded?.from).toEqual({ spot: "active" });
+  });
+
+  it("two copies of ONE print on one Pokémon are interchangeable — forced, not parked", () => {
+    // The M1 doctrine applied to card identity: either copy leaves the identical
+    // board and the identical discard pile, so there is nothing to ask. Contrast
+    // the two-DISTINCT-print cases below, which do park.
+    let state = board(20);
+    state = attachFromDeck(state, "p2", "fix-energy", 2);
+    const before = activeEnergy(state, "p2");
+
+    const { state: done, events } = playFromHand(state, "fix-hammer");
+
+    expect(done.phase.kind).toBe("turn:action"); // never parked
+    expect(types(events)).not.toContain("EFFECT_PENDING");
+    // Exactly ONE came off — "one" is still one, collapsing does not discard more.
+    expect(activeEnergy(done, "p2")).toEqual([before[1]]);
+    expect(done.players.p2.discard).toContain(before[0]);
+  });
+
+  it("identical prints on DIFFERENT Pokémon still park — the host is never fungible", () => {
+    // The collapse keys on (host, card): which Pokémon loses the Energy is the
+    // whole decision for a Crushing Hammer, so two identical Basic Energy on two
+    // different bodies are two candidates, not one.
+    let state = board(21);
+    state = benchFromDeck(state, "p2", "fix-basic-2");
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = attachBenchFromDeck(state, "p2", 0, "fix-energy", 1);
+
+    const { state: parked } = playFromHand(state, "fix-hammer");
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
+    expect(parked.phase.prompt.discardable.map((d) => d.from)).toEqual([
+      { seat: "p2", spot: { spot: "active" } },
+      { seat: "p2", spot: { spot: "bench", index: 0 } },
+    ]);
   });
 
   it("parks on a real choice, offering EVERY Energy on the opponent's board (Active + Bench)", () => {
@@ -177,7 +214,10 @@ describe("M5 op-slice — discardEnergy", () => {
 
   it("is NOT declinable — an empty pick is rejected, unlike a search or a move", () => {
     let state = board(3);
-    state = attachFromDeck(state, "p2", "fix-energy", 2);
+    // Two DISTINCT prints — two copies of one card are interchangeable and would
+    // auto-resolve (forcedDiscards' fungibility collapse), never reaching a park.
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
     const { state: parked } = playFromHand(state, "fix-hammer");
 
     expectErr(
@@ -196,7 +236,8 @@ describe("M5 op-slice — discardEnergy", () => {
 
   it("rejects an Energy that was never offered (a uid off the CONTROLLER's own board)", () => {
     let state = board(4);
-    state = attachFromDeck(state, "p2", "fix-energy", 2); // two → a real choice → parks
+    state = attachFromDeck(state, "p2", "fix-energy", 1); // two DISTINCT prints →
+    state = attachFromDeck(state, "p2", "fix-special", 1); // a real choice → parks
     state = attachFromDeck(state, "p1", "fix-energy", 1); // the controller's own
     const mine = activeEnergy(state, "p1")[0] as string;
 
@@ -530,7 +571,8 @@ describe("M5 op-slice — discardEnergy", () => {
 
   it("never mutates the input state — the play AND the resolve (frozen boards)", () => {
     let state = board(14);
-    state = attachFromDeck(state, "p2", "fix-energy", 2); // two → parks
+    state = attachFromDeck(state, "p2", "fix-energy", 1); // two DISTINCT prints → parks
+    state = attachFromDeck(state, "p2", "fix-special", 1);
     state = handFromDeck(state, "p1", "fix-hammer", 1);
     const uid = handUid(state, "p1", "fix-hammer");
     expect(() =>

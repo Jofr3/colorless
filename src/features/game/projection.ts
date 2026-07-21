@@ -387,11 +387,14 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
       };
     // effect:choose — a Trainer/Ability parked on a decision. Normally the
     // controller (phase.seat) both owns the turn and owes the decision, so
-    // activeSeat and waitingSeat are the same. The EXCEPTION is an on-KO trigger
-    // (resumeTail, §9): it parks MID-KO-SWEEP during the OPPONENT's turn, so
-    // phase.seat is the KO'd player (who owes the decision) while the turn owner
-    // is whoever the KO sweep sits inside — the same koParkActiveSeat the ko:*
-    // parks read (the attacker mid-turn, or null between turns from a Checkup KO).
+    // activeSeat and waitingSeat are the same. `resumeTail` marks the two
+    // mid-tail parks, which read the turn owner off the pending queue instead
+    // (koParkActiveSeat): an on-KO trigger (§9) parks MID-KO-SWEEP during the
+    // OPPONENT's turn, so phase.seat is the KO'd player and the turn owner is
+    // whoever the sweep sits inside (or null, between turns from a Checkup KO);
+    // an ATTACK's effect program (§8 step 4) parks with the attackEpilogue stage
+    // queued, where the decider IS the turn owner — koParkActiveSeat returns the
+    // same seat, so the two agree without a special case here.
     case "effect:choose":
       return {
         activeSeat: phase.resumeTail === true ? koParkActiveSeat(state) : phase.seat,
@@ -412,7 +415,10 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
     behind the ko stages (pending: [ko…, endTurn, checkup, startTurn]), so
     the parity owner still owns the turn. A MID-TURN KO (evolve-below-HP, a
     snipe ability) parks with a resumeTurn stage queued behind it (pending:
-    [ko…, resumeTurn]) — still inside the actor's turn, so it counts too.
+    [ko…, resumeTurn]) — still inside the actor's turn, so it counts too. So
+    does an ATTACK whose effect program parked (pending: [attackEpilogue]): the
+    turn tail has not even been seeded yet, and the attacker — who owns the turn
+    by parity — is the one owing the decision.
     Checkup-origin KOs park AFTER endTurn and checkup have already drained
     (pending: [ko…, startTurn]) with the turn counter not yet bumped — parity
     would misreport the JUST-ENDED seat as active — so those parks own no turn
@@ -420,7 +426,10 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
 function koParkActiveSeat(state: GameState): Seat | null {
   const inTurn = state.pending.some(
     (stage) =>
-      stage.kind === "endTurn" || stage.kind === "checkup" || stage.kind === "resumeTurn",
+      stage.kind === "endTurn" ||
+      stage.kind === "checkup" ||
+      stage.kind === "resumeTurn" ||
+      stage.kind === "attackEpilogue",
   );
   return inTurn ? turnOwnerOf(state) : null;
 }

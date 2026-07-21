@@ -10,6 +10,7 @@ import type { GameAction, GameState } from "@luminous/engine";
 import { applyAction } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
   DISCARD_ENERGY_DECK,
   MOVE_ENERGY_DECK,
@@ -563,8 +564,12 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
     renderHud(state, dispatch);
     // Two groups, three candidates; the confirm counts against the GROUPS.
     // The legend carries the SPOT too, so two same-named hosts stay distinct.
-    expect(screen.getByRole("group", { name: "fix-basic-1 · Active" })).toBeTruthy();
-    expect(screen.getByRole("group", { name: "fix-basic-2 · Bench 1" })).toBeTruthy();
+    // Every group also names its SIDE — the dialog serves the opponent's board
+    // (here) and the viewer's own Active (the self-discard attack cost).
+    expect(screen.getByRole("group", { name: "fix-basic-1 · Active · opponent" })).toBeTruthy();
+    expect(
+      screen.getByRole("group", { name: "fix-basic-2 · Bench 1 · opponent" }),
+    ).toBeTruthy();
     // The Active's group holds ONE candidate, so it is not a question — it comes
     // PRE-ANSWERED, leaving only the two-Energy bench Pokémon to decide. Without
     // that seeding the player would have to re-click a forced pick before Confirm
@@ -628,7 +633,7 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
     // Two hosts → two groups, each programmatically labelled by its Pokémon:
     // every row reads "fix-…", so the header is the only disambiguator and it
     // has to be exposed, not just painted above the list.
-    const bench = screen.getByRole("group", { name: "fix-basic-2 · Bench 1" });
+    const bench = screen.getByRole("group", { name: "fix-basic-2 · Bench 1 · opponent" });
     expect(bench.querySelectorAll("button")).toHaveLength(1);
 
     fireEvent.click(screen.getByRole("button", { name: "fix-energy" }));
@@ -689,5 +694,73 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
       throw new Error("expected a discardEnergy resolveEffect");
     }
     expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("an ATTACK's parked effect reaches the same dialog, and the answer ends the turn", () => {
+    // The fourth origin (M5): the park comes from an ATTACK, not a card play, so
+    // the HUD reaches it through the attackEpilogue stage rather than a turn
+    // action. The dialog is unchanged — the prompt is what carries the origin.
+    let state = p1Turn2(4, { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK });
+    state = setActiveFromDeck(state, "p1", "sv02-028"); // Paldean Tauros
+    state = setActiveFromDeck(state, "p2", "fix-bigbody"); // survives, so no KO tail
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 2);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index: 1 }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByRole("dialog", { name: "Discard Energy" })).toBeTruthy();
+    // The card's own printed sentence, about the viewer's OWN Pokémon.
+    expect(screen.getByText("Discard an Energy from this Pokémon.")).toBeTruthy();
+    // Two attached prints → two candidates, not the three cards on the board —
+    // asserted through the group, which pins the host legend at the same time.
+    const group = screen.getByRole("group", { name: "Paldean Tauros · Active" });
+    expect(group.querySelectorAll("button")).toHaveLength(2);
+    // No `opponent` marker: this host is the viewer's own Active.
+    expect(screen.queryByRole("group", { name: /opponent/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard 1/1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    // The engine accepts it AND the attack finishes — the turn passes to p2.
+    const applied = applyAction(state, call);
+    if (!applied.ok) throw new Error("expected the engine to accept the HUD's answer");
+    expect(applied.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+  });
+
+  it("the NON-deciding seat is shown no dialog, even though its projection carries the prompt", () => {
+    // D17 rule one, and it is load-bearing rather than cosmetic here: projection
+    // hands `pendingDecision` — prompt and all — to BOTH viewers (deliberate, and
+    // pinned by its own tests), so the `acting` gate is the only thing keeping the
+    // non-decider from seeing and clicking someone else's decision.
+    let state = p1Turn2(8, { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK });
+    state = setActiveFromDeck(state, "p1", "sv02-028");
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 2);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index: 1 }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const projection = projectGameState(state, "p2");
+    expect(projection.waitingOn).toBe("opponent");
+    expect(projection.pendingDecision?.kind).toBe("effectChoose"); // it IS carried…
+
+    const dispatch = vi.fn();
+    render(
+      <GameHud
+        game={state}
+        projection={projection}
+        viewerSeat="p2"
+        names={NAMES}
+        dispatch={dispatch}
+        onPlayAgain={() => {}}
+      />,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull(); // …and never rendered
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });

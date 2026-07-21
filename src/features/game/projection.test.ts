@@ -7,6 +7,7 @@ import type { GameState } from "@luminous/engine";
 import { topUid } from "@luminous/engine";
 import {
   ALL_BASIC_DECK,
+  ATTACK_PARK_DECK,
   FIXTURE_POOL,
   MIXED_DECK,
   ONKO_DECK,
@@ -492,6 +493,39 @@ describe("projectGameState — phase-derived fields", () => {
     const theirs = projectGameState(state, "p2");
     expect(theirs.activePlayer).toBe("opponent"); // P1 owns the turn (opponent, to p2)
     expect(theirs.waitingOn).toBe("you"); // p2 must act
+  });
+
+  it("keeps an ATTACK effect:choose park (resumeTail) owned by the attacker", () => {
+    // The other resumeTail origin (M5): Paldean Tauros' Blaze Dash parks on
+    // "Discard an Energy from this Pokémon" with only the attackEpilogue stage
+    // queued — the turn tail is not seeded yet, so koParkActiveSeat has to count
+    // attackEpilogue as in-turn or the board would show NO owner mid-attack.
+    let state = driveSetup(
+      3,
+      { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → P1's turn 2
+    state = setActiveFromDeck(state, "p1", "sv02-028");
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 2);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index: 1 }).state;
+
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(state.phase.seat).toBe("p1");
+    expect(state.phase.resumeTail).toBe(true);
+    expect(state.pending).toEqual([{ kind: "attackEpilogue", seat: "p1", koedSeat: "p2" }]);
+
+    // Unlike the on-KO park above, the decider IS the turn owner here.
+    const mine = projectGameState(state, "p1");
+    expect(mine.activePlayer).toBe("you");
+    expect(mine.waitingOn).toBe("you");
+    expect(mine.pendingDecision?.kind).toBe("effectChoose");
+
+    const theirs = projectGameState(state, "p2");
+    expect(theirs.activePlayer).toBe("opponent");
+    expect(theirs.waitingOn).toBe("opponent");
   });
 
   /** A CHECKUP-origin park: p2's Active is lethally poisoned when p1 ends

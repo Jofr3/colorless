@@ -1301,9 +1301,12 @@ function MoveEnergyDialog({
 }
 
 /** discardEnergy (§15) — take Energy off the OPPONENT's board (Crushing Hammer /
-    Giacomo / Mawile). MANDATORY, so there is no decline button: the only question
-    is which Energy, and the engine only parks when that question is real (a
-    forced pick auto-resolved before the dialog could mount). Two shapes off the
+    Giacomo / Mawile) or off the viewer's OWN Active (the §8 self-discard attack
+    cost — Paldean Tauros' "Blaze Dash"), which is why every group carries its
+    side. MANDATORY, so there is no decline button: the only question is which
+    Energy, and the engine only parks when that question is real (a forced pick,
+    or a set of interchangeable ones, auto-resolved before the dialog could
+    mount). Two shapes off the
     prompt's `scope`: "one" is a single pick over every candidate, grouped under
     the Pokémon it sits on so the choice reads as "which Pokémon, which Energy";
     "each" (Giacomo) asks for exactly one per group, and Confirm stays disabled
@@ -1370,13 +1373,20 @@ function DiscardEnergyDialog({
         {groups.map((group) => (
           <fieldset key={group.key} className="min-w-0">
             {/* The SPOT rides the legend — unlike the flat sibling dialogs, which
-                name the Pokémon alone. Two copies of one Basic on the opponent's
-                board would otherwise give two identical legends over two identical
-                "Basic Energy" rows, and for a Crushing Hammer WHICH host loses the
-                Energy is the entire decision. */}
+                name the Pokémon alone — because for a Crushing Hammer WHICH host
+                loses the Energy is the entire decision, and two Pokémon sharing a
+                name would otherwise give two identical legends. (Two copies of one
+                Energy print on ONE Pokémon no longer reach here at all: the engine
+                collapses interchangeable candidates to a single row.)
+                The SIDE rides it too, the same `opponent` marker
+                ChoosePokemonDialog puts on its rows: this dialog now serves both
+                boards — the opponent's for the hammer family and the viewer's OWN
+                Active for a self-discard attack cost — and the legend is the only
+                context a screen reader gets for the rows under it. */}
             <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
               {refName(game, group.ref)} ·{" "}
               {group.ref.spot.spot === "active" ? "Active" : `Bench ${group.ref.spot.index + 1}`}
+              {group.ref.seat !== viewerSeat && " · opponent"}
             </legend>
             <ul className="mt-1.5 flex flex-col gap-1.5">
               {group.uids.map((uid) => {
@@ -1453,6 +1463,23 @@ function GameOverOverlay({ projection, viewerSeat, names, onPlayAgain }: GameHud
   );
 }
 
+/** A stable identity for one parked decision — the prompt kind plus whatever it
+    offers. Two consecutive parks of the same kind differ here whenever their
+    candidates do, which is what makes the dialog's local picks reset between
+    them (see the effect:choose case below). */
+function promptKey(prompt: EffectPrompt): string {
+  switch (prompt.kind) {
+    case "chooseCards":
+      return `cards:${prompt.candidates.join(",")}`;
+    case "discardEnergy":
+      return `discard:${prompt.discardable.map((d) => d.uid).join(",")}`;
+    case "moveEnergy":
+      return `move:${prompt.movable.map((m) => m.uid).join(",")}`;
+    default:
+      return `${prompt.kind}:${prompt.note}`;
+  }
+}
+
 export function GameHud(props: GameHudProps) {
   const { game, projection } = props;
   // Exactly one panel per phase. Every interactive panel is mounted only
@@ -1485,7 +1512,17 @@ export function GameHud(props: GameHudProps) {
     case "ko:promote":
       return acting ? <PromoteDialog {...props} /> : null;
     case "effect:choose":
-      return acting ? <EffectChooseDialog key={`effect:${seatKey}`} {...props} /> : null;
+      // Keyed on the PROMPT, not just seat+turn: one program can park more than
+      // once, and two parks inside one turn share `seatKey`. The remount between
+      // them is what clears the picks today, but a program that parks twice on
+      // the SAME prompt kind would keep a stale uid selected — `ready` would be
+      // true, Confirm would light up, and the dispatch would be rejected. Now
+      // impossible: any change to the offered candidates is a new key. (An attack
+      // effect can park mid-turn since engine 0.22.0, which is exactly the
+      // direction that makes multi-park programs likely.)
+      return acting ? (
+        <EffectChooseDialog key={`effect:${seatKey}:${promptKey(game.phase.prompt)}`} {...props} />
+      ) : null;
     case "gameOver":
       return <GameOverOverlay {...props} />;
   }

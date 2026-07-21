@@ -197,6 +197,15 @@ export type PendingStage =
       collectKnockOuts (flow.ts) after the prize stages, before the promotions.
       `uid`'s card left play, but cardIdByUid → programFor still resolves it. */
   | { kind: "koTrigger"; seat: Seat; uid: string }
+  /** §8.1 + §5.3 — the attack's EPILOGUE: sweep `koedSeat`'s board for Knock
+      Outs, then end `seat`'s (the attacker's) turn through the staged tail.
+      Seeded BEFORE the attack's effect program runs and drained by `advance`
+      (flow.ts finishAttack), which is what lets that program PARK: a parked
+      attack effect leaves this stage sitting in `pending`, and settleProgram's
+      `resumeTail` fold resumes draining it once the decision lands. An attack
+      with no effect program never queues it (finishAttack runs inline), so the
+      stage exists only while an effect is mid-resolution. */
+  | { kind: "attackEpilogue"; seat: Seat; koedSeat: Seat }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory
@@ -226,12 +235,20 @@ export type Phase =
       to gust/switch/heal). `prompt` is the legal options; `cont` is the JSON
       continuation the resolveEffect action replays. Effects in scope normally
       run during the controller's own turn, so resolving returns to their
-      turn:action — no tail interaction (interpreter.ts). The EXCEPTION is an
-      on-KO triggered Ability (§9, M4 slice 9): it parks MID-KO-SWEEP during the
-      OPPONENT's turn, and `resumeTail` marks that — resolveEffect then RESUMES
-      the KO's queued prize/promotion tail (flow.ts settleProgram) instead of
-      folding back to a turn, and `seat` is the KO'd player (not the turn owner),
-      so the projection reads the turn owner separately (koParkActiveSeat). */
+      turn:action — no tail interaction (interpreter.ts).
+
+      `resumeTail` marks the two parks that are instead mid-TAIL, where finishing
+      the program must keep draining `pending` rather than fold back to a turn
+      (flow.ts settleProgram):
+        • an on-KO triggered Ability (§9, M4 slice 9), which parks MID-KO-SWEEP
+          during the OPPONENT's turn — `seat` is then the KO'd player, NOT the
+          turn owner, so the projection reads the turn owner separately
+          (koParkActiveSeat);
+        • an ATTACK's effect program (§8 step 4), which parks with the
+          attackEpilogue stage queued behind it — here `seat` IS the turn owner
+          (the attacker), and draining the tail runs the KO sweep + turn end.
+      Both are read the same way by resolveEffect; only the projection needs to
+      tell them apart. */
   | {
       kind: "effect:choose";
       seat: Seat;

@@ -21,12 +21,10 @@ import { effectiveAttackCost, passivesOf, providedEnergy } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import {
-  advance,
-  collectKnockOuts,
-  finishGame,
+  finishAttack,
   resolvePrizesAndResume,
   resolvePromotionAndResume,
-  turnTail,
+  settleProgram,
 } from "./flow";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
@@ -235,39 +233,40 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
 
   // §8 step 4 — the effect program runs AFTER the damage, in printed order: a
   // defender-targeted status lands even when the damage above is lethal (the
-  // condition vanishes with the stack at the KO below). Attack programs are
-  // synchronous (status/heal/coin-flip) — a parked result would drop the
-  // remaining ops, which no in-scope program produces.
+  // condition vanishes with the stack at the KO below).
+  //
+  // The program may PARK on a decision ("Discard an Energy from this Pokémon"
+  // with two different Energy attached), and an attack that parks must still
+  // finish afterwards — so the epilogue is QUEUED as a stage before the program
+  // runs, and the fold goes through settleProgram with `resumeTail`. A DONE
+  // program drains straight into it (identical to the pre-slice inline call, one
+  // hop later); a parked one leaves it sitting in `pending` until resolveEffect
+  // finishes the program and drains it then. APPENDED rather than assigned: the
+  // queue is empty here (turn:action never carries a tail — the three writers of
+  // that phase all leave it empty), so this is the same thing, but a stage that
+  // somehow WAS queued would run after the attack instead of vanishing.
   if (program !== null) {
-    next = runProgram(next, program, { seat: action.seat }, events).state;
+    const epilogue: PendingStage = {
+      kind: "attackEpilogue",
+      seat: action.seat,
+      koedSeat: defenderSeat,
+    };
+    return settleProgram(
+      runProgram(
+        { ...next, pending: [...next.pending, epilogue] },
+        program,
+        { seat: action.seat },
+        events,
+      ),
+      action.seat,
+      events,
+      { resumeTail: true },
+    );
   }
 
   // §8.1 Knock Out sweep on the defender's board, then the §5.3 turn end — the
   // shared epilogue with the confusion-tails exit above.
   return finishAttack(next, events, action.seat, defenderSeat);
-}
-
-/** The shared attack epilogue (§8.1 + §5.3), both exits out of `attack` (the
-    confusion-tails failure and the normal resolution): sweep `koedSeat`'s
-    WHOLE board for Knock Outs — the Active from the main damage AND any
-    Benched Pokémon a spread/snipe effect damaged (§8.1, generalized off the
-    Active) — prizes to the KO'd side's opponent, re-read off the state since
-    the effect ops replace the Pokémon objects. Then end `attackerSeat`'s turn
-    through the staged tail, the KO's decision stages in front of it. A
-    single-seat sweep can never tie (a §14 tie needs both boards to win at
-    once), but stay total — finishGame if one ever does. (A future recoil /
-    both-sides-damaging attack would sweep both seats here.) */
-function finishAttack(
-  state: GameState,
-  events: GameEvent[],
-  attackerSeat: Seat,
-  koedSeat: Seat,
-): ApplyResult {
-  const batch = collectKnockOuts(state, [koedSeat], events);
-  if (batch.done !== null) return finishGame(batch.state, batch.done, events);
-  // §5.3 — attacking ends the turn, through the same staged tail as a pass.
-  const pending: PendingStage[] = [...batch.stages, ...turnTail(attackerSeat)];
-  return advance({ ...batch.state, pending }, events);
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */
