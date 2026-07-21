@@ -237,13 +237,21 @@ Trainer cards are played from hand, take effect, then go to the **discard pile**
 ### 7.5 Costs paid **from hand** to make a play legal
 
 Some cards charge a **cost out of the hand** before they do anything. It prints in
-two wordings that are one rule — the wording tracks *where the paying card sits*,
-not what the cost does:
+three wordings that are one rule — two of them differ only by *where the paying
+card sits*, and the third does not use the word "cost" at all:
 
 | Printed on | Wording | Examples |
 |---|---|---|
 | **Trainers** (the card is in the hand it pays from) | "You can use this card only if you discard 2 **other** cards from your hand." / "…**another** card…" | Ultra Ball, Earthen Vessel, Superior Energy Retrieval |
 | **Abilities** (the card is on the board) | "You **must** discard a card from your hand **in order to use** this Ability." | Tinkaton, Revavroom, Meowscarada ex, Radiant Blastoise |
+| **The payment that is not a discard** | "Put a card from your hand on the bottom of your deck. **If you do**, …  (If you have no **other** cards in your hand, you can't use this card.)" | Dendra |
+
+- **The destination is not what makes it a cost — the "if you do" is.** Dendra
+  discards nothing, yet every clause of the rule is present: a card leaves the hand
+  first, the benefit is conditional on it, and the parenthetical states the same
+  play gate the Trainers open with, written as its contrapositive. A card put on
+  the bottom of the deck is *not* in the discard pile: it stays in the deck, and a
+  short deck can draw it straight back the same turn.
 
 - **"Other" / "another" excludes the card being played, and only Trainers say it** —
   because only a Trainer is *in* the hand it pays out of. Ultra Ball with itself
@@ -263,7 +271,8 @@ not what the cost does:
   counting the card already paid, so a hand of five pays one and draws **two**. The
   cards you discard also cannot be cards you are about to draw.
 - **Exactly the printed number, and no decline.** The only decision is *which*
-  cards; a player who can pay must pay in full to make the play.
+  cards; a player who can pay must pay in full to make the play. (The general form
+  of that rule — a printed number is a floor as well as a ceiling — is §9.1.)
 - A card whose own effect then reaches the discard pile may explicitly **exclude
   what it just paid** — Superior Energy Retrieval's "(You can't choose a card you
   discarded with the effect of this card.)" — so the cost and the effect are not
@@ -355,6 +364,28 @@ line of code (see D41/D43, `interpreter.ts forcedDiscards`).
   - Abilities can be **shut off** by effects ("Pokémon can't use Abilities"), so the
     engine needs an ability-enabled check.
 - A given card may have **both** an Ability and attacks.
+
+### 9.1 "Choose N" is not "up to N" — and "you may" is all-or-nothing
+
+A printed number in a *choose* clause is **exact**: a card that allows a smaller
+answer says so, in the words "**up to**". This is the same rule §7.5 states for a
+hand cost, generalized to every choice a card asks for, and §8.6 is its only
+softening: with fewer legal targets than the number, you choose as many as you can.
+
+- "Put 3 damage counters on **1** of your opponent's Benched Pokémon"
+  (Meowscarada ex, Radiant Blastoise) — exactly one. There is no answer "none",
+  and it matters most where these cards live: the Ability's hand cost has already
+  been paid and cannot be taken back.
+- "**Choose 2** of your opponent's Benched Pokémon and put 1 damage counter on each"
+  (Hawlucha) — exactly two, when two are there to choose.
+- "Search your deck for **up to 2** Basic Energy cards" (Earthen Vessel) — one, two,
+  or none, all legal.
+
+A printed "**you may**" adds the *empty* answer, and only that one: it makes the
+whole clause optional, not its number negotiable. Hawlucha's "**you may** choose 2"
+is therefore **2 or none** — never 1 of 2 — and the "may" of an *activated* Ability
+("Once during your turn, you **may** …") is spent by choosing to use the Ability at
+all, so it adds nothing to the choice that follows.
 
 ---
 

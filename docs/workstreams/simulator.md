@@ -2836,6 +2836,133 @@ then take those same 2 back plus 2 more. The natural home is a field on
 `EffectContext` (already JSON, already carried across a park in
 `EffectContinuation`), which is a mechanism slice, not a rider.
 
+## M5 op-slice: the FLOOR, and the cost that is not a discard (engine 0.27.0)
+**2026-07-21.** Two mandatory-exactly-N fixes, one on each prompt that could still
+say "up to" — and the resume point's #1, which the previous slice's own review
+found.
+
+### "Choose 1" is not "up to 1" (`choosePokemonMulti` gained `min`/`max`/`declinable`)
+The printed number in a *choose* clause is **exact**; a card that allows a smaller
+answer prints the words "up to", and no consumer of `damageChosen` does. The prompt
+had only `max`, so **Meowscarada ex / Radiant Blastoise could pay their hand cost
+and then place nothing** — an irreversible payment for no effect, reachable in one
+click. Written into the rules doc as **§9.1** (the general form of §7.5's "exactly
+the printed number").
+
+`declinable` is the third field, and it is not a synonym for `min: 0`:
+
+| card | printed | prompt | legal answers |
+|---|---|---|---|
+| Meowscarada ex / Radiant Blastoise | "put N damage counters on **1** of your opponent's Benched Pokémon" | min 1, max 1, declinable **false** | exactly 1 |
+| Hawlucha | "**you may** choose 2 … and put 1 damage counter on each" | min 2, max 2, declinable **true** | 2 **or** none — never 1 of 2 |
+| (Janine's Secret Art, next in) | "choose **up to** 2 of your {D} Pokémon" | min 0, max 2 | 0, 1 or 2 |
+
+Hawlucha is why a floor alone cannot describe this prompt. Its "you may" is
+all-or-nothing, and the decline has **nowhere else to live**: `triggers.ts`
+AUTO-FIRES optional triggers (the pure-upside doctrine), so the pick it governs is
+the only place a player can say no. A `min: 0` would have bought that decline by
+also legalizing a half-answer the card does not offer.
+
+**What decides between a prompt and an auto-take is `optional`, not the Bench
+size** — and the first draft got this wrong, which the review caught. A mandatory
+snipe over a Bench of `count` or fewer has no decision left in it and auto-takes
+(the M1 no-choice rule). A DECLINABLE one always has one, and it is the same
+decision on a Bench of 1 as on a Bench of 5, so it now parks at every non-empty
+Bench; keeping the old forced branch would have honoured Hawlucha's printed "you
+may" only when the opponent had 3+ Benched Pokémon, which is precisely where
+declining matters least. §8.6 still clamps the ASK (one Benched Pokémon → "you may
+choose 1"), because doing as much as you can is about the number, not the
+whether.
+
+### `discardFromHandCost` → `payFromHand`, with a required destination
+**Dendra** (sv02-179/-250/-266, Supporter): "Put a card from your hand on the
+bottom of your deck. If you do, draw cards until you have 5 cards in your hand.
+(If you have no other cards in your hand, you can't use this card.)"
+
+Nothing is discarded and the word "cost" never appears, yet every clause of D46's
+mechanism is on the card — which is why this is one field wider, not a second op:
+
+| the mechanism | Ultra Ball | Dendra |
+|---|---|---|
+| a mandatory exact pick out of hand | discard 2 | put 1 under the deck |
+| the benefit is conditional on it | "only if" | "**if you do**" |
+| the printed play gate, "other" included | "2 **other** cards" | "(If you have no **other** cards…)" |
+
+So the op is renamed for what it does — **pay** from hand — and `to: "discard" |
+"deckBottom"` is **required**, the rule `chooseCards.min` set one slice earlier
+(every author states it). `handCostUnmet` gates Dendra with no new code; the
+rejection, the park heading and the HUD's disabled-card hint all read one new
+helper, `handCostAction`, so the printed VERB reaches every surface ("put another
+card from your hand on the bottom of your deck", never "discard").
+
+**The event follows the destination's visibility.** `HAND_COST_PAID` gained `to`
+rather than splitting in two: cards paid to the discard become public where they
+land, cards paid under the deck go hidden → hidden and are never seen again. The
+log speaks in counts either way (they came out of a hidden hand) but prints a
+different verb, and P4's per-seat filter has the destination to key on. The paid
+cards keep the order they were PICKED in — no printed card pays more than one to
+this destination, so there is nothing to hide and no rng to spend.
+
+**Order is observable here too** (the D46 property, restated): Dendra + 3 others is
+a hand of 3 after the play, 2 after the payment, so the draw is **three**. Paying
+afterwards would draw two and end at 4. And the bottom of a SHORT deck is not out
+of reach — with 2 cards left, the paid card is drawn straight back the same turn,
+which is what paper does and what a "never return the payment" guard would break.
+
+### Skwovet — the same destination, and it needed no op at all
+**Skwovet** (sv01-151/-222) "Nest Stash": "Once during your turn, you may shuffle
+your hand and put it on the bottom of your deck. If you put any cards on the bottom
+of your deck in this way, draw a card." That is `handRefresh` with **Iono's two
+riders** — `toBottom` (the deck's order above survives) and `onlyIfAnyMoved` (an
+empty hand draws nothing) — in an `oncePerTurn`, `activeOnly: false` AbilityProgram:
+the first `handRefresh` reached through an ABILITY rather than the Trainer path, and
+the first that can run twice in a turn (two copies, two allowances).
+
+### Landed: 5 catalog rows
+Dendra ×3, Skwovet ×2. 1363 → **1395** tests; engineVersion 0.26.0 → **0.27.0**.
+
+### Review — 2 adversarial agents in ISOLATED worktrees, 86 + 67 mutations
+Both agents ran on the committed slice in their own `git worktree`, which is how
+mutation testing and a clean main tree coexist (they mutate freely, the tree they
+mutate is thrown away). No HIGH from engine+rules; **one HIGH from web**.
+
+**The HIGH: `usableAbilities` never mirrored the §7.5 gate.** The Trainer list has
+greyed unpayable cards out since D46; the Ability list computed `disabled` from
+`activeOnly` + `oncePerTurn` only, so Meowscarada ex with no Basic {G} in hand — a
+routine board — rendered fully lit and was refused on click with
+`ABILITY_COST_UNMET` and no reason anywhere. Recorded as "deliberate, per D29" a
+slice ago; it is not defensible now that the same helper serves the Trainer row,
+so Ability rows carry `handCostUnmet` + the printed reason (`title` + sr-only, the
+Trainer pattern verbatim).
+
+Fixes that changed behaviour rather than tests:
+- **the forced-branch decline above** (engine MEDIUM), the slice's one real logic
+  reversal;
+- **`dest: "deckBottom"` on the prompt.** The first draft parked with
+  `dest: "deck"` and let the dialog infer "Put under deck" from `min > 0` — which
+  is exactly the guess `min` exists to prevent, since `discardPileRetrieval` also
+  says `"deck"` and there it means SHUFFLED IN. The destination is the engine's to
+  state;
+- **the Ability rejection message** now reads the same `handCostAction` (it
+  hard-coded "discard");
+- **rows refuse at the cap with `aria-disabled`** (the ChooseCardsDialog rule this
+  dialog had dropped), the multi prompt's `promptKey` carries its candidates and
+  bounds, Ability rows name WHERE the Pokémon sits (Skwovet ×2 is the first board
+  with two identical Ability labels), and an "up to" pick's Confirm drops the
+  denominator it would otherwise print as "1/0".
+
+Test holes each proved by a surviving mutation: the reprint rows (deleting
+`sv02-250`/`sv02-266`/`sv01-222` left 1386 tests green — every prior slice ships
+this test and this one had not), `HAND_COST_PAID.seat` (unasserted anywhere in the
+repo, and the field a P4 filter keys on beside `to`), Dendra's Supporter-ness
+(the fixture could have said "Item"), a PADDED multi-choice (the shape that
+defeats all-or-nothing: two refs pass the floor, one is not a candidate, and
+`placeSnipeCounters` would silently drop it), `applyChoice`'s wrong-kind guard,
+Skwovet played from hand rather than placed by surgery, WHICH refs the snipe
+dialog dispatches (a dialog sending "the first `max` candidates" passed every
+length-only assertion), the live region surviving short→satisfied, and the
+declinable-at-zero wording.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
@@ -2845,7 +2972,7 @@ modifiers + special-energy provision), `triggers.ts` (triggered-Ability scan
 points — onPlayToBench/onEvolve/betweenTurns/**onKnockOut**) and `registry.ts`
 (EnergyProgram, StadiumEffects, PassiveEffects, TriggeredAbility incl. the on-KO
 `onKoPrizeGuard`, AbilityProgram — whose activation `cost` is now the
-`discardFromHandCost` op at the head of its program, not a field — op programs), and the
+`payFromHand` op at the head of its program, not a field — op programs), and the
 KO flow reaches the whole board (attacks, the Checkup, a mid-turn snipe via the
 shared `settleProgram`, and now an on-KO trigger that can pause the sweep for a
 decision via the `koTrigger` stage + `resumeTail`), so a new card in a known
