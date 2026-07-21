@@ -2746,6 +2746,96 @@ rule, which is a per-player allowance the engine has no vocabulary for (§15.J's
 allowances all reset each turn). Authoring it without the second would print a
 card that can be used every turn.
 
+## M5 op-slice: discardFromHandCost as built (engine 0.26.0)
+**2026-07-21.** The printed **hand COST** — the resume point's #1, and the first
+op that is not an effect at all but the price of one.
+
+### Two printed wordings, one mechanism — and the wording tracks the CARD'S ZONE
+| | Trainers | Abilities |
+|---|---|---|
+| printed | "You can use this card **only if** you discard 2 **other** cards from your hand" | "You **must** discard a card from your hand **in order to use** this Ability" |
+| cards | Ultra Ball (sv01-196), Earthen Vessel (sv06.5-096, "**another** card") | Tinkaton (sv02-105) "a card", Revavroom (sv01-142) "an Energy card", Meowscarada ex "a Basic {G} Energy card", Radiant Blastoise (swsh10.5-018) "a Water Energy card" |
+| says "other" | **always** | **never** |
+
+That correlation is exact across the family and it is not a style split: **a
+Trainer is in the very hand it pays out of; an Ability's card is on the board.**
+So "other" is not a field on the op — it is a consequence of where the payer sits,
+and the only place it has to be honoured is the **play gate**, which runs while the
+Trainer is still in hand. The APPLY never needs it, because `playTrainer` moves the
+played card to the discard before the program runs. Written into the rules doc as
+**§7.5**.
+
+### It is an OP, and it is the FIRST one, because it PARKS
+`{op:"discardFromHandCost"; count; filter?}`. "Discard a card from your hand" over a
+mixed hand is a real decision, so the payment has to run through the interpreter —
+which is what a handler field could never do. That field existed:
+`AbilityProgram.cost` (`{kind:"discardBasicEnergy", energyType}`), paid by
+`findAbilityCostCard` before `runProgram`. It is **GONE**, and Meowscarada migrated
+onto the op, because it was only ever the **fungible special case**: Basic {G}
+Energy copies are interchangeable, so "the first match" was as good as any, and
+Tinkaton's bare "a card" is the general one. Widen, don't copy — the D44/D45
+pattern, applied to a field this time instead of a function.
+
+**Order is observable, and the printed sentence puts the cost first on every card
+in the family.** Revavroom is the witness: pay 1 out of a hand of 5, THEN "draw
+cards until you have 6" draws **two**. Paying afterwards would draw one and leave
+five. Tinkaton's is the quieter version — the card you pay with comes from the
+pre-draw hand, so a card you are about to draw cannot pay for the draw.
+
+### MANDATORY: `chooseCards` grew a floor
+The prompt gained a **required** `min: number` (and a `"discard"` dest). Every
+printed "up to" consumer — searchDeck, discardPileRetrieval, lookAtTopN — declares
+`min: 0`, and this op declares `min === max === count`: **the only mandatory
+chooseCards park there has ever been.** Required rather than optional so each park
+site has to state which it is; `validateChoice` enforces the floor, and the dialog
+disables Confirm below it rather than letting the engine say no.
+
+It parks only on a real question. `interchangeableCandidates`' key function was
+generalized (`energyIdentity` → **`cardIdentity`**: basic Energy by the type it
+provides, everything else by catalog id) and `handCostCandidates` keeps at most
+`count` per class — so Meowscarada holding three Basic {G} asks nothing, exactly as
+the old field behaved, and an offer no bigger than `count` auto-resolves. One
+collapsed set serves **both** the prompt and the gate, which is sound because
+collapsing at cap `count` cannot cross the threshold: either one class alone has
+`count` members, or every class survives whole — so `kept >= count` iff
+`actual >= count`.
+
+### The gate VETOES — the opposite call from D45, one slice later
+`handCostUnmet` (interpreter.ts) is checked by **both** action paths before
+anything is committed, beside `trainerPlayableIf`. It is deliberately **not** in
+`programPlayable`, and the contrast with the previous slice is the point:
+
+- `attachFromTop` is **ungated** because a per-op veto inside `programPlayable`'s
+  AND would have vetoed a CARD whose other printed clause always resolves — the
+  engine guessing that one op would whiff.
+- This one **does** veto the whole card, on the card's own printed authority: "You
+  can use this card ONLY IF" states a precondition for the play. Same shape,
+  opposite answer, and the text is what decides.
+
+It also needs something `programPlayable` structurally cannot have — the played
+uid — which is the second reason it lives beside `trainerPlayableIf` (a printed
+RULE) rather than among the whiff heuristics.
+
+### Landed: 9 catalog rows, and one pre-existing bug the slice tripped over
+Ultra Ball, Earthen Vessel, Revavroom, Tinkaton, Radiant Blastoise, plus
+Meowscarada ex ×2 migrated. **Earthen Vessel is the first `searchDeck` for SEVERAL
+of something whose noun takes an article**, and it exposed that `searchNote` kept a
+second, hand-rolled noun table beside the shared `retrieveNoun` one: its plural
+branch printed "Search your deck for up to 2 **a Basic Energy** into your hand."
+Only `byName` (Flamigo's "up to 3 Flamigo") had ever reached that branch, which is
+how it survived. `searchNote` now reads the shared table like every note beside it.
+
+### Deferred, with a named reason
+**Superior Energy Retrieval** (sv02-189/-277) is the family's last row and stays
+unauthored: "(You can't choose a card you discarded with the effect of this card.)"
+means the cost's uids must reach the following `discardPileRetrieval`'s candidate
+set — **op → op data flow, which this engine has never needed** (every coupling so
+far is inside one op, or through the board). Authoring it without the exclusion
+would be strictly wrong and quietly exploitable: discard 2 Basic Energy to pay,
+then take those same 2 back plus 2 more. The natural home is a field on
+`EffectContext` (already JSON, already carried across a park in
+`EffectContinuation`), which is a mechanism slice, not a rider.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
@@ -2754,7 +2844,8 @@ spreadDamage, the `damageChosen` snipe + `attachEnergyFrom`), `continuous.ts` (p
 modifiers + special-energy provision), `triggers.ts` (triggered-Ability scan
 points — onPlayToBench/onEvolve/betweenTurns/**onKnockOut**) and `registry.ts`
 (EnergyProgram, StadiumEffects, PassiveEffects, TriggeredAbility incl. the on-KO
-`onKoPrizeGuard`, AbilityProgram incl. activation `cost`, op programs), and the
+`onKoPrizeGuard`, AbilityProgram — whose activation `cost` is now the
+`discardFromHandCost` op at the head of its program, not a field — op programs), and the
 KO flow reaches the whole board (attacks, the Checkup, a mid-turn snipe via the
 shared `settleProgram`, and now an on-KO trigger that can pause the sweep for a
 decision via the `koTrigger` stage + `resumeTail`), so a new card in a known

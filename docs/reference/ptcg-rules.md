@@ -234,6 +234,41 @@ Trainer cards are played from hand, take effect, then go to the **discard pile**
   Pokémon), and does **not** consume the Supporter/Stadium/Energy allowances.
 - If the Pokémon leaves play (KO), the Tool is discarded with it.
 
+### 7.5 Costs paid **from hand** to make a play legal
+
+Some cards charge a **cost out of the hand** before they do anything. It prints in
+two wordings that are one rule — the wording tracks *where the paying card sits*,
+not what the cost does:
+
+| Printed on | Wording | Examples |
+|---|---|---|
+| **Trainers** (the card is in the hand it pays from) | "You can use this card only if you discard 2 **other** cards from your hand." / "…**another** card…" | Ultra Ball, Earthen Vessel, Superior Energy Retrieval |
+| **Abilities** (the card is on the board) | "You **must** discard a card from your hand **in order to use** this Ability." | Tinkaton, Revavroom, Meowscarada ex, Radiant Blastoise |
+
+- **"Other" / "another" excludes the card being played, and only Trainers say it** —
+  because only a Trainer is *in* the hand it pays out of. Ultra Ball with itself
+  plus one other card in hand **cannot be played**: it needs two cards besides
+  itself. An Ability's cost has no such word and none is implied.
+- **It is a cost, not a condition.** Unlike "You can use this card only if you have
+  more Prize cards remaining than your opponent" (§14, a board condition that reads
+  public state and changes nothing), this **spends cards out of a hidden zone**. The
+  opponent cannot evaluate it in advance, and paying it changes the game state.
+- **Unpayable ⇒ the play is illegal**, and nothing happens: the card is not played,
+  the Ability is not used, and no part of the effect resolves. This is the card's
+  own printed rule, which is a different thing from "this play would have no
+  effect" (§7's no-legal-target principle) — a cost is a stated precondition, so it
+  vetoes even when the rest of the card would have done something.
+- **The cost is paid FIRST, and the order is observable.** Revavroom's "discard an
+  Energy card … then draw cards until you have 6 cards in your hand" draws to six
+  counting the card already paid, so a hand of five pays one and draws **two**. The
+  cards you discard also cannot be cards you are about to draw.
+- **Exactly the printed number, and no decline.** The only decision is *which*
+  cards; a player who can pay must pay in full to make the play.
+- A card whose own effect then reaches the discard pile may explicitly **exclude
+  what it just paid** — Superior Energy Retrieval's "(You can't choose a card you
+  discarded with the effect of this card.)" — so the cost and the effect are not
+  independent for every card in the family.
+
 ---
 
 ## 8. Attacking & damage resolution
