@@ -1968,6 +1968,178 @@ no-op cannot be seen at `/play` without a deck change.
 
 Suite 1164 → **1196**; `bun run check` + `vite build` green.
 
+## M5 op-slice: discardEnergy as built (2026-07-21) — Crushing Hammer / Giacomo / Mawile
+
+The `discardOpponentEnergy` backlog row (§15 energy removal — the "hammer"
+family). engineVersion 0.20.0 → **0.21.0**.
+
+### The op
+`{op: "discardEnergy", from, filter}` — that is the whole shape. `filter` narrows
+which ATTACHED Energy may be taken (`anyEnergy` / the new `specialEnergy`), and
+**`from` names both the eligible Pokémon and how many are hit**, spelled the way
+the cards are:
+
+| `from` | printed as | eligible |
+|---|---|---|
+| `opponentActive` | "…from your opponent's Active Pokémon" | their Active alone |
+| `opponentChosen` | "…from **1 of** your opponent's Pokémon" | their whole board, ONE Energy total |
+| `opponentEach` | "…from **each** of your opponent's Pokémon" | their whole board, one Energy off EVERY Pokémon that has a match |
+
+**Exactly one Energy per affected Pokémon.** No `count` field: every printed card
+in scope takes one, and the "discard 2 / discard all" variants are all ATTACKS,
+which cannot be authored yet (see the blocker below). `from` is deliberately the
+extension seam — the self-discard attacks join as another member, not a rename.
+
+**`opponentChosen` is a ONE-step decision, not two.** "Discard an Energy from 1 of
+your opponent's Pokémon" reads like "pick a Pokémon, then pick its Energy", but
+since exactly one Energy comes off, picking the Energy IS picking the Pokémon.
+So the prompt is a single flat candidate list and there is no source/destination
+coupling to validate — the thing that made `moveEnergy` (D37) a compound park.
+
+**MANDATORY — the first park with no decline.** Every previous parking op was
+"up to" (searchDeck / discardPileRetrieval / lookAtTopN / moveEnergy) or
+exactly-one (choosePokemon). Here the only question is WHICH Energy, never
+whether, so `validateChoice` enforces an EXACT count and an empty pick is an
+error, not a decline. Mawile's "you **may**" lives at the TRIGGER level
+(`optional`), not in the op.
+
+It parks only on a real choice: an affected Pokémon holding 2+ matching Energy,
+or — for `opponentChosen` — 2+ candidates across the board. A single forced
+candidate auto-resolves (the M1 "a choice with no choice in it is not a choice"
+doctrine, via `forcedDiscards`), and an empty candidate set is a no-op. Never
+damages, so it never KOs and never touches the flow tail.
+
+**The discarded card goes to its OWNER's pile** — the opponent's, never the
+controller's. Same rule the §8.1 KO cleanup follows, applied to a single Energy.
+
+### The prompt / choice
+`{kind: "discardEnergy", discardable: {uid, from: PokemonRef}[], scope: "one" |
+"each", note}` and `{kind: "discardEnergy", uids: string[]}`. `scope` is the only
+thing the two shapes differ by, and `validateChoice` gets both from **two rules
+plus a count**: every uid was offered and distinct, no Pokémon gives up two, and
+the total equals 1 (`"one"`) or the number of distinct sources (`"each"`) — from
+which "one each, none skipped" follows by pigeonhole.
+
+Every candidate is Energy sitting **face up on the table**, so the prompt leaks
+nothing and the projection is unchanged (unlike the standing searchDeck /
+lookAtTopN P4 item, where the parked prompt carries deck cards).
+
+### The `programPlayable` whiff gate — and the coin-gate bug it exposed
+`discardEnergyPlayable` rejects a play whose discard could only whiff, so Giacomo
+into a board with **no** Special Energy is rejected rather than burning the turn's
+one Supporter (§7.2).
+
+Crushing Hammer's discard sits INSIDE a `coinFlipGate`, and `programPlayable`
+used to scan **top-level ops only** — so the slice originally shipped it as
+playable into an Energy-less board, on the reasoning that "the flip happens
+either way". **The review falsified that**, and the fix is engine-wide:
+`programPlayable` now **descends into `coinFlipGate.then`**.
+
+The rule is §7 "you cannot play a card if it has no valid target" — Compendium
+[ruling/906](https://compendium.pokegym.net/ruling/906/), reconfirmed by the TPCi
+Rules Team **2025-06-26**. A coin gate has no `otherwise`, so its `then` is the
+only thing the card can ever do; a branch that could only whiff means the card
+could only whiff, and the **flip is procedure, not effect** (the rulebook's own
+attack sequence separates "flip a coin" from applying effects), so it cannot be
+what makes a target-less card playable. The apparent counter-precedent — Unown-E's
+"Hidden Power" forcing every flip to tails, yet flip Trainers staying playable
+(PUI Rules Team 2008-01-24) — is the OTHER branch of
+[ruling/284](https://compendium.pokegym.net/ruling/284/): *"playing a card for no
+effect happens when **the game state itself** prevents any effect from taking
+place"*. Blocked by an effect in play → playable; blocked by the board → not.
+
+This also fixes a **pre-existing** bug the slice inherited rather than caused:
+**Pokémon Catcher** (`coinFlipGate → [gust]`, D-M5 pass #1) was likewise playable
+into an empty opponent Bench. Both are now pinned. **Poké Ball is untouched** —
+`searchDeck` stays "playable enough" because a deck is *not* public knowledge, so
+"this search will find nothing" is never a fact the game state establishes, which
+is exactly the ruling's own limit.
+
+**Not extended to `conditionGate`.** No printed sv01–03 card puts a whiff-able op
+inside one (Falkner and Grusha branch into draws), and deciding it properly means
+EVALUATING the condition in `programPlayable` and scanning only the arm that will
+actually run — a bigger claim than the coin gate's pure implication, and one no
+card needs yet. Recorded here so the next author sees the asymmetry is deliberate.
+
+### Cards landed (verified vs the local D1 catalog)
+| Card | ids | Program |
+|---|---|---|
+| Crushing Hammer | sv01-168 | Item — `[coinFlipGate → [discardEnergy opponentChosen anyEnergy]]` |
+| Giacomo | sv02-182, 252, 267 | Supporter — `[discardEnergy opponentEach specialEnergy]` |
+| Mawile | sv03-143 | "Special Eater" — `triggered onPlayToBench, optional` → `[discardEnergy opponentActive specialEnergy]` |
+
+All three `from` arms land with a real printed card — no speculative vocabulary.
+`fix-hammer` is the one fixture: the `opponentChosen` arm WITHOUT Crushing
+Hammer's coin gate, so the park / the forced pick / the whiff gate are pinned
+without threading a seeded flip through every assertion.
+
+### Web — one dialog, one log row, no projection change
+`DiscardEnergyDialog` groups the candidates **by the Pokémon they sit on** (which
+is what `scope: "each"` counts against) and has **no decline button**, because the
+decision is mandatory; Confirm reads "Discard n/N" and stays disabled until every
+group is answered. A second pick within one group REPLACES the first, so the HUD
+cannot construct a choice the engine would reject.
+
+Three things the review changed, each worth keeping:
+- **Forced groups come PRE-ANSWERED.** In a `scope: "each"` park, a Pokémon
+  holding one candidate is not a question — `forcedDiscards` would have
+  auto-resolved the whole op if they all were, so only the one Pokémon carrying
+  two Special Energy actually parks it. Without seeding, the player had to
+  re-click every forced group before Confirm lit up. Same shape as
+  `MoveEnergyDialog` pre-selecting a sole source.
+- **The legend carries the SPOT** ("fix-basic-2 · Bench 1"), unlike the flat
+  sibling dialogs which name the Pokémon alone. Two copies of one Basic on the
+  opponent's board would otherwise give two identical legends over two identical
+  "Basic Energy" rows — and for Crushing Hammer, *which* host loses the Energy is
+  the entire decision.
+- **`fieldset`/`legend`, not a heading above a list.** This is the only HUD dialog
+  whose rows are GROUPED; without the host being part of the group's accessible
+  name, a screen reader never says which Pokémon an Energy would come off. The log
+  row also tints the Energy card differently from its host (the ENERGY_ATTACHED
+  precedent), since "discarded **X** from **Y**" gave no cue which was which.
+
+One new event `ENERGY_DISCARDED {seat, uids, from}` — **one per affected Pokémon**
+(a Giacomo sweep emits several), `seat` naming the VICTIM as DAMAGE_DEALT's does,
+so the log row flips to the other seat. Attached Energy and the discard pile are
+both public, so the row names the cards.
+
+### Recorded, not fixed — an optional trigger whose op is mandatory
+Mawile's Ability is printed "you **may** discard…", and the trigger framework
+AUTO-FIRES optional triggers (`TriggeredAbility.optional`). Every earlier
+auto-fired trigger still left an escape hatch, because the op it ran was itself
+declinable — the interpreter's own doctrine says so: *"the forced branch
+AUTO-TAKES rather than offering the 'you may' decline (only the parked branch
+does)"*. `discardEnergy` is the first **mandatory** parking op, so Mawile is the
+first case where a "you may" cannot be declined at all: with two Special Energy on
+the opponent's Active, the player is in a dialog they never asked for.
+
+Left as-is deliberately, and pinned by a test. The auto-fire doctrine's stated
+justification is that every optional trigger in scope is **pure upside**, and this
+one is unambiguously so — no member of the decision space is worse for the
+controller than another (there is no sv01–03 Special Energy whose loss helps its
+owner), so being "trapped" costs nothing but a click. The real fix is the
+trigger-level yes/no confirm the doctrine already contemplates, which is a
+framework change, not a card one.
+
+### The blocker this slice found — attack effect programs cannot PARK
+Scoping the family turned up **~13 more sv01–03 cards on the same idea** that this
+op cannot reach, and the reason is not the op: `attack.ts` runs an attack's effect
+program as `runProgram(...).state`, so a **parked** result silently drops the
+prompt and the remaining ops. Every "Discard an Energy from this Pokémon" attack
+(Houndoom ×2, Charcadet, Staraptor, Paldean Tauros, Dedenne ex, Bombirdier,
+Corviknight 2, Koraidon 3) and the opponent-side attack twins of Crushing Hammer
+(Pincurchin, Gumshoos, and Dedenne / Maschiff / Tympole behind a flip) are blocked
+on it — as is the `attack?: EffectOp[]` registry seam generally, which is still
+unused and, being card-level rather than per-attack, would also need keying by
+attack before a multi-attack Pokémon could use it.
+
+The fix has a known shape: seed `pending` with a new `attackEpilogue` stage and
+fold the park through `settleProgram`'s existing `resumeTail` path, so the KO
+sweep + turn tail resume after the decision. It touches the §14 tie guard and the
+turn tail, so it is its own slice — now the top row of the backlog. (Pawmot and
+Raichu, "Discard ALL Energy", need only a `count: "all"` rider and would land
+without the park work, since "all" has no decision.)
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

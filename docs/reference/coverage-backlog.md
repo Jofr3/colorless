@@ -50,7 +50,8 @@ unblocks. High-value ops first.
 | ✅ **`lookAtTopN`** (reveal/take a matching card from the top N) | 5 | **DONE 2/5** (engine 0.16.0, the top-of-deck twin of searchDeck: candidates are the top-N matches, then a trailing shuffle): **Great Ball** (top 7 → a Pokémon), **Pokégear 3.0** (top 7 → a Supporter). Remaining 3 need MORE: Electric Generator + Hydreigon attach the found Energy (a from-the-top **attach** variant — the 2 attachEnergyFrom cards this also unblocks), Malamar peeks at the OPPONENT's deck top (a distinct info-only op). |
 | ✅ **`moveEnergy`** (move an Energy between your Pokémon) | 5 | **DONE 2/5** (engine 0.17.0, the compound-park own→own op + the `anyEnergy` filter): **Energy Switch** (a Basic Energy, max 1), **Poppy** (up to 2 any Energy, max 2). Remaining 3 need MORE: Armarouge "Fire Off" (a {R} Energy benched→Active — fixed-endpoint + provided-type filter, an Ability), Mismagius "Magical Flick" (moves the OPPONENT's Energy on evolve — opponent-side + onEvolve trigger), Exp. Share (an on-KO Tool trigger). |
 | ✅ **`conditionalPlay`** (a "you can use this only if <board condition>" gate) | 5 | **PRIMITIVE DONE, 1/5 cards** (engine 0.20.0 — the `BoardCondition` vocabulary + its two consumers: the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op): **Fighting Au Lait** (more Prizes left → heal 60). The same vocabulary also lands **Falkner** (Stadium → draw 2 more) and, with `drawUntilHandSize`, **Grusha** — 2 cards from other rows. Remaining 4 each need a SECOND missing piece: **Letter of Encouragement** (a "were any of your Pokémon KO'd during your opponent's LAST turn" state fact — new per-seat history + flow wiring), **Dendra** (a choose-a-card-from-hand → BOTTOM park, mandatory-exactly-one, + `drawUntilHandSize`), **Luxray** (an in-hand Ability surface — abilities are in-play only today), **Lunatone** (Stadium-effect prevention). Next reader of the same vocabulary: **Defiance Band** (a conditional PASSIVE — the third consumer). |
-| **`discardOpponentEnergy`** (discard an Energy from an opponent's Pokémon) | 4 | Crushing Hammer, Giacomo, Klawf ex, Mawile |
+| ✅ **`discardOpponentEnergy`** (discard an Energy from an opponent's Pokémon) | 4 | **DONE 3/4** (engine 0.21.0 — the `discardEnergy` op + the `specialEnergy` filter; ONE op whose `from` names both the eligible Pokémon and how many are hit, all three arms landing with a real card): **Crushing Hammer** (`opponentChosen`, behind a coin flip), **Giacomo** (`opponentEach` — one Special Energy off EVERY one of their Pokémon that has one), **Mawile** (`opponentActive`, an onPlayToBench trigger). Remaining 1: **Klawf ex**, which needs `onDamagedByAttack` (the row below), not more of this op. |
+| 🚧 **attack effect programs that can PARK** (the `attack` registry seam + a mid-attack `effect:choose`) | ~13 | **THE next unlock, discovered while building `discardEnergy` (0.21.0).** `attack.ts` runs an attack's effect program as `runProgram(...).state` — a PARKED result silently drops the prompt and the remaining ops, so no attack program may hold a decision. That single limitation is what blocks the whole SELF-discard half of the hammer family (a `from: "yourActive"` member is otherwise a one-line addition): **Houndoom ×2, Charcadet, Staraptor, Paldean Tauros, Dedenne ex, Bombirdier** ("Discard an Energy from this Pokémon"), **Corviknight** (2), **Koraidon** (3), plus the opponent-side attacks **Pincurchin, Gumshoos** ("Discard an Energy from your opponent's Active Pokémon") and **Dedenne, Maschiff, Tympole** (the same behind a coin flip). **Pawmot** and **Raichu** ("Discard ALL Energy") need only a `count: "all"` rider and would land WITHOUT the park work, since "all" has no decision. The fix has a known shape: seed `pending` with a new `attackEpilogue` stage and fold the park through `settleProgram`'s existing `resumeTail` path, so the KO sweep + turn tail resume after the decision — but it touches the §14 tie guard and the turn tail, so it is its own slice. |
 | **`discardFromHandCost`** (pay "discard N cards from hand" to play) | 4 | Ultra Ball, Superior Energy Retrieval, Revavroom, Tinkaton |
 | **`onDamagedByAttack`** (a trigger firing when damaged by an attack, even if KO'd) | 4 | Cacnea, Cacturne, Armarouge, Klawf ex |
 | ✅ **`shuffleHandIntoDeck` (+ draw)** — the Iono/Judge hand-refresh family | 3 | **DONE — row CLOSED, +Judge +Iono** (the `handRefresh` op: engine 0.18.0 fully-automatic, reaches the OPPONENT): **Youngster** (draw 5), **Brassius** (draw hand+1), **Katy** (draw 8 + turn ends), **Judge** (both shuffle + draw 4), and **Iono** (engine 0.19.0 — the `toBottom` placement so the deck's ORDER survives, a `prizeCount` draw, and the `onlyIfAnyMoved` cross-seat draw gate). No Marnie exists in the sv01–03 catalog. The other bottom-of-deck cards need different ops: **Dendra** (a chosen card from hand → bottom + `drawUntilHandSize` + a can't-play gate), **Ortega** (reveal the opponent's hand + choose from it). |
@@ -106,14 +107,23 @@ is well under 70.
    so the primitive is done but the row is not. Cheapest next readers of the same
    vocabulary: **Defiance Band** (a conditional PASSIVE — the third consumer) and
    **Dendra** (a choose-from-hand → bottom-of-deck park).
-7. **Next candidates:** the from-the-top **attach** variant (Electric Generator /
-   Hydreigon — also 2 attachEnergyFrom cards), `discardOpponentEnergy` (Crushing
-   Hammer / Giacomo, 4), or `discardFromHandCost` (Ultra Ball / Superior Energy
-   Retrieval / Earthen Vessel, 4). NOTE that last one shares the printed wording
-   "You can use this card only if…" but is NOT a `BoardCondition` — it is a COST
-   with a card CHOICE, so it has to park, which is a different shape entirely.
-   A related deferral: **Miriam**'s "if you shuffled any cards in this way, draw
-   3" is `onlyIfAnyMoved`'s idea BETWEEN ops and across a park — it needs an
-   op-result threaded through the interpreter's continuation, not a flag.
+7. ✅ **`discardOpponentEnergy`** — **DONE 3/4** (engine 0.21.0, the `discardEnergy`
+   op + the `specialEnergy` filter: Crushing Hammer, Giacomo, Mawile). Building it
+   surfaced the next big structural unlock, now its own row above: **attack effect
+   programs cannot PARK**, which alone blocks ~13 more cards in the SAME family
+   (every "Discard an Energy from this Pokémon" attack, plus the opponent-side
+   attack twins of Crushing Hammer). Klawf ex, the 4th card on this row, needs
+   `onDamagedByAttack` instead.
+8. **Next candidates:** **attack programs that can park** (~13 cards, the row
+   above — the biggest remaining structural unlock, and it makes the whole attack
+   half of the catalog authorable), the from-the-top **attach** variant (Electric
+   Generator / Hydreigon — also 2 attachEnergyFrom cards), or `discardFromHandCost`
+   (Ultra Ball / Superior Energy Retrieval / Earthen Vessel, 4). NOTE that last one
+   shares the printed wording "You can use this card only if…" but is NOT a
+   `BoardCondition` — it is a COST with a card CHOICE, so it has to park, which is a
+   different shape entirely. A related deferral: **Miriam**'s "if you shuffled any
+   cards in this way, draw 3" is `onlyIfAnyMoved`'s idea BETWEEN ops and across a
+   park — it needs an op-result threaded through the interpreter's continuation,
+   not a flag.
 Each is a normal engine slice (new op + interpreter case + registry rows +
 tests + review), and each turns dozens of "needs-op" rows into a few data rows.

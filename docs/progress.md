@@ -3,7 +3,36 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-21 — build session #25 (**P3-M5: board conditions — one
+**Last updated:** 2026-07-21 — build session #26 (**P3-M5: `discardEnergy` — the
+energy-removal "hammer" family, and the coin-gate playability bug it exposed**). One
+new op takes Energy off the **OPPONENT's** in-play Pokémon; **`from` names both the
+eligible Pokémon and how many are hit** — `opponentActive` (Mawile), `opponentChosen`
+(Crushing Hammer), `opponentEach` (Giacomo) — and all three arms land with a REAL
+printed card. Exactly one Energy per affected Pokémon (no `count`: every "discard 2 /
+discard all" variant is an ATTACK, which cannot park). **The engine's first MANDATORY
+park** — every prior parking op was "up to" or exactly-one; here the only question is
+WHICH Energy, so an empty pick is an ERROR, not a decline. `opponentChosen` is a
+ONE-step decision (picking the Energy IS picking the Pokémon), so unlike `moveEnergy`
+there is no coupling to validate. New `specialEnergy` CardFilter; one
+`ENERGY_DISCARDED` event **per affected Pokémon**; the card goes to its **OWNER's**
+pile. Lands **3 COMPLETE real cards**: **Crushing Hammer** (sv01-168), **Giacomo**
+(sv02-182/252/267), **Mawile** (sv03-143, an onPlayToBench trigger). engineVersion
+0.20.0 → **0.21.0**; 1196 → **1227** tests, `bun run check` + `vite build` green.
+**Review (adversarial engine+rules + web+integration): no HIGH in the slice's own
+logic from either — but the engine review REVERSED a documented decision of mine, and
+that is the session's most important outcome.** I had shipped Crushing Hammer as
+playable into an Energy-less board ("the flip happens either way"); §7 / Compendium
+[ruling/906](https://compendium.pokegym.net/ruling/906/) (reconfirmed by the TPCi
+Rules Team **2025-06-26**) says otherwise, because **a coin flip is PROCEDURE, not
+effect**. `programPlayable` now DESCENDS into `coinFlipGate.then` — which also fixes a
+**pre-existing** bug: Pokémon Catcher was likewise playable into an empty opponent
+Bench. Poké Ball is deliberately untouched (a deck is not public knowledge). The
+engine agent's 45-mutant run left 5 real survivors, all test-adequacy, all now dead;
+the web agent's 3 MEDs are all fixed. See D41.
+
+---
+### Prior header (P3-M5 board conditions, kept for continuity)
+**Last updated (was):** 2026-07-21 — build session #25 (**P3-M5: board conditions — one
 `BoardCondition` vocabulary with TWO consumers**). The `conditionalPlay` backlog
 family, built as a primitive rather than a per-card flag. **`BoardCondition`** is a
 predicate union evaluated for one seat — `morePrizesThanOpponent` (strict `>`),
@@ -100,6 +129,101 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
+**`discardEnergy` is live (P3-M5, D41) — the energy-removal "hammer" family.** ONE op
+takes Energy off the **OPPONENT's** in-play Pokémon, and **`from` names both the
+eligible Pokémon and how many are hit**, spelled the way the cards are:
+**`opponentActive`** (Mawile), **`opponentChosen`** (Crushing Hammer — "from 1 of your
+opponent's Pokémon"), **`opponentEach`** (Giacomo — "from each of…", skipping any
+Pokémon with no match, the "do as much as you can" rule). All three arms land with a
+REAL printed card, so nothing in the vocabulary is speculative.
+**Exactly one Energy per affected Pokémon — no `count` field**, because every printed
+"discard 2 / discard all" variant is an ATTACK, and attacks cannot park (see below).
+**`opponentChosen` is a ONE-step decision, not two:** since exactly one Energy comes
+off, picking the Energy IS picking the Pokémon — so the prompt is a flat candidate list
+with none of the source/destination coupling that made `moveEnergy` (D37) compound.
+**The engine's FIRST mandatory park:** every prior parking op was "up to" (searchDeck /
+discardPileRetrieval / lookAtTopN / moveEnergy) or exactly-one (choosePokemon); here the
+only question is WHICH Energy, never whether, so `validateChoice` enforces an EXACT
+count and an empty pick is an ERROR, not a decline. The two scopes fall out of two rules
+plus a count (every uid offered and distinct, no Pokémon gives up two, total = 1 or the
+number of distinct sources — "one each, none skipped" then follows by pigeonhole). New
+**`specialEnergy`** CardFilter; one **`ENERGY_DISCARDED`** event per affected Pokémon
+(`seat` names the VICTIM, the DAMAGE_DEALT convention); the card goes to its **OWNER's**
+discard pile. Never damages, so it never KOs. engineVersion 0.20.0 → **0.21.0**.
+**Web: one dialog, one log row, NO projection change** — every candidate is Energy
+sitting face up on the table. `DiscardEnergyDialog` groups candidates by host, has no
+decline button (mandatory), **pre-answers forced groups** (a single-candidate group is
+not a question), and carries the SPOT in the group legend ("· Bench 1") because two
+copies of one Basic would otherwise give identical legends over identical rows.
+**Review (adversarial engine+rules + web+integration): no HIGH in the slice's own logic
+from either — but the engine review REVERSED a documented decision of mine.** I had
+shipped Crushing Hammer as playable into an Energy-LESS board, reasoning that
+`programPlayable` scans top-level ops only and "the flip happens either way". That is
+**wrong**: §7 "you cannot play a card if it has no valid target" (Compendium
+[ruling/906](https://compendium.pokegym.net/ruling/906/), reconfirmed by the TPCi Rules
+Team **2025-06-26**) covers it, because **a coin flip is PROCEDURE, not effect**. The
+apparent counter-precedent (Unown-E's Hidden Power forcing all flips tails, yet flip
+Trainers staying playable) is the OTHER branch of
+[ruling/284](https://compendium.pokegym.net/ruling/284/): blocked by an EFFECT in play →
+playable; blocked by the **game state** → not. So **`programPlayable` now DESCENDS into
+`coinFlipGate.then`**, which also fixes a **PRE-EXISTING** bug the slice merely
+inherited — **Pokémon Catcher** was likewise playable into an empty opponent Bench.
+**Poké Ball is deliberately untouched** (a deck is not public knowledge, so "this search
+will find nothing" is never a fact the state establishes — the ruling's own limit), and
+the check is **not** extended to `conditionGate` (no printed card needs it, and doing it
+properly means evaluating the condition and scanning only the arm that runs).
+The engine agent's **45-mutant** run left 5 real survivors, ALL test-adequacy, all now
+dead — notably `refKeyOf` dropping the bench index (two benched holders would FUSE into
+one group and park instead of auto-resolving) and `!==` → `<` on the required count (in
+scope "one" that would accept two Energy off two DIFFERENT Pokémon; only the exact count
+catches it). The web agent's 3 MEDs are all fixed (log-row tone, `fieldset`/`legend`
+grouping, six missing tests).
+**Recorded, NOT fixed:** Mawile is the first "you **may**" trigger that cannot be
+declined, because `discardEnergy` is the first MANDATORY parking op — every earlier
+auto-fired optional trigger escaped through its own declinable op. Left as-is and
+pinned: the auto-fire doctrine's justification is that such triggers are PURE UPSIDE,
+and this one is (no sv01–03 Special Energy's loss helps its owner), so it costs a click;
+the real fix is the trigger-level yes/no confirm the doctrine already contemplates.
+**P4 item surfaced (pre-existing):** `projection.ts` returns `pendingDecision` for BOTH
+viewers ungated on `phase.seat` — harmless here, but the sibling `chooseCards` prompt
+built by `searchDeck` carries the controller's DECK uids.
+**Next concrete actions:**
+1. **Make attack effect programs able to PARK** — now the top backlog row, and the
+   biggest remaining structural unlock (**~13 cards** in this very family). `attack.ts`
+   runs an attack's program as `runProgram(...).state`, so a parked result silently
+   drops the prompt AND the remaining ops. Blocks every "Discard an Energy from this
+   Pokémon" attack (Houndoom ×2, Charcadet, Staraptor, Paldean Tauros, Dedenne ex,
+   Bombirdier, Corviknight 2, Koraidon 3) and the opponent-side attack twins of Crushing
+   Hammer (Pincurchin, Gumshoos + Dedenne / Maschiff / Tympole behind a flip). Known fix
+   shape: seed `pending` with a new `attackEpilogue` stage and fold the park through
+   `settleProgram`'s existing `resumeTail` path. Touches the §14 tie guard and the turn
+   tail, so it wants its own careful slice. **Note the `attack?: EffectOp[]` registry
+   seam is still UNUSED and is card-level, not per-attack — it needs keying by attack
+   before a multi-attack Pokémon can use it.**
+2. **Cheap and independent of that:** a **`count: "all"`** rider on `discardEnergy` +
+   a `yourActive` `from` member lands **Pawmot** (sv01-076) and **Raichu** (sv02-064)
+   ("Discard all Energy from this Pokémon") WITHOUT the park work — "all" has no
+   decision, so those two attack programs never park.
+3. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen Vessel /
+   Revavroom / Tinkaton). Careful: it shares the printed wording "You can use this card
+   only if…" but is NOT a `BoardCondition` — it is a COST with a card CHOICE, so it must
+   PARK before the effect runs. A genuinely different shape from D40's gate.
+4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
+   PASSIVE — the third consumer; note `passivesOf` takes no seat today) and **Dendra**
+   (a choose-from-hand → BOTTOM park, mandatory-exactly-one — which `discardEnergy` has
+   now set the precedent for).
+5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games.
+   Two concrete named jobs stand: gate `projection.ts`'s `pendingDecision` on
+   `phase.seat` (the searchDeck deck-uid leak above), and D40's `stadium.owner` +
+   `prizesRemaining` projection additions.
+**Carried forward (pre-existing, NOT this slice):** every authored Supporter still has
+`legal_standard=0` in the local ingest (in fact all 78 registry ids do, so Mawile being
+out of Standard is not slice-specific); `GameLog` announces only a batch's LAST row to
+screen readers, which a Giacomo sweep (several `ENERGY_DISCARDED` rows) makes sharper;
+and Fighting Au Lait is still playable with nothing damaged anywhere.
+
+---
+### Prior resume point (P3-M5 board conditions, kept for continuity)
 **Board conditions are live (P3-M5, D40) — one `BoardCondition` vocabulary, TWO
 consumers.** The `conditionalPlay` family, built as a primitive instead of a per-card
 flag. **`BoardCondition`** (effects.ts) is a predicate union evaluated for ONE seat —
@@ -558,13 +682,58 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece)) — next: `discardOpponentEnergy` (4) or the from-the-top attach variant, `discardFromHandCost` (4 — a COST that parks, NOT a BoardCondition), the cheap D40 readers (Defiance Band / Dendra), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher)) — next: **make attack effect programs able to PARK** (~13 cards, the biggest remaining structural unlock), the cheap `count:"all"` + `yourActive` rider (Pawmot / Raichu, no park needed), `discardFromHandCost` (a COST that parks, NOT a BoardCondition), the cheap D40 readers (Defiance Band / Dendra), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-21** (build #26) — **P3-M5: `discardEnergy` — the energy-removal "hammer"
+  family, and the coin-gate playability bug it exposed** (D41; built solo — full context
+  — then an adversarial engine+rules + web+integration review: **no HIGH in the slice's
+  own logic from either**, but the engine review reversed a documented decision of mine).
+  Chosen as the resume point's #1. ONE op takes Energy off the **OPPONENT's** in-play
+  Pokémon, with **`from` naming both the eligible Pokémon and how many are hit** —
+  `opponentActive` (Mawile), `opponentChosen` (Crushing Hammer), `opponentEach` (Giacomo)
+  — and **all three arms land with a real printed card**, so no vocabulary is
+  speculative. Exactly one Energy per affected Pokémon; **no `count` field**, because
+  every printed "discard 2 / discard all" variant is an ATTACK. `opponentChosen` is a
+  ONE-step decision (picking the Energy IS picking the Pokémon), so unlike `moveEnergy`
+  there is no coupling to validate. **The engine's first MANDATORY park** — an empty pick
+  is an ERROR, not a decline. New `specialEnergy` filter; one `ENERGY_DISCARDED` per
+  affected Pokémon; the card goes to its OWNER's pile. Lands **Crushing Hammer**
+  (sv01-168), **Giacomo** (sv02-182/252/267), **Mawile** (sv03-143). Web: one dialog
+  (grouped by host, no decline, forced groups pre-answered, the spot in the legend), one
+  log row, **no projection change**. engineVersion 0.20.0 → **0.21.0**; 1196 → **1227**
+  tests, `bun run check` + `vite build` green.
+  **The session's most important outcome was the review reversing me.** I shipped
+  Crushing Hammer as playable into an Energy-LESS board, reasoning `programPlayable`
+  scans top-level ops only and "the flip happens either way". Wrong: §7 / Compendium
+  ruling/906 (reconfirmed by the TPCi Rules Team 2025-06-26) covers it, because **a coin
+  flip is PROCEDURE, not effect**; the apparent counter-precedent (Unown-E's Hidden Power
+  forcing all flips tails) is ruling/284's OTHER branch — blocked by an EFFECT → playable,
+  blocked by the **game state** → not. `programPlayable` now descends into
+  `coinFlipGate.then`, which also fixed a **pre-existing** bug (Pokémon Catcher into an
+  empty opponent Bench). Poké Ball deliberately untouched — a deck is not public
+  knowledge, the ruling's own limit — and `conditionGate` deliberately not extended.
+  **Mutation testing (engine agent): 45 mutants, 41 killed, 4 equivalent**; the 5 real
+  survivors were all test-adequacy and are now dead — the sharpest being `refKeyOf`
+  dropping the bench index (two benched holders would FUSE into one group and park
+  instead of auto-resolving) and `!==` → `<` on the required count (in scope "one" that
+  admits two Energy off two DIFFERENT Pokémon — only the exact count catches it). The web
+  agent found no soft-lock, no dispatchable-but-rejected choice and no leak; its 3 MEDs
+  are fixed (log-row tone, `fieldset`/`legend` grouping, six missing tests), and I took
+  two further UI calls off its report (pre-answer forced groups; put the spot in the
+  legend). **Recorded, not fixed:** Mawile is the first "you may" trigger that cannot be
+  declined, since this is the first mandatory parking op — left as-is because the op is
+  pure upside, pinned by a test, with the trigger-level yes/no confirm as the real fix.
+  **The bigger find is diagnostic:** scoping the family turned up **~13 more sv01–03
+  cards** on the same idea blocked NOT by the op but by `attack.ts` running an attack's
+  program as `runProgram(...).state` — so a parked result silently drops the prompt and
+  the remaining ops. **No attack program may hold a decision.** That is now the top
+  backlog row, with the fix's shape recorded (an `attackEpilogue` pending stage folded
+  through `settleProgram`'s existing `resumeTail`).
 - **2026-07-21** (build #25) — **P3-M5: board conditions — one `BoardCondition`
   vocabulary with TWO consumers** (D40; built solo — full context — then an adversarial
   engine+rules + web+integration review: **no HIGH from either**; 4 engine
