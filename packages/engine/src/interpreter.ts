@@ -82,27 +82,38 @@ export type EffectPrompt =
       max: number;
       note: string;
     }
-  /** Discard exactly one Energy off each affected Pokémon — the energy-removal
-      family (Crushing Hammer / Giacomo / Mawile) and the §8 self-discard attack
-      cost (Houndoom / Charcadet / Paldean Tauros). `discardable` pairs each
-      takeable Energy uid with the Pokémon it sits on — the opponent's, or the
-      controller's own Active for the self-discard arm; `scope` says how many to
-      pick: **"one"** = exactly one uid in total (picking the Energy also picks
-      the Pokémon), **"each"** = exactly one uid from EVERY distinct `from`
-      present. MANDATORY — there is NO decline, and the op only parks when a real
-      choice exists: `discardable` holds ONE representative per interchangeable
-      class (the same Energy on the same Pokémon — interpreter.ts
-      interchangeableCandidates), and a single surviving candidate auto-resolves
-      instead of parking. So a client can render every row as a distinct answer,
-      and validateChoice's "was it offered" check keys on this collapsed set.
-      Every candidate is Energy sitting face up on the table, so the prompt leaks
+  /** Discard Energy off the board — the energy-removal family (Crushing Hammer /
+      Giacomo / Mawile), its attack twins (Pincurchin / Dedenne) and the §8
+      self-discard attack cost (Houndoom / Corviknight / Koraidon). `discardable`
+      pairs each takeable Energy uid with the Pokémon it sits on — the opponent's,
+      or the controller's own Active for the self-discard arm; `scope` says how
+      many to pick: **`{kind:"total", count}`** = exactly `count` uids across the
+      whole offer (1 for "an Energy", 2 for Corviknight's "Discard 2 Energy"),
+      **`{kind:"each"}`** = exactly one uid from EVERY distinct `from` present.
+      MANDATORY — there is NO decline, and the op only parks when a real choice
+      exists: `discardable` holds at most `count` representatives per
+      interchangeable class (the same Energy on the same Pokémon — interpreter.ts
+      interchangeableCandidates), and an offer no bigger than `count` auto-resolves
+      instead of parking. So **every distinguishable answer is reachable, and no
+      row survives beyond what the pick could want** — which above `count: 1` is
+      NOT the same as "no two rows give the same answer": three interchangeable
+      {F} offered for a pick of 3 yield several uid-subsets landing on one board,
+      and that is correct — the player is choosing between identical cards, as in
+      paper. What the cap removes is the copy that could ONLY ever duplicate.
+      validateChoice's "was it offered" check keys on this collapsed set. Every
+      candidate is Energy sitting face up on the table, so the prompt leaks
       nothing. */
   | {
       kind: "discardEnergy";
       discardable: { uid: string; from: PokemonRef }[];
-      scope: "one" | "each";
+      scope: DiscardScope;
       note: string;
     };
+
+/** How many Energy a parked `discardEnergy` is asking for — a total across the
+    whole offer, or one from each Pokémon it offered. Named (rather than inlined)
+    because validateChoice and the HUD dialog both branch on it. */
+export type DiscardScope = { kind: "total"; count: number } | { kind: "each" };
 
 /** The controller's answer, off the resolveEffect action (wire-checked there). */
 export type EffectChoice =
@@ -113,9 +124,9 @@ export type EffectChoice =
       source) moved onto `dest` — the compound decision validateChoice checks
       (same source, dest distinct from it). An empty `uids` is a decline. */
   | { kind: "moveEnergy"; uids: string[]; dest: PokemonRef }
-  /** The discardEnergy answer: the Energy uids to discard off the opponent's
-      board — exactly one in total ("one") or exactly one per offered source
-      Pokémon ("each"), as validateChoice enforces. Never empty (mandatory). */
+  /** The discardEnergy answer: the Energy uids to discard — exactly `count` in
+      total (`{kind:"total"}`) or exactly one per offered source Pokémon
+      (`{kind:"each"}`), as validateChoice enforces. Never empty (mandatory). */
   | { kind: "discardEnergy"; uids: string[] };
 
 /** The JSON continuation stored in the effect:choose phase: the op awaiting a
@@ -337,8 +348,15 @@ function stepOp(
       if (op.count === "all") {
         return { done: discardEnergyApply(state, discardable.map((d) => d.uid), op, ctx, events) };
       }
-      const candidates = interchangeableCandidates(state, discardable);
-      const scope = op.from === "opponentEach" ? "each" : "one";
+      const scope: DiscardScope =
+        op.from === "opponentEach" ? { kind: "each" } : { kind: "total", count: op.count ?? 1 };
+      // A pick can never want more than `count` copies of one interchangeable
+      // Energy, so that is exactly how many of each survive the collapse: with
+      // cap 1 this is the single-Energy rule ("three {R} on a Houndoom ask
+      // nothing"), and with cap 3 a Koraidon discarding 3 off FOUR identical {F}
+      // is likewise no question at all.
+      const cap = scope.kind === "each" ? 1 : scope.count;
+      const candidates = interchangeableCandidates(state, discardable, cap);
       const forced = forcedDiscards(candidates, scope);
       if (forced !== null) return { done: discardEnergyApply(state, forced, op, ctx, events) };
       return {
@@ -1075,7 +1093,10 @@ function discardEnergyApply(
   const picks = new Set(uids);
   // Per affected Pokémon: the spot it sits on and what came off it. Collected in
   // one pass so the events read Active-then-bench, the board's own order.
-  const pulled: { target: PokemonTarget; uids: string[] }[] = [];
+  // `host` is captured HERE, off the pre-strip stack: an attack can take Energy
+  // off a defender its own damage Knocked Out, and by the time the batch renders
+  // that slot is empty — so the event names the Pokémon by uid, not by spot.
+  const pulled: { target: PokemonTarget; host: string; uids: string[] }[] = [];
   const strip = (pokemon: InPlayPokemon, target: PokemonTarget): InPlayPokemon => {
     const taken: string[] = [];
     const kept = pokemon.energy.filter((uid) => {
@@ -1084,7 +1105,7 @@ function discardEnergyApply(
       return false;
     });
     if (taken.length === 0) return pokemon;
-    pulled.push({ target, uids: taken });
+    pulled.push({ target, host: topUid(pokemon) ?? "", uids: taken });
     return { ...pokemon, energy: kept };
   };
   const active = side.active === null ? null : strip(side.active, { spot: "active" });
@@ -1099,6 +1120,7 @@ function discardEnergyApply(
       actor: ctx.seat,
       uids: [...entry.uids],
       from: { ...entry.target },
+      host: entry.host,
     });
   }
   return withSide(state, victim, {
@@ -1185,9 +1207,9 @@ function energyIdentity(state: GameState, uid: string): string {
     : `card:${card.id}`;
 }
 
-/** The discardable Energy with INTERCHANGEABLE candidates collapsed to one
-    representative each, board order preserved — the set the player is actually
-    asked about.
+/** The discardable Energy with INTERCHANGEABLE candidates collapsed to at most
+    `cap` representatives each, board order preserved — the set the player is
+    actually asked about.
 
     Two candidates are interchangeable when they are the same Energy (above) on
     the same Pokémon: discarding either leaves the identical board and puts an
@@ -1196,19 +1218,29 @@ function energyIdentity(state: GameState, uid: string): string {
     choice, so the key includes the host: two identical Basic Energy on two
     different Pokémon stay two candidates.
 
+    `cap` is how many the pick could possibly want from one class — 1 for the
+    single-Energy arms, N for an exact-N discard. Keeping N rather than 1 is what
+    makes "Discard 3 Energy" off three identical {F} + one {W} answerable at all
+    (collapsing to one {F} would leave two candidates for a three-card pick); the
+    surviving copies within a class are still interchangeable with each other, so
+    the DISTINGUISHABLE answers are the ways to split the count across classes.
+
     Collapsing here rather than at the park is what makes Houndoom's "Fire Blast"
     with three {R} attached resolve with no prompt at all: one representative
-    remains, and the existing forced-pick rule below sees a single candidate. */
+    remains, and the forced-pick rule below sees an offer no bigger than the
+    count. */
 function interchangeableCandidates(
   state: GameState,
   discardable: readonly { uid: string; from: PokemonRef }[],
+  cap: number,
 ): { uid: string; from: PokemonRef }[] {
-  const seen = new Set<string>();
+  const kept = new Map<string, number>();
   const out: { uid: string; from: PokemonRef }[] = [];
   for (const candidate of discardable) {
     const key = `${refKeyOf(candidate.from)}|${energyIdentity(state, candidate.uid)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const already = kept.get(key) ?? 0;
+    if (already >= cap) continue;
+    kept.set(key, already + 1);
     out.push(candidate);
   }
   return out;
@@ -1216,17 +1248,20 @@ function interchangeableCandidates(
 
 /** The picks a discardEnergy makes with NO choice left in it (the M1 doctrine),
     or null when the player must decide. Runs over the COLLAPSED candidate set
-    above, so "a single candidate" already means "a single distinguishable one".
-    "one": one candidate left in total. "each": every affected Pokémon has exactly
-    one — the common Giacomo board, where "one Special Energy off each" names
-    itself. */
+    above, so "as many candidates as the count" already means "as many
+    DISTINGUISHABLE ones".
+    "total": the offer holds no more than the count — every candidate comes off,
+    which covers both the exact fit (one candidate for "an Energy"; three for
+    Koraidon's "Discard 3") and the SHORT board, where "do as much as you can"
+    takes everything there is and asks nothing.
+    "each": every affected Pokémon has exactly one — the common Giacomo board,
+    where "one Special Energy off each" names itself. */
 function forcedDiscards(
   discardable: readonly { uid: string; from: PokemonRef }[],
-  scope: "one" | "each",
+  scope: DiscardScope,
 ): string[] | null {
-  if (scope === "one") {
-    const only = discardable[0];
-    return discardable.length === 1 && only !== undefined ? [only.uid] : null;
+  if (scope.kind === "total") {
+    return discardable.length <= scope.count ? discardable.map((d) => d.uid) : null;
   }
   const perSource = new Map<string, string[]>();
   for (const { uid, from } of discardable) {
@@ -1404,10 +1439,18 @@ function moveNote(filter: CardFilter, max: number): string {
 /** The discardEnergy prompt string — reproduced from the printed sentence, so
     the dialog's heading IS the card's own instruction (Crushing Hammer "…from 1
     of your opponent's Pokémon", Giacomo "…from each of…", Mawile "…from your
-    opponent's Active Pokémon"). Only the two filters those cards use are spelled;
-    any other reads as the generic "an Energy". */
+    opponent's Active Pokémon", Corviknight "Discard 2 Energy from this Pokémon").
+    Only the two filters those cards use are spelled; any other reads as the
+    generic "an Energy". `count: "all"` never reaches here — that arm asks
+    nothing, so it has no prompt to caption. */
 function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
-  const what = op.filter.kind === "specialEnergy" ? "a Special Energy" : "an Energy";
+  const noun = op.filter.kind === "specialEnergy" ? "Special Energy" : "Energy";
+  // A numeric count is printed as the bare number ("Discard 2 Energy…"), where
+  // one is printed as the article ("Discard an Energy…").
+  const what =
+    typeof op.count === "number" && op.count > 1
+      ? `${op.count} ${noun}`
+      : `${noun === "Energy" ? "an" : "a"} ${noun}`;
   switch (op.from) {
     case "opponentActive":
       return `Discard ${what} from your opponent's Active Pokémon.`;

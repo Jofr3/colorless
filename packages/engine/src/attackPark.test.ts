@@ -73,20 +73,19 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     expect(deriveAttackEffect("Discard all Energy from this Pokémon.")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
     ]);
-    // A NUMERIC count needs op vocabulary that does not exist (an exact-N park),
-    // and a TYPED one needs an energy-of-type filter. Deriving either loosely
-    // would under-discard on a real card, so both stay on the loud skipped path.
+    // A TYPED discard still needs an energy-of-type filter, and "{L}" means an
+    // Energy that PROVIDES {L} rather than a Basic Lightning card, so deriving it
+    // loosely would take the wrong card off a real board. (The NUMERIC counts and
+    // the opponent-side twins this list used to hold both derive now — see
+    // attackDiscards.test.ts.)
     for (const text of [
-      "Discard 2 Energy from this Pokémon.",
-      "Discard 3 Energy from this Pokémon.",
       "Discard 2 {R} Energy from this Pokémon.",
       "Discard a {L} Energy from this Pokémon.",
+      "Discard a Fire Energy from this Pokémon.",
       // Whole-sentence anchoring: a rider after the discard is a different card.
       "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
       "Flip a coin. If tails, discard all Energy from this Pokémon.",
-      // The OPPONENT's board is the hammer family, not this one.
-      "Discard an Energy from your opponent's Active Pokémon.",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -111,7 +110,7 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     expect(parked.phase.resumeTail).toBe(true);
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
     expect(parked.phase.prompt.note).toBe("Discard an Energy from this Pokémon.");
-    expect(parked.phase.prompt.scope).toBe("one");
+    expect(parked.phase.prompt.scope).toEqual({ kind: "total", count: 1 });
 
     // The epilogue is QUEUED, not run: the turn has not ended and nothing was
     // discarded yet. This is the whole regression — the old code returned here

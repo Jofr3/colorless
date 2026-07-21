@@ -147,7 +147,7 @@ describe("M5 op-slice — discardEnergy", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
     const prompt = parked.phase.prompt;
-    expect(prompt.scope).toBe("one");
+    expect(prompt.scope).toEqual({ kind: "total", count: 1 });
     expect(prompt.note).toBe("Discard an Energy from 1 of your opponent's Pokémon.");
     // anyEnergy admits both the basic and the Special, each tagged with its host.
     expect(prompt.discardable.map((d) => d.uid)).toEqual([onActive, onBench]);
@@ -350,6 +350,30 @@ describe("M5 op-slice — discardEnergy", () => {
     expect(done.players.p2.discard.slice(-2)).toEqual([onBench0, onBench1]);
   });
 
+  it("Giacomo asks NOTHING when a Pokémon carries two copies of ONE print — the 'each' cap is 1", () => {
+    // The `each` arm's collapse cap: exactly ONE representative per (host, Energy)
+    // class, because the answer for that Pokémon is one Energy no matter how many
+    // it holds. Two copies of the SAME print are one question wearing two hats, so
+    // the whole sweep auto-resolves. The sibling test below uses two DIFFERENT
+    // prints, which is what makes it park — these two together are what pin the
+    // cap at 1 rather than at the count.
+    let state = board(11);
+    state = benchFromDeck(state, "p2", "fix-basic-2");
+    state = attachFromDeck(state, "p2", "fix-special", 1); // Active — one match
+    state = attachBenchFromDeck(state, "p2", 0, "fix-special", 2); // bench 0 — two IDENTICAL
+    const onActive = activeEnergy(state, "p2")[0] as string;
+    const onBench = benchEnergy(state, "p2", 0);
+
+    const { state: done, events } = playFromHand(state, "sv02-182");
+    expect(types(events)).not.toContain("EFFECT_PENDING");
+    expect(done.phase.kind).toBe("turn:action");
+    // One off each Pokémon — and off the bench pair it is the first copy, the
+    // whole pair never having been a choice.
+    expect(activeEnergy(done, "p2")).toEqual([]);
+    expect(benchEnergy(done, "p2", 0)).toEqual([onBench[1]]);
+    expect(done.players.p2.discard).toEqual([onActive, onBench[0]]);
+  });
+
   it("Giacomo parks only when a Pokémon carries TWO Special Energy, and takes exactly one each", () => {
     let state = board(8);
     state = benchFromDeck(state, "p2", "fix-basic-2");
@@ -362,7 +386,7 @@ describe("M5 op-slice — discardEnergy", () => {
     const { state: parked } = playFromHand(state, "sv02-182");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
-    expect(parked.phase.prompt.scope).toBe("each");
+    expect(parked.phase.prompt.scope).toEqual({ kind: "each" });
     expect(parked.phase.prompt.note).toBe(
       "Discard a Special Energy from each of your opponent's Pokémon.",
     );
@@ -497,7 +521,7 @@ describe("M5 op-slice — discardEnergy", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
     expect(parked.phase.seat).toBe("p1"); // the CONTROLLER answers, not the victim
-    expect(parked.phase.prompt.scope).toBe("one");
+    expect(parked.phase.prompt.scope).toEqual({ kind: "total", count: 1 });
     expect(parked.phase.prompt.note).toBe(
       "Discard a Special Energy from your opponent's Active Pokémon.",
     );

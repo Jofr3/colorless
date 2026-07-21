@@ -702,6 +702,104 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+
+  // — M5 op-slice: the discardEnergy ATTACK arms (name / stage / hp / retreat /
+  //   type and the WHOLE attack row verified verbatim against the local catalog
+  //   2026-07-21 — the printed effect text IS the program here, since attacks
+  //   derive rather than read a registry row). Two deliberate simplifications,
+  //   declared so a later reader does not trust more than is here: printed
+  //   WEAKNESS is omitted (these cards only ever ATTACK in these suites, and a
+  //   defender's weakness is what damage math reads), and the cards with two
+  //   printed attacks carry only the discarding one — so a fixture's
+  //   `index: 0` is Slither Wing's and Koraidon's SECOND printed attack. —
+  /** Pincurchin (sv02-072) — "Needle Crush" [L][L][L] 70: the bare
+      opponent-side twin, on a Basic body. */
+  "sv02-072": battler("sv02-072", {
+    name: "Pincurchin",
+    hp: 80,
+    types: ["Lightning"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Lightning", "Lightning", "Lightning"],
+        name: "Needle Crush",
+        damage: 70,
+        effect: "Discard an Energy from your opponent's Active Pokémon.",
+      },
+    ],
+  }),
+  /** Tympole (sv03-050) — "Screw Tail" [W] 10: the same twin behind a coin flip,
+      on the cheapest printed cost in the family (one Energy, so a seeded flip is
+      all the board setup a heads/tails pair needs). */
+  "sv03-050": battler("sv03-050", {
+    name: "Tympole",
+    hp: 70,
+    types: ["Water"],
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Water"],
+        name: "Screw Tail",
+        damage: 10,
+        effect: "Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon.",
+      },
+    ],
+  }),
+  /** Slither Wing (sv06.5-026) — "Smashing Wing" [F][F][C] 130: the exact-N
+      self-discard at N=2, on a Basic body. */
+  "sv06.5-026": battler("sv06.5-026", {
+    name: "Slither Wing",
+    hp: 140,
+    types: ["Fighting"],
+    retreat: 3,
+    attacks: [
+      {
+        cost: ["Fighting", "Fighting", "Colorless"],
+        name: "Smashing Wing",
+        damage: 130,
+        effect: "Discard 2 Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Koraidon (sv01-124, the non-ex Basic) — "Rampaging Fang" [F][F][F][C] 190:
+      the exact-N self-discard at N=3, the biggest printed count in the family. */
+  "sv01-124": battler("sv01-124", {
+    name: "Koraidon",
+    hp: 130,
+    types: ["Fighting"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Fighting", "Fighting", "Fighting", "Colorless"],
+        name: "Rampaging Fang",
+        damage: 190,
+        effect: "Discard 3 Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** FIXTURE — an exact-N discard whose N EXCEEDS what the attack costs, so the
+      SHORT board ("do as much as you can") is reachable at all. Every printed
+      exact-N card pays a cost at least as big as its own discard (Slither Wing
+      3 Energy / discard 2; Koraidon 4 / 3), which makes the shortfall unreachable
+      through a real attack — but the rule is real and a future card need not be
+      so tidy, so it runs on a fixture: [C] to attack, "Discard 4 Energy". */
+  "fix-discard4": battler("fix-discard4", {
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Overdraw",
+        damage: 20,
+        effect: "Discard 4 Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** A Basic Lightning Energy — pays Needle Crush's [L][L][L]. */
+  "fix-lightning-energy": typedEnergy("fix-lightning-energy", "Lightning"),
+  /** FIXTURE — a SECOND catalog print of Fighting Energy, the fix-fire-energy-alt
+      shape for the {F} attackers: same provision, different id, so a board can
+      hold interchangeable copies whose collapse an exact-N pick must survive. */
+  "fix-fighting-energy-alt": typedEnergy("fix-fighting-energy-alt", "Fighting"),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1024,6 +1122,31 @@ export const ATTACK_PARK_DECK = deckOf({
   "fix-fire-energy-alt": 4, // a second Fire print — same type, different id
   "fix-special": 3, // a Special Energy, so the two identity spaces can be split
   "fix-energy": 17, // a DIFFERENT print, so a mixed attach is a real choice
+});
+
+/** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed
+    sentence derives — Pincurchin (the bare opponent-side twin), Tympole (the same
+    behind a coin flip), Slither Wing (discard 2) and Koraidon (discard 3) — with
+    the Energy their costs need. BOTH seats run it, so the opponent's Active can be
+    dressed with the Energy an attack twin strips. fix-victim (30 HP) dies to every
+    printed damage here and fix-bigbody (200 HP) survives all of it, which is how
+    the "strip a defender the same attack just Knocked Out" case is built. Two
+    Fighting prints (…-energy / …-energy-alt) plus colorless fix-energy and a
+    Special let an exact-N pick face both interchangeable copies and real choices. */
+export const ATTACK_DISCARD_DECK = deckOf({
+  "sv02-072": 4, // Pincurchin — Needle Crush
+  "sv03-050": 4, // Tympole — Screw Tail (coin-gated)
+  "sv06.5-026": 4, // Slither Wing — Smashing Wing (discard 2)
+  "sv01-124": 4, // Koraidon — Rampaging Fang (discard 3)
+  "fix-discard4": 3, // FIXTURE — discard 4 for a [C] cost, the short-board path
+  "fix-victim": 2, // 30 HP — OHKO'd by every attack here
+  "fix-bigbody": 3, // 200 HP — survives all of it
+  "fix-lightning-energy": 6, // pays Needle Crush's [L][L][L]
+  "fix-water-energy": 4, // pays Screw Tail's [W]
+  "fix-fighting-energy": 10, // pays the two {F} costs
+  "fix-fighting-energy-alt": 4, // a second {F} print — same provision, different id
+  "fix-special": 4, // a Special Energy — a distinct identity in the same pick
+  "fix-energy": 8, // basic Colorless — the "different print" a mixed board needs
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

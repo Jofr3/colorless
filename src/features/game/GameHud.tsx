@@ -1307,17 +1307,20 @@ function MoveEnergyDialog({
     Energy, and the engine only parks when that question is real (a forced pick,
     or a set of interchangeable ones, auto-resolved before the dialog could
     mount). Two shapes off the
-    prompt's `scope`: "one" is a single pick over every candidate, grouped under
-    the Pokémon it sits on so the choice reads as "which Pokémon, which Energy";
-    "each" (Giacomo) asks for exactly one per group, and Confirm stays disabled
-    until every group has its pick. Mounted only while parked on the viewer, so
-    the useState is the per-decision reset. */
+    prompt's `scope`: "total" is a flat pick of exactly `count` candidates
+    (1 for a Crushing Hammer, 2 for Corviknight's "Discard 2 Energy from this
+    Pokémon"), grouped under the Pokémon each sits on so a one-pick choice reads
+    as "which Pokémon, which Energy"; "each" (Giacomo) asks for exactly one per
+    group, and Confirm stays disabled until every group has its pick. Mounted
+    only while parked on the viewer, so the useState is the per-decision reset. */
 function DiscardEnergyDialog({
   game,
   viewerSeat,
   dispatch,
   prompt,
 }: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "discardEnergy" }> }) {
+  // Hoisted so the pick handler's closure keeps the discriminant narrowed.
+  const scope = prompt.scope;
   const keyOf = (ref: PokemonRef) =>
     `${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
   // The candidates grouped by the Pokémon they sit on, first-seen (board) order —
@@ -1338,32 +1341,52 @@ function DiscardEnergyDialog({
   // pre-selecting a sole source. "one" starts empty — there the whole answer is
   // a single uid, so nothing is forced unless the engine already resolved it.
   const [picked, setPicked] = useState<string[]>(() =>
-    prompt.scope === "each"
+    scope.kind === "each"
       ? groups.flatMap((group) => (group.uids.length === 1 ? [group.uids[0] as string] : []))
       : [],
   );
-  // One pick per Pokémon either way: a pick REPLACES that group's previous one
-  // rather than adding to it — exactly the rule the engine re-validates. In
-  // "one" scope a pick also clears every other group's, since the whole answer
-  // is a single uid; clicking the selected row again clears it.
+  // "each": ONE pick per Pokémon — a pick REPLACES that group's previous one
+  // rather than adding to it, exactly the rule the engine re-validates.
+  // "total": a flat multi-select of `count` Energy from anywhere in the offer,
+  // since an exact-N discard takes all N off one Pokémon. Clicking a selected row
+  // clears it; AT THE CAP a further click is REFUSED — the rule ChooseCardsDialog
+  // and ChoosePokemonMultiDialog already follow — except at count 1, where
+  // replacing the single pick is the established feel and nothing is ambiguous.
+  // Deliberately NOT evict-the-oldest above 1: that silently un-presses a row the
+  // user is not looking at, and since interchangeable copies can now legitimately
+  // be offered more than once, the evictable rows may be identical by name.
   const pick = (groupUids: readonly string[], uid: string) => {
     setPicked((prev) => {
-      const others = prev.filter((u) => !groupUids.includes(u));
-      if (prev.includes(uid)) return prompt.scope === "each" ? others : [];
-      return prompt.scope === "each" ? [...others, uid] : [uid];
+      if (scope.kind === "each") {
+        const others = prev.filter((u) => !groupUids.includes(u));
+        return prev.includes(uid) ? others : [...others, uid];
+      }
+      if (prev.includes(uid)) return prev.filter((u) => u !== uid);
+      if (prev.length < scope.count) return [...prev, uid];
+      return scope.count === 1 ? [uid] : prev;
     });
   };
-  const required = prompt.scope === "one" ? 1 : groups.length;
+  const required = scope.kind === "total" ? scope.count : groups.length;
   const ready = picked.length === required;
 
   return (
     <HudDialog label="Discard Energy">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
-      <p className="mt-1.5 text-sm text-white/55">
-        {prompt.scope === "each"
+      {/* <output> — an implicit polite LIVE REGION (the house pattern), because
+          the running total is otherwise unannounceable:
+          `aria-pressed` is only spoken for the row that has focus, and the
+          Confirm button's "Discard 1/2" is `disabled` until ready — so out of the
+          tab order exactly while the count is the thing you need. Doubly so now
+          that two rows may share a name (interchangeable copies are legitimately
+          offered for an exact-N pick) and that a click at the cap is REFUSED:
+          without this, silence is the only feedback either produces. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {scope.kind === "each"
           ? `Pick one Energy from each Pokémon (${picked.length}/${required}).`
-          : "Pick the Energy to discard."}
-      </p>
+          : required > 1
+            ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
+            : "Pick the Energy to discard."}
+      </output>
       <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
         {/* fieldset/legend, not a bare heading + list: this is the only HUD
             dialog whose candidate rows are GROUPED, and every row reads
@@ -1375,9 +1398,11 @@ function DiscardEnergyDialog({
             {/* The SPOT rides the legend — unlike the flat sibling dialogs, which
                 name the Pokémon alone — because for a Crushing Hammer WHICH host
                 loses the Energy is the entire decision, and two Pokémon sharing a
-                name would otherwise give two identical legends. (Two copies of one
-                Energy print on ONE Pokémon no longer reach here at all: the engine
-                collapses interchangeable candidates to a single row.)
+                name would otherwise give two identical legends. (Interchangeable
+                copies of one Energy print on ONE Pokémon collapse in the engine to
+                as many rows as the pick could want — so a one-Energy discard shows
+                a single row, and only an exact-N discard can show repeats, where
+                identical rows are genuinely interchangeable answers.)
                 The SIDE rides it too, the same `opponent` marker
                 ChoosePokemonDialog puts on its rows: this dialog now serves both
                 boards — the opponent's for the hammer family and the viewer's OWN
@@ -1391,14 +1416,34 @@ function DiscardEnergyDialog({
             <ul className="mt-1.5 flex flex-col gap-1.5">
               {group.uids.map((uid) => {
                 const selected = picked.includes(uid);
+                // A row the cap has closed off says so, rather than just doing
+                // nothing when clicked: `pick` REFUSES at `count` (above 1), and
+                // a silently inert row is the one thing the <output> above cannot
+                // announce — nothing changes, so nothing is spoken. Marked
+                // aria-disabled and NOT `disabled`, so it stays focusable: the
+                // rows are how you read the offer, and dropping them out of the
+                // tab order at the cap would hide half the board from a keyboard
+                // user mid-decision.
+                // `scope.count > 1` matters: at count 1 a click REPLACES the pick,
+                // so no row is ever refused there — mirroring `pick` exactly.
+                const refused =
+                  !selected &&
+                  scope.kind === "total" &&
+                  scope.count > 1 &&
+                  picked.length >= scope.count;
                 return (
                   <li key={uid}>
                     <button
                       type="button"
                       aria-pressed={selected}
+                      aria-disabled={refused || undefined}
                       onClick={() => pick(group.uids, uid)}
                       className={`${ROW_BUTTON_BASE} ${
-                        selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                        selected
+                          ? "bg-white/[0.12] text-white ring-white/40"
+                          : refused
+                            ? ROW_BUTTON_DISABLED
+                            : ROW_BUTTON_ENABLED
                       }`}
                     >
                       <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
@@ -1472,7 +1517,14 @@ function promptKey(prompt: EffectPrompt): string {
     case "chooseCards":
       return `cards:${prompt.candidates.join(",")}`;
     case "discardEnergy":
-      return `discard:${prompt.discardable.map((d) => d.uid).join(",")}`;
+      // The SCOPE rides the key too: the dialog's picked-state is only valid for
+      // the count it was gathered under, so two parks offering the same uids at
+      // different counts must not share one. (Unreachable today — resolving a
+      // discard always removes Energy, so the offer changes — but the key's whole
+      // job is "any change the state depends on is a new key".)
+      return `discard:${prompt.scope.kind === "total" ? prompt.scope.count : "each"}:${prompt.discardable
+        .map((d) => d.uid)
+        .join(",")}`;
     case "moveEnergy":
       return `move:${prompt.movable.map((m) => m.uid).join(",")}`;
     default:

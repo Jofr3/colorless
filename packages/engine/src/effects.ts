@@ -266,30 +266,47 @@ export type EffectOp =
           An Ability on a BENCHED Pokémon saying "this Pokémon" is NOT this member
           — EffectContext carries no source uid, so that card stays unauthored.
 
-      Exactly ONE Energy per affected Pokémon unless `count: "all"` (the printed
-      "Discard ALL Energy from this Pokémon" — Pawmot, Raichu), which takes every
-      match off every affected Pokémon and therefore never asks anything. A
-      numeric "discard 2 / discard 3" is neither shape and is still unauthored
-      (see the backlog).
+      `count` says how many come off, and ONE is the default (absent = the printed
+      "an Energy"):
+        • **a number** — the exact-N discard ("Discard 2 Energy from this Pokémon"
+          — Corviknight, Slither Wing; "Discard 3…" — Koraidon). Still MANDATORY,
+          so N is a floor as well as a ceiling — except that a board holding fewer
+          than N matching Energy gives up all of them ("do as much as you can");
+        • **`"all"`** — the printed "Discard ALL Energy from this Pokémon"
+          (Pawmot, Raichu): every match off every affected Pokémon, so it never
+          asks anything.
+      A count applies to the WHOLE pick, not per Pokémon, so pairing one with
+      `opponentEach` ("one from each") is not a shape any card prints — and the
+      union below makes it UNREPRESENTABLE rather than merely undocumented
+      (`count?: never` on that arm): the interpreter would otherwise ignore the
+      field and under-discard while the prompt captioned itself with the number.
+      The deriver is the only author of a numeric count today and only ever pairs
+      it with `yourActive`.
 
       MANDATORY, not "up to": the only decision is WHICH Energy, never whether — so
       unlike searchDeck / moveEnergy this park has NO decline. It parks only on a
       genuine choice: candidates that are the SAME printed card on the SAME
-      Pokémon are interchangeable and collapse to one (interpreter.ts
-      interchangeableCandidates), so a Houndoom attacking with three {R} attached
-      asks nothing while two DIFFERENT Energy on it do. An empty candidate set is
-      a no-op (`programPlayable` also blocks a top-level discard that could only
-      whiff — attacks do not consult it, since the attack was already legally
-      declared). Never damages, so it never KOs. */
+      Pokémon are interchangeable, and only as many of them survive as the pick
+      could possibly want (interpreter.ts interchangeableCandidates keeps `count`
+      per class) — so a Houndoom attacking with three {R} attached asks nothing,
+      and neither does a Koraidon discarding 3 off four identical {F}, while two
+      DIFFERENT Energy on one Pokémon do. An empty candidate set is a no-op
+      (`programPlayable` also blocks a top-level discard that could only whiff —
+      attacks do not consult it, since the attack was already legally declared).
+      Never damages, so it never KOs. */
   | {
       op: "discardEnergy";
-      from: "opponentActive" | "opponentChosen" | "opponentEach" | "yourActive";
+      from: "opponentActive" | "opponentChosen" | "yourActive";
       filter: CardFilter;
-      /** Take EVERY matching Energy off each affected Pokémon instead of one —
-          the printed "Discard all Energy from this Pokémon". No decision is left,
-          so the op never parks under it. */
-      count?: "all";
+      /** How many Energy the op takes in total: absent = one (the printed "an
+          Energy"), a number = exactly that many, `"all"` = every match — which
+          leaves no decision, so the op never parks under it. */
+      count?: "all" | number;
     }
+  /** The `opponentEach` sweep, split out so a count cannot ride it: "one from
+      EACH" already fixes how many come off (one per Pokémon with a match), and
+      the field would be silently ignored. Giacomo is the only printed member. */
+  | { op: "discardEnergy"; from: "opponentEach"; filter: CardFilter; count?: never }
   /** Move up to `max` Energy from ONE of the controller's own in-play Pokémon
       to ANOTHER of their own in-play Pokémon — the §6 manual Energy-movement
       family (Energy Switch: a Basic Energy; Poppy: up to 2 any Energy). `filter`
@@ -421,16 +438,38 @@ const SPREAD_EACH_BENCH = new RegExp(
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
 // The self-discard attack COST (§8): "an" leaves the player one pick per
-// distinct Energy attached, "all" strips the lot. Deliberately NOT matching the
-// numeric ("Discard 2 Energy…") or typed ("Discard a {L} Energy…") variants —
-// both need op vocabulary this engine does not have yet, and a loose regex here
-// would silently under-discard on a real card. "this Pokémon" is the Active by
+// distinct Energy attached, "{N}" asks for exactly that many, "all" strips the
+// lot. Deliberately NOT matching the TYPED variants ("Discard a {L} Energy…",
+// "Discard 2 {R} Energy…", the older "Discard a Fire Energy…") — those need an
+// energy-of-type filter this engine does not have yet, and "{L}" means an Energy
+// that PROVIDES {L} rather than a Basic Lightning card, so a loose regex here
+// would discard the wrong card on a real board. "this Pokémon" is the Active by
 // §8 (only the Active attacks), which is what `from: "yourActive"` encodes.
 const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\.$/;
+const SELF_DISCARD_N = /^Discard (\d+) Energy from this Pokémon\.$/;
 const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
+// The OPPONENT-side twin of the self-discard, printed on attacks rather than
+// Trainers (Pincurchin "Needle Crush", Gumshoos "Crunch", Dragonite V "Hyper
+// Beam") and half the time behind a flip (Dedenne "Energy Munch", Maschiff
+// "Crunch", Tympole "Screw Tail", Yveltal "Destructive Beam"). Same op as
+// Mawile's Ability, one filter wider: an attack takes ANY Energy, not just a
+// Special one.
+//
+// Krookodile (sv01-117) is the trap these two must not fall into: "Flip a coin
+// UNTIL you get tails. For each heads, discard an Energy from your opponent's
+// Active Pokémon." — a repeat count this engine cannot express — ENDS in the
+// bare pattern's exact words, and deriving it would silently discard once.
+// TWO things keep it out, and it takes both: the leading `^`, and the fact that
+// the clause reads lowercase "discard" mid-sentence where the pattern needs a
+// capital. Neither alone is enough (dropping `^` still misses on the capital;
+// adding /i still misses on the anchor) — so a future ingest that normalizes
+// capitalisation would put the whole weight on the anchor. Do not add /i here.
+const OPPONENT_ACTIVE_DISCARD = /^Discard an Energy from your opponent['’]s Active Pokémon\.$/;
+const FLIP_OPPONENT_ACTIVE_DISCARD =
+  /^Flip a coin\. If heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
 
 /** Parse printed attack text into executable ops, or null when the text is
-    ANYTHING but one of the eight recognized whole sentences (leading/trailing
+    ANYTHING but one of the eleven recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
 export function deriveAttackEffect(text: string): EffectOp[] | null {
   const effect = text.trim();
@@ -492,16 +531,42 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [{ op: "spreadDamage", target: "opponentBench", amount: Number(match[1]) }];
   }
 
-  // 7/8. "Discard an Energy from this Pokémon." / "Discard all Energy from this
-  //      Pokémon." — the self-discard attack cost (§8), the first DERIVED attack
-  //      effect that can PARK: with two different Energy attached, which one goes
-  //      is a real decision, so the attack resolves through the attackEpilogue
-  //      stage (attack.ts). "all" has no decision and resolves inline.
+  // 7/8/9. "Discard an Energy from this Pokémon." / "Discard {N} Energy from this
+  //        Pokémon." / "Discard all Energy from this Pokémon." — the self-discard
+  //        attack cost (§8), the first DERIVED attack effect that can PARK: with
+  //        two different Energy attached, which one goes is a real decision, so
+  //        the attack resolves through the attackEpilogue stage (attack.ts).
+  //        "all" has no decision and resolves inline.
   if (SELF_DISCARD_ONE.test(effect)) {
     return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }];
   }
+  match = SELF_DISCARD_N.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    // A printed 0 is not a real card and would derive to a silent no-op; leave
+    // anything but a positive count on the loud skipped path.
+    if (count >= 1) {
+      return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count }];
+    }
+  }
   if (SELF_DISCARD_ALL.test(effect)) {
     return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }];
+  }
+
+  // 10/11. "Discard an Energy from your opponent's Active Pokémon.", bare and
+  //        behind a coin flip — the hammer family's attack twins, the same op
+  //        Mawile's Ability runs with a wider filter.
+  if (OPPONENT_ACTIVE_DISCARD.test(effect)) {
+    return [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }];
+  }
+  if (FLIP_OPPONENT_ACTIVE_DISCARD.test(effect)) {
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      },
+    ];
   }
 
   return null;

@@ -251,11 +251,25 @@ export type GameEvent =
       which is why `actor` is carried rather than inferred: a consumer that read
       it as "the other seat" (the log did, before the self arm existed) would
       credit a Houndoom's own discard to its opponent. One event per affected
-      Pokémon (a Giacomo sweep emits several), each naming its own spot; the
-      Pokémon stay put (no compaction), so `from` resolves against the post-state.
-      Attached Energy and the discard pile are both public, so naming the cards
-      leaks nothing. */
-  | { type: "ENERGY_DISCARDED"; seat: Seat; actor: Seat; uids: string[]; from: PokemonTarget }
+      Pokémon (a Giacomo sweep emits several), each naming its own spot.
+
+      `host` is the stripped Pokémon's TOP-CARD uid, and it is what a consumer
+      must name it by: `from` says WHERE it sat, which no longer identifies it
+      afterwards. An ATTACK can discard Energy from a defender its own damage
+      Knocked Out (§8 resolves the whole attack before the §8.1 check, so the
+      Energy comes off a Pokémon that is about to leave) — and the KO empties
+      that slot in the very same batch, so resolving `from` against the post-state
+      yields "the Active spot". A uid stays resolvable through `cardIdByUid`
+      forever, exactly as KNOCKED_OUT's does. Attached Energy and the discard pile
+      are both public, so naming the cards leaks nothing. */
+  | {
+      type: "ENERGY_DISCARDED";
+      seat: Seat;
+      actor: Seat;
+      uids: string[];
+      from: PokemonTarget;
+      host: string;
+    }
   /** `seat` shuffled its whole hand (`count` cards) into its deck, then drew (a
       separate CARDS_DRAWN) — the hand-refresh Supporter family (Youngster, Judge,
       Brassius, Katy). COUNT-ONLY: a shuffled hand card is hidden, so the opponent

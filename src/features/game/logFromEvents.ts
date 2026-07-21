@@ -548,6 +548,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // "discarded X from Y" gives the reader no cue which is the card and
       // which is the Pokémon it came off.
       //
+      // The host is named by the event's `host` UID, never by re-reading the
+      // spot: an ATTACK can strip a defender its own damage Knocked Out (§8
+      // resolves before the §8.1 check), and the KO lands in this same batch, so
+      // `targetName(state, seat, from)` would find an EMPTY slot and print
+      // "Tide's the Active spot". A uid resolves through cardIdByUid forever —
+      // which is also why the Energy names above survive their own discard.
+      //
       // "from" must say WHOSE Pokémon, and it names the OWNER outright. While the
       // op only reached the opponent's board, a bare "from <name>" could only mean
       // theirs; now that the same sentence serves a self-discard, a mirror match
@@ -562,7 +569,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain("discarded "),
         { text: countedNames(cards), tone: "energy" },
         plain(" from "),
-        strong(`${names[event.seat]}'s ${targetName(state, event.seat, event.from)}`),
+        strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
       ]);
     }
     case "POKEMON_SWITCHED":

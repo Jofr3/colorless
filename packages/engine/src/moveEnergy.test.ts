@@ -230,6 +230,30 @@ describe("M5 op-slice — moveEnergy", () => {
     );
   });
 
+  it("rejects the SAME Energy named twice — one card cannot fill two of a max", () => {
+    // Pre-existing wire rule with no test until now (surfaced by the D43 review's
+    // mutation run: deleting the duplicate-uid guard left the whole suite green).
+    // Poppy moves "up to 2", so a repeated uid passes the count check and would
+    // otherwise reach moveEnergyApply, which moves by uid — a Set membership test
+    // that silently applies ONE move for a two-Energy answer.
+    let state = board(11);
+    state = benchFromDeck(state, "p1", "fix-basic-2");
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = handFromDeck(state, "p1", "sv03-193", 1); // Poppy — max 2
+    const energyUid = activeEnergy(state, "p1")[0] as string;
+    const uid = handUid(state, "p1", "sv03-193");
+    const { state: parked } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
+    expectErr(
+      parked,
+      {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "moveEnergy", uids: [energyUid, energyUid], dest: P1_BENCH0 },
+      },
+      "BAD_EFFECT_CHOICE",
+    );
+  });
+
   it("declining (move none) moves nothing and returns to turn:action", () => {
     let state = board(7);
     state = benchFromDeck(state, "p1", "fix-basic-2");

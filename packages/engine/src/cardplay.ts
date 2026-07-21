@@ -510,15 +510,6 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   // through the engine's own transitions (both producers queue before they run),
   // so this is the ko:* handlers' crafted-snapshot guard (attack.ts) applied to
   // the one fold that cannot recover on its own.
-
-  // A resumeTail park is MID-TAIL: the stages that finish the job (the KO sweep's
-  // prizes/promotions, or an attack's epilogue) must still be queued behind it,
-  // because settleProgram's resumeTail branch hands control to `advance` and
-  // writes NO phase of its own — an empty queue there would return this very
-  // effect:choose phase again, with the same continuation, forever. Unreachable
-  // through the engine's own transitions (both producers queue before they run),
-  // so this is the ko:* handlers' crafted-snapshot guard (attack.ts) applied to
-  // the one fold that cannot recover on its own.
   if (phase.resumeTail === true && state.pending.length === 0) {
     return err("PHASE_DESYNC", "a mid-tail effect park has no pending tail to resume");
   }
@@ -716,20 +707,30 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       return null;
     }
     case "discardEnergy": {
-      // Crushing Hammer / Giacomo / Mawile. MANDATORY — an empty pick is NOT a
-      // decline here (unlike chooseCards / moveEnergy), so the count is exact:
-      // "one" takes exactly one Energy in total, "each" exactly one from EVERY
-      // Pokémon the prompt offered. Both are enforced by the same two rules —
-      // every uid was offered and distinct, no Pokémon gives up two — plus the
-      // required count, which for "each" is the number of distinct sources (so
-      // "one each, none skipped" follows by pigeonhole).
+      // Crushing Hammer / Giacomo / Mawile, the attack twins, and the §8
+      // self-discard cost. MANDATORY — an empty pick is NOT a decline here
+      // (unlike chooseCards / moveEnergy), so the count is exact: "total" takes
+      // exactly `count` Energy across the whole offer, "each" exactly one from
+      // EVERY Pokémon the prompt offered. Both rest on the same two rules —
+      // every uid was offered, and no uid twice — plus the required count, which
+      // for "each" is the number of distinct sources, so "one each, none skipped"
+      // follows by pigeonhole once no Pokémon may give up two.
+      //
+      // The one-per-Pokémon rule is "each"-only: an exact-N discard takes all N
+      // off the SAME Pokémon (every printed one is "…from this Pokémon"), which
+      // is exactly what that rule forbids. AUTHORING NOTE — nothing here then
+      // pins a multi-count pick to a single host, so a future "discard 2 Energy
+      // from 1 of your opponent's Pokémon" would need a same-host rule of its
+      // own; the deriver is the only author of a numeric count and only ever
+      // pairs it with the single-Pokémon `yourActive` arm.
       if (choice.kind !== "discardEnergy" || !Array.isArray(choice.uids)) {
         return err("BAD_EFFECT_CHOICE", "expected an energy-discard choice");
       }
+      const scope = prompt.scope;
       const sourceOf = new Map(prompt.discardable.map((d) => [d.uid, d.from]));
       const required =
-        prompt.scope === "one"
-          ? 1
+        scope.kind === "total"
+          ? scope.count
           : new Set(prompt.discardable.map((d) => refKey(d.from))).size;
       if (choice.uids.length !== required) {
         return err("BAD_EFFECT_CHOICE", `discard exactly ${required} Energy`);
@@ -743,11 +744,13 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         }
         if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
         seen.add(uid);
-        const key = refKey(from);
-        if (sources.has(key)) {
-          return err("BAD_EFFECT_CHOICE", "only one Energy per Pokémon");
+        if (scope.kind === "each") {
+          const key = refKey(from);
+          if (sources.has(key)) {
+            return err("BAD_EFFECT_CHOICE", "only one Energy per Pokémon");
+          }
+          sources.add(key);
         }
-        sources.add(key);
       }
       return null;
     }

@@ -32,19 +32,20 @@ import {
 import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
-/** Engine milestone marker (M5 op-slice: ATTACK EFFECT PROGRAMS CAN PARK. A new
-    `attackEpilogue` PendingStage carries the §8.1 KO sweep + the §5.3 turn end,
-    seeded BEFORE the attack's effect program runs and folded through
-    settleProgram's `resumeTail` — so a program that stops for a decision no
-    longer has its prompt and remaining ops silently dropped. Its first readers
-    are the §8 self-discard attack COST: `discardEnergy` gains a `yourActive`
-    arm and a `count: "all"` rider, both DERIVED from the printed sentence
-    (effects.ts), and the op's candidates now collapse interchangeable Energy —
-    the same print on the same Pokémon — to one representative, so three {R} on a
-    Houndoom ask nothing. ENERGY_DISCARDED gains `actor`, since victim and
-    controller are the same seat here. discardEnergy was 0.21.0; board conditions
+/** Engine milestone marker (M5 op-slice: the discardEnergy op's ATTACK ARMS. No
+    new op — two extensions of D41/D42's `discardEnergy`, both DERIVED from the
+    printed sentence (effects.ts), so the slice adds ZERO registry rows. (1) The
+    hammer family's attack TWINS: "Discard an Energy from your opponent's Active
+    Pokémon", bare and behind a coin flip, on the existing `opponentActive` arm —
+    the first ops to park a decision about the OPPONENT's board mid-attack.
+    (2) The exact-N self-discard: `count` widens from `"all"` to any number
+    ("Discard 2 Energy from this Pokémon"), so the prompt's `scope` becomes
+    `{kind:"total",count} | {kind:"each"}` and the interchangeable-candidate
+    collapse keeps `count` representatives per class rather than one. A board
+    holding fewer than N gives up all of them (§ "do as much as you can").
+    attackEpilogue/park was 0.22.0; discardEnergy 0.21.0; board conditions
     0.20.0; handRefresh/Iono 0.19.0). */
-export const engineVersion = "0.22.0";
+export const engineVersion = "0.23.0";
 
 export type {
   ApplyResult,
@@ -111,6 +112,7 @@ export type { BoardCondition, CardFilter, EffectOp } from "./effects";
     reusing these online. */
 export { conditionHolds, conditionNote } from "./interpreter";
 export type {
+  DiscardScope,
   EffectChoice,
   EffectContinuation,
   EffectPrompt,

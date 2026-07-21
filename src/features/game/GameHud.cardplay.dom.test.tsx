@@ -10,6 +10,7 @@ import type { GameAction, GameState } from "@luminous/engine";
 import { applyAction } from "@luminous/engine";
 import {
   ABILITY_DECK,
+  ATTACK_DISCARD_DECK,
   ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
   DISCARD_ENERGY_DECK,
@@ -727,6 +728,129 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
       throw new Error("expected a discardEnergy resolveEffect");
     }
     // The engine accepts it AND the attack finishes — the turn passes to p2.
+    const applied = applyAction(state, call);
+    if (!applied.ok) throw new Error("expected the engine to accept the HUD's answer");
+    expect(applied.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+  });
+
+  it("scope 'total' with count 2 takes TWO off one Pokémon — the multi-pick the 'each' rule forbade", () => {
+    // Slither Wing's "Discard 2 Energy from this Pokémon" is the first prompt
+    // whose answer is two Energy off the SAME host, which is exactly what the
+    // one-pick-per-group rule used to prevent. Three distinguishable Energy
+    // attached ({F} ×2 + a filler), so choosing 2 of 3 is a real question.
+    let state = p1Turn2(6, { p1: ATTACK_DISCARD_DECK, p2: ATTACK_DISCARD_DECK });
+    state = setActiveFromDeck(state, "p1", "sv06.5-026"); // Slither Wing
+    state = setActiveFromDeck(state, "p2", "fix-bigbody"); // survives, so no KO tail
+    state = attachFromDeck(state, "p1", "fix-fighting-energy", 2);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByText("Discard 2 Energy from this Pokémon.")).toBeTruthy();
+    // The count is spelled out, not left to the Confirm button's fraction.
+    expect(screen.getByText("Pick 2 Energy to discard (0/2).")).toBeTruthy();
+    // Both interchangeable {F} copies are offered: the pick may want two of a
+    // class, so collapsing them to one row would make "discard both" unanswerable.
+    const group = screen.getByRole("group", { name: "Slither Wing · Active" });
+    expect(group.querySelectorAll("button")).toHaveLength(3);
+
+    const attached = [...(state.players.p1.active?.energy ?? [])];
+    const fighting = screen.getAllByRole("button", { name: "Fighting Energy" });
+    fireEvent.click(fighting[0] as HTMLElement);
+    expect(
+      (screen.getByRole("button", { name: "Discard 1/2" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    fireEvent.click(fighting[1] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "Discard 2/2" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    // WHICH two, not just how many: a handler recording the wrong row would still
+    // round-trip through the engine, since any offered pair is a legal answer.
+    expect(call.choice.uids).toEqual([attached[0], attached[1]]);
+    const applied = applyAction(state, call);
+    if (!applied.ok) throw new Error("expected the engine to accept the HUD's answer");
+    expect(applied.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+  });
+
+  it("at the cap a further pick is REFUSED, and deselecting one keeps the other", () => {
+    // Two rules the count-1 dialog could never express, so both are new here:
+    // (1) no silent eviction — a click at 2/2 changes nothing, rather than
+    // un-pressing a row the user is not looking at (and which may be identical by
+    // name to its neighbour); (2) deselect removes ONE pick, not the whole answer.
+    // The decision is MANDATORY and Escape is swallowed, so a deselect that
+    // over-cleared would be a soft-lock risk, and one that under-cleared a trap.
+    let state = p1Turn2(7, { p1: ATTACK_DISCARD_DECK, p2: ATTACK_DISCARD_DECK });
+    state = setActiveFromDeck(state, "p1", "sv06.5-026");
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    state = attachFromDeck(state, "p1", "fix-fighting-energy", 2);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    const attached = [...(state.players.p1.active?.energy ?? [])];
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    const fighting = screen.getAllByRole("button", { name: "Fighting Energy" });
+    // Pick out of BOARD ORDER, so "refused" can't be confused with any rule that
+    // silently reshuffles the answer toward the board's own order.
+    fireEvent.click(fighting[1] as HTMLElement);
+    fireEvent.click(fighting[0] as HTMLElement);
+    // At the cap the third row SAYS it is closed off — a silently inert row is
+    // the one state the <output> live region cannot announce, since nothing
+    // changes. It stays focusable (aria-disabled, not `disabled`): the rows are
+    // how a keyboard user reads the offer.
+    const spare = screen.getByRole("button", { name: "fix-energy" }) as HTMLButtonElement;
+    expect(spare.getAttribute("aria-disabled")).toBe("true");
+    expect(spare.disabled).toBe(false);
+    fireEvent.click(spare);
+    expect(spare.getAttribute("aria-pressed")).toBe("false");
+    // Deselect ONE — the other survives, so Confirm goes to 1/2 and not 0/2.
+    fireEvent.click(fighting[1] as HTMLElement);
+    expect(
+      (screen.getByRole("button", { name: "Discard 1/2" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    // …and re-picking is always possible: there is no way to strand the dialog.
+    fireEvent.click(screen.getByRole("button", { name: "fix-energy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard 2/2" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toEqual([attached[0], attached[2]]);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("an ATTACK's opponent-side twin reaches the dialog with the `opponent` legend", () => {
+    // The other new origin: the park is about the OPPONENT's board and comes from
+    // an attack, so the host legend must carry the side marker while the answer
+    // still drains the attack epilogue and hands the turn over.
+    let state = p1Turn2(1, { p1: ATTACK_DISCARD_DECK, p2: ATTACK_DISCARD_DECK });
+    state = setActiveFromDeck(state, "p1", "sv02-072"); // Pincurchin
+    state = setActiveFromDeck(state, "p2", "fix-bigbody"); // survives the 70
+    state = attachFromDeck(state, "p1", "fix-lightning-energy", 3);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(
+      screen.getByText("Discard an Energy from your opponent's Active Pokémon."),
+    ).toBeTruthy();
+    const group = screen.getByRole("group", { name: "fix-bigbody · Active · opponent" });
+    expect(group.querySelectorAll("button")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard 1/1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "discardEnergy") {
+      throw new Error("expected a discardEnergy resolveEffect");
+    }
     const applied = applyAction(state, call);
     if (!applied.ok) throw new Error("expected the engine to accept the HUD's answer");
     expect(applied.state.phase).toEqual({ kind: "turn:action", seat: "p2" });

@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState, Seat } from "@luminous/engine";
 import { topCardOf } from "@luminous/engine";
 import {
+  ATTACK_DISCARD_DECK,
   ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
   DISCARD_ENERGY_DECK,
@@ -783,6 +784,41 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
 
     expect(texts(logFromEvents(events, ctx(after)))).toContain(
       "discarded Fire Energy ×2, fix-energy from Ember's fix-alldiscard",
+    );
+  });
+
+  it("names a defender the same attack KNOCKED OUT — the host is a uid, not a slot", () => {
+    // The regression the attack twins introduced: §8 resolves the whole attack
+    // before the §8.1 KO check, so Pincurchin strips Energy off a defender that
+    // is Knocked Out in the SAME batch. Re-reading the host from its spot finds
+    // an empty Active and prints "Tide's the Active spot" — so the event carries
+    // the host UID, which stays resolvable through cardIdByUid forever.
+    let state = driveSetup(
+      5,
+      { p1: ATTACK_DISCARD_DECK, p2: ATTACK_DISCARD_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "sv02-072"); // Pincurchin — 70 damage
+    state = setActiveFromDeck(state, "p2", "fix-victim"); // 30 HP — Knocked Out
+    state = attachFromDeck(state, "p1", "fix-lightning-energy", 3);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = attachFromDeck(state, "p2", "fix-special", 1);
+
+    const parked = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
+    const pick = parked.phase.prompt.discardable[0]?.uid as string;
+    const { state: after, events } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "discardEnergy", uids: [pick] },
+    });
+
+    expect(types(events).slice(0, 2)).toEqual(["ENERGY_DISCARDED", "KNOCKED_OUT"]);
+    expect(after.players.p2.active).toBeNull(); // the slot the old code read
+    expect(texts(logFromEvents(events, ctx(after)))).toContain(
+      "discarded fix-energy from Tide's fix-victim",
     );
   });
 
