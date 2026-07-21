@@ -3,7 +3,44 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-21 — build session #27 (**P3-M5: ATTACK EFFECT PROGRAMS
+**Last updated:** 2026-07-21 — build session #28 (**P3-M5: the `discardEnergy`
+ATTACK arms — the opponent-side twins + the exact-N `count`**). No new op: two
+extensions of D41/D42's `discardEnergy`, both **DERIVED from printed text**, so
+**11 catalog rows land with ZERO registry rows**. (1) The hammer family's **attack
+TWINS** — "Discard an Energy from your opponent's Active Pokémon.", bare and behind
+a flip — run the EXISTING `opponentActive` arm with an `anyEnergy` filter
+(**Pincurchin, Gumshoos, Dragonite V ×2; Dedenne, Maschiff, Tympole, Yveltal**).
+They are the first ops to park a decision about the **OPPONENT's** board mid-attack,
+and needed NO new machinery: D42's `attackEpilogue` carries the tail and
+`coinFlipGate` already splices its branch into the queue. (2) The **exact-N
+self-discard** — `count` widens from `"all"` to any number (**Corviknight**,
+**Slither Wing** 2; **Koraidon** 3). The prompt's `scope` becomes
+**`{kind:"total",count} | {kind:"each"}`**, and the D42 collapse is **CAPPED at
+`count` per class rather than flattened to 1** — that is the design insight of the
+slice: flattening would erase a distinguishable answer ("discard both Fighting"),
+while the cap still drops every copy that could ONLY duplicate, so four identical
+{F} with count 3 stays forced. **`forcedDiscards` then folds the SHORT board into
+the same comparison** — "auto-resolve when the offer is ≤ count" IS both the M1
+no-choice rule and §8.6 "do as much as you can" (added to `ptcg-rules.md` this
+session, corroborated on-card by Sandaconda). **Anchoring is load-bearing beyond
+any earlier deriver slice:** Krookodile prints "Flip a coin **until** you get
+tails. For each heads, discard an Energy…" — it ENDS in the twin's exact words.
+engineVersion 0.22.0 → **0.23.0**; 1250 → **1268** tests, `bun run check` +
+`vite build` green. **Review (adversarial engine+rules with 48 mutants /
+web+integration): NO HIGH in the slice's own logic from either.** The engine agent
+checked all five regexes against all 978 catalog rows (11 matches, zero false
+positives/misses) and brute-forced the collapse math over 7770 configurations. The
+web agent found **one HIGH beside the slice**: `ENERGY_DISCARDED` named its host by
+SPOT, and an attack twin strips a defender its own damage Knocked Out in the SAME
+batch — so the log re-read an empty slot and printed "from Tide's the Active spot".
+The event now carries **`host`** (the top-card uid — the KNOCKED_OUT precedent).
+Of 10 surviving mutants 1 was a real hole (the **`each`-scope cap of 1** was
+entirely unpinned), 4 were unpinned regex anchors, 1 pre-existing outside the slice
+(`moveEnergy`'s duplicate-uid check), 4 equivalent; all now dead. See D43.
+
+---
+### Prior header (P3-M5 attack programs can PARK, kept for continuity)
+**Last updated (was):** 2026-07-21 — build session #27 (**P3-M5: ATTACK EFFECT PROGRAMS
 CAN PARK — the `attackEpilogue` stage, and the §8 self-discard attack cost**). The
 top backlog row and the biggest remaining structural unlock, diagnosed by D41 and
 built as one STAGE, not one op. `attack.ts` ran an attack's effect program as
@@ -163,6 +200,63 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
+**The `discardEnergy` ATTACK arms are live (P3-M5, D43) — engine 0.23.0.** Two
+extensions of one op, both derived, **11 catalog rows / zero registry rows**: the
+opponent-side **twins** (bare + coin-gated, on the existing `opponentActive` arm)
+and the **exact-N** self-discard (`count` widens from `"all"` to a number). The
+prompt's `scope` is now `{kind:"total",count} | {kind:"each"}`; the interchangeable
+collapse keeps **`count`** representatives per class rather than 1, and
+`forcedDiscards` auto-resolves whenever the collapsed offer is ≤ count — one
+comparison serving both the M1 no-choice rule and the new §8.6 "do as much as you
+can". `validateChoice`'s one-per-Pokémon rule is now `"each"`-only; `opponentEach`
++ a numeric count is unrepresentable (`count?: never`). `ENERGY_DISCARDED` gained
+**`host`** (the top-card uid): the log had been naming the host by SPOT, which an
+attack twin breaks by stripping a defender its own damage Knocked Out in the same
+batch.
+**Next concrete actions:**
+1. **The `providesEnergy` CardFilter — the ONE primitive that closes this family.**
+   "An Energy that PROVIDES {X}", which is **NOT** `basicEnergy` + type: a Special
+   Energy providing {L} counts and one providing {C} does not, so it must read
+   `continuous.ts providedEnergy`'s model (an authored EnergyProgram's `provides`,
+   the `ANY_ENERGY` wildcard, and `demoteWithOtherSpecial`, which is BOARD-dependent
+   — the first filter whose answer depends on more than the card). Lands
+   **Kilowattrel** ("a {L} Energy"), **Arcanine ex ×2** ("2 {R}" — typed AND
+   exact-N, so it composes with this slice), **Charmeleon** / **Charizard** (the
+   older spelled-out "a Fire Energy" / "all Fire Energy"), and its natural second
+   consumer is `moveEnergy` for **Armarouge**'s benched→Active {R} — the D40
+   two-consumers shape again.
+2. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
+   Vessel / Revavroom / Tinkaton). Shares the printed "You can use this card only
+   if…" wording but is NOT a `BoardCondition` — a COST with a card CHOICE, so it
+   must PARK before the effect runs.
+3. **The from-the-top attach variant** (Electric Generator / Hydreigon — also 2 of
+   the remaining `attachEnergyFrom` cards).
+4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
+   PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra**
+   (a choose-from-hand → BOTTOM park, mandatory-exactly-one).
+5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat` (the
+   searchDeck deck-uid leak), and D40's `stadium.owner` + `prizesRemaining`
+   projection additions.
+**Carried forward (pre-existing, NOT this slice):** every authored Supporter still
+has `legal_standard=0` in the local ingest; **`GameLog` announces only a batch's
+LAST row** to screen readers — this slice sharpens the ranking of what gets
+silenced (the swallowed row is now the one describing resource loss on the OTHER
+player's board: an opponent-side discard is followed by TURN_ENDED or
+KNOCKED_OUT/PRIZES_OWED, so it is never spoken); `GamePage`'s `passDisabled` phase
+check is untested; and Fighting Au Lait is still playable with nothing damaged
+anywhere. **Recorded, NOT fixed:** `validateChoice` does not pin a multi-count pick
+to a single host, so a future "discard 2 Energy from 1 of your opponent's Pokémon"
+(`opponentChosen` + count) would accept one Energy off each of two Pokémon —
+unreachable today because the deriver is the sole author of a numeric count
+(loudly commented in cardplay.ts). Also still open from D42: the attack epilogue
+sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is missed
+— **do that before landing any self-damaging attack text** (sv01-038 Skeledirge is
+one deriver sentence away, and widening to `SEATS` makes the §14 double-KO tie
+guard reachable from the attack path for the first time).
+
+---
+### Prior resume point (P3-M5 attack programs can PARK, kept for continuity)
 **Attack effect programs can PARK (P3-M5, D42) — the `attackEpilogue` stage.** The
 top backlog row is done, and it is a MECHANISM, not a card family: every future
 attack effect may now hold a decision. `attack.ts` used to run an attack's effect
@@ -798,13 +892,59 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher)) — next: **make attack effect programs able to PARK** (~13 cards, the biggest remaining structural unlock), the cheap `count:"all"` + `yourActive` rider (Pawmot / Raichu, no park needed), `discardFromHandCost` (a COST that parks, NOT a BoardCondition), the cheap D40 readers (Defiance Band / Dendra), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher) + **D42 = attack effect programs can PARK** (the `attackEpilogue` PendingStage carries the §8.1 KO sweep + §5.3 turn end, seeded BEFORE the effect program and folded through `settleProgram`'s `resumeTail` — a MECHANISM, not a card family; its first readers are the §8 self-discard cost via `discardEnergy`'s `yourActive` arm + `count:"all"`, 12 catalog rows all DERIVED, engine 0.22.0) + **D43 = the `discardEnergy` ATTACK arms** (the opponent-side twins on the existing `opponentActive` arm, bare + coin-gated — Pincurchin / Gumshoos / Dragonite V ×2 / Dedenne / Maschiff / Tympole / Yveltal — and the exact-N `count` — Corviknight / Slither Wing / Koraidon: 11 more rows, again ZERO registry rows; the collapse is now CAPPED at `count` per class, and `forcedDiscards` folds the short board into the same comparison as the no-choice rule, i.e. the new §8.6 "do as much as you can"; engine 0.23.0)) — next: the **`providesEnergy` filter** (the ONE primitive left in the energy-discard family — Kilowattrel / Arcanine ex ×2 / Charmeleon / Charizard, and it also unblocks Armarouge on `moveEnergy`), `discardFromHandCost` (a COST that parks, NOT a BoardCondition), the from-the-top attach variant (Electric Generator / Hydreigon), the cheap D40 readers (Defiance Band / Dendra), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-21** (build #28) — **P3-M5: the `discardEnergy` ATTACK arms — the
+  opponent-side twins + the exact-N `count`** (D43; built solo, then the usual
+  2-agent adversarial review). The resume point's #1, widened to also take its #2's
+  cheaper half so the slice is a coherent idea rather than two regexes. **No new op
+  and no registry rows** — 11 catalog rows from two deriver sentences and one
+  widened field. The twins run the EXISTING `opponentActive` arm and are the first
+  ops to park a decision about the OPPONENT's board mid-attack; D42's machinery
+  carried them with zero changes, which is the best evidence that slice was built
+  at the right seam. The exact-N half is where the thinking was: **capping the
+  interchangeable collapse at `count` instead of flattening to 1** keeps every
+  distinguishable answer reachable while still dropping copies that could only
+  duplicate — and it makes `forcedDiscards` a single comparison that is
+  simultaneously the M1 no-choice rule and §8.6 "do as much as you can" (added to
+  `ptcg-rules.md` this session; Sandaconda's "If you discarded any Energy in this
+  way" is the on-card corroboration). engineVersion 0.23.0; 1250 → **1268** tests.
+  **Review: NO HIGH in the slice's own logic from either agent** — the engine agent
+  ran all five regexes over all 978 catalog rows (11 matches, zero false positives
+  or misses) and brute-forced the collapse math over 7770 configurations. The web
+  agent found **one HIGH beside the slice**, and it is the lesson worth keeping:
+  `ENERGY_DISCARDED` named its host by SPOT, an invariant its own doc asserted was
+  safe — but an attack twin strips a defender its own damage Knocked Out in the
+  SAME batch, so the log re-read an empty slot and printed "from Tide's the Active
+  spot". The event now carries `host` (the top-card uid, the KNOCKED_OUT
+  precedent). **Mutation testing again earned its keep**: of 10 survivors, the
+  `each`-scope collapse cap of 1 was entirely unpinned (a `cap = 2` mutant changed
+  shipped Giacomo behaviour with all 1266 tests green), four regex anchors were
+  unpinned (my own anchor comment had the reason WRONG — Krookodile is refused by
+  capitalisation as much as by `^`, so it never pinned the anchor), and two of my
+  own new web tests were proven toothless. All now dead. Also fixed: three of four
+  new fixtures carried wrong HP/retreat under a header claiming catalog
+  verification, and `opponentEach` + a numeric count is now unrepresentable rather
+  than silently ignored.
+- **2026-07-21** (build #27) — **P3-M5: attack effect programs can PARK — the
+  `attackEpilogue` stage, and the §8 self-discard attack cost** (D42; log entry
+  written retroactively in #28 — the ritual was skipped that session). The top
+  backlog row and the biggest remaining structural unlock: `attack.ts` ran an
+  attack's effect program as `runProgram(...).state`, silently dropping a parked
+  prompt and every op behind it. The fix inverts the order — queue the tail first,
+  then run the program — via a new `attackEpilogue` PendingStage folded through
+  `settleProgram`'s `resumeTail` (deliberately REDEFINED from "mid-KO-sweep" to
+  "mid-TAIL"). Its first family is DERIVED, not authored: `discardEnergy` gained
+  `yourActive` + `count:"all"`, landing 12 catalog rows with zero registry rows,
+  and interchangeable candidates began collapsing (a Basic keys on what it
+  PROVIDES, not its id — the real catalog prints Basic Fire under three ids).
+  engineVersion 0.22.0; 1227 → 1250 tests. Review: no HIGH from either agent; 9 of
+  56 mutants survived, all fixed.
 - **2026-07-21** (build #26) — **P3-M5: `discardEnergy` — the energy-removal "hammer"
   family, and the coin-gate playability bug it exposed** (D41; built solo — full context
   — then an adversarial engine+rules + web+integration review: **no HIGH in the slice's

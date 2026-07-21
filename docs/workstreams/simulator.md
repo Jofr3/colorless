@@ -2237,6 +2237,164 @@ that inference would credit Houndoom's own attack cost to its opponent. The even
 now carries `actor` and the row files under it — an inference the log should never
 have been making.
 
+## M5 op-slice: the discardEnergy ATTACK arms as built (engine 0.23.0)
+**2026-07-21.** No new op — two extensions of D41/D42's `discardEnergy`, both
+**DERIVED from the printed sentence**, so **11 catalog rows land with ZERO registry
+rows**. The slice is the cheapest half of the family and the one that finishes the
+mechanism D42 built: an attack effect that can park is only worth having if attacks
+actually print decisions, and these are the ones they print.
+
+### Arm 1 — the hammer family's attack TWINS
+Two anchored deriver sentences, both onto the **existing** `opponentActive` arm
+with an `anyEnergy` filter (Mawile's Ability already ran that arm, one filter
+narrower):
+- `"Discard an Energy from your opponent's Active Pokémon."` — Pincurchin
+  (sv02-072), Gumshoos (sv03-177), Dragonite V (swsh10.5-049 / -076);
+- `"Flip a coin. If heads, discard an Energy from your opponent's Active
+  Pokémon."` — Dedenne (sv01-094), Maschiff (sv01-136), Tympole (sv03-050),
+  Yveltal (sv06.5-035).
+
+These are the first ops to park a decision about the **OPPONENT's** board mid-attack.
+Nothing in the interpreter or the flow changed to allow it — D42's `attackEpilogue`
+already carries the tail, and the coin gate already splices its branch into the work
+queue, so a park INSIDE a gate inside an attack works with no new machinery.
+
+Two rules points worth keeping:
+- **Anchoring is load-bearing here more than anywhere else so far.** Krookodile
+  (sv01-117) prints *"Flip a coin until you get tails. For each heads, discard an
+  Energy from your opponent's Active Pokémon."* — it ENDS in the twin's exact words.
+  An unanchored regex would silently discard ONCE for a repeat-count attack.
+- **A defender the same attack just Knocked Out is still stripped.** §8 resolves
+  the whole attack before the §8.1 KO check, so the defender is on the board holding
+  its Energy when the effect asks. The question is legal but academic (the rest of
+  the stack follows into the pile a moment later); the interpreter deliberately does
+  NOT predict the pending KO to skip it — that would mean reading the flow tail it
+  is forbidden to touch.
+
+### Arm 2 — the exact-N self-discard
+`count` widens from `"all"` to **any number**: `"Discard 2 Energy from this
+Pokémon."` (Corviknight sv02-148, Slither Wing sv06.5-026) and `"Discard 3…"`
+(Koraidon sv01-124). Three consequences:
+
+1. **The prompt's `scope` became a discriminated union** — `{kind:"total"; count}`
+   (exactly `count` uids across the whole offer) `| {kind:"each"}` (one per distinct
+   host, Giacomo). The old `"one"` was `{kind:"total",count:1}` all along; naming it
+   honestly was cheaper than adding a parallel field.
+2. **The interchangeable collapse is now CAPPED, not flattened.** D42 kept ONE
+   representative per (host, energy identity); it now keeps **`count`** of them.
+   Keeping one would make "discard both Fighting" unanswerable on a board of two
+   {F} + one filler — a *distinguishable* answer erased. The cap is exactly the
+   number a pick could ever want from one class, so it removes every copy that could
+   only produce a duplicate answer and no more. Two identities it preserves:
+   - four identical {F} with `count: 3` → capped to 3 → **forced, no prompt** (the
+     Houndoom result, generalized);
+   - three identical {F} + one filler with `count: 3` → 4 candidates → **parks**,
+     because "all three {F}" and "two {F} + the filler" are different boards.
+3. **`forcedDiscards` folds the SHORT board into the same rule.** "Auto-resolve when
+   the collapsed offer is ≤ count" is simultaneously the no-choice rule and the
+   "do as much as you can" rule: a board holding fewer than N gives up all of it and
+   asks nothing. (Every printed exact-N card pays a cost at least as big as its own
+   discard — Slither Wing 3/2, Koraidon 4/3 — so the shortfall is unreachable through
+   a real attack and runs on the `fix-discard4` fixture.)
+
+`validateChoice`'s **one-Energy-per-Pokémon** rule became **`"each"`-scope only**: an
+exact-N discard takes all N off the SAME Pokémon, which is precisely what that rule
+forbade. AUTHORING NOTE — nothing now pins a multi-count pick to a single host, so a
+future *"discard 2 Energy from 1 of your opponent's Pokémon"* would need a same-host
+rule of its own; the deriver is the only author of a numeric count and only ever
+pairs it with the single-Pokémon `yourActive` arm.
+
+### Web — one dialog rewritten, nothing else
+`DiscardEnergyDialog` (GameHud.tsx) is the only source change: `"each"` keeps the
+one-pick-per-group replace rule, and `"total"` became a flat multi-select of exactly
+`count` uids from anywhere in the offer — click a picked row to clear it, and at the
+cap the **OLDEST** pick is evicted, which degenerates at `count: 1` to the familiar
+"click another row to move the pick". The heading spells the count out
+("Pick 2 Energy to discard (0/2)") rather than leaving it to the Confirm fraction.
+No projection change, no new event, no new log row: `ENERGY_DISCARDED` already
+carries a uid ARRAY per affected Pokémon, so two cards off one host is one row.
+
+### Cards landed (verified vs the local D1 catalog)
+| Card | id | Sentence → program |
+|---|---|---|
+| Pincurchin | sv02-072 | `discardEnergy opponentActive anyEnergy` |
+| Gumshoos | sv03-177 | same |
+| Dragonite V | swsh10.5-049, -076 | same |
+| Dedenne | sv01-094 | `coinFlipGate → [same]` |
+| Maschiff | sv01-136 | same |
+| Tympole | sv03-050 | same |
+| Yveltal | sv06.5-035 | same |
+| Corviknight | sv02-148 | `discardEnergy yourActive anyEnergy count 2` |
+| Slither Wing | sv06.5-026 | same |
+| Koraidon | sv01-124 | `… count 3` |
+
+### Review — NO HIGH from either agent; the HIGH that did land was in the LOG
+Two adversarial agents (engine+rules with mutation testing / web+integration).
+**Neither found a HIGH in the slice's own logic.** The web agent found one HIGH
+next to it, and it is the finding worth remembering:
+
+**`ENERGY_DISCARDED` named its host by SPOT, and the attack twins made that
+unresolvable.** The log did `targetName(state, seat, event.from)` — re-reading the
+slot in the post-state. Safe for every prior arm (Trainers/Abilities never damage;
+the self-discard names the attacker, who never dies). But an attack twin strips a
+defender its own damage Knocked Out, the KO nulls that slot **in the same batch**,
+and the row printed *"discarded fix-energy from Tide's the Active spot"*. The
+event's own doc asserted the opposite invariant ("the Pokémon stay put, so `from`
+resolves against the post-state"), which is exactly why nobody looked. The engine
+test covered the board case; the log had no test at all.
+Fixed the way `KNOCKED_OUT` already does it: **the event carries `host`**, the
+Pokémon's top-card uid captured pre-strip, resolvable through `cardIdByUid`
+forever. `from` stays (it is still the structural fact).
+
+Everything else was test adequacy or robustness, all applied:
+- **The `each`-scope collapse cap was completely unpinned** — a `cap = 2` mutant
+  survived all 1266 tests while changing shipped Giacomo behaviour (two copies of
+  one print on one Pokémon would have parked on a fake question). The existing
+  Giacomo park test uses two DIFFERENT prints, so nothing held the cap at 1. Pinned.
+- **The anchoring argument was stated wrong.** Krookodile is refused by the leading
+  `^` *and* by its lowercase mid-sentence "discard" — either alone suffices, so it
+  never pinned the anchors: four anchor mutants survived. The comment now says the
+  guard is anchor **+ capitalisation** (and not to add `/i`), and six synthetic
+  strings keeping each pattern's own capitalised first word pin every `^` and `$`.
+- **Three of the four new fixtures had wrong HP/retreat** despite a header claiming
+  catalog verification (Pincurchin 90→80, Tympole 60→70, Slither Wing 130/2→140/3).
+  Corrected, and the header now DECLARES what the fixtures simplify (no printed
+  weakness; the two-attack cards carry only the discarding one, so `index: 0` is
+  their second printed attack).
+- **`opponentEach` + a numeric `count` is now UNREPRESENTABLE** (`count?: never` on
+  a split union arm), not merely undocumented — it used to type-check, discard one
+  per Pokémon, and caption itself with the number it ignored.
+- **The HUD's evict-the-oldest became refuse-at-the-cap** above `count: 1` (the
+  ChooseCards / ChoosePokemonMulti rule): evicting silently un-pressed a row the
+  user was not looking at, and interchangeable copies mean the evictable rows can
+  be identical by name. The count line became an `<output>` (implicit polite live
+  region) — `aria-pressed` is only spoken for the focused row and the Confirm
+  button is `disabled` until ready, so the running total was unannounceable; and a
+  refused row now carries `aria-disabled` (focusable still, since the rows ARE the
+  offer) because an inert row is the one state a live region cannot report.
+- **Two of the slice's own web tests were proven toothless** by mutation and
+  rewritten: the deselect branch at `count > 1` had zero coverage, and the
+  "drops the oldest" test clicked in board order so it could not tell FIFO from
+  board-order eviction.
+- Closed a **pre-existing** hole the run surfaced: `moveEnergy`'s duplicate-uid
+  wire check had no test (deleting it left the suite green).
+
+Recorded, not fixed: `validateChoice` does not pin a multi-count pick to one host
+(the AUTHORING NOTE above — unreachable until a card prints it), and `GameLog`
+still announces only a batch's last row.
+
+### What is left of the family — one filter
+Everything still unauthored here is **TYPED**: Kilowattrel "a {L} Energy",
+Arcanine ex ×2 "2 {R} Energy", Pawmot ex, and the older spelled-out wording
+(Charmeleon "a Fire Energy", Charizard "all Fire Energy"). One
+**`providesEnergy` CardFilter** covers all of them — and it is NOT `basicEnergy` +
+type: "{L}" means an Energy that **PROVIDES** {L}, so a Special Energy providing
+{L} counts and one providing {C} does not. Its natural second consumer is
+`moveEnergy` (Armarouge's benched→Active {R}), the D40 two-consumers shape again.
+The rest of the family needs sentence STRUCTURE rather than filters: a rider clause
+after the discard (Sandaconda, Eiscue ex, Weavile) and Krookodile's flip-until-tails
+repeat count.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

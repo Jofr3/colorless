@@ -264,6 +264,22 @@ Order of operations for a declared attack:
   resolution**, before the next turn (§13). If they have **no Bench Pokémon** to
   promote, they lose (§14).
 
+### 8.6 "Do as much as you can" (partial effect resolution)
+An effect that names a quantity it cannot fully reach still resolves **as far as
+it can**, rather than failing outright: "Discard 2 Energy from this Pokémon" with
+one Energy attached discards that one. This applies to any effect whose quantity
+outruns the board — a discard, a search for N cards, a heal-each. The exception
+is text that makes the shortfall an explicit condition of the effect happening at
+all ("If you can't, this attack does nothing"), which must be printed to apply.
+
+The corroboration is printed on the cards themselves: Sandaconda (sv01-120) reads
+*"Discard 2 Energy from this Pokémon. **If you discarded any Energy in this way**,
+…"* — a rider that would be meaningless if a partial discard were illegal.
+
+Engine note: this is why `discardEnergy`'s forced-pick rule auto-resolves whenever
+the collapsed offer is ≤ the count — the no-choice rule and this one are the same
+line of code (see D41/D43, `interpreter.ts forcedDiscards`).
+
 ---
 
 ## 9. Abilities vs. Attacks
