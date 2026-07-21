@@ -15,6 +15,7 @@ import {
   ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
   DISCARD_ENERGY_DECK,
+  HAND_COST_DECK,
   MOVE_ENERGY_DECK,
   ONKO_DECK,
   PROVIDES_ENERGY_DECK,
@@ -50,6 +51,20 @@ const both = { p1: TRAINER_DECK, p2: TRAINER_DECK };
 function p1Turn2(seed: number, decks: { p1: string[]; p2: string[] }): GameState {
   const state = driveSetup(seed, decks, { first: "p2" });
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
+}
+
+/** Rebuild p1's hand exactly: every dealt card back into the deck, then `ids`
+    dealt off it. The cost dialog's whole behaviour turns on hand CONTENTS (the
+    candidate set) and hand SIZE (whether the cost parks at all), so the dealt
+    hand would make these assertions seed-dependent. */
+function withHand(state: GameState, ids: readonly string[]): GameState {
+  const side = state.players.p1;
+  let next: GameState = {
+    ...state,
+    players: { ...state.players, p1: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+  };
+  for (const id of ids) next = handFromDeck(next, "p1", id, 1);
+  return next;
 }
 
 function renderHud(state: GameState, dispatch: (action: GameAction) => void) {
@@ -214,12 +229,203 @@ describe("effect:choose — the search dialog (chooseCards)", () => {
     renderHud(state, dispatch);
 
     expect(screen.getByRole("dialog", { name: "Choose cards" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Take none" }));
+    // The DECLINABLE branch: the counter says "up to", and Confirm is live at 0.
+    expect(screen.getByText("Pick up to 1 (0/1).")).toBeTruthy();
+    const takeNone = screen.getByRole("button", { name: "Take none" }) as HTMLButtonElement;
+    expect(takeNone.disabled).toBe(false);
+    fireEvent.click(takeNone);
     expect(dispatch).toHaveBeenCalledWith({
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "cards", uids: [] },
     });
+  });
+
+  it("the declinable branch's NON-empty pick reads and dispatches as 'Take N'", () => {
+    // The "up to" path with something actually selected was untested: every other
+    // declinable case clicks "Take none" immediately, so the whole Take-N label
+    // and the pressed-row state were unpinned.
+    let state = p1Turn2(1, both);
+    state = handFromDeck(state, "p1", "sv01-181", 1); // Nest Ball
+    const uid = handUid(state, "p1", "sv01-181");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = state.phase.prompt;
+    if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
+    const first = prompt.candidates[0] as string;
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    const row = screen.getAllByRole("button", { name: "fix-basic-1" })[0] as HTMLElement;
+    fireEvent.click(row);
+    expect(row.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Pick up to 1 (1/1).")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Take 1" }));
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [first] },
+    });
+  });
+});
+
+describe("effect:choose — the MANDATORY cost dialog (chooseCards min > 0)", () => {
+  /** Ultra Ball parked on its printed cost: the Item plus three
+      DISTINGUISHABLE others, so the pick is a real question (identical cards
+      collapse and would resolve with no dialog at all). */
+  function parkedCost(): GameState {
+    let state = p1Turn2(1, { p1: HAND_COST_DECK, p2: HAND_COST_DECK });
+    state = withHand(state, ["sv01-196", "fix-item", "fix-grass-energy", "fix-special"]);
+    const uid = handUid(state, "p1", "sv01-196");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected the cost to park");
+    return state;
+  }
+
+  it("reads as an EXACT pick, not an 'up to' — and Confirm is dead until it is met", () => {
+    const state = parkedCost();
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    // The heading is the card's own instruction; the counter must NOT say "up
+    // to", which would advertise a decline resolveEffect will reject — and it
+    // says outright that the cost cannot be declined, because the ABSENCE of a
+    // "Take none" button is not something a screen reader announces.
+    expect(screen.getByText("Discard 2 cards from your hand.")).toBeTruthy();
+    expect(
+      screen.getByText("Pick 2 (0/2). Pick 2 more — this cost must be paid."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
+    // The verb is DISCARD, not "Take" — a cost is spent, not gained — and it
+    // carries the denominator, since Confirm is the only self-describing surface
+    // a keyboard user reaches once it becomes focusable.
+    const confirm = screen.getByRole("button", { name: "Discard 0/2" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    // A dead button must not dispatch a rejection either.
+    fireEvent.click(confirm);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("announces the running count in ONE region that survives the transition", () => {
+    // The counter is the dialog's only live region (role=status via <output>) and
+    // must stay MOUNTED through short -> satisfied: that transition is when
+    // Confirm becomes reachable, and a region that unmounts on satisfaction says
+    // nothing at the only moment it had something to say.
+    const state = parkedCost();
+    renderHud(state, vi.fn());
+    const live = screen.getByRole("status");
+    expect(live.textContent).toBe("Pick 2 (0/2). Pick 2 more — this cost must be paid.");
+    fireEvent.click(screen.getByRole("button", { name: "fix-item" }));
+    expect(live.textContent).toBe("Pick 2 (1/2). Pick 1 more — this cost must be paid.");
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    // Same node, satisfied text — not a removal, which announces nothing.
+    expect(screen.getByRole("status")).toBe(live);
+    expect(live.textContent).toBe("Pick 2 (2/2). Ready.");
+  });
+
+  it("stays disabled one card short, and dispatches the exact pick at the count", () => {
+    const state = parkedCost();
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-item" }));
+    // ONE short: Confirm is still dead — the failure mode this replaces is a
+    // player clicking Confirm and being told no by the engine.
+    expect(
+      (screen.getByRole("button", { name: "Discard 1/2" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(dispatch).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    const confirm = screen.getByRole("button", { name: "Discard 2/2" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(false);
+    fireEvent.click(confirm);
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: {
+        kind: "cards",
+        uids: [handUid(state, "p1", "fix-item"), handUid(state, "p1", "fix-special")],
+      },
+    });
+  });
+
+  it("marks over-cap rows aria-disabled rather than letting them go silently inert", () => {
+    const state = parkedCost();
+    renderHud(state, vi.fn());
+    // (rows read by card NAME — typedEnergy names itself "Grass Energy")
+    const grass = () => screen.getByRole("button", { name: "Grass Energy" }) as HTMLButtonElement;
+    expect(grass().getAttribute("aria-disabled")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "fix-item" }));
+    fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
+    // At the cap the unpicked row is refused — and SAYS so. A silently inert
+    // button is the one thing the live region cannot announce, since clicking it
+    // changes nothing.
+    expect(grass().getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(grass());
+    expect(screen.getByText("Pick 2 (2/2). Ready.")).toBeTruthy();
+    expect(grass().getAttribute("aria-pressed")).toBe("false");
+    // It stays FOCUSABLE — the rows are how you read the offer.
+    expect(grass().disabled).toBe(false);
+    // Deselecting frees the slot again, and the row goes live again with it.
+    fireEvent.click(screen.getByRole("button", { name: "fix-item" }));
+    expect(grass().getAttribute("aria-disabled")).toBeNull();
+  });
+
+  it("a count-1 cost is exact too (Earthen Vessel) — not a declinable 'up to 1'", () => {
+    // Four of the six cards in the family are count 1, and none was covered:
+    // `min > 0` mutated to `min > 1` turned every one of them back into a
+    // declinable dialog whose Confirm dispatches an empty pick the engine rejects.
+    let state = p1Turn2(1, { p1: HAND_COST_DECK, p2: HAND_COST_DECK });
+    state = withHand(state, ["sv06.5-096", "fix-item", "fix-grass-energy"]);
+    const uid = handUid(state, "p1", "sv06.5-096");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected the cost to park");
+    renderHud(state, vi.fn());
+
+    expect(screen.getByText("Discard a card from your hand.")).toBeTruthy();
+    expect(screen.getByText("Pick 1 (0/1). Pick 1 more — this cost must be paid.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
+    expect(
+      (screen.getByRole("button", { name: "Discard 0/1" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "fix-item" }));
+    expect(
+      (screen.getByRole("button", { name: "Discard 1/1" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("a SECOND chooseCards park in one play starts empty (Ultra Ball: cost, then search)", () => {
+    // Ultra Ball is the codebase's likeliest double-park on ONE prompt kind. If
+    // promptKey did not discriminate them, the cost's picks would survive into
+    // the search — rendering rows that do not exist, with no decline and Escape
+    // swallowed, i.e. an unescapable dialog.
+    let state = p1Turn2(1, { p1: HAND_COST_DECK, p2: HAND_COST_DECK });
+    state = withHand(state, ["sv01-196", "fix-item", "fix-grass-energy", "fix-special"]);
+    const uid = handUid(state, "p1", "sv01-196");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected the cost to park");
+    const costPrompt = state.phase.prompt;
+    if (costPrompt.kind !== "chooseCards") throw new Error("expected chooseCards");
+    // Pay it through the engine, landing on Ultra Ball's own deck search.
+    state = mustApply(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: costPrompt.candidates.slice(0, 2) },
+    }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected the search to park");
+    const searchPrompt = state.phase.prompt;
+    if (searchPrompt.kind !== "chooseCards") throw new Error("expected chooseCards");
+
+    renderHud(state, vi.fn());
+    // The second park is the DECLINABLE search, rendered from scratch: no
+    // selection carried over, and "Take none" is live again.
+    expect(screen.getByText("Pick up to 1 (0/1).")).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "Take none" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(screen.queryByRole("status")?.textContent).toBe("Pick up to 1 (0/1).");
   });
 });
 
@@ -813,6 +1019,59 @@ describe("TurnPanel — a printed play gate greys the button out (M5 board condi
     // …and the reason stays OUT of the button's accessible name, which the other
     // tests (and a screen reader announcing the control) match on exactly.
     expect(button.textContent).toBe("sv02-181");
+  });
+
+  it("greys Ultra Ball out when its printed hand COST cannot be paid (§7.5)", () => {
+    // The SECOND producer of PLAY_CONDITION_NOT_MET. playTrainer rejects an
+    // unpayable cost exactly as it rejects an unmet board condition, so the same
+    // doctrine applies — and this is the row that is dead most often: a hand of
+    // [Ultra Ball, one other card] is the ordinary late-game state.
+    let state = p1Turn2(1, { p1: HAND_COST_DECK, p2: HAND_COST_DECK });
+    state = withHand(state, ["sv01-196", "fix-item"]); // 1 OTHER card — one short
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    const button = screen.getByRole("button", { name: "sv01-196" }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    fireEvent.click(button);
+    expect(dispatch).not.toHaveBeenCalled();
+    // The printed rule survives where the reject pill used to be — and it says
+    // "other", the word that makes the count correct.
+    const reason = "Only if you discard 2 other cards from your hand";
+    const row = button.closest("li");
+    expect(row?.getAttribute("title")).toBe(reason);
+    expect(row?.textContent).toContain(reason);
+
+    // One more card in hand → payable, enabled, and the engine TAKES it (the
+    // grey-out is calibrated against the engine, not guessed).
+    cleanup();
+    const payable = withHand(state, ["sv01-196", "fix-item", "fix-grass-energy"]);
+    const uid = handUid(payable, "p1", "sv01-196");
+    renderHud(payable, dispatch);
+    const enabled = screen.getByRole("button", { name: "sv01-196" }) as HTMLButtonElement;
+    expect(enabled.disabled).toBe(false);
+    expect(enabled.closest("li")?.getAttribute("title")).toBeNull();
+    expect(applyAction(payable, { type: "playTrainer", seat: "p1", uid }).ok).toBe(true);
+  });
+
+  it("counts the played card OUT of its own cost — the printed 'other'", () => {
+    // Ultra Ball alone in hand is hand.length === 1, and two copies is
+    // hand.length === 2: a gate reading the raw hand size would call the second
+    // one playable. Both must be refused; three copies is the first payable one.
+    const base = p1Turn2(1, { p1: HAND_COST_DECK, p2: HAND_COST_DECK });
+    for (const hand of [["sv01-196"], ["sv01-196", "sv01-196"]]) {
+      cleanup();
+      renderHud(withHand(base, hand), vi.fn());
+      expect(
+        (screen.getAllByRole("button", { name: "sv01-196" })[0] as HTMLButtonElement).disabled,
+      ).toBe(true);
+    }
+    cleanup();
+    // Three copies: two of them pay for the third, so it is legal — the "other"
+    // exclusion is about the PLAYED card, not about the card's name.
+    renderHud(withHand(base, ["sv01-196", "sv01-196", "sv01-196"]), vi.fn());
+    expect(
+      (screen.getAllByRole("button", { name: "sv01-196" })[0] as HTMLButtonElement).disabled,
+    ).toBe(false);
   });
 
   it("leaves an UNGATED Trainer alone (Falkner has no playableIf)", () => {

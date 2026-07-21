@@ -982,6 +982,85 @@ export const FIXTURE_POOL: Record<string, Card> = {
       (Kilowattrel, Pincurchin) carry attacks whose effects derive, which would put
       an unrelated discard in the middle of an attach test. */
   "fix-lightning-1": battler("fix-lightning-1", { types: ["Lightning"], hp: 70, retreat: 1 }),
+  // — M5 op-slice: discardFromHandCost. Every field below (name / stage /
+  //   evolveFrom / hp / retreat / type / trainerType and the whole attack and
+  //   effect rows) is verified verbatim against the local catalog 2026-07-21.
+  //   Printed WEAKNESS is omitted, as in the slices above — none of these is ever
+  //   a defender here. The two Pokémon carry their printed attacks so a fixture
+  //   Active is not one that cannot attack; neither attack DERIVES (a coin-flip
+  //   damage bonus and a Special-Energy damage bonus are both shapes this engine
+  //   does not express), so neither can put an unrelated effect into a cost test. —
+  /** Ultra Ball (sv01-196, Item) — the cost family's Trainer form: discard 2
+      OTHER cards, then search the deck for a Pokémon. */
+  "sv01-196": trainerCard(
+    "sv01-196",
+    "Item",
+    "You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
+  ),
+  /** Earthen Vessel (sv06.5-096, Item) — the same at count 1 ("another card"),
+      over a Basic Energy search that takes up to 2. */
+  "sv06.5-096": trainerCard(
+    "sv06.5-096",
+    "Item",
+    "You can use this card only if you discard another card from your hand.\n\nSearch your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+  ),
+  /** Revavroom (sv01-142) — "Rumbling Engine": discard an ENERGY card, then draw
+      until you hold 6. The family's ORDER witness (the draw counts the hand after
+      the payment) and its first cost whose candidates are not all
+      interchangeable (`anyEnergy` spans Basic and Special). */
+  "sv01-142": battler("sv01-142", {
+    name: "Revavroom",
+    hp: 140,
+    stage: "Stage1",
+    evolveFrom: "Varoom",
+    types: ["Metal"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Metal", "Colorless", "Colorless", "Colorless"],
+        name: "Knock Away",
+        effect: "Flip a coin. If heads, this attack does 90 more damage.",
+        damage: "90+",
+      },
+    ],
+  }),
+  /** Tinkaton (sv02-105) — "Gather Materials": discard ANY card, then draw 3. The
+      cost's general form, and the one the pre-op `AbilityCost` field could not
+      express. */
+  "sv02-105": battler("sv02-105", {
+    name: "Tinkaton",
+    hp: 140,
+    stage: "Stage2",
+    evolveFrom: "Tinkatuff",
+    types: ["Psychic"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Special Hammer",
+        effect:
+          "If this Pokémon has any Special Energy attached, this attack does 90 more damage.",
+        damage: "90+",
+      },
+    ],
+  }),
+  /** Radiant Blastoise (swsh10.5-018) — "Pump Shot": Meowscarada's Ability one
+      type and one counter apart, so it proves the cost is DATA. */
+  "swsh10.5-018": battler("swsh10.5-018", {
+    name: "Radiant Blastoise",
+    hp: 150,
+    stage: "Basic",
+    types: ["Water"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Water", "Water", "Colorless"],
+        name: "Torrential Cannon",
+        effect: "During your next turn, this Pokémon can't use Torrential Cannon.",
+        damage: 170,
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1389,6 +1468,32 @@ export const ATTACH_FROM_TOP_DECK = deckOf({
   "fix-energy": 6, // basic Colorless — a near-miss for the typed filter
   "fix-special": 6, // a Special Energy — anyEnergy takes it, basicEnergy does not
   "fix-item": 6, // non-Energy filler: window padding + Tri Howl's leftovers
+});
+
+/** M5 op-slice: discardFromHandCost — the printed hand COST, in both of its
+    wordings. Carries all four newly authored cards plus Meowscarada ex (migrated
+    onto the same op, and the FUNGIBLE end of its range).
+
+    The energy spread is what the suite's filters need to be separable:
+    fix-grass-energy is Meowscarada's Basic {G}, fix-water-energy Radiant
+    Blastoise's Basic {W}, and both are near-misses for the other. fix-special is
+    a SPECIAL Energy — Revavroom's `anyEnergy` takes it where the two typed costs
+    do not, and it is what makes a Revavroom hand ask a real question instead of
+    collapsing. fix-item is the non-Energy filler every unfiltered cost (Ultra
+    Ball, Earthen Vessel, Tinkaton) pays with, and fix-basic-1 the Pokémon Ultra
+    Ball's own search then has something to find. */
+export const HAND_COST_DECK = deckOf({
+  "sv01-196": 4, // Ultra Ball (Item) — discard 2 OTHER cards
+  "sv06.5-096": 4, // Earthen Vessel (Item) — discard ANOTHER card
+  "sv01-142": 4, // Revavroom — Rumbling Engine (an Energy card → draw to 6)
+  "sv02-105": 4, // Tinkaton — Gather Materials (a card → draw 3)
+  "swsh10.5-018": 2, // Radiant Blastoise — Pump Shot (a Basic {W} → 2 counters)
+  "sv02-015": 2, // Meowscarada ex — Bouquet Magic (a Basic {G} → 3 counters)
+  "fix-basic-1": 12, // bodies, and what Ultra Ball's search looks for
+  "fix-grass-energy": 8, // Meowscarada's Basic {G}
+  "fix-water-energy": 8, // Radiant Blastoise's Basic {W}
+  "fix-special": 6, // a SPECIAL Energy — anyEnergy only
+  "fix-item": 6, // non-Energy filler for the unfiltered costs
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

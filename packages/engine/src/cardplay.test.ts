@@ -302,6 +302,13 @@ describe("Abilities — activated (Chien-Pao ex, Shivery Chill §9)", () => {
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(prompt.max).toBe(2);
+    expect(prompt.min).toBe(0); // the printed "up to" — declinable
+    // REGRESSION (engine 0.26.0): this is the card that shipped the searchNote
+    // plural bug. `searchNote` used to keep its own singular-only noun table
+    // beside the shared one, so it prefixed the count onto an ARTICLE and this
+    // read "Search your deck for up to 2 a Basic Water Energy into your hand."
+    // It survived because nothing asserted any search note; now something does.
+    expect(prompt.note).toBe("Search your deck for up to 2 Basic Water Energy cards into your hand.");
     const pick = prompt.candidates.slice(0, 2);
     const handBefore = parked.players.p1.hand.length;
     const { state: done, events: e2 } = mustApply(parked, {

@@ -50,8 +50,21 @@ import type { GameState, Seat } from "./types";
     nothing. The filter reads the PRINT (`basicEnergy` / `anyEnergy`), never
     `providesEnergy`: these cards sit in a DECK, attached to nothing (§6.5).
     providesEnergy was 0.24.0; the discardEnergy attack arms 0.23.0;
-    attackEpilogue/park 0.22.0; discardEnergy 0.21.0; board conditions 0.20.0). */
-export const engineVersion = "0.25.0";
+    attackEpilogue/park 0.22.0; discardEnergy 0.21.0; board conditions 0.20.0).
+
+    **0.26.0 — `discardFromHandCost`, the printed COST that parks.** "You can use
+    this card only if you discard 2 OTHER cards from your hand" (Ultra Ball,
+    Earthen Vessel) and "You must discard a card from your hand in order to use
+    this Ability" (Tinkaton, Revavroom, Meowscarada ex, Radiant Blastoise) are ONE
+    mechanism in two printed wordings — and the "other" appears exactly when the
+    paying card is itself in the hand, which is why the play GATE excludes the
+    played uid and the op carries no flag. It is the FIRST op of its program, so
+    the payment happens before what it buys: Revavroom pays, THEN draws to a hand
+    size that counts the payment. MANDATORY and exact, so `chooseCards` gained a
+    `min` (0 for every printed "up to", `count` here — the one park with no
+    decline) and a `"discard"` destination; `AbilityProgram.cost` is GONE, its one
+    consumer migrated onto the op it was the fungible special case of. */
+export const engineVersion = "0.26.0";
 
 export type {
   ApplyResult,
@@ -117,6 +130,18 @@ export type { AttachTargetRiders, BoardCondition, CardFilter, EffectOp } from ".
     prize arrays — see the P4 notes in docs/workstreams/simulator.md before
     reusing these online. */
 export { conditionHolds, conditionNote } from "./interpreter";
+/** The §7.5 hand-COST gate + its printed noun phrase. Exported for the same
+    reason `conditionHolds` is: the HUD must grey out a card whose printed rule is
+    unmet rather than offering a button that can only reject (D19/D29), and it has
+    to do that with the SAME logic playTrainer rejects by — a second
+    implementation is how a card becomes greyed while it was legal.
+
+    SAFER to expose than `conditionHolds`, not riskier: this reads only the
+    viewer's OWN hand, where the condition evaluator reads Prize counts and the
+    Stadium's owner (see the P4 caveat above). Pass the played uid for a Trainer
+    (the printed "OTHER cards"); omit it for an Ability, whose card is on the
+    board. */
+export { handCostPhrase, handCostUnmet } from "./interpreter";
 export type {
   DiscardScope,
   EffectChoice,
@@ -125,7 +150,6 @@ export type {
   PokemonRef,
 } from "./interpreter";
 export type {
-  AbilityCost,
   AbilityProgram,
   CardProgram,
   EnergyOnAttach,

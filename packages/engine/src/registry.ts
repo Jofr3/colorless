@@ -13,16 +13,17 @@ import type { BoardCondition, EffectOp } from "./effects";
 // mechanics live in interpreter.ts, so a new card in a known family is a few
 // lines of op data, exactly as D8 intended.
 
-/** A cost paid to USE an activated Ability (§9) — checked and paid before the
-    program runs; an unpayable cost blocks the use (cardplay.ts useAbility).
-    Currently only Meowscarada ex "Bouquet Magic": "You must discard a Basic {G}
-    Energy card from your hand in order to use this Ability." A discard of a
-    basic Energy card of `energyType` from hand — its copies are fungible, so
-    there is no WHICH-card choice to make. */
-export type AbilityCost = { kind: "discardBasicEnergy"; energyType: string };
-
 /** A card's activated Ability (§9). Passive/continuous abilities are `passive`
-    below; triggered abilities are `triggered` (TriggeredAbility). */
+    below; triggered abilities are `triggered` (TriggeredAbility).
+
+    NOTE — there is no `cost` FIELD. The printed "You must discard … from your
+    hand in order to use this Ability" is the first op of `program`
+    (`discardFromHandCost`), because the general form of that cost PARKS: a field
+    resolved before the program ran could only ever express the FUNGIBLE case
+    (Meowscarada's Basic {G} Energy, where the copies are interchangeable and the
+    first match is as good as any), and Tinkaton's "a card" is a real choice over
+    the whole hand. `useAbility` still refuses the use when the cost cannot be
+    paid — see cardplay.ts `handCostUnmet`. */
 export interface AbilityProgram {
   name: string;
   /** §9/§15.J — usable once per turn per Pokémon (tracked in TurnAllowances). */
@@ -30,8 +31,6 @@ export interface AbilityProgram {
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
-  /** A cost paid from hand to use it (Meowscarada's {G}-Energy discard). */
-  cost?: AbilityCost;
   /** The Ability ENDS the controller's turn once its program completes
       (Koraidon "Dino Cry": "If you use this Ability, your turn ends."). Folded by
       flow.ts settleProgram — instead of returning to turn:action, it seeds the
@@ -379,18 +378,134 @@ const HAWLUCHA: CardProgram = {
 /** Meowscarada ex — "Bouquet Magic": "You must discard a Basic {G} Energy card
     from your hand in order to use this Ability. Once during your turn, you may
     put 3 damage counters on 1 of your opponent's Benched Pokémon." An ACTIVATED
-    Ability with the engine's first activation COST (discard a Basic {G} Energy);
-    usable from anywhere in play (not Active-only), once per turn. The counters
-    are flat and can KO — useAbility folds through settleProgram's mid-turn sweep. */
+    Ability with an activation COST; usable from anywhere in play (not
+    Active-only), once per turn. The counters are flat and can KO — useAbility
+    folds through settleProgram's mid-turn sweep.
+
+    The cost is the program's FIRST op (the printed sentence order), and it is the
+    FUNGIBLE end of that op's range: every Basic {G} Energy card in hand is
+    interchangeable, so they collapse to one candidate and the Ability asks
+    nothing — the same no-prompt behaviour the pre-op `AbilityCost` field had, now
+    a consequence of the general rule instead of a special case. */
 const MEOWSCARADA: CardProgram = {
   abilities: [
     {
       name: "Bouquet Magic",
       oncePerTurn: true,
       activeOnly: false,
-      cost: { kind: "discardBasicEnergy", energyType: "Grass" },
-      program: [{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1 }],
+      program: [
+        { op: "discardFromHandCost", count: 1, filter: { kind: "basicEnergy", energyType: "Grass" } },
+        { op: "damageChosen", target: "opponentBench", amount: 30, count: 1 },
+      ],
     },
+  ],
+};
+
+/** Radiant Blastoise (swsh10.5-018) — "Pump Shot": "You must discard a Water
+    Energy card from your hand in order to use this Ability. Once during your
+    turn, you may put 2 damage counters on 1 of your opponent's Benched Pokémon."
+    Meowscarada's Ability one type and one counter apart, so it lands as data.
+
+    FILTER — A DOCUMENTED DEVIATION, not a settled reading. The print says "a
+    **Water** Energy card" where Meowscarada says "a **Basic** {G} Energy card",
+    and the engine maps both to `basicEnergy` + a type, so the printed word
+    "Basic" is doing no work. By §6.5 a typed reference means an Energy that
+    PROVIDES that type, so the faithful answer would also admit a Special Energy
+    providing {W} sitting in hand — and the engine cannot ask that question,
+    because provision is a while-ATTACHED property and `matchesFilter` (the
+    pile scanner) answers false for `providesEnergy` by construction.
+
+    So `basicEnergy` is the CONSERVATIVE approximation: it will refuse Pump Shot
+    to a player holding only a Special Energy that provides {W}. That is
+    unreachable today (no such card is authored) and it fails in the safe
+    direction — a refused Ability, never a wrong card discarded. The real fix is a
+    pile-side "would provide" predicate, which §6.5 explicitly leaves open;
+    tracked in reference/coverage-backlog.md. */
+const RADIANT_BLASTOISE: CardProgram = {
+  abilities: [
+    {
+      name: "Pump Shot",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "discardFromHandCost", count: 1, filter: { kind: "basicEnergy", energyType: "Water" } },
+        { op: "damageChosen", target: "opponentBench", amount: 20, count: 1 },
+      ],
+    },
+  ],
+};
+
+/** Revavroom (sv01-142) — "Rumbling Engine": "You must discard an Energy card
+    from your hand in order to use this Ability. Once during your turn, you may
+    draw cards until you have 6 cards in your hand."
+
+    The family's ORDER WITNESS, and the reason the cost is an op rather than
+    something paid after the fact: the draw counts the hand AFTER the payment, so
+    a hand of 5 pays 1 and draws 2, not 1. `anyEnergy` (Basic OR Special — the
+    print says "an Energy card", not "a Basic Energy card"), which also makes this
+    the first cost whose candidates are not all interchangeable: a Basic {R} and a
+    Double Turbo Energy in hand is a real question. */
+const REVAVROOM: CardProgram = {
+  abilities: [
+    {
+      name: "Rumbling Engine",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "discardFromHandCost", count: 1, filter: { kind: "anyEnergy" } },
+        { op: "drawUntilHandSize", size: 6 },
+      ],
+    },
+  ],
+};
+
+/** Tinkaton (sv02-105) — "Gather Materials": "You must discard a card from your
+    hand in order to use this Ability. Once during your turn, you may draw 3
+    cards." The cost's GENERAL form — no filter at all, so every card in hand is a
+    candidate and a mixed hand always asks. This is the one the pre-op
+    `AbilityCost` field could not express. */
+const TINKATON: CardProgram = {
+  abilities: [
+    {
+      name: "Gather Materials",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "discardFromHandCost", count: 1 },
+        { op: "drawCards", count: 3 },
+      ],
+    },
+  ],
+};
+
+/** Ultra Ball (sv01-196) — "You can use this card only if you discard 2 other
+    cards from your hand. / Search your deck for a Pokémon, reveal it, and put it
+    into your hand. Then, shuffle your deck." (Item)
+
+    The cost family's Trainer form: same mechanism as the Abilities above, printed
+    as "only if" instead of "you must", and carrying the "OTHER" that says the
+    Ultra Ball itself may not pay — which it never can, since playTrainer moves it
+    to the discard before the program runs, and which the play GATE honours by
+    excluding the played uid (cardplay.ts). Two ops after the cost: Great Ball's
+    search, then the Nest Ball trailing shuffle. */
+const ULTRA_BALL: CardProgram = {
+  trainer: [
+    { op: "discardFromHandCost", count: 2 },
+    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Earthen Vessel (sv06.5-096) — "You can use this card only if you discard
+    another card from your hand. / Search your deck for up to 2 Basic Energy
+    cards, reveal them, and put them into your hand. Then, shuffle your deck."
+    (Item) Ultra Ball at count 1 — the printed "**another** card" is the singular
+    of "2 other cards", not a different rule — over a Basic Energy search. */
+const EARTHEN_VESSEL: CardProgram = {
+  trainer: [
+    { op: "discardFromHandCost", count: 1 },
+    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 2 },
+    { op: "shuffleDeck" },
   ],
 };
 
@@ -1092,7 +1207,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-118": HAWLUCHA,
   // Meowscarada ex — Bouquet Magic (activated, {G}-discard cost: 3 counters on 1 opp Benched)
   "sv02-015": MEOWSCARADA,
+  "sv02-231": MEOWSCARADA, // (reprint — same Bouquet Magic, byte-identical in the catalog)
   "sv02-256": MEOWSCARADA,
+  "sv02-271": MEOWSCARADA, // (reprint)
   // — M4 slice 9: on-KO triggered Abilities (verified vs the live catalog 2026-07-19). —
   // Glimmora — Shattering Crystal (on-KO: flip; heads → opponent takes no prize for it)
   "sv02-126": GLIMMORA,
@@ -1170,6 +1287,16 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M5 op-slice: attachFromTop (verified vs the local catalog 2026-07-21). —
   "sv01-170": ELECTRIC_GENERATOR, // Electric Generator — top 5, up to 2 Basic {L} → Benched {L}
   "sv02-140": HYDREIGON, // Hydreigon — Tri Howl (top 3, any Energy → your Pokémon, discard rest)
+  // — M5 op-slice: discardFromHandCost (verified vs the local catalog
+  //   2026-07-21). Meowscarada ex is ABOVE (M4 slice 8) and migrated onto this
+  //   op in place — the two printed wordings, "you must discard … in order to
+  //   use this Ability" and "you can use this card only if you discard … other
+  //   cards", are one mechanism. —
+  "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand
+  "sv06.5-096": EARTHEN_VESSEL, // Earthen Vessel — discard another card, search 2 Basic Energy
+  "sv01-142": REVAVROOM, // Revavroom — Rumbling Engine (discard an Energy card, draw to 6)
+  "sv02-105": TINKATON, // Tinkaton — Gather Materials (discard a card, draw 3)
+  "swsh10.5-018": RADIANT_BLASTOISE, // Radiant Blastoise — Pump Shot (discard a {W}, 2 counters)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

@@ -278,9 +278,12 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       abilityName: "Bouquet Magic",
     });
     expect(find(events, "ABILITY_USED")?.ability).toBe("Bouquet Magic");
-    const paid = find(events, "ABILITY_COST_PAID");
-    expect(paid?.uid).toBe(grassUid);
-    expect(paid?.energyType).toBe("Grass");
+    // The cost is now the Ability program's first op (discardFromHandCost), so
+    // it announces HAND_COST_PAID — and, its candidates being interchangeable
+    // Basic {G} Energy, it resolves without a prompt of its own, exactly as the
+    // pre-op `AbilityCost` field did.
+    const paid = find(events, "HAND_COST_PAID");
+    expect(paid?.uids).toEqual([grassUid]);
     // The Energy left hand for the discard pile.
     expect(parked.players.p1.hand).not.toContain(grassUid);
     expect(parked.players.p1.discard).toContain(grassUid);
@@ -311,7 +314,12 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       target: { spot: "active" },
       abilityName: "Bouquet Magic",
     });
-    expect(find(events, "ABILITY_COST_PAID")?.energyType).toBe("Grass");
+    // Names the card, not just the count: the FILTER is what this pins (a Basic
+    // {G} Energy was paid, not merely "something"), which is what the removed
+    // ABILITY_COST_PAID.energyType assertion used to carry.
+    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([
+      handUid(state, "p1", "fix-grass-energy"),
+    ]);
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(find(events, "COUNTERS_PLACED")?.amount).toBe(30);
     expect(done.phase.kind).toBe("turn:action");

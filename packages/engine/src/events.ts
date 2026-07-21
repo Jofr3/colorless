@@ -198,10 +198,17 @@ export type GameEvent =
   | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
-  /** §9 — an activated Ability's cost was paid from hand: `uid` (a Basic
-      `energyType` Energy card) was discarded to use it (Meowscarada ex "Bouquet
-      Magic"). Follows the ABILITY_USED row in the same batch. */
-  | { type: "ABILITY_COST_PAID"; seat: Seat; uid: string; energyType: string }
+  /** §7/§9 — a printed HAND-DISCARD cost was paid: `uids` went from `seat`'s hand
+      into their own discard pile to make a play legal (Ultra Ball's "only if you
+      discard 2 other cards", Tinkaton / Meowscarada ex's "you must discard … in
+      order to use this Ability"). Fires from the `discardFromHandCost` op, so it
+      follows TRAINER_PLAYED or ABILITY_USED in the same batch and PRECEDES
+      whatever the cost bought — the order the printed sentence is in.
+
+      Names the cards, because they land in the public discard pile where the
+      opponent reads them anyway; the LOG still speaks in counts, since they came
+      out of a hidden hand (the HAND_DISCARDED precedent). */
+  | { type: "HAND_COST_PAID"; seat: Seat; uids: string[] }
   /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
       reached its trigger condition — played to the Bench / evolved (during
       that seat's turn), the Pokémon Checkup (between turns), or being Knocked

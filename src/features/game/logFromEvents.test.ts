@@ -350,10 +350,15 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     });
   });
 
-  it("names an Ability activation cost paid from hand (M4 slice 8)", () => {
-    const { uid } = settled;
-    expect(line({ type: "ABILITY_COST_PAID", seat: "p1", uid, energyType: "Grass" })).toEqual({
-      text: "discarded a Grass Energy for the Ability",
+  it("counts a printed hand-discard cost without naming the cards (M5 discardFromHandCost)", () => {
+    // Count only — the cards came out of a hidden HAND (the HAND_DISCARDED rule),
+    // even though they land in the public discard pile. Both plurals pinned.
+    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1"] })).toEqual({
+      text: "discarded 1 card from their hand to pay a cost",
+      who: "p1",
+    });
+    expect(line({ type: "HAND_COST_PAID", seat: "p1", uids: ["u1", "u2"] })).toEqual({
+      text: "discarded 2 cards from their hand to pay a cost",
       who: "p1",
     });
   });

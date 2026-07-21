@@ -528,6 +528,90 @@ export type EffectOp =
       /** Draw only if ≥1 affected player actually moved ≥1 card (Iono). */
       onlyIfAnyMoved?: true;
     }
+  /** Pay a printed HAND-DISCARD COST: put `count` cards from the controller's
+      own hand into their discard pile before the rest of the program runs. The
+      §7/§9 "you can only do this if you pay" family, which prints in two
+      wordings that mean one thing:
+
+        • **Trainers** — "You can use this card **only if** you discard 2
+          **other** cards from your hand." (Ultra Ball, Earthen Vessel's
+          "**another** card", Superior Energy Retrieval);
+        • **Abilities** — "You **must** discard a card from your hand **in order
+          to use** this Ability." (Tinkaton "Gather Materials", Revavroom
+          "Rumbling Engine", Meowscarada ex "Bouquet Magic", Radiant Blastoise
+          "Pump Shot").
+
+      `filter` narrows WHICH cards may pay it — absent is the printed bare "a
+      card" (Tinkaton, and every Trainer in the family), `anyEnergy` is "an
+      Energy card" (Revavroom), `basicEnergy` + a type is "a Basic {G} Energy
+      card" (Meowscarada, Radiant Blastoise). It scans cards sitting in a HAND,
+      so like every pile-scanning op it reads the PRINT: never `providesEnergy`,
+      which a card attached to nothing cannot answer (§6.5).
+
+      **A COST, NOT A `BoardCondition`.** The printed "only if" is the same
+      opening as Fighting Au Lait's `trainerPlayableIf`, and it is a different
+      animal: a BoardCondition reads PUBLIC state and CHANGES NOTHING, while this
+      spends cards out of a HIDDEN zone. It could not be a BoardCondition even in
+      principle — that union's invariant is that both players can already derive
+      the answer, and a hand's contents are exactly what they cannot.
+
+      **AN OP, NOT A HANDLER FIELD — because it PARKS.** "Discard a card from
+      your hand" with a mixed hand is a real decision, so the cost has to run
+      through the interpreter. That is also why it is the FIRST op of its
+      program rather than a field paid before the program starts, which is the
+      shape `AbilityProgram.cost` used to have: that field could only express the
+      FUNGIBLE case (Meowscarada's Basic {G} Energy, where copies are
+      interchangeable so the first match is as good as any), and Tinkaton's "a
+      card" is the general one. Both are this op now — one vocabulary, one
+      payment, one event.
+
+      **ORDER IS OBSERVABLE, and the printed sentence puts the cost first on
+      every card in the family.** Revavroom is the witness: "discard an Energy
+      card … then draw cards until you have 6 in your hand" off a hand of 5 draws
+      TWO, because the payment happens first; paying afterwards would draw one.
+      Tinkaton's is the quieter version — the card you discard comes from the
+      pre-draw hand, so a card you are about to draw cannot pay for the draw.
+
+      MANDATORY and EXACT: `count` is a floor as well as a ceiling, so unlike
+      searchDeck / discardPileRetrieval this park has no decline (the prompt
+      carries `min === max === count`). It parks only on a genuine choice —
+      candidates that are the same card are interchangeable, and only as many of
+      them survive as the pick could want (interpreter.ts `cardIdentity`), so
+      Meowscarada with three Basic {G} Energy in hand asks nothing and neither
+      does Revavroom holding two identical {R}. An offer no bigger than `count`
+      auto-resolves.
+
+      **THE PLAY GATE IS THE CARD'S OWN PRINTED RULE — which is why it vetoes,
+      where D45's did not.** "You can use this card ONLY IF" makes paying a
+      precondition for the WHOLE card, so an unpayable cost refuses the play
+      (cardplay.ts, `handCostUnmet`) rather than resolving the rest for free.
+      That is the opposite call from `attachFromTop`, and the difference is the
+      text: there the veto was the ENGINE's guess that one op would whiff, applied
+      through a `programPlayable` AND to a card whose other printed clause always
+      resolves; here the card itself says the play is illegal. This gate is
+      therefore NOT in `programPlayable` — it is checked beside
+      `trainerPlayableIf`, the other printed-rule gate, and it needs something
+      `programPlayable` does not have (below).
+
+      **"OTHER" IS NOT A FIELD ON THIS OP** — it is a consequence of where the
+      paying card sits, and the two printed wordings agree exactly: every Trainer
+      in the family says "other"/"another" and every Ability says neither, because
+      a Trainer is IN THE HAND it is about to pay out of and an Ability's card is
+      on the board. The apply never has to care (playTrainer moves the played card
+      to the discard BEFORE the program runs, so it is not a candidate), but the
+      GATE runs while it is still in hand — hence the played uid is excluded there,
+      and that exclusion is the printed word "other".
+
+      AUTHORING NOTE — the gate lives on the two PLAY paths (`playTrainer`,
+      `useAbility`), which is where the printed sentence lives too: a cost is the
+      price of *making a play*. `runProgram` has two other callers that gate
+      nothing — attack.ts and the triggered-Ability scan (triggers.ts / flow.ts's
+      on-KO stage) — so this op authored into an `attack` or a `triggered` program
+      would be SKIPPED when it could not be paid rather than refusing anything,
+      because a trigger has no play to refuse. No printed card does that (nothing
+      charges a hand cost for a trigger firing), and if one ever appears it needs a
+      decision about what an unpayable trigger even means, not a gate copied here. */
+  | { op: "discardFromHandCost"; count: number; filter?: CardFilter }
   /** A BOARD-CONDITION branch: run `then` when `cond` holds for the controller,
       else `otherwise` (nothing, if absent). The deterministic sibling of
       `coinFlipGate`, and spliced into the work queue by runProgram exactly the

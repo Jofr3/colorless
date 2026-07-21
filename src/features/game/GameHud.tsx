@@ -22,6 +22,8 @@ import {
   cardOfUid,
   conditionHolds,
   conditionNote,
+  handCostPhrase,
+  handCostUnmet,
   costMet,
   effectiveAttackCost,
   effectiveRetreatCost,
@@ -120,8 +122,20 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // droppable on the shared slot, bypassing this list entirely).
     const gated = !isRareCandy && !isStadium ? program.trainerPlayableIf : undefined;
     const gateUnmet = gated !== undefined && !conditionHolds(game, seat, gated);
+    // The card's SECOND printed "only if" — the §7.5 hand COST (Ultra Ball's
+    // "only if you discard 2 OTHER cards from your hand"). Same doctrine and the
+    // same engine predicate as the board-condition gate above, because playTrainer
+    // rejects on both with the SAME code: leaving this one out is how the row that
+    // is dead most often — Ultra Ball on a nearly-empty hand — stays lit.
+    //
+    // `uid` is passed, which is the whole point: the played card is still in this
+    // hand while we ask, and the printed word "other" is exactly its exclusion.
+    // Scoped to the Item/Supporter path with the gate above, for the same reason.
+    const costUnmet =
+      !isRareCandy && !isStadium ? handCostUnmet(game, seat, program.trainer ?? [], uid) : null;
     const disabled =
       gateUnmet ||
+      costUnmet !== null ||
       (isRareCandy
         ? !rareCandyPlayable()
         : isSupporter
@@ -132,7 +146,12 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
       name: card.name,
       disabled,
       rareCandy: isRareCandy,
-      reason: gateUnmet && gated !== undefined ? `Only if ${conditionNote(gated)}` : undefined,
+      reason:
+        gateUnmet && gated !== undefined
+          ? `Only if ${conditionNote(gated)}`
+          : costUnmet !== null
+            ? `Only if you discard ${handCostPhrase(costUnmet, true)} from your hand`
+            : undefined,
     });
   }
   return out;
@@ -957,10 +976,19 @@ function EffectChooseDialog(props: GameHudProps) {
   );
 }
 
-/** "Up to N" card pick: multi-select up to max, or take none — origin-agnostic
-    (a deck search, §15.E, or a discard-pile retrieval, §7.1), both always
-    declinable. The prompt's `note` says which; the candidate cards are public
-    either way (deck picks are revealed, the discard pile is open). */
+/** A card pick, origin-agnostic — a deck search (§15.E), a discard-pile
+    retrieval (§7.1), a look at the deck top, or a printed hand COST (§7/§9). The
+    prompt's `note` says which; the candidate cards are public in every case (deck
+    picks are revealed, the discard pile is open, and a cost is paid out of the
+    viewer's OWN hand).
+
+    `prompt.min` is the whole behavioural split, and it is the ENGINE's answer
+    rather than this component's guess about the prompt's origin: at 0 the pick is
+    the printed "up to" and "Take none" is a legal answer, so Confirm is always
+    live; above 0 it is MANDATORY and exact (a cost — the only decision is which
+    cards), so Confirm stays disabled until the count is met. Dispatching a short
+    pick would be rejected by resolveEffect anyway; disabling is what keeps the
+    player from being told no. */
 function ChooseCardsDialog({
   game,
   viewerSeat,
@@ -977,23 +1005,56 @@ function ChooseCardsDialog({
           : prev,
     );
   };
+  const mandatory = prompt.min > 0;
+  const short = picked.length < prompt.min;
   return (
     <HudDialog label="Choose cards">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
-      <p className="mt-1.5 text-sm text-white/55">
-        Pick up to {prompt.max} ({picked.length}/{prompt.max}).
-      </p>
+      {/* An <output> (role=status), not a <p>, and it is the ONE live region —
+          the running total is otherwise unannounceable, exactly as
+          DiscardEnergyDialog documents: `aria-pressed` is spoken only for the row
+          that HAS focus, and Confirm is `disabled` (out of the tab order) while
+          the count is the thing you need. It stays MOUNTED in every state, so the
+          transition that matters most — short → satisfied, when Confirm becomes
+          reachable — is announced. A region that unmounts on satisfaction says
+          nothing at the only moment it had something to say.
+
+          The mandatory branch also states that the cost cannot be declined: the
+          absence of a "Take none" button is not something a screen reader
+          announces. `min === max` at every park site the engine has (0 for the
+          printed "up to", `count` here), so the pick is exact. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {mandatory
+          ? `Pick ${prompt.min} (${picked.length}/${prompt.max}). ${
+              short
+                ? `Pick ${prompt.min - picked.length} more — this cost must be paid.`
+                : "Ready."
+            }`
+          : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
+      </output>
       <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
         {prompt.candidates.map((uid) => {
           const selected = picked.includes(uid);
+          // At the cap a further click is REFUSED, which for a cost is every
+          // completed payment (min === max, so you always finish at the cap).
+          // Marked aria-disabled and NOT `disabled`, so the row stays focusable:
+          // the rows are how you read the offer. A silently inert button is the
+          // one thing the <output> above cannot announce — nothing changes, so
+          // nothing is spoken (the DiscardEnergyDialog rule).
+          const refused = !selected && picked.length >= prompt.max;
           return (
             <li key={uid}>
               <button
                 type="button"
                 aria-pressed={selected}
+                aria-disabled={refused || undefined}
                 onClick={() => toggle(uid)}
                 className={`${ROW_BUTTON_BASE} ${
-                  selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                  selected
+                    ? "bg-white/[0.12] text-white ring-white/40"
+                    : refused
+                      ? ROW_BUTTON_DISABLED
+                      : ROW_BUTTON_ENABLED
                 }`}
               >
                 <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
@@ -1005,12 +1066,21 @@ function ChooseCardsDialog({
       <div className="mt-5 flex justify-end">
         <button
           type="button"
+          disabled={short}
           className={ACCENT_BUTTON_CLASS}
           onClick={() =>
             dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "cards", uids: picked } })
           }
         >
-          {picked.length === 0 ? "Take none" : `Take ${picked.length}`}
+          {mandatory
+            ? // A cost is DISCARDED, not taken — the verb has to match the card —
+              // and it carries the DENOMINATOR, because once Confirm is finally
+              // focusable it is the only surface a keyboard user reaches that can
+              // say what was required (the sibling's rule).
+              `Discard ${picked.length}/${prompt.min}`
+            : picked.length === 0
+              ? "Take none"
+              : `Take ${picked.length}`}
         </button>
       </div>
     </HudDialog>
@@ -1726,7 +1796,16 @@ function GameOverOverlay({ projection, viewerSeat, names, onPlayAgain }: GameHud
 function promptKey(prompt: EffectPrompt): string {
   switch (prompt.kind) {
     case "chooseCards":
-      return `cards:${prompt.candidates.join(",")}`;
+      // The BOUNDS ride the key beside the candidates, for the reason `scope`
+      // rides discardEnergy's: the dialog's picked-state is only valid for the
+      // bounds it was gathered under, and min/max decide whether Confirm is even
+      // reachable. Ultra Ball is the codebase's likeliest double-park on ONE
+      // prompt kind (a hand cost, then a deck search), and while those two
+      // candidate sets cannot actually collide — hand uids then deck uids — the
+      // key's job is not to depend on that: a stale pick surviving into the
+      // second park would render rows that do not exist and leave the dialog
+      // unescapable, since it has no decline and swallows Escape.
+      return `cards:${prompt.min}:${prompt.max}:${prompt.candidates.join(",")}`;
     case "discardEnergy":
       // The SCOPE rides the key too: the dialog's picked-state is only valid for
       // the count it was gathered under, so two parks offering the same uids at

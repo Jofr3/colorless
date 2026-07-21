@@ -449,14 +449,21 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(" — no Prize card is taken for it"),
       ]);
-    case "ABILITY_COST_PAID":
-      // §9 activation cost (Meowscarada's Bouquet Magic) — follows the
-      // ABILITY_USED row; the card itself is public in the discard pile.
+    case "HAND_COST_PAID": {
+      // §7/§9 — the printed hand-discard cost (Ultra Ball's "only if you discard
+      // 2 other cards", Tinkaton / Meowscarada ex's "you must discard … in order
+      // to use this Ability"). Follows the TRAINER_PLAYED / ABILITY_USED row and
+      // PRECEDES whatever it bought, which is the printed sentence order.
+      //
+      // Count only, like every card leaving the hidden HAND (the HAND_DISCARDED
+      // rule) — the cards do land in the public discard pile, but the log's
+      // convention is about the zone they came FROM, and a curious player can
+      // read the pile itself.
+      const n = event.uids.length;
       return row(event.seat, [
-        plain("discarded a "),
-        strong(`${event.energyType} Energy`),
-        plain(" for the Ability"),
+        plain(`discarded ${n} card${n === 1 ? "" : "s"} from their hand to pay a cost`),
       ]);
+    }
     case "HAND_DISCARDED": {
       // Count only — the hand is otherwise hidden (module header), even though
       // the discard pile itself is public.

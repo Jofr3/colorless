@@ -64,15 +64,26 @@ export interface PokemonRef {
     human string for the prompt UI / log; the arrays are the legal options
     (a client that offers anything else is rejected by resolveEffect). */
 export type EffectPrompt =
-  /** Pick 0..max card uids to move to `dest` — "up to", so the player may pick
-      fewer or none (searchDeck moves deck → bench/hand; discardPileRetrieval
-      moves the discard pile → hand/deck). `dest` is display metadata; the op
-      owns the actual move, and `note` carries the accurate prompt text. */
+  /** Pick `min`..`max` card uids to move to `dest`. `dest` is display metadata;
+      the op owns the actual move, and `note` carries the accurate prompt text.
+
+      `min` is what tells the two consumers (the dialog's Confirm button and
+      resolveEffect's wire validator) whether the pick is DECLINABLE, and it is
+      required rather than optional so every park site has to say which it is:
+
+        • **`min: 0`** — the printed "up to", every pile-scanning op (searchDeck
+          moves deck → bench/hand; discardPileRetrieval moves the discard pile →
+          hand/deck; lookAtTopN takes from the deck top). Taking none is a legal
+          answer.
+        • **`min === max === count`** — a MANDATORY exact pick, the printed hand
+          COST (`discardFromHandCost`, dest `"discard"`): the only decision is
+          WHICH cards, never whether, so there is no decline. */
   | {
       kind: "chooseCards";
       candidates: string[];
+      min: number;
       max: number;
-      dest: "bench" | "hand" | "deck";
+      dest: "bench" | "hand" | "deck" | "discard";
       note: string;
     }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
@@ -318,6 +329,7 @@ function stepOp(
         park: {
           kind: "chooseCards",
           candidates,
+          min: 0, // "up to" — taking none is a legal answer
           max,
           dest: op.dest,
           note: searchNote(op.filter, op.dest, max),
@@ -338,6 +350,7 @@ function stepOp(
         park: {
           kind: "chooseCards",
           candidates,
+          min: 0, // "up to" — taking none is a legal answer
           max: op.max,
           dest: op.dest,
           note: retrieveNote(op.filter, op.dest, op.max),
@@ -358,6 +371,7 @@ function stepOp(
         park: {
           kind: "chooseCards",
           candidates,
+          min: 0, // "up to" — taking none is a legal answer
           max: op.max,
           dest: "hand",
           note: lookNote(op.filter, op.n, op.max),
@@ -428,6 +442,55 @@ function stepOp(
       if (forced !== null) return { done: discardEnergyApply(state, forced, op, ctx, events) };
       return {
         park: { kind: "discardEnergy", discardable: candidates, scope, note: discardNote(op) },
+      };
+    }
+    case "discardFromHandCost": {
+      // Pay the printed hand-discard cost (Ultra Ball / Earthen Vessel /
+      // Tinkaton / Revavroom / Meowscarada ex / Radiant Blastoise) — always the
+      // FIRST op of its program, so it runs before anything it buys.
+      //
+      // MANDATORY and exact: the only decision is WHICH cards, so there is no
+      // decline and the prompt asks for `count` on the nose. An offer no bigger
+      // than the count has no decision left in it and resolves inline (the M1
+      // doctrine) — which is what keeps Meowscarada, whose Basic {G} Energy are
+      // interchangeable and collapse to one candidate, asking nothing at all,
+      // exactly as its pre-op `AbilityCost` field did.
+      //
+      // A SHORT hand (fewer candidates than `count`) also lands in that branch
+      // and pays what there is. Unreachable through either action path — both
+      // gate on `handCostUnmet` before the card is committed — and deliberately
+      // NOT an exception here: an interpreter that threw or no-opped mid-program
+      // would leave the play half-resolved, where "do as much as you can" is the
+      // rule this engine already applies to a short board (§8.6).
+      const candidates = handCostCandidates(state, ctx.seat, op);
+      if (candidates.length <= op.count) {
+        return { done: discardFromHandApply(state, candidates, ctx, events) };
+      }
+      // HIDDEN INFORMATION — the candidates are cards in the controller's own
+      // HAND, and this prompt is the first that carries any. Do not reason from
+      // the apply's rule ("the paid cards land in the public discard, so naming
+      // them leaks nothing"): the OFFER is strictly bigger than the payment, so
+      // with Ultra Ball three uids are named and only two ever become public —
+      // the third stays in hand with its identity given away. The collapse leaks
+      // a second thing, the hand's DUPLICATE STRUCTURE: hand size is public but
+      // `candidates.length` against it says how many cards are copies.
+      //
+      // Safe today because the prompt is only ever shown to the seat that owns
+      // it. It reaches a client through `projection.ts`'s `pendingDecision`,
+      // which is NOT yet gated on `phase.seat` — a pre-existing P4 hole (deck
+      // uids already ride it) that this op is the first to widen to the HAND.
+      // That gate is P4's job; see docs/workstreams/simulator.md.
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates,
+          // No decline: min === max is what makes this the one MANDATORY
+          // chooseCards park (every other consumer is a printed "up to").
+          min: op.count,
+          max: op.count,
+          dest: "discard",
+          note: `Discard ${handCostPhrase(op, false)} from your hand.`,
+        },
       };
     }
     case "handRefresh":
@@ -533,6 +596,8 @@ export function applyChoice(
         : state;
     case "lookAtTopN":
       return choice.kind === "cards" ? revealFromTop(state, choice.uids, ctx, events) : state;
+    case "discardFromHandCost":
+      return choice.kind === "cards" ? discardFromHandApply(state, choice.uids, ctx, events) : state;
     case "switchActive":
       return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
     case "gust":
@@ -898,6 +963,135 @@ function revealFromTop(
   const deck = side.deck.filter((uid) => !picked.has(uid));
   events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, uids: [...moved] });
   return withSide(state, ctx.seat, { ...side, deck, hand: [...side.hand, ...moved] });
+}
+
+/** Pay a hand cost: move the chosen `uids` from the controller's hand into their
+    own discard pile (§7/§9 — Ultra Ball, Tinkaton, Meowscarada ex). Wire-safe in
+    the same way searchMove / retrieveMove are: only uids actually in the hand
+    move, and a uid repeated on the wire pays once, so a card is never duplicated
+    into the discard pile nor left in neither zone. Emits ONE event naming the
+    cards; they land in the public discard pile, so the uids leak nothing the
+    opponent will not see — the LOG still speaks in counts, because they came out
+    of a hidden hand (the HAND_DISCARDED precedent).
+
+    Never damages, so it never KOs. */
+function discardFromHandApply(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const inHand = new Set(side.hand);
+  const paid: string[] = [];
+  const spent = new Set<string>();
+  for (const uid of uids) {
+    if (!inHand.has(uid) || spent.has(uid)) continue;
+    spent.add(uid);
+    paid.push(uid);
+  }
+  if (paid.length === 0) return state;
+  events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid] });
+  return withSide(state, ctx.seat, {
+    ...side,
+    hand: side.hand.filter((uid) => !spent.has(uid)),
+    discard: [...side.discard, ...paid],
+  });
+}
+
+/** The cards in `seat`'s hand that may pay a `discardFromHandCost`, with
+    INTERCHANGEABLE copies collapsed to at most `count` representatives each —
+    the set the player is actually asked about, and the same set the play gate
+    counts.
+
+    `excludeUid` is the printed "**other**" (Ultra Ball's "2 other cards"): the
+    Trainer paying the cost is still in hand while the GATE runs, and it may not
+    pay for itself. The apply never needs it — playTrainer moves the played card
+    to the discard before the program runs — so this is the one place the word
+    has to be honoured, which is why it is a parameter here rather than a field
+    on the op (see effects.ts).
+
+    ONE collapsed set serves both readers, and that is sound because collapsing
+    at cap `count` cannot cross the gate's threshold: if the hand really holds
+    `count` matching cards then either one class alone has that many (and
+    contributes `count`) or every class survives whole — so `kept >= count` iff
+    `actual >= count`. A gate reading raw counts and a prompt reading collapsed
+    ones could otherwise offer a pick the player cannot complete. */
+function handCostCandidates(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "discardFromHandCost" }>,
+  excludeUid?: string,
+): string[] {
+  const kept = new Map<string, number>();
+  const out: string[] = [];
+  for (const uid of state.players[seat].hand) {
+    if (uid === excludeUid) continue;
+    const card = cardOf(state, uid);
+    if (op.filter !== undefined && !matchesFilter(card, op.filter)) continue;
+    if (op.filter === undefined && card === undefined) continue;
+    const key = cardIdentity(state, uid);
+    const already = kept.get(key) ?? 0;
+    if (already >= op.count) continue;
+    kept.set(key, already + 1);
+    out.push(uid);
+  }
+  return out;
+}
+
+/** The first top-level `discardFromHandCost` in `program` whose cost the seat
+    cannot pay, or null when every one of them can be. The printed "you can use
+    this card only if …" / "you must discard … in order to use this Ability"
+    gate, checked by BOTH action paths before anything is committed (cardplay.ts)
+    — a card whose cost cannot be paid is not played, so the effect it buys never
+    resolves for free.
+
+    Deliberately NOT part of `programPlayable`: that function is the ENGINE's
+    would-only-whiff heuristic, this is the CARD's own printed rule (the
+    `trainerPlayableIf` distinction), and it needs the played uid, which
+    `programPlayable` has no way to know. Like `programPlayable` it scans only
+    TOP-LEVEL ops — no printed card puts a cost inside a coin or condition gate,
+    and a cost that could be skipped by a branch would not be a cost.
+
+    NOT COMPOSITIONAL, and the limit is exactly one cost per program. Each op is
+    checked against the SAME starting hand, so a hypothetical program with two
+    costs would pass the gate on a hand that can only pay one, and the second
+    would then resolve free (the short-hand branch in `stepOp` pays what there
+    is). Every printed card in the family charges once — the cost is the price of
+    a play, and a play happens once — so this is a scope statement, not a bug;
+    folding it would mean deciding which cards the FIRST cost spends before asking
+    what the second can still afford, which is only answerable once a card exists
+    to say what the right answer is. */
+export function handCostUnmet(
+  state: GameState,
+  seat: Seat,
+  program: readonly EffectOp[],
+  excludeUid?: string,
+): Extract<EffectOp, { op: "discardFromHandCost" }> | null {
+  for (const op of program) {
+    if (op.op !== "discardFromHandCost") continue;
+    if (handCostCandidates(state, seat, op, excludeUid).length < op.count) return op;
+  }
+  return null;
+}
+
+/** How a hand cost reads as a printed noun phrase — "2 other cards", "another
+    card", "an Energy card", "a Basic Grass Energy card". `other` spells the word
+    the TRAINERS carry and the Abilities do not, which is not a stylistic split:
+    a Trainer is in the very hand it pays out of, an Ability's card is on the
+    board (see effects.ts). Shared by the prompt heading (`other: false` — by then
+    the played card has already left the hand, so every offered card IS another
+    one) and by both rejection messages (`other` as printed). */
+export function handCostPhrase(
+  op: Extract<EffectOp, { op: "discardFromHandCost" }>,
+  other: boolean,
+): string {
+  const { singular, plural } =
+    op.filter === undefined ? { singular: "a card", plural: "cards" } : retrieveNoun(op.filter);
+  if (op.count > 1) return `${op.count} ${other ? "other " : ""}${plural}`;
+  // "a card" → "another card"; no printed card pairs `other` with a filter, but
+  // the article strip keeps it reading correctly if one ever does.
+  return other ? `another ${singular.replace(/^an? /, "")}` : singular;
 }
 
 /** Switch the controller's Active with their benched `ref` (§G). The outgoing
@@ -1402,10 +1596,13 @@ export function discardableEnergies(
   return attachedEnergies(state, discardVictimSeat(seat, op), op.filter, activeOnly ? "active" : "all");
 }
 
-/** What an attached Energy card IS, for the purpose of "would discarding this one
-    rather than that one make any difference?".
+/** What a card IS, for the purpose of "would taking this one rather than that
+    one make any difference?" — the interchangeability key behind both mandatory
+    discards: `interchangeableCandidates` (Energy attached to the board, keyed
+    together with its HOST) and `handCostCandidates` (cards in hand, where there
+    is no host and this key is the whole story).
 
-    A **Basic** Energy has no in-play identity beyond the type it provides: the
+    A **Basic** Energy has no identity beyond the type it provides: the
     catalog prints the very same Basic Fire Energy under several ids (sve-002 /
     sve-010 / sve-018, identical in every field that matters), so keying on the id
     would treat three interchangeable Fire Energy in one real deck as three
@@ -1422,8 +1619,10 @@ export function discardableEnergies(
     `matchesAttached`, whose card-only arm rejects an unresolvable card and whose
     `providesEnergy` arm reads that card's provision, so no such uid can enter the
     candidate list. Kept because the fallback costs nothing and the alternative is
-    a silent collapse of things this function cannot actually compare.) */
-function energyIdentity(state: GameState, uid: string): string {
+    a silent collapse of things this function cannot actually compare. The hand
+    reader can reach it: an unresolvable uid there is filtered out before the key
+    is taken, so this stays the belt to that braces.) */
+function cardIdentity(state: GameState, uid: string): string {
   const card = cardOf(state, uid);
   if (card === undefined) return `?${uid}`;
   return isEnergyCard(card) && card.energyType === "Normal"
@@ -1461,7 +1660,7 @@ function interchangeableCandidates(
   const kept = new Map<string, number>();
   const out: { uid: string; from: PokemonRef }[] = [];
   for (const candidate of discardable) {
-    const key = `${refKeyOf(candidate.from)}|${energyIdentity(state, candidate.uid)}`;
+    const key = `${refKeyOf(candidate.from)}|${cardIdentity(state, candidate.uid)}`;
     const already = kept.get(key) ?? 0;
     if (already >= cap) continue;
     kept.set(key, already + 1);
@@ -1647,24 +1846,27 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
   }
 }
 
+/** The chooseCards note for a deck search — the printed "Search your deck for
+    [up to N] {noun} [onto your Bench | into your hand]".
+
+    Reads its noun off the SHARED `retrieveNoun` table, like the retrieval and
+    look-at-top notes beside it. It used to carry a second, hand-rolled table that
+    spelled only the SINGULAR, so the plural branch prefixed a count onto an
+    ARTICLE: "Search your deck for up to 2 **a Basic Water Energy** into your
+    hand."
+
+    That was a LIVE bug on a SHIPPED card, not a latent one this slice tripped:
+    **Chien-Pao ex "Shivery Chill"** (four catalog prints) is a `basicEnergy`
+    search at max 2 and has read that way since it was authored. It survived
+    because no test asserted any search note at all — the plural branch's only
+    other reader is `byName` (Flamigo's "up to 3 Flamigo"), which reads correctly
+    because that noun carries no article. Both forms are pinned by tests now. */
 function searchNote(filter: CardFilter, dest: "bench" | "hand", max: number): string {
-  const what =
-    filter.kind === "basicPokemon"
-      ? "a Basic Pokémon"
-      : filter.kind === "anyPokemon"
-        ? "a Pokémon"
-        : filter.kind === "byName"
-          ? filter.name
-          : filter.kind === "basicEnergy"
-            ? filter.energyType === undefined
-              ? "a Basic Energy"
-              : `a Basic ${filter.energyType} Energy`
-            : // supporter / pokemonOrBasicEnergy never reach searchDeck; stay total.
-              retrieveNoun(filter).singular;
+  const { singular, plural } = retrieveNoun(filter);
   const where = dest === "bench" ? "onto your Bench" : "into your hand";
   return max > 1
-    ? `Search your deck for up to ${max} ${what} ${where}.`
-    : `Search your deck for ${what} ${where}.`;
+    ? `Search your deck for up to ${max} ${plural} ${where}.`
+    : `Search your deck for ${singular} ${where}.`;
 }
 
 /** The chooseCards note for a discard-pile retrieval — reproduces the printed

@@ -8,7 +8,7 @@ import type {
   UseAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { cardOfUid, energyProvidesOf, isBasicPokemon, isEnergyCard, topUid } from "./cards";
+import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
@@ -19,11 +19,12 @@ import {
   conditionNote,
   discardEnergyPlayable,
   firstAttachableEnergy,
+  handCostPhrase,
+  handCostUnmet,
   moveEnergyPlayable,
   resumeProgram,
   runProgram,
 } from "./interpreter";
-import type { AbilityCost } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -96,6 +97,20 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   const playGate = entry?.trainerPlayableIf;
   if (playGate !== undefined && !conditionHolds(state, action.seat, playGate)) {
     return err("PLAY_CONDITION_NOT_MET", `${card.name} can only be used if ${conditionNote(playGate)}`);
+  }
+  // The card's OTHER printed "only if" — a hand-discard COST rather than a board
+  // condition (Ultra Ball's "only if you discard 2 OTHER cards from your hand").
+  // Checked beside the gate above because both are printed RULES, not
+  // programPlayable's would-only-whiff heuristics; and checked with the played
+  // uid EXCLUDED, which is exactly what the printed word "other" means — the card
+  // is still in hand right now and cannot pay for itself (it is about to become
+  // the discard's newest card, not one of the two the player picks).
+  const unpayable = handCostUnmet(state, action.seat, program, action.uid);
+  if (unpayable !== null) {
+    return err(
+      "PLAY_CONDITION_NOT_MET",
+      `${card.name} can only be used if you discard ${handCostPhrase(unpayable, true)} from your hand`,
+    );
   }
   if (!programPlayable(state, program, action.seat)) {
     return err("NO_LEGAL_TARGET", `${card.name} has no legal target`);
@@ -430,37 +445,26 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   if (!programPlayable(state, ability.program, action.seat)) {
     return err("NO_LEGAL_TARGET", `${ability.name} has no legal target`);
   }
-  // §9 activation cost (Meowscarada's {G}-Energy discard) — find the card to
-  // pay it BEFORE committing anything; an unpayable cost blocks the use.
-  let costUid: string | undefined;
-  if (ability.cost !== undefined) {
-    costUid = findAbilityCostCard(state, action.seat, ability.cost);
-    if (costUid === undefined) {
-      return err(
-        "ABILITY_COST_UNMET",
-        `${ability.name} needs a Basic ${ability.cost.energyType} Energy in hand to discard (§9)`,
-      );
-    }
+  // §9 activation cost — the printed "You must discard … from your hand in order
+  // to use this Ability" (Meowscarada ex, Radiant Blastoise, Revavroom,
+  // Tinkaton). The cost is the FIRST op of the Ability's own program, so the
+  // payment itself happens in the interpreter (it can PARK on which cards); what
+  // has to happen HERE is refusing the use before anything is committed, since a
+  // program that ran with an unpayable cost would hand out the effect for free.
+  //
+  // No `excludeUid`: an Ability's card is on the BOARD, not in the hand it pays
+  // out of — which is why none of these cards prints the "other" that every
+  // Trainer in the family does.
+  const unpayable = handCostUnmet(state, action.seat, ability.program);
+  if (unpayable !== null) {
+    return err(
+      "ABILITY_COST_UNMET",
+      `${ability.name} needs ${handCostPhrase(unpayable, false)} in hand to discard (§9)`,
+    );
   }
 
   const events: GameEvent[] = [{ type: "ABILITY_USED", seat: action.seat, uid, ability: ability.name }];
   let next = state;
-  // Pay the cost: the Energy leaves hand for the discard pile (announced so an
-  // event-only client sees the payment) — costUid is set iff ability.cost is.
-  if (ability.cost !== undefined && costUid !== undefined) {
-    const side = next.players[action.seat];
-    next = withSide(next, action.seat, {
-      ...side,
-      hand: without(side.hand, costUid),
-      discard: [...side.discard, costUid],
-    });
-    events.push({
-      type: "ABILITY_COST_PAID",
-      seat: action.seat,
-      uid: costUid,
-      energyType: ability.cost.energyType,
-    });
-  }
   if (ability.oncePerTurn) {
     next = {
       ...next,
@@ -472,22 +476,6 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   }
   return settleProgram(runProgram(next, ability.program, { seat: action.seat }, events), action.seat, events, {
     endsTurn: ability.endsTurn === true,
-  });
-}
-
-/** The first Basic Energy card of `cost.energyType` in `seat`'s hand — what an
-    Ability activation cost (Meowscarada's Bouquet Magic) discards, or undefined
-    when the hand holds none (the cost is unpayable). Copies are fungible, so
-    the first match is as good as any (no WHICH-card choice). */
-function findAbilityCostCard(state: GameState, seat: Seat, cost: AbilityCost): string | undefined {
-  return state.players[seat].hand.find((uid) => {
-    const card = cardOfUid(state, uid);
-    return (
-      card !== undefined &&
-      isEnergyCard(card) &&
-      card.energyType === "Normal" &&
-      energyProvidesOf(card) === cost.energyType
-    );
   });
 }
 
@@ -578,6 +566,13 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
     // (effects.ts). A gate here would be an AND over ops applied to a card whose
     // OTHER printed clause always resolves, which is precisely the case
     // ruling/284 (quoted above) excludes.
+    //
+    // `discardFromHandCost` is not gated here either, for the opposite reason:
+    // it DOES veto the whole card, but on the card's own printed authority
+    // ("You can use this card only if…") rather than this function's judgement
+    // about ops that would whiff — and the Trainer form needs the played uid
+    // excluded, which this function cannot see. Both action paths call
+    // `handCostUnmet` themselves, beside `trainerPlayableIf`.
     if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op)) {
       // No movable Energy, or fewer than two of your Pokémon in play (no distinct
       // destination) → the move can only whiff (Energy Switch / Poppy).
@@ -633,11 +628,20 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       if (choice.uids.length > prompt.max) {
         return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} card(s)`);
       }
+      // The FLOOR — 0 for every printed "up to" (a decline is a legal answer),
+      // `count` for the mandatory hand COST, where the only decision is which
+      // cards and an empty answer would take the effect without paying for it.
+      if (choice.uids.length < prompt.min) {
+        return err("BAD_EFFECT_CHOICE", `pick at least ${prompt.min} card(s)`);
+      }
       const candidates = new Set(prompt.candidates);
       const seen = new Set<string>();
       for (const uid of choice.uids) {
         if (typeof uid !== "string" || !candidates.has(uid)) {
-          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a searchable card`);
+          // Reads off the PROMPT: this validator now serves a deck search, a
+          // discard-pile retrieval, a look at the deck top AND a hand cost, so
+          // "searchable" was only ever right for the first of them.
+          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a legal card for this choice`);
         }
         if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
         seen.add(uid);
