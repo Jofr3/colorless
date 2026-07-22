@@ -387,6 +387,13 @@ is therefore **2 or none** — never 1 of 2 — and the "may" of an *activated* 
 ("Once during your turn, you **may** …") is spent by choosing to use the Ability at
 all, so it adds nothing to the choice that follows.
 
+One more exception rides the ZONE, not the number: a **search of a hidden zone**
+("search your deck for …") may be **failed on purpose**, even when a match is
+sitting there — the zone is private, and no one can force you to prove otherwise.
+So a deck-search pick is declinable even where its printed count has no "up to"
+(Pawmot's "search your deck for **a** Basic {L} Energy card"): the decline is the
+printed right to fail the search, not a smaller answer to the number.
+
 ### 9.2 A clause can refer to what an earlier clause of the SAME card did
 
 Most printed clauses are answerable from the board. Some are not: they ask what
@@ -444,6 +451,25 @@ resolution that put the cards back and drew before shuffling would leave them in
 **known position** — bottom of deck, in the order they were picked — which is
 exactly what the printed word "shuffle" denies. (Miriam is the case in scope: the
 draw that follows must come off a shuffled deck.)
+
+### 9.3 "This Pokémon" resolves to the effect's own source
+
+Text saying "**this Pokémon**" on an Ability, attack, or trigger means the
+Pokémon whose printed text is running — wherever it sits, and **not** "your
+Active" (Pawmot's "Electrogenesis" attaches to a benched Pawmot using it). A
+Trainer card has no "this Pokémon". Engine: `EffectContext.sourceUid` (D50),
+read so far by `attachFromDeck.toSelf`.
+
+- The source is tracked as the **top card of its stack**. A source **evolved
+  over** is no longer "this Pokémon" — the body the sentence pointed at has a
+  new top card, and an effect aimed at the old one has no target. Likewise a
+  source that has **left play** (KO'd, bounced). Either way the clause simply
+  does nothing (§8.6's spirit), and the rest of the card still resolves.
+- A Pokémon that leaves play and later **returns is a NEW Pokémon** — effects
+  do not follow it. *Engine note (latent):* nothing in the current op
+  vocabulary can return an in-play card to the board mid-program, so the
+  resolver has never had to distinguish "still there" from "came back"; the
+  first revival/self-recovery op must make it.
 
 ---
 

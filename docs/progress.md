@@ -3,7 +3,57 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-22 — build session #34 (**P3-M5: `attachFromDeck` — the
+**Last updated:** 2026-07-22 — build session #35 (**P3-M5:
+`EffectContext.sourceUid` — the printed "this Pokémon"**). The resume point's #1
+and the cheapest structural row on the board, and it is a FIELD, not an op: the
+context now names the Pokémon whose effect is running — its top-card **uid**,
+set at **every run site that knows it** (`useAbility`, both board-trigger
+runners, the KO trigger — where it names a card that has LEFT play, honestly —
+and the attacker, by uid rather than "the Active" so it stays truthful if the
+program moves it) and **ABSENT for a Trainer program**, whose parked context
+stays byte-identical `{seat}` (the §9.2 absent-when-empty promise, applied to a
+second field). Constant for the run, rides `EffectContinuation` across parks
+(JSON, D14). **First reader: `attachFromDeck.toSelf`**, the THIRD printed target
+rule — "attach it to **this Pokémon**" — landing **Pawmot ×2** (sv01-076/-209,
+"Electrogenesis"): a **benched Pawmot feeds ITSELF**, the exact sentence no
+seat-relative target rule could say. Resolution is by **board TOP uid** — a
+source evolved over or gone from play is no longer "this Pokémon", and the op
+whiffs into its printed trailing shuffle. The fixture shipped verbatim with
+ZERO deviations (independently re-verified against D1 — last slice's banner
+lesson, taken). engineVersion 0.29.0 → **0.30.0**; 1526 → **1561** tests,
+`bun run check` + `vite build` green. **Review (2 adversarial agents in
+ISOLATED worktrees, 43 + 33 mutations): ONE HIGH engine-side, and it is the
+recurring pattern — a false coverage CLAIM, not wrong behaviour.** The "board
+TOP, not stack membership — deliberately" doc and the shipped evolved-over test
+claimed the discrimination, but the stale-uid test sat the uid in the DECK, so
+**three wrong implementations** (Active-by-stack-membership,
+bench-by-stack-membership, bench-by-base-uid) **passed the entire suite** —
+under any of them a source evolved over mid-continuation attaches to the
+EVOLUTION. Closed by evolved-over tests on both arms. Its MED: every shipped
+board benched Pawmot at slot 0 with one copy, so hard-coded-index-0 and
+match-by-catalog-id (a two-Pawmot board resolves the WRONG Pawmot) both
+survived — closed, and the two-Pawmot board also pins the per-uid once-per-turn
+stamp. LOW worth keeping: `toSelf`'s "mutually exclusive with the other riders"
+was a RULE THE CODE DOESN'T ENFORCE — the op doc now states the precedence
+honestly (ignores `targetType`/`benchOnly`; `maxPerTarget` would still cap;
+authoring it alone is the rule, the doc is the enforcement). 43 mutants: 41
+killed (34 by the pre-existing suite, 7 only by its 11 new tests), 2 argued
+equivalent — one of them `runCheckupTriggers`' threading, which nothing can
+observe today. **Web: NO HIGH; its one behaviour change is a DESIGN fix** —
+`AttachCardsDialog` violated the house "a list of one is not a decision" rule
+(D44, `MoveEnergyDialog`'s): a sole-target offer (every `toSelf` park, and
+Janine over a lone {D} Pokémon) demanded a tap on a target list of one. The
+dialog now **COMMITS the attach on the card tap** when there is one target; the
+target list never mounts. Its other two MEDs were both untested mirrors: the
+`activeOnly` mirror in `usableAbilities` could be deleted with all 1545 tests
+green (the exact lit-row-refused-click HIGH of two sessions ago, on a benched
+Chien-Pao — pinned both directions), and `promptKey`'s attachCards
+`targets`/`max` segments were comment-enforced only (pinned via the belt
+technique). See D50.
+
+---
+### Prior header (P3-M5 attachFromDeck, kept for continuity)
+**Last updated (was):** 2026-07-22 — build session #34 (**P3-M5: `attachFromDeck` — the
 deck-SEARCH attach, and a §9.2 gate that asks WHERE**). The resume point named
 Janine's Secret Art as one card wanting a per-target deck search; **the catalog
 showed five cards printing that sentence**, differing only in the target rule and
@@ -453,7 +503,82 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**`attachFromDeck` is live (P3-M5, D49) — engine 0.29.0.** Search your own deck
+**`EffectContext.sourceUid` is live (P3-M5, D50) — engine 0.30.0.** The context
+names the Pokémon whose effect is running (the printed "this Pokémon"), set at
+every run site that knows it and ABSENT for a Trainer program (whose parked
+context stays byte-identical `{seat}`). First reader: `attachFromDeck.toSelf`,
+landing **Pawmot ×2** ("Electrogenesis" — a **benched** Pawmot feeds itself).
+Resolution is by board TOP uid: a source evolved over or gone from play is no
+longer "this Pokémon" and the op whiffs into its printed shuffle (`ptcg-rules.md`
+**§9.3**). Web: `AttachCardsDialog` now **commits on the card tap over a sole
+target** — "a list of one is not a decision" (D44's rule, now the attach
+dialog's too).
+**Next concrete actions:**
+1. **Saguaro** (sv02-187/-255/-270) — still the cheapest reader of §9.1's
+   `min: 0` end, three slices running. "Choose up to 2 of your Pokémon and heal
+   50 damage from each of them" wants `healChosen` widened with a count rather
+   than a new op. Note it is `legal_standard = 0` in the local ingest, like most
+   Trainers.
+2. **Ortega** (sv03-190/-219) — the "in this way" gate over an OPPONENT-side
+   pick from a hidden zone: "Your opponent reveals their hand, and you choose a
+   card you find there and put it on the bottom of their deck. If you put a card
+   on the bottom of your opponent's deck in this way, your opponent may draw a
+   card." The gate exists; what does not is a prompt over a zone the ACTOR must
+   be shown but does not own — and it is the first "your opponent **may**" (a
+   decline belonging to the other seat).
+3. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
+   optional discard that BUYS an effect (Bellibolt ex), a variable count with
+   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause
+   (Sandaconda, Eiscue ex, Weavile), a repeat count (Krookodile).
+4. **The last cheap reader of the D40 vocabulary: Defiance Band** — a
+   conditional PASSIVE, the third consumer (`passivesOf` takes no seat today).
+5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`,
+   and strip `cont` regardless — the §9.2 record AND now the context's
+   `sourceUid` both ride the phase; D40's `stadium.owner` + `prizesRemaining`
+   projection additions; and the engine-exported preview predicates the HUD
+   needs.
+**What sourceUid unblocked vs. what stays blocked:** Pawmot landed;
+**Forretress ex did NOT** — its target rule was never the blocker ("in any way
+you like" is Charizard's shape), the wall is its §9.2 gate into a **KO by
+EFFECT**, which no op can do (flow.ts owns every Knock Out). **Geeta** still
+needs the turn-scoped "your Pokémon can't attack". And `discardEnergy`'s
+self-side arm still has no printed consumer wanting the source — the wall
+comment now says the context HAS the uid; what is missing is an arm that reads
+it.
+**Recorded, NOT fixed (this slice):** **the returned-Pokémon doctrine gap
+(LATENT)** — `sourceRef` would re-acquire a source that left play and RETURNED
+as a board top mid-program; unreachable at HEAD (full op-vocabulary audit:
+nothing returns an in-play card to the board mid-program), but "a returned
+Pokémon is a NEW Pokémon" (§9.3), so the first revival/self-recovery op must
+revisit it. `runCheckupTriggers` threads the uid and **nothing can observe it**
+(no betweenTurns program parks or reads the source — the review's equivalent
+mutant). `toSelf`'s exclusivity with the other target riders is **DOC-enforced,
+not code-enforced** — the op doc states the precedence, authoring it alone is
+the rule. The attack path's sourceUid is the attacker's top uid at declaration
+and correctly follows a mid-program switch — **untested**, because no shipped
+program both moves the attacker and reads the source. **`GameLog` announces
+only a batch's LAST row — SIXTH slice running**; Pawmot's batch ends on
+`SHUFFLE`, so its attach is silent. **The P4 `pendingDecision` leak is unchanged
+in KIND** — a `toSelf` offer leaks strictly LESS than Janine's (a 0/1
+hidden-zone count by type, against her 1-vs-≥2). **Carried forward
+(pre-existing, NOT this slice):** `legal_standard = 0` on most Trainers in the
+local ingest (and on Pawmot itself — rotation, `legal_expanded = 1`);
+`GamePage`'s `passDisabled` phase check is untested; Fighting Au Lait is still
+playable with nothing damaged anywhere; `validateChoice` does not pin a
+multi-count pick to a single host; `handCostUnmet` is not compositional across
+two costs in one program; the played Trainer sits UNDER its own payment in the
+discard pile; **no test anywhere covers an onEvolve trigger firing through Rare
+Candy** (checked against this slice's review additions — they do not reach it
+either; still correct by inspection only); `maxPerTarget > 1` has no printed
+consumer; a full target row's disabled STYLING is unpinned (house style); and
+from D42 the attack epilogue sweeps ONE seat, so a KO an attack inflicts on the
+ATTACKER's own board is missed — **do that before landing any self-damaging
+attack text** (sv01-038 Skeledirge is one deriver sentence away).
+
+---
+### Prior resume point (P3-M5 attachFromDeck, kept for continuity)
+**(was)** **`attachFromDeck` is live (P3-M5, D49) — engine 0.29.0.** Search your own deck
 for Energy and attach it straight onto your Pokémon, then shuffle — the
 deck-search sibling of `attachFromTop`, sharing its `attachCards` MAP prompt.
 6 catalog rows: **Charizard ex ×4** ("in any way you like", an onEvolve trigger)
@@ -1492,13 +1617,42 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher) + **D42 = attack effect programs can PARK** (the `attackEpilogue` PendingStage carries the §8.1 KO sweep + §5.3 turn end, seeded BEFORE the effect program and folded through `settleProgram`'s `resumeTail` — a MECHANISM, not a card family; its first readers are the §8 self-discard cost via `discardEnergy`'s `yourActive` arm + `count:"all"`, 12 catalog rows all DERIVED, engine 0.22.0) + **D43 = the `discardEnergy` ATTACK arms** (the opponent-side twins on the existing `opponentActive` arm, bare + coin-gated — Pincurchin / Gumshoos / Dragonite V ×2 / Dedenne / Maschiff / Tympole / Yveltal — and the exact-N `count` — Corviknight / Slither Wing / Koraidon: 11 more rows, again ZERO registry rows; the collapse is now CAPPED at `count` per class, and `forcedDiscards` folds the short board into the same comparison as the no-choice rule, i.e. the new §8.6 "do as much as you can"; engine 0.23.0) + **D44 = the `providesEnergy` CardFilter** ("an Energy that PROVIDES {X}" — the first filter a CARD alone cannot answer, since provision is a while-ATTACHED property that Luminous makes depend on the holder's other attachments; read by TWO ops through one `unitsOf` shared with §8.2's cost matcher, so what can PAY a {L} cost is exactly what a "{L} Energy" effect can take: the DERIVED typed self-discard in both printed notations (5 rows, zero registry rows) and `moveEnergy`'s `benchToActive` route (Armarouge); §6.5, engine 0.24.0 — the energy-removal family is now FILTER-COMPLETE) + **D45 = `attachFromTop`** (look at the top N of your deck and attach the Energy you find there onto your own Pokémon, "in any way you like" — the first prompt whose answer is a MAP, card → Pokémon; Electric Generator / Hydreigon "Tri Howl", the two differing in every rider the op has, and the leftovers clause splitting two ways on purpose — a shuffle is a following op, a DISCARD is on the op and is charged on the whiff and the decline too; the review REMOVED the draft's play gate, since `programPlayable` is an AND over ops and would veto a card whose other printed clause always resolves; §15.E, engine 0.25.0) + **D46 = `discardFromHandCost`** (the printed hand COST that PARKS — two printed wordings, one mechanism, and the wording tracks WHERE THE PAYING CARD SITS: Trainers say "only if you discard 2 **other** cards from your hand" because the card is in the hand it pays from, Abilities say "you **must** discard … in order to use this Ability" and never say "other" because the card is on the board, exactly across the catalog — so "other" is not a field but the played uid excluded in the GATE. It is the FIRST op of its program because the payment can park, which is also what let it ABSORB `AbilityProgram.cost`: that field could only express the fungible case, so it, `findAbilityCostCard` and `ABILITY_COST_PAID` are gone and Meowscarada ex migrated — Ultra Ball / Earthen Vessel / Revavroom / Tinkaton / Radiant Blastoise + Meowscarada, **9 catalog rows**. `chooseCards` grew a required `min` (the first MANDATORY card park; every printed "up to" declares 0) and a `"discard"` dest; the gate VETOES, the mirror image of D45, because the card's own text states a precondition where D45's would have been the engine guessing a whiff. §7.5, engine 0.26.0) + **D47 = the printed number is a FLOOR, and the hand cost that is NOT a discard** (`choosePokemonMulti` gained `min`/`max` + `declinable` — a printed "choose 1" is exactly one, so Meowscarada ex / Radiant Blastoise can no longer pay an irreversible cost and place nothing, while Hawlucha's "you may choose 2" is 2-or-none at EVERY non-empty Bench; rules doc §9.1. And `discardFromHandCost` became **`payFromHand`** with a required `to`: `"deckBottom"` lands **Dendra** ×3 — the payment that discards nothing yet carries every clause of the §7.5 mechanism, gate and "other" included — while **Skwovet** ×2 reaches the same destination with the WHOLE hand for zero new ops (`handRefresh` + Iono's riders). `HAND_COST_PAID` and the prompt both carry the destination, because the event follows what stays VISIBLE; engine 0.27.0)) — next: **`EffectContext` op→op data flow** (closes Superior Energy Retrieval AND Miriam), the other end of §9.1 (a printed "choose **up to** N Pokémon" — Saguaro, then Janine's Secret Art), the energy-removal family's remaining SENTENCE STRUCTURES (Bellibolt ex / Chien-Pao ex / Sandaconda / Krookodile), the last cheap D40 reader (Defiance Band), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher) + **D42 = attack effect programs can PARK** (the `attackEpilogue` PendingStage carries the §8.1 KO sweep + §5.3 turn end, seeded BEFORE the effect program and folded through `settleProgram`'s `resumeTail` — a MECHANISM, not a card family; its first readers are the §8 self-discard cost via `discardEnergy`'s `yourActive` arm + `count:"all"`, 12 catalog rows all DERIVED, engine 0.22.0) + **D43 = the `discardEnergy` ATTACK arms** (the opponent-side twins on the existing `opponentActive` arm, bare + coin-gated — Pincurchin / Gumshoos / Dragonite V ×2 / Dedenne / Maschiff / Tympole / Yveltal — and the exact-N `count` — Corviknight / Slither Wing / Koraidon: 11 more rows, again ZERO registry rows; the collapse is now CAPPED at `count` per class, and `forcedDiscards` folds the short board into the same comparison as the no-choice rule, i.e. the new §8.6 "do as much as you can"; engine 0.23.0) + **D44 = the `providesEnergy` CardFilter** ("an Energy that PROVIDES {X}" — the first filter a CARD alone cannot answer, since provision is a while-ATTACHED property that Luminous makes depend on the holder's other attachments; read by TWO ops through one `unitsOf` shared with §8.2's cost matcher, so what can PAY a {L} cost is exactly what a "{L} Energy" effect can take: the DERIVED typed self-discard in both printed notations (5 rows, zero registry rows) and `moveEnergy`'s `benchToActive` route (Armarouge); §6.5, engine 0.24.0 — the energy-removal family is now FILTER-COMPLETE) + **D45 = `attachFromTop`** (look at the top N of your deck and attach the Energy you find there onto your own Pokémon, "in any way you like" — the first prompt whose answer is a MAP, card → Pokémon; Electric Generator / Hydreigon "Tri Howl", the two differing in every rider the op has, and the leftovers clause splitting two ways on purpose — a shuffle is a following op, a DISCARD is on the op and is charged on the whiff and the decline too; the review REMOVED the draft's play gate, since `programPlayable` is an AND over ops and would veto a card whose other printed clause always resolves; §15.E, engine 0.25.0) + **D46 = `discardFromHandCost`** (the printed hand COST that PARKS — two printed wordings, one mechanism, and the wording tracks WHERE THE PAYING CARD SITS: Trainers say "only if you discard 2 **other** cards from your hand" because the card is in the hand it pays from, Abilities say "you **must** discard … in order to use this Ability" and never say "other" because the card is on the board, exactly across the catalog — so "other" is not a field but the played uid excluded in the GATE. It is the FIRST op of its program because the payment can park, which is also what let it ABSORB `AbilityProgram.cost`: that field could only express the fungible case, so it, `findAbilityCostCard` and `ABILITY_COST_PAID` are gone and Meowscarada ex migrated — Ultra Ball / Earthen Vessel / Revavroom / Tinkaton / Radiant Blastoise + Meowscarada, **9 catalog rows**. `chooseCards` grew a required `min` (the first MANDATORY card park; every printed "up to" declares 0) and a `"discard"` dest; the gate VETOES, the mirror image of D45, because the card's own text states a precondition where D45's would have been the engine guessing a whiff. §7.5, engine 0.26.0) + **D47 = the printed number is a FLOOR, and the hand cost that is NOT a discard** (`choosePokemonMulti` gained `min`/`max` + `declinable` — a printed "choose 1" is exactly one, so Meowscarada ex / Radiant Blastoise can no longer pay an irreversible cost and place nothing, while Hawlucha's "you may choose 2" is 2-or-none at EVERY non-empty Bench; rules doc §9.1. And `discardFromHandCost` became **`payFromHand`** with a required `to`: `"deckBottom"` lands **Dendra** ×3 — the payment that discards nothing yet carries every clause of the §7.5 mechanism, gate and "other" included — while **Skwovet** ×2 reaches the same destination with the WHOLE hand for zero new ops (`handRefresh` + Iono's riders). `HAND_COST_PAID` and the prompt both carry the destination, because the event follows what stays VISIBLE; engine 0.27.0) + **D48 = the §9.2 op→op record** (an op files the uids it MOVED under a named `EffectSlot` and later ops of the SAME card read them — the `recordGate` ("in this way" / "if you do") + `discardPileRetrieval.exclude` ("with the effect of this card"); Miriam ×3 / Superior Energy Retrieval ×2 / Dendra's own conditional; the record rides `EffectContinuation` keyed by SLOT, absent when empty; engine 0.28.0) + **D49 = `attachFromDeck`** (SEARCH the deck for Energy and attach straight onto your own Pokémon — the deck-search sibling of `attachFromTop` sharing its `attachCards` MAP prompt; the whole-deck offer COLLAPSES to `max` per interchangeable class, and the two printed target rules are "in any way you like" = no rider vs "for each of those Pokémon" = `maxPerTarget: 1` — Charizard ex ×4 (onEvolve) / Janine's Secret Art ×2, whose self-poison is `recordGate.contains: "yourActive"`, a §9.2 gate asking WHERE rather than whether; engine 0.29.0) + **D50 = `EffectContext.sourceUid`** (the printed "this Pokémon" — the context names the running effect's Pokémon by top-card uid at every site that knows it, ABSENT for Trainers; first reader `attachFromDeck.toSelf` lands Pawmot ×2 "Electrogenesis", a BENCHED Pawmot feeding itself; resolution by board TOP uid, evolved-over = whiff; engine 0.30.0)) — next: the other end of §9.1 (a printed "choose **up to** N Pokémon" — Saguaro), Ortega's opponent-side hidden-zone pick + "your opponent may", the energy-removal family's remaining SENTENCE STRUCTURES (Bellibolt ex / Chien-Pao ex / Sandaconda / Krookodile), the last cheap D40 reader (Defiance Band), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-22** (build #35) — **P3-M5: `EffectContext.sourceUid` — the printed
+  "this Pokémon"** (D50; built solo, then two adversarial review agents in
+  ISOLATED worktrees). A FIELD, not an op: the context now carries the top-card
+  uid of the Pokémon whose effect is running, set at every run site that knows
+  it (`useAbility`, the board/checkup trigger runners, the KO trigger — naming a
+  card that has LEFT play, honestly — and the attacker, by uid so a mid-program
+  switch cannot stale it) and ABSENT for a Trainer, whose parked context stays
+  byte-identical `{seat}`. First reader: `attachFromDeck.toSelf` — "attach it to
+  **this Pokémon**" — landing **Pawmot** ×2 ("Electrogenesis"), whose whole
+  point is that a **benched** Pawmot feeds itself; resolution is by board TOP
+  uid, so an evolved-over or departed source whiffs into the printed shuffle
+  (rules doc **§9.3**, including the LATENT "a returned Pokémon is a NEW
+  Pokémon" note for the first revival op). **Reviews: ONE HIGH engine-side, the
+  recurring shape — a false coverage CLAIM**: the evolved-over discrimination
+  was documented and "tested", but the stale-uid test sat its uid in the DECK,
+  so three wrong `sourceRef` implementations (two stack-membership scans and a
+  base-uid match) passed the entire suite; closed on both arms, alongside the
+  MED that every shipped board benched one Pawmot at slot 0 (hard-coded-index-0
+  and match-by-catalog-id both survived — the two-Pawmot board now also pins the
+  per-uid once-per-turn stamp). **Web: NO HIGH, one deliberate behaviour
+  change** — a sole-target `attachCards` offer (every `toSelf` park, Janine over
+  a lone {D} Pokémon) violated the house "a list of one is not a decision" rule,
+  so `AttachCardsDialog` now commits on the card tap and the target list never
+  mounts; plus two untested mirrors pinned (`usableAbilities`' `activeOnly`,
+  deletable with all tests green — the lit-row-refused-click shape again — and
+  `promptKey`'s attachCards `targets`/`max` segments). `toSelf`'s rider
+  exclusivity is now documented as PRECEDENCE rather than claimed as a rule the
+  code never enforced. engineVersion 0.29.0 → **0.30.0**; 1526 → **1561** tests,
+  `bun run check` + `vite build` green. See D50.
 - **2026-07-21** (build #32) — **P3-M5: the printed number is a FLOOR, and the
   hand cost that is NOT a discard** (D47; built solo, then two adversarial review
   agents in ISOLATED git worktrees — which is how mutation testing and a clean

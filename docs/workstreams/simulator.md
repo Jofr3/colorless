@@ -616,7 +616,10 @@ is exhaustively covered by the engine + DOM tests instead.
 - **EffectContext is only `{seat}`** — an ability using a "self" op from the
   BENCH would wrongly target the Active. No in-scope ability does (Chien-Pao is
   Active-only); a bench-usable self-targeting ability needs the source uid in
-  ctx.
+  ctx. **(Closed in D50, engine 0.30.0: `EffectContext.sourceUid` — set at every
+  run site that knows it; first reader `attachFromDeck.toSelf`, Pawmot. The
+  "self" STATUS/heal ops still read the Active — only the attach reads the
+  source so far.)**
 - **P4 hidden info:** the `effect:choose` prompt (search candidates) and the
   existing opponent-hand/setup backs all need the P4 opaque-alias/redaction
   design — the projection is the same filter P4 will apply.
@@ -3179,6 +3182,12 @@ whole content of the difference.
 - **"For each of those Pokémon … attach it to THAT Pokémon"** (Janine) —
   `maxPerTarget: 1`. One apiece onto distinct Pokémon; stacking both is not a
   legal answer.
+- **"attach it to THIS Pokémon"** (Pawmot) — `toSelf`, added one slice later
+  (D50) once `EffectContext.sourceUid` existed: the sole target is the Pokémon
+  whose effect is running, resolved by board TOP uid. Its precedence over the
+  other riders is stated in the op's doc (it ignores `targetType`/`benchOnly`;
+  `maxPerTarget` would still cap) — authoring it alone is the rule, the doc is
+  the enforcement.
 
 A card prints "in any way you like" exactly when the split is free, so the
 absence of the phrase is **not silence, it is the other rule** — written into
@@ -3254,11 +3263,14 @@ attack deriver), and the first card in the repo that poisons its OWN Active.
 - **Pawmot** (sv01-076/-209) "Electrogenesis" — "attach it to **this Pokémon**".
   `EffectContext` carries no source uid, the same wall `discardEnergy`'s
   `yourActive` arm documented. Unblocking it unlocks a family, and it is the
-  cheapest structural row left.
+  cheapest structural row left. **(LANDED one slice later — D50,
+  `EffectContext.sourceUid` + the `toSelf` rule above, engine 0.30.0.)**
 - **Forretress ex** (sv02-005/-230) "Exploding Energy" — "If you searched your
   deck in this way, **this Pokémon is Knocked Out**". A §9.2 gate into a KO by
   EFFECT, which no op can do: flow.ts owns every Knock Out and the interpreter
-  never touches the tail (D23/D25).
+  never touches the tail (D23/D25). **(Since D50 this is the WHOLE blocker: its
+  attach is Charizard's "in any way you like" shape, and "this Pokémon" is now
+  expressible — only the self-KO gate is missing.)**
 - **Geeta** (sv03-188/-218/-226) — the attach itself is this op with a
   single-target cap, but "During this turn, your Pokémon **can't attack**" is a
   turn-scoped restriction that does not exist yet.
@@ -3274,7 +3286,10 @@ dialog's existing `atCap` so the pick is refused UP FRONT, with the live region
 explaining why "Attaching 1/2" is as far as it goes — the alternative left the way
 out (tap the card again) to be guessed.
 
-No new events, so no new log rows.
+No new events, so no new log rows. **(One slice later — D50's review — the
+dialog gained the sole-target commit: an offer whose target list holds ONE
+Pokémon attaches on the card tap, "a list of one is not a decision". See the
+sourceUid as-built section below.)**
 
 ### Review — 2 adversarial agents in isolated worktrees, 69 + 46 mutations
 **Engine+rules: ONE HIGH, and it was a claim rather than a behaviour** — the same
@@ -3352,6 +3367,105 @@ named {D} Pokémon). The spot now rides the state instead of being replaced by i
 - **`GameLog` announces only a batch's LAST row** — fifth slice running. Janine's
   batch ends on the poison, which is at least the interesting row; Charizard's ends
   on `SHUFFLE`, so its three attaches are silent.
+
+## M5 op-slice: EffectContext.sourceUid as built (engine 0.30.0)
+
+**The context now names the Pokémon whose effect is running** — `sourceUid?:
+string`, the printed "this Pokémon", a FIELD rather than an op. Three places had
+documented the wall in so many words (`discardEnergy`'s `yourActive` arm, the
+attachFromDeck deferred list, the M4 slice-2 notes above), and the unblocking
+was plumbing, not information: every run site already had the uid in scope.
+
+### Set wherever the runner knows it, absent where there is nothing to know
+
+| Run site | sourceUid |
+|---|---|
+| `useAbility` | the Ability's own Pokémon (the uid already keyed the once-per-turn stamp) |
+| `runBoardTrigger` / `runCheckupTriggers` | the triggering Pokémon (the uid already rode `ABILITY_TRIGGERED`) |
+| `runKoTrigger` | the KO'd Pokémon — a card that has LEFT play, named honestly; a source-reading op finds no board top and whiffs |
+| attack path | the attacker **by uid**, not "the Active" — a program that moves its own attacker cannot stale it |
+| `playTrainer` | **absent** — a Trainer has no "this Pokémon" |
+
+Absence is structural: a Trainer's parked context serializes byte-identical to
+the pre-slice `{seat}` (the §9.2 absent-when-empty promise, applied to a second
+field). The value is constant for the whole run, like `seat` — the accumulator
+shape stays on `EffectRecord` (D48's reasoning) — and rides `EffectContinuation`
+across parks (JSON, D14).
+
+### The first reader: `attachFromDeck.toSelf`, and resolution by board TOP
+
+`sourceRef` resolves the source to a zero-or-one-element target list: the
+controller's in-play Pokémon whose **top card** is the source uid. Top, not
+stack membership, deliberately — a source **evolved over is a different
+Pokémon** (the old top's "this Pokémon" no longer exists), and gone-from-play
+likewise; both fall into the op's standing whiff path, where the printed
+trailing shuffle still runs. Written into `ptcg-rules.md` as **§9.3**, along
+with the LATENT gap the review's audit established: `sourceRef` would
+RE-ACQUIRE a source that left play and RETURNED as a board top mid-program —
+unreachable at HEAD (nothing in the op vocabulary returns an in-play card to
+the board mid-program), but "a returned Pokémon is a NEW Pokémon", so the
+first revival/self-recovery op must revisit it.
+
+### Landed: 2 catalog rows
+
+**Pawmot** (sv01-076/-209), "Electrogenesis" — `oncePerTurn`, **`activeOnly:
+false`**, and the second flag is the card's whole point: a **benched Pawmot
+feeds itself**, the sentence no seat-relative target rule could say. The park
+stays declinable (a search of a hidden zone may be failed on purpose —
+`ptcg-rules.md` §9.1), so the printed bare article does not make the pick
+mandatory. The fixture shipped verbatim with zero deviations, independently
+re-verified against D1 — the D49 banner lesson, held.
+
+What this did and did not unblock: **Forretress ex** stays deferred on the
+self-KO gate alone (see the narrowed note above); **Geeta** on turn-scoped
+restrictions; and `discardEnergy`'s self-side arm still has no printed consumer
+wanting the source — its wall comment now says the context HAS the uid, and
+what is missing is an arm that reads it.
+
+### Web: no new anything — and one deliberate behaviour change
+
+A `toSelf` park is an `attachCards` prompt whose target list holds ONE fixed
+Pokémon, and the review's design MED was that the dialog demanded a tap on that
+list anyway — against the house **"a list of one is not a decision"** rule
+(D44, `MoveEnergyDialog`'s sole-destination pre-choose). `AttachCardsDialog`
+now **commits the attach on the card tap** when `targets.length === 1`
+(`soleTarget`): the target list never mounts, and the `<output>` copy is
+mode-aware. This reshapes Janine over a lone {D} Pokémon too, and the D49 DOM
+tests were rewritten to the new interaction (the promptKey tests' carryover
+device is now a stale committed ASSIGNMENT rather than a stale pending pick).
+
+### Review — 2 adversarial agents in isolated worktrees, 43 + 33 mutations
+
+**Engine+rules: ONE HIGH, the recurring pattern — a false coverage CLAIM, not
+wrong behaviour.** The "board TOP, not stack membership — deliberately" doc and
+the shipped evolved-over test claimed the discrimination, but the stale-uid
+test sat its uid in the DECK, so **three wrong implementations**
+(Active-by-stack-membership, bench-by-stack-membership, bench-by-base-uid)
+passed the entire suite — under any of them, a source evolved over
+mid-continuation attaches to the EVOLUTION. Closed by evolved-over tests on
+both arms. The MED is the same lesson at the next altitude: every shipped board
+benched ONE Pawmot at slot 0, so hard-coded-index-0 and match-by-catalog-id (a
+two-Pawmot board resolves the WRONG copy) both survived; the closing board also
+pins the per-uid once-per-turn stamp. LOWs: the `toSelf` exclusivity doc
+claimed a rule the code doesn't enforce (reworded to the honest precedence),
+and the cross-id collapse test was seed-vacuous-able (both prints now pinned
+present in the deck). 43 mutants: 41 killed — 34 by the pre-existing suite, 7
+only by the review's 11 new tests — and 2 equivalent, one being
+`runCheckupTriggers`' threading, which nothing can observe today (no
+betweenTurns program parks or reads the source).
+
+**Web+integration: NO HIGH.** Besides the sole-target change: the `activeOnly`
+mirror in `usableAbilities` was implemented but completely untested — deleting
+it left all 1545 tests green, the exact lit-row-refused-click HIGH of D47, this
+time on a benched Chien-Pao; pinned both directions. And `promptKey`'s
+attachCards `targets`/`max` segments were comment-enforced only (mutants
+dropping either survived); pinned via the belt technique. Also verified: the P4
+`pendingDecision` leak is unchanged in KIND — a `toSelf` offer leaks strictly
+LESS than Janine's (a 0/1 hidden-zone count by type) — and `GameLog` still
+announces only a batch's LAST row, so Pawmot's attach is silenced by the
+trailing `SHUFFLE`. Sixth slice running.
+
+1526 → **1561** tests; engineVersion 0.29.0 → **0.30.0**.
 
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
