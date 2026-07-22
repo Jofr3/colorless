@@ -404,13 +404,31 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
     // board's turn glow would hand the turn to a player who is only answering a
     // question. This is exactly why the engine files the answerer beside `seat`
     // rather than replacing it.
-    case "effect:choose":
+    case "effect:choose": {
+      // An `answerer` park's prompt goes ONLY to the seat that may answer it.
+      //
+      // NARROWLY SCOPED, ON PURPOSE. Handing `pendingDecision` to BOTH viewers
+      // is D17's deliberate contract for every other park — the HUD's
+      // `waitingOn === "you"` gate is what keeps it off the wrong screen, and
+      // three tests pin that. Reversing it wholesale is a real P4 job (it is
+      // named in the resume point, together with stripping `cont`) and not this
+      // slice's to do silently. What IS this slice's is the hole it opened:
+      // until now "who may see the prompt" was a tautology, because the
+      // controller answered everything. An `answerer` park is the first place
+      // the question has a different answer, so the redaction lands exactly
+      // there, where it is new. It costs nothing today — Ortega's mayDraw
+      // prompt carries only a count and a note — but the next op that hands a
+      // decision to the opponent will build its prompt out of the CONTROLLER's
+      // private zones, and the default it inherits should be "redacted".
+      const answerer = phase.answerer ?? phase.seat;
+      const withheld = phase.answerer !== undefined && phase.answerer !== viewerSeat;
       return {
         activeSeat: phase.resumeTail === true ? koParkActiveSeat(state) : phase.seat,
-        waitingSeat: phase.answerer ?? phase.seat,
-        pendingDecision: { kind: "effectChoose", prompt: phase.prompt },
+        waitingSeat: answerer,
+        pendingDecision: withheld ? null : { kind: "effectChoose", prompt: phase.prompt },
         outcome: null,
       };
+    }
     case "gameOver":
       return { ...none, activeSeat: null, waitingSeat: null, outcome: phase.outcome };
   }

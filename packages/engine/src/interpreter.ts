@@ -463,6 +463,14 @@ function describeCondition(
   // your opponent's deck in this way" — so its op says those words rather than
   // the two-word form below: the note is the printed text, and this is the
   // text printed. (Checked before the plain default for exactly that reason.)
+  //
+  // The `contains === undefined` half of this test is UNREACHABLE today and
+  // kept deliberately: `contains` has one member, consumed by one other op, so
+  // no gate can currently be both narrowed and pointed at this op. Dropping it
+  // is a passing mutation — and it is the exact mutation this function's own
+  // doc warns about, since a narrowed gate would then be announced in the broad
+  // gate's words ("if you put a card on the bottom" promising a consequence
+  // that in fact needs the card to have landed somewhere specific).
   if (gate.contains === undefined && op.op === "bottomFromOpponentHand") {
     return "If you put a card on the bottom of your opponent's deck in this way";
   }

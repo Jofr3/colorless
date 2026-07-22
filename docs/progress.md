@@ -3,7 +3,62 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-22 — build session #36 (**P3-M5: `healChosen.upTo`
+**Last updated:** 2026-07-22 — build session #37 (**P3-M5: the reveal-and-bottom
+family, and the engine's first NON-CONTROLLER decision**). The resume point's
+#1, and the first slice in a while that needed a MECHANISM rather than a field.
+**Ortega ×2** (sv03-190/-219, Supporter — identical text on both prints,
+verified verbatim vs D1): "Your opponent reveals their hand, and you choose a
+card you find there and put it on the bottom of their deck. If you put a card
+on the bottom of your opponent's deck in this way, your opponent may draw a
+card." It is **Miriam's shape with both halves across the table** — a recording
+op plus a plain `recordGate` — and each half needed something new. **(1)
+`bottomFromOpponentHand`.** The reveal is TOTAL and PUBLIC (new `HAND_REVEALED`
+naming every uid: the one hand event in the file that is not count-only,
+because a reveal is exactly when those cards stop being hidden), emitted as the
+op's first act on the parking AND the auto-resolving path. The bottomed card is
+**NAMED** (`CARD_TO_BOTTOM_OF_DECK`, carrying an `actor`) where Dendra's
+identical destination stays count-shaped — the event follows the move's
+VISIBILITY, and this one happened face up at both ends. The offer **collapses
+per interchangeable class**, which is sound here precisely where it is not in
+`payFromHand`: that offer names cards in a zone that stays hidden, so its
+collapse leaks the hand's duplicate structure; this hand was just shown in
+full. **(2) `opponentMayDraw` — the first decision this engine has ever handed
+to the seat that did not make the play.** The park carries a `decider`, the
+phase files an **`answerer` beside its controller `seat`** (absent when they
+agree, so every pre-D52 park serializes byte-identically), and `resolveEffect`
+admits only that seat. The turn does not move while they answer: `activeSeat`
+keeps reading `phase.seat`, `waitingSeat` follows the answerer. Rules doc
+**§9.4**. **Greavard "Underworld Stroll"** (sv01-105) is the attack twin,
+**DERIVED** from text rather than authored, because `CardProgram.attack` is
+per-CARD and its second attack must stay plain. `programPlayable` gained the
+empty-opponent-hand gate (a PUBLIC count — the Catcher/Hammer class; it reads
+hand LENGTH and never the filter) and is now **EXPORTED**, so the HUD greys a
+dead row with the predicate that rejects it. Web: a new `MayDrawDialog` (the
+first prompt shown to the non-controller mid-play), two log rows, no new
+projection field. engineVersion 0.31.0 → **0.32.0**; 1576 → **1627** tests,
+`bun run check` + `vite build` green. **Review (2 adversarial agents in
+ISOLATED worktrees, 87 + 44 mutations): ONE HIGH EACH, and both were FALSE
+CLAIMS over untested guards — four slices running now.** Engine-side: the new
+deriver rule's test claimed to pin the ANCHORS and both its negatives were
+refused by the pattern BODY, so dropping `^`/`$` passed all 722 tests where the
+same mutation on two sibling rules dies at once. Web-side: `promptKey`'s
+`mayDraw` arm **could not be observed at all** — the dialog is stateless, so
+gutting the arm to a constant passed every test; it is deleted, with the
+reasoning kept. Three web MEDIUMs changed CODE: the dialog **never named the
+deciding player** (and the handoff banner that normally does sits outside the
+modal, hence inert — a hot-seat device said "You may draw a card" to whoever
+held it); **Escape-swallowing was untested and breaking it soft-locks the
+game**; and `pendingDecision` went to both viewers, now withheld from a
+non-answerer — deliberately NARROWLY, since reversing D17's contract for every
+park is a named P4 job. One finding was a **pre-existing engine contradiction
+this slice made user-visible**: the `discardEnergy` arm's comment claimed
+Crushing Hammer stays playable while the `coinFlipGate` branch six lines above
+descends into `then` for exactly that card (D41) — the descent wins, measured,
+and the stale comment is corrected. See D52.
+
+---
+### Prior header (P3-M5 healChosen.upTo, kept for continuity)
+**Last updated (was):** 2026-07-22 — build session #36 (**P3-M5: `healChosen.upTo`
 — §9.1's `min: 0` end lands**). The resume point's #1 for three slices
 running, and it is ONE field: the printed "up to N … each" heal. **Saguaro
 ×3** (sv02-187/-255/-270, Supporter — identical text on every print, verified
@@ -539,63 +594,67 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**`healChosen.upTo` is live (P3-M5, D51) — engine 0.31.0.** Saguaro ×3
-(sv02-187/-255/-270) lands the printed "up to N … each" heal: the first
-`choosePokemonMulti` with `min ≠ max` (`{min: 0, max ≤ 2}`), §8.6 clamping
-both the ask and the heading, candidates = ALL your Pokémon, `[]` a legal
-decline that still spends the Supporter. The web needed zero source changes;
-the dialog's `min ≠ max` branches are now tested, and `promptKey`'s
-`pokemonMulti` segments are belt-pinned.
+**The reveal-and-bottom family is live (P3-M5, D52) — engine 0.32.0.** Ortega
+×2 (sv03-190/-219) reveals the opponent's hand, bottoms a chosen card onto
+THEIR deck, and — behind a §9.2 gate — offers THEM a draw: the engine's first
+decision answered by the seat that did not make the play (`phase.answerer`
+beside the controller `seat`; the turn does not move while they answer).
+Greavard "Underworld Stroll" is the DERIVED attack twin. `programPlayable` is
+now exported and mirrored by the HUD for Trainers AND Abilities, so a dead row
+greys with the predicate that rejects it. Rules doc **§9.4**.
 **Next concrete actions:**
-1. **Ortega** (sv03-190/-219) — the "in this way" gate over an OPPONENT-side
-   pick from a hidden zone: "Your opponent reveals their hand, and you choose a
-   card you find there and put it on the bottom of their deck. If you put a
-   card on the bottom of your opponent's deck in this way, your opponent may
-   draw a card." The gate exists; what does not is a prompt over a zone the
-   ACTOR must be shown but does not own — and it is the first "your opponent
-   **may**" (a decline belonging to the other seat).
-2. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
+1. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
    optional discard that BUYS an effect (Bellibolt ex), a variable count with
    damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause
-   (Sandaconda, Eiscue ex, Weavile), a repeat count (Krookodile).
-3. **The last cheap reader of the D40 vocabulary: Defiance Band** — a
+   (Sandaconda, Eiscue ex, Weavile), a repeat count (Krookodile). The largest
+   remaining coherent family, and the only one on the board that needs no new
+   decision mechanism.
+2. **The last cheap reader of the D40 vocabulary: Defiance Band** — a
    conditional PASSIVE, the third consumer (`passivesOf` takes no seat today).
+3. **The attack epilogue sweeps ONE seat** (carried since D42), so a KO an
+   attack inflicts on the ATTACKER's own board is missed — **do this before
+   landing any self-damaging attack text**; sv01-038 Skeledirge is one deriver
+   sentence away, which makes this the cheapest thing standing between the
+   engine and a real bug rather than a latent one.
 4. Or pivot to **P4 (online matches)** — the engine is broad enough to play
-   real games. Named jobs: gate `projection.ts`'s `pendingDecision` on
-   `phase.seat`, and strip `cont` regardless — the §9.2 record AND the
-   context's `sourceUid` both ride the phase; D40's `stadium.owner` +
-   `prizesRemaining` projection additions; and the engine-exported preview
-   predicates the HUD needs.
-**Recorded, NOT fixed (this slice):** **the TPCi state-change divergence is
-now THREE cards wide** — Potion, Fighting Au Lait and Saguaro are all playable
-on a fully-healed board (`programPlayable` has no heal branch); the review's
-verdict is that this missing play gate is the REAL paper divergence, while
-`min: 0` itself is sound (no ruling forbids a 0 answer to a visible-zone "up
-to" once the card is legally played). `healUpToNote`'s `"all"` arm is DEAD
-CODE — no printed consumer authors `"all"` + `upTo`; its doc declares it, and
-the first such card must exercise it. `healChosen`'s own-seat guard is an
-equivalent mutant (refs pre-validated at all three call sites — the
-runCheckupTriggers precedent). **The batch announcer still speaks only a
-batch's LAST row — SEVENTH slice** — Saguaro's 2-pick resolve announces one
-HEALED of two, and a decline announces nothing after "played Saguaro", which
-covers three distinct outcomes. Saguaro's HUD row never travels through a
-DOM test by click (review scratch-verified lit ⇔ engine-accepts, including
-the undamaged board; the generic TurnPanel tests cover the identical path).
-The P4 `pendingDecision` story for this prompt is CLEAN — own in-play refs
-plus printed numbers, all public, nothing new leaks. **Carried forward
-(pre-existing, NOT this slice):** `legal_standard = 0` on most Trainers in
-the local ingest (Saguaro included — rotation, `legal_expanded = 1`);
-`GamePage`'s `passDisabled` phase check is untested; `validateChoice` does
-not pin a multi-count pick to a single host; `handCostUnmet` is not
-compositional across two costs in one program; the played Trainer sits UNDER
-its own payment in the discard pile; no test anywhere covers an onEvolve
-trigger firing through Rare Candy; `maxPerTarget > 1` has no printed
-consumer; a full target row's disabled STYLING is unpinned (house style); the
-returned-Pokémon doctrine gap stays LATENT (§9.3 — the first
-revival/self-recovery op must revisit `sourceRef`); and from D42 the attack
-epilogue sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own
-board is missed — **do that before landing any self-damaging attack text**
-(sv01-038 Skeledirge is one deriver sentence away).
+   real games, and this slice moved the P4 story forward on its own terms: a
+   non-answerer's projection now carries NO `pendingDecision`, which is the
+   first piece of the redaction job. Still named and still owed: strip `cont`
+   from the phase regardless (the §9.2 record and `sourceUid` both ride it),
+   gate the REMAINING `pendingDecision` cases (D17 hands the prompt to both
+   viewers for every controller-answered park — three tests pin that contract,
+   so reversing it is its own change), D40's `stadium.owner` +
+   `prizesRemaining` projection additions, and the engine-exported preview
+   predicates the HUD needs (`programPlayable` is the first of these, shipped).
+**Recorded, NOT fixed (this slice):** **the log's live region sits OUTSIDE the
+modal**, so a screen-reader user answering the "may draw" is never told which
+card was taken or where it went — the one fact the decision is about. The
+batch itself announces correctly (the last-row rule picks the reveal, then the
+bottoming, then the draw); it is the inert subtree that swallows it. The fix is
+either an engine-side prompt note naming the bottomed card or rendering the
+last log row inside the dialog — **the eighth slice in a row to file a batch-
+announcer finding**, and the first where the row is right and the PLACEMENT is
+wrong. `HAND_REVEALED` renders as "revealed their hand" under a viewer-relative
+YOU chip (so "You revealed their hand" on the revealer's own screen) — it
+matches `HAND_DISCARDED`'s inherited wording exactly, and is left consistent
+with the file rather than fixed alone; its sibling `CARD_TO_BOTTOM_OF_DECK`
+names the owner outright because it is filed under the ACTOR, which is a
+different seat, so the two are coherent rather than inconsistent. The
+`!isRareCandy && !isStadium` scoping on the HUD's new `noTarget` term is DEAD
+today (both carry an empty `trainer`, and `programPlayable(_, [], _)` is true)
+— kept as defence, declared here rather than claimed load-bearing. Neither new
+row's `strong` tone is asserted (the log tests flatten segments), and the
+mayDraw dialog's accessible name is unpinned. **Carried forward (pre-existing,
+NOT this slice):** `legal_standard = 0` on most Trainers in the local ingest
+(both Ortega prints included — rotation, `legal_expanded = 1`); `GamePage`'s
+`passDisabled` phase check is untested; `validateChoice` does not pin a
+multi-count pick to a single host; `handCostUnmet` is not compositional across
+two costs in one program; the played Trainer sits UNDER its own payment in the
+discard pile; no test anywhere covers an onEvolve trigger firing through Rare
+Candy; `maxPerTarget > 1` has no printed consumer; a full target row's disabled
+STYLING is unpinned (house style); the returned-Pokémon doctrine gap stays
+LATENT (§9.3 — the first revival/self-recovery op must revisit `sourceRef`);
+and `healUpToNote`'s `"all"` arm is still dead code awaiting a printed author.
 
 ---
 ### Prior resume point (P3-M5 EffectContext.sourceUid, kept for continuity)
@@ -1713,7 +1772,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher) + **D42 = attack effect programs can PARK** (the `attackEpilogue` PendingStage carries the §8.1 KO sweep + §5.3 turn end, seeded BEFORE the effect program and folded through `settleProgram`'s `resumeTail` — a MECHANISM, not a card family; its first readers are the §8 self-discard cost via `discardEnergy`'s `yourActive` arm + `count:"all"`, 12 catalog rows all DERIVED, engine 0.22.0) + **D43 = the `discardEnergy` ATTACK arms** (the opponent-side twins on the existing `opponentActive` arm, bare + coin-gated — Pincurchin / Gumshoos / Dragonite V ×2 / Dedenne / Maschiff / Tympole / Yveltal — and the exact-N `count` — Corviknight / Slither Wing / Koraidon: 11 more rows, again ZERO registry rows; the collapse is now CAPPED at `count` per class, and `forcedDiscards` folds the short board into the same comparison as the no-choice rule, i.e. the new §8.6 "do as much as you can"; engine 0.23.0) + **D44 = the `providesEnergy` CardFilter** ("an Energy that PROVIDES {X}" — the first filter a CARD alone cannot answer, since provision is a while-ATTACHED property that Luminous makes depend on the holder's other attachments; read by TWO ops through one `unitsOf` shared with §8.2's cost matcher, so what can PAY a {L} cost is exactly what a "{L} Energy" effect can take: the DERIVED typed self-discard in both printed notations (5 rows, zero registry rows) and `moveEnergy`'s `benchToActive` route (Armarouge); §6.5, engine 0.24.0 — the energy-removal family is now FILTER-COMPLETE) + **D45 = `attachFromTop`** (look at the top N of your deck and attach the Energy you find there onto your own Pokémon, "in any way you like" — the first prompt whose answer is a MAP, card → Pokémon; Electric Generator / Hydreigon "Tri Howl", the two differing in every rider the op has, and the leftovers clause splitting two ways on purpose — a shuffle is a following op, a DISCARD is on the op and is charged on the whiff and the decline too; the review REMOVED the draft's play gate, since `programPlayable` is an AND over ops and would veto a card whose other printed clause always resolves; §15.E, engine 0.25.0) + **D46 = `discardFromHandCost`** (the printed hand COST that PARKS — two printed wordings, one mechanism, and the wording tracks WHERE THE PAYING CARD SITS: Trainers say "only if you discard 2 **other** cards from your hand" because the card is in the hand it pays from, Abilities say "you **must** discard … in order to use this Ability" and never say "other" because the card is on the board, exactly across the catalog — so "other" is not a field but the played uid excluded in the GATE. It is the FIRST op of its program because the payment can park, which is also what let it ABSORB `AbilityProgram.cost`: that field could only express the fungible case, so it, `findAbilityCostCard` and `ABILITY_COST_PAID` are gone and Meowscarada ex migrated — Ultra Ball / Earthen Vessel / Revavroom / Tinkaton / Radiant Blastoise + Meowscarada, **9 catalog rows**. `chooseCards` grew a required `min` (the first MANDATORY card park; every printed "up to" declares 0) and a `"discard"` dest; the gate VETOES, the mirror image of D45, because the card's own text states a precondition where D45's would have been the engine guessing a whiff. §7.5, engine 0.26.0) + **D47 = the printed number is a FLOOR, and the hand cost that is NOT a discard** (`choosePokemonMulti` gained `min`/`max` + `declinable` — a printed "choose 1" is exactly one, so Meowscarada ex / Radiant Blastoise can no longer pay an irreversible cost and place nothing, while Hawlucha's "you may choose 2" is 2-or-none at EVERY non-empty Bench; rules doc §9.1. And `discardFromHandCost` became **`payFromHand`** with a required `to`: `"deckBottom"` lands **Dendra** ×3 — the payment that discards nothing yet carries every clause of the §7.5 mechanism, gate and "other" included — while **Skwovet** ×2 reaches the same destination with the WHOLE hand for zero new ops (`handRefresh` + Iono's riders). `HAND_COST_PAID` and the prompt both carry the destination, because the event follows what stays VISIBLE; engine 0.27.0) + **D48 = the §9.2 op→op record** (an op files the uids it MOVED under a named `EffectSlot` and later ops of the SAME card read them — the `recordGate` ("in this way" / "if you do") + `discardPileRetrieval.exclude` ("with the effect of this card"); Miriam ×3 / Superior Energy Retrieval ×2 / Dendra's own conditional; the record rides `EffectContinuation` keyed by SLOT, absent when empty; engine 0.28.0) + **D49 = `attachFromDeck`** (SEARCH the deck for Energy and attach straight onto your own Pokémon — the deck-search sibling of `attachFromTop` sharing its `attachCards` MAP prompt; the whole-deck offer COLLAPSES to `max` per interchangeable class, and the two printed target rules are "in any way you like" = no rider vs "for each of those Pokémon" = `maxPerTarget: 1` — Charizard ex ×4 (onEvolve) / Janine's Secret Art ×2, whose self-poison is `recordGate.contains: "yourActive"`, a §9.2 gate asking WHERE rather than whether; engine 0.29.0) + **D50 = `EffectContext.sourceUid`** (the printed "this Pokémon" — the context names the running effect's Pokémon by top-card uid at every site that knows it, ABSENT for Trainers; first reader `attachFromDeck.toSelf` lands Pawmot ×2 "Electrogenesis", a BENCHED Pawmot feeding itself; resolution by board TOP uid, evolved-over = whiff; engine 0.30.0)) — next: the other end of §9.1 (a printed "choose **up to** N Pokémon" — Saguaro), Ortega's opponent-side hidden-zone pick + "your opponent may", the energy-removal family's remaining SENTENCE STRUCTURES (Bellibolt ex / Chien-Pao ex / Sandaconda / Krookodile), the last cheap D40 reader (Defiance Band), or P4 |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (M4: D22–D30, evolution→on-KO triggers; **M5**: pass #1 = a classify→verify Workflow fan-out landed 5 existing-op cards + the ranked new-op backlog in `docs/reference/coverage-backlog.md`; **op-slice D32 = `attachEnergyFrom`** (engine 0.12.0) + **D33 = its riders** (Gardevoir ex, 0.13.0) + **D34 = multi-attach + endsTurn** (Koraidon ex, 0.14.0), 4 of its 11 cards; **D35 = `discardPileRetrieval`** (the searchDeck mirror — Energy Retrieval / Pal Pad / Super Rod, engine 0.15.0, 3 of 6 cards) + **D36 = `lookAtTopN`** (the searchDeck deck-top twin — Great Ball / Pokégear 3.0, engine 0.16.0, 2 of 5 cards) + **D37 = `moveEnergy`** (move Energy own→own — the first compound-park op; Energy Switch / Poppy, engine 0.17.0, 2 of 5 cards) + **D38 = `handRefresh`** (shuffle your hand into your deck, then draw — the first fully-automatic op that can affect the OPPONENT; Youngster / Judge / Brassius / Katy, engine 0.18.0 — closes the `shuffleHandIntoDeck` + `endTurn` backlog rows) + **D39 = its Iono riders** (`toBottom` so the deck's ORDER survives + a `prizeCount` draw + the cross-seat `onlyIfAnyMoved` gate; engine 0.19.0 — **CLOSES the hand-refresh family**, no Marnie in sv01–03) + **D40 = board conditions** (one `BoardCondition` vocabulary with TWO consumers — the `trainerPlayableIf` PLAY gate and the `conditionGate` branch op — plus `drawUntilHandSize`; Fighting Au Lait / Falkner / Grusha, engine 0.20.0 — the `conditionalPlay` PRIMITIVE is done, though each remaining gated card needs a second missing piece) + **D41 = `discardEnergy`** (the energy-removal "hammer" family — ONE op whose `from` names both the eligible Pokémon and how many are hit: `opponentActive`/`opponentChosen`/`opponentEach`, all three landing with a real card — Crushing Hammer / Giacomo / Mawile, engine 0.21.0, 3 of the row's 4; the engine's FIRST mandatory park, plus the coin-gate playability fix: `programPlayable` now descends into `coinFlipGate.then`, which also fixed PRE-EXISTING Pokémon Catcher) + **D42 = attack effect programs can PARK** (the `attackEpilogue` PendingStage carries the §8.1 KO sweep + §5.3 turn end, seeded BEFORE the effect program and folded through `settleProgram`'s `resumeTail` — a MECHANISM, not a card family; its first readers are the §8 self-discard cost via `discardEnergy`'s `yourActive` arm + `count:"all"`, 12 catalog rows all DERIVED, engine 0.22.0) + **D43 = the `discardEnergy` ATTACK arms** (the opponent-side twins on the existing `opponentActive` arm, bare + coin-gated — Pincurchin / Gumshoos / Dragonite V ×2 / Dedenne / Maschiff / Tympole / Yveltal — and the exact-N `count` — Corviknight / Slither Wing / Koraidon: 11 more rows, again ZERO registry rows; the collapse is now CAPPED at `count` per class, and `forcedDiscards` folds the short board into the same comparison as the no-choice rule, i.e. the new §8.6 "do as much as you can"; engine 0.23.0) + **D44 = the `providesEnergy` CardFilter** ("an Energy that PROVIDES {X}" — the first filter a CARD alone cannot answer, since provision is a while-ATTACHED property that Luminous makes depend on the holder's other attachments; read by TWO ops through one `unitsOf` shared with §8.2's cost matcher, so what can PAY a {L} cost is exactly what a "{L} Energy" effect can take: the DERIVED typed self-discard in both printed notations (5 rows, zero registry rows) and `moveEnergy`'s `benchToActive` route (Armarouge); §6.5, engine 0.24.0 — the energy-removal family is now FILTER-COMPLETE) + **D45 = `attachFromTop`** (look at the top N of your deck and attach the Energy you find there onto your own Pokémon, "in any way you like" — the first prompt whose answer is a MAP, card → Pokémon; Electric Generator / Hydreigon "Tri Howl", the two differing in every rider the op has, and the leftovers clause splitting two ways on purpose — a shuffle is a following op, a DISCARD is on the op and is charged on the whiff and the decline too; the review REMOVED the draft's play gate, since `programPlayable` is an AND over ops and would veto a card whose other printed clause always resolves; §15.E, engine 0.25.0) + **D46 = `discardFromHandCost`** (the printed hand COST that PARKS — two printed wordings, one mechanism, and the wording tracks WHERE THE PAYING CARD SITS: Trainers say "only if you discard 2 **other** cards from your hand" because the card is in the hand it pays from, Abilities say "you **must** discard … in order to use this Ability" and never say "other" because the card is on the board, exactly across the catalog — so "other" is not a field but the played uid excluded in the GATE. It is the FIRST op of its program because the payment can park, which is also what let it ABSORB `AbilityProgram.cost`: that field could only express the fungible case, so it, `findAbilityCostCard` and `ABILITY_COST_PAID` are gone and Meowscarada ex migrated — Ultra Ball / Earthen Vessel / Revavroom / Tinkaton / Radiant Blastoise + Meowscarada, **9 catalog rows**. `chooseCards` grew a required `min` (the first MANDATORY card park; every printed "up to" declares 0) and a `"discard"` dest; the gate VETOES, the mirror image of D45, because the card's own text states a precondition where D45's would have been the engine guessing a whiff. §7.5, engine 0.26.0) + **D47 = the printed number is a FLOOR, and the hand cost that is NOT a discard** (`choosePokemonMulti` gained `min`/`max` + `declinable` — a printed "choose 1" is exactly one, so Meowscarada ex / Radiant Blastoise can no longer pay an irreversible cost and place nothing, while Hawlucha's "you may choose 2" is 2-or-none at EVERY non-empty Bench; rules doc §9.1. And `discardFromHandCost` became **`payFromHand`** with a required `to`: `"deckBottom"` lands **Dendra** ×3 — the payment that discards nothing yet carries every clause of the §7.5 mechanism, gate and "other" included — while **Skwovet** ×2 reaches the same destination with the WHOLE hand for zero new ops (`handRefresh` + Iono's riders). `HAND_COST_PAID` and the prompt both carry the destination, because the event follows what stays VISIBLE; engine 0.27.0) + **D48 = the §9.2 op→op record** (an op files the uids it MOVED under a named `EffectSlot` and later ops of the SAME card read them — the `recordGate` ("in this way" / "if you do") + `discardPileRetrieval.exclude` ("with the effect of this card"); Miriam ×3 / Superior Energy Retrieval ×2 / Dendra's own conditional; the record rides `EffectContinuation` keyed by SLOT, absent when empty; engine 0.28.0) + **D49 = `attachFromDeck`** (SEARCH the deck for Energy and attach straight onto your own Pokémon — the deck-search sibling of `attachFromTop` sharing its `attachCards` MAP prompt; the whole-deck offer COLLAPSES to `max` per interchangeable class, and the two printed target rules are "in any way you like" = no rider vs "for each of those Pokémon" = `maxPerTarget: 1` — Charizard ex ×4 (onEvolve) / Janine's Secret Art ×2, whose self-poison is `recordGate.contains: "yourActive"`, a §9.2 gate asking WHERE rather than whether; engine 0.29.0) + **D50 = `EffectContext.sourceUid`** (the printed "this Pokémon" — the context names the running effect's Pokémon by top-card uid at every site that knows it, ABSENT for Trainers; first reader `attachFromDeck.toSelf` lands Pawmot ×2 "Electrogenesis", a BENCHED Pawmot feeding itself; resolution by board TOP uid, evolved-over = whiff; engine 0.30.0) + **D51 = `healChosen.upTo`** (the printed "up to N … each" heal — the first `choosePokemonMulti` with `min ≠ max`, §9.1's min: 0 end, §8.6 clamping both the ask and the heading; Saguaro ×3, engine 0.31.0, ZERO web source changes) + **D52 = the reveal-and-bottom family + the OPPONENT's own decision** (two ops. `bottomFromOpponentHand` reveals the opponent's WHOLE hand — a new PUBLIC `HAND_REVEALED` naming every uid, the one hand event that is not count-only, because a reveal is exactly when those cards stop being hidden — then bottoms a chosen card onto THEIR deck, NAMED, since unlike Dendra's payment that move happened face up at both ends; its offer collapses per interchangeable class, sound here precisely where it is not in `payFromHand`. And `opponentMayDraw`, **the engine's first decision answered by the seat that did not make the play** — the park carries a `decider`, the phase an `answerer` beside its controller `seat` (absent when they agree, so every older park serializes byte-identically), and the turn does not move while they answer. Ortega ×2 authored (Miriam's shape with both halves across the table), Greavard "Underworld Stroll" DERIVED from attack text. `programPlayable` gained the public-count empty-hand gate and is EXPORTED, so the HUD greys a dead Trainer/Ability row with the predicate that rejects it; §9.4, engine 0.32.0)) — next: the energy-removal family's remaining SENTENCE STRUCTURES (Bellibolt ex / Chien-Pao ex / Sandaconda / Krookodile), the last cheap D40 reader (Defiance Band), the D42 one-seat attack-epilogue sweep (owed before any self-damaging attack text), or P4 |
 | online | P4 | 📋 Specced — blocked on P3 |
 | polish | P5 | 📝 Backlog |
 

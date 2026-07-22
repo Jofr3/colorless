@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { EffectChoice } from "./interpreter";
-import { runProgram } from "./interpreter";
+import { programPlayable } from "./cardplay";
+import { runProgram, resumeProgram } from "./interpreter";
 import { programFor } from "./registry";
 import {
   REVEAL_BOTTOM_DECK,
@@ -141,15 +142,31 @@ describe("the registry rows and the derived twin", () => {
         "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.",
       ),
     ).toEqual([{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }]);
-    // The anchor must not drift toward Ortega's Supporter form (registry-
-    // authored: its second sentence gates a draw no attack prints) nor accept
-    // a truncation that would silently widen the filter.
+    // The pattern BODY must not drift toward Ortega's Supporter form (registry-
+    // authored: its second sentence gates a draw no attack prints) nor accept a
+    // truncation that would silently widen the filter.
     expect(
       deriveAttackEffect(
         "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck. If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
       ),
     ).toBeNull();
     expect(deriveAttackEffect("Your opponent reveals their hand.")).toBeNull();
+    // THE ANCHORS, pinned directly — attackDiscards.test.ts's rule, and the
+    // whole safety argument for a whole-sentence deriver. Both strings CONTAIN
+    // the printed sentence verbatim and add text on one side, so it is `^` and
+    // `$` and nothing else that refuses them: drop either and the engine
+    // silently implements half of a card it has never seen, which is exactly
+    // what "anchored end to end" is supposed to make impossible.
+    expect(
+      deriveAttackEffect(
+        "This attack does 30 damage. Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackEffect(
+        "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck. Then, draw 2 cards.",
+      ),
+    ).toBeNull();
   });
 });
 
@@ -340,6 +357,72 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     expect(drawn.players.p2.deck).toEqual([]);
   });
 
+  it("carries the printed COUNT through the prompt, the note and the draw", () => {
+    // Ortega prints 1, so nothing in the live vocabulary exercises the number
+    // at all — the prompt's `count`, mayDrawNote's plural arm and the draw
+    // itself could each be hard-wired to 1 and no test would notice. Driven at
+    // the op level, which is where the field's contract lives.
+    const state = ortegaBoard(["fix-item"]);
+    const events: GameEvent[] = [];
+    const result = runProgram(state, [{ op: "opponentMayDraw", count: 3 }], { seat: "p1" }, events);
+    if (result.kind !== "parked") throw new Error("expected the may park");
+    expect(result.decider).toBe("p2");
+    const prompt = result.prompt;
+    if (prompt.kind !== "mayDraw") throw new Error("expected a mayDraw prompt");
+    expect(prompt.count).toBe(3);
+    expect(prompt.note).toBe("You may draw 3 cards.");
+    const top = state.players.p2.deck.slice(0, 3);
+    const drawn = resumeProgram(state, result.cont, { kind: "mayDraw", draw: true }, events);
+    if (drawn.kind !== "done") throw new Error("expected the program to finish");
+    expect(find(events, "CARDS_DRAWN")?.uids).toEqual(top);
+  });
+
+  it("reads the op's OWN slot — a record filed under `paid` is not read as `moved`", () => {
+    // `recordSlotOf` feeds the §9.2 describer; hard-wiring this op's slot would
+    // attach the wrong consequence clause (or none) to a card authored on the
+    // other slot. Ortega uses "moved", so only a differently-slotted program
+    // can tell the two apart.
+    const state = ortegaBoard(["fix-item", GREAVARD]);
+    const events: GameEvent[] = [];
+    const result = runProgram(
+      state,
+      [
+        { op: "bottomFromOpponentHand", recordAs: "paid" },
+        {
+          op: "recordGate",
+          slot: "paid",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "opponentMayDraw", count: 1 }],
+        },
+      ],
+      { seat: "p1" },
+      events,
+    );
+    if (result.kind !== "parked") throw new Error("expected the pick park");
+    // The consequence clause found the gate through the op's own slot.
+    expect(result.prompt.note).toContain(
+      "If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
+    );
+  });
+
+  it("checks the SEAT before the choice — a wrong seat learns nothing about the prompt", () => {
+    // Precedence, not merely rejection: both wrong-seat tests above send a
+    // VALID choice, so swapping the two checks would still reject them. A
+    // garbage choice from the wrong seat must come back WRONG_SEAT, or the
+    // error message becomes an oracle the other player can query.
+    const state = ortegaBoard(["fix-item", GREAVARD]);
+    const { state: parked } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", ORTEGA),
+    });
+    expectErr(
+      parked,
+      { type: "resolveEffect", seat: "p2", choice: { kind: "mayDraw", draw: true } },
+      "WRONG_SEAT",
+    );
+  });
+
   it("never parks the may when the draw could not move a card — the op contract's own guard", () => {
     // Unreachable through Ortega (above: the gate's own bottomed card feeds
     // the deck), so the M1 no-question guard is pinned at the op level, the
@@ -361,6 +444,16 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       uid: handUid(state, "p1", ORTEGA),
     });
+    // The REVEAL STILL COMES FIRST on this path too. The park test pins the
+    // order for the parking path; without this the auto-resolve path could
+    // bottom a card before announcing the hand it came from, and the op's
+    // "the reveal is its first act" claim would hold on one branch only.
+    expect(types(events)).toEqual([
+      "TRAINER_PLAYED",
+      "HAND_REVEALED",
+      "CARD_TO_BOTTOM_OF_DECK",
+      "EFFECT_PENDING",
+    ]);
     expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeDefined();
     expect(asked.players.p2.hand).toHaveLength(2);
     expect(asked.players.p2.deck.at(-1)).toBe(find(events, "CARD_TO_BOTTOM_OF_DECK")?.uid);
@@ -401,6 +494,132 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     // Nothing left the hand and the turn's Supporter is still available.
     expect(state.players.p1.hand).toContain(uid);
     expect(state.allowances.supporterPlayed).toBe(false);
+  });
+
+  it("PLAYS into a hand of exactly ONE — the gate's other boundary", () => {
+    // The gate is `length === 0`, and a suite that only ever plays into 0, 2 or
+    // more pins half of it: `<= 1` would refuse the commonest late-game board
+    // there is (an opponent holding one card), and refuse it as NO_LEGAL_TARGET
+    // when the card resolves perfectly well.
+    const state = ortegaBoard(["fix-item"]);
+    const { state: done, events } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", ORTEGA),
+    });
+    // One candidate ⇒ forced ⇒ it resolves straight through to the may.
+    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeDefined();
+    expect(done.players.p2.hand).toEqual([]);
+  });
+
+  it("the play gate reads the hand's LENGTH, never the op's FILTER", () => {
+    // The ruling/284 line, and the promise `programPlayable`'s export rests on:
+    // whether a non-empty HIDDEN hand holds a match is exactly what the game
+    // state does not establish, so a filtered op into a matchless hand stays
+    // playable and reveals. A gate that peeked would also leak — it would tell
+    // the controller "no Supporter in there" before they played the card.
+    const state = ortegaBoard(["fix-item", "fix-grass-energy"]);
+    expect(
+      programPlayable(state, [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }], "p1"),
+    ).toBe(true);
+    // …and still refuses the empty hand, which IS public.
+    const empty = ortegaBoard([]);
+    expect(
+      programPlayable(empty, [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }], "p1"),
+    ).toBe(false);
+  });
+
+  it("moves nothing for a uid that is no longer in the hand — no card is duplicated", () => {
+    // The apply's wire-safety guard, and the one failure it prevents is the
+    // worst kind: a crafted snapshot (a P4 client replaying an action against a
+    // state whose hand has moved on) would otherwise APPEND to the deck a card
+    // that is still sitting somewhere else — a duplicate that hides for the
+    // rest of the game. Reachable exactly as resolveEffect's own PHASE_DESYNC
+    // guard is.
+    const state = ortegaBoard(["fix-item", GREAVARD]);
+    const { state: parked } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", ORTEGA),
+    });
+    const picked = handUid(parked, "p2", GREAVARD);
+    // The snapshot moves that very card to the discard, keeping the prompt.
+    const p2 = parked.players.p2;
+    const crafted: GameState = {
+      ...parked,
+      players: {
+        ...parked.players,
+        p2: {
+          ...p2,
+          hand: p2.hand.filter((uid) => uid !== picked),
+          discard: [...p2.discard, picked],
+        },
+      },
+    };
+    const before = census(crafted, "p2");
+    const { state: after, events } = mustApply(crafted, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [picked] },
+    });
+    // Nothing moved, nothing was announced, and the census is intact.
+    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
+    expect(after.players.p2.deck).toEqual(crafted.players.p2.deck);
+    expect(after.players.p2.discard).toContain(picked);
+    expect(census(after, "p2")).toEqual(before);
+    // …and the §9.2 gate read the truth: nothing was bottomed, so no may parks.
+    expect(after.phase).toEqual({ kind: "turn:action", seat: "p1" });
+  });
+
+  it("files what MOVED, not what was picked — the gate cannot be fooled by a dropped uid", () => {
+    // The sharp end of the test above, stated as the record contract: if the
+    // apply filed `choice.uids` instead of the moved uids, the crafted snapshot
+    // would bottom nothing yet still park the opponent's may — a decision
+    // offered for an event that did not happen. Driven through the op directly
+    // so the record itself is observable, not just its consequence.
+    const state = ortegaBoard(["fix-item", GREAVARD]);
+    const ghost = "p2#ghost";
+    const events: GameEvent[] = [];
+    const result = runProgram(
+      state,
+      [
+        { op: "bottomFromOpponentHand", recordAs: "moved" },
+        {
+          op: "recordGate",
+          slot: "moved",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "opponentMayDraw", count: 1 }],
+        },
+      ],
+      { seat: "p1" },
+      events,
+    );
+    if (result.kind !== "parked") throw new Error("expected the pick park");
+    const resumed = resumeProgram(state, result.cont, { kind: "cards", uids: [ghost] }, events);
+    if (resumed.kind !== "done") throw new Error("a dropped uid must not park the may");
+    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
+  });
+
+  it("files an EMPTY record on a whiff — an honest no, not a missing key", () => {
+    // `recordGateHolds` reads `record[slot] ?? []`, so the filing and the
+    // absence agree on the gate's answer — which is why deleting the whiff's
+    // `recordMoved([])` changes no behaviour today. What it DOES change is the
+    // parked continuation's bytes, and that is the thing D14 replays, so the
+    // record is asserted where it actually lives.
+    const state = ortegaBoard(["fix-item", "fix-grass-energy"]);
+    const events: GameEvent[] = [];
+    const result = runProgram(
+      state,
+      [
+        { op: "bottomFromOpponentHand", filter: { kind: "supporter" }, recordAs: "moved" },
+        // A parking op BEHIND the whiff, so the continuation is observable.
+        { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
+      ],
+      { seat: "p1" },
+      events,
+    );
+    if (result.kind !== "parked") throw new Error("expected the search park");
+    expect(result.cont.record).toEqual({ moved: [] });
   });
 
   it("plays the reprint through its own id", () => {

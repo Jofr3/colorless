@@ -471,6 +471,47 @@ read so far by `attachFromDeck.toSelf`.
   resolver has never had to distinguish "still there" from "came back"; the
   first revival/self-recovery op must make it.
 
+### 9.4 A card can put a decision on the player who did not play it
+
+Almost every printed effect is decided by the player resolving it, even when it
+reaches across the table: "choose a card from your opponent's hand", "put their
+Benched Pokémon into the Active Spot" — the *target* is theirs, the *choice* is
+yours. A small family inverts that, and the wording is the tell: **"your
+opponent may …"**.
+
+- "… your opponent **may** draw a card." (Ortega) — the draw is optional and the
+  option is *theirs*. Nobody else can take it or refuse it for them.
+
+This is not the same as an effect that merely affects the opponent (Judge
+shuffles their hand; they decide nothing), nor the same as an "up to" you
+decline on their behalf. It is a genuine second decider inside one card's
+resolution, and the two decisions can be **interleaved with the turn**: the
+turn does not pass, the game does not pause between turns — the player whose
+turn it is simply waits while their opponent answers, and then their turn
+continues.
+
+Two consequences an engine has to get right:
+
+1. **The controller and the answerer are different seats, and both matter.**
+   The controller still owns the turn (allowances, the Supporter already spent,
+   where control returns when the program finishes); the answerer owns only this
+   question. Collapsing them either way is wrong: let the controller answer and
+   you have given them a choice the card gave their opponent; hand the turn to
+   the answerer and the board says it is their turn when it is not.
+2. **A "may" whose answers are indistinguishable is not a decision.** Drawing
+   from an empty deck moves nothing, so both answers leave the same game state
+   and there is nothing to ask — the same rule that auto-resolves a forced pick
+   (§8.6 and the "a choice with no choice in it" doctrine). Note this is about
+   the *state*, not about kindness: a deck with one card is still a real
+   question, and Ortega reaches exactly that case, since the card it just put on
+   the bottom may be the only card there.
+
+*Engine note:* `opponentMayDraw` (D52) parks with a `decider`; the phase carries
+an `answerer` beside its controller `seat`, and only that seat's `resolveEffect`
+is accepted. Whether the DECLINE should be visible to the controller is a
+presentation question, not a rules one — no printed card makes anything depend
+on it.
+
 ---
 
 ## 10. Evolution

@@ -1054,6 +1054,7 @@ function EffectChooseDialog(props: GameHudProps) {
     this answer and there is no third option. */
 function MayDrawDialog({
   viewerSeat,
+  names,
   dispatch,
   prompt,
 }: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "mayDraw" }> }) {
@@ -1061,21 +1062,40 @@ function MayDrawDialog({
     dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "mayDraw", draw } });
   return (
     <HudDialog label="You may draw">
-      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
-      {/* The one live region, the siblings' rule — but here it states WHOSE
-          decision this is rather than a running count. A player watching their
-          opponent's turn is not expecting a dialog, and the note alone ("You
-          may draw a card.") does not say why it appeared. */}
-      <output className="mt-1.5 block text-sm text-white/55">
-        Your opponent's card is asking. Declining costs you nothing.
-      </output>
+      {/* WHOSE decision this is, BY NAME, above the question itself. Every other
+          dialog in this file appears because the viewer just did something, so
+          "you" is unambiguous; this one appears on the other player's screen in
+          the middle of an opponent's turn, and on a hot-seat device the wrong
+          player is holding it. The only other thing that names a seat is the
+          handoff banner, and that sits OUTSIDE the modal — once <dialog>
+          showModal() runs, the banner is in the inert, backdrop-covered
+          subtree. Without this line the device says "You may draw a card" to
+          whoever is looking at it, and the engine accepts the answer. */}
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/45">
+        {names[viewerSeat]} — your opponent's card is asking
+      </p>
+      <h2 className="mt-1 text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* NO <output> here, unlike every sibling dialog, and the absence is the
+          considered choice: a live region earns its place by announcing a
+          CHANGE (the siblings' running pick counts), and this dialog has no
+          state, so any text here would be constant and announce nothing on
+          change. The heading and the two buttons are the whole decision. */}
       <div className="mt-5 flex justify-end gap-2">
-        <button type="button" className={NEUTRAL_BUTTON_CLASS} onClick={() => answer(false)}>
-          Decline
-        </button>
-        <button type="button" className={ACCENT_BUTTON_CLASS} onClick={() => answer(true)}>
-          {prompt.count === 1 ? "Draw a card" : `Draw ${prompt.count} cards`}
-        </button>
+        {/* Draw FIRST in DOM order, which is where showModal() puts the initial
+            focus. Both answers are printed and neither is styled as a default,
+            but focus has to land somewhere, and it should not land on the arm
+            that silently forfeits a card: Escape is swallowed (this decision is
+            owed), so an unprepared player pressing Enter would otherwise
+            decline irreversibly. Visual order is reversed by `flex-row-reverse`
+            so Decline still reads on the left, the siblings' layout. */}
+        <div className="flex flex-row-reverse gap-2">
+          <button type="button" className={ACCENT_BUTTON_CLASS} onClick={() => answer(true)}>
+            {prompt.count === 1 ? "Draw a card" : `Draw ${prompt.count} cards`}
+          </button>
+          <button type="button" className={NEUTRAL_BUTTON_CLASS} onClick={() => answer(false)}>
+            Decline
+          </button>
+        </div>
       </div>
     </HudDialog>
   );
@@ -2086,17 +2106,19 @@ function promptKey(prompt: EffectPrompt): string {
       return `pokemonMulti:${prompt.min}:${prompt.max}:${prompt.declinable}:${prompt.candidates
         .map((c) => `${c.seat}-${c.spot.spot === "bench" ? c.spot.index : "active"}`)
         .join(",")}`;
-    case "mayDraw":
-      // The COUNT rides the key although this dialog holds no state to go
-      // stale — it dispatches on the tap, so there is nothing to reset. It is
-      // here because the key is also the REMOUNT boundary: two mayDraw parks in
-      // one program (no card prints that yet) differing only in how many cards
-      // are offered would otherwise share a mounted dialog, and the second
-      // would keep the first's rendered button label. The `kind:note` default
-      // would very nearly work — the note carries the count — but "very nearly"
-      // via a describer is what every sibling arm here exists to stop relying on.
-      return `mayDraw:${prompt.count}`;
     default:
+      // `mayDraw` deliberately has NO arm of its own, and it is the one prompt
+      // kind where that is provably right rather than merely untested. Every
+      // arm above exists because its dialog gathers LOCAL PICKS that are only
+      // valid for the offer they were gathered under, so a changed offer must
+      // remount and reset them. MayDrawDialog gathers nothing — both buttons
+      // dispatch on the tap and every label is derived from `prompt.count` on
+      // each render — so a same-key re-render with a new prompt simply
+      // re-renders correctly, and no bespoke key can be observed to do
+      // anything. (A first draft added `mayDraw:${count}` with a comment about
+      // stale labels; gutting it to a constant passed every test, because there
+      // was nothing there to catch.) The `kind:note` default still gives it a
+      // per-count identity, since the note carries the number.
       return `${prompt.kind}:${prompt.note}`;
   }
 }

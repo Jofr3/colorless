@@ -317,7 +317,12 @@ export type GameEvent =
       Greavard "Underworld Stroll"). The uid-carrying opposite of the two
       count-only hand events above, and deliberately so — the reveal is the
       moment those cards STOP being hidden, and an event that named fewer would
-      be hiding what the effect just showed. The MULLIGAN_REVEALED family.
+      be hiding what the effect just showed. Same idea as MULLIGAN_REVEALED (the
+      only other event that makes a whole hand public), though not the same
+      payload: that one calls the array `hand` because a mulligan reveal IS the
+      hand and nothing else, while this one uses the `uids` every zone-moving
+      event in this file uses, since the cards named here are about to be
+      picked from.
       `uids` may be empty (revealing an empty hand is honest — the
       HAND_DISCARDED "(0 cards)" precedent; reachable only via the attack twin,
       the Trainer path being gated on the public hand count). */

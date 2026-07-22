@@ -613,9 +613,19 @@ export function programPlayable(state: GameState, program: readonly EffectOp[], 
     if (op.op === "discardEnergy" && !discardEnergyPlayable(state, seat, op)) {
       // Nothing matching on the opponent's board → the discard can only whiff
       // (Giacomo into a board with no Special Energy — rejected rather than
-      // spending the turn's one Supporter, §7.2). Only TOP-LEVEL ops are scanned,
-      // so Crushing Hammer's coin-GATED discard stays playable either way, which
-      // is how the printed card works (the flip happens regardless).
+      // spending the turn's one Supporter, §7.2).
+      //
+      // THIS REACHES CRUSHING HAMMER TOO, through the coinFlipGate branch above.
+      // An earlier version of this comment claimed the opposite ("only TOP-LEVEL
+      // ops are scanned, so Crushing Hammer's coin-GATED discard stays playable
+      // either way") — it predated D41, which added that descent for exactly
+      // this card and says so in its own comment. The descent wins, and it is
+      // the intended reading: ruling/906 makes the flip PROCEDURE, not effect,
+      // so a heads branch that could only whiff means the card could only whiff.
+      // Corrected here rather than in one place only, because the two comments
+      // disagreeing is how a reader concludes either behaviour is fine — and
+      // since 0.32.0 the HUD greys the row with this predicate, so the
+      // disagreement would now read to a player as a printed rule.
       return false;
     }
   }

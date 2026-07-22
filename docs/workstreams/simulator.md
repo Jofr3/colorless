@@ -3570,6 +3570,162 @@ picks, healed-then-silenced).
 
 1561 → **1576** tests; engineVersion 0.30.0 → **0.31.0**.
 
+## P3-M5 build session #37 (2026-07-22) — the reveal-and-bottom family, and the OPPONENT's decision (D52)
+
+**Ortega ×2** (sv03-190/-219, Supporter) and **Greavard "Underworld Stroll"**
+(sv01-105, DERIVED). Two ops, and the second of them is the slice's real
+content: *a card can put a decision on the player who did not play it.*
+
+### `bottomFromOpponentHand` — Miriam's shape, across the table
+
+Ortega authors as `[bottomFromOpponentHand recordAs:"moved", recordGate
+slot:"moved" then:[opponentMayDraw 1]]` — structurally D48's Miriam, with both
+halves pointed at the opponent. Three calls are worth recording:
+
+**The reveal is TOTAL, PUBLIC and FIRST.** New event `HAND_REVEALED` carries
+*every* uid — the only hand event in `events.ts` that is not count-only, and the
+exception is principled rather than convenient: the count-only rule protects
+cards in a hidden zone, and a reveal is precisely the moment those cards stop
+being hidden. It is emitted before the pick parks, and on the auto-resolving
+path too (a single-class hand still reveals before it bottoms), so the event
+sequence tells the story in printed order on both branches.
+
+**The bottomed card is NAMED, where Dendra's is not.** `CARD_TO_BOTTOM_OF_DECK
+{seat, uid, actor}` against `HAND_COST_PAID {..., to:"deckBottom"}`'s bare
+count. Same destination, opposite visibility: Dendra's payment goes hidden →
+hidden and only the payer ever knew it, while this card was just revealed and
+picked in the open, so which card sits on the bottom is real public information
+and the log is where it lives. **The event follows the move's visibility, not
+its destination** — which is the rule the two rows together now state.
+
+**The offer collapses per interchangeable class**, keyed by `cardIdentity` (the
+D49 key — the catalog prints one Basic Energy under several ids, and two of them
+in a hand are one answer wearing two uids). This is the interesting half: the
+identical collapse in `payFromHand` **leaks**, because that offer names cards in
+a hand that stays hidden, so `candidates.length` against the public hand size
+says how many cards are copies. Here the whole hand went out in `HAND_REVEALED`
+one step earlier, so the offer's shape has nothing left to give away. Same
+mechanism, opposite verdict, and the difference is entirely *what the player was
+already shown*.
+
+### `opponentMayDraw` — the first NON-CONTROLLER decision
+
+Every park before this one was answered by the program's controller. Even the
+on-KO trigger, which parks during the opponent's turn, is answered by the
+*controller of that sub-program* — `EffectContext.seat` and the answering seat
+had never diverged. "Your opponent **may** draw a card" is the first printed
+sentence where they must.
+
+The mechanism is deliberately thin: `RunResult.parked` gained an optional
+`decider`, `settleProgram` files it as **`phase.answerer` beside the existing
+controller `seat`**, and `resolveEffect` gates on `phase.answerer ?? phase.seat`.
+Three consequences fall out of filing it *beside* rather than *instead of*:
+
+- `phase.seat` keeps its one meaning everywhere (the program's owner — where
+  control returns, whose allowances are spent, what the projection's
+  `activeSeat` reads), so no existing reader had to be re-examined;
+- the field is **absent when the answerer is the controller**, so every park
+  predating this slice serializes byte-identically (the §9.2 record's rule,
+  applied a third time);
+- the turn does not move. `waitingSeat` follows the answerer, `activeSeat` does
+  not — the opponent answers a question in the middle of a turn that is still
+  the controller's, and the board's turn glow must not say otherwise.
+
+`EFFECT_PENDING`'s seat became `decider ?? controller`, since that event's own
+doc says it names the seat that must resolve. The op **never parks when the
+opponent's deck is empty** (both answers leave the same state — the M1
+no-choice rule); note Ortega itself cannot reach that case, because the card it
+just bottomed *is* their deck, which makes "bottom their last card, they may
+draw it straight back" a real and rather pleasing printed corner.
+
+Rules doc **§9.4**.
+
+### Greavard derives; Ortega is authored
+
+The attack twin prints Ortega's first sentence with a Supporter filter and no
+second sentence, so it is deriver rule 13 (`REVEAL_BOTTOM_SUPPORTER`) rather
+than a registry row — and it *has* to be, because `CardProgram.attack` is
+per-CARD while Greavard's second attack (Sharp Fang) is a plain 30 that must
+stay plain. The regex sweep over all 978 catalog rows × every text surface
+matched exactly one row, with no false positives and no misses in its family.
+
+### The play gate, and why it does not contradict D45
+
+`programPlayable` refuses Ortega into an **empty opponent hand**. That looks
+like the veto D45 removed, and is not: D45's reversal turns on
+`programPlayable` being an AND over ops, so vetoing one op vetoes a card whose
+*other* printed clause always resolves. Ortega has no such clause — its second
+sentence is a `recordGate` on the first — so over an empty hand the whole card
+does nothing, which is the Catcher/Hammer class under ruling/906 + ruling/284.
+The gate reads hand **LENGTH and never the op's filter**, because a non-empty
+hidden hand's *contents* are exactly what the game state does not establish
+(the Poké Ball line) — and a gate that peeked would also leak, telling the
+controller "no Supporter in there" before they spent the card.
+
+`programPlayable` is now **exported**, and the HUD mirrors it for Trainers *and*
+Abilities. That closes the finding this project has now logged four times (a row
+rendered lit and refused on click, with the reason nowhere) — at the source
+rather than per-card, since the predicate that rejects is now the predicate that
+greys. It is a visible change well beyond Ortega: Boss's Orders, Switch,
+Pokémon Catcher, Crushing Hammer, Energy Switch, Poppy and Giacomo all grey out
+on boards where they were previously lit and dead.
+
+### Web
+
+One new dialog — `MayDrawDialog`, the first prompt this HUD shows to the seat
+that did *not* act, mid-turn. It holds no state (both buttons dispatch on the
+tap), names the deciding player outright (the handoff banner that normally does
+sits **outside** the modal, hence inert once `showModal()` runs — on a hot-seat
+device the wrong player is holding it), swallows Escape (the decision is owed;
+`HudDialog` only calls `showModal()` on mount, so a dismissed dialog would never
+return and the game would need a reload), and puts **Draw first in the tab
+order** so that Enter cannot silently forfeit a card.
+
+It deliberately has **no `<output>`** and **no `promptKey` arm**, against the
+house pattern in both cases, because both exist to serve state this dialog does
+not have: a live region earns its place by announcing a *change*, and a prompt
+key by resetting *picks*. A first draft added the key arm with a comment about
+stale labels; gutting it to a constant passed all 1612 tests, which is what
+"nothing observable" looks like. `kind:note` already gives it a per-count
+identity.
+
+The projection withholds `pendingDecision` from a **non-answerer** — narrowly,
+because handing the prompt to both viewers is D17's deliberate contract for
+every other park (three tests pin it) and reversing that wholesale is a named P4
+job. What this slice owed was the hole it opened: "who may see the prompt"
+stopped being a tautology the moment an answerer could differ from the
+controller, so the redaction lands exactly there.
+
+Two log rows, both filed by the rule their sibling established: the reveal under
+the seat whose hand it is (the chip names them), the bottoming under the
+**actor**, naming the owner outright because there the chip does not.
+
+### Review (2 adversarial agents, ISOLATED worktrees; 87 + 44 mutations)
+
+**One HIGH each, and both were false CLAIMS over untested guards** — the fourth
+slice running where that is the shape. Engine: the deriver test said it pinned
+the ANCHORS while both its negatives were refused by the pattern *body*, so
+dropping `^`/`$` passed all 722 tests where the same mutation on two sibling
+rules dies immediately. Web: the `promptKey` arm above.
+
+The engine MEDIUMs were all test-adequacy and all real — the apply's wire guard
+could be deleted and **duplicate a card** off a crafted snapshot; the record
+could file *picked* rather than *moved* uids and park a decision for an event
+that never happened; the gate's `=== 0` boundary was never driven at a hand of
+one; "reads length, never the filter" was unpinned; the reveal-first ordering
+held on the parking path only.
+
+Three web MEDIUMs changed code (the seat name, Escape, the redaction). And one
+finding was a **pre-existing engine contradiction this slice made
+user-visible**: `programPlayable`'s `discardEnergy` arm claimed "Crushing
+Hammer's coin-GATED discard stays playable either way" while the `coinFlipGate`
+branch six lines above descends into `then` for exactly that card (D41). The
+descent wins — measured — and the stale comment is corrected, because as of this
+slice the disagreement renders to a player as an unclickable row rather than a
+transient pill.
+
+See D52.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

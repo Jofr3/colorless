@@ -12,9 +12,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState, Seat } from "@luminous/engine";
+import { applyAction } from "@luminous/engine";
 import {
   REVEAL_BOTTOM_DECK,
+  SNIPE_DECK,
   attachFromDeck,
+  benchFromDeck,
   driveSetup,
   handFromDeck,
   handUid,
@@ -191,11 +194,67 @@ describe("MayDrawDialog — the printed 'may' answered by the other seat", () =>
     }
   });
 
-  it("the count rides promptKey — a differing offer remounts the dialog", () => {
-    // The belt technique (the attachCards/heal precedent). This dialog holds no
-    // state to go stale, so the assertion is on the RENDER: a key that ignored
-    // `count` would leave the first park's button label mounted over the second
-    // park's offer.
+  it("names the deciding player, so a hot-seat device cannot be answered by the wrong one", () => {
+    // This is the only dialog that appears because of something the viewer did
+    // NOT do, in the middle of an opponent's turn. The handoff banner that
+    // normally names the seat renders outside the modal, so once showModal()
+    // runs it is inert and backdrop-covered — the dialog has to say it itself.
+    const asked = parkedMayDraw();
+    renderHud(asked, "p2", () => {});
+    screen.getByText(/Tide — your opponent's card is asking/);
+  });
+
+  it("SWALLOWS Escape — the decision is owed, and closing it would soft-lock the game", () => {
+    // The failure this prevents is unrecoverable, not merely untidy: HudDialog
+    // only calls showModal() on mount, so a dialog dismissed while the phase
+    // stays parked never reopens. Both HUDs would then be empty, passing is
+    // refused (it needs turn:action) and no drag maps to an action — the game
+    // would need a reload.
+    const asked = parkedMayDraw();
+    const dispatch = vi.fn();
+    renderHud(asked, "p2", dispatch);
+    const dialog = document.querySelector("dialog") as HTMLDialogElement;
+    // Asserted as the CONTRACT — that the cancel is default-prevented — rather
+    // than by observing the dialog stay open: jsdom does not implement
+    // <dialog>'s Escape-closes-me behaviour, so "it is still in the DOM" is
+    // true here whether or not the handler does its job, and a test written
+    // that way passes even with the guard removed.
+    const cancel = new Event("cancel", { cancelable: true, bubbles: false });
+    dialog.dispatchEvent(cancel);
+    expect(cancel.defaultPrevented).toBe(true);
+    // …and nothing was answered on the way through.
+    screen.getByRole("button", { name: "Draw a card" });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("puts Draw first in the tab order — Enter must not silently forfeit the card", () => {
+    // showModal() focuses the first focusable descendant. Escape is swallowed
+    // (above), so if that were Decline an unprepared player pressing Enter
+    // would irreversibly decline with no way back.
+    const asked = parkedMayDraw();
+    renderHud(asked, "p2", () => {});
+    const dialog = document.querySelector("dialog") as HTMLDialogElement;
+    const buttons = [...dialog.querySelectorAll("button")].map((b) => b.textContent);
+    expect(buttons[0]).toBe("Draw a card");
+  });
+
+  it("withholds the prompt from the seat that may not answer it", () => {
+    // The redaction is the projection's, not just the HUD gate's: an
+    // `answerer` park is the first time "who may see this" and "who owns the
+    // program" differ, so the controller's projection carries no prompt at all.
+    const asked = parkedMayDraw();
+    expect(projectGameState(asked, "p1").pendingDecision).toBeNull();
+    expect(projectGameState(asked, "p2").pendingDecision).not.toBeNull();
+  });
+
+  it("relabels for a differing count — the dialog is STATELESS, so no bespoke key is needed", () => {
+    // Deliberately NOT the belt technique its siblings use, because there is
+    // nothing here for a key to protect: this dialog holds no picks, so a
+    // changed prompt is handled by a plain re-render. (A first draft claimed
+    // the opposite in a `promptKey` arm; gutting that arm to a constant passed
+    // every test, which is exactly what "nothing observable" looks like — see
+    // promptKey's default arm.) What IS worth pinning is that every label reads
+    // the live prompt rather than the mount's.
     const first = parkedMayDraw();
     if (first.phase.kind !== "effect:choose") throw new Error("expected the mayDraw park");
     const prompt = first.phase.prompt;
@@ -246,6 +305,80 @@ describe("the Trainer row mirrors the engine's would-only-whiff gate", () => {
       mustApply(state, { type: "playTrainer", seat: "p1", uid: handUid(state, "p1", ORTEGA) }).state
         .phase.kind,
     ).not.toBe("turn:action");
+  });
+});
+
+describe("the ABILITY row mirrors the same gate", () => {
+  // `useAbility` gates on `programPlayable` exactly as `playTrainer` does, so
+  // the Ability list carries the identical grey — and it reaches six shipped
+  // programs (the snipe, four attachEnergyFrom Abilities, Fire Off's move),
+  // none of which had a test before this slice made the mirror the rule.
+  function meowscarada(oppBench: boolean): GameState {
+    let state = driveSetup(3, { p1: SNIPE_DECK, p2: SNIPE_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "sv02-015"); // Meowscarada ex
+    if (oppBench) state = benchFromDeck(state, "p2", "fix-basic-1");
+    const side = state.players.p1;
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...side, hand: [], deck: [...side.deck, ...side.hand] },
+      },
+    };
+    return handFromDeck(state, "p1", "fix-grass-energy", 1); // the cost is payable
+  }
+
+  it("greys a snipe Ability over an EMPTY opponent bench, with the reason on the row", () => {
+    const state = meowscarada(false);
+    renderHud(state, "p1", () => {});
+    const row = screen.getByRole("button", { name: /Bouquet Magic/ }) as HTMLButtonElement;
+    expect(row.disabled).toBe(true);
+    expect(screen.getByText("No legal target")).toBeTruthy();
+    // Lit ⇔ the engine accepts, checked against the engine rather than assumed.
+    const rejected = applyAction(state, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Bouquet Magic",
+    });
+    expect(rejected.ok).toBe(false);
+  });
+
+  it("lights it again the moment a benched target exists", () => {
+    const state = meowscarada(true);
+    renderHud(state, "p1", () => {});
+    const row = screen.getByRole("button", { name: /Bouquet Magic/ }) as HTMLButtonElement;
+    expect(row.disabled).toBe(false);
+    expect(screen.queryByText("No legal target")).toBeNull();
+    expect(
+      applyAction(state, {
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "active" },
+        abilityName: "Bouquet Magic",
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("prefers the printed COST clause over the engine's judgement when both are unmet", () => {
+    // Precedence: a card can be dead twice over, and the printed rule is the
+    // one a player can act on ("discard a Basic Grass Energy") where "No legal
+    // target" is the engine's own heuristic. The empty hand is the cost's miss.
+    let state = meowscarada(false);
+    const side = state.players.p1;
+    state = {
+      ...state,
+      players: { ...state.players, p1: { ...side, hand: [], deck: [...side.deck, ...side.hand] } },
+    };
+    renderHud(state, "p1", () => {});
+    expect(
+      (screen.getByRole("button", { name: /Bouquet Magic/ }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText("Only if you discard a Basic Grass Energy card from your hand"),
+    ).toBeTruthy();
+    expect(screen.queryByText("No legal target")).toBeNull();
   });
 });
 
