@@ -3,7 +3,43 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-22 — build session #35 (**P3-M5:
+**Last updated:** 2026-07-22 — build session #36 (**P3-M5: `healChosen.upTo`
+— §9.1's `min: 0` end lands**). The resume point's #1 for three slices
+running, and it is ONE field: the printed "up to N … each" heal. **Saguaro
+×3** (sv02-187/-255/-270, Supporter — identical text on every print, verified
+verbatim vs D1): "Choose up to 2 of your Pokémon and heal 50 damage from each
+of them." The park is the **first `choosePokemonMulti` with `min ≠ max`** —
+`{min: 0, max: min(2, in play), declinable: false}` (min: 0 IS the printed
+decline, so the "you may" flag stays unset; §8.6 clamps the ask AND the
+heading — a lone Active is asked "up to 1"), parked at every non-empty board
+per the D47 declinable-snipe rule. **The field is `upTo`, not `count`**,
+because `damageChosen.count` means EXACT — the name carries the printed
+words, so "choose 1 is not up to 1" stays structural. Candidates are ALL your
+Pokémon (no damaged restriction is printed; an undamaged pick heals 0 and
+emits nothing), the play is UNGATED (the Potion / Fighting Au Lait shipped
+doctrine — the recorded paper divergence vs TPCi's state-change rule, now
+three cards wide), and the exact-1 single arm is byte-untouched. **Web: ZERO
+source changes** — `ChoosePokemonMultiDialog` was written for this day
+("Take none" at zero picks, a denominator-free "Confirm N" for partials), but
+every `min ≠ max` branch was an untested DEAD PATH; two DOM tests now drive
+the park end-to-end, the partial confirm pinning WHICH ref is dispatched.
+engineVersion 0.30.0 → **0.31.0**; 1561 → **1576** tests, `bun run check` +
+`vite build` green. **Review (2 adversarial agents in ISOLATED worktrees,
+34 + 8 mutations): NO HIGH from either — and engine-side NO false coverage
+claim at all, the first such slice in three** (32/34 mutants killed, 2 argued
+equivalent: `healUpToNote`'s `"all"` arm is dead code with no printed author,
+declared in its own doc; the own-seat guard sits behind pre-validated refs —
+the runCheckupTriggers precedent). **The web MED is the recurring shape**:
+`promptKey`'s `pokemonMulti` arm was entirely UNPINNED — gutting the key to
+the bare string survived every test; LATENT (no live path parks this prompt
+twice with no render between), but the key's own doc claims the
+discrimination — closed with the attachCards belt technique over all four
+segments, verified to kill both survivors. The web table also proved the two
+new DOM tests are the SOLE killers of the "up to" surfaces. See D51.
+
+---
+### Prior header (P3-M5 EffectContext.sourceUid, kept for continuity)
+**Last updated (was):** 2026-07-22 — build session #35 (**P3-M5:
 `EffectContext.sourceUid` — the printed "this Pokémon"**). The resume point's #1
 and the cheapest structural row on the board, and it is a FIELD, not an op: the
 context now names the Pokémon whose effect is running — its top-card **uid**,
@@ -503,7 +539,67 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**`EffectContext.sourceUid` is live (P3-M5, D50) — engine 0.30.0.** The context
+**`healChosen.upTo` is live (P3-M5, D51) — engine 0.31.0.** Saguaro ×3
+(sv02-187/-255/-270) lands the printed "up to N … each" heal: the first
+`choosePokemonMulti` with `min ≠ max` (`{min: 0, max ≤ 2}`), §8.6 clamping
+both the ask and the heading, candidates = ALL your Pokémon, `[]` a legal
+decline that still spends the Supporter. The web needed zero source changes;
+the dialog's `min ≠ max` branches are now tested, and `promptKey`'s
+`pokemonMulti` segments are belt-pinned.
+**Next concrete actions:**
+1. **Ortega** (sv03-190/-219) — the "in this way" gate over an OPPONENT-side
+   pick from a hidden zone: "Your opponent reveals their hand, and you choose a
+   card you find there and put it on the bottom of their deck. If you put a
+   card on the bottom of your opponent's deck in this way, your opponent may
+   draw a card." The gate exists; what does not is a prompt over a zone the
+   ACTOR must be shown but does not own — and it is the first "your opponent
+   **may**" (a decline belonging to the other seat).
+2. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
+   optional discard that BUYS an effect (Bellibolt ex), a variable count with
+   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause
+   (Sandaconda, Eiscue ex, Weavile), a repeat count (Krookodile).
+3. **The last cheap reader of the D40 vocabulary: Defiance Band** — a
+   conditional PASSIVE, the third consumer (`passivesOf` takes no seat today).
+4. Or pivot to **P4 (online matches)** — the engine is broad enough to play
+   real games. Named jobs: gate `projection.ts`'s `pendingDecision` on
+   `phase.seat`, and strip `cont` regardless — the §9.2 record AND the
+   context's `sourceUid` both ride the phase; D40's `stadium.owner` +
+   `prizesRemaining` projection additions; and the engine-exported preview
+   predicates the HUD needs.
+**Recorded, NOT fixed (this slice):** **the TPCi state-change divergence is
+now THREE cards wide** — Potion, Fighting Au Lait and Saguaro are all playable
+on a fully-healed board (`programPlayable` has no heal branch); the review's
+verdict is that this missing play gate is the REAL paper divergence, while
+`min: 0` itself is sound (no ruling forbids a 0 answer to a visible-zone "up
+to" once the card is legally played). `healUpToNote`'s `"all"` arm is DEAD
+CODE — no printed consumer authors `"all"` + `upTo`; its doc declares it, and
+the first such card must exercise it. `healChosen`'s own-seat guard is an
+equivalent mutant (refs pre-validated at all three call sites — the
+runCheckupTriggers precedent). **The batch announcer still speaks only a
+batch's LAST row — SEVENTH slice** — Saguaro's 2-pick resolve announces one
+HEALED of two, and a decline announces nothing after "played Saguaro", which
+covers three distinct outcomes. Saguaro's HUD row never travels through a
+DOM test by click (review scratch-verified lit ⇔ engine-accepts, including
+the undamaged board; the generic TurnPanel tests cover the identical path).
+The P4 `pendingDecision` story for this prompt is CLEAN — own in-play refs
+plus printed numbers, all public, nothing new leaks. **Carried forward
+(pre-existing, NOT this slice):** `legal_standard = 0` on most Trainers in
+the local ingest (Saguaro included — rotation, `legal_expanded = 1`);
+`GamePage`'s `passDisabled` phase check is untested; `validateChoice` does
+not pin a multi-count pick to a single host; `handCostUnmet` is not
+compositional across two costs in one program; the played Trainer sits UNDER
+its own payment in the discard pile; no test anywhere covers an onEvolve
+trigger firing through Rare Candy; `maxPerTarget > 1` has no printed
+consumer; a full target row's disabled STYLING is unpinned (house style); the
+returned-Pokémon doctrine gap stays LATENT (§9.3 — the first
+revival/self-recovery op must revisit `sourceRef`); and from D42 the attack
+epilogue sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own
+board is missed — **do that before landing any self-damaging attack text**
+(sv01-038 Skeledirge is one deriver sentence away).
+
+---
+### Prior resume point (P3-M5 EffectContext.sourceUid, kept for continuity)
+**(was)** **`EffectContext.sourceUid` is live (P3-M5, D50) — engine 0.30.0.** The context
 names the Pokémon whose effect is running (the printed "this Pokémon"), set at
 every run site that knows it and ABSENT for a Trainer program (whose parked
 context stays byte-identical `{seat}`). First reader: `attachFromDeck.toSelf`,

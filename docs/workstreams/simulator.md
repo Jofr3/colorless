@@ -3467,6 +3467,109 @@ trailing `SHUFFLE`. Sixth slice running.
 
 1526 → **1561** tests; engineVersion 0.29.0 → **0.30.0**.
 
+## P3-M5 build session #36 (2026-07-22) — healChosen.upTo: §9.1's `min: 0` end lands (D51)
+
+### One field, not a new op — and the field name carries the printed words
+
+**Saguaro** (sv02-187/-255/-270, Supporter — identical text on all three
+prints, verified verbatim against the local D1): "Choose up to 2 of your
+Pokémon and heal 50 damage from each of them." Three slices after D47 reserved
+the range, this is the **first consumer of `choosePokemonMulti` with
+`min ≠ max`** — the prompt every earlier consumer used at `min === max`
+finally asks a question whose partial answer is legal.
+
+The op widening is `healChosen.upTo?: number`, and the name is deliberate:
+`damageChosen.count` means EXACT (§9.1's headline — "choose 1" is not "up to
+1"), so reusing `count` for a floor-0 pick would have made the field's meaning
+depend on the op. `upTo` spells the printed words; an exact multi-count heal,
+if one ever prints, gets its own field rather than a silent reinterpretation.
+Absent `upTo`, the single arm (Potion / Fighting Au Lait / Arboliva's "all")
+is byte-untouched — still `parkOrForce` onto `choosePokemon`, still
+auto-resolving at one candidate, because an EXACT mandatory pick over one
+candidate has no decision left. The `upTo` arm parks at **every non-empty
+board** — `{min: 0, max: min(upTo, in play), declinable: false}` — the
+declinable-snipe rule from D47: the take-fewer right is the same decision over
+one candidate as over six, and `min: 0` IS the printed decline, so the
+`declinable` flag stays unset (the prompt-doc rule).
+
+Two candidate calls, both the printed clause read literally:
+- **Candidates are ALL your Pokémon, damaged or not.** The printed choose
+  clause has no damaged restriction; an undamaged pick heals 0 and emits
+  nothing (the single-arm rule since M4). Filtering to damaged would have been
+  a second unprinted rule hiding inside the offer.
+- **The play is UNGATED** — a full-HP board can spend the turn's Supporter on
+  nothing. `programPlayable` has never had a heal branch (Potion and Fighting
+  Au Lait are the same call), so Saguaro follows shipped doctrine rather than
+  deciding it mid-slice; the honest "Take none" in the prompt is the
+  mitigation, and the wart stays on the carried-forward list, now three cards
+  wide.
+
+`healUpToNote` quotes the card with the §8.6-clamped number ("Choose up to 1
+of your Pokémon…" over a lone Active — the ask clamps, the whether survives).
+The `applyChoice` arm folds the picked refs through the existing single-target
+`healChosen` helper — one HEALED per damaged pick, each clamped to its own
+damage, `[]` a legal no-op resolve.
+
+### The web needed ZERO source changes — and that claim is now pinned
+
+`ChoosePokemonMultiDialog` was written for this day: `short` can never be true
+at `min: 0`, so Confirm is always live, reads "Take none" at zero picks and
+"Confirm N" (no denominator — nothing is owed) for partials; the live region
+says "Pick up to 2 (0/2)."; `promptKey` already carried min/max/declinable.
+What did NOT exist was any test with `min ≠ max` — the dialog's "up to"
+branches were four comment-documented dead paths. Two DOM tests now drive the
+Saguaro park end-to-end: the partial confirm pins WHICH ref is dispatched (a
+dialog sending the first N candidates fails it), and the decline pins the
+empty dispatch.
+
+One test-surgery lesson worth keeping: `fix-basic-1` has 60 HP, and a
+program-completion settle sweeps BOTH boards — so a test that leaves an
+unhealed own Pokémon at damage ≥ 60 when the program settles gets it KO'd
+mid-assertion. Real play cannot reach that state (damage ≥ HP is swept at
+every source); surgery keeps persisting damage sub-lethal.
+
+### Review — 2 adversarial agents in isolated worktrees, 34 + 8 mutations
+
+**Engine+rules: NO HIGH, NO MED — and no false coverage claim at all, the
+first such slice in three.** 34 mutants, 32 killed by the shipped suite; the
+2 survivors both argued equivalent: `healUpToNote`'s `"all"` arm is dead code
+(no printed consumer authors `"all"` + `upTo`, and its doc says so — a
+declared-ready phrase, not a false claim), and `healChosen`'s own-seat guard
+sits behind refs already validated against own-board candidates at all three
+call sites (the runCheckupTriggers precedent — defense nothing can observe).
+A 13-shape garbage probe (null refs, foreign seats, NaN indexes) all rejected
+`BAD_EFFECT_CHOICE` with the state byte-identical (D14); all three reprint
+rows are independently load-bearing (deleting any one fails its own test);
+the fixture text is byte-equal to D1 on every id. The rules-fidelity LOW
+worth recording: under TPCi's state-change doctrine Saguaro would be
+UNPLAYABLE on a fully-healed board — the missing play gate is the real paper
+divergence (`min: 0` itself is sound; no ruling forbids a 0 answer to a
+visible-zone "up to" once the card is legally played) — and it is the
+declared, carried-forward wart, now three cards wide.
+
+**Web+integration: NO HIGH; its MED is the recurring shape** — `promptKey`'s
+`pokemonMulti` arm was entirely UNPINNED: gutting the whole key to the bare
+string `"pokemonMulti"` survived every test (the sibling chooseCards /
+attachCards keys both have dedicated remount tests). The hazard is LATENT —
+no live path parks this prompt twice with no render between (§7.2 blocks two
+Saguaros a turn, and the `turn:action` render between any two parks unmounts
+the dialog) — but the key's own doc claims the discrimination, so it is now
+pinned by the attachCards belt technique: a real park, one prompt field
+swapped, the stale pick must not survive the rerender — all four segments
+(min / max / declinable / candidates), verified to kill both surviving
+mutants. The web mutation table also proved the two NEW DOM tests are the
+SOLE killers of the "up to" surfaces (the live region's "up to" phrasing and
+the denominator-free Confirm) — the dialog's `min ≠ max` branches really were
+dead paths until this slice. LOWs: Saguaro's row never travels the HUD button
+in a test (scratch-verified lit ⇔ engine-accepts, including the undamaged
+board — NOT the recurring lit-row-refused-click HIGH); and the batch
+announcer still speaks only a batch's LAST row (7th slice): a 2-pick resolve
+announces one HEALED of two, and a decline announces nothing after "played
+Saguaro" — which now covers three distinct outcomes (declined, all-undamaged
+picks, healed-then-silenced).
+
+1561 → **1576** tests; engineVersion 0.30.0 → **0.31.0**.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
