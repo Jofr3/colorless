@@ -406,8 +406,19 @@ there by this effect or was already sitting there. Three wordings, one idea:
   cards paid and the cards already in the pile are the same kind of card in the
   same zone, and only the history distinguishes them.
 
-Two consequences worth stating separately, because each is a rule the engine has
-to get right:
+A fourth wording asks the same question about a **subset** of what the earlier
+clause did:
+
+- "If you attached Energy to your **Active** Pokémon **in this way**, it is now
+  Poisoned." (Janine's Secret Art) — the earlier clause may have attached two
+  Energy and put neither on the Active, and then this is false. "Did the earlier
+  clause do anything" is the wrong question; "did it reach *this* Pokémon" is the
+  right one. Note the consequence for the player: the poison is theirs to take or
+  avoid, decided by where they put the Energy, so a resolution that fired it on
+  any attach at all would be removing a choice the card grants.
+
+Three consequences worth stating separately, because each is a rule the engine
+has to get right:
 
 1. **It is the cards, not the kind.** Superior Energy Retrieval bars the two
    Energy *you just discarded*, not "Energy like the ones you discarded" — a
@@ -420,6 +431,12 @@ to get right:
    "shuffle N cards into your deck" as a move followed by a shuffle, which is the
    natural decomposition. Either way, "the previous thing that happened" is not a
    workable reading of "in this way".
+3. **What the clause asks about can be narrower than what the earlier clause
+   did.** Janine again: two Energy attached, both to the Bench, satisfies "you
+   attached Energy" and fails "you attached Energy **to your Active Pokémon**".
+   So the record of what happened is not enough on its own — the later clause may
+   also need to know *where* it happened, which for an attach is a fact the board
+   still holds.
 
 **Ordering.** "Shuffle X into your deck" is one clause and the shuffle is *part of
 it*: the cards go in and the deck is randomised before anything later reads it. A
@@ -607,12 +624,29 @@ card, targets, the game state, RNG for coin flips):
 **E. Search / shuffle / draw / deck manipulation**
 - Draw N; search deck for a card matching a predicate; reveal; move between zones;
   shuffle; put cards on top/bottom of deck; look at prizes; discard from deck/hand.
-- **"…in any way you like"** (Electric Generator, Hydreigon "Tri Howl", Dragonite
-  VSTAR "Draconic Star"): when an effect distributes several cards over several
-  Pokémon, each card is assigned **independently** — any split is legal, including
-  putting all of them on one Pokémon. It is not "one each", and the count taken is
-  still capped by the printed "up to N" / unbounded for "any number" (both of which
-  also permit taking **none**).
+- **"…in any way you like"** (Electric Generator, Hydreigon "Tri Howl", Charizard ex
+  "Infernal Reign", Dragonite VSTAR "Draconic Star"): when an effect distributes
+  several cards over several Pokémon, each card is assigned **independently** — any
+  split is legal, including putting all of them on one Pokémon. It is not "one
+  each", and the count taken is still capped by the printed "up to N" / unbounded
+  for "any number" (both of which also permit taking **none**).
+- **"For each of those Pokémon…"** is the OTHER distribution rule, and it is the
+  one that makes the phrase above load-bearing rather than decorative. Janine's
+  Secret Art — "Choose up to 2 of your {D} Pokémon. For each of those Pokémon,
+  search your deck for a Basic {D} Energy card and attach it to **that** Pokémon"
+  — distributes **one apiece to distinct Pokémon**; stacking both on one is not a
+  legal answer. A card prints "in any way you like" exactly when the split is free,
+  so the absence of that phrase is not silence, it is the other rule.
+- **A per-target rule can make the printed maximum unreachable.** With one eligible
+  Pokémon, Janine's "up to 2" is a hard 1, and no rule is violated — this is §8.6
+  "do as much as you can" arriving from the target side rather than the card side.
+- **Searching your deck vs. looking at the top N.** Both are hidden zones the
+  controller is shown, and the cards taken become public while the rest stay
+  hidden — but a search sees the WHOLE deck, so the two differ in what a client may
+  reach and in how many candidates a real list produces. Where the cards taken are
+  interchangeable (any Basic Energy of one type — the catalog prints each under
+  several ids), *which* copy is taken is not a decision at all, and a resolution
+  that asked would be asking a question the game does not contain.
 - **The leftovers clause is part of the effect.** A look-at-the-top-N whose final
   sentence says "Shuffle the other cards back into your deck" or "**Discard** the
   other cards" performs that sentence **whether or not anything was taken** — a

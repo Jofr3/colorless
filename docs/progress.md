@@ -3,7 +3,61 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-22 — build session #33 (**P3-M5: §9.2 — a clause that
+**Last updated:** 2026-07-22 — build session #34 (**P3-M5: `attachFromDeck` — the
+deck-SEARCH attach, and a §9.2 gate that asks WHERE**). The resume point named
+Janine's Secret Art as one card wanting a per-target deck search; **the catalog
+showed five cards printing that sentence**, differing only in the target rule and
+a drawback — so the slice is the family's shape, not the card's. One new op:
+search your own deck for Energy matching a filter and attach it straight onto your
+own Pokémon. It is the deck-search **sibling of `attachFromTop`** and reuses that
+op's `attachCards` MAP prompt, because the printed clause is the same one; every
+difference falls out of the SOURCE. Two matter: the candidate set is the WHOLE
+deck, so it is **COLLAPSED to `max` representatives per interchangeable class**
+(D42's key — a Basic Energy keys on what it PROVIDES, since the catalog prints
+Basic Darkness Energy under four ids), and there is **no leftovers clause** at all
+(nothing ever left the deck), so the printed "Then, shuffle your deck" stays a
+trailing `shuffleDeck`. **TWO PRINTED TARGET RULES, one new field:** "in any way
+you like" (**Charizard ex ×4**, "Infernal Reign", an onEvolve trigger) is no rider;
+"**for each of those Pokémon**" (**Janine's Secret Art ×2**, Supporter) is
+`maxPerTarget: 1`. A card prints "in any way you like" exactly when the split is
+free, so the absence of the phrase is **not silence but the other rule**. **Janine
+parks ONCE, and that is a claim about the card** — her printed first sentence is
+not a second decision, because same-type Basic Energy is fungible, so the map
+prompt already says the whole thing. (Which is why this slice does NOT consume
+§9.1's `min: 0` end after all; Saguaro still wants it.) **§9.2 gained
+`recordGate.contains`**, a gate asking not "did the earlier op do anything" but
+"did any of it reach the ACTIVE" — two Energy onto the Bench records two uids and
+poisons nothing, which is the player's choice to make. engineVersion 0.28.0 →
+**0.29.0**; 1446 → **1526** tests, `bun run check` + `vite build` green.
+**Review (2 adversarial agents in ISOLATED worktrees, 69 + 46 mutations): one HIGH
+each, and BOTH were false CLAIMS rather than wrong behaviour** — which is the
+pattern worth carrying forward, because in both cases the claim had papered over
+real missing coverage. The engine's HIGH I had already caught mid-session, but the
+review found **four** divergences where I found one: `moveEnergy`'s `benchToActive`
+route produces a false POSITIVE (attach to the Bench, move it up, get poisoned for
+an attach that never touched the Active), which the detach-only framing misses
+entirely. Its three MEDIUMs were all real — the prompt's **`max` lied** whenever
+`maxPerTarget × targets` was the true ceiling (Janine printed "up to 2" over a
+board where 1 was the maximum — the exact dishonesty `attachFromTop`'s clamp
+exists to prevent, and the review wrongly read it as deliberate); the **whiff filed
+nothing** where its two sibling recording ops file `[]`; and the Charizard fixture
+sat under a "verified verbatim" banner with three undeclared deviations, the sharp
+one being that **Charizard ex is a {D} Pokémon** that merely attacks with {R}.
+15 of 69 mutants survived the suite as first written; the review's 33 new tests
+kill 11, three of them serious (a mutant that **duplicates a card**, one that
+**throws out of `applyAction`** — a D14 breach — and one filing *picked* rather
+than *attached* uids). **The web's two HIGHs were both in the new test file's own
+header**: `maxPerTarget` rides `promptKey` was listed as a case "below" and had
+none (deleting it from the key left all 1524 tests green, and the failure mode is
+a dispatch the engine rejects with a pill that cannot say which pairing was
+wrong); and the log test's `texts()` helper **discarded the seat entirely**, under
+a test named "names BOTH attaches" that only checked "some row mentions Energy" —
+so the self-poison filed under the OPPONENT's seat survived it, and Janine is the
+first `STATUS_APPLIED` in the game filed under the controller's own seat. See D49.
+
+---
+### Prior header (P3-M5 §9.2 the op→op record, kept for continuity)
+**Last updated (was):** 2026-07-22 — build session #33 (**P3-M5: §9.2 — a clause that
 reads what an earlier clause DID**). The resume point's #1, and the engine's first
 **op→op data flow**. Every op until now was decidable from `GameState` plus the op;
 some printed clauses are not, because they ask what *this card's own earlier
@@ -399,7 +453,86 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**§9.2 op→op data flow is live (P3-M5, D48) — engine 0.28.0.** An op files the uids
+**`attachFromDeck` is live (P3-M5, D49) — engine 0.29.0.** Search your own deck
+for Energy and attach it straight onto your Pokémon, then shuffle — the
+deck-search sibling of `attachFromTop`, sharing its `attachCards` MAP prompt.
+6 catalog rows: **Charizard ex ×4** ("in any way you like", an onEvolve trigger)
+and **Janine's Secret Art ×2** (`maxPerTarget: 1` — one apiece onto distinct {D}
+Pokémon — plus `recordGate.contains: "yourActive"`, the §9.2 gate that asks WHERE
+the cards landed rather than whether anything moved). The offer collapses
+interchangeable candidates and its `max` is clamped by three ceilings, the new one
+being `targets × maxPerTarget`.
+**Next concrete actions:**
+1. **Give `EffectContext` a source uid — "this Pokémon".** Now the cheapest
+   STRUCTURAL row on the board, and it unlocks a family rather than a card. Three
+   places already document the wall in so many words: `discardEnergy`'s
+   `yourActive` arm ("an Ability on a BENCHED Pokémon saying 'this Pokémon' is NOT
+   this member — EffectContext carries no source uid, so that card stays
+   unauthored"), and now **Pawmot** (sv01-076/-209, "Electrogenesis": search your
+   deck for a Basic {L} Energy and attach it to THIS Pokémon — an
+   `attachFromDeck` whose target rule is neither of the two this slice built) and
+   **Forretress ex**. Note `useAbility` already knows the uid; what is missing is
+   threading it into the context the interpreter carries, and deciding what a
+   source uid MEANS for a Trainer program (nothing — so it is optional).
+2. **Saguaro** (sv02-187/-255/-270) — still the cheapest reader of §9.1's `min: 0`
+   end, and this slice did NOT consume it after all (Janine's "choose up to 2"
+   collapsed into the map prompt). "Choose up to 2 of your Pokémon and heal 50
+   damage from each of them" wants `healChosen` widened with a count rather than a
+   new op. Note it is `legal_standard = 0` in the local ingest, like most Trainers.
+3. **Ortega** (sv03-190/-219) — the "in this way" gate over an OPPONENT-side pick
+   from a hidden zone: "Your opponent reveals their hand, and you choose a card you
+   find there and put it on the bottom of their deck. If you put a card on the
+   bottom of your opponent's deck in this way, your opponent may draw a card." The
+   gate exists; what does not is a prompt over a zone the ACTOR must be shown but
+   does not own — and it is the first "your opponent **may**" (a decline belonging
+   to the other seat).
+4. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
+   optional discard that BUYS an effect (Bellibolt ex), a variable count with
+   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
+   Eiscue ex, Weavile), a repeat count (Krookodile).
+5. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
+   PASSIVE, the third consumer (`passivesOf` takes no seat today).
+6. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
+   (**now the worst it has been — see below**), D40's `stadium.owner` +
+   `prizesRemaining` projection additions, and the engine-exported preview
+   predicates the HUD needs.
+**Recorded, NOT fixed (this slice):** **the P4 `pendingDecision` leak is
+qualitatively worse on three axes**, and the older note's wording ("the
+controller's private **deck-top** uids") is now the narrower half of the truth.
+(1) SCOPE — `attachFromTop` leaked "these are among your top N", a bounded window;
+this leaks "these are somewhere in your deck". (2) **A new kind of read: a
+hidden-zone COUNT by type** — when the collapse yields fewer than the printed
+`max`, the opponent reads off how many matching Basic Energy remain in the deck
+(Janine distinguishes 1 from ≥2, Charizard 1/2/≥3); no other prompt leaks that.
+(3) The older note's own axis — unattached candidates never becoming public by any
+other route — now covers EVERY declined candidate, since this op emits no search
+event at all. Bounded only by the interchangeable collapse. **Janine is playable
+into a board with no {D} Pokémon**, spending the turn's only Supporter on a bare
+deck shuffle — the shipped ungated doctrine (ruling/284), and the sharpest form of
+that call yet, since every earlier consumer of it was an Item; the prompt is the
+mitigation, not the gate. **`maxPerTarget > 1` has no printed consumer** (the
+field is `number`, Janine is the only card at 1, and the plural note branch is
+reachable only from a test). **A full target row's disabled STYLING is unpinned**
+(no test in the game feature asserts a class string — house style), and
+`promptKey` still omits `max` (pre-existing). **`GameLog` announces only a batch's
+LAST row** — fifth slice running; Charizard's batch ends on `SHUFFLE`, so its three
+attaches are silent. **Carried forward (pre-existing, NOT this slice):**
+`legal_standard = 0` on most Trainers in the local ingest (58/67 Supporters, 26/29
+Items, 9/11 Stadiums, 9/12 Tools); `GamePage`'s `passDisabled` phase check is
+untested; Fighting Au Lait is still playable with nothing damaged anywhere;
+`validateChoice` does not pin a multi-count pick to a single host; `handCostUnmet`
+is not compositional across two costs in one program; the played Trainer sits UNDER
+its own payment in the discard pile; **no test anywhere covers an onEvolve trigger
+firing through Rare Candy** (Charizard ex is the first card where that path
+matters, and it is correct by inspection only); and from D42 the attack epilogue
+sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is missed —
+**do that before landing any self-damaging attack text** (sv01-038 Skeledirge is
+one deriver sentence away).
+
+---
+### Prior resume point (P3-M5 §9.2 the op→op record, kept for continuity)
+**(was)** **§9.2 op→op data flow is live (P3-M5, D48) — engine 0.28.0.** An op files the uids
 it moved under a named `EffectSlot`; later ops read them through a `recordGate`
 (Miriam's "in this way", Dendra's "if you do") or `discardPileRetrieval.exclude`
 (Superior Energy Retrieval's "with the effect of this card"). 5 catalog rows. The

@@ -3139,6 +3139,220 @@ been unpinned in BOTH arms since engine 0.15.0.
   batch yet (retrieve / shuffle / draw), and the silenced row is the one saying
   what the card did.
 
+## M5 op-slice: attachFromDeck as built (engine 0.29.0)
+
+**SEARCH your deck for Energy and attach it straight onto your Pokémon** — the
+deck-search sibling of `attachFromTop`, and the slice that turned the resume
+point's one-card row (Janine's Secret Art) into a family. The catalog is what
+reframed it: five distinct cards print "search your deck for … Energy … and
+attach", and they differ only in the target rule and in a drawback.
+
+### The op shares a prompt with `attachFromTop`, and differs only where the SOURCE forces it
+
+Both ops answer the same printed clause — several cards, several places, chosen
+together — so both park on the `attachCards` MAP prompt. Every difference falls
+out of reading the WHOLE deck instead of a window on its top:
+
+| | `attachFromTop` | `attachFromDeck` |
+|---|---|---|
+| source | the top `n`, an ordered window | the whole deck |
+| candidate size | small by construction | a real list holds a dozen Basic {R} |
+| collapse | none needed | at most `max` per interchangeable class |
+| leftovers | `discardRest`, or a trailing shuffle | none — nothing ever left the deck |
+| `max: "any"` | Hydreigon prints it | no printed search does |
+
+The **collapse** is the substantive one. `interchangeableCandidates` already
+existed for the mandatory discards (D42), keyed by `cardIdentity` — a Basic
+Energy keys on what it **provides**, because the catalog prints the same Basic
+Darkness Energy under four ids (sve-007/-015/-023, sv06.5-098). Offering twelve
+identical rows for a pick of three is one question wearing twelve hats; the cap
+is `max` per class rather than 1 for D42's reason, that a pick of three off one
+class needs three rows to be answerable at all. The discard version keys the HOST
+in as well (which Pokémon loses an Energy is always a real choice); here there is
+no host — a card in a pile is attached to nothing — and that asymmetry is the
+whole content of the difference.
+
+### Two printed target rules, and the second is why the first is load-bearing
+
+- **"in any way you like"** (Charizard ex) — no rider. Any split, including all
+  three on one Pokémon.
+- **"For each of those Pokémon … attach it to THAT Pokémon"** (Janine) —
+  `maxPerTarget: 1`. One apiece onto distinct Pokémon; stacking both is not a
+  legal answer.
+
+A card prints "in any way you like" exactly when the split is free, so the
+absence of the phrase is **not silence, it is the other rule** — written into
+`ptcg-rules.md` §15.E. `maxPerTarget` lives on the OP rather than in
+`AttachTargetRiders` because the riders answer a per-Pokémon question ("may this
+one receive") shared with `attachEnergyFrom`, while this constrains the map as a
+whole.
+
+### Janine parks ONCE, and that is a claim about the card
+
+Read literally the card asks two questions: which Pokémon, then which Energy for
+each. The second has no content — same-type Basic Energy is fungible, the
+doctrine `attachEnergyFrom` has asserted since M4 ("the only decision is the
+TARGET") — so "choose up to 2 of your {D} Pokémon, one Energy each" and "attach
+up to 2 Basic {D} Energy to distinct {D} Pokémon" are the same decision, and the
+existing map prompt already says it. Modelling the printed first sentence as its
+own `choosePokemonMulti` would have added a park that asks nothing.
+
+This is why the slice does **not** consume §9.1's `min: 0` end after all — the
+resume point expected it to. Saguaro still wants it (`healChosen` with a count),
+and it stays on the list.
+
+### `recordGate.contains` — a §9.2 gate that asks WHERE, not whether
+
+"If you attached Energy to your **Active** Pokémon in this way, it is now
+Poisoned." The record files the uids actually attached, exactly as D48's two
+recording ops do, and the new `contains: "yourActive"` narrows the gate from "did
+anything move" to "did any of it land on the Active". Two Energy onto the Bench
+records two uids and poisons nothing — and that is the player's choice to make,
+so a gate firing on any attach at all would be removing something the card grants.
+
+**The narrowing reads the BOARD, not the record**, and that is deliberate: the
+record's values stay one kind of thing everywhere (the cards an op moved), and
+"where did it end up" is answered where every other board question is.
+
+But "was attached there by that op" and "is there now" are **not the same
+question**, and a first draft of this section claimed they were — that no op in
+the vocabulary could separate them. Three can, and none is exotic:
+**`switchActive`** (a different Pokémon is now Active, so the filed uids sit on a
+benched one), **`moveEnergy`** (own → own, which can take the filed card off the
+Active) and **`discardEnergy`'s `yourActive` arm** (the card is gone). No printed
+card puts any of them between an attach and its "in this way" clause, and Janine
+runs attach → shuffle → gate — so this is **safe as authored and unsafe as a
+general rule**. The op's doc names the three, and records the likely answer if a
+card ever needs one: file the HOST rather than widen the gate.
+
+`withConsequence` needed the condition as well as the consequence: it hardcoded
+"If you do, …", which is right for Miriam and **quietly wrong** here — a player
+reading "If you do, it is now Poisoned" would take the poison for a certainty of
+attaching at all and put both Energy on the Bench expecting it. `describeBranch`
+grew its third phrase (`applyStatus`, self arm only), still silent on anything it
+has no words for.
+
+### The play gate, again — and this is the sharpest form of that call so far
+
+Ungated, for `attachFromTop`'s reason: every card carrying this op also prints
+"Then, shuffle your deck", a clause that always resolves, so "no eligible target"
+is never "no effect" (ruling/284). But the precedent is weaker here than anywhere
+it has been used before — Electric Generator is an ITEM, and **Janine is a
+SUPPORTER** (§7.2, one per turn), so her whiff costs the turn's Supporter play
+rather than a card. Same call as Miriam one slice ago, and the same mitigation:
+the prompt, not the gate.
+
+### Landed: 6 catalog rows
+Charizard ex ×4 (sv03-125/-215/-223/-228) — also the first registry row reached
+through an `onEvolve` trigger AND through Rare Candy, since D28's shared
+`placeEvolution` runs both. Janine's Secret Art ×2 (sv06.5-059/-088) — the first
+registry program to author `applyStatus` at all (every earlier one came from the
+attack deriver), and the first card in the repo that poisons its OWN Active.
+1446 → **1486** tests; engineVersion 0.28.0 → **0.29.0**.
+
+### Deferred, each with a named blocker
+- **Pawmot** (sv01-076/-209) "Electrogenesis" — "attach it to **this Pokémon**".
+  `EffectContext` carries no source uid, the same wall `discardEnergy`'s
+  `yourActive` arm documented. Unblocking it unlocks a family, and it is the
+  cheapest structural row left.
+- **Forretress ex** (sv02-005/-230) "Exploding Energy" — "If you searched your
+  deck in this way, **this Pokémon is Knocked Out**". A §9.2 gate into a KO by
+  EFFECT, which no op can do: flow.ts owns every Knock Out and the interpreter
+  never touches the tail (D23/D25).
+- **Geeta** (sv03-188/-218/-226) — the attach itself is this op with a
+  single-target cap, but "During this turn, your Pokémon **can't attack**" is a
+  turn-scoped restriction that does not exist yet.
+
+### Web — one field, and it is the first prompt that can refuse a legal-looking pairing
+`AttachCardsDialog` gained `maxPerTarget`: a target already holding its one Energy
+renders refused (`aria-disabled`, "has one"), and `promptKey` carries the field,
+since an assignment gathered under "in any way you like" is not a legal answer to
+a one-apiece prompt. One case had to be designed rather than translated: with ONE
+eligible {D} Pokémon, "up to 2" is a hard 1, and picking the second card would
+strand it against a list of rows that all refuse it. It is folded into the
+dialog's existing `atCap` so the pick is refused UP FRONT, with the live region
+explaining why "Attaching 1/2" is as far as it goes — the alternative left the way
+out (tap the card again) to be guessed.
+
+No new events, so no new log rows.
+
+### Review — 2 adversarial agents in isolated worktrees, 69 + 46 mutations
+**Engine+rules: ONE HIGH, and it was a claim rather than a behaviour** — the same
+one this session had already caught mid-flight, but the review found *four*
+divergences where I had found one. "The two readings coincide" is false against
+the op union, and not only for the reason recorded above: **`moveEnergy`'s
+`benchToActive` route produces a false POSITIVE** (attach to the Bench, move it
+up, get poisoned for an attach that never touched the Active), which the
+detach-only framing misses entirely. All four are pinned as tests now.
+
+Three more, all real:
+- **the prompt's `max` lied** whenever `maxPerTarget × targets` was the true
+  ceiling — Janine on the ordinary one-{D}-Pokémon board printed "up to 2" over a
+  board where 1 was the maximum, which is exactly the dishonesty
+  `attachFromTopOffer`'s own doc says its clamp exists to prevent. Now a third
+  ceiling in the same `min`, taken BEFORE the collapse so the offer holds no
+  representative the pick could not use. (The review declined this one as
+  "looks deliberate" — it was not, and the rules-doc paragraph it read as intent
+  was about the RULE, not the prompt.)
+- **the whiff filed nothing where its two sibling recording ops file `[]`** — with
+  three recording ops, the third disagreed by accident.
+- the Charizard fixture sat under a "verified verbatim" banner with **three**
+  undeclared deviations, the sharp one being that Charizard ex is a **{D}**
+  Pokémon that merely attacks with {R}. Corrected in the data, not just the note.
+
+Of 69 mutations, **15 survived the suite as first written**; the review's 33 new
+tests kill 11, and three of those mattered — a mutant that **duplicates a card**,
+one that **throws out of `applyAction`** (a D14 breach), and one that files the
+*picked* uids rather than the *attached* ones.
+
+**Web+integration: TWO HIGHs, both "a claim asserted in prose with no test under
+it"** — the failure mode this repo keeps rediscovering, and both were in the new
+test file's own header.
+- **`maxPerTarget` rides `promptKey`** was listed as a case "below" and had none:
+  deleting the field from the key left all 1524 tests green. The consequence is
+  concrete — an assignment gathered under "in any way you like" survives into a
+  one-apiece prompt, the dialog reads "Attach 2", and Confirm dispatches an answer
+  the engine rejects with a pill that cannot say which pairing was wrong.
+- **the log test's `texts()` helper discarded `entry.who` entirely**, so no
+  assertion in the file could see a seat — under a test named "names BOTH
+  attaches" that only checked "some row mentions Energy". Two mutants survived it:
+  the self-poison filed under the **opponent's** seat, and one of Janine's two
+  attaches never logged. Janine is the first `STATUS_APPLIED` in the game filed
+  under the controller's OWN seat, which is precisely why the seat rule exists.
+
+Also fixed: `tapCard`'s toggle-off — the documented "way out" of a pending pick,
+and the only one, since the dialog has no decline and `HudDialog` swallows Escape
+— was untested; and my own `noRoom` comment illustrated the feature with a board
+the clamp above had just made unreachable, contradicting a sibling test 60 lines
+away. One finding the review left as a design call is fixed here rather than
+deferred: a full target row **replaced** its spot with "has one", against the
+rule three lines above it, on exactly the board Janine creates (two identically
+named {D} Pokémon). The spot now rides the state instead of being replaced by it.
+
+1446 → **1526** tests.
+
+### Recorded, not fixed
+- **The P4 `pendingDecision` leak is qualitatively worse on three axes**, and the
+  earlier note's wording ("the controller's private **deck-top** uids") is now the
+  narrower half of the truth. (1) **Scope** — `attachFromTop` leaked "these are
+  among your top N", a bounded window; this leaks "these are somewhere in your
+  deck". (2) **A new kind of read: a hidden-zone COUNT by type.** When the collapse
+  yields fewer than the printed `max`, the opponent reads off how many matching
+  Basic Energy remain in the deck — Janine distinguishes 1 from ≥2, Charizard 1/2/≥3.
+  No other prompt leaks that. (3) The older note's own axis — a shuffle-leftovers
+  card's unattached candidates never become public by another route — now covers
+  **every** declined candidate here, because this op emits no search event at all.
+  Bounded by the interchangeable collapse (≤ `max` uids per class), which is the
+  one thing that keeps a deck-wide list from crossing.
+- **`maxPerTarget > 1` has no printed consumer.** The field is `number` and Janine
+  is the only card, at 1; the plural note branch is reachable only from a test.
+- **A full target row's disabled STYLING is unpinned** (no test in the game feature
+  asserts a class string — house style), and `promptKey` still omits `max`
+  (pre-existing).
+- **`GameLog` announces only a batch's LAST row** — fifth slice running. Janine's
+  batch ends on the poison, which is at least the interesting row; Charizard's ends
+  on `SHUFFLE`, so its three attaches are silent.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
