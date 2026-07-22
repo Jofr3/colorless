@@ -3,7 +3,52 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-21 — build session #32 (**P3-M5: the printed number is a
+**Last updated:** 2026-07-22 — build session #33 (**P3-M5: §9.2 — a clause that
+reads what an earlier clause DID**). The resume point's #1, and the engine's first
+**op→op data flow**. Every op until now was decidable from `GameState` plus the op;
+some printed clauses are not, because they ask what *this card's own earlier
+sentence* did — and a pile after an effect looks the same whether a card got there
+by that effect or was already sitting there. An op now files the uids it ACTUALLY
+moved under a named **`EffectSlot`**, and later ops read them: **two readers, one
+record** (the D40 shape) — a new **`recordGate`**, the third and last gate, spliced
+into the work queue like the other two; and **`discardPileRetrieval.exclude`**.
+**Superior Energy Retrieval ×2** is what makes the exclusion load-bearing rather
+than cosmetic: its cost pays INTO the very pile its next clause reads, so without
+it a player discards 2 Basic Energy and takes the same two straight back — the cost
+refunds itself. **Miriam ×3** is the gate ("if you shuffled any cards into your
+deck **in this way**, draw 3"), and **Dendra** can finally state its own printed
+"if you do" instead of resting on a gate in another file. Two structural calls,
+both deviations from the plan: the record rides **`EffectContinuation`, not
+`EffectContext`** (an accumulator, sibling to `rest`; the context is a constant read
+by ~30 helpers that would hold it going stale), and it is keyed by **slot, not
+position** — Janine's Secret Art prints a whole sentence between the action and the
+clause about it, and Miriam's adjacent sentences stop being adjacent under the
+natural decomposition of "shuffle N into your deck". Absent when empty, so every
+pre-§9.2 program parks byte-identically. engineVersion 0.27.0 → **0.28.0**; 1395 →
+**1446** tests, `bun run check` + `vite build` green. **Review (2 adversarial agents
+in ISOLATED worktrees): NO HIGH engine-side** (49 mutations, 42 killed, 7 argued
+equivalent; D14 replay verified through a JSON round-trip at every park, deep-freeze
+purity, conservation over five degenerate zone states) — but its sharpest MEDIUM is
+that **the slice's headline claim was never exercised**: `resumeProgram`'s
+record-seeding could be deleted with all 12 original tests green, because neither
+shipped card READS `cont.record` (both record and read inside one `runProgram`), so
+the assertions pinned the STORAGE and not the CARRY. **ONE HIGH web-side, and it is
+a design gap: the prompt described half the card.** Miriam's dialog said "Shuffle up
+to 5 Pokémon…" over a button reading "Take none" and mentioned the 3 cards NOWHERE,
+so declining silently forfeited the draw and the turn's only Supporter — the gate's
+false arm emits no event either. Every prompt note before §9.2 was the whole printed
+effect because an op WAS the whole effect; a recording op is the first that is not.
+Fixed in the ENGINE: a parking op that records looks DOWN THE QUEUE for the gate
+reading it and appends the printed conditional, so Dendra's cost prompt is now its
+printed sentence verbatim — with a describer that stays **silent on anything it has
+no phrase for**. Three more web MEDIUMs were **false claims in this slice's own
+prose** (what Miriam prints; why the shuffle must precede the draw — runtime-
+disproved; and a self-match tripwire whose stated reason this slice rotted by
+putting a Supporter on the op), all corrected at the source. See D48.
+
+---
+### Prior header (P3-M5 the FLOOR + the deck-bottom payment, kept for continuity)
+**Last updated (was):** 2026-07-21 — build session #32 (**P3-M5: the printed number is a
 FLOOR, and the hand cost that is NOT a discard**). The resume point's #1, and it
 turned out to be one claim wearing two hats: **the printed number and the printed
 verb are the ENGINE's to state, not the caller's to infer.** (1)
@@ -354,7 +399,84 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**The FLOOR + the deck-bottom payment are live (P3-M5, D47) — engine 0.27.0.**
+**§9.2 op→op data flow is live (P3-M5, D48) — engine 0.28.0.** An op files the uids
+it moved under a named `EffectSlot`; later ops read them through a `recordGate`
+(Miriam's "in this way", Dendra's "if you do") or `discardPileRetrieval.exclude`
+(Superior Energy Retrieval's "with the effect of this card"). 5 catalog rows. The
+record rides `EffectContinuation`, is absent when empty, and is keyed by slot
+rather than position. A parking op that records now states what its answer BUYS in
+the prompt note — the web review's HIGH, and the first time a note was not the
+whole printed effect.
+**Next concrete actions:**
+1. **Janine's Secret Art** (sv06.5-059/-088) is now the best-supported row on the
+   board — two of its three pieces exist. "Choose **up to** 2 of your {D} Pokémon.
+   For each of those Pokémon, search your deck for a Basic {D} Energy card and
+   attach it to that Pokémon. Then, shuffle your deck. If you attached Energy to
+   your Active Pokémon **in this way**, it is now Poisoned." The "in this way" is
+   §9.2 (built), the "up to 2" is §9.1's other end (the prompt can express it,
+   `min: 0`, and nothing uses it yet), and the genuinely new piece is a
+   **per-target deck search** — neither `attachFromTop` (no window) nor
+   `attachEnergyFrom` (the source is the deck, one search PER chosen Pokémon).
+   Note it also needs the record to name a POKÉMON rather than a card, or a
+   `recordGate` variant that asks "was the Active among them" — the first reader
+   that wants more than "did anything move".
+2. **The cheapest reader of "choose up to N Pokémon" alone: Saguaro**
+   (sv02-187/-255/-270) — "Choose up to 2 of your Pokémon and heal 50 damage from
+   each of them", which wants `healChosen` widened with a count rather than a new
+   op.
+3. **Ortega** (sv03-190/-219) — the same "in this way" gate over an OPPONENT-side
+   pick from a hidden zone: "Your opponent reveals their hand, and you choose a
+   card you find there and put it on the bottom of their deck. If you put a card
+   on the bottom of your opponent's deck in this way, your opponent may draw a
+   card." The gate exists; what does not is a prompt over a zone the ACTOR must be
+   shown but does not own — and it is the first "your opponent **may**" (a decline
+   belonging to the other seat).
+4. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
+   optional discard that BUYS an effect (Bellibolt ex), a variable count with
+   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
+   Eiscue ex, Weavile), a repeat count (Krookodile).
+5. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
+   PASSIVE, the third consumer (`passivesOf` takes no seat today).
+6. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
+   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
+   (see below), D40's `stadium.owner` + `prizesRemaining` projection additions, and
+   the engine-exported preview predicates the HUD needs.
+**Recorded, NOT fixed (this slice):** **Miriam is playable into an empty discard**,
+spending the turn's only Supporter for a bare deck shuffle, and **SER is playable
+into a discard with no Basic Energy**, spending 2 cards for nothing. Both follow the
+shipped doctrine (ruling/284 — a shuffle is an effect; SER matches ungated Energy
+Retrieval exactly), but **Miriam is the first SUPPORTER on `discardPileRetrieval`**,
+where a whiff costs the turn rather than a card — the prompt is the mitigation, not
+the gate, and that asymmetry is the thing to revisit if a gate is ever added.
+**`promptKey`'s `chooseCards` bounds are unpinned** (dropping `min`/`max` from the
+key leaves the suite green) — unreachable today since hand and discard uids never
+collide, but SER is the first shipped card to park TWICE on one prompt kind, so the
+hole is now load-bearing for the next one. **The P4 `pendingDecision` leak is
+UNCHANGED by this slice** (runtime-confirmed: the projection copies `phase.prompt`
+only, so the record never crosses) — but `EffectContinuation.record` is the first
+phase-persisted data naming cards by uid AFTER they moved, and a `payFromHand`
+`to: "deckBottom"` with `recordAs` followed by a PARKING op would persist
+hidden-zone uids inside the phase; no printed card reaches that shape, and P4's
+filter must strip `cont` regardless. **`GameLog` announces only a batch's LAST
+row** (fourth slice running) — Miriam is the worst-shaped batch yet (retrieve /
+shuffle / draw) and the silenced row is the one saying what the card did.
+**Every prompt note states only its OWN op** — `withConsequence` fixes the §9.2
+case by scanning the queue, but a note builder still cannot see a `coinFlipGate` or
+`conditionGate` around it. **Carried forward (pre-existing, NOT this slice):**
+`legal_standard = 0` on most Trainers in the local ingest — **broader than
+previously recorded**: it is not a Supporter-specific gap (58/67 Supporters, 26/29
+Items, 9/11 Stadiums, 9/12 Tools); `GamePage`'s `passDisabled` phase check is
+untested; Fighting Au Lait is still playable with nothing damaged anywhere;
+`validateChoice` does not pin a multi-count pick to a single host; `handCostUnmet`
+is not compositional across two costs in one program; the played Trainer sits UNDER
+its own payment in the discard pile; and from D42 the attack epilogue sweeps ONE
+seat, so a KO an attack inflicts on the ATTACKER's own board is missed — **do that
+before landing any self-damaging attack text** (sv01-038 Skeledirge is one deriver
+sentence away).
+
+---
+### Prior resume point (P3-M5 the FLOOR + the deck-bottom payment, kept for continuity)
+**(was)** **The FLOOR + the deck-bottom payment are live (P3-M5, D47) — engine 0.27.0.**
 `choosePokemonMulti` now carries `min`/`max` + `declinable`, so a printed "choose
 1" is exactly one (Meowscarada ex / Radiant Blastoise can no longer pay an
 irreversible cost and place nothing) and Hawlucha's "you may choose 2" is 2 or

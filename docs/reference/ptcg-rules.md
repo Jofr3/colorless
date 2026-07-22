@@ -387,6 +387,47 @@ is therefore **2 or none** — never 1 of 2 — and the "may" of an *activated* 
 ("Once during your turn, you **may** …") is spent by choosing to use the Ability at
 all, so it adds nothing to the choice that follows.
 
+### 9.2 A clause can refer to what an earlier clause of the SAME card did
+
+Most printed clauses are answerable from the board. Some are not: they ask what
+*this card's own earlier sentence* actually did a moment ago, and the board cannot
+tell you, because the board after the effect looks the same whether a card got
+there by this effect or was already sitting there. Three wordings, one idea:
+
+- "If you shuffled any cards into your deck **in this way**, draw 3 cards."
+  (Miriam) — the benefit is conditional on the earlier clause having moved
+  *something*. Declining an "up to" is a legal answer, and then this is false.
+- "**If you do**, draw cards until you have 5 cards in your hand." (Dendra) — the
+  same conditional, printed as the family's opening words. §7.5's play gate
+  usually makes the false arm unreachable, but the sentence still says it.
+- "(You can't choose a card you discarded with **the effect of this card**.)"
+  (Superior Energy Retrieval) — the earlier clause's *specific cards* are barred
+  from the later clause's choice. Here the board genuinely cannot answer: the
+  cards paid and the cards already in the pile are the same kind of card in the
+  same zone, and only the history distinguishes them.
+
+Two consequences worth stating separately, because each is a rule the engine has
+to get right:
+
+1. **It is the cards, not the kind.** Superior Energy Retrieval bars the two
+   Energy *you just discarded*, not "Energy like the ones you discarded" — a
+   second copy of the identical print already in the pile stays choosable.
+2. **The clause need not be adjacent to the one it refers to.** Janine's Secret
+   Art prints "… Then, **shuffle your deck**. If you attached Energy to your
+   Active Pokémon **in this way**, it is now Poisoned" — a whole sentence stands
+   between the action and the clause about it. Miriam's two sentences *are*
+   adjacent on the card, but they stop being adjacent in any engine that models
+   "shuffle N cards into your deck" as a move followed by a shuffle, which is the
+   natural decomposition. Either way, "the previous thing that happened" is not a
+   workable reading of "in this way".
+
+**Ordering.** "Shuffle X into your deck" is one clause and the shuffle is *part of
+it*: the cards go in and the deck is randomised before anything later reads it. A
+resolution that put the cards back and drew before shuffling would leave them in a
+**known position** — bottom of deck, in the order they were picked — which is
+exactly what the printed word "shuffle" denies. (Miriam is the case in scope: the
+draw that follows must come off a shuffled deck.)
+
 ---
 
 ## 10. Evolution

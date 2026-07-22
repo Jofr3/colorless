@@ -2963,6 +2963,182 @@ dialog dispatches (a dialog sending "the first `max` candidates" passed every
 length-only assertion), the live region surviving short→satisfied, and the
 declinable-at-zero wording.
 
+## M5 op-slice: §9.2 — a clause that reads what an earlier clause DID (engine 0.28.0)
+
+The engine's first **op→op data flow**, and the mechanism two families had been
+waiting on. Everything before this could be decided from `GameState` plus the op
+itself. These cannot:
+
+| Printed clause | Card | What it needs |
+|---|---|---|
+| "If you shuffled any cards into your deck **in this way**, draw 3 cards." | Miriam ×3 | did the earlier op move anything? |
+| "**If you do**, draw cards until you have 5." | Dendra ×3 | the same question, on a payment |
+| "(You can't choose a card you discarded with **the effect of this card**.)" | Superior Energy Retrieval ×2 | *which* cards the earlier op moved |
+
+### Why the board cannot answer these
+A pile after an effect looks the same whether a card got there by that effect or
+was already sitting there. Superior Energy Retrieval is the sharp case: it pays
+its hand cost **into the very discard pile its next clause reads**, so the two
+Basic Energy just spent and the Basic Energy that were already there are the same
+kind of card in the same zone. Only the *history* distinguishes them — and without
+that distinction the player takes back exactly what they paid, the cost refunds
+itself, and a 2-card price becomes a free +2.
+
+### The shape: a named slot, a running record
+- **`EffectSlot = "paid" | "moved"`** (effects.ts) — a CLOSED union, so a mistyped
+  reference is a compile error. It has to be closed: an unrecorded slot reads as
+  "nothing moved", which is indistinguishable from a real empty answer, so a typo
+  would quietly cost Miriam its draw with every test still green.
+- **`EffectRecord`** (interpreter.ts) — `{[K in EffectSlot]?: string[]}`, threaded
+  through `runProgram` / `stepOp` / `applyChoice` as a mutable accumulator, exactly
+  like `events`.
+- **`recordAs`** on `payFromHand` and `discardPileRetrieval` files the uids
+  ACTUALLY moved (not offered, not picked — a wire-dropped uid never moved).
+- **Two readers, one record** (the D40 shape): `discardPileRetrieval.exclude`
+  removes them from a candidate set, and a new op **`recordGate {slot, then,
+  otherwise?}`** branches on whether any were filed.
+
+### `EffectContinuation`, not `EffectContext` — a deliberate deviation
+The backlog named `EffectContext` as the home for three slices running. It is the
+wrong one. The context is **who** the program runs for: one seat, constant for the
+whole program, read by ~30 helpers that would then be holding a value going stale
+under them mid-run. The record is the opposite — an accumulator that changes at
+nearly every op. Its sibling is **`rest`** ("the ops still to run") on the
+continuation, not `seat`. `EffectContinuation.record` is optional and omitted when
+empty, so every program that predates §9.2 parks into a byte-identical phase.
+
+### Slot-keyed, not position-keyed — and the first card refutes the cheaper design
+The obvious cheaper mechanism is "read the previous op's result". **Miriam kills
+it** — though not, as a first draft of this section claimed, at the level of the
+print. Miriam prints two ADJACENT sentences; the gap is the ENGINE's, because
+"shuffle up to 5 Pokémon into your deck" is authored as a move plus a trailing
+`shuffleDeck` (the Pal Pad / Super Rod pattern), putting the referenced op two
+upstream. That decomposition is forced: the shuffle must precede the draw, or the
+returned Pokémon sit at the deck's BOTTOM in pick order — what "shuffle" denies.
+(Not, as also first claimed, because the player would draw cards they had seen:
+`retrieveMove` appends to the END of the deck, so a draw-first program deals the
+unshuffled pre-existing top and cannot reach the returned cards at all. The
+review caught both overstatements by running the mutant.)
+
+**Janine's Secret Art** (sv06.5-059, unauthored) is the print-level proof: "…
+Then, shuffle your deck. If you attached Energy to your Active Pokémon **in this
+way**, it is now Poisoned" — a whole sentence between the action and the clause.
+A trailing shuffle is the commonest clause in the vocabulary, so "the previous
+op" would be wrong across the family either way.
+
+### The third gate, and why it is not a `BoardCondition`
+`recordGate` splices into runProgram's work queue exactly like `coinFlipGate` and
+`conditionGate`, so an op inside a branch can still park. It is **not** a new
+`BoardCondition` member, even though `conditionGate` would then have carried it
+for free: that union is shared with the printed PLAY gate (`trainerPlayableIf`),
+which is checked **before anything has run**. A condition reading an op result
+would be answerable in one consumer and meaningless in the other — keeping it out
+is what makes the nonsense unrepresentable. It emits no event, for
+`conditionGate`'s reason plus one more: the recording op already announced exactly
+these cards (`HAND_COST_PAID` / `DISCARD_RETRIEVED`), so a gate event would be a
+second telling of one fact.
+
+`handRefresh`'s `onlyIfAnyMoved` (Iono, Skwovet) is the same idea confined to ONE
+op — which is all those cards need, since their move and their draw are the same
+op. This is that idea BETWEEN ops, and across a park.
+
+### The record is keyed by UID, not by card id
+Superior Energy Retrieval bars the two Energy *you just discarded*, not "Energy
+like the ones you discarded" — a second copy of the identical print already in the
+pile stays choosable. That is the printed sentence read literally, and it is the
+reason the record carries uids. (Note the contrast with D42's interchangeable
+collapse, which keys a Basic Energy by what it PROVIDES: there the question is
+"which of these should I pick", where copies really are the same; here it is
+"which physical card was it", where they are not.)
+
+### Where the recording actually happens — both paths
+Both recording ops PARK, so nearly every recording is made on the resume path
+(`applyChoice`, reached through `resolveEffect`). But `payFromHand` also resolves
+INLINE when its offer is no bigger than `count` — the ordinary late-game hand with
+nothing to spare — so the recording exists in `stepOp` too. A record written on
+only one of the two paths would leave exactly the tightest hand refunding its own
+payment.
+
+### Landed: 5 catalog rows
+Miriam ×3 (sv01-179/-238/-251), Superior Energy Retrieval ×2 (sv02-189/-277), plus
+Dendra re-authored so its printed "If you do" is stated in the program rather than
+resting on a gate in another file. Both `payFromHand` and `discardPileRetrieval`
+backlog rows are now closed except for Pelipper (an Ability). 1395 → **1446**
+tests; engineVersion 0.27.0 → **0.28.0**.
+
+### Review — 2 adversarial agents in ISOLATED worktrees, 49 + web mutations
+**Engine+rules: NO HIGH.** 49 mutations, 42 killed, 7 survivors argued equivalent
+(`validateChoice` proves every pick is a distinct member of the offer, so the
+apply helpers' defensive filters have no reachable differing input). It verified
+D14 replay through a JSON round-trip at *every* park, deep-freeze purity, card
+conservation across five degenerate zone states, 8 garbage wire shapes, and all
+six printed texts verbatim. Its three MEDIUMs were all **test holes**, each fixed
+with the test that kills the mutant, and the first is the sharpest:
+
+- **the slice's headline claim was never exercised** — `resumeProgram`'s
+  `{...cont.record}` could be replaced with `{}` and all 12 original tests passed.
+  Neither shipped card *reads* `cont.record`: both record and read inside one
+  `runProgram`. The assertions pinned the **storage**, not the **carry**. Closed
+  by a program that records, parks on a LATER op, then gates.
+- **3 of the 5 new registry rows were unpinned** — the reprint ids could be
+  deleted or misrouted with the suite green (the exact test `deckBottom.test.ts`
+  ships for Dendra, and the third slice running to need it).
+- **resume-seeding purity was unproven** — seeding by aliasing survived; a
+  deep-freeze test now proves the stored record is never written through.
+
+**Web+integration: ONE HIGH, and it is a design gap the engine review could not
+see** — *the prompt described half the card*. Miriam's dialog said "Shuffle up to
+5 Pokémon from your discard pile into your deck." with a button reading "Take
+none", and **nothing anywhere mentioned the 3 cards**. Every prompt note before
+§9.2 was the whole printed effect, because an op WAS the whole effect; a recording
+op is the first that is not, so declining silently forfeited the draw *and* the
+turn's only Supporter — and the `recordGate`'s false arm emits no event, so the
+log said nothing either. Fixed in the engine, not the web: a parking op that
+records now looks DOWN THE QUEUE for the gate that reads it and appends the
+printed conditional (`withConsequence`). Dendra's cost prompt is now its printed
+sentence verbatim. The describer is deliberately tiny and **silent on anything it
+has no phrase for** — a partial consequence is worse than none.
+
+Three MEDIUMs were **false claims in this slice's own prose**, all corrected at
+the source, and they are the reason the review is worth its cost:
+
+- "Miriam prints retrieve → shuffle → in this way" — **it does not**. Miriam
+  prints two ADJACENT sentences; the gap is the engine's decomposition. Janine's
+  Secret Art is the print-level proof and now carries the argument.
+- "drawing first would hand the player cards off a deck top they have just seen"
+  — **runtime-disproved**. `retrieveMove` appends to the deck's END, so a
+  draw-first program deals the unshuffled pre-existing top and cannot reach the
+  returned cards. The real reason is that they would sit at the BOTTOM in pick
+  order, which is what "shuffle" denies.
+- `discardPileRetrieval`'s self-match tripwire read "every card in scope is an
+  Item…" — **Miriam is a Supporter on that op**, so the stated reason had rotted
+  this slice; reworded to the still-true one (no card's filter matches its own
+  category).
+
+Also applied: the retrieval note carries SER's printed exclusion parenthetical
+(the player watches those cards land in the public discard, so an offer that omits
+them without explanation contradicts the board); a whiffing retrieval now files an
+EMPTY answer rather than leaving a stale slot, so the two recording ops agree; and
+Confirm's verb follows the engine's `dest` ("Shuffle 2" into the deck, "Take 2"
+into hand) — wrong on Pal Pad and Super Rod since 0.15.0 and untested until now.
+The web agent's 11 DOM tests also closed `DISCARD_RETRIEVED`'s log copy, which had
+been unpinned in BOTH arms since engine 0.15.0.
+
+### Recorded, not fixed
+- **Miriam is playable into an empty discard**, spending the turn's only Supporter
+  for a bare deck shuffle, and **SER is playable into a discard with no Basic
+  Energy**, spending 2 cards for nothing. Both follow the shipped doctrine
+  (ruling/284: a shuffle is an effect; SER matches ungated Energy Retrieval
+  exactly), but Miriam is the first SUPPORTER on this op, where a whiff costs the
+  turn rather than a card. The prompt is the mitigation, not the gate.
+- **`promptKey`'s `chooseCards` bounds are unpinned** (dropping `min`/`max` from
+  the key leaves the suite green). Unreachable today — hand uids and discard uids
+  never collide — but SER is the first shipped card to park twice on one prompt
+  kind, so the hole is now load-bearing for the next one.
+- **`GameLog` announces only a batch's LAST row** — Miriam is the worst-shaped
+  batch yet (retrieve / shuffle / draw), and the silenced row is the one saying
+  what the card did.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
