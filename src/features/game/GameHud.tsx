@@ -1113,9 +1113,13 @@ function ChooseCardsDialog({
               // focusable it is the only surface a keyboard user reaches that can
               // say what was required (the sibling's rule).
               `${prompt.dest === "deckBottom" ? "Put under deck" : "Discard"} ${picked.length}/${prompt.min}`
-            : picked.length === 0
-              ? "Take none"
-              : `Take ${picked.length}`}
+            : // The same rule on the "up to" side: the verb follows the ENGINE's
+              // destination. A retrieval into the DECK is a shuffle, and the
+              // heading right above already says so ("Shuffle up to 5 Pokémon …
+              // into your deck"), so a Confirm reading "Take 2" contradicted it —
+              // on Pal Pad and Super Rod since 0.15.0, and now on Miriam, where
+              // the same count also decides whether you draw.
+              `${prompt.dest === "deck" ? "Shuffle" : "Take"} ${picked.length === 0 ? "none" : picked.length}`}
         </button>
       </div>
     </HudDialog>

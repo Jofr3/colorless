@@ -87,6 +87,39 @@ export type CardFilter =
       pre-existing hole in a filter this slice did not touch.) */
   | { kind: "providesEnergy"; energyType: BasicEnergyType };
 
+/** The name under which one op files WHAT IT MOVED so that a LATER op in the
+    same program can read it — the interpreter's op→op data flow (the running
+    record lives in `EffectContinuation.record`, interpreter.ts).
+
+    IT EXISTS BECAUSE PRINTED SENTENCES REFER BACK TO EACH OTHER. Three wordings,
+    one mechanism, and each is a clause that cannot be evaluated from the board
+    alone because it asks what *this card's own earlier clause* actually did
+    (rules doc §9.2):
+
+      • "If you shuffled any cards into your deck **in this way**, draw 3 cards."
+        (Miriam) — a GATE on whether the earlier op moved anything;
+      • "(You can't choose a card you discarded with **the effect of this
+        card**.)" (Superior Energy Retrieval) — the earlier op's uids EXCLUDED
+        from a later op's candidate set;
+      • "**If you do**, draw cards until you have 5." (Dendra) — the same gate as
+        Miriam's, printed as the conditional the whole family opens with.
+
+    A SLOT NAME, NOT A POSITION. The obvious cheaper design — "read the previous
+    op's result" — is refuted by the very first card that needs this: Miriam
+    shuffles the deck BETWEEN the retrieval and the sentence referring to it, and
+    Janine's Secret Art (sv06.5-059, unauthored) prints the same shape ("Then,
+    shuffle your deck. If you attached Energy … in this way, …"). A trailing
+    shuffle is the single most common op in the vocabulary, so "previous op"
+    would be wrong on the majority of the family.
+
+    A CLOSED UNION so a typo is a COMPILE error rather than a silent false: an
+    unrecorded slot reads as "nothing moved", which is indistinguishable from a
+    real empty answer, so a mistyped `recordAs` would quietly cost Miriam its
+    draw. Two members, matching the two things a program records — what it PAID
+    (a `payFromHand` cost) and what it MOVED (a benefit). Add a member when a
+    card needs a third. */
+export type EffectSlot = "paid" | "moved";
+
 /** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
     `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
     pre-shuffle hand size plus `delta` (Brassius "draw that many cards plus 1" =
@@ -310,12 +343,35 @@ export type EffectOp =
       validation and, for the deck destination, the one vetted `shuffleDeck`.
 
       AUTHORING NOTE: `playTrainer` discards the played card UP FRONT (before its
-      program runs), so a card whose own `filter` MATCHES ITSELF would offer
-      itself as a retrieval candidate. Every card in scope is an Item retrieving
-      Energy/Pokémon/Supporters, so none self-matches — but a future Supporter
-      authored with `filter: {kind:"supporter"}` (or a card retrieving its own
-      category) would need the played uid excluded first. */
-  | { op: "discardPileRetrieval"; filter: CardFilter; dest: "hand" | "deck"; max: number }
+      program runs), so a card whose own `filter` MATCHES ITS OWN CATEGORY would
+      offer ITSELF as a retrieval candidate. No card in scope does — the safety is
+      that each one retrieves a category it is not a member of. It is NOT, as this
+      note used to say, that "every card here is an Item retrieving
+      Energy/Pokémon/Supporters": **Miriam is a Supporter on this op**, and the
+      only reason it is safe is that its filter is `anyPokemon`. A Supporter
+      authored with `filter: {kind:"supporter"}` would put itself in its own offer
+      and needs the played uid excluded first — which is what `exclude` now
+      exists to express, though the played uid is not currently recorded anywhere.
+
+      `exclude` is Superior Energy Retrieval's parenthetical, "(You can't choose
+      a card you discarded with the effect of this card.)": the uids an earlier
+      op filed under that `EffectSlot` are dropped from the candidate set before
+      the filter runs. It is not a nicety — SER pays its hand cost INTO the very
+      pile this op then reads, so without it a player could discard 2 Basic
+      Energy and take the same two straight back, which turns the cost into a
+      no-op and the card into a free +2. `recordAs` is the other end of the same
+      wire: Miriam files what it shuffled back so its printed "in this way" has
+      something to ask about. */
+  | {
+      op: "discardPileRetrieval";
+      filter: CardFilter;
+      dest: "hand" | "deck";
+      max: number;
+      /** File the uids actually moved under this slot (Miriam). */
+      recordAs?: EffectSlot;
+      /** Drop the uids filed under this slot from the candidates (SER). */
+      exclude?: EffectSlot;
+    }
   /** Look at the top `n` cards of the controller's deck and put up to `max`
       matching `filter` into their HAND (Great Ball: top 7, a Pokémon; Pokégear
       3.0: top 7, a Supporter — "you may reveal … and put it into your hand").
@@ -577,13 +633,15 @@ export type EffectOp =
           destination is the one thing that varies, so it is a field on the op and
           not a second op — WIDEN, DON'T COPY (the D44/D45/D46 pattern).
 
-          "IF YOU DO" IS ENFORCED BY THE GATE, NOT BY THIS OP. The op pays what it
-          can and the ops after it run regardless (the short-hand branch below is
-          "do as much as you can"), so a program whose cost silently paid nothing
-          would still hand out the benefit. Dendra cannot reach that state — an
-          unpayable cost refuses the play outright — but a card that made the
-          payment optional would need the conditional expressed between ops, which
-          is the `EffectContext` op→op flow Superior Energy Retrieval also wants.
+          "IF YOU DO" IS A `recordGate`, NOT SOMETHING THIS OP ENFORCES. The op
+          pays what it can and returns; the ops after it run regardless (the
+          short-hand branch below is "do as much as you can"). Dendra says the
+          conditional out loud, so its program says it too — `recordAs: "paid"`
+          here, and the draw inside a `recordGate` on that slot. The play gate
+          already makes the unpaid case unreachable through the action path, so
+          this changes no game a player can produce; it is the printed sentence
+          being expressible at all, which is what a card making the payment
+          optional would need.
 
       `filter` narrows WHICH cards may pay it — absent is the printed bare "a
       card" (Tinkaton, and every Trainer in the family), `anyEnergy` is "an
@@ -678,6 +736,10 @@ export type EffectOp =
           it, the rule `chooseCards.min` set one slice earlier. */
       to: "discard" | "deckBottom";
       filter?: CardFilter;
+      /** File the uids actually paid under this slot, for a later op to read —
+          Superior Energy Retrieval excludes them from its retrieval, Dendra
+          gates its draw on them ("if you do"). */
+      recordAs?: EffectSlot;
     }
   /** A BOARD-CONDITION branch: run `then` when `cond` holds for the controller,
       else `otherwise` (nothing, if absent). The deterministic sibling of
@@ -696,7 +758,32 @@ export type EffectOp =
       the table (see BoardCondition's public-state invariant), and the branch's
       own ops emit whatever actually happened. `cond` is evaluated against the
       state AS OF this op — after every earlier op in the program has applied. */
-  | { op: "conditionGate"; cond: BoardCondition; then: EffectOp[]; otherwise?: EffectOp[] };
+  | { op: "conditionGate"; cond: BoardCondition; then: EffectOp[]; otherwise?: EffectOp[] }
+  /** AN OP-RESULT branch: run `then` when an earlier op in this same program
+      filed at least one card under `slot`, else `otherwise` (nothing, if
+      absent). The third and last gate, spliced into the work queue by runProgram
+      exactly like the other two — so an op inside a branch can still park.
+
+      This is the printed "**in this way**" / "**if you do**" (§9.2): Miriam's
+      "If you shuffled any cards into your deck in this way, draw 3 cards" and
+      Dendra's "If you do, draw cards until you have 5". `handRefresh`'s
+      `onlyIfAnyMoved` rider is the same idea confined to ONE op, which is all
+      Iono and Skwovet need because their move and their draw are the same op;
+      this is that idea BETWEEN ops, and across a park.
+
+      **WHY A THIRD GATE AND NOT A `BoardCondition` MEMBER.** `conditionGate` and
+      the printed play gate (`trainerPlayableIf`) share one `BoardCondition`
+      union, and that sharing is only sound because a board condition is a fact
+      that exists BEFORE the card is played. An op result does not: nothing has
+      run when a play gate is checked, so a `BoardCondition` member reading one
+      would be answerable in one consumer and meaningless in the other. Keeping
+      it out of that union is what makes the nonsense unrepresentable.
+
+      Emits NO event, for `conditionGate`'s reason and one more: the branch turns
+      on something the game has ALREADY announced (the recording op emitted its
+      own DISCARD_RETRIEVED / HAND_COST_PAID naming exactly these cards), so a
+      gate event would be a second telling of one fact. */
+  | { op: "recordGate"; slot: EffectSlot; then: EffectOp[]; otherwise?: EffectOp[] };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

@@ -121,6 +121,8 @@ describe("the registry rows", () => {
         op: "payFromHand",
         count: 1,
         to: "deckBottom",
+        // §9.2 — the payment is filed so the printed "if you do" can read it.
+        recordAs: "paid",
       });
     }
     for (const id of ["sv01-151", "sv01-222"]) {
@@ -147,7 +149,11 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
     expect(prompt.min).toBe(1);
     expect(prompt.max).toBe(1);
     expect(prompt.dest).toBe("deckBottom");
-    expect(prompt.note).toBe("Put a card from your hand on the bottom of your deck.");
+    // The whole printed sentence, "if you do" included (§9.2): the note now
+    // carries what the ANSWER buys, read off the recordGate behind this op.
+    expect(prompt.note).toBe(
+      "Put a card from your hand on the bottom of your deck. If you do, draw cards until you have 5 cards in your hand.",
+    );
     expect(prompt.candidates).toHaveLength(3);
     // The payment parks BEFORE the draw it buys — the printed sentence order.
     expect(types(events)).not.toContain("HAND_COST_PAID");

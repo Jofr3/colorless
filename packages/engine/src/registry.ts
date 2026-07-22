@@ -536,11 +536,25 @@ const EARTHEN_VESSEL: CardProgram = {
 
     `drawUntilHandSize` never trims, so a hand already above 5 after paying simply
     draws nothing (Grusha's rule, unchanged) — a real Dendra line late in a game,
-    and the only one where the Supporter is spent for a single card rotation. */
+    and the only one where the Supporter is spent for a single card rotation.
+
+    "IF YOU DO" IS NOW SAID OUT LOUD (§9.2). The draw sits inside a `recordGate`
+    on the payment, which is what the card prints. It changes no game a player can
+    reach — `handCostUnmet` refuses the play when there is nothing to pay with, so
+    the payment either happens or the card is never played — and that is exactly
+    why it is worth stating: the conditional's correctness currently rests on a
+    gate in another file agreeing with it, and this makes the program true on its
+    own. Running the program directly against an empty hand (which the tests do,
+    and only they can) now draws nothing instead of filling to 5. */
 const DENDRA: CardProgram = {
   trainer: [
-    { op: "payFromHand", count: 1, to: "deckBottom" },
-    { op: "drawUntilHandSize", size: 5 },
+    { op: "payFromHand", count: 1, to: "deckBottom", recordAs: "paid" },
+    {
+      op: "recordGate",
+      slot: "paid",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [{ op: "drawUntilHandSize", size: 5 }],
+    },
   ],
 };
 
@@ -801,6 +815,106 @@ const SUPER_ROD: CardProgram = {
   trainer: [
     { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "deck", max: 3 },
     { op: "shuffleDeck" },
+  ],
+};
+
+// ── M5 op-slice: §9.2 op→op data flow — the clause that refers back to what an
+//    earlier clause of the SAME card actually did. Three printed wordings, one
+//    running record: Miriam's "in this way", Superior Energy Retrieval's "with
+//    the effect of this card", Dendra's "if you do" (above).
+//    (verified vs the local catalog 2026-07-22). ──
+
+/** Miriam (sv01-179/-238/-251) — "Shuffle up to 5 Pokémon from your discard pile
+    into your deck. If you shuffled any cards into your deck in this way, draw 3
+    cards." (Supporter)
+
+    The card that makes the record a NAMED SLOT rather than "the previous op's
+    result", and it does so with its own middle op. Miriam prints TWO ADJACENT
+    sentences — the gap is the ENGINE's, because "shuffle up to 5 Pokémon … into
+    your deck" is authored as a move to the deck plus a trailing `shuffleDeck`
+    (the Pal Pad / Super Rod pattern), which puts the op the "in this way" clause
+    is about TWO ops upstream. That decomposition is not incidental: the shuffle
+    has to run before the draw, or the returned Pokémon sit at the BOTTOM of the
+    deck in the order they were picked — precisely what the printed word
+    "shuffle" denies. Janine's Secret Art (sv06.5-059, unauthored) prints the
+    non-adjacency outright ("Then, shuffle your deck. If you attached Energy … in
+    this way, …"), so positional reading fails at the print level too.
+
+    The retrieval is "up to", so declining it is legal and records nothing — and
+    then the gate is FALSE and the card draws nothing at all. That is the whole
+    point of the printed conditional: a player who wants only the shuffle cannot
+    also have the 3 cards.
+
+    NOT gated by `programPlayable` (an empty discard pile), for the reason
+    `attachFromTop` established: the trailing `shuffleDeck` always resolves, so
+    "no Pokémon to shuffle back" is never "no effect" — and it is the same
+    already-shipped call as Pal Pad and Super Rod into a discard holding nothing
+    they match.
+
+    THAT PRECEDENT IS WEAKER HERE THAN IT LOOKS, and the review was right to say
+    so: Pal Pad and Super Rod are ITEMS, where a whiff costs one card, and Miriam
+    is the first SUPPORTER on this op, where a whiff costs the turn's only
+    Supporter play (§7.2). The doctrine is about EFFECT, not price — ruling/284
+    asks whether the game state prevents any effect, and a deck shuffle is one
+    players deliberately buy — so the call stands. But the cost of being wrong
+    just went up, and the honest mitigation is the PROMPT rather than the gate:
+    the note now states the draw the answer buys, so a player declining into
+    nothing is doing it knowingly (interpreter.ts `withConsequence`). */
+const MIRIAM: CardProgram = {
+  trainer: [
+    {
+      op: "discardPileRetrieval",
+      filter: { kind: "anyPokemon" },
+      dest: "deck",
+      max: 5,
+      recordAs: "moved",
+    },
+    { op: "shuffleDeck" },
+    {
+      op: "recordGate",
+      slot: "moved",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [{ op: "drawCards", count: 3 }],
+    },
+  ],
+};
+
+/** Superior Energy Retrieval (sv02-189/-277) — "You can use this card only if
+    you discard 2 other cards from your hand. / Put up to 4 Basic Energy cards
+    from your discard pile into your hand. (You can't choose a card you discarded
+    with the effect of this card.)" (Item)
+
+    The `payFromHand` family's last row, and the one card whose two ops touch the
+    SAME pile in sequence: the cost pays INTO the discard, and the retrieval then
+    reads it. Without the exclusion a player pays two Basic Energy and takes the
+    same two back — the cost self-refunds, the card becomes a strict +2, and the
+    parenthetical the printer added precisely to stop it means nothing. So this
+    is not a cosmetic filter; it is the only thing making the cost a cost.
+
+    Note what is NOT excluded: Basic Energy already in the discard before the
+    play, and the OTHER kind of card paid (paying a Pokémon and an Energy bars
+    only the Energy from the offer, since the Pokémon was never a candidate).
+    The record is uid-keyed, so a second copy of the very same printed Energy
+    sitting in the pile stays takeable — correct, and the reason the record
+    carries uids rather than card ids.
+
+    UNGATED, like the rest of the family, and here the `attachFromTop` argument
+    does NOT apply — there is no trailing shuffle, so SER into a discard with no
+    Basic Energy really does spend 2 cards for nothing. It matches shipped Energy
+    Retrieval (sv01-171: same `dest: "hand"`, no shuffle, ungated), so this is the
+    family's standing doctrine question rather than a call this card makes; the
+    prompt is the mitigation again, since the cost's dialog names what it buys the
+    moment the retrieval offer is empty (it resolves with no second park at all). */
+const SUPERIOR_ENERGY_RETRIEVAL: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 2, to: "discard", recordAs: "paid" },
+    {
+      op: "discardPileRetrieval",
+      filter: { kind: "basicEnergy" },
+      dest: "hand",
+      max: 4,
+      exclude: "paid",
+    },
   ],
 };
 
@@ -1311,6 +1425,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-182": PAL_PAD, // Pal Pad — 2 Supporters from discard → deck (shuffle)
   "sv02-188": SUPER_ROD, // Super Rod — 3 Pokémon/Basic Energy from discard → deck (shuffle)
   "sv02-276": SUPER_ROD, // Super Rod (reprint)
+  // — M5 op-slice: §9.2 op→op data flow — a clause that reads what an earlier
+  //   clause of the same card DID (verified vs the local catalog 2026-07-22).
+  //   Both are also discardPileRetrieval rows: this is the op the mechanism was
+  //   missing at both ends, recording for Miriam and reading for SER. —
+  "sv01-179": MIRIAM, // Miriam — up to 5 Pokémon discard → deck, shuffle, "in this way" → draw 3
+  "sv01-238": MIRIAM, // Miriam (reprint)
+  "sv01-251": MIRIAM, // Miriam (reprint)
+  "sv02-189": SUPERIOR_ENERGY_RETRIEVAL, // Superior Energy Retrieval — pay 2, then up to 4 Basic Energy back, minus the 2 just paid
+  "sv02-277": SUPERIOR_ENERGY_RETRIEVAL, // Superior Energy Retrieval (reprint)
   // — M5 op-slice: lookAtTopN (verified vs the local catalog 2026-07-20). —
   "sv02-183": GREAT_BALL, // Great Ball — look at top 7, reveal a Pokémon → hand (shuffle)
   "sv01-186": POKEGEAR, // Pokégear 3.0 — look at top 7, reveal a Supporter → hand (shuffle)

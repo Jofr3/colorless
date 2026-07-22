@@ -82,8 +82,21 @@ import type { GameState, Seat } from "./types";
     because a payment to the discard becomes public and one to the deck never
     does. **Skwovet** ×2 ("Nest Stash") reaches the same destination with the
     WHOLE hand and needed no new op at all — `handRefresh` with Iono's `toBottom`
-    + `onlyIfAnyMoved`. */
-export const engineVersion = "0.27.0";
+    + `onlyIfAnyMoved`.
+
+    **0.28.0 — a clause can read what an earlier clause DID (§9.2).** The
+    engine's first op→op data flow: an op files the uids it moved under a named
+    `EffectSlot`, and a later op in the same program reads them. Two readers, one
+    record — the printed "in this way" / "if you do" is a new `recordGate` (the
+    third and last gate, spliced like the other two), and "you can't choose a card
+    you discarded with the effect of this card" is `discardPileRetrieval.exclude`.
+    Lands **Miriam** ×3 and **Superior Energy Retrieval** ×2, and lets **Dendra**
+    finally say its own "if you do". The record rides `EffectContinuation`, NOT
+    `EffectContext`: it is an accumulator, sibling to `rest`, where the context is
+    a constant. And it is keyed by SLOT rather than by position — Miriam shuffles
+    the deck between the retrieval and the sentence about it, so "the previous op"
+    would have been wrong on the very first card that needed this. */
+export const engineVersion = "0.28.0";
 
 export type {
   ApplyResult,
@@ -140,7 +153,7 @@ export {
 export { deriveAttackEffect } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
-export type { AttachTargetRiders, BoardCondition, CardFilter, EffectOp } from "./effects";
+export type { AttachTargetRiders, BoardCondition, CardFilter, EffectOp, EffectSlot } from "./effects";
 /** The one BoardCondition evaluator + its printed-text describer. Exported so a
     host holding raw engine state (today's hot-seat HUD) greys out a card whose
     printed "only if" gate is unmet using the SAME logic playTrainer rejects it
@@ -166,6 +179,7 @@ export type {
   EffectChoice,
   EffectContinuation,
   EffectPrompt,
+  EffectRecord,
   PokemonRef,
 } from "./interpreter";
 export type {

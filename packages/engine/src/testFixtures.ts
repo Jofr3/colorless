@@ -1082,6 +1082,22 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     attacks: [{ cost: ["Colorless", "Colorless"], name: "Bite", damage: 20 }],
   }),
+  // — M5 op-slice: §9.2 op→op data flow. Both rows verified verbatim against the
+  //   local catalog 2026-07-22. —
+  /** Miriam (sv01-179, Supporter) — the "in this way" gate, with the deck shuffle
+      sitting between the clause and the op it refers to. */
+  "sv01-179": trainerCard(
+    "sv01-179",
+    "Supporter",
+    "Shuffle up to 5 Pokémon from your discard pile into your deck. If you shuffled any cards into your deck in this way, draw 3 cards.",
+  ),
+  /** Superior Energy Retrieval (sv02-189, Item) — the hand cost that pays INTO
+      the pile its own next clause reads. */
+  "sv02-189": trainerCard(
+    "sv02-189",
+    "Item",
+    "You can use this card only if you discard 2 other cards from your hand.\n\nPut up to 4 Basic Energy cards from your discard pile into your hand. (You can't choose a card you discarded with the effect of this card.)",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1544,6 +1560,24 @@ export const DECK_BOTTOM_DECK = deckOf({
   "fix-grass-energy": 8, // a distinguishable class the pick can prefer
   "fix-water-energy": 8, // a second one, so a hand can hold three classes
   "fix-energy": 8, // Colorless basics — the filler that fills a deck out
+});
+
+/** M5 op-slice §9.2 op→op data flow (Miriam / Superior Energy Retrieval): the
+    two Trainers in multiples (handFromDeck pulls them), fix-basic-1 + fix-basic-2
+    as the Pokémon Miriam shuffles back (two names, so a pick is distinguishable
+    in the discard), fix-item as the plain card a hand cost prefers to pay, and
+    THREE basic Energy classes — the exclusion is only observable when the discard
+    can hold both a barred copy and an identical-print sibling that is still
+    takeable, which needs several of one type as well as several types. */
+export const OP_RECORD_DECK = deckOf({
+  "fix-basic-1": 10,
+  "fix-basic-2": 4,
+  "sv01-179": 4, // Miriam (Supporter)
+  "sv02-189": 4, // Superior Energy Retrieval (Item)
+  "fix-item": 6,
+  "fix-fire-energy": 12,
+  "fix-water-energy": 8,
+  "fix-energy": 12,
 });
 
 /** M5 coverage pass #1: a Fire attacker (Bite [C] 30 / Flame [Fire][C] 60) to

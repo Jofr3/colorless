@@ -13,6 +13,7 @@ import type {
   BoardCondition,
   CardFilter,
   EffectOp,
+  EffectSlot,
   HandRefreshDraw,
 } from "./effects";
 import type { GameEvent } from "./events";
@@ -211,13 +212,30 @@ export type EffectChoice =
       a legal decline. */
   | { kind: "attachCards"; assignments: { uid: string; to: PokemonRef }[] };
 
+/** What the ops ALREADY RUN in this program left behind for the ops still to
+    come — each recording op's moved uids under its printed `EffectSlot` (§9.2:
+    "in this way", "if you do", "with the effect of this card"). Threaded through
+    a run as a mutable accumulator, exactly like `events`, and carried across a
+    park inside the continuation.
+
+    DELIBERATELY NOT A FIELD ON `EffectContext`, which the backlog named as the
+    likely home. The context is WHO the program is running for — one seat, fixed
+    for the whole program, and read by ~30 helpers that would then be holding a
+    value going stale under them mid-run. This is the opposite: an accumulator
+    that changes at nearly every op. Its sibling is `rest` ("the ops still to
+    run") on the continuation, not `seat`. */
+export type EffectRecord = { [K in EffectSlot]?: string[] };
+
 /** The JSON continuation stored in the effect:choose phase: the op awaiting a
-    choice, the ops after it, and the context. Replaying `applyChoice(pendingOp)
-    → runProgram(rest)` resumes exactly where it parked. */
+    choice, the ops after it, the context, and what earlier ops recorded.
+    Replaying `applyChoice(pendingOp) → runProgram(rest)` resumes exactly where
+    it parked. `record` is absent when nothing has been recorded, so every
+    program in the vocabulary that predates §9.2 stores a byte-identical phase. */
 export interface EffectContinuation {
   pendingOp: EffectOp;
   rest: EffectOp[];
   ctx: EffectContext;
+  record?: EffectRecord;
 }
 
 export type RunResult =
@@ -236,6 +254,11 @@ export function runProgram(
   program: readonly EffectOp[],
   ctx: EffectContext,
   events: GameEvent[],
+  /** What earlier ops recorded (§9.2). Every caller but `resumeProgram` starts a
+      program from the top, where nothing has run yet — hence the default, which
+      is also what keeps this widening invisible to attack.ts / cardplay.ts /
+      triggers.ts / flow.ts. Mutated in place as the run proceeds, like `events`. */
+  record: EffectRecord = {},
 ): RunResult {
   let next = state;
   const queue: EffectOp[] = [...program];
@@ -257,14 +280,113 @@ export function runProgram(
       queue.unshift(...(conditionHolds(next, ctx.seat, op.cond) ? op.then : (op.otherwise ?? [])));
       continue;
     }
-    const stepped = stepOp(next, op, ctx, events);
+    if (op.op === "recordGate") {
+      // The printed "in this way" / "if you do" (§9.2 — Miriam, Dendra), spliced
+      // like the other two gates so an op inside a branch can still park. Reads
+      // the RUNNING record, not `ctx`: what makes this gate different from the
+      // other two is that its answer is produced by this very program, so it
+      // must see writes made since the run started — including one made by an
+      // op that parked and resolved through resolveEffect. No event: the
+      // recording op already announced these cards by uid.
+      queue.unshift(...(recorded(record, op.slot).length > 0 ? op.then : (op.otherwise ?? [])));
+      continue;
+    }
+    const stepped = stepOp(next, op, ctx, events, record);
     if ("park" in stepped) {
       // rest = the queue as it stands after shifting `op` — a plain EffectOp[].
-      return { kind: "parked", state: next, prompt: stepped.park, cont: { pendingOp: op, rest: [...queue], ctx } };
+      return {
+        kind: "parked",
+        state: next,
+        // The prompt describes its own op; a §9.2 gate makes the ANSWER buy
+        // something the op cannot see. `queue` is the only place that is
+        // knowable, which is why this is folded in here and not in the note.
+        prompt: withConsequence(stepped.park, op, queue),
+        cont: { pendingOp: op, rest: [...queue], ctx, ...carriedRecord(record) },
+      };
     }
     next = stepped.done;
   }
   return { kind: "done", state: next };
+}
+
+/** The uids filed under `slot`, or none. */
+function recorded(record: EffectRecord, slot: EffectSlot): readonly string[] {
+  return record[slot] ?? [];
+}
+
+/** The slot a parking op will file its answer under, if any. */
+function recordSlotOf(op: EffectOp): EffectSlot | undefined {
+  return op.op === "payFromHand" || op.op === "discardPileRetrieval" ? op.recordAs : undefined;
+}
+
+/** THE PROMPT MUST SAY WHAT THE ANSWER BUYS. Every prompt note before §9.2 was
+    the whole printed effect, because an op WAS the whole effect. A recording op
+    is the first that is not: Miriam's dialog describes a deck shuffle while the
+    answer silently decides three cards, and "take none" reads as declining a
+    minor extra rather than forfeiting the draw and the turn's only Supporter.
+
+    So a parking op that records looks DOWN THE QUEUE for the gate that reads it
+    and appends the printed conditional. The queue is where this is knowable —
+    a note builder sees one op, and the gate is a different op entirely.
+
+    Silence beats a guess: an unrecognised op in the branch yields no clause at
+    all rather than a partial one, so a future gate branch this describer has no
+    phrase for degrades to the pre-§9.2 note instead of announcing half a
+    consequence. Only TOP-LEVEL gates are scanned, matching every other scan over
+    a program (`programPlayable`, `handCostUnmet`). */
+function withConsequence(
+  prompt: EffectPrompt,
+  op: EffectOp,
+  queue: readonly EffectOp[],
+): EffectPrompt {
+  const slot = recordSlotOf(op);
+  if (slot === undefined) return prompt;
+  const gate = queue.find((q) => q.op === "recordGate" && q.slot === slot);
+  if (gate === undefined || gate.op !== "recordGate") return prompt;
+  const clause = describeBranch(gate.then);
+  return clause === null ? prompt : { ...prompt, note: `${prompt.note} If you do, ${clause}.` };
+}
+
+/** A gate branch as a printed phrase, or null when any op in it has none.
+    Deliberately TINY — it covers exactly the automatic ops the two §9.2 gates
+    branch into today (Miriam draws 3, Dendra draws to 5) and refuses everything
+    else, because a describer that guesses is how a dialog starts lying. Grow it
+    one case per card, the `retrieveNoun` rule. */
+function describeBranch(ops: readonly EffectOp[]): string | null {
+  const parts: string[] = [];
+  for (const op of ops) {
+    switch (op.op) {
+      case "drawCards":
+        parts.push(op.count === 1 ? "draw a card" : `draw ${op.count} cards`);
+        break;
+      case "drawUntilHandSize":
+        parts.push(`draw cards until you have ${op.size} cards in your hand`);
+        break;
+      default:
+        return null;
+    }
+  }
+  return parts.length === 0 ? null : parts.join(", then ");
+}
+
+/** File `uids` under `slot`, if the op asked for it. Always a FRESH array: the
+    record a park stored lives inside `GameState` (the phase's continuation), and
+    a resumed run seeds its accumulator from it — so writes must replace entries,
+    never mutate the arrays behind them. */
+function recordMoved(
+  record: EffectRecord,
+  slot: EffectSlot | undefined,
+  uids: readonly string[],
+): void {
+  if (slot !== undefined) record[slot] = [...uids];
+}
+
+/** The continuation's `record` field, or NOTHING when nothing has been recorded
+    — so a program that never touches §9.2 parks into the exact phase shape it
+    parked into before this existed. Copied, so the stored record cannot be
+    reached by a later write to the running accumulator. */
+function carriedRecord(record: EffectRecord): { record?: EffectRecord } {
+  return Object.keys(record).length === 0 ? {} : { record: { ...record } };
 }
 
 /** Resume a parked effect: apply the awaited op with the (already validated)
@@ -275,8 +397,14 @@ export function resumeProgram(
   choice: EffectChoice,
   events: GameEvent[],
 ): RunResult {
-  const applied = applyChoice(state, cont.pendingOp, choice, cont.ctx, events);
-  return runProgram(applied, cont.rest, cont.ctx, events);
+  // Seed the accumulator from the stored record (a COPY — the stored one is
+  // inside GameState), let the resolving op file its own result into it, then
+  // run the rest against it. This is the whole of what makes §9.2 survive a
+  // park: Superior Energy Retrieval's cost and Miriam's retrieval both PARK, so
+  // every recording this engine can do happens on exactly this path.
+  const record: EffectRecord = { ...cont.record };
+  const applied = applyChoice(state, cont.pendingOp, choice, cont.ctx, events, record);
+  return runProgram(applied, cont.rest, cont.ctx, events, record);
 }
 
 /** One synchronous step, or a park request. Parking ops compute their
@@ -288,6 +416,7 @@ function stepOp(
   op: EffectOp,
   ctx: EffectContext,
   events: GameEvent[],
+  record: EffectRecord,
 ): { done: GameState } | { park: EffectPrompt } {
   switch (op.op) {
     case "applyStatus":
@@ -386,10 +515,28 @@ function stepOp(
       // Also "up to" → parks on the SAME chooseCards prompt whenever ≥1 candidate
       // (the player may still take none); an empty match is a no-op, and any
       // trailing shuffleDeck op still fires — exactly like searchDeck's whiff.
-      const candidates = state.players[ctx.seat].discard.filter((uid) =>
-        matchesFilter(cardOf(state, uid), op.filter),
+      //
+      // `exclude` is Superior Energy Retrieval's "(You can't choose a card you
+      // discarded with the effect of this card.)" — the cards its own cost paid
+      // INTO this pile a moment ago (§9.2). Applied to the CANDIDATES, which is
+      // the only place it can bite: the offer is what resolveEffect's
+      // validateChoice checks a pick against, so an excluded uid is unreachable
+      // from the wire as well as absent from the dialog.
+      const barred = new Set(op.exclude === undefined ? [] : recorded(record, op.exclude));
+      const candidates = state.players[ctx.seat].discard.filter(
+        (uid) => !barred.has(uid) && matchesFilter(cardOf(state, uid), op.filter),
       );
-      if (candidates.length === 0 || op.max <= 0) return { done: state };
+      // A whiff FILES AN EMPTY ANSWER rather than filing nothing. Both are false
+      // to the gate that may follow ("if you shuffled any cards … in this way" —
+      // you shuffled none), but only one of them is false to a slot some earlier
+      // op already wrote: an op that ran and moved nothing must overwrite, or a
+      // stale value survives it. Unreachable while each slot has one writer, and
+      // the closed `EffectSlot` union makes reuse easy rather than hard — so the
+      // two recording ops agree here instead of differing by accident.
+      if (candidates.length === 0 || op.max <= 0) {
+        recordMoved(record, op.recordAs, []);
+        return { done: state };
+      }
       return {
         park: {
           kind: "chooseCards",
@@ -397,7 +544,7 @@ function stepOp(
           min: 0, // "up to" — taking none is a legal answer
           max: op.max,
           dest: op.dest,
-          note: retrieveNote(op.filter, op.dest, op.max),
+          note: retrieveNote(op.filter, op.dest, op.max, op.exclude !== undefined),
         },
       };
     }
@@ -509,7 +656,9 @@ function stepOp(
       // rule this engine already applies to a short board (§8.6).
       const candidates = handCostCandidates(state, ctx.seat, op);
       if (candidates.length <= op.count) {
-        return { done: payFromHandApply(state, candidates, op, ctx, events) };
+        const paid = payFromHandApply(state, candidates, op, ctx, events);
+        recordMoved(record, op.recordAs, paid.paid);
+        return { done: paid.state };
       }
       // HIDDEN INFORMATION — the candidates are cards in the controller's own
       // HAND, and this prompt is the first that carries any. Do not reason from
@@ -570,9 +719,10 @@ function stepOp(
         "Attach the Energy to which of your Pokémon?",
       );
     }
-    // Both gates are spliced by runProgram's queue loop (never reach here).
+    // All three gates are spliced by runProgram's queue loop (never reach here).
     case "coinFlipGate":
     case "conditionGate":
+    case "recordGate":
       return { done: state };
   }
 }
@@ -635,20 +785,32 @@ export function applyChoice(
   choice: EffectChoice,
   ctx: EffectContext,
   events: GameEvent[],
+  /** The running §9.2 record — the two recording ops both PARK, so this path is
+      where nearly every recording is actually made (see resumeProgram). */
+  record: EffectRecord = {},
 ): GameState {
   switch (op.op) {
     case "searchDeck":
       return choice.kind === "cards"
         ? searchMove(state, choice.uids, op.dest, ctx, events)
         : state;
-    case "discardPileRetrieval":
-      return choice.kind === "cards"
-        ? retrieveMove(state, choice.uids, op.dest, ctx, events)
-        : state;
+    case "discardPileRetrieval": {
+      if (choice.kind !== "cards") return state;
+      const retrieved = retrieveMove(state, choice.uids, op.dest, ctx, events);
+      // What was RETRIEVED, not what was offered or picked: a wire-dropped uid
+      // (one no longer in the discard) never moved, so Miriam's "if you
+      // shuffled any cards into your deck in this way" must not count it.
+      recordMoved(record, op.recordAs, retrieved.moved);
+      return retrieved.state;
+    }
     case "lookAtTopN":
       return choice.kind === "cards" ? revealFromTop(state, choice.uids, ctx, events) : state;
-    case "payFromHand":
-      return choice.kind === "cards" ? payFromHandApply(state, choice.uids, op, ctx, events) : state;
+    case "payFromHand": {
+      if (choice.kind !== "cards") return state;
+      const paid = payFromHandApply(state, choice.uids, op, ctx, events);
+      recordMoved(record, op.recordAs, paid.paid);
+      return paid.state;
+    }
     case "switchActive":
       return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
     case "gust":
@@ -977,17 +1139,21 @@ function searchMove(
     appends; deck appends to the end, where a trailing `shuffleDeck` op then
     scrambles them ("shuffle … into your deck"). Wire-safe like searchMove: only
     uids actually in the discard pile move (resolveEffect already checked them
-    against the candidate set, and rejects a uid picked twice). */
+    against the candidate set, and rejects a uid picked twice).
+
+    Hands back the uids that ACTUALLY moved, for the §9.2 record (Miriam) — the
+    same list the event names, so what a later clause reads is exactly what the
+    game announced. */
 function retrieveMove(
   state: GameState,
   uids: readonly string[],
   dest: "hand" | "deck",
   ctx: EffectContext,
   events: GameEvent[],
-): GameState {
+): { state: GameState; moved: string[] } {
   const side = state.players[ctx.seat];
   const moved = uids.filter((uid) => side.discard.includes(uid));
-  if (moved.length === 0) return state;
+  if (moved.length === 0) return { state, moved };
   const picked = new Set(moved);
   const discard = side.discard.filter((uid) => !picked.has(uid));
   const updated: PlayerSide =
@@ -995,7 +1161,7 @@ function retrieveMove(
       ? { ...side, discard, hand: [...side.hand, ...moved] }
       : { ...side, discard, deck: [...side.deck, ...moved] };
   events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest, uids: [...moved] });
-  return withSide(state, ctx.seat, updated);
+  return { state: withSide(state, ctx.seat, updated), moved };
 }
 
 /** Move the chosen looked-at cards deck → hand (lookAtTopN — Great Ball /
@@ -1034,14 +1200,18 @@ function revealFromTop(
     Iono exists for (`handRefresh` `toBottom`), which shuffles because it moves a
     WHOLE hand and hiding its order is the point.
 
-    Never damages, so it never KOs. */
+    Never damages, so it never KOs.
+
+    Hands back the uids ACTUALLY paid, for the §9.2 record: Superior Energy
+    Retrieval bars exactly these from the retrieval that follows, and Dendra
+    gates its draw on there being any ("if you do"). */
 function payFromHandApply(
   state: GameState,
   uids: readonly string[],
   op: Extract<EffectOp, { op: "payFromHand" }>,
   ctx: EffectContext,
   events: GameEvent[],
-): GameState {
+): { state: GameState; paid: string[] } {
   const side = state.players[ctx.seat];
   const inHand = new Set(side.hand);
   const paid: string[] = [];
@@ -1051,16 +1221,19 @@ function payFromHandApply(
     spent.add(uid);
     paid.push(uid);
   }
-  if (paid.length === 0) return state;
+  if (paid.length === 0) return { state, paid };
   events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to });
   const hand = side.hand.filter((uid) => !spent.has(uid));
-  return withSide(
-    state,
-    ctx.seat,
-    op.to === "deckBottom"
-      ? { ...side, hand, deck: [...side.deck, ...paid] }
-      : { ...side, hand, discard: [...side.discard, ...paid] },
-  );
+  return {
+    state: withSide(
+      state,
+      ctx.seat,
+      op.to === "deckBottom"
+        ? { ...side, hand, deck: [...side.deck, ...paid] }
+        : { ...side, hand, discard: [...side.discard, ...paid] },
+    ),
+    paid,
+  };
 }
 
 /** The cards in `seat`'s hand that may pay a `payFromHand`, with
@@ -1964,14 +2137,29 @@ function searchNote(filter: CardFilter, dest: "bench" | "hand", max: number): st
     card text (Energy Retrieval / Pal Pad / Super Rod). Every retrieval Item in
     scope has max ≥ 2, so the plural is what ships; the singular fallback stays
     total. Nouns are spelled per kind rather than "+s" so "Pokémon" stays
-    invariant. */
-function retrieveNote(filter: CardFilter, dest: "hand" | "deck", max: number): string {
+    invariant.
+
+    `excluded` reproduces Superior Energy Retrieval's printed parenthetical. The
+    player WATCHES the two cards they paid land in the public discard pile (the
+    playmat renders it) and is then handed an offer those two are missing from —
+    so without this the dialog silently contradicts what the board shows. The
+    card answers it in so many words, and the engine already knows the answer. */
+function retrieveNote(
+  filter: CardFilter,
+  dest: "hand" | "deck",
+  max: number,
+  excluded: boolean,
+): string {
   const { singular, plural } = retrieveNoun(filter);
   const verb = dest === "hand" ? "Put" : "Shuffle";
   const where = dest === "hand" ? "into your hand" : "into your deck";
-  return max > 1
-    ? `${verb} up to ${max} ${plural} from your discard pile ${where}.`
-    : `${verb} ${singular} from your discard pile ${where}.`;
+  const note =
+    max > 1
+      ? `${verb} up to ${max} ${plural} from your discard pile ${where}.`
+      : `${verb} ${singular} from your discard pile ${where}.`;
+  return excluded
+    ? `${note} (You can't choose a card you discarded with the effect of this card.)`
+    : note;
 }
 
 /** The chooseCards note for a lookAtTopN (Great Ball / Pokégear 3.0) —

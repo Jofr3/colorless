@@ -519,7 +519,11 @@ describe("the hand cost paid UNDER THE DECK (Dendra, M5)", () => {
     // Same mandatory dialog as Ultra Ball's, one word apart: a player must be
     // able to tell "this card is gone" from "this card is at the bottom of my
     // deck", and the heading + button are where that lives.
-    expect(screen.getByText("Put a card from your hand on the bottom of your deck.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Put a card from your hand on the bottom of your deck. If you do, draw cards until you have 5 cards in your hand.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("status").textContent).toBe(
       "Pick 1 (0/1). Pick 1 more — this cost must be paid.",
     );
