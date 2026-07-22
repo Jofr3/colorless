@@ -1678,7 +1678,34 @@ function AttachCardsDialog({
   /** The card waiting for a destination — the only reason the target list shows. */
   const [pending, setPending] = useState<string | null>(null);
   const destOf = (uid: string) => assignments.find((a) => a.uid === uid)?.to;
-  const atCap = assignments.length >= prompt.max;
+  /** How many are already going to this Pokémon, and whether that is all it may
+      take. `maxPerTarget` is the printed "for each of those Pokémon" (Janine's
+      Secret Art — one Energy apiece); absent is "in any way you like", where a
+      Pokémon can take every card in the offer. The engine rejects an over-stacked
+      answer either way, so this is about not OFFERING one: a target row that
+      cannot legally take the pending card has to say so, the same rule the card
+      rows already follow at the cap. */
+  const assignedTo = (ref: PokemonRef) =>
+    assignments.filter((a) => keyOf(a.to) === keyOf(ref)).length;
+  const targetFull = (ref: PokemonRef) =>
+    prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget;
+  /** No Pokémon can legally take another card — reachable only under a
+      per-target cap (Janine, whose Energy go one apiece). On every offer the
+      ENGINE builds this is never the DECIDING term: `attachFromDeckOffer` clamps
+      `max` to `targets × maxPerTarget`, so "every target is full" can only arrive
+      together with the count cap, never before it — Janine on a one-{D}-Pokémon
+      board parks at `max: 1` and reaches both at 1/1. What it decides there is
+      the SENTENCE below, not whether the next pick is refused.
+      It is folded into `atCap` rather than handled beside it for the case that
+      clamp does NOT cover — an offer that somehow arrived unclamped — so that
+      picking a card with nowhere to put it is refused UP FRONT, exactly as
+      picking one past the printed maximum is: the alternative is a dialog that
+      accepts the pick, shows a list of rows that all refuse it, and leaves the
+      way out (tap the card again) to be guessed. The length guard keeps `every`
+      from reading an empty target list as "full" — stepOp never parks with no
+      targets, and this does not depend on that. */
+  const noRoom = prompt.targets.length > 0 && prompt.targets.every(targetFull);
+  const atCap = assignments.length >= prompt.max || noRoom;
   const spotOf = (ref: PokemonRef) =>
     ref.spot.spot === "active" ? "Active" : `Bench ${ref.spot.index + 1}`;
   /** A row's readback: the Pokémon AND its spot, because `benchOnly` cards offer
@@ -1699,7 +1726,7 @@ function AttachCardsDialog({
     setPending((prev) => (prev === uid ? null : atCap ? prev : uid));
   };
   const assign = (to: PokemonRef) => {
-    if (pending === null) return;
+    if (pending === null || targetFull(to)) return;
     setAssignments((prev) => [...prev, { uid: pending, to }]);
     setPending(null);
   };
@@ -1720,8 +1747,18 @@ function AttachCardsDialog({
           "pick a card", which at the cap is exactly what you cannot do. */}
       <output className="mt-1.5 block text-sm text-white/55">
         {pendingName === null
-          ? `Attaching ${assignments.length}/${prompt.max}. ${
-              atCap ? "Tap an attached card to move it." : "Pick a card, then where it goes."
+          ? // `noRoom` is a SECOND reason the next pick is refused, and it reads
+            // nothing like the first: the count is at its ceiling either way, but
+            // "Attaching 1/1" over a prompt that printed "up to 2" looks like a
+            // dropped card unless the sentence says the {D} Pokémon, not the
+            // Energy, are what ran out. (The at-cap wording itself is the block
+            // above's rule.)
+            `Attaching ${assignments.length}/${prompt.max}. ${
+              noRoom
+                ? "Every eligible Pokémon already has one — tap an attached card to move it."
+                : atCap
+                  ? "Tap an attached card to move it."
+                  : "Pick a card, then where it goes."
             }`
           : `Attaching ${assignments.length}/${prompt.max}. Where does ${pendingName} go?`}
       </output>
@@ -1790,21 +1827,36 @@ function AttachCardsDialog({
             {/* The SPOT rides every row (the DiscardEnergyDialog legend's rule):
                 `benchOnly` cards offer several benched Pokémon that may share a
                 name, and which one gets the Energy is the whole decision. */}
-            {prompt.targets.map((ref) => (
-              <li key={keyOf(ref)}>
-                <button
-                  type="button"
-                  aria-label={destLabel(ref)}
-                  onClick={() => assign(ref)}
-                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
-                >
-                  <span className="truncate">{refName(game, ref)}</span>
-                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
-                    {spotOf(ref)}
-                  </span>
-                </button>
-              </li>
-            ))}
+            {prompt.targets.map((ref) => {
+              // aria-disabled, not `disabled`: the rows are how the player reads
+              // which Pokémon are eligible at all, so a full one must stay
+              // readable and focusable — the card rows' rule at the cap.
+              const full = targetFull(ref);
+              return (
+                <li key={keyOf(ref)}>
+                  <button
+                    type="button"
+                    aria-label={full ? `${destLabel(ref)} — already has one` : destLabel(ref)}
+                    aria-disabled={full || undefined}
+                    onClick={() => assign(ref)}
+                    className={`${ROW_BUTTON_BASE} ${full ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{refName(game, ref)}</span>
+                    <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                      {/* The spot RIDES the full state, it is not replaced by it
+                          — the block above's rule, and Janine is the board it was
+                          written for: two identically-named {D} Pokémon, told
+                          apart by nothing else. Swapping "Bench 1" for "has one"
+                          left the sighted reader resolving the list by
+                          elimination, which is the exact reasoning the spot
+                          exists to make unnecessary. (The accessible name always
+                          carried both.) */}
+                      {full ? `${spotOf(ref)} · has one` : spotOf(ref)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </>
       )}
@@ -1913,11 +1965,13 @@ function promptKey(prompt: EffectPrompt): string {
         .join(",")}:${prompt.movable.map((m) => m.uid).join(",")}`;
     case "attachCards":
       // BOTH halves ride the key, because both are half of every answer: the
-      // cards on offer AND the Pokémon they may go on (`max` too, since it caps
-      // the pick). An as-often-as-you-like Ability makes this the likeliest
-      // dialog to park twice in one turn, and a second Tri Howl looking at three
-      // new cards must not inherit a pick keyed to the last three.
-      return `attach:${prompt.max}:${prompt.targets
+      // cards on offer AND the Pokémon they may go on (`max` and `maxPerTarget`
+      // too, since they cap the pick — an assignment gathered under "in any way
+      // you like" is not a legal answer to a one-apiece prompt). An
+      // as-often-as-you-like Ability makes this the likeliest dialog to park
+      // twice in one turn, and a second Tri Howl looking at three new cards must
+      // not inherit a pick keyed to the last three.
+      return `attach:${prompt.max}:${prompt.maxPerTarget ?? "any"}:${prompt.targets
         .map((t) => `${t.seat}-${t.spot.spot === "bench" ? t.spot.index : "active"}`)
         .join(",")}:${prompt.candidates.join(",")}`;
     case "choosePokemonMulti":

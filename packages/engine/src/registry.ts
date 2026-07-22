@@ -1329,6 +1329,116 @@ const FIX_HAMMER: CardProgram = {
   trainer: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
 };
 
+// ── M5 op-slice: attachFromDeck — SEARCH your deck for Energy and attach it
+//    straight onto your Pokémon. The deck-search sibling of attachFromTop, and
+//    the two printed target rules it has to tell apart: "in any way you like"
+//    (Charizard ex) and "for each of those Pokémon" (Janine's Secret Art).
+//    Deferred with reasons in the workstream doc: Pawmot "Electrogenesis" ("to
+//    THIS Pokémon" — EffectContext carries no source uid), Forretress ex
+//    "Exploding Energy" (a §9.2 gate into a self-KO, which the interpreter
+//    cannot do), Geeta ("your Pokémon can't attack this turn" — a turn-scoped
+//    restriction that does not exist yet).
+//    (verified vs the local catalog 2026-07-22). ──
+
+/** Charizard ex — "Infernal Reign": "When you play this Pokémon from your hand
+    to evolve 1 of your Pokémon during your turn, you may search your deck for up
+    to 3 Basic {R} Energy cards and attach them to your Pokémon in any way you
+    like. Then, shuffle your deck." (sv03-125/-215/-223/-228)
+
+    The op's plain arm, and every setting is straight off the printed words:
+    - "search your deck" → `attachFromDeck`, not `attachFromTop`: no window, the
+      whole list is reachable;
+    - "up to 3 **Basic {R} Energy cards**" → `max: 3` with `basicEnergy` +
+      `energyType` — the PRINT, never `providesEnergy`, since these cards sit in
+      the deck attached to nothing (§6.5, the Electric Generator rule);
+    - "to **your Pokémon**" → no target rider: the Active is a target and so is
+      every benched one;
+    - "**in any way you like**" → no `maxPerTarget`, so all three may land on one
+      Pokémon;
+    - "Then, shuffle your deck" → the trailing `shuffleDeck`, which runs on the
+      whiff and the decline too (the Nest Ball pattern).
+
+    An `onEvolve` triggered Ability, so it also fires through Rare Candy — D28's
+    shared `placeEvolution` is what both paths run, and this card is exactly the
+    Basic→Stage 2 shape Rare Candy exists for. "You may" is `optional`, which the
+    framework AUTO-FIRES (D27); the decline the word actually buys survives in
+    the op's own "up to", where taking none is a legal answer to the park. */
+const CHARIZARD_EX: CardProgram = {
+  triggered: [
+    {
+      name: "Infernal Reign",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", energyType: "Fire" },
+          max: 3,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Janine's Secret Art — "Choose up to 2 of your {D} Pokémon. For each of those
+    Pokémon, search your deck for a Basic {D} Energy card and attach it to that
+    Pokémon. Then, shuffle your deck. If you attached Energy to your Active
+    Pokémon in this way, it is now Poisoned." (Supporter, sv06.5-059/-088)
+
+    THREE PRINTED SENTENCES, THREE OPS, IN ORDER — and the middle one is the
+    reason the first is not a `choosePokemonMulti`. Read literally the card asks
+    two questions (which Pokémon, then which card for each), but the second has no
+    content: same-type Basic Energy is fungible (the `attachEnergyFrom` doctrine),
+    so "which Basic {D} Energy" is never a decision. What remains is one map — up
+    to 2 Energy onto distinct {D} Pokémon of yours — which is exactly what the
+    `attachCards` prompt already says, so the card parks ONCE.
+
+    `maxPerTarget: 1` is "for **each** of those Pokémon … attach it to **that**
+    Pokémon": one apiece, never both on one. That is the whole distinction from
+    Charizard ex's "in any way you like" above, and it is a real one — a player
+    who could stack both on the Active would.
+
+    `targetType: "Darkness"` is "your **{D}** Pokémon", read off the TOP card's
+    types by the shared `attachEnergyTargets`.
+
+    The last sentence is §9.2 and needs the gate's `contains` narrowing: not "did
+    you attach anything" but "did anything land on your ACTIVE". `recordAs:
+    "moved"` files the uids actually attached and the gate asks where they are —
+    so poisoning happens exactly when the printed clause says, including the case
+    a player attaches both Energy to the Bench and takes no poison at all.
+
+    Self-poison is the point, not a drawback to route around: it is how the deck
+    turns on its own Poison payoffs. `applyStatus` with `target: "self"` resolves
+    to the CONTROLLER's Active (the interpreter reads `ctx.seat`), which is the
+    first registry program to author that op — every earlier one came from the
+    attack deriver.
+
+    NOT gated by `programPlayable`, per the op's doc — a board with no {D} Pokémon
+    still shuffles. This is the sharpest form of that call in the repo so far: a
+    SUPPORTER (§7.2 — one per turn) that can be spent on a bare shuffle. Recorded
+    rather than special-cased, with the prompt as the mitigation. */
+const JANINES_SECRET_ART: CardProgram = {
+  trainer: [
+    {
+      op: "attachFromDeck",
+      filter: { kind: "basicEnergy", energyType: "Darkness" },
+      max: 2,
+      targetType: "Darkness",
+      maxPerTarget: 1,
+      recordAs: "moved",
+    },
+    { op: "shuffleDeck" },
+    {
+      op: "recordGate",
+      slot: "moved",
+      contains: "yourActive",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -1499,6 +1609,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-266": DENDRA, // Dendra (reprint)
   "sv01-151": SKWOVET, // Skwovet — Nest Stash (hand → deck bottom, draw 1 if any moved)
   "sv01-222": SKWOVET, // Skwovet (reprint)
+  // — M5 op-slice: attachFromDeck (verified vs the local catalog 2026-07-22).
+  //   Search the deck for Energy and attach it; the two printed target rules are
+  //   "in any way you like" (Charizard) and "for each of those" (Janine). —
+  "sv03-125": CHARIZARD_EX, // Charizard ex — Infernal Reign (onEvolve: up to 3 Basic {R} → your Pokémon)
+  "sv03-215": CHARIZARD_EX, // Charizard ex (reprint)
+  "sv03-223": CHARIZARD_EX, // Charizard ex (reprint)
+  "sv03-228": CHARIZARD_EX, // Charizard ex (reprint)
+  "sv06.5-059": JANINES_SECRET_ART, // Janine's Secret Art — up to 2 Basic {D}, one per {D} Pokémon, Active → Poisoned
+  "sv06.5-088": JANINES_SECRET_ART, // Janine's Secret Art (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

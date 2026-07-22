@@ -8,6 +8,7 @@ import {
   topUid,
 } from "./cards";
 import { effectiveMaxHp, passivesOf, providesEnergyType } from "./continuous";
+import { STATUS_WORD_OF } from "./effects";
 import type {
   AttachTargetRiders,
   BoardCondition,
@@ -160,22 +161,35 @@ export type EffectPrompt =
       scope: DiscardScope;
       note: string;
     }
-  /** Attach cards off the deck TOP onto the controller's own Pokémon, "in any way
-      you like" (Electric Generator / Hydreigon "Tri Howl" — the `attachFromTop`
-      op). The first prompt whose answer is a MAP rather than a list: every picked
-      card names its OWN destination, where moveEnergy's picks all share one.
+  /** Attach cards out of the controller's DECK onto their own Pokémon — off the
+      TOP (Electric Generator / Hydreigon "Tri Howl" — `attachFromTop`) or out of
+      a SEARCH of the whole deck (Charizard ex "Infernal Reign", Janine's Secret
+      Art — `attachFromDeck`). The first prompt whose answer is a MAP rather than
+      a list: every picked card names its OWN destination, where moveEnergy's
+      picks all share one.
 
-      `candidates` are the cards among the looked-at top N that the op's filter
-      admits, in deck order (index 0 was the top). They are HIDDEN information the
-      controller is being shown — that is what "look at the top N" means — so this
-      prompt goes to the controller alone, exactly like lookAtTopN's chooseCards;
-      the ones actually attached become public through ENERGY_ATTACHED, and the
-      ones left unattached stay unnamed unless `discardRest` puts them in the
-      (public) discard pile. `targets` are the eligible own Pokémon
-      (attachEnergyTargets, with the op's targetType/benchOnly riders); `max` is
-      how many may be attached — the printed "up to 2", or the whole candidate set
-      for "any number", already resolved to a number here so the dialog and the
-      wire validator both read one field.
+      `candidates` are the cards the op's filter admits — among the looked-at top
+      N in deck order (index 0 was the top) for `attachFromTop`, or the deck-wide
+      matches COLLAPSED to at most `max` per interchangeable class for
+      `attachFromDeck`, whose source zone is big enough for the difference to
+      matter. They are HIDDEN information the controller is being shown — that is
+      what "look at the top N" and "search your deck" both mean — so this prompt
+      goes to the controller alone, exactly like lookAtTopN's chooseCards; the
+      ones actually attached become public through ENERGY_ATTACHED, and the ones
+      left unattached stay unnamed unless `discardRest` puts them in the (public)
+      discard pile. `targets` are the eligible own Pokémon (attachEnergyTargets,
+      with the op's targetType/benchOnly riders); `max` is how many may be
+      attached — the printed "up to 2", or the whole candidate set for "any
+      number", already resolved to a number here so the dialog and the wire
+      validator both read one field.
+
+      `maxPerTarget` caps how many may land on any ONE of those targets — the
+      printed "for each of those Pokémon" (Janine's Secret Art, one Energy
+      apiece). Absent is the printed "in any way you like": no limit, every split
+      legal including all of them on a single Pokémon. It is a separate field
+      rather than a smaller `max` because the two bound different things — three
+      cards spread one-per-Pokémon is `max: 3, maxPerTarget: 1`, and neither
+      number can be recovered from the other.
 
       DECLINABLE: attaching none is a legal answer ("up to" / "any number"), and
       the op's leftovers clause still runs. */
@@ -184,6 +198,7 @@ export type EffectPrompt =
       candidates: string[];
       targets: PokemonRef[];
       max: number;
+      maxPerTarget?: number;
       note: string;
     };
 
@@ -288,7 +303,7 @@ export function runProgram(
       // must see writes made since the run started — including one made by an
       // op that parked and resolved through resolveEffect. No event: the
       // recording op already announced these cards by uid.
-      queue.unshift(...(recorded(record, op.slot).length > 0 ? op.then : (op.otherwise ?? [])));
+      queue.unshift(...(recordGateHolds(next, ctx, op, record) ? op.then : (op.otherwise ?? [])));
       continue;
     }
     const stepped = stepOp(next, op, ctx, events, record);
@@ -316,7 +331,34 @@ function recorded(record: EffectRecord, slot: EffectSlot): readonly string[] {
 
 /** The slot a parking op will file its answer under, if any. */
 function recordSlotOf(op: EffectOp): EffectSlot | undefined {
-  return op.op === "payFromHand" || op.op === "discardPileRetrieval" ? op.recordAs : undefined;
+  return op.op === "payFromHand" || op.op === "discardPileRetrieval" || op.op === "attachFromDeck"
+    ? op.recordAs
+    : undefined;
+}
+
+/** Does the record satisfy this gate? The base test is "did the earlier op file
+    anything" — a whiffed op files an EMPTY array, which is why the length and not
+    the key is what is asked.
+
+    `contains: "yourActive"` narrows it to "is any of those cards on the
+    controller's Active" (Janine's Secret Art's "if you attached Energy to your
+    **Active** Pokémon in this way"). Read off the live board rather than out of
+    the record — see the op's doc for why the record's values stay one kind of
+    thing, and for the three ops that would make this board reading differ from
+    the historical one if a future card sequenced them in between — and against
+    `state` AS OF the gate, with every earlier op applied. */
+function recordGateHolds(
+  state: GameState,
+  ctx: EffectContext,
+  op: Extract<EffectOp, { op: "recordGate" }>,
+  record: EffectRecord,
+): boolean {
+  const filed = recorded(record, op.slot);
+  if (filed.length === 0) return false;
+  if (op.contains !== "yourActive") return true;
+  const active = state.players[ctx.seat].active;
+  if (active === null) return false;
+  return filed.some((uid) => active.energy.includes(uid));
 }
 
 /** THE PROMPT MUST SAY WHAT THE ANSWER BUYS. Every prompt note before §9.2 was
@@ -344,7 +386,41 @@ function withConsequence(
   const gate = queue.find((q) => q.op === "recordGate" && q.slot === slot);
   if (gate === undefined || gate.op !== "recordGate") return prompt;
   const clause = describeBranch(gate.then);
-  return clause === null ? prompt : { ...prompt, note: `${prompt.note} If you do, ${clause}.` };
+  if (clause === null) return prompt;
+  // The CONDITION, not just the consequence. "If you do" is right for a gate that
+  // asks whether the op did anything at all; it is wrong — and quietly wrong, the
+  // worst kind in a dialog — for one that asks where the cards LANDED. A player
+  // reading "If you do, it is now Poisoned" over Janine's prompt would take the
+  // poison for a certainty of attaching at all, and pick two Benched Pokémon.
+  const condition = describeCondition(op, gate);
+  return condition === null ? prompt : { ...prompt, note: `${prompt.note} ${condition}, ${clause}.` };
+}
+
+/** The gate's CONDITION as a printed phrase, or null when there is none to give.
+ *
+ *  A gate with no `contains` is the plain "did the earlier op do anything", and
+ *  "If you do" says that for every op that can record — it is the wording both
+ *  §9.2 cards print.
+ *
+ *  A NARROWED gate needs the narrowing spelled out, and it needs the op's own
+ *  verb to do it: "If your Active Pokémon is among them" — an earlier draft —
+ *  reads as a fact about the eligible targets rather than about where the cards
+ *  went, since "them" binds to the nearest list, which in the note above is
+ *  "your Darkness Pokémon". That is a softer form of exactly the misreading the
+ *  narrowing exists to prevent. So the phrase is built per RECORDING OP, and an
+ *  op this has no words for yields **null** — dropping the clause entirely rather
+ *  than describing a narrowed gate in the broad gate's words, which would promise
+ *  the consequence on any answer at all. `describeBranch`'s rule, applied to the
+ *  other half of the sentence. */
+function describeCondition(
+  op: EffectOp,
+  gate: Extract<EffectOp, { op: "recordGate" }>,
+): string | null {
+  if (gate.contains === undefined) return "If you do";
+  if (gate.contains === "yourActive" && op.op === "attachFromDeck") {
+    return "If you attach one to your Active Pokémon";
+  }
+  return null;
 }
 
 /** A gate branch as a printed phrase, or null when any op in it has none.
@@ -361,6 +437,14 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         break;
       case "drawUntilHandSize":
         parts.push(`draw cards until you have ${op.size} cards in your hand`);
+        break;
+      case "applyStatus":
+        // Only the controller-relative arm: "self" is the controller's own Active
+        // in a Trainer/Ability program (applyStatus reads ctx.seat), which is what
+        // Janine's "it is now Poisoned" refers to. The "defender" arm belongs to
+        // an ATTACK program, where no §9.2 gate exists to describe.
+        if (op.target !== "self") return null;
+        parts.push(`it is now ${STATUS_WORD_OF[op.status]}`);
         break;
       default:
         return null;
@@ -590,6 +674,44 @@ function stepOp(
         return { done: attachFromTopApply(state, [], op, ctx, events) };
       }
       return { park: { kind: "attachCards", candidates, targets, max, note: attachNote(op) } };
+    }
+    case "attachFromDeck": {
+      // SEARCH the deck for Energy and attach it onto your own Pokémon (Charizard
+      // ex "Infernal Reign" / Janine's Secret Art). The same compound decision
+      // attachFromTop parks on — which cards, and where each one goes — over a
+      // candidate set drawn from the whole deck rather than a window on its top.
+      //
+      // A dead end here returns `state` rather than routing through the apply, and
+      // that is the one structural difference from attachFromTop: this op has NO
+      // leftovers clause to charge on the empty paths (nothing was ever taken out
+      // of the deck, so there is nothing to put back or discard). The printed
+      // "Then, shuffle your deck" lives in the trailing `shuffleDeck` op, which
+      // runs on the whiff, the decline and the no-target board alike — exactly as
+      // it does behind every other search in this vocabulary. No `programPlayable`
+      // gate, so the no-target board IS a live path (see the op's doc).
+      //
+      // The dead end still FILES AN EMPTY ANSWER, the rule `discardPileRetrieval`
+      // states above: an op that ran and moved nothing must OVERWRITE its slot, or
+      // a stale value from an earlier writer survives it and the gate answers for
+      // the wrong op. Unreachable while each slot has one writer — and kept so
+      // that stays a property of the PROGRAMS rather than an accident of which
+      // branch remembered. With three recording ops now, the one that differed
+      // would have been this one.
+      const { candidates, targets, max } = attachFromDeckOffer(state, ctx.seat, op);
+      if (candidates.length === 0 || targets.length === 0 || max <= 0) {
+        recordMoved(record, op.recordAs, []);
+        return { done: state };
+      }
+      return {
+        park: {
+          kind: "attachCards",
+          candidates,
+          targets,
+          max,
+          ...(op.maxPerTarget === undefined ? {} : { maxPerTarget: op.maxPerTarget }),
+          note: attachFromDeckNote(op),
+        },
+      };
     }
     case "moveEnergy": {
       // Move up to `max` Energy from ONE own Pokémon to ANOTHER (Energy Switch /
@@ -831,6 +953,16 @@ export function applyChoice(
       return choice.kind === "attachCards"
         ? attachFromTopApply(state, choice.assignments, op, ctx, events)
         : state;
+    case "attachFromDeck": {
+      if (choice.kind !== "attachCards") return state;
+      const attached = attachFromDeckApply(state, choice.assignments, ctx, events);
+      // What was ATTACHED, not what was offered or picked — the retrieval/payment
+      // rule (§9.2): a uid the wire dropped, repeated, or aimed at a Pokémon that
+      // is not there never moved, so Janine's "if you attached Energy to your
+      // Active Pokémon in this way" must not count it.
+      recordMoved(record, op.recordAs, attached.attached);
+      return attached.state;
+    }
     case "moveEnergy":
       return choice.kind === "moveEnergy" ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events) : state;
     case "discardEnergy":
@@ -1530,6 +1662,144 @@ function attachFromTopOffer(
   };
 }
 
+/** What an `attachFromDeck` op is offering: the deck-wide matches for its filter
+    (deck order), the eligible targets, and the resolved cap.
+
+    **The collapse is the difference from `attachFromTopOffer`.** That one reads a
+    window of `n` cards, so its candidate list is small by construction; this one
+    reads the WHOLE deck, where a real list holds a dozen Basic {R} Energy. Twelve
+    rows for a pick of three is one question wearing twelve hats, so the offer
+    keeps at most `max` representatives per interchangeable class — the D42 rule
+    the mandatory discards run on (`interchangeableCandidates`), with the same cap
+    logic and for the same reason: a pick can never want more than `max` copies of
+    one class, and the copies that survive are still interchangeable with each
+    other, so every DISTINGUISHABLE answer remains reachable. Keying is
+    `cardIdentity`, which reads a Basic Energy by what it PROVIDES — the catalog
+    prints the same Basic Fire Energy under four ids (sve-002/-010/-018 plus
+    sv03-230 "Basic Fire Energy", which `energyProvidesOf` reads identically), and
+    an id key would offer
+    them as three separate answers.
+
+    There is no host to key on here (these cards are in a pile, attached to
+    nothing), which is exactly why the discard collapse's `refKeyOf(from)` prefix
+    is absent: WHICH Pokémon loses an Energy is always a real choice, but which of
+    three identical Energy comes out of the deck never is.
+
+    **THE CAP IS THE BOARD'S AS WELL AS THE PRINT'S**, for `attachFromTop`'s
+    reason — "a prompt reading `max: 3` over a single row invites a pick that does
+    not exist" — and this op has a SECOND way to be short. Three ceilings, and the
+    real one is their minimum:
+      • the printed `max` ("up to 2");
+      • how many cards are actually there (the clamp attachFromTop already takes);
+      • **`targets.length × maxPerTarget`**, which is the one a per-target rule
+        introduces. Janine on the ordinary board — one {D} Pokémon — prints "up to
+        2" and can legally attach exactly ONE, so a prompt saying 2 would have the
+        dialog count "0/2" over a board where 1 is the ceiling, and invite a
+        second pick the validator then refuses. Without a per-target rule this
+        ceiling does not exist (one Pokémon can take every card), which is why it
+        reads as `op.max` when the rider is absent rather than as `targets.length`.
+
+    The board ceiling is taken BEFORE the collapse and the collapse runs at that
+    cap, so the offer holds no representative the pick could not use: a pick that
+    can only want one card is shown one row. The candidate clamp is then taken
+    after, so it counts offered rows.
+
+    NOTE — this reads the DECK, so it is only ever asked at the moment the op
+    runs, and is deliberately NOT a `programPlayable` input (see the op's doc). */
+function attachFromDeckOffer(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "attachFromDeck" }>,
+): { candidates: string[]; targets: PokemonRef[]; max: number } {
+  const targets = attachEnergyTargets(state, seat, op);
+  const cap =
+    op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);
+  const matches = state.players[seat].deck.filter((uid) =>
+    matchesFilter(cardOf(state, uid), op.filter),
+  );
+  const kept = new Map<string, number>();
+  const candidates: string[] = [];
+  for (const uid of matches) {
+    const key = cardIdentity(state, uid);
+    const already = kept.get(key) ?? 0;
+    if (already >= cap) continue;
+    kept.set(key, already + 1);
+    candidates.push(uid);
+  }
+  return { candidates, targets, max: Math.min(cap, candidates.length) };
+}
+
+/** Apply a deck-search attach (Charizard ex "Infernal Reign" / Janine's Secret
+    Art): move each assigned card out of the deck onto the Pokémon it was assigned
+    to, and hand back the uids that ACTUALLY moved (§9.2 — the record).
+
+    **`validateChoice` is the ONE gate** on what may be attached — the cap, the
+    per-target cap, that every uid was offered, that no uid appears twice, and
+    that every destination is an offered target. This function re-derives none of
+    it, for `attachFromTopApply`'s reason: two readers of one rule drift. What it
+    does carry is the same wire-safety every mover in this file carries — the DECK
+    is re-read live and only uids actually sitting in it move, so a stale uid, a
+    repeated one, or a target that is not on the board is SKIPPED rather than
+    conjured. Dropping the bench-index check would silently DESTROY a card: the
+    `bench.map` no-ops, the event fires, and the uid still leaves the deck.
+
+    Each attach emits its own ENERGY_ATTACHED — the card lands face up on the
+    board, so nothing else has to announce it, and in particular there is no
+    "searched" event: what a search *found* is the controller's private business
+    (they saw their own deck), and what it *took* is public through this. The
+    target rides the event REBUILT field by field, never spread off the client's
+    ref (the §2 copy contract).
+
+    The deck keeps its order minus the taken cards; the trailing `shuffleDeck` op
+    is what scrambles it, so a search that takes nothing still leaves the printed
+    shuffle to the op that prints it. Never damages, so it never KOs and never
+    touches the flow tail.
+
+    Takes no `op`, unlike its from-the-top twin: with the cap, the filter, the
+    window and the leftovers all belonging to somebody else, the assignments and
+    the live deck are the whole input. */
+function attachFromDeckApply(
+  state: GameState,
+  assignments: readonly { uid: string; to: PokemonRef }[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): { state: GameState; attached: string[] } {
+  const side = state.players[ctx.seat];
+  const inDeck = new Set(side.deck);
+  let active = side.active;
+  let bench = side.bench;
+  const attached = new Set<string>();
+  for (const { uid, to } of assignments) {
+    if (!inDeck.has(uid) || attached.has(uid) || to.seat !== ctx.seat) continue;
+    if (to.spot.spot === "active") {
+      if (active === null) continue;
+      active = { ...active, energy: [...active.energy, uid] };
+    } else {
+      const index = to.spot.index;
+      if (bench[index] === undefined) continue;
+      bench = bench.map((p, i) => (i === index ? { ...p, energy: [...p.energy, uid] } : p));
+    }
+    attached.add(uid);
+    events.push({
+      type: "ENERGY_ATTACHED",
+      seat: ctx.seat,
+      uid,
+      target:
+        to.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: to.spot.index },
+    });
+  }
+  if (attached.size === 0) return { state, attached: [] };
+  return {
+    state: withSide(state, ctx.seat, {
+      ...side,
+      active,
+      bench,
+      deck: side.deck.filter((uid) => !attached.has(uid)),
+    }),
+    attached: [...attached],
+  };
+}
+
 /** Attach the first matching Basic Energy from `op.source` (hand/discard) onto
     the chosen own Pokémon `ref` (§6 energy acceleration). Re-finds the energy at
     apply time — fungible, so the parked decision was only the TARGET. Moves the
@@ -2196,6 +2466,41 @@ function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
     op.targetType === undefined ? "" : `${op.targetType} `
   }Pokémon`;
   return `Look at the top ${op.n} cards of your deck and attach ${how} ${plural} you find there to your ${where} in any way you like.`;
+}
+
+/** The attachCards prompt string for a deck SEARCH (Charizard ex "Infernal
+    Reign" / Janine's Secret Art) — the printed "Search your deck for up to N
+    {noun} and attach [them|it] to your [{type}] Pokémon [in any way you like]".
+
+    Built from the OP, like `attachNote`: both consumers print more around this
+    clause than belongs in a prompt asking what to attach (Charizard's is a
+    triggered Ability whose sentence opens "When you play this Pokémon…", and both
+    end in "Then, shuffle your deck", which is the NEXT op's business).
+
+    The two wordings this switches between are the printed ones, and the
+    difference is exactly `maxPerTarget`:
+      • absent → "**in any way you like**", the only cue that several Energy may
+        go on ONE Pokémon (§15.E — the misconception the dialog's shape invites);
+      • present → the phrase is a lie, so it is dropped and replaced by what
+        Janine actually prints — "for each of those Pokémon", one apiece. Saying
+        "in any way you like" over a prompt that rejects two on one Pokémon would
+        be the dialog contradicting the validator. */
+function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): string {
+  const { singular, plural } = retrieveNoun(op.filter);
+  const where = `${op.benchOnly === true ? "Benched " : ""}${
+    op.targetType === undefined ? "" : `${op.targetType} `
+  }Pokémon`;
+  if (op.maxPerTarget !== undefined) {
+    // "attach 1 to each", not "attach a Basic Darkness Energy card to each" —
+    // the noun is already in the first clause, and repeating it there produced a
+    // sentence long enough that the per-target rule stopped being the thing the
+    // reader noticed, which is the one thing this branch exists to say.
+    const each = op.maxPerTarget === 1 ? "1" : `up to ${op.maxPerTarget}`;
+    return `Search your deck for up to ${op.max} ${plural} and attach ${each} to each of up to ${op.max} of your ${where}.`;
+  }
+  return op.max > 1
+    ? `Search your deck for up to ${op.max} ${plural} and attach them to your ${where} in any way you like.`
+    : `Search your deck for ${singular} and attach it to your ${where}.`;
 }
 
 /** The moveEnergy prompt string (Energy Switch / Poppy) — the printed "Move [up

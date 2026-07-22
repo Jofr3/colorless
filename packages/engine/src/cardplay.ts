@@ -567,10 +567,16 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
       // (targetType / notIfKO riders) → the attach can only whiff.
       return false;
     }
-    // `attachFromTop` is deliberately NOT gated — see the op's own doc
-    // (effects.ts). A gate here would be an AND over ops applied to a card whose
-    // OTHER printed clause always resolves, which is precisely the case
-    // ruling/284 (quoted above) excludes.
+    // `attachFromTop` and `attachFromDeck` are deliberately NOT gated — see the
+    // ops' own docs (effects.ts). A gate here would be an AND over ops applied to
+    // a card whose OTHER printed clause always resolves, which is precisely the
+    // case ruling/284 (quoted above) excludes: every card carrying either op also
+    // prints a shuffle, and shuffling your deck is an effect players buy on
+    // purpose. Note this bites HARDER on the search op than on the top-N one,
+    // because a Supporter carries it — Janine's Secret Art into a board with no
+    // {D} Pokémon spends the turn's one Supporter (§7.2) on a bare shuffle, where
+    // Electric Generator only spends a card. Doctrine over cost; the prompt is the
+    // mitigation (see the Miriam precedent, docs/workstreams/simulator.md).
     //
     // `payFromHand` is not gated here either, for the opposite reason:
     // it DOES veto the whole card, but on the card's own printed authority
@@ -778,16 +784,24 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       return null;
     }
     case "attachCards": {
-      // Electric Generator / Hydreigon — "attach … in any way you like", so each
-      // pick carries its OWN destination and the answer is a list of PAIRS rather
-      // than the flat uid list every other card prompt takes. Four couplings: at
-      // most `max` of them; every uid one the prompt offered (which is what keeps
-      // a client off a card DEEPER in the deck than the look reached — the
-      // lookAtTopN rule, and here it also keeps a hand card out of an attach that
-      // must come from the deck top); no uid twice, since one physical card cannot
-      // land on two Pokémon and the apply would otherwise be asked to duplicate
-      // it; and every destination an offered target (the printed "your Benched {L}
-      // Pokémon" — the opponent's board is never among them).
+      // Electric Generator / Hydreigon / Charizard ex / Janine's Secret Art —
+      // "attach … in any way you like", so each pick carries its OWN destination
+      // and the answer is a list of PAIRS rather than the flat uid list every
+      // other card prompt takes. Five couplings: at most `max` of them; every uid
+      // one the prompt offered (which is what keeps a client off a card DEEPER in
+      // the deck than the look reached — the lookAtTopN rule — and off a card the
+      // filter or the interchangeable collapse excluded, and it also keeps a hand
+      // card out of an attach that must come from the deck); no uid twice, since
+      // one physical card cannot land on two Pokémon and the apply would otherwise
+      // be asked to duplicate it; every destination an offered target (the printed
+      // "your Benched {L} Pokémon" — the opponent's board is never among them);
+      // and, when the prompt sets it, at most `maxPerTarget` on any ONE Pokémon.
+      //
+      // That last one is the printed "for each of those Pokémon" (Janine's Secret
+      // Art: up to 2 Basic {D} Energy, one apiece). It is enforced HERE and only
+      // here, like every other coupling above — the apply re-derives none of them,
+      // so a rule that lived in both places could drift and let one path attach
+      // what the other refuses.
       //
       // An empty list is a legal DECLINE ("up to" / "any number"), and it is not
       // the same as nothing happening: the op's leftovers clause still runs.
@@ -799,6 +813,7 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       const candidates = new Set(prompt.candidates);
       const seen = new Set<string>();
+      const perTarget = new Map<string, number>();
       // The entries come off the WIRE, so each is checked as an unknown shape
       // (TypeScript's `{uid, to}` is a claim about the action, not about the JSON).
       for (const entry of choice.assignments as readonly ({
@@ -817,6 +832,17 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         const to = entry.to;
         if (!isPokemonRef(to) || !prompt.targets.some((t) => refEquals(t, to))) {
           return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal attach target");
+        }
+        if (prompt.maxPerTarget !== undefined) {
+          const key = refKey(to);
+          const count = (perTarget.get(key) ?? 0) + 1;
+          if (count > prompt.maxPerTarget) {
+            return err(
+              "BAD_EFFECT_CHOICE",
+              `attach at most ${prompt.maxPerTarget} card(s) to any one Pokémon`,
+            );
+          }
+          perTarget.set(key, count);
         }
       }
       return null;

@@ -466,6 +466,80 @@ export type EffectOp =
       benchOnly?: true;
       discardRest?: true;
     }
+  /** SEARCH the controller's whole deck for up to `max` Energy cards matching
+      `filter` and ATTACH them straight onto the controller's own in-play Pokémon
+      — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
+      the deck's top (Charizard ex "Infernal Reign": "search your deck for up to 3
+      Basic {R} Energy cards and attach them to your Pokémon in any way you like";
+      Janine's Secret Art: "Choose up to 2 of your {D} Pokémon. For each of those
+      Pokémon, search your deck for a Basic {D} Energy card and attach it to that
+      Pokémon").
+
+      It shares `attachFromTop`'s answer shape — the `attachCards` MAP prompt,
+      each picked card naming its OWN destination — because the printed clause is
+      the same one: several cards, several places, chosen together. What differs
+      is the SOURCE, and every difference below falls out of it:
+
+      • **The candidate set is the whole deck**, so it is HIDDEN and it is BIG.
+        Hidden is no new problem (the prompt goes to the controller alone, exactly
+        as lookAtTopN's does, and this is the controller's OWN deck — a zone the
+        printed word "search" hands them in full). Big is: a real deck holds a
+        dozen Basic {R} Energy, and offering all twelve for a pick of three is one
+        question wearing twelve hats. The offer is therefore COLLAPSED to at most
+        `max` representatives per interchangeable class, the D42 rule the
+        mandatory discards already run on — a Basic Energy keyed by what it
+        PROVIDES, since the catalog prints the same Basic Fire Energy under four
+        ids (sve-002/-010/-018 and sv03-230). Every distinguishable answer survives; only copies that could ONLY
+        duplicate are dropped.
+      • **There is no leftovers clause**, and so no `discardRest`. The cards not
+        taken never left the deck and are not even a named window, so the printed
+        "Then, shuffle your deck" is a trailing `shuffleDeck` op — the Nest Ball
+        search-then-shuffle pattern every deck search in this vocabulary follows,
+        and it runs on the whiff and the decline exactly as a whiffed search does.
+      • **`n` has no meaning** — a search sees the whole deck. `max` is the
+        printed "up to N", already a number (no `"any"`: no printed search says
+        "any number", because a search that emptied your deck of Energy would be
+        a different card).
+
+      `maxPerTarget` is the printed "**for EACH of those Pokémon** … attach it to
+      THAT Pokémon". Charizard's "in any way you like" allows every split
+      including all three on one Pokémon; Janine's wording does not — its Energy
+      go one apiece to distinct Pokémon, so the card is exactly "up to 2 Basic {D}
+      Energy onto DISTINCT {D} Pokémon of yours". Modelling it that way (rather
+      than as a choose-the-Pokémon prompt followed by a per-Pokémon search) is
+      what keeps it to ONE decision: the Energy are fungible, so choosing which
+      Pokémon get one and choosing which card goes where are the same choice, and
+      the map prompt already expresses it. The rider is on the OP and not on
+      `AttachTargetRiders` on purpose — the riders answer "which Pokémon may
+      receive", a per-Pokémon question shared with `attachEnergyFrom`, while this
+      is a constraint on the map as a whole.
+
+      `filter` scans cards sitting in the DECK, so it is about the PRINT
+      (`basicEnergy` + `energyType`), never `providesEnergy` — §6.5, the same rule
+      `attachFromTop` states.
+
+      `recordAs` files the uids ACTUALLY attached (§9.2), for a following
+      `recordGate` to read. Janine is the consumer, through that gate's `contains:
+      "yourActive"`: "If you attached Energy to your Active Pokémon in this way,
+      it is now Poisoned."
+
+      **NO `programPlayable` GATE**, for `attachFromTop`'s reason exactly: every
+      card carrying this op also prints "Then, shuffle your deck", a clause that
+      always resolves, so "no eligible target" is never "no effect" (ruling/284).
+      Never damages, so it never KOs; and it is not the §6.3 manual attach, so no
+      allowance is touched. */
+  | {
+      op: "attachFromDeck";
+      filter: CardFilter;
+      max: number;
+      targetType?: string;
+      benchOnly?: true;
+      /** At most this many of the attached cards may land on any ONE Pokémon —
+          the printed "for each of those Pokémon" (Janine's Secret Art). Absent =
+          "in any way you like", no per-target limit. */
+      maxPerTarget?: number;
+      recordAs?: EffectSlot;
+    }
   /** Discard Energy attached to an in-play Pokémon — the §15 energy-removal
       ("hammer") family on the opponent's side (Crushing Hammer, Giacomo, Mawile
       "Special Eater") and the §8 self-discard attack COST on the controller's
@@ -781,11 +855,60 @@ export type EffectOp =
 
       Emits NO event, for `conditionGate`'s reason and one more: the branch turns
       on something the game has ALREADY announced (the recording op emitted its
-      own DISCARD_RETRIEVED / HAND_COST_PAID naming exactly these cards), so a
-      gate event would be a second telling of one fact. */
-  | { op: "recordGate"; slot: EffectSlot; then: EffectOp[]; otherwise?: EffectOp[] };
+      own DISCARD_RETRIEVED / HAND_COST_PAID / ENERGY_ATTACHED naming exactly
+      these cards), so a gate event would be a second telling of one fact.
+
+      **`contains` narrows WHICH of the filed cards counts** — the printed clause
+      that asks not "did the earlier one do anything" but "did it reach a
+      particular Pokémon". Janine's Secret Art is the one consumer: "If you
+      attached Energy to your **Active** Pokémon in this way, it is now
+      Poisoned", where the earlier op may well have attached two Energy and put
+      neither on the Active. Absent = the plain "did anything move" test.
+
+      `"yourActive"` holds when at least one filed uid is a card ATTACHED to the
+      controller's Active right now. That is a read of the board rather than of
+      the record, and it is deliberate: the record's values stay one kind of
+      thing everywhere (the cards an op actually moved), and the question "where
+      did it end up" is answered where every other board question is.
+
+      **THE TWO READINGS ARE NOT THE SAME THING**, and the difference is worth
+      stating exactly rather than waving at. "Was attached to the Active by that
+      op" is history; "is on the Active now" is the board. They agree for every
+      program that exists — but this vocabulary already contains three ops that
+      would separate them if one were sequenced in between, and none of them is
+      exotic: `switchActive` (a different Pokémon is now the Active, so the filed
+      uids are on a BENCHED one), `moveEnergy` (own → own, which can take the
+      filed card off the Active), and `discardEnergy`'s `yourActive` arm (the
+      card is gone entirely). No printed card puts any of them between an attach
+      and its "in this way" clause, and the one consumer — Janine's Secret Art —
+      runs attach → shuffle → gate. So this is safe as authored and unsafe as a
+      general rule: a new card that gates on a slot with ops like those between
+      is the case to check, and the honest answer there is probably to file the
+      HOST rather than to widen this. */
+  | {
+      op: "recordGate";
+      slot: EffectSlot;
+      contains?: "yourActive";
+      then: EffectOp[];
+      otherwise?: EffectOp[];
+    };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
+
+/** A Special Condition as the CARDS print it — capitalized, the form the deriver
+    reads out of attack text and the form a prompt has to put back ("it is now
+    Poisoned", Janine's Secret Art). The inverse of `STATUS_OF_WORD` below (the
+    deriver's own `STATUS_WORDS` is a different thing — a regex alternation); both
+    tables are exhaustive `Record`s over their key type, so a new condition is a
+    compile error in two places rather than a silent gap in one, and a test pins
+    them mutually inverse (the one drift the types cannot catch). */
+export const STATUS_WORD_OF: Record<StatusName, StatusWord> = {
+  asleep: "Asleep",
+  burned: "Burned",
+  confused: "Confused",
+  paralyzed: "Paralyzed",
+  poisoned: "Poisoned",
+};
 
 const STATUS_OF_WORD: Record<StatusWord, StatusName> = {
   Asleep: "asleep",

@@ -95,8 +95,22 @@ import type { GameState, Seat } from "./types";
     `EffectContext`: it is an accumulator, sibling to `rest`, where the context is
     a constant. And it is keyed by SLOT rather than by position — Miriam shuffles
     the deck between the retrieval and the sentence about it, so "the previous op"
-    would have been wrong on the very first card that needed this. */
-export const engineVersion = "0.28.0";
+    would have been wrong on the very first card that needed this.
+
+    0.29.0 — `attachFromDeck`: SEARCH your deck for Energy and attach it straight
+    onto your Pokémon, the deck-search sibling of `attachFromTop`. It shares that
+    op's `attachCards` MAP prompt (the printed clause is the same one) and differs
+    only where the SOURCE forces it to: the candidate set is the whole deck, so it
+    is COLLAPSED to `max` representatives per interchangeable class (D42's rule —
+    a real list holds a dozen Basic {R}), and there is no leftovers clause, so the
+    printed "Then, shuffle your deck" is the usual trailing `shuffleDeck`. Two
+    printed target rules, one new field: "in any way you like" (**Charizard ex**
+    ×4, an onEvolve trigger) is no rider at all, and "for each of those Pokémon"
+    (**Janine's Secret Art** ×2) is `maxPerTarget: 1`. Janine also extends §9.2 —
+    `recordGate.contains` narrows the gate from "did the earlier op do anything"
+    to "did anything land on your ACTIVE", which is what her printed self-poison
+    turns on. */
+export const engineVersion = "0.29.0";
 
 export type {
   ApplyResult,

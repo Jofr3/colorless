@@ -1098,6 +1098,71 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Item",
     "You can use this card only if you discard 2 other cards from your hand.\n\nPut up to 4 Basic Energy cards from your discard pile into your hand. (You can't choose a card you discarded with the effect of this card.)",
   ),
+  // — M5 op-slice: attachFromDeck. Both card rows verified verbatim against the
+  //   local catalog 2026-07-22; printed WEAKNESS is omitted as in the slices
+  //   above (Charizard ex only ever ATTACHES here, never defends). —
+  /** Charizard ex (sv03-125) — "Infernal Reign", the onEvolve deck search that
+      attaches "in any way you like".
+
+      **`evolveFrom` is the ONE deliberate deviation from the print.** The real
+      card evolves from Charmeleon; here it evolves from `fix-stage1`, so the
+      suite can drive a real `evolve` action off the pool's existing
+      fix-basic-1 → fix-stage1 chain instead of carrying two more Fire bodies
+      whose only job is to be evolved through. The trigger under test fires on
+      the EVOLVE, and the evolve rule reads `evolveFrom` against the top card's
+      NAME — so what the chain is made of is exactly the part this slice does not
+      test. Its printed attack rides along verbatim (an Active that cannot attack
+      is an awkward fixture); the "+" damage and its Prize-scaling effect DERIVE
+      TO NOTHING — the deriver knows a fixed set of anchored sentences and this is
+      not one — so using it is a loud ATTACK_EFFECT_SKIPPED, never an unrelated
+      effect landing inside an attach test.
+
+      Note the card is **{D}**, not {R}: Charizard ex from Obsidian Flames is a
+      DARKNESS Pokémon that attacks with Fire Energy and accelerates Basic {R}.
+      Its op carries no `targetType`, so its own type changes nothing about this
+      slice — but the field is the catalog's, and a "verified verbatim" banner
+      over a quietly invented Fire type is exactly the kind of false claim this
+      repo treats as a defect. */
+  "sv03-125": battler("sv03-125", {
+    name: "Charizard ex",
+    hp: 330,
+    stage: "Stage2",
+    evolveFrom: "fix-stage1",
+    types: ["Darkness"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Fire", "Fire"],
+        name: "Burning Darkness",
+        damage: "180+",
+        effect: "This attack does 30 more damage for each Prize card your opponent has taken.",
+      },
+    ],
+  }),
+  /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
+      of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
+      poisons your own Active if one landed there. */
+  "sv06.5-059": trainerCard(
+    "sv06.5-059",
+    "Supporter",
+    "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a Basic {D} Energy card and attach it to that Pokémon. Then, shuffle your deck. If you attached Energy to your Active Pokémon in this way, it is now Poisoned.",
+  ),
+  /** A Basic Darkness Energy — what Janine's `basicEnergy` + `energyType`
+      filter admits. Provision comes off the NAME (cards.ts energyProvidesOf), so
+      "Darkness Energy" is what makes this a {D}. */
+  "fix-dark-energy": typedEnergy("fix-dark-energy", "Darkness"),
+  /** FIXTURE — a SECOND catalog print of Basic Darkness Energy (the
+      fix-fire-energy-alt shape). The real catalog prints this card under four ids
+      (sve-007/-015/-023, sv06.5-098), and the interchangeable collapse keys a
+      Basic by what it PROVIDES rather than by id — so a deck holding both prints
+      is what proves the collapse crosses the id boundary instead of merely
+      de-duplicating one id. */
+  "fix-dark-energy-alt": typedEnergy("fix-dark-energy-alt", "Darkness"),
+  /** FIXTURE — a Darkness-typed BASIC body, the target Janine's printed "your
+      {D} Pokémon" needs. The pool's only other {D} Pokémon is Hydreigon, a Stage
+      2 that has to be placed by surgery and carries its own attaching Ability —
+      both wrong for a test about which Pokémon may RECEIVE an attach. */
+  "fix-dark-1": battler("fix-dark-1", { types: ["Darkness"], hp: 70, retreat: 1 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1569,6 +1634,36 @@ export const DECK_BOTTOM_DECK = deckOf({
     THREE basic Energy classes — the exclusion is only observable when the discard
     can hold both a barred copy and an identical-print sibling that is still
     takeable, which needs several of one type as well as several types. */
+/** M5 op-slice: attachFromDeck — the deck SEARCH that attaches.
+ *
+ *  The energy mix is the whole point of this list. **Two prints of Basic {D}**
+ *  (fix-dark-energy / -alt) is what makes the interchangeable collapse
+ *  observable: they are different ids providing the same type, so a collapse
+ *  keyed on the id would offer them separately and this deck would catch it.
+ *  The count is deliberately far above any card's `max` — a real list runs a
+ *  dozen Energy, and offering twelve rows for a pick of three is exactly the
+ *  question the collapse exists to stop being asked.
+ *
+ *  fix-fire-energy is Charizard's, and each of the two typed classes is a
+ *  near-miss for the other card's filter; fix-energy (Colorless basics) and
+ *  fix-special are near-misses for BOTH, since `basicEnergy` + a type admits
+ *  neither. fix-dark-1 supplies Janine's {D} targets and fix-basic-1 the
+ *  Colorless bodies her `targetType` must exclude, while the
+ *  fix-basic-1 → fix-stage1 chain is what a real `evolve` action drives to fire
+ *  Charizard's onEvolve trigger. */
+export const ATTACH_FROM_DECK_DECK = deckOf({
+  "sv06.5-059": 4, // Janine's Secret Art (Supporter)
+  "sv03-125": 4, // Charizard ex — Infernal Reign (onEvolve)
+  "fix-stage1": 4, // what Charizard ex evolves from in this pool
+  "fix-basic-1": 8, // Colorless bodies: the chain's base, and non-{D} attach targets
+  "fix-dark-1": 6, // the {D} bodies Janine's targetType admits
+  "fix-dark-energy": 8, // Janine's Basic {D}
+  "fix-dark-energy-alt": 4, // a SECOND print of it — the collapse crosses ids
+  "fix-fire-energy": 8, // Charizard's Basic {R}, and a near-miss for Janine
+  "fix-energy": 10, // Colorless basics — near-misses for both typed filters
+  "fix-special": 4, // a Special Energy — `basicEnergy` admits none of them
+});
+
 export const OP_RECORD_DECK = deckOf({
   "fix-basic-1": 10,
   "fix-basic-2": 4,
