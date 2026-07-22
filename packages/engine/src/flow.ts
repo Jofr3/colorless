@@ -406,7 +406,10 @@ export function settleProgram(
   opts: { resumeTail?: boolean; endsTurn?: boolean } = {},
 ): ApplyResult {
   if (result.kind === "parked") {
-    events.push({ type: "EFFECT_PENDING", seat: controller, note: result.prompt.note });
+    // EFFECT_PENDING's seat is the seat that MUST RESOLVE the decision (its own
+    // doc) — the park's decider when one is named (opponentMayDraw: Ortega's
+    // "your opponent may"), else the controller, which is who it always was.
+    events.push({ type: "EFFECT_PENDING", seat: result.decider ?? controller, note: result.prompt.note });
     return ok(
       {
         ...result.state,
@@ -415,6 +418,14 @@ export function settleProgram(
           seat: controller,
           prompt: result.prompt,
           cont: result.cont,
+          // The seat that ANSWERS, only when it is not the controller (the
+          // absent-when-empty rule, so every pre-D52 park is byte-identical).
+          // `seat` above stays the CONTROLLER — every reader of it means the
+          // program's owner, and the turn still belongs to them while the
+          // opponent weighs their printed "may".
+          ...(result.decider !== undefined && result.decider !== controller
+            ? { answerer: result.decider }
+            : {}),
           // Carry the fold flags across a park so resolveEffect folds the same
           // way once the (possibly re-parking) program finishes: resumeTail
           // resumes the KO tail, endsTurn ends the controller's turn.

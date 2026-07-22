@@ -395,10 +395,19 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
     // an ATTACK's effect program (§8 step 4) parks with the attackEpilogue stage
     // queued, where the decider IS the turn owner — koParkActiveSeat returns the
     // same seat, so the two agree without a special case here.
+    //
+    // `answerer` (engine 0.32.0) is the THIRD way the two seats come apart, and
+    // the only one where they differ while the turn runs normally: Ortega's
+    // printed "your opponent may draw a card" parks a decision on the
+    // NON-controller mid-play. It moves waitingSeat alone — the turn is still
+    // the controller's, so activeSeat must keep reading phase.seat, or the
+    // board's turn glow would hand the turn to a player who is only answering a
+    // question. This is exactly why the engine files the answerer beside `seat`
+    // rather than replacing it.
     case "effect:choose":
       return {
         activeSeat: phase.resumeTail === true ? koParkActiveSeat(state) : phase.seat,
-        waitingSeat: phase.seat,
+        waitingSeat: phase.answerer ?? phase.seat,
         pendingDecision: { kind: "effectChoose", prompt: phase.prompt },
         outcome: null,
       };

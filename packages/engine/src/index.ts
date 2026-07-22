@@ -124,8 +124,22 @@ import type { GameState, Seat } from "./types";
     "Choose up to 2 of your Pokémon and heal 50 damage from each of them") —
     the first consumer of choosePokemonMulti's min: 0 end (§9.1's "up to"
     legalizes 0..max), parked at every non-empty board with §8.6 clamping the
-    ask. */
-export const engineVersion = "0.31.0";
+    ask.
+
+    0.32.0 — `bottomFromOpponentHand` + `opponentMayDraw`: the opponent reveals
+    their hand (a new public HAND_REVEALED — every uid, because that is what
+    the printed word means), the controller bottoms a chosen card onto the
+    OPPONENT's deck (CARD_TO_BOTTOM_OF_DECK, named — the whole move happened
+    face up), and the gated draw is the engine's first decision ANSWERED BY THE
+    NON-CONTROLLER: the park carries a decider, the phase an `answerer` (absent
+    when it is the controller, so every older park is byte-identical), and
+    resolveEffect admits only that seat. Ortega ×2 authored (the Miriam shape
+    across the table), Greavard "Underworld Stroll" DERIVED (the Supporter-
+    filtered attack twin — its second attack is why the card-level registry
+    `attack` field could not carry it). programPlayable gains the public-count
+    empty-opponent-hand gate (the Catcher/Hammer class) and is now EXPORTED —
+    the HUD greys with the predicate that rejects. */
+export const engineVersion = "0.32.0";
 
 export type {
   ApplyResult,
@@ -203,6 +217,14 @@ export { conditionHolds, conditionNote } from "./interpreter";
     (the printed "OTHER cards"); omit it for an Ability, whose card is on the
     board. */
 export { handCostAction, handCostUnmet } from "./interpreter";
+/** The would-only-whiff playability gate (gust needs an opponent Bench, Ortega
+    an opponent hand…). Exported for the two gates' reason exactly: playTrainer
+    and useAbility reject with it, so the HUD must grey with it — the recurring
+    review finding (D46/D47) was always a row this predicate refuses lighting
+    up anyway. Reads only counts and boards the viewer can see (its own limit:
+    hidden-zone CONTENTS never decide playability — the Poké Ball rule), so the
+    hot-seat HUD may call it freely; the P4 projection caveat above applies. */
+export { programPlayable } from "./cardplay";
 export type {
   DiscardScope,
   EffectChoice,

@@ -847,6 +847,82 @@ export type EffectOp =
           gates its draw on them ("if you do"). */
       recordAs?: EffectSlot;
     }
+  /** REVEAL the opponent's hand, then the CONTROLLER chooses one card matching
+      `filter` from it and puts it on the bottom of the OPPONENT's deck — the
+      printed "Your opponent reveals their hand, and you choose a card you find
+      there and put it on the bottom of their deck" (Ortega, unfiltered) and
+      "…Choose a Supporter card you find there…" (Greavard "Underworld Stroll",
+      the attack twin, DERIVED — see deriveAttackEffect). The first op to move a
+      card between two zones the controller owns NEITHER of.
+
+      THE REVEAL IS THE OP'S FIRST ACT and it is TOTAL: every uid in that hand
+      goes out in one public `HAND_REVEALED` — that is what the printed word
+      means at a table (both players see all of it), and it is emitted before
+      the pick parks, so the event tells the story in the order it happened. An
+      empty hand reveals honestly as zero uids (the HAND_DISCARDED "(0 cards)"
+      precedent) — reachable only through the ATTACK twin, because the Trainer
+      path is gated (programPlayable: an empty opponent hand is PUBLIC knowledge
+      — the count shows — so "this can only whiff" is a fact the board states,
+      the Catcher/Hammer class and not Poké Ball's; a FILTER's matches stay
+      hidden knowledge, so the gate reads hand LENGTH and never the filter).
+
+      The pick is MANDATORY and exactly one — "you choose a card", not "you
+      may" — so the prompt is the second `min === max` chooseCards after the
+      hand cost. It parks only when a real choice exists: the offer is the
+      filtered hand COLLAPSED to one representative per interchangeable class
+      (`cardIdentity` — the attachFromDeck key, because the catalog prints one
+      Basic Energy under several ids), and a single-class offer resolves inline
+      (the M1 doctrine). Collapsing is sound HERE where payFromHand must not:
+      that offer names cards in a zone that stays hidden, so its collapse leaks
+      the hand's duplicate structure — this hand was just revealed in full, so
+      there is nothing left for the offer's shape to give away.
+
+      The card lands UNDER the opponent's deck (their zone, their order —
+      appended exactly as payFromHand's `deckBottom` appends) and is PUBLIC the
+      whole way: everyone saw the reveal and watched the pick, so
+      `CARD_TO_BOTTOM_OF_DECK` names the uid — the event follows the
+      destination's VISIBILITY rule from the other side (Dendra's payment goes
+      hidden → hidden and stays count-shaped; this one goes revealed → known
+      bottom card).
+
+      A whiff (no match for the filter — Greavard into a Supporter-less hand)
+      files `[]` under `recordAs` like every recording op, so a §9.2 gate reads
+      an honest no. */
+  | {
+      op: "bottomFromOpponentHand";
+      /** Which cards may be chosen — absent is Ortega's bare "a card" (any).
+          `supporter` is Greavard's printed narrowing. */
+      filter?: CardFilter;
+      /** File the uid actually moved under this slot for a later op to read —
+          Ortega's "If you put a card on the bottom of your opponent's deck in
+          this way" is a plain recordGate on it. */
+      recordAs?: EffectSlot;
+    }
+  /** The OPPONENT of the controller may draw `count` cards — the printed "your
+      opponent may draw a card" (Ortega), and the engine's first decision that
+      belongs to the seat that did NOT make the play. The park carries a
+      `decider` (interpreter.ts), settleProgram files it as the phase's
+      `answerer`, and resolveEffect accepts only that seat's answer — the
+      controller cannot answer for them, because at a table this "may" is the
+      other player's to speak.
+
+      A yes draws off the OPPONENT's own deck top (`drawToHand`, the standard
+      contract); a no changes nothing and — like every decline in this engine
+      (Saguaro's empty heal, a declined snipe) — emits NOTHING: no state moved,
+      and the table saw the shrug.
+
+      NEVER PARKS WHEN THE QUESTION DOES NOT EXIST: an empty opponent deck can
+      only whiff the draw, so both answers are the same state and the op
+      resolves silently (the M1 no-choice rule, same as drawCards' own empty-
+      deck no-op). This is a DECISION rule, not a kindness — asking would park
+      the game on a question with one answer.
+
+      Deliberately NOT a rider on `drawCards`: that op is fully automatic and
+      seat-fixed to the controller, and every one of its call sites relies on
+      both. The name carries the printed words (the healChosen `upTo` rule) —
+      a future self-side "you may draw" is a different sentence and gets its
+      own field when a card prints it. */
+  | { op: "opponentMayDraw"; count: number }
   /** A BOARD-CONDITION branch: run `then` when `cond` holds for the controller,
       else `otherwise` (nothing, if absent). The deterministic sibling of
       `coinFlipGate`, and spliced into the work queue by runProgram exactly the
@@ -1013,6 +1089,13 @@ const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
 const OPPONENT_ACTIVE_DISCARD = /^Discard an Energy from your opponent['’]s Active Pokémon\.$/;
 const FLIP_OPPONENT_ACTIVE_DISCARD =
   /^Flip a coin\. If heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
+// The reveal-and-bottom attack sentence (Greavard "Underworld Stroll") — the
+// whole effect, anchored end to end like every rule here. Only the SUPPORTER
+// narrowing is derived: Ortega's unfiltered Supporter form carries a second
+// sentence (an opponent draw behind a §9.2 gate) that no attack prints, so it
+// is registry-authored and this anchor must not loosen toward it.
+const REVEAL_BOTTOM_SUPPORTER =
+  /^Your opponent reveals their hand\. Choose a Supporter card you find there and put it on the bottom of their deck\.$/;
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
 // the swsh-era prints carry ("Discard a Fire Energy" — Charmeleon, Charizard).
@@ -1202,6 +1285,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ];
+  }
+
+  // 13. "Your opponent reveals their hand. Choose a Supporter card you find
+  //     there and put it on the bottom of their deck." — Greavard "Underworld
+  //     Stroll", the attack twin of Ortega's Supporter sentence (which is
+  //     registry-authored: its second sentence gates an opponent draw no attack
+  //     prints). Derived rather than registry-authored because CardProgram's
+  //     `attack` field is per-CARD and Greavard has a second, effect-less
+  //     attack it must not leak onto.
+  if (REVEAL_BOTTOM_SUPPORTER.test(effect)) {
+    return [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }];
   }
 
   return null;

@@ -13,6 +13,7 @@ import {
   DISCARD_ENERGY_DECK,
   HAND_REFRESH_DECK,
   MIXED_DECK,
+  REVEAL_BOTTOM_DECK,
   SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
   attachBenchFromDeck,
@@ -676,6 +677,88 @@ describe("logFromEvents — handRefresh (M5): HAND_SHUFFLED_INTO_DECK / HAND_TO_
     // the opponent's hand, so every row here has to stay a bare count.
     const who = logFromEvents(events, ctx(after)).map((e) => (e.kind === "turn" ? null : e.who));
     expect(who).toEqual(["p1", "p1", "p2", "p1", "p2"]);
+  });
+});
+
+describe("logFromEvents — reveal-and-bottom (M5): HAND_REVEALED / CARD_TO_BOTTOM_OF_DECK", () => {
+  it("pins the REAL Ortega batch — the reveal NAMES cards, and the bottomed card is named too", () => {
+    // The one hand row in the file that is not count-only, and the contrast
+    // that justifies it sits two rows above in the Iono test: a hand SHUFFLED
+    // under a deck stays hidden, a hand REVEALED does not. Driven through
+    // playTrainer + resolveEffect, so the order is the real one.
+    let state = driveSetup(20260722, { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // P1's turn 2
+    // P2's hand, exactly: two classes so the pick is a real question.
+    const p2Side = state.players.p2;
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p2: { ...p2Side, hand: [], deck: [...p2Side.deck, ...p2Side.hand] },
+      },
+    };
+    state = handFromDeck(state, "p2", "fix-item", 1);
+    state = handFromDeck(state, "p2", "sv01-105", 1); // Greavard — a distinct name
+    state = handFromDeck(state, "p1", "sv03-190", 1); // Ortega
+    const uid = handUid(state, "p1", "sv03-190");
+
+    const { state: parked, events: played } = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid,
+    });
+    expect(texts(logFromEvents(played, ctx(parked)))).toEqual([
+      "played sv03-190",
+      "revealed their hand: fix-item, Greavard",
+    ]);
+    // The reveal is filed under the seat whose hand it is, not the actor —
+    // the row above it already named the cause.
+    expect(logFromEvents(played, ctx(parked)).map((e) => (e.kind === "turn" ? null : e.who))).toEqual(
+      ["p1", "p2"],
+    );
+
+    const picked = handUid(parked, "p2", "sv01-105");
+    const { state: after, events } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [picked] },
+    });
+    // Named, and the OWNER named outright: the `who` chip is viewer-relative,
+    // so a mirror match would otherwise print an identical row from both seats.
+    expect(texts(logFromEvents(events, ctx(after)))).toEqual([
+      "put Greavard on the bottom of Tide's deck",
+    ]);
+    // Filed under the ACTOR (whose card did it), the ENERGY_DISCARDED rule.
+    expect(logFromEvents(events, ctx(after)).map((e) => (e.kind === "turn" ? null : e.who))).toEqual([
+      "p1",
+    ]);
+  });
+
+  it("says so plainly when the revealed hand is empty", () => {
+    // Reachable through Greavard's attack (which is not gated on the hand), and
+    // an honest zero rather than a silent skip — the HAND_DISCARDED "(0 cards)"
+    // precedent.
+    const { state } = mustCreate(1);
+    const empty: GameEvent = { type: "HAND_REVEALED", seat: "p2", uids: [] };
+    expect(texts(logFromEvents([empty], ctx(state)))).toEqual(["revealed their hand — no cards"]);
+  });
+
+  it("folds repeats into ×N rather than stuttering the same name", () => {
+    // A revealed hand is the first batch that routinely holds several copies of
+    // one card, and a run of identical names reads as a stutter rather than a
+    // quantity (countedNames' rule, arriving here from the discard rows).
+    let state = driveSetup(20260722, { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK }, { first: "p2" });
+    const side = state.players.p2;
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p2: { ...side, hand: [], deck: [...side.deck, ...side.hand] },
+      },
+    };
+    state = handFromDeck(state, "p2", "fix-item", 2);
+    const dupes: GameEvent = { type: "HAND_REVEALED", seat: "p2", uids: state.players.p2.hand };
+    expect(texts(logFromEvents([dupes], ctx(state)))).toEqual(["revealed their hand: fix-item ×2"]);
   });
 });
 

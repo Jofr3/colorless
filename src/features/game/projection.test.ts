@@ -11,6 +11,7 @@ import {
   FIXTURE_POOL,
   MIXED_DECK,
   ONKO_DECK,
+  REVEAL_BOTTOM_DECK,
   SNIPE_DECK,
   STADIUM_TOOL_DECK,
   attachFromDeck,
@@ -531,6 +532,51 @@ describe("projectGameState — phase-derived fields", () => {
     const theirs = projectGameState(state, "p2");
     expect(theirs.activePlayer).toBe("opponent");
     expect(theirs.waitingOn).toBe("opponent");
+  });
+
+  it("routes an `answerer` park to the OTHER seat without moving the turn (M5 — Ortega)", () => {
+    // The THIRD way the deciding seat and the turn owner come apart, and the
+    // only one where they differ mid-play with no KO involved: the printed
+    // "your opponent may draw a card" parks on the non-controller while the
+    // controller's turn runs on. Unlike the two resumeTail cases above,
+    // activeSeat must keep reading phase.seat — the turn did not move, and a
+    // board that handed P2 the turn glow for answering a question would be
+    // lying about whose turn it is.
+    let state = driveSetup(
+      20260722,
+      { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → P1's turn 2
+    state = handFromDeck(state, "p1", "sv03-190", 1); // Ortega
+    const parked = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", "sv03-190"),
+    }).state;
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected the pick park");
+    const prompt = parked.phase.prompt;
+    if (prompt.kind !== "chooseCards") throw new Error("expected a chooseCards prompt");
+    const asked = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [prompt.candidates[0] as string] },
+    }).state;
+
+    if (asked.phase.kind !== "effect:choose") throw new Error("expected the mayDraw park");
+    expect(asked.phase.seat).toBe("p1"); // the controller, unchanged
+    expect(asked.phase.answerer).toBe("p2"); // …but P2 answers
+    expect(asked.phase.resumeTail).toBeUndefined(); // no KO tail involved
+
+    const mine = projectGameState(asked, "p1");
+    expect(mine.activePlayer).toBe("you"); // still P1's turn…
+    expect(mine.waitingOn).toBe("opponent"); // …and P2 owes the answer
+
+    const theirs = projectGameState(asked, "p2");
+    expect(theirs.activePlayer).toBe("opponent");
+    expect(theirs.waitingOn).toBe("you");
+    if (theirs.pendingDecision?.kind !== "effectChoose") throw new Error("expected effectChoose");
+    expect(theirs.pendingDecision.prompt.kind).toBe("mayDraw");
   });
 
   /** A CHECKUP-origin park: p2's Active is lethally poisoned when p1 ends

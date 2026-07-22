@@ -312,6 +312,25 @@ export type GameEvent =
       as they go under the deck. `count` may be 0 (an empty hand moves nothing —
       Iono's draw gate reads exactly that). */
   | { type: "HAND_TO_BOTTOM_OF_DECK"; seat: Seat; count: number }
+  /** `seat` REVEALED its whole hand — every uid, because that is what the
+      printed word means at a table: both players see all of it (Ortega,
+      Greavard "Underworld Stroll"). The uid-carrying opposite of the two
+      count-only hand events above, and deliberately so — the reveal is the
+      moment those cards STOP being hidden, and an event that named fewer would
+      be hiding what the effect just showed. The MULLIGAN_REVEALED family.
+      `uids` may be empty (revealing an empty hand is honest — the
+      HAND_DISCARDED "(0 cards)" precedent; reachable only via the attack twin,
+      the Trainer path being gated on the public hand count). */
+  | { type: "HAND_REVEALED"; seat: Seat; uids: string[] }
+  /** ONE card went from `seat`'s hand to the BOTTOM of `seat`'s own deck,
+      chosen by `actor` — the other player (Ortega, Greavard: the reveal-and-
+      bottom family; `actor` is the ENERGY_DISCARDED precedent). Names the uid
+      because the whole move happened face up: the hand was just revealed
+      (HAND_REVEALED) and the pick was made in the open, so both players know
+      exactly which card sits on the bottom until something shuffles — as at a
+      table. Contrast HAND_COST_PAID `to: "deckBottom"` (Dendra), where the
+      payer's hidden card goes hidden → hidden and only the payer ever knew it. */
+  | { type: "CARD_TO_BOTTOM_OF_DECK"; seat: Seat; uid: string; actor: Seat }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

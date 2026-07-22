@@ -252,6 +252,15 @@ export type Phase =
   | {
       kind: "effect:choose";
       seat: Seat;
+      /** The seat that must ANSWER this prompt, when it is not `seat` — the
+          opponent's printed "may" (opponentMayDraw, Ortega). Absent for every
+          controller-answered park (i.e. all of them before D52), so old phases
+          serialize byte-identically. `seat` keeps meaning the program's
+          CONTROLLER throughout: the turn is still theirs, the fold returns to
+          their turn:action, and the projection's activeSeat reads it — only
+          resolveEffect's who-may-answer check and the projection's waitingSeat
+          read this instead. */
+      answerer?: Seat;
       prompt: EffectPrompt;
       cont: EffectContinuation;
       resumeTail?: true;

@@ -879,6 +879,32 @@ const MIRIAM: CardProgram = {
   ],
 };
 
+/** Ortega (sv03-190/-219) — "Your opponent reveals their hand, and you choose a
+    card you find there and put it on the bottom of their deck. If you put a
+    card on the bottom of your opponent's deck in this way, your opponent may
+    draw a card."
+
+    The Miriam shape verbatim — a recording op, then a plain recordGate on its
+    slot — with both halves on the OTHER side of the table: the pick reads a
+    zone the controller does not own (revealed by the op), and the gated draw
+    is answered by a seat that did not make the play (the phase's `answerer`,
+    this card's whole reason to exist). Ungated by any printed rule; the
+    would-only-whiff gate (an empty opponent hand — public via the count) is
+    programPlayable's, not this card's text. The attack twin of the first
+    sentence (Greavard "Underworld Stroll", a Supporter-filtered pick with no
+    second sentence) is DERIVED, not authored — see deriveAttackEffect. */
+const ORTEGA: CardProgram = {
+  trainer: [
+    { op: "bottomFromOpponentHand", recordAs: "moved" },
+    {
+      op: "recordGate",
+      slot: "moved",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [{ op: "opponentMayDraw", count: 1 }],
+    },
+  ],
+};
+
 /** Superior Energy Retrieval (sv02-189/-277) — "You can use this card only if
     you discard 2 other cards from your hand. / Put up to 4 Basic Energy cards
     from your discard pile into your hand. (You can't choose a card you discarded
@@ -1613,6 +1639,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-179": MIRIAM, // Miriam — up to 5 Pokémon discard → deck, shuffle, "in this way" → draw 3
   "sv01-238": MIRIAM, // Miriam (reprint)
   "sv01-251": MIRIAM, // Miriam (reprint)
+  "sv03-190": ORTEGA, // Ortega — reveal opponent's hand, bottom a chosen card, "in this way" → they may draw
+  "sv03-219": ORTEGA, // Ortega (reprint)
   "sv02-189": SUPERIOR_ENERGY_RETRIEVAL, // Superior Energy Retrieval — pay 2, then up to 4 Basic Energy back, minus the 2 just paid
   "sv02-277": SUPERIOR_ENERGY_RETRIEVAL, // Superior Energy Retrieval (reprint)
   // — M5 op-slice: lookAtTopN (verified vs the local catalog 2026-07-20). —

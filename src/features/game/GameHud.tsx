@@ -30,6 +30,7 @@ import {
   isImmobilized,
   otherSeat,
   programFor,
+  programPlayable,
   providedEnergy,
   rareCandyOptions,
   topCardOf,
@@ -133,9 +134,23 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // Scoped to the Item/Supporter path with the gate above, for the same reason.
     const costUnmet =
       !isRareCandy && !isStadium ? handCostUnmet(game, seat, program.trainer ?? [], uid) : null;
+    // The card's THIRD way of being dead — not a printed rule this time but the
+    // engine's would-only-whiff judgement (§7 / ruling/284): Boss's Orders into
+    // an empty opponent Bench, Ortega into an empty opponent hand. playTrainer
+    // rejects these with NO_LEGAL_TARGET, so a lit row here can only ever be
+    // clicked and refused — the exact recurring finding the two mirrors above
+    // were each added to close, arriving a third time because the predicate was
+    // engine-private until 0.32.0. Every input it reads is public to this seat
+    // (zone counts, both boards), and hidden-zone CONTENTS never decide
+    // playability inside it (the Poké Ball rule), so mirroring leaks nothing.
+    // Scoped to the Item/Supporter path with the two above: playStadium and the
+    // rareCandy action never consult it.
+    const noTarget =
+      !isRareCandy && !isStadium && !programPlayable(game, program.trainer ?? [], seat);
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
+      noTarget ||
       (isRareCandy
         ? !rareCandyPlayable()
         : isSupporter
@@ -151,7 +166,12 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
           ? `Only if ${conditionNote(gated)}`
           : costUnmet !== null
             ? `Only if you ${handCostAction(costUnmet, true)}`
-            : undefined,
+            : noTarget
+              ? // No printed clause to quote — this is the engine's rule, not the
+                // card's — so the tooltip says the plain fact, in the words the
+                // engine's own rejection uses.
+                "No legal target"
+              : undefined,
     });
   }
   return out;
@@ -189,17 +209,28 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
       // pays out of — which is why none of these cards prints the "other" that
       // every Trainer in the family does.
       const costUnmet = handCostUnmet(game, seat, ability.program);
+      // useAbility gates on programPlayable exactly as playTrainer does
+      // (Meowscarada ex's snipe needs an opponent Bench), so the Ability row
+      // mirrors it for the Trainer row's reason — this list has carried the
+      // afford-then-reject since D29, and the predicate is exported now.
+      const noTarget = !programPlayable(game, ability.program, seat);
       const disabled =
         (ability.activeOnly && target.spot !== "active") ||
         (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
-        costUnmet !== null;
+        costUnmet !== null ||
+        noTarget;
       const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
       out.push({
         target,
         abilityName: ability.name,
         label: `${ability.name} · ${card.name} (${where})`,
         disabled,
-        reason: costUnmet === null ? undefined : `Only if you ${handCostAction(costUnmet, false)}`,
+        reason:
+          costUnmet !== null
+            ? `Only if you ${handCostAction(costUnmet, false)}`
+            : noTarget
+              ? "No legal target"
+              : undefined,
       });
     }
   };
@@ -1000,8 +1031,53 @@ function EffectChooseDialog(props: GameHudProps) {
     <DiscardEnergyDialog {...props} prompt={prompt} />
   ) : prompt.kind === "attachCards" ? (
     <AttachCardsDialog {...props} prompt={prompt} />
+  ) : prompt.kind === "mayDraw" ? (
+    <MayDrawDialog {...props} prompt={prompt} />
   ) : (
     <ChoosePokemonDialog {...props} prompt={prompt} />
+  );
+}
+
+/** The printed "you may" answered by the seat that did NOT play the card
+    (Ortega's "your opponent may draw a card") — the engine's first pure yes/no,
+    and the first prompt this HUD shows to the non-controller mid-play.
+    `projection.waitingOn` already routes it: the engine files the answerer on
+    the phase, the projection makes it the waiting seat, and useLocalGame flips
+    the hot-seat viewer to them exactly as it does for a KO promotion.
+
+    NO local state and no Confirm: unlike every sibling dialog there is nothing
+    to gather, so each button IS the answer and dispatches on the tap — the
+    "a list of one is not a decision" rule (D44/D50) at its limit. Both answers
+    are equally printed, so neither is styled as the default: declining is not
+    a lesser action, and a card the opponent draws is the controller's problem,
+    not theirs. Escape is swallowed (no `onDismiss`): the program is parked on
+    this answer and there is no third option. */
+function MayDrawDialog({
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "mayDraw" }> }) {
+  const answer = (draw: boolean) =>
+    dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "mayDraw", draw } });
+  return (
+    <HudDialog label="You may draw">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* The one live region, the siblings' rule — but here it states WHOSE
+          decision this is rather than a running count. A player watching their
+          opponent's turn is not expecting a dialog, and the note alone ("You
+          may draw a card.") does not say why it appeared. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        Your opponent's card is asking. Declining costs you nothing.
+      </output>
+      <div className="mt-5 flex justify-end gap-2">
+        <button type="button" className={NEUTRAL_BUTTON_CLASS} onClick={() => answer(false)}>
+          Decline
+        </button>
+        <button type="button" className={ACCENT_BUTTON_CLASS} onClick={() => answer(true)}>
+          {prompt.count === 1 ? "Draw a card" : `Draw ${prompt.count} cards`}
+        </button>
+      </div>
+    </HudDialog>
   );
 }
 
@@ -2010,6 +2086,16 @@ function promptKey(prompt: EffectPrompt): string {
       return `pokemonMulti:${prompt.min}:${prompt.max}:${prompt.declinable}:${prompt.candidates
         .map((c) => `${c.seat}-${c.spot.spot === "bench" ? c.spot.index : "active"}`)
         .join(",")}`;
+    case "mayDraw":
+      // The COUNT rides the key although this dialog holds no state to go
+      // stale — it dispatches on the tap, so there is nothing to reset. It is
+      // here because the key is also the REMOUNT boundary: two mayDraw parks in
+      // one program (no card prints that yet) differing only in how many cards
+      // are offered would otherwise share a mounted dialog, and the second
+      // would keep the first's rendered button label. The `kind:note` default
+      // would very nearly work — the note carries the count — but "very nearly"
+      // via a describer is what every sibling arm here exists to stop relying on.
+      return `mayDraw:${prompt.count}`;
     default:
       return `${prompt.kind}:${prompt.note}`;
   }

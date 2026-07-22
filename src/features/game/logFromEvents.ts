@@ -504,6 +504,42 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         ),
       ]);
     }
+    case "HAND_REVEALED": {
+      // Ortega / Greavard "Underworld Stroll". The ONE hand row that is not
+      // count-only, and deliberately: a reveal is the moment those cards stop
+      // being hidden, so the module header's rule ("never name a card in a
+      // hidden zone") does not bite — the zone is not hidden any more. Naming
+      // them is also the only way the log stays useful, since the reveal is
+      // transient: the hand goes back to face-down for the rest of the game and
+      // this row is the only lasting record of what was in it.
+      //
+      // Filed under the REVEALING seat (whose hand it is), not the actor whose
+      // card caused it — the TRAINER_PLAYED / ATTACK_DECLARED row directly above
+      // names the cause, the HAND_COST_PAID precedent.
+      const n = event.uids.length;
+      if (n === 0) return row(event.seat, [plain("revealed their hand — no cards")]);
+      return row(event.seat, [
+        plain("revealed their hand: "),
+        strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+      ]);
+    }
+    case "CARD_TO_BOTTOM_OF_DECK":
+      // The chosen card going under its owner's deck (Ortega / Greavard). Named,
+      // unlike HAND_COST_PAID's deckBottom row, because this move happened face
+      // up at both ends — the hand was just revealed and the pick was made in
+      // the open, so both players know what is sitting on the bottom until
+      // something shuffles. That is a real piece of public information and the
+      // log is where it lives.
+      //
+      // Filed under the ACTOR (whose card did it — the ENERGY_DISCARDED rule),
+      // and the owner is named OUTRIGHT rather than by a possessive: the `who`
+      // chip is viewer-relative while these segments are fixed text, so a
+      // mirror match would otherwise print an identical row from both seats.
+      return row(event.actor, [
+        plain("put "),
+        strong(cardName(state, event.uid)),
+        plain(` on the bottom of ${names[event.seat]}'s deck`),
+      ]);
     case "DECK_SEARCHED": {
       const n = event.uids.length;
       return row(

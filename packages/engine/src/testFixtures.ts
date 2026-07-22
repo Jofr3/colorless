@@ -1250,6 +1250,45 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
   ),
+
+  // — M5 op-slice: bottomFromOpponentHand + the opponent-seat decision (Ortega /
+  //   Greavard). All three rows verified verbatim against the local catalog
+  //   2026-07-22 (Ortega's text identical on both prints). —
+  /** Ortega (Supporter) — reveal the opponent's hand, bottom a chosen card,
+      "in this way" → the OPPONENT may draw. */
+  "sv03-190": trainerCard(
+    "sv03-190",
+    "Supporter",
+    "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck. If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
+  ),
+  /** Ortega (sv03-219) — the reprint, byte-identical in the catalog. */
+  "sv03-219": trainerCard(
+    "sv03-219",
+    "Supporter",
+    "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck. If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
+  ),
+  /** Greavard (sv01-105) — "Underworld Stroll", the DERIVED attack twin of
+      Ortega's first sentence (Supporter-filtered, no gate, no draw). Sharp
+      Fang is the plain second attack the card-level registry `attack` field
+      could not have coexisted with — the reason the twin derives from text. */
+  "sv01-105": battler("sv01-105", {
+    name: "Greavard",
+    hp: 80,
+    stage: "Basic",
+    types: ["Psychic"],
+    retreat: 3,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Underworld Stroll",
+        effect:
+          "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.",
+      },
+      { cost: ["Psychic", "Colorless", "Colorless"], name: "Sharp Fang", damage: 30 },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1779,6 +1818,33 @@ export const HEAL_UPTO_DECK = deckOf({
   "sv01-188": 2, // Potion — the exact-1 single arm, unchanged
   "fix-basic-1": 12,
   "fix-energy": 39,
+});
+
+/** M5 op-slice: bottomFromOpponentHand + opponentMayDraw (Ortega / Greavard).
+
+    The OPPONENT's hand is the zone under test, so the mix is about what a hand
+    can be made to hold: `fix-item` + `fix-basic-1` in multiples are the
+    same-id duplicates the collapse folds; the TWO PRINTS of Basic {D}
+    (fix-dark-energy / -alt) are the cross-id class the collapse must also fold
+    (the ATTACH_FROM_DECK_DECK trick, aimed at a hand); fix-grass-energy is a
+    second distinguishable class so a pick can be a real question. Miriam is
+    the SECOND Supporter class beside Ortega's own prints — Greavard's filtered
+    pick only parks when the revealed hand holds two distinct Supporters — and
+    fix-attacker is the body that attacks. Both Ortega prints are load-bearing
+    (each is driven through playTrainer by id). */
+export const REVEAL_BOTTOM_DECK = deckOf({
+  "sv03-190": 3, // Ortega
+  "sv03-219": 2, // Ortega (reprint)
+  "sv01-105": 4, // Greavard — Underworld Stroll (the derived attack twin)
+  "sv01-179": 3, // Miriam — a second Supporter class for Greavard's pick
+  "fix-attacker": 4, // the body that attacks / an opponent Active
+  "fix-basic-1": 8, // interchangeable non-Supporter bulk
+  "fix-item": 8, // more same-id bulk — the collapse's plainest case
+  "fix-grass-energy": 6, // a distinguishable class
+  "fix-dark-energy": 6, // Basic {D}, print one…
+  "fix-dark-energy-alt": 4, // …and print two: the collapse crosses ids in a HAND
+  "fix-psychic-energy": 2, // the {P} Greavard's SECOND attack costs — the plain one
+  "fix-energy": 10, // Colorless filler
 });
 
 export const OP_RECORD_DECK = deckOf({

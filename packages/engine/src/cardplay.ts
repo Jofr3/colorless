@@ -495,8 +495,12 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
     return err("BAD_PHASE", `resolveEffect is not legal during ${state.phase.kind}`);
   }
   const phase = state.phase;
-  if (phase.seat !== action.seat) {
-    return err("WRONG_SEAT", `only ${phase.seat} resolves this effect`);
+  // Who may ANSWER: the phase's answerer when one is filed (the opponent's
+  // printed "may" — Ortega's mayDraw park), else the controller as ever. The
+  // controller cannot answer the opponent's "may" for them, and vice versa.
+  const answerer = phase.answerer ?? phase.seat;
+  if (answerer !== action.seat) {
+    return err("WRONG_SEAT", `only ${answerer} resolves this effect`);
   }
   // A resumeTail park is MID-TAIL: the stages that finish the job (the KO sweep's
   // prizes/promotions, or an attack's epilogue) must still be queued behind it,
@@ -529,8 +533,12 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
     "playable enough" (they may whiff — fail a search, heal an undamaged
     Pokémon), which also matches the rule's own limit: the deck is not public
     knowledge, so "this search will find nothing" is not a fact the game state
-    establishes. Shared by playTrainer and useAbility. */
-function programPlayable(state: GameState, program: readonly EffectOp[], seat: Seat): boolean {
+    establishes. Shared by playTrainer and useAbility — and EXPORTED for the
+    HUD's row lighting (D52): every input it reads is public to the seat asking
+    (zone counts and the seat's own board), so the web can grey a dead Trainer
+    row with the engine's own predicate instead of offering a button the click
+    will refuse — the recurring review HIGH, closed at the source. */
+export function programPlayable(state: GameState, program: readonly EffectOp[], seat: Seat): boolean {
   for (const op of program) {
     if (op.op === "coinFlipGate") {
       // DESCEND INTO THE HEADS BRANCH. A coin gate has no `otherwise`, so its
@@ -560,6 +568,16 @@ function programPlayable(state: GameState, program: readonly EffectOp[], seat: S
     }
     if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
     if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;
+    if (op.op === "bottomFromOpponentHand" && state.players[otherSeat(seat)].hand.length === 0) {
+      // An empty opponent hand is PUBLIC knowledge (the count shows), so
+      // "this can only whiff" is a fact the board states — the Catcher/Hammer
+      // class, not Poké Ball's. Reads hand LENGTH and never the op's filter:
+      // whether a non-empty hidden hand holds a match is exactly what the game
+      // state does NOT establish (ruling/284's line), so a filtered op into a
+      // matchless hand stays playable and reveals — which is also the played
+      // card working as printed (the reveal happens; the pick whiffs).
+      return false;
+    }
     if (op.op === "switchActive" && state.players[seat].bench.length === 0) return false;
     if (
       op.op === "attachEnergyFrom" &&
@@ -849,6 +867,15 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
           }
           perTarget.set(key, count);
         }
+      }
+      return null;
+    }
+    case "mayDraw": {
+      // A plain boolean, and CHECKED to be one: a P4 client's truthy string
+      // ("yes", 1) must not read as consent to draw — the wire rule every
+      // index and count in this file already lives by.
+      if (choice.kind !== "mayDraw" || typeof choice.draw !== "boolean") {
+        return err("BAD_EFFECT_CHOICE", "expected a yes/no draw choice");
       }
       return null;
     }

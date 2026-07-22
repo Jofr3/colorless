@@ -211,7 +211,20 @@ export type EffectPrompt =
       max: number;
       maxPerTarget?: number;
       note: string;
-    };
+    }
+  /** A yes/no: the answering seat may draw `count` cards (opponentMayDraw —
+      Ortega's "your opponent may draw a card"). The engine's first pure binary
+      prompt, and the first whose ANSWERER is not the program's controller: the
+      park carries a `decider` and the phase files it as `answerer`, so this
+      prompt reaches the OTHER seat's screen while the controller's turn stands
+      still around it. `note` speaks to that answerer ("You may draw a card." —
+      every prompt addresses the seat that answers it, and here that is not the
+      seat that played the card). Carries no candidates: the decision is the
+      whole content, and `count` is the printed number the dialog and the wire
+      validator both read. Only ever parked when the draw could actually move a
+      card (an empty deck auto-resolves — the M1 no-choice rule), so "yes" is
+      never a no-op. */
+  | { kind: "mayDraw"; count: number; note: string };
 
 /** How many Energy a parked `discardEnergy` is asking for — a total across the
     whole offer, or one from each Pokémon it offered. Named (rather than inlined)
@@ -236,7 +249,11 @@ export type EffectChoice =
       offered and appears once (one physical card cannot land on two Pokémon), and
       every `to` is an offered target, as validateChoice enforces. An empty list is
       a legal decline. */
-  | { kind: "attachCards"; assignments: { uid: string; to: PokemonRef }[] };
+  | { kind: "attachCards"; assignments: { uid: string; to: PokemonRef }[] }
+  /** The mayDraw answer — `draw: true` takes the cards, `false` is the printed
+      decline. A plain boolean (wire-checked to be one: a P4 client's truthy
+      string must not read as consent), answered by the phase's `answerer`. */
+  | { kind: "mayDraw"; draw: boolean };
 
 /** What the ops ALREADY RUN in this program left behind for the ops still to
     come — each recording op's moved uids under its printed `EffectSlot` (§9.2:
@@ -266,7 +283,18 @@ export interface EffectContinuation {
 
 export type RunResult =
   | { kind: "done"; state: GameState }
-  | { kind: "parked"; state: GameState; prompt: EffectPrompt; cont: EffectContinuation };
+  | {
+      kind: "parked";
+      state: GameState;
+      prompt: EffectPrompt;
+      cont: EffectContinuation;
+      /** The seat that must ANSWER, when it is not the program's controller —
+          opponentMayDraw is the one producer (Ortega's "your opponent may").
+          Absent everywhere else, so settleProgram files the phase's `answerer`
+          only for the park that needs it and every pre-D52 park stays
+          byte-identical. */
+      decider?: Seat;
+    };
 
 /** Run an op program from the top. Synchronous ops apply in order; the first
     op that needs a decision PARKS (returns the prompt + a continuation), and
@@ -328,6 +356,7 @@ export function runProgram(
         // knowable, which is why this is folded in here and not in the note.
         prompt: withConsequence(stepped.park, op, queue),
         cont: { pendingOp: op, rest: [...queue], ctx, ...carriedRecord(record) },
+        ...(stepped.decider === undefined ? {} : { decider: stepped.decider }),
       };
     }
     next = stepped.done;
@@ -342,7 +371,10 @@ function recorded(record: EffectRecord, slot: EffectSlot): readonly string[] {
 
 /** The slot a parking op will file its answer under, if any. */
 function recordSlotOf(op: EffectOp): EffectSlot | undefined {
-  return op.op === "payFromHand" || op.op === "discardPileRetrieval" || op.op === "attachFromDeck"
+  return op.op === "payFromHand" ||
+    op.op === "discardPileRetrieval" ||
+    op.op === "attachFromDeck" ||
+    op.op === "bottomFromOpponentHand"
     ? op.recordAs
     : undefined;
 }
@@ -427,6 +459,13 @@ function describeCondition(
   op: EffectOp,
   gate: Extract<EffectOp, { op: "recordGate" }>,
 ): string | null {
+  // Ortega prints its plain gate LONG — "If you put a card on the bottom of
+  // your opponent's deck in this way" — so its op says those words rather than
+  // the two-word form below: the note is the printed text, and this is the
+  // text printed. (Checked before the plain default for exactly that reason.)
+  if (gate.contains === undefined && op.op === "bottomFromOpponentHand") {
+    return "If you put a card on the bottom of your opponent's deck in this way";
+  }
   if (gate.contains === undefined) return "If you do";
   if (gate.contains === "yourActive" && op.op === "attachFromDeck") {
     return "If you attach one to your Active Pokémon";
@@ -448,6 +487,16 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         break;
       case "drawUntilHandSize":
         parts.push(`draw cards until you have ${op.size} cards in your hand`);
+        break;
+      case "opponentMayDraw":
+        // Ortega's consequence, addressed to the CONTROLLER reading the pick
+        // prompt (the mayDraw prompt itself speaks to the opponent — see
+        // mayDrawNote; this clause describes what the answer buys THEM).
+        parts.push(
+          op.count === 1
+            ? "your opponent may draw a card"
+            : `your opponent may draw ${op.count} cards`,
+        );
         break;
       case "applyStatus":
         // Only the controller-relative arm: "self" is the controller's own Active
@@ -512,7 +561,7 @@ function stepOp(
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
-): { done: GameState } | { park: EffectPrompt } {
+): { done: GameState } | { park: EffectPrompt; decider?: Seat } {
   switch (op.op) {
     case "applyStatus":
       return { done: applyStatus(state, op, ctx, events) };
@@ -826,6 +875,54 @@ function stepOp(
         },
       };
     }
+    case "bottomFromOpponentHand": {
+      // Reveal FIRST, and totally — the whole hand goes public in one event
+      // before any question is asked, because that is the printed order ("Your
+      // opponent reveals their hand, and you choose…"). Emitted here and never
+      // in the apply, so a park tells the story once: the reveal rides the
+      // action that parked, the pick rides the resolveEffect that answers.
+      const revealed = otherSeat(ctx.seat);
+      events.push({ type: "HAND_REVEALED", seat: revealed, uids: [...state.players[revealed].hand] });
+      // The offer: the filtered hand, one representative per interchangeable
+      // class (see the op's doc for why collapsing is sound here and not in
+      // payFromHand). No match is the whiff (files [], Greavard into a
+      // Supporter-less hand); one class is a forced pick and resolves inline
+      // (the M1 doctrine); anything else parks the second-ever mandatory
+      // chooseCards.
+      const candidates = bottomFromOpponentHandOffer(state, ctx, op);
+      if (candidates.length === 0) {
+        recordMoved(record, op.recordAs, []);
+        return { done: state };
+      }
+      if (candidates.length === 1) {
+        const moved = bottomFromOpponentHandApply(state, candidates, ctx, events);
+        recordMoved(record, op.recordAs, moved.moved);
+        return { done: moved.state };
+      }
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates,
+          min: 1,
+          max: 1,
+          dest: "deckBottom",
+          note: bottomFromOpponentHandNote(op),
+        },
+      };
+    }
+    case "opponentMayDraw": {
+      // The opponent's printed "may" — the one park whose ANSWERER is the other
+      // seat (the decider below; settleProgram files it as phase.answerer). An
+      // empty opponent deck makes both answers the same state, so the question
+      // does not exist and the op resolves silently (the M1 no-choice rule —
+      // drawCards' own empty-deck no-op, asked about first).
+      const drawer = otherSeat(ctx.seat);
+      if (state.players[drawer].deck.length === 0) return { done: state };
+      return {
+        park: { kind: "mayDraw", count: op.count, note: mayDrawNote(op) },
+        decider: drawer,
+      };
+    }
     case "handRefresh":
       // Put the affected player(s)' hand back into their deck — shuffled in
       // (Youngster / Judge / Brassius / Katy) or under it (Iono) — then draw.
@@ -965,6 +1062,23 @@ export function applyChoice(
       recordMoved(record, op.recordAs, paid.paid);
       return paid.state;
     }
+    case "bottomFromOpponentHand": {
+      if (choice.kind !== "cards") return state;
+      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events);
+      // What actually MOVED, not what was picked — the retrieval/payment rule
+      // (§9.2): a wire-dropped uid never left the hand, and Ortega's "if you
+      // put a card on the bottom of your opponent's deck in this way" must not
+      // count it. The reveal is NOT re-emitted here — it already rode the
+      // action that parked.
+      recordMoved(record, op.recordAs, moved.moved);
+      return moved.state;
+    }
+    case "opponentMayDraw":
+      // The drawer is the answerer — the controller's OPPONENT (the op's whole
+      // point); a decline moves nothing and says nothing.
+      return choice.kind === "mayDraw" && choice.draw
+        ? drawToHand(state, otherSeat(ctx.seat), op.count, "effect", events)
+        : state;
     case "switchActive":
       return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
     case "gust":
@@ -1420,6 +1534,94 @@ function payFromHandApply(
     ),
     paid,
   };
+}
+
+/** The reveal-and-bottom offer (Ortega, Greavard "Underworld Stroll"): the
+    opponent's hand filtered by the op, collapsed to ONE representative per
+    interchangeable class in hand order — the pick is "a card", so no class can
+    ever want a second copy (the payFromHand cap logic at count 1, keyed by
+    `cardIdentity` like attachFromDeck because the catalog prints one Basic
+    Energy under several ids, and two of those in a hand are one answer wearing
+    two uids). Collapsing here leaks nothing: the whole hand just went out in
+    HAND_REVEALED, so the offer's shape has no secret left to give away — the
+    exact leak that keeps payFromHand's own-hidden-hand offer from doing this. */
+function bottomFromOpponentHandOffer(
+  state: GameState,
+  ctx: EffectContext,
+  op: Extract<EffectOp, { op: "bottomFromOpponentHand" }>,
+): string[] {
+  const hand = state.players[otherSeat(ctx.seat)].hand;
+  const kept = new Set<string>();
+  const candidates: string[] = [];
+  for (const uid of hand) {
+    if (op.filter !== undefined && !matchesFilter(cardOf(state, uid), op.filter)) continue;
+    const key = cardIdentity(state, uid);
+    if (kept.has(key)) continue;
+    kept.add(key);
+    candidates.push(uid);
+  }
+  return candidates;
+}
+
+/** Move the chosen card out of the OPPONENT's hand onto the bottom of the
+    OPPONENT's own deck (appended — payFromHandApply's `deckBottom` placement,
+    on the other seat's zones). Wire-safety like every mover in this file: the
+    hand is re-read live and only uids actually sitting in it move, so a stale
+    or repeated uid drops out rather than duplicating a card. Hands back what
+    ACTUALLY moved for the §9.2 record (Ortega's "in this way").
+
+    Emits CARD_TO_BOTTOM_OF_DECK naming the uid — public the whole way (the
+    hand was just revealed, the pick made in the open), with `actor` = the
+    controller who chose and `seat` = the owner whose zones both are. */
+function bottomFromOpponentHandApply(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): { state: GameState; moved: string[] } {
+  const owner = otherSeat(ctx.seat);
+  const side = state.players[owner];
+  const inHand = new Set(side.hand);
+  const moved: string[] = [];
+  const taken = new Set<string>();
+  for (const uid of uids) {
+    if (!inHand.has(uid) || taken.has(uid)) continue;
+    taken.add(uid);
+    moved.push(uid);
+  }
+  if (moved.length === 0) return { state, moved };
+  for (const uid of moved) {
+    events.push({ type: "CARD_TO_BOTTOM_OF_DECK", seat: owner, uid, actor: ctx.seat });
+  }
+  return {
+    state: withSide(state, owner, {
+      ...side,
+      hand: side.hand.filter((uid) => !taken.has(uid)),
+      deck: [...side.deck, ...moved],
+    }),
+    moved,
+  };
+}
+
+/** The pick prompt's printed sentence — the whole clause, since the op IS the
+    whole clause (the payFromHandNote rule). Grown one printed form per card
+    (the retrieveNoun rule): bare = Ortega's, `supporter` = Greavard's. An
+    unphrased future filter gets the bare form's structure with no guessed
+    noun — "a card" is never a lie, merely less than the card prints. */
+function bottomFromOpponentHandNote(
+  op: Extract<EffectOp, { op: "bottomFromOpponentHand" }>,
+): string {
+  if (op.filter?.kind === "supporter") {
+    return "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.";
+  }
+  return "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck.";
+}
+
+/** The mayDraw prompt speaks to its ANSWERER — the opponent of the seat that
+    played the card — so the printed "your opponent may draw a card" turns
+    around into the second person, the way it is said across a table. */
+function mayDrawNote(op: Extract<EffectOp, { op: "opponentMayDraw" }>): string {
+  return op.count === 1 ? "You may draw a card." : `You may draw ${op.count} cards.`;
 }
 
 /** The cards in `seat`'s hand that may pay a `payFromHand`, with
