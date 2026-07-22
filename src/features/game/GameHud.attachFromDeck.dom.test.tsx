@@ -180,15 +180,17 @@ describe("the one-apiece cap in the dialog", () => {
     const state = parkedJanine(0);
     renderHud(state, vi.fn());
     expect(cardRows()).toHaveLength(1);
-    expect(screen.getByText("Attaching 0/1. Pick a card, then where it goes.")).toBeTruthy();
+    // One target ⇒ no "then where it goes" step is coming, and the tap below
+    // attaches outright (a list of one is not a decision — the dialog's rule).
+    expect(screen.getByText("Attaching 0/1. Pick a card to attach.")).toBeTruthy();
     fireEvent.click(cardRows()[0] as HTMLElement);
-    fireEvent.click(screen.getByRole("button", { name: `${DARK_BODY} · Active` }));
     // Both ways of being at the cap are true at once here (one card, one target),
     // and the specific sentence is the one that wins — "1/1" alone leaves the
-    // player wondering where the printed second Energy went.
+    // player wondering where the printed second Energy went. Under a sole
+    // target it NAMES the Pokémon that ran out of room.
     expect(
       screen.getByText(
-        "Attaching 1/1. Every eligible Pokémon already has one — tap an attached card to move it.",
+        `Attaching 1/1. ${DARK_BODY} already has one — tap the attached card to take it back.`,
       ),
     ).toBeTruthy();
   });
@@ -257,13 +259,15 @@ describe("the one-apiece cap in the dialog", () => {
     };
     renderHud(unclamped, vi.fn());
     expect(cardRows()).toHaveLength(2);
+    // Sole target ⇒ the tap attaches outright — which makes the unclamped
+    // stranding SHORTER to reach, not impossible: the first attach fills the
+    // only Pokémon while the count still reads 1/2.
     fireEvent.click(cardRows()[0] as HTMLElement);
-    fireEvent.click(screen.getByRole("button", { name: `${DARK_BODY} · Active` }));
     // 1 of 2 attached, but the only target is full — the second row is closed
     // off and the sentence says why, rather than reading "pick a card".
     expect(
       screen.getByText(
-        "Attaching 1/2. Every eligible Pokémon already has one — tap an attached card to move it.",
+        `Attaching 1/2. ${DARK_BODY} already has one — tap the attached card to take it back.`,
       ),
     ).toBeTruthy();
     const second = cardRows()[1] as HTMLElement;

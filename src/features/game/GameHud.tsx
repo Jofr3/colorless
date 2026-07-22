@@ -1659,7 +1659,11 @@ function DiscardEnergyDialog({
     The one dialog whose answer is a MAP: each card carries its own destination,
     where MoveEnergyDialog's picks share one. So it is a two-step LOOP rather than
     a two-step wizard — pick a card, pick where it goes, repeat — and the target
-    list is mounted only while a card is waiting for one.
+    list is mounted only while a card is waiting for one. A target list of ONE
+    never mounts at all: a list of one is not a decision (the MoveEnergyDialog
+    rule, and the shape of every `toSelf` offer — the engine already resolved
+    "this Pokémon" to a single ref), so the tap commits the attach outright and
+    the row's own "→" readback says where it went.
     Clicking an already-assigned card TAKES IT BACK (there is no other way to undo
     a misplaced attach, and the alternative — closing the dialog — is not offered
     for a parked decision). Declinable with "Attach none", which is not the same as
@@ -1706,6 +1710,13 @@ function AttachCardsDialog({
       targets, and this does not depend on that. */
   const noRoom = prompt.targets.length > 0 && prompt.targets.every(targetFull);
   const atCap = assignments.length >= prompt.max || noRoom;
+  /** The offer's only Pokémon, when it has only one — every `toSelf` offer
+      (Pawmot: "this Pokémon" arrives as a single ref) and any board that
+      leaves one eligible target (Janine over a lone {D} Pokémon). `tapCard`
+      then commits the attach itself and the target list never mounts. A full
+      sole target needs no guard of its own: it makes `noRoom`, which is
+      already folded into `atCap`. */
+  const soleTarget = prompt.targets.length === 1 ? (prompt.targets[0] ?? null) : null;
   const spotOf = (ref: PokemonRef) =>
     ref.spot.spot === "active" ? "Active" : `Bench ${ref.spot.index + 1}`;
   /** A row's readback: the Pokémon AND its spot, because `benchOnly` cards offer
@@ -1721,6 +1732,12 @@ function AttachCardsDialog({
       // a selection the player made and can still see highlighted.
       setAssignments((prev) => prev.filter((a) => a.uid !== uid));
       setPending((prev) => (prev === uid ? null : prev));
+      return;
+    }
+    if (soleTarget !== null) {
+      // Commits outright — but the cap still refuses the pick up front, by
+      // calling no setter at all: the card rows' no-announce rule at `atCap`.
+      if (!atCap) setAssignments((prev) => [...prev, { uid, to: soleTarget }]);
       return;
     }
     setPending((prev) => (prev === uid ? null : atCap ? prev : uid));
@@ -1752,13 +1769,22 @@ function AttachCardsDialog({
             // "Attaching 1/1" over a prompt that printed "up to 2" looks like a
             // dropped card unless the sentence says the {D} Pokémon, not the
             // Energy, are what ran out. (The at-cap wording itself is the block
-            // above's rule.)
+            // above's rule.) Under a sole target, "move it" would promise a
+            // second destination that does not exist — the undo verb is "take
+            // it back" — and the idle line drops "then where it goes", which is
+            // not a step the player will be given.
             `Attaching ${assignments.length}/${prompt.max}. ${
               noRoom
-                ? "Every eligible Pokémon already has one — tap an attached card to move it."
+                ? soleTarget !== null
+                  ? `${refName(game, soleTarget)} already has one — tap the attached card to take it back.`
+                  : "Every eligible Pokémon already has one — tap an attached card to move it."
                 : atCap
-                  ? "Tap an attached card to move it."
-                  : "Pick a card, then where it goes."
+                  ? soleTarget !== null
+                    ? "Tap an attached card to take it back."
+                    : "Tap an attached card to move it."
+                  : soleTarget !== null
+                    ? "Pick a card to attach."
+                    : "Pick a card, then where it goes."
             }`
           : `Attaching ${assignments.length}/${prompt.max}. Where does ${pendingName} go?`}
       </output>

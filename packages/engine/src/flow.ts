@@ -458,9 +458,15 @@ function runKoTrigger(
   const ability = onKnockOutTrigger(state, uid);
   if (ability === undefined || ability.program.length === 0) return advance(state, events);
   events.push({ type: "ABILITY_TRIGGERED", seat: koedSeat, uid, ability: ability.name });
-  return settleProgram(runProgram(state, ability.program, { seat: koedSeat }, events), koedSeat, events, {
-    resumeTail: true,
-  });
+  // sourceUid names a card that has LEFT play — honest (the program is that
+  // card's own printed sentence), and a source-reading op then finds no board
+  // top for it and whiffs, which is what "this Pokémon" means after a KO.
+  return settleProgram(
+    runProgram(state, ability.program, { seat: koedSeat, sourceUid: uid }, events),
+    koedSeat,
+    events,
+    { resumeTail: true },
+  );
 }
 
 /** The Pokémon Checkup (§13), run whole inside its stage — no player

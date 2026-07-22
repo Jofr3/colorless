@@ -109,8 +109,17 @@ import type { GameState, Seat } from "./types";
     (**Janine's Secret Art** ×2) is `maxPerTarget: 1`. Janine also extends §9.2 —
     `recordGate.contains` narrows the gate from "did the earlier op do anything"
     to "did anything land on your ACTIVE", which is what her printed self-poison
-    turns on. */
-export const engineVersion = "0.29.0";
+    turns on.
+
+    0.30.0 — `EffectContext.sourceUid`: the context now names the Pokémon whose
+    effect is running — the printed "this Pokémon" — set at every run site that
+    knows it (an activated Ability's own Pokémon, a trigger's, the attacker) and
+    ABSENT for a Trainer program, which has no such Pokémon. Constant for the
+    run, rides the continuation across parks (JSON, D14). First reader:
+    `attachFromDeck.toSelf`, the third printed target rule ("attach it to THIS
+    Pokémon"), which lands **Pawmot** ×2 ("Electrogenesis") — a benched Pawmot
+    feeds ITSELF, the exact sentence no seat-relative target rule could say. */
+export const engineVersion = "0.30.0";
 
 export type {
   ApplyResult,

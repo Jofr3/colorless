@@ -161,6 +161,33 @@ describe("TurnPanel — Ability controls", () => {
     });
   });
 
+  it("greys an Active-only Ability on a BENCHED copy — the §9 spot gate is mirrored", () => {
+    // Chien-Pao's Shivery Chill is `activeOnly`; a benched copy's row must be
+    // dead BEFORE the click, or the row looks live and the engine refuses it
+    // with ABILITY_ACTIVE_ONLY — the unmirrored-gate failure (a lit row, a
+    // click, and only the reject pill left to explain). Mirror-tested in both
+    // directions: the row is grey AND the engine refuses the same action.
+    let state = p1Turn2(3, { p1: ABILITY_DECK, p2: ABILITY_DECK });
+    state = benchFromDeck(state, "p1", "sv02-061"); // Chien-Pao ex on the Bench
+    const index = state.players.p1.bench.length - 1;
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    const row = screen.getByRole("button", {
+      name: `Shivery Chill · Chien-Pao ex (Bench ${index + 1})`,
+    }) as HTMLButtonElement;
+    expect(row.disabled).toBe(true);
+    fireEvent.click(row);
+    expect(dispatch).not.toHaveBeenCalled();
+    const refused = applyAction(state, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "bench", index },
+      abilityName: "Shivery Chill",
+    });
+    expect(refused.ok).toBe(false);
+  });
+
   it("greys an Ability whose printed hand COST cannot be paid, with the reason", () => {
     // The §7.5 gate the Trainer rows have always mirrored, on the OTHER printed
     // wording ("You must discard a Basic {G} Energy card from your hand in order

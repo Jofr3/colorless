@@ -52,6 +52,16 @@ import {
     this seat's Active, "defender"/gust the opponent's. */
 export interface EffectContext {
   seat: Seat;
+  /** The top-card uid of the Pokémon whose effect this is — the printed "this
+      Pokémon" (Pawmot "Electrogenesis"). Set wherever the runner knows which
+      body the program belongs to: an activated Ability's own Pokémon
+      (useAbility), a trigger's (runBoardTrigger / runCheckupTriggers /
+      runKoTrigger), the attacker (attack.ts). ABSENT for a Trainer program — a
+      Trainer has no "this Pokémon", and an op that reads the source whiffs
+      without one. Constant for the whole run, like `seat` (the accumulator
+      shape lives on `EffectRecord`), and it rides `EffectContinuation` across
+      parks: plain JSON, so a parked program still replays identically (D14). */
+  sourceUid?: string;
 }
 
 /** A specific in-play Pokémon, addressed by the board it sits on and the spot.
@@ -697,7 +707,7 @@ function stepOp(
       // that stays a property of the PROGRAMS rather than an accident of which
       // branch remembered. With three recording ops now, the one that differed
       // would have been this one.
-      const { candidates, targets, max } = attachFromDeckOffer(state, ctx.seat, op);
+      const { candidates, targets, max } = attachFromDeckOffer(state, ctx, op);
       if (candidates.length === 0 || targets.length === 0 || max <= 0) {
         recordMoved(record, op.recordAs, []);
         return { done: state };
@@ -1633,6 +1643,28 @@ export function attachEnergyTargets(
   return refs;
 }
 
+/** The printed "this Pokémon" as a (zero- or one-element) target list: the
+    controller's in-play Pokémon whose TOP card is `ctx.sourceUid`. A top-card
+    uid sits in exactly one spot, so at most one ref comes back — and EMPTY is a
+    live answer, not an error, in two honest ways: the context carries no source
+    at all (a Trainer program authored with `toSelf` — the field means nothing
+    there), or the Pokémon is no longer a board TOP (evolved over, bounced,
+    Knocked Out mid-program). Both fall into the op's usual whiff path, where
+    the trailing shuffle still runs.
+
+    By TOP uid, not stack membership, deliberately: a card evolved over is no
+    longer "this Pokémon" — the body the printed sentence pointed at has a new
+    top card, and an attach aimed at it would be the evolution's, not ours. */
+function sourceRef(state: GameState, ctx: EffectContext): PokemonRef[] {
+  if (ctx.sourceUid === undefined) return [];
+  const side = state.players[ctx.seat];
+  if (side.active !== null && topUid(side.active) === ctx.sourceUid) {
+    return [{ seat: ctx.seat, spot: { spot: "active" } }];
+  }
+  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === ctx.sourceUid);
+  return index === -1 ? [] : [{ seat: ctx.seat, spot: { spot: "bench", index } }];
+}
+
 /** What an `attachFromTop` op is offering: the cards among the looked-at top `n`
     its filter admits (deck order, top first), the eligible targets, and the
     resolved cap.
@@ -1708,10 +1740,12 @@ function attachFromTopOffer(
     runs, and is deliberately NOT a `programPlayable` input (see the op's doc). */
 function attachFromDeckOffer(
   state: GameState,
-  seat: Seat,
+  ctx: EffectContext,
   op: Extract<EffectOp, { op: "attachFromDeck" }>,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
-  const targets = attachEnergyTargets(state, seat, op);
+  const seat = ctx.seat;
+  const targets =
+    op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, seat, op);
   const cap =
     op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);
   const matches = state.players[seat].deck.filter((uid) =>
@@ -2477,8 +2511,10 @@ function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
     triggered Ability whose sentence opens "When you play this Pokémon…", and both
     end in "Then, shuffle your deck", which is the NEXT op's business).
 
-    The two wordings this switches between are the printed ones, and the
-    difference is exactly `maxPerTarget`:
+    The wordings this switches between are the printed ones. `toSelf` is the
+    printed "attach it to **this Pokémon**" (Pawmot "Electrogenesis") — kept
+    verbatim, because the offered target row alone cannot say that the CHOICE of
+    destination is not one. Otherwise the difference is exactly `maxPerTarget`:
       • absent → "**in any way you like**", the only cue that several Energy may
         go on ONE Pokémon (§15.E — the misconception the dialog's shape invites);
       • present → the phrase is a lie, so it is dropped and replaced by what
@@ -2487,6 +2523,11 @@ function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
         be the dialog contradicting the validator. */
 function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): string {
   const { singular, plural } = retrieveNoun(op.filter);
+  if (op.toSelf === true) {
+    return op.max > 1
+      ? `Search your deck for up to ${op.max} ${plural} and attach them to this Pokémon.`
+      : `Search your deck for ${singular} and attach it to this Pokémon.`;
+  }
   const where = `${op.benchOnly === true ? "Benched " : ""}${
     op.targetType === undefined ? "" : `${op.targetType} `
   }Pokémon`;

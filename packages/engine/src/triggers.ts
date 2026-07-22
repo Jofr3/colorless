@@ -94,7 +94,11 @@ export function runBoardTrigger(
   // search still lets the player take none, and the other representatives are
   // pure upside. A yes/no confirm for a downside trigger is the follow-up.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
-  return settleProgram(runProgram(state, ability.program, { seat }, events), seat, events);
+  return settleProgram(
+    runProgram(state, ability.program, { seat, sourceUid: uid }, events),
+    seat,
+    events,
+  );
 }
 
 /** Run every betweenTurns triggered Ability in play during the Pokémon Checkup
@@ -125,7 +129,7 @@ export function runCheckupTriggers(
         events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
         // Non-parking by construction — a betweenTurns program returns done, so
         // taking .state loses nothing (parking mid-Checkup is deferred).
-        next = runProgram(next, ability.program, { seat }, events).state;
+        next = runProgram(next, ability.program, { seat, sourceUid: uid }, events).state;
       }
     }
   }

@@ -255,7 +255,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       runProgram(
         { ...next, pending: [...next.pending, epilogue] },
         program,
-        { seat: action.seat },
+        // The attacker is "this Pokémon" (§8) — by uid rather than "the Active",
+        // which stays truthful if the program itself moves it off the spot.
+        { seat: action.seat, sourceUid: attackerUid },
         events,
       ),
       action.seat,

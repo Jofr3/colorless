@@ -1333,11 +1333,12 @@ const FIX_HAMMER: CardProgram = {
 //    straight onto your Pokémon. The deck-search sibling of attachFromTop, and
 //    the two printed target rules it has to tell apart: "in any way you like"
 //    (Charizard ex) and "for each of those Pokémon" (Janine's Secret Art).
-//    Deferred with reasons in the workstream doc: Pawmot "Electrogenesis" ("to
-//    THIS Pokémon" — EffectContext carries no source uid), Forretress ex
-//    "Exploding Energy" (a §9.2 gate into a self-KO, which the interpreter
-//    cannot do), Geeta ("your Pokémon can't attack this turn" — a turn-scoped
-//    restriction that does not exist yet).
+//    Deferred with reasons in the workstream doc: Forretress ex "Exploding
+//    Energy" (a §9.2 gate into a self-KO, which the interpreter cannot do),
+//    Geeta ("your Pokémon can't attack this turn" — a turn-scoped restriction
+//    that does not exist yet). Pawmot "Electrogenesis" was deferred here on
+//    "EffectContext carries no source uid" and landed one slice later (D50,
+//    the `toSelf` rule below).
 //    (verified vs the local catalog 2026-07-22). ──
 
 /** Charizard ex — "Infernal Reign": "When you play this Pokémon from your hand
@@ -1435,6 +1436,50 @@ const JANINES_SECRET_ART: CardProgram = {
       contains: "yourActive",
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+    },
+  ],
+};
+
+// ── M5 op-slice: EffectContext.sourceUid — the printed "this Pokémon" (D50).
+//    The context now names the Pokémon whose effect is running, and
+//    `attachFromDeck.toSelf` is its first reader.
+//    (verified vs the local catalog 2026-07-22). ──
+
+/** Pawmot — "Electrogenesis": "Once during your turn, you may search your deck
+    for a Basic {L} Energy card and attach it to this Pokémon. Then, shuffle
+    your deck." (sv01-076/-209)
+
+    The card the source uid was built for: "this Pokémon" with no Active-spot
+    wording, so a BENCHED Pawmot feeds itself — the exact target neither of the
+    op's other two rules can name (`attachEnergyTargets` answers "which of your
+    Pokémon may receive", and this card's answer is "the one using the
+    Ability"). Every other setting is straight off the printed words:
+    - "Once during your turn" → `oncePerTurn` (§9, per Pokémon);
+    - no "in the Active Spot" clause → `activeOnly: false`;
+    - "a Basic {L} Energy card" → the PRINT (`basicEnergy` + `energyType`),
+      §6.5, with `max: 1` — the printed article is the count;
+    - "attach it to this Pokémon" → `toSelf`;
+    - "Then, shuffle your deck" → the trailing `shuffleDeck` (the Nest Ball
+      pattern — it runs on the whiff and the decline too).
+    The "you may" is spent by choosing to use the Ability; the park it opens is
+    still declinable (a search of a hidden zone may be failed on purpose — the
+    attachCards prompt's standing rule), which is strictly more permissive than
+    asking again and costs the player nothing they didn't already have. */
+const PAWMOT: CardProgram = {
+  abilities: [
+    {
+      name: "Electrogenesis",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", energyType: "Lightning" },
+          max: 1,
+          toSelf: true,
+        },
+        { op: "shuffleDeck" },
+      ],
     },
   ],
 };
@@ -1618,6 +1663,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-228": CHARIZARD_EX, // Charizard ex (reprint)
   "sv06.5-059": JANINES_SECRET_ART, // Janine's Secret Art — up to 2 Basic {D}, one per {D} Pokémon, Active → Poisoned
   "sv06.5-088": JANINES_SECRET_ART, // Janine's Secret Art (reprint)
+  // — M5 op-slice: EffectContext.sourceUid (verified vs the local catalog 2026-07-22). —
+  "sv01-076": PAWMOT, // Pawmot — Electrogenesis (search a Basic {L} → THIS Pokémon)
+  "sv01-209": PAWMOT, // Pawmot (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

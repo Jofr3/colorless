@@ -479,9 +479,12 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
       },
     };
   }
-  return settleProgram(runProgram(next, ability.program, { seat: action.seat }, events), action.seat, events, {
-    endsTurn: ability.endsTurn === true,
-  });
+  return settleProgram(
+    runProgram(next, ability.program, { seat: action.seat, sourceUid: uid }, events),
+    action.seat,
+    events,
+    { endsTurn: ability.endsTurn === true },
+  );
 }
 
 /** Resolve the parked effect:choose decision: validate the choice against the

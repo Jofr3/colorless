@@ -514,6 +514,18 @@ export type EffectOp =
       receive", a per-Pokémon question shared with `attachEnergyFrom`, while this
       is a constraint on the map as a whole.
 
+      `toSelf` is the THIRD printed target rule — "attach it to **this Pokémon**"
+      (Pawmot "Electrogenesis") — and the first op to read the context's
+      `sourceUid`: the one eligible target is the Pokémon whose effect this is,
+      wherever it sits (Electrogenesis is not Active-only — a benched Pawmot
+      feeds itself, which is exactly what the source uid exists to say).
+      Mutually exclusive with `targetType`/`benchOnly`/`maxPerTarget`: a card
+      that names its own body prints no other target rule, and a per-target cap
+      over one target is just `max`. With no source in the context (a Trainer
+      program — the field is meaningless there) or the Pokémon no longer a board
+      top, the target set is empty and the op whiffs into its trailing shuffle,
+      like any other empty path.
+
       `filter` scans cards sitting in the DECK, so it is about the PRINT
       (`basicEnergy` + `energyType`), never `providesEnergy` — §6.5, the same rule
       `attachFromTop` states.
@@ -538,6 +550,13 @@ export type EffectOp =
           the printed "for each of those Pokémon" (Janine's Secret Art). Absent =
           "in any way you like", no per-target limit. */
       maxPerTarget?: number;
+      /** The printed "attach it to THIS Pokémon" (Pawmot "Electrogenesis"): the
+          sole target is the Pokémon whose effect this is (`ctx.sourceUid`). No
+          card prints it beside another target rule, and this member does not
+          referee a co-authored one — it IGNORES `targetType`/`benchOnly` (the
+          source ref is not filtered), while `maxPerTarget` would still cap the
+          count. Authoring it alone is the rule; this doc is the enforcement. */
+      toSelf?: true;
       recordAs?: EffectSlot;
     }
   /** Discard Energy attached to an in-play Pokémon — the §15 energy-removal
@@ -564,7 +583,9 @@ export type EffectOp =
           Active, §8). The only arm that discards from the controller's own board,
           and the reason the discard pile is the HOST's rather than the opponent's.
           An Ability on a BENCHED Pokémon saying "this Pokémon" is NOT this member
-          — EffectContext carries no source uid, so that card stays unauthored.
+          — it would need an arm reading `ctx.sourceUid` (which the context now
+          carries — `attachFromDeck.toSelf` is its one reader), and no printed
+          card wants one here yet, so that card stays unauthored.
 
       `count` says how many come off, and ONE is the default (absent = the printed
       "an Energy"):

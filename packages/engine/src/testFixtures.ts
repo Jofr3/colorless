@@ -1163,6 +1163,72 @@ export const FIXTURE_POOL: Record<string, Card> = {
       2 that has to be placed by surgery and carries its own attaching Ability —
       both wrong for a test about which Pokémon may RECEIVE an attach. */
   "fix-dark-1": battler("fix-dark-1", { types: ["Darkness"], hp: 70, retreat: 1 }),
+
+  // — M5 op-slice: EffectContext.sourceUid. Both Pawmot rows verified verbatim
+  //   against the local catalog 2026-07-22 — stage, evolveFrom, type, HP,
+  //   retreat 0, the Ability text, the whole attack row and the Fighting
+  //   weakness are all the print's own. The suites place it by surgery
+  //   (setActiveFromDeck/benchFromDeck), so the real `evolveFrom: "Pawmo"`
+  //   costs nothing to keep: no test evolves into it, and a pool Pawmo whose
+  //   only job is to be evolved through is what the Charizard fixture's
+  //   declared deviation exists to avoid. —
+  /** Pawmot (sv01-076) — "Electrogenesis", the printed "this Pokémon" attach. */
+  "sv01-076": battler("sv01-076", {
+    name: "Pawmot",
+    hp: 130,
+    stage: "Stage2",
+    evolveFrom: "Pawmo",
+    types: ["Lightning"],
+    retreat: 0,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Electrogenesis",
+        effect:
+          "Once during your turn, you may search your deck for a Basic {L} Energy card and attach it to this Pokémon. Then, shuffle your deck.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Lightning", "Lightning", "Colorless"],
+        name: "Electro Paws",
+        damage: 230,
+        effect: "Discard all Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Pawmot (sv01-209) — the reprint, byte-identical in the catalog. */
+  "sv01-209": battler("sv01-209", {
+    name: "Pawmot",
+    hp: 130,
+    stage: "Stage2",
+    evolveFrom: "Pawmo",
+    types: ["Lightning"],
+    retreat: 0,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Electrogenesis",
+        effect:
+          "Once during your turn, you may search your deck for a Basic {L} Energy card and attach it to this Pokémon. Then, shuffle your deck.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Lightning", "Lightning", "Colorless"],
+        name: "Electro Paws",
+        damage: 230,
+        effect: "Discard all Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** FIXTURE — a SECOND catalog print of Basic Lightning Energy (the
+      fix-dark-energy-alt shape): the collapse keys a Basic by what it PROVIDES,
+      and a deck holding both prints is what proves Pawmot's one-card offer
+      crosses the id boundary. */
+  "fix-lightning-energy-alt": typedEnergy("fix-lightning-energy-alt", "Lightning"),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1662,6 +1728,23 @@ export const ATTACH_FROM_DECK_DECK = deckOf({
   "fix-fire-energy": 8, // Charizard's Basic {R}, and a near-miss for Janine
   "fix-energy": 10, // Colorless basics — near-misses for both typed filters
   "fix-special": 4, // a Special Energy — `basicEnergy` admits none of them
+});
+
+/** M5 op-slice EffectContext.sourceUid: Pawmot (an Ability the suite drives
+    from the Active AND the Bench), two prints of Basic {L} (the collapse
+    crosses ids), Flamigo (an onPlayToBench trigger that PARKS — its search
+    needs more Flamigo in the deck to find) and Nest Ball (a TRAINER that parks
+    — the context that must carry NO source). fix-basic-1 supplies the bodies
+    and Nest Ball's searchable Basics. */
+export const SOURCE_UID_DECK = deckOf({
+  "sv01-076": 4, // Pawmot — Electrogenesis
+  "sv01-209": 1, // Pawmot (reprint)
+  "sv02-170": 4, // Flamigo — Insta-Flock (onPlayToBench park)
+  "sv01-181": 3, // Nest Ball (a parking Trainer)
+  "fix-basic-1": 12,
+  "fix-lightning-energy": 6,
+  "fix-lightning-energy-alt": 4, // the second print — the collapse crosses ids
+  "fix-energy": 26,
 });
 
 export const OP_RECORD_DECK = deckOf({

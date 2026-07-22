@@ -105,6 +105,8 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.seat).toBe("p1"); // the ATTACKER decides
     expect(parked.phase.resumeTail).toBe(true);
+    // The attacker is the program's "this Pokémon" — the context names it by uid.
+    expect(parked.phase.cont.ctx.sourceUid).toBe(find(events, "ATTACK_DECLARED")?.uid);
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
     expect(parked.phase.prompt.note).toBe("Discard an Energy from this Pokémon.");
     expect(parked.phase.prompt.scope).toEqual({ kind: "total", count: 1 });

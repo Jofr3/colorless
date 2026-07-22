@@ -201,6 +201,9 @@ describe("on-KO parking — the resume-the-tail continuation (§8.1)", () => {
     // marks the mid-sweep park so resolveEffect drains the tail, not a turn.
     expect(parked.phase.seat).toBe("p2");
     expect(parked.phase.resumeTail).toBe(true);
+    // The KO'd Pokémon is the program's "this Pokémon" — named even though it
+    // left play (a source-reading op then finds no board top and whiffs).
+    expect(parked.phase.cont.ctx.sourceUid).toBe(fixOnko);
     expect(parked.phase.prompt.kind).toBe("chooseCards");
     // The prize/promotion tail is still queued behind the park.
     expect(parked.pending.map((s) => s.kind)).toEqual(["promote", "endTurn", "checkup", "startTurn"]);
