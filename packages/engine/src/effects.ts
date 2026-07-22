@@ -294,10 +294,21 @@ export type EffectOp =
   /** Gust: switch one of the OPPONENT's Benched Pokémon into their Active spot
       (Boss's Orders). PARKS on the opponent-bench choice unless forced. */
   | { op: "gust" }
-  /** Heal from one of the controller's own in-play Pokémon: `amount` HP, or
-      `"all"` its damage (Potion heals 30; Arboliva's "Enriching Oil" heals
-      all). PARKS on the target choice unless only the Active is in play. */
-  | { op: "healChosen"; amount: number | "all" }
+  /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
+      its damage. Without `upTo` it heals ONE — the printed exact "1 of your
+      Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a
+      choosePokemon unless only the Active is in play. `upTo` is the printed
+      "up to N … each" (Saguaro: "Choose up to 2 of your Pokémon and heal 50
+      damage from each of them"): it parks a choosePokemonMulti {min: 0,
+      max: min(upTo, in play)} — §9.1's "up to" legalizes 0, 1, … max, so this
+      is the first consumer of that prompt's min:0 end, and it parks at every
+      non-empty board (a take-fewer right is a decision even over one
+      candidate — the declinable-snipe rule). The candidates are ALL the
+      controller's Pokémon, damaged or not: the printed choose clause has no
+      damaged restriction, and picking an undamaged one heals 0 and emits
+      nothing (the single-arm rule). `amount` stays per-Pokémon ("from EACH of
+      them"), clamped to each pick's damage. */
+  | { op: "healChosen"; amount: number | "all"; upTo?: number }
   /** Attach ONE Basic Energy from a SOURCE zone (the controller's hand or
       discard pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration
       Ability family (Quaquaval "Energy Carnival" from hand; Baxcalibur "Super

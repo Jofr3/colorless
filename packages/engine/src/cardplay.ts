@@ -663,10 +663,12 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       return null;
     }
     case "choosePokemonMulti": {
-      // `min`..`max` DISTINCT offered refs — and the printed number is EXACT on
-      // every consumer today ("put 3 damage counters on 1 of your opponent's
-      // Benched Pokémon" is not "up to 1"), so the floor is what stops a player
-      // from paying an irreversible hand cost and then placing nothing.
+      // `min`..`max` DISTINCT offered refs — and the printed number is EXACT
+      // unless the card says "up to" ("put 3 damage counters on 1 of your
+      // opponent's Benched Pokémon" is not "up to 1"), so the floor is what
+      // stops a player from paying an irreversible hand cost and then placing
+      // nothing. An "up to" prompt (Saguaro's heal) carries min: 0, and there
+      // the floor never rejects — 0, 1, … max are all printed answers.
       //
       // The empty answer is legal only where the card prints "you may"
       // (`declinable` — Hawlucha, whose trigger the framework auto-fires, so the

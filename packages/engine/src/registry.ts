@@ -1484,6 +1484,32 @@ const PAWMOT: CardProgram = {
   ],
 };
 
+// ── M5 op-slice: healChosen's "up to N" arm — §9.1's min: 0 end (D51).
+//    (verified vs the local catalog 2026-07-22). ──
+
+/** Saguaro — "Choose up to 2 of your Pokémon and heal 50 damage from each of
+    them." (Supporter, sv02-187/-255/-270 — identical text on all three prints.)
+
+    The first consumer of choosePokemonMulti's "up to" end, the range the
+    prompt has carried since D47 with every consumer at `min === max`: "up to
+    2" legalizes 0, 1 or 2 (§9.1), so the park is {min: 0, max: 2}, §8.6
+    clamping the ask to the board. `amount: 50` is per Pokémon — "from EACH of
+    them" — clamped to each pick's damage like every heal.
+
+    Deliberately UNGATED, twice over, both following shipped doctrine rather
+    than deciding it here:
+    - playable with nothing damaged anywhere — `programPlayable` has never had
+      a heal branch (Potion and Fighting Au Lait's heal are the same call), so
+      a full-HP board can spend the turn's Supporter on nothing; the prompt's
+      honest "Take none" is the mitigation, and the wart stays on the
+      carried-forward list with its two siblings.
+    - the candidates are ALL your Pokémon, damaged or not — the printed choose
+      clause has no damaged restriction, and an undamaged pick heals 0 and
+      emits nothing (the single-arm rule since M4). */
+const SAGUARO: CardProgram = {
+  trainer: [{ op: "healChosen", amount: 50, upTo: 2 }],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -1666,6 +1692,10 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M5 op-slice: EffectContext.sourceUid (verified vs the local catalog 2026-07-22). —
   "sv01-076": PAWMOT, // Pawmot — Electrogenesis (search a Basic {L} → THIS Pokémon)
   "sv01-209": PAWMOT, // Pawmot (reprint)
+  // — M5 op-slice: healChosen "up to N" (verified vs the local catalog 2026-07-22). —
+  "sv02-187": SAGUARO, // Saguaro — heal 50 from up to 2 of your Pokémon
+  "sv02-255": SAGUARO, // Saguaro (reprint)
+  "sv02-270": SAGUARO, // Saguaro (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

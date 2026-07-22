@@ -118,8 +118,14 @@ import type { GameState, Seat } from "./types";
     run, rides the continuation across parks (JSON, D14). First reader:
     `attachFromDeck.toSelf`, the third printed target rule ("attach it to THIS
     Pokémon"), which lands **Pawmot** ×2 ("Electrogenesis") — a benched Pawmot
-    feeds ITSELF, the exact sentence no seat-relative target rule could say. */
-export const engineVersion = "0.30.0";
+    feeds ITSELF, the exact sentence no seat-relative target rule could say.
+
+    0.31.0 — `healChosen.upTo`: the printed "up to N … each" heal (Saguaro ×3,
+    "Choose up to 2 of your Pokémon and heal 50 damage from each of them") —
+    the first consumer of choosePokemonMulti's min: 0 end (§9.1's "up to"
+    legalizes 0..max), parked at every non-empty board with §8.6 clamping the
+    ask. */
+export const engineVersion = "0.31.0";
 
 export type {
   ApplyResult,

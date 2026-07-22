@@ -17,6 +17,7 @@ import {
   DECK_BOTTOM_DECK,
   DISCARD_ENERGY_DECK,
   HAND_COST_DECK,
+  HEAL_UPTO_DECK,
   MOVE_ENERGY_DECK,
   ONKO_DECK,
   PROVIDES_ENERGY_DECK,
@@ -769,6 +770,110 @@ describe("effect:choose — the snipe multi-target dialog (choosePokemonMulti)",
     if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");
     if (call.choice.kind !== "pokemonMulti") throw new Error("expected pokemonMulti");
     expect(call.choice.refs).toHaveLength(1);
+  });
+});
+
+describe("effect:choose — the 'up to' pick (Saguaro, choosePokemonMulti min 0)", () => {
+  const healDecks = { p1: HEAL_UPTO_DECK, p2: HEAL_UPTO_DECK };
+
+  /** p1's turn with Saguaro parked over 3 of their own Pokémon (min 0, max 2)
+      — the first prompt of this kind where min ≠ max, so a PARTIAL pick is a
+      legal answer no earlier consumer of the dialog allowed. */
+  function parkedHeal(seed: number): GameState {
+    let state = p1Turn2(seed, healDecks);
+    state = benchFromDeck(state, "p1", "fix-basic-1");
+    state = benchFromDeck(state, "p1", "fix-basic-1");
+    state = handFromDeck(state, "p1", "sv02-187", 1);
+    const uid = handUid(state, "p1", "sv02-187");
+    state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    return state;
+  }
+
+  it("confirms a PARTIAL pick — 1 of max 2 dispatches, with no denominator on the button", () => {
+    // Under every exact prompt "Confirm 1/2" is a disabled gap; under "up to 2"
+    // one pick IS a legal answer, so the button is live and carries no
+    // denominator ("Confirm 1" — there is no count the player owes).
+    const state = parkedHeal(3);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    expect(
+      screen.getByText("Choose up to 2 of your Pokémon and heal 50 damage from each of them."),
+    ).toBeTruthy();
+    // The live region says the pick is bounded, not owed.
+    expect(screen.getByRole("status").textContent).toBe("Pick up to 2 (0/2).");
+    // The candidates are the viewer's OWN Pokémon — no "opponent" badge.
+    expect(screen.queryByText("opponent")).toBeNull();
+    const rows = screen.getAllByRole("button", { name: /fix-basic-1/ });
+    expect(rows.length).toBe(3);
+    fireEvent.click(rows[1] as HTMLElement);
+    expect(screen.getByRole("status").textContent).toBe("Pick up to 2 (1/2).");
+    const confirm = screen.getByRole("button", { name: "Confirm 1" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(false);
+    fireEvent.click(confirm);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");
+    if (call.choice.kind !== "pokemonMulti") throw new Error("expected pokemonMulti");
+    const prompt = state.phase.kind === "effect:choose" ? state.phase.prompt : null;
+    if (prompt?.kind !== "choosePokemonMulti") throw new Error("expected the heal prompt");
+    expect(call.choice.refs).toEqual([prompt.candidates[1]]);
+  });
+
+  it("offers Take none — 'up to' declines without a printed 'you may'", () => {
+    const state = parkedHeal(3);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    fireEvent.click(screen.getByRole("button", { name: "Take none" }));
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemonMulti", refs: [] },
+    });
+  });
+
+  it("every field rides promptKey — min, max, declinable and the candidates each remount", () => {
+    // The hazard is LATENT (no live path parks choosePokemonMulti twice with no
+    // render between), but the key's doc claims the discrimination and until
+    // now nothing pinned it — gutting the whole key to "pokemonMulti" passed
+    // the suite. The attachCards belt technique: a real park, one prompt field
+    // swapped; if the segment rides the key the dialog remounts and the pick is
+    // gone, if not the stale pick survives and the assertion fails.
+    const first = parkedHeal(3);
+    if (first.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    const prompt = first.phase.prompt;
+    if (prompt.kind !== "choosePokemonMulti") throw new Error("expected the heal prompt");
+    const patches = [
+      { min: 1 },
+      { max: 1 },
+      { declinable: true },
+      { candidates: prompt.candidates.slice(0, 2) },
+    ];
+    for (const patch of patches) {
+      const second: GameState = {
+        ...first,
+        phase: { ...first.phase, prompt: { ...prompt, ...patch } },
+      };
+      const view = (s: GameState) => (
+        <GameHud
+          game={s}
+          projection={projectGameState(s, "p1")}
+          viewerSeat="p1"
+          names={NAMES}
+          dispatch={() => {}}
+          onPlayAgain={() => {}}
+        />
+      );
+      const { rerender, unmount } = render(view(first));
+      const row = screen.getAllByRole("button", { name: /fix-basic-1/ })[0] as HTMLElement;
+      fireEvent.click(row);
+      expect(row.getAttribute("aria-pressed")).toBe("true");
+      rerender(view(second));
+      const rows = screen.getAllByRole("button", { name: /fix-basic-1/ });
+      expect(rows.every((r) => r.getAttribute("aria-pressed") === "false")).toBe(true);
+      unmount();
+    }
   });
 });
 

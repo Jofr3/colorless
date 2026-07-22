@@ -1229,6 +1229,27 @@ export const FIXTURE_POOL: Record<string, Card> = {
       and a deck holding both prints is what proves Pawmot's one-card offer
       crosses the id boundary. */
   "fix-lightning-energy-alt": typedEnergy("fix-lightning-energy-alt", "Lightning"),
+
+  // — M5 op-slice: healChosen "up to N". All three Saguaro rows verified
+  //   verbatim against the local catalog (identical text on every print). —
+  /** Saguaro (Supporter) — heal 50 from up to 2 of your Pokémon. */
+  "sv02-187": trainerCard(
+    "sv02-187",
+    "Supporter",
+    "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
+  ),
+  /** Saguaro (sv02-255) — the reprint, byte-identical in the catalog. */
+  "sv02-255": trainerCard(
+    "sv02-255",
+    "Supporter",
+    "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
+  ),
+  /** Saguaro (sv02-270) — the second reprint, byte-identical in the catalog. */
+  "sv02-270": trainerCard(
+    "sv02-270",
+    "Supporter",
+    "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -1745,6 +1766,19 @@ export const SOURCE_UID_DECK = deckOf({
   "fix-lightning-energy": 6,
   "fix-lightning-energy-alt": 4, // the second print — the collapse crosses ids
   "fix-energy": 26,
+});
+
+/** M5 op-slice: healChosen "up to N" — all three Saguaro prints (the reprint
+    rows are load-bearing: each is driven through playTrainer by id), fix-basic-1
+    bodies to damage and heal, and a Potion so the single-arm regression rides
+    the same board. */
+export const HEAL_UPTO_DECK = deckOf({
+  "sv02-187": 3, // Saguaro
+  "sv02-255": 2, // Saguaro (reprint)
+  "sv02-270": 2, // Saguaro (reprint)
+  "sv01-188": 2, // Potion — the exact-1 single arm, unchanged
+  "fix-basic-1": 12,
+  "fix-energy": 39,
 });
 
 export const OP_RECORD_DECK = deckOf({

@@ -111,10 +111,11 @@ export type EffectPrompt =
       opponent's Benched Pokémon"). Distinct from choosePokemon (exactly one) in
       that the answer is a SET, dispatched in one go.
 
-      The printed number is EXACT unless the card says "up to", so today's
-      consumers all carry `min === max`; the range is here because the vocabulary
-      has to hold the "up to" print too (Janine's Secret Art's "up to 2 of your
-      {D} Pokémon" is the next one in).
+      The printed number is EXACT unless the card says "up to" (§9.1): the
+      snipes all carry `min === max`, and the "up to" print is `min: 0` —
+      healChosen's `upTo` arm (Saguaro's "up to 2 of your Pokémon", the range's
+      first consumer; Janine's Secret Art looked like the one coming in but its
+      pick collapsed into the attachCards map).
 
       `declinable` is the separate, printed "**you may**", and it is why a floor
       alone cannot describe this prompt: Hawlucha's "you may choose 2" is
@@ -835,8 +836,29 @@ function stepOp(
       return parkOrForce(state, ownBenchRefs(state, ctx.seat), (ref) => switchOwn(state, ref, ctx, events), "Switch to which Benched Pokémon?");
     case "gust":
       return parkOrForce(state, oppBenchRefs(state, ctx.seat), (ref) => gust(state, ref, ctx, events), "Gust up which of the opponent's Benched Pokémon?");
-    case "healChosen":
+    case "healChosen": {
+      if (op.upTo !== undefined) {
+        // The printed "up to N … each" (Saguaro). §8.6 clamps the ASK to the
+        // board; min is 0 because "up to" legalizes taking fewer — including
+        // none — so unlike the mandatory single arm below this parks at every
+        // non-empty board: the take-fewer right is the same decision over one
+        // candidate as over six (the declinable-snipe rule, D47).
+        const candidates = ownInPlayRefs(state, ctx.seat);
+        if (candidates.length === 0) return { done: state };
+        const max = Math.min(op.upTo, candidates.length);
+        return {
+          park: {
+            kind: "choosePokemonMulti",
+            candidates,
+            min: 0,
+            max,
+            declinable: false,
+            note: healUpToNote(op.amount, max),
+          },
+        };
+      }
       return parkOrForce(state, ownInPlayRefs(state, ctx.seat), (ref) => healChosen(state, ref, op.amount, ctx, events), "Heal which of your Pokémon?");
+    }
     case "attachEnergyFrom": {
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
       // a source with no matching Energy is a no-op (nothing to attach). The
@@ -948,6 +970,17 @@ export function applyChoice(
     case "gust":
       return choice.kind === "pokemon" ? gust(state, choice.ref, ctx, events) : state;
     case "healChosen":
+      // The "up to N" arm answers with a SET (each ref healed `amount`,
+      // clamped per Pokémon; the empty set is the legal "none" of §9.1's
+      // "up to"); the exact-1 arm with a single ref. Each shape only ever
+      // reaches its own prompt — validateChoice matches the choice against
+      // the PARKED prompt — so the cross arms are the wire belt.
+      if (choice.kind === "pokemonMulti") {
+        return choice.refs.reduce(
+          (healed, ref) => healChosen(healed, ref, op.amount, ctx, events),
+          state,
+        );
+      }
       return choice.kind === "pokemon"
         ? healChosen(state, choice.ref, op.amount, ctx, events)
         : state;
@@ -1095,6 +1128,17 @@ function snipeNote(amount: number, count: number, optional: boolean): string {
   const counters = Math.round(amount / 10);
   const verb = optional ? "You may choose" : "Choose";
   return `${verb} ${count} of your opponent's Benched Pokémon (${counters} damage counter${counters === 1 ? "" : "s"} each).`;
+}
+
+/** The heading for healChosen's "up to N" park. Quotes the card (Saguaro:
+    "Choose up to 2 of your Pokémon and heal 50 damage from each of them"),
+    with `max` already §8.6-clamped to the board — one Pokémon in play asks
+    "up to 1", because doing as much as you can is about the number, not the
+    whether. `"all"` has no printed consumer with `upTo` yet; the phrase is
+    ready so an author can never park a heading that lies about the amount. */
+function healUpToNote(amount: number | "all", max: number): string {
+  const what = amount === "all" ? "all damage" : `${amount} damage`;
+  return `Choose up to ${max} of your Pokémon and heal ${what} from each of them.`;
 }
 
 /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
