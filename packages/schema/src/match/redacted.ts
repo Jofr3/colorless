@@ -125,15 +125,28 @@ export const redactedBoardSchema = z.object({
 });
 export type RedactedBoard = z.infer<typeof redactedBoardSchema>;
 
-/** The interrupt the game is parked on — COUNTS ONLY, never card identity. The
-    mid-effect `effectChoose` carries no prompt this increment (the read-only
-    board renders no decision; increment 2 designs the redacted prompt). */
-export const redactedDecisionSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("takePrizes"), count: z.number() }),
-  z.object({ kind: z.literal("promote") }),
-  z.object({ kind: z.literal("effectChoose") }),
+/** The redacted engine `Phase` — the discriminant the client routes ACTIONS
+    on (P4 increment 2). Carries the kind plus only the non-sensitive fields the
+    acting client needs: setup:drawExtra the RECIPIENT's own owed compensation
+    count, setup:place the viewer-relative ready flags, the ko interrupts their
+    counts. The mid-effect `effect:choose` carries NO prompt (increment 2b
+    designs the redacted prompt — a raw prompt is built from the controller's
+    private zones). `activePlayer`/`waitingOn` (server-computed via phaseViewOf,
+    which reads the pending queue) still say WHO acts; this says WHAT kind. */
+export const redactedPhaseSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("setup:chooseFirst") }),
+  z.object({ kind: z.literal("setup:drawExtra"), owed: z.number() }),
+  z.object({
+    kind: z.literal("setup:place"),
+    ready: z.object({ you: z.boolean(), opponent: z.boolean() }),
+  }),
+  z.object({ kind: z.literal("turn:action") }),
+  z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
+  z.object({ kind: z.literal("ko:promote") }),
+  z.object({ kind: z.literal("effect:choose") }),
+  z.object({ kind: z.literal("gameOver") }),
 ]);
-export type RedactedDecision = z.infer<typeof redactedDecisionSchema>;
+export type RedactedPhase = z.infer<typeof redactedPhaseSchema>;
 
 /** How a finished game ended, seats mapped into the viewer's vocabulary. */
 export const redactedOutcomeSchema = z.discriminatedUnion("result", [
@@ -149,19 +162,33 @@ export const redactedOutcomeSchema = z.discriminatedUnion("result", [
 ]);
 export type RedactedOutcome = z.infer<typeof redactedOutcomeSchema>;
 
+/** A game action as it crosses the wire FROM a client (P4 increment 2). The
+    engine's `GameAction` is a large discriminated union it keeps as the single
+    source of truth; a full Zod mirror here would duplicate it, so the wire
+    schema is deliberately LOOSE — an object with a string `type`, all other
+    fields preserved (`z.looseObject`) — because the DO does NOT trust it: it
+    OVERWRITES `seat` with the socket's own bound seat and hands the action to
+    `applyAction`, whose never-throw totality (D14 — the wire's bogus type/seat
+    must not throw) is the real validator. A strict object would instead be a
+    bug (it would strip the action's uid/target), hence the loose object. */
+export const wireActionSchema = z.looseObject({ type: z.string() });
+export type WireAction = z.infer<typeof wireActionSchema>;
+
 /** A whole redacted game as one viewer sees it — the `{kind:"match"}` payload. */
 export const redactedGameSchema = z.object({
-  /** The recipient's own absolute seat (not a leak; binds their actions in P4.2). */
+  /** The recipient's own absolute seat — binds their actions (the DO ignores a
+      client-claimed seat and uses the socket's, but the client routes on this). */
   seat: matchSeatSchema,
   /** 1-based turn counter; 0 while still in setup. */
   turn: z.number(),
+  /** The redacted phase — WHAT kind of action the game is waiting for. */
+  phase: redactedPhaseSchema,
   board: redactedBoardSchema,
   /** The turn owner from this viewer's perspective; null in setup, between
       turns (a Checkup-origin KO park) and once the game is over. */
   activePlayer: viewerSchema.nullable(),
   /** Who must act right now; null once the game is over. */
   waitingOn: viewerSchema.nullable(),
-  pendingDecision: redactedDecisionSchema.nullable(),
   outcome: redactedOutcomeSchema.nullable(),
 });
 export type RedactedGame = z.infer<typeof redactedGameSchema>;

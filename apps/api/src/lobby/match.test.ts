@@ -1,11 +1,15 @@
+import { otherSeat } from "@luminous/engine";
 import type { Card, LobbySnapshot } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import {
+  applyMatchAction,
   FIXED_MATCH_CARD_IDS,
   FIXED_MATCH_DECKS,
   matchSeatOf,
+  type MatchRecord,
   SEAT_OF_SLOT,
   startMatch,
+  SUPPORTED_MATCH_ACTIONS,
 } from "./match";
 
 // P4 — the lobby → engine handoff. `startMatch` is a pure wrapper over the P3
@@ -99,6 +103,64 @@ describe("matchSeatOf — which redacted view a socket receives", () => {
   it("returns null for a player not seated in the lobby", () => {
     expect(matchSeatOf(snapshot, "stranger")).toBeNull();
     expect(matchSeatOf({ ...snapshot, guest: null }, "g")).toBeNull();
+  });
+});
+
+describe("applyMatchAction — the seat-bound apply loop", () => {
+  function freshRecord(seed = 1): { record: MatchRecord; winner: "p1" | "p2" } {
+    const created = startMatch({ seed, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    if (!created.ok) throw new Error(created.error.message);
+    if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("expected chooseFirst");
+    return { record: { seed, state: created.state }, winner: created.state.phase.coinWinner };
+  }
+
+  it("applies a legal action and carries the seed over", () => {
+    const { record, winner } = freshRecord();
+    const next = applyMatchAction(record, winner, {
+      type: "chooseFirstPlayer",
+      seat: winner,
+      first: winner,
+    });
+    expect(next).not.toBeNull();
+    expect(next?.seed).toBe(1);
+    // The coin winner's choice advanced setup off chooseFirst.
+    expect(next?.state.phase.kind).not.toBe("setup:chooseFirst");
+  });
+
+  it("BINDS to the actor's seat — a forged action.seat cannot act as the opponent", () => {
+    const { record, winner } = freshRecord();
+    const loser = otherSeat(winner);
+    // The loser's socket claims the WINNER's seat in the payload. The bind
+    // overrides it with the socket's own seat, so the engine sees the loser
+    // trying to choose first (only the coin winner may) and rejects.
+    const forged = applyMatchAction(record, loser, {
+      type: "chooseFirstPlayer",
+      seat: winner,
+      first: winner,
+    });
+    expect(forged).toBeNull();
+  });
+
+  it("returns null on a rejected action (nothing changes)", () => {
+    const { record, winner } = freshRecord();
+    // endTurn is illegal during setup — the engine refuses it.
+    expect(applyMatchAction(record, winner, { type: "endTurn", seat: winner })).toBeNull();
+    // A bogus action type is refused too (the total applyAction contract).
+    expect(applyMatchAction(record, winner, { type: "not-an-action" })).toBeNull();
+  });
+
+  it("rejects action types outside the 2a scope (no soft-lock via crafted frames)", () => {
+    const { record, winner } = freshRecord();
+    // A crafted attack/ability/decision frame is refused BEFORE the engine even
+    // sees it, so the match can't reach a ko:*/effect phase the 2a HUD can't drive.
+    for (const type of ["attack", "retreat", "useAbility", "takePrizes", "promote", "resolveEffect"]) {
+      expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(false);
+      expect(applyMatchAction(record, winner, { type, seat: winner })).toBeNull();
+    }
+    // The setup + drag + pass actions the 2a client actually sends ARE supported.
+    for (const type of ["chooseFirstPlayer", "setupPlaceActive", "attachEnergy", "endTurn"]) {
+      expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(true);
+    }
   });
 });
 

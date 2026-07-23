@@ -240,7 +240,12 @@ export function LocalMatch({
   const board = projection.board;
   const handleMoveCard = useCallback(
     (request: CardMoveRequest) => {
-      const action = moveToAction(request, { phase, viewerSeat, board });
+      const action = moveToAction(request, {
+        phaseKind: phase.kind,
+        isViewerTurn: phase.kind === "turn:action" && phase.seat === viewerSeat,
+        viewerSeat,
+        board,
+      });
       if (action !== null) dispatch(action);
     },
     [phase, viewerSeat, board, dispatch],

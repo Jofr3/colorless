@@ -42,8 +42,10 @@ function turnState(): GameState {
 }
 
 function contextOf(state: GameState, viewerSeat: Seat, phase?: Phase): MoveTranslationContext {
+  const effective = phase ?? state.phase;
   return {
-    phase: phase ?? state.phase,
+    phaseKind: effective.kind,
+    isViewerTurn: effective.kind === "turn:action" && effective.seat === viewerSeat,
     viewerSeat,
     board: projectGameState(state, viewerSeat).board,
   };

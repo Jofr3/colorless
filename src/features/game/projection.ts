@@ -352,7 +352,7 @@ export function projectionFromRedacted(game: RedactedGame): GameProjection {
     // playmat's PlayerId, so these pass straight through.
     activePlayer: game.activePlayer,
     waitingOn: game.waitingOn,
-    pendingDecision: decisionFromRedacted(game.pendingDecision),
+    pendingDecision: decisionFromPhase(game.phase),
     outcome:
       game.outcome === null
         ? null
@@ -406,20 +406,19 @@ function cardModelFromRedacted(card: RedactedInPlay): CardModel {
   return model;
 }
 
-/** Redacted decision → PendingDecision. The mid-effect prompt never crosses the
-    wire (server strips it), so `effectChoose` maps to null — the read-only board
-    renders no interactive decision this increment (increment 2 designs the
-    redacted prompt). The KO parks carry only counts and map through faithfully. */
-function decisionFromRedacted(
-  decision: RedactedGame["pendingDecision"],
-): PendingDecision | null {
-  if (decision === null) return null;
-  switch (decision.kind) {
-    case "takePrizes":
-      return { kind: "takePrizes", count: decision.count };
-    case "promote":
+/** The parked KO/effect interrupt, derived from the redacted phase. The
+    mid-effect prompt never crosses the wire (server strips it), so
+    `effect:choose` maps to null — the online board renders no interactive
+    effect decision yet (increment 2b designs the redacted prompt). The ko
+    parks carry only counts and map through faithfully; every non-parked phase
+    is null. */
+function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null {
+  switch (phase.kind) {
+    case "ko:takePrizes":
+      return { kind: "takePrizes", count: phase.count };
+    case "ko:promote":
       return { kind: "promote" };
-    case "effectChoose":
+    default:
       return null;
   }
 }

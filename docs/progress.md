@@ -3,7 +3,35 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-23 — build session #46 (**P4 increment 1c — the redactor + wire +
+**Last updated:** 2026-07-23 — build session #47 (**P4 increment 2a — the action transport +
+online setup flow**). The online match is now INTERACTIVE (setup + basic turn drags + pass). A
+new **`{kind:"action", action}`** client frame (schema — `wireActionSchema` = `z.looseObject`,
+loosely typed on purpose: the DO rebinds the seat and relies on `applyAction`'s totality) carries an
+engine `GameAction`. The DO's new **`case "action"`** handler binds the action to the SOCKET's own
+seat via `matchSeatOf` (host→p1/guest→p2) — **never the client-claimed `action.seat`, so a client
+can't act for its opponent** — gated to a seated player in an in-game lobby with a persisted record,
+runs the pure **`applyMatchAction(record, seat, action)`** (persist-before-broadcast), and re-fans
+each socket its redacted view. `applyMatchAction` gates to **`SUPPORTED_MATCH_ACTIONS`** (the
+2a-drivable subset) so a crafted attack/decision frame can't soft-lock the match in a phase the 2a
+HUD can't drive. **`RedactedGame` gained a redacted `phase`** (the action-routing discriminant;
+`pendingDecision` folded into it, derived client-side). **`moveToAction` + `placement.ts` refactored
+to a transport-agnostic context** (`phaseKind`/`isViewerTurn`/`isReady`) so local AND online drive ONE
+tested drag router / drop gate (placement.test.ts lockstep unchanged). Client: **`useLobby.sendAction`**;
+a new **`OnlineHud`** (chooseFirst / mulligan-draw / place-ready panels, gated on `waitingOn === "you"`);
+**`OnlineMatch`** now wires drags → `moveToAction` → `sendAction`, pass → `endTurn`, and the shared
+placement predicate. engine UNCHANGED (0.40.0); 1719 → **1731** tests, `bun run check` green.
+**Review (1 read-only adversarial reviewer): NO HIGH, NO MED** — the seat-binding blocks
+acting-for-opponent (forge test), the three gates block unseated/not-in-game/no-record,
+`applyAction`'s totality holds against hostile payloads, persist-before-broadcast + the DO input gate
+prevent desync, the redacted phase leaks nothing (`owed` is the viewer's own), and the refactors are
+logically identical. **TWO LOWs:** (L1, recorded) the DO `case "action"` boundary has no direct test
+(only the pure `applyMatchAction` does — the DO-shell pattern; it mirrors the tested `intent` handler);
+(L2, FIXED) the `SUPPORTED_MATCH_ACTIONS` allowlist. See D61. Below: the P4-1c header (kept for
+continuity).
+
+---
+### Prior header (P4 increment 1c — the redactor + wire + read-only board, kept for continuity)
+**Last updated (was):** 2026-07-23 — build session #46 (**P4 increment 1c — the redactor + wire +
 read-only board**). The match now CROSSES THE WIRE and RENDERS. New PURE
 `redactGame(state, seat) → RedactedGame` (`packages/engine/src/redact.ts`) is the per-viewer
 hidden-information filter the lobby DO runs server-side, once per connected socket — **no full
@@ -920,44 +948,43 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**P4 increment 1c (the redactor + wire + read-only board) is DONE — the match CROSSES THE WIRE and
-RENDERS (online.md, D60), engine 0.40.0.** The engine's pure `redactGame(state, seat) → RedactedGame`
-(`packages/engine/src/redact.ts`) is the per-viewer hidden-information filter the DO runs once per
-socket; `RedactedGame` is a `@luminous/schema` wire type (`match/redacted.ts`, viewer-relative); the
-DO fans each socket its own view on the in-game flip (`broadcastMatch`) and on reconnect
-(`sendMatchIfInGame`), keyed by `matchSeatOf` (host→p1/guest→p2); the client's `useLobby.match` +
-`OnlineMatch` render a READ-ONLY `PlaymatView` via `projectionFromRedacted` in place of
-`MatchPlaceholder` (`src/features/online/LobbyRoom.tsx`). The wire round-trip is pinned to equal the
-local `projectGameState`. The subtle `phaseViewOf` derivation now lives in the engine (`phaseView.ts`),
-shared by the projection + redactor.
-**Next concrete action — increment 2 (drive turns online):**
-1. **Client sends seat-bound actions** — the online HUD dispatches `GameAction`s bound to the
-   client's own seat (`RedactedGame.seat` is already on the wire for exactly this); the DO validates
-   the actor, `applyAction`s the persisted `MatchRecord.state`, persists the new state, and
-   RE-BROADCASTS each socket its redacted view (reuse `broadcastMatch`). This makes `OnlineMatch`
-   interactive — replacing its no-op `onMoveCard`/`onPassTurn` (the read-only stubs) + the GameHud
-   the local `/play` mounts.
-2. **Design the redacted effect PROMPT** 1c deliberately stripped: `RedactedDecision.effectChoose`
-   carries no prompt today (`redactDecision` in redact.ts drops it; `decisionFromRedacted` in
-   projection.ts maps it to null). Build a redacted prompt that carries only what the answerer's own
-   HUD may see — search candidates from the CONTROLLER's private zones must stay controller-only.
-3. **Per-recipient EVENT redaction** — `CARDS_DRAWN`/`MULLIGAN_REVEALED` carry hidden uids
-   (`events.ts:8`); the online board needs an event→log stream (`logFromEvents` is per-viewer
-   already) redacted per recipient before it crosses the wire.
-4. **Online HUD greying gates** — `programPlayable`/`conditionHolds` read FULL state
-   (`index.ts:288-315`), unsafe over a projection; rework for the online HUD (the P4 caveat in
-   `index.ts` names this).
+**P4 increment 2a (the action transport + online setup flow) is DONE — the online match is
+INTERACTIVE (online.md, D61), engine 0.40.0.** A `{kind:"action"}` client frame carries an engine
+`GameAction`; the DO's `case "action"` handler binds it to the socket's OWN seat (`matchSeatOf` —
+never the client-claimed one), runs the pure `applyMatchAction` (gated to `SUPPORTED_MATCH_ACTIONS`,
+persist-before-broadcast) and re-fans each socket its redacted view. `RedactedGame` carries a
+redacted `phase` (the action-routing discriminant). `moveToAction` + `placementPredicateFor` are
+transport-agnostic (shared by local + online). Client: `useLobby.sendAction`, `OnlineHud` (setup
+panels), interactive `OnlineMatch`. **Setup + basic turn drags (attach energy, bench a Basic) + pass
+are playable online**; attacks/dialogs are 2b (the fixed decks are basic-only, so setup + energy +
+pass is the reachable game).
+**Next concrete action — increment 2b (the turn:action HUD + the ko/effect dialogs):**
+1. **The turn:action HUD** — attacks (`attacksOf`/`effectiveAttackCost`/`costMet`), abilities,
+   non-Stadium trainers, retreat. These read the FULL GameState (`GameHud.tsx` TurnPanel;
+   `programPlayable`/`conditionHolds` — `index.ts:288-315`), unsafe over a projection. Put enough on
+   the wire (`RedactedGame`) for the online HUD to know what's PLAYABLE + payable WITHOUT leaking
+   (attack list + costs, retreat cost, ability/trainer options) — and GROW `SUPPORTED_MATCH_ACTIONS`
+   as each lands.
+2. **The ko:takePrizes / ko:promote / effect:choose DIALOGS** — the first needs the redacted **effect
+   PROMPT** 2a stripped (`RedactedPhase.effect:choose` carries no prompt; `redactPhase` in redact.ts +
+   `decisionFromPhase` in projection.ts are the seams). A prompt built from the CONTROLLER's private
+   zones must stay controller-only.
+3. **Per-recipient EVENT redaction + an online event→log stream** — `CARDS_DRAWN`/`MULLIGAN_REVEALED`
+   carry hidden uids (`events.ts:8`); redact per recipient before the wire (`logFromEvents` is
+   per-viewer already; the online board's `logEntries` is empty today).
+4. **A rejection pill** — the DO drops a rejected action silently today (2a); surface `applyMatchAction`
+   → null to the actor.
 See `workstreams/online.md`.
-**Recorded, NOT fixed (1c — review LOWs, in online.md + D60):** (L1) the client channel does no Zod
-on inbound frames — a malformed `match` frame throws at render; not opponent-exploitable (only the
-trusted DO sends server frames) and consistent with the untouched `state`/`reject` trust model;
-(L2) seat identity is bearer-only (a socket that knows another seat's `playerId` gets that seat's
-view) — the pre-existing lobby auth model, unchanged; (L3) the setup-phase turn glow lights "you" —
-cosmetic. **Carried from 1b (still open):** (a) the load-failure in-game WEDGE (an incomplete D1
-pool flips the lobby to in-game with no game/no match frame — the client sits on `MatchPlaceholder`;
-self-heals on abandon+rematch; increment 2/3 must surface match-start errors to players); (b)
-`match.test.ts` builds a synthetic pool (pins deck size + coverage, not real-catalog id existence —
-a Worker-pool D1 integration test would close it; no D1 in the current vitest setup).
+**Recorded, NOT fixed (2a — review LOWs, in online.md + D61):** (L1) the DO `case "action"` boundary
+has no direct test — only the pure `applyMatchAction` does (the DO-shell-untested pattern; it mirrors
+the tested `intent` handler). (L2 was FIXED — the `SUPPORTED_MATCH_ACTIONS` allowlist.)
+**Carried from 1c (still open):** (a) the client channel does no Zod on inbound frames (a malformed
+`match` frame throws at render; not opponent-exploitable — only the trusted DO sends server frames);
+(b) seat identity is bearer-only (pre-existing lobby auth, unchanged); (c) the setup-phase turn glow
+lights "you" (cosmetic). **Carried from 1b (still open):** the load-failure in-game WEDGE (an
+incomplete D1 pool flips to in-game with no match frame — client sits on `MatchPlaceholder`;
+self-heals on abandon+rematch; a rejection/error surface is 2b–3); and `match.test.ts`'s synthetic
+pool (pins deck size + coverage, not real-catalog id existence — no D1 in the current vitest setup).
 **Carried forward (pre-existing, phase-independent):** the long-standing engine/deck-builder test
 gaps are unchanged — see the prior resume point below (`legal_standard=0` on most local Trainers,
 `GamePage.passDisabled` untested, `validateChoice` multi-host, `handCostUnmet` composition, no
@@ -2395,6 +2422,32 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-23** (build #47) — **P4 increment 2a: the action transport + online setup flow** (built
+  solo with full context — two read-only Explore agents mapped the interactive machinery first —
+  then one read-only adversarial reviewer). The online match becomes INTERACTIVE. **Wire:** a
+  `{kind:"action", action}` client frame (`wireActionSchema` = `z.looseObject({type})`, loosely typed
+  so the DO rebinds the seat + relies on `applyAction`'s totality; one cast at the client send
+  boundary). `RedactedGame` gained a redacted `phase` (the action-routing discriminant), FOLDING IN
+  `pendingDecision` (now derived client-side via `decisionFromPhase`). **API DO:** a `case "action"`
+  handler binds the action to the socket's OWN seat via `matchSeatOf` (a client can't act for its
+  opponent), gated to a seated player in an in-game lobby with a record, runs the pure
+  `applyMatchAction` (allowlisted to `SUPPORTED_MATCH_ACTIONS`, persist-before-broadcast) and re-fans
+  each socket its redacted view. **Shared refactor:** `moveToAction` + `placement.ts` → a
+  transport-agnostic context (`phaseKind`/`isViewerTurn`/`isReady`) so local (full `Phase`) AND online
+  (redacted phase) drive ONE tested drag router / drop gate; the placement.test.ts lockstep is
+  unchanged. **Client:** `useLobby.sendAction`; a new `OnlineHud` (chooseFirst / mulligan-draw /
+  place-ready panels, gated on `waitingOn === "you"`, dispatching setup actions with the client's own
+  seat); `OnlineMatch` now wires drags → `moveToAction` → `sendAction`, pass → `endTurn`, and the
+  shared placement predicate. Setup + basic turn drags + pass are playable online. engine unchanged
+  (0.40.0); 1719 → **1731** tests, `bun run check` green. **Review (1 read-only adversarial reviewer):
+  NO HIGH, NO MED** — the seat-binding blocks acting-for-opponent (forge test), the three gates block
+  unseated/not-in-game/no-record, `applyAction`'s totality holds against hostile payloads,
+  persist-before-broadcast + the DO input gate prevent desync, the redacted phase leaks nothing, and
+  the refactors are logically identical. **ONE LOW FIXED** (the reviewer's L2): `applyMatchAction`
+  now gates to `SUPPORTED_MATCH_ACTIONS` (the 2a-drivable subset) so a crafted attack/decision frame
+  can't soft-lock the match in a ko:*/effect phase the 2a HUD renders no control for. **ONE LOW
+  recorded** (L1): the DO `case "action"` boundary has no direct test (only the pure
+  `applyMatchAction` does — the DO-shell pattern; it mirrors the tested `intent` handler). See D61.
 - **2026-07-23** (build #46) — **P4 increment 1c: the redactor + wire + read-only board** (built
   solo with full context — two read-only Explore agents mapped the client + DO wiring first — then
   one read-only adversarial reviewer). The match now CROSSES THE WIRE and RENDERS. **Engine:** new

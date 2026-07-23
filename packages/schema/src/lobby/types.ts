@@ -1,7 +1,7 @@
 // The shared vocabulary for the online lobby: the authoritative state the host
 // owns, and the messages the two peers exchange over the transport channel.
 
-import type { RedactedGame } from "../match";
+import type { RedactedGame, WireAction } from "../match";
 //
 // The model is deliberately client-server even though there's no server: the
 // HOST is authoritative. It holds the one true `LobbySnapshot`, applies every
@@ -72,6 +72,10 @@ export type LobbyMessage =
   | { kind: "match"; game: RedactedGame }
   /** guest → host: apply this change to my seat. */
   | { kind: "intent"; from: string; intent: LobbyIntent }
+  /** client → server: a game action for the running match (P4). The DO binds it
+      to the socket's own seat (a client can't act for the opponent) and runs it
+      through the engine's total `applyAction`. */
+  | { kind: "action"; action: WireAction }
   /** host → guest: you're not welcome — the seat is taken ("full"), or the host
       removed you ("kicked"). */
   | { kind: "reject"; to: string; reason: "full" | "kicked" }

@@ -8,8 +8,15 @@
 // card pool from D1 (`loadCardPool`) and calls `startMatch`, then persists + redacts
 // the result.
 
-import { type CreateGameResult, type GameState, type Seat, createGame } from "@luminous/engine";
-import type { Card, LobbySnapshot } from "@luminous/schema";
+import {
+  type CreateGameResult,
+  type GameAction,
+  type GameState,
+  type Seat,
+  applyAction,
+  createGame,
+} from "@luminous/engine";
+import type { Card, LobbySnapshot, WireAction } from "@luminous/schema";
 import { slotOf } from "./logic";
 
 /** The one place the lobby's seats map to the engine's: host → p1, guest → p2. */
@@ -92,4 +99,44 @@ export interface MatchRecord {
   seed: number;
   /** The engine's full game state — never sent whole to a client (online.md). */
   state: GameState;
+}
+
+/** The engine action types increment 2a's online client can DRIVE and RECOVER
+    from: setup, the `moveToAction` turn drags, and pass. The DO rejects
+    everything else — attack / retreat / abilities / the ko:* + effect:choose
+    decisions — so a crafted frame can't push the match into a phase the 2a HUD
+    renders no control for (a soft-lock; griefing-class, the review's LOW). With
+    the fixed basic-only decks these are exactly the reachable legal actions, so
+    nothing a legitimate client sends is blocked. Increment 2b GROWS this set as
+    it lands the turn:action HUD and the ko/effect dialogs. */
+export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
+  "chooseFirstPlayer",
+  "setupDrawExtra",
+  "setupPlaceActive",
+  "setupPlaceBench",
+  "setupReady",
+  "attachEnergy",
+  "playBasicToBench",
+  "evolve",
+  "attachTool",
+  "playTrainer",
+  "endTurn",
+]);
+
+/** Apply a client action to a persisted match (P4 increment 2). The action is
+    BOUND to the actor's own `seat` — never the client-claimed `action.seat` — so
+    a client can never act for its opponent, gated to the 2a-SUPPORTED types
+    (`SUPPORTED_MATCH_ACTIONS`), then run through the engine's TOTAL `applyAction`
+    (never throws on a bogus type/field, D14). Returns the next record on accept,
+    or null on reject (an unsupported/illegal action changes nothing — the
+    client's optimistic gesture already sprang back; the seed carries over
+    unchanged). Pure — no DO/storage. */
+export function applyMatchAction(
+  record: MatchRecord,
+  seat: Seat,
+  action: WireAction,
+): MatchRecord | null {
+  if (!SUPPORTED_MATCH_ACTIONS.has(action.type)) return null;
+  const result = applyAction(record.state, { ...action, seat } as GameAction);
+  return result.ok ? { seed: record.seed, state: result.state } : null;
 }

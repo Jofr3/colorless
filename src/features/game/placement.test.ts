@@ -182,6 +182,17 @@ function expectedActionType(
   return "playBasicToBench";
 }
 
+/** The transport-agnostic move context moveToAction now takes (a phase KIND +
+    an is-it-my-turn flag), derived from a full engine phase for these tests. */
+function moveCtx(phase: Phase, viewerSeat: Seat, board: BoardState) {
+  return {
+    phaseKind: phase.kind,
+    isViewerTurn: phase.kind === "turn:action" && phase.seat === viewerSeat,
+    viewerSeat,
+    board,
+  };
+}
+
 /** Assert the contract over every own-hand card × TARGETS for one state and
     viewer. `phase` overrides let the never-drop phases run against boards
     that actually hold cards (chooseFirst has empty hands, ko:* needs a KO). */
@@ -196,7 +207,7 @@ function expectLockstep(state: GameState, viewerSeat: Seat, phase?: Phase): void
       const allowed = predicate(board, from, to, model.type);
       const action = moveToAction(
         { cardId: model.id, from, to },
-        { phase: stateAt.phase, viewerSeat, board },
+        moveCtx(stateAt.phase, viewerSeat, board),
       );
       const label = `${stateAt.phase.kind}: ${model.type} → ${JSON.stringify(to)}`;
       if (allowed) {
@@ -313,7 +324,7 @@ describe("gamePlacementPredicate — turn:action structure", () => {
     expect(predicate(board, from, to, "pokemon")).toBe(true);
     const action = moveToAction(
       { cardId: stage1Uid, from, to },
-      { phase: state.phase, viewerSeat: "p1", board },
+      moveCtx(state.phase, "p1", board),
     );
     expect(action).toEqual({ type: "evolve", seat: "p1", uid: stage1Uid, target: { spot: "active" } });
     // The full chain lands a LEGAL evolve on this real turn-3 board.
@@ -334,7 +345,7 @@ describe("gamePlacementPredicate — turn:action structure", () => {
     expect(predicate(board, from, to, "stadium")).toBe(true);
     const action = moveToAction(
       { cardId: stadiumUid, from, to },
-      { phase: state.phase, viewerSeat: "p1", board },
+      moveCtx(state.phase, "p1", board),
     );
     expect(action).toEqual({ type: "playTrainer", seat: "p1", uid: stadiumUid });
     expect(action === null ? false : applyAction(state, action).ok).toBe(true);
@@ -342,7 +353,7 @@ describe("gamePlacementPredicate — turn:action structure", () => {
     const elsewhere: CardPlacement = { owner: "you", zone: "active" };
     expect(predicate(board, from, elsewhere, "stadium")).toBe(false);
     expect(
-      moveToAction({ cardId: stadiumUid, from, to: elsewhere }, { phase: state.phase, viewerSeat: "p1", board }),
+      moveToAction({ cardId: stadiumUid, from, to: elsewhere }, moveCtx(state.phase, "p1", board)),
     ).toBeNull();
   });
 
@@ -363,7 +374,7 @@ describe("gamePlacementPredicate — turn:action structure", () => {
       expect(predicate(board, from, to, "tool")).toBe(true);
       const action = moveToAction(
         { cardId: toolUid, from, to },
-        { phase: state.phase, viewerSeat: "p1", board },
+        moveCtx(state.phase, "p1", board),
       );
       expect(action?.type).toBe("attachTool");
       expect(action === null ? false : applyAction(state, action).ok).toBe(true);
@@ -372,7 +383,7 @@ describe("gamePlacementPredicate — turn:action structure", () => {
     const container: CardPlacement = { owner: "you", zone: "bench" };
     expect(predicate(board, from, container, "tool")).toBe(false);
     expect(
-      moveToAction({ cardId: toolUid, from, to: container }, { phase: state.phase, viewerSeat: "p1", board }),
+      moveToAction({ cardId: toolUid, from, to: container }, moveCtx(state.phase, "p1", board)),
     ).toBeNull();
   });
 

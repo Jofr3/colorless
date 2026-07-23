@@ -59,6 +59,7 @@ import {
   withPendingDisconnect,
 } from "./logic";
 import {
+  applyMatchAction,
   FIXED_MATCH_CARD_IDS,
   FIXED_MATCH_DECKS,
   matchSeatOf,
@@ -179,6 +180,31 @@ export class LobbyDO {
         if (slot === null) return;
         const next = applyIntent(snapshot, slot, frame.intent);
         if (next !== snapshot) await this.commit(next);
+        return;
+      }
+
+      case "action": {
+        // A game action for the running match (P4). Authority is the socket's
+        // OWN bound seat — never the client-claimed action.seat — so a client
+        // can never act for its opponent. Only a seated player in an in-game
+        // lobby with a persisted match may act.
+        if (snapshot === null || snapshot.phase !== "in-game") return;
+        const playerId = attachedPlayer(ws);
+        if (playerId === null) return;
+        const seat = matchSeatOf(snapshot, playerId);
+        if (seat === null) return;
+        const record = await this.state.storage.get<MatchRecord>(MATCH_KEY);
+        if (record === undefined) return;
+        // Bind the action to the socket's seat (a client can't act for the
+        // opponent) and run the engine's total applyAction. A rejected action
+        // changes nothing — the client's optimistic gesture already sprang back;
+        // increment 2b adds the rejection pill. On accept, persist BEFORE
+        // broadcasting (crash-safe, mirroring the handoff) and fan each socket
+        // its own redacted view.
+        const next = applyMatchAction(record, seat, frame.action);
+        if (next === null) return;
+        await this.state.storage.put(MATCH_KEY, next);
+        this.broadcastMatch(next, snapshot);
         return;
       }
 

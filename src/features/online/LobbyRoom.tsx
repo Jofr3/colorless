@@ -267,6 +267,7 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
           game={lobby.match}
           youName={self.name}
           opponentName={lobby.opponent?.name ?? "Opponent"}
+          onAction={lobby.sendAction}
         />
       );
     }

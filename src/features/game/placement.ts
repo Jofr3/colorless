@@ -19,17 +19,37 @@
 // enumerates that pairing over real engine states — extend BOTH together;
 // M4's evolve-by-drag now routes here, trainer plays are next).
 
-import type { GameState, Seat } from "@luminous/engine";
+import type { GameState, Phase, Seat } from "@luminous/engine";
 import { benchLimitFor } from "../playmat/constants";
 import type { PlacementPredicate } from "../playmat/utils/cardMovement";
 
-/** Build the /play drop gate for one rendered projection: `game` is the
-    engine state the board was projected FROM, `viewerSeat` the seat it was
-    projected FOR (its board's "you"). The closure reads only `game.phase`
-    (occupancy comes from the projected board the layer passes at call time),
-    so memoizing on [game.phase, viewerSeat] is enough. */
+/** The transport-agnostic slice of the phase the drop gate reads — a phase
+    KIND, whether it is the viewer's own turn (`turn:action`), and whether the
+    viewer has locked its setup placements (`setup:place`). Kept light so BOTH
+    local play — which has the full `Phase` — and online play — which has only a
+    redacted phase — build the SAME gate, in lockstep with moveToAction. */
+export interface PlacementContext {
+  phaseKind: Phase["kind"];
+  isViewerTurn: boolean;
+  isReady: boolean;
+}
+
+/** Local wrapper: derive the drop-gate context from the full engine state.
+    `game` is the state the board was projected FROM, `viewerSeat` the seat it
+    was projected FOR. Memoizing on [game.phase, viewerSeat] is enough. */
 export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): PlacementPredicate {
   const phase = game.phase;
+  return placementPredicateFor({
+    phaseKind: phase.kind,
+    isViewerTurn: phase.kind === "turn:action" && phase.seat === viewerSeat,
+    isReady: phase.kind === "setup:place" && phase.ready[viewerSeat],
+  });
+}
+
+/** Build the /play drop gate from the transport-agnostic context. Occupancy +
+    ownership come from the projected board the layer passes at call time (its
+    own side is always "you"), so the context alone — no seat — closes it. */
+export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate {
   return (board, source, target, sourceType) => {
     // Every translatable move starts in the viewer's own hand and lands on
     // their own board — moveToAction's first gate, mirrored here so a drag
@@ -46,11 +66,11 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
     // so previewing one would be a lie the projection immediately snaps back.
     if (target.zone === "hand") return false;
 
-    switch (phase.kind) {
+    switch (ctx.phaseKind) {
       case "setup:place": {
         // A seat that declared ready has locked its placements — nothing it
         // drops can ever apply (ALREADY_READY).
-        if (phase.ready[viewerSeat]) return false;
+        if (ctx.isReady) return false;
         // §3.6–§3.7 place Pokémon. Basic-ness is the engine's call
         // (NOT_A_BASIC_POKEMON — a rule a Pokémon drop gestures at), but a
         // non-Pokémon can never be a Basic, so energies/trainers get no
@@ -64,7 +84,7 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
       case "turn:action": {
         // Not this seat's turn — nothing translates. (A parked interrupt is
         // a different phase kind and falls through to the default below.)
-        if (phase.seat !== viewerSeat) return false;
+        if (!ctx.isViewerTurn) return false;
         if (sourceType === "energy") {
           // attachEnergy needs an existing own Pokémon host. Occupancy is
           // structural (an empty slot can never host); whether THIS energy

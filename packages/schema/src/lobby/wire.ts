@@ -20,7 +20,7 @@
 // in protocol.ts so the web client can import them without bundling zod.
 
 import { z } from "zod";
-import { redactedGameSchema } from "../match";
+import { redactedGameSchema, wireActionSchema } from "../match";
 import type {
   LobbyIntent,
   LobbyMessage,
@@ -98,6 +98,10 @@ const intentMessageSchema = z.object({
   from: z.string(),
   intent: lobbyIntentSchema,
 });
+const actionMessageSchema = z.object({
+  kind: z.literal("action"),
+  action: wireActionSchema,
+});
 const rejectMessageSchema = z.object({
   kind: z.literal("reject"),
   to: z.string(),
@@ -120,6 +124,7 @@ export const lobbyMessageSchema = z.discriminatedUnion("kind", [
   stateMessageSchema,
   matchMessageSchema,
   intentMessageSchema,
+  actionMessageSchema,
   rejectMessageSchema,
   heartbeatMessageSchema,
   byeMessageSchema,
@@ -134,11 +139,12 @@ export const lobbyMessageSchemaMatchesType: Equals<
 export const lobbyClientMessageSchema = z.discriminatedUnion("kind", [
   helloMessageSchema,
   intentMessageSchema,
+  actionMessageSchema,
   z.object({ kind: z.literal("reject"), to: z.string(), reason: z.literal("kicked") }),
   byeMessageSchema,
 ]);
 export type LobbyClientMessage =
-  | Extract<LobbyMessage, { kind: "hello" | "intent" | "bye" }>
+  | Extract<LobbyMessage, { kind: "hello" | "intent" | "action" | "bye" }>
   | { kind: "reject"; to: string; reason: "kicked" };
 export const lobbyClientMessageSchemaMatchesType: Equals<
   z.infer<typeof lobbyClientMessageSchema>,

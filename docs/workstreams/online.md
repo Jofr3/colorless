@@ -47,6 +47,22 @@ deny-all placement) until increment 2 drives turns. The wire round-trip is pinne
 EXACTLY the local `projectGameState` board (the guard against the two redactors drifting). 1702 →
 1719 tests, `bun run check` green.
 
+**Increment 2a — DONE:** the authoritative action transport + the online SETUP flow (D61, engine
+0.40.0). The match is now INTERACTIVE (setup + basic turn drags + pass). A new `{kind:"action",
+action}` client frame (schema — `wireActionSchema` = `z.looseObject`, loosely typed on purpose: the
+DO rebinds the seat and relies on `applyAction`'s totality) carries an engine `GameAction`. The DO's
+new `case "action"` handler binds the action to the SOCKET's own seat via `matchSeatOf` (never the
+client-claimed `action.seat` — a client can't act for its opponent), runs the pure
+`applyMatchAction(record, seat, action)` (persist-before-broadcast), and re-fans each socket its
+redacted view. `RedactedGame` gained a redacted **`phase`** (the action-routing discriminant —
+setup:chooseFirst / drawExtra`{owed}` / place`{ready}` / turn:action / ko / effect / gameOver;
+`pendingDecision` was folded into it and derived client-side). `moveToAction` + `placement.ts` were
+refactored to a transport-agnostic context (`phaseKind` + `isViewerTurn` + `isReady`) so local AND
+online drive ONE tested drag router / drop gate (the placement.test.ts lockstep unchanged). Client:
+`useLobby.sendAction`; a new `OnlineHud` (chooseFirst / drawExtra / place-ready panels, gated on
+`waitingOn === "you"`); `OnlineMatch` now wires drags → `moveToAction` → `sendAction`, pass →
+`endTurn`, and the shared placement predicate. 1719 → 1730 tests, `bun run check` green.
+
 **Match-record lifecycle (locked this increment):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -96,15 +112,22 @@ until 1c broadcasts the redacted view.
   (engine) + `RedactedGame` (schema) + the `{kind:"match", game}` server message; the DO
   broadcasts each socket its redacted view on the flip + reconnect; `useLobby.match` +
   `OnlineMatch` render a read-only `PlaymatView` in place of `MatchPlaceholder`.
-- **2 — drive turns (NEXT):** client sends actions (seat-bound like `lobbyDO.ts:156`), the DO
-  `applyAction`s + re-broadcasts each socket its redacted view, with per-RECIPIENT event
-  redaction (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal hidden info — `events.ts:8`). Design the
-  **redacted effect prompt** 1c deliberately stripped (`RedactedDecision.effectChoose` carries no
-  prompt today; `redactDecision` in redact.ts + `decisionFromRedacted` in projection.ts are the
-  two seams). The projection-unsafe greying gates (`programPlayable`/`conditionHolds` read full
-  state — `index.ts:288-315`) need rework for the online HUD, and the online board needs an
-  event→log stream (`logFromEvents` is per-viewer already). The read-only board's own hand is
-  currently draggable-but-inert (no-op `onMoveCard`); wiring real actions replaces that.
+- **2a — the action transport + the online setup flow. DONE** (see Status above): the
+  `{kind:"action"}` client frame, the DO's seat-bound `applyMatchAction` + re-broadcast, the
+  redacted `phase`, the shared `moveToAction`/`placementPredicateFor`, `useLobby.sendAction`,
+  `OnlineHud` + interactive `OnlineMatch`. Setup + basic turn drags + pass are playable online.
+- **2b — the turn:action HUD + the ko/effect dialogs (NEXT).** The heavy panels: attacks
+  (`attacksOf`/`effectAttackCost`/`costMet`), abilities, non-Stadium trainers, retreat — all read the
+  FULL GameState (`GameHud.tsx` TurnPanel; `programPlayable`/`conditionHolds` — `index.ts:288-315`),
+  unsafe over a projection. Two sub-problems: (1) put enough on the wire for the online HUD to know
+  what's PLAYABLE (attack list + payability, retreat cost, ability/trainer options) without leaking,
+  and (2) the ko:takePrizes / ko:promote / effect:choose DIALOGS — the first needs the redacted
+  **effect PROMPT** 2a stripped (`RedactedPhase.effect:choose` carries no prompt; `redactPhase` in
+  redact.ts + `decisionFromPhase` in projection.ts are the seams; a prompt built from the
+  CONTROLLER's private zones must stay controller-only). Also: per-RECIPIENT EVENT redaction
+  (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal hidden uids — `events.ts:8`) + an event→log stream for
+  the online board (`logFromEvents` is per-viewer already), and a rejection pill (the DO drops a
+  rejected action silently today).
 - **3:** real deck selection (resolve `deckId`→60 ids server-side), reconnect/timeouts,
   concede/rematch, spectate, and surfacing a match-start FAILURE to players (the load-failure
   wedge below).

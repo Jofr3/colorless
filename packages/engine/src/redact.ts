@@ -25,13 +25,14 @@ import type {
   RedactedGame,
   RedactedInPlay,
   RedactedOutcome,
+  RedactedPhase,
   RedactedSide,
   Viewer,
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { cardOfUid, topUid } from "./cards";
 import { effectiveMaxHp } from "./continuous";
-import { type PendingDecision, inSetup, phaseViewOf } from "./phaseView";
+import { inSetup, phaseViewOf } from "./phaseView";
 import type { GameOutcome, GameState, InPlayPokemon, Seat, SpecialConditions } from "./types";
 import { otherSeat } from "./types";
 
@@ -47,6 +48,7 @@ export function redactGame(state: GameState, viewerSeat: Seat): RedactedGame {
   return {
     seat: viewerSeat,
     turn: state.turn,
+    phase: redactPhase(state, viewerSeat),
     board: {
       // §7.3 — the one shared Stadium, public to both viewers.
       stadium: state.stadium === null ? null : redactedCardOf(state, state.stadium.uid),
@@ -55,9 +57,37 @@ export function redactGame(state: GameState, viewerSeat: Seat): RedactedGame {
     },
     activePlayer: asViewer(view.activeSeat, viewerSeat),
     waitingOn: asViewer(view.waitingSeat, viewerSeat),
-    pendingDecision: redactDecision(view.pendingDecision),
     outcome: view.outcome === null ? null : redactOutcome(view.outcome, viewerSeat),
   };
+}
+
+/** The redacted phase — the discriminant the client routes ACTIONS on. Carries
+    the kind plus only non-sensitive fields (setup:drawExtra the viewer's OWN
+    owed compensation count, setup:place the viewer-relative ready flags, the ko
+    interrupts their counts); the effect:choose prompt is dropped. */
+function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
+  const phase = state.phase;
+  switch (phase.kind) {
+    case "setup:chooseFirst":
+      return { kind: "setup:chooseFirst" };
+    case "setup:drawExtra":
+      return { kind: "setup:drawExtra", owed: phase.owed[viewerSeat] };
+    case "setup:place":
+      return {
+        kind: "setup:place",
+        ready: { you: phase.ready[viewerSeat], opponent: phase.ready[otherSeat(viewerSeat)] },
+      };
+    case "turn:action":
+      return { kind: "turn:action" };
+    case "ko:takePrizes":
+      return { kind: "ko:takePrizes", count: phase.count };
+    case "ko:promote":
+      return { kind: "ko:promote" };
+    case "effect:choose":
+      return { kind: "effect:choose" };
+    case "gameOver":
+      return { kind: "gameOver" };
+  }
 }
 
 /** How much of a side the viewer may see. The two redactions are independent:
@@ -194,22 +224,6 @@ function emptySlot(seat: Seat, index: number): RedactedCard {
 function asViewer(seat: Seat | null, viewerSeat: Seat): Viewer | null {
   if (seat === null) return null;
   return seat === viewerSeat ? "you" : "opponent";
-}
-
-/** Strip the phase view's decision to counts only. The mid-effect prompt is
-    dropped — it can be built out of the controller's private zones, so no raw
-    prompt crosses the wire; the read-only board renders no decision this
-    increment (increment 2 designs the redacted prompt). */
-function redactDecision(decision: PendingDecision | null): RedactedGame["pendingDecision"] {
-  if (decision === null) return null;
-  switch (decision.kind) {
-    case "takePrizes":
-      return { kind: "takePrizes", count: decision.count };
-    case "promote":
-      return { kind: "promote" };
-    case "effectChoose":
-      return { kind: "effectChoose" };
-  }
 }
 
 /** Viewer-map a finished game's outcome — fresh objects, nothing aliased. */

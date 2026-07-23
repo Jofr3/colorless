@@ -10,8 +10,14 @@ import type { GameAction, Phase, Seat } from "@luminous/engine";
 import type { BoardState, CardMoveRequest } from "../playmat/types";
 
 export interface MoveTranslationContext {
-  /** The engine phase the drag landed in. */
-  phase: Phase;
+  /** The engine phase KIND the drag landed in. Kept transport-agnostic (a kind,
+      not the full `Phase`) so BOTH local play — which has the real Phase — and
+      online play — which has only a redacted phase kind — drive this one router. */
+  phaseKind: Phase["kind"];
+  /** True only when it is the viewer's OWN `turn:action` — the turn gate the
+      old `phase.seat === viewerSeat` check enforced, hoisted to the caller
+      (online has no absolute seat on the phase, only "is it my turn"). */
+  isViewerTurn: boolean;
   /** The seat the projection was built for (its board's "you"). */
   viewerSeat: Seat;
   /** The projected board the drag happened on — used to type the dragged
@@ -40,7 +46,7 @@ export function moveToAction(
   if (model === undefined) return null;
 
   const seat = ctx.viewerSeat;
-  switch (ctx.phase.kind) {
+  switch (ctx.phaseKind) {
     case "setup:place": {
       // Any hand card may be AIMED at a Pokémon slot; the engine answers
       // NOT_A_BASIC_POKEMON (etc.) for the illegal ones.
@@ -51,7 +57,7 @@ export function moveToAction(
     case "turn:action": {
       // Not this seat's turn (a parked interrupt belongs elsewhere anyway —
       // those phase kinds fall through to null below).
-      if (ctx.phase.seat !== seat) return null;
+      if (!ctx.isViewerTurn) return null;
       if (model.type === "energy") {
         if (to.zone === "active") {
           return { type: "attachEnergy", seat, uid: cardId, target: { spot: "active" } };

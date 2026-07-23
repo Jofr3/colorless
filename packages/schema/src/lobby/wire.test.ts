@@ -33,6 +33,7 @@ const SNAPSHOT: LobbySnapshot = {
 const MATCH_GAME: RedactedGame = {
   seat: "p1",
   turn: 1,
+  phase: { kind: "turn:action" },
   board: {
     stadium: null,
     you: {
@@ -58,7 +59,6 @@ const MATCH_GAME: RedactedGame = {
   },
   activePlayer: "you",
   waitingOn: "you",
-  pendingDecision: null,
   outcome: null,
 };
 
@@ -112,6 +112,29 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "bye", from: "g1", slot: "guest" }).success,
     ).toBe(true);
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "action", action: { type: "endTurn", seat: "p1" } })
+        .success,
+    ).toBe(true);
+  });
+
+  it("preserves an action's fields (looseObject) so the engine can read uid/target", () => {
+    // The DO hands frame.action to the engine's total applyAction; stripping
+    // unknown keys would drop the action's payload, so wireActionSchema keeps them.
+    const parsed = lobbyClientMessageSchema.parse({
+      kind: "action",
+      action: { type: "attachEnergy", seat: "p1", uid: "e7", target: { spot: "active" } },
+    });
+    expect(parsed).toEqual({
+      kind: "action",
+      action: { type: "attachEnergy", seat: "p1", uid: "e7", target: { spot: "active" } },
+    });
+  });
+
+  it("refuses an action frame with no string type", () => {
+    expect(lobbyClientMessageSchema.safeParse({ kind: "action", action: { seat: "p1" } }).success).toBe(
+      false,
+    );
   });
 
   it("refuses server-only and fabricated frames", () => {
@@ -186,6 +209,7 @@ describe("lobbyMessageSchema (full channel vocabulary)", () => {
       { kind: "state", snapshot: SNAPSHOT },
       { kind: "match", game: MATCH_GAME },
       { kind: "intent", from: "g1", intent: { type: "set-name", name: "Bo" } },
+      { kind: "action", action: { type: "endTurn", seat: "p1" } },
       { kind: "reject", to: "g1", reason: "full" },
       { kind: "heartbeat", from: "h1", slot: "host" },
       { kind: "bye", from: "g1", slot: "guest" },

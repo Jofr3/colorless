@@ -269,6 +269,40 @@ describe("redactGame — phase-derived view (viewer-relative)", () => {
   });
 });
 
+describe("redactGame — the redacted phase (the action-routing discriminant)", () => {
+  it("carries turn:action while a turn runs", () => {
+    expect(redactGame(turnOneState(), "p1").phase).toEqual({ kind: "turn:action" });
+  });
+
+  it("carries setup:place with VIEWER-RELATIVE ready flags", () => {
+    const state = placedNotRevealed(); // p1 placed + ready, p2 not
+    // From p1's view, "you" (p1) is ready; from p2's view, "opponent" (p1) is.
+    expect(redactGame(state, "p1").phase).toEqual({
+      kind: "setup:place",
+      ready: { you: true, opponent: false },
+    });
+    expect(redactGame(state, "p2").phase).toEqual({
+      kind: "setup:place",
+      ready: { you: false, opponent: true },
+    });
+  });
+
+  it("carries setup:chooseFirst at the game's start", () => {
+    const fresh = mustCreate(SEED, DECKS).state;
+    if (fresh.phase.kind !== "setup:chooseFirst") throw new Error("expected chooseFirst");
+    expect(redactGame(fresh, "p1").phase).toEqual({ kind: "setup:chooseFirst" });
+  });
+
+  it("mirrors a gameOver phase (details ride on `outcome`)", () => {
+    const base = turnOneState();
+    const state: GameState = {
+      ...base,
+      phase: { kind: "gameOver", outcome: { result: "win", winner: "p1", reason: "prizesTaken" } },
+    };
+    expect(redactGame(state, "p1").phase).toEqual({ kind: "gameOver" });
+  });
+});
+
 describe("redactGame — purity", () => {
   it("never mutates the input state and is deterministic per seat", () => {
     const state = turnOneState();

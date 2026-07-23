@@ -1,3 +1,4 @@
+import type { GameAction } from "@luminous/engine";
 import {
   COUNTDOWN_MS,
   createSnapshot,
@@ -6,6 +7,7 @@ import {
   type LobbySnapshot,
   makePlayer,
   type RedactedGame,
+  type WireAction,
 } from "@luminous/schema";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createLobbyChannel, type LobbyChannel } from "./channel";
@@ -50,6 +52,10 @@ export type Lobby = {
   leave: () => void;
   /** Host only: remove the guest from the lobby. No-op for a guest. */
   kick: () => void;
+  /** Send a game action for the running match (P4). The server binds it to this
+      client's seat and applies it; the authoritative result comes back as a
+      `match` broadcast. */
+  sendAction: (action: GameAction) => void;
 };
 
 type PlayerStateOrNull = LobbySnapshot["host"] | null;
@@ -211,6 +217,16 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     channelRef.current?.post({ kind: "reject", to: guestId, reason: "kicked" });
   }, [isHost]);
 
+  const sendAction = useCallback((action: GameAction) => {
+    // The DO binds the action to this socket's seat (a client can't forge it),
+    // so we send the engine action as-is; the accepted result returns as a
+    // `match` broadcast — the board only ever reflects authoritative state.
+    // GameAction structurally satisfies the loose wire action; the missing
+    // index signature is a TS artifact of the loose Zod object, hence the cast
+    // at this one boundary.
+    channelRef.current?.post({ kind: "action", action: action as unknown as WireAction });
+  }, []);
+
   const self: PlayerStateOrNull = snapshot ? (isHost ? snapshot.host : snapshot.guest) : null;
   const opponent: PlayerStateOrNull = snapshot ? (isHost ? snapshot.guest : snapshot.host) : null;
 
@@ -225,6 +241,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     setReady,
     leave,
     kick,
+    sendAction,
   };
 }
 
