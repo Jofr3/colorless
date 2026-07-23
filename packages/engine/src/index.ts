@@ -149,8 +149,19 @@ import type { GameState, Seat } from "./types";
     it is takes their Prizes first" holds, and a self-KO prizes to the defender.
     This makes the §14 double-KO tie reachable from the attack path for the first
     time — collectKnockOuts' existing speculative guard owns it (the D42 debt,
-    paid). */
-export const engineVersion = "0.33.0";
+    paid).
+
+    0.34.0 — count-scaled attack damage (the additive "+" family): the printed
+    "This attack does N more damage for each damage counter on this Pokémon"
+    (Paldean Tauros sv02-028 "Raging Horns", fix-attacker "Rage") is now SIMULATED
+    — `deriveAttackDamageBonus` folds N × (the attacker's OWN damage counters) into
+    the base BEFORE the §8.5 W/R pipeline (attack.ts), alongside the continuous
+    Vitality Band bonus. The new DAMAGE_DEALT `scaled` field carries it (present
+    only when it applied), and the "+"/text is no longer flagged loudly for these
+    cards. Charizard ex sv03-125 "Burning Darkness" (a DIFFERENT count source — the
+    opponent's taken Prizes) STAYS on the ATTACK_EFFECT_SKIPPED path, the
+    anchor-guard witness proving the deriver is narrow. */
+export const engineVersion = "0.34.0";
 
 export type {
   ApplyResult,
@@ -204,10 +215,18 @@ export {
   providedEnergy,
   stadiumEffectsOf,
 } from "./continuous";
-export { deriveAttackEffect } from "./effects";
+export { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
-export type { AttachTargetRiders, BoardCondition, CardFilter, EffectOp, EffectSlot } from "./effects";
+export type {
+  AttachTargetRiders,
+  AttackDamageBonus,
+  BoardCondition,
+  CardFilter,
+  DamageCountSource,
+  EffectOp,
+  EffectSlot,
+} from "./effects";
 /** The one BoardCondition evaluator + its printed-text describer. Exported so a
     host holding raw engine state (today's hot-seat HUD) greys out a card whose
     printed "only if" gate is unmet using the SAME logic playTrainer rejects it

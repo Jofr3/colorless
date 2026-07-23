@@ -14,6 +14,7 @@ import {
   HAND_REFRESH_DECK,
   MIXED_DECK,
   REVEAL_BOTTOM_DECK,
+  SCALED_DAMAGE_DECK,
   SPECIAL_ENERGY_DECK,
   STADIUM_TOOL_DECK,
   attachBenchFromDeck,
@@ -26,6 +27,7 @@ import {
   mustApply,
   mustCreate,
   setActiveFromDeck,
+  setDamage,
   setPrizes,
   types,
 } from "../../../packages/engine/src/testFixtures";
@@ -195,13 +197,20 @@ describe("logFromEvents — attacks and KOs", () => {
   });
 
   it("flags a not-simulated attack effect as a system line", () => {
-    const state = matchup("fix-wall", 1);
-    // Rage ("10+") carries both a damage modifier and an underived effect
-    // text — the combined wording.
-    const applied = mustApply(state, { type: "attack", seat: "p1", index: 3 });
+    // fix-attacker's Rage now DERIVES its self-counter scaling (0.34.0), so the
+    // combined-wording witness moves to Charizard ex "Burning Darkness" — its
+    // "180+" carries both a damage modifier AND an underived Prize-scaling effect
+    // (a DIFFERENT count source no reader simulates). A Stage 2 fielded by surgery,
+    // energied for its {R}{R} cost; fix-bigbody (200 HP) survives the base 180.
+    let state = driveSetup(6, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "sv03-125");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 2);
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    const applied = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const entries = logFromEvents(applied.events, ctx(applied.state));
     const lines = texts(entries);
-    expect(lines).toContain('Rage — "+" damage and effect not simulated');
+    expect(lines).toContain('Burning Darkness — "+" damage and effect not simulated');
   });
 
   it("words a skipped damage marker WITHOUT claiming the effect was skipped", () => {
@@ -563,6 +572,26 @@ describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
     const { state: next, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const rows = texts(logFromEvents(events, ctx(next)));
     expect(rows).toContain("dealt 40 damage to fix-basic-1 · boosted +10");
+  });
+
+  it("breadcrumbs the printed damage-scaling clause (· scaled +N)", () => {
+    // fix-attacker's "Rage" folds 10 per damage counter into its base (0.34.0):
+    // 9 counters (90 HP) × 10 = 90 over base 10 → 100 vs fix-wall (120 HP, no
+    // weakness), so the DAMAGE_DEALT `scaled` field surfaces as a `· scaled +90`
+    // breadcrumb — the sibling of `· boosted +N`, pinned the same way.
+    let state = driveSetup(
+      12,
+      { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = setActiveFromDeck(state, "p2", "fix-wall");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
+    state = setDamage(state, "p1", 90);
+    const { state: next, events } = mustApply(state, { type: "attack", seat: "p1", index: 3 });
+    const rows = texts(logFromEvents(events, ctx(next)));
+    expect(rows).toContain("dealt 100 damage to fix-wall · scaled +90");
   });
 });
 

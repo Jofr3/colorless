@@ -342,17 +342,19 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
   // ── The paths the epilogue must NOT disturb ──
 
   it("an attack with NO effect program is byte-identical to before the stage existed", () => {
-    // fix-wall has no attacks; fix-victim neither — use Charcadet's Ember with a
-    // sibling that has no effect: Paldean Tauros' Raging Horns is unsimulated
-    // ("20+"), so its program is null and the epilogue runs inline.
+    // Paldean Tauros' Raging Horns now SIMULATES its scaling ("20+" folds the
+    // self-counter clause into the base, 0.34.0) but has NO PARKING program:
+    // scaling is pre-damage math, not an EffectOp, so `program` is still null and
+    // the epilogue runs inline. At 0 damage counters it deals its printed base 20
+    // with no `scaled` and no skip — the "no park, inline epilogue" intent is kept.
     const state = matchup(8, "sv02-028", "fix-bigbody", [{ id: "fix-fire-energy", count: 2 }]);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    expect(types(events)).toContain("ATTACK_EFFECT_SKIPPED");
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.pending).toEqual([]);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
-    // Nothing was discarded — the unsimulated program never ran.
+    // Nothing was discarded — there is no program, so no discard ran.
     expect(activeEnergy(done, "p1")).toHaveLength(2);
   });
 

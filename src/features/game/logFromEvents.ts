@@ -257,9 +257,12 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
       ];
       // The breadcrumbs read in §8.5 PIPELINE order so the math reconstructs:
-      // the attacker's pre-W/R bonus (Vitality Band) FIRST, then Weakness,
-      // Resistance, then the defender's post-W/R reduction (Bouffalant
-      // "Bouffer" / a defending Tool) last.
+      // the attack's own printed scaling clause (Paldean Tauros "Raging Horns")
+      // and then the attacker's continuous pre-W/R bonus (Vitality Band) FIRST —
+      // both land at the same pre-W/R step, the scaling ahead of the continuous
+      // boost — then Weakness, Resistance, then the defender's post-W/R reduction
+      // (Bouffalant "Bouffer" / a defending Tool) last.
+      if (event.scaled !== undefined) segments.push(plain(` · scaled +${event.scaled}`));
       if (event.bonus !== undefined) segments.push(plain(` · boosted +${event.bonus}`));
       if (event.weakness !== null) segments.push(plain(modifierText("weakness", event.weakness)));
       if (event.resistance !== null) {

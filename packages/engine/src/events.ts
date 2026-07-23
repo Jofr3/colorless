@@ -102,6 +102,12 @@ export type GameEvent =
       seat: Seat;
       uid: string;
       base: number;
+      /** HP the attack's own printed damage-scaling clause added to `base`
+          BEFORE Weakness/Resistance (Paldean Tauros "Raging Horns" — 10 per
+          damage counter on the attacker). Present only when it applied. Distinct
+          from `bonus`, a CONTINUOUS effect (Vitality Band); both land at the same
+          pre-W/R step. */
+      scaled?: number;
       /** Flat HP the attacker's continuous effects added BEFORE Weakness/
           Resistance (Vitality Band, §15.B). Present only when it applied. */
       bonus?: number;

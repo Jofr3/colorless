@@ -3,6 +3,7 @@ import { applyAction, deriveAttackEffect } from "./index";
 import type { GameState, RetreatAction, Seat } from "./index";
 import { flipCoin } from "./rng";
 import {
+  SCALED_DAMAGE_DECK,
   activeUid,
   attachFromDeck,
   deckOf,
@@ -11,6 +12,7 @@ import {
   expectErr,
   must,
   mustApply,
+  setActiveFromDeck,
   setConditions,
   setDamage,
   setPrizes,
@@ -726,10 +728,20 @@ describe("derived attack effects in play (effects.ts)", () => {
   });
 
   it("still flags underivable text loudly — ATTACK_EFFECT_SKIPPED as before", () => {
-    // fix-attacker's Rage: a "10+" marker plus an unrecognized sentence.
-    const { events } = mustApply(attackerBoard(HEADS), { type: "attack", seat: "p1", index: 3 });
+    // fix-attacker's Rage now DERIVES its self-counter scaling (0.34.0), so the
+    // "+"-modifier-skip witness moves to Charizard ex "Burning Darkness" — a
+    // DIFFERENT count source (the opponent's TAKEN Prizes) that no reader
+    // simulates, so its "+" stays flagged. A Stage 2 fielded by surgery, energied
+    // for its {R}{R} cost; fix-bigbody (200 HP) survives the base 180 so the KO
+    // tail stays out of the way.
+    let board = driveSetup(HEADS, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
+    board = must(applyAction(board, { type: "endTurn", seat: "p2" }));
+    board = setActiveFromDeck(board, "p1", "sv03-125");
+    board = attachFromDeck(board, "p1", "fix-fire-energy", 2);
+    board = setActiveFromDeck(board, "p2", "fix-bigbody");
+    const { events } = mustApply(board, { type: "attack", seat: "p1", index: 0 });
     expect(events.find((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      attack: "Rage",
+      attack: "Burning Darkness",
       damageModifier: "+",
     });
     expect(types(events)).not.toContain("STATUS_APPLIED");

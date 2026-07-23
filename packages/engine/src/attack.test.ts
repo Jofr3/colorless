@@ -158,7 +158,9 @@ describe("first-turn restriction (§4)", () => {
 describe("attack declaration validation", () => {
   it("rejects out-of-range, fractional and string indices (wire)", () => {
     const state = matchup("fix-wall");
-    for (const index of [4, -1, 1.5, "1"]) {
+    // fix-attacker prints 5 attacks (0-4: Bite, Flame, Yawn, Rage, Fury), so 5 is
+    // the first out-of-range index.
+    for (const index of [5, -1, 1.5, "1"]) {
       expectErr(state, { type: "attack", seat: "p1", index: index as never }, "BAD_ATTACK_INDEX");
     }
   });
@@ -248,13 +250,16 @@ describe("damage pipeline (§8.5)", () => {
     });
   });
 
-  it("applies the numeric part of a modifier damage and flags the rest", () => {
+  it("simulates a self-damage-counter scaling clause, no longer flagged", () => {
+    // fix-attacker's Rage — "This attack does 10 more damage for each damage
+    // counter on this Pokémon." — now DERIVES (0.34.0), so its "+" is simulated
+    // rather than flagged. At 0 damage counters it just deals its printed base 10,
+    // with no `scaled`; the deep scaling coverage lives in scaledDamage.test.ts.
     const { events } = mustApply(matchup("fix-wall"), { type: "attack", seat: "p1", index: 3 });
-    expect(events.find((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      attack: "Rage",
-      damageModifier: "+",
-    });
-    expect(events.find((e) => e.type === "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 10 });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    const dealt = events.find((e) => e.type === "DAMAGE_DEALT");
+    expect(dealt).toMatchObject({ base: 10, dealt: 10 });
+    expect(dealt?.type === "DAMAGE_DEALT" && dealt.scaled).toBeUndefined();
   });
 });
 

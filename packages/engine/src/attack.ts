@@ -18,7 +18,8 @@ import {
   weaknessOf,
 } from "./cards";
 import { effectiveAttackCost, passivesOf, providedEnergy } from "./continuous";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
+import type { AttackDamageBonus } from "./effects";
 import type { GameEvent } from "./events";
 import {
   finishAttack,
@@ -30,7 +31,7 @@ import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, turnGate } from "./turn";
-import type { GameState, PendingStage, Phase, Seat } from "./types";
+import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
 import { isImmobilized, otherSeat, withActive, withSide } from "./types";
 
 // The attack step (§8) and the two KO-resolution decisions it can park on
@@ -72,6 +73,19 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
   // Each typed need consumed exactly one unit; everything else (surplus typed
   // units, leftover wildcards, Colorless-provided units) pays the Colorless.
   return provided.length - typedNeeds >= colorless;
+}
+
+/** The HP an additive damage-scaling clause adds, tallying its resource off the
+    board as of attack declaration (§8.5 — counted when damage is calculated).
+    `attacker` is the attacking Active. A second reader (opponent's taken Prizes,
+    Charizard ex "Burning Darkness") will widen this to take the state + seats. */
+function scaledAttackDamage(attacker: InPlayPokemon, bonus: AttackDamageBonus): number {
+  switch (bonus.count.kind) {
+    case "damageCountersOnSelf":
+      // One damage counter = 10 HP (§12); floor for safety though all damage
+      // lands in tens.
+      return Math.floor(attacker.damage / 10) * bonus.per;
+  }
 }
 
 /** §8 — declare one attack with the Active Pokémon; resolving it ends the
@@ -186,33 +200,50 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const authored = programFor(attacker.id)?.attack ?? null;
   const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   const program = authored ?? derived;
-  if (modifier !== null || (effect !== null && effect !== "" && program === null)) {
+  // The additive damage-scaling clause ("… does N more damage for each …") reads
+  // the SAME effect text but folds into the base BEFORE the §8.5 pipeline, unlike
+  // a post-damage program. A card carries at most one of the two: the
+  // whole-sentence anchor means a scaling sentence never also derives an op.
+  const damageBonus =
+    effect === null || effect === "" ? null : deriveAttackDamageBonus(effect);
+  const scaled = damageBonus === null ? 0 : scaledAttackDamage(active, damageBonus);
+  // The "+"/"×" modifier is SIMULATED iff the scaling reader consumed it; the
+  // effect text is simulated iff a program ran it OR the scaling reader did. Only
+  // the genuinely-unsimulated remainder is flagged loudly (simulator.md coverage).
+  const effectSimulated = program !== null || damageBonus !== null;
+  const modifierSimulated = damageBonus !== null;
+  if (
+    (modifier !== null && !modifierSimulated) ||
+    (effect !== null && effect !== "" && !effectSimulated)
+  ) {
     events.push({
       type: "ATTACK_EFFECT_SKIPPED",
       seat: action.seat,
       attack: declared.name,
-      // Authored/derived text IS simulated — only an unsimulated one is skipped.
-      effect: program === null ? effect : null,
-      damageModifier: modifier,
+      // Authored/derived/scaled text IS simulated — only an unsimulated one is skipped.
+      effect: effectSimulated ? null : effect,
+      damageModifier: modifierSimulated ? null : modifier,
     });
   }
 
   let defended = defender;
-  if (base > 0) {
-    // §8.5 damage pipeline, in printed order: base + the attacker's continuous
-    // pre-W/R bonus (Vitality Band) → Weakness (modern ×2, the old-era +20
-    // prints add) → Resistance (−30) → the defender's continuous damage
-    // reduction (Bouffalant "Bouffer" / a defending Tool, §15.B), floored at
-    // 0. Weakness/Resistance apply to the Defending Pokémon only, and both
-    // continuous reads aggregate printed passives WITH attached Tools
-    // (continuous.ts). The bonus rides only an attack that already does
-    // damage — this base > 0 branch is that rule.
+  if (base + scaled > 0) {
+    // §8.5 damage pipeline, in printed order: base + the attack's own printed
+    // scaling clause (`scaled` — Paldean Tauros "Raging Horns", counted at
+    // declaration) + the attacker's continuous pre-W/R bonus (Vitality Band) →
+    // Weakness (modern ×2, the old-era +20 prints add) → Resistance (−30) → the
+    // defender's continuous damage reduction (Bouffalant "Bouffer" / a defending
+    // Tool, §15.B), floored at 0. Weakness/Resistance apply to the Defending
+    // Pokémon only, and both continuous reads aggregate printed passives WITH
+    // attached Tools (continuous.ts). `scaled` is the attack's own damage (added
+    // alongside the continuous bonus at the same pre-W/R step), so this branch
+    // fires whenever base OR the scaling clause does damage.
     const bonus = passivesOf(next, active).damageBonusBeforeWR;
     const weakness = weaknessOf(attacker, defenderCard);
     const resistance = resistanceOf(attacker, defenderCard);
     const afterWR = Math.max(
       0,
-      applyDamageModifier(applyDamageModifier(base + bonus, weakness), resistance),
+      applyDamageModifier(applyDamageModifier(base + scaled + bonus, weakness), resistance),
     );
     const reduction = passivesOf(next, defender).damageReductionAfterWR;
     const dealt = Math.max(0, afterWR - reduction);
@@ -223,6 +254,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       seat: defenderSeat,
       uid: defenderUid,
       base,
+      // Present only when the printed scaling clause actually added HP.
+      scaled: scaled > 0 ? scaled : undefined,
       // Present only when a continuous effect actually moved the total.
       bonus: bonus > 0 ? bonus : undefined,
       weakness,

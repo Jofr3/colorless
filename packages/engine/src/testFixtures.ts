@@ -157,6 +157,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: "10+",
         effect: "This attack does 10 more damage for each damage counter on this Pokémon.",
       },
+      // A base-0 self-counter scaler (index 4) — no real card prints "does N MORE
+      // damage" off a 0 base, so this is a deliberate PROBE: per 20 ≠ 10 pins that
+      // the fold multiplies by the CAPTURED per (not the literal 10 every real
+      // reader happens to print), and the absent base pins that attack.ts's widened
+      // `base + scaled > 0` guard fires on the scaling clause alone (0.34.0).
+      {
+        cost: ["Colorless"],
+        name: "Fury",
+        effect: "This attack does 20 more damage for each damage counter on this Pokémon.",
+      },
     ],
   }),
   /** The M3 cast: one derivable status sentence (effects.ts) per attack, on
@@ -645,8 +655,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 2,
     weaknesses: [{ type: "Water", value: "×2" }],
     attacks: [
-      // "20+" — an unsimulated damage modifier, so this attack stays on the loud
-      // ATTACK_EFFECT_SKIPPED path. Kept so the card's real attack list is its own.
+      // "20+" — the self-counter scaling clause is now SIMULATED (0.34.0,
+      // deriveAttackDamageBonus): Raging Horns folds 10 per damage counter on this
+      // Pokémon into its base before W/R, so it is off the ATTACK_EFFECT_SKIPPED path.
       {
         cost: ["Colorless", "Colorless"],
         name: "Raging Horns",
@@ -1668,6 +1679,26 @@ export const SELF_DAMAGE_DECK = deckOf({
   "fix-basic-1": 20, // Basics for setup + the bench bodies a KO promotes
   "fix-fire-energy": 20, // pays Blazing Shout's {R}{R}
   "fix-energy": 8, // Colorless for the {C}
+});
+
+/** 0.34.0: count-scaled attack damage (the additive "+" family). fix-attacker's
+    "Rage" (base 10) and Paldean Tauros's "Raging Horns" (base 20) both scale 10
+    per damage counter on the attacker; Charizard ex "Burning Darkness" (base 180)
+    is the anchor-guard witness whose Prize-scaling "+" STAYS skipped. fix-wall (120
+    HP) survives the scaling attackers' hits and fix-bigbody (200 HP) survives
+    Charizard's 180, so a scaling test is only ever about the damage math; fix-weak
+    (60 HP, ×2 Fire) is the scaling-times-weakness defender. fix-basic-1 seeds the
+    setup Actives (the two scaling attackers are Basics fielded by surgery; Charizard
+    is a Stage 2) and the promotion bodies, and fix-fire-energy pays every cost. */
+export const SCALED_DAMAGE_DECK = deckOf({
+  "fix-attacker": 4, // Rage (index 3, base 10) — the default scaling attacker
+  "sv02-028": 4, // Paldean Tauros — Raging Horns (index 0, base 20)
+  "sv03-125": 4, // Charizard ex — Burning Darkness (a DIFFERENT count source, stays skipped)
+  "fix-wall": 4, // 120 HP — survives the scaling attackers' hits here
+  "fix-weak": 4, // 60 HP, ×2 Fire — the scaling × weakness defender
+  "fix-bigbody": 4, // 200 HP — survives Charizard's 180
+  "fix-basic-1": 16, // Basics for setup + the bench bodies a KO promotes
+  "fix-fire-energy": 20, // pays every cost here ({C}/{R}/{F})
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

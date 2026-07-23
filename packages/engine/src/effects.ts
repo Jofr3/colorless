@@ -1117,6 +1117,22 @@ const REVEAL_BOTTOM_SUPPORTER =
 // skipped path. No /i, for the family's stated reason: capitalisation + the
 // anchors are what keep a mid-sentence clause off the derived path.
 const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
+// The additive damage-scaling clause (Paldean Tauros sv02-028 "Raging Horns",
+// fix-attacker "Rage") — "This attack does N more damage for each damage counter
+// on this Pokémon.", anchored end to end like every rule here. It is NOT a
+// deriveAttackEffect op: this folds N × (the attacker's own damage counters) into
+// the printed base BEFORE the §8.5 W/R pipeline (attack.ts), where the deriver's
+// ops all run AFTER damage — so it lives in its own reader (deriveAttackDamageBonus
+// below), not the op switch. The anchored whole-sentence match and the capital
+// `This` are the WHOLE guard: the sibling scaling sentence it MUST REFUSE is
+// Charizard ex sv03-125 "Burning Darkness" ("This attack does 30 more damage for
+// each Prize card your opponent has taken.") — a DIFFERENT count source that
+// differs only in the tail. A future "×"/multiply phrasing ("does N damage times
+// the number of …", Chien-Pao's Hail Blade — no in-tree reader yet) is a DIFFERENT
+// shape, not a `count` member. No /i, for the family's stated reason: the anchors
+// and the capital first word are what keep a mid-sentence clause off this path.
+const SELF_COUNTER_SCALE =
+  /^This attack does (\d+) more damage for each damage counter on this Pokémon\.$/;
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
 // the swsh-era prints carry ("Discard a Fire Energy" — Charmeleon, Charizard).
@@ -1332,6 +1348,45 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (amount >= 1) return [{ op: "damageSelf", amount }];
   }
 
+  return null;
+}
+
+/** An ADDITIVE damage-scaling clause — the printed "This attack does N more
+    damage for each …" that folds `per × (a counted resource)` into the attack's
+    printed base BEFORE the §8.5 Weakness/Resistance pipeline (Paldean Tauros
+    "Raging Horns" — 10 per damage counter on the attacker). Deliberately NOT an
+    `EffectOp`: it is PRE-damage math the caller computes (attack.ts), NOT a step
+    the interpreter runs — every `deriveAttackEffect` op instead reads a sentence
+    that runs AFTER damage, so the two derivers are disjoint and a card carries at
+    most one of the two (the whole-sentence anchor means a scaling sentence never
+    also derives an op). `count` is a union so a second REAL reader — Charizard ex
+    "Burning Darkness" (the opponent's TAKEN Prizes) — lands as a member here, not
+    a second interface. */
+export interface AttackDamageBonus {
+  per: number;
+  count: DamageCountSource;
+}
+/** The resource an `AttackDamageBonus` counts. One member today (the attacker's
+    OWN damage counters); the opponent's taken Prizes (Charizard ex "Burning
+    Darkness") is the next, and stays on the loud skipped path until it lands. */
+export type DamageCountSource = { kind: "damageCountersOnSelf" };
+
+/** Parse a printed additive damage-scaling sentence into its `per` amount and
+    count source, or null when the text is anything but the one anchored sentence
+    this reads — Charizard ex's Prize-card twin, a lowercased "this", a missing
+    trailing period, and any leading/trailing text all stay on the loud
+    ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect`: this reads the
+    SAME effect text but folds into the base pre-W/R rather than running after
+    damage (attack.ts owns the fold). */
+export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null {
+  const effect = text.trim();
+  const match = SELF_COUNTER_SCALE.exec(effect);
+  if (match !== null) {
+    const per = Number(match[1]);
+    // A printed 0 adds nothing — leave it on the loud ATTACK_EFFECT_SKIPPED path
+    // (the guard the self-damage / exact-N discard rules carry).
+    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+  }
   return null;
 }
 
