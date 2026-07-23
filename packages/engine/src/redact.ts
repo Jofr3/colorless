@@ -18,11 +18,13 @@
 // HIDDEN cards carry a POSITIONAL id and the `hidden` sentinel (never the uid —
 // leaking it would let a client track a hidden card across zones); empty in-play
 // slots the `empty` sentinel. Prizes/decks are counts; the mid-effect decision's
-// prompt is dropped (increment 2 designs the redacted prompt).
+// prompt crosses ONLY to the seat that must answer it (redactedPromptOf), and
+// only for a prompt kind whose online dialog exists (2b-iii-a: mayDraw alone).
 
 import type {
   RedactedAttack,
   RedactedCard,
+  RedactedEffectPrompt,
   RedactedGame,
   RedactedInPlay,
   RedactedOutcome,
@@ -35,8 +37,9 @@ import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from
 import { costMet } from "./attack";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import { effectiveAttackCost, effectiveMaxHp, effectiveRetreatCost, providedEnergy } from "./continuous";
+import type { EffectPrompt } from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
-import type { GameOutcome, GameState, InPlayPokemon, Seat, SpecialConditions } from "./types";
+import type { GameOutcome, GameState, InPlayPokemon, Phase, Seat, SpecialConditions } from "./types";
 import { isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
@@ -68,7 +71,8 @@ export function redactGame(state: GameState, viewerSeat: Seat): RedactedGame {
     the kind plus only non-sensitive fields (setup:drawExtra the viewer's OWN
     owed compensation count, setup:place the viewer-relative ready flags,
     turn:action the viewer's OWN attack options, the ko interrupts their counts);
-    the effect:choose prompt is dropped. */
+    the effect:choose prompt goes ONLY to the seat that must answer it
+    (`redactedPromptOf`), null for every other viewer. */
 function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
   const phase = state.phase;
   switch (phase.kind) {
@@ -95,9 +99,63 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
     case "ko:promote":
       return { kind: "ko:promote" };
     case "effect:choose":
-      return { kind: "effect:choose" };
+      return { kind: "effect:choose", prompt: redactedPromptOf(phase, viewerSeat) };
     case "gameOver":
       return { kind: "gameOver" };
+  }
+}
+
+/** The redacted mid-effect prompt for `viewerSeat` — non-null ONLY for the seat
+    that must ANSWER it: `phase.answerer ?? phase.seat` (the non-controller for
+    opponentMayDraw — Ortega — else the controller). Every other viewer gets
+    null. This gate is the hidden-information barrier: a prompt's candidates can
+    be the controller's own deck cards (a search) or a "look at the top N", so
+    the raw prompt must never reach the other side of the wire.
+
+    This is STRICTER than `phaseViewOf`'s local `withheld` (phaseView.ts), and
+    deliberately: that hot-seat projection only withholds an EXPLICIT-answerer
+    park (`answerer !== undefined && !== viewer`), leaving a controller-answered
+    prompt's `pendingDecision` present for BOTH viewers — harmless there because
+    one device shows one viewer and the HUD gates on `waitingOn === "you"`. The
+    wire has no such gate: it physically delivers the payload to a client, so a
+    controller-answered prompt must go to the CONTROLLER ALONE. The two coincide
+    exactly when `answerer` is set — which is ALWAYS for `mayDraw` (the only kind
+    wired so far), so the `projectionFromRedacted` round-trip still equals the
+    local projection for a mayDraw park. When a later slice wires a
+    controller-answered kind, that round-trip will hold for the answerer's view
+    only, not the opponent's — extend the pin accordingly, don't loosen this gate.
+
+    Even for the answerer, only a prompt kind whose online dialog exists is
+    redacted here (2b-iii-a: `mayDraw` alone); the rest return null until their
+    slice lands. */
+function redactedPromptOf(
+  phase: Extract<Phase, { kind: "effect:choose" }>,
+  viewerSeat: Seat,
+): RedactedEffectPrompt | null {
+  const answerer = phase.answerer ?? phase.seat;
+  if (answerer !== viewerSeat) return null;
+  return redactPrompt(phase.prompt);
+}
+
+/** Map the engine's full `EffectPrompt` to the neutral wire shape — the answerer
+    has already been established, so this only decides what identity crosses.
+    2b-iii-a lands `mayDraw` (count + note, no card references); every other kind
+    returns null (no online dialog yet — the public-ref choosePokemon/moveEnergy/
+    discardEnergy family and the hidden-candidate chooseCards/attachCards family
+    that needs server-side `RedactedCard` resolution follow in later 2b-iii
+    slices). The switch stays EXHAUSTIVE so a new engine prompt kind is a compile
+    error here, not a silent null. */
+function redactPrompt(prompt: EffectPrompt): RedactedEffectPrompt | null {
+  switch (prompt.kind) {
+    case "mayDraw":
+      return { kind: "mayDraw", count: prompt.count, note: prompt.note };
+    case "chooseCards":
+    case "choosePokemon":
+    case "choosePokemonMulti":
+    case "moveEnergy":
+    case "discardEnergy":
+    case "attachCards":
+      return null;
   }
 }
 

@@ -117,12 +117,17 @@ export interface MatchRecord {
     SEQUENCING CONSTRAINT (allowing `attack` is only soft-lock-safe because the
     decks are pure-damage): an `attack` here is accepted and let park wherever
     the engine takes it — with an EFFECT attack that is effect:choose, which the
-    online HUD can't yet drive. So REAL deck selection (increment 3) must NOT
-    ship before increment 2b-iii adds the effect:choose dialog + puts
-    `resolveEffect` on this set. The guarantee is plan ordering, not a structural
-    check — flagged so the coupling isn't lost. (`retreat` carries no such
-    caveat — it only ever discards energy and promotes a Bench Pokémon, never
-    parking at a decision, so it is soft-lock-safe with ANY deck.) */
+    online HUD can't yet fully drive. So REAL deck selection (increment 3) must
+    NOT ship before ALL of increment 2b-iii lands the effect:choose dialogs and
+    puts `resolveEffect` on this set. 2b-iii is SPLIT: 2b-iii-a landed the
+    prompt-redaction wire + the `mayDraw` dialog ALONE, so `resolveEffect` stays
+    OFF here — the invariant is "`resolveEffect` on this set ⟺ EVERY effect
+    prompt kind has an online dialog", and only `mayDraw` does so far. Adding it
+    for a subset would let a real-deck game reach an un-dialoged park (a
+    chooseCards search) and soft-lock. The guarantee is plan ordering, not a
+    structural check — flagged so the coupling isn't lost. (`retreat` carries no
+    such caveat — it only ever discards energy and promotes a Bench Pokémon,
+    never parking at a decision, so it is soft-lock-safe with ANY deck.) */
 export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
   "chooseFirstPlayer",
   "setupDrawExtra",

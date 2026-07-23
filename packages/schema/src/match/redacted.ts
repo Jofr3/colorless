@@ -164,16 +164,53 @@ export const redactedRetreatSchema = z.object({
 });
 export type RedactedRetreat = z.infer<typeof redactedRetreatSchema>;
 
+/** The redacted mid-effect prompt (§15.E/G) the answering client renders a
+    dialog for — the engine's full `EffectPrompt` mapped to the neutral wire
+    shape, exactly as `RedactedGame` does for the board (P4 increment 2b-iii).
+    It rides `effect:choose` (below) NULLABLE and is populated ONLY for the seat
+    that must answer it (`phase.answerer ?? phase.seat`) — every other viewer
+    gets null. That answerer gate is the whole point: a prompt's candidates are
+    built from the CONTROLLER's private zones (a deck search's uids, a "look at
+    the top N"), so the raw prompt must never reach the other side of the wire.
+    `redactedPromptOf` (redact.ts) is STRICTER than `phaseViewOf`'s hot-seat
+    `withheld` — the wire delivers a payload to one client, so a controller-
+    answered prompt goes to the CONTROLLER ALONE, where the local projection may
+    keep it in both viewers' (never-rendered) `pendingDecision`. The two coincide
+    exactly when `answerer` is set, which is ALWAYS for `mayDraw`, so a mayDraw
+    park still round-trips to the local projection (see redact.ts for the full
+    reasoning).
+
+    A DISCRIMINATED UNION on `kind`, mirroring `EffectPrompt`'s arms — but only
+    the arm(s) whose online dialog exists so far. **2b-iii-a lands `mayDraw`
+    alone** (Ortega's "your opponent may draw a card"): a pure yes/no with a
+    `count` + a `note` that speaks to the answerer, and NO card/Pokémon
+    references, so it needs no board-relative identity resolution — the ideal
+    first arm because it is also the ONE prompt whose answerer is the
+    non-controller, which is what makes the answerer gate load-bearing. The
+    remaining arms (the public-ref choosePokemon/moveEnergy/discardEnergy family,
+    then the hidden-candidate chooseCards/attachCards family that needs
+    server-side `RedactedCard` resolution) land in later 2b-iii slices, and
+    `resolveEffect` stays off the DO allowlist until every arm is dialoged. */
+export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
+  /** A yes/no owed by the ANSWERER (the non-controller): draw `count`, or
+      decline. `note` addresses that answerer ("You may draw a card."). No card
+      identity crosses — the whole decision is the `count`. */
+  z.object({ kind: z.literal("mayDraw"), count: z.number(), note: z.string() }),
+]);
+export type RedactedEffectPrompt = z.infer<typeof redactedEffectPromptSchema>;
+
 /** The redacted engine `Phase` — the discriminant the client routes ACTIONS
     on (P4 increment 2). Carries the kind plus only the non-sensitive fields the
     acting client needs: setup:drawExtra the RECIPIENT's own owed compensation
     count, setup:place the viewer-relative ready flags, turn:action the viewer's
     OWN attack options (empty for the non-acting viewer) and retreat option (null
     for it), the ko interrupts their counts. The mid-effect `effect:choose`
-    carries NO prompt (a later 2b slice
-    designs the redacted prompt — a raw prompt is built from the controller's
-    private zones). `activePlayer`/`waitingOn` (server-computed via phaseViewOf,
-    which reads the pending queue) still say WHO acts; this says WHAT kind. */
+    carries the redacted `prompt` (above) NULLABLE — non-null only for the seat
+    that must answer it, so the controller's private candidates never reach the
+    other viewer; null both for the non-answerer AND for a prompt kind whose
+    online dialog has not landed yet (only `mayDraw` so far).
+    `activePlayer`/`waitingOn` (server-computed via phaseViewOf, which reads the
+    pending queue) still say WHO acts; this says WHAT kind. */
 export const redactedPhaseSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("setup:chooseFirst") }),
   z.object({ kind: z.literal("setup:drawExtra"), owed: z.number() }),
@@ -188,7 +225,7 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),
-  z.object({ kind: z.literal("effect:choose") }),
+  z.object({ kind: z.literal("effect:choose"), prompt: redactedEffectPromptSchema.nullable() }),
   z.object({ kind: z.literal("gameOver") }),
 ]);
 export type RedactedPhase = z.infer<typeof redactedPhaseSchema>;

@@ -406,19 +406,43 @@ function cardModelFromRedacted(card: RedactedInPlay): CardModel {
   return model;
 }
 
-/** The parked KO/effect interrupt, derived from the redacted phase. The
-    mid-effect prompt never crosses the wire (server strips it), so
-    `effect:choose` maps to null — the online board renders no interactive
-    effect decision yet (increment 2b designs the redacted prompt). The ko
-    parks carry only counts and map through faithfully; every non-parked phase
-    is null. */
+/** The parked KO/effect interrupt, derived from the redacted phase. The ko
+    parks carry only counts and map through faithfully. The mid-effect prompt
+    now crosses the wire redacted and answerer-only (2b-iii): reconstructed here
+    into the SAME `PendingDecision.effectChoose` the local `phaseViewOf`
+    produces, so a wire round-trip reproduces it exactly — but only for a prompt
+    kind whose online dialog has landed (2b-iii-a: `mayDraw`); a withheld or
+    not-yet-redacted prompt is null on the wire and maps to null here, exactly as
+    `phaseViewOf` withholds it from the non-answerer. Every non-parked phase is
+    null. */
 function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null {
   switch (phase.kind) {
     case "ko:takePrizes":
       return { kind: "takePrizes", count: phase.count };
     case "ko:promote":
       return { kind: "promote" };
+    // The prompt is null on the wire when withheld from this viewer (the
+    // non-answerer) or not-yet-redacted; a present one rebuilds the engine's
+    // EffectPrompt so the round-trip reproduces phaseViewOf's decision exactly.
+    case "effect:choose":
+      return phase.prompt === null ? null : effectDecisionFromPrompt(phase.prompt);
     default:
       return null;
+  }
+}
+
+/** Rebuild the engine `PendingDecision.effectChoose` from a redacted wire
+    prompt (2b-iii). Exhaustive on the redacted union (only `mayDraw` so far), so
+    a new wire arm added in a later 2b-iii slice is a "not all paths return"
+    compile error here rather than a silently dropped decision. */
+function effectDecisionFromPrompt(
+  prompt: NonNullable<Extract<RedactedGame["phase"], { kind: "effect:choose" }>["prompt"]>,
+): PendingDecision {
+  switch (prompt.kind) {
+    case "mayDraw":
+      return {
+        kind: "effectChoose",
+        prompt: { kind: "mayDraw", count: prompt.count, note: prompt.note },
+      };
   }
 }

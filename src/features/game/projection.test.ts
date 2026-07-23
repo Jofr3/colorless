@@ -838,10 +838,14 @@ describe("projectGameState — the persistent zones (M4 slice 3)", () => {
 // The whole point of the P4 split: the server-side engine redactor (redactGame)
 // + this client adapter (projectionFromRedacted) must reconstruct EXACTLY the
 // board the local projectGameState produces. This equivalence is the guard
-// against the two redactors drifting — for any state NOT parked on an
-// effect:choose (whose prompt the wire deliberately strips), the round-trip is
-// byte-for-byte the local projection: same card models, image URLs, battle
-// rows, hidden backs, piles and phase-derived fields.
+// against the two redactors drifting: the round-trip is byte-for-byte the local
+// projection — same card models, image URLs, battle rows, hidden backs, piles
+// and phase-derived fields — INCLUDING a `mayDraw` effect:choose park now that
+// its redacted prompt crosses the wire answerer-only (2b-iii-a). The prompt
+// kinds without an online dialog yet (chooseCards/attachCards/…) are still
+// stripped to null, so a round-trip over one of THOSE parks would differ (the
+// local projection keeps the full prompt) — this block stays scoped to states
+// whose prompt round-trips.
 describe("projectionFromRedacted — the wire round-trip equals the local projection", () => {
   it("reconstructs a turn:action board identically, for both viewers", () => {
     const state = turnOneState();
@@ -857,6 +861,41 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
     for (const seat of ["p1", "p2"] as const) {
       expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
         projectGameState(state, seat),
+      );
+    }
+  });
+
+  it("reconstructs a mayDraw effect:choose park identically, for both viewers", () => {
+    // Drive Ortega to its "your opponent may draw a card" park — the one effect
+    // prompt now on the wire (2b-iii-a). The answerer is p2 (the non-controller),
+    // so the round-trip must reproduce both phaseViewOf's decision for p2 AND its
+    // withheld null for p1, plus the whole board.
+    let state = driveSetup(
+      20260722,
+      { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → p1's turn 2
+    state = handFromDeck(state, "p1", "sv03-190", 1); // Ortega
+    const parked = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", "sv03-190"),
+    }).state;
+    if (parked.phase.kind !== "effect:choose" || parked.phase.prompt.kind !== "chooseCards") {
+      throw new Error("expected the chooseCards pick park");
+    }
+    const asked = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [parked.phase.prompt.candidates[0] as string] },
+    }).state;
+    if (asked.phase.kind !== "effect:choose" || asked.phase.prompt.kind !== "mayDraw") {
+      throw new Error("expected the mayDraw park");
+    }
+    for (const seat of ["p1", "p2"] as const) {
+      expect(projectionFromRedacted(redactGame(asked, seat))).toEqual(
+        projectGameState(asked, seat),
       );
     }
   });

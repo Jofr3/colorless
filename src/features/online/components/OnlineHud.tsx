@@ -2,6 +2,7 @@ import type { GameAction } from "@luminous/engine";
 import { otherSeat } from "@luminous/engine";
 import type {
   RedactedAttack,
+  RedactedEffectPrompt,
   RedactedGame,
   RedactedInPlay,
   RedactedRetreat,
@@ -25,10 +26,14 @@ import type { PlayerId } from "../../playmat/types";
 // computed server-side) plus the ko:takePrizes / ko:promote decisions (2b-i),
 // and — from increment 2b-ii — the retreat button + dialog (cost + a `can` gate
 // computed server-side; the energies to discard and the Bench to promote to ride
-// the already-public board). Abilities, non-Stadium trainers and the
-// effect:choose dialogs read state the wire still withholds (and the fixed decks
-// can't exercise them) — they land with real decks / a later 2b slice; the pass
-// control lives in PlaymatView's TurnControls.
+// the already-public board), plus — from 2b-iii-a — the effect:choose `mayDraw`
+// dialog (Ortega's "your opponent may draw a card"), the one mid-effect prompt
+// with no card references. The other effect prompts (the public-ref
+// choosePokemon/moveEnergy/discardEnergy family, then the hidden-candidate
+// chooseCards/attachCards family) and abilities / non-Stadium trainers read
+// state the wire still withholds (and the fixed decks can't exercise them) —
+// they land with later 2b-iii slices / real decks; the pass control lives in
+// PlaymatView's TurnControls.
 //
 // Every panel is gated on `waitingOn === "you"` (the D17 rule the local HUD uses)
 // so a prompt never appears on the wrong screen, and the actions carry the
@@ -133,11 +138,64 @@ export function OnlineHud({
         <PromoteDialog bench={game.board.you.bench} seat={seat} onAction={onAction} />
       ) : null;
 
+    case "effect:choose": {
+      // The redacted prompt is non-null ONLY for the seat that must answer it
+      // (the server withholds it from everyone else), and `acting` is that same
+      // seat — so the two agree. 2b-iii-a renders only `mayDraw`; other prompt
+      // kinds have no online dialog yet (their arms aren't on the wire), so the
+      // prompt is null and nothing shows.
+      const prompt = game.phase.prompt;
+      return acting && prompt?.kind === "mayDraw" ? (
+        <MayDrawDialog prompt={prompt} seat={seat} onAction={onAction} />
+      ) : null;
+    }
+
     default:
-      // effect:choose (a later 2b slice) and gameOver (OnlineMatch's overlay)
-      // render no panel here.
+      // gameOver renders no panel here (OnlineMatch's overlay handles it).
       return null;
   }
+}
+
+/** The mid-effect "your opponent may draw a card" (§15 — Ortega), answered by
+    the seat that did NOT play the card. Mirrors the local HUD's MayDrawDialog
+    over the wire shape: the whole decision is the redacted prompt's `note` +
+    `count`, so each button IS the answer (no local state, no Confirm) and
+    dispatches `resolveEffect` on the tap. MANDATORY — a native <dialog> with no
+    `onDismiss`, so Escape is swallowed (the program is parked on this answer).
+    Unlike the local dialog it needs no seat name: online has no hot-seat
+    ambiguity, this client IS the answerer. Draw sits FIRST in DOM order (where
+    showModal lands focus) so an unprepared Enter doesn't silently forfeit the
+    card; `flex-row-reverse` keeps Decline reading on the left, the siblings'
+    layout. */
+function MayDrawDialog({
+  prompt,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "mayDraw" }>;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const answer = (draw: boolean) =>
+    onAction({ type: "resolveEffect", seat, choice: { kind: "mayDraw", draw } });
+  return (
+    <Dialog label="You may draw">
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/45">
+        Your opponent's card is asking
+      </p>
+      <h2 className="mt-1 text-lg font-semibold text-white">{prompt.note}</h2>
+      <div className="mt-5 flex justify-end gap-2">
+        <div className="flex flex-row-reverse gap-2">
+          <button type="button" className={ACCENT_BUTTON} onClick={() => answer(true)}>
+            {prompt.count === 1 ? "Draw a card" : `Draw ${prompt.count} cards`}
+          </button>
+          <button type="button" className={NEUTRAL_BUTTON} onClick={() => answer(false)}>
+            Decline
+          </button>
+        </div>
+      </div>
+    </Dialog>
+  );
 }
 
 /** The turn:action panel: the viewer's Active, a button per printed attack

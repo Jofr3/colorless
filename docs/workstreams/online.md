@@ -129,6 +129,35 @@ leak), the handler is soft-lock-safe (phase-unchanged) and totally validating, t
 the bench indices align 1:1 with the index-stable redaction, and the round-trip pin holds; the reviewer
 independently ran the 91 affected tests green.
 
+**Increment 2b-iii-a — DONE:** the effect:choose prompt SEAM + the `mayDraw` dialog (D64, engine
+0.40.0). The mid-effect decision PROMPT now crosses the wire redacted per-viewer. **2b-iii is SPLIT**
+(7 `EffectPrompt` kinds, several needing hidden-card resolution — see the sub-slices below); 2b-iii-a
+lands the seam with the ONE prompt with no card references AND the only one whose answerer is the
+non-controller: **`mayDraw`** (Ortega). New `@luminous/schema` **`RedactedEffectPrompt`** (discriminated
+union, `mayDraw` arm = `count`/`note`); `RedactedPhase.effect:choose` gained **`prompt` NULLABLE**. The
+engine's `redactPhase` fills it via **`redactedPromptOf(phase, viewerSeat)`** — non-null ONLY for the
+answering seat (`phase.answerer ?? phase.seat`), **STRICTER than `phaseViewOf`'s hot-seat `withheld`**
+(the wire delivers a payload to one client, so a controller-answered prompt goes to the controller
+alone; the two coincide when `answerer` is set, ALWAYS for mayDraw); `redactPrompt` maps mayDraw and
+returns null for the 6 controller-answered kinds via an EXHAUSTIVE switch. `decisionFromPhase`
+reconstructs the mayDraw decision (`effectDecisionFromPrompt`), so **`projectionFromRedacted ≡
+projectGameState` now holds for a mayDraw park** (both viewers) — the round-trip pin no longer excludes
+`effect:choose` wholesale. `OnlineHud` gained an `effect:choose` case + a **`MayDrawDialog`** (each
+button IS the answer → `resolveEffect{mayDraw, draw}`; mandatory, no dismiss). **`resolveEffect` STAYS
+OFF `SUPPORTED_MATCH_ACTIONS`** — the invariant is "`resolveEffect` on the set ⟺ EVERY prompt kind is
+dialoged", and only mayDraw is; the fixed pure-basic decks can't reach `effect:choose`, so the dialog is
+built + tested ahead of its allowlist flip. 1747 → **1754** tests, `bun run check` green.
+**Review (1 read-only adversarial reviewer): NO HIGH, NO MED** — the answerer gate is airtight under a
+complete case analysis (defined answerer ⟺ mayDraw ⟹ never gated out; undefined answerer ⟹ a controller
+kind ⟹ null to everyone), so ONLY `{mayDraw,count,note}` or `null` ever crosses the `effect:choose`
+wire — private candidates never cross; the round-trip is genuinely reproduced; the exhaustiveness guards
+are real. TWO LOWs — **1 FIXED** (the schema/redactor docs claimed `redactedPromptOf` "mirrors
+`phaseViewOf` exactly" — false for controller-answered parks, corrected), **1 RECORDED** (deliberate):
+the `MayDrawDialog` dispatches `resolveEffect`, which the DO rejects, and the dialog is mandatory — IF a
+mayDraw park were reachable online the answerer would strand; unreachable with the fixed decks (no
+Ortega), and the fix is the allowlist flip in 2b-iii-c, not making an owed decision dismissable —
+putting `resolveEffect` on now would be a WORSE strand at an un-dialoged park. See D64.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -204,13 +233,33 @@ until 1c broadcasts the redacted view.
     ability/trainer options + their greyed/reason on the wire without leaking (prize counts / the
     Stadium owner / the hand), and grow the allowlist by `useAbility`/`playTrainer` (Stadium already
     drives via the 2a drag).
-  - **2b-iii — the effect:choose DIALOG + prompt (NEXT).** Needs the redacted **effect PROMPT** 2a stripped
-    (`RedactedPhase.effect:choose` carries no prompt; `redactPhase` in redact.ts + `decisionFromPhase`
-    in projection.ts are the seams; a prompt built from the CONTROLLER's private zones must stay
-    controller-only). Blocks non-basic decks with effect attacks — until then `resolveEffect` stays
-    off the allowlist. Also: per-RECIPIENT EVENT redaction (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal
-    hidden uids — `events.ts:8`) + an event→log stream for the online board (`logFromEvents` is
-    per-viewer already), and a rejection pill (the DO drops a rejected action silently today).
+  - **2b-iii — the effect:choose DIALOG + prompt. SPLIT** (7 `EffectPrompt` kinds; the ref-family needs
+    board-relative resolution, the deck-search family needs server-side `RedactedCard` resolution of the
+    controller's private cards — too big for one increment). Sub-slices:
+    - **2b-iii-a — the prompt SEAM + the `mayDraw` dialog. DONE** (D64, see Status above): the redacted
+      **`RedactedEffectPrompt`** (schema, `mayDraw` arm only) rides `RedactedPhase.effect:choose.prompt`
+      NULLABLE; `redactedPromptOf` (redact.ts) sends it ONLY to the answering seat (`phase.answerer ??
+      phase.seat`), STRICTER than `phaseViewOf`'s hot-seat `withheld`; `decisionFromPhase` reconstructs
+      the mayDraw decision so the round-trip now EQUALS the local projection for a mayDraw park;
+      `OnlineHud` gained a `MayDrawDialog`. `resolveEffect` STAYS OFF the allowlist (only mayDraw is
+      dialoged). mayDraw first because it has no card refs AND its answerer is the non-controller
+      (Ortega), so it lands the whole seam + makes the answerer/leak gate load-bearing.
+    - **2b-iii-b — the public-ref prompts (NEXT):** choosePokemon / choosePokemonMulti / moveEnergy /
+      discardEnergy. Their candidates (in-play PokémonRefs, attached-Energy uids) are ALL on the public
+      redacted board, so the wire carries the refs and the client resolves display identity against the
+      board it already has — no hidden-card resolution. Add their `RedactedEffectPrompt` arms +
+      `OnlineHud` dialogs; these are controller-answered, so the round-trip pin holds for the answerer's
+      view only (redact.ts's gate is stricter than the hot-seat projection — see the note there).
+    - **2b-iii-c — the hidden-candidate prompts:** chooseCards (deck search / discard retrieval / hand
+      cost) + attachCards (deck/top). Their candidates are the CONTROLLER's own deck/top cards — hidden
+      info — so the redacted prompt must carry a server-resolved `RedactedCard` per candidate and go
+      controller-only (the answerer gate already withholds; add the identity payload). Once ALL prompt
+      kinds are dialoged, put **`resolveEffect` on `SUPPORTED_MATCH_ACTIONS`** (the allowlist invariant)
+      — this is the point the SEQUENCING CONSTRAINT in match.ts guards, before real decks (increment 3).
+    - **2b-iii-d — the online event log + rejection pill:** per-RECIPIENT EVENT redaction
+      (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal hidden uids — `events.ts:8`) + an event→log stream for
+      the online board (`logFromEvents` is per-viewer already; `OnlineMatch` feeds `NO_LOG` today), and a
+      rejection pill (the DO drops a rejected action silently today).
 - **3:** real deck selection (resolve `deckId`→60 ids server-side), reconnect/timeouts,
   concede/rematch, spectate, and surfacing a match-start FAILURE to players (the load-failure
   wedge below).

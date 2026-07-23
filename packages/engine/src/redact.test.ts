@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { EMPTY_CARD_ID, HIDDEN_CARD_ID, HIDDEN_CARD_NAME, type RedactedGame } from "@luminous/schema";
+import type { EffectContinuation } from "./interpreter";
 import { redactGame } from "./redact";
 import {
   MIXED_DECK,
@@ -439,6 +440,78 @@ describe("redactGame — turn:action retreat option (the online HUD's retreat ga
     const base = withEnergy(turnOneState(), 1);
     const retreated: GameState = { ...base, allowances: { ...base.allowances, retreated: true } };
     expect(retreatOf(retreated)).toEqual({ cost: 1, can: false });
+  });
+});
+
+// The online effect:choose dialog (increment 2b-iii-a) reads the redacted prompt
+// off the phase, which the redactor sends ONLY to the seat that must answer it —
+// a prompt's candidates can be the controller's private deck cards, so the raw
+// prompt must never reach the other viewer. These pin that answerer gate the way
+// phaseViewOf withholds the local projection's decision.
+describe("redactGame — the effect:choose prompt (answerer-only)", () => {
+  // The redactor never reads `cont`, so a minimal (unrelated) continuation
+  // stands in — this synthesizes the phase over a real board, like the gameOver
+  // test above, rather than driving Ortega through the whole engine.
+  const CONT: EffectContinuation = {
+    pendingOp: { op: "opponentMayDraw", count: 1 },
+    rest: [],
+    ctx: { seat: "p1" },
+  };
+
+  /** p1 (controller) played the card; p2 must ANSWER the "may draw" (Ortega). */
+  function mayDrawState(): GameState {
+    const base = turnOneState();
+    return {
+      ...base,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        answerer: "p2",
+        prompt: { kind: "mayDraw", count: 1, note: "You may draw a card." },
+        cont: CONT,
+      },
+    };
+  }
+
+  it("sends the mayDraw prompt to the answerer (the non-controller)", () => {
+    const phase = redactGame(mayDrawState(), "p2").phase;
+    if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(phase.prompt).toEqual({ kind: "mayDraw", count: 1, note: "You may draw a card." });
+  });
+
+  it("withholds the prompt from the controller, who does not answer it", () => {
+    const phase = redactGame(mayDrawState(), "p1").phase;
+    if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(phase.prompt).toBeNull();
+  });
+
+  it("returns null for a prompt kind with no online dialog yet — even to its answerer", () => {
+    // A controller-answered deck search: the answerer IS p1, but the chooseCards
+    // arm isn't on the wire yet, so the redactor drops it rather than leak the
+    // (deck-uid) candidates. Those uids must appear NOWHERE in p1's snapshot.
+    const base = turnOneState();
+    const deckUids = base.players.p1.deck.slice(0, 2);
+    const state: GameState = {
+      ...base,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        prompt: {
+          kind: "chooseCards",
+          candidates: deckUids,
+          min: 0,
+          max: 1,
+          dest: "hand",
+          note: "Search your deck.",
+        },
+        cont: CONT,
+      },
+    };
+    const game = redactGame(state, "p1");
+    if (game.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(game.phase.prompt).toBeNull();
+    const ids = new Set(allIds(game));
+    for (const uid of deckUids) expect(ids.has(uid)).toBe(false);
   });
 });
 

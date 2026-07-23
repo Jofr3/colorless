@@ -234,3 +234,68 @@ describe("OnlineHud — ko:promote", () => {
     expect(onAction).toHaveBeenCalledWith({ type: "promote", seat: "p1", benchIndex: 1 });
   });
 });
+
+describe("OnlineHud — effect:choose mayDraw (2b-iii-a)", () => {
+  it("dispatches resolveEffect{draw:true} on Draw and {draw:false} on Decline", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: { kind: "mayDraw", count: 1, note: "You may draw a card." },
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // The prompt's note is the heading; the two printed answers are the buttons.
+    expect(screen.getByText("You may draw a card.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Draw a card" }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "mayDraw", draw: true },
+    });
+    onAction.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Decline" }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "mayDraw", draw: false },
+    });
+  });
+
+  it("labels the Draw button with the count when more than one", () => {
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: { kind: "mayDraw", count: 2, note: "You may draw 2 cards." },
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Draw 2 cards" })).toBeTruthy();
+  });
+
+  it("renders nothing for the viewer the prompt is withheld from (null on the wire)", () => {
+    // The server sends the non-answering viewer effect:choose with a null prompt
+    // AND waitingOn=opponent; the HUD shows no dialog on the wrong screen.
+    const { container } = render(
+      <OnlineHud
+        game={game({ phase: { kind: "effect:choose", prompt: null }, waitingOn: "opponent" })}
+        waitingOn="opponent"
+        activePlaced={false}
+        onAction={vi.fn()}
+      />,
+    );
+    expect(container.firstChild).toBeNull();
+  });
+});
