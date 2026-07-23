@@ -104,6 +104,16 @@ export function countdownEndsAt(snapshot: LobbySnapshot): number | null {
     : null;
 }
 
+/** Whether a committed transition ABANDONS a running match — i.e. takes the
+    lobby out of in-game (only `removeGuest` does: a guest's `bye` or the host's
+    kick; `recomputePhase` never leaves in-game on its own). The DO drops its
+    persisted match record on exactly these, so a rematch in the same lobby mints
+    a fresh game instead of `handoffToMatch` reusing the stale one (P4). `prev`
+    null = a brand-new lobby, which was never in-game. */
+export function abandonsMatch(prev: LobbySnapshot | null, next: LobbySnapshot): boolean {
+  return prev !== null && prev.phase === "in-game" && next.phase !== "in-game";
+}
+
 // --- Pending-disconnect bookkeeping ----------------------------------------
 // One entry per player whose last socket dropped, carrying the deadline after
 // which the seat is marked disconnected (unless they returned first). At most

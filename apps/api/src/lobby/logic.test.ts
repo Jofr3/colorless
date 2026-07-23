@@ -4,10 +4,12 @@ import {
   createSnapshot,
   type LobbySnapshot,
   makePlayer,
+  removeGuest,
   seatGuest,
 } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import {
+  abandonsMatch,
   countdownEndsAt,
   helloDecision,
   parseClientMessage,
@@ -144,6 +146,24 @@ describe("countdown helpers", () => {
     const stamped = stampCountdown(countdownLobby(), 1000);
     expect(countdownEndsAt(stamped)).toBe(1000 + COUNTDOWN_MS);
     expect(countdownEndsAt(lobbyWithGuest())).toBeNull();
+  });
+});
+
+describe("abandonsMatch", () => {
+  it("is true only when a commit takes the lobby out of in-game (the match-record drop)", () => {
+    const inGame: LobbySnapshot = { ...countdownLobby(), phase: "in-game" };
+    // The real abandon path: removeGuest (a guest's bye / the host's kick) resets
+    // in-game → waiting. This is the transition that must drop the stale match.
+    expect(abandonsMatch(inGame, removeGuest(inGame))).toBe(true);
+    // Entering the match (countdown → in-game) is NOT an abandon — the handoff
+    // just wrote the record; dropping it here would erase every fresh match.
+    expect(abandonsMatch(countdownLobby(), inGame)).toBe(false);
+    // A pre-match guest leave (never in-game) has no match to abandon.
+    expect(abandonsMatch(lobbyWithGuest(), removeGuest(lobbyWithGuest()))).toBe(false);
+    // A brand-new lobby (no prior snapshot) was never in-game.
+    expect(abandonsMatch(null, inGame)).toBe(false);
+    // Staying in-game (a re-broadcast) keeps the record.
+    expect(abandonsMatch(inGame, inGame)).toBe(false);
   });
 });
 

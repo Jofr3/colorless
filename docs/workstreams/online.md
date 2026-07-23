@@ -16,11 +16,39 @@ seam `apps/api/src/lobby/match.ts` — `startMatch({seed, hostDeck, guestDeck, c
 wraps `createGame`, fixing the seat mapping **host → p1, guest → p2** (`SEAT_OF_SLOT`);
 `match.test.ts` pins the mapping, determinism, and deck-size rejection. 1693 → 1696 tests.
 
-**The handoff SEAM** (verified): `apps/api/src/lobby/lobbyDO.ts:228`, inside `alarm()` —
-the ONLY place `phase` becomes `"in-game"` (after the countdown ends with both ready +
-both sockets live). Today it broadcasts and the client renders `MatchPlaceholder`
-(`src/features/online/LobbyRoom.tsx:259`). That's where `startMatch` + the first per-seat
-broadcast hook in.
+**Increment 1b — DONE:** the DO seam. `LobbyDO`'s constructor now takes `env` (for D1);
+new pure `loadCardPool(db, ids)` (`apps/api/src/lobby/cardPool.ts` — chunked `db.batch(inArray)`
+→ `mapCardRow`, mirroring `guardUnknownCards`; the row→pool fold `poolFromRows` is unit-tested).
+At the in-game handoff inside `alarm()`, a new private `handoffToMatch()` loads the pool,
+mints an RNG seed (`crypto.getRandomValues`), calls `startMatch`, and persists a `MatchRecord`
+`{seed, state}` under storage key `"match"` — BEFORE the in-game snapshot broadcasts (crash-safe
+ordering; a mid-flip crash re-runs the handoff). Idempotent via a `MATCH_KEY`-exists guard.
+Fixed placeholder decks in `match.ts` (`FIXED_MATCH_DECKS`: host = Sneasel `sv06.5-013` +
+Water Energy, guest = Mareep `sv01-066` + Lightning Energy; 60 each, distinct per seat) +
+`FIXED_MATCH_CARD_IDS` (the 4 distinct ids the DO resolves from D1). 1696 → 1702 tests.
+
+**Match-record lifecycle (locked this increment):** the persisted match outlives EXACTLY the
+match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
+`abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
+`removeGuest` does: a guest's `bye` or the host's kick). Without this, a rematch in the same
+lobby would hit the idempotency guard and reuse the previous pairing's `GameState`/seed — a
+HIGH the review caught. The empty-lobby `deleteAll()` also clears it. Invariant: `MATCH_KEY`
+present ⇒ phase in-game (the reverse can briefly fail on the load-failure path below).
+
+**The handoff SEAM** (now wired): `apps/api/src/lobby/lobbyDO.ts` `alarm()`, the ONLY place
+`phase` becomes `"in-game"` (countdown ends, both ready + both sockets live). It now starts
+the match; the client still renders `MatchPlaceholder` (`src/features/online/LobbyRoom.tsx:259`)
+until 1c broadcasts the redacted view.
+
+**Known gaps carried into 1c/2 (review LOWs, deliberate):**
+- **Load-failure wedge:** if `startMatch` fails (only when the D1 pool is incomplete — all 4
+  fixed ids are confirmed present locally), `handoffToMatch` logs and returns without a record,
+  but the lobby STILL flips to in-game (no game). Self-heals on the next abandon+rematch (no
+  `MATCH_KEY` was written). Increment 2 must surface match-start errors to players.
+- **Vacuous deck test:** `match.test.ts` builds the pool with synthetic Basics, so it pins deck
+  size + pool coverage but NOT that the 4 ids exist/are-typed-right in the real catalog. A
+  Worker-pool integration test resolving them through `loadCardPool` against a seeded D1 would
+  close it (deferred — no D1 in the current vitest setup).
 
 **Architectural decisions (D-log a real one when they lock):**
 - **Redaction lives in the engine; the wire type in schema.** The engine produces ONE
@@ -38,10 +66,9 @@ broadcast hook in.
   `LobbyDO` constructor currently takes only `state` — **add `env` to it** for D1 access.
 
 **Next increments (was "Slice 1", now split):**
-- **1b — the DO seam.** Add `env` to the `LobbyDO` constructor; a `loadCardPool(db, ids)`
-  (D1 `inArray` → `mapCardRow`); at line 228, `startMatch(fixed decks)` + persist the
-  `GameState`/seed/seat-map under a new storage key. Server-only, testable.
-- **1c — the redactor + wire + read-only client.** `redactGame` (engine) + `RedactedGame`
+- **1b — the DO seam. DONE** (see Status above): `env` on the constructor, `loadCardPool`,
+  `handoffToMatch` persisting a `MatchRecord` under `MATCH_KEY`, fixed placeholder decks.
+- **1c — the redactor + wire + read-only client (NEXT).** `redactGame` (engine) + `RedactedGame`
   (schema) + a `{kind:"match", game}` server message (Zod + the exactness proof, mirroring
   `wire.ts`); the DO broadcasts each socket its redacted view; the client adopts it
   (`useLobby`/a `useMatch` hook) and renders a read-only board (reuse `PlaymatView` +

@@ -37,8 +37,12 @@ import {
   removeGuest,
   seatGuest,
 } from "@luminous/schema";
+import { drizzle } from "drizzle-orm/d1";
+import type { Env } from "../env";
 import { attachedPlayer, attachPlayer } from "./attachment";
+import { loadCardPool } from "./cardPool";
 import {
+  abandonsMatch,
   countdownEndsAt,
   DISCONNECT_GRACE_MS,
   EMPTY_LOBBY_TTL_MS,
@@ -53,6 +57,12 @@ import {
   withoutPendingDisconnect,
   withPendingDisconnect,
 } from "./logic";
+import {
+  FIXED_MATCH_CARD_IDS,
+  FIXED_MATCH_DECKS,
+  type MatchRecord,
+  startMatch,
+} from "./match";
 
 // Storage keys. `created` marks that POST /lobby claimed this code — a socket
 // upgrade for a code that was never created (or has expired) is refused, so
@@ -62,14 +72,20 @@ const CODE_KEY = "code";
 const SNAPSHOT_KEY = "snapshot";
 const CLEANUP_AT_KEY = "cleanupAt";
 const PENDING_KEY = "pendingDisconnects";
+// The authoritative match (P4) — the engine GameState + seed, written once when
+// the countdown flips the lobby to in-game (online.md increment 1b).
+const MATCH_KEY = "match";
 
 export class LobbyDO {
   private readonly state: DurableObjectState;
+  /** Worker bindings — needed for D1 (the match card pool) at handoff (P4). */
+  private readonly env: Env;
   /** In-memory mirror of SNAPSHOT_KEY; undefined = not read since last wake. */
   private snapshot: LobbySnapshot | null | undefined;
 
-  constructor(state: DurableObjectState) {
+  constructor(state: DurableObjectState, env: Env) {
     this.state = state;
+    this.env = env;
     // Keepalive pings are answered in the proxy layer — a hibernated lobby
     // stays hibernated while clients ping to check their link.
     state.setWebSocketAutoResponse(new WebSocketRequestResponsePair(LOBBY_WS_PING, LOBBY_WS_PONG));
@@ -226,6 +242,10 @@ export class LobbyDO {
         const guestLive = next.guest !== null && hasSocket(next.guest.id);
         if (hostLive && guestLive) {
           next = { ...next, phase: "in-game" };
+          // P4: instantiate the authoritative engine game before the in-game
+          // snapshot is broadcast, so a client that sees "in-game" can rely on
+          // the match already existing (increment 1c reads + redacts it).
+          await this.handoffToMatch();
         } else {
           if (!guestLive) next = setSeatConnected(next, "guest", false);
           if (!hostLive) next = setSeatConnected(next, "host", false);
@@ -267,12 +287,47 @@ export class LobbyDO {
     await this.scheduleMaintenance(remaining);
   }
 
+  /** P4 handoff (online.md): the countdown just flipped this lobby to in-game,
+      so mint the authoritative engine game once and persist it. The DO owns the
+      RNG seed + all hidden info here on out. Idempotent — a re-fired alarm never
+      restarts a live match. Fixed placeholder decks + a D1-resolved pool for now
+      (real deck selection is increment 3). */
+  private async handoffToMatch(): Promise<void> {
+    if ((await this.state.storage.get(MATCH_KEY)) !== undefined) return;
+    const cardPool = await loadCardPool(drizzle(this.env.DB), FIXED_MATCH_CARD_IDS);
+    const seedBytes = new Uint32Array(1);
+    crypto.getRandomValues(seedBytes);
+    const seed = seedBytes[0] ?? 0;
+    const result = startMatch({
+      seed,
+      hostDeck: FIXED_MATCH_DECKS.host,
+      guestDeck: FIXED_MATCH_DECKS.guest,
+      cardPool,
+    });
+    if (!result.ok) {
+      // The fixed decks are known-valid, so a failure means the pool was
+      // incomplete (those ids aren't in this D1). Don't wedge the lobby — it
+      // still shows in-game and the client renders a placeholder until 1c —
+      // but log it loudly; increment 2 surfaces match errors to players.
+      console.error(`lobby match handoff failed: ${result.error.code} — ${result.error.message}`);
+      return;
+    }
+    const record: MatchRecord = { seed, state: result.state };
+    await this.state.storage.put(MATCH_KEY, record);
+  }
+
   /** Persist → broadcast → re-arm the alarm: the ONE path every snapshot
       change takes, so nothing is ever announced that didn't hit storage. */
   private async commit(next: LobbySnapshot): Promise<void> {
     const stamped = stampCountdown(next, Date.now());
+    // A persisted match outlives EXACTLY the match it describes: when this commit
+    // takes the lobby out of in-game (removeGuest — a guest's bye or the host's
+    // kick), drop the stale GameState so a rematch in this same lobby mints a
+    // fresh one instead of handoffToMatch's guard reusing the old (P4, online.md).
+    const abandoned = abandonsMatch(this.snapshot ?? null, stamped);
     this.snapshot = stamped;
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
+    if (abandoned) await this.state.storage.delete(MATCH_KEY);
     this.broadcast({ kind: "state", snapshot: stamped });
     await this.scheduleMaintenance();
   }
