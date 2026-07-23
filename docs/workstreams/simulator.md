@@ -4118,6 +4118,70 @@ Corrected to name the anchor as load-bearing.
 
 See D58.
 
+## P3-M5 build session #44 (2026-07-23) — the ANY-target snipe, with conditional W/R (D59)
+
+The benched-snipe family's generalization: a chosen hit on 1 of ALL the opponent's Pokémon —
+the Active OR a Bench — where the ONE genuinely new idea is that Weakness/Resistance apply
+conditionally (only when the pick lands on the Active). engineVersion 0.38.0 → **0.39.0**;
+1683 → **1693** tests.
+
+### The shape and the rule
+"This attack does N damage to 1 of your opponent's Pokémon. (Don't apply Weakness and
+Resistance for Benched Pokémon.)" — the WHOLE attack (no `damage` field). The reminder is the
+tell: it names *Benched* specifically because for the *Active* pick, W/R DO apply (rules §8.5:
+"Weakness/Resistance apply only to the Active/Defending Pokémon"). So one op, two damage models
+picked at resolution.
+
+### Implementation (extending the shared snipe op, not a new one)
+- effects.ts: `CHOSEN_ANY_TARGET` derives `[{op:"damageChosen", target:"opponentAny", amount:N,
+  count:1, deals:true}]`. The op's `target` union widened to `"opponentBench" | "opponentAny"`.
+- interpreter.ts:
+  - `oppAnyRefs` — candidates = the opponent's Active (always present during an attack, so the
+    set is never empty) + the whole Bench, Active first.
+  - `placeSnipe` gained an **Active arm** (`snipeActive`) run when any ref is the opponent's
+    Active. It is the FULL §8.5 pipeline — `base + attacker.damageBonusBeforeWR → ×Weakness →
+    −Resistance → −reduction`, floored — byte-for-byte attack.ts's main hit, minus only the
+    main attack's own printed base (the snipe's `amount` is its whole base). The Bench arm is
+    unchanged (flat, no W/R).
+  - `snipeNote` gained a `target` param ("Pokémon" vs "Benched Pokémon").
+
+### Why the shared machinery does not regress
+`placeSnipe` is shared by the put-counter snipe (Hawlucha / Meowscarada), Wo-Chien, and the
+rider family — all `opponentBench`, whose candidates are Bench-only and whose picks
+`validateChoice` constrains to those candidates. So `refs.some(active)` is always false for
+them → the Active arm never fires and `next === state`, leaving their behavior byte-identical.
+The one real change, `if (targeted.size === 0) return next` (was `return state`), is the
+essential fix so an auto-taken Active snipe is not discarded. 42 prior snipe/Covetous/rider
+tests stay green.
+
+### Cards; and what stays loud
+Lands Fezandipiti ex (100), Rotom (20), Paldean Tauros "Aqua Dive" (60), Bellibolt ex /
+Kilowattrel (50). Stays loud, each a future shape: Umbreon "Feint Attack" ("… isn't affected by
+Weakness or Resistance" — a no-W/R-even-on-the-Active flag), Pawmot ex (a leading discard cost),
+Magikarp (a leading coin flip).
+
+### Review (1 read-only adversarial reviewer) — NO HIGH, and one MED fixed
+No shared-code regression (the `next` threading, the `validateChoice` Active rejection, and the
+regex narrowness all confirmed). **ONE MED FOUND AND FIXED:** `snipeActive` dropped the
+attacker's `damageBonusBeforeWR` (Vitality Band's "+10 to the opponent's Active, before W/R"),
+which DOES apply to an Active snipe — the draft's "consistent with the Bench arm" comment was a
+false equivalence (the Bench correctly omits it; the Active is exactly what Vitality Band
+boosts). Because these cards have no main `damage` field, the bonus was applied NOWHERE, so a
+Vitality-Band Fezandipiti would deal 100 where the rules say 110. Fixed by folding the bonus
+into the pre-W/R term + emitting the `bonus` field, pinned by a new test asserting
+`(20 + 10) × 2 = 60`.
+
+### Recorded, NOT fixed (reviewer LOW)
+`snipeActive`'s Resistance application, the `− reduction` term, and the two `Math.max(0, …)`
+floors are not INDEPENDENTLY pinned (no fixture gives the Active a Resistance or a reduction
+passive; none drives the total negative), and the Active-snipe KO → prize flow is untested —
+all a verbatim copy of attack.ts's own tested §8.5 pipeline (Weakness order IS pinned) and the
+benched arm's tested reduction, so a real bug is unlikely. Left analysis-only rather than adding
+three fixtures for a LOW. `snipeActive` duplicating attack.ts's W/R math (rather than sharing a
+helper) is acceptable until a third consumer justifies extraction.
+
+See D59.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

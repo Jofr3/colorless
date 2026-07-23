@@ -1,11 +1,15 @@
 import type { Card } from "@luminous/schema";
 import {
+  activeTop,
+  applyDamageModifier,
   energyProvidesOf,
   isBasicPokemon,
   isEnergyCard,
   isSpecialEnergy,
+  resistanceOf,
   topCardOf,
   topUid,
+  weaknessOf,
 } from "./cards";
 import { effectiveMaxHp, passivesOf, providesEnergyType } from "./continuous";
 import { STATUS_WORD_OF } from "./effects";
@@ -603,14 +607,18 @@ function stepOp(
       // opponent is happy to lose, free a Bench slot, or fire an on-KO Ability).
       // The framework auto-fires the TRIGGER (triggers.ts), so this pick is the
       // only place that "may" can live at all.
-      const candidates = oppBenchRefs(state, ctx.seat);
+      // `opponentAny` (Fezandipiti ex "Cruel Arrow") offers the Active TOO, not just
+      // the Bench — and the Active is always present during an attack, so this set
+      // is never empty; the Bench-only snipes can be.
+      const candidates =
+        op.target === "opponentAny" ? oppAnyRefs(state, ctx.seat) : oppBenchRefs(state, ctx.seat);
       if (candidates.length === 0) return { done: state };
       // Wo-Chien "Covetous Ivy" scales the amount by the opponent's TAKEN Prizes;
       // 0 taken → 0 damage, so there is nothing to place OR to ask about.
       const amount = snipeAmount(op, state, ctx);
       if (amount <= 0) return { done: state };
       const declinable = op.optional === true;
-      // §8.6: with fewer Benched Pokémon than the printed number, take them all.
+      // §8.6: with fewer candidates than the printed number, take them all.
       const take = Math.min(op.count, candidates.length);
       if (!declinable && candidates.length <= op.count) {
         return { done: placeSnipe(state, candidates, amount, op.deals === true, ctx, events) };
@@ -622,7 +630,7 @@ function stepOp(
           min: take,
           max: take,
           declinable,
-          note: snipeNote(amount, take, declinable, op.deals === true),
+          note: snipeNote(amount, take, declinable, op.deals === true, op.target),
         },
       };
     }
@@ -1236,12 +1244,23 @@ function placeSnipe(
 ): GameState {
   if (amount <= 0) return state;
   const opponent = otherSeat(ctx.seat);
+  // The Active target — `opponentAny` only (Fezandipiti ex "Cruel Arrow"). §8.5:
+  // Weakness/Resistance apply ONLY to the Active/Defending Pokémon, so a snipe that
+  // lands on the Active goes THROUGH W/R, unlike every Bench target below. A
+  // put-counter snipe never offers the Active (its candidates are Bench-only), so
+  // this branch is reached with deals=true.
+  let next = state;
+  if (refs.some((r) => r.seat === opponent && r.spot.spot === "active")) {
+    next = snipeActive(next, amount, ctx, events);
+  }
+  // Bench targets — flat (no W/R). Batched in one map so a count-N snipe (Hawlucha)
+  // still lands as before.
   const targeted = new Set<number>();
   for (const ref of refs) {
     if (ref.seat === opponent && ref.spot.spot === "bench") targeted.add(ref.spot.index);
   }
-  if (targeted.size === 0) return state;
-  const side = state.players[opponent];
+  if (targeted.size === 0) return next;
+  const side = next.players[opponent];
   const bench = side.bench.map((pokemon, index) => {
     if (!targeted.has(index)) return pokemon;
     const uid = topUid(pokemon);
@@ -1256,7 +1275,7 @@ function placeSnipe(
     // Resistance (§8.5, Benched), but a benched reduction passive still applies,
     // exactly like spreadDamage. Emitted as DAMAGE_DEALT, so the log reads "dealt"
     // rather than "counters placed".
-    const reduction = passivesOf(state, pokemon).damageReductionAfterWR;
+    const reduction = passivesOf(next, pokemon).damageReductionAfterWR;
     const dealt = Math.max(0, amount - reduction);
     events.push({
       type: "DAMAGE_DEALT",
@@ -1271,7 +1290,50 @@ function placeSnipe(
     });
     return { ...pokemon, damage: pokemon.damage + dealt };
   });
-  return withSide(state, opponent, { ...side, bench });
+  return withSide(next, opponent, { ...side, bench });
+}
+
+/** The Active-target arm of an `opponentAny` snipe (Fezandipiti ex "Cruel Arrow"
+    when the pick lands on the Active). Unlike the Bench arm, this runs the FULL §8.5
+    pipeline — base + the attacker's continuous pre-W/R bonus → ×Weakness →
+    −Resistance → −reduction, floored at 0 — read off the attacker's and the target's
+    printed cards, byte-for-byte attack.ts's main hit. The continuous bonus IS
+    included here (unlike the Bench arm): Vitality Band's "+10 to your opponent's
+    ACTIVE before Weakness/Resistance" applies precisely because the target is the
+    Active — the same reason the Bench arm correctly omits it. Only the main attack's
+    OWN printed base/scaling is absent (the snipe's `amount` is its whole base). */
+function snipeActive(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const opponent = otherSeat(ctx.seat);
+  const target = activeTop(state, opponent);
+  if (target === null) return state;
+  const attacker = activeTop(state, ctx.seat);
+  const bonus = attacker === null ? 0 : passivesOf(state, attacker.active).damageBonusBeforeWR;
+  const weakness = attacker === null ? null : weaknessOf(attacker.card, target.card);
+  const resistance = attacker === null ? null : resistanceOf(attacker.card, target.card);
+  const afterWR = Math.max(
+    0,
+    applyDamageModifier(applyDamageModifier(amount + bonus, weakness), resistance),
+  );
+  const reduction = passivesOf(state, target.active).damageReductionAfterWR;
+  const dealt = Math.max(0, afterWR - reduction);
+  events.push({
+    type: "DAMAGE_DEALT",
+    seat: opponent,
+    uid: target.uid,
+    base: amount,
+    bonus: bonus > 0 ? bonus : undefined,
+    weakness,
+    resistance,
+    reduction: reduction > 0 ? reduction : undefined,
+    dealt,
+    damage: target.active.damage + dealt,
+  });
+  return withActive(state, opponent, { ...target.active, damage: target.active.damage + dealt });
 }
 
 /** The effective snipe amount — `amount`, or `amount × the opponent's TAKEN
@@ -1292,12 +1354,20 @@ function snipeAmount(
     damage. The heading quotes the card: a bare "Choose 2" for the exact pick every
     consumer prints, and "you may" only where the card says it (an optional trigger,
     whose decline the dialog offers as taking none). Never "up to". */
-function snipeNote(amount: number, count: number, optional: boolean, deals: boolean): string {
+function snipeNote(
+  amount: number,
+  count: number,
+  optional: boolean,
+  deals: boolean,
+  target: "opponentBench" | "opponentAny" = "opponentBench",
+): string {
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
     ? `${amount} damage`
     : `${Math.round(amount / 10)} damage counter${Math.round(amount / 10) === 1 ? "" : "s"}`;
-  return `${verb} ${count} of your opponent's Benched Pokémon (${each} each).`;
+  // `opponentAny` offers the Active too, so the heading drops "Benched".
+  const zone = target === "opponentAny" ? "Pokémon" : "Benched Pokémon";
+  return `${verb} ${count} of your opponent's ${zone} (${each} each).`;
 }
 
 /** The heading for healChosen's "up to N" park. Quotes the card (Saguaro:
@@ -2670,6 +2740,17 @@ function ownBenchRefs(state: GameState, seat: Seat): PokemonRef[] {
 function oppBenchRefs(state: GameState, seat: Seat): PokemonRef[] {
   const opp = otherSeat(seat);
   return state.players[opp].bench.map((_, index) => ({ seat: opp, spot: { spot: "bench", index } }));
+}
+
+/** The opponent's Active (if any) PLUS their whole Bench — the candidate set for an
+    `opponentAny` snipe (Fezandipiti ex "Cruel Arrow", 1 of ALL the opponent's
+    Pokémon). The Active leads so a forced single-candidate board reads naturally. */
+function oppAnyRefs(state: GameState, seat: Seat): PokemonRef[] {
+  const opp = otherSeat(seat);
+  const refs: PokemonRef[] = [];
+  if (state.players[opp].active !== null) refs.push({ seat: opp, spot: { spot: "active" } });
+  refs.push(...oppBenchRefs(state, seat));
+  return refs;
 }
 
 /** Every in-play Pokémon the controller could heal — Active first, then bench. */

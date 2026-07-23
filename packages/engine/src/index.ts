@@ -202,8 +202,20 @@ import type { GameState, Seat } from "./types";
     prints across Miraidon / Tadbulb / Pawmot / Bellibolt / Decidueye ex / Jumpluff /
     Orthworm / Palafin / Pyroar / Dartrix. Flamigo's "If Flamigo is on your Bench, …"
     (a board-condition gate) and the "each of" / "2 of" / "1 of YOUR Benched" variants
-    stay loud, each a different shape. */
-export const engineVersion = "0.38.0";
+    stay loud, each a different shape.
+
+    0.39.0 — the ANY-target snipe family: "This attack does N damage to 1 of your
+    opponent's Pokémon." (the WHOLE attack — the Active OR a Bench) now SIMULATES.
+    `damageChosen` gained a `target: "opponentAny"` mode (candidates = the opponent's
+    Active + Bench, via `oppAnyRefs`), and `placeSnipe` an Active arm (`snipeActive`):
+    a snipe that lands on the ACTIVE runs the §8.5 W/R pipeline (base → ×Weakness →
+    −Resistance → −reduction), where a Benched target stays flat — the rules'
+    "Weakness/Resistance apply only to the Active" made conditional on the pick.
+    Fezandipiti ex sv06.5-038 "Cruel Arrow" (100), Rotom sv01-069 "Linear Attack"
+    (20), Paldean Tauros "Aqua Dive", Bellibolt ex, Kilowattrel. Umbreon "Feint
+    Attack" (a different W/R-immunity wording), Pawmot ex (a discard cost), and
+    Magikarp (a coin flip) stay loud. */
+export const engineVersion = "0.39.0";
 
 export type {
   ApplyResult,

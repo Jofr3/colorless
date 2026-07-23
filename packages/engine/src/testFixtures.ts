@@ -1360,6 +1360,58 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Rotom (sv01-069) — the ANY-target snipe family (0.39.0): "Linear Attack" ({C},
+      no `damage` field) does 20 damage to 1 of your opponent's Pokémon — the ACTIVE
+      or a Benched one. A Lightning attacker, so vs a {L}-weak Active it lands 40
+      (W/R applies to the Active, §8.5) but only 20 on the SAME body Benched — the
+      discriminating pair. A Basic. Verbatim vs the local D1 catalog (60 HP,
+      Lightning, retreat 1, ×2 Fighting). */
+  "sv01-069": battler("sv01-069", {
+    name: "Rotom",
+    hp: 60,
+    types: ["Lightning"],
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Linear Attack",
+        effect:
+          "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
+  /** Fezandipiti ex (sv06.5-038) — the any-target family's big twin: "Cruel Arrow"
+      ({C}{C}{C}, 100) to 1 of your opponent's Pokémon. A Darkness attacker (so no
+      Weakness against the {L}-weak bodies here — a flat 100 either zone), it pins
+      the amount ≠ Rotom's 20 and an auto-take on an all-but-Active-empty board. A
+      Basic. Verbatim vs the local D1 catalog (210 HP, Darkness, retreat 1, ×2
+      Fighting). */
+  "sv06.5-038": battler("sv06.5-038", {
+    name: "Fezandipiti ex",
+    hp: 210,
+    types: ["Darkness"],
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Cruel Arrow",
+        effect:
+          "This attack does 100 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
+  /** FIXTURE — a {L}-weak body (130 HP, ×2 Lightning), the any-target snipe's W/R
+      witness: sniped as the Active by a Lightning attacker it takes double, sniped
+      Benched it takes flat, and 130 HP survives both (40 / 20) so the math stands
+      alone. Basic, so it pins as a setup Active. */
+  "fix-lightning-weak": battler("fix-lightning-weak", {
+    types: ["Grass"],
+    hp: 130,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+  }),
   /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
       of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
       poisons your own Active if one landed there. */
@@ -1934,6 +1986,23 @@ export const ALSO_SNIPE_DECK = deckOf({
   "fix-bigbody": 32, // 200 HP — DOMINANT so BOTH setup Actives pin to it; also the survivor bench targets
   "fix-victim": 4, // 30 HP — the benched body the rider KOs
   "fix-lightning-energy": 16, // pays {L}{L}{C} / {L}{C}
+});
+
+/** 0.38.0 → 0.39.0: the ANY-target snipe family — "This attack does N damage to 1 of
+    your opponent's Pokémon." (the Active OR a Bench). Rotom sv01-069 "Linear Attack"
+    (Lightning, 20) is the W/R witness: against a {L}-weak body it lands 40 as the
+    ACTIVE (W/R applies, §8.5) but 20 Benched, the discriminating pair. Fezandipiti ex
+    sv06.5-038 "Cruel Arrow" (Darkness, 100) is the big flat twin. **fix-lightning-weak
+    is DOMINANT so BOTH setup Actives pin to it** (a deterministic {L}-weak Defender,
+    130 HP, empty Bench — no seed-dependent displaced body). fix-victim (30 HP) is the
+    body a snipe KOs. {C}-only costs, so fix-lightning-energy pays. */
+export const ANY_SNIPE_DECK = deckOf({
+  "sv01-069": 4, // Rotom — Linear Attack (opponentAny, 20, Lightning)
+  "sv06.5-038": 4, // Fezandipiti ex — Cruel Arrow (opponentAny, 100, Darkness)
+  "fix-lightning-weak": 30, // ×2 Lightning, 130 HP — DOMINANT pinned Active (the W/R target) + bench targets
+  "fix-victim": 4, // 30 HP — the body a snipe KOs
+  "sv01-197": 2, // Vitality Band — the attacker's pre-W/R +10 (an Active-snipe bonus witness)
+  "fix-lightning-energy": 16, // pays Cruel Arrow's {C}{C}{C} and Linear Attack's {C}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

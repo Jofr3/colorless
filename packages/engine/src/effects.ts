@@ -272,7 +272,12 @@ export type EffectOp =
       is paid), so their pick is mandatory. */
   | {
       op: "damageChosen";
-      target: "opponentBench";
+      /** `opponentBench` — the chosen target(s) are among the opponent's Bench
+          (flat, no W/R). `opponentAny` — 1 of ALL the opponent's Pokémon (Active
+          OR Bench): a target that lands on the Active takes Weakness/Resistance
+          (§8.5), a Benched one does not (Fezandipiti ex "Cruel Arrow", Rotom
+          "Linear Attack"). */
+      target: "opponentBench" | "opponentAny";
       amount: number;
       count: number;
       /** The printed "you may" of an auto-fired trigger: taking NONE is a legal
@@ -1111,6 +1116,20 @@ const ALSO_BENCHED_SNIPE = new RegExp(
   `^This attack also does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+// The ANY-target snipe: "This attack does N damage to 1 of your opponent's Pokémon."
+// — the WHOLE attack (no `damage` field), a chosen hit on the Active OR a Benched
+// Pokémon (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack", Paldean Tauros
+// "Aqua Dive", Bellibolt ex, Kilowattrel). "Pokémon" (not "Benched Pokémon") is the
+// tell: the target may be the Active, where Weakness/Resistance DO apply (§8.5), so
+// the op is `target: "opponentAny"`. The reminder tail is the SAME Benched clarifier
+// (true only for a Benched pick). Refuses the "Benched"-only snipes (that clause
+// names the zone), Umbreon "Feint Attack" ("… isn't affected by Weakness or
+// Resistance" — a DIFFERENT tail), and Pawmot ex / Magikarp (a leading discard cost
+// / coin flip, off the `^This attack does` anchor).
+const CHOSEN_ANY_TARGET = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 // The self-discard attack COST (§8): "an" leaves the player one pick per
 // distinct Energy attached, "{N}" asks for exactly that many, "all" strips the
 // lot. Deliberately NOT matching the TYPED variants ("Discard a {L} Energy…",
@@ -1346,6 +1365,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = Number(match[1]);
     if (amount >= 1) {
       return [{ op: "damageChosen", target: "opponentBench", amount, count: 1, deals: true }];
+    }
+  }
+
+  // 6d. "This attack does N damage to 1 of your opponent's Pokémon. (Don't apply
+  //     Weakness and Resistance for Benched Pokémon.)" — the ANY-target snipe
+  //     (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack"): the WHOLE attack is a
+  //     chosen hit on the Active OR a Bench, `target: "opponentAny"` so a hit that
+  //     lands on the Active takes W/R (§8.5). A printed 0 is not a real card.
+  match = CHOSEN_ANY_TARGET.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) {
+      return [{ op: "damageChosen", target: "opponentAny", amount, count: 1, deals: true }];
     }
   }
 
