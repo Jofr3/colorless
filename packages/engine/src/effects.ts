@@ -1127,17 +1127,32 @@ const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
 //   • the attacker's OWN damage counters (Paldean Tauros sv02-028 "Raging Horns",
 //     fix-attacker "Rage"), and
 //   • the opponent's TAKEN Prizes (Charizard ex sv03-125 "Burning Darkness").
-// The word "more" is load-bearing across BOTH: the "×"/multiply family ("This
-// attack does N damage for each Prize card your opponent has taken." — Pecharunt
-// ex, Annihilape, no "more") folds nothing into a printed base and MUST stay off
-// this path (a future reader, a different shape — not a `count` member). The
-// anchored whole-sentence match and the capital `This` are the rest of the guard.
-// No /i, for the family's stated reason: the anchors and the capital first word
-// are what keep a mid-sentence clause off this path.
+// The word "more" is the DISCRIMINATOR between two sibling families that share a
+// count evaluator but fold differently. With "more" it is ADDITIVE (`+`): fold
+// `per × count` ONTO a printed base (the reader here). WITHOUT "more" it MULTIPLIES
+// (`×`): the printed N is the PER-unit and `per × count` is the WHOLE damage, no
+// base to add ("This attack does N damage for each Prize card your opponent has
+// taken." — Pecharunt ex sv06.5-039 60×, Annihilape sv01-109 70×). That is a
+// DISTINCT fold, not a `count` member, so it has its OWN regex + reader
+// (OPPONENT_PRIZES_MULTIPLY / deriveAttackDamageMultiplier below) — the parse is
+// the same `{per, count}` shape (the count evaluator is reused UNCHANGED), only
+// attack.ts's fold differs. Each additive regex must therefore REFUSE its
+// no-"more" twin (the multiply reader owns it), and vice versa. The anchored
+// whole-sentence match and the capital `This` are the rest of the guard. No /i,
+// for the family's stated reason: the anchors and the capital first word are what
+// keep a mid-sentence clause off this path.
 const SELF_COUNTER_SCALE =
   /^This attack does (\d+) more damage for each damage counter on this Pokémon\.$/;
 const OPPONENT_PRIZES_SCALE =
   /^This attack does (\d+) more damage for each Prize card your opponent has taken\.$/;
+// The "×"/multiply twin of OPPONENT_PRIZES_SCALE — the SAME Prize-count source, no
+// "more": the whole damage is `per × count`, the printed base dropped (attack.ts).
+// Refuses Wo-Chien ex's benched-target print ("… to 1 of your opponent's Benched
+// Pokémon for each Prize …") by the mid-sentence text the anchors exclude, and
+// Chien-Pao ex's discarded-Energy count ("… for each card you discarded in this
+// way.") by the tail.
+const OPPONENT_PRIZES_MULTIPLY =
+  /^This attack does (\d+) damage for each Prize card your opponent has taken\.$/;
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
 // the swsh-era prints carry ("Discard a Fire Energy" — Charmeleon, Charizard).
@@ -1356,17 +1371,20 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   return null;
 }
 
-/** An ADDITIVE damage-scaling clause — the printed "This attack does N more
-    damage for each …" that folds `per × (a counted resource)` into the attack's
-    printed base BEFORE the §8.5 Weakness/Resistance pipeline (Paldean Tauros
-    "Raging Horns" — 10 per damage counter on the attacker). Deliberately NOT an
+/** A count-scaled damage clause — `per × (a counted resource)`, the parsed shape
+    BOTH scaling families produce (the additive "+" reader `deriveAttackDamageBonus`
+    and the "×"/multiply reader `deriveAttackDamageMultiplier`). Deliberately NOT an
     `EffectOp`: it is PRE-damage math the caller computes (attack.ts), NOT a step
     the interpreter runs — every `deriveAttackEffect` op instead reads a sentence
-    that runs AFTER damage, so the two derivers are disjoint and a card carries at
-    most one of the two (the whole-sentence anchor means a scaling sentence never
-    also derives an op). `count` is a union of two REAL readers — the attacker's
-    own damage counters and, since 0.35.0, Charizard ex "Burning Darkness" (the
-    opponent's TAKEN Prizes) — a member each, not a second interface. */
+    that runs AFTER damage, so the scaling derivers are disjoint from the op deriver
+    and a card carries at most one (the whole-sentence anchor means a scaling
+    sentence never also derives an op). The two families differ ONLY in attack.ts's
+    fold — additive folds `per × count` onto the printed base (Paldean Tauros
+    "Raging Horns" — 10 per damage counter on the attacker), multiply makes it the
+    WHOLE damage with no base (Pecharunt ex "Irritated Outburst") — so they share
+    this interface and the `count` evaluator. `count` is a union of two REAL readers
+    — the attacker's own damage counters and, since 0.35.0, the opponent's TAKEN
+    Prizes — a member each, not a second interface. */
 export interface AttackDamageBonus {
   per: number;
   count: DamageCountSource;
@@ -1398,6 +1416,28 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   }
   const opponentPrizes = OPPONENT_PRIZES_SCALE.exec(effect);
   if (opponentPrizes !== null) {
+    const per = Number(opponentPrizes[1]);
+    if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
+  }
+  return null;
+}
+
+/** Parse a printed "×"/multiply damage-scaling sentence — "This attack does N
+    damage for each Prize card your opponent has taken." (NO "more") — into the
+    same `{per, count}` shape as the additive reader, or null for anything else.
+    The two share the count evaluator (opponentPrizesTaken); they differ only in
+    attack.ts's fold: the additive reader's `per × count` adds to a printed base,
+    THIS family's IS the whole damage (the printed "N×" base is the per-unit, so
+    attack.ts drops it — count 0 → 0 damage). Refuses the additive "more" twin
+    (that reader owns it), Wo-Chien ex's benched-target print and Chien-Pao ex's
+    discarded-Energy count (both a different shape), a lowercased "this", a missing
+    trailing period, and any leading/trailing text — all stay on the loud
+    ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the same
+    reason the additive reader is (attack.ts owns the fold). */
+export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | null {
+  const opponentPrizes = OPPONENT_PRIZES_MULTIPLY.exec(text.trim());
+  if (opponentPrizes !== null) {
+    // A printed 0 does nothing — left loud, the guard the additive rules carry.
     const per = Number(opponentPrizes[1]);
     if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
   }

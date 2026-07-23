@@ -18,7 +18,11 @@ import {
   weaknessOf,
 } from "./cards";
 import { effectiveAttackCost, passivesOf, providedEnergy } from "./continuous";
-import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
+import {
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackEffect,
+} from "./effects";
 import type { AttackDamageBonus } from "./effects";
 import type { GameEvent } from "./events";
 import {
@@ -75,10 +79,13 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
   return provided.length - typedNeeds >= colorless;
 }
 
-/** The HP an additive damage-scaling clause adds, tallying its resource off the
-    board as of attack declaration (§8.5 — counted when damage is calculated).
+/** `per × count` — the scaled HP a count-scaling clause contributes, tallying its
+    resource off the board as of attack declaration (§8.5 — counted when damage is
+    calculated). Fold-agnostic: the caller adds this onto the printed base (the
+    additive "+" family) or uses it as the whole damage (the "×"/multiply family).
     `attacker` is the attacking Active; `state` + `defenderSeat` reach the
-    opponent's board for the Prize-count source (Charizard ex "Burning Darkness"). */
+    opponent's board for the Prize-count source (Charizard ex "Burning Darkness",
+    Pecharunt ex "Irritated Outburst"). */
 function scaledAttackDamage(
   attacker: InPlayPokemon,
   bonus: AttackDamageBonus,
@@ -211,19 +218,30 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const authored = programFor(attacker.id)?.attack ?? null;
   const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   const program = authored ?? derived;
-  // The additive damage-scaling clause ("… does N more damage for each …") reads
-  // the SAME effect text but folds into the base BEFORE the §8.5 pipeline, unlike
-  // a post-damage program. A card carries at most one of the two: the
-  // whole-sentence anchor means a scaling sentence never also derives an op.
-  const damageBonus =
-    effect === null || effect === "" ? null : deriveAttackDamageBonus(effect);
-  const scaled =
-    damageBonus === null ? 0 : scaledAttackDamage(active, damageBonus, next, defenderSeat);
-  // The "+"/"×" modifier is SIMULATED iff the scaling reader consumed it; the
-  // effect text is simulated iff a program ran it OR the scaling reader did. Only
+  // The count-scaling clause reads the SAME effect text but folds into the damage
+  // BEFORE the §8.5 pipeline, unlike a post-damage program. Two sibling families,
+  // told apart by the word "more": ADDITIVE ("+") folds `per × count` onto the
+  // printed base; MULTIPLY ("×", no "more") makes `per × count` the WHOLE damage,
+  // the printed base dropped. Their regexes are mutually exclusive, so at most one
+  // fires — read multiply only when additive did not, making that explicit. A card
+  // carries at most one scaling clause OR a program: the whole-sentence anchor
+  // means a scaling sentence never also derives an op.
+  const damageBonus = effect === null || effect === "" ? null : deriveAttackDamageBonus(effect);
+  const damageMultiplier =
+    damageBonus !== null || effect === null || effect === ""
+      ? null
+      : deriveAttackDamageMultiplier(effect);
+  const scaling = damageBonus ?? damageMultiplier;
+  const scaled = scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat);
+  // The multiply family's printed "N×" base IS the per-unit (already counted in
+  // `scaled`), so it is dropped from the pipeline — the additive family keeps its
+  // printed base. count 0 → scaled 0 → no damage (the base does not leak through).
+  const scaledBase = damageMultiplier !== null ? 0 : base;
+  // The "+"/"×" modifier is SIMULATED iff a scaling reader consumed it; the
+  // effect text is simulated iff a program ran it OR a scaling reader did. Only
   // the genuinely-unsimulated remainder is flagged loudly (simulator.md coverage).
-  const effectSimulated = program !== null || damageBonus !== null;
-  const modifierSimulated = damageBonus !== null;
+  const effectSimulated = program !== null || scaling !== null;
+  const modifierSimulated = scaling !== null;
   if (
     (modifier !== null && !modifierSimulated) ||
     (effect !== null && effect !== "" && !effectSimulated)
@@ -239,7 +257,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   }
 
   let defended = defender;
-  if (base + scaled > 0) {
+  if (scaledBase + scaled > 0) {
     // §8.5 damage pipeline, in printed order: base + the attack's own printed
     // scaling clause (`scaled` — Paldean Tauros "Raging Horns", counted at
     // declaration) + the attacker's continuous pre-W/R bonus (Vitality Band) →
@@ -249,13 +267,15 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // Pokémon only, and both continuous reads aggregate printed passives WITH
     // attached Tools (continuous.ts). `scaled` is the attack's own damage (added
     // alongside the continuous bonus at the same pre-W/R step), so this branch
-    // fires whenever base OR the scaling clause does damage.
+    // fires whenever the (multiply-adjusted) base OR the scaling clause does
+    // damage. `scaledBase` is `base` except for a multiply clause, whose printed
+    // "N×" base is the per-unit already inside `scaled` — so it is 0 here.
     const bonus = passivesOf(next, active).damageBonusBeforeWR;
     const weakness = weaknessOf(attacker, defenderCard);
     const resistance = resistanceOf(attacker, defenderCard);
     const afterWR = Math.max(
       0,
-      applyDamageModifier(applyDamageModifier(base + scaled + bonus, weakness), resistance),
+      applyDamageModifier(applyDamageModifier(scaledBase + scaled + bonus, weakness), resistance),
     );
     const reduction = passivesOf(next, defender).damageReductionAfterWR;
     const dealt = Math.max(0, afterWR - reduction);
@@ -265,7 +285,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       type: "DAMAGE_DEALT",
       seat: defenderSeat,
       uid: defenderUid,
-      base,
+      base: scaledBase,
       // Present only when the printed scaling clause actually added HP.
       scaled: scaled > 0 ? scaled : undefined,
       // Present only when a continuous effect actually moved the total.

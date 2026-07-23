@@ -3907,6 +3907,89 @@ twin of D54's "Fury" (base 0, per 20); the `* 30` mutant re-run and confirmed de
 
 See D55.
 
+## P3-M5 build session #41 (2026-07-23) — the "×"/multiply damage family (D56)
+
+The sibling of D54–D55's additive "+" family: "This attack does N damage for each Prize card
+your opponent has taken." (NO "more") now SIMULATES. engineVersion 0.35.0 → **0.36.0**;
+1653 → **1661** tests.
+
+### The distinct fold
+The additive family folds `per × count` ONTO a printed base. The "×"/multiply family's printed
+"N×" is the **per-unit**, so `per × count` is the **WHOLE damage** with the printed base DROPPED
+(count 0 → 0 damage). Same parse (`{per, count}`), same count evaluator — only the fold differs.
+
+New reader `deriveAttackDamageMultiplier` (effects.ts) + regex `OPPONENT_PRIZES_MULTIPLY`:
+
+```
+/^This attack does (\d+) damage for each Prize card your opponent has taken\.$/
+```
+
+parses into `{per, count: {kind: "opponentPrizesTaken"}}` — **D55's evaluator reused UNCHANGED**.
+attack.ts reads BOTH scaling derivers, `damageMultiplier` only when `damageBonus === null` (the
+regexes are mutually exclusive on "more", so at most one fires), and:
+
+```
+const scaling = damageBonus ?? damageMultiplier;
+const scaled = scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat);
+const scaledBase = damageMultiplier !== null ? 0 : base;   // multiply drops the printed base
+```
+
+The §8.5 guard (`scaledBase + scaled > 0`) and `DAMAGE_DEALT.base` both use `scaledBase`, so the
+additive family (where `scaledBase === base`) is byte-identical to before.
+
+### "more" is the discriminator (again)
+The catalog prints the Prize source in two shapes, told apart by ONE word — and this slice adds
+the multiply reader D55 named:
+
+| Text | Family | Cards | Reader |
+|---|---|---|---|
+| "…does N **more** damage for each Prize card your opponent has taken." | additive **+** (`180+`) | Charizard ex ×4 | `deriveAttackDamageBonus` (D55) |
+| "…does N damage for each Prize card your opponent has taken." | multiply **×** | Pecharunt ex, Annihilape | `deriveAttackDamageMultiplier` — THIS slice |
+
+Lands **Pecharunt ex** sv06.5-039 "Irritated Outburst" (60×, {D}{D}, Basic) and **Annihilape**
+sv01-109 "Rage Fist" (70×, {F}, Stage 2) — two pers on one source. New `MULTIPLY_DAMAGE_DECK`
+(Darkness/Fighting Energy pay the costs; Fire cannot).
+
+### The anchor-guard witnesses
+The bigger "×" siblings stay LOUD, each a DIFFERENT shape the reader must refuse:
+- **Wo-Chien ex** sv02-027 "Covetous Ivy" — a benched-TARGET multiply ("…to 1 of your opponent's
+  Benched Pokémon for each Prize…"), refused by the mid-sentence text the anchors exclude, and it
+  says "Don't apply Weakness and Resistance for Benched Pokémon" — so when it lands it must bypass
+  the §8.5 pipeline this fold runs.
+- **Chien-Pao ex** "Hail Blade" — a DISCARDED-Energy count ("…for each card you discarded in this
+  way."), a COMPOUND (an optional `discardEnergy` cost that PARKS, whose §9.2 moved-count then
+  scales the damage — a count source read off the record, not the board).
+
+Entei sv03-030 stays the ADDITIVE reader's anchor-guard witness (D55).
+
+### Web — nothing
+`DAMAGE_DEALT.base:0, scaled:N` renders through the generic `· scaled +N` breadcrumb; the only
+`DAMAGE_DEALT` consumer in `src/` is the log. No projection/redaction change.
+
+### Review (1 read-only adversarial reviewer) — NO HIGH, NO MED, no surviving mutants
+Catalog narrowness proven EXHAUSTIVELY (of the 4 cards printing "for each Prize card your opponent
+has taken", the multiply regex matches ONLY Pecharunt/Annihilape; refuses Wo-Chien benched and
+Charizard's "more"). Base-drop pinned two ways: a count-0 "no DAMAGE_DEALT" test (a kept base
+deals 60) and a count-2 `{base:0, scaled:120, dealt:120}` test (a kept base gives 180).
+Captured-per pinned by Annihilape's 70 ≠ Pecharunt's 60. Mutual exclusivity + `deriveAttackEffect`
+disjointness confirmed.
+
+**ONE LOW FOUND AND FIXED:** the Pecharunt fixture's "Verbatim vs the local D1 catalog" comment
+omitted the card's real "Subjugating Chains" Ability — a false-verbatim claim this repo names
+explicitly (the Charizard fixture comment). Corrected to "printed STATS + attack row verbatim;
+Ability OMITTED (unexercised, no registry row)".
+
+### Recorded, NOT fixed
+- The multiply W/R ordering is not INDEPENDENTLY pinned by a weak-defender test (every multiply
+  test uses fix-bigbody, no weakness) — but the fold is the SAME shared pipeline line as the
+  additive family, already pinned by "folds BEFORE weakness" (`scaled` sits inside the weakness
+  multiply), and with `scaledBase` forced to 0 the multiply arm only supplies `scaled`, so it
+  cannot break the order alone (reviewer LOW — the same call D55 made for its Prize arm).
+- No fixture exercises a card with BOTH a derived post-damage program AND a multiply modifier
+  (no such in-tree card; the shape is correct-by-analysis).
+
+See D56.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

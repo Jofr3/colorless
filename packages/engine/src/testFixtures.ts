@@ -1217,6 +1217,62 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Pecharunt ex (sv06.5-039) — the "×"/multiply Prize family (0.36.0): "Irritated
+      Outburst" (60×, "This attack does 60 damage for each Prize card your opponent
+      has taken.", NO "more") does 60 × (the opponent's TAKEN Prizes) as the WHOLE
+      damage, its printed "60×" base dropped (deriveAttackDamageMultiplier). A Basic,
+      so it reaches the Active straight out of setup; force-placed by surgery here to
+      control the board. The printed STATS and the attack row are verbatim vs the
+      local D1 catalog (Basic Darkness, 190 HP, retreat 1, ×2 Fighting, {D}{D}); its
+      "Subjugating Chains" Ability is OMITTED — it has no registry row and no test
+      declares it (this slice exercises only the attack), the same reason the
+      attacher fixtures above omit an unexercised printed field rather than claim a
+      verbatim card while quietly dropping one. */
+  "sv06.5-039": battler("sv06.5-039", {
+    name: "Pecharunt ex",
+    hp: 190,
+    types: ["Darkness"],
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness", "Darkness"],
+        name: "Irritated Outburst",
+        damage: "60×",
+        effect: "This attack does 60 damage for each Prize card your opponent has taken.",
+      },
+    ],
+  }),
+  /** Annihilape (sv01-109) — the "×"/multiply family's per-70 twin (0.36.0): "Rage
+      Fist" (70×, same Prize-count source, NO "more") does 70 × (taken Prizes), so
+      per 70 ≠ Pecharunt's 60 pins the fold reads the CAPTURED per here too. Its
+      second attack "Dynamite Punch" (170 + a 50 recoil) is a `damageSelf` already
+      simulated (0.33.0), kept so the card's real attack list is its own. A Stage 2
+      (from Primeape), fielded via setActiveFromDeck. Verbatim vs the local D1
+      catalog (140 HP, Fighting, retreat 2, ×2 Psychic). */
+  "sv01-109": battler("sv01-109", {
+    name: "Annihilape",
+    hp: 140,
+    stage: "Stage2",
+    evolveFrom: "Primeape",
+    types: ["Fighting"],
+    retreat: 2,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Rage Fist",
+        damage: "70×",
+        effect: "This attack does 70 damage for each Prize card your opponent has taken.",
+      },
+      {
+        cost: ["Fighting", "Fighting"],
+        name: "Dynamite Punch",
+        damage: 170,
+        effect: "This Pokémon also does 50 damage to itself.",
+      },
+    ],
+  }),
   /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
       of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
       poisons your own Active if one landed there. */
@@ -1737,6 +1793,25 @@ export const SCALED_DAMAGE_DECK = deckOf({
   "fix-bigbody": 4, // 200 HP — survives Entei's base 60
   "fix-basic-1": 16, // Basics for setup + the bench bodies a KO promotes
   "fix-fire-energy": 16, // pays every cost here ({C}/{R}/{F}); ≥3 for Entei's {C}{C}{C}
+});
+
+/** 0.35.0 → 0.36.0: the "×"/multiply Prize family — "This attack does N damage for
+    each Prize card your opponent has taken." (NO "more"). Pecharunt ex sv06.5-039
+    "Irritated Outburst" (60×) and Annihilape sv01-109 "Rage Fist" (70×) both do
+    per × (the opponent's TAKEN Prizes) as the WHOLE damage, the printed "N×" base
+    dropped. Two different pers (60, 70) on one count source pin the fold reads the
+    CAPTURED per. fix-bigbody (200 HP) survives both at ≤2 Prizes taken (120 / 140),
+    keeping the §8.1 KO tail out so the math stands alone; fix-basic-1 seeds the
+    setup Actives (Pecharunt is a Basic, Annihilape a Stage 2 — both force-placed by
+    surgery) and the promotion bodies. Pecharunt costs {D}{D} and Rage Fist {F}, so
+    Darkness and Fighting Energy pay them (Fire cannot). */
+export const MULTIPLY_DAMAGE_DECK = deckOf({
+  "sv06.5-039": 4, // Pecharunt ex — Irritated Outburst (opponentPrizesTaken, per 60)
+  "sv01-109": 4, // Annihilape — Rage Fist (opponentPrizesTaken, per 70)
+  "fix-bigbody": 4, // 200 HP — survives 60×2 / 70×2, isolating the damage math
+  "fix-basic-1": 16, // Basics for setup + the bench bodies a KO promotes
+  "fix-dark-energy": 16, // pays Pecharunt's {D}{D}
+  "fix-fighting-energy": 16, // pays Rage Fist's {F}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

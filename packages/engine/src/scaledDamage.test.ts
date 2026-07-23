@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applyAction, deriveAttackDamageBonus } from "./index";
+import { applyAction, deriveAttackDamageBonus, deriveAttackDamageMultiplier } from "./index";
 import type { GameEvent, GameState } from "./index";
 import {
+  MULTIPLY_DAMAGE_DECK,
   SCALED_DAMAGE_DECK,
   attachFromDeck,
   deepFreeze,
@@ -14,23 +15,26 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.34.0 → 0.35.0 — count-scaled attack damage (the additive "+" family), BOTH
-// count sources.
+// 0.34.0 → 0.36.0 — count-scaled attack damage: two sibling families, told apart
+// by the word "more".
 //
-// "This attack does N more damage for each <resource>." is SIMULATED for two
-// resources: the attacker's OWN damage counters (Paldean Tauros sv02-028 "Raging
-// Horns", fix-attacker "Rage") and — since 0.35.0 — the OPPONENT's taken Prizes
-// (Charizard ex sv03-125 "Burning Darkness"). deriveAttackDamageBonus reads the
-// anchored sentence, and attack.ts folds N × count into the printed base BEFORE
-// the §8.5 W/R pipeline — a DAMAGE_DEALT `scaled` field, at the same pre-W/R step
-// as the continuous Vitality Band bonus. The "+"/effect is no longer flagged
-// loudly for these cards.
+// ADDITIVE ("+", "… does N MORE damage for each …") folds N × count ONTO the
+// printed base. SIMULATED for two count sources: the attacker's OWN damage
+// counters (Paldean Tauros sv02-028 "Raging Horns", fix-attacker "Rage") and — the
+// opponent's taken Prizes (Charizard ex sv03-125 "Burning Darkness"). MULTIPLY
+// ("×", "… does N damage for each …", no "more") makes N × count the WHOLE damage,
+// the printed "N×" base dropped — SIMULATED (0.36.0) for the Prize twins Pecharunt
+// ex sv06.5-039 (60×) and Annihilape sv01-109 (70×). Both reuse ONE count evaluator
+// (opponentPrizesTaken); deriveAttackDamageBonus / deriveAttackDamageMultiplier read
+// the anchored sentence, and attack.ts folds N × count BEFORE the §8.5 W/R pipeline
+// — a DAMAGE_DEALT `scaled` field, at the same pre-W/R step as the continuous
+// Vitality Band bonus. The "+"/"×"/effect is no longer flagged loudly for these.
 //
 // Entei sv03-030 "Blaze Ball" ("… for each {R} Energy attached to this Pokémon.")
 // is an additive "+" whose count source no reader simulates — it STAYS on the loud
 // ATTACK_EFFECT_SKIPPED path, the anchor-guard witness (replacing Charizard) that
-// the deriver is narrow. The "×"/multiply Prize family (Pecharunt — no "more")
-// likewise stays loud.
+// the additive deriver is narrow; Wo-Chien ex (benched-target) and Chien-Pao ex
+// (discarded-Energy count) are the multiply deriver's.
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -100,7 +104,8 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
   it("REFUSES the '×'/multiply Prize family — 'more' is the additive tell", () => {
     // Pecharunt ex / Annihilape print "This attack does N damage for each Prize card
     // your opponent has taken." — NO "more". That MULTIPLIES (a printed "N×"), folding
-    // nothing into a base, so the additive reader must leave it on the loud path.
+    // nothing into a base, so the additive reader must refuse it — the multiply reader
+    // (deriveAttackDamageMultiplier, tested below) owns that text.
     expect(
       deriveAttackDamageBonus(
         "This attack does 60 damage for each Prize card your opponent has taken.",
@@ -151,6 +156,64 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
       "This attack does 30 more damage for each Prize card your opponent has taken. Then, draw a card.",
     ]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
+    }
+  });
+});
+
+describe("deriveAttackDamageMultiplier — the '×'/multiply reader", () => {
+  it("reads the no-'more' Prize sentence for any N, as opponentPrizesTaken", () => {
+    // Pecharunt ex (60×) and Annihilape (70×) — the SAME count source as the
+    // additive twin, a DIFFERENT fold. The parse is the shared {per, count} shape;
+    // per is captured (not hard-coded), which the two real pers prove.
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 60 damage for each Prize card your opponent has taken.",
+      ),
+    ).toEqual({ per: 60, count: { kind: "opponentPrizesTaken" } });
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 70 damage for each Prize card your opponent has taken.",
+      ),
+    ).toEqual({ per: 70, count: { kind: "opponentPrizesTaken" } });
+  });
+
+  it("REFUSES the additive '+' twin — 'more' belongs to the other reader", () => {
+    // Charizard ex's "… does N MORE damage …" is the additive family's; the multiply
+    // reader must leave it (deriveAttackDamageBonus owns it) so no text derives twice.
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 30 more damage for each Prize card your opponent has taken.",
+      ),
+    ).toBeNull();
+  });
+
+  it("REFUSES the bigger '×' siblings — a different SHAPE, not this reader's", () => {
+    for (const text of [
+      // Wo-Chien ex "Covetous Ivy" — a benched-target multiply (no W/R), refused by
+      // the mid-sentence text the anchors exclude, not by the tail.
+      "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      // Chien-Pao ex "Hail Blade" — a DISCARDED-Energy count (a compound: discard
+      // then scale), refused by the tail.
+      "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
+    ]) {
+      expect(deriveAttackDamageMultiplier(text)).toBeNull();
+    }
+  });
+
+  it("refuses the near-misses — the anchors, the capital, and a printed 0", () => {
+    for (const text of [
+      // Lowercase leading "this" — refused independently of the anchors (no /i).
+      "this attack does 60 damage for each Prize card your opponent has taken.",
+      // Missing trailing period is not the whole sentence.
+      "This attack does 60 damage for each Prize card your opponent has taken",
+      // A printed 0 does nothing — left loud, not derived to a no-op.
+      "This attack does 0 damage for each Prize card your opponent has taken.",
+      // Leading text with a capital "This" pins `^`.
+      "Draw a card. This attack does 60 damage for each Prize card your opponent has taken.",
+      // A real trailing clause pins `$`.
+      "This attack does 60 damage for each Prize card your opponent has taken. Then, draw a card.",
+    ]) {
+      expect(deriveAttackDamageMultiplier(text)).toBeNull();
     }
   });
 });
@@ -302,5 +365,81 @@ describe("the discrimination — an unsimulated '+' (Entei) stays skipped", () =
     const dealt = find(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 60, dealt: 60 });
     expect(dealt?.scaled).toBeUndefined();
+  });
+});
+
+describe("the '×'/multiply family — per × count as the whole damage (base dropped)", () => {
+  /** Setup, open P1's turn 2, and field `attacker` as P1's Active with `energy`
+      copies of `energyId` attached (its typed cost) against a fix-bigbody (200 HP)
+      that survives the scaled hit. The multiply twin of `matchup`: its own deck and
+      the Darkness/Fighting Energy the {D}{D} and {F} costs need (Fire cannot pay). */
+  function multiplyMatchup(
+    seed: number,
+    opts: { attacker: string; energyId: string; energy: number },
+  ): GameState {
+    let state = driveSetup(
+      seed,
+      { p1: MULTIPLY_DAMAGE_DECK, p2: MULTIPLY_DAMAGE_DECK },
+      { first: "p2" },
+    );
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+    state = setActiveFromDeck(state, "p1", opts.attacker);
+    state = attachFromDeck(state, "p1", opts.energyId, opts.energy);
+    return setActiveFromDeck(state, "p2", "fix-bigbody");
+  }
+
+  it("Pecharunt ex 'Irritated Outburst' does 60 × taken Prizes, base dropped", () => {
+    // p2 (the opponent/defender) has taken 2 of 6 Prizes → 4 remain, so 60 × 2 = 120
+    // is the WHOLE damage: base 0 (the printed "60×" per-unit dropped), scaled 120,
+    // dealt 120 vs fix-bigbody (200 HP survives, so the math stands alone).
+    let state = multiplyMatchup(1, {
+      attacker: "sv06.5-039",
+      energyId: "fix-dark-energy",
+      energy: 2,
+    });
+    state = setPrizes(state, "p2", 4); // 2 taken
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 120, dealt: 120 });
+  });
+
+  it("drops the printed base — 0 taken Prizes does 0 damage, no DAMAGE_DEALT", () => {
+    // The base-drop tell: a multiply at count 0 does NOTHING. Were the printed "60×"
+    // base kept (folded like the additive family), it would deal 60 — so the absent
+    // DAMAGE_DEALT pins that attack.ts drops the base (scaledBase 0) for a multiply.
+    const state = multiplyMatchup(2, {
+      attacker: "sv06.5-039",
+      energyId: "fix-dark-energy",
+      energy: 2,
+    });
+    // p2 keeps all 6 Prizes → 0 taken.
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+  });
+
+  it("scales by the CAPTURED per — Annihilape 'Rage Fist' is 70, not Pecharunt's 60", () => {
+    // per 70 ≠ 60 pins the multiply fold reads the deriver's captured per (a hard-coded
+    // 60 would give 120). p2 has taken 2 → 70 × 2 = 140, which fix-bigbody survives.
+    let state = multiplyMatchup(3, {
+      attacker: "sv01-109",
+      energyId: "fix-fighting-energy",
+      energy: 1,
+    });
+    state = setPrizes(state, "p2", 4); // 2 taken
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 140, dealt: 140 });
+  });
+
+  it("never mutates the state it was given (purity)", () => {
+    let state = multiplyMatchup(4, {
+      attacker: "sv06.5-039",
+      energyId: "fix-dark-energy",
+      energy: 2,
+    });
+    state = setPrizes(state, "p2", 4);
+    deepFreeze(state);
+    expect(() => applyAction(state, { type: "attack", seat: "p1", index: 0 })).not.toThrow();
   });
 });

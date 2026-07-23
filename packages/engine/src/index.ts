@@ -168,8 +168,18 @@ import type { GameState, Seat } from "./types";
     base. `scaledAttackDamage` widened to reach the opponent's board; the
     unsimulated-"+" witness moved to Entei sv03-030 (an attached-Energy count
     source, still no reader). The "×"/multiply Prize family (Pecharunt ex — no
-    "more") stays loud. */
-export const engineVersion = "0.35.0";
+    "more") stays loud.
+
+    0.36.0 — the "×"/multiply damage family, the additive family's sibling: "This
+    attack does N damage for each Prize card your opponent has taken." (NO "more" —
+    Pecharunt ex sv06.5-039 60×, Annihilape sv01-109 70×) now SIMULATES. It reuses
+    the additive family's `opponentPrizesTaken` count evaluator UNCHANGED via a new
+    reader `deriveAttackDamageMultiplier`; the only difference is the fold — the
+    printed "N×" base is the per-unit, so it is DROPPED and `per × count` is the
+    WHOLE damage (count 0 → 0 damage), where the additive family adds `per × count`
+    onto a printed base. Wo-Chien ex (benched-target) and Chien-Pao ex
+    (discarded-Energy count) stay loud, the anchor-guard witnesses. */
+export const engineVersion = "0.36.0";
 
 export type {
   ApplyResult,
@@ -223,7 +233,11 @@ export {
   providedEnergy,
   stadiumEffectsOf,
 } from "./continuous";
-export { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
+export {
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackEffect,
+} from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
 export type {
