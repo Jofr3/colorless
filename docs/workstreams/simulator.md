@@ -3726,6 +3726,113 @@ transient pill.
 
 See D52.
 
+## P3-M5 build session #39 (2026-07-23) — count-scaled attack damage: the additive "+" family (D54)
+
+The first reader to turn the **`ATTACK_EFFECT_SKIPPED` damage-modifier path** into
+a simulated one. `cards.ts` `parseAttackDamage` has always split a `"20+"` into
+`{base: 20, modifier: "+"}`, and nothing consumed the modifier — the numeric base
+landed and the "+" was flagged loudly. Now the printed **"This attack does N more
+damage for each damage counter on this Pokémon."** is SIMULATED. engineVersion
+0.33.0 → **0.34.0**.
+
+### The mechanism — a PRE-damage fold, not an EffectOp
+A new reader **`deriveAttackDamageBonus(text): AttackDamageBonus | null`**
+(effects.ts) parses the anchored whole-sentence into
+`{per, count: {kind: "damageCountersOnSelf"}}`. It sits beside `deriveAttackEffect`
+but is **DISJOINT** from it, and the distinction is load-bearing: `deriveAttackEffect`
+returns `EffectOp[]` that the interpreter runs **AFTER** damage, whereas a scaling
+clause changes the number the §8.5 pipeline **starts from**, so it is PRE-damage
+math the *caller* computes. attack.ts holds the fold:
+
+```
+const damageBonus = … deriveAttackDamageBonus(effect);
+const scaled = damageBonus === null ? 0 : scaledAttackDamage(active, damageBonus);
+…
+if (base + scaled > 0) {                       // widened from base > 0
+  const afterWR = max(0, applyMod(applyMod(base + scaled + bonus, weakness), resistance));
+  …DAMAGE_DEALT { base, scaled: scaled > 0 ? scaled : undefined, bonus, … }
+}
+```
+
+`scaledAttackDamage(attacker, bonus)` = `Math.floor(attacker.damage / 10) * bonus.per`
+(one damage counter = 10 HP, §12), read off the **attacker's** Active at
+DECLARATION — before any recoil/self-damage, which is when the TCG counts "for
+each damage counter". The fold lands at the same pre-W/R step as the continuous
+Vitality Band bonus (both additive, so commutative; the log orders scaling first).
+
+**A card carries at most one of the two derivers** — the whole-sentence anchor
+means a scaling sentence never also derives a post-damage op, so `program` and
+`damageBonus` are never both non-null for a real card.
+
+### The rebuilt skip condition
+```
+const effectSimulated = program !== null || damageBonus !== null;
+const modifierSimulated = damageBonus !== null;
+if ((modifier !== null && !modifierSimulated) || (effect && !effectSimulated)) {
+  …ATTACK_EFFECT_SKIPPED { effect: effectSimulated ? null : effect,
+                           damageModifier: modifierSimulated ? null : modifier }
+}
+```
+For any card with `damageBonus === null` this reduces **algebraically** to the old
+`modifier !== null || (effect && program === null)` with the old field expressions
+— so no existing card's skip behaviour changes (reviewer-verified, and pinned by
+the zero-regression suite).
+
+### Cards landed (verified vs the local D1 catalog)
+| Card | ids | Attack | Program |
+|---|---|---|---|
+| Paldean Tauros | sv02-028 | "Raging Horns" (20+) | DERIVED — `{per: 10, count: damageCountersOnSelf}` |
+| *fix-attacker* "Rage" | (test) | (10+) | same — the default test attacker, identical text |
+
+**Charizard ex** sv03-125 "Burning Darkness" (180+, "…for each **Prize card your
+opponent has taken**") is a DIFFERENT count source with no reader — DELIBERATELY
+left on the `ATTACK_EFFECT_SKIPPED` path. It is the **anchor-guard witness**: the
+deriver must REFUSE a scaling sentence it does not simulate, and the two "+"-skip
+test witnesses (checkup.test.ts, logFromEvents.test.ts) migrated from Rage onto it.
+`DamageCountSource` is a **union so the Prize-card reader lands as a member later**
+(`opponentPrizesTaken` = `PRIZE_COUNT − defender.prizes.length`), widening
+`scaledAttackDamage`'s signature to reach both boards — the next slice (see the
+resume point).
+
+### Web — one new field, one breadcrumb
+`DAMAGE_DEALT` gained **`scaled?: number`** (present only when >0, the
+`bonus`/`reduction` pattern), and logFromEvents renders **`· scaled +N`** ahead of
+`· boosted +N` (§8.5 order). No projection/redaction change — `scaled` is public
+damage math (a table fact); the only DAMAGE_DEALT consumer in `src/` is the log.
+
+### Review (2 adversarial agents, isolated worktrees, 17 engine mutations) — NO HIGH
+Rules confirmed verbatim (both fixtures, the damage-counter = 10 HP rule, the
+pre-W/R fold timing). The anchor-killers, the pre-W/R ordering (a 40-vs-30 test),
+the "right Pokémon at declaration" read, and `scaled`-honesty all genuinely die.
+**Three false-coverage MED/LOWs found and FIXED, each mutation re-run:** (1) the
+fold's `per` operand was untested — `* bonus.per → * 10` survived the whole suite
+(every folded fixture prints per=10); (2) the widened `base + scaled > 0` guard was
+untested (latent — no base-0 scaler). BOTH closed by ONE synthetic **base-0,
+per-20** scaler ("Fury", fix-attacker index 4) — a deliberate probe (no real card
+prints a 0-base "does N more"), asserting `{base:0, scaled:60, dealt:60}`: the
+`* 10` mutant gives 30, the `base > 0` revert emits no DAMAGE_DEALT. (3) The
+`· scaled +N` log breadcrumb was unpinned (deleting it survived) — closed with a
+rendered-string assertion, the `· boosted +N` sibling's technique. A stale "stays
+on the ATTACK_EFFECT_SKIPPED path" comment on the Raging Horns fixture was
+corrected.
+
+### Recorded, NOT fixed
+- **No fixture exercises a card with BOTH a derived post-damage program AND an
+  unsimulated "+" modifier**, so the skip arm firing `effect: null, damageModifier:
+  "+"` (program ≠ null, scaling = null) is correct-by-analysis only — a pre-existing
+  shape, no in-tree card.
+- `scaledAttackDamage` is a **one-member switch with no trailing return** (tsc
+  accepts it exhaustive); the `Math.floor` is defensive (all damage lands in tens),
+  its removal survives the suite — both declared, resolved when `opponentPrizesTaken`
+  lands.
+- The slice's originally-flagged #1 (**Sandaconda** "rider clause") was FALSIFIED
+  in exploration: the real text ("your opponent shuffles their Active Pokémon and
+  all attached cards into their deck") needs a brand-new shuffle-into-deck op PLUS a
+  persistent-marker subsystem (`types.ts` `markers[]` is a never-read stub), not the
+  `recordAs` the D53 resume note assumed.
+
+See D54.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
