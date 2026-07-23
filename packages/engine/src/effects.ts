@@ -1096,6 +1096,21 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
     "for each Prize card your opponent has taken\\." +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+// The flat, un-scaled RIDER: "This attack ALSO does N damage to 1 of your
+// opponent's Benched Pokémon." — a SECONDARY snipe after the main damage (which
+// rides the attack's own `damage` field). Miraidon "Lightning Laser", Pawmot,
+// Bellibolt, Palafin, Decidueye ex, Tadbulb, … — one shape, any N. "also" marks
+// the rider by intent, but the LOAD-BEARING separator from Covetous Ivy is the
+// whole-sentence `\.$` right after "Pokémon": Covetous Ivy's clause continues
+// ("… Benched Pokémon FOR EACH Prize …"), so the anchor — not the word "also" —
+// keeps it off this path (and it derives via BENCHED_SNIPE_TAKEN_PRIZES anyway).
+// "1 of" separates it from SPREAD_EACH_BENCH's "each of". Refuses Flamigo's "If
+// Flamigo is on your Bench, …" (a board-condition gate, off the `^This` anchor),
+// "2 of" (count ≠ 1), and "1 of YOUR Benched" (self-target) by the exact phrase.
+const ALSO_BENCHED_SNIPE = new RegExp(
+  `^This attack also does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 // The self-discard attack COST (§8): "an" leaves the player one pick per
 // distinct Energy attached, "{N}" asks for exactly that many, "all" strips the
 // lot. Deliberately NOT matching the TYPED variants ("Discard a {L} Energy…",
@@ -1317,6 +1332,20 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           perTakenPrize: true,
         },
       ];
+    }
+  }
+
+  // 6c. "This attack also does N damage to 1 of your opponent's Benched Pokémon.
+  //     (Don't apply Weakness and Resistance for Benched Pokémon.)" — the flat
+  //     RIDER (Miraidon "Lightning Laser", Tadbulb, Pawmot, Bellibolt, …): the
+  //     SAME count-1 `deals` snipe as Covetous Ivy but WITHOUT `perTakenPrize`
+  //     (a fixed N, not Prize-scaled). The main hit rides the `damage` field; this
+  //     clause is the secondary benched snipe. A printed 0 is not a real card.
+  match = ALSO_BENCHED_SNIPE.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) {
+      return [{ op: "damageChosen", target: "opponentBench", amount, count: 1, deals: true }];
     }
   }
 

@@ -191,8 +191,19 @@ import type { GameState, Seat } from "./types";
     0 taken → no damage and no pick). The "6 − remaining" Prize formula is now the
     shared `takenPrizes` helper (types.ts), used by both this and the D55/D56 fold.
     Chien-Pao ex "Hail Blade" (a DISCARDED-Energy count, and a PRE-damage park) stays
-    loud, the remaining "×" sibling. */
-export const engineVersion = "0.37.0";
+    loud, the remaining "×" sibling.
+
+    0.38.0 — the flat benched-snipe RIDER family: "This attack ALSO does N damage to 1
+    of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for
+    Benched Pokémon.)" now SIMULATES — a SECONDARY snipe after the main damage (which
+    rides the attack's own `damage` field). It is the SAME count-1 `deals` snipe as
+    D57's Covetous Ivy WITHOUT `perTakenPrize` (a fixed N, not Prize-scaled), so it is
+    a new derive `ALSO_BENCHED_SNIPE` and ZERO new op/interpreter code. Lands ~15
+    prints across Miraidon / Tadbulb / Pawmot / Bellibolt / Decidueye ex / Jumpluff /
+    Orthworm / Palafin / Pyroar / Dartrix. Flamigo's "If Flamigo is on your Bench, …"
+    (a board-condition gate) and the "each of" / "2 of" / "1 of YOUR Benched" variants
+    stay loud, each a different shape. */
+export const engineVersion = "0.38.0";
 
 export type {
   ApplyResult,

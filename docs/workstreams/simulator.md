@@ -4056,6 +4056,68 @@ state-rewriting AUTO-TAKE path. The captured `amount` is pinned by a per-40 `fix
 
 See D57.
 
+## P3-M5 build session #43 (2026-07-23) — the flat benched-snipe rider family (D58)
+
+The cheapest high-yield slice in the milestone: the D57 `damageChosen` op, built to generalize,
+lands ~15 real cards for a ~26-line diff with ZERO new op or interpreter code. engineVersion
+0.37.0 → **0.38.0**; 1673 → **1683** tests.
+
+### The shape
+"This attack ALSO does N damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness
+and Resistance for Benched Pokémon.)" — a SECONDARY snipe AFTER the main hit (which rides the
+attack's own `damage` field). It is D57's `damageChosen` op (count 1, `deals: true`) MINUS
+`perTakenPrize` (a fixed N, not Prize-scaled), so all that is new is one anchored derive:
+
+```
+const ALSO_BENCHED_SNIPE =
+  /^This attack also does (\d+) damage to 1 of your opponent's Benched Pokémon\.( …W/R tail…)?$/;
+```
+
+producing `[{op:"damageChosen", target:"opponentBench", amount:N, count:1, deals:true}]`. The main
+hit and the rider coexist by the ordinary attack flow — attack.ts deals the `damage`-field base to
+the Defender (through W/R) first, then the effect program runs the benched snipe (parks on the
+count-1 choice, auto-takes a Bench of one, or whiffs on an empty Bench).
+
+### Cards
+Authored as fixtures: **Miraidon** sv01-080 "Lightning Laser" (90 + 30) and **Tadbulb** sv03-076
+"Shake and Discharge" (20 + 10) — two Ns, two main-damage values. The same shape (any N) covers
+Pawmot, Bellibolt, Decidueye ex, Jumpluff, Orthworm, Palafin, Pyroar, Dartrix — ~15 prints total.
+
+### Narrowness — and what stays loud (the next shapes)
+Of every catalog "also does … damage to" attack, the regex matches ONLY the 10 intended cards.
+The refusals are each a DIFFERENT shape, and together they map the rest of the benched-snipe
+rider family (all cheap now the op is proven):
+- **Flamigo** "Synchronized Feathers" — "If Flamigo is on your Bench, this attack also does …": a
+  board-condition gate, off the `^This` anchor.
+- the **"each of"** also-SPREAD rider (all benched) — a `spreadDamage` rider, trivial.
+- **"2 of"** — a `damageChosen count:2` rider.
+- **"1 of YOUR Benched"** (self-target) and **"1 of your opponent's POKÉMON"** (any target incl.
+  the Active) — new target modes.
+
+### The test deck's determinism
+`ALSO_SNIPE_DECK` pins BOTH setup Actives to `fix-bigbody` (32/60 dominant, so driveSetup's
+`active` option finds it in the opening hand for every used seed). The Defender is then a
+deterministic 200 HP body that survives the main hit, with an EMPTY Bench — so the benched targets
+are exactly what a test places, with no seed-dependent displaced body. (The earlier draft used
+`setActiveFromDeck` for the Defender, which displaces the setup Active onto the Bench — a
+seed-dependent phantom that broke the count-1 / KO tests; the pin removes it.)
+
+### Web — nothing
+A `DAMAGE_DEALT` on a benched uid renders generically (logFromEvents keys off seat/uid), as
+`spreadDamage`'s benched hits already do.
+
+### Review (1 read-only adversarial reviewer, mutation-driven) — NO real defects
+Every load-bearing field is genuinely pinned: a `count:2` injection fails 3 tests, a
+`perTakenPrize:true` injection fails 6, the captured amount is pinned by Miraidon 30 ≠ Tadbulb 10,
+`deals` by DAMAGE_DEALT + `not COUNTERS_PLACED`, main+rider coexistence and ordering by the two
+bases (90 then 30). Regex narrowness proven over 18 edge cases + the whole catalog. **ONE comment
+nit FIXED:** the code claimed the word "also" is what separates this from Covetous Ivy, but the
+whole-sentence anchor does — Covetous Ivy's clause continues "… Benched Pokémon FOR EACH Prize …",
+so the `\.$` after "Pokémon" blocks it (making "also" optional survives the suite, harmlessly).
+Corrected to name the anchor as load-bearing.
+
+See D58.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

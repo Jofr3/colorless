@@ -1316,6 +1316,50 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Miraidon (sv01-080) — the flat benched-snipe RIDER family (0.38.0): "Lightning
+      Laser" ({L}{L}{C}, 90) hits the Defender AND, via "This attack also does 30
+      damage to 1 of your opponent's Benched Pokémon.", snipes one chosen benched
+      body for a fixed 30 (a `damageChosen` count-1 `deals` op, NO `perTakenPrize` —
+      Covetous Ivy minus the Prize scaling). Its "Sharp Fang" ({C}{C}, 30) is a plain
+      hit, kept so the attack list is its own. A Basic. Verbatim vs the local D1
+      catalog (120 HP, Lightning, retreat 1, ×2 Fighting). */
+  "sv01-080": battler("sv01-080", {
+    name: "Miraidon",
+    hp: 120,
+    types: ["Lightning"],
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Sharp Fang", damage: 30 },
+      {
+        cost: ["Lightning", "Lightning", "Colorless"],
+        name: "Lightning Laser",
+        damage: 90,
+        effect:
+          "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
+  /** Tadbulb (sv03-076) — the rider family's small-N twin (+10, main 20): "Shake and
+      Discharge" ({L}{C}, 20) with the same "also does 10 damage to 1 … Benched"
+      clause. per 10 ≠ Miraidon's 30 pins the derive captures the amount. A Basic.
+      Verbatim vs the local D1 catalog (60 HP, Lightning, retreat 2, ×2 Fighting). */
+  "sv03-076": battler("sv03-076", {
+    name: "Tadbulb",
+    hp: 60,
+    types: ["Lightning"],
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless"],
+        name: "Shake and Discharge",
+        damage: 20,
+        effect:
+          "This attack also does 10 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
   /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
       of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
       poisons your own Active if one landed there. */
@@ -1873,6 +1917,23 @@ export const COVETOUS_IVY_DECK = deckOf({
   "sv03-174": 2, // Bouffalant — "Bouffer" (−20 after W/R): the benched reduction target
   "fix-basic-1": 20, // setup Actives + Bench filler so the count-1 pick is real
   "fix-grass-energy": 20, // pays Covetous Ivy's {G}{G}{C} and Bramble's {C}
+});
+
+/** 0.37.0 → 0.38.0: the flat benched-snipe RIDER family — "This attack ALSO does N
+    damage to 1 of your opponent's Benched Pokémon." after the main hit. Miraidon
+    sv01-080 "Lightning Laser" (90 + 30 rider) and Tadbulb sv03-076 "Shake and
+    Discharge" (20 + 10 rider) — two Ns pin the captured amount; both {L}-cost, so
+    fix-lightning-energy pays. **fix-bigbody is abundant so BOTH setup Actives pin to
+    it** (driveSetup `active`): the Defender is then a deterministic 200 HP body that
+    survives the main hit, with an EMPTY Bench (no seed-dependent displaced body), so
+    the benched targets are exactly what a test places. fix-victim (30 HP) is the body
+    the rider KOs, fix-basic-1 fills the Bench so the count-1 pick is a real choice. */
+export const ALSO_SNIPE_DECK = deckOf({
+  "sv01-080": 4, // Miraidon — Lightning Laser (90 + a flat 30 benched rider)
+  "sv03-076": 4, // Tadbulb — Shake and Discharge (20 + a flat 10 benched rider)
+  "fix-bigbody": 32, // 200 HP — DOMINANT so BOTH setup Actives pin to it; also the survivor bench targets
+  "fix-victim": 4, // 30 HP — the benched body the rider KOs
+  "fix-lightning-energy": 16, // pays {L}{L}{C} / {L}{C}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed
