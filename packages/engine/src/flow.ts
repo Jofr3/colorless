@@ -316,34 +316,34 @@ export function resolveMidTurnKnockOuts(
 /** The shared attack epilogue (§8.1 + §5.3) — every exit out of `attack`
     (attack.ts: the confusion-tails failure, an attack with no effect program,
     and the attackEpilogue stage a PARKED effect program resumes into): sweep
-    `koedSeat`'s WHOLE board for Knock Outs — the Active from the main damage AND
-    any Benched Pokémon a spread/snipe effect damaged (§8.1, generalized off the
-    Active) — prizes to the KO'd side's opponent, re-read off the state since the
-    effect ops replace the Pokémon objects. Then end `attackerSeat`'s turn
-    through the staged tail, the KO's decision stages in front of it. A
-    single-seat sweep can never tie (a §14 tie needs both boards to win at once),
-    but stay total — finishGame if one ever does.
+    BOTH boards for Knock Outs — the Active from the main damage AND any Benched
+    Pokémon a spread/snipe effect damaged, plus the ATTACKER's own Active when a
+    recoil clause ("This Pokémon also does N damage to itself", damageSelf) turned
+    the attack on itself — prizes to each KO'd side's opponent, re-read off the
+    state since the effect ops replace the Pokémon objects. Then end
+    `attackerSeat`'s turn through the staged tail, the KO's decision stages in
+    front of it.
 
-    **The sweep is SINGLE-SEAT, and that is a live limit, not a nicety.** A Knock
-    Out an attack's own effect causes on the ATTACKER's board is missed here, and
-    `resumeTail` is precisely what skips settleProgram's both-boards
-    `resolveMidTurnKnockOuts`. Unreachable today — every deriver rule and every
-    authored attack program damages the opponent only — but the first
-    self-damaging attack text (sv01-038 Skeledirge's "This Pokémon also does 30
-    damage to itself.") is ONE deriver sentence away, and it must widen this to
-    `SEATS` (which also makes the §14 double-KO tie guard reachable from the
-    attack path for the first time, so it wants its own tests).
+    **The sweep is [defender, attacker] ORDER, and that order is §8.1.** When an
+    attack KOs both the Defending Pokémon and the attacker itself at once, "the
+    player whose turn it is takes their Prize card(s) first" — so the defender's
+    board is swept first, queueing the attacker's prizes ahead of the defender's
+    (collectKnockOuts groups every batch prizes-first in ref order, and lethalRefs
+    walks `seats` in order). A self-KO prizes to the DEFENDER, exactly as the
+    confusion self-hit's does. This widening (from the old single defender-seat
+    sweep) is what makes the §14 DOUBLE-KO tie reachable from the attack path —
+    both boards can now win at once — and collectKnockOuts' speculative tie guard
+    owns it, the same guard the Checkup path already exercises. Sweeping the
+    attacker's board on the no-recoil paths (confusion tails dealt the defender
+    nothing; a plain attack never touched the attacker) is a harmless superset:
+    only a fresh recoil can leave the attacker lethal here, since a mid-turn KO is
+    resolved the instant it occurs.
 
     Lives in flow.ts rather than attack.ts because `advance` below must reach it:
     attack.ts already imports flow, so the epilogue stage's handler cannot sit on
     the other side of that edge. */
-export function finishAttack(
-  state: GameState,
-  events: GameEvent[],
-  attackerSeat: Seat,
-  koedSeat: Seat,
-): ApplyResult {
-  const batch = collectKnockOuts(state, [koedSeat], events);
+export function finishAttack(state: GameState, events: GameEvent[], attackerSeat: Seat): ApplyResult {
+  const batch = collectKnockOuts(state, [otherSeat(attackerSeat), attackerSeat], events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
   // COMPOSES with whatever is still queued rather than overwriting it: both
@@ -389,11 +389,9 @@ export function finishAttack(
       stage is queued behind it, and draining it runs the KO sweep + turn end.
     Neither wants the mid-turn KO sweep below: the on-KO program does not damage,
     and an attack's KOs are the epilogue's own job — its sweep reads the
-    POST-effect board, so a spread that KOs the defender is still caught. Note the
-    epilogue sweeps ONE seat, so skipping the both-boards sweep here means a KO an
-    attack inflicts on the ATTACKER's own board is missed; see finishAttack above,
-    which owns that limit. The flag is about WHERE control returns, not a second
-    KO check.
+    POST-effect board and now covers BOTH seats, so a spread that KOs the defender
+    AND a recoil that KOs the attacker (damageSelf) are both caught there. The flag
+    is about WHERE control returns, not a second KO check.
 
     This is the flow↔triggers mutual import the header notes: the interpreter and
     triggers never KO, so completion is handed BACK to flow (the KO/tail owner)
@@ -809,11 +807,12 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       return runKoTrigger(popStage(state), stage.seat, stage.uid, events);
     case "attackEpilogue":
       // §8 step 4 has finished (the effect program ran to completion, possibly
-      // across one or more parks): sweep the defender's board and end the
-      // attacker's turn. The pop is REQUIRED — finishAttack composes with what is
-      // still queued, so leaving this stage on would re-queue the epilogue behind
-      // the turn tail and run the whole attack ending a second time.
-      return finishAttack(popStage(state), events, stage.seat, stage.koedSeat);
+      // across one or more parks): sweep BOTH boards (a spread that KO'd the
+      // defender, a recoil that KO'd the attacker) and end the attacker's turn.
+      // The pop is REQUIRED — finishAttack composes with what is still queued, so
+      // leaving this stage on would re-queue the epilogue behind the turn tail and
+      // run the whole attack ending a second time.
+      return finishAttack(popStage(state), events, stage.seat);
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

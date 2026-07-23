@@ -521,7 +521,7 @@ describe("projectGameState — phase-derived fields", () => {
     if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(state.phase.seat).toBe("p1");
     expect(state.phase.resumeTail).toBe(true);
-    expect(state.pending).toEqual([{ kind: "attackEpilogue", seat: "p1", koedSeat: "p2" }]);
+    expect(state.pending).toEqual([{ kind: "attackEpilogue", seat: "p1" }]);
 
     // Unlike the on-KO park above, the decider IS the turn owner here.
     const mine = projectGameState(state, "p1");

@@ -226,6 +226,19 @@ export type EffectOp =
       board, so the interpreter still never KOs or touches the flow tail. This
       is what the M4 KO generalization off the Active exists to reach. */
   | { op: "spreadDamage"; target: "opponentBench"; amount: number }
+  /** Place `amount` HP of SELF-damage on the attacker's own Active — the recoil
+      clause "This Pokémon also does N damage to itself" (Skeledirge sv01-038
+      "Blazing Shout", after its 190 to the defender). Self-damage is OUTSIDE the
+      §8.5 pipeline: no Weakness/Resistance (you have no Weakness to your own
+      attack) and no reduction passive — exactly the confusion self-hit's model
+      (attack.ts), which is why it lands as COUNTERS_PLACED source "self" rather
+      than a DAMAGE_DEALT that would imply the W/R math ran. Like every op it only
+      RAISES damage and never KOs: the resulting self-KO is caught by the attack
+      epilogue's TWO-seat sweep (flow.ts finishAttack), where it prizes to the
+      DEFENDER (the opponent of the KO'd side, as collectKnockOuts always owes it).
+      "itself" is the source, which for a §8 attack is the attacking Active — no
+      single-op derived program relocates it before this runs. */
+  | { op: "damageSelf"; amount: number }
   /** Put `amount` HP of damage counters on `count` CHOSEN Benched Pokémon of
       the opponent (Hawlucha "Flying Entry" — 2 × 1 counter; Meowscarada ex
       "Bouquet Magic" — 1 × 3 counters). "Put damage counters" is NOT attack
@@ -1096,6 +1109,14 @@ const FLIP_OPPONENT_ACTIVE_DISCARD =
 // is registry-authored and this anchor must not loosen toward it.
 const REVEAL_BOTTOM_SUPPORTER =
   /^Your opponent reveals their hand\. Choose a Supporter card you find there and put it on the bottom of their deck\.$/;
+// The recoil clause (Skeledirge sv01-038 "Blazing Shout") — a self-damage the
+// attack does IN ADDITION to its main numeric damage, hence the printed "also".
+// Anchored verbatim like every rule here: a hypothetical "This Pokémon does N
+// damage to itself." without the "also" (a pure-recoil attack with no defender
+// damage — none in sv01–03), or a "This attack …" phrasing, stays on the loud
+// skipped path. No /i, for the family's stated reason: capitalisation + the
+// anchors are what keep a mid-sentence clause off the derived path.
+const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
 // the swsh-era prints carry ("Discard a Fire Energy" — Charmeleon, Charizard).
@@ -1154,7 +1175,7 @@ const TYPED_SELF_DISCARD = new RegExp(
 );
 
 /** Parse printed attack text into executable ops, or null when the text is
-    ANYTHING but one of the twelve recognized whole sentences (leading/trailing
+    ANYTHING but one of the fourteen recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
 export function deriveAttackEffect(text: string): EffectOp[] | null {
   const effect = text.trim();
@@ -1296,6 +1317,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     attack it must not leak onto.
   if (REVEAL_BOTTOM_SUPPORTER.test(effect)) {
     return [{ op: "bottomFromOpponentHand", filter: { kind: "supporter" } }];
+  }
+
+  // 14. "This Pokémon also does {N} damage to itself." — the recoil clause
+  //     (Skeledirge sv01-038 "Blazing Shout"). The engine's FIRST attack that
+  //     damages its OWN board: the resulting self-KO is why the attack epilogue
+  //     now sweeps both seats (flow.ts finishAttack). Never parks — placing the
+  //     damage is not a decision.
+  match = SELF_DAMAGE.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // A printed 0 is not a real card and would derive to a silent no-op — the
+    // same guard the exact-N discard rules carry; leave it on the loud path.
+    if (amount >= 1) return [{ op: "damageSelf", amount }];
   }
 
   return null;

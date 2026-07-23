@@ -165,8 +165,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         source: "confusion",
       });
       // The self-hit can KO the attacker itself — prized to the DEFENDER
-      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent).
-      return finishAttack(next, events, action.seat, action.seat);
+      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The
+      // epilogue sweeps both boards; the defender took no damage on this failed
+      // attack, so only the attacker's own board can be lethal here.
+      return finishAttack(next, events, action.seat);
     }
   }
 
@@ -249,7 +251,6 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     const epilogue: PendingStage = {
       kind: "attackEpilogue",
       seat: action.seat,
-      koedSeat: defenderSeat,
     };
     return settleProgram(
       runProgram(
@@ -266,9 +267,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     );
   }
 
-  // §8.1 Knock Out sweep on the defender's board, then the §5.3 turn end — the
-  // shared epilogue with the confusion-tails exit above.
-  return finishAttack(next, events, action.seat, defenderSeat);
+  // §8.1 Knock Out sweep on both boards, then the §5.3 turn end — the shared
+  // epilogue with the confusion-tails exit above. With no effect program there is
+  // no recoil, so only the defender's board can be lethal, but the sweep stays
+  // total (finishAttack owns the order + the §14 tie).
+  return finishAttack(next, events, action.seat);
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */

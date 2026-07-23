@@ -581,6 +581,8 @@ function stepOp(
       return { done: damageActive(state, op.amount, ctx, events) };
     case "spreadDamage":
       return { done: spreadDamage(state, op.amount, ctx, events) };
+    case "damageSelf":
+      return { done: damageSelf(state, op.amount, ctx, events) };
     case "damageChosen": {
       // The snipe (Hawlucha / Meowscarada): choose `count` of the opponent's
       // Benched Pokémon and put counters on each. An empty Bench is a no-op.
@@ -1309,6 +1311,26 @@ function damageActive(
   if (uid === undefined) return state;
   events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
+}
+
+/** PLACE `amount` HP of SELF-damage on the controller's OWN Active — the attack
+    recoil "This Pokémon also does N damage to itself" (Skeledirge sv01-038
+    "Blazing Shout"). Self-damage sits OUTSIDE the §8.5 pipeline: no Weakness/
+    Resistance (you have no Weakness to your own attack) and no reduction, so it
+    is a flat placement emitted as COUNTERS_PLACED source "self", the confusion
+    self-hit's own model (attack.ts). "itself" is the attacking Pokémon — for a
+    §8 attack that is the Active, and no derived single-op program moves it before
+    this runs. Only raises damage; the resulting self-KO is caught by the attack
+    epilogue's TWO-seat sweep (flow.ts finishAttack) and prizes to the defender,
+    so this — like every op — never KOs or touches the flow tail. */
+function damageSelf(state: GameState, amount: number, ctx: EffectContext, events: GameEvent[]): GameState {
+  if (amount <= 0) return state;
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: "self" });
+  return withActive(state, ctx.seat, { ...active, damage: active.damage + amount });
 }
 
 /** Heal the controller's own Active (attack "heal from it" op). */

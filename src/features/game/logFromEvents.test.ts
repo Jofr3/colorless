@@ -343,6 +343,17 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     );
   });
 
+  it("attributes an attack's own recoil to the attacker, not the system", () => {
+    // M5 — "This Pokémon also does N damage to itself" (Skeledirge "Blazing
+    // Shout"). Unlike the confusion self-hit, the attacker CHOSE this attack, so
+    // it reads in their own voice (their seat) and echoes the printed sentence.
+    const { uid, name } = settled;
+    expect(line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 30, source: "self" })).toEqual({
+      text: `${name} did 30 damage to itself`,
+      who: "p1",
+    });
+  });
+
   it("names a triggered Ability firing on its own (M4 slice 6)", () => {
     const { uid, name } = settled;
     expect(line({ type: "ABILITY_TRIGGERED", seat: "p1", uid, ability: "Blessed Salt" })).toEqual({

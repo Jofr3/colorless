@@ -197,15 +197,17 @@ export type PendingStage =
       collectKnockOuts (flow.ts) after the prize stages, before the promotions.
       `uid`'s card left play, but cardIdByUid → programFor still resolves it. */
   | { kind: "koTrigger"; seat: Seat; uid: string }
-  /** §8.1 + §5.3 — the attack's EPILOGUE: sweep `koedSeat`'s board for Knock
-      Outs, then end `seat`'s (the attacker's) turn through the staged tail.
-      Seeded BEFORE the attack's effect program runs and drained by `advance`
-      (flow.ts finishAttack), which is what lets that program PARK: a parked
-      attack effect leaves this stage sitting in `pending`, and settleProgram's
-      `resumeTail` fold resumes draining it once the decision lands. An attack
-      with no effect program never queues it (finishAttack runs inline), so the
-      stage exists only while an effect is mid-resolution. */
-  | { kind: "attackEpilogue"; seat: Seat; koedSeat: Seat }
+  /** §8.1 + §5.3 — the attack's EPILOGUE: sweep BOTH boards for Knock Outs
+      (finishAttack owns the [defender, attacker] order + the §14 tie), then end
+      `seat`'s (the attacker's) turn through the staged tail. Seeded BEFORE the
+      attack's effect program runs and drained by `advance` (flow.ts
+      finishAttack), which is what lets that program PARK: a parked attack effect
+      leaves this stage sitting in `pending`, and settleProgram's `resumeTail`
+      fold resumes draining it once the decision lands. An attack with no effect
+      program never queues it (finishAttack runs inline), so the stage exists only
+      while an effect is mid-resolution. No `koedSeat`: the sweep reads both boards
+      off the post-effect state, so the KO'd seats need not be predeclared. */
+  | { kind: "attackEpilogue"; seat: Seat }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory

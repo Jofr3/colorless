@@ -337,6 +337,12 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           // a system row; the ABILITY_TRIGGERED/ABILITY_USED row just before
           // names the source.
           return row("system", [plain("Ability: "), amount, plain(" damage to "), strong(name)]);
+        case "self":
+          // An attack's own recoil ("This Pokémon also does N damage to itself" —
+          // Skeledirge "Blazing Shout"). The attacker CHOSE this attack, so unlike
+          // the confusion self-hit it reads in the attacker's own voice (its seat)
+          // rather than as a system row; it echoes the printed sentence.
+          return row(seat, [strong(name), plain(" did "), amount, plain(" damage to itself")]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);
       }

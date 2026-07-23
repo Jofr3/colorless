@@ -138,8 +138,19 @@ import type { GameState, Seat } from "./types";
     filtered attack twin — its second attack is why the card-level registry
     `attack` field could not carry it). programPlayable gains the public-count
     empty-opponent-hand gate (the Catcher/Hammer class) and is now EXPORTED —
-    the HUD greys with the predicate that rejects. */
-export const engineVersion = "0.32.0";
+    the HUD greys with the predicate that rejects.
+
+    0.33.0 — `damageSelf` + the TWO-seat attack epilogue: the recoil clause "This
+    Pokémon also does N damage to itself" (Skeledirge sv01-038 "Blazing Shout")
+    is the engine's first attack that damages its OWN board, placed flat as
+    COUNTERS_PLACED source "self" (the confusion self-hit's model, OUTSIDE the
+    §8.5 W/R pipeline). finishAttack's KO sweep widened from the single defender
+    seat to BOTH, in [defender, attacker] order so §8.1's "the player whose turn
+    it is takes their Prizes first" holds, and a self-KO prizes to the defender.
+    This makes the §14 double-KO tie reachable from the attack path for the first
+    time — collectKnockOuts' existing speculative guard owns it (the D42 debt,
+    paid). */
+export const engineVersion = "0.33.0";
 
 export type {
   ApplyResult,

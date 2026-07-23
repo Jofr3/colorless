@@ -114,9 +114,7 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     // The epilogue is QUEUED, not run: the turn has not ended and nothing was
     // discarded yet. This is the whole regression — the old code returned here
     // with the prompt thrown away and the turn already over.
-    expect(parked.pending).toEqual([
-      { kind: "attackEpilogue", seat: "p1", koedSeat: "p2" },
-    ]);
+    expect(parked.pending).toEqual([{ kind: "attackEpilogue", seat: "p1" }]);
     expect(types(events)).not.toContain("TURN_ENDED");
     expect(activeEnergy(parked, "p1")).toHaveLength(3);
     expect(parked.players.p1.discard).toHaveLength(0);

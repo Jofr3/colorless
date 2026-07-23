@@ -676,6 +676,40 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** M5: `damageSelf` + the two-seat attack epilogue. Skeledirge sv01-038's
+      "Blazing Shout" is the engine's FIRST self-damaging attack — 190 to the
+      defender, then "This Pokémon also does 30 damage to itself.", a DERIVED
+      recoil (so the text is verbatim from the catalog: change a character and
+      the derivation, and the test, correctly stops). Its first attack
+      "Passionate Singing" attaches Energy from the discard, which no rule
+      derives, so it stays on the loud ATTACK_EFFECT_SKIPPED path — kept so the
+      card's real attack list is its own. A Stage 2, fielded via setActiveFromDeck
+      (which bypasses the evolution scaffolding). Printed stats verified against
+      the local D1 ingest, 2026-07-23. */
+  "sv01-038": battler("sv01-038", {
+    name: "Skeledirge",
+    hp: 180,
+    types: ["Fire"],
+    stage: "Stage2",
+    evolveFrom: "Crocalor",
+    retreat: 3,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Passionate Singing",
+        damage: 50,
+        effect:
+          "Attach up to 2 Basic Energy cards from your discard pile to your Pokémon in any way you like.",
+      },
+      {
+        cost: ["Fire", "Fire", "Colorless"],
+        name: "Blazing Shout",
+        damage: 190,
+        effect: "This Pokémon also does 30 damage to itself.",
+      },
+    ],
+  }),
   /** FIXTURE — a SECOND catalog print of Fire Energy. The real catalog carries
       Basic Fire Energy under three ids (sve-002 / sve-010 / sve-018), all
       identical in play, so the interchangeability key must read what a Basic
@@ -1617,6 +1651,23 @@ export const ATTACK_PARK_DECK = deckOf({
   "fix-fire-energy-alt": 4, // a second Fire print — same type, different id
   "fix-special": 3, // a Special Energy, so the two identity spaces can be split
   "fix-energy": 17, // a DIFFERENT print, so a mixed attach is a real choice
+});
+
+/** M5: `damageSelf` + the two-seat attack epilogue. Skeledirge's "Blazing Shout"
+    (190 + 30 recoil) drives every case: a defender KO the recoil survives, a
+    self-KO the defender survives (prized to the defender), the both-boards double
+    KO, and the §14 tie now reachable from the attack path. fix-victim (30 HP)
+    dies to the 190, fix-bigbody (200 HP) survives it (so a self-KO stands alone),
+    and fix-basic-1 seeds legal openings + the promotion bodies each seat needs.
+    Skeledirge is a Stage 2 (fielded via setActiveFromDeck), so the Basics carry
+    the setup. */
+export const SELF_DAMAGE_DECK = deckOf({
+  "sv01-038": 4, // Skeledirge — Blazing Shout (190 + 30 self)
+  "fix-victim": 4, // 30 HP — OHKO'd by the 190
+  "fix-bigbody": 4, // 200 HP — survives the 190, isolating a self-KO
+  "fix-basic-1": 20, // Basics for setup + the bench bodies a KO promotes
+  "fix-fire-energy": 20, // pays Blazing Shout's {R}{R}
+  "fix-energy": 8, // Colorless for the {C}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

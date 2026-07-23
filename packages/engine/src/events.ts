@@ -137,14 +137,17 @@ export type GameEvent =
       reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded";
     }
   /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
-      Checkup ticks, the confusion self-hit) — `amount` is HP of damage, and
-      weakness/resistance never apply (§13). */
+      Checkup ticks, the confusion self-hit, an attack's own "does N damage to
+      itself" recoil clause) — `amount` is HP of damage, and weakness/resistance
+      never apply (§13, §8 recoil). `"self"` is a recoil the attacker DEALS to
+      its own Active mid-attack (Skeledirge "Blazing Shout"), so its `seat` owns
+      the damaged Pokémon exactly as the confusion self-hit's does. */
   | {
       type: "COUNTERS_PLACED";
       seat: Seat;
       uid: string;
       amount: number;
-      source: "poison" | "burn" | "confusion" | "ability";
+      source: "poison" | "burn" | "confusion" | "ability" | "self";
     }
   /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
       (§13.2) or asleep's wake flip (§13.3). Heads is followed by the
