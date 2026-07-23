@@ -728,20 +728,20 @@ describe("derived attack effects in play (effects.ts)", () => {
   });
 
   it("still flags underivable text loudly — ATTACK_EFFECT_SKIPPED as before", () => {
-    // fix-attacker's Rage now DERIVES its self-counter scaling (0.34.0), so the
-    // "+"-modifier-skip witness moves to Charizard ex "Burning Darkness" — a
-    // DIFFERENT count source (the opponent's TAKEN Prizes) that no reader
-    // simulates, so its "+" stays flagged. A Stage 2 fielded by surgery, energied
-    // for its {R}{R} cost; fix-bigbody (200 HP) survives the base 180 so the KO
-    // tail stays out of the way.
+    // Both scaling readers now DERIVE (fix-attacker's Rage self-counters, 0.34.0;
+    // Charizard's Prize "+", 0.35.0), so the "+"-modifier-skip witness is Entei
+    // "Blaze Ball" — a count source (Energy attached to itself) that no reader
+    // simulates, so its "+" stays flagged. A Basic fielded by surgery, energied for
+    // its {C}{C}{C} cost; fix-bigbody (200 HP) survives the base 60 so the KO tail
+    // stays out of the way.
     let board = driveSetup(HEADS, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
     board = must(applyAction(board, { type: "endTurn", seat: "p2" }));
-    board = setActiveFromDeck(board, "p1", "sv03-125");
-    board = attachFromDeck(board, "p1", "fix-fire-energy", 2);
+    board = setActiveFromDeck(board, "p1", "sv03-030");
+    board = attachFromDeck(board, "p1", "fix-fire-energy", 3);
     board = setActiveFromDeck(board, "p2", "fix-bigbody");
     const { events } = mustApply(board, { type: "attack", seat: "p1", index: 0 });
     expect(events.find((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      attack: "Burning Darkness",
+      attack: "Blaze Ball",
       damageModifier: "+",
     });
     expect(types(events)).not.toContain("STATUS_APPLIED");

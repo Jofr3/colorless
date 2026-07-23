@@ -32,7 +32,7 @@ import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
-import { isImmobilized, otherSeat, withActive, withSide } from "./types";
+import { PRIZE_COUNT, isImmobilized, otherSeat, withActive, withSide } from "./types";
 
 // The attack step (§8) and the two KO-resolution decisions it can park on
 // (§8.1). Declaring an attack ends the turn (§5.3), so every path out of
@@ -77,14 +77,25 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
 
 /** The HP an additive damage-scaling clause adds, tallying its resource off the
     board as of attack declaration (§8.5 — counted when damage is calculated).
-    `attacker` is the attacking Active. A second reader (opponent's taken Prizes,
-    Charizard ex "Burning Darkness") will widen this to take the state + seats. */
-function scaledAttackDamage(attacker: InPlayPokemon, bonus: AttackDamageBonus): number {
+    `attacker` is the attacking Active; `state` + `defenderSeat` reach the
+    opponent's board for the Prize-count source (Charizard ex "Burning Darkness"). */
+function scaledAttackDamage(
+  attacker: InPlayPokemon,
+  bonus: AttackDamageBonus,
+  state: GameState,
+  defenderSeat: Seat,
+): number {
   switch (bonus.count.kind) {
     case "damageCountersOnSelf":
       // One damage counter = 10 HP (§12); floor for safety though all damage
       // lands in tens.
       return Math.floor(attacker.damage / 10) * bonus.per;
+    case "opponentPrizesTaken":
+      // Prizes the opponent has TAKEN = 6 − what remains in their pile: each
+      // player draws from their OWN Prizes on a KO (§8.1), so the count shrinks as
+      // they take. Read at declaration, before this attack's own KOs award any
+      // Prize.
+      return (PRIZE_COUNT - state.players[defenderSeat].prizes.length) * bonus.per;
   }
 }
 
@@ -206,7 +217,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // whole-sentence anchor means a scaling sentence never also derives an op.
   const damageBonus =
     effect === null || effect === "" ? null : deriveAttackDamageBonus(effect);
-  const scaled = damageBonus === null ? 0 : scaledAttackDamage(active, damageBonus);
+  const scaled =
+    damageBonus === null ? 0 : scaledAttackDamage(active, damageBonus, next, defenderSeat);
   // The "+"/"×" modifier is SIMULATED iff the scaling reader consumed it; the
   // effect text is simulated iff a program ran it OR the scaling reader did. Only
   // the genuinely-unsimulated remainder is flagged loudly (simulator.md coverage).

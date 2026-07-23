@@ -158,9 +158,9 @@ describe("first-turn restriction (§4)", () => {
 describe("attack declaration validation", () => {
   it("rejects out-of-range, fractional and string indices (wire)", () => {
     const state = matchup("fix-wall");
-    // fix-attacker prints 5 attacks (0-4: Bite, Flame, Yawn, Rage, Fury), so 5 is
-    // the first out-of-range index.
-    for (const index of [5, -1, 1.5, "1"]) {
+    // fix-attacker prints 6 attacks (0-5: Bite, Flame, Yawn, Rage, Fury, Bounty), so
+    // 6 is the first out-of-range index.
+    for (const index of [6, -1, 1.5, "1"]) {
       expectErr(state, { type: "attack", seat: "p1", index: index as never }, "BAD_ATTACK_INDEX");
     }
   });

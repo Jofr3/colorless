@@ -197,20 +197,20 @@ describe("logFromEvents — attacks and KOs", () => {
   });
 
   it("flags a not-simulated attack effect as a system line", () => {
-    // fix-attacker's Rage now DERIVES its self-counter scaling (0.34.0), so the
-    // combined-wording witness moves to Charizard ex "Burning Darkness" — its
-    // "180+" carries both a damage modifier AND an underived Prize-scaling effect
-    // (a DIFFERENT count source no reader simulates). A Stage 2 fielded by surgery,
-    // energied for its {R}{R} cost; fix-bigbody (200 HP) survives the base 180.
+    // Both scaling readers now DERIVE (fix-attacker's Rage, 0.34.0; Charizard's
+    // Prize "+", 0.35.0), so the combined-wording witness is Entei "Blaze Ball" —
+    // its "60+" carries both a damage modifier AND an underived scaling effect (an
+    // attached-Energy count source no reader simulates). A Basic fielded by surgery,
+    // energied for its {C}{C}{C} cost; fix-bigbody (200 HP) survives the base 60.
     let state = driveSetup(6, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
-    state = setActiveFromDeck(state, "p1", "sv03-125");
-    state = attachFromDeck(state, "p1", "fix-fire-energy", 2);
+    state = setActiveFromDeck(state, "p1", "sv03-030");
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 3);
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
     const applied = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const entries = logFromEvents(applied.events, ctx(applied.state));
     const lines = texts(entries);
-    expect(lines).toContain('Burning Darkness — "+" damage and effect not simulated');
+    expect(lines).toContain('Blaze Ball — "+" damage and effect not simulated');
   });
 
   it("words a skipped damage marker WITHOUT claiming the effect was skipped", () => {

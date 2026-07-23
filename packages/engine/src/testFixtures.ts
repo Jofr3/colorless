@@ -167,6 +167,17 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Fury",
         effect: "This attack does 20 more damage for each damage counter on this Pokémon.",
       },
+      // A per-50 opponentPrizesTaken scaler (index 5) — the Prize-source twin of the
+      // Fury probe. Charizard "Burning Darkness" is the only real card on this source
+      // and always prints per 30, so an APPLY test at per ≠ 30 is the only thing that
+      // pins the fold multiplies by the CAPTURED per here (a `* 30` literal — the
+      // value a careless author would hard-code — otherwise survives; 0.35.0).
+      {
+        cost: ["Colorless"],
+        name: "Bounty",
+        damage: "40+",
+        effect: "This attack does 50 more damage for each Prize card your opponent has taken.",
+      },
     ],
   }),
   /** The M3 cast: one derivable status sentence (effects.ts) per attack, on
@@ -1157,10 +1168,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
       the EVOLVE, and the evolve rule reads `evolveFrom` against the top card's
       NAME — so what the chain is made of is exactly the part this slice does not
       test. Its printed attack rides along verbatim (an Active that cannot attack
-      is an awkward fixture); the "+" damage and its Prize-scaling effect DERIVE
-      TO NOTHING — the deriver knows a fixed set of anchored sentences and this is
-      not one — so using it is a loud ATTACK_EFFECT_SKIPPED, never an unrelated
-      effect landing inside an attach test.
+      is an awkward fixture); as of 0.35.0 "Burning Darkness" DERIVES a Prize-count
+      scaling bonus (opponentPrizesTaken), but the attach tests never DECLARE the
+      attack, so it never fires inside one.
 
       Note the card is **{D}**, not {R}: Charizard ex from Obsidian Flames is a
       DARKNESS Pokémon that attacks with Fire Energy and accelerates Basic {R}.
@@ -1181,6 +1191,29 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Burning Darkness",
         damage: "180+",
         effect: "This attack does 30 more damage for each Prize card your opponent has taken.",
+      },
+    ],
+  }),
+  /** Entei (sv03-030) — the anchor-guard witness that REPLACES Charizard once
+      "Burning Darkness" became simulated (0.35.0). "Blaze Ball" (60+, "This attack
+      does 20 more damage for each {R} Energy attached to this Pokémon.") is an
+      additive "+" whose count source — Energy attached to itself — no reader
+      simulates, so it STAYS on the loud ATTACK_EFFECT_SKIPPED path, keeping the
+      deriver-is-narrow witness the two Prize/self-counter readers would otherwise
+      leave uncovered. Verbatim vs the local D1 catalog (Basic Fire, 130 HP,
+      {C}{C}{C}, ×2 Water). */
+  "sv03-030": battler("sv03-030", {
+    name: "Entei",
+    hp: 130,
+    types: ["Fire"],
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Blaze Ball",
+        damage: "60+",
+        effect: "This attack does 20 more damage for each {R} Energy attached to this Pokémon.",
       },
     ],
   }),
@@ -1681,24 +1714,29 @@ export const SELF_DAMAGE_DECK = deckOf({
   "fix-energy": 8, // Colorless for the {C}
 });
 
-/** 0.34.0: count-scaled attack damage (the additive "+" family). fix-attacker's
-    "Rage" (base 10) and Paldean Tauros's "Raging Horns" (base 20) both scale 10
-    per damage counter on the attacker; Charizard ex "Burning Darkness" (base 180)
-    is the anchor-guard witness whose Prize-scaling "+" STAYS skipped. fix-wall (120
-    HP) survives the scaling attackers' hits and fix-bigbody (200 HP) survives
-    Charizard's 180, so a scaling test is only ever about the damage math; fix-weak
-    (60 HP, ×2 Fire) is the scaling-times-weakness defender. fix-basic-1 seeds the
-    setup Actives (the two scaling attackers are Basics fielded by surgery; Charizard
-    is a Stage 2) and the promotion bodies, and fix-fire-energy pays every cost. */
+/** 0.34.0 → 0.35.0: count-scaled attack damage (the additive "+" family), both
+    count sources. fix-attacker's "Rage" (base 10) and Paldean Tauros's "Raging
+    Horns" (base 20) scale 10 per damage counter on the attacker; Charizard ex
+    "Burning Darkness" (base 180) scales 30 per Prize the OPPONENT has taken
+    (0.35.0 — the union's second member). Entei's "Blaze Ball" (base 60) is the
+    anchor-guard witness whose count source (attached Energy) no reader simulates,
+    so its "+" STAYS skipped — replacing Charizard in that role. fix-wall (120 HP)
+    survives the self-counter attackers and fix-bigbody (200 HP) survives Entei's
+    base 60, so a scaling test is only ever about the damage math; the Charizard
+    mirror (330 HP) survives its own Prize-scaled hit; fix-weak (60 HP, ×2 Fire) is
+    the scaling-times-weakness defender. fix-basic-1 seeds the setup Actives (the
+    scaling attackers are Basics fielded by surgery; Charizard is a Stage 2) and the
+    promotion bodies, and fix-fire-energy pays every cost. */
 export const SCALED_DAMAGE_DECK = deckOf({
   "fix-attacker": 4, // Rage (index 3, base 10) — the default scaling attacker
   "sv02-028": 4, // Paldean Tauros — Raging Horns (index 0, base 20)
-  "sv03-125": 4, // Charizard ex — Burning Darkness (a DIFFERENT count source, stays skipped)
-  "fix-wall": 4, // 120 HP — survives the scaling attackers' hits here
+  "sv03-125": 4, // Charizard ex — Burning Darkness (opponentPrizesTaken, base 180); 330 HP mirror wall
+  "sv03-030": 4, // Entei — Blaze Ball (an unsimulated "+", the anchor-guard witness)
+  "fix-wall": 4, // 120 HP — survives the self-counter attackers' hits here
   "fix-weak": 4, // 60 HP, ×2 Fire — the scaling × weakness defender
-  "fix-bigbody": 4, // 200 HP — survives Charizard's 180
+  "fix-bigbody": 4, // 200 HP — survives Entei's base 60
   "fix-basic-1": 16, // Basics for setup + the bench bodies a KO promotes
-  "fix-fire-energy": 20, // pays every cost here ({C}/{R}/{F})
+  "fix-fire-energy": 16, // pays every cost here ({C}/{R}/{F}); ≥3 for Entei's {C}{C}{C}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

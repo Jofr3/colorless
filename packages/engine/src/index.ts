@@ -160,8 +160,16 @@ import type { GameState, Seat } from "./types";
     only when it applied), and the "+"/text is no longer flagged loudly for these
     cards. Charizard ex sv03-125 "Burning Darkness" (a DIFFERENT count source — the
     opponent's taken Prizes) STAYS on the ATTACK_EFFECT_SKIPPED path, the
-    anchor-guard witness proving the deriver is narrow. */
-export const engineVersion = "0.34.0";
+    anchor-guard witness proving the deriver is narrow.
+
+    0.35.0 — the count union's SECOND member: Charizard ex sv03-125 "Burning
+    Darkness" (180+, "… for each Prize card your opponent has taken") now SIMULATES,
+    folding 30 × (the opponent's TAKEN Prizes = 6 − their remaining pile) into the
+    base. `scaledAttackDamage` widened to reach the opponent's board; the
+    unsimulated-"+" witness moved to Entei sv03-030 (an attached-Energy count
+    source, still no reader). The "×"/multiply Prize family (Pecharunt ex — no
+    "more") stays loud. */
+export const engineVersion = "0.35.0";
 
 export type {
   ApplyResult,

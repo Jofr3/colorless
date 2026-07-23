@@ -10,23 +10,27 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  setPrizes,
   types,
 } from "./testFixtures";
 
-// 0.34.0 — count-scaled attack damage (the additive "+" family, self-damage-
-// counter reader).
+// 0.34.0 → 0.35.0 — count-scaled attack damage (the additive "+" family), BOTH
+// count sources.
 //
-// "This attack does N more damage for each damage counter on this Pokémon."
-// (Paldean Tauros sv02-028 "Raging Horns", fix-attacker "Rage") is now SIMULATED:
-// deriveAttackDamageBonus reads the anchored sentence, and attack.ts folds
-// N × (the attacker's OWN damage counters) into the printed base BEFORE the §8.5
-// W/R pipeline — a new DAMAGE_DEALT `scaled` field, landing at the same pre-W/R
-// step as the continuous Vitality Band bonus. The "+"/effect is no longer flagged
+// "This attack does N more damage for each <resource>." is SIMULATED for two
+// resources: the attacker's OWN damage counters (Paldean Tauros sv02-028 "Raging
+// Horns", fix-attacker "Rage") and — since 0.35.0 — the OPPONENT's taken Prizes
+// (Charizard ex sv03-125 "Burning Darkness"). deriveAttackDamageBonus reads the
+// anchored sentence, and attack.ts folds N × count into the printed base BEFORE
+// the §8.5 W/R pipeline — a DAMAGE_DEALT `scaled` field, at the same pre-W/R step
+// as the continuous Vitality Band bonus. The "+"/effect is no longer flagged
 // loudly for these cards.
 //
-// Charizard ex sv03-125 "Burning Darkness" ("… for each Prize card your opponent
-// has taken.") is a DIFFERENT count source with no reader — it STAYS on the loud
-// ATTACK_EFFECT_SKIPPED path, the anchor-guard witness that the deriver is narrow.
+// Entei sv03-030 "Blaze Ball" ("… for each {R} Energy attached to this Pokémon.")
+// is an additive "+" whose count source no reader simulates — it STAYS on the loud
+// ATTACK_EFFECT_SKIPPED path, the anchor-guard witness (replacing Charizard) that
+// the deriver is narrow. The "×"/multiply Prize family (Pecharunt — no "more")
+// likewise stays loud.
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -77,12 +81,35 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
     ).toEqual({ per: 20, count: { kind: "damageCountersOnSelf" } });
   });
 
-  it("REFUSES Charizard ex's Prize-card twin — the discrimination the slice turns on", () => {
-    // Same shape, a DIFFERENT count source (the opponent's taken Prizes), differing
-    // only in the tail: the anchored whole-sentence match is what keeps it out.
+  it("reads Charizard ex's Prize twin as opponentPrizesTaken (the second member)", () => {
+    // Same additive shape, a DIFFERENT count source (the opponent's taken Prizes),
+    // differing only in the tail — the second `count` member, landed in 0.35.0.
     expect(
       deriveAttackDamageBonus(
         "This attack does 30 more damage for each Prize card your opponent has taken.",
+      ),
+    ).toEqual({ per: 30, count: { kind: "opponentPrizesTaken" } });
+    // Not hard-coded to 30 — the per-Prize amount is captured.
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 60 more damage for each Prize card your opponent has taken.",
+      ),
+    ).toEqual({ per: 60, count: { kind: "opponentPrizesTaken" } });
+  });
+
+  it("REFUSES the '×'/multiply Prize family — 'more' is the additive tell", () => {
+    // Pecharunt ex / Annihilape print "This attack does N damage for each Prize card
+    // your opponent has taken." — NO "more". That MULTIPLIES (a printed "N×"), folding
+    // nothing into a base, so the additive reader must leave it on the loud path.
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 60 damage for each Prize card your opponent has taken.",
+      ),
+    ).toBeNull();
+    // And a count source with no reader at all (Entei's attached-Energy scaler).
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 20 more damage for each {R} Energy attached to this Pokémon.",
       ),
     ).toBeNull();
   });
@@ -102,6 +129,26 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
       "Draw a card. This attack does 10 more damage for each damage counter on this Pokémon.",
       // A real trailing clause pins `$`: dropping the end anchor would match this.
       "This attack does 10 more damage for each damage counter on this Pokémon. Then, draw a card.",
+    ]) {
+      expect(deriveAttackDamageBonus(text)).toBeNull();
+    }
+  });
+
+  it("refuses the Prize-regex near-misses — its anchors are load-bearing too", () => {
+    // The second reader's anchors and capital pinned INDEPENDENTLY of the first —
+    // dropping `^`/`$` on OPPONENT_PRIZES_SCALE must fail here, not survive because
+    // SELF_COUNTER_SCALE's own anchors happen to be tested.
+    for (const text of [
+      // Lowercase leading "this" — refused independently of the anchors (no /i).
+      "this attack does 30 more damage for each Prize card your opponent has taken.",
+      // Missing trailing period is not the whole sentence.
+      "This attack does 30 more damage for each Prize card your opponent has taken",
+      // A printed 0 adds nothing — left loud, not derived to a no-op.
+      "This attack does 0 more damage for each Prize card your opponent has taken.",
+      // Leading text with a capital "This" pins `^`.
+      "Draw a card. This attack does 30 more damage for each Prize card your opponent has taken.",
+      // A real trailing clause pins `$`.
+      "This attack does 30 more damage for each Prize card your opponent has taken. Then, draw a card.",
     ]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }
@@ -182,6 +229,51 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
   });
 
+  it("simulates Charizard ex 'Burning Darkness' — 30 per Prize the opponent has taken", () => {
+    // The opponent (p2, the defender) has taken 2 of their 6 Prizes → 4 remain, so
+    // scaled = 30 × 2 = 60 folded onto base 180 → 240. The mirror-match Charizard
+    // (330 HP) survives, keeping the §8.1 KO tail out so the math stands alone.
+    let state = matchup(8, { attacker: "sv03-125", defender: "sv03-125", energy: 2 });
+    state = setPrizes(state, "p2", 4); // 2 taken
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 60, dealt: 240 });
+  });
+
+  it("scales off the OPPONENT's Prizes, and by the CAPTURED per (not a literal 10)", () => {
+    // 4 taken by p2 (2 remain) → 30 × 4 = 120 → 300, still under the mirror's 330.
+    // Pins two mutations at once: reading the ATTACKER's own prizes (p1 has taken 0
+    // → would give base 180 alone) and a hard-coded `* 10` (would give 40, not 120).
+    let state = matchup(9, { attacker: "sv03-125", defender: "sv03-125", energy: 2 });
+    state = setPrizes(state, "p2", 2); // 4 taken
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 120, dealt: 300 });
+  });
+
+  it("omits `scaled` when the opponent has taken no Prizes", () => {
+    // Full 6 Prizes remain on p2 → 0 taken → the clause adds nothing, so `scaled`
+    // is absent and base 180 lands alone (the bonus/reduction omit-at-0 pattern).
+    const state = matchup(10, { attacker: "sv03-125", defender: "sv03-125", energy: 2 });
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const dealt = find(events, "DAMAGE_DEALT");
+    expect(dealt?.scaled).toBeUndefined();
+    expect(dealt?.dealt).toBe(180);
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+  });
+
+  it("multiplies the Prize count by the CAPTURED per — a per-50 probe (not a literal 30)", () => {
+    // Charizard is the only real opponentPrizesTaken card and always prints per 30, so
+    // an apply probe at per ≠ 30 is the only thing that pins `* bonus.per` for THIS arm
+    // — a `* 30` literal (the value most likely to be hard-coded) would give 60 here.
+    // fix-attacker's "Bounty" (index 5, base 40, per 50): p2 has taken 2 Prizes →
+    // 50 × 2 = 100 onto base 40 → 140, which fix-bigbody (200 HP) survives.
+    let state = matchup(11, { attacker: "fix-attacker", defender: "fix-bigbody", energy: 1 });
+    state = setPrizes(state, "p2", 4); // 2 taken
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 5 });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
+  });
+
   it("never mutates the state it was given (purity)", () => {
     const state = matchup(5, {
       attacker: "fix-attacker",
@@ -194,21 +286,21 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
   });
 });
 
-describe("the discrimination — Charizard ex's Prize-scaling '+' stays skipped", () => {
-  it("flags 'Burning Darkness' loudly and adds no `scaled` (a DIFFERENT count source)", () => {
-    // Charizard's "+" scales off the opponent's TAKEN Prizes, which no reader
-    // simulates — so its base 180 lands and the "+"/effect is flagged, exactly as
-    // before the slice. fix-bigbody (200 HP) survives the 180, keeping the §8.1 KO
-    // tail out of the way. Its attack is DERIVED (CHARIZARD_EX authors only the
-    // onEvolve Ability), so nothing but the deriver decides this.
-    const state = matchup(6, { attacker: "sv03-125", defender: "fix-bigbody", energy: 2 });
+describe("the discrimination — an unsimulated '+' (Entei) stays skipped", () => {
+  it("flags 'Blaze Ball' loudly and adds no `scaled` (a count source with no reader)", () => {
+    // Entei's "+" scales off {R} Energy attached to itself, which no reader
+    // simulates — so its base 60 lands and the "+"/effect is flagged, exactly as
+    // Charizard's Prize "+" was before 0.35.0. This is the anchor-guard witness that
+    // the deriver REFUSES a scaling sentence it does not read. fix-bigbody (200 HP)
+    // survives the 60, keeping the §8.1 KO tail out of the way.
+    const state = matchup(6, { attacker: "sv03-030", defender: "fix-bigbody", energy: 3 });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      attack: "Burning Darkness",
+      attack: "Blaze Ball",
       damageModifier: "+",
     });
     const dealt = find(events, "DAMAGE_DEALT");
-    expect(dealt).toMatchObject({ base: 180, dealt: 180 });
+    expect(dealt).toMatchObject({ base: 60, dealt: 60 });
     expect(dealt?.scaled).toBeUndefined();
   });
 });
