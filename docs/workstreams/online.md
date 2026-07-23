@@ -63,7 +63,45 @@ online drive ONE tested drag router / drop gate (the placement.test.ts lockstep 
 `waitingOn === "you"`); `OnlineMatch` now wires drags → `moveToAction` → `sendAction`, pass →
 `endTurn`, and the shared placement predicate. 1719 → 1730 tests, `bun run check` green.
 
-**Match-record lifecycle (locked this increment):** the persisted match outlives EXACTLY the
+**Increment 2b-i — DONE:** the attack + KO loop (engine 0.40.0). The online match now plays TO A
+WIN with the fixed basic decks. `RedactedPhase.turn:action` gained an **`attacks`** field — a new
+`RedactedAttack` (`index`/`name`/`cost`/`damage`/`playable`), the `@luminous/schema` wire type. The
+engine's `redactPhase` fills it via a new **`redactedAttacksOf(state, viewerSeat, turnSeat)`**: the
+viewer's OWN Active's printed attacks, each with a server-computed **`playable`** that folds §8.2
+payability (under the Stadium's continuous cost, `effectiveAttackCost`+`providedEnergy`+`costMet`),
+the §4 first-turn ban and the §12 immobilize gate — EXACTLY the local `TurnPanel`'s `disabled`, so
+the client adds no engine logic. Populated ONLY for the turn owner (the opponent's view of the same
+`turn:action` carries `[]`), own Active only (public), so nothing hidden leaves the DO. The DO's
+`SUPPORTED_MATCH_ACTIONS` grew by **`attack`/`takePrizes`/`promote`** (with the pure-damage fixed
+decks these never reach `effect:choose`, so no soft-lock; `resolveEffect`/`retreat`/`useAbility` stay
+blocked). `OnlineHud` gained an **AttackPanel** (bottom-right, mirroring the local `TurnPanel`) and
+the **ko:takePrizes / ko:promote dialogs** (centered overlays) — the ko dialogs need NO new wire data
+(count rides the phase, own prizes-count/bench ride the board). `EnergyDots` extracted to a shared
+`src/features/game/EnergyDots.tsx` (GameHud + OnlineHud, one source). The `turn:action`
+round-trip-equality (`projectionFromRedacted` ≡ `projectGameState`) still holds — `attacks` never
+enters the `GameProjection` (`decisionFromPhase` keeps `turn:action`→null). engine 0.40.0 (a
+transport/read surface, not a rule change); 1731 → **1740** tests, `bun run check` green.
+
+**Review (1 read-only adversarial reviewer): NO HIGH, NO MED** — the server-side payability is a
+faithful mirror of the local `TurnPanel`'s `disabled` (same `providedEnergy`/`effectiveAttackCost`/
+`costMet` + `state.turn===1` + `isImmobilized` + `attacksOf` indexing), leaks nothing (turn-owner +
+own-Active + viewer-public data), the dispatched action shapes match the engine handlers, the
+prize/bench indices align 1:1 with the index-stable redaction, and the round-trip equality holds.
+**FIVE LOWs — two FIXED, three RECORDED:** (FIXED) an orphaned EnergyDots doc comment left in
+GameHud; (FIXED) the ko `Dialog` is now a native `<dialog>` (top-layer + focus-trap, matching the
+local HudDialog). RECORDED (deliberate):
+(L1) `OnlineHud`'s TakePrizesDialog/PromoteDialog/AttackPanel restate GameHud's PrizeDialog/
+PromoteDialog/TurnPanel markup — the SAME "restate the redaction per surface, each independently
+tested" choice as the board redactor (D60); the two read different shapes (full `GameState` vs the
+redacted wire), so only the shape-neutral `EnergyDots` was extracted. If a third consumer or a
+picker-behavior change appears, extract the presentational grid/rows then. (L2) `AttackPanel` shows
+only the §4 first-turn note, not the §12 immobilize/confusion notes the local `TurnPanel` renders —
+harmless now (the fixed pure-damage decks never inflict status) and a natural part of 2b-ii (the
+retreat/immobilize surface), where the wire already carries `battle.conditions`. (L3) the DO's
+allow-`attack` no-soft-lock guarantee is plan-ordering, not structural — see the SEQUENCING CONSTRAINT
+in `match.ts` (real decks/increment 3 must not precede the 2b-iii effect dialog).
+
+**Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
 `removeGuest` does: a guest's `bye` or the host's kick). Without this, a rematch in the same
@@ -116,18 +154,29 @@ until 1c broadcasts the redacted view.
   `{kind:"action"}` client frame, the DO's seat-bound `applyMatchAction` + re-broadcast, the
   redacted `phase`, the shared `moveToAction`/`placementPredicateFor`, `useLobby.sendAction`,
   `OnlineHud` + interactive `OnlineMatch`. Setup + basic turn drags + pass are playable online.
-- **2b — the turn:action HUD + the ko/effect dialogs (NEXT).** The heavy panels: attacks
-  (`attacksOf`/`effectAttackCost`/`costMet`), abilities, non-Stadium trainers, retreat — all read the
-  FULL GameState (`GameHud.tsx` TurnPanel; `programPlayable`/`conditionHolds` — `index.ts:288-315`),
-  unsafe over a projection. Two sub-problems: (1) put enough on the wire for the online HUD to know
-  what's PLAYABLE (attack list + payability, retreat cost, ability/trainer options) without leaking,
-  and (2) the ko:takePrizes / ko:promote / effect:choose DIALOGS — the first needs the redacted
-  **effect PROMPT** 2a stripped (`RedactedPhase.effect:choose` carries no prompt; `redactPhase` in
-  redact.ts + `decisionFromPhase` in projection.ts are the seams; a prompt built from the
-  CONTROLLER's private zones must stay controller-only). Also: per-RECIPIENT EVENT redaction
-  (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal hidden uids — `events.ts:8`) + an event→log stream for
-  the online board (`logFromEvents` is per-viewer already), and a rejection pill (the DO drops a
-  rejected action silently today).
+- **2b — the turn:action HUD + the ko/effect dialogs. SPLIT** (2b was too big for one increment —
+  the heavy panels read the FULL GameState, unsafe over a projection). Sub-slices:
+  - **2b-i — the attack + KO loop. DONE** (see Status above): the online match now plays TO A WIN with
+    the fixed basic decks. `RedactedPhase.turn:action` gained an **`attacks`** list (a new
+    `RedactedAttack` — `index`/`name`/`cost`/`damage`/`playable`), computed server-side in
+    `redactedAttacksOf` (redact.ts) with §8.2 payability + the §4 ban + §12 immobilize folded into one
+    `playable` flag — populated ONLY for the turn owner (opponent gets `[]`), own Active only, so no
+    leak. The DO allowlist (`SUPPORTED_MATCH_ACTIONS`) grew by `attack`/`takePrizes`/`promote`.
+    `OnlineHud` gained an AttackPanel + the ko:takePrizes / ko:promote dialogs (the ko dialogs need NO
+    new wire data — count is on the phase, own prizes/bench on the board). `EnergyDots` extracted to a
+    shared module (GameHud + OnlineHud). Pure-damage fixed decks never reach effect:choose, so no
+    soft-lock.
+  - **2b-ii+ — the remaining turn:action HUD (NEXT).** retreat (needs the retreat cost on the wire),
+    abilities, non-Stadium trainers — all read the FULL GameState (`GameHud.tsx` TurnPanel;
+    `programPlayable`/`conditionHolds` — `index.ts:288-315`). Put enough on the wire (retreat cost,
+    ability/trainer options + payability) without leaking.
+  - **2b-iii — the effect:choose DIALOG + prompt.** Needs the redacted **effect PROMPT** 2a stripped
+    (`RedactedPhase.effect:choose` carries no prompt; `redactPhase` in redact.ts + `decisionFromPhase`
+    in projection.ts are the seams; a prompt built from the CONTROLLER's private zones must stay
+    controller-only). Blocks non-basic decks with effect attacks — until then `resolveEffect` stays
+    off the allowlist. Also: per-RECIPIENT EVENT redaction (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal
+    hidden uids — `events.ts:8`) + an event→log stream for the online board (`logFromEvents` is
+    per-viewer already), and a rejection pill (the DO drops a rejected action silently today).
 - **3:** real deck selection (resolve `deckId`→60 ids server-side), reconnect/timeouts,
   concede/rematch, spectate, and surfacing a match-start FAILURE to players (the load-failure
   wedge below).

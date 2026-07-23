@@ -125,11 +125,33 @@ export const redactedBoardSchema = z.object({
 });
 export type RedactedBoard = z.infer<typeof redactedBoardSchema>;
 
+/** One of the viewer's Active's printed attacks, with server-computed
+    payability — the online turn HUD (increment 2b) renders a button per entry
+    without ever reading the full state the local HUD does (attacksOf / costMet /
+    providedEnergy over the raw board). `playable` folds §8.2 payability (under
+    the Stadium's continuous cost effects), the §4 first-turn attack ban and the
+    §12 immobilize gate exactly as the local TurnPanel's `disabled` — so the
+    client needs no engine logic to know what it may attack with. `cost` is the
+    PRINTED cost (for the energy dots); `damage` the printed display string (a
+    number or a "60+"/"20×" modifier), null when the attack prints no damage.
+    Only the viewer's OWN Active's attacks ever appear (their own public table
+    facts), and only while it is their `turn:action`. */
+export const redactedAttackSchema = z.object({
+  /** Index into the Active's printed attacks — the `attack` action's discriminant. */
+  index: z.number(),
+  name: z.string(),
+  cost: z.array(z.string()),
+  damage: z.string().nullable(),
+  playable: z.boolean(),
+});
+export type RedactedAttack = z.infer<typeof redactedAttackSchema>;
+
 /** The redacted engine `Phase` — the discriminant the client routes ACTIONS
     on (P4 increment 2). Carries the kind plus only the non-sensitive fields the
     acting client needs: setup:drawExtra the RECIPIENT's own owed compensation
-    count, setup:place the viewer-relative ready flags, the ko interrupts their
-    counts. The mid-effect `effect:choose` carries NO prompt (increment 2b
+    count, setup:place the viewer-relative ready flags, turn:action the viewer's
+    OWN attack options (empty for the non-acting viewer), the ko interrupts their
+    counts. The mid-effect `effect:choose` carries NO prompt (a later 2b slice
     designs the redacted prompt — a raw prompt is built from the controller's
     private zones). `activePlayer`/`waitingOn` (server-computed via phaseViewOf,
     which reads the pending queue) still say WHO acts; this says WHAT kind. */
@@ -140,7 +162,7 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
     kind: z.literal("setup:place"),
     ready: z.object({ you: z.boolean(), opponent: z.boolean() }),
   }),
-  z.object({ kind: z.literal("turn:action") }),
+  z.object({ kind: z.literal("turn:action"), attacks: z.array(redactedAttackSchema) }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),
   z.object({ kind: z.literal("effect:choose") }),

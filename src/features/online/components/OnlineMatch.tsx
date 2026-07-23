@@ -9,17 +9,18 @@ import type { CardMoveRequest, TurnInfo } from "../../playmat/types";
 import { OnlineHud } from "./OnlineHud";
 
 // The online match board (P4). Renders THIS client's server-redacted snapshot
-// through the same PlaymatView the local /play page drives, and — from
-// increment 2a — sends the drags/buttons that translate to legal actions back
-// to the authoritative Durable Object (`onAction`). The board only ever reflects
-// state the server accepted and re-broadcast, so there is no optimism to
-// reconcile: a rejected drag simply never produces a new snapshot.
+// through the same PlaymatView the local /play page drives, and sends the
+// drags/buttons that translate to legal actions back to the authoritative
+// Durable Object (`onAction`). The board only ever reflects state the server
+// accepted and re-broadcast, so there is no optimism to reconcile: a rejected
+// drag simply never produces a new snapshot.
 //
-// SCOPE 2a: setup (chooseFirst / drawExtra / place → ready, via OnlineHud +
-// setup drags) and the basic turn drags moveToAction already routes (attach
-// energy, bench a Basic, evolve, attach a Tool, play a Stadium) + pass. Attacks,
-// abilities, non-Stadium trainers, retreat and the ko:*/effect dialogs read the
-// full GameState and land in 2b.
+// SCOPE (through 2b-i): setup (chooseFirst / drawExtra / place → ready, via
+// OnlineHud + setup drags), the basic turn drags moveToAction routes (attach
+// energy, bench a Basic, evolve, attach a Tool, play a Stadium), pass, and the
+// attack + KO loop (attack off the redacted attack list, then ko:takePrizes /
+// ko:promote). Retreat, abilities, non-Stadium trainers and the effect:choose
+// dialogs read state the wire still withholds and land in later 2b slices.
 
 const NO_LOG: never[] = [];
 

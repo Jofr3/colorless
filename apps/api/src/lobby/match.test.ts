@@ -149,16 +149,25 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     expect(applyMatchAction(record, winner, { type: "not-an-action" })).toBeNull();
   });
 
-  it("rejects action types outside the 2a scope (no soft-lock via crafted frames)", () => {
+  it("rejects action types outside the driveable scope (no soft-lock via crafted frames)", () => {
     const { record, winner } = freshRecord();
-    // A crafted attack/ability/decision frame is refused BEFORE the engine even
-    // sees it, so the match can't reach a ko:*/effect phase the 2a HUD can't drive.
-    for (const type of ["attack", "retreat", "useAbility", "takePrizes", "promote", "resolveEffect"]) {
+    // A crafted retreat/ability/effect frame is refused BEFORE the engine even
+    // sees it, so the match can't reach a phase the online HUD can't drive.
+    for (const type of ["retreat", "useAbility", "resolveEffect"]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(false);
       expect(applyMatchAction(record, winner, { type, seat: winner })).toBeNull();
     }
-    // The setup + drag + pass actions the 2a client actually sends ARE supported.
-    for (const type of ["chooseFirstPlayer", "setupPlaceActive", "attachEnergy", "endTurn"]) {
+    // The setup + drag + pass + attack/KO actions the client actually sends ARE
+    // supported (2b-i grew the set with attack / takePrizes / promote).
+    for (const type of [
+      "chooseFirstPlayer",
+      "setupPlaceActive",
+      "attachEnergy",
+      "attack",
+      "takePrizes",
+      "promote",
+      "endTurn",
+    ]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(true);
     }
   });

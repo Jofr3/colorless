@@ -21,6 +21,7 @@
 // prompt is dropped (increment 2 designs the redacted prompt).
 
 import type {
+  RedactedAttack,
   RedactedCard,
   RedactedGame,
   RedactedInPlay,
@@ -30,11 +31,12 @@ import type {
   Viewer,
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
-import { cardOfUid, topUid } from "./cards";
-import { effectiveMaxHp } from "./continuous";
+import { costMet } from "./attack";
+import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
+import { effectiveAttackCost, effectiveMaxHp, providedEnergy } from "./continuous";
 import { inSetup, phaseViewOf } from "./phaseView";
 import type { GameOutcome, GameState, InPlayPokemon, Seat, SpecialConditions } from "./types";
-import { otherSeat } from "./types";
+import { isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
     snapshot out. Pure — nothing aliases the input state. */
@@ -63,8 +65,9 @@ export function redactGame(state: GameState, viewerSeat: Seat): RedactedGame {
 
 /** The redacted phase — the discriminant the client routes ACTIONS on. Carries
     the kind plus only non-sensitive fields (setup:drawExtra the viewer's OWN
-    owed compensation count, setup:place the viewer-relative ready flags, the ko
-    interrupts their counts); the effect:choose prompt is dropped. */
+    owed compensation count, setup:place the viewer-relative ready flags,
+    turn:action the viewer's OWN attack options, the ko interrupts their counts);
+    the effect:choose prompt is dropped. */
 function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
   const phase = state.phase;
   switch (phase.kind) {
@@ -78,7 +81,9 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
         ready: { you: phase.ready[viewerSeat], opponent: phase.ready[otherSeat(viewerSeat)] },
       };
     case "turn:action":
-      return { kind: "turn:action" };
+      // turn:action's actor is phase.seat (phaseView) — only they get an attack
+      // list; the opponent's view of the same phase carries none.
+      return { kind: "turn:action", attacks: redactedAttacksOf(state, viewerSeat, phase.seat) };
     case "ko:takePrizes":
       return { kind: "ko:takePrizes", count: phase.count };
     case "ko:promote":
@@ -88,6 +93,33 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
     case "gameOver":
       return { kind: "gameOver" };
   }
+}
+
+/** The acting viewer's Active's attacks with server-computed payability, for the
+    online turn HUD — the opponent's view of the same turn gets [] (only the turn
+    owner may attack). Mirrors GameHud's TurnPanel `disabled` on the full state
+    the wire deliberately withholds: §8.2 payability under the Stadium's
+    continuous cost effects (effectiveAttackCost + providedEnergy), the §4
+    first-turn ban, and the §12 immobilize gate — folded into one `playable`
+    boolean so the client needs no engine logic. Own Active only (public), so no
+    hidden information leaves the DO. */
+function redactedAttacksOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedAttack[] {
+  if (viewerSeat !== turnSeat) return [];
+  const active = state.players[viewerSeat].active;
+  if (active === null) return [];
+  const card = topCardOf(state, active);
+  if (card === undefined) return [];
+  const provided = providedEnergy(state, active);
+  // §4 — turn 1 is by construction the going-first player's turn (the same
+  // check the local TurnPanel makes); §12 asleep/paralyzed blocks attacking.
+  const banned = state.turn === 1 || isImmobilized(active.conditions);
+  return attacksOf(card).map((attack, index) => ({
+    index,
+    name: attack.name,
+    cost: [...(attack.cost ?? [])],
+    damage: attack.damage === undefined ? null : String(attack.damage),
+    playable: !banned && costMet(effectiveAttackCost(state, active, attack.cost ?? []), provided),
+  }));
 }
 
 /** How much of a side the viewer may see. The two redactions are independent:

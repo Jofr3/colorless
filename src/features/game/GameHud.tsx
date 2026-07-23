@@ -7,7 +7,7 @@
 // enforces it ONCE, at its phase switch — the panels never re-check it.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { Attack, BasicEnergyType, Card } from "@luminous/schema";
+import type { Attack, Card } from "@luminous/schema";
 import type {
   EffectPrompt,
   GameAction,
@@ -36,7 +36,6 @@ import {
   topCardOf,
   topUid,
 } from "@luminous/engine";
-import { ENERGY_COLORS } from "../../lib/energyPalette";
 import {
   GLASS_ACCENT_BUTTON,
   GLASS_DIALOG_GHOST_BUTTON,
@@ -44,6 +43,7 @@ import {
   GLASS_NEUTRAL_BUTTON,
   GLASS_PANEL,
 } from "../../lib/glass";
+import { EnergyDots } from "./EnergyDots";
 import { STATUS_LABELS } from "./logFromEvents";
 import type { GameProjection } from "./projection";
 
@@ -245,51 +245,6 @@ function refName(game: GameState, ref: PokemonRef): string {
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
   if (pokemon == null) return "a Pokémon";
   return topCardOf(game, pokemon)?.name ?? "a Pokémon";
-}
-
-/** §6.1 energy-symbol dot tints, from the shared app palette (one "Fire red"
-    across builder + HUD). Keyed by the printed COST symbols: every basic
-    energy — Fairy included, old prints still show it in costs — plus
-    Colorless as the neutral cost. Typing the keys off the schema vocabulary
-    makes a schema change a compile error here, not a silent fallback dot. */
-type CostSymbol = BasicEnergyType | "Colorless";
-const ENERGY_DOT_COLORS: Record<CostSymbol, string> = {
-  Grass: ENERGY_COLORS.Grass,
-  Fire: ENERGY_COLORS.Fire,
-  Water: ENERGY_COLORS.Water,
-  Lightning: ENERGY_COLORS.Lightning,
-  Psychic: ENERGY_COLORS.Psychic,
-  Fighting: ENERGY_COLORS.Fighting,
-  Darkness: ENERGY_COLORS.Darkness,
-  Metal: ENERGY_COLORS.Metal,
-  Fairy: ENERGY_COLORS.Fairy,
-  Colorless: ENERGY_COLORS.Colorless,
-};
-
-/** Cost symbols arrive as free strings (schema `attack.cost`); an unknown
-    one (future symbol, bad data) falls back to the neutral Colorless tint. */
-function dotColor(symbol: string): string {
-  return Object.hasOwn(ENERGY_DOT_COLORS, symbol)
-    ? ENERGY_DOT_COLORS[symbol as CostSymbol]
-    : ENERGY_COLORS.Colorless;
-}
-
-function EnergyDots({ cost }: { cost: readonly string[] }) {
-  if (cost.length === 0) {
-    return <span className="text-[10px] uppercase tracking-wide text-white/40">free</span>;
-  }
-  return (
-    <span className="flex items-center gap-1" aria-label={`cost: ${cost.join(", ")}`}>
-      {cost.map((symbol, index) => (
-        <span
-          key={index}
-          title={symbol}
-          style={{ backgroundColor: dotColor(symbol) }}
-          className="h-2.5 w-2.5 rounded-full ring-1 ring-inset ring-black/30"
-        />
-      ))}
-    </span>
-  );
 }
 
 /** Floating glass panel for the in-flow phase prompts (not the modals). */

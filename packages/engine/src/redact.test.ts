@@ -9,6 +9,8 @@ import { EMPTY_CARD_ID, HIDDEN_CARD_ID, HIDDEN_CARD_NAME, type RedactedGame } fr
 import { redactGame } from "./redact";
 import {
   MIXED_DECK,
+  attachFromDeck,
+  deckOf,
   driveSetup,
   handUid,
   mustApply,
@@ -270,8 +272,9 @@ describe("redactGame — phase-derived view (viewer-relative)", () => {
 });
 
 describe("redactGame — the redacted phase (the action-routing discriminant)", () => {
-  it("carries turn:action while a turn runs", () => {
-    expect(redactGame(turnOneState(), "p1").phase).toEqual({ kind: "turn:action" });
+  it("carries turn:action while a turn runs (no attacks for an attackless Active)", () => {
+    // turnOneState's Actives are fix-basic-1 — a body with no printed attacks.
+    expect(redactGame(turnOneState(), "p1").phase).toEqual({ kind: "turn:action", attacks: [] });
   });
 
   it("carries setup:place with VIEWER-RELATIVE ready flags", () => {
@@ -300,6 +303,75 @@ describe("redactGame — the redacted phase (the action-routing discriminant)", 
       phase: { kind: "gameOver", outcome: { result: "win", winner: "p1", reason: "prizesTaken" } },
     };
     expect(redactGame(state, "p1").phase).toEqual({ kind: "gameOver" });
+  });
+});
+
+// The online turn HUD (increment 2b-i) renders attack buttons off the redacted
+// phase, so the redactor computes payability server-side over the full state the
+// wire withholds. These pin that computation the way GameHud's TurnPanel does.
+describe("redactGame — turn:action attack options (the online HUD's playability)", () => {
+  const ATTACKER_DECK = deckOf({
+    "fix-attacker": 30,
+    "fix-fire-energy": 20,
+    "fix-water-energy": 10,
+  });
+  const DEFENDER_DECK = deckOf({ "fix-wall": 40, "fix-water-energy": 20 });
+  // Seed borrowed from attack.test.ts: no mulligans for this pair, both actives
+  // in the opening hands.
+  const ATTACK_SEED = 11;
+
+  /** p1's fix-attacker Active with `fire` Fire energy attached; `advance` runs
+      the two end-turns that carry play to p1's turn 3 (past the §4 ban). */
+  function attackerBoard(fire: number, advance: boolean): GameState {
+    let state = driveSetup(
+      ATTACK_SEED,
+      { p1: ATTACKER_DECK, p2: DEFENDER_DECK },
+      { first: "p1", active: { p1: "fix-attacker", p2: "fix-wall" } },
+    );
+    if (fire > 0) state = attachFromDeck(state, "p1", "fix-fire-energy", fire);
+    if (advance) {
+      state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+      state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    }
+    return state;
+  }
+
+  it("lists the Active's attacks with per-attack payability (§8.2)", () => {
+    // One Fire energy on turn 3: the Colorless-cost attacks are payable, the
+    // two-symbol Flame is not, the costless Yawn always is.
+    const phase = redactGame(attackerBoard(1, true), "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.attacks).toEqual([
+      { index: 0, name: "Bite", cost: ["Colorless"], damage: "30", playable: true },
+      { index: 1, name: "Flame", cost: ["Fire", "Colorless"], damage: "60", playable: false },
+      { index: 2, name: "Yawn", cost: [], damage: null, playable: true },
+      { index: 3, name: "Rage", cost: ["Colorless"], damage: "10+", playable: true },
+      { index: 4, name: "Fury", cost: ["Colorless"], damage: null, playable: true },
+      { index: 5, name: "Bounty", cost: ["Colorless"], damage: "40+", playable: true },
+    ]);
+  });
+
+  it("gives the NON-acting viewer no attack list (only the turn owner may attack)", () => {
+    // p1's turn 3; p2 sees the same turn:action phase but carries no attacks.
+    const phase = redactGame(attackerBoard(1, true), "p2").phase;
+    expect(phase).toEqual({ kind: "turn:action", attacks: [] });
+  });
+
+  it("marks every attack unplayable on the §4 first turn, even a payable one", () => {
+    // Turn 1 with a Fire energy already attached: Bite would be payable, but the
+    // first-turn ban folds into `playable` for the whole list.
+    const phase = redactGame(attackerBoard(1, false), "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.attacks.every((a) => !a.playable)).toBe(true);
+    // The turn counter confirms this is the going-first player's first turn.
+    expect(redactGame(attackerBoard(1, false), "p1").turn).toBe(1);
+  });
+
+  it("marks every attack unplayable while the Active is immobilized (§12)", () => {
+    const asleep = setConditions(attackerBoard(1, true), "p1", { rotation: "asleep" });
+    const phase = redactGame(asleep, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.attacks.every((a) => !a.playable)).toBe(true);
   });
 });
 
