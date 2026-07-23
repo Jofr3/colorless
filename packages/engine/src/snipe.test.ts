@@ -261,7 +261,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
     // A PADDED pick is the shape that would defeat the all-or-nothing rule, and
     // it is the membership check — not the floor — that has to stop it: two
     // distinct refs satisfy min and max, but one of them is the opponent's
-    // ACTIVE, which `placeSnipeCounters` would silently drop, leaving a player
+    // ACTIVE, which `placeSnipe` would silently drop, leaving a player
     // who picked "1 of 2" after all.
     expectErr(
       parked,

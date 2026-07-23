@@ -36,7 +36,7 @@ import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
-import { PRIZE_COUNT, isImmobilized, otherSeat, withActive, withSide } from "./types";
+import { isImmobilized, otherSeat, takenPrizes, withActive, withSide } from "./types";
 
 // The attack step (§8) and the two KO-resolution decisions it can park on
 // (§8.1). Declaring an attack ends the turn (§5.3), so every path out of
@@ -98,11 +98,9 @@ function scaledAttackDamage(
       // lands in tens.
       return Math.floor(attacker.damage / 10) * bonus.per;
     case "opponentPrizesTaken":
-      // Prizes the opponent has TAKEN = 6 − what remains in their pile: each
-      // player draws from their OWN Prizes on a KO (§8.1), so the count shrinks as
-      // they take. Read at declaration, before this attack's own KOs award any
-      // Prize.
-      return (PRIZE_COUNT - state.players[defenderSeat].prizes.length) * bonus.per;
+      // Prizes the opponent has TAKEN (6 − their remaining pile, §8.1), read at
+      // declaration before this attack's own KOs award any Prize.
+      return takenPrizes(state, defenderSeat) * bonus.per;
   }
 }
 

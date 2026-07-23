@@ -178,8 +178,21 @@ import type { GameState, Seat } from "./types";
     printed "N×" base is the per-unit, so it is DROPPED and `per × count` is the
     WHOLE damage (count 0 → 0 damage), where the additive family adds `per × count`
     onto a printed base. Wo-Chien ex (benched-target) and Chien-Pao ex
-    (discarded-Energy count) stay loud, the anchor-guard witnesses. */
-export const engineVersion = "0.36.0";
+    (discarded-Energy count) stay loud, the anchor-guard witnesses.
+
+    0.37.0 — the "×"/multiply family's benched-TARGET sibling: Wo-Chien ex sv02-027
+    "Covetous Ivy" ("This attack does 60 damage to 1 of your opponent's Benched
+    Pokémon for each Prize card your opponent has taken.") now SIMULATES. Its target
+    is one CHOSEN Benched Pokémon rather than the Defender, so it is NOT the pre-W/R
+    Defender fold (D56) but a `damageChosen` op — the put-counter snipe (Hawlucha /
+    Meowscarada) extended with `deals` (ATTACK DAMAGE, a DAMAGE_DEALT with the
+    benched reduction passive, not a flat placed counter) and `perTakenPrize` (the
+    amount is `60 × the opponent's taken Prizes`, read from state in the interpreter;
+    0 taken → no damage and no pick). The "6 − remaining" Prize formula is now the
+    shared `takenPrizes` helper (types.ts), used by both this and the D55/D56 fold.
+    Chien-Pao ex "Hail Blade" (a DISCARDED-Energy count, and a PRE-damage park) stays
+    loud, the remaining "×" sibling. */
+export const engineVersion = "0.37.0";
 
 export type {
   ApplyResult,

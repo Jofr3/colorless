@@ -1273,6 +1273,49 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Wo-Chien ex (sv02-027) — the "×"/multiply family's benched-TARGET sibling
+      (0.37.0): "Covetous Ivy" ({G}{G}{C}, no `damage` field) does 60 × (the
+      opponent's TAKEN Prizes) to 1 CHOSEN Benched Pokémon, dealt as attack damage
+      with NO Weakness/Resistance (§8.5, Benched) — a `damageChosen` op (count 1,
+      `deals` + `perTakenPrize`), NOT the pre-W/R Defender fold Pecharunt uses.
+      Its second attack "Forest Blast" ({G}{G}{G}{C}, 220) is a plain hit, kept so
+      the card's real attack list is its own. A Basic. Verbatim vs the local D1
+      catalog (230 HP, Grass, retreat 4, ×2 Fire). */
+  "sv02-027": battler("sv02-027", {
+    name: "Wo-Chien ex",
+    hp: 230,
+    types: ["Grass"],
+    retreat: 4,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Grass", "Grass", "Colorless"],
+        name: "Covetous Ivy",
+        effect:
+          "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      { cost: ["Grass", "Grass", "Grass", "Colorless"], name: "Forest Blast", damage: 220 },
+    ],
+  }),
+  /** FIXTURE — a per-40 benched-snipe-scaled probe. Wo-Chien is the only real card
+      on this reader and always prints per 60, so an APPLY test at per ≠ 60 is the
+      only thing that pins the interpreter multiplies the CAPTURED `amount` (not a
+      hard-coded 60) — the false-coverage the "×"/multiply and additive families
+      each closed with a synthetic probe. "Bramble" carries the derived text
+      verbatim at 40, so a character change stops the derivation and the test. */
+  "fix-bramble": battler("fix-bramble", {
+    hp: 120,
+    types: ["Grass"],
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Bramble",
+        effect:
+          "This attack does 40 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
+      },
+    ],
+  }),
   /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
       of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
       poisons your own Active if one landed there. */
@@ -1812,6 +1855,24 @@ export const MULTIPLY_DAMAGE_DECK = deckOf({
   "fix-basic-1": 16, // Basics for setup + the bench bodies a KO promotes
   "fix-dark-energy": 16, // pays Pecharunt's {D}{D}
   "fix-fighting-energy": 16, // pays Rage Fist's {F}
+});
+
+/** 0.36.0 → 0.37.0: the "×"/multiply family's benched-TARGET sibling — Wo-Chien ex
+    sv02-027 "Covetous Ivy" does 60 × (the opponent's TAKEN Prizes) to 1 CHOSEN
+    Benched Pokémon (a `damageChosen` op, `deals` + `perTakenPrize`). fix-grass-energy
+    pays {G}{G}{C} (Grass covers the {C} too). The opponent's Bench holds the targets:
+    fix-bigbody (200 HP) survives the scaled hit so the damage math stands alone,
+    fix-victim (30 HP) is the body a scaled hit KOs through the attack epilogue, and
+    fix-basic-1 fills the Bench so the count-1 pick is a real choice. fix-bramble is
+    the per-40 probe (a body fielded as the ATTACKER) pinning the CAPTURED amount. */
+export const COVETOUS_IVY_DECK = deckOf({
+  "sv02-027": 4, // Wo-Chien ex — Covetous Ivy (opponentPrizesTaken, per 60, benched)
+  "fix-bramble": 4, // the per-40 benched-snipe probe (attacker)
+  "fix-bigbody": 6, // 200 HP — a benched target that survives the scaled hit
+  "fix-victim": 4, // 30 HP — a benched target a scaled hit KOs
+  "sv03-174": 2, // Bouffalant — "Bouffer" (−20 after W/R): the benched reduction target
+  "fix-basic-1": 20, // setup Actives + Bench filler so the count-1 pick is real
+  "fix-grass-energy": 20, // pays Covetous Ivy's {G}{G}{C} and Bramble's {C}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

@@ -3990,6 +3990,72 @@ Ability OMITTED (unexercised, no registry row)".
 
 See D56.
 
+## P3-M5 build session #42 (2026-07-23) — the "×" family's benched-target sibling (D57)
+
+The last of the four "for each Prize card your opponent has taken" cards — Wo-Chien ex sv02-027
+"Covetous Ivy" — and a genuinely new mechanism (not just a data row). engineVersion 0.36.0 →
+**0.37.0**; 1661 → **1673** tests.
+
+### Why it is NOT the D56 fold
+Charizard/Pecharunt/Annihilape scale the damage to the DEFENDER (a pre-W/R fold in attack.ts).
+Wo-Chien's damage goes to **one CHOSEN Benched** Pokémon instead — a targeted snipe, not the
+main hit — so it derives to a **`damageChosen`** op that runs in the effect program, NOT the
+scaling fold. The `damageChosen` op (the Hawlucha / Meowscarada put-counter snipe) already owns
+the "choose N of the opponent's Bench" park (count-1, mandatory here), so it was extended rather
+than duplicated:
+
+- **`deals`** — the hit is ATTACK DAMAGE: emit `DAMAGE_DEALT` and apply the benched reduction
+  passive, exactly `spreadDamage`'s model. The default snipe (no `deals`) emits a flat
+  `COUNTERS_PLACED` counter, which reduction does NOT touch. Either way a Benched target takes
+  no Weakness/Resistance (§8.5).
+- **`perTakenPrize`** — the effective amount is `amount × the opponent's TAKEN Prizes`, computed
+  in the interpreter's new **`snipeAmount(op, state, ctx)`** at the run site AND the pick. The
+  two are provably equal: nothing takes a prize in the `effect:choose` window, and this attack's
+  own KOs defer to `finishAttack`. 0 taken → amount 0 → the `amount <= 0` guard returns a no-op
+  (no park, no event; the epilogue still ends the turn).
+
+### The derive + the shared helper
+`BENCHED_SNIPE_TAKEN_PRIZES` (effects.ts): `^This attack does (\d+) damage to 1 of your
+opponent's Benched Pokémon for each Prize card your opponent has taken\.( …W/R clarifier…)?$`.
+The "**1 of**" vs `SPREAD_EACH_BENCH`'s "**each of**" is the whole distinction; the optional
+W/R-reminder tail is the spread family's. The "6 − remaining" Prize formula moved to a shared
+**`takenPrizes(state, seat)`** in types.ts, now called by BOTH `scaledAttackDamage` (the D55/D56
+fold) and `snipeAmount` — the one formula they would otherwise duplicate.
+
+### Narrowness (the same catalog proof)
+Of the ~20 catalog attacks printing "to 1 of … Benched Pokémon", the regex matches ONLY Wo-Chien.
+Every other is a DIFFERENT shape and stays loud — chiefly the flat **"This attack ALSO does N
+damage to 1 of your opponent's Benched Pokémon"** RIDER (Bellibolt, Miraidon, Palafin, Jumpluff,
+Pawmot, Dartrix, Orthworm, …), a secondary snipe AFTER the main damage with no Prize scaling.
+That is a whole untouched family and the high-yield next step: the SAME op minus `perTakenPrize`,
+behind a "This attack also does …" derive.
+
+### Web — nothing
+A `DAMAGE_DEALT` on a benched uid renders generically (logFromEvents keys off seat/uid), exactly
+as `spreadDamage`'s benched hits already do. No projection/redaction change.
+
+### Review (1 read-only adversarial reviewer) — NO HIGH
+Recompute-at-resolve safety, the 0-guard completeness, `deals`/`spreadDamage` parity, the
+benched-KO-through-`finishAttack` turn-END (distinct from the Ability snipe's `resolveMidTurnKnockOuts`
+resume), regex narrowness, and the `takenPrizes` refactor's value-identity all confirmed; the
+Hawlucha/Meowscarada put-counter path is unbroken by the `placeSnipe` rename (`op.deals`
+undefined → false).
+
+**ONE MED false-coverage FOUND AND FIXED, plus 2 LOWs:** the "reduction passive" test benched a
+passive-LESS body (fix-bigbody, reduction 0), so the `dealt = amount − reduction` subtraction and
+the `reduction` field were never exercised (`dealt = amount` and `reduction: undefined` survived).
+Closed by benching real **Bouffalant sv03-174 "Bouffer"** (−20), asserting `{base:60, reduction:20,
+dealt:40}`. The purity test moved from the park path (which returns before `placeSnipe`) to the
+state-rewriting AUTO-TAKE path. The captured `amount` is pinned by a per-40 `fix-bramble` probe
+(Wo-Chien always prints 60).
+
+### Recorded, NOT fixed
+- The benched hit's `weakness/resistance: null` is hard-coded in `placeSnipe`'s `deals` branch (a
+  Benched target never has W/R applied, §8.5) — no realistic mutation reaches it, so a
+  weak-benched-defender test is unnecessary (reviewer LOW).
+
+See D57.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before

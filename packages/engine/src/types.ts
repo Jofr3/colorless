@@ -314,6 +314,15 @@ export function withActive(state: GameState, seat: Seat, active: InPlayPokemon):
   return withSide(state, seat, { ...state.players[seat], active });
 }
 
+/** Prizes a seat has TAKEN — `PRIZE_COUNT − what remains in their pile`. Each
+    player draws from their OWN Prizes on a KO (§8.1), so a shrinking pile IS the
+    taken count. The count-scaling attack readers scale by the OPPONENT's taken
+    Prizes (Charizard ex "Burning Darkness", Pecharunt ex / Annihilape, Wo-Chien ex
+    "Covetous Ivy"), read at declaration before this attack's own KO awards one. */
+export function takenPrizes(state: GameState, seat: Seat): number {
+  return PRIZE_COUNT - state.players[seat].prizes.length;
+}
+
 /** Remove one card uid from a zone array (uids are unique by construction). */
 export function without(zone: readonly string[], uid: string): string[] {
   return zone.filter((entry) => entry !== uid);

@@ -28,6 +28,7 @@ import {
   noConditions,
   otherSeat,
   presentStatuses,
+  takenPrizes,
   withActive,
   withSide,
   without,
@@ -604,11 +605,15 @@ function stepOp(
       // only place that "may" can live at all.
       const candidates = oppBenchRefs(state, ctx.seat);
       if (candidates.length === 0) return { done: state };
+      // Wo-Chien "Covetous Ivy" scales the amount by the opponent's TAKEN Prizes;
+      // 0 taken → 0 damage, so there is nothing to place OR to ask about.
+      const amount = snipeAmount(op, state, ctx);
+      if (amount <= 0) return { done: state };
       const declinable = op.optional === true;
       // §8.6: with fewer Benched Pokémon than the printed number, take them all.
       const take = Math.min(op.count, candidates.length);
       if (!declinable && candidates.length <= op.count) {
-        return { done: placeSnipeCounters(state, candidates, op.amount, ctx, events) };
+        return { done: placeSnipe(state, candidates, amount, op.deals === true, ctx, events) };
       }
       return {
         park: {
@@ -617,7 +622,7 @@ function stepOp(
           min: take,
           max: take,
           declinable,
-          note: snipeNote(op.amount, take, declinable),
+          note: snipeNote(amount, take, declinable, op.deals === true),
         },
       };
     }
@@ -1109,8 +1114,11 @@ export function applyChoice(
         ? healChosen(state, choice.ref, op.amount, ctx, events)
         : state;
     case "damageChosen":
+      // Recompute the (possibly Prize-scaled) amount from state: no KO has
+      // happened between parking and this pick, so the count is unchanged — the
+      // same value snipeNote quoted in the prompt.
       return choice.kind === "pokemonMulti"
-        ? placeSnipeCounters(state, choice.refs, op.amount, ctx, events)
+        ? placeSnipe(state, choice.refs, snipeAmount(op, state, ctx), op.deals === true, ctx, events)
         : state;
     case "attachEnergyFrom":
       return choice.kind === "pokemon"
@@ -1218,10 +1226,11 @@ function spreadDamage(
     counter is not — the damageActive rule). One COUNTERS_PLACED source "ability"
     per Pokémon actually hit. Only raises damage; the KO check runs in the
     caller's mid-turn sweep (flow.ts), so this never KOs. */
-function placeSnipeCounters(
+function placeSnipe(
   state: GameState,
   refs: readonly PokemonRef[],
   amount: number,
+  deals: boolean,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -1237,21 +1246,58 @@ function placeSnipeCounters(
     if (!targeted.has(index)) return pokemon;
     const uid = topUid(pokemon);
     if (uid === undefined) return pokemon;
-    events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
-    return { ...pokemon, damage: pokemon.damage + amount };
+    if (!deals) {
+      // The default put-counter snipe (Hawlucha / Meowscarada): flat, no W/R and
+      // no reduction passive (a placed counter is not "damage from an attack").
+      events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
+      return { ...pokemon, damage: pokemon.damage + amount };
+    }
+    // Wo-Chien "Covetous Ivy": ATTACK DAMAGE to a Benched Pokémon — no Weakness/
+    // Resistance (§8.5, Benched), but a benched reduction passive still applies,
+    // exactly like spreadDamage. Emitted as DAMAGE_DEALT, so the log reads "dealt"
+    // rather than "counters placed".
+    const reduction = passivesOf(state, pokemon).damageReductionAfterWR;
+    const dealt = Math.max(0, amount - reduction);
+    events.push({
+      type: "DAMAGE_DEALT",
+      seat: opponent,
+      uid,
+      base: amount,
+      weakness: null,
+      resistance: null,
+      reduction: reduction > 0 ? reduction : undefined,
+      dealt,
+      damage: pokemon.damage + dealt,
+    });
+    return { ...pokemon, damage: pokemon.damage + dealt };
   });
   return withSide(state, opponent, { ...side, bench });
 }
 
-/** The choosePokemonMulti prompt string — counters are the printed unit, so the
-    HP `amount` reads back as counters (one counter = 10 HP, §12). The heading
-    quotes the card: a bare "Choose 2" for the exact pick every consumer prints,
-    and "you may" only where the card says it (an optional trigger, whose decline
-    the dialog offers as taking none). Never "up to", which no consumer prints. */
-function snipeNote(amount: number, count: number, optional: boolean): string {
-  const counters = Math.round(amount / 10);
+/** The effective snipe amount — `amount`, or `amount × the opponent's TAKEN
+    Prizes` when the op scales by them (Wo-Chien "Covetous Ivy"). Read from state
+    at the moment the op runs (and again at the pick, unchanged — no KO intervenes),
+    the interpreter's counterpart to attack.ts's pre-W/R Prize fold. */
+function snipeAmount(
+  op: { amount: number; perTakenPrize?: true },
+  state: GameState,
+  ctx: EffectContext,
+): number {
+  return op.perTakenPrize === true ? op.amount * takenPrizes(state, otherSeat(ctx.seat)) : op.amount;
+}
+
+/** The choosePokemonMulti prompt string. For the put-counter snipe, counters are
+    the printed unit, so the HP `amount` reads back as counters (one counter = 10
+    HP, §12); for a `deals` hit (Wo-Chien "Covetous Ivy") the printed unit is
+    damage. The heading quotes the card: a bare "Choose 2" for the exact pick every
+    consumer prints, and "you may" only where the card says it (an optional trigger,
+    whose decline the dialog offers as taking none). Never "up to". */
+function snipeNote(amount: number, count: number, optional: boolean, deals: boolean): string {
   const verb = optional ? "You may choose" : "Choose";
-  return `${verb} ${count} of your opponent's Benched Pokémon (${counters} damage counter${counters === 1 ? "" : "s"} each).`;
+  const each = deals
+    ? `${amount} damage`
+    : `${Math.round(amount / 10)} damage counter${Math.round(amount / 10) === 1 ? "" : "s"}`;
+  return `${verb} ${count} of your opponent's Benched Pokémon (${each} each).`;
 }
 
 /** The heading for healChosen's "up to N" park. Quotes the card (Saguaro:

@@ -278,6 +278,18 @@ export type EffectOp =
       /** The printed "you may" of an auto-fired trigger: taking NONE is a legal
           answer, but a partial pick still is not (Hawlucha). */
       optional?: true;
+      /** Wo-Chien ex "Covetous Ivy": the hit is ATTACK DAMAGE, not a placed
+          counter — emit DAMAGE_DEALT and let a benched reduction passive apply
+          (spreadDamage's model), where the default put-counter snipe (Hawlucha /
+          Meowscarada, an Ability) emits COUNTERS_PLACED and is flat. Benched
+          Pokémon still take NO Weakness/Resistance either way (§8.5). */
+      deals?: true;
+      /** Wo-Chien ex "Covetous Ivy": the printed "for each Prize card your
+          opponent has taken" — the effective amount is `amount × the opponent's
+          TAKEN Prizes`, read from state at run time (0 taken → no damage, no pick).
+          The multiply "×" of the benched-snipe family, evaluated in the interpreter
+          rather than folded pre-W/R (the target is benched, never the defender). */
+      perTakenPrize?: true;
     }
   /** "Flip a coin. If heads, …" — `then` runs on heads only. The other gate is
       `conditionGate` (below, deterministic); both are spliced by runProgram. */
@@ -1072,6 +1084,18 @@ const SPREAD_EACH_BENCH = new RegExp(
   `^This attack does (\\d+) damage to each of your opponent['’]s Benched Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+// The CHOSEN-single benched hit SCALED by the opponent's taken Prizes — Wo-Chien
+// ex sv02-027 "Covetous Ivy". The "×"/multiply sibling of the Prize-count family
+// (Pecharunt ex, effects.ts's OPPONENT_PRIZES_MULTIPLY), but its target is one
+// CHOSEN Benched Pokémon rather than the Defender, so it is a `damageChosen` op
+// (count 1, `deals` + `perTakenPrize`) and not a pre-W/R damage fold. The "1 of"
+// is what distinguishes it from SPREAD_EACH_BENCH's "each of"; the optional W/R
+// clarifier tail is the spread family's, and true here for the same §8.5 reason.
+const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon ` +
+    "for each Prize card your opponent has taken\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 // The self-discard attack COST (§8): "an" leaves the player one pick per
 // distinct Energy attached, "{N}" asks for exactly that many, "all" strips the
 // lot. Deliberately NOT matching the TYPED variants ("Discard a {L} Energy…",
@@ -1271,6 +1295,29 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = SPREAD_EACH_BENCH.exec(effect);
   if (match !== null) {
     return [{ op: "spreadDamage", target: "opponentBench", amount: Number(match[1]) }];
+  }
+
+  // 6b. "This attack does N damage to 1 of your opponent's Benched Pokémon for
+  //     each Prize card your opponent has taken. (Don't apply Weakness and
+  //     Resistance for Benched Pokémon.)" — Wo-Chien ex "Covetous Ivy". A CHOSEN
+  //     single benched target (damageChosen's count-1 park), the amount SCALED by
+  //     the opponent's TAKEN Prizes and dealt as attack damage (`deals`), not a
+  //     placed counter. A printed 0-per is not a real card — left on the loud path.
+  match = BENCHED_SNIPE_TAKEN_PRIZES.exec(effect);
+  if (match !== null) {
+    const per = Number(match[1]);
+    if (per >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentBench",
+          amount: per,
+          count: 1,
+          deals: true,
+          perTakenPrize: true,
+        },
+      ];
+    }
   }
 
   // 7/8/9. "Discard an Energy from this Pokémon." / "Discard {N} Energy from this
