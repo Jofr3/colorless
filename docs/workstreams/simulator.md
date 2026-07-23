@@ -3833,6 +3833,80 @@ corrected.
 
 See D54.
 
+## P3-M5 build session #40 (2026-07-23) — the count union's second member: `opponentPrizesTaken` (D55)
+
+The cheapest continuation of D54: the additive damage-scaling family's `DamageCountSource`
+union gains its **second member**, confirming the union-of-two shape the interface was built
+to hold. engineVersion 0.34.0 → **0.35.0**.
+
+### The member
+`OPPONENT_PRIZES_SCALE` (effects.ts), anchored whole-sentence beside `SELF_COUNTER_SCALE`:
+
+```
+/^This attack does (\d+) more damage for each Prize card your opponent has taken\.$/
+```
+
+parses into `{per, count: {kind: "opponentPrizesTaken"}}`. `scaledAttackDamage` (attack.ts)
+**widened** `(attacker, bonus)` → `(attacker, bonus, state, defenderSeat)` and gained the arm:
+
+```
+case "opponentPrizesTaken":
+  return (PRIZE_COUNT - state.players[defenderSeat].prizes.length) * bonus.per;
+```
+
+Taken = **6 − remaining** (each player draws from their OWN Prizes on a KO, §8.1), read at
+DECLARATION off `next` before this attack's own KO awards a Prize (§8.5). Robust by
+construction too: this attack's KO prizes to `action.seat`, never the defender, so the
+opponent's taken-count cannot move mid-resolution.
+
+### "more" is the discriminator
+The catalog prints the Prize source in TWO shapes, told apart by ONE word:
+
+| Text | Family | Cards | Reader |
+|---|---|---|---|
+| "…does N **more** damage for each Prize card your opponent has taken." | additive **+** (`180+`) | Charizard ex ×4 (sv03-125/-215/-223/-228) | `opponentPrizesTaken` — THIS slice |
+| "…does N damage for each Prize card your opponent has taken." | multiply **×** | Pecharunt ex, Annihilape, Wo-Chien ex | none — stays loud (resume #1) |
+
+The "×" family folds nothing into a printed base (`damage = per × count`), so it is a
+DIFFERENT shape, not a `count` member; the regex refuses it, witnessed by a deriver test.
+
+### The witness migration
+Simulating Charizard RETIRED it as D54's anchor-guard witness (the "+"-card that STAYS on
+the loud `ATTACK_EFFECT_SKIPPED` path). Its role moved to a real replacement — **Entei
+sv03-030 "Blaze Ball"** (60+, "…for each {R} Energy attached to this Pokémon.", an
+attached-Energy count source no reader simulates) — across all three witnesses (scaledDamage's
+discrimination test, checkup.test.ts, logFromEvents.test.ts). `SCALED_DAMAGE_DECK` gained 4
+Entei; `fix-fire-energy` trimmed 20→16 to hold exactly 60.
+
+### Web — nothing
+`DAMAGE_DEALT.scaled` and the `· scaled +N` breadcrumb render generically over both count
+sources; the only `DAMAGE_DEALT` consumer in `src/` is the log. No projection/redaction change.
+
+### Review (1 read-only adversarial reviewer + an in-tree mutation self-audit, 6 mutations) — NO HIGH
+Rules correctness (opponent = defender, 6−remaining, declaration timing), regex narrowness
+(matches ONLY the 4 identical Charizard prints across the whole catalog; refuses every "×" and
+self-scaler), deck integrity (=60), the Entei fixture (verbatim vs D1), and the two-case switch's
+exhaustiveness all CONFIRMED correct. The `6−remaining`, the opponent-seat read, both new-regex
+anchors, and the "more" keyword each individually die under mutation.
+
+**ONE MED false-coverage FOUND AND FIXED, mutation-proven:** every apply-level Prize test used
+Charizard's `per: 30`, so `* bonus.per → * 30` (the literal a careless author would most plausibly
+hard-code — the "captured per" test only ruled out `* 10`) survived the WHOLE suite. Closed with a
+synthetic **per-50 probe** — "Bounty" (fix-attacker index 5, base 40 + 50×count), the Prize-source
+twin of D54's "Fury" (base 0, per 20); the `* 30` mutant re-run and confirmed dead.
+`attack.test.ts`'s out-of-range-index witness bumped 5→6 (fix-attacker now prints 6 attacks).
+
+### Recorded, NOT fixed
+- `scaledAttackDamage` is now a TWO-member exhaustive switch with no trailing return — sound
+  (a third member would fail tsc's "function lacks ending return", the safety D54 relied on for
+  one member). `Math.floor` stays only in the self-counter arm (Prize counts are integers).
+- The Prize arm's "folds before Weakness" ordering is not INDEPENDENTLY pinned by a W/R test; the
+  fold (`base + scaled + bonus` → W/R) is shared code already pinned by the self-counter's fix-weak
+  test, and the Prize arm only supplies the `scaled` number, so it cannot break the order alone
+  (reviewer LOW).
+
+See D55.
+
 ## Notes for effect authoring at scale
 Authoring handlers for many cards is a natural **Workflow** fan-out (one agent per
 set/card batch, each verified against the rules doc). Ask the user before
