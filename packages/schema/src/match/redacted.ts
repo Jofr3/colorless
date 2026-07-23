@@ -146,12 +146,31 @@ export const redactedAttackSchema = z.object({
 });
 export type RedactedAttack = z.infer<typeof redactedAttackSchema>;
 
+/** The viewer's OWN retreat option, server-computed for the online turn HUD
+    (increment 2b-ii) — like `RedactedAttack`, the client renders the control
+    without reading the full state the local TurnPanel does (`effectiveRetreatCost`
+    + the §11/§12 gates over the raw board). `cost` is the CONTINUOUS retreat cost
+    (§7.3 discounts — the number of attached energies the retreat must discard);
+    `can` folds the §12 immobilize gate, the once-per-turn retreated allowance, a
+    non-empty Bench (something to promote to) and enough attached energy into ONE
+    boolean, EXACTLY the local TurnPanel's `canRetreat` — so the client needs no
+    engine logic. The energies to discard and the Bench to promote to are already
+    on the public board (the viewer's own attachments + Bench). Only the viewer's
+    OWN `turn:action` carries it — null for the non-acting viewer, who never
+    retreats. */
+export const redactedRetreatSchema = z.object({
+  cost: z.number(),
+  can: z.boolean(),
+});
+export type RedactedRetreat = z.infer<typeof redactedRetreatSchema>;
+
 /** The redacted engine `Phase` — the discriminant the client routes ACTIONS
     on (P4 increment 2). Carries the kind plus only the non-sensitive fields the
     acting client needs: setup:drawExtra the RECIPIENT's own owed compensation
     count, setup:place the viewer-relative ready flags, turn:action the viewer's
-    OWN attack options (empty for the non-acting viewer), the ko interrupts their
-    counts. The mid-effect `effect:choose` carries NO prompt (a later 2b slice
+    OWN attack options (empty for the non-acting viewer) and retreat option (null
+    for it), the ko interrupts their counts. The mid-effect `effect:choose`
+    carries NO prompt (a later 2b slice
     designs the redacted prompt — a raw prompt is built from the controller's
     private zones). `activePlayer`/`waitingOn` (server-computed via phaseViewOf,
     which reads the pending queue) still say WHO acts; this says WHAT kind. */
@@ -162,7 +181,11 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
     kind: z.literal("setup:place"),
     ready: z.object({ you: z.boolean(), opponent: z.boolean() }),
   }),
-  z.object({ kind: z.literal("turn:action"), attacks: z.array(redactedAttackSchema) }),
+  z.object({
+    kind: z.literal("turn:action"),
+    attacks: z.array(redactedAttackSchema),
+    retreat: redactedRetreatSchema.nullable(),
+  }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),
   z.object({ kind: z.literal("effect:choose") }),

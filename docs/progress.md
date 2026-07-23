@@ -3,7 +3,40 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-23 — build session #48 (**P4 increment 2b-i — the online attack + KO
+**Last updated:** 2026-07-23 — build session #49 (**P4 increment 2b-ii — online retreat**). The online
+turn HUD can now RETREAT. Following the "was Slice 1, now split" discipline, 2b-ii is scoped to RETREAT
+ALONE: the fixed basic decks (Sneasel/Mareep + Energy) have no abilities and no non-Stadium trainers,
+so those surfaces can't be exercised end-to-end against a real online game — they move to real deck
+selection (increment 3). **Wire:** `RedactedPhase.turn:action` gained a **`retreat`** field — a new
+`@luminous/schema` **`RedactedRetreat`** (`cost`/`can`), Zod source-of-truth, NULLABLE (null for the
+non-acting viewer, like `attacks: []`). The engine's `redactPhase` fills it via a new
+**`redactedRetreatOf(state, viewerSeat, turnSeat)`**: the viewer's OWN Active's CONTINUOUS retreat cost
+(§7.3 Beach Court discounts) + a server-computed **`can`** folding the §12 immobilize gate, the
+once-per-turn `retreated` allowance, a non-empty Bench and enough attached energy into ONE boolean —
+EXACTLY the local `TurnPanel`'s `canRetreat`, so the online client adds no engine logic. Turn-owner +
+own-Active only, so nothing hidden leaves the DO (the energies to discard and the Bench to promote to
+were already public on the board). **API DO:** `SUPPORTED_MATCH_ACTIONS` grew by **`retreat`** — and
+unlike `attack`, retreat carries NO sequencing caveat: the engine's `retreat` handler (`turn.ts:333`)
+only discards energy + promotes a Bench Pokémon, returning `ok(next)` with the phase UNCHANGED (never
+parks at `effect:choose`), so it is soft-lock-safe with ANY deck; it also validates every field
+defensively (`discardEnergy` an array of exactly `cost` attached uids, a real bench index), so a
+crafted frame is rejected, not crashed. **Client:** `OnlineHud`'s AttackPanel gained a **Retreat (cost)
+button** (disabled off `retreat.can`) and a **`RetreatDialog`** (the local HUD's, restated over the
+wire shape: pick `cost` attached energies + a Bench Pokémon → dispatch `retreat`); the `Dialog` helper
+gained an optional `onDismiss` so retreat is dismissable while the ko:* dialogs stay mandatory. The
+`turn:action` round-trip equality still holds (`retreat` never enters `GameProjection` —
+`decisionFromPhase` keeps `turn:action`→null). engine UNCHANGED (0.40.0 — a transport/read surface);
+1740 → **1747** tests (5 engine retreat-gate cases + 2 OnlineHud DOM cases). `bun run check` green.
+**Review (1 read-only adversarial reviewer): NO defects at HIGH, MED, or LOW** — `can` is field-for-field
+identical to the local `canRetreat`, `redactedRetreatOf` is null for the non-acting viewer (no leak),
+the `retreat` handler returns `ok(next)` phase-unchanged (soft-lock-safe with any deck), the dispatched
+`discardEnergy` uids are engine uids (`redactedCardOf.id`) matching the handler's membership check, the
+prize/bench indices align 1:1, and the round-trip pin holds. See D63. Below: the P4-2b-i header (kept
+for continuity).
+
+---
+### Prior header (P4 increment 2b-i — the online attack + KO loop, kept for continuity)
+**Last updated (was):** 2026-07-23 — build session #48 (**P4 increment 2b-i — the online attack + KO
 loop**). The online match now plays **TO A WIN** with the fixed basic decks: attack → take prizes →
 promote. 2b was too big for one increment (the local turn HUD reads the full `GameState`, unsafe over
 a projection), so it's SPLIT — 2b-i lands the attack/KO loop; retreat + abilities/trainers (2b-ii) and
@@ -979,48 +1012,46 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**P4 increment 2b-i (the online attack + KO loop) is DONE — the online match plays TO A WIN with the
-fixed basic decks (online.md), engine 0.40.0.** `RedactedPhase.turn:action` carries an `attacks` list
-(`RedactedAttack` — `index`/`name`/`cost`/`damage`/`playable`), filled by `redactedAttacksOf`
-(redact.ts) with §8.2 payability + the §4 ban + §12 immobilize folded into `playable`, turn-owner +
-own-Active only (no leak). `SUPPORTED_MATCH_ACTIONS` gained `attack`/`takePrizes`/`promote` (no
-soft-lock — pure-damage fixed decks never reach `effect:choose`). `OnlineHud` gained the AttackPanel +
-the ko:takePrizes/ko:promote dialogs (no new wire data — count on the phase, own prizes/bench on the
-board). `EnergyDots` is now shared (`src/features/game/EnergyDots.tsx`). 1731 → 1740 tests.
-**2b was split** because the local turn HUD reads the full `GameState`: 2b-i (this) is the attack/KO
-loop; 2b-ii + 2b-iii remain.
-**Next concrete action — increment 2b-ii (retreat + abilities/trainers):**
-1. **Retreat** — needs the CONTINUOUS retreat cost + whether it's payable on the wire (`effectiveRetreatCost`,
-   `game.allowances.retreated`, immobilize — `GameHud.tsx` RetreatDialog reads the raw active). Add a
-   redacted retreat descriptor (cost + canRetreat) to `RedactedGame`; grow `SUPPORTED_MATCH_ACTIONS`
-   by `retreat`. The online RetreatDialog picks which energy to discard + which bench to promote off
-   the board it already has.
-2. **Abilities + non-Stadium trainers** — read the FULL GameState (`programPlayable`/`conditionHolds`/
-   `handCostUnmet` — `index.ts:288-320`), unsafe over a projection (they read prize counts + the
-   Stadium's owner + the viewer's hand). Put the playable ability/trainer options + their
-   greyed/reason on the wire without leaking; grow the allowlist by `useAbility`/`playTrainer` (Stadium
-   already supported via the 2a drag). NOTE: the fixed decks have no abilities/non-Stadium trainers, so
-   this is untestable against a REAL online game until real deck selection (increment 3) — pin it in
-   unit/DOM tests meanwhile.
-**Then increment 2b-iii (the effect:choose DIALOG + prompt + log + rejection pill):**
-3. **The effect:choose DIALOG** — needs the redacted **effect PROMPT** 2a stripped
+**P4 increment 2b-ii (online retreat) is DONE — the online turn HUD can now attack, KO-loop AND retreat
+with the fixed basic decks (online.md), engine 0.40.0.** `RedactedPhase.turn:action` carries an
+`attacks` list (2b-i) AND a nullable `retreat` (`RedactedRetreat` — `cost`/`can`), both filled
+server-side (redact.ts `redactedAttacksOf`/`redactedRetreatOf`), turn-owner + own-Active only (no
+leak); `can` mirrors the local `TurnPanel`'s `canRetreat` field-for-field. `SUPPORTED_MATCH_ACTIONS` is
+now setup + the turn drags + `attack`/`takePrizes`/`promote`/`retreat` + `endTurn` (retreat is
+soft-lock-safe with ANY deck — `turn.ts:333` returns `ok(next)` phase-unchanged). `OnlineHud` has the
+AttackPanel (attacks + a Retreat button + a dismissable RetreatDialog) and the ko dialogs. 1740 → 1747
+tests; review clean (no HIGH/MED/LOW).
+**Abilities + non-Stadium trainers were CUT from 2b-ii and DEFERRED to increment 3 (real decks):** the
+fixed decks (Sneasel/Mareep + Energy) have NEITHER, so a wire surface for them can't be exercised
+end-to-end — building it now would be speculative + untested against a real game, against the
+"only wire what's driven" discipline. When real deck selection lands: add the playable ability/trainer
+options + their greyed/reason to the wire (they read the FULL GameState —
+`programPlayable`/`conditionHolds`/`handCostUnmet`, `index.ts:288-320` — so put enough on the wire
+without leaking prize counts / the Stadium owner / the hand) and grow the allowlist by
+`useAbility`/`playTrainer` (Stadium already drives via the 2a drag).
+**Next concrete action — increment 2b-iii (the effect:choose DIALOG + prompt + log + rejection pill):**
+1. **The effect:choose DIALOG** — needs the redacted **effect PROMPT** 2a stripped
    (`RedactedPhase.effect:choose` carries no prompt; `redactPhase` in redact.ts + `decisionFromPhase`
    in projection.ts are the seams). A prompt built from the CONTROLLER's private zones must stay
-   controller-only. Only after this can `resolveEffect` join the allowlist (and effect attacks be safe).
-4. **Per-recipient EVENT redaction + an online event→log stream** — `CARDS_DRAWN`/`MULLIGAN_REVEALED`
+   controller-only. Only after this can `resolveEffect` join the allowlist (and effect attacks be safe)
+   — the SEQUENCING CONSTRAINT in `match.ts` says real decks (increment 3) must NOT precede this.
+2. **Per-recipient EVENT redaction + an online event→log stream** — `CARDS_DRAWN`/`MULLIGAN_REVEALED`
    carry hidden uids (`events.ts:8`); redact per recipient before the wire (`logFromEvents` is
    per-viewer already; the online board's `logEntries` is empty today).
-5. **A rejection pill** — the DO drops a rejected action silently today; surface `applyMatchAction`
+3. **A rejection pill** — the DO drops a rejected action silently today; surface `applyMatchAction`
    → null to the actor (also closes the ko-dialog-stays-open-on-reject gap).
 See `workstreams/online.md`.
-**Recorded, NOT fixed (2b-i — review LOWs, in online.md + D62):** (a) the OnlineHud ko/attack panels
-restate GameHud's dialog markup (the D60 restate-per-surface choice — different shapes; extract the
-presentational grid/rows when a 3rd consumer appears); (b) AttackPanel omits the §12 immobilize/
-confusion notes (harmless with pure-damage decks — 2b-ii's surface); (c) allow-`attack` is
-soft-lock-safe by PLAN ORDERING not a structural check (real decks/increment 3 must not precede the
-2b-iii effect dialog — the SEQUENCING CONSTRAINT is loud in `match.ts`). Also still open: the DO
-`case "action"` boundary has no direct test for the new types (only the pure `applyMatchAction`/
-allowlist do); a two-client browser run of the loop is unverified (tests only). **Recorded, NOT fixed
+**2b-ii review was clean — no HIGH/MED/LOW.** **Recorded, NOT fixed (2b-i — review LOWs, in online.md +
+D62):** (a) the OnlineHud ko/attack/retreat panels restate GameHud's dialog markup (the D60
+restate-per-surface choice — different shapes; extract the presentational grid/rows when a 3rd consumer
+appears); (b) the online AttackPanel folds §12 immobilize into `attack.playable` + `retreat.can` but
+still renders no explanatory immobilize/confusion NOTE text (harmless with the pure-damage/status-free
+fixed decks — the note surface is deferred to when status-inflicting decks arrive); (c) allow-`attack`
+is soft-lock-safe by PLAN ORDERING not a structural check (real decks/increment 3 must not precede the
+2b-iii effect dialog — the SEQUENCING CONSTRAINT is loud in `match.ts`; note `retreat` carries no such
+caveat — it never parks at a decision). Also still open: the DO `case "action"` boundary has no direct
+test for the new types (only the pure `applyMatchAction`/allowlist do); a two-client browser run of the
+loop is unverified (tests only). **Recorded, NOT fixed
 (2a — review LOWs, in online.md + D61):** (L1) the DO `case "action"` boundary
 has no direct test — only the pure `applyMatchAction` does (the DO-shell-untested pattern; it mirrors
 the tested `intent` handler). (L2 was FIXED — the `SUPPORTED_MATCH_ACTIONS` allowlist.)

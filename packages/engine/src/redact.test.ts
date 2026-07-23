@@ -273,8 +273,13 @@ describe("redactGame — phase-derived view (viewer-relative)", () => {
 
 describe("redactGame — the redacted phase (the action-routing discriminant)", () => {
   it("carries turn:action while a turn runs (no attacks for an attackless Active)", () => {
-    // turnOneState's Actives are fix-basic-1 — a body with no printed attacks.
-    expect(redactGame(turnOneState(), "p1").phase).toEqual({ kind: "turn:action", attacks: [] });
+    // turnOneState's Actives are fix-basic-1 — a body with no printed attacks and
+    // retreat cost 1; p1's Active has no energy attached, so retreat can't be paid.
+    expect(redactGame(turnOneState(), "p1").phase).toEqual({
+      kind: "turn:action",
+      attacks: [],
+      retreat: { cost: 1, can: false },
+    });
   });
 
   it("carries setup:place with VIEWER-RELATIVE ready flags", () => {
@@ -351,10 +356,11 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
     ]);
   });
 
-  it("gives the NON-acting viewer no attack list (only the turn owner may attack)", () => {
-    // p1's turn 3; p2 sees the same turn:action phase but carries no attacks.
+  it("gives the NON-acting viewer no attack list and no retreat (only the turn owner acts)", () => {
+    // p1's turn 3; p2 sees the same turn:action phase but carries no attacks and
+    // a null retreat.
     const phase = redactGame(attackerBoard(1, true), "p2").phase;
-    expect(phase).toEqual({ kind: "turn:action", attacks: [] });
+    expect(phase).toEqual({ kind: "turn:action", attacks: [], retreat: null });
   });
 
   it("marks every attack unplayable on the §4 first turn, even a payable one", () => {
@@ -372,6 +378,67 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
     const phase = redactGame(asleep, "p1").phase;
     if (phase.kind !== "turn:action") throw new Error("expected turn:action");
     expect(phase.attacks.every((a) => !a.playable)).toBe(true);
+  });
+});
+
+// The online turn HUD (increment 2b-ii) also renders a retreat control off the
+// redacted phase, so the redactor computes the cost + a `can` gate server-side
+// over the full state the wire withholds. These pin it the way GameHud's
+// TurnPanel computes `canRetreat`.
+describe("redactGame — turn:action retreat option (the online HUD's retreat gate)", () => {
+  /** turnOneState with `energy`-many deck cards moved onto p1's Active — the
+      attach a fixture otherwise can't express (mirrors the attachment test above). */
+  function withEnergy(state: GameState, energy: number): GameState {
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("expected active");
+    const uids = state.players.p1.deck.slice(0, energy);
+    return {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...state.players.p1,
+          active: { ...active, energy: [...active.energy, ...uids] },
+          deck: state.players.p1.deck.slice(energy),
+        },
+      },
+    };
+  }
+
+  function retreatOf(state: GameState) {
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    return phase.retreat;
+  }
+
+  it("is payable when enough energy is attached and the Bench is non-empty", () => {
+    // fix-basic-1 costs 1; one attached energy + the fix-basic-0 Bench = payable.
+    expect(retreatOf(withEnergy(turnOneState(), 1))).toEqual({ cost: 1, can: true });
+  });
+
+  it("is unpayable with too little attached energy", () => {
+    // No energy on the Active — cost 1 can't be paid.
+    expect(retreatOf(turnOneState())).toEqual({ cost: 1, can: false });
+  });
+
+  it("is blocked while the Active is immobilized (§12), even with the energy", () => {
+    const asleep = setConditions(withEnergy(turnOneState(), 1), "p1", { rotation: "asleep" });
+    expect(retreatOf(asleep)).toEqual({ cost: 1, can: false });
+  });
+
+  it("is blocked with an empty Bench (nothing to promote to)", () => {
+    const base = withEnergy(turnOneState(), 1);
+    const noBench: GameState = {
+      ...base,
+      players: { ...base.players, p1: { ...base.players.p1, bench: [] } },
+    };
+    expect(retreatOf(noBench)).toEqual({ cost: 1, can: false });
+  });
+
+  it("is blocked once the player has already retreated this turn", () => {
+    const base = withEnergy(turnOneState(), 1);
+    const retreated: GameState = { ...base, allowances: { ...base.allowances, retreated: true } };
+    expect(retreatOf(retreated)).toEqual({ cost: 1, can: false });
   });
 });
 

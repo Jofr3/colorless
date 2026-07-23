@@ -101,6 +101,34 @@ retreat/immobilize surface), where the wire already carries `battle.conditions`.
 allow-`attack` no-soft-lock guarantee is plan-ordering, not structural — see the SEQUENCING CONSTRAINT
 in `match.ts` (real decks/increment 3 must not precede the 2b-iii effect dialog).
 
+**Increment 2b-ii — DONE:** the online RETREAT (D63, engine 0.40.0). The turn HUD can now attack,
+KO-loop AND retreat with the fixed decks. Scoped to RETREAT ALONE (the fixed basic decks have no
+abilities and no non-Stadium trainers, so those surfaces can't be exercised end-to-end — CUT and
+deferred to real deck selection / increment 3). `RedactedPhase.turn:action` gained a **`retreat`**
+field — a new `@luminous/schema` **`RedactedRetreat`** (`cost`/`can`), NULLABLE (null for the
+non-acting viewer, mirroring `attacks: []`). The engine's `redactPhase` fills it via a new
+**`redactedRetreatOf(state, viewerSeat, turnSeat)`**: the viewer's OWN Active's CONTINUOUS retreat cost
+(§7.3 Beach Court discount) + a server-computed **`can`** folding the §12 immobilize gate, the
+once-per-turn `retreated` allowance, a non-empty Bench and enough attached energy into ONE boolean —
+EXACTLY the local `TurnPanel`'s `canRetreat` (§11), so the online client adds no engine logic.
+Turn-owner + own-Active only, so nothing hidden leaves the DO (the energies to discard and the Bench to
+promote to were already public on the board). The DO's `SUPPORTED_MATCH_ACTIONS` grew by **`retreat`**
+— and unlike `attack`, retreat carries NO sequencing caveat: the engine's `retreat` handler
+(`turn.ts:333`) only discards energy + promotes a Bench Pokémon, returning `ok(next)` with the phase
+UNCHANGED (never parks at `effect:choose`), so it is soft-lock-safe with ANY deck; it validates every
+field defensively (`discardEnergy` an array of exactly `cost` attached uids, a real bench index), so a
+crafted frame rejects, never crashes. `OnlineHud`'s AttackPanel gained a **Retreat (cost) button**
+(disabled off `retreat.can`) + a **`RetreatDialog`** (the local HUD's, restated over the wire shape),
+and the `Dialog` helper an optional `onDismiss` so retreat is dismissable while the ko:* dialogs stay
+mandatory. The `turn:action` round-trip equality still holds (`retreat` never enters `GameProjection` —
+`decisionFromPhase` keeps `turn:action`→null). 1740 → **1747** tests, `bun run check` green.
+**Review (1 read-only adversarial reviewer): NO defects at HIGH, MED, or LOW** — `can` is
+field-for-field identical to the local `canRetreat`, `redactedRetreatOf` is null for the non-actor (no
+leak), the handler is soft-lock-safe (phase-unchanged) and totally validating, the dispatched
+`discardEnergy` uids are engine uids (`redactedCardOf.id`) that match the handler's membership check,
+the bench indices align 1:1 with the index-stable redaction, and the round-trip pin holds; the reviewer
+independently ran the 91 affected tests green.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -166,11 +194,17 @@ until 1c broadcasts the redacted view.
     new wire data — count is on the phase, own prizes/bench on the board). `EnergyDots` extracted to a
     shared module (GameHud + OnlineHud). Pure-damage fixed decks never reach effect:choose, so no
     soft-lock.
-  - **2b-ii+ — the remaining turn:action HUD (NEXT).** retreat (needs the retreat cost on the wire),
-    abilities, non-Stadium trainers — all read the FULL GameState (`GameHud.tsx` TurnPanel;
-    `programPlayable`/`conditionHolds` — `index.ts:288-315`). Put enough on the wire (retreat cost,
-    ability/trainer options + payability) without leaking.
-  - **2b-iii — the effect:choose DIALOG + prompt.** Needs the redacted **effect PROMPT** 2a stripped
+  - **2b-ii — online RETREAT. DONE** (see Status above): `RedactedPhase.turn:action` gained a nullable
+    `retreat` (`RedactedRetreat` — `cost`/`can`) filled by `redactedRetreatOf` (redact.ts), mirroring
+    the local `canRetreat`; `SUPPORTED_MATCH_ACTIONS` grew by `retreat` (soft-lock-safe with any deck);
+    `OnlineHud` gained a Retreat button + RetreatDialog. **Abilities + non-Stadium trainers were CUT
+    and DEFERRED to increment 3** — they read the FULL GameState (`programPlayable`/`conditionHolds`/
+    `handCostUnmet` — `index.ts:288-320`) AND the fixed decks have neither, so a wire surface for them
+    can't be exercised end-to-end until real deck selection. When it lands: put the playable
+    ability/trainer options + their greyed/reason on the wire without leaking (prize counts / the
+    Stadium owner / the hand), and grow the allowlist by `useAbility`/`playTrainer` (Stadium already
+    drives via the 2a drag).
+  - **2b-iii — the effect:choose DIALOG + prompt (NEXT).** Needs the redacted **effect PROMPT** 2a stripped
     (`RedactedPhase.effect:choose` carries no prompt; `redactPhase` in redact.ts + `decisionFromPhase`
     in projection.ts are the seams; a prompt built from the CONTROLLER's private zones must stay
     controller-only). Blocks non-basic decks with effect attacks — until then `resolveEffect` stays

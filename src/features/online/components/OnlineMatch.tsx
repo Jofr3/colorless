@@ -15,12 +15,14 @@ import { OnlineHud } from "./OnlineHud";
 // accepted and re-broadcast, so there is no optimism to reconcile: a rejected
 // drag simply never produces a new snapshot.
 //
-// SCOPE (through 2b-i): setup (chooseFirst / drawExtra / place → ready, via
+// SCOPE (through 2b-ii): setup (chooseFirst / drawExtra / place → ready, via
 // OnlineHud + setup drags), the basic turn drags moveToAction routes (attach
-// energy, bench a Basic, evolve, attach a Tool, play a Stadium), pass, and the
+// energy, bench a Basic, evolve, attach a Tool, play a Stadium), pass, the
 // attack + KO loop (attack off the redacted attack list, then ko:takePrizes /
-// ko:promote). Retreat, abilities, non-Stadium trainers and the effect:choose
-// dialogs read state the wire still withholds and land in later 2b slices.
+// ko:promote), and retreat (the OnlineHud RetreatDialog). Abilities, non-Stadium
+// trainers and the effect:choose dialogs read state the wire still withholds
+// (and the fixed decks can't exercise them) — they land with real decks / a
+// later 2b slice.
 
 const NO_LOG: never[] = [];
 

@@ -27,13 +27,14 @@ import type {
   RedactedInPlay,
   RedactedOutcome,
   RedactedPhase,
+  RedactedRetreat,
   RedactedSide,
   Viewer,
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { costMet } from "./attack";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
-import { effectiveAttackCost, effectiveMaxHp, providedEnergy } from "./continuous";
+import { effectiveAttackCost, effectiveMaxHp, effectiveRetreatCost, providedEnergy } from "./continuous";
 import { inSetup, phaseViewOf } from "./phaseView";
 import type { GameOutcome, GameState, InPlayPokemon, Seat, SpecialConditions } from "./types";
 import { isImmobilized, otherSeat } from "./types";
@@ -82,8 +83,13 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
       };
     case "turn:action":
       // turn:action's actor is phase.seat (phaseView) — only they get an attack
-      // list; the opponent's view of the same phase carries none.
-      return { kind: "turn:action", attacks: redactedAttacksOf(state, viewerSeat, phase.seat) };
+      // list and a retreat option; the opponent's view of the same phase carries
+      // neither (empty attacks, null retreat).
+      return {
+        kind: "turn:action",
+        attacks: redactedAttacksOf(state, viewerSeat, phase.seat),
+        retreat: redactedRetreatOf(state, viewerSeat, phase.seat),
+      };
     case "ko:takePrizes":
       return { kind: "ko:takePrizes", count: phase.count };
     case "ko:promote":
@@ -120,6 +126,27 @@ function redactedAttacksOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): 
     damage: attack.damage === undefined ? null : String(attack.damage),
     playable: !banned && costMet(effectiveAttackCost(state, active, attack.cost ?? []), provided),
   }));
+}
+
+/** The acting viewer's retreat option for the online turn HUD — null for the
+    opponent (only the turn owner retreats). Mirrors GameHud's TurnPanel
+    `canRetreat` on the full state the wire withholds: the CONTINUOUS retreat cost
+    (§7.3 — Beach Court discounts Basics), and a `can` folding the §12 immobilize
+    gate (asleep/paralyzed blocks retreating), the once-per-turn `retreated`
+    allowance, a non-empty Bench (something to promote to) and enough attached
+    energy to pay the cost. The energies to discard and the Bench are already on
+    the public board, so nothing hidden leaves the DO. */
+function redactedRetreatOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedRetreat | null {
+  if (viewerSeat !== turnSeat) return null;
+  const active = state.players[viewerSeat].active;
+  if (active === null) return null;
+  const cost = effectiveRetreatCost(state, active);
+  const can =
+    !isImmobilized(active.conditions) &&
+    !state.allowances.retreated &&
+    state.players[viewerSeat].bench.length > 0 &&
+    active.energy.length >= cost;
+  return { cost, can };
 }
 
 /** How much of a side the viewer may see. The two redactions are independent:

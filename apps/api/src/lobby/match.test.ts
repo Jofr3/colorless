@@ -151,14 +151,15 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
 
   it("rejects action types outside the driveable scope (no soft-lock via crafted frames)", () => {
     const { record, winner } = freshRecord();
-    // A crafted retreat/ability/effect frame is refused BEFORE the engine even
-    // sees it, so the match can't reach a phase the online HUD can't drive.
-    for (const type of ["retreat", "useAbility", "resolveEffect"]) {
+    // A crafted ability/effect frame is refused BEFORE the engine even sees it,
+    // so the match can't reach a phase the online HUD can't drive.
+    for (const type of ["useAbility", "resolveEffect"]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(false);
       expect(applyMatchAction(record, winner, { type, seat: winner })).toBeNull();
     }
-    // The setup + drag + pass + attack/KO actions the client actually sends ARE
-    // supported (2b-i grew the set with attack / takePrizes / promote).
+    // The setup + drag + pass + attack/KO + retreat actions the client actually
+    // sends ARE supported (2b-i grew the set with attack / takePrizes / promote;
+    // 2b-ii added retreat).
     for (const type of [
       "chooseFirstPlayer",
       "setupPlaceActive",
@@ -166,6 +167,7 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
       "attack",
       "takePrizes",
       "promote",
+      "retreat",
       "endTurn",
     ]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(true);

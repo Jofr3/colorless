@@ -102,16 +102,17 @@ export interface MatchRecord {
 }
 
 /** The engine action types the online client can DRIVE and RECOVER from: setup,
-    the `moveToAction` turn drags, pass, and — from increment 2b-i — the attack +
-    KO loop (`attack`, then the KOing player's `takePrizes` and the KO'd player's
-    `promote`). The DO rejects everything else — retreat / abilities / the
-    effect:choose `resolveEffect` — so a crafted frame can't push the match into
-    a phase the online HUD renders no control for (a soft-lock; griefing-class,
-    the review's LOW). With the fixed basic-only decks (pure-damage attacks, no
-    status/abilities), attack → ko:takePrizes → ko:promote is exactly the
-    reachable loop and never reaches effect:choose, so nothing a legitimate
-    client sends is blocked. Later 2b slices GROW this set as they land retreat,
-    abilities/trainers and the effect dialogs.
+    the `moveToAction` turn drags, pass, the attack + KO loop (increment 2b-i —
+    `attack`, then the KOing player's `takePrizes` and the KO'd player's
+    `promote`), and — from increment 2b-ii — `retreat`. The DO rejects everything
+    else — abilities (`useAbility`) / the effect:choose `resolveEffect` — so a
+    crafted frame can't push the match into a phase the online HUD renders no
+    control for (a soft-lock; griefing-class, the review's LOW). With the fixed
+    basic-only decks (pure-damage attacks, no status/abilities/trainers), the
+    reachable game is exactly setup → the turn drags → attack → ko:takePrizes →
+    ko:promote → retreat → endTurn, none of which reaches effect:choose, so
+    nothing a legitimate client sends is blocked. Later 2b slices GROW this set as
+    they land abilities/trainers and the effect dialogs.
 
     SEQUENCING CONSTRAINT (allowing `attack` is only soft-lock-safe because the
     decks are pure-damage): an `attack` here is accepted and let park wherever
@@ -119,7 +120,9 @@ export interface MatchRecord {
     online HUD can't yet drive. So REAL deck selection (increment 3) must NOT
     ship before increment 2b-iii adds the effect:choose dialog + puts
     `resolveEffect` on this set. The guarantee is plan ordering, not a structural
-    check — flagged so the coupling isn't lost. */
+    check — flagged so the coupling isn't lost. (`retreat` carries no such
+    caveat — it only ever discards energy and promotes a Bench Pokémon, never
+    parking at a decision, so it is soft-lock-safe with ANY deck.) */
 export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
   "chooseFirstPlayer",
   "setupDrawExtra",
@@ -134,6 +137,7 @@ export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
   "attack",
   "takePrizes",
   "promote",
+  "retreat",
   "endTurn",
 ]);
 

@@ -70,7 +70,7 @@ describe("OnlineHud — turn:action attack panel", () => {
     render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: ATTACKS },
+          phase: { kind: "turn:action", attacks: ATTACKS, retreat: null },
           you: { active: inPlay("sneasel", "Sneasel") },
         })}
         waitingOn="you"
@@ -93,7 +93,7 @@ describe("OnlineHud — turn:action attack panel", () => {
       <OnlineHud
         game={game({
           turn: 1,
-          phase: { kind: "turn:action", attacks: ATTACKS },
+          phase: { kind: "turn:action", attacks: ATTACKS, retreat: null },
           you: { active: inPlay("sneasel", "Sneasel") },
         })}
         waitingOn="you"
@@ -107,7 +107,7 @@ describe("OnlineHud — turn:action attack panel", () => {
     render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: ATTACKS },
+          phase: { kind: "turn:action", attacks: ATTACKS, retreat: null },
           you: { active: inPlay("sneasel", "Sneasel") },
         })}
         waitingOn="you"
@@ -122,7 +122,7 @@ describe("OnlineHud — turn:action attack panel", () => {
     const { container } = render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: [] },
+          phase: { kind: "turn:action", attacks: [], retreat: null },
           you: { active: inPlay("sneasel", "Sneasel") },
           waitingOn: "opponent",
         })}
@@ -132,6 +132,66 @@ describe("OnlineHud — turn:action attack panel", () => {
       />,
     );
     expect(container.firstChild).toBeNull();
+  });
+});
+
+describe("OnlineHud — turn:action retreat", () => {
+  const ENERGY = {
+    id: "e1",
+    cardId: "water",
+    name: "Water Energy",
+    category: "Energy" as const,
+    trainerType: null,
+    hasImage: false,
+  };
+  const activeWithEnergy = inPlay("sneasel", "Sneasel", {
+    attached: { tools: [], energies: [ENERGY] },
+  });
+
+  it("opens the retreat dialog and dispatches the picked energy + bench index", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: { kind: "turn:action", attacks: [], retreat: { cost: 1, can: true } },
+          you: { active: activeWithEnergy, bench: [inPlay("b", "Bench Sneasel")] },
+        })}
+        waitingOn="you"
+        activePlaced
+        onAction={onAction}
+      />,
+    );
+    // The panel's Retreat control (labelled with the cost) opens the dialog.
+    fireEvent.click(screen.getByRole("button", { name: /Retreat \(1\)/ }));
+    // Confirm stays disabled until an energy AND a bench Pokémon are picked.
+    const confirm = screen.getByRole<HTMLButtonElement>("button", { name: /^Retreat$/ });
+    expect(confirm.disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: /Bench Sneasel/ }));
+    expect(confirm.disabled).toBe(false);
+    fireEvent.click(confirm);
+    expect(onAction).toHaveBeenCalledWith({
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: ["e1"],
+      promoteBenchIndex: 0,
+    });
+  });
+
+  it("disables the retreat control when the server marks it unpayable", () => {
+    render(
+      <OnlineHud
+        game={game({
+          phase: { kind: "turn:action", attacks: [], retreat: { cost: 2, can: false } },
+          you: { active: inPlay("sneasel", "Sneasel"), bench: [inPlay("b", "Beta")] },
+        })}
+        waitingOn="you"
+        activePlaced
+        onAction={vi.fn()}
+      />,
+    );
+    const btn = screen.getByRole<HTMLButtonElement>("button", { name: /Retreat \(2\)/ });
+    expect(btn.disabled).toBe(true);
   });
 });
 
