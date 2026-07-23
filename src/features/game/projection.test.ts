@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { GameState } from "@luminous/engine";
-import { topUid } from "@luminous/engine";
+import { redactGame, topUid } from "@luminous/engine";
 import {
   ALL_BASIC_DECK,
   ATTACK_PARK_DECK,
@@ -28,7 +28,12 @@ import {
   setPrizes,
 } from "../../../packages/engine/src/testFixtures";
 import { cardImageUrl } from "../../lib/api";
-import { HIDDEN_CARD_ID, HIDDEN_CARD_NAME, projectGameState } from "./projection";
+import {
+  HIDDEN_CARD_ID,
+  HIDDEN_CARD_NAME,
+  projectGameState,
+  projectionFromRedacted,
+} from "./projection";
 
 // Seed borrowed from the engine's turn.test.ts: MIXED decks, no mulligans,
 // and p1's post-setup hand holds >=2 energy, an item and a Stage1.
@@ -827,5 +832,32 @@ describe("projectGameState — the persistent zones (M4 slice 3)", () => {
     expect(active?.battle?.hp).toBe(before + 50);
     // The Tool itself rides along as an attached face-up model.
     expect(active?.attached?.tools.map((tool) => tool.id)).toEqual([charm]);
+  });
+});
+
+// The whole point of the P4 split: the server-side engine redactor (redactGame)
+// + this client adapter (projectionFromRedacted) must reconstruct EXACTLY the
+// board the local projectGameState produces. This equivalence is the guard
+// against the two redactors drifting — for any state NOT parked on an
+// effect:choose (whose prompt the wire deliberately strips), the round-trip is
+// byte-for-byte the local projection: same card models, image URLs, battle
+// rows, hidden backs, piles and phase-derived fields.
+describe("projectionFromRedacted — the wire round-trip equals the local projection", () => {
+  it("reconstructs a turn:action board identically, for both viewers", () => {
+    const state = turnOneState();
+    for (const seat of ["p1", "p2"] as const) {
+      expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
+        projectGameState(state, seat),
+      );
+    }
+  });
+
+  it("reconstructs the setup barrier identically (opponent placements as backs)", () => {
+    const state = placedNotRevealed();
+    for (const seat of ["p1", "p2"] as const) {
+      expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
+        projectGameState(state, seat),
+      );
+    }
   });
 });

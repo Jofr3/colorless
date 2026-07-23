@@ -1,8 +1,9 @@
-import type { Card } from "@luminous/schema";
+import type { Card, LobbySnapshot } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import {
   FIXED_MATCH_CARD_IDS,
   FIXED_MATCH_DECKS,
+  matchSeatOf,
   SEAT_OF_SLOT,
   startMatch,
 } from "./match";
@@ -70,6 +71,34 @@ describe("startMatch — the lobby → engine handoff", () => {
   it("surfaces the engine's rejection of an illegal deck (not 60 cards)", () => {
     const result = startMatch({ seed: 1, hostDeck: ["basic"], guestDeck: DECK, cardPool: POOL });
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("matchSeatOf — which redacted view a socket receives", () => {
+  const player = (id: string): LobbySnapshot["host"] => ({
+    id,
+    name: id,
+    deckId: null,
+    deckName: null,
+    ready: true,
+    connected: true,
+  });
+  const snapshot: LobbySnapshot = {
+    code: "ABCD",
+    phase: "in-game",
+    host: player("h"),
+    guest: player("g"),
+    countdownStartedAt: null,
+  };
+
+  it("maps the host's socket to p1 and the guest's to p2", () => {
+    expect(matchSeatOf(snapshot, "h")).toBe("p1");
+    expect(matchSeatOf(snapshot, "g")).toBe("p2");
+  });
+
+  it("returns null for a player not seated in the lobby", () => {
+    expect(matchSeatOf(snapshot, "stranger")).toBeNull();
+    expect(matchSeatOf({ ...snapshot, guest: null }, "g")).toBeNull();
   });
 });
 

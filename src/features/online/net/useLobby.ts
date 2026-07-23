@@ -5,6 +5,7 @@ import {
   type LobbySlot,
   type LobbySnapshot,
   makePlayer,
+  type RedactedGame,
 } from "@luminous/schema";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createLobbyChannel, type LobbyChannel } from "./channel";
@@ -38,6 +39,9 @@ export type Lobby = {
   self: PlayerStateOrNull;
   /** The other seat, or null while it's empty. */
   opponent: PlayerStateOrNull;
+  /** This client's REDACTED view of the running match (P4), or null until the
+      server broadcasts one (i.e. before the in-game handoff, or after abandon). */
+  match: RedactedGame | null;
   role: LobbySlot;
   status: LobbyStatus;
   selectDeck: (deck: DeckChoice) => void;
@@ -70,6 +74,10 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     isHost ? createSnapshot(code, makePlayer(playerId, name)) : null,
   );
   const [status, setStatus] = useState<LobbyStatus>(isHost ? "connected" : "connecting");
+  // This client's redacted match view. Server-pushed on the in-game flip and on
+  // reconnect; cleared whenever the lobby leaves in-game (abandon/rematch) so a
+  // stale board never lingers behind a new match.
+  const [match, setMatch] = useState<RedactedGame | null>(null);
 
   // Refs the effect's timers and handlers share. Kept out of React state so
   // reading them in intervals/listeners never sees a stale render closure.
@@ -106,6 +114,19 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           snapshotRef.current = message.snapshot;
           setSnapshot(message.snapshot);
           setStatus("connected");
+          // A lobby that isn't in-game holds no match — drop any stale board so a
+          // rematch in this same lobby starts clean (the server drops the record
+          // on abandon and re-mints on the next flip).
+          if (message.snapshot.phase !== "in-game") setMatch(null);
+          break;
+        }
+        case "match": {
+          // Our per-viewer redacted snapshot of the running game. A refused
+          // client never receives one, but stay defensive and never render a
+          // board while rejected.
+          if (rejected) break;
+          lastServerSeenRef.current = now();
+          setMatch(message.game);
           break;
         }
         case "reject": {
@@ -197,6 +218,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     snapshot,
     self,
     opponent,
+    match,
     role,
     status,
     selectDeck,

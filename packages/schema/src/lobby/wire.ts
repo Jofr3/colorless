@@ -20,6 +20,7 @@
 // in protocol.ts so the web client can import them without bundling zod.
 
 import { z } from "zod";
+import { redactedGameSchema } from "../match";
 import type {
   LobbyIntent,
   LobbyMessage,
@@ -88,6 +89,10 @@ const stateMessageSchema = z.object({
   kind: z.literal("state"),
   snapshot: lobbySnapshotSchema,
 });
+const matchMessageSchema = z.object({
+  kind: z.literal("match"),
+  game: redactedGameSchema,
+});
 const intentMessageSchema = z.object({
   kind: z.literal("intent"),
   from: z.string(),
@@ -113,6 +118,7 @@ const byeMessageSchema = z.object({
 export const lobbyMessageSchema = z.discriminatedUnion("kind", [
   helloMessageSchema,
   stateMessageSchema,
+  matchMessageSchema,
   intentMessageSchema,
   rejectMessageSchema,
   heartbeatMessageSchema,
@@ -144,13 +150,15 @@ export const lobbyClientMessagesAreLobbyMessages: LobbyClientMessage extends Lob
   : false = true;
 
 /** What the lobby server sends a client: authoritative snapshots after every
-    change, and rejections ("full" to a refused hello, "kicked" to a removed
-    guest). Keepalive pongs are raw strings, not frames — see LOBBY_WS_PONG. */
+    change, rejections ("full" to a refused hello, "kicked" to a removed guest),
+    and each socket's redacted in-game match view (P4). Keepalive pongs are raw
+    strings, not frames — see LOBBY_WS_PONG. */
 export const lobbyServerMessageSchema = z.discriminatedUnion("kind", [
   stateMessageSchema,
+  matchMessageSchema,
   rejectMessageSchema,
 ]);
-export type LobbyServerMessage = Extract<LobbyMessage, { kind: "state" | "reject" }>;
+export type LobbyServerMessage = Extract<LobbyMessage, { kind: "state" | "match" | "reject" }>;
 export const lobbyServerMessageSchemaMatchesType: Equals<
   z.infer<typeof lobbyServerMessageSchema>,
   LobbyServerMessage

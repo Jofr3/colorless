@@ -37,6 +37,7 @@ import {
   removeGuest,
   seatGuest,
 } from "@luminous/schema";
+import { redactGame } from "@luminous/engine";
 import { drizzle } from "drizzle-orm/d1";
 import type { Env } from "../env";
 import { attachedPlayer, attachPlayer } from "./attachment";
@@ -60,6 +61,7 @@ import {
 import {
   FIXED_MATCH_CARD_IDS,
   FIXED_MATCH_DECKS,
+  matchSeatOf,
   type MatchRecord,
   startMatch,
 } from "./match";
@@ -146,6 +148,7 @@ export class LobbyDO {
             attachPlayer(ws, frame.from);
             await this.clearPendingDisconnect(frame.from);
             await this.commit(createSnapshot(code, makePlayer(frame.from, frame.name)));
+            await this.sendMatchIfInGame(ws);
             return;
           }
           case "reseat-host": {
@@ -153,6 +156,7 @@ export class LobbyDO {
             attachPlayer(ws, frame.from);
             await this.clearPendingDisconnect(frame.from);
             await this.commit(reseatHost(snapshot, frame.name));
+            await this.sendMatchIfInGame(ws);
             return;
           }
           case "seat-guest": {
@@ -160,6 +164,7 @@ export class LobbyDO {
             attachPlayer(ws, frame.from);
             await this.clearPendingDisconnect(frame.from);
             await this.commit(seatGuest(snapshot, frame.from, frame.name));
+            await this.sendMatchIfInGame(ws);
             return;
           }
         }
@@ -253,6 +258,16 @@ export class LobbyDO {
       }
 
       if (next !== snapshot) await this.commit(next);
+
+      // On the countdown → in-game FLIP, fan each socket its own redacted match
+      // view (the `state` broadcast above only says "in-game"; without this the
+      // client sits on the placeholder). Gated on the transition so a later
+      // alarm mid-match doesn't re-broadcast. Skipped if the handoff failed to
+      // write a record (the load-failure wedge, online.md).
+      if (snapshot.phase !== "in-game" && next.phase === "in-game") {
+        const record = await this.state.storage.get<MatchRecord>(MATCH_KEY);
+        if (record !== undefined) this.broadcastMatch(record, next);
+      }
     }
 
     // 3) An empty lobby past its expiry evaporates entirely, freeing the code
@@ -402,5 +417,32 @@ export class LobbyDO {
         // Socket already gone; its close event will tidy up.
       }
     }
+  }
+
+  /** Send each targeted socket its OWN redacted view of the match (P4). Unlike
+      `broadcast`, the payload differs PER SOCKET — the one authoritative
+      GameState redacted for that socket's seat (host→p1, guest→p2) — so no full
+      state ever crosses the wire. `only` targets one socket (a reconnect);
+      omitted, it fans out to every live socket (the in-game flip). A socket with
+      no seat (a refused/observer connection) is skipped. */
+  private broadcastMatch(record: MatchRecord, snapshot: LobbySnapshot, only?: WebSocket): void {
+    for (const ws of only === undefined ? this.liveSockets() : [only]) {
+      const playerId = attachedPlayer(ws);
+      if (playerId === null) continue;
+      const seat = matchSeatOf(snapshot, playerId);
+      if (seat === null) continue;
+      this.send(ws, { kind: "match", game: redactGame(record.state, seat) });
+    }
+  }
+
+  /** A (re)connecting socket that lands in an already-in-game lobby gets the
+      current match view at once — the `state` broadcast alone would leave it on
+      the placeholder. No-op outside in-game or before the handoff wrote a
+      record (the load-failure wedge, online.md). */
+  private async sendMatchIfInGame(ws: WebSocket): Promise<void> {
+    const snapshot = await this.loadSnapshot();
+    if (snapshot === null || snapshot.phase !== "in-game") return;
+    const record = await this.state.storage.get<MatchRecord>(MATCH_KEY);
+    if (record !== undefined) this.broadcastMatch(record, snapshot, ws);
   }
 }

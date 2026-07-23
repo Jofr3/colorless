@@ -27,6 +27,26 @@ Fixed placeholder decks in `match.ts` (`FIXED_MATCH_DECKS`: host = Sneasel `sv06
 Water Energy, guest = Mareep `sv01-066` + Lightning Energy; 60 each, distinct per seat) +
 `FIXED_MATCH_CARD_IDS` (the 4 distinct ids the DO resolves from D1). 1696 → 1702 tests.
 
+**Increment 1c — DONE:** the redactor + wire + read-only client (D60, engine 0.40.0). The
+match now CROSSES THE WIRE and renders. New PURE **`redactGame(state, seat) → RedactedGame`**
+(`packages/engine/src/redact.ts`) — the per-viewer hidden-information filter, run server-side once
+per socket, so no full `GameState` ever leaves the DO. **`RedactedGame`** is a `@luminous/schema`
+wire type (`match/redacted.ts`, Zod source-of-truth, viewer-relative you/opponent): opponent hand a
+count of positional-id backs (never the engine uid), prizes + decks counts, discards + Stadium
+public, in-play redacted to anonymous backs during setup (no battle row → no HP leak), the
+mid-effect prompt STRIPPED. Its subtle phase derivation (`phaseViewOf`) was MOVED out of the web
+projection into the engine (`phaseView.ts`) so the projection and the redactor share ONE source
+(verified byte-identical; the whole local suite stays green). The DO broadcasts each socket its view
+on the in-game FLIP (a per-viewer fan-out `broadcastMatch`, gated on the countdown→in-game
+transition) and on RECONNECT (`sendMatchIfInGame` in the three hello branches), keyed by
+`matchSeatOf` (host→p1, guest→p2). `{kind:"match", game}` joins the lobby server-message union (Zod
++ exactness proof). Client: `useLobby` gains a `match` state (set on the frame; cleared when the
+lobby leaves in-game so a rematch starts clean); a new **`OnlineMatch`** feeds the same `PlaymatView`
+a `projectionFromRedacted(game)` in place of `MatchPlaceholder` — READ-ONLY (no-op drag/pass,
+deny-all placement) until increment 2 drives turns. The wire round-trip is pinned to reconstruct
+EXACTLY the local `projectGameState` board (the guard against the two redactors drifting). 1702 →
+1719 tests, `bun run check` green.
+
 **Match-record lifecycle (locked this increment):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -51,14 +71,18 @@ until 1c broadcasts the redacted view.
   close it (deferred — no D1 in the current vitest setup).
 
 **Architectural decisions (D-log a real one when they lock):**
-- **Redaction lives in the engine; the wire type in schema.** The engine produces ONE
-  full-information `GameState` (redaction is explicitly "P4's job" — `events.ts:8`,
-  `setup.ts:262`). The only redactor today is CLIENT-side and playmat-coupled
-  (`src/features/game/projection.ts` — imports `cardImageUrl`, outputs playmat
-  `CardModel`s, so a DO can't use it). So P4 adds a PURE `redactGame(state, seat) →
-  RedactedGame` in `packages/engine`, with `RedactedGame` a wire type in `packages/schema`.
-  **No full `GameState` (opponent hand/deck/prizes) may cross the wire** (`projection.ts:5`).
-- Seats: host→p1, guest→p2 (minted at handoff — the lobby has no p1/p2).
+- **Redaction lives in the engine; the wire type in schema. DONE (1c, D60).** The engine
+  produces ONE full-information `GameState` (redaction is explicitly "P4's job" — `events.ts:8`,
+  `setup.ts:262`). The prior redactor was CLIENT-side + playmat-coupled
+  (`src/features/game/projection.ts`), unusable by the DO. So 1c added the PURE
+  **`redactGame(state, seat) → RedactedGame`** (`packages/engine/src/redact.ts`), with
+  **`RedactedGame`** the wire type in `packages/schema` (`match/redacted.ts`). **No full
+  `GameState` (opponent hand/deck/prizes) crosses the wire** — pinned by redact.test.ts's
+  "LEAKS NOTHING" barrier + the projectionFromRedacted round-trip equality. The subtle phase
+  derivation (`phaseViewOf`) MOVED into the engine (`phaseView.ts`), shared by the projection +
+  the redactor (one source, no drift).
+- Seats: host→p1, guest→p2 (minted at handoff — the lobby has no p1/p2). The DO keys each
+  socket's redaction off `matchSeatOf(snapshot, playerId)` (`slotOf` → `SEAT_OF_SLOT`).
 - **Fixed test decks + a server card pool** for now: lobbies are account-less
   (`lobby/routes.ts`) and store only opaque `deckId`/`deckName`, not the card list, and
   the deck routes are session-gated — so the DO can't resolve a player's saved deck yet.
@@ -68,18 +92,22 @@ until 1c broadcasts the redacted view.
 **Next increments (was "Slice 1", now split):**
 - **1b — the DO seam. DONE** (see Status above): `env` on the constructor, `loadCardPool`,
   `handoffToMatch` persisting a `MatchRecord` under `MATCH_KEY`, fixed placeholder decks.
-- **1c — the redactor + wire + read-only client (NEXT).** `redactGame` (engine) + `RedactedGame`
-  (schema) + a `{kind:"match", game}` server message (Zod + the exactness proof, mirroring
-  `wire.ts`); the DO broadcasts each socket its redacted view; the client adopts it
-  (`useLobby`/a `useMatch` hook) and renders a read-only board (reuse `PlaymatView` +
-  the `GameProjection` shape) in place of `MatchPlaceholder`.
-- **2 — drive turns:** client sends actions (seat-bound like `lobbyDO.ts:156`), the DO
-  `applyAction`s + broadcasts, with per-RECIPIENT event redaction (`CARDS_DRAWN`/
-  `MULLIGAN_REVEALED` reveal hidden info — `events.ts:8`). The projection-unsafe greying
-  gates (`programPlayable`/`conditionHolds` read full state — `index.ts:288-315`) need
-  rework for the online HUD.
+- **1c — the redactor + wire + read-only client. DONE** (see Status above): `redactGame`
+  (engine) + `RedactedGame` (schema) + the `{kind:"match", game}` server message; the DO
+  broadcasts each socket its redacted view on the flip + reconnect; `useLobby.match` +
+  `OnlineMatch` render a read-only `PlaymatView` in place of `MatchPlaceholder`.
+- **2 — drive turns (NEXT):** client sends actions (seat-bound like `lobbyDO.ts:156`), the DO
+  `applyAction`s + re-broadcasts each socket its redacted view, with per-RECIPIENT event
+  redaction (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal hidden info — `events.ts:8`). Design the
+  **redacted effect prompt** 1c deliberately stripped (`RedactedDecision.effectChoose` carries no
+  prompt today; `redactDecision` in redact.ts + `decisionFromRedacted` in projection.ts are the
+  two seams). The projection-unsafe greying gates (`programPlayable`/`conditionHolds` read full
+  state — `index.ts:288-315`) need rework for the online HUD, and the online board needs an
+  event→log stream (`logFromEvents` is per-viewer already). The read-only board's own hand is
+  currently draggable-but-inert (no-op `onMoveCard`); wiring real actions replaces that.
 - **3:** real deck selection (resolve `deckId`→60 ids server-side), reconnect/timeouts,
-  concede/rematch, spectate.
+  concede/rematch, spectate, and surfacing a match-start FAILURE to players (the load-failure
+  wedge below).
 
 ## What already exists (reuse it)
 The lobby was built to swap transports without UI changes:

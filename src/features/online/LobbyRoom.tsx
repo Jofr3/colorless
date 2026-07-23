@@ -10,6 +10,7 @@ import { DeckPickerDialog } from "./components/DeckPickerDialog";
 import { LeaveButton } from "./components/LeaveButton";
 import { LobbyCodeCard } from "./components/LobbyCodeCard";
 import { MatchPlaceholder } from "./components/MatchPlaceholder";
+import { OnlineMatch } from "./components/OnlineMatch";
 import { PlayerPanel } from "./components/PlayerPanel";
 import { StartCountdown } from "./components/StartCountdown";
 import { clearIdentity, resolveIdentity } from "./net/session";
@@ -257,6 +258,18 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
   }
 
   if (snapshot.phase === "in-game") {
+    // Once the server broadcasts our redacted view, render the read-only board;
+    // until it arrives (the flip → first `match` frame gap, or a load-failure
+    // wedge), the placeholder stands in.
+    if (lobby.match !== null) {
+      return (
+        <OnlineMatch
+          game={lobby.match}
+          youName={self.name}
+          opponentName={lobby.opponent?.name ?? "Opponent"}
+        />
+      );
+    }
     return (
       <MatchPlaceholder self={lobby.self} opponent={lobby.opponent} onLeave={() => leaveTo("/")} />
     );

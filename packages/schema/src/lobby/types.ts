@@ -1,5 +1,7 @@
 // The shared vocabulary for the online lobby: the authoritative state the host
 // owns, and the messages the two peers exchange over the transport channel.
+
+import type { RedactedGame } from "../match";
 //
 // The model is deliberately client-server even though there's no server: the
 // HOST is authoritative. It holds the one true `LobbySnapshot`, applies every
@@ -63,6 +65,11 @@ export type LobbyMessage =
   | { kind: "hello"; from: string; name: string }
   /** host → all: the authoritative snapshot after any change. */
   | { kind: "state"; snapshot: LobbySnapshot }
+  /** server → one client: that client's REDACTED view of the in-game match
+      (P4). Per-viewer — the DO redacts `GameState` for each socket's seat — so
+      it never rides the same-string `broadcast`; it is sent on the in-game flip
+      and on reconnect. */
+  | { kind: "match"; game: RedactedGame }
   /** guest → host: apply this change to my seat. */
   | { kind: "intent"; from: string; intent: LobbyIntent }
   /** host → guest: you're not welcome — the seat is taken ("full"), or the host

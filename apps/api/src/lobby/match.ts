@@ -9,13 +9,23 @@
 // the result.
 
 import { type CreateGameResult, type GameState, type Seat, createGame } from "@luminous/engine";
-import type { Card } from "@luminous/schema";
+import type { Card, LobbySnapshot } from "@luminous/schema";
+import { slotOf } from "./logic";
 
 /** The one place the lobby's seats map to the engine's: host → p1, guest → p2. */
 export const SEAT_OF_SLOT = { host: "p1", guest: "p2" } as const satisfies Record<
   "host" | "guest",
   Seat
 >;
+
+/** The engine seat whose REDACTED view the socket-holder `playerId` receives —
+    host → p1, guest → p2 (SEAT_OF_SLOT), or null for a player not seated in this
+    lobby (a refused/observer socket). The DO's per-viewer match broadcast keys
+    each socket's redaction off this. */
+export function matchSeatOf(snapshot: LobbySnapshot, playerId: string): Seat | null {
+  const slot = slotOf(snapshot, playerId);
+  return slot === null ? null : SEAT_OF_SLOT[slot];
+}
 
 export interface StartMatchOptions {
   /** The authoritative RNG seed the DO owns for this match (shuffle + coin flip). */

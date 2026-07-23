@@ -12,4 +12,5 @@ export * from "./catalog";
 export * from "./decks";
 export * from "./health";
 export * from "./lobby";
+export * from "./match";
 export * from "./tcgdex";

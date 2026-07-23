@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { RedactedGame } from "../match";
 import type { LobbySnapshot } from "./types";
 import {
   lobbyClientMessageSchema,
@@ -25,6 +26,40 @@ const SNAPSHOT: LobbySnapshot = {
   host: { id: "h1", name: "Ana", deckId: "d1", deckName: "Sparks", ready: false, connected: true },
   guest: { id: "g1", name: "Bo", deckId: null, deckName: null, ready: false, connected: true },
   countdownStartedAt: null,
+};
+
+/** A minimal but well-formed redacted match view — one own card in hand, the
+    opponent's hand as a single anonymous back, empty boards. */
+const MATCH_GAME: RedactedGame = {
+  seat: "p1",
+  turn: 1,
+  board: {
+    stadium: null,
+    you: {
+      hand: [
+        { id: "u1", cardId: "sv01-066", name: "Mareep", category: "Pokemon", trainerType: null, hasImage: true },
+      ],
+      active: null,
+      bench: [],
+      prizesRemaining: 6,
+      deckCount: 53,
+      discard: [],
+    },
+    opponent: {
+      hand: [
+        { id: "opponent-hand-0", cardId: "hidden", name: "Face-down card", category: "Trainer", trainerType: null, hasImage: false },
+      ],
+      active: null,
+      bench: [],
+      prizesRemaining: 6,
+      deckCount: 53,
+      discard: [],
+    },
+  },
+  activePlayer: "you",
+  waitingOn: "you",
+  pendingDecision: null,
+  outcome: null,
 };
 
 describe("compile-time schema/type equality proofs", () => {
@@ -108,13 +143,23 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
 });
 
 describe("lobbyServerMessageSchema (what clients receive)", () => {
-  it("accepts state broadcasts and rejections", () => {
+  it("accepts state broadcasts, redacted match views and rejections", () => {
     expect(lobbyServerMessageSchema.safeParse({ kind: "state", snapshot: SNAPSHOT }).success).toBe(
+      true,
+    );
+    expect(lobbyServerMessageSchema.safeParse({ kind: "match", game: MATCH_GAME }).success).toBe(
       true,
     );
     expect(
       lobbyServerMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
     ).toBe(true);
+  });
+
+  it("round-trips a redacted match view unchanged", () => {
+    expect(lobbyServerMessageSchema.parse({ kind: "match", game: MATCH_GAME })).toEqual({
+      kind: "match",
+      game: MATCH_GAME,
+    });
   });
 
   it("refuses client-only frames", () => {
@@ -139,6 +184,7 @@ describe("lobbyMessageSchema (full channel vocabulary)", () => {
     const messages = [
       { kind: "hello", from: "g1", name: "Bo" },
       { kind: "state", snapshot: SNAPSHOT },
+      { kind: "match", game: MATCH_GAME },
       { kind: "intent", from: "g1", intent: { type: "set-name", name: "Bo" } },
       { kind: "reject", to: "g1", reason: "full" },
       { kind: "heartbeat", from: "h1", slot: "host" },

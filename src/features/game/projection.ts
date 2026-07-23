@@ -28,16 +28,16 @@
 // turn-parity fallback named the wrong seat exactly when ko:promote parked.
 
 import type {
-  EffectPrompt,
   GameOutcome,
   GameOverReason,
   GameState,
   InPlayPokemon,
+  PendingDecision,
   Seat,
   SpecialConditions,
 } from "@luminous/engine";
-import { SEATS, cardOfUid, effectiveMaxHp, otherSeat, topUid } from "@luminous/engine";
-import type { Card } from "@luminous/schema";
+import { cardOfUid, effectiveMaxHp, inSetup, otherSeat, phaseViewOf, topUid } from "@luminous/engine";
+import type { CardCategory, RedactedGame, RedactedInPlay, RedactedSide } from "@luminous/schema";
 import { cardImageUrl } from "../../lib/api";
 import type {
   BattleConditions,
@@ -49,9 +49,10 @@ import type {
   PlayerId,
 } from "../playmat/types";
 
-/** The `cardId` every hidden (face-down) card carries instead of a catalog id. */
-export const HIDDEN_CARD_ID = "hidden";
-export const HIDDEN_CARD_NAME = "Face-down card";
+// The hidden/empty sentinels live in @luminous/schema (the wire redactor and
+// this projection share them); re-exported here for the existing importers.
+export { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
+import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 
 /** The zones BoardState cannot carry: deck size and the public discard. */
 export interface ProjectedPiles {
@@ -61,18 +62,8 @@ export interface ProjectedPiles {
   discard: CardModel[];
 }
 
-/** A parked KO interrupt (§8.1 resolution — mid-turn from an attack, or
-    between turns from the Checkup) awaiting `waitingOn`'s decision. Without
-    this a projection-driven client soft-locks: the turn controls go dark
-    during a ko:* park and nothing would say WHAT is being asked. Counts
-    only — never card identity. */
-export type PendingDecision =
-  | { kind: "takePrizes"; count: number }
-  | { kind: "promote" }
-  /** A parked mid-effect decision (§15.E/G): a Trainer/Ability search or
-      targeting the controller owes. `prompt` carries the legal options the HUD
-      renders (search candidates, gust/switch/heal targets). */
-  | { kind: "effectChoose"; prompt: EffectPrompt };
+// PendingDecision (the parked KO/effect interrupt) now lives in @luminous/engine
+// (phaseView.ts) — shared with the P4 wire redactor — and is imported above.
 
 /** The engine's GameOutcome with seats mapped into the viewer's vocabulary. */
 export type ProjectedOutcome =
@@ -248,25 +239,10 @@ function battleStateOf(state: GameState, pokemon: InPlayPokemon): BattleState {
 function emptyStackModel(seat: Seat, index: number): CardModel {
   return {
     id: `${seat}-bench-${index}-empty`,
-    cardId: "empty",
-    name: "Empty slot",
+    cardId: EMPTY_CARD_ID,
+    name: EMPTY_CARD_NAME,
     type: "trainer",
   };
-}
-
-/** True until the engine reveals the boards: every setup:* phase. The engine
-    emits SETUP_REVEALED when the second player readies and transitions
-    straight into turn:action (packages/engine/src/setup.ts), so "phase is
-    setup" is exactly "placements are still face-down". */
-function inSetup(state: GameState): boolean {
-  switch (state.phase.kind) {
-    case "setup:chooseFirst":
-    case "setup:drawExtra":
-    case "setup:place":
-      return true;
-    default:
-      return false;
-  }
 }
 
 /** A face-down back for an opponent in-play stack during setup. Positional
@@ -299,8 +275,10 @@ function hiddenHand(count: number): CardModel[] {
   }));
 }
 
-/** tcgdex category/trainerType → the playmat's CardType vocabulary. */
-function cardTypeOf(card: Card): CardType {
+/** tcgdex category/trainerType → the playmat's CardType vocabulary. Takes just
+    the two fields it reads, so both a full catalog `Card` and a wire
+    `RedactedCard` feed it. */
+function cardTypeOf(card: { category: CardCategory; trainerType: string | null }): CardType {
   switch (card.category) {
     case "Pokemon":
       return "pokemon";
@@ -319,164 +297,10 @@ function asPlayerId(seat: Seat | null, viewerSeat: Seat): PlayerId | null {
   return seat === viewerSeat ? "you" : "opponent";
 }
 
-/** Everything the projection derives from the phase (engine seats — the
-    caller maps them per viewer). */
-export interface PhaseView {
-  /** Turn owner; null in setup, between turns (checkup-origin ko:* parks)
-      and once the game is over. */
-  activeSeat: Seat | null;
-  /** The seat that must act; null once the game is over. */
-  waitingSeat: Seat | null;
-  pendingDecision: PendingDecision | null;
-  /** Unmapped engine outcome; non-null only on gameOver. */
-  outcome: GameOutcome | null;
-}
-
-/** THE one exhaustive switch over the Phase union — exported so
-    useLocalGame's waitingSeatOf reuses it instead of duplicating the
-    phase→seat mapping. Exhaustive on purpose: M1's defensive turn-parity
-    fallback (written while M2's phases were still landing) guessed the TURN
-    OWNER, which is the wrong seat to wait on exactly when ko:promote parks —
-    the KO'd seat decides in the middle of the attacker's turn. With the
-    union complete in-tree, a future kind is a compile error here instead of
-    a wrong guess. */
-export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
-  const none = { pendingDecision: null, outcome: null };
-  const phase = state.phase;
-  switch (phase.kind) {
-    // Setup: turn 0, nobody OWNS a turn (activeSeat null) — but somebody
-    // still owes a decision, which waitingSeat carries.
-    case "setup:chooseFirst":
-      return { ...none, activeSeat: null, waitingSeat: phase.coinWinner };
-    case "setup:drawExtra":
-      return {
-        ...none,
-        activeSeat: null,
-        waitingSeat: preferViewer(
-          SEATS.filter((seat) => !phase.decided[seat]),
-          viewerSeat,
-        ),
-      };
-    case "setup:place":
-      return {
-        ...none,
-        activeSeat: null,
-        waitingSeat: preferViewer(
-          SEATS.filter((seat) => !phase.ready[seat]),
-          viewerSeat,
-        ),
-      };
-    case "turn:action":
-      return { ...none, activeSeat: phase.seat, waitingSeat: phase.seat };
-    // ko:* — phase.seat is the DECIDER (prize taker / promoter), not the
-    // turn owner. Whether a turn is even in progress depends on the KO's
-    // ORIGIN, which the pending queue still records — see koParkActiveSeat.
-    case "ko:takePrizes":
-      return {
-        activeSeat: koParkActiveSeat(state),
-        waitingSeat: phase.seat,
-        pendingDecision: { kind: "takePrizes", count: phase.count },
-        outcome: null,
-      };
-    case "ko:promote":
-      return {
-        activeSeat: koParkActiveSeat(state),
-        waitingSeat: phase.seat,
-        pendingDecision: { kind: "promote" },
-        outcome: null,
-      };
-    // effect:choose — a Trainer/Ability parked on a decision. Normally the
-    // controller (phase.seat) both owns the turn and owes the decision, so
-    // activeSeat and waitingSeat are the same. `resumeTail` marks the two
-    // mid-tail parks, which read the turn owner off the pending queue instead
-    // (koParkActiveSeat): an on-KO trigger (§9) parks MID-KO-SWEEP during the
-    // OPPONENT's turn, so phase.seat is the KO'd player and the turn owner is
-    // whoever the sweep sits inside (or null, between turns from a Checkup KO);
-    // an ATTACK's effect program (§8 step 4) parks with the attackEpilogue stage
-    // queued, where the decider IS the turn owner — koParkActiveSeat returns the
-    // same seat, so the two agree without a special case here.
-    //
-    // `answerer` (engine 0.32.0) is the THIRD way the two seats come apart, and
-    // the only one where they differ while the turn runs normally: Ortega's
-    // printed "your opponent may draw a card" parks a decision on the
-    // NON-controller mid-play. It moves waitingSeat alone — the turn is still
-    // the controller's, so activeSeat must keep reading phase.seat, or the
-    // board's turn glow would hand the turn to a player who is only answering a
-    // question. This is exactly why the engine files the answerer beside `seat`
-    // rather than replacing it.
-    case "effect:choose": {
-      // An `answerer` park's prompt goes ONLY to the seat that may answer it.
-      //
-      // NARROWLY SCOPED, ON PURPOSE. Handing `pendingDecision` to BOTH viewers
-      // is D17's deliberate contract for every other park — the HUD's
-      // `waitingOn === "you"` gate is what keeps it off the wrong screen, and
-      // three tests pin that. Reversing it wholesale is a real P4 job (it is
-      // named in the resume point, together with stripping `cont`) and not this
-      // slice's to do silently. What IS this slice's is the hole it opened:
-      // until now "who may see the prompt" was a tautology, because the
-      // controller answered everything. An `answerer` park is the first place
-      // the question has a different answer, so the redaction lands exactly
-      // there, where it is new. It costs nothing today — Ortega's mayDraw
-      // prompt carries only a count and a note — but the next op that hands a
-      // decision to the opponent will build its prompt out of the CONTROLLER's
-      // private zones, and the default it inherits should be "redacted".
-      const answerer = phase.answerer ?? phase.seat;
-      const withheld = phase.answerer !== undefined && phase.answerer !== viewerSeat;
-      return {
-        activeSeat: phase.resumeTail === true ? koParkActiveSeat(state) : phase.seat,
-        waitingSeat: answerer,
-        pendingDecision: withheld ? null : { kind: "effectChoose", prompt: phase.prompt },
-        outcome: null,
-      };
-    }
-    case "gameOver":
-      return { ...none, activeSeat: null, waitingSeat: null, outcome: phase.outcome };
-  }
-  // Only reachable when the switch above stops covering the Phase union —
-  // then `phase` is no longer never and this line refuses to compile.
-  return phase satisfies never;
-}
-
-/** The turn a parked ko:* interrupt sits INSIDE — or null when it sits
-    BETWEEN turns. Attack-origin KOs park with the turn tail still queued
-    behind the ko stages (pending: [ko…, endTurn, checkup, startTurn]), so
-    the parity owner still owns the turn. A MID-TURN KO (evolve-below-HP, a
-    snipe ability) parks with a resumeTurn stage queued behind it (pending:
-    [ko…, resumeTurn]) — still inside the actor's turn, so it counts too. So
-    does an ATTACK whose effect program parked (pending: [attackEpilogue]): the
-    turn tail has not even been seeded yet, and the attacker — who owns the turn
-    by parity — is the one owing the decision.
-    Checkup-origin KOs park AFTER endTurn and checkup have already drained
-    (pending: [ko…, startTurn]) with the turn counter not yet bumped — parity
-    would misreport the JUST-ENDED seat as active — so those parks own no turn
-    at all. */
-function koParkActiveSeat(state: GameState): Seat | null {
-  const inTurn = state.pending.some(
-    (stage) =>
-      stage.kind === "endTurn" ||
-      stage.kind === "checkup" ||
-      stage.kind === "resumeTurn" ||
-      stage.kind === "attackEpilogue",
-  );
-  return inTurn ? turnOwnerOf(state) : null;
-}
-
-/** The turn-ownership invariant: odd turns belong to firstPlayer. Only
-    meaningful while a turn is actually in progress — koParkActiveSeat guards
-    the between-turns case, where this parity names the wrong seat. */
-function turnOwnerOf(state: GameState): Seat | null {
-  if (state.turn < 1 || state.firstPlayer === null) return null;
-  return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);
-}
-
-/** Both seats can owe a simultaneous setup decision; a single waitingOn must
-    pick one, and the viewer wins the tie — the client's question is "am I
-    being waited on?". An empty list never happens (a fully-decided phase is
-    never entered), but stay total. */
-function preferViewer(undecided: Seat[], viewerSeat: Seat): Seat | null {
-  if (undecided.includes(viewerSeat)) return viewerSeat;
-  return undecided[0] ?? null;
-}
+// PhaseView + phaseViewOf (the exhaustive Phase→view switch) + its
+// koParkActiveSeat/turnOwnerOf/preferViewer helpers now live in
+// @luminous/engine (phaseView.ts), shared with the P4 wire redactor; phaseViewOf
+// is imported above.
 
 /** Viewer-map a finished game's outcome — fresh objects, nothing aliased
     from the engine state. */
@@ -495,4 +319,107 @@ function outcomeFor(outcome: GameOutcome, viewerSeat: Seat): ProjectedOutcome {
       opponent: outcome.reasons[otherSeat(viewerSeat)],
     },
   };
+}
+
+// --- The wire adapter: RedactedGame → GameProjection (P4 online) -------------
+//
+// A REDACTED game already crossed the wire from the authoritative server, which
+// applied every hidden-information rule via `redactGame` (packages/engine). So
+// this is a pure, mechanical map into the SAME GameProjection shape the local
+// projectGameState produces — the only work left is the client-side rendering
+// concerns the engine deliberately left off the wire: the asset URL (built from
+// `cardId` here, keeping the scheme client-side) and the playmat's CardType
+// vocabulary (derived from category + trainerType). No redaction decisions live
+// here; the board arrives already redacted, and it is viewer-relative
+// ("you"/"opponent"), so it renders with perspective "you" like the local one.
+
+/** Adapt a server-redacted match snapshot into the playmat's GameProjection.
+    Pure; the read-only online board (features/online) feeds the result to
+    PlaymatView exactly as LocalMatch feeds projectGameState's. */
+export function projectionFromRedacted(game: RedactedGame): GameProjection {
+  return {
+    board: {
+      stadium: game.board.stadium === null ? null : cardModelFromRedacted(game.board.stadium),
+      you: playerBoardFromRedacted(game.board.you),
+      opponent: playerBoardFromRedacted(game.board.opponent),
+    },
+    piles: {
+      you: pilesFromRedacted(game.board.you),
+      opponent: pilesFromRedacted(game.board.opponent),
+    },
+    turn: game.turn,
+    // The wire is viewer-relative already — Viewer ("you"/"opponent") IS the
+    // playmat's PlayerId, so these pass straight through.
+    activePlayer: game.activePlayer,
+    waitingOn: game.waitingOn,
+    pendingDecision: decisionFromRedacted(game.pendingDecision),
+    outcome:
+      game.outcome === null
+        ? null
+        : game.outcome.result === "win"
+          ? { result: "win", winner: game.outcome.winner, reason: game.outcome.reason }
+          : { result: "tie", reasons: { ...game.outcome.reasons } },
+  };
+}
+
+function playerBoardFromRedacted(side: RedactedSide): PlayerBoard {
+  return {
+    hand: side.hand.map(cardModelFromRedacted),
+    active: side.active === null ? null : cardModelFromRedacted(side.active),
+    bench: side.bench.map(cardModelFromRedacted),
+    prizesRemaining: side.prizesRemaining,
+  };
+}
+
+function pilesFromRedacted(side: RedactedSide): ProjectedPiles {
+  return {
+    deckCount: side.deckCount,
+    discard: side.discard.map(cardModelFromRedacted),
+  };
+}
+
+/** A wire card → the playmat CardModel. Accepts leaf `RedactedCard`s too (their
+    optional battle/attached are simply absent). The asset URL is built here from
+    `cardId` + `hasImage`, so the scheme lives on the client, exactly as
+    cardModelOf does for local play. */
+function cardModelFromRedacted(card: RedactedInPlay): CardModel {
+  const model: CardModel = {
+    id: card.id,
+    cardId: card.cardId,
+    name: card.name,
+    type: cardTypeOf(card),
+  };
+  if (card.hasImage) model.imageUrl = cardImageUrl(card.cardId, "high");
+  if (card.attached !== undefined) {
+    model.attached = {
+      tools: card.attached.tools.map(cardModelFromRedacted),
+      energies: card.attached.energies.map(cardModelFromRedacted),
+    };
+  }
+  if (card.battle !== undefined) {
+    model.battle = {
+      damage: card.battle.damage,
+      hp: card.battle.hp,
+      conditions: { ...card.battle.conditions },
+    };
+  }
+  return model;
+}
+
+/** Redacted decision → PendingDecision. The mid-effect prompt never crosses the
+    wire (server strips it), so `effectChoose` maps to null — the read-only board
+    renders no interactive decision this increment (increment 2 designs the
+    redacted prompt). The KO parks carry only counts and map through faithfully. */
+function decisionFromRedacted(
+  decision: RedactedGame["pendingDecision"],
+): PendingDecision | null {
+  if (decision === null) return null;
+  switch (decision.kind) {
+    case "takePrizes":
+      return { kind: "takePrizes", count: decision.count };
+    case "promote":
+      return { kind: "promote" };
+    case "effectChoose":
+      return null;
+  }
 }

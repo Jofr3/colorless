@@ -214,8 +214,21 @@ import type { GameState, Seat } from "./types";
     Fezandipiti ex sv06.5-038 "Cruel Arrow" (100), Rotom sv01-069 "Linear Attack"
     (20), Paldean Tauros "Aqua Dive", Bellibolt ex, Kilowattrel. Umbreon "Feint
     Attack" (a different W/R-immunity wording), Pawmot ex (a discard cost), and
-    Magikarp (a coin flip) stay loud. */
-export const engineVersion = "0.39.0";
+    Magikarp (a coin flip) stay loud.
+
+    0.40.0 — the authoritative per-viewer REDACTOR (P4 online, increment 1c). The
+    engine gains `redactGame(state, seat) → RedactedGame` (redact.ts): the PURE
+    server-side hidden-information filter the lobby Durable Object runs once per
+    connected socket, so no full `GameState` (opponent hand/deck/prizes) ever
+    crosses the network. It restates the web app's playmat redaction (opponent
+    hand/prizes/decks as counts, setup in-play as anonymous backs) against the
+    neutral `@luminous/schema` `RedactedGame` wire shape — no image URLs, no
+    engine imports on the far side. Its subtle phase derivation (turn owner /
+    who-must-act / parked interrupt / outcome) is the exhaustive `phaseViewOf`
+    switch, MOVED here from that projection (phaseView.ts) so both share one
+    source; the web projection now imports it. No game-logic change — this slice
+    adds a read surface, not a rule. */
+export const engineVersion = "0.40.0";
 
 export type {
   ApplyResult,
@@ -333,6 +346,16 @@ export type {
 } from "./registry";
 export { programFor } from "./registry";
 export type { DrawReason, GameEvent, StatusName } from "./events";
+/** The exhaustive phase→view derivation (turn owner / who-must-act / parked
+    interrupt / outcome), shared by the web app's per-viewer playmat projection
+    and the P4 wire redactor below. `inSetup` is the board-redaction gate both
+    consumers use. Pure; engine seats (the caller maps them per viewer). */
+export { inSetup, phaseViewOf } from "./phaseView";
+export type { PendingDecision, PhaseView } from "./phaseView";
+/** The authoritative per-viewer wire redactor (P4). Runs server-side in the
+    lobby Durable Object once per socket; produces the `@luminous/schema`
+    `RedactedGame` — no full `GameState` crosses the network. */
+export { redactGame } from "./redact";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
