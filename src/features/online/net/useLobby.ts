@@ -28,6 +28,10 @@ export type LobbyStatus = "connecting" | "connected" | "not-found" | "full" | "k
 
 export type DeckChoice = { id: string; name: string };
 
+/** A rejected game action, surfaced as a transient pill (P4). `nonce` bumps per
+    rejection so an identical repeat re-announces (the local GameError pattern). */
+export type ActionError = { reason: string; nonce: number };
+
 export type UseLobbyOptions = {
   code: string;
   role: LobbySlot;
@@ -44,6 +48,9 @@ export type Lobby = {
   /** This client's REDACTED view of the running match (P4), or null until the
       server broadcasts one (i.e. before the in-game handoff, or after abandon). */
   match: RedactedGame | null;
+  /** The last game action the server refused (P4), for a transient pill; null
+      until one is rejected, cleared by the next accepted action (a `match`). */
+  actionError: ActionError | null;
   role: LobbySlot;
   status: LobbyStatus;
   selectDeck: (deck: DeckChoice) => void;
@@ -84,6 +91,10 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
   // reconnect; cleared whenever the lobby leaves in-game (abandon/rematch) so a
   // stale board never lingers behind a new match.
   const [match, setMatch] = useState<RedactedGame | null>(null);
+  // The last refused game action, for a transient pill. Bumped on each
+  // `reject-action`, cleared by the next accepted action (a `match` frame) — the
+  // local useLocalGame clears its lastError on every ok apply for the same reason.
+  const [actionError, setActionError] = useState<ActionError | null>(null);
 
   // Refs the effect's timers and handlers share. Kept out of React state so
   // reading them in intervals/listeners never sees a stale render closure.
@@ -120,10 +131,13 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           snapshotRef.current = message.snapshot;
           setSnapshot(message.snapshot);
           setStatus("connected");
-          // A lobby that isn't in-game holds no match — drop any stale board so a
-          // rematch in this same lobby starts clean (the server drops the record
-          // on abandon and re-mints on the next flip).
-          if (message.snapshot.phase !== "in-game") setMatch(null);
+          // A lobby that isn't in-game holds no match — drop any stale board (and
+          // any stale rejection pill) so a rematch in this same lobby starts clean
+          // (the server drops the record on abandon and re-mints on the next flip).
+          if (message.snapshot.phase !== "in-game") {
+            setMatch(null);
+            setActionError(null);
+          }
           break;
         }
         case "match": {
@@ -133,6 +147,17 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           if (rejected) break;
           lastServerSeenRef.current = now();
           setMatch(message.game);
+          // An accepted action supersedes any pending rejection pill (the
+          // useLocalGame lastError-clears-on-ok rule, over the wire).
+          setActionError(null);
+          break;
+        }
+        case "reject-action": {
+          // The server refused our last game action (illegal / unsupported). A
+          // transient pill, not terminal — bump the nonce so a repeat re-announces.
+          if (rejected) break;
+          lastServerSeenRef.current = now();
+          setActionError((prev) => ({ reason: message.reason, nonce: (prev?.nonce ?? 0) + 1 }));
           break;
         }
         case "reject": {
@@ -235,6 +260,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     self,
     opponent,
     match,
+    actionError,
     role,
     status,
     selectDeck,

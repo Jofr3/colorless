@@ -146,6 +146,10 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
     ).toBe(false);
+    // reject-action is the server's to send (the pill), never the client's.
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "reject-action", reason: "nope" }).success,
+    ).toBe(false);
     // heartbeats are not client frames — keepalive is the raw ping string.
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "heartbeat", from: "g1", slot: "guest" }).success,
@@ -175,6 +179,11 @@ describe("lobbyServerMessageSchema (what clients receive)", () => {
     );
     expect(
       lobbyServerMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
+    ).toBe(true);
+    // The transient action-rejection pill (P4) is a server frame.
+    expect(
+      lobbyServerMessageSchema.safeParse({ kind: "reject-action", reason: "Illegal move." })
+        .success,
     ).toBe(true);
   });
 
@@ -211,6 +220,7 @@ describe("lobbyMessageSchema (full channel vocabulary)", () => {
       { kind: "intent", from: "g1", intent: { type: "set-name", name: "Bo" } },
       { kind: "action", action: { type: "endTurn", seat: "p1" } },
       { kind: "reject", to: "g1", reason: "full" },
+      { kind: "reject-action", reason: "Illegal move." },
       { kind: "heartbeat", from: "h1", slot: "host" },
       { kind: "bye", from: "g1", slot: "guest" },
     ];

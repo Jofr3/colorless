@@ -197,14 +197,17 @@ export class LobbyDO {
         if (record === undefined) return;
         // Bind the action to the socket's seat (a client can't act for the
         // opponent) and run the engine's total applyAction. A rejected action
-        // changes nothing — the client's optimistic gesture already sprang back;
-        // increment 2b adds the rejection pill. On accept, persist BEFORE
-        // broadcasting (crash-safe, mirroring the handoff) and fan each socket
-        // its own redacted view.
-        const next = applyMatchAction(record, seat, frame.action);
-        if (next === null) return;
-        await this.state.storage.put(MATCH_KEY, next);
-        this.broadcastMatch(next, snapshot);
+        // changes nothing (the client's optimistic gesture already sprang back);
+        // the actor's socket gets a transient `reject-action` pill with the
+        // engine's own reason (2b-iii-d). On accept, persist BEFORE broadcasting
+        // (crash-safe, mirroring the handoff) and fan each socket its redacted view.
+        const outcome = applyMatchAction(record, seat, frame.action);
+        if (!outcome.ok) {
+          this.send(ws, { kind: "reject-action", reason: outcome.reason });
+          return;
+        }
+        await this.state.storage.put(MATCH_KEY, outcome.record);
+        this.broadcastMatch(outcome.record, snapshot);
         return;
       }
 

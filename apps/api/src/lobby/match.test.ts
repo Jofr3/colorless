@@ -121,10 +121,11 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
       seat: winner,
       first: winner,
     });
-    expect(next).not.toBeNull();
-    expect(next?.seed).toBe(1);
+    expect(next.ok).toBe(true);
+    if (!next.ok) throw new Error("expected accept");
+    expect(next.record.seed).toBe(1);
     // The coin winner's choice advanced setup off chooseFirst.
-    expect(next?.state.phase.kind).not.toBe("setup:chooseFirst");
+    expect(next.record.state.phase.kind).not.toBe("setup:chooseFirst");
   });
 
   it("BINDS to the actor's seat — a forged action.seat cannot act as the opponent", () => {
@@ -138,15 +139,19 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
       seat: winner,
       first: winner,
     });
-    expect(forged).toBeNull();
+    expect(forged.ok).toBe(false);
   });
 
-  it("returns null on a rejected action (nothing changes)", () => {
+  it("rejects with a reason on an illegal action (nothing changes)", () => {
     const { record, winner } = freshRecord();
-    // endTurn is illegal during setup — the engine refuses it.
-    expect(applyMatchAction(record, winner, { type: "endTurn", seat: winner })).toBeNull();
+    // endTurn is illegal during setup — the engine refuses it, and the reason
+    // (its own message) rides back for the pill.
+    const illegal = applyMatchAction(record, winner, { type: "endTurn", seat: winner });
+    expect(illegal.ok).toBe(false);
+    if (illegal.ok) throw new Error("expected reject");
+    expect(illegal.reason.length).toBeGreaterThan(0);
     // A bogus action type is refused too (the total applyAction contract).
-    expect(applyMatchAction(record, winner, { type: "not-an-action" })).toBeNull();
+    expect(applyMatchAction(record, winner, { type: "not-an-action" }).ok).toBe(false);
   });
 
   it("rejects action types outside the driveable scope, and effect answers off a park (no soft-lock)", () => {
@@ -154,13 +159,13 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     // useAbility is still OFF the set (abilities land with real decks) — refused
     // BEFORE the engine even sees it, so the match can't reach an un-drivable phase.
     expect(SUPPORTED_MATCH_ACTIONS.has("useAbility")).toBe(false);
-    expect(applyMatchAction(record, winner, { type: "useAbility", seat: winner })).toBeNull();
+    expect(applyMatchAction(record, winner, { type: "useAbility", seat: winner }).ok).toBe(false);
     // resolveEffect is now ON the set (2b-iii-c dialoged every prompt kind), but a
     // crafted frame off an effect:choose park is rejected by the ENGINE's own
     // validation (BAD_PHASE during setup here) — so it changes nothing and cannot
     // soft-lock, exactly the soft-lock-safety the allowlist flip relied on.
     expect(SUPPORTED_MATCH_ACTIONS.has("resolveEffect")).toBe(true);
-    expect(applyMatchAction(record, winner, { type: "resolveEffect", seat: winner })).toBeNull();
+    expect(applyMatchAction(record, winner, { type: "resolveEffect", seat: winner }).ok).toBe(false);
     // The setup + drag + pass + attack/KO + retreat + effect-answer actions the
     // client actually sends ARE supported (2b-i grew the set with attack /
     // takePrizes / promote; 2b-ii added retreat; 2b-iii-c added resolveEffect).

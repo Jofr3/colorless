@@ -107,6 +107,10 @@ const rejectMessageSchema = z.object({
   to: z.string(),
   reason: z.enum(["full", "kicked"]),
 });
+const rejectActionMessageSchema = z.object({
+  kind: z.literal("reject-action"),
+  reason: z.string(),
+});
 const heartbeatMessageSchema = z.object({
   kind: z.literal("heartbeat"),
   from: z.string(),
@@ -126,6 +130,7 @@ export const lobbyMessageSchema = z.discriminatedUnion("kind", [
   intentMessageSchema,
   actionMessageSchema,
   rejectMessageSchema,
+  rejectActionMessageSchema,
   heartbeatMessageSchema,
   byeMessageSchema,
 ]);
@@ -157,14 +162,19 @@ export const lobbyClientMessagesAreLobbyMessages: LobbyClientMessage extends Lob
 
 /** What the lobby server sends a client: authoritative snapshots after every
     change, rejections ("full" to a refused hello, "kicked" to a removed guest),
-    and each socket's redacted in-game match view (P4). Keepalive pongs are raw
-    strings, not frames — see LOBBY_WS_PONG. */
+    each socket's redacted in-game match view (P4), and a transient
+    `reject-action` to the actor when a game action is refused. Keepalive pongs
+    are raw strings, not frames — see LOBBY_WS_PONG. */
 export const lobbyServerMessageSchema = z.discriminatedUnion("kind", [
   stateMessageSchema,
   matchMessageSchema,
   rejectMessageSchema,
+  rejectActionMessageSchema,
 ]);
-export type LobbyServerMessage = Extract<LobbyMessage, { kind: "state" | "match" | "reject" }>;
+export type LobbyServerMessage = Extract<
+  LobbyMessage,
+  { kind: "state" | "match" | "reject" | "reject-action" }
+>;
 export const lobbyServerMessageSchemaMatchesType: Equals<
   z.infer<typeof lobbyServerMessageSchema>,
   LobbyServerMessage

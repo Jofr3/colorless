@@ -153,16 +153,29 @@ export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
     BOUND to the actor's own `seat` — never the client-claimed `action.seat` — so
     a client can never act for its opponent, gated to the 2a-SUPPORTED types
     (`SUPPORTED_MATCH_ACTIONS`), then run through the engine's TOTAL `applyAction`
-    (never throws on a bogus type/field, D14). Returns the next record on accept,
-    or null on reject (an unsupported/illegal action changes nothing — the
-    client's optimistic gesture already sprang back; the seed carries over
-    unchanged). Pure — no DO/storage. */
+    (never throws on a bogus type/field, D14). On accept returns the next record;
+    on reject returns a `reason` (an unsupported/illegal action changes nothing —
+    the client's optimistic gesture already sprang back; the seed carries over
+    unchanged) so the DO can surface the transient rejection pill (P4 2b-iii-d).
+    Pure — no DO/storage. */
+export type MatchActionOutcome =
+  | { ok: true; record: MatchRecord }
+  | { ok: false; reason: string };
+
 export function applyMatchAction(
   record: MatchRecord,
   seat: Seat,
   action: WireAction,
-): MatchRecord | null {
-  if (!SUPPORTED_MATCH_ACTIONS.has(action.type)) return null;
+): MatchActionOutcome {
+  // Off-allowlist types never reach the engine (the soft-lock gate) — a generic
+  // reason, since there is no engine message to quote.
+  if (!SUPPORTED_MATCH_ACTIONS.has(action.type)) {
+    return { ok: false, reason: "That move isn't available here." };
+  }
   const result = applyAction(record.state, { ...action, seat } as GameAction);
-  return result.ok ? { seed: record.seed, state: result.state } : null;
+  // The engine's own rejection message is safe to surface: it describes the
+  // ACTOR's own illegal move / wrong phase, never the opponent's hidden zones.
+  return result.ok
+    ? { ok: true, record: { seed: record.seed, state: result.state } }
+    : { ok: false, reason: result.error.message };
 }

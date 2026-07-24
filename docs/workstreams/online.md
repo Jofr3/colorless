@@ -235,6 +235,38 @@ commented): the online key omits seat+turn (safe/stricter in the single-viewer o
 if it ever goes hot-seat), and the server-side `maxPerTarget: undefined` key is dropped by the wire.
 The reviewer independently ran `bun run check` green.
 
+**Increment 2b-iii-d-i — DONE:** the rejection pill (D67). **2b-iii-d is SPLIT** into d-i (this — the
+rejection pill) and d-ii (the online event log, a bigger multi-package refactor: `logFromEvents` + the
+log types must move from `apps/web` into shared packages so the DO can build rows server-side, then
+accumulate them in `MatchRecord` and broadcast them). d-i closes the silent-drop gap the DO code flagged
+("increment 2b adds the rejection pill"): a refused game action now surfaces to the ACTOR as a transient
+pill instead of vanishing. New `@luminous/schema` server frame **`{kind:"reject-action", reason}`**
+(added to `LobbyMessage` + `lobbyServerMessageSchema` with the exactness proof; server-only — the client
+schema refuses it). **`applyMatchAction` now returns a discriminated `MatchActionOutcome`**
+(`{ok:true,record} | {ok:false,reason}`) instead of `MatchRecord | null`: the reason is a generic string
+for an off-allowlist type and the ENGINE's own `error.message` for an illegal move (safe to surface — it
+describes the actor's own move/phase, never the opponent's hidden zones). The DO's `case "action"` sends
+`reject-action` to the acting socket on `!ok` (the board already reflects only accepted state, so nothing
+else changes). Client: `useLobby` gained **`actionError: {reason, nonce}`** (bumped per rejection so a
+repeat re-announces, cleared by the next accepted `match` frame — the local `useLocalGame`
+clears-lastError-on-ok rule over the wire); `OnlineMatch` renders the shared **`TransientErrorPill`** with
+the nonce+TTL dismiss pattern lifted verbatim from `GamePage`. 1774 → **1777** tests (wire schema
+accept/refuse, `applyMatchAction` reason, 3 OnlineMatch DOM pill cases), `bun run check` green.
+**Review (1 read-only adversarial reviewer): NO HIGH** — the info-leak check is clean: every engine
+`err(...)` that names a card confirms the uid is in the ACTOR's own hand or names a public in-play
+Pokémon first (none resolves a name from an opponent's hidden zone), `validateChoice` echoes only the
+client-supplied uid (never the candidate set), and the DO sends `reject-action` ONLY to the acting socket
+(`this.send(ws, …)`, no broadcast; an unseated socket returns before `applyMatchAction`). **1 MED, FIXED:**
+a nonce-collision — `useLobby` restarts its per-error nonce at 1 after clearing `actionError` on an
+accepted move, and `OnlineMatch`'s `dismissedNonce` never cleared, so a rejection AFTER a dismissed-then-
+succeeded sequence collided (`nonce === dismissedNonce`) and the pill silently didn't show — exactly the
+gap this slice closes; fixed by resetting `dismissedNonce` when `actionError` goes null (+ a DOM test
+pinning the reject→dismiss→accept→repeat-nonce path). **1 LOW, RECORDED:** a crafted-frame rejection can
+surface developer-facing engine text (e.g. "the ko:takePrizes phase disagrees with the pending queue
+head") — actor-only, no leak/crash, cosmetic. **Pre-existing sibling NOTED (out of scope):** the local
+`GamePage`/`useLocalGame` pill shares the same latent nonce-reset defect (less reachable in hot-seat);
+deferred, not touched by this online slice.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -340,10 +372,18 @@ until 1c broadcasts the redacted view.
       resets picks. With every prompt kind dialoged, **`resolveEffect` is now ON `SUPPORTED_MATCH_ACTIONS`**
       (soft-lock-safe — the engine rejects it off a park and validates the choice on one). The effect-dialog
       precondition on real decks (increment 3) is MET.
-    - **2b-iii-d — the online event log + rejection pill (NEXT):** per-RECIPIENT EVENT redaction
-      (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal hidden uids — `events.ts:8`) + an event→log stream for
-      the online board (`logFromEvents` is per-viewer already; `OnlineMatch` feeds `NO_LOG` today), and a
-      rejection pill (the DO drops a rejected action silently today).
+    - **2b-iii-d — the online event log + rejection pill. SPLIT** (two features of very different size):
+      - **2b-iii-d-i — the rejection pill. DONE** (D67, see Status above): a refused game action now
+        surfaces to the actor as a transient pill. New `{kind:"reject-action", reason}` server frame;
+        `applyMatchAction` returns `{ok,reason}` instead of `MatchRecord | null`; the DO sends it on `!ok`;
+        `useLobby.actionError` + `OnlineMatch`'s `TransientErrorPill` (the GamePage nonce+TTL pattern).
+      - **2b-iii-d-ii — the online event log (NEXT):** per-RECIPIENT EVENT redaction — but note
+        `logFromEvents` is ALREADY viewer-independent + leak-safe (counts-only for hidden draws/prizes,
+        names resolved off state), so the cleanest path is the SERVER building the rows: move
+        `logFromEvents` + the `LogSegment`/`SeatLogEntry`/`LogEntry` types from `apps/web` into shared
+        packages (engine + schema), have the DO run it with the full state, accumulate `SeatLogEntry[]` in
+        `MatchRecord` (+ a `startedAt` for elapsed), broadcast the log (a `RedactedGame`/frame field), and
+        render it in `OnlineMatch` (`viewLogEntries` → `PlaymatView`, replacing today's `NO_LOG`).
 - **3:** real deck selection (resolve `deckId`→60 ids server-side), reconnect/timeouts,
   concede/rematch, spectate, and surfacing a match-start FAILURE to players (the load-failure
   wedge below).

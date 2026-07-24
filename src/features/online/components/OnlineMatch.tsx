@@ -1,11 +1,13 @@
 import type { GameAction } from "@luminous/engine";
 import type { RedactedGame } from "@luminous/schema";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { TransientErrorPill } from "../../../components/TransientErrorPill";
 import { moveToAction } from "../../game/moveToAction";
 import { placementPredicateFor } from "../../game/placement";
 import { projectionFromRedacted } from "../../game/projection";
 import { PlaymatView } from "../../playmat/PlaymatView";
 import type { CardMoveRequest, TurnInfo } from "../../playmat/types";
+import type { ActionError } from "../net/useLobby";
 import { OnlineHud } from "./OnlineHud";
 
 // The online match board (P4). Renders THIS client's server-redacted snapshot
@@ -25,16 +27,21 @@ import { OnlineHud } from "./OnlineHud";
 // later 2b slice.
 
 const NO_LOG: never[] = [];
+// The rejection pill lingers this long before auto-dismissing (GamePage's TTL).
+const ERROR_TTL_MS = 4000;
 
 export function OnlineMatch({
   game,
   youName,
   opponentName,
+  actionError,
   onAction,
 }: {
   game: RedactedGame;
   youName: string;
   opponentName: string;
+  /** The server's last action rejection (P4), surfaced as a transient pill. */
+  actionError: ActionError | null;
   onAction: (action: GameAction) => void;
 }) {
   const projection = useMemo(() => projectionFromRedacted(game), [game]);
@@ -77,6 +84,28 @@ export function OnlineMatch({
     opponentName,
   };
 
+  // Transient pill for a server-rejected action — the GamePage pattern over the
+  // wire: derived from `actionError` (not mirrored into state), it hides once its
+  // nonce is dismissed (button or TTL) and vanishes when the next accepted action
+  // clears `actionError` in useLobby. The nonce keying remounts the pill so an
+  // identical consecutive rejection re-announces.
+  const [dismissedNonce, setDismissedNonce] = useState<number | null>(null);
+  const shownError =
+    actionError !== null && actionError.nonce !== dismissedNonce ? actionError : null;
+  useEffect(() => {
+    if (actionError === null) {
+      // An accepted action cleared the rejection: reset the dismissal too, so the
+      // NEXT rejection shows even when its nonce REPEATS an earlier one — useLobby's
+      // per-error nonce restarts after it clears `actionError` on an accepted move,
+      // and a stale `dismissedNonce` would otherwise swallow the repeat (the exact
+      // silent-drop this pill exists to prevent).
+      setDismissedNonce(null);
+      return;
+    }
+    const timer = setTimeout(() => setDismissedNonce(actionError.nonce), ERROR_TTL_MS);
+    return () => clearTimeout(timer);
+  }, [actionError]);
+
   return (
     <PlaymatView
       board={board}
@@ -109,6 +138,14 @@ export function OnlineMatch({
             </p>
           </output>
         </div>
+      )}
+      {shownError !== null && (
+        <TransientErrorPill
+          message={shownError.reason}
+          nonce={shownError.nonce}
+          onDismiss={() => setDismissedNonce(shownError.nonce)}
+          className="absolute bottom-[calc(var(--hand-h)+12px)] left-1/2 z-[90] -translate-x-1/2"
+        />
       )}
     </PlaymatView>
   );

@@ -79,6 +79,12 @@ export type LobbyMessage =
   /** host → guest: you're not welcome — the seat is taken ("full"), or the host
       removed you ("kicked"). */
   | { kind: "reject"; to: string; reason: "full" | "kicked" }
+  /** server → the acting client: their last game action was refused — an illegal
+      move, or an unsupported type (P4). TRANSIENT, unlike `reject`: it aims at
+      the socket that sent the action (no `to`), carries the engine's own reason
+      for a pill, and is not terminal — the board already reflects only accepted
+      state, so a rejected action changed nothing. */
+  | { kind: "reject-action"; reason: string }
   /** either direction: a periodic keep-alive so the other side knows we're here. */
   | { kind: "heartbeat"; from: string; slot: LobbySlot }
   /** either direction: a graceful "I'm leaving" so the other side reacts at once
