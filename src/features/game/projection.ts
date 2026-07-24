@@ -439,12 +439,14 @@ function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null
 }
 
 /** Rebuild the engine `PendingDecision.effectChoose` from a redacted wire
-    prompt (2b-iii). Exhaustive on the redacted union (mayDraw + the public-ref
-    family), so a new wire arm added in a later 2b-iii slice is a "not all paths
-    return" compile error here rather than a silently dropped decision. The
-    public-ref arms carry the engine's own `PokemonRef`s (absolute seats) + uids
-    verbatim, so this rebuilds the full `EffectPrompt` field-for-field and the
-    answerer's-view round-trip equals the local projection exactly. */
+    prompt (2b-iii). Exhaustive on the redacted union (every arm now), so a new
+    wire arm is a "not all paths return" compile error here rather than a silently
+    dropped decision. The public-ref arms carry the engine's own `PokemonRef`s
+    (absolute seats) + uids verbatim; the hidden-candidate arms (chooseCards /
+    attachCards) carry a `RedactedCard` per candidate whose `id` IS the engine uid
+    the engine prompt held — so `candidates.map((c) => c.id)` recovers the exact
+    `string[]` and this rebuilds the full `EffectPrompt` field-for-field, keeping
+    the answerer's-view round-trip equal to the local projection. */
 function effectDecisionFromPrompt(
   prompt: NonNullable<Extract<RedactedGame["phase"], { kind: "effect:choose" }>["prompt"]>,
 ): PendingDecision {
@@ -502,6 +504,33 @@ function effectDecisionFromPrompt(
             prompt.scope.kind === "total"
               ? { kind: "total", count: prompt.scope.count }
               : { kind: "each" },
+          note: prompt.note,
+        },
+      };
+    case "chooseCards":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "chooseCards",
+          // Recover the engine uids from the revealed RedactedCards (id === uid).
+          candidates: prompt.candidates.map((c) => c.id),
+          min: prompt.min,
+          max: prompt.max,
+          dest: prompt.dest,
+          note: prompt.note,
+        },
+      };
+    case "attachCards":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "attachCards",
+          candidates: prompt.candidates.map((c) => c.id),
+          targets: prompt.targets.map(refFromWire),
+          max: prompt.max,
+          // Absent stays absent (the engine arm omits it for "no per-target cap");
+          // spreading avoids writing an explicit `maxPerTarget: undefined` key.
+          ...(prompt.maxPerTarget !== undefined ? { maxPerTarget: prompt.maxPerTarget } : {}),
           note: prompt.note,
         },
       };

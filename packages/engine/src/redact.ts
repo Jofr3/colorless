@@ -18,9 +18,9 @@
 // HIDDEN cards carry a POSITIONAL id and the `hidden` sentinel (never the uid —
 // leaking it would let a client track a hidden card across zones); empty in-play
 // slots the `empty` sentinel. Prizes/decks are counts; the mid-effect decision's
-// prompt crosses ONLY to the seat that must answer it (redactedPromptOf), and
-// only for a prompt kind whose online dialog exists (mayDraw + the public-ref
-// choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy family so far).
+// prompt crosses ONLY to the seat that must answer it (redactedPromptOf) — for a
+// hidden-candidate prompt (chooseCards/attachCards) that carries the revealed
+// deck-card identities, so the answerer gate is the hidden-info barrier there.
 
 import type {
   RedactedAttack,
@@ -102,7 +102,7 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
     case "ko:promote":
       return { kind: "ko:promote" };
     case "effect:choose":
-      return { kind: "effect:choose", prompt: redactedPromptOf(phase, viewerSeat) };
+      return { kind: "effect:choose", prompt: redactedPromptOf(state, phase, viewerSeat) };
     case "gameOver":
       return { kind: "gameOver" };
   }
@@ -123,39 +123,45 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
     wire has no such gate: it physically delivers the payload to a client, so a
     controller-answered prompt must go to the CONTROLLER ALONE. The two coincide
     exactly when `answerer` is set — ALWAYS for `mayDraw` — so a mayDraw park
-    round-trips to the local projection for BOTH viewers. The public-ref family
-    (2b-iii-b) is CONTROLLER-answered, so `answerer` is undefined and this gate is
-    strictly stricter than `phaseViewOf`'s (which keeps the prompt for both):
-    such a park round-trips for the ANSWERER's view only, not the opponent's —
-    the round-trip pin is scoped accordingly, and this gate stays as-is (tightening
-    the projection instead would be the wrong direction — the wire is the barrier).
+    round-trips to the local projection for BOTH viewers. The public-ref
+    (2b-iii-b) and hidden-candidate (2b-iii-c) families are CONTROLLER-answered, so
+    `answerer` is undefined and this gate is strictly stricter than `phaseViewOf`'s
+    (which keeps the prompt for both): such a park round-trips for the ANSWERER's
+    view only, not the opponent's — the round-trip pin is scoped accordingly, and
+    this gate stays as-is (tightening the projection instead would be the wrong
+    direction — the wire is the barrier, and for a deck search it is the ONLY thing
+    keeping the revealed deck-card identities off the opponent's snapshot).
 
-    Even for the answerer, only a prompt kind whose online dialog exists is
-    redacted here (mayDraw + the public-ref family); chooseCards/attachCards still
-    return null until 2b-iii-c resolves their hidden candidates. */
+    Every prompt kind now has an online dialog (2b-iii-a/b/c), so for the answerer
+    this always returns a non-null redacted prompt; null is now ONLY the
+    answerer-gate result. */
 function redactedPromptOf(
+  state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
   viewerSeat: Seat,
 ): RedactedEffectPrompt | null {
   const answerer = phase.answerer ?? phase.seat;
   if (answerer !== viewerSeat) return null;
-  return redactPrompt(phase.prompt);
+  return redactPrompt(state, phase.prompt);
 }
 
 /** Map the engine's full `EffectPrompt` to the neutral wire shape — the answerer
     has already been established, so this only decides what identity crosses.
-    Wired so far: `mayDraw` (count + note, no references — 2b-iii-a) and the
+    Three families: `mayDraw` (count + note, no references — 2b-iii-a); the
     PUBLIC-REF family (choosePokemon / choosePokemonMulti / moveEnergy /
     discardEnergy — 2b-iii-b), whose candidates are all in-play `PokemonRef`s and
-    attached-Energy uids ALREADY public on the redacted board, so they pass
-    through as fresh copies with no hidden-card resolution. The hidden-candidate
-    chooseCards/attachCards family (the CONTROLLER's own deck/top cards) still
-    returns null — it needs a server-resolved `RedactedCard` per candidate
-    (2b-iii-c). The switch stays EXHAUSTIVE so a new engine prompt kind is a
-    compile error here, not a silent null. Every branch builds FRESH objects (the
-    ref/scope copies below), so nothing aliases the input state — the redactor's
-    purity contract, like copyConditions. */
-function redactPrompt(prompt: EffectPrompt): RedactedEffectPrompt | null {
+    attached-Energy uids ALREADY public on the redacted board (fresh ref/scope
+    copies, no card resolution); and the HIDDEN-CANDIDATE family (chooseCards /
+    attachCards — 2b-iii-c), whose candidates are the controller's own deck/top/
+    hand/discard cards — the deck ones hidden until this effect REVEALS them — so
+    each candidate uid is resolved to a `RedactedCard` (identity keyed by that
+    uid, which the answer dispatches back). That resolution goes to the answerer
+    ALONE (the gate above), which is what keeps a deck uid off the opponent's
+    wire. The switch stays EXHAUSTIVE so a new engine prompt kind is a compile
+    error here, not a silent null. Every branch builds FRESH objects (the
+    ref/scope copies and redactedCardOf), so nothing aliases the input state — the
+    redactor's purity contract, like copyConditions. */
+function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPrompt {
   switch (prompt.kind) {
     case "mayDraw":
       return { kind: "mayDraw", count: prompt.count, note: prompt.note };
@@ -190,8 +196,27 @@ function redactPrompt(prompt: EffectPrompt): RedactedEffectPrompt | null {
         note: prompt.note,
       };
     case "chooseCards":
+      return {
+        kind: "chooseCards",
+        // The reveal: each candidate uid resolved to its identity (the deck
+        // cards this search turned face-up), keyed by the uid the answer sends.
+        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),
+        min: prompt.min,
+        max: prompt.max,
+        dest: prompt.dest,
+        note: prompt.note,
+      };
     case "attachCards":
-      return null;
+      return {
+        kind: "attachCards",
+        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),
+        targets: prompt.targets.map(redactedRefOf),
+        max: prompt.max,
+        // Absent = "in any way you like" (no per-target cap); passed through as
+        // undefined, which the wire drops and the schema's optional accepts.
+        maxPerTarget: prompt.maxPerTarget,
+        note: prompt.note,
+      };
   }
 }
 

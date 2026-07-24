@@ -149,17 +149,21 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     expect(applyMatchAction(record, winner, { type: "not-an-action" })).toBeNull();
   });
 
-  it("rejects action types outside the driveable scope (no soft-lock via crafted frames)", () => {
+  it("rejects action types outside the driveable scope, and effect answers off a park (no soft-lock)", () => {
     const { record, winner } = freshRecord();
-    // A crafted ability/effect frame is refused BEFORE the engine even sees it,
-    // so the match can't reach a phase the online HUD can't drive.
-    for (const type of ["useAbility", "resolveEffect"]) {
-      expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(false);
-      expect(applyMatchAction(record, winner, { type, seat: winner })).toBeNull();
-    }
-    // The setup + drag + pass + attack/KO + retreat actions the client actually
-    // sends ARE supported (2b-i grew the set with attack / takePrizes / promote;
-    // 2b-ii added retreat).
+    // useAbility is still OFF the set (abilities land with real decks) — refused
+    // BEFORE the engine even sees it, so the match can't reach an un-drivable phase.
+    expect(SUPPORTED_MATCH_ACTIONS.has("useAbility")).toBe(false);
+    expect(applyMatchAction(record, winner, { type: "useAbility", seat: winner })).toBeNull();
+    // resolveEffect is now ON the set (2b-iii-c dialoged every prompt kind), but a
+    // crafted frame off an effect:choose park is rejected by the ENGINE's own
+    // validation (BAD_PHASE during setup here) — so it changes nothing and cannot
+    // soft-lock, exactly the soft-lock-safety the allowlist flip relied on.
+    expect(SUPPORTED_MATCH_ACTIONS.has("resolveEffect")).toBe(true);
+    expect(applyMatchAction(record, winner, { type: "resolveEffect", seat: winner })).toBeNull();
+    // The setup + drag + pass + attack/KO + retreat + effect-answer actions the
+    // client actually sends ARE supported (2b-i grew the set with attack /
+    // takePrizes / promote; 2b-ii added retreat; 2b-iii-c added resolveEffect).
     for (const type of [
       "chooseFirstPlayer",
       "setupPlaceActive",
@@ -168,6 +172,7 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
       "takePrizes",
       "promote",
       "retreat",
+      "resolveEffect",
       "endTurn",
     ]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(true);

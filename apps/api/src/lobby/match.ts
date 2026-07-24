@@ -104,32 +104,32 @@ export interface MatchRecord {
 /** The engine action types the online client can DRIVE and RECOVER from: setup,
     the `moveToAction` turn drags, pass, the attack + KO loop (increment 2b-i —
     `attack`, then the KOing player's `takePrizes` and the KO'd player's
-    `promote`), and — from increment 2b-ii — `retreat`. The DO rejects everything
-    else — abilities (`useAbility`) / the effect:choose `resolveEffect` — so a
-    crafted frame can't push the match into a phase the online HUD renders no
-    control for (a soft-lock; griefing-class, the review's LOW). With the fixed
+    `promote`), `retreat` (2b-ii), and — from increment 2b-iii-c — the effect:choose
+    answer `resolveEffect`. The DO rejects everything else (abilities `useAbility`)
+    — so a crafted frame can't push the match into a phase the online HUD renders
+    no control for (a soft-lock; griefing-class, the review's LOW). With the fixed
     basic-only decks (pure-damage attacks, no status/abilities/trainers), the
     reachable game is exactly setup → the turn drags → attack → ko:takePrizes →
     ko:promote → retreat → endTurn, none of which reaches effect:choose, so
-    nothing a legitimate client sends is blocked. Later 2b slices GROW this set as
-    they land abilities/trainers and the effect dialogs.
+    nothing a legitimate client sends is blocked. Real decks (increment 3) GROW
+    this set with abilities/trainers.
 
-    SEQUENCING CONSTRAINT (allowing `attack` is only soft-lock-safe because the
-    decks are pure-damage): an `attack` here is accepted and let park wherever
-    the engine takes it — with an EFFECT attack that is effect:choose, which the
-    online HUD can't yet fully drive. So REAL deck selection (increment 3) must
-    NOT ship before ALL of increment 2b-iii lands the effect:choose dialogs and
-    puts `resolveEffect` on this set. 2b-iii is SPLIT: 2b-iii-a landed the
-    prompt-redaction wire + the `mayDraw` dialog, and 2b-iii-b the PUBLIC-REF
-    family (choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy), so
-    `resolveEffect` stays OFF here — the invariant is "`resolveEffect` on this set
-    ⟺ EVERY effect prompt kind has an online dialog", and the hidden-candidate
-    chooseCards/attachCards family still has none (2b-iii-c). Adding it for a
-    subset would let a real-deck game reach an un-dialoged park (a chooseCards
-    search) and soft-lock. The guarantee is plan ordering, not a structural check
-    — flagged so the coupling isn't lost. (`retreat` carries no
-    such caveat — it only ever discards energy and promotes a Bench Pokémon,
-    never parking at a decision, so it is soft-lock-safe with ANY deck.) */
+    SEQUENCING (allowing `attack` is only soft-lock-safe because an effect:choose
+    park it reaches must have an online dialog): an `attack` is accepted and let
+    park wherever the engine takes it — with an EFFECT attack that is effect:choose.
+    The invariant is "`resolveEffect` on this set ⟺ EVERY effect prompt kind has an
+    online dialog." 2b-iii SPLIT it: 2b-iii-a landed `mayDraw`, 2b-iii-b the
+    PUBLIC-REF family (choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy),
+    and **2b-iii-c the hidden-candidate chooseCards/attachCards family — the LAST
+    kinds, so `resolveEffect` now goes ON**. With every prompt kind dialoged, a
+    real-deck effect attack that parks at effect:choose can be driven to completion
+    online, so this precondition on real deck selection (increment 3) is now MET.
+    (`retreat` never carried the caveat — it only discards energy + promotes a
+    Bench Pokémon, never parking at a decision, so it is soft-lock-safe with ANY
+    deck.) `resolveEffect` itself is soft-lock-safe on any deck: `applyAction`
+    rejects it off an effect:choose park (unreachable with the fixed decks), and on
+    one it validates the choice against the parked prompt (validateChoice) before
+    applying — a crafted frame rejects, never crashes/soft-locks. */
 export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
   "chooseFirstPlayer",
   "setupDrawExtra",
@@ -145,6 +145,7 @@ export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
   "takePrizes",
   "promote",
   "retreat",
+  "resolveEffect",
   "endTurn",
 ]);
 

@@ -964,4 +964,52 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
       expect(projectGameState(state, "p2").pendingDecision).not.toBeNull();
     }
   });
+
+  it("reconstructs the hidden-candidate effect prompts for the ANSWERER's view (2b-iii-c)", () => {
+    // chooseCards / attachCards carry a RedactedCard per candidate (the revealed
+    // deck cards). The reconstruction recovers the engine uids from `c.id`, so the
+    // answerer (controller) round-trip still equals the local projection exactly,
+    // even though the wire shape (RedactedCard[]) differs from the engine's
+    // (string[]). The searched deck uids are real p1 deck uids so the identities
+    // resolve; the opponent view stays withheld (its prompt is null).
+    const CONT: EffectContinuation = {
+      pendingOp: { op: "opponentMayDraw", count: 1 },
+      rest: [],
+      ctx: { seat: "p1" },
+    };
+    const base = turnOneState();
+    const deckUids = base.players.p1.deck.slice(0, 2);
+    const active: PokemonRef = { seat: "p1", spot: { spot: "active" } };
+    const bench0: PokemonRef = { seat: "p1", spot: { spot: "bench", index: 0 } };
+    const prompts: EffectPrompt[] = [
+      { kind: "chooseCards", candidates: deckUids, min: 0, max: 1, dest: "hand", note: "Search." },
+      // maxPerTarget present on one, absent on the other — both must round-trip.
+      {
+        kind: "attachCards",
+        candidates: deckUids,
+        targets: [active, bench0],
+        max: 2,
+        maxPerTarget: 1,
+        note: "Attach.",
+      },
+      {
+        kind: "attachCards",
+        candidates: deckUids,
+        targets: [active],
+        max: 2,
+        note: "Attach anywhere.",
+      },
+    ];
+    for (const prompt of prompts) {
+      const state: GameState = {
+        ...base,
+        phase: { kind: "effect:choose", seat: "p1", prompt, cont: CONT },
+      };
+      expect(projectionFromRedacted(redactGame(state, "p1"))).toEqual(
+        projectGameState(state, "p1"),
+      );
+      expect(projectionFromRedacted(redactGame(state, "p2")).pendingDecision).toBeNull();
+      expect(projectGameState(state, "p2").pendingDecision).not.toBeNull();
+    }
+  });
 });

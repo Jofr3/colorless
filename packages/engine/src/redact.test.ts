@@ -485,33 +485,99 @@ describe("redactGame — the effect:choose prompt (answerer-only)", () => {
     expect(phase.prompt).toBeNull();
   });
 
-  it("returns null for a prompt kind with no online dialog yet — even to its answerer", () => {
-    // A controller-answered deck search: the answerer IS p1, but the chooseCards
-    // arm isn't on the wire yet, so the redactor drops it rather than leak the
-    // (deck-uid) candidates. Those uids must appear NOWHERE in p1's snapshot.
+  /** A deck-search chooseCards park owed by p1 (the controller). */
+  function deckSearchState(): { state: GameState; deckUids: string[] } {
     const base = turnOneState();
     const deckUids = base.players.p1.deck.slice(0, 2);
+    return {
+      deckUids,
+      state: {
+        ...base,
+        phase: {
+          kind: "effect:choose",
+          seat: "p1",
+          prompt: {
+            kind: "chooseCards",
+            candidates: deckUids,
+            min: 0,
+            max: 1,
+            dest: "hand",
+            note: "Search your deck.",
+          },
+          cont: CONT,
+        },
+      },
+    };
+  }
+
+  it("REVEALS the deck-search candidate identities to the controller (2b-iii-c)", () => {
+    // The controller (answerer) sees the searched cards face-up — full identity,
+    // keyed by the engine uid the answer dispatches back — plus the bounds/dest.
+    const { state, deckUids } = deckSearchState();
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "effect:choose" || phase.prompt?.kind !== "chooseCards") {
+      throw new Error("expected a chooseCards prompt");
+    }
+    expect(phase.prompt.candidates.map((c) => c.id)).toEqual(deckUids);
+    for (const card of phase.prompt.candidates) {
+      expect(card.cardId).not.toBe(HIDDEN_CARD_ID);
+      expect(card.name).not.toBe(HIDDEN_CARD_NAME);
+    }
+    expect(phase.prompt.min).toBe(0);
+    expect(phase.prompt.max).toBe(1);
+    expect(phase.prompt.dest).toBe("hand");
+  });
+
+  it("WITHHOLDS the deck search from the opponent — no deck uid crosses anywhere", () => {
+    // The whole hidden-info barrier: the non-answerer's prompt is null, AND the
+    // searched deck uids appear NOWHERE else in their snapshot (their view of both
+    // decks is a count). This is the property the answerer gate exists to hold.
+    const { state, deckUids } = deckSearchState();
+    const game = redactGame(state, "p2");
+    if (game.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(game.phase.prompt).toBeNull();
+    const ids = new Set(allIds(game));
+    for (const uid of deckUids) expect(ids.has(uid)).toBe(false);
+  });
+
+  it("REVEALS attachCards candidates to the controller and maps targets to refs", () => {
+    const base = turnOneState();
+    const deckUids = base.players.p1.deck.slice(0, 2);
+    const targets: { seat: Seat; spot: { spot: "active" } | { spot: "bench"; index: number } }[] = [
+      { seat: "p1", spot: { spot: "active" } },
+      { seat: "p1", spot: { spot: "bench", index: 0 } },
+    ];
     const state: GameState = {
       ...base,
       phase: {
         kind: "effect:choose",
         seat: "p1",
         prompt: {
-          kind: "chooseCards",
+          kind: "attachCards",
           candidates: deckUids,
-          min: 0,
-          max: 1,
-          dest: "hand",
-          note: "Search your deck.",
+          targets,
+          max: 2,
+          maxPerTarget: 1,
+          note: "Attach the revealed Energy.",
         },
         cont: CONT,
       },
     };
-    const game = redactGame(state, "p1");
-    if (game.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(game.phase.prompt).toBeNull();
-    const ids = new Set(allIds(game));
-    for (const uid of deckUids) expect(ids.has(uid)).toBe(false);
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "effect:choose" || phase.prompt?.kind !== "attachCards") {
+      throw new Error("expected an attachCards prompt");
+    }
+    expect(phase.prompt.candidates.map((c) => c.id)).toEqual(deckUids);
+    for (const card of phase.prompt.candidates) expect(card.cardId).not.toBe(HIDDEN_CARD_ID);
+    expect(phase.prompt.targets).toEqual(targets);
+    expect(phase.prompt.max).toBe(2);
+    expect(phase.prompt.maxPerTarget).toBe(1);
+    // Withheld from the opponent, with none of the candidate uids leaking.
+    const opp = redactGame(state, "p2");
+    if (opp.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(opp.phase.prompt).toBeNull();
+    const oppIds = new Set(allIds(opp));
+    for (const uid of deckUids) expect(oppIds.has(uid)).toBe(false);
   });
 });
 

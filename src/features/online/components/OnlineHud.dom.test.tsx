@@ -65,6 +65,11 @@ function energy(id: string, name: string) {
   return { id, cardId: id, name, category: "Energy" as const, trainerType: null, hasImage: false };
 }
 
+/** A revealed prompt-candidate leaf card (chooseCards / attachCards). */
+function card(id: string, name: string) {
+  return { id, cardId: id, name, category: "Trainer" as const, trainerType: null, hasImage: false };
+}
+
 // Wire PokemonRefs (absolute seat) the way the redactor emits them.
 const YOU_ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
 const OPP_ACTIVE = { seat: "p2", spot: { spot: "active" } } as const;
@@ -526,6 +531,140 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "discardEnergy", uids: ["e1"] },
+    });
+  });
+});
+
+describe("OnlineHud — effect:choose hidden-candidate prompts (2b-iii-c)", () => {
+  it("chooseCards: a mandatory cost gates Confirm to the count, then dispatches the ids", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "chooseCards",
+              candidates: [card("c1", "Card One"), card("c2", "Card Two"), card("c3", "Card Three")],
+              min: 2,
+              max: 2,
+              dest: "discard",
+              note: "Discard 2 cards from your hand.",
+            },
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // The revealed identities name the rows (no board lookup).
+    expect(screen.getByRole("button", { name: "Card One" })).toBeTruthy();
+    const confirm = screen.getByRole<HTMLButtonElement>("button", { name: /Discard 0\/2/ });
+    expect(confirm.disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Card One" }));
+    fireEvent.click(screen.getByRole("button", { name: "Card Three" }));
+    const armed = screen.getByRole<HTMLButtonElement>("button", { name: /Discard 2\/2/ });
+    expect(armed.disabled).toBe(false);
+    fireEvent.click(armed);
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: ["c1", "c3"] },
+    });
+  });
+
+  it("chooseCards: an 'up to' search into the deck labels Shuffle and can dispatch none", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "chooseCards",
+              candidates: [card("d1", "Deck Card")],
+              min: 0,
+              max: 1,
+              dest: "deck",
+              note: "You may shuffle a Pokémon into your deck.",
+            },
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // min:0 → Confirm is live at zero picks, and the verb follows dest:"deck".
+    fireEvent.click(screen.getByRole("button", { name: /Shuffle none/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [] },
+    });
+  });
+
+  it("attachCards: pick a card then a target, then Attach dispatches the assignment", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "attachCards",
+              candidates: [card("e1", "Fire Energy")],
+              targets: [YOU_ACTIVE, YOU_BENCH0],
+              max: 2,
+              note: "Attach the revealed Energy.",
+            },
+          },
+          you: { active: inPlay("a", "My Active"), bench: [inPlay("b0", "My Bench")] },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // Two targets → not a sole-target auto-commit: tap the card, then the target.
+    fireEvent.click(screen.getByRole("button", { name: /Fire Energy/ }));
+    fireEvent.click(screen.getByRole("button", { name: /My Bench/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Attach 1$/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attachCards", assignments: [{ uid: "e1", to: YOU_BENCH0 }] },
+    });
+  });
+
+  it("attachCards: Attach none declines with an empty assignment list", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "attachCards",
+              candidates: [card("e1", "Fire Energy")],
+              targets: [YOU_ACTIVE],
+              max: 2,
+              note: "You may attach the revealed Energy.",
+            },
+          },
+          you: { active: inPlay("a", "My Active") },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Attach none$/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attachCards", assignments: [] },
     });
   });
 });

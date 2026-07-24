@@ -192,6 +192,49 @@ stays off the allowlist so no strand; and each dialog is behaviorally identical 
 declinable-gap Confirm, the moveEnergy decline/sole-source/sole-dest, the discardEnergy scope + refused-
 at-cap). The reviewer independently ran `bun run check` green.
 
+**Increment 2b-iii-c — DONE:** the HIDDEN-CANDIDATE effect prompts + the allowlist flip (D66, engine
+0.40.0). chooseCards / attachCards now cross the wire and get online dialogs — the LAST two prompt
+kinds — so **`resolveEffect` goes ONTO `SUPPORTED_MATCH_ACTIONS`** (the invariant: on ⟺ every prompt
+kind dialoged). Unlike the public-ref family, their candidates are the CONTROLLER's own deck / looked-
+at-top / hand / discard cards — the deck ones HIDDEN even from the controller until the effect REVEALS
+them — so `RedactedEffectPrompt`'s two new arms carry a **`RedactedCard` per candidate** (identity keyed
+by the engine uid the answer dispatches back), plus chooseCards `min/max/dest` and attachCards
+`targets`(refs)/`max`/`maxPerTarget?`. The engine's `redactPrompt` now takes `state` and resolves each
+candidate uid via `redactedCardOf` (the same public-card builder, fresh objects) — sent to the answerer
+ALONE, which is where the answerer gate stops being a convenience and becomes the HIDDEN-INFO barrier: a
+deck uid must never appear in the opponent's snapshot (it doesn't — their prompt is null and their view
+of both decks is a count; pinned by a leak test). `decisionFromPhase` recovers the engine `string[]`
+uids from the `RedactedCard[]` (`c.id`), so the answerer-view round-trip still holds. `OnlineHud` gained
+`ChooseCardsDialog` (min-gated cost vs "up to", dest-driven verb) + `AttachCardsDialog` (the two-step
+pick-card→pick-target loop, sole-target auto-commit, per-target cap) reading identities straight off the
+prompt; the shared `effect:choose` render now **keys on the prompt** (`JSON.stringify`) so a second
+same-kind park (Ultra Ball's hand cost → deck search, both chooseCards) REMOUNTS with fresh picks —
+closing the stale-state parity gap the 2b-iii-b dialogs shared with the local `promptKey`. **API DO:**
+`SUPPORTED_MATCH_ACTIONS` += `resolveEffect`; it is soft-lock-safe on ANY deck — `applyAction` rejects it
+off an effect:choose park (unreachable with the fixed decks) and validates the choice against the parked
+prompt (`validateChoice`) on one, so a crafted frame rejects, never crashes. With every prompt kind
+dialoged, the effect-dialog precondition on real deck selection (increment 3) is now MET. 1767 →
+**1774** tests, `bun run check` green.
+**Review (1 read-only adversarial reviewer): NO defects at HIGH, MED, or LOW** — scrutinizing the two
+highest-stakes properties hardest: (LEAK) `redactPrompt` — the only code that resolves a candidate uid
+to a `RedactedCard` — is reached ONLY when viewer === controller (the answerer gate); the redacted board
+carries card identities in exactly two places (`board`, `phase.prompt`), and BOTH decks are a count for
+both viewers (so even the controller gets only the effect-surfaced candidates, not their deck order), so
+there is no third leak vector; the leak-barrier test's `allIds` covers every zone a card id can appear in
+a p2 snapshot AND asserts `phase.prompt` null; a discard-retrieval candidate reaching the opponent via
+the PUBLIC discard is expected-public, not a leak (the test uses hidden DECK uids). (ALLOWLIST) the
+`resolveEffect` handler rejects off-park (`BAD_PHASE`), checks the answerer with the SAME `answerer ??
+seat` expression `phaseViewOf` uses (so the prompt can't land on a screen that can't act — mayDraw
+included, since the DO rebinds to the answerer's own socket seat), and `validateChoice` is totally
+defensive (every branch type-checks, never throws); the loose wire schema doesn't strip the answer
+payload. The round-trip recovers the engine uids from `c.id` and preserves `maxPerTarget` optionality
+(tested with + without); the dialogs are faithful restatements of the local twins; the `JSON.stringify`
+key remounts the child dialog correctly and is strictly MORE discriminating than the local `promptKey`
+(deterministic, no spurious remount). Two informational non-defects RECORDED (both deliberate + already
+commented): the online key omits seat+turn (safe/stricter in the single-viewer online context — a note
+if it ever goes hot-seat), and the server-side `maxPerTarget: undefined` key is dropped by the wire.
+The reviewer independently ran `bun run check` green.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -286,13 +329,18 @@ until 1c broadcasts the redacted view.
       maps them (fresh copies); `OnlineHud` gained the four dialogs (via `EffectChooseDialog`). These are
       controller-answered, so the round-trip pin holds for the answerer's view only (redact.ts's gate is
       stricter than the hot-seat projection — see the note there). `resolveEffect` still OFF the allowlist.
-    - **2b-iii-c — the hidden-candidate prompts (NEXT):** chooseCards (deck search / discard retrieval / hand
-      cost) + attachCards (deck/top). Their candidates are the CONTROLLER's own deck/top cards — hidden
-      info — so the redacted prompt must carry a server-resolved `RedactedCard` per candidate and go
-      controller-only (the answerer gate already withholds; add the identity payload). Once ALL prompt
-      kinds are dialoged, put **`resolveEffect` on `SUPPORTED_MATCH_ACTIONS`** (the allowlist invariant)
-      — this is the point the SEQUENCING CONSTRAINT in match.ts guards, before real decks (increment 3).
-    - **2b-iii-d — the online event log + rejection pill:** per-RECIPIENT EVENT redaction
+    - **2b-iii-c — the hidden-candidate prompts. DONE** (D66, see Status above): chooseCards (deck search /
+      discard retrieval / hand cost) + attachCards (deck/top). Their candidates are the CONTROLLER's own
+      deck/top cards — hidden info — so `RedactedEffectPrompt`'s two arms carry a server-resolved
+      `RedactedCard` per candidate (identity keyed by the answer-dispatched uid), sent controller-only via
+      the answerer gate (now the load-bearing hidden-info barrier — a leak test pins that no deck uid
+      reaches the opponent). `redactPrompt` takes `state` + resolves via `redactedCardOf`;
+      `decisionFromPhase` recovers the uids (`c.id`); `OnlineHud` gained `ChooseCardsDialog` +
+      `AttachCardsDialog`, and the `effect:choose` render now KEYS on the prompt so a same-kind re-park
+      resets picks. With every prompt kind dialoged, **`resolveEffect` is now ON `SUPPORTED_MATCH_ACTIONS`**
+      (soft-lock-safe — the engine rejects it off a park and validates the choice on one). The effect-dialog
+      precondition on real decks (increment 3) is MET.
+    - **2b-iii-d — the online event log + rejection pill (NEXT):** per-RECIPIENT EVENT redaction
       (`CARDS_DRAWN`/`MULLIGAN_REVEALED` reveal hidden uids — `events.ts:8`) + an event→log stream for
       the online board (`logFromEvents` is per-viewer already; `OnlineMatch` feeds `NO_LOG` today), and a
       rejection pill (the DO drops a rejected action silently today).

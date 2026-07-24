@@ -32,19 +32,21 @@ import type { PlayerId } from "../../playmat/types";
 // dialog (Ortega's "your opponent may draw a card"), plus — from 2b-iii-b — the
 // PUBLIC-REF effect prompts (choosePokemon / choosePokemonMulti / moveEnergy /
 // discardEnergy), whose candidates are all in-play refs and attached-Energy uids
-// already public on the redacted board, so the dialogs resolve display names off
-// the board they already have. The remaining hidden-candidate prompts
-// (chooseCards / attachCards — the controller's own deck/top cards) and abilities
-// / non-Stadium trainers read state the wire still withholds (and the fixed decks
-// can't exercise them) — they land with 2b-iii-c / real decks; the pass control
-// lives in PlaymatView's TurnControls.
+// already public on the redacted board, plus — from 2b-iii-c — the HIDDEN-
+// CANDIDATE prompts (chooseCards / attachCards), whose candidates are the
+// controller's own deck/top cards: the server puts a full `RedactedCard` per
+// candidate on the wire (the reveal), sent to the controller alone, so the dialog
+// names them straight off the prompt rather than the board. Every EffectPrompt
+// kind now has an online dialog. Abilities / non-Stadium trainers read state the
+// wire still withholds (and the fixed decks can't exercise them) — they land with
+// real decks (increment 3); the pass control lives in PlaymatView's TurnControls.
 //
 // Every panel is gated on `waitingOn === "you"` (the D17 rule the local HUD uses)
 // so a prompt never appears on the wrong screen, and the actions carry the
-// client's own seat (the DO rebinds it regardless). resolveEffect stays OFF the
-// DO allowlist until every prompt kind is dialoged (2b-iii-c), so these dispatch
-// but are rejected — unreachable with the fixed pure-basic decks that can't park
-// at effect:choose (D64).
+// client's own seat (the DO rebinds it regardless). With every prompt kind
+// dialoged, resolveEffect goes ONTO the DO allowlist (2b-iii-c); the surface stays
+// test-only until real decks, since the fixed pure-basic decks can't park at
+// effect:choose (D64).
 
 const TOP_PANEL_CLASS = "left-1/2 top-16 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2";
 const PANEL_CLASS = `pointer-events-auto absolute z-[75] rounded-2xl p-4 ${GLASS_PANEL} ${TOP_PANEL_CLASS}`;
@@ -157,11 +159,22 @@ export function OnlineHud({
     case "effect:choose": {
       // The redacted prompt is non-null ONLY for the seat that must answer it
       // (the server withholds it from everyone else), and `acting` is that same
-      // seat — so the two agree. A prompt kind with no online dialog yet
-      // (chooseCards/attachCards) crosses as null, so nothing shows for it.
+      // seat — so the two agree. The null case is now ONLY the non-answerer (every
+      // prompt kind is dialoged); nothing shows for them.
       const prompt = game.phase.prompt;
+      // Key on the prompt so a NEW park (a second effect:choose of the SAME kind —
+      // e.g. Ultra Ball's hand cost then deck search, both chooseCards) REMOUNTS
+      // the dialog and resets its local picks, instead of carrying stale ones into
+      // an offer they aren't valid for (the local GameHud's promptKey rule; a
+      // different-kind park already remounts via the child switch).
       return acting && prompt !== null ? (
-        <EffectChooseDialog prompt={prompt} board={game.board} seat={seat} onAction={onAction} />
+        <EffectChooseDialog
+          key={JSON.stringify(prompt)}
+          prompt={prompt}
+          board={game.board}
+          seat={seat}
+          onAction={onAction}
+        />
       ) : null;
     }
 
@@ -199,6 +212,10 @@ function EffectChooseDialog({
       return <MoveEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
     case "discardEnergy":
       return <DiscardEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
+    case "chooseCards":
+      return <ChooseCardsDialog prompt={prompt} seat={seat} onAction={onAction} />;
+    case "attachCards":
+      return <AttachCardsDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
   }
 }
 
@@ -732,6 +749,261 @@ function DiscardEnergyDialog({
           }
         >
           Discard {picked.length}/{required}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
+// --- Hidden-candidate effect prompts (2b-iii-c) ------------------------------
+//
+// chooseCards / attachCards. Their candidates are the CONTROLLER's own deck /
+// looked-at-top / hand / discard cards — the deck ones HIDDEN until this effect
+// reveals them — so unlike the public-ref family they DON'T resolve off the
+// board: the server puts a full `RedactedCard` per candidate on the wire (sent
+// to the controller alone), and the dialog names them straight off the prompt.
+// The answer dispatches each pick's `id` (the engine uid). Restated from the
+// local GameHud dialogs over the wire shape.
+
+/** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a
+    discard retrieval, a look-at-top, or a §7.5 hand cost. `min > 0` is a
+    MANDATORY exact cost (no decline, Confirm gated to the count); `min: 0` is the
+    printed "up to" (Confirm always live). The candidate identities ride the wire
+    (RedactedCard), so the rows name them directly. */
+function ChooseCardsDialog({
+  prompt,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "chooseCards" }>;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const toggle = (id: string) =>
+    setPicked((prev) =>
+      prev.includes(id) ? prev.filter((u) => u !== id) : prev.length < prompt.max ? [...prev, id] : prev,
+    );
+  const mandatory = prompt.min > 0;
+  const short = picked.length < prompt.min;
+  return (
+    <Dialog label="Choose cards">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* A live region — the running total is otherwise unannounceable; the
+          mandatory branch also states the cost cannot be declined (the absent
+          "Take none" is not something a screen reader announces). */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {mandatory
+          ? `Pick ${prompt.min} (${picked.length}/${prompt.max}). ${
+              short ? `Pick ${prompt.min - picked.length} more — this cost must be paid.` : "Ready."
+            }`
+          : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
+      </output>
+      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((card) => {
+          const selected = picked.includes(card.id);
+          const refused = !selected && picked.length >= prompt.max;
+          return (
+            <li key={card.id}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                aria-disabled={refused || undefined}
+                onClick={() => toggle(card.id)}
+                className={`${ROW_BUTTON_BASE} ${
+                  selected ? ROW_BUTTON_SELECTED : refused ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED
+                }`}
+              >
+                <span className="truncate">{card.name}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          disabled={short}
+          className={ACCENT_BUTTON}
+          onClick={() =>
+            onAction({ type: "resolveEffect", seat, choice: { kind: "cards", uids: picked } })
+          }
+        >
+          {/* The verb follows the ENGINE's `dest` — a cost is Discarded / Put
+              under deck; an "up to" retrieval into the deck is a Shuffle. */}
+          {mandatory
+            ? `${prompt.dest === "deckBottom" ? "Put under deck" : "Discard"} ${picked.length}/${prompt.min}`
+            : `${prompt.dest === "deck" ? "Shuffle" : "Take"} ${picked.length === 0 ? "none" : picked.length}`}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
+/** attachCards (§15.E + §6) — attach revealed deck/top cards onto your own
+    Pokémon, "in any way you like" (Electric Generator / Charizard ex / Janine).
+    The answer is a MAP (each card names its own destination), so it is a two-step
+    loop: tap a card, tap where it goes — with a sole target auto-committing and a
+    per-target cap (`maxPerTarget`). Candidate identities ride the wire; the
+    targets resolve off the board. Restated from the local AttachCardsDialog. */
+function AttachCardsDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "attachCards" }>;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const [assignments, setAssignments] = useState<{ uid: string; to: RedactedPokemonRef }[]>([]);
+  /** The card waiting for a destination — the only reason the target list shows. */
+  const [pending, setPending] = useState<string | null>(null);
+  const destOf = (uid: string) => assignments.find((a) => a.uid === uid)?.to;
+  const cardName = (uid: string) => prompt.candidates.find((c) => c.id === uid)?.name ?? uid;
+  const assignedTo = (ref: RedactedPokemonRef) =>
+    assignments.filter((a) => refKey(a.to) === refKey(ref)).length;
+  const targetFull = (ref: RedactedPokemonRef) =>
+    prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget;
+  // No Pokémon can take another card — reachable only under a per-target cap.
+  const noRoom = prompt.targets.length > 0 && prompt.targets.every(targetFull);
+  const atCap = assignments.length >= prompt.max || noRoom;
+  // The offer's only Pokémon, when it has one — the tap commits outright.
+  const soleTarget = prompt.targets.length === 1 ? (prompt.targets[0] ?? null) : null;
+  const destLabel = (ref: RedactedPokemonRef) => `${refName(board, seat, ref)} · ${spotLabel(ref)}`;
+
+  const tapCard = (uid: string) => {
+    if (destOf(uid) !== undefined) {
+      // Releasing an assignment leaves any other card's pending pick alone.
+      setAssignments((prev) => prev.filter((a) => a.uid !== uid));
+      setPending((prev) => (prev === uid ? null : prev));
+      return;
+    }
+    if (soleTarget !== null) {
+      if (!atCap) setAssignments((prev) => [...prev, { uid, to: soleTarget }]);
+      return;
+    }
+    setPending((prev) => (prev === uid ? null : atCap ? prev : uid));
+  };
+  const assign = (to: RedactedPokemonRef) => {
+    if (pending === null || targetFull(to)) return;
+    setAssignments((prev) => [...prev, { uid: pending, to }]);
+    setPending(null);
+  };
+  const pendingName = pending === null ? null : cardName(pending);
+
+  return (
+    <Dialog label="Attach cards">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* A live region carrying the count AND which card is waiting for a target
+          (the target list appearing below is a silent change on its own). */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {pendingName === null
+          ? `Attaching ${assignments.length}/${prompt.max}. ${
+              noRoom
+                ? soleTarget !== null
+                  ? `${refName(board, seat, soleTarget)} already has one — tap the attached card to take it back.`
+                  : "Every eligible Pokémon already has one — tap an attached card to move it."
+                : atCap
+                  ? soleTarget !== null
+                    ? "Tap an attached card to take it back."
+                    : "Tap an attached card to move it."
+                  : soleTarget !== null
+                    ? "Pick a card to attach."
+                    : "Pick a card, then where it goes."
+            }`
+          : `Attaching ${assignments.length}/${prompt.max}. Where does ${pendingName} go?`}
+      </output>
+      <ul className="mt-3 flex max-h-52 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((card) => {
+          const dest = destOf(card.id);
+          const selected = pending === card.id;
+          const refused = dest === undefined && !selected && atCap;
+          return (
+            <li key={card.id}>
+              <button
+                type="button"
+                // State rides the row's NAME (separate spans would be announced
+                // as one run-on word by the accessible-name algorithm).
+                aria-label={
+                  dest === undefined
+                    ? selected
+                      ? `${card.name} — choosing where it goes`
+                      : card.name
+                    : `${card.name} → ${destLabel(dest)}`
+                }
+                aria-pressed={dest !== undefined}
+                aria-current={selected || undefined}
+                aria-disabled={refused || undefined}
+                onClick={() => tapCard(card.id)}
+                className={`${ROW_BUTTON_BASE} ${
+                  dest !== undefined
+                    ? ROW_BUTTON_SELECTED
+                    : selected
+                      ? "bg-white/[0.06] text-white ring-accent/70"
+                      : refused
+                        ? ROW_BUTTON_DISABLED
+                        : ROW_BUTTON_ENABLED
+                }`}
+              >
+                <span className="truncate">{card.name}</span>
+                {(dest !== undefined || selected) && (
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    {dest === undefined ? "choosing…" : `→ ${destLabel(dest)}`}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {pending !== null && (
+        <>
+          <p className="mt-3 text-sm text-white/55">Attach to:</p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {prompt.targets.map((ref) => {
+              const full = targetFull(ref);
+              return (
+                <li key={refKey(ref)}>
+                  <button
+                    type="button"
+                    aria-label={full ? `${destLabel(ref)} — already has one` : destLabel(ref)}
+                    aria-disabled={full || undefined}
+                    onClick={() => assign(ref)}
+                    className={`${ROW_BUTTON_BASE} ${full ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{refName(board, seat, ref)}</span>
+                    <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                      {full ? `${spotLabel(ref)} · has one` : spotLabel(ref)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON}
+          onClick={() =>
+            onAction({
+              type: "resolveEffect",
+              seat,
+              choice: {
+                kind: "attachCards",
+                // Filtered against the offer — a stale uid (offer changed) would
+                // otherwise make a mandatory-less dialog dispatch a rejected pick.
+                assignments: assignments.filter((a) =>
+                  prompt.candidates.some((c) => c.id === a.uid),
+                ),
+              },
+            })
+          }
+        >
+          {assignments.length === 0 ? "Attach none" : `Attach ${assignments.length}`}
         </button>
       </div>
     </Dialog>

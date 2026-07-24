@@ -227,10 +227,17 @@ export type RedactedEnergyOffer = z.infer<typeof redactedEnergyOfferSchema>;
     candidates are all in-play `PokemonRef`s and attached-Energy uids, ALREADY on
     the public redacted board, so the wire carries the refs/uids and the client
     resolves display identity against the board — no hidden-card resolution.
-    These are controller-answered. The remaining hidden-candidate family
-    (chooseCards / attachCards — the CONTROLLER's own deck/top cards, which need
-    a server-resolved `RedactedCard` per candidate) lands in 2b-iii-c, and
-    `resolveEffect` stays off the DO allowlist until every arm is dialoged. */
+    These are controller-answered. **2b-iii-c adds the HIDDEN-CANDIDATE family**
+    (chooseCards / attachCards): their candidates are the CONTROLLER's own deck /
+    looked-at-top / hand / discard cards — the deck ones HIDDEN even from the
+    controller until the effect REVEALS them — so the wire carries a server-
+    resolved **`RedactedCard` per candidate** (its identity, keyed by the engine
+    uid the answer dispatches back), and it goes to the CONTROLLER ALONE via the
+    same answerer gate. This is where that gate stops being a convenience and
+    becomes the HIDDEN-INFO barrier: a deck uid must never appear in the
+    opponent's snapshot (it doesn't — the opponent's prompt is null and their
+    view of both decks is a count). With every arm now dialoged, `resolveEffect`
+    goes ONTO the DO allowlist (the invariant). */
 export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
   /** A yes/no owed by the ANSWERER (the non-controller): draw `count`, or
       decline. `note` addresses that answerer ("You may draw a card."). No card
@@ -275,6 +282,38 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     scope: redactedDiscardScopeSchema,
     note: z.string(),
   }),
+  /** Pick `min`..`max` cards (a deck search / discard retrieval / look-at-top /
+      a §7.5 hand cost). `candidates` carry FULL identity (`RedactedCard`) because
+      a deck-search candidate is HIDDEN until this effect reveals it — the server
+      resolves each so the controller's dialog can name them without the full
+      state; the answer dispatches back the `id` (engine uid) of each pick. `min`
+      is the DECLINABLE split (0 = the printed "up to", `min === max === count` =
+      a mandatory exact cost); `dest` is where the picks go (the ENGINE's word —
+      "deck" is shuffled-in, "deckBottom" is under-the-deck). Controller-only. */
+  z.object({
+    kind: z.literal("chooseCards"),
+    candidates: z.array(redactedCardSchema),
+    min: z.number(),
+    max: z.number(),
+    dest: z.enum(["bench", "hand", "deck", "deckBottom", "discard"]),
+    note: z.string(),
+  }),
+  /** Attach cards out of the controller's DECK (top or search) onto their own
+      Pokémon, "in any way you like" (Electric Generator / Charizard ex / Janine).
+      `candidates` carry FULL identity (`RedactedCard`, same reason as chooseCards
+      — they are hidden deck cards the effect reveals); `targets` are the eligible
+      own in-play refs (public board); `max` is how many may attach; `maxPerTarget`
+      caps per-target ("for each of those Pokémon"), absent = no per-target limit.
+      DECLINABLE (attach none). The answer pairs each picked `id` with a target
+      ref. Controller-only. */
+  z.object({
+    kind: z.literal("attachCards"),
+    candidates: z.array(redactedCardSchema),
+    targets: z.array(redactedPokemonRefSchema),
+    max: z.number(),
+    maxPerTarget: z.number().optional(),
+    note: z.string(),
+  }),
 ]);
 export type RedactedEffectPrompt = z.infer<typeof redactedEffectPromptSchema>;
 
@@ -286,9 +325,8 @@ export type RedactedEffectPrompt = z.infer<typeof redactedEffectPromptSchema>;
     for it), the ko interrupts their counts. The mid-effect `effect:choose`
     carries the redacted `prompt` (above) NULLABLE — non-null only for the seat
     that must answer it, so the controller's private candidates never reach the
-    other viewer; null both for the non-answerer AND for a prompt kind whose
-    online dialog has not landed yet (mayDraw + the public-ref family so far —
-    chooseCards/attachCards still cross as null until 2b-iii-c).
+    other viewer (null for the non-answerer). Every prompt kind is now dialoged
+    (2b-iii-a/b/c), so the only reason it is null is the answerer gate.
     `activePlayer`/`waitingOn` (server-computed via phaseViewOf, which reads the
     pending queue) still say WHO acts; this says WHAT kind. */
 export const redactedPhaseSchema = z.discriminatedUnion("kind", [
