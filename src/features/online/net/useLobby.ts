@@ -7,6 +7,7 @@ import {
   type LobbySnapshot,
   makePlayer,
   type RedactedGame,
+  type SeatLogEntry,
   type WireAction,
 } from "@luminous/schema";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -48,6 +49,11 @@ export type Lobby = {
   /** This client's REDACTED view of the running match (P4), or null until the
       server broadcasts one (i.e. before the in-game handoff, or after abandon). */
   match: RedactedGame | null;
+  /** The running match's accumulated game log (seat-keyed; the DO builds it and
+      sends it on every `match` frame). Empty until the first frame / after
+      abandon. Rides alongside `match` because it can't be rebuilt from the
+      redacted snapshot alone (it accumulates across the whole game). */
+  matchLog: SeatLogEntry[];
   /** The last game action the server refused (P4), for a transient pill; null
       until one is rejected, cleared by the next accepted action (a `match`). */
   actionError: ActionError | null;
@@ -91,6 +97,10 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
   // reconnect; cleared whenever the lobby leaves in-game (abandon/rematch) so a
   // stale board never lingers behind a new match.
   const [match, setMatch] = useState<RedactedGame | null>(null);
+  // The running match's game log, seat-keyed, replaced whole on every `match`
+  // frame (the DO sends the full accumulated log — cheap, and a reconnect gets
+  // the backlog for free). Cleared with `match` when the lobby leaves in-game.
+  const [matchLog, setMatchLog] = useState<SeatLogEntry[]>([]);
   // The last refused game action, for a transient pill. Bumped on each
   // `reject-action`, cleared by the next accepted action (a `match` frame) — the
   // local useLocalGame clears its lastError on every ok apply for the same reason.
@@ -136,6 +146,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           // (the server drops the record on abandon and re-mints on the next flip).
           if (message.snapshot.phase !== "in-game") {
             setMatch(null);
+            setMatchLog([]);
             setActionError(null);
           }
           break;
@@ -147,6 +158,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           if (rejected) break;
           lastServerSeenRef.current = now();
           setMatch(message.game);
+          setMatchLog(message.log);
           // An accepted action supersedes any pending rejection pill (the
           // useLocalGame lastError-clears-on-ok rule, over the wire).
           setActionError(null);
@@ -260,6 +272,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     self,
     opponent,
     match,
+    matchLog,
     actionError,
     role,
     status,

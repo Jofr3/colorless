@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
-import type { RedactedGame, RedactedInPlay } from "@luminous/schema";
+import type { RedactedGame, RedactedInPlay, SeatLogEntry } from "@luminous/schema";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
 import { OnlineMatch } from "./OnlineMatch";
@@ -64,6 +64,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
     wrap(
       <OnlineMatch
         game={GAME}
+        log={[]}
         youName="You"
         opponentName="Opp"
         actionError={{ reason: "That move isn't available here.", nonce: 1 }}
@@ -78,7 +79,14 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
 
   it("shows no pill when there is no rejection", () => {
     wrap(
-      <OnlineMatch game={GAME} youName="You" opponentName="Opp" actionError={null} onAction={vi.fn()} />,
+      <OnlineMatch
+        game={GAME}
+        log={[]}
+        youName="You"
+        opponentName="Opp"
+        actionError={null}
+        onAction={vi.fn()}
+      />,
     );
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -91,6 +99,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
       <MemoryRouter>
         <OnlineMatch
           game={GAME}
+          log={[]}
           youName="You"
           opponentName="Opp"
           actionError={actionError}
@@ -108,5 +117,31 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
     // re-show, not stay hidden behind the dismissed nonce.
     rerender(match({ reason: "Illegal again.", nonce: 1 }));
     expect(screen.getByRole("alert").textContent).toContain("Illegal again.");
+  });
+});
+
+describe("OnlineMatch — the game log (2b-iii-d-ii)", () => {
+  const LOG: SeatLogEntry[] = [
+    { kind: "action", who: "p1", elapsed: "+00:01", segments: [{ text: "drew 7 cards" }] },
+    { kind: "action", who: "p2", elapsed: "+00:02", segments: [{ text: "shuffled their deck" }] },
+  ];
+
+  it("renders the seat-keyed log relabeled for this viewer's seat", () => {
+    // GAME.seat is p1, so its own p1 rows read YOU and the p2 rows read OPP — the
+    // viewLogEntries relabel over the server's viewer-independent log.
+    wrap(
+      <OnlineMatch
+        game={GAME}
+        log={LOG}
+        youName="You"
+        opponentName="Opp"
+        actionError={null}
+        onAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show game log" }));
+    expect(screen.getByText("drew 7 cards")).toBeTruthy();
+    expect(screen.getByText("shuffled their deck")).toBeTruthy();
+    expect(screen.getAllByText(/^(YOU|OPP)$/).map((b) => b.textContent)).toEqual(["YOU", "OPP"]);
   });
 });

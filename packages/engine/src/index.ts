@@ -356,6 +356,12 @@ export type { PendingDecision, PhaseView } from "./phaseView";
     lobby Durable Object once per socket; produces the `@luminous/schema`
     `RedactedGame` — no full `GameState` crosses the network. */
 export { redactGame } from "./redact";
+/** The GameEvent → game-log formatter (log.ts). PURE and shared: /play builds
+    the rows client-side, the P4 lobby DO builds them server-side with the full
+    state. Rows are seat-keyed `SeatLogEntry` (@luminous/schema); the seat→viewer
+    relabel is the web's `viewLogEntries`. */
+export { formatElapsed, logFromEvents, STATUS_LABELS } from "./log";
+export type { LogContext } from "./log";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";

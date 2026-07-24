@@ -1,21 +1,25 @@
-// GameEvent stream → game-log lines. Entries are recorded SEAT-keyed
-// (SeatLogEntry) because the hot-seat viewer flips mid-game: a line minted as
-// "you" would lie the moment the other player takes over. `viewLogEntries`
-// maps the accumulated seat log into the playmat's LogEntry vocabulary for
-// whoever is looking right now. Both functions are pure.
+// GameEvent stream → game-log rows (`SeatLogEntry`, @luminous/schema). Entries
+// are recorded SEAT-keyed because the log outlives its viewer: on /play the
+// hot-seat device flips mid-game, and online the SAME array is broadcast to both
+// clients — a row minted as "you" would lie to whoever ends up reading it. The
+// seat→viewer relabel is the render layer's job (`viewLogEntries`,
+// src/features/game/viewLog.ts), which the redactor precedent (redact.ts builds
+// the wire shape, the web maps it to playmat) keeps out of the engine.
+//
+// PURE, and run in TWO places: /play builds rows client-side, and the lobby
+// Durable Object builds them server-side with the full state (P4 online.md). So
+// this is the log's SINGLE definition, shared by both — hence its move into the
+// engine package alongside `redactGame`.
 //
 // Hidden information stays hidden in the log too: draws and prize takes are
 // counts only, and face-down setup placements never name the card — the log
 // persists across viewer flips, so a named draw would leak one player's hand
 // to the other.
 
-import type { DamageModifier, GameEvent, GameState, Seat, StatusName } from "@luminous/engine";
-import { DEFAULT_POISON_DAMAGE, cardOfUid, otherSeat, topCardOf } from "@luminous/engine";
-import type { LogEntry, LogSegment } from "../playmat/types";
-
-export type SeatLogEntry =
-  | { kind: "action"; who: Seat | "system"; elapsed: string; segments: LogSegment[] }
-  | { kind: "turn"; turn: number };
+import type { LogSegment, SeatLogEntry } from "@luminous/schema";
+import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
+import type { GameEvent, StatusName } from "./events";
+import { DEFAULT_POISON_DAMAGE, type GameState, type Seat, otherSeat } from "./types";
 
 export interface LogContext {
   /** Display names per seat (deck names on /play). */
@@ -44,17 +48,6 @@ export function logFromEvents(events: readonly GameEvent[], ctx: LogContext): Se
     if (formatted !== null) entries.push(...formatted);
   }
   return entries;
-}
-
-/** Seat log → the playmat's LogEntry, for the current viewer. */
-export function viewLogEntries(entries: readonly SeatLogEntry[], viewerSeat: Seat): LogEntry[] {
-  return entries.map((entry) => {
-    if (entry.kind === "turn") return entry;
-    return {
-      ...entry,
-      who: entry.who === "system" ? "system" : entry.who === viewerSeat ? "you" : "opponent",
-    };
-  });
 }
 
 function cardName(state: GameState, uid: string): string {

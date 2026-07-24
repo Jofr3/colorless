@@ -37,7 +37,7 @@ import {
   removeGuest,
   seatGuest,
 } from "@luminous/schema";
-import { redactGame } from "@luminous/engine";
+import { formatElapsed, logFromEvents, redactGame, type Seat } from "@luminous/engine";
 import { drizzle } from "drizzle-orm/d1";
 import type { Env } from "../env";
 import { attachedPlayer, attachPlayer } from "./attachment";
@@ -201,7 +201,8 @@ export class LobbyDO {
         // the actor's socket gets a transient `reject-action` pill with the
         // engine's own reason (2b-iii-d). On accept, persist BEFORE broadcasting
         // (crash-safe, mirroring the handoff) and fan each socket its redacted view.
-        const outcome = applyMatchAction(record, seat, frame.action);
+        // Date.now() stamps the appended log rows' elapsed time (2b-iii-d-ii).
+        const outcome = applyMatchAction(record, seat, frame.action, Date.now());
         if (!outcome.ok) {
           this.send(ws, { kind: "reject-action", reason: outcome.reason });
           return;
@@ -278,8 +279,9 @@ export class LobbyDO {
           next = { ...next, phase: "in-game" };
           // P4: instantiate the authoritative engine game before the in-game
           // snapshot is broadcast, so a client that sees "in-game" can rely on
-          // the match already existing (increment 1c reads + redacts it).
-          await this.handoffToMatch();
+          // the match already existing (increment 1c reads + redacts it). `next`
+          // carries both seated players' names for the log's system rows.
+          await this.handoffToMatch(next);
         } else {
           if (!guestLive) next = setSeatConnected(next, "guest", false);
           if (!hostLive) next = setSeatConnected(next, "host", false);
@@ -336,7 +338,7 @@ export class LobbyDO {
       RNG seed + all hidden info here on out. Idempotent — a re-fired alarm never
       restarts a live match. Fixed placeholder decks + a D1-resolved pool for now
       (real deck selection is increment 3). */
-  private async handoffToMatch(): Promise<void> {
+  private async handoffToMatch(snapshot: LobbySnapshot): Promise<void> {
     if ((await this.state.storage.get(MATCH_KEY)) !== undefined) return;
     const cardPool = await loadCardPool(drizzle(this.env.DB), FIXED_MATCH_CARD_IDS);
     const seedBytes = new Uint32Array(1);
@@ -356,7 +358,22 @@ export class LobbyDO {
       console.error(`lobby match handoff failed: ${result.error.code} — ${result.error.message}`);
       return;
     }
-    const record: MatchRecord = { seed, state: result.state };
+    // Seat display names for the game log's system rows (host → p1, guest → p2,
+    // the SEAT_OF_SLOT mapping startMatch itself uses). A guest is always present
+    // at handoff (bothReady + guestLive gate it), so the fallback is defensive.
+    const names: Record<Seat, string> = {
+      p1: snapshot.host.name,
+      p2: snapshot.guest?.name ?? "Guest",
+    };
+    const startedAt = Date.now();
+    // Seed the log from createGame's own events (shuffles + the coin flip), at
+    // elapsed +00:00 — the same origin the local /play page uses (useLocalGame).
+    const log = logFromEvents(result.events, {
+      names,
+      state: result.state,
+      elapsed: formatElapsed(0),
+    });
+    const record: MatchRecord = { seed, startedAt, names, state: result.state, log };
     await this.state.storage.put(MATCH_KEY, record);
   }
 
@@ -449,18 +466,23 @@ export class LobbyDO {
   }
 
   /** Send each targeted socket its OWN redacted view of the match (P4). Unlike
-      `broadcast`, the payload differs PER SOCKET — the one authoritative
-      GameState redacted for that socket's seat (host→p1, guest→p2) — so no full
-      state ever crosses the wire. `only` targets one socket (a reconnect);
-      omitted, it fans out to every live socket (the in-game flip). A socket with
-      no seat (a refused/observer connection) is skipped. */
+      `broadcast`, the BOARD differs PER SOCKET — the one authoritative GameState
+      redacted for that socket's seat (host→p1, guest→p2) — so no full state ever
+      crosses the wire. The game LOG rides along too (2b-iii-d-ii): seat-keyed and
+      leak-safe, so the same array goes to both sockets (each relabels it for its
+      own seat), and a reconnecting socket gets the whole backlog. `only` targets
+      one socket (a reconnect); omitted, it fans out to every live socket (the
+      in-game flip). A socket with no seat (a refused/observer connection) is
+      skipped. */
   private broadcastMatch(record: MatchRecord, snapshot: LobbySnapshot, only?: WebSocket): void {
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const playerId = attachedPlayer(ws);
       if (playerId === null) continue;
       const seat = matchSeatOf(snapshot, playerId);
       if (seat === null) continue;
-      this.send(ws, { kind: "match", game: redactGame(record.state, seat) });
+      // The board is redacted PER seat; the log is seat-keyed + leak-safe, so the
+      // SAME array goes to both sockets (the client relabels it for its own seat).
+      this.send(ws, { kind: "match", game: redactGame(record.state, seat), log: record.log });
     }
   }
 

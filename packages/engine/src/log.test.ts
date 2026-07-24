@@ -3,9 +3,11 @@
 // hidden-info rules matter as much as the wording: draws and prize takes are
 // counts only, face-down placements are never named.
 
+import type { SeatLogEntry } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
-import type { GameEvent, GameState, Seat } from "@luminous/engine";
-import { topCardOf } from "@luminous/engine";
+import { topCardOf } from "./cards";
+import type { GameEvent } from "./events";
+import { formatElapsed, type LogContext, logFromEvents } from "./log";
 import {
   ATTACK_DISCARD_DECK,
   ATTACK_PARK_DECK,
@@ -30,14 +32,8 @@ import {
   setDamage,
   setPrizes,
   types,
-} from "../../../packages/engine/src/testFixtures";
-import {
-  formatElapsed,
-  logFromEvents,
-  viewLogEntries,
-  type LogContext,
-  type SeatLogEntry,
-} from "./logFromEvents";
+} from "./testFixtures";
+import type { GameState, Seat } from "./types";
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
@@ -480,21 +476,6 @@ describe("logFromEvents — resilience and viewer mapping", () => {
       ctx(state),
     );
     expect(entries).toEqual([]);
-  });
-
-  it("viewLogEntries maps seats into the current viewer's vocabulary", () => {
-    const seatLog: SeatLogEntry[] = [
-      { kind: "action", who: "p1", elapsed: "+00:01", segments: [{ text: "a" }] },
-      { kind: "action", who: "p2", elapsed: "+00:02", segments: [{ text: "b" }] },
-      { kind: "action", who: "system", elapsed: "+00:03", segments: [{ text: "c" }] },
-      { kind: "turn", turn: 3 },
-    ];
-    expect(
-      viewLogEntries(seatLog, "p1").map((e) => (e.kind === "action" ? e.who : e.turn)),
-    ).toEqual(["you", "opponent", "system", 3]);
-    expect(
-      viewLogEntries(seatLog, "p2").map((e) => (e.kind === "action" ? e.who : e.turn)),
-    ).toEqual(["opponent", "you", "system", 3]);
   });
 });
 
@@ -991,9 +972,11 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
     );
   });
 
-  it("the row is seat-keyed, so a viewer flip re-reads it as the OPPONENT's", () => {
-    // The log outlives the hot-seat flip: the same entry must read "you" to the
-    // controller and "opponent" to the victim, never the other way round.
+  it("files the row under the ACTOR's absolute seat, so a viewer flip can re-read it", () => {
+    // The log outlives its viewer (the hot-seat flip on /play, both online
+    // clients sharing one array): a row is keyed to the absolute seat that acted,
+    // never "you"/"opponent". The seat→viewer relabel is viewLogEntries' job (its
+    // p1→you/opponent mapping is pinned in src/features/game/viewLog.test.ts).
     let state = p1Turn2(1);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const withCard = handFromDeck(state, "p1", "fix-hammer", 1);
@@ -1001,14 +984,9 @@ describe("logFromEvents — discardEnergy (M5): ENERGY_DISCARDED", () => {
     const { state: after, events } = mustApply(withCard, { type: "playTrainer", seat: "p1", uid });
     const rows = logFromEvents(events, ctx(after));
 
-    expect(viewLogEntries(rows, "p1").map((e) => (e.kind === "turn" ? null : e.who))).toEqual([
-      "you",
-      "you",
-    ]);
-    expect(viewLogEntries(rows, "p2").map((e) => (e.kind === "turn" ? null : e.who))).toEqual([
-      "opponent",
-      "opponent",
-    ]);
+    // p1 played the Crushing Hammer + p1 owns the discarded energy: both rows
+    // are filed under p1, whoever ends up viewing them.
+    expect(rows.map((e) => (e.kind === "turn" ? null : e.who))).toEqual(["p1", "p1"]);
   });
 
   it("names the Energy with the ENERGY tone and the host with STRONG", () => {

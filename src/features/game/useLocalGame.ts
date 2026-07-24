@@ -8,9 +8,10 @@
 
 import { useCallback, useMemo, useReducer } from "react";
 import type { ErrorCode, GameAction, GameEvent, GameState, Seat } from "@luminous/engine";
-import { applyAction, phaseViewOf } from "@luminous/engine";
-import { formatElapsed, logFromEvents, viewLogEntries, type SeatLogEntry } from "./logFromEvents";
+import { applyAction, formatElapsed, logFromEvents, phaseViewOf } from "@luminous/engine";
+import type { SeatLogEntry } from "@luminous/schema";
 import { projectGameState, type GameProjection } from "./projection";
+import { viewLogEntries } from "./viewLog";
 
 /** Everything a fresh match starts from — the createGame result plus the
     display names. Produced by the pregame flow. */

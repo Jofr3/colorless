@@ -265,6 +265,7 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
       return (
         <OnlineMatch
           game={lobby.match}
+          log={lobby.matchLog}
           youName={self.name}
           opponentName={lobby.opponent?.name ?? "Opponent"}
           actionError={lobby.actionError}

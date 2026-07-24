@@ -33,6 +33,7 @@ import {
   programPlayable,
   providedEnergy,
   rareCandyOptions,
+  STATUS_LABELS,
   topCardOf,
   topUid,
 } from "@luminous/engine";
@@ -44,7 +45,6 @@ import {
   GLASS_PANEL,
 } from "../../lib/glass";
 import { EnergyDots } from "./EnergyDots";
-import { STATUS_LABELS } from "./logFromEvents";
 import type { GameProjection } from "./projection";
 
 export interface GameHudProps {

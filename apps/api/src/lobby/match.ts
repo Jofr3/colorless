@@ -15,8 +15,10 @@ import {
   type Seat,
   applyAction,
   createGame,
+  formatElapsed,
+  logFromEvents,
 } from "@luminous/engine";
-import type { Card, LobbySnapshot, WireAction } from "@luminous/schema";
+import type { Card, LobbySnapshot, SeatLogEntry, WireAction } from "@luminous/schema";
 import { slotOf } from "./logic";
 
 /** The one place the lobby's seats map to the engine's: host → p1, guest → p2. */
@@ -97,8 +99,20 @@ export const FIXED_MATCH_CARD_IDS: readonly string[] = [
 export interface MatchRecord {
   /** The RNG seed the DO minted for this match. */
   seed: number;
+  /** Epoch ms the match started — the log's "+MM:SS" elapsed origin (2b-iii-d-ii). */
+  startedAt: number;
+  /** Display names per seat (the lobby player names: host → p1, guest → p2) — the
+      log's system rows read them ("Ana wins the toss"). Fixed for the match. */
+  names: Record<Seat, string>;
   /** The engine's full game state — never sent whole to a client (online.md). */
   state: GameState;
+  /** The accumulated game log, seat-keyed + leak-safe (@luminous/engine
+      `logFromEvents`). Grows as actions apply; the DO broadcasts it WHOLE on every
+      match frame (a reconnect gets the full backlog), and each client relabels it
+      for its own seat (`viewLogEntries`). It can't be rebuilt from `state` — it is
+      the running record of every event since createGame — so it is persisted here
+      beside the state it describes. */
+  log: SeatLogEntry[];
 }
 
 /** The engine action types the online client can DRIVE and RECOVER from: setup,
@@ -153,11 +167,13 @@ export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
     BOUND to the actor's own `seat` — never the client-claimed `action.seat` — so
     a client can never act for its opponent, gated to the 2a-SUPPORTED types
     (`SUPPORTED_MATCH_ACTIONS`), then run through the engine's TOTAL `applyAction`
-    (never throws on a bogus type/field, D14). On accept returns the next record;
-    on reject returns a `reason` (an unsupported/illegal action changes nothing —
-    the client's optimistic gesture already sprang back; the seed carries over
-    unchanged) so the DO can surface the transient rejection pill (P4 2b-iii-d).
-    Pure — no DO/storage. */
+    (never throws on a bogus type/field, D14). On accept returns the next record —
+    the state advanced AND the accepted events formatted into the log (`now` is the
+    DO's wall clock, stamped once per action; the pure reducer takes it as an arg,
+    the local `useLocalGame` pattern) — carrying seed/startedAt/names over. On
+    reject returns a `reason` (an unsupported/illegal action changes nothing — the
+    client's optimistic gesture already sprang back) so the DO can surface the
+    transient rejection pill (P4 2b-iii-d). Pure — no DO/storage. */
 export type MatchActionOutcome =
   | { ok: true; record: MatchRecord }
   | { ok: false; reason: string };
@@ -166,6 +182,7 @@ export function applyMatchAction(
   record: MatchRecord,
   seat: Seat,
   action: WireAction,
+  now: number,
 ): MatchActionOutcome {
   // Off-allowlist types never reach the engine (the soft-lock gate) — a generic
   // reason, since there is no engine message to quote.
@@ -175,7 +192,16 @@ export function applyMatchAction(
   const result = applyAction(record.state, { ...action, seat } as GameAction);
   // The engine's own rejection message is safe to surface: it describes the
   // ACTOR's own illegal move / wrong phase, never the opponent's hidden zones.
-  return result.ok
-    ? { ok: true, record: { seed: record.seed, state: result.state } }
-    : { ok: false, reason: result.error.message };
+  if (!result.ok) return { ok: false, reason: result.error.message };
+  // Format the accepted events into log rows (leak-safe: counts for hidden draws,
+  // names off public state) and append. The log grows; seed/startedAt/names ride on.
+  const entries = logFromEvents(result.events, {
+    names: record.names,
+    state: result.state,
+    elapsed: formatElapsed(now - record.startedAt),
+  });
+  return {
+    ok: true,
+    record: { ...record, state: result.state, log: [...record.log, ...entries] },
+  };
 }

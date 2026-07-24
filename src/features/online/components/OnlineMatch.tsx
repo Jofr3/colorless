@@ -1,10 +1,11 @@
 import type { GameAction } from "@luminous/engine";
-import type { RedactedGame } from "@luminous/schema";
+import type { RedactedGame, SeatLogEntry } from "@luminous/schema";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TransientErrorPill } from "../../../components/TransientErrorPill";
 import { moveToAction } from "../../game/moveToAction";
 import { placementPredicateFor } from "../../game/placement";
 import { projectionFromRedacted } from "../../game/projection";
+import { viewLogEntries } from "../../game/viewLog";
 import { PlaymatView } from "../../playmat/PlaymatView";
 import type { CardMoveRequest, TurnInfo } from "../../playmat/types";
 import type { ActionError } from "../net/useLobby";
@@ -26,18 +27,21 @@ import { OnlineHud } from "./OnlineHud";
 // (and the fixed decks can't exercise them) — they land with real decks / a
 // later 2b slice.
 
-const NO_LOG: never[] = [];
 // The rejection pill lingers this long before auto-dismissing (GamePage's TTL).
 const ERROR_TTL_MS = 4000;
 
 export function OnlineMatch({
   game,
+  log,
   youName,
   opponentName,
   actionError,
   onAction,
 }: {
   game: RedactedGame;
+  /** The accumulated game log (seat-keyed, from the DO); relabeled for this
+      viewer's seat below and rendered in PlaymatView's GameLog (2b-iii-d-ii). */
+  log: SeatLogEntry[];
   youName: string;
   opponentName: string;
   /** The server's last action rejection (P4), surfaced as a transient pill. */
@@ -46,6 +50,10 @@ export function OnlineMatch({
 }) {
   const projection = useMemo(() => projectionFromRedacted(game), [game]);
   const seat = game.seat;
+  // Relabel the seat-keyed log into this viewer's you/opponent vocabulary — the
+  // log's twin of projectionFromRedacted above (the same array reaches both
+  // clients; only the labels differ per seat).
+  const logEntries = useMemo(() => viewLogEntries(log, seat), [log, seat]);
   const board = projection.board;
   const phaseKind = game.phase.kind;
   const isViewerTurn = phaseKind === "turn:action" && projection.activePlayer === "you";
@@ -117,7 +125,7 @@ export function OnlineMatch({
       passDisabled={passDisabled}
       passAnimationKey={projection.turn}
       placementPredicate={placementPredicate}
-      logEntries={NO_LOG}
+      logEntries={logEntries}
       piles={projection.piles}
     >
       <OnlineHud

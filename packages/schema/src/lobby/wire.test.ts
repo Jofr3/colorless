@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { RedactedGame } from "../match";
+import type { RedactedGame, SeatLogEntry } from "../match";
 import type { LobbySnapshot } from "./types";
 import {
   lobbyClientMessageSchema,
@@ -61,6 +61,18 @@ const MATCH_GAME: RedactedGame = {
   waitingOn: "you",
   outcome: null,
 };
+
+/** A seat-keyed game log — one action row and a turn divider. */
+const MATCH_LOG: SeatLogEntry[] = [
+  { kind: "action", who: "p1", elapsed: "+00:00", segments: [{ text: "drew 7 cards" }] },
+  { kind: "turn", turn: 1 },
+  {
+    kind: "action",
+    who: "system",
+    elapsed: "+00:05",
+    segments: [{ text: "Coin flip: " }, { text: "heads", tone: "strong" }],
+  },
+];
 
 describe("compile-time schema/type equality proofs", () => {
   it("hold (and double as documentation that they exist)", () => {
@@ -174,9 +186,10 @@ describe("lobbyServerMessageSchema (what clients receive)", () => {
     expect(lobbyServerMessageSchema.safeParse({ kind: "state", snapshot: SNAPSHOT }).success).toBe(
       true,
     );
-    expect(lobbyServerMessageSchema.safeParse({ kind: "match", game: MATCH_GAME }).success).toBe(
-      true,
-    );
+    expect(
+      lobbyServerMessageSchema.safeParse({ kind: "match", game: MATCH_GAME, log: MATCH_LOG })
+        .success,
+    ).toBe(true);
     expect(
       lobbyServerMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
     ).toBe(true);
@@ -187,11 +200,16 @@ describe("lobbyServerMessageSchema (what clients receive)", () => {
     ).toBe(true);
   });
 
-  it("round-trips a redacted match view unchanged", () => {
-    expect(lobbyServerMessageSchema.parse({ kind: "match", game: MATCH_GAME })).toEqual({
-      kind: "match",
-      game: MATCH_GAME,
-    });
+  it("round-trips a redacted match view + its game log unchanged", () => {
+    expect(lobbyServerMessageSchema.parse({ kind: "match", game: MATCH_GAME, log: MATCH_LOG })).toEqual(
+      { kind: "match", game: MATCH_GAME, log: MATCH_LOG },
+    );
+  });
+
+  it("refuses a match frame with no log (the field is required)", () => {
+    expect(lobbyServerMessageSchema.safeParse({ kind: "match", game: MATCH_GAME }).success).toBe(
+      false,
+    );
   });
 
   it("refuses client-only frames", () => {
@@ -216,7 +234,7 @@ describe("lobbyMessageSchema (full channel vocabulary)", () => {
     const messages = [
       { kind: "hello", from: "g1", name: "Bo" },
       { kind: "state", snapshot: SNAPSHOT },
-      { kind: "match", game: MATCH_GAME },
+      { kind: "match", game: MATCH_GAME, log: MATCH_LOG },
       { kind: "intent", from: "g1", intent: { type: "set-name", name: "Bo" } },
       { kind: "action", action: { type: "endTurn", seat: "p1" } },
       { kind: "reject", to: "g1", reason: "full" },

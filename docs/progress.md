@@ -3,7 +3,55 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-24 — build session #53 (**P4 increment 2b-iii-d-i — the online rejection
+**Last updated:** 2026-07-24 — build session #54 (**P4 increment 2b-iii-d-ii — the online event log**).
+Online play now shows the game log (was `NO_LOG`), built SERVER-SIDE and broadcast to both clients — the
+last of 2b-iii-d, and the multi-package refactor d-i deferred. **The move:** the pure GameEvent→rows
+formatter **`logFromEvents`** (+ `formatElapsed`/`STATUS_LABELS`/`LogContext`) moved from the web
+(`src/features/game/logFromEvents.ts`) INTO **`@luminous/engine`** (`log.ts`, exported from the barrel) —
+it reads engine events/state and now runs in TWO places (the /play client AND the DO), so the engine is
+its single home (the `redactGame` precedent, D60). The wire log types live in **`@luminous/schema`**
+(`match/log.ts`, Zod source-of-truth): **`SeatLogEntry`** (seat-keyed — `who` ∈ p1/p2/system) +
+`LogSegment`. **The KEY property:** the log is broadcast SEAT-KEYED and **identical to both clients** —
+it is LEAK-SAFE regardless of viewer (counts for hidden draws/prizes, face-down setup placements unnamed,
+every named card resolved off PUBLIC state — the `logFromEvents` module invariant, unchanged by the move,
+and no more revealing than local hot-seat, where one screen already shows both players' rows), so there is
+nothing to redact per-viewer, only to RELABEL. The p1/p2→you/opponent relabel (**`viewLogEntries`**)
+stayed in the web (`src/features/game/viewLog.ts`, the `projectionFromRedacted` twin), run client-side
+over the viewer's own `game.seat`; the `LogEntry`/`LogSource` RENDER types stayed in the playmat (its zero
+cross-package imports preserved). **Wire:** the `{kind:"match"}` frame grew **`log: SeatLogEntry[]`**
+(`LobbyMessage` + `matchMessageSchema`, the exactness proofs still hold) — it rides the FRAME, NOT
+`RedactedGame`, because it accumulates across the whole game and can't be rebuilt from one snapshot's
+state, so **`RedactedGame`/`redactGame`/the round-trip pins are UNTOUCHED** (no engine rule change).
+**API:** `MatchRecord` grew **`startedAt`** (the "+MM:SS" origin), **`names`** (host→p1/guest→p2 display
+names, for the log's system rows) and **`log`**; **`applyMatchAction` takes a `now` arg** (the pure
+reducer stays clockless — the DO stamps `Date.now()` once per action, the `useLocalGame` pattern) and
+APPENDS the accepted events' rows. The DO's `handoffToMatch(snapshot)` seeds startedAt/names/initial-log
+from createGame's events at +00:00; `broadcastMatch` sends `record.log` whole to each socket (a reconnect
+gets the full backlog). **Client:** `useLobby.matchLog` (set with `match` on the frame, cleared with it on
+leaving in-game); `OnlineMatch` renders `viewLogEntries(log, seat)`. engine RULES UNCHANGED (a
+transport/read surface); 1777 → **1782** tests (wire log accept/refuse/round-trip, match.test log-append +
+elapsed-stamp + reject-untouched, the engine log suite moved with a seat-keyed assertion, a web `viewLog`
+relabel test, an OnlineMatch DOM log-render case). `bun run check` green. **Unlike D64–D67 this surface IS
+exercisable end-to-end with the fixed decks** (they emit a real log), so a two-client browser run would
+verify it (not done — test-only so far). Built solo with full context; **1 read-only adversarial
+reviewer: NO HIGH, NO MED** — the LEAK property HOLDS under a per-arm classification of `formatEvent`
+(every row names nothing / a seat label / a COUNT for a hidden zone / a genuinely-public in-play card;
+the two naming-reveal events `HAND_REVEALED`/`CARD_TO_BOTTOM_OF_DECK` fire ONLY after a public hand
+reveal; setup benching stays `POKEMON_PLACED`-unnamed vs mid-game `POKEMON_BENCHED`-named), so one
+identical `record.log` to both sockets leaks nothing; seat-keying/relabel, record lifecycle
+(drop-on-abandon, reconnect backlog), purity (fresh array, `now` threaded) and the exactness/round-trip
+pins all hold. **2 LOWs, both RECORDED (not fixed):** (1) a `MatchRecord` written by PRE-slice code
+(`{seed,state}`) and read across THIS deploy lacks `startedAt`/`names`/`log` → NaN elapsed + a
+`names[…]` TypeError on a system row (and `log:undefined` → a client render throw) — narrow (a match
+in-flight across one deploy, dev-only fixed decks), self-heals on abandon+rematch, part of the
+acknowledged no-DO-storage-migration gap (the fix lands with increment 3's storage hardening); (2) the
+whole log re-broadcasts every action (O(n²) bandwidth) — the deliberate simplicity tradeoff (already
+in-code-commented), a later delta/paginate pass. See D68. Below: the P4-2b-iii-d-i header (kept for
+continuity).
+
+---
+### Prior header (P4 increment 2b-iii-d-i — the online rejection pill, kept for continuity)
+**Last updated (was):** 2026-07-24 — build session #53 (**P4 increment 2b-iii-d-i — the online rejection
 pill**). A refused game action now surfaces to the ACTOR as a transient pill instead of vanishing
 silently (the gap the DO code flagged: "increment 2b adds the rejection pill"). **2b-iii-d is SPLIT**
 into d-i (this — the pill) and d-ii (the online event log, a bigger multi-package refactor: move
@@ -1166,54 +1214,50 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**P4 increment 2b-iii-a (the effect:choose prompt seam + the mayDraw dialog) is DONE — the mid-effect
-decision PROMPT now crosses the wire, redacted answerer-only (online.md, D64), engine 0.40.0.**
-`RedactedPhase.effect:choose` gained a nullable `prompt` (`RedactedEffectPrompt`, `mayDraw` arm =
-`count`/`note`); `redactPhase` fills it via `redactedPromptOf(phase, viewerSeat)` — non-null ONLY for the
-answering seat (`phase.answerer ?? phase.seat`), STRICTER than `phaseViewOf`'s hot-seat `withheld` (the
-wire delivers to one client, so a controller-answered prompt goes to the controller alone; coincides
-with the hot-seat gate when `answerer` is set — ALWAYS for mayDraw). `redactPrompt` maps mayDraw + is
-EXHAUSTIVE (null for the 6 controller-answered kinds). `decisionFromPhase` reconstructs the mayDraw
-decision, so `projectionFromRedacted ≡ projectGameState` now holds for a mayDraw park (both viewers).
-`OnlineHud` gained a `MayDrawDialog`. **`resolveEffect` STAYS OFF `SUPPORTED_MATCH_ACTIONS`** — the
-invariant is "on the set ⟺ EVERY prompt kind is dialoged", only mayDraw is; unreachable with the fixed
-decks, so built + tested ahead of the flip. 1747 → 1754 tests; review NO HIGH/MED (2 LOWs — 1 fixed doc,
-1 recorded below).
-**2b-iii is SPLIT** (7 EffectPrompt kinds, several needing hidden-card resolution): a=mayDraw seam
-(DONE), b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection
-pill.
-**Abilities + non-Stadium trainers were CUT from 2b-ii and DEFERRED to increment 3 (real decks):** the
-fixed decks (Sneasel/Mareep + Energy) have NEITHER, so a wire surface for them can't be exercised
-end-to-end — building it now would be speculative + untested against a real game, against the
-"only wire what's driven" discipline. When real deck selection lands: add the playable ability/trainer
-options + their greyed/reason to the wire (they read the FULL GameState —
-`programPlayable`/`conditionHolds`/`handCostUnmet`, `index.ts:288-320` — so put enough on the wire
-without leaking prize counts / the Stadium owner / the hand) and grow the allowlist by
-`useAbility`/`playTrainer` (Stadium already drives via the 2a drag).
-**Next concrete action — increment 2b-iii-b (the public-ref effect prompts):**
-1. **choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy** — their candidates are ALL on the
-   public redacted board (in-play PokémonRefs, attached-Energy uids), so add their `RedactedEffectPrompt`
-   arms (refs the client resolves against the board it already has — NO hidden-card resolution) +
-   `OnlineHud` dialogs restated over the wire shape. These are controller-answered, so the round-trip
-   pin holds for the ANSWERER's view only (`redactedPromptOf` is stricter than the hot-seat projection —
-   see the note in redact.ts). `resolveEffect` stays off the allowlist until 2b-iii-c dialogs the rest.
-2. **2b-iii-c** — chooseCards/attachCards need a server-resolved `RedactedCard` per candidate (the
-   controller's own deck/top cards, controller-only). Once ALL kinds are dialoged, put `resolveEffect`
-   on `SUPPORTED_MATCH_ACTIONS` — the SEQUENCING CONSTRAINT in `match.ts` (real decks/increment 3 must
-   NOT precede this).
-3. **2b-iii-d** — per-recipient EVENT redaction (`CARDS_DRAWN`/`MULLIGAN_REVEALED` carry hidden uids,
-   `events.ts:8`) + an online event→log stream (`logFromEvents` is per-viewer already; `OnlineMatch`
-   feeds `NO_LOG`); and a rejection pill (the DO drops a rejected action silently — also closes the
-   ko-dialog-stays-open-on-reject gap).
+**P4 increment 2b-iii-d-ii (the online event log) is DONE — and with it the WHOLE of 2b (online.md, D68).**
+Online play with the fixed decks is now a COMPLETE game: setup, the turn drags, attack + KO loop, retreat,
+every `effect:choose` dialog (2b-iii-a/b/c), the rejection pill (d-i), AND the event log (d-ii). The log is
+built server-side (`logFromEvents` MOVED into `@luminous/engine`; wire type `SeatLogEntry` in
+`@luminous/schema` `match/log.ts`), accumulated in `MatchRecord` (`+ startedAt/names`), and broadcast on
+the `{kind:"match"}` frame's new `log` field — the SAME array to both clients (seat-keyed + leak-safe), each
+relabeling p1/p2→you/opponent via `viewLogEntries` (web) over its own `game.seat`. The log rides the FRAME,
+not `RedactedGame`, so the redactor + round-trip pins are untouched. 1777 → **1782** tests; `bun run check`
+green. **Review (1 read-only adversarial reviewer): NO HIGH, NO MED** — the leak property holds under a
+full per-arm `formatEvent` classification; seat-keying, lifecycle, purity + the exactness/round-trip pins
+all hold. **2 LOWs RECORDED (not fixed), listed below.**
+**Next concrete action — increment 3 (real deck selection), and it needs SPLITTING (it is large):**
+1. **Resolve a player's chosen deck server-side.** Lobbies are account-less and store only an opaque
+   `deckId`/`deckName` (`lobby/routes.ts`) — the DO can't read a saved deck's card list yet. `handoffToMatch`
+   still hands the engine `FIXED_MATCH_DECKS` (Sneasel/Mareep + basic Energy). Increment 3 must resolve
+   `deckId` → the 60 card ids (the deck routes are session-gated — decide how the DO reads them), build the
+   `cardPool` from D1 for BOTH real decks, and drop the fixed placeholders. This is the precondition for
+   everything below (real decks exercise the surfaces the fixed decks can't).
+2. **Abilities + non-Stadium trainers (CUT from 2b-ii, deferred here).** The fixed decks have NEITHER, so
+   their wire surface couldn't be driven end-to-end. With real decks: put the playable ability/trainer
+   options + their greyed/reason on the wire (they read the FULL GameState —
+   `programPlayable`/`conditionHolds`/`handCostUnmet`, `index.ts:288-320` — so carry enough WITHOUT leaking
+   prize counts / the Stadium owner / the hand), and grow `SUPPORTED_MATCH_ACTIONS` by
+   `useAbility`/`playTrainer` (Stadium already drives via the 2a drag; `resolveEffect` is already ON — every
+   prompt kind is dialoged, so a real-deck effect attack that parks can be driven to completion).
+3. **Reconnect / timeouts, concede / rematch, spectate, and a match-start FAILURE surface** (the load-failure
+   wedge below — an incomplete D1 pool flips to in-game with no match; surface it to players now that the
+   pill exists). These are independent of real decks and can be sub-sliced in any order.
 See `workstreams/online.md`.
-**2b-iii-a review LOWs (online.md + D64):** (FIXED) the schema/redactor docs claimed `redactedPromptOf`
-"mirrors `phaseViewOf` exactly" — false for controller-answered parks (the wire is strictly STRICTER,
-safe), corrected in both. (RECORDED, deliberate) the `MayDrawDialog` dispatches `resolveEffect`, which
-the DO rejects (off the allowlist), and the dialog is mandatory — IF a mayDraw park were reachable
-online the answerer would strand; unreachable with the fixed decks (no Ortega), and the fix is the
-allowlist flip in 2b-iii-c, not making an owed decision dismissable (putting `resolveEffect` on now
-would be a WORSE strand at an un-dialoged park).
-**2b-ii review was clean — no HIGH/MED/LOW.** **Recorded, NOT fixed (2b-i — review LOWs, in online.md +
+**2b-iii-d-ii: verifiable in a browser (unlike D64–D67).** The fixed decks emit a real log (shuffles, coin
+flip, draws, attacks, KOs), so a two-client browser run WOULD exercise the online log end-to-end — not yet
+done (test-only, the `verify` skill covers the launch recipe). This is the first online surface the fixed
+decks can drive to completion, so it is the natural first browser smoke-test of P4 online play.
+**Recorded, NOT fixed (2b-iii-d-ii — review LOWs, in online.md + D68):** (1) a `MatchRecord` written by
+PRE-slice code (`{seed,state}` only) and read across THIS deploy has no `startedAt`/`names`/`log` → the
+next `applyMatchAction` stamps NaN elapsed and throws a `names[…]` TypeError on a system row (COIN_FLIP /
+FIRST_PLAYER_CHOSEN / GAME_OVER), and `broadcastMatch` sends `log:undefined` → a client `viewLogEntries`
+render throw; NARROW (a match in-flight across a single deploy, dev-only fixed decks) and self-heals on
+abandon+rematch — this is the acknowledged no-DO-storage-migration gap (carried from 1b), so the fix is
+deferred to increment 3's storage/reconnect hardening (default the missing fields on read, or bump/reset
+on shape mismatch), NOT bolted on here against the "no migration contract yet" posture. (2) the whole log
+re-broadcasts on every accepted action (`broadcastMatch` sends `record.log` in full) — O(n) per action /
+O(n²) over a match; the deliberate simplicity tradeoff (a reconnect gets the backlog for free), flagged
+for a later delta/paginate pass. **Recorded, NOT fixed (2b-i — review LOWs, in online.md +
 D62):** (a) the OnlineHud ko/attack/retreat panels restate GameHud's dialog markup (the D60
 restate-per-surface choice — different shapes; extract the presentational grid/rows when a 3rd consumer
 appears); (b) the online AttackPanel folds §12 immobilize into `attack.playable` + `retreat.can` but

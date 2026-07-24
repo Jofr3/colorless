@@ -20,7 +20,7 @@
 // in protocol.ts so the web client can import them without bundling zod.
 
 import { z } from "zod";
-import { redactedGameSchema, wireActionSchema } from "../match";
+import { redactedGameSchema, seatLogEntrySchema, wireActionSchema } from "../match";
 import type {
   LobbyIntent,
   LobbyMessage,
@@ -92,6 +92,7 @@ const stateMessageSchema = z.object({
 const matchMessageSchema = z.object({
   kind: z.literal("match"),
   game: redactedGameSchema,
+  log: z.array(seatLogEntrySchema),
 });
 const intentMessageSchema = z.object({
   kind: z.literal("intent"),

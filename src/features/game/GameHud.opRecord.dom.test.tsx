@@ -27,7 +27,8 @@ import {
 } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { GameHud } from "./GameHud";
-import { logFromEvents, type SeatLogEntry } from "./logFromEvents";
+import { logFromEvents } from "@luminous/engine";
+import type { SeatLogEntry } from "@luminous/schema";
 import { projectGameState } from "./projection";
 
 beforeAll(installDomShims);

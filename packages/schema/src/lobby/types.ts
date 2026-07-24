@@ -1,7 +1,7 @@
 // The shared vocabulary for the online lobby: the authoritative state the host
 // owns, and the messages the two peers exchange over the transport channel.
 
-import type { RedactedGame, WireAction } from "../match";
+import type { RedactedGame, SeatLogEntry, WireAction } from "../match";
 //
 // The model is deliberately client-server even though there's no server: the
 // HOST is authoritative. It holds the one true `LobbySnapshot`, applies every
@@ -68,8 +68,11 @@ export type LobbyMessage =
   /** server → one client: that client's REDACTED view of the in-game match
       (P4). Per-viewer — the DO redacts `GameState` for each socket's seat — so
       it never rides the same-string `broadcast`; it is sent on the in-game flip
-      and on reconnect. */
-  | { kind: "match"; game: RedactedGame }
+      and on reconnect. `log` is the accumulated game log (seat-keyed, leak-safe,
+      so IDENTICAL for both viewers — the client relabels `who` for its own seat);
+      it rides here because the log outlives any single snapshot and can't be
+      rebuilt from `game`'s current state alone. */
+  | { kind: "match"; game: RedactedGame; log: SeatLogEntry[] }
   /** guest → host: apply this change to my seat. */
   | { kind: "intent"; from: string; intent: LobbyIntent }
   /** client → server: a game action for the running match (P4). The DO binds it

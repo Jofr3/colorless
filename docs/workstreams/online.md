@@ -267,6 +267,55 @@ head") — actor-only, no leak/crash, cosmetic. **Pre-existing sibling NOTED (ou
 `GamePage`/`useLocalGame` pill shares the same latent nonce-reset defect (less reachable in hot-seat);
 deferred, not touched by this online slice.
 
+**Increment 2b-iii-d-ii — DONE:** the online event log (D68) — the last of 2b-iii-d. Online play now
+shows the game log (previously `NO_LOG`), built server-side and broadcast to both clients. **The move
+(the multi-package refactor 2b-iii-d anticipated):** the pure GameEvent→rows formatter `logFromEvents`
+(+ `formatElapsed`, `STATUS_LABELS`, `LogContext`) moved from the web (`src/features/game/logFromEvents.ts`)
+INTO **`@luminous/engine`** (`log.ts`, exported from the barrel) — it reads engine events/state and now
+runs in TWO places (the /play client AND the DO), so the engine is its single home, the `redactGame`
+precedent (D60). The wire log types live in **`@luminous/schema`** (`match/log.ts`, Zod source-of-truth):
+**`SeatLogEntry`** (seat-keyed — `who` ∈ p1/p2/system) + `LogSegment`. **The layering** (the board's:
+schema=wire, engine=producer, web=wire→render): the log is broadcast SEAT-KEYED and **identical to both
+clients** — it is LEAK-SAFE regardless of viewer (counts for hidden draws/prizes, face-down setup
+placements unnamed, every named card resolved off PUBLIC state — the module header's invariant, unchanged
+by the move), so there is nothing to redact per-viewer, only to RELABEL; the p1/p2→you/opponent relabel
+(`viewLogEntries`) stayed in the web (`src/features/game/viewLog.ts`, the `projectionFromRedacted` twin),
+run client-side over the viewer's own `game.seat`. **Wire:** the `{kind:"match"}` frame grew
+**`log: SeatLogEntry[]`** (`LobbyMessage` + `matchMessageSchema`; the exactness proofs still hold) — it
+rides the FRAME, not `RedactedGame`, because it accumulates across the whole game and can't be rebuilt
+from a single snapshot's state (so `RedactedGame`/`redactGame`/the round-trip pins are UNTOUCHED).
+**API:** `MatchRecord` grew **`startedAt`** (the "+MM:SS" origin), **`names`** (host→p1/guest→p2 display
+names for the log's system rows), and **`log`**; `applyMatchAction` takes a **`now`** arg (the pure
+reducer stays clockless — the DO stamps `Date.now()` once per action, the `useLocalGame` pattern) and
+APPENDS the accepted events' rows. The DO's `handoffToMatch(snapshot)` seeds startedAt/names/initial-log
+from createGame's events at +00:00; `broadcastMatch` sends `record.log` whole to each socket (a reconnect
+gets the full backlog). **Client:** `useLobby` gained a `matchLog` state (set with `match` on the frame,
+cleared with it on leaving in-game); `OnlineMatch` renders `viewLogEntries(log, seat)` into PlaymatView.
+engine RULES UNCHANGED (a transport/read surface); 1777 → **1782** tests (wire log accept/refuse/round-trip,
+a match.test log-append + elapsed-stamp + reject-untouched, the engine log suite moved with a seat-keyed
+assertion, a web `viewLog` relabel test, an OnlineMatch DOM log-render case). `bun run check` green.
+**Unlike D64–D67, this surface IS exercisable end-to-end with the fixed decks** (they emit shuffles / the
+coin flip / draws / attacks / KOs — a real log), so a two-client browser run would verify it (not done —
+test-only so far).
+**Review (1 read-only adversarial reviewer): NO HIGH, NO MED** — the headline LEAK property (one identical
+`record.log` to both sockets) HOLDS under a per-arm classification of `formatEvent`: every row names
+nothing / a seat label / a COUNT for a hidden zone (draws, prizes, hand costs, deck searches, top-looks) /
+a genuinely-PUBLIC in-play card; the two deliberately-naming events were verified at their emit sites —
+`HAND_REVEALED` (interpreter.ts, the whole hand revealed publicly first) and `CARD_TO_BOTTOM_OF_DECK`
+(bottomed face-up after that reveal) — and face-down SETUP benching stays `POKEMON_PLACED` (unnamed) vs
+mid-game `POKEMON_BENCHED` (named, face-up). Seat-keying/relabel (`game.seat` = the viewer's own absolute
+seat, opposite for the two clients), record lifecycle (drop on the in-game→not transition, no
+in-game→different-guest path, reconnect resends the leak-safe backlog), purity (`applyMatchAction` returns
+a FRESH log array, never mutates, `now` threaded — pinned by the prefix-unchanged test) and the exactness
+proof / round-trip (RedactedGame not in the diff) all hold. **2 LOWs, both RECORDED (not fixed):** (1) a
+`MatchRecord` written by PRE-slice code (`{seed,state}`) read across THIS deploy lacks the new fields → NaN
+elapsed + a `names[…]` TypeError on a system row, and `log:undefined` → a client render throw; NARROW (a
+match in-flight across one deploy, dev-only fixed decks), self-heals on abandon+rematch, the acknowledged
+no-DO-migration gap — deferred to increment 3's storage hardening (default the missing fields on read, or
+reset on shape mismatch). (2) the whole log re-broadcasts every action (O(n²) bandwidth over a match) —
+the deliberate simplicity tradeoff (a reconnect gets the backlog for free), a later delta/paginate pass.
+See D68.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -377,13 +426,16 @@ until 1c broadcasts the redacted view.
         surfaces to the actor as a transient pill. New `{kind:"reject-action", reason}` server frame;
         `applyMatchAction` returns `{ok,reason}` instead of `MatchRecord | null`; the DO sends it on `!ok`;
         `useLobby.actionError` + `OnlineMatch`'s `TransientErrorPill` (the GamePage nonce+TTL pattern).
-      - **2b-iii-d-ii — the online event log (NEXT):** per-RECIPIENT EVENT redaction — but note
-        `logFromEvents` is ALREADY viewer-independent + leak-safe (counts-only for hidden draws/prizes,
-        names resolved off state), so the cleanest path is the SERVER building the rows: move
-        `logFromEvents` + the `LogSegment`/`SeatLogEntry`/`LogEntry` types from `apps/web` into shared
-        packages (engine + schema), have the DO run it with the full state, accumulate `SeatLogEntry[]` in
-        `MatchRecord` (+ a `startedAt` for elapsed), broadcast the log (a `RedactedGame`/frame field), and
-        render it in `OnlineMatch` (`viewLogEntries` → `PlaymatView`, replacing today's `NO_LOG`).
+      - **2b-iii-d-ii — the online event log. DONE** (D68, see Status above): `logFromEvents` (+
+        `formatElapsed`/`STATUS_LABELS`/`LogContext`) moved into `@luminous/engine`; the wire log types
+        (`SeatLogEntry`/`LogSegment`) into `@luminous/schema` (`match/log.ts`); the `{kind:"match"}` frame
+        grew `log: SeatLogEntry[]`. `MatchRecord` grew `startedAt`/`names`/`log`; `applyMatchAction` takes
+        a `now` arg and appends the accepted events' rows; `handoffToMatch` seeds the initial log; the DO
+        broadcasts `record.log` (seat-keyed + leak-safe → same array to both, no per-viewer redaction).
+        `viewLogEntries` (the seat→viewer relabel) stayed in the web (`src/features/game/viewLog.ts`);
+        `useLobby.matchLog` + `OnlineMatch` render it. The `LogEntry`/`LogSource` RENDER types stayed in
+        the playmat (zero cross-package imports). Confirmed the log rides the FRAME, not `RedactedGame`
+        (it can't be rebuilt from one snapshot), so the redactor + round-trip pins are untouched.
 - **3:** real deck selection (resolve `deckId`→60 ids server-side), reconnect/timeouts,
   concede/rematch, spectate, and surfacing a match-start FAILURE to players (the load-failure
   wedge below).
