@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { EMPTY_CARD_ID, HIDDEN_CARD_ID, HIDDEN_CARD_NAME, type RedactedGame } from "@luminous/schema";
-import type { EffectContinuation } from "./interpreter";
+import type { EffectContinuation, EffectPrompt } from "./interpreter";
 import { redactGame } from "./redact";
 import {
   MIXED_DECK,
@@ -512,6 +512,106 @@ describe("redactGame — the effect:choose prompt (answerer-only)", () => {
     expect(game.phase.prompt).toBeNull();
     const ids = new Set(allIds(game));
     for (const uid of deckUids) expect(ids.has(uid)).toBe(false);
+  });
+});
+
+// The online effect:choose dialogs (increment 2b-iii-b) render the PUBLIC-REF
+// family — choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy —
+// whose candidates are in-play refs and attached-Energy uids already public on
+// the board. The redactor passes them through as FRESH copies (no alias), still
+// gated answerer-only. Unlike mayDraw these are CONTROLLER-answered, so the
+// prompt reaches the controller (phase.seat) and is withheld from the opponent.
+describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)", () => {
+  const CONT: EffectContinuation = {
+    pendingOp: { op: "opponentMayDraw", count: 1 },
+    rest: [],
+    ctx: { seat: "p1" },
+  };
+  const P1_ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
+  const P2_ACTIVE = { seat: "p2", spot: { spot: "active" } } as const;
+  const P1_BENCH0 = { seat: "p1", spot: { spot: "bench", index: 0 } } as const;
+
+  /** turnOneState with a synthesized controller-answered effect:choose park
+      (the redactor never reads `cont`, so a minimal one stands in). */
+  function withPrompt(prompt: EffectPrompt): GameState {
+    return { ...turnOneState(), phase: { kind: "effect:choose", seat: "p1", prompt, cont: CONT } };
+  }
+  function promptFor(prompt: EffectPrompt, seat: Seat) {
+    const phase = redactGame(withPrompt(prompt), seat).phase;
+    if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    return phase.prompt;
+  }
+
+  it("passes a choosePokemon prompt through to the controller, verbatim", () => {
+    const prompt: EffectPrompt = {
+      kind: "choosePokemon",
+      candidates: [P1_ACTIVE, P2_ACTIVE],
+      note: "Choose a Pokémon.",
+    };
+    expect(promptFor(prompt, "p1")).toEqual(prompt);
+  });
+
+  it("passes a choosePokemonMulti prompt through with its bounds + declinable", () => {
+    const prompt: EffectPrompt = {
+      kind: "choosePokemonMulti",
+      candidates: [P2_ACTIVE, P1_BENCH0],
+      min: 2,
+      max: 2,
+      declinable: true,
+      note: "Choose 2 Pokémon.",
+    };
+    expect(promptFor(prompt, "p1")).toEqual(prompt);
+  });
+
+  it("passes a moveEnergy prompt through (movable pairs + destinations)", () => {
+    const prompt: EffectPrompt = {
+      kind: "moveEnergy",
+      movable: [{ uid: "e1", from: P1_ACTIVE }],
+      destinations: [P1_ACTIVE, P1_BENCH0],
+      max: 1,
+      note: "Move an Energy.",
+    };
+    expect(promptFor(prompt, "p1")).toEqual(prompt);
+  });
+
+  it("passes a discardEnergy prompt through with its scope", () => {
+    const prompt: EffectPrompt = {
+      kind: "discardEnergy",
+      discardable: [
+        { uid: "e1", from: P2_ACTIVE },
+        { uid: "e2", from: P2_ACTIVE },
+      ],
+      scope: { kind: "total", count: 1 },
+      note: "Discard an Energy.",
+    };
+    expect(promptFor(prompt, "p1")).toEqual(prompt);
+  });
+
+  it("withholds a controller-answered prompt from the opponent (null on the wire)", () => {
+    const prompt: EffectPrompt = {
+      kind: "choosePokemon",
+      candidates: [P1_ACTIVE, P2_ACTIVE],
+      note: "Choose a Pokémon.",
+    };
+    // p1 is the controller/answerer; p2 (the non-answerer) gets null.
+    expect(promptFor(prompt, "p1")).not.toBeNull();
+    expect(promptFor(prompt, "p2")).toBeNull();
+  });
+
+  it("copies the refs/scope rather than aliasing the input prompt (purity)", () => {
+    const prompt: EffectPrompt = {
+      kind: "moveEnergy",
+      movable: [{ uid: "e1", from: P1_ACTIVE }],
+      destinations: [P1_BENCH0],
+      max: 1,
+      note: "Move an Energy.",
+    };
+    const redacted = promptFor(prompt, "p1");
+    if (redacted === null || redacted.kind !== "moveEnergy") throw new Error("expected moveEnergy");
+    // Structurally equal but not the SAME objects — a consumer mutating the
+    // snapshot must not reach back into game state (the copyConditions contract).
+    expect(redacted.movable[0]?.from).not.toBe(P1_ACTIVE);
+    expect(redacted.destinations[0]).not.toBe(P1_BENCH0);
   });
 });
 

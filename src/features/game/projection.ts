@@ -33,11 +33,18 @@ import type {
   GameState,
   InPlayPokemon,
   PendingDecision,
+  PokemonRef,
   Seat,
   SpecialConditions,
 } from "@luminous/engine";
 import { cardOfUid, effectiveMaxHp, inSetup, otherSeat, phaseViewOf, topUid } from "@luminous/engine";
-import type { CardCategory, RedactedGame, RedactedInPlay, RedactedSide } from "@luminous/schema";
+import type {
+  CardCategory,
+  RedactedGame,
+  RedactedInPlay,
+  RedactedPokemonRef,
+  RedactedSide,
+} from "@luminous/schema";
 import { cardImageUrl } from "../../lib/api";
 import type {
   BattleConditions,
@@ -411,10 +418,10 @@ function cardModelFromRedacted(card: RedactedInPlay): CardModel {
     now crosses the wire redacted and answerer-only (2b-iii): reconstructed here
     into the SAME `PendingDecision.effectChoose` the local `phaseViewOf`
     produces, so a wire round-trip reproduces it exactly — but only for a prompt
-    kind whose online dialog has landed (2b-iii-a: `mayDraw`); a withheld or
-    not-yet-redacted prompt is null on the wire and maps to null here, exactly as
-    `phaseViewOf` withholds it from the non-answerer. Every non-parked phase is
-    null. */
+    kind whose online dialog has landed (mayDraw + the public-ref family); a
+    withheld or not-yet-redacted prompt (the non-answerer, or chooseCards/
+    attachCards) is null on the wire and maps to null here, exactly as
+    `phaseViewOf` withholds it. Every non-parked phase is null. */
 function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null {
   switch (phase.kind) {
     case "ko:takePrizes":
@@ -432,9 +439,12 @@ function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null
 }
 
 /** Rebuild the engine `PendingDecision.effectChoose` from a redacted wire
-    prompt (2b-iii). Exhaustive on the redacted union (only `mayDraw` so far), so
-    a new wire arm added in a later 2b-iii slice is a "not all paths return"
-    compile error here rather than a silently dropped decision. */
+    prompt (2b-iii). Exhaustive on the redacted union (mayDraw + the public-ref
+    family), so a new wire arm added in a later 2b-iii slice is a "not all paths
+    return" compile error here rather than a silently dropped decision. The
+    public-ref arms carry the engine's own `PokemonRef`s (absolute seats) + uids
+    verbatim, so this rebuilds the full `EffectPrompt` field-for-field and the
+    answerer's-view round-trip equals the local projection exactly. */
 function effectDecisionFromPrompt(
   prompt: NonNullable<Extract<RedactedGame["phase"], { kind: "effect:choose" }>["prompt"]>,
 ): PendingDecision {
@@ -444,5 +454,67 @@ function effectDecisionFromPrompt(
         kind: "effectChoose",
         prompt: { kind: "mayDraw", count: prompt.count, note: prompt.note },
       };
+    case "choosePokemon":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "choosePokemon",
+          candidates: prompt.candidates.map(refFromWire),
+          note: prompt.note,
+        },
+      };
+    case "choosePokemonMulti":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "choosePokemonMulti",
+          candidates: prompt.candidates.map(refFromWire),
+          min: prompt.min,
+          max: prompt.max,
+          declinable: prompt.declinable,
+          note: prompt.note,
+        },
+      };
+    case "moveEnergy":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "moveEnergy",
+          movable: prompt.movable.map((offer) => ({
+            uid: offer.uid,
+            from: refFromWire(offer.from),
+          })),
+          destinations: prompt.destinations.map(refFromWire),
+          max: prompt.max,
+          note: prompt.note,
+        },
+      };
+    case "discardEnergy":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "discardEnergy",
+          discardable: prompt.discardable.map((offer) => ({
+            uid: offer.uid,
+            from: refFromWire(offer.from),
+          })),
+          scope:
+            prompt.scope.kind === "total"
+              ? { kind: "total", count: prompt.scope.count }
+              : { kind: "each" },
+          note: prompt.note,
+        },
+      };
   }
+}
+
+/** A wire `RedactedPokemonRef` → the engine `PokemonRef` it mirrors. Structurally
+    identical (both absolute-seat, same spot union), rebuilt fresh field-for-field
+    so an added spot field is a compile error rather than a silent alias. */
+function refFromWire(ref: RedactedPokemonRef): PokemonRef {
+  return {
+    seat: ref.seat,
+    spot:
+      ref.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: ref.spot.index },
+  };
 }

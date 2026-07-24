@@ -19,16 +19,19 @@
 // leaking it would let a client track a hidden card across zones); empty in-play
 // slots the `empty` sentinel. Prizes/decks are counts; the mid-effect decision's
 // prompt crosses ONLY to the seat that must answer it (redactedPromptOf), and
-// only for a prompt kind whose online dialog exists (2b-iii-a: mayDraw alone).
+// only for a prompt kind whose online dialog exists (mayDraw + the public-ref
+// choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy family so far).
 
 import type {
   RedactedAttack,
   RedactedCard,
+  RedactedDiscardScope,
   RedactedEffectPrompt,
   RedactedGame,
   RedactedInPlay,
   RedactedOutcome,
   RedactedPhase,
+  RedactedPokemonRef,
   RedactedRetreat,
   RedactedSide,
   Viewer,
@@ -37,7 +40,7 @@ import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from
 import { costMet } from "./attack";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import { effectiveAttackCost, effectiveMaxHp, effectiveRetreatCost, providedEnergy } from "./continuous";
-import type { EffectPrompt } from "./interpreter";
+import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
 import type { GameOutcome, GameState, InPlayPokemon, Phase, Seat, SpecialConditions } from "./types";
 import { isImmobilized, otherSeat } from "./types";
@@ -119,15 +122,17 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
     one device shows one viewer and the HUD gates on `waitingOn === "you"`. The
     wire has no such gate: it physically delivers the payload to a client, so a
     controller-answered prompt must go to the CONTROLLER ALONE. The two coincide
-    exactly when `answerer` is set — which is ALWAYS for `mayDraw` (the only kind
-    wired so far), so the `projectionFromRedacted` round-trip still equals the
-    local projection for a mayDraw park. When a later slice wires a
-    controller-answered kind, that round-trip will hold for the answerer's view
-    only, not the opponent's — extend the pin accordingly, don't loosen this gate.
+    exactly when `answerer` is set — ALWAYS for `mayDraw` — so a mayDraw park
+    round-trips to the local projection for BOTH viewers. The public-ref family
+    (2b-iii-b) is CONTROLLER-answered, so `answerer` is undefined and this gate is
+    strictly stricter than `phaseViewOf`'s (which keeps the prompt for both):
+    such a park round-trips for the ANSWERER's view only, not the opponent's —
+    the round-trip pin is scoped accordingly, and this gate stays as-is (tightening
+    the projection instead would be the wrong direction — the wire is the barrier).
 
     Even for the answerer, only a prompt kind whose online dialog exists is
-    redacted here (2b-iii-a: `mayDraw` alone); the rest return null until their
-    slice lands. */
+    redacted here (mayDraw + the public-ref family); chooseCards/attachCards still
+    return null until 2b-iii-c resolves their hidden candidates. */
 function redactedPromptOf(
   phase: Extract<Phase, { kind: "effect:choose" }>,
   viewerSeat: Seat,
@@ -139,24 +144,84 @@ function redactedPromptOf(
 
 /** Map the engine's full `EffectPrompt` to the neutral wire shape — the answerer
     has already been established, so this only decides what identity crosses.
-    2b-iii-a lands `mayDraw` (count + note, no card references); every other kind
-    returns null (no online dialog yet — the public-ref choosePokemon/moveEnergy/
-    discardEnergy family and the hidden-candidate chooseCards/attachCards family
-    that needs server-side `RedactedCard` resolution follow in later 2b-iii
-    slices). The switch stays EXHAUSTIVE so a new engine prompt kind is a compile
-    error here, not a silent null. */
+    Wired so far: `mayDraw` (count + note, no references — 2b-iii-a) and the
+    PUBLIC-REF family (choosePokemon / choosePokemonMulti / moveEnergy /
+    discardEnergy — 2b-iii-b), whose candidates are all in-play `PokemonRef`s and
+    attached-Energy uids ALREADY public on the redacted board, so they pass
+    through as fresh copies with no hidden-card resolution. The hidden-candidate
+    chooseCards/attachCards family (the CONTROLLER's own deck/top cards) still
+    returns null — it needs a server-resolved `RedactedCard` per candidate
+    (2b-iii-c). The switch stays EXHAUSTIVE so a new engine prompt kind is a
+    compile error here, not a silent null. Every branch builds FRESH objects (the
+    ref/scope copies below), so nothing aliases the input state — the redactor's
+    purity contract, like copyConditions. */
 function redactPrompt(prompt: EffectPrompt): RedactedEffectPrompt | null {
   switch (prompt.kind) {
     case "mayDraw":
       return { kind: "mayDraw", count: prompt.count, note: prompt.note };
-    case "chooseCards":
     case "choosePokemon":
+      return {
+        kind: "choosePokemon",
+        candidates: prompt.candidates.map(redactedRefOf),
+        note: prompt.note,
+      };
     case "choosePokemonMulti":
+      return {
+        kind: "choosePokemonMulti",
+        candidates: prompt.candidates.map(redactedRefOf),
+        min: prompt.min,
+        max: prompt.max,
+        declinable: prompt.declinable,
+        note: prompt.note,
+      };
     case "moveEnergy":
+      return {
+        kind: "moveEnergy",
+        movable: prompt.movable.map(redactedOfferOf),
+        destinations: prompt.destinations.map(redactedRefOf),
+        max: prompt.max,
+        note: prompt.note,
+      };
     case "discardEnergy":
+      return {
+        kind: "discardEnergy",
+        discardable: prompt.discardable.map(redactedOfferOf),
+        scope: redactedScopeOf(prompt.scope),
+        note: prompt.note,
+      };
+    case "chooseCards":
     case "attachCards":
       return null;
   }
+}
+
+/** A fresh copy of an engine `PokemonRef` for the wire — never an alias into
+    game state (the redactor's no-alias purity contract). The `seat` is ABSOLUTE;
+    see `RedactedPokemonRef` for why that is not a leak. Rebuilding `spot`
+    explicitly (rather than spreading) makes an added `PokemonTarget` field a
+    compile error here rather than a silent alias. */
+function redactedRefOf(ref: PokemonRef): RedactedPokemonRef {
+  return {
+    seat: ref.seat,
+    spot:
+      ref.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: ref.spot.index },
+  };
+}
+
+/** A fresh copy of one offered Energy (uid + its host ref) for the wire. */
+function redactedOfferOf(offer: { uid: string; from: PokemonRef }): {
+  uid: string;
+  from: RedactedPokemonRef;
+} {
+  return { uid: offer.uid, from: redactedRefOf(offer.from) };
+}
+
+/** A fresh copy of a `DiscardScope` — a `satisfies` pins that a new arm is a
+    compile error rather than a silent drop. */
+function redactedScopeOf(scope: DiscardScope): RedactedDiscardScope {
+  return (
+    scope.kind === "total" ? { kind: "total", count: scope.count } : { kind: "each" }
+  ) satisfies DiscardScope;
 }
 
 /** The acting viewer's Active's attacks with server-computed payability, for the

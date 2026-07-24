@@ -2,9 +2,11 @@ import type { GameAction } from "@luminous/engine";
 import { otherSeat } from "@luminous/engine";
 import type {
   RedactedAttack,
+  RedactedBoard,
   RedactedEffectPrompt,
   RedactedGame,
   RedactedInPlay,
+  RedactedPokemonRef,
   RedactedRetreat,
   MatchSeat,
 } from "@luminous/schema";
@@ -27,22 +29,36 @@ import type { PlayerId } from "../../playmat/types";
 // and — from increment 2b-ii — the retreat button + dialog (cost + a `can` gate
 // computed server-side; the energies to discard and the Bench to promote to ride
 // the already-public board), plus — from 2b-iii-a — the effect:choose `mayDraw`
-// dialog (Ortega's "your opponent may draw a card"), the one mid-effect prompt
-// with no card references. The other effect prompts (the public-ref
-// choosePokemon/moveEnergy/discardEnergy family, then the hidden-candidate
-// chooseCards/attachCards family) and abilities / non-Stadium trainers read
-// state the wire still withholds (and the fixed decks can't exercise them) —
-// they land with later 2b-iii slices / real decks; the pass control lives in
-// PlaymatView's TurnControls.
+// dialog (Ortega's "your opponent may draw a card"), plus — from 2b-iii-b — the
+// PUBLIC-REF effect prompts (choosePokemon / choosePokemonMulti / moveEnergy /
+// discardEnergy), whose candidates are all in-play refs and attached-Energy uids
+// already public on the redacted board, so the dialogs resolve display names off
+// the board they already have. The remaining hidden-candidate prompts
+// (chooseCards / attachCards — the controller's own deck/top cards) and abilities
+// / non-Stadium trainers read state the wire still withholds (and the fixed decks
+// can't exercise them) — they land with 2b-iii-c / real decks; the pass control
+// lives in PlaymatView's TurnControls.
 //
 // Every panel is gated on `waitingOn === "you"` (the D17 rule the local HUD uses)
 // so a prompt never appears on the wrong screen, and the actions carry the
-// client's own seat (the DO rebinds it regardless).
+// client's own seat (the DO rebinds it regardless). resolveEffect stays OFF the
+// DO allowlist until every prompt kind is dialoged (2b-iii-c), so these dispatch
+// but are rejected — unreachable with the fixed pure-basic decks that can't park
+// at effect:choose (D64).
 
 const TOP_PANEL_CLASS = "left-1/2 top-16 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2";
 const PANEL_CLASS = `pointer-events-auto absolute z-[75] rounded-2xl p-4 ${GLASS_PANEL} ${TOP_PANEL_CLASS}`;
 const ACCENT_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-40 ${GLASS_ACCENT_BUTTON}`;
 const NEUTRAL_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-medium ${GLASS_NEUTRAL_BUTTON}`;
+// The compact left-aligned row buttons the effect-prompt dialogs share — the
+// same look as the local GameHud's ROW_BUTTON_* (restated here over the redacted
+// wire shape, the D62/D63 restate-per-surface choice).
+const ROW_BUTTON_BASE =
+  "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all";
+const ROW_BUTTON_ENABLED =
+  "cursor-pointer bg-white/[0.06] text-white/90 ring-white/15 hover:bg-white/[0.1] active:scale-[0.98]";
+const ROW_BUTTON_DISABLED = "cursor-default bg-white/[0.03] text-white/40 ring-white/8";
+const ROW_BUTTON_SELECTED = "bg-white/[0.12] text-white ring-white/40";
 
 export function OnlineHud({
   game,
@@ -141,18 +157,48 @@ export function OnlineHud({
     case "effect:choose": {
       // The redacted prompt is non-null ONLY for the seat that must answer it
       // (the server withholds it from everyone else), and `acting` is that same
-      // seat — so the two agree. 2b-iii-a renders only `mayDraw`; other prompt
-      // kinds have no online dialog yet (their arms aren't on the wire), so the
-      // prompt is null and nothing shows.
+      // seat — so the two agree. A prompt kind with no online dialog yet
+      // (chooseCards/attachCards) crosses as null, so nothing shows for it.
       const prompt = game.phase.prompt;
-      return acting && prompt?.kind === "mayDraw" ? (
-        <MayDrawDialog prompt={prompt} seat={seat} onAction={onAction} />
+      return acting && prompt !== null ? (
+        <EffectChooseDialog prompt={prompt} board={game.board} seat={seat} onAction={onAction} />
       ) : null;
     }
 
     default:
       // gameOver renders no panel here (OnlineMatch's overlay handles it).
       return null;
+  }
+}
+
+/** Routes a redacted `effect:choose` prompt to its dialog. Exhaustive over the
+    dialoged arms (mayDraw + the public-ref family), so a new wire arm (2b-iii-c)
+    is a compile error here until its dialog lands. The caller has already gated
+    on `acting` + a non-null prompt, so this only picks the shape. */
+function EffectChooseDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: RedactedEffectPrompt;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  switch (prompt.kind) {
+    case "mayDraw":
+      return <MayDrawDialog prompt={prompt} seat={seat} onAction={onAction} />;
+    case "choosePokemon":
+      return <ChoosePokemonDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
+    case "choosePokemonMulti":
+      return (
+        <ChoosePokemonMultiDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />
+      );
+    case "moveEnergy":
+      return <MoveEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
+    case "discardEnergy":
+      return <DiscardEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
   }
 }
 
@@ -193,6 +239,500 @@ function MayDrawDialog({
             Decline
           </button>
         </div>
+      </div>
+    </Dialog>
+  );
+}
+
+// --- Public-ref effect prompts (2b-iii-b) ------------------------------------
+//
+// choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy. Their
+// candidates are in-play `PokemonRef`s and attached-Energy uids ALREADY public
+// on the redacted board, so these dialogs resolve display names off the board
+// (the helpers below) instead of the full GameState the local GameHud reads.
+// They restate the local dialogs over the wire shape (the D62/D63 restate-per-
+// surface choice); the dispatched refs are the engine's own absolute-seat
+// `PokemonRef`s, carried verbatim through resolveEffect.
+
+/** Resolve a prompt's `PokemonRef` (absolute seat) to the in-play Pokémon on the
+    redacted board. The wire is viewer-relative, so the ref's absolute seat maps
+    to `you` when it equals the viewer's own seat, else `opponent`. */
+function pokemonAt(
+  board: RedactedBoard,
+  viewerSeat: MatchSeat,
+  ref: RedactedPokemonRef,
+): RedactedInPlay | null {
+  const side = ref.seat === viewerSeat ? board.you : board.opponent;
+  return ref.spot.spot === "active" ? side.active : (side.bench[ref.spot.index] ?? null);
+}
+
+/** A ref's display name off the board — the redacted equivalent of GameHud's
+    `refName` over the full state. */
+function refName(board: RedactedBoard, viewerSeat: MatchSeat, ref: RedactedPokemonRef): string {
+  return pokemonAt(board, viewerSeat, ref)?.name ?? "a Pokémon";
+}
+
+/** An offered Energy's display name — found among its host's public attachments
+    (the `from` ref locates the host, then the uid the Energy on it). */
+function energyName(
+  board: RedactedBoard,
+  viewerSeat: MatchSeat,
+  from: RedactedPokemonRef,
+  uid: string,
+): string {
+  return (
+    pokemonAt(board, viewerSeat, from)?.attached?.energies.find((e) => e.id === uid)?.name ?? uid
+  );
+}
+
+/** A stable key for a ref — GameHud's dialog `keyOf`, over the wire shape. */
+function refKey(ref: RedactedPokemonRef): string {
+  return `${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
+}
+
+/** The spot label a grouped/target row shows (GameHud's `spotOf`). */
+function spotLabel(ref: RedactedPokemonRef): string {
+  return ref.spot.spot === "active" ? "Active" : `Bench ${ref.spot.index + 1}`;
+}
+
+/** choosePokemon (§9 — switch / gust / heal): pick exactly one in-play Pokémon.
+    Picking is the whole decision, so each row dispatches directly (the local
+    ChoosePokemonDialog over the wire refs). */
+function ChoosePokemonDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "choosePokemon" }>;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  return (
+    <Dialog label="Choose a Pokémon">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {prompt.candidates.map((ref) => (
+          <li key={refKey(ref)}>
+            <button
+              type="button"
+              onClick={() =>
+                onAction({ type: "resolveEffect", seat, choice: { kind: "pokemon", ref } })
+              }
+              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+            >
+              <span className="truncate">{refName(board, seat, ref)}</span>
+              {ref.seat !== seat && (
+                <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                  opponent
+                </span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Dialog>
+  );
+}
+
+/** choosePokemonMulti (§9 — the multi-target snipe): pick `min`..`max` Pokémon,
+    dispatched in one go. `declinable` adds the empty pick as a second legal
+    answer WITHOUT the gap between it and `min` (Hawlucha's "you may choose 2" is
+    2 or none), so Confirm reads "Take none" at zero and is disabled short — the
+    local ChoosePokemonMultiDialog's doctrine, over the wire shape. */
+function ChoosePokemonMultiDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "choosePokemonMulti" }>;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const [picked, setPicked] = useState<RedactedPokemonRef[]>([]);
+  const pickedKeys = new Set(picked.map(refKey));
+  const toggle = (ref: RedactedPokemonRef) =>
+    setPicked((prev) => {
+      const key = refKey(ref);
+      if (prev.some((r) => refKey(r) === key)) return prev.filter((r) => refKey(r) !== key);
+      return prev.length < prompt.max ? [...prev, ref] : prev;
+    });
+  const exact = prompt.min === prompt.max;
+  // The gap between "some, but not enough" and a legal answer — an empty pick is
+  // legal only when the engine says so (min: 0 or declinable), never inferred.
+  const short = picked.length < prompt.min && !(prompt.declinable && picked.length === 0);
+  return (
+    <Dialog label="Choose Pokémon">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* A live region — the running total is otherwise unannounceable
+          (aria-pressed speaks only the focused row, Confirm leaves the tab order
+          while disabled), and the transition that matters is short → satisfied. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {`Pick ${exact ? prompt.min : `up to ${prompt.max}`} (${picked.length}/${prompt.max}).`}
+        {short
+          ? ` Pick ${prompt.min - picked.length} more${prompt.declinable ? ", or none at all." : "."}`
+          : prompt.declinable && picked.length === 0
+            ? " Taking none is allowed."
+            : ""}
+      </output>
+      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((ref) => {
+          const selected = pickedKeys.has(refKey(ref));
+          // At the cap a further click is refused, and the row says so (the one
+          // thing the live region can't announce — clicking changes nothing).
+          const refused = !selected && picked.length >= prompt.max;
+          return (
+            <li key={refKey(ref)}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                aria-disabled={refused || undefined}
+                onClick={() => toggle(ref)}
+                className={`${ROW_BUTTON_BASE} ${
+                  selected
+                    ? ROW_BUTTON_SELECTED
+                    : refused
+                      ? ROW_BUTTON_DISABLED
+                      : ROW_BUTTON_ENABLED
+                }`}
+              >
+                <span className="truncate">{refName(board, seat, ref)}</span>
+                {ref.seat !== seat && (
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    opponent
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          disabled={short}
+          className={ACCENT_BUTTON}
+          onClick={() =>
+            onAction({
+              type: "resolveEffect",
+              seat,
+              choice: { kind: "pokemonMulti", refs: picked },
+            })
+          }
+        >
+          {picked.length === 0 && !short
+            ? "Take none"
+            : exact
+              ? `Confirm ${picked.length}/${prompt.min}`
+              : `Confirm ${picked.length}`}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
+/** moveEnergy (§6 — Energy Switch / Poppy): move up to `max` Energy from ONE
+    source Pokémon to ONE destination. A staged dialog (pick source, auto when
+    only one; then Energy + a distinct destination; then Confirm — or Move none to
+    decline), mirroring the local MoveEnergyDialog over the wire shape. */
+function MoveEnergyDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "moveEnergy" }>;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  // The distinct source Pokémon (those holding movable Energy), first-seen order.
+  const sources: RedactedPokemonRef[] = [];
+  const seenSource = new Set<string>();
+  for (const { from } of prompt.movable) {
+    const key = refKey(from);
+    if (!seenSource.has(key)) {
+      seenSource.add(key);
+      sources.push(from);
+    }
+  }
+  // Pre-select a sole source (skip straight to Energy + destination).
+  const [sourceKey, setSourceKey] = useState<string | null>(
+    sources.length === 1 ? refKey(sources[0] as RedactedPokemonRef) : null,
+  );
+  const [pickedUids, setPickedUids] = useState<string[]>([]);
+  const [destKey, setDestKey] = useState<string | null>(null);
+
+  const source = sources.find((ref) => refKey(ref) === sourceKey) ?? null;
+  const sourceEnergies =
+    source === null ? [] : prompt.movable.filter(({ from }) => refKey(from) === sourceKey);
+  // Destinations are the offered ones minus the chosen source (no self-move); a
+  // sole destination is pre-chosen (derived, since `dests` shifts with source).
+  const dests = prompt.destinations.filter((ref) => refKey(ref) !== sourceKey);
+  const dest =
+    dests.find((ref) => refKey(ref) === destKey) ??
+    (dests.length === 1 ? (dests[0] as RedactedPokemonRef) : null);
+  const declineDest = prompt.destinations[0];
+
+  const reset = () => {
+    setPickedUids([]);
+    setDestKey(null);
+  };
+  const togglePick = (uid: string) =>
+    setPickedUids((prev) =>
+      prev.includes(uid)
+        ? prev.filter((u) => u !== uid)
+        : prev.length < prompt.max
+          ? [...prev, uid]
+          : prev,
+    );
+  const ready = pickedUids.length > 0 && dest !== null;
+
+  return (
+    <Dialog label="Move Energy">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {source === null ? (
+        <>
+          <p className="mt-1.5 text-sm text-white/55">Choose which Pokémon to move Energy from.</p>
+          <ul className="mt-3 flex flex-col gap-1.5">
+            {sources.map((ref) => (
+              <li key={refKey(ref)}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceKey(refKey(ref));
+                    reset();
+                  }}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{refName(board, seat, ref)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          {/* A live region carrying the count AND the destination (which this
+              dialog picks for the player when only one is legal). */}
+          <output className="mt-1.5 block text-sm text-white/55">
+            From <span className="text-white/80">{refName(board, seat, source)}</span> — pick up to{" "}
+            {prompt.max} ({pickedUids.length}/{prompt.max})
+            {dest !== null && (
+              <>
+                , moving to <span className="text-white/80">{refName(board, seat, dest)}</span>
+              </>
+            )}
+            :
+          </output>
+          <ul className="mt-2 flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+            {sourceEnergies.map(({ uid, from }) => {
+              const selected = pickedUids.includes(uid);
+              return (
+                <li key={uid}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => togglePick(uid)}
+                    className={`${ROW_BUTTON_BASE} ${selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{energyName(board, seat, from, uid)}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-sm text-white/55">Move to:</p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {dests.map((ref) => {
+              const selected = dest !== null && refKey(dest) === refKey(ref);
+              return (
+                <li key={refKey(ref)}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setDestKey(refKey(ref))}
+                    className={`${ROW_BUTTON_BASE} ${selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{refName(board, seat, ref)}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+      <div className="mt-5 flex justify-between gap-2">
+        {declineDest !== undefined && (
+          <button
+            type="button"
+            className={GLASS_DIALOG_GHOST_BUTTON}
+            onClick={() =>
+              onAction({
+                type: "resolveEffect",
+                seat,
+                choice: { kind: "moveEnergy", uids: [], dest: declineDest },
+              })
+            }
+          >
+            Move none
+          </button>
+        )}
+        <div className="flex gap-2">
+          {source !== null && sources.length > 1 && (
+            <button
+              type="button"
+              className={GLASS_DIALOG_GHOST_BUTTON}
+              onClick={() => {
+                setSourceKey(null);
+                reset();
+              }}
+            >
+              ← Back
+            </button>
+          )}
+          {source !== null && (
+            <button
+              type="button"
+              className={ACCENT_BUTTON}
+              disabled={!ready}
+              onClick={() => {
+                if (dest === null) return;
+                onAction({
+                  type: "resolveEffect",
+                  seat,
+                  choice: { kind: "moveEnergy", uids: pickedUids, dest },
+                });
+              }}
+            >
+              Move {pickedUids.length}
+            </button>
+          )}
+        </div>
+      </div>
+    </Dialog>
+  );
+}
+
+/** discardEnergy (§15 — Crushing Hammer / Giacomo, or a §8 self-discard cost):
+    take Energy off the board, grouped by the Pokémon each sits on. MANDATORY (no
+    decline). Two shapes off `scope`: "total" is a flat pick of exactly `count`;
+    "each" asks for one per group. Mirrors the local DiscardEnergyDialog over the
+    wire shape — every candidate is Energy public on the board. */
+function DiscardEnergyDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "discardEnergy" }>;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  // Hoisted so the pick handler's closure keeps the discriminant narrowed.
+  const scope = prompt.scope;
+  // Candidates grouped by host Pokémon, first-seen order (what "each" counts).
+  const groups: { key: string; ref: RedactedPokemonRef; uids: string[] }[] = [];
+  for (const { uid, from } of prompt.discardable) {
+    const key = refKey(from);
+    const group = groups.find((g) => g.key === key);
+    if (group === undefined) groups.push({ key, ref: from, uids: [uid] });
+    else group.uids.push(uid);
+  }
+  // "each" pre-answers every single-candidate group (not a question — the engine
+  // would have auto-resolved the whole op if all were); "total" starts empty.
+  const [picked, setPicked] = useState<string[]>(() =>
+    scope.kind === "each"
+      ? groups.flatMap((group) => (group.uids.length === 1 ? [group.uids[0] as string] : []))
+      : [],
+  );
+  // "each": one pick per group — a pick REPLACES that group's previous one.
+  // "total": a flat multi-select of `count`; at the cap a click is refused
+  // (above 1), except at count 1 where a pick replaces the single one.
+  const pick = (groupUids: readonly string[], uid: string) =>
+    setPicked((prev) => {
+      if (scope.kind === "each") {
+        const others = prev.filter((u) => !groupUids.includes(u));
+        return prev.includes(uid) ? others : [...others, uid];
+      }
+      if (prev.includes(uid)) return prev.filter((u) => u !== uid);
+      if (prev.length < scope.count) return [...prev, uid];
+      return scope.count === 1 ? [uid] : prev;
+    });
+  const required = scope.kind === "total" ? scope.count : groups.length;
+  const ready = picked.length === required;
+
+  return (
+    <Dialog label="Discard Energy">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <output className="mt-1.5 block text-sm text-white/55">
+        {scope.kind === "each"
+          ? `Pick one Energy from each Pokémon (${picked.length}/${required}).`
+          : required > 1
+            ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
+            : "Pick the Energy to discard."}
+      </output>
+      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+        {/* fieldset/legend so a screen reader says WHICH Pokémon the Energy comes
+            off — the host + spot ride the legend (two Pokémon can share a name),
+            plus the `opponent` marker (this dialog serves both boards). */}
+        {groups.map((group) => (
+          <fieldset key={group.key} className="min-w-0">
+            <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              {refName(board, seat, group.ref)} · {spotLabel(group.ref)}
+              {group.ref.seat !== seat && " · opponent"}
+            </legend>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {group.uids.map((uid) => {
+                const selected = picked.includes(uid);
+                const refused =
+                  !selected &&
+                  scope.kind === "total" &&
+                  scope.count > 1 &&
+                  picked.length >= scope.count;
+                return (
+                  <li key={uid}>
+                    <button
+                      type="button"
+                      aria-pressed={selected}
+                      aria-disabled={refused || undefined}
+                      onClick={() => pick(group.uids, uid)}
+                      className={`${ROW_BUTTON_BASE} ${
+                        selected
+                          ? ROW_BUTTON_SELECTED
+                          : refused
+                            ? ROW_BUTTON_DISABLED
+                            : ROW_BUTTON_ENABLED
+                      }`}
+                    >
+                      <span className="truncate">{energyName(board, seat, group.ref, uid)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </fieldset>
+        ))}
+      </div>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON}
+          disabled={!ready}
+          onClick={() =>
+            onAction({
+              type: "resolveEffect",
+              seat,
+              choice: { kind: "discardEnergy", uids: picked },
+            })
+          }
+        >
+          Discard {picked.length}/{required}
+        </button>
       </div>
     </Dialog>
   );

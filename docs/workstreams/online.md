@@ -158,6 +158,40 @@ mayDraw park were reachable online the answerer would strand; unreachable with t
 Ortega), and the fix is the allowlist flip in 2b-iii-c, not making an owed decision dismissable —
 putting `resolveEffect` on now would be a WORSE strand at an un-dialoged park. See D64.
 
+**Increment 2b-iii-b — DONE:** the PUBLIC-REF effect prompts (D65, engine 0.40.0). The
+choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy family now crosses the wire and
+gets online dialogs — their candidates are all in-play `PokemonRef`s and attached-Energy uids
+ALREADY public on the redacted board, so NO hidden-card resolution is needed (the wire carries the
+refs/uids, the client resolves display identity against the board it already has). `RedactedEffectPrompt`
+gained the four arms (plus `RedactedPokemonRef` — absolute-seat, and `RedactedDiscardScope` /
+`RedactedEnergyOffer`); the refs are ABSOLUTE (unlike the viewer-relative board) because they must
+round-trip to the engine's own `PokemonRef` AND ride the dispatched `resolveEffect` back verbatim
+(the DO rebinds the ACTING seat, never a choice's target refs) — not a leak (the board is public and
+the viewer knows its own seat). The engine's `redactPrompt` maps them via `redactedRefOf` /
+`redactedOfferOf` / `redactedScopeOf` (FRESH copies, no alias — the purity contract); still
+answerer-only, but these are CONTROLLER-answered, so the wire is STRICTER than `phaseViewOf`
+(which keeps the prompt for both viewers) — the prompt reaches the controller alone. `decisionFromPhase`
+reconstructs the full `EffectPrompt` field-for-field, so **`projectionFromRedacted ≡ projectGameState`
+now holds for a public-ref park for the ANSWERER's view** (the opponent's is deliberately unequal —
+its prompt is withheld on the wire; the round-trip pin is scoped accordingly). `OnlineHud` gained the
+four dialogs (restated over the wire shape, the D62/D63 restate-per-surface choice, reading names off
+the board via `pokemonAt`/`refName`/`energyName`) routed through a new `EffectChooseDialog`.
+**`resolveEffect` STAYS OFF `SUPPORTED_MATCH_ACTIONS`** — the invariant is "`resolveEffect` on the set
+⟺ EVERY prompt kind dialoged", and chooseCards/attachCards (2b-iii-c) still aren't; the fixed
+pure-basic decks can't reach `effect:choose`, so the dialogs are built + tested ahead of the allowlist
+flip (D64's pattern). 1754 → **1767** tests, `bun run check` green.
+**Review (1 read-only adversarial reviewer): NO defects at HIGH, MED, or LOW** — the answerer gate is
+character-for-character `phaseViewOf`'s `waitingSeat` gate (so a non-null prompt reaches exactly the
+`waitingOn === "you"` seat), and the absolute-seat refs/uids are a strict SUBSET of the face-up board
+that already crosses to that viewer (no leak); the fresh-copy purity holds (test-asserted `.not.toBe`);
+`effectDecisionFromPrompt` reconstructs every arm field-for-field (round-trip pinned to the answerer's
+view, with the opponent's deliberate divergence also asserted); the four `resolveEffect` dispatches
+match the engine `EffectChoice` union + the local `GameHud` dispatches verbatim; `pokemonAt`/`energyName`
+are null-safe (worst case a cosmetic uid fallback, unreachable for a face-up board); `resolveEffect`
+stays off the allowlist so no strand; and each dialog is behaviorally identical to its local twin (the
+declinable-gap Confirm, the moveEnergy decline/sole-source/sole-dest, the discardEnergy scope + refused-
+at-cap). The reviewer independently ran `bun run check` green.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -244,13 +278,15 @@ until 1c broadcasts the redacted view.
       `OnlineHud` gained a `MayDrawDialog`. `resolveEffect` STAYS OFF the allowlist (only mayDraw is
       dialoged). mayDraw first because it has no card refs AND its answerer is the non-controller
       (Ortega), so it lands the whole seam + makes the answerer/leak gate load-bearing.
-    - **2b-iii-b — the public-ref prompts (NEXT):** choosePokemon / choosePokemonMulti / moveEnergy /
-      discardEnergy. Their candidates (in-play PokémonRefs, attached-Energy uids) are ALL on the public
-      redacted board, so the wire carries the refs and the client resolves display identity against the
-      board it already has — no hidden-card resolution. Add their `RedactedEffectPrompt` arms +
-      `OnlineHud` dialogs; these are controller-answered, so the round-trip pin holds for the answerer's
-      view only (redact.ts's gate is stricter than the hot-seat projection — see the note there).
-    - **2b-iii-c — the hidden-candidate prompts:** chooseCards (deck search / discard retrieval / hand
+    - **2b-iii-b — the public-ref prompts. DONE** (D65, see Status above): choosePokemon /
+      choosePokemonMulti / moveEnergy / discardEnergy. Their candidates (in-play PokémonRefs,
+      attached-Energy uids) are ALL on the public redacted board, so the wire carries the refs (absolute
+      seat — `RedactedPokemonRef`) + uids and the client resolves display identity against the board it
+      already has — no hidden-card resolution. `RedactedEffectPrompt` gained the four arms; `redactPrompt`
+      maps them (fresh copies); `OnlineHud` gained the four dialogs (via `EffectChooseDialog`). These are
+      controller-answered, so the round-trip pin holds for the answerer's view only (redact.ts's gate is
+      stricter than the hot-seat projection — see the note there). `resolveEffect` still OFF the allowlist.
+    - **2b-iii-c — the hidden-candidate prompts (NEXT):** chooseCards (deck search / discard retrieval / hand
       cost) + attachCards (deck/top). Their candidates are the CONTROLLER's own deck/top cards — hidden
       info — so the redacted prompt must carry a server-resolved `RedactedCard` per candidate and go
       controller-only (the answerer gate already withholds; add the identity payload). Once ALL prompt

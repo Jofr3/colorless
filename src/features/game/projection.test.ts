@@ -3,7 +3,13 @@
 // not export testFixtures (test-only by design), hence the relative import.
 
 import { describe, expect, it } from "vitest";
-import type { GameState } from "@luminous/engine";
+import type {
+  EffectContinuation,
+  EffectPrompt,
+  GameState,
+  PokemonRef,
+  Seat,
+} from "@luminous/engine";
 import { redactGame, topUid } from "@luminous/engine";
 import {
   ALL_BASIC_DECK,
@@ -897,6 +903,65 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
       expect(projectionFromRedacted(redactGame(asked, seat))).toEqual(
         projectGameState(asked, seat),
       );
+    }
+  });
+
+  it("reconstructs the public-ref effect prompts for the ANSWERER's view (2b-iii-b)", () => {
+    // choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy are
+    // CONTROLLER-answered, so redactedPromptOf is STRICTER than phaseViewOf (which
+    // keeps the prompt for both viewers): the wire delivers it to the controller
+    // (p1) alone. So the round-trip holds for the ANSWERER's view — synthesized
+    // over a real board like redact.test.ts's effect-prompt cases, since driving
+    // four real cards adds nothing the reconstruction pin needs. The opponent's
+    // view is DELIBERATELY not equal (its prompt is withheld on the wire).
+    const CONT: EffectContinuation = {
+      pendingOp: { op: "opponentMayDraw", count: 1 },
+      rest: [],
+      ctx: { seat: "p1" },
+    };
+    const active = (seat: Seat): PokemonRef => ({ seat, spot: { spot: "active" } });
+    const bench0: PokemonRef = { seat: "p1", spot: { spot: "bench", index: 0 } };
+    const prompts: EffectPrompt[] = [
+      {
+        kind: "choosePokemon",
+        candidates: [active("p1"), active("p2")],
+        note: "Choose a Pokémon.",
+      },
+      {
+        kind: "choosePokemonMulti",
+        candidates: [active("p2"), bench0],
+        min: 2,
+        max: 2,
+        declinable: true,
+        note: "Choose 2 Pokémon.",
+      },
+      {
+        kind: "moveEnergy",
+        movable: [{ uid: "e1", from: active("p1") }],
+        destinations: [active("p1"), bench0],
+        max: 1,
+        note: "Move an Energy.",
+      },
+      {
+        kind: "discardEnergy",
+        discardable: [{ uid: "e1", from: active("p2") }],
+        scope: { kind: "total", count: 1 },
+        note: "Discard an Energy.",
+      },
+    ];
+    for (const prompt of prompts) {
+      const state: GameState = {
+        ...turnOneState(),
+        phase: { kind: "effect:choose", seat: "p1", prompt, cont: CONT },
+      };
+      // The controller (p1 — the answerer) round-trips exactly, prompt included.
+      expect(projectionFromRedacted(redactGame(state, "p1"))).toEqual(
+        projectGameState(state, "p1"),
+      );
+      // The opponent (p2) does NOT: the wire withholds the prompt (pendingDecision
+      // null) where the local projection keeps it — the answerer gate, by design.
+      expect(projectionFromRedacted(redactGame(state, "p2")).pendingDecision).toBeNull();
+      expect(projectGameState(state, "p2").pendingDecision).not.toBeNull();
     }
   });
 });

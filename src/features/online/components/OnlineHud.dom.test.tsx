@@ -33,6 +33,7 @@ function inPlay(id: string, name: string, extra: Partial<RedactedInPlay> = {}): 
 function game(overrides: {
   phase: RedactedPhase;
   you?: Partial<RedactedGame["board"]["you"]>;
+  opponent?: Partial<RedactedGame["board"]["opponent"]>;
   waitingOn?: RedactedGame["waitingOn"];
   turn?: number;
 }): RedactedGame {
@@ -51,13 +52,23 @@ function game(overrides: {
     board: {
       stadium: null,
       you: { ...emptySide, ...overrides.you },
-      opponent: emptySide,
+      opponent: { ...emptySide, ...overrides.opponent },
     },
     activePlayer: "you",
     waitingOn: overrides.waitingOn ?? "you",
     outcome: null,
   };
 }
+
+/** An attached-Energy leaf card (no battle row / attachments). */
+function energy(id: string, name: string) {
+  return { id, cardId: id, name, category: "Energy" as const, trainerType: null, hasImage: false };
+}
+
+// Wire PokemonRefs (absolute seat) the way the redactor emits them.
+const YOU_ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
+const OPP_ACTIVE = { seat: "p2", spot: { spot: "active" } } as const;
+const YOU_BENCH0 = { seat: "p1", spot: { spot: "bench", index: 0 } } as const;
 
 describe("OnlineHud — turn:action attack panel", () => {
   const ATTACKS: Extract<RedactedPhase, { kind: "turn:action" }>["attacks"] = [
@@ -297,5 +308,224 @@ describe("OnlineHud — effect:choose mayDraw (2b-iii-a)", () => {
       />,
     );
     expect(container.firstChild).toBeNull();
+  });
+});
+
+describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
+  it("choosePokemon: each row dispatches resolveEffect{pokemon, ref} and marks the opponent's", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "choosePokemon",
+              candidates: [YOU_ACTIVE, OPP_ACTIVE],
+              note: "Choose a Pokémon to switch.",
+            },
+          },
+          you: { active: inPlay("mine", "My Sneasel") },
+          opponent: { active: inPlay("theirs", "Their Mareep") },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // The opponent's candidate carries the "opponent" marker (its ref.seat !== own).
+    const oppRow = screen.getByRole("button", { name: /Their Mareep/ });
+    expect(oppRow.textContent).toContain("opponent");
+    fireEvent.click(screen.getByRole("button", { name: /My Sneasel/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: YOU_ACTIVE },
+    });
+  });
+
+  it("choosePokemonMulti: Confirm is gated to the exact count, then dispatches the refs", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "choosePokemonMulti",
+              candidates: [OPP_ACTIVE, YOU_BENCH0],
+              min: 2,
+              max: 2,
+              declinable: false,
+              note: "Choose 2 Pokémon.",
+            },
+          },
+          you: { bench: [inPlay("b0", "My Bench")] },
+          opponent: { active: inPlay("oa", "Their Active") },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    const confirm = screen.getByRole<HTMLButtonElement>("button", { name: /Confirm 0\/2/ });
+    expect(confirm.disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: /Their Active/ }));
+    fireEvent.click(screen.getByRole("button", { name: /My Bench/ }));
+    const armed = screen.getByRole<HTMLButtonElement>("button", { name: /Confirm 2\/2/ });
+    expect(armed.disabled).toBe(false);
+    fireEvent.click(armed);
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemonMulti", refs: [OPP_ACTIVE, YOU_BENCH0] },
+    });
+  });
+
+  it("choosePokemonMulti: a declinable snipe offers Take none at zero picks", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "choosePokemonMulti",
+              candidates: [OPP_ACTIVE],
+              min: 2,
+              max: 2,
+              declinable: true,
+              note: "You may choose 2 Pokémon.",
+            },
+          },
+          opponent: { active: inPlay("oa", "Their Active") },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Take none$/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemonMulti", refs: [] },
+    });
+  });
+
+  it("moveEnergy: picks an Energy off a sole source onto a sole destination, then Move", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "moveEnergy",
+              movable: [{ uid: "e1", from: YOU_ACTIVE }],
+              destinations: [YOU_ACTIVE, YOU_BENCH0],
+              max: 1,
+              note: "Move an Energy.",
+            },
+          },
+          you: {
+            active: inPlay("a", "My Active", {
+              attached: { tools: [], energies: [energy("e1", "Water Energy")] },
+            }),
+            bench: [inPlay("b0", "My Bench")],
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // Sole source + sole destination are pre-chosen; picking the Energy arms Move.
+    const move = screen.getByRole<HTMLButtonElement>("button", { name: /Move 0/ });
+    expect(move.disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: /Move 1/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "moveEnergy", uids: ["e1"], dest: YOU_BENCH0 },
+    });
+  });
+
+  it("moveEnergy: Move none declines against the first destination", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "moveEnergy",
+              movable: [{ uid: "e1", from: YOU_ACTIVE }],
+              destinations: [YOU_BENCH0],
+              max: 1,
+              note: "Move an Energy.",
+            },
+          },
+          you: {
+            active: inPlay("a", "My Active", {
+              attached: { tools: [], energies: [energy("e1", "Water Energy")] },
+            }),
+            bench: [inPlay("b0", "My Bench")],
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Move none/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "moveEnergy", uids: [], dest: YOU_BENCH0 },
+    });
+  });
+
+  it("discardEnergy: a total-1 pick off the opponent's Active dispatches the uid", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "discardEnergy",
+              discardable: [
+                { uid: "e1", from: OPP_ACTIVE },
+                { uid: "e2", from: OPP_ACTIVE },
+              ],
+              scope: { kind: "total", count: 1 },
+              note: "Discard an Energy from your opponent's Active.",
+            },
+          },
+          opponent: {
+            active: inPlay("oa", "Their Active", {
+              attached: {
+                tools: [],
+                energies: [energy("e1", "Fire Energy"), energy("e2", "Water Energy")],
+              },
+            }),
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    const discard = screen.getByRole<HTMLButtonElement>("button", { name: /Discard 0\/1/ });
+    expect(discard.disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: /Discard 1\/1/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "discardEnergy", uids: ["e1"] },
+    });
   });
 });

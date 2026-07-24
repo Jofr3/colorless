@@ -164,38 +164,117 @@ export const redactedRetreatSchema = z.object({
 });
 export type RedactedRetreat = z.infer<typeof redactedRetreatSchema>;
 
+/** A specific in-play Pokémon a prompt refers to — the wire mirror of the
+    engine's `PokemonRef`. Its `seat` is ABSOLUTE (p1/p2), NOT viewer-relative
+    like the rest of RedactedGame, and deliberately: these refs must round-trip
+    to the engine's own `PokemonRef` (so the reconstructed local decision equals
+    the wire one) AND ride the dispatched `resolveEffect` choice back to the DO
+    VERBATIM (the DO rebinds the ACTING seat, never a choice's target refs). Not
+    a leak — every in-play Pokémon is public once setup is over, and the viewer
+    already knows which absolute seat it is (`RedactedGame.seat`); the client
+    resolves a ref to a board Pokémon by comparing `ref.seat` to that own seat. */
+export const redactedPokemonRefSchema = z.object({
+  seat: matchSeatSchema,
+  spot: z.discriminatedUnion("spot", [
+    z.object({ spot: z.literal("active") }),
+    z.object({ spot: z.literal("bench"), index: z.number() }),
+  ]),
+});
+export type RedactedPokemonRef = z.infer<typeof redactedPokemonRefSchema>;
+
+/** How many Energy a `discardEnergy` prompt asks for — the wire mirror of the
+    engine's `DiscardScope`: `total` = exactly `count` uids across the whole
+    offer, `each` = exactly one uid from every distinct host Pokémon offered. */
+export const redactedDiscardScopeSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("total"), count: z.number() }),
+  z.object({ kind: z.literal("each") }),
+]);
+export type RedactedDiscardScope = z.infer<typeof redactedDiscardScopeSchema>;
+
+/** One offered Energy — an attached uid paired with the Pokémon it sits on —
+    shared by `moveEnergy` (movable) and `discardEnergy` (discardable). The uid
+    is a public attached-Energy uid on `from`'s in-play stack, so the client
+    resolves its display name off the board it already has. */
+export const redactedEnergyOfferSchema = z.object({
+  uid: z.string(),
+  from: redactedPokemonRefSchema,
+});
+export type RedactedEnergyOffer = z.infer<typeof redactedEnergyOfferSchema>;
+
 /** The redacted mid-effect prompt (§15.E/G) the answering client renders a
     dialog for — the engine's full `EffectPrompt` mapped to the neutral wire
     shape, exactly as `RedactedGame` does for the board (P4 increment 2b-iii).
     It rides `effect:choose` (below) NULLABLE and is populated ONLY for the seat
     that must answer it (`phase.answerer ?? phase.seat`) — every other viewer
-    gets null. That answerer gate is the whole point: a prompt's candidates are
-    built from the CONTROLLER's private zones (a deck search's uids, a "look at
-    the top N"), so the raw prompt must never reach the other side of the wire.
-    `redactedPromptOf` (redact.ts) is STRICTER than `phaseViewOf`'s hot-seat
-    `withheld` — the wire delivers a payload to one client, so a controller-
-    answered prompt goes to the CONTROLLER ALONE, where the local projection may
-    keep it in both viewers' (never-rendered) `pendingDecision`. The two coincide
-    exactly when `answerer` is set, which is ALWAYS for `mayDraw`, so a mayDraw
-    park still round-trips to the local projection (see redact.ts for the full
-    reasoning).
+    gets null. That answerer gate is the whole point: a prompt's candidates CAN
+    be built from the CONTROLLER's private zones (a deck search's uids, a "look
+    at the top N"), so the raw prompt must never reach the other side of the
+    wire. `redactedPromptOf` (redact.ts) is STRICTER than `phaseViewOf`'s
+    hot-seat `withheld` — the wire delivers a payload to one client, so a
+    controller-answered prompt goes to the CONTROLLER ALONE, where the local
+    projection may keep it in both viewers' (never-rendered) `pendingDecision`.
+    The two coincide exactly when `answerer` is set (ALWAYS for `mayDraw`); for
+    a CONTROLLER-answered kind the wire is strictly stricter, so a park of one of
+    those round-trips to the local projection for the ANSWERER's view only (see
+    redact.ts for the full reasoning).
 
     A DISCRIMINATED UNION on `kind`, mirroring `EffectPrompt`'s arms — but only
-    the arm(s) whose online dialog exists so far. **2b-iii-a lands `mayDraw`
-    alone** (Ortega's "your opponent may draw a card"): a pure yes/no with a
-    `count` + a `note` that speaks to the answerer, and NO card/Pokémon
-    references, so it needs no board-relative identity resolution — the ideal
-    first arm because it is also the ONE prompt whose answerer is the
-    non-controller, which is what makes the answerer gate load-bearing. The
-    remaining arms (the public-ref choosePokemon/moveEnergy/discardEnergy family,
-    then the hidden-candidate chooseCards/attachCards family that needs
-    server-side `RedactedCard` resolution) land in later 2b-iii slices, and
+    the arms whose online dialog exists so far. **2b-iii-a landed `mayDraw`**
+    (Ortega's "your opponent may draw a card") — a pure yes/no with no card
+    references, the arm that made the answerer gate load-bearing (its answerer is
+    the non-controller). **2b-iii-b adds the PUBLIC-REF family**
+    (choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy): their
+    candidates are all in-play `PokemonRef`s and attached-Energy uids, ALREADY on
+    the public redacted board, so the wire carries the refs/uids and the client
+    resolves display identity against the board — no hidden-card resolution.
+    These are controller-answered. The remaining hidden-candidate family
+    (chooseCards / attachCards — the CONTROLLER's own deck/top cards, which need
+    a server-resolved `RedactedCard` per candidate) lands in 2b-iii-c, and
     `resolveEffect` stays off the DO allowlist until every arm is dialoged. */
 export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
   /** A yes/no owed by the ANSWERER (the non-controller): draw `count`, or
       decline. `note` addresses that answerer ("You may draw a card."). No card
       identity crosses — the whole decision is the `count`. */
   z.object({ kind: z.literal("mayDraw"), count: z.number(), note: z.string() }),
+  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). The
+      candidates are public in-play refs. */
+  z.object({
+    kind: z.literal("choosePokemon"),
+    candidates: z.array(redactedPokemonRefSchema),
+    note: z.string(),
+  }),
+  /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`
+      is the separate printed "you may" (an all-or-nothing empty pick as a second
+      legal answer); `min: 0` is the printed "up to". Mirrors the engine arm
+      field-for-field so the dialog reads the same bounds the local HUD does. */
+  z.object({
+    kind: z.literal("choosePokemonMulti"),
+    candidates: z.array(redactedPokemonRefSchema),
+    min: z.number(),
+    max: z.number(),
+    declinable: z.boolean(),
+    note: z.string(),
+  }),
+  /** Move up to `max` Energy from ONE source Pokémon to ONE destination (Energy
+      Switch / Poppy). `movable` pairs each takeable Energy uid with its host;
+      `destinations` are the eligible destinations. Declinable (move none). */
+  z.object({
+    kind: z.literal("moveEnergy"),
+    movable: z.array(redactedEnergyOfferSchema),
+    destinations: z.array(redactedPokemonRefSchema),
+    max: z.number(),
+    note: z.string(),
+  }),
+  /** Discard Energy off the board (Crushing Hammer / Giacomo / a §8 self-discard
+      cost). `discardable` pairs each takeable Energy uid with its host — the
+      opponent's, or the viewer's own Active; `scope` says how many to pick.
+      MANDATORY — no decline. Every candidate is Energy face-up on the table. */
+  z.object({
+    kind: z.literal("discardEnergy"),
+    discardable: z.array(redactedEnergyOfferSchema),
+    scope: redactedDiscardScopeSchema,
+    note: z.string(),
+  }),
 ]);
 export type RedactedEffectPrompt = z.infer<typeof redactedEffectPromptSchema>;
 
@@ -208,7 +287,8 @@ export type RedactedEffectPrompt = z.infer<typeof redactedEffectPromptSchema>;
     carries the redacted `prompt` (above) NULLABLE — non-null only for the seat
     that must answer it, so the controller's private candidates never reach the
     other viewer; null both for the non-answerer AND for a prompt kind whose
-    online dialog has not landed yet (only `mayDraw` so far).
+    online dialog has not landed yet (mayDraw + the public-ref family so far —
+    chooseCards/attachCards still cross as null until 2b-iii-c).
     `activePlayer`/`waitingOn` (server-computed via phaseViewOf, which reads the
     pending queue) still say WHO acts; this says WHAT kind. */
 export const redactedPhaseSchema = z.discriminatedUnion("kind", [
