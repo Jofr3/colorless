@@ -14,6 +14,8 @@ import {
   helloDecision,
   parseClientMessage,
   reseatHost,
+  resetAfterFailedStart,
+  seatClaimAllowed,
   setSeatConnected,
   slotOf,
   splitDuePending,
@@ -127,6 +129,37 @@ describe("reseatHost", () => {
     snapshot = setSeatConnected(snapshot, "host", false);
     const back = reseatHost(snapshot, "Ana2");
     expect(back.host).toMatchObject({ name: "Ana2", connected: true, deckId: "d1" });
+  });
+});
+
+describe("seatClaimAllowed (3a-sec seat authentication)", () => {
+  it("lets anyone claim an UNBOUND seat (anonymous or authenticated)", () => {
+    expect(seatClaimAllowed(null, null)).toBe(true);
+    expect(seatClaimAllowed(null, "user-1")).toBe(true);
+  });
+
+  it("lets ONLY the bound account re-adopt a bound seat", () => {
+    expect(seatClaimAllowed("user-1", "user-1")).toBe(true);
+  });
+
+  it("refuses a bound seat to a different account or an anonymous socket", () => {
+    // A socket replaying the seat's public playerId without its session — the
+    // impersonation the leak needed. Neither a rival account nor anonymous passes.
+    expect(seatClaimAllowed("user-1", "user-2")).toBe(false);
+    expect(seatClaimAllowed("user-1", null)).toBe(false);
+  });
+});
+
+describe("resetAfterFailedStart", () => {
+  it("un-readies both seats and falls back to selecting for a retry", () => {
+    const next = resetAfterFailedStart(countdownLobby());
+    expect(next.phase).toBe("selecting");
+    expect(next.host.ready).toBe(false);
+    expect(next.guest?.ready).toBe(false);
+    // Deck picks survive — the players just re-ready, they don't re-pick.
+    expect(next.host.deckId).toBe("d1");
+    expect(next.guest?.deckId).toBe("d2");
+    expect(next.countdownStartedAt).toBeNull();
   });
 });
 

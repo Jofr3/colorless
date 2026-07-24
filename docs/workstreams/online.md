@@ -316,6 +316,73 @@ reset on shape mismatch). (2) the whole log re-broadcasts every action (O(n²) b
 the deliberate simplicity tradeoff (a reconnect gets the backlog for free), a later delta/paginate pass.
 See D68.
 
+**Increment 3a — DONE:** real deck selection at the match handoff (D69). The lobby now loads each player's
+OWN chosen deck from D1 instead of the fixed placeholder decks — the first authenticated surface in an
+otherwise account-less lobby. **Increment 3 is SPLIT** (it was large): 3a (this — resolution + the failure
+surface), 3b (the online ability + non-Stadium trainer HUD, so an ability/trainer-heavy deck is fully
+drivable), 3c+ (reconnect/timeouts, concede/rematch, spectate). **The auth boundary (the crux):** the lobby
+stays account-less for SEAT identity (anonymous playerIds), but the `/ws` upgrade now resolves the FORWARDED
+`session` cookie to an account (`resolveUserIdFromCookie`, read-only) and stashes it on the SOCKET
+(`attachUserId` — DO-only, never on the broadcast snapshot). At handoff the DO reads each player's chosen
+deck **OWNER-SCOPED** (`loadPlayerDeck` — `WHERE decks.id = <client deckId> AND decks.userId = <the socket's
+authenticated userId>`), so a crafted `select-deck` naming another user's deck id resolves to nothing (the
+same 404-as-missing the deck routes give), and an anonymous socket (null userId) is refused before any query.
+**Contents come from D1, never the client** (the client sends only an opaque `deckId`), so a client can't
+forge an illegal 60. `startMatch`/createGame stays the authoritative validator (60 + a Basic; the
+persistence layer enforces neither). **The failure surface (the load-failure wedge, finally closed):**
+`handoffToMatch` now returns `{ok}|{ok:false,reason}`; the alarm flips to in-game ONLY on success — on
+failure it `resetAfterFailedStart` (un-readies both → back to `selecting`, breaking the countdown re-fire)
+and broadcasts a new `{kind:"match-error", reason}` server frame to both, so players see WHY (not signed in
+/ deck not theirs / malformed) and can re-pick + retry (no MatchRecord was written, so the retry re-attempts
+cleanly). Client: `useLobby.matchError` renders it on the versus screen. `FIXED_MATCH_DECKS` removed.
+1782 → **1787** tests (deckIdsFromRows + the loadPlayerDeck auth guards, attachment userId round-trip,
+resetAfterFailedStart, the match-error wire accept/refuse; the fixed-deck tests removed), `bun run check`
+green. **3b GAP (loud):** with real decks, abilities + non-Stadium trainers (Supporters/Items) are now
+reachable, but the online HUD has no affordance for them (`useAbility` stays OFF the allowlist; only the
+Stadium DRAG sends `playTrainer`), so a deck that NEEDS one to progress can STALL — a missing affordance,
+not an engine soft-lock, and the next sub-slice. **Still unverified:** a real browser two-client run
+confirming the SameSite=None session cookie actually reaches the DO on the cross-origin WS handshake (the
+code path forwards it; the browser behavior is standard but untested here).
+**Review (1 read-only adversarial reviewer): NO HIGH** — the five ranked properties all HOLD: (1)
+DECK-OWNERSHIP AUTH — the owner-scoped `WHERE decks.id AND decks.userId` is correct and a socket's `userId`
+only ever comes from a valid `session` cookie, so you can only load a deck owned by the account whose token
+you hold (a crafted `deckId` reads as missing; anonymous/null-deck refused pre-query); (2) userId
+confidentiality — grep-confirmed absent from every schema, read in exactly one place (`userIdOf`), never
+sent; (3) session resolution — read-only, rejects forged/expired/no-cookie; (4) failure surface — in-game is
+unreachable without a MatchRecord (the wedge is closed), no alarm re-fire loop, retry unblocked; (5) no
+regressions (no dangling `FIXED_MATCH_*`, MatchRecord shape unchanged). **1 MED — FIXED in-session as
+3a-sec (a PRE-EXISTING leak 3a ELEVATED):** seat identity was bearer-only (the D60 L2 gap) — every `state`
+frame broadcasts the seats' PUBLIC `playerId`s, and a socket replaying one was reseated by `helloDecision`
+(no account check) and handed that seat's redacted HAND via `sendMatchIfInGame` (the deck stays a count, so
+the decklist itself does NOT leak). Harmless with fixed decks; a real competitive leak once the hand is
+real. **2 LOWs — RECORDED (not fixed):** (a) `userIdOf` returns the first same-`playerId` socket regardless
+of userId, so two live sockets with different userIds (a mid-lobby login change) can pick the wrong account →
+a spurious `match-error` (recoverable; fix = prefer a non-null-userId socket); (b) `match-error` broadcasts
+the actor-specific reason to BOTH — a trivial sign-in-state disclosure (the name is public; fix = actor-only
+specific reason, generic to the other). **Non-defects confirmed:** cookie forwarding preserves headers to
+the DO (but verify LIVE — if the cookie did NOT survive, every authed user would resolve anonymous and NO
+match could start); attachment set-order / hibernation; no alarm socket-set race (DO input-gating); empty/
+oversized decks fail safe through `startMatch`. See D69.
+
+**Increment 3a-sec — DONE (folded into the same session):** seat authentication — closes the review MED. A
+new pure **`seatClaimAllowed(boundUserId, userId)`** (`= boundUserId === null || boundUserId === userId`) +
+a DO-only **`SEAT_USERS_KEY`** map (`playerId → account`, never broadcast). The `hello` handler binds a
+playerId to its account on the FIRST authenticated claim, and refuses any later hello replaying that playerId
+whose socket `userId` doesn't match — so a socket echoing a seat's public `playerId` without its session
+can't take the seat (nor be handed its redacted hand). An UNBOUND seat stays bearer-only, which is safe: an
+anonymous socket can't load a real deck (`loadPlayerDeck` refuses null `userId`), so it never reaches an
+in-game match with a hand to protect — and conversely an in-game seat is ALWAYS bound (handoff requires both
+authed), which is exactly what closes the leak. 1787 → **1790** tests (`seatClaimAllowed`). **Review (a
+second read-only reviewer, scoped to this fix): the leak is CLOSED** — no `hello` path reaches a match
+emitter for a seat bound to a different account, and the other emitters (`broadcastMatch`, the alarm flip)
+redact per `attachedPlayer`, which only a gated hello sets — **and no legit flow is broken** (ordinary
+reconnect + the anonymous→authenticated upgrade both pass; `deleteAll` clears the map on empty-lobby). **3
+LOWs, all BY-DESIGN:** a player who LOSES their session mid-lobby can't rejoin their bound seat (the intended
+boundary; low-probability — 30-day sessions, and a cookie that drops on reconnect was absent on the initial
+claim too, leaving the seat unbound); a same-tab account SWITCH is locked out for the lobby's lifetime
+(recoverable in a new tab); `SEAT_USERS_KEY` grows unpruned across repeated guest-takeovers (bounded, TTL-
+cleared).
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -436,9 +503,23 @@ until 1c broadcasts the redacted view.
         `useLobby.matchLog` + `OnlineMatch` render it. The `LogEntry`/`LogSource` RENDER types stayed in
         the playmat (zero cross-package imports). Confirmed the log rides the FRAME, not `RedactedGame`
         (it can't be rebuilt from one snapshot), so the redactor + round-trip pins are untouched.
-- **3:** real deck selection (resolve `deckId`→60 ids server-side), reconnect/timeouts,
-  concede/rematch, spectate, and surfacing a match-start FAILURE to players (the load-failure
-  wedge below).
+- **3 — real decks + the rest of online. SPLIT** (it was large):
+  - **3a — real deck selection + the failure surface. DONE** (D69, see Status above): the `/ws` upgrade
+    authenticates the forwarded session cookie → a per-socket userId; the handoff loads each player's
+    chosen deck OWNER-SCOPED from D1 (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, and on a resolution
+    failure resets the lobby to selecting + broadcasts `{kind:"match-error"}` instead of wedging in-game.
+  - **3a-sec — seat authentication. DONE** (D69, folded in): binds a playerId to the account that first
+    claimed it (`seatClaimAllowed` + a DO-only `SEAT_USERS_KEY`), refusing a hello that replays a bound
+    seat's public playerId without its session — closes the D60 L2 bearer-only-seat HAND leak that real
+    decks made meaningful. A second review confirmed the leak closed with no legit reconnect broken.
+  - **3b — the online ability + non-Stadium trainer HUD (NEXT):** real decks make abilities +
+    Supporters/Items reachable, but the online HUD has no button for them and `useAbility` is off the
+    allowlist, so such a deck can stall. Put the playable ability/trainer options + their greyed/reason on
+    the wire (they read the FULL GameState — `programPlayable`/`conditionHolds`/`handCostUnmet`,
+    `index.ts:288-320` — WITHOUT leaking prize counts / the Stadium owner / the hand), add the OnlineHud
+    buttons, and grow `SUPPORTED_MATCH_ACTIONS` by `useAbility` (Stadium already drives via the 2a drag).
+  - **3c+ — reconnect/timeouts, concede/rematch, spectate**, and the DO-storage-migration hardening the
+    2b-iii-d-ii LOW deferred (default missing MatchRecord fields on read).
 
 ## What already exists (reuse it)
 The lobby was built to swap transports without UI changes:

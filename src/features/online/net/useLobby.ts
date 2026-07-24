@@ -57,6 +57,10 @@ export type Lobby = {
   /** The last game action the server refused (P4), for a transient pill; null
       until one is rejected, cleared by the next accepted action (a `match`). */
   actionError: ActionError | null;
+  /** Why the last match failed to START (P4 increment 3) — a deck that wouldn't
+      resolve dropped the lobby back to selecting; shown on the versus screen.
+      Null until a `match-error`, cleared by the next lobby state change. */
+  matchError: string | null;
   role: LobbySlot;
   status: LobbyStatus;
   selectDeck: (deck: DeckChoice) => void;
@@ -105,6 +109,10 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
   // `reject-action`, cleared by the next accepted action (a `match` frame) — the
   // local useLocalGame clears its lastError on every ok apply for the same reason.
   const [actionError, setActionError] = useState<ActionError | null>(null);
+  // Why a match failed to START (P4 increment 3) — a deck that wouldn't resolve.
+  // Set on `match-error` (which arrives right AFTER the reset-to-selecting state
+  // frame, so it survives that frame's clear), cleared by the next state change.
+  const [matchError, setMatchError] = useState<string | null>(null);
 
   // Refs the effect's timers and handlers share. Kept out of React state so
   // reading them in intervals/listeners never sees a stale render closure.
@@ -141,6 +149,10 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           snapshotRef.current = message.snapshot;
           setSnapshot(message.snapshot);
           setStatus("connected");
+          // Any lobby progress clears a stale match-start error. The failing
+          // handoff broadcasts its `state` (back to selecting) BEFORE the
+          // `match-error`, so this clear runs first and the error still lands.
+          setMatchError(null);
           // A lobby that isn't in-game holds no match — drop any stale board (and
           // any stale rejection pill) so a rematch in this same lobby starts clean
           // (the server drops the record on abandon and re-mints on the next flip).
@@ -170,6 +182,15 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           if (rejected) break;
           lastServerSeenRef.current = now();
           setActionError((prev) => ({ reason: message.reason, nonce: (prev?.nonce ?? 0) + 1 }));
+          break;
+        }
+        case "match-error": {
+          // The countdown ended but the match couldn't start (a deck wouldn't
+          // resolve, P4 increment 3). The server has already dropped us back to
+          // selecting; surface the reason on the versus screen.
+          if (rejected) break;
+          lastServerSeenRef.current = now();
+          setMatchError(message.reason);
           break;
         }
         case "reject": {
@@ -274,6 +295,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     match,
     matchLog,
     actionError,
+    matchError,
     role,
     status,
     selectDeck,

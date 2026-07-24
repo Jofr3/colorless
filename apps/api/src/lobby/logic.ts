@@ -66,6 +66,20 @@ export function helloDecision(snapshot: LobbySnapshot | null, from: string): Hel
   return "seat-guest";
 }
 
+/** Whether a socket presenting `userId` (null = anonymous) may (re)claim the
+    seat whose playerId is bound to `boundUserId` (null = never yet claimed by an
+    account). A playerId becomes account-BOUND the first time an authenticated
+    socket claims it; from then on ONLY that account may re-adopt it — so a socket
+    that replays the seat's PUBLIC playerId (broadcast in every `state` frame)
+    WITHOUT its session (a different account, or anonymous) is refused, and so can
+    never be handed that seat's redacted in-game HAND (P4 3a-sec, closing the D60
+    L2 bearer-only-seat leak). An unbound seat stays bearer-only, which is safe:
+    an anonymous seat can't load a real deck (`loadPlayerDeck` refuses a null
+    userId), so it never reaches an in-game match with a hand to protect. Pure. */
+export function seatClaimAllowed(boundUserId: string | null, userId: string | null): boolean {
+  return boundUserId === null || boundUserId === userId;
+}
+
 /** Update a seat's connectivity — `setGuestConnected` plus the host twin the
     reducer never needed when the host was the authority. Disconnecting drops
     the seat's ready (a countdown can't proceed with an absent player), and the
@@ -86,6 +100,19 @@ export function setSeatConnected(
     keep their deck/ready, adopt the announced name, mark them present. */
 export function reseatHost(snapshot: LobbySnapshot, name: string): LobbySnapshot {
   return { ...snapshot, host: { ...snapshot.host, name, connected: true } };
+}
+
+/** The countdown ended but the match couldn't START (a chosen deck wouldn't
+    resolve, P4 increment 3): un-ready both seats and re-derive the phase, so the
+    lobby falls back to `selecting` for a retry instead of wedging in-game with no
+    match. Un-readying is what breaks the loop — leaving it in `countdown` past
+    its deadline would just re-fire the failing handoff on the next alarm. */
+export function resetAfterFailedStart(snapshot: LobbySnapshot): LobbySnapshot {
+  return recomputePhase({
+    ...snapshot,
+    host: { ...snapshot.host, ready: false },
+    guest: snapshot.guest ? { ...snapshot.guest, ready: false } : null,
+  });
 }
 
 /** Stamp the countdown's start the moment the reducer enters the phase — the

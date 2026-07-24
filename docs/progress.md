@@ -3,7 +3,61 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-24 — build session #54 (**P4 increment 2b-iii-d-ii — the online event log**).
+**Last updated:** 2026-07-24 — build session #55 (**P4 increment 3a + 3a-sec — real deck selection at the
+match handoff, and seat authentication**). The lobby now loads each player's OWN chosen deck from D1 instead
+of the fixed placeholder decks — the first AUTHENTICATED surface in an otherwise account-less lobby — and
+the review's one MED (a bearer-only-seat HAND leak) was FIXED in the same session as **3a-sec**. **Increment
+3 is SPLIT** (it was large): 3a (this — resolution + the failure surface), 3a-sec (seat authentication —
+folded in), 3b (the online ability + non-Stadium trainer HUD), 3c+ (reconnect/timeouts, concede/rematch,
+spectate). **The auth boundary (the crux, aligned with the user
+— "authenticate the WS"):** seat identity stays account-less (anonymous playerIds), but the `/ws` upgrade
+now resolves the FORWARDED `session` cookie to an account (new **`resolveUserIdFromCookie`**, read-only —
+no lazy-delete, unlike `requireUser`) and stashes it on the SOCKET (`attachment.ts` gained
+`attachUserId`/`attachedUserId`, set BEFORE the hello and each preserving the other) — **DO-only, never on
+the broadcast snapshot** (PlayerState has no userId). At handoff the DO resolves each player's chosen deck
+**OWNER-SCOPED** (new **`loadPlayerDeck`** — `WHERE decks.id = <client deckId> AND decks.userId = <the
+socket's authenticated userId>`, via `this.userIdOf(playerId)` off the live socket), so a crafted
+`select-deck` naming ANOTHER user's deck id resolves to nothing (the 404-as-missing the deck routes give)
+and an anonymous socket (null userId) is refused before any query. **Contents come from D1, never the
+client** (only an opaque `deckId` crosses), so a client can't forge an illegal 60; `startMatch`/createGame
+stays the authoritative validator (60 + a Basic). **The failure surface (the load-failure wedge, finally
+closed):** `handoffToMatch` returns **`{ok}|{ok:false,reason}`**; the alarm flips to in-game ONLY on
+success — on failure it **`resetAfterFailedStart`** (un-readies both → back to `selecting`, breaking the
+countdown re-fire) and broadcasts a new **`{kind:"match-error", reason}`** server frame to both, so players
+see WHY (not signed in / deck not theirs / malformed) and retry cleanly (no MatchRecord was written).
+Client: **`useLobby.matchError`** on the versus screen. `FIXED_MATCH_DECKS` removed. **3a-sec (the seat-auth
+fix):** a new pure **`seatClaimAllowed(bound, userId)`** + a DO-only **`SEAT_USERS_KEY`** (playerId→account)
+map — the `hello` handler binds a playerId to its account on the FIRST authenticated claim and refuses any
+later hello replaying that playerId without the matching session (so an impersonator can't take the seat or
+its redacted hand); an unbound anonymous seat stays bearer-only (and can't reach an in-game real-deck match
+anyway). 1782 → **1790** tests (+ `deckIdsFromRows`, the `loadPlayerDeck` auth guards, attachment userId
+round-trip, `resetAfterFailedStart`, the match-error wire accept/refuse, `seatClaimAllowed`; fixed-deck
+tests removed). `bun run check` green. **3b GAP (loud):** with
+real decks, abilities + non-Stadium trainers (Supporters/Items) are reachable but the online HUD has NO
+affordance for them (`useAbility` off the allowlist; only the Stadium DRAG sends `playTrainer`), so such a
+deck can STALL — a missing affordance, not an engine soft-lock, the next sub-slice. **Still unverified:** a
+real browser two-client run confirming the SameSite=None session cookie reaches the DO on the cross-origin
+WS handshake (the code path forwards it; the browser behavior is standard but untested here). Built solo
+with full context; **1 read-only adversarial reviewer: NO HIGH** — all five ranked properties HOLD:
+deck-ownership auth (you can only load a deck owned by the account whose session TOKEN you hold — a crafted
+`deckId` reads as missing, an anonymous/null-deck socket is refused pre-query), userId confidentiality
+(grep-confirmed absent from every schema — never on the wire), session resolution (read-only; rejects a
+forged/expired/absent cookie), the failure surface (in-game unreachable without a MatchRecord, no alarm
+re-fire loop, retry unblocked), and no regressions (no dangling `FIXED_MATCH_*`). **1 MED — FIXED
+in-session as 3a-sec (a PRE-EXISTING leak 3a ELEVATED):** seat identity was bearer-only (the D60 L2 gap) — a
+socket replaying a seat's PUBLIC `playerId` reseated and got that seat's redacted HAND, meaningful now the
+deck is real. Fixed by binding a playerId to the account that first claimed it (above); **a second read-only
+review confirmed the leak is CLOSED** (no `hello` path reaches a match emitter for a seat bound to a
+different account; an in-game seat is ALWAYS bound since handoff requires both authed) **with no legit
+reconnect broken** (ordinary reconnect + the anonymous→authenticated upgrade both pass) — 3 LOW by-design
+notes recorded below. **2 LOWs from the 3a review, RECORDED (not fixed):** `userIdOf` reads an arbitrary
+same-`playerId` socket (a spurious `match-error` if two live sockets carry different userIds — a mid-lobby
+login change; recoverable), and `match-error` broadcasts the sign-in-state reason to both (trivial — the
+name is already public). See D69. Below: the P4-2b-iii-d-ii header (kept for continuity).
+
+---
+### Prior header (P4 increment 2b-iii-d-ii — the online event log, kept for continuity)
+**Last updated (was):** 2026-07-24 — build session #54 (**P4 increment 2b-iii-d-ii — the online event log**).
 Online play now shows the game log (was `NO_LOG`), built SERVER-SIDE and broadcast to both clients — the
 last of 2b-iii-d, and the multi-package refactor d-i deferred. **The move:** the pure GameEvent→rows
 formatter **`logFromEvents`** (+ `formatElapsed`/`STATUS_LABELS`/`LogContext`) moved from the web
@@ -1214,39 +1268,49 @@ build` green. INFO (not bugs): an empty hand emits `count:0` (honest, non-leaky 
 no consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See D38.
 
 ## Resume point
-**P4 increment 2b-iii-d-ii (the online event log) is DONE — and with it the WHOLE of 2b (online.md, D68).**
-Online play with the fixed decks is now a COMPLETE game: setup, the turn drags, attack + KO loop, retreat,
-every `effect:choose` dialog (2b-iii-a/b/c), the rejection pill (d-i), AND the event log (d-ii). The log is
-built server-side (`logFromEvents` MOVED into `@luminous/engine`; wire type `SeatLogEntry` in
-`@luminous/schema` `match/log.ts`), accumulated in `MatchRecord` (`+ startedAt/names`), and broadcast on
-the `{kind:"match"}` frame's new `log` field — the SAME array to both clients (seat-keyed + leak-safe), each
-relabeling p1/p2→you/opponent via `viewLogEntries` (web) over its own `game.seat`. The log rides the FRAME,
-not `RedactedGame`, so the redactor + round-trip pins are untouched. 1777 → **1782** tests; `bun run check`
-green. **Review (1 read-only adversarial reviewer): NO HIGH, NO MED** — the leak property holds under a
-full per-arm `formatEvent` classification; seat-keying, lifecycle, purity + the exactness/round-trip pins
-all hold. **2 LOWs RECORDED (not fixed), listed below.**
-**Next concrete action — increment 3 (real deck selection), and it needs SPLITTING (it is large):**
-1. **Resolve a player's chosen deck server-side.** Lobbies are account-less and store only an opaque
-   `deckId`/`deckName` (`lobby/routes.ts`) — the DO can't read a saved deck's card list yet. `handoffToMatch`
-   still hands the engine `FIXED_MATCH_DECKS` (Sneasel/Mareep + basic Energy). Increment 3 must resolve
-   `deckId` → the 60 card ids (the deck routes are session-gated — decide how the DO reads them), build the
-   `cardPool` from D1 for BOTH real decks, and drop the fixed placeholders. This is the precondition for
-   everything below (real decks exercise the surfaces the fixed decks can't).
-2. **Abilities + non-Stadium trainers (CUT from 2b-ii, deferred here).** The fixed decks have NEITHER, so
-   their wire surface couldn't be driven end-to-end. With real decks: put the playable ability/trainer
-   options + their greyed/reason on the wire (they read the FULL GameState —
-   `programPlayable`/`conditionHolds`/`handCostUnmet`, `index.ts:288-320` — so carry enough WITHOUT leaking
-   prize counts / the Stadium owner / the hand), and grow `SUPPORTED_MATCH_ACTIONS` by
-   `useAbility`/`playTrainer` (Stadium already drives via the 2a drag; `resolveEffect` is already ON — every
-   prompt kind is dialoged, so a real-deck effect attack that parks can be driven to completion).
-3. **Reconnect / timeouts, concede / rematch, spectate, and a match-start FAILURE surface** (the load-failure
-   wedge below — an incomplete D1 pool flips to in-game with no match; surface it to players now that the
-   pill exists). These are independent of real decks and can be sub-sliced in any order.
+**P4 increment 3a (real deck selection at the match handoff) is DONE (online.md, D69).** The lobby loads
+each player's OWN chosen deck from D1 — the first AUTHENTICATED surface in an otherwise account-less lobby.
+**Increment 3 is SPLIT:** 3a (this — resolution + the failure surface), 3b (the online ability + non-Stadium
+trainer HUD), 3c+ (reconnect/timeouts, concede/rematch, spectate). The `/ws` upgrade resolves the forwarded
+`session` cookie → a per-socket userId (`resolveUserIdFromCookie`, DO-only, `attachUserId`); the handoff
+reads each deck OWNER-SCOPED (`loadPlayerDeck` — `WHERE decks.id = <client deckId> AND decks.userId = <the
+socket's authenticated userId>`), so a crafted `select-deck` for another user's deck resolves to nothing and
+an anonymous socket is refused. Contents come from D1, never the client, so no forged 60. On failure the
+alarm `resetAfterFailedStart` (back to selecting) + broadcasts `{kind:"match-error"}` — the load-failure
+wedge is closed. `FIXED_MATCH_DECKS` removed. **3a-sec (seat authentication) folded in:** a playerId, once
+claimed by an account, can only be re-adopted by that account (`seatClaimAllowed` + a DO-only
+`SEAT_USERS_KEY`), closing the review's bearer-only-seat HAND leak. 1782 → **1790** tests; `bun run check`
+green. **Two reviews: NO HIGH. 3a — five ranked properties HOLD, 1 MED (the leak) + 2 LOWs. 3a-sec — the
+leak CLOSED, no legit reconnect broken, 3 LOW by-design notes.** All findings in the block below.
+**Next concrete action — 3b (the online ability + non-Stadium trainer HUD):** real decks make abilities +
+Supporters/Items REACHABLE, but the online HUD has no button for them and `useAbility` is off
+`SUPPORTED_MATCH_ACTIONS`, so a deck that needs one to progress can STALL (the loud 3a gap — a missing
+affordance, not an engine soft-lock). Put the playable ability/trainer options + their greyed/reason on the
+`RedactedGame` wire — they read the FULL GameState (`programPlayable`/`conditionHolds`/`handCostUnmet`,
+`index.ts:288-320`) so carry enough WITHOUT leaking prize counts / the Stadium owner / the hand — add the
+OnlineHud buttons (restated over the redacted shape, the D62/D63 per-surface pattern), and grow the allowlist
+by `useAbility` (Stadium already drives via the 2a drag; non-Stadium `playTrainer` needs a new hand-card
+affordance). Then **3c+**: timeouts, concede/rematch, spectate, and the DO-storage-migration hardening the
+2b-iii-d-ii LOW deferred (default missing MatchRecord fields on read).
 See `workstreams/online.md`.
-**2b-iii-d-ii: verifiable in a browser (unlike D64–D67).** The fixed decks emit a real log (shuffles, coin
-flip, draws, attacks, KOs), so a two-client browser run WOULD exercise the online log end-to-end — not yet
-done (test-only, the `verify` skill covers the launch recipe). This is the first online surface the fixed
-decks can drive to completion, so it is the natural first browser smoke-test of P4 online play.
+**Recorded, NOT fixed (3a + 3a-sec — review findings, in online.md + D69):** the 3a MED (the bearer-only-seat
+HAND leak) was FIXED in 3a-sec. Still open: (LOW, 3a) `userIdOf` returns the FIRST live socket with the
+seat's `playerId` regardless of its userId, so two live sockets sharing a `playerId` with DIFFERENT userIds
+(a mid-lobby login change) can pick the account that doesn't own the `deckId` → a spurious `match-error`;
+recoverable (re-ready), fix = prefer a non-null-userId socket. (LOW, 3a) `match-error` broadcasts the
+actor-specific reason (e.g. "…must be signed in…") to BOTH players — a trivial sign-in-state disclosure (the
+name is already public); fix = specific reason to the failing socket, generic to the other. (LOW ×3, 3a-sec,
+all BY-DESIGN) a player who LOSES their session mid-lobby (cookie expired/dropped → anonymous) can't rejoin
+their own bound seat — the intended boundary, low-probability (30-day sessions; a browser that drops the
+SameSite=None cookie on reconnect was anonymous on the initial claim too, so the seat was never bound); a
+same-tab account SWITCH is locked out for the lobby's lifetime (recoverable in a new tab — fresh playerId);
+and `SEAT_USERS_KEY` grows unpruned across repeated guest-takeovers within one lobby (bounded in practice,
+cleared by the empty-lobby `deleteAll`).
+**Browser verification owed (two things, both untested):** (a) 3a — a two-client run confirming the
+SameSite=None `session` cookie actually reaches the DO on the cross-origin WS handshake (the code forwards
+it; the browser behavior is standard but unverified); (b) 2b-iii-d-ii — the online event log end-to-end
+(the fixed decks emitted a real log; with real decks now loaded, a real game does too). The `verify` skill
+covers the launch recipe. With real decks + the 3b HUD, a full online game becomes the P4 smoke-test.
 **Recorded, NOT fixed (2b-iii-d-ii — review LOWs, in online.md + D68):** (1) a `MatchRecord` written by
 PRE-slice code (`{seed,state}` only) and read across THIS deploy has no `startedAt`/`names`/`log` → the
 next `applyMatchAction` stamps NaN elapsed and throws a `names[…]` TypeError on a system row (COIN_FLIP /

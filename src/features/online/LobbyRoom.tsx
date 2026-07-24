@@ -133,6 +133,15 @@ function VersusScreen({ lobby, onLeave }: { lobby: Lobby; onLeave: () => void })
             {status}
           </output>
         )}
+
+        {lobby.matchError && (
+          <output
+            aria-live="assertive"
+            className="rounded-lg bg-rose-500/15 px-4 py-2 text-center text-sm text-rose-200 ring-1 ring-inset ring-rose-400/25"
+          >
+            Couldn't start the match — {lobby.matchError}
+          </output>
+        )}
       </main>
 
       <DeckPickerDialog

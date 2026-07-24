@@ -88,6 +88,12 @@ export type LobbyMessage =
       for a pill, and is not terminal — the board already reflects only accepted
       state, so a rejected action changed nothing. */
   | { kind: "reject-action"; reason: string }
+  /** server → both players: the countdown ended but the match could NOT start —
+      a player's chosen deck wouldn't resolve (not signed in / not theirs /
+      malformed) (P4 increment 3). The lobby has dropped back to `selecting` (both
+      un-readied); `reason` says why, so they can fix a deck and retry instead of
+      wedging in-game with no match. */
+  | { kind: "match-error"; reason: string }
   /** either direction: a periodic keep-alive so the other side knows we're here. */
   | { kind: "heartbeat"; from: string; slot: LobbySlot }
   /** either direction: a graceful "I'm leaving" so the other side reacts at once

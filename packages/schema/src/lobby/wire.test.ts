@@ -162,6 +162,10 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "reject-action", reason: "nope" }).success,
     ).toBe(false);
+    // match-error is the server's to send (the failed-start notice), not the client's.
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "match-error", reason: "nope" }).success,
+    ).toBe(false);
     // heartbeats are not client frames — keepalive is the raw ping string.
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "heartbeat", from: "g1", slot: "guest" }).success,
@@ -196,6 +200,11 @@ describe("lobbyServerMessageSchema (what clients receive)", () => {
     // The transient action-rejection pill (P4) is a server frame.
     expect(
       lobbyServerMessageSchema.safeParse({ kind: "reject-action", reason: "Illegal move." })
+        .success,
+    ).toBe(true);
+    // The match-start failure (P4 increment 3) is a server frame.
+    expect(
+      lobbyServerMessageSchema.safeParse({ kind: "match-error", reason: "Ana: deck not found." })
         .success,
     ).toBe(true);
   });
@@ -239,6 +248,7 @@ describe("lobbyMessageSchema (full channel vocabulary)", () => {
       { kind: "action", action: { type: "endTurn", seat: "p1" } },
       { kind: "reject", to: "g1", reason: "full" },
       { kind: "reject-action", reason: "Illegal move." },
+      { kind: "match-error", reason: "Ana: deck not found." },
       { kind: "heartbeat", from: "h1", slot: "host" },
       { kind: "bye", from: "g1", slot: "guest" },
     ];

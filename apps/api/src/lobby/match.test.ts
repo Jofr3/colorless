@@ -3,8 +3,6 @@ import type { Card, LobbySnapshot } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import {
   applyMatchAction,
-  FIXED_MATCH_CARD_IDS,
-  FIXED_MATCH_DECKS,
   matchSeatOf,
   type MatchRecord,
   SEAT_OF_SLOT,
@@ -235,39 +233,5 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     ]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(true);
     }
-  });
-});
-
-describe("FIXED_MATCH_DECKS — the placeholder decks the DO hands off until real selection", () => {
-  it("both seats are 60 cards drawn only from FIXED_MATCH_CARD_IDS, which are distinct", () => {
-    const known = new Set(FIXED_MATCH_CARD_IDS);
-    expect(known.size).toBe(FIXED_MATCH_CARD_IDS.length); // no dup in the pool list
-    for (const deck of [FIXED_MATCH_DECKS.host, FIXED_MATCH_DECKS.guest]) {
-      expect(deck).toHaveLength(60);
-      for (const id of deck) expect(known.has(id)).toBe(true);
-    }
-    // Every pool id is actually referenced (no dead ids to resolve from D1).
-    const used = new Set([...FIXED_MATCH_DECKS.host, ...FIXED_MATCH_DECKS.guest]);
-    for (const id of FIXED_MATCH_CARD_IDS) expect(used.has(id)).toBe(true);
-  });
-
-  it("the seats differ, so redaction asymmetry (1c) is exercised on a real board", () => {
-    expect(FIXED_MATCH_DECKS.host).not.toEqual(FIXED_MATCH_DECKS.guest);
-  });
-
-  it("boot a real game once their ids resolve to a pool (engine-valid: 60 + a Basic)", () => {
-    // The DO builds this pool from D1; here every id maps to a Basic so the
-    // engine's "60 cards, all resolvable, ≥1 Basic" check passes — proving the
-    // deck sizes + pool coverage, not the runtime card types.
-    const pool = Object.fromEntries(FIXED_MATCH_CARD_IDS.map((id) => [id, basicCard(id)]));
-    const result = startMatch({
-      seed: 3,
-      hostDeck: FIXED_MATCH_DECKS.host,
-      guestDeck: FIXED_MATCH_DECKS.guest,
-      cardPool: pool,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error(result.error.message);
-    expect(result.state.phase.kind).toBe("setup:chooseFirst");
   });
 });

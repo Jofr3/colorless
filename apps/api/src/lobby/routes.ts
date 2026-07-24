@@ -1,9 +1,11 @@
 // /lobby — creating and joining real-time lobbies (§6, P1 milestone 8).
 //
-// Anonymity: lobbies are ACCOUNT-LESS this phase, matching the client model —
-// players are identified by lobby-scoped session ids the browser mints
-// (net/session.ts), not by users/sessions rows, so neither route reads the
-// session cookie.
+// Seat identity stays account-less: players are identified by lobby-scoped
+// session ids the browser mints (net/session.ts), not by users/sessions rows, so
+// these routes don't gate on auth (an anonymous player can create/join). But the
+// upgrade request's `session` cookie IS forwarded to the DO, which resolves it to
+// an account at /ws (P4 increment 3) — used ONLY to owner-scope that player's
+// saved-deck read at the match handoff, never for seat identity.
 
 import { generateLobbyCode, isValidLobbyCode } from "@luminous/schema";
 import { Hono } from "hono";
