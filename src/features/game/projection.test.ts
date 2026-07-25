@@ -12,6 +12,7 @@ import type {
 } from "@luminous/engine";
 import { redactGame, topUid } from "@luminous/engine";
 import {
+  ABILITY_DECK,
   ALL_BASIC_DECK,
   ATTACK_PARK_DECK,
   FIXTURE_POOL,
@@ -864,6 +865,24 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
 
   it("reconstructs the setup barrier identically (opponent placements as backs)", () => {
     const state = placedNotRevealed();
+    for (const seat of ["p1", "p2"] as const) {
+      expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
+        projectGameState(state, seat),
+      );
+    }
+  });
+
+  it("ignores the 3b ability/trainer lists — a populated turn:action still equals", () => {
+    // Chien-Pao ex (Shivery Chill) as p1's Active makes the wire turn:action carry
+    // a non-empty ability list; like attacks/retreat (2b-i/ii) it never enters the
+    // playmat projection, so the round-trip still equals the local one for both
+    // viewers (the guard against those action lists leaking into the board).
+    let state = driveSetup(3, { p1: ABILITY_DECK, p2: ABILITY_DECK }, { first: "p2" });
+    state = setActiveFromDeck(state, "p1", "sv02-061");
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → p1's turn 2
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.abilities.length).toBeGreaterThan(0); // else this proves nothing
     for (const seat of ["p1", "p2"] as const) {
       expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
         projectGameState(state, seat),

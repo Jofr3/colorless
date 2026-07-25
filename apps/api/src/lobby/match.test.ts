@@ -201,25 +201,38 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     expect(applyMatchAction(record, winner, { type: "not-an-action" }, STARTED_AT).ok).toBe(false);
   });
 
-  it("rejects action types outside the driveable scope, and effect answers off a park (no soft-lock)", () => {
+  it("rejects action types outside the driveable scope, and effect/ability/trainer plays off their phase (no soft-lock)", () => {
     const { record, winner } = freshRecord();
-    // useAbility is still OFF the set (abilities land with real decks) — refused
-    // BEFORE the engine even sees it, so the match can't reach an un-drivable phase.
-    expect(SUPPORTED_MATCH_ACTIONS.has("useAbility")).toBe(false);
-    expect(applyMatchAction(record, winner, { type: "useAbility", seat: winner }, STARTED_AT).ok).toBe(
-      false,
-    );
-    // resolveEffect is now ON the set (2b-iii-c dialoged every prompt kind), but a
-    // crafted frame off an effect:choose park is rejected by the ENGINE's own
-    // validation (BAD_PHASE during setup here) — so it changes nothing and cannot
-    // soft-lock, exactly the soft-lock-safety the allowlist flip relied on.
+    // useAbility is ON the set (3b landed its HUD), but — like attack/resolveEffect
+    // — a crafted frame off its phase is rejected by the ENGINE's own validation
+    // (turnGate fails during setup here), so it changes nothing and cannot
+    // soft-lock. That engine gate is what makes admitting a parking play safe.
+    expect(SUPPORTED_MATCH_ACTIONS.has("useAbility")).toBe(true);
+    expect(
+      applyMatchAction(
+        record,
+        winner,
+        { type: "useAbility", seat: winner, target: { spot: "active" }, abilityName: "X" },
+        STARTED_AT,
+      ).ok,
+    ).toBe(false);
+    // resolveEffect is ON the set (2b-iii-c), same soft-lock-safety: a crafted frame
+    // off an effect:choose park is rejected by the engine's own validation.
     expect(SUPPORTED_MATCH_ACTIONS.has("resolveEffect")).toBe(true);
     expect(
       applyMatchAction(record, winner, { type: "resolveEffect", seat: winner }, STARTED_AT).ok,
     ).toBe(false);
-    // The setup + drag + pass + attack/KO + retreat + effect-answer actions the
-    // client actually sends ARE supported (2b-i grew the set with attack /
-    // takePrizes / promote; 2b-ii added retreat; 2b-iii-c added resolveEffect).
+    // Rare Candy stays OFF (its own dialog + action are deferred, 3b GAP) — refused
+    // BEFORE the engine sees it, so a crafted rareCandy frame can't reach an
+    // un-drivable phase.
+    expect(SUPPORTED_MATCH_ACTIONS.has("rareCandy")).toBe(false);
+    expect(applyMatchAction(record, winner, { type: "rareCandy", seat: winner }, STARTED_AT).ok).toBe(
+      false,
+    );
+    // The setup + drag + pass + attack/KO + retreat + effect-answer + ability/
+    // trainer actions the client actually sends ARE supported (3b added useAbility;
+    // playTrainer was already on for the Stadium drag and now the Item/Supporter
+    // buttons too).
     for (const type of [
       "chooseFirstPlayer",
       "setupPlaceActive",
@@ -229,6 +242,8 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
       "promote",
       "retreat",
       "resolveEffect",
+      "useAbility",
+      "playTrainer",
       "endTurn",
     ]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(true);

@@ -60,6 +60,14 @@ function game(overrides: {
   };
 }
 
+/** A turn:action phase with every action list defaulting to empty — callers pass
+    only the fields their case exercises (the 3b ability/trainer lists included). */
+function turnAction(
+  fields: Partial<Extract<RedactedPhase, { kind: "turn:action" }>> = {},
+): RedactedPhase {
+  return { kind: "turn:action", attacks: [], retreat: null, abilities: [], trainers: [], ...fields };
+}
+
 /** An attached-Energy leaf card (no battle row / attachments). */
 function energy(id: string, name: string) {
   return { id, cardId: id, name, category: "Energy" as const, trainerType: null, hasImage: false };
@@ -86,7 +94,7 @@ describe("OnlineHud — turn:action attack panel", () => {
     render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: ATTACKS, retreat: null },
+          phase: turnAction({ attacks: ATTACKS }),
           you: { active: inPlay("sneasel", "Sneasel") },
         })}
         waitingOn="you"
@@ -109,7 +117,7 @@ describe("OnlineHud — turn:action attack panel", () => {
       <OnlineHud
         game={game({
           turn: 1,
-          phase: { kind: "turn:action", attacks: ATTACKS, retreat: null },
+          phase: turnAction({ attacks: ATTACKS }),
           you: { active: inPlay("sneasel", "Sneasel") },
         })}
         waitingOn="you"
@@ -123,7 +131,7 @@ describe("OnlineHud — turn:action attack panel", () => {
     render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: ATTACKS, retreat: null },
+          phase: turnAction({ attacks: ATTACKS }),
           you: { active: inPlay("sneasel", "Sneasel") },
         })}
         waitingOn="you"
@@ -138,7 +146,7 @@ describe("OnlineHud — turn:action attack panel", () => {
     const { container } = render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: [], retreat: null },
+          phase: turnAction(),
           you: { active: inPlay("sneasel", "Sneasel") },
           waitingOn: "opponent",
         })}
@@ -169,7 +177,7 @@ describe("OnlineHud — turn:action retreat", () => {
     render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: [], retreat: { cost: 1, can: true } },
+          phase: turnAction({ retreat: { cost: 1, can: true } }),
           you: { active: activeWithEnergy, bench: [inPlay("b", "Bench Sneasel")] },
         })}
         waitingOn="you"
@@ -198,7 +206,7 @@ describe("OnlineHud — turn:action retreat", () => {
     render(
       <OnlineHud
         game={game({
-          phase: { kind: "turn:action", attacks: [], retreat: { cost: 2, can: false } },
+          phase: turnAction({ retreat: { cost: 2, can: false } }),
           you: { active: inPlay("sneasel", "Sneasel"), bench: [inPlay("b", "Beta")] },
         })}
         waitingOn="you"
@@ -208,6 +216,102 @@ describe("OnlineHud — turn:action retreat", () => {
     );
     const btn = screen.getByRole<HTMLButtonElement>("button", { name: /Retreat \(2\)/ });
     expect(btn.disabled).toBe(true);
+  });
+});
+
+describe("OnlineHud — turn:action abilities + trainers (3b)", () => {
+  type TurnPhase = Extract<RedactedPhase, { kind: "turn:action" }>;
+  const ABILITIES: TurnPhase["abilities"] = [
+    {
+      target: { spot: "active" },
+      abilityName: "Shivery Chill",
+      label: "Shivery Chill · Chien-Pao ex (Active)",
+      disabled: false,
+      reason: null,
+    },
+    {
+      target: { spot: "bench", index: 1 },
+      abilityName: "Shivery Chill",
+      label: "Shivery Chill · Chien-Pao ex (Bench 2)",
+      disabled: true,
+      reason: null,
+    },
+  ];
+  const TRAINERS: TurnPhase["trainers"] = [
+    { uid: "t1", name: "Professor's Research", disabled: false, reason: null },
+    { uid: "t2", name: "Boss's Orders", disabled: true, reason: "No legal target" },
+  ];
+
+  it("dispatches useAbility (seat + target + name) on an enabled ability row", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: turnAction({ abilities: ABILITIES }),
+          you: { active: inPlay("chien", "Chien-Pao ex") },
+        })}
+        waitingOn="you"
+        activePlaced
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Shivery Chill · Chien-Pao ex \(Active\)/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "active" },
+      abilityName: "Shivery Chill",
+    });
+    // The Active-only copy sitting on the Bench is a disabled row — a click on it
+    // dispatches nothing.
+    onAction.mockClear();
+    const benched = screen.getByRole<HTMLButtonElement>("button", {
+      name: /Shivery Chill · Chien-Pao ex \(Bench 2\)/,
+    });
+    expect(benched.disabled).toBe(true);
+    fireEvent.click(benched);
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
+  it("dispatches playTrainer (seat + uid) on an enabled trainer row, greying the whiff", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: turnAction({ trainers: TRAINERS }),
+          you: { active: inPlay("chien", "Chien-Pao ex") },
+        })}
+        waitingOn="you"
+        activePlaced
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Professor's Research" }));
+    expect(onAction).toHaveBeenCalledWith({ type: "playTrainer", seat: "p1", uid: "t1" });
+    // Boss's Orders whiffs (server-folded), so its row is disabled and carries the
+    // reason for a screen reader.
+    const boss = screen.getByRole<HTMLButtonElement>("button", { name: "Boss's Orders" });
+    expect(boss.disabled).toBe(true);
+    expect(screen.getByText("No legal target")).toBeTruthy();
+    onAction.mockClear();
+    fireEvent.click(boss);
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
+  it("renders no ability/trainer sections when the lists are empty", () => {
+    render(
+      <OnlineHud
+        game={game({
+          phase: turnAction(),
+          you: { active: inPlay("chien", "Chien-Pao ex") },
+        })}
+        waitingOn="you"
+        activePlaced
+        onAction={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("Abilities")).toBeNull();
+    expect(screen.queryByText("Trainers")).toBeNull();
   });
 });
 

@@ -164,6 +164,68 @@ export const redactedRetreatSchema = z.object({
 });
 export type RedactedRetreat = z.infer<typeof redactedRetreatSchema>;
 
+/** A seatless in-play spot on the acting viewer's OWN side — the wire mirror of
+    the engine's `PokemonTarget` (which is exactly `RedactedPokemonRef.spot`, kept
+    a standalone union here rather than shared to keep that ref's discriminated
+    inference untouched). The `useAbility` action (increment 3b) dispatches one back
+    VERBATIM: an Ability is always on the actor's own board, so no seat is carried
+    (the DO rebinds the acting seat regardless). */
+export const redactedPokemonTargetSchema = z.discriminatedUnion("spot", [
+  z.object({ spot: z.literal("active") }),
+  z.object({ spot: z.literal("bench"), index: z.number() }),
+]);
+export type RedactedPokemonTarget = z.infer<typeof redactedPokemonTargetSchema>;
+
+/** An activated Ability on one of the acting viewer's OWN in-play Pokémon, with
+    server-computed playability — the online turn HUD (increment 3b) renders a
+    button per entry without ever reading the full state the local HUD's
+    `usableAbilities` does (§9 Active-only + the §9/§15.J once-per-turn flag + the
+    §7.5 hand cost + the would-only-whiff `programPlayable` gate — over raw
+    allowances, the own hand, both boards, and the Stadium's OWNER, none of which
+    the wire carries whole). `disabled` folds ALL of those gates into ONE boolean
+    EXACTLY as the local Ability row's `disabled` — so the client needs no engine
+    logic. `reason` is the printed clause a GREYED row shows as its tooltip (a §7.5
+    hand cost or "No legal target"), null when the row is enabled or the disable is
+    self-evident (Active-only / already-used). `target` is the seatless
+    `PokemonTarget` the `useAbility` action dispatches back verbatim; `abilityName`
+    the printed name (a card may carry more than one); `label` the display string
+    ("Name · Card (Active)"), which disambiguates two copies of the same card. Only
+    the acting viewer's OWN abilities appear (their own public board + own hand
+    cost — nothing hidden), and only while it is their `turn:action` — [] for the
+    non-acting viewer, who cannot use an Ability. */
+export const redactedAbilitySchema = z.object({
+  target: redactedPokemonTargetSchema,
+  abilityName: z.string(),
+  label: z.string(),
+  disabled: z.boolean(),
+  reason: z.string().nullable(),
+});
+export type RedactedAbility = z.infer<typeof redactedAbilitySchema>;
+
+/** A non-Stadium Trainer (Item/Supporter) playable from the acting viewer's OWN
+    hand, with server-computed playability — the online turn HUD (increment 3b)
+    renders a button per DISTINCT card without reading the full state the local
+    HUD's `playableTrainers` does. `disabled` folds the §4 first-turn Supporter ban
+    + §7.2 one-Supporter-per-turn, the printed `trainerPlayableIf` board gate
+    (`conditionHolds` — reads prize counts + the Stadium OWNER the wire withholds),
+    the §7.5 hand cost (`handCostUnmet`), and the would-only-whiff `programPlayable`
+    gate into ONE boolean EXACTLY as the local Trainer row's `disabled`. `reason`
+    is the printed/engine clause a GREYED row shows ("Only if …" / "No legal
+    target"), null when enabled or self-evident (the §4/§7.2 timing). `uid` is the
+    hand uid the `playTrainer` action dispatches back (already on the viewer's own
+    face-up hand); `name` the display name. STADIUMS are NOT here — they play by
+    the board DRAG (the 2a `moveToAction` path onto the shared slot) — and RARE
+    CANDY is excluded (it needs its own two-step Basic/Stage-2 dialog + the
+    `rareCandy` action; deferred). Only the acting viewer's OWN hand appears, and
+    only during their `turn:action` — [] for the non-acting viewer. */
+export const redactedTrainerSchema = z.object({
+  uid: z.string(),
+  name: z.string(),
+  disabled: z.boolean(),
+  reason: z.string().nullable(),
+});
+export type RedactedTrainer = z.infer<typeof redactedTrainerSchema>;
+
 /** A specific in-play Pokémon a prompt refers to — the wire mirror of the
     engine's `PokemonRef`. Its `seat` is ABSOLUTE (p1/p2), NOT viewer-relative
     like the rest of RedactedGame, and deliberately: these refs must round-trip
@@ -340,6 +402,12 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
     kind: z.literal("turn:action"),
     attacks: z.array(redactedAttackSchema),
     retreat: redactedRetreatSchema.nullable(),
+    /** The acting viewer's own activated Abilities + non-Stadium Trainers, each
+        with server-folded playability (increment 3b); [] for the non-acting
+        viewer. Like `attacks`, they never enter the playmat projection, so the
+        `projectionFromRedacted ≡ projectGameState` round-trip is untouched. */
+    abilities: z.array(redactedAbilitySchema),
+    trainers: z.array(redactedTrainerSchema),
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),

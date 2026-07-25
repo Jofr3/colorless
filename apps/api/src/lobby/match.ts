@@ -86,32 +86,35 @@ export interface MatchRecord {
     the `moveToAction` turn drags (attach energy, bench a Basic, evolve, attach a
     Tool, play a Stadium), pass, the attack + KO loop (increment 2b-i — `attack`,
     then the KOing player's `takePrizes` and the KO'd player's `promote`),
-    `retreat` (2b-ii), and the effect:choose answer `resolveEffect` (2b-iii-c). The
-    DO rejects everything else — so a crafted frame can't push the match into a
+    `retreat` (2b-ii), the effect:choose answer `resolveEffect` (2b-iii-c), and —
+    from increment 3b — the activated Ability + non-Stadium Trainer plays
+    (`useAbility` newly ON; `playTrainer` was already on but only the Stadium DRAG
+    reached it, and now the OnlineHud turn panel sends it for Items/Supporters too).
+    The DO rejects everything else — so a crafted frame can't push the match into a
     phase the online HUD renders no control for (a soft-lock; griefing-class).
 
-    STILL OFF, DEFERRED TO 3b: **`useAbility`**. As of increment 3a the lobby loads
-    each player's REAL chosen deck (not the old fixed basic decks), so a deck can
-    now carry abilities AND non-Stadium trainers (Supporters/Items). But the online
-    HUD has no affordance for either yet — abilities (`useAbility`, off this set)
-    and non-Stadium trainer PLAY (no button; `playTrainer` is on the set but only
-    the Stadium DRAG sends it) — so a deck that NEEDS one to progress can stall (the
-    known 3b gap: the ability/trainer HUD is the next sub-slice). This is a missing
-    affordance, not a soft-lock the engine can't recover from.
+    STILL DEFERRED (a missing affordance, not a soft-lock the engine can't recover
+    from): **`rareCandy`**. It is a Trainer that EVOLVES via its own action + a
+    two-step Basic/Stage-2 dialog reading `rareCandyOptions` off the full state, so
+    it needs its own wire surface — a follow-up sub-slice — and stays off this set;
+    a deck that NEEDS Rare Candy to progress can still stall on that one play.
+    `redactedTrainersOf` (redact.ts) deliberately omits Rare Candy from the wire
+    trainer list so no dead button is offered.
 
-    SEQUENCING (allowing `attack` is only soft-lock-safe because an effect:choose
-    park it reaches must have an online dialog): an `attack` is accepted and let
-    park wherever the engine takes it — with an EFFECT attack that is effect:choose.
-    The invariant is "`resolveEffect` on this set ⟺ EVERY effect prompt kind has an
-    online dialog." 2b-iii dialoged all seven kinds (a/b/c), so `resolveEffect` is
-    ON and a real-deck effect attack that parks at effect:choose drives to
-    completion — the precondition real deck selection (3a) relied on, now MET.
-    (`retreat` never carried the caveat — it only discards energy + promotes a
-    Bench Pokémon, never parking at a decision, so it is soft-lock-safe with ANY
-    deck.) `resolveEffect` itself is soft-lock-safe on any deck: `applyAction`
-    rejects it off an effect:choose park, and on one it validates the choice
-    against the parked prompt (validateChoice) before applying — a crafted frame
-    rejects, never crashes/soft-locks. */
+    SEQUENCING (allowing `attack`/`useAbility`/`playTrainer` is only soft-lock-safe
+    because an effect:choose park they reach must have an online dialog): each is
+    accepted and let park wherever the engine takes it — with an EFFECT attack /
+    ability / trainer that is effect:choose. The invariant is "`resolveEffect` on
+    this set ⟺ EVERY effect prompt kind has an online dialog." 2b-iii dialoged all
+    seven kinds (a/b/c), so `resolveEffect` is ON and a real-deck effect play that
+    parks at effect:choose drives to completion — the precondition real deck
+    selection (3a) relied on, now MET. (`retreat` never carried the caveat — it only
+    discards energy + promotes a Bench Pokémon, never parking at a decision, so it
+    is soft-lock-safe with ANY deck; `useAbility`/`playTrainer` DO park, which is
+    exactly why they wait for the dialoged effect layer.) `resolveEffect` itself is
+    soft-lock-safe on any deck: `applyAction` rejects it off an effect:choose park,
+    and on one it validates the choice against the parked prompt (validateChoice)
+    before applying — a crafted frame rejects, never crashes/soft-locks. */
 export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
   "chooseFirstPlayer",
   "setupDrawExtra",
@@ -123,6 +126,7 @@ export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
   "evolve",
   "attachTool",
   "playTrainer",
+  "useAbility",
   "attack",
   "takePrizes",
   "promote",

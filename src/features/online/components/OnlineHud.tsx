@@ -1,6 +1,7 @@
 import type { GameAction } from "@luminous/engine";
 import { otherSeat } from "@luminous/engine";
 import type {
+  RedactedAbility,
   RedactedAttack,
   RedactedBoard,
   RedactedEffectPrompt,
@@ -8,6 +9,7 @@ import type {
   RedactedInPlay,
   RedactedPokemonRef,
   RedactedRetreat,
+  RedactedTrainer,
   MatchSeat,
 } from "@luminous/schema";
 import { useEffect, useRef, useState } from "react";
@@ -37,9 +39,13 @@ import type { PlayerId } from "../../playmat/types";
 // controller's own deck/top cards: the server puts a full `RedactedCard` per
 // candidate on the wire (the reveal), sent to the controller alone, so the dialog
 // names them straight off the prompt rather than the board. Every EffectPrompt
-// kind now has an online dialog. Abilities / non-Stadium trainers read state the
-// wire still withholds (and the fixed decks can't exercise them) — they land with
-// real decks (increment 3); the pass control lives in PlaymatView's TurnControls.
+// kind now has an online dialog. From increment 3b the turn:action panel also
+// carries the acting viewer's activated Abilities + non-Stadium Trainers, each
+// with a server-folded `disabled` flag + greyed-row `reason` (the same
+// programPlayable / conditionHolds / handCostUnmet the local HUD reads off the
+// full state, computed server-side and shipped as the result) — dispatching
+// `useAbility` / `playTrainer`. Stadiums still play by the board drag and Rare
+// Candy is deferred. The pass control lives in PlaymatView's TurnControls.
 //
 // Every panel is gated on `waitingOn === "you"` (the D17 rule the local HUD uses)
 // so a prompt never appears on the wrong screen, and the actions carry the
@@ -135,6 +141,8 @@ export function OnlineHud({
           bench={game.board.you.bench}
           attacks={game.phase.attacks}
           retreat={game.phase.retreat}
+          abilities={game.phase.abilities}
+          trainers={game.phase.trainers}
           firstTurn={game.turn === 1}
           seat={seat}
           onAction={onAction}
@@ -1013,15 +1021,20 @@ function AttachCardsDialog({
 /** The turn:action panel: the viewer's Active, a button per printed attack
     (disabled off the server-computed `playable` flag — §8.2 payability + the §4
     ban + §12 immobilize, all folded server-side, so the client adds no rule
-    logic), and the retreat entry point (disabled off the server-computed
-    `retreat.can`, opening the RetreatDialog). Bottom-right, clear of the pass
-    control, mirroring the local TurnPanel. Abilities / non-Stadium trainers land
-    with real decks (they need cards the fixed decks don't have). */
+    logic), the activated Abilities + non-Stadium Trainers (increment 3b — each
+    disabled off a server-folded `disabled` flag with the greyed row's `reason`
+    tooltip, dispatching `useAbility` / `playTrainer`), and the retreat entry point
+    (disabled off the server-computed `retreat.can`, opening the RetreatDialog).
+    Bottom-right, clear of the pass control, mirroring the local TurnPanel. Stadiums
+    play by the board DRAG (not a button here) and Rare Candy is deferred, so
+    neither appears in `trainers`. */
 function AttackPanel({
   active,
   bench,
   attacks,
   retreat,
+  abilities,
+  trainers,
   firstTurn,
   seat,
   onAction,
@@ -1030,6 +1043,8 @@ function AttackPanel({
   bench: readonly RedactedInPlay[];
   attacks: readonly RedactedAttack[];
   retreat: RedactedRetreat | null;
+  abilities: readonly RedactedAbility[];
+  trainers: readonly RedactedTrainer[];
   firstTurn: boolean;
   seat: MatchSeat;
   onAction: (action: GameAction) => void;
@@ -1082,6 +1097,63 @@ function AttackPanel({
         </ul>
         {firstTurn && (
           <p className="mt-2 text-[11px] text-white/45">No attacking on the first turn (§4).</p>
+        )}
+        {abilities.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Abilities
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {abilities.map((opt) => (
+                // `title` on the LI (a disabled button is out of the tab order)
+                // with an sr-only twin, since the §7.5 cost can grey this row too —
+                // the local GameHud's doctrine, over the wire shape.
+                <li
+                  key={`${opt.abilityName}-${opt.target.spot === "bench" ? opt.target.index : "active"}`}
+                  title={opt.reason ?? undefined}
+                >
+                  <button
+                    type="button"
+                    disabled={opt.disabled}
+                    onClick={() =>
+                      onAction({
+                        type: "useAbility",
+                        seat,
+                        target: opt.target,
+                        abilityName: opt.abilityName,
+                      })
+                    }
+                    className={`${ROW_BUTTON_BASE} ${opt.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                  {opt.reason !== null && <span className="sr-only">{opt.reason}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {trainers.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Trainers
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {trainers.map((opt) => (
+                <li key={opt.uid} title={opt.reason ?? undefined}>
+                  <button
+                    type="button"
+                    disabled={opt.disabled}
+                    onClick={() => onAction({ type: "playTrainer", seat, uid: opt.uid })}
+                    className={`${ROW_BUTTON_BASE} ${opt.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{opt.name}</span>
+                  </button>
+                  {opt.reason !== null && <span className="sr-only">{opt.reason}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         {retreat !== null && (
           <div className="mt-3 flex justify-end">

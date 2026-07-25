@@ -34,7 +34,7 @@ function active(name: string): RedactedInPlay {
 const GAME: RedactedGame = {
   seat: "p1",
   turn: 3,
-  phase: { kind: "turn:action", attacks: [], retreat: null },
+  phase: { kind: "turn:action", attacks: [], retreat: null, abilities: [], trainers: [] },
   board: {
     stadium: null,
     you: {

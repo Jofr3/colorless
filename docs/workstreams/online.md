@@ -383,6 +383,43 @@ claim too, leaving the seat unbound); a same-tab account SWITCH is locked out fo
 (recoverable in a new tab); `SEAT_USERS_KEY` grows unpruned across repeated guest-takeovers (bounded, TTL-
 cleared).
 
+**Increment 3b — DONE:** the online ability + non-Stadium trainer HUD (D70, engine 0.40.0). Real decks
+(3a) made abilities + Supporters/Items reachable, but the online turn HUD had no affordance for them
+(`useAbility` off the allowlist; only the Stadium DRAG sent `playTrainer`) — a deck needing one could
+stall. Closed by the SAME server-compute-then-ship pattern as `attacks`/`retreat` (2b-i/ii):
+`RedactedPhase.turn:action` gained **`abilities`** (`RedactedAbility` — `target`/`abilityName`/`label`/
+`disabled`/`reason`) + **`trainers`** (`RedactedTrainer` — `uid`/`name`/`disabled`/`reason`), each a
+server-folded playability boolean + a greyed-row reason string. The engine's `redactPhase` fills them via
+new **`redactedAbilitiesOf`/`redactedTrainersOf`** (redact.ts), mirroring the local `usableAbilities`/
+`playableTrainers` field-for-field: the §9 Active-only + once-per-turn (`abilitiesUsed`) gates, the §4/§7.2
+Supporter timing, the printed `trainerPlayableIf` board gate (`conditionHolds`), the §7.5 hand cost
+(`handCostUnmet`), and the would-only-whiff `programPlayable` gate — ALL read the full state (the Stadium
+OWNER, prize counts, the own hand the wire withholds), so folding them SERVER-SIDE and shipping only the
+result is what keeps them off the wire. Emitted to the ACTING viewer ONLY ([] for the opponent — the
+`viewerSeat !== turnSeat` gate, like attacks), and everything read is the actor's own public board + own
+hand, so nothing hidden leaves the DO. `RedactedAbility.target` is the seatless `PokemonTarget` `useAbility`
+dispatches back verbatim (a new standalone `redactedPokemonTargetSchema`, kept separate from
+`RedactedPokemonRef` to leave its discriminated inference untouched). The lists NEVER enter the playmat
+projection (`decisionFromPhase` keeps `turn:action`→null), so the `projectionFromRedacted ≡ projectGameState`
+round-trip is untouched (pinned with a POPULATED turn:action). `OnlineHud`'s AttackPanel gained the
+Abilities + Trainers sections (restated from GameHud over the wire shape — the reason as an LI `title` +
+sr-only twin, the disabled greying), dispatching `useAbility`/`playTrainer`; **`SUPPORTED_MATCH_ACTIONS`
+grew by `useAbility`** (`playTrainer` was already on for the Stadium drag). **SCOPED — Rare Candy DEFERRED:**
+`redactedTrainersOf` omits Stadiums (they play by the 2a board drag) AND Rare Candy (its `rareCandy` action
+needs its own two-step Basic/Stage-2 dialog reading `rareCandyOptions` off the full state — a follow-up
+sub-slice), so no dead button is offered; a Rare-Candy-dependent deck can still stall on that ONE play.
+engine RULES UNCHANGED (a transport/read surface); 1790 → **1803** tests (redact ability/trainer passthrough
++ actor-gate + Stadium/RareCandy exclusion + dedup + first-turn ban, a populated-turn:action round-trip,
+3 OnlineHud DOM dispatch/disabled/reason cases, the match.test allowlist update), `bun run check` green.
+**Still unverified:** a two-client browser run with an ability/trainer deck (the surface is test-only — the
+prior fixed decks had neither; a real-deck lobby would exercise it end-to-end, not yet done).
+**Review (1 read-only adversarial reviewer): NO HIGH, NO MED** — all six properties HOLD (leak/actor-gate +
+own-side-only reads, field-for-field local-HUD fidelity, off-phase reject + park-completion soft-lock safety,
+round-trip untouched, dispatch shapes, purity). **1 LOW FIXED** (a two-activated-ability card shared one
+`target` literal per row → now a fresh per-row rebuild); **1 LOW RECORDED** (an Ability is the first online
+play that can reach the moveEnergy/discardEnergy/choosePokemonMulti parks — newly-reachable surface, no break
+found, covered by the browser-run caveat). See D70.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -512,13 +549,18 @@ until 1c broadcasts the redacted view.
     claimed it (`seatClaimAllowed` + a DO-only `SEAT_USERS_KEY`), refusing a hello that replays a bound
     seat's public playerId without its session — closes the D60 L2 bearer-only-seat HAND leak that real
     decks made meaningful. A second review confirmed the leak closed with no legit reconnect broken.
-  - **3b — the online ability + non-Stadium trainer HUD (NEXT):** real decks make abilities +
-    Supporters/Items reachable, but the online HUD has no button for them and `useAbility` is off the
-    allowlist, so such a deck can stall. Put the playable ability/trainer options + their greyed/reason on
-    the wire (they read the FULL GameState — `programPlayable`/`conditionHolds`/`handCostUnmet`,
-    `index.ts:288-320` — WITHOUT leaking prize counts / the Stadium owner / the hand), add the OnlineHud
-    buttons, and grow `SUPPORTED_MATCH_ACTIONS` by `useAbility` (Stadium already drives via the 2a drag).
-  - **3c+ — reconnect/timeouts, concede/rematch, spectate**, and the DO-storage-migration hardening the
+  - **3b — the online ability + non-Stadium trainer HUD. DONE** (D70, see Status above): the
+    `RedactedPhase.turn:action` gained **`abilities`** (`RedactedAbility`) + **`trainers`**
+    (`RedactedTrainer`), each a server-folded `disabled` + greyed-row `reason` computed in
+    `redactedAbilitiesOf`/`redactedTrainersOf` (redact.ts) EXACTLY like the local `usableAbilities`/
+    `playableTrainers` — the `programPlayable`/`conditionHolds`/`handCostUnmet` reads stay server-side
+    (so the Stadium owner / prize counts / own hand never need to cross), emitted to the acting viewer
+    only ([] for the opponent). `OnlineHud`'s turn panel gained the Abilities + Trainers sections
+    (`useAbility`/`playTrainer`), and `SUPPORTED_MATCH_ACTIONS` grew by `useAbility`. STADIUMS still play
+    by the 2a board drag; **Rare Candy is DEFERRED** (its own two-step dialog + the `rareCandy` action —
+    a follow-up), and `redactedTrainersOf` omits it so no dead button is offered.
+  - **3c+ — reconnect/timeouts, concede/rematch, spectate**, the ONLINE RARE CANDY (the deferred 3b
+    affordance), and the DO-storage-migration hardening the
     2b-iii-d-ii LOW deferred (default missing MatchRecord fields on read).
 
 ## What already exists (reuse it)

@@ -23,6 +23,7 @@
 // deck-card identities, so the answerer gate is the hidden-info barrier there.
 
 import type {
+  RedactedAbility,
   RedactedAttack,
   RedactedCard,
   RedactedDiscardScope,
@@ -34,15 +35,27 @@ import type {
   RedactedPokemonRef,
   RedactedRetreat,
   RedactedSide,
+  RedactedTrainer,
   Viewer,
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { costMet } from "./attack";
+import { programPlayable } from "./cardplay";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import { effectiveAttackCost, effectiveMaxHp, effectiveRetreatCost, providedEnergy } from "./continuous";
 import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
+import { conditionHolds, conditionNote, handCostAction, handCostUnmet } from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
-import type { GameOutcome, GameState, InPlayPokemon, Phase, Seat, SpecialConditions } from "./types";
+import { programFor } from "./registry";
+import type {
+  GameOutcome,
+  GameState,
+  InPlayPokemon,
+  Phase,
+  PokemonTarget,
+  Seat,
+  SpecialConditions,
+} from "./types";
 import { isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
@@ -90,12 +103,15 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
       };
     case "turn:action":
       // turn:action's actor is phase.seat (phaseView) — only they get an attack
-      // list and a retreat option; the opponent's view of the same phase carries
-      // neither (empty attacks, null retreat).
+      // list, a retreat option and an ability/trainer list; the opponent's view
+      // of the same phase carries none (empty attacks/abilities/trainers, null
+      // retreat).
       return {
         kind: "turn:action",
         attacks: redactedAttacksOf(state, viewerSeat, phase.seat),
         retreat: redactedRetreatOf(state, viewerSeat, phase.seat),
+        abilities: redactedAbilitiesOf(state, viewerSeat, phase.seat),
+        trainers: redactedTrainersOf(state, viewerSeat, phase.seat),
       };
     case "ko:takePrizes":
       return { kind: "ko:takePrizes", count: phase.count };
@@ -295,6 +311,128 @@ function redactedRetreatOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): 
     state.players[viewerSeat].bench.length > 0 &&
     active.energy.length >= cost;
   return { cost, can };
+}
+
+/** The acting viewer's activated Abilities with server-computed playability, for
+    the online turn HUD (increment 3b) — [] for the opponent (only the turn owner
+    may use one). Mirrors GameHud's `usableAbilities` on the full state the wire
+    withholds: it walks the viewer's OWN Active + Bench, enumerates each stack-top
+    card's activated `abilities` (never passive/triggered), and folds the §9
+    Active-only gate, the §9/§15.J once-per-turn `abilitiesUsed` flag, the §7.5
+    hand cost (`handCostUnmet` — reads the OWN hand) and the would-only-whiff
+    `programPlayable` gate into ONE `disabled` boolean, EXACTLY as the local Ability
+    row — so the client needs no engine logic. Everything read is the viewer's own
+    public board + own hand, and it is emitted only to the actor, so nothing hidden
+    leaves the DO. `target` is a fresh seatless `PokemonTarget` literal (no alias
+    into state — the redactor's purity contract) the `useAbility` action dispatches
+    back verbatim. */
+function redactedAbilitiesOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedAbility[] {
+  if (viewerSeat !== turnSeat) return [];
+  const side = state.players[viewerSeat];
+  const out: RedactedAbility[] = [];
+  const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {
+    if (pokemon === null) return;
+    const uid = topUid(pokemon);
+    const card = uid === undefined ? undefined : cardOfUid(state, uid);
+    if (uid === undefined || card === undefined) return;
+    for (const ability of programFor(card.id)?.abilities ?? []) {
+      // No excludeUid: an Ability's card is on the BOARD, not the hand it pays out
+      // of (which is why none of these cards prints the Trainer's "other").
+      const costUnmet = handCostUnmet(state, viewerSeat, ability.program);
+      const noTarget = !programPlayable(state, ability.program, viewerSeat);
+      const disabled =
+        (ability.activeOnly && target.spot !== "active") ||
+        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
+        costUnmet !== null ||
+        noTarget;
+      const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
+      out.push({
+        // A FRESH target per row (never the shared `consider` param — a card with
+        // two activated abilities would otherwise alias one literal across both
+        // rows), rebuilt explicitly like redactedRefOf — the redactor's no-alias
+        // purity contract.
+        target:
+          target.spot === "active" ? { spot: "active" } : { spot: "bench", index: target.index },
+        abilityName: ability.name,
+        // Disambiguates two copies of the same card carrying the same Ability
+        // (Skwovet ×2) by its board position, exactly as the local list does.
+        label: `${ability.name} · ${card.name} (${where})`,
+        disabled,
+        // The printed clause a greyed row shows; null when enabled or the disable
+        // is self-evident (Active-only / already-used), matching the local row.
+        reason:
+          costUnmet !== null
+            ? `Only if you ${handCostAction(costUnmet, false)}`
+            : noTarget
+              ? "No legal target"
+              : null,
+      });
+    }
+  };
+  consider(side.active, { spot: "active" });
+  side.bench.forEach((pokemon, index) => consider(pokemon, { spot: "bench", index }));
+  return out;
+}
+
+/** The acting viewer's non-Stadium Trainers (Items/Supporters) playable from
+    their OWN hand, with server-computed playability, for the online turn HUD (3b)
+    — [] for the opponent. Mirrors GameHud's `playableTrainers` on the full state
+    the wire withholds, deduped to one entry per distinct card, EXCLUDING the two
+    that aren't a plain `playTrainer` button online: STADIUMS play by the board
+    DRAG (the 2a moveToAction path — offered here would double the affordance), and
+    RARE CANDY needs its own two-step dialog + the `rareCandy` action (deferred).
+    (Tools are drag gestures too, and fall out on `program.trainer === undefined`.)
+    `disabled` folds the §4 first-turn Supporter ban + §7.2 one-per-turn, the
+    printed `trainerPlayableIf` board gate (`conditionHolds` reads prize counts +
+    the Stadium OWNER the wire withholds), the §7.5 hand cost (`handCostUnmet`, the
+    played uid excluded — the printed "OTHER cards") and the would-only-whiff
+    `programPlayable` gate into ONE boolean, EXACTLY as the local Trainer row. Every
+    input is the viewer's own hand + public counts/boards, emitted only to the
+    actor, so nothing hidden leaves the DO. `uid` (already on the viewer's own
+    face-up hand) is what the `playTrainer` action dispatches back. */
+function redactedTrainersOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedTrainer[] {
+  if (viewerSeat !== turnSeat) return [];
+  const side = state.players[viewerSeat];
+  const seen = new Set<string>();
+  const out: RedactedTrainer[] = [];
+  for (const uid of side.hand) {
+    const card = cardOfUid(state, uid);
+    if (card === undefined || card.category !== "Trainer" || seen.has(card.id)) continue;
+    const program = programFor(card.id);
+    if (program === undefined) continue;
+    // Stadium (drag) / Rare Candy (deferred) are not plain buttons — skip both.
+    if (program.rareCandy === true || card.trainerType === "Stadium") continue;
+    // No Item/Supporter play path (a Tool, or an unauthored Trainer) — not offered;
+    // the coverage strategy surfaces it as "not simulated" on attempt.
+    if (program.trainer === undefined) continue;
+    seen.add(card.id);
+    const isSupporter = card.trainerType === "Supporter";
+    const gated = program.trainerPlayableIf;
+    const gateUnmet = gated !== undefined && !conditionHolds(state, viewerSeat, gated);
+    const costUnmet = handCostUnmet(state, viewerSeat, program.trainer, uid);
+    const noTarget = !programPlayable(state, program.trainer, viewerSeat);
+    const disabled =
+      gateUnmet ||
+      costUnmet !== null ||
+      noTarget ||
+      (isSupporter && (state.turn === 1 || state.allowances.supporterPlayed));
+    out.push({
+      uid,
+      name: card.name,
+      disabled,
+      // The printed/engine clause a greyed row shows; null when enabled or the
+      // disable is self-evident (the §4/§7.2 timing), matching the local row.
+      reason:
+        gateUnmet && gated !== undefined
+          ? `Only if ${conditionNote(gated)}`
+          : costUnmet !== null
+            ? `Only if you ${handCostAction(costUnmet, true)}`
+            : noTarget
+              ? "No legal target"
+              : null,
+    });
+  }
+  return out;
 }
 
 /** How much of a side the viewer may see. The two redactions are independent:

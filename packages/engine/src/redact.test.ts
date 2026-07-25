@@ -9,13 +9,19 @@ import { EMPTY_CARD_ID, HIDDEN_CARD_ID, HIDDEN_CARD_NAME, type RedactedGame } fr
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 import { redactGame } from "./redact";
 import {
+  ABILITY_DECK,
   MIXED_DECK,
+  RARE_CANDY_DECK,
+  STADIUM_TOOL_DECK,
+  TRAINER_DECK,
   attachFromDeck,
   deckOf,
   driveSetup,
+  handFromDeck,
   handUid,
   mustApply,
   mustCreate,
+  setActiveFromDeck,
   setConditions,
   setDamage,
   setPrizes,
@@ -280,6 +286,10 @@ describe("redactGame — the redacted phase (the action-routing discriminant)", 
       kind: "turn:action",
       attacks: [],
       retreat: { cost: 1, can: false },
+      // fix-basic-1 has no ability; MIXED_DECK's fix-item is unauthored, so no
+      // playable-trainer row either (a Tool/unauthored Trainer is never offered).
+      abilities: [],
+      trainers: [],
     });
   });
 
@@ -361,7 +371,13 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
     // p1's turn 3; p2 sees the same turn:action phase but carries no attacks and
     // a null retreat.
     const phase = redactGame(attackerBoard(1, true), "p2").phase;
-    expect(phase).toEqual({ kind: "turn:action", attacks: [], retreat: null });
+    expect(phase).toEqual({
+      kind: "turn:action",
+      attacks: [],
+      retreat: null,
+      abilities: [],
+      trainers: [],
+    });
   });
 
   it("marks every attack unplayable on the §4 first turn, even a payable one", () => {
@@ -440,6 +456,150 @@ describe("redactGame — turn:action retreat option (the online HUD's retreat ga
     const base = withEnergy(turnOneState(), 1);
     const retreated: GameState = { ...base, allowances: { ...base.allowances, retreated: true } };
     expect(retreatOf(retreated)).toEqual({ cost: 1, can: false });
+  });
+});
+
+// The online turn HUD (increment 3b) renders activated-Ability + non-Stadium
+// Trainer buttons off the redacted phase, so the redactor folds each option's
+// playability server-side over the full state the wire withholds (the own hand,
+// prize counts, the Stadium owner) EXACTLY the way GameHud's usableAbilities /
+// playableTrainers do — and emits them ONLY to the acting viewer.
+describe("redactGame — turn:action ability options (increment 3b)", () => {
+  /** p2 first → p1's turn 2, with Chien-Pao ex (its activated "Shivery Chill")
+      surgically forced as p1's Active (the ABILITY_DECK's fixture ability card). */
+  function abilityBoard(): GameState {
+    let state = driveSetup(3, { p1: ABILITY_DECK, p2: ABILITY_DECK }, { first: "p2" });
+    state = setActiveFromDeck(state, "p1", "sv02-061");
+    return mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  }
+
+  it("lists the acting viewer's own activated abilities, playability folded", () => {
+    const phase = redactGame(abilityBoard(), "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    // Shivery Chill (search up to 2 Basic {W} Energy → hand) has no hand cost and
+    // always has a legal use, so it is enabled with no greying reason; the target
+    // is the seatless PokemonTarget useAbility dispatches back.
+    expect(phase.abilities).toEqual([
+      {
+        target: { spot: "active" },
+        abilityName: "Shivery Chill",
+        label: "Shivery Chill · Chien-Pao ex (Active)",
+        disabled: false,
+        reason: null,
+      },
+    ]);
+  });
+
+  it("gives the NON-acting viewer no ability list (only the turn owner acts)", () => {
+    const phase = redactGame(abilityBoard(), "p2").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    // The acting seat's own hand + board decide the list, so it must never cross
+    // to the opponent — their view of the same turn:action carries none.
+    expect(phase.abilities).toEqual([]);
+  });
+
+  it("greys an activeOnly ability sitting on the Bench (self-evident, no reason)", () => {
+    // A second Chien-Pao ex benched: Shivery Chill is Active-only, so its Bench
+    // copy is a disabled row with no tooltip (the §9 gate is self-evident). It
+    // lands at Bench index 1 — setActiveFromDeck displaced the opening Active to
+    // Bench 0 first.
+    let state = driveSetup(3, { p1: ABILITY_DECK, p2: ABILITY_DECK }, { first: "p2" });
+    state = setActiveFromDeck(state, "p1", "sv02-061");
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv02-061", 1);
+    const benchUid = handUid(state, "p1", "sv02-061");
+    state = mustApply(state, { type: "playBasicToBench", seat: "p1", uid: benchUid }).state;
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.abilities).toContainEqual({
+      target: { spot: "bench", index: 1 },
+      abilityName: "Shivery Chill",
+      label: "Shivery Chill · Chien-Pao ex (Bench 2)",
+      disabled: true,
+      reason: null,
+    });
+  });
+});
+
+// The non-Stadium Trainer half of increment 3b — the acting viewer's Item/
+// Supporter hand cards, deduped, each with folded playability. Stadiums (the
+// board drag) and Rare Candy (deferred) are deliberately excluded.
+describe("redactGame — turn:action trainer options (increment 3b)", () => {
+  it("lists Item/Supporter hand cards with folded playability + greying reasons", () => {
+    // p1's turn 2 (Supporters legal), p2 with no Bench: Professor's Research is a
+    // clean enabled Supporter; Boss's Orders (gust an opponent Benched Pokémon)
+    // whiffs into the empty Bench, so it greys with "No legal target".
+    let state = driveSetup(1, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-189", 1);
+    state = handFromDeck(state, "p1", "sv02-172", 1);
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.trainers).toContainEqual({
+      uid: handUid(state, "p1", "sv01-189"),
+      name: "sv01-189",
+      disabled: false,
+      reason: null,
+    });
+    expect(phase.trainers).toContainEqual({
+      uid: handUid(state, "p1", "sv02-172"),
+      name: "sv02-172",
+      disabled: true,
+      reason: "No legal target",
+    });
+  });
+
+  it("disables a Supporter on the §4 first turn (self-evident, no reason)", () => {
+    // p1 goes first: turn 1 is p1's, so a Supporter is banned — a greyed row with
+    // no tooltip (the §4 timing needs none).
+    let state = driveSetup(1, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" });
+    state = handFromDeck(state, "p1", "sv01-189", 1);
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.trainers).toContainEqual({
+      uid: handUid(state, "p1", "sv01-189"),
+      name: "sv01-189",
+      disabled: true,
+      reason: null,
+    });
+  });
+
+  it("dedupes to one row per distinct card even with copies in hand", () => {
+    let state = driveSetup(1, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-189", 2); // two Professor's Research
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.trainers.filter((t) => t.name === "sv01-189")).toHaveLength(1);
+  });
+
+  it("gives the NON-acting viewer no trainer list (their hand never crosses here)", () => {
+    let state = driveSetup(1, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-189", 1);
+    const phase = redactGame(state, "p2").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.trainers).toEqual([]);
+  });
+
+  it("omits Stadiums — they play by the board drag, not a button", () => {
+    // Beach Court is an authored Stadium; it must NOT appear in the wire trainer
+    // list (the 2a moveToAction drag onto the shared slot drives it instead).
+    let state = driveSetup(1, { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-167", 1);
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.trainers.some((t) => t.name === "sv01-167")).toBe(false);
+  });
+
+  it("omits Rare Candy — its own dialog + action are deferred", () => {
+    let state = driveSetup(1, { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-191", 1);
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.trainers.some((t) => t.name === "sv01-191")).toBe(false);
   });
 });
 
