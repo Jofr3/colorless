@@ -9,6 +9,7 @@ const deckRow: DeckRow = {
   name: "Charizard ex",
   format: "standard",
   tint: 22,
+  coverCardId: null,
   position: -3,
   updated: new Date("2026-07-09T12:34:56.000Z"),
 };
@@ -25,6 +26,7 @@ describe("mapDeckRow", () => {
       position: -3,
       updated: "2026-07-09T12:34:56.000Z",
       cards: [{ cardId: "sv01-001", count: 4 }],
+      chosenCoverCardId: null,
     });
     expect(deck).not.toHaveProperty("userId");
     expect(deckSchema.parse(deck)).toEqual(deck);
@@ -35,6 +37,14 @@ describe("mapDeckRow", () => {
     expect(deck.folderId).toBeNull();
     expect(deck.format).toBeNull();
     expect(deck.cards).toEqual([]);
+    expect(deckSchema.parse(deck)).toEqual(deck);
+  });
+
+  it("carries the owner's cover pick — the stored choice, not the face drawn", () => {
+    // The summary's `coverCardId` is what the grid draws; this is what the
+    // editor's picker is set to (P5-6), and it is null for almost every deck.
+    const deck = mapDeckRow({ ...deckRow, coverCardId: "sv01-001" }, []);
+    expect(deck.chosenCoverCardId).toBe("sv01-001");
     expect(deckSchema.parse(deck)).toEqual(deck);
   });
 });

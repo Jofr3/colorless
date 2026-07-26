@@ -40,16 +40,24 @@ const deckBaseSchema = z.object({
 /** The full deck resource — what GET /decks/:id (and create/patch) serve. */
 export const deckSchema = deckBaseSchema.extend({
   cards: z.array(deckCardSchema),
+  /** The cover the OWNER picked (P5-6), or null for "automatic" — the default
+      the server derives from the contents. Deliberately NOT the same field as
+      `DeckSummary.coverCardId`, which is the face actually being drawn: this is
+      the stored CHOICE, the editor's state, and it is null for almost every
+      deck. PATCH /decks/:id takes it under the same name. */
+  chosenCoverCardId: z.string().nullable(),
 });
 export type Deck = z.infer<typeof deckSchema>;
 
 /** The GET /decks list row: no card list, just the summed copy count. */
 export const deckSummarySchema = deckBaseSchema.extend({
   cardCount: z.number().int().min(0),
-  /** The card whose art fronts this deck in the library grid (P5-3), or null
-      when nothing in it qualifies — an empty deck, or one whose Pokémon have no
-      scan yet. Server-derived on read (`pickCoverCardId`), so it follows the
-      deck's contents with nothing to keep in sync. */
+  /** The card whose art fronts this deck in the library grid — the owner's
+      `chosenCoverCardId` when they picked one that is still in the deck and
+      drawable (P5-6), else the derived default (P5-3, `pickCoverCardId`), else
+      null for a deck with nothing to show (an empty one, or one whose Pokémon
+      have no scan yet). Resolved server-side on read, so it follows the deck's
+      contents with nothing to keep in sync. */
   coverCardId: z.string().nullable(),
 });
 export type DeckSummary = z.infer<typeof deckSummarySchema>;

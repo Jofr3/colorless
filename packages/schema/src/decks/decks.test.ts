@@ -23,11 +23,25 @@ describe("deckSchema / deckSummarySchema", () => {
     folderId: null,
     position: -2,
     updated: "2026-07-09T00:00:00.000Z",
+    // Required on the full deck (P5-6) and ignored by the summary, so the
+    // rejection cases below still fail for the reason they name.
+    chosenCoverCardId: null,
   };
 
   it("parses a full deck with cards", () => {
     const parsed = deckSchema.parse({ ...base, cards: [card("sv01-001", 4)] });
     expect(parsed.cards).toEqual([{ cardId: "sv01-001", count: 4 }]);
+    expect(parsed.chosenCoverCardId).toBeNull();
+  });
+
+  it("carries the owner's cover pick on the full deck, not on the list row", () => {
+    // Two different questions: what the editor's picker is set to (here) versus
+    // what the grid draws (the summary's `coverCardId`, resolved server-side).
+    const parsed = deckSchema.parse({ ...base, cards: [], chosenCoverCardId: "sv01-001" });
+    expect(parsed.chosenCoverCardId).toBe("sv01-001");
+    expect(
+      deckSummarySchema.parse({ ...base, cardCount: 0, coverCardId: null }),
+    ).not.toHaveProperty("chosenCoverCardId");
   });
 
   it("parses a summary with cardCount instead of cards", () => {
@@ -108,6 +122,15 @@ describe("patchDeckRequestSchema", () => {
   it("accepts a lone explicit null (clear folder / format)", () => {
     expect(patchDeckRequestSchema.parse({ folderId: null }).folderId).toBeNull();
     expect(patchDeckRequestSchema.parse({ format: null }).format).toBeNull();
+  });
+
+  it("takes a cover pick, and a lone null to go back to automatic (P5-6)", () => {
+    expect(patchDeckRequestSchema.parse({ chosenCoverCardId: "sv01-001" }).chosenCoverCardId).toBe(
+      "sv01-001",
+    );
+    expect(patchDeckRequestSchema.parse({ chosenCoverCardId: null }).chosenCoverCardId).toBeNull();
+    // An empty string is not a card id — that's a bug, not "automatic".
+    expect(patchDeckRequestSchema.safeParse({ chosenCoverCardId: "" }).success).toBe(false);
   });
 
   it("accepts a wholesale cards replacement, including clearing to []", () => {

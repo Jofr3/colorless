@@ -18,6 +18,7 @@ afterEach(cleanup);
 function renderPanel(over: Partial<DeckPanelProps> = {}) {
   const onRemoveEntry = vi.fn();
   const onClear = vi.fn();
+  const onChooseCover = vi.fn();
   render(
     <DeckPanel
       deckName="Test Deck"
@@ -33,10 +34,11 @@ function renderPanel(over: Partial<DeckPanelProps> = {}) {
       onRemoveEntry={onRemoveEntry}
       onClear={onClear}
       onImportExport={() => {}}
+      onChooseCover={onChooseCover}
       {...over}
     />,
   );
-  return { onRemoveEntry, onClear };
+  return { onRemoveEntry, onClear, onChooseCover };
 }
 
 describe("DeckPanel — pending entries", () => {
@@ -72,6 +74,23 @@ describe("DeckPanel — pending entries", () => {
     renderPanel();
     const clear = screen.getByRole("button", { name: "Clear deck" }) as HTMLButtonElement;
     expect(clear.disabled).toBe(true);
+  });
+
+  it("withholds the cover picker while no hydrated card could be picked (P5-6)", () => {
+    // Unlike Clear, this one needs a HYDRATED card: a pending or unavailable
+    // entry has no art to front a deck with.
+    renderPanel({ pending: [{ cardId: "gone-001", quantity: 1, unknown: true }], total: 1 });
+    expect((screen.getByRole("button", { name: "Deck cover" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it("opens the cover picker once the deck holds a real card", () => {
+    const { onChooseCover } = renderPanel({ deck: [{ card: pikachu, quantity: 1 }], total: 1 });
+    const cover = screen.getByRole("button", { name: "Deck cover" }) as HTMLButtonElement;
+    expect(cover.disabled).toBe(false);
+    fireEvent.click(cover);
+    expect(onChooseCover).toHaveBeenCalledTimes(1);
   });
 });
 

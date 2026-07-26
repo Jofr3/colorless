@@ -2,6 +2,7 @@ import { CardImage } from "../../../components/CardImage";
 import {
   AlertTriangleIcon,
   CheckCircleIcon,
+  ImageIcon,
   ImportExportIcon,
   TrashIcon,
   XIcon,
@@ -55,6 +56,9 @@ export interface DeckPanelProps {
   onRemoveEntry: (cardId: string) => void;
   onClear: () => void;
   onImportExport: () => void;
+  /** Open the cover picker (P5-6). Disabled while the deck holds no drawable
+      card — there would be nothing to choose between. */
+  onChooseCover: () => void;
   /** Suppress the pointer tilt while any drag is in flight. */
   dragActive?: boolean;
   /** Begin a drag of a deck card (to drop off the deck = remove a copy). */
@@ -335,6 +339,9 @@ function DeckStats({ deck }: { deck: Deck }) {
 // Footer pill: the shared ghost paint (focus ring included) under panel-local
 // layout.
 const PANEL_BUTTON = `inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`;
+/** The footer's square icon actions (cover, clear) — same glass as PANEL_BUTTON
+    without the label, and dimmed rather than hidden when they'd do nothing. */
+const ICON_BUTTON = `inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/[0.05] text-white/65 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.09] hover:text-white/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS_RING}`;
 
 /** The right pane: deck title, completeness, stats, validation, the grouped
     decklist, and the import/export + clear actions. */
@@ -353,6 +360,7 @@ export function DeckPanel({
   onRemoveEntry,
   onClear,
   onImportExport,
+  onChooseCover,
   dragActive,
   onDragStart,
   pulse,
@@ -485,6 +493,17 @@ export function DeckPanel({
           <ImportExportIcon className="h-4 w-4" />
           Import / Export
         </button>
+        {/* The cover picker (P5-6) — only offered once a hydrated card could
+            actually be picked; until then the derived default stands. */}
+        <button
+          type="button"
+          onClick={onChooseCover}
+          disabled={deck.length === 0}
+          aria-label="Deck cover"
+          className={ICON_BUTTON}
+        >
+          <ImageIcon className="h-4 w-4" />
+        </button>
         {/* Enabled while ANY entry exists — pending/unavailable included, so
             a deck of only unavailable entries can still be cleared. */}
         <button
@@ -492,7 +511,7 @@ export function DeckPanel({
           onClick={onClear}
           disabled={empty}
           aria-label="Clear deck"
-          className={`inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/[0.05] text-white/65 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.09] hover:text-white/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS_RING}`}
+          className={ICON_BUTTON}
         >
           <TrashIcon className="h-4 w-4" />
         </button>

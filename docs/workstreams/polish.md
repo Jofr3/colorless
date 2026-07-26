@@ -89,6 +89,24 @@ P2–P4; tracked here so nothing is forgotten.
   the deck name was nearly illegible over busy card art (it had always sat on a
   flat blue back), so the label now gets a gradient scrim — only when there IS
   art, so a coverless deck looks exactly as before.
+  **A CHOSEN cover — DONE 2026-07-26 (P5-6, D86).** The follow-up above, built:
+  a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure
+  **`effectiveCoverCardId(chosen, candidates)`** (apps/api/src/decks/cover.ts) the
+  list query runs — the pin wins, everything else falls through to
+  `pickCoverCardId`, which is now explicitly the DEFAULT rather than the answer.
+  It resolves against the candidate list the default was already deriving from,
+  so a choice costs no extra query and a STALE pin (card removed elsewhere, scan
+  gone after a re-ingest) falls back rather than drawing a blank. The pin may be
+  a **Trainer** — guessing needs a rule, choosing does not. Two fields on purpose:
+  `DeckSummary.coverCardId` is still the face being DRAWN (the grid needed no
+  change), while `Deck.chosenCoverCardId` is the stored CHOICE the picker is set
+  to. The picker (`CoverDialog`, opened from the deck panel's footer) offers
+  **Automatic as an explicit option** — reverting is one click — and only cards
+  the catalog can draw. **Consistency is enforced on both sides:** PATCH validates
+  the pin against the list the patch leaves behind (400 `cover card not in deck`)
+  and drops a pin whose card it removes; the editor's `toSnapshot` drops it
+  locally too, which is load-bearing — the cover rides the same debounced PATCH
+  as the card list, so a self-contradicting body would 400 forever.
 - **Card detail view:** richer card view using tcgdex fields (attacks, abilities,
   pricing, set/illustrator).
 - **Settings & accessibility:** carry the existing `prefers-reduced-motion`

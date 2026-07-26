@@ -62,6 +62,10 @@ export const patchDeckRequestSchema = nonEmptyPatch({
   folderId: z.string().nullable().optional(),
   /** When present, REPLACES the whole card list (no per-entry merging). */
   cards: deckCardsField.optional(),
+  /** The owner's cover pick (P5-6): a card id to pin, `null` for automatic.
+      Must be a card in the deck AFTER this patch applies — sending one that
+      isn't is a 400, since the request contradicts itself. */
+  chosenCoverCardId: z.string().min(1).nullable().optional(),
 });
 export type PatchDeckRequest = z.infer<typeof patchDeckRequestSchema>;
 

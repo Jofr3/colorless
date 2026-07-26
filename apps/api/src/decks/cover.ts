@@ -36,10 +36,9 @@ export type CoverCandidate = {
     the rest so the same deck always shows the same face.
 
     It is a HEURISTIC and will occasionally pick a wall over the attacker beside
-    it. That is acceptable for a default; the proper answer is letting the owner
-    choose one in the editor, which this leaves room for (a stored choice would
-    simply win over this). Cards with no scan are skipped rather than picked and
-    rendered blank. */
+    it. That is acceptable for a DEFAULT — since P5-6 the owner can pin their own
+    (see `effectiveCoverCardId`), and this is what a deck wears until they do.
+    Cards with no scan are skipped rather than picked and rendered blank. */
 export function pickCoverCardId(candidates: readonly CoverCandidate[]): string | null {
   let best: CoverCandidate | null = null;
   for (const candidate of candidates) {
@@ -47,6 +46,30 @@ export function pickCoverCardId(candidates: readonly CoverCandidate[]): string |
     if (best === null || outranks(candidate, best)) best = candidate;
   }
   return best === null ? null : best.cardId;
+}
+
+/** The card a deck's grid tile actually draws: **the owner's pick wins**, and
+    everything else falls back to the derived default.
+
+    P5-6 — the follow-up P5-3 left room for. The pin is honoured only while it
+    names a card that is still IN the deck and still has a scan, which is why
+    this is a resolution rather than a plain `??`. PATCH keeps the first half
+    true (a pinned card removed from the deck drops the pin with it), so the
+    membership check here is a belt-and-braces on a row edited by some other
+    path — but the SCAN half is live: the catalog is re-ingested, and a deck must
+    never front a blank rectangle because a picture moved. Both checks run
+    against the candidate list the default is derived from anyway, so honouring
+    a choice costs no query at all. */
+export function effectiveCoverCardId(
+  chosen: string | null,
+  candidates: readonly CoverCandidate[],
+): string | null {
+  const pinned = candidates.find((candidate) => candidate.cardId === chosen);
+  // A pinned TRAINER or ENERGY is fine here — the owner is allowed a signature
+  // Supporter as their deck's face; only the DERIVED default is Pokémon-only,
+  // because guessing needs a rule and choosing does not.
+  if (pinned?.hasImage) return pinned.cardId;
+  return pickCoverCardId(candidates);
 }
 
 /** Strictly better cover than `best`: more HP, else more copies, else the lower

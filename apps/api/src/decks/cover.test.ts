@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type CoverCandidate, pickCoverCardId } from "./cover";
+import { type CoverCandidate, effectiveCoverCardId, pickCoverCardId } from "./cover";
 
 // The rule that decides a deck's face (P5-3). Kept pure precisely so it can be
 // argued with here rather than buried in SQL.
@@ -71,5 +71,44 @@ describe("pickCoverCardId", () => {
     // deck you have only just created.
     expect(pickCoverCardId([])).toBeNull();
     expect(pickCoverCardId([card({ cardId: "ball", category: "Trainer", hp: null })])).toBeNull();
+  });
+});
+
+describe("effectiveCoverCardId (P5-6 — the owner's pick)", () => {
+  const library = [
+    card({ cardId: "fuecoco", hp: 70, count: 4 }),
+    card({ cardId: "skeledirge", hp: 170, count: 3 }),
+    card({ cardId: "boss", category: "Trainer", hp: null, count: 2 }),
+  ];
+
+  it("draws the owner's pick over the bigger body the rule would choose", () => {
+    expect(effectiveCoverCardId("fuecoco", library)).toBe("fuecoco");
+  });
+
+  it("lets the owner front their deck with a Trainer", () => {
+    // Only the DERIVED default is Pokémon-only: guessing needs a rule, and
+    // choosing does not.
+    expect(effectiveCoverCardId("boss", library)).toBe("boss");
+  });
+
+  it("falls back to the default when nothing is pinned", () => {
+    expect(effectiveCoverCardId(null, library)).toBe("skeledirge");
+  });
+
+  it("falls back when the pinned card is no longer in the deck", () => {
+    // PATCH drops a pin whose card it removes, so this is the row edited by
+    // some other path — a deck must never front a card it doesn't run.
+    expect(effectiveCoverCardId("charizard-ex", library)).toBe("skeledirge");
+  });
+
+  it("falls back when the pinned card lost its scan", () => {
+    // The live half of the check: the catalog is re-ingested under us, and a
+    // blank rectangle is worse than the default.
+    const unscanned = [card({ cardId: "fuecoco", hp: 70, hasImage: false }), ...library.slice(1)];
+    expect(effectiveCoverCardId("fuecoco", unscanned)).toBe("skeledirge");
+  });
+
+  it("gives an empty deck no cover, pinned or not", () => {
+    expect(effectiveCoverCardId("skeledirge", [])).toBeNull();
   });
 });

@@ -34,7 +34,7 @@ import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
-import { type CoverCandidate, pickCoverCardId } from "./cover";
+import { type CoverCandidate, effectiveCoverCardId } from "./cover";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
 import { chunk, createsCycle, D1_MAX_BOUND_PARAMS, unknownIds } from "./validate";
 
@@ -221,7 +221,14 @@ deckRoutes.get("/", requireUser, async (c) => {
   return c.json(
     deckSummariesResponseSchema.parse(
       rows.map((row) =>
-        mapDeckSummaryRow(row.deck, row.cardCount, pickCoverCardId(byDeck.get(row.deck.id) ?? [])),
+        mapDeckSummaryRow(
+          row.deck,
+          row.cardCount,
+          // The owner's pin wins over the derived default, but only while it is
+          // still a drawable card in the deck (P5-6) — resolved against the
+          // candidates already in hand, so honouring a choice costs no query.
+          effectiveCoverCardId(row.deck.coverCardId, byDeck.get(row.deck.id) ?? []),
+        ),
       ),
     ),
   );
@@ -263,6 +270,9 @@ deckRoutes.post("/", validateBody(createDeckRequestSchema), requireUser, async (
     name: body.name,
     format: body.format ?? null,
     tint: body.tint,
+    // A brand-new deck wears the derived default; picking a cover is an edit
+    // you make later, in the editor, once there is something to pick.
+    coverCardId: null,
     position: await nextPrependPosition(db, decks, user.id),
     updated: new Date(),
   };
@@ -294,6 +304,28 @@ deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, asyn
   if (badCards !== null) {
     return badCards;
   }
+  // A cover pin must name a card the deck still runs (P5-6) — and `cards` can
+  // be replaced by this same request, so the list it has to live in is the one
+  // the patch LEAVES BEHIND. Read only when a pin is actually in play, so the
+  // ordinary rename/move patch costs nothing.
+  const pinInPlay =
+    (body.chosenCoverCardId ?? null) !== null ||
+    (existing.coverCardId !== null && body.cards !== undefined);
+  const cardIdsAfter = pinInPlay
+    ? new Set((body.cards ?? (await selectDeckCards(db, deckId).all())).map((e) => e.cardId))
+    : null;
+  let coverCardId = existing.coverCardId;
+  if (body.chosenCoverCardId !== undefined) {
+    // Explicit: a card id pins it, null goes back to the derived default.
+    coverCardId = body.chosenCoverCardId;
+    if (coverCardId !== null && cardIdsAfter?.has(coverCardId) !== true) {
+      return c.json({ error: "cover card not in deck", cardIds: [coverCardId] }, 400);
+    }
+  } else if (coverCardId !== null && cardIdsAfter !== null && !cardIdsAfter.has(coverCardId)) {
+    // The pinned card left the deck in this patch, so the choice goes with it
+    // rather than lingering as a pin nothing can honour.
+    coverCardId = null;
+  }
   const next: DeckRow = {
     ...existing,
     name: body.name ?? existing.name,
@@ -301,6 +333,7 @@ deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, asyn
     // For the nullable fields, absent means "keep" and null means "clear".
     format: body.format === undefined ? existing.format : body.format,
     folderId: body.folderId === undefined ? existing.folderId : body.folderId,
+    coverCardId,
     updated: new Date(),
   };
   const statements: BatchItem<"sqlite">[] = [
@@ -311,6 +344,7 @@ deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, asyn
         tint: next.tint,
         format: next.format,
         folderId: next.folderId,
+        coverCardId: next.coverCardId,
         updated: next.updated,
       })
       .where(eq(decks.id, deckId)),

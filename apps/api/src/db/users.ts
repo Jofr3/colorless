@@ -94,6 +94,11 @@ export const decks = sqliteTable(
     format: text("format"),
     /** Base hue 0–360 for the deck cover gradient (web `Deck.tint`). */
     tint: integer("tint").notNull(),
+    /** The owner's CHOSEN cover card (P5-6), or null for the derived default
+        (`pickCoverCardId`). References the catalog like `deck_cards` does, so
+        ingest can't orphan it; the read side falls back to the default anyway
+        if the card has left the deck. */
+    coverCardId: text("cover_card_id").references(() => cards.id),
     /** Manual sort slot, global per user (see @luminous/schema Deck.position). */
     position: integer("position").notNull().default(0),
     updated: integer("updated", { mode: "timestamp_ms" }).notNull().default(nowMs),

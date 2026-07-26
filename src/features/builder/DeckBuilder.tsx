@@ -9,7 +9,6 @@ import {
 import { Link, useLocation, useParams } from "react-router-dom";
 import {
   type Deck as ApiDeck,
-  type DeckCard,
   MAX_DECK_CARD_ENTRIES,
   type PatchDeckRequest,
 } from "@luminous/schema";
@@ -34,8 +33,10 @@ import { useCardHydration, useCardStore } from "./cardStore";
 import { importDecklist } from "./catalog";
 import { useCatalogOptions } from "./catalogOptions";
 import type { SaveStatus } from "./deckSaver";
+import { type DeckSnapshot, toSnapshot } from "./deckSnapshot";
 import { useDeckSaver } from "./useDeckSaver";
 import { CardGrid } from "./components/CardGrid";
+import { CoverDialog } from "./components/CoverDialog";
 import { FilterRail } from "./components/FilterRail";
 import { DeckPanel } from "./components/DeckPanel";
 import { ImportExportDialog } from "./components/ImportExportDialog";
@@ -66,23 +67,6 @@ function initialEntries(deck: ApiDeck): Map<string, number> {
       .sort((a, b) => a.cardId.localeCompare(b.cardId))
       .map((card) => [card.cardId, card.count] as const),
   );
-}
-
-/** What the saver persists — name kept pre-trimmed so it either matches the
-    server's own trim or is omitted (empty) from the PATCH body. */
-type DeckSnapshot = { name: string; format: string; cards: DeckCard[] };
-
-function toSnapshot(name: string, format: string, entries: Map<string, number>): DeckSnapshot {
-  return {
-    name: name.trim(),
-    format,
-    // Sorted so the saver's no-op key is insertion-order-independent (addCard
-    // re-appends a removed id at the Map's end; a content-identical deck must
-    // serialize identically or it fires a spurious PATCH).
-    cards: [...entries]
-      .map(([cardId, count]) => ({ cardId, count }))
-      .sort((a, b) => a.cardId.localeCompare(b.cardId)),
-  };
 }
 
 // Back-to-decks pill, mirroring the fixed home button in the opposite corner.
@@ -227,15 +211,24 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
   const [deckName, setDeckName] = useState(initial.name);
   const [formatId, setFormatId] = useState(initial.format ?? DEFAULT_FORMAT.id);
   const [entries, setEntries] = useState<Map<string, number>>(() => initialEntries(initial));
+  // The owner's cover pick (P5-6), null for the derived default. Local state
+  // like the rest of the editor — the debounced saver carries it to the server.
+  const [chosenCover, setChosenCover] = useState<string | null>(initial.chosenCoverCardId);
   // The saver's no-op seed: the state this editor mounted with, computed once
   // (a lazy initializer, reusing the just-built entries Map) instead of
   // re-sorted on every render. `initial` never changes for a mounted editor —
   // the route entry keys this component on the deck id.
   const [initialSnapshot] = useState(() =>
-    toSnapshot(initial.name, initial.format ?? DEFAULT_FORMAT.id, entries),
+    toSnapshot(
+      initial.name,
+      initial.format ?? DEFAULT_FORMAT.id,
+      entries,
+      initial.chosenCoverCardId,
+    ),
   );
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [coverOpen, setCoverOpen] = useState(false);
   // Mobile drawers for the rail / deck panel (always-on columns at lg/xl).
   const [railOpen, setRailOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
@@ -284,6 +277,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
       const body: PatchDeckRequest = {
         format: snapshot.format,
         cards: snapshot.cards,
+        chosenCoverCardId: snapshot.chosenCoverCardId,
         ...(snapshot.name === "" ? {} : { name: snapshot.name }),
       };
       return patchDeck(deckId, body);
@@ -291,12 +285,12 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
     onStatus: handleSaveStatus,
   });
 
-  // Every edit (name, format, cards) reschedules the debounced PATCH; the
-  // saver coalesces bursts, serializes flights, and skips no-ops. The hook
+  // Every edit (name, format, cards, cover) reschedules the debounced PATCH;
+  // the saver coalesces bursts, serializes flights, and skips no-ops. The hook
   // flushes the pending save on unmount.
   useEffect(() => {
-    scheduleSave(toSnapshot(deckName, formatId, entries));
-  }, [scheduleSave, deckName, formatId, entries]);
+    scheduleSave(toSnapshot(deckName, formatId, entries, chosenCover));
+  }, [scheduleSave, deckName, formatId, entries, chosenCover]);
 
   // Tab title reflects the deck being edited.
   useEffect(() => {
@@ -464,6 +458,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
     onRemoveEntry: removeEntry,
     onClear: clearDeck,
     onImportExport: () => setDialogOpen(true),
+    onChooseCover: () => setCoverOpen(true),
     dragActive: dragging,
     onDragStart: (card: BuilderCard, e: ReactPointerEvent<HTMLElement>) =>
       startDrag({ card, source: "deck" }, e),
@@ -615,6 +610,14 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
         deckText={formatDecklist(deck)}
         onImport={importText}
         onClose={() => setDialogOpen(false)}
+      />
+
+      <CoverDialog
+        open={coverOpen}
+        deck={deck}
+        chosenCoverCardId={chosenCover}
+        onChoose={setChosenCover}
+        onClose={() => setCoverOpen(false)}
       />
 
       {/* Polite live region so screen readers hear each add/remove. */}

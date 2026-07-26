@@ -27,9 +27,15 @@ function mapDeckBase(row: DeckRow) {
   };
 }
 
-/** Full deck: the row plus its (already user-scoped) deck_cards entries. */
+/** Full deck: the row plus its (already user-scoped) deck_cards entries.
+    `chosenCoverCardId` is the STORED pin (P5-6) — the editor's state, null for
+    automatic — not the face being drawn, which is the summary's business. */
 export function mapDeckRow(row: DeckRow, cards: readonly DeckCard[]): Deck {
-  return { ...mapDeckBase(row), cards: cards.map(({ cardId, count }) => ({ cardId, count })) };
+  return {
+    ...mapDeckBase(row),
+    cards: cards.map(({ cardId, count }) => ({ cardId, count })),
+    chosenCoverCardId: row.coverCardId,
+  };
 }
 
 /** List row: `cardCount` is the SQL-side sum of the deck's copy counts, and
