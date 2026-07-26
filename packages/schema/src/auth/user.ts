@@ -10,6 +10,11 @@ export const userSchema = z.object({
   email: z.email(),
   displayName: z.string(),
   emailVerified: z.boolean(),
+  /** The account's generated-avatar token (P5-2), derived server-side from the
+      id — the SAME value a lobby seat carries in `PlayerState.avatarSeed`, so
+      the face a player sees on their own profile is the face opponents see.
+      Sent rather than derived client-side on purpose: one hash, one place. */
+  avatarSeed: z.string(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   createdAt: z.iso.datetime(),
 });

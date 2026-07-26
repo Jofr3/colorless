@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { loginRequestSchema, registerRequestSchema, userSchema } from "./index";
+import {
+  loginRequestSchema,
+  registerRequestSchema,
+  updateProfileRequestSchema,
+  userSchema,
+} from "./index";
 
 describe("registerRequestSchema", () => {
   it("accepts a minimal valid body and lowercases the email", () => {
@@ -40,6 +45,22 @@ describe("loginRequestSchema", () => {
   });
 });
 
+describe("updateProfileRequestSchema", () => {
+  it("trims the new display name", () => {
+    expect(updateProfileRequestSchema.parse({ displayName: "  Brock  " }).displayName).toBe(
+      "Brock",
+    );
+  });
+
+  it.each([
+    ["a blank name", { displayName: "   " }],
+    ["a missing name — unlike register, it is required here", {}],
+    ["a name past 64 chars", { displayName: "x".repeat(65) }],
+  ])("rejects %s", (_label, body) => {
+    expect(updateProfileRequestSchema.safeParse(body).success).toBe(false);
+  });
+});
+
 describe("userSchema", () => {
   it("has no password-shaped fields, even via passthrough attempts", () => {
     const parsed = userSchema.parse({
@@ -47,6 +68,7 @@ describe("userSchema", () => {
       email: "a@b.co",
       displayName: "Ash",
       emailVerified: false,
+      avatarSeed: "1a2b3c4d",
       createdAt: "2026-07-09T00:00:00.000Z",
       passwordHash: "should-be-stripped",
     });

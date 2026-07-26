@@ -27,3 +27,12 @@ export const loginRequestSchema = z.object({
   password: z.string().min(1).max(256),
 });
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
+/** Editing your own profile (P5-5). Same 1–64 bounds as register's optional
+    name, but REQUIRED here: register may omit it and get the email's local
+    part, while explicitly saving a blank one would only cost you your name —
+    the lobby would fall back to a generated "Player 4271" handle (P5-1). */
+export const updateProfileRequestSchema = z.object({
+  displayName: z.string().trim().min(1).max(64),
+});
+export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;

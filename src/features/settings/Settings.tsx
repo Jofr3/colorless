@@ -4,6 +4,7 @@ import { ArrowLeftIcon, SettingsIcon } from "../../components/icons";
 import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE, GLASS_PANEL } from "../../lib/glass";
 import { useFont } from "./FontProvider";
 import { FONT_OPTIONS, fontFamilyValue } from "./fonts";
+import { ProfileSection } from "./ProfileSection";
 
 export function Settings() {
   const { fontId, setFontId } = useFont();
@@ -17,6 +18,8 @@ export function Settings() {
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-white/90">Settings</h1>
         </header>
+
+        <ProfileSection />
 
         <section className={`rounded-2xl p-5 ${GLASS_PANEL}`}>
           <div className="flex items-center justify-between gap-4">

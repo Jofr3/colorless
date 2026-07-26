@@ -51,6 +51,7 @@ import {
 } from "@luminous/engine";
 import { drizzle } from "drizzle-orm/d1";
 import type { Env } from "../env";
+import { avatarSeedFrom } from "../auth/avatar";
 import { resolveUserIdFromCookie } from "../auth/resolveSession";
 import {
   attachedPlayer,
@@ -60,7 +61,6 @@ import {
   attachUserId,
   isSpectating,
 } from "./attachment";
-import { avatarSeedFrom } from "./avatar";
 import { loadCardPool } from "./cardPool";
 import { loadPlayerDeck } from "./deckLoad";
 import { loadDisplayName } from "./displayName";

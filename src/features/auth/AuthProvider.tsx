@@ -8,13 +8,14 @@ import {
   useRef,
   useState,
 } from "react";
-import type { LoginRequest, RegisterRequest, User } from "@luminous/schema";
+import type { LoginRequest, RegisterRequest, UpdateProfileRequest, User } from "@luminous/schema";
 import {
   ApiError,
   login as apiLogin,
   logout as apiLogout,
   me as apiMe,
   register as apiRegister,
+  updateProfile as apiUpdateProfile,
   setSessionRecoveryHandler,
 } from "../../lib/api";
 
@@ -35,6 +36,10 @@ type AuthContextValue = {
   login: (body: LoginRequest) => Promise<User>;
   register: (body: RegisterRequest) => Promise<User>;
   logout: () => Promise<void>;
+  /** Save profile edits (P5-5) and adopt the api's answer as the current user,
+      so every surface reading it — the corner control's initial, the generated
+      avatar — follows without a re-probe. */
+  updateProfile: (body: UpdateProfileRequest) => Promise<User>;
   /** Re-run the `me()` probe (e.g. after returning from an OAuth callback). */
   refresh: () => Promise<void>;
 };
@@ -131,6 +136,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applyUser],
   );
 
+  // Same last-writer-wins discipline as login/register: a save that lands
+  // after a logout must not resurrect the user.
+  const updateProfile = useCallback(
+    async (body: UpdateProfileRequest) => {
+      const op = ++opToken.current;
+      const next = await apiUpdateProfile(body);
+      if (op === opToken.current) applyUser(next);
+      return next;
+    },
+    [applyUser],
+  );
+
   const logout = useCallback(async () => {
     const op = ++opToken.current;
     try {
@@ -144,8 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearUser]);
 
   const value = useMemo(
-    () => ({ status, user, probeFailed, login, register, logout, refresh }),
-    [status, user, probeFailed, login, register, logout, refresh],
+    () => ({ status, user, probeFailed, login, register, logout, updateProfile, refresh }),
+    [status, user, probeFailed, login, register, logout, updateProfile, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

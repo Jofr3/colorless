@@ -1,7 +1,7 @@
 import type { PlayerState } from "@luminous/schema";
 import { CheckCircleIcon, SpinnerIcon, XIcon } from "../../../components/icons";
+import { PlayerAvatar } from "../../../components/PlayerAvatar";
 import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_NEUTRAL_BUTTON } from "../../../lib/glass";
-import { PlayerAvatar } from "./PlayerAvatar";
 import { CardBackStack } from "../../decks/CardBackStack";
 import { type Side, SIDE_STYLES } from "../theme";
 

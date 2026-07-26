@@ -1,4 +1,4 @@
-// P5-2 — the token a lobby seat's generated avatar is drawn from (polish.md
+// P5-2 — the token an account's generated avatar is drawn from (polish.md
 // "Lobby identity", the half P5-1 left). Pure, and deliberately tiny: there is no
 // image here and nothing stored. The client draws a deterministic face from this
 // string, so the same person looks the same to you in every lobby, and an
@@ -11,6 +11,10 @@
 // happens to expose the same id. A hash keeps the one property the avatar needs
 // (the same account always maps to the same face) and gives up the one it
 // doesn't (being the account id).
+//
+// It lives under auth/ (not lobby/) since P5-5: the seed is a property of the
+// ACCOUNT, not of a seat. /auth/me carries it so the profile shows a player the
+// same face the lobby shows everyone else, and one hash serves both.
 
 /** FNV-1a, 32-bit, as 8 lowercase hex — a display token, not a security
     boundary, so the cheapest stable hash that spreads well is the right one; the
@@ -26,10 +30,16 @@ function fnv1a(input: string): string {
   return hash.toString(16).padStart(8, "0");
 }
 
-/** The avatar token for the account a socket authenticated as, or null for an
-    anonymous socket — which renders the generic figure, honestly saying "we
-    don't know who this is" rather than inventing a face from a throwaway id
-    that would change on every visit. */
+/** The avatar token of an account. Every account has one — it's derived, not
+    stored, so there is no "not set yet" case to represent. */
+export function avatarSeedOf(userId: string): string {
+  return fnv1a(userId);
+}
+
+/** The same token for a caller that may have no account: null for an anonymous
+    socket, which renders the generic figure — honestly saying "we don't know who
+    this is" rather than inventing a face from a throwaway id that would change
+    on every visit. */
 export function avatarSeedFrom(userId: string | null): string | null {
-  return userId === null ? null : fnv1a(userId);
+  return userId === null ? null : avatarSeedOf(userId);
 }

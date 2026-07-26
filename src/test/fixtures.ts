@@ -8,6 +8,7 @@ export const USER: User = {
   email: "ash@example.com",
   displayName: "Ash",
   emailVerified: false,
+  avatarSeed: "1a2b3c4d",
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 

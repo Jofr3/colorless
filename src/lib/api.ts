@@ -29,6 +29,7 @@ import type {
   Serie,
   SetBrief,
   SetWithCards,
+  UpdateProfileRequest,
   User,
 } from "@luminous/schema";
 import { apiUrl } from "./apiOrigin";
@@ -279,6 +280,13 @@ export function logout(): Promise<void> {
     branch, not this module's. */
 export function me(): Promise<User> {
   return request("/auth/me");
+}
+
+/** Rename yourself (P5-5). 400 when the name is blank or over 64 chars; 401
+    when the session is gone — and, like every /auth call, NOT retried through
+    session recovery, because there a 401 IS the answer. */
+export function updateProfile(body: UpdateProfileRequest): Promise<User> {
+  return request("/auth/me", { method: "PATCH", body });
 }
 
 /** The url that STARTS an OAuth flow — assign it to window.location (it

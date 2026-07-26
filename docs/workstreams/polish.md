@@ -46,10 +46,34 @@ P2–P4; tracked here so nothing is forgotten.
   and lightness are FIXED so the seed picks the hue and never how loud the result
   is. **Still open: uploaded avatars** — the item below (R2 + CSP); an image
   simply wins over the generated one when it lands.
-- **Profiles:** a basic user profile (display name, avatar, maybe favourite
-  deck) backed by the `users` table.
+- **Profiles — NAME + FACE DONE 2026-07-26 (P5-5, D85); favourite deck open.**
+  The Profile section on **/settings** (`src/features/settings/
+  ProfileSection.tsx`) is where an account edits itself, and the first thing it
+  fixes is that P5-1 made your name authoritative and broadcast while leaving it
+  unchangeable. **`PATCH /auth/me`** (requireUser BEFORE the validator; no write
+  when nothing changed) takes `updateProfileRequestSchema` — one required
+  `displayName`, trimmed, 1–64, the same bounds register applies to its optional
+  one. The provider's `updateProfile` adopts the api's answer as the current
+  user, so the corner account control follows with no re-probe.
+  **The section shows the REAL generated avatar, not a lookalike:** `userSchema`
+  now carries **`avatarSeed`** (derived server-side, the same value the lobby
+  broadcasts), so `PlayerAvatar` — moved to `src/components/` since two surfaces
+  use it — draws the identical face here and in a lobby. The seed module moved
+  with it, to `apps/api/src/auth/avatar.ts`: it is a property of the ACCOUNT, not
+  of a seat. Deriving the hash client-side was rejected — a second copy of FNV-1a
+  is one that must agree with the server forever.
+  The initial follows the draft as you type; a 401 mid-save re-probes and the
+  panel becomes a sign-in prompt (`state.from` returns you here). **A rename
+  reaches a lobby at the next hello** (`loadDisplayName` resolves the seat name
+  there), so a player already seated keeps the old name until they rejoin.
+  Browser-verified across two clients: "Brock" → "Pewter Brock" updated the
+  initial, the corner control and the OPPONENT's player panel, with a
+  byte-identical gradient throughout (the seed is the id, not the name).
+  **Still open: a favourite deck** on the profile, and the uploads below.
 - **Avatars:** upload/choose an avatar → stored in R2, served from our domain;
-  update CSP accordingly.
+  update CSP accordingly. The settings surface P5-2 said this needed now exists
+  (the Profile section above), so what's left is genuinely the R2 + CSP +
+  moderation half; an uploaded image simply wins over the generated face.
 - **Deck covers / art — DONE 2026-07-26 (P5-3, D83).** A deck is fronted by its
   own headline card. **The rule (pure `pickCoverCardId`, apps/api/src/decks/
   cover.ts): the Pokémon with the highest printed HP**, ties broken by copies

@@ -110,6 +110,18 @@ describe("session routes without a cookie", () => {
     expect(((await res.json()) as { error: string }).error).toBe("unauthorized");
   });
 
+  it("PATCH /auth/me → 401 before the body is even looked at", async () => {
+    // Order matters: a signed-out caller hears "unauthorized", not a critique
+    // of their body — and an invalid body from a stranger costs no D1.
+    const res = await app.request(
+      "/auth/me",
+      { method: "PATCH", headers: { "Content-Type": "application/json" }, body: "{}" },
+      envWith(),
+    );
+    expect(res.status).toBe(401);
+    expect(((await res.json()) as { error: string }).error).toBe("unauthorized");
+  });
+
   it("POST /auth/logout → 204 and clears the cookie, no D1 needed", async () => {
     const res = await app.request("/auth/logout", { method: "POST" }, envWith());
     expect(res.status).toBe(204);

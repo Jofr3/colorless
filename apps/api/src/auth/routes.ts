@@ -9,13 +9,20 @@
 // guarantees no password/hash field can ever leak.
 
 import { zValidator } from "@hono/zod-validator";
-import { loginRequestSchema, registerRequestSchema, type User, userSchema } from "@luminous/schema";
+import {
+  loginRequestSchema,
+  registerRequestSchema,
+  updateProfileRequestSchema,
+  type User,
+  userSchema,
+} from "@luminous/schema";
 import { and, eq } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import type { z } from "zod";
 import { oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
+import { avatarSeedOf } from "./avatar";
 import {
   buildAuthorizeUrl,
   clearedStateCookie,
@@ -59,6 +66,9 @@ function mapUserRow(row: UserRow): User {
     email: row.email,
     displayName: row.displayName,
     emailVerified: row.emailVerified,
+    // Derived, never stored (P5-2): the same token the lobby broadcasts for
+    // this account, so a player's profile draws the face opponents see.
+    avatarSeed: avatarSeedOf(row.id),
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -201,6 +211,30 @@ authRoutes.post(
 // lives in requireUser — shared with /decks and /folders (milestone 7); /me
 // is just "echo the resolved caller".
 authRoutes.get("/me", requireUser, (c) => c.json(userSchema.parse(mapUserRow(c.get("user")))));
+
+// Editing your own account (P5-5 — polish.md "Profiles"). The name P5-1 made
+// authoritative was, until now, whatever register chose: the lobby broadcasts
+// it to the opponent and to spectators, so being unable to change it is a real
+// gap, not a nicety. requireUser runs BEFORE validation deliberately — a
+// signed-out caller should hear "unauthorized", not a critique of their body.
+authRoutes.patch(
+  "/me",
+  requireUser,
+  zValidator("json", updateProfileRequestSchema, (result, c) =>
+    result.success ? undefined : invalidBody(c, result.error),
+  ),
+  async (c) => {
+    const row = c.get("user");
+    const { displayName } = c.req.valid("json");
+    // No write when nothing changed: the form disables Save in that case, but
+    // the route is the api, and a re-submit shouldn't cost a D1 write.
+    if (displayName !== row.displayName) {
+      await drizzle(c.env.DB).update(users).set({ displayName }).where(eq(users.id, row.id));
+    }
+    // The updated row, not a re-read: this session owns the only change.
+    return c.json(userSchema.parse(mapUserRow({ ...row, displayName })));
+  },
+);
 
 authRoutes.post("/logout", async (c) => {
   const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);

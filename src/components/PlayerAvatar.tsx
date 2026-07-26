@@ -1,10 +1,14 @@
-import { UserIcon } from "../../../components/icons";
+import { UserIcon } from "./icons";
 
-// A player's face in the lobby (P5-2). Generated, not uploaded: the server hands
-// each seat an `avatarSeed` derived from the account behind it (apps/api
-// lobby/avatar.ts), and the same seed always draws the same face — so an
-// opponent you meet twice looks the same both times, with nothing stored and
-// nothing to upload. When real avatars land, an image simply wins over this.
+// A player's face (P5-2). Generated, not uploaded: the server hands out an
+// `avatarSeed` derived from the account behind it (apps/api auth/avatar.ts), and
+// the same seed always draws the same face — so an opponent you meet twice looks
+// the same both times, with nothing stored and nothing to upload. When real
+// avatars land, an image simply wins over this.
+//
+// Shared (not lobby-local) since P5-5: /settings shows a player their OWN face
+// from the seed on `User`, and it must be the same drawing the lobby broadcasts,
+// which means the same component, not a second one that looks similar.
 //
 // An ANONYMOUS seat (no account, so no seed) keeps the generic figure. That is
 // the honest rendering: inventing a face from a throwaway per-lobby id would

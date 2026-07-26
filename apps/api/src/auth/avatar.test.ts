@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avatarSeedFrom } from "./avatar";
+import { avatarSeedFrom, avatarSeedOf } from "./avatar";
 
 // The generated avatar's token (P5-2). What matters is that the SAME account
 // always draws the same face, that different accounts usually don't, and that
@@ -32,5 +32,13 @@ describe("avatarSeedFrom", () => {
     // A per-visit id would draw a face that changes every visit, promising an
     // identity that isn't there; the client renders the generic figure instead.
     expect(avatarSeedFrom(null)).toBeNull();
+  });
+
+  it("agrees with avatarSeedOf — the profile's face IS the lobby's face", () => {
+    // /auth/me goes through avatarSeedOf and the lobby seat through
+    // avatarSeedFrom; two derivations that could drift would show a player one
+    // face on their profile and their opponents another.
+    const id = "7a0f2f38-6b2f-4d5b-9d4e-2f9b0e8c1a11";
+    expect(avatarSeedOf(id)).toBe(avatarSeedFrom(id));
   });
 });
