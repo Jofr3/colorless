@@ -13,6 +13,7 @@ import { MatchPlaceholder } from "./components/MatchPlaceholder";
 import { OnlineMatch } from "./components/OnlineMatch";
 import { PlayerPanel } from "./components/PlayerPanel";
 import { StartCountdown } from "./components/StartCountdown";
+import { useAuth } from "../auth/AuthProvider";
 import { clearIdentity, resolveIdentity } from "./net/session";
 import { COUNTDOWN_MS, type Lobby, useLobby } from "./net/useLobby";
 
@@ -185,11 +186,16 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
   // Resolve identity once per mount (a fresh visit stakes a new one; a refresh
   // restores it from the session). hintedRole only matters on that first resolve.
   const identity = useMemo(() => resolveIdentity(code, hintedRole), [code, hintedRole]);
+  // Announce the ACCOUNT's name when we have one (P5). The server resolves it
+  // again from the session and is the authority — this only spares the host the
+  // half-second where their own seat reads "Player 4271" before the first
+  // broadcast corrects it, since the waiting screen is seeded locally.
+  const { user } = useAuth();
   const lobby = useLobby({
     code,
     role: identity.role,
     playerId: identity.playerId,
-    name: identity.name,
+    name: user?.displayName.trim() || identity.name,
   });
 
   const leaveTo = (path: string) => {

@@ -62,6 +62,7 @@ import {
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { loadPlayerDeck } from "./deckLoad";
+import { loadDisplayName } from "./displayName";
 import {
   ABANDON_GRACE_MS,
   abandonsMatch,
@@ -234,13 +235,22 @@ export class LobbyDO {
         if (boundUserId === null && userId !== null) {
           await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
         }
+        // The seat's NAME is the account's, not the one the frame announced (P5).
+        // Resolved here rather than trusted, so a player cannot present themselves
+        // as someone else — which starts to matter the moment names stop being
+        // random. An anonymous socket (or an account with a blank name) keeps its
+        // announced handle; a signed-out player can sit in a lobby, they just
+        // can't start a match with a saved deck. The read is deliberately AFTER
+        // the refusal branches above, so a socket that gets no seat costs no D1
+        // query however often it retries.
+        const name = (await loadDisplayName(drizzle(this.env.DB), userId)) ?? frame.name;
         switch (decision) {
           case "claim-host": {
             const code = await this.state.storage.get<string>(CODE_KEY);
             if (code === undefined) return; // unreachable: /ws 404s before create
             attachPlayer(ws, frame.from);
             await this.clearDisconnectGrace(frame.from);
-            await this.commit(createSnapshot(code, makePlayer(frame.from, frame.name)));
+            await this.commit(createSnapshot(code, makePlayer(frame.from, name)));
             await this.sendMatchIfInGame(ws);
             return;
           }
@@ -248,7 +258,7 @@ export class LobbyDO {
             if (snapshot === null) return; // narrowing; decision implies non-null
             attachPlayer(ws, frame.from);
             await this.clearDisconnectGrace(frame.from);
-            await this.commit(reseatHost(snapshot, frame.name));
+            await this.commit(reseatHost(snapshot, name));
             await this.sendMatchIfInGame(ws);
             return;
           }
@@ -256,7 +266,7 @@ export class LobbyDO {
             if (snapshot === null) return;
             attachPlayer(ws, frame.from);
             await this.clearDisconnectGrace(frame.from);
-            await this.commit(seatGuest(snapshot, frame.from, frame.name));
+            await this.commit(seatGuest(snapshot, frame.from, name));
             await this.sendMatchIfInGame(ws);
             return;
           }

@@ -41,9 +41,20 @@ P2–P4; tracked here so nothing is forgotten.
   hit-testing. Fix is a layout call (move the controls clear of the panel's
   right-hand column, move the panel, or give the panel a max-height that stops
   short of the vertical centre) — worth deciding once for both HUDs.
-- **Lobby identity:** real player names + profile pictures on the lobby and
-  player panels (`src/features/online/components/PlayerPanel.tsx`). Today names
-  are ad-hoc and there are no avatars.
+- **Lobby identity — NAMES DONE 2026-07-26 (P5-1, D81); avatars still open.** A
+  lobby seat's name is now the ACCOUNT's `displayName`, resolved SERVER-SIDE at
+  the hello (`loadDisplayName`, apps/api/src/lobby/displayName.ts) from the same
+  `userId` the /ws session cookie already provided — so it is authoritative, not
+  announced, and a player cannot present themselves as someone else. An anonymous
+  socket (or an account whose name is blank) keeps the client's generated
+  "Player 4271" handle; the blank case deliberately does NOT fall back to the
+  email, which `AccountButton` shows a user about themselves but which a lobby
+  broadcasts to the opponent AND to spectators. The client announces its account
+  name too, purely so the host's locally-seeded waiting screen doesn't flash the
+  old handle. Browser-verified: signed-in seats read "Ash"/"Misty" across panels,
+  turn banner, game log and the spectator pill, while two signed-out players kept
+  their generated handles. **Still open here: profile pictures** — needs the
+  avatar item below.
 - **Profiles:** a basic user profile (display name, avatar, maybe favourite
   deck) backed by the `users` table.
 - **Avatars:** upload/choose an avatar → stored in R2, served from our domain;
