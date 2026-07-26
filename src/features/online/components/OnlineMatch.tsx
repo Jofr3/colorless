@@ -125,14 +125,6 @@ export function OnlineMatch({
     [phaseKind, isViewerTurn, seat, board, onAction, spectating],
   );
 
-  const passTurn = useCallback(() => {
-    onAction({ type: "endTurn", seat });
-  }, [onAction, seat]);
-  // Pass only during your own turn:action (mirrors LocalMatch's gate) — never
-  // while spectating, where "your" turn is somebody else's.
-  const passDisabled =
-    spectating || !(phaseKind === "turn:action" && projection.waitingOn === "you");
-
   // The same drop-legality gate the local page uses, from the redacted phase —
   // so affordances stay in lockstep with moveToAction (no highlight for a drop
   // that would spring back).
@@ -187,8 +179,6 @@ export function OnlineMatch({
       perspective="you"
       glowPerspective={projection.activePlayer ?? "you"}
       onMoveCard={handleMove}
-      onPassTurn={passTurn}
-      passDisabled={passDisabled}
       passAnimationKey={projection.turn}
       placementPredicate={placementPredicate}
       leaveConfirm={

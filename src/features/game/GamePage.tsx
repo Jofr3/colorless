@@ -261,9 +261,6 @@ export function LocalMatch({
     [game, viewerSeat],
   );
 
-  const passTurn = useCallback(() => {
-    dispatch({ type: "endTurn", seat: viewerSeat });
-  }, [dispatch, viewerSeat]);
   const passDisabled = !(projection.waitingOn === "you" && phase.kind === "turn:action");
 
   const turnInfo: TurnInfo = {
@@ -315,7 +312,6 @@ export function LocalMatch({
       glowPerspective={viewerSeat === "p1" ? "you" : "opponent"}
       onMoveCard={handleMoveCard}
       placementPredicate={placementPredicate}
-      onPassTurn={passTurn}
       passDisabled={passDisabled}
       passAnimationKey={projection.turn}
       logEntries={logEntries}

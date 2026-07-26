@@ -103,9 +103,7 @@ export function OnlineHud({
             <button
               type="button"
               className={NEUTRAL_BUTTON}
-              onClick={() =>
-                onAction({ type: "chooseFirstPlayer", seat, first: otherSeat(seat) })
-              }
+              onClick={() => onAction({ type: "chooseFirstPlayer", seat, first: otherSeat(seat) })}
             >
               Go second
             </button>
@@ -796,7 +794,11 @@ function ChooseCardsDialog({
   const [picked, setPicked] = useState<string[]>([]);
   const toggle = (id: string) =>
     setPicked((prev) =>
-      prev.includes(id) ? prev.filter((u) => u !== id) : prev.length < prompt.max ? [...prev, id] : prev,
+      prev.includes(id)
+        ? prev.filter((u) => u !== id)
+        : prev.length < prompt.max
+          ? [...prev, id]
+          : prev,
     );
   const mandatory = prompt.min > 0;
   const short = picked.length < prompt.min;
@@ -825,7 +827,11 @@ function ChooseCardsDialog({
                 aria-disabled={refused || undefined}
                 onClick={() => toggle(card.id)}
                 className={`${ROW_BUTTON_BASE} ${
-                  selected ? ROW_BUTTON_SELECTED : refused ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED
+                  selected
+                    ? ROW_BUTTON_SELECTED
+                    : refused
+                      ? ROW_BUTTON_DISABLED
+                      : ROW_BUTTON_ENABLED
                 }`}
               >
                 <span className="truncate">{card.name}</span>
@@ -1199,8 +1205,10 @@ function AttackPanel({
             onClick={() => onAction({ type: "endTurn", seat })}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold ${GLASS_ACCENT_BUTTON}`}
           >
-            {/* "Pass", not "Pass turn" — the playmat's ⟶ control owns that
-                accessible name (see the local GameHud twin). */}
+            {/* "Pass", not "Pass turn" — the name was chosen while the playmat's
+                ⟶ still owned that label, and kept since (see the GameHud twin);
+                P5-4 removed that control from this surface, where it was only
+                ever enabled underneath this panel. */}
             Pass
           </button>
         </div>
@@ -1375,7 +1383,8 @@ function RetreatDialog({
       {cost > 0 && (
         <>
           <p className="mt-1.5 text-sm text-white/55">
-            Discard exactly {cost} attached energ{cost === 1 ? "y" : "ies"} ({chosen.length}/{cost}):
+            Discard exactly {cost} attached energ{cost === 1 ? "y" : "ies"} ({chosen.length}/{cost}
+            ):
           </p>
           <ul className="mt-2 flex flex-col gap-1.5">
             {energies.map((energy) => {

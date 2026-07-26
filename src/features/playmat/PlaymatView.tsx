@@ -25,7 +25,11 @@ export interface PlaymatViewProps {
       glow still flips in hot-seat play, where `perspective` is fixed. */
   glowPerspective?: PlayerId;
   onMoveCard: (request: CardMoveRequest) => void;
-  onPassTurn: () => void;
+  /** Give the board its own ⟶ pass control by giving it something to call
+      (P5-4). Absent — the /play and online drivers — no control is rendered: on
+      those surfaces the turn panel covers that corner exactly when passing is
+      legal, so the panel carries its own `Pass` instead. */
+  onPassTurn?: () => void;
   passDisabled?: boolean;
   passAnimationKey?: number;
   logEntries: LogEntry[];
@@ -113,7 +117,7 @@ export function PlaymatView({
       >
         <StadiumSlot card={board.stadium} />
       </div>
-      <TurnControls onPassTurn={onPassTurn} passDisabled={passDisabled} />
+      {onPassTurn && <TurnControls onPassTurn={onPassTurn} passDisabled={passDisabled} />}
       <TurnBanner info={turn} passAnimationKey={passAnimationKey} />
       <BackToMenu confirm={leaveConfirm} />
       <GameLog entries={logEntries} turn={turn.turn} />

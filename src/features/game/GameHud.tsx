@@ -85,8 +85,7 @@ interface TrainerOption {
 }
 function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
   const side = game.players[seat];
-  const inPlayStadium =
-    game.stadium === null ? undefined : cardOfUid(game, game.stadium.uid)?.name;
+  const inPlayStadium = game.stadium === null ? undefined : cardOfUid(game, game.stadium.uid)?.name;
   // §7.1 legality (a Basic in play + a matching Stage 2 in hand + timing) is the
   // engine's — greying Rare Candy out before the reject. Computed LAZILY (its
   // cardPool scan is only worth paying when a Rare Candy is actually in hand).
@@ -106,7 +105,10 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     const isStadium = card.trainerType === "Stadium";
     // A card with no play path (no program, no stadium, not Rare Candy) is not
     // offered — the coverage strategy surfaces it as "not simulated" on attempt.
-    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {
+    if (
+      !isRareCandy &&
+      (isStadium ? program.stadium === undefined : program.trainer === undefined)
+    ) {
       continue;
     }
     seen.add(card.id);
@@ -596,13 +598,13 @@ function TurnPanel(props: GameHudProps) {
             </ul>
           </div>
         )}
-        {/* Retreat + Pass share the panel's footer. Pass lives HERE, not only on
-            the playmat's ⟶ control, because this panel (z-[75], bottom-right)
-            COVERS that control (z-20, right-edge centred) at every ordinary
-            viewport height — a click there lands on an attack row instead. The
-            panel renders exactly when `waitingOn === "you" && turn:action`, which
-            is exactly GamePage's `passDisabled === false`, so this button needs no
-            disabled state: if it is on screen, passing is legal. */}
+        {/* Retreat + Pass share the panel's footer. Pass lives HERE because this
+            panel (z-[75], bottom-right) COVERED the playmat's old ⟶ control
+            (z-20, right-edge centred) at every ordinary viewport height — a click
+            there landed on an attack row instead — and since P5-4 that control is
+            not rendered on this surface at all. The panel appears exactly when
+            `waitingOn === "you" && turn:action`, so this button needs no disabled
+            state: if it is on screen, passing is legal. */}
         <div className="mt-3 flex items-center justify-between gap-2">
           <button
             type="button"
@@ -617,10 +619,10 @@ function TurnPanel(props: GameHudProps) {
             className={`${ACCENT_BUTTON_CLASS} px-3 py-1.5 text-xs`}
             onClick={() => dispatch({ type: "endTurn", seat: viewerSeat })}
           >
-            {/* "Pass", not "Pass turn": the playmat's ⟶ control already owns that
-                accessible name, and two same-named buttons would be ambiguous to
-                a screen reader (and to queries). The "Turn actions" region label
-                supplies the context. */}
+            {/* "Pass", not "Pass turn": the name was chosen while the playmat's
+                ⟶ still owned that label, and it is kept because it is the name
+                this control has been verified and tested under. The "Turn
+                actions" region label supplies the context. */}
             Pass
           </button>
         </div>
@@ -742,7 +744,11 @@ function RareCandyDialog({
           Cancel
         </button>
         {chosen !== null && options.length > 1 && (
-          <button type="button" onClick={() => setBasicUid(null)} className={GLASS_DIALOG_GHOST_BUTTON}>
+          <button
+            type="button"
+            onClick={() => setBasicUid(null)}
+            className={GLASS_DIALOG_GHOST_BUTTON}
+          >
             ← Back
           </button>
         )}
@@ -1125,9 +1131,7 @@ function ChooseCardsDialog({
       <output className="mt-1.5 block text-sm text-white/55">
         {mandatory
           ? `Pick ${prompt.min} (${picked.length}/${prompt.max}). ${
-              short
-                ? `Pick ${prompt.min - picked.length} more — this cost must be paid.`
-                : "Ready."
+              short ? `Pick ${prompt.min - picked.length} more — this cost must be paid.` : "Ready."
             }`
           : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
       </output>
@@ -1168,7 +1172,11 @@ function ChooseCardsDialog({
           disabled={short}
           className={ACCENT_BUTTON_CLASS}
           onClick={() =>
-            dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "cards", uids: picked } })
+            dispatch({
+              type: "resolveEffect",
+              seat: viewerSeat,
+              choice: { kind: "cards", uids: picked },
+            })
           }
         >
           {mandatory
@@ -1208,11 +1216,17 @@ function ChoosePokemonDialog({
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       <ul className="mt-3 flex flex-col gap-1.5">
         {prompt.candidates.map((ref) => (
-          <li key={`${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "a"}`}>
+          <li
+            key={`${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "a"}`}
+          >
             <button
               type="button"
               onClick={() =>
-                dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "pokemon", ref } })
+                dispatch({
+                  type: "resolveEffect",
+                  seat: viewerSeat,
+                  choice: { kind: "pokemon", ref },
+                })
               }
               className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
             >
