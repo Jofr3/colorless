@@ -35,7 +35,9 @@ import { OpponentAwayBanner } from "./OpponentAwayBanner";
 // match (server-side), 3c-iii adds the Concede control below, 3c-iv makes
 // walking out (the Back control) forfeit too — hence its own confirmation copy —
 // 3c-v shows the opponent's side of that clock (`opponentAway`), and 3c-vi puts
-// Rematch on the result panel. Still missing: spectate.
+// Rematch on the result panel. From 3c-vii-b the same component also renders for
+// a SPECTATOR (`spectating`): the identical board, with every control removed —
+// they hold no seat, so there is nothing here they could legally send.
 
 // The rejection pill lingers this long before auto-dismissing (GamePage's TTL).
 const ERROR_TTL_MS = 4000;
@@ -57,6 +59,12 @@ const LEAVE_CONFIRM_OVER: LeaveConfirmCopy = {
   title: "Leave the match?",
   message: "The match is over. You'll return to the main menu.",
 };
+// A spectator forfeits nothing by leaving — theirs is the only one of the three
+// that costs the player nothing, so it must not borrow the others' warning.
+const LEAVE_CONFIRM_WATCHING: LeaveConfirmCopy = {
+  title: "Stop watching?",
+  message: "You'll return to the main menu. The match carries on without you.",
+};
 
 // The one primary action on the board — the result panel's Rematch. Solid white
 // (the leave dialog's confirm styling) rather than the HUD's glass, because it is
@@ -73,6 +81,7 @@ export function OnlineMatch({
   actionError,
   onAction,
   onRematch,
+  spectating = false,
 }: {
   game: RedactedGame;
   /** The accumulated game log (seat-keyed, from the DO); relabeled for this
@@ -90,6 +99,12 @@ export function OnlineMatch({
   onAction: (action: GameAction) => void;
   /** Ask to play again once the game is over (P4 3c-vi). */
   onRematch: () => void;
+  /** Watching without a seat (P4 3c-vii-b): render the board and the log, and
+      NOTHING that acts on the game. The server would refuse such a frame anyway
+      (a spectator socket has no bound player), so this is about not offering a
+      control that cannot work — and the seatless snapshot it renders carries no
+      affordances to drive one with (3c-vii-a). */
+  spectating?: boolean;
 }) {
   const projection = useMemo(() => projectionFromRedacted(game), [game]);
   const seat = game.seat;
@@ -103,29 +118,34 @@ export function OnlineMatch({
 
   const handleMove = useCallback(
     (request: CardMoveRequest) => {
+      if (spectating) return;
       const action = moveToAction(request, { phaseKind, isViewerTurn, viewerSeat: seat, board });
       if (action !== null) onAction(action);
     },
-    [phaseKind, isViewerTurn, seat, board, onAction],
+    [phaseKind, isViewerTurn, seat, board, onAction, spectating],
   );
 
   const passTurn = useCallback(() => {
     onAction({ type: "endTurn", seat });
   }, [onAction, seat]);
-  // Pass only during your own turn:action (mirrors LocalMatch's gate).
-  const passDisabled = !(phaseKind === "turn:action" && projection.waitingOn === "you");
+  // Pass only during your own turn:action (mirrors LocalMatch's gate) — never
+  // while spectating, where "your" turn is somebody else's.
+  const passDisabled =
+    spectating || !(phaseKind === "turn:action" && projection.waitingOn === "you");
 
   // The same drop-legality gate the local page uses, from the redacted phase —
   // so affordances stay in lockstep with moveToAction (no highlight for a drop
   // that would spring back).
   const placementPredicate = useMemo(
     () =>
-      placementPredicateFor({
-        phaseKind,
-        isViewerTurn,
-        isReady: game.phase.kind === "setup:place" && game.phase.ready.you,
-      }),
-    [phaseKind, isViewerTurn, game.phase],
+      spectating
+        ? () => false
+        : placementPredicateFor({
+            phaseKind,
+            isViewerTurn,
+            isReady: game.phase.kind === "setup:place" && game.phase.ready.you,
+          }),
+    [phaseKind, isViewerTurn, game.phase, spectating],
   );
 
   const turnInfo: TurnInfo = {
@@ -171,20 +191,38 @@ export function OnlineMatch({
       passDisabled={passDisabled}
       passAnimationKey={projection.turn}
       placementPredicate={placementPredicate}
-      leaveConfirm={projection.outcome === null ? LEAVE_CONFIRM_LIVE : LEAVE_CONFIRM_OVER}
+      leaveConfirm={
+        spectating
+          ? LEAVE_CONFIRM_WATCHING
+          : projection.outcome === null
+            ? LEAVE_CONFIRM_LIVE
+            : LEAVE_CONFIRM_OVER
+      }
       logEntries={logEntries}
       piles={projection.piles}
     >
-      <OnlineHud
-        game={game}
-        waitingOn={projection.waitingOn}
-        activePlaced={board.you.active !== null}
-        onAction={onAction}
-      />
+      {/* Every control below is for a SEATED player. A spectator gets the board,
+          the log and the result — nothing that acts on the game. */}
+      {!spectating && (
+        <OnlineHud
+          game={game}
+          waitingOn={projection.waitingOn}
+          activePlaced={board.you.active !== null}
+          onAction={onAction}
+        />
+      )}
+      {spectating && (
+        <output
+          className="absolute z-[80] rounded-full bg-[#16161f]/85 px-4 py-1.5 text-[13px] text-white/60 shadow-[0_8px_28px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/10 backdrop-blur-md"
+          style={{ top: 16, left: "50%", transform: "translateX(-50%)" }}
+        >
+          Watching — {youName} vs {opponentName}
+        </output>
+      )}
       {/* The opponent walked away and the server is timing them out (3c-v).
           Hidden once the game is over: by then the clock has either fired or
           become irrelevant, and the result overlay is the only thing to read. */}
-      {opponentAway !== null && projection.outcome === null && (
+      {!spectating && opponentAway !== null && projection.outcome === null && (
         <OpponentAwayBanner name={opponentName} forfeitAt={opponentAway.forfeitAt} />
       )}
       {/* Concede (3c-iii). Placed beside the playmat's own "Back" control (top
@@ -193,7 +231,7 @@ export function OnlineMatch({
           conceding in any phase — including the one that matters most, an
           opponent's turn you are waiting out. Hidden once the game is over: there
           is nothing left to concede, and the engine would reject it anyway. */}
-      {projection.outcome === null && (
+      {!spectating && projection.outcome === null && (
         <>
           <button
             type="button"
@@ -245,13 +283,16 @@ export function OnlineMatch({
                 inspectable; the button opts back in. Pressing it readies THIS seat
                 and returns both to the versus screen — the opponent accepts by
                 readying too, which is the same agreement the first game needed. */}
-            <button
-              type="button"
-              onClick={onRematch}
-              className={`pointer-events-auto mt-4 ${REMATCH_BUTTON_CLASS}`}
-            >
-              Rematch
-            </button>
+            {/* Playing again is the players' call, not a watcher's. */}
+            {!spectating && (
+              <button
+                type="button"
+                onClick={onRematch}
+                className={`pointer-events-auto mt-4 ${REMATCH_BUTTON_CLASS}`}
+              >
+                Rematch
+              </button>
+            )}
           </output>
         </div>
       )}

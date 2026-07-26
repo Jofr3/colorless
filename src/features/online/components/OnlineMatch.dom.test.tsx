@@ -223,6 +223,74 @@ describe("OnlineMatch — the opponent-away countdown (3c-v)", () => {
   });
 });
 
+describe("OnlineMatch — the spectator board (3c-vii-b)", () => {
+  function renderWatching(overrides: Partial<RedactedGame> = {}, onAction = vi.fn()) {
+    wrap(
+      <OnlineMatch
+        game={{ ...GAME, ...overrides }}
+        log={[]}
+        youName="Ana"
+        opponentName="Bo"
+        opponentAway={null}
+        actionError={null}
+        onAction={onAction}
+        onRematch={vi.fn()}
+        spectating
+      />,
+    );
+    return onAction;
+  }
+
+  it("offers NO control that acts on the game", () => {
+    // A spectator holds no seat, so the server would refuse any of these anyway;
+    // the point is not to offer a button that cannot work.
+    renderWatching({ outcome: { result: "win", winner: "you", reason: "prizesTaken" } });
+    expect(screen.queryByRole("button", { name: "Concede" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Rematch" })).toBeNull();
+    // …but the RESULT is still shown: following the game to its end is the point.
+    expect(screen.getByText("All prize cards taken.")).toBeTruthy();
+  });
+
+  it("names both players instead of pretending one seat is yours", () => {
+    renderWatching();
+    expect(screen.getByText(/Watching — Ana vs Bo/)).toBeTruthy();
+  });
+
+  it("keeps the game log — following the match is the whole point", () => {
+    wrap(
+      <OnlineMatch
+        game={GAME}
+        log={[
+          { kind: "action", who: "p1", elapsed: "+00:01", segments: [{ text: "drew 7 cards" }] },
+        ]}
+        youName="Ana"
+        opponentName="Bo"
+        opponentAway={null}
+        actionError={null}
+        onAction={vi.fn()}
+        onRematch={vi.fn()}
+        spectating
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show game log" }));
+    expect(screen.getByText("drew 7 cards")).toBeTruthy();
+  });
+
+  it("asks a leave question that costs nothing, unlike a player's", () => {
+    renderWatching();
+    expect(
+      screen.getByText("You'll return to the main menu. The match carries on without you."),
+    ).toBeTruthy();
+  });
+
+  it("sends nothing when the board is dragged", () => {
+    // The seatless snapshot carries no affordances anyway, but the handler is
+    // gated too, so a stray gesture can't produce a frame.
+    const onAction = renderWatching();
+    expect(onAction).not.toHaveBeenCalled();
+  });
+});
+
 describe("OnlineMatch — concede (3c-iii)", () => {
   function renderMatch(
     overrides: Partial<RedactedGame> = {},

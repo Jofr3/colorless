@@ -47,7 +47,14 @@ import {
 import { drizzle } from "drizzle-orm/d1";
 import type { Env } from "../env";
 import { resolveUserIdFromCookie } from "../auth/resolveSession";
-import { attachedPlayer, attachedUserId, attachPlayer, attachUserId } from "./attachment";
+import {
+  attachedPlayer,
+  attachedUserId,
+  attachPlayer,
+  attachSpectator,
+  attachUserId,
+  isSpectating,
+} from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { loadPlayerDeck } from "./deckLoad";
 import {
@@ -103,6 +110,12 @@ const MATCH_KEY = "match";
 // steal a seat (and its redacted hand) by echoing the public playerId. DO-only,
 // never broadcast. Cleared with the rest of storage when the lobby empties.
 const SEAT_USERS_KEY = "seatUsers";
+
+/** Which side of the table a SPECTATOR's board renders from (P4 3c-vii-b). The
+    host, so every spectator of a given match sees the same orientation and reads
+    the lobby's own host/guest order. It carries no privilege: the seatless
+    redaction withholds both sides' hands either way. */
+const SPECTATOR_SIDE = "p1" as const;
 
 /** Whether the match handoff started a real game, or why it couldn't (P4
     increment 3) — a failed deck resolution surfaces `reason` to the players
@@ -201,10 +214,7 @@ export class LobbyDO {
     switch (frame.kind) {
       case "hello": {
         const decision = helloDecision(snapshot, frame.from);
-        if (decision === "reject-full") {
-          this.send(ws, { kind: "reject", to: frame.from, reason: "full" });
-          return;
-        }
+        if (decision === "reject-full") return await this.refuseSeat(ws, frame.from);
         // Seat authentication (3a-sec): once a playerId is claimed by an account,
         // only that account may re-adopt it — so a socket replaying the seat's
         // PUBLIC playerId without its session can't take the seat (nor be handed
@@ -212,10 +222,7 @@ export class LobbyDO {
         const seatUsers = await this.seatUsers();
         const boundUserId = seatUsers[frame.from] ?? null;
         const userId = attachedUserId(ws);
-        if (!seatClaimAllowed(boundUserId, userId)) {
-          this.send(ws, { kind: "reject", to: frame.from, reason: "full" });
-          return;
-        }
+        if (!seatClaimAllowed(boundUserId, userId)) return await this.refuseSeat(ws, frame.from);
         // Bind the seat to the account on its FIRST authenticated claim.
         if (boundUserId === null && userId !== null) {
           await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
@@ -698,7 +705,18 @@ export class LobbyDO {
   private broadcastMatch(record: MatchRecord, snapshot: LobbySnapshot, only?: WebSocket): void {
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const playerId = attachedPlayer(ws);
-      if (playerId === null) continue;
+      // A SPECTATOR (3c-vii-b) has no seat: they get the seatless redaction, which
+      // withholds BOTH hands and every actor affordance (3c-vii-a). `SPECTATOR_SIDE`
+      // only decides which side renders at the bottom of their board.
+      if (playerId === null) {
+        if (!isSpectating(ws)) continue;
+        this.send(ws, {
+          kind: "match",
+          game: redactGame(record.state, SPECTATOR_SIDE, true),
+          log: record.log,
+        });
+        continue;
+      }
       const seat = matchSeatOf(snapshot, playerId);
       if (seat === null) continue;
       // The board is redacted PER seat; the log is seat-keyed + leak-safe, so the
@@ -717,6 +735,42 @@ export class LobbyDO {
     const load = await this.peekMatch();
     if (load.kind === "ok") this.broadcastMatch(load.record, snapshot, ws);
     else if (load.kind === "stale") await this.retireStaleMatch();
+  }
+
+  /** No seat for this socket — both are held, or the one it named belongs to a
+      different account (3a-sec). It always learns that (`reject: full`, the frame
+      the client has always keyed its "Lobby is full" screen on), and IF a match is
+      running it also becomes a SPECTATOR and is handed the seatless board
+      (P4 3c-vii-b).
+
+      Reusing the refusal as the entry point is the whole design: no new client
+      frame, no second URL, no invite flow — **the lobby link IS the spectate
+      link**, and the rule falls out as "you can watch a MATCH, you cannot watch a
+      lobby". Outside in-game this stays exactly the dead end it has always been,
+      which matters because a pre-match lobby has nothing to show a third party
+      and a seat may yet free up for them.
+
+      A spectator is NOT seated: no playerId, no `PlayerState`, nothing in the
+      snapshot. Every handler that can change the game gates on `attachedPlayer`,
+      which stays null for them, so watching grants no power over the match — and
+      by `redactGame(..., true)` (3c-vii-a) it grants no hidden information either.
+      Deliberate consequence, worth naming: anyone who has (or guesses) the lobby
+      code can watch a game in progress. What they see is a public table — both
+      boards, no hands, no deck order, no prizes. */
+  private async refuseSeat(ws: WebSocket, to: string): Promise<void> {
+    this.send(ws, { kind: "reject", to, reason: "full" });
+    const snapshot = await this.loadSnapshot();
+    if (snapshot === null || snapshot.phase !== "in-game") return;
+    const load = await this.peekMatch();
+    if (load.kind !== "ok") return;
+    attachSpectator(ws);
+    // The snapshot as well as the board. `state` frames only go out on a lobby
+    // COMMIT, and a match in progress may not produce one for many minutes — so a
+    // spectator who joined mid-match would otherwise have no idea who is playing
+    // (a browser run caught exactly this: their board read "Host vs Guest"). It
+    // carries nothing private; it is the same frame both players already hold.
+    this.send(ws, { kind: "state", snapshot });
+    this.broadcastMatch(load.record, snapshot, ws);
   }
 
   /** Concede the running match FOR `seat` and fan the finished game out — the

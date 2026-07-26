@@ -200,12 +200,32 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
 
   const { snapshot, self, status } = lobby;
 
-  if (status === "full") {
+  // Refused a seat while a MATCH is running: the server feeds this client the
+  // seatless board instead (P4 3c-vii-b), so the lobby link doubles as the
+  // spectate link. Names come from the snapshot, which a spectator also receives;
+  // the board renders from p1's side (SPECTATOR_SIDE), i.e. the host is "you".
+  if (status === "spectating" && lobby.match !== null) {
+    return (
+      <OnlineMatch
+        game={lobby.match}
+        log={lobby.matchLog}
+        youName={snapshot?.host.name ?? "Host"}
+        opponentName={snapshot?.guest?.name ?? "Guest"}
+        opponentAway={null}
+        actionError={null}
+        onAction={() => {}}
+        onRematch={() => {}}
+        spectating
+      />
+    );
+  }
+
+  if (status === "full" || status === "spectating") {
     return (
       <InfoScreen
         icon={<UserIcon className="h-9 w-9" />}
         title="Lobby is full"
-        message={`Lobby ${code} already has two players.`}
+        message={`Lobby ${code} already has two players. If they start a match, you'll be able to watch it from here.`}
         actions={
           <button type="button" onClick={() => leaveTo("/lobby")} className={GHOST_PILL_CLASS}>
             <ArrowLeftIcon className="h-4 w-4" />

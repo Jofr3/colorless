@@ -801,16 +801,28 @@ until 1c broadcasts the redacted view.
     hand SIZES, whose turn it is, the outcome. engine RULES UNCHANGED (0.41.0 — a read surface). 1858 →
     **1865** tests, incl. the invariant that no uid private to EITHER seat appears in a spectator snapshot,
     checked from both sides. **NOT WIRED — nothing calls it yet.**
-  - **3c-vii-b — the spectator TRANSPORT + client. NEXT.** Scoped to need no new frame and no new URL: **the
-    lobby link IS the spectate link.** A third socket's `hello` already resolves to `reject-full`
-    (`helloDecision`); the plan is that this branch, WHEN the lobby is in-game, also marks the socket a
-    spectator (an `attachment.ts` marker, no `PlayerState`, nothing in the snapshot) and sends it
-    `redactGame(state, "p1", true)`; `broadcastMatch` then includes spectator sockets. Rule: **you can watch
-    a MATCH, you cannot watch a lobby** — outside in-game, `reject-full` stays the dead end it is today.
-    Client: `useLobby`'s `rejected` flag currently drops `match` frames, so it needs a `spectating` status
-    that keeps the connection; `OnlineMatch` needs a read-only mode (no `OnlineHud`, no Concede, no Rematch,
-    no drags — the log stays). Open question worth answering first: whether the two players are TOLD someone
-    is watching.
+  - **3c-vii-b — the spectator TRANSPORT + client. DONE** (D79): **the lobby link IS the spectate link** — no
+    new frame, no new URL, no invite flow. The entry point is a refusal that already existed: `helloDecision`
+    returns `reject-full` to a third player, and that branch now — **only while the lobby is `in-game`** —
+    marks the socket a spectator (`attachSpectator`) and sends it the snapshot + `redactGame(state, "p1",
+    true)`; `broadcastMatch` includes spectator sockets from then on. The rule falls out of the code: **you
+    can watch a MATCH, you cannot watch a lobby.** A spectator has no `playerId`, no `PlayerState` and no
+    presence in the snapshot, so no lobby rule depends on how many are watching and the reducer is untouched;
+    their safety is structural twice — every game-changing handler gates on `attachedPlayer` (null for them)
+    and their board withholds both hands. `attachPlayer` clears the flag, so a watcher who later takes a
+    freed seat stops getting the seatless board. **Players are NOT told they are watched** (deliberate: a
+    count would be a wire change + a broadcast per join/leave; the lobby already refuses sockets silently).
+    **Deliberate consequence:** anyone with or guessing a 4-char code can watch a game in progress — a public
+    table, no hands/deck order/prizes. Client: `useLobby`'s sticky `rejected` became
+    `refusal: "full" | "kicked" | null` (a kick is terminal; "full" keeps the connection, keeps `state` for
+    the names and `match` for the board, and flips the status to `spectating`), with the hello retry moved to
+    the idle-driven cadence heartbeats keep fresh; `OnlineMatch` gained `spectating`, which strips every
+    control and keeps the board, the log and the result. 1865 → **1874** tests. **BROWSER-VERIFIED with a
+    third signed-out profile on the same link:** at `setup:place` the player saw their own hand NAMED while
+    the spectator saw "Face-down card" ×7 for BOTH hands; no Concede/Ready/Rematch, Pass disabled; a concede
+    reached them instantly; a rematch dropped them to "Lobby is full" and they picked the NEXT match up
+    automatically. Zero page errors. **The run caught a real bug:** `state` frames only go out on a lobby
+    COMMIT, so a mid-match joiner never got one and read "Host vs Guest" — `refuseSeat` now sends it.
   - **RECORDED, NOT FIXED (found during 3c-v's browser run; pre-existing):** a **HALF-OPEN socket is
     invisible to the server**. `setWebSocketAutoResponse` answers keepalives without waking the DO and
     nothing watches for pings that STOP arriving, so a player whose network dies without a TCP close is

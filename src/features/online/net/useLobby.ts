@@ -24,8 +24,16 @@ import { createLobbyChannel, type LobbyChannel } from "./channel";
 
 /** How our link to the lobby server is faring. "connecting" also covers a
     client that lost the server and is trying to reconnect. "kicked" is a
-    terminal state — the host removed us. */
-export type LobbyStatus = "connecting" | "connected" | "not-found" | "full" | "kicked";
+    terminal state — the host removed us. "full" means both seats are held; if a
+    MATCH is running the server also starts feeding us the seatless board, and we
+    become "spectating" (P4 3c-vii-b) — the same connection, no seat. */
+export type LobbyStatus =
+  | "connecting"
+  | "connected"
+  | "not-found"
+  | "full"
+  | "kicked"
+  | "spectating";
 
 export type DeckChoice = { id: string; name: string };
 
@@ -130,7 +138,10 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     channelRef.current = channel;
     let disposed = false;
     let connectedOnce = false;
-    let rejected = false;
+    // Why we hold no seat, if we don't. "kicked" is terminal — stop everything.
+    // "full" is NOT: the server may still hand us the match to watch, so the
+    // connection stays up and we keep the snapshot for the players' names.
+    let refusal: "full" | "kicked" | null = null;
     const now = () => Date.now();
     const mountedAt = now();
 
@@ -142,12 +153,28 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
       if (disposed) return;
       switch (message.kind) {
         case "state": {
+          // A SPECTATOR keeps the snapshot but claims nothing from it: it is all
+          // public lobby data (names, deck names, phase) and their board needs the
+          // two players' names. They never become "connected" and never render as
+          // a seated player — status stays "spectating" below.
+          if (refusal === "full") {
+            lastServerSeenRef.current = now();
+            snapshotRef.current = message.snapshot;
+            setSnapshot(message.snapshot);
+            // The match is over for watching purposes the moment the lobby leaves
+            // in-game (a rematch re-opens it, and the server re-sends the board).
+            if (message.snapshot.phase !== "in-game") {
+              setMatch(null);
+              setMatchLog([]);
+            }
+            break;
+          }
           // Only adopt a snapshot that actually seats US — a refused client
           // (or one watching a full lobby) also receives broadcasts, and must
           // not render the lobby impersonating the real player — and never
           // override a sticky refusal.
           const seatedId = isHost ? message.snapshot.host.id : message.snapshot.guest?.id;
-          if (rejected || seatedId !== playerId) break;
+          if (refusal !== null || seatedId !== playerId) break;
           lastServerSeenRef.current = now();
           connectedOnce = true;
           snapshotRef.current = message.snapshot;
@@ -168,11 +195,13 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           break;
         }
         case "match": {
-          // Our per-viewer redacted snapshot of the running game. A refused
-          // client never receives one, but stay defensive and never render a
-          // board while rejected.
-          if (rejected) break;
+          // Our per-viewer redacted snapshot of the running game — or, for a
+          // client refused a seat while a match is running, the SEATLESS
+          // spectator board the server chose to send (3c-vii-b). A KICKED client
+          // is never fed one, and refuses it here too.
+          if (refusal === "kicked") break;
           lastServerSeenRef.current = now();
+          if (refusal === "full") setStatus("spectating");
           setMatch(message.game);
           setMatchLog(message.log);
           // An accepted action supersedes any pending rejection pill (the
@@ -183,7 +212,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
         case "reject-action": {
           // The server refused our last game action (illegal / unsupported). A
           // transient pill, not terminal — bump the nonce so a repeat re-announces.
-          if (rejected) break;
+          if (refusal !== null) break;
           lastServerSeenRef.current = now();
           setActionError((prev) => ({ reason: message.reason, nonce: (prev?.nonce ?? 0) + 1 }));
           break;
@@ -192,17 +221,20 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           // The countdown ended but the match couldn't start (a deck wouldn't
           // resolve, P4 increment 3). The server has already dropped us back to
           // selecting; surface the reason on the versus screen.
-          if (rejected) break;
+          if (refusal !== null) break;
           lastServerSeenRef.current = now();
           setMatchError(message.reason);
           break;
         }
         case "reject": {
-          // Terminal for us: either the seat was already taken, or the host
-          // removed us. Stop the hello retries so we don't try to rejoin.
+          // No seat for us: either both are held, or the host removed us. A KICK
+          // is terminal. "full" is not — the server may follow it with the match
+          // to watch (3c-vii-b), and a seat can free up — but we stop CLAIMING
+          // one, so the hello retries below fall back to the idle-driven cadence.
           if (message.to === playerId) {
-            rejected = true;
-            setStatus(message.reason === "kicked" ? "kicked" : "full");
+            refusal = message.reason === "kicked" ? "kicked" : "full";
+            lastServerSeenRef.current = now();
+            setStatus(refusal === "kicked" ? "kicked" : "full");
           }
           break;
         }
@@ -219,8 +251,17 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
 
     sendHello();
     const tick = setInterval(() => {
-      if (disposed || rejected) return;
+      if (disposed || refusal === "kicked") return;
       const idle = now() - lastServerSeenRef.current;
+      if (refusal === "full") {
+        // Refused a seat, possibly watching. Re-announce ONLY when the link has
+        // gone quiet: the server marks a spectator on the hello it refuses, so
+        // after a dropped socket this is what re-establishes the feed — and
+        // gating on idle (heartbeats keep it fresh) is what stops it becoming a
+        // retry storm against a lobby that is simply full.
+        if (idle > PRESENCE_TIMEOUT_MS) sendHello();
+        return;
+      }
       if (!connectedOnce) {
         if (now() - mountedAt > NOT_FOUND_MS) {
           setStatus("not-found");

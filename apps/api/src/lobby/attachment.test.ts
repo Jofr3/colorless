@@ -4,7 +4,9 @@ import {
   attachedPlayer,
   attachedUserId,
   attachPlayer,
+  attachSpectator,
   attachUserId,
+  isSpectating,
 } from "./attachment";
 
 /** The runtime contract in miniature: whatever was serialized comes back. */
@@ -62,5 +64,41 @@ describe("attachment codec", () => {
     expect(attachedUserId(fakeSocket())).toBeNull();
     expect(attachedUserId(fakeSocket({ playerId: "p1" }))).toBeNull(); // userId absent
     expect(attachedUserId(fakeSocket({ userId: 42 }))).toBeNull();
+  });
+});
+
+describe("the spectator marker (3c-vii-b)", () => {
+  it("marks a socket watching, WITHOUT giving it a seat", () => {
+    // The safety property: every handler that can touch the game gates on
+    // `attachedPlayer`, so a spectator must never acquire one.
+    const ws = fakeSocket();
+    attachSpectator(ws);
+    expect(isSpectating(ws)).toBe(true);
+    expect(attachedPlayer(ws)).toBeNull();
+  });
+
+  it("keeps the authenticated account (a watcher may still be signed in)", () => {
+    const ws = fakeSocket();
+    attachUserId(ws, "user-9");
+    attachSpectator(ws);
+    expect(attachedUserId(ws)).toBe("user-9");
+    // …and the account survives while watching, so a later seat claim still
+    // presents it to `seatClaimAllowed`.
+    expect(isSpectating(ws)).toBe(true);
+  });
+
+  it("stops spectating the moment the socket takes a seat", () => {
+    // A refused client can watch and then be seated when one frees up; leaving
+    // the flag set would hand a seated player the seatless board.
+    const ws = fakeSocket();
+    attachSpectator(ws);
+    attachPlayer(ws, "player-1");
+    expect(isSpectating(ws)).toBe(false);
+    expect(attachedPlayer(ws)).toBe("player-1");
+  });
+
+  it("reads a never-attached socket as not spectating", () => {
+    expect(isSpectating(fakeSocket())).toBe(false);
+    expect(isSpectating(fakeSocket({ playerId: "p" }))).toBe(false);
   });
 });
