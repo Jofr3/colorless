@@ -743,8 +743,37 @@ until 1c broadcasts the redacted view.
     each ended the match instantly for the player who stayed — "You win! / The match was forfeited.", board
     intact, log row present, and (the guest case) NOT dropped to the "Waiting for an opponent" screen with
     the game gone. Real hit-tested clicks; the Back dialog showed the forfeit warning on both; zero page
-    errors. **Still to do:** the opponent-facing "forfeits in 0:45" countdown for an UNGRACEFUL drop (now the
-    only path that waits) — it needs the deadline on the wire.
+    errors.
+  - **3c-v — the forfeit deadline on the wire + the opponent's countdown. DONE** (D76): the last silent
+    path. An UNGRACEFUL drop (crash / killed tab / dead network) left the other player watching a
+    motionless board for 90s and then handed them a win with no explanation. **The deadline moved out of
+    the DO's `ABANDON_KEY` list and onto `PlayerState.forfeitAt`** — a WIRE type, so the number the
+    countdown renders is the number the alarm fires on and the two cannot drift (mirroring, with
+    `ABANDON_KEY` still authoritative, was rejected for exactly that reason). The snapshot beats the
+    `match` frame as the carrier: the arming moment already commits a snapshot and sends no match frame, a
+    forfeit is transport state the engine knows nothing about, and a reconnecting client gets it free.
+    **The invariant `connected` ⇒ `forfeitAt === null`** is enforced structurally: `setSeatConnected` takes
+    the deadline as a final argument defaulting to null (you cannot write one without deciding the other),
+    and `seatGuest`/`reseatHost`/`makePlayer` clear it — which REPLACES 3c-ii's `clearDisconnectTimers`,
+    whose whole purpose was the fear of a branch cancelling one timer and not the other. `forfeitAbandoned`
+    dissolved into the alarm (due deadlines judged on the final snapshot, consumed in the same commit).
+    Also new: **`readSnapshot`**, a normalizer for `SNAPSHOT_KEY` (no version gate — deliberately the
+    OPPOSITE of `MatchRecord`'s D72 answer: a snapshot is scalars with no embedded engine state, so a
+    missing field has one sensible value; guarded on the field's TYPE because it feeds `Math.min` in the
+    scheduler and an `undefined` would set NaN). Client: a top-centre `OpponentAwayBanner` — "…forfeits in
+    1:30" ticking, "forfeiting…" past zero (the server's alarm ends it and may lag), "waiting for them to
+    reconnect…" with no clock armed; hidden once the game is over. 1841 → **1853** tests. **BROWSER-VERIFIED
+    on two clients, all three paths:** a killed client raised the banner at +5s with the full 1:30, counted
+    down live, and forfeited at zero (also the proof that moving the deadline kept the scheduling that D73
+    nearly shipped broken); a genuine reconnect (same tab navigated away and back, so the playerId survived)
+    cleared it at once and left the match running well past the original deadline. Zero page errors.
+  - **RECORDED, NOT FIXED (found during 3c-v's browser run; pre-existing):** a **HALF-OPEN socket is
+    invisible to the server**. `setWebSocketAutoResponse` answers keepalives without waking the DO and
+    nothing watches for pings that STOP arriving, so a player whose network dies without a TCP close is
+    never marked disconnected and never forfeits — the lobby waits until the socket errors at the transport
+    level, which can take minutes. Every ordinary exit (tab close, browser kill, navigation, reload, crash)
+    does produce a close event, which is why it has never bitten. Closing it needs server-side liveness — a
+    per-socket `lastSeen` in place of the auto-response, or an idle sweep — and is its own slice.
   - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
     run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
     should confirm the three things tests can't: the SameSite=None `session` cookie surviving the

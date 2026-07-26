@@ -96,23 +96,97 @@ export function seatClaimAllowed(boundUserId: string | null, userId: string | nu
 /** Update a seat's connectivity — `setGuestConnected` plus the host twin the
     reducer never needed when the host was the authority. Disconnecting drops
     the seat's ready (a countdown can't proceed with an absent player), and the
-    phase is re-derived either way. */
+    phase is re-derived either way.
+
+    `forfeitAt` rides along because the two ALWAYS move together (P4 3c-v): this
+    is the only place that arms a forfeit deadline, and it defaults to null, so
+    marking a seat present clears it in the same call — you cannot write one
+    without deciding the other. Pass a deadline only when disconnecting a seat
+    whose match is running; `connected: true` must always leave it null
+    (PlayerState's invariant, and the thing that stops a returning player losing
+    a game they came back to). */
 export function setSeatConnected(
   snapshot: LobbySnapshot,
   slot: LobbySlot,
   connected: boolean,
+  forfeitAt: number | null = null,
 ): LobbySnapshot {
-  if (slot === "guest") return setGuestConnected(snapshot, connected);
+  const next =
+    slot === "guest" ? setGuestConnected(snapshot, connected) : hostConnected(snapshot, connected);
+  // The single writer, so neither arm above has to remember the invariant.
+  return withForfeitAt(next, slot, forfeitAt);
+}
+
+function hostConnected(snapshot: LobbySnapshot, connected: boolean): LobbySnapshot {
   const host = connected
     ? { ...snapshot.host, connected: true }
     : { ...snapshot.host, connected: false, ready: false };
   return recomputePhase({ ...snapshot, host });
 }
 
+/** Write one seat's forfeit deadline (null = none). Pure; no policy of its own. */
+export function withForfeitAt(
+  snapshot: LobbySnapshot,
+  slot: LobbySlot,
+  forfeitAt: number | null,
+): LobbySnapshot {
+  if (slot === "host") return { ...snapshot, host: { ...snapshot.host, forfeitAt } };
+  return snapshot.guest === null
+    ? snapshot
+    : { ...snapshot, guest: { ...snapshot.guest, forfeitAt } };
+}
+
+/** Every seat with a forfeit deadline, as (slot, deadline) pairs — what the DO
+    schedules its alarm from and judges due forfeits against. Reading them off
+    the SNAPSHOT rather than a second storage list is the point of 3c-v: the
+    deadline the opponent's countdown renders is the same number the alarm fires
+    on, so the two can never disagree. */
+export function forfeitDeadlines(snapshot: LobbySnapshot): { slot: LobbySlot; deadline: number }[] {
+  const seats: { slot: LobbySlot; forfeitAt: number | null }[] = [
+    { slot: "host", forfeitAt: snapshot.host.forfeitAt },
+    ...(snapshot.guest === null
+      ? []
+      : [{ slot: "guest" as const, forfeitAt: snapshot.guest.forfeitAt }]),
+  ];
+  return seats.flatMap(({ slot, forfeitAt }) =>
+    forfeitAt === null ? [] : [{ slot, deadline: forfeitAt }],
+  );
+}
+
 /** Re-seat a reconnecting host: same semantics as `seatGuest` for a known id —
-    keep their deck/ready, adopt the announced name, mark them present. */
+    keep their deck/ready, adopt the announced name, mark them present — and, as
+    on every other return path, cancel any armed forfeit (3c-v). */
 export function reseatHost(snapshot: LobbySnapshot, name: string): LobbySnapshot {
-  return { ...snapshot, host: { ...snapshot.host, name, connected: true } };
+  return { ...snapshot, host: { ...snapshot.host, name, connected: true, forfeitAt: null } };
+}
+
+/** Read a snapshot back out of DO storage, filling in fields added since it was
+    written. Unlike `MATCH_KEY`, `SNAPSHOT_KEY` has no version gate and MUST not
+    have one: a lobby snapshot is a handful of scalars with no engine state
+    embedded, so a missing field has exactly one sensible value, and the cost of
+    being wrong is cosmetic — whereas retiring the snapshot (the `MatchRecord`
+    answer, D72) would evict live lobbies on every deploy that adds a field. Note
+    the DO is the only writer, so this runs once per wake, and every later commit
+    persists the completed shape. */
+export function readSnapshot(raw: unknown): LobbySnapshot | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const snapshot = raw as LobbySnapshot;
+  // A shallow shape check for the same reason `readMatchRecord` has one: the DO
+  // is the only writer, so this can't fire in practice, and that is exactly why
+  // it must not throw if it somehow does.
+  if (typeof snapshot.host !== "object" || snapshot.host === null) return null;
+  return {
+    ...snapshot,
+    host: withSeatDefaults(snapshot.host),
+    guest: snapshot.guest ? withSeatDefaults(snapshot.guest) : null,
+  };
+}
+
+/** 3c-v: a seat persisted before `forfeitAt` existed has none armed. Guarded on
+    the TYPE rather than `?? null` because the field feeds `Math.min` in the alarm
+    scheduler, where an `undefined` that slipped through would set NaN. */
+function withSeatDefaults(seat: LobbySnapshot["host"]): LobbySnapshot["host"] {
+  return { ...seat, forfeitAt: typeof seat.forfeitAt === "number" ? seat.forfeitAt : null };
 }
 
 /** The countdown ended but the match couldn't START (a chosen deck wouldn't

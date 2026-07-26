@@ -74,6 +74,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
         log={[]}
         youName="You"
         opponentName="Opp"
+        opponentAway={null}
         actionError={{ reason: "That move isn't available here.", nonce: 1 }}
         onAction={vi.fn()}
       />,
@@ -91,6 +92,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
         log={[]}
         youName="You"
         opponentName="Opp"
+        opponentAway={null}
         actionError={null}
         onAction={vi.fn()}
       />,
@@ -109,6 +111,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
           log={[]}
           youName="You"
           opponentName="Opp"
+          opponentAway={null}
           actionError={actionError}
           onAction={vi.fn()}
         />
@@ -142,6 +145,7 @@ describe("OnlineMatch — the game log (2b-iii-d-ii)", () => {
         log={LOG}
         youName="You"
         opponentName="Opp"
+        opponentAway={null}
         actionError={null}
         onAction={vi.fn()}
       />,
@@ -153,6 +157,67 @@ describe("OnlineMatch — the game log (2b-iii-d-ii)", () => {
   });
 });
 
+describe("OnlineMatch — the opponent-away countdown (3c-v)", () => {
+  function renderAway(
+    opponentAway: { forfeitAt: number | null } | null,
+    overrides: Partial<RedactedGame> = {},
+  ) {
+    wrap(
+      <OnlineMatch
+        game={{ ...GAME, ...overrides }}
+        log={[]}
+        youName="You"
+        opponentName="Opp"
+        opponentAway={opponentAway}
+        actionError={null}
+        onAction={vi.fn()}
+      />,
+    );
+  }
+
+  const notice = () => screen.queryByText(/disconnected —/);
+
+  it("counts down to the server's forfeit deadline", () => {
+    // The banner reads the DO's own `forfeitAt` (epoch ms), so the number shown is
+    // the number the alarm fires on — it can't promise a forfeit the server won't
+    // make. `Math.ceil` keeps the first tick at the full 0:45 rather than 0:44.
+    renderAway({ forfeitAt: Date.now() + 45_000 });
+    expect(notice()?.textContent).toBe("Opp disconnected — forfeits in 0:45");
+  });
+
+  it("formats past a minute as M:SS", () => {
+    renderAway({ forfeitAt: Date.now() + 90_000 });
+    expect(notice()?.textContent).toBe("Opp disconnected — forfeits in 1:30");
+  });
+
+  it("hands over to the server once the deadline passes", () => {
+    // Not frozen at 0:00: the alarm may be a moment behind the client clock, and
+    // the honest thing to say is that it's being decided elsewhere.
+    renderAway({ forfeitAt: Date.now() - 1_000 });
+    expect(notice()?.textContent).toBe("Opp disconnected — forfeiting…");
+  });
+
+  it("shows the notice without a clock when no forfeit is armed", () => {
+    // The seat can read disconnected before the server arms anything (a lobby
+    // that isn't in a match). Say they're gone; promise no deadline.
+    renderAway({ forfeitAt: null });
+    expect(notice()?.textContent).toBe("Opp disconnected — waiting for them to reconnect…");
+  });
+
+  it("stays hidden while they're connected, and once the game is over", () => {
+    renderAway(null);
+    expect(notice()).toBeNull();
+    cleanup();
+    // A finished match has nothing left to time out — the result overlay is the
+    // only thing worth reading.
+    renderAway(
+      { forfeitAt: Date.now() + 45_000 },
+      { outcome: { result: "win", winner: "you", reason: "conceded" } },
+    );
+    expect(notice()).toBeNull();
+  });
+});
+
 describe("OnlineMatch — concede (3c-iii)", () => {
   function renderMatch(overrides: Partial<RedactedGame> = {}, onAction = vi.fn()) {
     wrap(
@@ -161,6 +226,7 @@ describe("OnlineMatch — concede (3c-iii)", () => {
         log={[]}
         youName="You"
         opponentName="Opp"
+        opponentAway={null}
         actionError={null}
         onAction={onAction}
       />,
@@ -207,8 +273,9 @@ describe("OnlineMatch — concede (3c-iii)", () => {
     // content is in the DOM whether or not it is open; this pins the copy, not
     // the native <dialog> plumbing.)
     renderMatch();
-    expect(screen.getByText("Leaving forfeits the match — your opponent wins immediately."))
-      .toBeTruthy();
+    expect(
+      screen.getByText("Leaving forfeits the match — your opponent wins immediately."),
+    ).toBeTruthy();
 
     cleanup();
     renderMatch({ outcome: { result: "win", winner: "you", reason: "prizesTaken" } });

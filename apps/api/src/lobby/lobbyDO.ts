@@ -58,9 +58,11 @@ import {
   endMatch,
   DISCONNECT_GRACE_MS,
   EMPTY_LOBBY_TTL_MS,
+  forfeitDeadlines,
   helloDecision,
   parseClientMessage,
   type PendingDisconnect,
+  readSnapshot,
   reseatHost,
   resetAfterFailedStart,
   seatClaimAllowed,
@@ -68,6 +70,7 @@ import {
   slotOf,
   splitDuePending,
   stampCountdown,
+  withForfeitAt,
   withoutPendingDisconnect,
   withPendingDisconnect,
 } from "./logic";
@@ -78,6 +81,7 @@ import {
   type MatchRecord,
   matchSeatOf,
   readMatchRecord,
+  SEAT_OF_SLOT,
   startMatch,
 } from "./match";
 
@@ -98,14 +102,6 @@ const MATCH_KEY = "match";
 // steal a seat (and its redacted hand) by echoing the public playerId. DO-only,
 // never broadcast. Cleared with the rest of storage when the lobby empties.
 const SEAT_USERS_KEY = "seatUsers";
-// Forfeit deadlines for players who vanished mid-MATCH (P4 3c-ii). Same
-// {playerId, deadline} shape as PENDING_KEY and driven by the same pure helpers,
-// but a different clock and a different consequence: PENDING_KEY's 5s decides
-// whether a seat shows as disconnected, this one's 90s decides whether they lose
-// the game. Armed only while the lobby is in-game, cleared the moment they
-// reconnect.
-const ABANDON_KEY = "abandonDeadlines";
-
 /** Whether the match handoff started a real game, or why it couldn't (P4
     increment 3) — a failed deck resolution surfaces `reason` to the players
     instead of wedging the lobby in-game with no match. */
@@ -181,7 +177,10 @@ export class LobbyDO {
       // handoff can owner-scope this player's deck read. Anonymous (no/expired
       // cookie) leaves it null — the lobby still works, but that socket can't
       // start a match with a saved deck. Only the DO ever reads it.
-      const userId = await resolveUserIdFromCookie(drizzle(this.env.DB), request.headers.get("Cookie"));
+      const userId = await resolveUserIdFromCookie(
+        drizzle(this.env.DB),
+        request.headers.get("Cookie"),
+      );
       if (userId !== null) attachUserId(pair[1], userId);
       // A live socket parks any pending empty-lobby expiry.
       await this.scheduleMaintenance();
@@ -224,7 +223,7 @@ export class LobbyDO {
             const code = await this.state.storage.get<string>(CODE_KEY);
             if (code === undefined) return; // unreachable: /ws 404s before create
             attachPlayer(ws, frame.from);
-            await this.clearDisconnectTimers(frame.from);
+            await this.clearDisconnectGrace(frame.from);
             await this.commit(createSnapshot(code, makePlayer(frame.from, frame.name)));
             await this.sendMatchIfInGame(ws);
             return;
@@ -232,7 +231,7 @@ export class LobbyDO {
           case "reseat-host": {
             if (snapshot === null) return; // narrowing; decision implies non-null
             attachPlayer(ws, frame.from);
-            await this.clearDisconnectTimers(frame.from);
+            await this.clearDisconnectGrace(frame.from);
             await this.commit(reseatHost(snapshot, frame.name));
             await this.sendMatchIfInGame(ws);
             return;
@@ -240,7 +239,7 @@ export class LobbyDO {
           case "seat-guest": {
             if (snapshot === null) return;
             attachPlayer(ws, frame.from);
-            await this.clearDisconnectTimers(frame.from);
+            await this.clearDisconnectGrace(frame.from);
             await this.commit(seatGuest(snapshot, frame.from, frame.name));
             await this.sendMatchIfInGame(ws);
             return;
@@ -349,23 +348,19 @@ export class LobbyDO {
     if (snapshot !== null) {
       let next = snapshot;
       // A seat whose grace ran out drops to disconnected — and, if a MATCH is
-      // running, starts its much longer forfeit clock (P4 3c-ii). Arming it here
-      // rather than at socket-close is deliberate: this is the first moment we
-      // know they did not come straight back, and the 5s grace has already
-      // absorbed the blips.
-      let armed = await this.abandonDeadlines();
-      let armedChanged = false;
+      // running, starts its much longer forfeit clock in the SAME write (P4
+      // 3c-ii, on the snapshot since 3c-v). Arming it here rather than at
+      // socket-close is deliberate: this is the first moment we know they did not
+      // come straight back, and the 5s grace has already absorbed the blips.
+      // `recomputePhase` never leaves in-game, so the phase read before the call
+      // is the phase after it.
       for (const entry of due) {
         const slot = slotOf(next, entry.playerId);
         if (slot !== null && !hasSocket(entry.playerId)) {
-          next = setSeatConnected(next, slot, false);
-          if (next.phase === "in-game") {
-            armed = withPendingDisconnect(armed, entry.playerId, now + ABANDON_GRACE_MS);
-            armedChanged = true;
-          }
+          const forfeitAt = next.phase === "in-game" ? now + ABANDON_GRACE_MS : null;
+          next = setSeatConnected(next, slot, false, forfeitAt);
         }
       }
-      if (armedChanged) await this.state.storage.put(ABANDON_KEY, armed);
 
       // 2) A countdown that ran its course starts the match — unless a seat's
       //    player is gone mid-countdown (possible without a close event, e.g.
@@ -397,6 +392,27 @@ export class LobbyDO {
         }
       }
 
+      // 2b) A player who never came back forfeits the running match (P4 3c-ii).
+      //     Judged on the FINAL `next` — after the flip, so a match that started
+      //     on this same alarm is never judged by a deadline armed for the
+      //     previous one — and CONSUMED in it, so clearing the deadline rides the
+      //     commit below instead of needing a second one. Consumed whether or not
+      //     the forfeit lands, so a stale deadline can't re-fire every alarm.
+      //     The concede itself waits until after the commit, so the board it
+      //     broadcasts is the snapshot the players have.
+      const forfeiting: Seat[] = [];
+      for (const { slot, deadline } of forfeitDeadlines(next)) {
+        if (deadline > now) continue;
+        const player = slot === "host" ? next.host : next.guest;
+        next = withForfeitAt(next, slot, null);
+        // `hasSocket` re-checks the live truth: a deadline is cleared the moment
+        // its player says hello, but this also covers one set before they came
+        // back. A lobby that already left in-game has nothing to forfeit.
+        if (next.phase === "in-game" && player !== null && !hasSocket(player.id)) {
+          forfeiting.push(SEAT_OF_SLOT[slot]);
+        }
+      }
+
       if (next !== snapshot) await this.commit(next);
 
       // A match that couldn't start: tell both players why (the commit above has
@@ -417,11 +433,7 @@ export class LobbyDO {
         if (load.kind === "ok") this.broadcastMatch(load.record, next);
       }
 
-      // 2b) A player who never came back forfeits the running match (P4 3c-ii).
-      //     Read AFTER the commit above so `next` is the snapshot we judge, and
-      //     after the flip so a match that started this same alarm isn't judged
-      //     by a deadline armed for the previous one.
-      await this.forfeitAbandoned(next, now, hasSocket);
+      for (const seat of forfeiting) await this.concedeSeat(next, seat, now);
     }
 
     // 3) An empty lobby past its expiry evaporates entirely, freeing the code
@@ -472,7 +484,11 @@ export class LobbyDO {
     // Resolve each player's CHOSEN deck (P4 increment 3), owner-scoped by the
     // account the socket authenticated at /ws — a crafted `select-deck` naming
     // someone else's deck id resolves to nothing. host → p1, guest → p2.
-    const hostDeck = await loadPlayerDeck(db, snapshot.host.deckId, this.userIdOf(snapshot.host.id));
+    const hostDeck = await loadPlayerDeck(
+      db,
+      snapshot.host.deckId,
+      this.userIdOf(snapshot.host.id),
+    );
     if (!hostDeck.ok) return { ok: false, reason: `${snapshot.host.name}: ${hostDeck.reason}.` };
     const guestDeck = await loadPlayerDeck(
       db,
@@ -557,12 +573,16 @@ export class LobbyDO {
     if (countdownEnd !== null) deadlines.push(countdownEnd);
 
     for (const entry of await this.pendingDisconnects()) deadlines.push(entry.deadline);
-    // The match forfeit clock (3c-ii). Load-bearing, not bookkeeping: the alarm
-    // that ARMS a forfeit is the disconnect grace, and it consumes its own pending
-    // entry — so if this deadline were not scheduled here, nothing would wake the
-    // DO again and the forfeit would simply never fire (a lobby with one live
-    // socket never reaches the empty-lobby TTL either).
-    for (const entry of await this.abandonDeadlines()) deadlines.push(entry.deadline);
+    // The match forfeit clock (3c-ii; read off the snapshot's seats since 3c-v).
+    // Load-bearing, not bookkeeping: the alarm that ARMS a forfeit is the
+    // disconnect grace, and it consumes its own pending entry — so if this
+    // deadline were not scheduled here, nothing would wake the DO again and the
+    // forfeit would simply never fire (a lobby with one live socket never reaches
+    // the empty-lobby TTL either). It sits beside `countdownEndsAt` on purpose:
+    // one place that turns snapshot state into the next wake-up.
+    if (snapshot !== null) {
+      for (const { deadline } of forfeitDeadlines(snapshot)) deadlines.push(deadline);
+    }
 
     if (sockets.length === 0) {
       let cleanupAt = await this.state.storage.get<number>(CLEANUP_AT_KEY);
@@ -579,9 +599,14 @@ export class LobbyDO {
     else await this.state.storage.setAlarm(Math.min(...deadlines));
   }
 
+  /** The stored snapshot, read through `readSnapshot` so a lobby persisted by an
+      OLDER deploy comes back complete (3c-v added `PlayerState.forfeitAt`). The
+      alternative — a version gate like `MatchRecord`'s — would evict live lobbies
+      on every deploy that adds a field, and unlike a match record there is no
+      embedded engine state a default could quietly get wrong. */
   private async loadSnapshot(): Promise<LobbySnapshot | null> {
     if (this.snapshot === undefined) {
-      this.snapshot = (await this.state.storage.get<LobbySnapshot>(SNAPSHOT_KEY)) ?? null;
+      this.snapshot = readSnapshot(await this.state.storage.get(SNAPSHOT_KEY));
     }
     return this.snapshot;
   }
@@ -590,25 +615,19 @@ export class LobbyDO {
     return (await this.state.storage.get<PendingDisconnect[]>(PENDING_KEY)) ?? [];
   }
 
-  /** A player is back: cancel BOTH of their timers — the 5s "show them
-      disconnected" grace and, crucially, the 90s match forfeit (P4 3c-ii). Called
-      from every hello branch, which is exactly the set of moments a player
-      returns; folding both in here is what stops a future branch from cancelling
-      one and silently leaving the other armed, which would forfeit a player who
-      HAD come back. */
-  private async clearDisconnectTimers(playerId: string): Promise<void> {
+  /** A player is back: cancel the 5s "show them disconnected" grace. Called from
+      every hello branch, which is exactly the set of moments a player returns.
+
+      Their 90s match FORFEIT is cancelled by the same branch's reseat —
+      `seatGuest` / `reseatHost` / `createSnapshot` each mark the seat present and
+      clear `forfeitAt` in one write, PlayerState's invariant (3c-v). That is why
+      this only has one timer left to clear: the deadline moved onto the seat it
+      belongs to, so "mark them present" and "don't forfeit them" became a single
+      indivisible act rather than two calls a future branch could do one of. */
+  private async clearDisconnectGrace(playerId: string): Promise<void> {
     const pending = await this.pendingDisconnects();
     const next = withoutPendingDisconnect(pending, playerId);
     if (next.length !== pending.length) await this.state.storage.put(PENDING_KEY, next);
-    const abandons = await this.abandonDeadlines();
-    const remaining = withoutPendingDisconnect(abandons, playerId);
-    if (remaining.length !== abandons.length) {
-      await this.state.storage.put(ABANDON_KEY, remaining);
-    }
-  }
-
-  private async abandonDeadlines(): Promise<PendingDisconnect[]> {
-    return (await this.state.storage.get<PendingDisconnect[]>(ABANDON_KEY)) ?? [];
   }
 
   private liveSockets(excluding?: WebSocket): WebSocket[] {
@@ -674,48 +693,19 @@ export class LobbyDO {
     else if (load.kind === "stale") await this.retireStaleMatch();
   }
 
-  /** Forfeit the running match for any player whose 90s abandonment deadline has
-      passed while they are still gone (P4 3c-ii) — the fix for the lobby that
-      could never resolve: before this, one player closing their tab left the
-      other staring at a board forever (the empty-lobby TTL only fires when NOBODY
-      is connected, and the waiting player is).
-
-      It applies the engine's own `concede` for the vanished seat (`concedeSeat`)
-      rather than inventing a server-side "abandoned" state, so the match ends the
-      way every other match ends: a real `GameOutcome`, the winner's overlay, and a
-      log row. The lobby stays in-game with a finished game, again exactly as it
-      does after a normal win.
-
-      Every guard here is a real case: `in-game` (a lobby that already left the
-      match has nothing to forfeit), `hasSocket` (they reconnected between the
-      alarm being set and it firing — the deadline is cleared on hello, but this
-      re-checks the live truth), and `concedeSeat`'s own outcome (the engine
-      refuses a concede once the game is over, so a forfeit racing a real win
-      changes nothing). Deadlines are consumed whether or not the forfeit lands,
-      so a stale entry can't re-fire every alarm. */
-  private async forfeitAbandoned(
-    snapshot: LobbySnapshot,
-    now: number,
-    hasSocket: (playerId: string) => boolean,
-  ): Promise<void> {
-    const { due, waiting } = splitDuePending(await this.abandonDeadlines(), now);
-    if (due.length === 0) return;
-    await this.state.storage.put(ABANDON_KEY, waiting);
-    if (snapshot.phase !== "in-game") return;
-    for (const entry of due) {
-      if (hasSocket(entry.playerId)) continue;
-      const seat = matchSeatOf(snapshot, entry.playerId);
-      if (seat !== null) await this.concedeSeat(snapshot, seat, now);
-    }
-  }
-
   /** Concede the running match FOR `seat` and fan the finished game out — the
       one path by which the SERVER ends a match on a player's behalf, shared by
-      its two triggers: the 90s abandonment forfeit (3c-ii) and a graceful leave
-      mid-match (3c-iv). It is deliberately the same `applyMatchAction` → persist
+      its two triggers: the 90s abandonment forfeit (3c-ii, fired from the alarm)
+      and a graceful leave mid-match (3c-iv). Both exist to close the same hole —
+      a lobby that could never resolve, because the empty-lobby TTL only fires
+      when NOBODY is connected and the player left staring at the board IS.
+
+      It applies the engine's own `concede` rather than inventing a server-side
+      "abandoned" state, and does so through the same `applyMatchAction` → persist
       → `broadcastMatch` sequence a player's own `concede` action takes, so a
       server-ended match is indistinguishable from a pressed one: same
-      `GameOutcome`, same log row, same overlay.
+      `GameOutcome`, same log row, same overlay, and the lobby stays in-game with a
+      finished game exactly as it does after a normal win.
 
       It does NOTHING when there is nothing to concede — no readable record, or a
       game the engine says is already over (a forfeit racing a real win, or the

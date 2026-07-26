@@ -13,6 +13,7 @@ import type { CardMoveRequest, TurnInfo } from "../../playmat/types";
 import type { ActionError } from "../net/useLobby";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { OnlineHud } from "./OnlineHud";
+import { OpponentAwayBanner } from "./OpponentAwayBanner";
 
 // The online match board (P4). Renders THIS client's server-redacted snapshot
 // through the same PlaymatView the local /play page drives, and sends the
@@ -31,8 +32,9 @@ import { OnlineHud } from "./OnlineHud";
 // Rare Candy through its own two-step dialog + the `rareCandy` action. Every
 // turn affordance the local HUD offers now has an online counterpart. The match
 // LIFECYCLE is landing on top of that: 3c-ii forfeits a player who abandons the
-// match (server-side), 3c-iii adds the Concede control below, and 3c-iv makes
-// walking out (the Back control) forfeit too — hence its own confirmation copy.
+// match (server-side), 3c-iii adds the Concede control below, 3c-iv makes
+// walking out (the Back control) forfeit too — hence its own confirmation copy —
+// and 3c-v shows the opponent's side of that clock (`opponentAway`).
 // Still missing: rematch and spectate.
 
 // The rejection pill lingers this long before auto-dismissing (GamePage's TTL).
@@ -61,6 +63,7 @@ export function OnlineMatch({
   log,
   youName,
   opponentName,
+  opponentAway,
   actionError,
   onAction,
 }: {
@@ -70,6 +73,11 @@ export function OnlineMatch({
   log: SeatLogEntry[];
   youName: string;
   opponentName: string;
+  /** The opponent's LOBBY presence — null while they are connected, set while
+      their seat shows disconnected, carrying the server's forfeit deadline when
+      one is armed (P4 3c-v). It is lobby state, not game state, so it arrives on
+      the snapshot rather than the redacted board. */
+  opponentAway: { forfeitAt: number | null } | null;
   /** The server's last action rejection (P4), surfaced as a transient pill. */
   actionError: ActionError | null;
   onAction: (action: GameAction) => void;
@@ -164,6 +172,12 @@ export function OnlineMatch({
         activePlaced={board.you.active !== null}
         onAction={onAction}
       />
+      {/* The opponent walked away and the server is timing them out (3c-v).
+          Hidden once the game is over: by then the clock has either fired or
+          become irrelevant, and the result overlay is the only thing to read. */}
+      {opponentAway !== null && projection.outcome === null && (
+        <OpponentAwayBanner name={opponentName} forfeitAt={opponentAway.forfeitAt} />
+      )}
       {/* Concede (3c-iii). Placed beside the playmat's own "Back" control (top
           right, z-20, `right: 16`) rather than in the turn panel, because the
           turn panel only renders on YOUR turn and the engine deliberately allows

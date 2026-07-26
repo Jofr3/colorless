@@ -86,6 +86,7 @@ describe("matchSeatOf — which redacted view a socket receives", () => {
     deckName: null,
     ready: true,
     connected: true,
+    forfeitAt: null,
   });
   const snapshot: LobbySnapshot = {
     code: "ABCD",
@@ -261,9 +262,9 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     ).toBe(false);
     // A structurally BOGUS rareCandy (no uid/target at all) is refused too, not
     // thrown on — the D14 totality the allowlist relies on.
-    expect(applyMatchAction(record, winner, { type: "rareCandy", seat: winner }, STARTED_AT).ok).toBe(
-      false,
-    );
+    expect(
+      applyMatchAction(record, winner, { type: "rareCandy", seat: winner }, STARTED_AT).ok,
+    ).toBe(false);
     // The setup + drag + pass + attack/KO + retreat + effect-answer + ability/
     // trainer actions the client actually sends ARE supported (3b added useAbility;
     // playTrainer was already on for the Stadium drag and now the Item/Supporter

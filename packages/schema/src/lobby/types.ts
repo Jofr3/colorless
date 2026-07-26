@@ -30,6 +30,16 @@ export type PlayerState = {
   /** Whether the host currently sees this player as connected (heartbeat-based;
       the host is connected by definition). */
   connected: boolean;
+  /** Epoch ms at which this seat FORFEITS the running match unless its player
+      comes back — armed by the lobby server when a disconnect grace expires
+      while in-game (P4 3c-ii's `ABANDON_GRACE_MS`), null whenever there is
+      nothing to forfeit. It rides the snapshot rather than the DO's own storage
+      so the opponent can be SHOWN the countdown (3c-v) — before it, a player
+      whose opponent crashed watched a silent board for 90 seconds — and so a
+      reconnecting client gets it with the state it already receives.
+      INVARIANT: `connected` ⇒ `forfeitAt === null`; every path that marks a seat
+      present clears it, which is what stops a returning player being forfeited. */
+  forfeitAt: number | null;
 };
 
 /** The lobby's stage in the create → join → ready → start flow.

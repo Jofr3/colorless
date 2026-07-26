@@ -12,9 +12,11 @@ import {
   abandonsMatch,
   applyBye,
   countdownEndsAt,
+  forfeitDeadlines,
   endMatch,
   helloDecision,
   parseClientMessage,
+  readSnapshot,
   reseatHost,
   resetAfterFailedStart,
   seatClaimAllowed,
@@ -22,6 +24,7 @@ import {
   slotOf,
   splitDuePending,
   stampCountdown,
+  withForfeitAt,
   withoutPendingDisconnect,
   withPendingDisconnect,
 } from "./logic";
@@ -122,6 +125,83 @@ describe("setSeatConnected", () => {
     expect(next.guest?.connected).toBe(false);
     expect(next.guest?.ready).toBe(false);
     expect(next.phase).toBe("selecting");
+  });
+});
+
+describe("the forfeit deadline on the seat (3c-v)", () => {
+  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+
+  it("arms the deadline in the SAME write that marks the seat gone", () => {
+    // One writer for the pair is the whole point: you cannot disconnect a seat
+    // without deciding its forfeit, and you cannot mark one present and forget to
+    // cancel one — the bug that would cost a returning player their game.
+    const next = setSeatConnected(running(), "guest", false, 9_000);
+    expect(next.guest).toMatchObject({ connected: false, forfeitAt: 9_000 });
+  });
+
+  it("clears it on every path that marks a seat PRESENT", () => {
+    const away = setSeatConnected(running(), "guest", false, 9_000);
+    expect(setSeatConnected(away, "guest", true).guest?.forfeitAt).toBeNull();
+    // …and the reconnect paths the hello branches actually take.
+    expect(seatGuest(away, "g1", "Bo").guest?.forfeitAt).toBeNull();
+    const hostAway = setSeatConnected(running(), "host", false, 9_000);
+    expect(reseatHost(hostAway, "Ana").host.forfeitAt).toBeNull();
+    // A brand-new seat never carries one.
+    expect(makePlayer("x", "X").forfeitAt).toBeNull();
+  });
+
+  it("defaults to none, so a plain disconnect outside a match arms nothing", () => {
+    expect(setSeatConnected(lobbyWithGuest(), "guest", false).guest?.forfeitAt).toBeNull();
+  });
+
+  it("reports armed deadlines for the alarm to schedule and judge", () => {
+    let snapshot = setSeatConnected(running(), "guest", false, 9_000);
+    expect(forfeitDeadlines(snapshot)).toEqual([{ slot: "guest", deadline: 9_000 }]);
+    snapshot = withForfeitAt(snapshot, "host", 4_000);
+    // Host first, so the caller sees both — the alarm takes the minimum.
+    expect(forfeitDeadlines(snapshot)).toEqual([
+      { slot: "host", deadline: 4_000 },
+      { slot: "guest", deadline: 9_000 },
+    ]);
+    expect(
+      forfeitDeadlines(withForfeitAt(withForfeitAt(snapshot, "host", null), "guest", null)),
+    ).toEqual([]);
+  });
+
+  it("ignores a guest seat that isn't there", () => {
+    const solo = createSnapshot("ABCD", makePlayer("h1", "Ana"));
+    expect(withForfeitAt(solo, "guest", 1)).toBe(solo);
+    expect(forfeitDeadlines(solo)).toEqual([]);
+  });
+});
+
+describe("readSnapshot — the stored shape, completed (3c-v)", () => {
+  it("defaults a seat written before `forfeitAt` existed", () => {
+    // A deploy must not evict live lobbies. The guard is on the TYPE, not on
+    // nullishness, because the field feeds Math.min in the alarm scheduler — an
+    // undefined that slipped through would set the next alarm to NaN.
+    const legacy = {
+      code: "ABCD",
+      phase: "selecting",
+      host: { id: "h1", name: "Ana", deckId: null, deckName: null, ready: false, connected: true },
+      guest: { id: "g1", name: "Bo", deckId: null, deckName: null, ready: false, connected: false },
+      countdownStartedAt: null,
+    };
+    const read = readSnapshot(legacy);
+    expect(read?.host.forfeitAt).toBeNull();
+    expect(read?.guest?.forfeitAt).toBeNull();
+    // Everything else survives untouched.
+    expect(read?.guest?.connected).toBe(false);
+  });
+
+  it("keeps a real deadline, and reads nothing back as null", () => {
+    const armed = withForfeitAt(lobbyWithGuest(), "guest", 1234);
+    expect(readSnapshot(armed)?.guest?.forfeitAt).toBe(1234);
+    expect(readSnapshot(undefined)).toBeNull();
+    expect(readSnapshot("nope")).toBeNull();
+    // Never throws on a blob that isn't one — the DO is the only writer, which is
+    // precisely why an impossible value must not take the lobby down.
+    expect(readSnapshot({})).toBeNull();
   });
 });
 

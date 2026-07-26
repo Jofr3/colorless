@@ -23,8 +23,24 @@ import {
 const SNAPSHOT: LobbySnapshot = {
   code: "ABCD",
   phase: "selecting",
-  host: { id: "h1", name: "Ana", deckId: "d1", deckName: "Sparks", ready: false, connected: true },
-  guest: { id: "g1", name: "Bo", deckId: null, deckName: null, ready: false, connected: true },
+  host: {
+    id: "h1",
+    name: "Ana",
+    deckId: "d1",
+    deckName: "Sparks",
+    ready: false,
+    connected: true,
+    forfeitAt: null,
+  },
+  guest: {
+    id: "g1",
+    name: "Bo",
+    deckId: null,
+    deckName: null,
+    ready: false,
+    connected: true,
+    forfeitAt: null,
+  },
   countdownStartedAt: null,
 };
 
@@ -45,7 +61,14 @@ const MATCH_GAME: RedactedGame = {
     stadium: null,
     you: {
       hand: [
-        { id: "u1", cardId: "sv01-066", name: "Mareep", category: "Pokemon", trainerType: null, hasImage: true },
+        {
+          id: "u1",
+          cardId: "sv01-066",
+          name: "Mareep",
+          category: "Pokemon",
+          trainerType: null,
+          hasImage: true,
+        },
       ],
       active: null,
       bench: [],
@@ -55,7 +78,14 @@ const MATCH_GAME: RedactedGame = {
     },
     opponent: {
       hand: [
-        { id: "opponent-hand-0", cardId: "hidden", name: "Face-down card", category: "Trainer", trainerType: null, hasImage: false },
+        {
+          id: "opponent-hand-0",
+          cardId: "hidden",
+          name: "Face-down card",
+          category: "Trainer",
+          trainerType: null,
+          hasImage: false,
+        },
       ],
       active: null,
       bench: [],
@@ -132,8 +162,10 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
       lobbyClientMessageSchema.safeParse({ kind: "bye", from: "g1", slot: "guest" }).success,
     ).toBe(true);
     expect(
-      lobbyClientMessageSchema.safeParse({ kind: "action", action: { type: "endTurn", seat: "p1" } })
-        .success,
+      lobbyClientMessageSchema.safeParse({
+        kind: "action",
+        action: { type: "endTurn", seat: "p1" },
+      }).success,
     ).toBe(true);
   });
 
@@ -151,9 +183,9 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
   });
 
   it("refuses an action frame with no string type", () => {
-    expect(lobbyClientMessageSchema.safeParse({ kind: "action", action: { seat: "p1" } }).success).toBe(
-      false,
-    );
+    expect(
+      lobbyClientMessageSchema.safeParse({ kind: "action", action: { seat: "p1" } }).success,
+    ).toBe(false);
   });
 
   it("refuses server-only and fabricated frames", () => {
@@ -217,9 +249,9 @@ describe("lobbyServerMessageSchema (what clients receive)", () => {
   });
 
   it("round-trips a redacted match view + its game log unchanged", () => {
-    expect(lobbyServerMessageSchema.parse({ kind: "match", game: MATCH_GAME, log: MATCH_LOG })).toEqual(
-      { kind: "match", game: MATCH_GAME, log: MATCH_LOG },
-    );
+    expect(
+      lobbyServerMessageSchema.parse({ kind: "match", game: MATCH_GAME, log: MATCH_LOG }),
+    ).toEqual({ kind: "match", game: MATCH_GAME, log: MATCH_LOG });
   });
 
   it("refuses a match frame with no log (the field is required)", () => {

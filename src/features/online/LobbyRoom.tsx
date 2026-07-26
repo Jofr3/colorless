@@ -277,6 +277,13 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
           log={lobby.matchLog}
           youName={self.name}
           opponentName={lobby.opponent?.name ?? "Opponent"}
+          // Their lobby presence, straight off the snapshot (P4 3c-v): the board
+          // itself says nothing about whether anyone is still there to play it.
+          opponentAway={
+            lobby.opponent !== null && !lobby.opponent.connected
+              ? { forfeitAt: lobby.opponent.forfeitAt }
+              : null
+          }
           actionError={lobby.actionError}
           onAction={lobby.sendAction}
         />

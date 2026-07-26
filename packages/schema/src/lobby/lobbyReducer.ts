@@ -6,9 +6,18 @@ import type { LobbyIntent, LobbySlot, LobbySnapshot, PlayerState } from "./types
 // hook (net/useLobby.ts) is what broadcasts the result and drives the one piece
 // of real time — the countdown — that can't live in a pure function.
 
-/** A blank seat: no deck, not ready, present. */
+/** A blank seat: no deck, not ready, present — and with no forfeit armed
+    (`connected` ⇒ `forfeitAt === null`, PlayerState's invariant). */
 export function makePlayer(id: string, name: string): PlayerState {
-  return { id, name, deckId: null, deckName: null, ready: false, connected: true };
+  return {
+    id,
+    name,
+    deckId: null,
+    deckName: null,
+    ready: false,
+    connected: true,
+    forfeitAt: null,
+  };
 }
 
 /** The initial lobby a host creates: itself in seat one, waiting for a joiner. */
@@ -52,11 +61,13 @@ export function recomputePhase(snapshot: LobbySnapshot): LobbySnapshot {
 
 /** Seat (or re-seat) a guest. A hello from the *same* id is a reconnect, so we
     keep their prior deck/ready and just mark them present again; any other id is
-    a fresh joiner taking the seat. */
+    a fresh joiner taking the seat. Either way the seat comes back with NO forfeit
+    armed: this is one of the paths a player returns by, and leaving a deadline on
+    a present player is exactly how you lose a game you came back from (P4 3c-v). */
 export function seatGuest(snapshot: LobbySnapshot, id: string, name: string): LobbySnapshot {
   const reconnecting = snapshot.guest?.id === id ? snapshot.guest : null;
   const guest: PlayerState = reconnecting
-    ? { ...reconnecting, name, connected: true }
+    ? { ...reconnecting, name, connected: true, forfeitAt: null }
     : makePlayer(id, name);
   return recomputePhase({ ...snapshot, guest });
 }
@@ -75,11 +86,13 @@ export function removeGuest(snapshot: LobbySnapshot): LobbySnapshot {
 }
 
 /** Update the guest's connectivity. Losing the connection also drops their
-    ready state, so a countdown can't proceed with an absent player. */
+    ready state, so a countdown can't proceed with an absent player. Reconnecting
+    also clears any armed forfeit (PlayerState's invariant); ARMING one is the
+    lobby server's call, not the reducer's — see `setSeatConnected` (api logic.ts). */
 export function setGuestConnected(snapshot: LobbySnapshot, connected: boolean): LobbySnapshot {
   if (!snapshot.guest) return snapshot;
   const guest: PlayerState = connected
-    ? { ...snapshot.guest, connected: true }
+    ? { ...snapshot.guest, connected: true, forfeitAt: null }
     : { ...snapshot.guest, connected: false, ready: false };
   return recomputePhase({ ...snapshot, guest });
 }
