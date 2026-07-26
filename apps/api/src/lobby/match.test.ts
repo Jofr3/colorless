@@ -86,6 +86,7 @@ describe("matchSeatOf — which redacted view a socket receives", () => {
     deckName: null,
     ready: true,
     connected: true,
+    avatarSeed: null,
     forfeitAt: null,
   });
   const snapshot: LobbySnapshot = {

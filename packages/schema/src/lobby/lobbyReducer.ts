@@ -7,8 +7,16 @@ import type { LobbyIntent, LobbySlot, LobbySnapshot, PlayerState } from "./types
 // of real time — the countdown — that can't live in a pure function.
 
 /** A blank seat: no deck, not ready, present — and with no forfeit armed
-    (`connected` ⇒ `forfeitAt === null`, PlayerState's invariant). */
-export function makePlayer(id: string, name: string): PlayerState {
+    (`connected` ⇒ `forfeitAt === null`, PlayerState's invariant).
+
+    `avatarSeed` defaults to null (an anonymous seat). Like the name, it is the
+    lobby SERVER's to resolve from the account (P5-2) — the parameter exists so
+    the DO can pass what it resolved, not so a client can choose a face. */
+export function makePlayer(
+  id: string,
+  name: string,
+  avatarSeed: string | null = null,
+): PlayerState {
   return {
     id,
     name,
@@ -16,6 +24,7 @@ export function makePlayer(id: string, name: string): PlayerState {
     deckName: null,
     ready: false,
     connected: true,
+    avatarSeed,
     forfeitAt: null,
   };
 }
@@ -64,11 +73,16 @@ export function recomputePhase(snapshot: LobbySnapshot): LobbySnapshot {
     a fresh joiner taking the seat. Either way the seat comes back with NO forfeit
     armed: this is one of the paths a player returns by, and leaving a deadline on
     a present player is exactly how you lose a game you came back from (P4 3c-v). */
-export function seatGuest(snapshot: LobbySnapshot, id: string, name: string): LobbySnapshot {
+export function seatGuest(
+  snapshot: LobbySnapshot,
+  id: string,
+  name: string,
+  avatarSeed: string | null = null,
+): LobbySnapshot {
   const reconnecting = snapshot.guest?.id === id ? snapshot.guest : null;
   const guest: PlayerState = reconnecting
-    ? { ...reconnecting, name, connected: true, forfeitAt: null }
-    : makePlayer(id, name);
+    ? { ...reconnecting, name, avatarSeed, connected: true, forfeitAt: null }
+    : makePlayer(id, name, avatarSeed);
   return recomputePhase({ ...snapshot, guest });
 }
 

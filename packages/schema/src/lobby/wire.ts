@@ -52,6 +52,7 @@ export const playerStateSchema = z.object({
   deckName: z.string().nullable(),
   ready: z.boolean(),
   connected: z.boolean(),
+  avatarSeed: z.string().nullable(),
   forfeitAt: z.number().nullable(),
 });
 export const playerStateSchemaMatchesType: Equals<

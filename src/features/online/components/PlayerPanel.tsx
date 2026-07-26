@@ -1,6 +1,7 @@
 import type { PlayerState } from "@luminous/schema";
-import { CheckCircleIcon, SpinnerIcon, UserIcon, XIcon } from "../../../components/icons";
+import { CheckCircleIcon, SpinnerIcon, XIcon } from "../../../components/icons";
 import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_NEUTRAL_BUTTON } from "../../../lib/glass";
+import { PlayerAvatar } from "./PlayerAvatar";
 import { CardBackStack } from "../../decks/CardBackStack";
 import { type Side, SIDE_STYLES } from "../theme";
 
@@ -99,11 +100,7 @@ export function PlayerPanel({
     >
       {/* Identity row. */}
       <div className="flex items-center gap-3">
-        <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-inset ring-white/10 ${styles.accent}`}
-        >
-          <UserIcon className="h-5 w-5" />
-        </div>
+        <PlayerAvatar name={player.name} seed={player.avatarSeed} className="h-10 w-10" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <ConnectionDot side={side} connected={player.connected} />

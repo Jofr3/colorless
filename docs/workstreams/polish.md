@@ -53,8 +53,16 @@ P2–P4; tracked here so nothing is forgotten.
   name too, purely so the host's locally-seeded waiting screen doesn't flash the
   old handle. Browser-verified: signed-in seats read "Ash"/"Misty" across panels,
   turn banner, game log and the spectator pill, while two signed-out players kept
-  their generated handles. **Still open here: profile pictures** — needs the
-  avatar item below.
+  their generated handles. **AVATARS (generated) DONE 2026-07-26 (P5-2, D82):**
+  `PlayerState.avatarSeed` carries an FNV-1a HASH of the account id (never the id
+  — the snapshot is broadcast to the opponent and to spectators), from which
+  `PlayerAvatar` draws a deterministic two-hue gradient plus the same initial the
+  account control shows. Nothing stored, nothing uploaded, and the same person
+  looks the same to you in every lobby; an anonymous seat keeps the generic
+  figure rather than being given a face that would change next visit. Saturation
+  and lightness are FIXED so the seed picks the hue and never how loud the result
+  is. **Still open: uploaded avatars** — the item below (R2 + CSP); an image
+  simply wins over the generated one when it lands.
 - **Profiles:** a basic user profile (display name, avatar, maybe favourite
   deck) backed by the `users` table.
 - **Avatars:** upload/choose an avatar → stored in R2, served from our domain;

@@ -187,8 +187,15 @@ export function forfeitDeadlines(snapshot: LobbySnapshot): { slot: LobbySlot; de
 /** Re-seat a reconnecting host: same semantics as `seatGuest` for a known id —
     keep their deck/ready, adopt the announced name, mark them present — and, as
     on every other return path, cancel any armed forfeit (3c-v). */
-export function reseatHost(snapshot: LobbySnapshot, name: string): LobbySnapshot {
-  return { ...snapshot, host: { ...snapshot.host, name, connected: true, forfeitAt: null } };
+export function reseatHost(
+  snapshot: LobbySnapshot,
+  name: string,
+  avatarSeed: string | null = null,
+): LobbySnapshot {
+  return {
+    ...snapshot,
+    host: { ...snapshot.host, name, avatarSeed, connected: true, forfeitAt: null },
+  };
 }
 
 /** Read a snapshot back out of DO storage, filling in fields added since it was
@@ -213,11 +220,16 @@ export function readSnapshot(raw: unknown): LobbySnapshot | null {
   };
 }
 
-/** 3c-v: a seat persisted before `forfeitAt` existed has none armed. Guarded on
-    the TYPE rather than `?? null` because the field feeds `Math.min` in the alarm
-    scheduler, where an `undefined` that slipped through would set NaN. */
+/** Fields added to a seat since the stored snapshot was written: `forfeitAt`
+    (3c-v) and `avatarSeed` (P5-2). `forfeitAt` is guarded on the TYPE rather than
+    `?? null` because it feeds `Math.min` in the alarm scheduler, where an
+    `undefined` that slipped through would set NaN. */
 function withSeatDefaults(seat: LobbySnapshot["host"]): LobbySnapshot["host"] {
-  return { ...seat, forfeitAt: typeof seat.forfeitAt === "number" ? seat.forfeitAt : null };
+  return {
+    ...seat,
+    avatarSeed: typeof seat.avatarSeed === "string" ? seat.avatarSeed : null,
+    forfeitAt: typeof seat.forfeitAt === "number" ? seat.forfeitAt : null,
+  };
 }
 
 /** The countdown ended but the match couldn't START (a chosen deck wouldn't

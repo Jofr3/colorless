@@ -60,6 +60,7 @@ import {
   attachUserId,
   isSpectating,
 } from "./attachment";
+import { avatarSeedFrom } from "./avatar";
 import { loadCardPool } from "./cardPool";
 import { loadPlayerDeck } from "./deckLoad";
 import { loadDisplayName } from "./displayName";
@@ -244,13 +245,16 @@ export class LobbyDO {
         // the refusal branches above, so a socket that gets no seat costs no D1
         // query however often it retries.
         const name = (await loadDisplayName(drizzle(this.env.DB), userId)) ?? frame.name;
+        // …and the face, from the same account (P5-2). Derived, not stored and
+        // not read: it costs nothing beyond the userId the socket already holds.
+        const avatarSeed = avatarSeedFrom(userId);
         switch (decision) {
           case "claim-host": {
             const code = await this.state.storage.get<string>(CODE_KEY);
             if (code === undefined) return; // unreachable: /ws 404s before create
             attachPlayer(ws, frame.from);
             await this.clearDisconnectGrace(frame.from);
-            await this.commit(createSnapshot(code, makePlayer(frame.from, name)));
+            await this.commit(createSnapshot(code, makePlayer(frame.from, name, avatarSeed)));
             await this.sendMatchIfInGame(ws);
             return;
           }
@@ -258,7 +262,7 @@ export class LobbyDO {
             if (snapshot === null) return; // narrowing; decision implies non-null
             attachPlayer(ws, frame.from);
             await this.clearDisconnectGrace(frame.from);
-            await this.commit(reseatHost(snapshot, name));
+            await this.commit(reseatHost(snapshot, name, avatarSeed));
             await this.sendMatchIfInGame(ws);
             return;
           }
@@ -266,7 +270,7 @@ export class LobbyDO {
             if (snapshot === null) return;
             attachPlayer(ws, frame.from);
             await this.clearDisconnectGrace(frame.from);
-            await this.commit(seatGuest(snapshot, frame.from, name));
+            await this.commit(seatGuest(snapshot, frame.from, name, avatarSeed));
             await this.sendMatchIfInGame(ws);
             return;
           }

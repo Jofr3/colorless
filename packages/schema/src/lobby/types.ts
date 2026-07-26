@@ -30,6 +30,12 @@ export type PlayerState = {
   /** Whether the host currently sees this player as connected (heartbeat-based;
       the host is connected by definition). */
   connected: boolean;
+  /** A stable, opaque token for the ACCOUNT behind this seat, from which a
+      deterministic avatar is drawn (P5-2). Null for an anonymous seat, which
+      renders the generic figure instead. It is a HASH of the account id, never
+      the id itself: the point is that the same person looks the same to you
+      across lobbies, not that anyone can join this token to another surface. */
+  avatarSeed: string | null;
   /** Epoch ms at which this seat FORFEITS the running match unless its player
       comes back — armed by the lobby server when a disconnect grace expires
       while in-game (P4 3c-ii's `ABANDON_GRACE_MS`), null whenever there is

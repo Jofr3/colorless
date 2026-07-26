@@ -30,6 +30,7 @@ const SNAPSHOT: LobbySnapshot = {
     deckName: "Sparks",
     ready: false,
     connected: true,
+    avatarSeed: null,
     forfeitAt: null,
   },
   guest: {
@@ -39,6 +40,7 @@ const SNAPSHOT: LobbySnapshot = {
     deckName: null,
     ready: false,
     connected: true,
+    avatarSeed: null,
     forfeitAt: null,
   },
   countdownStartedAt: null,
