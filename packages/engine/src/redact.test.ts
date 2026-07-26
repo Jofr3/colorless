@@ -5,7 +5,12 @@
 // crosses into a viewer's snapshot.
 
 import { describe, expect, it } from "vitest";
-import { EMPTY_CARD_ID, HIDDEN_CARD_ID, HIDDEN_CARD_NAME, type RedactedGame } from "@luminous/schema";
+import {
+  EMPTY_CARD_ID,
+  HIDDEN_CARD_ID,
+  HIDDEN_CARD_NAME,
+  type RedactedGame,
+} from "@luminous/schema";
 import { rareCandyOptions } from "./cardplay";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 import { redactGame } from "./redact";
@@ -50,8 +55,11 @@ function turnOneState(): GameState {
 function placedNotRevealed(): GameState {
   let state = mustCreate(SEED, DECKS).state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = mustApply(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" })
-    .state;
+  state = mustApply(state, {
+    type: "chooseFirstPlayer",
+    seat: state.phase.coinWinner,
+    first: "p1",
+  }).state;
   if (state.phase.kind !== "setup:place") throw new Error("expected setup:place");
   state = mustApply(state, {
     type: "setupPlaceActive",
@@ -82,7 +90,10 @@ function privateUids(state: GameState, seat: Seat): string[] {
     positional id — so this set is exactly what a client could correlate. */
 function allIds(game: RedactedGame): string[] {
   const ids: string[] = [];
-  const card = (c: { id: string; attached?: { tools: { id: string }[]; energies: { id: string }[] } }) => {
+  const card = (c: {
+    id: string;
+    attached?: { tools: { id: string }[]; energies: { id: string }[] };
+  }) => {
     ids.push(c.id);
     if (c.attached) {
       for (const t of c.attached.tools) ids.push(t.id);
@@ -248,7 +259,10 @@ describe("redactGame — phase-derived view (viewer-relative)", () => {
   it("maps the turn owner and who-must-act into you/opponent", () => {
     const state = turnOneState(); // p1's turn:action
     expect(redactGame(state, "p1")).toMatchObject({ activePlayer: "you", waitingOn: "you" });
-    expect(redactGame(state, "p2")).toMatchObject({ activePlayer: "opponent", waitingOn: "opponent" });
+    expect(redactGame(state, "p2")).toMatchObject({
+      activePlayer: "opponent",
+      waitingOn: "opponent",
+    });
   });
 
   it("has no turn owner during setup, but names who must act", () => {
@@ -955,6 +969,123 @@ describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)
     // snapshot must not reach back into game state (the copyConditions contract).
     expect(redacted.movable[0]?.from).not.toBe(P1_ACTIVE);
     expect(redacted.destinations[0]).not.toBe(P1_BENCH0);
+  });
+});
+
+describe("redactGame — the SPECTATOR view (3c-vii)", () => {
+  it("hides BOTH hands — the threat is a player watching their own match", () => {
+    // The whole point. A seated viewer sees one hand; a spectator sees none, so
+    // opening a spectator view of a game you are playing tells you nothing your
+    // own seat didn't already.
+    const state = turnOneState();
+    const game = redactGame(state, "p1", true);
+    for (const side of [game.board.you, game.board.opponent]) {
+      expect(side.hand.length).toBeGreaterThan(0);
+      for (const c of side.hand) {
+        expect(c.cardId).toBe(HIDDEN_CARD_ID);
+        expect(c.name).toBe(HIDDEN_CARD_NAME);
+      }
+    }
+    // Counts still cross — a hand SIZE is public at the table.
+    expect(game.board.you.hand).toHaveLength(state.players.p1.hand.length);
+    expect(game.board.opponent.hand).toHaveLength(state.players.p2.hand.length);
+  });
+
+  it("LEAKS NOTHING: no uid private to EITHER seat reaches a spectator", () => {
+    // The seated tests assert this one-directionally; for a spectator it holds
+    // BOTH ways, which is the invariant that makes the view safe to hand out.
+    const state = placedNotRevealed();
+    for (const side of ["p1", "p2"] as const) {
+      const leaked = new Set(allIds(redactGame(state, side, true)));
+      for (const seat of ["p1", "p2"] as const) {
+        for (const uid of privateUids(state, seat)) {
+          expect(leaked.has(uid)).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("hides the watched side's OWN setup placements too", () => {
+    // A seated viewer sees their own face-down placements because they made
+    // them. A spectator made none — and watching from p1's side must not reveal
+    // what p1 just benched, or a player could spectate their opponent's side.
+    const state = placedNotRevealed();
+    const seated = redactGame(state, "p1");
+    expect(seated.board.you.active?.cardId).not.toBe(HIDDEN_CARD_ID);
+    const watching = redactGame(state, "p1", true);
+    expect(watching.board.you.active?.cardId).toBe(HIDDEN_CARD_ID);
+    expect(watching.board.you.bench.map((c) => c.cardId)).toEqual([HIDDEN_CARD_ID]);
+  });
+
+  it("reveals in-play normally once setup is over — a spectator watches a real board", () => {
+    const state = turnOneState();
+    const game = redactGame(state, "p1", true);
+    expect(game.board.you.active?.cardId).not.toBe(HIDDEN_CARD_ID);
+    expect(game.board.opponent.active?.cardId).not.toBe(HIDDEN_CARD_ID);
+    // Public zones stay public.
+    expect(game.board.you.prizesRemaining).toBe(state.players.p1.prizes.length);
+    expect(game.board.you.deckCount).toBe(state.players.p1.deck.length);
+  });
+
+  it("withholds EVERY turn:action affordance, including on the actor's own side", () => {
+    // The actor lists name cards in a HAND: leaking them would undo the hand
+    // redaction above. One `actor = null` gate covers all five, so the next
+    // affordance added is withheld by default.
+    // A board with real affordances to withhold: p1 on turn 2 holding a
+    // Supporter (the trainer-options fixture from 3b).
+    let state = driveSetup(1, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p2" });
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = handFromDeck(state, "p1", "sv01-189", 1);
+    const seated = redactGame(state, "p1");
+    if (seated.phase.kind !== "turn:action") throw new Error("expected turn:action");
+    // The trainer list is the sharpest witness: its rows ARE hand cards, named.
+    expect(seated.phase.trainers.length).toBeGreaterThan(0);
+
+    const watching = redactGame(state, "p1", true);
+    if (watching.phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(watching.phase).toEqual({
+      kind: "turn:action",
+      attacks: [],
+      retreat: null,
+      abilities: [],
+      trainers: [],
+      rareCandy: [],
+    });
+  });
+
+  it("withholds the effect:choose prompt from the answerer's own side", () => {
+    // A controller-answered park, built the way the 2b-iii-b block does (the
+    // redactor never reads `cont`, so a minimal one stands in).
+    const prompt: EffectPrompt = { kind: "mayDraw", count: 2, note: "Draw 2 cards?" };
+    const cont: EffectContinuation = {
+      pendingOp: { op: "opponentMayDraw", count: 1 },
+      rest: [],
+      ctx: { seat: "p1" },
+    };
+    const state: GameState = {
+      ...turnOneState(),
+      phase: { kind: "effect:choose", seat: "p1", prompt, cont },
+    };
+    const seated = redactGame(state, "p1");
+    if (seated.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(seated.phase.prompt).not.toBeNull();
+
+    const watching = redactGame(state, "p1", true);
+    if (watching.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(watching.phase.prompt).toBeNull();
+  });
+
+  it("keeps the public phase view — a spectator can still follow the game", () => {
+    // Withholding is about CARDS, not about who is to move: whose turn it is, the
+    // turn number and the outcome are all public at the table.
+    const state = turnOneState();
+    const seated = redactGame(state, "p1");
+    const watching = redactGame(state, "p1", true);
+    expect(watching.turn).toBe(seated.turn);
+    expect(watching.activePlayer).toBe(seated.activePlayer);
+    expect(watching.waitingOn).toBe(seated.waitingOn);
+    expect(watching.outcome).toEqual(seated.outcome);
+    expect(watching.board.stadium).toEqual(seated.board.stadium);
   });
 });
 

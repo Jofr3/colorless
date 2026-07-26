@@ -21,6 +21,17 @@
 // prompt crosses ONLY to the seat that must answer it (redactedPromptOf) — for a
 // hidden-candidate prompt (chooseCards/attachCards) that carries the revealed
 // deck-card identities, so the answerer gate is the hidden-info barrier there.
+//
+// SPECTATORS (P4 3c-vii): `redactGame(state, side, true)` is the view for someone
+// with no seat, watching from `side` of the table. It is the same snapshot with
+// three things taken away — BOTH hands, BOTH sides' setup placements, and every
+// actor affordance (the turn:action lists, the effect prompt). The threat model is
+// not a stranger: it is a PLAYER opening a spectator view of their own match to
+// read the other hand, so "a spectator sees strictly less than either player"
+// is the property, and the sides are treated symmetrically. Note the actor lists
+// name cards in a HAND, so withholding the hand without withholding them would
+// leak exactly what was hidden — hence one `actor = null` gate rather than a
+// field-by-field decision that a future affordance could miss.
 
 import type {
   RedactedAbility,
@@ -43,7 +54,12 @@ import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from
 import { costMet } from "./attack";
 import { programPlayable, rareCandyOptions } from "./cardplay";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
-import { effectiveAttackCost, effectiveMaxHp, effectiveRetreatCost, providedEnergy } from "./continuous";
+import {
+  effectiveAttackCost,
+  effectiveMaxHp,
+  effectiveRetreatCost,
+  providedEnergy,
+} from "./continuous";
 import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
 import { conditionHolds, conditionNote, handCostAction, handCostUnmet } from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
@@ -60,22 +76,32 @@ import type {
 import { isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
-    snapshot out. Pure — nothing aliases the input state. */
-export function redactGame(state: GameState, viewerSeat: Seat): RedactedGame {
+    snapshot out. Pure — nothing aliases the input state.
+
+    `spectating` builds the SEATLESS view instead (3c-vii): `viewerSeat` then only
+    picks which side of the table is rendered as "you", and that side's hand,
+    setup placements and turn affordances are withheld exactly as the opposite
+    side's already were. Everything a spectator sees, both players can already
+    see. */
+export function redactGame(state: GameState, viewerSeat: Seat, spectating = false): RedactedGame {
   const opponentSeat = otherSeat(viewerSeat);
   const view = phaseViewOf(state, viewerSeat);
   // Setup placements are face-down until both players ready, so the opponent's
   // in-play stacks (battle rows included) redact until then. The viewer's own
-  // placements stay face-up — they placed them.
+  // placements stay face-up — they placed them. A SPECTATOR placed nothing, so
+  // the same setup gate applies to BOTH sides for them.
   const setup = inSetup(state);
   return {
     seat: viewerSeat,
     turn: state.turn,
-    phase: redactPhase(state, viewerSeat),
+    phase: redactPhase(state, viewerSeat, spectating),
     board: {
       // §7.3 — the one shared Stadium, public to both viewers.
       stadium: state.stadium === null ? null : redactedCardOf(state, state.stadium.uid),
-      you: redactedSideOf(state, viewerSeat, { faceUpHand: true, faceUpInPlay: true }),
+      you: redactedSideOf(state, viewerSeat, {
+        faceUpHand: !spectating,
+        faceUpInPlay: spectating ? !setup : true,
+      }),
       opponent: redactedSideOf(state, opponentSeat, { faceUpHand: false, faceUpInPlay: !setup }),
     },
     activePlayer: asViewer(view.activeSeat, viewerSeat),
@@ -90,7 +116,7 @@ export function redactGame(state: GameState, viewerSeat: Seat): RedactedGame {
     turn:action the viewer's OWN attack options, the ko interrupts their counts);
     the effect:choose prompt goes ONLY to the seat that must answer it
     (`redactedPromptOf`), null for every other viewer. */
-function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
+function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): RedactedPhase {
   const phase = state.phase;
   switch (phase.kind) {
     case "setup:chooseFirst":
@@ -102,25 +128,40 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
         kind: "setup:place",
         ready: { you: phase.ready[viewerSeat], opponent: phase.ready[otherSeat(viewerSeat)] },
       };
-    case "turn:action":
+    case "turn:action": {
       // turn:action's actor is phase.seat (phaseView) — only they get an attack
       // list, a retreat option, an ability/trainer list and the Rare Candy
       // pairings; the opponent's view of the same phase carries none (empty
       // attacks/abilities/trainers/rareCandy, null retreat).
+      //
+      // A SPECTATOR has NO actor: `null` can never equal a seat, so every helper
+      // below withholds through the guard it already had. One gate rather than
+      // five `spectating ? [] : …` — which is the point, because the affordance
+      // added HERE next must be withheld by default, not by remembering to. It is
+      // load-bearing beyond neatness: the trainer/ability lists name cards in the
+      // actor's HAND, so leaking them to a spectator would leak the hand the
+      // board redaction just hid.
+      const actor = spectating ? null : phase.seat;
       return {
         kind: "turn:action",
-        attacks: redactedAttacksOf(state, viewerSeat, phase.seat),
-        retreat: redactedRetreatOf(state, viewerSeat, phase.seat),
-        abilities: redactedAbilitiesOf(state, viewerSeat, phase.seat),
-        trainers: redactedTrainersOf(state, viewerSeat, phase.seat),
-        rareCandy: redactedRareCandyOf(state, viewerSeat, phase.seat),
+        attacks: redactedAttacksOf(state, viewerSeat, actor),
+        retreat: redactedRetreatOf(state, viewerSeat, actor),
+        abilities: redactedAbilitiesOf(state, viewerSeat, actor),
+        trainers: redactedTrainersOf(state, viewerSeat, actor),
+        rareCandy: redactedRareCandyOf(state, viewerSeat, actor),
       };
+    }
     case "ko:takePrizes":
       return { kind: "ko:takePrizes", count: phase.count };
     case "ko:promote":
       return { kind: "ko:promote" };
     case "effect:choose":
-      return { kind: "effect:choose", prompt: redactedPromptOf(state, phase, viewerSeat) };
+      // A prompt's candidates can be the answerer's own deck cards; nobody who
+      // cannot ANSWER it may see it, and a spectator never can.
+      return {
+        kind: "effect:choose",
+        prompt: spectating ? null : redactedPromptOf(state, phase, viewerSeat),
+      };
     case "gameOver":
       return { kind: "gameOver" };
   }
@@ -275,7 +316,11 @@ function redactedScopeOf(scope: DiscardScope): RedactedDiscardScope {
     first-turn ban, and the §12 immobilize gate — folded into one `playable`
     boolean so the client needs no engine logic. Own Active only (public), so no
     hidden information leaves the DO. */
-function redactedAttacksOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedAttack[] {
+function redactedAttacksOf(
+  state: GameState,
+  viewerSeat: Seat,
+  turnSeat: Seat | null,
+): RedactedAttack[] {
   if (viewerSeat !== turnSeat) return [];
   const active = state.players[viewerSeat].active;
   if (active === null) return [];
@@ -302,7 +347,11 @@ function redactedAttacksOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): 
     allowance, a non-empty Bench (something to promote to) and enough attached
     energy to pay the cost. The energies to discard and the Bench are already on
     the public board, so nothing hidden leaves the DO. */
-function redactedRetreatOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedRetreat | null {
+function redactedRetreatOf(
+  state: GameState,
+  viewerSeat: Seat,
+  turnSeat: Seat | null,
+): RedactedRetreat | null {
   if (viewerSeat !== turnSeat) return null;
   const active = state.players[viewerSeat].active;
   if (active === null) return null;
@@ -328,7 +377,11 @@ function redactedRetreatOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): 
     leaves the DO. `target` is a fresh seatless `PokemonTarget` literal (no alias
     into state — the redactor's purity contract) the `useAbility` action dispatches
     back verbatim. */
-function redactedAbilitiesOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedAbility[] {
+function redactedAbilitiesOf(
+  state: GameState,
+  viewerSeat: Seat,
+  turnSeat: Seat | null,
+): RedactedAbility[] {
   if (viewerSeat !== turnSeat) return [];
   const side = state.players[viewerSeat];
   const out: RedactedAbility[] = [];
@@ -344,7 +397,8 @@ function redactedAbilitiesOf(state: GameState, viewerSeat: Seat, turnSeat: Seat)
       const noTarget = !programPlayable(state, ability.program, viewerSeat);
       const disabled =
         (ability.activeOnly && target.spot !== "active") ||
-        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
+        (ability.oncePerTurn &&
+          state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
         costUnmet !== null ||
         noTarget;
       const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
@@ -396,7 +450,11 @@ function redactedAbilitiesOf(state: GameState, viewerSeat: Seat, turnSeat: Seat)
     to the actor, so nothing hidden leaves the DO. `uid` (already on the viewer's
     own face-up hand) is what the `playTrainer` / `rareCandy` action dispatches
     back. */
-function redactedTrainersOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedTrainer[] {
+function redactedTrainersOf(
+  state: GameState,
+  viewerSeat: Seat,
+  turnSeat: Seat | null,
+): RedactedTrainer[] {
   if (viewerSeat !== turnSeat) return [];
   const side = state.players[viewerSeat];
   // §7.1 legality (a Basic in play + a matching Stage 2 in hand + timing) is the
@@ -479,7 +537,7 @@ function redactedTrainersOf(state: GameState, viewerSeat: Seat, turnSeat: Seat):
 function redactedRareCandyOf(
   state: GameState,
   viewerSeat: Seat,
-  turnSeat: Seat,
+  turnSeat: Seat | null,
 ): RedactedRareCandyOption[] {
   if (viewerSeat !== turnSeat) return [];
   return rareCandyOptions(state, viewerSeat).map((option) => ({
@@ -543,7 +601,14 @@ function redactedCardOf(state: GameState, uid: string): RedactedCard {
     // pool), but the redactor stays total: an identity-only placeholder that
     // still animates under its uid. "Trainer" is the neutral category.
     const cardId = state.cardIdByUid[uid] ?? uid;
-    return { id: uid, cardId, name: cardId, category: "Trainer", trainerType: null, hasImage: false };
+    return {
+      id: uid,
+      cardId,
+      name: cardId,
+      category: "Trainer",
+      trainerType: null,
+      hasImage: false,
+    };
   }
   return {
     id: uid,

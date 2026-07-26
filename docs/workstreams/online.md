@@ -785,6 +785,32 @@ until 1c broadcasts the redacted view.
     readied, opponent shown as Ready) — then the opponent readying started a genuinely new game, the log
     restarting at T0 with fresh shuffles and a new coin flip. **A CRAFTED mid-game `rematch`** over a second
     socket bound to a real player's own id and account was silently dropped, board untouched.
+  - **3c-vii-a — the spectator REDACTION. DONE** (D78): spectate splits in two, and this is the
+    hidden-information half, landed alone so it reads as a security change (the 2b-iii-a precedent — a seam
+    before its consumer). **The threat model is the decision:** the realistic attacker is a PLAYER opening a
+    spectator view of their OWN match to read the other hand, so the property is "a spectator sees strictly
+    LESS than either seated player" and the sides are symmetric. `redactGame(state, side, spectating)`
+    withholds BOTH hands, BOTH sides' setup placements (a seated viewer sees their own because they placed
+    them — a spectator placed nothing) and every actor affordance; `viewerSeat` degrades from "who I am" to
+    "which side renders at the bottom". **Mechanism:** the five `turn:action` helpers already guarded on
+    `viewerSeat !== turnSeat`, so widening that param to `Seat | null` and passing ONE
+    `actor = spectating ? null : phase.seat` withholds all five through guards that already existed — load-
+    bearing, not tidy, because `trainers`/`abilities`/`rareCandy` NAME CARDS IN THE HAND the board redaction
+    just hid, and because the next affordance added there is then withheld by default. The `effect:choose`
+    prompt goes the same way. Still public: both boards after setup, Stadium, discards, prize/deck counts,
+    hand SIZES, whose turn it is, the outcome. engine RULES UNCHANGED (0.41.0 — a read surface). 1858 →
+    **1865** tests, incl. the invariant that no uid private to EITHER seat appears in a spectator snapshot,
+    checked from both sides. **NOT WIRED — nothing calls it yet.**
+  - **3c-vii-b — the spectator TRANSPORT + client. NEXT.** Scoped to need no new frame and no new URL: **the
+    lobby link IS the spectate link.** A third socket's `hello` already resolves to `reject-full`
+    (`helloDecision`); the plan is that this branch, WHEN the lobby is in-game, also marks the socket a
+    spectator (an `attachment.ts` marker, no `PlayerState`, nothing in the snapshot) and sends it
+    `redactGame(state, "p1", true)`; `broadcastMatch` then includes spectator sockets. Rule: **you can watch
+    a MATCH, you cannot watch a lobby** — outside in-game, `reject-full` stays the dead end it is today.
+    Client: `useLobby`'s `rejected` flag currently drops `match` frames, so it needs a `spectating` status
+    that keeps the connection; `OnlineMatch` needs a read-only mode (no `OnlineHud`, no Concede, no Rematch,
+    no drags — the log stays). Open question worth answering first: whether the two players are TOLD someone
+    is watching.
   - **RECORDED, NOT FIXED (found during 3c-v's browser run; pre-existing):** a **HALF-OPEN socket is
     invisible to the server**. `setWebSocketAutoResponse` answers keepalives without waking the DO and
     nothing watches for pings that STOP arriving, so a player whose network dies without a TCP close is
