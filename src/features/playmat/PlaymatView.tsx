@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import "./playmat.css";
 import { benchLimitFor, CENTER_LINE_TOP, PLAYMAT_WRAPPER_CLASS } from "./constants";
 import { AnimatedCardsLayer } from "./components/AnimatedCardsLayer";
-import { BackToMenu } from "./components/BackToMenu";
+import { BackToMenu, type LeaveConfirmCopy } from "./components/BackToMenu";
 import { BoardSummary } from "./components/BoardSummary";
 import { GameLog } from "./components/GameLog";
 import { Hand } from "./components/Hand";
@@ -34,6 +34,10 @@ export interface PlaymatViewProps {
   /** Optional drag-legality gate, forwarded untouched to AnimatedCardsLayer;
       absent (the mock) every placement stays allowed. */
   placementPredicate?: PlacementPredicate;
+  /** Optional override for the Back control's confirmation copy; absent, it asks
+      the local /play question. The online match replaces it because leaving there
+      forfeits the game (P4 3c-iv). */
+  leaveConfirm?: LeaveConfirmCopy;
   /** Page-level HUD overlay (phase panels, dialogs, banners). Rendered last,
       above the card canvas. */
   children?: ReactNode;
@@ -54,6 +58,7 @@ export function PlaymatView({
   logEntries,
   piles,
   placementPredicate,
+  leaveConfirm,
   children,
 }: PlaymatViewProps) {
   const playmatRef = useRef<HTMLElement>(null);
@@ -110,7 +115,7 @@ export function PlaymatView({
       </div>
       <TurnControls onPassTurn={onPassTurn} passDisabled={passDisabled} />
       <TurnBanner info={turn} passAnimationKey={passAnimationKey} />
-      <BackToMenu />
+      <BackToMenu confirm={leaveConfirm} />
       <GameLog entries={logEntries} turn={turn.turn} />
       <AnimatedCardsLayer
         board={board}

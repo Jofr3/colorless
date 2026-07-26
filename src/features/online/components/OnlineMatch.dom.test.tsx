@@ -201,6 +201,20 @@ describe("OnlineMatch — concede (3c-iii)", () => {
     expect(onAction).toHaveBeenCalledWith({ type: "concede", seat: "p1" });
   });
 
+  it("warns that leaving forfeits, and stops warning once the game is over (3c-iv)", () => {
+    // The Back control is a leave, and the DO now concedes for a player who walks
+    // out of a running match — so the confirmation has to say so. (The dialog's
+    // content is in the DOM whether or not it is open; this pins the copy, not
+    // the native <dialog> plumbing.)
+    renderMatch();
+    expect(screen.getByText("Leaving forfeits the match — your opponent wins immediately."))
+      .toBeTruthy();
+
+    cleanup();
+    renderMatch({ outcome: { result: "win", winner: "you", reason: "prizesTaken" } });
+    expect(screen.getByText("The match is over. You'll return to the main menu.")).toBeTruthy();
+  });
+
   it("disappears once the game is over (nothing left to concede)", () => {
     renderMatch({ outcome: { result: "win", winner: "opponent", reason: "conceded" } });
     expect(screen.queryByRole("button", { name: "Concede" })).toBeNull();

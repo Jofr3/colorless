@@ -10,6 +10,7 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   abandonsMatch,
+  applyBye,
   countdownEndsAt,
   endMatch,
   helloDecision,
@@ -202,6 +203,50 @@ describe("endMatch — stopping a RUNNING match", () => {
     // Un-readying is what stops the countdown re-firing straight back into a
     // handoff — the same loop-breaker resetAfterFailedStart relies on.
     expect(endMatch(running()).phase).not.toBe("countdown");
+  });
+});
+
+describe("applyBye — a graceful leave (3c-iv)", () => {
+  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+
+  it("frees the guest seat when no match is running", () => {
+    const next = applyBye(lobbyWithGuest(), "guest");
+    expect(next.guest).toBeNull();
+    expect(next.phase).toBe("waiting");
+  });
+
+  it("only parks the host seat — the host id is pinned for the lobby's life", () => {
+    const next = applyBye(lobbyWithGuest(), "host");
+    expect(next.host.connected).toBe(false);
+    expect(next.host.ready).toBe(false);
+    expect(next.guest).not.toBeNull();
+  });
+
+  it("KEEPS an in-game seat, so the match record and the winner's board survive", () => {
+    // The bug this closes: freeing the seat mid-match took the lobby out of
+    // in-game, which drops the persisted match (abandonsMatch → commit) and blanks
+    // the opponent's board — the DO has just conceded for the leaver, so that
+    // would erase the result a frame after announcing it.
+    for (const slot of ["host", "guest"] as const) {
+      const next = applyBye(running(), slot);
+      expect(next.phase).toBe("in-game");
+      expect(next.guest).not.toBeNull();
+      expect(abandonsMatch(running(), next)).toBe(false);
+    }
+  });
+
+  it("marks the leaver away in-game, and leaves the seat that stayed alone", () => {
+    const next = applyBye(running(), "guest");
+    expect(next.guest?.connected).toBe(false);
+    expect(next.host.connected).toBe(true);
+  });
+
+  it("is idempotent in-game, so a second bye can't undo the first", () => {
+    // A leave is often TWO frames (an explicit leave() plus the unmount's). Under
+    // the old guest branch the second would have freed the seat and voided the
+    // match the first had just ended properly.
+    const once = applyBye(running(), "guest");
+    expect(applyBye(once, "guest")).toEqual(once);
   });
 });
 

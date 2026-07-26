@@ -519,8 +519,9 @@ frame — unit-tested only), and a game driven to an actual WIN online.
 
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
-`abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
-`removeGuest` does: a guest's `bye` or the host's kick). Without this, a rematch in the same
+`abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game
+(`removeGuest`, now only the host's KICK — since 3c-iv a mid-match `bye` keeps the seat so the
+concede it just applied stays visible — plus `endMatch`). Without this, a rematch in the same
 lobby would hit the idempotency guard and reuse the previous pairing's `GameState`/seed — a
 HIGH the review caught. The empty-lobby `deleteAll()` also clears it. Invariant: `MATCH_KEY`
 present ⇒ phase in-game (the reverse can briefly fail on the load-failure path below).
@@ -714,11 +715,36 @@ until 1c broadcasts the redacted view.
     winner-centric ("The opponent forfeited.") and the online overlay shows the same line to BOTH
     players, so the conceder was told their opponent forfeited; `GAME_OVER_DETAIL` is now
     possessive-free ("The match was forfeited."), accurate from either side under a title that already
-    names the winner. 1832 → **1835** tests. **Recorded, not changed:** an explicit LEAVE (`bye`) during
-    a match still VOIDS it rather than conceding — the opponent's game vanishes with no result, now the
-    odd one out beside the timeout forfeit and this button. Making `bye` concede first raises a real
-    question (does the leaver stay seated long enough for the other player to SEE the result?), so it
-    wants its own slice.
+    names the winner. 1832 → **1835** tests. **Recorded, not changed** (closed by 3c-iv below): an
+    explicit LEAVE (`bye`) during a match still VOIDED it rather than conceding.
+  - **3c-iv — leaving a match forfeits it. DONE** (D75): the last way an online match could end with no
+    result. A `bye` (the frame EVERY leave sends — the Back control's confirm and `useLobby`'s unmount
+    alike) took the pre-P4 path: a guest's freed the seat → the lobby left in-game → `commit` deleted
+    `MATCH_KEY` → the opponent's board and game vanished mid-play with nothing said; a host's left the
+    guest waiting out the full 5s + 90s clock for someone who had explicitly said goodbye. Now the DO
+    **concedes for the leaver first** through a new private **`concedeSeat(snapshot, seat, now)`** —
+    extracted from `forfeitAbandoned`, so a graceful leave and the 90s timeout are the SAME code path
+    (same `GameOutcome`, log row and overlay as a pressed Concede) — and only then commits the lobby
+    change. **The seat-keeping half is the real decision** and answers the question 3c-iii deferred:
+    the new pure **`applyBye(snapshot, slot)`** (logic.ts) KEEPS the seat for both slots while the lobby
+    is in-game, falling back to the old free-the-guest / park-the-host semantics otherwise — freeing it
+    would have undone the concede a frame after it landed (`abandonsMatch` → record delete → blank
+    board). It covers a FINISHED game too, deliberately: a leave is often TWO `bye` frames (an explicit
+    `leave()` plus the unmount's) and the second must not void what the first ended, and the loser
+    clicking Back must not yank the winner's result off screen. **Cost, accepted:** a lobby that has
+    been in-game now has no route back to `selecting` except the host's kick — rematch is the next
+    slice and `endMatch` (3c-i) is already its primitive. **Client:** `BackToMenu` takes an overridable
+    **`LeaveConfirmCopy`** (default = the local /play wording), forwarded through
+    `PlaymatView.leaveConfirm`; the online match sets it to "Leaving forfeits the match — your opponent
+    wins immediately." while the game is live and a plain goodbye once it is over — turning "Back" into
+    "you lose" silently was the one part of this a player must never meet unannounced. 1835 → **1841**
+    tests, `bun run check` green. **BROWSER-VERIFIED on two real clients, BOTH directions** (the DO class
+    has no tests, so the `bye` → `concedeSeat` wiring is only provable live): host-leaves and guest-leaves
+    each ended the match instantly for the player who stayed — "You win! / The match was forfeited.", board
+    intact, log row present, and (the guest case) NOT dropped to the "Waiting for an opponent" screen with
+    the game gone. Real hit-tested clicks; the Back dialog showed the forfeit warning on both; zero page
+    errors. **Still to do:** the opponent-facing "forfeits in 0:45" countdown for an UNGRACEFUL drop (now the
+    only path that waits) — it needs the deadline on the wire.
   - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
     run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
     should confirm the three things tests can't: the SameSite=None `session` cookie surviving the

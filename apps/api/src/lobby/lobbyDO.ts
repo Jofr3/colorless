@@ -53,6 +53,7 @@ import { loadPlayerDeck } from "./deckLoad";
 import {
   ABANDON_GRACE_MS,
   abandonsMatch,
+  applyBye,
   countdownEndsAt,
   endMatch,
   DISCONNECT_GRACE_MS,
@@ -307,12 +308,19 @@ export class LobbyDO {
       case "bye": {
         if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
         const slot = slotOf(snapshot, frame.from);
-        // A guest's graceful leave frees the seat at once (old semantics); the
-        // host's marks the seat disconnected but keeps the lobby alive — the
-        // host id is pinned, so only they can return to it, and the empty-lobby
-        // expiry reclaims the code if nobody does.
-        if (slot === "guest") await this.commit(removeGuest(snapshot));
-        else if (slot === "host") await this.commit(setSeatConnected(snapshot, "host", false));
+        if (slot === null) return;
+        // Walking out of a RUNNING match FORFEITS it (P4 3c-iv) instead of
+        // voiding it: the opponent gets a real result — the same one the Concede
+        // button and the 90s abandonment timer produce — down the same
+        // applyMatchAction → persist → broadcastMatch path. A no-op once the game
+        // is over (the engine refuses a concede then), which is what makes a
+        // double `bye` — an explicit leave() plus the unmount's — harmless.
+        const seat = snapshot.phase === "in-game" ? matchSeatOf(snapshot, frame.from) : null;
+        if (seat !== null) await this.concedeSeat(snapshot, seat, Date.now());
+        // …and only THEN the lobby change, which in-game keeps the seat (so the
+        // result the concede just broadcast stays on the winner's screen) and
+        // otherwise frees a guest's / parks the host's (applyBye).
+        await this.commit(applyBye(snapshot, slot));
         return;
       }
     }
@@ -528,9 +536,10 @@ export class LobbyDO {
   private async commit(next: LobbySnapshot): Promise<void> {
     const stamped = stampCountdown(next, Date.now());
     // A persisted match outlives EXACTLY the match it describes: when this commit
-    // takes the lobby out of in-game (removeGuest — a guest's bye or the host's
-    // kick), drop the stale GameState so a rematch in this same lobby mints a
-    // fresh one instead of handoffToMatch's guard reusing the old (P4, online.md).
+    // takes the lobby out of in-game (the host's kick, or `endMatch` retiring an
+    // unreadable record — a mid-match `bye` no longer does, 3c-iv), drop the stale
+    // GameState so a rematch in this same lobby mints a fresh one instead of
+    // handoffToMatch's guard reusing the old (P4, online.md).
     const abandoned = abandonsMatch(this.snapshot ?? null, stamped);
     this.snapshot = stamped;
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
@@ -671,17 +680,16 @@ export class LobbyDO {
       other staring at a board forever (the empty-lobby TTL only fires when NOBODY
       is connected, and the waiting player is).
 
-      It applies the engine's own `concede` for the vanished seat rather than
-      inventing a server-side "abandoned" state, so the match ends the way every
-      other match ends: a real `GameOutcome`, the winner's overlay, and a log row,
-      all through the same `applyMatchAction` → persist → `broadcastMatch` path a
-      player's own move takes. The lobby stays in-game with a finished game, again
-      exactly as it does after a normal win.
+      It applies the engine's own `concede` for the vanished seat (`concedeSeat`)
+      rather than inventing a server-side "abandoned" state, so the match ends the
+      way every other match ends: a real `GameOutcome`, the winner's overlay, and a
+      log row. The lobby stays in-game with a finished game, again exactly as it
+      does after a normal win.
 
       Every guard here is a real case: `in-game` (a lobby that already left the
       match has nothing to forfeit), `hasSocket` (they reconnected between the
       alarm being set and it firing — the deadline is cleared on hello, but this
-      re-checks the live truth), and the outcome of `applyMatchAction` (the engine
+      re-checks the live truth), and `concedeSeat`'s own outcome (the engine
       refuses a concede once the game is over, so a forfeit racing a real win
       changes nothing). Deadlines are consumed whether or not the forfeit lands,
       so a stale entry can't re-fire every alarm. */
@@ -697,14 +705,29 @@ export class LobbyDO {
     for (const entry of due) {
       if (hasSocket(entry.playerId)) continue;
       const seat = matchSeatOf(snapshot, entry.playerId);
-      if (seat === null) continue;
-      const load = await this.peekMatch();
-      if (load.kind !== "ok") return;
-      const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
-      if (!outcome.ok) continue;
-      await this.state.storage.put(MATCH_KEY, outcome.record);
-      this.broadcastMatch(outcome.record, snapshot);
+      if (seat !== null) await this.concedeSeat(snapshot, seat, now);
     }
+  }
+
+  /** Concede the running match FOR `seat` and fan the finished game out — the
+      one path by which the SERVER ends a match on a player's behalf, shared by
+      its two triggers: the 90s abandonment forfeit (3c-ii) and a graceful leave
+      mid-match (3c-iv). It is deliberately the same `applyMatchAction` → persist
+      → `broadcastMatch` sequence a player's own `concede` action takes, so a
+      server-ended match is indistinguishable from a pressed one: same
+      `GameOutcome`, same log row, same overlay.
+
+      It does NOTHING when there is nothing to concede — no readable record, or a
+      game the engine says is already over (a forfeit racing a real win, or the
+      second of the two `bye` frames a leave sends). Neither caller needs to know
+      which: in every case the answer is to carry on, never to retry. */
+  private async concedeSeat(snapshot: LobbySnapshot, seat: Seat, now: number): Promise<void> {
+    const load = await this.peekMatch();
+    if (load.kind !== "ok") return;
+    const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
+    if (!outcome.ok) return;
+    await this.state.storage.put(MATCH_KEY, outcome.record);
+    this.broadcastMatch(outcome.record, snapshot);
   }
 
   /** Read the persisted match WITHOUT side effects: absent, usable, or written by

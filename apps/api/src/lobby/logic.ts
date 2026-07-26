@@ -10,6 +10,7 @@ import {
   type LobbySlot,
   type LobbySnapshot,
   recomputePhase,
+  removeGuest,
   setGuestConnected,
 } from "@luminous/schema";
 
@@ -151,6 +152,31 @@ export function endMatch(snapshot: LobbySnapshot): LobbySnapshot {
   });
 }
 
+/** The lobby change a seated player's graceful `bye` makes. Three cases, kept
+    together because the difference between them is the whole point:
+
+    - **in-game (either seat) — the seat only goes AWAY** (P4 3c-iv). The lobby
+      stays in-game around the match, so the player who is still there keeps their
+      board and, above all, the RESULT: the DO concedes for the leaver first
+      (`concedeSeat`), and freeing the seat here would immediately take the lobby
+      out of in-game, drop the match record (`abandonsMatch` → `commit`) and blank
+      the winner's screen a frame after they were told they won — the "a leave
+      VOIDS the match" bug this closes. It covers a FINISHED game too (leaving
+      after a win/loss), for the same reason and because a leave is often two
+      `bye` frames (an explicit `leave()` plus the unmount's): the second must not
+      undo what the first just decided. Leaving in-game deliberately has no path
+      left except the ones a player asks for — the host's kick today, rematch next.
+    - **the host, otherwise** — the host id is pinned for the lobby's lifetime, so
+      their seat can only be marked gone; the empty-lobby TTL reclaims the code if
+      they never come back.
+    - **the guest, otherwise** — the seat is freed at once (the pre-P4 semantics),
+      so the host drops back to the waiting screen and can take another opponent. */
+export function applyBye(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapshot {
+  return snapshot.phase === "in-game" || slot === "host"
+    ? setSeatConnected(snapshot, slot, false)
+    : removeGuest(snapshot);
+}
+
 /** Stamp the countdown's start the moment the reducer enters the phase — the
     reducer leaves `countdownStartedAt` for its driver to fill (the old host
     hook stamped it the same way), so every client counts from one instant. */
@@ -168,11 +194,11 @@ export function countdownEndsAt(snapshot: LobbySnapshot): number | null {
 }
 
 /** Whether a committed transition ABANDONS a running match — i.e. takes the
-    lobby out of in-game (only `removeGuest` does: a guest's `bye` or the host's
-    kick; `recomputePhase` never leaves in-game on its own). The DO drops its
-    persisted match record on exactly these, so a rematch in the same lobby mints
-    a fresh game instead of `handoffToMatch` reusing the stale one (P4). `prev`
-    null = a brand-new lobby, which was never in-game. */
+    lobby out of in-game: `removeGuest` (now only the host's KICK — a mid-match
+    `bye` keeps the seat since 3c-iv) and `endMatch`; `recomputePhase` never leaves
+    in-game on its own. The DO drops its persisted match record on exactly these,
+    so a rematch in the same lobby mints a fresh game instead of `handoffToMatch`
+    reusing the stale one (P4). `prev` null = a brand-new lobby, never in-game. */
 export function abandonsMatch(prev: LobbySnapshot | null, next: LobbySnapshot): boolean {
   return prev !== null && prev.phase === "in-game" && next.phase !== "in-game";
 }

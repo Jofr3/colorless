@@ -7,6 +7,7 @@ import { moveToAction } from "../../game/moveToAction";
 import { placementPredicateFor } from "../../game/placement";
 import { GAME_OVER_DETAIL, projectionFromRedacted } from "../../game/projection";
 import { viewLogEntries } from "../../game/viewLog";
+import type { LeaveConfirmCopy } from "../../playmat/components/BackToMenu";
 import { PlaymatView } from "../../playmat/PlaymatView";
 import type { CardMoveRequest, TurnInfo } from "../../playmat/types";
 import type { ActionError } from "../net/useLobby";
@@ -30,8 +31,9 @@ import { OnlineHud } from "./OnlineHud";
 // Rare Candy through its own two-step dialog + the `rareCandy` action. Every
 // turn affordance the local HUD offers now has an online counterpart. The match
 // LIFECYCLE is landing on top of that: 3c-ii forfeits a player who abandons the
-// match (server-side), and 3c-iii adds the Concede control below. Still missing:
-// rematch and spectate.
+// match (server-side), 3c-iii adds the Concede control below, and 3c-iv makes
+// walking out (the Back control) forfeit too — hence its own confirmation copy.
+// Still missing: rematch and spectate.
 
 // The rejection pill lingers this long before auto-dismissing (GamePage's TTL).
 const ERROR_TTL_MS = 4000;
@@ -39,6 +41,20 @@ const ERROR_TTL_MS = 4000;
 // Matches the playmat's own "Back" control (BackToMenu) so the two read as one
 // row of HUD chrome; positioned to its LEFT (right: 96 vs 16).
 const CONCEDE_BUTTON_CLASS = `absolute z-20 flex h-9 cursor-pointer items-center rounded-full px-3.5 text-[13px] font-medium tracking-wide ${GLASS_HUD_BUTTON}`;
+
+// What "Back" asks in an online match. Leaving is NOT free here: the DO concedes
+// for a player who walks out of a running match (3c-iv), so the confirmation says
+// so in the same words the Concede dialog uses — the two now do the same thing to
+// the game, and the only surprise worth avoiding is a silent one. Once the game
+// is over there is nothing left to lose, so it drops back to a plain goodbye.
+const LEAVE_CONFIRM_LIVE: LeaveConfirmCopy = {
+  title: "Leave the match?",
+  message: "Leaving forfeits the match — your opponent wins immediately.",
+};
+const LEAVE_CONFIRM_OVER: LeaveConfirmCopy = {
+  title: "Leave the match?",
+  message: "The match is over. You'll return to the main menu.",
+};
 
 export function OnlineMatch({
   game,
@@ -138,6 +154,7 @@ export function OnlineMatch({
       passDisabled={passDisabled}
       passAnimationKey={projection.turn}
       placementPredicate={placementPredicate}
+      leaveConfirm={projection.outcome === null ? LEAVE_CONFIRM_LIVE : LEAVE_CONFIRM_OVER}
       logEntries={logEntries}
       piles={projection.piles}
     >
