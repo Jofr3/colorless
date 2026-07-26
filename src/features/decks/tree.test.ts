@@ -10,8 +10,8 @@ const folders: Folder[] = [
   { id: "B", name: "B", parentId: null, position: 3 },
 ];
 const decks: Deck[] = [
-  { id: "d1", name: "d1", folderId: "A", cardCount: 1, tint: 0, position: 0 },
-  { id: "d2", name: "d2", folderId: null, cardCount: 1, tint: 0, position: 1 },
+  { id: "d1", name: "d1", folderId: "A", cardCount: 1, tint: 0, coverCardId: null, position: 0 },
+  { id: "d2", name: "d2", folderId: null, cardCount: 1, tint: 0, coverCardId: null, position: 1 },
 ];
 const folder = (id: string) => ({ type: "folder" as const, id });
 const deck = (id: string) => ({ type: "deck" as const, id });

@@ -67,8 +67,21 @@ P2–P4; tracked here so nothing is forgotten.
   deck) backed by the `users` table.
 - **Avatars:** upload/choose an avatar → stored in R2, served from our domain;
   update CSP accordingly.
-- **Deck covers / art:** use real card art for deck covers in the decks list
-  (currently a generated tint gradient — see `src/features/decks/data.ts`).
+- **Deck covers / art — DONE 2026-07-26 (P5-3, D83).** A deck is fronted by its
+  own headline card. **The rule (pure `pickCoverCardId`, apps/api/src/decks/
+  cover.ts): the Pokémon with the highest printed HP**, ties broken by copies
+  then card id. HP is the best proxy the catalog offers for "the card this deck
+  is built around" and needs no taxonomy: ranking by STAGE gets a Basic-ex deck
+  wrong, ranking by COUNT gets nearly every evolution deck wrong (the 4-of Basic
+  beats the 3-of Stage 2 it evolves into). Cards with no scan are skipped;
+  `coverCardId` is null for an empty or Pokémon-less deck and the blue back
+  stands, which is also right for a deck you just created. Derived on READ in the
+  list query (one extra query for the whole library, no stored column to keep in
+  sync). It is a HEURISTIC — a user-chosen cover would simply win over it, and
+  that's the natural follow-up. **A browser run caught the thing tests couldn't:**
+  the deck name was nearly illegible over busy card art (it had always sat on a
+  flat blue back), so the label now gets a gradient scrim — only when there IS
+  art, so a coverless deck looks exactly as before.
 - **Card detail view:** richer card view using tcgdex fields (attacks, abilities,
   pricing, set/illustrator).
 - **Settings & accessibility:** carry the existing `prefers-reduced-motion`

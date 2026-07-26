@@ -32,7 +32,13 @@ export function mapDeckRow(row: DeckRow, cards: readonly DeckCard[]): Deck {
   return { ...mapDeckBase(row), cards: cards.map(({ cardId, count }) => ({ cardId, count })) };
 }
 
-/** List row: `cardCount` is the SQL-side sum of the deck's copy counts. */
-export function mapDeckSummaryRow(row: DeckRow, cardCount: number): DeckSummary {
-  return { ...mapDeckBase(row), cardCount };
+/** List row: `cardCount` is the SQL-side sum of the deck's copy counts, and
+    `coverCardId` the deck's face (P5-3 — `pickCoverCardId`, null for a deck with
+    nothing to show). */
+export function mapDeckSummaryRow(
+  row: DeckRow,
+  cardCount: number,
+  coverCardId: string | null,
+): DeckSummary {
+  return { ...mapDeckBase(row), cardCount, coverCardId };
 }

@@ -41,8 +41,9 @@ describe("mapDeckRow", () => {
 
 describe("mapDeckSummaryRow", () => {
   it("carries the summed cardCount instead of the card list", () => {
-    const summary = mapDeckSummaryRow(deckRow, 60);
+    const summary = mapDeckSummaryRow(deckRow, 60, "sv01-001");
     expect(summary.cardCount).toBe(60);
+    expect(summary.coverCardId).toBe("sv01-001");
     expect(summary).not.toHaveProperty("cards");
     expect(deckSummarySchema.parse(summary)).toEqual(summary);
   });

@@ -15,8 +15,12 @@ export type Deck = {
   folderId: string | null;
   /** Summed copies across the deck's card list (server-derived). */
   cardCount: number;
-  /** Base hue (0–360) for the deck's cover gradient, so the grid reads colourful. */
+  /** Base hue (0–360) for the deck's cover gradient, so the grid reads colourful.
+      Still the backdrop behind a cover, and the whole cover when there is none. */
   tint: number;
+  /** The card whose art fronts this deck (P5-3), or null for a deck with nothing
+      to show yet — server-derived, so it follows the deck's contents. */
+  coverCardId: string | null;
   /** Manual sort slot (server-persisted, global per user). The library array
       stays sorted by it — array order IS the manual order — so a reorder
       rewrites both together (see reorder.ts applyReorder). */
@@ -41,6 +45,7 @@ export function fromDeckSummary(row: DeckSummary): Deck {
     folderId: row.folderId,
     cardCount: row.cardCount,
     tint: row.tint,
+    coverCardId: row.coverCardId,
     position: row.position,
   };
 }
@@ -55,6 +60,9 @@ export function fromDeck(resource: ApiDeck): Deck {
     folderId: resource.folderId,
     cardCount: resource.cards.reduce((sum, card) => sum + card.count, 0),
     tint: resource.tint,
+    // Only ever a just-CREATED deck here (the sole call site), which has no cards
+    // and so no cover — the card back is the right face for it.
+    coverCardId: null,
     position: resource.position,
   };
 }

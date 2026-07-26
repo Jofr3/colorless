@@ -32,6 +32,7 @@ const DECKS: DeckSummary[] = [
     position: 0,
     updated: "2026-01-02T00:00:00.000Z",
     cardCount: 60,
+    coverCardId: null,
   },
 ];
 

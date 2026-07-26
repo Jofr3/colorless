@@ -64,10 +64,17 @@ const TOP_CARD_SCALE = 1.01;
     while the pile beneath stays put, like lifting the top card off the deck. */
 export function CardBackStack({
   label,
+  coverUrl,
   juiceOnMount,
   dragActive,
 }: {
   label?: ReactNode;
+  /** Art for the TOP card (P5-3) — a deck's own headline card, chosen by the
+      server. Absent, the stack stays the blue back it has always been, which is
+      what a new or Pokémon-less deck should look like. Only the top card takes
+      it: the ones behind are the deck's bulk, and printing the same scan three
+      times would read as three copies rather than a stack. */
+  coverUrl?: string;
   /** Pop the top card with a juice bounce when it first appears (new decks). */
   juiceOnMount?: boolean;
   /** Suppress the hover tilt while a drag is in flight (see useTiltJuice). */
@@ -96,10 +103,25 @@ export function CardBackStack({
             <div
               ref={tiltRef}
               {...handlers}
-              style={{ backgroundImage: `url("${BLUE_BACK}")`, ...tiltStyle }}
+              style={{ backgroundImage: `url("${coverUrl ?? BLUE_BACK}")`, ...tiltStyle }}
               className={`pointer-events-auto cursor-pointer select-none ${CARD_CLASS}`}
             >
-              {label && <div className="absolute inset-x-0 bottom-0 px-6 pb-6">{label}</div>}
+              {label && (
+                <>
+                  {/* A scrim, only under real art (P5-3). The name used to sit on
+                      a flat blue back where white read cleanly; over a card scan
+                      — flames, holo foil, a 190 in bold — it was barely legible.
+                      Beneath the label, above the art, and absent for a coverless
+                      deck so the original look is untouched. */}
+                  {coverUrl !== undefined && (
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-x-0 bottom-0 h-1/2 rounded-b-[7px] bg-gradient-to-t from-black/90 via-black/55 to-transparent"
+                    />
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 px-6 pb-6">{label}</div>
+                </>
+              )}
             </div>
           </div>
         );

@@ -14,6 +14,7 @@ import { StatusPanel, StatusSpinner } from "../../components/StatusPanel";
 import { useTiltJuice } from "../../components/useTiltJuice";
 import {
   ApiError,
+  cardImageUrl,
   createDeck as apiCreateDeck,
   createFolder as apiCreateFolder,
   deleteDeck as apiDeleteDeck,
@@ -455,6 +456,7 @@ function DeckCard({
       <CardBackStack
         juiceOnMount={juiceOnMount}
         dragActive={dragActive}
+        coverUrl={deck.coverCardId === null ? undefined : cardImageUrl(deck.coverCardId, "high")}
         label={
           <>
             {folderLabel && (

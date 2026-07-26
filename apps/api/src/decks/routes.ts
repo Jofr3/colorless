@@ -34,6 +34,7 @@ import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
+import { type CoverCandidate, pickCoverCardId } from "./cover";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
 import { chunk, createsCycle, D1_MAX_BOUND_PARAMS, unknownIds } from "./validate";
 
@@ -178,17 +179,50 @@ function selectDeckCards(db: Db, deckId: string) {
 
 deckRoutes.get("/", requireUser, async (c) => {
   const db = drizzle(c.env.DB);
+  const userId = c.get("user").id;
   const rows = await db
     .select({ deck: decks, cardCount: sql<number>`coalesce(sum(${deckCards.count}), 0)` })
     .from(decks)
     .leftJoin(deckCards, eq(deckCards.deckId, decks.id))
-    .where(eq(decks.userId, c.get("user").id))
+    .where(eq(decks.userId, userId))
     .groupBy(decks.id)
     .orderBy(asc(decks.position), asc(decks.id))
     .all();
+  // Cover candidates for the whole library in ONE query (P5-3), rather than the
+  // window function this would need to fold into the aggregate above: the RULE
+  // then lives in a pure `pickCoverCardId` that can be argued with and tested,
+  // and the extra rows are one per distinct card per deck.
+  const candidateRows = await db
+    .select({
+      deckId: deckCards.deckId,
+      cardId: deckCards.cardId,
+      count: deckCards.count,
+      category: cards.category,
+      hp: cards.hp,
+      imageUrl: cards.imageUrl,
+    })
+    .from(deckCards)
+    .innerJoin(decks, eq(decks.id, deckCards.deckId))
+    .innerJoin(cards, eq(cards.id, deckCards.cardId))
+    .where(eq(decks.userId, userId))
+    .all();
+  const byDeck = new Map<string, CoverCandidate[]>();
+  for (const row of candidateRows) {
+    const list = byDeck.get(row.deckId) ?? [];
+    list.push({
+      cardId: row.cardId,
+      count: row.count,
+      category: row.category,
+      hp: row.hp,
+      hasImage: row.imageUrl !== null,
+    });
+    byDeck.set(row.deckId, list);
+  }
   return c.json(
     deckSummariesResponseSchema.parse(
-      rows.map((row) => mapDeckSummaryRow(row.deck, row.cardCount)),
+      rows.map((row) =>
+        mapDeckSummaryRow(row.deck, row.cardCount, pickCoverCardId(byDeck.get(row.deck.id) ?? [])),
+      ),
     ),
   );
 });

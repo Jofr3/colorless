@@ -46,5 +46,10 @@ export type Deck = z.infer<typeof deckSchema>;
 /** The GET /decks list row: no card list, just the summed copy count. */
 export const deckSummarySchema = deckBaseSchema.extend({
   cardCount: z.number().int().min(0),
+  /** The card whose art fronts this deck in the library grid (P5-3), or null
+      when nothing in it qualifies — an empty deck, or one whose Pokémon have no
+      scan yet. Server-derived on read (`pickCoverCardId`), so it follows the
+      deck's contents with nothing to keep in sync. */
+  coverCardId: z.string().nullable(),
 });
 export type DeckSummary = z.infer<typeof deckSummarySchema>;

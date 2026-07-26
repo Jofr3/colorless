@@ -36,6 +36,7 @@ const summary = (
   folderId: null,
   updated: UPDATED,
   cardCount: 60,
+  coverCardId: null,
   position: 0,
   ...partial,
 });

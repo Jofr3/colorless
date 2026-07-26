@@ -31,9 +31,16 @@ describe("deckSchema / deckSummarySchema", () => {
   });
 
   it("parses a summary with cardCount instead of cards", () => {
-    const parsed = deckSummarySchema.parse({ ...base, cardCount: 60 });
+    const parsed = deckSummarySchema.parse({ ...base, cardCount: 60, coverCardId: "sv01-001" });
     expect(parsed.cardCount).toBe(60);
+    expect(parsed.coverCardId).toBe("sv01-001");
     expect(parsed).not.toHaveProperty("cards");
+  });
+
+  it("accepts a summary with no cover — an empty deck has no face (P5-3)", () => {
+    expect(
+      deckSummarySchema.parse({ ...base, cardCount: 0, coverCardId: null }).coverCardId,
+    ).toBeNull();
   });
 
   it.each([
