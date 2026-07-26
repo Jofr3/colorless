@@ -69,6 +69,10 @@ export type Lobby = {
   leave: () => void;
   /** Host only: remove the guest from the lobby. No-op for a guest. */
   kick: () => void;
+  /** Play again in this same lobby (P4 3c-vi). The server refuses it unless the
+      match it holds has FINISHED; on success the lobby returns to `selecting`
+      with this seat already readied, so the opponent accepts by readying too. */
+  requestRematch: () => void;
   /** Send a game action for the running match (P4). The server binds it to this
       client's seat and applies it; the authoritative result comes back as a
       `match` broadcast. */
@@ -208,8 +212,8 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
           lastServerSeenRef.current = now();
           break;
         }
-        // hello/intent/bye are client → server frames; the server never sends
-        // them, so there's nothing to handle here.
+        // hello/intent/bye/rematch are client → server frames; the server never
+        // sends them, so there's nothing to handle here.
       }
     });
 
@@ -265,6 +269,12 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     channelRef.current?.post({ kind: "bye", from: playerId, slot: role });
   }, [playerId, role]);
 
+  const requestRematch = useCallback(() => {
+    // A lifecycle frame, not a seat intent: only the server can see whether the
+    // match is over, so it — not this client — decides whether this lands.
+    channelRef.current?.post({ kind: "rematch", from: playerId });
+  }, [playerId]);
+
   const kick = useCallback(() => {
     if (!isHost) return;
     const guestId = snapshotRef.current?.guest?.id;
@@ -302,6 +312,7 @@ export function useLobby({ code, role, playerId, name }: UseLobbyOptions): Lobby
     setReady,
     leave,
     kick,
+    requestRematch,
     sendAction,
   };
 }

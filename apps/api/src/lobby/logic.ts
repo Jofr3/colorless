@@ -4,6 +4,7 @@
 // the reducer they drive. The DO (lobbyDO.ts) is a thin shell around these.
 
 import {
+  applyIntent,
   COUNTDOWN_MS,
   type LobbyClientMessage,
   lobbyClientMessageSchema,
@@ -224,6 +225,27 @@ export function endMatch(snapshot: LobbySnapshot): LobbySnapshot {
     host: { ...snapshot.host, ready: false },
     guest: snapshot.guest ? { ...snapshot.guest, ready: false } : null,
   });
+}
+
+/** A player asked to play again (P4 3c-vi): end the finished match and READY the
+    asker, in one commit.
+
+    Auto-readying is what makes this a whole feature rather than half of one. The
+    alternative shapes were a mutual offer/accept handshake (a second piece of
+    lobby state to persist, expire and reconcile — and a "waiting for them to
+    accept" screen that can wedge) or a plain `endMatch` that drops both players
+    on the versus screen to re-ready (correct, but it makes the asker press twice
+    and says nothing about who asked). This shape reuses the ready-up flow VERBATIM
+    as the agreement mechanism: the countdown still starts only when BOTH seats are
+    ready, so pressing Rematch is an offer the opponent accepts by readying — and
+    the asker can withdraw it by un-readying, which the versus screen already does.
+
+    `applyIntent(set-ready)` rather than writing `ready: true` directly, so the
+    "you can't be ready without a deck" rule stays in ONE place: a player whose
+    saved deck vanished between games lands back on the versus screen un-readied,
+    exactly as if they'd pressed Ready themselves. */
+export function rematch(snapshot: LobbySnapshot, slot: LobbySlot): LobbySnapshot {
+  return applyIntent(endMatch(snapshot), slot, { type: "set-ready", ready: true });
 }
 
 /** The lobby change a seated player's graceful `bye` makes. Three cases, kept

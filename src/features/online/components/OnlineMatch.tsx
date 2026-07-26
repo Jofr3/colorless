@@ -34,8 +34,8 @@ import { OpponentAwayBanner } from "./OpponentAwayBanner";
 // LIFECYCLE is landing on top of that: 3c-ii forfeits a player who abandons the
 // match (server-side), 3c-iii adds the Concede control below, 3c-iv makes
 // walking out (the Back control) forfeit too — hence its own confirmation copy —
-// and 3c-v shows the opponent's side of that clock (`opponentAway`).
-// Still missing: rematch and spectate.
+// 3c-v shows the opponent's side of that clock (`opponentAway`), and 3c-vi puts
+// Rematch on the result panel. Still missing: spectate.
 
 // The rejection pill lingers this long before auto-dismissing (GamePage's TTL).
 const ERROR_TTL_MS = 4000;
@@ -58,6 +58,12 @@ const LEAVE_CONFIRM_OVER: LeaveConfirmCopy = {
   message: "The match is over. You'll return to the main menu.",
 };
 
+// The one primary action on the board — the result panel's Rematch. Solid white
+// (the leave dialog's confirm styling) rather than the HUD's glass, because it is
+// the thing to do next rather than another piece of chrome.
+const REMATCH_BUTTON_CLASS =
+  "cursor-pointer rounded-full bg-white px-5 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+
 export function OnlineMatch({
   game,
   log,
@@ -66,6 +72,7 @@ export function OnlineMatch({
   opponentAway,
   actionError,
   onAction,
+  onRematch,
 }: {
   game: RedactedGame;
   /** The accumulated game log (seat-keyed, from the DO); relabeled for this
@@ -81,6 +88,8 @@ export function OnlineMatch({
   /** The server's last action rejection (P4), surfaced as a transient pill. */
   actionError: ActionError | null;
   onAction: (action: GameAction) => void;
+  /** Ask to play again once the game is over (P4 3c-vi). */
+  onRematch: () => void;
 }) {
   const projection = useMemo(() => projectionFromRedacted(game), [game]);
   const seat = game.seat;
@@ -228,6 +237,21 @@ export function OnlineMatch({
                 ? "Both players met a win condition at the same time."
                 : GAME_OVER_DETAIL[projection.outcome.reason]}
             </p>
+            {/* Play again in this same lobby (3c-vi). It lives INSIDE the result
+                panel because this is the one moment it's offered, and because
+                3c-iv left an in-game lobby with no other way out than leaving:
+                without it, two players who just finished have to mint a new code.
+                The panel is `pointer-events-none` so the board underneath stays
+                inspectable; the button opts back in. Pressing it readies THIS seat
+                and returns both to the versus screen — the opponent accepts by
+                readying too, which is the same agreement the first game needed. */}
+            <button
+              type="button"
+              onClick={onRematch}
+              className={`pointer-events-auto mt-4 ${REMATCH_BUTTON_CLASS}`}
+            >
+              Rematch
+            </button>
           </output>
         </div>
       )}

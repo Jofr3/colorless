@@ -286,6 +286,7 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
           }
           actionError={lobby.actionError}
           onAction={lobby.sendAction}
+          onRematch={lobby.requestRematch}
         />
       );
     }

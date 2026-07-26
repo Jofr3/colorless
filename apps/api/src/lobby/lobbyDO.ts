@@ -63,6 +63,7 @@ import {
   parseClientMessage,
   type PendingDisconnect,
   readSnapshot,
+  rematch,
   reseatHost,
   resetAfterFailedStart,
   seatClaimAllowed,
@@ -102,6 +103,7 @@ const MATCH_KEY = "match";
 // steal a seat (and its redacted hand) by echoing the public playerId. DO-only,
 // never broadcast. Cleared with the rest of storage when the lobby empties.
 const SEAT_USERS_KEY = "seatUsers";
+
 /** Whether the match handoff started a real game, or why it couldn't (P4
     increment 3) — a failed deck resolution surfaces `reason` to the players
     instead of wedging the lobby in-game with no match. */
@@ -320,6 +322,30 @@ export class LobbyDO {
         // result the concede just broadcast stays on the winner's screen) and
         // otherwise frees a guest's / parks the host's (applyBye).
         await this.commit(applyBye(snapshot, slot));
+        return;
+      }
+
+      case "rematch": {
+        // Play again in this same lobby (P4 3c-vi) — the exit 3c-iv deliberately
+        // left out, since an in-game lobby otherwise has no route back except the
+        // host's kick. Legality is the SERVER's to judge, which is why this is a
+        // frame and not a seat `intent`: only the DO can see whether the match it
+        // holds has finished, and a rematch mid-game must be refused (conceding is
+        // how you leave a live one).
+        if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
+        if (snapshot.phase !== "in-game") return;
+        const slot = slotOf(snapshot, frame.from);
+        if (slot === null) return;
+        const load = await this.peekMatch();
+        if (load.kind === "stale") return await this.retireStaleMatch();
+        // No record, or a game still in progress: nothing to replay yet. Silent —
+        // the client only offers the control on a finished board, so reaching this
+        // means a crafted frame, and it changes nothing.
+        if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
+        // `commit` sees the lobby leave in-game (`abandonsMatch`) and drops
+        // MATCH_KEY with it — which is precisely what makes the next handoff mint
+        // a FRESH game rather than hitting its idempotency guard on this one.
+        await this.commit(rematch(snapshot, slot));
         return;
       }
     }

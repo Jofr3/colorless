@@ -767,6 +767,24 @@ until 1c broadcasts the redacted view.
     down live, and forfeited at zero (also the proof that moving the deadline kept the scheduling that D73
     nearly shipped broken); a genuine reconnect (same tab navigated away and back, so the playerId survived)
     cleared it at once and left the match running well past the original deadline. Zero page errors.
+  - **3c-vi — rematch. DONE** (D77): the hole 3c-iv opened on purpose — with a mid-match `bye` keeping the
+    seat, an in-game lobby had no route back to `selecting` but the host's kick, so two players who had just
+    finished had to mint a new code. **Shape:** `endMatch` + READY THE ASKER, in one commit (the pure
+    `rematch(snapshot, slot)` = `applyIntent(endMatch(s), slot, set-ready)`). That reuses the ready-up flow
+    VERBATIM as the agreement mechanism — the countdown still needs both seats, so pressing Rematch is the
+    offer, readying is the acceptance, un-readying is the withdrawal — and adds NO new lobby state, unlike an
+    offer/accept handshake (a second thing to persist, expire and wedge on). Routing through `applyIntent`
+    keeps "no ready without a deck" in one place. **It is a `{kind:"rematch", from}` CLIENT FRAME, not a
+    `LobbyIntent`**, because only the DO can judge its legality: gated on seated + bound socket + `in-game` +
+    a readable record whose `state.phase.kind === "gameOver"` (a rematch during a LIVE game is refused —
+    conceding is how you leave one). `commit` then drops `MATCH_KEY` on the `abandonsMatch` transition, which
+    is what makes the next handoff mint a FRESH game instead of hitting the idempotency guard. Client: the
+    button sits INSIDE the game-over panel (`pointer-events-none` there, so it opts back in) as the one
+    primary action on the board. 1853 → **1858** tests. **BROWSER-VERIFIED on two clients:** absent mid-game,
+    present on both after a concede, and pressing it returned BOTH to the versus screen (decks kept, asker
+    readied, opponent shown as Ready) — then the opponent readying started a genuinely new game, the log
+    restarting at T0 with fresh shuffles and a new coin flip. **A CRAFTED mid-game `rematch`** over a second
+    socket bound to a real player's own id and account was silently dropped, board untouched.
   - **RECORDED, NOT FIXED (found during 3c-v's browser run; pre-existing):** a **HALF-OPEN socket is
     invisible to the server**. `setWebSocketAutoResponse` answers keepalives without waking the DO and
     nothing watches for pings that STOP arriving, so a player whose network dies without a TCP close is

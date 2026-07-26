@@ -161,6 +161,9 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "bye", from: "g1", slot: "guest" }).success,
     ).toBe(true);
+    // A rematch is a client → server LIFECYCLE frame (3c-vi): the server decides
+    // whether the match it holds has actually finished.
+    expect(lobbyClientMessageSchema.safeParse({ kind: "rematch", from: "g1" }).success).toBe(true);
     expect(
       lobbyClientMessageSchema.safeParse({
         kind: "action",
@@ -290,6 +293,7 @@ describe("lobbyMessageSchema (full channel vocabulary)", () => {
       { kind: "match-error", reason: "Ana: deck not found." },
       { kind: "heartbeat", from: "h1", slot: "host" },
       { kind: "bye", from: "g1", slot: "guest" },
+      { kind: "rematch", from: "g1" },
     ];
     for (const message of messages) {
       expect(lobbyMessageSchema.safeParse(message).success).toBe(true);

@@ -77,6 +77,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
         opponentAway={null}
         actionError={{ reason: "That move isn't available here.", nonce: 1 }}
         onAction={vi.fn()}
+        onRematch={vi.fn()}
       />,
     );
     const pill = screen.getByRole("alert");
@@ -95,6 +96,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
         opponentAway={null}
         actionError={null}
         onAction={vi.fn()}
+        onRematch={vi.fn()}
       />,
     );
     expect(screen.queryByRole("alert")).toBeNull();
@@ -114,6 +116,7 @@ describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
           opponentAway={null}
           actionError={actionError}
           onAction={vi.fn()}
+          onRematch={vi.fn()}
         />
       </MemoryRouter>
     );
@@ -148,6 +151,7 @@ describe("OnlineMatch — the game log (2b-iii-d-ii)", () => {
         opponentAway={null}
         actionError={null}
         onAction={vi.fn()}
+        onRematch={vi.fn()}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Show game log" }));
@@ -171,6 +175,7 @@ describe("OnlineMatch — the opponent-away countdown (3c-v)", () => {
         opponentAway={opponentAway}
         actionError={null}
         onAction={vi.fn()}
+        onRematch={vi.fn()}
       />,
     );
   }
@@ -219,7 +224,11 @@ describe("OnlineMatch — the opponent-away countdown (3c-v)", () => {
 });
 
 describe("OnlineMatch — concede (3c-iii)", () => {
-  function renderMatch(overrides: Partial<RedactedGame> = {}, onAction = vi.fn()) {
+  function renderMatch(
+    overrides: Partial<RedactedGame> = {},
+    onAction = vi.fn(),
+    onRematch = vi.fn(),
+  ) {
     wrap(
       <OnlineMatch
         game={{ ...GAME, ...overrides }}
@@ -229,6 +238,7 @@ describe("OnlineMatch — concede (3c-iii)", () => {
         opponentAway={null}
         actionError={null}
         onAction={onAction}
+        onRematch={onRematch}
       />,
     );
     return onAction;
@@ -265,6 +275,25 @@ describe("OnlineMatch — concede (3c-iii)", () => {
     if (confirm === undefined) throw new Error("expected a confirm button inside the dialog");
     fireEvent.click(confirm);
     expect(onAction).toHaveBeenCalledWith({ type: "concede", seat: "p1" });
+  });
+
+  it("offers a Rematch on the finished board, and nothing before (3c-vi)", () => {
+    // The one exit an in-game lobby has besides leaving: 3c-iv keeps the seat, so
+    // without this two players who just finished must mint a new code. It lives in
+    // the result panel because that is the one moment it applies.
+    const onRematch = vi.fn();
+    renderMatch(
+      { outcome: { result: "win", winner: "you", reason: "prizesTaken" } },
+      vi.fn(),
+      onRematch,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Rematch" }));
+    expect(onRematch).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    // Mid-game there is nothing to replay — conceding is how you leave a live one.
+    renderMatch();
+    expect(screen.queryByRole("button", { name: "Rematch" })).toBeNull();
   });
 
   it("warns that leaving forfeits, and stops warning once the game is over (3c-iv)", () => {

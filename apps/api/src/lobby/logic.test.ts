@@ -17,6 +17,7 @@ import {
   helloDecision,
   parseClientMessage,
   readSnapshot,
+  rematch,
   reseatHost,
   resetAfterFailedStart,
   seatClaimAllowed,
@@ -283,6 +284,43 @@ describe("endMatch — stopping a RUNNING match", () => {
     // Un-readying is what stops the countdown re-firing straight back into a
     // handoff — the same loop-breaker resetAfterFailedStart relies on.
     expect(endMatch(running()).phase).not.toBe("countdown");
+  });
+});
+
+describe("rematch — play again in the same lobby (3c-vi)", () => {
+  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+
+  it("ends the match and READIES the asker, leaving the opponent to accept", () => {
+    // Pressing Rematch is an offer; the opponent accepts by readying, which is the
+    // same agreement the first game needed — so no second piece of lobby state.
+    const next = rematch(running(), "host");
+    expect(next.phase).toBe("selecting");
+    expect(next.host.ready).toBe(true);
+    expect(next.guest?.ready).toBe(false);
+    // Deck picks survive, so accepting is one click.
+    expect(next.host.deckId).toBe("d1");
+    expect(next.guest?.deckId).toBe("d2");
+  });
+
+  it("is the transition `abandonsMatch` reports, so the finished game is dropped", () => {
+    // Without this the next handoff would hit its idempotency guard and re-serve
+    // the game that just ended.
+    const before = running();
+    expect(abandonsMatch(before, rematch(before, "guest"))).toBe(true);
+  });
+
+  it("starts the countdown as soon as the other seat readies", () => {
+    const offered = rematch(running(), "host");
+    const accepted = applyIntent(offered, "guest", { type: "set-ready", ready: true });
+    expect(accepted.phase).toBe("countdown");
+  });
+
+  it("cannot ready a seat with no deck — the asker just lands back un-readied", () => {
+    const deckless: LobbySnapshot = {
+      ...running(),
+      host: { ...running().host, deckId: null, deckName: null },
+    };
+    expect(rematch(deckless, "host").host.ready).toBe(false);
   });
 });
 

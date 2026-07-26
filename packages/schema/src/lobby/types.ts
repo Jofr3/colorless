@@ -108,4 +108,11 @@ export type LobbyMessage =
   | { kind: "heartbeat"; from: string; slot: LobbySlot }
   /** either direction: a graceful "I'm leaving" so the other side reacts at once
       instead of waiting for the heartbeat to lapse. */
-  | { kind: "bye"; from: string; slot: LobbySlot };
+  | { kind: "bye"; from: string; slot: LobbySlot }
+  /** client → server: play again in this same lobby (P4 3c-vi). A lifecycle
+      command rather than a seat `intent`, because its legality is not a property
+      of the snapshot the reducer sees — only the server knows whether the match
+      it holds has actually FINISHED. It takes the lobby back to `selecting` and
+      readies the asker, so the existing ready-up flow is what starts the next
+      game; the server drops the finished match with the phase change. */
+  | { kind: "rematch"; from: string };

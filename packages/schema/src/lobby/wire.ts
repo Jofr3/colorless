@@ -9,7 +9,8 @@
 // Direction matters. The full `LobbyMessage` union is the transport-channel
 // vocabulary the client code was written against; over the socket only a
 // subset travels each way:
-//   - client → server: `LobbyClientMessage` — hello / intent / kick / bye.
+//   - client → server: `LobbyClientMessage` — hello / intent / kick / bye /
+//     rematch.
 //     The kick IS the `reject … "kicked"` frame the BroadcastChannel host used
 //     to post at its guest, narrowed so a client can never fabricate a "full".
 //   - server → client: `LobbyServerMessage` — state broadcasts + rejections.
@@ -127,6 +128,10 @@ const byeMessageSchema = z.object({
   from: z.string(),
   slot: lobbySlotSchema,
 });
+const rematchMessageSchema = z.object({
+  kind: z.literal("rematch"),
+  from: z.string(),
+});
 
 /** Everything that can travel over a lobby channel — the full types.ts union. */
 export const lobbyMessageSchema = z.discriminatedUnion("kind", [
@@ -140,6 +145,7 @@ export const lobbyMessageSchema = z.discriminatedUnion("kind", [
   matchErrorMessageSchema,
   heartbeatMessageSchema,
   byeMessageSchema,
+  rematchMessageSchema,
 ]);
 export const lobbyMessageSchemaMatchesType: Equals<
   z.infer<typeof lobbyMessageSchema>,
@@ -154,9 +160,10 @@ export const lobbyClientMessageSchema = z.discriminatedUnion("kind", [
   actionMessageSchema,
   z.object({ kind: z.literal("reject"), to: z.string(), reason: z.literal("kicked") }),
   byeMessageSchema,
+  rematchMessageSchema,
 ]);
 export type LobbyClientMessage =
-  | Extract<LobbyMessage, { kind: "hello" | "intent" | "action" | "bye" }>
+  | Extract<LobbyMessage, { kind: "hello" | "intent" | "action" | "bye" | "rematch" }>
   | { kind: "reject"; to: string; reason: "kicked" };
 export const lobbyClientMessageSchemaMatchesType: Equals<
   z.infer<typeof lobbyClientMessageSchema>,
