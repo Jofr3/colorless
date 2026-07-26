@@ -65,7 +65,15 @@ function game(overrides: {
 function turnAction(
   fields: Partial<Extract<RedactedPhase, { kind: "turn:action" }>> = {},
 ): RedactedPhase {
-  return { kind: "turn:action", attacks: [], retreat: null, abilities: [], trainers: [], ...fields };
+  return {
+    kind: "turn:action",
+    attacks: [],
+    retreat: null,
+    abilities: [],
+    trainers: [],
+    rareCandy: [],
+    ...fields,
+  };
 }
 
 /** An attached-Energy leaf card (no battle row / attachments). */
@@ -238,8 +246,14 @@ describe("OnlineHud — turn:action abilities + trainers (3b)", () => {
     },
   ];
   const TRAINERS: TurnPhase["trainers"] = [
-    { uid: "t1", name: "Professor's Research", disabled: false, reason: null },
-    { uid: "t2", name: "Boss's Orders", disabled: true, reason: "No legal target" },
+    { uid: "t1", name: "Professor's Research", disabled: false, reason: null, rareCandy: false },
+    {
+      uid: "t2",
+      name: "Boss's Orders",
+      disabled: true,
+      reason: "No legal target",
+      rareCandy: false,
+    },
   ];
 
   it("dispatches useAbility (seat + target + name) on an enabled ability row", () => {
@@ -298,6 +312,25 @@ describe("OnlineHud — turn:action abilities + trainers (3b)", () => {
     expect(onAction).not.toHaveBeenCalled();
   });
 
+  it("dispatches endTurn from the in-panel Pass (the playmat ⟶ is covered by this panel)", () => {
+    // The panel renders only while `waitingOn === "you"` on a turn:action — which
+    // is exactly when passing is legal — so this button is never disabled, and it
+    // is the only pass affordance a real click can reach while the panel is up.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({ phase: turnAction(), you: { active: inPlay("chien", "Chien-Pao ex") } })}
+        waitingOn="you"
+        activePlaced
+        onAction={onAction}
+      />,
+    );
+    const pass = screen.getByRole<HTMLButtonElement>("button", { name: "Pass" });
+    expect(pass.disabled).toBe(false);
+    fireEvent.click(pass);
+    expect(onAction).toHaveBeenCalledWith({ type: "endTurn", seat: "p1" });
+  });
+
   it("renders no ability/trainer sections when the lists are empty", () => {
     render(
       <OnlineHud
@@ -312,6 +345,97 @@ describe("OnlineHud — turn:action abilities + trainers (3b)", () => {
     );
     expect(screen.queryByText("Abilities")).toBeNull();
     expect(screen.queryByText("Trainers")).toBeNull();
+  });
+});
+
+describe("OnlineHud — turn:action Rare Candy (3b-ii)", () => {
+  type TurnPhase = Extract<RedactedPhase, { kind: "turn:action" }>;
+  const CANDY_ROW: TurnPhase["trainers"][number] = {
+    uid: "rc1",
+    name: "Rare Candy",
+    disabled: false,
+    reason: null,
+    rareCandy: true,
+  };
+  const ACTIVE_OPTION: TurnPhase["rareCandy"][number] = {
+    target: { spot: "active" },
+    basicUid: "b0",
+    basicName: "Charmander",
+    stage2: [{ uid: "s0", name: "Charizard ex" }],
+  };
+  const BENCH_OPTION: TurnPhase["rareCandy"][number] = {
+    target: { spot: "bench", index: 1 },
+    basicUid: "b1",
+    basicName: "Squirtle",
+    stage2: [{ uid: "s1", name: "Blastoise" }],
+  };
+  const OPTIONS: TurnPhase["rareCandy"] = [ACTIVE_OPTION, BENCH_OPTION];
+
+  function renderCandy(
+    fields: Partial<TurnPhase>,
+    onAction: (action: unknown) => void = vi.fn(),
+  ) {
+    render(
+      <OnlineHud
+        game={game({
+          phase: turnAction({ trainers: [CANDY_ROW], ...fields }),
+          you: { active: inPlay("b0", "Charmander") },
+        })}
+        waitingOn="you"
+        activePlaced
+        onAction={onAction}
+      />,
+    );
+  }
+
+  it("opens the two-step dialog and dispatches the picked Basic + Stage 2 pair", () => {
+    const onAction = vi.fn();
+    renderCandy({ rareCandy: OPTIONS }, onAction);
+    // The flagged row must NOT play on click (a pair can't ride one dispatch) —
+    // it opens the dialog, which asks for the Basic first when there is a choice.
+    fireEvent.click(screen.getByRole("button", { name: "Rare Candy" }));
+    expect(onAction).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Squirtle" }));
+    // Then the Stage 2s that evolve from it (server-computed — the client never
+    // checks the chain), and the pick dispatches the whole pair, seat-bound.
+    fireEvent.click(screen.getByRole("button", { name: "Blastoise" }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "rareCandy",
+      seat: "p1",
+      uid: "rc1",
+      target: { spot: "bench", index: 1 },
+      evolutionUid: "s1",
+    });
+    // The dialog closes on commit (no second dispatch from a stale pick).
+    expect(screen.queryByRole("button", { name: "Blastoise" })).toBeNull();
+  });
+
+  it("pre-selects a sole Basic, skipping straight to the Stage 2 pick", () => {
+    const onAction = vi.fn();
+    renderCandy({ rareCandy: [ACTIVE_OPTION] }, onAction);
+    fireEvent.click(screen.getByRole("button", { name: "Rare Candy" }));
+    // One option means no choice to make — the dialog opens on the Stage 2 step.
+    expect(screen.queryByRole("button", { name: "Charmander" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Charizard ex" }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "rareCandy",
+      seat: "p1",
+      uid: "rc1",
+      target: { spot: "active" },
+      evolutionUid: "s0",
+    });
+  });
+
+  it("greys the row with no legal pairing, so the dialog is unreachable", () => {
+    const onAction = vi.fn();
+    // The server folds "no Basic/Stage-2 pairing right now" into `disabled` and
+    // ships an empty list — the row can't be clicked into an empty dialog.
+    renderCandy({ trainers: [{ ...CANDY_ROW, disabled: true }], rareCandy: [] }, onAction);
+    const row = screen.getByRole<HTMLButtonElement>("button", { name: "Rare Candy" });
+    expect(row.disabled).toBe(true);
+    fireEvent.click(row);
+    expect(onAction).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
 

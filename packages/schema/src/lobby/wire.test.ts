@@ -33,7 +33,14 @@ const SNAPSHOT: LobbySnapshot = {
 const MATCH_GAME: RedactedGame = {
   seat: "p1",
   turn: 1,
-  phase: { kind: "turn:action", attacks: [], retreat: null, abilities: [], trainers: [] },
+  phase: {
+    kind: "turn:action",
+    attacks: [],
+    retreat: null,
+    abilities: [],
+    trainers: [],
+    rareCandy: [],
+  },
   board: {
     stadium: null,
     you: {

@@ -6,6 +6,7 @@ import {
   createGame,
   isBasicPokemon,
   isEnergyCard,
+  otherSeat,
   retreatCostOf,
   topCardOf,
 } from "./index";
@@ -17,6 +18,7 @@ import {
   ONE_BASIC_DECK,
   deepFreeze,
   driveSetup,
+  expectErr,
   handUid,
   must,
   mustApply,
@@ -374,5 +376,50 @@ describe("scripted end-to-end game", () => {
     expect(state.players.p1.prizes).toHaveLength(6);
     expect(state.players.p2.prizes).toHaveLength(6);
     expect(events.at(-1)?.type).toBe("GAME_OVER");
+  });
+});
+
+// Concede (P4 3c-ii) — the only non-§14 way a game ends. One action serves two
+// triggers: a player giving up, and the online server acting for one who
+// abandoned the match, so it must work from ANY phase a stuck match can be in.
+describe("concede — giving the game up", () => {
+  it("hands the win to the opponent, with the `conceded` reason", () => {
+    const state = driveSetup(7);
+    const { state: next, events } = mustApply(state, { type: "concede", seat: "p1" });
+    expect(next.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p2", reason: "conceded" },
+    });
+    // It goes out through the ONE GAME_OVER emitter, so consumers (the log, the
+    // redactor, both overlays) need no special case.
+    expect(events.some((e) => e.type === "GAME_OVER")).toBe(true);
+  });
+
+  it("works on the OPPONENT's turn — the case it exists for", () => {
+    // A player who walks away does so on their own turn; the other player's
+    // forfeit timer then fires while it is still the ABSENTEE's turn. A concede
+    // gated on "your turn" would be useless exactly there.
+    const state = driveSetup(7);
+    if (state.phase.kind !== "turn:action") throw new Error("expected turn:action");
+    const idle = otherSeat(state.phase.seat);
+    const { state: next } = mustApply(state, { type: "concede", seat: idle });
+    expect(next.phase.kind).toBe("gameOver");
+  });
+
+  it("clears the pending queue, so nothing resumes into a finished game", () => {
+    const state = driveSetup(7);
+    const { state: next } = mustApply(state, { type: "concede", seat: "p1" });
+    expect(next.pending).toEqual([]);
+  });
+
+  it("is refused once the game is over — the first result stands", () => {
+    const state = driveSetup(7);
+    const over = mustApply(state, { type: "concede", seat: "p1" }).state;
+    // p2 cannot concede back and flip the winner.
+    expectErr(over, { type: "concede", seat: "p2" }, "GAME_OVER");
+    expect(over.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p2", reason: "conceded" },
+    });
   });
 });

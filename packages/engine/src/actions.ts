@@ -77,6 +77,17 @@ export interface RareCandyAction {
   evolutionUid: string;
 }
 
+/** Give up the game (P4 3c-ii). Not a §14 rules condition — a player's own
+    choice, or the server acting for one who abandoned an online match — so unlike
+    every other action it is legal in ANY phase but `gameOver`: you can concede on
+    your opponent's turn, mid-effect, or while a KO interrupt is parked. That
+    totality is the point: it is the ONE action that can always end a match that
+    is otherwise stuck. */
+export interface ConcedeAction {
+  type: "concede";
+  seat: Seat;
+}
+
 export interface RetreatAction {
   type: "retreat";
   seat: Seat;
@@ -160,6 +171,7 @@ export type GameAction =
   | PlayBasicToBenchAction
   | EvolveAction
   | RareCandyAction
+  | ConcedeAction
   | RetreatAction
   | AttackAction
   | PlayTrainerAction

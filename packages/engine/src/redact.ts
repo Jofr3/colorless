@@ -33,6 +33,7 @@ import type {
   RedactedOutcome,
   RedactedPhase,
   RedactedPokemonRef,
+  RedactedRareCandyOption,
   RedactedRetreat,
   RedactedSide,
   RedactedTrainer,
@@ -40,7 +41,7 @@ import type {
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { costMet } from "./attack";
-import { programPlayable } from "./cardplay";
+import { programPlayable, rareCandyOptions } from "./cardplay";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import { effectiveAttackCost, effectiveMaxHp, effectiveRetreatCost, providedEnergy } from "./continuous";
 import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
@@ -103,15 +104,16 @@ function redactPhase(state: GameState, viewerSeat: Seat): RedactedPhase {
       };
     case "turn:action":
       // turn:action's actor is phase.seat (phaseView) — only they get an attack
-      // list, a retreat option and an ability/trainer list; the opponent's view
-      // of the same phase carries none (empty attacks/abilities/trainers, null
-      // retreat).
+      // list, a retreat option, an ability/trainer list and the Rare Candy
+      // pairings; the opponent's view of the same phase carries none (empty
+      // attacks/abilities/trainers/rareCandy, null retreat).
       return {
         kind: "turn:action",
         attacks: redactedAttacksOf(state, viewerSeat, phase.seat),
         retreat: redactedRetreatOf(state, viewerSeat, phase.seat),
         abilities: redactedAbilitiesOf(state, viewerSeat, phase.seat),
         trainers: redactedTrainersOf(state, viewerSeat, phase.seat),
+        rareCandy: redactedRareCandyOf(state, viewerSeat, phase.seat),
       };
     case "ko:takePrizes":
       return { kind: "ko:takePrizes", count: phase.count };
@@ -374,25 +376,38 @@ function redactedAbilitiesOf(state: GameState, viewerSeat: Seat, turnSeat: Seat)
   return out;
 }
 
-/** The acting viewer's non-Stadium Trainers (Items/Supporters) playable from
-    their OWN hand, with server-computed playability, for the online turn HUD (3b)
-    — [] for the opponent. Mirrors GameHud's `playableTrainers` on the full state
-    the wire withholds, deduped to one entry per distinct card, EXCLUDING the two
-    that aren't a plain `playTrainer` button online: STADIUMS play by the board
-    DRAG (the 2a moveToAction path — offered here would double the affordance), and
-    RARE CANDY needs its own two-step dialog + the `rareCandy` action (deferred).
-    (Tools are drag gestures too, and fall out on `program.trainer === undefined`.)
-    `disabled` folds the §4 first-turn Supporter ban + §7.2 one-per-turn, the
-    printed `trainerPlayableIf` board gate (`conditionHolds` reads prize counts +
-    the Stadium OWNER the wire withholds), the §7.5 hand cost (`handCostUnmet`, the
-    played uid excluded — the printed "OTHER cards") and the would-only-whiff
-    `programPlayable` gate into ONE boolean, EXACTLY as the local Trainer row. Every
-    input is the viewer's own hand + public counts/boards, emitted only to the
-    actor, so nothing hidden leaves the DO. `uid` (already on the viewer's own
-    face-up hand) is what the `playTrainer` action dispatches back. */
+/** The acting viewer's non-Stadium Trainers (Items/Supporters + Rare Candy)
+    playable from their OWN hand, with server-computed playability, for the online
+    turn HUD (3b) — [] for the opponent. Mirrors GameHud's `playableTrainers` on
+    the full state the wire withholds, deduped to one entry per distinct card,
+    EXCLUDING only STADIUMS: they play by the board DRAG (the 2a moveToAction path
+    — offered here too would double the affordance). (Tools are drag gestures too,
+    and fall out on `program.trainer === undefined`.) RARE CANDY is included and
+    FLAGGED (3b-ii): it evolves rather than running a program, so its row opens the
+    two-step dialog fed by `redactedRareCandyOf` and answers with the `rareCandy`
+    action — but it is still a hand Trainer, so it belongs in this list, exactly as
+    the local HUD has it. `disabled` folds the §4 first-turn Supporter ban + §7.2
+    one-per-turn, the printed `trainerPlayableIf` board gate (`conditionHolds` reads
+    prize counts + the Stadium OWNER the wire withholds), the §7.5 hand cost
+    (`handCostUnmet`, the played uid excluded — the printed "OTHER cards"), the
+    would-only-whiff `programPlayable` gate and — for Rare Candy alone — the §7.1
+    "is there a legal pairing" gate into ONE boolean, EXACTLY as the local Trainer
+    row. Every input is the viewer's own hand + public counts/boards, emitted only
+    to the actor, so nothing hidden leaves the DO. `uid` (already on the viewer's
+    own face-up hand) is what the `playTrainer` / `rareCandy` action dispatches
+    back. */
 function redactedTrainersOf(state: GameState, viewerSeat: Seat, turnSeat: Seat): RedactedTrainer[] {
   if (viewerSeat !== turnSeat) return [];
   const side = state.players[viewerSeat];
+  // §7.1 legality (a Basic in play + a matching Stage 2 in hand + timing) is the
+  // engine's — greying Rare Candy out before the reject. Computed LAZILY (its
+  // cardPool scan is only worth paying when a Rare Candy is actually in hand),
+  // the local list's own shape.
+  let candyOptions: number | null = null;
+  const rareCandyPlayable = (): boolean => {
+    if (candyOptions === null) candyOptions = rareCandyOptions(state, viewerSeat).length;
+    return candyOptions > 0;
+  };
   const seen = new Set<string>();
   const out: RedactedTrainer[] = [];
   for (const uid of side.hand) {
@@ -400,28 +415,42 @@ function redactedTrainersOf(state: GameState, viewerSeat: Seat, turnSeat: Seat):
     if (card === undefined || card.category !== "Trainer" || seen.has(card.id)) continue;
     const program = programFor(card.id);
     if (program === undefined) continue;
-    // Stadium (drag) / Rare Candy (deferred) are not plain buttons — skip both.
-    if (program.rareCandy === true || card.trainerType === "Stadium") continue;
+    const isRareCandy = program.rareCandy === true;
+    // Stadiums play by the board DRAG, not a button here.
+    if (card.trainerType === "Stadium") continue;
     // No Item/Supporter play path (a Tool, or an unauthored Trainer) — not offered;
-    // the coverage strategy surfaces it as "not simulated" on attempt.
-    if (program.trainer === undefined) continue;
+    // the coverage strategy surfaces it as "not simulated" on attempt. Rare Candy
+    // is exempt: it is a marker program (`{rareCandy: true}`) with no `trainer`
+    // ops, since the `rareCandy` action evolves instead of running one.
+    if (!isRareCandy && program.trainer === undefined) continue;
     seen.add(card.id);
     const isSupporter = card.trainerType === "Supporter";
-    const gated = program.trainerPlayableIf;
+    // The three Item/Supporter gates are scoped OFF Rare Candy exactly as the local
+    // list scopes them: cardplay.ts reads `trainerPlayableIf` / the hand cost / the
+    // whiff predicate only in playTrainer's Item/Supporter branch, and the
+    // `rareCandy` action consults none of them — greying on one here would disagree
+    // with the engine.
+    const gated = isRareCandy ? undefined : program.trainerPlayableIf;
     const gateUnmet = gated !== undefined && !conditionHolds(state, viewerSeat, gated);
-    const costUnmet = handCostUnmet(state, viewerSeat, program.trainer, uid);
-    const noTarget = !programPlayable(state, program.trainer, viewerSeat);
+    const costUnmet = isRareCandy
+      ? null
+      : handCostUnmet(state, viewerSeat, program.trainer ?? [], uid);
+    const noTarget = !isRareCandy && !programPlayable(state, program.trainer ?? [], viewerSeat);
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
       noTarget ||
-      (isSupporter && (state.turn === 1 || state.allowances.supporterPlayed));
+      (isRareCandy
+        ? !rareCandyPlayable()
+        : isSupporter && (state.turn === 1 || state.allowances.supporterPlayed));
     out.push({
       uid,
       name: card.name,
       disabled,
       // The printed/engine clause a greyed row shows; null when enabled or the
-      // disable is self-evident (the §4/§7.2 timing), matching the local row.
+      // disable is self-evident (the §4/§7.2 timing, and — like the local row —
+      // Rare Candy's no-legal-pairing, which the empty dialog would only restate),
+      // matching the local row.
       reason:
         gateUnmet && gated !== undefined
           ? `Only if ${conditionNote(gated)}`
@@ -430,9 +459,41 @@ function redactedTrainersOf(state: GameState, viewerSeat: Seat, turnSeat: Seat):
             : noTarget
               ? "No legal target"
               : null,
+      rareCandy: isRareCandy,
     });
   }
   return out;
+}
+
+/** The acting viewer's legal Rare Candy pairings (§7.1) — what the online Rare
+    Candy dialog offers behind the `rareCandy`-flagged Trainer row (increment
+    3b-ii) — [] for the opponent, who never plays one. The legality is the
+    ENGINE's: `rareCandyOptions` already folds the §4 first-turn ban, the
+    Basic-in-play + came-into-play-this-turn checks and the Basic→Stage 1→Stage 2
+    chain bridge (a cardPool scan the wire could not carry), so this only maps its
+    result to the wire shape and resolves the two display names. Everything named
+    is the actor's OWN in-play stack top + OWN hand — face-up to this viewer
+    already, and emitted to them alone — so nothing hidden leaves the DO. The
+    `target` literal is rebuilt fresh (never the option's own object) to keep the
+    redactor's no-alias purity contract, as `redactedRefOf` does. */
+function redactedRareCandyOf(
+  state: GameState,
+  viewerSeat: Seat,
+  turnSeat: Seat,
+): RedactedRareCandyOption[] {
+  if (viewerSeat !== turnSeat) return [];
+  return rareCandyOptions(state, viewerSeat).map((option) => ({
+    target:
+      option.target.spot === "active"
+        ? { spot: "active" }
+        : { spot: "bench", index: option.target.index },
+    basicUid: option.basicUid,
+    basicName: cardOfUid(state, option.basicUid)?.name ?? option.basicUid,
+    stage2: option.stage2Uids.map((uid) => ({
+      uid,
+      name: cardOfUid(state, uid)?.name ?? uid,
+    })),
+  }));
 }
 
 /** How much of a side the viewer may see. The two redactions are independent:

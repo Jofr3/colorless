@@ -420,6 +420,103 @@ round-trip untouched, dispatch shapes, purity). **1 LOW FIXED** (a two-activated
 play that can reach the moveEnergy/discardEnergy/choosePokemonMulti parks — newly-reachable surface, no break
 found, covered by the browser-run caveat). See D70.
 
+**Increment 3b-ii — DONE:** the online RARE CANDY (D71, engine 0.40.0) — the last deferred turn
+affordance, closing the ONE narrow gap 3b carried. **Why it was its own sub-slice:** Rare Candy is the
+only hand Trainer that isn't a plain button — it EVOLVES instead of running a program, and its decision
+is a PAIR (which Basic in play, which Stage 2 in hand) that no single dispatch carries and no
+`effect:choose` prompt can express (a prompt picks from ONE candidate list), which is exactly why the
+local HUD gives it a bespoke two-step dialog. **Wire:** `RedactedTrainer` gained **`rareCandy: boolean`**
+— it stays a Trainer row, just flagged as the one whose click OPENS A DIALOG — and
+`RedactedPhase.turn:action` gained **`rareCandy: RedactedRareCandyOption[]`** (`target` the seatless
+`PokemonTarget` the action dispatches back / `basicUid` / `basicName` / `stage2: {uid,name}[]`). The
+pairings ride the PHASE rather than the row because they don't depend on WHICH copy is played (the row
+supplies only the `uid`), mirroring the local decomposition 1:1 (`TrainerOption.rareCandy` + a separately
+computed options list) — which is what keeps the fidelity check a field-for-field comparison.
+**Engine:** `redactedTrainersOf` stopped skipping Rare Candy and now mirrors the local `playableTrainers`
+exactly, INCLUDING its three deliberate scope-outs — `trainerPlayableIf` / the §7.5 hand cost / the
+would-only-whiff `programPlayable` gate are evaluated ONLY on the Item/Supporter path, because
+`cardplay.ts` reads them only in `playTrainer`'s Item/Supporter branch and the `rareCandy` action consults
+none of them (greying on one would DISAGREE with the engine) — with its §7.1 gate the lazily computed
+`rareCandyOptions(state, seat).length > 0` (the cardPool scan is only paid when a Rare Candy is actually
+in hand), also the local's shape. Rare Candy is likewise exempt from the `program.trainer === undefined`
+skip: its registry program is the bare marker `{rareCandy: true}`. New **`redactedRareCandyOf(state,
+viewerSeat, turnSeat)`** maps `rareCandyOptions` to the wire — the ENGINE stays the legality authority
+(the §4/§7.1 first-turn ban, the Basic-in-play + came-into-play-this-turn checks, and the Basic→Stage 1→
+Stage 2 chain BRIDGE, a `state.cardPool` scan the client could never run), so a listed pair always
+resolves to a legal action; the `target` literal is rebuilt fresh (the no-alias purity contract, D70's
+LOW fix). **The consistency invariant:** both are computed in the SAME `redactPhase` call on the same
+state, so a LIT row always has ≥1 pairing and a greyed row always has [] — no dead dialog is reachable.
+**Leak posture identical to 3b:** actor-gated (`viewerSeat !== turnSeat` ⟹ []), and everything named is
+the actor's own in-play stack top (public) + own hand (already face-up on their own wire).
+**Client:** `OnlineHud`'s trainer row branches on the flag (`setRareCandyUid` vs `playTrainer`), and a new
+**`RareCandyDialog`** restates the local one over the wire shape (sole-Basic pre-select, Cancel always,
+Back only when the Basic pick was a real choice), dispatching `{type:"rareCandy", seat, uid, target,
+evolutionUid}`. **API DO:** `SUPPORTED_MATCH_ACTIONS` += **`rareCandy`** — soft-lock-safe on any deck:
+`turnGate` rejects it off a turn:action / wrong seat without throwing, the handler re-validates every wire
+value (target shape + bench index, both hand uids distinct and in hand, the Basic-and-chain link), and on
+accept it evolves through the SHARED `placeEvolution`, whose only parks are an on-evolve triggered
+Ability's effect:choose (all 7 kinds dialoged, 2b-iii-c) and the evolve-below-HP mid-turn KO (dialoged,
+2b-i). **No NEW park surface:** plain `evolve` has been on the allowlist since 2a and reaches the
+identical tail. Round-trip untouched (`decisionFromPhase` keeps `turn:action`→null) — pinned with a
+POPULATED `rareCandy` list. engine RULES UNCHANGED; 1803 → **1812** tests (flagged-row + pairing
+passthrough, the bench-index option, the §4 first-turn empty-list-with-greyed-row consistency pin, the
+actor gate, a target-copy purity pin, the populated round-trip, 3 OnlineHud DOM cases — two-step dispatch
+/ sole-Basic pre-select / greyed-row-no-dialog — and the match.test allowlist flip). `bun run check` green.
+**With this the online turn HUD is COMPLETE — every affordance the local HUD offers has an online
+counterpart**; what remains for P4 is the match LIFECYCLE (3c+).
+**Self-reviewed (no independent reviewer this session).** **RECORDED — a pre-existing engine gap this
+surface makes visible, NOT introduced here:** `stage2EvolvesFromBasic` resolves the bridge Stage 1 against
+the SHARED `state.cardPool` (both decks' cards), so where a player's own deck runs NO copy of the bridge
+Stage 1 but the OPPONENT's does, their dialog lights up when it otherwise wouldn't — a faint inference
+about the opponent's decklist. It is the documented ingest-debt gap in `cardplay.ts` (the catalog stores
+only each card's IMMEDIATE `evolveFrom`), identical in local hot-seat play; the fix is an engine/ingest
+change (persist the full evolution family at ingest, or scope the bridge scan to the actor's own
+deck+discard+hand), not a transport one — do it when the ingest debt is next touched.
+
+**BROWSER-VERIFIED — 2026-07-26, two real clients (the verification owed since 3a).** Two Chrome
+sessions (`agent-browser --session host|guest`, isolated cookie jars), two registered accounts each
+with a D1-saved deck, a real lobby over the WS DO. **What it PROVED, in order of what was most at
+risk:**
+1. **The forwarded `session` cookie DOES reach the DO on the cross-origin WS upgrade (3a's headline
+   unknown).** Both seats resolved to their account, `loadPlayerDeck` returned each player's OWN deck
+   and the match started with 60/60 real cards — had the cookie not survived, every socket would have
+   resolved anonymous and NO match could have started. The one failure mode that would have made the
+   whole of P4-3 useless is closed.
+2. **The online event log (2b-iii-d-ii) renders on both clients, correctly relabelled** — "You: drew
+   1 extra card" on one screen, "Opponent: drew 1 extra card" on the other, from the one seat-keyed
+   array (`viewLogEntries`).
+3. **3b's ability/trainer HUD is faithful live:** Chien-Pao ex's "Shivery Chill · Chien-Pao ex
+   (Active)" fired `useAbility` → parked at its deck search → resolved; the row then **greyed itself**
+   (the server-folded once-per-turn `abilitiesUsed` gate) — and `Switch` sat greyed with "No legal
+   target" against an empty Bench (the server-folded whiff gate + reason), `Hail Blade` greyed for
+   §8.2 payability, `Retreat` greyed for the empty Bench.
+4. **3b-ii's Rare Candy works end-to-end:** the flagged row opened the dialog, which — with a single
+   evolvable Basic — **pre-selected it and went straight to the Stage 2 pick**, and the chosen pair
+   dispatched `rareCandy` → Fuecoco evolved straight to **Skeledirge (180 HP)**, skipping Crocalor,
+   with Rare Candy in the discard and BOTH logs showing "evolved Fuecoco → Skeledirge". The chain
+   BRIDGE resolved through a Crocalor that was only ever in the deck, never in hand — the §7.1
+   mechanism, live. (Driven with a purpose-built 60-card probe deck — Fuecoco ×16 / Crocalor ×4 /
+   Skeledirge ×20 / Rare Candy ×20 — because the real Ember list's 2-of Rare Candy is a coin flip;
+   the probe still had to wait until turn 11 to draw one.)
+5. **The hidden-info barrier holds in a REAL two-client game:** the host's Nest Ball deck search
+   (2b-iii-c) rendered its candidate list on the CONTROLLER's screen only — the guest had no dialog
+   and saw the opponent's deck as a bare count. Same for the Rare Candy dialog.
+6. Setup flow (mulligan → the opponent's drawExtra compensation → face-down placement → reveal on
+   both-ready), the per-viewer hand redaction, and the drag placements all behaved. **Zero page
+   errors on either client for the whole session.**
+**What it FOUND (one real bug, PRE-EXISTING, not a P4 regression — see `polish.md`):** the playmat's
+**Pass turn button is unclickable while the turn panel is open**, in BOTH /play and online — the
+`z-[75]` panel covers the `z-20` control at every viewport height tested (633–900), so a click lands
+on an attack/ability row. It reproduces with the minimal local panel, so it predates 3b. It had been
+mis-recorded in the `verify` skill as an agent-browser quirk (a synthetic `.click()` "works" only
+because it skips hit-testing) — that entry is now corrected. **FIXED the same session:** both turn
+panels grew their own **`Pass`** footer button (never disabled — a panel renders exactly when
+`passDisabled === false`; named "Pass" to avoid colliding with the ⟶'s accessible name), verified
+with a real hit-tested click. The ⟶ and the Previous/Forward arrows remain covered — history
+navigation is still unreachable during your own turn:action (see `polish.md`).
+**Still NOT exercised:** reconnect/hibernation, concede/rematch, the rejection pill (needs a crafted
+frame — unit-tested only), and a game driven to an actual WIN online.
+
 **Match-record lifecycle (locked earlier — 2a):** the persisted match outlives EXACTLY the
 match it describes. `handoffToMatch` writes `MATCH_KEY` once; `commit` drops it on the
 `abandonsMatch(prev, next)` transition — any commit that takes the lobby OUT of in-game (only
@@ -557,11 +654,83 @@ until 1c broadcasts the redacted view.
     (so the Stadium owner / prize counts / own hand never need to cross), emitted to the acting viewer
     only ([] for the opponent). `OnlineHud`'s turn panel gained the Abilities + Trainers sections
     (`useAbility`/`playTrainer`), and `SUPPORTED_MATCH_ACTIONS` grew by `useAbility`. STADIUMS still play
-    by the 2a board drag; **Rare Candy is DEFERRED** (its own two-step dialog + the `rareCandy` action —
-    a follow-up), and `redactedTrainersOf` omits it so no dead button is offered.
-  - **3c+ — reconnect/timeouts, concede/rematch, spectate**, the ONLINE RARE CANDY (the deferred 3b
-    affordance), and the DO-storage-migration hardening the
-    2b-iii-d-ii LOW deferred (default missing MatchRecord fields on read).
+    by the 2a board drag; **Rare Candy was DEFERRED** to 3b-ii (below), and `redactedTrainersOf` omitted
+    it so no dead button was offered.
+  - **3b-ii — the online Rare Candy. DONE** (D71, see Status above): `RedactedTrainer` gained a
+    **`rareCandy` FLAG** (the one row that opens a dialog instead of dispatching `playTrainer`) and
+    `RedactedPhase.turn:action` a **`rareCandy` pairing list** (`redactedRareCandyOf` — the engine's own
+    `rareCandyOptions` mapped to the wire, actor-only; both computed in ONE `redactPhase` call, so a lit
+    row always has ≥1 pairing and a greyed one always has []). `OnlineHud` gained the two-step
+    `RareCandyDialog`, and `SUPPORTED_MATCH_ACTIONS` grew by **`rareCandy`** — soft-lock-safe on any deck
+    (the same `placeEvolution` tail `evolve` has reached since 2a, so no new park surface). **The online
+    turn HUD is now COMPLETE.**
+  - **3c-i — the MatchRecord storage hardening. DONE** (D72): the no-migrations gap the 2b-iii-d-ii LOW
+    deferred, closed BEFORE the shape changes again for reconnect/timeouts. `MatchRecord` gained
+    **`version`** (stamped from `MATCH_RECORD_VERSION`) and every read goes through the pure
+    **`readMatchRecord`**, which refuses anything this build didn't write — chosen over defaulting the
+    missing fields because defaults say nothing about an embedded `GameState` from a build whose RULES
+    moved (reads back "fine", plays subtly wrong). The DO gained one door onto the key (`peekMatch` →
+    `none`/`ok`/`stale`) and **`retireStaleMatch`** (drop it, leave in-game, `match-error` to both —
+    3a's surface reused). Call sites differ deliberately: the action handler + `sendMatchIfInGame`
+    RETIRE, the alarm flip only SKIPS (retiring mid-flip would commit a second snapshot), the handoff
+    guard treats stale as "no live match" and overwrites. **Caught while building:**
+    `resetAfterFailedStart` CANNOT end a running match — `recomputePhase` returns an in-game snapshot
+    untouched — so a new **`endMatch`** (logic.ts) clears the phase first and re-derives; it is the
+    primitive concede/rematch/timeouts will share. 1814 → **1825** tests.
+  - **3c-ii — concede + the abandonment forfeit. DONE** (D73, engine 0.41.0): closes the last way an
+    online match could never resolve — one player closing their tab used to leave the other staring at
+    a board forever (the 5s disconnect grace only greys the connection dot; the empty-lobby TTL fires
+    only when NOBODY is connected, and the abandoned player is). **Engine:** `GameOverReason` +=
+    **`conceded`** + a new **`concede`** action (flow.ts, beside `finishGame`), legal in ANY phase but
+    `gameOver` — a concede gated on your own turn would be useless exactly where it's needed (an
+    opponent who walked away mid-turn, a park nobody can answer), and it's the one action that can
+    always END a stuck match. ONE reason for both triggers (pressed, or forfeited by the server) —
+    the engine stays ignorant of transport. **DO:** `ABANDON_GRACE_MS` = 90s on an `ABANDON_KEY` list
+    (same shape + helpers as the disconnect grace, different consequence), armed when the 5s grace
+    expires while in-game, cleared by `clearDisconnectTimers` (which replaced `clearPendingDisconnect`
+    and now cancels BOTH from every hello branch — so no future branch can leave one armed and forfeit
+    a player who came back), fired by **`forfeitAbandoned`** through the ordinary `applyMatchAction` →
+    persist → `broadcastMatch` path, so a forfeited match ends like any other. `SUPPORTED_MATCH_ACTIONS`
+    += `concede`. **`MATCH_RECORD_VERSION` NOT bumped** — widening an enum is backwards-compatible
+    (see the worked example now in its doc). **Two bugs caught mid-build, both invisible to tests:**
+    the abandon deadlines were persisted but never added to `scheduleMaintenance` (nothing would have
+    woken the DO — the feature would have silently never fired), and a change check compared array
+    references against a fresh storage read (a write every alarm). **Client:** both game-over overlays
+    now show WHY, off a shared total `GAME_OVER_DETAIL` (the online one showed no reason at all, and a
+    bare "You win!" would leave a forfeit unexplained); the local overlay's and the log's ternary
+    chains became total Records, so a future reason is a compile error instead of "the deck ran out".
+    1825 → **1832** tests. **BROWSER-VERIFIED:** with a match live, the guest's browser was killed and
+    the host — who touched nothing — got "You win! / The match was forfeited." ~95s later, plus the log
+    row. That is the only proof the `scheduleMaintenance` fix works: unscheduled, the DO would never
+    have woken. **Still to do:** an opponent-facing "forfeits in 0:45" countdown, which needs the
+    deadline on the wire.
+  - **3c-iii — the Concede control. DONE** (D74): 3c-ii let the SERVER end an abandoned match but left
+    the player unable to forfeit their own. The button sits in the HUD chrome beside the playmat's
+    "Back" (top-right), NOT in the turn panel — that panel renders only on your turn, while the engine
+    allows conceding in any phase, and the case that matters most is waiting out an opponent who walked
+    away on THEIR turn. Confirmed through the existing `ConfirmDialog` (danger), hidden once the game is
+    over. **Browser-verified on two clients**, including a concede during SETUP (turn 0) — the any-phase
+    legality is real, not a unit-test artifact. **A copy bug the run caught:** the game-over detail was
+    winner-centric ("The opponent forfeited.") and the online overlay shows the same line to BOTH
+    players, so the conceder was told their opponent forfeited; `GAME_OVER_DETAIL` is now
+    possessive-free ("The match was forfeited."), accurate from either side under a title that already
+    names the winner. 1832 → **1835** tests. **Recorded, not changed:** an explicit LEAVE (`bye`) during
+    a match still VOIDS it rather than conceding — the opponent's game vanishes with no result, now the
+    odd one out beside the timeout forfeit and this button. Making `bye` concede first raises a real
+    question (does the leaver stay seated long enough for the other player to SEE the result?), so it
+    wants its own slice.
+  - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
+    run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
+    should confirm the three things tests can't: the SameSite=None `session` cookie surviving the
+    cross-origin WS handshake (3a — if it does NOT, every user resolves anonymous and no match starts),
+    the event log rendering (2b-iii-d-ii), and an ability/trainer/Rare-Candy deck driving a full game
+    (3b/3b-ii); the `verify` skill has the launch recipe. (2) **reconnect/hibernation + timeouts** —
+    `PlayerState.id` already supports reconnect and `sendMatchIfInGame` resends the snapshot, but nothing
+    bounds a player who never returns. (3) **concede/rematch** — the match-record lifecycle already drops
+    `MATCH_KEY` on the abandon transition, a clean seam to hang a rematch off. (4) the
+    **DO-storage-migration hardening** the 2b-iii-d-ii LOW deferred (default the missing `MatchRecord`
+    fields on read, or reset on shape mismatch) — do this BEFORE any further `MatchRecord` shape change.
+    (5) **spectate** — per-viewer redaction makes this nearly free (a third, seatless viewer).
 
 ## What already exists (reuse it)
 The lobby was built to swap transports without UI changes:

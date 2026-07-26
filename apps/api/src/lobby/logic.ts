@@ -19,6 +19,18 @@ import {
     never flickers the opponent to "disconnected". */
 export const DISCONNECT_GRACE_MS = 5000;
 
+/** How long a player may be gone from a RUNNING match before they forfeit it
+    (P4 3c-ii). Deliberately far longer than `DISCONNECT_GRACE_MS`, which is a
+    5-second "did the socket blip?" window whose only consequence is a greyed-out
+    connection dot: losing a game to a 5-second blip would be indefensible, while
+    a lobby that can never resolve is the actual bug this closes — before it, one
+    player closing their tab left the other staring at a board forever (the
+    empty-lobby TTL can't help: it only fires when NOBODY is connected, and the
+    waiting player is). 90s is long enough to survive a tab reload, a phone
+    changing networks, or a brief ISP drop, and short enough that the abandoned
+    player isn't held hostage. */
+export const ABANDON_GRACE_MS = 90_000;
+
 /** How long an empty lobby (zero sockets — also a freshly-minted, never-joined
     one) survives before its storage is wiped and the code freed. Generous next
     to the old model, where a lobby died with the host's tab: it lets a lone
@@ -110,6 +122,30 @@ export function reseatHost(snapshot: LobbySnapshot, name: string): LobbySnapshot
 export function resetAfterFailedStart(snapshot: LobbySnapshot): LobbySnapshot {
   return recomputePhase({
     ...snapshot,
+    host: { ...snapshot.host, ready: false },
+    guest: snapshot.guest ? { ...snapshot.guest, ready: false } : null,
+  });
+}
+
+/** End a match that is ALREADY RUNNING and hand the lobby back for a rematch:
+    both seats un-readied, phase re-derived from there (`selecting` with a guest,
+    `waiting` without).
+
+    This exists because `resetAfterFailedStart` CANNOT do it: `recomputePhase`
+    returns an `in-game` snapshot untouched (it never leaves in-game on its own —
+    the invariant that stops a mid-match ready-toggle from tearing the game down),
+    so un-readying an in-game lobby leaves the phase exactly where it was. Clearing
+    the phase FIRST is what lets the recompute run, and it must be done explicitly
+    — which is the point: leaving in-game is a decision a caller makes, never a
+    side effect. Its callers are the ways a match can stop before the engine says
+    `gameOver`: a record this deploy can't read (retired), and — when they land —
+    concede / rematch / a timed-out player. `abandonsMatch` reports true for the
+    transition, so `commit` drops the persisted match with it. */
+export function endMatch(snapshot: LobbySnapshot): LobbySnapshot {
+  return recomputePhase({
+    ...snapshot,
+    phase: "selecting",
+    countdownStartedAt: null,
     host: { ...snapshot.host, ready: false },
     guest: snapshot.guest ? { ...snapshot.guest, ready: false } : null,
   });

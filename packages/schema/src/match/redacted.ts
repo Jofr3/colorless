@@ -40,7 +40,16 @@ export const matchSeatSchema = z.enum(["p1", "p2"]);
 export type MatchSeat = z.infer<typeof matchSeatSchema>;
 
 /** §14 end conditions — mirrors the engine's `GameOverReason`. */
-export const redactedGameOverReasonSchema = z.enum(["prizesTaken", "noPokemon", "deckOut"]);
+/** Mirrors the engine `GameOverReason`. `conceded` covers BOTH ways a player
+    can forfeit — pressing concede, or an online player abandoning the match
+    until their timer runs out (P4 3c-ii) — because to the opponent they are the
+    same event. */
+export const redactedGameOverReasonSchema = z.enum([
+  "prizesTaken",
+  "noPokemon",
+  "deckOut",
+  "conceded",
+]);
 export type RedactedGameOverReason = z.infer<typeof redactedGameOverReasonSchema>;
 
 /** The cardId a hidden (face-down) card carries instead of a catalog id, and
@@ -214,17 +223,55 @@ export type RedactedAbility = z.infer<typeof redactedAbilitySchema>;
     target"), null when enabled or self-evident (the §4/§7.2 timing). `uid` is the
     hand uid the `playTrainer` action dispatches back (already on the viewer's own
     face-up hand); `name` the display name. STADIUMS are NOT here — they play by
-    the board DRAG (the 2a `moveToAction` path onto the shared slot) — and RARE
-    CANDY is excluded (it needs its own two-step Basic/Stage-2 dialog + the
-    `rareCandy` action; deferred). Only the acting viewer's OWN hand appears, and
-    only during their `turn:action` — [] for the non-acting viewer. */
+    the board DRAG (the 2a `moveToAction` path onto the shared slot). RARE CANDY
+    IS here (increment 3b-ii), flagged by `rareCandy`: it is the one row whose
+    click OPENS A DIALOG (pick a Basic, then a Stage 2) instead of dispatching
+    `playTrainer`, because it evolves rather than running a program — its pairings
+    ride the phase's `rareCandy` list and its answer is the `rareCandy` action.
+    Only the acting viewer's OWN hand appears, and only during their `turn:action`
+    — [] for the non-acting viewer. */
 export const redactedTrainerSchema = z.object({
   uid: z.string(),
   name: z.string(),
   disabled: z.boolean(),
   reason: z.string().nullable(),
+  /** Rare Candy (§7.1) — the row opens the Rare Candy dialog (the phase's
+      `rareCandy` pairings) rather than dispatching `playTrainer`, mirroring the
+      local `TrainerOption.rareCandy`. `disabled` already folds "no legal pairing
+      right now", so a lit row always has at least one option to show. */
+  rareCandy: z.boolean(),
 });
 export type RedactedTrainer = z.infer<typeof redactedTrainerSchema>;
+
+/** One legal Rare Candy play (§7.1) the acting viewer's dialog may offer — the
+    wire mirror of the engine's `RareCandyOption` (increment 3b-ii). Rare Candy
+    evolves a Basic in play straight to a Stage 2 in hand, skipping the Stage 1,
+    so the decision is a PAIR (which Basic, which Stage 2) the engine cannot
+    express as an `effect:choose` prompt — it is its own two-step dialog, and this
+    is what feeds it. The options come from the engine's own `rareCandyOptions`
+    (the authority: it folds the §4 first-turn ban, the Basic-in-play and
+    came-into-play-this-turn checks, and the Basic→Stage 1→Stage 2 chain bridge),
+    so a listed pairing always resolves to a legal `rareCandy` action — which the
+    handler still re-validates field by field.
+
+    `target` is the seatless `PokemonTarget` the action dispatches back verbatim
+    (the Basic is always on the actor's own board, so no seat is carried; the DO
+    rebinds the acting seat). `basicUid`/`basicName` and each `stage2` entry name
+    cards that are ALREADY face-up to this viewer (their own in-play stack top and
+    their own hand), carried here as display strings for the same reason
+    `RedactedTrainer` carries `name` — the panel family is wire-driven and looks
+    nothing up. Only the acting viewer's OWN options appear, and only during their
+    `turn:action` — [] for the non-acting viewer, who never plays a Trainer. */
+export const redactedRareCandyOptionSchema = z.object({
+  target: redactedPokemonTargetSchema,
+  basicUid: z.string(),
+  basicName: z.string(),
+  /** The matching Stage 2 cards in the actor's own hand — `uid` is what the
+      action's `evolutionUid` dispatches back. Never empty (the engine only
+      offers a Basic that has one). */
+  stage2: z.array(z.object({ uid: z.string(), name: z.string() })),
+});
+export type RedactedRareCandyOption = z.infer<typeof redactedRareCandyOptionSchema>;
 
 /** A specific in-play Pokémon a prompt refers to — the wire mirror of the
     engine's `PokemonRef`. Its `seat` is ABSOLUTE (p1/p2), NOT viewer-relative
@@ -408,6 +455,13 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
         `projectionFromRedacted ≡ projectGameState` round-trip is untouched. */
     abilities: z.array(redactedAbilitySchema),
     trainers: z.array(redactedTrainerSchema),
+    /** The legal Rare Candy pairings behind the `rareCandy`-flagged Trainer row
+        (increment 3b-ii); [] for the non-acting viewer, and [] when no pairing is
+        legal (which is exactly when that row is `disabled`). On the PHASE rather
+        than the row because the pairings do not depend on WHICH copy of Rare
+        Candy is played — the row supplies the `uid`, this supplies the rest —
+        matching the local HUD, where the dialog calls `rareCandyOptions` itself. */
+    rareCandy: z.array(redactedRareCandyOptionSchema),
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),

@@ -22,6 +22,7 @@ import type { ApplyResult, GameAction } from "./actions";
 import { err } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
 import { attachTool, playTrainer, rareCandy, resolveEffect, useAbility } from "./cardplay";
+import { concede } from "./flow";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -227,8 +228,23 @@ import type { GameState, Seat } from "./types";
     who-must-act / parked interrupt / outcome) is the exhaustive `phaseViewOf`
     switch, MOVED here from that projection (phaseView.ts) so both share one
     source; the web projection now imports it. No game-logic change — this slice
-    adds a read surface, not a rule. */
-export const engineVersion = "0.40.0";
+    adds a read surface, not a rule.
+
+    0.41.0 — CONCEDE (P4 online, increment 3c-ii). The first change to the win
+    vocabulary since M1: `GameOverReason` gains **`conceded`** and a new
+    `concede(state, action)` (flow.ts, beside `finishGame`) hands the game to the
+    opponent. Unlike every other action it is legal in ANY phase but `gameOver` —
+    a concede that only worked on your own turn would be useless in the situations
+    it exists for (an opponent who walked away mid-turn, a park nobody can answer),
+    and it is the one action that can always END a match that is otherwise stuck.
+    ONE reason covers both triggers — a player pressing concede, and the P4 server
+    forfeiting for a player who abandoned an online match — because to the opponent
+    they are the same event, and the engine has no business knowing about sockets.
+    This IS a rules-surface change (a new way a game can end), hence the minor
+    bump; the two reason→prose maps (log.ts `GAME_OVER_REASONS`, the web's
+    `GAME_OVER_DETAIL`) became total Records in the same pass, so a future reason
+    is a compile error rather than silently rendering as "the deck ran out". */
+export const engineVersion = "0.41.0";
 
 export type {
   ApplyResult,
@@ -454,6 +470,8 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return promote(state, action);
     case "endTurn":
       return endTurn(state, action);
+    case "concede":
+      return concede(state, action);
     default:
       return err("UNKNOWN_ACTION", `unknown action type "${(action as { type: string }).type}"`);
   }

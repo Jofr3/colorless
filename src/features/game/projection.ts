@@ -77,6 +77,31 @@ export type ProjectedOutcome =
   | { result: "win"; winner: PlayerId; reason: GameOverReason }
   | { result: "tie"; reasons: Record<PlayerId, GameOverReason> };
 
+/** Why the game ended, as the one-line explanation both game-over surfaces show
+    under the result — the local `GameHud` overlay and the online `OnlineMatch`
+    one. Shared rather than restated per surface (the D60/D62/D63 rule is about
+    MARKUP, which the two genuinely differ in; this is a shape-neutral string map,
+    the `EnergyDots` case) so the two screens can't disagree about what just
+    happened. A total `Record`, replacing ternary chains whose final `else` would
+    have rendered a NEW reason as "the deck ran out" — an unhandled reason is now
+    a compile error. The engine's `GAME_OVER_REASONS` (log.ts) is the same
+    information in the log's clause-shaped voice; kept separate because these are
+    full sentences and because the playmat imports no engine strings.
+
+    Phrased with NO possessive — "no Pokémon left", not "THE OPPONENT has no
+    Pokémon left" — because the same line is shown to BOTH players. The earlier
+    winner-centric wording read as a lie to the loser (a browser run caught the
+    conceding player being told "The opponent forfeited."), and it was already
+    ambiguous on the local hot-seat overlay, which belongs to neither player. Each
+    overlay's TITLE already names who won, so the detail only has to say what
+    happened. */
+export const GAME_OVER_DETAIL: Record<GameOverReason, string> = {
+  prizesTaken: "All prize cards taken.",
+  noPokemon: "No Pokémon left in play.",
+  deckOut: "No cards left to draw.",
+  conceded: "The match was forfeited.",
+};
+
 export interface GameProjection {
   /** Drop-in playmat board; `you` is always the viewer's seat. */
   board: BoardState;

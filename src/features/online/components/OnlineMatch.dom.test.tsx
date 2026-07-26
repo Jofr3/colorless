@@ -34,7 +34,14 @@ function active(name: string): RedactedInPlay {
 const GAME: RedactedGame = {
   seat: "p1",
   turn: 3,
-  phase: { kind: "turn:action", attacks: [], retreat: null, abilities: [], trainers: [] },
+  phase: {
+    kind: "turn:action",
+    attacks: [],
+    retreat: null,
+    abilities: [],
+    trainers: [],
+    rareCandy: [],
+  },
   board: {
     stadium: null,
     you: {
@@ -143,5 +150,64 @@ describe("OnlineMatch — the game log (2b-iii-d-ii)", () => {
     expect(screen.getByText("drew 7 cards")).toBeTruthy();
     expect(screen.getByText("shuffled their deck")).toBeTruthy();
     expect(screen.getAllByText(/^(YOU|OPP)$/).map((b) => b.textContent)).toEqual(["YOU", "OPP"]);
+  });
+});
+
+describe("OnlineMatch — concede (3c-iii)", () => {
+  function renderMatch(overrides: Partial<RedactedGame> = {}, onAction = vi.fn()) {
+    wrap(
+      <OnlineMatch
+        game={{ ...GAME, ...overrides }}
+        log={[]}
+        youName="You"
+        opponentName="Opp"
+        actionError={null}
+        onAction={onAction}
+      />,
+    );
+    return onAction;
+  }
+
+  it("confirms first, then dispatches a seat-bound concede", () => {
+    const onAction = renderMatch();
+    fireEvent.click(screen.getByRole("button", { name: "Concede" }));
+    // The button alone must not end the match — an irreversible action gets a
+    // confirmation, and cancelling it dispatches nothing.
+    expect(onAction).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onAction).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Concede" }));
+    const confirm = screen
+      .getAllByRole("button", { name: "Concede" })
+      .find((b) => b.closest("dialog") !== null);
+    if (confirm === undefined) throw new Error("expected a confirm button inside the dialog");
+    fireEvent.click(confirm);
+    expect(onAction).toHaveBeenCalledWith({ type: "concede", seat: "p1" });
+  });
+
+  it("is offered on the OPPONENT's turn — the case it matters most for", () => {
+    // Waiting out an opponent who has walked away is exactly when a player wants
+    // out, and it is why the control sits in the HUD chrome rather than the turn
+    // panel (which only renders on your own turn).
+    const onAction = renderMatch({ activePlayer: "opponent", waitingOn: "opponent" });
+    expect(screen.getByRole("button", { name: "Concede" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Concede" }));
+    const confirm = screen
+      .getAllByRole("button", { name: "Concede" })
+      .find((b) => b.closest("dialog") !== null);
+    if (confirm === undefined) throw new Error("expected a confirm button inside the dialog");
+    fireEvent.click(confirm);
+    expect(onAction).toHaveBeenCalledWith({ type: "concede", seat: "p1" });
+  });
+
+  it("disappears once the game is over (nothing left to concede)", () => {
+    renderMatch({ outcome: { result: "win", winner: "opponent", reason: "conceded" } });
+    expect(screen.queryByRole("button", { name: "Concede" })).toBeNull();
+    // …and the overlay explains WHY, which is new in 3c-ii: a bare "Opp wins"
+    // would leave a forfeit unexplained.
+    // Neutral phrasing: the SAME line is shown to the winner and the loser, so it
+    // must not claim "the opponent" did it (the conceding player is reading it).
+    expect(screen.getByText("The match was forfeited.")).toBeTruthy();
   });
 });

@@ -125,7 +125,13 @@ export interface StadiumInPlay {
 
 /** The §14 conditions in their precedence order: prizes taken (§14.1), the
     opponent out of Pokémon (§14.2), deck-out at the draw (§14.3). */
-export type GameOverReason = "prizesTaken" | "noPokemon" | "deckOut";
+/** Why a game ended. The first three are the §14 RULES conditions, evaluated by
+    `evaluateWin`. `conceded` is the fourth and only non-rules one: a player gave
+    the game up. It is deliberately ONE reason for both ways that happens — the
+    player pressed concede, or an online player vanished and their abandonment
+    timer ran out (P4 3c-ii) — because to the opponent they are the same event,
+    a forfeit, and the engine has no business knowing about sockets. */
+export type GameOverReason = "prizesTaken" | "noPokemon" | "deckOut" | "conceded";
 
 /** §14 — how a finished game ended. A win names the condition met; a TIE is
     the simultaneous case (both players met one at the same instant), with

@@ -18,6 +18,7 @@ import {
   FIXTURE_POOL,
   MIXED_DECK,
   ONKO_DECK,
+  RARE_CANDY_DECK,
   REVEAL_BOTTOM_DECK,
   SNIPE_DECK,
   STADIUM_TOOL_DECK,
@@ -883,6 +884,32 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
     const phase = redactGame(state, "p1").phase;
     if (phase.kind !== "turn:action") throw new Error("expected turn:action");
     expect(phase.abilities.length).toBeGreaterThan(0); // else this proves nothing
+    for (const seat of ["p1", "p2"] as const) {
+      expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
+        projectGameState(state, seat),
+      );
+    }
+  });
+
+  it("ignores the 3b-ii Rare Candy pairings — a populated turn:action still equals", () => {
+    // A Rare Candy + a matching Stage 2 in p1's hand on their turn 3 makes the wire
+    // turn:action carry a non-empty pairing list. Like the ability/trainer lists it
+    // feeds a HUD dialog, never the playmat, so the round-trip must still equal the
+    // local projection for both viewers.
+    let state = driveSetup(
+      4,
+      { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK },
+      { first: "p1", active: { p1: "fix-basic-1", p2: "fix-basic-1" } },
+    );
+    while (state.turn < 3) {
+      if (state.phase.kind !== "turn:action") throw new Error("expected turn:action");
+      state = mustApply(state, { type: "endTurn", seat: state.phase.seat }).state;
+    }
+    state = handFromDeck(state, "p1", "sv01-191", 1);
+    state = handFromDeck(state, "p1", "fix-stage2", 1);
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.rareCandy.length).toBeGreaterThan(0); // else this proves nothing
     for (const seat of ["p1", "p2"] as const) {
       expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
         projectGameState(state, seat),

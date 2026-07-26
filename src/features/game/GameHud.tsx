@@ -45,7 +45,7 @@ import {
   GLASS_PANEL,
 } from "../../lib/glass";
 import { EnergyDots } from "./EnergyDots";
-import type { GameProjection } from "./projection";
+import { GAME_OVER_DETAIL, type GameProjection } from "./projection";
 
 export interface GameHudProps {
   game: GameState;
@@ -596,6 +596,13 @@ function TurnPanel(props: GameHudProps) {
             </ul>
           </div>
         )}
+        {/* Retreat + Pass share the panel's footer. Pass lives HERE, not only on
+            the playmat's ⟶ control, because this panel (z-[75], bottom-right)
+            COVERS that control (z-20, right-edge centred) at every ordinary
+            viewport height — a click there lands on an attack row instead. The
+            panel renders exactly when `waitingOn === "you" && turn:action`, which
+            is exactly GamePage's `passDisabled === false`, so this button needs no
+            disabled state: if it is on screen, passing is legal. */}
         <div className="mt-3 flex items-center justify-between gap-2">
           <button
             type="button"
@@ -605,11 +612,22 @@ function TurnPanel(props: GameHudProps) {
           >
             Retreat ({retreatCost})
           </button>
-          <span className="text-right text-[10px] leading-tight text-white/40">
-            {game.allowances.energyAttached ? "energy attached ✓" : "drag an energy to attach"}
-            {game.allowances.retreated ? " · retreated ✓" : ""}
-          </span>
+          <button
+            type="button"
+            className={`${ACCENT_BUTTON_CLASS} px-3 py-1.5 text-xs`}
+            onClick={() => dispatch({ type: "endTurn", seat: viewerSeat })}
+          >
+            {/* "Pass", not "Pass turn": the playmat's ⟶ control already owns that
+                accessible name, and two same-named buttons would be ambiguous to
+                a screen reader (and to queries). The "Turn actions" region label
+                supplies the context. */}
+            Pass
+          </button>
         </div>
+        <p className="mt-1.5 text-right text-[10px] leading-tight text-white/40">
+          {game.allowances.energyAttached ? "energy attached ✓" : "drag an energy to attach"}
+          {game.allowances.retreated ? " · retreated ✓" : ""}
+        </p>
       </HudPanel>
       {retreatOpen && (
         <RetreatDialog
@@ -1977,11 +1995,7 @@ function GameOverOverlay({ projection, viewerSeat, names, onPlayAgain }: GameHud
       : "It's a tie";
   const detail =
     outcome.result === "win"
-      ? outcome.reason === "prizesTaken"
-        ? "All prize cards taken."
-        : outcome.reason === "noPokemon"
-          ? "The opponent has no Pokémon left in play."
-          : "The opponent's deck ran out of cards."
+      ? GAME_OVER_DETAIL[outcome.reason]
       : "Both players met a win condition at the same time.";
   return (
     <div className="absolute inset-0 z-[85] flex items-center justify-center bg-black/50 backdrop-blur-[2px]">

@@ -2,13 +2,15 @@ import type { GameAction } from "@luminous/engine";
 import type { RedactedGame, SeatLogEntry } from "@luminous/schema";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TransientErrorPill } from "../../../components/TransientErrorPill";
+import { GLASS_HUD_BUTTON } from "../../../lib/glass";
 import { moveToAction } from "../../game/moveToAction";
 import { placementPredicateFor } from "../../game/placement";
-import { projectionFromRedacted } from "../../game/projection";
+import { GAME_OVER_DETAIL, projectionFromRedacted } from "../../game/projection";
 import { viewLogEntries } from "../../game/viewLog";
 import { PlaymatView } from "../../playmat/PlaymatView";
 import type { CardMoveRequest, TurnInfo } from "../../playmat/types";
 import type { ActionError } from "../net/useLobby";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { OnlineHud } from "./OnlineHud";
 
 // The online match board (P4). Renders THIS client's server-redacted snapshot
@@ -18,17 +20,25 @@ import { OnlineHud } from "./OnlineHud";
 // accepted and re-broadcast, so there is no optimism to reconcile: a rejected
 // drag simply never produces a new snapshot.
 //
-// SCOPE (through 3b): setup (chooseFirst / drawExtra / place → ready, via
+// SCOPE (through 3b-ii): setup (chooseFirst / drawExtra / place → ready, via
 // OnlineHud + setup drags), the basic turn drags moveToAction routes (attach
 // energy, bench a Basic, evolve, attach a Tool, play a Stadium), pass, the
 // attack + KO loop (attack off the redacted attack list, then ko:takePrizes /
 // ko:promote), retreat (the OnlineHud RetreatDialog), the effect:choose dialogs
 // (2b-iii), and — from 3b — the activated Abilities + non-Stadium Trainers (the
-// OnlineHud turn panel, server-folded playability). Rare Candy (its own dialog +
-// the rareCandy action) is the remaining deferred turn affordance.
+// OnlineHud turn panel, server-folded playability), including — from 3b-ii —
+// Rare Candy through its own two-step dialog + the `rareCandy` action. Every
+// turn affordance the local HUD offers now has an online counterpart. The match
+// LIFECYCLE is landing on top of that: 3c-ii forfeits a player who abandons the
+// match (server-side), and 3c-iii adds the Concede control below. Still missing:
+// rematch and spectate.
 
 // The rejection pill lingers this long before auto-dismissing (GamePage's TTL).
 const ERROR_TTL_MS = 4000;
+
+// Matches the playmat's own "Back" control (BackToMenu) so the two read as one
+// row of HUD chrome; positioned to its LEFT (right: 96 vs 16).
+const CONCEDE_BUTTON_CLASS = `absolute z-20 flex h-9 cursor-pointer items-center rounded-full px-3.5 text-[13px] font-medium tracking-wide ${GLASS_HUD_BUTTON}`;
 
 export function OnlineMatch({
   game,
@@ -92,6 +102,9 @@ export function OnlineMatch({
     opponentName,
   };
 
+  // Whether the concede confirmation is open (3c-iii).
+  const [conceding, setConceding] = useState(false);
+
   // Transient pill for a server-rejected action — the GamePage pattern over the
   // wire: derived from `actionError` (not mirrored into state), it hides once its
   // nonce is dismissed (button or TTL) and vanishes when the next accepted action
@@ -134,6 +147,37 @@ export function OnlineMatch({
         activePlaced={board.you.active !== null}
         onAction={onAction}
       />
+      {/* Concede (3c-iii). Placed beside the playmat's own "Back" control (top
+          right, z-20, `right: 16`) rather than in the turn panel, because the
+          turn panel only renders on YOUR turn and the engine deliberately allows
+          conceding in any phase — including the one that matters most, an
+          opponent's turn you are waiting out. Hidden once the game is over: there
+          is nothing left to concede, and the engine would reject it anyway. */}
+      {projection.outcome === null && (
+        <>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => setConceding(true)}
+            className={CONCEDE_BUTTON_CLASS}
+            style={{ top: 16, right: 96 }}
+          >
+            Concede
+          </button>
+          <ConfirmDialog
+            open={conceding}
+            title="Concede the match?"
+            message="Your opponent wins immediately. This can't be undone."
+            confirmLabel="Concede"
+            danger
+            onConfirm={() => {
+              setConceding(false);
+              onAction({ type: "concede", seat });
+            }}
+            onCancel={() => setConceding(false)}
+          />
+        </>
+      )}
       {projection.outcome !== null && (
         <div className="pointer-events-none absolute inset-0 z-[85] flex items-center justify-center">
           <output className="rounded-2xl bg-[#16161f]/90 px-8 py-5 text-center shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/15 backdrop-blur-xl">
@@ -143,6 +187,15 @@ export function OnlineMatch({
                 : projection.outcome.winner === "you"
                   ? "You win!"
                   : `${opponentName} wins`}
+            </p>
+            {/* WHY it ended. Not cosmetic since 3c-ii: a win can now arrive
+                because the opponent forfeited — pressed concede, or abandoned the
+                match until their timer ran out — and a bare "You win!" would leave
+                that unexplained. Same copy as the local overlay (one map). */}
+            <p className="mt-1 text-sm text-white/60">
+              {projection.outcome.result === "tie"
+                ? "Both players met a win condition at the same time."
+                : GAME_OVER_DETAIL[projection.outcome.reason]}
             </p>
           </output>
         </div>

@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { EMPTY_CARD_ID, HIDDEN_CARD_ID, HIDDEN_CARD_NAME, type RedactedGame } from "@luminous/schema";
+import { rareCandyOptions } from "./cardplay";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 import { redactGame } from "./redact";
 import {
@@ -14,6 +15,7 @@ import {
   RARE_CANDY_DECK,
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
+  activeUid,
   attachFromDeck,
   deckOf,
   driveSetup,
@@ -287,9 +289,11 @@ describe("redactGame — the redacted phase (the action-routing discriminant)", 
       attacks: [],
       retreat: { cost: 1, can: false },
       // fix-basic-1 has no ability; MIXED_DECK's fix-item is unauthored, so no
-      // playable-trainer row either (a Tool/unauthored Trainer is never offered).
+      // playable-trainer row either (a Tool/unauthored Trainer is never offered),
+      // and no Rare Candy in that deck at all.
       abilities: [],
       trainers: [],
+      rareCandy: [],
     });
   });
 
@@ -368,8 +372,8 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
   });
 
   it("gives the NON-acting viewer no attack list and no retreat (only the turn owner acts)", () => {
-    // p1's turn 3; p2 sees the same turn:action phase but carries no attacks and
-    // a null retreat.
+    // p1's turn 3; p2 sees the same turn:action phase but carries no attacks, a
+    // null retreat and none of the 3b/3b-ii option lists.
     const phase = redactGame(attackerBoard(1, true), "p2").phase;
     expect(phase).toEqual({
       kind: "turn:action",
@@ -377,6 +381,7 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
       retreat: null,
       abilities: [],
       trainers: [],
+      rareCandy: [],
     });
   });
 
@@ -521,9 +526,40 @@ describe("redactGame — turn:action ability options (increment 3b)", () => {
   });
 });
 
+/** p1 first, both Actives fix-basic-1, driven to p1's turn 3 — their first
+    Rare-Candy-legal turn (§4/§7.1 bans it on their own first turn). `benchP1`
+    adds evolvable benched copies (a second dialog option). */
+function rareCandyBoard({ benchP1 = 0 }: { benchP1?: number } = {}): GameState {
+  let state = driveSetup(
+    4,
+    { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK },
+    {
+      first: "p1",
+      active: { p1: "fix-basic-1", p2: "fix-basic-1" },
+      bench: { p1: Array.from({ length: benchP1 }, () => "fix-basic-1") },
+    },
+  );
+  while (state.turn < 3) {
+    if (state.phase.kind !== "turn:action") {
+      throw new Error(`unexpected phase ${state.phase.kind} while passing to turn 3`);
+    }
+    state = mustApply(state, { type: "endTurn", seat: state.phase.seat }).state;
+  }
+  return state;
+}
+
+/** Pull a Rare Candy + the fix-stage2 it places into p1's hand; returns
+    [state, stage2Uid]. */
+function rareCandyHand(state: GameState): [GameState, string] {
+  let next = handFromDeck(state, "p1", "sv01-191", 1);
+  next = handFromDeck(next, "p1", "fix-stage2", 1);
+  return [next, handUid(next, "p1", "fix-stage2")];
+}
+
 // The non-Stadium Trainer half of increment 3b — the acting viewer's Item/
-// Supporter hand cards, deduped, each with folded playability. Stadiums (the
-// board drag) and Rare Candy (deferred) are deliberately excluded.
+// Supporter hand cards, deduped, each with folded playability. Stadiums are
+// excluded (the board drag); Rare Candy is included but FLAGGED (3b-ii), its row
+// opening the dialog the next block's pairings feed.
 describe("redactGame — turn:action trainer options (increment 3b)", () => {
   it("lists Item/Supporter hand cards with folded playability + greying reasons", () => {
     // p1's turn 2 (Supporters legal), p2 with no Bench: Professor's Research is a
@@ -540,12 +576,14 @@ describe("redactGame — turn:action trainer options (increment 3b)", () => {
       name: "sv01-189",
       disabled: false,
       reason: null,
+      rareCandy: false,
     });
     expect(phase.trainers).toContainEqual({
       uid: handUid(state, "p1", "sv02-172"),
       name: "sv02-172",
       disabled: true,
       reason: "No legal target",
+      rareCandy: false,
     });
   });
 
@@ -561,6 +599,7 @@ describe("redactGame — turn:action trainer options (increment 3b)", () => {
       name: "sv01-189",
       disabled: true,
       reason: null,
+      rareCandy: false,
     });
   });
 
@@ -593,13 +632,91 @@ describe("redactGame — turn:action trainer options (increment 3b)", () => {
     expect(phase.trainers.some((t) => t.name === "sv01-167")).toBe(false);
   });
 
-  it("omits Rare Candy — its own dialog + action are deferred", () => {
-    let state = driveSetup(1, { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK }, { first: "p2" });
-    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
-    state = handFromDeck(state, "p1", "sv01-191", 1);
+  it("flags Rare Candy — its row opens a dialog rather than playing on click", () => {
+    const state = rareCandyHand(rareCandyBoard())[0];
     const phase = redactGame(state, "p1").phase;
     if (phase.kind !== "turn:action") throw new Error("expected turn:action");
-    expect(phase.trainers.some((t) => t.name === "sv01-191")).toBe(false);
+    // It IS offered (3b-ii — it was omitted while its dialog was deferred), lit,
+    // and marked so the client opens the two-step dialog instead of playTrainer.
+    expect(phase.trainers).toContainEqual({
+      uid: handUid(state, "p1", "sv01-191"),
+      name: "Rare Candy",
+      disabled: false,
+      reason: null,
+      rareCandy: true,
+    });
+  });
+});
+
+// The Rare Candy pairings behind that flagged row (increment 3b-ii) — the wire
+// mirror of the engine's own `rareCandyOptions`, folded server-side so the online
+// dialog can never offer an illegal Basic/Stage-2 pair, and emitted to the acting
+// viewer alone.
+describe("redactGame — turn:action Rare Candy options (increment 3b-ii)", () => {
+  it("lists a legal pairing: the Basic's spot + uid + the matching Stage 2 in hand", () => {
+    const [state, stage2Uid] = rareCandyHand(rareCandyBoard());
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    const option = phase.rareCandy.find((o) => o.target.spot === "active");
+    // The seatless target the `rareCandy` action dispatches back, the Basic's
+    // display identity, and the Stage 2 that skips fix-stage1 (the fixture line
+    // is fix-basic-1 → fix-stage1 → fix-stage2 — the bridge need only be in the
+    // pool, which is exactly the chain check the client cannot run).
+    expect(option?.basicUid).toBe(activeUid(state, "p1"));
+    expect(option?.basicName).toBe("fix-basic-1");
+    expect(option?.stage2).toContainEqual({ uid: stage2Uid, name: "fix-stage2" });
+  });
+
+  it("lists a benched Basic too, by index (the dialog's first pick)", () => {
+    const [state] = rareCandyHand(rareCandyBoard({ benchP1: 1 }));
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    // Both the Active and the benched fix-basic-1 are evolvable, so the dialog
+    // has a real Basic choice — the bench one addressed by its index.
+    expect(phase.rareCandy.map((o) => o.target)).toEqual([
+      { spot: "active" },
+      { spot: "bench", index: 0 },
+    ]);
+  });
+
+  it("offers nothing on the §4 first turn, and greys the row to match", () => {
+    // p1 goes first, so turn 1 is theirs and Rare Candy is banned (§4/§7.1). The
+    // engine's own `rareCandyOptions` returns [] there — so the wire list is empty
+    // AND the row is disabled (with no tooltip: the timing is self-evident, the
+    // local row's choice). An empty list behind a LIT row would be a dead dialog.
+    const [state] = rareCandyHand(
+      driveSetup(
+        4,
+        { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK },
+        { first: "p1", active: { p1: "fix-basic-1", p2: "fix-basic-1" } },
+      ),
+    );
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.rareCandy).toEqual([]);
+    expect(phase.trainers).toContainEqual({
+      uid: handUid(state, "p1", "sv01-191"),
+      name: "Rare Candy",
+      disabled: true,
+      reason: null,
+      rareCandy: true,
+    });
+  });
+
+  it("gives the NON-acting viewer no pairings (their own board + hand decide them)", () => {
+    const [state] = rareCandyHand(rareCandyBoard());
+    const phase = redactGame(state, "p2").phase;
+    if (phase.kind !== "turn:action") throw new Error("expected turn:action");
+    expect(phase.rareCandy).toEqual([]);
+  });
+
+  it("copies the target rather than aliasing the engine's option (purity)", () => {
+    const [state] = rareCandyHand(rareCandyBoard());
+    const wire = redactGame(state, "p1").phase;
+    if (wire.kind !== "turn:action") throw new Error("expected turn:action");
+    const engineOption = rareCandyOptions(state, "p1")[0];
+    expect(wire.rareCandy[0]?.target).toEqual(engineOption?.target);
+    expect(wire.rareCandy[0]?.target).not.toBe(engineOption?.target);
   });
 });
 

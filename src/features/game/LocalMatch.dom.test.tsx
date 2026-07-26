@@ -60,4 +60,20 @@ describe("LocalMatch HUD across turns", () => {
     // §4 note renders only while game.turn === 1).
     expect(document.body.textContent).not.toContain("No attacking on the first turn");
   });
+
+  it("passes the turn from the IN-PANEL Pass button", () => {
+    // The playmat's ⟶ control (aria-label "Pass turn") is COVERED by this panel
+    // at every ordinary viewport height — z-[75] bottom-right vs the control's
+    // z-20 right-edge-centred box — so a real click there lands on an attack row.
+    // The panel therefore carries its own Pass ("Pass", a distinct accessible
+    // name), and it must actually end the turn.
+    renderMatch();
+    // Turn 1 is the going-first player's, so the §4 note is up — the probe the
+    // leak test above uses for "this panel belongs to the current turn".
+    expect(document.body.textContent).toContain("No attacking on the first turn");
+    fireEvent.click(screen.getByRole("button", { name: "Pass" }));
+    // The turn advanced: the note is gone and exactly one panel survives.
+    expect(document.body.textContent).not.toContain("No attacking on the first turn");
+    expect(document.querySelectorAll('[aria-label="Turn actions"]')).toHaveLength(1);
+  });
 });

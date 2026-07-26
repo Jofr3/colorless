@@ -19,7 +19,13 @@
 import type { LogSegment, SeatLogEntry } from "@luminous/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
 import type { GameEvent, StatusName } from "./events";
-import { DEFAULT_POISON_DAMAGE, type GameState, type Seat, otherSeat } from "./types";
+import {
+  DEFAULT_POISON_DAMAGE,
+  type GameOverReason,
+  type GameState,
+  type Seat,
+  otherSeat,
+} from "./types";
 
 export interface LogContext {
   /** Display names per seat (deck names on /play). */
@@ -109,6 +115,20 @@ export const STATUS_LABELS: Record<StatusName, string> = {
   confused: "Confused",
   burned: "Burned",
   poisoned: "Poisoned",
+};
+
+/** Why the game ended, in log prose. A total `Record` on purpose — this replaced
+    a ternary chain whose final `else` meant a NEW reason silently rendered as
+    "the opponent could not draw"; a record makes an unhandled reason a compile
+    error instead. Phrased from the WINNER's side, which is how the row reads
+    ("<winner> wins — …"). `conceded` says "forfeited" rather than "conceded"
+    because the same reason covers a player pressing concede AND an online player
+    abandoning the match (P4 3c-ii) — forfeit is true of both. */
+const GAME_OVER_REASONS: Record<GameOverReason, string> = {
+  prizesTaken: "all prizes taken",
+  noPokemon: "the opponent has no Pokémon left",
+  deckOut: "the opponent could not draw",
+  conceded: "the opponent forfeited",
 };
 
 /** One event → its log rows (usually one), or null to skip it. The switch is
@@ -651,12 +671,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "GAME_OVER": {
       const outcome = event.outcome;
       if (outcome.result === "win") {
-        const reason =
-          outcome.reason === "prizesTaken"
-            ? "all prizes taken"
-            : outcome.reason === "noPokemon"
-              ? "the opponent has no Pokémon left"
-              : "the opponent could not draw";
+        const reason = GAME_OVER_REASONS[outcome.reason];
         return row("system", [strong(names[outcome.winner]), plain(` wins — ${reason}`)]);
       }
       return row("system", [strong("The game ends in a tie")]);

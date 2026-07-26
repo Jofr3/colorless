@@ -8,6 +8,7 @@ import type {
   RedactedGame,
   RedactedInPlay,
   RedactedPokemonRef,
+  RedactedRareCandyOption,
   RedactedRetreat,
   RedactedTrainer,
   MatchSeat,
@@ -44,8 +45,12 @@ import type { PlayerId } from "../../playmat/types";
 // with a server-folded `disabled` flag + greyed-row `reason` (the same
 // programPlayable / conditionHolds / handCostUnmet the local HUD reads off the
 // full state, computed server-side and shipped as the result) — dispatching
-// `useAbility` / `playTrainer`. Stadiums still play by the board drag and Rare
-// Candy is deferred. The pass control lives in PlaymatView's TurnControls.
+// `useAbility` / `playTrainer`. Stadiums still play by the board drag. From
+// increment 3b-ii the Trainer list also carries RARE CANDY, flagged: its row
+// opens a two-step dialog (pick a Basic, then a Stage 2) over the phase's
+// server-computed `rareCandy` pairings and answers with the `rareCandy` action —
+// the last deferred turn affordance. The pass control lives in PlaymatView's
+// TurnControls.
 //
 // Every panel is gated on `waitingOn === "you"` (the D17 rule the local HUD uses)
 // so a prompt never appears on the wrong screen, and the actions carry the
@@ -143,6 +148,7 @@ export function OnlineHud({
           retreat={game.phase.retreat}
           abilities={game.phase.abilities}
           trainers={game.phase.trainers}
+          rareCandy={game.phase.rareCandy}
           firstTurn={game.turn === 1}
           seat={seat}
           onAction={onAction}
@@ -1026,8 +1032,9 @@ function AttachCardsDialog({
     tooltip, dispatching `useAbility` / `playTrainer`), and the retreat entry point
     (disabled off the server-computed `retreat.can`, opening the RetreatDialog).
     Bottom-right, clear of the pass control, mirroring the local TurnPanel. Stadiums
-    play by the board DRAG (not a button here) and Rare Candy is deferred, so
-    neither appears in `trainers`. */
+    play by the board DRAG (not a button here), so they never appear in `trainers`;
+    RARE CANDY does (3b-ii), flagged — its row opens the RareCandyDialog over the
+    phase's `rareCandy` pairings instead of dispatching `playTrainer`. */
 function AttackPanel({
   active,
   bench,
@@ -1035,6 +1042,7 @@ function AttackPanel({
   retreat,
   abilities,
   trainers,
+  rareCandy,
   firstTurn,
   seat,
   onAction,
@@ -1045,11 +1053,17 @@ function AttackPanel({
   retreat: RedactedRetreat | null;
   abilities: readonly RedactedAbility[];
   trainers: readonly RedactedTrainer[];
+  /** The legal §7.1 pairings the Rare Candy row's dialog offers (server-computed;
+      empty exactly when that row is disabled). */
+  rareCandy: readonly RedactedRareCandyOption[];
   firstTurn: boolean;
   seat: MatchSeat;
   onAction: (action: GameAction) => void;
 }) {
   const [retreatOpen, setRetreatOpen] = useState(false);
+  // The Rare Candy Item uid whose dialog is open (null = closed) — the local
+  // HUD's `rareCandyUid` over the wire shape.
+  const [rareCandyUid, setRareCandyUid] = useState<string | null>(null);
   // No Active means nothing to attack with (defensive — a turn:action always
   // has one); render nothing rather than an empty panel.
   if (active === null) return null;
@@ -1144,7 +1158,14 @@ function AttackPanel({
                   <button
                     type="button"
                     disabled={opt.disabled}
-                    onClick={() => onAction({ type: "playTrainer", seat, uid: opt.uid })}
+                    // Rare Candy is the one row that opens a dialog rather than
+                    // playing on click — it needs a Basic AND a Stage 2 (§7.1),
+                    // a pair no single dispatch can carry.
+                    onClick={() =>
+                      opt.rareCandy
+                        ? setRareCandyUid(opt.uid)
+                        : onAction({ type: "playTrainer", seat, uid: opt.uid })
+                    }
                     className={`${ROW_BUTTON_BASE} ${opt.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
                   >
                     <span className="truncate">{opt.name}</span>
@@ -1155,8 +1176,15 @@ function AttackPanel({
             </ul>
           </div>
         )}
-        {retreat !== null && (
-          <div className="mt-3 flex justify-end">
+        {/* Retreat + Pass share the footer. Pass lives HERE, not only on the
+            playmat's ⟶ control, because this panel (z-[75], bottom-right) COVERS
+            that control (z-20, right-edge centred) at every ordinary viewport
+            height — a click there lands on an attack row instead. This panel
+            renders exactly when `waitingOn === "you" && turn:action`, which is
+            exactly OnlineMatch's `passDisabled === false`, so the button needs no
+            disabled state: if it is on screen, passing is legal. */}
+        <div className="mt-3 flex items-center justify-end gap-2">
+          {retreat !== null && (
             <button
               type="button"
               disabled={!retreat.can}
@@ -1165,8 +1193,17 @@ function AttackPanel({
             >
               Retreat ({retreat.cost})
             </button>
-          </div>
-        )}
+          )}
+          <button
+            type="button"
+            onClick={() => onAction({ type: "endTurn", seat })}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${GLASS_ACCENT_BUTTON}`}
+          >
+            {/* "Pass", not "Pass turn" — the playmat's ⟶ control owns that
+                accessible name (see the local GameHud twin). */}
+            Pass
+          </button>
+        </div>
       </section>
       {retreatOpen && retreat !== null && (
         <RetreatDialog
@@ -1178,7 +1215,118 @@ function AttackPanel({
           onClose={() => setRetreatOpen(false)}
         />
       )}
+      {rareCandyUid !== null && (
+        <RareCandyDialog
+          options={rareCandy}
+          rareCandyUid={rareCandyUid}
+          seat={seat}
+          onAction={onAction}
+          onClose={() => setRareCandyUid(null)}
+        />
+      )}
     </>
+  );
+}
+
+/** §7.1 Rare Candy — evolve a Basic straight to a Stage 2, skipping the Stage 1
+    (increment 3b-ii). Mirrors the local HUD's RareCandyDialog over the wire shape:
+    a two-pick decision the engine can't express as an effect:choose prompt (it
+    needs a Basic in play AND a Stage 2 in hand), so it is its own dialog fed by
+    the server-computed `rareCandy` pairings — the engine's `rareCandyOptions`,
+    folded server-side, so a listed pair is always legal and the client adds no
+    rule logic. Native <dialog>, dismissable — Rare Candy is an optional play.
+    Mounted only while open, so the useState initializer is the fresh-picks-per-
+    open reset. */
+function RareCandyDialog({
+  options,
+  rareCandyUid,
+  seat,
+  onAction,
+  onClose,
+}: {
+  options: readonly RedactedRareCandyOption[];
+  /** The Rare Candy Item uid being played (the clicked Trainer row's). */
+  rareCandyUid: string;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+  onClose: () => void;
+}) {
+  // Pre-select when there is only one Basic to evolve (skip straight to the
+  // Stage 2 pick); otherwise the player chooses the Basic first.
+  const [basicUid, setBasicUid] = useState<string | null>(
+    options.length === 1 ? (options[0]?.basicUid ?? null) : null,
+  );
+  const chosen = options.find((o) => o.basicUid === basicUid) ?? null;
+
+  return (
+    <Dialog label="Rare Candy" onDismiss={onClose}>
+      <h2 className="text-lg font-semibold text-white">Rare Candy</h2>
+      {chosen === null ? (
+        <>
+          <p className="mt-1.5 text-sm text-white/55">
+            Choose a Basic Pokémon to evolve, skipping the Stage 1.
+          </p>
+          <ul className="mt-3 flex flex-col gap-1.5">
+            {options.map((option) => (
+              <li key={option.basicUid}>
+                <button
+                  type="button"
+                  onClick={() => setBasicUid(option.basicUid)}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{option.basicName}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <p className="mt-1.5 text-sm text-white/55">
+            Put a Stage 2 onto <span className="text-white/80">{chosen.basicName}</span>:
+          </p>
+          <ul className="mt-3 flex flex-col gap-1.5">
+            {chosen.stage2.map((stage2) => (
+              <li key={stage2.uid}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onAction({
+                      type: "rareCandy",
+                      seat,
+                      uid: rareCandyUid,
+                      target: chosen.target,
+                      evolutionUid: stage2.uid,
+                    });
+                    onClose();
+                  }}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{stage2.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {/* Rare Candy is optional — always offer an on-screen dismiss (the
+          RetreatDialog pattern), and Back only when the Basic pick was a real
+          choice (>1 option). */}
+      <div className="mt-4 flex justify-between gap-2">
+        <button type="button" onClick={onClose} className={GLASS_DIALOG_GHOST_BUTTON}>
+          Cancel
+        </button>
+        {chosen !== null && options.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setBasicUid(null)}
+            className={GLASS_DIALOG_GHOST_BUTTON}
+          >
+            ← Back
+          </button>
+        )}
+      </div>
+    </Dialog>
   );
 }
 

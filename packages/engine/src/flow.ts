@@ -1,5 +1,5 @@
-import type { ApplyResult } from "./actions";
-import { ok } from "./actions";
+import type { ApplyResult, ConcedeAction } from "./actions";
+import { err, ok } from "./actions";
 import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
 import { effectiveMaxHp } from "./continuous";
 import type { GameEvent } from "./events";
@@ -605,6 +605,34 @@ export function evaluateWin(state: GameState): GameOutcome | null {
   if (p1 !== undefined) return { result: "win", winner: "p1", reason: p1 };
   if (p2 !== undefined) return { result: "win", winner: "p2", reason: p2 };
   return null;
+}
+
+/** Give the game up (§ none — this is not a rules condition, it is a player's
+    own choice, or the P4 server acting for one who abandoned an online match).
+    The opponent wins by `conceded`.
+
+    Legal in EVERY phase but `gameOver`, which is deliberate and is why it lives
+    here beside `finishGame` rather than behind `turnGate` with the turn actions:
+    a concede that only worked on your own turn would be useless in exactly the
+    situations it exists for — an opponent who walked away mid-turn, or a park
+    nobody can answer. `gameOver` is the one refusal, so a finished game can't be
+    re-decided (and a second concede can't overwrite the first winner);
+    `applyAction`'s global finished-game guard already returns first for anything
+    arriving that way, so the check below is what keeps this handler total for a
+    direct caller rather than the enforcing gate.
+
+    Conceding while a decision is parked is safe for the same reason the phase is:
+    `finishGame` clears `pending` wholesale, so no queued stage resumes into a
+    finished game. */
+export function concede(state: GameState, action: ConcedeAction): ApplyResult {
+  if (state.phase.kind === "gameOver") {
+    return err("GAME_OVER", "the game is already over");
+  }
+  return finishGame(
+    state,
+    { result: "win", winner: otherSeat(action.seat), reason: "conceded" },
+    [],
+  );
 }
 
 /** The one GAME_OVER emitter: parks the phase, clears whatever tail was

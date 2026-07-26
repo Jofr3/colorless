@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import {
   abandonsMatch,
   countdownEndsAt,
+  endMatch,
   helloDecision,
   parseClientMessage,
   reseatHost,
@@ -160,6 +161,47 @@ describe("resetAfterFailedStart", () => {
     expect(next.host.deckId).toBe("d1");
     expect(next.guest?.deckId).toBe("d2");
     expect(next.countdownStartedAt).toBeNull();
+  });
+
+  it("CANNOT end a running match — recomputePhase never leaves in-game", () => {
+    // The trap `endMatch` exists for: this helper is for a lobby still in
+    // COUNTDOWN. Pointed at an in-game one it un-readies the seats but leaves the
+    // phase alone (recomputePhase returns an in-game snapshot untouched), so a
+    // caller that used it to tear down a live match would wedge the lobby in-game.
+    const running: LobbySnapshot = { ...countdownLobby(), phase: "in-game" };
+    expect(resetAfterFailedStart(running).phase).toBe("in-game");
+  });
+});
+
+describe("endMatch — stopping a RUNNING match", () => {
+  const running = (): LobbySnapshot => ({ ...countdownLobby(), phase: "in-game" });
+
+  it("leaves in-game and hands the lobby back at selecting, both un-readied", () => {
+    const next = endMatch(running());
+    expect(next.phase).toBe("selecting");
+    expect(next.host.ready).toBe(false);
+    expect(next.guest?.ready).toBe(false);
+    // Deck picks survive, exactly as they do after a failed start — the players
+    // ready up again, they don't re-pick.
+    expect(next.host.deckId).toBe("d1");
+    expect(next.guest?.deckId).toBe("d2");
+    expect(next.countdownStartedAt).toBeNull();
+  });
+
+  it("is the transition `abandonsMatch` reports, so commit drops the record", () => {
+    const before = running();
+    expect(abandonsMatch(before, endMatch(before))).toBe(true);
+  });
+
+  it("falls back to waiting when the guest already left", () => {
+    const soloed: LobbySnapshot = { ...running(), guest: null };
+    expect(endMatch(soloed).phase).toBe("waiting");
+  });
+
+  it("does not re-enter countdown even though both were ready", () => {
+    // Un-readying is what stops the countdown re-firing straight back into a
+    // handoff — the same loop-breaker resetAfterFailedStart relies on.
+    expect(endMatch(running()).phase).not.toBe("countdown");
   });
 });
 
