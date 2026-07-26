@@ -11,12 +11,17 @@
 // (attachment.ts), and the keepalive is answered by `setWebSocketAutoResponse`
 // without waking the instance at all.
 //
-// One alarm, three duties (earliest deadline wins; alarm() re-derives all):
+// One alarm, five duties (earliest deadline wins; alarm() re-derives all):
+//   0. liveness — every LIVENESS_SWEEP_MS while sockets are connected, a socket
+//      that stopped answering keepalives is closed (3c-viii); the auto-response
+//      below is precisely why nothing else could notice;
 //   1. disconnect graces — a dropped socket only marks its seat disconnected
 //      after DISCONNECT_GRACE_MS without a reconnect (logic.ts);
 //   2. the countdown — countdown → in-game after COUNTDOWN_MS, unless a seat's
 //      player vanished, who is demoted instead (the old host did the same);
-//   3. empty-lobby expiry — EMPTY_LOBBY_TTL_MS after the last socket goes,
+//   3. match forfeits — a seat's ABANDON_GRACE_MS deadline (3c-ii/3c-v, on the
+//      snapshot) ends the running match for a player who never came back;
+//   4. empty-lobby expiry — EMPTY_LOBBY_TTL_MS after the last socket goes,
 //      storage is wiped, freeing the code.
 //
 // This class deliberately does NOT extend cloudflare:workers' DurableObject:
@@ -67,6 +72,7 @@ import {
   EMPTY_LOBBY_TTL_MS,
   forfeitDeadlines,
   helloDecision,
+  LIVENESS_SWEEP_MS,
   parseClientMessage,
   type PendingDisconnect,
   readSnapshot,
@@ -76,6 +82,7 @@ import {
   seatClaimAllowed,
   setSeatConnected,
   slotOf,
+  socketIsSilent,
   splitDuePending,
   stampCountdown,
   withForfeitAt,
@@ -368,6 +375,10 @@ export class LobbyDO {
 
   async alarm(): Promise<void> {
     const now = Date.now();
+    // 0) Sockets that stopped answering keepalives (P4 3c-viii). FIRST, so a
+    //    connection dropped here is judged by everything below on this same pass
+    //    rather than waiting another sweep.
+    await this.sweepSilentSockets(now);
     const sockets = this.liveSockets();
     const hasSocket = (playerId: string) =>
       sockets.some((socket) => attachedPlayer(socket) === playerId);
@@ -501,6 +512,40 @@ export class LobbyDO {
     await this.scheduleMaintenance(remaining);
   }
 
+  /** Close sockets that have stopped answering keepalives (P4 3c-viii) — the
+      half-open connection: a network that dies without a TCP close, leaving a
+      socket that looks perfectly live to the DO forever. Before this, such a
+      player was never marked disconnected, never started a forfeit clock, and
+      their opponent waited indefinitely; every ORDINARY exit (tab close, browser
+      kill, navigation, reload, crash) produces a close event, which is why it took
+      a deliberate `set offline` in a browser run to surface it.
+
+      The signal is the runtime's own: `setWebSocketAutoResponse` answers the
+      client's 1.5s ping WITHOUT waking the DO — which is exactly why the DO can
+      never notice pings that stop — but it records WHEN it last answered, and
+      `getWebSocketAutoResponseTimestamp` hands that back for free. So liveness
+      costs one alarm every `LIVENESS_SWEEP_MS` instead of the hibernation-killing
+      alternative of answering keepalives in `webSocketMessage`.
+
+      Closing is all this does. Everything after — the 5s grace, the seat going
+      disconnected, the 90s forfeit — is the machinery a real close already drives,
+      reached here through the same `socketGone`. The server's own `close()` does
+      not deliver a `webSocketClose` event to us, so that call is explicit rather
+      than incidental. */
+  private async sweepSilentSockets(now: number): Promise<void> {
+    const silent = this.liveSockets().filter((ws) =>
+      socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), now),
+    );
+    for (const ws of silent) {
+      try {
+        ws.close(1001, "keepalive lost");
+      } catch {
+        // Already gone; the bookkeeping below still applies.
+      }
+      await this.socketGone(ws);
+    }
+  }
+
   /** P4 handoff (online.md): the countdown just flipped this lobby to in-game,
       so mint the authoritative engine game once and persist it. The DO owns the
       RNG seed + all hidden info here on out. Idempotent — a re-fired alarm never
@@ -616,6 +661,12 @@ export class LobbyDO {
     if (snapshot !== null) {
       for (const { deadline } of forfeitDeadlines(snapshot)) deadlines.push(deadline);
     }
+
+    // While anyone is connected, keep a slow poll running: it is the ONLY thing
+    // that can notice a socket whose keepalives stopped (3c-viii), because the
+    // auto-response deliberately never wakes us. With nobody connected there is
+    // nothing to check — the empty-lobby expiry below owns that case.
+    if (sockets.length > 0) deadlines.push(Date.now() + LIVENESS_SWEEP_MS);
 
     if (sockets.length === 0) {
       let cleanupAt = await this.state.storage.get<number>(CLEANUP_AT_KEY);

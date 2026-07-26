@@ -33,6 +33,36 @@ export const DISCONNECT_GRACE_MS = 5000;
     player isn't held hostage. */
 export const ABANDON_GRACE_MS = 90_000;
 
+/** How long a socket may go without answering a keepalive before the lobby gives
+    up on it (P4 3c-viii). The client pings every 1.5s (channel.ts) and the DO's
+    `setWebSocketAutoResponse` answers WITHOUT waking it, so 15s is ten missed
+    pings — long enough that a phone switching networks or a paused tab is not
+    mistaken for a dead one, short enough to land well inside the 90s forfeit. */
+export const SOCKET_SILENCE_MS = 15_000;
+
+/** How often the alarm checks for silent sockets while any are connected
+    (3c-viii). It is a POLL, and it has to be: the whole point of the auto-response
+    is that a ping does not wake the DO, so nothing else will ever notice pings
+    that STOPPED. 30s is the compromise — a half-open socket costs its opponent at
+    most this plus the usual 5s grace before the forfeit clock starts, while an
+    occupied lobby wakes twice a minute instead of the ~40 times a minute it would
+    if we answered keepalives in the handler and gave up hibernation entirely. */
+export const LIVENESS_SWEEP_MS = 30_000;
+
+/** Whether a socket has gone silent — its last auto-answered keepalive is older
+    than `SOCKET_SILENCE_MS` (P4 3c-viii). Pure; the DO reads the timestamp from
+    the runtime (`getWebSocketAutoResponseTimestamp`) and closes what this rejects.
+
+    A `null` timestamp counts as ALIVE, deliberately: it means the runtime has
+    never auto-answered this socket, which is the state of every connection for
+    its first ping — and, since we cannot tell "just connected" from "connected
+    long ago and never pinged", the only safe reading is to leave it alone. The
+    cost of being wrong that way is a socket we never sweep; the cost of the other
+    way is closing a healthy connection a second after it opened. */
+export function socketIsSilent(lastAutoResponse: Date | null, now: number): boolean {
+  return lastAutoResponse !== null && now - lastAutoResponse.getTime() > SOCKET_SILENCE_MS;
+}
+
 /** How long an empty lobby (zero sockets — also a freshly-minted, never-joined
     one) survives before its storage is wiped and the code freed. Generous next
     to the old model, where a lobby died with the host's tab: it lets a lone

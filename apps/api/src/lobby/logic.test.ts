@@ -9,8 +9,10 @@ import {
 } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import {
+  ABANDON_GRACE_MS,
   abandonsMatch,
   applyBye,
+  DISCONNECT_GRACE_MS,
   countdownEndsAt,
   forfeitDeadlines,
   endMatch,
@@ -22,7 +24,10 @@ import {
   resetAfterFailedStart,
   seatClaimAllowed,
   setSeatConnected,
+  LIVENESS_SWEEP_MS,
   slotOf,
+  SOCKET_SILENCE_MS,
+  socketIsSilent,
   splitDuePending,
   stampCountdown,
   withForfeitAt,
@@ -402,6 +407,38 @@ describe("abandonsMatch", () => {
     expect(abandonsMatch(null, inGame)).toBe(false);
     // Staying in-game (a re-broadcast) keeps the record.
     expect(abandonsMatch(inGame, inGame)).toBe(false);
+  });
+});
+
+describe("socketIsSilent — the half-open connection (3c-viii)", () => {
+  const at = (ms: number) => new Date(ms);
+
+  it("gives up on a socket whose keepalives stopped", () => {
+    // The client pings every 1.5s and the runtime auto-answers, so a gap this
+    // long means the connection is gone even though no close ever arrived.
+    expect(socketIsSilent(at(1_000), 1_000 + SOCKET_SILENCE_MS + 1)).toBe(true);
+  });
+
+  it("leaves a socket answering on time alone, including right on the boundary", () => {
+    expect(socketIsSilent(at(1_000), 1_500)).toBe(false);
+    expect(socketIsSilent(at(1_000), 1_000 + SOCKET_SILENCE_MS)).toBe(false);
+  });
+
+  it("treats a socket that has NEVER auto-answered as alive", () => {
+    // Every connection looks like this for its first ping, and nothing here can
+    // tell "just opened" from "opened long ago and never pinged" — so the only
+    // safe reading is to leave it be. Closing a healthy one-second-old socket
+    // would be the worse mistake.
+    expect(socketIsSilent(null, 1_000_000)).toBe(false);
+  });
+
+  it("is comfortably inside the forfeit clock it feeds", () => {
+    // Detection has to fit in the budget it starts: sweep + silence + the 5s
+    // grace all happen BEFORE the 90s forfeit begins, or a dead network would
+    // resolve slower than a player who simply closed their tab.
+    expect(LIVENESS_SWEEP_MS + SOCKET_SILENCE_MS + DISCONNECT_GRACE_MS).toBeLessThan(
+      ABANDON_GRACE_MS,
+    );
   });
 });
 

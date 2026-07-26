@@ -823,13 +823,24 @@ until 1c broadcasts the redacted view.
     reached them instantly; a rematch dropped them to "Lobby is full" and they picked the NEXT match up
     automatically. Zero page errors. **The run caught a real bug:** `state` frames only go out on a lobby
     COMMIT, so a mid-match joiner never got one and read "Host vs Guest" — `refuseSeat` now sends it.
-  - **RECORDED, NOT FIXED (found during 3c-v's browser run; pre-existing):** a **HALF-OPEN socket is
-    invisible to the server**. `setWebSocketAutoResponse` answers keepalives without waking the DO and
-    nothing watches for pings that STOP arriving, so a player whose network dies without a TCP close is
-    never marked disconnected and never forfeits — the lobby waits until the socket errors at the transport
-    level, which can take minutes. Every ordinary exit (tab close, browser kill, navigation, reload, crash)
-    does produce a close event, which is why it has never bitten. Closing it needs server-side liveness — a
-    per-socket `lastSeen` in place of the auto-response, or an idle sweep — and is its own slice.
+  - **3c-viii — half-open socket liveness. DONE** (D80): the gap 3c-v's run surfaced, and the last known way
+    a match could stall. `setWebSocketAutoResponse` answers the 1.5s ping without waking the DO — which is
+    why the DO could never notice pings that STOP — so a network dying without a TCP close left a socket
+    that looked live forever: no disconnect grace, no forfeit clock, an opponent waiting indefinitely.
+    **The fix reads the signal the runtime already records:** `state.getWebSocketAutoResponseTimestamp(ws)`
+    gives the last auto-answer, so liveness costs nothing at ping time. (Dropping the auto-response and
+    stamping `lastSeen` in `webSocketMessage` was rejected: ~40 wakes/minute/socket to learn what the
+    runtime already knows.) What it costs is a POLL — a quiet in-game lobby schedules no alarm at all, so
+    `scheduleMaintenance` pushes a `LIVENESS_SWEEP_MS` (30s) deadline while any socket is connected.
+    `SOCKET_SILENCE_MS` is 15s (ten missed pings), and a test pins the budget: sweep + silence + the 5s
+    grace fit inside the 90s forfeit, so a dead network never resolves slower than a closed tab. A `null`
+    timestamp counts ALIVE (every connection looks like that before its first ping). The sweep only CLOSES;
+    the grace, the disconnect and the forfeit are the machinery a real close already drives, reached through
+    the same `socketGone` — called explicitly, since a server-side `close()` delivers no `webSocketClose`.
+    1874 → **1878** tests. **BROWSER-VERIFIED with the reproducer that exposed it:** a client put offline
+    with its socket left open produced NOTHING before this change; now the opponent saw
+    "disconnected — forfeits in 1:30" after ~50s and the countdown ran, coming back online restored the
+    player within ~10s (forfeit cancelled), and the client that stayed connected was never swept.
   - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
     run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
     should confirm the three things tests can't: the SameSite=None `session` cookie surviving the
