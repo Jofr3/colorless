@@ -35,7 +35,7 @@ export interface CoverDialogProps {
 }
 
 const TILE_BASE =
-  "relative block w-full overflow-hidden rounded-lg ring-1 ring-inset transition-all hover:scale-[1.03] active:scale-95";
+  "relative block w-full overflow-hidden rounded-lg ring-1 ring-inset transition-all hover:scale-[1.03] active:scale-95 motion-reduce:transition-none";
 
 export function CoverDialog({
   open,
@@ -81,7 +81,7 @@ export function CoverDialog({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`}
+            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white motion-reduce:transition-none ${FOCUS_RING_INSET}`}
           >
             <XIcon className="h-4 w-4" />
           </button>
@@ -148,7 +148,11 @@ export function CoverDialog({
         )}
 
         <div className="mt-4 flex justify-end">
-          <button type="button" onClick={onClose} className={GLASS_DIALOG_GHOST_BUTTON}>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`${GLASS_DIALOG_GHOST_BUTTON} motion-reduce:transition-none`}
+          >
             Done
           </button>
         </div>

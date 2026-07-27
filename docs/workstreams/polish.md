@@ -151,11 +151,44 @@ P2–P4; tracked here so nothing is forgotten.
   all close. **NOTE the schema header (`apps/api/src/db/schema.ts`) documents that
   pricing / `dexId` / `description` are deliberately unstored** — adding any needs
   a migration + re-ingest, so a future "richer" detail view would start there.
-- **Reduced-motion audit (open, small):** carry `prefers-reduced-motion` respect
-  through the remaining new P5 surfaces that lack it — `CoverDialog.tsx`
-  (unconditional `hover:scale-[1.03] active:scale-95`), `PlayerAvatar`, and
-  `src/features/settings/**`. The card detail view (P5-8) now models the fix. This
-  is the smallest, lowest-risk remaining P5 item and a good default autonomous pick.
+- **Reduced-motion audit — DONE 2026-07-27 (P5-9, D89).** Carried
+  `prefers-reduced-motion` respect through the three new P5 surfaces that lacked it,
+  appending `motion-reduce:*` variants AT THE CALL SITE per the D88 idiom (the P5-8
+  author deliberately did NOT edit the shared `glass.ts` constants; this slice
+  honoured that placement). The app's ONLY global reduced-motion rule
+  (`src/index.css` L190) neutralises just `<body>` + `.route-view`; it never
+  touches a Tailwind `transition-*`/`scale-*`/`animate-*` utility on a component,
+  which is why these were unguarded.
+  - `CoverDialog.tsx`: `TILE_BASE`'s `hover:scale-[1.03] active:scale-95`, the
+    close button's `transition-colors`, and the Done ghost button.
+  - `Settings.tsx`: the font `<select>`, the back-arrow icon's
+    `transition-transform` slide, and the Back-to-home ghost button.
+  - `ProfileSection.tsx`: the Save button, the sign-in link — and the Save
+    **spinner**, a perpetual `animate-spin` that `transition-none` can't stop, got
+    `motion-reduce:animate-none` (the one genuinely-new variant in the repo).
+    Halting it is correct: the "Save" text + disabled/dimmed button convey "saving",
+    and `SpinnerIcon` is a 3/4 ring that reads fine frozen.
+  - **`PlayerAvatar` was already clean** — its only `style` is a static gradient,
+    no transition/animation.
+  Pure CSS-class slice — no logic/component/API touch, 1941 → 1941 tests. Verified
+  via the shipped stylesheet: a production `vite build` emits both
+  `motion-reduce:transition-none` and `motion-reduce:animate-none` inside `@media
+  (prefers-reduced-motion: reduce)`, so the guards are live (not a dropped typo'd
+  variant). A browser drive was judged low-value — the change is additive +
+  reduced-motion-only (can't regress the default render) and the mechanism is
+  browser-verified from P5-8.
+- **App-wide glass reduced-motion pass (open, root cause of P5-9).** P5-9 fixed the
+  three P5 surfaces at their call sites, but the ROOT cause is untouched: the shared
+  `glass.ts` button constants (`GLASS_GHOST_BUTTON`, `GLASS_ACCENT_BUTTON`,
+  `GLASS_HUD_BUTTON`, `GLASS_NEUTRAL_BUTTON`, `GLASS_DIALOG_GHOST_BUTTON`,
+  `GLASS_FILTER_TOGGLE`, `GLASS_INPUT`) all carry `transition-*` + `active:scale-95`
+  with NO reduced-motion guard and feed EVERY glass button app-wide (auth, lobby
+  HUD, filters, decks). So the same defect P5-9 patched on three surfaces still
+  lives everywhere else. Adding `motion-reduce:transition-none` INTO those constants
+  fixes the whole app in one additive edit — but it reverses D88/D89's "patch at the
+  call site" placement and reaches well beyond the P5 surfaces, so it's a deliberate
+  app-wide pass worth the user's nod (or a considered autonomous slice). If done,
+  the per-call-site guards P5-9 added become redundant and could be dropped.
 
 Pull items into an active phase as they become relevant; don't build them ahead
 of the data they need.

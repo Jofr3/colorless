@@ -28,7 +28,7 @@ const INPUT_CLASS = `${GLASS_INPUT} px-4 py-2.5 placeholder:text-white/35`;
 // read as one form. disabled:opacity keeps it legible while the library loads.
 const SELECT_CLASS = `${GLASS_INPUT} cursor-pointer px-4 py-2.5 disabled:cursor-wait disabled:opacity-50`;
 const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-white/55";
-const SAVE_BUTTON_CLASS = `inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${GLASS_ACCENT_BUTTON}`;
+const SAVE_BUTTON_CLASS = `inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${GLASS_ACCENT_BUTTON} motion-reduce:transition-none`;
 
 /** The register/login copy, narrowed to what a rename can actually fail on. */
 function messageForError(error: unknown): string {
@@ -67,7 +67,7 @@ export function ProfileSection() {
           <Link
             to="/login"
             state={{ from: "/settings" }}
-            className="rounded font-medium text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+            className="rounded font-medium text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 motion-reduce:transition-none"
           >
             Sign in
           </Link>{" "}
@@ -209,7 +209,7 @@ function ProfileForm({ user }: { user: User }) {
 
         <div className="flex items-center gap-3">
           <button type="submit" disabled={!canSave || saving} className={SAVE_BUTTON_CLASS}>
-            {saving && <SpinnerIcon className="h-4 w-4 animate-spin" />}
+            {saving && <SpinnerIcon className="h-4 w-4 animate-spin motion-reduce:animate-none" />}
             Save
           </button>
           <output className="empty:hidden">
