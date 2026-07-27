@@ -78,9 +78,17 @@ P2–P4; tracked here so nothing is forgotten.
   decks → 400 `favourite deck not found`), the profile stores only the id and
   resolves the cover/name from the caller's own `GET /decks` (derive-on-read,
   tolerate stale — like the covers), and the FK is `ON DELETE SET NULL` so
-  deleting the deck clears the pin. NOT browser-verified this session (budget) —
-  covered by a DOM round-trip test + schema units; verify next session.
-  **Still open: the uploads below.**
+  deleting the deck clears the pin. **BROWSER-VERIFIED end to end 2026-07-27
+  (build #71):** the /settings picker listed only the caller's own decks;
+  pinning one rendered its cover (real `<img>`, `naturalWidth=245`) + name and
+  rode `PATCH /auth/me` (200); the pin survived a reload; `DELETE`ing the deck
+  cleared `favouriteDeckId` to null server-side (the FK) and the tile went blank.
+  Zero page errors. **Dev-drive gotcha:** wrangler's default API port `:8787`
+  can be held by another project's dev server on this machine — the web client
+  defaults its API origin to `:8787` (`src/lib/apiOrigin.ts`), so point it at the
+  real port with `VITE_API_ORIGIN=http://localhost:<port>` when the API lands
+  elsewhere; the API's CORS still allows `localhost:5173` regardless of its own
+  port. **Still open: the uploads below.**
 - **Avatars:** upload/choose an avatar → stored in R2, served from our domain;
   update CSP accordingly. The settings surface P5-2 said this needed now exists
   (the Profile section above), so what's left is genuinely the R2 + CSP +

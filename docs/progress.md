@@ -3,7 +3,10 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #70 (**P5-7 — a favourite deck on your profile**).
+**Last updated:** 2026-07-27 — build session #71 (**verify P5-7 in the browser**). Session #70 shipped P5-7
+(a favourite deck on your profile) but ran out of budget before driving it live; this session did that
+verification — it passes end to end (see the ✅ in the header below and the session-log entry). The P5-7 build
+header follows.
 P5-5 gave /settings a Profile section (name + generated face); P5-6 gave a deck the cover art it's fronted
 with. This joins them: an account PINS one of its **own** decks as its favourite and sees that deck's cover +
 name on /settings. A nullable **`users.favourite_deck_id`** (migration **0005**) the Profile form sets,
@@ -21,16 +24,25 @@ hand. The picker is a native `<select>` (keyboard/screen-reader friendly, reduce
 form as the name, riding ONE PATCH — name + favourite save together, and the provider adopts the answer so the
 corner control follows. The users↔decks mutual reference needed an `AnySQLiteColumn` annotation to break the
 TS type cycle. engine RULES UNCHANGED (0.41.0); 1932 → **1936** tests. `bun run check` green. Built solo with
-full context; **self-reviewed, no independent reviewer this session; NOT browser-verified this session
-(budget)** — covered instead by a new DOM round-trip test (enable picker → select a deck → Save → asserts the
-PATCH body `{displayName, favouriteDeckId}` and the post-save disabled state) plus schema-level unit tests for
-the optional/nullable field and the userSchema shape.
-**NEXT (resume point):** FIRST browser-verify this slice next session (pin a deck on /settings, confirm the
-cover + name render, save persists through a reload, delete that deck elsewhere and confirm the pin clears).
-Then the remaining P5 backlog — uploaded avatars (R2 + CSP + moderation, the biggest item; the moderation
-approach is an unresolved product call), a card detail view, or a reduced-motion audit — or the remote P4
-deploy, which still needs the user. **Deploy note: migrations 0004 AND 0005 must be applied remotely**
-(`db:migrate:remote`). See D87 + `workstreams/polish.md`. Below: the P5-6 header (kept for continuity).
+full context; **self-reviewed, no independent reviewer.** **✅ NOW BROWSER-VERIFIED (build #71, 2026-07-27)**
+end to end against the real API (web on :5173 → API on :8788, since :8787 was held by another project):
+seeded two decks with real Pokémon via the authed session, then on /settings pinned "Kingdra Control" — the
+native `<select>` listed only the caller's own decks, choosing one enabled Save, `PATCH /auth/me` returned 200,
+and the favourite's **cover (Kingdra ex `sv06.5-012`, `<img>` `naturalWidth=245` from the R2/tcgdex mirror) +
+name rendered** while Save fell back to disabled. `GET /auth/me` showed the pinned id; the pin **survived a
+full reload** (select + cover both back). Deleting that deck via `DELETE /decks/:id` (204) **cleared
+`favouriteDeckId` to null server-side** (the `ON DELETE SET NULL` FK) and the reloaded /settings fell back to
+"No favourite" with **no cover tile**. Zero page errors. Also covered by a DOM round-trip test (enable picker →
+select a deck → Save → asserts the PATCH body `{displayName, favouriteDeckId}` and the post-save disabled
+state) plus schema-level unit tests for the optional/nullable field and the userSchema shape.
+**NEXT (resume point):** P5-7 is done AND browser-verified — pick from the remaining P5 backlog. In rough
+order of size: **uploaded avatars** (R2 + CSP + moderation — the biggest item, and the moderation approach is
+an unresolved *product* call the user should weigh in on before building); a **card detail view** (richer
+tcgdex fields — attacks/abilities/pricing/set/illustrator); or a **reduced-motion audit** across the new P5
+surfaces (`prefers-reduced-motion` through /settings, the cover picker, the profile tile — the smallest,
+lowest-risk slice, a good default if picking blind). Or the remote **P4 deploy**, which still needs the user.
+**Deploy note: migrations 0004 AND 0005 must be applied remotely** (`db:migrate:remote`). See D87 +
+`workstreams/polish.md`. Below: the P5-6 header (kept for continuity).
 
 ---
 ### Prior header (P5-6 — a deck cover you choose, kept for continuity)
@@ -3903,6 +3915,25 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-27** (build #71) — **Browser-verified P5-7 (a favourite deck on your profile)** — the live
+  verification build #70 deferred for budget. (Build #70 shipped P5-7 itself — nullable
+  `users.favourite_deck_id` (migration `0005`), `userSchema.favouriteDeckId`, an optional/nullable
+  `favouriteDeckId` on `PATCH /auth/me` validated against the caller's own decks, a native `<select>` on
+  /settings riding the SAME PATCH as the name, cover/name resolved on read from `GET /decks`, `ON DELETE SET
+  NULL` — see the header + D87; #70 wrote no session-log entry, so this backfills it.) **Verification, end to
+  end against the real API** (had to point the web dev server at API `:8788` via `VITE_API_ORIGIN` because
+  another project held wrangler's default `:8787` — noted in `workstreams/polish.md`): registered a throwaway
+  account, seeded two decks with real Pokémon (Kingdra ex, Revavroom ex) through the authed session. On
+  /settings the picker listed **only the caller's own two decks**; selecting "Kingdra Control" enabled Save;
+  clicking it sent **`PATCH /auth/me` → 200** and the favourite's **cover (`sv06.5-012`, `<img>`
+  `naturalWidth=245` — real art from the lazy R2/tcgdex mirror) + name rendered**, Save returning to disabled.
+  `GET /auth/me` confirmed the pinned id; a **full page reload** kept both the selection and the cover.
+  `DELETE /decks/:id` (204) on the favourited deck **cleared `favouriteDeckId` to null server-side** (the FK's
+  `ON DELETE SET NULL`, confirmed via `GET /auth/me`), and the reloaded /settings fell back to **"No favourite"
+  with no cover tile** and the deleted deck gone from the options. Zero page errors. No code changes — the
+  slice was already green (1936 tests, `bun run check`); this session added only the verification + doc
+  updates. Process note: #70's slice was committed under the misleading message `465496b "loop budget
+  increase"` (bundled with an autoloop tweak); left as-is (not pushed; rewriting history unwarranted). See D87.
 - **2026-07-26** (build #69) — **P5-6: a deck cover you choose** (built solo with full context;
   self-reviewed, no independent reviewer). P5-3 fronted every deck with its highest-HP Pokémon and
   said outright that the proper answer was letting the owner pick. This is that pick: a nullable
