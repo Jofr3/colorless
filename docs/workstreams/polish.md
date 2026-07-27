@@ -177,18 +177,47 @@ P2–P4; tracked here so nothing is forgotten.
   variant). A browser drive was judged low-value — the change is additive +
   reduced-motion-only (can't regress the default render) and the mechanism is
   browser-verified from P5-8.
-- **App-wide glass reduced-motion pass (open, root cause of P5-9).** P5-9 fixed the
-  three P5 surfaces at their call sites, but the ROOT cause is untouched: the shared
-  `glass.ts` button constants (`GLASS_GHOST_BUTTON`, `GLASS_ACCENT_BUTTON`,
-  `GLASS_HUD_BUTTON`, `GLASS_NEUTRAL_BUTTON`, `GLASS_DIALOG_GHOST_BUTTON`,
-  `GLASS_FILTER_TOGGLE`, `GLASS_INPUT`) all carry `transition-*` + `active:scale-95`
-  with NO reduced-motion guard and feed EVERY glass button app-wide (auth, lobby
-  HUD, filters, decks). So the same defect P5-9 patched on three surfaces still
-  lives everywhere else. Adding `motion-reduce:transition-none` INTO those constants
-  fixes the whole app in one additive edit — but it reverses D88/D89's "patch at the
-  call site" placement and reaches well beyond the P5 surfaces, so it's a deliberate
-  app-wide pass worth the user's nod (or a considered autonomous slice). If done,
-  the per-call-site guards P5-9 added become redundant and could be dropped.
+- **App-wide glass reduced-motion pass — DONE 2026-07-27 (P5-10, D90).** The
+  root cause P5-9 fixed only at three call sites, now fixed at the source. The
+  shared `glass.ts` constants that carry a transition — `GLASS_HUD_BUTTON`,
+  `GLASS_GHOST_BUTTON`, `GLASS_DIALOG_GHOST_BUTTON`, `GLASS_ACCENT_BUTTON`,
+  `GLASS_NEUTRAL_BUTTON`, `GLASS_FILTER_TOGGLE` (all `transition-all` +
+  `active:scale-95`) and `GLASS_INPUT` (`transition-colors`) — each got
+  `motion-reduce:transition-none` appended, so EVERY glass control app-wide (auth,
+  lobby HUD, filters, decks, dialogs, corner controls) respects reduced motion
+  from the constant, not each call site. Under reduced motion the fade is off and
+  the active-scale SNAPS rather than animating (the same behaviour `CoverDialog`'s
+  `TILE_BASE` was browser-verified with in P5-8). **This reverses D88/D89's "patch
+  at the call site" placement** — a blessed reversal (the P5-9 resume point named
+  it), logged as D90; a header comment in `glass.ts` states the invariant so the
+  next author appends the guard to any new transitional constant. **The four
+  call-site guards adjacent to a glass constant became redundant and were dropped**
+  (`CardDetailDialog` Retry, `Settings` Back-to-home, `CoverDialog` Done,
+  `ProfileSection` Save); **every guard protecting an OWN non-constant transition
+  was kept** (`Settings` font select + arrow-icon slide, `CoverDialog` `TILE_BASE`
+  + close button, `CardDetailDialog` close button, `CardGrid` info button,
+  `ProfileSection` sign-in link, and the Save spinner's `motion-reduce:animate-none`
+  — a `transition-none` can't stop an `animate-spin`). Pure CSS-class slice — no
+  logic/component/API/DB/schema touch; 1941 → 1941 tests (nothing new to
+  unit-test: `motion-reduce:*` isn't observable in jsdom, className assertions are
+  brittle). Verified via the shipped stylesheet — a production `vite build` emits
+  `.motion-reduce\:transition-none{transition-property:none}` inside `@media
+  (prefers-reduced-motion:reduce)` in the main `index-*.css` bundle where the glass
+  buttons live. A browser drive was low-value: additive + reduced-motion-only
+  (can't regress the default render), the mechanism is browser-verified from P5-8,
+  and constant-vs-call-site placement is invisible in the compiled CSS (cascade is
+  by stylesheet order, not class-attribute order). **The reduced-motion story is
+  now complete app-wide.**
+- **Uploaded avatars (still open — USER-gated).** Same as the item above:
+  upload/choose an avatar → stored in R2, served from our domain, CSP updated. The
+  settings surface exists (Profile section); what's left is the R2 + CSP +
+  **moderation** half — moderation is an unresolved product call, so this needs
+  the user before it can be built.
+
+**With P5-10 done and the two remaining items (uploaded avatars, the remote P4
+deploy) both USER-gated, P5 has no autonomous work left.** The next autonomous
+slice belongs to another workstream — the P3 simulator M5 card-effect backlog
+(`docs/reference/coverage-backlog.md`, `workstreams/simulator.md`) is the deepest.
 
 Pull items into an active phase as they become relevant; don't build them ahead
 of the data they need.

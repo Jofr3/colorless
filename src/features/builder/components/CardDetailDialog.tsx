@@ -212,7 +212,7 @@ function ErrorBody({ onRetry }: { onRetry: () => void }) {
       <button
         type="button"
         onClick={onRetry}
-        className={`rounded-full px-3.5 py-1.5 text-sm font-medium motion-reduce:transition-none ${GLASS_GHOST_BUTTON}`}
+        className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${GLASS_GHOST_BUTTON}`}
       >
         Retry
       </button>

@@ -28,7 +28,7 @@ const INPUT_CLASS = `${GLASS_INPUT} px-4 py-2.5 placeholder:text-white/35`;
 // read as one form. disabled:opacity keeps it legible while the library loads.
 const SELECT_CLASS = `${GLASS_INPUT} cursor-pointer px-4 py-2.5 disabled:cursor-wait disabled:opacity-50`;
 const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-white/55";
-const SAVE_BUTTON_CLASS = `inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${GLASS_ACCENT_BUTTON} motion-reduce:transition-none`;
+const SAVE_BUTTON_CLASS = `inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${GLASS_ACCENT_BUTTON}`;
 
 /** The register/login copy, narrowed to what a rename can actually fail on. */
 function messageForError(error: unknown): string {

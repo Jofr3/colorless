@@ -151,7 +151,7 @@ export function CoverDialog({
           <button
             type="button"
             onClick={onClose}
-            className={`${GLASS_DIALOG_GHOST_BUTTON} motion-reduce:transition-none`}
+            className={GLASS_DIALOG_GHOST_BUTTON}
           >
             Done
           </button>

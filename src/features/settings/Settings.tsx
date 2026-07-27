@@ -54,7 +54,7 @@ export function Settings() {
 
         <Link
           to="/"
-          className={`group inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON} motion-reduce:transition-none`}
+          className={`group inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`}
         >
           <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5 motion-reduce:transition-none" />
           Back to home
