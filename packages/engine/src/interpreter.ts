@@ -1035,6 +1035,22 @@ export function conditionNote(cond: BoardCondition): string {
   }
 }
 
+/** §8.5 — the attacker's total pre-W/R damage bonus for a hit landing on the
+    opponent's Active: the unconditional Tool bonuses (Vitality Band) plus every
+    conditional one (Defiance Band) whose board condition holds for the ATTACKING
+    `seat`. The two attack-damage read sites (attack.ts's main hit and
+    `snipeActive` below) share this so the condition is evaluated ONCE, here,
+    beside the single `conditionHolds` — continuous.ts aggregates the passives
+    but is seat-free, and a BoardCondition is relative to whose board it reads. */
+export function attackerPreWRBonus(state: GameState, pokemon: InPlayPokemon, seat: Seat): number {
+  const passives = passivesOf(state, pokemon);
+  let bonus = passives.damageBonusBeforeWR;
+  for (const { amount, cond } of passives.conditionalDamageBonusBeforeWR) {
+    if (conditionHolds(state, seat, cond)) bonus += amount;
+  }
+  return bonus;
+}
+
 /** A mandatory targeting op: no candidate = no-op, one = forced (auto-resolve),
     ≥2 = park on a choosePokemon prompt. */
 function parkOrForce(
@@ -1312,7 +1328,7 @@ function snipeActive(
   const target = activeTop(state, opponent);
   if (target === null) return state;
   const attacker = activeTop(state, ctx.seat);
-  const bonus = attacker === null ? 0 : passivesOf(state, attacker.active).damageBonusBeforeWR;
+  const bonus = attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat);
   const weakness = attacker === null ? null : weaknessOf(attacker.card, target.card);
   const resistance = attacker === null ? null : resistanceOf(attacker.card, target.card);
   const afterWR = Math.max(

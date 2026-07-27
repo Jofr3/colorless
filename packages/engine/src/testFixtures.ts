@@ -327,6 +327,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
   } satisfies Card,
   /** Vitality Band — Tool: attacks do 10 more damage (before W/R). */
   "sv01-197": trainerCard("sv01-197", "Tool", "The attacks of the Pokémon this card is attached to do 10 more damage…"),
+  /** Defiance Band — Tool: +30 before W/R while behind on Prizes. */
+  "sv01-169": trainerCard("sv01-169", "Tool", "If you have more Prize cards remaining than your opponent, the attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."),
   /** Bravery Charm — Tool: the Basic holder gets +50 HP. */
   "sv02-173": trainerCard("sv02-173", "Tool", "The Basic Pokémon this card is attached to gets +50 HP."),
 
@@ -1630,6 +1632,20 @@ export const STADIUM_TOOL_DECK = deckOf({
   "sv02-173": 3,
   "fix-stadium": 1,
   "fix-tool": 1,
+  "fix-energy": 16,
+});
+
+/** M5 (Defiance Band): a DEDICATED 60 so the conditional-bonus tests never
+    perturb STADIUM_TOOL_DECK's fragile opening-hand seeds (shared by 5 suites).
+    All-Basic bodies (fix-attacker) make setup mulligan-free; fix-wall / fix-weak
+    are the two defenders the tests set as P2's Active; sv01-169 is the Tool and
+    fix-energy pays the attack cost — both pulled post-setup by id, so seed does
+    not matter. */
+export const DEFIANCE_DECK = deckOf({
+  "fix-attacker": 30,
+  "fix-wall": 4,
+  "fix-weak": 4,
+  "sv01-169": 6,
   "fix-energy": 16,
 });
 

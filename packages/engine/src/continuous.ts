@@ -8,6 +8,7 @@ import {
   retreatCostOf,
   topCardOf,
 } from "./cards";
+import type { BoardCondition } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { GameState, InPlayPokemon } from "./types";
@@ -39,7 +40,18 @@ export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
 export function passivesOf(
   state: GameState,
   pokemon: InPlayPokemon,
-): Required<Omit<PassiveEffects, "basicHpBonus">> & { hpBonus: number } {
+): {
+  damageReductionAfterWR: number;
+  damageBonusBeforeWR: number;
+  /** Pre-W/R bonuses gated on a board condition (Defiance Band), collected RAW
+      and UNEVALUATED: the condition is seat-relative and this aggregation has no
+      seat, so the two pre-W/R read sites fold them via `conditionHolds`
+      (interpreter.ts `attackerPreWRBonus`). Kept out of `damageBonusBeforeWR` so
+      the defender-reduction / HP reads, which never look at either, can't be
+      accidentally credited an attacker's conditional bonus. */
+  conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[];
+  hpBonus: number;
+} {
   const top = topCardOf(state, pokemon);
   const sources: (PassiveEffects | undefined)[] = [
     top === undefined ? undefined : programFor(top.id)?.passive,
@@ -52,13 +64,16 @@ export function passivesOf(
   let damageReductionAfterWR = 0;
   let damageBonusBeforeWR = 0;
   let hpBonus = 0;
+  const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
+    if (passive.damageBonusBeforeWRIf !== undefined)
+      conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
   }
-  return { damageReductionAfterWR, damageBonusBeforeWR, hpBonus };
+  return { damageReductionAfterWR, damageBonusBeforeWR, conditionalDamageBonusBeforeWR, hpBonus };
 }
 
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus

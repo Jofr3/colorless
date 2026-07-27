@@ -96,6 +96,17 @@ export interface PassiveEffects {
       Active, applied BEFORE Weakness and Resistance (Vitality Band). Only
       attacks that already do damage get it (a 0-damage attack stays 0). */
   damageBonusBeforeWR?: number;
+  /** Like `damageBonusBeforeWR`, but applied ONLY while a board condition holds
+      for the ATTACKING seat (Defiance Band — "If you have more Prize cards
+      remaining than your opponent, the attacks of the Pokémon this card is
+      attached to do 30 more damage to your opponent's Active Pokémon (before
+      applying Weakness and Resistance)"). The D40 `BoardCondition` vocabulary's
+      third consumer (a passive, after the `trainerPlayableIf` play gate and the
+      `conditionGate` branch op). Aggregated seat-FREE by continuous.ts; the
+      condition is evaluated at the two pre-W/R read sites (attack.ts main hit,
+      interpreter.ts snipeActive) via the shared `conditionHolds` — the only
+      sites that know the attacker's seat, which a BoardCondition is relative to. */
+  damageBonusBeforeWRIf?: { amount: number; cond: BoardCondition };
   /** Max-HP added while the holder's TOP card is a Basic Pokémon (Bravery
       Charm — "The Basic Pokémon this card is attached to gets +50 HP");
       evolving the holder ends it, the Tool staying attached notwithstanding.
@@ -275,6 +286,16 @@ const POKEMON_LEAGUE_HQ: CardProgram = { stadium: { basicAttackCostSurcharge: 1 
     more damage to your opponent's Active Pokémon (before applying Weakness
     and Resistance)." (Tool) */
 const VITALITY_BAND: CardProgram = { passive: { damageBonusBeforeWR: 10 } };
+
+/** Defiance Band — "If you have more Prize cards remaining than your opponent,
+    the attacks of the Pokémon this card is attached to do 30 more damage to
+    your opponent's Active Pokémon (before applying Weakness and Resistance)."
+    (Tool) The conditional twin of Vitality Band, gated on the existing
+    `morePrizesThanOpponent` board condition — the D40 vocabulary's third
+    consumer, and the first PASSIVE reader of it. */
+const DEFIANCE_BAND: CardProgram = {
+  passive: { damageBonusBeforeWRIf: { amount: 30, cond: { kind: "morePrizesThanOpponent" } } },
+};
 
 /** Bravery Charm — "The Basic Pokémon this card is attached to gets +50 HP."
     (Tool) */
@@ -1572,6 +1593,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-192": POKEMON_LEAGUE_HQ,
   // Vitality Band (Tool)
   "sv01-197": VITALITY_BAND,
+  "sv01-169": DEFIANCE_BAND, // +30 before W/R while behind on Prizes (morePrizesThanOpponent)
   // Bravery Charm (Tool)
   "sv02-173": BRAVERY_CHARM,
   // — M4 slice 5: Special Energy (verified vs local D1 2026-07-18). —

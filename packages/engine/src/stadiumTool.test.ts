@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applyAction, effectiveMaxHp, effectiveRetreatCost } from "./index";
+import { applyAction, effectiveMaxHp, effectiveRetreatCost, programFor } from "./index";
 import type { GameEvent, GameState } from "./index";
 import {
+  DEFIANCE_DECK,
   STADIUM_TOOL_DECK,
   activeUid,
   attachFromDeck,
@@ -14,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  setPrizes,
   types,
 } from "./testFixtures";
 
@@ -309,6 +311,64 @@ describe("Vitality Band — +10 damage before Weakness/Resistance", () => {
     const dealt = find(events, "DAMAGE_DEALT");
     // A wrong after-W/R bonus would read 30 × 2 + 10 = 70.
     expect(dealt?.dealt).toBe(80);
+  });
+});
+
+describe("Defiance Band — a CONDITIONAL +30 before W/R (D40's third consumer)", () => {
+  /** DEFIANCE_DECK (not STADIUM_TOOL_DECK) so this suite never perturbs the
+      shared deck's fragile opening-hand seeds. Opens P1's turn 2 (P2 passed). */
+  function defTurn2(seed: number): GameState {
+    const state = driveSetup(seed, { p1: DEFIANCE_DECK, p2: DEFIANCE_DECK }, { first: "p2" });
+    return must(applyAction(state, { type: "endTurn", seat: "p2" }));
+  }
+
+  /** Attacker + Defiance Band attached, ready to attack. `p2Prizes` sets the
+      opponent's remaining Prizes: 6 (level) leaves the condition FALSE, 4 (P2
+      ahead on prizes taken) makes P1 BEHIND, so `morePrizesThanOpponent` holds. */
+  function armed(defenderId: string, p2Prizes: number): GameState {
+    let state = defTurn2(6);
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = setActiveFromDeck(state, "p2", defenderId);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = handFromDeck(state, "p1", "sv01-169", 1);
+    const band = handUid(state, "p1", "sv01-169");
+    state = must(
+      applyAction(state, { type: "attachTool", seat: "p1", uid: band, target: { spot: "active" } }),
+    );
+    return setPrizes(state, "p2", p2Prizes);
+  }
+
+  it("is registered as a conditional pre-W/R bonus keyed on morePrizesThanOpponent", () => {
+    expect(programFor("sv01-169")?.passive?.damageBonusBeforeWRIf).toEqual({
+      amount: 30,
+      cond: { kind: "morePrizesThanOpponent" },
+    });
+  });
+
+  it("adds 30 while the holder is BEHIND on prizes (P1 6 vs P2 4)", () => {
+    const state = armed("fix-wall", 4);
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const dealt = find(events, "DAMAGE_DEALT");
+    expect(dealt?.base).toBe(30);
+    expect(dealt?.bonus).toBe(30); // 30 + 30 = 60
+    expect(dealt?.dealt).toBe(60);
+  });
+
+  it("adds NOTHING when the prize counts are level (the condition is strict)", () => {
+    const state = armed("fix-wall", 6);
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const dealt = find(events, "DAMAGE_DEALT");
+    expect(dealt?.base).toBe(30);
+    expect(dealt?.bonus).toBeUndefined(); // no bonus row emitted
+    expect(dealt?.dealt).toBe(30);
+  });
+
+  it("(30 + 30) × 2 = 120 against a Fire-weak defender — the before-W/R pin", () => {
+    const state = armed("fix-weak", 4);
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const dealt = find(events, "DAMAGE_DEALT");
+    // A wrong after-W/R bonus would read 30 × 2 + 30 = 90.
+    expect(dealt?.dealt).toBe(120);
   });
 });
 

@@ -243,8 +243,26 @@ import type { GameState, Seat } from "./types";
     This IS a rules-surface change (a new way a game can end), hence the minor
     bump; the two reason→prose maps (log.ts `GAME_OVER_REASONS`, the web's
     `GAME_OVER_DETAIL`) became total Records in the same pass, so a future reason
-    is a compile error rather than silently rendering as "the deck ran out". */
-export const engineVersion = "0.41.0";
+    is a compile error rather than silently rendering as "the deck ran out".
+
+    0.42.0 — DEFIANCE BAND (P3-M5, the `conditionalDamageBonus` row). The D40
+    `BoardCondition` vocabulary's third consumer, and its first PASSIVE one — the
+    conditional twin of Vitality Band. `PassiveEffects` gains
+    `damageBonusBeforeWRIf: { amount, cond }` (Tool: "+30 before W/R while you
+    have more Prize cards remaining than your opponent"). continuous.ts stays the
+    single seat-FREE aggregation point, now collecting these gated bonuses RAW in
+    a `conditionalDamageBonusBeforeWR` list; the fold lives in interpreter.ts's
+    new `attackerPreWRBonus`, shared by the two pre-W/R read sites (attack.ts's
+    main hit + `snipeActive`), so the condition is evaluated ONCE beside the sole
+    `conditionHolds` — the only place that knows the attacker's seat, which a
+    BoardCondition is relative to. Kept out of the unconditional
+    `damageBonusBeforeWR` so the defender-reduction / HP reads cannot be credited
+    an attacker's conditional bonus. Reuses `morePrizesThanOpponent` (no new
+    condition), so it is a card row + one new passive field, not a new primitive.
+    No web change (damage bonuses are engine-internal, surfaced only via the
+    `DAMAGE_DEALT` log event). Choice Belt — the row's other card — is a
+    target-type gate ("…Active Pokémon V"), a different shape, left for its slice. */
+export const engineVersion = "0.42.0";
 
 export type {
   ApplyResult,
