@@ -3,7 +3,45 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #77 (**P3-M5 — Prize value: a KO is worth its rule box (§8.1)**).
+**Last updated:** 2026-07-27 — build session #78 (**P3-M5 — the each-of-spread "also" rider: one optional token, Cetoddle authored**).
+The each-of-spread also-rider — "This attack **also** does N damage to each of your opponent's Benched Pokémon." — now SIMULATES,
+landing **Cetoddle sv02-053 "Avalanche"** (30 to the Active, then 10 to each Bench), a real print in the live SV pool
+(tcgdex-confirmed this session). **A one-token deriver relaxation, ZERO new op/interpreter/registry code:** the word "also"
+is made OPTIONAL in the existing `SPREAD_EACH_BENCH` regex (`^This attack (?:also )?does …`), so the rider derives to the
+**same** `spreadDamage` op as the bare "This attack does N …" form. The engine already treats even the bare spread as a
+SECONDARY hit — the main damage rides the attack's own `damage` field — so "also" is pure emphasis, not a second op; a
+separate `ALSO_` twin regex would produce a byte-identical program and was rejected. Unlike the snipe family, where "1 of"
+vs "each of" pick genuinely different ops (`damageChosen` vs `spreadDamage`), here the string AFTER "does" is identical, so
+ONE rule serves both wordings. **A test MOVED, not just added:** `alsoBenchedSnipe.test.ts` had listed this exact "each of"
+text as a `toBeNull()` near-miss (null only because NO reader claimed it); the assertion flipped to "derives to
+`spreadDamage`", preserving its real intent — the single-target snipe reader must never grab a spread. New behaviour pinned
+by a derive assertion on the verbatim Cetoddle text in `knockout.test.ts`; the full §8.5 spread flow (bench W/R, Bouffer
+reduction, bench KO) is already covered by `fix-sniper`'s Spread Shot, so a Cetoddle-deck re-drive of the identical op would
+be redundant. **DEVIATION recorded (D94):** the prior resume point ranked "count-2" FIRST as cheapest, but there is no
+committed card corpus (attack text is fetched from tcgdex at runtime) and the backlog names NO concrete SV card for count-2,
+while it named Cetoddle for this rider — a live tcgdex query confirmed Cetoddle prints the text, so per conventions ("prefer
+the first unless the code tells you otherwise") this session took the candidate with real yield; count-2 stays on the
+backlog as dormant/unverified. **No web/API/DB/schema touch.** engineVersion 0.44.0 → **0.45.0**; 1958 → **1960** tests
+(138 files). `bun run check` green (138 files / 1960 tests). **Self-reviewed, no independent reviewer** — a one-token
+relaxation of a just-verified regex. See D94 + `docs/reference/coverage-backlog.md`.
+**NEXT (resume point):** the each-of-spread "also" rider is DONE (Cetoddle sv02-053 "Avalanche"). **Best next AUTONOMOUS
+slice: continue the P3-M5 card-effect backlog** — see `docs/reference/coverage-backlog.md`. Open candidates:
+- **Umbreon "Feint Attack" no-W/R-on-Active flag** — an `opponentAny` snipe whose damage "isn't affected by Weakness or
+  Resistance"; needs an `ignoreWR` flag on `damageChosen` threaded into `snipeActive`'s W/R math. Its own small slice —
+  touches the damage pipeline, NOT deriver-only. Verify a real consumer against tcgdex first. LOW/MED.
+- **"count-2" snipe** — relax "1 of"→"2 of" in `ALSO_BENCHED_SNIPE` / `CHOSEN_ANY_TARGET` (`damageChosen` already carries
+  `count`; Hawlucha's `count:2` proves the op). **WARNING (D94): zero verifiable real cards** — no committed card corpus,
+  and the backlog names NO concrete SV card for it (unlike Cetoddle for the spread rider). It is a DORMANT
+  family-completeness relaxation like Choice Belt — correct but fires against no known print. Confirm against live tcgdex
+  BEFORE taking it, or take it knowingly as a dormant slice.
+- **Chien-Pao ex "Hail Blade"** — a COMPOUND + PRE-damage park (discard-any-amount → damage scales off the discarded
+  count); its own session, HARDEST of the family.
+The USER-gated P5 items (uploaded avatars, remote P4 deploy — migrations 0004 + 0005) still need the user. See D94 +
+`workstreams/simulator.md`. Below: the P3-M5 Prize-value header (kept for continuity).
+
+---
+### Prior header (P3-M5 — Prize value: a KO is worth its rule box (§8.1), kept for continuity)
+**Last updated (was):** 2026-07-27 — build session #77 (**P3-M5 — Prize value: a KO is worth its rule box (§8.1)**).
 `prizeValueOf` stops returning 1 for every KO — a **VMAX is worth 3 Prizes, any other rule box (ex / V / VSTAR / GX) 2,
 a plain body 1** — closing the correctness gap D92 unlocked and explicitly deferred. **The whole slice is one function
 body + tests.** The class is read off D92's **`pokemonSuffixOf`** (the rule-box marker the printed NAME still carries
@@ -20,7 +58,7 @@ can't mark ex). **No longer dormant against the live SV-era pool, which is full 
 change that actually FIRES in a real game. engineVersion 0.43.0 → **0.44.0**; 1952 → **1958** tests (137 → **138** files).
 `bun run check` green (138 files / 1958 tests). **Self-reviewed, no independent reviewer** — a one-function slice reusing
 D92's just-reviewed `pokemonSuffixOf`. See D93 + `docs/reference/coverage-backlog.md`.
-**NEXT (resume point):** prize value is DONE — every rule-box KO now owes its real Prize count. **Best next AUTONOMOUS
+**NEXT (resume point) (was):** prize value is DONE — every rule-box KO now owes its real Prize count. **Best next AUTONOMOUS
 slice: continue the P3-M5 card-effect backlog** — see `docs/reference/coverage-backlog.md`. Open candidates (cheapest
 first, both deriver-only over EXISTING ops per the Explore map this session made): **"count-2"** — a benched / any-target
 snipe hitting "2 of your opponent's Pokémon", which `damageChosen` already carries `count` for (Hawlucha's `count:2` path)
@@ -4088,6 +4126,21 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-07-27** (build #78) — **P3-M5: the each-of-spread "also" rider — one optional token, Cetoddle authored.**
+  Autoloop iteration. The rider "This attack **also** does N damage to each of your opponent's Benched Pokémon."
+  (Cetoddle sv02-053 "Avalanche" — 30 to the Active, then 10 to each Bench) now simulates. **One-token deriver
+  relaxation, zero new op/interpreter/registry code:** "also" made OPTIONAL in the existing `SPREAD_EACH_BENCH` regex
+  (`^This attack (?:also )?does …`), so it derives to the SAME `spreadDamage` op as the bare form — the main hit rides
+  the attack's `damage` field either way, so "also" is emphasis, not a second op (a twin `ALSO_` regex would be
+  byte-identical and was rejected). **A test moved:** `alsoBenchedSnipe.test.ts` had this exact text as a `toBeNull()`
+  near-miss (null only because no reader claimed it) → flipped to "derives to `spreadDamage`", preserving its intent
+  (the single-target snipe reader must never grab a spread). Pinned by a derive assertion on the verbatim Cetoddle text
+  in `knockout.test.ts`; the §8.5 spread flow is already covered by `fix-sniper`'s Spread Shot. **Deviated from the
+  resume point's "count-2 first" ordering (D94):** no committed card corpus exists (tcgdex is fetched at runtime) and
+  the backlog names NO concrete SV card for count-2, while it named Cetoddle for this rider — a live tcgdex query
+  confirmed Cetoddle's text, so per conventions I took the candidate with real catalog yield; count-2 stays backlogged
+  as dormant/unverified. engine 0.44.0 → **0.45.0**; 1958 → **1960** tests (138 files). `bun run check` green.
+  Self-reviewed. See D94.
 - **2026-07-27** (build #76) — **P3-M5: Choice Belt — the `conditionalDamageBonus` row CLOSED, and a rule-box suffix
   read off the card's NAME.** **This session resumed an interrupted one:** the previous autoloop iteration was cut off
   by a usage limit part-way through this slice — the engine implementation was on disk and complete (cards/continuous/

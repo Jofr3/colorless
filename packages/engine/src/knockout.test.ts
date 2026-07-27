@@ -63,6 +63,18 @@ describe("spreadDamage — the derived spread op", () => {
       ),
     ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 30 }]);
   });
+
+  it("derives the flat 'also' rider (Cetoddle sv02-053 'Avalanche') to the same op", () => {
+    // Avalanche does 30 to the Active (the attack's own `damage` field) THEN
+    // this secondary spread; the "also" is emphasis of the main hit, not a
+    // different op — it derives to the identical `spreadDamage`. Verbatim card
+    // text from the live SV pool, so the deriver reads a real print.
+    expect(
+      deriveAttackEffect(
+        "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 10 }]);
+  });
 });
 
 describe("spread attack damage (§8.5)", () => {

@@ -1084,9 +1084,16 @@ const DEFENDER_POISON_N =
 // Spread damage — the whole effect sentence, with the era's optional
 // "(Don't apply Weakness and Resistance for Benched Pokémon.)" clarifier
 // (§8.5 makes it true regardless). The main numeric damage rides the attack's
-// own `damage` field; this clause is the secondary hit on the Bench.
+// own `damage` field; this clause is the secondary hit on the Bench — so the
+// optional "also" ("This attack ALSO does N …", Cetoddle sv02-053 "Avalanche"
+// after its 30 to the Active) is pure emphasis of that fact and derives to the
+// SAME `spreadDamage` op: the only thing the word marks is that a main hit
+// precedes it, which the `damage` field already carries either way. ONE rule
+// for both wordings, unlike the snipe family where "1 of" vs "each of" pick
+// genuinely different ops (damageChosen vs spreadDamage) — here the shape after
+// "does" is identical, so a separate `ALSO_` regex would be a redundant twin.
 const SPREAD_EACH_BENCH = new RegExp(
-  `^This attack does (\\d+) damage to each of your opponent['’]s Benched Pokémon\\.` +
+  `^This attack (?:also )?does (\\d+) damage to each of your opponent['’]s Benched Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
 // The CHOSEN-single benched hit SCALED by the opponent's taken Prizes — Wo-Chien
@@ -1323,9 +1330,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     ];
   }
 
-  // 6. "This attack does {N} damage to each of your opponent's Benched
+  // 6. "This attack (also) does {N} damage to each of your opponent's Benched
   //    Pokémon." — the spread hit that the M4 KO generalization reaches (a
   //    benched Pokémon can now be Knocked Out). `damage` is HP, not counters.
+  //    The optional "also" rider (Cetoddle sv02-053 "Avalanche" — 30 to the
+  //    Active, then 10 to each Bench) shares this case: the main hit rides the
+  //    attack's `damage` field, this clause is its secondary bench spread.
   match = SPREAD_EACH_BENCH.exec(effect);
   if (match !== null) {
     return [{ op: "spreadDamage", target: "opponentBench", amount: Number(match[1]) }];

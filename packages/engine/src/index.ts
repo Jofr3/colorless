@@ -293,8 +293,20 @@ import type { GameState, Seat } from "./types";
     body, so the whole suite stayed green; the new behaviour is pinned by a new
     prizeValue.test.ts (the KO→count wiring, on a dedicated mulligan-free
     PRIZE_DECK) plus unit cases in cards.test.ts. No longer dormant against the
-    live SV-era pool, which is full of ex Pokémon. No web/API/DB/schema change. */
-export const engineVersion = "0.44.0";
+    live SV-era pool, which is full of ex Pokémon. No web/API/DB/schema change.
+
+    0.45.0 — SPREAD "ALSO" RIDER (P3-M5, the each-of-spread rider). The word
+    "also" is now optional in the `SPREAD_EACH_BENCH` deriver, so "This attack
+    ALSO does N damage to each of your opponent's Benched Pokémon." derives to
+    the SAME `spreadDamage` op as the bare form — Cetoddle sv02-053 "Avalanche"
+    (30 to the Active, then 10 to each Bench), a real print in the live SV pool.
+    A one-token regex relaxation, ZERO new op/interpreter/registry code: the
+    main hit rides the attack's `damage` field either way, so "also" is pure
+    emphasis, not a second op. One rule for both wordings (unlike the snipe
+    family, where "1 of" vs "each of" pick genuinely different ops). Pinned by a
+    derive assertion on the verbatim card text; the full §8.5 spread flow is
+    already covered by fix-sniper's Spread Shot. No web/API/DB/schema change. */
+export const engineVersion = "0.45.0";
 
 export type {
   ApplyResult,

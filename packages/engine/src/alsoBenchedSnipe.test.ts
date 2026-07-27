@@ -81,12 +81,10 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to 1
     ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 60, count: 1, deals: true }]);
   });
 
-  it("REFUSES the near-misses — Flamigo's gate, 'each of', '2 of', 'YOUR', and a 0", () => {
+  it("REFUSES the near-misses — Flamigo's gate, '2 of', 'YOUR', and a 0", () => {
     for (const text of [
       // Flamigo's "Synchronized Feathers" — a leading board-condition gate, off `^This`.
       "If Flamigo is on your Bench, this attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      // The "each of" also-SPREAD rider (all benched) — a different op.
-      "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       // "2 of" — count ≠ 1.
       "This attack also does 20 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       // "1 of YOUR Benched" — a self-target, not the opponent's.
@@ -96,6 +94,19 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to 1
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+  });
+
+  it("hands the 'each of' also-rider to the SPREAD op, not this single-target snipe", () => {
+    // "each of" (all benched) is a different op than "1 of" (one chosen). As of
+    // engine 0.45.0 SPREAD_EACH_BENCH accepts the "also" wording (Cetoddle
+    // sv02-053 "Avalanche"), so this text now DERIVES to `spreadDamage` — it is
+    // no longer a refused near-miss, but it must still never be read as this
+    // reader's `damageChosen` count-1 snipe.
+    expect(
+      deriveAttackEffect(
+        "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 10 }]);
   });
 
   it("does not COLLIDE with Covetous Ivy's Prize-scaled clause — that keeps its perTakenPrize", () => {
