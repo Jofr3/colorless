@@ -946,6 +946,23 @@ on-play/on-evolve *damaging* trigger that KOs mid-turn (needs a multi-Pokémon
 prompt + settleRun sweeping the board after a damaging program). These land with
 Rare Candy and the coverage fan-out.
 
+**Timing #5 — `onDamagedByAttack` (D99, engine 0.50.0).** The FIFTH `TriggerTiming`
+(after `onKnockOut`, D30). Fires when an Active Pokémon is DAMAGED by the main hit
+of an opponent's attack — scanned in attack.ts at the SAME spot D98's `damageAttacker`
+recoil folds (right after `DAMAGE_DEALT`, gated `dealt>0`, main-hit Active only,
+BEFORE finishAttack's §8.1 sweep, so "even if this Pokémon is Knocked Out" is free).
+The scan is a new **`runDamagedByAttackTriggers`** in triggers.ts (mirrors
+`runCheckupTriggers` — **NON-PARKING by construction**, threads state through `.state`;
+`triggersOf` stays module-private). The program runs under the DAMAGED Pokémon's seat,
+so an `applyStatus target:"defender"` op lands on the ATTACKER's Active (`otherSeat`) —
+the Trevenant/Mawile "run on the holder, target the opponent" shape. Representative:
+**Armarouge sv03-044 "Scorching Armor"** (Burn the attacker). `activeOnly:true` carries
+"in the Active Spot" (redundant with the read site, which only ever passes the main-hit
+Active). Deferred on this timing: **Klawf ex sv03-120** ("discard an Energy from the
+Attacking Pokémon") — a §9.4 opponent-side decision that PARKS mid-attacker's-turn, the
+one `onDamagedByAttack` card the non-parking Burn framework does not yet cover. Tests:
+`scorchingArmor.test.ts` (4).
+
 **Verification.** `bun run check` green (tsc + biome + **1019 tests** — 1002 →
 1019: 16 engine `triggered.test.ts` covering each scan point + parking + forced
 auto-resolve + the setup-doesn't-trigger scoping + the Bouffer-counter regression

@@ -362,6 +362,19 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { type: "Ability", name: "Custom Trap", effect: "…put 5 damage counters on the Attacking Pokémon." },
     ],
   }),
+  /** Armarouge (sv03-044) — a Fire body whose registry entry carries the
+      `onDamagedByAttack` TRIGGER "Scorching Armor" (Burn the Attacking Pokémon
+      when this Active is damaged, even if Knocked Out). The Fire attacker's Bite
+      is Colorless, so no Weakness is engaged and the Burn is isolated; 120 HP so
+      a bare Bite (30) leaves it standing (the KO cases pre-damage it). */
+  "sv03-044": battler("sv03-044", {
+    name: "Armarouge",
+    types: ["Fire"],
+    hp: 120,
+    abilities: [
+      { type: "Ability", name: "Scorching Armor", effect: "…the Attacking Pokémon is now Burned." },
+    ],
+  }),
 
   // — M4 slice 3: the persistent-zone cast (real catalog ids so the registry
   //   finds their continuous effects; names are the REAL card names because
@@ -2246,6 +2259,22 @@ export const DAMAGE_ATTACKER_DECK = deckOf({
   "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0)
   "sv01-197": 3, // Vitality Band — the inert Tool for the Custom Trap gate
   "fix-bigbody": 29, // 200 HP neutral Basic — DOMINANT setup + the promote target
+  "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
+});
+
+/** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
+    "Scorching Armor", D99). A DEDICATED deck (the DAMAGE_ATTACKER_DECK is
+    seed-pinned; growing it to hold Armarouge would reshuffle that suite): the
+    plain-damage attacker (fix-attacker's Bite — Colorless {C}, 30, no effect;
+    Yawn at index 2 is the 0-damage status) hits a P2 Active carrying the
+    Scorching Armor trigger, which Burns the ATTACKER. fix-bigbody is the
+    DOMINANT (mulligan-free) Basic + the bench body BOTH sides promote into after
+    a KO. fix-energy pays Bite's {C}. BOTH seats run it so Armarouge can be
+    surgically fielded on P2. */
+export const SCORCHING_ARMOR_DECK = deckOf({
+  "sv03-044": 4, // Armarouge — Scorching Armor (onDamagedByAttack → Burn the attacker)
+  "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0; Yawn = index 2)
+  "fix-bigbody": 40, // 200 HP neutral Basic — DOMINANT setup + the promote target
   "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
 });
 

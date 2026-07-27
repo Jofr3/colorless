@@ -49,8 +49,18 @@ export interface AbilityProgram {
     - `onKnockOut` — this Pokémon was Knocked Out (§8.1, flow.ts KO sweep). It
       fires during the OPPONENT's turn, mid-KO-sweep, which is why the program
       folds through settleProgram with `resumeTail`: a decision PARKS and the
-      sweep RESUMES draining the remaining prize/promotion stages afterwards. */
-export type TriggerTiming = "onPlayToBench" | "onEvolve" | "betweenTurns" | "onKnockOut";
+      sweep RESUMES draining the remaining prize/promotion stages afterwards;
+    - `onDamagedByAttack` — this Pokémon, in the Active Spot, was DAMAGED by the
+      opponent's attack (§9, attack.ts main-hit, even if Knocked Out — the scan
+      runs BEFORE the §8.1 sweep). Fires a reactive program on the ATTACKING
+      Pokémon; NON-PARKING by construction (a Special Condition on the attacker),
+      so it runs inline like `betweenTurns` rather than through settleProgram. */
+export type TriggerTiming =
+  | "onPlayToBench"
+  | "onEvolve"
+  | "betweenTurns"
+  | "onKnockOut"
+  | "onDamagedByAttack";
 
 /** A card's triggered Ability (§9) — one that FIRES on a game event rather than
     being player-activated. The framework runs `program` through the shared
@@ -477,6 +487,31 @@ const TREVENANT: CardProgram = {
       trigger: "betweenTurns",
       activeOnly: true,
       program: [{ op: "damageActive", amount: 10 }],
+    },
+  ],
+};
+
+/** Armarouge (sv03-044) — "Scorching Armor": "If this Pokémon is in the Active
+    Spot and is damaged by an attack from your opponent's Pokémon (even if this
+    Pokémon is Knocked Out), the Attacking Pokémon is now Burned." The general
+    `onDamagedByAttack` trigger the D98 `damageAttacker` passive deliberately did
+    NOT build (that one is flat, program-free counter placement read seat-free;
+    this one runs an EffectOp reactively, which is what TriggeredAbility.program
+    is for). `activeOnly` carries the "in the Active Spot" clause; the trigger
+    program runs under the DAMAGED Pokémon's seat, so `applyStatus target:
+    "defender"` Burns the ATTACKER's Active (otherSeat). Mandatory ("is now
+    Burned"), so no `optional`. attack.ts fires it at the same main-hit spot as
+    the recoil, gated on `dealt > 0`, BEFORE the §8.1 sweep — so "even if Knocked
+    Out" is free (a lethally-damaged Armarouge still Burns the attacker). This is
+    the SV-era Armarouge WITH the ability; sv01-041/-203 (`ARMAROUGE`, "Fire
+    Off") is a different print with a different Ability. */
+const SCORCHING_ARMOR: CardProgram = {
+  triggered: [
+    {
+      name: "Scorching Armor",
+      trigger: "onDamagedByAttack",
+      activeOnly: true,
+      program: [{ op: "applyStatus", target: "defender", status: "burned" }],
     },
   ],
 };
@@ -1748,6 +1783,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)
   "sv01-006": COUNTERATTACK_QUILLS, // Cacturne — Counterattack Quills (same program)
   "sv03-112": STUNFISK, // Stunfisk — Custom Trap (5 counters, only while a Tool is attached)
+  "sv03-044": SCORCHING_ARMOR, // Armarouge — Scorching Armor (onDamagedByAttack → Burn the attacker)
   // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)

@@ -34,6 +34,7 @@ import {
 import { attackerPreWRBonus, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
+import { runDamagedByAttackTriggers } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
 import { isImmobilized, otherSeat, takenPrizes, withActive, withSide } from "./types";
@@ -329,6 +330,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         amount: recoil,
         source: "ability",
       });
+    }
+
+    // §9 reactive status — a defender with an `onDamagedByAttack` triggered
+    // Ability (Armarouge "Scorching Armor") fires a reactive program on the
+    // ATTACKING Pokémon when it is DAMAGED (`dealt > 0`), even if it was Knocked
+    // Out. Like the recoil above this runs BEFORE finishAttack's §8.1 sweep, and
+    // the program runs under the damaged defender's seat so its `applyStatus
+    // target:"defender"` Burns the attacker's Active. `defended` is the damaged
+    // Active defender (the main hit); a benched holder hit by spread does not
+    // react, matching the "in the Active Spot" clause (the read site enforces it).
+    if (dealt > 0) {
+      next = runDamagedByAttackTriggers(next, defenderSeat, defended, events);
     }
   }
 

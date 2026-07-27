@@ -135,3 +135,31 @@ export function runCheckupTriggers(
   }
   return next;
 }
+
+/** Run the `onDamagedByAttack` triggered Abilities of the Active Pokémon that a
+    main-hit attack just DAMAGED (§9, Armarouge "Scorching Armor"). The caller
+    (attack.ts) fires this only when the defender took damage (`dealt > 0`) and
+    only for the Active defender, so the read site already carries the "if this
+    Pokémon is in the Active Spot" clause (`isActive` passed `true`; the
+    ability's own `activeOnly` still gates it for symmetry). It runs BEFORE
+    finishAttack's §8.1 sweep, so "even if this Pokémon is Knocked Out" is free —
+    a lethally-damaged defender still reacts. NON-PARKING by construction (the
+    representative inflicts a Special Condition on the attacker), so state threads
+    straight through like a betweenTurns trigger. The program runs under the
+    DAMAGED Pokémon's seat, so an `applyStatus target:"defender"` op lands on the
+    ATTACKER's Active (`otherSeat`), matching "the Attacking Pokémon is now …". */
+export function runDamagedByAttackTriggers(
+  state: GameState,
+  damagedSeat: Seat,
+  damaged: InPlayPokemon,
+  events: GameEvent[],
+): GameState {
+  const uid = topUid(damaged);
+  if (uid === undefined) return state;
+  let next = state;
+  for (const ability of triggersOf(next, damaged, "onDamagedByAttack", true)) {
+    events.push({ type: "ABILITY_TRIGGERED", seat: damagedSeat, uid, ability: ability.name });
+    next = runProgram(next, ability.program, { seat: damagedSeat, sourceUid: uid }, events).state;
+  }
+  return next;
+}

@@ -375,7 +375,24 @@ import type { GameState, Seat } from "./types";
     strictly the passive's shape (D98). Snipe/spread hits on the Active are a
     documented follow-up (recoil folds only at the §8.5 main hit for now). No
     web/API/DB/schema change. */
-export const engineVersion = "0.49.0";
+
+    /* 0.50.0 — ON DAMAGED BY ATTACK: the general reactive trigger the D98
+    passive deliberately did NOT build (P3-M5, D99). A new `TriggerTiming`
+    `onDamagedByAttack` + a scan point at the SAME attack.ts spot D98's recoil
+    uses (right after DAMAGE_DEALT, gated on `dealt > 0`, main-hit Active only),
+    firing a NON-PARKING reactive program on the ATTACKING Pokémon. Authors
+    Armarouge sv03-044 "Scorching Armor": the damaged Active defender Burns the
+    attacker ("even if this Pokémon is Knocked Out" — the scan precedes the §8.1
+    sweep). Modelled as a `TriggeredAbility` (not a passive like D98) because the
+    effect runs an EffectOp program (`applyStatus`) reactively — exactly what
+    `TriggeredAbility.program` is for; the passive shape carries no program. The
+    program runs under the DAMAGED Pokémon's seat so `applyStatus target:
+    "defender"` lands on the attacker's Active (otherSeat); `activeOnly` carries
+    the "in the Active Spot" clause. triggers.ts `runDamagedByAttackTriggers`
+    threads state straight through like `runCheckupTriggers`. Klawf ex sv03-120
+    (a parking opponent-side Energy discard) still deferred — the remaining
+    onDamagedByAttack card. No web/API/DB/schema change. */
+export const engineVersion = "0.50.0";
 
 export type {
   ApplyResult,

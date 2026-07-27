@@ -3,26 +3,24 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #83 (**P3-M5 — `damageAttacker`: the reactive counters-on-attacker recoil, landed as a defender-side PASSIVE, closing the row 3/3 (D98, engine 0.49.0)**).
-The `damageAttacker` backlog row (Cacnea/Cacturne "Counterattack Quills" 30, Stunfisk "Custom Trap" 50) is **DONE + green in one pass**. **Deviation from the resume point, with a trail (D98):** the resume point named `onDamagedByAttack` first (a trigger framework), but two research sub-agents — a **verbatim D1 query** (the D95/D96/D97 lesson) + an **Explore code-map** — showed the counter-placing subset is NOT a trigger: "if this Pokémon is damaged by an attack, put N damage counters on the Attacking Pokémon" is a **reactive continuous read, the exact shape of `damageReductionAfterWR`**. So it landed as ONE new `PassiveEffects` field `damageAttacker?: {amount, requiresTool?}` — **no new op, TriggerTiming, action, or phase.** continuous.ts sums it seat-free (evaluating Custom Trap's `requiresTool` against the holder's board, so the read site stays a number); attack.ts folds it right after `DAMAGE_DEALT`, placing flat counters (outside the §8.5 W/R pipeline — `COUNTERS_PLACED source:"ability"`) on the attacker's Active when `dealt > 0`. **"Even if this Pokémon is Knocked Out" is FREE** — the placement precedes finishAttack's both-board §8.1 sweep, which then KOs a lethally-retaliated attacker and prizes it to the defender (the confusion-self-KO path already proves the sweep handles a mid-turn attacker KO). **The "in the Active Spot" clause needs no flag** — the READ SITE enforces it (only the main-hit Active defender retaliates; a benched holder hit by spread does not, exactly as printed). Cacnea/Cacturne share one const (byte-identical). **New tests:** `packages/engine/src/damageAttacker.test.ts` (8) — registry amounts + Tool gate; Cacnea's 30 with the exact order (`DAMAGE_DEALT`→`COUNTERS_PLACED`→turn end); Cacturne's shared 30; "even if KO'd" (recoil lands + `COUNTERS_PLACED` before `KNOCKED_OUT`); a lethal recoil KOing the ATTACKER prized to P2 (the read-before-sweep proof); the `dealt>0` gate (Yawn, a 0-damage attack → no recoil); Custom Trap's Tool gate BOTH ways (bare → none, Vitality Band → 50). New fixtures: Cacnea/Cacturne/Stunfisk battlers + `DAMAGE_ATTACKER_DECK`. Passed after **one deck rebalance** (2→4 Cacturne copies — a 60-card deck can prize/draw out a 2-of before surgery fields it). engineVersion 0.48.0 → **0.49.0**; `bun run check` **GREEN: 140 → 141 files, 1985 → 1993 tests**. No web/API/DB/schema touch. **⚠️ `/code-review` STILL NOT RUN** on D96 + D97 + this slice (user-triggered). This supersedes #82 (Psy Purge, D97 — folded into `decisions.md`).
+**Last updated:** 2026-07-27 — build session #84 (**P3-M5 — `onDamagedByAttack`: the general reactive TRIGGER framework, landing Armarouge "Scorching Armor" (Burn the attacker) (D99, engine 0.50.0)**).
+Armarouge **sv03-044** "Scorching Armor" now SIMULATES: "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), the Attacking Pokémon is now Burned." — the general `onDamagedByAttack` TRIGGER D98 deliberately deferred, landed **DONE + VERIFIED + green in one pass**. **Verbatim re-confirmed against the live D1** before authoring (the D95→D98 lesson; the query also enumerated the WHOLE `onDamagedByAttack` family to fix the slice boundary — Cacnea/Cacturne/Stunfisk done by D98's passive, Klawf ex deferred, Fezandipiti sv06.5-073 out of the sv01–sv03 scope + a damage-PREVENTION read). **Modelled as a `TriggeredAbility` on a new `TriggerTiming` `onDamagedByAttack` — NOT a D98-style passive** — because the effect runs an EffectOp program (`applyStatus`) reactively (a passive carries no program). **Framework:** the scan point is the SAME attack.ts spot D98's recoil uses (right after `DAMAGE_DEALT`, gated `dealt>0`, main-hit Active only, BEFORE finishAttack's §8.1 sweep), via a new `runDamagedByAttackTriggers` in triggers.ts (mirrors `runCheckupTriggers` — NON-parking, threads state through `.state`; `triggersOf` stayed module-private). The program runs under the DAMAGED seat so `applyStatus target:"defender"` Burns the ATTACKER's Active (`otherSeat`, the Trevenant/Mawile pattern); `activeOnly:true` carries the "in the Active Spot" clause redundantly with the read site. **"Even if Knocked Out" is FREE** — the trigger precedes the sweep; the KO case PAUSES at `ko:takePrizes` before the Checkup, so the attacker's `burned` flag is observable pre-cure. **Klawf ex sv03-120** (discard an Energy from the attacker — a §9.4 PARKING opponent-side choice) is the ONE remaining `onDamagedByAttack` card, still deferred (needs the parking path, not more timing/scan). **New tests:** `packages/engine/src/scorchingArmor.test.ts` (4) — the registry-authored trigger; Bite 30 → attacker Burned with the exact order `DAMAGE_DEALT`→`ABILITY_TRIGGERED`→`STATUS_APPLIED`; "even if KO'd" (Burn before `KNOCKED_OUT`, flag set pre-Checkup, Armarouge prized to P1); the `dealt>0` gate (Yawn → no trigger, attacker un-Burned). The non-KO Burn asserts via EVENTS (the Checkup coin can cure the flag); the KO case asserts the stable pre-Checkup flag. New fixtures: an Armarouge sv03-044 battler + a DEDICATED `SCORCHING_ARMOR_DECK` (the DAMAGE_ATTACKER_DECK is seed-pinned). engineVersion 0.49.0 → **0.50.0**; `bun run check` **GREEN: 141 → 142 files, 1993 → 1997 tests**. No web/API/DB/schema touch. **⚠️ `/code-review` STILL NOT RUN** on D96 + D97 + D98 + this slice (user-triggered). This supersedes #83 (damageAttacker, D98 — folded into `decisions.md`).
 
-**NEXT (resume point):** `damageAttacker` is **DONE** (D98, `damageAttacker.test.ts`, full `bun run check` green — 141
-files / 1993 tests). **FIRST, if you want it: `/code-review`** — D96, D97 and this D98 slice have had NO independent
-reviewer (together: a new op, an EffectSlot, a DiscardScope, a base-suppression rule, the `cap` field, the index-keyed
-attack seam, and now the `damageAttacker` passive + its after-`DAMAGE_DEALT` recoil hook). USER-triggered — can't be
-launched from the loop. **THEN the P3-M5 backlog continues** (`docs/reference/coverage-backlog.md`). Three op-family
-rows remain; **VERBATIM D1 text for all was fetched this session (below — re-confirm before authoring per the
-D95/D96/D97 lesson, via the local D1 sqlite under `apps/api/.wrangler/state/v3/d1/**.sqlite`, cols
-`abilities_json`/`attacks_json`/`effect`):**
-- **`onDamagedByAttack` (2 cards left — the natural continuation of THIS work).** The general trigger the
-  `damageAttacker` passive deliberately did NOT build, for reactions that are not counter-placement. **Armarouge
-  sv03-044 "Scorching Armor":** "If this Pokémon is in the Active Spot and is damaged by an attack from your
-  opponent's Pokémon (even if this Pokémon is Knocked Out), the Attacking Pokémon is now Burned." — NON-parking
-  (`applyStatus` on the attacker) → the CLEANEST next slice: a new `TriggerTiming` + a scan point at the SAME
-  attack.ts spot D98 added (right after `DAMAGE_DEALT`, `dealt>0`), firing a reactive program on the attacker's
-  Active. **Klawf ex sv03-120 "Counterattacking Pincer":** "…discard an Energy from the Attacking Pokémon." —
-  harder: an OPPONENT-side discard that PARKS (the DEFENDER's controller picks which Energy, mid-attacker's-turn —
-  the §9.4 opponent-decision shape). **Do Armarouge first, defer Klawf ex.**
+**NEXT (resume point):** Armarouge "Scorching Armor" is **DONE** (D99, `scorchingArmor.test.ts`, full `bun run check`
+green — 142 files / 1997 tests, engine 0.50.0). The general `onDamagedByAttack` TRIGGER framework now EXISTS (a new
+`TriggerTiming`, `runDamagedByAttackTriggers` in triggers.ts scanning at the D98 recoil spot after `DAMAGE_DEALT`,
+firing a NON-parking reactive program on the attacker). **FIRST, if you want it: `/code-review`** — D96, D97, D98 and
+this D99 slice have had NO independent reviewer (together: a new op, an EffectSlot, a DiscardScope, a base-suppression
+rule, the `cap` field, the index-keyed attack seam, the `damageAttacker` passive + recoil hook, and now the
+`onDamagedByAttack` TriggerTiming + reactive-status hook). USER-triggered — can't be launched from the loop. **THEN
+the P3-M5 backlog continues** (`docs/reference/coverage-backlog.md`). Three op-family rows remain; re-confirm verbatim
+before authoring per the D95→D99 lesson, via the local D1 sqlite under `apps/api/.wrangler/state/v3/d1/**.sqlite`,
+cols `abilities_json`/`attacks_json`/`effect`:
+- **`onDamagedByAttack` — 1 card left: Klawf ex sv03-120 "Counterattacking Pincer"** ("…discard an Energy from the
+  Attacking Pokémon"). The framework is BUILT (D99); Klawf ex only needs the PARKING path — a §9.4 opponent-side
+  decision (the DEFENDER's controller picks which Energy off the attacker) mid-attacker's-turn, folded through
+  settleProgram from the reactive scan spot. A reactive trigger that PARKS during the OPPONENT's turn is genuinely
+  new (the Burn was non-parking); deferred by D98/D99 as the one card that needs more than the timing.
 - **`disableAbilities` (3 — a continuous ability-lock aura, WIDEST blast radius).** Must gate all THREE ability read
   sites (activated `cardplay.ts:~433`, passive `continuous.ts:~63`, triggered `triggers.ts:~46/59`) AND exempt the
   grant-source. **Klefki sv01-096 "Mischievous Lock":** "As long as this Pokémon is in the Active Spot, Basic Pokémon
@@ -39,12 +37,24 @@ D95/D96/D97 lesson, via the local D1 sqlite under `apps/api/.wrangler/state/v3/d
   hand. Then, that player shuffles their deck." **Town Store sv03-196:** "Once during each player's turn, that player
   may search their deck for a Pokémon Tool card, reveal it, and put it into their hand. Then, that player shuffles
   their deck."
-Recommended order: **Armarouge (`onDamagedByAttack` Burn) → the rest.** Still-open riders: the dormant **"count-2"**
+Recommended order: **either close `onDamagedByAttack` with Klawf ex (a focused parking-path slice) OR open `disableAbilities` (widest coverage, a continuous read like the passives).** Still-open riders: the dormant **"count-2"**
 snipe (D94 warning: no verifiable real card). USER-gated items (uploaded avatars, remote P4 deploy — migrations
 0004 + 0005) still need the user.
-Below: the Psy Purge (#82) and Hail Blade (#81) implementation headers, kept briefly for continuity.
+Below: the damageAttacker (#83), Psy Purge (#82) and Hail Blade (#81) headers, kept briefly for continuity.
 
 ---
+### Superseded header (build #83 — P3-M5 `damageAttacker`, the reactive counters-on-attacker recoil as a defender-side PASSIVE, kept briefly for continuity; full detail in D98)
+The `damageAttacker` backlog row CLOSED 3/3 (Cacnea/Cacturne "Counterattack Quills" 30, Stunfisk "Custom Trap" 50)
+as ONE new `PassiveEffects` field `damageAttacker?: {amount, requiresTool?}` — NOT the `onDamagedByAttack` trigger the
+backlog label named. Two research sub-agents (a verbatim D1 query + an Explore code-map) showed the counter-placing
+subset is a reactive continuous read the exact shape of `damageReductionAfterWR`, so it needed no new op/timing/action:
+continuous.ts sums it seat-free (Custom Trap's `requiresTool` vs the holder's board); attack.ts folds flat counters
+(`COUNTERS_PLACED source:"ability"`, outside the §8.5 W/R pipeline) on the attacker's Active right after `DAMAGE_DEALT`
+when `dealt>0`, BEFORE the §8.1 sweep (so "even if Knocked Out" is free and a lethal recoil KOs the attacker, prized
+to the defender). The "in the Active Spot" clause is enforced by the read site. D99 (above) built the general trigger
+for the genuinely-trigger-shaped cards (Armarouge's Burn; Klawf ex's parking discard still deferred).
+`damageAttacker.test.ts` (8). engine 0.48.0 → 0.49.0; 140 → 141 files, 1985 → 1993 tests.
+
 ### Superseded header (build #82 — P3-M5 Mewtwo VSTAR "Psy Purge", the CAPPED Hail Blade shape + the index-keyed attack seam, kept briefly for continuity; full detail in D97)
 Mewtwo VSTAR **swsh10.5-031** "Psy Purge" ({P}{C}, "90×") now SIMULATES: "Discard **up to 3** Psychic Energy from
 your Pokémon. This attack does 90 damage for each card you discarded in this way." — the "cheap adjacent option"
