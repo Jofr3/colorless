@@ -96,7 +96,7 @@ describe("Chien-Pao ex 'Hail Blade' — the REGISTRY-authored attack", () => {
     // sentence is one the deriver deliberately will not read (a park whose count is
     // a player decision, feeding a scaling clause), so the program is hand-written
     // and the text stays null — the two halves of "registry-authored".
-    expect(programFor("sv02-061")?.attack).toEqual([
+    expect(programFor("sv02-061")?.attack?.[0]).toEqual([
       {
         op: "discardEnergy",
         from: "yours",
@@ -111,7 +111,7 @@ describe("Chien-Pao ex 'Hail Blade' — the REGISTRY-authored attack", () => {
 
   it("every printed sv02-061 id carries it — the reprints are the same card", () => {
     for (const id of ["sv02-061", "sv02-236", "sv02-261", "sv02-274"]) {
-      expect(programFor(id)?.attack).toBeDefined();
+      expect(programFor(id)?.attack?.[0]).toBeDefined();
     }
   });
 });

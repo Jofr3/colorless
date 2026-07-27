@@ -1473,6 +1473,44 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Water", value: "×2" }],
   }),
+  /** The ×2 Psychic witness for Mewtwo VSTAR "Psy Purge" (200 HP survives a
+      1-card 90 × 2 = 180 hit, so the doubling stands alone without a KO). */
+  "fix-psychic-weak": battler("fix-psychic-weak", {
+    hp: 200,
+    retreat: 1,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+  }),
+  /** Mewtwo VSTAR (swsh10.5-031) — a Psychic Stage VSTAR (280 HP) whose registry
+      entry authors "Psy Purge" at INDEX 0 (discard up to 3 {P} → 90× the count,
+      the CAPPED Hail Blade shape) and leaves index-1 "Star Raid" unsimulated.
+      Both attacks carry the VERBATIM print. Placed active in tests via
+      setActiveFromDeck (a VSTAR never STARTS a game), so its non-Basic stage never
+      blocks setup — the deck's fix-bigbody is the mulligan-free starter. Its 280
+      HP survives the max 270 (90 × 3), so it doubles as Psy Purge's own defender. */
+  "swsh10.5-031": battler("swsh10.5-031", {
+    name: "Mewtwo VSTAR",
+    stage: "VSTAR",
+    types: ["Psychic"],
+    hp: 280,
+    retreat: 2,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Psy Purge",
+        damage: "90×",
+        effect:
+          "Discard up to 3 Psychic Energy from your Pokémon. This attack does 90 damage for each card you discarded in this way.",
+      },
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Star Raid",
+        effect:
+          "This attack does 120 damage to each of your opponent's Pokémon V. This damage isn't affected by Weakness or Resistance. (You can't use more than 1 VSTAR Power in a game.)",
+      },
+    ],
+  }),
   /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
       of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
       poisons your own Active if one landed there. */
@@ -2141,6 +2179,22 @@ export const HAIL_BLADE_DECK = deckOf({
   "fix-bigbody": 28, // 200 HP neutral — DOMINANT (mulligan-free) + the plain defender
   "fix-water-energy": 16, // pays {W}{W} and IS the discardable {W}
   "fix-energy": 8, // plain Colorless Basic Energy — never offered by the {W} filter
+});
+
+/** 0.47.0 → 0.48.0: Mewtwo VSTAR "Psy Purge" — the CAPPED Hail Blade shape
+    (discard up to 3 {P} → 90× the count). Mirrors HAIL_BLADE_DECK exactly, one
+    element {P}-flavoured: swsh10.5-031 is BOTH the attacker AND (at 280 HP) the
+    defender that survives the max 270; fix-psychic-weak is the ×2 Psychic witness;
+    fix-bigbody is the DOMINANT Basic (mulligan-free setup + starting Active, since
+    a VSTAR cannot start); fix-psychic-energy is Psy Purge's {P}{C} cost AND its
+    discard fuel; fix-energy is the plain Colorless the `providesEnergy` {P} filter
+    must never offer. */
+export const PSY_PURGE_DECK = deckOf({
+  "swsh10.5-031": 4, // Mewtwo VSTAR — Psy Purge (attacker AND the 280 HP defender)
+  "fix-psychic-weak": 4, // ×2 Psychic, 200 HP — the Weakness the damage doubles into
+  "fix-bigbody": 28, // 200 HP neutral Basic — DOMINANT (mulligan-free) starting Active
+  "fix-psychic-energy": 16, // pays {P}{C} and IS the discardable {P}
+  "fix-energy": 8, // plain Colorless Basic Energy — never offered by the {P} filter
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

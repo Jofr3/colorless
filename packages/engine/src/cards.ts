@@ -95,9 +95,11 @@ export function prizeValueOf(card: Card): number {
     in `name` rather than a lost column. Read LITERALLY: "V" does not match
     "VMAX"/"VSTAR" (each is its own suffix, none a space-then-"V"), which is
     exactly the distinction Choice Belt draws — "…Active Pokémon V" boosts a V,
-    never a VMAX. The current SV-era catalog holds no V/VMAX/VSTAR at all, so
-    Choice Belt's gate is dormant against the live pool and fires only once a
-    prior-era set is ingested; it is correct in both cases. */
+    never a VMAX or VSTAR. The live catalog's Pokémon GO set (swsh10.5) IS an
+    ingested prior-era set — it holds 13 Pokémon V, 2 VMAX and 5 VSTAR — so Choice
+    Belt's gate is LIVE against those V, and Mewtwo VSTAR "Psy Purge" (swsh10.5-031)
+    is the first authored VSTAR (D97). The SV-era sets alone hold none, which is
+    why the gate lay dormant until swsh10.5 was ingested. */
 export type PokemonSuffix = "ex" | "V" | "VMAX" | "VSTAR" | "GX";
 export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   if (card.category !== "Pokemon") return null;

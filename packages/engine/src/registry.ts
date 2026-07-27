@@ -167,9 +167,16 @@ export interface EnergyProgram {
 }
 
 export interface CardProgram {
-  /** Overrides the text-derived attack effect. Unused by the representative
-      set (kept as the `programFor(id).attack ?? derive(text)` seam). */
-  attack?: EffectOp[];
+  /** Registry-authored attack programs, keyed by ATTACK INDEX (the position in
+      the card's printed `attacks` list — the same index the `attack` action
+      carries). A card authors only the attacks whose printed sentence the deriver
+      refuses; the rest fall back to `deriveAttackEffect` (or stay unsimulated).
+      Sits ABOVE the deriver (D8): `programFor(id)?.attack?.[index] ?? derive`.
+      Chien-Pao ex "Hail Blade" (sv02-061 idx 0, D96) was the first; Mewtwo VSTAR
+      "Psy Purge" (swsh10.5-031 idx 0, D97) the second — and the first on a
+      MULTI-attack card, which is WHY this is index-keyed: its idx-1 "Star Raid"
+      must fall through to unsimulated, not inherit Psy Purge's program. */
+  attack?: { readonly [attackIndex: number]: EffectOp[] };
   /** Activated Abilities printed on this card. */
   abilities?: AbilityProgram[];
   /** The Trainer's play effect (Item/Supporter — §7.1/§7.2). */
@@ -271,16 +278,18 @@ const ENERGY_SEARCH: CardProgram = {
     the deriver deliberately refuses (effects.ts). The printed "60×" base is
     suppressed (attack.ts) — the program owns the damage. */
 const CHIEN_PAO: CardProgram = {
-  attack: [
-    {
-      op: "discardEnergy",
-      from: "yours",
-      filter: { kind: "providesEnergy", energyType: "Water" },
-      count: "any",
-      recordAs: "discarded",
-    },
-    { op: "damageDefender", per: 60, count: "discarded" },
-  ],
+  attack: {
+    0: [
+      {
+        op: "discardEnergy",
+        from: "yours",
+        filter: { kind: "providesEnergy", energyType: "Water" },
+        count: "any",
+        recordAs: "discarded",
+      },
+      { op: "damageDefender", per: 60, count: "discarded" },
+    ],
+  },
   abilities: [
     {
       name: "Shivery Chill",
@@ -297,6 +306,31 @@ const CHIEN_PAO: CardProgram = {
       ],
     },
   ],
+};
+
+/** Mewtwo VSTAR (swsh10.5-031) — "Psy Purge" ({P}{C}, "90×"): "Discard up to 3
+    Psychic Energy from your Pokémon. This attack does 90 damage for each card you
+    discarded in this way." The Hail Blade shape one step further: the SAME
+    declinable whole-own-board discard feeding `damageDefender`, but CAPPED at 3
+    (`cap: 3` bounds the `count: "any"` up-to). Registry-authored at INDEX 0 — the
+    deriver refuses the sentence exactly as it does Hail Blade's, and this is the
+    first authored attack on a MULTI-attack card: index 1 "Star Raid" (the VSTAR
+    Power spread onto opponent's Pokémon V) is NOT authored, so it falls through to
+    unsimulated rather than inheriting Psy Purge's program. See D97. */
+const MEWTWO_VSTAR: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "discardEnergy",
+        from: "yours",
+        filter: { kind: "providesEnergy", energyType: "Psychic" },
+        count: "any",
+        cap: 3,
+        recordAs: "discarded",
+      },
+      { op: "damageDefender", per: 90, count: "discarded" },
+    ],
+  },
 };
 
 /** Bouffalant — "Bouffer": "This Pokémon takes 20 less damage from attacks
@@ -1626,6 +1660,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-236": CHIEN_PAO,
   "sv02-261": CHIEN_PAO,
   "sv02-274": CHIEN_PAO,
+  // Mewtwo VSTAR — Psy Purge (registry-authored attack index 0, D97). Three
+  // prints, all identical.
+  "swsh10.5-031": MEWTWO_VSTAR,
+  "swsh10.5-079": MEWTWO_VSTAR,
+  "swsh10.5-086": MEWTWO_VSTAR,
   // Bouffalant — Bouffer (passive)
   "sv03-174": BOUFFALANT,
   // — M4 slice 3: Stadiums + Tools (verified vs local D1 2026-07-18). —

@@ -702,6 +702,12 @@ export type EffectOp =
           today; absent = record nothing, the shape every discard predating this
           parks into. */
       recordAs?: EffectSlot;
+      /** Only meaningful with `count: "any"`: an upper BOUND on the declinable
+          up-to — the printed "up to N" (Mewtwo VSTAR "Psy Purge": discard up to
+          3). Absent = uncapped (0..every match, Chien-Pao ex "Hail Blade"). It
+          narrows ONLY the ceiling: the pick is still 0..min(cap, matches) and
+          still DECLINABLE, so a capped op parks identically to the uncapped one. */
+      cap?: number;
     }
   /** The `opponentEach` sweep, split out so a count cannot ride it: "one from
       EACH" already fixes how many come off (one per Pokémon with a match), and

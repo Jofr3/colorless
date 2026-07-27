@@ -3,7 +3,57 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #81 (**P3-M5 — Chien-Pao ex "Hail Blade" VERIFIED: the behavioural tests D96 landed without, and the full gate D96 never ran**).
+**Last updated:** 2026-07-27 — build session #82 (**P3-M5 — Mewtwo VSTAR "Psy Purge": the CAPPED Hail Blade shape, and the authored-attack seam keyed by attack INDEX (D97, engine 0.48.0)**).
+Mewtwo VSTAR **swsh10.5-031** "Psy Purge" ({P}{C}, "90×") now SIMULATES: "Discard **up to 3** Psychic Energy from
+your Pokémon. This attack does 90 damage for each card you discarded in this way." — the "cheap adjacent option"
+the #81 resume point flagged, and it landed **DONE + VERIFIED + green** in one pass. **Verbatim re-confirmed
+against the live D1 catalog** (all three prints -031/-079/-086 identical) before authoring — the D95/D96 lesson
+held a third time; here the text matched the shorthand, but the DB query is what confirmed the card, its ids, and
+a stale comment (below). **Two small changes on D96's machinery, no new op:** (1) `discardEnergy` gained
+**`cap?: number`** — meaningful only with `count: "any"`, it bounds the declinable up-to BELOW the whole board
+(the printed "up to N"), so the park's `{kind:"upTo", max}` becomes `min(cap, offered)` and `discardNote` prints
+"up to 3 …"; the wire validator (`cardplay.ts` "discard at most N Energy") was ALREADY cap-agnostic, so a smaller
+`max` needed zero wire change. (2) The `programFor(id)?.attack` seam is now **keyed by attack INDEX**
+(`CardProgram.attack: { [attackIndex]: EffectOp[] }`, read as `?.attack?.[index]`) — Mewtwo VSTAR is the first
+authored attack on a MULTI-attack card, and its idx-1 "Star Raid" (a VSTAR Power spread) must NOT inherit Psy
+Purge's discard program, so index-keying is what keeps it unsimulated. Chien-Pao migrated to `{ 0: [...] }` (its
+two `hailBlade.test.ts` assertions updated); the only functional reader was `attack.ts:216`, so the blast radius
+was one line + the type + two assertions. **Stale comment corrected (made reachable by this slice):**
+`cards.ts pokemonSuffixOf` claimed "the current SV-era catalog holds no V/VMAX/VSTAR at all" (Choice Belt
+dormant) — but the live pool's Pokémon GO set (swsh10.5) holds **13 Pokémon V, 2 VMAX, 5 VSTAR** (queried this
+session), so Choice Belt's V-gate is LIVE and Mewtwo VSTAR is the first authored VSTAR. **New tests:**
+`packages/engine/src/psyPurge.test.ts` (11) — authored-at-idx-0-with-cap-3 + idx-1-undefined + all three prints;
+the CAP (park max 3 not 5, the "up to 3" caption, a 4-pick REJECTED by the validator); 90×k scaling
+(3 → **270** survives a 280 HP Mewtwo defender, 1 → 90, decline → 0); **Star Raid idx 1 stays unsimulated** (no
+park, no damage, `ATTACK_EFFECT_SKIPPED` — the index-keying proof); Weakness DOUBLING (90×2=180); and a VSTAR KO
+owing **2 Prizes** (D93 — the first VSTAR the authored pool KOs). New fixtures `fix-psychic-weak`, the
+`swsh10.5-031` Mewtwo VSTAR (both attacks, VERBATIM), `PSY_PURGE_DECK` (mirrors `HAIL_BLADE_DECK`, {P}-flavoured).
+**Every test passed on first run — no behavioural fix.** engineVersion 0.47.0 → **0.48.0**; `bun run check`
+**GREEN: 139 → 140 files, 1974 → 1985 tests** (ran the FULL gate twice, incl. after the comment edit — the D96
+lesson). No web/API/DB/schema touch. **⚠️ `/code-review` STILL NOT RUN** on D96 + this slice (user-triggered).
+This supersedes #81 (Chien-Pao "Hail Blade" VERIFIED — see D96 follow-up in `decisions.md`).
+
+**NEXT (resume point):** Mewtwo VSTAR "Psy Purge" is **DONE + VERIFIED** (D97, `psyPurge.test.ts`, full
+`bun run check` green). The whole energy-discard damage family (Hail Blade + Psy Purge) is now closed for its
+variable-count cards. **FIRST, if you want it: `/code-review`** — D96, the #81 test slice, and this D97 slice have
+had NO independent reviewer, and together they add a new op, an EffectSlot, a DiscardScope, a base-suppression
+rule, the `cap` field, and the index-keyed attack seam. It needs the USER to trigger it. **THEN the P3-M5
+card-effect backlog continues** (`docs/reference/coverage-backlog.md`): open a FRESH op-family row — the four
+top candidates are **`onDamagedByAttack`** (4 cards: Cacnea, Cacturne, Armarouge, Klawf ex — a trigger firing
+when damaged by an attack even if KO'd), **`damageAttacker`** (3: Cacnea, Cacturne, Stunfisk — the rough-skin
+counters-on-attacker, pairs with `onDamagedByAttack` since Cacnea/Cacturne need both), **`stadiumActivatedAbility`**
+(3: Artazon, Mesagoza, Town Store — a "once during each player's turn" Stadium), and **`disableAbilities`**
+(3: Klefki, Spiritomb, Ting-Lu ex — a continuous ability-lock aura). Each is a full new-op slice (op + interpreter
+case + registry rows + tests) unlocking several cards — LARGER than the last few deriver/field riders, so scope for
+a whole session. `onDamagedByAttack` + `damageAttacker` are the natural PAIR (Cacnea/Cacturne want both). Confirm
+each card's VERBATIM text against the live D1 first (the D95/D96/D97 lesson). Still-open riders: the dormant
+**"count-2"** snipe (D94 warning: no verifiable real card). USER-gated items (uploaded avatars, remote P4 deploy —
+migrations 0004 + 0005) still need the user.
+Below: the Chien-Pao ex "Hail Blade" implementation header (kept for continuity).
+
+---
+### Superseded header (build #81 — P3-M5 Chien-Pao ex "Hail Blade" VERIFIED, kept briefly for continuity; full detail in D96 follow-up)
+**Last updated (was):** 2026-07-27 — build session #81.
 The slice the previous session left half-finished is now CLOSED. D96's implementation was typecheck-green and
 existing-suite-green but had **no tests of its own** (the test sub-agent was stopped at the autoloop hard landing),
 so this session wrote **`packages/engine/src/hailBlade.test.ts`** — 10 tests over the seven behaviours the resume
@@ -33,24 +83,8 @@ the printed `{type,value}` row). **But `bun run check` was RED**, and had been s
 was corrected too — that seam is live now. **LESSON: a slice that hard-lands mid-flight must be re-run through
 the FULL gate, not the subset the interrupted session happened to reach.** engineVersion **unchanged at 0.47.0**
 (no engine behaviour changed — tests, fixtures, one lint refactor, two comments). `bun run check` **GREEN:
-138 → 139 files, 1964 → 1974 tests**. `coverage-backlog.md` updated: the Chien-Pao row moved to ✅ with the
-three-gap summary, and a stale parenthetical on Pawmot ex corrected (`opponentAny` has existed since 0.39.0 —
-what still blocks it is the deriver's whole-sentence anchor, not a missing op). No web/API/DB/schema touch.
-**⚠️ `/code-review` STILL NOT RUN** on D96+this slice — it is user-triggered, so it could not be launched from
-here. See D96 + `docs/reference/coverage-backlog.md`.
-**NEXT (resume point):** Chien-Pao ex "Hail Blade" is **DONE and VERIFIED** (impl D96 + `hailBlade.test.ts`,
-full `bun run check` green). **FIRST, if you want it: `/code-review`** — neither D96 nor this test slice had an
-independent reviewer, and D96 is the largest single-slice engine change in a while (a new op, a new EffectSlot,
-a new DiscardScope, a base-suppression rule in attack.ts, and a HUD dialog branch). It needs the USER to trigger
-it. **THEN the P3-M5 card-effect backlog continues** (`docs/reference/coverage-backlog.md`): open a FRESH
-op-family row — `onDamagedByAttack`, `stadiumActivatedAbility`, `disableAbilities` or `damageAttacker` — each
-unlocking several cards as a full new-op slice (op + interpreter case + registry rows + tests). The dormant
-**"count-2"** snipe also remains, with D94's warning intact (no verifiable real card; confirm against live
-tcgdex first or take it knowingly as dormant). A cheap adjacent option now that the machinery exists:
-**Mewtwo VSTAR** is the Hail Blade shape one step further — "Discard **up to 3** … 90 damage for each" needs a
-CAPPED `upTo` where `count: "any"` is 0..all. USER-gated items (uploaded avatars, remote P4 deploy —
-migrations 0004 + 0005) still need the user.
-Below: the Chien-Pao ex "Hail Blade" implementation header (kept for continuity).
+138 → 139 files, 1964 → 1974 tests**. (Its resume point named Mewtwo VSTAR as the cheap next slice — taken in #82
+above.)
 
 ---
 ### Prior header (P3-M5 — Chien-Pao ex "Hail Blade": the variable-count discard that scales damage, the IMPLEMENTATION half, kept for continuity)

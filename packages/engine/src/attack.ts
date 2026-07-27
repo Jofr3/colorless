@@ -210,10 +210,13 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const { base, modifier } = parseAttackDamage(declared.damage);
   const effect = declared.effect ?? null;
   // Registry ABOVE the deriver (D8): an authored attack program wins; else the
-  // text deriver; else null (unsimulated). Chien-Pao ex "Hail Blade" (sv02-061,
-  // D96) is the first attack to take the authored branch — its variable-count
-  // sentence is one the deriver deliberately refuses — so both arms are live.
-  const authored = programFor(attacker.id)?.attack ?? null;
+  // text deriver; else null (unsimulated). Authored programs are keyed by ATTACK
+  // INDEX — a card authors only the attacks whose sentence the deriver refuses,
+  // the rest fall through. Chien-Pao ex "Hail Blade" (sv02-061 idx 0, D96) was
+  // the first; Mewtwo VSTAR "Psy Purge" (swsh10.5-031 idx 0, D97) the second, and
+  // the first on a MULTI-attack card — its idx-1 "Star Raid" must NOT inherit Psy
+  // Purge's program, which is WHY the seam is index-keyed.
+  const authored = programFor(attacker.id)?.attack?.[index] ?? null;
   const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   const program = authored ?? derived;
   // The count-scaling clause reads the SAME effect text but folds into the damage

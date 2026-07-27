@@ -337,8 +337,22 @@ import type { GameState, Seat } from "./types";
     re-enters the W/R math from inside the program, after the choice. Registry-
     AUTHORED (the deriver still refuses the variable-count sentence). No
     web/API/DB/schema change (the HUD's discard dialog gained the upTo/declinable
-    branch). */
-export const engineVersion = "0.47.0";
+    branch).
+
+    0.48.0 — PSY PURGE: the CAPPED Hail Blade shape, and the first authored attack
+    on a MULTI-attack card (P3-M5). Mewtwo VSTAR (swsh10.5-031) "Psy Purge" prints
+    "Discard up to 3 Psychic Energy from your Pokémon. This attack does 90 damage
+    for each card you discarded in this way." — the same declinable whole-board
+    discard → damageDefender as Hail Blade, plus ONE new field: `discardEnergy`
+    gains `cap?: number`, which bounds the `count: "any"` up-to below the whole
+    board (the printed "up to N"; the park's max becomes min(cap, offered), the
+    wire validator rejecting anything over it). And the `programFor(id)?.attack`
+    seam is now keyed by ATTACK INDEX — Psy Purge is authored at index 0 while its
+    index-1 "Star Raid" (a VSTAR Power) falls through to unsimulated, which a
+    single card-level program could not express (D97). No web/API/DB/schema change
+    (swsh10.5 was already ingested; the HUD's existing upTo dialog carries the cap
+    via the smaller scope.max). */
+export const engineVersion = "0.48.0";
 
 export type {
   ApplyResult,

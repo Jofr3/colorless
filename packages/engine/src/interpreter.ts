@@ -860,11 +860,15 @@ function stepOp(
       // identical {W} must offer three pickable rows, not one. The record is
       // filed when the pick resolves (applyChoice), so a decline files nothing.
       if (op.count === "any") {
+        // "up to N" (Mewtwo VSTAR "Psy Purge") bounds the ceiling below the whole
+        // offer; absent a cap it is every offered Energy (Hail Blade "any amount").
+        const max =
+          op.cap !== undefined ? Math.min(op.cap, discardable.length) : discardable.length;
         return {
           park: {
             kind: "discardEnergy",
             discardable,
-            scope: { kind: "upTo", max: discardable.length },
+            scope: { kind: "upTo", max },
             note: discardNote(op),
           },
         };
@@ -3106,10 +3110,13 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
   const noun = energyNoun(op.filter);
   // A numeric count is printed as the bare number ("Discard 2 Energy…"), one as
   // the article ("Discard an Energy…"), and `"any"` as the printed "any amount
-  // of" (Chien-Pao ex "Hail Blade").
+  // of" (Chien-Pao ex "Hail Blade") — or "up to N" when it carries a cap (Mewtwo
+  // VSTAR "Psy Purge": "Discard up to 3 Psychic Energy…").
   const what =
     op.count === "any"
-      ? `any amount of ${noun}`
+      ? op.cap !== undefined
+        ? `up to ${op.cap} ${noun}`
+        : `any amount of ${noun}`
       : typeof op.count === "number" && op.count > 1
         ? `${op.count} ${noun}`
         : `${noun === "Energy" ? "an" : "a"} ${noun}`;
