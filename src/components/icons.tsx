@@ -441,6 +441,17 @@ export function UserIcon(props: IconProps) {
   );
 }
 
+/** Circled "i" — inspect / view a card's full details. */
+export function InfoIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <path d="M12 7.5h.01" />
+    </IconBase>
+  );
+}
+
 /** Three-quarter ring — a "connecting"/loading spinner. Pair with
     `animate-spin` (Tailwind) so it rotates. */
 export function SpinnerIcon(props: IconProps) {

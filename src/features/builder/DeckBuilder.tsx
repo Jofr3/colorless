@@ -35,6 +35,7 @@ import { useCatalogOptions } from "./catalogOptions";
 import type { SaveStatus } from "./deckSaver";
 import { type DeckSnapshot, toSnapshot } from "./deckSnapshot";
 import { useDeckSaver } from "./useDeckSaver";
+import { CardDetailDialog } from "./components/CardDetailDialog";
 import { CardGrid } from "./components/CardGrid";
 import { CoverDialog } from "./components/CoverDialog";
 import { FilterRail } from "./components/FilterRail";
@@ -229,6 +230,11 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [coverOpen, setCoverOpen] = useState(false);
+  // The card whose detail view is open. Kept set through the close (only the
+  // `detailOpen` toggle drives visibility) so the modal's content doesn't blank
+  // out on the way out.
+  const [inspecting, setInspecting] = useState<BuilderCard | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   // Mobile drawers for the rail / deck panel (always-on columns at lg/xl).
   const [railOpen, setRailOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
@@ -582,6 +588,10 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
               remainingOf={remainingOf}
               onAdd={addCard}
               onRemove={removeCard}
+              onInspect={(card) => {
+                setInspecting(card);
+                setDetailOpen(true);
+              }}
               dragActive={dragging}
               onDragStart={(card, e) => startDrag({ card, source: "gallery" }, e)}
               pulse={pulse}
@@ -619,6 +629,8 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
         onChoose={setChosenCover}
         onClose={() => setCoverOpen(false)}
       />
+
+      <CardDetailDialog open={detailOpen} card={inspecting} onClose={() => setDetailOpen(false)} />
 
       {/* Polite live region so screen readers hear each add/remove. */}
       <div aria-live="polite" className="sr-only">

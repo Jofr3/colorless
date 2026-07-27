@@ -126,10 +126,36 @@ P2–P4; tracked here so nothing is forgotten.
   and drops a pin whose card it removes; the editor's `toSnapshot` drops it
   locally too, which is load-bearing — the cover rides the same debounced PATCH
   as the card list, so a self-contradicting body would 400 forever.
-- **Card detail view:** richer card view using tcgdex fields (attacks, abilities,
-  pricing, set/illustrator).
-- **Settings & accessibility:** carry the existing `prefers-reduced-motion`
-  respect through the new surfaces.
+- **Card detail view — DONE 2026-07-27 (P5-8, D88).** A read-only **detail modal**
+  (`src/features/builder/components/CardDetailDialog.tsx`) opened from the deck
+  builder's card grid, hydrating the full `Card` via the already-existing
+  `GET /cards/:id` (`getCard`) — so the whole slice was web-UI; no API/DB/schema/
+  ingest change. Shows the big high-quality scan plus attacks (cost pips + damage
+  + effect), abilities, weakness/resistance/retreat, Trainer/Energy rules text,
+  illustrator, rarity, regulation mark, and `{localId} · {setId}`. **The inspect
+  affordance is a SIBLING of the add button, not a child** — the tile is a
+  `<button>` (click=add, right-click=remove, pointer-down=drag), so a corner info
+  button floats over it at `z-20`, revealed on hover/keyboard-focus, and clicking
+  it opens the modal WITHOUT adding a copy (all three tile gestures untouched).
+  Header name + image come from the seed `BuilderCard` (up instantly) while the
+  body swaps loading→ready as `getCard` resolves, with a `cancelled` flag against
+  stale responses and the seed retained through the close. **Honest about the
+  catalog:** pricing / national-dex number / flavor text are NOT in D1, so the
+  view doesn't show them (and prints the raw set id, no name lookup); every block
+  is guarded so a Trainer/Energy omits what it lacks. **Respects
+  `prefers-reduced-motion`** (`motion-reduce:transition-none`) — the model the
+  older surfaces below still need. Type/cost pips reuse `EnergyGlyph` behind a
+  pure `isGlyphType` guard. 1936 → 1941 tests. Browser-verified end to end
+  (build #72): Absol (Pokémon), Academy at Night (Trainer, Effect-only), high-Q
+  `<img>` naturalWidth=600, info click left the deck count at 0, X/Escape/backdrop
+  all close. **NOTE the schema header (`apps/api/src/db/schema.ts`) documents that
+  pricing / `dexId` / `description` are deliberately unstored** — adding any needs
+  a migration + re-ingest, so a future "richer" detail view would start there.
+- **Reduced-motion audit (open, small):** carry `prefers-reduced-motion` respect
+  through the remaining new P5 surfaces that lack it — `CoverDialog.tsx`
+  (unconditional `hover:scale-[1.03] active:scale-95`), `PlayerAvatar`, and
+  `src/features/settings/**`. The card detail view (P5-8) now models the fix. This
+  is the smallest, lowest-risk remaining P5 item and a good default autonomous pick.
 
 Pull items into an active phase as they become relevant; don't build them ahead
 of the data they need.

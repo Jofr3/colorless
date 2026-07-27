@@ -1,9 +1,9 @@
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { CardImage } from "../../../components/CardImage";
-import { AlertTriangleIcon, DecksIcon } from "../../../components/icons";
+import { AlertTriangleIcon, DecksIcon, InfoIcon } from "../../../components/icons";
 import { useTiltJuice } from "../../../components/useTiltJuice";
 import { cardImageUrl } from "../../../lib/api";
-import { FOCUS_RING_INSET, GLASS_GHOST_BUTTON } from "../../../lib/glass";
+import { FOCUS_RING, FOCUS_RING_INSET, GLASS_GHOST_BUTTON } from "../../../lib/glass";
 import type { BuilderCard } from "../cards";
 
 // The pile cards peek out only their bottom edge, so — like the decks page's
@@ -34,6 +34,8 @@ export interface CardGridProps {
   remainingOf: (card: BuilderCard) => number;
   onAdd: (card: BuilderCard) => void;
   onRemove: (card: BuilderCard) => void;
+  /** Open the rich single-card detail view for this card. */
+  onInspect: (card: BuilderCard) => void;
   /** Suppress the pointer tilt while any drag is in flight. */
   dragActive?: boolean;
   /** Begin a drag of this card (to drop on the deck). */
@@ -44,7 +46,14 @@ export interface CardGridProps {
 
 type TileHandlers = Pick<
   CardGridProps,
-  "countOf" | "remainingOf" | "onAdd" | "onRemove" | "dragActive" | "onDragStart" | "pulse"
+  | "countOf"
+  | "remainingOf"
+  | "onAdd"
+  | "onRemove"
+  | "onInspect"
+  | "dragActive"
+  | "onDragStart"
+  | "pulse"
 >;
 
 function CardTile({
@@ -53,6 +62,7 @@ function CardTile({
   remainingOf,
   onAdd,
   onRemove,
+  onInspect,
   dragActive,
   onDragStart,
   pulse,
@@ -74,7 +84,7 @@ function CardTile({
     });
 
   return (
-    <li className="relative transition-[z-index] hover:z-10">
+    <li className="group relative transition-[z-index] hover:z-10">
       {/* Pile — the copies still available to add, peeking out the bottom as
           card-back edges. */}
       {Array.from({ length: pile }, (_, i) => (
@@ -129,6 +139,19 @@ function CardTile({
           </div>
         </button>
       </div>
+      {/* Inspect affordance — a SIBLING of the add button (never nested; a
+          button inside a button is invalid), floated in the corner above it so
+          its click opens the detail view instead of adding a copy. Subtle by
+          default, revealed on tile hover and on its own keyboard focus; the
+          reveal fade is dropped under prefers-reduced-motion. */}
+      <button
+        type="button"
+        aria-label={`View ${card.name} details`}
+        onClick={() => onInspect(card)}
+        className={`absolute right-1.5 top-1.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white/80 opacity-0 ring-1 ring-inset ring-white/15 backdrop-blur-md transition-opacity hover:bg-black/65 hover:text-white focus-visible:opacity-100 group-hover:opacity-100 motion-reduce:transition-none ${FOCUS_RING}`}
+      >
+        <InfoIcon className="h-4 w-4" />
+      </button>
     </li>
   );
 }

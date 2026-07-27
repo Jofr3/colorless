@@ -3,7 +3,53 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #71 (**verify P5-7 in the browser**). Session #70 shipped P5-7
+**Last updated:** 2026-07-27 — build session #72 (**P5-8 — a card detail view**).
+Cards in the deck builder have only ever been a tile you click to add — there was nowhere to READ a card. This
+adds one: a **card-detail modal** opened from the grid, hydrating the full `Card` (attacks, abilities,
+weakness/resistance/retreat, illustrator, rarity, regulation mark, Trainer/Energy rules text) via the
+already-existing `GET /cards/:id` (`getCard`). The **backend was already complete** — single-card endpoint,
+full `cardSchema`, and a battle-tested `getCard` client — so this is a PURE web-UI slice (no API/DB/schema/
+ingest touch). **Four decisions carry it.** First, **the inspect affordance is a SIBLING of the add button,
+not a child.** The tile is a `<button>` (click adds a copy, right-click removes, pointer-down starts a drag)
+and a button-inside-a-button is invalid HTML, so a corner info button floats OVER the tile at `z-20`, revealed
+on tile hover and on its own keyboard focus, and clicking it opens the modal WITHOUT adding a copy — the three
+existing tile gestures are untouched (browser-verified: Absol stayed at 0 in deck through the info click).
+Second, **two questions, one surface, and the second must never blank the first:** the header name + big image
+come straight from the `BuilderCard` the grid already holds (up the instant the dialog opens) while the body
+swaps loading→ready as `getCard` resolves; a `cancelled` flag drops a stale response so reopening a different
+card can't be clobbered by a slower earlier fetch, and the seed is retained through the close so nothing
+flashes empty on the way out. Third, **the view is honest about what the catalog stores:** pricing,
+national-dex number and flavor text are NOT in D1, so it doesn't pretend to — and the set prints as raw
+`{localId} · {setId}` rather than a name lookup the payload can't back; every block (types/attacks/abilities/
+combat/effect) is guarded so a Trainer or Energy simply omits what it lacks. Fourth, **the new surface respects
+`prefers-reduced-motion`** (the info-button reveal drops its transition under it) — a down-payment on the
+reduced-motion-audit backlog item. Type/cost pips reuse `EnergyGlyph` + `ENERGY_TYPE_META` colours behind a
+pure exported `isGlyphType` guard that falls back to a text chip for type strings outside the ten glyph keys.
+engine RULES UNCHANGED (0.41.0); 1936 → **1941** tests (a jsdom dialog test covering loading/ready/error/close
++ the guard). `bun run check` green (137 files / 1941 tests). Built via sub-agents (Explore scoping +
+general-purpose implementation); the main session reviewed the full diff — **self-reviewed, no independent
+reviewer.** **✅ BROWSER-VERIFIED end to end 2026-07-27 (build #72)** against the real API (web :5173 → API
+:8787): hovering a grid tile faded in a corner circled-i button (opacity 0 by default, so hidden until
+hover/focus); clicking "View Absol details" opened the modal with the name up instantly, then `GET
+/cards/sv06.5-030` (200) filled in Attacks (Darkfall 20+ with effect), Combat (Weakness ×2, Retreat pips) and
+"Illus. rika · 030 · sv06.5", with a **high-quality `<img>` (`naturalWidth=600`) from the R2/tcgdex mirror**
+(`/assets/cards/sv06.5-030/high.webp` 200); the info click did **NOT** add a copy (the tile's "Add Absol"
+stayed 0-in-deck); a Trainer (Academy at Night) refetched to show ONLY its rules Effect — no types/attacks;
+and the X, **Escape** and **backdrop** all closed it. A Bloodmoon Ursaluna screenshot showed the ability +
+attack (cost pips + "100+") + weakness/retreat glyphs rendering legibly over the glass panel. Zero console
+errors; every `GET /cards/:id` + asset returned 200.
+**NEXT (resume point):** P5-8 is done AND browser-verified — pick from the remaining P5 backlog. Best
+autonomous pick: a **reduced-motion audit** across the still-unguarded new P5 surfaces — `CoverDialog.tsx`
+(unconditional `hover:scale-[1.03] active:scale-95`), `PlayerAvatar`, and `src/features/settings/**` — the
+detail view now models the fix (`motion-reduce:transition-none`, no scale under reduced motion); small and
+low-risk. Bigger items still need the USER: **uploaded avatars** (R2 + CSP + **moderation is an unresolved
+product call** — do not build blind), and the remote **P4 deploy**. **Deploy note: migrations 0004 AND 0005
+must be applied remotely** (`db:migrate:remote`). See D88 + `workstreams/polish.md`. Below: the P5-7 header
+(kept for continuity).
+
+---
+### Prior header (P5-7 — a favourite deck a profile pins, browser-verified, kept for continuity)
+**Last updated (was):** 2026-07-27 — build session #71 (**verify P5-7 in the browser**). Session #70 shipped P5-7
 (a favourite deck on your profile) but ran out of budget before driving it live; this session did that
 verification — it passes end to end (see the ✅ in the header below and the session-log entry). The P5-7 build
 header follows.
