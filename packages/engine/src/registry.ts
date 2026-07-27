@@ -127,6 +127,21 @@ export interface PassiveEffects {
       evolves (§8.1), which `evolve` now checks via the mid-turn KO flow (M4
       slice 4 — turn.ts evolve → flow.ts resolveMidTurnKnockOuts). */
   basicHpBonus?: number;
+  /** §9 reactive recoil: when this Pokémon is DAMAGED by an opponent's attack
+      while in the Active Spot, this many HP of damage counters land on the
+      Attacking Pokémon — even if this Pokémon is Knocked Out. attack.ts folds it
+      in right after DAMAGE_DEALT, BEFORE finishAttack's §8.1 both-board sweep, so
+      a lethal retaliation KOs the attacker and is prized to this Pokémon's side.
+      Counterattack Quills (Cacnea/Cacturne, `amount: 30`) fires whenever the
+      Active is damaged; Custom Trap (Stunfisk, `amount: 50` + `requiresTool`)
+      fires only while the holder has a Pokémon Tool attached. The "in the Active
+      Spot" clause is enforced by the READ SITE — only the main-hit Active
+      defender retaliates (a benched holder damaged by spread does not) — so no
+      `activeOnly` flag is needed. Aggregated seat-free by continuous.ts, which
+      evaluates `requiresTool` against the holder's board so the read site stays
+      a plain summed number. (Snipe/spread hits on the Active are a follow-up: the
+      recoil is folded only at the §8.5 main hit for now.) */
+  damageAttacker?: { amount: number; requiresTool?: boolean };
 }
 
 /** A Stadium's continuous effects (§7.3) — applied to BOTH players' boards
@@ -336,6 +351,19 @@ const MEWTWO_VSTAR: CardProgram = {
 /** Bouffalant — "Bouffer": "This Pokémon takes 20 less damage from attacks
     (after applying Weakness and Resistance)." (passive) */
 const BOUFFALANT: CardProgram = { passive: { damageReductionAfterWR: 20 } };
+
+/** Cacnea / Cacturne — "Counterattack Quills": "If this Pokémon is in the Active
+    Spot and is damaged by an attack from your opponent's Pokémon (even if this
+    Pokémon is Knocked Out), put 3 damage counters on the Attacking Pokémon."
+    (passive reactive recoil, §9). Byte-identical on both prints, so one const. */
+const COUNTERATTACK_QUILLS: CardProgram = { passive: { damageAttacker: { amount: 30 } } };
+
+/** Stunfisk — "Custom Trap": "If this Pokémon is in the Active Spot, has a
+    Pokémon Tool attached, and is damaged by an attack from your opponent's
+    Pokémon (even if this Pokémon is Knocked Out), put 5 damage counters on the
+    Attacking Pokémon." — Counterattack Quills with the extra `requiresTool` gate
+    (evaluated in continuous.ts against the holder's board). */
+const STUNFISK: CardProgram = { passive: { damageAttacker: { amount: 50, requiresTool: true } } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -1716,6 +1744,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
   "sv02-150": COPPERAJAH_EX, // Copperajah ex — Bronze Body (−30 after W/R)
   "sv01-121": STONJOURNER, // Stonjourner — Exoskeleton (−20 after W/R)
+  // — M5 op-slice: damageAttacker reactive recoil (verified vs the live D1 2026-07-27). —
+  "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)
+  "sv01-006": COUNTERATTACK_QUILLS, // Cacturne — Counterattack Quills (same program)
+  "sv03-112": STUNFISK, // Stunfisk — Custom Trap (5 counters, only while a Tool is attached)
   // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)

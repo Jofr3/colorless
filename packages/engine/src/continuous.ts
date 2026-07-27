@@ -57,6 +57,11 @@ export function passivesOf(
       `pokemonSuffixOf(defenderCard)` in `attackerPreWRBonus`. */
   targetConditionalDamageBonusBeforeWR: { amount: number; targetSuffix: PokemonSuffix }[];
   hpBonus: number;
+  /** §9 reactive recoil placed on the ATTACKER when this Pokémon is damaged by
+      an attack while Active (Counterattack Quills / Custom Trap) — summed HP.
+      `requiresTool` is evaluated HERE against the holder's board (this function
+      has the Pokémon), so the attack.ts read site stays a plain number. */
+  damageAttacker: number;
 } {
   const top = topCardOf(state, pokemon);
   const sources: (PassiveEffects | undefined)[] = [
@@ -67,9 +72,11 @@ export function passivesOf(
     }),
   ];
   const isBasic = top !== undefined && isBasicPokemon(top);
+  const hasTool = pokemon.tools.length > 0;
   let damageReductionAfterWR = 0;
   let damageBonusBeforeWR = 0;
   let hpBonus = 0;
+  let damageAttacker = 0;
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
   const targetConditionalDamageBonusBeforeWR: {
     amount: number;
@@ -84,6 +91,8 @@ export function passivesOf(
     if (passive.damageBonusBeforeWRIfTarget !== undefined)
       targetConditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIfTarget);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
+    if (passive.damageAttacker !== undefined && (passive.damageAttacker.requiresTool !== true || hasTool))
+      damageAttacker += passive.damageAttacker.amount;
   }
   return {
     damageReductionAfterWR,
@@ -91,6 +100,7 @@ export function passivesOf(
     conditionalDamageBonusBeforeWR,
     targetConditionalDamageBonusBeforeWR,
     hpBonus,
+    damageAttacker,
   };
 }
 

@@ -352,7 +352,30 @@ import type { GameState, Seat } from "./types";
     single card-level program could not express (D97). No web/API/DB/schema change
     (swsh10.5 was already ingested; the HUD's existing upTo dialog carries the cap
     via the smaller scope.max). */
-export const engineVersion = "0.48.0";
+
+    /* 0.49.0 — DAMAGE ATTACKER: the reactive counters-on-attacker recoil, as a
+    defender-side PASSIVE rather than a trigger (P3-M5, D98). The whole
+    `damageAttacker` backlog row (Cacnea sv01-005 / Cacturne sv01-006
+    "Counterattack Quills", 30; Stunfisk sv03-112 "Custom Trap", 50) lands as one
+    new `PassiveEffects` field `damageAttacker?: {amount, requiresTool?}`. It is
+    read exactly like `damageReductionAfterWR` — another reactive continuous value
+    folded at damage time — so "if this Pokémon is damaged by an attack, put N
+    damage counters on the Attacking Pokémon" needs NO new op, trigger timing,
+    action, or phase. continuous.ts sums it seat-free (evaluating Custom Trap's
+    `requiresTool` against the holder's board, so the read site stays a number);
+    attack.ts folds it right after DAMAGE_DEALT, placing flat counters (outside
+    the §8.5 W/R pipeline, the confusion-self-hit / damageSelf model) on the
+    Attacking Pokémon when `dealt > 0`. "Even if this Pokémon is Knocked Out" is
+    FREE: the placement precedes finishAttack's both-board §8.1 sweep, which then
+    KOs a lethally-retaliated attacker and prizes it to the defender. The "in the
+    Active Spot" clause is enforced by the READ SITE — only the main-hit Active
+    defender retaliates (a benched holder hit by spread does not). Chosen over the
+    general `onDamagedByAttack` trigger framework (which Armarouge's Burn and Klawf
+    ex's parking Energy-discard still need) because the counter-placing subset is
+    strictly the passive's shape (D98). Snipe/spread hits on the Active are a
+    documented follow-up (recoil folds only at the §8.5 main hit for now). No
+    web/API/DB/schema change. */
+export const engineVersion = "0.49.0";
 
 export type {
   ApplyResult,

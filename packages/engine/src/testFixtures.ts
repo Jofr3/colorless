@@ -329,6 +329,40 @@ export const FIXTURE_POOL: Record<string, Card> = {
     attacks: [{ cost: ["Colorless", "Colorless"], name: "Damage Rush", damage: "50+" }],
   }),
 
+  /** Cacnea / Cacturne — Grass bodies whose registry entry carries the passive
+      "Counterattack Quills" (§9 reactive recoil: 3 damage counters on the
+      Attacking Pokémon when the Active is damaged, even if Knocked Out). No Fire
+      weakness on the fixtures, so the Fire attacker's Bite lands a clean 30 and
+      the recoil math is isolated from the §8.5 pipeline. */
+  "sv01-005": battler("sv01-005", {
+    name: "Cacnea",
+    types: ["Grass"],
+    hp: 60,
+    abilities: [
+      { type: "Ability", name: "Counterattack Quills", effect: "…put 3 damage counters on the Attacking Pokémon." },
+    ],
+  }),
+  "sv01-006": battler("sv01-006", {
+    name: "Cacturne",
+    types: ["Grass"],
+    hp: 130,
+    abilities: [
+      { type: "Ability", name: "Counterattack Quills", effect: "…put 3 damage counters on the Attacking Pokémon." },
+    ],
+  }),
+  /** Stunfisk — a Fighting body whose registry passive "Custom Trap" is the
+      Counterattack Quills variant gated on a Pokémon Tool being attached (5
+      counters). No weakness on the fixture — the recoil and its Tool gate are
+      what's under test. */
+  "sv03-112": battler("sv03-112", {
+    name: "Stunfisk",
+    types: ["Fighting"],
+    hp: 120,
+    abilities: [
+      { type: "Ability", name: "Custom Trap", effect: "…put 5 damage counters on the Attacking Pokémon." },
+    ],
+  }),
+
   // — M4 slice 3: the persistent-zone cast (real catalog ids so the registry
   //   finds their continuous effects; names are the REAL card names because
   //   the §7.3 same-name rule compares names, not ids). —
@@ -2195,6 +2229,24 @@ export const PSY_PURGE_DECK = deckOf({
   "fix-bigbody": 28, // 200 HP neutral Basic — DOMINANT (mulligan-free) starting Active
   "fix-psychic-energy": 16, // pays {P}{C} and IS the discardable {P}
   "fix-energy": 8, // plain Colorless Basic Energy — never offered by the {P} filter
+});
+
+/** 0.48.0 → 0.49.0: the `damageAttacker` reactive-recoil row. A plain-damage
+    attacker (fix-attacker's Bite — Colorless {C}, 30, no effect) hits a P2 Active
+    that carries the recoil passive: Cacnea/Cacturne "Counterattack Quills" (30)
+    or Stunfisk "Custom Trap" (50, only while a Tool is attached — Vitality Band
+    is the inert Tool, since a non-attacking Stunfisk never fires its +10).
+    fix-bigbody is the DOMINANT (mulligan-free) Basic + the bench body BOTH sides
+    promote into after a KO. fix-energy pays Bite's {C}. BOTH seats run it so the
+    defender can be surgically fielded on P2. */
+export const DAMAGE_ATTACKER_DECK = deckOf({
+  "sv01-005": 4, // Cacnea — Counterattack Quills (30 recoil)
+  "sv01-006": 4, // Cacturne — Counterattack Quills (same 30)
+  "sv03-112": 4, // Stunfisk — Custom Trap (50 recoil, requires a Tool)
+  "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0)
+  "sv01-197": 3, // Vitality Band — the inert Tool for the Custom Trap gate
+  "fix-bigbody": 29, // 200 HP neutral Basic — DOMINANT setup + the promote target
+  "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

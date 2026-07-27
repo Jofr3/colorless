@@ -287,7 +287,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       0,
       applyDamageModifier(applyDamageModifier(scaledBase + scaled + bonus, weakness), resistance),
     );
-    const reduction = passivesOf(next, defender).damageReductionAfterWR;
+    const defenderPassives = passivesOf(next, defender);
+    const reduction = defenderPassives.damageReductionAfterWR;
     const dealt = Math.max(0, afterWR - reduction);
     defended = { ...defender, damage: defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
@@ -306,6 +307,29 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       dealt,
       damage: defended.damage,
     });
+
+    // §9 reactive recoil — a defender with Counterattack Quills / Custom Trap
+    // (the `damageAttacker` passive) puts damage counters on the Attacking
+    // Pokémon when it is DAMAGED (`dealt > 0`), even if it was Knocked Out: this
+    // runs BEFORE finishAttack's both-board §8.1 sweep (below, or in the
+    // attackEpilogue after the program), so a lethal retaliation KOs the attacker
+    // and is prized to the defender's side. Flat counters OUTSIDE the §8.5
+    // pipeline (no Weakness/Resistance) — the confusion-self-hit / damageSelf
+    // model. The attacker is this seat's Active (attacks come from the Active,
+    // and its own effect program has not run yet); `active` is unchanged in
+    // `next`, which only updated the rngState + the defender's side.
+    const recoil = defenderPassives.damageAttacker;
+    if (dealt > 0 && recoil > 0) {
+      const retaliated = { ...active, damage: active.damage + recoil };
+      next = withActive(next, action.seat, retaliated);
+      events.push({
+        type: "COUNTERS_PLACED",
+        seat: action.seat,
+        uid: attackerUid,
+        amount: recoil,
+        source: "ability",
+      });
+    }
   }
 
   // §8 step 4 — the effect program runs AFTER the damage, in printed order: a

@@ -3,7 +3,49 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #82 (**P3-M5 — Mewtwo VSTAR "Psy Purge": the CAPPED Hail Blade shape, and the authored-attack seam keyed by attack INDEX (D97, engine 0.48.0)**).
+**Last updated:** 2026-07-27 — build session #83 (**P3-M5 — `damageAttacker`: the reactive counters-on-attacker recoil, landed as a defender-side PASSIVE, closing the row 3/3 (D98, engine 0.49.0)**).
+The `damageAttacker` backlog row (Cacnea/Cacturne "Counterattack Quills" 30, Stunfisk "Custom Trap" 50) is **DONE + green in one pass**. **Deviation from the resume point, with a trail (D98):** the resume point named `onDamagedByAttack` first (a trigger framework), but two research sub-agents — a **verbatim D1 query** (the D95/D96/D97 lesson) + an **Explore code-map** — showed the counter-placing subset is NOT a trigger: "if this Pokémon is damaged by an attack, put N damage counters on the Attacking Pokémon" is a **reactive continuous read, the exact shape of `damageReductionAfterWR`**. So it landed as ONE new `PassiveEffects` field `damageAttacker?: {amount, requiresTool?}` — **no new op, TriggerTiming, action, or phase.** continuous.ts sums it seat-free (evaluating Custom Trap's `requiresTool` against the holder's board, so the read site stays a number); attack.ts folds it right after `DAMAGE_DEALT`, placing flat counters (outside the §8.5 W/R pipeline — `COUNTERS_PLACED source:"ability"`) on the attacker's Active when `dealt > 0`. **"Even if this Pokémon is Knocked Out" is FREE** — the placement precedes finishAttack's both-board §8.1 sweep, which then KOs a lethally-retaliated attacker and prizes it to the defender (the confusion-self-KO path already proves the sweep handles a mid-turn attacker KO). **The "in the Active Spot" clause needs no flag** — the READ SITE enforces it (only the main-hit Active defender retaliates; a benched holder hit by spread does not, exactly as printed). Cacnea/Cacturne share one const (byte-identical). **New tests:** `packages/engine/src/damageAttacker.test.ts` (8) — registry amounts + Tool gate; Cacnea's 30 with the exact order (`DAMAGE_DEALT`→`COUNTERS_PLACED`→turn end); Cacturne's shared 30; "even if KO'd" (recoil lands + `COUNTERS_PLACED` before `KNOCKED_OUT`); a lethal recoil KOing the ATTACKER prized to P2 (the read-before-sweep proof); the `dealt>0` gate (Yawn, a 0-damage attack → no recoil); Custom Trap's Tool gate BOTH ways (bare → none, Vitality Band → 50). New fixtures: Cacnea/Cacturne/Stunfisk battlers + `DAMAGE_ATTACKER_DECK`. Passed after **one deck rebalance** (2→4 Cacturne copies — a 60-card deck can prize/draw out a 2-of before surgery fields it). engineVersion 0.48.0 → **0.49.0**; `bun run check` **GREEN: 140 → 141 files, 1985 → 1993 tests**. No web/API/DB/schema touch. **⚠️ `/code-review` STILL NOT RUN** on D96 + D97 + this slice (user-triggered). This supersedes #82 (Psy Purge, D97 — folded into `decisions.md`).
+
+**NEXT (resume point):** `damageAttacker` is **DONE** (D98, `damageAttacker.test.ts`, full `bun run check` green — 141
+files / 1993 tests). **FIRST, if you want it: `/code-review`** — D96, D97 and this D98 slice have had NO independent
+reviewer (together: a new op, an EffectSlot, a DiscardScope, a base-suppression rule, the `cap` field, the index-keyed
+attack seam, and now the `damageAttacker` passive + its after-`DAMAGE_DEALT` recoil hook). USER-triggered — can't be
+launched from the loop. **THEN the P3-M5 backlog continues** (`docs/reference/coverage-backlog.md`). Three op-family
+rows remain; **VERBATIM D1 text for all was fetched this session (below — re-confirm before authoring per the
+D95/D96/D97 lesson, via the local D1 sqlite under `apps/api/.wrangler/state/v3/d1/**.sqlite`, cols
+`abilities_json`/`attacks_json`/`effect`):**
+- **`onDamagedByAttack` (2 cards left — the natural continuation of THIS work).** The general trigger the
+  `damageAttacker` passive deliberately did NOT build, for reactions that are not counter-placement. **Armarouge
+  sv03-044 "Scorching Armor":** "If this Pokémon is in the Active Spot and is damaged by an attack from your
+  opponent's Pokémon (even if this Pokémon is Knocked Out), the Attacking Pokémon is now Burned." — NON-parking
+  (`applyStatus` on the attacker) → the CLEANEST next slice: a new `TriggerTiming` + a scan point at the SAME
+  attack.ts spot D98 added (right after `DAMAGE_DEALT`, `dealt>0`), firing a reactive program on the attacker's
+  Active. **Klawf ex sv03-120 "Counterattacking Pincer":** "…discard an Energy from the Attacking Pokémon." —
+  harder: an OPPONENT-side discard that PARKS (the DEFENDER's controller picks which Energy, mid-attacker's-turn —
+  the §9.4 opponent-decision shape). **Do Armarouge first, defer Klawf ex.**
+- **`disableAbilities` (3 — a continuous ability-lock aura, WIDEST blast radius).** Must gate all THREE ability read
+  sites (activated `cardplay.ts:~433`, passive `continuous.ts:~63`, triggered `triggers.ts:~46/59`) AND exempt the
+  grant-source. **Klefki sv01-096 "Mischievous Lock":** "As long as this Pokémon is in the Active Spot, Basic Pokémon
+  in play (both yours and your opponent's) have no Abilities, except for Mischievous Lock." **Spiritomb sv02-089
+  "Fettered in Misfortune":** "Basic Pokémon V in play (both yours and your opponent's) have no Abilities." (Two
+  Spiritomb exist — only sv02-089 is the lock; sv01-129 is NOT.) **Ting-Lu ex sv02-127 (+-243/-263/-275) "Cursed
+  Land":** "As long as this Pokémon is in the Active Spot, your opponent's Pokémon in play that have any damage
+  counters on them have no Abilities, except for Pokémon ex."
+- **`stadiumActivatedAbility` (3 — BIGGEST: a new action + per-PLAYER once-per-turn allowance, not the per-ability
+  `abilitiesUsed` key).** A "once during each player's turn" Stadium. **Artazon sv02-171/sv03-229:** "Once during each
+  player's turn, that player may search their deck for a Basic Pokémon that doesn't have a Rule Box and put it onto
+  their Bench. Then, that player shuffles their deck." **Mesagoza sv01-178:** "Once during each player's turn, that
+  player may flip a coin. If heads, that player searches their deck for a Pokémon, reveals it, and puts it into their
+  hand. Then, that player shuffles their deck." **Town Store sv03-196:** "Once during each player's turn, that player
+  may search their deck for a Pokémon Tool card, reveal it, and put it into their hand. Then, that player shuffles
+  their deck."
+Recommended order: **Armarouge (`onDamagedByAttack` Burn) → the rest.** Still-open riders: the dormant **"count-2"**
+snipe (D94 warning: no verifiable real card). USER-gated items (uploaded avatars, remote P4 deploy — migrations
+0004 + 0005) still need the user.
+Below: the Psy Purge (#82) and Hail Blade (#81) implementation headers, kept briefly for continuity.
+
+---
+### Superseded header (build #82 — P3-M5 Mewtwo VSTAR "Psy Purge", the CAPPED Hail Blade shape + the index-keyed attack seam, kept briefly for continuity; full detail in D97)
 Mewtwo VSTAR **swsh10.5-031** "Psy Purge" ({P}{C}, "90×") now SIMULATES: "Discard **up to 3** Psychic Energy from
 your Pokémon. This attack does 90 damage for each card you discarded in this way." — the "cheap adjacent option"
 the #81 resume point flagged, and it landed **DONE + VERIFIED + green** in one pass. **Verbatim re-confirmed
@@ -32,24 +74,6 @@ owing **2 Prizes** (D93 — the first VSTAR the authored pool KOs). New fixtures
 **GREEN: 139 → 140 files, 1974 → 1985 tests** (ran the FULL gate twice, incl. after the comment edit — the D96
 lesson). No web/API/DB/schema touch. **⚠️ `/code-review` STILL NOT RUN** on D96 + this slice (user-triggered).
 This supersedes #81 (Chien-Pao "Hail Blade" VERIFIED — see D96 follow-up in `decisions.md`).
-
-**NEXT (resume point):** Mewtwo VSTAR "Psy Purge" is **DONE + VERIFIED** (D97, `psyPurge.test.ts`, full
-`bun run check` green). The whole energy-discard damage family (Hail Blade + Psy Purge) is now closed for its
-variable-count cards. **FIRST, if you want it: `/code-review`** — D96, the #81 test slice, and this D97 slice have
-had NO independent reviewer, and together they add a new op, an EffectSlot, a DiscardScope, a base-suppression
-rule, the `cap` field, and the index-keyed attack seam. It needs the USER to trigger it. **THEN the P3-M5
-card-effect backlog continues** (`docs/reference/coverage-backlog.md`): open a FRESH op-family row — the four
-top candidates are **`onDamagedByAttack`** (4 cards: Cacnea, Cacturne, Armarouge, Klawf ex — a trigger firing
-when damaged by an attack even if KO'd), **`damageAttacker`** (3: Cacnea, Cacturne, Stunfisk — the rough-skin
-counters-on-attacker, pairs with `onDamagedByAttack` since Cacnea/Cacturne need both), **`stadiumActivatedAbility`**
-(3: Artazon, Mesagoza, Town Store — a "once during each player's turn" Stadium), and **`disableAbilities`**
-(3: Klefki, Spiritomb, Ting-Lu ex — a continuous ability-lock aura). Each is a full new-op slice (op + interpreter
-case + registry rows + tests) unlocking several cards — LARGER than the last few deriver/field riders, so scope for
-a whole session. `onDamagedByAttack` + `damageAttacker` are the natural PAIR (Cacnea/Cacturne want both). Confirm
-each card's VERBATIM text against the live D1 first (the D95/D96/D97 lesson). Still-open riders: the dormant
-**"count-2"** snipe (D94 warning: no verifiable real card). USER-gated items (uploaded avatars, remote P4 deploy —
-migrations 0004 + 0005) still need the user.
-Below: the Chien-Pao ex "Hail Blade" implementation header (kept for continuity).
 
 ---
 ### Superseded header (build #81 — P3-M5 Chien-Pao ex "Hail Blade" VERIFIED, kept briefly for continuity; full detail in D96 follow-up)
