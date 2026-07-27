@@ -20,7 +20,7 @@ import { and, eq } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import type { z } from "zod";
-import { oauthIdentities, sessions, users } from "../db/schema";
+import { decks, oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
 import { avatarSeedOf } from "./avatar";
 import {
@@ -69,6 +69,10 @@ function mapUserRow(row: UserRow): User {
     // Derived, never stored (P5-2): the same token the lobby broadcasts for
     // this account, so a player's profile draws the face opponents see.
     avatarSeed: avatarSeedOf(row.id),
+    // The stored CHOICE (P5-7), just the id — /settings resolves its cover +
+    // name from GET /decks. The FK's SET NULL guarantees a non-null id is a
+    // live deck of this account's.
+    favouriteDeckId: row.favouriteDeckId,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -151,6 +155,7 @@ authRoutes.post(
       displayName: body.displayName ?? body.email.split("@")[0] ?? body.email,
       passwordHash: await hashPassword(body.password),
       emailVerified: false,
+      favouriteDeckId: null,
       createdAt: new Date(),
     };
     const session = await newSession(row.id);
@@ -225,14 +230,47 @@ authRoutes.patch(
   ),
   async (c) => {
     const row = c.get("user");
-    const { displayName } = c.req.valid("json");
+    const { displayName, favouriteDeckId } = c.req.valid("json");
+    const db = drizzle(c.env.DB);
+
+    const changes: Partial<Pick<UserRow, "displayName" | "favouriteDeckId">> = {};
+    if (displayName !== row.displayName) {
+      changes.displayName = displayName;
+    }
+    // The favourite (P5-7). Absent (undefined) leaves it untouched; null clears
+    // it; a non-null id must be one of the CALLER'S OWN decks — anyone else's or
+    // a phantom is a 400, not a row that would resolve to nothing on the
+    // profile. An UNCHANGED non-null id skips the check: the FK's ON DELETE SET
+    // NULL means it can't have gone stale under us.
+    if (favouriteDeckId !== undefined && favouriteDeckId !== row.favouriteDeckId) {
+      if (favouriteDeckId !== null) {
+        const owned = await db
+          .select({ id: decks.id })
+          .from(decks)
+          .where(and(eq(decks.id, favouriteDeckId), eq(decks.userId, row.id)))
+          .get();
+        if (owned === undefined) {
+          return c.json({ error: "favourite deck not found" }, 400);
+        }
+      }
+      changes.favouriteDeckId = favouriteDeckId;
+    }
+
     // No write when nothing changed: the form disables Save in that case, but
     // the route is the api, and a re-submit shouldn't cost a D1 write.
-    if (displayName !== row.displayName) {
-      await drizzle(c.env.DB).update(users).set({ displayName }).where(eq(users.id, row.id));
+    if (Object.keys(changes).length > 0) {
+      await db.update(users).set(changes).where(eq(users.id, row.id));
     }
     // The updated row, not a re-read: this session owns the only change.
-    return c.json(userSchema.parse(mapUserRow({ ...row, displayName })));
+    return c.json(
+      userSchema.parse(
+        mapUserRow({
+          ...row,
+          displayName,
+          favouriteDeckId: favouriteDeckId === undefined ? row.favouriteDeckId : favouriteDeckId,
+        }),
+      ),
+    );
   },
 );
 
@@ -372,6 +410,7 @@ async function findOrCreateOAuthUser(
     displayName: profile.displayName,
     passwordHash: null,
     emailVerified: profile.emailVerified,
+    favouriteDeckId: null,
     createdAt: new Date(),
   };
   await db.batch([

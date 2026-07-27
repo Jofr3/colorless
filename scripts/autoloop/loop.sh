@@ -57,7 +57,7 @@ EFFORT="${AUTOLOOP_EFFORT:-}"
 # that gets stuck retrying will keep spending: a session told to do something it
 # cannot do was measured burning 93 turns before it was killed. Set either to ""
 # to uncap, but do that with your eyes open.
-BUDGET_USD="${AUTOLOOP_BUDGET_USD-8}"
+BUDGET_USD="${AUTOLOOP_BUDGET_USD-15}"
 ITER_TIMEOUT="${AUTOLOOP_TIMEOUT-5400}"      # wall-clock seconds per iteration
 STOP_FILE="$ROOT/tmp/autoloop-stop"   # gitignored: a signal to you, not a commit
 WAIT_FOR_RESET="${AUTOLOOP_WAIT_FOR_RESET:-1}"

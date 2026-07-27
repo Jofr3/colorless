@@ -23,6 +23,31 @@ const renderSection = () =>
 const nameField = () => screen.getByLabelText("Display name") as HTMLInputElement;
 const saveButton = () => screen.getByRole("button", { name: "Save" }) as HTMLButtonElement;
 
+// The profile form loads my library for the favourite-deck picker (P5-7); every
+// form-rendering test stubs those two GETs so the picker settles deterministically.
+const DECK = {
+  id: "deck-1",
+  name: "Rain Dance",
+  folderId: null,
+  format: "standard",
+  tint: 210,
+  position: 0,
+  updated: "2026-01-01T00:00:00.000Z",
+  cardCount: 60,
+  coverCardId: "sv06.5-001",
+};
+const LIBRARY_STUBS = {
+  "GET /decks": () => json([DECK]),
+  "GET /folders": () => json([]),
+};
+
+/** The body of the (single) PATCH /auth/me call, found by method so the
+    library GETs the form fires on mount don't shift a positional index. */
+function patchBody(impl: { mock: { calls: unknown[][] } }) {
+  const call = impl.mock.calls.find((c) => (c[1] as RequestInit | undefined)?.method === "PATCH");
+  return JSON.parse(String((call?.[1] as RequestInit).body));
+}
+
 const rename = (value: string) => {
   fireEvent.change(nameField(), { target: { value } });
   fireEvent.click(saveButton());
@@ -45,6 +70,7 @@ describe("ProfileSection", () => {
   it("seeds the field with the current name and saves a trimmed new one", async () => {
     const { impl } = stubFetch({
       "GET /auth/me": () => json(USER),
+      ...LIBRARY_STUBS,
       "PATCH /auth/me": () => json({ ...USER, displayName: "Ashley" }),
     });
     renderSection();
@@ -53,15 +79,38 @@ describe("ProfileSection", () => {
     rename("  Ashley  ");
 
     await screen.findByText("Saved.");
-    const [, init] = impl.mock.calls[1] as [unknown, RequestInit];
-    expect(JSON.parse(String(init.body))).toEqual({ displayName: "Ashley" });
+    // Favourite rides the same body, unchanged (null) here.
+    expect(patchBody(impl)).toEqual({ displayName: "Ashley", favouriteDeckId: null });
     // Saving again is refused until the name changes again — the api's answer
     // became the current user, so the field now matches it.
     expect(saveButton().disabled).toBe(true);
   });
 
+  it("saves a chosen favourite deck alongside the name", async () => {
+    const { impl } = stubFetch({
+      "GET /auth/me": () => json(USER),
+      ...LIBRARY_STUBS,
+      "PATCH /auth/me": () => json({ ...USER, favouriteDeckId: "deck-1" }),
+    });
+    renderSection();
+
+    await waitFor(() => expect(nameField().value).toBe("Ash"));
+    // The picker enables once the library lands, then offers the deck by name.
+    const picker = (await screen.findByLabelText("Favourite deck")) as HTMLSelectElement;
+    await waitFor(() => expect(picker.disabled).toBe(false));
+    fireEvent.change(picker, { target: { value: "deck-1" } });
+    // A favourite change alone (name untouched) is enough to enable Save.
+    expect(saveButton().disabled).toBe(false);
+    fireEvent.click(saveButton());
+
+    await screen.findByText("Saved.");
+    expect(patchBody(impl)).toEqual({ displayName: "Ash", favouriteDeckId: "deck-1" });
+    // The api's answer became "me", so re-choosing the same deck can't re-save.
+    expect(saveButton().disabled).toBe(true);
+  });
+
   it("refuses to save a blank or unchanged name", async () => {
-    stubFetch({ "GET /auth/me": () => json(USER) });
+    stubFetch({ "GET /auth/me": () => json(USER), ...LIBRARY_STUBS });
     renderSection();
 
     // Freshly loaded: the field holds the saved name, so there is nothing to save.
@@ -75,7 +124,7 @@ describe("ProfileSection", () => {
   });
 
   it("draws the account's own generated face beside the field", async () => {
-    stubFetch({ "GET /auth/me": () => json(USER) });
+    stubFetch({ "GET /auth/me": () => json(USER), ...LIBRARY_STUBS });
     renderSection();
 
     // The avatar is the lobby's component fed the account's seed — its initial
@@ -88,6 +137,7 @@ describe("ProfileSection", () => {
   it("explains a rejected name without losing what was typed", async () => {
     stubFetch({
       "GET /auth/me": () => json(USER),
+      ...LIBRARY_STUBS,
       "PATCH /auth/me": () => json({ error: "invalid body" }, 400),
     });
     renderSection();
@@ -103,6 +153,7 @@ describe("ProfileSection", () => {
     let sessionAlive = true;
     stubFetch({
       "GET /auth/me": () => (sessionAlive ? json(USER) : json({ error: "unauthorized" }, 401)),
+      ...LIBRARY_STUBS,
       "PATCH /auth/me": () => {
         sessionAlive = false;
         return json({ error: "unauthorized" }, 401);

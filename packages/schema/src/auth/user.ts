@@ -15,6 +15,12 @@ export const userSchema = z.object({
       the face a player sees on their own profile is the face opponents see.
       Sent rather than derived client-side on purpose: one hash, one place. */
   avatarSeed: z.string(),
+  /** The account's chosen favourite deck (P5-7), or null. Just the deck's ID —
+      NOT its name or cover: /settings resolves those from the caller's own
+      GET /decks list, so a rename or a re-cover is never stale here. A non-null
+      id always points at a real deck of the caller's — the DB column's
+      ON DELETE SET NULL nulls it the moment that deck is deleted. */
+  favouriteDeckId: z.string().nullable(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   createdAt: z.iso.datetime(),
 });

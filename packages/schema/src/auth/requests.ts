@@ -34,5 +34,10 @@ export type LoginRequest = z.infer<typeof loginRequestSchema>;
     the lobby would fall back to a generated "Player 4271" handle (P5-1). */
 export const updateProfileRequestSchema = z.object({
   displayName: z.string().trim().min(1).max(64),
+  /** Your favourite deck (P5-7): one of your OWN decks — the api 400s an id
+      that isn't yours — or null to clear it. ABSENT (undefined) leaves it
+      unchanged, so a name-only save need not carry it, and older clients keep
+      working. */
+  favouriteDeckId: z.string().nullable().optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;

@@ -3,7 +3,38 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-26 — build session #69 (**P5-6 — a deck cover you choose**).
+**Last updated:** 2026-07-27 — build session #70 (**P5-7 — a favourite deck on your profile**).
+P5-5 gave /settings a Profile section (name + generated face); P5-6 gave a deck the cover art it's fronted
+with. This joins them: an account PINS one of its **own** decks as its favourite and sees that deck's cover +
+name on /settings. A nullable **`users.favourite_deck_id`** (migration **0005**) the Profile form sets,
+surfaced as **`userSchema.favouriteDeckId`** — just the ID. **Three choices carry it.** First, **the profile
+stores only the id, not the deck's name or cover:** /settings resolves those from the caller's OWN `GET /decks`
+list, so a rename or a re-cover shows through with no stale copy and a favourite whose deck has vanished
+resolves to a blank tile — the same "derive on read, tolerate stale" the covers themselves use. Second, **a
+favourite must be one of YOUR decks:** `PATCH /auth/me` (schema now carries an OPTIONAL nullable
+`favouriteDeckId` — absent leaves it, null clears it, a string is validated against your decks) 400s
+`favourite deck not found` for anyone else's id or a phantom, so the account can never point at a deck it
+doesn't own. Third, **the FK is `ON DELETE SET NULL`**, so deleting a favourited deck clears the pin instead
+of blocking the delete (a RESTRICT FK) or dangling a stale id — D1 enforces FKs here (the deck DELETE leans on
+deck_cards' cascade), and drizzle-kit drops the referential action on an ADD COLUMN so 0005 restores it by
+hand. The picker is a native `<select>` (keyboard/screen-reader friendly, reduced-motion-safe) in the SAME
+form as the name, riding ONE PATCH — name + favourite save together, and the provider adopts the answer so the
+corner control follows. The users↔decks mutual reference needed an `AnySQLiteColumn` annotation to break the
+TS type cycle. engine RULES UNCHANGED (0.41.0); 1932 → **1936** tests. `bun run check` green. Built solo with
+full context; **self-reviewed, no independent reviewer this session; NOT browser-verified this session
+(budget)** — covered instead by a new DOM round-trip test (enable picker → select a deck → Save → asserts the
+PATCH body `{displayName, favouriteDeckId}` and the post-save disabled state) plus schema-level unit tests for
+the optional/nullable field and the userSchema shape.
+**NEXT (resume point):** FIRST browser-verify this slice next session (pin a deck on /settings, confirm the
+cover + name render, save persists through a reload, delete that deck elsewhere and confirm the pin clears).
+Then the remaining P5 backlog — uploaded avatars (R2 + CSP + moderation, the biggest item; the moderation
+approach is an unresolved product call), a card detail view, or a reduced-motion audit — or the remote P4
+deploy, which still needs the user. **Deploy note: migrations 0004 AND 0005 must be applied remotely**
+(`db:migrate:remote`). See D87 + `workstreams/polish.md`. Below: the P5-6 header (kept for continuity).
+
+---
+### Prior header (P5-6 — a deck cover you choose, kept for continuity)
+**Last updated (was):** 2026-07-26 — build session #69 (**P5-6 — a deck cover you choose**).
 P5-3 fronted every deck with its highest-HP Pokémon and said outright that the proper answer was letting the
 owner pick. This is that pick: a nullable `decks.cover_card_id` (migration **0004**) the editor sets, and a
 pure **`effectiveCoverCardId(chosen, candidates)`** the list query runs — **the pin wins, everything else

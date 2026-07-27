@@ -9,7 +9,15 @@
 // forgotten insert value can never produce a row without a timestamp.
 
 import { sql } from "drizzle-orm";
-import { foreignKey, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  type AnySQLiteColumn,
+  foreignKey,
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 import { cards } from "./catalog";
 
 /** DB-side default for epoch-ms timestamp columns. */
@@ -22,6 +30,17 @@ export const users = sqliteTable("users", {
   /** Null for OAuth-only accounts (§3.5: password and OAuth can coexist). */
   passwordHash: text("password_hash"),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+  /** The account's chosen favourite deck (P5-7), or null. References `decks`
+      below via a thunk (forward reference) so file order stays users→decks; the
+      `AnySQLiteColumn` return type breaks the type cycle the mutual reference
+      would otherwise create (users↔decks). ON DELETE SET NULL means deleting the
+      deck clears the favourite instead of blocking the delete (a RESTRICT FK) or
+      dangling a stale id — and D1 enforces FKs here (the deck DELETE leans on
+      deck_cards' cascade). NB: drizzle-kit omits the referential action on an
+      ADD COLUMN, so migration 0005 restores `ON DELETE SET NULL` by hand. */
+  favouriteDeckId: text("favourite_deck_id").references((): AnySQLiteColumn => decks.id, {
+    onDelete: "set null",
+  }),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(nowMs),
 });
 

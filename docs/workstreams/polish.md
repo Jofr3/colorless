@@ -69,7 +69,18 @@ P2–P4; tracked here so nothing is forgotten.
   Browser-verified across two clients: "Brock" → "Pewter Brock" updated the
   initial, the corner control and the OPPONENT's player panel, with a
   byte-identical gradient throughout (the seed is the id, not the name).
-  **Still open: a favourite deck** on the profile, and the uploads below.
+  **FAVOURITE DECK — DONE 2026-07-27 (P5-7, D87):** an account pins one of its
+  **own** decks as its favourite (nullable `users.favourite_deck_id`, migration
+  `0005`, surfaced as `userSchema.favouriteDeckId` — just the ID) and sees that
+  deck's cover + name on /settings via a native `<select>` that rides the SAME
+  PATCH as the name. `PATCH /auth/me` takes an OPTIONAL nullable `favouriteDeckId`
+  (absent leaves it, null clears it, a string is validated against the caller's
+  decks → 400 `favourite deck not found`), the profile stores only the id and
+  resolves the cover/name from the caller's own `GET /decks` (derive-on-read,
+  tolerate stale — like the covers), and the FK is `ON DELETE SET NULL` so
+  deleting the deck clears the pin. NOT browser-verified this session (budget) —
+  covered by a DOM round-trip test + schema units; verify next session.
+  **Still open: the uploads below.**
 - **Avatars:** upload/choose an avatar → stored in R2, served from our domain;
   update CSP accordingly. The settings surface P5-2 said this needed now exists
   (the Profile section above), so what's left is genuinely the R2 + CSP +

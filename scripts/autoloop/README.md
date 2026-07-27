@@ -60,7 +60,7 @@ account.
 | `AUTOLOOP_MAX_ITERATIONS` | `8` | Sessions per run |
 | `AUTOLOOP_CONTEXT_WINDOW` | auto | Resolved from the model in your settings — `1000000` if it carries `[1m]`, else `200000`. The banner prints which and why; override if it guesses wrong |
 | `AUTOLOOP_SOFT_PCT` / `_HARD_PCT` | `60` / `78` | Land-the-session thresholds |
-| `AUTOLOOP_BUDGET_USD` | `8` | Per-iteration cap on *estimated equivalent* cost — see Billing (`""` = uncapped) |
+| `AUTOLOOP_BUDGET_USD` | `15` | Per-iteration cap on *estimated equivalent* cost — see Billing (`""` = uncapped) |
 | `AUTOLOOP_TIMEOUT` | `5400` | Per-iteration wall clock, seconds (`""` = none) |
 | `AUTOLOOP_WAIT_FOR_RESET` | `1` | On hitting a usage limit, sleep until the window reopens instead of halting |
 | `AUTOLOOP_MAX_WAIT` | `21600` | Longest sleep it will take — 6h rides out a five-hour window, not a weekly one |
