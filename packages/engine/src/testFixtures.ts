@@ -229,6 +229,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 120,
     weaknesses: [{ type: "Fire", value: "+20" }],
   }),
+  /** A Pokémon V — `pokemonSuffixOf` reads the "V" off the NAME (fixtures
+      default `name` to their id, so the id-named defenders above are non-V).
+      Choice Belt's +30 target for the "is a V" arm. */
+  "fix-pokemon-v": battler("fix-pokemon-v", { name: "Fixmon V", hp: 210 }),
+  /** A Pokémon V that is ALSO Fire-weak — pins Choice Belt's +30 lands BEFORE
+      W/R: (30 + 30) × 2 = 120, where an after-W/R fold reads 30 × 2 + 30 = 90. */
+  "fix-pokemon-v-weak": battler("fix-pokemon-v-weak", {
+    name: "Weakmon V",
+    hp: 210,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+  }),
+  /** A Pokémon VMAX — its name ends in "VMAX", not " V", so Choice Belt's "V"
+      gate must NOT fire on it (the whole point of reading the suffix literally). */
+  "fix-pokemon-vmax": battler("fix-pokemon-vmax", { name: "Fixmon VMAX", hp: 330 }),
   /** hp printed as 0 — a catalog data gap schema/ingest let through, read as
       null by hpOf: never KO'd (a KO requires printed hp > 0). */
   "fix-zero-hp": battler("fix-zero-hp", { hp: 0 }),
@@ -331,6 +345,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "sv01-169": trainerCard("sv01-169", "Tool", "If you have more Prize cards remaining than your opponent, the attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."),
   /** Bravery Charm — Tool: the Basic holder gets +50 HP. */
   "sv02-173": trainerCard("sv02-173", "Tool", "The Basic Pokémon this card is attached to gets +50 HP."),
+  /** Choice Belt — Tool: +30 before W/R vs a defending Pokémon V. */
+  "sv02-176": trainerCard("sv02-176", "Tool", "The attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon V (before applying Weakness and Resistance)."),
 
   // — M4 slice 5: Special Energy (real catalog ids so the registry finds their
   //   EnergyProgram; names are the REAL names, though provision keys on the id). —
@@ -1646,6 +1662,21 @@ export const DEFIANCE_DECK = deckOf({
   "fix-wall": 4,
   "fix-weak": 4,
   "sv01-169": 6,
+  "fix-energy": 16,
+});
+
+/** M5 (Choice Belt): a DEDICATED 60, same reasoning as DEFIANCE_DECK. All-Basic
+    bodies (fix-attacker) make setup mulligan-free; the defenders the tests set
+    as P2's Active are fix-pokemon-v / fix-pokemon-v-weak (Pokémon V), a plain
+    fix-wall (non-V) and fix-pokemon-vmax (a VMAX the "V" gate must skip); sv02-176
+    is the Tool, fix-energy pays the cost — all pulled post-setup by id. */
+export const CHOICE_DECK = deckOf({
+  "fix-attacker": 28,
+  "fix-pokemon-v": 4,
+  "fix-pokemon-v-weak": 2,
+  "fix-pokemon-vmax": 2,
+  "fix-wall": 2,
+  "sv02-176": 6,
   "fix-energy": 16,
 });
 

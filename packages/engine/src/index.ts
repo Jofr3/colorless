@@ -261,8 +261,25 @@ import type { GameState, Seat } from "./types";
     condition), so it is a card row + one new passive field, not a new primitive.
     No web change (damage bonuses are engine-internal, surfaced only via the
     `DAMAGE_DEALT` log event). Choice Belt — the row's other card — is a
-    target-type gate ("…Active Pokémon V"), a different shape, left for its slice. */
-export const engineVersion = "0.42.0";
+    target-type gate ("…Active Pokémon V"), a different shape, left for its slice.
+
+    0.43.0 — CHOICE BELT (P3-M5, the `conditionalDamageBonus` row's 2nd and last
+    card). The target-gated twin of Vitality Band: +30 before W/R, but only when
+    the DEFENDER is a Pokémon V. `PassiveEffects` gains a sibling field
+    `damageBonusBeforeWRIfTarget: { amount, targetSuffix }`, aggregated seat-free
+    by continuous.ts into a new `targetConditionalDamageBonusBeforeWR` list and
+    folded at the two pre-W/R read sites via the SAME `attackerPreWRBonus`, which
+    now also takes the `defenderCard` (both the main hit and `snipeActive` had it
+    in hand). The "is a Pokémon V" test needs no schema/ingest/DB change: the
+    suffix tcgdex drops at ingest is ALSO printed in the card NAME, which IS
+    persisted, so a new `cards.ts pokemonSuffixOf` derives it from `name`,
+    reading "V" LITERALLY (a VMAX/VSTAR defender is untouched). The current
+    SV-era pool holds no Pokémon V, so the gate is dormant against the live
+    catalog and correct — it fires once a prior-era set is ingested. Distinct
+    from Defiance Band's field because the gate reads the DEFENDER, not the
+    attacker's board, so it is NOT the D40 `BoardCondition` vocabulary. No
+    web/API/DB/schema change (damage bonuses stay engine-internal). */
+export const engineVersion = "0.43.0";
 
 export type {
   ApplyResult,
@@ -301,6 +318,7 @@ export {
   isEnergyCard,
   isSpecialEnergy,
   parseAttackDamage,
+  pokemonSuffixOf,
   prizeValueOf,
   resistanceOf,
   retreatCostOf,
@@ -308,7 +326,7 @@ export {
   topUid,
   weaknessOf,
 } from "./cards";
-export type { DamageModifier, ParsedDamage } from "./cards";
+export type { DamageModifier, ParsedDamage, PokemonSuffix } from "./cards";
 export {
   effectiveAttackCost,
   effectiveMaxHp,

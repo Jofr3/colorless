@@ -71,12 +71,36 @@ export function attacksOf(card: Card): readonly Attack[] {
 }
 
 /** Prizes the KOing player takes for this Pokémon (§8.1). SHOULD be 2 for an
-    ex/V/GX rule box and 3 for VMAX — but the canonical Card carries no
-    suffix/rule-box field (tcgdex's `suffix: "ex"` is dropped at ingest), so
-    every KO is worth 1 until ingest persists it. The single point of change
-    once the column lands; the M2 prize flow already takes `count` prizes. */
+    ex/V/GX rule box and 3 for VMAX — every KO is worth 1 until the prize-count
+    change is worth its blast radius (it ripples through the win condition and
+    almost every KO test). `pokemonSuffixOf` below now supplies the exact
+    classification this wants, read off the same persisted datum, so this is a
+    one-line change (`pokemonSuffixOf(card) === null ? 1 : …`) when we take it. */
 export function prizeValueOf(_card: Card): number {
   return 1;
+}
+
+/** The printed rule-box SUFFIX of a Pokémon — the "V" / "VMAX" / "VSTAR" /
+    "ex" / "GX" marker following the species name — or null for a plain Pokémon
+    or a non-Pokémon. tcgdex drops its dedicated `suffix` field at ingest, but
+    the marker is ALSO part of the card NAME (a Pokémon V is literally printed
+    "<Species> V"), and the name IS persisted — so the datum survives, encoded
+    in `name` rather than a lost column. Read LITERALLY: "V" does not match
+    "VMAX"/"VSTAR" (each is its own suffix, none a space-then-"V"), which is
+    exactly the distinction Choice Belt draws — "…Active Pokémon V" boosts a V,
+    never a VMAX. The current SV-era catalog holds no V/VMAX/VSTAR at all, so
+    Choice Belt's gate is dormant against the live pool and fires only once a
+    prior-era set is ingested; it is correct in both cases. */
+export type PokemonSuffix = "ex" | "V" | "VMAX" | "VSTAR" | "GX";
+export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
+  if (card.category !== "Pokemon") return null;
+  const { name } = card;
+  if (name.endsWith(" VMAX")) return "VMAX";
+  if (name.endsWith(" VSTAR")) return "VSTAR";
+  if (name.endsWith(" V")) return "V";
+  if (name.endsWith(" ex")) return "ex";
+  if (name.endsWith(" GX")) return "GX";
+  return null;
 }
 
 /** What one attached Energy card provides toward a cost (§6.3). Catalog

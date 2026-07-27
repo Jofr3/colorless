@@ -8,6 +8,7 @@ import {
   retreatCostOf,
   topCardOf,
 } from "./cards";
+import type { PokemonSuffix } from "./cards";
 import type { BoardCondition } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
@@ -50,6 +51,11 @@ export function passivesOf(
       the defender-reduction / HP reads, which never look at either, can't be
       accidentally credited an attacker's conditional bonus. */
   conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[];
+  /** Pre-W/R bonuses gated on the DEFENDER's rule-box suffix (Choice Belt),
+      collected RAW like the board-condition list above: the defender is not a
+      seat and this aggregation has none, so the read sites fold them via
+      `pokemonSuffixOf(defenderCard)` in `attackerPreWRBonus`. */
+  targetConditionalDamageBonusBeforeWR: { amount: number; targetSuffix: PokemonSuffix }[];
   hpBonus: number;
 } {
   const top = topCardOf(state, pokemon);
@@ -65,15 +71,27 @@ export function passivesOf(
   let damageBonusBeforeWR = 0;
   let hpBonus = 0;
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
+  const targetConditionalDamageBonusBeforeWR: {
+    amount: number;
+    targetSuffix: PokemonSuffix;
+  }[] = [];
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
+    if (passive.damageBonusBeforeWRIfTarget !== undefined)
+      targetConditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIfTarget);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
   }
-  return { damageReductionAfterWR, damageBonusBeforeWR, conditionalDamageBonusBeforeWR, hpBonus };
+  return {
+    damageReductionAfterWR,
+    damageBonusBeforeWR,
+    conditionalDamageBonusBeforeWR,
+    targetConditionalDamageBonusBeforeWR,
+    hpBonus,
+  };
 }
 
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus

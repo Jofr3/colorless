@@ -268,7 +268,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // fires whenever the (multiply-adjusted) base OR the scaling clause does
     // damage. `scaledBase` is `base` except for a multiply clause, whose printed
     // "N×" base is the per-unit already inside `scaled` — so it is 0 here.
-    const bonus = attackerPreWRBonus(next, active, action.seat);
+    const bonus = attackerPreWRBonus(next, active, action.seat, defenderCard);
     const weakness = weaknessOf(attacker, defenderCard);
     const resistance = resistanceOf(attacker, defenderCard);
     const afterWR = Math.max(

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { energyProvidesOf, hpOf, parseAttackDamage, resistanceOf, weaknessOf } from "./index";
+import {
+  energyProvidesOf,
+  hpOf,
+  parseAttackDamage,
+  pokemonSuffixOf,
+  resistanceOf,
+  weaknessOf,
+} from "./index";
 import { basicEnergy, battler, typedEnergy } from "./testFixtures";
 
 // Unit coverage for the card accessors' PARSERS — the name/value formats the
@@ -89,5 +96,28 @@ describe("parseAttackDamage", () => {
     // The fallback must be TOTAL: "30\n×" flags a modifier rather than
     // silently parsing as 0 damage.
     expect(parseAttackDamage("30\n×")).toEqual({ base: 30, modifier: "×" });
+  });
+});
+
+describe("pokemonSuffixOf", () => {
+  it("reads the printed rule-box suffix off the NAME (the datum ingest keeps)", () => {
+    // tcgdex's dedicated `suffix` field is dropped at ingest, but the marker is
+    // also part of the printed name — which IS persisted.
+    expect(pokemonSuffixOf(battler("x", { name: "Mewtwo V" }))).toBe("V");
+    expect(pokemonSuffixOf(battler("x", { name: "Mewtwo VMAX" }))).toBe("VMAX");
+    expect(pokemonSuffixOf(battler("x", { name: "Arceus VSTAR" }))).toBe("VSTAR");
+    expect(pokemonSuffixOf(battler("x", { name: "Charizard ex" }))).toBe("ex");
+    expect(pokemonSuffixOf(battler("x", { name: "Pikachu GX" }))).toBe("GX");
+  });
+
+  it("matches LITERALLY — each suffix is its own, and a plain body is null", () => {
+    // The distinction Choice Belt draws: it boosts a V, never a VMAX/VSTAR.
+    // Case and word-boundary matter, so "Vaporeon" is not a V and the
+    // capital-E "EX" of the old print is not the modern lowercase "ex".
+    expect(pokemonSuffixOf(battler("x", { name: "Vaporeon" }))).toBeNull();
+    expect(pokemonSuffixOf(battler("x", { name: "Mew" }))).toBeNull();
+    expect(pokemonSuffixOf(battler("x", { name: "Gardevoir EX" }))).toBeNull();
+    // Non-Pokémon never carry one, whatever their name ends in.
+    expect(pokemonSuffixOf(basicEnergy("e"))).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { ANY_ENERGY } from "./cards";
+import type { PokemonSuffix } from "./cards";
 import type { BoardCondition, EffectOp } from "./effects";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
@@ -107,6 +108,17 @@ export interface PassiveEffects {
       interpreter.ts snipeActive) via the shared `conditionHolds` — the only
       sites that know the attacker's seat, which a BoardCondition is relative to. */
   damageBonusBeforeWRIf?: { amount: number; cond: BoardCondition };
+  /** Like `damageBonusBeforeWR`, but applied ONLY when the DEFENDER (the
+      opponent's Active being hit) is a Pokémon of a given rule-box suffix
+      (Choice Belt — "…do 30 more damage to your opponent's Active Pokémon V
+      (before applying Weakness and Resistance)"). The target-gated sibling of
+      `damageBonusBeforeWRIf`: that one reads the ATTACKER's seat-relative board
+      (a `BoardCondition`), this one reads the DEFENDER's printed suffix
+      (`pokemonSuffixOf`), so it is a distinct field rather than the D40
+      vocabulary. Aggregated seat-free by continuous.ts; the defender is known
+      only at the two pre-W/R read sites, which fold it via `attackerPreWRBonus`
+      (interpreter.ts) exactly like the board-condition one. */
+  damageBonusBeforeWRIfTarget?: { amount: number; targetSuffix: PokemonSuffix };
   /** Max-HP added while the holder's TOP card is a Basic Pokémon (Bravery
       Charm — "The Basic Pokémon this card is attached to gets +50 HP");
       evolving the holder ends it, the Tool staying attached notwithstanding.
@@ -295,6 +307,17 @@ const VITALITY_BAND: CardProgram = { passive: { damageBonusBeforeWR: 10 } };
     consumer, and the first PASSIVE reader of it. */
 const DEFIANCE_BAND: CardProgram = {
   passive: { damageBonusBeforeWRIf: { amount: 30, cond: { kind: "morePrizesThanOpponent" } } },
+};
+
+/** Choice Belt — "The attacks of the Pokémon this card is attached to do 30
+    more damage to your opponent's Active Pokémon V (before applying Weakness
+    and Resistance)." (Tool) The target-gated twin of Vitality Band: the bonus
+    is unconditional on the holder's own board but applies ONLY when the
+    DEFENDER is a Pokémon V — a defender-suffix gate (`pokemonSuffixOf`), not a
+    `BoardCondition`, so a sibling passive field rather than the D40 vocabulary.
+    "V" is read literally: a VMAX/VSTAR defender is untouched. */
+const CHOICE_BELT: CardProgram = {
+  passive: { damageBonusBeforeWRIfTarget: { amount: 30, targetSuffix: "V" } },
 };
 
 /** Bravery Charm — "The Basic Pokémon this card is attached to gets +50 HP."
@@ -1594,6 +1617,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // Vitality Band (Tool)
   "sv01-197": VITALITY_BAND,
   "sv01-169": DEFIANCE_BAND, // +30 before W/R while behind on Prizes (morePrizesThanOpponent)
+  "sv02-176": CHOICE_BELT, // +30 before W/R vs a defending Pokémon V (name-derived suffix)
   // Bravery Charm (Tool)
   "sv02-173": BRAVERY_CHARM,
   // — M4 slice 5: Special Energy (verified vs local D1 2026-07-18). —

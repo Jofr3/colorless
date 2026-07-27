@@ -6,6 +6,7 @@ import {
   isBasicPokemon,
   isEnergyCard,
   isSpecialEnergy,
+  pokemonSuffixOf,
   resistanceOf,
   topCardOf,
   topUid,
@@ -1036,17 +1037,28 @@ export function conditionNote(cond: BoardCondition): string {
 }
 
 /** §8.5 — the attacker's total pre-W/R damage bonus for a hit landing on the
-    opponent's Active: the unconditional Tool bonuses (Vitality Band) plus every
-    conditional one (Defiance Band) whose board condition holds for the ATTACKING
-    `seat`. The two attack-damage read sites (attack.ts's main hit and
-    `snipeActive` below) share this so the condition is evaluated ONCE, here,
-    beside the single `conditionHolds` — continuous.ts aggregates the passives
-    but is seat-free, and a BoardCondition is relative to whose board it reads. */
-export function attackerPreWRBonus(state: GameState, pokemon: InPlayPokemon, seat: Seat): number {
+    opponent's Active `defenderCard`: the unconditional Tool bonuses (Vitality
+    Band) plus every board-conditional one (Defiance Band) whose condition holds
+    for the ATTACKING `seat`, plus every target-conditional one (Choice Belt)
+    whose printed suffix matches the defender. The two attack-damage read sites
+    (attack.ts's main hit and `snipeActive` below) share this so both gates are
+    evaluated ONCE, here, beside the single `conditionHolds`: continuous.ts
+    aggregates the passives but is seat-free and defender-free — a BoardCondition
+    is relative to whose board it reads, and a target suffix to who is being hit,
+    both of which only these sites know. */
+export function attackerPreWRBonus(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  seat: Seat,
+  defenderCard: Card,
+): number {
   const passives = passivesOf(state, pokemon);
   let bonus = passives.damageBonusBeforeWR;
   for (const { amount, cond } of passives.conditionalDamageBonusBeforeWR) {
     if (conditionHolds(state, seat, cond)) bonus += amount;
+  }
+  for (const { amount, targetSuffix } of passives.targetConditionalDamageBonusBeforeWR) {
+    if (pokemonSuffixOf(defenderCard) === targetSuffix) bonus += amount;
   }
   return bonus;
 }
@@ -1328,7 +1340,7 @@ function snipeActive(
   const target = activeTop(state, opponent);
   if (target === null) return state;
   const attacker = activeTop(state, ctx.seat);
-  const bonus = attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat);
+  const bonus = attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);
   const weakness = attacker === null ? null : weaknessOf(attacker.card, target.card);
   const resistance = attacker === null ? null : resistanceOf(attacker.card, target.card);
   const afterWR = Math.max(

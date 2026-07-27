@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyAction, effectiveMaxHp, effectiveRetreatCost, programFor } from "./index";
 import type { GameEvent, GameState } from "./index";
 import {
+  CHOICE_DECK,
   DEFIANCE_DECK,
   STADIUM_TOOL_DECK,
   activeUid,
@@ -368,6 +369,78 @@ describe("Defiance Band — a CONDITIONAL +30 before W/R (D40's third consumer)"
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const dealt = find(events, "DAMAGE_DEALT");
     // A wrong after-W/R bonus would read 30 × 2 + 30 = 90.
+    expect(dealt?.dealt).toBe(120);
+  });
+});
+
+describe("Choice Belt — a TARGET-gated +30 before W/R (the DEFENDER's suffix)", () => {
+  /** CHOICE_DECK (not STADIUM_TOOL_DECK), the DEFIANCE_DECK reasoning again:
+      the shared 60 is fixed-size, so swapping a card into it reshuffles every
+      seed and breaks the fragile opening-hand tests. Opens P1's turn 2. */
+  function choiceTurn2(seed: number): GameState {
+    const state = driveSetup(seed, { p1: CHOICE_DECK, p2: CHOICE_DECK }, { first: "p2" });
+    return must(applyAction(state, { type: "endTurn", seat: "p2" }));
+  }
+
+  /** P1's fix-attacker wearing Choice Belt and energised for Bite ([C] 30),
+      facing `defenderId` as P2's Active. Unlike Defiance Band there is no board
+      state to set: the gate reads the defender, so the defender IS the input. */
+  function armed(defenderId: string): GameState {
+    let state = choiceTurn2(6);
+    state = setActiveFromDeck(state, "p1", "fix-attacker");
+    state = setActiveFromDeck(state, "p2", defenderId);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = handFromDeck(state, "p1", "sv02-176", 1);
+    const belt = handUid(state, "p1", "sv02-176");
+    return must(
+      applyAction(state, { type: "attachTool", seat: "p1", uid: belt, target: { spot: "active" } }),
+    );
+  }
+
+  it("is registered as a target-conditional pre-W/R bonus keyed on the V suffix", () => {
+    expect(programFor("sv02-176")?.passive?.damageBonusBeforeWRIfTarget).toEqual({
+      amount: 30,
+      targetSuffix: "V",
+    });
+  });
+
+  it("adds 30 against a defending Pokémon V", () => {
+    const { events } = mustApply(armed("fix-pokemon-v"), { type: "attack", seat: "p1", index: 0 });
+    const dealt = find(events, "DAMAGE_DEALT");
+    expect(dealt?.base).toBe(30);
+    expect(dealt?.bonus).toBe(30); // 30 + 30 = 60
+    expect(dealt?.dealt).toBe(60);
+  });
+
+  it("adds NOTHING against a plain Pokémon — the gate reads the DEFENDER, not the holder", () => {
+    const { events } = mustApply(armed("fix-wall"), { type: "attack", seat: "p1", index: 0 });
+    const dealt = find(events, "DAMAGE_DEALT");
+    expect(dealt?.base).toBe(30);
+    expect(dealt?.bonus).toBeUndefined(); // no bonus row emitted
+    expect(dealt?.dealt).toBe(30);
+  });
+
+  it("adds NOTHING against a Pokémon VMAX — 'V' is matched literally", () => {
+    // The whole point of reading the suffix as a whole marker: a VMAX's name
+    // ends in "VMAX", never " V", and Choice Belt does not boost against it.
+    const { events } = mustApply(armed("fix-pokemon-vmax"), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    });
+    const dealt = find(events, "DAMAGE_DEALT");
+    expect(dealt?.bonus).toBeUndefined();
+    expect(dealt?.dealt).toBe(30);
+  });
+
+  it("(30 + 30) × 2 = 120 against a Fire-weak V — the before-W/R pin", () => {
+    const { events } = mustApply(armed("fix-pokemon-v-weak"), {
+      type: "attack",
+      seat: "p1",
+      index: 0,
+    });
+    const dealt = find(events, "DAMAGE_DEALT");
+    // A wrong after-W/R fold would read 30 × 2 + 30 = 90.
     expect(dealt?.dealt).toBe(120);
   });
 });
