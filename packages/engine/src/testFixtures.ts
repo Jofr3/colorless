@@ -376,6 +376,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // — M5 op-slice: disableAbilities continuous Ability-lock auras (D-next). The
+  //   Klefki carries a Bite attack so it can be the Active aura source AND damage
+  //   an Active target (the triggersOf wiring proof — a locked Armarouge does not
+  //   Burn its attacker). The printed `abilities` name is what "except for
+  //   Mischievous Lock" is matched against (a mirror-match Klefki stays on). —
+  "sv01-096": battler("sv01-096", {
+    name: "Klefki",
+    types: ["Fairy"],
+    hp: 70,
+    attacks: [{ cost: ["Colorless"], name: "Bite", damage: 30 }],
+    abilities: [
+      { type: "Ability", name: "Mischievous Lock", effect: "Basic Pokémon in play have no Abilities." },
+    ],
+  }),
+  "sv02-089": battler("sv02-089", {
+    name: "Spiritomb",
+    types: ["Darkness"],
+    hp: 70,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Fettered in Misfortune",
+        effect: "Basic Pokémon V in play have no Abilities.",
+      },
+    ],
+  }),
+  "sv02-127": battler("sv02-127", {
+    name: "Ting-Lu ex",
+    types: ["Fighting"],
+    hp: 220,
+    retreat: 3,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Cursed Land",
+        effect: "…your opponent's damaged Pokémon have no Abilities, except for Pokémon ex.",
+      },
+    ],
+  }),
+
   // — M4 slice 3: the persistent-zone cast (real catalog ids so the registry
   //   finds their continuous effects; names are the REAL card names because
   //   the §7.3 same-name rule compares names, not ids). —
@@ -2276,6 +2316,30 @@ export const SCORCHING_ARMOR_DECK = deckOf({
   "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0; Yawn = index 2)
   "fix-bigbody": 40, // 200 HP neutral Basic — DOMINANT setup + the promote target
   "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
+});
+
+/** 0.50.0 → 0.51.0: the `disableAbilities` continuous Ability-lock row (Klefki
+    "Mischievous Lock" / Spiritomb "Fettered in Misfortune" / Ting-Lu ex "Cursed
+    Land"). Carries the three aura sources plus a spread of targets whose Abilities
+    are surgically fielded to observe the lock: Bouffalant (a Basic passive), a
+    Basic V (Fixmon V — Spiritomb's target), Copperajah ex (a Basic ex passive —
+    Ting-Lu's exemption), Tinkaton (an activated Ability — the useAbility site),
+    Armarouge (a triggered Ability — the triggersOf site, hit by Klefki's Bite).
+    fix-bigbody is the DOMINANT (mulligan-free) setup Basic + the promote body both
+    sides use. fix-energy pays Bite. BOTH seats run it for cross-table surgery. */
+export const ABILITY_LOCK_DECK = deckOf({
+  "sv01-096": 4, // Klefki — Mischievous Lock (Basic, both sides, Active-only)
+  "sv02-089": 4, // Spiritomb — Fettered in Misfortune (Basic V, both sides, from bench too)
+  "sv02-127": 4, // Ting-Lu ex — Cursed Land (opponent's damaged non-ex, Active-only)
+  "sv03-174": 4, // Bouffalant — "Bouffer" (a Basic passive to observe suppression)
+  "fix-pokemon-v": 4, // Fixmon V — a Basic V target (Spiritomb membership)
+  "sv02-150": 4, // Copperajah ex — "Bronze Body" (a Basic ex passive — the ex exemption)
+  "sv02-105": 4, // Tinkaton — "Gather Materials" (an activated Ability to lock)
+  "sv03-044": 4, // Armarouge — "Scorching Armor" (a triggered Ability to lock)
+  "fix-basic-1": 4, // a plain Basic target
+  "fix-stage1": 4, // a NON-basic target (Klefki/Spiritomb exclude it by stage)
+  "fix-bigbody": 12, // 200 HP neutral Basic — setup + promote body
+  "fix-energy": 8, // Colorless Basic Energy — pays Bite / attaches
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

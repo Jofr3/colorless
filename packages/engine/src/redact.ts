@@ -55,6 +55,7 @@ import { costMet } from "./attack";
 import { programPlayable, rareCandyOptions } from "./cardplay";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import {
+  disabledAbilityUids,
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
@@ -385,6 +386,10 @@ function redactedAbilitiesOf(
   if (viewerSeat !== turnSeat) return [];
   const side = state.players[viewerSeat];
   const out: RedactedAbility[] = [];
+  // §9 — Pokémon under a continuous Ability-lock aura render their Ability rows
+  // greyed, mirroring useAbility's ABILITY_DISABLED reject so the HUD never
+  // offers a button the engine will refuse.
+  const lockedUids = disabledAbilityUids(state);
   const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {
     if (pokemon === null) return;
     const uid = topUid(pokemon);
@@ -396,6 +401,7 @@ function redactedAbilitiesOf(
       const costUnmet = handCostUnmet(state, viewerSeat, ability.program);
       const noTarget = !programPlayable(state, ability.program, viewerSeat);
       const disabled =
+        lockedUids.has(uid) ||
         (ability.activeOnly && target.spot !== "active") ||
         (ability.oncePerTurn &&
           state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||

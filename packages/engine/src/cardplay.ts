@@ -9,6 +9,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
+import { disabledAbilityUids } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
@@ -433,6 +434,12 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   const ability = (programFor(card.id)?.abilities ?? []).find((a) => a.name === action.abilityName);
   if (ability === undefined) {
     return err("NO_SUCH_ABILITY", `${card.name} has no usable Ability "${action.abilityName}"`);
+  }
+  // §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex) turns
+  // this Pokémon's Abilities off. Checked before activeOnly/oncePerTurn/cost so a
+  // locked Pokémon reports the lock, not an incidental cost failure.
+  if (disabledAbilityUids(state).has(uid)) {
+    return err("ABILITY_DISABLED", `${card.name} has no Abilities right now (§9)`);
   }
   if (ability.activeOnly && action.target.spot !== "active") {
     return err("ABILITY_ACTIVE_ONLY", `${ability.name} can only be used from the Active Spot (§9)`);

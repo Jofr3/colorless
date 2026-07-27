@@ -5,14 +5,18 @@ import {
   hpOf,
   isBasicPokemon,
   isSpecialEnergy,
+  pokemonSuffixOf,
   retreatCostOf,
   topCardOf,
+  topUid,
 } from "./cards";
 import type { PokemonSuffix } from "./cards";
+import type { Card } from "@luminous/schema";
 import type { BoardCondition } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
-import type { GameState, InPlayPokemon } from "./types";
+import type { GameState, InPlayPokemon, Seat } from "./types";
+import { SEATS } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -33,11 +37,87 @@ export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
   return id === undefined ? undefined : programFor(id)?.stadium;
 }
 
+/** §9 — the top uids of every in-play Pokémon whose Abilities are currently
+    suppressed by a continuous Ability-lock AURA (Klefki "Mischievous Lock" /
+    Spiritomb "Fettered in Misfortune" / Ting-Lu ex "Cursed Land"). A single
+    UNGATED pass over both boards: each lock is read straight off its source's
+    printed passive (never through the gated ability-read sites, so a lock cannot
+    turn itself — or, deliberately, another lock — off), and its target predicate
+    is then evaluated against every in-play Pokémon. The four ability read sites
+    (useAbility, passivesOf, triggersOf, the HUD redactor) consult the returned
+    Set by top uid. Empty when no lock is in play, so every board without one is
+    byte-identically unaffected.
+
+    KNOWN LIMITATION (documented follow-up, not this slice): a lock does not
+    disable ANOTHER lock's source — the aura-disables-aura fixpoint (e.g. an Active
+    Ting-Lu ex opposite a damaged Klefki, which by the rules should switch
+    Mischievous Lock off) resolves as if both auras stay on. The three cards in
+    scope never mute a NON-lock ability of another lock's source, so this only
+    bites lock-vs-lock, which needs a fixpoint pass rather than one ungated read. */
+export function disabledAbilityUids(state: GameState): Set<string> {
+  const disabled = new Set<string>();
+  // Collect the live auras first (ungated), each tagged with its source's seat.
+  const auras: { aura: NonNullable<PassiveEffects["disableAbilities"]>; sourceSeat: Seat }[] = [];
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    for (const holder of holders) {
+      const top = topCardOf(state, holder);
+      if (top === undefined) continue;
+      const aura = programFor(top.id)?.passive?.disableAbilities;
+      if (aura === undefined) continue;
+      if (aura.requiresActive === true && holder !== side.active) continue;
+      auras.push({ aura, sourceSeat: seat });
+    }
+  }
+  if (auras.length === 0) return disabled;
+  // Then evaluate each aura's target predicate against every in-play Pokémon.
+  for (const targetSeat of SEATS) {
+    const side = state.players[targetSeat];
+    const targets = side.active === null ? side.bench : [side.active, ...side.bench];
+    for (const target of targets) {
+      const top = topCardOf(state, target);
+      const uid = topUid(target);
+      if (top === undefined || uid === undefined) continue;
+      if (auras.some(({ aura, sourceSeat }) => auraSuppresses(aura, sourceSeat, targetSeat, target, top)))
+        disabled.add(uid);
+    }
+  }
+  return disabled;
+}
+
+/** Does `aura` (emitted by `sourceSeat`) suppress the Abilities of the in-play
+    Pokémon `target` (top card `top`, on `targetSeat`)? Each field is an
+    independent narrowing predicate; a target passes only when every stated clause
+    holds and no exemption applies. */
+function auraSuppresses(
+  aura: NonNullable<PassiveEffects["disableAbilities"]>,
+  sourceSeat: Seat,
+  targetSeat: Seat,
+  target: InPlayPokemon,
+  top: Card,
+): boolean {
+  if (aura.side === "opponent" && targetSeat === sourceSeat) return false;
+  if (aura.stage === "Basic" && !isBasicPokemon(top)) return false;
+  if (aura.suffix !== undefined && pokemonSuffixOf(top) !== aura.suffix) return false;
+  if (aura.requiresDamage === true && target.damage <= 0) return false;
+  if (aura.exemptSuffix !== undefined && pokemonSuffixOf(top) === aura.exemptSuffix) return false;
+  if (
+    aura.exemptAbilityNamed !== undefined &&
+    (top.abilities ?? []).some((a) => a.name === aura.exemptAbilityNamed)
+  )
+    return false;
+  return true;
+}
+
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
     its TOP card's printed passive (Bouffalant "Bouffer") and every attached
     Tool (§7.4) — summed, since each source is its own card effect. The
     Basic-only hpBonus (Bravery Charm) counts only while the top card is a
-    Basic: evolving the holder ends it even though the Tool stays attached. */
+    Basic: evolving the holder ends it even though the Tool stays attached. A
+    Pokémon under an Ability-lock aura (§9 disableAbilities) contributes nothing
+    from its own printed passive — that passive IS an Ability — but its attached
+    Tools (not Abilities) keep working. */
 export function passivesOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -64,8 +144,14 @@ export function passivesOf(
   damageAttacker: number;
 } {
   const top = topCardOf(state, pokemon);
+  // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
+  // are not Abilities and keep contributing. The lock aura itself is read by
+  // disabledAbilityUids straight off the passive, never here, so this never
+  // recurses (disableAbilities carries no field this aggregation consumes).
+  const holderUid = topUid(pokemon);
+  const disabled = holderUid !== undefined && disabledAbilityUids(state).has(holderUid);
   const sources: (PassiveEffects | undefined)[] = [
-    top === undefined ? undefined : programFor(top.id)?.passive,
+    disabled || top === undefined ? undefined : programFor(top.id)?.passive,
     ...pokemon.tools.map((uid) => {
       const id = state.cardIdByUid[uid];
       return id === undefined ? undefined : programFor(id)?.passive;

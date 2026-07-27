@@ -263,6 +263,9 @@ export type ErrorCode =
   | "NO_SUCH_ABILITY"
   /** §9 — the Ability may only be used from the Active Spot. */
   | "ABILITY_ACTIVE_ONLY"
+  /** §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex) has
+      turned this Pokémon's Abilities off. */
+  | "ABILITY_DISABLED"
   /** §9/§15.J — this Pokémon already used a once-per-turn Ability this turn. */
   | "ABILITY_ALREADY_USED"
   /** §9 — the Ability's activation cost cannot be paid (Meowscarada's "Bouquet

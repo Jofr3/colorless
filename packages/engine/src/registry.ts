@@ -152,6 +152,45 @@ export interface PassiveEffects {
       a plain summed number. (Snipe/spread hits on the Active are a follow-up: the
       recoil is folded only at the §8.5 main hit for now.) */
   damageAttacker?: { amount: number; requiresTool?: boolean };
+  /** §9 continuous Ability-lock AURA: while this Pokémon is in play (and, when
+      `requiresActive`, in the Active Spot), every in-play Pokémon matching the
+      target predicate "has no Abilities" — the engine suppresses its activated /
+      passive / triggered Abilities at every read site (continuous.ts
+      `disabledAbilityUids`, consulted by useAbility, passivesOf, triggersOf and
+      the HUD redactor by top uid). Unlike every other `PassiveEffects` field this
+      one does NOT modify its holder — it reaches OTHER Pokémon — so continuous.ts
+      reads it through a dedicated both-boards scan rather than the per-Pokémon
+      `passivesOf` aggregation, and it is a printed Pokémon Ability so only the TOP
+      card grants it (never an attached Tool). Klefki "Mischievous Lock" (Basic,
+      both sides, except itself), Spiritomb "Fettered in Misfortune" (Basic V, both
+      sides), Ting-Lu ex "Cursed Land" (the opponent's DAMAGED Pokémon, except ex).
+      The aura is collected UNGATED (a lock never turns itself — or another lock —
+      off): the aura-disables-aura fixpoint (e.g. Ting-Lu ex vs a damaged Klefki) is
+      a documented follow-up, not this slice. */
+  disableAbilities?: {
+    /** Target must be this stage (Klefki/Spiritomb: "Basic"); omitted = any stage
+        (Ting-Lu, whose "Pokémon in play" carries no stage restriction). */
+    stage?: "Basic";
+    /** Target must carry this printed rule-box suffix (Spiritomb: "V"). */
+    suffix?: PokemonSuffix;
+    /** Which side the lock reaches: "both" (Klefki/Spiritomb — "both yours and
+        your opponent's") or the source's "opponent" (Ting-Lu — "your opponent's
+        Pokémon"). */
+    side: "both" | "opponent";
+    /** Target must have damage counters on it (Ting-Lu — "that have any damage
+        counters on them"). */
+    requiresDamage?: boolean;
+    /** The aura is live only while the SOURCE is in the Active Spot ("As long as
+        this Pokémon is in the Active Spot" — Klefki/Ting-Lu). Spiritomb omits it. */
+    requiresActive?: boolean;
+    /** A target with this rule-box suffix keeps its Abilities (Ting-Lu: "ex" —
+        "except for Pokémon ex"). */
+    exemptSuffix?: PokemonSuffix;
+    /** A target whose printed Ability is named this keeps it (Klefki:
+        "Mischievous Lock" — "except for Mischievous Lock"). Matched against the
+        target CARD's printed abilities; keeps a mirror-match Klefki's own lock on. */
+    exemptAbilityNamed?: string;
+  };
 }
 
 /** A Stadium's continuous effects (§7.3) — applied to BOTH players' boards
@@ -374,6 +413,42 @@ const COUNTERATTACK_QUILLS: CardProgram = { passive: { damageAttacker: { amount:
     Attacking Pokémon." — Counterattack Quills with the extra `requiresTool` gate
     (evaluated in continuous.ts against the holder's board). */
 const STUNFISK: CardProgram = { passive: { damageAttacker: { amount: 50, requiresTool: true } } };
+
+/** Klefki — "Mischievous Lock": "As long as this Pokémon is in the Active Spot,
+    Basic Pokémon in play (both yours and your opponent's) have no Abilities,
+    except for Mischievous Lock." (continuous Ability-lock aura, §9) */
+const MISCHIEVOUS_LOCK: CardProgram = {
+  passive: {
+    disableAbilities: {
+      stage: "Basic",
+      side: "both",
+      requiresActive: true,
+      exemptAbilityNamed: "Mischievous Lock",
+    },
+  },
+};
+
+/** Spiritomb (sv02-089) — "Fettered in Misfortune": "Basic Pokémon V in play
+    (both yours and your opponent's) have no Abilities." — no "in the Active Spot"
+    clause, so the lock works from the Bench too. (The other Spiritomb, sv01-129,
+    has no Ability and is not registered.) */
+const FETTERED_IN_MISFORTUNE: CardProgram = {
+  passive: { disableAbilities: { stage: "Basic", suffix: "V", side: "both" } },
+};
+
+/** Ting-Lu ex (sv02-127 + reprints) — "Cursed Land": "As long as this Pokémon is
+    in the Active Spot, your opponent's Pokémon in play that have any damage
+    counters on them have no Abilities, except for Pokémon ex." */
+const CURSED_LAND: CardProgram = {
+  passive: {
+    disableAbilities: {
+      side: "opponent",
+      requiresDamage: true,
+      requiresActive: true,
+      exemptSuffix: "ex",
+    },
+  },
+};
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -1784,6 +1859,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-006": COUNTERATTACK_QUILLS, // Cacturne — Counterattack Quills (same program)
   "sv03-112": STUNFISK, // Stunfisk — Custom Trap (5 counters, only while a Tool is attached)
   "sv03-044": SCORCHING_ARMOR, // Armarouge — Scorching Armor (onDamagedByAttack → Burn the attacker)
+  // — M5 op-slice: disableAbilities continuous Ability-lock auras (verified vs the live D1 2026-07-27). —
+  "sv01-096": MISCHIEVOUS_LOCK, // Klefki — Mischievous Lock (Basic, both sides, Active-only, except itself)
+  "sv02-089": FETTERED_IN_MISFORTUNE, // Spiritomb — Fettered in Misfortune (Basic V, both sides)
+  "sv02-127": CURSED_LAND, // Ting-Lu ex — Cursed Land (opponent's damaged non-ex, Active-only)
+  "sv02-243": CURSED_LAND, // (reprint)
+  "sv02-263": CURSED_LAND, // (reprint)
+  "sv02-275": CURSED_LAND, // (reprint)
   // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)

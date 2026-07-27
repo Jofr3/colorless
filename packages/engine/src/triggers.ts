@@ -1,6 +1,7 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
 import { topCardOf, topUid } from "./cards";
+import { disabledAbilityUids } from "./continuous";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
 import { runProgram } from "./interpreter";
@@ -56,6 +57,12 @@ function triggersOf(
 ): TriggeredAbility[] {
   const card = topCardOf(state, pokemon);
   if (card === undefined) return [];
+  // §9 — a continuous Ability-lock aura suppresses this Pokémon's triggered
+  // Abilities too (this is the single choke for onPlayToBench / onEvolve /
+  // betweenTurns / onDamagedByAttack). The on-KO trigger (onKnockOutTrigger,
+  // above) is deliberately NOT gated: it fires as the Pokémon leaves play.
+  const uid = topUid(pokemon);
+  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return [];
   return (programFor(card.id)?.triggered ?? []).filter(
     (t) => t.trigger === timing && (t.activeOnly !== true || isActive),
   );

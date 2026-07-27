@@ -392,7 +392,7 @@ import type { GameState, Seat } from "./types";
     threads state straight through like `runCheckupTriggers`. Klawf ex sv03-120
     (a parking opponent-side Energy discard) still deferred — the remaining
     onDamagedByAttack card. No web/API/DB/schema change. */
-export const engineVersion = "0.50.0";
+export const engineVersion = "0.51.0";
 
 export type {
   ApplyResult,
@@ -441,6 +441,7 @@ export {
 } from "./cards";
 export type { DamageModifier, ParsedDamage, PokemonSuffix } from "./cards";
 export {
+  disabledAbilityUids,
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
