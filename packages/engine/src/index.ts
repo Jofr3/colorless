@@ -316,8 +316,29 @@ import type { GameState, Seat } from "./types";
     passive on both snipe arms (the "any effects on that Pokémon" half), while
     KEEPING the attacker's own pre-W/R bonus (an effect on the attacker, not the
     target). One flag threaded into placeSnipe/snipeActive; ZERO new op — a field
-    on the existing snipe op. No web/API/DB/schema change. */
-export const engineVersion = "0.46.0";
+    on the existing snipe op. No web/API/DB/schema change.
+
+    0.47.0 — HAIL BLADE: the variable-count discard whose damage scales off it,
+    and the engine's FIRST registry-authored attack (P3-M5). Chien-Pao ex
+    (sv02-061) "Hail Blade" prints "You may discard any amount of {W} Energy from
+    your Pokémon. This attack does 60 damage for each card you discarded in this
+    way." — the family's hardest damage card. THREE gaps closed together:
+    (1) `discardEnergy` gains a `from: "yours"` arm (the WHOLE own board, the
+    printed "your Pokémon", vs `yourActive`'s "this Pokémon") and a `count: "any"`
+    mode — the one DECLINABLE discard, 0..all, a new `DiscardScope {kind:"upTo"}`
+    whose pick may be empty; (2) it also gains a §9.2 `recordAs`, filing the
+    discarded uids under the new `discarded` EffectSlot; (3) a new `damageDefender`
+    op reads that count and deals `per × N` to the DEFENDER through snipeActive's
+    full §8.5 W/R pipeline (Weakness doubles, the attacker's pre-W/R bonus adds) —
+    genuine attack damage, so the printed "60×" base is SUPPRESSED (attack.ts owns
+    that: a program that deals the main damage drops the base like the multiply
+    family does). Model A (post-damage, record-driven) because §8 runs damage
+    BEFORE the program: an attack whose number depends on a mid-attack choice
+    re-enters the W/R math from inside the program, after the choice. Registry-
+    AUTHORED (the deriver still refuses the variable-count sentence). No
+    web/API/DB/schema change (the HUD's discard dialog gained the upTo/declinable
+    branch). */
+export const engineVersion = "0.47.0";
 
 export type {
   ApplyResult,

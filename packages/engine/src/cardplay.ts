@@ -790,6 +790,25 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       const scope = prompt.scope;
       const sourceOf = new Map(prompt.discardable.map((d) => [d.uid, d.from]));
+      // "You may discard any amount" (Chien-Pao ex "Hail Blade"): DECLINABLE, so
+      // 0..`max` rather than an exact count — every uid still offered and none
+      // twice (the two rules every scope shares), but no per-source rule and an
+      // empty pick is a legal decline. Branched out before the exact-count path
+      // below, which "each" and "total" share.
+      if (scope.kind === "upTo") {
+        if (choice.uids.length > scope.max) {
+          return err("BAD_EFFECT_CHOICE", `discard at most ${scope.max} Energy`);
+        }
+        const picked = new Set<string>();
+        for (const uid of choice.uids) {
+          if (typeof uid !== "string" || !sourceOf.has(uid)) {
+            return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a discardable Energy`);
+          }
+          if (picked.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
+          picked.add(uid);
+        }
+        return null;
+      }
       const required =
         scope.kind === "total"
           ? scope.count

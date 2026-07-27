@@ -115,10 +115,11 @@ export type CardFilter =
     A CLOSED UNION so a typo is a COMPILE error rather than a silent false: an
     unrecorded slot reads as "nothing moved", which is indistinguishable from a
     real empty answer, so a mistyped `recordAs` would quietly cost Miriam its
-    draw. Two members, matching the two things a program records — what it PAID
-    (a `payFromHand` cost) and what it MOVED (a benefit). Add a member when a
-    card needs a third. */
-export type EffectSlot = "paid" | "moved";
+    draw. Three members, matching the three things a program records — what it PAID
+    (a `payFromHand` cost), what it MOVED (a benefit), and what it DISCARDED
+    (Chien-Pao ex "Hail Blade" counts the Energy its own attack discarded "in this
+    way" to scale the damage). Add a member when a card needs a fourth. */
+export type EffectSlot = "paid" | "moved" | "discarded";
 
 /** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
     `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
@@ -303,6 +304,22 @@ export type EffectOp =
           the `opponentAny` reader sets it (Feint Attack targets any Pokémon). */
       ignoreWR?: true;
     }
+  /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
+      N is how many cards an earlier op filed under the `count` §9.2 slot —
+      Chien-Pao ex "Hail Blade" ("This attack does 60 damage for each card you
+      discarded in this way", `per: 60`, reading the `discarded` slot its own
+      leading `discardEnergy` wrote). It runs the FULL §8.5 pipeline through
+      `snipeActive` (the attacker's pre-W/R bonus → Weakness → Resistance → the
+      defender's reduction passive), so it IS genuine attack damage — which is why
+      the card's printed "N×" base is suppressed (attack.ts) rather than dealt on
+      top. A slot count of 0 (nothing discarded, or an empty board) deals nothing.
+      Only RAISES damage; the resulting KO is swept by the attack epilogue, like
+      every program-emitted damage op. This exists because damage runs BEFORE the
+      program in §8, so an attack whose number depends on a mid-attack choice
+      cannot use the pre-W/R fold (`AttackDamageBonus`, read off the board at
+      declaration) — it re-enters the same W/R math from inside the program, after
+      the choice is made. */
+  | { op: "damageDefender"; per: number; count: EffectSlot }
   /** "Flip a coin. If heads, …" — `then` runs on heads only. The other gate is
       `conditionGate` (below, deterministic); both are spliced by runProgram. */
   | { op: "coinFlipGate"; then: EffectOp[] }
@@ -665,17 +682,31 @@ export type EffectOp =
       Never damages, so it never KOs. */
   | {
       op: "discardEnergy";
-      from: "opponentActive" | "opponentChosen" | "yourActive";
+      /** `yours` — the CONTROLLER's WHOLE board (Active + Bench), the printed
+          "from your Pokémon" (Chien-Pao ex "Hail Blade"). Distinct from
+          `yourActive`'s "this Pokémon": Hail Blade may pull {W} off a benched
+          Pokémon too, so its victim is the whole own side rather than the one
+          Active. */
+      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours";
       filter: CardFilter;
       /** How many Energy the op takes in total: absent = one (the printed "an
           Energy"), a number = exactly that many, `"all"` = every match — which
-          leaves no decision, so the op never parks under it. */
-      count?: "all" | number;
+          leaves no decision, so the op never parks under it — and `"any"` = the
+          declinable "you may discard ANY amount" (Chien-Pao ex "Hail Blade"): 0
+          up to every match, the player choosing HOW MANY as well as WHICH, so it
+          ALWAYS parks on a non-empty board (the one count-mode with a decline). */
+      count?: "all" | number | "any";
+      /** File the discarded uids under this §9.2 slot so a later op can read how
+          many came off — Hail Blade's "for each card you discarded in this way"
+          (its `damageDefender` reads the count). Only the `"any"` mode records
+          today; absent = record nothing, the shape every discard predating this
+          parks into. */
+      recordAs?: EffectSlot;
     }
   /** The `opponentEach` sweep, split out so a count cannot ride it: "one from
       EACH" already fixes how many come off (one per Pokémon with a match), and
       the field would be silently ignored. Giacomo is the only printed member. */
-  | { op: "discardEnergy"; from: "opponentEach"; filter: CardFilter; count?: never }
+  | { op: "discardEnergy"; from: "opponentEach"; filter: CardFilter; count?: never; recordAs?: never }
   /** Move up to `max` Energy from ONE of the controller's own in-play Pokémon
       to ANOTHER of their own in-play Pokémon — the §6 manual Energy-movement
       family (Energy Switch: a Basic Energy; Poppy: up to 2 any Energy). `filter`

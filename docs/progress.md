@@ -3,7 +3,47 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #79 (**P3-M5 — Umbreon "Feint Attack": the any-target snipe that ignores W/R AND effects on the target**).
+**Last updated:** 2026-07-27 — build session #80 (**P3-M5 — Chien-Pao ex "Hail Blade": the variable-count discard whose damage scales off it, and the engine's FIRST registry-authored attack**).
+Chien-Pao ex **sv02-061** "Hail Blade" now SIMULATES: "You may discard **any amount** of {W} Energy from **your Pokémon**. This
+attack does 60 damage for each card you discarded in this way." (tcgdex-confirmed VERBATIM this session — the D95 lesson held
+again: the real print is "from your Pokémon"/"for each card", broader than the backlog's "from this Pokémon" shorthand). The
+family's hardest damage card, closing THREE gaps at once, **Model A (post-damage, §9.2 record-driven)** because §8 runs damage
+BEFORE the program — an attack whose number depends on a mid-attack choice re-enters the W/R math from INSIDE the program:
+(1) `discardEnergy` gained a **`from: "yours"`** arm (the WHOLE own board — the printed "your Pokémon", distinct from
+`yourActive`'s "this Pokémon"; the apply/candidate scan already handled a whole board, so it was mostly wiring) and a
+**`count: "any"`** mode — the one DECLINABLE discard (0..all), a new `DiscardScope {kind:"upTo"}` whose pick MAY be empty;
+(2) it also gained a §9.2 **`recordAs`**, filing the discarded uids under a NEW `discarded` EffectSlot (the "in this way"
+clause is literally an op→op record read); (3) a new **`damageDefender`** op reads that count and deals `per × N` (60×N) to the
+DEFENDER through the existing **`snipeActive`** (Umbreon's/Wo-Chien's full §8.5 W/R pipeline — Weakness DOUBLES, the attacker's
+pre-W/R bonus ADDS), so it is genuine attack damage and the printed **"60×" base is SUPPRESSED** (attack.ts: a program that
+deals the main damage drops the base like the multiply family does — a `programDamage` check). **Registry-AUTHORED** (the FIRST
+attack to use the `programFor(id)?.attack` seam), because the variable-count sentence is one the deriver deliberately refuses;
+CHIEN_PAO's existing Shivery-Chill entry gained the `attack` program. The HUD's discard dialog gained the upTo/declinable
+branch (multi-select capped at max, "Discard none"/"Discard N", always-ready Confirm). engineVersion 0.46.0 → **0.47.0**.
+`bun run typecheck` GREEN; the **engine suite GREEN (45 files / 929 tests unchanged)** — the refactor of `discardEnergyApply`
+to return `{state, discarded}` + `recordMoved` at every discard site is a no-op for the 5 pre-existing discard cards (recordAs
+absent). **⚠️ NOT test-verified for Hail Blade's own behaviour** — the dedicated behavioural tests were being written by a
+sub-agent that was STOPPED at the autoloop hard-landing before it produced `hailBlade.test.ts` (budget). No web/API/DB/schema
+touch (HUD-only client change). See D96 + `docs/reference/coverage-backlog.md`.
+**NEXT (resume point):** Chien-Pao ex "Hail Blade" IMPLEMENTATION is done + typecheck-green + existing-engine-suite-green, but
+**the dedicated behavioural tests were NOT written** (the test sub-agent was stopped at hard-landing). **DO THIS FIRST — write
+`packages/engine/src/hailBlade.test.ts`** pinning: (a) `programFor("sv02-061")?.attack` defined + `deriveAttackEffect(verbatim)`
+still `=== null` (registry-authored, deriver refuses); (b) attack parks on `discardEnergy` `scope {kind:"upTo", max:N}` offering
+every {W}-providing Energy on the ATTACKER's whole board (Active+Bench; non-{W} energy NOT offered); (c) discard k → **60×k**
+to the defender + `ENERGY_DISCARDED {seat:p1, actor:p1}` + energy in P1's discard, and **NO `ATTACK_EFFECT_SKIPPED`**;
+(d) decline (`uids:[]`) → **0 damage** (the "60× base suppressed" proof); (e) whole-board discard counts a BENCHED Chien-Pao's
+{W}; (f) Weakness DOUBLES (60×k×2 vs a Water-weak defender — may need a `fix-water-weak` fixture); (g) an ex-defender KO takes
+**2 Prizes** (D93) via the epilogue sweep. Needs a mulligan-free `HAIL_BLADE_DECK` (holds sv02-061 + Basic {W} Energy) + likely
+a `fix-water-weak` witness — mirror `FEINT_DECK`/`fix-feint`. Then `bun run check` full-suite green, and (only if a test surfaces
+a bug) fix the impl. Model the drive on `discardEnergy.test.ts` + `attackPark.test.ts`. **THEN** run `/code-review` — this slice
+had NO independent review. After that, the P3-M5 backlog continues (`coverage-backlog.md`): the dormant **"count-2"** snipe (D94
+warning: no verifiable real card) or a FRESH op-family row (`onDamagedByAttack`, `stadiumActivatedAbility`, `disableAbilities`,
+`damageAttacker`). USER-gated items (uploaded avatars, remote P4 deploy — migrations 0004+0005) still need the user. See D96.
+Below: the Umbreon "Feint Attack" header (kept for continuity).
+
+---
+### Prior header (P3-M5 — Umbreon "Feint Attack": the any-target snipe that ignores W/R, kept for continuity)
+**Last updated (was):** 2026-07-27 — build session #79 (**P3-M5 — Umbreon "Feint Attack": the any-target snipe that ignores W/R AND effects on the target**).
 Umbreon **sv03-130** "Feint Attack" now SIMULATES: "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's
 damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon." — a real print in the live SV pool
 (tcgdex-confirmed VERBATIM this session). **A FIELD on the existing `damageChosen` op (`ignoreWR?: true`), NOT a new op** —

@@ -260,8 +260,27 @@ const ENERGY_SEARCH: CardProgram = {
 };
 
 /** Chien-Pao ex — "Shivery Chill": once/turn, Active-only, "search your deck
-    for up to 2 Basic {W} Energy cards … put them into your hand. Then, shuffle." */
+    for up to 2 Basic {W} Energy cards … put them into your hand. Then, shuffle."
+    and "Hail Blade" ({W}{W}, "60×"): "You may discard any amount of {W} Energy
+    from your Pokémon. This attack does 60 damage for each card you discarded in
+    this way." — the family's hardest damage card, and the FIRST registry-authored
+    attack. Two ops: a DECLINABLE, whole-own-board, {W}-provision discard that
+    FILES its count under the `discarded` §9.2 slot, then a `damageDefender` that
+    reads that count and deals 60× it through the full W/R pipeline. Registry-
+    authored (not derived) because the printed sentence is a variable-count park
+    the deriver deliberately refuses (effects.ts). The printed "60×" base is
+    suppressed (attack.ts) — the program owns the damage. */
 const CHIEN_PAO: CardProgram = {
+  attack: [
+    {
+      op: "discardEnergy",
+      from: "yours",
+      filter: { kind: "providesEnergy", energyType: "Water" },
+      count: "any",
+      recordAs: "discarded",
+    },
+    { op: "damageDefender", per: 60, count: "discarded" },
+  ],
   abilities: [
     {
       name: "Shivery Chill",

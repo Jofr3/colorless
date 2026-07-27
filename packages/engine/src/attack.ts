@@ -231,15 +231,24 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       : deriveAttackDamageMultiplier(effect);
   const scaling = damageBonus ?? damageMultiplier;
   const scaled = scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat);
+  // A program that DEALS the main damage itself owns the printed number the same
+  // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
+  // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
+  // (damageDefender, after the mid-attack discard the number depends on), so the
+  // base must not ALSO land pre-program. The scaling readers can't carry it: the
+  // count is a mid-attack choice, not a board fact at declaration.
+  const programDamage = program !== null && program.some((step) => step.op === "damageDefender");
   // The multiply family's printed "N×" base IS the per-unit (already counted in
   // `scaled`), so it is dropped from the pipeline — the additive family keeps its
   // printed base. count 0 → scaled 0 → no damage (the base does not leak through).
-  const scaledBase = damageMultiplier !== null ? 0 : base;
-  // The "+"/"×" modifier is SIMULATED iff a scaling reader consumed it; the
-  // effect text is simulated iff a program ran it OR a scaling reader did. Only
-  // the genuinely-unsimulated remainder is flagged loudly (simulator.md coverage).
+  // A program that owns the damage drops the base for the same reason.
+  const scaledBase = damageMultiplier !== null || programDamage ? 0 : base;
+  // The "+"/"×" modifier is SIMULATED iff a scaling reader consumed it OR the
+  // program deals the damage; the effect text is simulated iff a program ran it
+  // OR a scaling reader did. Only the genuinely-unsimulated remainder is flagged
+  // loudly (simulator.md coverage).
   const effectSimulated = program !== null || scaling !== null;
-  const modifierSimulated = scaling !== null;
+  const modifierSimulated = scaling !== null || programDamage;
   if (
     (modifier !== null && !modifierSimulated) ||
     (effect !== null && effect !== "" && !effectSimulated)

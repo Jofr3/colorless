@@ -235,7 +235,15 @@ export type EffectPrompt =
 /** How many Energy a parked `discardEnergy` is asking for — a total across the
     whole offer, or one from each Pokémon it offered. Named (rather than inlined)
     because validateChoice and the HUD dialog both branch on it. */
-export type DiscardScope = { kind: "total"; count: number } | { kind: "each" };
+export type DiscardScope =
+  | { kind: "total"; count: number }
+  | { kind: "each" }
+  /** "You may discard ANY amount" (Chien-Pao ex "Hail Blade"): 0 up to `max`
+      (every offered Energy), DECLINABLE — the one discard scope whose answer may
+      be empty, and whose count the player sets. The prompt offers each Energy
+      distinctly (no interchangeable collapse) because the COUNT is what the
+      damage reads. */
+  | { kind: "upTo"; max: number };
 
 /** The controller's answer, off the resolveEffect action (wire-checked there). */
 export type EffectChoice =
@@ -248,7 +256,9 @@ export type EffectChoice =
   | { kind: "moveEnergy"; uids: string[]; dest: PokemonRef }
   /** The discardEnergy answer: the Energy uids to discard — exactly `count` in
       total (`{kind:"total"}`) or exactly one per offered source Pokémon
-      (`{kind:"each"}`), as validateChoice enforces. Never empty (mandatory). */
+      (`{kind:"each"}`), as validateChoice enforces. Never empty for those two
+      MANDATORY scopes; the `{kind:"upTo"}` scope (Hail Blade's "any amount") is
+      the one that MAY answer empty (a decline of the whole discard). */
   | { kind: "discardEnergy"; uids: string[] }
   /** The attachCards answer: each card to attach paired with the Pokémon it goes
       on — "in any way you like", so the pairing IS the decision. Every uid was
@@ -380,7 +390,8 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
   return op.op === "payFromHand" ||
     op.op === "discardPileRetrieval" ||
     op.op === "attachFromDeck" ||
-    op.op === "bottomFromOpponentHand"
+    op.op === "bottomFromOpponentHand" ||
+    op.op === "discardEnergy"
     ? op.recordAs
     : undefined;
 }
@@ -589,6 +600,20 @@ function stepOp(
       return { done: spreadDamage(state, op.amount, ctx, events) };
     case "damageSelf":
       return { done: damageSelf(state, op.amount, ctx, events) };
+    case "damageDefender": {
+      // Chien-Pao ex "Hail Blade": `per` (60) HP per card an earlier op filed
+      // under `count` — its own leading discardEnergy's `discarded` slot. This is
+      // genuine ATTACK damage to the DEFENDER, so it goes through snipeActive's
+      // full §8.5 pipeline (attacker pre-W/R bonus → Weakness → Resistance →
+      // reduction), NOT the flat put-counter model: Hail Blade doubles off a {G}
+      // defender's Weakness, and Vitality Band adds its +10. Nothing discarded
+      // (an empty slot or a whiffed board) → amount 0 → no damage placed. Never
+      // parks; the KO it may cause is swept by the attack epilogue, like every
+      // program-emitted damage op. */
+      const amount = recorded(record, op.count).length * op.per;
+      if (amount <= 0) return { done: state };
+      return { done: snipeActive(state, amount, false, ctx, events) };
+    }
     case "damageChosen": {
       // The snipe (Hawlucha / Meowscarada): choose `count` of the opponent's
       // Benched Pokémon and put counters on each. An empty Bench is a no-op.
@@ -820,13 +845,38 @@ function stepOp(
       // question is WHICH: nothing matching is a no-op, a forced pick
       // auto-resolves (the parkOrForce doctrine), and anything else parks.
       const discardable = discardableEnergies(state, ctx.seat, op);
-      if (discardable.length === 0) return { done: state };
+      if (discardable.length === 0) {
+        // A whiff still FILES an empty record, so a downstream reader (Hail
+        // Blade's damageDefender) counts 0 rather than a stale slot — the same
+        // empty-array-on-whiff the retrieval/attach ops record.
+        recordMoved(record, op.recordAs, []);
+        return { done: state };
+      }
+      // "You may discard ANY amount" (Chien-Pao ex "Hail Blade"): 0..all, the
+      // player choosing HOW MANY as well as WHICH — a real decision at every
+      // non-empty board (unlike the mandatory arms, which auto-take a forced
+      // set), so it ALWAYS parks. Every candidate stays DISTINCT (no
+      // interchangeable collapse): the COUNT is what the damage reads, so three
+      // identical {W} must offer three pickable rows, not one. The record is
+      // filed when the pick resolves (applyChoice), so a decline files nothing.
+      if (op.count === "any") {
+        return {
+          park: {
+            kind: "discardEnergy",
+            discardable,
+            scope: { kind: "upTo", max: discardable.length },
+            note: discardNote(op),
+          },
+        };
+      }
       // "Discard ALL Energy from this Pokémon" (Pawmot / Raichu) asks nothing —
       // every match comes off, so it resolves inline like any automatic op. The
       // FULL set, not the collapsed one: interchangeability is about which to
       // pick, and here nothing is picked.
       if (op.count === "all") {
-        return { done: discardEnergyApply(state, discardable.map((d) => d.uid), op, ctx, events) };
+        const done = discardEnergyApply(state, discardable.map((d) => d.uid), op, ctx, events);
+        recordMoved(record, op.recordAs, done.discarded);
+        return { done: done.state };
       }
       const scope: DiscardScope =
         op.from === "opponentEach" ? { kind: "each" } : { kind: "total", count: op.count ?? 1 };
@@ -835,10 +885,14 @@ function stepOp(
       // cap 1 this is the single-Energy rule ("three {R} on a Houndoom ask
       // nothing"), and with cap 3 a Koraidon discarding 3 off FOUR identical {F}
       // is likewise no question at all.
-      const cap = scope.kind === "each" ? 1 : scope.count;
+      const cap = scope.kind === "total" ? scope.count : 1;
       const candidates = interchangeableCandidates(state, discardable, cap);
       const forced = forcedDiscards(candidates, scope);
-      if (forced !== null) return { done: discardEnergyApply(state, forced, op, ctx, events) };
+      if (forced !== null) {
+        const done = discardEnergyApply(state, forced, op, ctx, events);
+        recordMoved(record, op.recordAs, done.discarded);
+        return { done: done.state };
+      }
       return {
         park: { kind: "discardEnergy", discardable: candidates, scope, note: discardNote(op) },
       };
@@ -1186,8 +1240,15 @@ export function applyChoice(
     }
     case "moveEnergy":
       return choice.kind === "moveEnergy" ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events) : state;
-    case "discardEnergy":
-      return choice.kind === "discardEnergy" ? discardEnergyApply(state, choice.uids, op, ctx, events) : state;
+    case "discardEnergy": {
+      if (choice.kind !== "discardEnergy") return state;
+      const done = discardEnergyApply(state, choice.uids, op, ctx, events);
+      // File what actually came off under the §9.2 slot — Hail Blade's
+      // damageDefender reads its length. A decline (empty pick) files [], so the
+      // damage counts 0. No-op for every other discard (recordAs absent).
+      recordMoved(record, op.recordAs, done.discarded);
+      return done.state;
+    }
     default:
       // Synchronous ops never park, so never reach the choice path.
       return state;
@@ -2489,8 +2550,8 @@ function discardEnergyApply(
   op: Extract<EffectOp, { op: "discardEnergy" }>,
   ctx: EffectContext,
   events: GameEvent[],
-): GameState {
-  if (uids.length === 0) return state;
+): { state: GameState; discarded: string[] } {
+  if (uids.length === 0) return { state, discarded: [] };
   const victim = discardVictimSeat(ctx.seat, op);
   const side = state.players[victim];
   const picks = new Set(uids);
@@ -2513,7 +2574,7 @@ function discardEnergyApply(
   };
   const active = side.active === null ? null : strip(side.active, { spot: "active" });
   const bench = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
-  if (pulled.length === 0) return state; // nothing was actually attached
+  if (pulled.length === 0) return { state, discarded: [] }; // nothing was actually attached
   const discarded: string[] = [];
   for (const entry of pulled) {
     discarded.push(...entry.uids);
@@ -2526,12 +2587,15 @@ function discardEnergyApply(
       host: entry.host,
     });
   }
-  return withSide(state, victim, {
-    ...side,
-    active,
-    bench,
-    discard: [...side.discard, ...discarded],
-  });
+  return {
+    state: withSide(state, victim, {
+      ...side,
+      active,
+      bench,
+      discard: [...side.discard, ...discarded],
+    }),
+    discarded,
+  };
 }
 
 // ── Candidate builders + small shared helpers ──
@@ -2586,7 +2650,7 @@ function matchesAttached(
     hammer arms. One helper so the candidate scan and the apply can never
     disagree about whose Pokémon is stripped and whose discard pile it lands in. */
 function discardVictimSeat(seat: Seat, op: Extract<EffectOp, { op: "discardEnergy" }>): Seat {
-  return op.from === "yourActive" ? seat : otherSeat(seat);
+  return op.from === "yourActive" || op.from === "yours" ? seat : otherSeat(seat);
 }
 
 /** The Energy a `discardEnergy` op may take, in board order — the two `…Active`
@@ -3040,12 +3104,15 @@ function energyNoun(filter: CardFilter): string {
     nothing, so it has no prompt to caption. */
 function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
   const noun = energyNoun(op.filter);
-  // A numeric count is printed as the bare number ("Discard 2 Energy…"), where
-  // one is printed as the article ("Discard an Energy…").
+  // A numeric count is printed as the bare number ("Discard 2 Energy…"), one as
+  // the article ("Discard an Energy…"), and `"any"` as the printed "any amount
+  // of" (Chien-Pao ex "Hail Blade").
   const what =
-    typeof op.count === "number" && op.count > 1
-      ? `${op.count} ${noun}`
-      : `${noun === "Energy" ? "an" : "a"} ${noun}`;
+    op.count === "any"
+      ? `any amount of ${noun}`
+      : typeof op.count === "number" && op.count > 1
+        ? `${op.count} ${noun}`
+        : `${noun === "Energy" ? "an" : "a"} ${noun}`;
   switch (op.from) {
     case "opponentActive":
       return `Discard ${what} from your opponent's Active Pokémon.`;
@@ -3056,6 +3123,9 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
     case "yourActive":
       // The printed attack sentence verbatim — "this Pokémon" is the Active (§8).
       return `Discard ${what} from this Pokémon.`;
+    case "yours":
+      // The printed "from your Pokémon" — the whole own board (Hail Blade).
+      return `Discard ${what} from your Pokémon.`;
   }
 }
 

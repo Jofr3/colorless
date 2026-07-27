@@ -296,7 +296,10 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** An UNAUTHORED Tool — the attachTool twin of fix-stadium. */
   "fix-tool": trainerCard("fix-tool", "Tool", "A test Tool."),
   /** Chien-Pao ex — a Water Basic whose registry entry carries the activated
-      "Shivery Chill" Ability (search up to 2 Basic {W} Energy → hand). */
+      "Shivery Chill" Ability (search up to 2 Basic {W} Energy → hand) AND the
+      registry-authored "Hail Blade" attack (discard any amount of {W} → 60× the
+      count). Attack text is the VERBATIM sv02-061 print (the deriver refuses it;
+      the registry program is authoritative). */
   "sv02-061": battler("sv02-061", {
     name: "Chien-Pao ex",
     types: ["Water"],
@@ -304,7 +307,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 2,
     weaknesses: [{ type: "Metal", value: "×2" }],
     abilities: [{ type: "Ability", name: "Shivery Chill", effect: "…search for up to 2 Basic {W} Energy…" }],
-    attacks: [{ cost: ["Water", "Water"], name: "Hail Blade", damage: "60×", effect: "…discard {W} Energy…" }],
+    attacks: [
+      {
+        cost: ["Water", "Water"],
+        name: "Hail Blade",
+        damage: "60×",
+        effect:
+          "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
+      },
+    ],
   }),
   /** Bouffalant — a Colorless Basic whose registry entry carries the passive
       "Bouffer" (takes 20 less damage after Weakness/Resistance). */

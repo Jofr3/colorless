@@ -1624,12 +1624,19 @@ function DiscardEnergyDialog({
         return prev.includes(uid) ? others : [...others, uid];
       }
       if (prev.includes(uid)) return prev.filter((u) => u !== uid);
+      // "upTo" (Hail Blade's "any amount") is a flat multi-select like "total",
+      // but declinable and capped at `max` — never a replace-at-1, since 0 is a
+      // legal answer and there is no single mandatory pick to swap.
+      if (scope.kind === "upTo") return prev.length < scope.max ? [...prev, uid] : prev;
       if (prev.length < scope.count) return [...prev, uid];
       return scope.count === 1 ? [uid] : prev;
     });
   };
-  const required = scope.kind === "total" ? scope.count : groups.length;
-  const ready = picked.length === required;
+  // "upTo" is DECLINABLE — any count 0..max is a valid answer, so Confirm is
+  // always ready; the mandatory scopes need an exact count.
+  const required =
+    scope.kind === "total" ? scope.count : scope.kind === "upTo" ? scope.max : groups.length;
+  const ready = scope.kind === "upTo" || picked.length === required;
 
   return (
     <HudDialog label="Discard Energy">
@@ -1645,9 +1652,11 @@ function DiscardEnergyDialog({
       <output className="mt-1.5 block text-sm text-white/55">
         {scope.kind === "each"
           ? `Pick one Energy from each Pokémon (${picked.length}/${required}).`
-          : required > 1
-            ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
-            : "Pick the Energy to discard."}
+          : scope.kind === "upTo"
+            ? `Pick any amount of Energy to discard (${picked.length} selected).`
+            : required > 1
+              ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
+              : "Pick the Energy to discard."}
       </output>
       <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
         {/* fieldset/legend, not a bare heading + list: this is the only HUD
@@ -1690,9 +1699,8 @@ function DiscardEnergyDialog({
                 // so no row is ever refused there — mirroring `pick` exactly.
                 const refused =
                   !selected &&
-                  scope.kind === "total" &&
-                  scope.count > 1 &&
-                  picked.length >= scope.count;
+                  ((scope.kind === "total" && scope.count > 1 && picked.length >= scope.count) ||
+                    (scope.kind === "upTo" && picked.length >= scope.max));
                 return (
                   <li key={uid}>
                     <button
@@ -1730,7 +1738,11 @@ function DiscardEnergyDialog({
             })
           }
         >
-          Discard {picked.length}/{required}
+          {scope.kind === "upTo"
+            ? picked.length === 0
+              ? "Discard none"
+              : `Discard ${picked.length}`
+            : `Discard ${picked.length}/${required}`}
         </button>
       </div>
     </HudDialog>
