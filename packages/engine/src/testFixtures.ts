@@ -1462,6 +1462,17 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
+      is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
+      which is the proof that the op re-enters the full §8.5 pipeline rather than
+      putting flat counters. 200 HP survives the doubled one-card discard (120),
+      so the Weakness math stands alone with no KO in the way. A Basic, no rule
+      box (1 Prize), no attacks — it only ever gets hit. */
+  "fix-water-weak": battler("fix-water-weak", {
+    hp: 200,
+    retreat: 1,
+    weaknesses: [{ type: "Water", value: "×2" }],
+  }),
   /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
       of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
       poisons your own Active if one landed there. */
@@ -2112,6 +2123,24 @@ export const FEINT_DECK = deckOf({
   "sv03-174": 4, // Bouffalant — "Bouffer" (−20 after W/R): the reduction ignoreWR SKIPS
   "sv01-197": 2, // Vitality Band — the attacker's pre-W/R +10 (an Active-snipe bonus witness)
   "fix-lightning-energy": 16, // pays Feint Attack's {C}
+});
+
+/** 0.47.0: Chien-Pao ex "Hail Blade" — the variable-count discard whose damage
+    scales off it. A DEDICATED 60 (the FEINT_DECK reasoning: ABILITY_DECK already
+    holds sv02-061, but growing it would reshuffle the seed-pinned Ability suite).
+    sv02-061 is BOTH ends of the slice — P1's attacker, and the ex the D93 Prize
+    case Knocks Out. fix-bigbody is DOMINANT (a 200 HP neutral body: mulligan-free
+    setup, and a defender the 60× math never accidentally KOs); fix-water-weak is
+    the ×2 Water witness the §8.5 pipeline doubles into; fix-water-energy is both
+    Hail Blade's {W}{W} cost AND its discard fuel (a cost is not spent, so every
+    Energy paying it is discardable); fix-energy is the plain Colorless Basic the
+    `providesEnergy` {W} filter must never offer. */
+export const HAIL_BLADE_DECK = deckOf({
+  "sv02-061": 4, // Chien-Pao ex — Hail Blade (the attacker, and the ex defender)
+  "fix-water-weak": 4, // ×2 Water, 200 HP — the Weakness the damage doubles into
+  "fix-bigbody": 28, // 200 HP neutral — DOMINANT (mulligan-free) + the plain defender
+  "fix-water-energy": 16, // pays {W}{W} and IS the discardable {W}
+  "fix-energy": 8, // plain Colorless Basic Energy — never offered by the {W} filter
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

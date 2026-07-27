@@ -210,9 +210,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const { base, modifier } = parseAttackDamage(declared.damage);
   const effect = declared.effect ?? null;
   // Registry ABOVE the deriver (D8): an authored attack program wins; else the
-  // text deriver; else null (unsimulated). None of the representative attacks
-  // are registry-authored, so this reads through to the deriver today — the
-  // seam is here for when they are.
+  // text deriver; else null (unsimulated). Chien-Pao ex "Hail Blade" (sv02-061,
+  // D96) is the first attack to take the authored branch — its variable-count
+  // sentence is one the deriver deliberately refuses — so both arms are live.
   const authored = programFor(attacker.id)?.attack ?? null;
   const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   const program = authored ?? derived;
@@ -237,7 +237,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // (damageDefender, after the mid-attack discard the number depends on), so the
   // base must not ALSO land pre-program. The scaling readers can't carry it: the
   // count is a mid-attack choice, not a board fact at declaration.
-  const programDamage = program !== null && program.some((step) => step.op === "damageDefender");
+  const programDamage = program?.some((step) => step.op === "damageDefender") ?? false;
   // The multiply family's printed "N×" base IS the per-unit (already counted in
   // `scaled`), so it is dropped from the pipeline — the additive family keeps its
   // printed base. count 0 → scaled 0 → no damage (the base does not leak through).
