@@ -622,7 +622,9 @@ function stepOp(
       // §8.6: with fewer candidates than the printed number, take them all.
       const take = Math.min(op.count, candidates.length);
       if (!declinable && candidates.length <= op.count) {
-        return { done: placeSnipe(state, candidates, amount, op.deals === true, ctx, events) };
+        return {
+          done: placeSnipe(state, candidates, amount, op.deals === true, op.ignoreWR === true, ctx, events),
+        };
       }
       return {
         park: {
@@ -1154,7 +1156,15 @@ export function applyChoice(
       // happened between parking and this pick, so the count is unchanged — the
       // same value snipeNote quoted in the prompt.
       return choice.kind === "pokemonMulti"
-        ? placeSnipe(state, choice.refs, snipeAmount(op, state, ctx), op.deals === true, ctx, events)
+        ? placeSnipe(
+            state,
+            choice.refs,
+            snipeAmount(op, state, ctx),
+            op.deals === true,
+            op.ignoreWR === true,
+            ctx,
+            events,
+          )
         : state;
     case "attachEnergyFrom":
       return choice.kind === "pokemon"
@@ -1267,6 +1277,7 @@ function placeSnipe(
   refs: readonly PokemonRef[],
   amount: number,
   deals: boolean,
+  ignoreWR: boolean,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -1276,10 +1287,11 @@ function placeSnipe(
   // Weakness/Resistance apply ONLY to the Active/Defending Pokémon, so a snipe that
   // lands on the Active goes THROUGH W/R, unlike every Bench target below. A
   // put-counter snipe never offers the Active (its candidates are Bench-only), so
-  // this branch is reached with deals=true.
+  // this branch is reached with deals=true. `ignoreWR` (Umbreon "Feint Attack")
+  // short-circuits that W/R math and the reduction passive — see snipeActive.
   let next = state;
   if (refs.some((r) => r.seat === opponent && r.spot.spot === "active")) {
-    next = snipeActive(next, amount, ctx, events);
+    next = snipeActive(next, amount, ignoreWR, ctx, events);
   }
   // Bench targets — flat (no W/R). Batched in one map so a count-N snipe (Hawlucha)
   // still lands as before.
@@ -1302,8 +1314,10 @@ function placeSnipe(
     // Wo-Chien "Covetous Ivy": ATTACK DAMAGE to a Benched Pokémon — no Weakness/
     // Resistance (§8.5, Benched), but a benched reduction passive still applies,
     // exactly like spreadDamage. Emitted as DAMAGE_DEALT, so the log reads "dealt"
-    // rather than "counters placed".
-    const reduction = passivesOf(next, pokemon).damageReductionAfterWR;
+    // rather than "counters placed". Umbreon "Feint Attack" (`ignoreWR`) skips even
+    // that reduction — its "not affected by any effects on that Pokémon" reaches a
+    // Benched pick too.
+    const reduction = ignoreWR ? 0 : passivesOf(next, pokemon).damageReductionAfterWR;
     const dealt = Math.max(0, amount - reduction);
     events.push({
       type: "DAMAGE_DEALT",
@@ -1329,10 +1343,15 @@ function placeSnipe(
     included here (unlike the Bench arm): Vitality Band's "+10 to your opponent's
     ACTIVE before Weakness/Resistance" applies precisely because the target is the
     Active — the same reason the Bench arm correctly omits it. Only the main attack's
-    OWN printed base/scaling is absent (the snipe's `amount` is its whole base). */
+    OWN printed base/scaling is absent (the snipe's `amount` is its whole base).
+    `ignoreWR` (Umbreon "Feint Attack") nulls Weakness/Resistance AND the target's
+    reduction passive — its "isn't affected by Weakness or Resistance, or by any
+    effects on that Pokémon" — while KEEPING the attacker's own pre-W/R bonus, which
+    is an effect on the ATTACKER, not on "that Pokémon". */
 function snipeActive(
   state: GameState,
   amount: number,
+  ignoreWR: boolean,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -1341,13 +1360,13 @@ function snipeActive(
   if (target === null) return state;
   const attacker = activeTop(state, ctx.seat);
   const bonus = attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);
-  const weakness = attacker === null ? null : weaknessOf(attacker.card, target.card);
-  const resistance = attacker === null ? null : resistanceOf(attacker.card, target.card);
+  const weakness = ignoreWR || attacker === null ? null : weaknessOf(attacker.card, target.card);
+  const resistance = ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
   const afterWR = Math.max(
     0,
     applyDamageModifier(applyDamageModifier(amount + bonus, weakness), resistance),
   );
-  const reduction = passivesOf(state, target.active).damageReductionAfterWR;
+  const reduction = ignoreWR ? 0 : passivesOf(state, target.active).damageReductionAfterWR;
   const dealt = Math.max(0, afterWR - reduction);
   events.push({
     type: "DAMAGE_DEALT",

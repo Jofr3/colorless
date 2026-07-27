@@ -295,6 +295,13 @@ export type EffectOp =
           The multiply "×" of the benched-snipe family, evaluated in the interpreter
           rather than folded pre-W/R (the target is benched, never the defender). */
       perTakenPrize?: true;
+      /** Umbreon "Feint Attack" (sv03-130): "This attack's damage isn't affected by
+          Weakness or Resistance, or by any effects on that Pokémon." — the snipe's
+          hit skips BOTH the target's Weakness/Resistance AND its `damageReductionAfterWR`
+          passive (the "any effects on that Pokémon" half). The ATTACKER's own pre-W/R
+          bonus is an effect on the ATTACKER, not the target, so it still applies. Only
+          the `opponentAny` reader sets it (Feint Attack targets any Pokémon). */
+      ignoreWR?: true;
     }
   /** "Flip a coin. If heads, …" — `then` runs on heads only. The other gate is
       `conditionGate` (below, deterministic); both are spliced by runProgram. */
@@ -1128,14 +1135,19 @@ const ALSO_BENCHED_SNIPE = new RegExp(
 // Pokémon (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack", Paldean Tauros
 // "Aqua Dive", Bellibolt ex, Kilowattrel). "Pokémon" (not "Benched Pokémon") is the
 // tell: the target may be the Active, where Weakness/Resistance DO apply (§8.5), so
-// the op is `target: "opponentAny"`. The reminder tail is the SAME Benched clarifier
-// (true only for a Benched pick). Refuses the "Benched"-only snipes (that clause
-// names the zone), Umbreon "Feint Attack" ("… isn't affected by Weakness or
-// Resistance" — a DIFFERENT tail), and Pawmot ex / Magikarp (a leading discard cost
-// / coin flip, off the `^This attack does` anchor).
+// the op is `target: "opponentAny"`. The tail is an ALTERNATION: the SAME Benched
+// clarifier (true only for a Benched pick, no op change), OR — captured as group 2 —
+// Umbreon "Feint Attack"'s "This attack's damage isn't affected by Weakness or
+// Resistance[, or by any effects on that Pokémon]." (sv03-130), which sets `ignoreWR`.
+// The ", or by any effects on that Pokémon" clause is optional so both the modern SV
+// wording and the bare classic one derive the same flag. Refuses the "Benched"-only
+// snipes (that clause names the zone) and Pawmot ex / Magikarp (a leading discard
+// cost / coin flip, off the `^This attack does` anchor).
 const CHOSEN_ANY_TARGET = new RegExp(
   `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)` +
+    `|( This attack['’]s damage isn['’]t affected by Weakness or Resistance` +
+    "(?:, or by any effects on that Pokémon)?\\.))?$",
 );
 // The self-discard attack COST (§8): "an" leaves the player one pick per
 // distinct Energy attached, "{N}" asks for exactly that many, "all" strips the
@@ -1382,12 +1394,16 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     Weakness and Resistance for Benched Pokémon.)" — the ANY-target snipe
   //     (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack"): the WHOLE attack is a
   //     chosen hit on the Active OR a Bench, `target: "opponentAny"` so a hit that
-  //     lands on the Active takes W/R (§8.5). A printed 0 is not a real card.
+  //     lands on the Active takes W/R (§8.5). A printed 0 is not a real card. When
+  //     group 2 caught Umbreon "Feint Attack"'s "…isn't affected by Weakness or
+  //     Resistance, or by any effects on that Pokémon." tail, the hit sets `ignoreWR`.
   match = CHOSEN_ANY_TARGET.exec(effect);
   if (match !== null) {
     const amount = Number(match[1]);
     if (amount >= 1) {
-      return [{ op: "damageChosen", target: "opponentAny", amount, count: 1, deals: true }];
+      return match[2] === undefined
+        ? [{ op: "damageChosen", target: "opponentAny", amount, count: 1, deals: true }]
+        : [{ op: "damageChosen", target: "opponentAny", amount, count: 1, deals: true, ignoreWR: true }];
     }
   }
 

@@ -1430,6 +1430,27 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Lightning", value: "×2" }],
   }),
+  /** FIXTURE — a synthetic {L} "Feint Attack" witness for the `ignoreWR` snipe. The
+      real print is Umbreon sv03-130 (Darkness), but the W/R skip is type-agnostic, so
+      typing it {L} lets fix-lightning-weak — the family's existing W/R witness — show
+      the Weakness that `ignoreWR` NULLS (it would double to 100 on the {L}-weak Active
+      without the flag; 50 flat with it). The attack text is the card's VERBATIM SV
+      wording, so it derives through the same `CHOSEN_ANY_TARGET` path as the real
+      card. A Basic; {C} cost so fix-lightning-energy pays. */
+  "fix-feint": battler("fix-feint", {
+    types: ["Lightning"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Feint Attack",
+        effect:
+          "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      },
+    ],
+  }),
   /** Janine's Secret Art (sv06.5-059, Supporter) — up to 2 Basic {D} Energy out
       of the deck, one apiece onto your {D} Pokémon, and the §9.2 clause that
       poisons your own Active if one landed there. */
@@ -2065,6 +2086,21 @@ export const ANY_SNIPE_DECK = deckOf({
   "fix-victim": 4, // 30 HP — the body a snipe KOs
   "sv01-197": 2, // Vitality Band — the attacker's pre-W/R +10 (an Active-snipe bonus witness)
   "fix-lightning-energy": 16, // pays Cruel Arrow's {C}{C}{C} and Linear Attack's {C}
+});
+
+/** 0.46.0: Umbreon "Feint Attack"'s ignoreWR snipe. A SEPARATE deck from
+    ANY_SNIPE_DECK so the (seed-sensitive) opening-hand pins of the existing snipe
+    suite are left byte-identical. fix-feint (a synthetic {L} Feint Attack) is the
+    ignoreWR witness; fix-lightning-weak is DOMINANT so BOTH setup Actives pin to it
+    (the {L}-weak body whose Weakness ignoreWR nulls); sv03-174 (Bouffalant, "Bouffer"
+    −20 after W/R) is the benched reduction the "any effects on that Pokémon" clause
+    skips; sv01-197 (Vitality Band) proves the ATTACKER's own bonus still lands. */
+export const FEINT_DECK = deckOf({
+  "fix-feint": 4, // synthetic {L} Feint Attack — the ignoreWR witness (opponentAny, 50)
+  "fix-lightning-weak": 34, // ×2 Lightning, 130 HP — DOMINANT pinned Active (the W/R target) + bench targets
+  "sv03-174": 4, // Bouffalant — "Bouffer" (−20 after W/R): the reduction ignoreWR SKIPS
+  "sv01-197": 2, // Vitality Band — the attacker's pre-W/R +10 (an Active-snipe bonus witness)
+  "fix-lightning-energy": 16, // pays Feint Attack's {C}
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

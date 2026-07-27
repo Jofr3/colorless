@@ -305,8 +305,19 @@ import type { GameState, Seat } from "./types";
     emphasis, not a second op. One rule for both wordings (unlike the snipe
     family, where "1 of" vs "each of" pick genuinely different ops). Pinned by a
     derive assertion on the verbatim card text; the full §8.5 spread flow is
-    already covered by fix-sniper's Spread Shot. No web/API/DB/schema change. */
-export const engineVersion = "0.45.0";
+    already covered by fix-sniper's Spread Shot. No web/API/DB/schema change.
+
+    0.46.0 — FEINT ATTACK: the any-target snipe that ignores W/R (P3-M5). Umbreon
+    "Feint Attack" (sv03-130) prints "This attack does 50 damage to 1 of your
+    opponent's Pokémon. This attack's damage isn't affected by Weakness or
+    Resistance, or by any effects on that Pokémon." — the `CHOSEN_ANY_TARGET`
+    deriver now captures that second sentence and sets `damageChosen.ignoreWR`,
+    which nulls Weakness/Resistance AND the target's `damageReductionAfterWR`
+    passive on both snipe arms (the "any effects on that Pokémon" half), while
+    KEEPING the attacker's own pre-W/R bonus (an effect on the attacker, not the
+    target). One flag threaded into placeSnipe/snipeActive; ZERO new op — a field
+    on the existing snipe op. No web/API/DB/schema change. */
+export const engineVersion = "0.46.0";
 
 export type {
   ApplyResult,

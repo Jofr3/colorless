@@ -189,3 +189,25 @@ is well under 70.
    count).
 Each is a normal engine slice (new op + interpreter case + registry rows +
 tests + review), and each turns dozens of "needs-op" rows into a few data rows.
+
+## Snipe/damage-family riders authored since 0.41.0 (not new-op rows)
+These are DERIVER riders on the D59 any-target snipe / D57–D58 benched-snipe
+families, each a field or token on an EXISTING op rather than a table row above:
+- ✅ **each-of-spread "also" rider** (D94, engine 0.45.0) — "also" optional in
+  `SPREAD_EACH_BENCH`, deriving to the same `spreadDamage` op. Cetoddle sv02-053
+  "Avalanche".
+- ✅ **Umbreon "Feint Attack" `ignoreWR`** (D95, engine 0.46.0) — the any-target
+  snipe whose damage "isn't affected by Weakness or Resistance, or by any effects
+  on that Pokémon." A `damageChosen.ignoreWR?: true` field: it nulls W/R AND the
+  target's `damageReductionAfterWR` passive on both arms, while KEEPING the
+  attacker's own pre-W/R bonus. Umbreon **sv03-130** (verbatim tcgdex-confirmed).
+  **LESSON for the next snipe rider:** the printed SV text was LONGER than this
+  doc's shorthand ("no-W/R-on-Active flag") — it had a second "or by any effects on
+  that Pokémon" clause that materially changed the op (skip the reduction too).
+  **Fetch the exact tcgdex attack text before scoping any snipe/damage rider** — the
+  shorthand names the family, not the whole sentence.
+
+Still OPEN in these families: the dormant **"count-2"** snipe (D94 warning: no
+verifiable real card — confirm live or take knowingly as dormant), and **Chien-Pao
+ex "Hail Blade"** (a COMPOUND discard-any-amount → damage-scales-off-count park —
+its own session, the hardest of the family).
