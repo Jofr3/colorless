@@ -1680,6 +1680,21 @@ export const CHOICE_DECK = deckOf({
   "fix-energy": 16,
 });
 
+/** M5 (prize value, §8.1): a DEDICATED 60, same reasoning as DEFIANCE_DECK /
+    CHOICE_DECK. All-Basic bodies (fix-attacker, whose Bite [C] 30 is the
+    single-target KO attack) make setup mulligan-free; the rule-box defenders the
+    tests set as P2's Active — fix-pokemon-v (a V → 2 Prizes), fix-pokemon-vmax (a
+    VMAX → 3) and plain fix-victim (→ 1, the contrast) — are pre-damaged to lethal
+    with setDamage and pulled post-setup by id, so the shuffle seed doesn't
+    matter; fix-energy pays the cost. */
+export const PRIZE_DECK = deckOf({
+  "fix-attacker": 32,
+  "fix-pokemon-v": 4,
+  "fix-pokemon-vmax": 4,
+  "fix-victim": 4,
+  "fix-energy": 16,
+});
+
 /** M4 slice 4 (KO generalized off the Active): the spread attacker (fix-sniper,
     Spread Shot [C] 30 + 20 to each opponent Benched), small-HP bodies the
     spread can finish (fix-victim 30 HP, fix-weak 60 HP), the fix-basic-1 →

@@ -278,8 +278,23 @@ import type { GameState, Seat } from "./types";
     catalog and correct — it fires once a prior-era set is ingested. Distinct
     from Defiance Band's field because the gate reads the DEFENDER, not the
     attacker's board, so it is NOT the D40 `BoardCondition` vocabulary. No
-    web/API/DB/schema change (damage bonuses stay engine-internal). */
-export const engineVersion = "0.43.0";
+    web/API/DB/schema change (damage bonuses stay engine-internal).
+
+    0.44.0 — PRIZE VALUE (P3-M5, §8.1). `prizeValueOf` stops returning 1 for every
+    KO: a VMAX is worth 3 Prizes, any other rule box (ex / V / VSTAR / GX) 2, a
+    plain body 1. The class is read off `pokemonSuffixOf` (the rule-box marker the
+    NAME still carries after ingest drops tcgdex's `suffix`), so — like Choice Belt
+    (0.43.0) — no schema/ingest/DB change was needed to value an ex at its two
+    Prizes. The `count` this feeds was already a variable at the two prize read
+    sites (flow.ts's takePrizes stage + the §14 tie-guard speculation), both of
+    which clamp to the Prizes that remain, so a 2-Prize KO with one Prize left
+    takes the last one and wins rather than over-drawing — no flow change. The
+    feared blast radius never landed: every existing KO test knocks out a plain
+    body, so the whole suite stayed green; the new behaviour is pinned by a new
+    prizeValue.test.ts (the KO→count wiring, on a dedicated mulligan-free
+    PRIZE_DECK) plus unit cases in cards.test.ts. No longer dormant against the
+    live SV-era pool, which is full of ex Pokémon. No web/API/DB/schema change. */
+export const engineVersion = "0.44.0";
 
 export type {
   ApplyResult,

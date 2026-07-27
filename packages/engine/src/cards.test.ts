@@ -4,6 +4,7 @@ import {
   hpOf,
   parseAttackDamage,
   pokemonSuffixOf,
+  prizeValueOf,
   resistanceOf,
   weaknessOf,
 } from "./index";
@@ -119,5 +120,22 @@ describe("pokemonSuffixOf", () => {
     expect(pokemonSuffixOf(battler("x", { name: "Gardevoir EX" }))).toBeNull();
     // Non-Pokémon never carry one, whatever their name ends in.
     expect(pokemonSuffixOf(basicEnergy("e"))).toBeNull();
+  });
+});
+
+describe("prizeValueOf (§8.1)", () => {
+  it("owes 3 Prizes for a VMAX, 2 for any other rule box, 1 for a plain body", () => {
+    // The class rides pokemonSuffixOf — the rule-box marker the NAME still
+    // carries — so no persisted `suffix` column is needed to value a KO.
+    expect(prizeValueOf(battler("x", { name: "Fixmon VMAX" }))).toBe(3);
+    expect(prizeValueOf(battler("x", { name: "Mewtwo V" }))).toBe(2);
+    expect(prizeValueOf(battler("x", { name: "Arceus VSTAR" }))).toBe(2);
+    expect(prizeValueOf(battler("x", { name: "Charizard ex" }))).toBe(2);
+    expect(prizeValueOf(battler("x", { name: "Pikachu GX" }))).toBe(2);
+    expect(prizeValueOf(battler("x", { name: "Vaporeon" }))).toBe(1);
+  });
+
+  it("owes 1 for a non-Pokémon (Trainers/Energy are never KO'd, but the total stays safe)", () => {
+    expect(prizeValueOf(basicEnergy("e"))).toBe(1);
   });
 });

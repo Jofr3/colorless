@@ -375,10 +375,11 @@ describe("prize taking (§8.1)", () => {
   });
 
   it("handles a multi-prize pick (the ex flow) including duplicate rejection", () => {
-    // The catalog cannot mark ex yet (prizeValueOf is 1), so craft the
-    // 2-prize decision directly — in BOTH encodings (the phase AND the head
-    // pending stage), exactly the way parking writes them; the handler
-    // cross-checks the two and the resolution already takes `count` prizes.
+    // Craft the 2-prize decision directly — in BOTH encodings (the phase AND the
+    // head pending stage), exactly the way parking writes them — to pin the PICK
+    // HANDLER (duplicate rejection) in isolation; prizeValue.test.ts covers the
+    // KO→count wiring that now feeds it (an ex/V owes 2 via prizeValueOf). The
+    // handler cross-checks the two encodings and the resolution takes `count`.
     const { state } = parkedOnPrizes();
     const twoPrize: GameState = {
       ...state,

@@ -70,14 +70,21 @@ export function attacksOf(card: Card): readonly Attack[] {
   return card.attacks ?? [];
 }
 
-/** Prizes the KOing player takes for this Pokémon (§8.1). SHOULD be 2 for an
-    ex/V/GX rule box and 3 for VMAX — every KO is worth 1 until the prize-count
-    change is worth its blast radius (it ripples through the win condition and
-    almost every KO test). `pokemonSuffixOf` below now supplies the exact
-    classification this wants, read off the same persisted datum, so this is a
-    one-line change (`pokemonSuffixOf(card) === null ? 1 : …`) when we take it. */
-export function prizeValueOf(_card: Card): number {
-  return 1;
+/** Prizes the KOing player takes for this Pokémon (§8.1): 3 for a VMAX, 2 for
+    any other rule box (ex / V / VSTAR / GX), 1 for a plain Pokémon. The class is
+    read off `pokemonSuffixOf` — the printed rule-box marker the NAME still
+    carries after ingest drops tcgdex's `suffix` field — so no schema/ingest/DB
+    change was needed to make an ex worth its two Prizes. The feared blast radius
+    (the win condition + "almost every KO test") never landed: every existing KO
+    test knocks out a plain body, so the whole suite stayed green; the new
+    behaviour is pinned by prizeValue.test.ts (the KO→count wiring) and the unit
+    cases in cards.test.ts. Both prize read sites clamp `count` to the Prizes that
+    remain (flow.ts's takePrizes handler + the §14 tie-guard slice), so a 2-Prize
+    KO with one Prize left takes the last one and wins rather than over-drawing. */
+export function prizeValueOf(card: Card): number {
+  const suffix = pokemonSuffixOf(card);
+  if (suffix === null) return 1;
+  return suffix === "VMAX" ? 3 : 2;
 }
 
 /** The printed rule-box SUFFIX of a Pokémon — the "V" / "VMAX" / "VSTAR" /

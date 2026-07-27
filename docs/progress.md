@@ -3,7 +3,38 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-07-27 — build session #76 (**P3-M5 — Choice Belt: the `conditionalDamageBonus` row CLOSED, and a
+**Last updated:** 2026-07-27 — build session #77 (**P3-M5 — Prize value: a KO is worth its rule box (§8.1)**).
+`prizeValueOf` stops returning 1 for every KO — a **VMAX is worth 3 Prizes, any other rule box (ex / V / VSTAR / GX) 2,
+a plain body 1** — closing the correctness gap D92 unlocked and explicitly deferred. **The whole slice is one function
+body + tests.** The class is read off D92's **`pokemonSuffixOf`** (the rule-box marker the printed NAME still carries
+after ingest drops tcgdex's `suffix`), so — exactly like Choice Belt — **no schema / ingest / DB / API / web change** was
+needed to value an ex at its two Prizes; the body becomes `suffix === null ? 1 : suffix === "VMAX" ? 3 : 2`. **The feared
+blast radius never landed (measured, not guessed):** applying the change and running the FULL suite left all 1952 tests
+green — every existing KO test knocks out a plain body, so nothing shifted. **The `count` was already a variable** at both
+prize read sites (flow.ts's `takePrizes` stage + the §14 tie-guard speculation), and both clamp to the Prizes that remain
+(`Math.min` / `slice`), so a 2-Prize KO with one Prize left takes the last one and **wins rather than over-drawing — no
+flow change.** New behaviour pinned by a dedicated **`prizeValue.test.ts`** (4 behavioural: V→2, VMAX→3, plain→1, and the
+clamp-to-win §14.1) on a new mulligan-free **`PRIZE_DECK`** per D91's test-deck reasoning, plus 2 `prizeValueOf` unit
+cases in `cards.test.ts`. Stale comment at `attack.test.ts`'s ex-flow pick test corrected (it no longer says the catalog
+can't mark ex). **No longer dormant against the live SV-era pool, which is full of ex Pokémon** — the first D92-family
+change that actually FIRES in a real game. engineVersion 0.43.0 → **0.44.0**; 1952 → **1958** tests (137 → **138** files).
+`bun run check` green (138 files / 1958 tests). **Self-reviewed, no independent reviewer** — a one-function slice reusing
+D92's just-reviewed `pokemonSuffixOf`. See D93 + `docs/reference/coverage-backlog.md`.
+**NEXT (resume point):** prize value is DONE — every rule-box KO now owes its real Prize count. **Best next AUTONOMOUS
+slice: continue the P3-M5 card-effect backlog** — see `docs/reference/coverage-backlog.md`. Open candidates (cheapest
+first, both deriver-only over EXISTING ops per the Explore map this session made): **"count-2"** — a benched / any-target
+snipe hitting "2 of your opponent's Pokémon", which `damageChosen` already carries `count` for (Hawlucha's `count:2` path)
+and `choosePokemonMulti` already parks: ONE deriver regex in `effects.ts` (relax the "count ≠ 1" refusal at the
+`ALSO_BENCHED_SNIPE` guard), zero new op code; **"each-of spread also-rider"** — a secondary "also … to each of your
+opponent's Benched" clause reusing the fully-tested `spreadDamage` op (one deriver regex + dispatch). Then the deeper
+**Umbreon "Feint Attack" no-W/R-on-Active flag** (an `ignoreWR` flag on `damageChosen` threaded into `snipeActive`'s W/R
+math — its own slice, touches the damage pipeline). **Chien-Pao ex "Hail Blade"** remains flagged as its own session
+(a COMPOUND + PRE-damage park). The USER-gated P5 items (uploaded avatars, remote P4 deploy — migrations 0004 + 0005)
+still need the user. See D93 + `workstreams/simulator.md`. Below: the P3-M5 Choice Belt header (kept for continuity).
+
+---
+### Prior header (P3-M5 — Choice Belt: the `conditionalDamageBonus` row CLOSED, and a rule-box suffix off the NAME, kept for continuity)
+**Last updated (was):** 2026-07-27 — build session #76 (**P3-M5 — Choice Belt: the `conditionalDamageBonus` row CLOSED, and a
 rule-box suffix read off the card's NAME**). The row's second and last card, and the target-gated twin of Vitality Band:
 "The attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon **V** (before
 applying Weakness and Resistance)" (sv02-176). **Two calls carry it (D92).** **(1) A SIBLING passive field, not the D40
@@ -27,7 +58,7 @@ behavioural on a dedicated `CHOICE_DECK` per D91's test-deck reasoning — regis
 D91's just-reviewed mechanism. **Note:** the previous autoloop iteration was cut off mid-slice by a usage limit — the
 implementation was on disk and complete, the tests were not; this session wrote the tests, verified, and documented it.
 See D92 + `docs/reference/coverage-backlog.md`.
-**NEXT (resume point):** the `conditionalDamageBonus` row is **CLOSED 2/2**. **Best next AUTONOMOUS slice: continue the
+**NEXT (resume point) (was):** the `conditionalDamageBonus` row is **CLOSED 2/2**. **Best next AUTONOMOUS slice: continue the
 P3-M5 card-effect backlog** — see `docs/reference/coverage-backlog.md`. Open candidates: the remaining rider shapes
 (each-of spread, count-2, Umbreon's no-W/R-on-Active flag); **Saguaro** ("choose up to N Pokémon" alone — `healChosen`
 widened with a count); or the **prize-value slice** this session unlocked (`prizeValueOf` off `pokemonSuffixOf` — 2 for an
