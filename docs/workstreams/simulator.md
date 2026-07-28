@@ -642,6 +642,32 @@ attacker's pre-W/R **bonus** (Vitality Band +10) and the defender's post-W/R
 **reduction** — now Bouffer AND a defending Tool, summed). Pure and total: a
 missing card/program/stadium contributes nothing.
 
+**The Ability-LOCK aura (D100, engine 0.51.0) — the one continuous read that is
+NOT an aggregation.** `PassiveEffects.disableAbilities` is the first passive field
+that does not modify its HOLDER: it reaches other Pokémon ("Basic Pokémon in play
+… have no Abilities"). So continuous.ts exposes a SECOND entry point beside
+`passivesOf` — **`disabledAbilityUids(state)`**, one pass over BOTH boards
+returning the top uids whose Abilities are currently off. Only a TOP CARD grants an
+aura (it is a printed Pokémon Ability, never a Tool), and the aura's own read is
+**UNGATED** — a lock never turns itself, or another lock, off. Seven independent
+narrowing predicates (`stage` / `suffix` / `side` / `requiresDamage` /
+`requiresActive` / `exemptSuffix` / `exemptAbilityNamed`) express all three printed
+cards: Klefki sv01-096, Spiritomb sv02-089, Ting-Lu ex sv02-127 (+ -243/-263/-275).
+**FOUR read sites consult the Set by uid — this is the checklist any new Ability
+surface must join:** `cardplay.ts useAbility` (→ `ABILITY_DISABLED`, checked BEFORE
+activeOnly/oncePerTurn/cost so the lock is what the player is told),
+`continuous.ts passivesOf` (drops the TOP CARD's printed passive only — attached
+Tools are §7.4 card effects, not Abilities, and keep contributing),
+`triggers.ts triggersOf` (the single choke for onPlayToBench / onEvolve /
+betweenTurns / onDamagedByAttack — **`onKnockOutTrigger` is deliberately NOT gated**,
+it fires as the Pokémon leaves play) and `redact.ts redactedAbilitiesOf` (the HUD row
+greys with `reason: null`). The Set is empty on any board with no lock in play, so
+every other game is untouched. **KNOWN LIMITATION (open follow-up):** because auras
+are collected ungated, a lock does not disable ANOTHER lock's source — an Active
+Ting-Lu ex opposite a damaged Klefki should switch Mischievous Lock off and does not.
+Fixing it means a fixpoint pass rather than one read; `abilityLock.test.ts` holds a
+tripwire test that pins the current behaviour and flips when the fixpoint lands.
+
 **Stadium (§7.3).** A single shared `GameState.stadium` `{uid, owner}`.
 `playTrainer` routes a Stadium to **`playStadium`**: one play per turn (a new
 `TurnAllowances.stadiumPlayed`), replace-on-play discards the predecessor to

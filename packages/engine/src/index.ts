@@ -392,6 +392,28 @@ import type { GameState, Seat } from "./types";
     threads state straight through like `runCheckupTriggers`. Klawf ex sv03-120
     (a parking opponent-side Energy discard) still deferred — the remaining
     onDamagedByAttack card. No web/API/DB/schema change. */
+
+    /* 0.51.0 — DISABLE ABILITIES: the continuous Ability-lock AURA (P3-M5,
+    D100) — Klefki sv01-096 "Mischievous Lock", Spiritomb sv02-089 "Fettered in
+    Misfortune", Ting-Lu ex sv02-127 (+ -243/-263/-275) "Cursed Land". A new
+    `PassiveEffects.disableAbilities` predicate (stage / suffix / side /
+    requiresDamage / requiresActive / exemptSuffix / exemptAbilityNamed) and, in
+    continuous.ts, `disabledAbilityUids(state)` — ONE both-boards pass returning
+    the top uids whose Abilities are off. It is the first passive field that does
+    not modify its HOLDER, so it is read through that dedicated scan rather than
+    the per-Pokémon `passivesOf` aggregation, and only a TOP CARD grants it (an
+    aura is a printed Pokémon Ability, never a Tool). FOUR read sites consult the
+    Set by uid: activated (cardplay.ts useAbility → the new `ABILITY_DISABLED`,
+    checked BEFORE activeOnly/oncePerTurn/cost so the lock is what gets reported),
+    passive (continuous.ts passivesOf — the top card's printed passive only; the
+    holder's Tools keep working), triggered (triggers.ts triggersOf — the single
+    choke for onPlayToBench/onEvolve/betweenTurns/onDamagedByAttack; onKnockOut is
+    deliberately NOT gated, it fires as the Pokémon leaves play) and the HUD
+    (redact.ts — the row greys, so the client never offers a button the engine
+    refuses). Auras are collected UNGATED, so a lock never turns itself or another
+    lock off: the aura-vs-aura fixpoint (Ting-Lu ex opposite a damaged Klefki) is a
+    documented follow-up, pinned by a tripwire test. Empty Set on every board with
+    no lock in play. No web/API/DB/schema change. */
 export const engineVersion = "0.51.0";
 
 export type {
