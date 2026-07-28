@@ -77,7 +77,9 @@ unblocks. High-value ops first.
 `seatRemovesWeakness` scan; the FIRST long-tail passive aura), `noRetreatCostAura`
 (Clefable ex), `retaliationDamage` (Rocky Helmet), `preventDamageFromExV`
 (Mimikyu), the Iono/Judge prize-count draws, per-card search filters
-(`searchFilter:{itemCard,toolCard,evolutionPokemon,…}`), and several bespoke
+(`searchFilter:{itemCard,toolCard,~~evolutionPokemon~~,…}` — `toolCard` done
+D102, **`evolutionPokemon` done D105/0.56.0** (Jacq); `itemCard`'s only sv01–03
+user Arven needs a dual-target search, not a filter), and several bespoke
 passives/triggers. Full list in the fan-out result. Many collapse into a few
 parameterized ops (an `attachEnergyFrom` with source/filter params; a
 `conditionalGate` family; extra `CardFilter` kinds), so the real op count to build
@@ -88,7 +90,8 @@ is well under 70.
 |---|---|---|---|
 | Picnic Basket | sv01-184 | `healEachAll` (heal 30 from EVERY Pokémon, both boards; non-parking, seat-blind twin of `healEach`) | 0.54.0 (D103) |
 | Florges | sv01-093 | `removeWeakness` (own-board "no Weakness" aura; a `PassiveEffects` flag + `seatRemovesWeakness` scan gated through `disabledAbilityUids`, wired into both W/R read sites) | 0.55.0 (D104) |
-| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability) · more `CardFilter` kinds (`itemCard`/`evolutionPokemon`, the cheapest) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion) | — |
+| Jacq | sv01-175/-236/-250 | `evolutionPokemon` CardFilter (search up to 2 Evolution Pokémon → hand; a bare union variant reading `evolveFromOf`, the D102 pattern, ZERO new op — the Flamigo search-to-hand shape) | 0.56.0 (D105) |
+| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion) — BOTH now mechanism slices; the cheap "one new filter kind" avenue is spent for sv01–03 (`itemCard`'s only user Arven needs a dual-target search) | — |
 
 ## Suggested sequencing
 1. ✅ **`attachEnergyFrom`** — the single biggest unlock (11+, and the engine of most

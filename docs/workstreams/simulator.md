@@ -695,6 +695,30 @@ dedicated `continuous.ts` scan (gated through `disabledAbilityUids` unless it is
 itself a lock) + a gate at each rule-read site it touches. `bloomingGarden.test.ts`
 (8) covers it.
 
+**The leanest coverage slice: a new `CardFilter` kind — `evolutionPokemon` (D105,
+engine 0.56.0).** Jacq sv01-175/-236/-250 ("Search your deck for up to 2 Evolution
+Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.") is the
+FIRST long-tail card whose whole novelty is ONE new `CardFilter` variant — the D102
+`noRuleBox`/`toolCard` pattern with **zero new op, action, event or interpreter
+op-case**. The **6-step recipe** for any future filter kind: (1) add
+`| { kind: "…" }` to the `effects.ts CardFilter` union (with a doc-comment); (2) add
+a `case` to `interpreter.ts matchesFilter` — the switch is exhaustive with **no
+`default`**, so tsc forces this; (3) add a `case` to `interpreter.ts retrieveNoun`
+(same forcing) — for a plural that starts with an article you MUST spell the
+article-free plural (`searchNote` does "up to N {plural}", the Chien-Pao bug the
+comment records); (4) the predicate — reuse a `cards.ts` helper if one exists
+(`evolutionPokemon` reused the EXISTING exported `evolveFromOf(card) !== null`, so no
+new helper, unlike D102's `hasRuleBox`); (5) author the card in `registry.ts` (Jacq
+is the Flamigo search-to-hand shape `[searchDeck {…} dest:hand max:2, shuffleDeck]`,
+`max:2` = "up to 2"); (6) a behavioural test through `playTrainer` → the `chooseCards`
+park (see `jacq.test.ts`, 8). No schema/wire change — `CardFilter` is engine-internal.
+**`evolutionPokemon` = the exact complement of `basicPokemon` inside `anyPokemon`**
+(`evolveFromOf` is non-null for Stage 1 / Stage 2 / VMAX/VSTAR, null for Basics and
+non-Pokémon). This slice **drains the "one new filter kind" avenue for sv01–03**: a
+`Search your deck` D1 sweep showed Jacq was the only such searcher; the next filter
+candidate, `itemCard`, is mechanism-blocked (its only user Arven searches an Item AND
+a Tool at once — a dual-target search).
+
 **Stadium (§7.3).** A single shared `GameState.stadium` `{uid, owner}`.
 `playTrainer` routes a Stadium to **`playStadium`**: one play per turn (a new
 `TurnAllowances.stadiumPlayed`), replace-on-play discards the predecessor to

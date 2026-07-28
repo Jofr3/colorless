@@ -478,7 +478,7 @@ import type { GameState, Seat } from "./types";
     main hit and interpreter.ts `snipeActive` (Chien-Pao ex "Hail Blade", Fezandipiti
     "Cruel Arrow"); Resistance is untouched, and Bench snipes already carry no
     Weakness, so nothing changes there. No web/API/DB/schema change. */
-export const engineVersion = "0.55.0";
+export const engineVersion = "0.56.0";
 
 export type {
   ApplyResult,

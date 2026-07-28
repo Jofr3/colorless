@@ -283,6 +283,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Item",
     "Heal 30 damage from each Pokémon (both yours and your opponent's).",
   ),
+  "sv01-175": trainerCard(
+    "sv01-175",
+    "Supporter",
+    "Search your deck for up to 2 Evolution Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+  ),
   "sv01-172": trainerCard(
     "sv01-172",
     "Item",
@@ -2717,6 +2722,20 @@ export const PICNIC_BASKET_DECK = deckOf({
   "sv01-184": 4, // Picnic Basket
   "fix-basic-1": 20, // bodies for BOTH boards (Active + bench each)
   "fix-energy": 36,
+});
+
+/** M5 long-tail: the `evolutionPokemon` CardFilter (Jacq, sv01-175). fix-basic-1
+    gives a reliable Basic opening (the Active) and the Basic NON-candidates the
+    search must drop; the fix-stage1 → fix-stage2 line is the Evolution Pokémon
+    candidate pool (12 + 8 leaves plenty in the deck past the opening hand +
+    prizes); Jacq copies are pulled into hand with handFromDeck; fix-energy is
+    the non-Pokémon filler the filter also rejects. */
+export const JACQ_DECK = deckOf({
+  "fix-basic-1": 24, // reliable Basic Active + Basic non-candidates
+  "fix-stage1": 12, // Evolution Pokémon candidates
+  "fix-stage2": 8, // more Evolution Pokémon candidates
+  "sv01-175": 4, // Jacq — pulled into hand post-setup
+  "fix-energy": 12, // non-Pokémon filler (rejected)
 });
 
 /** M5 op-slice: bottomFromOpponentHand + opponentMayDraw (Ortega / Greavard).

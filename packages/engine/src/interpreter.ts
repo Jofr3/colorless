@@ -3,6 +3,7 @@ import {
   activeTop,
   applyDamageModifier,
   energyProvidesOf,
+  evolveFromOf,
   hasRuleBox,
   isBasicPokemon,
   isEnergyCard,
@@ -2931,6 +2932,11 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
       return isBasicPokemon(card) && (filter.noRuleBox !== true || !hasRuleBox(card));
     case "anyPokemon":
       return card.category === "Pokemon";
+    case "evolutionPokemon":
+      // An Evolution Pokémon (Jacq) — one that evolves from another Pokémon.
+      // `evolveFromOf` returns null for non-Pokémon and for a Basic, so a
+      // non-null result is the exact complement of `basicPokemon`.
+      return evolveFromOf(card) !== null;
     case "toolCard":
       // A Pokémon Tool card (Town Store) — the attachTool discriminant.
       return card.category === "Trainer" && card.trainerType === "Tool";
@@ -3198,6 +3204,8 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
             plural: "Basic Pokémon that don't have a Rule Box",
           }
         : { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
+    case "evolutionPokemon":
+      return { singular: "an Evolution Pokémon", plural: "Evolution Pokémon" };
     case "toolCard":
       return { singular: "a Pokémon Tool card", plural: "Pokémon Tool cards" };
     case "basicEnergy": {

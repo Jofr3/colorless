@@ -26,6 +26,13 @@ export type CardFilter =
       `energyType`. */
   | { kind: "basicPokemon"; noRuleBox?: true }
   | { kind: "anyPokemon" }
+  /** An Evolution Pokémon — one that evolves from another Pokémon (Jacq's
+      "search your deck for up to 2 Evolution Pokémon"). The discriminant is
+      cards.ts `evolveFromOf(card) !== null`: a non-null `evolveFrom` marks a
+      Stage 1 / Stage 2 (or VMAX/VSTAR) card, and the helper already returns null
+      for non-Pokémon, so this is the exact complement of `basicPokemon` inside
+      `anyPokemon`. */
+  | { kind: "evolutionPokemon" }
   /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
       catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
   | { kind: "toolCard" }

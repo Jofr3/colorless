@@ -369,6 +369,19 @@ const ENERGY_SEARCH: CardProgram = {
   ],
 };
 
+/** Jacq — "Search your deck for up to 2 Evolution Pokémon, reveal them, and put
+    them into your hand. Then, shuffle your deck." (Supporter). The Flamigo
+    search-to-hand shape (`max: 2` = "up to 2", "reveal them" implicit in a
+    to-hand search), narrowed by the new `evolutionPokemon` filter. Like every
+    search Trainer it has no would-whiff play gate — legal to play even with no
+    Evolution Pokémon in the deck (it just reveals nothing, then shuffles). */
+const JACQ: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "evolutionPokemon" }, dest: "hand", max: 2 },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** Chien-Pao ex — "Shivery Chill": once/turn, Active-only, "search your deck
     for up to 2 Basic {W} Energy cards … put them into your hand. Then, shuffle."
     and "Hail Blade" ({W}{W}, "60×"): "You may discard any amount of {W} Energy
@@ -2003,6 +2016,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-275": CURSED_LAND, // (reprint)
   // — M5 op-slice: removeWeakness continuous own-board aura (verified vs the live D1 2026-07-28). —
   "sv01-093": BLOOMING_GARDEN, // Florges — Blooming Garden ("Your Pokémon in play have no Weakness")
+  // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
+  "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
+  "sv01-236": JACQ, // (reprint)
+  "sv01-250": JACQ, // (reprint)
   // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)
