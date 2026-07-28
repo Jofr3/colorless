@@ -167,6 +167,11 @@ export function passivesOf(
       `requiresTool` is evaluated HERE against the holder's board (this function
       has the Pokémon), so the attack.ts read site stays a plain number. */
   damageAttacker: number;
+  /** §8.5 full damage PREVENTION when the attacker is an ex/V (Mimikyu
+      "Safeguard"). The attacker's rule-box class is known only at the read sites,
+      so this aggregation just reports whether the holder carries the aura; the
+      sites gate it on `isExOrV(attacker)`. */
+  preventDamageFromExV: boolean;
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
@@ -188,6 +193,7 @@ export function passivesOf(
   let damageBonusBeforeWR = 0;
   let hpBonus = 0;
   let damageAttacker = 0;
+  let preventDamageFromExV = false;
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
   const targetConditionalDamageBonusBeforeWR: {
     amount: number;
@@ -204,6 +210,7 @@ export function passivesOf(
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
     if (passive.damageAttacker !== undefined && (passive.damageAttacker.requiresTool !== true || hasTool))
       damageAttacker += passive.damageAttacker.amount;
+    if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
   }
   return {
     damageReductionAfterWR,
@@ -212,6 +219,7 @@ export function passivesOf(
     targetConditionalDamageBonusBeforeWR,
     hpBonus,
     damageAttacker,
+    preventDamageFromExV,
   };
 }
 

@@ -478,7 +478,22 @@ import type { GameState, Seat } from "./types";
     main hit and interpreter.ts `snipeActive` (Chien-Pao ex "Hail Blade", Fezandipiti
     "Cruel Arrow"); Resistance is untouched, and Bench snipes already carry no
     Weakness, so nothing changes there. No web/API/DB/schema change. */
-export const engineVersion = "0.57.0";
+
+    /* 0.58.0 — SAFEGUARD (sv02-097): the first ATTACKER-class-gated damage
+    PREVENTION passive (P3-M5 long tail, D107) — Mimikyu "Prevent all damage done
+    to this Pokémon by attacks from your opponent's Pokémon ex and Pokémon V", the
+    only ex/V-gated total prevention in the sv01–03 pool. A bare
+    `PassiveEffects.preventDamageFromExV` flag — the defender-side twin of
+    `damageReductionAfterWR` (a full null instead of a flat subtraction) that rides
+    `passivesOf`, but GATED at the read sites on the ATTACKER's rule-box class via
+    the new `cards.ts isExOrV` (ex or V off `pokemonSuffixOf`, NOT VMAX/VSTAR/GX).
+    Honored at all four attack-damage sites like the reduction it mirrors — main
+    hit (attack.ts) + spread + both snipe arms (interpreter.ts) — since Safeguard
+    has no "in the Active Spot" clause and protects the holder on the Bench too;
+    `ignoreWR` (Feint Attack) bypasses it as it does the reduction. A new
+    `prevented` flag on DAMAGE_DEALT marks the 0 as a prevention (not a 0-damage
+    attack). No web/API/DB/schema change. */
+export const engineVersion = "0.58.0";
 
 export type {
   ApplyResult,

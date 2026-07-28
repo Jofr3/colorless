@@ -7,6 +7,7 @@ import {
   hasRuleBox,
   isBasicPokemon,
   isEnergyCard,
+  isExOrV,
   isSpecialEnergy,
   pokemonSuffixOf,
   resistanceOf,
@@ -1312,11 +1313,17 @@ function spreadDamage(
   const opponent = otherSeat(ctx.seat);
   const side = state.players[opponent];
   if (side.bench.length === 0) return state;
+  // Mimikyu "Safeguard" prevents spread damage too (no "Active Spot" clause) when
+  // the attacker is an ex/V — the same gate the main hit runs.
+  const attackerCard = activeTop(state, ctx.seat)?.card;
   const bench = side.bench.map((pokemon) => {
     const uid = topUid(pokemon);
     if (uid === undefined) return pokemon;
-    const reduction = passivesOf(state, pokemon).damageReductionAfterWR;
-    const dealt = Math.max(0, amount - reduction);
+    const passives = passivesOf(state, pokemon);
+    const prevented =
+      passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard);
+    const reduction = passives.damageReductionAfterWR;
+    const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     const damage = pokemon.damage + dealt;
     events.push({
       type: "DAMAGE_DEALT",
@@ -1326,6 +1333,7 @@ function spreadDamage(
       weakness: null,
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
+      prevented: prevented ? true : undefined,
       dealt,
       damage,
     });
@@ -1371,6 +1379,9 @@ function placeSnipe(
   }
   if (targeted.size === 0) return next;
   const side = next.players[opponent];
+  // Mimikyu "Safeguard" — an ex/V attacker's Benched-target attack damage is
+  // prevented too (the deals arm only; a placed counter below is not "damage").
+  const attackerCard = activeTop(next, ctx.seat)?.card;
   const bench = side.bench.map((pokemon, index) => {
     if (!targeted.has(index)) return pokemon;
     const uid = topUid(pokemon);
@@ -1387,8 +1398,16 @@ function placeSnipe(
     // rather than "counters placed". Umbreon "Feint Attack" (`ignoreWR`) skips even
     // that reduction — its "not affected by any effects on that Pokémon" reaches a
     // Benched pick too.
-    const reduction = ignoreWR ? 0 : passivesOf(next, pokemon).damageReductionAfterWR;
-    const dealt = Math.max(0, amount - reduction);
+    const targetPassives = passivesOf(next, pokemon);
+    // `ignoreWR` (Feint Attack — "not affected by any effects on that Pokémon")
+    // bypasses the prevention just as it bypasses the reduction passive.
+    const prevented =
+      !ignoreWR &&
+      targetPassives.preventDamageFromExV &&
+      attackerCard !== undefined &&
+      isExOrV(attackerCard);
+    const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
+    const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     events.push({
       type: "DAMAGE_DEALT",
       seat: opponent,
@@ -1397,6 +1416,7 @@ function placeSnipe(
       weakness: null,
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
+      prevented: prevented ? true : undefined,
       dealt,
       damage: pokemon.damage + dealt,
     });
@@ -1440,8 +1460,13 @@ function snipeActive(
     0,
     applyDamageModifier(applyDamageModifier(amount + bonus, weakness), resistance),
   );
-  const reduction = ignoreWR ? 0 : passivesOf(state, target.active).damageReductionAfterWR;
-  const dealt = Math.max(0, afterWR - reduction);
+  const targetPassives = passivesOf(state, target.active);
+  // Mimikyu "Safeguard" on the sniped Active — an ex/V attacker's snipe is
+  // prevented, unless `ignoreWR` (Feint Attack) bypasses on-target effects.
+  const prevented =
+    !ignoreWR && targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card);
+  const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
+  const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
   events.push({
     type: "DAMAGE_DEALT",
     seat: opponent,
@@ -1451,6 +1476,7 @@ function snipeActive(
     weakness,
     resistance,
     reduction: reduction > 0 ? reduction : undefined,
+    prevented: prevented ? true : undefined,
     dealt,
     damage: target.active.damage + dealt,
   });

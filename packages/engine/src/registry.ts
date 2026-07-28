@@ -206,6 +206,21 @@ export interface PassiveEffects {
       the first place (§8.5 applies only to the Active/Defending Pokémon), so the
       only observable effect is on the seat's Active while it defends. */
   removeWeakness?: true;
+  /** §8.5 continuous holder-modifying PREVENTION: prevent ALL attack damage this
+      Pokémon TAKES from an opponent's Pokémon ex / Pokémon V (Mimikyu sv02-097
+      "Safeguard"). The defender-side twin of `damageReductionAfterWR` — a full
+      null instead of a flat subtraction — but GATED on the ATTACKER's rule-box
+      class (`isExOrV`, i.e. ex or V, NOT VMAX/VSTAR/GX). Because the attacker's
+      class is known only at the read sites, continuous.ts just reports whether
+      the holder carries the aura; the sites gate it on `isExOrV(attacker)`. Like
+      the reduction it modifies only its holder, so it rides `passivesOf` and is
+      honored at EVERY attack-damage site (main hit, spread, both snipe arms):
+      Safeguard has NO "in the Active Spot" clause, so it protects the holder on
+      the Bench too. The only ex/V-gated total-prevention print in the sv01–03
+      pool — the type-gated Dachsbun/Bellibolt "prevent all damage from {R}/{L}"
+      are a separate family needing an energy-type gate, not this one. A bare
+      flag: unconditional once the holder is in play. */
+  preventDamageFromExV?: true;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -506,6 +521,13 @@ const CURSED_LAND: CardProgram = {
     Weakness." — a continuous own-board aura (no "in the Active Spot" clause, so
     it works from the Bench). The only "no Weakness" Ability in the sv01–03 pool. */
 const BLOOMING_GARDEN: CardProgram = { passive: { removeWeakness: true } };
+
+/** Mimikyu (sv02-097) — "Safeguard": "Prevent all damage done to this Pokémon by
+    attacks from your opponent's Pokémon ex and Pokémon V." — a holder-modifying
+    full-prevention passive gated on the ATTACKER's rule-box class (ex/V, not
+    VMAX/VSTAR/GX). Honored at every attack-damage read site (no "Active Spot"
+    clause). The only ex/V-gated total-prevention print in the sv01–03 pool. */
+const SAFEGUARD: CardProgram = { passive: { preventDamageFromExV: true } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -2029,6 +2051,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-275": CURSED_LAND, // (reprint)
   // — M5 op-slice: removeWeakness continuous own-board aura (verified vs the live D1 2026-07-28). —
   "sv01-093": BLOOMING_GARDEN, // Florges — Blooming Garden ("Your Pokémon in play have no Weakness")
+  // — M5 long-tail: preventDamageFromExV holder passive (verified vs the live D1 2026-07-28). —
+  "sv02-097": SAFEGUARD, // Mimikyu — Safeguard ("Prevent all damage from opponent's Pokémon ex/V")
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)

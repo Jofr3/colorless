@@ -243,6 +243,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** A Pokémon VMAX — its name ends in "VMAX", not " V", so Choice Belt's "V"
       gate must NOT fire on it (the whole point of reading the suffix literally). */
   "fix-pokemon-vmax": battler("fix-pokemon-vmax", { name: "Fixmon VMAX", hp: 330 }),
+  // — M5 long-tail: the Mimikyu "Safeguard" cast (preventDamageFromExV). The
+  //   defender is a faithful Mimikyu sv02-097 (its passive comes from the
+  //   registry, keyed by id); the attackers are three named bodies so
+  //   `pokemonSuffixOf` reads ex / V / VMAX off the NAME — the ex and V are
+  //   prevented, the VMAX (and the plain fix-attacker) are NOT. Bite ({C} 30) is
+  //   the main-hit witness; the ex also carries Spread Shot for the interpreter
+  //   spread arm. —
+  "sv02-097": battler("sv02-097", {
+    name: "Mimikyu",
+    types: ["Psychic"],
+    hp: 70,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    retreat: 1,
+  }),
+  "fix-attacker-ex": battler("fix-attacker-ex", {
+    name: "Fixmon ex",
+    types: ["Fire"],
+    hp: 120,
+    attacks: [
+      { cost: ["Colorless"], name: "Bite", damage: 30 },
+      {
+        cost: ["Colorless"],
+        name: "Spread Shot",
+        damage: 30,
+        effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
+      },
+    ],
+  }),
+  "fix-attacker-v": battler("fix-attacker-v", {
+    name: "Guardmon V",
+    types: ["Fire"],
+    hp: 120,
+    attacks: [{ cost: ["Colorless"], name: "Bite", damage: 30 }],
+  }),
+  "fix-attacker-vmax": battler("fix-attacker-vmax", {
+    name: "Bigmon VMAX",
+    types: ["Fire"],
+    hp: 120,
+    attacks: [{ cost: ["Colorless"], name: "Bite", damage: 30 }],
+  }),
   /** hp printed as 0 — a catalog data gap schema/ingest let through, read as
       null by hpOf: never KO'd (a KO requires printed hp > 0). */
   "fix-zero-hp": battler("fix-zero-hp", { hp: 0 }),
@@ -2432,6 +2472,27 @@ export const ROCKY_HELMET_DECK = deckOf({
   "sv01-193": 4, // Rocky Helmet — the recoil TOOL (2 counters = 20 HP)
   "fix-bigbody": 40, // 200 HP neutral Basic — DOMINANT setup + the holder + the promote target
   "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
+});
+
+/** 0.57.0 → 0.58.0: the Mimikyu "Safeguard" row — a holder-side full-prevention
+    passive gated on the ATTACKER's rule-box class (preventDamageFromExV, D107).
+    A DEDICATED deck (the others are seed-pinned): P2 fields the Mimikyu defender
+    (sv02-097) Active or benched; P1 attacks with one of the three named bodies so
+    `pokemonSuffixOf` reads the class off the NAME. The ex/V Bites are prevented,
+    the VMAX Bite and the plain fix-attacker Bite are NOT (the ex/V-only gate). The
+    ex's Spread Shot + fix-sniper's Spread Shot drive the interpreter spread arm.
+    fix-bigbody is the DOMINANT (mulligan-free) Basic + the P2 Active in front of a
+    benched Mimikyu; fix-energy pays every {C}. BOTH seats run it so Mimikyu can be
+    surgically fielded on P2. */
+export const SAFEGUARD_DECK = deckOf({
+  "sv02-097": 4, // Mimikyu — Safeguard (the preventDamageFromExV defender)
+  "fix-attacker-ex": 4, // ex attacker — Bite ({C} 30, idx 0) + Spread Shot (idx 1)
+  "fix-attacker-v": 4, // V attacker — Bite ({C} 30)
+  "fix-attacker-vmax": 4, // VMAX attacker — Bite ({C} 30): the ex/V-only gate's negative
+  "fix-attacker": 4, // plain attacker — Bite ({C} 30): the not-prevented control
+  "fix-sniper": 4, // plain spread attacker — Spread Shot: the spread not-prevented control
+  "fix-energy": 8, // Colorless Basic Energy — pays every Bite/Spread Shot {C}
+  "fix-bigbody": 28, // 200 HP neutral Basic — DOMINANT starter + the P2 Active over a benched Mimikyu
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

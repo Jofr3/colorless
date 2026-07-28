@@ -11,6 +11,7 @@ import {
   activeTop,
   applyDamageModifier,
   attacksOf,
+  isExOrV,
   parseAttackDamage,
   resistanceOf,
   topCardOf,
@@ -298,7 +299,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     );
     const defenderPassives = passivesOf(next, defender);
     const reduction = defenderPassives.damageReductionAfterWR;
-    const dealt = Math.max(0, afterWR - reduction);
+    // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
+    // ex/V. A full null (not a flat reduction), gated on the ATTACKER's rule-box
+    // class, so it supersedes any Bouffer-style reduction.
+    const prevented = defenderPassives.preventDamageFromExV && isExOrV(attacker);
+    const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
     defended = { ...defender, damage: defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
     events.push({
@@ -313,6 +318,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       weakness,
       resistance,
       reduction: reduction > 0 ? reduction : undefined,
+      prevented: prevented ? true : undefined,
       dealt,
       damage: defended.damage,
     });

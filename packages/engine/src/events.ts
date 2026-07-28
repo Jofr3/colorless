@@ -117,6 +117,11 @@ export type GameEvent =
           Resistance (Bouffalant "Bouffer", a defending Tool — §15.B).
           Present only when it actually reduced. */
       reduction?: number;
+      /** True when the defender fully PREVENTED this attack's damage (Mimikyu
+          "Safeguard" — all damage from an opponent's Pokémon ex/V), so `dealt` is
+          0 for that reason rather than because the attack does no damage. Present
+          only when a prevention actually fired. */
+      prevented?: true;
       dealt: number;
       damage: number;
     }

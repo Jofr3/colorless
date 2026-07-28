@@ -112,6 +112,16 @@ export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   return null;
 }
 
+/** Is this Pokémon an "ex" or a "V" — the two rule-box classes Mimikyu
+    "Safeguard" prevents all damage from ("…your opponent's Pokémon ex and
+    Pokémon V")? NOT VMAX/VSTAR/GX: the print names ex and V only, so this is
+    narrower than `hasRuleBox` (which also matches VMAX/VSTAR/GX and Radiant).
+    Read off the name-derived `pokemonSuffixOf`; non-Pokémon are always false. */
+export function isExOrV(card: Card): boolean {
+  const suffix = pokemonSuffixOf(card);
+  return suffix === "ex" || suffix === "V";
+}
+
 /** Does this Pokémon have a Rule Box (§ the reminder text Artazon prints:
     "Pokémon ex, Pokémon V, etc. have Rule Boxes.")? — the negated predicate of
     Artazon "Basic Pokémon that doesn't have a Rule Box". A Rule Box is the grey
