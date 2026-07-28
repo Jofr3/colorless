@@ -603,6 +603,17 @@ const CHOICE_BELT: CardProgram = {
     (Tool) */
 const BRAVERY_CHARM: CardProgram = { passive: { basicHpBonus: 50 } };
 
+/** Rocky Helmet — "If the Pokémon this card is attached to is in the Active Spot
+    and is damaged by an attack from your opponent's Pokémon (even if it is
+    Knocked Out), put 2 damage counters on the Attacking Pokémon." (Tool) The
+    Tool twin of Counterattack Quills — it rides D98's `damageAttacker` machinery
+    verbatim: `passivesOf` already folds an attached Tool's `damageAttacker` into
+    its seat-free sum, and attack.ts places the counters on the main-hit Active
+    defender's attacker, so this is a pure data row (no new op). 2 counters = 20
+    HP; unconditional once attached (the Tool IS the source, so no `requiresTool`,
+    unlike Custom Trap). */
+const ROCKY_HELMET: CardProgram = { passive: { damageAttacker: { amount: 20 } } };
+
 // ── M4 slice 5: Special Energy (§6.1). ──
 
 /** Jet Energy — "provides {C} Energy. When you attach this card from your hand
@@ -1963,6 +1974,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-176": CHOICE_BELT, // +30 before W/R vs a defending Pokémon V (name-derived suffix)
   // Bravery Charm (Tool)
   "sv02-173": BRAVERY_CHARM,
+  // Rocky Helmet (Tool) — reactive recoil, the Tool twin of Counterattack Quills (D98 damageAttacker)
+  "sv01-193": ROCKY_HELMET,
   // — M4 slice 5: Special Energy (verified vs local D1 2026-07-18). —
   // Jet Energy — {C} + switch-on-bench-attach
   "sv02-190": JET_ENERGY,

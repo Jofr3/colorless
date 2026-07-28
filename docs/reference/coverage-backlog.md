@@ -75,7 +75,9 @@ unblocks. High-value ops first.
 `healEachAll`, the seat-blind twin of `healEach`; the FIRST long-tail slice), ~~`removeWeakness`
 (Florges)~~ (**DONE**, engine 0.55.0 / D104 — a `PassiveEffects.removeWeakness` flag + the own-board
 `seatRemovesWeakness` scan; the FIRST long-tail passive aura), `noRetreatCostAura`
-(Clefable ex), `retaliationDamage` (Rocky Helmet), `preventDamageFromExV`
+(Clefable ex), ~~`retaliationDamage` (Rocky Helmet)~~ (**DONE**, engine 0.57.0 /
+D106 — the D98 `damageAttacker` recoil on a Tool, a PURE data row: `passivesOf`
+already folds attached-Tool passives), `preventDamageFromExV`
 (Mimikyu), the Iono/Judge prize-count draws, per-card search filters
 (`searchFilter:{itemCard,toolCard,~~evolutionPokemon~~,…}` — `toolCard` done
 D102, **`evolutionPokemon` done D105/0.56.0** (Jacq); `itemCard`'s only sv01–03
@@ -91,7 +93,8 @@ is well under 70.
 | Picnic Basket | sv01-184 | `healEachAll` (heal 30 from EVERY Pokémon, both boards; non-parking, seat-blind twin of `healEach`) | 0.54.0 (D103) |
 | Florges | sv01-093 | `removeWeakness` (own-board "no Weakness" aura; a `PassiveEffects` flag + `seatRemovesWeakness` scan gated through `disabledAbilityUids`, wired into both W/R read sites) | 0.55.0 (D104) |
 | Jacq | sv01-175/-236/-250 | `evolutionPokemon` CardFilter (search up to 2 Evolution Pokémon → hand; a bare union variant reading `evolveFromOf`, the D102 pattern, ZERO new op — the Flamigo search-to-hand shape) | 0.56.0 (D105) |
-| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion) — BOTH now mechanism slices; the cheap "one new filter kind" avenue is spent for sv01–03 (`itemCard`'s only user Arven needs a dual-target search) | — |
+| Rocky Helmet | sv01-193 | `damageAttacker` on a TOOL (2 counters = 20 HP recoil on the attacker; the D98 family's Tool member — a PURE data row, `passivesOf` already folds attached-Tool passives, no `requiresTool` since the Tool IS the source) | 0.57.0 (D106) |
+| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion) — BOTH mechanism slices. Two LIGHTER long-tail passives remain but each needs a NEW read site: Clefable ex sv03-082 "Lunar Zone" (`noRetreatCostAura`, conditional on {P}-attached — a retreat-cost read site) · Mimikyu sv02-097 "Safeguard" (`preventDamageFromExV`, prevent all damage from an ex/V attacker — a damage-pipeline prevention read). The cheap "one new filter kind" avenue is spent for sv01–03 (`itemCard`'s only user Arven needs a dual-target search). | — |
 
 ## Suggested sequencing
 1. ✅ **`attachEnergyFrom`** — the single biggest unlock (11+, and the engine of most

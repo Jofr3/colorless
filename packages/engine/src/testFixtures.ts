@@ -517,6 +517,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "sv02-173": trainerCard("sv02-173", "Tool", "The Basic Pokémon this card is attached to gets +50 HP."),
   /** Choice Belt — Tool: +30 before W/R vs a defending Pokémon V. */
   "sv02-176": trainerCard("sv02-176", "Tool", "The attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon V (before applying Weakness and Resistance)."),
+  /** Rocky Helmet — Tool: 2 damage counters on the attacker when the holder is
+      damaged while Active (the D98 `damageAttacker` family, granted by a Tool). */
+  "sv01-193": trainerCard("sv01-193", "Tool", "If the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if it is Knocked Out), put 2 damage counters on the Attacking Pokémon."),
 
   // — M4 slice 5: Special Energy (real catalog ids so the registry finds their
   //   EnergyProgram; names are the REAL names, though provision keys on the id). —
@@ -2413,6 +2416,21 @@ export const DAMAGE_ATTACKER_DECK = deckOf({
   "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0)
   "sv01-197": 3, // Vitality Band — the inert Tool for the Custom Trap gate
   "fix-bigbody": 29, // 200 HP neutral Basic — DOMINANT setup + the promote target
+  "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
+});
+
+/** 0.56.0 → 0.57.0: the Rocky Helmet row — the D98 `damageAttacker` recoil on a
+    TOOL rather than an Ability (D106). A DEDICATED deck (the DAMAGE_ATTACKER_DECK
+    is seed-pinned): the plain-damage attacker (fix-attacker's Bite — {C} 30 at
+    index 0, Yawn at index 2) hits a plain P2 Active (fix-bigbody, no passive of
+    its own) that carries Rocky Helmet, so the ONLY source of recoil is the Tool.
+    fix-bigbody is the DOMINANT (mulligan-free) Basic + the holder + the promote
+    target both sides; fix-energy pays Bite's {C}. BOTH seats run it so the holder
+    can be surgically fielded on P2. */
+export const ROCKY_HELMET_DECK = deckOf({
+  "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0)
+  "sv01-193": 4, // Rocky Helmet — the recoil TOOL (2 counters = 20 HP)
+  "fix-bigbody": 40, // 200 HP neutral Basic — DOMINANT setup + the holder + the promote target
   "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
 });
 
