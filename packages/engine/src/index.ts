@@ -457,7 +457,14 @@ import type { GameState, Seat } from "./types";
     programs are the Nest Ball / Poké Ball search shapes, so no new op. New event
     STADIUM_ABILITY_ACTIVATED. ENGINE + tests only — the HUD affordance (a
     target-less "global" button + projection field) is a deferred follow-up. */
-export const engineVersion = "0.53.0";
+
+    /* 0.54.0 — PICNIC BASKET (sv01-184): the first single-op long-tail slice
+    after the last op-family row closed (P3-M5, D103). One new EffectOp
+    `healEachAll` — the seat-blind twin of `healEach` — heals up to 30 damage
+    from EVERY in-play Pokémon on BOTH boards, each heal clamped and emitting its
+    own HEALED tagged with that Pokémon's own seat. Non-parking, no choice, so no
+    wire/schema change; like Potion it has no would-whiff play gate. */
+export const engineVersion = "0.54.0";
 
 export type {
   ApplyResult,

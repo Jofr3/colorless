@@ -71,14 +71,21 @@ unblocks. High-value ops first.
 | ✅ **the reveal-and-bottom family + the OPPONENT's own decision** (`bottomFromOpponentHand` + `opponentMayDraw`) | 3 | **DONE (engine 0.32.0) — the last row the §9.2 and `payFromHand` rows both left open, and it needed a mechanism neither of them did.** Two ops. `bottomFromOpponentHand` reveals the opponent's whole hand (a new PUBLIC `HAND_REVEALED` naming every uid — that is what the printed word means at a table, and it is the one hand event in the file that is not count-only), the controller picks one card, and it goes under the OPPONENT's deck (`CARD_TO_BOTTOM_OF_DECK`, named, with an `actor`: unlike Dendra's payment this move happened face up at BOTH ends, so which card sits on the bottom is real public information). The offer collapses to one representative per interchangeable class — sound here precisely where it is not in `payFromHand`, whose collapse over a still-hidden hand leaks its duplicate structure. `opponentMayDraw` is the engine's **first decision answered by the NON-controller**: the park carries a `decider`, the phase a `answerer` beside its controller `seat` (absent when they agree, so every older park serializes byte-identically), and `resolveEffect` admits only that seat — the controller cannot consent for them. Rules doc **§9.4**. Lands **Ortega** ×2 (sv03-190/-219, the Miriam shape with both halves across the table) and **Greavard** "Underworld Stroll" (sv01-105) DERIVED from attack text — its Supporter-filtered twin has no second sentence, and its plain second attack (Sharp Fang) is exactly why the per-CARD registry `attack` field could not have carried it. `programPlayable` gained the empty-opponent-hand gate (a PUBLIC count — the Catcher/Hammer class, not Poké Ball's; it reads hand LENGTH and never the filter, since whether a hidden hand holds a match is what the game state does not establish) and is now EXPORTED, so the HUD greys a dead Trainer/Ability row with the predicate that rejects it. |
 
 **Long tail (~70 single-card ops)** — e.g. `bounceToHand` (Penny), `moveDamageCounters`
-(Slowbro), `healBothPlayers` (Picnic Basket), `noRetreatCostAura` (Clefable ex),
-`removeWeakness` (Florges), `retaliationDamage` (Rocky Helmet), `preventDamageFromExV`
+(Slowbro), ~~`healBothPlayers` (Picnic Basket)~~ (**DONE**, engine 0.54.0 / D103 — the op is
+`healEachAll`, the seat-blind twin of `healEach`; the FIRST long-tail slice), `noRetreatCostAura`
+(Clefable ex), `removeWeakness` (Florges), `retaliationDamage` (Rocky Helmet), `preventDamageFromExV`
 (Mimikyu), the Iono/Judge prize-count draws, per-card search filters
 (`searchFilter:{itemCard,toolCard,evolutionPokemon,…}`), and several bespoke
 passives/triggers. Full list in the fan-out result. Many collapse into a few
 parameterized ops (an `attachEnergyFrom` with source/filter params; a
 `conditionalGate` family; extra `CardFilter` kinds), so the real op count to build
 is well under 70.
+
+### Landed from the long tail
+| Card | id | Op | Engine |
+|---|---|---|---|
+| Picnic Basket | sv01-184 | `healEachAll` (heal 30 from EVERY Pokémon, both boards; non-parking, seat-blind twin of `healEach`) | 0.54.0 (D103) |
+| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability) · `removeWeakness` (Florges sv01-093, continuous passive aura) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion) | — |
 
 ## Suggested sequencing
 1. ✅ **`attachEnergyFrom`** — the single biggest unlock (11+, and the engine of most

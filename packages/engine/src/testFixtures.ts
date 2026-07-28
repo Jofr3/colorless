@@ -278,6 +278,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
   ),
   "sv01-194": trainerCard("sv01-194", "Item", "Switch your Active Pokémon with 1 of your Benched Pokémon."),
   "sv01-188": trainerCard("sv01-188", "Item", "Heal 30 damage from 1 of your Pokémon."),
+  "sv01-184": trainerCard(
+    "sv01-184",
+    "Item",
+    "Heal 30 damage from each Pokémon (both yours and your opponent's).",
+  ),
   "sv01-172": trainerCard(
     "sv01-172",
     "Item",
@@ -2666,6 +2671,15 @@ export const HEAL_UPTO_DECK = deckOf({
   "sv01-188": 2, // Potion — the exact-1 single arm, unchanged
   "fix-basic-1": 12,
   "fix-energy": 39,
+});
+
+/** M5 op-slice: healEachAll (Picnic Basket, sv01-184). Both boards are healed,
+    so the deck (shared by both seats) just needs plenty of fix-basic-1 to field
+    Active + bench on each side and copies of Picnic Basket to draw into hand. */
+export const PICNIC_BASKET_DECK = deckOf({
+  "sv01-184": 4, // Picnic Basket
+  "fix-basic-1": 20, // bodies for BOTH boards (Active + bench each)
+  "fix-energy": 36,
 });
 
 /** M5 op-slice: bottomFromOpponentHand + opponentMayDraw (Ortega / Greavard).

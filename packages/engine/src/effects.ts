@@ -219,6 +219,12 @@ export type EffectOp =
       (Garganacl "Blessed Salt" — a between-turns triggered Ability). No target
       choice, so it never parks; one HEALED per Pokémon that actually healed. */
   | { op: "healEach"; amount: number }
+  /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket
+      "Heal 30 damage from each Pokémon (both yours and your opponent's)"). The
+      seat-blind twin of `healEach` — the whole table heals, not just the
+      controller's side. No target choice, so it never parks; one HEALED per
+      Pokémon that actually healed, tagged with that Pokémon's OWN seat. */
+  | { op: "healEachAll"; amount: number }
   /** Place `amount` HP of damage on the OPPONENT's Active Pokémon (Trevenant
       "Forest Miasma" — 1 damage counter between turns). A COUNTER placement,
       not attack damage: no Weakness/Resistance (§8.5), emitted as

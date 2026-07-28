@@ -338,6 +338,13 @@ const SWITCH: CardProgram = { trainer: [{ op: "switchActive" }] };
 /** "Heal 30 damage from 1 of your Pokémon." (Item) */
 const POTION: CardProgram = { trainer: [{ op: "healChosen", amount: 30 }] };
 
+/** "Heal 30 damage from each Pokémon (both yours and your opponent's)." (Item —
+    a no-choice whole-table heal, so it never parks and — like Potion — has no
+    would-whiff play gate: legal to play even with nothing damaged.) */
+const PICNIC_BASKET: CardProgram = {
+  trainer: [{ op: "healEachAll", amount: 30 }],
+};
+
 /** "Search your deck for a Basic Energy card, reveal it, and put it into your
     hand. Then, shuffle your deck." (Item) */
 const ENERGY_SEARCH: CardProgram = {
@@ -1891,6 +1898,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-194": SWITCH,
   // Potion
   "sv01-188": POTION,
+  // Picnic Basket
+  "sv01-184": PICNIC_BASKET,
   // Energy Search
   "sv01-172": ENERGY_SEARCH,
   // Chien-Pao ex — Shivery Chill (activated ability)

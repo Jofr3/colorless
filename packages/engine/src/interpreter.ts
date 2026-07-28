@@ -29,6 +29,7 @@ import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "
 import {
   BENCH_MAX,
   DEFAULT_POISON_DAMAGE,
+  SEATS,
   drawToHand,
   makeInPlay,
   noConditions,
@@ -595,6 +596,8 @@ function stepOp(
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
       return { done: healEach(state, op.amount, ctx, events) };
+    case "healEachAll":
+      return { done: healEachAll(state, op.amount, events) };
     case "damageActive":
       return { done: damageActive(state, op.amount, ctx, events) };
     case "spreadDamage":
@@ -1515,6 +1518,33 @@ function healEach(
   const active = side.active === null ? null : healOne(side.active);
   const bench = side.bench.map(healOne);
   return withSide(state, ctx.seat, { ...side, active, bench });
+}
+
+/** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket).
+    Seat-blind twin of `healEach`: each heal is clamped to that Pokémon's damage
+    and emits its own HEALED tagged with that Pokémon's own seat (an undamaged
+    Pokémon heals 0 and emits nothing). Active then bench per seat, p1 then p2.
+    Never parks. */
+function healEachAll(
+  state: GameState,
+  amount: number,
+  events: GameEvent[],
+): GameState {
+  let next = state;
+  for (const seat of SEATS) {
+    const side = next.players[seat];
+    const healOne = (pokemon: InPlayPokemon): InPlayPokemon => {
+      const uid = topUid(pokemon);
+      const healed = Math.min(amount, pokemon.damage);
+      if (uid === undefined || healed <= 0) return pokemon;
+      events.push({ type: "HEALED", seat, uid, amount: healed });
+      return { ...pokemon, damage: pokemon.damage - healed };
+    };
+    const active = side.active === null ? null : healOne(side.active);
+    const bench = side.bench.map(healOne);
+    next = withSide(next, seat, { ...side, active, bench });
+  }
+  return next;
 }
 
 /** PUT `amount` HP of damage counters on the OPPONENT's Active Pokémon
