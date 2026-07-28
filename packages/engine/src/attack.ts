@@ -26,6 +26,7 @@ import {
 import type { AttackDamageBonus } from "./effects";
 import type { GameEvent } from "./events";
 import {
+  advance,
   finishAttack,
   resolvePrizesAndResume,
   resolvePromotionAndResume,
@@ -34,7 +35,7 @@ import {
 import { attackerPreWRBonus, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
-import { runDamagedByAttackTriggers } from "./triggers";
+import { damagedByAttackAbility } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
 import { isImmobilized, otherSeat, takenPrizes, withActive, withSide } from "./types";
@@ -268,6 +269,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   }
 
   let defended = defender;
+  // §9 — the damaged Active's reactive onDamagedByAttack Ability, recorded at
+  // damage time but run as a staged epilogue below (so a PARKING discard survives).
+  let damagedTriggerStage: PendingStage | null = null;
   if (scaledBase + scaled > 0) {
     // §8.5 damage pipeline, in printed order: base + the attack's own printed
     // scaling clause (`scaled` — Paldean Tauros "Raging Horns", counted at
@@ -332,41 +336,44 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       });
     }
 
-    // §9 reactive status — a defender with an `onDamagedByAttack` triggered
-    // Ability (Armarouge "Scorching Armor") fires a reactive program on the
-    // ATTACKING Pokémon when it is DAMAGED (`dealt > 0`), even if it was Knocked
-    // Out. Like the recoil above this runs BEFORE finishAttack's §8.1 sweep, and
-    // the program runs under the damaged defender's seat so its `applyStatus
-    // target:"defender"` Burns the attacker's Active. `defended` is the damaged
-    // Active defender (the main hit); a benched holder hit by spread does not
-    // react, matching the "in the Active Spot" clause (the read site enforces it).
-    if (dealt > 0) {
-      next = runDamagedByAttackTriggers(next, defenderSeat, defended, events);
+    // §9 reactive trigger — a defender with an `onDamagedByAttack` Ability
+    // (Armarouge "Scorching Armor" Burns the attacker; Klawf ex "Counterattacking
+    // Pincer" discards an Energy from it) reacts when it is DAMAGED (`dealt > 0`),
+    // even if Knocked Out. Recorded here for the main-hit Active defender — a
+    // benched holder hit by spread does not react, matching the "in the Active
+    // Spot" clause (the read site enforces it) — and run as a staged epilogue
+    // (below) AFTER the attack's own effect program but BEFORE finishAttack's §8.1
+    // sweep, so "even if Knocked Out" stays free AND Klawf's opponent-side discard
+    // decision can PARK (the stage carries a resumeTail into the epilogue). Seeded
+    // only when such an Ability is actually present (and not §9-locked), so every
+    // other damaging attack keeps its exact pre-slice queue.
+    if (dealt > 0 && damagedByAttackAbility(next, defenderSeat, defenderUid) !== undefined) {
+      damagedTriggerStage = { kind: "damagedTrigger", seat: defenderSeat, uid: defenderUid };
     }
   }
 
-  // §8 step 4 — the effect program runs AFTER the damage, in printed order: a
-  // defender-targeted status lands even when the damage above is lethal (the
-  // condition vanishes with the stack at the KO below).
+  // §8 step 4 — the attack's own effect program runs AFTER the damage, in printed
+  // order (a defender-targeted status lands even on a lethal hit — the condition
+  // vanishes with the stack at the KO below), and the §9 reactive damagedTrigger
+  // of the damaged Active runs after THAT; both precede finishAttack's §8.1 sweep.
   //
-  // The program may PARK on a decision ("Discard an Energy from this Pokémon"
-  // with two different Energy attached), and an attack that parks must still
-  // finish afterwards — so the epilogue is QUEUED as a stage before the program
-  // runs, and the fold goes through settleProgram with `resumeTail`. A DONE
-  // program drains straight into it (identical to the pre-slice inline call, one
-  // hop later); a parked one leaves it sitting in `pending` until resolveEffect
-  // finishes the program and drains it then. APPENDED rather than assigned: the
-  // queue is empty here (turn:action never carries a tail — the three writers of
-  // that phase all leave it empty), so this is the same thing, but a stage that
-  // somehow WAS queued would run after the attack instead of vanishing.
+  // Either can PARK ("Discard an Energy from this Pokémon" with two different
+  // Energy attached; Klawf ex's opponent-side discard), so the tail is STAGED: the
+  // attackEpilogue (finishAttack) sits at the end, the damagedTrigger in front of
+  // it when the defender reacts, and the attacker's effect program — when present —
+  // runs first through settleProgram with `resumeTail`, draining into that queue. A
+  // DONE program drains straight through; a parked one leaves the queue in
+  // `pending` until resolveEffect finishes it. APPENDED not assigned: turn:action
+  // never carries a tail (its three writers all leave it empty), so this equals a
+  // fresh queue but stays honest if a stage somehow WERE queued.
+  const epilogue: PendingStage[] =
+    damagedTriggerStage !== null
+      ? [damagedTriggerStage, { kind: "attackEpilogue", seat: action.seat }]
+      : [{ kind: "attackEpilogue", seat: action.seat }];
   if (program !== null) {
-    const epilogue: PendingStage = {
-      kind: "attackEpilogue",
-      seat: action.seat,
-    };
     return settleProgram(
       runProgram(
-        { ...next, pending: [...next.pending, epilogue] },
+        { ...next, pending: [...next.pending, ...epilogue] },
         program,
         // The attacker is "this Pokémon" (§8) — by uid rather than "the Active",
         // which stays truthful if the program itself moves it off the spot.
@@ -379,10 +386,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     );
   }
 
-  // §8.1 Knock Out sweep on both boards, then the §5.3 turn end — the shared
-  // epilogue with the confusion-tails exit above. With no effect program there is
-  // no recoil, so only the defender's board can be lethal, but the sweep stays
-  // total (finishAttack owns the order + the §14 tie).
+  // No effect program. When the defender reacts, drain [damagedTrigger, epilogue]
+  // through advance (the trigger may park; the epilogue behind it resumes on
+  // resolve). Otherwise the epilogue alone is exactly finishAttack — its advance
+  // case pops itself and calls it — so keep the direct call for the common
+  // no-reaction path (byte-identical to the pre-slice tail).
+  if (damagedTriggerStage !== null) {
+    return advance({ ...next, pending: [...next.pending, ...epilogue] }, events);
+  }
+
+  // §8.1 Knock Out sweep on both boards, then the §5.3 turn end. With no effect
+  // program there is no recoil, so only the defender's board can be lethal, but the
+  // sweep stays total (finishAttack owns the order + the §14 tie).
   return finishAttack(next, events, action.seat);
 }
 

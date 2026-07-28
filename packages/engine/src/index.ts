@@ -414,7 +414,26 @@ import type { GameState, Seat } from "./types";
     lock off: the aura-vs-aura fixpoint (Ting-Lu ex opposite a damaged Klefki) is a
     documented follow-up, pinned by a tripwire test. Empty Set on every board with
     no lock in play. No web/API/DB/schema change. */
-export const engineVersion = "0.51.0";
+
+    /* 0.52.0 — COUNTERATTACKING PINCER: the PARKING `onDamagedByAttack` reactive
+    trigger the D99 framework deferred (P3-M5, D101) — Klawf ex sv03-120, the last
+    card on the row. Its reaction is `discardEnergy from:"opponentActive"` run under
+    the DAMAGED seat, so the DEFENDER discards an Energy from the ATTACKER, and that
+    choice must PARK during the OPPONENT's turn. Made the trigger a STAGED
+    `damagedTrigger` PendingStage (the twin of koTrigger) instead of D99's inline
+    non-parking call: attack.ts records it at damage time (only when the damaged
+    Active carries such an Ability, so every other attack keeps its exact queue) and
+    seeds it AFTER the attack's own effect program but BEFORE the attackEpilogue;
+    flow.ts `runDamagedTrigger` folds it through settleProgram with `resumeTail`
+    under the DAMAGED seat — so, exactly like an on-KO trigger, the DEFENDER is the
+    answerer (no `decider`/`answerer` needed), the attacker still owns the turn
+    (koParkActiveSeat reads the attackEpilogue behind the park), and finishAttack's
+    §8.1 sweep + turn end resume after the pick ("even if Knocked Out" stays free;
+    Klawf ex prizes 2). triggers.ts `runDamagedByAttackTriggers` (the D99 inline
+    runner) became the `damagedByAttackAbility` gated lookup. Armarouge's Burn
+    (non-parking) rides the same staged path, byte-identical. No web/API/DB/schema
+    change (the discard surfaces via the existing ENERGY_DISCARDED event). */
+export const engineVersion = "0.52.0";
 
 export type {
   ApplyResult,

@@ -143,30 +143,26 @@ export function runCheckupTriggers(
   return next;
 }
 
-/** Run the `onDamagedByAttack` triggered Abilities of the Active Pokémon that a
-    main-hit attack just DAMAGED (§9, Armarouge "Scorching Armor"). The caller
-    (attack.ts) fires this only when the defender took damage (`dealt > 0`) and
-    only for the Active defender, so the read site already carries the "if this
-    Pokémon is in the Active Spot" clause (`isActive` passed `true`; the
-    ability's own `activeOnly` still gates it for symmetry). It runs BEFORE
-    finishAttack's §8.1 sweep, so "even if this Pokémon is Knocked Out" is free —
-    a lethally-damaged defender still reacts. NON-PARKING by construction (the
-    representative inflicts a Special Condition on the attacker), so state threads
-    straight through like a betweenTurns trigger. The program runs under the
-    DAMAGED Pokémon's seat, so an `applyStatus target:"defender"` op lands on the
-    ATTACKER's Active (`otherSeat`), matching "the Attacking Pokémon is now …". */
-export function runDamagedByAttackTriggers(
+/** The `onDamagedByAttack` reactive Ability of the Active `uid` on `seat`'s board
+    — the one a main-hit attack just DAMAGED (§9, Armarouge "Scorching Armor" Burns
+    the attacker; Klawf ex "Counterattacking Pincer" discards its Energy). The
+    §9 ability-lock is applied (through `triggersOf`, the single choke), and the
+    `uid` must STILL be the Active — the caller seeds the damagedTrigger stage at
+    damage time but it runs after the attack's own effect program, which could have
+    switched the defender out (then the "in the Active Spot" clause no longer holds
+    and this returns undefined). Representatives carry ONE such Ability, so the
+    first match is it — the flow.ts twin of `onKnockOutTrigger`. Unlike D99's
+    NON-PARKING inline runner, the program is now run by flow.ts `runDamagedTrigger`
+    through settleProgram, so a PARKING discard (Klawf) survives the opponent's
+    turn. It runs under the DAMAGED seat, so `discardEnergy from:"opponentActive"`
+    (or `applyStatus target:"defender"`) reaches the ATTACKER's Active (`otherSeat`),
+    matching "… from the Attacking Pokémon". */
+export function damagedByAttackAbility(
   state: GameState,
-  damagedSeat: Seat,
-  damaged: InPlayPokemon,
-  events: GameEvent[],
-): GameState {
-  const uid = topUid(damaged);
-  if (uid === undefined) return state;
-  let next = state;
-  for (const ability of triggersOf(next, damaged, "onDamagedByAttack", true)) {
-    events.push({ type: "ABILITY_TRIGGERED", seat: damagedSeat, uid, ability: ability.name });
-    next = runProgram(next, ability.program, { seat: damagedSeat, sourceUid: uid }, events).state;
-  }
-  return next;
+  seat: Seat,
+  uid: string,
+): TriggeredAbility | undefined {
+  const active = state.players[seat].active;
+  if (active === null || topUid(active) !== uid) return undefined;
+  return triggersOf(state, active, "onDamagedByAttack", true)[0];
 }

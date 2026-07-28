@@ -6,7 +6,7 @@ import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { runProgram } from "./interpreter";
 import { flipCoin } from "./rng";
-import { onKnockOutTrigger, runCheckupTriggers } from "./triggers";
+import { damagedByAttackAbility, onKnockOutTrigger, runCheckupTriggers } from "./triggers";
 import type {
   GameOutcome,
   GameOverReason,
@@ -478,6 +478,39 @@ function runKoTrigger(
   );
 }
 
+/** Run the `onDamagedByAttack` reactive Ability of the Active `uid` a main-hit
+    attack just DAMAGED (§9 — Armarouge "Scorching Armor" Burns the attacker,
+    Klawf ex "Counterattacking Pincer" discards its Energy) — a damagedTrigger
+    stage attack.ts queued AFTER the attack's own effect program and BEFORE
+    finishAttack's sweep. The twin of runKoTrigger: it fires during the ATTACKER's
+    turn, so it runs under `damagedSeat` (the DAMAGED, non-turn player, the
+    program's controller) and folds through settleProgram with `resumeTail`, so a
+    PARKING discard PARKS on effect:choose (the DEFENDER decides which of the
+    attacker's Energy) and draining RESUMES the attackEpilogue queued behind it —
+    which then sweeps §8.1 (so "even if this Pokémon is Knocked Out" holds: the
+    reaction lands before the sweep) and ends the attacker's turn. `damagedSeat`
+    being the controller makes it the answerer by default (no `decider`), exactly
+    as runKoTrigger routes a KO'd player's on-KO decision; the projection reads the
+    real turn owner off the attackEpilogue in `pending` (koParkActiveSeat). A stage
+    whose Ability no longer resolves — the effect program switched the defender out,
+    or a lock came down — just keeps draining. */
+function runDamagedTrigger(
+  state: GameState,
+  damagedSeat: Seat,
+  uid: string,
+  events: GameEvent[],
+): ApplyResult {
+  const ability = damagedByAttackAbility(state, damagedSeat, uid);
+  if (ability === undefined || ability.program.length === 0) return advance(state, events);
+  events.push({ type: "ABILITY_TRIGGERED", seat: damagedSeat, uid, ability: ability.name });
+  return settleProgram(
+    runProgram(state, ability.program, { seat: damagedSeat, sourceUid: uid }, events),
+    damagedSeat,
+    events,
+    { resumeTail: true },
+  );
+}
+
 /** The Pokémon Checkup (§13), run whole inside its stage — no player
     decisions happen mid-checkup, so there is no checkup phase: the four
     condition steps tick in their fixed order, THEN the batch's KOs resolve
@@ -833,6 +866,12 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // first so the prize/promotion stages behind it are what resumes if the
       // program parks (resume-the-tail); a done program just keeps draining.
       return runKoTrigger(popStage(state), stage.seat, stage.uid, events);
+    case "damagedTrigger":
+      // §9 — the damaged Active's reactive onDamagedByAttack Ability (Klawf ex's
+      // parking Energy discard, Armarouge's Burn). Pop first so the attackEpilogue
+      // behind it is what resumes if the program parks (resume-the-tail); a done
+      // program just keeps draining into the sweep + turn end.
+      return runDamagedTrigger(popStage(state), stage.seat, stage.uid, events);
     case "attackEpilogue":
       // §8 step 4 has finished (the effect program ran to completion, possibly
       // across one or more parks): sweep BOTH boards (a spread that KO'd the

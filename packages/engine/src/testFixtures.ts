@@ -376,6 +376,27 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** Klawf ex (sv03-120) — a Fighting Basic ex (220 HP, retreat 3, the REAL
+      print) whose registry entry carries the `onDamagedByAttack` TRIGGER
+      "Counterattacking Pincer" (a PARKING discard of an Energy from the Attacking
+      Pokémon when this Active is damaged, even if Knocked Out). No `attacks`: it is
+      always the DEFENDER in the tests, so Falling Press is never paid; 220 HP so a
+      bare Bite (30) leaves it standing (the KO case pre-damages it to 190). Being
+      an `ex` it prizes 2 when Knocked Out (§8.1, D93). */
+  "sv03-120": battler("sv03-120", {
+    name: "Klawf ex",
+    types: ["Fighting"],
+    hp: 220,
+    retreat: 3,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Counterattacking Pincer",
+        effect: "…discard an Energy from the Attacking Pokémon.",
+      },
+    ],
+  }),
+
   // — M5 op-slice: disableAbilities continuous Ability-lock auras (D100). HP /
   //   retreat / stage are the REAL prints (queried off the live D1); the printed
   //   `abilities` NAME matters mechanically — it is what Mischievous Lock's
@@ -2324,6 +2345,25 @@ export const SCORCHING_ARMOR_DECK = deckOf({
   "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0; Yawn = index 2)
   "fix-bigbody": 40, // 200 HP neutral Basic — DOMINANT setup + the promote target
   "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
+});
+
+/** 0.51.0 → 0.52.0: the `onDamagedByAttack` PARKING reactive-trigger row (Klawf ex
+    "Counterattacking Pincer", D101). A DEDICATED deck (SCORCHING_ARMOR_DECK is
+    tuned for the non-parking Burn): the plain-damage attacker (fix-attacker's Bite
+    — Colorless {C}, 30, no effect; Yawn at index 2 is the 0-damage status) hits a
+    P2 Active carrying Counterattacking Pincer, which makes the DEFENDER discard an
+    Energy from the ATTACKER. The attacker is fielded with TWO DIFFERENT Energy —
+    fix-energy (Colorless, pays Bite) + fix-fire-energy (Fire) — so the discard is a
+    real CHOICE and PARKS (two identical Energy would collapse to a forced pick and
+    auto-resolve). fix-bigbody is the DOMINANT (mulligan-free) Basic + the bench body
+    BOTH sides promote into after a KO. BOTH seats run it so Klawf ex can be
+    surgically fielded on P2 while fix-attacker attacks from P1. */
+export const COUNTERATTACKING_PINCER_DECK = deckOf({
+  "sv03-120": 4, // Klawf ex — Counterattacking Pincer (onDamagedByAttack → PARKING discard)
+  "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0; Yawn = index 2)
+  "fix-bigbody": 30, // 200 HP neutral Basic — DOMINANT setup + the promote target
+  "fix-energy": 9, // Colorless Basic Energy — pays Bite's {C}, one discard candidate
+  "fix-fire-energy": 9, // Fire Basic Energy — the SECOND, DIFFERENT candidate that forces a PARK
 });
 
 /** 0.50.0 → 0.51.0: the `disableAbilities` continuous Ability-lock row (D100 —

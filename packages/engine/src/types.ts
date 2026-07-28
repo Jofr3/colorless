@@ -203,6 +203,18 @@ export type PendingStage =
       collectKnockOuts (flow.ts) after the prize stages, before the promotions.
       `uid`'s card left play, but cardIdByUid → programFor still resolves it. */
   | { kind: "koTrigger"; seat: Seat; uid: string }
+  /** §9 — run the `onDamagedByAttack` reactive Ability of the Active `uid` that a
+      main-hit attack just DAMAGED (Armarouge "Scorching Armor" Burns the attacker;
+      Klawf ex "Counterattacking Pincer" discards an Energy from the attacker).
+      Fires DURING the OPPONENT's turn, so — like koTrigger — its program runs under
+      `seat` (the DAMAGED player, NOT the turn owner) and may PARK on a decision
+      (effect:choose with `resumeTail`), after which draining RESUMES the
+      attackEpilogue queued behind it. Seeded by attack.ts only when the damaged
+      Active carries such an Ability, AFTER the attack's own effect program and
+      BEFORE finishAttack's §8.1 sweep, so "even if this Pokémon is Knocked Out" is
+      free. `uid`'s card is re-looked-up (it is still the Active unless the effect
+      program moved it), so the "in the Active Spot" clause holds at run time. */
+  | { kind: "damagedTrigger"; seat: Seat; uid: string }
   /** §8.1 + §5.3 — the attack's EPILOGUE: sweep BOTH boards for Knock Outs
       (finishAttack owns the [defender, attacker] order + the §14 tie), then end
       `seat`'s (the attacker's) turn through the staged tail. Seeded BEFORE the
@@ -252,6 +264,10 @@ export type Phase =
           during the OPPONENT's turn — `seat` is then the KO'd player, NOT the
           turn owner, so the projection reads the turn owner separately
           (koParkActiveSeat);
+        • a reactive `onDamagedByAttack` Ability (§9 — Klawf ex "Counterattacking
+          Pincer", the damagedTrigger stage), which likewise parks during the
+          OPPONENT's turn with `seat` the DAMAGED player and the attackEpilogue
+          queued behind it — the SAME shape as the on-KO trigger, read the same way;
         • an ATTACK's effect program (§8 step 4), which parks with the
           attackEpilogue stage queued behind it — here `seat` IS the turn owner
           (the attacker), and draining the tail runs the KO sweep + turn end.

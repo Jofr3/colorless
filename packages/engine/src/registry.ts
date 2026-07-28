@@ -591,6 +591,33 @@ const SCORCHING_ARMOR: CardProgram = {
   ],
 };
 
+/** Klawf ex (sv03-120) — "Counterattacking Pincer": "If this Pokémon is in the
+    Active Spot and is damaged by an attack from your opponent's Pokémon (even if
+    this Pokémon is Knocked Out), discard an Energy from the Attacking Pokémon."
+    The `onDamagedByAttack` twin of Scorching Armor (D99), and the card that made
+    the trigger PARK: its reactive program is a `discardEnergy from:"opponentActive"`
+    (the Mawile op, reused verbatim), and — since the program runs under the DAMAGED
+    seat — `opponentActive` resolves to the ATTACKER's Active (`otherSeat`), so the
+    DEFENDER chooses which of the attacker's Energy to discard. That choice PARKS
+    during the OPPONENT's turn: attack.ts stages it as a `damagedTrigger` and folds
+    it through settleProgram with `resumeTail` (flow.ts `runDamagedTrigger`), so the
+    DEFENDER is the answerer (the koTrigger routing) and the attackEpilogue behind it
+    resumes after the pick. `filter: anyEnergy` — the print says "an Energy", not a
+    Special (that would be `specialEnergy`, Mawile's "Special Eater"). `activeOnly`
+    carries the "in the Active Spot" clause; mandatory ("discard an Energy"), so no
+    `optional`. "Even if Knocked Out" is free — the stage runs before finishAttack's
+    §8.1 sweep, and Klawf ex being a rule-box ex prizes 2 to the attacker (§8.1). */
+const COUNTERATTACKING_PINCER: CardProgram = {
+  triggered: [
+    {
+      name: "Counterattacking Pincer",
+      trigger: "onDamagedByAttack",
+      activeOnly: true,
+      program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+    },
+  ],
+};
+
 // ── M4 slice 8: the mid-turn-damage snipe (§9). ──
 
 /** Hawlucha — "Flying Entry": "When you play this Pokémon from your hand onto
@@ -1859,6 +1886,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-006": COUNTERATTACK_QUILLS, // Cacturne — Counterattack Quills (same program)
   "sv03-112": STUNFISK, // Stunfisk — Custom Trap (5 counters, only while a Tool is attached)
   "sv03-044": SCORCHING_ARMOR, // Armarouge — Scorching Armor (onDamagedByAttack → Burn the attacker)
+  "sv03-120": COUNTERATTACKING_PINCER, // Klawf ex — Counterattacking Pincer (onDamagedByAttack → PARKING discard from the attacker)
   // — M5 op-slice: disableAbilities continuous Ability-lock auras (verified vs the live D1 2026-07-27). —
   "sv01-096": MISCHIEVOUS_LOCK, // Klefki — Mischievous Lock (Basic, both sides, Active-only, except itself)
   "sv02-089": FETTERED_IN_MISFORTUNE, // Spiritomb — Fettered in Misfortune (Basic V, both sides)
