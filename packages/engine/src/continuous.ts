@@ -110,6 +110,31 @@ function auraSuppresses(
   return true;
 }
 
+/** §8.5 — does `seat` currently have a live "Your Pokémon in play have no
+    Weakness" aura (Florges "Blooming Garden")? A source is any of the seat's OWN
+    in-play Pokémon — Active or Bench, since the printed Ability carries no "in the
+    Active Spot" clause — whose TOP card's passive sets `removeWeakness`, provided
+    that source's own Ability is not itself suppressed by a §9 lock (a damaged
+    Florges opposite Ting-Lu ex "Cursed Land" loses the aura — Florges is a Stage 2,
+    not ex — so this joins the `disabledAbilityUids` checklist every non-lock
+    Ability surface must). The two Weakness read sites (attack.ts main hit,
+    interpreter.ts snipeActive) call this on the DEFENDER's seat to null its
+    Weakness before the pipeline; Resistance is untouched. Cheap on the common
+    path: the lock scan runs only once a `removeWeakness` source is found, so a
+    board with no Florges pays nothing. */
+export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    if (top === undefined || programFor(top.id)?.passive?.removeWeakness !== true) continue;
+    const uid = topUid(holder);
+    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue;
+    return true;
+  }
+  return false;
+}
+
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
     its TOP card's printed passive (Bouffalant "Bouffer") and every attached
     Tool (§7.4) — summed, since each source is its own card effect. The

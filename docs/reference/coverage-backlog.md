@@ -72,8 +72,10 @@ unblocks. High-value ops first.
 
 **Long tail (~70 single-card ops)** — e.g. `bounceToHand` (Penny), `moveDamageCounters`
 (Slowbro), ~~`healBothPlayers` (Picnic Basket)~~ (**DONE**, engine 0.54.0 / D103 — the op is
-`healEachAll`, the seat-blind twin of `healEach`; the FIRST long-tail slice), `noRetreatCostAura`
-(Clefable ex), `removeWeakness` (Florges), `retaliationDamage` (Rocky Helmet), `preventDamageFromExV`
+`healEachAll`, the seat-blind twin of `healEach`; the FIRST long-tail slice), ~~`removeWeakness`
+(Florges)~~ (**DONE**, engine 0.55.0 / D104 — a `PassiveEffects.removeWeakness` flag + the own-board
+`seatRemovesWeakness` scan; the FIRST long-tail passive aura), `noRetreatCostAura`
+(Clefable ex), `retaliationDamage` (Rocky Helmet), `preventDamageFromExV`
 (Mimikyu), the Iono/Judge prize-count draws, per-card search filters
 (`searchFilter:{itemCard,toolCard,evolutionPokemon,…}`), and several bespoke
 passives/triggers. Full list in the fan-out result. Many collapse into a few
@@ -85,7 +87,8 @@ is well under 70.
 | Card | id | Op | Engine |
 |---|---|---|---|
 | Picnic Basket | sv01-184 | `healEachAll` (heal 30 from EVERY Pokémon, both boards; non-parking, seat-blind twin of `healEach`) | 0.54.0 (D103) |
-| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability) · `removeWeakness` (Florges sv01-093, continuous passive aura) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion) | — |
+| Florges | sv01-093 | `removeWeakness` (own-board "no Weakness" aura; a `PassiveEffects` flag + `seatRemovesWeakness` scan gated through `disabledAbilityUids`, wired into both W/R read sites) | 0.55.0 (D104) |
+| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability) · more `CardFilter` kinds (`itemCard`/`evolutionPokemon`, the cheapest) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion) | — |
 
 ## Suggested sequencing
 1. ✅ **`attachEnergyFrom`** — the single biggest unlock (11+, and the engine of most

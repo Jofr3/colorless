@@ -191,6 +191,21 @@ export interface PassiveEffects {
         target CARD's printed abilities; keeps a mirror-match Klefki's own lock on. */
     exemptAbilityNamed?: string;
   };
+  /** §8.5 continuous own-board AURA: while this Pokémon is in play, every one of
+      its CONTROLLER's in-play Pokémon "has no Weakness" — the two Weakness read
+      sites (attack.ts main hit, interpreter.ts snipeActive) null this seat's
+      defenders' Weakness before the pipeline (Resistance is untouched). Like
+      `disableAbilities` it reaches OTHER Pokémon rather than modifying its holder,
+      so continuous.ts reads it through the dedicated `seatRemovesWeakness` scan,
+      not the per-Pokémon `passivesOf` aggregation, and only a TOP card's printed
+      Ability grants it. Florges sv01-093 "Blooming Garden" ("Your Pokémon in play
+      have no Weakness") is the only print in the sv01–03 pool: own board only,
+      unconditional, and NO "in the Active Spot" clause (it works from the Bench),
+      so a bare flag carries it — a future opponent-side or conditional print
+      would add fields then. Bench Pokémon never take Weakness-modified damage in
+      the first place (§8.5 applies only to the Active/Defending Pokémon), so the
+      only observable effect is on the seat's Active while it defends. */
+  removeWeakness?: true;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -473,6 +488,11 @@ const CURSED_LAND: CardProgram = {
     },
   },
 };
+
+/** Florges (sv01-093) — "Blooming Garden": "Your Pokémon in play have no
+    Weakness." — a continuous own-board aura (no "in the Active Spot" clause, so
+    it works from the Bench). The only "no Weakness" Ability in the sv01–03 pool. */
+const BLOOMING_GARDEN: CardProgram = { passive: { removeWeakness: true } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -1981,6 +2001,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-243": CURSED_LAND, // (reprint)
   "sv02-263": CURSED_LAND, // (reprint)
   "sv02-275": CURSED_LAND, // (reprint)
+  // — M5 op-slice: removeWeakness continuous own-board aura (verified vs the live D1 2026-07-28). —
+  "sv01-093": BLOOMING_GARDEN, // Florges — Blooming Garden ("Your Pokémon in play have no Weakness")
   // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)

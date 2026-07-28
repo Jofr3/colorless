@@ -464,7 +464,21 @@ import type { GameState, Seat } from "./types";
     from EVERY in-play Pokémon on BOTH boards, each heal clamped and emitting its
     own HEALED tagged with that Pokémon's own seat. Non-parking, no choice, so no
     wire/schema change; like Potion it has no would-whiff play gate. */
-export const engineVersion = "0.54.0";
+
+    /* 0.55.0 — BLOOMING GARDEN (sv01-093): the first long-tail continuous PASSIVE
+    aura (P3-M5, D104) — Florges "Your Pokémon in play have no Weakness", the only
+    "no Weakness" Ability in the sv01–03 pool. A bare `PassiveEffects.removeWeakness`
+    flag (own board, unconditional, no Active-Spot clause) read through the new
+    continuous.ts `seatRemovesWeakness(state, seat)` — the own-board twin of
+    `disabledAbilityUids`: it scans the seat's own Active + Bench for a top card
+    granting the aura, GATED through `disabledAbilityUids` so a §9-locked Florges
+    (damaged opposite Ting-Lu ex "Cursed Land" — Florges is a non-ex Stage 2) loses
+    it, joining the checklist every non-lock Ability surface must. The two Weakness
+    read sites null the DEFENDER's Weakness before the pipeline — attack.ts §8.5
+    main hit and interpreter.ts `snipeActive` (Chien-Pao ex "Hail Blade", Fezandipiti
+    "Cruel Arrow"); Resistance is untouched, and Bench snipes already carry no
+    Weakness, so nothing changes there. No web/API/DB/schema change. */
+export const engineVersion = "0.55.0";
 
 export type {
   ApplyResult,
@@ -518,6 +532,7 @@ export {
   effectiveMaxHp,
   effectiveRetreatCost,
   providedEnergy,
+  seatRemovesWeakness,
   stadiumEffectsOf,
 } from "./continuous";
 export {

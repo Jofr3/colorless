@@ -1634,6 +1634,22 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Psychic", value: "×2" }],
   }),
+  /** Florges (sv01-093, D104) — "Blooming Garden": "Your Pokémon in play have no
+      Weakness." The `removeWeakness` continuous own-board aura source (registry).
+      A Psychic Stage 2 (140 HP, ×2 Metal), VERBATIM off the live D1 — never a
+      starter, so tests place it via benchFromDeck surgery. Non-ex, so Ting-Lu ex
+      "Cursed Land" can lock it (the §9-gating witness in bloomingGarden.test.ts). */
+  "sv01-093": battler("sv01-093", {
+    name: "Florges",
+    types: ["Psychic"],
+    stage: "Stage2",
+    hp: 140,
+    retreat: 2,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    abilities: [
+      { type: "Ability", name: "Blooming Garden", effect: "Your Pokémon in play have no Weakness." },
+    ],
+  }),
   /** Mewtwo VSTAR (swsh10.5-031) — a Psychic Stage VSTAR (280 HP) whose registry
       entry authors "Psy Purge" at INDEX 0 (discard up to 3 {P} → 90× the count,
       the CAPPED Hail Blade shape) and leaves index-1 "Star Raid" unsimulated.
@@ -2470,6 +2486,27 @@ export const ABILITY_LOCK_DECK = deckOf({
   "fix-water-energy": 4, // what Shivery Chill searches for — without it the redactor
   //                        greys the row as "No legal target" and the lock is invisible
   "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT setup Active + the displaced body
+});
+
+/** M5 op-slice: the `removeWeakness` continuous own-board aura (Florges "Blooming
+    Garden", D104). fix-bigbody is the DOMINANT mulligan-free starter both seats
+    open on (the `board()` helper asserts it — Ting-Lu ex is a Basic ex that could
+    otherwise open Active and smuggle a live Cursed Land lock, and fix-weak /
+    fix-water-weak opening Active would pre-place a defender). Every specific body
+    is surgeried in from the deck: fix-attacker (Fire, Bite {C} 30) vs fix-weak
+    (60 HP ×2 Fire) is the main §8.5 path; Chien-Pao ex (sv02-061, Water) "Hail
+    Blade" vs fix-water-weak (200 HP ×2 Water) is the interpreter.ts snipeActive
+    path; Florges (sv01-093) is the aura, Ting-Lu ex (sv02-127) the §9 lock. */
+export const REMOVE_WEAKNESS_DECK = deckOf({
+  "sv01-093": 3, // Florges — Blooming Garden (the removeWeakness aura source)
+  "fix-attacker": 3, // Fire attacker — Bite ({C}, 30), fix-weak's Fire weakness doubles it
+  "fix-weak": 3, // 60 HP ×2 Fire defender — the main-hit weakness witness
+  "sv02-061": 3, // Chien-Pao ex (Water) — "Hail Blade" drives the snipeActive path
+  "fix-water-weak": 3, // 200 HP ×2 Water defender — the snipeActive weakness witness
+  "sv02-127": 3, // Ting-Lu ex — Cursed Land (locks a damaged Florges: the §9-gating witness)
+  "fix-fire-energy": 8, // pays Bite's {C} and colours fix-attacker's hit
+  "fix-water-energy": 8, // pays Hail Blade's {W}{W} and is its discard fuel
+  "fix-bigbody": 26, // 200 HP neutral Basic — DOMINANT mulligan-free starter + displaced body
 });
 
 /** M5 op-slice: the discardEnergy ATTACK arms. Four real Basics whose printed

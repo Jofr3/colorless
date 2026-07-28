@@ -13,7 +13,7 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
-import { effectiveMaxHp, passivesOf, providesEnergyType } from "./continuous";
+import { effectiveMaxHp, passivesOf, providesEnergyType, seatRemovesWeakness } from "./continuous";
 import { STATUS_WORD_OF } from "./effects";
 import type {
   AttachTargetRiders,
@@ -1429,7 +1429,11 @@ function snipeActive(
   if (target === null) return state;
   const attacker = activeTop(state, ctx.seat);
   const bonus = attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);
-  const weakness = ignoreWR || attacker === null ? null : weaknessOf(attacker.card, target.card);
+  // Weakness, unless nulled by `ignoreWR` (Feint Attack) OR by a "your Pokémon
+  // have no Weakness" aura on the sniped seat (Florges "Blooming Garden");
+  // Resistance still applies to a Blooming-Garden-protected Active.
+  const noWeakness = ignoreWR || attacker === null || seatRemovesWeakness(state, opponent);
+  const weakness = noWeakness ? null : weaknessOf(attacker.card, target.card);
   const resistance = ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
   const afterWR = Math.max(
     0,

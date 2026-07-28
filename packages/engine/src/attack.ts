@@ -17,7 +17,7 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
-import { effectiveAttackCost, passivesOf, providedEnergy } from "./continuous";
+import { effectiveAttackCost, passivesOf, providedEnergy, seatRemovesWeakness } from "./continuous";
 import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -286,7 +286,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // damage. `scaledBase` is `base` except for a multiply clause, whose printed
     // "N×" base is the per-unit already inside `scaled` — so it is 0 here.
     const bonus = attackerPreWRBonus(next, active, action.seat, defenderCard);
-    const weakness = weaknessOf(attacker, defenderCard);
+    // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
+    // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
+    const weakness = seatRemovesWeakness(next, defenderSeat)
+      ? null
+      : weaknessOf(attacker, defenderCard);
     const resistance = resistanceOf(attacker, defenderCard);
     const afterWR = Math.max(
       0,

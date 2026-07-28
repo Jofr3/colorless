@@ -668,6 +668,33 @@ Ting-Lu ex opposite a damaged Klefki should switch Mischievous Lock off and does
 Fixing it means a fixpoint pass rather than one read; `abilityLock.test.ts` holds a
 tripwire test that pins the current behaviour and flips when the fixpoint lands.
 
+**The second non-holder-modifying passive: `removeWeakness` (D104, engine 0.55.0).**
+Florges sv01-093 "Blooming Garden" ("Your Pokémon in play have no Weakness") is
+the own-board twin of the lock aura, and it establishes the general shape for any
+future passive that reaches OTHER Pokémon. Modelled as a **bare
+`PassiveEffects.removeWeakness?: true` flag** (one card, own board, unconditional,
+no "in the Active Spot" clause — a flag, not the `disableAbilities` predicate
+object; a future opponent/conditional print adds fields then). continuous.ts reads
+it through a **second dedicated scan beside `disabledAbilityUids`** —
+**`seatRemovesWeakness(state, seat)`** (exported like its sibling) — which walks
+that seat's OWN Active + Bench for a top card granting the aura. Unlike the raw
+`disableAbilities` collector (which stays UNGATED so a lock never disables another
+lock), a non-lock aura **consults `disabledAbilityUids` for its own source**, so a
+§9-locked Florges (a damaged, non-ex Stage 2 opposite an Active Ting-Lu ex "Cursed
+Land") loses the aura — this is the D100 "every non-lock Ability surface joins the
+disabled-Set checklist" rule applied. It is FREE on boards without the card (the
+lock pass runs only once a `removeWeakness` source is found). **The consumers are
+the two Weakness read sites** — attack.ts §8.5 main hit and interpreter.ts
+`snipeActive` (Chien-Pao ex "Hail Blade", Fezandipiti "Cruel Arrow") — each gating
+`weaknessOf` on `seatRemovesWeakness(defenderSeat)` and nulling Weakness before the
+pipeline (Resistance untouched). Bench snipes already carry `weakness: null` (§8.5
+applies only to the Active/Defending Pokémon), so the aura's Bench Pokémon need no
+extra handling — the only observable effect is the seat's Active while it defends.
+**The pattern for the next such passive:** a new `PassiveEffects` flag/predicate + a
+dedicated `continuous.ts` scan (gated through `disabledAbilityUids` unless it is
+itself a lock) + a gate at each rule-read site it touches. `bloomingGarden.test.ts`
+(8) covers it.
+
 **Stadium (§7.3).** A single shared `GameState.stadium` `{uid, owner}`.
 `playTrainer` routes a Stadium to **`playStadium`**: one play per turn (a new
 `TurnAllowances.stadiumPlayed`), replace-on-play discards the predecessor to
