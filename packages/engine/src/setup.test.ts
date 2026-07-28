@@ -405,6 +405,6 @@ describe("finishing setup", () => {
     expect(next.turn).toBe(1);
     // The per-turn allowances live on state.allowances, not the phase (M2).
     expect(next.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect(next.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, abilitiesUsed: [] });
+    expect(next.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [] });
   });
 });

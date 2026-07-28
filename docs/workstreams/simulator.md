@@ -4239,3 +4239,38 @@ KO flow reaches the whole board (attacks, the Checkup, a mid-turn snipe via the
 shared `settleProgram`, and now an on-KO trigger that can pause the sweep for a
 decision via the `koTrigger` stage + `resumeTail`), so a new card in a known
 family is a few lines of data in `registry.ts` — the fan-out adds rows, not code.
+
+### Stadiums can now ACTIVATE, and the "each player's turn" pattern (D102, engine 0.53.0)
+A Stadium is no longer continuous-only. `StadiumEffects.ability?: {label, program}`
+(registry.ts) makes the shared Stadium run an interpreter **program** on demand,
+driven by a new **`useStadiumAbility {seat}`** action (cardplay.ts — the
+`useAbility` twin, minus the ability-lock/`activeOnly`/hand-cost paths a Stadium
+never has; there is no `target` because there is exactly one shared Stadium).
+Artazon / Mesagoza / Town Store landed on it with **no new op** (Nest Ball /
+Poké Ball search shapes) plus two `CardFilter` refinements — `basicPokemon.noRuleBox`
+(the new `cards.ts hasRuleBox` = the ex/V/…/GX suffixes ∪ the "Radiant " NAME PREFIX)
+and `toolCard`.
+
+**The reusable lesson — "once during EACH player's turn" is a per-turn bool, not
+a per-player map.** The backlog feared "a per-PLAYER once-per-turn allowance, not
+the per-ability `abilitiesUsed` key". It is simpler: `turnGate` already admits
+only `phase.seat`, and `TurnAllowances` **reset every turn** (`freshAllowances`),
+so a single new bool (`stadiumAbilityUsed`) gives "once this turn" for the active
+player AND automatically re-arms for the opponent's own turn. NO `answerer`/`decider`
+routing (contrast D101's on-KO reaction, where the whole program belonged to the
+non-turn seat). Any future "once during each player's turn" effect keys off the
+same shape.
+
+**Deferred:** the HUD affordance. The engine action + projection surface for a
+**target-less "global" Stadium button** (no Pokémon `PokemonTarget`, no drag
+target) is a distinct web/schema slice — it needs a new redacted-phase field
+(`@luminous/schema`) + a button the client renders and dispatches. Landed
+engine-only, reachable by tests and the P4 action path; surface it with a live
+/play pass. Also deferred, out of the sv01–03 scope: **Academy at Night
+sv06.5-054** (the 4th activated Stadium — "put a card from hand on top of their
+deck", a `payFromHand to:"deckTop"` op that does not exist yet).
+
+**Process scar (see the auto-memory `biome-format-churn`):** `bun run check` runs
+`biome lint`, NOT `biome format`. Committed code is not format-clean, so
+`biome format --write <dir>` reformats dozens of unrelated files. Never run it
+repo-wide; rely on the lint gate and match surrounding style.

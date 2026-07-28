@@ -193,11 +193,24 @@ export interface PassiveEffects {
   };
 }
 
-/** A Stadium's continuous effects (§7.3) — applied to BOTH players' boards
-    while the card sits in the shared zone (continuous.ts reads them off
-    `GameState.stadium`). Activated "once during each player's turn" Stadiums
-    (Artazon, Mesagoza, Town Store) are a later slice, with the triggered
-    abilities. */
+/** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
+    Artazon / Mesagoza / Town Store. Unlike the continuous fields beside it this
+    runs an op `program` when the turn's own player activates it (the
+    `useStadiumAbility` action, cardplay.ts), so it may PARK on a search choice
+    like any Trainer/Ability program. There is no `oncePerTurn`/`activeOnly`
+    field: a Stadium ability is ALWAYS once-per-player-turn (tracked by the
+    per-turn `TurnAllowances.stadiumAbilityUsed` flag) and belongs to no Pokémon
+    spot. `label` is the Stadium's own name, for the log/HUD. */
+export interface StadiumAbility {
+  label: string;
+  program: EffectOp[];
+}
+
+/** A Stadium's effects (§7.3) — applied while the card sits in the shared zone.
+    The two continuous fields are read by continuous.ts off `GameState.stadium`
+    for BOTH players' boards; the optional `ability` is the activated "once during
+    each player's turn" effect (Artazon / Mesagoza / Town Store), run by the
+    `useStadiumAbility` action for the turn's own player. */
 export interface StadiumEffects {
   /** §11 retreat costs THIS much less for every Basic Pokémon in play
       (Beach Court), floored at a free retreat. */
@@ -205,6 +218,10 @@ export interface StadiumEffects {
   /** Attacks of every Basic Pokémon in play cost this many {C} more
       (Pokémon League Headquarters). */
   basicAttackCostSurcharge?: number;
+  /** The "once during each player's turn" activated ability (Artazon / Mesagoza
+      / Town Store). A Stadium WITH this can be activated; the continuous-only
+      Stadiums (Beach Court / League HQ) leave it undefined. */
+  ability?: StadiumAbility;
 }
 
 /** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
@@ -459,6 +476,62 @@ const BEACH_COURT: CardProgram = { stadium: { basicRetreatDiscount: 1 } };
 /** Pokémon League Headquarters — "Attacks used by each Basic Pokémon in play
     (both yours and your opponent's) cost {C} more." (Stadium) */
 const POKEMON_LEAGUE_HQ: CardProgram = { stadium: { basicAttackCostSurcharge: 1 } };
+
+/** Artazon — "Once during each player's turn, that player may search their deck
+    for a Basic Pokémon that doesn't have a Rule Box and put it onto their Bench.
+    Then, that player shuffles their deck." (Stadium activated ability) — the Nest
+    Ball search-to-Bench + trailing shuffle, narrowed to no-Rule-Box Basics
+    (`noRuleBox`). */
+const ARTAZON: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Artazon",
+      program: [
+        { op: "searchDeck", filter: { kind: "basicPokemon", noRuleBox: true }, dest: "bench", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  },
+};
+
+/** Mesagoza — "Once during each player's turn, that player may flip a coin. If
+    heads, that player searches their deck for a Pokémon, reveals it, and puts it
+    into their hand. Then, that player shuffles their deck." (Stadium activated
+    ability) — the Poké Ball program exactly: the search AND the shuffle are BOTH
+    gated on heads, so shuffleDeck sits INSIDE the coin gate's `then`. */
+const MESAGOZA: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Mesagoza",
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+            { op: "shuffleDeck" },
+          ],
+        },
+      ],
+    },
+  },
+};
+
+/** Town Store — "Once during each player's turn, that player may search their
+    deck for a Pokémon Tool card, reveal it, and put it into their hand. Then,
+    that player shuffles their deck." (Stadium activated ability) — a `toolCard`
+    search-to-hand + the trailing shuffle. */
+const TOWN_STORE: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Town Store",
+      program: [
+        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  },
+};
 
 /** Vitality Band — "The attacks of the Pokémon this card is attached to do 10
     more damage to your opponent's Active Pokémon (before applying Weakness
@@ -1837,6 +1910,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-167": BEACH_COURT,
   // Pokémon League Headquarters (Stadium)
   "sv03-192": POKEMON_LEAGUE_HQ,
+  // — Stadium activated abilities (D102, verified vs local D1 2026-07-28). —
+  "sv02-171": ARTAZON, // Artazon — search a no-Rule-Box Basic → Bench
+  "sv03-229": ARTAZON, // Artazon (reprint)
+  "sv01-178": MESAGOZA, // Mesagoza — coin-gated search a Pokémon → hand
+  "sv03-196": TOWN_STORE, // Town Store — search a Pokémon Tool → hand
   // Vitality Band (Tool)
   "sv01-197": VITALITY_BAND,
   "sv01-169": DEFIANCE_BAND, // +30 before W/R while behind on Prizes (morePrizesThanOpponent)

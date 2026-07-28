@@ -20,8 +20,15 @@ import type { StatusName } from "./events";
     Basic Energy [of a type]" and "a card named X"; the union grows one entry
     per new shape. */
 export type CardFilter =
-  | { kind: "basicPokemon" }
+  /** A Basic Pokémon. `noRuleBox` narrows it to one WITHOUT a Rule Box —
+      Artazon's "a Basic Pokémon that doesn't have a Rule Box" (cards.ts
+      `hasRuleBox`), the same optional-refinement shape as `basicEnergy`'s
+      `energyType`. */
+  | { kind: "basicPokemon"; noRuleBox?: true }
   | { kind: "anyPokemon" }
+  /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
+      catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
+  | { kind: "toolCard" }
   /** A basic Energy card; `energyType` (a BASIC_ENERGY_TYPES member) narrows
       it to one type (Chien-Pao's "Basic {W} Energy"), else any basic energy. */
   | { kind: "basicEnergy"; energyType?: string }

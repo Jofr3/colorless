@@ -6,6 +6,7 @@ import type {
   RareCandyAction,
   ResolveEffectAction,
   UseAbilityAction,
+  UseStadiumAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
@@ -491,6 +492,55 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
     action.seat,
     events,
     { endsTurn: ability.endsTurn === true },
+  );
+}
+
+/** §7.3 — activate the shared Stadium's "once during each player's turn" ability
+    (Artazon / Mesagoza / Town Store). Simpler than useAbility: there is exactly
+    ONE shared Stadium, so no target; the turnGate admits only the turn's own
+    player (turn:action, phase.seat), so "each player's turn" needs no
+    non-active-seat routing — the opponent activates it on THEIR own turn, off
+    their own fresh allowance. Not affected by the D100 ability-lock aura (that
+    targets Pokémon, and a Stadium is neither). No hand-cost path: no printed
+    Stadium ability pays one. The program runs under the activating seat, so it
+    searches THAT player's deck and benches onto THEIR board. */
+export function useStadiumAbility(
+  state: GameState,
+  action: UseStadiumAbilityAction,
+): ApplyResult {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  const stadium = state.stadium;
+  if (stadium === null) {
+    return err("STADIUM_ABILITY_UNAVAILABLE", "no Stadium is in play (§7.3)");
+  }
+  const card = cardOfUid(state, stadium.uid);
+  const ability = card === undefined ? undefined : programFor(card.id)?.stadium?.ability;
+  if (ability === undefined) {
+    return err(
+      "STADIUM_ABILITY_UNAVAILABLE",
+      "the Stadium in play has no activated Ability (§7.3)",
+    );
+  }
+  if (state.allowances.stadiumAbilityUsed) {
+    return err("STADIUM_ABILITY_ALREADY_USED", `${ability.label} was already used this turn (§7.3)`);
+  }
+  // Would-only-whiff gate, exactly as useAbility (Mesagoza's heads-branch search
+  // is always playable enough; a search that can only whiff is still a search).
+  if (!programPlayable(state, ability.program, action.seat)) {
+    return err("NO_LEGAL_TARGET", `${ability.label} has no legal target`);
+  }
+  const events: GameEvent[] = [
+    { type: "STADIUM_ABILITY_ACTIVATED", seat: action.seat, uid: stadium.uid, stadium: ability.label },
+  ];
+  const next: GameState = {
+    ...state,
+    allowances: { ...state.allowances, stadiumAbilityUsed: true },
+  };
+  return settleProgram(
+    runProgram(next, ability.program, { seat: action.seat, sourceUid: stadium.uid }, events),
+    action.seat,
+    events,
   );
 }
 

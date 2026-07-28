@@ -599,7 +599,7 @@ describe("allowances across interrupts", () => {
       seat: "p1",
       prizeIndices: [0],
     });
-    expect(done.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, abilitiesUsed: [] });
+    expect(done.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [] });
   });
 });
 

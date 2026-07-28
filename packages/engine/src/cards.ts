@@ -112,6 +112,23 @@ export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   return null;
 }
 
+/** Does this Pokémon have a Rule Box (§ the reminder text Artazon prints:
+    "Pokémon ex, Pokémon V, etc. have Rule Boxes.")? — the negated predicate of
+    Artazon "Basic Pokémon that doesn't have a Rule Box". A Rule Box is the grey
+    banner behind the rules text of the special-mechanic Pokémon: the suffix
+    families (ex / V / VMAX / VSTAR / GX, off `pokemonSuffixOf`) PLUS Radiant
+    Pokémon, whose marker is a NAME PREFIX ("Radiant Greninja") rather than a
+    trailing suffix — the same name-encoded datum, read the other end. LIMITATION
+    like `pokemonSuffixOf`: this is name-derived because tcgdex's structured
+    markers are dropped at ingest, so any future Rule-Box family that is neither
+    a known suffix nor the Radiant prefix would read as no-Rule-Box until named
+    here (ACE SPEC is a Trainer subtype, so it never reaches this Pokémon-only
+    check). Non-Pokémon are always false. */
+export function hasRuleBox(card: Card): boolean {
+  if (card.category !== "Pokemon") return false;
+  return pokemonSuffixOf(card) !== null || card.name.startsWith("Radiant ");
+}
+
 /** What one attached Energy card provides toward a cost (§6.3). Catalog
     basic energies carry no `types` — the NAME is the datum, and real prints
     spell it both ways: "Fire Energy" and "Basic Darkness Energy"

@@ -153,6 +153,13 @@ export interface TurnAllowances {
   supporterPlayed: boolean;
   /** §7.3 — at most one Stadium play per turn. */
   stadiumPlayed: boolean;
+  /** §7.3 — the shared Stadium's "once during each player's turn" activated
+      ability (Artazon / Mesagoza / Town Store). A plain bool, not a per-uid list
+      like `abilitiesUsed`: there is exactly one shared Stadium and only the
+      turn's own player may use it, so one flag per turn suffices — and because
+      allowances reset every turn (freshAllowances), it re-arms for the
+      opponent's turn, which is precisely what "each player's turn" means. */
+  stadiumAbilityUsed: boolean;
   /** §9/§15.J — per-Pokémon once-per-turn Ability uses, `${uid}:${ability}`.
       A list, not a bool: several Pokémon may each use a once-per-turn Ability
       in the same turn. Reset each turn, so a plain array clears cleanly. */
@@ -165,6 +172,7 @@ export function freshAllowances(): TurnAllowances {
     retreated: false,
     supporterPlayed: false,
     stadiumPlayed: false,
+    stadiumAbilityUsed: false,
     abilitiesUsed: [],
   };
 }

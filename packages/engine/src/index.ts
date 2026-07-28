@@ -21,7 +21,14 @@
 import type { ApplyResult, GameAction } from "./actions";
 import { err } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
-import { attachTool, playTrainer, rareCandy, resolveEffect, useAbility } from "./cardplay";
+import {
+  attachTool,
+  playTrainer,
+  rareCandy,
+  resolveEffect,
+  useAbility,
+  useStadiumAbility,
+} from "./cardplay";
 import { concede } from "./flow";
 import {
   chooseFirstPlayer,
@@ -433,7 +440,24 @@ import type { GameState, Seat } from "./types";
     runner) became the `damagedByAttackAbility` gated lookup. Armarouge's Burn
     (non-parking) rides the same staged path, byte-identical. No web/API/DB/schema
     change (the discard surfaces via the existing ENERGY_DISCARDED event). */
-export const engineVersion = "0.52.0";
+
+    /* 0.53.0 — STADIUM ACTIVATED ABILITIES: the "once during each player's turn"
+    Stadium row (P3-M5, D102) — Artazon (sv02-171/-229), Mesagoza (sv01-178),
+    Town Store (sv03-196), the last big op-family row. A new `useStadiumAbility`
+    action activates the shared Stadium's `StadiumEffects.ability` program under
+    the turn's own player, gated once-per-turn by the new
+    `TurnAllowances.stadiumAbilityUsed` bool — which, resetting every turn like
+    every allowance, re-arms for the opponent's own turn (so "each player's turn"
+    needs NO non-active-seat routing; the turnGate admits only phase.seat). No
+    Pokémon target, so a bespoke action rather than a useAbility target; the
+    D100 ability-lock never touches it (a Stadium is not a Pokémon). Two new
+    CardFilter kinds carry the searches: `basicPokemon.noRuleBox` (Artazon,
+    cards.ts `hasRuleBox` = suffix ∪ "Radiant " prefix) and `toolCard` (Town
+    Store); Mesagoza reuses `anyPokemon` inside the Poké Ball coin gate. The
+    programs are the Nest Ball / Poké Ball search shapes, so no new op. New event
+    STADIUM_ABILITY_ACTIVATED. ENGINE + tests only — the HUD affordance (a
+    target-less "global" button + projection field) is a deferred follow-up. */
+export const engineVersion = "0.53.0";
 
 export type {
   ApplyResult,
@@ -653,6 +677,8 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return attachTool(state, action);
     case "useAbility":
       return useAbility(state, action);
+    case "useStadiumAbility":
+      return useStadiumAbility(state, action);
     case "resolveEffect":
       return resolveEffect(state, action);
     case "takePrizes":

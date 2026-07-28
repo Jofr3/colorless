@@ -3,6 +3,7 @@ import {
   activeTop,
   applyDamageModifier,
   energyProvidesOf,
+  hasRuleBox,
   isBasicPokemon,
   isEnergyCard,
   isSpecialEnergy,
@@ -2891,9 +2892,14 @@ function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
   if (card === undefined) return false;
   switch (filter.kind) {
     case "basicPokemon":
-      return isBasicPokemon(card);
+      // `noRuleBox` (Artazon) drops the ex/V/…/Radiant Rule-Box Pokémon; a plain
+      // `basicPokemon` (Nest Ball) takes any Basic.
+      return isBasicPokemon(card) && (filter.noRuleBox !== true || !hasRuleBox(card));
     case "anyPokemon":
       return card.category === "Pokemon";
+    case "toolCard":
+      // A Pokémon Tool card (Town Store) — the attachTool discriminant.
+      return card.category === "Trainer" && card.trainerType === "Tool";
     case "basicEnergy":
       return (
         isEnergyCard(card) &&
@@ -3152,7 +3158,14 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
     case "byName":
       return { singular: filter.name, plural: filter.name };
     case "basicPokemon":
-      return { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
+      return filter.noRuleBox === true
+        ? {
+            singular: "a Basic Pokémon that doesn't have a Rule Box",
+            plural: "Basic Pokémon that don't have a Rule Box",
+          }
+        : { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
+    case "toolCard":
+      return { singular: "a Pokémon Tool card", plural: "Pokémon Tool cards" };
     case "basicEnergy": {
       const kind = filter.energyType === undefined ? "Basic" : `Basic ${filter.energyType}`;
       return { singular: `a ${kind} Energy card`, plural: `${kind} Energy cards` };

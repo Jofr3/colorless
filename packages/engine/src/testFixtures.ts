@@ -466,6 +466,39 @@ export const FIXTURE_POOL: Record<string, Card> = {
     trainerType: "Stadium",
     effect: "Attacks used by each Basic Pokémon in play (both yours and your opponent's) cost {C} more.",
   } satisfies Card,
+  /** Artazon — Stadium ACTIVATED ability (D102): once per player-turn, search a
+      no-Rule-Box Basic → Bench. */
+  "sv02-171": {
+    ...blank,
+    id: "sv02-171",
+    name: "Artazon",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect:
+      "Once during each player's turn, that player may search their deck for a Basic Pokémon that doesn't have a Rule Box and put it onto their Bench. Then, that player shuffles their deck.",
+  } satisfies Card,
+  /** Mesagoza — Stadium ACTIVATED ability (D102): once per player-turn, flip a
+      coin; heads → search a Pokémon → hand (the Poké Ball coin gate). */
+  "sv01-178": {
+    ...blank,
+    id: "sv01-178",
+    name: "Mesagoza",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect:
+      "Once during each player's turn, that player may flip a coin. If heads, that player searches their deck for a Pokémon, reveals it, and puts it into their hand. Then, that player shuffles their deck.",
+  } satisfies Card,
+  /** Town Store — Stadium ACTIVATED ability (D102): once per player-turn, search
+      a Pokémon Tool card → hand. */
+  "sv03-196": {
+    ...blank,
+    id: "sv03-196",
+    name: "Town Store",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect:
+      "Once during each player's turn, that player may search their deck for a Pokémon Tool card, reveal it, and put it into their hand. Then, that player shuffles their deck.",
+  } satisfies Card,
   /** Vitality Band — Tool: attacks do 10 more damage (before W/R). */
   "sv01-197": trainerCard("sv01-197", "Tool", "The attacks of the Pokémon this card is attached to do 10 more damage…"),
   /** Defiance Band — Tool: +30 before W/R while behind on Prizes. */
@@ -1846,6 +1879,32 @@ export const STADIUM_TOOL_DECK = deckOf({
   "fix-stadium": 1,
   "fix-tool": 1,
   "fix-energy": 16,
+});
+
+/** 0.52.0 → 0.53.0: the "once during each player's turn" Stadium activated-ability
+    row (D102 — Artazon / Mesagoza / Town Store). Carries all three Stadiums plus
+    one search CANDIDATE per card AND the negative control Artazon must exclude:
+      • fix-bigbody — the DOMINANT (mulligan-free) starter both seats open on.
+      • fix-basic-0 — a plain no-Rule-Box Basic: Artazon's positive candidate.
+      • sv02-061 (Chien-Pao ex) — a Basic WITH a Rule Box: Artazon's negative
+        control (a Basic the `noRuleBox` filter must drop), also a Mesagoza
+        `anyPokemon` candidate.
+      • fix-tool — a Pokémon Tool: Town Store's candidate.
+      • sv01-167 (Beach Court) — a CONTINUOUS-only Stadium (no activated ability),
+        the STADIUM_ABILITY_UNAVAILABLE control.
+    Both seats run the SAME deck so the "each player's turn" re-arm can be driven
+    from either side. Mesagoza's coin is seed-driven (the Poké Ball pattern —
+    loop seeds to see both faces). */
+export const STADIUM_ABILITY_DECK = deckOf({
+  "fix-bigbody": 30,
+  "sv02-171": 3, // Artazon
+  "sv01-178": 3, // Mesagoza
+  "sv03-196": 3, // Town Store
+  "sv01-167": 3, // Beach Court — a CONTINUOUS-only Stadium (no activated ability)
+  "fix-basic-0": 3, // no-Rule-Box Basic — Artazon takes it
+  "sv02-061": 3, // Chien-Pao ex — a Basic WITH a Rule Box — Artazon drops it
+  "fix-tool": 6, // a Pokémon Tool — Town Store takes it
+  "fix-energy": 6,
 });
 
 /** M5 (Defiance Band): a DEDICATED 60 so the conditional-bonus tests never

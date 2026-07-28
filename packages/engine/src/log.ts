@@ -444,6 +444,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" used "),
         strong(event.ability),
       ]);
+    case "STADIUM_ABILITY_ACTIVATED":
+      // The Stadium's own name is the effect's name, so "used <Stadium>" rather
+      // than the Pokémon-Ability "<Pokémon> used <Ability>" phrasing.
+      return row(event.seat, [plain("used "), strong(event.stadium)]);
     case "ABILITY_TRIGGERED":
       // A triggered Ability firing on its own (played to Bench / evolved /
       // between turns / on Knock Out) — reads like ABILITY_USED but names it as

@@ -207,6 +207,11 @@ export type GameEvent =
   | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
+  /** §7.3 — `seat` activated the shared Stadium's "once during each player's
+      turn" ability (`uid` is the Stadium in the shared zone; `stadium` its name —
+      Artazon / Mesagoza / Town Store). Its ops follow in the same batch (and may
+      park on a deck-search choice), like ABILITY_USED. */
+  | { type: "STADIUM_ABILITY_ACTIVATED"; seat: Seat; uid: string; stadium: string }
   /** §7/§9 — a printed HAND cost was paid: `uids` left `seat`'s hand to make a
       play legal (Ultra Ball's "only if you discard 2 other cards", Tinkaton /
       Meowscarada ex's "you must discard … in order to use this Ability", Dendra's

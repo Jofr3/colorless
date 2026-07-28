@@ -148,6 +148,11 @@ export interface UseAbilityAction {
   abilityName: string;
 }
 
+export interface UseStadiumAbilityAction {
+  type: "useStadiumAbility";
+  seat: Seat;
+}
+
 export interface ResolveEffectAction {
   type: "resolveEffect";
   seat: Seat;
@@ -177,6 +182,7 @@ export type GameAction =
   | PlayTrainerAction
   | AttachToolAction
   | UseAbilityAction
+  | UseStadiumAbilityAction
   | ResolveEffectAction
   | TakePrizesAction
   | PromoteAction
@@ -271,6 +277,12 @@ export type ErrorCode =
   /** §9 — the Ability's activation cost cannot be paid (Meowscarada's "Bouquet
       Magic" needs a Basic {G} Energy in hand to discard). */
   | "ABILITY_COST_UNMET"
+  /** §7.3 — useStadiumAbility with no Stadium in play, or a Stadium that has no
+      activated ability (Beach Court / League HQ are continuous-only). */
+  | "STADIUM_ABILITY_UNAVAILABLE"
+  /** §7.3 — the shared Stadium's "once during each player's turn" ability was
+      already used this turn. */
+  | "STADIUM_ABILITY_ALREADY_USED"
   /** resolveEffect's choice does not match the parked prompt (bad uid/ref/count). */
   | "BAD_EFFECT_CHOICE"
   /** §12 — an Asleep or Paralyzed Active cannot attack. (Confusion does not
