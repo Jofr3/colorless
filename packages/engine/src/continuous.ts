@@ -16,7 +16,7 @@ import type { BoardCondition } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { GameState, InPlayPokemon, Seat } from "./types";
-import { SEATS } from "./types";
+import { SEATS, otherSeat } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -352,28 +352,82 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
   return false;
 }
 
-/** §11 retreat cost under the continuous effects in play: an own-board "no
+/** §11 — the {C} ADDED to `pokemon`'s Retreat Cost by the OPPOSING side's
+    continuous auras (Spidops ex "Trap Territory": "Your opponent's Active
+    Pokémon's Retreat Cost is {C} more"). The cross-board, delta-returning mirror
+    of `hasFreeRetreatAura`, and it shares that scan's derived-seat trick: the
+    caller hands us one of a side's own `active`/`bench` entries, so we find that
+    side by top uid and then read the OTHER one — which is what keeps
+    `effectiveRetreatCost`'s signature, and all four of its call sites, untouched.
+
+    The two Active clauses are NOT symmetric, and the printed text is the whole
+    reason: "your opponent's ACTIVE Pokémon's Retreat Cost" scopes the TARGET, so
+    a benched target is never surcharged — but nothing scopes the SOURCE, so a
+    Spidops ex imposes it from the Bench as readily as from the Active Spot
+    (contrast `damageAttacker`, whose Active clause is on the holder). Sources
+    are SUMMED: two Spidops ex in play are {C}{C} more, and each is gated through
+    `disabledAbilityUids` (§9) like every non-lock Ability surface. */
+export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemon): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return 0;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    // The TARGET clause: only the side's Active is surcharged, so a benched
+    // holder of this uid is out even though it belongs to this side.
+    if (side.active === null || topUid(side.active) !== uid) continue;
+    const foes = state.players[otherSeat(seat)];
+    const sources = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+    let added = 0;
+    for (const source of sources) {
+      const top = topCardOf(state, source);
+      const amount =
+        top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveRetreatSurcharge;
+      if (amount === undefined) continue;
+      const sourceUid = topUid(source);
+      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
+      added += amount;
+    }
+    return added;
+  }
+  return 0;
+}
+
+/** §11 retreat cost under the continuous effects in play. An own-board "no
     Retreat Cost" aura (Lunar Zone) sets it to zero outright, which is why it is
-    read FIRST — a set-to-zero beats the ± Stadium deltas, and it is
-    stage-agnostic where those are Basic-only. Otherwise the in-play Stadium's ±
-    Basic deltas apply — Beach Court's discount subtracts, Calamitous Wasteland's
-    surcharge adds (skipping the type its print exempts) — floored at a free
-    retreat; non-Basics (and boards with no Stadium) pay the printed cost. Only
-    one Stadium is ever in play (§7.3), so the two deltas never actually meet;
-    they are summed anyway so the fold stays honest if that changes. */
+    read FIRST — a set-to-zero beats every ± delta, and it is stage-agnostic
+    where the Stadium ones are Basic-only. Otherwise the printed cost is summed
+    with every delta and floored ONCE at a free retreat: the in-play Stadium's ±
+    Basic deltas (Beach Court's discount subtracts, Calamitous Wasteland's
+    surcharge adds, skipping the type its print exempts) plus the opposing side's
+    `opponentActiveRetreatSurcharge` auras. Only one Stadium is ever in play
+    (§7.3) so its two deltas never actually meet — they are summed anyway so the
+    fold stays honest if that changes — but a Stadium and an aura DO meet, which
+    is exactly why the floor is applied to the sum rather than per term. */
 export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): number {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return 0;
   if (hasFreeRetreatAura(state, pokemon)) return 0;
   const printed = retreatCostOf(top);
-  if (!isBasicPokemon(top)) return printed;
+  return Math.max(
+    0,
+    printed + stadiumRetreatDelta(state, top) + opposingRetreatSurcharge(state, pokemon),
+  );
+}
+
+/** The in-play Stadium's ± contribution to one Pokémon's Retreat Cost. Both
+    prints on this seam are Basic-only, so a non-Basic (and a board with no
+    Stadium) contributes nothing — note that this is a zero TERM, not the early
+    return it used to be: the cross-board auras are stage-agnostic and must still
+    reach a Stage 1/2 Active. */
+function stadiumRetreatDelta(state: GameState, top: Card): number {
+  if (!isBasicPokemon(top)) return 0;
   const stadium = stadiumEffectsOf(state);
   const discount = stadium?.basicRetreatDiscount ?? 0;
   const surcharge = stadium?.basicRetreatSurcharge;
   const exempt =
     surcharge?.excludesType !== undefined && (top.types ?? []).includes(surcharge.excludesType);
   const added = surcharge === undefined || exempt ? 0 : surcharge.amount;
-  return Math.max(0, printed - discount + added);
+  return added - discount;
 }
 
 /** §8.2 attack cost under the in-play Stadium's continuous effects: Pokémon

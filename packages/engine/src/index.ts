@@ -526,7 +526,22 @@ import type { GameState, Seat } from "./types";
     number these attacks read — the payoff of D108's single derivation point. NO
     registry row: the cards simulate straight off their printed text. No
     web/API/DB/schema change. */
-export const engineVersion = "0.61.0";
+
+    /* 0.62.0 — `opponentActiveRetreatSurcharge`: Spidops ex sv01-019/-223/-243
+    "Trap Territory" ("Your opponent's Active Pokémon's Retreat Cost is {C}
+    more") — the LAST unbuilt modifier on the retreat-cost seam, which closes at
+    9/9 ids (P3-M5 long tail, D111). The cross-board, delta-returning mirror of
+    D108's `noRetreatCostAura`, read through a new continuous.ts scan
+    `opposingRetreatSurcharge` that reuses the same derived-seat trick, so all
+    FOUR readers of `effectiveRetreatCost` pick it up untouched. Its two Active
+    clauses are asymmetric: the TARGET must be the opponent's Active, the SOURCE
+    works from the Bench. `effectiveRetreatCost` is refolded to
+    `max(0, printed + Σdeltas)` with the Stadium term extracted into
+    `stadiumRetreatDelta` — its Basic-only early RETURN became a zero TERM, since
+    this aura is stage-agnostic and must still reach a Stage 1/2 Active. Spidops
+    ex's own "Wire Hang" READS the cost it raises (D110), so the reader/modifier
+    composition lands on one card. No web/API/DB/schema change. */
+export const engineVersion = "0.62.0";
 
 export type {
   ApplyResult,
@@ -580,6 +595,7 @@ export {
   effectiveMaxHp,
   effectiveRetreatCost,
   hasFreeRetreatAura,
+  opposingRetreatSurcharge,
   providedEnergy,
   seatRemovesWeakness,
   stadiumEffectsOf,

@@ -242,6 +242,22 @@ export interface PassiveEffects {
       `basicRetreatDiscount`, and any future surcharge) — the read site checks
       it first. */
   noRetreatCostAura?: { requiresEnergyType?: BasicEnergyType };
+  /** §11 continuous OPPONENT-side aura: this many {C} are ADDED to the Retreat
+      Cost of the opposing side's ACTIVE Pokémon (Spidops ex sv01-019/-223/-243
+      "Trap Territory" — "Your opponent's Active Pokémon's Retreat Cost is {C}
+      more"), the last unbuilt modifier on the retreat-cost seam and the
+      sign-flipped, cross-board mirror of `noRetreatCostAura`. Like that one it
+      reaches OTHER Pokémon, so continuous.ts reads it through a dedicated scan
+      (`opposingRetreatSurcharge`) rather than `passivesOf`; unlike it the return
+      is a DELTA, so the scan sums every live source and `effectiveRetreatCost`
+      folds it with the Stadium deltas before the single floor at 0.
+      A bare number, not an object (the D104 rule): the print is unconditional.
+      Note the two Active clauses are NOT symmetric — the TARGET must be the
+      opponent's Active, but the SOURCE has no "in the Active Spot" clause, so a
+      BENCHED Spidops ex imposes it just as well (contrast `damageAttacker`,
+      whose Active clause is on the holder). Stage-agnostic, so unlike the
+      Stadium ± deltas it also reaches a non-Basic Active. */
+  opponentActiveRetreatSurcharge?: number;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -565,6 +581,15 @@ const SAFEGUARD: CardProgram = { passive: { preventDamageFromExV: true } };
     it too holds a Psychic Energy). Stage-agnostic and with no "in the Active
     Spot" clause; the only "no Retreat Cost" print in the pool. */
 const LUNAR_ZONE: CardProgram = { passive: { noRetreatCostAura: { requiresEnergyType: "Psychic" } } };
+
+/** Spidops ex (sv01-019/-223/-243) — "Trap Territory": "Your opponent's Active
+    Pokémon's Retreat Cost is {C} more." — a continuous CROSS-BOARD aura and the
+    last modifier on the retreat-cost seam. The target must be the opponent's
+    Active; the source needs only to be in play (no "in the Active Spot" clause),
+    and neither end is Basic-gated. Its own "Wire Hang" READS the very cost it
+    raises (the `opponentActiveRetreatCost` count source, D110), so a Spidops ex
+    in the Active Spot hits for +30 off its own Ability. */
+const TRAP_TERRITORY: CardProgram = { passive: { opponentActiveRetreatSurcharge: 1 } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -2103,6 +2128,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-097": SAFEGUARD, // Mimikyu — Safeguard ("Prevent all damage from opponent's Pokémon ex/V")
   // — M5 long-tail: noRetreatCostAura continuous own-board aura (verified vs the live D1 2026-07-31). —
   "sv03-082": LUNAR_ZONE, // Clefable ex — Lunar Zone ("All of your Pokémon that have {P} Energy attached have no Retreat Cost")
+  // — M5 long-tail: opponentActiveRetreatSurcharge, the last retreat-cost modifier (verified vs the live D1 2026-07-31). —
+  "sv01-019": TRAP_TERRITORY, // Spidops ex — Trap Territory ("Your opponent's Active Pokémon's Retreat Cost is {C} more")
+  "sv01-223": TRAP_TERRITORY, // (reprint)
+  "sv01-243": TRAP_TERRITORY, // (reprint)
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)

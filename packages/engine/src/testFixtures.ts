@@ -796,6 +796,38 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Colorless", "Colorless", "Colorless"], name: "Sharp Fang", damage: 140 },
     ],
   } satisfies Card,
+  /** Spidops ex sv01-019 — the ONE card on both sides of the retreat-cost seam
+      (D111): the Ability "Trap Territory" raises the opponent's Active's Retreat
+      Cost (registry `opponentActiveRetreatSurcharge`), and the attack "Wire Hang"
+      READS that same cost off the derived sentence (D110, no registry row — so
+      its effect text is LOAD-BEARING and must stay char-for-char). A Grass Stage 1
+      from Tarountula, 260 HP, ×2 Fire, retreat 2 — VERBATIM off the live D1, where
+      -019/-223/-243 are byte-identical in rules text. */
+  "sv01-019": battler("sv01-019", {
+    name: "Spidops ex",
+    types: ["Grass"],
+    stage: "Stage1",
+    evolveFrom: "Tarountula",
+    hp: 260,
+    retreat: 2,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Trap Territory",
+        effect: "Your opponent's Active Pokémon's Retreat Cost is {C} more.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Grass", "Colorless"],
+        name: "Wire Hang",
+        damage: "90+",
+        effect:
+          "This attack does 30 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost.",
+      },
+    ],
+  }),
 
   // — attachEnergyFrom multi + endsTurn: Koraidon ex "Dino Cry". —
   /** Koraidon ex — "Dino Cry" (multi-attach up to 2 Basic {F} from discard to
@@ -2647,6 +2679,33 @@ export const RETREAT_SCALING_DECK = deckOf({
   "fix-grass-energy": 6, // Basic {G} — pays Superpowered Throw
   "fix-energy": 8, // Basic {C} — pays Chomp Chomp Panic
   "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT starter + bench body
+});
+
+/** 0.61.0 → 0.62.0: the LAST retreat-cost modifier (Spidops ex "Trap Territory",
+    D111) — the cross-board `opponentActiveRetreatSurcharge` aura. A DEDICATED deck:
+    LUNAR_ZONE_DECK and RETREAT_SCALING_DECK are both seed-pinned, and this suite
+    needs Spidops ex on BOTH boards plus the whole composition ladder in one 60.
+    Spidops ex (sv01-019) is the aura source AND — via its own "Wire Hang" — the
+    reader that sees the cost it raises; it is a Stage 1, so it is always surgeried
+    in. The targets: fix-retreat2 (2, the main body), fix-basic-0 (printed 0 — the
+    surcharge lifts it to 1, so a "free" retreater stops being free) and Clefable ex
+    (sv03-082, a Stage 1) — the NON-BASIC target that the old Basic-only early-out
+    would have let escape, and the set-to-zero that beats the surcharge once it holds
+    {P}. Beach Court (sv01-167) is here because a Stadium and an aura CAN coexist:
+    it is the ± composition D109 found unreachable between the two Stadiums. Klefki
+    (sv01-096) is the §9 gate's (structurally negative) witness. Grass + fix-energy
+    pay Wire Hang's {G}{C}. fix-bigbody is the DOMINANT mulligan-free starter. */
+export const TRAP_TERRITORY_DECK = deckOf({
+  "sv01-019": 4, // Spidops ex — Trap Territory (the aura) + Wire Hang (the reader)
+  "fix-retreat2": 4, // retreat-2 Basic — the surcharged body
+  "fix-basic-0": 4, // retreat-0 Basic — a free retreater the surcharge lifts to 1
+  "sv03-082": 3, // Clefable ex — the NON-Basic target + Lunar Zone's set-to-zero
+  "fix-psychic-energy": 4, // Basic {P} — arms Lunar Zone's clause
+  "sv01-167": 3, // Beach Court — the −1 the +1 aura composes with (both reachable)
+  "sv01-096": 3, // Klefki — Mischievous Lock: the §9 gate's negative witness
+  "fix-grass-energy": 6, // Basic {G} — pays Wire Hang's {G}
+  "fix-energy": 8, // Basic {C} — pays Wire Hang's {C} and the surcharged retreat
+  "fix-bigbody": 21, // 200 HP neutral Basic — DOMINANT starter + bench body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

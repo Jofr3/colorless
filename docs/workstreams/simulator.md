@@ -4407,20 +4407,44 @@ deck", a `payFromHand to:"deckTop"` op that does not exist yet).
 `biome format --write <dir>` reformats dozens of unrelated files. Never run it
 repo-wide; rely on the lint gate and match surrounding style.
 
-### The retreat-cost seam, end to end — and the deriver path as the cheapest slice (D110, engine 0.61.0)
-The seam is now **6 of 9 card ids** built. A full D1 census (all sets, `%retreat cost%`
-over `attacks_json ‖ abilities_json ‖ effect`) returns exactly **9 unique ids** — 4 distinct
-MODIFIER effects (6 printings) and 4 distinct READER effects (6 printings), with Spidops ex
-sitting in **both** buckets:
+### The retreat-cost seam, end to end — CLOSED at 9/9 (D108–D111, engine 0.62.0)
+The seam is **complete**. A full D1 census (all sets, `%retreat cost%` over
+`attacks_json ‖ abilities_json ‖ effect`, re-run twice) returns exactly **9 unique ids** —
+4 distinct MODIFIER effects (6 printings) and 4 distinct READER effects (6 printings), with
+Spidops ex sitting in **both** buckets. Alternate wordings were swept and found empty:
+`to retreat`, `more to retreat`, `retreating`, `escape`, `without paying` all return **zero**
+hits, so "costs {C} more to retreat" phrasing does not exist in this pool.
 
 | | card | state |
 |---|---|---|
 | modifier | Beach Court `sv01-167` (−1, Basic, both boards) | built (`basicRetreatDiscount`) |
 | modifier | Calamitous Wasteland `sv02-175` (+1, Basic non-{F}, both boards) | built (D109 `basicRetreatSurcharge`) |
 | modifier | Clefable ex `sv03-082` "Lunar Zone" (set-to-zero, own board, {P} clause) | built (D108 `noRetreatCostAura`) |
-| modifier | **Spidops ex `sv01-019`/`-223`/`-243` "Trap Territory"** (+1, opponent's ACTIVE only) | **UNBUILT — the last one** |
+| modifier | Spidops ex `sv01-019`/`-223`/`-243` "Trap Territory" (+1, opponent's ACTIVE only) | built (D111 `opponentActiveRetreatSurcharge`) |
 | reader | Heracross `sv01-002`, Spidops ex "Wire Hang", Sharpedo `sv03-047` (base + 30·n) | built (D110) |
 | reader | Stoutland `sv03-172` "Chomp Chomp Panic" (`50×`, bare 50·n) | built (D110) |
+
+**Read the Active clauses off the print, one end at a time.** Trap Territory's are
+ASYMMETRIC and the sentence says so: "your opponent's **Active** Pokémon's Retreat Cost"
+scopes the TARGET, and *nothing* scopes the source — so a **benched** Spidops ex imposes it
+exactly as an Active one does. (Contrast `damageAttacker`, where the Active clause is on the
+holder.) The same care applies to stage: neither end is Basic-gated, unlike both Stadiums.
+
+**`effectiveRetreatCost` is now a fold, not a chain of early-outs.** D111 had to convert the
+`!isBasicPokemon(top) → return printed` early RETURN into a zero TERM (`stadiumRetreatDelta`),
+because a stage-agnostic aura would otherwise be silently swallowed on a Stage 1/2 Active.
+The shape is now `max(0, printed + Σdeltas)` with the set-to-zero checked first:
+- **the floor applies to the SUM, not per term** — a printed-0 Basic under Beach Court is −1
+  before Trap Territory's +1, and reads 0, not 1;
+- a Stadium and an aura **can** coexist, so the ± composition D109 correctly found unreachable
+  between the two Stadiums *is* reachable here — that is the case worth testing;
+- set-to-zero still beats everything (the official "no Retreat Cost applies after the ±
+  modifiers" rule).
+
+**A card can sit on both sides of one seam.** Spidops ex's "Wire Hang" READS the very cost
+its own "Trap Territory" raises, so an Active Spidops ex hits for +30 off its own Ability
+(90 → 150 against a printed-retreat-1 body). Nothing special was needed to make that work —
+it falls out of the single derivation point — but it is the test that proves the loop closes.
 
 Do **not** confuse this with the 15-card lowercase-"retreat" **retreat-LOCK** seam
 ("the Defending Pokémon can't retreat") — a different mechanic, still unbuilt.
@@ -4448,9 +4472,24 @@ than a new *op*. Two guardrails make it safe:
   behaviour the Prize twins already had) — that is correct, not a bug, and is the case
   that distinguishes the two arms on the board.
 
-**Next on the seam: Spidops ex "Trap Territory"** — the last modifier, deliberately left
-for last so it lands as a one-card finish. It is the opponent-side, Active-only, ADDITIVE
-mirror of `hasFreeRetreatAura`: the seat derivation generalizes, but the return stops being
-a boolean, so it wants a single `retreatCostModifiers(state, pokemon)` fold with
-`max(0, printed + Σdeltas)` and the set-to-zero applied last. Note it **raises the very cost
-its own "Wire Hang" reads**, so the reader/modifier composition on one card is its own test.
+**The four continuous-aura scans now form a family** — same derived-seat trick, differing
+only in reach and return type. When the next aura lands, copy the nearest of these:
+
+| scan | reach | returns | gated on §9 |
+|---|---|---|---|
+| `disabledAbilityUids` | both boards, predicate-matched targets | `Set<uid>` | no (a lock never disables a lock) |
+| `seatRemovesWeakness` | own board, per SEAT | `boolean` | yes |
+| `hasFreeRetreatAura` | own board, per TARGET | `boolean` | yes |
+| `opposingRetreatSurcharge` | **cross-board**, per TARGET | **`number` (summed)** | yes |
+
+**Next seam (unbuilt, and the biggest single family left): the retreat LOCK.** Do not confuse
+it with the above — it is 15 cards of lowercase-"retreat" text ("the Defending Pokémon can't
+retreat during your opponent's next turn"), a *condition on the Pokémon*, not a cost modifier:
+`sv01-103` Espathra, `sv01-138`/`-219` Bombirdier, `sv02-016` Tarountula, `sv02-030` Talonflame,
+`sv02-165` Corvisquire, `sv03-012` Trevenant, `sv03-059` Wugtrio, `sv03-102` Houndstone ex,
+`sv03-112` Stunfisk, `sv03-128` Paldean Clodsire, `sv03-137` Inkay, `sv06.5-013` Sneasel,
+`sv06.5-020`/`-070` Dusknoir. The read site almost certainly already exists — `redact.ts` and
+`turn.ts` both gate retreat on `isImmobilized(active.conditions)` (Paralyzed/Asleep), so an
+attack-applied "can't retreat" flag with an until-end-of-next-turn lifetime should ride the
+same check. Census it against the live D1 first: the wordings above are a grep summary, not
+verbatim, and every prior print corrected the shorthand.
