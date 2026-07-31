@@ -307,12 +307,61 @@ function unitsOf(state: GameState, uid: string, specialUids: readonly string[]):
     : [...program.provides];
 }
 
-/** §11 retreat cost under the in-play Stadium's continuous effects: Beach
-    Court's Basic discount subtracts, floored at a free retreat. Non-Basics
-    (and boards with no Stadium) pay the printed cost. */
+/** §11 — is `pokemon`'s Retreat Cost currently zeroed by an own-board "no
+    Retreat Cost" aura (Clefable ex "Lunar Zone")? The per-TARGET cousin of
+    `seatRemovesWeakness`: the aura reaches other Pokémon, so it is read through a
+    dedicated scan rather than `passivesOf`, but its printed clause ("…that have
+    {P} Energy attached") is evaluated against each target rather than once per
+    seat, so this takes the Pokémon.
+
+    The seat is derived rather than passed: the aura is OWN-BOARD, so we find the
+    side holding `pokemon` (by top uid — the caller always hands us one of that
+    side's own `active`/`bench` entries) and look for a source only there, which
+    keeps `effectiveRetreatCost`'s signature — and its three call sites (turn.ts
+    retreat, redact.ts, the web HUD) — untouched. A source is any of that side's
+    in-play Pokémon (Active or Bench, no "in the Active Spot" clause) whose TOP
+    card's passive sets `noRetreatCostAura`, provided that source is not itself
+    §9-locked (the `disabledAbilityUids` checklist every non-lock Ability surface
+    must consult). The energy clause is a PROVISION read (`providesEnergyType`),
+    so a wildcard Luminous Energy satisfies {P} exactly as it would pay a {P}
+    cost. Self-inclusive: the source's own Retreat Cost is freed too, iff it
+    satisfies the clause. */
+export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return false;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    if (!holders.some((holder) => topUid(holder) === uid)) continue;
+    for (const holder of holders) {
+      const top = topCardOf(state, holder);
+      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.noRetreatCostAura;
+      if (aura === undefined) continue;
+      const sourceUid = topUid(holder);
+      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
+      const required = aura.requiresEnergyType;
+      if (
+        required !== undefined &&
+        !pokemon.energy.some((energyUid) => providesEnergyType(state, pokemon, energyUid, required))
+      )
+        continue;
+      return true;
+    }
+    return false; // this is the Pokémon's own side — no other side can free it
+  }
+  return false;
+}
+
+/** §11 retreat cost under the continuous effects in play: an own-board "no
+    Retreat Cost" aura (Lunar Zone) sets it to zero outright, which is why it is
+    read FIRST — a set-to-zero beats the ± Stadium deltas, and it is
+    stage-agnostic where those are Basic-only. Otherwise Beach Court's Basic
+    discount subtracts, floored at a free retreat; non-Basics (and boards with no
+    Stadium) pay the printed cost. */
 export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): number {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return 0;
+  if (hasFreeRetreatAura(state, pokemon)) return 0;
   const printed = retreatCostOf(top);
   if (!isBasicPokemon(top)) return printed;
   const discount = stadiumEffectsOf(state)?.basicRetreatDiscount ?? 0;

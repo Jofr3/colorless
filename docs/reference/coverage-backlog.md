@@ -74,8 +74,11 @@ unblocks. High-value ops first.
 (Slowbro), ~~`healBothPlayers` (Picnic Basket)~~ (**DONE**, engine 0.54.0 / D103 — the op is
 `healEachAll`, the seat-blind twin of `healEach`; the FIRST long-tail slice), ~~`removeWeakness`
 (Florges)~~ (**DONE**, engine 0.55.0 / D104 — a `PassiveEffects.removeWeakness` flag + the own-board
-`seatRemovesWeakness` scan; the FIRST long-tail passive aura), `noRetreatCostAura`
-(Clefable ex), ~~`retaliationDamage` (Rocky Helmet)~~ (**DONE**, engine 0.57.0 /
+`seatRemovesWeakness` scan; the FIRST long-tail passive aura), ~~`noRetreatCostAura` (Clefable ex)~~
+(**DONE**, engine 0.59.0 / D108 — a `PassiveEffects.noRetreatCostAura
+{requiresEnergyType?}` + the per-TARGET `hasFreeRetreatAura` scan folded into
+`effectiveRetreatCost`; the FIRST CONDITIONAL aura and the first retreat-cost
+modifier), ~~`retaliationDamage` (Rocky Helmet)~~ (**DONE**, engine 0.57.0 /
 D106 — the D98 `damageAttacker` recoil on a Tool, a PURE data row: `passivesOf`
 already folds attached-Tool passives), ~~`preventDamageFromExV` (Mimikyu)~~
 (**DONE**, engine 0.58.0 / D107 — a `PassiveEffects.preventDamageFromExV` flag +
@@ -97,7 +100,8 @@ is well under 70.
 | Jacq | sv01-175/-236/-250 | `evolutionPokemon` CardFilter (search up to 2 Evolution Pokémon → hand; a bare union variant reading `evolveFromOf`, the D102 pattern, ZERO new op — the Flamigo search-to-hand shape) | 0.56.0 (D105) |
 | Rocky Helmet | sv01-193 | `damageAttacker` on a TOOL (2 counters = 20 HP recoil on the attacker; the D98 family's Tool member — a PURE data row, `passivesOf` already folds attached-Tool passives, no `requiresTool` since the Tool IS the source) | 0.57.0 (D106) |
 | Mimikyu | sv02-097 | `preventDamageFromExV` (Safeguard — prevent ALL damage from an opponent's ex/V; a bare `PassiveEffects` flag riding `passivesOf`, GATED at all four attack-damage read sites on the attacker's class via the new `cards.ts isExOrV`, NOT `hasRuleBox`; a `prevented` DAMAGE_DEALT flag; honored on the Bench too — no Active-Spot clause) | 0.58.0 (D107) |
-| Next candidates | — | `noRetreatCostAura` (Clefable ex sv03-082 "Lunar Zone" — a CONDITIONAL own-board retreat aura gated per-Pokémon on {P} Energy attached; needs a NEW retreat-cost read site + the {P}-attached gate; the `removeWeakness`/D104 shape but conditional — cheapest remaining) · `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability — needs a move-counter op + the as-often-as-you-like repeat path) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion). ALL THREE need genuinely new machinery — the one-field-flag passive avenue is now spent (D104/D107), as is the "one new filter kind" avenue (`itemCard`'s only user Arven needs a dual-target search). | — |
+| Clefable ex | sv03-082 | `noRetreatCostAura` (Lunar Zone — "All of your Pokémon that have {P} Energy attached have no Retreat Cost"; a `PassiveEffects.noRetreatCostAura { requiresEnergyType? }` read through the new per-TARGET `hasFreeRetreatAura(state, pokemon)` scan, which DERIVES the seat so `effectiveRetreatCost`'s three readers stay untouched; a SET-TO-ZERO checked before Beach Court's ± `basicRetreatDiscount`, stage-agnostic, self-inclusive; the {P} clause is a PROVISION read so a wildcard Luminous counts) | 0.59.0 (D108) |
+| Next candidates | — | `moveDamageCounters` (Slowbro sv01-043, repeatable parking Ability — needs a move-counter op + the as-often-as-you-like repeat path) · `bounceToHand` (Penny — real print is "Basic Pokémon", so an Active bounce needs mid-turn promotion). BOTH need genuinely new machinery — the one-field-flag passive avenue is now spent (D104/D107), the "one new filter kind" avenue is spent (`itemCard`'s only user Arven needs a dual-target search), and D108 drained the last aura that a new read site alone could carry. Still unbuilt on the retreat-cost seam: Spidops ex sv01-019/-223/-243 "Trap Territory" (opponent's Active Retreat Cost {C} MORE — the opponent-side additive twin, and it needs the ± composition order D108 only half-exercised), Calamitous Wasteland sv02-175 (a Stadium surcharge, the `basicRetreatDiscount` sibling), and the four "damage per {C} of the opponent's Retreat Cost" attacks (Heracross sv01-002, Spidops ex "Wire Hang", Sharpedo sv03-047, Stoutland sv03-172) which READ the same seam. | — |
 
 ## Suggested sequencing
 1. ✅ **`attachEnergyFrom`** — the single biggest unlock (11+, and the engine of most

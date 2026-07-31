@@ -493,7 +493,24 @@ import type { GameState, Seat } from "./types";
     `ignoreWR` (Feint Attack) bypasses it as it does the reduction. A new
     `prevented` flag on DAMAGE_DEALT marks the 0 as a prevention (not a 0-damage
     attack). No web/API/DB/schema change. */
-export const engineVersion = "0.58.0";
+
+    /* 0.59.0 — LUNAR ZONE (sv03-082): the first CONDITIONAL continuous aura and
+    the first modifier on the RETREAT-COST seam (P3-M5 long tail, D108) — Clefable
+    ex "All of your Pokémon that have {P} Energy attached have no Retreat Cost",
+    the only "no Retreat Cost" print in the whole local pool. A new
+    `PassiveEffects.noRetreatCostAura { requiresEnergyType? }` read through the new
+    continuous.ts `hasFreeRetreatAura(state, pokemon)` — the per-TARGET cousin of
+    `seatRemovesWeakness`: the clause is evaluated against each Pokémon, so the
+    scan takes the Pokémon and DERIVES its seat (the aura is own-board), leaving
+    `effectiveRetreatCost`'s signature and its three call sites (turn.ts retreat,
+    redact.ts `redactedRetreatOf`, the web HUD) untouched — one seam, three
+    readers, no drift. Source gated through `disabledAbilityUids` (§9) like every
+    non-lock Ability surface; the {P} clause is a PROVISION read
+    (`providesEnergyType`, the `providesEnergy` CardFilter's predicate), so a
+    wildcard Luminous Energy counts. A SET-TO-ZERO, so it is checked BEFORE Beach
+    Court's ± `basicRetreatDiscount` and applies to non-Basics too. No
+    web/API/DB/schema change. */
+export const engineVersion = "0.59.0";
 
 export type {
   ApplyResult,
@@ -546,6 +563,7 @@ export {
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
+  hasFreeRetreatAura,
   providedEnergy,
   seatRemovesWeakness,
   stadiumEffectsOf,

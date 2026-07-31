@@ -1,3 +1,4 @@
+import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY } from "./cards";
 import type { PokemonSuffix } from "./cards";
 import type { BoardCondition, EffectOp } from "./effects";
@@ -221,6 +222,26 @@ export interface PassiveEffects {
       are a separate family needing an energy-type gate, not this one. A bare
       flag: unconditional once the holder is in play. */
   preventDamageFromExV?: true;
+  /** §11 continuous own-board AURA: while this Pokémon is in play, every one of
+      its CONTROLLER's in-play Pokémon that satisfies `requiresEnergyType` has NO
+      Retreat Cost. Like `removeWeakness` it reaches OTHER Pokémon rather than
+      modifying its holder, so continuous.ts reads it through a dedicated scan
+      (`hasFreeRetreatAura`) rather than the per-Pokémon `passivesOf` fold — but
+      unlike that seat-wide flag the clause is evaluated PER TARGET, so the scan
+      takes the Pokémon, not just the seat. Clefable ex sv03-082 "Lunar Zone"
+      ("All of your Pokémon that have {P} Energy attached have no Retreat Cost")
+      is the only "no Retreat Cost" print in the whole local pool: own board,
+      stage-agnostic, self-inclusive (Clefable ex qualifies iff it too carries
+      {P}), and no "in the Active Spot" clause. The energy clause is a
+      PROVISION read (continuous.ts `providesEnergyType`, the `providesEnergy`
+      CardFilter's predicate), so a wildcard Luminous Energy counts as {P} —
+      the same rule that lets it pay a {P} cost. `requiresEnergyType` is an
+      OPTIONAL refinement (the `basicEnergy.energyType` idiom): a future
+      unconditional "your Pokémon have no Retreat Cost" print omits it. This is
+      a SET-TO-ZERO, so it wins over the ± Stadium deltas (Beach Court's
+      `basicRetreatDiscount`, and any future surcharge) — the read site checks
+      it first. */
+  noRetreatCostAura?: { requiresEnergyType?: BasicEnergyType };
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -528,6 +549,13 @@ const BLOOMING_GARDEN: CardProgram = { passive: { removeWeakness: true } };
     VMAX/VSTAR/GX). Honored at every attack-damage read site (no "Active Spot"
     clause). The only ex/V-gated total-prevention print in the sv01–03 pool. */
 const SAFEGUARD: CardProgram = { passive: { preventDamageFromExV: true } };
+
+/** Clefable ex (sv03-082) — "Lunar Zone": "All of your Pokémon that have {P}
+    Energy attached have no Retreat Cost." — a continuous own-board aura, gated
+    PER TARGET on the target carrying {P} (so Clefable ex frees itself only while
+    it too holds a Psychic Energy). Stage-agnostic and with no "in the Active
+    Spot" clause; the only "no Retreat Cost" print in the pool. */
+const LUNAR_ZONE: CardProgram = { passive: { noRetreatCostAura: { requiresEnergyType: "Psychic" } } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -2053,6 +2081,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-093": BLOOMING_GARDEN, // Florges — Blooming Garden ("Your Pokémon in play have no Weakness")
   // — M5 long-tail: preventDamageFromExV holder passive (verified vs the live D1 2026-07-28). —
   "sv02-097": SAFEGUARD, // Mimikyu — Safeguard ("Prevent all damage from opponent's Pokémon ex/V")
+  // — M5 long-tail: noRetreatCostAura continuous own-board aura (verified vs the live D1 2026-07-31). —
+  "sv03-082": LUNAR_ZONE, // Clefable ex — Lunar Zone ("All of your Pokémon that have {P} Energy attached have no Retreat Cost")
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)

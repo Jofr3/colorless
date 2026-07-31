@@ -695,6 +695,52 @@ dedicated `continuous.ts` scan (gated through `disabledAbilityUids` unless it is
 itself a lock) + a gate at each rule-read site it touches. `bloomingGarden.test.ts`
 (8) covers it.
 
+**The third such passive, and the first CONDITIONAL one: `noRetreatCostAura`
+(D108, engine 0.59.0).** Clefable ex sv03-082 "Lunar Zone" — "All of your Pokémon
+that have {P} Energy attached have no Retreat Cost" — is the only "no Retreat
+Cost" print in the whole local pool, and the first aura whose printed clause
+narrows **per TARGET** rather than per seat. Two shape lessons for the next one:
+
+- **The field carries the clause, optionally.**
+  `PassiveEffects.noRetreatCostAura?: { requiresEnergyType?: BasicEnergyType }` —
+  not a bare flag (D104's shape) and not the seven-predicate object (D100's).
+  An OPTIONAL refinement is the middle idiom the `CardFilter`s already use
+  (`basicEnergy.energyType`, `basicPokemon.noRuleBox`): a future unconditional
+  print just omits it, and no existing row changes.
+- **The scan takes the Pokémon and DERIVES the seat.**
+  `hasFreeRetreatAura(state, pokemon)` finds the side whose own `active`/`bench`
+  holds this top uid (the aura is own-board, so no other side can matter), then
+  looks for a live, non-§9-locked source there and evaluates the clause against
+  the target. That is what let `effectiveRetreatCost(state, pokemon)` keep its
+  signature — and it has **three** readers (`turn.ts` retreat, `redact.ts
+  redactedRetreatOf` → the wire `{cost, can}`, and the web `GameHud.tsx`), so
+  threading a seat parameter would have cost a web + wire diff for nothing.
+  **When a new aura's read site already has the Pokémon, derive; don't thread.**
+
+Two rule details worth reusing. **The energy clause is a PROVISION read**
+(`providesEnergyType`, the `providesEnergy` CardFilter's own predicate), so a
+wildcard Luminous Energy satisfies "{P} Energy attached" — the same §6.3 rule that
+lets it pay a {P} cost; the card-identity reading (`energyProvidesOf(card) ===
+type`, what the `basicEnergy` filter uses) was rejected as the narrower one.
+And **a set-to-zero is read BEFORE the ± modifiers**: `effectiveRetreatCost`
+checks the aura first, ahead of Beach Court's `basicRetreatDiscount` *and* ahead
+of that function's `!isBasicPokemon → return printed` early-out, since the aura is
+stage-agnostic where the Stadium deltas are Basic-only.
+
+**The §9 gate here is structurally unreachable and the test says so.** No lock in
+sv01–03 can touch Clefable ex — Klefki and Spiritomb narrow to Basics (it is a
+Stage 1), Ting-Lu ex exempts ex — so `lunarZone.test.ts` (12) asserts the negative
+(an Active Klefki does NOT lock it) and records why the positive is unassertable.
+
+**The retreat-cost seam is now open and has three unbuilt siblings**, all of which
+exercise the ± composition order this slice only half-tested: Spidops ex
+sv01-019/-223/-243 "Trap Territory" (opponent's Active Retreat Cost {C} MORE — the
+opponent-side additive twin), Calamitous Wasteland sv02-175 (a Stadium surcharge,
+the `basicRetreatDiscount` sibling), and four attacks that READ the computed cost
+as a damage multiplier (Heracross sv01-002, Spidops ex "Wire Hang", Sharpedo
+sv03-047, Stoutland sv03-172 — "30/50 more damage for each {C} in your opponent's
+Active Pokémon's Retreat Cost").
+
 **The leanest coverage slice: a new `CardFilter` kind — `evolutionPokemon` (D105,
 engine 0.56.0).** Jacq sv01-175/-236/-250 ("Search your deck for up to 2 Evolution
 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.") is the

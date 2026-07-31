@@ -711,6 +711,31 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-psychic-1": battler("fix-psychic-1", { name: "fix-psychic-1", types: ["Psychic"], hp: 60, retreat: 1 }),
   /** A Basic Psychic Energy — the Psychic Embrace attach source. */
   "fix-psychic-energy": typedEnergy("fix-psychic-energy", "Psychic"),
+  /** Clefable ex (sv03-082, D108) — "Lunar Zone": "All of your Pokémon that have
+      {P} Energy attached have no Retreat Cost." The `noRetreatCostAura` source
+      (registry). A Psychic Stage 1 (260 HP, ×2 Metal, retreat 2), VERBATIM off
+      the live D1 — its retreat 2 is what its own aura frees, self-inclusively,
+      once it holds {P}. An ex, so Ting-Lu ex "Cursed Land" (opponent's damaged
+      NON-ex) can never lock it; abilityLock coverage stays with Florges. */
+  "sv03-082": battler("sv03-082", {
+    name: "Clefable ex",
+    types: ["Psychic"],
+    stage: "Stage1",
+    evolveFrom: "Clefairy",
+    hp: 260,
+    retreat: 2,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Lunar Zone",
+        effect: "All of your Pokémon that have {P} Energy attached have no Retreat Cost.",
+      },
+    ],
+  }),
+  /** A neutral Basic with retreat 2 — the Lunar Zone beneficiary/control body:
+      it pays 2 bare, 0 once it holds {P} beside a Clefable ex. */
+  "fix-retreat2": battler("fix-retreat2", { name: "fix-retreat2", hp: 120, retreat: 2 }),
 
   // — attachEnergyFrom multi + endsTurn: Koraidon ex "Dino Cry". —
   /** Koraidon ex — "Dino Cry" (multi-attach up to 2 Basic {F} from discard to
@@ -2493,6 +2518,26 @@ export const SAFEGUARD_DECK = deckOf({
   "fix-sniper": 4, // plain spread attacker — Spread Shot: the spread not-prevented control
   "fix-energy": 8, // Colorless Basic Energy — pays every Bite/Spread Shot {C}
   "fix-bigbody": 28, // 200 HP neutral Basic — DOMINANT starter + the P2 Active over a benched Mimikyu
+});
+
+/** 0.58.0 → 0.59.0: the `noRetreatCostAura` row (Clefable ex "Lunar Zone", D108).
+    A DEDICATED deck — every other retreat-cost suite (turn.test.ts, stadiumTool)
+    is seed-pinned, and this one needs a Stadium plus two Energy types in the same
+    60. Clefable ex (sv03-082) is the aura source, surgeried in from the deck (a
+    Stage 1 never starts); fix-retreat2 is the retreat-2 beneficiary and the
+    aura-off control; fix-psychic-energy satisfies the {P} clause and fix-energy
+    ({C}) is the WRONG-type negative; Beach Court (sv01-167) proves the
+    set-to-zero is read before its ± Basic discount. fix-bigbody (retreat 1) is
+    the DOMINANT mulligan-free starter and the bench body a retreat needs. */
+export const LUNAR_ZONE_DECK = deckOf({
+  "sv03-082": 4, // Clefable ex — Lunar Zone (the noRetreatCostAura source; retreat 2 itself)
+  "fix-retreat2": 4, // retreat-2 neutral Basic — the beneficiary and the no-aura control
+  "fix-psychic-energy": 8, // Basic {P} — satisfies the aura's requiresEnergyType clause
+  "fix-energy": 8, // Basic {C} — the wrong-type negative (attached, still pays full cost)
+  "sv02-191": 3, // Luminous Energy (ANY) — the wildcard-provision witness
+  "sv01-167": 3, // Beach Court — the ± Basic discount the set-to-zero must beat
+  "sv01-096": 3, // Klefki — Mischievous Lock: the §9 gate's (structurally negative) witness
+  "fix-bigbody": 27, // 200 HP neutral Basic — DOMINANT mulligan-free starter + bench body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
