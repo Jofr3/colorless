@@ -735,11 +735,46 @@ Stage 1), Ting-Lu ex exempts ex — so `lunarZone.test.ts` (12) asserts the nega
 **The retreat-cost seam is now open and has three unbuilt siblings**, all of which
 exercise the ± composition order this slice only half-tested: Spidops ex
 sv01-019/-223/-243 "Trap Territory" (opponent's Active Retreat Cost {C} MORE — the
-opponent-side additive twin), Calamitous Wasteland sv02-175 (a Stadium surcharge,
-the `basicRetreatDiscount` sibling), and four attacks that READ the computed cost
-as a damage multiplier (Heracross sv01-002, Spidops ex "Wire Hang", Sharpedo
-sv03-047, Stoutland sv03-172 — "30/50 more damage for each {C} in your opponent's
-Active Pokémon's Retreat Cost").
+opponent-side additive twin), ~~Calamitous Wasteland sv02-175~~ (**DONE**, D109 —
+see below), and four attacks that READ the computed cost as a damage multiplier
+(Heracross sv01-002, Spidops ex "Wire Hang", Sharpedo sv03-047, Stoutland
+sv03-172 — "30/50 more damage for each {C} in your opponent's Active Pokémon's
+Retreat Cost").
+
+**The seam's Stadium half is now closed: `basicRetreatSurcharge` (D109, engine
+0.60.0).** Calamitous Wasteland sv02-175 — "The Retreat Cost of each Basic non-{F}
+Pokémon in play (both yours and your opponent's) is {C} more" — is Beach Court's
+sign-flipped twin plus a type exemption, and it is the smallest slice built in the
+long tail so far: **one `StadiumEffects` field, one registry row, one clause, one
+fixture, one deck.** Three things it settled:
+
+- **A bare number vs. an object is decided by whether the print narrows.**
+  `basicRetreatDiscount?: number` (Beach Court, ungated) stayed a bare number;
+  the surcharge is `{ amount: number; excludesType?: BasicEnergyType }` because
+  its print carries "non-{F}". The asymmetry is deliberate and is the same
+  D104-vs-D108 rule one level down: flag when unconditional, object with an
+  OPTIONAL refinement when the clause narrows. `excludesType` is typed
+  `BasicEnergyType` (the `requiresEnergyType` neighbour) even though it matches a
+  Pokémon's `Card.types` — the vocabulary is the same word list, and the only two
+  real prints exempt {F} / {W}.
+- **Prose uses `{F}`; structural fields use `"Fighting"`.** `types_json` holds
+  full words and attack costs hold `["Fighting","Colorless"]`, so any `non-{X}`
+  gate must map the brace token to the word. sv02-174 Calamitous Snowy Mountain
+  (`Basic non-{W}`) proves this is a two-card family, not a one-off — but it does
+  **not** touch retreat cost, so it is a different seam.
+- **The ± deltas can never actually stack**, so the "composition order" the D108
+  resume point wanted tested is only observable against the aura. The shared zone
+  holds exactly one Stadium *and* §7.3 allows one Stadium play per turn
+  (`STADIUM_ALREADY_PLAYED`), so a discount and a surcharge cannot coexist —
+  `effectiveRetreatCost` sums them anyway to keep the fold honest, and the test
+  asserts the impossibility rather than pretending to exercise it. The only real
+  composition is **set-to-zero beats surcharge** (Lunar Zone → 0 over a
+  Wasteland-surcharged 3), which `calamitousWasteland.test.ts` (10) pins.
+
+**Watch out for League HQ when pattern-matching:** sv03-192 has the *identical*
+sentence skeleton ("each Basic Pokémon in play (both yours and your opponent's) …
+{C} more") but bites on the ATTACK-cost seam. Two adjacent fields on the same
+interface, one word apart in the print.
 
 **The leanest coverage slice: a new `CardFilter` kind — `evolutionPokemon` (D105,
 engine 0.56.0).** Jacq sv01-175/-236/-250 ("Search your deck for up to 2 Evolution

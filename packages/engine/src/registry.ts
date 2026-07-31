@@ -266,6 +266,15 @@ export interface StadiumEffects {
   /** §11 retreat costs THIS much less for every Basic Pokémon in play
       (Beach Court), floored at a free retreat. */
   basicRetreatDiscount?: number;
+  /** §11 retreat costs `amount` MORE for every Basic Pokémon in play
+      (Calamitous Wasteland), except one exempt type — the print reads "each
+      Basic non-{F} Pokémon". An OBJECT rather than a bare number twin of
+      `basicRetreatDiscount` because this print NARROWS where Beach Court's
+      does not; `excludesType` is the optional refinement (the
+      `noRetreatCostAura.requiresEnergyType` idiom), so an ungated surcharge
+      would just omit it. Matched against the Pokémon's own `Card.types`, whose
+      vocabulary is the same word list ("Fighting" for {F}). */
+  basicRetreatSurcharge?: { amount: number; excludesType?: BasicEnergyType };
   /** Attacks of every Basic Pokémon in play cost this many {C} more
       (Pokémon League Headquarters). */
   basicAttackCostSurcharge?: number;
@@ -566,6 +575,15 @@ const BEACH_COURT: CardProgram = { stadium: { basicRetreatDiscount: 1 } };
 /** Pokémon League Headquarters — "Attacks used by each Basic Pokémon in play
     (both yours and your opponent's) cost {C} more." (Stadium) */
 const POKEMON_LEAGUE_HQ: CardProgram = { stadium: { basicAttackCostSurcharge: 1 } };
+
+/** Calamitous Wasteland — "The Retreat Cost of each Basic non-{F} Pokémon in
+    play (both yours and your opponent's) is {C} more." (Stadium) — Beach Court's
+    negative twin, plus the type exemption that keeps {F} Pokémon at their
+    printed cost. Note League HQ above shares the sentence skeleton but bites on
+    the ATTACK-cost seam, not this one. */
+const CALAMITOUS_WASTELAND: CardProgram = {
+  stadium: { basicRetreatSurcharge: { amount: 1, excludesType: "Fighting" } },
+};
 
 /** Artazon — "Once during each player's turn, that player may search their deck
     for a Basic Pokémon that doesn't have a Rule Box and put it onto their Bench.
@@ -2013,6 +2031,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-167": BEACH_COURT,
   // Pokémon League Headquarters (Stadium)
   "sv03-192": POKEMON_LEAGUE_HQ,
+  // Calamitous Wasteland (Stadium) — D109, verified vs local D1 2026-07-31
+  "sv02-175": CALAMITOUS_WASTELAND,
   // — Stadium activated abilities (D102, verified vs local D1 2026-07-28). —
   "sv02-171": ARTAZON, // Artazon — search a no-Rule-Box Basic → Bench
   "sv03-229": ARTAZON, // Artazon (reprint)

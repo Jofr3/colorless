@@ -510,7 +510,7 @@ import type { GameState, Seat } from "./types";
     wildcard Luminous Energy counts. A SET-TO-ZERO, so it is checked BEFORE Beach
     Court's ± `basicRetreatDiscount` and applies to non-Basics too. No
     web/API/DB/schema change. */
-export const engineVersion = "0.59.0";
+export const engineVersion = "0.60.0";
 
 export type {
   ApplyResult,

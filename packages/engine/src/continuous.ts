@@ -355,17 +355,25 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
 /** §11 retreat cost under the continuous effects in play: an own-board "no
     Retreat Cost" aura (Lunar Zone) sets it to zero outright, which is why it is
     read FIRST — a set-to-zero beats the ± Stadium deltas, and it is
-    stage-agnostic where those are Basic-only. Otherwise Beach Court's Basic
-    discount subtracts, floored at a free retreat; non-Basics (and boards with no
-    Stadium) pay the printed cost. */
+    stage-agnostic where those are Basic-only. Otherwise the in-play Stadium's ±
+    Basic deltas apply — Beach Court's discount subtracts, Calamitous Wasteland's
+    surcharge adds (skipping the type its print exempts) — floored at a free
+    retreat; non-Basics (and boards with no Stadium) pay the printed cost. Only
+    one Stadium is ever in play (§7.3), so the two deltas never actually meet;
+    they are summed anyway so the fold stays honest if that changes. */
 export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): number {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return 0;
   if (hasFreeRetreatAura(state, pokemon)) return 0;
   const printed = retreatCostOf(top);
   if (!isBasicPokemon(top)) return printed;
-  const discount = stadiumEffectsOf(state)?.basicRetreatDiscount ?? 0;
-  return Math.max(0, printed - discount);
+  const stadium = stadiumEffectsOf(state);
+  const discount = stadium?.basicRetreatDiscount ?? 0;
+  const surcharge = stadium?.basicRetreatSurcharge;
+  const exempt =
+    surcharge?.excludesType !== undefined && (top.types ?? []).includes(surcharge.excludesType);
+  const added = surcharge === undefined || exempt ? 0 : surcharge.amount;
+  return Math.max(0, printed - discount + added);
 }
 
 /** §8.2 attack cost under the in-play Stadium's continuous effects: Pokémon

@@ -507,6 +507,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
     trainerType: "Stadium",
     effect: "The Retreat Cost of each Basic Pokémon in play (both yours and your opponent's) is {C} less.",
   } satisfies Card,
+  /** Calamitous Wasteland — Stadium: Basic non-{F} retreat cost {C} more. */
+  "sv02-175": {
+    ...blank,
+    id: "sv02-175",
+    name: "Calamitous Wasteland",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect:
+      "The Retreat Cost of each Basic non-{F} Pokémon in play (both yours and your opponent's) is {C} more.",
+  } satisfies Card,
   /** Pokémon League Headquarters — Stadium: Basic attacks cost {C} more. */
   "sv03-192": {
     ...blank,
@@ -2538,6 +2548,31 @@ export const LUNAR_ZONE_DECK = deckOf({
   "sv01-167": 3, // Beach Court — the ± Basic discount the set-to-zero must beat
   "sv01-096": 3, // Klefki — Mischievous Lock: the §9 gate's (structurally negative) witness
   "fix-bigbody": 27, // 200 HP neutral Basic — DOMINANT mulligan-free starter + bench body
+});
+
+/** 0.59.0 → 0.60.0: the `basicRetreatSurcharge` row (Calamitous Wasteland,
+    D109). A DEDICATED deck — STADIUM_TOOL_DECK and LUNAR_ZONE_DECK are both
+    seed-pinned, and this one needs the Stadium plus one body per branch of the
+    clause: fix-retreat2 (non-{F} Basic, retreat 2 → 3) is the surcharged
+    beneficiary, fix-fighting-1 ({F} Basic) is the type EXEMPTION, fix-stage1
+    (Colorless Stage 1, retreat 2) is the Basic-only gate's negative, and
+    fix-basic-0 (retreat 0) proves a free retreater is pushed to 1. Beach Court
+    (sv01-167) is the ± twin — only one Stadium is ever in play, so the two are
+    tested by REPLACING each other, not stacking. Clefable ex (sv03-082) +
+    fix-psychic-energy prove the set-to-zero still beats the surcharge.
+    fix-bigbody is the DOMINANT mulligan-free starter and the bench body a
+    retreat promotes. */
+export const CALAMITOUS_WASTELAND_DECK = deckOf({
+  "sv02-175": 3, // Calamitous Wasteland — the surcharge Stadium
+  "sv01-167": 3, // Beach Court — the ± twin it replaces in the shared zone
+  "fix-retreat2": 4, // non-{F} Basic, retreat 2 — the surcharged body
+  "fix-fighting-1": 4, // {F} Basic, retreat 1 — the type exemption
+  "fix-basic-0": 4, // retreat-0 Basic — a free retreater pushed to 1
+  "fix-stage1": 4, // Colorless Stage 1, retreat 2 — the Basic-only negative
+  "sv03-082": 2, // Clefable ex — the set-to-zero that still wins
+  "fix-psychic-energy": 4, // Basic {P} — satisfies Lunar Zone's clause
+  "fix-energy": 8, // Basic {C} — pays the surcharged retreat
+  "fix-bigbody": 24, // 200 HP neutral Basic — DOMINANT starter + bench body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
