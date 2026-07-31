@@ -4406,3 +4406,51 @@ deck", a `payFromHand to:"deckTop"` op that does not exist yet).
 `biome lint`, NOT `biome format`. Committed code is not format-clean, so
 `biome format --write <dir>` reformats dozens of unrelated files. Never run it
 repo-wide; rely on the lint gate and match surrounding style.
+
+### The retreat-cost seam, end to end — and the deriver path as the cheapest slice (D110, engine 0.61.0)
+The seam is now **6 of 9 card ids** built. A full D1 census (all sets, `%retreat cost%`
+over `attacks_json ‖ abilities_json ‖ effect`) returns exactly **9 unique ids** — 4 distinct
+MODIFIER effects (6 printings) and 4 distinct READER effects (6 printings), with Spidops ex
+sitting in **both** buckets:
+
+| | card | state |
+|---|---|---|
+| modifier | Beach Court `sv01-167` (−1, Basic, both boards) | built (`basicRetreatDiscount`) |
+| modifier | Calamitous Wasteland `sv02-175` (+1, Basic non-{F}, both boards) | built (D109 `basicRetreatSurcharge`) |
+| modifier | Clefable ex `sv03-082` "Lunar Zone" (set-to-zero, own board, {P} clause) | built (D108 `noRetreatCostAura`) |
+| modifier | **Spidops ex `sv01-019`/`-223`/`-243` "Trap Territory"** (+1, opponent's ACTIVE only) | **UNBUILT — the last one** |
+| reader | Heracross `sv01-002`, Spidops ex "Wire Hang", Sharpedo `sv03-047` (base + 30·n) | built (D110) |
+| reader | Stoutland `sv03-172` "Chomp Chomp Panic" (`50×`, bare 50·n) | built (D110) |
+
+Do **not** confuse this with the 15-card lowercase-"retreat" **retreat-LOCK** seam
+("the Defending Pokémon can't retreat") — a different mechanic, still unbuilt.
+
+**The one derivation point held.** `effectiveRetreatCost(state, pokemon)` (continuous.ts)
+is the only place the rule lives, and it now has **four** readers — turn.ts's retreat
+action, redact.ts's `redactedRetreatOf`, the web `GameHud.tsx`, and (new) attack.ts's
+`scaledAttackDamage`. Adding the damage readers cost **one `switch` arm**, because that
+function already received `state` + `defenderSeat`. Every modifier in play is therefore
+automatically inside the number the attacks read — tested directly (Beach Court 70→40,
+Calamitous Wasteland 70→100, its {F} exemption holding at 40).
+
+**The reusable lesson — when the printed sentence is a clean anchored whole, the
+DERIVER path beats authoring, and costs nothing per card.** D110 added **zero**
+registry rows: two regexes in effects.ts plus a `DamageCountSource` member simulated
+six printings at once. The `AttackDamageBonus {per, count}` shape already covered both
+arithmetic arms (additive "+" vs "×"/multiply, discriminated by the word **"more"** —
+the same tell as the Prize twins), so a new *count source* is a strictly cheaper slice
+than a new *op*. Two guardrails make it safe:
+- **The sentence is load-bearing.** A fixture whose text drifts by one character
+  silently un-simulates the card with no test failure — so any deriver-path fixture
+  gets an explicit verbatim-text assertion (`retreatCostScaling.test.ts`). Confirm the
+  bytes against D1: these prints use **ASCII apostrophes** and a real `é`.
+- **The `×` arm has no base.** `50 × 0` emits **no `DAMAGE_DEALT` at all** (the count-0
+  behaviour the Prize twins already had) — that is correct, not a bug, and is the case
+  that distinguishes the two arms on the board.
+
+**Next on the seam: Spidops ex "Trap Territory"** — the last modifier, deliberately left
+for last so it lands as a one-card finish. It is the opponent-side, Active-only, ADDITIVE
+mirror of `hasFreeRetreatAura`: the seat derivation generalizes, but the return stops being
+a boolean, so it wants a single `retreatCostModifiers(state, pokemon)` fold with
+`max(0, printed + Σdeltas)` and the set-to-zero applied last. Note it **raises the very cost
+its own "Wire Hang" reads**, so the reader/modifier composition on one card is its own test.

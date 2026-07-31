@@ -18,7 +18,13 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
-import { effectiveAttackCost, passivesOf, providedEnergy, seatRemovesWeakness } from "./continuous";
+import {
+  effectiveAttackCost,
+  effectiveRetreatCost,
+  passivesOf,
+  providedEnergy,
+  seatRemovesWeakness,
+} from "./continuous";
 import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -88,7 +94,8 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     additive "+" family) or uses it as the whole damage (the "×"/multiply family).
     `attacker` is the attacking Active; `state` + `defenderSeat` reach the
     opponent's board for the Prize-count source (Charizard ex "Burning Darkness",
-    Pecharunt ex "Irritated Outburst"). */
+    Pecharunt ex "Irritated Outburst") and for the retreat-cost source (Heracross
+    "Superpowered Throw" and siblings). */
 function scaledAttackDamage(
   attacker: InPlayPokemon,
   bonus: AttackDamageBonus,
@@ -104,6 +111,17 @@ function scaledAttackDamage(
       // Prizes the opponent has TAKEN (6 − their remaining pile, §8.1), read at
       // declaration before this attack's own KOs award any Prize.
       return takenPrizes(state, defenderSeat) * bonus.per;
+    case "opponentActiveRetreatCost": {
+      // The {C} in the DEFENDING Pokémon's Retreat Cost — the EFFECTIVE one, not
+      // the printed number: `effectiveRetreatCost` already folds every modifier in
+      // play (Beach Court's discount, Calamitous Wasteland's surcharge, Clefable
+      // ex's set-to-zero aura), so a Stadium that changes what it costs to retreat
+      // changes what these attacks hit for. The only derived count source; the
+      // rest read a raw field. A missing Active can't happen here (the attack gate
+      // requires a Defending Pokémon) — 0 keeps the arm total.
+      const defenderActive = state.players[defenderSeat].active;
+      return defenderActive === null ? 0 : effectiveRetreatCost(state, defenderActive) * bonus.per;
+    }
   }
 }
 

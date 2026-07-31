@@ -510,7 +510,23 @@ import type { GameState, Seat } from "./types";
     wildcard Luminous Energy counts. A SET-TO-ZERO, so it is checked BEFORE Beach
     Court's ± `basicRetreatDiscount` and applies to non-Basics too. No
     web/API/DB/schema change. */
-export const engineVersion = "0.60.0";
+
+    /* 0.61.0 — RETREAT-COST READERS: a third `DamageCountSource`,
+    `opponentActiveRetreatCost` (P3-M5 long tail, D110) — "This attack does N
+    (more) damage for each {C} in your opponent's Active Pokémon's Retreat Cost",
+    landing FOUR cards at once: Heracross sv01-002 "Superpowered Throw" (10+),
+    Spidops ex sv01-019/-223/-243 "Wire Hang" (90+), Sharpedo sv03-047 "Aqua
+    Impact" (10+) and — the "×"/multiply arm, no base — Stoutland sv03-172 "Chomp
+    Chomp Panic" (50×). Two anchored regexes (the arms differ only by the word
+    "more", exactly as the Prize twins do) plus one `switch` arm in attack.ts's
+    `scaledAttackDamage`, which already carried `state` + `defenderSeat`. The FIRST
+    count source that is DERIVED rather than read off a field: it evaluates through
+    continuous.ts `effectiveRetreatCost`, so Beach Court's discount, Calamitous
+    Wasteland's surcharge and Clefable ex's set-to-zero aura are all inside the
+    number these attacks read — the payoff of D108's single derivation point. NO
+    registry row: the cards simulate straight off their printed text. No
+    web/API/DB/schema change. */
+export const engineVersion = "0.61.0";
 
 export type {
   ApplyResult,

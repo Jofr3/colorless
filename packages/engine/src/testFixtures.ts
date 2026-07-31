@@ -747,6 +747,56 @@ export const FIXTURE_POOL: Record<string, Card> = {
       it pays 2 bare, 0 once it holds {P} beside a Clefable ex. */
   "fix-retreat2": battler("fix-retreat2", { name: "fix-retreat2", hp: 120, retreat: 2 }),
 
+  // — the retreat-cost READERS (D110): the two arithmetic shapes of "for each {C}
+  //   in your opponent's Active Pokémon's Retreat Cost". Faithful to the D1 rows;
+  //   the effect text is LOAD-BEARING here (both cards derive from the sentence —
+  //   neither carries a registry program), so it must stay char-for-char. —
+  /** Heracross sv01-002 — "Superpowered Throw" (10+, 30 more per {C} of the
+      defender's Retreat Cost): the ADDITIVE arm, printed base kept. Its second
+      attack is a plain number, the "one card, one scaled attack" control. */
+  "sv01-002": battler("sv01-002", {
+    name: "Heracross",
+    types: ["Grass"],
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Grass", "Colorless"],
+        name: "Superpowered Throw",
+        damage: "10+",
+        effect:
+          "This attack does 30 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost.",
+      },
+      { cost: ["Grass", "Grass", "Colorless"], name: "Horn Attack", damage: 90 },
+    ],
+  }),
+  /** Stoutland sv03-172 — "Chomp Chomp Panic" (50×, 50 per {C}, NO base): the
+      MULTIPLY arm, the odd one out of the four readers. A Stage 2 (evolves from
+      Herdier), surgeried straight onto the Active in tests. */
+  "sv03-172": {
+    ...blank,
+    id: "sv03-172",
+    name: "Stoutland",
+    category: "Pokemon",
+    stage: "Stage2",
+    evolveFrom: "Herdier",
+    hp: 160,
+    types: ["Colorless"],
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Chomp Chomp Panic",
+        damage: "50×",
+        effect:
+          "This attack does 50 damage for each {C} in your opponent's Active Pokémon's Retreat Cost.",
+      },
+      { cost: ["Colorless", "Colorless", "Colorless"], name: "Sharp Fang", damage: 140 },
+    ],
+  } satisfies Card,
+
   // — attachEnergyFrom multi + endsTurn: Koraidon ex "Dino Cry". —
   /** Koraidon ex — "Dino Cry" (multi-attach up to 2 Basic {F} from discard to
       Basic {F} Pokémon; then the turn ends). Basic Fighting, so it is its own
@@ -2573,6 +2623,30 @@ export const CALAMITOUS_WASTELAND_DECK = deckOf({
   "fix-psychic-energy": 4, // Basic {P} — satisfies Lunar Zone's clause
   "fix-energy": 8, // Basic {C} — pays the surcharged retreat
   "fix-bigbody": 24, // 200 HP neutral Basic — DOMINANT starter + bench body
+});
+
+/** 0.60.0 → 0.61.0: the retreat-cost READERS (D110) — the `opponentActiveRetreatCost`
+    count source. A DEDICATED deck: SCALED_DAMAGE_DECK and MULTIPLY_DAMAGE_DECK are
+    seed-pinned, and CALAMITOUS_WASTELAND_DECK carries no attackers. Both arms of the
+    shape are here — Heracross sv01-002 (10+, ADDITIVE) and Stoutland sv03-172 (50×,
+    MULTIPLY) — plus the defender ladder they read: fix-retreat2 (2), fix-fighting-1
+    (1, and Calamitous Wasteland's {F} exemption), fix-basic-0 (0 — the multiply arm's
+    zero-damage case). BOTH retreat-cost Stadiums are in the 60 because the whole
+    point of one derivation point is that the readers see the MODIFIED cost: Beach
+    Court (sv01-167) drops it, Calamitous Wasteland (sv02-175) raises it. Grass Energy
+    pays Superpowered Throw's {G}{C}, fix-energy pays Chomp Chomp Panic's {C}, and
+    fix-bigbody is the DOMINANT mulligan-free starter both Actives displace. */
+export const RETREAT_SCALING_DECK = deckOf({
+  "sv01-002": 4, // Heracross — "Superpowered Throw" 10+, the additive arm
+  "sv03-172": 4, // Stoutland — "Chomp Chomp Panic" 50×, the multiply arm
+  "fix-retreat2": 4, // retreat-2 Basic — the main defender
+  "fix-fighting-1": 4, // retreat-1 {F} Basic — the Calamitous exemption, read through
+  "fix-basic-0": 4, // retreat-0 Basic — the multiply arm's 0-damage case
+  "sv01-167": 3, // Beach Court — the discount the readers must see
+  "sv02-175": 3, // Calamitous Wasteland — the surcharge the readers must see
+  "fix-grass-energy": 6, // Basic {G} — pays Superpowered Throw
+  "fix-energy": 8, // Basic {C} — pays Chomp Chomp Panic
+  "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT starter + bench body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

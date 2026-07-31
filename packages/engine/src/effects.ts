@@ -1287,6 +1287,22 @@ const OPPONENT_PRIZES_SCALE =
 // way.") by the tail.
 const OPPONENT_PRIZES_MULTIPLY =
   /^This attack does (\d+) damage for each Prize card your opponent has taken\.$/;
+// The retreat-cost READER pair — the first count source that reads a DERIVED
+// board value (continuous.ts effectiveRetreatCost on the DEFENDER) rather than a
+// raw field. Both sentences are printed verbatim on real cards, char-for-char
+// identical apart from the missing "more":
+//   additive  — Heracross sv01-002 "Superpowered Throw" (10+), Spidops ex
+//               sv01-019/-223/-243 "Wire Hang" (90+), Sharpedo sv03-047
+//               "Aqua Impact" (10+): base + 30 per {C}.
+//   multiply  — Stoutland sv03-172 "Chomp Chomp Panic" (50×): 50 per {C} and
+//               NOTHING else, so a retreat-0 defender takes 0.
+// `{C}` is a literal brace token in the printed text, escaped here; the
+// apostrophes are ASCII (verified against the D1 rows), and `Pokémon` carries
+// the real é — a lookalike would silently fall off the path.
+const RETREAT_COST_SCALE =
+  /^This attack does (\d+) more damage for each \{C\} in your opponent's Active Pokémon's Retreat Cost\.$/;
+const RETREAT_COST_MULTIPLY =
+  /^This attack does (\d+) damage for each \{C\} in your opponent's Active Pokémon's Retreat Cost\.$/;
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
 // the swsh-era prints carry ("Discard a Fire Energy" — Charmeleon, Charizard).
@@ -1580,17 +1596,25 @@ export interface AttackDamageBonus {
   per: number;
   count: DamageCountSource;
 }
-/** The resource an `AttackDamageBonus` counts. Two members: the attacker's OWN
-    damage counters (Paldean Tauros "Raging Horns") and the opponent's TAKEN Prizes
-    (Charizard ex "Burning Darkness"), each read by its own anchored sentence. */
+/** The resource an `AttackDamageBonus` counts. Three members: the attacker's OWN
+    damage counters (Paldean Tauros "Raging Horns"), the opponent's TAKEN Prizes
+    (Charizard ex "Burning Darkness") and — since 0.61.0 — the {C} in the opponent's
+    Active Pokémon's RETREAT COST (Heracross "Superpowered Throw" and its three
+    siblings), each read by its own anchored sentence. The third is the first count
+    source that is DERIVED rather than read off a field: attack.ts evaluates it
+    through continuous.ts `effectiveRetreatCost`, so every retreat-cost modifier
+    already in play (Beach Court's discount, Calamitous Wasteland's surcharge,
+    Clefable ex's set-to-zero aura) is inside the number these attacks read. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
-  | { kind: "opponentPrizesTaken" };
+  | { kind: "opponentPrizesTaken" }
+  | { kind: "opponentActiveRetreatCost" };
 
 /** Parse a printed additive damage-scaling sentence into its `per` amount and
-    count source, or null when the text is anything but one of the two anchored
-    sentences this reads (self damage counters, the opponent's taken Prizes) — the
-    "×"/multiply Prize family (no "more"), a lowercased "this", a missing trailing
+    count source, or null when the text is anything but one of the three anchored
+    sentences this reads (self damage counters, the opponent's taken Prizes, the
+    opponent's Active Retreat Cost) — the "×"/multiply twins (no "more", owned by
+    `deriveAttackDamageMultiplier`), a lowercased "this", a missing trailing
     period, and any leading/trailing text all stay on the loud ATTACK_EFFECT_SKIPPED
     path. Disjoint from `deriveAttackEffect`: this reads the SAME effect text but
     folds into the base pre-W/R rather than running after damage (attack.ts owns
@@ -1610,13 +1634,19 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     const per = Number(opponentPrizes[1]);
     if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
   }
+  const retreatCost = RETREAT_COST_SCALE.exec(effect);
+  if (retreatCost !== null) {
+    const per = Number(retreatCost[1]);
+    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+  }
   return null;
 }
 
 /** Parse a printed "×"/multiply damage-scaling sentence — "This attack does N
-    damage for each Prize card your opponent has taken." (NO "more") — into the
-    same `{per, count}` shape as the additive reader, or null for anything else.
-    The two share the count evaluator (opponentPrizesTaken); they differ only in
+    damage for each Prize card your opponent has taken." / "… for each {C} in your
+    opponent's Active Pokémon's Retreat Cost." (NO "more") — into the same
+    `{per, count}` shape as the additive reader, or null for anything else.
+    The two share the count evaluator; they differ only in
     attack.ts's fold: the additive reader's `per × count` adds to a printed base,
     THIS family's IS the whole damage (the printed "N×" base is the per-unit, so
     attack.ts drops it — count 0 → 0 damage). Refuses the additive "more" twin
@@ -1626,11 +1656,17 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the same
     reason the additive reader is (attack.ts owns the fold). */
 export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | null {
-  const opponentPrizes = OPPONENT_PRIZES_MULTIPLY.exec(text.trim());
+  const effect = text.trim();
+  const opponentPrizes = OPPONENT_PRIZES_MULTIPLY.exec(effect);
   if (opponentPrizes !== null) {
     // A printed 0 does nothing — left loud, the guard the additive rules carry.
     const per = Number(opponentPrizes[1]);
     if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
+  }
+  const retreatCost = RETREAT_COST_MULTIPLY.exec(effect);
+  if (retreatCost !== null) {
+    const per = Number(retreatCost[1]);
+    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
   return null;
 }
