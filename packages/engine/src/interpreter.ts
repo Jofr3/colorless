@@ -33,6 +33,11 @@ import type {
   HandRefreshDraw,
 } from "./effects";
 import type { GameEvent } from "./events";
+// THE one exhaustive switch over `Phase` (phaseView.ts) — `conditionHolds` reads
+// the turn OWNER from it rather than re-deriving one by turn parity, which that
+// module's header forbids. phaseView.ts imports from here TYPE-ONLY
+// (`import type { EffectPrompt }`), so this value import leaves no runtime cycle.
+import { phaseViewOf } from "./phaseView";
 import { flipCoin, shuffle } from "./rng";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
@@ -1218,6 +1223,28 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.tools.length > 0;
     }
+    case "youPlayedSupporterThisTurn":
+      // §7.2 — the one-Supporter-per-turn flag `playTrainer` already sets, read
+      // back as a printed clause. No new state, and no new clock: the allowances
+      // bag is reset by `freshAllowances()` on every startTurn, so its lifetime
+      // IS the printed "during this turn".
+      //
+      // THE SEAT GUARD IS THE WHOLE ARM. `state.allowances` is a SINGLE bag
+      // describing whoever owns the current turn, not a per-seat record, and this
+      // predicate is seat-relative with consumers where `seat` is NOT the turn
+      // owner (a `conditionGate` under a koTrigger/damagedTrigger stage evaluates
+      // during the OPPONENT's turn). Unguarded, the bag would answer "your
+      // OPPONENT played a Supporter" as "you played a Supporter" — so the seat
+      // must first be proved to own the turn.
+      //
+      // The owner comes from `phaseViewOf`, THE one exhaustive switch over
+      // `Phase`, never from turn parity (phaseView.ts's header forbids exactly
+      // that shortcut, and a ko:* park is where it goes wrong). `activeSeat` is
+      // viewer-independent, so passing `seat` as the viewer is immaterial. During
+      // a checkup-origin `ko:*` park `activeSeat` is null and this reads FALSE for
+      // BOTH seats: "during this turn" is vacuous between turns, which is the
+      // intended reading.
+      return phaseViewOf(state, seat).activeSeat === seat && state.allowances.supporterPlayed;
   }
 }
 
@@ -1297,6 +1324,12 @@ export function conditionNote(cond: BoardCondition): string {
       // glyph, so only the pronoun is dropped (D116) and the rest is the printed
       // sentence.
       return "your Active Pokémon has a Pokémon Tool attached";
+    case "youPlayedSupporterThisTurn":
+      // A full ROUND-TRIP, the family's cleanest: this clause names no pronoun to
+      // resolve (the printed subject is already "you", which is what a
+      // seat-relative predicate means), no timing word to drop and no card-face
+      // glyph to spell out. The printed sentence, verbatim.
+      return "you played a Supporter card from your hand during this turn";
   }
 }
 

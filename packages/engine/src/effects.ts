@@ -426,7 +426,48 @@ export type BoardCondition =
       Trainer play gate has no self. A Tool sits face up on the Pokémon it is
       attached to, so the union's public-state invariant holds; redact.ts already
       ships the tool list to both seats. False with an empty Active Spot. */
-  | { kind: "yourActiveHasToolAttached" };
+  | { kind: "yourActiveHasToolAttached" }
+  /** §7.2 — YOU have already played a Supporter card from your hand THIS TURN:
+      Pikachu swsh10.5-027 "Buddy Bolt" (+30), whose printed clause is "If you
+      played a Supporter card from your hand during this turn". A HAPAX in the
+      ingested 978 cards — one printing, one card, no reprint, and the pool's only
+      other "you played" sentence is Crobat sv06.5-029's "Shadowy Envoy" Ability,
+      which names a SPECIFIC card ("if you played Janine's Secret Art from your
+      hand this turn") and is a different question entirely.
+
+      THE FIRST MEMBER OF THIS VOCABULARY THAT READS A TURN EVENT RATHER THAN A
+      BOARD, and it costs NO new state: §7.2's one-Supporter-per-turn cap is
+      already tracked as `state.allowances.supporterPlayed`, set by `playTrainer`
+      (cardplay.ts) when the played Trainer's `trainerType` is "Supporter" and
+      cleared by `freshAllowances()` on every `startTurn`. "During this turn" is
+      therefore not a new clock — it is the lifetime the allowances bag already
+      has. A bare tag, because there is nothing left to parameterise: the sentence
+      names no card, no count and no type, only the card CLASS the cap is keyed
+      on.
+
+      A BARE TAG, and the vocabulary's SECOND-cheapest member after
+      `yourActiveHasToolAttached` — but the cheapness hides the one real hazard,
+      which is the SEAT. `GameState.allowances` is a SINGLE bag describing whoever
+      owns the current turn, not a per-seat record, while `conditionHolds` is
+      SEAT-RELATIVE and has consumers where `seat` is NOT the turn owner (a
+      `conditionGate` running under a koTrigger / damagedTrigger stage parks during
+      the OPPONENT's turn — see the `resumeTail` note on `effect:choose` in
+      types.ts). Reading the bag unguarded would answer "your OPPONENT played a
+      Supporter" as "you played a Supporter", so the predicate first proves the
+      seat OWNS the turn (`phaseViewOf(state, seat).activeSeat === seat`) and only
+      then reads the flag. The turn owner is taken from THE one exhaustive switch
+      over `Phase` and never re-derived by turn parity, which phaseView.ts's module
+      header forbids for exactly the case that breaks it.
+
+      A consequence worth naming: during a checkup-origin `ko:*` park `activeSeat`
+      is null, so this reads FALSE for BOTH seats. "During this turn" is vacuous
+      BETWEEN turns, which is the intended reading — no turn is in progress, so no
+      turn holds a Supporter play.
+
+      Whether a Supporter has been played this turn is PUBLIC — the card went from
+      a hand to a face-up discard pile and the §7.2 cap is common knowledge — so
+      the union's public-state invariant holds. */
+  | { kind: "youPlayedSupporterThisTurn" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1749,6 +1790,20 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // a middle conjunct — so a substring matcher would score a damage bonus off two
   // Abilities. The whole-sentence anchor is what keeps them off this path.
   ["this Pokémon has a Pokémon Tool attached", { kind: "yourActiveHasToolAttached" }],
+  // Pikachu swsh10.5-027 "Buddy Bolt" (+30) — the pool's only printing, with no
+  // reprint, and the family's first clause that reads a TURN EVENT rather than a
+  // board. It costs no new state: §7.2's one-Supporter-per-turn cap already
+  // lives on `state.allowances.supporterPlayed`, whose lifetime IS "during this
+  // turn". No pronoun to resolve either — the sentence says "you", so the
+  // seat-relative reading is the printed one and the table translates nothing.
+  // The pool's only other "you played" sentence is Crobat sv06.5-029's "Shadowy
+  // Envoy" Ability, which names a SPECIFIC card ("if you played Janine's Secret
+  // Art from your hand this turn") and drops the "during" — two differences, and
+  // the whole-sentence anchor refuses it on either one.
+  [
+    "you played a Supporter card from your hand during this turn",
+    { kind: "youPlayedSupporterThisTurn" },
+  ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name

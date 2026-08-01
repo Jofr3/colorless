@@ -873,8 +873,56 @@ import type { GameState, Seat } from "./types";
     row, 1 test-surgery helper. No new op, event, error code, registry row, wire
     field or fold change; no continuous.ts diff; no web/API/DB/`@luminous/schema`
     diff. The note ROUND-TRIPS to the printed clause with only the pronoun swapped
-    — this sentence carries no timing word and no card-face glyph. */
-export const engineVersion = "0.73.0";
+    — this sentence carries no timing word and no card-face glyph.
+
+    0.73.0 → 0.74.0 — the SUPPORTER-PLAYED clause (D123). Pikachu swsh10.5-027
+    "Buddy Bolt", "If you played a Supporter card from your hand during this turn,
+    this attack does 30 more damage." (+30): one printing, one card, one clause, no
+    reprint. The table goes 17 → 18 literal rows + 2 templates, covering 22 of the
+    pool's 26 distinct clauses / 38 of its 43 printings.
+
+    D122 called itself the LAST clause in this family that reads a field the model
+    already carries. That was true of the BOARD; this one reads a TURN EVENT, and
+    the field it needs turns out to already exist too — §7.2's
+    one-Supporter-per-turn cap is `state.allowances.supporterPlayed`, set by
+    `playTrainer` (cardplay.ts) and cleared by `freshAllowances()` on every
+    `startTurn`. So the printed "during this turn" is not a new clock: it is
+    exactly the lifetime the allowances bag already has. ZERO new state — no field
+    on `TurnAllowances`, none on `PlayerSide`, no serializer change, no
+    `MATCH_RECORD_VERSION` bump.
+
+    `youPlayedSupporterThisTurn` is a BARE TAG on a LITERAL row. Nothing is left to
+    parameterise: the sentence names no card, no count and no type, only the card
+    CLASS the §7.2 cap is already keyed on. And D116's pronoun rule does not apply
+    for the first time in this family — the printed subject is "you", so a
+    seat-relative predicate reads the sentence as printed and the clause table
+    translates nothing.
+
+    THE ONE REAL DECISION IS THE SEAT GUARD. `GameState.allowances` is a SINGLE bag
+    describing whoever owns the current turn, not a per-seat record, while
+    `conditionHolds` is seat-relative and has consumers where `seat` is NOT the
+    turn owner (a `conditionGate` under a koTrigger / damagedTrigger stage
+    evaluates during the OPPONENT's turn — the `resumeTail` case on
+    `effect:choose`). Read unguarded, the bag would answer "your OPPONENT played a
+    Supporter" as "you played a Supporter". So the arm proves ownership first, via
+    `phaseViewOf(state, seat).activeSeat === seat` — THE one exhaustive switch over
+    `Phase`, never a turn-parity re-derivation, which phaseView.ts's own header
+    forbids for precisely the case that breaks it. A checkup-origin `ko:*` park has
+    `activeSeat` null and therefore reads FALSE for BOTH seats: "during this turn"
+    is vacuous between turns, which is the intended reading.
+
+    The near-miss is real and it is an ABILITY: Crobat sv06.5-029's "Shadowy Envoy"
+    is the pool's only other "you played" sentence, and it differs twice over — it
+    names a SPECIFIC card ("if you played Janine's Secret Art from your hand this
+    turn") and it drops the "during". The whole-sentence anchor refuses it on
+    either difference alone.
+
+    Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 literal
+    table row, 0 new state fields, 0 registry rows. No new op, event, error code,
+    wire field or fold change; no continuous.ts diff; no web/API/DB/
+    `@luminous/schema` diff. The note ROUND-TRIPS to the printed clause byte for
+    byte — the family's first that drops nothing at all. */
+export const engineVersion = "0.74.0";
 
 export type {
   ApplyResult,

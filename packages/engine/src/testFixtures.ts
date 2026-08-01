@@ -2930,6 +2930,42 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Colorless", value: "×2" }],
   }),
+
+  // — M5 clause slice: the SUPPORTER-PLAYED clause (D123). Pikachu swsh10.5-027
+  //   "Buddy Bolt" — the pool's only printing of a clause that reads a TURN
+  //   EVENT rather than a board, read verbatim off the local D1 2026-08-01.
+  /** Pikachu swsh10.5-027 "Buddy Bolt" (+30) — a Lightning BASIC, 60 HP, retreat
+      1, ×2 Fighting, NO Resistance, NO Ability (`abilities_json` is NULL on the
+      row), reg mark F, and a HAPAX: no other card in the 978-card catalog prints
+      this clause. A Basic, so it can open as the setup Active — but the deck below
+      pins fix-bigbody anyway, on the TOOL_CLAUSE_DECK precedent, so no case is at
+      the mercy of the deal.
+
+      ONE attack, and the whole slice is in it. The clause is SEAT-RELATIVE and
+      TURN-SCOPED, so the deck carries a real Supporter (Nemona sv01-180) to arm it
+      through a genuine `playTrainer` action rather than by surgery — the flag it
+      reads is one only the game sets.
+
+      Verbatim off the local D1 — the effect string is 96 code points / 96 UTF-8
+      bytes, i.e. PURE ASCII: no é (the sentence never says "Pokémon") and no
+      apostrophe of either kind, in deliberate contrast to every clause row before
+      it. */
+  "swsh10.5-027": battler("swsh10.5-027", {
+    name: "Pikachu",
+    types: ["Lightning"],
+    hp: 60,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless", "Colorless"],
+        name: "Buddy Bolt",
+        effect:
+          "If you played a Supporter card from your hand during this turn, this attack does 30 more damage.",
+        damage: "30+",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -4097,6 +4133,47 @@ export const TOOL_CLAUSE_DECK = deckOf({
   "fix-energy": 9, // Basic {C} — pays Enhanced Fang's {C}{C}{C}
   "fix-colorless-weak": 3, // 200 HP, ×2 Colorless — the Weakness defender for the fold-order pair
   "fix-bigbody": 35, // 200 HP neutral Colorless Basic — DOMINANT pinned starter + the Bench holder
+});
+
+/** 0.73.0 → 0.74.0: the SUPPORTER-PLAYED clause (D123) — Pikachu swsh10.5-027
+    "Buddy Bolt", "If you played a Supporter card from your hand during this turn,
+    this attack does 30 more damage." One card, one clause, one printing, no
+    reprint.
+
+    A DEDICATED deck, and the reason is the SUPPORTER. This clause is the first in
+    the family that no surgery can honestly arm: `allowances.supporterPlayed` is
+    set by `playTrainer` and by nothing else, so the board cases have to play a
+    REAL Supporter through a REAL action. Nemona sv01-180 ("Draw 3 cards.") is that
+    Supporter — already authored in the registry (an unauthored one would be
+    refused with `TRAINER_NOT_SIMULATED`), and deliberately one whose effect
+    touches NOTHING the clause or the damage arithmetic reads: it draws, and a hand
+    size is invisible to every predicate in this slice. Four copies, because the
+    turn-scoping case plays one on each of two different turns and the
+    opponent-seat case plays a third.
+
+    The ENERGY LINE is split on purpose. Buddy Bolt costs {L}{C}{C}, so
+    fix-lightning-energy pays the typed symbol and fix-energy (the plain Colorless
+    Basic) pays the two generic ones — both lines are load-bearing, and neither is
+    ever counted by anything, since this clause reads no Energy at all.
+
+    fix-lightning-weak (130 HP, ×2 Lightning) is the §8.5 fold-order defender:
+    Pikachu is a {L} attacker, so an armed Buddy Bolt lands (30 + 30) × 2 = 120
+    against the un-armed control's 30 × 2 = 60. 130 HP survives BOTH, so the
+    Weakness math stands alone with no KO, no prize take and no promotion park in
+    the way — which matters more here than usual, because a ko:* park is exactly
+    where this member's seat guard changes its answer.
+
+    fix-bigbody is 33 of 60 — the DOMINANT mulligan-free starter both Actives pin
+    to (Pikachu is a Basic and COULD open, but pinning it would make every case
+    hostage to the deal) and the Bench body left behind when Pikachu is set
+    Active. */
+export const SUPPORTER_CLAUSE_DECK = deckOf({
+  "swsh10.5-027": 4, // Pikachu — "Buddy Bolt" (30+): youPlayedSupporterThisTurn, +30
+  "sv01-180": 4, // Nemona (Supporter, "Draw 3 cards.") — the ONLY thing that arms the clause
+  "fix-lightning-energy": 6, // Basic {L} — pays Buddy Bolt's typed symbol
+  "fix-energy": 6, // Basic {C} — pays Buddy Bolt's two generic symbols
+  "fix-lightning-weak": 7, // 130 HP, ×2 Lightning — the Weakness defender for the fold-order pair
+  "fix-bigbody": 33, // 200 HP neutral Colorless Basic — DOMINANT pinned starter + the Bench holder
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

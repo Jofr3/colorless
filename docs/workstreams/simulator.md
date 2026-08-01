@@ -5392,3 +5392,163 @@ deleted** → **Pikachu `swsh10.5-027`** ("you played a Supporter card from your
 during this turn"). It has now been Venoshock (→D116), Ceruledge (→D117), Greedent
 (→D122); this time it was deliberately pointed at a clause that **needs new
 per-turn state**, so no one-row table extension can map it out from under the case.
+
+## D123 — the SUPPORTER-PLAYED clause (engine 0.74.0)
+
+Pikachu `swsh10.5-027` "Buddy Bolt" — "If you played a Supporter card from your
+hand during this turn, this attack does 30 more damage." One printing, one card,
+one clause, no reprint. The table goes **17 → 18 literal rows + 2 templates, 22
+of 26 distinct clauses / 38 of 43 printings**.
+
+### D122's "cheap era is over" was HALF right — and this is the correction
+
+D122 said every remaining clause buys new state, an ingest change or a new
+mechanism. That was true of the **BOARD**. This clause reads a **TURN EVENT**, and
+the fact it needs already existed anyway: §7.2's one-Supporter-per-turn cap is
+`state.allowances.supporterPlayed` (`types.ts` `TurnAllowances`), set by
+`playTrainer` (`cardplay.ts`) when the played Trainer's `trainerType` is
+`"Supporter"` and cleared by `freshAllowances()` on every `startTurn`
+(`flow.ts`). **So the printed "during this turn" is not a new clock — it is
+exactly the lifetime the allowances bag already has.** Zero new state: no field on
+`TurnAllowances`, none on `PlayerSide`, no serializer change, no
+`MATCH_RECORD_VERSION` bump, no `redact.ts` diff.
+
+**The lesson to carry: before costing a per-turn clause as "new state", check the
+RULE-ENFORCEMENT flags first.** The engine already tracks a per-turn fact for every
+once-per-turn cap it enforces (`energyAttached`, `retreated`, `supporterPlayed`,
+`stadiumPlayed`, `stadiumAbilityUsed`, `abilitiesUsed`). Any clause that asks "did
+you do X this turn" where X is *capped* by the rules is already recorded — the cap
+and the clause are the same bookkeeping seen from two sides.
+
+### The one real call: THE SEAT GUARD
+
+`GameState.allowances` is a **SINGLE bag** describing whoever owns the current
+turn — it is deliberately not per-seat (the doc at `types.ts:156` explains why it
+lives on `GameState` and not on the phase). `conditionHolds(state, seat, cond)` is
+**seat-relative**, and it has consumers where `seat` is **not** the turn owner: a
+`conditionGate` op running under a `koTrigger` / `damagedTrigger` stage evaluates
+during the **OPPONENT's** turn (the `resumeTail` case on `effect:choose`). Read
+unguarded, the bag would answer *"your OPPONENT played a Supporter"* as *"you
+played a Supporter"*.
+
+So the arm proves ownership before it reads the flag:
+
+```ts
+case "youPlayedSupporterThisTurn":
+  return phaseViewOf(state, seat).activeSeat === seat && state.allowances.supporterPlayed;
+```
+
+The owner comes from **`phaseViewOf` (`phaseView.ts`), THE one exhaustive switch
+over `Phase`** — never from turn parity, which that module's own header
+(`phaseView.ts:13-16`) forbids for precisely the case that breaks it (a `ko:*`
+park, where the turn owner and the deciding seat differ). `activeSeat` is
+viewer-independent, so passing `seat` as the viewer arg is immaterial.
+
+**Import note:** `phaseView.ts` imports from `interpreter.ts` **type-only**
+(`import type { EffectPrompt }`), so the new value import interpreter→phaseView is
+erased at runtime and leaves no cycle. Verified green; no lint complaint.
+
+**Generalisable rule (the D123 half of D122's gate lesson): a state field scoped to
+the TURN is a fact about the TURN OWNER, not about a seat. A seat-relative
+predicate over it must first prove the seat owns the turn.** Any future clause
+reading `allowances` owes the same guard.
+
+### The vacuous-between-turns reading
+
+During a **checkup-origin** `ko:*` park `phaseViewOf` reports `activeSeat: null`
+(nobody owns a turn between turns), so this member reads **FALSE for both seats**.
+That is the intended reading: no turn is in progress, so no turn holds a Supporter
+play. An **attack-origin** `ko:*` park is different — `koParkActiveSeat` still
+names the attacker, so the owner keeps reading TRUE there. The suite pins both,
+which is what proves the guard reads *ownership* rather than blanket-refusing
+every `ko:*` phase.
+
+### D116's pronoun rule does NOT apply here — the family's first full round-trip
+
+Every previous member had to translate a printed pronoun ("this Pokémon", "your
+opponent's Active Pokémon"). This clause's printed subject is already **"you"**,
+which is exactly what a seat-relative predicate means, so the table translates
+nothing and `conditionNote` returns the printed sentence **byte for byte**. No
+timing word to drop, no card-face glyph to spell out.
+
+### Census facts (local D1, 2026-08-01)
+
+Swept over the WHOLE effect string of every attack of all 978 cards (the D121
+lesson), case-insensitive:
+
+- `played a Supporter` → **1 hit**, `swsh10.5-027`. **HAPAX.**
+- `Supporter card from your hand during this turn` → the same single hit.
+- `you played` (attacks) → the same single hit. In **abilities**: exactly one
+  other, Crobat `sv06.5-029` "Shadowy Envoy" — *"Once during your turn, if you
+  played Janine's Secret Art from your hand this turn, you may draw cards until
+  you have 8 cards in your hand."* It differs **twice**: it names a **SPECIFIC
+  card**, and it drops the **"during"**. The whole-sentence anchor refuses it on
+  either difference alone. **0 abilities mention "played a Supporter".**
+- `during this turn` in attack effects → **3 distinct clauses**, all singletons:
+  Buddy Bolt (this one), Lokix `sv02-021` (`evolved from Nymble`), and Malamar
+  `sv06.5-034` "Colluding Tentacles" — *"…If you didn't play Xerosic's
+  Machinations from your hand during this turn, this attack does nothing."*
+  (negative polarity + named card + a "does nothing" consequent: a different
+  skeleton entirely, not a row on this one). In trainer `effect` text: the three
+  Geeta printings (`sv03-188`/`-218`/`-226`), a can't-attack lock, unrelated.
+
+So the sentence is a **bare tag on a literal row** with no template warrant
+(D121): one printing, and the varying half has no closed vocabulary anyway (D120).
+
+### The Buddy Bolt string is PURE ASCII — the first in this family
+
+96 characters, 96 UTF-8 bytes, **zero non-ASCII code points**: no `é` (it never
+says "Pokémon"), no apostrophe of either kind. Every clause row before it carried
+at least a precomposed `é`. The suite pins this deliberately, in contrast to
+`toolClause.test.ts`'s é-pinning — the byte guards are per-sentence, not a house
+constant.
+
+### Card facts + fixtures
+
+`swsh10.5-027` Pikachu: hp 60, `["Lightning"]`, Basic, retreat 1, weakness
+`Fighting ×2` (the `×` is U+00D7 — non-ASCII, but in the weakness field, never in
+the effect), no resistances, **no abilities**, regulation mark F. One attack:
+`Buddy Bolt`, cost `{L}{C}{C}`, damage `"30+"`.
+
+`SUPPORTER_CLAUSE_DECK` (`testFixtures.ts`) carries **both** `fix-lightning-energy`
+and `fix-energy` — Buddy Bolt's `{L}{C}{C}` cost cannot be paid by plain Colourless
+alone. Nemona `sv01-180` ("Draw 3 cards.", already authored in the registry) is the
+Supporter the board cases actually **play through a real `playTrainer` action**,
+which is what makes the arming assertion real rather than a hand-set flag.
+
+The Weakness fold uses `fix-lightning-weak` (130 HP, ×2 Lightning) — the defender
+is weak to the **attacker's** type, and 130 HP survives both 60 and 120 so no
+KO/park interrupts the measurement.
+
+### The loud-witness bookkeeping
+
+`conditionalDamage.test.ts`'s "unmapped stays LOUD" witness was **re-pointed, not
+deleted** → **Revavroom ex `sv06.5-015`** ("If this Pokémon moved from your Bench to
+the Active Spot this turn, this attack does 120 more damage."). Occupant **#4**:
+Venoshock (→D116), Ceruledge (→D117), Greedent (→D122), Pikachu (→D123).
+
+**Why this occupant is safe when the last one was not:** Pikachu's clause *looked*
+like it needed new per-turn state and did not — the flag already existed, so a
+single table row mapped it out from under the case within one slice. The new
+occupant needs state **nothing on the model carries in any form**: "moved from your
+Bench to the Active Spot this turn" is **per-Pokémon and per-turn at once**, and no
+field on `InPlayPokemon`, `TurnAllowances` or `PlayerSide` records *where a Pokémon
+was earlier in the turn*. It also has **3 printings**, so it is the highest-value
+clause left as well as the safest witness.
+
+### Still unmapped after this slice (21 → 22 of 26 clauses mapped)
+
+1. `this Pokémon moved from your Bench to the Active Spot this turn` — **3
+   printings** (Revavroom ex `sv06.5-015`/`-081` +120, Golisopod `swsh10.5-026`
+   +90). The best printings-per-clause left. Needs a promoted-this-turn fact that
+   survives **both** a retreat and a KO-promotion.
+2. `this Pokémon evolved from Nymble during this turn` — 1 (Lokix `sv02-021`
+   +100). Two facts: evolved-this-turn (`turnPlayed` may already answer it) plus
+   the NAME evolved from, readable off the stack (§1.2). Open vocabulary → literal
+   row, never a template (D120).
+3. `any of your {F} Pokémon were Knocked Out by damage from an attack during your
+   opponent's last turn` — 1 (Lucario `sv01-114` +120). Cross-turn, type-filtered,
+   and must distinguish a KO by attack damage from any other KO route. Last, or
+   not at all.
+4. `your opponent has any Future Pokémon in play` — 1 (Slither Wing `sv06.5-026`
+   +120). **Blocked on a P1 INGEST change**, not engine work.
