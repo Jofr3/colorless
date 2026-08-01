@@ -4693,10 +4693,17 @@ printed-text→structure table.
 
 **An UNMAPPED clause falls through to `null` and stays LOUD** (`ATTACK_EFFECT_SKIPPED`).
 Silently scoring an unrecognised condition at 0 would be a wrong number with no failure; the
-loud path is a visible gap. Each of the ~28 still-unmapped clauses is a future **one-row**
+loud path is a visible gap. Each of the 18 still-unmapped clauses is a future **one-row**
 extension — this is the cheapest backlog in the engine right now.
 
-### What landed — 11 printings / 11 ids / 7 cards / 4 sentences, ZERO registry rows
+**The whole-sentence anchor is not decoration.** Three printings in the pool contain the
+mapped substring `has any damage counters on it` inside a damage-PLACEMENT sentence — Yveltal
+`sv06.5-035` "Put 2 damage counters on each of your opponent's Pokémon that has any damage
+counters on it.", Vespiquen ex `sv03-096`/`-212` with the Benched twin. A substring matcher
+would have scored a bonus off them. (Both currently derive to `null` on *both* paths: the
+`Put N counters on EACH <filter>` spread shape is unbuilt, so they sit wholly on the loud path.)
+
+### What landed — D115: 11 printings / 11 ids / 7 cards / 4 sentences, ZERO registry rows
 
 | printed clause | `BoardCondition` | cards | printings |
 |---|---|---|---|
@@ -4721,6 +4728,70 @@ an undamaged defender cannot bootstrap the bonus with the very hit the bonus is 
 (Gyarados ex into a clean Active is **180, not 360**). The predicate itself cannot enforce
 this; the read site does, and the suite asserts it explicitly. `conditionNote` deliberately
 **drops** the "already" — a reject/tooltip fragment is read in the present tense.
+
+## D116 (engine 0.67.0) — the SELF-SCOPED clause, and 4 more table rows
+
+The second wave. The table goes **4 → 8 entries, 18 of the pool's 43 printings**, again on
+ZERO registry rows and with **no change to the fold, the ops, the events or the wire** — 4
+union members, 4 `conditionHolds` arms, 4 `conditionNote` arms, 4 table rows. `conditionClause.test.ts`
+(46) on a dedicated `CONDITION_CLAUSE_DECK`.
+
+| printed clause | `BoardCondition` | cards | printings |
+|---|---|---|---|
+| `this Pokémon has any damage counters on it` | `yourActiveDamaged` | Talonflame `sv02-030` (+90), Darmanitan `sv03-035` (+60) | 2 |
+| `your Benched Pokémon have any damage counters on them` | `yourBenchDamaged` | Tyranitar ex `sv03-066`/`-211` (+100) | 2 |
+| `your opponent's Active Pokémon is Poisoned` | `opponentActivePoisoned` | Seviper `sv01-128`, Paldean Clodsire `sv03-129` (both +120, both printing "Venoshock") | 2 |
+| `your opponent's Active Pokémon is affected by a Special Condition` | `opponentActiveHasSpecialCondition` | Sableye `sv02-136` (+70) | 1 |
+
+### The design call: a printed PRONOUN resolves in the TABLE, not in `conditionHolds`
+
+"If **this Pokémon** has any damage counters on it" is the family's first clause whose subject
+is the card itself, and `BoardCondition` is **shared**: `trainerPlayableIf` (a Trainer play
+gate) and the HUD's grey-out read the same union, and a Trainer has no self. Adding a
+self-scoped member meaning "the attacker" would have put a value in the vocabulary that two of
+its five consumers must never author.
+
+**The member is named for what it READS — `yourActiveDamaged` — and the CLAUSE TABLE resolves
+the pronoun.** The table is the only layer that knows the sentence came off an attack, and the
+reading is EXACT rather than approximate: §8 lets only the Active declare an attack, so on the
+one path this sentence can arrive by, "this Pokémon" *is* "your Active". No second union, no
+`context` parameter threaded through `conditionHolds`, one evaluator still.
+
+> **Reusable form:** when a printed sentence's subject is context-dependent, resolve it at the
+> site that knows the context and keep the shared vocabulary context-free.
+
+The same reasoning runs through `conditionNote`: `yourActiveDamaged`'s fragment is "your Active
+Pokémon has damage counters on it", with the pronoun dropped for the same reason "already" is.
+
+### The other three, and the readings they pin
+
+- **`yourBenchDamaged`** — the printed plural ("your Benched Pokémon **have** any damage
+  counters on **them**") is the game's usual **collective "any of them"**, not a requirement
+  that every benched Pokémon be damaged. The Active is deliberately excluded (the printed word
+  is "Benched", and `yourActiveDamaged` covers the other spot), and an **empty Bench is false**
+  rather than vacuously true. The regression the suite catches: damage on Tyranitar ex *itself*
+  must NOT satisfy it.
+- **`opponentActivePoisoned`** — Poison is a counter **amount** on the model
+  (`poisonDamage`, which effects may raise), so "is Poisoned" is `> 0`, exactly as the Checkup
+  reads it. Distinct from the still-unmapped **self** twin, Okidogi ex `sv06.5-036`/`-082`/`-090`
+  "If **this** Pokémon is Poisoned…" (+130, 3 printings).
+- **`opponentActiveHasSpecialCondition`** — reuses **`presentStatuses` verbatim**, the same
+  list the status chips and `STATUS_CLEARED` events are built from, so "affected" cannot drift
+  from what the board shows. Any ONE of rotation/Poison/Burn suffices.
+
+### Census notes (re-derived against the local D1, 2026-08-01)
+
+- D115's shorthand **confirmed exactly**: 43 printings / 32 distinct sentences — plus a number
+  nobody had counted, **26 distinct CLAUSES**. Clauses are what the table costs, so that is the
+  number to rank future slices by.
+- **"already" is the sole lexical discriminator** between the two damage-counter clauses. One
+  word apart, two different members, one own-board and one cross-board.
+- Every clause string is ASCII apostrophes + a precomposed U+00E9; the suite pins each one's
+  UTF-8 byte length (80/80/92/81/103) because a decomposed `é` or a U+2019 is **invisible in a
+  diff** and would silently un-map the row. `TextEncoder` is NOT available under the engine's
+  `tsconfig` (`lib: ["ES2022"]`, `types: []`) — the suite uses a local code-point summer.
+- Sableye's clause is the pool's **only** "is affected by" printing. The setter form ("is now
+  affected by that Special Condition", Vivillon `sv01-010`) is a different sentence entirely.
 
 ### Costed and NOT built
 

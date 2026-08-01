@@ -667,7 +667,42 @@ import type { GameState, Seat } from "./types";
     twin, and no "… more damage if …" trailing form or "N LESS damage" variant
     exists either. No new op, event, error code, registry row or wire field; no
     API/DB/`@luminous/schema`/web change. */
-export const engineVersion = "0.66.0";
+
+    /* 0.67.0 — the SECOND wave of D115's clause table (D116): FOUR more printed
+    clauses, 7 printings across 6 cards, again on ZERO registry rows and with no
+    change to the fold, the ops, the events or the wire. `CONDITIONAL_DAMAGE_CLAUSES`
+    goes 4 → 8 entries and now covers 18 of the pool's 43 leading-`If` printings.
+    New: Talonflame sv02-030 "Fiery Breeze" (+90) and Darmanitan sv03-035 "Damage
+    Counterpunch" (+60) on `yourActiveDamaged`; Tyranitar ex sv03-066/-211
+    "Lightning Rampage" (+100) on `yourBenchDamaged`; Seviper sv01-128 and Paldean
+    Clodsire sv03-129, both printing "Venoshock" (+120), on
+    `opponentActivePoisoned`; Sableye sv02-136 "Unseen Claw" (+70) on
+    `opponentActiveHasSpecialCondition`. All four clause strings were re-confirmed
+    char-for-char against the local D1 before authoring, and each is
+    anchored-unique in the pool (the census also found three damage-PLACEMENT
+    sentences containing "has any damage counters on it" — Yveltal sv06.5-035,
+    Vespiquen ex sv03-096/-212 — which a substring matcher would have swallowed and
+    the whole-sentence anchor does not).
+
+    THE DESIGN CALL is the SELF-SCOPED clause, which D115's resume point left open:
+    "If **this Pokémon** has any damage counters on it" is the first printed clause
+    whose subject is the card itself, and `BoardCondition` is shared with
+    `trainerPlayableIf` and the HUD, where a self-pronoun has no referent. The
+    resolution is that the member is named for what it READS — `yourActiveDamaged`,
+    a plain seat-relative board fact, meaningful on every consumer — and the
+    pronoun is resolved in the CLAUSE TABLE, the only layer that knows the sentence
+    came off an attack. That reading is exact rather than approximate: §8 lets only
+    the Active declare an attack, so on this path "this Pokémon" IS "your Active".
+    No second union, no context parameter threaded through `conditionHolds`, and
+    the play gate keeps its single evaluator. `yourBenchDamaged` reads the printed
+    plural ("your Benched Pokémon have any damage counters on them") as the
+    game's usual collective "any of them", excludes the Active, and is false on an
+    empty Bench. The two §12 members read the existing model: Poison is a counter
+    AMOUNT (`poisonDamage > 0`, as the Checkup reads it) and "affected by a Special
+    Condition" reuses `presentStatuses` verbatim, so it can never drift from the
+    status chips. Cost: 4 union members, 4 `conditionHolds` arms, 4 `conditionNote`
+    arms, 4 table rows. */
+export const engineVersion = "0.67.0";
 
 export type {
   ApplyResult,

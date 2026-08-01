@@ -193,7 +193,37 @@ export type BoardCondition =
       "Clean Hit". "Evolution Pokémon" is D105's definition reused verbatim
       (`evolveFromOf(topCard) !== null`, the exact complement of `basicPokemon`),
       so the two readings can never drift apart. False with no Active. */
-  | { kind: "opponentActiveIsEvolution" };
+  | { kind: "opponentActiveIsEvolution" }
+  /** YOUR Active Pokémon has any damage counters on it — Talonflame sv02-030
+      "Fiery Breeze" (+90) and Darmanitan sv03-035 "Damage Counterpunch" (+60),
+      whose printed clause is "If **this Pokémon** has any damage counters on
+      it". D116: the member is named for what it READS (your Active), not for
+      the pronoun one consumer prints, because "this Pokémon" is meaningless on
+      the play-gate path — a Trainer has no self. The printed pronoun resolves to
+      the Active in the CLAUSE TABLE, which is the only layer that knows the
+      sentence came off an attack, and an attack is declared by the Active by
+      definition (§8). False with an empty Active Spot. */
+  | { kind: "yourActiveDamaged" }
+  /** Any ONE of your BENCHED Pokémon has damage counters on it — Tyranitar ex
+      sv03-066/-211 "Lightning Rampage" (+100), printed in the plural ("If your
+      Benched Pokémon have any damage counters on them"). The plural is the
+      game's usual collective phrasing for "any of them", NOT a requirement that
+      every benched Pokémon be damaged; an EMPTY Bench is false. Deliberately
+      excludes the Active — the printed word is "Benched", and the sibling
+      `yourActiveDamaged` covers the other spot. */
+  | { kind: "yourBenchDamaged" }
+  /** §12 — your opponent's Active Pokémon is Poisoned: Seviper sv01-128 and
+      Paldean Clodsire sv03-129, both printing "Venoshock" (+120). Poison is a
+      COUNTER amount on the model rather than a flag (`poisonDamage`, which
+      effects may raise), so "is Poisoned" is `> 0`. False with no Active. */
+  | { kind: "opponentActivePoisoned" }
+  /** §12 — your opponent's Active Pokémon is affected by ANY Special Condition:
+      Sableye sv02-136 "Unseen Claw" (+70), the pool's only printing of this
+      clause. Reuses `presentStatuses` verbatim — the same list the STATUS_CLEARED
+      events and the status chips are built from — so "affected" can never drift
+      from what the board shows. The rotation slot, Poison and Burn all count, and
+      any ONE of them suffices. False with no Active. */
+  | { kind: "opponentActiveHasSpecialCondition" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1364,15 +1394,24 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     "toString", …) and hand back something that is not a `BoardCondition` at all.
     A Map has no inherited keys.
 
-    Four entries. The first two reuse `BoardCondition` members that ALREADY
-    existed — built in the 2026-07-21 board-condition slice (D40) for Falkner's
-    `conditionGate` and Fighting Au Lait's play gate — which makes this family the
-    vocabulary's FOURTH consumer and the first to reach it through printed ATTACK
-    text rather than a registry row. The last two are new members, added here.
+    EIGHT entries, covering 18 of the pool's 43 printings. The first two reuse
+    `BoardCondition` members that ALREADY existed — built in the 2026-07-21
+    board-condition slice (D40) for Falkner's `conditionGate` and Fighting Au
+    Lait's play gate — which makes this family the vocabulary's FOURTH consumer
+    and the first to reach it through printed ATTACK text rather than a registry
+    row. The rest are members added by this family itself (D115, then D116).
 
-    `Pokémon` in the last two keys carries a REAL U+00E9 é and every apostrophe is
-    ASCII, both verified against the local D1 rows; a lookalike character would
-    silently un-map the clause. The remaining ~28 printed clauses in the pool stay
+    THE TABLE IS WHERE THE PRINTED PRONOUN RESOLVES (D116). "this Pokémon" on an
+    attack is the attacking Active — true by §8, since only the Active declares an
+    attack — so it maps onto the seat-relative `yourActiveDamaged`. That
+    translation belongs HERE and nowhere else: `conditionHolds` is shared with the
+    play gate and the HUD, where a self-pronoun has no referent at all.
+
+    `Pokémon` carries a REAL U+00E9 é in every key that spells it and every
+    apostrophe is ASCII, both verified against the local D1 rows; a lookalike
+    character would silently un-map the clause. `Poisoned`, `Special Condition`,
+    `Benched`, `Active` and `Evolution` are CAPITALISED as printed, and the
+    matcher has no /i. The remaining 18 printed clauses in the pool stay
     deliberately UNMAPPED and therefore LOUD (an unrecognised clause returns null
     and keeps its ATTACK_EFFECT_SKIPPED row) — each is a future one-row extension,
     and "loud" is strictly better than silently scoring the bonus at 0. */
@@ -1395,6 +1434,28 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "your opponent's Active Pokémon is an Evolution Pokémon",
     { kind: "opponentActiveIsEvolution" },
+  ],
+  // Talonflame sv02-030 "Fiery Breeze" (+90), Darmanitan sv03-035 "Damage
+  // Counterpunch" (+60) — the printed "this Pokémon" resolving to the attacker's
+  // own Active (see the pronoun note above). Note the missing "already": that
+  // word appears ONLY on the opponent-facing twin two rows up, and is the sole
+  // lexical discriminator between the two damage-counter clauses.
+  ["this Pokémon has any damage counters on it", { kind: "yourActiveDamaged" }],
+  // Tyranitar ex sv03-066/-211 "Lightning Rampage" (+100) — the two printings are
+  // byte-identical in rules text, so one fixture serves both ids.
+  ["your Benched Pokémon have any damage counters on them", { kind: "yourBenchDamaged" }],
+  // Seviper sv01-128 "Venoshock" (+120) and Paldean Clodsire sv03-129, same
+  // attack NAME and same clause on two different cards. NOT the same clause as
+  // Okidogi ex sv06.5-036/-082/-090's "If THIS Pokémon is Poisoned" (+130), which
+  // is a different, still-unmapped member.
+  ["your opponent's Active Pokémon is Poisoned", { kind: "opponentActivePoisoned" }],
+  // Sableye sv02-136 "Unseen Claw" (+70) — the pool's only "is affected by"
+  // clause. The setter form ("is now affected by that Special Condition",
+  // Vivillon sv01-010) reads similarly and is a different sentence entirely; the
+  // whole-sentence anchor is what keeps it off this path.
+  [
+    "your opponent's Active Pokémon is affected by a Special Condition",
+    { kind: "opponentActiveHasSpecialCondition" },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE

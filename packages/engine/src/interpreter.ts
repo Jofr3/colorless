@@ -1107,6 +1107,34 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && evolveFromOf(spot.card) !== null;
     }
+    case "yourActiveDamaged": {
+      // "this Pokémon has any damage counters on it" as printed on Talonflame /
+      // Darmanitan — resolved to YOUR ACTIVE by the clause table, not here (D116).
+      // At the one live read site (attack.ts's damage fold) `state` is the board
+      // as of DECLARATION and the attacker IS this Active, so the number read is
+      // the damage it walked in with, not any it takes later in the same attack.
+      const active = state.players[seat].active;
+      return active !== null && active.damage > 0;
+    }
+    case "yourBenchDamaged":
+      // "your Benched Pokémon have any damage counters on them" — the plural is
+      // collective, so ANY one damaged benched Pokémon satisfies it. The Active is
+      // deliberately not consulted, and an empty Bench is false rather than
+      // vacuously true (nothing there is carrying counters).
+      return state.players[seat].bench.some((p) => p !== null && p.damage > 0);
+    case "opponentActivePoisoned": {
+      // §12 — Poison is stored as the counter amount an effect may raise, so
+      // "is Poisoned" is `> 0`, exactly as the Checkup reads it (flow.ts).
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && active.conditions.poisonDamage > 0;
+    }
+    case "opponentActiveHasSpecialCondition": {
+      // §12 — ANY condition: the rotation slot, Poison or Burn. `presentStatuses`
+      // is the same list the status chips and STATUS_CLEARED events are built
+      // from, so "affected" cannot drift from what the board shows.
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && presentStatuses(active.conditions).length > 0;
+    }
   }
 }
 
@@ -1126,6 +1154,17 @@ export function conditionNote(cond: BoardCondition): string {
       return "your opponent's Active Pokémon has damage counters on it";
     case "opponentActiveIsEvolution":
       return "your opponent's Active Pokémon is an Evolution Pokémon";
+    case "yourActiveDamaged":
+      // The printed pronoun is dropped for the same reason "already" is above: a
+      // reject/tooltip fragment is read off the BOARD, where "this Pokémon" has
+      // no referent (D116).
+      return "your Active Pokémon has damage counters on it";
+    case "yourBenchDamaged":
+      return "1 of your Benched Pokémon has damage counters on it";
+    case "opponentActivePoisoned":
+      return "your opponent's Active Pokémon is Poisoned";
+    case "opponentActiveHasSpecialCondition":
+      return "your opponent's Active Pokémon is affected by a Special Condition";
   }
 }
 

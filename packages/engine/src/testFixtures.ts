@@ -2235,6 +2235,150 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Talonflame sv02-030 — "Fiery Breeze" (70+, +90 while IT is damaged): the
+      `yourActiveDamaged` clause (D116), i.e. the printed "this Pokémon" resolved
+      to the attacker's own Active. A Fire Stage 2 from Fletchinder, so it is
+      always force-placed. Its index-0 "Clutch" is kept faithful and is doing real
+      work: that sentence is D112's retreat-LOCK rider, which `deriveAttackEffect`
+      already owns — so one card carries a DERIVED PROGRAM at index 0 and a
+      DERIVED SCALING CLAUSE at index 1, and the index-keyed disjointness of the
+      two derivers is assertable without leaving the fixture. */
+  "sv02-030": battler("sv02-030", {
+    name: "Talonflame",
+    types: ["Fire"],
+    stage: "Stage2",
+    evolveFrom: "Fletchinder",
+    hp: 150,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Clutch",
+        effect: "During your opponent's next turn, the Defending Pokémon can't retreat.",
+        damage: 50,
+      },
+      {
+        cost: ["Fire"],
+        name: "Fiery Breeze",
+        effect: "If this Pokémon has any damage counters on it, this attack does 90 more damage.",
+        damage: "70+",
+      },
+    ],
+  }),
+  /** Darmanitan sv03-035 — "Damage Counterpunch" (60+, +60 while IT is damaged):
+      the SECOND printing of the same `yourActiveDamaged` clause at a DIFFERENT N,
+      which is what proves the table maps a clause rather than a card. A Fire
+      Stage 1 from Darumaka. Its "Heat Blast" carries NO `effect` key at all (not
+      an empty string — the row simply omits it), the plain-vanilla control that
+      must stay silent on the skipped-effect path. */
+  "sv03-035": battler("sv03-035", {
+    name: "Darmanitan",
+    types: ["Fire"],
+    stage: "Stage1",
+    evolveFrom: "Darumaka",
+    hp: 140,
+    retreat: 3,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire", "Colorless", "Colorless"],
+        name: "Damage Counterpunch",
+        effect: "If this Pokémon has any damage counters on it, this attack does 60 more damage.",
+        damage: "60+",
+      },
+      { cost: ["Fire", "Colorless", "Colorless", "Colorless"], name: "Heat Blast", damage: 140 },
+    ],
+  }),
+  /** Tyranitar ex sv03-066 — "Lightning Rampage" (150+, +100 while any of YOUR
+      BENCHED Pokémon is damaged): the `yourBenchDamaged` clause, the only member
+      of this family that reads the Bench at all. sv03-211 is a second printing
+      whose rules text is BYTE-IDENTICAL (verified: one distinct `hex(attacks_json)`
+      across both, `abilities_json` NULL on both — only id/local id/rarity differ),
+      so ONE fixture serves the pair. A Stage 2 from Pupitar, force-placed.
+      Faithfully odd: the card is typed {L} but both attacks cost {F} and it is
+      weak to Fighting — that is what tcgdex ships, and it is kept, so the Energy
+      the deck pays with is Fighting despite the Lightning body. */
+  "sv03-066": battler("sv03-066", {
+    name: "Tyranitar ex",
+    types: ["Lightning"],
+    stage: "Stage2",
+    evolveFrom: "Pupitar",
+    hp: 340,
+    retreat: 4,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Mountain Hurl",
+        effect: "Discard the top 2 cards of your deck.",
+        damage: 120,
+      },
+      {
+        cost: ["Fighting", "Fighting"],
+        name: "Lightning Rampage",
+        effect:
+          "If your Benched Pokémon have any damage counters on them, this attack does 100 more damage.",
+        damage: "150+",
+      },
+    ],
+  }),
+  /** Seviper sv01-128 — "Venoshock" (60+, +120 into a POISONED Active): the
+      `opponentActivePoisoned` clause. A DIFFERENT Seviper from sv02-137 above
+      (same name, different print, different clause), which is why every assertion
+      about either goes by card ID. Self-contained: its index-0 "Spit Poison"
+      Poisons the opponent's Active and deals no damage at all (no `damage` key),
+      so the suite can arm the very condition index 1 reads without a surgery. */
+  "sv01-128": battler("sv01-128", {
+    name: "Seviper",
+    types: ["Darkness"],
+    stage: "Basic",
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness"],
+        name: "Spit Poison",
+        effect: "Your opponent's Active Pokémon is now Poisoned.",
+      },
+      {
+        cost: ["Darkness", "Colorless", "Colorless"],
+        name: "Venoshock",
+        effect: "If your opponent's Active Pokémon is Poisoned, this attack does 120 more damage.",
+        damage: "60+",
+      },
+    ],
+  }),
+  /** Sableye sv02-136 — "Unseen Claw" (20+, +70 into an Active affected by ANY
+      Special Condition): the `opponentActiveHasSpecialCondition` clause, the
+      pool's only printing of it. The perfect companion to Seviper because its own
+      index-0 "Night Eyes" applies ASLEEP, not Poison — so one board proves the
+      clause is "any condition" rather than a Poison alias, and proves Venoshock
+      does NOT fire on the same board. A Darkness Basic, 70 HP. */
+  "sv02-136": battler("sv02-136", {
+    name: "Sableye",
+    types: ["Darkness"],
+    stage: "Basic",
+    hp: 70,
+    retreat: 1,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Night Eyes",
+        effect: "Your opponent's Active Pokémon is now Asleep.",
+      },
+      {
+        cost: ["Darkness"],
+        name: "Unseen Claw",
+        effect:
+          "If your opponent's Active Pokémon is affected by a Special Condition, this attack does 70 more damage.",
+        damage: "20+",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -3074,6 +3218,45 @@ export const CONDITIONAL_DAMAGE_DECK = deckOf({
   "fix-dark-energy": 4, // Basic {D} — pays Cross-Cut
   "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
   "fix-bigbody": 21, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the Basic defender
+});
+
+/** 0.66.0 → 0.67.0: the SECOND wave of conditional-damage clauses (D116) — the
+    two damage-counter clauses that read YOUR OWN board (`yourActiveDamaged`,
+    `yourBenchDamaged`) and the two §12 clauses that read the opponent's Active
+    (`opponentActivePoisoned`, `opponentActiveHasSpecialCondition`). A DEDICATED
+    deck rather than a grown CONDITIONAL_DAMAGE_DECK: that one is seed-pinned by
+    conditionalDamage.test.ts, and this cast shares none of its printings anyway.
+
+    One printing per clause, and the cast is chosen so that every condition can be
+    armed BY THE GAME rather than only by surgery: Seviper's index-0 "Spit Poison"
+    Poisons, Sableye's index-0 "Night Eyes" puts the same spot ASLEEP, and damage
+    counters land through any ordinary attack. Darmanitan is in as the SECOND
+    printing of Talonflame's clause at a different N — the pair that proves the
+    table maps a printed CLAUSE, not a card.
+
+    Both seats run the WHOLE cast: `yourActiveDamaged`/`yourBenchDamaged` are
+    seat-relative, so the asymmetry ("damage on the DEFENDER's bench scores
+    nothing") is only assertable if the same body can be fielded on either side.
+
+    Energy pays the printed symbols: {R} for Talonflame and Darmanitan, {F} for
+    Tyranitar ex (typed {L}, costed {F} — faithful to the row), {D} for both
+    Venoshock and Unseen Claw, plain {C} for the Colorless slots. fix-bigbody is
+    the DOMINANT mulligan-free starter, the body both Actives pin to, the damaged
+    BENCH body Lightning Rampage reads, and — 200 HP, no Weakness, no Resistance —
+    the arithmetically clean defender every damage assertion is measured against.
+    Seviper and Sableye are the only Basics in the cast besides it, which is
+    exactly why the pinning matters. */
+export const CONDITION_CLAUSE_DECK = deckOf({
+  "sv02-030": 3, // Talonflame — "Fiery Breeze" (70+): yourActiveDamaged, +90
+  "sv03-035": 3, // Darmanitan — "Damage Counterpunch" (60+): the same clause, +60
+  "sv03-066": 3, // Tyranitar ex — "Lightning Rampage" (150+): yourBenchDamaged
+  "sv01-128": 3, // Seviper — "Venoshock" (60+): opponentActivePoisoned, and its own Poison setter
+  "sv02-136": 3, // Sableye — "Unseen Claw" (20+): the ANY-condition clause, and its Asleep setter
+  "fix-fire-energy": 6, // Basic {R} — pays Fiery Breeze and Damage Counterpunch
+  "fix-fighting-energy": 6, // Basic {F} — pays Lightning Rampage's {F}{F}
+  "fix-dark-energy": 6, // Basic {D} — pays Venoshock and Unseen Claw
+  "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
+  "fix-bigbody": 19, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the bench body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

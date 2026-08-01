@@ -245,10 +245,14 @@ describe("deriveAttackDamageBonus — the anchor guards (everything else stays L
       "Draw a card. If you have a Stadium in play, this attack does 80 more damage.",
       // A printed 0 adds nothing — the guard every arm in this family carries.
       "If you have a Stadium in play, this attack does 0 more damage.",
-      // A well-formed sentence whose CLAUSE is not in the table: Venoshock
-      // sv01-128/sv03-129. A deliberate future one-row extension — until it is
-      // mapped it stays LOUD rather than silently scoring its bonus at 0.
-      "If your opponent's Active Pokémon is Poisoned, this attack does 120 more damage.",
+      // A well-formed sentence whose CLAUSE is not in the table: Ceruledge
+      // sv02-098 "Fighting Sword", the pool's only printing of it. A deliberate
+      // future one-row extension — until it is mapped it stays LOUD rather than
+      // silently scoring its bonus at 0. (This witness was Venoshock's "is
+      // Poisoned" until D116 mapped that clause; if you map this one too, re-point
+      // the witness again rather than deleting the case — it is the only thing
+      // pinning the fall-through.)
+      "If your opponent's Active Pokémon is a Pokémon ex or Pokémon V, this attack does 100 more damage.",
     ]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }
