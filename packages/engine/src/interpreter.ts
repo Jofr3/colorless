@@ -1088,6 +1088,25 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const side = state.players[seat];
       return [side.active, ...side.bench].every((p) => p === null || p.energy.length === 0);
     }
+    case "opponentActiveDamaged": {
+      // "your opponent's Active Pokémon ALREADY has any damage counters on it" —
+      // the OPPONENT of `seat` (this is the one cross-board member of the
+      // vocabulary). Damage is HP on the model, so "any counters" is `> 0`; the
+      // "already" is a TIMING word the caller honours by asking at declaration,
+      // not something this predicate can enforce.
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && active.damage > 0;
+    }
+    case "opponentActiveIsEvolution": {
+      // D105's Evolution reading, verbatim: a Pokémon that evolves from another
+      // one. `evolveFromOf` returns null for a Basic and for a non-Pokémon, so a
+      // non-null result is the exact complement of `basicPokemon`. An empty
+      // Active Spot is FALSE (nothing there is an Evolution) rather than a throw —
+      // the attack gate already guarantees a Defending Pokémon at the one live
+      // read site, so this only covers a directly-invoked edge.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && evolveFromOf(spot.card) !== null;
+    }
   }
 }
 
@@ -1101,6 +1120,12 @@ export function conditionNote(cond: BoardCondition): string {
       return "you have a Stadium in play";
     case "noEnergyOnYourPokemon":
       return "none of your Pokémon have any Energy attached";
+    case "opponentActiveDamaged":
+      // The printed clause drops the "already" — that word is about WHEN the
+      // condition is read, and a reject/tooltip fragment is read in the present.
+      return "your opponent's Active Pokémon has damage counters on it";
+    case "opponentActiveIsEvolution":
+      return "your opponent's Active Pokémon is an Evolution Pokémon";
   }
 }
 

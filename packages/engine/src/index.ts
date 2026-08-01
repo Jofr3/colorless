@@ -611,7 +611,63 @@ import type { GameState, Seat } from "./types";
     printed 3 snaps back. One registry row, one new scan, one barrel export; no
     new op, event, error code or wire field, and no API/DB/`@luminous/schema`/web
     change. */
-export const engineVersion = "0.65.0";
+
+    /* 0.66.0 — the CONDITIONAL flat attack-damage bonus (D115): "If <clause>,
+    this attack does N more damage." now SIMULATES, where before this slice EVERY
+    leading-conditional print fell onto the loud ATTACK_EFFECT_SKIPPED path with
+    its "+" marker unsimulated (`deriveAttackDamageBonus` recognised only the
+    trailing `for each` scaling family). The leading-`If` family is 32 distinct
+    sentences / 43 printings in the ingested pool; this slice maps FOUR of them —
+    11 printings across 11 card ids (7 distinct cards), on ZERO registry rows, every one deriving off
+    its printed text: Palossand sv02-096 "Earthen Power" (+80, `yourStadiumInPlay`),
+    Gyarados sv02-043 "Revengeful Storm" (+100, `morePrizesThanOpponent`),
+    Gyarados ex sv01-045/-225 "Tyrannical Tail" (+180) and Meowscarada ex
+    sv02-015/-231/-256/-271 "Scratching Nails" (+60) on a new
+    `opponentActiveDamaged`, and Seviper sv02-137 "Cross-Cut" (+50) / Houndoom
+    sv03-133 "Daring Strike" / Toxicroak sv06.5-024 "Clean Hit" on a new
+    `opponentActiveIsEvolution`. The first two clauses REUSE `BoardCondition`
+    members that already existed (D40, built for Falkner and Fighting Au Lait),
+    making this family the vocabulary's FOURTH consumer and its first through
+    printed ATTACK text rather than a registry row.
+
+    The design point is the INDICATOR count. A fourth `DamageCountSource`,
+    `{ kind: "boardCondition"; cond }`, is honestly degenerate — it counts 1 when
+    the condition holds for the ATTACKER's seat and 0 when it does not — and that
+    is exactly what lets the conditional bonus reuse the additive family WHOLE:
+    `per × count` is the printed flat bonus or nothing, so attack.ts needs no new
+    fold, no new branch in the §8.5 pipeline, no dropped base and no new event
+    field. The printed base stands either way ("100+" with the clause true is
+    100 + 120 = 220, false is 100), and `effectSimulated`/`modifierSimulated` both
+    ride `scaling !== null`, so the "+" and the sentence stop being flagged WHETHER
+    OR NOT the condition holds — which is correct: the engine simulated the
+    sentence, it simply evaluated to zero. The one signature change is
+    `scaledAttackDamage` gaining `attackerSeat`: a `BoardCondition` is relative to
+    whose board it reads, and the fold knew only the defender's seat.
+
+    "Already" (Tyrannical Tail, Scratching Nails) is a TIMING word, honoured by
+    evaluating the indicator at attack DECLARATION, before this attack's own damage
+    lands — an undamaged defender takes 180, not 360, so an opening hit can never
+    bootstrap the bonus that scales it. "Evolution Pokémon" reuses D105's definition
+    verbatim (`evolveFromOf(topCard) !== null`, the exact complement of
+    `basicPokemon`) so the two readings cannot drift.
+
+    The clause table is a `Map<string, BoardCondition>`, not an object literal:
+    the key is arbitrary printed text and an object lookup on arbitrary text can
+    hit `Object.prototype`. It holds exactly four entries, keyed char-for-char on
+    the printed clause; the remaining ~28 printed clauses in the pool stay
+    deliberately UNMAPPED and therefore LOUD — an unrecognised clause returns null
+    and keeps its ATTACK_EFFECT_SKIPPED row, which is strictly better than silently
+    scoring the bonus at 0, and each is a future one-row extension. The regex is
+    anchored whole-sentence with a required trailing period and no /i, which is
+    what keeps "Flip a coin. If heads, this attack does 20 more damage." (26
+    printings — a different mechanism that must announce its flip) and Cresselia's
+    "You may turn 1 of your face-down Prize cards face up. If you do, …" (a leading
+    CHOICE, not a board read) off this path. `deriveAttackDamageMultiplier` is
+    untouched: the pool prints no "If …, this attack does N damage." (no-"more")
+    twin, and no "… more damage if …" trailing form or "N LESS damage" variant
+    exists either. No new op, event, error code, registry row or wire field; no
+    API/DB/`@luminous/schema`/web change. */
+export const engineVersion = "0.66.0";
 
 export type {
   ApplyResult,

@@ -39,7 +39,7 @@ import {
   resolvePromotionAndResume,
   settleProgram,
 } from "./flow";
-import { attackerPreWRBonus, runProgram } from "./interpreter";
+import { attackerPreWRBonus, conditionHolds, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { damagedByAttackAbility } from "./triggers";
@@ -95,12 +95,18 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     `attacker` is the attacking Active; `state` + `defenderSeat` reach the
     opponent's board for the Prize-count source (Charizard ex "Burning Darkness",
     Pecharunt ex "Irritated Outburst") and for the retreat-cost source (Heracross
-    "Superpowered Throw" and siblings). */
+    "Superpowered Throw" and siblings). `attackerSeat` is the OTHER end of the
+    table and exists only for the `boardCondition` indicator (D115): a
+    `BoardCondition` is relative to whose board it reads — "you have a Stadium in
+    play" is about the ATTACKER's ownership, "your opponent's Active …" reaches
+    across from there — so it cannot be derived from `defenderSeat` alone without
+    quietly hard-coding a two-player table into this fold. */
 function scaledAttackDamage(
   attacker: InPlayPokemon,
   bonus: AttackDamageBonus,
   state: GameState,
   defenderSeat: Seat,
+  attackerSeat: Seat,
 ): number {
   switch (bonus.count.kind) {
     case "damageCountersOnSelf":
@@ -122,6 +128,14 @@ function scaledAttackDamage(
       const defenderActive = state.players[defenderSeat].active;
       return defenderActive === null ? 0 : effectiveRetreatCost(state, defenderActive) * bonus.per;
     }
+    case "boardCondition":
+      // The 0-or-1 INDICATOR (D115) — "If <clause>, this attack does N more
+      // damage." The printed bonus lands whole when the clause holds for the
+      // ATTACKER and nothing lands when it does not, which is the entire fold:
+      // no base is dropped, no branch is added, and the `+` modifier is simulated
+      // either way. Evaluated HERE, at declaration, so Gyarados ex's "already has
+      // any damage counters on it" cannot be bootstrapped by this very attack.
+      return conditionHolds(state, attackerSeat, bonus.count.cond) ? bonus.per : 0;
   }
 }
 
@@ -254,7 +268,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       ? null
       : deriveAttackDamageMultiplier(effect);
   const scaling = damageBonus ?? damageMultiplier;
-  const scaled = scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat);
+  const scaled =
+    scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program

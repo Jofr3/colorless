@@ -180,7 +180,20 @@ export type BoardCondition =
   /** None of your in-play Pokémon (Active or Benched) has ANY Energy attached —
       Basic or Special (Grusha's "if none of your Pokémon have any Energy
       attached"). Vacuously true with nothing in play. */
-  | { kind: "noEnergyOnYourPokemon" };
+  | { kind: "noEnergyOnYourPokemon" }
+  /** Your opponent's Active Pokémon ALREADY has any damage counters on it —
+      Meowscarada ex sv02-015/-231/-256/-271 "Scratching Nails" and Gyarados ex
+      sv01-045/-225 "Tyrannical Tail" (the D115 conditional damage-bonus family).
+      Read at attack DECLARATION, i.e. BEFORE this attack's own damage lands,
+      which is exactly what the printed "already" means: an undamaged defender
+      cannot bootstrap the bonus with the very hit the bonus is scaling. */
+  | { kind: "opponentActiveDamaged" }
+  /** Your opponent's Active Pokémon is an EVOLUTION Pokémon — Seviper sv02-137
+      "Cross-Cut", Houndoom sv03-133 "Daring Strike" and Toxicroak sv06.5-024
+      "Clean Hit". "Evolution Pokémon" is D105's definition reused verbatim
+      (`evolveFromOf(topCard) !== null`, the exact complement of `basicPokemon`),
+      so the two readings can never drift apart. False with no Active. */
+  | { kind: "opponentActiveIsEvolution" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1323,6 +1336,67 @@ const RETREAT_COST_SCALE =
   /^This attack does (\d+) more damage for each \{C\} in your opponent's Active Pokémon's Retreat Cost\.$/;
 const RETREAT_COST_MULTIPLY =
   /^This attack does (\d+) damage for each \{C\} in your opponent's Active Pokémon's Retreat Cost\.$/;
+// The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
+// damage.", the additive family's third arithmetic shape and the first one whose
+// count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
+// is the printed N when it holds and 0 when it does not (see
+// DamageCountSource.boardCondition below). 32 distinct sentences / 43 printings in
+// the ingested pool, ALL of them leading-`If` — the pool holds no "… more damage
+// if …" trailing form and no "If …, this attack does N LESS damage." twin, and no
+// sentence combines a leading `If` with a trailing "for each", so this bucket and
+// the three scaling ones above are disjoint by construction.
+//
+// No /i, and anchored whole-sentence with a REQUIRED trailing period, exactly like
+// its neighbours — the anchor is load-bearing here in a way it is not anywhere
+// else, because it is the only thing keeping two large families off this path:
+//   • "Flip a coin. If heads, this attack does 20 more damage." (26 printings) — a
+//     genuinely different mechanism that must announce its flip, and one that can
+//     never reach an anchored `^If` since the flip sentence always precedes it;
+//   • Cresselia's "You may turn 1 of your face-down Prize cards face up. If you
+//     do, this attack does 90 more damage." — a leading OPTIONAL action whose
+//     "if you do" reads a choice, not the board.
+// Both stay on the loud ATTACK_EFFECT_SKIPPED path, which is where they belong.
+const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
+/** The printed clauses this family understands, keyed CHAR-FOR-CHAR on the text
+    between the leading "If " and the ", this attack does" — a Map rather than an
+    object literal on purpose: the key is arbitrary PRINTED text, and an object
+    lookup on arbitrary text can hit `Object.prototype` ("constructor",
+    "toString", …) and hand back something that is not a `BoardCondition` at all.
+    A Map has no inherited keys.
+
+    Four entries. The first two reuse `BoardCondition` members that ALREADY
+    existed — built in the 2026-07-21 board-condition slice (D40) for Falkner's
+    `conditionGate` and Fighting Au Lait's play gate — which makes this family the
+    vocabulary's FOURTH consumer and the first to reach it through printed ATTACK
+    text rather than a registry row. The last two are new members, added here.
+
+    `Pokémon` in the last two keys carries a REAL U+00E9 é and every apostrophe is
+    ASCII, both verified against the local D1 rows; a lookalike character would
+    silently un-map the clause. The remaining ~28 printed clauses in the pool stay
+    deliberately UNMAPPED and therefore LOUD (an unrecognised clause returns null
+    and keeps its ATTACK_EFFECT_SKIPPED row) — each is a future one-row extension,
+    and "loud" is strictly better than silently scoring the bonus at 0. */
+const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
+  // Palossand sv02-096 "Earthen Power" (+80) and its siblings — §7.3 OWNERSHIP,
+  // not mere presence: the opponent's Stadium in the shared zone does not count.
+  ["you have a Stadium in play", { kind: "yourStadiumInPlay" }],
+  // Gyarados sv02-043 "Revengeful Storm" (+100) — §14, the comeback clause: you
+  // have MORE prizes left, i.e. you are BEHIND on prizes taken.
+  ["you have more Prize cards remaining than your opponent", { kind: "morePrizesThanOpponent" }],
+  // Gyarados ex sv01-045/-225 "Tyrannical Tail" (+180), Meowscarada ex
+  // sv02-015/-231/-256/-271 "Scratching Nails" (+120) — "already", read at
+  // declaration.
+  [
+    "your opponent's Active Pokémon already has any damage counters on it",
+    { kind: "opponentActiveDamaged" },
+  ],
+  // Seviper sv02-137 "Cross-Cut" (+50), Houndoom sv03-133 "Daring Strike" (+70),
+  // Toxicroak sv06.5-024 "Clean Hit" (+90) — D105's Evolution reading.
+  [
+    "your opponent's Active Pokémon is an Evolution Pokémon",
+    { kind: "opponentActiveIsEvolution" },
+  ],
+]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
 // the swsh-era prints carry ("Discard a Fire Energy" — Charmeleon, Charizard).
@@ -1632,24 +1706,37 @@ export interface AttackDamageBonus {
   per: number;
   count: DamageCountSource;
 }
-/** The resource an `AttackDamageBonus` counts. Three members: the attacker's OWN
+/** The resource an `AttackDamageBonus` counts. Four members: the attacker's OWN
     damage counters (Paldean Tauros "Raging Horns"), the opponent's TAKEN Prizes
-    (Charizard ex "Burning Darkness") and — since 0.61.0 — the {C} in the opponent's
+    (Charizard ex "Burning Darkness"), — since 0.61.0 — the {C} in the opponent's
     Active Pokémon's RETREAT COST (Heracross "Superpowered Throw" and its three
-    siblings), each read by its own anchored sentence. The third is the first count
-    source that is DERIVED rather than read off a field: attack.ts evaluates it
-    through continuous.ts `effectiveRetreatCost`, so every retreat-cost modifier
-    already in play (Beach Court's discount, Calamitous Wasteland's surcharge,
-    Clefable ex's set-to-zero aura) is inside the number these attacks read. */
+    siblings), and — since 0.66.0 — a `boardCondition` INDICATOR, each read by its
+    own anchored sentence. The third is the first count source that is DERIVED
+    rather than read off a field: attack.ts evaluates it through continuous.ts
+    `effectiveRetreatCost`, so every retreat-cost modifier already in play (Beach
+    Court's discount, Calamitous Wasteland's surcharge, Clefable ex's set-to-zero
+    aura) is inside the number these attacks read.
+
+    The fourth is honestly DEGENERATE: a `boardCondition` count is 1 when the
+    condition holds for the ATTACKER's seat and 0 when it does not, so `per × count`
+    is the printed flat bonus or nothing at all — "If <clause>, this attack does N
+    more damage." (D115). Modelling the conditional flat bonus as a 0-or-1 count is
+    what lets it reuse the additive family whole: attack.ts needs no new fold, no
+    new branch in the §8.5 pipeline and no new event field, only the ATTACKER's
+    seat (a `BoardCondition` is relative to whose board it reads, and `scaledAttackDamage`
+    knew only the defender's). */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
-  | { kind: "opponentActiveRetreatCost" };
+  | { kind: "opponentActiveRetreatCost" }
+  | { kind: "boardCondition"; cond: BoardCondition };
 
 /** Parse a printed additive damage-scaling sentence into its `per` amount and
-    count source, or null when the text is anything but one of the three anchored
-    sentences this reads (self damage counters, the opponent's taken Prizes, the
-    opponent's Active Retreat Cost) — the "×"/multiply twins (no "more", owned by
+    count source, or null when the text is anything but one of the four anchored
+    sentence shapes this reads (self damage counters, the opponent's taken Prizes,
+    the opponent's Active Retreat Cost, and the leading-`If` conditional flat bonus
+    whose clause is one of `CONDITIONAL_DAMAGE_CLAUSES`) — the "×"/multiply twins
+    (no "more", owned by
     `deriveAttackDamageMultiplier`), a lowercased "this", a missing trailing
     period, and any leading/trailing text all stay on the loud ATTACK_EFFECT_SKIPPED
     path. Disjoint from `deriveAttackEffect`: this reads the SAME effect text but
@@ -1674,6 +1761,20 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   if (retreatCost !== null) {
     const per = Number(retreatCost[1]);
     if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+  }
+  // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
+  // damage." — last, because its clause capture is the loosest pattern here and
+  // the three "for each" arms above are exact. An UNMAPPED clause deliberately
+  // falls through to `return null`: an unrecognised condition must stay LOUD
+  // (ATTACK_EFFECT_SKIPPED), never silently score its bonus at 0.
+  const conditional = CONDITIONAL_DAMAGE_BONUS.exec(effect);
+  if (conditional !== null) {
+    const cond = CONDITIONAL_DAMAGE_CLAUSES.get(conditional[1] ?? "");
+    if (cond !== undefined) {
+      const per = Number(conditional[2]);
+      // A printed 0 adds nothing — the guard every arm in this family carries.
+      if (per >= 1) return { per, count: { kind: "boardCondition", cond } };
+    }
   }
   return null;
 }

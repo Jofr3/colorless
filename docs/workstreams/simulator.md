@@ -4626,3 +4626,113 @@ Every census in this file written before 2026-08-01 says five sets / ~890 cards.
   Standard-legal subset. The retreat-COST seam read 9/10 raw until D114 built Wimpod
   `swsh10.5-025`; it is now **10/10 against the raw local pool**, which is the scope that
   matters — `legal_standard` is *not* a slice-selection criterion (D113).
+
+---
+
+## The CONDITIONAL flat attack-damage bonus (D115, engine 0.66.0) — "If \<clause\>, this attack does N more damage."
+
+The largest unbuilt **attack-text** family in the ingested pool, and the first slice built on
+the P3-M5 long tail whose value is a **shared skeleton with independently-priced predicates**
+rather than a single card or a single mechanism.
+
+### The census that mattered — sweep the SKELETON, not the PREDICATE
+
+Both leads D114's resume point named were costed first and both were corrected, one fatally.
+The lesson is general enough to keep: **when a named lead dies, re-census one level up.** The
+resume point pointed at a *predicate* ("Future Pokémon in play", "Stadium in play"); sweeping
+the *sentence skeleton* instead turned a dead 1-printing lead into a 43-printing family.
+
+| pattern (case-sensitive, per-attack, whole-sentence) | distinct sentences | printings |
+|---|---|---|
+| `^If <clause>, this attack does N more damage\.$` | **32** | **43** |
+| coin-flip riders (`Flip a coin. If heads, …`) | 13 | 30 |
+| `^This attack does N more damage for each …` (built, D54/D110) | 26 | 50 |
+
+Three negative facts from the same sweep, each load-bearing for the anchored regex:
+- the pool holds **no** trailing "… more damage **if** …" — the conditional is ALWAYS leading;
+- the pool holds **no** `If …, this attack does N **less** damage.` twin;
+- **no** sentence combines a leading `If` with a trailing `for each` — so this bucket and the
+  three built scaling buckets are **disjoint by construction**. That is what makes
+  `^If (.+), this attack does (\d+) more damage\.$` safe next to the exact `for each` arms.
+
+The coin-flip family (26 printings) can never reach an anchored `^If`, because the flip
+sentence always precedes it — it is a genuinely different mechanism (a flip is new
+information and must be announced; a board condition is not, per the D40 invariant).
+
+### The design — a fourth `DamageCountSource` that is a 0-or-1 INDICATOR
+
+```ts
+| { kind: "boardCondition"; cond: BoardCondition }   // effects.ts
+```
+`per × count` is then the printed flat bonus when the clause holds and **0** when it does not.
+Modelling the conditional bonus as a degenerate *count* is what lets it reuse the additive
+`AttackDamageBonus` fold whole: **no new fold in attack.ts, no new branch in the §8.5
+pipeline, no new op, no new event or event field, no registry row, no web/API/DB/`@luminous/schema`
+diff.** This is D110's "a member, not a mechanism" rule applied a second time.
+
+The **only** structural change is that `scaledAttackDamage` gains the **ATTACKER's seat**. It
+knew only `defenderSeat`, and a `BoardCondition` is relative to whose board it reads — "you
+have a Stadium in play" is the attacker's ownership; "your opponent's Active …" reaches across
+from there. `action.seat` was already in scope at the single call site (`snipeActive` does not
+use this function), so it is a one-argument change.
+
+The D110 payoff repeats: `effectSimulated` and `modifierSimulated` both flip purely because
+`scaling !== null`, so the printed `+` and the sentence stop being flagged **whether or not the
+condition holds**. That is correct — the card IS simulated when the answer is "no bonus" — and
+it is asserted in both directions.
+
+### The clause table — a `Map`, and unmapped means LOUD
+
+```ts
+const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([...])
+```
+**A `Map`, not an object literal, on purpose:** the key is arbitrary PRINTED text, and an
+object lookup on arbitrary text can hit `Object.prototype` (`"constructor"`, `"toString"`) and
+hand back something that is not a `BoardCondition` at all. Keep it a `Map` for every future
+printed-text→structure table.
+
+**An UNMAPPED clause falls through to `null` and stays LOUD** (`ATTACK_EFFECT_SKIPPED`).
+Silently scoring an unrecognised condition at 0 would be a wrong number with no failure; the
+loud path is a visible gap. Each of the ~28 still-unmapped clauses is a future **one-row**
+extension — this is the cheapest backlog in the engine right now.
+
+### What landed — 11 printings / 11 ids / 7 cards / 4 sentences, ZERO registry rows
+
+| printed clause | `BoardCondition` | cards | printings |
+|---|---|---|---|
+| `you have a Stadium in play` | `yourStadiumInPlay` **(already existed)** | Palossand `sv02-096` (+80) | 1 |
+| `you have more Prize cards remaining than your opponent` | `morePrizesThanOpponent` **(already existed)** | Gyarados `sv02-043` (+100) | 1 |
+| `your opponent's Active Pokémon already has any damage counters on it` | `opponentActiveDamaged` (new) | Meowscarada ex `sv02-015/-231/-256/-271` (+120), Gyarados ex `sv01-045/-225` (+180) | 6 |
+| `your opponent's Active Pokémon is an Evolution Pokémon` | `opponentActiveIsEvolution` (new) | Seviper `sv02-137` (+50), Houndoom `sv03-133` (+70), Toxicroak `sv06.5-024` (+90) | 3 |
+
+**Two of the four cost ZERO new predicate code.** The D40 board-condition vocabulary
+(2026-07-21, built for Falkner's `conditionGate` and Fighting Au Lait's play gate) is now on
+its **fourth consumer** and its first reached through printed ATTACK text rather than a
+registry row. When a new printed family shows up, check the existing vocabulary before adding
+to it — that is the whole return on having spelled it once.
+
+`opponentActiveIsEvolution` reuses **D105's `evolveFromOf(card) !== null`** verbatim, so the
+Evolution reading can never drift from the `evolutionPokemon` CardFilter's.
+
+### The rules call: "already" is a TIMING word, not a predicate refinement
+
+`opponentActiveDamaged` is read at **declaration**, before this attack's own damage lands — so
+an undamaged defender cannot bootstrap the bonus with the very hit the bonus is scaling
+(Gyarados ex into a clean Active is **180, not 360**). The predicate itself cannot enforce
+this; the read site does, and the suite asserts it explicitly. `conditionNote` deliberately
+**drops** the "already" — a reject/tooltip fragment is read in the present tense.
+
+### Costed and NOT built
+
+- **Slither Wing `sv06.5-026`** ("If your opponent has any **Future** Pokémon in play…") is
+  **blocked on an ingest change**, not on engine work. The `cards` table has **no subtype/tag
+  column and no column that could hold one**; the upstream tcgdex `suffix` field IS parsed
+  (`packages/schema/src/tcgdex/card.ts`) but **dropped before the D1 insert** — and it carries
+  the rule-box suffix (`ex`/`V`), never the Ancient/Future tag. In the ingested pool "Future
+  Pokémon" is a **1-card name list** (only Iron Moth `sv06.5-009` could satisfy it) that rots
+  the moment sv04/sv05 ingest. Do not hardcode the name list.
+- **Paldean Clodsire ex `sv02-130`/`-244`** is NOT part of the Stadium sub-shape: its sentence
+  is on an **Ability**, and it reads *presence* ("if **a** Stadium is in play"), not the
+  ownership `yourStadiumInPlay` encodes. A different seam. **Falkner `sv02-180`/`-251` was
+  already built** (D40). So the "5 printings" the D114 resume point recorded for this
+  sub-shape was really **one**: Palossand.

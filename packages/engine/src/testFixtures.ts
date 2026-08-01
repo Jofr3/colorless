@@ -2116,6 +2116,125 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Psychic", "Colorless", "Colorless"], name: "Sharp Fang", damage: 30 },
     ],
   }),
+
+  // — the CONDITIONAL flat attack-damage bonus (D115): "If <clause>, this attack
+  //   does N more damage." One printed card per mapped clause, each transcribed
+  //   VERBATIM off the local D1 this session and checked CHAR-FOR-CHAR. The
+  //   printed sentence is LOAD-BEARING on every one of them: these cards DERIVE
+  //   (not one carries a registry row), so a single drifted character — a U+2019
+  //   apostrophe for an ASCII one, a lookalike for the é in "Pokémon", a lost
+  //   trailing period — does not fail loudly, it silently UN-simulates the card
+  //   and drops it back onto the ATTACK_EFFECT_SKIPPED path with its "+" intact.
+  //   That is why conditionalDamage.test.ts pins each sentence against this pool
+  //   rather than only against the deriver. —
+  /** Palossand sv02-096 — "Earthen Power" (80+, +80 with YOUR Stadium out): the
+      `yourStadiumInPlay` clause, and the fixture that proves the OWNERSHIP
+      reading through a whole attack (the shared zone holding the OPPONENT's Beach
+      Court leaves the printed 80 alone). A Psychic Stage 1 from Sandygast, so it
+      is always surgeried in; it is also one of the pool's few rows carrying a
+      NON-EMPTY resistance (Fighting −30, a real fold factor when it is the
+      DEFENDER) and it mixes an int-damage attack with a string-damage one in the
+      same array — both kept faithful. */
+  "sv02-096": battler("sv02-096", {
+    name: "Palossand",
+    types: ["Psychic"],
+    stage: "Stage1",
+    evolveFrom: "Sandygast",
+    hp: 150,
+    retreat: 4,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      { cost: ["Psychic", "Colorless"], name: "Spooky Shot", damage: 40 },
+      {
+        cost: ["Psychic", "Colorless", "Colorless"],
+        name: "Earthen Power",
+        effect: "If you have a Stadium in play, this attack does 80 more damage.",
+        damage: "80+",
+      },
+    ],
+  }),
+  /** Gyarados sv02-043 — "Revengeful Storm" (80+, +100 when you are BEHIND on
+      Prizes taken): the `morePrizesThanOpponent` clause, the §14 comeback shape.
+      A Water Stage 1 from Magikarp. Its second attack "Berserker Tackle" is a
+      plain 200 carrying the ALREADY-DERIVED recoil sentence, which is why it is
+      kept: it is the same card's control that this slice's deriver must NOT
+      swallow (`deriveAttackEffect` owns that sentence, the bonus reader owns
+      index 0), and the two must stay disjoint. */
+  "sv02-043": battler("sv02-043", {
+    name: "Gyarados",
+    types: ["Water"],
+    stage: "Stage1",
+    evolveFrom: "Magikarp",
+    hp: 180,
+    retreat: 4,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Water", "Colorless", "Colorless"],
+        name: "Revengeful Storm",
+        effect:
+          "If you have more Prize cards remaining than your opponent, this attack does 100 more damage.",
+        damage: "80+",
+      },
+      {
+        cost: ["Water", "Water", "Colorless", "Colorless"],
+        name: "Berserker Tackle",
+        effect: "This Pokémon also does 50 damage to itself.",
+        damage: 200,
+      },
+    ],
+  }),
+  /** Gyarados ex sv01-045 — "Tyrannical Tail" (180+, +180 against an ALREADY
+      damaged Active): the `opponentActiveDamaged` clause, and the whole reason
+      the indicator is read at DECLARATION. An undamaged defender takes 180, NOT
+      360 — the attack's own hit cannot bootstrap the condition that scales it,
+      which is exactly what the printed "already" says. A Water Stage 1 from
+      Magikarp with NO abilities (verified — the ex carries none), 300 HP, and a
+      five-symbol attack cost, the deepest in this cast. */
+  "sv01-045": battler("sv01-045", {
+    name: "Gyarados ex",
+    types: ["Water"],
+    stage: "Stage1",
+    evolveFrom: "Magikarp",
+    hp: 300,
+    retreat: 4,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      { cost: ["Water", "Water", "Water"], name: "Waterfall", damage: 100 },
+      {
+        cost: ["Water", "Water", "Water", "Colorless", "Colorless"],
+        name: "Tyrannical Tail",
+        effect:
+          "If your opponent's Active Pokémon already has any damage counters on it, this attack does 180 more damage.",
+        damage: "180+",
+      },
+    ],
+  }),
+  /** Seviper sv02-137 — "Cross-Cut" (50+, +50 against an EVOLUTION Active): the
+      `opponentActiveIsEvolution` clause, the pair that proves the D105
+      `evolveFromOf` reading (a Basic Active is the negative, a fielded Palossand
+      or Gyarados the positive). A Darkness BASIC, so it is the one card in this
+      cast that could legally start a game — which is precisely why both Active
+      spots are pinned to fix-bigbody before every surgery. */
+  "sv02-137": battler("sv02-137", {
+    name: "Seviper",
+    types: ["Darkness"],
+    stage: "Basic",
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless"], name: "Sharp Fang", damage: 20 },
+      {
+        cost: ["Darkness", "Colorless"],
+        name: "Cross-Cut",
+        effect:
+          "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 50 more damage.",
+        damage: "50+",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -2910,6 +3029,51 @@ export const PUNK_OUT_DECK = deckOf({
   "fix-retreat2": 2, // retreat-2 Basic — the SELF-only control (it still pays)
   "fix-energy": 12, // Basic {C} — pays the control's retreat
   "fix-bigbody": 32, // 200 HP neutral Basic — DOMINANT starter + both pinned Actives
+});
+
+/** 0.65.0 → 0.66.0: the CONDITIONAL flat attack-damage bonus (D115) — "If
+    <clause>, this attack does N more damage.", the `boardCondition` 0-or-1
+    indicator count. A DEDICATED deck: SCALED_DAMAGE_DECK, MULTIPLY_DAMAGE_DECK,
+    RETREAT_SCALING_DECK, BOARD_CONDITION_DECK, PUNK_OUT_DECK and every other
+    neighbour is seed-pinned, and none of them holds even one of these four
+    printings — so growing one to reach this cast would reshuffle a suite that has
+    nothing to do with it. BOTH seats run the WHOLE cast, because every clause has
+    to be assertable from either board (the ownership case literally needs the same
+    Beach Court played by the opponent) and the Evolution clause needs an Evolution
+    fielded on the DEFENDING side.
+
+    One printing per mapped clause: Palossand (sv02-096, `yourStadiumInPlay`),
+    Gyarados (sv02-043, `morePrizesThanOpponent`), Gyarados ex (sv01-045,
+    `opponentActiveDamaged`) and Seviper (sv02-137, `opponentActiveIsEvolution`).
+    Palossand and Gyarados double as the EVOLUTION Active that satisfies Cross-Cut
+    — the deck's only non-Basic bodies, which is what makes fix-bigbody the
+    clause's negative rather than an accident of the seed.
+
+    Beach Court (sv01-167) is the Stadium the first clause reads, and the Stadium
+    ZONE is SHARED — so the same card played by the OPPONENT sits in the very same
+    zone and must NOT satisfy "you have a Stadium in play". fix-bigbody is doing
+    three jobs at once: the DOMINANT mulligan-free starter, the body BOTH Active
+    spots are pinned to before each surgery (so no assertion depends on which Basic
+    the seed dealt), and — being a neutral 200 HP Colorless BASIC with no Weakness
+    and no Resistance — both the Evolution clause's NEGATIVE and the arithmetically
+    clean defender every damage assertion is measured against.
+
+    The Energy pays the printed costs symbol-for-symbol rather than leaning on
+    typed Energy to cover the Colorless halves: {W} for Revengeful Storm and
+    Tyrannical Tail (which needs THREE, on top of two {C} — the deepest cost in the
+    cast), {P} for Earthen Power, {D} for Cross-Cut, and plain {C} (fix-energy) for
+    every Colorless symbol. */
+export const CONDITIONAL_DAMAGE_DECK = deckOf({
+  "sv02-096": 3, // Palossand — "Earthen Power" (80+): the Stadium clause + an Evolution body
+  "sv02-043": 3, // Gyarados — "Revengeful Storm" (80+): the Prize clause + an Evolution body
+  "sv01-045": 3, // Gyarados ex — "Tyrannical Tail" (180+): the "already damaged" clause
+  "sv02-137": 3, // Seviper — "Cross-Cut" (50+): the Evolution clause
+  "sv01-167": 3, // Beach Court — the Stadium the ownership case needs on EITHER side
+  "fix-water-energy": 8, // Basic {W} — Tyrannical Tail alone wants three
+  "fix-psychic-energy": 4, // Basic {P} — pays Earthen Power
+  "fix-dark-energy": 4, // Basic {D} — pays Cross-Cut
+  "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
+  "fix-bigbody": 21, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the Basic defender
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
