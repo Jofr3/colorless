@@ -1216,7 +1216,57 @@ import type { GameState, Seat } from "./types";
     `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
     error codes, registry rows or log arms; no web/API/DB/`@luminous/schema` diff.
     NO MATCH_RECORD_VERSION BUMP — no event shape changed at all. */
-export const engineVersion = "0.79.0";
+/** 0.80.0 — P3-M5: the UNBOUNDED FOLD (D129). "Flip a coin until you get tails.
+    This attack does D [more] damage for each heads." (5 damaging printings) now
+    SIMULATES, and with it the coin family's LAST damaging shape: Growlithe
+    sv01-030 "Relentless Flames" (30×), Rellor sv02-026 "Ball Roll" (30×),
+    Forretress sv01-139 "Continuous Spin" (50×), Chansey sv01-144 "Egg Rolling"
+    (60×) — the MULTIPLY reading, printed base dropped — plus Bouffalant sv03-174
+    "Damage Rush" ("30 MORE damage for each heads", 50+) — the ADDITIVE reading,
+    printed base kept. The other 3 "until you get tails" printings run an EffectOp
+    per heads rather than folding a number and stay on the loud skipped path.
+
+    THE FLIP COUNT IS NEITHER TEXT NOR BOARD — IT IS THE FACES. `untilTails` is the
+    third `AttackFlipCount` member and the first that is not a number at any point:
+    D127's is known at derivation, D128's at the flip site, and this one only once
+    the coin has been drawn. So `flipCount` (a reader returning a COUNT for a `for`
+    loop to consume) could not express it without flipping to find out how many
+    times to flip — it became `takeFlips`, returning the SEQUENCE OF FACES for all
+    three members. Every member now announces its rows and tallies its heads
+    through one path with no `untilTails` branch at the site at all.
+
+    A TERMINATION ARGUMENT, NOT A CEILING — the slice's real content. Nothing in
+    the text or the board bounds this count, so D127's answer (refuse the row) would
+    refuse a LEGAL sentence, and a truncating cap chosen by feel would silently lie
+    about the game rather than loudly skip it. The bound is therefore owed to the
+    RNG that produces the faces (D128's provenance rule, third application):
+    `MAX_UNTIL_TAILS_FLIPS = 64` lives in rng.ts beside `flipCoin`. mulberry32's
+    pre-states advance by a fixed ODD stride, so the flips walk `n·K mod 2³²` and
+    the face sequence is ONE fixed cycle whose worst case is MEASURABLE rather than
+    probabilistic: scanned over all 4 294 967 296 steps (plus the wrap — the cycle
+    ends "…HH" and begins "H…"), THE LONGEST RUN OF CONSECUTIVE HEADS IS 31. 64 is
+    twice that, so the cap cannot fire from any seed and every sequence ends in
+    tails. `flipUntilTails` takes the cap as a PARAMETER so the truncation branch
+    stays reachable in a test at cap 1 and 2; the engine's own value is, by design,
+    dead code.
+
+    IT REACHES BOTH DAMAGE MEMBERS, which is the shape's one surprise and the proof
+    that D126's split was load-bearing rather than incidental. 4 printings are "D×"
+    (`perHeads`, base dropped) and Bouffalant is "50+" (`bonusOnHeads`, base kept) —
+    one flip COUNT, two consequents. So `bonusOnHeads` GREW THE SAME `flips` FIELD
+    D128 gave `perHeads` (its D126 printings derive `{ printed, 1 }`, which is what
+    they always were implicitly), and the union has now stayed THREE MEMBERS ACROSS
+    FOUR SHAPES: count and consequent are independent axes, and a member per pair
+    would be six members and five copies of one fold.
+
+    Cost: 2 skeleton regexes, 1 union member (`AttackFlipCount.untilTails`), 1
+    widened field (`bonusOnHeads.flips`), 2 deriver arms, 1 rng.ts primitive +
+    1 constant, and `flipCount` → `takeFlips` in attack.ts. ZERO new events, ops,
+    `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
+    error codes, registry rows or log arms; no continuous.ts diff; no web/API/DB/
+    `@luminous/schema` diff. NO MATCH_RECORD_VERSION BUMP — no event shape changed
+    at all. */
+export const engineVersion = "0.80.0";
 
 export type {
   ApplyResult,

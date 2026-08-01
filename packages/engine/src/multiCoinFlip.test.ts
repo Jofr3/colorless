@@ -78,8 +78,9 @@ import {
 //
 // AND THE REST OF THE FLIP FAMILY STAYS LOUD. Two live "more" printings sit one
 // word away from this regex (Melmetal swsh10.5-046 flips 2, Bouffalant sv03-174
-// flips until tails), and the UNBOUNDED opening ("until you get tails", 9 prints)
-// is still unbuilt. Each is pinned below with the property that refuses it.
+// flips until tails), and the UNBOUNDED opening ("until you get tails", 8 prints)
+// was still unbuilt when this file was written. Each is pinned below with the
+// property that refuses it.
 //
 // 0.78.0 → 0.79.0 (D128) TOUCHED THIS FILE IN EXACTLY ONE PLACE: `flips` widened
 // from a number to an `AttackFlipCount`, so every value below reads
@@ -91,6 +92,29 @@ import {
 // shape D128 reads it to, because a witness that is quietly deleted when its
 // subject gets built is a witness that was never load-bearing. That family's own
 // suite is perEnergyFlip.test.ts.
+//
+// 0.79.0 → 0.80.0 (D129) DID THE SAME THING TWICE MORE, and this file's own claims
+// are again untouched — same regex, same member, same loop, same site, same fold,
+// same dropped base. What moved is around it:
+//
+//   • `bonusOnHeads` GAINED A `flips` FIELD, for the reason D128 gave: a bound
+//     belongs to the SOURCE of the number, and "Flip a coin until you get tails.
+//     This attack does 30 more damage for each heads." (Bouffalant sv03-174) is that
+//     member's consequent over an unbounded count. Its D126 printings now read
+//     `{ kind: "printed", count: 1 }` — what they always were implicitly. The
+//     "D126 members" block at the bottom of this file is where that is pinned, and
+//     it is a CARDINALITY change: the consequent (base KEPT, `heads × per` folded
+//     pre-W/R) did not move at all.
+//
+//   • BOTH OF THIS FILE'S UNMAPPED WITNESSES WERE OCCUPIED BY D129 and both were
+//     RE-POINTED rather than deleted. Bouffalant is now asserted POSITIVELY under
+//     the "more" case — refused by THIS regex still, read by the unbounded one — and
+//     the "unbounded opening" case is re-pointed at Magikarp sv02-042 ("Flip 2 coins.
+//     If both of them are heads, this attack does 20 more damage.", 2 printings),
+//     which prints this slice's leading sentence VERBATIM and a consequent this
+//     deriver does not read. Melmetal stays refused, and is now the family's ONLY
+//     unmapped printed-count additive fold: one printing, so D121's second-printing
+//     warrant is not met and there is nothing yet to say what varies.
 
 /** Tandemaus sv01-160 "Double Hit", verbatim, and pinned char-for-char against
     FIXTURE_POOL below. TWO flips, so THREE outcomes and three distinct totals —
@@ -495,25 +519,47 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
 });
 
 describe("the rest of the flip family — what stays LOUD, and the one shape D128 took", () => {
-  it("refuses the two live \"more\" printings — ONE WORD from the mapped shape", () => {
+  it('refuses the live "more" printing — ONE WORD from the mapped shape', () => {
     // THE SHARPEST NEAR-MISSES IN THE POOL, and the reason the regex is anchored on
     // the whole sentence rather than matching "damage for each heads". Both are real
     // printings whose damage marker is "+", not "×" — so their printed base is KEPT
     // and their per-heads amount is added ON TOP. A reader that claimed either would
-    // drop a base it must not drop and score the card wrong on every outcome.
+    // drop a base it must not drop and score the card wrong on every outcome. Both
+    // are still refused BY THIS SLICE'S REGEX; what D129 changed is that one of them
+    // is now read by a different arm instead of by nothing at all.
     //
     // Melmetal swsh10.5-046 (base "30+") — TWO coins, the same count as Tandemaus,
-    // and the only thing separating the two sentences is the word "more".
+    // and the only thing separating the two sentences is the word "more". D129 left
+    // it exactly where it was, and it is now the family's ONLY unmapped
+    // printed-count additive fold: ONE printing, so D121's warrant for a shape (two
+    // printings with one token varying) is not met, and a shape built for a single
+    // card would be a row wearing a regex. That is why it is still REFUSED rather
+    // than mapped — not because the arithmetic is hard, but because nothing yet says
+    // what varies.
     const melmetal = "Flip 2 coins. This attack does 90 more damage for each heads.";
     expect(deriveAttackCoinFlip(melmetal)).toBe(null);
-    // Bouffalant sv03-174 (base "50+") — "more" AND an unbounded opening, refused
-    // twice over.
-    const bouffalant = "Flip a coin until you get tails. This attack does 30 more damage for each heads.";
-    expect(deriveAttackCoinFlip(bouffalant)).toBe(null);
-    // The refusals really are about "more": deleting that one word turns each into a
-    // sentence this deriver reads (Melmetal's) or still refuses for the OTHER reason
-    // (Bouffalant's unbounded opening). Stating both makes the pair a claim about
-    // which property does the work, not just two nulls.
+    // Bouffalant sv03-174 (base "50+") — "more" AND an unbounded opening. It stood
+    // here as the second refusal until D129 built the unbounded arm, and it is
+    // asserted POSITIVELY now rather than dropped: the witness is what says which
+    // property was doing the work, and the answer changed from "both" to "neither".
+    // Its "more" sends it to `bonusOnHeads` (printed base KEPT — "50+"), its opening
+    // sends it to `untilTails`, and this slice's regex still does not see it.
+    const bouffalant =
+      "Flip a coin until you get tails. This attack does 30 more damage for each heads.";
+    expect(deriveAttackCoinFlip(bouffalant)).toEqual({
+      kind: "bonusOnHeads",
+      flips: { kind: "untilTails" },
+      per: 30,
+    });
+    // …and it is emphatically NOT this slice's member: a `perHeads` reading would
+    // drop the "50+" base Bouffalant keeps and score it wrong on every outcome.
+    expect(deriveAttackCoinFlip(bouffalant)).not.toHaveProperty("flips.count");
+    expect(deriveAttackCoinFlip(bouffalant)?.kind).not.toBe("perHeads");
+    // The refusal really is about "more": deleting that one word turns Melmetal's
+    // sentence into one this deriver reads, and turns Bouffalant's into the OTHER
+    // D129 arm — the multiply one, whose base is dropped. One word, two members, on
+    // each of two flip counts. Stating both makes the pair a claim about which
+    // property does the work rather than a null and a value.
     expect(melmetal.replace(" more", "")).toBe(
       "Flip 2 coins. This attack does 90 damage for each heads.",
     );
@@ -522,24 +568,53 @@ describe("the rest of the flip family — what stays LOUD, and the one shape D12
       flips: { kind: "printed", count: 2 },
       per: 90,
     });
-    expect(deriveAttackCoinFlip(bouffalant.replace(" more", ""))).toBe(null);
+    expect(deriveAttackCoinFlip(bouffalant.replace(" more", ""))).toEqual({
+      kind: "perHeads",
+      flips: { kind: "untilTails" },
+      per: 30,
+    });
   });
 
-  it("refuses the UNBOUNDED opening — still unbuilt, and deliberately so", () => {
-    // Growlithe sv01-030, and 9 printings share the opening. "Flip a coin until you
-    // get tails." is a genuinely different risk from a printed count: the number of
-    // flips is unbounded, so the ceiling this deriver enforces has nothing to bite
-    // on and the loop would need a different shape entirely. Refusing it keeps those
-    // 9 printings on the loud ATTACK_EFFECT_SKIPPED path instead of silently
-    // resolving them as some arbitrary fixed number of flips.
+  it("refuses the STEPPED TWO-COIN GATE — this slice's own opening, a different consequent", () => {
+    // THE WITNESS MOVED, IT WAS NOT DELETED. This case stood on Growlithe sv01-030
+    // ("Flip a coin until you get tails. This attack does 30 damage for each
+    // heads.") as the UNBOUNDED opening this deriver refused — the shape D129 then
+    // built, and which is now read by the arm two patterns down (its own suite is
+    // untilTailsFlip.test.ts). The point the case was making, though, was never
+    // about unboundedness: it was that THE OPENING SENTENCE, not the tail, is what
+    // this regex matches on. So it is re-pointed at the closest live near-miss,
+    // which now comes from the other direction.
+    //
+    // Magikarp sv02-042 (+ its sv02-203 reprint, 2 printings) prints THIS SLICE'S
+    // LEADING SENTENCE VERBATIM — "Flip 2 coins." — and then a consequent this
+    // deriver does not read: an all-heads GATE on a flat "+20", not a per-heads
+    // fold. It is the mirror image of the old witness and a sharper test of the
+    // anchoring, because a reader that matched the opening and got sloppy about the
+    // tail would claim it and pay 20 per head on a card that pays 20 only for two.
+    const magikarp = "Flip 2 coins. If both of them are heads, this attack does 20 more damage.";
+    expect(deriveAttackCoinFlip(magikarp)).toBe(null);
+    // Its OPENING is Tandemaus's, word for word — so this is the consequent being
+    // refused, not the count.
+    expect(magikarp.startsWith("Flip 2 coins. ")).toBe(true);
+    expect(magikarp.startsWith(DOUBLE_HIT.slice(0, "Flip 2 coins. ".length))).toBe(true);
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. This attack does 30 damage for each heads."),
+    ).not.toBe(null);
+    // …and the sentence that used to hold this slot is now READ, by D129's unbounded
+    // arm, to this slice's OWN member over a flip count nothing bounds. Asserted
+    // rather than dropped: its consequent is still Tandemaus's word for word, which
+    // is exactly why the leading sentence had to be the thing telling them apart.
     const growlithe = "Flip a coin until you get tails. This attack does 30 damage for each heads.";
-    expect(deriveAttackCoinFlip(growlithe)).toBe(null);
-    // Its CONSEQUENT is Tandemaus's, word for word past the count — so this is the
-    // opening sentence being refused, not the tail.
     expect(growlithe.endsWith("This attack does 30 damage for each heads.")).toBe(true);
-    expect(deriveAttackCoinFlip("Flip 2 coins. This attack does 30 damage for each heads.")).not.toBe(
-      null,
-    );
+    expect(deriveAttackCoinFlip(growlithe)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "untilTails" },
+      per: 30,
+    });
+    // The `flips` TAG is the whole disjointness claim: a `printed` reading here would
+    // be a FIXED number of flips for a card whose count is a property of the faces.
+    expect(deriveAttackCoinFlip(growlithe)).not.toHaveProperty("flips.count");
+    expect(deriveAttackCoinFlip(growlithe)).not.toEqual(deriveAttackCoinFlip(DOUBLE_HIT));
   });
 
   it("hands the BOARD-COUNTED number of flips to D128's arm — never to this slice's printed one", () => {
@@ -1027,29 +1102,48 @@ describe("the fold order — the dropped base and the count land BEFORE Weakness
   });
 });
 
-describe("the D126 members are UNTOUCHED", () => {
-  it("still reads both one-flip sentences to their old shapes", () => {
+describe("the D126 members still read the D126 sentences", () => {
+  it("still reads both one-flip sentences to their own shapes", () => {
     // A widened union is the classic place to break a sibling: the new regex runs
     // BETWEEN the two old ones, so a pattern that was one character looser would
     // swallow a sentence that used to reach `ATTACK_COIN_CANCEL`. Both D126
     // sentences, verbatim, through the widened deriver.
-    expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does 10 more damage.")).toEqual({
-      kind: "bonusOnHeads",
-      per: 10,
-    });
+    //
+    // D129 WIDENED `bonusOnHeads` THE WAY D128 WIDENED `perHeads`, and this block
+    // used to claim the opposite ("neither acquired a `flips` field"). That claim
+    // was about D127's arm, and it still holds of D127's arm — what changed is that
+    // "Flip a coin until you get tails. This attack does 30 more damage for each
+    // heads." (Bouffalant sv03-174) is `bonusOnHeads`'s consequent over an unbounded
+    // count, so the member had to say WHERE its flip count comes from. `printed 1`
+    // is what these 20 printings always were implicitly; the consequent — base KEPT,
+    // `heads × per` folded pre-W/R — is untouched, which is what makes this a
+    // cardinality change and not a behavioural one.
+    expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does 10 more damage.")).toEqual(
+      { kind: "bonusOnHeads", flips: { kind: "printed", count: 1 }, per: 10 },
+    );
     expect(deriveAttackCoinFlip("Flip a coin. If tails, this attack does nothing.")).toEqual({
       kind: "cancelOnTails",
     });
-    // …and neither acquired a `flips` field on the way past the new arm. The two
-    // one-flip members are still one and two keys wide.
+    // `cancelOnTails` did NOT get one, and that asymmetry is deliberate: the member
+    // IS "flip once, then take the printed branch", and attack.ts spells its single
+    // flip as a local `ONE_FLIP` value rather than as a field nothing would vary.
     expect(
       Object.keys(
         deriveAttackCoinFlip("Flip a coin. If heads, this attack does 10 more damage.") ?? {},
       ).sort(),
-    ).toEqual(["kind", "per"]);
+    ).toEqual(["flips", "kind", "per"]);
     expect(
       Object.keys(deriveAttackCoinFlip("Flip a coin. If tails, this attack does nothing.") ?? {}),
     ).toEqual(["kind"]);
+    // …and D126's flip count is THIS SLICE'S constructor with a count of 1, not a
+    // fourth thing: one `AttackFlipCount` serves both members, which is the whole
+    // reason the union has stayed three members across four shapes.
+    expect(
+      deriveAttackCoinFlip("Flip a coin. If heads, this attack does 10 more damage."),
+    ).toHaveProperty("flips.kind", "printed");
+    expect(
+      deriveAttackCoinFlip("Flip a coin. If heads, this attack does 10 more damage."),
+    ).toHaveProperty("flips.count", 1);
   });
 
   it("still flips exactly ONCE for a cancelOnTails attack — the loop's `flips = 1` path", () => {

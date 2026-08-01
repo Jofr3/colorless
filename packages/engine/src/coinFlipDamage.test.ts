@@ -82,6 +82,24 @@ import {
 // the `^Flip a coin\.` literal for the multi-flip prints, and the CONSEQUENT for
 // the 16 "…is now Paralyzed." printings, which are the slice's only real
 // double-read risk because `deriveAttackEffect` already claims them.
+//
+// 0.79.0 → 0.80.0 (D129) TOUCHED THIS FILE IN EXACTLY ONE PLACE, and it is a
+// CARDINALITY change: `bonusOnHeads` gained a `flips: AttackFlipCount`, so these 20
+// printings now read `{ kind: "printed", count: 1 }` where they used to carry no
+// such field — which is what they always were implicitly. Nothing else about the
+// slice moved: same two regexes, same union members, same site, same fold, same
+// KEPT printed base. The reason for the widening is that "Flip a coin until you get
+// tails. This attack does 30 more damage for each heads." (Bouffalant sv03-174) is
+// THIS member's consequent over an unbounded count — only the SOURCE of the number
+// differs, which is D128's rule applied to the other member. The `ONE_FLIP` constant
+// below names the value once so the diff stayed mechanical.
+//
+// One witness in this file moved with it: the unbounded printing that stood as a
+// REFUSAL under "a DIFFERENT NUMBER OF FLIPS" is the sentence D129 mapped, so that
+// case is now held by Magikarp sv02-042 ("Flip 2 coins. If both of them are heads,
+// this attack does 20 more damage.") — a sharper witness for the same claim, since
+// its consequent is FIREBREATHING's word for word. A witness quietly deleted when
+// its subject gets built is a witness that was never load-bearing.
 
 /** Tarountula sv01-018 "Surprise Attack", verbatim, and pinned char-for-char
     against FIXTURE_POOL below. ELEVEN printings share it. Tarountula carries no
@@ -105,6 +123,19 @@ const PRINTED_BONUSES = [10, 20, 30, 50, 60, 80, 90] as const;
     cases below name it instead of carrying it — the mistake this guards against
     is exactly the mistake a literal would make in this file. */
 const NBSP = "\u00a0";
+
+/** The flip COUNT every printing in THIS slice carries, as the value D129 made it.
+    `bonusOnHeads` was `{ kind, per }` when D126 built it — one flip, implicitly —
+    and D129 WIDENED it to carry an `AttackFlipCount`, because "Flip a coin until
+    you get tails. This attack does 30 more damage for each heads." (Bouffalant
+    sv03-174) is the SAME consequent over an unbounded count. Only the SOURCE of the
+    number moved: these 20 printings still take exactly ONE flip, still KEEP their
+    printed base, and still fold `heads × per` at the same pre-W/R step. `printed 1`
+    is what they always were implicitly, now written down. Naming the value once,
+    here, is what keeps the widening a CARDINALITY change rather than a rewrite of
+    this file — every expectation below reads `flips: ONE_FLIP` and the slice's own
+    claims are untouched. */
+const ONE_FLIP = { kind: "printed", count: 1 } as const;
 
 /** UTF-8 byte length, counted off code points. Deliberately NOT
     `new TextEncoder().encode(s).length`: the engine package compiles with
@@ -280,11 +311,15 @@ describe("deriveAttackCoinFlip — two sentences, ZERO new vocabulary", () => {
     // reader built on literal sentences would need seven rows for this.
     for (const per of PRINTED_BONUSES) {
       const text = `Flip a coin. If heads, this attack does ${per} more damage.`;
-      expect(deriveAttackCoinFlip(text)).toEqual({ kind: "bonusOnHeads", per });
+      expect(deriveAttackCoinFlip(text)).toEqual({ kind: "bonusOnHeads", flips: ONE_FLIP, per });
     }
     // …and Litwick's own printing is the smallest of them, derived off the string
     // rather than off a rebuilt template.
-    expect(deriveAttackCoinFlip(FIREBREATHING)).toEqual({ kind: "bonusOnHeads", per: 10 });
+    expect(deriveAttackCoinFlip(FIREBREATHING)).toEqual({
+      kind: "bonusOnHeads",
+      flips: ONE_FLIP,
+      per: 10,
+    });
   });
 
   it("reads the cancel sentence as a BARE TAG", () => {
@@ -304,7 +339,7 @@ describe("deriveAttackCoinFlip — two sentences, ZERO new vocabulary", () => {
     ).toEqual({ kind: "cancelOnTails" });
     expect(
       deriveAttackCoinFlip(FIXTURE_POOL["sv03-036"]?.attacks?.[FLIP_INDEX]?.effect ?? ""),
-    ).toEqual({ kind: "bonusOnHeads", per: 10 });
+    ).toEqual({ kind: "bonusOnHeads", flips: ONE_FLIP, per: 10 });
   });
 
   it("buys ZERO NEW VOCABULARY — neither sentence reaches a clause table", () => {
@@ -321,14 +356,26 @@ describe("deriveAttackCoinFlip — two sentences, ZERO new vocabulary", () => {
     // The union's own shape says the same thing structurally: NO member of it
     // carries a `cond`, a `count`, or anything else that would have to be answered
     // off the board. A coin face is not a board fact.
+    //
+    // D129 ADDED A KEY HERE AND THE CLAIM IS UNCHANGED. `bonusOnHeads` now carries
+    // `flips` (the widening this file's ONE_FLIP names), and `{ kind: "printed",
+    // count: 1 }` is a LITERAL — it is answered by the sentence, not by the state,
+    // exactly like the `per` beside it. What the assertion is about is the ABSENCE
+    // of `cond` and `count`: those are the two field names the clause vocabulary and
+    // `DamageCountSource` use, and neither has ever appeared on this union. The key
+    // list is spelled out per member rather than loosened to "at least these", so a
+    // future field that DID have to be answered off the board would fail here.
     for (const text of [SURPRISE_ATTACK, FIREBREATHING]) {
       const flip = deriveAttackCoinFlip(text);
       if (flip === null) throw new Error("unreachable");
       expect(Object.keys(flip).sort()).toEqual(
-        flip.kind === "bonusOnHeads" ? ["kind", "per"] : ["kind"],
+        flip.kind === "bonusOnHeads" ? ["flips", "kind", "per"] : ["kind"],
       );
       expect(flip).not.toHaveProperty("cond");
       expect(flip).not.toHaveProperty("count");
+      // …and the added key is the PRINTED one, not a board read: no `energy` filter
+      // to resolve and no state to ask.
+      expect(flip).not.toHaveProperty("flips.energy");
     }
   });
 
@@ -426,13 +473,24 @@ describe("the rest of the coin family stays LOUD", () => {
   it("refuses a DIFFERENT NUMBER OF FLIPS — at the literal `^Flip a coin\\.`", () => {
     // Real printings whose mechanism is a MULTI-flip tally. Each is refused on the
     // opening sentence itself, which is the guard that matters: their consequents
-    // ("does N more damage for each heads") are close cousins of the mapped one,
-    // and a reader anchored only on the consequent would claim all three and flip
-    // exactly once for a card that prints two, three, or unboundedly many.
+    // are close cousins of the mapped one — one of them is this slice's consequent
+    // WORD FOR WORD — and a reader anchored only on the consequent would claim all
+    // three and flip exactly once for a card that prints two or three.
+    //
+    // THE WITNESS MOVED, IT WAS NOT DELETED. Bouffalant sv03-174 ("Flip a coin until
+    // you get tails. …30 more damage for each heads.") stood here as the unbounded
+    // tally until D129 mapped it, so its slot is now held by Magikarp sv02-042, which
+    // is a SHARPER witness for this case's actual claim: its consequent is
+    // FIREBREATHING's consequent verbatim ("this attack does 20 more damage."), only
+    // the number differs, and the sentence is still unmapped. If the `^Flip a coin\.`
+    // literal ever loosened, Magikarp is the first printing that would silently
+    // resolve as a ONE-flip bonus — paying out on a single head where the card
+    // demands two.
     for (const text of [
-      // Bouffalant sv03-174 — "until you get tails", an unbounded tally.
-      "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
-      // Melmetal swsh10.5-046 — TWO coins.
+      // Magikarp sv02-042 (+ its sv02-203 reprint) — TWO coins gating D126's own
+      // consequent, and the closest live near-miss this slice has.
+      "Flip 2 coins. If both of them are heads, this attack does 20 more damage.",
+      // Melmetal swsh10.5-046 — TWO coins, folded per heads.
       "Flip 2 coins. This attack does 90 more damage for each heads.",
       // Bisharp sv03-149 — THREE coins with a stepped payout table.
       "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.",
@@ -440,6 +498,23 @@ describe("the rest of the coin family stays LOUD", () => {
       expect(deriveAttackCoinFlip(text)).toBeNull();
       expect(text.startsWith("Flip a coin. ")).toBe(false); // the opening sentence differs
     }
+    // Magikarp's tail really IS this slice's consequent, so the null above is the
+    // OPENING doing the work and not the consequent.
+    expect(
+      "Flip 2 coins. If both of them are heads, this attack does 20 more damage.".endsWith(
+        "this attack does 20 more damage.",
+      ),
+    ).toBe(true);
+    expect(FIREBREATHING.endsWith("this attack does 10 more damage.")).toBe(true);
+    // …and the sentence that used to sit here is now READ, by D129's unbounded arm,
+    // to the same member this slice owns over a different flip count. Stated here
+    // rather than dropped: a witness quietly deleted when its subject gets built is a
+    // witness that was never load-bearing. (Its own suite is untilTailsFlip.test.ts.)
+    expect(
+      deriveAttackCoinFlip(
+        "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
+      ),
+    ).toEqual({ kind: "bonusOnHeads", flips: { kind: "untilTails" }, per: 30 });
   });
 
   it("refuses the PARALYSIS flip — the slice's ONLY real double-read risk", () => {
@@ -506,6 +581,7 @@ describe("constructed near-misses stay LOUD", () => {
     // …while the smallest REAL value one digit away is read fine.
     expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does 1 more damage.")).toEqual({
       kind: "bonusOnHeads",
+      flips: ONE_FLIP,
       per: 1,
     });
   });
@@ -513,7 +589,11 @@ describe("constructed near-misses stay LOUD", () => {
   it("refuses whitespace and apostrophe drift", () => {
     // A TRAILING SPACE survives `trim()` by design (the deriver trims), so this
     // pair states which drift is tolerated and which is not.
-    expect(deriveAttackCoinFlip(`${FIREBREATHING} `)).toEqual({ kind: "bonusOnHeads", per: 10 });
+    expect(deriveAttackCoinFlip(`${FIREBREATHING} `)).toEqual({
+      kind: "bonusOnHeads",
+      flips: ONE_FLIP,
+      per: 10,
+    });
     expect(deriveAttackCoinFlip(` ${SURPRISE_ATTACK}`)).toEqual({ kind: "cancelOnTails" });
     // An INTERIOR double space is not trimmable and is refused.
     expect(
@@ -827,7 +907,11 @@ describe("purity", () => {
       mustApply(tarountula, { type: "attack", seat: "p1", index: FLIP_INDEX });
     }
     // …and the DERIVER is a pure function of its string, frozen board or not.
-    expect(deriveAttackCoinFlip(FIREBREATHING)).toEqual({ kind: "bonusOnHeads", per: 10 });
+    expect(deriveAttackCoinFlip(FIREBREATHING)).toEqual({
+      kind: "bonusOnHeads",
+      flips: ONE_FLIP,
+      per: 10,
+    });
     expect(deriveAttackCoinFlip(SURPRISE_ATTACK)).toEqual({ kind: "cancelOnTails" });
   });
 });

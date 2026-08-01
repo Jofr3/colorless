@@ -6269,17 +6269,147 @@ flips") was **re-pointed, not deleted** — it now pins the disjointness of the 
 churn. ⚠️ The repo's real pre-existing `biome format` flagged count is **89**, not
 the 57 D113 recorded — it has grown with the repo, so re-measure rather than quoting.
 
-### Still unmapped in the coin family after this slice
+### Still unmapped in the coin family after D128
 
 One shape, refused at the leading sentence: **`Flip a coin until you get tails.`** —
-9 printings, an UNBOUNDED fold with no bound from the text *or* the board (see the
-provenance table above). Two sub-shapes: the multiply form (`…tails. This attack does
-D damage for each heads.` — Growlithe `sv01-030`, Rellor `sv02-026`, Forretress
-`sv01-139`, Chansey `sv01-144`), now a three-line change on D127's loop plus the
-termination question, and a repeated EFFECT (`…tails. For each heads, <effect>.` —
-Masquerain `sv03-007`, Krookodile `sv01-117`, Gyarados `swsh10.5-022`), which is a
-program, not a fold. Plus Bouffalant `sv03-174`'s `more` variant (base `50+`, so it
-keeps its printed base — the ADDITIVE unbounded form, and its only printing).
+an UNBOUNDED fold with no bound from the text *or* the board (see the provenance table
+above). D129 took its damaging half; see below.
+
+The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
+Slither Wing `sv06.5-026`) and their four loud witnesses are untouched by that slice.
+
+## P3-M5 — the UNBOUNDED FOLD (D129, engine 0.80.0)
+
+`Flip a coin until you get tails. This attack does D [more] damage for each heads.` —
+**5 damaging printings on TWO regexes**, and with it the coin family's damaging shapes
+are complete at **61 printings across five shapes, zero clause-table rows and zero
+`BoardCondition` members**.
+
+### The census (local D1, 2026-08-01)
+
+809 cards carry attacks; **136 printings / 63 distinct clauses** open with "Flip".
+**8** say "until you get tails":
+
+| id | card | attack | printed damage | reading |
+|---|---|---|---|---|
+| `sv01-030` | Growlithe | Relentless Flames | `30×` | `perHeads` / `untilTails` |
+| `sv02-026` | Rellor | Ball Roll | `30×` | `perHeads` / `untilTails` |
+| `sv01-139` | Forretress | Continuous Spin | `50×` | `perHeads` / `untilTails` |
+| `sv01-144` | Chansey | Egg Rolling | `60×` | `perHeads` / `untilTails` |
+| `sv03-174` | Bouffalant | Damage Rush | `50+` | **`bonusOnHeads`** / `untilTails` |
+| `sv01-117` | Krookodile | Chomp Chomp Bite | 50 | ✗ repeated `EffectOp` |
+| `swsh10.5-022` | Gyarados | Wreak Havoc | — | ✗ repeated `EffectOp` |
+| `sv03-007` | Masquerain | Panic-Prompting Pattern | — | ✗ repeated `EffectOp` |
+
+⚠️ The pre-D129 planning note said **9**; the D1 says 8. Re-census, do not quote.
+
+### The flip count is neither the text nor the board — it is the FACES
+
+`AttackFlipCount` now has three members, and the third is the first that is **not a
+number at any point**:
+
+| member | count known at | bounded by |
+|---|---|---|
+| `printed` (D127) | derivation | `MAX_PRINTED_FLIPS`, an ingested-text refusal |
+| `attachedEnergy` (D128) | the flip site | the deck that built the board |
+| `untilTails` (D129) | **only once the coin is drawn** | the RNG — see below |
+
+So D128's `flipCount` (a reader returning a COUNT for a `for` loop) could not express
+it without flipping to find out how many times to flip. It became **`takeFlips`,
+returning the SEQUENCE OF FACES** for all three members. The flip site has **no
+per-member branch at all** — it announces one `ATTACK_EFFECT_COIN_FLIP` row per face
+and tallies the heads, identically for every shape.
+
+### ⚠️ The termination argument — a MEASUREMENT, not a ceiling and not a probability
+
+This is the slice's real content and the rule to carry.
+
+- A **refusal ceiling** (`MAX_PRINTED_FLIPS`) answers *"is this row malformed?"*. There
+  is no malformed row here: the sentence is legal and fully specified.
+- A **truncating cap chosen by feel** would silently lie about the game rather than
+  loudly skip it — the opposite of what this engine does with everything it can't do.
+- So the bound is owed to whatever **produces the values** (D128's provenance rule,
+  third application). `MAX_UNTIL_TAILS_FLIPS = 64` lives in `rng.ts` beside `flipCoin`.
+
+**Why 64 is provably unreachable.** mulberry32's pre-states advance by a fixed **odd**
+stride (`state + 0x6d2b79f5`), so successive flips walk `n·K mod 2³²` and visit every
+int32 exactly once. The face sequence is therefore **one closed cycle** whose worst
+case is *computable*. Scanned over all **4 294 967 296** steps, plus the wrap (the
+cycle ends `…HH` and begins `H…`, so no run straddles the seam):
+
+> **THE LONGEST RUN OF CONSECUTIVE HEADS IS 31.**
+
+64 is twice that. The cap cannot fire from any seed; every sequence ends in tails; the
+guard is dead code by construction, which is what a guard of this kind should be. **To
+re-derive after touching `nextU32`:** scan `n·K` for n in [0, 2³²) and take the longest
+heads run — ~40 seconds of arithmetic in Bun, and it is an exact answer, not a bound.
+
+**The cap is a PARAMETER, not a read of the constant.** `flipUntilTails(state, cap)`
+takes its ceiling so the truncation branch stays reachable in a test at cap 1 and 2 —
+a bound set above what the RNG can produce can never be observed by a test that only
+drives the engine. And it returns **faces, not a count**, precisely so a caller can
+detect a truncated sequence (all heads, no trailing tails).
+
+### ⚠️ One flip count, BOTH damage members — the proof D126's split was load-bearing
+
+4 printings are `D×` (`perHeads`, printed base **dropped**); Bouffalant is `50+`
+(`bonusOnHeads`, printed base **kept**). Same opening sentence, two consequents, told
+apart by the single word **"more"** — the same word that separates the whole additive
+scaling family from the multiply one, and the same near-miss D127's regex was written
+to refuse *by name*.
+
+So **`bonusOnHeads` grew the same `flips` field D128 gave `perHeads`** (its D126
+printings now derive `{ kind: "printed", count: 1 }` — what they always were
+implicitly): only the SOURCE of the number moved, so D128's widen-don't-add rule
+applies unchanged. **The union has stayed three members across four shapes** because
+the flip COUNT and the flip CONSEQUENT are independent axes; a member per pair would
+be six members and five copies of one fold.
+
+### The suite
+
+`untilTailsFlip.test.ts` (**39**) on a new `UNTIL_TAILS_FLIP_DECK` — both Actives are
+`fix-titan` (340 HP, no Weakness) so no seed run ends in a KO and truncates an
+assertion. It sweeps **32** seeds, asserts every announced sequence **ends in tails**,
+recomputes each board's `rngState` against `flipUntilTails` itself with ±1 probes, and
+pins the two members apart on ONE seed: first-flip-tails gives Bouffalant **50** damage
+and Growlithe **nothing at all**. The termination block unit-tests `flipUntilTails`
+directly — observable truncation at cap 1 and cap 2 with exact step accounting, the
+`cap <= 0` no-op, face-for-face agreement with repeated `flipCoin`, the measured
+constant (`=== 64`, `> 31`) with its re-derivation recipe, and a 400 000-state window
+scan (labelled a *window*, not a proof).
+
+⚠️ **An unbounded fold's outcome space is a GEOMETRIC TAIL.** 24 seeds reach heads
+counts {0, 1, 3, 5} and **never 2** — so the coverage case asserts a **superset**
+(contains 0, 1, 2 at SEEDS=32) rather than the exact set D127 and D128 could assert.
+Do not copy their exact-set idiom into an unbounded shape.
+
+Two loud-skip witnesses were **re-pointed, not deleted** (the family's standing rule):
+`multiCoinFlip.test.ts`'s "two live *more* printings" keeps **Melmetal `swsh10.5-046`**
+and promotes Bouffalant to a positive assertion; its "refuses the UNBOUNDED opening"
+case moved from Growlithe to **Magikarp `sv02-042`**.
+
+`bun run check` GREEN exit 0: **171 → 172 files, 2671 → 2710 tests**.
+
+### Still unmapped in the coin family after D129
+
+- **`Flip 2 coins. This attack does 90 more damage for each heads.`** — Melmetal
+  `swsh10.5-046` (`30+`), now the pool's ONLY unmapped printed-count ADDITIVE fold.
+  Every part of it exists (`bonusOnHeads` carries `flips`, `takeFlips` answers
+  `printed`, the member keeps the base), so it is one regex + one deriver arm. It is
+  refused because it is **1 printing** — D121's warrant is unmet — and because it is a
+  live witness. Mapping it is defensible; re-point the witnesses first.
+- **`…tails. For each heads, <effect>.`** — Krookodile / Gyarados / Masquerain. A
+  PROGRAM, not a fold: it runs an `EffectOp` N times, and D125's placement rule puts
+  ops at `attack.ts`'s TAIL while the flips are taken in FRONT of §8.5, so the flip
+  result must be **carried across the pipeline** — which nothing does today. That carry
+  is the slice's content. `takeFlips` already returns the faces, so the flipping half
+  is done. ⚠️ Its census is bigger than 3: Wugtrio `sv01-057` prints the PRINTED-count
+  version (`Flip 3 coins. For each heads, …`) and Oinkologne `sv03-184` reads a heads
+  COUNT into an op (`Put a number of cards up to the number of heads …`). Re-census
+  `For each heads` and `number of heads` before assuming one slice.
+- The multi-consequent long tail (Floette `sv01-092`, Dragonite ex `sv03-159`, Bisharp
+  `sv03-149`, Magikarp `sv02-042`, Spiritomb `sv01-129`, Squawkabilly `sv01-162`) —
+  refused by `$` and untouched by D126–D129.
 
 The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
 Slither Wing `sv06.5-026`) and their four loud witnesses are untouched by this slice.

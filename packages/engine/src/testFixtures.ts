@@ -387,7 +387,18 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
   /** Bouffalant — a Colorless Basic whose registry entry carries the passive
-      "Bouffer" (takes 20 less damage after Weakness/Resistance). */
+      "Bouffer" (takes 20 less damage after Weakness/Resistance).
+
+      D129 GAVE "Damage Rush" ITS PRINTED EFFECT TEXT, which it had gone without
+      while every suite using this card used it as a DEFENDER (the passive is what
+      those cases read; nothing declared its attack). The sentence is the UNBOUNDED
+      FOLD's only ADDITIVE printing — "Flip a coin until you get tails. This attack
+      does 30 more damage for each heads." against a "50+" marker — and it is the
+      card that pins `bonusOnHeads` and `perHeads` apart on ONE flip count: the
+      printed 50 is KEPT and the fold rides on top, where Growlithe's "30×" base is
+      dropped. The attack text is verbatim off the local D1 (2026-08-01); the Ability
+      text stays the ellipsis it has always been, because the registry keys "Bouffer"
+      on the card id and nothing derives that string. */
   "sv03-174": battler("sv03-174", {
     name: "Bouffalant",
     types: ["Colorless"],
@@ -395,7 +406,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 2,
     weaknesses: [{ type: "Fighting", value: "×2" }],
     abilities: [{ type: "Ability", name: "Bouffer", effect: "This Pokémon takes 20 less damage…" }],
-    attacks: [{ cost: ["Colorless", "Colorless"], name: "Damage Rush", damage: "50+" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Damage Rush",
+        effect: "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
+        damage: "50+",
+      },
+    ],
   }),
 
   /** Cacnea / Cacturne — Grass bodies whose registry entry carries the passive
@@ -3593,6 +3611,151 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Growlithe sv01-030 — the UNBOUNDED FOLD's MULTIPLY form (D129), and the
+      cheapest board in the family: ONE {R} pays "Relentless Flames", so the only
+      thing varying across a seed sweep is the flip sequence itself. Verbatim off the
+      local D1 (2026-08-01): 70 HP, Fire, Basic, retreat 2, ×2 Water, no Resistance,
+      no Ability, exactly one attack, rarity Common / mark G.
+
+      "30×" is the load-bearing field TWICE over, exactly as it is for D127's and
+      D128's printings: its digits ARE the per-heads amount, so `scaledBase` must
+      DROP the printed base (a two-heads Growlithe deals 60, not 30 + 60), and its
+      "×" is the modifier `modifierSimulated` has to claim. Three of the pool's other
+      four unbounded damaging printings are the same sentence with a different number
+      (Rellor sv02-026 also 30, Forretress sv01-139 50, Chansey sv01-144 60), which
+      is what makes this a SHAPE rather than a row. */
+  "sv01-030": battler("sv01-030", {
+    name: "Growlithe",
+    types: ["Fire"],
+    hp: 70,
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Relentless Flames",
+        effect: "Flip a coin until you get tails. This attack does 30 damage for each heads.",
+        damage: "30×",
+      },
+    ],
+  }),
+  /** Chansey sv01-144 — the SECOND multiply printing of the same sentence, with the
+      family's LARGEST per (60). It is here for the reason D127 fielded two cards:
+      one printing cannot tell a `per` READ off the regex from a hardcoded 30, and
+      60 ≠ 30 makes every damage assertion in the suite a claim about the capture.
+      Verbatim off the local D1: 110 HP, Colorless, Basic, retreat 2, ×2 Fighting,
+      TWO attacks — a flat "Pound" ({C}{C}, 40) at index 0 and "Egg Rolling"
+      ({C}{C}{C}, 60×) at index 1, which is also the suite's control for "the coin
+      reader is keyed to the TEXT of the attack declared, not to the card". */
+  "sv01-144": battler("sv01-144", {
+    name: "Chansey",
+    types: ["Colorless"],
+    hp: 110,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Pound", damage: 40 },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Egg Rolling",
+        effect: "Flip a coin until you get tails. This attack does 60 damage for each heads.",
+        damage: "60×",
+      },
+    ],
+  }),
+  /** Rellor sv02-026 — D129's multiply form, THIRD printing, and the one that makes
+      the shape a shape: its effect sentence is BYTE-IDENTICAL to Growlithe's (same
+      30, same everything), on a card of a different type, cost and set. D121's
+      warrant for a parameterised reading rather than a row is "two printings with
+      one token varying", and this pair does not even vary the token.
+
+      DERIVER-ONLY, and deliberately not in any deck: a board case would re-run
+      Growlithe's arithmetic on the same number and prove nothing the deriver has not
+      already said. Same call perEnergyFlip.test.ts makes for Ambipom. Verbatim off
+      the local D1: 50 HP, Grass, Basic, retreat 1, ×2 Fire, one attack, {C}{C}. */
+  "sv02-026": battler("sv02-026", {
+    name: "Rellor",
+    types: ["Grass"],
+    hp: 50,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Ball Roll",
+        effect: "Flip a coin until you get tails. This attack does 30 damage for each heads.",
+        damage: "30×",
+      },
+    ],
+  }),
+  /** Forretress sv01-139 — D129's multiply form, FOURTH printing, at the family's
+      middle per (50). DERIVER-ONLY for Rellor's reason. Verbatim off the local D1:
+      120 HP, Metal, Stage 1 from Pineco, retreat 3, ×2 Fire, −30 Grass Resistance
+      (the family's only printing with one), two attacks — "Continuous Spin" ({M},
+      50×) at index 0 and a flat "Rolling Shell" at index 1. */
+  "sv01-139": battler("sv01-139", {
+    name: "Forretress",
+    stage: "Stage1",
+    evolveFrom: "Pineco",
+    types: ["Metal"],
+    hp: 120,
+    retreat: 3,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    resistances: [{ type: "Grass", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Metal"],
+        name: "Continuous Spin",
+        effect: "Flip a coin until you get tails. This attack does 50 damage for each heads.",
+        damage: "50×",
+      },
+      {
+        cost: ["Metal", "Colorless", "Colorless"],
+        name: "Rolling Shell",
+        effect:
+          "During your opponent's next turn, this Pokémon takes 50 less damage from attacks (after applying Weakness and Resistance).",
+        damage: 90,
+      },
+    ],
+  }),
+  /** Gyarados swsh10.5-022 — one of the THREE "Flip a coin until you get tails. For
+      each heads, <effect>." printings D129 deliberately did NOT build (the others are
+      Krookodile sv01-117 and Masquerain sv03-007). It shares D129's leading sentence
+      VERBATIM and differs only in the consequent: it repeats an EffectOp per heads
+      rather than folding a number, which is a different mechanism at a different site
+      — so it stays on the loud ATTACK_EFFECT_SKIPPED path, and this fixture is what
+      lets a suite assert that END TO END rather than by deriving a null.
+
+      "Wreak Havoc" is the load-bearing one: a {C} cost (paid by the same fix-energy
+      line as Bouffalant's) and NO printed damage at all, so a declaration produces an
+      ATTACK_EFFECT_SKIPPED carrying the effect text, a null damageModifier, and ZERO
+      coin rows — the unmapped shape does not even take the flip. Verbatim off the
+      local D1: 170 HP, Water, Stage 1 from Magikarp, retreat 3, ×2 Lightning, −30
+      Grass Resistance. */
+  "swsh10.5-022": battler("swsh10.5-022", {
+    name: "Gyarados",
+    stage: "Stage1",
+    evolveFrom: "Magikarp",
+    types: ["Water"],
+    hp: 170,
+    retreat: 3,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    resistances: [{ type: "Grass", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Wreak Havoc",
+        effect:
+          "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.",
+      },
+      {
+        cost: ["Water", "Water", "Colorless", "Colorless"],
+        name: "Wild Splash",
+        effect: "Discard the top 5 cards of your deck.",
+        damage: 230,
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -5059,6 +5222,61 @@ export const PER_ENERGY_FLIP_DECK = deckOf({
   "fix-special": 3, // an UNAUTHORED Special — Colorless by fallback, typed by nothing
   "fix-pokemon-v-weak": 2, // 210 HP, ×2 FIRE — the pre-Weakness fold defender for Torkoal
   "fix-titan": 18, // 340 HP neutral Basic — the pinned Active on both sides, and it survives 270
+});
+
+/** 0.79.0 → 0.80.0: the UNBOUNDED FOLD (D129) — "Flip a coin until you get tails.
+    This attack does D [more] damage for each heads." Growlithe sv01-030 "Relentless
+    Flames" ({R}, 30×) and Chansey sv01-144 "Egg Rolling" ({C}{C}{C}, 60×) are the
+    MULTIPLY form (printed base DROPPED); Bouffalant sv03-174 "Damage Rush"
+    ({C}{C}, 50+) is the pool's only ADDITIVE one (printed base KEPT).
+
+    A DEDICATED deck, for MULTI_COIN_FLIP_DECK's reason and one sharper one: this is
+    the only suite in the family whose FLIP COUNT IS UNBOUNDED, so its sweep cannot
+    be reasoned about from a deck shared with a suite that flips a fixed number of
+    times. Every seed here draws a different-length sequence, and the outcome
+    coverage the cases assert (0, 1 and 2 heads all seen) is measured on THIS deck.
+
+    THREE CARDS BECAUSE THE SLICE HAS TWO MEMBERS AND ONE CAPTURE. Bouffalant against
+    either multiply printing is what pins `bonusOnHeads` apart from `perHeads` on the
+    same flip count — 50 + 30 × heads against 30 × heads, which differ at EVERY
+    outcome including zero heads (50 against nothing at all). Growlithe against
+    Chansey is what pins `per` as CAPTURED rather than assumed: 30 ≠ 60 off one
+    regex, and their totals share only 0.
+
+    fix-titan (340 HP, no Weakness, no Resistance, no attacks) is the pinned Active on
+    BOTH sides, as it is for PER_ENERGY_FLIP_DECK and for the same reason doubled: an
+    unbounded sequence has no printed maximum, so the defender is chosen against the
+    measured worst case of the sweep rather than against an arithmetic one. 340 HP
+    survives 5 heads of Chansey's 60 (300) and 9 heads of Bouffalant's 50 + 30 × n
+    (320), well past anything the swept seeds produce — no seed may end on a Knock Out
+    and park the turn on a promotion, or the sequence assertions would be truncated.
+
+    THE ENERGY LINES ARE COST PAYMENT AND NOTHING ELSE. No sentence in this slice
+    reads the board at all — the flip count is a property of the FACES — so
+    fix-fire-energy is there only to pay Relentless Flames' single {R} and fix-energy
+    only to pay Damage Rush's {C}{C}, Egg Rolling's {C}{C}{C} and Wreak Havoc's {C}.
+    That is the whole difference from D128's deck, where which Energy was attached
+    WAS the case.
+
+    swsh10.5-022 (Gyarados) IS THE UNMAPPED WITNESS, fielded rather than merely
+    derived: "Flip a coin until you get tails. For each heads, discard the top 2 cards
+    of your opponent's deck." is D129's leading sentence with a consequent D129
+    deliberately did not build, and it must still reach ATTACK_EFFECT_SKIPPED and take
+    NO flip at all. A null out of the deriver says the first half; only a declared
+    attack says the second.
+
+    Rellor sv02-026 and Forretress sv01-139 — the slice's other two multiply printings
+    — are in FIXTURE_POOL but NOT in this deck: a board case on either would re-run
+    Growlithe's or Chansey's arithmetic on a number the deriver has already captured.
+    Same call perEnergyFlip.test.ts makes for Ambipom. */
+export const UNTIL_TAILS_FLIP_DECK = deckOf({
+  "sv01-030": 4, // Growlithe — "Relentless Flames" (30×) at index 0: perHeads, untilTails, per 30
+  "sv01-144": 4, // Chansey — "Egg Rolling" (60×) at index 1: perHeads, untilTails, per 60
+  "sv03-174": 4, // Bouffalant — "Damage Rush" (50+) at index 0: bonusOnHeads, untilTails, per 30
+  "swsh10.5-022": 4, // Gyarados — "Wreak Havoc": D129's leading sentence, UNMAPPED consequent (LOUD)
+  "fix-fire-energy": 6, // Basic {R} — pays Relentless Flames' single symbol
+  "fix-energy": 8, // Basic {C} — pays Damage Rush's {C}{C}, Egg Rolling's {C}{C}{C} and Wreak Havoc's {C}
+  "fix-titan": 30, // 340 HP neutral Basic — the pinned Active on both sides, and no total here KOs it
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

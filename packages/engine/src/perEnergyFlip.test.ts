@@ -862,14 +862,24 @@ describe("deriver disjointness — a fourth SHAPE that crosses none of the other
     expect(CONCENTRATED_FIRE).toContain("for each {R} Energy attached to this Pokémon.");
   });
 
-  it("leaves the three existing AttackCoinFlip members exactly as they were", () => {
+  it("leaves the other AttackCoinFlip readings exactly where they were", () => {
     // A widened field is the classic place to break a sibling: the new arm runs
     // BETWEEN the multi-flip one and the cancel test, so a pattern one character
     // looser would swallow a sentence that used to reach one of them, and a `flips`
     // that changed shape would show up on D127's member first.
+    //
+    // D129 THEN WIDENED THE OTHER MEMBER THE SAME WAY, which is why the first
+    // expectation below carries a `flips` this case originally asserted was ABSENT.
+    // `bonusOnHeads` had to say where its flip count comes from once "Flip a coin
+    // until you get tails. This attack does 30 more damage for each heads."
+    // (Bouffalant sv03-174) turned up as its consequent over an unbounded count —
+    // D128's own rule, applied to the other member. `printed 1` is what D126's 20
+    // printings always were implicitly, and their CONSEQUENT (base kept, `heads ×
+    // per` folded pre-W/R) is untouched.
     expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does 10 more damage.")).toEqual(
       {
         kind: "bonusOnHeads",
+        flips: { kind: "printed", count: 1 },
         per: 10,
       },
     );
@@ -885,23 +895,51 @@ describe("deriver disjointness — a fourth SHAPE that crosses none of the other
     expect(
       deriveAttackCoinFlip("Flip 3 coins. This attack does 20 damage for each heads."),
     ).toEqual({ kind: "perHeads", flips: { kind: "printed", count: 3 }, per: 20 });
-    // …and the two one-flip members did NOT acquire a `flips` field on the way past
-    // the new arm.
+    // `cancelOnTails` did NOT acquire one, and the asymmetry is deliberate: that
+    // member IS "flip once, then take the printed branch", so attack.ts spells its
+    // single flip as a local value rather than as a field nothing would vary.
     expect(
       Object.keys(
         deriveAttackCoinFlip("Flip a coin. If heads, this attack does 10 more damage.") ?? {},
       ).sort(),
-    ).toEqual(["kind", "per"]);
+    ).toEqual(["flips", "kind", "per"]);
     expect(
       Object.keys(deriveAttackCoinFlip("Flip a coin. If tails, this attack does nothing.") ?? {}),
     ).toEqual(["kind"]);
-    // The UNBOUNDED opening is STILL unbuilt, and is the family's last unmapped shape
-    // (Growlithe sv01-030 and 8 more). It shares this slice's "Flip a coin" opening
-    // and this slice's consequent, so it is the one sentence the new regex could most
-    // plausibly have swallowed.
+    // THE UNBOUNDED OPENING IS THE SHAPE D129 BUILT, and this slice's arm runs BEFORE
+    // both of its regexes — so "the board-counted arm must not swallow it" is a live
+    // claim, not a historical one, and the `flips` TAG is what states it. This case
+    // used to pin the same two sentences as REFUSED; the witness is RE-POINTED at the
+    // shape they now read to rather than deleted, because a witness dropped when its
+    // subject gets built is a witness that was never load-bearing. (Their own suite
+    // is untilTailsFlip.test.ts.)
+    for (const [text, expected] of [
+      [
+        "Flip a coin until you get tails. This attack does 30 damage for each heads.",
+        { kind: "perHeads", flips: { kind: "untilTails" }, per: 30 },
+      ],
+      [
+        "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
+        { kind: "bonusOnHeads", flips: { kind: "untilTails" }, per: 30 },
+      ],
+    ] as const) {
+      expect(deriveAttackCoinFlip(text)).toEqual(expected);
+      // NOT this slice's constructor: `attachedEnergy` would mean a count read off a
+      // board that has nothing to say about it, and would flip once per attached
+      // Energy on a card whose count is a property of the FACES.
+      expect(deriveAttackCoinFlip(text)).not.toHaveProperty("flips.energy");
+      expect(deriveAttackCoinFlip(text)).toHaveProperty("flips.kind", "untilTails");
+    }
+    // AND THE FAMILY'S LAST UNMAPPED FLIP SENTENCES STILL DERIVE NULL — the three
+    // "For each heads, <effect>." printings (Krookodile sv01-117, Gyarados
+    // swsh10.5-022, Masquerain sv03-007). They share D129's leading sentence VERBATIM
+    // and differ only in the consequent, which makes them the sentences the two new
+    // arms could most plausibly have swallowed on their way past this one. They fold
+    // no number at all — they run an EffectOp per heads — so they stay on the loud
+    // ATTACK_EFFECT_SKIPPED path.
     expect(
       deriveAttackCoinFlip(
-        "Flip a coin until you get tails. This attack does 30 damage for each heads.",
+        "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
       ),
     ).toBe(null);
   });

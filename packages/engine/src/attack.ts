@@ -44,7 +44,8 @@ import {
 } from "./flow";
 import { attackerPreWRBonus, conditionHolds, runProgram } from "./interpreter";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
+import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS } from "./rng";
+import type { CoinFace } from "./rng";
 import { damagedByAttackAbility } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
@@ -142,27 +143,56 @@ function scaledAttackDamage(
   }
 }
 
-/** How many times a `perHeads` attack flips (D128): its printed N, or the Energy
-    the board says is attached to the attacker. The coin family's ONLY board read,
-    and deliberately not a `DamageCountSource` arm — `scaledAttackDamage` answers
-    "how much damage per unit of a board resource" and folds into `scaled`, where
-    this answers "how many faces to draw" and folds into nothing at all. Sharing a
-    fold between the two would mean the flips could reach `scaled`.
+/** One flip-count member's worth of faces, IN ORDER, plus the advanced rngState
+    (D128, reshaped by D129). Deliberately not a `DamageCountSource` arm —
+    `scaledAttackDamage` answers "how much damage per unit of a board resource"
+    and folds into `scaled`, where this answers "which faces came up" and folds
+    into nothing at all. Sharing a fold between the two would mean the flips could
+    reach `scaled`.
+
+    D129 — THIS RETURNS FACES, NOT A COUNT, and that is the whole shape change.
+    D128's `flipCount` computed a number and handed it to a `for` loop, which is
+    the only reading `printed` and `attachedEnergy` admit; `untilTails` has NO
+    such number — its count is a property of the faces and is known only once they
+    are drawn, so asking "how many times?" first would mean flipping to find out
+    how many times to flip. Returning the sequence answers all three members with
+    one signature and leaves the caller's job (announce each face, count the heads)
+    identical for every one of them.
 
     `attacker` is the Active as of declaration and exists only as the unreachable
     branch's answer: the count is read off `state` at the flip site, and the Active
     can't be missing there (the attack gate required it and every path that removes
     one returns first), so the fallback keeps the arm total rather than covering a
     case. Same shape `scaledAttackDamage`'s `opponentActiveRetreatCost` arm uses. */
-function flipCount(
+function takeFlips(
   state: GameState,
   attackerSeat: Seat,
   attacker: InPlayPokemon,
   count: AttackFlipCount,
-): number {
-  if (count.kind === "printed") return count.count;
-  return countAttachedEnergy(state, state.players[attackerSeat].active ?? attacker, count.energy);
+): [faces: CoinFace[], nextState: number] {
+  // The unbounded arm's bound lives with the RNG that produces the faces, not
+  // here — see MAX_UNTIL_TAILS_FLIPS. It cannot fire with the current flipCoin.
+  if (count.kind === "untilTails") return flipUntilTails(state.rngState, MAX_UNTIL_TAILS_FLIPS);
+  const flips =
+    count.kind === "printed"
+      ? count.count
+      : countAttachedEnergy(state, state.players[attackerSeat].active ?? attacker, count.energy);
+  const faces: CoinFace[] = [];
+  let rng = state.rngState;
+  for (let flip = 0; flip < flips; flip += 1) {
+    const [face, next] = flipCoin(rng);
+    faces.push(face);
+    rng = next;
+  }
+  return [faces, rng];
 }
+
+/** `cancelOnTails` takes exactly one flip and carries no `flips` field to say so
+    — the member IS "flip once, then take the printed branch". Spelling that one
+    flip as a value rather than a `? 1 :` branch keeps every coin printing on the
+    single `takeFlips` path, so the event rows and the rngState accounting are
+    written once for the whole family. */
+const ONE_FLIP: AttackFlipCount = { kind: "printed", count: 1 };
 
 /** §8 — declare one attack with the Active Pokémon; resolving it ends the
     turn through the staged tail. The cost is a CHECK, not a payment (§8.2):
@@ -465,14 +495,38 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // printing in the pool can reach it (all three carry a cost floor of at least
   // one Energy, and Torkoal's `{R}` cost is itself the `{R}` its filter counts),
   // so the branch is defensive and its test is a constructed fixture.
+  //
+  // D129 — AND IT CAN BE UNBOUNDED. "Flip a coin until you get tails." (5 damaging
+  // printings) is the same site again, and the ONLY thing it changes about this
+  // block is that the faces are drawn before they are counted rather than after.
+  // `takeFlips` now returns the SEQUENCE for every member, so this loop announces
+  // rows and tallies heads identically whether the count came from the text, the
+  // board, or the faces themselves — there is no `untilTails` branch here at all,
+  // which is the point.
+  //
+  // BOTH DAMAGE MEMBERS ARE REACHED BY IT, and that is the shape's one surprise:
+  // 4 of the 5 printings are "D×" multiply (`perHeads`, base dropped) and
+  // Bouffalant sv03-174 is "50+" additive (`bonusOnHeads`, base kept). The flip
+  // COUNT and the printed BASE are independent, so widening `bonusOnHeads` with
+  // the same `flips` field costs one field and no new arithmetic — the fold below
+  // was already shared.
+  //
+  // THE TERMINATION ARGUMENT IS NOT A CEILING and does not live here: nothing in
+  // the text or the board bounds this count, so a refusal (D127's answer for a
+  // malformed printed N) would refuse a LEGAL sentence, and a truncating cap
+  // chosen by feel would silently lie about the game. It is answered where the
+  // faces come from — `MAX_UNTIL_TAILS_FLIPS` in rng.ts is set above the longest
+  // heads run that EXISTS anywhere in mulberry32's full 2³² cycle (measured: 31),
+  // so it cannot fire from any seed and the sequence always ends in tails.
   let coinBonus = 0;
   if (coinFlip !== null) {
-    const flips =
-      coinFlip.kind === "perHeads" ? flipCount(next, action.seat, active, coinFlip.flips) : 1;
+    const [faces, rngState] =
+      coinFlip.kind === "cancelOnTails"
+        ? takeFlips(next, action.seat, active, ONE_FLIP)
+        : takeFlips(next, action.seat, active, coinFlip.flips);
+    next = { ...next, rngState };
     let heads = 0;
-    for (let flip = 0; flip < flips; flip += 1) {
-      const [face, rngState] = flipCoin(next.rngState);
-      next = { ...next, rngState };
+    for (const face of faces) {
       events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
       if (face === "heads") heads += 1;
     }
