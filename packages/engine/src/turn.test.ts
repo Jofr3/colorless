@@ -247,7 +247,10 @@ describe("retreat", () => {
       discardEnergy: [energy],
       promoteBenchIndex: 0,
     });
-    expect(next.players.p1.active).toEqual(promoted);
+    // The promoted Pokémon arrives UNCHANGED except for the one thing a retreat
+    // is: it moved up from the Bench on this turn (D124's `promotedTurn`).
+    expect(next.players.p1.active).toEqual({ ...promoted, promotedTurn: state.turn });
+    expect(promoted.promotedTurn).toBeNull();
     // The retreater sits at the end of the (dense) bench, cost discarded.
     expect(next.players.p1.bench.at(-1)?.stack).toEqual(retreater.stack);
     expect(next.players.p1.bench.at(-1)?.energy).toEqual([]);

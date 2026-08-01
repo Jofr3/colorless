@@ -486,7 +486,10 @@ describe("promotion (§8.1)", () => {
       uid: chosen === undefined ? "?" : topUid(chosen),
       benchIndex: 1,
     });
-    expect(done.players.p2.active).toEqual(chosen);
+    // Unchanged but for the §8.1 move itself: the replacement is stamped with
+    // the turn it came up on (D124's `promotedTurn`), which is the ATTACKER's
+    // turn — so it reads "did not move this turn" once p2's own turn starts.
+    expect(done.players.p2.active).toEqual({ ...chosen, promotedTurn: state.turn });
     expect(done.players.p2.bench).toEqual([remaining]);
     expect(types(events)).toEqual([
       "POKEMON_PROMOTED",

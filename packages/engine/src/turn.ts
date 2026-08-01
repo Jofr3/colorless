@@ -427,7 +427,13 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     benched,
   ];
   const next: GameState = {
-    ...withSide(state, action.seat, { ...paid.side, active: promoted, bench }),
+    ...withSide(state, action.seat, {
+      ...paid.side,
+      // The Pokémon remembers WHEN it came in from the Bench (types.ts
+      // `promotedTurn`) — a retreat is the deliberate half of that move.
+      active: { ...promoted, promotedTurn: state.turn },
+      bench,
+    }),
     allowances: { ...state.allowances, retreated: true },
   };
   const events: GameEvent[] = [

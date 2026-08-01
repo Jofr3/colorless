@@ -105,8 +105,17 @@ export interface MatchRecord {
     `GameOverReason` and left this at 1 on purpose: a record written before it
     holds only the older reasons, which this build still understands, so live
     matches survive the deploy. The test is always "could the PREVIOUS deploy's
-    record be misread by THIS one", not "did any type change". */
-export const MATCH_RECORD_VERSION = 1;
+    record be misread by THIS one", not "did any type change".
+
+    1 → 2 (engine 0.75.0, D124): `InPlayPokemon` gained a REQUIRED `promotedTurn`
+    field. Every in-play Pokémon in a record written by the previous deploy lacks
+    it entirely — a missing required field, not a widened enum, so the embedded
+    `GameState` is one this build cannot claim to have written. It would in fact
+    read back benignly (`undefined === state.turn` is false, i.e. "did not move
+    this turn"), and that is exactly the trap this version exists to refuse: the
+    rule is "could the previous deploy's record be misread", and a silently
+    defaulted rules-relevant field is the misreading the doc above names. */
+export const MATCH_RECORD_VERSION = 2;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

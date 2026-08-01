@@ -922,7 +922,68 @@ import type { GameState, Seat } from "./types";
     wire field or fold change; no continuous.ts diff; no web/API/DB/
     `@luminous/schema` diff. The note ROUND-TRIPS to the printed clause byte for
     byte — the family's first that drops nothing at all. */
-export const engineVersion = "0.74.0";
+/** 0.75.0 — P3-M5: the PROMOTED-THIS-TURN clause (D124). `BoardCondition` gains
+    `yourActivePromotedThisTurn`, mapping "If this Pokémon moved from your Bench to
+    the Active Spot this turn, this attack does N more damage." — Revavroom ex
+    sv06.5-015/-081 "Accelerator Flash" (20+, +120) and Golisopod swsh10.5-026
+    "First Impression" (20+, +90). THREE printings on ONE literal row, the best
+    ratio in the family and the only row here that is not one or two prints. The
+    table goes 18 → 19 literal rows + 2 templates, covering 23 of the pool's 26
+    distinct clauses / 41 of its 43 printings. THREE CLAUSES REMAIN, and none of
+    them is cheap (see progress.md's resume point).
+
+    ONE ROW AND NOT A TEMPLATE even though the pool prints two different amounts:
+    the amount is captured by the OUTER skeleton, so the clause itself is
+    byte-identical across all three printings and there is nothing inside it to
+    parameterise. D118's rule, read from the other end.
+
+    THIS IS THE FIRST CLAUSE IN THE FAMILY THAT BUYS NEW STATE. D123 got its turn
+    event free by reading a rule-enforcement flag; that shortcut is spent, because
+    no rule caps how often a Pokémon may move up. The fact is per-Pokémon AND
+    per-turn at once and nothing on the model held it — `turnPlayed` records when
+    the CARD entered play, `markers` is a write-only string bag never read in
+    production, and `TurnAllowances` is per-SEAT. So `InPlayPokemon` gained
+    `promotedTurn: number | null` (types.ts).
+
+    A TURN STAMP, NOT A FLAG — the decision the whole slice turns on, and it pays
+    three times. (1) NO TURN-BOUNDARY CLEAR: `promotedTurn === state.turn` expires
+    by arithmetic, so `startTurn` needs no walk over in-play Pokémon (it has none
+    today) and no future slice can forget to reset it. (2) NO SEAT GUARD, the exact
+    inverse of D123 and the generalisation to carry: **D123's guard was owed to
+    seat-AMBIGUOUS STATE (`allowances` is one bag owned by the turn's owner), not
+    to the words "this turn".** A fact stamped on a Pokémon is unambiguous — the
+    Pokémon knows whose it is — so the predicate is total over seats, consumers and
+    phases. (3) §8.1 FALLS OUT FREE: a Knock Out promotion runs during the
+    OPPONENT's turn and stamps THEIR turn number, which can never equal
+    `state.turn` once the controller's own turn begins.
+
+    ALL THREE bench→Active routes stamp it and all three COUNT, because the printed
+    verb is "moved", not "retreated": `retreat` (turn.ts), `switchInto`
+    (interpreter.ts — Switch/Escape Rope, Boss's Orders, and Jet Energy's on-attach
+    switch) and `resolvePromotion` after a KO (flow.ts). Setup placement is not a
+    route (a card from the hand never came from the Bench), so `makeInPlay` stamps
+    `null`. It SURVIVES EVOLUTION: `placeEvolution` spreads the Pokémon and clears
+    only conditions/`retreatBlocked`/`markers`, and §10 sheds the effects of
+    ATTACKS — having moved is a fact about the turn, not an effect on the card.
+
+    The negative twin stays LOUD and is NOT a near-miss of this row: Palafin
+    sv03-062/-200 "Justice Kick" prints "If this Pokémon didn't move from the Bench
+    to the Active Spot this turn, this attack does nothing." — a different
+    CONSEQUENT (the outer anchor refuses it before the table is consulted), a
+    different verb form, and no possessive on "the Bench". Same state underneath; a
+    `conditionGate`-shaped slice whenever someone wants it. Weavile sv02-134's
+    "Assaulting Hunt" reads the same transition as a `when` TRIGGER, not a per-turn
+    query, and is a different mechanism again.
+
+    Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 literal
+    table row, 1 NEW `InPlayPokemon` field, 3 one-line stamp sites, 0 registry rows.
+    No new op, event, error code, wire field or fold change; no continuous.ts diff;
+    no web/API/`@luminous/schema` diff. `redact.ts` allow-lists what crosses the
+    wire, so the field is invisible to clients by construction. **MATCH_RECORD_VERSION
+    1 → 2** (apps/api/src/lobby/match.ts): a record written by the previous deploy
+    has in-play Pokémon with NO `promotedTurn` at all, which is a MISSING REQUIRED
+    FIELD, not a widening — the one case that doc block says must bump. */
+export const engineVersion = "0.75.0";
 
 export type {
   ApplyResult,

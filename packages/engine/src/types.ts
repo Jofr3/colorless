@@ -92,6 +92,26 @@ export interface InPlayPokemon {
       turn it came into play", §10) reads this — the separate "no evolving on
       your own first turn" rule is a turn/firstPlayer check, not this field. */
   turnPlayed: number;
+  /** The turn this Pokémon last moved from the BENCH into the Active Spot, or
+      `null` if it never has (it was placed Active at setup, or has only ever
+      been Benched). Distinct from `turnPlayed`, which records when the CARD
+      entered play, not when the Pokémon changed zone.
+
+      It is a turn STAMP, not a flag, and that is the whole design: "moved to
+      the Active Spot **this turn**" is `promotedTurn === state.turn`, so the
+      fact expires by arithmetic and there is no turn-boundary clear to forget.
+      It also needs no seat/ownership proof (contrast `allowances`, which is a
+      single bag owned by whoever's turn it is — D123): the stamp is on the
+      Pokémon, which already knows whose it is, and the turn counter is global,
+      so a KO-promotion made during the OPPONENT's turn reads FALSE on the
+      controller's next turn without anyone asking who moved it.
+
+      Written by every bench→Active route: `retreat` and `switchInto`
+      (Switch/Escape Rope, Boss's Orders, Jet Energy) in turn.ts/interpreter.ts,
+      and `resolvePromotion` after a Knock Out in flow.ts. Survives evolution —
+      `placeEvolution` spreads it through, because evolving does not un-move a
+      Pokémon (§10 sheds the effects of ATTACKS, and this is neither). */
+  promotedTurn: number | null;
 }
 
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
@@ -104,6 +124,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     retreatBlocked: false,
     markers: [],
     turnPlayed,
+    // Never moved: a card entering play arrives from the HAND (or a deck
+    // search), never from the Bench. The three bench→Active routes stamp it.
+    promotedTurn: null,
   };
 }
 

@@ -261,6 +261,9 @@ describe("placement", () => {
       retreatBlocked: false,
       markers: [],
       turnPlayed: 0,
+      // Placed Active from the HAND, which is not a move from the Bench — the
+      // one in-play Pokémon that never gets a `promotedTurn` stamp (D124).
+      promotedTurn: null,
     });
   });
 

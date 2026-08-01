@@ -245,25 +245,32 @@ describe("deriveAttackDamageBonus — the anchor guards (everything else stays L
       "Draw a card. If you have a Stadium in play, this attack does 80 more damage.",
       // A printed 0 adds nothing — the guard every arm in this family carries.
       "If you have a Stadium in play, this attack does 0 more damage.",
-      // A well-formed sentence whose CLAUSE is not in the table: Revavroom ex
-      // sv06.5-015 "Accelerator Flash", three printings (sv06.5-015, sv06.5-081, and
-      // Golisopod swsh10.5-026 at 90). Until it is mapped it stays LOUD rather
-      // than silently scoring its bonus at 0. (This is the FOURTH occupant of
-      // this slot: the witness was Venoshock's "is Poisoned" until D116 mapped
-      // that clause, then Ceruledge's "ex or V" until D117, then Greedent's
-      // Pokémon Tool until D122, then Pikachu's Supporter clause until D123. If
-      // you map this one too, re-point the witness again rather than deleting the
-      // case — it is the only thing pinning the fall-through.)
+      // A well-formed sentence whose CLAUSE is not in the table: Lokix sv02-021
+      // "Assaulting Kick" (30+), one printing. Until it is mapped it stays LOUD rather than
+      // silently scoring its bonus at 0. (This is the FIFTH occupant of this
+      // slot: the witness was Venoshock's "is Poisoned" until D116 mapped that
+      // clause, then Ceruledge's "ex or V" until D117, then Greedent's Pokémon
+      // Tool until D122, then Pikachu's Supporter clause until D123, then
+      // Revavroom ex's "moved from your Bench" until D124. If you map this one
+      // too, re-point the witness again rather than deleting the case — it is the
+      // only thing pinning the fall-through.)
       //
-      // THIS OCCUPANT IS SAFE FOR THE REASON THE LAST ONE TURNED OUT NOT TO BE.
-      // Pikachu's clause looked like it needed new per-turn state and did not —
-      // §7.2's one-Supporter cap was already on `allowances.supporterPlayed`, so a
-      // single table row mapped it out from under this case. This clause needs
-      // state NOTHING on the model carries in any form: "moved from your Bench to
-      // the Active Spot this turn" is PER-POKÉMON and PER-TURN at once, and no
-      // field on `InPlayPokemon`, `TurnAllowances` or `PlayerSide` records where a
-      // Pokémon was earlier in the turn. No one-row extension can reach it.
-      "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 120 more damage.",
+      // THE OCCUPANT IS NOW SHARED with clauseTable.test.ts, and that is a fact
+      // about the POOL, not a slip: only THREE unmapped clauses are left in 978
+      // cards (this one, Lucario sv01-114's cross-turn KO clause, and Slither
+      // Wing sv06.5-026's, which is blocked on an ingest change), against four
+      // suites that each need a witness. energyClause/energyInPlay already share
+      // one for the same reason.
+      //
+      // WHY THIS OCCUPANT IS HARD TO MAP OUT FROM UNDER, in the terms D124's
+      // predecessors kept getting wrong: it is not one fact but TWO — "evolved"
+      // AND "from Nymble" — and the name half is OPEN-vocabulary, so D120's
+      // precondition forbids a template and D119's corollary forbids calling it a
+      // single varying token. It needs its own state (an evolved-this-turn stamp,
+      // which D124's `promotedTurn` is deliberately NOT: evolving is not moving)
+      // plus a name comparison against the pre-evolution card. No one-row
+      // extension can reach it.
+      "If this Pokémon evolved from Nymble during this turn, this attack does 100 more damage.",
     ]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }

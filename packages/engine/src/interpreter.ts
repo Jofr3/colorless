@@ -1245,6 +1245,30 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // BOTH seats: "during this turn" is vacuous between turns, which is the
       // intended reading.
       return phaseViewOf(state, seat).activeSeat === seat && state.allowances.supporterPlayed;
+    case "yourActivePromotedThisTurn": {
+      // D116's pronoun rule: "this Pokémon" was resolved to your Active by the
+      // clause table, so this arm only has to ask the Active when it moved up.
+      //
+      // AND THIS ONE TAKES NO SEAT GUARD — the deliberate inverse of the arm
+      // directly above, and the reason worth writing down. D123's guard was NOT
+      // owed to the words "this turn"; it was owed to `allowances` being a
+      // SINGLE bag belonging to whoever owns the turn, i.e. to seat-AMBIGUOUS
+      // state. `promotedTurn` is stamped on the Pokémon, which already knows
+      // whose it is, and `state.turn` is a global counter, so the comparison is
+      // total: it is true exactly when THIS Pokémon moved during the turn now in
+      // progress, for any `seat`, from any consumer, in any phase.
+      //
+      // That totality is also what gets §8.1 right for free. A Knock Out
+      // promotion runs during the OPPONENT's turn and stamps THEIR turn number,
+      // so it can never equal `state.turn` once the controller's own turn has
+      // begun — the replacement Pokémon did not "move up this turn", and nothing
+      // had to be cleared to say so. Between turns (a checkup-origin ko:* park)
+      // the counter has not yet advanced, so a promotion made in the turn just
+      // played still reads TRUE for the player who made it: correct, since that
+      // turn is the one it moved in.
+      const active = state.players[seat].active;
+      return active !== null && active.promotedTurn === state.turn;
+    }
   }
 }
 
@@ -1330,6 +1354,12 @@ export function conditionNote(cond: BoardCondition): string {
       // seat-relative predicate means), no timing word to drop and no card-face
       // glyph to spell out. The printed sentence, verbatim.
       return "you played a Supporter card from your hand during this turn";
+    case "yourActivePromotedThisTurn":
+      // Back to a resolved pronoun (D116): the printed subject is "this
+      // Pokémon", which for a note read off the board by a person has to become
+      // "your Active Pokémon". Everything after it is the printed sentence, the
+      // possessive on "your Bench" included.
+      return "your Active Pokémon moved from your Bench to the Active Spot this turn";
   }
 }
 
@@ -2369,7 +2399,13 @@ export function switchInto(
   if (cleared.length > 0) {
     events.push({ type: "STATUS_CLEARED", seat, uid: wasActive, statuses: cleared, reason: "benched" });
   }
-  return withSide(state, seat, { ...side, active: incoming, bench });
+  // Stamp the move (types.ts `promotedTurn`). This is the FORCED half of
+  // bench→Active and it covers three provenances at once — Switch/Escape Rope
+  // on your own board, Boss's Orders on the opponent's, and Jet Energy's
+  // on-attach switch — because all three land here. A Pokémon dragged out by
+  // the opponent really did move to the Active Spot on THAT turn; the stamp is
+  // a turn number, so it simply fails to match the controller's next turn.
+  return withSide(state, seat, { ...side, active: { ...incoming, promotedTurn: state.turn }, bench });
 }
 
 /** Heal from the controller's own in-play `ref`: `amount` HP, or all of its

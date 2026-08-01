@@ -5552,3 +5552,186 @@ clause left as well as the safest witness.
    not at all.
 4. `your opponent has any Future Pokémon in play` — 1 (Slither Wing `sv06.5-026`
    +120). **Blocked on a P1 INGEST change**, not engine work.
+
+## D124 — the PROMOTED-THIS-TURN clause (engine 0.75.0)
+
+Revavroom ex `sv06.5-015`/`-081` "Accelerator Flash" (20+, **+120**) and Golisopod
+`swsh10.5-026` "First Impression" (20+, **+90**) SIMULATE:
+*"If this Pokémon moved from your Bench to the Active Spot this turn, this attack
+does N more damage."* — **3 printings / 2 cards / 1 clause on ZERO registry rows**,
+the best printings-per-clause ratio in the whole family. The table goes **18 → 19
+literal rows + 2 templates, 23 of 26 distinct clauses / 41 of 43 printings.**
+
+### One row, not a template — D118's rule read from the other end
+The pool prints this at **two** amounts (120 and 90), which looks like exactly the
+variation D118 built templates for. It is not. The amount is captured by the
+**OUTER** skeleton (`this attack does (\d+) more damage`), so the clause string
+itself is **byte-identical** across all three printings. Nothing varies *inside*
+the clause; there is nothing to parameterise. The suite pins this by deriving both
+real printed sentences and asserting the **same `cond`** at **different `per`**.
+
+### This is the family's FIRST slice that buys new state
+D123 got its turn event free by reading a rule-enforcement flag
+(`allowances.supporterPlayed`), and its lesson was "check the rule-enforcement
+flags before costing a per-turn clause as new state". **That shortcut is now
+spent** — no rule caps how often a Pokémon may move up, so there was no
+bookkeeping to borrow. The fact is **per-Pokémon AND per-turn at once**, and
+nothing on the model held it:
+
+- `turnPlayed` records when the **CARD entered play**, not when the Pokémon
+  changed zone (and `placeEvolution` re-stamps it, so it is actively wrong here).
+- `markers: string[]` is **never read in production** — a write-only bag. Using it
+  would have been a stringly-typed channel with no compile-time reader.
+- `TurnAllowances` is per-**SEAT**, not per-Pokémon.
+
+So `InPlayPokemon` gained `promotedTurn: number | null` (types.ts).
+
+### The decision: a TURN STAMP, not a flag
+`promotedTurn` holds the turn number the Pokémon last came up from the Bench;
+the predicate is `active.promotedTurn === state.turn`. It pays three times:
+
+1. **No turn-boundary clear.** The fact expires by arithmetic. `startTurn` has no
+   loop over in-play Pokémon today, and a boolean would have forced one — plus a
+   permanent invitation for a later slice to forget it.
+2. **No seat guard**, the exact inverse of D123 — see below.
+3. **§8.1 falls out free.** A KO promotion runs during the OPPONENT's turn and
+   stamps THEIR turn number, which can never equal `state.turn` once the
+   controller's own turn begins. Without this, every KO would hand the defender a
+   free +120 on its next attack.
+
+### THE GENERALISATION: D123's seat guard was owed to seat-AMBIGUOUS STATE, not to "this turn"
+D123 concluded *"a state field scoped to the TURN is a fact about the TURN OWNER;
+a seat-relative predicate over it must first prove the seat owns the turn."* That
+is **too broad, and this slice is the counter-example.** The real reason
+`youPlayedSupporterThisTurn` needs `phaseViewOf(state, seat).activeSeat === seat`
+is that `state.allowances` is a **single bag** describing whoever owns the current
+turn — the *state* is seat-ambiguous. The words "this turn" had nothing to do with
+it.
+
+`promotedTurn` is stamped **on the Pokémon**, and a Pokémon already knows whose it
+is. `state.turn` is a global counter. So the predicate is **total**: true exactly
+when *this* Pokémon moved during the turn now in progress, for any `seat`, from
+any consumer, in any phase. The suite proves it on ONE board where the seat
+answering TRUE is **not the turn owner** (P1 plays Boss's Orders and drags a P2
+Revavroom up; `conditionHolds(state, "p2")` is true while P1 owns the turn), and a
+mirror board so neither answer is a constant.
+
+**Corrected rule: ask where the state LIVES, not what its lifetime is. A fact on a
+shared/turn-owned structure owes an ownership proof; a fact stamped on an object
+that already has an owner does not.**
+
+### All three bench→Active routes stamp it, and all three COUNT
+The printed verb is **"moved"**, not "retreated", so every route is a move:
+
+| route | site | note |
+|---|---|---|
+| `retreat` | turn.ts | the deliberate half |
+| `switchInto` | interpreter.ts | **three** provenances at once: Switch/Escape Rope (`switchOwn`), Boss's Orders (`gust`, on the OPPONENT's board), and Jet Energy's on-attach switch (turn.ts `attachEnergy`) |
+| `resolvePromotion` | flow.ts | after a Knock Out — almost always the opponent's turn |
+
+Setup placement (`setupPlaceActive`) is **not** a route: a card arriving from the
+hand never came from the Bench, so `makeInPlay` stamps `null`.
+
+**Jet Energy is what makes this a real card**, not a retreat-only trick — and it is
+the reason the stamp lives in `switchInto` rather than at each of its three
+callers.
+
+### It SURVIVES evolution
+`placeEvolution` spreads the whole Pokémon and clears only `conditions`,
+`retreatBlocked` and `markers`. §10 sheds the effects of **ATTACKS**; having moved
+is a fact about the turn, not an effect on the card. So retreating a Varoom in and
+evolving it into Revavroom ex the **same turn** leaves the clause armed — which is
+both the printed reading and the only line on which the card is actually good. The
+suite drives this end to end with the real `sv06.5-043` Varoom.
+
+### MATCH_RECORD_VERSION 1 → 2
+A record written by the previous deploy has in-play Pokémon with **no
+`promotedTurn` at all** — a **missing required field, not a widening**, which is
+the one case that constant's own doc block says must bump. Note *why* it is not
+optional to skip: it would read back **benignly** (`undefined === state.turn` is
+false, i.e. "did not move this turn"), and a silently-defaulted rules-relevant
+field is precisely the misreading the version exists to refuse. `redact.ts`
+allow-lists what crosses the wire, so nothing else moved: no wire field, no
+`@luminous/schema` diff, no web/API diff beyond the constant.
+
+### Census facts (local D1, 2026-08-01, 978 cards, whole effect string)
+- `Active Spot this turn` — exactly **5** cards (the 3 positive printings + 2
+  Palafin). `moved from` — exactly **3** (the positive printings).
+- **Zero U+2019 in the entire pool.** Only two non-ASCII characters exist
+  anywhere: `é` U+00E9 (always in "Pokémon") and `×` U+00D7 (always in weakness
+  values). The clause string is 101 code points / 102 UTF-8 bytes — one `é`.
+- Data oddity, faithfully mirrored in the fixture: Revavroom ex's `types_json` is
+  `["Lightning"]` while both attack costs are `Metal` (weakness Fighting, which is
+  consistent with Lightning). The fixture matches the **ingest**, not intuition.
+
+### Two near-misses, and neither is a table near-miss
+- **Palafin `sv03-062`/`-200` "Justice Kick"**: *"If this Pokémon **didn't move
+  from the Bench** to the Active Spot this turn, this attack **does nothing**."*
+  A different **consequent**, so the OUTER anchor refuses it before the table is
+  ever consulted; also a different verb form and no possessive on "the Bench".
+  Same state underneath — a **`conditionGate`-shaped** slice, cheap now that
+  `promotedTurn` exists, but not a row on this skeleton.
+- **Weavile `sv02-134` "Assaulting Hunt"** reads the same transition as a
+  present-tense **`when` TRIGGER** (*"when this Pokémon moves from your Bench to
+  the Active Spot, you may…"*), not a per-turn query. A different mechanism.
+
+### Fixtures + suite
+New `FIXTURE_POOL` rows: `sv06.5-015` Revavroom ex, `swsh10.5-026` Golisopod,
+`sv06.5-043` Varoom (the pre-evolution, for the evolution-survival case) and one
+synthetic `fix-lightning-weak-big` (320 HP, ×2 Lightning) — sized so the §8.5
+fold-order pair ((20+120)×2 = **280** vs 20×2 = 40) never KOs, because a KO would
+park a *second* `promotedTurn` stamp into the middle of the arithmetic.
+`sv06.5-081` is deliberately **not** a fixture (byte-identical to `-015`); it
+appears only in comments and in the ZERO-registry-rows assertion. Wimpod
+`swsh10.5-025` was already in the pool from D114.
+
+`PROMOTED_CLAUSE_DECK` (60): 4 Revavroom ex / 3 Varoom / 3 Golisopod / 4 Boss's
+Orders / 3 Switch / 5 {M} / 3 {W} / 5 {C} / 3 fix-lightning-weak-big / 27
+fix-bigbody. **2 copies of Boss's Orders was not enough** — at seed 11 both landed
+outside the dealt deck; 4 is the working count. Revavroom ex is a Stage 1 and can
+never open, but both Actives are still pinned to `fix-bigbody` on the sibling
+suites' precedent.
+
+`promotedClause.test.ts` (**34 tests**) adds a block the siblings do not have —
+**`promotedTurn` — the state itself** — because this is the first slice in the
+family with state to test: null on every Pokémon that never came from the Bench,
+each of the three routes driven through a **real action**, and the evolution
+survival case.
+
+### A harness fact worth knowing
+**`promote` resolves the promotion AND rolls the turn over in the same
+`applyAction`.** There is no reachable state where a freshly KO-promoted Pokémon
+can be observed with the turn counter still the attacker's. The suite asserts the
+arithmetic instead (stamp `=== 2` from the park state's own `turn`, `done.turn ===
+3`, `conditionHolds(done, "p2")` false) and then drives P2's Revavroom attacking
+on its own turn for the printed 20. The "still true between turns" reading is
+covered separately by crafting `ko:takePrizes` / `ko:promote` phases onto a Boss's
+Orders board and showing the answer does **not** move — the direct contrast with
+`youPlayedSupporterThisTurn`, which flips to false for both seats there.
+
+### The loud-witness bookkeeping
+`conditionalDamage.test.ts`'s "unmapped stays LOUD" witness moved to occupant
+**#5**, Lokix `sv02-021` — **now SHARED with `clauseTable.test.ts`**. That sharing
+is a fact about the pool, not a slip: only **three** unmapped clauses remain in 978
+cards against **four** suites that each need a witness (`energyClause` /
+`energyInPlay` already share one). Lokix is a safe occupant for a reason no
+predecessor had: it is **two** facts (evolved + *from Nymble*) and the name half is
+open-vocabulary, so D120 forbids a template and D119 forbids calling it one varying
+token.
+
+### Still unmapped after this slice (22 → 23 of 26 clauses mapped)
+
+1. `this Pokémon evolved from Nymble during this turn` — 1 (Lokix `sv02-021`
+   +100). Two facts: evolved-this-turn plus the NAME evolved from, readable off
+   the stack (§1.2). ⚠️ `turnPlayed` does **not** answer the first half cleanly —
+   `placeEvolution` re-stamps it, so it says "evolved this turn" *and* "was played
+   this turn" with no way to tell them apart on a Pokémon that was benched this
+   turn and evolved later. Open vocabulary on the name → literal row, never a
+   template (D120). **`promotedTurn` is NOT reusable here: evolving is not
+   moving**, and the two facts have deliberately separate stamps.
+2. `any of your {F} Pokémon were Knocked Out by damage from an attack during your
+   opponent's last turn` — 1 (Lucario `sv01-114` +120). Cross-turn, type-filtered,
+   and must distinguish a KO by attack damage from any other KO route. Last, or
+   not at all.
+3. `your opponent has any Future Pokémon in play` — 1 (Slither Wing `sv06.5-026`
+   +120). **Blocked on a P1 INGEST change**, not engine work.

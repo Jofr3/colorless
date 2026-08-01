@@ -467,7 +467,54 @@ export type BoardCondition =
       Whether a Supporter has been played this turn is PUBLIC — the card went from
       a hand to a face-up discard pile and the §7.2 cap is common knowledge — so
       the union's public-state invariant holds. */
-  | { kind: "youPlayedSupporterThisTurn" };
+  | { kind: "youPlayedSupporterThisTurn" }
+  /** §8.1/§11 — YOUR Active Pokémon moved up from the BENCH during the current
+      turn: Revavroom ex sv06.5-015/-081 "Accelerator Flash" (20+, +120) and
+      Golisopod swsh10.5-026 "First Impression" (20+, +90), whose printed clause
+      is "If this Pokémon moved from your Bench to the Active Spot this turn".
+      THREE printings on one clause — the best printings-per-clause ratio left in
+      the family when it was built, and the whole per-turn cluster's anchor.
+
+      THE SECOND MEMBER TO READ A TURN EVENT (after `youPlayedSupporterThisTurn`)
+      and the FIRST to need state that did not exist. It is per-Pokémon AND
+      per-turn at once, which nothing on the model recorded: `turnPlayed` says
+      when the CARD entered play, `markers` is a write-only string bag, and
+      `TurnAllowances` is per-SEAT. So `InPlayPokemon` gained `promotedTurn:
+      number | null` (types.ts).
+
+      A TURN STAMP, NOT A FLAG, and that choice pays for itself three times.
+      (1) There is no turn-boundary clear to write or to forget — `promotedTurn
+      === state.turn` expires by arithmetic, and `startTurn` has no loop over
+      in-play Pokémon to add one to. (2) It needs NO seat guard, which is the
+      exact inverse of `youPlayedSupporterThisTurn` and the point worth carrying:
+      D123's clause needed `activeSeat === seat` because `allowances` is a single
+      bag owned by whoever's turn it is, so the STATE was seat-ambiguous — "this
+      turn" was never the problem. A fact stamped on a Pokémon is not ambiguous;
+      the Pokémon already knows whose it is. (3) It gets the KO case right for
+      free: a promotion after a Knock Out happens during the OPPONENT's turn, so
+      it stamps THEIR turn number and reads FALSE the instant the controller's
+      own turn starts — which is the printed reading (§8.1's replacement is not
+      the attacker's "moved up this turn").
+
+      All three bench→Active routes stamp it and all three COUNT: a `retreat`
+      (turn.ts), a forced `switchInto` (interpreter.ts — Switch/Escape Rope,
+      Boss's Orders, and Jet Energy's on-attach switch), and `resolvePromotion`
+      after a KO (flow.ts). Jet Energy is the one that makes this a real deck: the
+      printed clause does not say "if you retreated", it says "moved", and every
+      route is a move. Setup placement is NOT one — a card arriving from the hand
+      never came from the Bench, so `makeInPlay` stamps `null`.
+
+      SURVIVES EVOLUTION. `placeEvolution` spreads the whole Pokémon and clears
+      only `conditions`, `retreatBlocked` and `markers` — the §10 rule is that
+      evolving sheds the effects of ATTACKS, and having moved is a fact about the
+      turn, not an effect on the card. So retreating a Varoom in and evolving it
+      into Revavroom ex the same turn leaves the clause armed, which is both the
+      printed reading and the only line on which this card is actually good.
+
+      Where a Pokémon has been is PUBLIC — every one of those moves is announced
+      (RETREATED / POKEMON_SWITCHED / POKEMON_PROMOTED) and happens face-up on the
+      table — so the union's public-state invariant holds. */
+  | { kind: "yourActivePromotedThisTurn" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1638,8 +1685,11 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     "toString", …) and hand back something that is not a `BoardCondition` at all.
     A Map has no inherited keys.
 
-    SEVENTEEN entries which, with the two patterns below them, cover 21 of the
-    pool's 26 distinct clauses / 37 of its 43 printings. The first two reuse
+    NINETEEN entries which, with the two patterns below them, cover 23 of the
+    pool's 26 distinct clauses / 41 of its 43 printings (the count moves with the
+    table — it was 17/21/37 at D122 and is re-stated by each slice that adds a
+    row, most recently D124's promoted-this-turn clause, which is the only row
+    here carrying THREE printings). The first two reuse
     `BoardCondition` members that ALREADY existed — built in the 2026-07-21
     board-condition slice (D40) for Falkner's `conditionGate` and Fighting Au
     Lait's play gate — which makes this family the vocabulary's FOURTH consumer
@@ -1803,6 +1853,27 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "you played a Supporter card from your hand during this turn",
     { kind: "youPlayedSupporterThisTurn" },
+  ],
+  // Revavroom ex sv06.5-015/-081 "Accelerator Flash" (20+, +120) and Golisopod
+  // swsh10.5-026 "First Impression" (20+, +90) — THREE printings on ONE row.
+  // D116's pronoun rule: "this Pokémon" is the attacker, which for a damage
+  // bonus is the reader's Active, so the member is named for the board fact.
+  //
+  // ONE ROW AND NOT A TEMPLATE, even though the pool prints it at two different
+  // amounts: the amount is captured by the OUTER skeleton ("this attack does
+  // (\d+) more damage"), so the clause itself is byte-identical across all
+  // three printings. Nothing varies inside the clause; there is nothing to
+  // parameterise (D118's rule read from the other end).
+  //
+  // The NEGATIVE twin stays LOUD and is not a near-miss of this row: Palafin
+  // sv03-062/-200 "Justice Kick" prints "If this Pokémon didn't move from the
+  // Bench to the Active Spot this turn, this attack does nothing." — a different
+  // CONSEQUENT (so the outer anchor refuses it before this table is consulted),
+  // a different verb form, and "the Bench" without the possessive. Same state
+  // underneath; a `conditionGate`-shaped slice, not a row here.
+  [
+    "this Pokémon moved from your Bench to the Active Spot this turn",
+    { kind: "yourActivePromotedThisTurn" },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE

@@ -316,7 +316,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
   ),
-  "sv01-194": trainerCard("sv01-194", "Item", "Switch your Active Pokémon with 1 of your Benched Pokémon."),
+  "sv01-194": trainerCard(
+    "sv01-194",
+    "Item",
+    "Switch your Active Pokémon with 1 of your Benched Pokémon.",
+  ),
   "sv01-188": trainerCard("sv01-188", "Item", "Heal 30 damage from 1 of your Pokémon."),
   "sv01-184": trainerCard(
     "sv01-184",
@@ -356,7 +360,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 220,
     retreat: 2,
     weaknesses: [{ type: "Metal", value: "×2" }],
-    abilities: [{ type: "Ability", name: "Shivery Chill", effect: "…search for up to 2 Basic {W} Energy…" }],
+    abilities: [
+      { type: "Ability", name: "Shivery Chill", effect: "…search for up to 2 Basic {W} Energy…" },
+    ],
     attacks: [
       {
         cost: ["Water", "Water"],
@@ -389,7 +395,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
     types: ["Grass"],
     hp: 60,
     abilities: [
-      { type: "Ability", name: "Counterattack Quills", effect: "…put 3 damage counters on the Attacking Pokémon." },
+      {
+        type: "Ability",
+        name: "Counterattack Quills",
+        effect: "…put 3 damage counters on the Attacking Pokémon.",
+      },
     ],
   }),
   "sv01-006": battler("sv01-006", {
@@ -397,7 +407,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
     types: ["Grass"],
     hp: 130,
     abilities: [
-      { type: "Ability", name: "Counterattack Quills", effect: "…put 3 damage counters on the Attacking Pokémon." },
+      {
+        type: "Ability",
+        name: "Counterattack Quills",
+        effect: "…put 3 damage counters on the Attacking Pokémon.",
+      },
     ],
   }),
   /** Stunfisk — a Fighting body whose registry passive "Custom Trap" is the
@@ -409,7 +423,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
     types: ["Fighting"],
     hp: 120,
     abilities: [
-      { type: "Ability", name: "Custom Trap", effect: "…put 5 damage counters on the Attacking Pokémon." },
+      {
+        type: "Ability",
+        name: "Custom Trap",
+        effect: "…put 5 damage counters on the Attacking Pokémon.",
+      },
     ],
   }),
   /** Armarouge (sv03-044) — a Fire body whose registry entry carries the
@@ -465,7 +483,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     attacks: [{ cost: ["Colorless"], name: "Bite", damage: 30 }],
     abilities: [
-      { type: "Ability", name: "Mischievous Lock", effect: "Basic Pokémon in play have no Abilities." },
+      {
+        type: "Ability",
+        name: "Mischievous Lock",
+        effect: "Basic Pokémon in play have no Abilities.",
+      },
     ],
   }),
   "sv02-089": battler("sv02-089", {
@@ -505,7 +527,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
     name: "Beach Court",
     category: "Trainer",
     trainerType: "Stadium",
-    effect: "The Retreat Cost of each Basic Pokémon in play (both yours and your opponent's) is {C} less.",
+    effect:
+      "The Retreat Cost of each Basic Pokémon in play (both yours and your opponent's) is {C} less.",
   } satisfies Card,
   /** Calamitous Wasteland — Stadium: Basic non-{F} retreat cost {C} more. */
   "sv02-175": {
@@ -524,7 +547,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
     name: "Pokémon League Headquarters",
     category: "Trainer",
     trainerType: "Stadium",
-    effect: "Attacks used by each Basic Pokémon in play (both yours and your opponent's) cost {C} more.",
+    effect:
+      "Attacks used by each Basic Pokémon in play (both yours and your opponent's) cost {C} more.",
   } satisfies Card,
   /** Artazon — Stadium ACTIVATED ability (D102): once per player-turn, search a
       no-Rule-Box Basic → Bench. */
@@ -560,16 +584,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
       "Once during each player's turn, that player may search their deck for a Pokémon Tool card, reveal it, and put it into their hand. Then, that player shuffles their deck.",
   } satisfies Card,
   /** Vitality Band — Tool: attacks do 10 more damage (before W/R). */
-  "sv01-197": trainerCard("sv01-197", "Tool", "The attacks of the Pokémon this card is attached to do 10 more damage…"),
+  "sv01-197": trainerCard(
+    "sv01-197",
+    "Tool",
+    "The attacks of the Pokémon this card is attached to do 10 more damage…",
+  ),
   /** Defiance Band — Tool: +30 before W/R while behind on Prizes. */
-  "sv01-169": trainerCard("sv01-169", "Tool", "If you have more Prize cards remaining than your opponent, the attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."),
+  "sv01-169": trainerCard(
+    "sv01-169",
+    "Tool",
+    "If you have more Prize cards remaining than your opponent, the attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+  ),
   /** Bravery Charm — Tool: the Basic holder gets +50 HP. */
-  "sv02-173": trainerCard("sv02-173", "Tool", "The Basic Pokémon this card is attached to gets +50 HP."),
+  "sv02-173": trainerCard(
+    "sv02-173",
+    "Tool",
+    "The Basic Pokémon this card is attached to gets +50 HP.",
+  ),
   /** Choice Belt — Tool: +30 before W/R vs a defending Pokémon V. */
-  "sv02-176": trainerCard("sv02-176", "Tool", "The attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon V (before applying Weakness and Resistance)."),
+  "sv02-176": trainerCard(
+    "sv02-176",
+    "Tool",
+    "The attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon V (before applying Weakness and Resistance).",
+  ),
   /** Rocky Helmet — Tool: 2 damage counters on the attacker when the holder is
       damaged while Active (the D98 `damageAttacker` family, granted by a Tool). */
-  "sv01-193": trainerCard("sv01-193", "Tool", "If the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if it is Knocked Out), put 2 damage counters on the Attacking Pokémon."),
+  "sv01-193": trainerCard(
+    "sv01-193",
+    "Tool",
+    "If the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if it is Knocked Out), put 2 damage counters on the Attacking Pokémon.",
+  ),
 
   // — M4 slice 5: Special Energy (real catalog ids so the registry finds their
   //   EnergyProgram; names are the REAL names, though provision keys on the id). —
@@ -653,7 +697,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Pokémon). A Basic HERE (surgery places it as an Active/bench body — the
       registry keys on the id, not the stage) though the real card is a Stage 2.
       Not Active-only, so it fires from the Bench too. */
-  "sv02-015": battler("sv02-015", { name: "Meowscarada ex", types: ["Grass"], hp: 310, retreat: 2 }),
+  "sv02-015": battler("sv02-015", {
+    name: "Meowscarada ex",
+    types: ["Grass"],
+    hp: 310,
+    retreat: 2,
+  }),
   /** A Basic Grass Energy — the discard Meowscarada's Bouquet Magic costs. The
       NAME "Grass Energy" is what energyProvidesOf derives "Grass" from. */
   "fix-grass-energy": typedEnergy("fix-grass-energy", "Grass"),
@@ -673,7 +722,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         type: "Ability",
         name: "Shattering Crystal",
-        effect: "When this Pokémon is Knocked Out, flip a coin. If heads, your opponent can't take any Prize cards for it.",
+        effect:
+          "When this Pokémon is Knocked Out, flip a coin. If heads, your opponent can't take any Prize cards for it.",
       },
     ],
   }),
@@ -703,7 +753,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
       so an attack lands with the reduction visible without a KO. */
   "sv02-150": battler("sv02-150", { name: "Copperajah ex", types: ["Metal"], hp: 280, retreat: 3 }),
   /** Stonjourner — passive "Exoskeleton" (−20 damage after W/R). */
-  "sv01-121": battler("sv01-121", { name: "Stonjourner", types: ["Fighting"], hp: 140, retreat: 2 }),
+  "sv01-121": battler("sv01-121", {
+    name: "Stonjourner",
+    types: ["Fighting"],
+    hp: 140,
+    retreat: 2,
+  }),
 
   // — M5 op-slice: attachEnergyFrom (real ids so the registry finds the abilities;
   //   Basic bodies here — surgery places them, the registry keys on the id). —
@@ -715,10 +770,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-attacher": battler("fix-attacher", { name: "fix-attacher", hp: 120, retreat: 1 }),
   /** Gardevoir ex — "Psychic Embrace" (attachEnergyFrom riders: {P} from discard
       + 2 counters + not-if-KO). Psychic type, so it is its own {P} target. */
-  "sv01-086": battler("sv01-086", { name: "Gardevoir ex", types: ["Psychic"], hp: 310, retreat: 2 }),
+  "sv01-086": battler("sv01-086", {
+    name: "Gardevoir ex",
+    types: ["Psychic"],
+    hp: 310,
+    retreat: 2,
+  }),
   /** A Basic Psychic {P} Pokémon — a Psychic Embrace target; 60 HP so a damaged
       one exercises the not-if-KO exclusion (50 + 20 counters ≥ 60). */
-  "fix-psychic-1": battler("fix-psychic-1", { name: "fix-psychic-1", types: ["Psychic"], hp: 60, retreat: 1 }),
+  "fix-psychic-1": battler("fix-psychic-1", {
+    name: "fix-psychic-1",
+    types: ["Psychic"],
+    hp: 60,
+    retreat: 1,
+  }),
   /** A Basic Psychic Energy — the Psychic Embrace attach source. */
   "fix-psychic-energy": typedEnergy("fix-psychic-energy", "Psychic"),
   /** Clefable ex (sv03-082, D108) — "Lunar Zone": "All of your Pokémon that have
@@ -953,9 +1018,19 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** Koraidon ex — "Dino Cry" (multi-attach up to 2 Basic {F} from discard to
       Basic {F} Pokémon; then the turn ends). Basic Fighting, so it is its own
       valid Basic {F} target. */
-  "sv01-125": battler("sv01-125", { name: "Koraidon ex", types: ["Fighting"], hp: 230, retreat: 1 }),
+  "sv01-125": battler("sv01-125", {
+    name: "Koraidon ex",
+    types: ["Fighting"],
+    hp: 230,
+    retreat: 1,
+  }),
   /** A Basic Fighting {F} Pokémon — a valid Dino Cry target. */
-  "fix-fighting-1": battler("fix-fighting-1", { name: "fix-fighting-1", types: ["Fighting"], hp: 70, retreat: 1 }),
+  "fix-fighting-1": battler("fix-fighting-1", {
+    name: "fix-fighting-1",
+    types: ["Fighting"],
+    hp: 70,
+    retreat: 1,
+  }),
   /** A NON-Basic Fighting {F} Pokémon (Stage 2) — the right type but excluded by
       `basicOnly` (Dino Cry targets only your Basic {F}). */
   "fix-fighting-evo": {
@@ -1583,8 +1658,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Psychic", "Colorless"],
         name: "Special Hammer",
-        effect:
-          "If this Pokémon has any Special Energy attached, this attack does 90 more damage.",
+        effect: "If this Pokémon has any Special Energy attached, this attack does 90 more damage.",
         damage: "90+",
       },
     ],
@@ -1953,7 +2027,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 2,
     weaknesses: [{ type: "Metal", value: "×2" }],
     abilities: [
-      { type: "Ability", name: "Blooming Garden", effect: "Your Pokémon in play have no Weakness." },
+      {
+        type: "Ability",
+        name: "Blooming Garden",
+        effect: "Your Pokémon in play have no Weakness.",
+      },
     ],
   }),
   /** Mewtwo VSTAR (swsh10.5-031) — a Psychic Stage VSTAR (280 HP) whose registry
@@ -2748,7 +2826,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Psychic"],
         name: "Souvenir",
-        effect: "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck.",
+        effect:
+          "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck.",
       },
       {
         cost: ["Colorless", "Colorless", "Colorless"],
@@ -2965,6 +3044,155 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: "30+",
       },
     ],
+  }),
+
+  // — M5 clause slice: the PROMOTED clause (D124). Revavroom ex sv06.5-015 /
+  //   -081 "Accelerator Flash" (+120) and Golisopod swsh10.5-026 "First
+  //   Impression" (+90) — THREE printings of ONE byte-identical clause across TWO
+  //   distinct cards, read verbatim off the local D1 2026-08-01. The pool sweep:
+  //   "Active Spot this turn" occurs in exactly 5 cards (these 3 plus the two
+  //   Palafin prints, which are the NEGATIVE twin and are deliberately unmapped),
+  //   and "moved from" in exactly these 3.
+  /** Revavroom ex sv06.5-015 "Accelerator Flash" (20+, +120) — a STAGE 1 evolving
+      from Varoom, 280 HP, retreat 1, ×2 Fighting, NO Resistance, NO Ability
+      (`abilities_json` is NULL on the row), reg mark H, "Double rare", Standard
+      legal. sv06.5-081 is the SAME CARD at "Ultra Rare" — byte-identical in every
+      other field, `local_id` apart — so it is deliberately NOT a fixture: one
+      print is enough to drive a clause that keys on TEXT, and the second is
+      asserted only as a registry-row absence.
+
+      THE TYPE/COST ODDITY IS FAITHFUL AND IS NOT A TYPO. `types_json` is
+      ["Lightning"] while BOTH attack costs are Metal. That is what the ingest
+      holds, so that is what this row holds — and it is load-bearing twice over:
+      fix-metal-energy is what pays Accelerator Flash, while the §8.5 fold-order
+      defender has to be ×2 LIGHTNING, because Weakness reads the attacker's TYPE
+      and never its cost.
+
+      A Stage 1, so it can NEVER be the dealt starter: every board case either
+      places it by surgery or evolves a Varoom under it, and the deck below pins
+      fix-bigbody as the mulligan-free Active on both sides.
+
+      Attack 1 ("Shattering Speed", a flat 250 with "Discard this Pokémon and all
+      attached cards.") is carried VERBATIM and is deliberately UNSIMULATED — it
+      is here so the clause attack cannot be right merely by being the only attack
+      on the card, and so index 0 has to be named.
+
+      Verbatim off the local D1 — the clause is 101 code points / 102 UTF-8 bytes,
+      the one extra byte being the é in "Pokémon". */
+  "sv06.5-015": battler("sv06.5-015", {
+    name: "Revavroom ex",
+    stage: "Stage1",
+    evolveFrom: "Varoom",
+    types: ["Lightning"],
+    hp: 280,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Metal"],
+        name: "Accelerator Flash",
+        effect:
+          "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 120 more damage.",
+        damage: "20+",
+      },
+      {
+        cost: ["Metal", "Metal", "Metal"],
+        name: "Shattering Speed",
+        effect: "Discard this Pokémon and all attached cards.",
+        damage: 250,
+      },
+    ],
+  }),
+  /** Golisopod swsh10.5-026 "First Impression" (20+, +90) — the SECOND card on the
+      same clause row, and the reason this slice is ONE literal row rather than a
+      template: the clause is byte-identical to Revavroom ex's, and only the OUTER
+      skeleton's captured amount differs (120 against 90). Nothing inside the
+      clause varies, so there is nothing to parameterise.
+
+      A Water Stage 1 evolving from Wimpod, 130 HP, retreat 2, ×2 Lightning, no
+      Resistance, no Ability, reg mark F, "Holo Rare", and `legal_standard` 0 — an
+      Expanded-only print, which is immaterial to a derivation that reads printed
+      TEXT (`legal` is not a field any deriver consults).
+
+      IT IS FIELDED, for one board case only: the deck below carries it and a {W}
+      line, and the suite retreats into it to prove the FOLD reads the amount the
+      derivation captured (20 + 90 = 110) rather than a constant learned from the
+      +120 print. Everything else it could show, Revavroom ex already shows. Its
+      own pre-evolution Wimpod swsh10.5-025 IS in this pool (D114's "Punk Out"
+      holder), so a Wimpod → Golisopod line would be drivable — the
+      evolution-survival case uses the Varoom line instead, because that one is
+      the ex's OWN set and needs no second Energy type.
+
+      Note attack 1: "Slash" (a flat 100) has NO `effect` key AT ALL on the row —
+      not an empty string — so this fixture omits the field rather than spelling it
+      "". Verbatim: the clause is 100 code points / 101 UTF-8 bytes. */
+  "swsh10.5-026": battler("swsh10.5-026", {
+    name: "Golisopod",
+    stage: "Stage1",
+    evolveFrom: "Wimpod",
+    types: ["Water"],
+    hp: 130,
+    retreat: 2,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Water"],
+        name: "First Impression",
+        effect:
+          "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 90 more damage.",
+        damage: "20+",
+      },
+      { cost: ["Water", "Colorless", "Colorless"], name: "Slash", damage: 100 },
+    ],
+  }),
+  /** Varoom sv06.5-043 — Revavroom ex's PRE-EVOLUTION, and the only reason the
+      evolution-survival case can be driven at all: `placeEvolution` spreads the
+      whole Pokémon (`{ ...from }`), so a `promotedTurn` stamped by a retreat has
+      to survive a Stage 1 landing on top of it. Evolving is not un-moving.
+
+      A Metal BASIC — 70 HP, retreat 1, ×2 Fire, -30 Grass Resistance, reg mark H,
+      Common, Standard legal — verbatim off the D1. The pool prints six Varoom
+      rows in all; this is the sv06.5 one, i.e. the ex's own set. Its `name` is
+      what §10 matches against `evolveFrom: "Varoom"`, so the name field is
+      load-bearing here in a way a plain fixture body's never is.
+
+      Both attacks are carried verbatim and both are UNSIMULATED: Varoom is a body
+      to be RETREATED IN and evolved, never one to attack with. The -30 Grass
+      Resistance is faithful and inert — no attacker in the deck below is Grass. */
+  "sv06.5-043": battler("sv06.5-043", {
+    name: "Varoom",
+    types: ["Metal"],
+    hp: 70,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    resistances: [{ type: "Grass", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Metal"],
+        name: "Rigidify",
+        effect:
+          "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).",
+      },
+      { cost: ["Metal", "Metal"], name: "Headbutt Bounce", damage: 20 },
+    ],
+  }),
+  /** FIXTURE (synthetic) — a 320 HP ×2 Lightning body with no attacks, the §8.5
+      fold-order defender for Accelerator Flash, on the fix-colorless-weak /
+      fix-water-weak precedent. Revavroom ex is a LIGHTNING attacker (its COSTS
+      are Metal; Weakness reads the type), so the armed hit is (20 + 120) × 2 = 280
+      against the un-armed control's 20 × 2 = 40.
+
+      The pool's existing fix-lightning-weak is 130 HP and DIES to the armed
+      number, which matters more here than in any predecessor suite: a KO parks the
+      turn on a PROMOTION, i.e. on the very move this slice measures, dropping a
+      second `promotedTurn` stamp into the middle of the arithmetic. 320 HP
+      survives BOTH numbers, so the fold order stands alone with no KO, no prize
+      take and no promotion in the way. A Basic (so it can pin as a setup Active),
+      no rule box (1 Prize), no Resistance, no attacks — it only ever gets hit. */
+  "fix-lightning-weak-big": battler("fix-lightning-weak-big", {
+    hp: 320,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
   }),
 };
 
@@ -4176,6 +4404,58 @@ export const SUPPORTER_CLAUSE_DECK = deckOf({
   "fix-bigbody": 33, // 200 HP neutral Colorless Basic — DOMINANT pinned starter + the Bench holder
 });
 
+/** 0.74.0 → 0.75.0: the PROMOTED clause (D124) — Revavroom ex sv06.5-015
+    "Accelerator Flash", "If this Pokémon moved from your Bench to the Active Spot
+    this turn, this attack does 120 more damage." Three printings, two cards, one
+    clause — and the family's FIRST slice that buys new state
+    (`InPlayPokemon.promotedTurn`).
+
+    A DEDICATED deck, and the reason is the ROUTES. This clause is armed by a
+    MOVE, and there are three of them — `retreat` (turn.ts), `switchInto`
+    (interpreter.ts: Switch, Boss's Orders, Jet Energy) and `resolvePromotion`
+    after a Knock Out (flow.ts). No existing deck carries an attacker on the
+    clause together with the two Trainers that drive the forced-switch routes on
+    BOTH boards, and bolting them onto SUPPORTER_CLAUSE_DECK would reshuffle a
+    seed-pinned suite. So: one deck holding the attacker and every road to it.
+
+    Revavroom ex is a STAGE 1 and can therefore never be the dealt starter, so
+    every case places it deliberately — by surgery, by a Trainer, or by evolving a
+    Varoom. fix-bigbody is 27 of 60: the DOMINANT mulligan-free Basic both setup
+    Actives pin to, the body that retreats OUT of the Active Spot to let Revavroom
+    in, and the Bench filler a promotion needs a target from.
+
+    THE ENERGY LINES ARE SPLIT THREE WAYS, and the split is the type/cost oddity
+    made load-bearing: Revavroom ex is a LIGHTNING Pokémon whose Accelerator Flash
+    costs a single {M}, so fix-metal-energy pays THAT attack, fix-water-energy pays
+    Golisopod's {W}, and fix-energy (the plain Colorless Basic) pays the RETREAT
+    that arms either of them — §11 takes any Energy. No line is ever counted; this
+    clause reads no Energy at all.
+
+    fix-lightning-weak-big (320 HP, ×2 Lightning) is the §8.5 fold-order defender:
+    (20 + 120) × 2 = 280 against the control's 20 × 2 = 40, and 320 HP survives
+    both — which matters more here than anywhere before it, because a KO parks the
+    turn on a PROMOTION and would stamp a second `promotedTurn` in the middle of
+    the arithmetic the case is measuring.
+
+    Golisopod swsh10.5-026 is here for ONE case and pays for its slots: it is the
+    SECOND card on the same clause row at a DIFFERENT amount, so retreating into
+    it and reading 20 + 90 = 110 off a real attack proves attack.ts folds the
+    amount the DERIVATION captured and not a constant it learned from the +120
+    print. It costs a single {W}, which is the whole reason a Water line exists in
+    this deck. */
+export const PROMOTED_CLAUSE_DECK = deckOf({
+  "sv06.5-015": 4, // Revavroom ex — "Accelerator Flash" (20+) at index 0: yourActivePromotedThisTurn, +120
+  "sv06.5-043": 3, // Varoom — the pre-evolution the evolution-SURVIVES-it case retreats in and evolves
+  "swsh10.5-026": 3, // Golisopod — the SAME clause at +90, the proof the fold reads the captured amount
+  "sv02-172": 4, // Boss's Orders (Supporter, gust) — the switchInto route on the OPPONENT's board
+  "sv01-194": 3, // Switch (Item, switchActive) — the switchInto route on YOUR OWN board
+  "fix-metal-energy": 5, // Basic {M} — pays Accelerator Flash's single typed symbol
+  "fix-water-energy": 3, // Basic {W} — pays First Impression's single typed symbol
+  "fix-energy": 5, // Basic {C} — pays the retreat cost (§11: any Energy) that arms the clause
+  "fix-lightning-weak-big": 3, // 320 HP, ×2 Lightning — the Weakness defender for the fold-order pair
+  "fix-bigbody": 27, // 200 HP neutral Colorless Basic — DOMINANT pinned starter, the retreater, the promote target
+});
+
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
     "Scorching Armor", D99). A DEDICATED deck (the DAMAGE_ATTACKER_DECK is
     seed-pinned; growing it to hold Armarouge would reshuffle that suite): the
@@ -4618,7 +4898,8 @@ export function setBenchDamage(
   damage: number,
 ): GameState {
   const side = state.players[seat];
-  if (side.bench[index] === undefined) throw new Error(`${seat} has no benched Pokémon at ${index}`);
+  if (side.bench[index] === undefined)
+    throw new Error(`${seat} has no benched Pokémon at ${index}`);
   return {
     ...state,
     players: {
@@ -4862,7 +5143,8 @@ export function attachBenchFromDeck(
   count: number,
 ): GameState {
   const side = state.players[seat];
-  if (side.bench[index] === undefined) throw new Error(`${seat} has no benched Pokémon at ${index}`);
+  if (side.bench[index] === undefined)
+    throw new Error(`${seat} has no benched Pokémon at ${index}`);
   const uids = side.deck.filter((uid) => state.cardIdByUid[uid] === cardId).slice(0, count);
   if (uids.length < count) {
     throw new Error(`${seat} deck has ${uids.length} ${cardId}, needed ${count}`);
@@ -4949,12 +5231,7 @@ export function discardFromDeck(
     prepending, so seed the DEEPEST layer first and the shallowest last (push a
     filler layer to bury a marker below the window, then push the top
     candidates). Legal-shaped: every uid stays in exactly one zone. */
-export function toDeckTop(
-  state: GameState,
-  seat: Seat,
-  cardId: string,
-  count: number,
-): GameState {
+export function toDeckTop(state: GameState, seat: Seat, cardId: string, count: number): GameState {
   const side = state.players[seat];
   const uids = side.deck.filter((uid) => state.cardIdByUid[uid] === cardId).slice(0, count);
   if (uids.length < count) {

@@ -769,7 +769,12 @@ function resolvePromotion(
   events.push({ type: "POKEMON_PROMOTED", seat, uid, benchIndex: index });
   return withSide(state, seat, {
     ...side,
-    active: promoted,
+    // The involuntary half of bench→Active (types.ts `promotedTurn`). This
+    // almost always runs during the OPPONENT's turn, and the stamp is what
+    // makes that harmless: `state.turn` is THEIR turn number, so a Pokémon
+    // that replaced a Knocked Out Active reads "did not move this turn" the
+    // moment its own controller's turn begins.
+    active: { ...promoted, promotedTurn: state.turn },
     bench: [...side.bench.slice(0, index), ...side.bench.slice(index + 1)],
   });
 }
