@@ -1465,7 +1465,69 @@ import type { GameState, Seat } from "./types";
     rng.ts / continuous.ts / attack.ts / events.ts diff. NO MATCH_RECORD_VERSION BUMP
     — no `MatchRecord`/`GameState` shape and no event shape changed. No web/API/DB/
     `@luminous/schema` diff. */
-export const engineVersion = "0.83.0";
+/** 0.84.0 — P3-M5: the OWN-BOARD HEAL sentence (D133). "Heal {N} damage from each of
+    your Pokémon." now SIMULATES on ONE anchored regex and ONE deriver arm — **7
+    printings / 2 distinct clauses** (N = 20, 30), every one a STANDALONE single
+    sentence. Censused against the local D1 (2026-08-01) over the WHOLE effect string:
+    5 at 30 (Skeledirge ex sv02-037/-233/-258/-272 "Vitality Song", WITH a printed 50,
+    + Steenee sv03-017 "Aromatherapy") and 2 at 20 (Cresselia sv06.5-021/-071 "Healing
+    Pirouette"). THE HEAL CENSUS IS CLOSED and this slice was read straight off it —
+    no new sweep was needed, only D132's own remainder list.
+
+    D132 A SECOND TIME, EXECUTED VERBATIM. `healEach { amount }` has shipped since 0.x,
+    produced by Garganacl sv02-123's between-turns "Blessed Salt" Ability; what was
+    missing was a READER for the same action printed as an ATTACK. So this is the
+    inventory rule applied to its own leftovers: D132 said "before pricing a shape,
+    ask what an EXISTING arm already emits", wrote down which heal clauses had ops and
+    which did not, and the top of that list cost exactly what it forecast — a regex,
+    an arm, a guard. NO INTERPRETER DIFF, for the second slice running.
+
+    "EACH OF YOUR POKÉMON" IS THE ACTIVE AND THE BENCH, and that reading — not the
+    regex — is the only substantive content of the slice. §1.1: the Active is one of
+    your Pokémon, and only the printed word "Benched" excludes it. `healEach` was
+    already written that way (`side.active` then `side.bench` in index order), but it
+    had only ever been reached from a CHECKUP trigger, where the Active is nobody in
+    particular; from an ATTACK the Active is the ATTACKER, which is the case a build
+    that healed "the rest of the board" would get wrong. So it is asserted end to end
+    rather than inherited from the op's doc comment — including the degenerate
+    empty-Bench board, where the Active alone IS "each".
+
+    THE CLAMP IS PER POKÉMON, and the board is arranged to show it: {100, 80, 10}
+    damage against a printed 30 heals {30, 30, 10} and emits three rows reporting
+    exactly that. A shared clamp, or a clamp read once off the Active, passes every
+    one-body board and fails only here. The whiff is silent PER POKÉMON too — an
+    undamaged body between two damaged ones emits NO row and does not truncate the
+    sequence, so the count of HEALED rows is the count of Pokémon that MOVED rather
+    than the count on the board.
+
+    THE SEAT SCOPE IS THE `healEachAll` BOUNDARY, asserted from both sides: the
+    Picnic Basket sentence ("each Pokémon (both yours and your opponent's)") is
+    refused at the deriver, and the end-to-end case damages the OPPONENT's Active and
+    Bench so they can be asserted unhealed — invisible on an undamaged opponent, which
+    is why every earlier heal board would have passed a seat-blind implementation.
+
+    THE ANCHOR'S REAL JOB IS SAGUARO. sv02-187/-255/-270 prints "Choose up to 2 of
+    your Pokémon and heal 50 damage from each of them." — the mapped words,
+    mid-sentence, behind a choice. A reader without `^` would take its tail and heal
+    the whole board unconditionally. It is a Supporter and never routes through this
+    deriver in production; the guard is asserted anyway, because a guard that depends
+    on which reader a card happens to reach is not a guard.
+
+    FOUR OF THE SEVEN CARRY PRINTED DAMAGE (Skeledirge ex's 50), which the tail
+    placement (D125) handles with no new thought; the other three print no `damage`
+    field at all (Cresselia, Steenee), so the board heal is the entire visible result.
+    Both halves are pinned, for the same reason D132 pinned them.
+
+    Cost: 1 regex, 1 deriver arm, 2 test fixtures (Skeledirge ex sv02-037, Cresselia
+    sv06.5-021), 1 test deck, 1 test file, and a widened doc block on the `healEach`
+    member. ZERO new events, ops, `EffectOp` members, `AttackCoinFlip`/
+    `AttackFlipCount`/`BoardCondition`/`DamageCountSource` members, clause-table rows,
+    state fields, prompts, error codes, registry rows, redact arms or log arms. NO
+    INTERPRETER DIFF — `healEach` was already correct, including its per-Pokémon clamp,
+    its silence and its Active. No rng.ts / continuous.ts / attack.ts / events.ts diff.
+    NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState` shape and no event
+    shape changed. No web/API/DB/`@luminous/schema` diff. */
+export const engineVersion = "0.84.0";
 
 export type {
   ApplyResult,

@@ -6817,3 +6817,160 @@ before mapping any of them; never delete the case.**
   Camerupt `sv03-032` (the mill neighbourhood's hardest)** and the one shape D130's "rewrite
   the later stage's existing input" rule does not answer. Do it last or not at all — and if
   you do, do it *with* Camerupt, since one channel would serve both.
+
+---
+
+## D133 — the OWN-BOARD HEAL: `Heal {N} damage from each of your Pokémon.` (engine 0.84.0)
+
+**Read straight off D132's remainder list.** No new census was run and none was needed:
+the section above had already ranked this "the cheapest un-taken thing in the engine",
+named all seven printings, and flagged the one thing to verify. It cost exactly what
+that note forecast — **one anchored regex, one deriver arm, and no interpreter diff**.
+That is the second slice in a row where a *previous slice's written-down remainder* was
+the whole spec. Keep writing them.
+
+### The census (local D1, 2026-08-01, whole effect string, 978 cards)
+
+`attacks_json LIKE '%from each of your%'` → **7 printings / 2 distinct clauses**, every
+one a STANDALONE single sentence (no compounds):
+
+| N | printings | cards |
+|---|---|---|
+| 30 | 5 | Skeledirge ex `sv02-037`/`-233`/`-258`/`-272` "Vitality Song" (**WITH a printed 50**); Steenee `sv03-017` "Aromatherapy" (no `damage`) |
+| 20 | 2 | Cresselia `sv06.5-021`/`-071` "Healing Pirouette" (no `damage`) |
+
+The same sweep also confirms the neighbourhood the anchor must *not* reach: Garganacl
+`sv02-123`'s Ability (the existing `healEach` consumer), Picnic Basket `sv01-184`
+(`healEachAll`), and Saguaro `sv02-187`/`-255`/`-270` (a mid-sentence "…and heal 50
+damage from each of them." behind a choice).
+
+```ts
+const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
+// → [{ op: "healEach", amount }]   (guard: amount >= 1; no ceiling)
+```
+
+### ⚠️ The reading is the slice; the regex is not
+
+**"Each of your Pokémon" is the ACTIVE *and* the whole Bench.** §1.1 — the Active is one
+of your Pokémon, and only the printed word "Benched" excludes it (D120's zone rule).
+`healEach` was *already* written that way (`side.active`, then `side.bench` in index
+order), but it had only ever been reached from a **Checkup trigger**, where the Active is
+nobody in particular. From an **attack** the Active is the ATTACKER — which is exactly
+the case a build that healed "the rest of the board" gets wrong. So the reading is
+asserted end to end rather than inherited from the op's doc comment, including the
+degenerate **empty-Bench** board where the Active alone *is* "each".
+
+Generalise: **when you reach an existing op from a new site, the op's semantics are not
+automatically re-verified — only the ones the old site happened to exercise were ever
+tested.** Ask which of its readings the *new* caller depends on that the old one did not.
+
+### ⚠️ The clamp is PER POKÉMON, and the whiff is silent PER POKÉMON
+
+A board of {100, 80, 10} damage against a printed 30 heals {30, 30, 10} and emits three
+rows reporting exactly that. A shared clamp — or a clamp read once off the Active —
+passes every one-body board and fails only here. And an **undamaged body sitting BETWEEN
+two damaged ones** emits no row and does not truncate the sequence: the count of `HEALED`
+rows is the count of Pokémon that MOVED, never the count on the board.
+
+### ⚠️ The seat scope is the `healEachAll` boundary — assert it from BOTH sides
+
+`healEach` is seat-scoped through `ctx.seat`; `healEachAll` (Picnic Basket) is not. The
+difference is **invisible on an undamaged opponent**, which is why every earlier heal
+board would have passed a seat-blind implementation. So the end-to-end case DAMAGES the
+opponent's Active *and* Bench and asserts both come back unhealed, and the deriver case
+refuses the Picnic Basket sentence in text form.
+
+### ⚠️ The anchor's real job is Saguaro
+
+`Choose up to 2 of your Pokémon and heal 50 damage from each of them.` is the mapped
+words, mid-sentence, behind a choice. A reader without `^` takes its tail and heals the
+whole board unconditionally. Saguaro is a **Supporter** and never routes through
+`deriveAttackEffect` in production — the guard is asserted anyway, because **a guard that
+depends on which reader a card happens to reach is not a guard.**
+
+### ⚠️ `clearBench` — a new test surgery, and a trap that had been latent
+
+`setActiveFromDeck` **DISPLACES** the Active it replaces onto the bench rather than
+removing it. So a board built by two or three successive Active surgeries silently
+carries one benched *stranger* per surgery. That is invisible to every suite that only
+asserts the Active (which is most of them) and WRONG for any suite whose claim is about
+the whole SIDE — a board heal, a spread, a bench count, a §1.1 "each of your Pokémon".
+**The first three test failures of this slice were all that, not the engine.**
+
+`clearBench(state, seat)` (testFixtures.ts) empties the bench and returns every card on
+it — stack, attached Energy, attached Tools — to the bottom of that seat's deck, so the
+board stays legal-shaped with every uid in exactly one zone. Call it after the LAST
+Active surgery and before benching the bodies the case actually wants. **Any future
+side-wide slice should reach for it first.**
+
+### Fixture / deck work this slice forced
+
+- **`sv02-037` Skeledirge ex** — 340 HP Stage 2 from Crocalor, Fire, retreat 3, ×2 Water.
+  The WITH-PRINTED-DAMAGE half (heal 30 across the board AND a flat 50), and 4 of the 7
+  printings on its own. Its `ex` suffix is kept faithful because `prizeValueOf` reads the
+  rule box off the NAME — nothing in the heal family depends on it, which is exactly why
+  a fixture that quietly renamed it would make a true thing false with no test noticing.
+- **`sv06.5-021` Cresselia** — 120 HP Basic, Psychic, retreat 1, −30 Fighting Resistance.
+  The NO-DAMAGE half and the second clause, on a different N so a hardcoded 30 downstream
+  cannot satisfy both. Index-1 "Crescent Purge" ({P}{P}{P}) is the unmapped-neighbour
+  control, unpayable from the deck.
+- **`BOARD_HEAL_DECK`** — 4 Skeledirge ex / 4 Cresselia / 6 `fix-fire-energy` /
+  6 `fix-psychic-energy` / 40 `fix-titan`, both seats. **Two TYPED Energy lines**, because
+  both attacks print a typed single cost and Colorless pays neither. `fix-titan` does
+  double duty: the pinned Active on both sides *and* every benched body (340 HP carries
+  any damage figure a case wants without the KO sweep removing it mid-count).
+
+### The suite
+
+`boardHeal.test.ts` — **20 tests, ONE board, no seed sweep** (nothing here takes a coin;
+`rngState` is asserted unchanged). Notable cases beyond the usual anchor/guard/rewrite
+set: the Active-and-Bench reading, the per-Pokémon clamp on a {100, 80, 10} board, the
+undamaged-body-in-the-middle whiff, the empty-Bench board, the damaged-opponent seat
+boundary, both seats, and **`healEach { amount: 20 }` asserted byte-identical to the
+program the Garganacl registry row carries** — which is what makes "one action, two
+readers" a checkable claim rather than a description.
+
+**Two witnesses re-pointed in `selfHeal.test.ts`, per the standing rule** (map one,
+re-point it — never delete): `REAL_NEAR_MISSES[1]` moved from Steenee's now-mapped
+sentence to Tropius `sv01-007` (`Heal 60 damage from 1 of your Benched Pokémon.`), and
+the inline rewrite list swapped the same string for Chansey `swsh10.5-051`'s
+(`Heal 30 damage from 1 of your Benched Pokémon.`).
+
+### Still unmapped after D133 — the heal neighbourhood, ranked by cost
+
+All live "stays LOUD" witnesses in `selfHeal.test.ts` and/or `boardHeal.test.ts`.
+**Re-point the witness before mapping any of them; never delete the case.**
+
+- **The FLIP-GATED OP family — 3 printings / 2 clauses across two workstreams, and the
+  cheapest thing left.** Fuecoco `sv02-035`/`-201` "Spacing Out" (`Flip a coin. If heads,
+  heal 30 damage from this Pokémon.`) and Wiglett `sv01-056` "Dig a Little" (`Flip a coin.
+  If heads, discard the top card of your opponent's deck.`). **Both consequents already
+  exist** (`heal` / `discardDeckTop`) and both copy `FLIP_OPPONENT_ACTIVE_DISCARD`
+  exactly, so each is one anchored regex + one arm. Taking them TOGETHER is what makes
+  Wiglett defensible on its own: alone it is 1 printing and D121's warrant is unmet;
+  beside Fuecoco (2 printings, warrant met) it is a second member of a shape the engine
+  already reads a third instance of. ⚠️ **Literal arms, NOT a template** — the varying
+  token is the whole consequent, an OPEN vocabulary, so D120's precondition fails.
+  ⚠️ Floette `sv01-092` (`…this attack does 30 more damage, and heal 30 damage from this
+  Pokémon.`) is a bonus AND an op on one flip — a different, harder shape. Do not let one
+  regex reach for both.
+- **`Heal {N} damage from 1 of your Pokémon.` — 5 printings / 3 clauses.** Nacli
+  `sv02-121`/`-220` (20), Vespiquen ex `sv03-096`/`-212` (60), Smoliv `sv01-021` (30).
+  `healChosen { amount }` exists (Potion) but **PARKS on a choice**, so this would be the
+  first parking op the *attack* deriver emits — check how the D125 tail placement
+  interacts with a park before pricing it. Warrant met (3 clauses). This is the one that
+  opens a real mechanism question rather than adding a reader.
+- **The BENCHED-only variants — 4 printings / 4 clauses, needing a filter `healChosen`
+  does not have.** Tropius `sv01-007` (60), Chansey `swsh10.5-051` (30), Combee
+  `sv03-008` (20) print `from 1 of your Benched Pokémon.`; Blissey `swsh10.5-052` +
+  Arboliva `sv03-021` print `Heal all damage from 1 of your Benched Pokémon.`
+  (`healChosen` already takes `amount: "all"`, so that half is free). Honour the printed
+  zone word — "Bench" excludes the Active (D120). Best taken *with* the chosen-heal above,
+  since the park question is the same one twice.
+- **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132's note: a channel from the
+  §8.5 pipeline's RESULT back into a tail op, structurally identical to Camerupt
+  `sv03-032`. Do it last or not at all, and do it *with* Camerupt.
+
+**The heal census stays CLOSED** — 42 heal-mentioning attack printings / 18 distinct
+clauses pool-wide; 18 bare self-heal (D132), 2 compound `SELF_SLEEP_HEAL` (0.x), 7
+own-board (D133). Do not re-run it.

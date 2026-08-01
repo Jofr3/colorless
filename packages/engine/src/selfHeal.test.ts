@@ -28,8 +28,8 @@ import {
 // WHAT THIS FILE PINS, and why each part is here:
 //   • THE ANCHOR, on all 4 distinct clauses (N = 10, 20, 30, 50) and against the 6
 //     REAL catalog rows it must refuse. Five of those six name a DIFFERENT target
-//     (one of your Pokémon, each of your Pokémon, a Benched one) or gate the same
-//     action behind a coin; the sixth is the compound Sleep form, which is refused
+//     (one of your Pokémon, a Benched one) or gate the same action behind a coin, or
+//     read the amount off the board; the sixth is the compound Sleep form, refused
 //     HERE and simulated by the OTHER anchor — the one-reader-per-printed-string
 //     boundary, asserted rather than assumed.
 //   • THE GUARD. A printed "Heal 0 damage" derives to null: a silent no-op that
@@ -95,8 +95,14 @@ const CLAUSES = [
     which is simulated by the OTHER anchor and is pinned as such):
       • Nacli sv02-121 / -220 "Salt Coating" — a CHOSEN target. `healChosen` exists
         as an op; the sentence has no reader, so the row stays loud.
-      • Steenee sv03-017 "Aromatherapy" / Skeledirge ex sv02-037 "Vitality Song" —
-        the whole OWN board. `healEach` exists as an op; same story.
+      • Tropius sv01-007 "Fresh-Picked Fruit" — a chosen BENCHED target for a printed
+        amount. `healChosen` exists as an op but has no Bench FILTER, so both halves
+        of the sentence are unread and the row stays loud.
+        (RE-POINTED at 0.84.0. This slot held Steenee sv03-017 "Aromatherapy" / the
+        Skeledirge ex "Vitality Song" clause — "Heal {N} damage from each of your
+        Pokémon." — until D133 mapped it onto `healEach`. Per the standing note below
+        the case was re-pointed, not deleted; the mapped sentence's own refusals now
+        live in boardHeal.test.ts.)
       • Blissey swsh10.5-052 / Arboliva sv03-021 — a chosen BENCHED target, healed
         for "all". Two things unmapped at once: the zone and the amount.
       • Fuecoco sv02-035 / -201 — THE SAME ACTION, THE SAME TARGET, GATED BEHIND A
@@ -113,7 +119,7 @@ const CLAUSES = [
     anything. */
 const REAL_NEAR_MISSES = [
   "Heal 20 damage from 1 of your Pokémon.",
-  "Heal 30 damage from each of your Pokémon.",
+  "Heal 60 damage from 1 of your Benched Pokémon.",
   "Heal all damage from 1 of your Benched Pokémon.",
   "Flip a coin. If heads, heal 30 damage from this Pokémon.",
   "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
@@ -325,9 +331,14 @@ describe("the anchor — 18 printings, 4 clauses, one sentence", () => {
       "Heal 30 damage from this Pokémon. This Pokémon is now Asleep.",
       "Heal 30 damage from this Pokémon. Then, shuffle your deck.",
       // OTHER TARGETS, spelled the way the pool spells them. Each is a different op
-      // (healChosen / healEach / healEachAll) or no op at all.
+      // (healChosen / healEach / healEachAll) or no op at all — and the point of the
+      // list is that THIS anchor refuses all of them, whether or not some other
+      // anchor claims them. "each of your Pokémon" used to sit here and no longer
+      // does: 0.84.0 (D133) gave it a reader of its own, so asserting it derives to
+      // null would now be false. Chansey swsh10.5-051's Benched clause replaced it —
+      // same neighbourhood, still unread by anything.
       "Heal 30 damage from your Active Pokémon.",
-      "Heal 30 damage from each of your Pokémon.",
+      "Heal 30 damage from 1 of your Benched Pokémon.",
       "Heal 30 damage from 1 of your Pokémon.",
       "Heal 30 damage from your opponent's Active Pokémon.",
       // COUNTERS, not HP. "Remove N damage counters" is the older wording for the

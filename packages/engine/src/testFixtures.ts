@@ -3945,6 +3945,100 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Psychic", "Colorless"], name: "Peck", damage: 20 },
     ],
   }),
+  /** Skeledirge ex sv02-037 — D133's WITH-PRINTED-DAMAGE witness for the OWN-BOARD
+      heal ("Heal 30 damage from each of your Pokémon.", the larger of the family's
+      two clauses; the same clause Steenee sv03-017 prints without damage).
+
+      "Vitality Song" ({R}, index 0) heals 30 from the WHOLE own board AND deals a
+      flat 50, so it is where the tail placement (D125 — ops run AFTER the §8.5
+      pipeline) is asserted on this family and where the direction shows: the seat
+      it heals must be the ATTACKER's, and the defender it just hit must stay hit.
+      Four of the family's seven printings are this card (-037/-233/-258/-272 are
+      the same attack in four rarities).
+
+      A STAGE 2 from Crocalor, so it is NEVER played — it reaches the Active Spot
+      only by `setActiveFromDeck` surgery, which does not care about the evolution
+      line. Its index-1 "Burning Voice" ({R}{R}, 270−) is a scaling clause belonging
+      to another family and is unpayable out of BOARD_HEAL_DECK's single Fire line
+      per turn anyway.
+
+      ⚠️ IT IS AN `ex`, AND THAT IS KEPT ON PURPOSE. `prizeValueOf` reads the rule
+      box off the NAME (cards.ts), so "Skeledirge ex" is worth TWO Prizes — the only
+      fixture in this deck that is. Nothing in the heal family depends on it, which
+      is exactly why it is worth keeping faithful: a KO of this attacker (it cannot
+      happen on these boards — 340 HP against a titan with no attacks) would take 2,
+      and a fixture that quietly renamed it "Skeledirge" would make that untrue
+      without any test noticing.
+
+      Verbatim off the local D1 (2026-08-01): 340 HP, Fire, Stage2 from Crocalor,
+      retreat 3, ×2 Water, no Resistance, no Ability. */
+  "sv02-037": battler("sv02-037", {
+    name: "Skeledirge ex",
+    types: ["Fire"],
+    stage: "Stage2",
+    evolveFrom: "Crocalor",
+    hp: 340,
+    retreat: 3,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Vitality Song",
+        effect: "Heal 30 damage from each of your Pokémon.",
+        damage: 50,
+      },
+      {
+        cost: ["Fire", "Fire"],
+        name: "Burning Voice",
+        effect: "This attack does 10 less damage for each damage counter on this Pokémon.",
+        damage: "270-",
+      },
+    ],
+  }),
+  /** Cresselia sv06.5-021 — D133's NO-PRINTED-DAMAGE witness for the own-board heal,
+      and the second of the family's two clauses ("Heal 20 damage from each of your
+      Pokémon.", 2 printings: -021 and -071).
+
+      "Healing Pirouette" ({P}, index 0) prints NO `damage` field at all, so the
+      board heal is the ENTIRE visible result — the same half Natu plays for the bare
+      self-heal, and needed for the same reason: an implementation that folded the
+      heal into the damage pipeline would pass every Skeledirge assertion and fail
+      here. Its N is 20 rather than 30 so that a hardcoded amount cannot satisfy both
+      fixtures.
+
+      A BASIC, so no evolution surgery is needed in principle; it is still fielded by
+      `setActiveFromDeck` so both attackers' boards are the same shape.
+
+      Its index-1 "Crescent Purge" ({P}{P}{P}, 80+) is a face-up-Prize clause from a
+      family nothing has mapped — unpayable out of this deck, and left faithful
+      rather than trimmed so the index-keyed control has real text to be a control
+      of.
+
+      Verbatim off the local D1 (2026-08-01): 120 HP, Psychic, Basic, retreat 1, ×2
+      Darkness, −30 Fighting Resistance, no Ability. */
+  "sv06.5-021": battler("sv06.5-021", {
+    name: "Cresselia",
+    types: ["Psychic"],
+    stage: "Basic",
+    hp: 120,
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Psychic"],
+        name: "Healing Pirouette",
+        effect: "Heal 20 damage from each of your Pokémon.",
+      },
+      {
+        cost: ["Psychic", "Psychic", "Psychic"],
+        name: "Crescent Purge",
+        effect:
+          "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)",
+        damage: "80+",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -5624,6 +5718,54 @@ export const SELF_HEAL_DECK = deckOf({
   "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active both sides
 });
 
+/** 0.83.0 → 0.84.0: the OWN-BOARD HEAL (D133) — "Heal {N} damage from each of your
+    Pokémon." A DEDICATED deck rather than two lines added to SELF_HEAL_DECK, and the
+    reason is specific rather than habitual: this suite is the first to need a
+    populated BENCH on the attacking side (that is the whole claim — "each of your
+    Pokémon" is the Active AND the Bench), so its boards are a different shape from
+    the bare-heal boards and sharing a deck would reshuffle every case in that file
+    for nothing. Nothing here takes a COIN either, so the suite needs no seed sweep.
+
+    THE TWO CARDS ARE THE TWO CLAUSES AND THE TWO HALVES OF THE CENSUS — four of the
+    seven printings carry printed damage and three do not:
+      • Skeledirge ex sv02-037 "Vitality Song" (idx 0, {R}, heal 30 across the board
+        AND a flat 50) — the WITH-DAMAGE half, and 4 of the 7 printings on its own
+        (-037/-233/-258/-272 are one attack in four rarities). A STAGE 2 from
+        Crocalor, so it reaches the Active Spot only by `setActiveFromDeck` surgery.
+        Its idx-1 "Burning Voice" ({R}{R}) is another family's clause and unpayable.
+      • Cresselia sv06.5-021 "Healing Pirouette" (idx 0, {P}, heal 20, NO `damage`
+        field) — the NO-DAMAGE half and the OTHER clause, on a different N so that a
+        hardcoded 30 downstream cannot satisfy both. A Basic; still fielded by
+        surgery so both attackers' boards are the same shape. Its idx-1 "Crescent
+        Purge" ({P}{P}{P}) is the effect-less-control's opposite — real unmapped text
+        that no {P}{P}{P} in this deck can pay for.
+
+    TWO TYPED ENERGY LINES, not one Colorless line, because both attacks print a
+    TYPED single cost ({R} and {P} respectively) and Colorless cannot pay either.
+    Six each is generous on purpose: a case declares the same attack from a freshly
+    built board several times over, and an Energy-starved deck would fail as an
+    attach error rather than as an assertion.
+
+    BOTH SEATS RUN IT — either attacker can be surgeried onto either side, which is
+    what lets the `seat` on every HEALED row be asserted rather than assumed.
+
+    fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) does DOUBLE DUTY here
+    and both jobs matter. It is the pinned Active on both sides (Vitality Song's 50
+    cannot come near KOing it, so no promotion parks mid-batch and truncates a row
+    sequence, and no defender attack interleaves rows with the ones being counted),
+    AND it is every BENCHED body the heal has to reach — a 340 HP bench body can
+    carry any damage figure a case wants without the attack epilogue's KO sweep
+    removing it from under the assertion mid-count. Its damage arrives by
+    `setBenchDamage` surgery rather than by scripting the attacks that would place
+    it. 40 copies keeps it the DOMINANT (mulligan-free) Basic through setup. */
+export const BOARD_HEAL_DECK = deckOf({
+  "sv02-037": 4, // Skeledirge ex — "Vitality Song" at idx 0: heal 30 each, AFTER a printed 50
+  "sv06.5-021": 4, // Cresselia — "Healing Pirouette" at idx 0: heal 20 each, NO printed damage
+  "fix-fire-energy": 6, // Basic {R} — pays Vitality Song's single Fire, and nothing else
+  "fix-psychic-energy": 6, // Basic {P} — pays Healing Pirouette's single Psychic, and nothing else
+  "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active BOTH sides + every bench body
+});
+
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
     "Scorching Armor", D99). A DEDICATED deck (the DAMAGE_ATTACKER_DECK is
     seed-pinned; growing it to hold Armarouge would reshuffle that suite): the
@@ -6052,6 +6194,29 @@ export function benchFromDeck(state: GameState, seat: Seat, cardId: string): Gam
         deck: side.deck.filter((u) => u !== uid),
         bench: [...side.bench, makeInPlay(uid, 0)],
       },
+    },
+  };
+}
+
+/** TEST SURGERY: empty the seat's BENCH, returning every card on it (stack,
+    attached Energy and Tools) to the bottom of that seat's deck — so the result
+    stays legal-shaped, with every uid still in exactly one zone.
+
+    Needed because `setActiveFromDeck` DISPLACES the Active it replaces onto the
+    bench rather than removing it, so a board built by two or three successive
+    Active surgeries silently carries one benched body per surgery. That is
+    invisible to a suite that only asserts the Active (most of them), and wrong
+    for any suite whose claim is about the WHOLE side — a board heal, a spread, a
+    bench count. Call it after the last Active surgery and before benching the
+    bodies the case actually wants. */
+export function clearBench(state: GameState, seat: Seat): GameState {
+  const side = state.players[seat];
+  const returned = side.bench.flatMap((p) => [...p.stack, ...p.energy, ...p.tools]);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: { ...side, bench: [], deck: [...side.deck, ...returned] },
     },
   };
 }

@@ -575,9 +575,15 @@ export type EffectOp =
       now Asleep. Heal {N} damage from it.", since 0.x) and — since 0.83.0 —
       the bare `SELF_HEAL` sentence (D132). */
   | { op: "heal"; target: "self"; amount: number }
-  /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
-      (Garganacl "Blessed Salt" — a between-turns triggered Ability). No target
-      choice, so it never parks; one HEALED per Pokémon that actually healed. */
+  /** Heal `amount` HP from EACH of the controller's own in-play Pokémon — the
+      ACTIVE and the whole Bench, which is what the printed "each of your
+      Pokémon" means (the Active is one of your Pokémon; only the printed word
+      "Benched" would exclude it). Each heal is CLAMPED to that Pokémon's own
+      damage independently, so one healthy body cannot eat another's heal, and a
+      whiff is SILENT per Pokémon. No target choice, so it never parks; one
+      HEALED per Pokémon that actually healed. Two readers produce it: Garganacl
+      "Blessed Salt" (a between-turns triggered Ability, since 0.x) and — since
+      0.84.0 — the bare `OWN_BOARD_HEAL` attack sentence (D133). */
   | { op: "healEach"; amount: number }
   /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket
       "Heal 30 damage from each Pokémon (both yours and your opponent's)"). The
@@ -1570,6 +1576,37 @@ const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from i
 // clause — Fuecoco sv02-035's "Flip a coin. If heads, heal 30 damage from this
 // Pokémon." — off this path and on the loud one where it belongs.
 const SELF_HEAL = /^Heal (\d+) damage from this Pokémon\.$/;
+// The OWN-BOARD heal (D133) — "Heal {N} damage from each of your Pokémon.", the
+// whole printed effect, 7 printings across 2 distinct clauses (N = 20, 30):
+// Skeledirge ex sv02-037/-233/-258/-272 "Vitality Song" (30, WITH a printed 50),
+// Steenee sv03-017 "Aromatherapy" (30, no damage), Cresselia sv06.5-021/-071
+// "Healing Pirouette" (20, no damage). D132 again, and for the same reason: the
+// op it derives to — `healEach` — has shipped since 0.x behind Garganacl's
+// "Blessed Salt" Ability, so the slice is a READER and nothing else. No new op,
+// no new event, no interpreter diff.
+//
+// "EACH OF YOUR POKÉMON" INCLUDES THE ACTIVE, and that is the one substantive
+// reading in the sentence rather than a detail of the regex. `healEach` already
+// heals `side.active` then `side.bench` in index order (interpreter.ts), which
+// is the rule (§1.1: the Active is one of your Pokémon) — it had simply never
+// been reached from an ATTACK before, only from a Checkup trigger, so the
+// reading is asserted end-to-end in boardHeal.test.ts rather than inherited.
+// Only the printed word "Benched" excludes the Active, and no printing of THIS
+// sentence carries it (the pool's Benched heals are all `1 of your Benched`,
+// a different op entirely and still unmapped).
+//
+// SEPARATE FROM `SELF_HEAL` ABOVE, and disjoint from it by construction: both
+// are `^…$`-anchored on a differing middle, so neither can claim the other's
+// string and the ordering of the two arms is immaterial. That is the same
+// argument SELF_HEAL makes against SELF_SLEEP_HEAL, and it is why this family
+// keeps costing one regex per sentence with no dispatch table.
+//
+// No /i, for the standing reason: the capitalised first word plus `^…$` is the
+// WHOLE guard, and it is what keeps a mid-sentence clause — Saguaro sv02-187's
+// "Choose up to 2 of your Pokémon and heal 50 damage from each of them." — off
+// this path. (That one is a Supporter and never reaches this reader anyway, but
+// the guard should not depend on which reader a card happens to route through.)
+const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -2948,6 +2985,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // actually present (`healSelf`, Math.min), so a malformed large amount heals
     // an Active to full and stops, which is a legal board state.
     if (amount >= 1) return [{ op: "heal", target: "self", amount }];
+  }
+
+  // 17. "Heal {N} damage from each of your Pokémon." — D133's OWN-BOARD HEAL, 7
+  //     printings across 2 clauses (N = 20, 30), and D132's shape a second time:
+  //     the op (`healEach`) has existed since 0.x, produced by Garganacl's
+  //     between-turns "Blessed Salt" Ability, so this is a reader for the same
+  //     action printed as an ATTACK and the interpreter does not change. Four of
+  //     the seven printings carry printed damage (Skeledirge ex's 50) and the
+  //     tail placement (D125) resolves them in the printed order for free.
+  //     `healEach` heals the ACTIVE and the Bench — see the anchor's note.
+  match = OWN_BOARD_HEAL.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // `amount >= 1` is the guard every arm here carries: a printed "Heal 0
+    // damage" is not a real card and would derive to a whole board's worth of
+    // silent no-ops. No CEILING, same as the bare self-heal: the interpreter
+    // clamps PER POKÉMON to the damage actually present, so a malformed large
+    // amount heals the board to full and stops — a legal state.
+    if (amount >= 1) return [{ op: "healEach", amount }];
   }
 
   return null;
