@@ -806,6 +806,38 @@ function stepOp(
       }
       return { park: { kind: "attachCards", candidates, targets, max, note: attachNote(op) } };
     }
+    case "discardOpponentDeckTop": {
+      // D130 — the MILL. The top `count` of the OPPONENT's deck into the
+      // OPPONENT's discard, in deck order (top first — the order the pile gains
+      // them, §2). No choice, so no park; no filter, so no scan; no rng, so the
+      // faces that decided how many times this runs are the only randomness in the
+      // sentence. That is what makes it safe to repeat once per heads.
+      //
+      // CLAMPED BY `slice`, which is the whole of the "do as much as you can" rule
+      // here: a deck shallower than `count` gives up everything it has and the
+      // event reports the SHORT list, so the log and the wire agree with the board
+      // rather than with the printed number. Milling to zero does NOT end the game
+      // — §14.3 deck-out is checked at the DRAW (flow.ts `startTurn`), which for
+      // the milled player is their next turn, so the loss stays owed to the draw
+      // step exactly as it is for a short `drawCards`.
+      //
+      // ZERO CARDS EMIT NOTHING (an empty deck, or a `count` of 0 no deriver can
+      // produce): the sibling producer's "only fires with ≥1" rule, and the reason
+      // it matters here is that a heads-count of N on an empty deck would
+      // otherwise announce N rows about nothing having happened.
+      const victim = otherSeat(ctx.seat);
+      const side = state.players[victim];
+      const milled = side.deck.slice(0, Math.max(0, op.count));
+      if (milled.length === 0) return { done: state };
+      events.push({ type: "DECK_TOP_DISCARDED", seat: victim, uids: milled });
+      return {
+        done: withSide(state, victim, {
+          ...side,
+          deck: side.deck.slice(milled.length),
+          discard: [...side.discard, ...milled],
+        }),
+      };
+    }
     case "attachFromDeck": {
       // SEARCH the deck for Energy and attach it onto your own Pokémon (Charizard
       // ex "Infernal Reign" / Janine's Secret Art). The same compound decision

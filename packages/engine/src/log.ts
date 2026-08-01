@@ -619,15 +619,26 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     }
     case "DECK_TOP_DISCARDED": {
-      // Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at cards
-      // that were NOT attached. Count only, like its DECK_TOP_REVEALED sibling:
-      // the pile is public, so a curious player can read the cards themselves,
-      // and what the LOG has to carry is that the look cost them. It fires even
-      // when nothing was attached (an empty look, or a declined one), which is
-      // exactly the case where this row is the whole story of the play.
+      // TWO producers, and the wording is PROVENANCE-NEUTRAL because of it (D113's
+      // rule: reuse the event, fix the message so it cannot lie):
+      //   • Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at
+      //     cards that were NOT attached, off the actor's OWN deck.
+      //   • D130's mill (discardOpponentDeckTop) — "For each heads, discard the
+      //     top N cards of your opponent's deck", off the NON-actor's deck.
+      // The old copy said "discarded N LOOKED-AT cards", which is true of the
+      // first and a flat lie about the second: nobody looked at a milled card.
+      // The "looked-at" flavour is not lost — Tri Howl's own DECK_TOP_REVEALED and
+      // ENERGY_ATTACHED rows sit directly above this one and carry it, which is
+      // exactly why this row never needed to.
+      //
+      // Count only, like its DECK_TOP_REVEALED sibling: the pile is public, so a
+      // curious player can read the cards themselves, and what the LOG has to
+      // carry is that the cards LEFT THE DECK. `event.seat` is the deck's OWNER on
+      // both producers, so the row belongs to the player who lost them — a mill
+      // reads as the opponent's row, which is what it is.
       const n = event.uids.length;
       return row(event.seat, [
-        plain(`discarded ${n} looked-at card${n === 1 ? "" : "s"} from the top of their deck`),
+        plain(`discarded ${n} card${n === 1 ? "" : "s"} from the top of their deck`),
       ]);
     }
     case "ENERGY_MOVED": {

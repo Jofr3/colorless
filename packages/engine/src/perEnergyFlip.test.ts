@@ -930,13 +930,17 @@ describe("deriver disjointness — a fourth SHAPE that crosses none of the other
       expect(deriveAttackCoinFlip(text)).not.toHaveProperty("flips.energy");
       expect(deriveAttackCoinFlip(text)).toHaveProperty("flips.kind", "untilTails");
     }
-    // AND THE FAMILY'S LAST UNMAPPED FLIP SENTENCES STILL DERIVE NULL — the three
-    // "For each heads, <effect>." printings (Krookodile sv01-117, Gyarados
-    // swsh10.5-022, Masquerain sv03-007). They share D129's leading sentence VERBATIM
-    // and differ only in the consequent, which makes them the sentences the two new
-    // arms could most plausibly have swallowed on their way past this one. They fold
-    // no number at all — they run an EffectOp per heads — so they stay on the loud
-    // ATTACK_EFFECT_SKIPPED path.
+    // AND THE FAMILY'S LAST UNMAPPED FLIP SENTENCES STILL DERIVE NULL — the "For
+    // each heads, <effect>." printings that remain after D130 mapped the mill:
+    // Krookodile sv01-117 (below) and Masquerain sv03-007. They share D129's leading
+    // sentence VERBATIM and differ only in the consequent, which makes them the
+    // sentences the two new arms could most plausibly have swallowed on their way
+    // past this one. They fold no number at all — they run an EffectOp per heads —
+    // and D130's expansion cannot carry either of them (Krookodile's op PARKS,
+    // Masquerain's would consume `rngState`), so they stay on the loud
+    // ATTACK_EFFECT_SKIPPED path. Gyarados swsh10.5-022 was the third and is now
+    // `programPerHeads`; its witness moved to untilTailsFlip.test.ts's re-pointed
+    // block rather than being deleted.
     expect(
       deriveAttackCoinFlip(
         "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",

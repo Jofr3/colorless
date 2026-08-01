@@ -296,18 +296,37 @@ export type GameEvent =
       other looked-at cards are shuffled back — a trailing SHUFFLE in the same
       batch hides the deck order, so naming the taken (revealed) cards is safe. */
   | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[] }
-  /** The looked-at top cards a from-the-top ATTACH did NOT attach went to
-      `seat`'s discard pile — Hydreigon "Tri Howl"'s printed "Discard the other
-      cards" (attachFromTop `discardRest`). `uids` is in deck order, top first,
-      which is the order the pile gained them (§2). The discard pile is public, so
-      naming them leaks nothing — and the cards that WERE attached are named by
-      their own ENERGY_ATTACHED rows, never here.
+  /** `uids` went from the top of `seat`'s DECK to `seat`'s DISCARD PILE, in deck
+      order, top first — which is the order the pile gained them (§2). That is the
+      whole game fact, and it is deliberately stated without a cause: TWO ops
+      produce this row and they are not the same kind of effect.
 
-      Only fires with ≥1 leftover, but it DOES fire when nothing was attached at
-      all (an empty look, or a declined one): the discard is a cost the card
-      charges regardless. The sibling clause "Shuffle the other cards back into
-      your deck" (Electric Generator) emits nothing of its own — those cards never
-      left the deck, and the trailing SHUFFLE row is the whole story. */
+      **`seat` IS THE DECK'S OWNER, on both producers** — the player who lost the
+      cards, exactly as DAMAGE_DEALT's seat names the defender. On one producer
+      that is the actor and on the other it is not, which is why the field is the
+      OWNER rather than "the player whose card did it":
+        • attachFromTop `discardRest` — Hydreigon "Tri Howl"'s printed "Discard the
+          other cards": the looked-at top cards a from-the-top ATTACH did NOT
+          attach. Own deck, so `seat` is the ACTOR. The cards that WERE attached
+          are named by their own ENERGY_ATTACHED rows, never here.
+        • discardOpponentDeckTop (D130) — the MILL: "For each heads, discard the
+          top N cards of your opponent's deck" (Wugtrio sv01-057, Gyarados
+          swsh10.5-022). Opponent's deck, so `seat` is the NON-ACTOR, and the row
+          belongs to the seat whose deck shrank.
+      A consumer that read `seat` as "whoever is taking the turn" would credit
+      every mill to the wrong player — the same mistake ENERGY_DISCARDED shipped
+      once and now carries a separate `actor` to prevent. This event needs no
+      `actor`: neither producer's row says who caused it, and the ATTACK_DECLARED /
+      TRAINER_PLAYED row above it does.
+
+      Naming the uids leaks nothing on either producer: the discard pile is PUBLIC.
+
+      ONLY FIRES WITH ≥1 CARD on both — a zero-card mill (an already-empty deck)
+      and a zero-card leftover emit nothing. But Tri Howl's DOES fire when nothing
+      was attached at all (an empty look, or a declined one): the discard is a cost
+      the card charges regardless. The sibling clause "Shuffle the other cards back
+      into your deck" (Electric Generator) emits nothing of its own — those cards
+      never left the deck, and the trailing SHUFFLE row is the whole story. */
   | { type: "DECK_TOP_DISCARDED"; seat: Seat; uids: string[] }
   /** An effect moved `uids` (Energy cards) from one of `seat`'s own in-play
       Pokémon (`from`) to another (`to`) — the §6 manual Energy movement (Energy

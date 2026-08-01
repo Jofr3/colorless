@@ -615,11 +615,18 @@ describe("logFromEvents — lookAtTopN (M5): DECK_TOP_REVEALED", () => {
   });
 });
 
-describe("logFromEvents — attachFromTop (M5): DECK_TOP_DISCARDED", () => {
-  it("logs a count-only 'discarded looked-at cards' row (singular + plural)", () => {
+describe("logFromEvents — attachFromTop + mill (M5): DECK_TOP_DISCARDED", () => {
+  it("logs a count-only, PROVENANCE-NEUTRAL 'discarded from the top' row (singular + plural)", () => {
     // The sibling of DECK_TOP_REVEALED, and count-only for the same reason — the
-    // discard pile is public, so what the row has to carry is that the look COST
-    // something (Hydreigon "Tri Howl": "Discard the other cards").
+    // discard pile is public, so what the row has to carry is that the cards LEFT
+    // THE DECK (Hydreigon "Tri Howl": "Discard the other cards").
+    //
+    // D130 gave the event a SECOND producer — the mill, "For each heads, discard
+    // the top N cards of your opponent's deck" — and the old copy said "discarded
+    // N LOOKED-AT cards", which is true of Tri Howl and a lie about a mill (nobody
+    // looked at a milled card). D113's rule applies: reuse the event, fix the
+    // MESSAGE so it cannot lie. The "looked-at" flavour is carried by Tri Howl's
+    // own preceding DECK_TOP_REVEALED / ENERGY_ATTACHED rows, so nothing was lost.
     const { state } = mustCreate(1);
     const line = (event: GameEvent) => {
       const entry = logFromEvents([event], ctx(state))[0];
@@ -629,14 +636,22 @@ describe("logFromEvents — attachFromTop (M5): DECK_TOP_DISCARDED", () => {
     // The SEAT rides the assertion, not just the text: the row belongs to the
     // player whose deck was discarded from, and "infer the actor from the other
     // seat" is a bug this log has already shipped once (see ENERGY_DISCARDED).
+    // Since D130 the seat is load-bearing in a second way — on a MILL the owner is
+    // the NON-actor, so a row credited to the turn-taker would name the wrong
+    // player entirely.
     expect(line({ type: "DECK_TOP_DISCARDED", seat: "p2", uids: ["p2#0"] })).toEqual({
-      text: "discarded 1 looked-at card from the top of their deck",
+      text: "discarded 1 card from the top of their deck",
       who: "p2",
     });
     expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0", "p1#1"] })).toEqual({
-      text: "discarded 2 looked-at cards from the top of their deck",
+      text: "discarded 2 cards from the top of their deck",
       who: "p1",
     });
+    // The word the mill made false, named as an ABSENCE: this row must not claim
+    // anybody looked at these cards.
+    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0"] }).text).not.toContain(
+      "looked-at",
+    );
   });
 });
 

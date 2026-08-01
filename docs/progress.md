@@ -3,7 +3,11 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-01 — build session #114 (**P3-M5 — the UNBOUNDED FOLD: "Flip a coin until you get tails.", the coin family's LAST damaging shape — and when nothing bounds a loop you owe a TERMINATION ARGUMENT, not a ceiling (D129, engine 0.80.0)**).
+**Last updated:** 2026-08-01 — build session #115 (**P3-M5 — the PER-HEADS PROGRAM: "For each heads, discard the top N cards of your opponent's deck." — the coin family's FIRST non-damaging consequent, and the carry from the flip site to the tail is PROGRAM EXPANSION, not a channel (D130, engine 0.81.0)**).
+*"Flip N coins. / Flip a coin until you get tails. **For each heads, discard the top M cards of your opponent's deck.**"* (**2 printings**) now SIMULATES on **TWO anchored regexes, ONE NEW UNION MEMBER and ONE NEW OP**: Wugtrio `sv01-057` "Undersea Tunnel" (attack index **1**, `Flip 3 coins.` … top **3**, no `damage` field) and Gyarados `swsh10.5-022` "Wreak Havoc" (index 0, `Flip a coin until you get tails.` … top **2**, no `damage` field). Census re-run against the local D1 before authoring, over the WHOLE effect string: 978 cards, **118 attack effects contain "heads" / 60 distinct**; `For each heads` is **4 printings / 4 distinct clauses and exactly 2 of them are mills** — these two. **TWO PRINTINGS ACROSS TWO DIFFERENT FLIP COUNTS IS WHAT MADE IT A SLICE:** D121's second-printing warrant is met, and because the two sit on *different* `AttackFlipCount` members (`printed` and `untilTails`) the union D129 froze at three members was reused **completely unchanged** — the "count and consequent are independent axes" claim its doc block has carried since D128 is now DEMONSTRATED rather than asserted. **⚠️ THE CARRY WAS THE SLICE, AND THE ANSWER IS EXPANSION, NOT A CHANNEL.** D125's placement rule puts an `EffectOp` at `attack.ts`'s TAIL while the flips are taken in FRONT of §8.5, and nothing carried a value between those points (`faces`/`heads` are block-scoped; the only escapee was `coinBonus`, a number). The tempting shapes — widen `EffectRecord`, add a `repeat` op, thread a per-resolution context object — are all wrong for one reason: **"For each heads, X" IS X repeated `heads` times, and the tail already runs an `EffectOp[]`.** So the flip block splices `heads` copies of the member's ops into `program`: no new channel, no new park state, no serialization question. It **APPENDS** rather than replaces (a registry row can never be silently dropped) and collapses an empty result back to `null` so `heads === 0` takes the existing no-program ending unchanged. **The ops live ON the coin member** (`{ kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[] }`, the union's 4th) so ONE reader owns the sentence — the alternative would put two anchored readers on one string with an invariant nobody enforces. **New op `{ op: "discardOpponentDeckTop"; count: number }`** — deterministic, never parks, consumes **no rng** (exactly what makes it safe to repeat per heads), clamped by `slice`; deliberately no `whose:` and no filter (D104). **The event is REUSED unchanged**: `DECK_TOP_DISCARDED` already says "these uids went from the top of `seat`'s deck to `seat`'s discard", with `seat` = the deck's OWNER — the actor for Hydreigon, the **NON-actor** here — and the discard pile being public means `redact.ts` still needs no arm. Its **log message was a lie the moment it had a second producer** ("discarded N **looked-at** cards…") and was made provenance-neutral: the D113 precedent exactly. **Deck-out is not the op's business** (§14.3 is checked at the DRAW), but attacking ends the turn, so a clamped mill reaches the victim's draw in the SAME batch and `GAME_OVER reason:"deckOut"` always follows — the claim is pinned on ORDER (`DECK_TOP_DISCARDED` < `TURN_ENDED` < `TURN_STARTED` < `GAME_OVER`, no `CARDS_DRAWN`), so a build that ended the game inside the op would emit it a full turn early. `modifierSimulated` grew its **second exception** (this member explains no `+`/`×`) — correctness in principle, not a live bug, since neither printing has a `damage` field. **Witnesses re-pointed, not deleted:** `untilTailsFlip.test.ts`'s three-printing loud-skip block becomes **two** (Masquerain `sv03-007`, Krookodile `sv01-117`), the end-to-end skipped case moved onto Krookodile, and a new case asserts Gyarados is now POSITIVE. `UNTIL_TAILS_FLIP_DECK` was re-pointed **without invalidating D129's measured seed table** (60 cards kept, indices 12–29 still eighteen consecutive non-Basics; the split is measured, `{C} = 8` forced by seeds 20 and 29). Fixed in passing: the Gyarados fixture claimed a `-30` Grass resistance its D1 row does not have. engineVersion 0.80.0 → **0.81.0**; `bun run check` **GREEN (exit 0): 172 → 173 files, 2710 → 2747 tests**. No web/API/DB/`@luminous/schema` diff; **no `MATCH_RECORD_VERSION` bump**. **⚠️ `/code-review` STILL NOT RUN** on D96–D130 (user-triggered). This supersedes #114 (D129 — folded into `decisions.md`).
+
+**Superseded header (build #114 — the UNBOUNDED FOLD, D129):**
+**Last updated (was):** 2026-08-01 — build session #114 (**P3-M5 — the UNBOUNDED FOLD: "Flip a coin until you get tails.", the coin family's LAST damaging shape — and when nothing bounds a loop you owe a TERMINATION ARGUMENT, not a ceiling (D129, engine 0.80.0)**).
 *"Flip a coin until you get tails. This attack does D [more] damage for each heads."* (**5 damaging printings**) now SIMULATES on **TWO anchored regexes, ONE NEW UNION MEMBER and ONE MORE WIDENED FIELD**: the MULTIPLY reading (printed base DROPPED) Growlithe `sv01-030` "Relentless Flames" (`30×`), Rellor `sv02-026` "Ball Roll" (`30×`), Forretress `sv01-139` "Continuous Spin" (`50×`) and Chansey `sv01-144` "Egg Rolling" (`60×`), plus the ADDITIVE reading (printed base KEPT) Bouffalant `sv03-174` "Damage Rush" (*"…does 30 **more** damage for each heads."*, `50+`). Census re-run against the local D1 before authoring (809 cards carrying attacks; 136 printings / 63 distinct clauses opening with "Flip"): **8** printings say "until you get tails" — these 5 fold a number, the other 3 run an `EffectOp` per heads and stay loudly skipped. **THE FLIP COUNT IS NEITHER THE TEXT NOR THE BOARD — IT IS THE FACES.** `untilTails` is the third `AttackFlipCount` member and the first that is not a number at ANY point: D127's is known at derivation, D128's at the flip site, and this one only once the coin has been drawn. So D128's `flipCount` — a reader returning a COUNT for a `for` loop to consume — **could not express it without flipping to find out how many times to flip**, and became `takeFlips`, returning the **SEQUENCE OF FACES** for all three members. There is no `untilTails` branch at the flip site at all; every member announces its rows and tallies its heads through one path, which is the point. **⚠️ THE GENERALISATION: WHEN NOTHING BOUNDS A LOOP, OWE A TERMINATION ARGUMENT — NOT A CEILING.** D127's `MAX_PRINTED_FLIPS` refuses a MALFORMED ROW; there is no malformed row here — the sentence is legal and fully specified and its length is a fact about the RNG — so a refusal would refuse legal text and a truncating cap chosen by feel would **silently lie about the game** rather than loudly skip it. The bound is owed to the SOURCE of the faces (D128's provenance rule, third application) and lives in `rng.ts` beside `flipCoin`: `MAX_UNTIL_TAILS_FLIPS = 64`. **⚠️ AND THE ARGUMENT IS MEASURED, NOT PROBABILISTIC** — this is the slice's real content. mulberry32's pre-states advance by a fixed **ODD** stride (`state + 0x6d2b79f5`), so successive flips walk `n·K mod 2³²` and visit every int32 exactly once: the face sequence is ONE fixed cycle whose worst case you can *compute* rather than bound by probability. Scanned over all **4 294 967 296** steps, plus the wrap (the cycle ends `…HH` and begins `H…`, so no run straddles the seam): **THE LONGEST RUN OF CONSECUTIVE HEADS IS 31.** 64 is twice that, so the cap **cannot fire from any seed** and every sequence ends in tails — the guard is dead code by construction, which is what a guard of this kind should be. To re-derive after touching `nextU32`: scan `n·K` for n in [0, 2³²) and take the longest heads run (~40s of arithmetic; the script is 15 lines). **⚠️ THE CAP IS A PARAMETER (`flipUntilTails(state, cap)`) SO ITS BRANCH STAYS TESTABLE** — a bound set above what the RNG can produce can never be observed by a test that only drives the engine, so the suite pins what truncation DOES at cap 1 and cap 2 (all-heads faces, exact step accounting) and pins the constant separately. It returns FACES, not a count, precisely so a caller can detect a truncated sequence (all heads, no trailing tails). **⚠️ ONE FLIP COUNT REACHES BOTH DAMAGE MEMBERS — the proof D126's split was load-bearing rather than incidental.** 4 printings are `D×` (`perHeads`, base dropped), Bouffalant is `50+` (`bonusOnHeads`, base kept): same opening, two consequents, told apart by the single word **"more"** — the same word that separates the whole additive scaling family from the multiply one, and the same near-miss D127's regex was built to refuse *by name*. So **`bonusOnHeads` grew the same `flips` field D128 gave `perHeads`** (its D126 printings now derive `{ kind: "printed", count: 1 }`, which is what they always were implicitly): only the SOURCE of the number moved, so D128's widen-don't-add rule applies to the other member unchanged. **The union has stayed THREE MEMBERS ACROSS FOUR SHAPES** because count and consequent are independent axes; a member per pair would be six members and five copies of one fold. **⚠️ TWO "unmapped stays LOUD" witnesses were RE-POINTED, not deleted:** `multiCoinFlip.test.ts`'s "two live *more* printings" keeps **Melmetal `swsh10.5-046`** (`Flip 2 coins. This attack does 90 more damage for each heads.`, `30+`) — now the pool's ONLY unmapped printed-count additive fold, and still refused because it is **1 printing** and D121's second-printing warrant is unmet — while Bouffalant moved to a positive assertion; and its "refuses the UNBOUNDED opening" case re-pointed at **Magikarp `sv02-042`** (`Flip 2 coins. If both of them are heads, this attack does 20 more damage.`, 2 printings), the same leading sentence D127 reads with a consequent it does not. `untilTailsFlip.test.ts` (**39 tests**) on a new `UNTIL_TAILS_FLIP_DECK` (both Actives `fix-titan`, 340 HP, no Weakness, so no seed run ends in a KO and truncates an assertion) sweeps **32** seeds, asserts every announced sequence ENDS IN TAILS, recomputes each board's `rngState` against `flipUntilTails` itself with ±1 probes, and pins the two members apart on ONE seed: first-flip-tails gives Bouffalant **50** damage and Growlithe **nothing at all**. ⚠️ Measured while authoring: 24 seeds reach heads counts {0,1,3,5} and **never 2** — an unbounded fold's outcome space is a geometric tail, so the coverage case asserts a SUPERSET (contains 0,1,2 at SEEDS=32), not the exact set D127/D128 could assert. engineVersion 0.79.0 → **0.80.0**; `bun run check` **GREEN (exit 0): 171 → 172 files, 2671 → 2710 tests**. ZERO new events, ops, `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields, error codes, registry rows or log arms; no `continuous.ts` diff; no `MATCH_RECORD_VERSION` bump; no web/API/DB/`@luminous/schema` diff. **⚠️ `/code-review` STILL NOT RUN** on D96–D129 (user-triggered). This supersedes #113 (D128 — folded into `decisions.md`).
 
 **Superseded header (build #112 — the MULTI-FLIP COUNT FOLD, D127):**
@@ -67,21 +71,25 @@ Wimpod **swsh10.5-025** "Punk Out" now SIMULATES: "If your opponent has any Pok�
 Snorlax **swsh10.5-055** "Block" now SIMULATES: "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat." — the **L3 shape D112 left open**, and the smallest aura slice yet (one `PassiveEffects` flag + one scan + three `&&` terms). **Verbatim re-confirmed against the local D1 before authoring** (the D95→D112 lesson): a D1 sub-agent read the row (Basic Colorless, 150 HP, retreat 4, ×2 Fighting, reg mark F; "Collapse" {C}×4 150 "This Pokémon is now Asleep.") and re-ran the lock census with COALESCE on every text column — **it is the ONLY continuous-Ability retreat lock in the ingested 978 cards, with no reprint**, and **zero rows in the entire pool carry U+2019** (all 459 apostrophe-bearing rows are ASCII), so lock matching never needs the typographic twin. **D112's `legal_standard=0` caveat was a NON-ISSUE and is retired**: 851 of 978 ingested cards are `legal_standard=0`, **including every card in sv01/sv02/sv03** — the flag tracks the post-G rotation, only sv06.5's 96 reg-mark H cards and most blank-mark Energies are Standard, and the engine has simulated non-Standard cards since D1. **Pick engine slices by mechanism, never by `legal_standard`**; format legality is a deck-builder (P2) concern. **Modelled as a bare `PassiveEffects.preventOpponentActiveRetreat?: true`** (D104's minimal-shape rule), read through a new continuous.ts scan **`opposingRetreatBlocked(state, pokemon)`** — the **FIFTH** aura scan and the boolean cross-board twin of D111's `opposingRetreatSurcharge`, sharing its derived-seat trick and §9 gate. **The two differ in exactly one line, and the printed text is the whole reason:** Trap Territory scopes only the TARGET (a benched Spidops ex still surcharges), while this print OPENS with "As long as this Pokémon is in the Active Spot" — so the SOURCE is Active-scoped too and the source list is the opponent's Active **alone**, enforced in the SCAN, not by a new `activeOnly` field (the `damageAttacker` precedent). **It rides NEITHER D112's `retreatBlocked` flag NOR the `preventRetreat` op**: no turn duration means nothing to apply and nothing to clear — read live, lapses the instant either end leaves the Active Spot. **Read at the RETREAT GATE, never in `effectiveRetreatCost` — a block is not a cost** (the wire still reports the real `cost` beside `can: false`). The three D112 read sites take one more `&&` each (turn.ts gate, redact.ts `can`, the web `GameHud.tsx`): **no new events, no new error code** (`RETREAT_PREVENTED` reused with a different *message* only — "an attack effect" would be a lie for an Ability), no new op, no wire field, no API/DB/`@luminous/schema` diff. Two provenances, two independent guards at one gate, composing for free. **The family's FIRST §9 POSITIVE:** Klefki `sv01-096` = `{ stage: "Basic", side: "both", requiresActive: true, exemptAbilityNamed: "Mischievous Lock" }` silences BASIC sources only — Florges/Clefable ex/Spidops ex are all Stage 1/2, which is why every earlier suite could record only the negative; **Snorlax is a Basic**, so an Active Klefki really does take Block down, and the Pokémon thereby freed is the Klefki itself. §9 reachability in this family is a function of the source's **STAGE**. `block.test.ts` (**12**) on a DEDICATED `BLOCK_DECK`: the bare-flag registry row; a fixture-text-verbatim guard; the block + its control; the **SOURCE clause** (a benched Snorlax blocks nothing — Trap Territory's exact inverse, located by card id so the guard is not vacuous); the target clause; own-board scoping asserted in BOTH directions off one board; the §9 positive + its lock-free control; the cost unchanged; the wire `{cost:2,can:false}` vs `{cost:2,can:true}`; the gate refusing **the very retreat the same board otherwise allows**; the block NOT preventing attacking and writing nothing onto the Pokémon (no `STATUS_APPLIED`, `conditions` untouched, `retreatBlocked` still false); and the composition with D112's flag (both, then each alone). New fixtures: a faithful Snorlax (the first `swsh10.5` fixture with an Ability) + the deck, which needed a 4th body (`fix-attacker`) because the "does not block attacking" case needs the *blocked* Pokémon to have an attack and it cannot be the Klefki; the suite pins BOTH Active spots before each surgery, `BLOCK_DECK` being Basic-dense enough that an unpinned starter could itself be an aura source or a §9 lock. engineVersion 0.63.0 → **0.64.0**; `bun run check` **GREEN (exit 0): 155 → 156 files, 2137 → 2149 tests** (tsc + biome lint + vitest). Clean diff (6 engine files + 1 new test + 1 web line) with zero new formatter churn (57 files flagged before and after — the real pre-existing count is **57**, not the "~45" D111 recorded, which was the default 20-diagnostic cap misread). **⚠️ `/code-review` STILL NOT RUN** on D96–D113 (user-triggered). This supersedes #97 (D112 — folded into `decisions.md`).
 
 
-**NEXT (resume point):** **THE COIN FAMILY'S DAMAGING SHAPES ARE COMPLETE.** Five
-regex pairs, 61 printings, ZERO clause-table rows and ZERO `BoardCondition` members:
-heads-bonus (20 printings, D126), tails-cancel (11, D126), the printed multi-flip fold
-(22, D127), the board-counted flip count (3, D128) and the unbounded fold (5, D129).
+**NEXT (resume point):** **THE COIN FAMILY'S DAMAGING SHAPES ARE COMPLETE, AND ITS
+FIRST NON-DAMAGING CONSEQUENT NOW RUNS.** Six regex pairs, 63 printings, ZERO
+clause-table rows and ZERO `BoardCondition` members: heads-bonus (20 printings, D126),
+tails-cancel (11, D126), the printed multi-flip fold (22, D127), the board-counted flip
+count (3, D128), the unbounded fold (5, D129) and the **per-heads PROGRAM** (2, D130 —
+`AttackCoinFlip`'s 4th member, the first whose consequent is an `EffectOp[]` rather
+than a number).
 The board-fact families are unchanged by this session: damage-bonus at **19 literal
 rows + 2 TEMPLATES, covering 23 of the pool's 26 distinct clauses / 41 of its 43
 printings**; requirement ("…this attack does nothing") at **2 rows / 2 cards / 3
 printings**, own table, own skeleton, shared `BoardCondition` vocabulary but
-deliberately no shared lookup. (D115 → D129, `conditionalDamage.test.ts` +
+deliberately no shared lookup. (D115 → D130, `conditionalDamage.test.ts` +
 `conditionClause.test.ts` + `clauseTable.test.ts` + `energyClause.test.ts` +
 `publicCount.test.ts` + `typeNameClause.test.ts` + `energyInPlay.test.ts` +
 `toolClause.test.ts` + `supporterClause.test.ts` + `promotedClause.test.ts` +
 `attackRequirement.test.ts` + `coinFlipDamage.test.ts` + `multiCoinFlip.test.ts` +
-`perEnergyFlip.test.ts` + `untilTailsFlip.test.ts`, engine **0.80.0**) — full
-`bun run check` green exit 0, **172 files / 2710 tests**. Twelve rules are settled and
+`perEnergyFlip.test.ts` + `untilTailsFlip.test.ts` + `perHeadsProgram.test.ts`, engine
+**0.81.0**) — full
+`bun run check` green exit 0, **173 files / 2747 tests**. Thirteen rules are settled and
 should be applied without re-litigating them: **D116's pronoun rule** (the union member
 is named for the board fact it READS), **D118's template rule** (a clause varying on ONE
 token is a pattern, not N rows — literals match FIRST), **D119's corollary** (if TWO
@@ -96,7 +104,9 @@ derived shape is classified by WHERE IN RESOLUTION IT LANDS), **D126's vocabular
 **D127's cardinality rule** (once a shape's SITE is right, varying its cardinality is
 cheap), **D128's provenance rule** (a bound is owed to the SOURCE of the number, not to
 the loop it feeds; and WIDEN THE FIELD rather than add a member when only that source
-moved), and **D129's rule** (next).
+moved), **D129's rule** (next), and **D130's carry rule** (when a value must reach a
+LATER stage of one resolution, ask first whether the later stage's existing input can
+just be REWRITTEN — expansion beats a channel).
 
 ⚠️ **D129: WHEN NOTHING BOUNDS A LOOP, OWE A TERMINATION ARGUMENT — NOT A CEILING.**
 A refusal ceiling (`MAX_PRINTED_FLIPS`) answers "is this row malformed?"; it is the
@@ -114,13 +124,35 @@ unbounded fold; do not re-derive it.
 flipping. If a future flip shape appears, add an `AttackFlipCount` member and answer it
 inside `takeFlips`; the flip site itself has no per-member branch and should keep none.
 
-⚠️ **FOUR "unmapped stays LOUD" witnesses exist and ALL must survive** — they are the
+⚠️ **D130: THE CARRY IS EXPANSION, NOT A CHANNEL.** The flips are taken in FRONT of
+§8.5 and `EffectOp`s run at `attack.ts`'s TAIL, and nothing carried a value between
+those points. The tempting shapes — widen `EffectRecord`, add a `repeat` op, thread a
+per-resolution context object — are all wrong for the same reason: **"For each heads,
+X" IS X repeated `heads` times, and the tail already runs an `EffectOp[]`.** So the
+flip block splices `heads` copies of the member's ops into `program`; there is no new
+channel, no new park state and no serialization question (the expansion parks and
+resumes like any other program). It **APPENDS** rather than replaces, so a registry row
+can never be silently dropped, and collapses an empty result back to `null` so
+`heads === 0` takes the existing no-program ending unchanged. **Before building a
+channel between two stages of one resolution, check whether the later stage's existing
+INPUT can simply be rewritten.**
+
+⚠️ **D130: THE OPS LIVE ON THE COIN MEMBER, SO ONE READER OWNS THE SENTENCE.**
+`{ kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[] }`. Splitting it
+(coin deriver returns the count, `deriveAttackEffect` returns the op) would put two
+anchored readers on one string with an invariant nobody enforces. Also: `AttackFlipCount`
+was reused **completely unchanged**, and the two printings sitting on two DIFFERENT
+members is what turns D128's "count and consequent are independent axes" from a claim
+into a demonstration.
+
+⚠️ **THREE "unmapped stays LOUD" witnesses exist and ALL must survive** — they are the
 only things pinning the fall-through. **Only THREE unmapped board-fact clauses remain
 in 978 cards against four suites**, so two witnesses share an occupant, which is
-expected and documented in-file. D129 re-pointed TWO coin-family witnesses whose
-occupants it mapped (Melmetal kept + Bouffalant promoted to a positive assertion;
-Growlithe → Magikarp `sv02-042`). **If you map any of these, re-point that case at
-another unmapped clause, do not delete it.**
+expected and documented in-file. D130 re-pointed the coin family's own witness block
+(`untilTailsFlip.test.ts` went from three `For each heads` printings to **two** —
+Masquerain `sv03-007` and Krookodile `sv01-117` — with the end-to-end skipped case moved
+onto Krookodile and a new case asserting Gyarados is now POSITIVE). **If you map any of
+these, re-point that case at another unmapped clause, do not delete it.**
 - `clauseTable.test.ts` **and** `conditionalDamage.test.ts` → **Lokix `sv02-021`**
   ("If this Pokémon evolved from Nymble during this turn, …").
 - `conditionClause.test.ts` → **Lucario `sv01-114`** ("If any of your {F} Pokémon
@@ -129,40 +161,63 @@ another unmapped clause, do not delete it.**
   Wing `sv06.5-026`** ("If your opponent has any Future Pokémon in play, …") —
   blocked on an INGEST change (item 4 below).
 
-**1. THE BEST NEXT SLICE — pick by appetite; the first is the cheapest thing left in
-the whole engine and the second is the last coin shape.**
-- **1a — MELMETAL `swsh10.5-046`, ONE PRINTING, ONE REGEX (~15 minutes).**
-  `Flip 2 coins. This attack does 90 more damage for each heads.` (base `30+`) is now
+**1. THE BEST NEXT SLICE — pick by appetite. The mill OP now exists and is the
+cheapest lever in the engine; the coin family has TWO shapes left and both need
+machinery that does not exist yet.**
+- **1a — THE SEVEN UNCONDITIONAL MILLS, ~7 printings, ONE REGEX, and the op is
+  ALREADY BUILT (the cheapest thing left).** `Discard the top N cards of your
+  opponent's deck.` — Chi-Yu ex `sv02-040`/`-234`/`-259`, Garganacl `sv02-123`,
+  Diggersby `sv03-113`, Paldean Clodsire `sv03-128`, Skwovet `sv03-178` (surfaced by
+  D130's census, not yet verbatim-confirmed per row — do that first). They are
+  **exactly the shape `discardOpponentDeckTop` was built for** and stay unmapped only
+  because no deriver reads that sentence: the slice is one anchored regex + one
+  `deriveAttackEffect` arm, no coin involved. D121's warrant is met several times
+  over. ⚠️ Check whether the sentence is standalone or rides a compound effect on any
+  of the seven — a multi-sentence printing is a different slice.
+  ⚠️ Two neighbours the anchor must REFUSE by name: Whiscash `sv03-109` (mills per
+  attached {F} Energy — a board-counted amount) and Gyarados `swsh10.5-022`'s *other*
+  attack "Wild Splash" (the OWN-deck reading, which is exactly why
+  `discardOpponentDeckTop` has no `whose:` field yet — add one when that lands).
+- **1b — MELMETAL `swsh10.5-046`, ONE PRINTING, ONE REGEX (~15 minutes).**
+  `Flip 2 coins. This attack does 90 more damage for each heads.` (base `30+`) is
   the pool's ONLY unmapped printed-count ADDITIVE fold, and D129 already built every
   part of it: `bonusOnHeads` carries `flips`, `takeFlips` answers `printed`, and the
   base is kept by the member. The whole slice is one anchored regex + one deriver arm
-  + assertions. ⚠️ **It is deliberately NOT taken here, and the reason is worth
-  weighing before you take it:** it is **1 printing**, so D121's warrant ("a closed
-  vocabulary tells you a template is SAFE, never that one is WARRANTED — the warrant
-  is a second printing") is unmet, and it is currently a LIVE WITNESS in
-  `multiCoinFlip.test.ts` and `coinFlipDamage.test.ts` for the loud-skip path. D121 is
-  about TEMPLATES, not about mapping a distinct literal clause, so mapping it is
-  defensible — but **if you do, re-point both witnesses first** (Magikarp `sv02-042`
-  and Bisharp `sv03-149` are the remaining near-misses) and say in `decisions.md` why
-  a one-printing map was worth the witness.
-- **1b — THE REPEATED EFFECT: `…tails. For each heads, <effect>.` (a PROGRAM, not a
-  fold).** Masquerain `sv03-007` (discard a random card from the opponent's hand),
-  Krookodile `sv01-117` (discard an Energy from the opponent's Active), Gyarados
-  `swsh10.5-022` (mill 2). Genuinely different machinery: it runs an `EffectOp` N times
-  where D127–D129 fold a NUMBER, and D125's placement rule says an op runs at
-  `attack.ts`'s TAIL while the flips are taken in FRONT of §8.5 — **so the flip result
-  must be carried across the pipeline, which nothing does today.** That carry is the
-  slice's real content, exactly as the termination argument was D129's. ⚠️ The census
-  is BIGGER than 3: Wugtrio `sv01-057` prints `Flip 3 coins. For each heads, discard
-  the top 3 cards of your opponent's deck.` — a PRINTED-count version of the same
-  repeated effect — and Oinkologne `sv03-184` prints `Flip 3 coins. Put a number of
-  cards up to the number of heads from your discard pile into your hand.`, a
-  heads-COUNT read by an op rather than a per-heads repeat. Re-census `For each heads`
-  and `number of heads` over the whole effect string before authoring; the shapes may
-  not be one slice.
-  ⚠️ **Note `takeFlips` already returns the faces**, so the flips half of 1b is done:
-  what is missing is a channel from the flip site to the program, not a way to flip.
-
+  + assertions. ⚠️ **Still deliberately NOT taken, and the reason is worth weighing
+  before you take it:** it is **1 printing**, so D121's warrant ("a closed vocabulary
+  tells you a template is SAFE, never that one is WARRANTED — the warrant is a second
+  printing") is unmet, and it is a LIVE WITNESS in `multiCoinFlip.test.ts` and
+  `coinFlipDamage.test.ts` for the loud-skip path. D121 is about TEMPLATES, not about
+  mapping a distinct literal clause, so mapping it is defensible — but **if you do,
+  re-point both witnesses first** (Magikarp `sv02-042` and Bisharp `sv03-149` are the
+  remaining near-misses) and say in `decisions.md` why a one-printing map was worth
+  the witness.
+- **1c — THE LAST TWO `For each heads` PRINTINGS. Both are 1 printing each and each
+  needs machinery the engine has never had.** D130 mapped the two mills; the census is
+  now CLOSED at 4 printings / 4 distinct clauses pool-wide, so these two are the whole
+  remainder and neither is cheap:
+  - **Masquerain `sv03-007`** — `Flip a coin until you get tails. For each heads,
+    discard a random card from your opponent's hand.` Would be the **FIRST `EffectOp`
+    in the engine to consume `state.rngState`** (today only `coinFlipGate` and the
+    attack flip site do, and both are coins). It must consume rng deterministically so
+    replay holds, which means deciding where an op's rng draw is written back and how
+    it survives a park.
+  - **Krookodile `sv01-117`** — `Flip a coin until you get tails. For each heads,
+    discard an Energy from your opponent's Active Pokémon.` The op EXISTS
+    (`discardEnergy from:"opponentActive"`) but it **PARKS on a mandatory choice**, so
+    N heads is N sequential parks across a serialized continuation. D130's expansion
+    carry is already correct for this — the question is purely whether N parks in a row
+    is the right player experience versus collapsing them (they are NOT equivalent in
+    general, though here all flips resolve before any op runs).
+  Both are still LIVE WITNESSES in `untilTailsFlip.test.ts` for the loud-skip path.
+- **1d — OINKOLOGNE `sv03-184`, a heads COUNT read as a CEILING, not a repeat.**
+  `Flip 3 coins. Put a number of cards up to the number of heads from your discard pile
+  into your hand.` **`number of heads` is a 1-printing hapax pool-wide** (censused
+  2026-08-01). The op exists — `discardPileRetrieval` takes `max`, which is already an
+  "up to" — so this wants **`max = heads`**, i.e. a 5th `AttackCoinFlip` member whose
+  consequent is a NUMBER handed to one op rather than a repeat count. D130's expansion
+  carry does not answer it (expanding one op 3× is not "up to 3"). 1 printing means
+  D121's warrant is unmet; take it only if you want the shape for its own sake.
 
 **2. THE THREE BOARD-FACT CLAUSES LEFT, ranked.** (Census re-confirmed 2026-08-01:
 **43 printings / 32 distinct (condition, N) pairs / 26 distinct CLAUSES** — that
@@ -505,7 +560,7 @@ formatter, so a new file should be `biome format --write`-ed to keep the count f
   least one Energy), so `fix-flip-filter` exists purely to reach it. Say in the fixture's comment
   *why* it is constructed, or the next session reads it as a card that should have been faithful.
 
-**FIRST, if you want it: `/code-review`** — D96–D128 have had NO independent reviewer (a new op, an
+**FIRST, if you want it: `/code-review`** — D96–D130 have had NO independent reviewer (a new op, an
 EffectSlot, a DiscardScope, the `cap` field, the index-keyed attack seam, the `damageAttacker` passive
 + its Tool member, the `onDamagedByAttack` TriggerTiming + `damagedTrigger` stage, a cross-board
 ability-lock aura, a `useStadiumAbility` action + `StadiumEffects.ability` + `noRuleBox`/`toolCard`
@@ -4853,13 +4908,59 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D129** — the UNBOUNDED FOLD, engine **0.80.0**: "Flip a coin until you get tails. This attack does D [more] damage for each heads." — 5 damaging printings on 2 regexes, the coin family's LAST damaging shape and its 61st printing; a MEASURED termination argument (`MAX_UNTIL_TAILS_FLIPS = 64` vs a longest-heads-run of 31 over mulberry32's whole 2³² cycle) instead of a ceiling, and `flipCount` → `takeFlips` returning FACES rather than a count) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D130** — the PER-HEADS PROGRAM, engine **0.81.0**: "Flip N coins / until you get tails. **For each heads, discard the top M cards of your opponent's deck.**" — 2 printings on 2 regexes, the coin family's FIRST non-damaging consequent; the carry from the flip site to the tail is PROGRAM EXPANSION, not a channel; new op `discardOpponentDeckTop`, `DECK_TOP_DISCARDED` reused. Prior: **D129** — the UNBOUNDED FOLD, engine 0.80.0: "Flip a coin until you get tails. This attack does D [more] damage for each heads." — 5 damaging printings on 2 regexes, the coin family's LAST damaging shape and its 61st printing; a MEASURED termination argument (`MAX_UNTIL_TAILS_FLIPS = 64` vs a longest-heads-run of 31 over mulberry32's whole 2³² cycle) instead of a ceiling, and `flipCount` → `takeFlips` returning FACES rather than a count) |
 | online | P4 | 🚧 **STARTED** (engine broad at 0.40.0). M1 (WS lobby over the DO) already done at P1-M8. **1a: engine wired into `apps/api`** (`startMatch`, host→p1/guest→p2). **1b: the DO seam DONE** — `handoffToMatch()` in `alarm()` loads the D1 pool, mints a seed, persists a `MatchRecord` under `MATCH_KEY` (dropped on `abandonsMatch`). **1c: the redactor + wire + read-only board DONE** — `redactGame`/`RedactedGame` + `{kind:"match"}` + `OnlineMatch` over `PlaymatView`. **2a: the action transport + setup flow DONE** — `{kind:"action"}` frame, seat-bound `applyMatchAction`, redacted `phase`, `OnlineHud` setup panels. **2b-i: the attack + KO loop DONE** — `RedactedPhase.turn:action.attacks` (server-computed payability, turn-owner + own-Active only), `SUPPORTED_MATCH_ACTIONS` += attack/takePrizes/promote, `OnlineHud` AttackPanel + ko:takePrizes/ko:promote dialogs; the match now plays TO A WIN with the fixed basic decks. **2b-ii: retreat DONE** (scoped to retreat ALONE — abilities/trainers deferred to real decks): `RedactedPhase.turn:action.retreat` + `SUPPORTED_MATCH_ACTIONS` += retreat + `OnlineHud` RetreatDialog. **2b-iii-a: the effect:choose prompt SEAM + the mayDraw dialog DONE** — `RedactedEffectPrompt` (mayDraw arm) on `RedactedPhase.effect:choose.prompt` (answerer-only via `redactedPromptOf`), `decisionFromPhase` reconstruction (round-trip now holds for a mayDraw park), `OnlineHud` MayDrawDialog; `resolveEffect` stays OFF the allowlist (2b-iii SPLIT: a=mayDraw seam, b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection pill). **2b-iii-b: the public-ref prompts DONE** — `RedactedEffectPrompt` += choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy arms (+ `RedactedPokemonRef`, absolute-seat), `redactPrompt` maps them (fresh copies, answerer-only, controller-answered so stricter than `phaseViewOf`), `decisionFromPhase` reconstructs full (round-trip holds for the answerer's view), `OnlineHud` += four dialogs via `EffectChooseDialog` (names resolved off the board); `resolveEffect` still OFF the allowlist. **2b-iii-c: the hidden-candidate prompts DONE** — `RedactedEffectPrompt` += chooseCards/attachCards arms carrying a `RedactedCard` per candidate (the deck-card reveal, server-resolved via `redactedCardOf`, answerer-only — the hidden-info barrier, leak-tested); `decisionFromPhase` recovers uids from `c.id`; `OnlineHud` += ChooseCards/AttachCards dialogs + the `effect:choose` render keys on the prompt (stale-pick reset); **`resolveEffect` now ON `SUPPORTED_MATCH_ACTIONS`** (every kind dialoged; soft-lock-safe). 1767→1774 tests. **2b-iii-d SPLIT** into d-i (pill) + d-ii (log). **2b-iii-d-i: the rejection pill DONE** — `{kind:"reject-action", reason}` server frame, `applyMatchAction` returns `{ok,reason}`, the DO sends it on `!ok`, `useLobby.actionError` + `OnlineMatch` `TransientErrorPill`. 1774→1777 tests. **2b-iii-d-ii: the online event log DONE** (D68) — `logFromEvents` + `LogContext` moved into `@luminous/engine`, the wire log types (`SeatLogEntry`/`LogSegment`) into `@luminous/schema`, the `{kind:"match"}` frame grew `log` (seat-keyed + leak-safe, identical to both), `MatchRecord` grew `startedAt`/`names`/`log`, `applyMatchAction` takes `now`; `viewLogEntries` relabels client-side. 1777→1782. **3 SPLIT** (a/a-sec/b/c+). **3a + 3a-sec: real deck selection + seat auth DONE** (D69) — the `/ws` upgrade authenticates the forwarded `session` cookie → a per-socket userId; the handoff loads each player's OWN deck OWNER-SCOPED (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, resets + broadcasts `{kind:"match-error"}` on a load failure; `seatClaimAllowed` + `SEAT_USERS_KEY` bind a seat to its account (closing the bearer-only-seat HAND leak). 1782→1790. **3b: the online ability + non-Stadium trainer HUD DONE** (D70) — `RedactedPhase.turn:action` gained `abilities`/`trainers` (server-folded playability via `redactedAbilitiesOf`/`redactedTrainersOf`, actor-only), `OnlineHud` gained the Abilities + Trainers sections, `SUPPORTED_MATCH_ACTIONS` += `useAbility`; STADIUMS stay the board drag, RARE CANDY deferred. 1790→**1803**. **3b-ii: the online Rare Candy DONE** (D71) — `RedactedTrainer` gained a `rareCandy` FLAG (the one row that opens a dialog instead of dispatching `playTrainer`) and `RedactedPhase.turn:action` a `rareCandy` pairing list (`redactedRareCandyOf` = the engine's `rareCandyOptions` mapped to the wire, actor-only; both computed in one `redactPhase` call, so a lit row always has ≥1 pairing), `OnlineHud` gained the two-step `RareCandyDialog`, `SUPPORTED_MATCH_ACTIONS` += `rareCandy` (soft-lock-safe — the same `placeEvolution` tail `evolve` has reached since 2a, no new park surface). 1803→**1812**. **The online turn HUD is now COMPLETE — every local affordance has an online counterpart.** **BROWSER-VERIFIED** (2026-07-26, two real clients + two D1 decks): the forwarded `session` cookie survives the cross-origin WS upgrade, the event log renders on both, 3b's greying is faithful live, Rare Candy evolves end-to-end and the hidden-info barrier holds. **3c — the match LIFECYCLE** is now landing: **3c-i** `MatchRecord.version` + `readMatchRecord`/`peekMatch`/`retireStaleMatch` + `endMatch` (D72, 1812→**1825**); **3c-ii** the engine `concede` action + `GameOverReason.conceded` + the 90s `ABANDON_GRACE_MS` forfeit for a player who vanishes mid-match (D73, engine 0.41.0, 1825→**1832**, browser-verified by killing a client); **3c-iii** the Concede control in the HUD chrome + neutral `GAME_OVER_DETAIL` copy (D74, 1832→**1835**); **3c-iv** a mid-match LEAVE now forfeits instead of voiding the opponent's game — `concedeSeat` shared with the timeout path, the pure `applyBye` keeping the seat while in-game so the result survives, and a Back confirmation that says leaving forfeits (D75, 1835→**1841**); **3c-v** the forfeit deadline moved onto the WIRE (`PlayerState.forfeitAt` replacing the DO's `ABANDON_KEY`, so the countdown renders the number the alarm fires on), the `connected` ⇒ no-forfeit invariant made structural, `readSnapshot` normalizing the un-versioned snapshot, and the ticking `OpponentAwayBanner` (D76, 1841→**1853**, browser-verified incl. a reconnect that was correctly NOT forfeited). **3c-vi** rematch — a `{kind:"rematch"}` lifecycle FRAME (server-judged: only the DO knows the match reached `gameOver`) running `endMatch` + readying the ASKER, so the existing ready-up flow is the agreement and no new lobby state exists; `commit` drops `MATCH_KEY` so the next handoff mints a fresh game (D77, 1853→**1858**, browser-verified incl. a crafted mid-game frame being dropped). **P4's match lifecycle is now COMPLETE end to end — start → play → resolve → play again, in one lobby.** **3c-vii-a** the SPECTATOR redaction — `redactGame(state, side, spectating)` withholding BOTH hands, both sides' setup placements and every actor affordance through one `actor = null` gate (the threat model is a PLAYER watching their own match, so the sides are symmetric); leak-tested from both sides, engine rules unchanged, **not wired yet** (D78, 1858→**1865**). **3c-vii-b** spectate WIRED — the lobby link is the spectate link (a third socket's `reject-full` becomes a spectator while in-game; no new frame, URL or invite flow), a spectator having no playerId/PlayerState/snapshot presence at all; `useLobby`'s `rejected` became `refusal: full|kicked` and `OnlineMatch` gained `spectating` (D79, 1874 tests, browser-verified with a third profile: both hands face-down to them, no controls, live updates). **Every P4 milestone is now DONE — transport, handoff, hidden info, reconnect/timeouts, concede/rematch, spectate.** **3c-viii** half-open socket liveness — `getWebSocketAutoResponseTimestamp` on a 30s poll closes any socket silent for 15s, funnelling into the grace→disconnect→forfeit machinery a real close already drives (D80, 1878 tests, browser-verified with the offline reproducer that exposed it). **P4 has NO known defects and no planned work left — every milestone is done.** **Next:** a REMOTE deploy + verification (all of P4 is local-only; needs the user's go-ahead + credentials, and P1's remote migrations/ingest first), or P5 polish. See `workstreams/online.md`. |
 | polish | P5 | 🚧 **STARTED** — **P5-1: real player names DONE** (D81): a lobby seat's name is the ACCOUNT's `displayName`, resolved SERVER-SIDE at the hello (`loadDisplayName`) from the /ws session's `userId`, so it is authoritative rather than announced (a client-supplied name was an impersonation vector once names stopped being random); anonymous sockets keep their generated handle, and a BLANK account name never falls back to the email (it is broadcast to the opponent and to spectators). Browser-verified on four clients. **P5-2: generated AVATARS DONE** (D82): `PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient + the account's initial; nothing stored, nothing uploaded, an anonymous seat keeps the generic figure. Cross-client determinism browser-verified (identical gradients for the same accounts on both clients). **P5-3: DECK COVER ART DONE** (D83): a pure `pickCoverCardId` fronts each deck with its highest-HP Pokémon (ties: copies, then card id) — HP being the one number that beats both stage-ranking (wrong for a Basic-ex deck) and count-ranking (wrong for every evolution deck); derived on READ in the list query, null → the card back for an empty deck. Browser-verified, and the run caught the deck NAME being illegible over card art (scrim added, only where there is art). **P5-4: the playmat's pass + history controls DELETED** (D84): the arrows were never wired to anything on any surface, and the ⟶ was enabled exactly when the turn panel covered it — so the repo's oldest defect was two dead controls, not a layout problem; `PlaymatView.onPassTurn` is now optional and only the /simulator sandbox asks for one. Browser-verified with a real `elementFromPoint` hit-test. **P5-5: PROFILES — the account you can EDIT — DONE** (D85): a Profile section on /settings behind `PATCH /auth/me` (`updateProfileRequestSchema`: required `displayName`, trimmed, 1–64; `requireUser` before the validator; no write when unchanged), closing the gap P5-1 opened — a name that is authoritative and broadcast but unchangeable. It shows the account's REAL generated face: `userSchema` gained `avatarSeed` (derived server-side by D82's hash), `avatarSeedFrom` moved to `apps/api/src/auth/avatar.ts` (a property of the ACCOUNT, not a seat) and `PlayerAvatar` to `src/components/`, so /settings and the lobby cannot drift into two similar drawings; deriving the hash client-side was rejected. Browser-verified on two clients — a rename reached the corner control, a reload, and the OPPONENT's panel with a byte-identical gradient. **P5-6: a CHOSEN deck cover DONE** (D86): the follow-up P5-3 named — a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure `effectiveCoverCardId` where the pin wins and everything else falls through to `pickCoverCardId` (now explicitly the DEFAULT). It resolves against the candidates the list query already had, so a choice costs no query and a stale pin falls back rather than drawing a blank; the pin may be a TRAINER, since guessing needs a rule and choosing does not. `DeckSummary.coverCardId` still means the face DRAWN, `Deck.chosenCoverCardId` the stored choice; the `CoverDialog` offers Automatic as an explicit option. PATCH and the client's `toSnapshot` both refuse to let the pin and the card list disagree — load-bearing, since a self-contradicting body would 400 forever on a shared save path. Browser-verified end to end incl. the fallback-after-removal and the 400 gate. **P5-7: a FAVOURITE deck on the profile DONE** (D87): a nullable `users.favourite_deck_id` (migration `0005`, surfaced as `userSchema.favouriteDeckId` — just the id) an account pins to one of its OWN decks via a native `<select>` on /settings riding the SAME `PATCH /auth/me` as the name (optional/nullable `favouriteDeckId`, validated against the caller's decks → 400 `favourite deck not found`); the profile stores only the id and resolves cover/name on read from `GET /decks` (derive-on-read, tolerate stale), the FK is `ON DELETE SET NULL`. Browser-verified end to end (build #71). **P5-8: a card DETAIL VIEW DONE** (D88): a read-only detail modal (`CardDetailDialog.tsx`) opened from the builder grid, hydrating the full `Card` via `GET /cards/:id` — a pure web-UI slice; the inspect affordance is a SIBLING of the add button (corner info button, opens without adding a copy), honest about what the catalog stores, respects `prefers-reduced-motion`. Browser-verified (build #72). **P5-9: a REDUCED-MOTION AUDIT DONE** (D89): carried `prefers-reduced-motion` through the three unguarded P5 surfaces — `CoverDialog.tsx`, `Settings.tsx`, `ProfileSection.tsx` — appending `motion-reduce:transition-none` at each call site per the D88 idiom (the global `index.css` rule only covers `<body>`/`.route-view`, not component Tailwind utilities), plus `motion-reduce:animate-none` on the Save spinner; `PlayerAvatar` was already clean. Pure CSS-class slice; verified via the shipped stylesheet (both guard rules emitted inside `@media (prefers-reduced-motion: reduce)`). **P5-10: the APP-WIDE glass reduced-motion pass DONE** (D90): the root-cause P5-9 deferred — `motion-reduce:transition-none` added INTO the seven `glass.ts` constants that carry a transition (`GLASS_HUD_BUTTON`/`GLASS_GHOST_BUTTON`/`GLASS_DIALOG_GHOST_BUTTON`/`GLASS_ACCENT_BUTTON`/`GLASS_NEUTRAL_BUTTON`/`GLASS_FILTER_TOGGLE` + `GLASS_INPUT`), so EVERY glass control app-wide respects reduced motion from the constant, not each call site; **reverses D88/D89's call-site placement** (blessed by the resume point), and the four now-redundant call-site guards adjacent to a glass constant (CardDetailDialog Retry, Settings Back-to-home, CoverDialog Done, ProfileSection Save) were dropped while every guard protecting an OWN non-constant transition was kept. Pure CSS-class slice, 1941 → 1941 tests, verified via the shipped stylesheet (the guard emitted in the main `index-*.css` bundle inside `@media (prefers-reduced-motion:reduce)`). **P5's autonomous surface is now exhausted. Next:** the only open P5 items both need the USER — uploaded avatars (R2 + CSP + moderation product call) and the remote P4 deploy (migrations 0004 AND 0005 remote). Best next AUTONOMOUS work is the P3 simulator M5 card-effect backlog (`docs/reference/coverage-backlog.md`). |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-01** (build #115) — **P3-M5: the PER-HEADS PROGRAM — "For each heads, discard
+  the top N cards of your opponent's deck." (D130, engine 0.81.0).** Took the resume point's
+  item **1b** rather than the cheaper 1a it named first, and the reason is the one the file
+  itself gave: 1a (Melmetal) is **1 printing** and would have cost two live loud-skip
+  witnesses to map, while 1b was the last coin shape and the one with real content. The
+  re-census the resume point demanded changed the slice's shape and was worth every minute:
+  over the WHOLE effect string, `For each heads` is **4 printings / 4 distinct clauses**
+  (not the 3 the header assumed) and **exactly 2 of them are mills** — Wugtrio `sv01-057`
+  (`Flip 3 coins.`, top 3) and Gyarados `swsh10.5-022` (`until you get tails.`, top 2). That
+  pair is the slice: **two printings across two DIFFERENT `AttackFlipCount` members**, which
+  meets D121's warrant *and* turns D128's "count and consequent are independent axes" from a
+  claim into a demonstration — the union D129 froze at three members was reused completely
+  unchanged. The other two `For each heads` printings each need machinery that does not
+  exist (Masquerain would be the FIRST op to consume `state.rngState`; Krookodile's
+  `discardEnergy` PARKS, so N heads is N sequential parks) and stay loudly skipped, with the
+  witness block re-pointed onto them. **The carry was the slice, exactly as predicted, and
+  the answer was smaller than the plan budgeted for.** The plan said "the flip result must be
+  carried across the pipeline, which nothing does today" and offered a channel; the right
+  answer is that there is **nothing to carry** — "For each heads, X" IS X repeated `heads`
+  times, and the tail already runs an `EffectOp[]`, so the flip block just rewrites
+  `program`. No new channel, no `EffectRecord` widening, no `repeat` op, no context object,
+  and no serialization question. It APPENDS (a registry row can never be silently dropped)
+  and collapses empty back to `null` (so `heads === 0` takes the existing ending). One new op
+  (`discardOpponentDeckTop` — deterministic, never parks, consumes no rng, clamped), and
+  **zero new events**: `DECK_TOP_DISCARDED` already said exactly the right thing, with `seat`
+  = the deck's OWNER (the actor for Hydreigon, the NON-actor here). Its log line *was* a lie
+  the moment it had a second producer ("discarded N **looked-at** cards…") and was made
+  provenance-neutral — the D113 precedent. Deck-out stayed where it belongs (the DRAW), but
+  since attacking ends the turn a clamped mill reaches the victim's draw in the same batch,
+  so the claim is pinned on event ORDER instead: a build that ended the game inside the op
+  would emit `GAME_OVER` a full turn early. Two bugs found in passing and fixed: the Gyarados
+  fixture claimed a `-30` Grass resistance its D1 row does not have while its doc said
+  "verbatim off the local D1" (nothing asserted it, which is how it survived), and
+  `modifierSimulated` would have claimed a `+`/`×` this member cannot explain — correctness
+  in principle, since neither printing has a `damage` field. Re-pointing
+  `UNTIL_TAILS_FLIP_DECK` without invalidating D129's measured seed table needed a measured
+  swap of its own (60 cards kept, indices 12–29 still eighteen consecutive non-Basics;
+  `{C} = 8` forced by seeds 20 and 29) — **every D129 pin passes unedited.**
+  `perHeadsProgram.test.ts` (36 tests, `SEEDS = 12` chosen by sweeping 0–199: Wugtrio's
+  three-tails outcome first appears at seed 10 and binds). `bun run check` green exit 0:
+  **172 → 173 files, 2710 → 2747 tests**. No web/API/DB/`@luminous/schema` diff; no
+  `MATCH_RECORD_VERSION` bump. ⚠️ `/code-review` still not run on D96–D130.
+  **Left for next time:** the seven UNCONDITIONAL opponent-side mills the census surfaced
+  (`Discard the top N cards of your opponent's deck.` — Chi-Yu ex ×3, Garganacl, Diggersby,
+  Paldean Clodsire, Skwovet) are **already the right shape for the new op** and need only one
+  regex + one `deriveAttackEffect` arm. That is now the cheapest lever in the engine.
 - **2026-08-01** (build #114) — **P3-M5: the UNBOUNDED FOLD — "Flip a coin until you get
   tails.", the coin family's LAST damaging shape (D129, engine 0.80.0).** Took the resume
   point's named best-next slice (item 1a) and re-censused it against the local D1 first, as

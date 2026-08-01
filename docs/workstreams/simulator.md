@@ -6390,7 +6390,7 @@ case moved from Growlithe to **Magikarp `sv02-042`**.
 
 `bun run check` GREEN exit 0: **171 → 172 files, 2671 → 2710 tests**.
 
-### Still unmapped in the coin family after D129
+### Still unmapped in the coin family after D129 *(superseded by the D130 section below — read that first)*
 
 - **`Flip 2 coins. This attack does 90 more damage for each heads.`** — Melmetal
   `swsh10.5-046` (`30+`), now the pool's ONLY unmapped printed-count ADDITIVE fold.
@@ -6413,3 +6413,141 @@ case moved from Growlithe to **Magikarp `sv02-042`**.
 
 The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
 Slither Wing `sv06.5-026`) and their four loud witnesses are untouched by this slice.
+
+
+## D130 — the PER-HEADS PROGRAM: `For each heads, discard the top N cards of your opponent's deck.` (engine 0.81.0)
+
+The coin family's **first non-damaging consequent**. Two printings, mapped together
+because they sit on two *different* flip counts:
+
+| Card | Attack (index) | Text | `damage` |
+|---|---|---|---|
+| Wugtrio `sv01-057` | "Undersea Tunnel" (**1**) | `Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.` | **absent** |
+| Gyarados `swsh10.5-022` | "Wreak Havoc" (0) | `Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.` | **absent** |
+
+**The `For each heads` census is now CLOSED** (re-run 2026-08-01 over the WHOLE effect
+string, 978 cards): 118 attack effects contain "heads" / 60 distinct; `For each heads`
+is **4 printings / 4 distinct clauses**, of which these 2 are mills. `number of heads`
+is a **1-printing hapax** (Oinkologne `sv03-184`). Do not re-run this census.
+
+⚠️ **THE CARRY IS EXPANSION, NOT A CHANNEL — the generalisation to keep.** D125's
+placement rule puts `EffectOp`s at `attack.ts`'s TAIL while the flips are taken in
+FRONT of §8.5, and nothing carried a value between those points (`faces`/`heads` are
+block-scoped in the flip block; the only escapee was `coinBonus`, a number). Every
+"build a channel" answer — widen `EffectRecord` (§9.2's uid-array scratch), add a
+`repeat` op, thread a per-resolution context object — is wrong for one reason:
+**"For each heads, X" IS X repeated `heads` times, and the tail already runs an
+`EffectOp[]`.** So the flip block splices `heads` copies of the member's ops into
+`program`. No new channel, no new park state, no serialization question — the expansion
+is a plain program that parks and resumes like any other. **Before building a channel
+between two stages of one resolution, check whether the later stage's existing INPUT can
+simply be rewritten.**
+
+Two details of the expansion that are not incidental:
+- it **APPENDS** (`[...(program ?? []), ...repeated]`) rather than replaces, so a
+  registry row can never be silently dropped;
+- it collapses an empty result back to `null`, so `heads === 0` takes the existing
+  no-program ending unchanged rather than running `runProgram` with `[]`.
+
+⚠️ **THE OPS LIVE ON THE COIN MEMBER, so ONE READER OWNS THE SENTENCE.**
+`{ kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[] }` is
+`AttackCoinFlip`'s 4th member. The split alternative (coin deriver returns the count,
+`deriveAttackEffect` returns the op) would put two anchored readers on one string with
+an invariant nobody enforces. `deriveAttackEffect` / `deriveAttackDamageBonus` /
+`deriveAttackDamageMultiplier` / `deriveAttackRequirement` all still return `null` for
+both sentences, asserted.
+
+**`AttackFlipCount` was reused COMPLETELY UNCHANGED**, and the two printings landing on
+two different members (`printed`, `untilTails`) is what turns D128's "count and
+consequent are independent axes" from a claim into a demonstration.
+
+### The new op — `{ op: "discardOpponentDeckTop"; count: number }`
+
+Deterministic, **never parks**, consumes **no rng** — which is exactly what makes it
+safe to repeat once per heads. Clamped by `slice`, so a shallow deck gives up what it
+has and the event reports the SHORT list. Deliberately **no `whose:` and no filter**
+(D104's minimal shape): both printings are opponent-side. Gyarados's *other* attack
+"Wild Splash" is the own-deck reading — widen the field when that lands.
+
+**No new event.** `DECK_TOP_DISCARDED` already says exactly the right thing — *these
+uids went from the top of `seat`'s deck to `seat`'s discard* — with `seat` = the deck's
+**OWNER**, which is the actor for Hydreigon's `attachFromTop discardRest` and the
+**NON-actor** here. Naming uids leaks nothing (the discard pile is public), so
+`redact.ts` still needs no arm. Its **log message was a lie the moment it had a second
+producer** ("discarded N **looked-at** cards…") and was made provenance-neutral: the
+D113 precedent exactly — reuse the event, fix the *message*.
+
+⚠️ **DECK-OUT IS NOT THE OP'S BUSINESS, and the test cannot assert it naively.** §14.3
+is checked at the DRAW (`flow.ts` `startTurn`), so milling to zero does not end the game
+on the spot — but **attacking ends the turn**, so a clamped mill reaches the victim's
+draw in the SAME event batch and `GAME_OVER reason:"deckOut"` always follows. The claim
+is therefore pinned on **ORDER** (`DECK_TOP_DISCARDED` < `TURN_ENDED` < `TURN_STARTED`
+< `GAME_OVER`, and no `CARDS_DRAWN`): a build that ended the game inside the op would
+emit it a full turn early.
+
+⚠️ **`modifierSimulated` grew its SECOND exception.** `programPerHeads` folds no damage,
+so it explains no printed `+`/`×`; riding the existing `kind !== "cancelOnTails"` test
+would suppress a loud row the engine has not earned. Neither printing carries a `damage`
+field, so no board can reach the difference — written from the rule, not from what a
+test would notice. `effectSimulated` needed **no** new term (`coinFlip !== null` already
+covers it) and `scaledBase` **keeps** the base (this member owns no printed number for
+it to duplicate).
+
+### Fixture / witness work this slice forced
+
+- `untilTailsFlip.test.ts`'s `For each heads` loud-skip block went from **three** to
+  **two** printings (Masquerain `sv03-007`, Krookodile `sv01-117`); the end-to-end
+  `ATTACK_EFFECT_SKIPPED` case moved from Gyarados onto **Krookodile** (fielded
+  faithfully, `{F}` line added), and a new case asserts Gyarados is now POSITIVE.
+- ⚠️ **`UNTIL_TAILS_FLIP_DECK` was re-pointed WITHOUT invalidating D129's measured seed
+  table.** Setup's rng depends only on deck **length** and which **indices** hold a
+  Basic, so the swap kept 60 cards and indices 12–29 as eighteen consecutive
+  non-Basics (`3 Krookodile + 4 {R} + 3 {F} + 8 {C}` for `4 Gyarados + 6 {R} + 8 {C}`).
+  The split is measured — only `(3,3,4,8)` and `(3,4,3,8)` leave every seed 0–31 enough
+  copies to field, and `{C} = 8` is forced by seeds 20 and 29. **Every D129 pin passes
+  unedited.** Reuse this reasoning before touching any measured deck.
+- **A fixture lied and nothing caught it:** the Gyarados fixture claimed
+  `resistances: [{ type: "Grass", value: "-30" }]` while its doc said "verbatim off the
+  local D1"; the D1 row's `resistances_json` is `null`. No test asserted it, which is
+  how it survived. Corrected.
+- `perHeadsProgram.test.ts` — **36 tests**, `SEEDS = 12` chosen by **measurement** over
+  seeds 0–199: Wugtrio's three-tails outcome first appears at **seed 10** and is the
+  binding constraint (every "nothing happened" assertion rests on it); 12 also covers
+  Wugtrio's full outcome space `{0,1,2,3}`. Gyarados's set is asserted as a **superset**
+  only (contains 0, contains ≥2) — D129's rule for an unbounded count.
+
+`bun run check` GREEN exit 0: **172 → 173 files, 2710 → 2747 tests**. No web/API/DB/
+`@luminous/schema` diff; no `MATCH_RECORD_VERSION` bump.
+
+### Still unmapped in the coin family after D130
+
+- **The seven UNCONDITIONAL opponent-side mills — the cheapest lever in the engine.**
+  `Discard the top N cards of your opponent's deck.` — Chi-Yu ex `sv02-040`/`-234`/
+  `-259`, Garganacl `sv02-123`, Diggersby `sv03-113`, Paldean Clodsire `sv03-128`,
+  Skwovet `sv03-178`. **Already the right shape for `discardOpponentDeckTop`**; they
+  stay unmapped only because no deriver reads that sentence. One regex + one
+  `deriveAttackEffect` arm. ⚠️ Verbatim-confirm each row first (the ids came from
+  D130's census, not from a per-row read) and check none of them rides a compound
+  effect. Near-misses the anchor must refuse by name: Whiscash `sv03-109` (mills per
+  attached {F} Energy) and Gyarados `swsh10.5-022`'s own "Wild Splash" (own-deck).
+- **Melmetal `swsh10.5-046`** — `Flip 2 coins. This attack does 90 more damage for each
+  heads.` (`30+`), still the pool's ONLY unmapped printed-count additive fold, still
+  refused for being **1 printing** and a live witness. Unchanged by D130.
+- **Masquerain `sv03-007`** — `…tails. For each heads, discard a random card from your
+  opponent's hand.` Would be the **first `EffectOp` in the engine to consume
+  `state.rngState`**; it must do so deterministically and survive a park.
+- **Krookodile `sv01-117`** — `…tails. For each heads, discard an Energy from your
+  opponent's Active Pokémon.` The op exists but **PARKS**, so N heads is N sequential
+  parks across a serialized continuation. D130's expansion carry is already correct for
+  it; the open question is N parks versus collapsing them.
+- **Oinkologne `sv03-184`** — `Flip 3 coins. Put a number of cards up to the number of
+  heads from your discard pile into your hand.` A heads COUNT read as a **ceiling**, not
+  a repeat: `discardPileRetrieval` already takes an "up to" `max`, so this wants a 5th
+  `AttackCoinFlip` member handing a NUMBER to one op. Expansion does not answer it
+  (running one op 3× is not "up to 3"). 1 printing — D121's warrant unmet.
+- The multi-consequent long tail (Floette `sv01-092`, Dragonite ex `sv03-159`, Bisharp
+  `sv03-149`, Magikarp `sv02-042`, Spiritomb `sv01-129`, Squawkabilly `sv01-162`) —
+  refused by `$` and untouched by D126–D130.
+
+The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
+Slither Wing `sv06.5-026`) and their witnesses are untouched by this slice.

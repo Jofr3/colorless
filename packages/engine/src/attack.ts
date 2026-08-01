@@ -33,7 +33,7 @@ import {
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
-import type { AttackDamageBonus, AttackFlipCount } from "./effects";
+import type { AttackDamageBonus, AttackFlipCount, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -308,7 +308,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // Purge's program, which is WHY the seam is index-keyed.
   const authored = programFor(attacker.id)?.attack?.[index] ?? null;
   const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
-  const program = authored ?? derived;
+  // REASSIGNABLE since D130, and only from the flip block below: a
+  // `programPerHeads` coin member is expanded into `heads` copies of its ops and
+  // APPENDED here, so the attack's existing tail runs them with no new channel.
+  // Nothing else in this function writes it.
+  let program = authored ?? derived;
   // The count-scaling clause reads the SAME effect text but folds into the damage
   // BEFORE the §8.5 pipeline, unlike a post-damage program. Two sibling families,
   // told apart by the word "more": ADDITIVE ("+") folds `per × count` onto the
@@ -361,6 +365,16 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // amount, so Tandemaus's "30×" on two heads is 60, not 30 + 60. Its sibling
   // `bonusOnHeads` is printed "10+" and keeps its base — the marker is exactly what
   // separates them, which is why they are two union members and not one.
+  //
+  // D130 — `programPerHeads` is NOT a fourth claimant and the test names
+  // `perHeads` rather than "any folding member" for exactly that reason. The rule
+  // is "drop the base when something else already owns the printed number", and
+  // this member owns nothing: it folds no damage at all, so there is no per-unit
+  // for the base to be a duplicate of. It therefore KEEPS the base, like
+  // `bonusOnHeads` and like a plain attack. Both of its printings have no `damage`
+  // field whatsoever (base 0), so no swept board can tell the two answers apart —
+  // which is precisely why the branch is written from the rule rather than from
+  // what a test would notice.
   const scaledBase =
     damageMultiplier !== null || programDamage || coinFlip?.kind === "perHeads" ? 0 : base;
   // The "+"/"×" modifier is SIMULATED iff a scaling reader consumed it OR the
@@ -382,10 +396,28 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // of the three members own a modifier and only `cancelOnTails` — the one member
   // that reads a FLAT printed number — does not. Naming the exception keeps the
   // next member from silently defaulting to "unsimulated".
+  //
+  // D130 ADDS THE SECOND EXCEPTION, and it is the case that exception list was
+  // written for. `programPerHeads` explains no `+`/`×` at all — it folds no damage,
+  // so a printed damage marker on such a card would be a number NOTHING in the
+  // derived shape accounts for, and claiming it would suppress a loud row the
+  // engine has not earned. Both of this member's printings carry no `damage` field
+  // whatsoever, so no board can currently reach the difference: this is
+  // correctness in principle, not a live bug, and it is written down now because
+  // the default (ride the `!== "cancelOnTails"` test) would have been silently
+  // wrong the first time a "For each heads" printing arrived with a marker.
+  //
+  // `effectSimulated`, by contrast, needs NO new term: `coinFlip !== null` already
+  // covers the new member, and it is right to — the sentence IS read, whole, by
+  // one reader. Verified rather than duplicated.
   const effectSimulated =
     program !== null || scaling !== null || requirement !== null || coinFlip !== null;
-  const modifierSimulated =
-    scaling !== null || programDamage || (coinFlip !== null && coinFlip.kind !== "cancelOnTails");
+  // The exception LIST, named rather than inlined: two of the coin union's four
+  // members explain a printed damage marker and two do not, and a bare
+  // `coinFlip !== null` here would claim the modifier for all four.
+  const coinExplainsModifier =
+    coinFlip !== null && coinFlip.kind !== "cancelOnTails" && coinFlip.kind !== "programPerHeads";
+  const modifierSimulated = scaling !== null || programDamage || coinExplainsModifier;
   if (
     (modifier !== null && !modifierSimulated) ||
     (effect !== null && effect !== "" && !effectSimulated)
@@ -518,6 +550,37 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // faces come from — `MAX_UNTIL_TAILS_FLIPS` in rng.ts is set above the longest
   // heads run that EXISTS anywhere in mulberry32's full 2³² cycle (measured: 31),
   // so it cannot fire from any seed and the sequence always ends in tails.
+  //
+  // D130 — AND THE CONSEQUENT CAN BE A PROGRAM RATHER THAN A NUMBER. "For each
+  // heads, discard the top N cards of your opponent's deck." (2 printings —
+  // Wugtrio sv01-057 on a PRINTED count of 3, Gyarados swsh10.5-022 on an
+  // UNBOUNDED one) runs an EffectOp per heads instead of folding `per × heads`.
+  // Nothing about the flip half moves: the same `takeFlips`, the same one row per
+  // face, the same tally.
+  //
+  // THE CARRY IS PROGRAM EXPANSION, AT THIS SITE, AND NOT A NEW CHANNEL. The flips
+  // are taken HERE, in front of §8.5; EffectOps run at this function's TAIL,
+  // strictly after it; and until now nothing carried a value between the two. The
+  // obvious repair — thread a heads count through to `runProgram` and teach the
+  // interpreter a "repeat" op — buys a second way to say "N times" and a new
+  // vocabulary member to say it with. But "For each heads, X" literally IS X
+  // repeated `heads` times, and the tail already runs an `EffectOp[]`: so the
+  // faces are spent HERE into a longer PROGRAM, and the value that crosses the gap
+  // is the program itself. `heads === 0` expands to nothing at all, which is why
+  // the zero-heads outcome needs no branch and takes the existing no-program
+  // ending below.
+  //
+  // APPENDED, NEVER ASSIGNED. `program` is the registry row or the derived one,
+  // and overwriting it would let an authored program be silently dropped by a coin
+  // sentence on the same attack. For these two printings it is always null — the
+  // derivers are whole-sentence anchored, so a sentence this coin reader claims is
+  // a sentence `deriveAttackEffect` refused, and neither card carries a registry
+  // row — which makes the append behaviour-identical today and honest tomorrow.
+  // The same call `finishAttack` makes about its own queue.
+  //
+  // `coinBonus` STAYS 0 for this member: it folds no damage, so there is nothing
+  // to add at the pre-W/R step and the printed base (if a future printing had one)
+  // is KEPT — see `scaledBase` above, where the rule is stated.
   let coinBonus = 0;
   if (coinFlip !== null) {
     const [faces, rngState] =
@@ -543,6 +606,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         });
         return finishAttack(next, events, action.seat);
       }
+    } else if (coinFlip.kind === "programPerHeads") {
+      // D130 — THE EXPANSION. One copy of the member's ops per heads, in flip
+      // order, appended to whatever program the attack already had. A `flat` over
+      // `heads` references to the SAME array is safe because `EffectOp`s are plain
+      // frozen-by-convention data the interpreter never mutates — every op reads
+      // its own fields and writes only the state it returns — so the copies share
+      // structure rather than needing one.
+      const repeated: EffectOp[] = [];
+      for (let i = 0; i < heads; i += 1) repeated.push(...coinFlip.ops);
+      const expanded = [...(program ?? []), ...repeated];
+      // Back to NULL when nothing came out of it (zero heads and no prior program),
+      // because null is what the tail below tests for: an empty `EffectOp[]` would
+      // route the attack through `settleProgram` to say nothing at all, which is a
+      // different ending with the same result, and "different ending" is how a
+      // no-op grows a KO sweep it did not have.
+      program = expanded.length > 0 ? expanded : null;
     } else {
       coinBonus = heads * coinFlip.per;
     }

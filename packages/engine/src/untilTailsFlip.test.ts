@@ -73,15 +73,26 @@ import {
 // and the outcome a build that collapsed the members into one would get wrong on
 // every card in the file. It has its own case below and is asserted explicitly.
 //
-// AND THREE PRINTINGS OF THE SAME LEADING SENTENCE STAY LOUD. Krookodile sv01-117,
-// Gyarados swsh10.5-022 and Masquerain sv03-007 print "Flip a coin until you get
-// tails. For each heads, <effect>." — an EffectOp repeated per heads rather than a
-// number folded, which is a different mechanism at a different site. They differ
-// from the five mapped sentences ONLY in the consequent, which makes them the
-// sharpest witnesses this file has: they are what says the two new regexes are
-// anchored on their whole sentence and not on the opening they share. Gyarados is
-// fielded rather than merely derived, so the claim is END TO END — it reaches
-// ATTACK_EFFECT_SKIPPED and takes NO flip at all.
+// AND TWO PRINTINGS OF THE SAME LEADING SENTENCE STAY LOUD. Krookodile sv01-117
+// and Masquerain sv03-007 print "Flip a coin until you get tails. For each heads,
+// <effect>." — an EffectOp repeated per heads rather than a number folded, which is
+// a different mechanism at a different site. They differ from the five mapped
+// sentences ONLY in the consequent, which makes them the sharpest witnesses this
+// file has: they are what says the two new regexes are anchored on their whole
+// sentence and not on the opening they share. Krookodile is fielded rather than
+// merely derived, so the claim is END TO END — it reaches ATTACK_EFFECT_SKIPPED,
+// takes NO flip at all, and still lands its printed 50.
+//
+// THERE WERE THREE, AND D130 MAPPED ONE OF THEM. Gyarados swsh10.5-022 ("For each
+// heads, discard the top 2 cards of your opponent's deck.") was this file's
+// end-to-end LOUD witness until the per-heads PROGRAM member was built; it now
+// derives to `programPerHeads` and lives in perHeadsProgram.test.ts. The witness
+// was RE-POINTED at Krookodile rather than deleted (docs/progress.md's standing
+// rule): a witness left asserting "stays loud" after it is mapped is a failing
+// test, and one quietly removed is worse — it takes the disjointness claim with it.
+// Krookodile is the survivor that can be fielded (its flat `damage: 50` gives the
+// declaration something to land); Masquerain prints no damage and stays
+// deriver-level, exactly as it was.
 
 /** Growlithe sv01-030 "Relentless Flames", verbatim, and pinned char-for-char
     against FIXTURE_POOL below. Growlithe carries no authored program (see the
@@ -117,18 +128,34 @@ const EGG_ROLLING = "Flip a coin until you get tails. This attack does 60 damage
 const DAMAGE_RUSH =
   "Flip a coin until you get tails. This attack does 30 more damage for each heads.";
 
-/** The three printings that share D129's leading sentence and stay UNMAPPED —
-    Krookodile sv01-117 "Chomp Chomp Bite", Gyarados swsh10.5-022 "Wreak Havoc" and
-    Masquerain sv03-007 "Panic-Prompting Pattern", verbatim off the local D1
-    (2026-08-01). Each repeats an EffectOp per heads instead of folding a number,
-    which is a different mechanism at a different site (an effect PROGRAM runs at
-    attack.ts's tail, where these five sentences must land in FRONT of the §8.5
-    pipeline). They are the suite's own "stays LOUD" witnesses. */
+/** The TWO printings that share D129's leading sentence and stay UNMAPPED after
+    D130 — Krookodile sv01-117 "Chomp Chomp Bite" and Masquerain sv03-007
+    "Panic-Prompting Pattern", verbatim off the local D1 (2026-08-01). Each repeats
+    an EffectOp per heads instead of folding a number, which is a different
+    mechanism at a different site (an effect PROGRAM runs at attack.ts's tail, where
+    these five sentences must land in FRONT of the §8.5 pipeline). They are the
+    suite's own "stays LOUD" witnesses.
+
+    D130 BUILT THAT MECHANISM AND STILL DID NOT REACH THESE TWO, which is what makes
+    them better witnesses now than they were. Its expansion appends `heads` copies
+    of a DETERMINISTIC, NON-PARKING op to the attack's program; Krookodile's
+    `discardEnergy` PARKS on a choice (N heads is N sequential parks across a
+    serialized continuation) and Masquerain's would be the first EffectOp in the
+    engine to consume `state.rngState`. Their refusal is therefore no longer "no
+    regex yet" — it is a cost neither slice has paid. */
 const FOR_EACH_HEADS = [
   "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
-  "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.",
   "Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand.",
 ] as const;
+
+/** Gyarados swsh10.5-022 "Wreak Havoc", verbatim — the printing that USED to be the
+    third member of the list above and is MAPPED as of D130 (`programPerHeads` over
+    `untilTails`, expanding to one `discardOpponentDeckTop { count: 2 }` per heads).
+    Kept here, out of the loud list, for one job: it is the sentence closest to this
+    file's five and it must now derive to something OTHER than a fold, which is a
+    sharper disjointness claim than a null ever was. */
+const WREAK_HAVOC =
+  "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.";
 
 /** The leading sentence all EIGHT printings share, char-for-char. It is what denies
     `^Flip a coin\.` its literal period and `^Flip (\d+) coins\.` its digits — the
@@ -253,11 +280,13 @@ function bouffalantActive(state: GameState, seat: Seat): GameState {
   return attachFromDeck(setActiveFromDeck(state, seat, "sv03-174"), seat, "fix-energy", 2);
 }
 
-/** Gyarados in the seat's Active Spot with Wreak Havoc's single {C} paid — the
-    UNMAPPED consequent, fielded so "stays LOUD" is a claim about a declared attack
-    and not only about a null out of the deriver. */
-function gyaradosActive(state: GameState, seat: Seat): GameState {
-  return attachFromDeck(setActiveFromDeck(state, seat, "swsh10.5-022"), seat, "fix-energy", 1);
+/** Krookodile in the seat's Active Spot with Chomp Chomp Bite's single {F} paid —
+    the UNMAPPED consequent, fielded so "stays LOUD" is a claim about a declared
+    attack and not only about a null out of the deriver. It replaced Gyarados here
+    when D130 mapped Gyarados's sentence; a Stage 2 reaches the Active Spot by the
+    same surgery a Basic does. */
+function krookodileActive(state: GameState, seat: Seat): GameState {
+  return attachFromDeck(setActiveFromDeck(state, seat, "sv01-117"), seat, "fix-fighting-energy", 1);
 }
 
 /** The seat's Active damage — read straight off the board, so the "nothing happened"
@@ -374,17 +403,39 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     );
   });
 
-  it("matches FIXTURE_POOL char-for-char for the UNMAPPED Gyarados swsh10.5-022", () => {
-    const attack = FIXTURE_POOL["swsh10.5-022"]?.attacks?.[FLIP_INDEX];
-    expect(attack?.effect).toBe(FOR_EACH_HEADS[1]);
-    expect(attack?.name).toBe("Wreak Havoc");
-    // NO PRINTED DAMAGE AT ALL, which is what makes this the clean end-to-end
-    // witness: there is no number for a mis-read to land, so the only thing a
-    // declaration can produce is the loud row (and, if the anchoring ever slipped,
-    // coin rows that must not be there).
-    expect(attack?.damage).toBeUndefined();
-    expect(attack?.cost).toEqual(["Colorless"]);
-    expect(FIXTURE_POOL["swsh10.5-022"]?.attacks).toHaveLength(2);
+  it("matches FIXTURE_POOL char-for-char for the UNMAPPED Krookodile sv01-117", () => {
+    const attack = FIXTURE_POOL["sv01-117"]?.attacks?.[FLIP_INDEX];
+    expect(attack?.effect).toBe(FOR_EACH_HEADS[0]);
+    expect(attack?.name).toBe("Chomp Chomp Bite");
+    // A FLAT PRINTED 50 — a number, with NO modifier, which is what makes this the
+    // end-to-end witness D130 could re-point the case onto. The loud row is one
+    // claim; the printed damage landing unmodified is the other, and a card with no
+    // damage at all (Masquerain) can only make the first.
+    expect(attack?.damage).toBe(50);
+    expect(typeof attack?.damage).toBe("number");
+    expect(attack?.cost).toEqual(["Fighting"]);
+    expect(FIXTURE_POOL["sv01-117"]?.attacks).toHaveLength(2);
+    expect(FIXTURE_POOL["sv01-117"]?.abilities).toBeNull();
+  });
+
+  it("keeps the RE-POINTED witness honest — Gyarados swsh10.5-022 is now MAPPED", () => {
+    // The standing rule (docs/progress.md): a loud-skip witness this repo MAPS gets
+    // re-pointed at another unmapped clause, never deleted. D130 mapped Gyarados, so
+    // the end-to-end case above moved to Krookodile — and this is the assertion that
+    // says the move was necessary rather than cosmetic.
+    expect(FIXTURE_POOL["swsh10.5-022"]?.attacks?.[FLIP_INDEX]?.effect).toBe(WREAK_HAVOC);
+    expect(deriveAttackCoinFlip(WREAK_HAVOC)).not.toBeNull();
+    // …and it derives to something that is NOT a fold, which is the disjointness
+    // claim this file actually needs from it: it shares D129's leading sentence
+    // verbatim and must still not reach either of D129's two members.
+    expect(deriveAttackCoinFlip(WREAK_HAVOC)?.kind).toBe("programPerHeads");
+    expect(deriveAttackCoinFlip(WREAK_HAVOC)?.kind).not.toBe("perHeads");
+    expect(deriveAttackCoinFlip(WREAK_HAVOC)?.kind).not.toBe("bonusOnHeads");
+    expect(deriveAttackCoinFlip(WREAK_HAVOC)).not.toHaveProperty("per");
+    // …on the SAME flip count as the five folds in this file, which is the fact
+    // D130 rests on: count and consequent are independent axes.
+    expect(deriveAttackCoinFlip(WREAK_HAVOC)).toHaveProperty("flips.kind", "untilTails");
+    expect(WREAK_HAVOC.startsWith(UNTIL_TAILS_OPENING)).toBe(true);
   });
 
   it('splits the printed markers into base + "×" / "+" through parseAttackDamage', () => {
@@ -527,7 +578,7 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(RELENTLESS_FLAMES.replace(" damage", " more damage")).toBe(DAMAGE_RUSH);
   });
 
-  it("pins the THREE unmapped sentences too — same opening, different consequent", () => {
+  it("pins the TWO unmapped sentences too — same opening, different consequent", () => {
     // The witnesses are pinned char-for-char for the same reason the mapped ones are:
     // the claim below is that they are refused by the CONSEQUENT, and that is only a
     // claim if the opening they share is byte-identical to the mapped one.
@@ -541,15 +592,18 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
       expect(sentence).not.toContain("This attack does");
       expect(sentence).toBe(sentence.trim());
     }
-    // Krookodile's names a Pokémon and so carries the family's only é; the other two
-    // are pure ASCII. Pinned because a re-ingest that mangled the accent would change
+    // Krookodile's names a Pokémon and so carries the family's only é; Masquerain's
+    // is pure ASCII. Pinned because a re-ingest that mangled the accent would change
     // that sentence and nothing else in this file.
     expect(FOR_EACH_HEADS[0].length).toBe(103);
     expect(utf8Bytes(FOR_EACH_HEADS[0])).toBe(104);
     expect(FOR_EACH_HEADS[1].length).toBe(97);
     expect(utf8Bytes(FOR_EACH_HEADS[1])).toBe(97);
-    expect(FOR_EACH_HEADS[2].length).toBe(97);
-    expect(utf8Bytes(FOR_EACH_HEADS[2])).toBe(97);
+    // The re-pointed-away sentence is pinned by the same rule and for a new reason:
+    // its length is what says the two witnesses above were not merely renamed.
+    expect(WREAK_HAVOC.length).toBe(97);
+    expect(utf8Bytes(WREAK_HAVOC)).toBe(97);
+    expect(WREAK_HAVOC).not.toBe(FOR_EACH_HEADS[1]);
   });
 });
 
@@ -763,20 +817,21 @@ describe("the two new regexes are DISJOINT — from each other, and from all fou
   });
 });
 
-describe("the three `For each heads` printings stay LOUD — the suite's own unmapped witnesses", () => {
-  it("derives NULL for all three, verbatim, on every reader in the family", () => {
-    // Krookodile sv01-117, Gyarados swsh10.5-022, Masquerain sv03-007. They print
-    // D129's leading sentence VERBATIM and differ only in the consequent, which makes
-    // them the sharpest disjointness witnesses this file has: if the new regexes were
-    // anchored on the opening rather than on the whole sentence, these three would be
-    // read as folds of a number that is not printed anywhere in them.
+describe("the two `For each heads` printings stay LOUD — the suite's own unmapped witnesses", () => {
+  it("derives NULL for both, verbatim, on every reader in the family", () => {
+    // Krookodile sv01-117 and Masquerain sv03-007. They print D129's leading sentence
+    // VERBATIM and differ only in the consequent, which makes them the sharpest
+    // disjointness witnesses this file has: if the new regexes were anchored on the
+    // opening rather than on the whole sentence, these two would be read as folds of
+    // a number that is not printed anywhere in them.
     //
-    // WHY THEY ARE UNBUILT IS NOT "not yet". They repeat an EffectOp per heads —
-    // discard an Energy, mill 2, discard from hand — which is an effect PROGRAM, and
-    // programs run at attack.ts's TAIL, strictly after the §8.5 pipeline. The five
-    // mapped sentences must land in FRONT of it. Same sentence, same flip, different
-    // SITE, which is D125's rule: a derived shape is classified by where in
-    // resolution it lands.
+    // WHY THEY ARE UNBUILT IS NOT "not yet", and it stopped being "no regex yet" when
+    // D130 built the per-heads PROGRAM. That member expands "For each heads, X" into
+    // `heads` copies of X at the flip site, which works only because X is
+    // deterministic and never parks. Krookodile's X is a `discardEnergy` that PARKS
+    // on a choice — N heads would be N sequential parks across a serialized
+    // continuation — and Masquerain's would be the first EffectOp in the engine to
+    // consume `state.rngState`. Both are real slices with costs of their own.
     for (const sentence of FOR_EACH_HEADS) {
       expect(deriveAttackCoinFlip(sentence)).toBeNull();
       // …and by nothing else in the family either, so the null is a genuine gap on
@@ -801,14 +856,19 @@ describe("the three `For each heads` printings stay LOUD — the suite's own unm
     }
   });
 
-  it("reaches ATTACK_EFFECT_SKIPPED and takes NO FLIP — Gyarados, end to end", () => {
+  it("reaches ATTACK_EFFECT_SKIPPED and takes NO FLIP — Krookodile, end to end", () => {
     // A null out of the deriver says the sentence is unread. Only a declared attack
     // says what that COSTS, and the second half is the one that matters: an unmapped
     // printing must not consume an rngState step or announce a coin row it has no
-    // business announcing. "Wreak Havoc" prints no damage at all, so the loud row is
-    // the entire visible result and there is no number for a mis-read to hide behind.
+    // business announcing.
+    //
+    // RE-POINTED FROM GYARADOS BY D130, which mapped that sentence. Krookodile is the
+    // better witness for a second reason once the case had to move: its "Chomp Chomp
+    // Bite" prints a FLAT 50, so the case can also assert that being loud is not the
+    // same as being broken — the printed number still lands, unmodified, on the same
+    // declaration that reports the sentence unread.
     for (let seed = 0; seed < SEEDS; seed++) {
-      const state = gyaradosActive(board(seed), "p1");
+      const state = krookodileActive(board(seed), "p1");
       const before = state.rngState;
       const { state: done, events } = mustApply(state, {
         type: "attack",
@@ -821,11 +881,12 @@ describe("the three `For each heads` printings stay LOUD — the suite's own unm
       expect(find(events, "ATTACK_EFFECT_SKIPPED")).toEqual({
         type: "ATTACK_EFFECT_SKIPPED",
         seat: "p1",
-        attack: "Wreak Havoc",
+        attack: "Chomp Chomp Bite",
         // The effect text is reported IN FULL, which is what makes the row loud
         // rather than merely present: the sentence nobody read is in the log.
-        effect: FOR_EACH_HEADS[1],
-        // …and no modifier is unsimulated, because the card prints no damage marker.
+        effect: FOR_EACH_HEADS[0],
+        // …and no modifier is unsimulated, because the card prints a FLAT 50 with no
+        // "+"/"×" marker at all.
         damageModifier: null,
       });
       // ZERO ROWS and ZERO STEPS. The second is strictly stronger: a flip taken and
@@ -833,9 +894,17 @@ describe("the three `For each heads` printings stay LOUD — the suite's own unm
       expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(0);
       expect(done.rngState).toBe(before);
       expect(done.rngState).not.toBe(flipUntilTails(before, MAX_UNTIL_TAILS_FLIPS)[1]);
-      // Nothing landed, and the turn still ended the ordinary way.
-      expect(types(events)).not.toContain("DAMAGE_DEALT");
+      // …and no Energy left the defender either: the unread consequent did NOTHING,
+      // which is what "loud" has to mean.
+      expect(types(events)).not.toContain("ENERGY_DISCARDED");
+      // The printed 50 lands unmodified (fix-titan has neither Weakness nor
+      // Resistance), and the turn ends the ordinary way.
+      expect(find(events, "DAMAGE_DEALT")?.base).toBe(50);
+      expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(50);
+      expect(activeDamage(done, "p2")).toBe(50);
       expect(types(events)).not.toContain("ATTACK_FAILED");
+      expect(types(events)).not.toContain("KNOCKED_OUT");
       expect(types(events)).toContain("TURN_ENDED");
     }
   });
@@ -921,11 +990,12 @@ describe("constructed near-misses stay LOUD", () => {
       "Flip a coin until you get tails. This attack does 30 damage for each head.",
       // A NON-BREAKING SPACE where an ASCII one is printed — the invisible drift.
       `Flip a coin until you get tails.${NBSP}This attack does 30 damage for each heads.`,
-      // A CURLY APOSTROPHE variant. None of the five mapped sentences contains an
-      // apostrophe at all, so this is built on the nearest family sentence that does
-      // — Gyarados's, which is unmapped anyway; the point stands either way, since
-      // the pool holds ZERO U+2019 and a hand-retyped near-miss is the only way one
-      // enters the codebase.
+      // A CURLY APOSTROPHE variant. None of the FIVE sentences THIS file maps
+      // contains an apostrophe at all, so it is built on the nearest family sentence
+      // that does — Gyarados's, which D130 maps and which must therefore be refused
+      // HERE for the ordinary reason (it is not a fold) and refused THERE for the
+      // U+2019. The pool holds ZERO U+2019, so a hand-retyped near-miss is the only
+      // way one enters the codebase at all.
       "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent’s deck.",
       // A SECOND CONSEQUENT riding the same sequence — the shape the `$` exists for.
       // No pool printing extends this exact sentence today, which is precisely why the
@@ -972,6 +1042,10 @@ describe("ZERO registry rows — the cards fold straight off their printed text"
     expect(programFor("sv03-174")?.attack).toBeUndefined();
     // …and the unmapped witness has none either, which is why it lands on the loud
     // path rather than being resolved by a hand-written row.
+    expect(programFor("sv01-117")).toBeUndefined();
+    // The re-pointed-away card has none EITHER, and that is a different claim worth
+    // keeping: Gyarados is MAPPED as of D130 and still carries zero registry rows, so
+    // the shape it now resolves through is the printed sentence and nothing else.
     expect(programFor("swsh10.5-022")).toBeUndefined();
   });
 });
@@ -1512,7 +1586,7 @@ describe("purity", () => {
         seat: "p1",
         index: FLIP_INDEX,
       });
-      mustApply(deepFreeze(gyaradosActive(board(seed), "p1")), {
+      mustApply(deepFreeze(krookodileActive(board(seed), "p1")), {
         type: "attack",
         seat: "p1",
         index: FLIP_INDEX,

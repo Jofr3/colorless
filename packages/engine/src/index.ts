@@ -1266,7 +1266,85 @@ import type { GameState, Seat } from "./types";
     error codes, registry rows or log arms; no continuous.ts diff; no web/API/DB/
     `@luminous/schema` diff. NO MATCH_RECORD_VERSION BUMP — no event shape changed
     at all. */
-export const engineVersion = "0.80.0";
+/** 0.81.0 — P3-M5: the per-heads PROGRAM (D130). "Flip {N} coins|a coin until you
+    get tails. For each heads, discard the top {M} cards of your opponent's deck."
+    now SIMULATES — Wugtrio sv01-057 "Undersea Tunnel" (idx 1, {C}{C}{C}, 3 flips,
+    mill 3) and Gyarados swsh10.5-022 "Wreak Havoc" (idx 0, {C}, until tails, mill
+    2), the pool's only two mill-per-heads printings, neither of which prints a
+    `damage` field at all.
+
+    THE FIRST COIN CONSEQUENT THAT IS NOT A NUMBER. D126 built the seam (a printed
+    flip is taken in FRONT of the §8.5 pipeline, because a flip that gates or scales
+    damage cannot be an effect PROGRAM — programs run at attack.ts's TAIL, strictly
+    after the number is computed), and D127/D128/D129 then varied only the flip
+    COUNT: printed, board-read, unbounded. Every one of them FOLDED the faces into
+    arithmetic. `programPerHeads` keeps the count axis untouched and moves the other
+    one: "For each heads, X" runs an OP per heads and folds nothing, so the member
+    carries `ops: EffectOp[]` where its two siblings carry `per: number`.
+
+    THE CARRY IS PROGRAM EXPANSION AT THE FLIP SITE, and it is the slice's real
+    content. The flips are taken in front of §8.5 and EffectOps run at the tail, and
+    until now NOTHING carried a value between those two places. The obvious repair —
+    thread a heads COUNT through to `runProgram` and teach the interpreter a "repeat"
+    op — buys a second way to say "N times" and a new vocabulary member to say it
+    with. But "For each heads, X" literally IS X repeated `heads` times, and the tail
+    already runs an `EffectOp[]`: so the faces are spent AT THE FLIP SITE into a
+    LONGER PROGRAM. `heads` copies of the member's ops, APPENDED to whatever program
+    the attack already had (never assigned over it — a registry row must not be
+    silently droppable by a coin sentence), and `heads === 0` expands to nothing,
+    which is why the zero-heads outcome needs no branch and takes the existing
+    no-program ending. The value that crosses the gap is the program itself.
+
+    THAT IS ONLY LEGAL BECAUSE THE OP IS DETERMINISTIC AND NEVER PARKS.
+    `discardOpponentDeckTop` consumes no `rngState`, asks no question and clamps to
+    the deck, so N copies of it is N ordinary steps. The two "For each heads"
+    printings NOT built are exactly the two where that fails: Krookodile sv01-117
+    discards an Energy (a `discardEnergy` that PARKS on a choice — N heads would be N
+    sequential parks across a serialized continuation) and Masquerain sv03-007
+    discards a RANDOM card from the hand (the first EffectOp that would consume
+    `state.rngState`). Oinkologne sv03-184 shares the opening and not the shape — a
+    heads COUNT read as an "up to" ceiling by one op. All three stay loudly unmapped,
+    and untilTailsFlip.test.ts's end-to-end witness was RE-POINTED from Gyarados
+    (which this slice maps) onto Krookodile rather than deleted.
+
+    TWO PRINTINGS ACROSS TWO FLIP-COUNT SOURCES IS WHAT MAKES IT A SLICE, and it
+    REUSES `AttackFlipCount` WHOLESALE — that union is unchanged. Wugtrio is
+    `{ printed, 3 }` and Gyarados is `{ untilTails }`, feeding a byte-identical op.
+    D128's doc block has claimed since it was written that the flip COUNT and the
+    flip CONSEQUENT are independent axes; this is the first slice that DEMONSTRATES
+    it rather than asserting it, and the union has now stayed one member per
+    consequent across five shapes.
+
+    ONE READER OWNS THE SENTENCE. The ops live on the coin member rather than being
+    produced by `deriveAttackEffect` off the same string, so no invariant has to hold
+    between two derivers reading one printing — the kind of invariant nothing can
+    enforce and every future arm can break.
+
+    §14.3 DECK-OUT IS A TURN-START RULE AND THE MILL DOES NOT TOUCH IT. Milling a
+    deck to zero does not end the game: the milled player loses when they must DRAW
+    and cannot (flow.ts `startTurn`), exactly as a short `drawCards` short-draws
+    rather than losing. Attacking ends the turn, so the loss does arrive in the same
+    event batch — AFTER TURN_ENDED and TURN_STARTED, with reason "deckOut", which is
+    what the clamp cases pin.
+
+    `DECK_TOP_DISCARDED` IS REUSED, NOT JOINED BY A SIBLING (D113's rule). Its game
+    fact is exactly ours — these uids went from the top of `seat`'s deck to `seat`'s
+    discard pile — and `seat` is the deck's OWNER on both producers, which here is
+    the NON-actor. What was fixed instead is the MESSAGE: log.ts said "discarded N
+    LOOKED-AT cards", true of Hydreigon "Tri Howl" and a flat lie about a mill, so
+    the wording is now provenance-neutral. redact.ts needs no arm and still has none:
+    it redacts STATE, and a discard pile is public in any case.
+
+    Cost: 2 skeleton regexes, 1 `AttackCoinFlip` member (`programPerHeads`), 1
+    `EffectOp` member (`discardOpponentDeckTop`) + its interpreter arm, 1 new arm and
+    1 `const` → `let` in attack.ts's flip block, 1 `modifierSimulated` exclusion, and
+    1 reworded log line. ZERO new events, `AttackFlipCount` members,
+    `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
+    prompts, error codes, registry rows or redact arms; no rng.ts diff and no
+    continuous.ts diff. NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState`
+    shape changed and no event shape changed. No web/API/DB/`@luminous/schema`
+    diff. */
+export const engineVersion = "0.81.0";
 
 export type {
   ApplyResult,

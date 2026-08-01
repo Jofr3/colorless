@@ -893,6 +893,45 @@ export type EffectOp =
       benchOnly?: true;
       discardRest?: true;
     }
+  /** MILL: move the top `count` cards of the OPPONENT's deck into the OPPONENT's
+      discard pile, in deck order (top first — the order the pile gains them, §2).
+      D130's op, and the second producer of `DECK_TOP_DISCARDED` (the first is
+      `attachFromTop`'s `discardRest` above); the event's `seat` is the deck's
+      OWNER on both, which here is the NON-actor.
+
+      Deterministic in the strongest sense the op vocabulary has: it consumes NO
+      `rngState` (the cards are taken in the order they already sit in), it never
+      PARKS (there is no choice in "the top N"), and it never prompts. That is what
+      lets it be repeated N times at the flip site — D130 expands "For each heads,
+      X" into `heads` copies of X — where an op that parked would owe N sequential
+      continuations across a serialized state, and one that drew from `rngState`
+      would make the expansion's step count depend on the faces twice over.
+
+      CLAMPED TO THE DECK, never an error: a shallower deck discards all of it and
+      the op reports what actually moved (§8.6 "do as much as you can"). And
+      MILLING TO ZERO DOES NOT END THE GAME — §14.3 deck-out is a turn-START rule,
+      checked at the draw (flow.ts `startTurn`), exactly as `drawCards` short-draws
+      rather than losing on the spot. A player milled out loses at their next draw
+      step and not one instant earlier, which is a rule about WHERE the loss is
+      owed, not a leniency.
+
+      OPPONENT-ONLY AND COUNT-ONLY, by D104's minimal-shape rule. Both printings
+      that reach it are opponent-side ("discard the top N cards of your opponent's
+      deck") and neither filters, so there is no `whose:` discriminator and no
+      `CardFilter` here: the pool's own-deck mill ("Discard the top 5 cards of your
+      deck" — Gyarados swsh10.5-022's OTHER attack, Wild Splash) is a live sentence
+      nobody has mapped, and the first slice that maps it widens this field then,
+      with two readings in hand rather than one guessed at. The unconditional
+      opponent-side mills (Chi-Yu ex sv02-040 "Discard the top 2 cards of your
+      opponent's deck.", Garganacl sv02-123, Skwovet sv03-178 and four more) are
+      the same op with no coin in front of them and stay unmapped only because no
+      deriver reads their sentence yet — this op is already the right shape for
+      them, which is the check that says it is not overfitted to the coin.
+
+      Naming the uids on the event leaks nothing: the discard pile is PUBLIC, so a
+      redact.ts arm would hide from the opponent exactly what the opponent can pick
+      up and read. */
+  | { op: "discardOpponentDeckTop"; count: number }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
       — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
@@ -2244,6 +2283,54 @@ const ATTACK_COIN_UNTIL_TAILS_BONUS =
 const ATTACK_COIN_UNTIL_TAILS_MULTI =
   /^Flip a coin until you get tails\. This attack does (\d+) damage for each heads\.$/;
 
+// The PER-HEADS PROGRAM (D130) — "Flip {N} coins|a coin until you get tails. For
+// each heads, discard the top {M} cards of your opponent's deck." — the coin
+// family's first consequent that is NOT a number. Census (2026-08-01,
+// `attacks_json`, 809 cards with attacks): FOUR printings say "For each heads,",
+// and exactly TWO of them mill the opponent's deck — Wugtrio sv01-057 "Undersea
+// Tunnel" (idx 1, {C}{C}{C}, top 3) and Gyarados swsh10.5-022 "Wreak Havoc"
+// (idx 0, {C}, top 2). Neither prints a `damage` field at all.
+//
+// TWO REGEXES BECAUSE THE FLIP COUNT IS PRINTED TWO WAYS, and that is the whole
+// reason this is a slice rather than a one-off: one consequent reached by two
+// members of `AttackFlipCount` is exactly the independence D128's doc block
+// claims, demonstrated. The consequent is byte-identical between them (only the
+// count `M` varies), so the two patterns differ ONLY in their leading sentence —
+// the same split D129's pair carries, and disjoint from all five siblings for the
+// same reason: "until you get tails." denies `^Flip a coin\.` its literal period
+// and `^Flip (\d+) coins\.` its digits, while "For each heads," denies all five
+// of them their "This attack does" consequent.
+//
+// THE PLURAL `cards` IS LOAD-BEARING, and Wiglett sv01-056 "Dig a Little" is the
+// live near-miss that proves it: "Flip a coin. If heads, discard the top card of
+// your opponent's deck." is the SAME game action on the SAME zone, printed by the
+// pre-evolution of one of this slice's own two cards — and the anchor refuses it
+// on THREE separate counts. Its count is singular ("the top card", no digits at
+// all, so `the top (\d+) cards` cannot span it); its flip count is the bare "Flip
+// a coin." D126 reads; and its consequent is a GATE ("If heads, …", one flip, one
+// conditional run) rather than a repeat ("For each heads, …", N flips, N runs).
+// One of those three would be enough; all three is what makes the refusal an
+// argument instead of an accident. A regex that admitted it would silently turn a
+// `coinFlipGate` into a per-heads loop over a sentence that has only one flip.
+//
+// The other TWO "For each heads," printings are refused by the same `$`, and
+// deliberately: Krookodile sv01-117 discards an Energy (a `discardEnergy` that
+// PARKS on a choice, so N heads is N sequential parks across a serialized
+// continuation) and Masquerain sv03-007 discards a RANDOM card from the hand
+// (which would be the first EffectOp in the engine to consume `state.rngState`).
+// Both are real slices with costs of their own; neither is this one. Oinkologne
+// sv03-184 "Flip 3 coins. Put a number of cards up to the number of heads from
+// your discard pile into your hand." shares the opening and not the shape at all
+// — a heads COUNT read as an "up to" ceiling by ONE op, not a repeat.
+//
+// No /i, for the family's standing reason: a capitalised first word is half of
+// what keeps a mid-sentence clause off the derived path and the anchors are the
+// other half.
+const ATTACK_COIN_MILL_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard the top (\d+) cards of your opponent's deck\.$/;
+const ATTACK_COIN_MILL_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, discard the top (\d+) cards of your opponent's deck\.$/;
+
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
     one); the ceiling exists because the digits are read out of THIRD-PARTY
@@ -2326,11 +2413,39 @@ export type AttackFlipCount =
     the members would hide that behind a flag. D129 is the proof that the split was
     load-bearing rather than incidental: "Flip a coin until you get tails." prints
     BOTH ways, so one flip count reaches both members and the marker is the only
-    thing telling Bouffalant's "50+" from Growlithe's "30×". */
+    thing telling Bouffalant's "50+" from Growlithe's "30×".
+
+    D130 ADDS A FOURTH MEMBER AND IT IS NOT A FOLD AT ALL:
+      • `programPerHeads` — `flips` flips; the `ops` PROGRAM runs once PER HEADS,
+        and no number is folded (`per` would have nothing to multiply). "For each
+        heads, discard the top N cards of your opponent's deck." is literally that
+        op repeated `heads` times, so the flip site EXPANDS it — `attack.ts`
+        appends `heads` copies onto the attack's `program` and the existing tail
+        runs them. Named for the contrast with `perHeads`, which folds a NUMBER.
+    It carries no `per`, KEEPS the printed base (there is no damage marker to
+    consume — both printings print no `damage` field at all), and explains no
+    `+`/`×` modifier, which is the one place `attack.ts` has to name it explicitly
+    rather than let it ride the "not cancelOnTails" default.
+
+    IT REUSES `AttackFlipCount` WHOLESALE — that union is UNCHANGED by this slice,
+    and the fact that its two printings use two DIFFERENT members of it (Wugtrio
+    sv01-057 is `printed 3`, Gyarados swsh10.5-022 is `untilTails`) is the point:
+    count and consequent really are independent axes, which the doc above has
+    claimed since D128 and which two printings on one op now demonstrate rather
+    than assert. A member per (count × consequent) pair would now be eight.
+
+    ONE READER OWNS THE SENTENCE. The `ops` live on the coin member rather than
+    being produced by `deriveAttackEffect` off the same string, so there is no
+    invariant to hold between two derivers reading one printing ("whenever THIS
+    coin member appears, THAT deriver must have produced exactly these ops") — the
+    kind of invariant nothing can enforce and every future arm can break. The
+    string is read once, by `deriveAttackCoinFlip`, and hands back both halves of
+    what the sentence says. */
 export type AttackCoinFlip =
   | { kind: "bonusOnHeads"; flips: AttackFlipCount; per: number }
   | { kind: "cancelOnTails" }
-  | { kind: "perHeads"; flips: AttackFlipCount; per: number };
+  | { kind: "perHeads"; flips: AttackFlipCount; per: number }
+  | { kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[] };
 
 /** The coin flip an attack's printed text calls for, or null when the text is not
     one of the six recognised whole sentences — null keeps the attack on the loud
@@ -2406,6 +2521,44 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   if (untilMulti !== null) {
     const per = Number(untilMulti[1]);
     return per >= 1 ? { kind: "perHeads", flips: { kind: "untilTails" }, per } : null;
+  }
+  // D130 — the two PROGRAM arms. They produce the same `ops` off two different
+  // flip counts, which is the slice: `AttackFlipCount` is reused wholesale and the
+  // consequent does not know which member fed it.
+  const millPrinted = ATTACK_COIN_MILL_PRINTED.exec(effect);
+  if (millPrinted !== null) {
+    const flips = Number(millPrinted[1]);
+    const count = Number(millPrinted[2]);
+    // The SAME two guards the `perHeads` printed arm carries, for the same two
+    // reasons: `flips >= 2` because the regex's own "coins" is PLURAL (the one-flip
+    // form is printed "Flip a coin." and is read above, so "Flip 1 coins." is not
+    // English and not in the pool), and `flips <= MAX_PRINTED_FLIPS` because the
+    // digits come from THIRD-PARTY ingested text — an unbounded `\d+` would let one
+    // malformed row spin the flip loop, and now the EXPANSION too, since the program
+    // grows one copy per heads. `count >= 1` is this arm's own `per >= 1`: a "discard
+    // the top 0 cards" printing would spend the flips to move nothing.
+    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && count >= 1
+      ? {
+          kind: "programPerHeads",
+          flips: { kind: "printed", count: flips },
+          ops: [{ op: "discardOpponentDeckTop", count }],
+        }
+      : null;
+  }
+  const millUntil = ATTACK_COIN_MILL_UNTIL_TAILS.exec(effect);
+  if (millUntil !== null) {
+    const count = Number(millUntil[1]);
+    // No ceiling here, D129's rule verbatim: the bound that makes an unbounded
+    // sequence terminate belongs to the RNG that produces the faces
+    // (`MAX_UNTIL_TAILS_FLIPS`, rng.ts), not to the sentence that asks for them. The
+    // mill count is the only payload there is to validate.
+    return count >= 1
+      ? {
+          kind: "programPerHeads",
+          flips: { kind: "untilTails" },
+          ops: [{ op: "discardOpponentDeckTop", count }],
+        }
+      : null;
   }
   return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;
 }

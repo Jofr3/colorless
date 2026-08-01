@@ -3718,20 +3718,29 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** Gyarados swsh10.5-022 — one of the THREE "Flip a coin until you get tails. For
-      each heads, <effect>." printings D129 deliberately did NOT build (the others are
-      Krookodile sv01-117 and Masquerain sv03-007). It shares D129's leading sentence
-      VERBATIM and differs only in the consequent: it repeats an EffectOp per heads
-      rather than folding a number, which is a different mechanism at a different site
-      — so it stays on the loud ATTACK_EFFECT_SKIPPED path, and this fixture is what
-      lets a suite assert that END TO END rather than by deriving a null.
+  /** Gyarados swsh10.5-022 — D130's UNBOUNDED half: "Flip a coin until you get
+      tails. For each heads, discard the top 2 cards of your opponent's deck." It was
+      fielded by D129 as an UNMAPPED witness (the shape ran an EffectOp per heads
+      rather than folding a number, which is a different mechanism at a different
+      site); D130 built that mechanism, so this card now MAPS — to
+      `programPerHeads` over `flips: { kind: "untilTails" }`, expanded at the flip
+      site into one `discardOpponentDeckTop { count: 2 }` per heads.
 
       "Wreak Havoc" is the load-bearing one: a {C} cost (paid by the same fix-energy
-      line as Bouffalant's) and NO printed damage at all, so a declaration produces an
-      ATTACK_EFFECT_SKIPPED carrying the effect text, a null damageModifier, and ZERO
-      coin rows — the unmapped shape does not even take the flip. Verbatim off the
-      local D1: 170 HP, Water, Stage 1 from Magikarp, retreat 3, ×2 Lightning, −30
-      Grass Resistance. */
+      line as Bouffalant's) and NO printed damage at all, so the mill is the entire
+      visible result of a declaration — there is no number for a mis-read to hide
+      behind, and no `damage` marker for `modifierSimulated` to have to explain.
+
+      "Wild Splash" at index 1 is this card's own control AND a live unmapped
+      near-miss of D130's op: "Discard the top 5 cards of YOUR deck" is the same
+      game action aimed the other way, which is exactly the sentence
+      `discardOpponentDeckTop` deliberately refuses to carry a `whose:` field for
+      (D104's minimal shape). It stays loudly skipped.
+
+      Verbatim off the local D1 (2026-08-01): 170 HP, Water, Stage 1 from Magikarp,
+      retreat 3, ×2 Lightning, and NO Resistance — the row's `resistances_json` is
+      null. (An earlier version of this fixture invented a −30 Grass Resistance; it
+      was never read by any assertion, which is how it survived.) */
   "swsh10.5-022": battler("swsh10.5-022", {
     name: "Gyarados",
     stage: "Stage1",
@@ -3740,7 +3749,6 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 170,
     retreat: 3,
     weaknesses: [{ type: "Lightning", value: "×2" }],
-    resistances: [{ type: "Grass", value: "-30" }],
     attacks: [
       {
         cost: ["Colorless"],
@@ -3753,6 +3761,95 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Wild Splash",
         effect: "Discard the top 5 cards of your deck.",
         damage: 230,
+      },
+    ],
+  }),
+  /** Wugtrio sv01-057 — D130's PRINTED half: "Flip 3 coins. For each heads, discard
+      the top 3 cards of your opponent's deck." at INDEX 1, behind a flat "Headbutt"
+      (30, {W}, no effect) at index 0.
+
+      IT IS THE OTHER FLIP COUNT ON THE SAME CONSEQUENT, which is the whole reason
+      D130 is a slice and not a one-off: `{ kind: "printed", count: 3 }` against
+      Gyarados's `{ kind: "untilTails" }`, feeding a byte-identical
+      `discardOpponentDeckTop` (count 3 against count 2). Count and consequent are
+      independent axes, demonstrated on two cards rather than asserted in a comment.
+
+      Its index-0 "Headbutt" is the control the family always fields: a bare number
+      on the same card and the same board, which must take NO flip, keep its printed
+      base and emit no loud row — the claim that the coin reader is keyed to the TEXT
+      of the attack declared and not to the card carrying it. And its PRE-EVOLUTION
+      Wiglett sv01-056 prints the sharpest near-miss in the slice ("Flip a coin. If
+      heads, discard the top card of your opponent's deck." — singular, gated, one
+      flip), so the two live one evolution apart in the same pool.
+
+      Verbatim off the local D1 (2026-08-01): 90 HP, Water, Stage 1 from Wiglett,
+      retreat 2, ×2 Lightning, no Resistance, no Ability. The {C}{C}{C} cost is paid
+      by the fix-energy line; note that "Undersea Tunnel" prints NO `damage` field at
+      all, so a mis-read has no number to land on. */
+  "sv01-057": battler("sv01-057", {
+    name: "Wugtrio",
+    stage: "Stage1",
+    evolveFrom: "Wiglett",
+    types: ["Water"],
+    hp: 90,
+    retreat: 2,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      { cost: ["Water"], name: "Headbutt", damage: 30 },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Undersea Tunnel",
+        effect: "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.",
+      },
+    ],
+  }),
+  /** Krookodile sv01-117 — the "For each heads, <effect>." printing that stays
+      UNMAPPED after D130, and the suite's re-pointed end-to-end LOUD witness (it
+      took that job from Gyarados swsh10.5-022, which D130 maps).
+
+      "Chomp Chomp Bite" ({F}, 50) is "Flip a coin until you get tails. For each
+      heads, discard an Energy from your opponent's Active Pokémon." — D129's leading
+      sentence and D130's per-heads REPEAT, refused by neither of those slices for
+      want of a regex but for want of a mechanism: `discardEnergy` PARKS on a choice,
+      so N heads means N SEQUENTIAL PARKS across a serialized continuation, which is
+      the one thing D130's expansion cannot express. (Masquerain sv03-007 is the
+      other survivor, and its cost is different again: its "discard a random card
+      from your opponent's hand" would be the first EffectOp to consume
+      `state.rngState`.)
+
+      IT IS FIELDED RATHER THAN MERELY DERIVED because "stays loud" is a claim about
+      a declared attack, not about a null out of a deriver: the attack must reach
+      ATTACK_EFFECT_SKIPPED and take NO flip at all. Its flat `damage: 50` is what
+      makes it the easier of the two end-to-end (Masquerain prints no damage), and
+      the 50 landing unmodified is the second half of the claim — an unmapped
+      sentence must not stop the printed number.
+
+      Verbatim off the local D1 (2026-08-01): 170 HP, Fighting, STAGE 2 from
+      Krokorok, retreat 3, ×2 Grass, no Resistance, no Ability. A Stage 2 reaches the
+      Active Spot here by `setActiveFromDeck` surgery, which does not care about the
+      evolution line. */
+  "sv01-117": battler("sv01-117", {
+    name: "Krookodile",
+    stage: "Stage2",
+    evolveFrom: "Krokorok",
+    types: ["Fighting"],
+    hp: 170,
+    retreat: 3,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Chomp Chomp Bite",
+        effect:
+          "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
+        damage: 50,
+      },
+      {
+        cost: ["Fighting", "Fighting"],
+        name: "Earthquake",
+        effect:
+          "This attack also does 30 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 180,
       },
     ],
   }),
@@ -5253,17 +5350,43 @@ export const PER_ENERGY_FLIP_DECK = deckOf({
 
     THE ENERGY LINES ARE COST PAYMENT AND NOTHING ELSE. No sentence in this slice
     reads the board at all — the flip count is a property of the FACES — so
-    fix-fire-energy is there only to pay Relentless Flames' single {R} and fix-energy
-    only to pay Damage Rush's {C}{C}, Egg Rolling's {C}{C}{C} and Wreak Havoc's {C}.
-    That is the whole difference from D128's deck, where which Energy was attached
-    WAS the case.
+    fix-fire-energy is there only to pay Relentless Flames' single {R},
+    fix-fighting-energy only to pay Chomp Chomp Bite's single {F}, and fix-energy
+    only to pay Damage Rush's {C}{C} and Egg Rolling's {C}{C}{C}. That is the whole
+    difference from D128's deck, where which Energy was attached WAS the case.
 
-    swsh10.5-022 (Gyarados) IS THE UNMAPPED WITNESS, fielded rather than merely
-    derived: "Flip a coin until you get tails. For each heads, discard the top 2 cards
-    of your opponent's deck." is D129's leading sentence with a consequent D129
-    deliberately did not build, and it must still reach ATTACK_EFFECT_SKIPPED and take
-    NO flip at all. A null out of the deriver says the first half; only a declared
-    attack says the second.
+    sv01-117 (Krookodile) IS THE UNMAPPED WITNESS, fielded rather than merely
+    derived: "Flip a coin until you get tails. For each heads, discard an Energy from
+    your opponent's Active Pokémon." is D129's leading sentence with a consequent
+    NEITHER D129 nor D130 built, and it must still reach ATTACK_EFFECT_SKIPPED and
+    take NO flip at all. A null out of the deriver says the first half; only a
+    declared attack says the second. Its flat printed 50 must still land, which is
+    the other half of "loud, not broken".
+
+    IT TOOK THAT JOB FROM GYARADOS swsh10.5-022, which D130 MAPPED (the per-heads
+    PROGRAM — "discard the top 2 cards of your opponent's deck" — now expands at the
+    flip site). A witness that becomes mapped and is left asserting "stays loud" is a
+    failing test; one that is silently deleted is worse. So the case was re-pointed
+    rather than removed, and Gyarados left this deck for PER_HEADS_PROGRAM_DECK.
+    fix-fighting-energy is here for exactly one reason: Chomp Chomp Bite's {F}.
+
+    THE SWAP PRESERVES EVERY MEASURED SEED IN THE SUITE, deliberately, and that is
+    why the counts look arbitrary (3 Krookodile, 4 + 3 + 8 Energy). Setup's rng
+    consumption depends on exactly two things: the deck's LENGTH (the shuffle) and
+    which INDICES hold a BASIC Pokémon (the mulligan loop). This list is still 60
+    cards, and indices 12–29 are still eighteen consecutive non-Basics — they were
+    4 Gyarados + 6 {R} + 8 {C}, they are now 3 Krookodile + 4 {R} + 3 {F} + 8 {C}.
+    So every seed lands on exactly the rngState it did before, and D129's measured
+    first-seed table, its `max heads = 5` pin and its "seed 0 is a first-flip tails"
+    all still hold unedited. Re-measuring them would have been correct too; not
+    having to is better.
+
+    THE SPLIT ITSELF IS MEASURED, over seeds 0–31 on this deck: after the opening
+    hand (7) and the prizes (6), every seed must still leave ≥1 Krookodile, ≥1 {R},
+    ≥1 {F} and ≥3 {C} in P1's deck for the `*Active` surgeries to pull. Only two
+    splits of the eighteen slots satisfy that — (3, 3, 4, 8) and (3, 4, 3, 8) — and
+    {C} = 8 is forced by seeds 20 and 29, which take five of them between hand and
+    prizes. This is the second one; the four fix-fire-energy is the slack.
 
     Rellor sv02-026 and Forretress sv01-139 — the slice's other two multiply printings
     — are in FIXTURE_POOL but NOT in this deck: a board case on either would re-run
@@ -5273,10 +5396,56 @@ export const UNTIL_TAILS_FLIP_DECK = deckOf({
   "sv01-030": 4, // Growlithe — "Relentless Flames" (30×) at index 0: perHeads, untilTails, per 30
   "sv01-144": 4, // Chansey — "Egg Rolling" (60×) at index 1: perHeads, untilTails, per 60
   "sv03-174": 4, // Bouffalant — "Damage Rush" (50+) at index 0: bonusOnHeads, untilTails, per 30
-  "swsh10.5-022": 4, // Gyarados — "Wreak Havoc": D129's leading sentence, UNMAPPED consequent (LOUD)
-  "fix-fire-energy": 6, // Basic {R} — pays Relentless Flames' single symbol
-  "fix-energy": 8, // Basic {C} — pays Damage Rush's {C}{C}, Egg Rolling's {C}{C}{C} and Wreak Havoc's {C}
+  "sv01-117": 3, // Krookodile — "Chomp Chomp Bite" (50): D129's leading sentence, UNMAPPED consequent (LOUD)
+  "fix-fire-energy": 4, // Basic {R} — pays Relentless Flames' single symbol
+  "fix-fighting-energy": 3, // Basic {F} — pays Chomp Chomp Bite's single symbol, and nothing else
+  "fix-energy": 8, // Basic {C} — pays Damage Rush's {C}{C} and Egg Rolling's {C}{C}{C}
   "fix-titan": 30, // 340 HP neutral Basic — the pinned Active on both sides, and no total here KOs it
+});
+
+/** 0.80.0 → 0.81.0: the per-heads PROGRAM (D130) — "Flip {N} coins|a coin until you
+    get tails. For each heads, discard the top {M} cards of your opponent's deck."
+    Wugtrio sv01-057 "Undersea Tunnel" ({C}{C}{C}, 3 flips, top 3) at index 1 and
+    Gyarados swsh10.5-022 "Wreak Havoc" ({C}, until tails, top 2) at index 0 — the
+    pool's only two mill-per-heads printings, and the whole reason this is a slice:
+    ONE consequent reached by TWO different `AttackFlipCount` members.
+
+    A DEDICATED deck, and here the reason is not seed hygiene but the ZONE UNDER
+    TEST. Every assertion in the suite is about the OPPONENT's deck and discard
+    pile — sizes, deltas, and the exact uids that moved off the top, in order — so
+    the deck this slice runs on is the measuring instrument, not the setting. A
+    shared deck would make "the discard grew by exactly heads × M" a claim entangled
+    with whatever else the sharing suite discards.
+
+    BOTH SEATS RUN IT, for the ordinary reason (either attacker can be fielded on
+    either side by surgery) and one specific to a mill: the milled deck is the
+    DEFENDER's, so the deck has to be well-stocked on the side that is NOT attacking.
+
+    fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned Active
+    on both sides. Neither printing here deals any damage at all — neither carries a
+    `damage` field — so the defender is not chosen against an arithmetic worst case
+    the way D129's was; it is chosen so that nothing else happens. No KO can park a
+    swept seed on a promotion, and no defender attack can interleave rows with the
+    ones being counted.
+
+    THE DECK IS DEEP ON PURPOSE, and 40 fix-titan is what makes it so (§3.1 fixes
+    the total at 60). Gyarados's sequence is UNBOUNDED, so the mill it drives has no printed
+    maximum: 2 cards per heads off a deck that has already lost 7 to the opening
+    hand and 6 to the prizes. The sweep's worst case is what the depth is set
+    against, and the clamp case reaches the shallow end DELIBERATELY, through
+    `trimDeckTo` surgery rather than by hoping a seed gets there.
+
+    fix-energy is the only Energy line: {C}{C}{C} for Undersea Tunnel, {C} for Wreak
+    Havoc, and {W} for Wugtrio's index-0 "Headbutt" control is NOT paid — that
+    control is declared on the same board and simply costs a Water this deck does
+    not hold, so it is exercised at the deriver level instead. (Headbutt is fielded
+    via fix-water-energy, which is here for that one attach.) */
+export const PER_HEADS_PROGRAM_DECK = deckOf({
+  "sv01-057": 4, // Wugtrio — "Undersea Tunnel" at index 1: programPerHeads, printed 3, mill 3
+  "swsh10.5-022": 4, // Gyarados — "Wreak Havoc" at index 0: programPerHeads, untilTails, mill 2
+  "fix-energy": 8, // Basic {C} — pays Undersea Tunnel's {C}{C}{C} and Wreak Havoc's {C}
+  "fix-water-energy": 4, // Basic {W} — pays Wugtrio's index-0 "Headbutt" control, and nothing else
+  "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active both sides, and the mill's fodder
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
@@ -6068,6 +6237,37 @@ export function toDeckTop(state: GameState, seat: Seat, cardId: string, count: n
       [seat]: {
         ...side,
         deck: [...uids, ...side.deck.filter((uid) => !taken.has(uid))],
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: shrink the seat's deck to exactly `size` cards by sending the
+    surplus off the BOTTOM into their discard pile — the CLAMP cases need a deck
+    shallower than the number an op wants to take (D130's mill: "discard the top 3
+    cards of your opponent's deck" against a deck of 2), and no seed can be relied
+    on to produce one.
+
+    OFF THE BOTTOM, never the top, which is the whole point of the helper: the top
+    is exactly what the op under test reads, so a trim that ate it would change the
+    uids the assertions match against. Into the DISCARD rather than out of the game,
+    because every zone must still hold every uid exactly once — the cases measure
+    discard-pile DELTAS across the action, so a pre-loaded pile is not in the way.
+
+    A `size` at or above the current deck is a no-op (never an error): a case may
+    want "at most N" without asserting the deck was longer. */
+export function trimDeckTo(state: GameState, seat: Seat, size: number): GameState {
+  const side = state.players[seat];
+  const keep = Math.max(0, size);
+  if (side.deck.length <= keep) return state;
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.slice(0, keep),
+        discard: [...side.discard, ...side.deck.slice(keep)],
       },
     },
   };
