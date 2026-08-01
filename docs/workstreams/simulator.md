@@ -7164,10 +7164,17 @@ which is why this slice needed no D125 tail-order reasoning at all.
 
 **A correction to D134's remainder list**, which had the Bench half at *4 printings /
 4 clauses*: it is **5 / 4**. Arboliva `sv03-021` prints the "all" clause as its
-**attack** ("Healing Fruit"), and the `ARBOLIVA` registry row is a *different printing
-on the same card* — its `onEvolve` triggered Ability "Enriching Oil", which heals **1
-of your Pokémon** with no zone word. Two sentences, one card, and only the ability had
-a row. The row is untouched; the attack now derives.
+**attack** ("Healing Fruit"), and it had no registry row.
+
+**⚠️ AND THE `ARBOLIVA` REGISTRY ROW IS A DIFFERENT CARD, NOT A DIFFERENT PRINTING.**
+This was mis-stated while authoring and corrected against the D1: that row is keyed
+**`sv01-023`** — a 150 HP Arboliva from another set, whose only attack is "Solar Beam"
+and whose `onEvolve` Ability "Enriching Oil" heals "1 of your Pokémon" with **no zone
+word**. The printing mapped here is **`sv03-021`**, 140 HP, with **no Ability at all**.
+So `programFor("sv03-021")` is undefined *entirely*, and `sv01-023`'s row is untouched.
+**Two cards, one name.** The lesson is small and general: a shared card NAME is not a
+shared card — key every registry claim by id and check it, because the wrong reading
+here would have had a registry row shadowing a deriver that in fact never meets it.
 
 ### ⚠️ The mechanism question this slice was priced on does not exist
 

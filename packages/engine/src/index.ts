@@ -1628,8 +1628,11 @@ import type { GameState, Seat } from "./types";
     table, so D119 does not govern and there is no table to look anything up in.
     "all" cost one alternation branch and nothing else, because `healChosen.amount`
     has taken `number | "all"` since 0.x (Arboliva's "Enriching Oil" Ability prints
-    it — a DIFFERENT printing on the same card as one of the ten, and its registry row
-    is untouched). The cross product is deliberately UNFILTERED: "Heal all damage from
+    it — but on a DIFFERENT CARD: that row is keyed `sv01-023`, a 150 HP Arboliva from
+    another set whose only attack is "Solar Beam", while the printing mapped here is
+    `sv03-021`, 140 HP with NO Ability at all. `programFor("sv03-021")` is undefined
+    entirely, and `sv01-023`'s row is untouched. Two cards, one name — checked against
+    the D1 rather than inferred from the name.) The cross product is deliberately UNFILTERED: "Heal all damage from
     1 of your Pokémon." is unprinted and this anchor accepts it, the same call D131
     made for the unprinted "the top 1 cards" — a refusal would be a claim about the
     ingest rather than about the game.

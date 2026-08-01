@@ -918,6 +918,15 @@ describe("end to end — Tropius 'Fresh-Picked Fruit' (heal 60, BENCH only)", ()
       expect(ref.spot.spot).toBe("bench");
     }
     expect(prompt.note).toBe("Heal which of your Benched Pokémon?");
+    // The Active is not merely UNLISTED, it is UNREACHABLE: `candidates` is the whole
+    // legality rule, so a client that offered it anyway (or a hand-built wire message)
+    // is refused rather than obeyed. Displaying the exclusion and enforcing it are two
+    // different properties and this file wants both.
+    expectErr(
+      parked,
+      { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref: ACTIVE_REF } },
+      "BAD_EFFECT_CHOICE",
+    );
 
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
@@ -931,8 +940,6 @@ describe("end to end — Tropius 'Fresh-Picked Fruit' (heal 60, BENCH only)", ()
     // AND THE ACTIVE'S DAMAGE IS UNCHANGED — the other half of the exclusion, taken
     // from the board rather than from the prompt.
     expect(done.players.p1.active?.damage).toBe(ATTACKER_HURT);
-    // The Active is not even reachable by an explicit answer: `candidates` is the
-    // whole legality rule, so the exclusion is enforced and not merely displayed.
     expect(types(events)).toEqual(["HEALED", "TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
   });
 
