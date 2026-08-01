@@ -2100,6 +2100,84 @@ export function deriveAttackRequirement(text: string): BoardCondition | null {
   if (nothing === null) return null;
   return ATTACK_REQUIREMENT_CLAUSES.get(nothing[1] ?? "") ?? null;
 }
+
+// The PRINTED COIN FLIP (D126) — "Flip a coin. If heads, this attack does N more
+// damage." (20 printings) and "Flip a coin. If tails, this attack does nothing."
+// (11 printings). Two sentences, 31 printings, and the reason they are ONE slice
+// is that they are ONE MECHANISM read from two ends: a single flip taken BEFORE
+// the §8.5 damage pipeline, whose heads branch adds the printed N and whose tails
+// branch cancels the attack outright. Splitting them would build that flip twice.
+//
+// THE CLAUSE IS A FIXED LITERAL, which is what makes this the cheapest slice in
+// the whole derived-attack-text family. Every predecessor of the "does N more
+// damage" shape had to buy a table of printed clauses and (usually) a
+// `BoardCondition` member to answer one; here the clause is the word "heads" (or
+// "tails") and a coin face is NOT A BOARD FACT AT ALL — no state answers it, so
+// there is no table, no new `BoardCondition` member, and no new
+// `DamageCountSource`. Two anchored regexes and a two-member union is the entire
+// vocabulary cost. `scaledAttackDamage` stays PURE and state-only on purpose: a
+// flip is drawn from `rngState` at resolution, not read off the board.
+//
+// A UNION, not two nullable readers, and not a record with two optional halves.
+// A printing is one shape or the other and never both — the two anchors are
+// mutually exclusive by their own text — so the union makes that exclusivity
+// STRUCTURAL: `attack.ts` matches one value and can never flip twice.
+//
+// Anchored whole-sentence with the required trailing period and no /i, exactly
+// like CONDITIONAL_DAMAGE_BONUS and ATTACK_DOES_NOTHING, and the anchors are
+// doing heavy work here because the coin family's LONG TAIL is large and lives
+// one clause away:
+//   • "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage
+//     from this Pokémon." (Floette sv01-092) and its siblings — a SECOND
+//     consequent riding the same flip, refused by `$`;
+//   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
+//     your next turn, this Pokémon can't attack." (Dragonite ex sv03-159) — a
+//     TAILS branch as well, refused by `$`;
+//   • "Flip a coin until you get tails. …" / "Flip 2 coins. …" / "Flip 3 coins.
+//     …" — a different NUMBER of flips, refused by the literal `^Flip a coin\.`;
+//   • "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed."
+//     (16 printings) — a different consequent entirely, and one `deriveAttackEffect`
+//     ALREADY reads as a `coinFlipGate` program. It must never be read here too,
+//     or the attack would flip twice; the consequent anchor is what prevents it.
+// All of them stay on the loud ATTACK_EFFECT_SKIPPED path, which is where they
+// belong.
+const ATTACK_COIN_BONUS = /^Flip a coin\. If heads, this attack does (\d+) more damage\.$/;
+const ATTACK_COIN_CANCEL = /^Flip a coin\. If tails, this attack does nothing\.$/;
+
+/** What a single pre-damage coin flip printed on an attack DOES with its faces.
+    A 2-member union rather than a record, because a printing is one or the other
+    and never both:
+      • `bonusOnHeads` — heads adds `per` HP to the attack's own damage (folded
+        alongside the count-scaling clauses' `scaled`, i.e. BEFORE Weakness and
+        Resistance); tails simply adds nothing and the attack resolves normally.
+      • `cancelOnTails` — tails cancels the whole attack (no damage, no W/R, no
+        effect ops, and the turn still ends); heads resolves normally.
+    Note the asymmetry is only apparent: both are "flip once, then take the
+    printed branch", and the OTHER face is always the plain resolution. */
+export type AttackCoinFlip = { kind: "bonusOnHeads"; per: number } | { kind: "cancelOnTails" };
+
+/** The coin flip an attack's printed text calls for, or null when the text is not
+    one of the two recognised whole sentences — null keeps the attack on the loud
+    ATTACK_EFFECT_SKIPPED path, never on a silent unflipped resolution.
+
+    Pure in its string, like its three sibling derivers, and disjoint from all of
+    them by the leading "Flip a coin." sentence (which denies the leading-`If`
+    families their `^` anchor) and by the consequent (which keeps the Paralysis
+    flip on `deriveAttackEffect`'s `coinFlipGate` path and off this one). */
+export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
+  const effect = text.trim();
+  const bonus = ATTACK_COIN_BONUS.exec(effect);
+  if (bonus !== null) {
+    const per = Number(bonus[1]);
+    // The same `per >= 1` guard every arm of the scaling family carries: a
+    // printed 0 is not a bonus, and admitting one would spend a flip (and an
+    // rngState step) to add nothing. No card prints it; the guard is what keeps
+    // that a fact about the pool rather than an assumption.
+    return per >= 1 ? { kind: "bonusOnHeads", per } : null;
+  }
+  return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;
+}
+
 // The TYPED self-discard: "Discard a|all|{N} {type} Energy from this Pokémon."
 // — the same §8 attack cost as its untyped siblings above, narrowed to one
 // energy type. Both notations in one pattern, and both alternations built FROM

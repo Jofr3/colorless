@@ -3,7 +3,11 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-01 — build session #110 (**P3-M5 — the REQUIREMENT skeleton: "If \<clause\>, this attack does nothing.", the clause family's SECOND CONSEQUENT, mapped on ZERO new vocabulary; 3 printings / 2 cards / 2 clauses (D125, engine 0.76.0)**).
+**Last updated:** 2026-08-01 — build session #111 (**P3-M5 — the PRINTED COIN FLIP: one pre-damage flip read from TWO consequents, 31 printings on TWO REGEXES and ZERO vocabulary — the largest single mapping in P3-M5 (D126, engine 0.77.0)**).
+*"Flip a coin. If heads, this attack does N more damage."* (**20 printings**, 7 distinct N) and *"Flip a coin. If tails, this attack does nothing."* (**11 printings**) now SIMULATE. **THE HEADLINE IS THE PRICE:** two anchored regexes and a two-member union bought 31 printings — **no clause-table row, no `BoardCondition` member, no `DamageCountSource` member, no state field, no registry row, no `continuous.ts`/web/API/DB diff.** The reason is the generalisation to carry: **THE CLAUSE IS A FIXED LITERAL.** Every predecessor of the "does N more damage" shape (D115–D124) bought a table row and usually a vocabulary member because its clause named a BOARD FACT; here the clause is the word *heads*, and **a coin face is not a board fact at all** — no state answers it, so there is nothing for the board vocabulary to spell. `scaledAttackDamage` stays **pure and state-only** on purpose. **HEADS AND TAILS ARE ONE SLICE because they are ONE MECHANISM** — a single pre-damage flip read from two ends — and `deriveAttackCoinFlip` returns a **2-member union**, which makes *"at most one flip per attack"* a **type property** rather than a rule `attack.ts` must keep. Placement is D125's rule applied, not re-derived: the block sits after the D125 requirement gate and in front of the §8.5 pipeline (the confusion-flip site, one gate later), and heads folds into a new `scaledTotal` used at all three `scaled` sites, so the bonus is **PRE-WEAKNESS**. The event was **REUSED** (`ATTACK_EFFECT_COIN_FLIP` names a fact identical here and inside a `coinFlipGate`, and its copy was already neutralised); `ATTACK_FAILED.reason` widened a third time with no `MATCH_RECORD_VERSION` bump. `bun run check` **GREEN exit 0 — 169 files / 2604 tests**.
+
+**Superseded header (build #110 — the REQUIREMENT skeleton, D125):**
+**Last updated (was):** 2026-08-01 — build session #110 (**P3-M5 — the REQUIREMENT skeleton: "If \<clause\>, this attack does nothing.", the clause family's SECOND CONSEQUENT, mapped on ZERO new vocabulary; 3 printings / 2 cards / 2 clauses (D125, engine 0.76.0)**).
 Ten slices of *"…does N more damage"* are joined by a **second consequent**: Palafin `sv03-062`/`-200` "Justice Kick" (`{W}{W}`, **210**) and Lycanroc `sv03-117` "Finishing Fang" (`{F}`, **90**) now SIMULATE — the attack is **CANCELLED** when its printed requirement is unmet. **The literal clause table is UNTOUCHED at 19 rows + 2 templates**, and that is the headline: both new rows reuse a `BoardCondition` member the vocabulary already had (`yourActivePromotedThisTurn` from D124, `opponentActiveDamaged` from D115), so a whole new sentence shape cost **zero union members, zero `conditionHolds`/`conditionNote` arms, zero ops, zero state**. **THE RESUME POINT'S FORECAST WAS WRONG IN A USEFUL WAY.** It called this "a `conditionGate`-shaped slice", but an effect PROGRAM runs at `attack.ts`'s tail, strictly AFTER the §8.5 damage pipeline, and no op can retract damage already dealt. A cancel must be evaluated in FRONT of the pipeline — so it is not a program at all, and the gate the engine already had for exactly *"no damage, no effects, the turn still ends"* is the §8 step-3 **CONFUSION** path. D125 is that path minus the self-damage: `ATTACK_FAILED` then `finishAttack`. **Generalisation: derived-text shapes are separated by WHERE IN RESOLUTION THEY LAND, not by how the sentence reads.** **THE ONE DESIGN CALL IS POLARITY, AND IT LIVES IN THE SKELETON, NOT IN THE VOCABULARY** — no `{ kind: "not", cond }` member was added. All SIX of the pool's distinct "does nothing" clauses are NEGATIVE sentences, and that is the *grammar of the mechanic* rather than an accident of this pool: a card prints "does nothing" precisely to state a REQUIREMENT, and English states a requirement by naming its failure. So `deriveAttackRequirement` reads the printed NEGATIVE and returns the POSITIVE fact required, and `attack.ts` cancels on its ABSENCE. Lycanroc's trailing *"before this attack does damage"* is **discharged by the SITE, not by the predicate** — `opponentActiveDamaged` is already committed to being read at declaration, and the gate sits in front of §8.5. `ATTACK_FAILED.reason` widened `"confusion" | "requirement"` (a widening, **no `MATCH_RECORD_VERSION` bump**). New `attackRequirement.test.ts` (34); 167 → **168 files / 2543 → 2577 tests**, `bun run check` green exit 0.
 
 **Superseded header (build #109 — the PROMOTED-THIS-TURN clause, D124):**
@@ -54,163 +58,191 @@ Wimpod **swsh10.5-025** "Punk Out" now SIMULATES: "If your opponent has any Pok�
 Snorlax **swsh10.5-055** "Block" now SIMULATES: "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat." — the **L3 shape D112 left open**, and the smallest aura slice yet (one `PassiveEffects` flag + one scan + three `&&` terms). **Verbatim re-confirmed against the local D1 before authoring** (the D95→D112 lesson): a D1 sub-agent read the row (Basic Colorless, 150 HP, retreat 4, ×2 Fighting, reg mark F; "Collapse" {C}×4 150 "This Pokémon is now Asleep.") and re-ran the lock census with COALESCE on every text column — **it is the ONLY continuous-Ability retreat lock in the ingested 978 cards, with no reprint**, and **zero rows in the entire pool carry U+2019** (all 459 apostrophe-bearing rows are ASCII), so lock matching never needs the typographic twin. **D112's `legal_standard=0` caveat was a NON-ISSUE and is retired**: 851 of 978 ingested cards are `legal_standard=0`, **including every card in sv01/sv02/sv03** — the flag tracks the post-G rotation, only sv06.5's 96 reg-mark H cards and most blank-mark Energies are Standard, and the engine has simulated non-Standard cards since D1. **Pick engine slices by mechanism, never by `legal_standard`**; format legality is a deck-builder (P2) concern. **Modelled as a bare `PassiveEffects.preventOpponentActiveRetreat?: true`** (D104's minimal-shape rule), read through a new continuous.ts scan **`opposingRetreatBlocked(state, pokemon)`** — the **FIFTH** aura scan and the boolean cross-board twin of D111's `opposingRetreatSurcharge`, sharing its derived-seat trick and §9 gate. **The two differ in exactly one line, and the printed text is the whole reason:** Trap Territory scopes only the TARGET (a benched Spidops ex still surcharges), while this print OPENS with "As long as this Pokémon is in the Active Spot" — so the SOURCE is Active-scoped too and the source list is the opponent's Active **alone**, enforced in the SCAN, not by a new `activeOnly` field (the `damageAttacker` precedent). **It rides NEITHER D112's `retreatBlocked` flag NOR the `preventRetreat` op**: no turn duration means nothing to apply and nothing to clear — read live, lapses the instant either end leaves the Active Spot. **Read at the RETREAT GATE, never in `effectiveRetreatCost` — a block is not a cost** (the wire still reports the real `cost` beside `can: false`). The three D112 read sites take one more `&&` each (turn.ts gate, redact.ts `can`, the web `GameHud.tsx`): **no new events, no new error code** (`RETREAT_PREVENTED` reused with a different *message* only — "an attack effect" would be a lie for an Ability), no new op, no wire field, no API/DB/`@luminous/schema` diff. Two provenances, two independent guards at one gate, composing for free. **The family's FIRST §9 POSITIVE:** Klefki `sv01-096` = `{ stage: "Basic", side: "both", requiresActive: true, exemptAbilityNamed: "Mischievous Lock" }` silences BASIC sources only — Florges/Clefable ex/Spidops ex are all Stage 1/2, which is why every earlier suite could record only the negative; **Snorlax is a Basic**, so an Active Klefki really does take Block down, and the Pokémon thereby freed is the Klefki itself. §9 reachability in this family is a function of the source's **STAGE**. `block.test.ts` (**12**) on a DEDICATED `BLOCK_DECK`: the bare-flag registry row; a fixture-text-verbatim guard; the block + its control; the **SOURCE clause** (a benched Snorlax blocks nothing — Trap Territory's exact inverse, located by card id so the guard is not vacuous); the target clause; own-board scoping asserted in BOTH directions off one board; the §9 positive + its lock-free control; the cost unchanged; the wire `{cost:2,can:false}` vs `{cost:2,can:true}`; the gate refusing **the very retreat the same board otherwise allows**; the block NOT preventing attacking and writing nothing onto the Pokémon (no `STATUS_APPLIED`, `conditions` untouched, `retreatBlocked` still false); and the composition with D112's flag (both, then each alone). New fixtures: a faithful Snorlax (the first `swsh10.5` fixture with an Ability) + the deck, which needed a 4th body (`fix-attacker`) because the "does not block attacking" case needs the *blocked* Pokémon to have an attack and it cannot be the Klefki; the suite pins BOTH Active spots before each surgery, `BLOCK_DECK` being Basic-dense enough that an unpinned starter could itself be an aura source or a §9 lock. engineVersion 0.63.0 → **0.64.0**; `bun run check` **GREEN (exit 0): 155 → 156 files, 2137 → 2149 tests** (tsc + biome lint + vitest). Clean diff (6 engine files + 1 new test + 1 web line) with zero new formatter churn (57 files flagged before and after — the real pre-existing count is **57**, not the "~45" D111 recorded, which was the default 20-diagnostic cap misread). **⚠️ `/code-review` STILL NOT RUN** on D96–D113 (user-triggered). This supersedes #97 (D112 — folded into `decisions.md`).
 
 
-**NEXT (resume point):** The clause family now has **TWO CONSEQUENTS.** The damage-bonus one is at
-**19 literal rows + 2 TEMPLATES, covering 23 of the pool's 26 distinct clauses / 41 of its 43
-printings**; the REQUIREMENT one (D125, "…this attack does nothing") is at **2 rows / 2 cards / 3
-printings**, on its OWN table and its OWN skeleton, sharing the `BoardCondition` vocabulary but
-deliberately no lookup. (D115 + D116 + D117 + D118 + D119 + D120 + D121 + D122 + D123 + D124 + D125,
-`conditionalDamage.test.ts` + `conditionClause.test.ts` + `clauseTable.test.ts` + `energyClause.test.ts`
-+ `publicCount.test.ts` + `typeNameClause.test.ts` + `energyInPlay.test.ts` + `toolClause.test.ts` +
-`supporterClause.test.ts` + `promotedClause.test.ts` + `attackRequirement.test.ts`, engine **0.76.0**)
-— full `bun run check` green exit 0, **168 files / 2577 tests**. Eight rules are settled and should be
-applied without re-litigating them: **D116's pronoun rule** (the union member is
-named for the board fact it READS; the clause layer resolves the printed pronoun), **D118's template
-rule** (a clause varying on ONE token is a pattern, not N rows — literals are matched FIRST, so a
-template can never re-interpret a row), **D119's corollary** (if TWO things vary it is not one token),
-**D120's precondition** (a template is only safe when the varying token has a CLOSED VOCABULARY to be
-rejected against), **D121's correction of D120** (a closed vocabulary tells you a template is SAFE,
-never that one is WARRANTED — the warrant is a second printing), **D122's gate rule** (a rule enforced
-at a GATE is not an invariant of the state the gate writes into), **D124's correction of D123**
-(below), and **D125's placement rule** (next).
+**NEXT (resume point):** The derived-attack-text family now has **THREE CONSEQUENTS
+ACROSS TWO CONDITION KINDS.** The board-fact ones: damage-bonus at **19 literal rows
++ 2 TEMPLATES, covering 23 of the pool's 26 distinct clauses / 41 of its 43
+printings**; requirement ("…this attack does nothing") at **2 rows / 2 cards / 3
+printings**, own table, own skeleton, shared `BoardCondition` vocabulary but
+deliberately no shared lookup. The coin-fact one (D126) is at **2 REGEXES / 31
+printings / ZERO table rows** — heads-bonus (20 printings, 7 amounts) and
+tails-cancel (11 printings) — because a coin face is not a board fact and needs no
+vocabulary at all. (D115 + D116 + D117 + D118 + D119 + D120 + D121 + D122 + D123 +
+D124 + D125 + D126, `conditionalDamage.test.ts` + `conditionClause.test.ts` +
+`clauseTable.test.ts` + `energyClause.test.ts` + `publicCount.test.ts` +
+`typeNameClause.test.ts` + `energyInPlay.test.ts` + `toolClause.test.ts` +
+`supporterClause.test.ts` + `promotedClause.test.ts` + `attackRequirement.test.ts` +
+`coinFlipDamage.test.ts`, engine **0.77.0**) — full `bun run check` green exit 0,
+**169 files / 2604 tests**. Nine rules are settled and should be applied without
+re-litigating them: **D116's pronoun rule** (the union member is named for the board
+fact it READS; the clause layer resolves the printed pronoun), **D118's template
+rule** (a clause varying on ONE token is a pattern, not N rows — literals are matched
+FIRST, so a template can never re-interpret a row), **D119's corollary** (if TWO
+things vary it is not one token), **D120's precondition** (a template is only safe
+when the varying token has a CLOSED VOCABULARY to be rejected against), **D121's
+correction of D120** (a closed vocabulary tells you a template is SAFE, never that
+one is WARRANTED — the warrant is a second printing), **D122's gate rule** (a rule
+enforced at a GATE is not an invariant of the state the gate writes into), **D124's
+correction of D123** (ask where state LIVES, not what its lifetime is), **D125's
+placement rule** (a derived shape is classified by WHERE IN RESOLUTION IT LANDS), and
+**D126's vocabulary rule** (next).
 
-⚠️ **D125: A DERIVED SHAPE IS CLASSIFIED BY WHERE IN RESOLUTION IT LANDS, NOT BY HOW ITS SENTENCE
-READS — and the last resume point got this wrong, which is why it is written here first.** It forecast
-Palafin as "a `conditionGate`-shaped slice". It is not: an effect PROGRAM runs at `attack.ts`'s tail,
-strictly AFTER the §8.5 damage pipeline, and no op can retract damage already dealt. Anything that must
-run BEFORE damage cannot be an `EffectOp`, however naturally the sentence maps onto one. The gate the
-engine already had for *"no damage, no effects, the turn still ends"* is the §8 step-3 **CONFUSION**
-path, and D125 is that path minus the self-damage (`ATTACK_FAILED` then `finishAttack`). **Before
-costing any future sentence as a program, ask when it must be evaluated.** The remaining pre-damage
-candidates are the whole coin-flip "If tails" family (item 3) and the 3 anaphoric "If you can't" prints.
+⚠️ **D126: WHEN THE CONDITION IS NOT READ OFF THE BOARD, DO NOT SPELL IT IN THE BOARD
+VOCABULARY.** This is why the biggest mapping in P3-M5 was also the cheapest. Ten
+prior slices bought a printed-clause table row (and usually a `BoardCondition`
+member) because their clause named a board fact. D126's clause is the word *heads* —
+drawn from `rngState` at resolution, answerable by no state — so it bought a regex
+and a 2-member union and nothing else. `scaledAttackDamage` stays PURE and
+state-only; a coin face has no business in `DamageCountSource`. **Before adding a
+union member, ask whether the thing is a fact ABOUT THE BOARD at all.**
 
-⚠️ **D125: POLARITY BELONGS TO THE SKELETON, NOT TO THE VOCABULARY.** `BoardCondition` has **no**
-`{ kind: "not", cond }` member and should not grow one on present evidence. All SIX distinct "does
-nothing" clauses in the pool are NEGATIVE sentences, because a card prints "does nothing" precisely to
-state a REQUIREMENT and English states a requirement by naming its failure. So the negative-clause
-table maps the printed negative → the POSITIVE fact required, and the gate cancels on its absence. A
-`not` member would make the vocabulary recursive — five consumers each owing a recursion arm, and
-`conditionNote` owing a negated phrasing English does not supply — for a spelling nothing in 978 cards
-asks for. **If a POSITIVE clause ever appears under this consequent, THAT is the warrant** (D121's
-rule), and the cheap answer then is a second table of positive-sense rows, still without the union.
+⚠️ **D126: THE CENSUS CORRECTED THE PLAN'S OWN NUMBERS, AND THE PLAN WAS THIS FILE.**
+The last resume point carried "16 `If heads` printings across 8 amounts" and "12 `If
+tails`"; the anchored re-census says **20 / 7** and **11**. The whole difference is
+EXTENDED prints that the `$` anchor refuses (Floette, Conkeldurr V, Dragonite ex,
+Squawkabilly), which an earlier `%…%` LIKE had silently folded into the counts.
+**Re-census against the SHAPE YOU ARE ACTUALLY BUILDING before sizing a slice, even
+when a previous session already censused the family.**
 
-⚠️ **D124 NARROWED D123's SEAT RULE, AND THE NARROWING IS THE THING TO CARRY.** D123 concluded "a
-state field scoped to the TURN is a fact about the TURN OWNER; a seat-relative predicate over it must
-first prove the seat owns the turn." **That is too broad.** The real reason
-`youPlayedSupporterThisTurn` needs `phaseViewOf(state, seat).activeSeat === seat` is that
-`state.allowances` is a **SINGLE BAG** — the *state* is seat-ambiguous. The words "this turn" had
-nothing to do with it. D124's `promotedTurn` is also turn-scoped and needs **no guard at all**,
-because it is stamped on a Pokémon and a Pokémon already knows whose it is. **Corrected rule: ask
-where the state LIVES, not what its lifetime is.** A fact on a shared or turn-owned structure owes an
-ownership proof; a fact stamped on an object that already has an owner does not.
+⚠️ **D126: THE `modifierSimulated` TRAP — real, silent, and it will recur.** The 20
+heads printings carry a printed `"10+"`-style damage marker, and the coin reader is
+exactly what consumes that `+`. Adding the `effectSimulated` term is the obvious
+half; **omitting the `modifierSimulated` one produces perfectly correct damage on all
+20 AND a loud `ATTACK_EFFECT_SKIPPED` row on every one.** Only a "no skipped row on
+either face" assertion catches it. Any future reader that consumes a `+`/`×` marker
+owes BOTH terms.
 
-⚠️ **AND D123's "check the rule-enforcement flags first" SHORTCUT IS NOW SPENT.** It was real — a "did
-you do X this turn" clause where X is *capped by the rules* is the engine's own bookkeeping seen from
-the other side — but none of the three clauses left is capped by a rule. D124 was the first slice in
-the family to buy new state (`InPlayPokemon.promotedTurn`), and every remaining clause buys more.
+⚠️ **D126: THE DOUBLE-READ RISK IS THE ONE THING TO CHECK IN THIS FAMILY.**
+`deriveAttackEffect` ALREADY reads *"Flip a coin. If heads, your opponent's Active
+Pokémon is now Paralyzed."* (16 printings) into a `coinFlipGate` program. Had
+`deriveAttackCoinFlip` also claimed it, the attack would flip TWICE — correct-looking
+damage, a doubled `rngState` account, and no failing assertion unless one exists. The
+consequent anchor prevents it; the suite asserts both directions **empirically**, not
+by reading the regex. **Any new coin reader must be checked against the existing
+`coinFlipGate` deriver first.**
 
-⚠️ **FOUR "unmapped stays LOUD" witnesses exist and ALL must survive** — they are the only things
-pinning the fall-through. **Only THREE unmapped clauses remain in 978 cards against four suites**, so
-two witnesses now share an occupant, which is expected and documented in-file. If you map any of these,
+⚠️ **FOUR "unmapped stays LOUD" witnesses exist and ALL must survive** — they are the
+only things pinning the fall-through. **Only THREE unmapped board-fact clauses remain
+in 978 cards against four suites**, so two witnesses share an occupant, which is
+expected and documented in-file. D126 touched none of them. If you map any of these,
 **re-point that case at another unmapped clause, do not delete it.**
-- `clauseTable.test.ts` **and** `conditionalDamage.test.ts` → **Lokix `sv02-021`** ("If this Pokémon
-  evolved from Nymble during this turn, …"). Occupant #5 of the `conditionalDamage.test.ts` slot; its
-  predecessors went Venoshock (→D116), Ceruledge (→D117), Greedent (→D122), Pikachu (→D123),
-  Revavroom ex (→D124).
-- `conditionClause.test.ts` → **Lucario `sv01-114`** ("If any of your {F} Pokémon were Knocked Out by
-  damage from an attack during your opponent's last turn, …").
-- `energyClause.test.ts` (+ a second assertion in `energyInPlay.test.ts`) → **Slither Wing
-  `sv06.5-026`** ("If your opponent has any Future Pokémon in play, …") — blocked on an INGEST change
-  (item 4 below).
+- `clauseTable.test.ts` **and** `conditionalDamage.test.ts` → **Lokix `sv02-021`**
+  ("If this Pokémon evolved from Nymble during this turn, …").
+- `conditionClause.test.ts` → **Lucario `sv01-114`** ("If any of your {F} Pokémon
+  were Knocked Out by damage from an attack during your opponent's last turn, …").
+- `energyClause.test.ts` (+ a second assertion in `energyInPlay.test.ts`) → **Slither
+  Wing `sv06.5-026`** ("If your opponent has any Future Pokémon in play, …") —
+  blocked on an INGEST change (item 4 below).
 
-**1. ~~PALAFIN~~ — DONE (D125), and it turned out to be a SKELETON, not a card.** The sweep the last
-resume point asked for found **19 "does nothing" printings / 6 distinct clauses**, so the slice was the
-consequent. Two of the six are `BoardCondition`-shaped and both are now mapped (Palafin `sv03-062`/`-200`
-"Justice Kick" → `yourActivePromotedThisTurn`; Lycanroc `sv03-117` "Finishing Fang" →
-`opponentActiveDamaged`). **THE FOUR THAT ARE LEFT, and why each is refused — this is the census, do
-not re-run it:**
-- **12 printings — `Flip a coin. If tails, this attack does nothing.`** The coin-flip mechanism, and
-  the flip sentence in front already denies it `^If`. **This is now a MUCH better-shaped slice than it
-  was**, because D125 built the cancel machinery it needs: the gate site, `ATTACK_FAILED.reason`, the
-  `effectSimulated` term. What is missing is only the FLIP — it must be announced (an event) and it
-  must consume `rngState` BEFORE the damage pipeline, which is exactly where the confusion flip already
-  sits. **Do this one with item 3, not separately** — the same 12 cards' "If heads, …N more damage"
-  siblings are the other half of the same mechanism.
-- **3 printings — `If you can't, this attack does nothing.`** (sv02-132 "Dirty Throw", sv06.5-005
-  "Power Shot", and sv02-009's "…if you can't shuffle a Combee…"). **ANAPHORIC**: "can't" points back
-  at a cost sentence in front of it. Needs a two-sentence reader that binds a failed COST to a cancel —
-  genuinely new, and the only family here that is not a one-table extension.
-- **1 printing — Sharpedo `sv06.5-034` "Colluding Tentacles"** (`If you didn't play Xerosic's
-  Machinations from your hand during this turn, …`). Names a SPECIFIC card and is multi-sentence; the
-  anchor refuses it twice over. D123's `youPlayedSupporterThisTurn` is the near neighbour and is NOT
-  enough — this needs a "played a card NAMED X this turn" fact, which nothing records.
+**1. THE BEST NEXT SLICE: the MULTI-FLIP count fold — `Flip N coins. This attack does
+D damage for each heads.`** D126 built the seam; this is the same seam with a LOOP
+instead of a single draw, and it is now the largest unbuilt shape in the family.
+**Census (verified 2026-08-01, `attacks_json`, 978 cards):**
+- `Flip 2 coins. This attack does D damage for each heads.` — **12 printings** across
+  D ∈ {10 ×3, 20 ×2, 30 ×3, 50 ×1, 70 ×1, 100 ×2}.
+- `Flip 3 coins. This attack does D damage for each heads.` — **9 printings** across
+  D ∈ {10 ×3, 20 ×1, 40 ×1, 50 ×2, 60 ×1, 80 ×1}.
+- `Flip 4 coins. This attack does D damage for each heads.` — **1 printing**
+  (Unfezant `swsh10.5-063`, 70).
+- **22 printings on ONE regex** `/^Flip (\d+) coins\. This attack does (\d+) damage for
+  each heads\.$/`, all carrying a printed `"D×"` marker (U+00D7, in the `damage`
+  field, never in the effect string) — so this is the **MULTIPLY** family: the printed
+  base IS the per-unit and `scaledBase` must be 0, exactly like
+  `deriveAttackDamageMultiplier`'s existing arms. That is the one real design question:
+  **the count comes from the flips, not from the board, so it cannot be a
+  `DamageCountSource`** (D126's rule) — it wants its own shape folded at the same
+  `scaledTotal` site.
+- ⚠️ **Two `more` variants are the near-misses and must stay LOUD**: Melmetal
+  `swsh10.5-046` (`Flip 2 coins. This attack does 90 more damage for each heads.`,
+  base `30+`) and Bouffalant `sv03-174` (`Flip a coin until you get tails. This attack
+  does 30 more damage for each heads.`, base `50+`). The word *more* makes them
+  ADDITIVE, not multiply — a substring matcher would score them wrong.
+- ⚠️ **The open design question D126 did not have to answer: N flips need N announced
+  results.** One `ATTACK_EFFECT_COIN_FLIP` per flip is the obvious reading (the event
+  carries a single `CoinFace`), and the log would then print N rows. Decide that
+  before writing the loop; it is the only thing here that is not mechanical.
 
-⚠️ **The traps D125 already paid, recorded so nobody re-pays them:** Palafin prints **`the Bench`, not
-`your Bench`** (its positive twin one table up DOES carry the possessive), and `didn't` with an **ASCII
-apostrophe**. Lycanroc's clause carries a trailing **`before this attack does damage`** which needs NO
-modelling — it is discharged by where the gate runs.
+**2. THE UNBOUNDED FOLD — `Flip a coin until you get tails.`** — 9 printings, and it
+needs a LOOP WITH NO PRINTED BOUND, so it is a genuinely different risk from item 1
+(a seeded RNG makes it terminating in practice, but the code must be written so a
+pathological seed cannot hang). Two sub-shapes: `…tails. This attack does D damage
+for each heads.` (Growlithe `sv01-030`, Rellor `sv02-026`, Forretress `sv01-139`,
+Chansey `sv01-144` — the multiply form) and `…tails. For each heads, <effect>.`
+(Masquerain `sv03-007`, Krookodile `sv01-117`, Gyarados `swsh10.5-022` — a repeated
+EFFECT, which is a program, not a fold). Plus Bouffalant `sv03-174`'s `more` variant.
+Do the bounded family (item 1) first; it shares every seam and asks one fewer question.
 
-**2. THE THREE CLAUSES LEFT, ranked** (census re-confirmed against the local D1 on 2026-08-01: **43
-printings / 32 distinct (condition, N) pairs / 26 distinct CLAUSES** — that filter is the raw
-skeleton's 71/45/32 minus the coin-flip family minus one anaphoric `you do`; say which you mean. The
-clause count is the one that costs work, and **23 of 26 are now mapped**).
-- **Lokix `sv02-021`** (+100), `this Pokémon evolved from Nymble during this turn` — 1 printing. TWO
-  facts, and the name half is open-vocabulary so D120 says LITERAL row. ⚠️ **`turnPlayed` does NOT
-  answer the first half**: `placeEvolution` re-stamps it, so it cannot distinguish "evolved this turn"
-  from "was played this turn" on a Pokémon benched and then evolved in the same turn. ⚠️ **`promotedTurn`
-  is NOT reusable either — evolving is not moving**; this wants its own stamp (`evolvedTurn`, the same
-  shape D124 established) plus a name read off the stack below the top (§1.2).
-- **Lucario `sv01-114`** (+120), `any of your {F} Pokémon were Knocked Out by damage from an attack
-  during your opponent's last turn` — 1 printing. Cross-turn, type-filtered, and must distinguish a KO
-  by attack damage from any other KO route. Do it LAST or not at all.
-- **Slither Wing `sv06.5-026`** (+120) — blocked on an INGEST change, see item 4.
+**3. THE THREE BOARD-FACT CLAUSES LEFT, ranked.** (Census re-confirmed 2026-08-01:
+**43 printings / 32 distinct (condition, N) pairs / 26 distinct CLAUSES** — that
+filter is the raw skeleton's 71/45/32 minus the coin-flip family minus one anaphoric
+`you do`; say which you mean. The clause count is the one that costs work, and **23 of
+26 are mapped**.)
+- **Lokix `sv02-021`** (+100), `this Pokémon evolved from Nymble during this turn` —
+  1 printing. TWO facts, and the name half is open-vocabulary so D120 says LITERAL
+  row. ⚠️ **`turnPlayed` does NOT answer the first half**: `placeEvolution` re-stamps
+  it, so it cannot distinguish "evolved this turn" from "was played this turn" on a
+  Pokémon benched and then evolved in the same turn. ⚠️ **`promotedTurn` is NOT
+  reusable either — evolving is not moving**; this wants its own stamp (`evolvedTurn`,
+  the same shape D124 established) plus a name read off the stack below the top (§1.2).
+- **Lucario `sv01-114`** (+120), `any of your {F} Pokémon were Knocked Out by damage
+  from an attack during your opponent's last turn` — 1 printing. Cross-turn,
+  type-filtered, and must distinguish a KO by attack damage from any other KO route.
+  Do it LAST or not at all.
+- **Slither Wing `sv06.5-026`** (+120) — blocked on an INGEST change, see item 5.
 
-**3. THE BIGGEST REMAINING COUNT IN THE WHOLE FAMILY: the 26-printing COIN-FLIP family**, and it is a
-DIFFERENT mechanism (`Flip a coin. If heads, this attack does N more damage.`). `coinFlipGate` exists
-as an op, but this is a **pre-W/R damage fold**, not a post-damage program — it deserves its own
-costed slice, not a table row. D121's census enumerated it exactly: 16 `If heads` printings across 8
-amounts, 4 multi-flip variants (`both of them`, `1 of them`, `2 of them`, `all of them` — three of
-those on Bisharp `sv03-149` alone) and 2 anaphoric `If you do` (Cresselia `sv06.5-021`/`-071`).
-**This is now the largest single win available in P3-M5, and D125 moved it closer**: the 12 "If
-tails, this attack does nothing." prints are the SAME 26-printing mechanism seen from the cancel side,
-and D125 built the pre-damage cancel seam they need (`attack.ts`'s requirement gate,
-`ATTACK_FAILED.reason`, the `effectSimulated` term). What is still missing is the flip itself — it has
-to be ANNOUNCED as an event and consume `rngState` in front of the §8.5 pipeline, which is precisely
-where §8 step 3's confusion flip already sits. **Take heads and tails together in one slice**; they are
-one mechanism and splitting them would build the fold twice.
+**4. THE REST OF THE "does nothing" CONSEQUENT — 4 printings, all refused, census
+done (D125), do not re-run it.** D126 took the 12 coin ones. What is left:
+- **3 printings — `If you can't, this attack does nothing.`** (sv02-132 "Dirty Throw",
+  sv06.5-005 "Power Shot", and sv02-009's "…if you can't shuffle a Combee…").
+  **ANAPHORIC**: "can't" points back at a cost sentence in front of it. Needs a
+  two-sentence reader that binds a failed COST to a cancel — genuinely new, and the
+  only family here that is not a one-table extension.
+- **1 printing — Sharpedo `sv06.5-034` "Colluding Tentacles"** (`If you didn't play
+  Xerosic's Machinations from your hand during this turn, …`). Names a SPECIFIC card
+  and is multi-sentence; the anchor refuses it twice over. D123's
+  `youPlayedSupporterThisTurn` is the near neighbour and is NOT enough — this needs a
+  "played a card NAMED X this turn" fact, which nothing records.
 
-**4. BLOCKED ON AN INGEST CHANGE, not engine work (D115, still true):** Slither Wing `sv06.5-026`
-"If your opponent has any **Future** Pokémon in play". The `cards` table has **no subtype/tag column**;
-the upstream tcgdex `suffix` field IS parsed (`packages/schema/src/tcgdex/card.ts`) but dropped before
-the D1 insert, and carries `ex`/`V`, never Ancient/Future. Do NOT hardcode a name list. Iron Moth
-`sv06.5-009` ("prevent all damage … from **Ancient** Pokémon") is blocked identically. If you want
+**5. BLOCKED ON AN INGEST CHANGE, not engine work (D115, still true):** Slither Wing
+`sv06.5-026` "If your opponent has any **Future** Pokémon in play". The `cards` table
+has **no subtype/tag column**; the upstream tcgdex `suffix` field IS parsed
+(`packages/schema/src/tcgdex/card.ts`) but dropped before the D1 insert, and carries
+`ex`/`V`, never Ancient/Future. Do NOT hardcode a name list. Iron Moth `sv06.5-009`
+("prevent all damage … from **Ancient** Pokémon") is blocked identically. If you want
 these, the slice is a **P1 ingest** one: add the tag column + re-ingest.
 
-**5. TWO SEAMS OUTSIDE THE CLAUSE FAMILY, both still unbuilt:**
-- **The counter-SPREAD shape, 3 printings, unbuilt on BOTH paths.** `Put N damage counters on each of
-  your opponent's [Benched] Pokémon that has any damage counters on it.` — Yveltal `sv06.5-035` (2
-  counters, all), Vespiquen ex `sv03-096`/`-212` (3 counters, Benched). Neither `deriveAttackEffect`
-  nor `deriveAttackDamageBonus` touches them today. A `putCounters on EACH <filter>` op, and the
-  filter it wants ("that has any damage counters on it") is the predicate D116 already spelled.
-- **The BARE self-heal sentence** (D117). `Heal N damage from this Pokémon.` (Ceruledge `sv02-098`
-  "Life Sucker", 30) derives to **null on every path**: the op deriver owns only the COMPOUND
-  `SELF_SLEEP_HEAL` form. The `heal` op exists, so it is a one-regex slice — census the pool for the
-  bare form first (it was noticed in passing, never swept).
+**6. TWO SEAMS OUTSIDE THE CLAUSE FAMILY, both still unbuilt:**
+- **The counter-SPREAD shape, 3 printings, unbuilt on BOTH paths.** `Put N damage
+  counters on each of your opponent's [Benched] Pokémon that has any damage counters
+  on it.` — Yveltal `sv06.5-035` (2 counters, all), Vespiquen ex `sv03-096`/`-212`
+  (3 counters, Benched). Neither `deriveAttackEffect` nor `deriveAttackDamageBonus`
+  touches them today. A `putCounters on EACH <filter>` op, and the filter it wants
+  ("that has any damage counters on it") is the predicate D116 already spelled.
+- **The BARE self-heal sentence** (D117). `Heal N damage from this Pokémon.`
+  (Ceruledge `sv02-098` "Life Sucker", 30) derives to **null on every path**: the op
+  deriver owns only the COMPOUND `SELF_SLEEP_HEAL` form. The `heal` op exists, so it
+  is a one-regex slice — census the pool for the bare form first (it was noticed in
+  passing, never swept).
 
-**Do NOT build these** (censused and refuted): a `<Name> is in the Active Spot` row (D120 — all 28
-"in the Active Spot" sentences use a pronoun); a `you have at least N {X} Energy in play` TEMPLATE
-(D121 — `at least` and `Energy in play` are each a HAPAX); a `for each Pokémon Tool` scaling shape
-(D122 — zero occurrences in 978 cards); a `<Name> moves to the Active Spot` trigger built off D124's
-state (Weavile `sv02-134` is the pool's only one and it is a `when` TRIGGER, a different mechanism).
+**Do NOT build these** (censused and refuted): a `<Name> is in the Active Spot` row
+(D120 — all 28 "in the Active Spot" sentences use a pronoun); a `you have at least N
+{X} Energy in play` TEMPLATE (D121 — `at least` and `Energy in play` are each a
+HAPAX); a `for each Pokémon Tool` scaling shape (D122 — zero occurrences in 978
+cards); a `<Name> moves to the Active Spot` trigger built off D124's state (Weavile
+`sv02-134` is the pool's only one and it is a `when` TRIGGER, a different mechanism);
+a `{ kind: "not", cond }` `BoardCondition` member (D125 — polarity belongs to the
+skeleton).
 
-⚠️ Re-confirm the printed text char-for-char against the local D1 before authoring, and sweep for the
-SHAPE rather than the predicate (the D115 lesson), **over the WHOLE effect string, not per sentence**
-(D121 — split on sentence boundaries and the leading-`If` anchor additionally captures 27 coin-flip /
-"you do" clauses). The local D1 is at
-`apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d866…sqlite` (binding `DB`, 978 rows;
-attacks/abilities are JSON text columns `attacks_json` / `abilities_json`, trainer text is the scalar
-`effect` column).
+⚠️ Re-confirm the printed text char-for-char against the local D1 before authoring,
+and sweep for the SHAPE rather than the predicate (the D115 lesson), **over the WHOLE
+effect string, not per sentence** (D121). The local D1 is at
+`apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d866…sqlite` (binding
+`DB`, 978 rows; attacks/abilities are JSON text columns `attacks_json` /
+`abilities_json`, trainer text is the scalar `effect` column). ⚠️ In `attacks_json`
+the keys are `name` / `cost` / `effect` (optional) / `damage` (optional), `cost` is
+**spelled-out words** (`"Fire"`), NEVER brace tokens, and `damage` is an integer OR a
+string (`"10+"`, `"30×"`) OR absent — D126 verified all of this.
 
-**6. LESSONS worth carrying:**
+**7. LESSONS worth carrying:**
 - **Resolve a context-dependent printed subject at the site that knows the context; keep the shared
   vocabulary context-free** (D116). `BoardCondition` has five consumers and only one of them is an
   attack — so "this Pokémon" is resolved by the clause table, and the union member is named
@@ -382,7 +414,52 @@ attacks/abilities are JSON text columns `attacks_json` / `abilities_json`, train
   `MATCH_RECORD_VERSION` change. The bump is for MISSING REQUIRED FIELDS on an old record. Note the
   log line must branch too, or a cancelled attack renders as a confusion that never happened.
 
-**FIRST, if you want it: `/code-review`** — D96–D124 have had NO independent reviewer (a new op, an
+- **Ask whether the condition is a fact ABOUT THE BOARD at all** (D126). Ten slices of
+  "does N more damage" bought a table row + usually a `BoardCondition` member because
+  their clause named a board fact; D126's clause is the word *heads*, which no state
+  answers, so it bought a regex and a union and nothing else — the biggest mapping in
+  P3-M5 and the cheapest. Keep board folds (`scaledAttackDamage`) PURE and state-only;
+  a resolution-time draw is not a `DamageCountSource`.
+- **A 2-member union beats two nullable readers when the members are mutually
+  exclusive** (D126). It makes "at most one flip per attack" a TYPE property rather
+  than a rule the call site has to keep, and it is why heads and tails could be one
+  slice instead of two designs of the same flip.
+- **A reader that consumes a `+`/`×` damage marker owes BOTH `effectSimulated` and
+  `modifierSimulated`** (D126). Omitting the second is SILENT: perfectly correct
+  damage plus a loud `ATTACK_EFFECT_SKIPPED` row on every printing. Only a "no skipped
+  row on either outcome" assertion catches it.
+- **Check a new text reader against the EXISTING derivers empirically, not by reading
+  the regex** (D126). `deriveAttackEffect` already claims 16 `Flip a coin. If heads,
+  … Paralyzed.` printings as `coinFlipGate` programs; a second claimant would flip
+  twice, with correct-looking damage and a doubled `rngState` account. Assert both
+  directions.
+- **Reuse an event that names the same FACT; add one only for a different fact**
+  (D126). `ATTACK_EFFECT_COIN_FLIP` was already neutral copy shared with Trainers, so
+  the attack's own printed flip reads correctly through it unchanged, while
+  `CONFUSION_CHECK` stays separate because it is a §12 STATUS check, not printed text.
+  A sibling event would have owed a new log arm and a new wire member for nothing.
+- **Re-census against the SHAPE you are building, even when a previous session
+  censused the family** (D126). This file carried 16/8 and 12; the anchored counts are
+  20/7 and 11. The gap was entirely EXTENDED prints that `$` refuses, folded in by an
+  earlier `%…%` LIKE.
+- **Pin `bytes === codePoints` explicitly when a sentence is pure ASCII** (D126). The
+  two mapped sentences are the family's first printed text with NO `é`, so the usual
+  `bytes = codePoints + count("Pokémon")` invariant degenerates — inferring it from
+  equal totals would hide a real drift.
+- **`attacks_json` shape, verified** (D126): keys are `name` / `cost` / `effect`
+  (optional) / `damage` (optional); `cost` is spelled-out words (`"Fire"`), NEVER
+  brace tokens; `damage` is an integer OR a string (`"10+"`, `"30×"` with U+00D7) OR
+  absent. `×` lives in `damage`, never in an effect string. Brace tokens appear in
+  exactly ONE coin effect in 978 cards (Torkoal `sv01-035`).
+- **`ATTACK_FAILED` has ZERO consumers outside `packages/engine/src`** (D126, grepped
+  `apps/` + `packages/`) — its reason enum can be widened engine-locally.
+- **There is NO catalog-wide census test in the repo** (D126). `coverage.test.ts` is
+  the M5 "5 existing-op cards" suite, `clauseTable.test.ts` has no table-size
+  assertion, and `FIXTURE_POOL` is synthetic — so mapping real printings moves no
+  numeric expectation, and the loud witnesses are the ONLY coverage tripwires. Do not
+  assume a broken count will tell you something regressed.
+
+**FIRST, if you want it: `/code-review`** — D96–D126 have had NO independent reviewer (a new op, an
 EffectSlot, a DiscardScope, the `cap` field, the index-keyed attack seam, the `damageAttacker` passive
 + its Tool member, the `onDamagedByAttack` TriggerTiming + `damagedTrigger` stage, a cross-board
 ability-lock aura, a `useStadiumAbility` action + `StadiumEffects.ability` + `noRuleBox`/`toolCard`
@@ -4737,6 +4814,38 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-01** (build #111) — **P3-M5: the PRINTED COIN FLIP — one pre-damage flip read from TWO
+  consequents, 31 printings on TWO REGEXES and ZERO vocabulary (D126, engine 0.77.0).** Took the
+  resume point's named "biggest remaining count", and re-censused it first — which was the right
+  call, because the plan's own numbers were wrong: it carried "16 `If heads` across 8 amounts" and
+  "12 `If tails`"; the anchored counts are **20 / 7** and **11**, the gap being entirely EXTENDED
+  prints the `$` anchor refuses that an earlier `%…%` LIKE had folded in. *"Flip a coin. If heads,
+  this attack does N more damage."* and *"Flip a coin. If tails, this attack does nothing."* now
+  SIMULATE — the **largest single mapping in P3-M5**. **The headline is the price:** two anchored
+  regexes and a two-member union, and **no clause-table row, no `BoardCondition` member, no
+  `DamageCountSource` member, no state field, no registry row, no continuous/web/API/DB diff.** The
+  reason is the generalisation: **the clause is a FIXED LITERAL** — every predecessor bought a table
+  row because its clause named a BOARD FACT, and *heads* is not one. No state answers a coin, so
+  `scaledAttackDamage` stays PURE and state-only and the board vocabulary was never touched.
+  **Heads and tails are ONE slice because they are ONE mechanism** (a single pre-damage flip read
+  from two ends), and `deriveAttackCoinFlip` returns a **2-member union** so that "at most one flip
+  per attack" is a TYPE property rather than a rule `attack.ts` must keep. Placement was D125's rule
+  applied rather than re-derived: the block sits after the D125 requirement gate and in FRONT of the
+  §8.5 pipeline — the confusion-flip site, one gate later — because a program runs at the tail and
+  could neither add to a number already computed nor retract damage already dealt. Heads folds into a
+  new `scaledTotal` used at all three `scaled` sites, so the bonus is **pre-Weakness** ((10+10)×2=40,
+  not 10×2+10). The event was **REUSED**: `ATTACK_EFFECT_COIN_FLIP` names a fact identical here and
+  inside a `coinFlipGate` and its copy was already neutralised for sharing, so a sibling event would
+  have owed a new log arm and a wire member for nothing; `ATTACK_FAILED.reason` widened a third time
+  (`"coinFlip"`) with **no `MATCH_RECORD_VERSION` bump**, and it has zero consumers outside the
+  engine. **Two traps found and recorded:** `modifierSimulated` needs its own term or all 20 heads
+  printings deal correct damage AND emit a loud skipped row (silent — only a no-skipped-row assertion
+  catches it); and `deriveAttackEffect` ALREADY claims the 16 `…is now Paralyzed.` printings as
+  `coinFlipGate` programs, so a second claimant would flip TWICE — asserted empirically in both
+  directions. New `coinFlipDamage.test.ts` (**27**) on a new `COIN_FLIP_DECK` (Tarountula `sv01-018`,
+  Litwick `sv03-036`), both faces via the established seed sweep, pinning the full rngState account
+  (exactly one `flipCoin` step per attack) and three distinct `ATTACK_FAILED` log rows. Every loud
+  witness untouched. `bun run check` **GREEN exit 0 — 168 → 169 files, 2577 → 2604 tests.**
 - **2026-08-01** (build #110) — **P3-M5: the REQUIREMENT skeleton — "If \<clause\>, this attack does
   nothing.", the clause family's SECOND CONSEQUENT, mapped on ZERO new vocabulary (D125, engine
   0.76.0).** Took the resume point's item #1, and the first thing it asked for changed the slice: it

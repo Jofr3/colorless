@@ -386,16 +386,22 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(event.result),
       ]);
     case "ATTACK_FAILED":
-      // Two reasons: "confusion" is §12's tails (the 30 self-damage follows as
+      // Three reasons: "confusion" is §12's tails (the 30 self-damage follows as
       // its own row), "requirement" is D125's printed "this attack does
       // nothing" with its clause held — nothing follows that one, so the row
-      // must say so on its own or the attack reads as a silent no-op.
+      // must say so on its own or the attack reads as a silent no-op — and
+      // "coinFlip" is D126's printed "If tails, this attack does nothing." The
+      // last one is PRECEDED by its own ATTACK_EFFECT_COIN_FLIP row, which
+      // already named the face, so this line states the CONSEQUENCE and does not
+      // repeat "tails".
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
           event.reason === "confusion"
             ? "'s attack failed — Confused"
-            : "'s attack did nothing — its condition was not met",
+            : event.reason === "coinFlip"
+              ? "'s attack did nothing — the coin flip missed"
+              : "'s attack did nothing — its condition was not met",
         ),
       ]);
     case "HEALED":

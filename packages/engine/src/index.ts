@@ -1045,7 +1045,72 @@ import type { GameState, Seat } from "./types";
     diff; no web/API/DB/`@luminous/schema` diff. NO MATCH_RECORD_VERSION BUMP:
     widening an event's reason enum is a widening, not a missing required field —
     the distinction D124 had to bump for. */
-export const engineVersion = "0.76.0";
+/** 0.77.0 — P3-M5: the PRINTED COIN FLIP (D126), and the cheapest slice the
+    derived-attack-text family has had. "Flip a coin. If heads, this attack does N
+    more damage." (20 printings) and "Flip a coin. If tails, this attack does
+    nothing." (11 printings) now SIMULATE — 31 printings on TWO REGEXES AND ZERO
+    NEW VOCABULARY. No clause table, no `BoardCondition` member, no
+    `DamageCountSource` member, no state field, no registry row. Tarountula
+    sv01-018 "Surprise Attack" ({G}, 30) and Litwick sv03-036 "Firebreathing"
+    ({R}, 10+) are the fixtures.
+
+    THE CLAUSE IS A FIXED LITERAL, which is the whole reason for the price. Ten
+    predecessor slices built "If <clause>, this attack does N more damage." and
+    every one of them paid for a printed clause and usually a board fact to answer
+    it. Here the clause is the word "heads" — and A COIN FACE IS NOT A BOARD FACT.
+    It is drawn from `rngState` at resolution, so `scaledAttackDamage` stays PURE
+    and state-only and `DamageCountSource` is untouched; the flip's contribution
+    is a local `coinBonus` folded into the same pre-W/R step. GENERALISATION: the
+    cost of a derived shape tracks WHAT ANSWERS ITS CLAUSE, not how elaborate the
+    sentence looks. A clause with no referent at all is free.
+
+    HEADS AND TAILS ARE ONE SLICE, and `AttackCoinFlip` is a 2-MEMBER UNION rather
+    than two nullable readers. They are one mechanism — a single flip taken BEFORE
+    the §8.5 pipeline — read from two ends; the union makes their mutual
+    exclusivity STRUCTURAL, so `attack.ts` matches one value and can never flip
+    twice. Split into two slices, the flip's site, its event and its fold would
+    have been designed twice.
+
+    THE FLIP IS NOT AN `EffectOp`, for D125's reason restated: a shape is
+    classified by WHERE IN RESOLUTION IT LANDS. A program runs at attack.ts's
+    tail, after §8.5 — it can neither raise a number already computed nor retract
+    damage already dealt — so a flip that GATES damage must run in front of the
+    pipeline, at the same site as §8's confusion flip. The tails branch reuses
+    D125's ending exactly (`ATTACK_FAILED` → `finishAttack`, so the turn still
+    ends), and the block sits AFTER the D125 requirement gate so a
+    already-cancelled attack never burns an rngState step. (No pool printing
+    carries both, so that order is a rules reading, not a pinned behaviour.)
+
+    `ATTACK_EFFECT_COIN_FLIP` IS REUSED, NOT TWINNED. It names the fact "a coin
+    was flipped resolving this", which is identical here and inside a
+    `coinFlipGate`, and its log copy was neutralised for Trainer sharing long ago.
+    A second event type would owe a new log arm and a new wire member for zero new
+    information.
+
+    THE ONE TRAP WORTH RECORDING: `modifierSimulated`. The 20 heads printings carry
+    a printed "10+"-style marker, which `parseAttackDamage` splits into base 10 +
+    modifier "+", and that modifier IS the flip's N — so the coin reader must be a
+    term in `modifierSimulated` as well as in `effectSimulated`, or all 20 stay
+    loudly ATTACK_EFFECT_SKIPPED while resolving perfectly. The term is narrowed to
+    `bonusOnHeads`: the cancel printings carry a flat number and no marker at all.
+
+    The family's LONG TAIL stays LOUD, and on the anchors rather than on a table:
+    the "…, and heal 30 damage…" / "…, and your opponent's Active Pokémon is now
+    Confused." second-consequent prints and Dragonite ex's added tails branch are
+    refused by `$`; "Flip a coin until you get tails.", "Flip 2 coins.", "Flip 3
+    coins." by the literal `^Flip a coin\.`; and the 16 "If heads, your opponent's
+    Active Pokémon is now Paralyzed." printings by the CONSEQUENT — those already
+    derive to a `coinFlipGate` program, and reading them here too would flip twice.
+
+    Cost: 2 new skeleton regexes, 1 exported union + 1 exported deriver, 1 reader +
+    1 flip block + 1 `scaledTotal` fold in attack.ts, 2 `*Simulated` terms, 1 ENUM
+    WIDENING on `ATTACK_FAILED.reason` ("confusion" | "requirement" | "coinFlip")
+    and its log arm. ZERO new `BoardCondition` members, `DamageCountSource`
+    members, clause-table rows, ops, events, state fields, error codes, registry
+    rows or fold changes; no continuous.ts diff; no web/API/DB/`@luminous/schema`
+    diff. NO MATCH_RECORD_VERSION BUMP — the same widening-not-a-missing-field
+    distinction D125 recorded. */
+export const engineVersion = "0.77.0";
 
 export type {
   ApplyResult,
@@ -1109,6 +1174,7 @@ export {
   stadiumEffectsOf,
 } from "./continuous";
 export {
+  deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
@@ -1118,6 +1184,7 @@ export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
 export type {
   AttachTargetRiders,
+  AttackCoinFlip,
   AttackDamageBonus,
   BoardCondition,
   CardFilter,

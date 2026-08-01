@@ -26,6 +26,7 @@ import {
   seatRemovesWeakness,
 } from "./continuous";
 import {
+  deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
@@ -277,6 +278,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // ones by CONSEQUENT ("nothing" versus "N more damage" / "for each"), so at
   // most one of the three ever fires on a given attack.
   const requirement = effect === null || effect === "" ? null : deriveAttackRequirement(effect);
+  // D126 — the printed "Flip a coin." the attack itself calls for: a `bonusOnHeads`
+  // that adds its printed N to this attack's own damage, a `cancelOnTails` that
+  // cancels the attack outright, or null when the text is neither sentence. A
+  // FOURTH reader of the same effect string, disjoint from the other three by its
+  // leading flip sentence (which denies them their `^If` anchor) and from
+  // `deriveAttackEffect`'s `coinFlipGate` programs by its CONSEQUENT — "this
+  // attack does N more damage" / "does nothing" is neither a status nor a search,
+  // so the 16 "If heads, … is now Paralyzed." printings stay on the program path
+  // and are never read twice. The union's two members are mutually exclusive by
+  // construction, which is what makes "at most one flip per attack" structural
+  // rather than a rule this function has to keep.
+  const coinFlip = effect === null || effect === "" ? null : deriveAttackCoinFlip(effect);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
@@ -293,8 +306,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // program deals the damage; the effect text is simulated iff a program ran it
   // OR a scaling reader did. Only the genuinely-unsimulated remainder is flagged
   // loudly (simulator.md coverage).
-  const effectSimulated = program !== null || scaling !== null || requirement !== null;
-  const modifierSimulated = scaling !== null || programDamage;
+  //
+  // D126 adds a term to BOTH, and the second one is easy to miss: the 20
+  // `bonusOnHeads` printings carry a printed "10+"-style damage marker
+  // (`parseAttackDamage` splits "10+" into base 10 + modifier "+"), and that
+  // modifier is exactly what the coin reader now consumes — the flip's N IS the
+  // "+". Leaving `modifierSimulated` alone would keep all 20 loudly flagged even
+  // though the engine now resolves them completely. The `cancelOnTails` printings
+  // carry a FLAT number and never touch that term, which is why the term is
+  // narrowed to the one member rather than to `coinFlip !== null`.
+  const effectSimulated =
+    program !== null || scaling !== null || requirement !== null || coinFlip !== null;
+  const modifierSimulated =
+    scaling !== null || programDamage || coinFlip?.kind === "bonusOnHeads";
   if (
     (modifier !== null && !modifierSimulated) ||
     (effect !== null && effect !== "" && !effectSimulated)
@@ -332,11 +356,68 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     return finishAttack(next, events, action.seat);
   }
 
+  // D126 — the attack's OWN printed coin flip, taken here and nowhere else.
+  //
+  // WHY NOT AN `EffectOp`? D125's rule: a derived shape is classified by WHERE IN
+  // RESOLUTION IT LANDS, not by how its sentence reads. An effect program runs at
+  // this function's TAIL, strictly after the §8.5 pipeline — so a `coinFlipGate`
+  // could neither add to a number already computed nor retract damage already
+  // dealt. A flip that GATES damage has to run in front of the pipeline, which is
+  // precisely why §8 step 3's confusion flip sits where it does. This is the same
+  // site, one gate later.
+  //
+  // WHY `ATTACK_EFFECT_COIN_FLIP` IS REUSED rather than joined by a sibling event.
+  // The event names a FACT — "a coin was flipped resolving this" — and that fact
+  // is identical here and inside a `coinFlipGate`; its log copy was already
+  // neutralised ("flipped <face> for the effect") back when Trainers started
+  // sharing it, so it reads correctly with no change. A second type would owe a
+  // new log arm and a new wire union member to carry exactly the information the
+  // existing one already carries. (CONFUSION_CHECK stays separate for the opposite
+  // reason: it is a §12 STATUS check, not part of the attack's printed text, and
+  // its row names the condition.)
+  //
+  // WHY THIS SITS AFTER THE D125 REQUIREMENT GATE. An attack already cancelled
+  // must not burn an rngState step: the flip is part of RESOLVING the attack, and
+  // a cancelled attack never gets that far. Honestly: no printing in the pool
+  // carries both a board requirement and a printed flip (the two sentences are
+  // whole-string anchored, so a card could only have one), so nothing in the
+  // suite pins this order — it is here because it is the order the rules read in,
+  // not because a case would fail the other way round.
+  //
+  // WHY HEADS AND TAILS ARE ONE SLICE. They are ONE MECHANISM — a single
+  // pre-damage flip — read from two ends, and the union makes that structural.
+  // Built separately, the flip, its event and its placement would have been
+  // designed twice, and the second design would have had to justify not being the
+  // first.
+  let coinBonus = 0;
+  if (coinFlip !== null) {
+    const [face, rngState] = flipCoin(next.rngState);
+    next = { ...next, rngState };
+    events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
+    if (coinFlip.kind === "cancelOnTails" && face === "tails") {
+      // D125's ending, third caller: no damage, no W/R, no effect ops, no
+      // triggers — and `finishAttack` still sweeps §8.1 and still ends the turn,
+      // because an attack that did nothing is an attack that was USED.
+      events.push({ type: "ATTACK_FAILED", seat: action.seat, uid: attackerUid, reason: "coinFlip" });
+      return finishAttack(next, events, action.seat);
+    }
+    if (coinFlip.kind === "bonusOnHeads" && face === "heads") coinBonus = coinFlip.per;
+  }
+  // The flip's heads bonus is the attack's OWN printed extra damage, exactly like
+  // a count-scaling clause's `scaled` — so it folds at the same step, PRE-Weakness
+  // and pre-Resistance ((10 + 10) × 2 = 40 for Litwick into a Fire-weak body, not
+  // 10 × 2 + 10). `scaled` itself is left alone: it is what `scaledAttackDamage`
+  // returned from the BOARD, and that function stays pure and state-only —
+  // a coin face is not a board fact and has no business in `DamageCountSource`.
+  // The two can never both be non-zero on a real printing (the anchors are
+  // disjoint), but summing rather than choosing keeps the arithmetic total.
+  const scaledTotal = scaled + coinBonus;
+
   let defended = defender;
   // §9 — the damaged Active's reactive onDamagedByAttack Ability, recorded at
   // damage time but run as a staged epilogue below (so a PARKING discard survives).
   let damagedTriggerStage: PendingStage | null = null;
-  if (scaledBase + scaled > 0) {
+  if (scaledBase + scaledTotal > 0) {
     // §8.5 damage pipeline, in printed order: base + the attack's own printed
     // scaling clause (`scaled` — Paldean Tauros "Raging Horns", counted at
     // declaration) + the attacker's continuous pre-W/R bonus (Vitality Band) →
@@ -344,9 +425,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // defender's continuous damage reduction (Bouffalant "Bouffer" / a defending
     // Tool, §15.B), floored at 0. Weakness/Resistance apply to the Defending
     // Pokémon only, and both continuous reads aggregate printed passives WITH
-    // attached Tools (continuous.ts). `scaled` is the attack's own damage (added
-    // alongside the continuous bonus at the same pre-W/R step), so this branch
-    // fires whenever the (multiply-adjusted) base OR the scaling clause does
+    // attached Tools (continuous.ts). `scaledTotal` is the attack's own printed
+    // extra — the scaling clause's `scaled` plus D126's heads `coinBonus` — added
+    // alongside the continuous bonus at the same pre-W/R step, so this branch
+    // fires whenever the (multiply-adjusted) base OR the attack's own extra does
     // damage. `scaledBase` is `base` except for a multiply clause, whose printed
     // "N×" base is the per-unit already inside `scaled` — so it is 0 here.
     const bonus = attackerPreWRBonus(next, active, action.seat, defenderCard);
@@ -358,7 +440,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     const resistance = resistanceOf(attacker, defenderCard);
     const afterWR = Math.max(
       0,
-      applyDamageModifier(applyDamageModifier(scaledBase + scaled + bonus, weakness), resistance),
+      applyDamageModifier(
+        applyDamageModifier(scaledBase + scaledTotal + bonus, weakness),
+        resistance,
+      ),
     );
     const defenderPassives = passivesOf(next, defender);
     const reduction = defenderPassives.damageReductionAfterWR;
@@ -374,8 +459,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       seat: defenderSeat,
       uid: defenderUid,
       base: scaledBase,
-      // Present only when the printed scaling clause actually added HP.
-      scaled: scaled > 0 ? scaled : undefined,
+      // Present only when the attack's own printed extra actually added HP — the
+      // count-scaling clause's `scaled` or D126's heads bonus, which land at the
+      // same pre-W/R step and are reported through the same field.
+      scaled: scaledTotal > 0 ? scaledTotal : undefined,
       // Present only when a continuous effect actually moved the total.
       bonus: bonus > 0 ? bonus : undefined,
       weakness,

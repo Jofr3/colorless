@@ -180,7 +180,7 @@ export type GameEvent =
       followed by ATTACK_FAILED, heads by the normal resolution. */
   | { type: "CONFUSION_CHECK"; seat: Seat; uid: string; result: CoinFace }
   /** The declared attack did NOT resolve: no damage to the defender, no
-      effects — and the turn still ends either way. Two reasons, and they differ
+      effects — and the turn still ends either way. Three reasons, and they differ
       only in what follows:
         • "confusion" — §12, the step-3 flip came up tails; the 30 self-damage
           follows as COUNTERS_PLACED.
@@ -188,9 +188,20 @@ export type GameEvent =
           does nothing." and the clause held (Palafin "Justice Kick" without the
           promotion, Lycanroc "Finishing Fang" into an undamaged Active). Nothing
           follows; the attacker is untouched.
-      A WIDENING of the reason enum, not a shape change — no
-      MATCH_RECORD_VERSION bump (see match.ts's own doc block). */
-  | { type: "ATTACK_FAILED"; seat: Seat; uid: string; reason: "confusion" | "requirement" }
+        • "coinFlip" — D126, the attack's printed "Flip a coin. If tails, this
+          attack does nothing." came up tails. PRECEDED by the
+          ATTACK_EFFECT_COIN_FLIP that announces the face, and followed by
+          nothing; the attacker is untouched.
+      Each widening is a WIDENING of the reason enum, not a shape change — no
+      MATCH_RECORD_VERSION bump for any of them (see match.ts's own doc block);
+      a record written by an older deploy stays readable, it simply never carries
+      the newer reasons. */
+  | {
+      type: "ATTACK_FAILED";
+      seat: Seat;
+      uid: string;
+      reason: "confusion" | "requirement" | "coinFlip";
+    }
   /** Damage removed from `seat`'s Active by an attack effect; `amount` is
       what actually healed (clamped at the damage present — never 0). */
   | { type: "HEALED"; seat: Seat; uid: string; amount: number }

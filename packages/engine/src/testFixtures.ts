@@ -3345,6 +3345,72 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Grass", value: "×2" }],
   }),
+  /** Tarountula sv01-018 — the PRINTED COIN FLIP's cancel end (D126). "Surprise
+      Attack" ({G}, 30): "Flip a coin. If tails, this attack does nothing."
+
+      ELEVEN printings share that sentence char-for-char and this is the canonical
+      one. A FLAT 30, not "30+" — the cancel consequent adds nothing, so there is
+      no printed damage marker at all and `modifierSimulated` is never in play on
+      this half of the slice (which is exactly the contrast that makes Litwick's
+      "10+" worth spelling out below).
+
+      ONE attack, so its index cannot be got wrong, and no ability. Its ×2 Fire
+      Weakness is INERT against every attacker either coin fixture can face here
+      (Tarountula is Grass, Litwick is Fire — and nothing attacks Tarountula in
+      the suite), so no case in coinFlipDamage.test.ts is accidentally about
+      Weakness. 60 HP: Firebreathing's heads 20 does not KO it, which keeps the
+      seed sweep measuring damage rather than promotions.
+
+      Verbatim off the local D1 — the sentence is pure ASCII, 48 code points /
+      48 UTF-8 bytes, the family's first printed text with no é in it at all. */
+  "sv01-018": battler("sv01-018", {
+    name: "Tarountula",
+    types: ["Grass"],
+    hp: 60,
+    retreat: 2,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Grass"],
+        name: "Surprise Attack",
+        effect: "Flip a coin. If tails, this attack does nothing.",
+        damage: 30,
+      },
+    ],
+  }),
+  /** Litwick sv03-036 — the PRINTED COIN FLIP's bonus end (D126). "Firebreathing"
+      ({R}, 10+): "Flip a coin. If heads, this attack does 10 more damage."
+
+      THE "10+" IS THE LOAD-BEARING FIELD. `parseAttackDamage` splits it into base
+      10 + modifier "+", and that modifier is precisely what the coin reader
+      consumes — so this card is the fixture that catches a missed
+      `modifierSimulated` term (it would resolve correctly AND still emit a loud
+      ATTACK_EFFECT_SKIPPED row). It is typed as a STRING here because that is how
+      it is printed; Tarountula's flat 30 is a number.
+
+      10 is the SMALLEST of the seven printed N values in the pool
+      ({10, 20, 30, 50, 60, 80, 90}), which is what makes the Weakness case
+      readable: heads into a Fire-weak body is (10 + 10) × 2 = 40, where an
+      after-W/R fold would give 10 × 2 + 10 = 30 — two numbers that cannot be
+      confused for one another, and both under fix-weak's 60 HP so neither KOs.
+
+      ONE attack, no ability, ×2 Water Weakness (inert against everything in the
+      suite). Verbatim off the local D1 — pure ASCII, 55 code points / 55 bytes. */
+  "sv03-036": battler("sv03-036", {
+    name: "Litwick",
+    types: ["Fire"],
+    hp: 60,
+    retreat: 1,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Firebreathing",
+        effect: "Flip a coin. If heads, this attack does 10 more damage.",
+        damage: "10+",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -4675,6 +4741,52 @@ export const ATTACK_REQUIREMENT_DECK = deckOf({
   "fix-energy": 6, // Basic {C} — Slashing Claw's two generic symbols, and the retreat (§11) that arms Palafin
   "fix-lightning-weak-big": 4, // 320 HP — the only body in the pool that survives 210 (its Weakness is inert here)
   "fix-bigbody": 23, // 200 HP neutral Colorless Basic — DOMINANT pinned starter, the retreater, the promote target
+});
+
+/** 0.76.0 → 0.77.0: the PRINTED COIN FLIP (D126) — one deck for BOTH ends of the
+    mechanism, because they ARE one mechanism. Tarountula sv01-018 "Surprise
+    Attack" ({G}, 30) carries "Flip a coin. If tails, this attack does nothing.";
+    Litwick sv03-036 "Firebreathing" ({R}, 10+) carries "Flip a coin. If heads,
+    this attack does 10 more damage." Two cards, two sentences, ZERO new
+    vocabulary — the clause is a fixed literal, so there is no table and no board
+    fact to field.
+
+    A DEDICATED deck, and for the usual reason plus one new one. The usual: every
+    neighbouring deck is seed-pinned and growing one would reshuffle a suite. The
+    new one: THIS SUITE SWEEPS SEEDS. Its cases run `for (let seed = 0; seed < 24
+    && !(sawHeads && sawTails); seed++)` to reach both faces of a real flip, so the
+    deck has to open to a usable board on EVERY seed in that range, from either
+    seat — which is what the dominant fix-bigbody line buys, and why nothing here
+    depends on a particular opening hand.
+
+    BOTH ATTACKERS ARE BASIC, which is the difference from ATTACK_REQUIREMENT_DECK
+    (two Stage 1s, surgically fielded). They still go in by `setActiveFromDeck`
+    rather than being dealt, because a swept seed cannot be relied on to deal any
+    particular starter — but being Basic means no evolution line is owed and the
+    deck stays four lines wide.
+
+    fix-weak (60 HP, ×2 FIRE) IS THE LOAD-BEARING SLOT. Litwick is Fire, so it is
+    the body that proves the heads bonus folds PRE-Weakness: (10 + 10) × 2 = 40,
+    where an after-W/R fold would read 10 × 2 + 10 = 30. 40 < 60, so the case
+    measures damage and never a Knock Out — and the same ×2 Fire is INERT against
+    Tarountula (Grass), so the cancel cases never meet it.
+
+    fix-bigbody (200 HP, no Weakness at all) is the NEUTRAL defender both faces are
+    measured against — 10/20 from Litwick and 0/30 from Tarountula all land on a
+    body that cannot be Knocked Out, cannot double a number, and cannot park the
+    turn on a promotion in the middle of a seed sweep. It is also the DOMINANT
+    (mulligan-free) starter both Active spots pin over.
+
+    THE TWO ENERGY LINES ARE ONE SYMBOL EACH: fix-grass-energy pays Surprise
+    Attack's {G}, fix-fire-energy pays Firebreathing's {R}. Neither attack reads
+    Energy, and no case counts it. */
+export const COIN_FLIP_DECK = deckOf({
+  "sv01-018": 4, // Tarountula — "Surprise Attack" (30) at index 0: cancelOnTails
+  "sv03-036": 4, // Litwick — "Firebreathing" (10+) at index 0: bonusOnHeads, per 10
+  "fix-grass-energy": 6, // Basic {G} — pays Surprise Attack's single symbol
+  "fix-fire-energy": 6, // Basic {R} — pays Firebreathing's single symbol
+  "fix-weak": 4, // 60 HP, ×2 FIRE — the pre-Weakness fold defender for Litwick's heads
+  "fix-bigbody": 36, // 200 HP neutral Colorless Basic — DOMINANT pinned starter and the neutral defender
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
