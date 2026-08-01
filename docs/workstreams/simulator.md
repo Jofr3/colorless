@@ -5070,3 +5070,120 @@ play` (1, the other loud witness) · `your opponent's Active Pokémon is a Drago
 `Falinks is on your Bench` (1, needs a name field) · three that need new per-turn/cross-turn state ·
 `your opponent has any Future Pokémon in play` (blocked on an ingest change) · and the 26-printing
 coin-flip family, which is a different mechanism and deserves its own costed slice.
+
+## D120 (engine 0.71.0) — TYPE and NAME: when a one-token clause may be a TEMPLATE
+
+Two clauses, both singletons, both varying on **exactly one token**, and they get **opposite
+treatments**. That is the whole reason they were built in one slice.
+
+- **Sylveon `swsh10.5-035` "Wonder Flash"** (`90+`, +90) — "If your opponent's Active Pokémon is a
+  **Dragon** Pokémon, this attack does 90 more damage." → a **TEMPLATE**,
+  `{ kind: "opponentActiveHasType"; type: PokemonType }`.
+- **Falinks `sv02-119` "Reckless Charge Together"** (`70+`, +90) — "If **Falinks** is on your Bench,
+  this attack does 90 more damage." → a **LITERAL ROW**,
+  `{ kind: "yourBenchHasNamed"; name: string }`.
+
+Both derive straight off printed text; neither card has a registry row of any kind.
+
+### The rule this slice adds — D118's missing precondition
+
+D118 said: *a clause that varies on ONE token is a pattern, not N rows.* True, and not sufficient.
+The question a template has to answer is **what happens to a token it does not recognise**, and the
+only good answer is "nothing, loudly".
+
+- A **type name** has a closed vocabulary: `POKEMON_TYPES`, eleven words. So
+  `^your opponent's Active Pokémon is a (.+) Pokémon$` can capture `Basic` — a real reading the pool
+  prints on another skeleton (Houndoom ex `sv03-134`, "If the Defending Pokémon is a Basic Pokémon,
+  it can't attack…") — fail to resolve it, and leave the sentence on its `ATTACK_EFFECT_SKIPPED` row.
+- A **card name** has none. `^(.+) is on your Bench$` has nothing to reject against: it would read
+  "a Pokémon with an Ability is on your Bench" as a card *called* "a Pokémon with an Ability", build
+  a perfectly well-formed condition, and answer **FALSE on every board forever** — no throw, no
+  skipped row, no symptom at all. Wrong-with-no-failure is the one outcome this family refuses.
+
+So: **ask what an unrecognised token does before writing the regex.** The printing COUNT is not the
+test — these two clauses are both singletons and they diverge anyway. Both calls stay reversible in
+D119's direction, since `boardConditionForClause` runs literals FIRST: a name template added later
+(once something can validate a name against the catalog) cannot re-interpret the Falinks row.
+
+### `POKEMON_TYPES` — a Pokémon type is WIDER than an energy type
+
+```ts
+export const POKEMON_TYPES = [...BASIC_ENERGY_TYPES, "Dragon", "Colorless"] as const;
+export type PokemonType = (typeof POKEMON_TYPES)[number];
+```
+
+Built FROM the schema list (D118's anti-drift rule), not re-typed. `Colorless` and `Dragon` are
+absent from `BASIC_ENERGY_TYPES` for good reasons — a cost symbol, and a type with no Basic Energy —
+but a **Pokémon** is very much allowed to BE either: **117 of the pool's 978 rows are** (100
+Colorless, 17 Dragon). Typing a Pokémon-type condition with `BasicEnergyType` makes Sylveon's clause
+literally unspellable. Keep the two vocabularies distinct and build the wider one from the narrower.
+
+`conditionHolds` reads `activeTop(...).card.types` with `.includes` — the same field and the same
+read `weaknessOf`/`resistanceOf` make two lines later in the §8.5 pipeline, so a printed type cannot
+mean one thing to the clause and another to the multiplier it feeds. `types` is null on Trainers and
+Energy (hence `?? []`), and every Pokémon row in the pool carries exactly one type; the predicate is
+written for an array anyway, since dual types are a real printing.
+
+### `yourBenchHasNamed` — the vocabulary's first card IDENTITY
+
+Every member before it asks what a Pokémon *is* (damaged, Poisoned, an Evolution, an ex). This one
+asks *which card it is*. That is fine for a shared vocabulary — `CardFilter.byName` and the aura's
+`exemptAbilityNamed` already do it, and the deck builder keys on names all day — with three rules:
+
+- **Read the stack TOP** (§1.2, via `topCardOf`), so evolving the named Pokémon stops satisfying it.
+- **Honour the printed zone word.** "Bench" excludes the Active, exactly as `yourBenchDamaged` does;
+  the attacking Falinks does not count itself. An empty Bench is false.
+- **Do not model it as "another copy of me"**, tempting though it is: both pool printings of the
+  shape happen to name their own card, but the sentence names a CARD, and Lunatone `sv03-092`'s "If
+  you have Solrock in play" is already the counterexample sitting in the same pool.
+
+### Census notes (local D1, 2026-08-01)
+
+- The word **"Dragon" appears in exactly ONE sentence in 978 cards** — this one. Four spelled-out
+  `<Type> Pokémon` sentences exist in total, the other three being the swsh10.5 Moltres/Articuno/
+  Zapdos "Symbol" buffs (a static own-side selector, not a predicate). The 17 brace-coded
+  `{X} Pokémon` sentences are all selectors and counters on other skeletons.
+- **A Pokémon's TYPE is printed as the bare word in BOTH notation eras**, so D118's brace-code vs
+  spelled-name split (which is real for ENERGY, and splits cleanly by set) does not apply here.
+- `is on your Bench` → **3 sentences, 2 in a clause frame**. The second is Flamigo `sv03-185`
+  "Synchronized Feathers", which prints Falinks' clause word for word under a **different
+  consequent** ("…this attack ALSO does 60 damage to 1 of your opponent's Benched Pokémon"), so it
+  never reaches the leading-`If` skeleton. One row per printing is what per-printing means.
+- **`<Name> is in the Active Spot` does not exist in the pool at all** — all 28 "in the Active Spot"
+  sentences use a pronoun. Do not build for it.
+- Other named-card predicates, for whoever generalises this later: Lunatone `sv03-092` ("If you have
+  Solrock in play"), Munkidori ex ×3 ("if you have any Pecharunt ex in play"), Vespiquen `sv02-009`
+  ("If you can't shuffle a Combee into your deck"). Across that family **three** things vary — the
+  name, the zone/quantifier and the consequent — which is a second reason the Bench clause is a row.
+
+### Fixture notes
+
+- **Drampa `sv03-161`** is the Dragon body. The pool offered three Basic Dragons with no ability
+  (Noibat `sv02-152`, Dratini `sv03-157`, Drampa); Drampa's **120 HP** is the only one that survives
+  the un-armed 90 and dies to the armed 180, so the control/armed pair differs in more than a number.
+  It carries neither Weakness nor Resistance, so the 180 is the fold alone.
+- **`fix-fighting-weak` is SYNTHETIC**, and deliberately: no faithful ×2 Fighting body in the pool is
+  inert — every one carries attacks, an ability or a rule box. It is a sibling of the existing
+  `fix-psychic-weak`/`fix-water-weak` bodies.
+- `board()` pins **both** setup Actives by name. `setActiveFromDeck` pushes the sitting Active onto
+  the **Bench** — the exact zone the Falinks clause reads — so an unpinned starter would have made
+  the clause deal-dependent.
+
+### The loud-witness bookkeeping
+
+This slice mapped the clause that **both** surviving "unmapped stays LOUD" cases were using, so both
+were **re-pointed, never deleted**: `clauseTable.test.ts` → Lokix `sv02-021` (evolved-this-turn),
+`conditionClause.test.ts` → Lucario `sv01-114` (last-turn KO). The two older witnesses
+(`conditionalDamage.test.ts` → Greedent `sv01-152`, `energyClause.test.ts` → Absol `sv06.5-030`) are
+untouched. Whenever a slice maps a witnessed clause, re-point the case in the same commit.
+
+### Still unmapped after this slice (17 → 19 of 26 clauses mapped)
+
+`you have at least 3 {D} Energy in play` (1, a loud witness — a board-wide fold over D118's provision
+predicate, and a template by D120's test since the energy vocabulary is closed) · `this Pokémon has a
+Pokémon Tool attached` (1, the other loud witness) · `this Pokémon moved from your Bench to the Active
+Spot this turn` (3, **needs new per-turn state** and is the biggest printing count left outside the
+coin flips) · three that need new per-turn/cross-turn state (`evolved from Nymble during this turn`,
+`played a Supporter … during this turn`, `any of your {F} Pokémon were Knocked Out … last turn`) ·
+`your opponent has any Future Pokémon in play` (blocked on an ingest change) · and the 26-printing
+coin-flip family, a different mechanism that deserves its own costed slice.

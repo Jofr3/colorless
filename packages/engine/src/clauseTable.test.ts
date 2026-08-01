@@ -369,15 +369,20 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
     expect(deriveAttackDamageBonus(FIGHTING_SWORD)).not.toBeNull();
   });
 
-  it("refuses Sylveon's Dragon-type clause — a well-formed sentence, an unmapped condition", () => {
-    // Sylveon swsh10.5-035 "Magical Shot", printed text (the card is in the live
-    // catalog, not in this pool). The sentence matches the family's shape
-    // perfectly and even shares Fighting Sword's "your opponent's Active Pokémon
-    // is a …" prefix; only the CLAUSE misses the table, which is exactly the
-    // fall-through the `Map.get` guard exists to protect.
+  it("refuses Lokix's evolved-this-turn clause — a well-formed sentence, an unmapped condition", () => {
+    // Lokix sv02-021 "Assaulting Kick", printed text (verified verbatim against
+    // the local D1 — the attack's NAME is "Assaulting Kick", not "Bug Bite").
+    // The sentence matches the family's
+    // shape perfectly; only the CLAUSE misses the table, which is exactly the
+    // fall-through the `Map.get` guard exists to protect. It needs cross-turn
+    // state nothing on the model carries yet, so it will stay unmapped a while.
+    //
+    // (This case used to point at Sylveon swsh10.5-035's Dragon clause, which
+    // D120 mapped via the type TEMPLATE — re-pointed rather than deleted, since
+    // the fall-through needs a live witness.)
     expect(
       deriveAttackDamageBonus(
-        "If your opponent's Active Pokémon is a Dragon Pokémon, this attack does 90 more damage.",
+        "If this Pokémon evolved from Nymble during this turn, this attack does 100 more damage.",
       ),
     ).toBeNull();
   });

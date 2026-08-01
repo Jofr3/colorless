@@ -1181,6 +1181,24 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // The vocabulary's one SEAT-SYMMETRIC member: equality commutes, so this
       // reads the same for p1 and p2 on any board. Sizes only, as above.
       return state.players[seat].hand.length === state.players[otherSeat(seat)].hand.length;
+    case "opponentActiveHasType": {
+      // The same read Weakness and Resistance make two lines later in the §8.5
+      // pipeline (`cards.ts` `weaknessOf`), so a printed type cannot mean one
+      // thing to this clause and another to the multiplier it feeds. `types` is
+      // null on Trainers and Energy, hence the `?? []`. Empty Active Spot is
+      // FALSE, as with the two other card-reading members.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && (spot.card.types ?? []).includes(cond.type);
+    }
+    case "yourBenchHasNamed":
+      // Bench only — the printed word is "Bench", and the Active Spot is excluded
+      // exactly as `yourBenchDamaged` excludes it. Bench slots are nullable and a
+      // stack can outrun the catalog, so the name is read through `topCardOf`
+      // (the stack TOP is the Pokémon's identity, §1.2: evolving a Falinks into
+      // something else stops satisfying this, which is the right answer).
+      return state.players[seat].bench.some(
+        (p) => p !== null && topCardOf(state, p)?.name === cond.name,
+      );
   }
 }
 
@@ -1238,6 +1256,14 @@ export function conditionNote(cond: BoardCondition): string {
       return `your opponent has ${cond.count} or fewer cards in their hand`;
     case "handSizesEqual":
       return "you have the same number of cards in your hand as your opponent";
+    case "opponentActiveHasType":
+      // Round-trips to the printed clause: the note is built from the parameter
+      // and the type word is the same token the sentence carried in.
+      return `your opponent's Active Pokémon is a ${cond.type} Pokémon`;
+    case "yourBenchHasNamed":
+      // Also verbatim — this clause names no pronoun and no timing word, so
+      // nothing has to be dropped on the way out (D119's whole cluster).
+      return `${cond.name} is on your Bench`;
   }
 }
 

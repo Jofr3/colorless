@@ -2720,6 +2720,122 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+
+  /** D120 — the TYPE-vs-NAME pair: two clauses that vary on exactly ONE token and
+      get OPPOSITE treatments, because only one of the two tokens has a CLOSED
+      vocabulary to be rejected against.
+
+      Sylveon swsh10.5-035 "Wonder Flash" (+90) — a Psychic Stage 1 from Eevee,
+      120 HP, ×2 Metal, no Resistance, no Ability. The pool's ONLY printing of a
+      type clause, and the only sentence in all 978 ingested rows that contains
+      the word "Dragon" at all; the eleven-word type vocabulary is what lets it be
+      a TEMPLATE on one printing without ever admitting a token it cannot resolve.
+
+      Its index-0 "Souvenir" is a REAL unbuilt sentence — an unrestricted
+      search-your-deck-for-2, which no deriver owns (checked: `deriveAttackEffect`
+      returns null for it today) — and it carries NO `damage` key at all, so
+      Sylveon holds one loud index beside its silent one and the contrast rides on
+      a single card. Verbatim off the local D1. */
+  "swsh10.5-035": battler("swsh10.5-035", {
+    name: "Sylveon",
+    types: ["Psychic"],
+    stage: "Stage1",
+    evolveFrom: "Eevee",
+    hp: 120,
+    retreat: 1,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic"],
+        name: "Souvenir",
+        effect: "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Wonder Flash",
+        effect:
+          "If your opponent's Active Pokémon is a Dragon Pokémon, this attack does 90 more damage.",
+        damage: "90+",
+      },
+    ],
+  }),
+
+  /** Falinks sv02-119 "Reckless Charge Together" (+90) — a Fighting Basic, 110 HP,
+      ×2 Psychic, no Resistance, no Ability. The other half of the D120 pair and
+      the LITERAL row: its one varying token is a card NAME, which has no closed
+      vocabulary to fail against, so `^(.+) is on your Bench$` would read "a Pokémon
+      with an Ability is on your Bench" as a card called "a Pokémon with an Ability"
+      and answer FALSE forever with no failure. One row per printing instead.
+
+      Two facts the suite leans on. The clause names the ATTACKER'S OWN CARD, so
+      arming it needs a SECOND copy on the Bench and the attacker must not count
+      itself — the deck therefore runs six. And the clause is
+      DEFENDER-INDEPENDENT (it reads your own Bench), which makes this the cast's
+      §8.5 fold-order attacker: a Fighting body whose whole folded number doubles
+      into a Fighting-weak defender. "Headbutt" at index 0 carries no `effect` key
+      at all (not an empty string — the catalog row omits it). Verbatim off the
+      local D1. */
+  "sv02-119": battler("sv02-119", {
+    name: "Falinks",
+    types: ["Fighting"],
+    hp: 110,
+    retreat: 2,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless"], name: "Headbutt", damage: 20 },
+      {
+        cost: ["Fighting", "Colorless", "Colorless"],
+        name: "Reckless Charge Together",
+        effect: "If Falinks is on your Bench, this attack does 90 more damage.",
+        damage: "70+",
+      },
+    ],
+  }),
+
+  /** Drampa sv03-161 — the DRAGON body, and the only reason `opponentActiveHasType`
+      can be armed on a real board at all: before D120 no fixture in the pool
+      carried `types: ["Dragon"]` (the ten other type words all appeared; Dragon
+      did not). Picked off the local D1 as the simplest Basic Dragon in
+      sv01/sv02/sv03 with no Ability and at least one attack — Noibat sv02-152 (70
+      HP) and Dratini sv03-157 (70 HP) are the alternatives, and Drampa's 120 HP is
+      what lets Sylveon's UNARMED 90 leave it standing while the armed 180 does
+      not.
+
+      Faithful: 120 HP, Dragon, retreat 2, NO Weakness and NO Resistance — which is
+      also why it is the arithmetically clean armed defender (Sylveon is a Psychic
+      attacker, so §8.5 contributes nothing here and the 180 is the fold alone).
+      Its single "Outrage" is kept verbatim and does derive (a
+      `damageCountersOnSelf` scaler from D97) — irrelevant here, since this body
+      only ever gets hit. */
+  "sv03-161": battler("sv03-161", {
+    name: "Drampa",
+    types: ["Dragon"],
+    hp: 120,
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Outrage",
+        effect: "This attack does 10 more damage for each damage counter on this Pokémon.",
+        damage: "60+",
+      },
+    ],
+  }),
+
+  /** FIXTURE — a ×2 FIGHTING body (200 HP, no attacks), the D120 fold-order
+      defender and the exact sibling of fix-psychic-weak / fix-water-weak: the pool
+      held a ×2 Lightning, a ×2 Water, a ×2 Psychic and a ×2 Fire body but no ×2
+      Fighting one that is otherwise inert (every faithful ×2 Fighting row in the
+      file is a real card carrying attacks, an Ability or a rule box). Falinks is
+      Fighting and its clause is defender-independent, so (70 + 90) × 2 = 320 here
+      against the un-armed control's 70 × 2 = 140 — and 200 HP is chosen so the
+      control leaves it standing while the armed hit Knocks it Out. A Basic, no
+      rule box (1 Prize). */
+  "fix-fighting-weak": battler("fix-fighting-weak", {
+    hp: 200,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -3732,6 +3848,70 @@ export const PUBLIC_COUNT_DECK = deckOf({
   "fix-fighting-energy": 5, // Basic {F} — pays Payback and Corkscrew Punch
   "fix-psychic-energy": 6, // Basic {P} — pays Two Four-ocious's {P}{C}{C} on its own
   "fix-bigbody": 18, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the control
+});
+
+/** 0.70.0 → 0.71.0: the TYPE-vs-NAME pair (D120) — two clauses that each vary on
+    exactly ONE token and get OPPOSITE treatments: Sylveon swsh10.5-035 "Wonder
+    Flash" (their Active is a Dragon Pokémon, +90) is a parameterised TEMPLATE,
+    Falinks sv02-119 "Reckless Charge Together" (a Falinks is on your Bench, +90)
+    is a LITERAL row. The discriminator is whether the varying token has a CLOSED
+    vocabulary to be rejected against; a type name has eleven, a card name has
+    none.
+
+    A DEDICATED deck for the usual reason (every existing deck is seed-pinned by
+    its own suite) and one specific to this slice: the Falinks clause reads the
+    attacker's own BENCH, so a shared deck would have every other suite's benched
+    bodies deciding whether this one's clause is armed.
+
+    THE DECK IS TWO CASTS THAT NEED OPPOSITE THINGS.
+
+      • Sylveon needs a DRAGON to point at. sv03-161 Drampa is the pool's Dragon
+        body — added by this slice, because before it no fixture carried
+        `types: ["Dragon"]` at all — and at 120 HP with no Weakness it survives the
+        un-armed 90 and dies to the armed 180, so the two boards differ visibly in
+        more than a number. fix-bigbody (200 HP, COLORLESS) is the non-Dragon
+        control on the same swing: the type read is `Card.types.includes`, so a
+        Colorless body is a genuine negative rather than an absent field.
+      • Falinks needs A SECOND FALINKS. The clause names the attacker's own card,
+        so arming it means one in the Active Spot and one on the Bench, and the
+        case that matters most is the one where the attacker must NOT count
+        itself. Six copies, because a seat's opening hand and Prize row hold 13 of
+        its 60 cards and two have to be left in the deck for the surgery to reach.
+
+    fix-fighting-weak (200 HP, ×2 Fighting, no attacks) is the §8.5 fold-order
+    defender — Falinks is a Fighting Pokémon and its clause is
+    DEFENDER-INDEPENDENT, which is exactly what makes it the right attacker for
+    that case: the Bench arms the bonus while the Weakness doubles it, and the two
+    layers cannot be confused for each other. (70 + 90) × 2 = 320 against the
+    control's 70 × 2 = 140.
+
+    fix-bigbody is 31 of 60 — the DOMINANT mulligan-free starter, and BOTH setup
+    Actives are pinned to it BY NAME (`active:`) rather than by whatever Basic the
+    deal happened to put first in hand. That pin is load-bearing here and nowhere
+    else in the family: every surgery below displaces the Active onto the BENCH,
+    which is the zone this slice's second clause reads, so a deal-dependent starter
+    would be a deal-dependent clause.
+
+    Energy is one line per printed TYPED symbol and no plain {C} at all, the
+    PUBLIC_COUNT_DECK convention: the Colorless symbols in Wonder Flash's {C}{C}{C}
+    and Reckless Charge Together's {F}{C}{C} are paid with typed Energy, which is
+    legal (§8.2). Each attacker draws ONE card of its own printed type and TWO of
+    the other line, so no single line is ever asked for more than two — which
+    matters because a seat's opening hand and Prize row hold 13 of its 60 before
+    any surgery runs, and `attachFromDeck` reaches only what is LEFT. {P} also buys
+    Souvenir at Sylveon's index 0, the unbuilt sibling the ATTACK_EFFECT_SKIPPED
+    contrast rides on. No Energy in this cast ARMS anything: unlike D118's, neither
+    clause here can be touched by an attachment. Both seats run the whole deck,
+    since both clauses are seat-asymmetric and the asymmetry is only assertable if
+    the same body can be fielded on either side. */
+export const TYPE_NAME_DECK = deckOf({
+  "sv02-119": 6, // Falinks — "Reckless Charge Together" (70+): yourBenchHasNamed, +90. Needs TWO at once.
+  "swsh10.5-035": 4, // Sylveon — "Wonder Flash" (90+): opponentActiveHasType Dragon, +90
+  "sv03-161": 4, // Drampa — the pool's DRAGON body (120 HP, no Weakness): the armed defender
+  "fix-fighting-weak": 3, // 200 HP, ×2 Fighting — the Weakness defender for the fold-order pair
+  "fix-psychic-energy": 6, // Basic {P} — pays Souvenir, and two of Reckless Charge Together's {C}{C}
+  "fix-fighting-energy": 6, // Basic {F} — pays Reckless Charge Together's {F}, and two of Wonder Flash's {C}{C}{C}
+  "fix-bigbody": 31, // 200 HP neutral Colorless Basic — DOMINANT pinned starter, the non-Dragon control
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

@@ -783,7 +783,34 @@ import type { GameState, Seat } from "./types";
     comparisons over different operands. Cost: 3 union members, 3 `conditionHolds`
     arms, 3 `conditionNote` arms (one built from its parameter, agreement and all),
     4 table rows. */
-export const engineVersion = "0.70.0";
+
+    /* 0.71.0 — TYPE and NAME (D120): the conditional-damage family's two
+    cheapest remaining clauses, and the pair exists to settle when a clause that
+    varies on ONE token may be a TEMPLATE. Sylveon swsh10.5-035 "Wonder Flash"
+    ("If your opponent's Active Pokémon is a Dragon Pokémon", +90) and Falinks
+    sv02-119 "Reckless Charge Together" ("If Falinks is on your Bench", +90). 2
+    printings / 2 cards / 2 clauses, ZERO registry rows, no new op, event, error
+    code or wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+
+    Both vary on exactly one token and they get OPPOSITE treatments, which is the
+    slice's whole point. The discriminator is not the printing count (each is a
+    singleton) and not D119's "how many things vary" — it is whether the varying
+    token has a CLOSED vocabulary to be REJECTED against. A type name does: the
+    new `POKEMON_TYPES` (built from BASIC_ENERGY_TYPES + Dragon + Colorless, so
+    the two lists cannot drift) is eleven words, an unknown token resolves to
+    null and the clause stays LOUD — which is what keeps the pattern off "is a
+    Basic Pokémon". A card NAME does not: `^(.+) is on your Bench$` has nothing to
+    reject against and would read any noun phrase as a card name and answer FALSE
+    forever, SILENTLY. So the type is a template and the name is a literal row.
+
+    `opponentActiveHasType { type }` reads `Card.types`, the same field Weakness
+    and Resistance read two lines later in §8.5. `yourBenchHasNamed { name }` is
+    the vocabulary's first member reading a card IDENTITY rather than a structural
+    fact; it reads the stack TOP (§1.2), so evolving the named Pokémon stops
+    satisfying it. Cost: 1 union member + 1 clause pattern + 1 token map (the
+    type), 1 union member + 1 table row (the name), 2 `conditionHolds` arms, 2
+    `conditionNote` arms — both round-tripping to the printed clause verbatim. */
+export const engineVersion = "0.71.0";
 
 export type {
   ApplyResult,

@@ -147,6 +147,22 @@ export type HandRefreshDraw =
   | { kind: "handPlus"; delta: number }
   | { kind: "prizeCount" };
 
+/** §6.1's full type wheel, exactly as the CATALOG spells it in `Card.types` —
+    the nine Basic-Energy types plus the two that have no Basic Energy of their
+    own. Built FROM `BASIC_ENERGY_TYPES` rather than re-listed, so the two
+    vocabularies cannot drift and a type added to the schema is admitted here by
+    construction (the same rule `ENERGY_TYPE_BY_NAME` follows further down).
+
+    This is a POKÉMON type, a strictly wider thing than a payable energy type:
+    `Colorless` is a cost symbol no Basic Energy prints and `Dragon` has no Basic
+    Energy at all, which is exactly why both are absent from BASIC_ENERGY_TYPES —
+    but a Pokémon is very much allowed to BE either, and 117 of the ingested
+    pool's rows are (100 Colorless, 17 Dragon). Keep the two lists apart: a
+    condition reading a Pokémon's printed type must never be typed with the
+    energy vocabulary, or Sylveon's clause becomes unspellable. */
+export const POKEMON_TYPES = [...BASIC_ENERGY_TYPES, "Dragon", "Colorless"] as const;
+export type PokemonType = (typeof POKEMON_TYPES)[number];
+
 /** A board predicate read for ONE seat — the vocabulary behind both the printed
     "You can use this card only if <condition>" play gates (CardProgram
     `playableIf`) and the "if <condition>, …" mid-program branches (the
@@ -312,7 +328,47 @@ export type BoardCondition =
       The one member of this whole vocabulary that is SEAT-SYMMETRIC — equality
       commutes, so it reads the same from either seat, and that is asserted rather
       than assumed. Sizes only, contents never (see the sibling above). */
-  | { kind: "handSizesEqual" };
+  | { kind: "handSizesEqual" }
+  /** Your opponent's Active Pokémon is a `type` Pokémon — Sylveon swsh10.5-035
+      "Wonder Flash" (+90, `Dragon`), the pool's only printing of a TYPE clause
+      and the only sentence in 978 cards that contains the word "Dragon" at all.
+
+      PARAMETERISED on one printing (D118's rule, applied where the evidence is
+      thinnest): the sentence varies on exactly ONE token, that token is
+      byte-identical to the value sitting in `Card.types`, and the vocabulary it
+      draws from is CLOSED at eleven names. A flat `opponentActiveIsDragon` would
+      cost a member and a row for every one of the other ten the day a Fire or a
+      Water printing lands — D118's mistake, made in advance.
+
+      The reading is the same one Weakness/Resistance make (`Card.types`
+      `.includes`), so it cannot drift from the §8.5 pipeline running two lines
+      later. `types` is null on Trainers and Energy and every Pokémon row in the
+      ingested pool carries exactly one; the predicate is written for many all the
+      same, since the field is an array and dual types are a real printing. False
+      with an empty Active Spot. */
+  | { kind: "opponentActiveHasType"; type: PokemonType }
+  /** A card NAMED `name` is on YOUR Bench — Falinks sv02-119 "Reckless Charge
+      Together" (+90, `Falinks`), the pool's only printing in this skeleton.
+
+      **The union's first member reading a card IDENTITY rather than a structural
+      fact** — every predicate before it asks what a Pokémon IS (damaged, Poisoned,
+      an Evolution, an ex). There is precedent for the read itself (`CardFilter`'s
+      `byName`, the aura's `exemptAbilityNamed`), and the deck builder keys on
+      names all day, so a name is a legitimate thing for the shared vocabulary to
+      carry. What it must NOT be is a TEMPLATE — see the clause table's row.
+
+      Named-card, not another-copy-of-me: both pool printings of the shape happen
+      to name their own card, but the printed sentence names a CARD, and a
+      predicate reading "another copy of the attacker" would answer differently
+      the day a card names a different one (Lunatone sv03-092's "If you have
+      Solrock in play" is already that sentence on another skeleton). Exact match,
+      no normalisation — the catalog's `name` IS the printed name.
+
+      Your BENCH alone: the Active Spot is deliberately not consulted, exactly as
+      `yourBenchDamaged` excludes it, because the printed word is "Bench". An
+      empty Bench is false. Names are public the moment a Pokémon is in play, so
+      the union's public-state invariant holds. */
+  | { kind: "yourBenchHasNamed"; name: string };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1483,7 +1539,8 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     "toString", …) and hand back something that is not a `BoardCondition` at all.
     A Map has no inherited keys.
 
-    TEN entries, covering 22 of the pool's 43 printings. The first two reuse
+    FIFTEEN entries which, with the two patterns below them, cover 19 of the
+    pool's 26 distinct clauses / 35 of its 43 printings. The first two reuse
     `BoardCondition` members that ALREADY existed — built in the 2026-07-21
     board-condition slice (D40) for Falkner's `conditionGate` and Fighting Au
     Lait's play gate — which makes this family the vocabulary's FOURTH consumer
@@ -1597,6 +1654,18 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // matcher would score a damage bonus off the pre-evolution; the whole-sentence
   // anchor is what keeps it off this path.
   ["you have the same number of cards in your hand as your opponent", { kind: "handSizesEqual" }],
+  // Falinks sv02-119 "Reckless Charge Together" (+90) — a LITERAL row although
+  // exactly one token varies, which is the one place this family departs from
+  // D118. A template is safe only when the varying token has a CLOSED vocabulary
+  // to fail against: the energy tokens are nine codes and nine names, the type
+  // tokens eleven words, so an unknown token falls through and stays LOUD. A card
+  // NAME is open-ended, and `^(.+) is on your Bench$` has nothing to reject
+  // against — it would read "a Pokémon with an Ability is on your Bench" as a
+  // card called "a Pokémon with an Ability" and answer FALSE forever, silently.
+  // Wrong-with-no-failure is the one outcome this family refuses. So: one row per
+  // printing, and the pool prints one (Flamigo sv03-185 prints the same clause
+  // under a different CONSEQUENT, which the leading-If skeleton never reaches).
+  ["Falinks is on your Bench", { kind: "yourBenchHasNamed", name: "Falinks" }],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name
@@ -1673,6 +1742,41 @@ const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special"> = n
   ["Special", "special"] as [string, BasicEnergyType | "special"],
 ]);
 
+/** The family's SECOND parameterised clause: "If your opponent's Active Pokémon
+    is a <type> Pokémon, this attack does N more damage." — Sylveon swsh10.5-035
+    "Wonder Flash" (+90, `Dragon`), and today that is the whole census.
+
+    A template on ONE printing, deliberately. D118's test is "does exactly one
+    TOKEN vary", not "are there enough rows yet to bother", and here the token is
+    a type name that is byte-identical to the value in `Card.types` — so the
+    pattern costs the same as the literal row would and covers the other ten
+    types for free. It is the mirror-image call to the Falinks row in the table
+    above, and the discriminator between them is not the printing count: it is
+    whether the token has a CLOSED vocabulary to be rejected against.
+
+    `CLAUSE_POKEMON_TYPES` is that vocabulary, a `Map` for D115's reason (an
+    object lookup on arbitrary printed text can hit `Object.prototype`) built
+    FROM `POKEMON_TYPES` so it cannot drift from the schema's list. An
+    unresolvable token falls through to null and stays LOUD — which is what
+    stops this pattern swallowing the two OTHER "is a … Pokémon" readings the
+    pool prints: "is a Basic Pokémon" (sv03-134) captures `Basic`, which is not a
+    type and never resolves, and "is an Evolution Pokémon" cannot even reach here
+    (its "an" fails the anchor, and its literal row wins first regardless).
+
+    The article is hard-coded to "a" because all eleven type names begin with a
+    consonant; a vowel-initial type would need "an" and would break this pattern
+    LOUDLY rather than silently, which is the right failure.
+
+    Note the SET's other convention does not bite here: swsh10.5 spells energy
+    names out where sv01-sv03 print brace codes (D118), but a Pokémon's TYPE is
+    printed as the bare word in both eras, and the pool contains no `{D} Pokémon`
+    CONDITION at all — the 17 brace-coded type sentences are all selectors and
+    counters on other skeletons. When one is printed, it is a row in this map. */
+const OPPONENT_ACTIVE_TYPE_CLAUSE = /^your opponent's Active Pokémon is a (.+) Pokémon$/;
+const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map(
+  POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
+);
+
 /** The printed clause between the leading "If " and the ", this attack does" →
     a `BoardCondition`, or null when nothing claims it (which keeps the sentence
     on the loud ATTACK_EFFECT_SKIPPED path — never a silent 0).
@@ -1687,6 +1791,11 @@ function boardConditionForClause(clause: string): BoardCondition | null {
   if (selfEnergy !== null) {
     const energy = CLAUSE_ENERGY_TOKENS.get(selfEnergy[1] ?? "");
     if (energy !== undefined) return { kind: "yourActiveHasEnergyAttached", energy };
+  }
+  const activeType = OPPONENT_ACTIVE_TYPE_CLAUSE.exec(clause);
+  if (activeType !== null) {
+    const type = CLAUSE_POKEMON_TYPES.get(activeType[1] ?? "");
+    if (type !== undefined) return { kind: "opponentActiveHasType", type };
   }
   return null;
 }

@@ -397,13 +397,20 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
     });
   });
 
-  it("refuses Sylveon's Dragon-type clause — a well-formed sentence, an unmapped condition", () => {
-    // Sylveon swsh10.5-035 "Magical Shot". The sentence matches the family's shape
-    // perfectly; only the CLAUSE misses the table, which is exactly the
-    // fall-through the `Map.get` guard exists to protect.
+  it("refuses Lucario's last-turn-KO clause — a well-formed sentence, an unmapped condition", () => {
+    // Lucario sv01-114 "Avenging Knuckle", printed text (verified verbatim
+    // against the local D1 — the attack's NAME is "Avenging Knuckle", not "Aura
+    // Sphere"). The sentence matches the
+    // family's shape perfectly; only the CLAUSE misses the table, which is exactly
+    // the fall-through the `Map.get` guard exists to protect. It reads what
+    // happened on the PREVIOUS turn, state the model does not keep.
+    //
+    // (This case used to point at Sylveon swsh10.5-035's Dragon clause, which
+    // D120 mapped via the type TEMPLATE — re-pointed rather than deleted, since
+    // the fall-through needs a live witness.)
     expect(
       deriveAttackDamageBonus(
-        "If your opponent's Active Pokémon is a Dragon Pokémon, this attack does 90 more damage.",
+        "If any of your {F} Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 120 more damage.",
       ),
     ).toBeNull();
   });
