@@ -239,7 +239,35 @@ export type BoardCondition =
       is narrower than `hasRuleBox`). It inherits that predicate's one limitation
       — the class is derived from the card NAME's suffix, tcgdex's structured
       markers being dropped at ingest. False with no Active. */
-  | { kind: "opponentActiveIsExOrV" };
+  | { kind: "opponentActiveIsExOrV" }
+  /** §6.3 — YOUR Active Pokémon has at least one attached Energy of `energy`:
+      Scovillain sv01-029/-202 "Super Spicy Breath" (+90, `{R}`), Galvantula
+      sv06.5-002 "Shocking Web" (+80, `{L}`), Cetitan sv02-055 "Special Horn"
+      (+140) and Tinkaton sv02-105 "Special Hammer" (+90, both `Special`).
+
+      **The union's FIRST member carrying a PARAMETER.** Every member before it is
+      a bare tag, and three flat tags would have done for today's four printings —
+      but the clause is a template, not four sentences: the pool prints nine
+      distinct energy codes and two rival notations for them, so the flat form
+      costs a member per type per notation and the parameterised form costs
+      nothing at all for the tenth printing. The parameter is the only axis the
+      printed sentences actually vary on.
+
+      `energy` is a `BasicEnergyType` (the schema's own §6.1 vocabulary — no
+      `Colorless`, no `Dragon`) or the string `"special"` for the CARD-CLASS
+      reading, which is a different axis from a type and deliberately not a tenth
+      type. The predicate is PROVISION, not the printed name (continuous.ts
+      `hasAttachedEnergy`): an Energy that can pay a `{R}` cost is exactly an
+      Energy this clause counts, so a wildcard Luminous Energy satisfies `{R}`
+      for as long as it provides every type — and stops the moment a second
+      Special demotes it to `{C}`. Reading it any other way would let Scovillain
+      pay its own cost with a card the very same sentence then refuses to see.
+
+      D116's pronoun rule, third use: the member is named for what it READS (your
+      Active) and the CLAUSE TABLE resolves the printed "this Pokémon". Attached
+      Energy sits face up, so the union's public-state invariant holds. False with
+      an empty Active Spot. */
+  | { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1431,10 +1459,15 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     apostrophe is ASCII, both verified against the local D1 rows; a lookalike
     character would silently un-map the clause. `Poisoned`, `Special Condition`,
     `Benched`, `Active` and `Evolution` are CAPITALISED as printed, and the
-    matcher has no /i. The remaining 18 printed clauses in the pool stay
+    matcher has no /i. The remaining printed clauses in the pool stay
     deliberately UNMAPPED and therefore LOUD (an unrecognised clause returns null
     and keeps its ATTACK_EFFECT_SKIPPED row) — each is a future one-row extension,
-    and "loud" is strictly better than silently scoring the bonus at 0. */
+    and "loud" is strictly better than silently scoring the bonus at 0.
+
+    This table holds only the LITERAL clauses. Since D118 a clause that is a
+    TEMPLATE — one shape varying on a single token — is matched by an anchored
+    pattern instead (SELF_ENERGY_ATTACHED_CLAUSE below); `boardConditionForClause`
+    consults this table FIRST, so a literal row always wins. */
 const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // Palossand sv02-096 "Earthen Power" (+80) and its siblings — §7.3 OWNERSHIP,
   // not mere presence: the opponent's Stadium in the shared zone does not count.
@@ -1521,6 +1554,68 @@ export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = {
 const ENERGY_TYPE_BY_NAME: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
   BASIC_ENERGY_TYPES.map((type) => [type, type]),
 );
+/** The PARAMETERISED clause (D118), the conditional-damage family's first:
+    "If this Pokémon has any <energy> Energy attached, this attack does N more
+    damage." — Scovillain sv01-029/-202 (`{R}`, +90), Galvantula sv06.5-002
+    (`{L}`, +80), Cetitan sv02-055 and Tinkaton sv02-105 (`Special`, +140/+90).
+
+    Four printings, four sentences, ONE shape — so it does not go in
+    `CONDITIONAL_DAMAGE_CLAUSES` as four literal rows. That table keys whole
+    printed clauses because its clauses genuinely differ; these differ on exactly
+    one TOKEN, and the pool holds nine energy codes in two rival notations, so
+    the literal form costs a row (and, without a parameter, a union member) per
+    type per notation forever. Anchored whole-clause all the same: the capture is
+    the token alone, and the clause table is consulted FIRST, so this pattern can
+    only ever see text no literal row claimed.
+
+    The token vocabulary is a `Map`, for D115's reason one level down: the key is
+    arbitrary PRINTED text and an object lookup on arbitrary text can hit
+    `Object.prototype` ("constructor", "toString", …) and hand back something
+    that is not an energy type at all. It is built FROM the two notation maps
+    above rather than re-listed, so the three cannot drift and a type added to
+    BASIC_ENERGY_TYPES is admitted here by construction.
+
+    Both notations are carried because the pool prints both and they are split
+    cleanly by SET: sv01/sv02/sv03/sv06.5 use brace codes exclusively, swsh10.5
+    spells the names out exclusively ("Water Energy", "Psychic Energy") with zero
+    brace codes in 25 matching cards. Today all four printings of THIS sentence
+    are brace-coded, but a code-only parser would silently skip a whole set the
+    moment one of its cards prints the shape.
+
+    `Special` is the CARD CLASS, not a tenth type — a different axis, and the
+    reason the parameter is `BasicEnergyType | "special"` rather than a widened
+    type union. `{C}` is absent for the same reason it is absent from
+    ENERGY_TYPE_BY_CODE: Colorless is the conservative provision fallback for
+    every unauthored Special Energy, so a `{C}` clause would quietly match cards
+    nobody meant. An unresolvable token falls through to null and stays LOUD. */
+const SELF_ENERGY_ATTACHED_CLAUSE = /^this Pokémon has any (.+) Energy attached$/;
+const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special"> = new Map([
+  ...Object.entries(ENERGY_TYPE_BY_CODE).map(
+    ([code, type]) => [`{${code}}`, type] as [string, BasicEnergyType | "special"],
+  ),
+  ...Object.entries(ENERGY_TYPE_BY_NAME).map(
+    ([name, type]) => [name, type] as [string, BasicEnergyType | "special"],
+  ),
+  ["Special", "special"] as [string, BasicEnergyType | "special"],
+]);
+
+/** The printed clause between the leading "If " and the ", this attack does" →
+    a `BoardCondition`, or null when nothing claims it (which keeps the sentence
+    on the loud ATTACK_EFFECT_SKIPPED path — never a silent 0).
+
+    Two passes, in this order and no other: the LITERAL table first, then the
+    parameterised patterns. Literals win by construction, so adding a template
+    can never re-interpret a clause a row already owns. */
+function boardConditionForClause(clause: string): BoardCondition | null {
+  const literal = CONDITIONAL_DAMAGE_CLAUSES.get(clause);
+  if (literal !== undefined) return literal;
+  const selfEnergy = SELF_ENERGY_ATTACHED_CLAUSE.exec(clause);
+  if (selfEnergy !== null) {
+    const energy = CLAUSE_ENERGY_TOKENS.get(selfEnergy[1] ?? "");
+    if (energy !== undefined) return { kind: "yourActiveHasEnergyAttached", energy };
+  }
+  return null;
+}
 // The TYPED self-discard: "Discard a|all|{N} {type} Energy from this Pokémon."
 // — the same §8 attack cost as its untyped siblings above, narrowed to one
 // energy type. Both notations in one pattern, and both alternations built FROM
@@ -1863,8 +1958,8 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // (ATTACK_EFFECT_SKIPPED), never silently score its bonus at 0.
   const conditional = CONDITIONAL_DAMAGE_BONUS.exec(effect);
   if (conditional !== null) {
-    const cond = CONDITIONAL_DAMAGE_CLAUSES.get(conditional[1] ?? "");
-    if (cond !== undefined) {
+    const cond = boardConditionForClause(conditional[1] ?? "");
+    if (cond !== null) {
       const per = Number(conditional[2]);
       // A printed 0 adds nothing — the guard every arm in this family carries.
       if (per >= 1) return { per, count: { kind: "boardCondition", cond } };

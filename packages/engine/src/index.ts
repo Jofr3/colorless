@@ -725,7 +725,38 @@ import type { GameState, Seat } from "./types";
     Active is the one the real game uses — the opponent Poisons you, and §13.1's
     Checkup ticks it before your attack reads it. `clauseTable.test.ts` arms it
     that way rather than by surgery. */
-export const engineVersion = "0.68.0";
+
+    /* 0.69.0 — the conditional-damage family's FIRST PARAMETERISED clause (D118):
+    "If this Pokémon has any <energy> Energy attached, this attack does N more
+    damage." — Scovillain sv01-029/-202 "Super Spicy Breath" (+90, `{R}`),
+    Galvantula sv06.5-002 "Shocking Web" (+80, `{L}`), Cetitan sv02-055 "Special
+    Horn" (+140) and Tinkaton sv02-105 "Special Hammer" (+90, both `Special`).
+    6 printings / 5 cards, ZERO registry rows, no new op, event, error code or
+    wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+
+    `BoardCondition` gains its first member carrying a PARAMETER —
+    `{ kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }`
+    — and `boardConditionForClause` (effects.ts) gains a SECOND resolution pass:
+    the literal `CONDITIONAL_DAMAGE_CLAUSES` table first, then anchored
+    whole-clause TEMPLATES. Four literal rows would have covered today's four
+    sentences; the pool prints nine energy codes in two rival notations, so the
+    literal form costs a row and a union member per type per notation forever
+    while the template costs nothing for the tenth printing. The energy token
+    vocabulary is a `Map` built FROM the two existing notation maps
+    (ENERGY_TYPE_BY_CODE / ENERGY_TYPE_BY_NAME) plus `Special`, so the three
+    cannot drift and an arbitrary printed token cannot reach `Object.prototype`.
+
+    The predicate is continuous.ts's new `hasAttachedEnergy`, read by PROVISION
+    rather than by the printed name — an Energy that can pay a {R} cost is
+    exactly an Energy this clause counts, so a wildcard Luminous Energy satisfies
+    `{R}` while it provides every type and stops the moment a second Special
+    demotes it to {C}. `"special"` is the CARD CLASS (`isSpecialEnergy`), a
+    different axis from a type, which is why it is a string member of the
+    parameter rather than a tenth type. D116's pronoun rule, third use. Cost: 1
+    union member, 1 `conditionHolds` arm, 1 `conditionNote` arm (the family's
+    first built from a parameter rather than returned as a literal), 1 clause
+    pattern, 1 token map, 1 continuous.ts predicate. */
+export const engineVersion = "0.69.0";
 
 export type {
   ApplyResult,
@@ -778,6 +809,7 @@ export {
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
+  hasAttachedEnergy,
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
   opposingRetreatBlocked,

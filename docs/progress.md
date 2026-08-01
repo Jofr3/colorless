@@ -3,7 +3,11 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-01 — build session #102 (**P3-M5 — the clause table's THIRD wave: `yourActivePoisoned` (the SELF-Poison twin, 3 printings) + `opponentActiveIsExOrV`, 4 printings / 2 cards on ZERO registry rows (D117, engine 0.68.0)**).
+**Last updated:** 2026-08-01 — build session #103 (**P3-M5 — the FIRST PARAMETERISED clause: `yourActiveHasEnergyAttached`, and a second resolution pass (literal table → anchored TEMPLATES); 6 printings / 5 cards on ZERO registry attack rows (D118, engine 0.69.0)**).
+"If this Pokémon has any \<energy\> Energy attached, this attack does N more damage." now SIMULATES, and **the one design question D117's resume point left open is CLOSED: the parameter belongs in the union.** Every `BoardCondition` member before this one is a bare tag; four literal rows would have covered today's four sentences — but the clause is a **TEMPLATE, not four sentences**: the pool prints **nine** energy codes in **two rival notations**, so the literal form costs a table row *and* a union member per type per notation forever while the template costs **nothing** for the tenth printing. **`{ kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }`** — the union's first parameter-carrying member. Landed: **Scovillain `sv01-029`/`-202` "Super Spicy Breath"** (+90, `{R}`), **Galvantula `sv06.5-002` "Shocking Web"** (+80, `{L}`), **Cetitan `sv02-055` "Special Horn"** (+140) and **Tinkaton `sv02-105` "Special Hammer"** (+90, both `Special`). **The structural change is one function — `boardConditionForClause(clause)`: the LITERAL `CONDITIONAL_DAMAGE_CLAUSES` table FIRST, then anchored whole-clause TEMPLATES.** Literals win by construction, so adding a template can never re-interpret a clause a row already owns; the outer `^If (.+), this attack does (\d+) more damage\.$` anchor is untouched and the template (`^this Pokémon has any (.+) Energy attached$`) is itself whole-clause anchored, so the capture is the token alone. The token vocabulary is a **`Map` built FROM the two existing notation maps** (`ENERGY_TYPE_BY_CODE` + `ENERGY_TYPE_BY_NAME`) plus `Special` — D115's rule one level down (an object lookup on arbitrary printed text can hit `Object.prototype`) and the thing that stops the three vocabularies drifting; an unresolvable token falls through to null and stays LOUD. **`"special"` is the CARD CLASS, a different AXIS from a type and deliberately not a tenth type** — the Luminous+Jet board is where that shows (the `{R}` clause reads FALSE on the very board the `Special` clause reads TRUE; modelled as a tenth type the two could not disagree). `{C}` is refused for the same reason it is absent from `ENERGY_TYPE_BY_CODE`: Colorless is the conservative provision fallback for every unauthored Special Energy, and the demoted Luminous on that board genuinely does provide it. **The predicate is PROVISION, not the printed name** — continuous.ts's new `hasAttachedEnergy` (`providesEnergyType` for a type, `isSpecialEnergy` for the class), living beside the provision code so that "an Energy that can pay a {R} cost" and "an Energy this clause counts" stay ONE question. The payoff is the slice's best test: a **wildcard Luminous Energy ALONE satisfies `{R}`** on a Grass Scovillain (→180), and attaching a **second** Special demotes it to `{C}` so the SAME board — nothing left, no counter moved, same attacker — scores **90**; a name-matching read cannot behave that way, and the attack COST is asserted payable across the demotion rather than dodged. D116's pronoun rule, **third use**; `conditionNote` is the family's first note **built from a parameter** rather than returned as a literal. **Verbatim re-confirmed against the local D1 before authoring** (the D95→D117 lesson): `sv01-202` is byte-identical to `sv01-029` (one fixture, two ids), every clause carries a precomposed U+00E9 and **no apostrophe at all**, and the census settled the shape — the leading-`If` skeleton holds **five** Energy-mentioning sentences, these four plus **Absol `sv06.5-030`'s "you have at least 3 {D} Energy IN PLAY"**, a whole-board count that stays deliberately unmapped and is now the suite's **live** loud witness (the outer shape matches and the clause still misses). **Notation is split by SET, not mixed:** sv01/sv02/sv03/sv06.5 brace-code exclusively, **swsh10.5 spells names out exclusively** (25 cards, zero brace codes) — nothing there prints this sentence today, so the spelled-out arm is a **constructed** test, labelled as such; a code-only parser would silently skip a whole set. **Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 clause pattern, 1 token map, 1 continuous.ts predicate. No new op, event, error code, registry row or wire field; no fold change; no web/API/DB/`@luminous/schema` diff.** `energyClause.test.ts` (**51**) on a DEDICATED `ENERGY_CLAUSE_DECK`: the verbatim-text guard incl. the byte facts (78/77, 78/77, 83/82, 82/81 — the invariant is `bytes = codePoints + count("Pokémon")`); all four derivations + the N-from-the-sentence case; **all nine brace codes resolved**; the constructed notation-parity loop over `BASIC_ENERGY_TYPES`; the near-misses staying LOUD — **Okidogi `sv06.5-074`'s ABILITY** (prefix-identical to the mapped shape), **`sv03-022`'s `for each` sentence** (the mapped substring, a different mechanism), **Haxorus `sv06.5-046`** (the opponent-scoped twin), **Absol `sv06.5-030`** (the live one) plus constructed `{C}`, a bogus token, a lowercase `if`, both margins and an opponent-scoped rewrite; the derivers' disjointness and the index-keyed negatives (Scovillain's Hot Bite, Cetitan's **effect-less** Icicle Missile); ZERO registry ATTACK rows for all five ids; each card's control/armed pair; the **provision flip** (180 → 90) and the **two-axes** board; seat asymmetry both directions and the bench-vs-Active edge; the §8.5 fold order (`(90+90)×2 = 360`, control 180); **no `ATTACK_EFFECT_SKIPPED` in EITHER direction on all four**; direct `conditionHolds`/`conditionNote` on both parameter shapes, both seats, null-Active edges; and a frozen-board purity pair. New fixtures: faithful Scovillain `sv01-029`, Galvantula `sv06.5-002` (whose "Compound Eyes" Ability is kept verbatim and asserted **INERT** — no registry row, no deriver reads ability text), Cetitan `sv02-055` + the deck; the existing Tinkaton `sv02-105` entry upgraded in place. **One shorthand CORRECTED:** the family's claim is "zero registry **ATTACK** rows", not zero rows — Tinkaton already carries an **abilities-only** program (Gather Materials, payFromHand slice) on a key the attack path never consults; asserted both ways rather than tolerated. Check `programFor(id)?.attack`, not `programFor(id)`. engineVersion 0.68.0 → **0.69.0**; `bun run check` **GREEN (exit 0): 160 → 161 files, 2277 → 2328 tests** (tsc + biome lint + vitest). Clean diff (4 engine files + 1 fixtures file + 1 new test, **no test re-points**), **zero new formatter churn verified by stashing** (45 files flagged before and after — with `--max-diagnostics=1000`; the bare command caps at 20, which is the misread D113 warned about). **⚠️ `/code-review` STILL NOT RUN** on D96–D118 (user-triggered). This supersedes #102 (D117 — folded into `decisions.md`).
+
+**Superseded header (build #102 — the clause table's THIRD wave, D117):**
+**Last updated (was):** 2026-08-01 — build session #102 (**P3-M5 — the clause table's THIRD wave: `yourActivePoisoned` (the SELF-Poison twin, 3 printings) + `opponentActiveIsExOrV`, 4 printings / 2 cards on ZERO registry rows (D117, engine 0.68.0)**).
 The clause table goes **8 → 10 entries and now covers 22 of the ingested pool's 43 leading-`If` printings**, and D116's resume point named this slice first ("best printings-per-unit-of-work left, near-zero design risk") — it was exactly that. **Cost: 2 union members, 2 `conditionHolds` arms, 2 `conditionNote` arms, 2 table rows. No new op, event, error code, registry row or wire field; no fold change; no web/API/DB/`@luminous/schema` diff.** **Okidogi ex `sv06.5-036`/`-082`/`-090` "Chain-Crazed" (+130)** maps onto **`yourActivePoisoned`**, the exact SELF twin of D116's `opponentActivePoisoned` — **D116's pronoun rule applied a second time and therefore settled**: the member is named for the board fact it READS (your Active), the CLAUSE TABLE resolves the printed "this Pokémon", `conditionHolds` stays context-free and shared with the play gate and the HUD, and `conditionNote` drops the pronoun ("your Active Pokémon is Poisoned"). **Ceruledge `sv02-098` "Fighting Sword" (+100)** maps onto **`opponentActiveIsExOrV`**, which reuses **D107's `isExOrV` verbatim** — ex and V ONLY, never VMAX/VSTAR/GX, so the reading cannot drift from Mimikyu "Safeguard"'s; deliberately **NOT `hasRuleBox`**, and the VMAX case is the test that catches conflating them. It inherits that predicate's one limitation (the class is NAME-derived; tcgdex's structured markers are dropped at ingest). **Verbatim re-confirmed against the local D1 before authoring** (the D95→D116 lesson): all three Okidogi rows are **byte-identical in rules text** (one distinct `hex(attacks_json)` across the three, `abilities_json` NULL on all three — only id/local id/rarity/illustrator differ), so **one fixture serves three ids**; Ceruledge is the pool's only printing of its clause. A COALESCE'd `is Poisoned` sweep returns **exactly 5 printings, ALL now mapped**, split 3 self / 2 cross-board — **the two clauses are one possessive apart and read OPPOSITE boards**, which is the standing argument for keying the table on whole printed clauses and never substrings. **The board-level finding: an own-side Poison can only arrive from ACROSS THE TABLE.** Okidogi's own index-0 "Poisonous Musculature" self-Poisons but is **UNBUILT** (deck search + attach + shuffle + a conditional self-Poison in one sentence pair), so the only honest route to a Poisoned own Active is the one the real game uses — P2's Seviper `sv01-128` "Spit Poison" applies it, §13.1's Checkup ticks it (10 on the attacker, **asserted rather than dodged**), and Chain-Crazed reads it a turn later for 260. `clauseTable.test.ts` (**38**) on a DEDICATED `CLAUSE_TABLE_DECK`: the verbatim-text guard incl. the byte facts (63 / 100 — note the invariant is `length + count("Pokémon")`, NOT the `+1` the predecessor suite's two sentences happened to share); both derivations + the printed `130+`/`100+`; **the possessive discriminator run BOTH ways**; the near-misses staying LOUD (a constructed VMAX/VSTAR probe, Sylveon's real Dragon clause) and the whole-sentence anchor guards; both derivers' disjointness and the **index-keyed negatives** (Okidogi's index-0 and Ceruledge's index-0 derive to null on BOTH paths); ZERO registry rows for all four ids; Chain-Crazed control (130) / surgery (260) / **armed by the GAME** / the **seat asymmetry** (Poison on the DEFENDER scores nothing — the case that catches a member wired to `otherSeat`) / the P2 mirror; all four Fighting Sword targets (non-rule-box 100, ex 200, V 200, **VMAX 100**) + a seat mirror; the §8.5 fold order (Chain-Crazed into a Darkness-weak Ceruledge is `(130+130)×2 = 520`, control 260); **no `ATTACK_EFFECT_SKIPPED` in EITHER direction on either card**; `conditionHolds`/`conditionNote` for both members on both seats incl. the null-Active edges; and a frozen-board purity pair. New fixtures: faithful Okidogi ex `sv06.5-036` (250 HP Darkness Basic — and, being "… ex", itself the target Ceruledge's clause reads) and Ceruledge `sv02-098` (a Stage 1 with a real resistance) + the deck. **One pre-existing docstring CORRECTED:** the Ceruledge fixture claimed its index-0 "Life Sucker" was a built program — it is not; the op deriver owns only the compound `SELF_SLEEP_HEAL` form, so the bare self-heal derives to null on every path and stays loud (a real, small, unclaimed slice). The "unmapped stays LOUD" witness in `conditionalDamage.test.ts` moved off Ceruledge onto **Greedent `sv01-152` "Enhanced Fang"**. engineVersion 0.67.0 → **0.68.0**; `bun run check` **GREEN (exit 0): 159 → 160 files, 2239 → 2277 tests** (tsc + biome lint + vitest). Clean diff (3 engine files + 1 fixtures file + 1 new test + 2 test re-points), **zero new formatter churn verified by stashing** (the pre-existing flagged-file list is byte-identical before and after). **⚠️ `/code-review` STILL NOT RUN** on D96–D117 (user-triggered). This supersedes #101 (D116 — folded into `decisions.md`).
 
 **Superseded header (build #101 — the SELF-SCOPED clause, D116):**
@@ -31,41 +35,52 @@ Snorlax **swsh10.5-055** "Block" now SIMULATES: "As long as this Pokémon is in 
 Spidops ex **sv01-019/-223/-243** "Trap Territory" now SIMULATES: "Your opponent's Active Pokémon's Retreat Cost is {C} more." — the last unbuilt effect on the retreat-cost seam, which is now **complete: 4 modifiers + 4 readers, 9 unique card ids, 12 printings**. **Verbatim re-confirmed against the live D1 before authoring** (the D95→D110 lesson): a D1 sub-agent read all three printings — **byte-identical in rules text** (`hex(abilities_json)`/`hex(attacks_json)` each have exactly ONE distinct value across the three; only `local_id` and `rarity` differ) — Grass Stage 1 from Tarountula, 260 HP, retreat 2, ×2 Fire, reg G, ASCII apostrophes and a real `é`. It also re-ran the census AND swept alternate wordings (`to retreat`, `more to retreat`, `retreating`, `escape`, `without paying` — **all zero hits**), so the seam is provably 9 ids wide with nothing missed **within the INGESTED pool**. **⚠️ SCOPE CORRECTION (2026-07-31, independent re-verification):** that census ran against the LOCAL mirror `apps/api/.wrangler/state/v3/d1/**/*.sqlite` — **890 cards, five sets: `sv01`/`sv02`/`sv03`/`sv06.5`/`sve`** — NOT "all sets" as this entry originally claimed. The **live remote D1 holds 3698 cards** (through `sv10.5b` + `svp`), where `%retreat cost%` matches **54 printings, not 9**. The 9 are exactly the ingested subset (verified: the other 45 are all in un-ingested sets), so the seam is closed for **everything playable** — but it **REOPENS the moment any set beyond those five is ingested**, with ~45 unswept printings. The local mirror is otherwise in sync with the remote for the ingested sets (per-set counts match exactly). **The sweep corrected the shorthand TWICE, and both corrections were load-bearing.** (1) The print is **NOT "Active-only" on both ends**: "your opponent's ACTIVE Pokémon's Retreat Cost" scopes the **TARGET**; *nothing* scopes the **SOURCE** — so a **BENCHED Spidops ex imposes it just as well** (contrast `damageAttacker`, whose Active clause sits on the holder). (2) Neither end is Basic-gated, unlike both Stadiums — so `effectiveRetreatCost`'s `!isBasicPokemon(top) → return printed` **early RETURN had to become a zero TERM** (extracted as `stadiumRetreatDelta`), or the aura would have been silently swallowed on every Stage 1/2 Active. **Modelled as a bare `PassiveEffects.opponentActiveRetreatSurcharge?: number`** (the D104 rule — a bare number when the print is unconditional), read through a new continuous.ts scan **`opposingRetreatSurcharge(state, pokemon)`**: the **cross-board, delta-returning** member of the aura-scan family (`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` / this — see the new table in `workstreams/simulator.md`). It reuses D108's **derived-seat** trick (find the side whose `active` top uid is the target's, then read the OTHER side's holders), which is again what keeps `effectiveRetreatCost`'s signature and **ALL FOUR of its readers** (turn.ts retreat, redact.ts `redactedRetreatOf`, the web `GameHud.tsx`, attack.ts `scaledAttackDamage`) untouched — **zero call-site churn, no web/API/DB/`@luminous/schema` diff**. Sources are **SUMMED** (two Spidops ex = {C}{C} more), each gated through `disabledAbilityUids` (§9) though structurally negative-only in sv01–03 (Klefki/Spiritomb narrow to Basics; Spidops ex is a Stage 1). `effectiveRetreatCost` is now the honest fold D110's resume point asked for — `max(0, printed + Σdeltas)` with the set-to-zero first — and **the floor applies to the SUM, not per term** (a printed-0 Basic under Beach Court is −1 before the aura's +1 and reads **0, not 1**). **The ± composition D109 found UNREACHABLE between two Stadiums IS reachable here**, since a Stadium and an aura coexist freely. Registry: `TRAP_TERRITORY = { passive: { opponentActiveRetreatSurcharge: 1 } }` at all three ids. `trapTerritory.test.ts` (**16**) on a DEDICATED `TRAP_TERRITORY_DECK` (LUNAR_ZONE_DECK and RETREAT_SCALING_DECK are seed-pinned): the three-id row; a **fixture-text-verbatim guard** (Spidops ex has a registry row for the Ability but NOT the attack — "Wire Hang" still DERIVES off its sentence, so a drifted char silently un-simulates half the card); the Active target (2→3) and the **benched SOURCE**; the benched-target negative; own-side scoping; the SUM of two sources (→4); both boards; the **non-Basic target** (Clefable ex 2→3, with Beach Court proved inert on it — the regression the refold prevents); printed-0 lifted to 1; the Beach Court ± composition (2→1→2); the sum-floor case (0); Lunar Zone's set-to-zero winning while the surcharge is still imposed; the §9 negative; the real RETREAT action (printed 2 → `RETREAT_COST_MISMATCH`, surcharged 3 → `RETREATED`); and **"Wire Hang reads the cost it raises"** — an Active Spidops ex vs a printed-retreat-1 body hits 90 → **150**, one card on both sides of one seam. New fixture: a faithful Spidops ex sv01-019 (Ability + attack) + the deck. engineVersion 0.61.0 → **0.62.0**; `bun run check` **GREEN (exit 0): 153 → 154 files, 2105 → 2121 tests** (tsc + biome lint 412 files no warnings + vitest). Clean diff (4 engine files + 1 new test) with **verified** zero formatter churn (`bunx biome format packages/engine/src` reports the same 45 pre-existing diffs stashed and unstashed — it does not resolve the repo's `lineWidth: 100`, so those are noise). **⚠️ `/code-review` STILL NOT RUN** on D96–D111 (user-triggered). This supersedes #95 (the retreat-cost readers, D110 — folded into `decisions.md`).
 
 
-**NEXT (resume point):** The clause table is at **10 entries / 22 of 43 printings** (D115 + D116 +
-D117, `conditionalDamage.test.ts` + `conditionClause.test.ts` + `clauseTable.test.ts`, engine
-**0.68.0**) — full `bun run check` green exit 0, **160 files / 2277 tests**. D116's pronoun rule has
-now been used twice and is **settled** (the union member is named for the board fact it reads; the
-CLAUSE TABLE resolves the printed pronoun). The backlog is still the cheapest in the engine: **a
-clause is a `Map` row + (usually) a `BoardCondition` member + a `conditionHolds` arm + a
-`conditionNote` arm + a fixture + tests. No registry row, no new op, no fold change.** ⚠️ The
-"unmapped stays LOUD" witness in `conditionalDamage.test.ts` is now **Greedent `sv01-152` "Enhanced
-Fang"** ("If this Pokémon has a Pokémon Tool attached, …"). If you map that clause, **re-point the
-witness at another unmapped one — do not delete the case**; it is the only thing pinning the
-fall-through.
+**NEXT (resume point):** The clause family is at **10 literal rows + 1 TEMPLATE, covering 13 of the
+pool's 26 distinct clauses / 28 of its 43 printings** (D115 + D116 + D117 + D118,
+`conditionalDamage.test.ts` + `conditionClause.test.ts` + `clauseTable.test.ts` +
+`energyClause.test.ts`, engine **0.69.0**) — full `bun run check` green exit 0, **161 files / 2328
+tests**. Two rules are now settled and should be applied without re-litigating them: **D116's pronoun
+rule** (the union member is named for the board fact it READS; the clause layer resolves the printed
+pronoun) and **D118's template rule** (a clause that varies on ONE token is a pattern, not N rows —
+`boardConditionForClause` runs the literal table first, then anchored whole-clause templates, so
+literals always win). The backlog is still the cheapest in the engine: **a clause is a `Map` row or a
+pattern + (usually) a `BoardCondition` member + a `conditionHolds` arm + a `conditionNote` arm + a
+fixture + tests. No registry row, no new op, no fold change.**
 
-**1. THE NEXT SLICE — THE FIRST PARAMETERISED CLAUSE — the self-Energy family, 5 printings, one shape.**
-`this Pokémon has any {R} Energy attached` (2: Scovillain `sv01-029`/`-202` +90),
-`this Pokémon has any {L} Energy attached` (1: Galvantula `sv06.5-002` +80) and
-`this Pokémon has any Special Energy attached` (2: Cetitan `sv02-055` +140, Tinkaton `sv02-105`
-+90). Every existing `BoardCondition` member is a bare tag; this family wants
-`{ kind: "yourActiveHasEnergy"; energy: EnergyType | "special" }` — the first member carrying a
-PARAMETER. Decide deliberately whether that belongs in the union or wants three flat members (three
-rows is honest and dumb; one parameterised row scales to the rest of the pool). `energyProvidesOf` /
-`isSpecialEnergy` (cards.ts) already answer the predicate.
+⚠️ **TWO "unmapped stays LOUD" witnesses now exist and BOTH must survive** — they are the only things
+pinning the fall-through. If you map either clause, **re-point that case at another unmapped one; do
+not delete it.**
+- `conditionalDamage.test.ts` → **Greedent `sv01-152` "Enhanced Fang"** ("If this Pokémon has a
+  Pokémon Tool attached, …").
+- `energyClause.test.ts` → **Absol `sv06.5-030` "Darkfall"** ("If you have at least 3 {D} Energy in
+  play, …") — the stronger of the two, because the outer skeleton MATCHES and the clause still misses.
+
+**1. THE NEXT SLICE — the PUBLIC-COUNT cluster, 5 printings / 4 clauses, and it re-uses D118's rule
+immediately.** All four read a public count, all four satisfy the union's public-state invariant, and
+none needs new state:
+- `your opponent has 3 or fewer cards in their hand` (2: Absol ex `sv03-135`/`-214` +120) — a hand
+  COUNT is public even though its contents are not.
+- `you have the same number of cards in your hand as your opponent` (1: Bronzong `sv03-145` +90).
+- `your opponent has exactly 1 Prize card remaining` (1: Krokorok `sv01-116` +90) and
+  `exactly 2 or 4 Prize cards remaining` (1: Houndstone `sv03-101` +120).
+The two Prize clauses are **the same shape at different values** — D118 says that is a parameter, not
+two rows (`{ kind: "opponentPrizesRemaining"; counts: readonly number[] }` or similar). Decide the
+hand clauses the same way, but note they are genuinely two different comparisons (a threshold vs a
+parity), so honest separate members may well be right there — **the rule is "one token varying", not
+"anything that looks similar"**. ⚠️ Re-confirm the printed text char-for-char against the local D1
+before authoring, and sweep for the shape rather than the predicate (the D115 lesson).
 
 **2. THE REST OF THE TABLE, ranked** (census re-derived against the local D1 on 2026-08-01: **43
 printings / 32 distinct sentences / 26 distinct CLAUSES**; the clause count is the one that costs
-work — **10 of 26 are now mapped**). All still unmapped:
+work — **13 of 26 are now mapped**). All still unmapped:
 - `this Pokémon moved from your Bench to the Active Spot this turn` (3: Revavroom ex
   `sv06.5-015`/`-081` +120, Golisopod `swsh10.5-026` +90) — **needs new per-turn state.**
-- `your opponent has 3 or fewer cards in their hand` (2: Absol ex `sv03-135`/`-214` +120) — a hand
-  COUNT is public even though its contents are not, so it satisfies the union's invariant.
-- `this Pokémon has a Pokémon Tool attached` (1: Greedent `sv01-152` +80) — **and this is the
-  current loud witness**, so mapping it means re-pointing that case (see the ⚠️ above).
-- `you have at least 3 {D} Energy in play` (1: Absol `sv06.5-030` +50) — a whole-board Energy count.
-- `your opponent has exactly 1 Prize card remaining` (1: Krokorok `sv01-116` +90),
-  `exactly 2 or 4 Prize cards remaining` (1: Houndstone `sv03-101` +120),
-  `you have the same number of cards in your hand as your opponent` (1: Bronzong `sv03-145` +90).
+- `this Pokémon has a Pokémon Tool attached` (1: Greedent `sv01-152` +80) — **a loud witness**, so
+  mapping it means re-pointing that case (see the ⚠️ above).
+- `you have at least 3 {D} Energy in play` (1: Absol `sv06.5-030` +50) — a whole-board Energy count,
+  and **the other loud witness**. It is the natural sibling of D118's `hasAttachedEnergy` (a
+  board-wide fold over the same provision predicate) but a DIFFERENT scan — "in play", not
+  "attached", and a threshold rather than "any".
 - `your opponent's Active Pokémon is a Dragon Pokémon` (1: Sylveon `swsh10.5-035` +90) — a TYPE
   predicate; `types` is on the card, so cheap.
 - `Falinks is on your Bench` (1: `sv02-119` +90) — a card-NAME predicate; needs a name field on the
@@ -106,8 +121,19 @@ identically. If you want these, the slice is a **P1 ingest** one: add the tag co
   `yourActiveDamaged` for what it READS. The alternative (a self-scoped member two consumers must
   never author) would have poisoned the vocabulary permanently.
   D117 used the same rule for `yourActivePoisoned` without re-litigating it — consider it settled.
+- **A clause that varies on ONE token is a PATTERN, not N rows** (D118). `boardConditionForClause`
+  runs the literal table FIRST, then anchored whole-clause templates, so literals always win and a
+  template can never re-interpret a clause a row already owns. The test is "one token varying", not
+  "these look similar" — genuinely different comparisons still deserve their own members.
+- **A parameterised union member is fine; a parameter that collapses two AXES is not** (D118).
+  `energy: BasicEnergyType | "special"` works because the class is not a tenth type — and the
+  Luminous+Jet board, where the `{R}` clause reads false while the `Special` clause reads true, is
+  the case that proves it. If two readings can disagree on one board, they are two axes.
+- **Read printed Energy by PROVISION, never by the card's name** (D118). `hasAttachedEnergy` lives
+  beside the provision code so "an Energy that can pay a {R} cost" and "an Energy a {R} clause
+  counts" stay one question — a wildcard Luminous satisfies `{R}` until a second Special demotes it.
 - **Rank the backlog by distinct CLAUSES, not printings or sentences.** 43 printings / 32 sentences /
-  **26 clauses**, of which **10 are mapped** — the clause is the unit of work.
+  **26 clauses**, of which **13 are mapped** — the clause is the unit of work.
 - **When a clause's condition can only be armed by the OPPONENT, arm it that way in the suite**
   (D117). Okidogi's own self-Poison attack is unbuilt, so the only honest route to a Poisoned own
   Active is the opponent's Poison + §13.1's Checkup. A surgery would have passed while hiding that.
@@ -124,15 +150,23 @@ identically. If you want these, the slice is a **P1 ingest** one: add the tag co
   SQLite `LIKE` is case-insensitive for ASCII. The whole pool is ASCII apostrophes (zero U+2019) and
   `Pokémon` is a real precomposed U+00E9. The LIVE remote D1 still holds 3698 cards, so ingesting any
   new set reopens every seam.
+- **Energy NOTATION is split by SET, not mixed** (D118): sv01/sv02/sv03/sv06.5 print brace codes
+  (`{R}`) exclusively, **swsh10.5 spells names out** ("Water Energy") exclusively — 25 matching
+  cards, zero brace codes. Any printed-Energy parser must carry both, or it silently skips a set.
+  The pool holds only **4 Special Energy** cards, all sv02 (Jet `sv02-190`, Luminous `sv02-191`,
+  Reversal `sv02-192`, Therapeutic `sv02-193`).
+- **Say "zero registry ATTACK rows", not "zero registry rows"** (D118). Check
+  `programFor(id)?.attack`, not `programFor(id)` — a card can carry an abilities-only program on a
+  key the attack path never consults (Tinkaton `sv02-105` does).
 - **`legal_standard` IS NOT A SLICE-SELECTION CRITERION** (D113, still true — 851/978 are 0,
   including every sv01/sv02/sv03 card). Pick slices by **mechanism**.
 - **Check what is seed-pinned before touching an existing deck.** Every retreat-cost, retreat-lock,
   `BLOCK_DECK`, `PUNK_OUT_DECK`, `CONDITIONAL_DAMAGE_DECK`, `CONDITION_CLAUSE_DECK` and now
-  `CLAUSE_TABLE_DECK` deck is.
+  `CLAUSE_TABLE_DECK` and now `ENERGY_CLAUSE_DECK` deck is.
 - **Fixture docstrings drift too** (D117 found one claiming an unbuilt sentence was built). If a
   docstring asserts a card's sentence derives, assert it in the suite as well.
 
-**FIRST, if you want it: `/code-review`** — D96–D117 have had NO independent reviewer (a new op, an
+**FIRST, if you want it: `/code-review`** — D96–D118 have had NO independent reviewer (a new op, an
 EffectSlot, a DiscardScope, the `cap` field, the index-keyed attack seam, the `damageAttacker` passive
 + its Tool member, the `onDamagedByAttack` TriggerTiming + `damagedTrigger` stage, a cross-board
 ability-lock aura, a `useStadiumAbility` action + `StadiumEffects.ability` + `noRuleBox`/`toolCard`
@@ -143,7 +177,9 @@ event flag, `noRetreatCostAura` + `hasFreeRetreatAura` + the set-to-zero orderin
 `opponentActiveRetreatSurcharge` + the `effectiveRetreatCost` refold, `retreatBlocked` +
 `preventRetreat` + the checkup-clock lifetime, `preventOpponentActiveRetreat` +
 `opposingRetreatBlocked`, `noRetreatCostSelf` + `hasFreeRetreatSelf`, the `boardCondition` indicator
-count + the attacker-seat parameter, and now **eight** `BoardCondition` members across three slices).
+count + the attacker-seat parameter, **nine** `BoardCondition` members across four slices, and now the
+union's first PARAMETERISED member + `boardConditionForClause`'s second resolution pass +
+`hasAttachedEnergy`).
 USER-triggered — cannot be launched from the loop.
 
 Older named long-tail candidates (both still need genuinely NEW machinery):

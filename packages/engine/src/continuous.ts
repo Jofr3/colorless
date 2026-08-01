@@ -11,7 +11,7 @@ import {
   topUid,
 } from "./cards";
 import type { PokemonSuffix } from "./cards";
-import type { Card } from "@luminous/schema";
+import type { BasicEnergyType, Card } from "@luminous/schema";
 import type { BoardCondition } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
@@ -284,6 +284,31 @@ export function providesEnergyType(
 ): boolean {
   const units = unitsProvidedBy(state, pokemon, uid);
   return units.includes(energyType) || units.includes(ANY_ENERGY);
+}
+
+/** Does `pokemon` have ANY attached Energy of `energy` (§6.3)? The predicate
+    behind the printed "If this Pokémon has any {R} / Special Energy attached"
+    clause (D118's `yourActiveHasEnergyAttached`), and it lives HERE, beside the
+    provision code, for the reason `unitsProvidedBy` gives one docblock up: the
+    reading must not drift from what pays a cost.
+
+    A TYPE is read through `providesEnergyType`, i.e. by PROVISION rather than by
+    the printed name — so a wildcard Luminous Energy is a {R} Energy for as long
+    as it provides every type, and stops being one the moment a second Special
+    demotes it to {C}. That is the same answer §8.2's cost check gives, which is
+    the point: an Energy that can pay a {R} cost is exactly an Energy a "has any
+    {R} Energy attached" clause counts.
+
+    `"special"` is the CARD CLASS, not a type, so it reads `isSpecialEnergy`
+    directly — the same list Luminous's own "any other Special Energy attached"
+    condition is evaluated against, one function down. */
+export function hasAttachedEnergy(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  energy: BasicEnergyType | "special",
+): boolean {
+  if (energy === "special") return specialEnergyUids(state, pokemon).length > 0;
+  return pokemon.energy.some((uid) => providesEnergyType(state, pokemon, uid, energy));
 }
 
 /** The attached Energy that are SPECIAL — the context Luminous's "any other

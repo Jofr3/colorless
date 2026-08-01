@@ -4867,3 +4867,94 @@ remembering for any future SELF-status clause — the arming path is the opponen
 - The "unmapped stays LOUD" witness in `conditionalDamage.test.ts` has now moved twice (Venoshock
   → Ceruledge → **Greedent `sv01-152` "Enhanced Fang"**, "If this Pokémon has a Pokémon Tool
   attached, …"). Re-point it, never delete it — it is the only thing pinning the fall-through.
+
+## D118 (engine 0.69.0) — the FIRST PARAMETERISED clause, and a second resolution pass
+
+The clause family's fourth wave, and the first one that is **not** a table row. 6 printings / 5
+cards / 4 sentences on **zero registry attack rows**, with no change to the fold, the ops, the
+events or the wire. `energyClause.test.ts` (51) on a dedicated `ENERGY_CLAUSE_DECK`.
+
+| printed clause | `BoardCondition` | cards | printings |
+|---|---|---|---|
+| `this Pokémon has any {R} Energy attached` | `yourActiveHasEnergyAttached` `{energy:"Fire"}` | Scovillain `sv01-029`/`-202` "Super Spicy Breath" (+90) | 2 |
+| `this Pokémon has any {L} Energy attached` | … `{energy:"Lightning"}` | Galvantula `sv06.5-002` "Shocking Web" (+80) | 1 |
+| `this Pokémon has any Special Energy attached` | … `{energy:"special"}` | Cetitan `sv02-055` "Special Horn" (+140), Tinkaton `sv02-105` "Special Hammer" (+90) | 2 |
+
+### The design call: the parameter belongs in the union
+
+D117's resume point left this open, and the census answers it. Four literal rows would have
+covered today's four sentences — but this is a **template**, not four sentences: the pool prints
+**nine** energy codes in **two rival notations**, so the literal form costs a table row *and* a
+union member per type per notation forever while the template costs **nothing** for the tenth
+printing. The parameter is the only axis the printed sentences vary on.
+
+```ts
+| { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
+```
+
+> **Reusable form:** a clause that varies on ONE token is a pattern, not N rows. Keep the literal
+> table for clauses that genuinely differ, and add a second pass for the ones that don't.
+
+`boardConditionForClause(clause)` (effects.ts) is that second pass, and the ORDER is load-bearing:
+the literal `CONDITIONAL_DAMAGE_CLAUSES` table first, then anchored whole-clause templates. Literals
+win by construction, so adding a template can never re-interpret a clause a row already owns. The
+outer `^If (.+), this attack does (\d+) more damage\.$` anchor is untouched; the template
+(`^this Pokémon has any (.+) Energy attached$`) is itself whole-clause anchored, so the capture is
+the token alone.
+
+The token vocabulary is a **`Map` built FROM the two existing notation maps** (`ENERGY_TYPE_BY_CODE`
++ `ENERGY_TYPE_BY_NAME`) plus `Special`. D115's rule one level down — an object lookup on arbitrary
+printed text can hit `Object.prototype` — and building it from the existing maps is what stops the
+three vocabularies drifting. An unresolvable token falls through to null and stays LOUD.
+
+### `"special"` is a different AXIS, not a tenth type
+
+The card CLASS, not an energy type — which is why the parameter is `BasicEnergyType | "special"`
+rather than a widened type union. **The Luminous+Jet board is where that shows**: with a demoted
+Luminous and a Jet attached, the `{R}` clause reads FALSE while the `Special` clause reads TRUE.
+Modelled as a tenth type, the two could not disagree.
+
+`{C}` is refused for exactly the reason it is absent from `ENERGY_TYPE_BY_CODE`: Colorless is the
+conservative provision fallback for every unauthored Special Energy, so a `{C}` filter would quietly
+match cards nobody meant — and the demoted Luminous on that same board genuinely does provide it.
+
+### The predicate is PROVISION, not the printed name
+
+continuous.ts's new `hasAttachedEnergy(state, pokemon, energy)` — `providesEnergyType` for a type,
+`isSpecialEnergy` for the class. It lives beside the provision code for the reason `unitsProvidedBy`
+already gives: **"an Energy that can pay a {R} cost" and "an Energy this clause counts" must be one
+question.** The consequence is testable and is the slice's best case: a wildcard **Luminous Energy
+alone satisfies `{R}`** on a Grass Scovillain (→180), and attaching a **second** Special demotes it
+to `{C}` so the SAME board — nothing left, no counter moved, same attacker — scores **90**. A
+name-matching read cannot behave that way.
+
+D116's pronoun rule, **third use**: the member is named for the board fact it READS and the clause
+pattern resolves the printed "this Pokémon". `conditionNote` is the family's first note **built from
+a parameter** rather than returned as a literal.
+
+### Census notes (local D1, 2026-08-01)
+
+- The leading-`If` skeleton holds **five** Energy-mentioning sentences: these four plus Absol
+  `sv06.5-030`'s "you have at least **3 {D} Energy in play**" — a whole-board count, a different
+  scan, and now the suite's **live** unmapped witness (the outer shape matches and the clause still
+  misses, which is the strongest possible proof the fall-through is loud).
+- **Notation is split by SET, not mixed:** sv01/sv02/sv03/sv06.5 use brace codes exclusively;
+  **swsh10.5 spells names out exclusively** ("Water Energy", "Psychic Energy") — 25 matching cards,
+  zero brace codes. Nothing in swsh10.5 prints *this* sentence today, so the spelled-out arm is
+  covered by a **constructed** test and labelled as such; a code-only parser would silently skip a
+  whole set the moment one of its cards prints the shape.
+- The near-misses are real and close: **Okidogi `sv06.5-074`'s ABILITY** ("If this Pokémon has any
+  {D} Energy attached, **it gets +100 HP**, …") is prefix-identical to the mapped shape;
+  **`sv03-022`** prints the mapped substring inside a `for each` sentence; **Haxorus `sv06.5-046`**
+  is the opponent-scoped twin ("… it is Knocked Out."). All three stay null, all three are asserted.
+- Only **4 Special Energy** cards exist in the ingested pool, all sv02 (Jet `sv02-190`, Luminous
+  `sv02-191`, Reversal `sv02-192`, Therapeutic `sv02-193`). Luminous's own printed text ("has any
+  **other** Special Energy attached") is a second, self-referential instance of the same predicate.
+
+### A shorthand corrected
+
+The family's registry claim is **"zero registry ATTACK rows"**, not "zero registry rows". Tinkaton
+`sv02-105` already carries an **abilities-only** program (Gather Materials, authored in the
+payFromHand slice) on a key the attack path never consults. The suite asserts it both ways — four
+ids with no row at all, Tinkaton's row named and explained — rather than tolerating a claim that is
+almost true. Check `programFor(id)?.attack`, not `programFor(id)`, when making this claim again.

@@ -1550,7 +1550,19 @@ export const FIXTURE_POOL: Record<string, Card> = {
   }),
   /** Tinkaton (sv02-105) — "Gather Materials": discard ANY card, then draw 3. The
       cost's general form, and the one the pre-op `AbilityCost` field could not
-      express. */
+      express.
+
+      SINCE D118 it is also the fourth printing of the parameterised energy clause
+      (see Scovillain / Galvantula / Cetitan at the end of this pool), and the only
+      STAGE 2 in that cast: "Special Hammer" (90+, +90 while any Special Energy is
+      attached to it) is the CLASS arm at a second N, the pair that proves the
+      pattern carries the condition and never the amount. Its Ability is
+      registry-authored (that is the slice above) but the registry row carries NO
+      `attack` key at all, so the attack is pure text and the printed sentence IS
+      the wiring — it is the cast's one card where the two coexist on one id, and
+      energyClause.test.ts pins that split. The ×2 Metal Weakness is
+      faithful and inert for both slices — nothing in this pool attacks with a
+      Metal body. */
   "sv02-105": battler("sv02-105", {
     name: "Tinkaton",
     hp: 140,
@@ -1558,6 +1570,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
     evolveFrom: "Tinkatuff",
     types: ["Psychic"],
     retreat: 2,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Gather Materials",
+        effect:
+          "You must discard a card from your hand in order to use this Ability. Once during your turn, you may draw 3 cards.",
+      },
+    ],
     attacks: [
       {
         cost: ["Psychic", "Colorless"],
@@ -2446,6 +2467,123 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "If your opponent's Active Pokémon is a Pokémon ex or Pokémon V, this attack does 100 more damage.",
         damage: "100+",
+      },
+    ],
+  }),
+
+  // — 0.68.0 → 0.69.0 (D118): the conditional-damage family's first
+  //   PARAMETERISED clause, "If this Pokémon has any <energy> Energy attached,
+  //   this attack does N more damage." Four printings on ONE shape, differing in
+  //   exactly one token — two TYPES ({R}, {L}) and two of the CARD CLASS
+  //   (Special). Tinkaton, the fourth, already lives in the payFromHand slice
+  //   above and is annotated there rather than duplicated here. —
+  /** Scovillain sv01-029 — "Super Spicy Breath" (90+, +90 while a {R} Energy is
+      attached to IT): the parameterised clause's TYPE arm, and the family's
+      biggest printed swing (90 → 180). sv01-202 is a second printing whose rules
+      text is BYTE-IDENTICAL (verified: one distinct `hex(attacks_json)` across
+      the pair, `abilities_json` NULL on both — only id/local id/rarity differ),
+      so ONE fixture serves both ids, exactly as it does for Tyranitar ex and
+      Okidogi ex above.
+
+      Faithfully odd, and load-bearing for the suite: Scovillain is a GRASS
+      Pokémon whose bonus reads FIRE Energy, so the Energy that arms the clause is
+      never the Energy that pays the cost ({G}{C}{C}). That separation is what
+      lets the provision case attach a wildcard Luminous Energy as the ONLY {R}
+      on the board while the printed cost still resolves. Its index-0 "Hot Bite"
+      is a built status setter (a plain Burn), which makes it this cast's only
+      index-0 that is simulated for a reason OTHER than a scaling clause. A Stage
+      1 from Capsakid, so surgery always force-places it. */
+  "sv01-029": battler("sv01-029", {
+    name: "Scovillain",
+    types: ["Grass"],
+    stage: "Stage1",
+    evolveFrom: "Capsakid",
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Hot Bite",
+        effect: "Your opponent's Active Pokémon is now Burned.",
+        damage: 20,
+      },
+      {
+        cost: ["Grass", "Colorless", "Colorless"],
+        name: "Super Spicy Breath",
+        effect: "If this Pokémon has any {R} Energy attached, this attack does 90 more damage.",
+        damage: "90+",
+      },
+    ],
+  }),
+  /** Galvantula sv06.5-002 — "Shocking Web" (50+, +80 while a {L} Energy is
+      attached to IT): the SECOND printing of the type arm, at a different token
+      AND a different N, which is what proves the pattern captures a token rather
+      than mapping a card. Also a Grass Pokémon reading an off-type Energy (see
+      Scovillain), and the cast's cheapest attack — {G}{C} — so the clause Energy
+      is unambiguously a rider on the cost rather than part of it.
+
+      Its Ability "Compound Eyes" is kept VERBATIM and is INERT: it carries no
+      registry row, and no deriver reads ability text at all, so nothing in the
+      engine sees it. It is here because the printed card has it and because a
+      body with an Ability is worth having in a pool where several auras and
+      clauses ask "does this Pokémon have an Ability" — but the +50 it promises
+      is NOT simulated, and the ZERO-registry-rows case in energyClause.test.ts is
+      what pins that. A Stage 1 from Joltik. */
+  "sv06.5-002": battler("sv06.5-002", {
+    name: "Galvantula",
+    types: ["Grass"],
+    stage: "Stage1",
+    evolveFrom: "Joltik",
+    hp: 100,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Compound Eyes",
+        effect:
+          "Attacks used by this Pokémon do 50 more damage to your opponent's Active Pokémon that has an Ability (before applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Grass", "Colorless"],
+        name: "Shocking Web",
+        effect: "If this Pokémon has any {L} Energy attached, this attack does 80 more damage.",
+        damage: "50+",
+      },
+    ],
+  }),
+  /** Cetitan sv02-055 — "Special Horn" (80+, +140 while ANY Special Energy is
+      attached to IT): the CLASS arm of the same clause, and the family's largest
+      printed bonus anywhere (80 → 220). "Special" is not a tenth energy type —
+      it is the card class — which is exactly why the clause's parameter is
+      `BasicEnergyType | "special"` and why this card and Scovillain, run over one
+      identical board, answer OPPOSITE.
+
+      Faithfully odd: its index-0 "Icicle Missile" carries NO `effect` key at all
+      (not an empty string — the row simply omits it), the Darmanitan precedent
+      above. That makes it the cast's plain-vanilla index-keyed negative: a real
+      attack that derives to nothing on every path and must stay SILENT on the
+      skipped-effect path. A Water Stage 1 from Cetoddle, 180 HP — the cast's only
+      body that survives its own 220. */
+  "sv02-055": battler("sv02-055", {
+    name: "Cetitan",
+    types: ["Water"],
+    stage: "Stage1",
+    evolveFrom: "Cetoddle",
+    hp: 180,
+    retreat: 3,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      { cost: ["Water", "Colorless"], name: "Icicle Missile", damage: 50 },
+      {
+        cost: ["Water", "Water", "Colorless"],
+        name: "Special Horn",
+        effect:
+          "If this Pokémon has any Special Energy attached, this attack does 140 more damage.",
+        damage: "80+",
       },
     ],
   }),
@@ -3363,6 +3501,61 @@ export const CLAUSE_TABLE_DECK = deckOf({
   "fix-psychic-energy": 6, // Basic {P} — pays Fighting Sword's {P}
   "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
   "fix-bigbody": 27, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the clean control
+});
+
+/** 0.68.0 → 0.69.0: the conditional-damage family's first PARAMETERISED clause
+    (D118) — "If this Pokémon has any <energy> Energy attached, this attack does N
+    more damage." on all four of the pool's printings: Scovillain sv01-029/-202
+    ({R}, +90), Galvantula sv06.5-002 ({L}, +80), Cetitan sv02-055 (Special, +140)
+    and Tinkaton sv02-105 (Special, +90). A DEDICATED deck for the usual reason —
+    every existing deck is seed-pinned by its own suite — and for one specific to
+    this slice: no clause deck before it needed SPECIAL Energy on the board at all,
+    and adding it to CLAUSE_TABLE_DECK would change what every one of its seeds
+    deals.
+
+    THE ENERGY LIST IS THE CAST. Two axes meet here and the deck has to separate
+    them, so it carries three kinds of Energy at once:
+
+      • the Energy that PAYS — {G} for Scovillain's {G}{C}{C} and Galvantula's
+        {G}{C}, {W} for Cetitan's {W}{W}{C}, {P} for Tinkaton's {P}{C}, and plain
+        {C} (fix-energy) for every Colorless symbol;
+      • the Energy that ARMS the TYPE clauses — {R} for Scovillain, {L} for
+        Galvantula. Both attackers are GRASS Pokémon reading an OFF-TYPE Energy,
+        so an arming Energy is never mistakable for a cost one;
+      • the two SPECIALS. **Luminous** (sv02-191) is the wildcard: alone on a
+        Pokémon it PROVIDES every type, so it satisfies the {R} clause without
+        being a Fire card at all — the reading is provision, not the printed name,
+        the same answer §8.2's cost check gives. **Jet** (sv02-190) is the second
+        Special whose mere presence DEMOTES Luminous to {C}, which turns the {R}
+        clause back off on a board where nothing moved. That one pair of cards is
+        the slice's sharpest case, and on that very board the CLASS clause is TRUE
+        while the TYPE clause is FALSE — the two axes, pinned against each other.
+
+    fix-psychic-weak (200 HP, ×2 Psychic, no attacks) is the §8.5 fold-order
+    defender: Tinkaton is Psychic, so (90 + 90) × 2 = 360 there and the un-armed
+    control is 90 × 2 = 180. fix-bigbody is the DOMINANT mulligan-free starter, the
+    body both Active spots pin to before each surgery, the BENCHED body the
+    "Energy on the Bench does not count" case attaches to, and — 200 HP, Colorless,
+    no Weakness, no Resistance — the arithmetically clean defender every other
+    damage number is measured against. All four attackers are Stage 1 or Stage 2
+    and are always force-placed, so no evolution bases are needed; both seats run
+    the whole cast, since the clause is seat-relative and the asymmetry is only
+    assertable if the same body can be fielded on either side. */
+export const ENERGY_CLAUSE_DECK = deckOf({
+  "sv01-029": 3, // Scovillain — "Super Spicy Breath" (90+): the {R} clause, +90
+  "sv06.5-002": 3, // Galvantula — "Shocking Web" (50+): the {L} clause, +80
+  "sv02-055": 3, // Cetitan — "Special Horn" (80+): the Special CLASS clause, +140
+  "sv02-105": 3, // Tinkaton — "Special Hammer" (90+): the same clause, +90, on a Stage 2
+  "fix-psychic-weak": 2, // 200 HP, ×2 Psychic — the Weakness defender for the fold-order pair
+  "fix-grass-energy": 3, // Basic {G} — pays Super Spicy Breath and Shocking Web
+  "fix-fire-energy": 3, // Basic {R} — ARMS Scovillain's clause; never pays its cost
+  "fix-lightning-energy": 3, // Basic {L} — ARMS Galvantula's clause; never pays its cost
+  "fix-water-energy": 4, // Basic {W} — Special Horn alone wants two
+  "fix-psychic-energy": 3, // Basic {P} — pays Special Hammer
+  "fix-energy": 5, // Basic {C} — pays every Colorless symbol in the cast
+  "sv02-191": 4, // Luminous Energy — the WILDCARD Special: provides every type, alone
+  "sv02-190": 4, // Jet Energy — the second Special that DEMOTES Luminous to {C}
+  "fix-bigbody": 17, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the bench body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

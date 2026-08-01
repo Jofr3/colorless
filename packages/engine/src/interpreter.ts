@@ -15,7 +15,13 @@ import {
   topUid,
   weaknessOf,
 } from "./cards";
-import { effectiveMaxHp, passivesOf, providesEnergyType, seatRemovesWeakness } from "./continuous";
+import {
+  effectiveMaxHp,
+  hasAttachedEnergy,
+  passivesOf,
+  providesEnergyType,
+  seatRemovesWeakness,
+} from "./continuous";
 import { STATUS_WORD_OF } from "./effects";
 import type {
   AttachTargetRiders,
@@ -1151,6 +1157,15 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && isExOrV(spot.card);
     }
+    case "yourActiveHasEnergyAttached": {
+      // D116's pronoun rule again — the printed "this Pokémon" was resolved to
+      // your Active by the clause table, not here. The predicate itself is
+      // continuous.ts's, so a type reads by PROVISION (a wildcard Luminous
+      // Energy counts as {R} while it provides every type) and cannot drift from
+      // the §8.2 cost check. False with an empty Active Spot.
+      const active = state.players[seat].active;
+      return active !== null && hasAttachedEnergy(state, active, cond.energy);
+    }
   }
 }
 
@@ -1187,6 +1202,15 @@ export function conditionNote(cond: BoardCondition): string {
       return "your Active Pokémon is Poisoned";
     case "opponentActiveIsExOrV":
       return "your opponent's Active Pokémon is a Pokémon ex or Pokémon V";
+    case "yourActiveHasEnergyAttached":
+      // The family's first note built from a PARAMETER rather than returned as a
+      // literal. The pronoun is dropped exactly as its siblings drop it, and the
+      // energy reads as the printed NAME rather than the brace code — a
+      // reject/tooltip fragment is prose, and half the pool prints it that way
+      // anyway.
+      return cond.energy === "special"
+        ? "your Active Pokémon has a Special Energy attached"
+        : `your Active Pokémon has ${cond.energy} Energy attached`;
   }
 }
 
