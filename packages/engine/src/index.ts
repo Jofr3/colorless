@@ -702,7 +702,30 @@ import type { GameState, Seat } from "./types";
     Condition" reuses `presentStatuses` verbatim, so it can never drift from the
     status chips. Cost: 4 union members, 4 `conditionHolds` arms, 4 `conditionNote`
     arms, 4 table rows. */
-export const engineVersion = "0.67.0";
+
+    /* 0.68.0 — the THIRD wave of D115's clause table (D117): TWO more printed
+    clauses, 4 printings across 2 cards, again on ZERO registry rows and with no
+    change to the fold, the ops, the events or the wire. `CONDITIONAL_DAMAGE_CLAUSES`
+    goes 8 → 10 entries and now covers 22 of the pool's 43 leading-`If` printings.
+    New: Okidogi ex sv06.5-036/-082/-090 "Chain-Crazed" (+130) on
+    `yourActivePoisoned` — the SELF twin of D116's `opponentActivePoisoned`, and
+    the second use of D116's pronoun rule (the member is named for the board fact
+    it reads; the CLAUSE TABLE resolves the printed "this Pokémon"); and Ceruledge
+    sv02-098 "Fighting Sword" (+100) on `opponentActiveIsExOrV`, which reuses
+    D107's `isExOrV` verbatim, so "Pokémon ex or Pokémon V" reads exactly as
+    Mimikyu "Safeguard" reads it — ex and V ONLY, never VMAX/VSTAR/GX. Both clause
+    strings were re-confirmed char-for-char against the local D1 before authoring,
+    and both are anchored-unique in the pool ("is Poisoned" matches exactly five
+    printings, all now mapped, split 3/2 between the self and cross-board
+    readings — one possessive apart, opposite boards). Cost: 2 union members, 2
+    `conditionHolds` arms, 2 `conditionNote` arms, 2 table rows.
+
+    The slice's one board-level note: Okidogi's own index-0 "Poisonous
+    Musculature" self-Poisons but is UNBUILT, so the only route to a Poisoned own
+    Active is the one the real game uses — the opponent Poisons you, and §13.1's
+    Checkup ticks it before your attack reads it. `clauseTable.test.ts` arms it
+    that way rather than by surgery. */
+export const engineVersion = "0.68.0";
 
 export type {
   ApplyResult,

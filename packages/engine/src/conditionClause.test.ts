@@ -59,7 +59,8 @@ import {
 // The other trap the family sets is LEXICAL. `yourActiveDamaged`'s clause and
 // D115's `opponentActiveDamaged` differ by exactly one printed word ("already"),
 // and `opponentActivePoisoned`'s clause is one pronoun away from Okidogi ex's
-// still-UNMAPPED self-Poison twin. Both discriminators get their own case.
+// self-Poison twin (UNMAPPED when this suite was written; D117 mapped it onto the
+// SELF member `yourActivePoisoned`). Both discriminators get their own case.
 
 /** The five printed sentences, pinned here and asserted char-for-char against
     FIXTURE_POOL below. These cards derive off text — not one carries a registry
@@ -380,15 +381,20 @@ describe("deriveAttackDamageBonus — the four NEW clauses", () => {
 });
 
 describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
-  it("refuses Okidogi ex's SELF-Poison twin — the near-twin of the mapped clause", () => {
-    // Okidogi ex sv06.5-036 "Adrena-Brain", 3 printings. One pronoun away from
-    // Venoshock's row and a genuinely different read (the ATTACKER's own status,
-    // which no member covers yet). Until it is mapped it must return null and keep
-    // its ATTACK_EFFECT_SKIPPED row — silently scoring its +130 at 0 would be a
-    // wrong number presented as a right one.
+  it("reads Okidogi ex's SELF-Poison twin as the OTHER member, not this one", () => {
+    // Okidogi ex sv06.5-036/-082/-090 "Chain-Crazed", 3 printings — UNMAPPED when
+    // this suite was written (it was the file's near-miss witness) and mapped by
+    // D117 onto `yourActivePoisoned`. It stays here as the LEXICAL discriminator
+    // it always was: one pronoun apart from Venoshock's row, opposite boards. The
+    // failure this guards against is a row keyed loosely enough to swallow both.
     expect(
-      deriveAttackDamageBonus("If this Pokémon is Poisoned, this attack does 130 more damage."),
-    ).toBeNull();
+      deriveAttackDamageBonus("If this Pokémon is Poisoned, this attack does 130 more damage.")
+        ?.count,
+    ).toEqual({ kind: "boardCondition", cond: { kind: "yourActivePoisoned" } });
+    expect(deriveAttackDamageBonus(VENOSHOCK)?.count).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "opponentActivePoisoned" },
+    });
   });
 
   it("refuses Sylveon's Dragon-type clause — a well-formed sentence, an unmapped condition", () => {

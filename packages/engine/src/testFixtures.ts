@@ -2379,6 +2379,76 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Okidogi ex sv06.5-036 — "Chain-Crazed" (130+, +130 while IT is Poisoned):
+      the `yourActivePoisoned` clause, the SELF twin of Venoshock's. sv06.5-082
+      and sv06.5-090 are further printings whose rules text is BYTE-IDENTICAL
+      (verified: one distinct `hex(attacks_json)` across all three, `abilities_json`
+      NULL on all three — only id/local id/rarity/illustrator differ), so ONE
+      fixture serves three ids. A Darkness Basic, 250 HP, and — being named
+      "… ex" — itself an `isExOrV` body, which is why it doubles as the target
+      Ceruledge's clause reads. Its index-0 "Poisonous Musculature" is kept
+      faithful and is DELIBERATELY unbuilt: a deck search, an attach, a shuffle
+      and a conditional self-Poison in one sentence pair, which neither deriver
+      owns, so it stays on the loud ATTACK_EFFECT_SKIPPED path. The Poison this
+      card's own clause reads therefore has to arrive the way the real game
+      delivers it — from across the table. */
+  "sv06.5-036": battler("sv06.5-036", {
+    name: "Okidogi ex",
+    types: ["Darkness"],
+    stage: "Basic",
+    hp: 250,
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Poisonous Musculature",
+        effect:
+          "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned.",
+      },
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Chain-Crazed",
+        effect: "If this Pokémon is Poisoned, this attack does 130 more damage.",
+        damage: "130+",
+      },
+    ],
+  }),
+  /** Ceruledge sv02-098 — "Fighting Sword" (100+, +100 into an ex or V Active):
+      the `opponentActiveIsExOrV` clause, the pool's only printing of it. A
+      Psychic Stage 1 from Charcadet, so it is always force-placed. Faithfully
+      odd in two ways worth keeping: it carries a real RESISTANCE (-30 Fighting,
+      rare in this pool), and its index-0 "Life Sucker" is a bare self-HEAL
+      ("Heal 30 damage from this Pokémon.") that is UNBUILT — the op deriver owns
+      only the compound `SELF_SLEEP_HEAL` form, so this sentence derives to null
+      on every path and keeps its loud ATTACK_EFFECT_SKIPPED row. It is kept
+      faithful anyway: it is the index-keyed control proving index 1's clause does
+      not leak sideways, and a standing marker for the bare-heal sentence family. */
+  "sv02-098": battler("sv02-098", {
+    name: "Ceruledge",
+    types: ["Psychic"],
+    stage: "Stage1",
+    evolveFrom: "Charcadet",
+    hp: 140,
+    retreat: 2,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Life Sucker",
+        effect: "Heal 30 damage from this Pokémon.",
+        damage: 50,
+      },
+      {
+        cost: ["Psychic", "Colorless", "Colorless"],
+        name: "Fighting Sword",
+        effect:
+          "If your opponent's Active Pokémon is a Pokémon ex or Pokémon V, this attack does 100 more damage.",
+        damage: "100+",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -3257,6 +3327,42 @@ export const CONDITION_CLAUSE_DECK = deckOf({
   "fix-dark-energy": 6, // Basic {D} — pays Venoshock and Unseen Claw
   "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
   "fix-bigbody": 19, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the bench body
+});
+
+/** 0.67.0 → 0.68.0: the THIRD wave of conditional-damage clauses (D117) — the
+    SELF-scoped Poison clause (Okidogi ex sv06.5-036/-082/-090 "Chain-Crazed",
+    +130) and the rule-box clause (Ceruledge sv02-098 "Fighting Sword", +100). A
+    DEDICATED deck: CONDITION_CLAUSE_DECK is seed-pinned, and this cast needs two
+    bodies (`fix-pokemon-v`, `fix-pokemon-vmax`) that no clause suite before it
+    wanted anywhere near a board.
+
+    The cast exists so BOTH clauses can be armed BY THE GAME rather than only by
+    surgery, and for the Poison one that is the whole point: Okidogi's own index-0
+    "Poisonous Musculature" is unbuilt (a search + attach + conditional
+    self-Poison), so the only honest way to Poison your OWN Active is the way the
+    real game does it — the opponent Poisons you. Seviper sv01-128's index-0
+    "Spit Poison" is that source, fielded on the other seat, with §13.1's Checkup
+    then ticking the Poison it applied. Okidogi ex doubles as Ceruledge's target
+    (it is an "ex"), so one board can carry both clauses at once; `fix-pokemon-v`
+    and `fix-pokemon-vmax` are the pair that pins the printed reading — V counts,
+    VMAX does NOT (`isExOrV`, not `hasRuleBox`).
+
+    Energy pays the printed symbols: {D} for Chain-Crazed's {D}{D} and Spit
+    Poison's {D}, {P} for Fighting Sword's {P}, plain {C} for every Colorless
+    slot. fix-bigbody is the DOMINANT mulligan-free starter, the body both Actives
+    pin to, and — 200 HP, no Weakness, no Resistance — the arithmetically clean
+    NON-ex defender every control is measured against. Ceruledge is a Stage 1 and
+    is always force-placed. */
+export const CLAUSE_TABLE_DECK = deckOf({
+  "sv06.5-036": 3, // Okidogi ex — "Chain-Crazed" (130+): yourActivePoisoned, and an ex target
+  "sv02-098": 3, // Ceruledge — "Fighting Sword" (100+): opponentActiveIsExOrV
+  "sv01-128": 3, // Seviper — "Spit Poison": the only in-game route to a Poisoned OWN Active
+  "fix-pokemon-v": 2, // 210 HP Fixmon V — the other half of the printed "ex or V"
+  "fix-pokemon-vmax": 2, // 330 HP Fixmon VMAX — the body the clause does NOT name
+  "fix-dark-energy": 6, // Basic {D} — pays Chain-Crazed and Spit Poison
+  "fix-psychic-energy": 6, // Basic {P} — pays Fighting Sword's {P}
+  "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
+  "fix-bigbody": 27, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the clean control
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

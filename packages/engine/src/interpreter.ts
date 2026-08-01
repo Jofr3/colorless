@@ -1135,6 +1135,22 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[otherSeat(seat)].active;
       return active !== null && presentStatuses(active.conditions).length > 0;
     }
+    case "yourActivePoisoned": {
+      // "this Pokémon is Poisoned" as printed on Okidogi ex — resolved to YOUR
+      // ACTIVE by the clause table, not here (D116's rule, D117's second use).
+      // Same `> 0` read as the cross-board twin above: Poison is the counter
+      // AMOUNT, and the attacker walks into its own attack already carrying it
+      // (the Checkup that Poisons it ran on an earlier turn).
+      const active = state.players[seat].active;
+      return active !== null && active.conditions.poisonDamage > 0;
+    }
+    case "opponentActiveIsExOrV": {
+      // D107's `isExOrV` verbatim — ex or V, NOT VMAX/VSTAR/GX, which is exactly
+      // what the sentence names. An empty Active Spot is FALSE, as with the
+      // Evolution sibling.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && isExOrV(spot.card);
+    }
   }
 }
 
@@ -1165,6 +1181,12 @@ export function conditionNote(cond: BoardCondition): string {
       return "your opponent's Active Pokémon is Poisoned";
     case "opponentActiveHasSpecialCondition":
       return "your opponent's Active Pokémon is affected by a Special Condition";
+    case "yourActivePoisoned":
+      // The printed pronoun is dropped exactly as `yourActiveDamaged` drops it —
+      // a reject/tooltip fragment is read off the BOARD (D116).
+      return "your Active Pokémon is Poisoned";
+    case "opponentActiveIsExOrV":
+      return "your opponent's Active Pokémon is a Pokémon ex or Pokémon V";
   }
 }
 

@@ -4807,3 +4807,63 @@ Pokémon has damage counters on it", with the pronoun dropped for the same reaso
   ownership `yourStadiumInPlay` encodes. A different seam. **Falkner `sv02-180`/`-251` was
   already built** (D40). So the "5 printings" the D114 resume point recorded for this
   sub-shape was really **one**: Palossand.
+
+## D117 (engine 0.68.0) — the clause table's third wave: the SELF-Poison twin and the rule-box clause
+
+The table goes **8 → 10 entries, 22 of the pool's 43 leading-`If` printings**, on ZERO registry
+rows and with **no change to the fold, the ops, the events or the wire** — 2 union members, 2
+`conditionHolds` arms, 2 `conditionNote` arms, 2 table rows. `clauseTable.test.ts` (38) on a
+dedicated `CLAUSE_TABLE_DECK`.
+
+| printed clause | `BoardCondition` | cards | printings |
+|---|---|---|---|
+| `this Pokémon is Poisoned` | `yourActivePoisoned` | Okidogi ex `sv06.5-036`/`-082`/`-090` "Chain-Crazed" (+130) | 3 |
+| `your opponent's Active Pokémon is a Pokémon ex or Pokémon V` | `opponentActiveIsExOrV` | Ceruledge `sv02-098` "Fighting Sword" (+100) | 1 |
+
+### D116's pronoun rule, used a second time — call it settled
+
+`yourActivePoisoned` is the exact SELF twin of D116's `opponentActivePoisoned`, and the printed
+subject is again the pronoun "this Pokémon". Same resolution, no new argument needed: **the
+member is named for the board fact it READS, and the CLAUSE TABLE resolves the pronoun**, because
+`conditionHolds` is shared with `trainerPlayableIf` and the HUD, where a self has no referent.
+`conditionNote` drops the pronoun for the same reason ("your Active Pokémon is Poisoned").
+
+**The lexical fact this slice pins:** a COALESCE'd sweep for `is Poisoned` over the ingested pool
+returns **exactly five printings, all now mapped** — 3 self (Okidogi ex) and 2 cross-board
+(Seviper `sv01-128`, Paldean Clodsire `sv03-129`). The two clauses are **one possessive apart and
+read OPPOSITE boards**. That is the standing argument for keying the table on whole printed
+clauses and never on substrings, and both directions are asserted in `conditionClause.test.ts`
+(which owned the self clause as its unmapped near-miss witness until this slice) and again here.
+
+### `opponentActiveIsExOrV` is `isExOrV`, NOT `hasRuleBox`
+
+The sentence names ex and V and nothing else, so it reuses **D107's `isExOrV`** verbatim (the same
+predicate Mimikyu "Safeguard" reads) rather than the wider `hasRuleBox`, which also matches
+VMAX/VSTAR/GX and Radiant. A VMAX Active does **not** satisfy the clause, and that is the case in
+the suite that catches conflating the two. It inherits `isExOrV`'s one limitation: the class is
+derived from the card NAME's suffix, tcgdex's structured markers being dropped at ingest.
+
+### The board finding: an own-side Poison can only arrive from across the table
+
+Okidogi's own index-0 "Poisonous Musculature" self-Poisons — and is **UNBUILT** (a deck search +
+attach + shuffle + a conditional self-Poison in one sentence pair, which neither deriver owns), so
+it stays on the loud `ATTACK_EFFECT_SKIPPED` path. There is therefore **no way to Poison your own
+Active from your own side of the board**, and the suite arms the clause the way the real game
+does: P2's Seviper `sv01-128` "Spit Poison" applies it, §13.1's Checkup ticks it (10 on the
+attacker, asserted rather than dodged), and Chain-Crazed reads it a turn later for 260. Worth
+remembering for any future SELF-status clause — the arming path is the opponent's turn.
+
+### Notes for the next wave
+
+- All three Okidogi printings are **byte-identical in rules text** (one distinct
+  `hex(attacks_json)`; only id/local id/rarity/illustrator differ), so **one fixture serves three
+  ids** — the Tyranitar ex pattern again. Check this before authoring a second fixture.
+- The UTF-8 byte-length pin does **not** have a `+1` invariant: it is `length + count("Pokémon")`.
+  Chain-Crazed prints `Pokémon` once (62 chars / 63 bytes), Fighting Sword three times (97 / 100).
+- **A corrected fixture docstring:** Ceruledge's index-0 "Life Sucker" ("Heal 30 damage from this
+  Pokémon.") is **not** a built program — the op deriver owns only the compound `SELF_SLEEP_HEAL`
+  form (`This Pokémon is now Asleep. Heal N damage from it.`). The bare self-heal sentence family
+  is unbuilt and loud; it is a real, small, unclaimed slice.
+- The "unmapped stays LOUD" witness in `conditionalDamage.test.ts` has now moved twice (Venoshock
+  → Ceruledge → **Greedent `sv01-152` "Enhanced Fang"**, "If this Pokémon has a Pokémon Tool
+  attached, …"). Re-point it, never delete it — it is the only thing pinning the fall-through.

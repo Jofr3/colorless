@@ -223,7 +223,23 @@ export type BoardCondition =
       events and the status chips are built from — so "affected" can never drift
       from what the board shows. The rotation slot, Poison and Burn all count, and
       any ONE of them suffices. False with no Active. */
-  | { kind: "opponentActiveHasSpecialCondition" };
+  | { kind: "opponentActiveHasSpecialCondition" }
+  /** §12 — YOUR Active Pokémon is Poisoned: Okidogi ex sv06.5-036/-082/-090
+      "Chain-Crazed" (+130), whose printed clause is "If **this Pokémon** is
+      Poisoned". D116's pronoun rule applied a second time — the member is named
+      for what it READS (your Active) and the CLAUSE TABLE resolves the printed
+      "this Pokémon", because a Trainer play gate has no self. The exact SELF twin
+      of `opponentActivePoisoned` and read the same way (`poisonDamage > 0`, as
+      the Checkup reads it). False with an empty Active Spot. */
+  | { kind: "yourActivePoisoned" }
+  /** Your opponent's Active Pokémon is a Pokémon **ex** or a Pokémon **V** —
+      Ceruledge sv02-098 "Fighting Sword" (+100), the pool's only printing.
+      D107's `isExOrV` reused verbatim, so the reading can never drift from
+      Mimikyu "Safeguard"'s: ex and V ONLY, NOT VMAX/VSTAR/GX (which is why this
+      is narrower than `hasRuleBox`). It inherits that predicate's one limitation
+      — the class is derived from the card NAME's suffix, tcgdex's structured
+      markers being dropped at ingest. False with no Active. */
+  | { kind: "opponentActiveIsExOrV" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1394,7 +1410,7 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     "toString", …) and hand back something that is not a `BoardCondition` at all.
     A Map has no inherited keys.
 
-    EIGHT entries, covering 18 of the pool's 43 printings. The first two reuse
+    TEN entries, covering 22 of the pool's 43 printings. The first two reuse
     `BoardCondition` members that ALREADY existed — built in the 2026-07-21
     board-condition slice (D40) for Falkner's `conditionGate` and Fighting Au
     Lait's play gate — which makes this family the vocabulary's FOURTH consumer
@@ -1403,9 +1419,13 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
 
     THE TABLE IS WHERE THE PRINTED PRONOUN RESOLVES (D116). "this Pokémon" on an
     attack is the attacking Active — true by §8, since only the Active declares an
-    attack — so it maps onto the seat-relative `yourActiveDamaged`. That
-    translation belongs HERE and nowhere else: `conditionHolds` is shared with the
-    play gate and the HUD, where a self-pronoun has no referent at all.
+    attack — so it maps onto the seat-relative `yourActiveDamaged` (and, D117, onto
+    `yourActivePoisoned`). That translation belongs HERE and nowhere else:
+    `conditionHolds` is shared with the play gate and the HUD, where a self-pronoun
+    has no referent at all. Note how little separates the two Poison rows: "this
+    Pokémon is Poisoned" and "your opponent's Active Pokémon is Poisoned" are one
+    possessive apart and read OPPOSITE boards, which is why the keys are whole
+    printed clauses and never substrings.
 
     `Pokémon` carries a REAL U+00E9 é in every key that spells it and every
     apostrophe is ASCII, both verified against the local D1 rows; a lookalike
@@ -1456,6 +1476,19 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "your opponent's Active Pokémon is affected by a Special Condition",
     { kind: "opponentActiveHasSpecialCondition" },
+  ],
+  // Okidogi ex sv06.5-036/-082/-090 "Chain-Crazed" (+130) — the three printings
+  // are byte-identical in rules text, so one fixture serves all three. The
+  // printed "this Pokémon" resolves to the attacker's own Active here, exactly
+  // as Talonflame's does four rows up; the CROSS-BOARD twin two rows up is one
+  // possessive apart, and the pool prints no third reading of "is Poisoned".
+  ["this Pokémon is Poisoned", { kind: "yourActivePoisoned" }],
+  // Ceruledge sv02-098 "Fighting Sword" (+100) — the pool's only printing of the
+  // rule-box clause, and NOT a `hasRuleBox` read: the sentence names ex and V and
+  // nothing else, so a VMAX/VSTAR Active does not satisfy it.
+  [
+    "your opponent's Active Pokémon is a Pokémon ex or Pokémon V",
+    { kind: "opponentActiveIsExOrV" },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
