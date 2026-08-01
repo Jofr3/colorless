@@ -2133,8 +2133,8 @@ export function deriveAttackRequirement(text: string): BoardCondition | null {
 //   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
 //     your next turn, this Pokémon can't attack." (Dragonite ex sv03-159) — a
 //     TAILS branch as well, refused by `$`;
-//   • "Flip a coin until you get tails. …" / "Flip 2 coins. …" / "Flip 3 coins.
-//     …" — a different NUMBER of flips, refused by the literal `^Flip a coin\.`;
+//   • "Flip a coin until you get tails. …" — an UNBOUNDED number of flips, refused
+//     by the literal `^Flip a coin\.` (and still unbuilt: see D127);
 //   • "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed."
 //     (16 printings) — a different consequent entirely, and one `deriveAttackEffect`
 //     ALREADY reads as a `coinFlipGate` program. It must never be read here too,
@@ -2144,20 +2144,72 @@ export function deriveAttackRequirement(text: string): BoardCondition | null {
 const ATTACK_COIN_BONUS = /^Flip a coin\. If heads, this attack does (\d+) more damage\.$/;
 const ATTACK_COIN_CANCEL = /^Flip a coin\. If tails, this attack does nothing\.$/;
 
-/** What a single pre-damage coin flip printed on an attack DOES with its faces.
-    A 2-member union rather than a record, because a printing is one or the other
-    and never both:
-      • `bonusOnHeads` — heads adds `per` HP to the attack's own damage (folded
-        alongside the count-scaling clauses' `scaled`, i.e. BEFORE Weakness and
-        Resistance); tails simply adds nothing and the attack resolves normally.
-      • `cancelOnTails` — tails cancels the whole attack (no damage, no W/R, no
-        effect ops, and the turn still ends); heads resolves normally.
-    Note the asymmetry is only apparent: both are "flip once, then take the
-    printed branch", and the OTHER face is always the plain resolution. */
-export type AttackCoinFlip = { kind: "bonusOnHeads"; per: number } | { kind: "cancelOnTails" };
+// The MULTI-FLIP COUNT FOLD (D127) — "Flip N coins. This attack does D damage for
+// each heads." — 22 printings on ONE regex, N ∈ {2 (12 prints), 3 (9), 4 (1)},
+// D ∈ {10, 20, 30, 40, 50, 60, 70, 80, 100}. The SAME seam D126 built, with a
+// bounded LOOP where D126 took a single draw, and it needs neither a new event nor
+// a new site: N flips are announced as N `ATTACK_EFFECT_COIN_FLIP` rows in order
+// (the event already carries exactly one `CoinFace`, so a sequence of them is the
+// only reading that does not invent an aggregate the wire cannot express).
+//
+// IT IS A MULTIPLY PRINTING, NOT AN ADDITIVE ONE. Every one of the 22 carries a
+// printed "D×" damage marker whose digits ARE the per-heads D — so `attack.ts`
+// must DROP the printed base exactly as it does for `deriveAttackDamageMultiplier`,
+// or a 2-heads "30×" Double Hit would deal 30 + 60 instead of 60. The word that
+// tells the two families apart is "more", and the pool's two "more" variants are
+// live near-misses this regex must refuse: Melmetal swsh10.5-046 ("Flip 2 coins.
+// This attack does 90 more damage for each heads.", base "30+") and Bouffalant
+// sv03-174 ("Flip a coin until you get tails. This attack does 30 more damage for
+// each heads.", base "50+"). A substring matcher would score both wrong.
+//
+// AND YET IT IS NOT A `DamageCountSource` (D126's rule, applied not re-derived):
+// the count comes from the flips, not from the board, so nothing in the state
+// answers it and `scaledAttackDamage` must stay pure. It belongs in the coin union
+// with its siblings, at the coin site, for the same reason they do.
+//
+// The three shapes it refuses at the leading sentence, all still unbuilt:
+// "Flip a coin until you get tails. …" (9 prints, an UNBOUNDED fold — a genuinely
+// different risk) and "Flip a coin for each {R} Energy attached to this Pokémon. …"
+// (3 prints — a BOARD-counted number of flips, which is where the board vocabulary
+// would finally earn its place in this family).
+const ATTACK_COIN_MULTI = /^Flip (\d+) coins\. This attack does (\d+) damage for each heads\.$/;
+
+/** The most flips a printed attack may call for before this deriver refuses the
+    sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
+    one); the ceiling exists because the digits are read out of THIRD-PARTY
+    ingested text, and an unbounded `\d+` would let one malformed row spin the
+    resolution loop for an arbitrarily long time. A refusal is LOUD — the attack
+    lands on the ATTACK_EFFECT_SKIPPED path — where a hang is not. */
+const MAX_PRINTED_FLIPS = 10;
+
+/** What the pre-damage coin flip printed on an attack DOES with its faces. A
+    union rather than a record, because a printing is exactly one of these and
+    never two:
+      • `bonusOnHeads` — one flip; heads adds `per` HP to the attack's own damage
+        (folded alongside the count-scaling clauses' `scaled`, i.e. BEFORE Weakness
+        and Resistance); tails simply adds nothing and the attack resolves normally.
+      • `cancelOnTails` — one flip; tails cancels the whole attack (no damage, no
+        W/R, no effect ops, and the turn still ends); heads resolves normally.
+      • `perHeads` — `flips` flips; the damage is `per` × the number of heads and
+        the printed base is DROPPED (these are "D×" printings, where D is `per`).
+    The first two are "flip once, then take the printed branch", with the OTHER
+    face always the plain resolution; the third is a fold over N faces. What the
+    union buys is that `attack.ts` matches ONE value, so "an attack takes at most
+    one printed flip DECISION" stays structural rather than a rule it must keep —
+    D127 widened that from "at most one flip" without weakening it.
+
+    `bonusOnHeads` is NOT folded into `perHeads` with `flips: 1`, even though the
+    arithmetic coincides (`heads × per` is right for both, and `attack.ts` computes
+    them with one expression on purpose). They differ in the one place that is not
+    arithmetic: the printed marker. "+" keeps the base, "×" drops it, and collapsing
+    the members would hide that behind a flag. */
+export type AttackCoinFlip =
+  | { kind: "bonusOnHeads"; per: number }
+  | { kind: "cancelOnTails" }
+  | { kind: "perHeads"; flips: number; per: number };
 
 /** The coin flip an attack's printed text calls for, or null when the text is not
-    one of the two recognised whole sentences — null keeps the attack on the loud
+    one of the three recognised whole sentences — null keeps the attack on the loud
     ATTACK_EFFECT_SKIPPED path, never on a silent unflipped resolution.
 
     Pure in its string, like its three sibling derivers, and disjoint from all of
@@ -2174,6 +2226,20 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     // rngState step) to add nothing. No card prints it; the guard is what keeps
     // that a fact about the pool rather than an assumption.
     return per >= 1 ? { kind: "bonusOnHeads", per } : null;
+  }
+  const multi = ATTACK_COIN_MULTI.exec(effect);
+  if (multi !== null) {
+    const flips = Number(multi[1]);
+    const per = Number(multi[2]);
+    // `flips >= 2` because the regex's own "coins" is PLURAL: the one-flip form is
+    // printed "Flip a coin." and is read by the two patterns above, so "Flip 1
+    // coins." is not English and not in the pool. Refusing it (rather than quietly
+    // treating it as one flip) keeps the grammar of the sentence and the shape of
+    // the value in agreement. `per >= 1` is the same guard every scaling arm
+    // carries; `flips <= MAX_PRINTED_FLIPS` is the ingested-text ceiling.
+    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
+      ? { kind: "perHeads", flips, per }
+      : null;
   }
   return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;
 }

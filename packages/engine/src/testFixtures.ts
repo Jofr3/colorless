@@ -223,6 +223,19 @@ export const FIXTURE_POOL: Record<string, Card> = {
     weaknesses: [{ type: "Fire", value: "×2" }],
     resistances: [{ type: "Fire", value: "-30" }],
   }),
+  /** Weak to COLORLESS, and big enough that nothing in the multi-flip suite can
+      Knock it Out (D127). Synthetic on purpose and in a way no printed card is:
+      real cards have no Colorless Weakness. It exists because both faithful
+      multi-flip fixtures — Tandemaus sv01-160 and Meowth sv06.5-048 — are
+      Colorless Pokémon, and the pool holds no multi-flip attacker of a type any
+      existing weak body already fields. What it pins is the "×" base drop landing
+      PRE-Weakness: Tandemaus on two heads is (0 + 60) × 2 = 120, where a leaked
+      printed base would read (30 + 60) × 2 = 180. 200 HP survives both, so the
+      case measures damage and never a promotion. */
+  "fix-colorless-weak-big": battler("fix-colorless-weak-big", {
+    hp: 200,
+    weaknesses: [{ type: "Colorless", value: "×2" }],
+  }),
   /** Old-era ADDITIVE weakness (the dp5-4 print): Bite deals 30 + 20 = 50,
       where a misread ×2 would deal 60. */
   "fix-weak-plus": battler("fix-weak-plus", {
@@ -3411,6 +3424,66 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Tandemaus sv01-160 — the MULTI-FLIP COUNT FOLD's two-coin end (D127).
+      "Double Hit" ({C}{C}, 30×): "Flip 2 coins. This attack does 30 damage for
+      each heads."
+
+      THE "30×" IS THE LOAD-BEARING FIELD, and it is load-bearing TWICE. Its digits
+      ARE the per-heads amount, so the printed base must be DROPPED (0/30/60, never
+      30/60/90) — the same treatment `deriveAttackDamageMultiplier`'s printings get,
+      and the whole reason this shape is not the additive one. And its "×" modifier
+      is what `modifierSimulated` has to claim, so this card is also the fixture
+      that catches the missing term (correct damage AND a loud
+      ATTACK_EFFECT_SKIPPED row on every attack — D126's trap, recurring exactly
+      where D126 predicted it would).
+
+      Two flips means THREE outcomes (0, 1, 2 heads) and therefore three distinct
+      totals — 0, 30, 60 — which is what makes "the count is read, not assumed"
+      observable. Verbatim off the local D1: pure ASCII, one attack, 40 HP,
+      ×2 Fighting Weakness (inert against everything in the suite). */
+  "sv01-160": battler("sv01-160", {
+    name: "Tandemaus",
+    types: ["Colorless"],
+    hp: 40,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Double Hit",
+        effect: "Flip 2 coins. This attack does 30 damage for each heads.",
+        damage: "30×",
+      },
+    ],
+  }),
+  /** Meowth sv06.5-048 — the MULTI-FLIP COUNT FOLD's three-coin end (D127).
+      "Fury Swipes" ({C}{C}, 20×): "Flip 3 coins. This attack does 20 damage for
+      each heads."
+
+      THE SECOND N IS THE POINT. A single printing would leave "2" indistinguishable
+      from a hardcoded pair, and the rngState account (exactly `flips` steps per
+      attack, no more) is only a real assertion when two different `flips` values
+      are checked against the same code path. 20 ≠ 30 for the same reason: the
+      totals of the two cards never collide (Meowth 0/20/40/60 against Tandemaus
+      0/30/60 share only 0 and 60, and 60 needs a different heads count on each),
+      so a case can never be passing for the other card's arithmetic.
+
+      Verbatim off the local D1: pure ASCII, one attack, 70 HP, ×2 Fighting. */
+  "sv06.5-048": battler("sv06.5-048", {
+    name: "Meowth",
+    types: ["Colorless"],
+    hp: 70,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Fury Swipes",
+        effect: "Flip 3 coins. This attack does 20 damage for each heads.",
+        damage: "20×",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -4787,6 +4860,44 @@ export const COIN_FLIP_DECK = deckOf({
   "fix-fire-energy": 6, // Basic {R} — pays Firebreathing's single symbol
   "fix-weak": 4, // 60 HP, ×2 FIRE — the pre-Weakness fold defender for Litwick's heads
   "fix-bigbody": 36, // 200 HP neutral Colorless Basic — DOMINANT pinned starter and the neutral defender
+});
+
+/** 0.77.0 → 0.78.0: the MULTI-FLIP COUNT FOLD (D127) — "Flip N coins. This attack
+    does D damage for each heads." Tandemaus sv01-160 "Double Hit" ({C}{C}, 30×)
+    flips TWO; Meowth sv06.5-048 "Fury Swipes" ({C}{C}, 20×) flips THREE. Two cards
+    and two different N, which is the whole reason there are two: one printing
+    cannot tell a read `flips` from a hardcoded one, and the rngState account
+    ("exactly `flips` steps, never more") is only an assertion when two values run
+    through the same loop.
+
+    A DEDICATED deck rather than growing COIN_FLIP_DECK, and here the usual reason
+    (seed-pinned neighbours reshuffle) is joined by a sharper one: this suite sweeps
+    seeds too, but it needs a WIDER sweep than D126's — reaching all three of
+    Tandemaus's outcomes and all four of Meowth's takes more seeds than reaching two
+    faces of one flip, and folding both suites onto one deck would couple those
+    sweeps to each other.
+
+    BOTH ATTACKERS COST {C}{C} — two generic symbols, paid by the one fix-energy
+    line. Neither attack reads Energy and no case counts it; two symbols rather than
+    one is simply what both cards print.
+
+    fix-colorless-weak-big (200 HP, ×2 COLORLESS) IS THE LOAD-BEARING SLOT and is
+    synthetic in a way no printed card is — see its fixture. Both attackers are
+    Colorless, so it is the body that proves the "×" base drop happens PRE-Weakness:
+    Tandemaus on two heads is (0 + 60) × 2 = 120, where a leaked base reads
+    (30 + 60) × 2 = 180. 200 HP survives every outcome of both attackers, so no case
+    is ever about a Knock Out.
+
+    fix-bigbody (200 HP, no Weakness) is the NEUTRAL defender the raw totals are
+    measured against, and the DOMINANT (mulligan-free) starter both Active spots
+    pin over — 40 HP Tandemaus and 70 HP Meowth would otherwise be dealt into
+    openings the sweep cannot control. */
+export const MULTI_COIN_FLIP_DECK = deckOf({
+  "sv01-160": 4, // Tandemaus — "Double Hit" (30×) at index 0: perHeads, flips 2, per 30
+  "sv06.5-048": 4, // Meowth — "Fury Swipes" (20×) at index 0: perHeads, flips 3, per 20
+  "fix-energy": 8, // Basic {C} — pays both attacks' two generic symbols
+  "fix-colorless-weak-big": 4, // 200 HP, ×2 COLORLESS — the pre-Weakness fold defender
+  "fix-bigbody": 40, // 200 HP neutral Colorless Basic — DOMINANT pinned starter and the neutral defender
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

@@ -5983,3 +5983,147 @@ heads.`** (~24 printings, a multi-flip count fold) and **`Flip a coin until you 
 tails.`** (9 printings, an unbounded fold). Both are the same seam D126 built, with a
 LOOP instead of a single draw — and both would want the flip results announced as a
 sequence, which is the one design question they raise that D126 did not have to answer.
+
+---
+
+## P3-M5 — the MULTI-FLIP COUNT FOLD (D127, engine 0.78.0)
+
+*"Flip N coins. This attack does D damage for each heads."* (**22 printings**:
+N=2 ×12, N=3 ×9, N=4 ×1; D ∈ {10, 20, 30, 40, 50, 60, 70, 80, 100}) now SIMULATES,
+on **ONE anchored regex, ONE union member and still ZERO vocabulary.** No new event,
+no new op, no `BoardCondition`/`DamageCountSource` member, no clause-table row, no
+state field, no registry row, no log arm, no `MATCH_RECORD_VERSION` bump, no
+web/API/DB diff.
+
+### The census matched the plan for once — but only because the plan had been re-censused
+The previous resume point's numbers (22 printings, N ∈ {2,3,4}, the two "more"
+near-misses) came from a sweep run against the shape actually being built. Re-running
+it confirmed all of them exactly. **That is D126's rule paying off, not an argument
+against it** — the number that had to be corrected last time came from a `%…%` LIKE.
+
+### The whole diff is a `for` loop
+Same reader (`deriveAttackCoinFlip`), same union, same site in `attack.ts` (after the
+D125 requirement gate, in front of §8.5), same `coinBonus` → `scaledTotal` fold, same
+event, same log copy. What changed: a third union member, a bounded loop where D126
+took a single draw, one term in `scaledBase`, one in `modifierSimulated`.
+
+**THE GENERALISATION: once a shape's SITE is right, varying its CARDINALITY is
+cheap.** The expensive questions in this family were *where in resolution does this
+land* (D125) and *what answers this clause* (D126). "How many times" is not in their
+league. Price a cardinality-only slice as cheap even when its printing count is large.
+
+### N flips are announced as N rows — the question D126 did not have to answer
+`ATTACK_EFFECT_COIN_FLIP` carries exactly ONE `CoinFace`. One event per flip, in flip
+order, is the only reading that does not invent an aggregate the event, the wire and
+the log cannot express. The alternative — a single row carrying a heads COUNT — would
+owe a new event type, a new wire member and a new log arm to say what a reader can
+already count off the rows, **and it would discard the ORDER**, which is exactly what
+a player watching a three-flip attack wants to see.
+
+### It is the MULTIPLY family, and the printed MARKER is what says so
+All 22 carry a `"D×"` marker whose digits ARE the per-heads D, so `scaledBase` drops
+the printed base the same way it does for `deriveAttackDamageMultiplier`: Tandemaus
+on two heads is **60, not 30 + 60**. `perHeads` is the third claimant on that rule
+and the coin family's first.
+
+The word that separates the two families is *more*, and the pool holds **two live
+"more" near-misses** the whole-sentence anchor must refuse — a substring matcher
+scores both wrong:
+- Melmetal `swsh10.5-046` — `Flip 2 coins. This attack does 90 more damage for each heads.` (base `30+`)
+- Bouffalant `sv03-174` — `Flip a coin until you get tails. This attack does 30 more damage for each heads.` (base `50+`)
+
+### Why `bonusOnHeads` is NOT `perHeads` with `flips: 1`
+The arithmetic coincides — `heads × per` is right for both, and `attack.ts` computes
+them with ONE expression, so the branch in the flip block is over **cancellation**,
+not over the members. `bonusOnHeads` really is the one-flip case of the same fold.
+What is NOT shared is the printed marker: `"+"` keeps the base, `"×"` drops it. One
+boolean flag would hide the only real difference behind a name that does not mention
+it, so they stay two members and the difference stays where the marker is read
+(`scaledBase`).
+
+### And still not a `DamageCountSource` — D126's rule applied, not re-derived
+The count comes from the flips, not from the board. No state answers it,
+`scaledAttackDamage` stays pure and state-only, and the value belongs in the coin
+union with its siblings, at the coin site, for the same reason they do.
+
+### ⚠️ The `modifierSimulated` trap recurred exactly where D126 said it would
+`"D×"` is a marker the reader consumes, so the term needed widening — and widening it
+**inverted** the expression. Two of three members now own a modifier, so the honest
+statement names the one that does not:
+
+```ts
+scaling !== null || programDamage || (coinFlip !== null && coinFlip.kind !== "cancelOnTails")
+```
+
+Naming the EXCEPTION rather than the cases is what keeps a future member from
+silently defaulting to "unsimulated" — which is the failure mode that produces
+perfectly correct damage plus a loud `ATTACK_EFFECT_SKIPPED` row on every printing.
+
+### The two guards, and why neither is arbitrary
+- **`flips >= 2`** because the sentence's *coins* is PLURAL. The one-flip form is
+  printed *"Flip a coin."* and belongs to D126's two patterns, so `"Flip 1 coins."`
+  is neither English nor in the pool. Refusing it (rather than quietly reading it as
+  one flip) keeps the grammar of the sentence and the shape of the value in agreement.
+- **`flips <= MAX_PRINTED_FLIPS = 10`** is a REFUSAL CEILING, not a rule. The pool's
+  maximum is 4 (Unfezant `swsh10.5-063`), but the digits are read out of INGESTED
+  THIRD-PARTY TEXT, where an unbounded `\d+` would let one malformed row spin the
+  resolution loop for an arbitrarily long time. **A refusal is LOUD; a hang is not.**
+  Any future deriver that loops on a printed number owes the same ceiling.
+
+### ZERO HEADS is a RESOLVED attack that dealt nothing, not a cancelled one
+No `DAMAGE_DEALT` at all (the `scaledBase + scaledTotal > 0` guard fires before
+Weakness is ever consulted, so the multiplier is unobservable on that outcome), no
+`ATTACK_FAILED`, and the turn still ends. That is the sharpest behavioural difference
+from `cancelOnTails` and it has its own case in the suite.
+
+### Pool facts worth not re-deriving
+- Both mapped sentences are **pure ASCII**, 56 chars each — the same degenerate
+  `bytes === codePoints` invariant D126's pair had, pinned explicitly.
+- `×` (U+00D7) is in the **`damage`** field, never in the effect string — unchanged
+  from D126.
+- The two multi-flip fixtures are both **Colorless**, and the pool holds no multi-flip
+  attacker of a type any existing weak fixture fields. Hence the one new synthetic
+  body, `fix-colorless-weak-big` (200 HP, ×2 COLORLESS) — synthetic in a way no
+  printed card is, and documented as such at the fixture.
+
+### The suite
+`multiCoinFlip.test.ts` (**30**) on a new `MULTI_COIN_FLIP_DECK` (Tandemaus `sv01-160`,
+Meowth `sv06.5-048`, `fix-energy`, `fix-colorless-weak-big`, `fix-bigbody`). It sweeps
+seeds to reach **all three** Tandemaus outcomes and **all four** Meowth ones —
+measured: complete by seed 5 and seed 10 respectively, so D126's inherited `SEEDS =
+24` is comfortably past both — and **asserts the observed outcome SET exactly**, so a
+regression that stops reaching an outcome fails rather than silently under-testing.
+
+Two cards and two different N is not redundancy: a suite on Tandemaus alone cannot
+tell a `flips` READ from the sentence from a hardcoded 2, and the rngState account is
+only an assertion when two values run through the same loop. 20 ≠ 30 for the same
+reason — the two cards' total sets share only 0 and 60, and 60 needs a different heads
+count on each, so no assertion can be passing for the other card's arithmetic.
+
+It pins the **rngState account both ways** — the hand-folded state equals
+`after.rngState` AND the folded FACES equal the emitted rows IN ORDER, plus explicit
+`flips ± 1` non-equality. Either half alone is weak: a loop that flipped N times but
+reported the first face N times passes the first. It also pins the four-reader
+disjointness **empirically in both directions**, no `ATTACK_EFFECT_SKIPPED` on any
+swept seed, and the pre-Weakness fold `(0 + 60) × 2 = 120` with **180** (leaked base)
+and **60** (post-W/R fold) named as the wrong answers.
+
+### Still unmapped after this slice
+On the coin consequent, two shapes remain and they are refused at the LEADING
+sentence, not at the consequent:
+- **`Flip a coin until you get tails.`** — 9 printings, an UNBOUNDED fold. Genuinely
+  different risk from this slice: the loop has no printed bound, so it must be written
+  so a pathological seed cannot hang. Two sub-shapes: the multiply form (`…tails. This
+  attack does D damage for each heads.` — Growlithe `sv01-030`, Rellor `sv02-026`,
+  Forretress `sv01-139`, Chansey `sv01-144`) and a repeated EFFECT (`…tails. For each
+  heads, <effect>.` — Masquerain `sv03-007`, Krookodile `sv01-117`, Gyarados
+  `swsh10.5-022`), which is a program, not a fold. Plus Bouffalant `sv03-174`'s `more`
+  variant.
+- **`Flip a coin for each {R} Energy attached to this Pokémon.`** — 3 printings
+  (Torkoal `sv01-035`, Ambipom `swsh10.5-057`, Bellossom `sv03-003`). A **BOARD-COUNTED
+  number of flips**, and therefore the first shape in this family where the board
+  vocabulary would finally earn its place: the `flips` count is a `DamageCountSource`-
+  shaped question even though the DAMAGE count is not.
+
+The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
+Slither Wing `sv06.5-026`) and their four loud witnesses are untouched by this slice.

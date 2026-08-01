@@ -278,17 +278,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // ones by CONSEQUENT ("nothing" versus "N more damage" / "for each"), so at
   // most one of the three ever fires on a given attack.
   const requirement = effect === null || effect === "" ? null : deriveAttackRequirement(effect);
-  // D126 — the printed "Flip a coin." the attack itself calls for: a `bonusOnHeads`
+  // D126/D127 — the printed coin flip the attack itself calls for: a `bonusOnHeads`
   // that adds its printed N to this attack's own damage, a `cancelOnTails` that
-  // cancels the attack outright, or null when the text is neither sentence. A
-  // FOURTH reader of the same effect string, disjoint from the other three by its
-  // leading flip sentence (which denies them their `^If` anchor) and from
-  // `deriveAttackEffect`'s `coinFlipGate` programs by its CONSEQUENT — "this
-  // attack does N more damage" / "does nothing" is neither a status nor a search,
-  // so the 16 "If heads, … is now Paralyzed." printings stay on the program path
-  // and are never read twice. The union's two members are mutually exclusive by
-  // construction, which is what makes "at most one flip per attack" structural
-  // rather than a rule this function has to keep.
+  // cancels the attack outright, a `perHeads` that folds N flips into `per × heads`,
+  // or null when the text is none of those sentences. A FOURTH reader of the same
+  // effect string, disjoint from the other three by its leading flip sentence (which
+  // denies them their `^If` anchor) and from `deriveAttackEffect`'s `coinFlipGate`
+  // programs by its CONSEQUENT — "this attack does N more damage" / "does nothing" /
+  // "does D damage for each heads" is neither a status nor a search, so the 16 "If
+  // heads, … is now Paralyzed." printings stay on the program path and are never
+  // read twice. The union's members are mutually exclusive by construction, which
+  // is what makes "at most one flip DECISION per attack" structural rather than a
+  // rule this function has to keep.
   const coinFlip = effect === null || effect === "" ? null : deriveAttackCoinFlip(effect);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
@@ -301,7 +302,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `scaled`), so it is dropped from the pipeline — the additive family keeps its
   // printed base. count 0 → scaled 0 → no damage (the base does not leak through).
   // A program that owns the damage drops the base for the same reason.
-  const scaledBase = damageMultiplier !== null || programDamage ? 0 : base;
+  //
+  // D127 — `perHeads` is a THIRD claimant on the same rule, and it is the coin
+  // family's first: all 22 printings carry a "D×" marker whose D is the per-heads
+  // amount, so Tandemaus's "30×" on two heads is 60, not 30 + 60. Its sibling
+  // `bonusOnHeads` is printed "10+" and keeps its base — the marker is exactly what
+  // separates them, which is why they are two union members and not one.
+  const scaledBase =
+    damageMultiplier !== null || programDamage || coinFlip?.kind === "perHeads" ? 0 : base;
   // The "+"/"×" modifier is SIMULATED iff a scaling reader consumed it OR the
   // program deals the damage; the effect text is simulated iff a program ran it
   // OR a scaling reader did. Only the genuinely-unsimulated remainder is flagged
@@ -314,11 +322,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // "+". Leaving `modifierSimulated` alone would keep all 20 loudly flagged even
   // though the engine now resolves them completely. The `cancelOnTails` printings
   // carry a FLAT number and never touch that term, which is why the term is
-  // narrowed to the one member rather than to `coinFlip !== null`.
+  // narrowed rather than written `coinFlip !== null`.
+  //
+  // D127 turned that narrowing inside out, and it is the more honest statement:
+  // `perHeads`'s 22 printings carry a "D×" marker the reader also consumes, so TWO
+  // of the three members own a modifier and only `cancelOnTails` — the one member
+  // that reads a FLAT printed number — does not. Naming the exception keeps the
+  // next member from silently defaulting to "unsimulated".
   const effectSimulated =
     program !== null || scaling !== null || requirement !== null || coinFlip !== null;
   const modifierSimulated =
-    scaling !== null || programDamage || coinFlip?.kind === "bonusOnHeads";
+    scaling !== null || programDamage || (coinFlip !== null && coinFlip.kind !== "cancelOnTails");
   if (
     (modifier !== null && !modifierSimulated) ||
     (effect !== null && effect !== "" && !effectSimulated)
@@ -389,19 +403,48 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // Built separately, the flip, its event and its placement would have been
   // designed twice, and the second design would have had to justify not being the
   // first.
+  //
+  // D127 — N FLIPS, ANNOUNCED AS N ROWS. "Flip N coins. This attack does D damage
+  // for each heads." (22 printings, N ∈ {2, 3, 4}) is this same site with a bounded
+  // LOOP where D126 took a single draw. `ATTACK_EFFECT_COIN_FLIP` carries exactly
+  // ONE `CoinFace`, so a sequence of them — one per flip, in flip order — is the
+  // only reading that does not invent an aggregate the event, the wire and the log
+  // cannot express. The alternative (one row carrying a heads COUNT) would owe a
+  // new event, a new wire member and a new log arm to say something the reader can
+  // already count off the rows, and it would throw away the ORDER, which is the one
+  // thing a player watching a three-flip attack actually wants to see.
+  //
+  // THE FOLD IS THE SAME ARITHMETIC FOR BOTH DAMAGE MEMBERS. `heads × per` is
+  // right for `bonusOnHeads` too (its `heads` is 0 or 1), so the branch below is
+  // over CANCELLATION, not over the members — `bonusOnHeads` really is the
+  // one-flip case of the same fold. What is NOT shared is the printed base, and
+  // that lives at `scaledBase` above where the marker is read.
   let coinBonus = 0;
   if (coinFlip !== null) {
-    const [face, rngState] = flipCoin(next.rngState);
-    next = { ...next, rngState };
-    events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
-    if (coinFlip.kind === "cancelOnTails" && face === "tails") {
-      // D125's ending, third caller: no damage, no W/R, no effect ops, no
-      // triggers — and `finishAttack` still sweeps §8.1 and still ends the turn,
-      // because an attack that did nothing is an attack that was USED.
-      events.push({ type: "ATTACK_FAILED", seat: action.seat, uid: attackerUid, reason: "coinFlip" });
-      return finishAttack(next, events, action.seat);
+    const flips = coinFlip.kind === "perHeads" ? coinFlip.flips : 1;
+    let heads = 0;
+    for (let flip = 0; flip < flips; flip += 1) {
+      const [face, rngState] = flipCoin(next.rngState);
+      next = { ...next, rngState };
+      events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
+      if (face === "heads") heads += 1;
     }
-    if (coinFlip.kind === "bonusOnHeads" && face === "heads") coinBonus = coinFlip.per;
+    if (coinFlip.kind === "cancelOnTails") {
+      if (heads === 0) {
+        // D125's ending, third caller: no damage, no W/R, no effect ops, no
+        // triggers — and `finishAttack` still sweeps §8.1 and still ends the turn,
+        // because an attack that did nothing is an attack that was USED.
+        events.push({
+          type: "ATTACK_FAILED",
+          seat: action.seat,
+          uid: attackerUid,
+          reason: "coinFlip",
+        });
+        return finishAttack(next, events, action.seat);
+      }
+    } else {
+      coinBonus = heads * coinFlip.per;
+    }
   }
   // The flip's heads bonus is the attack's OWN printed extra damage, exactly like
   // a count-scaling clause's `scaled` — so it folds at the same step, PRE-Weakness

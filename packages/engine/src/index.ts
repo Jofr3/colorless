@@ -1110,7 +1110,68 @@ import type { GameState, Seat } from "./types";
     rows or fold changes; no continuous.ts diff; no web/API/DB/`@luminous/schema`
     diff. NO MATCH_RECORD_VERSION BUMP — the same widening-not-a-missing-field
     distinction D125 recorded. */
-export const engineVersion = "0.77.0";
+/** 0.78.0 — P3-M5: the MULTI-FLIP COUNT FOLD (D127). "Flip N coins. This attack
+    does D damage for each heads." (22 printings: N=2 ×12, N=3 ×9, N=4 ×1) now
+    SIMULATES — ONE REGEX, ONE union member, and STILL zero vocabulary. Tandemaus
+    sv01-160 "Double Hit" ({C}{C}, 30×, 2 flips) and Meowth sv06.5-048 "Fury
+    Swipes" ({C}{C}, 20×, 3 flips) are the fixtures.
+
+    THIS IS D126's SEAM WITH A BOUNDED LOOP, and the point is how little that
+    changes. Same reader, same union, same site (after the D125 requirement gate,
+    in front of §8.5), same `coinBonus` → `scaledTotal` fold, same event. The
+    diff is a `for` loop, a third union member, one term in `scaledBase` and one
+    in `modifierSimulated`. GENERALISATION: once a shape's SITE is right, varying
+    its cardinality is cheap — the expensive question was never "how many", it was
+    "where in resolution does this land" (D125) and "what answers this clause"
+    (D126).
+
+    N FLIPS ARE ANNOUNCED AS N ROWS. `ATTACK_EFFECT_COIN_FLIP` carries exactly one
+    `CoinFace`, so one event per flip in flip order is the only reading that does
+    not invent an aggregate the event, the wire and the log cannot express. A
+    single row carrying a heads COUNT would owe a new event type, a new wire member
+    and a new log arm to say what a reader can already count off the rows — and it
+    would discard the ORDER, which is the part a player watching a three-flip
+    attack wants.
+
+    IT IS THE MULTIPLY FAMILY, NOT THE ADDITIVE ONE, AND THE MARKER SAYS SO. All 22
+    printings are "D×" where D is the per-heads amount, so `scaledBase` drops the
+    printed base exactly as it does for `deriveAttackDamageMultiplier` — Tandemaus
+    on two heads is 60, not 30 + 60. The word "more" is what separates the families,
+    and the pool holds two live "more" near-misses (Melmetal swsh10.5-046, Bouffalant
+    sv03-174) that the whole-sentence anchor must refuse; a substring matcher would
+    score both wrong.
+
+    AND YET NOT A `DamageCountSource` — D126's rule applied, not re-derived. The
+    count comes from the flips, not from the board; no state answers it, so
+    `scaledAttackDamage` stays pure and the value belongs in the coin union with its
+    siblings. `bonusOnHeads` is NOT collapsed into `perHeads` with `flips: 1` even
+    though the arithmetic coincides (`heads × per` is correct for both, and
+    attack.ts computes them with one expression): they differ in the printed marker,
+    "+" keeps the base and "×" drops it, and one flag would hide that.
+
+    THE `modifierSimulated` TRAP RECURRED EXACTLY WHERE D126 PREDICTED. "D×" is a
+    marker the reader consumes, so the term flipped from naming the one member that
+    owns a modifier to naming the one that does NOT (`kind !== "cancelOnTails"`) —
+    the more honest statement, and the one that keeps a future member from silently
+    defaulting to "unsimulated".
+
+    `MAX_PRINTED_FLIPS = 10` is a refusal ceiling, not a rule: the pool's maximum is
+    4, and the digits come from ingested third-party text, where an unbounded `\d+`
+    would let one malformed row spin the resolution loop. A refusal is LOUD; a hang
+    is not. `flips >= 2` because the sentence's "coins" is plural — the one-flip
+    form is printed "Flip a coin." and belongs to the two D126 patterns.
+
+    Still LOUD after this: "Flip a coin until you get tails." (9 prints — an
+    UNBOUNDED fold, a genuinely different risk) and "Flip a coin for each {R} Energy
+    attached to this Pokémon." (3 prints — a BOARD-counted number of flips, which is
+    where the board vocabulary would finally earn a place in this family).
+
+    Cost: 1 skeleton regex + 1 constant, 1 union member, 1 deriver arm, 1 loop + 2
+    terms in attack.ts. ZERO new events, ops, `BoardCondition`/`DamageCountSource`
+    members, clause-table rows, state fields, error codes, registry rows or log
+    arms; no continuous.ts diff; no web/API/DB/`@luminous/schema` diff. NO
+    MATCH_RECORD_VERSION BUMP — no event shape changed at all. */
+export const engineVersion = "0.78.0";
 
 export type {
   ApplyResult,
