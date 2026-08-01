@@ -870,8 +870,13 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** Paldean Clodsire sv03-128 — "Poison Ring" ({D}, 20): the TWO-CLAUSE
       printing, where the lock hides behind a Poison and the second sentence says
       "that Pokémon" rather than "the Defending Pokémon". A Stage 1 (from Paldean
-      Wooper), surgeried straight onto the Active in tests. Its second attack is
-      unsimulated on purpose — the "one card, one derived attack" control. */
+      Wooper), surgeried straight onto the Active in tests. Its second attack
+      ("Muddy Hammer", {D}{C}{C}, 100) was the "one card, one derived attack"
+      control while it was UNSIMULATED; D131 mapped its "Discard the top card of
+      your opponent's deck." and the control is now the STRONGER one — index 1
+      derives a DIFFERENT op, so retreatLock.test.ts's "does not inherit down the
+      attack index" case proves the lock is keyed to the declared attack rather
+      than merely to an absence. */
   "sv03-128": {
     ...blank,
     id: "sv03-128",
@@ -3724,18 +3729,22 @@ export const FIXTURE_POOL: Record<string, Card> = {
       rather than folding a number, which is a different mechanism at a different
       site); D130 built that mechanism, so this card now MAPS — to
       `programPerHeads` over `flips: { kind: "untilTails" }`, expanded at the flip
-      site into one `discardOpponentDeckTop { count: 2 }` per heads.
+      site into one `discardDeckTop { whose: "opponent", count: 2 }` per heads.
 
       "Wreak Havoc" is the load-bearing one: a {C} cost (paid by the same fix-energy
       line as Bouffalant's) and NO printed damage at all, so the mill is the entire
       visible result of a declaration — there is no number for a mis-read to hide
       behind, and no `damage` marker for `modifierSimulated` to have to explain.
 
-      "Wild Splash" at index 1 is this card's own control AND a live unmapped
-      near-miss of D130's op: "Discard the top 5 cards of YOUR deck" is the same
-      game action aimed the other way, which is exactly the sentence
-      `discardOpponentDeckTop` deliberately refuses to carry a `whose:` field for
-      (D104's minimal shape). It stays loudly skipped.
+      "Wild Splash" at index 1 IS THE SAME OP AIMED THE OTHER WAY, and since D131 it
+      SIMULATES: "Discard the top 5 cards of YOUR deck" derives to
+      `discardDeckTop { whose: "self", count: 5 }` off the bare-sentence reader, with
+      230 printed damage in front of it. It was D130's deliberate refusal (the op was
+      opponent-only by D104's minimal shape, and this sentence was the second reading
+      it wanted before widening); D131 took it, so ONE fixture card now carries both
+      directions of one action — index 0 mills the opponent behind a coin, index 1
+      mills its own deck flat. Nothing about the fixture changed to make that true,
+      which is the point: the bytes were already verbatim.
 
       Verbatim off the local D1 (2026-08-01): 170 HP, Water, Stage 1 from Magikarp,
       retreat 3, ×2 Lightning, and NO Resistance — the row's `resistances_json` is
@@ -3771,7 +3780,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       IT IS THE OTHER FLIP COUNT ON THE SAME CONSEQUENT, which is the whole reason
       D130 is a slice and not a one-off: `{ kind: "printed", count: 3 }` against
       Gyarados's `{ kind: "untilTails" }`, feeding a byte-identical
-      `discardOpponentDeckTop` (count 3 against count 2). Count and consequent are
+      `discardDeckTop` (count 3 against count 2). Count and consequent are
       independent axes, demonstrated on two cards rather than asserted in a comment.
 
       Its index-0 "Headbutt" is the control the family always fields: a bare number
@@ -3801,6 +3810,42 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Undersea Tunnel",
         effect: "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.",
       },
+    ],
+  }),
+  /** Skwovet sv03-178 — D131's OPPONENT-side witness: "Nicked Nibble" ({C}, index 0)
+      is "Discard the top card of your opponent's deck." with NO `damage` field at
+      all, so the mill is the entire visible result of the declaration and no number
+      can hide a mis-read.
+
+      IT IS THE SINGULAR BRANCH. The pool prints "the top card" (7 printings) and
+      "the top N cards" (9) and never "the top 1 cards", so the anchor gives the
+      singular its own alternation arm rather than an optional digit group — and this
+      fixture is the end-to-end case for it: the arm that captures NOTHING must still
+      produce `count: 1`, which is the one place the deriver invents a number instead
+      of reading one.
+
+      "Gentle Slap" at index 1 is the control the family always fields — {C} for a
+      flat 10 with no effect text, on the SAME card and the same board, which must
+      mill nothing and emit no loud row. That the two attacks cost the same single {C}
+      is what makes the control sharp here: nothing but the INDEX distinguishes them,
+      so an implementation keyed to the card rather than to the declared attack's text
+      fails on it.
+
+      Verbatim off the local D1 (2026-08-01): 60 HP, Colorless, BASIC (no evolution
+      surgery needed — it can be dealt straight into the Active Spot), retreat 1, ×2
+      Fighting, no Resistance, no Ability. */
+  "sv03-178": battler("sv03-178", {
+    name: "Skwovet",
+    hp: 60,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Nicked Nibble",
+        effect: "Discard the top card of your opponent's deck.",
+      },
+      { cost: ["Colorless"], name: "Gentle Slap", damage: 10 },
     ],
   }),
   /** Krookodile sv01-117 — the "For each heads, <effect>." printing that stays
@@ -5446,6 +5491,47 @@ export const PER_HEADS_PROGRAM_DECK = deckOf({
   "fix-energy": 8, // Basic {C} — pays Undersea Tunnel's {C}{C}{C} and Wreak Havoc's {C}
   "fix-water-energy": 4, // Basic {W} — pays Wugtrio's index-0 "Headbutt" control, and nothing else
   "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active both sides, and the mill's fodder
+});
+
+/** 0.81.0 → 0.82.0: the UNCONDITIONAL MILL, both directions (D131) — "Discard the
+    top [{N} cards|card] of your [opponent's] deck." A DEDICATED deck rather than a
+    reuse of PER_HEADS_PROGRAM_DECK above, for the ordinary reason (that one is
+    seed-pinned to a measured sweep, and adding a line would reshuffle every case in
+    it) and one specific to this slice: the sentences here take NO coin, so the suite
+    needs no seed sweep at all and can be pinned on a single board.
+
+    THE TWO CARDS ARE THE TWO DIRECTIONS, and the second is the widening's own proof:
+      • Skwovet sv03-178 "Nicked Nibble" (idx 0, {C}, NO damage) — the OPPONENT
+        reading, and the SINGULAR branch ("the top card", count 1 with nothing
+        captured). Its idx-1 "Gentle Slap" (also {C}, 10, no effect) is the control.
+      • Gyarados swsh10.5-022 "Wild Splash" (idx 1, {W}{W}{C}{C}, 230) — the OWN-deck
+        reading, on the very card whose idx-0 "Wreak Havoc" mills the OPPONENT behind
+        D130's coin. One card, one action, both directions, and it also carries the
+        only PRINTED DAMAGE in the suite: 230 lands BEFORE the mill (D125's tail
+        placement), which is what the ordering cases assert.
+
+    BOTH SEATS RUN IT — either attacker can be surgeried onto either side, and a mill
+    needs the deck stocked on whichever side is losing cards, which for the self-mill
+    is the ATTACKER's own.
+
+    fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned Active on
+    both sides, so nothing else happens: Wild Splash's 230 cannot KO it (no promotion
+    park to truncate a row sequence) and no defender attack can interleave rows.
+
+    THE DECK IS DEEP ON PURPOSE — 38 fix-titan against a 60-card total (§3.1). Wild
+    Splash mills 5 of the ATTACKER's own deck per declaration off a deck that has
+    already lost 7 to the opening hand and 6 to the prizes, and the deck-out cases
+    reach the shallow end DELIBERATELY through `trimDeckTo` surgery rather than by
+    hoping a board gets there.
+
+    fix-water-energy is here for Wild Splash's {W}{W} and nothing else; fix-energy
+    ({C}) pays its {C}{C} and both of Skwovet's single-{C} attacks. */
+export const DECK_TOP_MILL_DECK = deckOf({
+  "sv03-178": 4, // Skwovet — "Nicked Nibble" at idx 0: discardDeckTop, opponent, count 1 (singular)
+  "swsh10.5-022": 4, // Gyarados — "Wild Splash" at idx 1: discardDeckTop, self, count 5, after 230 damage
+  "fix-energy": 8, // Basic {C} — Skwovet's two attacks, and Wild Splash's {C}{C}
+  "fix-water-energy": 6, // Basic {W} — Wild Splash's {W}{W}, and nothing else
+  "fix-titan": 38, // 340 HP neutral Basic, NO attacks — the pinned Active both sides, and the mill's fodder
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

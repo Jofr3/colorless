@@ -6519,17 +6519,11 @@ it to duplicate).
 `bun run check` GREEN exit 0: **172 → 173 files, 2710 → 2747 tests**. No web/API/DB/
 `@luminous/schema` diff; no `MATCH_RECORD_VERSION` bump.
 
-### Still unmapped in the coin family after D130
+### Still unmapped in the coin family after D130 *(the seven mills item is DONE — D131 below)*
 
-- **The seven UNCONDITIONAL opponent-side mills — the cheapest lever in the engine.**
-  `Discard the top N cards of your opponent's deck.` — Chi-Yu ex `sv02-040`/`-234`/
-  `-259`, Garganacl `sv02-123`, Diggersby `sv03-113`, Paldean Clodsire `sv03-128`,
-  Skwovet `sv03-178`. **Already the right shape for `discardOpponentDeckTop`**; they
-  stay unmapped only because no deriver reads that sentence. One regex + one
-  `deriveAttackEffect` arm. ⚠️ Verbatim-confirm each row first (the ids came from
-  D130's census, not from a per-row read) and check none of them rides a compound
-  effect. Near-misses the anchor must refuse by name: Whiscash `sv03-109` (mills per
-  attached {F} Energy) and Gyarados `swsh10.5-022`'s own "Wild Splash" (own-deck).
+- ~~**The seven UNCONDITIONAL opponent-side mills.**~~ **DONE in D131**, and bigger than
+  forecast: the same anchor also reads the NINE own-deck printings, so the slice landed
+  **16 printings** rather than 7. See the D131 section below.
 - **Melmetal `swsh10.5-046`** — `Flip 2 coins. This attack does 90 more damage for each
   heads.` (`30+`), still the pool's ONLY unmapped printed-count additive fold, still
   refused for being **1 printing** and a live witness. Unchanged by D130.
@@ -6551,3 +6545,95 @@ it to duplicate).
 
 The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
 Slither Wing `sv06.5-026`) and their witnesses are untouched by this slice.
+
+
+## D131 — the UNCONDITIONAL MILL, both directions: `Discard the top [N cards|card] of your [opponent's] deck.` (engine 0.82.0)
+
+**16 printings / 7 distinct clauses on ONE anchored regex and ONE `deriveAttackEffect`
+arm** — the largest single mapping this family has taken and the cheapest per printing.
+Censused 2026-08-01 against the local D1 over the WHOLE effect string. Every one is a
+STANDALONE single sentence, and **9 of the 16 carry printed damage**.
+
+| Clause | Printings | Cards |
+|---|---|---|
+| `Discard the top card of your opponent's deck.` | 4 | Garganacl `sv02-123` + Diggersby `sv03-113` ("Knocking Hammer"), Paldean Clodsire `sv03-128` ("Muddy Hammer"), Skwovet `sv03-178` ("Nicked Nibble") |
+| `Discard the top 2 cards of your opponent's deck.` | 3 | Chi-Yu ex `sv02-040`/`-234`/`-259` ("Jealously Singe") |
+| `Discard the top card of your deck.` | 3 | Fraxure `sv06.5-045`/`-077` ("Dragon Pulse"), Diglett `sv03-103` |
+| `Discard the top 2 cards of your deck.` | 2 | Tyranitar ex `sv03-066`/`-211` ("Mountain Hurl") |
+| `Discard the top 3 cards of your deck.` | 1 | Haxorus `sv06.5-046` ("Dragon Pulse") |
+| `Discard the top 4 cards of your deck.` | 2 | Tyranitar `sv02-135`/`-222` ("Dread Mountain") |
+| `Discard the top 5 cards of your deck.` | 1 | Gyarados `swsh10.5-022` ("Wild Splash") |
+
+**This census is CLOSED. Do not re-run it.**
+
+⚠️ **THE SLICE'S SPEC WAS WRITTEN BY THE PREVIOUS SLICE — that is the lesson.** D130
+shipped the mill op opponent-only (D104's minimal shape) and wrote into its own doc block
+that the own-deck reading was live and unmapped, and that *"the first slice that maps it
+widens this field then, with two readings in hand rather than one guessed at."* D131
+executed that note verbatim with nothing re-derived: `discardOpponentDeckTop` →
+**`discardDeckTop { whose: "self" | "opponent"; count }`**, and the interpreter arm grew
+**one ternary**. **When you decline a widening, write down the condition that would
+warrant it.** The note cost two sentences and bought a 16-printing slice for a regex.
+
+⚠️ **WIDEN THE FIELD, DON'T ADD A MEMBER** (D128's provenance rule in the small). The
+two sentences differ in exactly one word and everything downstream of picking the seat is
+byte-identical. **Gyarados `swsh10.5-022` settles it alone: index 0 mills the OPPONENT
+(D130, behind an until-tails coin), index 1 mills its OWN deck for 5.** One card, one
+action, two directions — and the fixture already carried both sentences verbatim (D130
+fielded "Wild Splash" as its refused near-miss), so the proof case cost zero new bytes
+and one flipped assertion.
+
+⚠️ **TWO CAPTURES IN ONE REGEX IS NOT A D119 VIOLATION.** D119 governs the clause
+TABLE, where a row is a lookup KEY and a two-token row is N rows in disguise. Here both
+tokens land in FIELDS of one op (`count`, `whose`), each has a closed reading, and the
+sentence is a single printed action.
+
+⚠️ **THE SINGULAR IS ITS OWN ALTERNATION BRANCH, NOT `(\d+)?`** — two printed
+SPELLINGS, not one with an optional part: "the top card" never carries a digit, "the top
+N cards" always does, "the top cards" is neither and reads as nothing. The branch does
+**not** filter: "the top 1 cards" is unprinted but unambiguous and is accepted. (The
+first draft's doc + test claimed it was refused; the test caught the claim and the CLAIM
+was corrected, not the regex.)
+
+⚠️ **THE SELF-MILL IS A PRINTED COST, AND §14.3 STAYS AT THE DRAW.** The op can now
+empty the ATTACKER's deck. An OPPONENT mill-out loses in the SAME event batch
+(`DECK_TOP_DISCARDED` < `TURN_ENDED` < `TURN_STARTED` < `GAME_OVER`); a SELF mill-out
+emits **no `GAME_OVER` at all** in that batch and loses a FULL TURN LATER, after the
+opponent passes. Both pinned. The asymmetry is in the rule, not in the op.
+
+⚠️ **NOTHING DOWNSTREAM NEEDED A DIFF, and D113/D130 paid for that in advance.**
+`DECK_TOP_DISCARDED` was already provenance-neutral and keyed to the deck's OWNER, so one
+op emitting on both seats needed no log copy change, no new event and no redact arm.
+
+⚠️ **A CONTROL BECAME A CASE.** `retreatLock.test.ts`'s "does not inherit down the
+attack index" rides Paldean Clodsire `sv03-128`, whose index-1 "Muddy Hammer" was the
+*unsimulated* half of a "one card, one derived attack" control. It now derives a
+DIFFERENT op, which makes the case stronger, not weaker. The fixture doc says so.
+
+⚠️ **THE FIVE REAL NEAR-MISSES the anchor refuses**, all pinned in
+`deckTopMill.test.ts` as "stays LOUD" witnesses: Wiglett `sv01-056` (the same action
+GATED behind a flip — **still unmapped by anything**), Wugtrio `sv01-057` / Gyarados
+`swsh10.5-022` idx 0 (D130's programs — simulated, but by the OTHER reader), Whiscash
+`sv03-109` (a BOARD-COUNTED mill amount — the shape D128 would answer), and **Camerupt
+`sv03-032`** (`Discard the top card of each player's deck. This attack does 100 more
+damage for each Energy card discarded in this way.` — two decks AND a bonus reading WHAT
+was discarded; refused by the bonus reader too, so the whole row stays loud).
+
+`bun run check` GREEN exit 0: **173 → 174 files, 2747 → 2768 tests**. `biome format`
+churn re-measured on a clean tree: **20 files, unchanged**. No web/API/DB/
+`@luminous/schema` diff; no `MATCH_RECORD_VERSION` bump.
+
+### Still unmapped after D131 — the mill neighbourhood
+
+- **Wiglett `sv01-056` "Dig a Little"** — `Flip a coin. If heads, discard the top card of
+  your opponent's deck.` The op and the gate (`coinFlipGate`) both exist; nothing reads
+  this sentence. **1 printing**, so D121's warrant is unmet — and it is a live witness in
+  `deckTopMill.test.ts`. Re-point it before mapping it.
+- **Whiscash `sv03-109` "Raging and Rocking"** — `For each {F} Energy attached to this
+  Pokémon, discard the top card of your opponent's deck.` A board-counted repeat with no
+  coin: D128's `attachedEnergy` count feeding D130's expansion, on a non-coin site that
+  does not exist yet. **1 printing.**
+- **Camerupt `sv03-032` "Eruption"** — two decks in one sentence AND a damage bonus that
+  counts **what was discarded**. Needs a mill whose RESULT is readable by the bonus
+  reader, which is a channel between two stages — exactly the thing D130 said to check
+  for an existing input first. **1 printing.**

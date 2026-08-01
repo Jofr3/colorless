@@ -1296,7 +1296,8 @@ import type { GameState, Seat } from "./types";
     no-program ending. The value that crosses the gap is the program itself.
 
     THAT IS ONLY LEGAL BECAUSE THE OP IS DETERMINISTIC AND NEVER PARKS.
-    `discardOpponentDeckTop` consumes no `rngState`, asks no question and clamps to
+    `discardDeckTop` (named `discardOpponentDeckTop` until D131 widened it) consumes
+    no `rngState`, asks no question and clamps to
     the deck, so N copies of it is N ordinary steps. The two "For each heads"
     printings NOT built are exactly the two where that fails: Krookodile sv01-117
     discards an Energy (a `discardEnergy` that PARKS on a choice — N heads would be N
@@ -1336,7 +1337,7 @@ import type { GameState, Seat } from "./types";
     it redacts STATE, and a discard pile is public in any case.
 
     Cost: 2 skeleton regexes, 1 `AttackCoinFlip` member (`programPerHeads`), 1
-    `EffectOp` member (`discardOpponentDeckTop`) + its interpreter arm, 1 new arm and
+    `EffectOp` member (`discardOpponentDeckTop`, since renamed) + its interpreter arm, 1 new arm and
     1 `const` → `let` in attack.ts's flip block, 1 `modifierSimulated` exclusion, and
     1 reworded log line. ZERO new events, `AttackFlipCount` members,
     `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
@@ -1344,7 +1345,71 @@ import type { GameState, Seat } from "./types";
     continuous.ts diff. NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState`
     shape changed and no event shape changed. No web/API/DB/`@luminous/schema`
     diff. */
-export const engineVersion = "0.81.0";
+/** 0.82.0 — P3-M5: the UNCONDITIONAL MILL, both directions (D131). "Discard the
+    top [{N} cards|card] of your [opponent's] deck." now SIMULATES on ONE anchored
+    regex and ONE deriver arm — **16 printings / 7 distinct clauses**, the largest
+    single mapping any slice in this family has taken, and the cheapest per printing.
+    Censused against the local D1 (2026-08-01) over the WHOLE effect string: 7
+    opponent-side (Chi-Yu ex sv02-040/-234/-259 "Jealously Singe", Garganacl
+    sv02-123 + Diggersby sv03-113 "Knocking Hammer", Paldean Clodsire sv03-128
+    "Muddy Hammer", Skwovet sv03-178 "Nicked Nibble") and 9 own-side (Fraxure
+    sv06.5-045/-077 + Haxorus sv06.5-046 "Dragon Pulse", Gyarados swsh10.5-022 "Wild
+    Splash", Tyranitar sv02-135/-222 "Dread Mountain", Tyranitar ex sv03-066/-211
+    "Mountain Hurl", Diglett sv03-103 "Hole-Diggin' Noggin").
+
+    THE OP WAS ALREADY BUILT, AND THAT IS THE HEADLINE. D130 shipped the mill for
+    the coin family and wrote into its own doc block that it was OPPONENT-ONLY by
+    D104's minimal shape, that the own-deck reading ("Wild Splash") was a live
+    unmapped sentence, and that "the first slice that maps it widens this field then,
+    with two readings in hand rather than one guessed at". This is that slice, taken
+    verbatim off that note: `discardOpponentDeckTop` → `discardDeckTop` with a
+    `whose: "self" | "opponent"` field, and the interpreter arm grew ONE ternary.
+    **A forecast a previous slice wrote down was executable a session later without
+    re-deriving anything** — which is the return on stating the widening rule at the
+    time you decline to take it.
+
+    WIDEN THE FIELD, DON'T ADD A MEMBER (D128's provenance rule in the small). The
+    two sentences differ in exactly one word and everything downstream of picking the
+    seat is byte-identical, so a second op member would have been two copies of one
+    `slice`. Gyarados swsh10.5-022 settles it on its own: index 0 mills the OPPONENT
+    (behind D130's until-tails coin), index 1 mills its OWN deck for 5 — one card,
+    one action, two directions. The fixture already carried both sentences verbatim
+    because D130 fielded "Wild Splash" as its refused near-miss, so the widening's
+    proof case needed no new bytes.
+
+    TWO CAPTURES IN ONE REGEX IS NOT A D119 VIOLATION. D119 ("if TWO things vary it
+    is not one token") governs the clause TABLE, where a row is a lookup key and a
+    two-token row is N rows in disguise. Here both varying tokens land in FIELDS of
+    one op — `count` and `whose` — each has a closed reading, and the printed
+    sentence is a single action. The singular gets its OWN alternation branch rather
+    than an optional `(\d+)?`, because "the top card" (7 printings) and "the top N
+    cards" (9) are two printed SPELLINGS: one never carries a digit, the other always
+    does, and "the top cards" is neither and reads as nothing. The branch does not
+    filter — "the top 1 cards" is unprinted but unambiguous, and refusing it would
+    cost a digit class that exists to reject one string.
+
+    THE SELF-MILL IS A COST, AND §14.3 STILL LANDS AT THE DRAW. Nine of the sixteen
+    printings mill their OWN deck for damage (Haxorus 230 for 3 cards, Tyranitar 230
+    for 4), so the op can now empty the ATTACKER's deck — and the deck-out rule is
+    unchanged by that: the loss is owed at that player's next draw step (flow.ts
+    `startTurn`), not the instant the deck runs dry. Attacking ends the turn, so an
+    opponent-mill-out surfaces in the same event batch and a self-mill-out surfaces a
+    full turn later. Both are pinned.
+
+    NINE PRINTINGS CARRY PRINTED DAMAGE, which the tail placement (D125) already
+    handles with no new thought: the ops run AFTER the §8.5 pipeline, so "230 damage,
+    then discard 3 of your own" resolves in the printed order for free.
+
+    Cost: 1 regex, 1 deriver arm, 1 RENAMED + widened `EffectOp` member, 1 ternary in
+    its interpreter arm. ZERO new events, ops, `AttackCoinFlip`/`AttackFlipCount`/
+    `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
+    prompts, error codes, registry rows, redact arms or log arms — the log row was
+    already provenance-neutral and seat-owner-keyed (D113/D130), which is exactly the
+    property that let one op start emitting on both seats with no copy change. No
+    rng.ts / continuous.ts / attack.ts diff. NO MATCH_RECORD_VERSION BUMP — no
+    `MatchRecord`/`GameState` shape and no event shape changed. No web/API/DB/
+    `@luminous/schema` diff. */
+export const engineVersion = "0.82.0";
 
 export type {
   ApplyResult,

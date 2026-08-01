@@ -150,7 +150,7 @@ const FOR_EACH_HEADS = [
 
 /** Gyarados swsh10.5-022 "Wreak Havoc", verbatim — the printing that USED to be the
     third member of the list above and is MAPPED as of D130 (`programPerHeads` over
-    `untilTails`, expanding to one `discardOpponentDeckTop { count: 2 }` per heads).
+    `untilTails`, expanding to one `discardDeckTop { whose: "opponent", count: 2 }` per heads).
     Kept here, out of the loud list, for one job: it is the sentence closest to this
     file's five and it must now derive to something OTHER than a fold, which is a
     sharper disjointness claim than a null ever was. */

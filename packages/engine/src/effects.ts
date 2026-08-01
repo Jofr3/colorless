@@ -893,11 +893,11 @@ export type EffectOp =
       benchOnly?: true;
       discardRest?: true;
     }
-  /** MILL: move the top `count` cards of the OPPONENT's deck into the OPPONENT's
+  /** MILL: move the top `count` cards of `whose` deck into that same player's
       discard pile, in deck order (top first — the order the pile gains them, §2).
-      D130's op, and the second producer of `DECK_TOP_DISCARDED` (the first is
-      `attachFromTop`'s `discardRest` above); the event's `seat` is the deck's
-      OWNER on both, which here is the NON-actor.
+      D130's op, widened by D131; the third producer of `DECK_TOP_DISCARDED` (the
+      others are `attachFromTop`'s `discardRest` above and, since D131, this op on
+      either side); the event's `seat` is the deck's OWNER on all of them.
 
       Deterministic in the strongest sense the op vocabulary has: it consumes NO
       `rngState` (the cards are taken in the order they already sit in), it never
@@ -915,23 +915,30 @@ export type EffectOp =
       step and not one instant earlier, which is a rule about WHERE the loss is
       owed, not a leniency.
 
-      OPPONENT-ONLY AND COUNT-ONLY, by D104's minimal-shape rule. Both printings
-      that reach it are opponent-side ("discard the top N cards of your opponent's
-      deck") and neither filters, so there is no `whose:` discriminator and no
-      `CardFilter` here: the pool's own-deck mill ("Discard the top 5 cards of your
-      deck" — Gyarados swsh10.5-022's OTHER attack, Wild Splash) is a live sentence
-      nobody has mapped, and the first slice that maps it widens this field then,
-      with two readings in hand rather than one guessed at. The unconditional
-      opponent-side mills (Chi-Yu ex sv02-040 "Discard the top 2 cards of your
-      opponent's deck.", Garganacl sv02-123, Skwovet sv03-178 and four more) are
-      the same op with no coin in front of them and stay unmapped only because no
-      deriver reads their sentence yet — this op is already the right shape for
-      them, which is the check that says it is not overfitted to the coin.
+      `whose` IS A WIDENED FIELD, NOT A SECOND MEMBER (D131, D128's provenance rule
+      applied in the small): the printed sentences differ in exactly one word — "your
+      deck" against "your opponent's deck" — and everything downstream of picking the
+      seat is byte-identical. D130 deliberately shipped this op opponent-only, saying
+      the first slice to map the own-deck reading should widen it "with two readings
+      in hand rather than one guessed at"; D131 is that slice, and the two readings
+      are 16 printings split 7/9. Gyarados swsh10.5-022 prints BOTH on one card —
+      "Wreak Havoc" mills the opponent behind a coin, "Wild Splash" mills its own
+      deck for 5 — which is the sharpest possible evidence that the direction is a
+      FIELD of one action rather than two actions.
+
+      STILL COUNT-ONLY, by D104's minimal-shape rule: no printing in the pool filters
+      what it mills, so there is no `CardFilter` here.
+
+      MILLING YOUR OWN DECK IS A REAL COST, NOT A BUG — Tyranitar's "Dread Mountain"
+      (230 for {D}{D}) pays 4 cards off its own deck for the number, and §14.3
+      deck-out is checked at the DRAW, so the self-mill's danger lands on the
+      attacker's NEXT turn. That asymmetry is entirely in the rule, not in this op:
+      the two directions run the same code.
 
       Naming the uids on the event leaks nothing: the discard pile is PUBLIC, so a
       redact.ts arm would hide from the opponent exactly what the opponent can pick
       up and read. */
-  | { op: "discardOpponentDeckTop"; count: number }
+  | { op: "discardDeckTop"; whose: "self" | "opponent"; count: number }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
       — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
@@ -1644,6 +1651,40 @@ const REVEAL_BOTTOM_SUPPORTER =
 // skipped path. No /i, for the family's stated reason: capitalisation + the
 // anchors are what keep a mid-sentence clause off the derived path.
 const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
+// D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
+// [N cards|card] of your [opponent's] deck." 16 printings / 7 distinct clauses
+// (censused against the local D1 2026-08-01), split 7 opponent-side (Chi-Yu ex
+// sv02-040/-234/-259, Garganacl sv02-123, Diggersby sv03-113, Paldean Clodsire
+// sv03-128, Skwovet sv03-178) and 9 own-side (Fraxure sv06.5-045/-077, Haxorus
+// sv06.5-046, Gyarados swsh10.5-022 "Wild Splash", Tyranitar sv02-135/-222,
+// Tyranitar ex sv03-066/-211, Diglett sv03-103).
+//
+// TWO TOKENS VARY AND IT IS STILL ONE PATTERN, which does not contradict D119 —
+// that rule is about the clause TABLE, where a row is a lookup key and a
+// two-token row is really N rows in a trench coat. Here both tokens land in
+// FIELDS of one op (`count`, `whose`), each has a CLOSED reading, and the
+// sentence they sit in is a single printed action. D119's test — "if two things
+// vary it is not one token" — is a test for whether you have one CLAUSE, and a
+// regex with two captures is honest about having two.
+//
+// THE SINGULAR IS A SEPARATE BRANCH, NOT `(\d+)?`, because the two are two printed
+// SPELLINGS and not one with an optional part: "the top card" (7 printings) carries
+// no digits at all, "the top N cards" (9) always carries one, and "the top cards"
+// — plural with no number — is neither and has no reading. The undefined capture
+// means one, invented at the site. The branch is about spelling and does NOT filter:
+// "the top 1 cards" is not English and no card prints it, but `\d+` accepts it and
+// reads it as one, which is the only reading it could have.
+//
+// The near-misses are all real catalog rows and every one is refused by the
+// anchors alone: Wiglett sv01-056 ("Flip a coin. If heads, discard…" — gated),
+// Wugtrio sv01-057 / Gyarados swsh10.5-022 index 0 (D130's per-heads programs),
+// Whiscash sv03-109 ("For each {F} Energy attached to this Pokémon, discard…" —
+// a board-counted amount, and the sentence Krookodile's warning above is about),
+// and Camerupt sv03-032 ("Discard the top card of EACH PLAYER'S deck. This attack
+// does 100 more damage for each Energy card discarded in this way." — two decks
+// AND a damage bonus that reads what was discarded; a genuinely different slice
+// that must land loudly). No /i, for the family's stated reason.
+const DECK_TOP_MILL = /^Discard the top (?:(\d+) cards|card) of your (opponent['’]s )?deck\.$/;
 // The additive damage-scaling family — "This attack does N more damage for each
 // <resource>.", anchored end to end like every rule here. It is NOT a
 // deriveAttackEffect op: this folds N × (a resource counted at declaration) into
@@ -2541,7 +2582,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
       ? {
           kind: "programPerHeads",
           flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardOpponentDeckTop", count }],
+          ops: [{ op: "discardDeckTop", whose: "opponent", count }],
         }
       : null;
   }
@@ -2556,7 +2597,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
       ? {
           kind: "programPerHeads",
           flips: { kind: "untilTails" },
-          ops: [{ op: "discardOpponentDeckTop", count }],
+          ops: [{ op: "discardDeckTop", whose: "opponent", count }],
         }
       : null;
   }
@@ -2819,6 +2860,26 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // A printed 0 is not a real card and would derive to a silent no-op — the
     // same guard the exact-N discard rules carry; leave it on the loud path.
     if (amount >= 1) return [{ op: "damageSelf", amount }];
+  }
+
+  // 15. "Discard the top [N cards|card] of your [opponent's] deck." — D131's
+  //     UNCONDITIONAL MILL, the biggest single mapping this reader has taken (16
+  //     printings). It needed NO new op and NO new mechanism: D130 built the
+  //     action for the coin family and predicted this exact slice would widen it
+  //     with `whose`, so all that was missing was a reader for the bare sentence.
+  //     Runs at `attack.ts`'s TAIL like every op here, which is right for both
+  //     directions — nine of these printings carry printed damage (Haxorus's 230,
+  //     Tyranitar ex's 120) and the mill is what the attack does AFTER it.
+  match = DECK_TOP_MILL.exec(effect);
+  if (match !== null) {
+    // The singular branch leaves group 1 undefined and means exactly one card.
+    const count = match[1] === undefined ? 1 : Number(match[1]);
+    const whose = match[2] === undefined ? "self" : "opponent";
+    // `count >= 1` is the guard every arm here carries: a printed "top 0 cards" is
+    // not a real card and would derive to a silent no-op. No ceiling — the count
+    // is CLAMPED to the deck by the op (§8.6), so a malformed 999 mills a deck and
+    // stops, which is a legal board state rather than a runaway loop.
+    if (count >= 1) return [{ op: "discardDeckTop", whose, count }];
   }
 
   return null;

@@ -806,12 +806,21 @@ function stepOp(
       }
       return { park: { kind: "attachCards", candidates, targets, max, note: attachNote(op) } };
     }
-    case "discardOpponentDeckTop": {
-      // D130 — the MILL. The top `count` of the OPPONENT's deck into the
-      // OPPONENT's discard, in deck order (top first — the order the pile gains
-      // them, §2). No choice, so no park; no filter, so no scan; no rng, so the
-      // faces that decided how many times this runs are the only randomness in the
-      // sentence. That is what makes it safe to repeat once per heads.
+    case "discardDeckTop": {
+      // D130 — the MILL, widened to either deck by D131. The top `count` of
+      // `whose` deck into that same player's discard, in deck order (top first —
+      // the order the pile gains them, §2). No choice, so no park; no filter, so no
+      // scan; no rng, so the faces that decided how many times this runs are the
+      // only randomness in the sentence. That is what makes it safe to repeat once
+      // per heads.
+      //
+      // `whose` PICKS THE SEAT AND NOTHING ELSE — that one ternary is the entire
+      // difference between "Discard the top 5 cards of your deck" (Gyarados
+      // swsh10.5-022 "Wild Splash") and "…of your opponent's deck" (its own index-0
+      // "Wreak Havoc"), which is why D131 widened the field instead of adding a
+      // member. Note the self-mill can empty the ATTACKER's deck, and the deck-out
+      // rule below applies to it identically: the attacker loses at THEIR next draw
+      // step, not the instant the deck runs dry.
       //
       // CLAMPED BY `slice`, which is the whole of the "do as much as you can" rule
       // here: a deck shallower than `count` gives up everything it has and the
@@ -825,7 +834,7 @@ function stepOp(
       // produce): the sibling producer's "only fires with ≥1" rule, and the reason
       // it matters here is that a heads-count of N on an empty deck would
       // otherwise announce N rows about nothing having happened.
-      const victim = otherSeat(ctx.seat);
+      const victim = op.whose === "self" ? ctx.seat : otherSeat(ctx.seat);
       const side = state.players[victim];
       const milled = side.deck.slice(0, Math.max(0, op.count));
       if (milled.length === 0) return { done: state };

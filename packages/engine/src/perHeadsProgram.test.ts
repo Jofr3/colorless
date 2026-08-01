@@ -52,7 +52,7 @@ import {
 //
 // TWO PRINTINGS ACROSS TWO FLIP-COUNT SOURCES IS WHAT MAKES IT A SLICE. Wugtrio is
 // `{ kind: "printed", count: 3 }` and Gyarados is `{ kind: "untilTails" }`, feeding
-// a byte-identical `discardOpponentDeckTop` (count 3 against count 2). D128's doc
+// a byte-identical `discardDeckTop` (count 3 against count 2). D128's doc
 // block has claimed since it was written that the flip COUNT and the flip
 // CONSEQUENT are independent axes; this is the first slice that DEMONSTRATES it
 // rather than asserting it, and it reuses `AttackFlipCount` wholesale — that union
@@ -66,7 +66,7 @@ import {
 // block below asserts all four sibling readers return null for both sentences.
 //
 // THE OP IS DETERMINISTIC AND NEVER PARKS, AND THAT IS WHY THE EXPANSION IS LEGAL.
-// `discardOpponentDeckTop` consumes no `rngState` and asks no question, so N copies
+// `discardDeckTop` consumes no `rngState` and asks no question, so N copies
 // of it is N ordinary steps. The two "For each heads" printings D130 did NOT build
 // are exactly the two where that fails: Krookodile sv01-117 discards an Energy (a
 // `discardEnergy` that PARKS on a choice — N heads would be N sequential parks
@@ -315,17 +315,23 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(attack?.cost).toEqual(["Colorless"]);
     expect(FIXTURE_POOL["swsh10.5-022"]?.attacks).toHaveLength(2);
     expect(FIXTURE_POOL["swsh10.5-022"]?.abilities).toBeNull();
-    // ITS OTHER ATTACK IS THE OP AIMED THE OTHER WAY, and it stays unmapped: "Wild
-    // Splash" discards the top 5 of YOUR OWN deck. That is exactly the sentence
-    // `discardOpponentDeckTop` refuses to grow a `whose:` field for until a second
-    // reading is actually in hand (D104's minimal shape), and having it printed on
-    // the same card as this slice's own sentence is what keeps the refusal honest.
+    // ITS OTHER ATTACK IS THE OP AIMED THE OTHER WAY: "Wild Splash" discards the
+    // top 5 of YOUR OWN deck. D130 kept it deliberately unmapped — the sentence
+    // `discardOpponentDeckTop` refused to grow a `whose:` field for until a second
+    // reading was in hand (D104's minimal shape) — and D131 mapped it, widening
+    // that op to `discardDeckTop { whose }`. So the assertion FLIPPED rather than
+    // being deleted: the coin reader must still refuse it (a bare sentence is not a
+    // flip sentence, which is the reader boundary this case exists to pin), while
+    // the op reader now claims it. Having both directions printed on ONE card is
+    // what made the widening's proof case free.
     expect(FIXTURE_POOL["swsh10.5-022"]?.attacks?.[1]?.name).toBe("Wild Splash");
     expect(FIXTURE_POOL["swsh10.5-022"]?.attacks?.[1]?.effect).toBe(
       "Discard the top 5 cards of your deck.",
     );
     expect(deriveAttackCoinFlip("Discard the top 5 cards of your deck.")).toBeNull();
-    expect(deriveAttackEffect("Discard the top 5 cards of your deck.")).toBeNull();
+    expect(deriveAttackEffect("Discard the top 5 cards of your deck.")).toEqual([
+      { op: "discardDeckTop", whose: "self", count: 5 },
+    ]);
   });
 
   it("keeps the card facts the boards are built on", () => {
@@ -450,7 +456,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
     expect(deriveAttackCoinFlip(UNDERSEA_TUNNEL)).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
-      ops: [{ op: "discardOpponentDeckTop", count: 3 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
     });
     // THE MEMBER IS THE POINT, not just the payload: a `perHeads` reading would fold
     // a number this sentence does not print, and a `bonusOnHeads` one would add it to
@@ -469,7 +475,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
     expect(deriveAttackCoinFlip(WREAK_HAVOC)).toEqual({
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
-      ops: [{ op: "discardOpponentDeckTop", count: 2 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
     });
     // THE SLICE, IN ONE ASSERTION: same member, same op, DIFFERENT flip count. Count
     // and consequent are independent axes — D128's doc block has claimed it since it
@@ -500,14 +506,14 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
     ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
-      ops: [{ op: "discardOpponentDeckTop", count: 3 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
     });
     expect(
       deriveAttackCoinFlip(FIXTURE_POOL["swsh10.5-022"]?.attacks?.[HAVOC_INDEX]?.effect ?? ""),
     ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
-      ops: [{ op: "discardOpponentDeckTop", count: 2 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
     });
   });
 
@@ -525,7 +531,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
         ).toEqual({
           kind: "programPerHeads",
           flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardOpponentDeckTop", count: mill }],
+          ops: [{ op: "discardDeckTop", whose: "opponent", count: mill }],
         });
       }
     }
@@ -537,7 +543,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
       ).toEqual({
         kind: "programPerHeads",
         flips: { kind: "untilTails" },
-        ops: [{ op: "discardOpponentDeckTop", count: mill }],
+        ops: [{ op: "discardDeckTop", whose: "opponent", count: mill }],
       });
     }
     // THE TWO NUMBERS ARE READ INDEPENDENTLY, stated on the one sentence where they
@@ -548,7 +554,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
     expect(swapped).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 2 },
-      ops: [{ op: "discardOpponentDeckTop", count: 9 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 9 }],
     });
     expect(swapped).not.toEqual(
       deriveAttackCoinFlip(
@@ -676,7 +682,7 @@ describe("constructed near-misses stay NULL", () => {
     ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 2 },
-      ops: [{ op: "discardOpponentDeckTop", count: 1 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
     });
   });
 
@@ -700,7 +706,7 @@ describe("constructed near-misses stay NULL", () => {
     ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 10 },
-      ops: [{ op: "discardOpponentDeckTop", count: 3 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
     });
     expect(
       deriveAttackCoinFlip("Flip 11 coins. For each heads, discard the top 3 cards of your opponent's deck."),
@@ -731,12 +737,12 @@ describe("constructed near-misses stay NULL", () => {
     // …while the smallest REAL value one digit away is read fine on both.
     expect(
       deriveAttackCoinFlip("Flip 3 coins. For each heads, discard the top 1 cards of your opponent's deck."),
-    ).toHaveProperty("ops", [{ op: "discardOpponentDeckTop", count: 1 }]);
+    ).toHaveProperty("ops", [{ op: "discardDeckTop", whose: "opponent", count: 1 }]);
     expect(
       deriveAttackCoinFlip(
         "Flip a coin until you get tails. For each heads, discard the top 1 cards of your opponent's deck.",
       ),
-    ).toHaveProperty("ops", [{ op: "discardOpponentDeckTop", count: 1 }]);
+    ).toHaveProperty("ops", [{ op: "discardDeckTop", whose: "opponent", count: 1 }]);
   });
 
   it("is CASE SENSITIVE — there is no /i on either pattern", () => {
@@ -829,12 +835,12 @@ describe("constructed near-misses stay NULL", () => {
     expect(deriveAttackCoinFlip(`${UNDERSEA_TUNNEL} `)).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
-      ops: [{ op: "discardOpponentDeckTop", count: 3 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
     });
     expect(deriveAttackCoinFlip(`  ${WREAK_HAVOC}\n`)).toEqual({
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
-      ops: [{ op: "discardOpponentDeckTop", count: 2 }],
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
     });
   });
 
@@ -1318,7 +1324,7 @@ describe("the rngState account — exactly the sequence, no more and no fewer st
     //
     //   • the resulting rngState IS `after.rngState` — so exactly the sequence's
     //     worth of steps was consumed, and nothing else in this attack touched the
-    //     rng. THE EXPANDED OPS ARE THE POINT: `discardOpponentDeckTop` consumes no
+    //     rng. THE EXPANDED OPS ARE THE POINT: `discardDeckTop` consumes no
     //     randomness, so N copies of it must leave the state exactly where the flips
     //     left it. A mill that reached for the rng would fail here on every seed with
     //     a heads in it, and nowhere else in the file.

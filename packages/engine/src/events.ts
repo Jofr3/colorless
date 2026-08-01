@@ -301,18 +301,22 @@ export type GameEvent =
       whole game fact, and it is deliberately stated without a cause: TWO ops
       produce this row and they are not the same kind of effect.
 
-      **`seat` IS THE DECK'S OWNER, on both producers** — the player who lost the
-      cards, exactly as DAMAGE_DEALT's seat names the defender. On one producer
-      that is the actor and on the other it is not, which is why the field is the
-      OWNER rather than "the player whose card did it":
+      **`seat` IS THE DECK'S OWNER, on every producer** — the player who lost the
+      cards, exactly as DAMAGE_DEALT's seat names the defender. It is sometimes the
+      actor and sometimes not, and since D131 ONE producer is both depending on its
+      own field, which is why this is the OWNER rather than "the player whose card
+      did it":
         • attachFromTop `discardRest` — Hydreigon "Tri Howl"'s printed "Discard the
           other cards": the looked-at top cards a from-the-top ATTACH did NOT
           attach. Own deck, so `seat` is the ACTOR. The cards that WERE attached
           are named by their own ENERGY_ATTACHED rows, never here.
-        • discardOpponentDeckTop (D130) — the MILL: "For each heads, discard the
-          top N cards of your opponent's deck" (Wugtrio sv01-057, Gyarados
-          swsh10.5-022). Opponent's deck, so `seat` is the NON-ACTOR, and the row
-          belongs to the seat whose deck shrank.
+        • discardDeckTop (D130, widened D131) — the MILL, and the ONE producer that
+          can be either seat: its `whose` field aims the same action at the
+          opponent's deck ("Discard the top 2 cards of your opponent's deck" —
+          Chi-Yu ex sv02-040; "For each heads, …" — Wugtrio sv01-057) or at the
+          actor's OWN ("Discard the top 5 cards of your deck" — Gyarados
+          swsh10.5-022 "Wild Splash"). `seat` is the deck's owner either way, which
+          is exactly why this event never needed to name a cause.
       A consumer that read `seat` as "whoever is taking the turn" would credit
       every mill to the wrong player — the same mistake ENERGY_DISCARDED shipped
       once and now carries a separate `actor` to prevent. This event needs no

@@ -619,12 +619,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     }
     case "DECK_TOP_DISCARDED": {
-      // TWO producers, and the wording is PROVENANCE-NEUTRAL because of it (D113's
+      // THREE producers, and the wording is PROVENANCE-NEUTRAL because of it (D113's
       // rule: reuse the event, fix the message so it cannot lie):
       //   • Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at
       //     cards that were NOT attached, off the actor's OWN deck.
-      //   • D130's mill (discardOpponentDeckTop) — "For each heads, discard the
-      //     top N cards of your opponent's deck", off the NON-actor's deck.
+      //   • the mill (discardDeckTop, D130 + D131) — "Discard the top N cards of
+      //     your [opponent's] deck", off EITHER deck depending on the op's `whose`.
+      // That third case is why the wording had to stay neutral rather than merely
+      // provenance-free: one op now produces rows on both seats, so a message that
+      // named the actor would be wrong half the time from a single call site.
       // The old copy said "discarded N LOOKED-AT cards", which is true of the
       // first and a flat lie about the second: nobody looked at a milled card.
       // The "looked-at" flavour is not lost — Tri Howl's own DECK_TOP_REVEALED and
