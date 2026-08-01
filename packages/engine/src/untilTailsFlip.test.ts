@@ -990,13 +990,13 @@ describe("constructed near-misses stay LOUD", () => {
       "Flip a coin until you get tails. This attack does 30 damage for each head.",
       // A NON-BREAKING SPACE where an ASCII one is printed — the invisible drift.
       `Flip a coin until you get tails.${NBSP}This attack does 30 damage for each heads.`,
-      // A CURLY APOSTROPHE variant. None of the FIVE sentences THIS file maps
-      // contains an apostrophe at all, so it is built on the nearest family sentence
-      // that does — Gyarados's, which D130 maps and which must therefore be refused
-      // HERE for the ordinary reason (it is not a fold) and refused THERE for the
-      // U+2019. The pool holds ZERO U+2019, so a hand-retyped near-miss is the only
-      // way one enters the codebase at all.
-      "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent’s deck.",
+      // (A CURLY APOSTROPHE variant of Gyarados's sentence used to sit here. It was
+      // never this file's to refuse: none of the FIVE sentences THIS file maps
+      // contains an apostrophe, so the string was borrowed from D130's family, and it
+      // was pinned null on the strength of the U+2019 — which the D135 review found
+      // to be a missing `['’]` class rather than a property of the sentence. D130's
+      // suite now asserts it ACCEPTED, and this list keeps only near-misses of the
+      // folds this file actually owns.)
       // A SECOND CONSEQUENT riding the same sequence — the shape the `$` exists for.
       // No pool printing extends this exact sentence today, which is precisely why the
       // guard is pinned now: the first one that does must land loudly rather than

@@ -802,11 +802,8 @@ describe("constructed near-misses stay NULL", () => {
       "Flip 3 coins.  For each heads, discard the top 3 cards of your opponent's deck.",
       // A NON-BREAKING SPACE where an ASCII one is printed.
       `Flip 3 coins.${NBSP}For each heads, discard the top 3 cards of your opponent's deck.`,
-      // A CURLY APOSTROPHE, on both arms. The pool holds ZERO U+2019, so a
-      // hand-retyped near-miss is the only way one enters the codebase — and it would
-      // silently drop both cards onto the loud path with no number to notice it by.
-      `Flip 3 coins. For each heads, discard the top 3 cards of your opponent${RSQUO}s deck.`,
-      `Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent${RSQUO}s deck.`,
+      // (The CURLY APOSTROPHE pair used to sit here, refused. It is now ACCEPTED and
+      // asserted below — see the block after this loop for why that was the bug.)
       // "coin" for "coins" and "coins" for "coin" — the one-letter swap between the
       // two arms' own leading sentences.
       "Flip 3 coin. For each heads, discard the top 3 cards of your opponent's deck.",
@@ -842,6 +839,32 @@ describe("constructed near-misses stay NULL", () => {
       flips: { kind: "untilTails" },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
     });
+  });
+
+  it("ACCEPTS the U+2019 spelling of `opponent's` on both arms — the class, not a near-miss", () => {
+    // This pair was pinned as REFUSED until the D135 review, on the reasoning that the
+    // pool holds zero U+2019 so only a hand-retype could produce one. True, and beside
+    // the point: `effects.ts` states the opposite convention at the top of the regex
+    // block — every sibling reading this same noun phrase (DECK_TOP_MILL,
+    // FLIP_DECK_TOP_MILL, DEFENDER_NOW…) carries `['’]` explicitly "so a re-ingest
+    // changing only punctuation cannot silently un-derive" the sentence. These two
+    // regexes were the ones that missed it.
+    //
+    // The asymmetry is what made it a bug rather than a style slip. A catalog
+    // re-ingest normalising to U+2019 would leave the UNCONDITIONAL mills deriving
+    // (D131 has the class) while these two dropped to the loud path — a regression
+    // that reads as "two cards broke", with the punctuation nowhere in sight. Same
+    // noun phrase, same slice, so it is one rule or it is nothing.
+    //
+    // Asserted as EQUALITY WITH THE STRAIGHT FORM, not merely as non-null: the point
+    // is that the apostrophe is not semantic, so the two spellings must produce the
+    // same member, not merely both produce one.
+    for (const straight of [UNDERSEA_TUNNEL, WREAK_HAVOC]) {
+      const curly = straight.replace("opponent's", `opponent${RSQUO}s`);
+      expect(curly).not.toBe(straight); // the rewrite actually fired
+      expect(deriveAttackCoinFlip(curly)).toEqual(deriveAttackCoinFlip(straight));
+      expect(deriveAttackCoinFlip(curly)).not.toBeNull();
+    }
   });
 
   it("leaves the THREE out-of-scope printings on the loud path, on every reader", () => {

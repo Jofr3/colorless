@@ -640,13 +640,21 @@ describe("logFromEvents — attachFromTop + mill (M5): DECK_TOP_DISCARDED", () =
     // the NON-actor, so a row credited to the turn-taker would name the wrong
     // player entirely.
     expect(line({ type: "DECK_TOP_DISCARDED", seat: "p2", uids: ["p2#0"] })).toEqual({
-      text: "discarded 1 card from the top of their deck",
+      text: "had 1 card discarded from the top of their deck",
       who: "p2",
     });
     expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0", "p1#1"] })).toEqual({
-      text: "discarded 2 cards from the top of their deck",
+      text: "had 2 cards discarded from the top of their deck",
       who: "p1",
     });
+    // The VOICE is load-bearing, not stylistic. Rows render after their seat's
+    // name, so an active verb would assert that the SEAT did it — and on a mill
+    // the seat is the victim, so "P2 discarded 2 cards" credits the milling to the
+    // player who lost them. Provenance-neutral wording (no "looked-at") does not
+    // fix that; only the passive does.
+    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0"] }).text).not.toMatch(
+      /^discarded/,
+    );
     // The word the mill made false, named as an ABSENCE: this row must not claim
     // anybody looked at these cards.
     expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0"] }).text).not.toContain(

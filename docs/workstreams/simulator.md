@@ -7319,3 +7319,142 @@ neighbourhood — do not re-run it.
 - **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132/D133/D134: a channel from
   the §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt
   `sv03-032`. Do it last or not at all, and do it *with* Camerupt.
+
+## D136 — the FIRST code review of D96–D135 (engine unchanged, 0.86.0)
+
+Not a slice. `/code-review` over `git diff origin/backend...HEAD` — **25 commits, 50
+files, ~33k lines, D112–D135** — the first review this branch has had since D96, run at
+the user's trigger. It is **user-triggered**: no session can launch it, which is why all
+24 autoloop sessions ended by flagging it and none could clear it.
+
+**Three findings: one medium, two low. Nothing structural.**
+
+### What the review CLEARED — the more informative half
+
+Chased and came back clean, so a future slice can stop re-deriving these:
+
+- the retreat-block lifetime in `runCheckup` (the `endedSeat`-only paralysis clear gives
+  the printed duration on **all four** turn orderings, D112);
+- all three bench→Active routes stamping `promotedTurn`, with no stale-flag path —
+  `clearOnLeavingActive`, `switchInto` and `placeEvolution` are the only three
+  `noConditions()` sites and all clear `retreatBlocked` (D124);
+- `gust` / `switchOwn` both routing through `switchInto`;
+- the deliberately-inverted polarity of `ATTACK_REQUIREMENT_CLAUSES` against the
+  `!conditionHolds` gate (D125) — documented and correct;
+- the `phaseViewOf` import in `interpreter.ts`: **no runtime cycle**, `phaseView.ts`
+  imports the interpreter type-only (D123);
+- disjointness of the four effect-text readers;
+- `MATCH_RECORD_VERSION = 2` correctly retiring pre-`promotedTurn` records.
+
+It also **re-derived D129's termination argument independently**, scanning the full 2³²
+mulberry32 cycle: the longest run of consecutive heads is **31**, so
+`MAX_UNTIL_TAILS_FLIPS = 64` is genuinely unreachable. D129's claim now has a second,
+outside measurement behind it.
+
+### ⚠️ Finding 1 (medium) — the mill log row credited the VICTIM
+
+`DECK_TOP_DISCARDED` is filed under `event.seat` = **the deck's OWNER**, which is correct
+and deliberate (D131 leaned on it so one op could emit on both seats with no log diff).
+But the message read in the **active voice**, and every row in `log.ts` renders after its
+seat's name — so P1 attacking with Chi-Yu ex produced:
+
+> **P2** discarded 2 cards from the top of their deck
+
+crediting the milling to the player who *lost* the cards.
+
+**D130 saw half of this and fixed the wrong half.** Its doc block says the line "was a
+lie the moment it had a second producer", drops the false word "looked-at", and calls the
+result provenance-neutral. That is a true fix to a different problem: **neutral wording
+addresses PROVENANCE; the VOICE is what carries the ACTOR.** Necessary, not sufficient.
+
+Fixed by making the verb **passive** — `had {n} cards discarded from the top of their
+deck` — with the seat untouched. Passive over `ENERGY_DISCARDED`'s separate `actor` field
+(the file's other solution to exactly this shape) because it costs no event field and
+this row never names the actor anyway: the producing `ATTACK_DECLARED` /
+`ABILITY_TRIGGERED` row sits directly above it. Hydreigon's own-deck Tri Howl row also
+reads passive now, which is mildly stilted for a self-discard and is the right trade —
+the alternative is **wrong** on the mill.
+
+### ⚠️ Finding 2 (low) — three regexes missed the `['’]` class, and two suites had pinned that gap as INTENDED
+
+`ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and
+`OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` with a straight-only
+apostrophe, while every sibling regex reading the **same noun phrase** — `DECK_TOP_MILL`,
+`FLIP_DECK_TOP_MILL`, `DEFENDER_NOW` — carries `['’]`, a class `effects.ts` documents as
+existing precisely *"so a re-ingest changing only punctuation cannot silently un-derive"*
+the sentence.
+
+**The ASYMMETRY is the defect, not the spelling.** A catalog re-ingest normalising to
+U+2019 would leave D131's unconditional mills deriving while D130's two dropped to the
+loud-skip path — a regression that reads as "two cards broke", with the punctuation
+nowhere in sight. Same noun phrase, same slice: it is one rule or it is nothing.
+
+**And the tests asserted the bug.** Both suites named the hazard and then pinned the
+wrong side of it:
+
+- `perHeadsProgram.test.ts` listed both curly variants as near-misses that must be
+  REFUSED, commenting that they "would silently drop both cards onto the loud path with
+  no number to notice it by";
+- `typeNameClause.test.ts` pinned Wonder Flash's BYTES and observed that a curly
+  apostrophe "would silently un-map the clause".
+
+Both strings moved out of the refusal lists into **positive assertions of equality with
+the straight form** — not merely non-null, because the apostrophe carries no meaning and
+the two spellings must yield the *same* member. The byte-pins **stay**: they say what the
+catalog holds today, and the new tests say the reader does not depend on it. Pinning only
+the first mistakes a property of the current ingest for a property of the engine.
+
+### ⚠️ Finding 3 (low, latent) — the truncation guard had no reader, and closing it cost the engine's first `throw`
+
+`rng.ts` returns **faces** rather than a count *"precisely so a caller can detect the
+truncation"*, and no caller did: every consumer just tallies heads, so a truncated
+all-heads sequence would quietly score **64 heads** — of damage on one printing, of mill
+iterations on the other. That is the exact lie the constant's own docblock says the bound
+exists to prevent, and it is silent.
+
+The guard went in **`takeFlips`**, the single choke point for the `untilTails` arm
+(covering both consumers and any future one), rather than at the flip site the review
+named.
+
+**This is the engine's only `throw`, and the engine is total by design** — there are zero
+others in engine source. The exception is earned by there being **no honest value to
+return**: a "flip until tails" that has not seen tails has no heads count, the sequence
+is not over. Refusing the attack would invent game semantics the rules do not describe;
+scoring the truncation would corrupt the match record. It is unreachable by construction
+(31 < 64), so it cannot fire today — it fires only if someone replaces `nextU32` with
+something degenerate, and a crash at the flip site is how they should find out rather
+than through a match that paid 64 heads.
+
+**Deliberately untested.** Driving it needs `vi.mock` on the RNG, which the engine suite
+has never used and which breaks a stronger convention than the throw does; `rng.ts`'s own
+truncation branch stays reachable through its `cap` parameter and is covered there.
+
+### ⚠️ Not done — the literal clause-table keys have the same exposure
+
+~8 rows of the literal clause table (`"your opponent's Active Pokémon is Poisoned"` and
+its neighbours) are exact `Map` lookups with straight-only apostrophes, so the same
+re-ingest drops them too. **A `Map` key cannot carry a character class**, so the fix is
+not the one applied above — it is a normalisation pass at lookup (fold U+2019 → U+0027 on
+the clause string before the table hit; the template pass is already covered). That is a
+small design call rather than a patch, and it was left out rather than expanded into
+silently. It is now **item 1 of the resume point**.
+
+### The generalisation — and it is about the loop, not the code
+
+**A test suite written by the same session that wrote the code inherits its blind spot.**
+Both low findings are places where the author *saw* the hazard, *wrote it down*, and then
+asserted the wrong side of it. The suites passed for 40 decisions because they encoded
+the author's belief rather than the requirement — which is exactly the class of error a
+fresh reader catches and an authoring session structurally cannot.
+
+The operational consequence: **run `/code-review` on a cadence, not at the end.** It is
+user-triggered, so a session cannot do it; what a session *can* do is state in its
+handoff how many decisions have accrued since the last review. This one covered
+D96–D135; anything from D136 on is again unreviewed.
+
+### Verification
+
+`bun run check` green, exit 0 — **178 files / 2859 tests** (was 178 / 2857: two new `it`
+blocks, and two entries removed from near-miss loops that were never separate tests).
+**Engine version UNCHANGED** — no behaviour a card can reach moved. No
+`MATCH_RECORD_VERSION` bump, no web/API/DB/`@luminous/schema` diff.

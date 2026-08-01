@@ -281,6 +281,32 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
     );
   });
 
+  it("ACCEPTS the U+2019 spelling of Wonder Flash's `opponent's` — the template's class", () => {
+    // The byte-pin above says a curly apostrophe "would silently un-map the clause".
+    // Until the D135 review that was literally true, and it was a defect rather than
+    // a fact worth pinning: `OPPONENT_ACTIVE_TYPE_CLAUSE` spelled the possessive
+    // straight-only while every sibling regex reading the SAME noun phrase carries
+    // `['’]` — a class that effects.ts documents as existing precisely "so a
+    // re-ingest changing only punctuation cannot silently un-derive" the sentence.
+    //
+    // Both assertions belong here. The BYTES pin says what the catalog holds today
+    // (ASCII, U+0027); this says the reader does not DEPEND on that. Pinning only
+    // the first mistakes a property of the current ingest for a property of the
+    // engine — and the whole point of the class is to survive an ingest that changes.
+    const CURLY_APOSTROPHE = "’";
+    const curly = WONDER_FLASH.replace("'", CURLY_APOSTROPHE);
+    expect(curly).toContain(CURLY_APOSTROPHE); // the rewrite actually fired
+    expect(curly).not.toBe(WONDER_FLASH);
+    // Equality with the straight form, not merely non-null: the apostrophe carries
+    // no meaning, so the two spellings must yield the SAME condition.
+    expect(deriveAttackDamageBonus(curly)).toEqual(deriveAttackDamageBonus(WONDER_FLASH));
+    expect(deriveAttackDamageBonus(curly)).not.toBeNull();
+    // And the note round-trips the sentence it was actually given.
+    expect(conditionNote({ kind: "opponentActiveHasType", type: "Dragon" })).toBe(
+      "your opponent's Active Pokémon is a Dragon Pokémon",
+    );
+  });
+
   it("pins Reckless Charge Together's bytes — PURE ASCII, no é and no apostrophe", () => {
     // The other half of the pair, and the opposite byte profile: this clause names
     // no Pokémon and no possessive, so it is one byte per character throughout.

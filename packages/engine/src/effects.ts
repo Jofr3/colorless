@@ -2247,7 +2247,7 @@ const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special"> = n
     printed as the bare word in both eras, and the pool contains no `{D} Pokémon`
     CONDITION at all — the 17 brace-coded type sentences are all selectors and
     counters on other skeletons. When one is printed, it is a row in this map. */
-const OPPONENT_ACTIVE_TYPE_CLAUSE = /^your opponent's Active Pokémon is a (.+) Pokémon$/;
+const OPPONENT_ACTIVE_TYPE_CLAUSE = /^your opponent['’]s Active Pokémon is a (.+) Pokémon$/;
 const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map(
   POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
 );
@@ -2550,10 +2550,16 @@ const ATTACK_COIN_UNTIL_TAILS_MULTI =
 // No /i, for the family's standing reason: a capitalised first word is half of
 // what keeps a mid-sentence clause off the derived path and the anchors are the
 // other half.
+// `['’]` on "opponent's", per the convention at the top of this block: these
+// read the SAME noun phrase as DECK_TOP_MILL / FLIP_DECK_TOP_MILL, and a class
+// on one but not the other is worse than neither — a re-ingest normalising to
+// U+2019 would keep the unconditional mills deriving while these two silently
+// dropped to the loud-skip path, which reads as a two-card regression rather
+// than as punctuation.
 const ATTACK_COIN_MILL_PRINTED =
-  /^Flip (\d+) coins\. For each heads, discard the top (\d+) cards of your opponent's deck\.$/;
+  /^Flip (\d+) coins\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
 const ATTACK_COIN_MILL_UNTIL_TAILS =
-  /^Flip a coin until you get tails\. For each heads, discard the top (\d+) cards of your opponent's deck\.$/;
+  /^Flip a coin until you get tails\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
 
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only

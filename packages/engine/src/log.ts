@@ -639,9 +639,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // carry is that the cards LEFT THE DECK. `event.seat` is the deck's OWNER on
       // both producers, so the row belongs to the player who lost them — a mill
       // reads as the opponent's row, which is what it is.
+      //
+      // Which is exactly why the verb is PASSIVE. Every row here is rendered after
+      // its seat's name, so an active verb asserts that seat DID the thing; on a
+      // mill the owner is the victim, and "P2 discarded 2 cards from the top of
+      // their deck" credits the milling to the player who lost the cards. Neutral
+      // wording was necessary and not sufficient — dropping "looked-at" stopped the
+      // row lying about PROVENANCE, and the voice is what stops it lying about the
+      // ACTOR. The alternative is ENERGY_DISCARDED's: carry a separate `actor` on
+      // the event and read the line off it. Passive costs no event field, and this
+      // row never names the actor anyway — the producing ATTACK_DECLARED /
+      // ABILITY_TRIGGERED row sits directly above and names it.
       const n = event.uids.length;
       return row(event.seat, [
-        plain(`discarded ${n} card${n === 1 ? "" : "s"} from the top of their deck`),
+        plain(`had ${n} card${n === 1 ? "" : "s"} discarded from the top of their deck`),
       ]);
     }
     case "ENERGY_MOVED": {

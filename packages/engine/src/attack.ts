@@ -172,7 +172,34 @@ function takeFlips(
 ): [faces: CoinFace[], nextState: number] {
   // The unbounded arm's bound lives with the RNG that produces the faces, not
   // here — see MAX_UNTIL_TAILS_FLIPS. It cannot fire with the current flipCoin.
-  if (count.kind === "untilTails") return flipUntilTails(state.rngState, MAX_UNTIL_TAILS_FLIPS);
+  //
+  // BUT THE CAP IS CHECKED HERE, and this is the engine's ONLY throw. `rng.ts`
+  // returns the faces rather than a count "precisely so a caller can detect the
+  // truncation", and until now no caller did: every consumer just tallies heads,
+  // so a truncated all-heads sequence would quietly score 64 heads — of damage on
+  // one printing, of mill iterations on the other. That is the exact lie the
+  // constant's docblock says the bound exists to prevent, and it is silent.
+  //
+  // Total functions everywhere else in this engine, and deliberately so; the
+  // exception is earned by there being no honest value to return. "Flip until
+  // tails" that has not yet seen tails has NO heads count — the sequence isn't
+  // over. Refusing the attack would invent game semantics for a case the rules
+  // don't describe; scoring the truncation would corrupt the match record. The
+  // condition is unreachable by construction (mulberry32's longest heads run over
+  // the whole 2³² cycle is 31, half the cap), so this cannot fire today — it fires
+  // only if someone replaces `nextU32` with something degenerate, and a crash at
+  // the flip site is how they should find out rather than through a match that
+  // paid 64 heads. Re-derive the run length before changing the RNG; rng.ts says
+  // how.
+  if (count.kind === "untilTails") {
+    const [faces, rngState] = flipUntilTails(state.rngState, MAX_UNTIL_TAILS_FLIPS);
+    if (faces.at(-1) !== "tails") {
+      throw new Error(
+        `flipUntilTails truncated at the ${MAX_UNTIL_TAILS_FLIPS}-flip cap (${faces.length} consecutive heads), so the sequence has no heads count to score — see MAX_UNTIL_TAILS_FLIPS in rng.ts, which the shipped flipCoin cannot reach`,
+      );
+    }
+    return [faces, rngState];
+  }
   const flips =
     count.kind === "printed"
       ? count.count
