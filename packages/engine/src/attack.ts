@@ -19,6 +19,7 @@ import {
   weaknessOf,
 } from "./cards";
 import {
+  countAttachedEnergy,
   effectiveAttackCost,
   effectiveRetreatCost,
   passivesOf,
@@ -32,7 +33,7 @@ import {
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
-import type { AttackDamageBonus } from "./effects";
+import type { AttackDamageBonus, AttackFlipCount } from "./effects";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -139,6 +140,28 @@ function scaledAttackDamage(
       // any damage counters on it" cannot be bootstrapped by this very attack.
       return conditionHolds(state, attackerSeat, bonus.count.cond) ? bonus.per : 0;
   }
+}
+
+/** How many times a `perHeads` attack flips (D128): its printed N, or the Energy
+    the board says is attached to the attacker. The coin family's ONLY board read,
+    and deliberately not a `DamageCountSource` arm — `scaledAttackDamage` answers
+    "how much damage per unit of a board resource" and folds into `scaled`, where
+    this answers "how many faces to draw" and folds into nothing at all. Sharing a
+    fold between the two would mean the flips could reach `scaled`.
+
+    `attacker` is the Active as of declaration and exists only as the unreachable
+    branch's answer: the count is read off `state` at the flip site, and the Active
+    can't be missing there (the attack gate required it and every path that removes
+    one returns first), so the fallback keeps the arm total rather than covering a
+    case. Same shape `scaledAttackDamage`'s `opponentActiveRetreatCost` arm uses. */
+function flipCount(
+  state: GameState,
+  attackerSeat: Seat,
+  attacker: InPlayPokemon,
+  count: AttackFlipCount,
+): number {
+  if (count.kind === "printed") return count.count;
+  return countAttachedEnergy(state, state.players[attackerSeat].active ?? attacker, count.energy);
 }
 
 /** §8 — declare one attack with the Active Pokémon; resolving it ends the
@@ -419,9 +442,33 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // over CANCELLATION, not over the members — `bonusOnHeads` really is the
   // one-flip case of the same fold. What is NOT shared is the printed base, and
   // that lives at `scaledBase` above where the marker is read.
+  //
+  // D128 — THE FLIP COUNT ITSELF CAN BE A BOARD FACT. "Flip a coin for each [{X}]
+  // Energy attached to this Pokémon." (3 printings) folds exactly as D127's printed
+  // N does; the only thing that moved is where the bound comes from. It is read
+  // HERE, at the site the flips are taken, and not at declaration beside `scaled` —
+  // the count and the flips it bounds are one act, and splitting them would let a
+  // future gate between the two silently invalidate the number. (Nothing between
+  // declaration and this line can change an attachment today; that is a fact about
+  // the current gates, not a property worth depending on.)
+  //
+  // It is NOT a `DamageCountSource` and `scaledAttackDamage` is untouched: the
+  // DAMAGE count still comes from the flips (D126's rule), and what the board
+  // answers is how many times to flip — the one number the coin cannot answer. So
+  // this is a widened `flips`, not a fourth union member and not a second fold.
+  //
+  // A ZERO COUNT MEANS ZERO FLIPS, which is not the same as zero heads: no
+  // `ATTACK_EFFECT_COIN_FLIP` rows at all and no rngState step consumed, where
+  // D127's zero-HEADS outcome spends its flips and announces every one of them.
+  // Both then land on the same ending — `coinBonus` 0, `scaledBase` 0, so the
+  // §8.5 gate below deals no damage and `finishAttack` still ends the turn. No
+  // printing in the pool can reach it (all three carry a cost floor of at least
+  // one Energy, and Torkoal's `{R}` cost is itself the `{R}` its filter counts),
+  // so the branch is defensive and its test is a constructed fixture.
   let coinBonus = 0;
   if (coinFlip !== null) {
-    const flips = coinFlip.kind === "perHeads" ? coinFlip.flips : 1;
+    const flips =
+      coinFlip.kind === "perHeads" ? flipCount(next, action.seat, active, coinFlip.flips) : 1;
     let heads = 0;
     for (let flip = 0; flip < flips; flip += 1) {
       const [face, rngState] = flipCoin(next.rngState);

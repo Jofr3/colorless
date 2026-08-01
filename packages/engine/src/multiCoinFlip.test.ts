@@ -78,9 +78,19 @@ import {
 //
 // AND THE REST OF THE FLIP FAMILY STAYS LOUD. Two live "more" printings sit one
 // word away from this regex (Melmetal swsh10.5-046 flips 2, Bouffalant sv03-174
-// flips until tails), and the two unbounded/board-counted openings ("until you get
-// tails", "for each {R} Energy attached") are still unbuilt. Each is pinned below
-// with the property that refuses it.
+// flips until tails), and the UNBOUNDED opening ("until you get tails", 9 prints)
+// is still unbuilt. Each is pinned below with the property that refuses it.
+//
+// 0.78.0 → 0.79.0 (D128) TOUCHED THIS FILE IN EXACTLY ONE PLACE: `flips` widened
+// from a number to an `AttackFlipCount`, so every value below reads
+// `{ kind: "printed", count: N }` where it used to read `N`. Nothing else about
+// this slice moved — same regex, same member, same loop, same site, same fold —
+// which is the widening being a CARDINALITY change and not a behavioural one. The
+// board-counted opening ("for each {R} Energy attached", 3 prints) that this file
+// used to pin as REFUSED is the sentence D128 mapped; its case below now pins the
+// shape D128 reads it to, because a witness that is quietly deleted when its
+// subject gets built is a witness that was never load-bearing. That family's own
+// suite is perEnergyFlip.test.ts.
 
 /** Tandemaus sv01-160 "Double Hit", verbatim, and pinned char-for-char against
     FIXTURE_POOL below. TWO flips, so THREE outcomes and three distinct totals —
@@ -367,12 +377,29 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
 
 describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
   it("reads both fixture sentences to their exact perHeads values", () => {
-    expect(deriveAttackCoinFlip(DOUBLE_HIT)).toEqual({ kind: "perHeads", flips: 2, per: 30 });
-    expect(deriveAttackCoinFlip(FURY_SWIPES)).toEqual({ kind: "perHeads", flips: 3, per: 20 });
+    expect(deriveAttackCoinFlip(DOUBLE_HIT)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "printed", count: 2 },
+      per: 30,
+    });
+    expect(deriveAttackCoinFlip(FURY_SWIPES)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "printed", count: 3 },
+      per: 20,
+    });
+    // `flips` is D128's `AttackFlipCount`, and BOTH of this slice's sentences read
+    // to its `printed` member: the count is the literal N of "Flip N coins.", known
+    // at derivation and answered by nothing on the board. That is the half of D128
+    // this file owns — the other member (`attachedEnergy`) is a board read and lives
+    // in perEnergyFlip.test.ts. Stated as the whole value rather than as `count`
+    // alone, so a build that quietly defaulted the tag would fail here.
+    expect(deriveAttackCoinFlip(DOUBLE_HIT)).toHaveProperty("flips.kind", "printed");
+    expect(deriveAttackCoinFlip(FURY_SWIPES)).toHaveProperty("flips.kind", "printed");
     // Three keys and no more: the member is `flips` + `per` + the tag, and nothing
     // that would have to be answered off the BOARD. That is D126's rule holding for
-    // a third member — the count comes from the flips, not from the state, so
-    // `scaledAttackDamage` stays pure and no `DamageCountSource` member was added.
+    // a third member — the DAMAGE count comes from the flips, not from the state, so
+    // `scaledAttackDamage` stays pure and no `DamageCountSource` member was added
+    // (D128 widened where the FLIP count may come from, and left that rule alone).
     const flip = deriveAttackCoinFlip(DOUBLE_HIT);
     if (flip === null) throw new Error("unreachable");
     expect(Object.keys(flip).sort()).toEqual(["flips", "kind", "per"]);
@@ -386,10 +413,10 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
     // in the same edit.
     expect(
       deriveAttackCoinFlip(FIXTURE_POOL["sv01-160"]?.attacks?.[FLIP_INDEX]?.effect ?? ""),
-    ).toEqual({ kind: "perHeads", flips: 2, per: 30 });
+    ).toEqual({ kind: "perHeads", flips: { kind: "printed", count: 2 }, per: 30 });
     expect(
       deriveAttackCoinFlip(FIXTURE_POOL["sv06.5-048"]?.attacks?.[FLIP_INDEX]?.effect ?? ""),
-    ).toEqual({ kind: "perHeads", flips: 3, per: 20 });
+    ).toEqual({ kind: "perHeads", flips: { kind: "printed", count: 3 }, per: 20 });
   });
 
   it("reads every printed COUNT and every printed PER off the one regex", () => {
@@ -400,7 +427,11 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
     for (const flips of PRINTED_FLIPS) {
       for (const per of PRINTED_PER) {
         const text = `Flip ${flips} coins. This attack does ${per} damage for each heads.`;
-        expect(deriveAttackCoinFlip(text)).toEqual({ kind: "perHeads", flips, per });
+        expect(deriveAttackCoinFlip(text)).toEqual({
+          kind: "perHeads",
+          flips: { kind: "printed", count: flips },
+          per,
+        });
       }
     }
   });
@@ -423,8 +454,13 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
     // ingested text, so an unbounded `\d+` would let one malformed row spin the
     // resolution loop arbitrarily long — and a hang is the one failure mode that is
     // not loud. A refusal drops the card onto ATTACK_EFFECT_SKIPPED, which is.
+    //
+    // D128 — the ceiling is owed to the `printed` member ALONE and deliberately did
+    // NOT travel to the board-counted one: a bound belongs to the SOURCE of the
+    // number, and an attached-Energy count is read off the engine's own state, where
+    // a ceiling would refuse a legal board rather than a malformed row.
     expect(deriveAttackCoinFlip("Flip 10 coins. This attack does 10 damage for each heads.")).toEqual(
-      { kind: "perHeads", flips: 10, per: 10 },
+      { kind: "perHeads", flips: { kind: "printed", count: 10 }, per: 10 },
     );
     expect(deriveAttackCoinFlip("Flip 11 coins. This attack does 10 damage for each heads.")).toBe(
       null,
@@ -437,7 +473,7 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
     // The pool's own maximum sits comfortably inside the bound (Unfezant
     // swsh10.5-063 is the family's only 4).
     expect(deriveAttackCoinFlip("Flip 4 coins. This attack does 30 damage for each heads.")).toEqual(
-      { kind: "perHeads", flips: 4, per: 30 },
+      { kind: "perHeads", flips: { kind: "printed", count: 4 }, per: 30 },
     );
   });
 
@@ -452,13 +488,13 @@ describe("deriveAttackCoinFlip — the THIRD member, on ONE regex", () => {
     // …while the smallest REAL value one digit away is read fine.
     expect(deriveAttackCoinFlip("Flip 2 coins. This attack does 1 damage for each heads.")).toEqual({
       kind: "perHeads",
-      flips: 2,
+      flips: { kind: "printed", count: 2 },
       per: 1,
     });
   });
 });
 
-describe("the rest of the flip family stays LOUD", () => {
+describe("the rest of the flip family — what stays LOUD, and the one shape D128 took", () => {
   it("refuses the two live \"more\" printings — ONE WORD from the mapped shape", () => {
     // THE SHARPEST NEAR-MISSES IN THE POOL, and the reason the regex is anchored on
     // the whole sentence rather than matching "damage for each heads". Both are real
@@ -483,7 +519,7 @@ describe("the rest of the flip family stays LOUD", () => {
     );
     expect(deriveAttackCoinFlip(melmetal.replace(" more", ""))).toEqual({
       kind: "perHeads",
-      flips: 2,
+      flips: { kind: "printed", count: 2 },
       per: 90,
     });
     expect(deriveAttackCoinFlip(bouffalant.replace(" more", ""))).toBe(null);
@@ -506,18 +542,36 @@ describe("the rest of the flip family stays LOUD", () => {
     );
   });
 
-  it("refuses a BOARD-COUNTED number of flips — where the board vocabulary would earn its place", () => {
-    // Torkoal sv01-035, 3 printings. This one is the interesting refusal: the count
-    // of flips is itself a board fact ("for each {R} Energy attached to this
-    // Pokémon"), which is exactly the shape a `BoardCondition` / `DamageCountSource`
-    // would answer — and the first place in this family where that vocabulary would
-    // buy anything at all. D126 and D127 both bought none because a coin FACE is not
-    // a board fact; this sentence is the boundary of that argument, so it is pinned
-    // as refused rather than left to be discovered.
+  it("hands the BOARD-COUNTED number of flips to D128's arm — never to this slice's printed one", () => {
+    // Torkoal sv01-035, 3 printings. D127 pinned this sentence as REFUSED and named
+    // it the boundary of its own argument: the count of flips is itself a board fact
+    // ("for each {R} Energy attached to this Pokémon"), the first place in this
+    // family where the board vocabulary would buy anything at all. D128 built exactly
+    // that, so the witness is not deleted — it is RE-POINTED at the shape the
+    // sentence now reads to, which is the assertion that keeps the two arms apart.
+    //
+    // What this case still owns is the DISJOINTNESS: `ATTACK_COIN_MULTI` (this
+    // slice's regex) must not claim it, and the proof is the `flips` TAG. A printed
+    // reading here would be a fixed number of flips for a card whose count is a
+    // board fact — 80 damage per head on a count nobody counted.
     const torkoal =
       "Flip a coin for each {R} Energy attached to this Pokémon. This attack does 80 damage for each heads.";
-    expect(deriveAttackCoinFlip(torkoal)).toBe(null);
+    expect(deriveAttackCoinFlip(torkoal)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "attachedEnergy", energy: "Fire" },
+      per: 80,
+    });
+    expect(deriveAttackCoinFlip(torkoal)).not.toHaveProperty("flips.kind", "printed");
+    expect(deriveAttackCoinFlip(torkoal)).not.toHaveProperty("flips.count");
+    // Its CONSEQUENT is Tandemaus's, word for word past the opening — so the two arms
+    // really are told apart by the leading sentence and by nothing else. (The whole
+    // family's own cases live in perEnergyFlip.test.ts.)
     expect(torkoal.endsWith("This attack does 80 damage for each heads.")).toBe(true);
+    // …and this slice's own reading of that same consequent is untouched by the arm
+    // that now sits between the two regexes.
+    expect(deriveAttackCoinFlip("Flip 2 coins. This attack does 80 damage for each heads.")).toEqual(
+      { kind: "perHeads", flips: { kind: "printed", count: 2 }, per: 80 },
+    );
   });
 
   it("refuses the STEPPED PAYOUT table — a count with no per-heads amount at all", () => {
@@ -586,10 +640,14 @@ describe("constructed near-misses stay LOUD", () => {
     ).toBe(null);
     // Outer whitespace, by contrast, SURVIVES by design (the deriver trims), so this
     // pair states which drift is tolerated and which is not.
-    expect(deriveAttackCoinFlip(`${DOUBLE_HIT} `)).toEqual({ kind: "perHeads", flips: 2, per: 30 });
+    expect(deriveAttackCoinFlip(`${DOUBLE_HIT} `)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "printed", count: 2 },
+      per: 30,
+    });
     expect(deriveAttackCoinFlip(`  ${FURY_SWIPES}\n`)).toEqual({
       kind: "perHeads",
-      flips: 3,
+      flips: { kind: "printed", count: 3 },
       per: 20,
     });
   });
@@ -1060,7 +1118,15 @@ describe("purity", () => {
       mustApply(meowth, { type: "attack", seat: "p1", index: FLIP_INDEX });
     }
     // …and the DERIVER is a pure function of its string, frozen board or not.
-    expect(deriveAttackCoinFlip(DOUBLE_HIT)).toEqual({ kind: "perHeads", flips: 2, per: 30 });
-    expect(deriveAttackCoinFlip(FURY_SWIPES)).toEqual({ kind: "perHeads", flips: 3, per: 20 });
+    expect(deriveAttackCoinFlip(DOUBLE_HIT)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "printed", count: 2 },
+      per: 30,
+    });
+    expect(deriveAttackCoinFlip(FURY_SWIPES)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "printed", count: 3 },
+      per: 20,
+    });
   });
 });

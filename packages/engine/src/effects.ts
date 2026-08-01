@@ -2167,20 +2167,77 @@ const ATTACK_COIN_CANCEL = /^Flip a coin\. If tails, this attack does nothing\.$
 // answers it and `scaledAttackDamage` must stay pure. It belongs in the coin union
 // with its siblings, at the coin site, for the same reason they do.
 //
-// The three shapes it refuses at the leading sentence, all still unbuilt:
-// "Flip a coin until you get tails. …" (9 prints, an UNBOUNDED fold — a genuinely
-// different risk) and "Flip a coin for each {R} Energy attached to this Pokémon. …"
-// (3 prints — a BOARD-counted number of flips, which is where the board vocabulary
-// would finally earn its place in this family).
+// The shapes it refuses at the leading sentence: "Flip a coin for each {R} Energy
+// attached to this Pokémon. …" (3 prints — the BOARD-counted flip count, built one
+// pattern down by D128) and "Flip a coin until you get tails. …" (9 prints, an
+// UNBOUNDED fold — still unbuilt, and a genuinely different risk from either of
+// these two, since it has no bound from the text OR from the board).
 const ATTACK_COIN_MULTI = /^Flip (\d+) coins\. This attack does (\d+) damage for each heads\.$/;
+
+// The BOARD-COUNTED FLIP COUNT (D128) — "Flip a coin for each [{X}] Energy attached
+// to this Pokémon. This attack does D damage for each heads." — 3 printings, and
+// the shape where the board vocabulary finally earns its place in the coin family.
+// Census (2026-08-01, `attacks_json`, 978 cards): Torkoal sv01-035 "Concentrated
+// Fire" (`80×`, the TYPED `{R}` reading and the pool's ONLY coin effect containing
+// a brace token), Ambipom swsh10.5-057 "Full Tilt Fling" (`60×`) and Bellossom
+// sv03-003 "Powerful Dance" (`90×`) — the UNTYPED reading, two printings, so D121's
+// warrant for one shared shape is satisfied rather than assumed. Nothing else in
+// the pool counts anything at all with "flip a coin for each": the counted thing is
+// ALWAYS self-attached Energy, and the only variation is the optional type filter.
+//
+// THE DAMAGE COUNT STILL COMES FROM THE FLIPS — D126's rule is untouched, and this
+// is NOT a `DamageCountSource`. What is a board fact here is the number of FLIPS,
+// which is the one number the board can answer and the coin cannot. So the slice is
+// a widened `flips`, not a new consequent: the fold, the loop, the event sequence
+// and the dropped printed base are all D127's, verbatim.
+//
+// BOTH NOTATIONS, for D118's reason and through D118's map. The pool prints energy
+// types two ways, split cleanly by set (sv* brace-code, swsh10.5 spelled-out), and
+// today all three printings of THIS sentence happen to sit on the side that needs
+// neither — Torkoal brace-codes, the other two carry no filter at all. Resolving
+// the token through `CLAUSE_ENERGY_TOKENS` rather than a local `{R}`-only lookup
+// costs nothing and means a swsh-era reprint reading "for each Water Energy" is
+// admitted by construction instead of silently skipped.
+const ATTACK_COIN_PER_ENERGY =
+  /^Flip a coin for each (?:(.+) )?Energy attached to this Pokémon\. This attack does (\d+) damage for each heads\.$/;
 
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
     one); the ceiling exists because the digits are read out of THIRD-PARTY
     ingested text, and an unbounded `\d+` would let one malformed row spin the
     resolution loop for an arbitrarily long time. A refusal is LOUD — the attack
-    lands on the ATTACK_EFFECT_SKIPPED path — where a hang is not. */
+    lands on the ATTACK_EFFECT_SKIPPED path — where a hang is not.
+
+    D128 — this ceiling is owed to the `printed` member ALONE, and deliberately
+    does not travel to `attachedEnergy`. A bound is owed to the SOURCE of the
+    number, not to the loop it feeds: printed digits come from third-party text
+    and have no upper bound but this one, while an attached-Energy count is read
+    off the engine's own state and is bounded by the deck that produced it. Adding
+    a second ceiling there would refuse a legal board rather than a malformed row,
+    which is the opposite of what this constant is for. */
 const MAX_PRINTED_FLIPS = 10;
+
+/** HOW MANY times an attack's printed sentence calls for the coin to be flipped
+    (D128). Two members, because the pool prints the count two ways and only one
+    of them is a number the deriver can read:
+      • `printed` — the literal N of "Flip N coins." (D127), known at derivation.
+      • `attachedEnergy` — "for each [{X}] Energy attached to this Pokémon", a
+        BOARD fact resolved at the flip site. `energy` is the printed type filter,
+        or null for the unfiltered form.
+
+    The two readings of `energy` are not the same tally and the difference is the
+    whole reason the field is nullable rather than defaulted. A FILTERED count is
+    read by PROVISION (`providesEnergyType`, the D118 rule): an Energy that can pay
+    a `{R}` cost is exactly an Energy a `{R}` clause counts, so a wildcard Luminous
+    Energy is one for as long as it provides every type. An UNFILTERED count is
+    read by CARD: "each Energy attached" counts attached Energy CARDS, and a
+    Special Energy that provides nothing typed is still one of them. Collapsing
+    null into "the type filter that matches everything" would quietly make the
+    second question the first one, and get Ambipom wrong on any board holding a
+    demoted Special. */
+export type AttackFlipCount =
+  | { kind: "printed"; count: number }
+  | { kind: "attachedEnergy"; energy: BasicEnergyType | "special" | null };
 
 /** What the pre-damage coin flip printed on an attack DOES with its faces. A
     union rather than a record, because a printing is exactly one of these and
@@ -2198,6 +2255,13 @@ const MAX_PRINTED_FLIPS = 10;
     one printed flip DECISION" stays structural rather than a rule it must keep —
     D127 widened that from "at most one flip" without weakening it.
 
+    D128 widened `flips` from a number to an `AttackFlipCount`, which is where the
+    board-counted printings land. That is a widening of the member's CARDINALITY
+    only: `perHeads` still means "fold `per` × heads and drop the printed base",
+    still emits one row per flip, and still resolves at the same site. The union
+    stayed three members BECAUSE nothing about the consequent changed — a fourth
+    member would have duplicated the fold to vary the bound.
+
     `bonusOnHeads` is NOT folded into `perHeads` with `flips: 1`, even though the
     arithmetic coincides (`heads × per` is right for both, and `attack.ts` computes
     them with one expression on purpose). They differ in the one place that is not
@@ -2206,10 +2270,10 @@ const MAX_PRINTED_FLIPS = 10;
 export type AttackCoinFlip =
   | { kind: "bonusOnHeads"; per: number }
   | { kind: "cancelOnTails" }
-  | { kind: "perHeads"; flips: number; per: number };
+  | { kind: "perHeads"; flips: AttackFlipCount; per: number };
 
 /** The coin flip an attack's printed text calls for, or null when the text is not
-    one of the three recognised whole sentences — null keeps the attack on the loud
+    one of the four recognised whole sentences — null keeps the attack on the loud
     ATTACK_EFFECT_SKIPPED path, never on a silent unflipped resolution.
 
     Pure in its string, like its three sibling derivers, and disjoint from all of
@@ -2238,7 +2302,31 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     // the value in agreement. `per >= 1` is the same guard every scaling arm
     // carries; `flips <= MAX_PRINTED_FLIPS` is the ingested-text ceiling.
     return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
-      ? { kind: "perHeads", flips, per }
+      ? { kind: "perHeads", flips: { kind: "printed", count: flips }, per }
+      : null;
+  }
+  const perEnergy = ATTACK_COIN_PER_ENERGY.exec(effect);
+  if (perEnergy !== null) {
+    const token = perEnergy[1];
+    const per = Number(perEnergy[2]);
+    // `token === undefined` is the UNFILTERED sentence ("for each Energy attached"),
+    // which is a real reading and resolves to `energy: null`. An unresolvable token
+    // resolves to null TOO — so the two are told apart by the token, not by the
+    // lookup, and a `{C}`/`{N}`/garbage filter falls through to the loud skipped
+    // path instead of quietly counting every attached card. (Colorless is absent
+    // from `ENERGY_TYPE_BY_CODE` on purpose: it is the conservative provision
+    // fallback for every unauthored Special Energy, so a `{C}` filter would match
+    // cards nobody meant — see that map.) `per >= 1` is the same guard every arm
+    // of this family carries; there is no flip ceiling here, because the count is
+    // read off the board and the board is bounded by the deck.
+    if (token !== undefined) {
+      const energy = CLAUSE_ENERGY_TOKENS.get(token);
+      return energy !== undefined && per >= 1
+        ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy }, per }
+        : null;
+    }
+    return per >= 1
+      ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy: null }, per }
       : null;
   }
   return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;

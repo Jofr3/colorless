@@ -3484,6 +3484,115 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Torkoal sv01-035 — the BOARD-COUNTED FLIP COUNT's TYPED end (D128).
+      "Concentrated Fire" ({R}{C}{C}, 80×): "Flip a coin for each {R} Energy
+      attached to this Pokémon. This attack does 80 damage for each heads." — the
+      pool's ONLY coin effect containing a brace token, and the printing that makes
+      "the count is TYPED" observable at all.
+
+      THE COST AND THE FILTER ARE DIFFERENT QUESTIONS, and this card is where they
+      can be told apart on ONE board: {R}{C}{C} is MET by 1 Fire + 2 Water (the Fire
+      pays {R}, the Waters pay the two {C}), but the `{R}` count is ONE, so the
+      attack flips ONCE for a maximum of 80 — where a reader that counted attached
+      CARDS would flip three times and could deal 240. Those two numbers cannot be
+      confused for one another, which is the whole reason this fixture exists beside
+      the untyped one.
+
+      "Stampede" ({C}{C}, 30) rides along because it is printed: a plain flat number
+      at index 0 keeps the flip attack at index 1 and gives the suite a control the
+      coin never touches. Verbatim off the local D1: Basic Fire, 130 HP, retreat 3,
+      ×2 Water (inert — nothing in the deck below is a Water attacker), rarity
+      Uncommon / regulation mark G / sv01-035, none of which any reader here asks
+      for (the fixture helpers supply the blank metadata every other card here uses).
+      The effect sentence is NOT pure ASCII — "Pokémon" carries a U+00E9 — and its
+      byte count is pinned in perEnergyFlip.test.ts. */
+  "sv01-035": battler("sv01-035", {
+    name: "Torkoal",
+    hp: 130,
+    types: ["Fire"],
+    retreat: 3,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Stampede",
+        damage: 30,
+      },
+      {
+        cost: ["Fire", "Colorless", "Colorless"],
+        name: "Concentrated Fire",
+        effect:
+          "Flip a coin for each {R} Energy attached to this Pokémon. This attack does 80 damage for each heads.",
+        damage: "80×",
+      },
+    ],
+  }),
+  /** Bellossom sv03-003 — the BOARD-COUNTED FLIP COUNT's UNTYPED end (D128).
+      "Powerful Dance" ({G}, 90×): "Flip a coin for each Energy attached to this
+      Pokémon. This attack does 90 damage for each heads." — no type filter at all,
+      so the count is attached Energy CARDS and every attached card is one flip
+      whatever it provides.
+
+      A STAGE 2, which is why it is force-placed by surgery in every case rather
+      than evolved: the suite is about the flip count, not about the evolution
+      chain, and Gloom/Oddish are not in the deck. Its {G} cost is ONE symbol, so a
+      board can hold Grass + Fire + Water and still pay — which is exactly the board
+      that separates "counts cards" (3 flips) from "counts Grass" (1 flip).
+
+      "Sleep Powder" ({C}, 30, "Your opponent's Active Pokémon is now Asleep.") rides
+      along at index 0 because it is printed, which puts the flip attack at index 1
+      — the same index as Torkoal's, deliberately, so one FLIP_INDEX serves both.
+      Verbatim off the local D1: 130 HP, Grass, retreat 1, ×2 Fire, evolves from
+      Gloom, rarity Uncommon / mark G / sv03-003. BOTH of its effect sentences carry
+      the U+00E9 of "Pokémon". */
+  "sv03-003": battler("sv03-003", {
+    name: "Bellossom",
+    stage: "Stage2",
+    evolveFrom: "Gloom",
+    hp: 130,
+    types: ["Grass"],
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Sleep Powder",
+        effect: "Your opponent's Active Pokémon is now Asleep.",
+        damage: 30,
+      },
+      {
+        cost: ["Grass"],
+        name: "Powerful Dance",
+        effect:
+          "Flip a coin for each Energy attached to this Pokémon. This attack does 90 damage for each heads.",
+        damage: "90×",
+      },
+    ],
+  }),
+  /** FIXTURE — the ZERO-COUNT probe for D128's board-counted flip count, and it is
+      CONSTRUCTED because no printed card can reach the branch: all three printings
+      of the sentence carry a cost floor of at least one Energy, and Torkoal's `{R}`
+      cost IS the `{R}` its filter counts, so a legal declaration always leaves at
+      least one Energy for the filter to find. This body prints a `{C}` cost against
+      a `{W}` filter — the one combination that separates "what pays" from "what
+      counts" completely — so an attack that is perfectly legal with a single Fire
+      attached counts ZERO and therefore flips ZERO times.
+      Zero flips is not zero heads: no ATTACK_EFFECT_COIN_FLIP rows at all and no
+      rngState step consumed, where D127's zero-HEADS outcome spends its flips and
+      announces every one of them. Both land on the same ending. 130 HP and one
+      attack, so the index cannot be got wrong and the body can also be attacked. */
+  "fix-flip-filter": battler("fix-flip-filter", {
+    hp: 130,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Filtered Flip",
+        effect:
+          "Flip a coin for each {W} Energy attached to this Pokémon. This attack does 50 damage for each heads.",
+        damage: "50×",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -4898,6 +5007,58 @@ export const MULTI_COIN_FLIP_DECK = deckOf({
   "fix-energy": 8, // Basic {C} — pays both attacks' two generic symbols
   "fix-colorless-weak-big": 4, // 200 HP, ×2 COLORLESS — the pre-Weakness fold defender
   "fix-bigbody": 40, // 200 HP neutral Colorless Basic — DOMINANT pinned starter and the neutral defender
+});
+
+/** 0.78.0 → 0.79.0: the BOARD-COUNTED FLIP COUNT (D128) — "Flip a coin for each
+    [{X}] Energy attached to this Pokémon. This attack does D damage for each
+    heads." Torkoal sv01-035 "Concentrated Fire" ({R}{C}{C}, 80×) counts the TYPED
+    `{R}`; Bellossom sv03-003 "Powerful Dance" ({G}, 90×) counts attached CARDS; the
+    constructed fix-flip-filter ({C} cost, `{W}` filter, 50×) reaches the zero-count
+    branch no printing can.
+
+    A DEDICATED deck, for MULTI_COIN_FLIP_DECK's reason and one more: every case
+    here is about WHICH Energy is attached, so the deck has to hold several types at
+    once and the suite has to be free to attach any mix of them. Folding that onto
+    a deck whose other suite counts nothing would make one suite's attachments the
+    other's noise.
+
+    THE ENERGY LINES ARE THE POINT, not the cost payment. fix-fire-energy is both
+    Torkoal's `{R}` filter AND part of what pays its cost; fix-water-energy pays the
+    two {C} of that same cost WITHOUT being counted by the `{R}` filter — the pair
+    is what makes "the cost is met but the count is 1" a board this deck can build,
+    and it is the sharpest case in the slice (1 Fire + 2 Water → ONE flip, max 80,
+    never the 240 an unfiltered count would give). fix-grass-energy pays Bellossom's
+    {G} and joins the mixed pile its untyped count reads.
+
+    sv02-191 (Luminous, the WILDCARD Special) and fix-special (an UNAUTHORED Special,
+    Colorless by fallback) are here for `countAttachedEnergy`'s unit cases, which is
+    where the two readings DISAGREE: a wildcard counts for every TYPE filter and is
+    still exactly ONE card for the untyped reading, and a Special that provides
+    nothing typed counts for the untyped reading and for no type at all. That
+    disagreement is the whole reason the filter is nullable rather than defaulted.
+
+    fix-pokemon-v-weak (210 HP, ×2 FIRE) IS THE LOAD-BEARING DEFENDER SLOT: Torkoal
+    is a Fire attacker, so it is the body that proves the count lands PRE-Weakness —
+    one head is 80 × 2 = 160, where an after-W/R fold reads 80. 160 < 210, so the
+    case measures damage and never a Knock Out. (It is a "V" by name, which nothing
+    in this suite reads.)
+
+    fix-titan (340 HP, no Weakness, no attacks) is the NEUTRAL defender every raw
+    total is measured against, and it is 340 rather than fix-bigbody's 200 because
+    the totals here are much larger: three Fire on Torkoal is 240 and three mixed
+    Energy on Bellossom is 270, both of which would Knock a 200 HP body Out and park
+    a swept seed on a promotion. It is also the pinned Active on both sides. */
+export const PER_ENERGY_FLIP_DECK = deckOf({
+  "sv01-035": 4, // Torkoal — "Concentrated Fire" (80×) at index 1: perHeads, attachedEnergy {R}, per 80
+  "sv03-003": 4, // Bellossom — "Powerful Dance" (90×) at index 1: perHeads, attachedEnergy null, per 90
+  "fix-flip-filter": 4, // CONSTRUCTED — {C} cost, {W} filter: the only route to a ZERO count
+  "fix-fire-energy": 8, // Basic {R} — Torkoal's filter AND the {R} of its own cost
+  "fix-water-energy": 8, // Basic {W} — pays Torkoal's two {C} while its {R} filter ignores them
+  "fix-grass-energy": 6, // Basic {G} — pays Powerful Dance, and one type of its mixed pile
+  "sv02-191": 3, // Luminous Energy — the WILDCARD Special (counts for every type, one CARD)
+  "fix-special": 3, // an UNAUTHORED Special — Colorless by fallback, typed by nothing
+  "fix-pokemon-v-weak": 2, // 210 HP, ×2 FIRE — the pre-Weakness fold defender for Torkoal
+  "fix-titan": 18, // 340 HP neutral Basic — the pinned Active on both sides, and it survives 270
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

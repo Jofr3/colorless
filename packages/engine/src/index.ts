@@ -1171,7 +1171,52 @@ import type { GameState, Seat } from "./types";
     members, clause-table rows, state fields, error codes, registry rows or log
     arms; no continuous.ts diff; no web/API/DB/`@luminous/schema` diff. NO
     MATCH_RECORD_VERSION BUMP — no event shape changed at all. */
-export const engineVersion = "0.78.0";
+/** 0.79.0 — P3-M5: the BOARD-COUNTED FLIP COUNT (D128). "Flip a coin for each
+    [{X}] Energy attached to this Pokémon. This attack does D damage for each
+    heads." (3 printings) now SIMULATES: Torkoal sv01-035 "Concentrated Fire"
+    ({R}{C}{C}, 80×, the TYPED `{R}` reading and the pool's only coin effect
+    carrying a brace token), Ambipom swsh10.5-057 "Full Tilt Fling" ({C}, 60×) and
+    Bellossom sv03-003 "Powerful Dance" ({G}, 90×) — the UNTYPED reading, two
+    printings, so D121's warrant for one shared shape is met rather than assumed.
+
+    THE FLIP COUNT IS A BOARD FACT; THE DAMAGE COUNT IS STILL NOT. D126's rule is
+    untouched — `scaledAttackDamage` stays pure and state-only and gains no
+    `DamageCountSource` member, because the damage still comes from the faces. What
+    the board answers is HOW MANY TIMES TO FLIP, which is the one number a coin
+    cannot answer, so the slice is a WIDENED `flips` (`AttackFlipCount` = printed N
+    | attached Energy) rather than a fourth `AttackCoinFlip` member. The fold, the
+    loop, the one-row-per-flip event sequence and the dropped printed base are all
+    D127's, verbatim.
+
+    A BOUND IS OWED TO THE SOURCE OF THE NUMBER, NOT TO THE LOOP. D127's
+    `MAX_PRINTED_FLIPS` guards `printed` alone and deliberately does not travel:
+    printed digits are read out of third-party ingested text and have no upper
+    bound but that constant, while an attached-Energy count is read off the
+    engine's own state and is bounded by the deck that produced it. A ceiling there
+    would refuse a legal board rather than a malformed row.
+
+    A ZERO COUNT MEANS ZERO FLIPS, which is not zero heads: no
+    `ATTACK_EFFECT_COIN_FLIP` rows and no rngState step, where D127's zero-HEADS
+    outcome spends its flips and announces every one. Both land on the same ending
+    (no damage, turn still ends). No printing can reach it — every one of the three
+    has a cost floor of at least one Energy, and Torkoal's `{R}` cost IS the `{R}`
+    its filter counts — so the branch is defensive and `fix-flip-filter` is the
+    constructed fixture that pins it.
+
+    BOTH ENERGY NOTATIONS, through D118's `CLAUSE_ENERGY_TOKENS` rather than a
+    local `{R}` lookup: the pool prints types brace-coded (sv*) and spelled out
+    (swsh10.5), and reusing the map means a "for each Water Energy" reprint is
+    admitted by construction. An unresolvable token — `{C}`, `{N}`, garbage — is
+    told apart from the UNFILTERED sentence by the token's presence, not by the
+    lookup, and falls through to the loud ATTACK_EFFECT_SKIPPED path.
+
+    Cost: 1 skeleton regex, 1 exported union (`AttackFlipCount`), 1 deriver arm, 1
+    continuous.ts counter (`countAttachedEnergy`, beside `hasAttachedEnergy`), 1
+    private `flipCount` reader + 1 changed line in attack.ts. ZERO new events, ops,
+    `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
+    error codes, registry rows or log arms; no web/API/DB/`@luminous/schema` diff.
+    NO MATCH_RECORD_VERSION BUMP — no event shape changed at all. */
+export const engineVersion = "0.79.0";
 
 export type {
   ApplyResult,
@@ -1220,6 +1265,7 @@ export {
 } from "./cards";
 export type { DamageModifier, ParsedDamage, PokemonSuffix } from "./cards";
 export {
+  countAttachedEnergy,
   countEnergyInPlay,
   disabledAbilityUids,
   effectiveAttackCost,
@@ -1247,6 +1293,7 @@ export type {
   AttachTargetRiders,
   AttackCoinFlip,
   AttackDamageBonus,
+  AttackFlipCount,
   BoardCondition,
   CardFilter,
   DamageCountSource,

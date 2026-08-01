@@ -3,8 +3,13 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-01 — build session #112 (**P3-M5 — the MULTI-FLIP COUNT FOLD: "Flip N coins. This attack does D damage for each heads.", 22 printings on ONE regex, and the whole diff is a `for` loop (D127, engine 0.78.0)**).
+**Last updated:** 2026-08-01 — build session #113 (**P3-M5 — the BOARD-COUNTED FLIP COUNT: "Flip a coin for each [{X}] Energy attached to this Pokémon.", the coin family's FIRST board read — and a bound is owed to the SOURCE of the number, not to the loop (D128, engine 0.79.0)**).
+*"Flip a coin for each [{X}] Energy attached to this Pokémon. This attack does D damage for each heads."* (**3 printings**) now SIMULATES on **ONE anchored regex and ONE WIDENED FIELD**: Torkoal `sv01-035` "Concentrated Fire" ({R}{C}{C}, `80×`) — the TYPED `{R}` reading and **the pool's only coin effect carrying a brace token** — plus Ambipom `swsh10.5-057` "Full Tilt Fling" ({C}, `60×`) and Bellossom `sv03-003` "Powerful Dance" ({G}, `90×`), the UNTYPED reading, two printings, so D121's warrant for one shared shape is MET rather than assumed. Census re-run against the local D1 before authoring: those three are the WHOLE family, `Flip a coin for each` never counts anything but self-attached Energy in 978 cards, and the only variation is the optional type filter. **THE FLIP COUNT IS A BOARD FACT; THE DAMAGE COUNT STILL IS NOT — D126's rule survived contact with the shape most likely to break it.** `scaledAttackDamage` is UNTOUCHED and gains **no `DamageCountSource` member**: the damage still comes from the faces, and what the board answers is **how many times to flip**, the one number a coin cannot answer. **So the slice is a WIDENED `flips`, not a fourth `AttackCoinFlip` member** — `AttackFlipCount = { kind: "printed"; count } | { kind: "attachedEnergy"; energy }`, and `perHeads` still means "fold `per` × heads, drop the printed `D×` base, emit one row per flip". The consequent did not change at all, so nothing about D127's fold, loop, event sequence or base drop did either. **⚠️ THE GENERALISATION: A BOUND IS OWED TO THE SOURCE OF THE NUMBER, NOT TO THE LOOP IT FEEDS.** `MAX_PRINTED_FLIPS = 10` guards the `printed` member ALONE and deliberately does not travel: printed digits are read out of THIRD-PARTY INGESTED TEXT and have no upper bound but that constant, while an attached-Energy count is read off the engine's own state and is bounded by the deck that produced it — a ceiling there would refuse a **legal board** rather than a malformed row. (The still-unbuilt `Flip a coin until you get tails.` family is the third case and the reason to state it as a rule: no bound from the text AND none from the board, so it needs a *termination argument*, not a ceiling.) **⚠️ THE COUNT IS READ AT THE FLIP SITE, not at declaration beside `scaled`** — the count and the flips it bounds are one act, and splitting them would let a future gate between the two silently invalidate the number; `flipCount(state, seat, attacker, count)` is private to `attack.ts` and reads the attacker off `state`. **⚠️ `energy: null` IS A DIFFERENT TALLY, NOT A FILTER THAT MATCHES EVERYTHING** — a FILTERED count reads by PROVISION (`providesEnergyType`, D118: an Energy that can pay a `{R}` cost is exactly an Energy a `{R}` sentence counts), an UNFILTERED one reads by CARD, so a wildcard Luminous counts for every type filter and is still exactly ONE card; collapsing null into "the filter that matches everything" would get Ambipom wrong on any board holding a demoted Special. New `continuous.ts` `countAttachedEnergy` sits beside `hasAttachedEnergy` so the two readings of the same printed noun cannot drift. **Both energy notations, through D118's `CLAUSE_ENERGY_TOKENS`** rather than a local `{R}` lookup — all three printings need neither, but reusing the map admits a swsh-era "for each Water Energy" reprint by construction; an **unresolvable** token is told apart from the UNFILTERED sentence by the token's PRESENCE, not by the lookup's null, so `{C}`/`{N}`/`Dragon`/junk fall through to the loud `ATTACK_EFFECT_SKIPPED` path. **⚠️ A ZERO COUNT MEANS ZERO FLIPS, WHICH IS NOT ZERO HEADS:** no `ATTACK_EFFECT_COIN_FLIP` rows at all and **no `rngState` step consumed**, where D127's zero-HEADS outcome spends its flips and announces every one; both land on the same ending (no damage, no `ATTACK_FAILED`, turn still ends). **No printing can reach it** — every one of the three has a cost floor of at least one Energy and Torkoal's `{R}` cost IS the `{R}` its filter counts — so the branch is defensive and a CONSTRUCTED fixture (`fix-flip-filter`, a `{C}` cost against a `{W}` filter) pins it. **The central behavioural case, and the one an unfiltered implementation passes everything else on:** Torkoal holding **1 Fire + 2 Water** MEETS its `{R}{C}{C}` cost while its `{R}` count is **1** — exactly one flip, damage ∈ {0, 80}, never the 240 a card-count reading gives. `perEnergyFlip.test.ts` (**37**) on a new `PER_ENERGY_FLIP_DECK` with faithful Torkoal + Bellossom (a Stage 2 IS fieldable by `setActiveFromDeck`, so the untyped case runs on the real card) sweeps seeds and asserts the observed outcome SET exactly, recomputes every board's whole flip sequence by hand, pins byte-identical `rngState` on the zero board, asserts no `ATTACK_EFFECT_SKIPPED` on ANY outcome including zero, `(0+80)×2 = 160` pre-Weakness, and a `countAttachedEnergy` block where the three readings **DISAGREE** (a wildcard counts 1 for every type and 1 card; a second Special drops every type count to 0 while the card count rises to 2); mutation-checked — ignoring the filter fails 9, leaking the base 8, hard-coding one flip 7. D127's "refuses a BOARD-COUNTED number of flips" witness was **re-pointed, not deleted**, and now pins the disjointness of the two `AttackFlipCount` arms. engineVersion 0.78.0 → **0.79.0**; `bun run check` **GREEN (exit 0): 170 → 171 files, 2634 → 2671 tests**. ZERO new events, ops, `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields, error codes, registry rows or log arms; no `MATCH_RECORD_VERSION` bump; no web/API/DB/`@luminous/schema` diff. **⚠️ The repo's real pre-existing `biome format` flagged count is 89, not the 57 D113 recorded** — re-measure rather than quoting; this slice added zero churn (89 before, 89 after). **⚠️ `/code-review` STILL NOT RUN** on D96–D128 (user-triggered). This supersedes #112 (D127 — folded into `decisions.md`).
+
+**Superseded header (build #112 — the MULTI-FLIP COUNT FOLD, D127):**
+**Last updated (was):** 2026-08-01 — build session #112 (**P3-M5 — the MULTI-FLIP COUNT FOLD: "Flip N coins. This attack does D damage for each heads.", 22 printings on ONE regex, and the whole diff is a `for` loop (D127, engine 0.78.0)**).
 *"Flip N coins. This attack does D damage for each heads."* (**22 printings** — N=2 ×12, N=3 ×9, N=4 ×1; D ∈ {10,20,30,40,50,60,70,80,100}) now SIMULATES on **ONE anchored regex, ONE union member and STILL zero vocabulary.** **THE HEADLINE IS HOW LITTLE CHANGED:** same reader (`deriveAttackCoinFlip`), same union (`AttackCoinFlip` 2 → 3 members), same site in `attack.ts` (after the D125 requirement gate, in front of §8.5), same `coinBonus` → `scaledTotal` fold, same event, same log copy. The diff is **a bounded `for` loop, a third union member, one term in `scaledBase` and one in `modifierSimulated`** — no new events, ops, `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields, registry rows or log arms; no `MATCH_RECORD_VERSION` bump; no continuous/web/API/DB diff. **THE GENERALISATION: once a shape's SITE is right, varying its CARDINALITY is cheap.** The expensive questions in this family were *where in resolution does this land* (D125) and *what answers this clause* (D126); "how many times" is not in their league, so price a cardinality-only slice as cheap even when its printing count is large. **N FLIPS ARE ANNOUNCED AS N ROWS — the one design question D126 did not have to answer.** `ATTACK_EFFECT_COIN_FLIP` carries exactly ONE `CoinFace`, so one event per flip in flip order is the only reading that does not invent an aggregate the event, the wire and the log cannot express; a single row carrying a heads COUNT would owe a new event type, a new wire member and a new log arm to say what a reader can already count off the rows — **and would throw away the ORDER**, which is the part a player watching a three-flip attack wants. **IT IS THE MULTIPLY FAMILY, AND THE PRINTED MARKER SAYS SO:** all 22 carry a `"D×"` marker whose digits ARE the per-heads D, so `scaledBase` drops the printed base exactly as it does for `deriveAttackDamageMultiplier` — Tandemaus on two heads is **60, not 30 + 60**. The word that separates the families is *more*, and the pool holds **two live "more" near-misses** the whole-sentence anchor must refuse (Melmetal `swsh10.5-046`, Bouffalant `sv03-174`); a substring matcher scores both wrong. **AND YET IT IS NOT A `DamageCountSource`** — D126's rule applied, not re-derived: the count comes from the flips, not the board, so `scaledAttackDamage` stays pure and the value belongs in the coin union. **`bonusOnHeads` IS NOT COLLAPSED INTO `perHeads` WITH `flips: 1`** even though `heads × per` is right for both (attack.ts computes them with ONE expression, so the branch there is over CANCELLATION, not over the members): they differ in the printed marker — `"+"` keeps the base, `"×"` drops it — and one flag would hide the only real difference. **⚠️ THE `modifierSimulated` TRAP RECURRED EXACTLY WHERE D126 PREDICTED,** and the fix INVERTED the term to `coinFlip !== null && coinFlip.kind !== "cancelOnTails"` — naming the EXCEPTION rather than the cases, which keeps a future member from silently defaulting to "unsimulated". **ZERO HEADS IS A RESOLVED ATTACK THAT DEALT NOTHING, NOT A CANCELLED ONE** (no `DAMAGE_DEALT`, no `ATTACK_FAILED`, the turn still ends) — the sharpest behavioural difference from `cancelOnTails`. Guards: `flips >= 2` because *coins* is PLURAL (the one-flip form is D126's), and `flips <= MAX_PRINTED_FLIPS = 10` as a **refusal ceiling, not a rule** — the pool's max is 4, but the digits come from INGESTED THIRD-PARTY TEXT and an unbounded `\d+` would let one malformed row spin the resolution loop; **a refusal is LOUD, a hang is not.** New `multiCoinFlip.test.ts` (**30**) on `MULTI_COIN_FLIP_DECK` (Tandemaus `sv01-160` 2 flips / Meowth `sv06.5-048` 3 flips — two N so a `flips` READ cannot be confused with a hardcoded 2) plus one synthetic `fix-colorless-weak-big`; it sweeps to **all three / all four** outcomes (measured complete by seed 5 / seed 10) and asserts the outcome SET exactly, pins the **rngState account both ways** (folded state AND folded face sequence in order, plus `flips ± 1` non-equality), the four-reader disjointness empirically, no `ATTACK_EFFECT_SKIPPED` on any swept seed, and the pre-Weakness fold `(0 + 60) × 2 = 120` with **180** (leaked base) and **60** (post-W/R) named as the wrong answers. `bun run check` **GREEN exit 0 — 170 files / 2634 tests**, engineVersion **0.78.0**.
+
 
 **Superseded header (build #111 — the PRINTED COIN FLIP, D126):**
 **Last updated (was):** 2026-08-01 — build session #111 (**P3-M5 — the PRINTED COIN FLIP: one pre-damage flip read from TWO consequents, 31 printings on TWO REGEXES and ZERO vocabulary — the largest single mapping in P3-M5 (D126, engine 0.77.0)**).
@@ -63,106 +68,119 @@ Snorlax **swsh10.5-055** "Block" now SIMULATES: "As long as this Pokémon is in 
 
 
 **NEXT (resume point):** The derived-attack-text family now has **THREE CONSEQUENTS
-ACROSS TWO CONDITION KINDS, and the coin kind has outgrown the board kind.** The
-board-fact ones: damage-bonus at **19 literal rows + 2 TEMPLATES, covering 23 of the
-pool's 26 distinct clauses / 41 of its 43 printings**; requirement ("…this attack does
-nothing") at **2 rows / 2 cards / 3 printings**, own table, own skeleton, shared
-`BoardCondition` vocabulary but deliberately no shared lookup. The coin-fact one is at
-**3 REGEXES / 53 printings / ZERO table rows** — heads-bonus (20 printings, D126),
-tails-cancel (11, D126) and the multi-flip fold (22, D127) — because a coin face is not
-a board fact and needs no vocabulary at all. (D115 → D127, `conditionalDamage.test.ts` +
-`conditionClause.test.ts` + `clauseTable.test.ts` + `energyClause.test.ts` +
-`publicCount.test.ts` + `typeNameClause.test.ts` + `energyInPlay.test.ts` +
-`toolClause.test.ts` + `supporterClause.test.ts` + `promotedClause.test.ts` +
-`attackRequirement.test.ts` + `coinFlipDamage.test.ts` + `multiCoinFlip.test.ts`, engine
-**0.78.0**) — full `bun run check` green exit 0, **170 files / 2634 tests**. Ten rules
-are settled and should be applied without re-litigating them: **D116's pronoun rule**
-(the union member is named for the board fact it READS), **D118's template rule** (a
-clause varying on ONE token is a pattern, not N rows — literals match FIRST), **D119's
-corollary** (if TWO things vary it is not one token), **D120's precondition** (a
-template is only safe when the varying token has a CLOSED VOCABULARY to be rejected
-against), **D121's correction of D120** (a closed vocabulary tells you a template is
-SAFE, never that one is WARRANTED — the warrant is a second printing), **D122's gate
-rule** (a rule enforced at a GATE is not an invariant of the state the gate writes
-into), **D124's correction of D123** (ask where state LIVES, not what its lifetime is),
-**D125's placement rule** (a derived shape is classified by WHERE IN RESOLUTION IT
-LANDS), **D126's vocabulary rule** (when the condition is not read off the board, do not
-spell it in the board vocabulary), and **D127's cardinality rule** (next).
+ACROSS TWO CONDITION KINDS, and the coin kind is ONE SHAPE from complete.** The
+board-fact ones are unchanged by this session: damage-bonus at **19 literal rows + 2
+TEMPLATES, covering 23 of the pool's 26 distinct clauses / 41 of its 43 printings**;
+requirement ("…this attack does nothing") at **2 rows / 2 cards / 3 printings**, own
+table, own skeleton, shared `BoardCondition` vocabulary but deliberately no shared
+lookup. The coin one is at **4 REGEXES / 56 printings / ZERO clause-table rows and
+ZERO `BoardCondition` members** — heads-bonus (20 printings, D126), tails-cancel (11,
+D126), the printed multi-flip fold (22, D127) and the board-counted flip count (3,
+D128). (D115 → D128, `conditionalDamage.test.ts` + `conditionClause.test.ts` +
+`clauseTable.test.ts` + `energyClause.test.ts` + `publicCount.test.ts` +
+`typeNameClause.test.ts` + `energyInPlay.test.ts` + `toolClause.test.ts` +
+`supporterClause.test.ts` + `promotedClause.test.ts` + `attackRequirement.test.ts` +
+`coinFlipDamage.test.ts` + `multiCoinFlip.test.ts` + `perEnergyFlip.test.ts`, engine
+**0.79.0**) — full `bun run check` green exit 0, **171 files / 2671 tests**. Eleven
+rules are settled and should be applied without re-litigating them: **D116's pronoun
+rule** (the union member is named for the board fact it READS), **D118's template
+rule** (a clause varying on ONE token is a pattern, not N rows — literals match
+FIRST), **D119's corollary** (if TWO things vary it is not one token), **D120's
+precondition** (a template is only safe when the varying token has a CLOSED
+VOCABULARY to be rejected against), **D121's correction of D120** (a closed
+vocabulary tells you a template is SAFE, never that one is WARRANTED — the warrant is
+a second printing), **D122's gate rule** (a rule enforced at a GATE is not an
+invariant of the state the gate writes into), **D124's correction of D123** (ask where
+state LIVES, not what its lifetime is), **D125's placement rule** (a derived shape is
+classified by WHERE IN RESOLUTION IT LANDS), **D126's vocabulary rule** (when the
+condition is not read off the board, do not spell it in the board vocabulary),
+**D127's cardinality rule** (once a shape's SITE is right, varying its cardinality is
+cheap), and **D128's provenance rule** (next).
 
-⚠️ **D127: ONCE A SHAPE'S SITE IS RIGHT, VARYING ITS CARDINALITY IS CHEAP.** D127
-mapped 22 printings for a `for` loop, a union member and two one-line terms, because
-D125 had already settled WHERE the flip lands and D126 had already settled WHAT answers
-its clause. "How many times" is not in the same league as either. **Price a
-cardinality-only slice as cheap even when its printing count is large** — and expect the
-same to hold for the two remaining coin shapes, whose real cost is in their leading
-sentence, not their consequent.
+⚠️ **D128: A BOUND IS OWED TO THE SOURCE OF THE NUMBER, NOT TO THE LOOP IT FEEDS.**
+`MAX_PRINTED_FLIPS = 10` guards the `printed` flip count ALONE and deliberately does
+not travel to the board-counted one: printed digits come from THIRD-PARTY INGESTED
+TEXT and have no upper bound but that constant, while an attached-Energy count is read
+off the engine's own state and is bounded by the deck that produced it. A ceiling on
+the board read would refuse a **legal board** rather than a malformed row. **This
+matters immediately for item 1 below** — `Flip a coin until you get tails.` has no
+bound from the text *and* none from the board, so it needs a **termination argument**,
+not a ceiling. Do not reach for `MAX_PRINTED_FLIPS` there; it answers a different
+question.
 
-⚠️ **D127: WHEN A NEW MEMBER JOINS A `*Simulated` TERM, RE-READ THE TERM AS AN
-EXCEPTION.** D126 wrote `coinFlip?.kind === "bonusOnHeads"` because one member of two
-owned a printed marker. D127 made it two of three, and the honest form became
-`coinFlip !== null && coinFlip.kind !== "cancelOnTails"` — **naming the member that does
-NOT own a modifier.** The enumerate-the-cases form silently defaults a future member to
-"unsimulated", which is the failure that produces correct damage plus a loud
-`ATTACK_EFFECT_SKIPPED` row on every printing. Same trap D126 flagged, second sighting.
+⚠️ **D128: WIDEN THE FIELD, DO NOT ADD THE MEMBER, when only the SOURCE of a value
+moved.** The board-counted flip count is `perHeads` with `flips: number` widened to
+`flips: AttackFlipCount` — the consequent, the fold, the one-row-per-flip event
+sequence and the dropped `"D×"` base are all D127's, verbatim. A fourth
+`AttackCoinFlip` member would have duplicated the whole fold to vary its bound. Ask
+"did the CONSEQUENT change?" before reaching for a union member.
 
-⚠️ **D127: A DERIVER THAT LOOPS ON A PRINTED NUMBER OWES A REFUSAL CEILING.**
-`MAX_PRINTED_FLIPS = 10` is not a rule of the game (the pool's max is 4) — it is there
-because the digits are read out of INGESTED THIRD-PARTY TEXT and an unbounded `\d+`
-would let one malformed row spin the resolution loop. **A refusal is LOUD; a hang is
-not.** The unbounded family (item 2 below) is the same concern with no printed number at
-all, so it needs the equivalent from the other direction.
+⚠️ **D128: `energy: null` IS A DIFFERENT TALLY, NOT A FILTER THAT MATCHES
+EVERYTHING.** A FILTERED Energy count reads by PROVISION (`providesEnergyType`, D118),
+an UNFILTERED one reads by CARD. A wildcard Luminous counts for every type filter and
+is still exactly ONE card. Any future "for each Energy" shape inherits this
+distinction — `continuous.ts`'s `countAttachedEnergy(state, pokemon, energy | null)`
+already answers it; do not re-derive it.
 
 ⚠️ **FOUR "unmapped stays LOUD" witnesses exist and ALL must survive** — they are the
 only things pinning the fall-through. **Only THREE unmapped board-fact clauses remain
 in 978 cards against four suites**, so two witnesses share an occupant, which is
-expected and documented in-file. D126 and D127 touched none of them. If you map any of
-these, **re-point that case at another unmapped clause, do not delete it.**
+expected and documented in-file. D126, D127 and D128 touched none of them. If you map
+any of these, **re-point that case at another unmapped clause, do not delete it.**
+(D128 did exactly that to a *different* witness — D127's "refuses a BOARD-COUNTED
+number of flips" case, which now pins the disjointness of the two `AttackFlipCount`
+arms rather than being deleted. Same rule, different family.)
 - `clauseTable.test.ts` **and** `conditionalDamage.test.ts` → **Lokix `sv02-021`**
   ("If this Pokémon evolved from Nymble during this turn, …").
 - `conditionClause.test.ts` → **Lucario `sv01-114`** ("If any of your {F} Pokémon
   were Knocked Out by damage from an attack during your opponent's last turn, …").
 - `energyClause.test.ts` (+ a second assertion in `energyInPlay.test.ts`) → **Slither
   Wing `sv06.5-026`** ("If your opponent has any Future Pokémon in play, …") —
-  blocked on an INGEST change (item 5 below).
+  blocked on an INGEST change (item 4 below).
 
-**1. THE BEST NEXT SLICE: the BOARD-COUNTED flip count — `Flip a coin for each <thing>
-attached to this Pokémon. This attack does D damage for each heads.`** This is the
-shape where the board vocabulary finally earns its place in the coin family: the DAMAGE
-count still comes from the flips (D126's rule holds — not a `DamageCountSource`), but
-the **FLIP count is a board fact**, and it is the same question `scaledAttackDamage`
-already answers for a dozen clauses. **Census (verified 2026-08-01, `attacks_json`, 978
-cards) — 3 printings, and they split into TWO readings:**
-- Torkoal `sv01-035` "Concentrated Fire" (`80×`) — `Flip a coin for each {R} Energy
-  attached to this Pokémon. This attack does 80 damage for each heads.` — a TYPED
-  energy count, and **the pool's only coin effect containing a brace token** (D126).
-- Ambipom `swsh10.5-057` "Full Tilt Fling" (`60×`) and Bellossom `sv03-003` "Powerful
-  Dance" (`90×`) — `Flip a coin for each Energy attached to this Pokémon. …` — the
-  UNTYPED count. Two printings, so D121's warrant for a shared shape is satisfied.
-- **The design call:** `perHeads` currently carries a literal `flips: number`. This
-  wants that field to become a small union (`{ kind: "printed"; n } | { kind: "count";
-  source }`), OR a fourth member. Prefer widening `flips` — the fold, the loop, the
-  event sequence and the `scaledBase` drop are all identical, and only the bound
-  changes. ⚠️ **The count must be read at the SAME site the flips are taken** (after
-  the D125 gate), not at declaration, and `hasAttachedEnergy`/the D118 provision code is
-  where "an Energy that counts for {R}" is already answered — do not re-derive it.
-- ⚠️ **A ZERO count means ZERO flips, which is not the same as zero heads.** No
-  `ATTACK_EFFECT_COIN_FLIP` rows at all and no rngState step consumed. D127's
-  zero-heads case (`no DAMAGE_DEALT`, no `ATTACK_FAILED`, turn still ends) is the
-  precedent for the damage half; the flip-count half is new and needs its own case.
+**1. THE BEST NEXT SLICE: the UNBOUNDED FOLD — `Flip a coin until you get tails.`**
+This is the LAST coin shape and the only one left refused at the leading sentence — 9
+printings, and unlike D127 and D128 it has **no bound from the text and none from the
+board**, which is the whole reason it was deferred twice. Take it in TWO pieces and
+ship the first alone if the session is short:
+- **1a — the FOLD (5 printings, a small change on D127's loop).** `…tails. This
+  attack does D damage for each heads.` — Growlithe `sv01-030`, Rellor `sv02-026`,
+  Forretress `sv01-139`, Chansey `sv01-144` (the MULTIPLY form, printed `D×`, base
+  dropped) plus Bouffalant `sv03-174` (`This attack does 30 **more** damage for each
+  heads.`, base `50+` — the ADDITIVE form, which KEEPS its printed base, and the only
+  printing of it). Two markers, so per D127 that is **two union members or one member
+  plus the marker read at `scaledBase`** — decide which by asking whether the
+  consequent differs (D128's rule), and note the `more` variants are exactly the
+  near-misses D127's regex was built to refuse, so the anchors must stay disjoint.
+  The natural shape is a THIRD `AttackFlipCount` member (`{ kind: "untilTails" }`)
+  read by `flipCount`'s sibling — but `flipCount` returns a NUMBER computed before the
+  loop, and this shape's count is only known by flipping, so the honest change is
+  probably to the LOOP's condition rather than to `flipCount`. Look at the loop before
+  committing to a shape.
+  ⚠️ **THE TERMINATION ARGUMENT IS THE SLICE'S REAL CONTENT.** A seeded RNG makes it
+  terminate in practice, but nothing in the type system says the seed is fair, and one
+  degenerate `rngState` would spin the resolution loop forever. A cap is NOT the D127
+  answer here (it would silently truncate a legal, if wildly improbable, sequence
+  rather than refuse a malformed row) — so state explicitly what the cap means, log or
+  event it if it ever fires, and pin it with a test that drives a rigged `rngState`.
+  This is the one place in the family where the right answer is not already written
+  down.
+  ⚠️ **THE FLIP COUNT IS ≥ 1 AND UNBOUNDED ABOVE, so the rngState account differs from
+  every prior suite:** the number of steps is a function of the faces, not of the text
+  or the board, so an "exactly N steps" assertion has to recompute the sequence rather
+  than count it. `multiCoinFlip.test.ts`'s `foldFlips` helper is the wrong shape;
+  `perEnergyFlip.test.ts`'s hand-recomputation is closer.
+- **1b — the repeated EFFECT (3 printings), a PROGRAM, not a fold.** `…tails. For each
+  heads, <effect>.` — Masquerain `sv03-007` (discard from hand), Krookodile `sv01-117`
+  (discard Energy), Gyarados `swsh10.5-022` (mill). Genuinely different machinery: it
+  runs an `EffectOp` N times where D127/D128 fold a number, and D125's placement rule
+  says an op runs at `attack.ts`'s TAIL while the flips are taken in FRONT of §8.5 —
+  so the flip result must be carried across the pipeline, which nothing does today.
+  **Do 1a first and decide 1b on its own evidence.** Note Wugtrio `sv01-057` prints
+  `Flip 3 coins. For each heads, …` — a PRINTED-count version of the same repeated
+  effect, so 1b's machinery would map it too and the census for 1b is bigger than 3.
 
-**2. THE UNBOUNDED FOLD — `Flip a coin until you get tails.`** — 9 printings, and it
-needs a LOOP WITH NO PRINTED BOUND, so it is a genuinely different risk from item 1 (a
-seeded RNG makes it terminating in practice, but the code must be written so a
-pathological seed cannot hang — the same concern `MAX_PRINTED_FLIPS` answers for D127,
-from the other direction). Two sub-shapes: `…tails. This attack does D damage for each
-heads.` (Growlithe `sv01-030`, Rellor `sv02-026`, Forretress `sv01-139`, Chansey
-`sv01-144` — the multiply form, and now a **three-line change** on D127's loop plus the
-bound question) and `…tails. For each heads, <effect>.` (Masquerain `sv03-007`,
-Krookodile `sv01-117`, Gyarados `swsh10.5-022` — a repeated EFFECT, which is a program,
-not a fold). Plus Bouffalant `sv03-174`'s `more` variant (base `50+`, so it keeps its
-printed base — the ADDITIVE unbounded form, and the only printing of it).
-
-**3. THE THREE BOARD-FACT CLAUSES LEFT, ranked.** (Census re-confirmed 2026-08-01:
+**2. THE THREE BOARD-FACT CLAUSES LEFT, ranked.** (Census re-confirmed 2026-08-01:
 **43 printings / 32 distinct (condition, N) pairs / 26 distinct CLAUSES** — that
 filter is the raw skeleton's 71/45/32 minus the coin-flip family minus one anaphoric
 `you do`; say which you mean. The clause count is the one that costs work, and **23 of
@@ -178,9 +196,9 @@ filter is the raw skeleton's 71/45/32 minus the coin-flip family minus one anaph
   from an attack during your opponent's last turn` — 1 printing. Cross-turn,
   type-filtered, and must distinguish a KO by attack damage from any other KO route.
   Do it LAST or not at all.
-- **Slither Wing `sv06.5-026`** (+120) — blocked on an INGEST change, see item 5.
+- **Slither Wing `sv06.5-026`** (+120) — blocked on an INGEST change, see item 4.
 
-**4. THE REST OF THE "does nothing" CONSEQUENT — 4 printings, all refused, census
+**3. THE REST OF THE "does nothing" CONSEQUENT — 4 printings, all refused, census
 done (D125), do not re-run it.** D126 took the 12 coin ones. What is left:
 - **3 printings — `If you can't, this attack does nothing.`** (sv02-132 "Dirty Throw",
   sv06.5-005 "Power Shot", and sv02-009's "…if you can't shuffle a Combee…").
@@ -195,7 +213,7 @@ done (D125), do not re-run it.** D126 took the 12 coin ones. What is left:
   `youPlayedSupporterThisTurn` is the near neighbour and is NOT enough — this needs a
   "played a card NAMED X this turn" fact, which nothing records.
 
-**5. BLOCKED ON AN INGEST CHANGE, not engine work (D115, still true):** Slither Wing
+**4. BLOCKED ON AN INGEST CHANGE, not engine work (D115, still true):** Slither Wing
 `sv06.5-026` "If your opponent has any **Future** Pokémon in play". The `cards` table
 has **no subtype/tag column**; the upstream tcgdex `suffix` field IS parsed
 (`packages/schema/src/tcgdex/card.ts`) but dropped before the D1 insert, and carries
@@ -203,7 +221,7 @@ has **no subtype/tag column**; the upstream tcgdex `suffix` field IS parsed
 ("prevent all damage … from **Ancient** Pokémon") is blocked identically. If you want
 these, the slice is a **P1 ingest** one: add the tag column + re-ingest.
 
-**6. TWO SEAMS OUTSIDE THE CLAUSE FAMILY, both still unbuilt:**
+**5. TWO SEAMS OUTSIDE THE CLAUSE FAMILY, both still unbuilt:**
 - **The counter-SPREAD shape, 3 printings, unbuilt on BOTH paths.** `Put N damage
   counters on each of your opponent's [Benched] Pokémon that has any damage counters
   on it.` — Yveltal `sv06.5-035` (2 counters, all), Vespiquen ex `sv03-096`/`-212`
@@ -223,7 +241,8 @@ HAPAX); a `for each Pokémon Tool` scaling shape (D122 — zero occurrences in 9
 cards); a `<Name> moves to the Active Spot` trigger built off D124's state (Weavile
 `sv02-134` is the pool's only one and it is a `when` TRIGGER, a different mechanism);
 a `{ kind: "not", cond }` `BoardCondition` member (D125 — polarity belongs to the
-skeleton).
+skeleton); a `DamageCountSource` member for any coin shape (D126 + D128 — the DAMAGE
+count comes from the faces, and even the board-COUNTED flip shape did not want one).
 
 ⚠️ Re-confirm the printed text char-for-char against the local D1 before authoring,
 and sweep for the SHAPE rather than the predicate (the D115 lesson), **over the WHOLE
@@ -231,11 +250,16 @@ effect string, not per sentence** (D121). The local D1 is at
 `apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d866…sqlite` (binding
 `DB`, 978 rows; attacks/abilities are JSON text columns `attacks_json` /
 `abilities_json`, trainer text is the scalar `effect` column). ⚠️ In `attacks_json`
-the keys are `name` / `cost` / `effect` (optional) / `damage` (optional), `cost` is
-**spelled-out words** (`"Fire"`), NEVER brace tokens, and `damage` is an integer OR a
-string (`"10+"`, `"30×"`) OR absent — D126 verified all of this.
+the keys are `cost` / `name` / `effect` (optional) / `damage` (optional) **in that
+stored order**, `cost` is **spelled-out words** (`"Fire"`), NEVER brace tokens, and
+`damage` is an integer OR a string (`"10+"`, `"30×"`, `"80×"`) OR absent — D126 and
+D128 verified all of this. ⚠️ **The `×` in a damage string is U+00D7 and the `é` in
+"Pokémon" is U+00E9; `{R}` is plain ASCII braces.** ⚠️ **`biome format` flags 89 files
+repo-wide on a clean tree** (not the 57 D113 recorded — it grows with the repo).
+Re-measure with `git stash -u` before claiming churn; `bun run check` does not run the
+formatter, so a new file should be `biome format --write`-ed to keep the count flat.
 
-**7. LESSONS worth carrying:**
+**6. LESSONS worth carrying:**
 - **Resolve a context-dependent printed subject at the site that knows the context; keep the shared
   vocabulary context-free** (D116). `BoardCondition` has five consumers and only one of them is an
   attack — so "this Pokémon" is resolved by the clause table, and the union member is named
@@ -484,8 +508,16 @@ string (`"10+"`, `"30×"`) OR absent — D126 verified all of this.
 - **Assert the swept outcome SET, not just "we saw one"** (D127). `expect([...seen].sort()).toEqual([0,1,2,3])`
   fails when a regression stops reaching an outcome; a sweep that merely records what it found
   silently under-tests instead.
+- **Keep the ONE case a plausible wrong implementation would fail** (D128). Every other case in
+  `perEnergyFlip.test.ts` is satisfied by an implementation that ignores the `{R}` filter; only
+  Torkoal holding 1 Fire + 2 Water (cost MET, count 1) is not. When a suite grows, know which case
+  is load-bearing — that is the one to write first and the last one to trim.
+- **A defensive branch no printing can reach still gets a CONSTRUCTED fixture** (D128). The
+  zero-flip-count path is unreachable on all three real cards (every one has a cost floor of at
+  least one Energy), so `fix-flip-filter` exists purely to reach it. Say in the fixture's comment
+  *why* it is constructed, or the next session reads it as a card that should have been faithful.
 
-**FIRST, if you want it: `/code-review`** — D96–D127 have had NO independent reviewer (a new op, an
+**FIRST, if you want it: `/code-review`** — D96–D128 have had NO independent reviewer (a new op, an
 EffectSlot, a DiscardScope, the `cap` field, the index-keyed attack seam, the `damageAttacker` passive
 + its Tool member, the `onDamagedByAttack` TriggerTiming + `damagedTrigger` stage, a cross-board
 ability-lock aura, a `useStadiumAbility` action + `StadiumEffects.ability` + `noRuleBox`/`toolCard`
@@ -4833,13 +4865,52 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D127** — the MULTI-FLIP COUNT FOLD, engine **0.78.0**: "Flip N coins. This attack does D damage for each heads." — **22 printings on ONE regex, ONE union member and ZERO vocabulary**, D126's seam with a bounded LOOP. The coin consequent now covers **53 printings across 3 regexes**; the board-fact damage-bonus table stays at 19 rows + 2 templates / 23 of 26 clauses. N flips announce N `ATTACK_EFFECT_COIN_FLIP` rows in order; the printed `"D×"` marker is what drops the base. Still LOUD: the UNBOUNDED fold (9 prints) and the BOARD-COUNTED flip count (3 prints)) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D128** — the BOARD-COUNTED FLIP COUNT, engine **0.79.0**: "Flip a coin for each [{X}] Energy attached to this Pokémon." — **3 printings on ONE regex and ONE WIDENED FIELD**; the coin family's FIRST board read, and it still wanted NO `DamageCountSource` member. A bound is owed to the SOURCE of the number, not to the loop it feeds. `bun run check` green: 171 files / 2671 tests. Prior: **D127** — the MULTI-FLIP COUNT FOLD, engine 0.78.0: "Flip N coins. This attack does D damage for each heads." — **22 printings on ONE regex, ONE union member and ZERO vocabulary**, D126's seam with a bounded LOOP. The coin consequent now covers **53 printings across 3 regexes**; the board-fact damage-bonus table stays at 19 rows + 2 templates / 23 of 26 clauses. N flips announce N `ATTACK_EFFECT_COIN_FLIP` rows in order; the printed `"D×"` marker is what drops the base. Still LOUD: the UNBOUNDED fold (9 prints) and the BOARD-COUNTED flip count (3 prints)) |
 | online | P4 | 🚧 **STARTED** (engine broad at 0.40.0). M1 (WS lobby over the DO) already done at P1-M8. **1a: engine wired into `apps/api`** (`startMatch`, host→p1/guest→p2). **1b: the DO seam DONE** — `handoffToMatch()` in `alarm()` loads the D1 pool, mints a seed, persists a `MatchRecord` under `MATCH_KEY` (dropped on `abandonsMatch`). **1c: the redactor + wire + read-only board DONE** — `redactGame`/`RedactedGame` + `{kind:"match"}` + `OnlineMatch` over `PlaymatView`. **2a: the action transport + setup flow DONE** — `{kind:"action"}` frame, seat-bound `applyMatchAction`, redacted `phase`, `OnlineHud` setup panels. **2b-i: the attack + KO loop DONE** — `RedactedPhase.turn:action.attacks` (server-computed payability, turn-owner + own-Active only), `SUPPORTED_MATCH_ACTIONS` += attack/takePrizes/promote, `OnlineHud` AttackPanel + ko:takePrizes/ko:promote dialogs; the match now plays TO A WIN with the fixed basic decks. **2b-ii: retreat DONE** (scoped to retreat ALONE — abilities/trainers deferred to real decks): `RedactedPhase.turn:action.retreat` + `SUPPORTED_MATCH_ACTIONS` += retreat + `OnlineHud` RetreatDialog. **2b-iii-a: the effect:choose prompt SEAM + the mayDraw dialog DONE** — `RedactedEffectPrompt` (mayDraw arm) on `RedactedPhase.effect:choose.prompt` (answerer-only via `redactedPromptOf`), `decisionFromPhase` reconstruction (round-trip now holds for a mayDraw park), `OnlineHud` MayDrawDialog; `resolveEffect` stays OFF the allowlist (2b-iii SPLIT: a=mayDraw seam, b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection pill). **2b-iii-b: the public-ref prompts DONE** — `RedactedEffectPrompt` += choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy arms (+ `RedactedPokemonRef`, absolute-seat), `redactPrompt` maps them (fresh copies, answerer-only, controller-answered so stricter than `phaseViewOf`), `decisionFromPhase` reconstructs full (round-trip holds for the answerer's view), `OnlineHud` += four dialogs via `EffectChooseDialog` (names resolved off the board); `resolveEffect` still OFF the allowlist. **2b-iii-c: the hidden-candidate prompts DONE** — `RedactedEffectPrompt` += chooseCards/attachCards arms carrying a `RedactedCard` per candidate (the deck-card reveal, server-resolved via `redactedCardOf`, answerer-only — the hidden-info barrier, leak-tested); `decisionFromPhase` recovers uids from `c.id`; `OnlineHud` += ChooseCards/AttachCards dialogs + the `effect:choose` render keys on the prompt (stale-pick reset); **`resolveEffect` now ON `SUPPORTED_MATCH_ACTIONS`** (every kind dialoged; soft-lock-safe). 1767→1774 tests. **2b-iii-d SPLIT** into d-i (pill) + d-ii (log). **2b-iii-d-i: the rejection pill DONE** — `{kind:"reject-action", reason}` server frame, `applyMatchAction` returns `{ok,reason}`, the DO sends it on `!ok`, `useLobby.actionError` + `OnlineMatch` `TransientErrorPill`. 1774→1777 tests. **2b-iii-d-ii: the online event log DONE** (D68) — `logFromEvents` + `LogContext` moved into `@luminous/engine`, the wire log types (`SeatLogEntry`/`LogSegment`) into `@luminous/schema`, the `{kind:"match"}` frame grew `log` (seat-keyed + leak-safe, identical to both), `MatchRecord` grew `startedAt`/`names`/`log`, `applyMatchAction` takes `now`; `viewLogEntries` relabels client-side. 1777→1782. **3 SPLIT** (a/a-sec/b/c+). **3a + 3a-sec: real deck selection + seat auth DONE** (D69) — the `/ws` upgrade authenticates the forwarded `session` cookie → a per-socket userId; the handoff loads each player's OWN deck OWNER-SCOPED (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, resets + broadcasts `{kind:"match-error"}` on a load failure; `seatClaimAllowed` + `SEAT_USERS_KEY` bind a seat to its account (closing the bearer-only-seat HAND leak). 1782→1790. **3b: the online ability + non-Stadium trainer HUD DONE** (D70) — `RedactedPhase.turn:action` gained `abilities`/`trainers` (server-folded playability via `redactedAbilitiesOf`/`redactedTrainersOf`, actor-only), `OnlineHud` gained the Abilities + Trainers sections, `SUPPORTED_MATCH_ACTIONS` += `useAbility`; STADIUMS stay the board drag, RARE CANDY deferred. 1790→**1803**. **3b-ii: the online Rare Candy DONE** (D71) — `RedactedTrainer` gained a `rareCandy` FLAG (the one row that opens a dialog instead of dispatching `playTrainer`) and `RedactedPhase.turn:action` a `rareCandy` pairing list (`redactedRareCandyOf` = the engine's `rareCandyOptions` mapped to the wire, actor-only; both computed in one `redactPhase` call, so a lit row always has ≥1 pairing), `OnlineHud` gained the two-step `RareCandyDialog`, `SUPPORTED_MATCH_ACTIONS` += `rareCandy` (soft-lock-safe — the same `placeEvolution` tail `evolve` has reached since 2a, no new park surface). 1803→**1812**. **The online turn HUD is now COMPLETE — every local affordance has an online counterpart.** **BROWSER-VERIFIED** (2026-07-26, two real clients + two D1 decks): the forwarded `session` cookie survives the cross-origin WS upgrade, the event log renders on both, 3b's greying is faithful live, Rare Candy evolves end-to-end and the hidden-info barrier holds. **3c — the match LIFECYCLE** is now landing: **3c-i** `MatchRecord.version` + `readMatchRecord`/`peekMatch`/`retireStaleMatch` + `endMatch` (D72, 1812→**1825**); **3c-ii** the engine `concede` action + `GameOverReason.conceded` + the 90s `ABANDON_GRACE_MS` forfeit for a player who vanishes mid-match (D73, engine 0.41.0, 1825→**1832**, browser-verified by killing a client); **3c-iii** the Concede control in the HUD chrome + neutral `GAME_OVER_DETAIL` copy (D74, 1832→**1835**); **3c-iv** a mid-match LEAVE now forfeits instead of voiding the opponent's game — `concedeSeat` shared with the timeout path, the pure `applyBye` keeping the seat while in-game so the result survives, and a Back confirmation that says leaving forfeits (D75, 1835→**1841**); **3c-v** the forfeit deadline moved onto the WIRE (`PlayerState.forfeitAt` replacing the DO's `ABANDON_KEY`, so the countdown renders the number the alarm fires on), the `connected` ⇒ no-forfeit invariant made structural, `readSnapshot` normalizing the un-versioned snapshot, and the ticking `OpponentAwayBanner` (D76, 1841→**1853**, browser-verified incl. a reconnect that was correctly NOT forfeited). **3c-vi** rematch — a `{kind:"rematch"}` lifecycle FRAME (server-judged: only the DO knows the match reached `gameOver`) running `endMatch` + readying the ASKER, so the existing ready-up flow is the agreement and no new lobby state exists; `commit` drops `MATCH_KEY` so the next handoff mints a fresh game (D77, 1853→**1858**, browser-verified incl. a crafted mid-game frame being dropped). **P4's match lifecycle is now COMPLETE end to end — start → play → resolve → play again, in one lobby.** **3c-vii-a** the SPECTATOR redaction — `redactGame(state, side, spectating)` withholding BOTH hands, both sides' setup placements and every actor affordance through one `actor = null` gate (the threat model is a PLAYER watching their own match, so the sides are symmetric); leak-tested from both sides, engine rules unchanged, **not wired yet** (D78, 1858→**1865**). **3c-vii-b** spectate WIRED — the lobby link is the spectate link (a third socket's `reject-full` becomes a spectator while in-game; no new frame, URL or invite flow), a spectator having no playerId/PlayerState/snapshot presence at all; `useLobby`'s `rejected` became `refusal: full|kicked` and `OnlineMatch` gained `spectating` (D79, 1874 tests, browser-verified with a third profile: both hands face-down to them, no controls, live updates). **Every P4 milestone is now DONE — transport, handoff, hidden info, reconnect/timeouts, concede/rematch, spectate.** **3c-viii** half-open socket liveness — `getWebSocketAutoResponseTimestamp` on a 30s poll closes any socket silent for 15s, funnelling into the grace→disconnect→forfeit machinery a real close already drives (D80, 1878 tests, browser-verified with the offline reproducer that exposed it). **P4 has NO known defects and no planned work left — every milestone is done.** **Next:** a REMOTE deploy + verification (all of P4 is local-only; needs the user's go-ahead + credentials, and P1's remote migrations/ingest first), or P5 polish. See `workstreams/online.md`. |
 | polish | P5 | 🚧 **STARTED** — **P5-1: real player names DONE** (D81): a lobby seat's name is the ACCOUNT's `displayName`, resolved SERVER-SIDE at the hello (`loadDisplayName`) from the /ws session's `userId`, so it is authoritative rather than announced (a client-supplied name was an impersonation vector once names stopped being random); anonymous sockets keep their generated handle, and a BLANK account name never falls back to the email (it is broadcast to the opponent and to spectators). Browser-verified on four clients. **P5-2: generated AVATARS DONE** (D82): `PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient + the account's initial; nothing stored, nothing uploaded, an anonymous seat keeps the generic figure. Cross-client determinism browser-verified (identical gradients for the same accounts on both clients). **P5-3: DECK COVER ART DONE** (D83): a pure `pickCoverCardId` fronts each deck with its highest-HP Pokémon (ties: copies, then card id) — HP being the one number that beats both stage-ranking (wrong for a Basic-ex deck) and count-ranking (wrong for every evolution deck); derived on READ in the list query, null → the card back for an empty deck. Browser-verified, and the run caught the deck NAME being illegible over card art (scrim added, only where there is art). **P5-4: the playmat's pass + history controls DELETED** (D84): the arrows were never wired to anything on any surface, and the ⟶ was enabled exactly when the turn panel covered it — so the repo's oldest defect was two dead controls, not a layout problem; `PlaymatView.onPassTurn` is now optional and only the /simulator sandbox asks for one. Browser-verified with a real `elementFromPoint` hit-test. **P5-5: PROFILES — the account you can EDIT — DONE** (D85): a Profile section on /settings behind `PATCH /auth/me` (`updateProfileRequestSchema`: required `displayName`, trimmed, 1–64; `requireUser` before the validator; no write when unchanged), closing the gap P5-1 opened — a name that is authoritative and broadcast but unchangeable. It shows the account's REAL generated face: `userSchema` gained `avatarSeed` (derived server-side by D82's hash), `avatarSeedFrom` moved to `apps/api/src/auth/avatar.ts` (a property of the ACCOUNT, not a seat) and `PlayerAvatar` to `src/components/`, so /settings and the lobby cannot drift into two similar drawings; deriving the hash client-side was rejected. Browser-verified on two clients — a rename reached the corner control, a reload, and the OPPONENT's panel with a byte-identical gradient. **P5-6: a CHOSEN deck cover DONE** (D86): the follow-up P5-3 named — a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure `effectiveCoverCardId` where the pin wins and everything else falls through to `pickCoverCardId` (now explicitly the DEFAULT). It resolves against the candidates the list query already had, so a choice costs no query and a stale pin falls back rather than drawing a blank; the pin may be a TRAINER, since guessing needs a rule and choosing does not. `DeckSummary.coverCardId` still means the face DRAWN, `Deck.chosenCoverCardId` the stored choice; the `CoverDialog` offers Automatic as an explicit option. PATCH and the client's `toSnapshot` both refuse to let the pin and the card list disagree — load-bearing, since a self-contradicting body would 400 forever on a shared save path. Browser-verified end to end incl. the fallback-after-removal and the 400 gate. **P5-7: a FAVOURITE deck on the profile DONE** (D87): a nullable `users.favourite_deck_id` (migration `0005`, surfaced as `userSchema.favouriteDeckId` — just the id) an account pins to one of its OWN decks via a native `<select>` on /settings riding the SAME `PATCH /auth/me` as the name (optional/nullable `favouriteDeckId`, validated against the caller's decks → 400 `favourite deck not found`); the profile stores only the id and resolves cover/name on read from `GET /decks` (derive-on-read, tolerate stale), the FK is `ON DELETE SET NULL`. Browser-verified end to end (build #71). **P5-8: a card DETAIL VIEW DONE** (D88): a read-only detail modal (`CardDetailDialog.tsx`) opened from the builder grid, hydrating the full `Card` via `GET /cards/:id` — a pure web-UI slice; the inspect affordance is a SIBLING of the add button (corner info button, opens without adding a copy), honest about what the catalog stores, respects `prefers-reduced-motion`. Browser-verified (build #72). **P5-9: a REDUCED-MOTION AUDIT DONE** (D89): carried `prefers-reduced-motion` through the three unguarded P5 surfaces — `CoverDialog.tsx`, `Settings.tsx`, `ProfileSection.tsx` — appending `motion-reduce:transition-none` at each call site per the D88 idiom (the global `index.css` rule only covers `<body>`/`.route-view`, not component Tailwind utilities), plus `motion-reduce:animate-none` on the Save spinner; `PlayerAvatar` was already clean. Pure CSS-class slice; verified via the shipped stylesheet (both guard rules emitted inside `@media (prefers-reduced-motion: reduce)`). **P5-10: the APP-WIDE glass reduced-motion pass DONE** (D90): the root-cause P5-9 deferred — `motion-reduce:transition-none` added INTO the seven `glass.ts` constants that carry a transition (`GLASS_HUD_BUTTON`/`GLASS_GHOST_BUTTON`/`GLASS_DIALOG_GHOST_BUTTON`/`GLASS_ACCENT_BUTTON`/`GLASS_NEUTRAL_BUTTON`/`GLASS_FILTER_TOGGLE` + `GLASS_INPUT`), so EVERY glass control app-wide respects reduced motion from the constant, not each call site; **reverses D88/D89's call-site placement** (blessed by the resume point), and the four now-redundant call-site guards adjacent to a glass constant (CardDetailDialog Retry, Settings Back-to-home, CoverDialog Done, ProfileSection Save) were dropped while every guard protecting an OWN non-constant transition was kept. Pure CSS-class slice, 1941 → 1941 tests, verified via the shipped stylesheet (the guard emitted in the main `index-*.css` bundle inside `@media (prefers-reduced-motion:reduce)`). **P5's autonomous surface is now exhausted. Next:** the only open P5 items both need the USER — uploaded avatars (R2 + CSP + moderation product call) and the remote P4 deploy (migrations 0004 AND 0005 remote). Best next AUTONOMOUS work is the P3 simulator M5 card-effect backlog (`docs/reference/coverage-backlog.md`). |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-01** (build #113) — **P3-M5: the BOARD-COUNTED FLIP COUNT — "Flip a coin for each [{X}]
+  Energy attached to this Pokémon.", the coin family's FIRST board read (D128, engine 0.79.0).**
+  Took the resume point's named best-next slice, and re-censused it against the local D1 first as
+  the file demands. The plan's numbers held (3 printings, two wordings, Torkoal the only brace
+  token) and the sweep added one fact the plan did not have: `Flip a coin for each` never counts
+  anything but self-attached Energy anywhere in 978 cards, so the optional type filter is the
+  family's ONLY axis of variation. **The interesting result is how narrowly the board vocabulary
+  earned its place.** D126 and D127 both named this as the shape where a coin effect would finally
+  want a `DamageCountSource` member — and it does not want one. The DAMAGE count still comes from
+  the faces; what the board answers is HOW MANY TIMES TO FLIP. So `scaledAttackDamage` is untouched
+  and stays pure, and the whole slice is `perHeads.flips` widened from a number to an
+  `AttackFlipCount`. Nothing about D127's fold, loop, one-row-per-flip event sequence or dropped
+  `"D×"` base changed, because the CONSEQUENT did not change — which is the rule to carry: ask
+  whether the consequent moved before reaching for a union member. **The generalisation this
+  session produced is about BOUNDS.** D127's `MAX_PRINTED_FLIPS = 10` guards the printed count
+  alone and deliberately does not travel to the board-counted one: printed digits come from
+  third-party ingested text and have no upper bound but that constant, while an attached-Energy
+  count is read off the engine's own state and is bounded by the deck that produced it — a ceiling
+  there would refuse a legal board rather than a malformed row. **A bound is owed to the SOURCE of
+  the number, not to the loop it feeds.** That lands directly on the next slice: `Flip a coin until
+  you get tails.` has no bound from the text AND none from the board, so it needs a termination
+  argument, not a ceiling, and the resume point says so in as many words. **The design call the
+  slice turned on was `energy: null`** — an unfiltered "each Energy attached" is a different TALLY,
+  not a filter matching everything: filtered counts read by PROVISION (D118), unfiltered ones read
+  by CARD, so a wildcard Luminous counts for every type filter and is still exactly one card.
+  Collapsing the two would get Ambipom wrong on any board holding a demoted Special.
+  `continuous.ts` gained `countAttachedEnergy` beside `hasAttachedEnergy` so the two readings of
+  the same printed noun cannot drift. The count is read at the FLIP SITE, not at declaration
+  beside `scaled`: the count and the flips it bounds are one act. Zero count = zero flips = no
+  event rows and no `rngState` step, which is NOT D127's zero-heads (that spends its flips and
+  announces every one) — unreachable on all three printings, so a constructed `fix-flip-filter`
+  pins it. Delegated the code map and the D1 census to sub-agents in parallel, wrote the engine
+  change here (5 files, ~40 lines of code under ~120 of docblock), and delegated the 37-test suite
+  + fixtures + the 9 shape-assertion repairs in `multiCoinFlip.test.ts`; that agent mutation-checked
+  its own suite (ignoring the filter fails 9 tests, leaking the base 8, hard-coding one flip 7) and
+  re-pointed D127's board-counted witness rather than deleting it. Also corrected a doc fact worth
+  not re-deriving: `biome format` flags **89** files repo-wide on a clean tree, not the 57 D113
+  recorded — measured by `git stash -u`, and this slice added zero churn. `bun run check` GREEN
+  exit 0: **170 → 171 files, 2634 → 2671 tests**. ⚠️ `/code-review` still not run on D96–D128.
 - **2026-08-01** (build #112) — **P3-M5: the MULTI-FLIP COUNT FOLD — "Flip N coins. This attack does
   D damage for each heads.", 22 printings on ONE regex, and the whole diff is a `for` loop (D127,
   engine 0.78.0).** Took the resume point's named best-next slice, and re-censused it first as the

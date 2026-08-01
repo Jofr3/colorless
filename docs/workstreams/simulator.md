@@ -6124,6 +6124,162 @@ sentence, not at the consequent:
   number of flips**, and therefore the first shape in this family where the board
   vocabulary would finally earn its place: the `flips` count is a `DamageCountSource`-
   shaped question even though the DAMAGE count is not.
+  → **Mapped by D128** (below). It turned out NOT to want a `DamageCountSource`
+  member at all — see that section for why the widening landed on `flips` instead.
+
+The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
+Slither Wing `sv06.5-026`) and their four loud witnesses are untouched by this slice.
+
+---
+
+## P3-M5 — the BOARD-COUNTED FLIP COUNT (D128, engine 0.79.0)
+
+*"Flip a coin for each [{X}] Energy attached to this Pokémon. This attack does D
+damage for each heads."* (**3 printings**) now SIMULATES, on **ONE anchored regex
+and ONE widened field.** No new event, no new op, no `BoardCondition` or
+`DamageCountSource` member, no clause-table row, no state field, no registry row,
+no log arm, no `MATCH_RECORD_VERSION` bump, no web/API/DB diff.
+
+Fixtures: **Torkoal `sv01-035`** "Concentrated Fire" ({R}{C}{C}, `80×`) — the TYPED
+`{R}` reading and the pool's ONLY coin effect carrying a brace token — and
+**Bellossom `sv03-003`** "Powerful Dance" ({G}, `90×`) for the UNTYPED one.
+**Ambipom `swsh10.5-057`** "Full Tilt Fling" ({C}, `60×`) is the untyped reading's
+second printing and is covered at the deriver level only (its Ability
+"Primate Dexterity" is irrelevant to an attacker and buys the suite nothing).
+
+### The flip count is a board fact; the DAMAGE count still is not
+
+This is the shape D126 and D127 both named as the one where the board vocabulary
+would finally earn its place, and the interesting result is **how narrowly it does.**
+`scaledAttackDamage` is untouched and gains **no `DamageCountSource` member**: the
+damage still comes from the faces, exactly as D126 ruled. What the board answers is
+**how many times to flip**, which is the one number a coin cannot answer.
+
+So the value that moved is the flip COUNT, and it moved inside the member that
+already owned it:
+
+```ts
+export type AttackFlipCount =
+  | { kind: "printed"; count: number }
+  | { kind: "attachedEnergy"; energy: BasicEnergyType | "special" | null };
+// AttackCoinFlip's perHeads: flips: number  →  flips: AttackFlipCount
+```
+
+**Not a fourth `AttackCoinFlip` member.** `perHeads` still means "fold `per` × heads,
+drop the printed `D×` base, emit one row per flip"; the consequent did not change at
+all. A fourth member would have duplicated D127's whole fold to vary its bound.
+
+### ⚠️ A bound is owed to the SOURCE of the number, not to the loop it feeds
+
+D127's `MAX_PRINTED_FLIPS = 10` guards the `printed` member **alone**, and
+deliberately does not travel to `attachedEnergy`. The two numbers have different
+provenance:
+
+| member | where the number comes from | what bounds it |
+|---|---|---|
+| `printed` | third-party INGESTED TEXT (`\d+`) | nothing but the constant |
+| `attachedEnergy` | the engine's own state | the deck that produced the board |
+
+A ceiling on the board read would refuse a **legal board** rather than a malformed
+row — the opposite of what a refusal ceiling is for. The still-unbuilt
+`Flip a coin until you get tails.` family is the third case and the reason to state
+this as a rule: it has no bound from the text **and** none from the board, so it
+needs a *termination argument*, not a ceiling. Do not reach for `MAX_PRINTED_FLIPS`
+there; it answers a different question.
+
+### ⚠️ The count is read at the FLIP SITE, not at declaration
+
+`flipCount(state, seat, attacker, count)` is private to `attack.ts` and lives inside
+the flip block, not up beside `scaled`. The count and the flips it bounds are **one
+act**; splitting them would let a future gate between the two silently invalidate the
+number. Nothing between declaration and the flip can change an attachment today —
+but that is a fact about the current gates, not a property worth depending on. It
+reads the attacker off `state` with the declaration-time Active as the unreachable
+branch's answer, the same idiom `scaledAttackDamage`'s `opponentActiveRetreatCost`
+arm uses.
+
+### ⚠️ `energy: null` is a DIFFERENT TALLY, not a filter that matches everything
+
+The design call the slice turns on, and the one place a plausible shortcut is wrong:
+
+- A **FILTERED** count reads by **PROVISION** (`providesEnergyType`, the D118 rule):
+  an Energy that can pay a `{R}` cost is exactly an Energy a `{R}` sentence counts,
+  so a wildcard Luminous is a `{R}` Energy for as long as it provides every type, and
+  stops being one the moment a second Special demotes it to {C}.
+- An **UNFILTERED** count reads by **CARD**: "each Energy attached" counts attached
+  Energy CARDS. A Special demoted to providing only {C} is still one. A wildcard
+  providing eleven types is still exactly one.
+
+Collapsing `null` into "the type filter that matches everything" quietly makes the
+second question the first, and gets Ambipom wrong on any board holding a demoted
+Special. `continuous.ts` gained `countAttachedEnergy(state, pokemon, energy | null)`
+beside `hasAttachedEnergy`, so the two readings of the same printed noun cannot
+drift; `hasAttachedEnergy` keeps its short-circuiting `.some` rather than being
+reimplemented on the counter.
+
+### Both notations, through D118's map
+
+The token resolves through the existing `CLAUSE_ENERGY_TOKENS` — brace codes AND
+spelled-out names — not a local `{R}` lookup. All three printings of this sentence
+happen to need neither (Torkoal brace-codes, the other two carry no filter), but
+reusing the map costs nothing and admits a swsh-era "for each Water Energy" reprint
+by construction instead of silently skipping a whole set.
+
+An **unresolvable** token is told apart from the UNFILTERED sentence **by the token's
+presence, not by the lookup's null** — `if (token !== undefined)` — so `{C}`, `{N}`,
+`Dragon` and junk all fall through to the loud `ATTACK_EFFECT_SKIPPED` path instead
+of quietly counting every attached card. `{C}` is refused for `ENERGY_TYPE_BY_CODE`'s
+own reason: Colorless is the conservative provision fallback for every unauthored
+Special Energy, so a `{C}` filter would match cards nobody meant.
+
+### ⚠️ A ZERO count means ZERO FLIPS, which is not zero HEADS
+
+| | flip rows | rngState steps | DAMAGE_DEALT | ATTACK_FAILED | turn ends |
+|---|---|---|---|---|---|
+| D127 zero HEADS | N | N | no | no | yes |
+| D128 zero COUNT | **0** | **0** | no | no | yes |
+
+Same ending, different account. **No printing can reach the zero branch**: all three
+have a cost floor of at least one Energy, and Torkoal's `{R}` cost IS the `{R}` its
+filter counts. So it is defensive, and a **constructed** fixture pins it —
+`fix-flip-filter`, a `{C}` cost against a `{W}` filter, holding one Fire.
+
+### The case an unfiltered implementation passes everything else on
+
+Torkoal holding **1 Fire + 2 Water** MEETS its `{R}{C}{C}` cost (Fire pays `{R}`, the
+Waters pay `{C}{C}`) while its `{R}` count is **1**. Exactly one flip; damage ∈
+{0, 80}; **never the 240** a card-count reading gives. Every other case in the suite
+is satisfied by an implementation that ignores the filter — this one is not, and it
+is the case to keep first if the suite is ever trimmed.
+
+### The suite
+
+`perEnergyFlip.test.ts` (**37**) on a new `PER_ENERGY_FLIP_DECK`. A Stage 2 **is**
+fieldable by `setActiveFromDeck`, so the untyped case runs on the real Bellossom. It
+sweeps seeds and asserts the observed outcome SET exactly, recomputes every board's
+whole flip sequence by hand, pins byte-identical `rngState` on the zero board,
+asserts no `ATTACK_EFFECT_SKIPPED` on any outcome including zero, `(0+80)×2 = 160`
+pre-Weakness, and a `countAttachedEnergy` block where the three readings **disagree**.
+Mutation-checked: ignoring the filter fails 9 tests, leaking the printed base 8,
+hard-coding one flip 7. D127's witness case ("refuses a BOARD-COUNTED number of
+flips") was **re-pointed, not deleted** — it now pins the disjointness of the two
+`AttackFlipCount` arms.
+
+`bun run check` GREEN exit 0: **170 → 171 files, 2634 → 2671 tests**, zero formatter
+churn. ⚠️ The repo's real pre-existing `biome format` flagged count is **89**, not
+the 57 D113 recorded — it has grown with the repo, so re-measure rather than quoting.
+
+### Still unmapped in the coin family after this slice
+
+One shape, refused at the leading sentence: **`Flip a coin until you get tails.`** —
+9 printings, an UNBOUNDED fold with no bound from the text *or* the board (see the
+provenance table above). Two sub-shapes: the multiply form (`…tails. This attack does
+D damage for each heads.` — Growlithe `sv01-030`, Rellor `sv02-026`, Forretress
+`sv01-139`, Chansey `sv01-144`), now a three-line change on D127's loop plus the
+termination question, and a repeated EFFECT (`…tails. For each heads, <effect>.` —
+Masquerain `sv03-007`, Krookodile `sv01-117`, Gyarados `swsh10.5-022`), which is a
+program, not a fold. Plus Bouffalant `sv03-174`'s `more` variant (base `50+`, so it
+keeps its printed base — the ADDITIVE unbounded form, and its only printing).
 
 The three unmapped board-fact damage clauses (Lokix `sv02-021`, Lucario `sv01-114`,
 Slither Wing `sv06.5-026`) and their four loud witnesses are untouched by this slice.

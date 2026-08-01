@@ -311,6 +311,32 @@ export function hasAttachedEnergy(
   return pokemon.energy.some((uid) => providesEnergyType(state, pokemon, uid, energy));
 }
 
+/** How many Energy CARDS are attached to `pokemon` (§6.3), optionally narrowed to
+    one type? `hasAttachedEnergy` counted rather than tested — the predicate behind
+    D128's "Flip a coin for each [{X}] Energy attached to this Pokémon."
+
+    It is not written as `hasAttachedEnergy`'s implementation (that one keeps its
+    `.some`, which short-circuits on the first hit) but it must give the same answer
+    on the same board, which is why the two sit together: a FILTERED count reads by
+    PROVISION through `providesEnergyType`, the D118 rule, so an Energy that can pay
+    a `{R}` cost is exactly an Energy a `{R}` sentence counts.
+
+    `energy: null` — the UNFILTERED reading, and a genuinely different tally rather
+    than a filter that matches everything. "Each Energy attached to this Pokémon"
+    counts attached Energy CARDS, so a Special Energy demoted to providing only {C}
+    is still one Energy here, and a wildcard providing every type is still exactly
+    one. CARDS not units, for the same reason `countEnergyInPlay` gives below: one
+    Energy card is one Energy however many units it provides. */
+export function countAttachedEnergy(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  energy: BasicEnergyType | "special" | null,
+): number {
+  if (energy === null) return pokemon.energy.length;
+  if (energy === "special") return specialEnergyUids(state, pokemon).length;
+  return pokemon.energy.filter((uid) => providesEnergyType(state, pokemon, uid, energy)).length;
+}
+
 /** How many Energy CARDS of `energy` are in play on `seat`'s side (§6.3)? The
     board-wide sibling of `hasAttachedEnergy` above, and the predicate behind
     Absol sv06.5-030 "Darkfall" ("If you have at least 3 {D} Energy in play, …").
