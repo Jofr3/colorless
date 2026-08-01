@@ -732,6 +732,8 @@ sv01–03 can touch Clefable ex — Klefki and Spiritomb narrow to Basics (it is
 Stage 1), Ting-Lu ex exempts ex — so `lunarZone.test.ts` (12) asserts the negative
 (an Active Klefki does NOT lock it) and records why the positive is unassertable.
 
+**[SUPERSEDED — the whole seam is CLOSED at 10/10 as of D114; see "The retreat-cost seam,
+end to end" below. Kept for the reasoning trail.]**
 **The retreat-cost seam is now open and has three unbuilt siblings**, all of which
 exercise the ± composition order this slice only half-tested: Spidops ex
 sv01-019/-223/-243 "Trap Territory" (opponent's Active Retreat Cost {C} MORE — the
@@ -4407,8 +4409,11 @@ deck", a `payFromHand to:"deckTop"` op that does not exist yet).
 `biome format --write <dir>` reformats dozens of unrelated files. Never run it
 repo-wide; rely on the lint gate and match surrounding style.
 
-### The retreat-cost seam, end to end — CLOSED at 9/9 (D108–D111, engine 0.62.0)
-The seam is **complete**. A full D1 census (all sets, `%retreat cost%` over
+### The retreat-cost seam, end to end — CLOSED at 10/10 (D108–D111 + D114, engine 0.65.0)
+The seam is **complete** for the **ingested** pool (six sets, 978 cards — see the pool note
+below; the live remote D1's ~3698 cards would reopen it). The table below was written when
+the census covered only the five sv/sve sets and read 9/9; `swsh10.5` added a 10th print,
+**Wimpod `swsh10.5-025` "Punk Out"**, built in D114. A full D1 census (`%retreat cost%` over
 `attacks_json ‖ abilities_json ‖ effect`, re-run twice) returns exactly **9 unique ids** —
 4 distinct MODIFIER effects (6 printings) and 4 distinct READER effects (6 printings), with
 Spidops ex sitting in **both** buckets. Alternate wordings were swept and found empty:
@@ -4421,6 +4426,7 @@ hits, so "costs {C} more to retreat" phrasing does not exist in this pool.
 | modifier | Calamitous Wasteland `sv02-175` (+1, Basic non-{F}, both boards) | built (D109 `basicRetreatSurcharge`) |
 | modifier | Clefable ex `sv03-082` "Lunar Zone" (set-to-zero, own board, {P} clause) | built (D108 `noRetreatCostAura`) |
 | modifier | Spidops ex `sv01-019`/`-223`/`-243` "Trap Territory" (+1, opponent's ACTIVE only) | built (D111 `opponentActiveRetreatSurcharge`) |
+| modifier | Wimpod `swsh10.5-025` "Punk Out" (set-to-zero, **SELF only**, gated on the OPPONENT holding a Pokémon V in play) | built (D114 `noRetreatCostSelf`) |
 | reader | Heracross `sv01-002`, Spidops ex "Wire Hang", Sharpedo `sv03-047` (base + 30·n) | built (D110) |
 | reader | Stoutland `sv03-172` "Chomp Chomp Panic" (`50×`, bare 50·n) | built (D110) |
 
@@ -4449,13 +4455,21 @@ it falls out of the single derivation point — but it is the test that proves t
 Do **not** confuse this with the **retreat-LOCK** seam ("the Defending Pokémon can't
 retreat") — a different mechanic, built separately in D112 (next section).
 
-**⚠️ Scope correction (D112, 2026-08-01):** the "9/9 closed" above is scoped to the
-**five sv/sve sets**. The local D1 also holds `swsh10.5` (see the pool note below), which
-contains a **10th** cost-seam print: **Wimpod `swsh10.5-025`** "Punk Out" — *"If your
-opponent has any Pokémon V in play, this Pokémon has no Retreat Cost."* A conditional
-**self** `noRetreatCost` keyed on the OPPONENT's board — structurally close to Clefable ex's
-aura but with the condition on the wrong side of the table for `hasFreeRetreatAura` as
-written. **Unbuilt** — and the last known open print on the cost seam.
+**Scope correction (D112, 2026-08-01) — since RESOLVED by D114.** The original "9/9 closed"
+was scoped to the **five sv/sve sets**; the local D1 also holds `swsh10.5`, which contains a
+**10th** cost-seam print: **Wimpod `swsh10.5-025`** "Punk Out" — *"If your opponent has any
+Pokémon V in play, this Pokémon has no Retreat Cost."* **Built in D114** as
+`PassiveEffects.noRetreatCostSelf?: { requiresOpponentSuffixInPlay?: PokemonSuffix }`, read
+through a **sixth** scan `hasFreeRetreatSelf` — the first **SELF-only** member of the family
+(it frees its holder and nobody else, yet must look across the table to decide). It is NOT a
+refinement of `noRetreatCostAura`: that field frees *all of your* Pokémon satisfying its
+clause, and conflating them would have silently freed the whole board the moment a Wimpod hit
+the Bench. The predicate is a bespoke `PokemonSuffix` field rather than a `BoardCondition`
+member — precedent `damageBonusBeforeWRIfTarget` in the same interface, and structurally
+forced: `conditionHolds` lives in `interpreter.ts`, which imports `continuous.ts`, so reading
+a `BoardCondition` from a continuous scan would close an import cycle.
+**⚠️ The seam still reopens the moment a set beyond the ingested six is ingested** — the live
+remote D1 matches ~54 `%retreat cost%` printings against these 10.
 
 > **`legal_standard` is NOT a slice-selection criterion — stop treating it as one (D113).**
 > D112's resume point flagged Snorlax and Wimpod's `legal_standard=0` as something to
@@ -4490,7 +4504,7 @@ than a new *op*. Two guardrails make it safe:
   behaviour the Prize twins already had) — that is correct, not a bug, and is the case
   that distinguishes the two arms on the board.
 
-**The five continuous-aura scans now form a family** — same derived-seat trick, differing
+**The six continuous-aura scans now form a family** — same derived-seat trick, differing
 only in reach, return type, and which end of the printed sentence is Active-scoped. When the
 next aura lands, copy the nearest of these:
 
@@ -4501,6 +4515,27 @@ next aura lands, copy the nearest of these:
 | `hasFreeRetreatAura` | own board, per TARGET | `boolean` | yes | neither |
 | `opposingRetreatSurcharge` | **cross-board**, per TARGET | **`number` (summed)** | yes | target only |
 | `opposingRetreatBlocked` | **cross-board**, per TARGET | `boolean` | yes | **both** |
+| `hasFreeRetreatSelf` (D114) | **SELF only** — reads across the board merely to decide | `boolean` | yes | neither |
+
+**"Scan" ≠ "aura" (D114).** The sixth member breaks the family's unstated assumption that a
+dedicated scan means the effect reaches other Pokémon. `hasFreeRetreatSelf` modifies **only
+its holder** — what it needs the walk for is resolving the word "your opponent" in its
+*condition*. The rule that actually decides between a scan and the seat-free `passivesOf`
+fold is therefore: **does the effect need to know a seat?** — not "does it reach anyone
+else?". `passivesOf` is deliberately seat-free (which is why `damageBonusBeforeWRIf` is
+returned raw and folded at the read sites); anything with a side-relative clause, reach or
+condition, needs a scan.
+
+**A suffix predicate belongs on the field, a board fact belongs in `BoardCondition` (D114).**
+`PassiveEffects` already carried `damageBonusBeforeWRIfTarget: { targetSuffix: PokemonSuffix }`;
+`noRetreatCostSelf: { requiresOpponentSuffixInPlay?: PokemonSuffix }` follows it. There is
+also a hard structural reason not to reach for `BoardCondition` from a continuous scan:
+`conditionHolds` lives in **`interpreter.ts`, which imports `continuous.ts`** — the import
+would close a cycle. If a future print really needs the shared vocabulary in a continuous
+context, move `conditionHolds` down to a module both can import, don't add the back-edge.
+Note `pokemonSuffixOf` tests `" VMAX"`/`" VSTAR"` before the bare `" V"`, so
+`=== "V"` means *exactly* the printed "Pokémon V" — VMAX and VSTAR are excluded by
+construction, which is the same line Choice Belt draws.
 
 **Read the Active clauses off the print, one end at a time** (the D111 lesson, sharpened by
 D113): the last two scans are structurally the same walk and differ *only* here. Trap
@@ -4588,5 +4623,6 @@ Every census in this file written before 2026-08-01 says five sets / ~890 cards.
   (`bunx wrangler d1 execute luminous --remote --command "…"`). Every seam here is
   ingested-pool-scoped and **reopens the moment a new set is ingested**.
 - When a census claims a seam is "N/N closed", say **which** scope: raw local pool, or the
-  Standard-legal subset. The retreat-COST seam is 9/9 Standard-legal but 9/10 raw
-  (Wimpod `swsh10.5-025`).
+  Standard-legal subset. The retreat-COST seam read 9/10 raw until D114 built Wimpod
+  `swsh10.5-025`; it is now **10/10 against the raw local pool**, which is the scope that
+  matters — `legal_standard` is *not* a slice-selection criterion (D113).

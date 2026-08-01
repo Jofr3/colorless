@@ -435,11 +435,65 @@ export function opposingRetreatBlocked(state: GameState, pokemon: InPlayPokemon)
   return false;
 }
 
-/** §11 retreat cost under the continuous effects in play. An own-board "no
-    Retreat Cost" aura (Lunar Zone) sets it to zero outright, which is why it is
-    read FIRST — a set-to-zero beats every ± delta, and it is stage-agnostic
-    where the Stadium ones are Basic-only. Otherwise the printed cost is summed
-    with every delta and floored ONCE at a free retreat: the in-play Stadium's ±
+/** §11 — is `pokemon`'s Retreat Cost zeroed by its OWN printed passive (Wimpod
+    swsh10.5-025 "Punk Out": "If your opponent has any Pokémon V in play, this
+    Pokémon has no Retreat Cost")? The SIXTH member of the aura-scan family
+    (`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` /
+    `opposingRetreatSurcharge` / `opposingRetreatBlocked`) and the first that is
+    SELF-ONLY: it reads the HOLDER's own passive and merely LOOKS across the table
+    to evaluate the condition, so unlike `hasFreeRetreatAura` beside it it never
+    touches another Pokémon's cost. The seat is DERIVED exactly as its five
+    siblings derive theirs — find the side holding this top uid — purely so "your
+    opponent" can be resolved, which is what keeps `effectiveRetreatCost`'s
+    signature and ALL FOUR of its readers (turn.ts retreat, redact.ts, attack.ts's
+    cost reader, the web HUD) untouched.
+
+    "IN PLAY" MEANS ACTIVE + BENCH. There is no Active clause anywhere in the
+    sentence — neither on the holder nor on the opposing V — so a BENCHED opposing
+    Pokémon V satisfies it just as an Active one does, and reading it as
+    Active-only would be silent. The suffix match is `pokemonSuffixOf`, which
+    tests " VMAX"/" VSTAR" before the bare " V", so "Pokémon V" excludes VMAX and
+    VSTAR by construction — precisely what the print means.
+
+    The §9 gate is a POSITIVE here: Wimpod is a BASIC, so an Active Klefki
+    sv01-096 "Mischievous Lock" really does silence Punk Out and the printed cost
+    snaps back (the family's second assertable §9 positive after D113's Snorlax,
+    and per D113's rule the reachability follows the SOURCE's stage — here the
+    source and the beneficiary are the same card). Deliberately reads only the TOP
+    CARD's passive and not attached Tools, unlike `passivesOf`: no Tool in the
+    ingested pool grants free retreat, and a future one (Air Balloon) would fold
+    the tool list in HERE — un-§9-gated, a Tool being no Ability. */
+export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): boolean {
+  const top = topCardOf(state, pokemon);
+  const uid = topUid(pokemon);
+  if (top === undefined || uid === undefined) return false;
+  const self = programFor(top.id)?.passive?.noRetreatCostSelf;
+  if (self === undefined) return false;
+  if (disabledAbilityUids(state).has(uid)) return false; // §9
+  const required = self.requiresOpponentSuffixInPlay;
+  if (required === undefined) return true;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    if (!holders.some((holder) => topUid(holder) === uid)) continue;
+    const foe = state.players[otherSeat(seat)];
+    const foeHolders = foe.active === null ? foe.bench : [foe.active, ...foe.bench];
+    return foeHolders.some((holder) => {
+      const card = topCardOf(state, holder);
+      return card !== undefined && pokemonSuffixOf(card) === required;
+    });
+  }
+  return false;
+}
+
+/** §11 retreat cost under the continuous effects in play. A "no Retreat Cost"
+    effect sets it to zero outright, which is why that tier is read FIRST — a
+    set-to-zero beats every ± delta, and it is stage-agnostic where the Stadium
+    ones are Basic-only. That tier now has TWO members, an own-board AURA (Lunar
+    Zone, which frees every teammate satisfying its clause) and a SELF-only
+    conditional (Punk Out, which frees nobody but its holder); either one alone
+    zeroes the cost. Otherwise the printed cost is summed with every delta and
+    floored ONCE at a free retreat: the in-play Stadium's ±
     Basic deltas (Beach Court's discount subtracts, Calamitous Wasteland's
     surcharge adds, skipping the type its print exempts) plus the opposing side's
     `opponentActiveRetreatSurcharge` auras. Only one Stadium is ever in play
@@ -449,7 +503,7 @@ export function opposingRetreatBlocked(state: GameState, pokemon: InPlayPokemon)
 export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): number {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return 0;
-  if (hasFreeRetreatAura(state, pokemon)) return 0;
+  if (hasFreeRetreatAura(state, pokemon) || hasFreeRetreatSelf(state, pokemon)) return 0;
   const printed = retreatCostOf(top);
   return Math.max(
     0,

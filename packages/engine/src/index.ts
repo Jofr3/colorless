@@ -582,7 +582,36 @@ import type { GameState, Seat } from "./types";
     also the family's first §9-POSITIVE: Snorlax is a BASIC, so an Active Klefki's
     "Mischievous Lock" really does silence it — where Lunar Zone and Trap
     Territory, both Stage 1 sources, could only assert the negative. */
-export const engineVersion = "0.64.0";
+
+    /* 0.65.0 — `noRetreatCostSelf`: Wimpod swsh10.5-025 "Punk Out" ("If your
+    opponent has any Pokémon V in play, this Pokémon has no Retreat Cost") — the
+    TENTH and last open print on the retreat-COST seam, which closes at 10/10
+    within the INGESTED pool (the live remote D1 holds 3698 cards, so ingesting
+    new sets reopens it). A shape with no precedent: a SELF-only set-to-zero with
+    a CROSS-BOARD predicate, where every retreat modifier before it either reached
+    other Pokémon through a dedicated aura scan (D108 `noRetreatCostAura`, D111
+    `opponentActiveRetreatSurcharge`) or modified its holder through the seat-free
+    `passivesOf` fold. So it gets its own continuous.ts scan `hasFreeRetreatSelf`
+    — the SIXTH member of the aura-scan family and the first that is self-only: it
+    reads the HOLDER's own passive and merely looks across the table, deriving the
+    seat exactly as its siblings do, purely so "your opponent" resolves. That is
+    what keeps `effectiveRetreatCost`'s signature and all FOUR of its readers
+    untouched; the only edit at the read site is one `||` in the set-to-zero line,
+    a tier that now has two members (an own-board aura and this self-only
+    conditional), both still beating every ± Stadium/aura delta. "In play" is
+    Active + BENCH — the sentence carries no Active clause at either end — and
+    "Pokémon V" excludes VMAX/VSTAR by construction, `pokemonSuffixOf` matching
+    " VMAX"/" VSTAR" before the bare " V". The predicate rides an optional
+    `PokemonSuffix` field on `PassiveEffects` rather than a D40 `BoardCondition`:
+    the precedent is `damageBonusBeforeWRIfTarget` (a printed suffix is carried
+    directly), and `conditionHolds` lives in interpreter.ts, which imports
+    continuous.ts, so reading one from a continuous scan would close an import
+    cycle. It is also the aura family's SECOND §9 POSITIVE — Wimpod is a BASIC, so
+    an Active Klefki's "Mischievous Lock" genuinely silences Punk Out and the
+    printed 3 snaps back. One registry row, one new scan, one barrel export; no
+    new op, event, error code or wire field, and no API/DB/`@luminous/schema`/web
+    change. */
+export const engineVersion = "0.65.0";
 
 export type {
   ApplyResult,
@@ -636,6 +665,7 @@ export {
   effectiveMaxHp,
   effectiveRetreatCost,
   hasFreeRetreatAura,
+  hasFreeRetreatSelf,
   opposingRetreatBlocked,
   opposingRetreatSurcharge,
   providedEnergy,

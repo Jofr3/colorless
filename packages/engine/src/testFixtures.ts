@@ -838,6 +838,35 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** Wimpod swsh10.5-025 — "Punk Out": the TENTH and last print on the
+      retreat-COST seam (D114), and the only SELF-only set-to-zero on it. VERBATIM
+      off the local D1 (70 HP, retreat 3, {W}, ×2 {L}, one attack "Gnaw" with no
+      effect key): the printed sentence is load-bearing only through the REGISTRY
+      here — nothing derives off it — but the suite pins it char-for-char anyway so
+      the row and the sentence cannot drift apart. Two byte facts worth naming: the
+      text contains NO apostrophe of either kind (ASCII or U+2019), which makes it
+      the pool's cleanest verbatim guard, and its "Pokémon" is a real U+00E9 é. Its
+      retreat 3 is deliberately its own, not a neighbour's: it is what the Ability
+      zeroes and what Beach Court's −1 must lose to. A Basic, so it fields with one
+      surgery — and being a Basic it is also reachable by an Active Klefki's
+      Basic-only "Mischievous Lock", which is what makes the §9 gate assertable as
+      a POSITIVE. */
+  "swsh10.5-025": battler("swsh10.5-025", {
+    name: "Wimpod",
+    types: ["Water"],
+    hp: 70,
+    retreat: 3,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Punk Out",
+        effect: "If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost.",
+      },
+    ],
+    attacks: [{ cost: ["Water"], name: "Gnaw", damage: 10 }],
+  }),
+
   // — the retreat-cost READERS (D110): the two arithmetic shapes of "for each {C}
   //   in your opponent's Active Pokémon's Retreat Cost". Faithful to the D1 rows;
   //   the effect text is LOAD-BEARING here (both cards derive from the sentence —
@@ -2851,6 +2880,35 @@ export const BLOCK_DECK = deckOf({
   "sv01-096": 4, // Klefki — "Mischievous Lock": the §9 gate's POSITIVE witness
   "fix-attacker": 4, // Bite ({C}, 30) — the blocked body that still attacks
   "fix-energy": 12, // Basic {C} — pays the blocked body's retreat cost and Bite
+  "fix-bigbody": 32, // 200 HP neutral Basic — DOMINANT starter + both pinned Actives
+});
+
+/** 0.64.0 → 0.65.0: Wimpod swsh10.5-025 "Punk Out" (D114) — the SELF-only
+    set-to-zero with a cross-board predicate, and the last print on the retreat-COST
+    seam. A DEDICATED deck: LUNAR_ZONE_DECK, TRAP_TERRITORY_DECK, RETREAT_LOCK_DECK
+    and BLOCK_DECK are all seed-pinned, and none of them holds the rule-box ladder
+    this predicate has to be separated against. Wimpod (retreat 3) is the holder and
+    a Basic, so one surgery fields it on either board. The trigger is Guardmon V
+    (fix-attacker-v) — fielded Active or BENCHED, since "in play" carries no Active
+    clause — and the two NEGATIVES that prove "Pokémon V" is literal are Bigmon VMAX
+    (fix-attacker-vmax) and Fixmon ex (fix-attacker-ex), neither of which
+    `pokemonSuffixOf` calls a "V". fix-retreat2 is the SELF-only control: on the very
+    board where Wimpod reads 0 it must still read 2, which is the assertion that
+    would catch modelling this as an aura. Klefki (sv01-096) is the §9 POSITIVE —
+    Wimpod is a Basic, so "Mischievous Lock" really silences Punk Out. Beach Court
+    (sv01-167) is the ± delta the set-to-zero has to beat (3 → 2 bare, 0 with a V
+    out). fix-energy pays the retreat the control still owes, and fix-bigbody is the
+    DOMINANT mulligan-free starter both Active spots pin to before each surgery.
+    BOTH seats run the whole cast so either board can host the holder or the V. */
+export const PUNK_OUT_DECK = deckOf({
+  "swsh10.5-025": 4, // Wimpod — "Punk Out": the holder (retreat 3)
+  "fix-attacker-v": 2, // Guardmon V — the cross-board trigger (Active or Bench)
+  "fix-attacker-vmax": 2, // Bigmon VMAX — the V-only negative
+  "fix-attacker-ex": 2, // Fixmon ex — the other rule-box negative
+  "sv01-096": 2, // Klefki — "Mischievous Lock": the §9 gate's POSITIVE witness
+  "sv01-167": 2, // Beach Court — the ± Stadium the set-to-zero must beat
+  "fix-retreat2": 2, // retreat-2 Basic — the SELF-only control (it still pays)
+  "fix-energy": 12, // Basic {C} — pays the control's retreat
   "fix-bigbody": 32, // 200 HP neutral Basic — DOMINANT starter + both pinned Actives
 });
 

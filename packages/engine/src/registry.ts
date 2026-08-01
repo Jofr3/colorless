@@ -276,6 +276,35 @@ export interface PassiveEffects {
       by a new `activeOnly` field (the `damageAttacker` precedent: an Active clause
       on the holder is honored at the read site). */
   preventOpponentActiveRetreat?: true;
+  /** §11 continuous SELF-only set-to-zero: while this Pokémon is in play THIS
+      Pokémon — and only this one — has NO Retreat Cost, optionally gated on the
+      OPPONENT having a Pokémon of a given rule-box suffix in play (Wimpod
+      swsh10.5-025 "Punk Out" — "If your opponent has any Pokémon V in play, this
+      Pokémon has no Retreat Cost"). The last unbuilt print on the retreat-cost
+      seam, and a shape with no precedent here: every retreat modifier above either
+      reaches OTHER Pokémon through a dedicated aura scan or modifies its holder
+      through the seat-free `passivesOf` fold — this one modifies only its holder
+      yet must LOOK across the table, so it gets its own scan
+      (continuous.ts `hasFreeRetreatSelf`) that reads the holder's own passive.
+      It is deliberately NOT a refinement of `noRetreatCostAura` above: that field
+      frees ALL OF YOUR Pokémon that satisfy its clause, this one frees exactly its
+      holder, and conflating them behind one flag would silently free the whole
+      board the moment a Wimpod hit the Bench.
+      The predicate is a bespoke optional field rather than a `BoardCondition`
+      (D40) member for two reasons. The direct precedent is
+      `damageBonusBeforeWRIfTarget: { targetSuffix: PokemonSuffix }` in this same
+      interface: when the gate is a PRINTED SUFFIX rather than a seat-relative
+      board fact, `PassiveEffects` carries the suffix directly. And structurally it
+      has to — `conditionHolds` lives in interpreter.ts, which imports
+      continuous.ts, so reading a `BoardCondition` from a continuous scan would
+      close an import cycle.
+      `requiresOpponentSuffixInPlay` is OPTIONAL per D104's minimal-shape rule: a
+      future unconditional "this Pokémon has no Retreat Cost" print simply omits
+      it. And `PokemonSuffix === "V"` excludes VMAX/VSTAR BY CONSTRUCTION —
+      `pokemonSuffixOf` matches " VMAX"/" VSTAR" before the bare " V" arm — which
+      is exactly what the printed "Pokémon V" means (Choice Belt's gate draws the
+      same line). */
+  noRetreatCostSelf?: { requiresOpponentSuffixInPlay?: PokemonSuffix };
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -621,6 +650,17 @@ const TRAP_TERRITORY: CardProgram = { passive: { opponentActiveRetreatSurcharge:
     Active-scoped: the opening clause scopes the source, the sentence's object
     scopes the target. */
 const BLOCK: CardProgram = { passive: { preventOpponentActiveRetreat: true } };
+
+/** Wimpod (swsh10.5-025) — "Punk Out": "If your opponent has any Pokémon V in
+    play, this Pokémon has no Retreat Cost." — the TENTH and last print on the
+    retreat-cost seam, and the only SELF-only set-to-zero on it. Unlike Lunar Zone
+    (own-board aura) and Trap Territory (cross-board aura) it frees nobody but its
+    own holder, yet its condition is read across the table — "in play" being
+    Active + Bench, since the sentence carries no Active clause at either end. One
+    printing, no reprint. */
+const PUNK_OUT: CardProgram = {
+  passive: { noRetreatCostSelf: { requiresOpponentSuffixInPlay: "V" } },
+};
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -2165,6 +2205,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-243": TRAP_TERRITORY, // (reprint)
   // — M5 long-tail: preventOpponentActiveRetreat, the L3 shape of the retreat-lock seam (verified vs the local D1 2026-08-01). —
   "swsh10.5-055": BLOCK, // Snorlax — Block ("As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat")
+  // — M5 long-tail: noRetreatCostSelf, the LAST print on the retreat-cost seam, closing it at 10/10 (verified vs the local D1 2026-08-01). —
+  "swsh10.5-025": PUNK_OUT, // Wimpod — Punk Out ("If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost")
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)
