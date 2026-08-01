@@ -6637,3 +6637,183 @@ churn re-measured on a clean tree: **20 files, unchanged**. No web/API/DB/
   counts **what was discarded**. Needs a mill whose RESULT is readable by the bonus
   reader, which is a channel between two stages — exactly the thing D130 said to check
   for an existing input first. **1 printing.**
+
+---
+
+## D132 — the BARE SELF-HEAL: `Heal {N} damage from this Pokémon.` (engine 0.83.0)
+
+**18 printings / 4 distinct clauses on ONE anchored regex and ONE `deriveAttackEffect`
+arm, with NO interpreter diff at all.** The largest printings-per-byte slice this reader
+has taken, and the cheapest — because the mechanism had already shipped.
+
+### The census (local D1, 2026-08-01, whole effect string, 978 cards)
+
+`Heal {N} damage from this Pokémon.` is the **entire printed effect** on all 18. Every one
+is a standalone single sentence; none aims at a Pokémon other than "this", which is why the
+`heal` op needed no target field.
+
+| N | printings | cards |
+|---|---|---|
+| 30 | 8 | Horsea `sv06.5-010`/`-067` + Slowpoke `swsh10.5-019` "Hold Still" (no dmg); Slowbro `sv01-043` (60) + Azumarill `sv02-045` (50) "Bubble Drain"; Brambleghast `sv02-024` "Absorb Life" (30); Ceruledge `sv02-098` "Life Sucker" (50); Dolliv `sv03-020` "Sunny Wind" (30) |
+| 20 | 5 | Natu `swsh10.5-032` "Nap" (no dmg); Tropius `sv02-007`/`-195` "Leaf Drain" (20); Marill `sv02-044`/`-204` "Bubble Drain" (20) |
+| 10 | 4 | Shroomish `sv01-003` + Smoliv `sv03-019` "Absorb" (10); Bramblin `sv02-023`/`-198` "Blot" (10) |
+| 50 | 1 | Ariados `swsh10.5-007` "Absorb" (50) — attack **index 1**, the family's only non-index-0 printing |
+
+**12 of the 18 carry printed damage** (free under D125's tail placement — ops run after
+the §8.5 pipeline, so "50 to the defender, then heal 30 on itself" resolves in printed
+order); the other 6 print **no `damage` field at all**, so the heal is the entire visible
+result of the declaration. The suite pins both, deliberately: **a build that folded the
+heal into the damage pipeline would pass the first case and fail the second.**
+
+The **wider heal census is now CLOSED — do not re-run it.** 42 heal-mentioning attack
+printings / 18 distinct clauses pool-wide. 20 are mapped (these 18 + the 2 compound
+`SELF_SLEEP_HEAL` printings). The remaining 22 printings / 16 clauses are itemised under
+"Still unmapped after D132" below.
+
+### ⚠️ The op had existed since 0.x — the READER was the whole gap
+
+`{ op: "heal"; target: "self"; amount: number }` is one of the oldest members of
+`EffectOp`. It shipped for the COMPOUND printing `This Pokémon is now Asleep. Heal {N}
+damage from it.` (`SELF_SLEEP_HEAL`, Slowpoke `sv01-042`/`-204`, Cetoddle `sv02-054`) and
+`interpreter.ts`'s `healSelf` has been correct ever since — it resolves "this Pokémon" at
+`ctx.seat` (never a hardcoded seat), clamps with `Math.min(amount, active.damage)`, emits
+one `HEALED` only when the clamp leaves something, and never parks.
+
+So the slice was a regex, an arm and a guard. **The generalisation worth carrying:
+before pricing a shape, ask what an EXISTING arm already emits. The compound form of a
+sentence is the cheapest possible spec for its bare form** — it has already answered every
+semantic question (who heals, how much, what happens on a whiff) and has end-to-end tests
+proving the answers. This is D131's lesson pointing the other way: D131 executed a *note* a
+previous slice left; D132 found a previous slice had already shipped the *machinery*.
+
+The `heal` member was also **the only member of the entire `EffectOp` union with no doc
+comment**. It has one now, including why `target` stays a one-value literal union: no pool
+printing heals the DEFENDER, and the seat is resolved by the interpreter rather than
+carried in the op.
+
+### ⚠️ One anchored reader per printed string — proved, not asserted
+
+```ts
+const SELF_HEAL       = /^Heal (\d+) damage from this Pokémon\.$/;
+const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
+```
+
+The new anchor starts at `^Heal`; the compound never does. **Neither can claim the other's
+string, so the family's one-reader-per-printed-string invariant holds by construction
+rather than by arm ordering** — the new arm could sit anywhere in `deriveAttackEffect` and
+behave identically. The suite makes that checkable rather than descriptive: it asserts the
+compound's *second* op is **byte-identical** (`toEqual`) to the bare anchor's output for
+the same N. No `/i` flag, per the family's standing rule — the capitalised first word plus
+`^…$` is the whole guard, and it is what keeps Fuecoco `sv02-035`'s mid-sentence
+`…, heal 30 damage from this Pokémon.` off this path and on the loud one.
+
+### ⚠️ The guard is the family's; the clamp is the interpreter's
+
+`amount >= 1` refuses a printed "Heal 0 damage" — the guard every arm here carries, because
+**a silent no-op that reports a simulated effect is strictly worse than a loud unsimulated
+one**. But there is deliberately **no ceiling and no clamp in the deriver**: `healSelf`
+already takes `Math.min(amount, damage)`, so the printed number is a MAXIMUM and the board
+decides the rest. A malformed large amount heals an Active to full and stops, which is a
+legal board state.
+
+And the two silences are different facts that must not share a log row:
+
+- **a WHIFF** (undamaged Active) → no `HEALED` event, and the attack is still **SIMULATED**
+  (no `ATTACK_EFFECT_SKIPPED`). The op ran and had nothing to do.
+- **an UNREAD sentence** → `ATTACK_EFFECT_SKIPPED`, loud.
+
+Both are asserted. The direction is asserted from the side that must **not** move: the
+defender takes its printed damage and is never healed, so a `target` read the wrong way
+round fails exactly there and passes every count assertion above it.
+
+### Fixture / control work this slice forced
+
+- **Ceruledge `sv02-098` was already in `FIXTURE_POOL`** with the exact printed text, and
+  its doc block had called Life Sucker "UNBUILT … a standing marker for the bare-heal
+  sentence family". Rewritten: the family is mapped, and Ceruledge is now the
+  with-printed-damage end-to-end occupant. (Stage 1 from Charcadet, so it is only ever
+  fielded by `setActiveFromDeck` surgery, never played.)
+- **New fixture: Natu `swsh10.5-032`** (50 HP Psychic Basic, ×2 Darkness, −30 Fighting),
+  verbatim off the D1 — "Nap" `{C}` heals 20 with **no `damage` key**, "Peck" `{P}{C}` deals
+  20 with **no `effect` key**. It is the no-printed-damage half and the different-N half in
+  one card. Its `{P}` is unpayable from `SELF_HEAL_DECK` (Colorless-only), so its index-1
+  control is deriver-level rather than end-to-end — the same arrangement Wugtrio's
+  "Headbutt" has in `PER_HEADS_PROGRAM_DECK`.
+- **`SELF_HEAL_DECK`** — 4 Ceruledge / 4 Natu / 12 `fix-energy` / 40 `fix-titan`, both seats.
+- ⚠️ **`setDamage(state, seat, 100)` on Natu is a corpse** (50 HP) and the epilogue KO sweep
+  clears it, leaving `active` undefined. The suite uses a named `NATU_HURT = 40` — still
+  above both 20 and 30, so the heal stays unclamped and the different-N claim holds.
+- **A control became a stronger case, not a deletion.** `clauseTable.test.ts`'s "Ceruledge's
+  index-0 heal is its own index-keyed negative" asserted `deriveAttackEffect(lifeSucker)`
+  was `null`. It now asserts the exact `heal` op, so the two SCALING derivers staying silent
+  on it is a statement about **which reader owns which sentence** rather than about an
+  absence.
+
+### The suite
+
+`selfHeal.test.ts` — **17 tests, one board, no seed sweep** (the sentence takes no coin, and
+the suite asserts that by pinning `rngState` unchanged). Five describes: the anchor (4
+clauses, the zero guard, the five refused catalog rows, the compound handoff, the
+rewrite/anchor/case/NBSP refusals); the fixtures' printed text char-for-char; Ceruledge end
+to end (heal + printed damage, both seats, the clamp, the silent whiff); Natu end to end
+(heal with no damage, a different N, the index-1 control); and what the slice costs the
+rest of the engine (no rng, never parks, zero registry rows).
+
+**Cost:** 1 regex, 1 deriver arm, 1 fixture, 1 deck, 1 test file, 1 doc block on the
+undocumented member, 1 flipped assertion. ZERO new events, ops, `EffectOp` /
+`AttackCoinFlip` / `AttackFlipCount` / `BoardCondition` / `DamageCountSource` members,
+clause-table rows, state fields, prompts, error codes, registry rows, redact arms or log
+arms. **No `interpreter.ts` diff.** No `rng.ts` / `continuous.ts` / `attack.ts` /
+`events.ts` diff. No web/API/DB/`@luminous/schema` diff; no `MATCH_RECORD_VERSION` bump.
+Full `bun run check` green exit 0: **174 → 175 files, 2768 → 2785 tests**.
+
+### ⚠️ The `biome format` churn number was never a measurement
+
+Four sessions recorded it as 89 (D128), 57 (D113) and 20 files (D131), each telling the next
+to "re-measure rather than quote any of these". **The cause: `biome format` truncates its
+diagnostics at `--max-diagnostics`, default 20.** Every figure was a cap, or a differently
+capped count. Measured to convergence (identical output at `--max-diagnostics` 500 / 1000 /
+3000): **88 files repo-wide, 83 excluding the gitignored `.claude/worktrees/` copies.**
+
+Always pass an explicit high `--max-diagnostics` and exclude `.claude/worktrees/` before
+quoting a churn number. `bun run check` does not run the formatter, so
+`bunx biome format --write` any file you touch — that removes it from the set permanently,
+which is why the count is a ceiling that only ever falls.
+
+### Still unmapped after D132 — the heal neighbourhood, ranked by cost
+
+All five are live "stays LOUD" witnesses in `selfHeal.test.ts`. **Re-point the witness
+before mapping any of them; never delete the case.**
+
+- **`Heal {N} damage from each of your Pokémon.` — 7 printings / 2 clauses, and the
+  cheapest un-taken thing in the engine.** Skeledirge ex `sv02-037`/`-233`/`-258`/`-272`
+  "Vitality Song" (30, with a printed 50) + Steenee `sv03-017` "Aromatherapy" (30, no dmg) +
+  Cresselia `sv06.5-021`/`-071` "Healing Pirouette" (20, no dmg). **`healEach { amount }`
+  already exists** (Garganacl "Blessed Salt") and is non-parking — this is D132 again.
+  ⚠️ Verify first whether `healEach` covers the ACTIVE as well as the Bench: "each of your
+  Pokémon" means all in-play, and its only existing consumer is a between-turns trigger, so
+  the reading has never been exercised from an attack.
+- **`Heal {N} damage from 1 of your Pokémon.` — 5 printings / 3 clauses.** Nacli
+  `sv02-121`/`-220` (20), Vespiquen ex `sv03-096`/`-212` (60), Smoliv `sv01-021` (30).
+  `healChosen { amount }` exists (Potion) but **PARKS on a choice**, so this would be the
+  first parking op the *attack* deriver emits — check how the D125 tail placement interacts
+  with a park before pricing it. Warrant met (3 clauses).
+- **The BENCHED-only variants — 4 printings / 4 clauses, needing a filter `healChosen` does
+  not have.** Tropius `sv01-007` (60), Chansey `swsh10.5-051` (30), Combee `sv03-008` (20)
+  print `from 1 of your Benched Pokémon.`; Blissey `swsh10.5-052` + Arboliva `sv03-021`
+  print `Heal all damage from 1 of your Benched Pokémon.` (`healChosen` already takes
+  `amount: "all"`, so that half is free). Honour the printed zone word — "Bench" excludes
+  the Active (D120).
+- **Fuecoco `sv02-035`/`-201` "Spacing Out"** — `Flip a coin. If heads, heal 30 damage from
+  this Pokémon.` **2 printings and both halves exist** (`coinFlipGate` + `heal`): one regex
+  beside the `FLIP_OPPONENT_ACTIVE_DISCARD` twin it copies exactly, and unlike Wiglett
+  `sv01-056` (the mill neighbourhood's gated twin) **D121's warrant IS met.** ⚠️ Floette
+  `sv01-092`'s `Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage
+  from this Pokémon.` is a compound of a damage BONUS and an OP on one flip — a different
+  and harder shape. Do not let one regex reach for both.
+- **Iron Moth `sv06.5-009` "Suction"** — `Heal from this Pokémon the same amount of damage
+  you did to your opponent's Active Pokémon.` 1 printing, and it wants a channel from the
+  §8.5 pipeline's RESULT back into an op that runs at the tail. **Structurally identical to
+  Camerupt `sv03-032` (the mill neighbourhood's hardest)** and the one shape D130's "rewrite
+  the later stage's existing input" rule does not answer. Do it last or not at all — and if
+  you do, do it *with* Camerupt, since one channel would serve both.

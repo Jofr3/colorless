@@ -3,7 +3,11 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-01 — build session #116 (**P3-M5 — the UNCONDITIONAL MILL, BOTH DIRECTIONS: "Discard the top [N cards|card] of your [opponent's] deck." — 16 printings on ONE regex and ONE deriver arm, and the widening a PREVIOUS SLICE had already specified (D131, engine 0.82.0)**).
+**Last updated:** 2026-08-01 — build session #117 (**P3-M5 — the BARE SELF-HEAL: "Heal {N} damage from this Pokémon." — 18 printings on ONE regex and ONE deriver arm over an op that had existed since 0.x, and the discovery that every recorded `biome format` churn number was a `--max-diagnostics` CAP (D132, engine 0.83.0)**).
+*"Heal {N} damage from this Pokémon."* (**18 printings / 4 distinct clauses**, N ∈ {10, 20, 30, 50}) now SIMULATES on **ONE anchored regex and ONE `deriveAttackEffect` arm**, with **NO interpreter diff at all**. Census run 2026-08-01 against the local D1 over the WHOLE effect string (978 cards): **8 at 30** (Horsea `sv06.5-010`/`-067` + Slowpoke `swsh10.5-019` "Hold Still", Slowbro `sv01-043` + Azumarill `sv02-045` "Bubble Drain", Brambleghast `sv02-024` "Absorb Life", Ceruledge `sv02-098` "Life Sucker", Dolliv `sv03-020` "Sunny Wind"), **5 at 20** (Natu `swsh10.5-032` "Nap", Tropius `sv02-007`/`-195` "Leaf Drain", Marill `sv02-044`/`-204` "Bubble Drain"), **4 at 10** (Shroomish `sv01-003` + Smoliv `sv03-019` "Absorb", Bramblin `sv02-023`/`-198` "Blot") and **1 at 50** (Ariados `swsh10.5-007` "Absorb"). Every one is a STANDALONE single sentence; **12 of the 18 also carry printed damage**, which D125's tail placement handles for free, and the other 6 print no `damage` field at all so the heal is the entire visible result — both halves are pinned. **⚠️ THE HEADLINE IS THAT THE OP HAD BEEN BUILT SINCE 0.x.** `heal { target: "self"; amount }` is one of the oldest `EffectOp` members, shipped for the COMPOUND printing "This Pokémon is now Asleep. Heal {N} damage from it." (`SELF_SLEEP_HEAL`); `healSelf` was already correct including its clamp and its silence. What was missing was never a mechanism — only a READER for the same action printed without the Sleep clause in front of it. D131 executed a note a previous slice left; **D132 found that a previous slice had already shipped the machinery, and only the sentence was unread.** Also fixed for good: the `heal` member was the ONE member of the whole `EffectOp` union with no doc comment, and now has one.
+
+**Superseded header (build #116 — the UNCONDITIONAL MILL, BOTH DIRECTIONS, D131):**
+**Last updated (was):** 2026-08-01 — build session #116 (**P3-M5 — the UNCONDITIONAL MILL, BOTH DIRECTIONS: "Discard the top [N cards|card] of your [opponent's] deck." — 16 printings on ONE regex and ONE deriver arm, and the widening a PREVIOUS SLICE had already specified (D131, engine 0.82.0)**).
 *"Discard the top [{N} cards|card] of your [opponent's] deck."* (**16 printings / 7 distinct clauses**) now SIMULATES on **ONE anchored regex and ONE `deriveAttackEffect` arm** — the largest single mapping this family has taken and the cheapest per printing. Census re-run 2026-08-01 against the local D1 over the WHOLE effect string (978 cards / 809 with attacks): **7 opponent-side** (Chi-Yu ex `sv02-040`/`-234`/`-259` "Jealously Singe", Garganacl `sv02-123` + Diggersby `sv03-113` "Knocking Hammer", Paldean Clodsire `sv03-128` "Muddy Hammer", Skwovet `sv03-178` "Nicked Nibble") and **9 own-side** (Fraxure `sv06.5-045`/`-077` + Haxorus `sv06.5-046` "Dragon Pulse", Gyarados `swsh10.5-022` "Wild Splash", Tyranitar `sv02-135`/`-222` "Dread Mountain", Tyranitar ex `sv03-066`/`-211` "Mountain Hurl", Diglett `sv03-103` "Hole-Diggin' Noggin"). Every one is a STANDALONE single sentence; **9 of the 16 also carry printed damage**, which the D125 tail placement handles for free. **⚠️ THE HEADLINE IS THAT THE PREVIOUS SLICE HAD ALREADY WRITTEN THE SPEC.** D130 shipped the mill op OPPONENT-ONLY by D104's minimal shape and wrote into its own doc block that the own-deck reading ("Wild Splash") was live and unmapped, and that *"the first slice that maps it widens this field then, with two readings in hand rather than one guessed at."* This session executed that note verbatim with nothing re-derived: `discardOpponentDeckTop` → **`discardDeckTop { whose: "self" | "opponent"; count }`**, and the interpreter arm grew **one ternary**. **The generalisation: when you DECLINE a widening, write down the condition that would warrant it.** **⚠️ WIDEN THE FIELD, DON'T ADD A MEMBER** (D128's provenance rule in the small) — the two sentences differ in exactly one word and everything downstream of picking the seat is byte-identical. **Gyarados `swsh10.5-022` settles it alone: index 0 mills the OPPONENT (D130, behind an until-tails coin), index 1 mills its OWN deck for 5** — one card, one action, two directions, and the fixture already carried both sentences verbatim so the proof case cost zero new bytes and one flipped assertion. **⚠️ TWO CAPTURES IN ONE REGEX IS NOT A D119 VIOLATION**: D119 governs the clause TABLE, where a row is a lookup KEY; here both tokens land in FIELDS of one op. **⚠️ THE SINGULAR IS ITS OWN ALTERNATION BRANCH, NOT `(\d+)?`** — two printed SPELLINGS, and the branch does NOT filter ("the top 1 cards" is unprinted but unambiguous and is accepted; the first draft's doc claimed a refusal, the test caught it, and the CLAIM was corrected rather than the regex). **⚠️ THE SELF-MILL IS A PRINTED COST AND §14.3 STAYS AT THE DRAW**: an OPPONENT mill-out loses in the SAME event batch, a SELF mill-out emits **no `GAME_OVER` at all** in that batch and loses a FULL TURN LATER — both pinned, and the asymmetry is in the rule rather than in the op. **⚠️ NOTHING DOWNSTREAM NEEDED A DIFF, and D113/D130 paid for it in advance**: `DECK_TOP_DISCARDED` was already provenance-neutral and keyed to the deck's OWNER, so one op emitting on both seats needed no log copy change, no new event and no redact arm. `deckTopMill.test.ts` (**21 tests**, ONE board and NO seed sweep — the sentences take no coin, asserted by pinning `rngState` unchanged on both directions) + Skwovet `sv03-178` fixture + `DECK_TOP_MILL_DECK` + 4 touched suites. Full `bun run check` GREEN exit 0, **174 files / 2768 tests**; `biome format` churn re-measured on a clean tree at **20 files, unchanged**.
 
 **Superseded header (build #115 — the PER-HEADS PROGRAM, D130):**
@@ -75,16 +79,20 @@ Wimpod **swsh10.5-025** "Punk Out" now SIMULATES: "If your opponent has any Pok�
 Snorlax **swsh10.5-055** "Block" now SIMULATES: "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat." — the **L3 shape D112 left open**, and the smallest aura slice yet (one `PassiveEffects` flag + one scan + three `&&` terms). **Verbatim re-confirmed against the local D1 before authoring** (the D95→D112 lesson): a D1 sub-agent read the row (Basic Colorless, 150 HP, retreat 4, ×2 Fighting, reg mark F; "Collapse" {C}×4 150 "This Pokémon is now Asleep.") and re-ran the lock census with COALESCE on every text column — **it is the ONLY continuous-Ability retreat lock in the ingested 978 cards, with no reprint**, and **zero rows in the entire pool carry U+2019** (all 459 apostrophe-bearing rows are ASCII), so lock matching never needs the typographic twin. **D112's `legal_standard=0` caveat was a NON-ISSUE and is retired**: 851 of 978 ingested cards are `legal_standard=0`, **including every card in sv01/sv02/sv03** — the flag tracks the post-G rotation, only sv06.5's 96 reg-mark H cards and most blank-mark Energies are Standard, and the engine has simulated non-Standard cards since D1. **Pick engine slices by mechanism, never by `legal_standard`**; format legality is a deck-builder (P2) concern. **Modelled as a bare `PassiveEffects.preventOpponentActiveRetreat?: true`** (D104's minimal-shape rule), read through a new continuous.ts scan **`opposingRetreatBlocked(state, pokemon)`** — the **FIFTH** aura scan and the boolean cross-board twin of D111's `opposingRetreatSurcharge`, sharing its derived-seat trick and §9 gate. **The two differ in exactly one line, and the printed text is the whole reason:** Trap Territory scopes only the TARGET (a benched Spidops ex still surcharges), while this print OPENS with "As long as this Pokémon is in the Active Spot" — so the SOURCE is Active-scoped too and the source list is the opponent's Active **alone**, enforced in the SCAN, not by a new `activeOnly` field (the `damageAttacker` precedent). **It rides NEITHER D112's `retreatBlocked` flag NOR the `preventRetreat` op**: no turn duration means nothing to apply and nothing to clear — read live, lapses the instant either end leaves the Active Spot. **Read at the RETREAT GATE, never in `effectiveRetreatCost` — a block is not a cost** (the wire still reports the real `cost` beside `can: false`). The three D112 read sites take one more `&&` each (turn.ts gate, redact.ts `can`, the web `GameHud.tsx`): **no new events, no new error code** (`RETREAT_PREVENTED` reused with a different *message* only — "an attack effect" would be a lie for an Ability), no new op, no wire field, no API/DB/`@luminous/schema` diff. Two provenances, two independent guards at one gate, composing for free. **The family's FIRST §9 POSITIVE:** Klefki `sv01-096` = `{ stage: "Basic", side: "both", requiresActive: true, exemptAbilityNamed: "Mischievous Lock" }` silences BASIC sources only — Florges/Clefable ex/Spidops ex are all Stage 1/2, which is why every earlier suite could record only the negative; **Snorlax is a Basic**, so an Active Klefki really does take Block down, and the Pokémon thereby freed is the Klefki itself. §9 reachability in this family is a function of the source's **STAGE**. `block.test.ts` (**12**) on a DEDICATED `BLOCK_DECK`: the bare-flag registry row; a fixture-text-verbatim guard; the block + its control; the **SOURCE clause** (a benched Snorlax blocks nothing — Trap Territory's exact inverse, located by card id so the guard is not vacuous); the target clause; own-board scoping asserted in BOTH directions off one board; the §9 positive + its lock-free control; the cost unchanged; the wire `{cost:2,can:false}` vs `{cost:2,can:true}`; the gate refusing **the very retreat the same board otherwise allows**; the block NOT preventing attacking and writing nothing onto the Pokémon (no `STATUS_APPLIED`, `conditions` untouched, `retreatBlocked` still false); and the composition with D112's flag (both, then each alone). New fixtures: a faithful Snorlax (the first `swsh10.5` fixture with an Ability) + the deck, which needed a 4th body (`fix-attacker`) because the "does not block attacking" case needs the *blocked* Pokémon to have an attack and it cannot be the Klefki; the suite pins BOTH Active spots before each surgery, `BLOCK_DECK` being Basic-dense enough that an unpinned starter could itself be an aura source or a §9 lock. engineVersion 0.63.0 → **0.64.0**; `bun run check` **GREEN (exit 0): 155 → 156 files, 2137 → 2149 tests** (tsc + biome lint + vitest). Clean diff (6 engine files + 1 new test + 1 web line) with zero new formatter churn (57 files flagged before and after — the real pre-existing count is **57**, not the "~45" D111 recorded, which was the default 20-diagnostic cap misread). **⚠️ `/code-review` STILL NOT RUN** on D96–D113 (user-triggered). This supersedes #97 (D112 — folded into `decisions.md`).
 
 
-**NEXT (resume point):** **THE COIN FAMILY IS DONE FOR ITS DAMAGING SHAPES, AND THE
-BARE MILL SENTENCE NOW RUNS IN BOTH DIRECTIONS.** Seven regexes, **79 printings**, ZERO
-clause-table rows and ZERO `BoardCondition` members: heads-bonus (20 printings, D126),
+**NEXT (resume point):** **THE COIN FAMILY IS DONE FOR ITS DAMAGING SHAPES, THE BARE
+MILL SENTENCE RUNS IN BOTH DIRECTIONS, AND THE BARE SELF-HEAL IS MAPPED.** Eight
+regexes, **97 printings**, ZERO clause-table rows and ZERO `BoardCondition` members:
+heads-bonus (20 printings, D126),
 tails-cancel (11, D126), the printed multi-flip fold (22, D127), the board-counted flip
 count (3, D128), the unbounded fold (5, D129), the **per-heads PROGRAM** (2, D130 —
 `AttackCoinFlip`'s 4th member, the first whose consequent is an `EffectOp[]` rather
 than a number) and the **UNCONDITIONAL MILL, BOTH DIRECTIONS** (16, D131 — one regex,
 one deriver arm, no coin, and `discardOpponentDeckTop` widened to
 `discardDeckTop { whose: "self" | "opponent"; count }` with a ONE-TERNARY interpreter
-diff, exactly as D130's own doc block had specified).
+diff, exactly as D130's own doc block had specified) and the **BARE SELF-HEAL**
+(18 printings / 4 clauses, D132 — one regex, one arm, `amount >= 1` guard, and **NO
+INTERPRETER DIFF AT ALL** because `heal`/`healSelf` had existed since 0.x behind the
+compound `SELF_SLEEP_HEAL` sentence).
 The board-fact families are unchanged by this session: damage-bonus at **19 literal
 rows + 2 TEMPLATES, covering 23 of the pool's 26 distinct clauses / 41 of its 43
 printings**; requirement ("…this attack does nothing") at **2 rows / 2 cards / 3
@@ -95,8 +103,8 @@ deliberately no shared lookup. (D115 → D130, `conditionalDamage.test.ts` +
 `toolClause.test.ts` + `supporterClause.test.ts` + `promotedClause.test.ts` +
 `attackRequirement.test.ts` + `coinFlipDamage.test.ts` + `multiCoinFlip.test.ts` +
 `perEnergyFlip.test.ts` + `untilTailsFlip.test.ts` + `perHeadsProgram.test.ts` +
-`deckTopMill.test.ts`, engine **0.82.0**) — full
-`bun run check` green exit 0, **174 files / 2768 tests**. Fourteen rules are settled and
+`deckTopMill.test.ts` + `selfHeal.test.ts`, engine **0.83.0**) — full
+`bun run check` green exit 0, **175 files / 2785 tests**. Fifteen rules are settled and
 should be applied without re-litigating them: **D116's pronoun rule** (the union member
 is named for the board fact it READS), **D118's template rule** (a clause varying on ONE
 token is a pattern, not N rows — literals match FIRST), **D119's corollary** (if TWO
@@ -113,10 +121,25 @@ cheap), **D128's provenance rule** (a bound is owed to the SOURCE of the number,
 the loop it feeds; and WIDEN THE FIELD rather than add a member when only that source
 moved), **D129's rule** (next), **D130's carry rule** (when a value must reach a
 LATER stage of one resolution, ask first whether the later stage's existing input can
-just be REWRITTEN — expansion beats a channel), and **D131's deferral rule** (when you
+just be REWRITTEN — expansion beats a channel), **D131's deferral rule** (when you
 DECLINE a widening, write down the condition that would warrant it — D130's two-sentence
 note bought a 16-printing slice a session later, executed verbatim with nothing
-re-derived).
+re-derived), and **D132's inventory rule** (**before pricing a shape, ask what an
+EXISTING arm already emits — the COMPOUND form of a sentence is the cheapest possible
+spec for its BARE form**; the bare self-heal looked like a 1-printing curiosity in the
+backlog and turned out to be 18 printings over an op that had been shipped, clamped and
+end-to-end tested since 0.x).
+
+⚠️ **D132: THE `biome format` CHURN NUMBER WAS NEVER A MEASUREMENT.** Four successive
+sessions recorded it as 89 (D128), 57 (D113) and 20 files (D131), each telling the next
+to "re-measure rather than quote". **The cause is now known: `biome format` truncates
+its diagnostics at `--max-diagnostics`, default 20**, so every figure was a CAP (or a
+differently-capped line count), not a count of dirty files. Measured to CONVERGENCE
+(identical at 500 / 1000 / 3000): **88 files repo-wide, 83 excluding the gitignored
+`.claude/worktrees/` copies.** ALWAYS pass an explicit high `--max-diagnostics` before
+quoting a churn number, and exclude `.claude/worktrees/`. Running
+`bunx biome format --write` on a file you already touched is still the right move and
+takes that file OUT of the set — this session's five files are all clean.
 
 ⚠️ **D129: WHEN NOTHING BOUNDS A LOOP, OWE A TERMINATION ARGUMENT — NOT A CEILING.**
 A refusal ceiling (`MAX_PRINTED_FLIPS`) answers "is this row malformed?"; it is the
@@ -179,9 +202,24 @@ and pin the one-anchored-reader-per-string boundary rather than a gap; the other
 are genuine gaps and are item 1e. Same standing rule: **map one and re-point its case,
 never delete it.**
 
-**1. THE BEST NEXT SLICE — pick by appetite. 1a IS DONE (D131). The mill family's
-remainder is all 1-printing shapes needing machinery that does not exist; the BARE
-SELF-HEAL (old item 5b) is now the cheapest un-taken thing in the engine.**
+⚠️ **D132 added a FIFTH witness set, in `selfHeal.test.ts`** — five real catalog rows the
+bare-heal anchor refuses, and they ARE the heal family's whole remainder (item 5b below):
+Nacli `sv02-121` (`Heal 20 damage from 1 of your Pokémon.`), Steenee `sv03-017` (`Heal 30
+damage from each of your Pokémon.`), Blissey `swsh10.5-052` (`Heal all damage from 1 of
+your Benched Pokémon.`), Fuecoco `sv02-035` (`Flip a coin. If heads, heal 30 damage from
+this Pokémon.` — refused by the COIN reader too, so it stays loud on BOTH) and Iron Moth
+`sv06.5-009` (`Heal from this Pokémon the same amount of damage you did to your
+opponent's Active Pokémon.`). A SIXTH row in the same table is the compound Slowpoke
+`sv01-042` sentence, refused by this anchor but SIMULATED by `SELF_SLEEP_HEAL` — it pins
+the one-reader-per-string boundary, and its case asserts the two anchors' `heal` ops are
+BYTE-IDENTICAL for the same N. Same standing rule: **map one and re-point its case,
+never delete it.**
+
+**1. THE BEST NEXT SLICE — pick by appetite. 1a IS DONE (D131) and the BARE SELF-HEAL is
+DONE (D132). The mill family's remainder is all 1-printing shapes needing machinery that
+does not exist. ⚠️ THE CHEAPEST UN-TAKEN THING IN THE ENGINE IS NOW `Heal {N} damage from
+each of your Pokémon.` — 7 printings / 2 clauses over the EXISTING non-parking `healEach`
+op. See item 5b; it is D132 again and should cost the same.**
 - ~~**1a — the seven unconditional mills.**~~ **DONE (D131)**, and bigger than the
   forecast: the same anchor also read the NINE own-deck printings, so it landed **16
   printings / 7 distinct clauses**, not 7. Every printing was standalone (the compound
@@ -296,16 +334,48 @@ these, the slice is a **P1 ingest** one: add the tag column + re-ingest.
   (3 counters, Benched). Neither `deriveAttackEffect` nor `deriveAttackDamageBonus`
   touches them today. A `putCounters on EACH <filter>` op, and the filter it wants
   ("that has any damage counters on it") is the predicate D116 already spelled.
-- **The BARE self-heal sentence** (D117) — **now the cheapest un-taken slice in the
-  engine, and the one to take next if you want a clean win.** `Heal N damage from this
-  Pokémon.` (Ceruledge `sv02-098` "Life Sucker", 30) derives to **null on every path**:
-  the op deriver owns only the COMPOUND `SELF_SLEEP_HEAL` form. The `heal` op exists, so
-  it is one regex + one `deriveAttackEffect` arm, structurally identical to what D131
-  just did. ⚠️ **Census the pool for the bare form FIRST** — it was noticed in passing
-  and never swept, and D131's own experience says the sweep can double the slice (7
-  forecast → 16 actual). Sweep over the WHOLE effect string (D121), and check whether
-  any printing aims at a Pokémon other than "this" before deciding the op needs a
-  target field.
+- ~~**The BARE self-heal sentence** (D117)~~ — **DONE (D132)**, and the sweep the old
+  note demanded paid off exactly as it warned: forecast **1 printing** (Ceruledge
+  `sv02-098` "Life Sucker"), actual **18 printings / 4 clauses**. One regex, one arm,
+  **zero interpreter diff**. **⚠️ THE HEAL CENSUS IS NOW CLOSED — do not re-run it.**
+  42 heal-mentioning attack printings / 18 distinct clauses pool-wide; 18 are the bare
+  self-heal (mapped) and 2 are the compound `SELF_SLEEP_HEAL` form (mapped long ago).
+  **5b — THE HEAL NEIGHBOURHOOD LEFT, ranked by cost.** All five are live
+  `selfHeal.test.ts` witnesses, so **re-point the witness before mapping any of them**.
+  - **`Heal {N} damage from each of your Pokémon.` — 7 printings / 2 clauses, and the
+    CHEAPEST un-taken thing in the engine now.** Skeledirge ex `sv02-037`/`-233`/`-258`/
+    `-272` "Vitality Song" (30, with a printed 50 damage) + Steenee `sv03-017`
+    "Aromatherapy" (30, no damage) + Cresselia `sv06.5-021`/`-071` "Healing Pirouette"
+    (20, no damage). **`healEach { amount }` ALREADY EXISTS** (Garganacl "Blessed Salt",
+    a between-turns trigger) and is non-parking, so this is D132 again: one regex, one
+    arm, no mechanism. ⚠️ Verify first whether `healEach` covers the ACTIVE as well as
+    the Bench — "each of your Pokémon" means all in-play, and the existing consumer is a
+    trigger, so the reading has never been tested from an attack.
+  - **`Heal {N} damage from 1 of your Pokémon.` — 5 printings / 3 clauses.** Nacli
+    `sv02-121`/`-220` "Salt Coating" (20), Vespiquen ex `sv03-096`/`-212` "Healing
+    Pheromone" (60), Smoliv `sv01-021` "Nutrients" (30). `healChosen { amount }` EXISTS
+    (Potion) but it **PARKS on a choice**, so this is the first PARKING op the attack
+    deriver would emit — check how `deriveAttackEffect`'s tail placement interacts with a
+    park before pricing it. Warrant is met (3 clauses, 5 printings).
+  - **The BENCHED-only variants — 4 printings / 4 clauses, and they need a FILTER
+    `healChosen` does not have.** Tropius `sv01-007` (60), Chansey `swsh10.5-051` (30),
+    Combee `sv03-008` (20) print `from 1 of your Benched Pokémon.`; Blissey
+    `swsh10.5-052` + Arboliva `sv03-021` print `Heal all damage from 1 of your Benched
+    Pokémon.` (`healChosen` already takes `amount: "all"`, so that half is free). Honour
+    the printed zone word — "Bench" excludes the Active (D120's rule).
+  - **Fuecoco `sv02-035`/`-201` "Spacing Out"** — `Flip a coin. If heads, heal 30 damage
+    from this Pokémon.` **2 printings, and BOTH halves now exist** (`coinFlipGate` +
+    `heal`): one regex into `deriveAttackEffect` beside the `FLIP_OPPONENT_ACTIVE_DISCARD`
+    twin it copies exactly, and unlike Wiglett (1e) **D121's warrant IS met**. Floette
+    `sv01-092`'s `Flip a coin. If heads, this attack does 30 more damage, and heal 30
+    damage from this Pokémon.` is a compound of a bonus AND an op on one flip and is a
+    different, harder shape — do not let one regex reach for both.
+  - **Iron Moth `sv06.5-009` "Suction"** — `Heal from this Pokémon the same amount of
+    damage you did to your opponent's Active Pokémon.` 1 printing, and it wants a channel
+    from the §8.5 pipeline's RESULT back into an op that runs at the tail. **Same shape
+    as Camerupt (1e)** and the one case D130's "rewrite the later stage's input" rule
+    does not answer. Do it last or not at all — and if you do, do it WITH Camerupt, since
+    one channel would serve both.
 
 **Do NOT build these** (censused and refuted): a `<Name> is in the Active Spot` row
 (D120 — all 28 "in the Active Spot" sentences use a pronoun); a `you have at least N
@@ -329,12 +399,16 @@ the keys are `cost` / `name` / `effect` (optional) / `damage` (optional) **in th
 stored order**, `cost` is **spelled-out words** (`"Fire"`), NEVER brace tokens, and
 `damage` is an integer OR a string (`"10+"`, `"30×"`, `"80×"`) OR absent — D126 and
 D128 verified all of this. ⚠️ **The `×` in a damage string is U+00D7 and the `é` in
-"Pokémon" is U+00E9; `{R}` is plain ASCII braces.** ⚠️ **`biome format` flags 20 files
-repo-wide on a clean tree** — re-measured 2026-08-01 with `git stash -u` (NOT the 89 D128
-recorded nor the 57 D113 recorded; both were counting lines or a wider glob, not files,
-so re-measure rather than quoting any of these).
-Re-measure before claiming churn; `bun run check` does not run the
-formatter, so a new file should be `biome format --write`-ed to keep the count flat.
+"Pokémon" is U+00E9; `{R}` is plain ASCII braces.** ⚠️ **`biome format` flags 88 files
+repo-wide (83 excluding the gitignored `.claude/worktrees/` copies)** — and **the reason
+every earlier figure disagreed is now known (D132): `biome format` truncates at
+`--max-diagnostics`, default 20.** The "20 files" D131 recorded was that cap; 89 and 57
+were differently-capped or line counts. Measured to convergence (identical at
+`--max-diagnostics` 500 / 1000 / 3000). **Always pass an explicit high
+`--max-diagnostics` and exclude `.claude/worktrees/` before quoting a churn number.**
+`bun run check` does not run the formatter, so `bunx biome format --write` any file you
+touch — that takes it OUT of the set, which is why the count is a ceiling that only ever
+falls.
 
 **6. LESSONS worth carrying:**
 - **Resolve a context-dependent printed subject at the site that knows the context; keep the shared
@@ -4942,13 +5016,62 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D131** — the UNCONDITIONAL MILL, both directions, engine **0.82.0**: "Discard the top [N cards|card] of your [opponent's] deck." — **16 printings / 7 distinct clauses** on ONE regex + ONE `deriveAttackEffect` arm; `discardOpponentDeckTop` widened to `discardDeckTop { whose }` exactly as D130's doc block had specified, one ternary in the interpreter, zero new events/ops/members/rows. `deckTopMill.test.ts`, 174 files / 2768 tests. Prev: **D130** — the PER-HEADS PROGRAM, engine **0.81.0**: "Flip N coins / until you get tails. **For each heads, discard the top M cards of your opponent's deck.**" — 2 printings on 2 regexes, the coin family's FIRST non-damaging consequent; the carry from the flip site to the tail is PROGRAM EXPANSION, not a channel; new op `discardOpponentDeckTop`, `DECK_TOP_DISCARDED` reused. Prior: **D129** — the UNBOUNDED FOLD, engine 0.80.0: "Flip a coin until you get tails. This attack does D [more] damage for each heads." — 5 damaging printings on 2 regexes, the coin family's LAST damaging shape and its 61st printing; a MEASURED termination argument (`MAX_UNTIL_TAILS_FLIPS = 64` vs a longest-heads-run of 31 over mulberry32's whole 2³² cycle) instead of a ceiling, and `flipCount` → `takeFlips` returning FACES rather than a count) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D132** — the BARE SELF-HEAL, engine **0.83.0**: "Heal {N} damage from this Pokémon." — **18 printings / 4 distinct clauses** on ONE regex + ONE `deriveAttackEffect` arm and **ZERO interpreter diff**, because `heal`/`healSelf` had existed since 0.x behind the compound `SELF_SLEEP_HEAL` sentence and only the bare reading was unread; `selfHeal.test.ts`, full `bun run check` green — **175 files / 2785 tests**. Prev: **D131** the UNCONDITIONAL MILL both directions, engine 0.82.0) |
 | online | P4 | 🚧 **STARTED** (engine broad at 0.40.0). M1 (WS lobby over the DO) already done at P1-M8. **1a: engine wired into `apps/api`** (`startMatch`, host→p1/guest→p2). **1b: the DO seam DONE** — `handoffToMatch()` in `alarm()` loads the D1 pool, mints a seed, persists a `MatchRecord` under `MATCH_KEY` (dropped on `abandonsMatch`). **1c: the redactor + wire + read-only board DONE** — `redactGame`/`RedactedGame` + `{kind:"match"}` + `OnlineMatch` over `PlaymatView`. **2a: the action transport + setup flow DONE** — `{kind:"action"}` frame, seat-bound `applyMatchAction`, redacted `phase`, `OnlineHud` setup panels. **2b-i: the attack + KO loop DONE** — `RedactedPhase.turn:action.attacks` (server-computed payability, turn-owner + own-Active only), `SUPPORTED_MATCH_ACTIONS` += attack/takePrizes/promote, `OnlineHud` AttackPanel + ko:takePrizes/ko:promote dialogs; the match now plays TO A WIN with the fixed basic decks. **2b-ii: retreat DONE** (scoped to retreat ALONE — abilities/trainers deferred to real decks): `RedactedPhase.turn:action.retreat` + `SUPPORTED_MATCH_ACTIONS` += retreat + `OnlineHud` RetreatDialog. **2b-iii-a: the effect:choose prompt SEAM + the mayDraw dialog DONE** — `RedactedEffectPrompt` (mayDraw arm) on `RedactedPhase.effect:choose.prompt` (answerer-only via `redactedPromptOf`), `decisionFromPhase` reconstruction (round-trip now holds for a mayDraw park), `OnlineHud` MayDrawDialog; `resolveEffect` stays OFF the allowlist (2b-iii SPLIT: a=mayDraw seam, b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection pill). **2b-iii-b: the public-ref prompts DONE** — `RedactedEffectPrompt` += choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy arms (+ `RedactedPokemonRef`, absolute-seat), `redactPrompt` maps them (fresh copies, answerer-only, controller-answered so stricter than `phaseViewOf`), `decisionFromPhase` reconstructs full (round-trip holds for the answerer's view), `OnlineHud` += four dialogs via `EffectChooseDialog` (names resolved off the board); `resolveEffect` still OFF the allowlist. **2b-iii-c: the hidden-candidate prompts DONE** — `RedactedEffectPrompt` += chooseCards/attachCards arms carrying a `RedactedCard` per candidate (the deck-card reveal, server-resolved via `redactedCardOf`, answerer-only — the hidden-info barrier, leak-tested); `decisionFromPhase` recovers uids from `c.id`; `OnlineHud` += ChooseCards/AttachCards dialogs + the `effect:choose` render keys on the prompt (stale-pick reset); **`resolveEffect` now ON `SUPPORTED_MATCH_ACTIONS`** (every kind dialoged; soft-lock-safe). 1767→1774 tests. **2b-iii-d SPLIT** into d-i (pill) + d-ii (log). **2b-iii-d-i: the rejection pill DONE** — `{kind:"reject-action", reason}` server frame, `applyMatchAction` returns `{ok,reason}`, the DO sends it on `!ok`, `useLobby.actionError` + `OnlineMatch` `TransientErrorPill`. 1774→1777 tests. **2b-iii-d-ii: the online event log DONE** (D68) — `logFromEvents` + `LogContext` moved into `@luminous/engine`, the wire log types (`SeatLogEntry`/`LogSegment`) into `@luminous/schema`, the `{kind:"match"}` frame grew `log` (seat-keyed + leak-safe, identical to both), `MatchRecord` grew `startedAt`/`names`/`log`, `applyMatchAction` takes `now`; `viewLogEntries` relabels client-side. 1777→1782. **3 SPLIT** (a/a-sec/b/c+). **3a + 3a-sec: real deck selection + seat auth DONE** (D69) — the `/ws` upgrade authenticates the forwarded `session` cookie → a per-socket userId; the handoff loads each player's OWN deck OWNER-SCOPED (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, resets + broadcasts `{kind:"match-error"}` on a load failure; `seatClaimAllowed` + `SEAT_USERS_KEY` bind a seat to its account (closing the bearer-only-seat HAND leak). 1782→1790. **3b: the online ability + non-Stadium trainer HUD DONE** (D70) — `RedactedPhase.turn:action` gained `abilities`/`trainers` (server-folded playability via `redactedAbilitiesOf`/`redactedTrainersOf`, actor-only), `OnlineHud` gained the Abilities + Trainers sections, `SUPPORTED_MATCH_ACTIONS` += `useAbility`; STADIUMS stay the board drag, RARE CANDY deferred. 1790→**1803**. **3b-ii: the online Rare Candy DONE** (D71) — `RedactedTrainer` gained a `rareCandy` FLAG (the one row that opens a dialog instead of dispatching `playTrainer`) and `RedactedPhase.turn:action` a `rareCandy` pairing list (`redactedRareCandyOf` = the engine's `rareCandyOptions` mapped to the wire, actor-only; both computed in one `redactPhase` call, so a lit row always has ≥1 pairing), `OnlineHud` gained the two-step `RareCandyDialog`, `SUPPORTED_MATCH_ACTIONS` += `rareCandy` (soft-lock-safe — the same `placeEvolution` tail `evolve` has reached since 2a, no new park surface). 1803→**1812**. **The online turn HUD is now COMPLETE — every local affordance has an online counterpart.** **BROWSER-VERIFIED** (2026-07-26, two real clients + two D1 decks): the forwarded `session` cookie survives the cross-origin WS upgrade, the event log renders on both, 3b's greying is faithful live, Rare Candy evolves end-to-end and the hidden-info barrier holds. **3c — the match LIFECYCLE** is now landing: **3c-i** `MatchRecord.version` + `readMatchRecord`/`peekMatch`/`retireStaleMatch` + `endMatch` (D72, 1812→**1825**); **3c-ii** the engine `concede` action + `GameOverReason.conceded` + the 90s `ABANDON_GRACE_MS` forfeit for a player who vanishes mid-match (D73, engine 0.41.0, 1825→**1832**, browser-verified by killing a client); **3c-iii** the Concede control in the HUD chrome + neutral `GAME_OVER_DETAIL` copy (D74, 1832→**1835**); **3c-iv** a mid-match LEAVE now forfeits instead of voiding the opponent's game — `concedeSeat` shared with the timeout path, the pure `applyBye` keeping the seat while in-game so the result survives, and a Back confirmation that says leaving forfeits (D75, 1835→**1841**); **3c-v** the forfeit deadline moved onto the WIRE (`PlayerState.forfeitAt` replacing the DO's `ABANDON_KEY`, so the countdown renders the number the alarm fires on), the `connected` ⇒ no-forfeit invariant made structural, `readSnapshot` normalizing the un-versioned snapshot, and the ticking `OpponentAwayBanner` (D76, 1841→**1853**, browser-verified incl. a reconnect that was correctly NOT forfeited). **3c-vi** rematch — a `{kind:"rematch"}` lifecycle FRAME (server-judged: only the DO knows the match reached `gameOver`) running `endMatch` + readying the ASKER, so the existing ready-up flow is the agreement and no new lobby state exists; `commit` drops `MATCH_KEY` so the next handoff mints a fresh game (D77, 1853→**1858**, browser-verified incl. a crafted mid-game frame being dropped). **P4's match lifecycle is now COMPLETE end to end — start → play → resolve → play again, in one lobby.** **3c-vii-a** the SPECTATOR redaction — `redactGame(state, side, spectating)` withholding BOTH hands, both sides' setup placements and every actor affordance through one `actor = null` gate (the threat model is a PLAYER watching their own match, so the sides are symmetric); leak-tested from both sides, engine rules unchanged, **not wired yet** (D78, 1858→**1865**). **3c-vii-b** spectate WIRED — the lobby link is the spectate link (a third socket's `reject-full` becomes a spectator while in-game; no new frame, URL or invite flow), a spectator having no playerId/PlayerState/snapshot presence at all; `useLobby`'s `rejected` became `refusal: full|kicked` and `OnlineMatch` gained `spectating` (D79, 1874 tests, browser-verified with a third profile: both hands face-down to them, no controls, live updates). **Every P4 milestone is now DONE — transport, handoff, hidden info, reconnect/timeouts, concede/rematch, spectate.** **3c-viii** half-open socket liveness — `getWebSocketAutoResponseTimestamp` on a 30s poll closes any socket silent for 15s, funnelling into the grace→disconnect→forfeit machinery a real close already drives (D80, 1878 tests, browser-verified with the offline reproducer that exposed it). **P4 has NO known defects and no planned work left — every milestone is done.** **Next:** a REMOTE deploy + verification (all of P4 is local-only; needs the user's go-ahead + credentials, and P1's remote migrations/ingest first), or P5 polish. See `workstreams/online.md`. |
 | polish | P5 | 🚧 **STARTED** — **P5-1: real player names DONE** (D81): a lobby seat's name is the ACCOUNT's `displayName`, resolved SERVER-SIDE at the hello (`loadDisplayName`) from the /ws session's `userId`, so it is authoritative rather than announced (a client-supplied name was an impersonation vector once names stopped being random); anonymous sockets keep their generated handle, and a BLANK account name never falls back to the email (it is broadcast to the opponent and to spectators). Browser-verified on four clients. **P5-2: generated AVATARS DONE** (D82): `PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient + the account's initial; nothing stored, nothing uploaded, an anonymous seat keeps the generic figure. Cross-client determinism browser-verified (identical gradients for the same accounts on both clients). **P5-3: DECK COVER ART DONE** (D83): a pure `pickCoverCardId` fronts each deck with its highest-HP Pokémon (ties: copies, then card id) — HP being the one number that beats both stage-ranking (wrong for a Basic-ex deck) and count-ranking (wrong for every evolution deck); derived on READ in the list query, null → the card back for an empty deck. Browser-verified, and the run caught the deck NAME being illegible over card art (scrim added, only where there is art). **P5-4: the playmat's pass + history controls DELETED** (D84): the arrows were never wired to anything on any surface, and the ⟶ was enabled exactly when the turn panel covered it — so the repo's oldest defect was two dead controls, not a layout problem; `PlaymatView.onPassTurn` is now optional and only the /simulator sandbox asks for one. Browser-verified with a real `elementFromPoint` hit-test. **P5-5: PROFILES — the account you can EDIT — DONE** (D85): a Profile section on /settings behind `PATCH /auth/me` (`updateProfileRequestSchema`: required `displayName`, trimmed, 1–64; `requireUser` before the validator; no write when unchanged), closing the gap P5-1 opened — a name that is authoritative and broadcast but unchangeable. It shows the account's REAL generated face: `userSchema` gained `avatarSeed` (derived server-side by D82's hash), `avatarSeedFrom` moved to `apps/api/src/auth/avatar.ts` (a property of the ACCOUNT, not a seat) and `PlayerAvatar` to `src/components/`, so /settings and the lobby cannot drift into two similar drawings; deriving the hash client-side was rejected. Browser-verified on two clients — a rename reached the corner control, a reload, and the OPPONENT's panel with a byte-identical gradient. **P5-6: a CHOSEN deck cover DONE** (D86): the follow-up P5-3 named — a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure `effectiveCoverCardId` where the pin wins and everything else falls through to `pickCoverCardId` (now explicitly the DEFAULT). It resolves against the candidates the list query already had, so a choice costs no query and a stale pin falls back rather than drawing a blank; the pin may be a TRAINER, since guessing needs a rule and choosing does not. `DeckSummary.coverCardId` still means the face DRAWN, `Deck.chosenCoverCardId` the stored choice; the `CoverDialog` offers Automatic as an explicit option. PATCH and the client's `toSnapshot` both refuse to let the pin and the card list disagree — load-bearing, since a self-contradicting body would 400 forever on a shared save path. Browser-verified end to end incl. the fallback-after-removal and the 400 gate. **P5-7: a FAVOURITE deck on the profile DONE** (D87): a nullable `users.favourite_deck_id` (migration `0005`, surfaced as `userSchema.favouriteDeckId` — just the id) an account pins to one of its OWN decks via a native `<select>` on /settings riding the SAME `PATCH /auth/me` as the name (optional/nullable `favouriteDeckId`, validated against the caller's decks → 400 `favourite deck not found`); the profile stores only the id and resolves cover/name on read from `GET /decks` (derive-on-read, tolerate stale), the FK is `ON DELETE SET NULL`. Browser-verified end to end (build #71). **P5-8: a card DETAIL VIEW DONE** (D88): a read-only detail modal (`CardDetailDialog.tsx`) opened from the builder grid, hydrating the full `Card` via `GET /cards/:id` — a pure web-UI slice; the inspect affordance is a SIBLING of the add button (corner info button, opens without adding a copy), honest about what the catalog stores, respects `prefers-reduced-motion`. Browser-verified (build #72). **P5-9: a REDUCED-MOTION AUDIT DONE** (D89): carried `prefers-reduced-motion` through the three unguarded P5 surfaces — `CoverDialog.tsx`, `Settings.tsx`, `ProfileSection.tsx` — appending `motion-reduce:transition-none` at each call site per the D88 idiom (the global `index.css` rule only covers `<body>`/`.route-view`, not component Tailwind utilities), plus `motion-reduce:animate-none` on the Save spinner; `PlayerAvatar` was already clean. Pure CSS-class slice; verified via the shipped stylesheet (both guard rules emitted inside `@media (prefers-reduced-motion: reduce)`). **P5-10: the APP-WIDE glass reduced-motion pass DONE** (D90): the root-cause P5-9 deferred — `motion-reduce:transition-none` added INTO the seven `glass.ts` constants that carry a transition (`GLASS_HUD_BUTTON`/`GLASS_GHOST_BUTTON`/`GLASS_DIALOG_GHOST_BUTTON`/`GLASS_ACCENT_BUTTON`/`GLASS_NEUTRAL_BUTTON`/`GLASS_FILTER_TOGGLE` + `GLASS_INPUT`), so EVERY glass control app-wide respects reduced motion from the constant, not each call site; **reverses D88/D89's call-site placement** (blessed by the resume point), and the four now-redundant call-site guards adjacent to a glass constant (CardDetailDialog Retry, Settings Back-to-home, CoverDialog Done, ProfileSection Save) were dropped while every guard protecting an OWN non-constant transition was kept. Pure CSS-class slice, 1941 → 1941 tests, verified via the shipped stylesheet (the guard emitted in the main `index-*.css` bundle inside `@media (prefers-reduced-motion:reduce)`). **P5's autonomous surface is now exhausted. Next:** the only open P5 items both need the USER — uploaded avatars (R2 + CSP + moderation product call) and the remote P4 deploy (migrations 0004 AND 0005 remote). Best next AUTONOMOUS work is the P3 simulator M5 card-effect backlog (`docs/reference/coverage-backlog.md`). |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-01** (build #117) — **P3-M5: the BARE SELF-HEAL — "Heal {N} damage from this
+  Pokémon." (D132, engine 0.83.0).** Took the item the resume point named as "the cheapest
+  un-taken slice in the engine", and the census it demanded first paid off exactly as the
+  note warned it might: **forecast 1 printing (Ceruledge `sv02-098` "Life Sucker"), actual
+  18 printings / 4 distinct clauses** (N ∈ {10, 20, 30, 50}), every one a standalone single
+  sentence. **12 of the 18 carry printed damage** — free under D125's tail placement — and
+  the other 6 print no `damage` field at all, so the heal is the whole visible result. Both
+  halves are pinned end to end, because a build that folded the heal into the §8.5 damage
+  pipeline would pass the first and fail the second.
+  **THE SESSION'S FINDING IS AN INVENTORY ONE.** The slice has **NO interpreter diff**:
+  `heal { target: "self"; amount }` is one of the oldest `EffectOp` members, shipped for the
+  COMPOUND printing "This Pokémon is now Asleep. Heal {N} damage from it." and correct ever
+  since — clamp (`Math.min(amount, damage)`), silence on a whiff, no park, all already
+  there. What was missing was never a mechanism, only a READER for the same action printed
+  without the Sleep clause in front of it. So: **before pricing a shape, ask what an EXISTING
+  arm already emits — the compound form of a sentence is the cheapest possible spec for its
+  bare form** (D132's inventory rule). D131 executed a note a previous slice left behind;
+  this one found that a previous slice had already shipped the machinery.
+  The design calls: **one anchored reader per printed string, proved rather than asserted**
+  — `SELF_HEAL` starts at `^Heal` and `SELF_SLEEP_HEAL` never does, so neither anchor can
+  claim the other's string and the invariant holds by construction rather than by arm
+  ordering; the suite asserts the compound's second op is **byte-identical** to the bare
+  anchor's for the same N. **The guard is the family's, the clamp is the interpreter's**:
+  `amount >= 1` refuses a printed "Heal 0 damage" (a silent no-op reporting a simulated
+  effect is worse than a loud unsimulated one), but there is deliberately no ceiling in the
+  deriver. And **"the op ran and had nothing to do" ≠ "the sentence was never read"** — an
+  undamaged attacker emits no `HEALED` row and is still SIMULATED; both are asserted.
+  Housekeeping done in passing: the `heal` member was the ONE member of the entire `EffectOp`
+  union with no doc comment and now has one; the `sv02-098` fixture's doc block (which called
+  Life Sucker "UNBUILT … a standing marker for the bare-heal sentence family") was rewritten;
+  and `clauseTable.test.ts`'s index-keyed control was **strengthened, not deleted** — index 0
+  now derives a *different* op rather than none, so the two scaling derivers staying silent
+  is a claim about reader ownership rather than about an absence.
+  **A DOC BUG FOUR SESSIONS OLD WAS CLOSED.** The `biome format` churn figure had been
+  recorded as 89, then 57, then 20, each session telling the next to "re-measure rather than
+  quote". The cause: **`biome format` truncates at `--max-diagnostics`, default 20**, so
+  every figure was a cap. Measured to convergence: **88 files repo-wide, 83 excluding the
+  gitignored `.claude/worktrees/` copies**. None of this slice's five files is in the set.
+  ⚠️ The commit carries some incidental `biome format` reindentation of long-standing doc
+  comments in `effects.ts` and `index.ts` (a consequence of formatting the files this slice
+  touched, per the standing instruction) — it is whitespace only and it takes those two files
+  out of the churn set for good.
+  The heal census is now **CLOSED** (42 heal-mentioning printings / 18 clauses; 20 mapped)
+  and its remainder is written up as the new item 5b, ranked. New resume point: **`Heal {N}
+  damage from each of your Pokémon.`** — 7 printings / 2 clauses over the existing
+  non-parking `healEach` op, which is D132 again and should cost the same.
+  `selfHeal.test.ts` (17 tests, one board, no seed sweep) + 1 new fixture (Natu
+  `swsh10.5-032`, verbatim off the D1) + 1 new deck + 1 touched suite; full `bun run check`
+  green exit 0, **175 files / 2785 tests**.
 - **2026-08-01** (build #116) — **P3-M5: the UNCONDITIONAL MILL, both directions — "Discard
   the top [N cards|card] of your [opponent's] deck." (D131, engine 0.82.0).** Took the resume
   point's item **1a**, the one it named first, and it came back **bigger than forecast**: the

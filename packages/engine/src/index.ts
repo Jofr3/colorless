@@ -360,7 +360,7 @@ import type { GameState, Seat } from "./types";
     (swsh10.5 was already ingested; the HUD's existing upTo dialog carries the cap
     via the smaller scope.max). */
 
-    /* 0.49.0 — DAMAGE ATTACKER: the reactive counters-on-attacker recoil, as a
+/* 0.49.0 — DAMAGE ATTACKER: the reactive counters-on-attacker recoil, as a
     defender-side PASSIVE rather than a trigger (P3-M5, D98). The whole
     `damageAttacker` backlog row (Cacnea sv01-005 / Cacturne sv01-006
     "Counterattack Quills", 30; Stunfisk sv03-112 "Custom Trap", 50) lands as one
@@ -383,7 +383,7 @@ import type { GameState, Seat } from "./types";
     documented follow-up (recoil folds only at the §8.5 main hit for now). No
     web/API/DB/schema change. */
 
-    /* 0.50.0 — ON DAMAGED BY ATTACK: the general reactive trigger the D98
+/* 0.50.0 — ON DAMAGED BY ATTACK: the general reactive trigger the D98
     passive deliberately did NOT build (P3-M5, D99). A new `TriggerTiming`
     `onDamagedByAttack` + a scan point at the SAME attack.ts spot D98's recoil
     uses (right after DAMAGE_DEALT, gated on `dealt > 0`, main-hit Active only),
@@ -400,7 +400,7 @@ import type { GameState, Seat } from "./types";
     (a parking opponent-side Energy discard) still deferred — the remaining
     onDamagedByAttack card. No web/API/DB/schema change. */
 
-    /* 0.51.0 — DISABLE ABILITIES: the continuous Ability-lock AURA (P3-M5,
+/* 0.51.0 — DISABLE ABILITIES: the continuous Ability-lock AURA (P3-M5,
     D100) — Klefki sv01-096 "Mischievous Lock", Spiritomb sv02-089 "Fettered in
     Misfortune", Ting-Lu ex sv02-127 (+ -243/-263/-275) "Cursed Land". A new
     `PassiveEffects.disableAbilities` predicate (stage / suffix / side /
@@ -422,7 +422,7 @@ import type { GameState, Seat } from "./types";
     documented follow-up, pinned by a tripwire test. Empty Set on every board with
     no lock in play. No web/API/DB/schema change. */
 
-    /* 0.52.0 — COUNTERATTACKING PINCER: the PARKING `onDamagedByAttack` reactive
+/* 0.52.0 — COUNTERATTACKING PINCER: the PARKING `onDamagedByAttack` reactive
     trigger the D99 framework deferred (P3-M5, D101) — Klawf ex sv03-120, the last
     card on the row. Its reaction is `discardEnergy from:"opponentActive"` run under
     the DAMAGED seat, so the DEFENDER discards an Energy from the ATTACKER, and that
@@ -441,7 +441,7 @@ import type { GameState, Seat } from "./types";
     (non-parking) rides the same staged path, byte-identical. No web/API/DB/schema
     change (the discard surfaces via the existing ENERGY_DISCARDED event). */
 
-    /* 0.53.0 — STADIUM ACTIVATED ABILITIES: the "once during each player's turn"
+/* 0.53.0 — STADIUM ACTIVATED ABILITIES: the "once during each player's turn"
     Stadium row (P3-M5, D102) — Artazon (sv02-171/-229), Mesagoza (sv01-178),
     Town Store (sv03-196), the last big op-family row. A new `useStadiumAbility`
     action activates the shared Stadium's `StadiumEffects.ability` program under
@@ -458,14 +458,14 @@ import type { GameState, Seat } from "./types";
     STADIUM_ABILITY_ACTIVATED. ENGINE + tests only — the HUD affordance (a
     target-less "global" button + projection field) is a deferred follow-up. */
 
-    /* 0.54.0 — PICNIC BASKET (sv01-184): the first single-op long-tail slice
+/* 0.54.0 — PICNIC BASKET (sv01-184): the first single-op long-tail slice
     after the last op-family row closed (P3-M5, D103). One new EffectOp
     `healEachAll` — the seat-blind twin of `healEach` — heals up to 30 damage
     from EVERY in-play Pokémon on BOTH boards, each heal clamped and emitting its
     own HEALED tagged with that Pokémon's own seat. Non-parking, no choice, so no
     wire/schema change; like Potion it has no would-whiff play gate. */
 
-    /* 0.55.0 — BLOOMING GARDEN (sv01-093): the first long-tail continuous PASSIVE
+/* 0.55.0 — BLOOMING GARDEN (sv01-093): the first long-tail continuous PASSIVE
     aura (P3-M5, D104) — Florges "Your Pokémon in play have no Weakness", the only
     "no Weakness" Ability in the sv01–03 pool. A bare `PassiveEffects.removeWeakness`
     flag (own board, unconditional, no Active-Spot clause) read through the new
@@ -479,7 +479,7 @@ import type { GameState, Seat } from "./types";
     "Cruel Arrow"); Resistance is untouched, and Bench snipes already carry no
     Weakness, so nothing changes there. No web/API/DB/schema change. */
 
-    /* 0.58.0 — SAFEGUARD (sv02-097): the first ATTACKER-class-gated damage
+/* 0.58.0 — SAFEGUARD (sv02-097): the first ATTACKER-class-gated damage
     PREVENTION passive (P3-M5 long tail, D107) — Mimikyu "Prevent all damage done
     to this Pokémon by attacks from your opponent's Pokémon ex and Pokémon V", the
     only ex/V-gated total prevention in the sv01–03 pool. A bare
@@ -494,7 +494,7 @@ import type { GameState, Seat } from "./types";
     `prevented` flag on DAMAGE_DEALT marks the 0 as a prevention (not a 0-damage
     attack). No web/API/DB/schema change. */
 
-    /* 0.59.0 — LUNAR ZONE (sv03-082): the first CONDITIONAL continuous aura and
+/* 0.59.0 — LUNAR ZONE (sv03-082): the first CONDITIONAL continuous aura and
     the first modifier on the RETREAT-COST seam (P3-M5 long tail, D108) — Clefable
     ex "All of your Pokémon that have {P} Energy attached have no Retreat Cost",
     the only "no Retreat Cost" print in the whole local pool. A new
@@ -511,7 +511,7 @@ import type { GameState, Seat } from "./types";
     Court's ± `basicRetreatDiscount` and applies to non-Basics too. No
     web/API/DB/schema change. */
 
-    /* 0.61.0 — RETREAT-COST READERS: a third `DamageCountSource`,
+/* 0.61.0 — RETREAT-COST READERS: a third `DamageCountSource`,
     `opponentActiveRetreatCost` (P3-M5 long tail, D110) — "This attack does N
     (more) damage for each {C} in your opponent's Active Pokémon's Retreat Cost",
     landing FOUR cards at once: Heracross sv01-002 "Superpowered Throw" (10+),
@@ -527,7 +527,7 @@ import type { GameState, Seat } from "./types";
     registry row: the cards simulate straight off their printed text. No
     web/API/DB/schema change. */
 
-    /* 0.62.0 — `opponentActiveRetreatSurcharge`: Spidops ex sv01-019/-223/-243
+/* 0.62.0 — `opponentActiveRetreatSurcharge`: Spidops ex sv01-019/-223/-243
     "Trap Territory" ("Your opponent's Active Pokémon's Retreat Cost is {C}
     more") — the LAST unbuilt modifier on the retreat-cost seam, which closes at
     9/9 ids (P3-M5 long tail, D111). The cross-board, delta-returning mirror of
@@ -541,7 +541,7 @@ import type { GameState, Seat } from "./types";
     this aura is stage-agnostic and must still reach a Stage 1/2 Active. Spidops
     ex's own "Wire Hang" READS the cost it raises (D110), so the reader/modifier
     composition lands on one card. No web/API/DB/schema change. */
-    /* 0.63.0 — the retreat-LOCK seam: "During your opponent's next turn, the
+/* 0.63.0 — the retreat-LOCK seam: "During your opponent's next turn, the
     Defending Pokémon can't retreat." now SIMULATES on 16 printings / 14 names
     (P3-M5 long tail, D112) — a CONDITION on the Pokémon, not a cost modifier, so
     it shares nothing with the D108–D111 cost seam but the word "retreat". New
@@ -558,7 +558,7 @@ import type { GameState, Seat } from "./types";
     off its printed text. No API/DB/`@luminous/schema` change; the web diff is the
     one `&&`. */
 
-    /* 0.64.0 — `preventOpponentActiveRetreat`: Snorlax swsh10.5-055 "Block" ("As
+/* 0.64.0 — `preventOpponentActiveRetreat`: Snorlax swsh10.5-055 "Block" ("As
     long as this Pokémon is in the Active Spot, your opponent's Active Pokémon
     can't retreat") — the L3 shape of D112's retreat-LOCK seam, and the ONLY
     continuous-Ability retreat lock in the ingested pool (one printing, no
@@ -583,7 +583,7 @@ import type { GameState, Seat } from "./types";
     "Mischievous Lock" really does silence it — where Lunar Zone and Trap
     Territory, both Stage 1 sources, could only assert the negative. */
 
-    /* 0.65.0 — `noRetreatCostSelf`: Wimpod swsh10.5-025 "Punk Out" ("If your
+/* 0.65.0 — `noRetreatCostSelf`: Wimpod swsh10.5-025 "Punk Out" ("If your
     opponent has any Pokémon V in play, this Pokémon has no Retreat Cost") — the
     TENTH and last open print on the retreat-COST seam, which closes at 10/10
     within the INGESTED pool (the live remote D1 holds 3698 cards, so ingesting
@@ -612,7 +612,7 @@ import type { GameState, Seat } from "./types";
     new op, event, error code or wire field, and no API/DB/`@luminous/schema`/web
     change. */
 
-    /* 0.66.0 — the CONDITIONAL flat attack-damage bonus (D115): "If <clause>,
+/* 0.66.0 — the CONDITIONAL flat attack-damage bonus (D115): "If <clause>,
     this attack does N more damage." now SIMULATES, where before this slice EVERY
     leading-conditional print fell onto the loud ATTACK_EFFECT_SKIPPED path with
     its "+" marker unsimulated (`deriveAttackDamageBonus` recognised only the
@@ -668,7 +668,7 @@ import type { GameState, Seat } from "./types";
     exists either. No new op, event, error code, registry row or wire field; no
     API/DB/`@luminous/schema`/web change. */
 
-    /* 0.67.0 — the SECOND wave of D115's clause table (D116): FOUR more printed
+/* 0.67.0 — the SECOND wave of D115's clause table (D116): FOUR more printed
     clauses, 7 printings across 6 cards, again on ZERO registry rows and with no
     change to the fold, the ops, the events or the wire. `CONDITIONAL_DAMAGE_CLAUSES`
     goes 4 → 8 entries and now covers 18 of the pool's 43 leading-`If` printings.
@@ -703,7 +703,7 @@ import type { GameState, Seat } from "./types";
     status chips. Cost: 4 union members, 4 `conditionHolds` arms, 4 `conditionNote`
     arms, 4 table rows. */
 
-    /* 0.68.0 — the THIRD wave of D115's clause table (D117): TWO more printed
+/* 0.68.0 — the THIRD wave of D115's clause table (D117): TWO more printed
     clauses, 4 printings across 2 cards, again on ZERO registry rows and with no
     change to the fold, the ops, the events or the wire. `CONDITIONAL_DAMAGE_CLAUSES`
     goes 8 → 10 entries and now covers 22 of the pool's 43 leading-`If` printings.
@@ -726,7 +726,7 @@ import type { GameState, Seat } from "./types";
     Checkup ticks it before your attack reads it. `clauseTable.test.ts` arms it
     that way rather than by surgery. */
 
-    /* 0.69.0 — the conditional-damage family's FIRST PARAMETERISED clause (D118):
+/* 0.69.0 — the conditional-damage family's FIRST PARAMETERISED clause (D118):
     "If this Pokémon has any <energy> Energy attached, this attack does N more
     damage." — Scovillain sv01-029/-202 "Super Spicy Breath" (+90, `{R}`),
     Galvantula sv06.5-002 "Shocking Web" (+80, `{L}`), Cetitan sv02-055 "Special
@@ -757,7 +757,7 @@ import type { GameState, Seat } from "./types";
     first built from a parameter rather than returned as a literal), 1 clause
     pattern, 1 token map, 1 continuous.ts predicate. */
 
-    /* 0.70.0 — the PUBLIC-COUNT cluster (D119): the conditional-damage family's
+/* 0.70.0 — the PUBLIC-COUNT cluster (D119): the conditional-damage family's
     first clauses that read NOTHING ON A POKÉMON. Krokorok sv01-116 "Payback"
     (their Prizes exactly 1, +90), Houndstone sv03-101 "Two Four-ocious" (exactly
     2 or 4, +120), Absol ex sv03-135/-214 "Cursed Slug" (their hand 3 or fewer,
@@ -784,7 +784,7 @@ import type { GameState, Seat } from "./types";
     arms, 3 `conditionNote` arms (one built from its parameter, agreement and all),
     4 table rows. */
 
-    /* 0.71.0 — TYPE and NAME (D120): the conditional-damage family's two
+/* 0.71.0 — TYPE and NAME (D120): the conditional-damage family's two
     cheapest remaining clauses, and the pair exists to settle when a clause that
     varies on ONE token may be a TEMPLATE. Sylveon swsh10.5-035 "Wonder Flash"
     ("If your opponent's Active Pokémon is a Dragon Pokémon", +90) and Falinks
@@ -810,7 +810,7 @@ import type { GameState, Seat } from "./types";
     satisfying it. Cost: 1 union member + 1 clause pattern + 1 token map (the
     type), 1 union member + 1 table row (the name), 2 `conditionHolds` arms, 2
     `conditionNote` arms — both round-tripping to the printed clause verbatim. */
-    /* 0.72.0 — the BOARD-WIDE Energy count (D121): Absol sv06.5-030 "Darkfall",
+/* 0.72.0 — the BOARD-WIDE Energy count (D121): Absol sv06.5-030 "Darkfall",
     "If you have at least 3 {D} Energy in play, this attack does 50 more damage."
     1 printing / 1 card / 1 clause, ZERO registry rows, no new op, event, error
     code or wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
@@ -1409,7 +1409,63 @@ import type { GameState, Seat } from "./types";
     rng.ts / continuous.ts / attack.ts diff. NO MATCH_RECORD_VERSION BUMP — no
     `MatchRecord`/`GameState` shape and no event shape changed. No web/API/DB/
     `@luminous/schema` diff. */
-export const engineVersion = "0.82.0";
+/** 0.83.0 — P3-M5: the BARE SELF-HEAL sentence (D132). "Heal {N} damage from this
+    Pokémon." now SIMULATES on ONE anchored regex and ONE deriver arm — **18
+    printings / 4 distinct clauses** (N = 10, 20, 30, 50), every one of them a
+    STANDALONE single sentence. Censused against the local D1 (2026-08-01) over the
+    WHOLE effect string: 8 at 30 (Horsea sv06.5-010/-067 + Slowpoke swsh10.5-019
+    "Hold Still", Slowbro sv01-043 + Azumarill sv02-045 "Bubble Drain", Brambleghast
+    sv02-024 "Absorb Life", Ceruledge sv02-098 "Life Sucker", Dolliv sv03-020 "Sunny
+    Wind"), 5 at 20 (Natu swsh10.5-032 "Nap", Tropius sv02-007/-195 "Leaf Drain",
+    Marill sv02-044/-204 "Bubble Drain"), 4 at 10 (Shroomish sv01-003 + Smoliv
+    sv03-019 "Absorb", Bramblin sv02-023/-198 "Blot") and 1 at 50 (Ariados
+    swsh10.5-007 "Absorb").
+
+    THE OP WAS ALREADY BUILT, AND HAS BEEN SINCE 0.x. `heal { target: "self" }` is
+    one of the oldest members of `EffectOp`, shipped for the COMPOUND printing "This
+    Pokémon is now Asleep. Heal {N} damage from it." (SELF_SLEEP_HEAL) and exercised
+    end to end ever since. What was missing was never a mechanism — it was a READER
+    for the same action printed without the Sleep clause in front of it. So this
+    slice is the smallest one this family has taken and among the largest in
+    printings per byte: a regex, an arm, a guard, and eighteen cards come off the
+    loud ATTACK_EFFECT_SKIPPED path. It is the same lesson D131 drew from D130 in the
+    other direction: **the expensive part of a sentence is its mechanism, and once
+    the mechanism exists a second spelling is nearly free.**
+
+    ONE ANCHORED READER PER PRINTED STRING, AND THE TWO ANCHORS PROVE IT. The new
+    `SELF_HEAL` starts at `^Heal`; `SELF_SLEEP_HEAL` never does. Neither can claim
+    the other's string, so the invariant holds by construction rather than by arm
+    ordering — and the test asserts the compound's `heal` op is BYTE-IDENTICAL to the
+    bare anchor's for the same N, which is what makes "one action, two sentences"
+    a checkable claim rather than a description.
+
+    THE GUARD IS THE FAMILY'S, THE CLAMP IS THE INTERPRETER'S. `amount >= 1` refuses
+    a printed "Heal 0 damage" — a silent no-op that reported a simulated effect is
+    strictly worse than a loud unsimulated one. There is deliberately NO ceiling and
+    NO clamp in the deriver: `healSelf` already takes `Math.min(amount, damage)`, so
+    the printed number is a MAXIMUM and the board decides the rest. A whiff — an
+    undamaged Active — emits NO HEALED row at all, and the attack is still SIMULATED:
+    "the op ran and had nothing to do" and "the sentence was never read" are
+    different facts and do not share a log row.
+
+    TWELVE OF THE EIGHTEEN CARRY PRINTED DAMAGE, which the tail placement (D125)
+    handles with no new thought: the ops run AFTER the §8.5 pipeline, so Ceruledge's
+    "50 damage, then heal 30" resolves in the printed order for free. The other six
+    (Natu "Nap", Horsea "Hold Still") print no `damage` field at all, so the heal is
+    the entire visible result of the declaration — both halves are pinned, because a
+    build that folded the heal into the damage pipeline would pass the first and fail
+    the second.
+
+    Cost: 1 regex, 1 deriver arm, 1 test fixture (Natu swsh10.5-032), 1 test deck,
+    1 test file, and a doc block on the ONE `EffectOp` member that had none. ZERO new
+    events, ops, `EffectOp` members, `AttackCoinFlip`/`AttackFlipCount`/
+    `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
+    prompts, error codes, registry rows, redact arms or log arms. NO INTERPRETER
+    DIFF — `healSelf` was already correct, including its clamp and its silence. No
+    rng.ts / continuous.ts / attack.ts / events.ts diff. NO MATCH_RECORD_VERSION BUMP
+    — no `MatchRecord`/`GameState` shape and no event shape changed. No web/API/DB/
+    `@luminous/schema` diff. */
+export const engineVersion = "0.83.0";
 
 export type {
   ApplyResult,

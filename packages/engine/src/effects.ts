@@ -563,6 +563,17 @@ export type EffectOp =
       pinned by two exhaustive `Record`s, the wire condition schema and the
       playmat's status chips; the block is none of those things. */
   | { op: "preventRetreat" }
+  /** Heal `amount` HP from the CONTROLLER's own Active Pokémon — the printed
+      "this Pokémon" / "it" of a self-heal, resolved at `ctx.seat` by the
+      interpreter rather than carried in the op (which is why `target` has one
+      member and not two: no pool printing heals the DEFENDER). CLAMPED to the
+      damage actually present, so it can never drive damage below 0 and never
+      heals past what is there; a whiff — an undamaged Active, or an `amount`
+      the board has no use for — is SILENT, emitting no HEALED row rather than a
+      row saying nothing happened. Never parks: "this Pokémon" is not a choice.
+      Two readers produce it: the compound `SELF_SLEEP_HEAL` ("This Pokémon is
+      now Asleep. Heal {N} damage from it.", since 0.x) and — since 0.83.0 —
+      the bare `SELF_HEAL` sentence (D132). */
   | { op: "heal"; target: "self"; amount: number }
   /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
       (Garganacl "Blessed Salt" — a between-turns triggered Ability). No target
@@ -1120,7 +1131,13 @@ export type EffectOp =
   /** The `opponentEach` sweep, split out so a count cannot ride it: "one from
       EACH" already fixes how many come off (one per Pokémon with a match), and
       the field would be silently ignored. Giacomo is the only printed member. */
-  | { op: "discardEnergy"; from: "opponentEach"; filter: CardFilter; count?: never; recordAs?: never }
+  | {
+      op: "discardEnergy";
+      from: "opponentEach";
+      filter: CardFilter;
+      count?: never;
+      recordAs?: never;
+    }
   /** Move up to `max` Energy from ONE of the controller's own in-play Pokémon
       to ANOTHER of their own in-play Pokémon — the §6 manual Energy-movement
       family (Energy Switch: a Basic Energy; Poppy: up to 2 any Energy). `filter`
@@ -1531,6 +1548,28 @@ const FLIP_DEFENDER_NOW = new RegExp(
 );
 const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
 const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
+// The BARE self-heal (D132) — "Heal {N} damage from this Pokémon.", the whole
+// printed effect, 18 printings across 4 distinct clauses (N = 10, 20, 30, 50):
+// Horsea sv06.5-010/-067 + Slowpoke swsh10.5-019 "Hold Still", Slowbro sv01-043 +
+// Azumarill sv02-045 + Marill sv02-044/-204 "Bubble Drain", Brambleghast sv02-024
+// + Shroomish sv01-003 + Smoliv sv03-019 + Ariados swsh10.5-007 "Absorb",
+// Ceruledge sv02-098 "Life Sucker", Dolliv sv03-020 "Sunny Wind", Tropius
+// sv02-007/-195 "Leaf Drain", Bramblin sv02-023/-198 "Blot", Natu swsh10.5-032
+// "Nap". Twelve of the eighteen also carry printed damage, which needs nothing:
+// ops run at attack.ts's TAIL, after the §8.5 pipeline (D125).
+//
+// SEPARATE FROM `SELF_SLEEP_HEAL` ABOVE, NOT A LOOSENING OF IT. That sentence
+// heals "from IT", bound by its own first clause to the Pokémon it just put to
+// Sleep; this one names "this Pokémon" outright and has no first clause at all.
+// Neither anchor can claim the other's string (this one starts at `^Heal`, which
+// the compound never does), so the family's one-anchored-reader-per-printed-
+// string invariant holds by construction rather than by ordering.
+//
+// No /i, for the standing reason (see TYPED_SELF_DISCARD below): the capitalised
+// first word plus `^…$` is the WHOLE guard, and it is what keeps a mid-sentence
+// clause — Fuecoco sv02-035's "Flip a coin. If heads, heal 30 damage from this
+// Pokémon." — off this path and on the loud one where it belongs.
+const SELF_HEAL = /^Heal (\d+) damage from this Pokémon\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -1815,10 +1854,7 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   ],
   // Seviper sv02-137 "Cross-Cut" (+50), Houndoom sv03-133 "Daring Strike" (+70),
   // Toxicroak sv06.5-024 "Clean Hit" (+90) — D105's Evolution reading.
-  [
-    "your opponent's Active Pokémon is an Evolution Pokémon",
-    { kind: "opponentActiveIsEvolution" },
-  ],
+  ["your opponent's Active Pokémon is an Evolution Pokémon", { kind: "opponentActiveIsEvolution" }],
   // Talonflame sv02-030 "Fiery Breeze" (+90), Darmanitan sv03-035 "Damage
   // Counterpunch" (+60) — the printed "this Pokémon" resolving to the attacker's
   // own Active (see the pronoun note above). Note the missing "already": that
@@ -2699,7 +2735,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     Ring") — the same lock behind a Poison clause; ops in printed order.
   match = DEFENDER_POISON_CANT_RETREAT.exec(effect);
   if (match !== null) {
-    return [{ op: "applyStatus", target: "defender", status: "poisoned" }, { op: "preventRetreat" }];
+    return [
+      { op: "applyStatus", target: "defender", status: "poisoned" },
+      { op: "preventRetreat" },
+    ];
   }
 
   // 6. "This attack (also) does {N} damage to each of your opponent's Benched
@@ -2763,7 +2802,16 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (amount >= 1) {
       return match[2] === undefined
         ? [{ op: "damageChosen", target: "opponentAny", amount, count: 1, deals: true }]
-        : [{ op: "damageChosen", target: "opponentAny", amount, count: 1, deals: true, ignoreWR: true }];
+        : [
+            {
+              op: "damageChosen",
+              target: "opponentAny",
+              amount,
+              count: 1,
+              deals: true,
+              ignoreWR: true,
+            },
+          ];
     }
   }
 
@@ -2786,7 +2834,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
   if (SELF_DISCARD_ALL.test(effect)) {
-    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }];
+    return [
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+    ];
   }
 
   // 10. "Discard a|all|{N} {type} Energy from this Pokémon." — the TYPED
@@ -2801,9 +2851,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // Exactly one of the two notation groups matched; an unmapped brace code
     // cannot reach here (the character class is built from the map's keys).
     const energyType =
-      match[2] === undefined
-        ? ENERGY_TYPE_BY_NAME[match[3] ?? ""]
-        : ENERGY_TYPE_BY_CODE[match[2]];
+      match[2] === undefined ? ENERGY_TYPE_BY_NAME[match[3] ?? ""] : ENERGY_TYPE_BY_CODE[match[2]];
     const amount = match[1];
     if (energyType !== undefined && amount !== undefined) {
       const filter = { kind: "providesEnergy", energyType } as const;
@@ -2880,6 +2928,26 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // is CLAMPED to the deck by the op (§8.6), so a malformed 999 mills a deck and
     // stops, which is a legal board state rather than a runaway loop.
     if (count >= 1) return [{ op: "discardDeckTop", whose, count }];
+  }
+
+  // 16. "Heal {N} damage from this Pokémon." — D132's BARE SELF-HEAL, 18
+  //     printings across 4 clauses (N = 10, 20, 30, 50) and the cheapest slice
+  //     this reader has taken: NO new op, NO new event, NO new mechanism. The
+  //     `heal` op has existed since 0.x, produced by the compound
+  //     `SELF_SLEEP_HEAL` arm above; all that was ever missing was a reader for
+  //     the sentence printed on its own. Twelve of the eighteen printings carry
+  //     printed damage (Ceruledge sv02-098's 50, Slowbro sv01-043's 60) and the
+  //     tail placement (D125) resolves them in the printed order for free.
+  match = SELF_HEAL.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // `amount >= 1` is the guard every arm here carries: a printed "Heal 0
+    // damage" is not a real card and would derive to a silent no-op — an attack
+    // reporting a simulated effect that moved nothing. Leave it loud. No CEILING
+    // and no clamp, by contrast: the interpreter clamps the heal to the damage
+    // actually present (`healSelf`, Math.min), so a malformed large amount heals
+    // an Active to full and stops, which is a legal board state.
+    if (amount >= 1) return [{ op: "heal", target: "self", amount }];
   }
 
   return null;

@@ -2558,11 +2558,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Psychic Stage 1 from Charcadet, so it is always force-placed. Faithfully
       odd in two ways worth keeping: it carries a real RESISTANCE (-30 Fighting,
       rare in this pool), and its index-0 "Life Sucker" is a bare self-HEAL
-      ("Heal 30 damage from this Pokémon.") that is UNBUILT — the op deriver owns
-      only the compound `SELF_SLEEP_HEAL` form, so this sentence derives to null
-      on every path and keeps its loud ATTACK_EFFECT_SKIPPED row. It is kept
-      faithful anyway: it is the index-keyed control proving index 1's clause does
-      not leak sideways, and a standing marker for the bare-heal sentence family. */
+      ("Heal 30 damage from this Pokémon.") — which 0.83.0 MAPPED (D132), so the
+      whole 18-printing bare-heal family now derives to `heal { target: "self" }`
+      and this attack no longer keeps a loud ATTACK_EFFECT_SKIPPED row. Life
+      Sucker is that slice's WITH-PRINTED-DAMAGE end-to-end occupant: it heals 30
+      AND deals a flat 50, so it is where the tail placement (D125 — ops run
+      AFTER the §8.5 pipeline) is asserted rather than assumed, and where a
+      `target` read the wrong way round would heal the defender it just hit.
+      Index 0 remains the index-keyed control for clauseTable.test.ts too — its
+      text is not the scaling family, so index 1's clause cannot leak sideways —
+      and it is now a control that derives a DIFFERENT op rather than none. */
   "sv02-098": battler("sv02-098", {
     name: "Ceruledge",
     types: ["Psychic"],
@@ -3896,6 +3901,48 @@ export const FIXTURE_POOL: Record<string, Card> = {
           "This attack also does 30 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
         damage: 180,
       },
+    ],
+  }),
+  /** Natu swsh10.5-032 — D132's NO-PRINTED-DAMAGE witness for the bare self-heal,
+      and the second of the family's four clauses ("Heal 20 damage from this
+      Pokémon.", 5 printings; Ceruledge sv02-098 above already carried the 30).
+
+      "Nap" ({C}, index 0) prints NO `damage` field at all, so the heal is the
+      ENTIRE visible result of the declaration — no number can hide a mis-read, and
+      the case can assert that zero DAMAGE_DEALT rows fire and the defender's damage
+      never moves. That is the half Ceruledge cannot state: six of the eighteen
+      printings heal and do nothing else, and an implementation that folded the heal
+      into the damage pipeline rather than running it as a tail op would pass every
+      Ceruledge assertion and fail here.
+
+      "Peck" at index 1 ({P}{C}, 20) is the control the family always fields: a flat
+      number with NO effect text on the SAME card. Its {P} is deliberately NOT paid
+      by SELF_HEAL_DECK (which holds only Colorless Basic Energy), so it is exercised
+      at the DERIVER level rather than on a board — the same arrangement Wugtrio's
+      index-0 "Headbutt" has in PER_HEADS_PROGRAM_DECK, and enough for what the
+      control claims: an attack with no effect text derives no op.
+
+      Verbatim off the local D1 (2026-08-01): 50 HP, Psychic, BASIC (no evolution
+      surgery needed — it can be dealt straight into the Active Spot), retreat 1, ×2
+      Darkness, and a real −30 Fighting RESISTANCE, kept faithful because it is
+      rare in this pool and because a Resistance on the HEALING side is exactly the
+      kind of modifier a heal must not consult (§8.5 governs damage taken, not
+      damage removed). No Ability. */
+  "swsh10.5-032": battler("swsh10.5-032", {
+    name: "Natu",
+    types: ["Psychic"],
+    stage: "Basic",
+    hp: 50,
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Nap",
+        effect: "Heal 20 damage from this Pokémon.",
+      },
+      { cost: ["Psychic", "Colorless"], name: "Peck", damage: 20 },
     ],
   }),
 };
@@ -5532,6 +5579,49 @@ export const DECK_TOP_MILL_DECK = deckOf({
   "fix-energy": 8, // Basic {C} — Skwovet's two attacks, and Wild Splash's {C}{C}
   "fix-water-energy": 6, // Basic {W} — Wild Splash's {W}{W}, and nothing else
   "fix-titan": 38, // 340 HP neutral Basic, NO attacks — the pinned Active both sides, and the mill's fodder
+});
+
+/** 0.82.0 → 0.83.0: the BARE SELF-HEAL (D132) — "Heal {N} damage from this
+    Pokémon." A DEDICATED deck for the usual reason (every neighbouring deck is tuned
+    to its own slice, and adding a line to one reshuffles every case in it) and one
+    specific to this slice: nothing here takes a COIN, so the suite needs no seed
+    sweep at all and the whole account fits on a single deterministic board.
+
+    THE TWO CARDS ARE THE TWO HALVES OF THE CENSUS — twelve of the eighteen printings
+    carry printed damage and six do not, and the pair covers both, on two different N:
+      • Ceruledge sv02-098 "Life Sucker" (idx 0, {C}{C}, heal 30 AND a flat 50) — the
+        WITH-DAMAGE half. It is where D125's tail placement is asserted (the 50 lands
+        through the §8.5 pipeline, the heal runs after it) and where a `target` read
+        the wrong way round would show up: it would heal the Pokémon it just hit.
+        Ceruledge is a STAGE 1 (evolveFrom Charcadet), so it is NEVER played — it
+        reaches the Active Spot only by `setActiveFromDeck` surgery, which does not
+        care about the evolution line. Its idx-1 "Fighting Sword" ({P}{C}{C}) is
+        unpayable out of this deck and belongs to clauseTable.test.ts anyway.
+      • Natu swsh10.5-032 "Nap" (idx 0, {C}, heal 20, NO `damage` field) — the
+        NO-DAMAGE half, and a second clause of the four. A Basic, so it needs no
+        surgery in principle; it is still fielded by `setActiveFromDeck` so that the
+        board is the same shape for both attackers. Its idx-1 "Peck" ({P}{C}, 20) is
+        the effect-less control, exercised at the deriver level (no {P} in this deck).
+
+    BOTH SEATS RUN IT — either attacker can be surgeried onto either side, which is
+    what lets the `seat` on the HEALED row be asserted rather than assumed.
+
+    fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned Active on
+    both sides: Life Sucker's 50 cannot come close to KOing it, so no promotion can
+    park mid-batch and truncate a row sequence, and no defender attack can interleave
+    rows with the ones being counted. The board under test is not the defender — it is
+    the ATTACKER's own damage, which arrives by `setDamage` surgery rather than by
+    scripting the attacks that would place it.
+
+    fix-energy is the only Energy line, and 12 is generous on purpose: Life Sucker's
+    {C}{C} and Nap's {C} are the whole demand, but a heal case declares the same
+    attack from a freshly-built board several times over and an Energy-starved deck
+    would fail as an attach error rather than as an assertion. */
+export const SELF_HEAL_DECK = deckOf({
+  "sv02-098": 4, // Ceruledge — "Life Sucker" at idx 0: heal 30, AFTER a printed 50
+  "swsh10.5-032": 4, // Natu — "Nap" at idx 0: heal 20, NO printed damage at all
+  "fix-energy": 12, // Basic {C} — pays Life Sucker's {C}{C} and Nap's {C}
+  "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active both sides
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

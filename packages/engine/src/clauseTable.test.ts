@@ -459,19 +459,19 @@ describe("the two derivers stay disjoint, and stay INDEX-KEYED", () => {
   });
 
   it("Ceruledge's index-0 heal is its own index-keyed negative", () => {
-    // FOUND AND REPORTED, not worked around: the fixture's docstring calls Life
-    // Sucker "a built effect", but "Heal N damage from this Pokémon." derives to
-    // NOTHING today — the only self-heal the op deriver owns is the compound
-    // "This Pokémon is now Asleep. Heal {N} damage from it." (SELF_SLEEP_HEAL in
-    // effects.ts), and sv02-098 carries no registry row either. So index 0 is
-    // unbuilt-and-loud exactly like Okidogi's, and the case it can still carry is
-    // the index-keyed one: index 0's text is not this family, and index 1's clause
-    // is not reachable from index 0.
+    // 0.83.0 (D132) MAPPED Life Sucker. This case used to record that "Heal N damage
+    // from this Pokémon." derived to nothing at all — the op deriver owned only the
+    // compound "This Pokémon is now Asleep. Heal {N} damage from it." — and it is
+    // STRONGER now that the bare sentence has an anchor: index 0 derives a DIFFERENT
+    // op rather than none, so the SCALING derivers being silent on it is a statement
+    // about which reader owns which sentence, and not about an absence. (The heal's
+    // own end-to-end account lives in selfHeal.test.ts; sv02-098 still carries no
+    // registry row, so both readings come off the printed text.)
     const lifeSucker = FIXTURE_POOL["sv02-098"]?.attacks?.[0]?.effect ?? "";
     expect(lifeSucker).toBe(LIFE_SUCKER);
     expect(deriveAttackDamageBonus(lifeSucker)).toBeNull();
     expect(deriveAttackDamageMultiplier(lifeSucker)).toBeNull();
-    expect(deriveAttackEffect(lifeSucker)).toBeNull();
+    expect(deriveAttackEffect(lifeSucker)).toEqual([{ op: "heal", target: "self", amount: 30 }]);
     expect(deriveAttackDamageBonus(FIXTURE_POOL["sv02-098"]?.attacks?.[1]?.effect ?? "")).toEqual({
       per: 100,
       count: { kind: "boardCondition", cond: { kind: "opponentActiveIsExOrV" } },
