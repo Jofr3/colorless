@@ -16,6 +16,7 @@ import {
   weaknessOf,
 } from "./cards";
 import {
+  countEnergyInPlay,
   effectiveMaxHp,
   hasAttachedEnergy,
   passivesOf,
@@ -1199,6 +1200,13 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return state.players[seat].bench.some(
         (p) => p !== null && topCardOf(state, p)?.name === cond.name,
       );
+    case "yourEnergyInPlayAtLeast":
+      // The board-wide fold of D118's per-Pokémon predicate, and it stays in
+      // continuous.ts for that reason: "an Energy that can pay a {D} cost" and
+      // "an Energy this clause counts" are one question, whichever board asks it.
+      // Active + Bench, cards rather than units, `>=` because the printed word is
+      // "at least" (a threshold, unlike the sibling above's "exactly").
+      return countEnergyInPlay(state, seat, cond.energy) >= cond.count;
   }
 }
 
@@ -1264,6 +1272,15 @@ export function conditionNote(cond: BoardCondition): string {
       // Also verbatim — this clause names no pronoun and no timing word, so
       // nothing has to be dropped on the way out (D119's whole cluster).
       return `${cond.name} is on your Bench`;
+    case "yourEnergyInPlayAtLeast":
+      // Built from BOTH parameters, and the energy reads as the printed NAME
+      // rather than the brace code — D118's rule, so this is the family's first
+      // note that does NOT round-trip to the printed clause byte for byte
+      // ("{D}" → "Darkness"). Deliberate: a reject message and a HUD tooltip are
+      // read off the board by a person, and "{D}" is a card-face glyph.
+      return cond.energy === "special"
+        ? `you have at least ${cond.count} Special Energy in play`
+        : `you have at least ${cond.count} ${cond.energy} Energy in play`;
   }
 }
 

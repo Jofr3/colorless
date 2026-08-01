@@ -311,6 +311,46 @@ export function hasAttachedEnergy(
   return pokemon.energy.some((uid) => providesEnergyType(state, pokemon, uid, energy));
 }
 
+/** How many Energy CARDS of `energy` are in play on `seat`'s side (§6.3)? The
+    board-wide sibling of `hasAttachedEnergy` above, and the predicate behind
+    Absol sv06.5-030 "Darkfall" ("If you have at least 3 {D} Energy in play, …").
+    It lives here, next to its sibling, so the two readings of the SAME printed
+    noun cannot drift: "a {D} Energy" means the same card whether the sentence
+    scopes it to one Pokémon or to the whole board.
+
+    Two things this deliberately is, both forced by the printed text:
+
+    - **CARDS, not units of provision.** The sentence counts Energy, and one
+      Energy card is one Energy however many units it provides — a Special that
+      pays for two {D} is still a single card here. `.filter(…).length` per
+      holder, never a sum of `unitsProvidedBy`.
+    - **PROVISION, not the printed name**, exactly as `hasAttachedEnergy` reads
+      it (D118): a wildcard Luminous attached to one of your Pokémon counts
+      toward `{D}` for as long as it provides every type, and stops the moment a
+      second Special demotes it to {C}. Provision is computed on the HOST, so
+      this must ask per holder rather than once per uid.
+
+    "In play" is Active + Bench and nothing else — the discard pile, the hand and
+    the deck are not in play, and the pool's own usage of the phrase is
+    consistently field-scoped (cards that mean otherwise print "in your discard
+    pile" / "in your hand"). An empty board counts 0. */
+export function countEnergyInPlay(
+  state: GameState,
+  seat: Seat,
+  energy: BasicEnergyType | "special",
+): number {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  let total = 0;
+  for (const holder of holders) {
+    total +=
+      energy === "special"
+        ? specialEnergyUids(state, holder).length
+        : holder.energy.filter((uid) => providesEnergyType(state, holder, uid, energy)).length;
+  }
+  return total;
+}
+
 /** The attached Energy that are SPECIAL — the context Luminous's "any other
     Special Energy attached" clause is evaluated against. */
 function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {

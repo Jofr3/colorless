@@ -810,7 +810,35 @@ import type { GameState, Seat } from "./types";
     satisfying it. Cost: 1 union member + 1 clause pattern + 1 token map (the
     type), 1 union member + 1 table row (the name), 2 `conditionHolds` arms, 2
     `conditionNote` arms — both round-tripping to the printed clause verbatim. */
-export const engineVersion = "0.71.0";
+    /* 0.72.0 — the BOARD-WIDE Energy count (D121): Absol sv06.5-030 "Darkfall",
+    "If you have at least 3 {D} Energy in play, this attack does 50 more damage."
+    1 printing / 1 card / 1 clause, ZERO registry rows, no new op, event, error
+    code or wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+
+    ONE WORD SEPARATES IT FROM D118, AND THAT WORD IS THE SLICE. "attached" scopes
+    to a single Pokémon (nine printings, four cards); "in play" means your whole
+    side of the table. The PREDICATE underneath is deliberately identical — a type
+    is read by PROVISION, on the holder, so a wildcard Luminous is a {D} Energy for
+    this clause exactly as it is for a cost — and only the FOLD over it is new:
+    continuous.ts's `countEnergyInPlay`, sitting beside `hasAttachedEnergy` so the
+    two readings of one printed noun cannot drift. It counts CARDS, not units of
+    provision (one Energy is one Energy however many symbols it offers), and
+    Active + Bench only.
+
+    A LITERAL ROW although the member is parameterised — D119's corollary, second
+    use. Two tokens could vary here (the threshold and the energy), so D118's
+    one-token test fails; and there is nothing to generalise from, since "at least"
+    and "Energy in play" are each a HAPAX in the ingested 978 cards. A template
+    would parameterise over a pool of one on both axes at once. The parameters are
+    real all the same: `conditionHolds` compares a count against a threshold, and
+    the printed "at least" makes it `>=` — a threshold, not D119's set membership.
+    Rows are matched first, so a template can still be added over this later.
+
+    Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 table
+    row, 1 continuous.ts helper. The note is the family's first that does NOT
+    round-trip to the printed clause byte for byte: it renders "{D}" as "Darkness"
+    (D118's rule — a reject message is read off the board by a person). */
+export const engineVersion = "0.72.0";
 
 export type {
   ApplyResult,
@@ -859,6 +887,7 @@ export {
 } from "./cards";
 export type { DamageModifier, ParsedDamage, PokemonSuffix } from "./cards";
 export {
+  countEnergyInPlay,
   disabledAbilityUids,
   effectiveAttackCost,
   effectiveMaxHp,

@@ -5187,3 +5187,99 @@ coin flips) · three that need new per-turn/cross-turn state (`evolved from Nymb
 `played a Supporter … during this turn`, `any of your {F} Pokémon were Knocked Out … last turn`) ·
 `your opponent has any Future Pokémon in play` (blocked on an ingest change) · and the 26-printing
 coin-flip family, a different mechanism that deserves its own costed slice.
+
+---
+
+## D121 — the BOARD-WIDE Energy count (engine 0.72.0)
+
+Absol `sv06.5-030` "Darkfall": *"If you have at least 3 {D} Energy in play, this attack does 50 more
+damage."* One card, one clause, zero registry rows, no fold change.
+
+### The one word
+
+`attached` (D118) scopes to a **single Pokémon** — nine printings across four cards. `in play` means
+**your whole side of the table**. The predicate underneath is deliberately the SAME (provision, not
+the printed name, computed on the holder); only the fold over it is new.
+
+- `continuous.ts countEnergyInPlay(state, seat, energy)` sits **beside `hasAttachedEnergy`**, for that
+  module's standing reason: the reading must not drift from what pays a cost. "A {D} Energy" means the
+  same card whether the sentence scopes it to one Pokémon or to the board.
+- It counts **CARDS, not units of provision**. One Energy is one Energy however many symbols it
+  offers. A wildcard is 1, not 9.
+- Active + Bench, via continuous.ts's null-safe `holders` idiom (`side.active === null ? side.bench :
+  [side.active, ...side.bench]`), so a side mid-promotion counts its Bench rather than throwing.
+
+### The template rule, corrected
+
+**D120's resume point predicted a TEMPLATE here** ("the energy token vocabulary being closed"). The
+census reversed it, and the correction is the reusable part:
+
+> **D120's closed-vocabulary precondition tells you when a template is SAFE. It never tells you when
+> one is WARRANTED. The warrant is a second printing.**
+
+Here there is none: **`at least` and `Energy in play` are each a HAPAX in the ingested 978 cards.**
+And two tokens could vary (the threshold *and* the energy), so D118's one-token test fails outright
+and **D119's corollary applies — take the literal row.** The MEMBER is still parameterised, exactly
+as `opponentPrizesRemaining` is: `conditionHolds` genuinely compares a count against a threshold.
+What is literal is the **table key**. Rows match first, so a template can be added over it later.
+
+The printed **"at least" makes it `>=`** — a threshold, not D119's set membership. That is the whole
+difference from its nearest sibling, and it is swept 0-5 rather than sampled: `===` for `>=` fails on
+a single value ABOVE the line and survives a two-point check.
+
+### Census facts (local D1, 2026-08-01)
+
+- The sentence is **PURE ASCII, 75 code points / 75 bytes** — it names no Pokémon and carries no
+  apostrophe of either kind. The family's simplest byte claim.
+- **No reprint.** `sv06.5-030` is the only card in the pool named exactly "Absol"; the two "Absol ex"
+  printings are a different card (and are byte-identical to each other).
+- **"in play" attaches to exactly three noun kinds pool-wide**: Pokémon, Stadium, and Energy on this
+  one card. It never co-occurs with a narrowing scope word, and cards that mean a hidden zone say "in
+  your discard pile" / "in your hand". So the field-scoped reading is the only one consistent with the
+  catalog — but note it rests on a single printing.
+- **A trap for a sentence-level matcher:** split effects on sentence boundaries and the leading-`If`
+  anchor additionally captures **27 coin-flip / "you do" clauses**. It must stay anchored to the WHOLE
+  effect string.
+- The whole-effect skeleton re-confirmed row by row at **43 printings / 32 distinct (condition, N)
+  pairs / 26 distinct clauses**.
+
+### Fixture notes
+
+- **The plain `{C}` line in `ENERGY_IN_PLAY_DECK` is load-bearing, not padding.** Darkfall costs a
+  bare `{C}`; paying it with a Darkness Energy would put a **counted** card on the attacker in every
+  case and confound "in play" with "attached" in exactly the direction this clause is most likely to
+  be wrong. `fix-energy` pays and counts zero, which is what makes "3 on the Bench, nothing on Absol"
+  a reachable board.
+- `fix-darkness-weak` is **SYNTHETIC**, on the `fix-fighting-weak` precedent (D120) and for the same
+  reason: no faithful ×2 Darkness row in the file is inert.
+- `board()` leaves both benches **EMPTY** — the pinned starter is what the deal opened with, so
+  nothing is displaced. A bench body appears only where a surgery fields an attacker over the top of
+  it, so the arming helper seeds a holder when the seat has none. (This differs from the D120 suite,
+  where every armed seat was also the seat that fielded an attacker.)
+- **Absol's whole cast is one attack**, so the family's usual index-keyed negative becomes "the array
+  has length 1".
+
+### The sharpest test in the suite
+
+A **second** Luminous Energy attached to the same body **disarms** the clause: the two Specials demote
+each other to `{C}`, neither counts any more, and the same attacker on the same board with **one MORE
+card attached** scores 20 instead of 70. A name-matching read cannot behave that way. Its control —
+two Luminous on **different** bodies both count — is what pins that provision is computed per holder.
+
+### The loud-witness bookkeeping
+
+This slice mapped `energyClause.test.ts`'s witness, so it was **re-pointed, not deleted** →
+**Slither Wing `sv06.5-026`** ("any Future Pokémon in play"). That keeps the case's original `in play`
+vs `attached` discriminator intact, and it is the better long-term choice: it is blocked on an
+**ingest** change (the catalog parses tcgdex's `suffix` but drops it before the D1 insert), so no
+table row can map it out from under the case.
+
+### Still unmapped after this slice (19 → 20 of 26 clauses mapped)
+
+`this Pokémon has a Pokémon Tool attached` (1, Greedent `sv01-152` — the last cheap one, and
+`conditionalDamage.test.ts`'s loud witness) · `this Pokémon moved from your Bench to the Active Spot
+this turn` (3 — **needs new per-turn state**, the biggest printing count left outside the coin flips)
+· three needing new per-turn/cross-turn state (`evolved from Nymble during this turn`, `played a
+Supporter … during this turn`, `any of your {F} Pokémon were Knocked Out … last turn`) · `your
+opponent has any Future Pokémon in play` (blocked on an ingest change) · and the 26-printing
+coin-flip family, a different mechanism that deserves its own costed slice.

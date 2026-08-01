@@ -503,21 +503,31 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
     expect(deriveAttackEffect(haxorus)).toBeNull();
   });
 
-  it("refuses Absol sv06.5-030 — the OUTER shape matches and the clause still misses", () => {
+  it("refuses Slither Wing sv06.5-026 — the OUTER shape matches and the clause still misses", () => {
     // REAL printed text, and the strongest live witness in the suite: the outer
-    // anchor "If <clause>, this attack does 50 more damage." matches PERFECTLY, so
-    // `boardConditionForClause` genuinely runs — misses the literal table, misses
-    // the template (Absol's clause counts Energy IN PLAY, across the whole board,
-    // not attached to one Pokémon), and returns null. That null is the whole
-    // fall-through contract: an unrecognised clause keeps its loud
-    // ATTACK_EFFECT_SKIPPED row instead of silently scoring the bonus at 0.
-    const absol = "If you have at least 3 {D} Energy in play, this attack does 50 more damage.";
-    expect(deriveAttackDamageBonus(absol)).toBeNull();
-    // "in play" is not "attached" — the one word that separates a board-wide count
-    // from a per-Pokémon read, and the reason this must not be a template row.
-    expect(absol).toContain("in play");
-    expect(absol).not.toContain("attached");
-    // The same sentence with a MAPPED clause derives fine, so the anchor is not
+    // anchor "If <clause>, this attack does 120 more damage." matches PERFECTLY,
+    // so `boardConditionForClause` genuinely runs — misses every literal row,
+    // misses both templates, and returns null. That null is the whole fall-through
+    // contract: an unrecognised clause keeps its loud ATTACK_EFFECT_SKIPPED row
+    // instead of silently scoring the bonus at 0.
+    //
+    // RE-POINTED (D121). This case used to ride Absol sv06.5-030's "you have at
+    // least 3 {D} Energy in play", which that slice MAPPED — so the witness moved
+    // rather than being deleted, per the family's standing rule. Slither Wing is
+    // the better long-term choice besides: it is blocked on an INGEST change, not
+    // on engine work (D115's census — the catalog parses tcgdex's `suffix` but
+    // drops it before the D1 insert, so "Future Pokémon" is unspellable today),
+    // which means it cannot be mapped out from under this case by a table row.
+    const slitherWing =
+      "If your opponent has any Future Pokémon in play, this attack does 120 more damage.";
+    expect(deriveAttackDamageBonus(slitherWing)).toBeNull();
+    // It also keeps the discriminator this case was originally chosen for: "in
+    // play" is not "attached", the one word between a board-wide read and a
+    // per-Pokémon one, and the reason this suite's template is anchored on the
+    // latter. (The Energy half of that pair now lives in energyInPlay.test.ts.)
+    expect(slitherWing).toContain("in play");
+    expect(slitherWing).not.toContain("attached");
+    // The same skeleton with a MAPPED clause derives fine, so the anchor is not
     // what refused it.
     expect(
       deriveAttackDamageBonus(

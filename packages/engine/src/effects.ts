@@ -368,7 +368,41 @@ export type BoardCondition =
       `yourBenchDamaged` excludes it, because the printed word is "Bench". An
       empty Bench is false. Names are public the moment a Pokémon is in play, so
       the union's public-state invariant holds. */
-  | { kind: "yourBenchHasNamed"; name: string };
+  | { kind: "yourBenchHasNamed"; name: string }
+  /** You have AT LEAST `count` Energy of `energy` in play — Absol sv06.5-030
+      "Darkfall" (+50, `3` × `Darkness`), and in 978 cards that is the entire
+      census: "at least" and "Energy in play" are each a HAPAX, occurring in this
+      one sentence and nowhere else.
+
+      **The board-wide twin of `yourActiveHasEnergyAttached`, and the reason it
+      is a separate member rather than a scope flag on that one:** the two read
+      different boards with the same noun. Every other energy clause in the pool
+      says "attached" and means one Pokémon (nine printings across four cards);
+      this one says "in play" and means all of them. One word separates them, and
+      folding them together behind a `scope` parameter would put the choice
+      between "your Active" and "your whole side" inside a value the four other
+      consumers of this vocabulary would then have to author.
+
+      PARAMETERISED but a LITERAL row (D119's corollary, second use): TWO things
+      vary in principle, the count and the energy token, so D118's one-token test
+      fails and the clause table takes the sentence whole. The parameters are
+      still real — `conditionHolds` genuinely compares a count against a
+      threshold, and burying `3` and `Darkness` in the member's name would make
+      the second printing a second member for no gain.
+
+      `energy` is D118's type verbatim (`BasicEnergyType | "special"`), because
+      the predicate is D118's predicate folded over the board: the card class is
+      as countable as a type, and narrowing it here would fork one question into
+      two. The pool prints no "Special Energy in play" sentence today; the arm
+      costs nothing and answers correctly if one lands.
+
+      Energy in play sits face up on both sides of the table, so the union's
+      public-state invariant holds — this is strictly more online-evaluable than
+      `yourStadiumInPlay`. Counts CARDS, not units of provision, and reads
+      provision rather than the printed name (continuous.ts `countEnergyInPlay`).
+      An empty board is 0, so a printed `count` of 0 would be trivially true;
+      the pool prints 3. */
+  | { kind: "yourEnergyInPlayAtLeast"; energy: BasicEnergyType | "special"; count: number };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1666,6 +1700,20 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // printing, and the pool prints one (Flamigo sv03-185 prints the same clause
   // under a different CONSEQUENT, which the leading-If skeleton never reaches).
   ["Falinks is on your Bench", { kind: "yourBenchHasNamed", name: "Falinks" }],
+  // Absol sv06.5-030 "Darkfall" (+50) — a LITERAL row although the member is
+  // parameterised, which is D119's corollary rather than a departure from D118:
+  // TWO tokens vary here in principle, the threshold and the energy, so there is
+  // no single-token pattern to write. And there is nothing to generalise FROM —
+  // "at least" and "Energy in play" are each a hapax in 978 cards, so a template
+  // would be parameterising over a pool of one on both axes at once. The nearest
+  // real family is the "has any <energy> Energy attached" template above, which
+  // varies on one token and reads a different board. Rows are matched FIRST, so
+  // the day a second threshold prints, a template can be added over both without
+  // re-interpreting this one.
+  [
+    "you have at least 3 {D} Energy in play",
+    { kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 },
+  ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name

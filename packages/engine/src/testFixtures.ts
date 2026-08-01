@@ -2836,6 +2836,50 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Fighting", value: "×2" }],
   }),
+
+  // — M5 clause slice: the BOARD-WIDE Energy count (D121). Absol sv06.5-030
+  //   "Darkfall" — the pool's only "at least" and only "Energy in play" sentence,
+  //   read verbatim off the local D1 2026-08-01.
+  /** Absol sv06.5-030 "Darkfall" (+50) — a Darkness Basic, 110 HP, retreat 1,
+      ×2 Grass, NO Resistance, NO Ability (`abilities_json` is NULL on the row, not
+      an empty array), reg mark H, Common, and the pool's only card named exactly
+      "Absol" (the two "Absol ex" printings are a different card). Its ONE attack
+      is the whole cast: {C} for 20+, and the clause counts Energy across your
+      whole side rather than on the attacker, which is why the deck below can arm
+      it with a Bench that Darkfall's own cost never touches. Verbatim off the
+      local D1 — the effect string is PURE ASCII, 75 code points and 75 bytes: it
+      names no Pokémon and carries no apostrophe of either kind. */
+  "sv06.5-030": battler("sv06.5-030", {
+    name: "Absol",
+    types: ["Darkness"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Darkfall",
+        effect: "If you have at least 3 {D} Energy in play, this attack does 50 more damage.",
+        damage: "20+",
+      },
+    ],
+  }),
+  /** A Basic Darkness Energy — the counted card. The pool prints `{D}` in effect
+      text and spells "Darkness" out in cost arrays (two notation channels, D118),
+      and this fixture is the cost-array side of that. */
+  "fix-darkness-energy": typedEnergy("fix-darkness-energy", "Darkness"),
+  /** FIXTURE (synthetic) — a 200 HP ×2 Darkness body with no attacks, for the
+      §8.5 fold-order pair, on the fix-fighting-weak precedent and for the same
+      reason: no faithful ×2 Darkness row in this file is inert. Absol is a
+      Darkness Pokémon and its clause is DEFENDER-INDEPENDENT, so the Bench arms
+      the bonus while the Weakness doubles it and the two layers cannot be
+      confused: (20 + 50) × 2 = 140 against the un-armed control's 20 × 2 = 40.
+      A Basic, no rule box (1 Prize). */
+  "fix-darkness-weak": battler("fix-darkness-weak", {
+    hp: 200,
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -3912,6 +3956,57 @@ export const TYPE_NAME_DECK = deckOf({
   "fix-psychic-energy": 6, // Basic {P} — pays Souvenir, and two of Reckless Charge Together's {C}{C}
   "fix-fighting-energy": 6, // Basic {F} — pays Reckless Charge Together's {F}, and two of Wonder Flash's {C}{C}{C}
   "fix-bigbody": 31, // 200 HP neutral Colorless Basic — DOMINANT pinned starter, the non-Dragon control
+});
+
+/** 0.71.0 → 0.72.0: the BOARD-WIDE Energy count (D121) — Absol sv06.5-030
+    "Darkfall", "If you have at least 3 {D} Energy in play, this attack does 50
+    more damage." One card, one clause, and the whole census: "at least" and
+    "Energy in play" are each a hapax in 978 cards.
+
+    A DEDICATED deck, and here the reason is unusually literal: this is the ONLY
+    clause in the family whose truth is decided by how much ENERGY is on the
+    board, so every other suite's deck would arm or disarm it as a side effect of
+    paying its own costs. It is also the first clause a shared deck could arm
+    ACCIDENTALLY — nothing has to be fielded, only attached.
+
+    THE DECK IS BUILT TO SEPARATE FOUR THINGS THE SENTENCE COULD MEAN.
+
+      • "IN PLAY", NOT "ATTACHED". The one word between this clause and D118's,
+        and the case that proves it is 3 Darkness on the BENCH with ZERO on Absol
+        — armed, though the attacker carries nothing. 12 copies of
+        fix-darkness-energy, well past the 3 the threshold wants, because a seat's
+        opening hand and Prize row hold 13 of its 60 before any surgery and the
+        boundary cases need 2, 3 and 4 reachable on either side.
+      • A THRESHOLD, NOT AN EXACT COUNT. `>=`, so 4 is armed where D119's
+        `opponentPrizesRemaining` would read FALSE above its list. 2 is the
+        boundary that fails.
+      • CARDS, NOT UNITS. sv02-191 Luminous Energy is the wildcard: one attached
+        anywhere on your side counts as a {D} Energy by PROVISION (D118's rule
+        folded over the board), and TWO on the same Pokémon demote each other to
+        {C} — so the same two cards, nothing moved, stop counting. 4 copies, which
+        is what the demotion pair plus the provision case need at once.
+      • YOUR SIDE, NOT THE TABLE. Both seats run the whole deck so the same
+        Energy can be fielded opposite and assert nothing.
+
+    THE PLAIN {C} LINE IS LOAD-BEARING, not padding. Darkfall's cost is a bare
+    {C}, and paying it with a Darkness Energy would put a counted card on the
+    attacker in every single case — which is exactly the confound this clause is
+    about. fix-energy (Colorless, provides neither Darkness nor ANY) pays the cost
+    while counting zero, so "3 on the Bench and NOTHING countable on Absol" is a
+    board this deck can actually reach. Both readings get their own case: the
+    attacker's own cost Energy is in play too, and when it is Darkness it counts.
+
+    fix-darkness-weak (200 HP, ×2 Darkness, no attacks) is the §8.5 fold-order
+    defender: (20 + 50) × 2 = 140 against the control's 20 × 2 = 40. fix-bigbody
+    is 31 of 60 — the DOMINANT mulligan-free starter and the Bench body every
+    "in play, not attached" surgery hangs its Energy on. */
+export const ENERGY_IN_PLAY_DECK = deckOf({
+  "sv06.5-030": 4, // Absol — "Darkfall" (20+): yourEnergyInPlayAtLeast Darkness ×3, +50
+  "fix-darkness-energy": 12, // Basic {D} — the counted card
+  "sv02-191": 4, // Luminous Energy — the wildcard-provision witness + the demotion pair
+  "fix-energy": 6, // Basic {C} — pays Darkfall's cost while counting ZERO
+  "fix-darkness-weak": 3, // 200 HP, ×2 Darkness — the Weakness defender for the fold-order pair
+  "fix-bigbody": 31, // 200 HP neutral Colorless Basic — DOMINANT pinned starter + the Bench holders
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
