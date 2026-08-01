@@ -402,7 +402,31 @@ export type BoardCondition =
       provision rather than the printed name (continuous.ts `countEnergyInPlay`).
       An empty board is 0, so a printed `count` of 0 would be trivially true;
       the pool prints 3. */
-  | { kind: "yourEnergyInPlayAtLeast"; energy: BasicEnergyType | "special"; count: number };
+  | { kind: "yourEnergyInPlayAtLeast"; energy: BasicEnergyType | "special"; count: number }
+  /** §7.4 — YOUR Active Pokémon is wearing a Pokémon Tool: Greedent sv01-152
+      "Enhanced Fang" (+80), whose printed clause is "If **this Pokémon** has a
+      Pokémon Tool attached". The pool's only printing, and no reprint.
+
+      A BARE TAG, and the last clause in this family that reads a field the model
+      already carries: `InPlayPokemon.tools` is a uid array kept beside `energy`
+      and `stack`, so the predicate is a length test and needs no continuous.ts
+      helper the way the Energy clauses do. There is no provision question to
+      answer — an Energy card can pay for a type it is not named after, but a Tool
+      is a Tool, and `attachTool` (cardplay.ts) has already refused anything whose
+      `trainerType` is not "Tool" before a uid can land in this array.
+
+      "A Pokémon Tool", singular as printed, is still `> 0` rather than `=== 1`:
+      §7.4's one-Tool-per-Pokémon rule is enforced at the attach gate, but
+      Revavroom ex sv03-156's "Tune-Up" Ability raises the cap to 4, so the array
+      is not bounded at one by the type system and a card that lifts the cap must
+      not un-arm this clause.
+
+      D116's pronoun rule, fourth use: the member is named for what it READS (your
+      Active) and the CLAUSE TABLE resolves the printed "this Pokémon", because a
+      Trainer play gate has no self. A Tool sits face up on the Pokémon it is
+      attached to, so the union's public-state invariant holds; redact.ts already
+      ships the tool list to both seats. False with an empty Active Spot. */
+  | { kind: "yourActiveHasToolAttached" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1573,8 +1597,8 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     "toString", …) and hand back something that is not a `BoardCondition` at all.
     A Map has no inherited keys.
 
-    FIFTEEN entries which, with the two patterns below them, cover 19 of the
-    pool's 26 distinct clauses / 35 of its 43 printings. The first two reuse
+    SEVENTEEN entries which, with the two patterns below them, cover 21 of the
+    pool's 26 distinct clauses / 37 of its 43 printings. The first two reuse
     `BoardCondition` members that ALREADY existed — built in the 2026-07-21
     board-condition slice (D40) for Falkner's `conditionGate` and Fighting Au
     Lait's play gate — which makes this family the vocabulary's FOURTH consumer
@@ -1714,6 +1738,17 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "you have at least 3 {D} Energy in play",
     { kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 },
   ],
+  // Greedent sv01-152 "Enhanced Fang" (+80) — the pool's only printing, with no
+  // reprint, and the last clause in this family that reads a field the model
+  // already carries. The printed "this Pokémon" resolves to the attacker's own
+  // Active here exactly as Talonflame's and Okidogi ex's do. Two OTHER cards
+  // print this clause's exact words under a different consequent — Genesect
+  // sv06.5-040's "ACE Nullifier" Ability shares the whole prefix ("If this
+  // Pokémon has a Pokémon Tool attached, your opponent can't play any ACE SPEC
+  // cards from their hand.") and Stunfisk sv03-112's "Custom Trap" carries it as
+  // a middle conjunct — so a substring matcher would score a damage bonus off two
+  // Abilities. The whole-sentence anchor is what keeps them off this path.
+  ["this Pokémon has a Pokémon Tool attached", { kind: "yourActiveHasToolAttached" }],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name

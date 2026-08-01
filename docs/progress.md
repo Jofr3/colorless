@@ -3,7 +3,11 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-01 — build session #106 (**P3-M5 — the BOARD-WIDE Energy count: `yourEnergyInPlayAtLeast`, a parameterised member on a LITERAL row, + the fold `countEnergyInPlay`; 1 printing / 1 card / 1 clause on ZERO registry rows (D121, engine 0.72.0)**).
+**Last updated:** 2026-08-01 — build session #107 (**P3-M5 — the POKÉMON TOOL clause: `yourActiveHasToolAttached`, a BARE TAG on a LITERAL row, and the LAST clause in the family that reads a field the model already carries; 1 printing / 1 card / 1 clause on ZERO registry rows (D122, engine 0.73.0)**).
+The clause family goes **16 → 17 literal rows + 2 templates, covering 21 of the pool's 26 distinct clauses / 37 of its 43 printings.** Greedent `sv01-152` "Enhanced Fang" ("If this Pokémon has a Pokémon Tool attached", +80) now SIMULATES — the slice D121's resume point named first, and it was exactly the cheapest thing left. **WITH IT THE "READS STATE THE ENGINE ALREADY HAS" SEAM CLOSES.** All five clauses remaining need **new per-turn state** (Lokix's evolved-this-turn, Pikachu's Supporter-this-turn, Revavroom ex/Golisopod's promoted-this-turn, Lucario's KO'd-last-turn), an **INGEST change** (Slither Wing's Future tag) or the **coin-flip mechanism** — and the first four all want the same kind of thing, so they are one costed design slice rather than four rows. **The cheapness here is STRUCTURAL, not luck: `InPlayPokemon.tools` is already a uid array, and every uid in it reached it through `attachTool` (cardplay.ts), which refuses anything whose `trainerType` is not "Tool" before it can land.** So — unlike D118's Energy clauses, where an Energy card can pay for a type it is not named after and the predicate must therefore be PROVISION — **there is no reading question at all and no continuous.ts helper: a Tool is a Tool, and the predicate is a length test.** **THE ONE REAL DESIGN CALL IS `> 0` RATHER THAN `=== 1`.** §7.4 caps a Pokémon at one Tool, but that cap is enforced **at the attach gate**, and Revavroom ex `sv03-156`'s "Tune-Up" Ability raises it to 4 — a predicate written to the printed singular would answer FALSE on a board the sentence plainly describes. The reusable form: **a rule enforced at a GATE is not an invariant of the state the gate writes into; read the state, not the rule.** D116's pronoun rule, **FOURTH use**, and it matters more here than usual because **two OTHER cards print this clause's exact words under a different consequent** — Genesect `sv06.5-040`'s "ACE Nullifier" is **byte-identical through the comma** and Stunfisk `sv03-112`'s "Custom Trap" carries the same words as a **middle conjunct**; both are ABILITIES, and the whole-sentence anchor is the only thing keeping a damage bonus off them. **Verbatim re-confirmed against the local D1 before authoring** and the census re-confirmed **43 printings / 32 distinct (clause, N) pairs / 26 distinct clauses row by row**, plus: **no reprint** (`sv01-152` is the only "Greedent" and its `attacks_json` is unique); the effect string is **77 code points / 79 UTF-8 bytes** with **no apostrophe of either kind**; **`for each Pokémon Tool` occurs ZERO times in 978 cards**, so there is no per-Tool scaling family to anticipate and the bare tag needs no parameter; and a whole-corpus byte fact worth carrying — the ENTIRE text pool holds exactly **two** distinct non-ASCII code points, **U+00D7 `×` and U+00E9 `é`**, with **no U+2019 anywhere**. **Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 table row, 1 test-surgery helper. No new op, event, error code, registry row, wire field or fold change; no continuous.ts diff; no web/API/DB/`@luminous/schema` diff.** The note ROUND-TRIPS to the printed clause with only the pronoun swapped. **THE TEST DESIGN TURNS ON A HARNESS FACT: `attachTool` refuses UNAUTHORED Tools (`TRAINER_NOT_SIMULATED`), so no Tool in the pool attaches successfully while doing nothing** — `fix-tool` cannot arm this clause through the real action. Two REAL Tools are used instead and they are the suite's sharpest pair: **Bravery Charm `sv02-173` is the SILENT arm** (`basicHpBonus: 50`, and Greedent is a **Stage 1**, so `effectiveMaxHp` is asserted still 120 and every point of the 80-swing is the clause's), while **Vitality Band `sv01-197` is the LOUD arm** (`damageBonusBeforeWR: 10` — arming the clause AND adding its own bonus in the SAME pre-W/R step, so **170** against the Charm's **160**; a fold that read the Tool's passive AS the clause would score the two identically). `toolClause.test.ts` (**28**) on a dedicated `TOOL_CLAUSE_DECK`: the verbatim + byte guard (77/79, the `bytes = codePoints + count("Pokémon")` invariant, precomposed é, no apostrophe) with the Genesect sentence as a **COMPANION carrying both an é and an ASCII apostrophe** so the claim is about this string and not the module; the derivation, N-from-the-sentence and the printed-0 guard; the **bare-tag proof** (`Object.keys(cond)` is exactly `["kind"]`); **both REAL near-miss Abilities refused on all three derivers** plus eight constructed rewrites (plural, "attached to it", "any", **de-accented**, opponent-scoped, bench-scoped, Tool-by-name) and the outer anchor guards; deriver disjointness and the **index-keyed negative** (index 0 "Bite" carries NO `effect` key at all on the D1 row); ZERO registry rows for `sv01-152` asserted three ways, with the two Tools' programs asserted PRESENT so no board case is vacuous; control **80** / Charm **160** / Band **170**; **armed BY THE GAME** through a real §7.4 `attachTool` (`TOOL_ATTACHED`, then 160); **a Tool on your own BENCH arming nothing** — the same board as the control with one Tool moved one spot, the case that catches "any of your Pokémon"; **seat asymmetry from BOTH seats, each paired with the same Tool on the attacker's own Active** so neither half can pass for want of a Tool anywhere; the §8.5 fold order ((80+80)×2 = **320**, control 160) against a synthetic `fix-colorless-weak`; no `ATTACK_EFFECT_SKIPPED` in EITHER direction; direct `conditionHolds`/`conditionNote` incl. the **TWO-Tool case** (the `> 0` proof), the null-Active edge and the benched-only edge; and a frozen-board purity pair. New: faithful Greedent `sv01-152` (a **Stage 1** from Skwovet, 120 HP, ×2 Fighting, two attacks), synthetic `fix-colorless-weak` (the `fix-darkness-weak` precedent), `TOOL_CLAUSE_DECK`, and **`attachToolFromDeck` — the harness's FIRST Tool surgery** (the real action is turn-gated and hand-scoped, so it cannot reach the OPPONENT's board, and it deliberately does not enforce the §7.4 cap Tune-Up lifts). **`conditionalDamage.test.ts`'s loud witness was RE-POINTED, not deleted** → **Pikachu `swsh10.5-027`** ("you played a Supporter card from your hand during this turn"), deliberately a clause that **needs NEW PER-TURN STATE** so no one-row extension can map it out from under the case the way its last three occupants were. engineVersion 0.72.0 → **0.73.0**; `bun run check` **GREEN (exit 0): 164 → 165 files, 2457 → 2485 tests** (tsc + biome lint + vitest). Clean diff (3 engine files + 1 fixtures file + 1 new test + 1 test re-point), **zero new formatter churn verified with `git stash -u`** — 46 files flagged in `packages/engine/src` before and after. ⚠️ **A METHOD CORRECTION worth keeping:** a plain `git stash` leaves UNTRACKED files on disk, so a before/after churn comparison that adds a new test file is meaningless without `-u`. **⚠️ `/code-review` STILL NOT RUN** on D96–D122 (user-triggered). This supersedes #106 (D121 — folded into `decisions.md`).
+
+**Superseded header (build #106 — the BOARD-WIDE Energy count, D121):**
+**Last updated (was):** 2026-08-01 — build session #106 (**P3-M5 — the BOARD-WIDE Energy count: `yourEnergyInPlayAtLeast`, a parameterised member on a LITERAL row, + the fold `countEnergyInPlay`; 1 printing / 1 card / 1 clause on ZERO registry rows (D121, engine 0.72.0)**).
 The clause family goes **15 → 16 literal rows + 2 templates, covering 20 of the pool's 26 distinct clauses / 36 of its 43 printings.** Absol `sv06.5-030` "Darkfall" ("If you have at least 3 {D} Energy in play", +50) now SIMULATES — the clause D120's resume point named FIRST, and it was exactly the cheapest real thing left. **ONE WORD SEPARATES IT FROM D118, AND THAT WORD IS THE WHOLE SLICE.** D118 built `has any <energy> Energy attached`: nine printings across four cards, every one scoped to a SINGLE Pokémon. This sentence says "in play" and means your whole side of the table. The predicate underneath is deliberately IDENTICAL — provision, not the printed name, computed on the HOLDER — and only the FOLD over it is new: continuous.ts's **`countEnergyInPlay(state, seat, energy)`**, placed beside `hasAttachedEnergy` for that module's standing reason (the reading must not drift from what pays a cost), so "a {D} Energy" means the same card whether the sentence scopes it to one Pokémon or to the board. It counts **CARDS, not units of provision** (a wildcard is 1, not 9), Active + Bench, via the null-safe `holders` idiom so a side mid-promotion counts its Bench rather than throwing. **THE DESIGN CALL REVERSES THE PREDICTION D120's OWN RESUME POINT MADE** — that note forecast a TEMPLATE ("the energy token vocabulary being closed"); the census says otherwise and the census wins. **`at least` and `Energy in play` are each a HAPAX in the ingested 978 cards** — this sentence and nowhere else — and **TWO tokens could vary** (the threshold *and* the energy), so D118's one-token test fails outright and **D119's corollary applies: take the literal row.** The reusable correction: **D120's closed-vocabulary precondition tells you when a template is SAFE; it never tells you when one is WARRANTED, and the warrant is a second printing.** The MEMBER is parameterised all the same (D119's `opponentPrizesRemaining` shape exactly) because `conditionHolds` genuinely compares a count against a threshold; what is LITERAL is the table KEY, and rows match FIRST so a template can still be added over it later. **The printed "at least" makes it `>=` — a THRESHOLD, not D119's set membership** — swept 0-5 rather than sampled, because `===` for `>=` fails on a single value ABOVE the line and would survive a two-point check. `energy` is D118's type verbatim (`BasicEnergyType | "special"`): the card class is as countable as a type, the arm costs nothing, and the pool prints no "Special Energy in play" sentence today. **Verbatim re-confirmed against the local D1 before authoring** and the census settled five things: the sentence is **PURE ASCII at 75/75** (it names no Pokémon and carries no apostrophe of either kind — the family's simplest byte claim); **no reprint** (the only card in the pool named exactly "Absol"; the two "Absol ex" printings are a different card); the whole-effect skeleton re-confirmed row by row at **43 printings / 32 distinct (condition, N) pairs / 26 distinct clauses**; **"in play" attaches to exactly three noun kinds pool-wide** (Pokémon, Stadium, and Energy on this one card) and never co-occurs with a narrowing scope word, so the field-scoped reading is the only one consistent with the catalog; and a **trap for a SENTENCE-level matcher** — split effects on sentence boundaries and the same anchor additionally captures **27 coin-flip / "you do" clauses**, so it must stay anchored to the WHOLE effect string. **Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 table row, 1 continuous.ts helper. No new op, event, error code, registry row or wire field; no fold change; no web/API/DB/`@luminous/schema` diff.** The note is the family's **first that does NOT round-trip to the printed clause byte for byte** — it renders `{D}` as `Darkness` (D118's rule: a reject message is read off the board by a person, and `{D}` is a card-face glyph), asserted as an exact one-token substitution rather than left to a reader. `energyInPlay.test.ts` (**40**) on a dedicated `ENERGY_IN_PLAY_DECK`: the verbatim + pure-ASCII byte guard with a non-ASCII COMPANION so the claim is about the string and not the module's encoding; the derivation with both parameters; N-from-the-sentence; the **LITERAL-ROW proof run on BOTH axes** (every other threshold null, all nine other brace codes null, **and the spelled-out `Darkness` form null**) with the printed 3 resolving at ANY bonus, so the mapped/loud boundary runs through the threshold token alone; the one-word hybrid `in play` → `attached` refused while D118's real sentence still derives; the near-misses staying LOUD — **Orthworm `sv02-151` "3 or more {M} Energy attached"** (a threshold, a brace code and the word Energy — everything but the scope — on an ability that changes HP) and Kingambit `sv03-150`; ZERO registry attack rows; **the headline board case — 3 Darkness on the BENCH, nothing countable on Absol, ARMED** — plus the 2 boundary, the 4 threshold case, the cross-zone 1+2 split, the attacker's-own-Energy case, seat asymmetry both ways, the §8.5 fold order ((20+50)×2 = **140**, control 40) and no `ATTACK_EFFECT_SKIPPED` in EITHER direction; **the PROVISION quartet, whose second member is the suite's sharpest case** — a wildcard Luminous alone counts as a {D}; a SECOND Luminous on the same body demotes both to {C} so the same attacker on the same board with **one MORE card attached** scores 20 instead of 70 (a name-matching read cannot behave that way, and the attack still resolves because the plain {C} paid the cost); two Luminous on DIFFERENT bodies both count, since provision is per holder; and one card is one card however many types it offers; the helper direct (**0 on a deal-only board** — no seed can arm this by accident, which is what makes every control real — the Active+Bench sum, an empty Active Spot, the `special` arm); `conditionHolds`/`conditionNote` incl. the 0-5 sweep, per-seat, the degenerate `count: 0` and a wrong-type negative; and a frozen-board purity pair. **The plain {C} Energy line in the deck is LOAD-BEARING, not padding:** Darkfall costs a bare {C}, so paying it with a Darkness Energy would put a counted card on the attacker in EVERY case and confound "in play" with "attached" in exactly the direction this clause is most likely to be wrong. New fixtures: faithful Absol `sv06.5-030` (its whole cast is this one attack, so the index-keyed negative becomes "the array has length 1"), `fix-darkness-energy`, a **synthetic `fix-darkness-weak`** (the `fix-fighting-weak` precedent — no faithful ×2 Darkness row in the file is inert) + the deck. **`board()` leaves both benches EMPTY here** (the pinned starter is what the deal opened with, so nothing is displaced), unlike D120's suite — the arming helper seeds a holder when the seat has none. **The loud witness `energyClause.test.ts` was RE-POINTED, not deleted** (this slice mapped the clause it used): → **Slither Wing `sv06.5-026`** "any Future Pokémon in play", which keeps that case's original `in play` vs `attached` discriminator intact and is the better long-term choice besides — it is blocked on an **INGEST** change (the catalog parses tcgdex's `suffix` but drops it before the D1 insert), so no table row can map it out from under the case. engineVersion 0.71.0 → **0.72.0**; `bun run check` **GREEN (exit 0): 163 → 164 files, 2417 → 2457 tests** (tsc + biome lint + vitest). Clean diff (4 engine files + 1 fixtures file + 1 new test + 1 test re-point), **zero new formatter churn verified by stashing** (69 files flagged before and after with `--max-diagnostics=1000`, lists byte-identical — note the real pre-existing count is **69**, not the 46 D119 recorded). **⚠️ `/code-review` STILL NOT RUN** on D96–D121 (user-triggered). This supersedes #105 (D120 — folded into `decisions.md`).
 
 **Superseded header (build #105 — TYPE and NAME, D120):**
@@ -38,11 +42,12 @@ Wimpod **swsh10.5-025** "Punk Out" now SIMULATES: "If your opponent has any Pok�
 Snorlax **swsh10.5-055** "Block" now SIMULATES: "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat." — the **L3 shape D112 left open**, and the smallest aura slice yet (one `PassiveEffects` flag + one scan + three `&&` terms). **Verbatim re-confirmed against the local D1 before authoring** (the D95→D112 lesson): a D1 sub-agent read the row (Basic Colorless, 150 HP, retreat 4, ×2 Fighting, reg mark F; "Collapse" {C}×4 150 "This Pokémon is now Asleep.") and re-ran the lock census with COALESCE on every text column — **it is the ONLY continuous-Ability retreat lock in the ingested 978 cards, with no reprint**, and **zero rows in the entire pool carry U+2019** (all 459 apostrophe-bearing rows are ASCII), so lock matching never needs the typographic twin. **D112's `legal_standard=0` caveat was a NON-ISSUE and is retired**: 851 of 978 ingested cards are `legal_standard=0`, **including every card in sv01/sv02/sv03** — the flag tracks the post-G rotation, only sv06.5's 96 reg-mark H cards and most blank-mark Energies are Standard, and the engine has simulated non-Standard cards since D1. **Pick engine slices by mechanism, never by `legal_standard`**; format legality is a deck-builder (P2) concern. **Modelled as a bare `PassiveEffects.preventOpponentActiveRetreat?: true`** (D104's minimal-shape rule), read through a new continuous.ts scan **`opposingRetreatBlocked(state, pokemon)`** — the **FIFTH** aura scan and the boolean cross-board twin of D111's `opposingRetreatSurcharge`, sharing its derived-seat trick and §9 gate. **The two differ in exactly one line, and the printed text is the whole reason:** Trap Territory scopes only the TARGET (a benched Spidops ex still surcharges), while this print OPENS with "As long as this Pokémon is in the Active Spot" — so the SOURCE is Active-scoped too and the source list is the opponent's Active **alone**, enforced in the SCAN, not by a new `activeOnly` field (the `damageAttacker` precedent). **It rides NEITHER D112's `retreatBlocked` flag NOR the `preventRetreat` op**: no turn duration means nothing to apply and nothing to clear — read live, lapses the instant either end leaves the Active Spot. **Read at the RETREAT GATE, never in `effectiveRetreatCost` — a block is not a cost** (the wire still reports the real `cost` beside `can: false`). The three D112 read sites take one more `&&` each (turn.ts gate, redact.ts `can`, the web `GameHud.tsx`): **no new events, no new error code** (`RETREAT_PREVENTED` reused with a different *message* only — "an attack effect" would be a lie for an Ability), no new op, no wire field, no API/DB/`@luminous/schema` diff. Two provenances, two independent guards at one gate, composing for free. **The family's FIRST §9 POSITIVE:** Klefki `sv01-096` = `{ stage: "Basic", side: "both", requiresActive: true, exemptAbilityNamed: "Mischievous Lock" }` silences BASIC sources only — Florges/Clefable ex/Spidops ex are all Stage 1/2, which is why every earlier suite could record only the negative; **Snorlax is a Basic**, so an Active Klefki really does take Block down, and the Pokémon thereby freed is the Klefki itself. §9 reachability in this family is a function of the source's **STAGE**. `block.test.ts` (**12**) on a DEDICATED `BLOCK_DECK`: the bare-flag registry row; a fixture-text-verbatim guard; the block + its control; the **SOURCE clause** (a benched Snorlax blocks nothing — Trap Territory's exact inverse, located by card id so the guard is not vacuous); the target clause; own-board scoping asserted in BOTH directions off one board; the §9 positive + its lock-free control; the cost unchanged; the wire `{cost:2,can:false}` vs `{cost:2,can:true}`; the gate refusing **the very retreat the same board otherwise allows**; the block NOT preventing attacking and writing nothing onto the Pokémon (no `STATUS_APPLIED`, `conditions` untouched, `retreatBlocked` still false); and the composition with D112's flag (both, then each alone). New fixtures: a faithful Snorlax (the first `swsh10.5` fixture with an Ability) + the deck, which needed a 4th body (`fix-attacker`) because the "does not block attacking" case needs the *blocked* Pokémon to have an attack and it cannot be the Klefki; the suite pins BOTH Active spots before each surgery, `BLOCK_DECK` being Basic-dense enough that an unpinned starter could itself be an aura source or a §9 lock. engineVersion 0.63.0 → **0.64.0**; `bun run check` **GREEN (exit 0): 155 → 156 files, 2137 → 2149 tests** (tsc + biome lint + vitest). Clean diff (6 engine files + 1 new test + 1 web line) with zero new formatter churn (57 files flagged before and after — the real pre-existing count is **57**, not the "~45" D111 recorded, which was the default 20-diagnostic cap misread). **⚠️ `/code-review` STILL NOT RUN** on D96–D113 (user-triggered). This supersedes #97 (D112 — folded into `decisions.md`).
 
 
-**NEXT (resume point):** The clause family is at **16 literal rows + 2 TEMPLATES, covering 20 of the
-pool's 26 distinct clauses / 36 of its 43 printings** (D115 + D116 + D117 + D118 + D119 + D120 +
-D121, `conditionalDamage.test.ts` + `conditionClause.test.ts` + `clauseTable.test.ts` +
-`energyClause.test.ts` + `publicCount.test.ts` + `typeNameClause.test.ts` + `energyInPlay.test.ts`,
-engine **0.72.0**) — full `bun run check` green exit 0, **164 files / 2457 tests**. Five rules are
+**NEXT (resume point):** The clause family is at **17 literal rows + 2 TEMPLATES, covering 21 of the
+pool's 26 distinct clauses / 37 of its 43 printings** (D115 + D116 + D117 + D118 + D119 + D120 +
+D121 + D122, `conditionalDamage.test.ts` + `conditionClause.test.ts` + `clauseTable.test.ts` +
+`energyClause.test.ts` + `publicCount.test.ts` + `typeNameClause.test.ts` + `energyInPlay.test.ts` +
+`toolClause.test.ts`, engine **0.73.0**) — full `bun run check` green exit 0, **165 files / 2485
+tests**. Five rules are
 settled and should be applied without re-litigating them: **D116's pronoun rule** (the union member
 is named for the board fact it READS; the clause layer resolves the printed pronoun), **D118's
 template rule** (a clause varying on ONE token is a pattern, not N rows — literals are matched FIRST,
@@ -51,39 +56,50 @@ token — take the literal rows), **D120's precondition** (a template is only sa
 token has a CLOSED VOCABULARY to be rejected against; an open-ended capture answers FALSE forever
 with no symptom) and **D121's correction of D120** — the closed vocabulary tells you when a template
 is **SAFE**, never when one is **WARRANTED**; the warrant is a **second printing**, and D120's own
-resume point got this wrong about Absol. The backlog is still the cheapest in the engine: **a clause
-is a `Map` row or a pattern + (usually) a `BoardCondition` member + a `conditionHolds` arm + a
-`conditionNote` arm + a fixture + tests. No registry row, no new op, no fold change.**
+resume point got this wrong about Absol. D122 adds a sixth: **a rule enforced at a GATE is not an
+invariant of the state the gate writes into — read the state, not the rule** (§7.4 caps Tools at one
+*at the attach gate*, and Revavroom ex's "Tune-Up" raises it to 4, so the predicate is `> 0`).
 
-⚠️ **THREE "unmapped stays LOUD" witnesses exist and ALL must survive** — they are the only things
-pinning the fall-through. D120 re-pointed two and D121 re-pointed a third; if you map any of these,
+⚠️ **THE CHEAP ERA IS OVER.** D122 mapped the last clause that reads a field the model already
+carries. Every remaining slice buys **new state**, an **ingest change**, or a **new mechanism** — do
+not open one expecting a table row.
+
+⚠️ **FOUR "unmapped stays LOUD" witnesses exist and ALL must survive** — they are the only things
+pinning the fall-through. D120 re-pointed two, D121 a third, D122 the fourth; if you map any of these,
 **re-point that case at another unmapped clause, do not delete it.**
 - `clauseTable.test.ts` → **Lokix `sv02-021`** ("If this Pokémon evolved from Nymble during this
   turn, …").
 - `conditionClause.test.ts` → **Lucario `sv01-114`** ("If any of your {F} Pokémon were Knocked Out by
   damage from an attack during your opponent's last turn, …").
 - `energyClause.test.ts` → **Slither Wing `sv06.5-026`** ("If your opponent has any Future Pokémon in
-  play, …") — re-pointed by D121, and the most durable of the three: it is blocked on an INGEST
-  change (item 5 below), so no table row can map it out from under the case.
-- (Also still live, from an earlier slice: `conditionalDamage.test.ts` → **Greedent `sv01-152`** —
-  and note that clause is item 1 below, so mapping it means re-pointing that case too.)
+  play, …") — re-pointed by D121, blocked on an INGEST change (item 5 below).
+- `conditionalDamage.test.ts` → **Pikachu `swsh10.5-027`** ("If you played a Supporter card from your
+  hand during this turn, …") — re-pointed by D122 onto a clause that needs NEW PER-TURN STATE, so no
+  one-row extension can map it out from under the case (its last three occupants all were).
+  ⚠️ **Note this one overlaps item 1 below**: the per-turn-state slice would map it, so re-point it
+  again as part of that slice.
 
-**1. THE NEXT SLICE — two left, and the first is the LAST cheap one.** Every clause that reads fields
-already on the model is now mapped except one; after that each slice buys NEW STATE or a new
-mechanism.
-- **`this Pokémon has a Pokémon Tool attached` (1: Greedent `sv01-152` +80)** — reads the attached
-  Tool the model already carries (`InPlayPokemon.tools`); **D116's pronoun rule** resolves the "this
-  Pokémon" to your Active in the clause table, so the member is `yourActiveHasToolAttached`, a bare
-  tag with no parameter. A LITERAL row: nothing varies. This is the cheapest slice left in the whole
-  engine and it should take one session comfortably. ⚠️ It is `conditionalDamage.test.ts`'s loud
-  witness — re-point that case as part of the slice (the pool has no shortage of unmapped clauses to
-  move it to; prefer one that needs new state, so it cannot be mapped out from under the case soon).
+**1. THE NEXT SLICE — the PER-TURN STATE cluster, and it is FOUR clauses wanting the same thing.**
+Cost it as ONE design slice, not four rows. All four are "something happened earlier in a turn", which
+is precisely what `GameState` does not record today.
 - **`this Pokémon moved from your Bench to the Active Spot this turn` (3 printings: Revavroom ex
-  `sv06.5-015`/`-081` +120, Golisopod `swsh10.5-026` +90)** — the best printings-per-clause left, but
-  it **needs new per-turn state** (a "promoted this turn" flag set by the retreat/promotion paths and
-  cleared at the turn boundary). A real design slice, not a table row; cost it before starting. Note
-  `InPlayPokemon` already carries `markers: string[]` and `turnPlayed: number` — check whether either
-  can carry this before adding a field.
+  `sv06.5-015`/`-081` +120, Golisopod `swsh10.5-026` +90)** — the best printings-per-clause left, and
+  the natural anchor for the slice. Needs a "promoted this turn" fact set by the retreat/promotion
+  paths and cleared at the turn boundary. ⚠️ `InPlayPokemon` already carries `markers: string[]` and
+  `turnPlayed: number` — **check whether either can carry this before adding a field**, and note the
+  fact must survive a KO-promotion as well as a retreat.
+- **`you played a Supporter card from your hand during this turn` (1: Pikachu `swsh10.5-027` +30)** —
+  a SEAT-level per-turn fact, not a per-Pokémon one, and the engine already tracks per-turn seat state
+  in `state.allowances` (`energyAttached`, the Supporter allowance). **Look there first** — a
+  Supporter-played flag may already exist in all but name, which would make this the cheapest of the
+  four by a wide margin and a good place to start the slice.
+- **`this Pokémon evolved from Nymble during this turn` (1: Lokix `sv02-021` +100)** — two facts at
+  once: evolved-this-turn (a per-turn per-Pokémon fact, and `turnPlayed` may already answer it) AND
+  the NAME it evolved from, which is readable off the STACK (§1.2) rather than stored. The name half
+  is an open-vocabulary token, so **D120's precondition says LITERAL row, not template.**
+- **`any of your {F} Pokémon were Knocked Out by damage from an attack during your opponent's last
+  turn` (1: Lucario `sv01-114` +120)** — the hardest: CROSS-turn, type-filtered, and it must
+  distinguish a KO by attack damage from a KO by any other route. Do this one LAST or not at all.
 ⚠️ Re-confirm the printed text char-for-char against the local D1 before authoring, and sweep for the
 SHAPE rather than the predicate (the D115 lesson). D121's census adds a second half to that lesson:
 **sweep for the shape over the WHOLE effect string, not per sentence** — split on sentence boundaries
@@ -92,13 +108,8 @@ and the leading-`If` anchor additionally captures 27 coin-flip / "you do" clause
 **2. THE REST OF THE TABLE, ranked** (census re-confirmed row by row against the local D1 on
 2026-08-01: **43 printings / 32 distinct (condition, N) pairs / 26 distinct CLAUSES** — that filter is
 the raw skeleton's 71/45/32 minus the coin-flip family minus one anaphoric `you do`; say which you
-mean. The clause count is the one that costs work, and **20 of 26 are now mapped**). The two cheapest
-are promoted to item 1 above; what remains:
-- **Needs new per-turn / cross-turn STATE, do NOT start here without costing it:** `this Pokémon
-  evolved from Nymble during this turn` (1: Lokix `sv02-021`), `you played a Supporter card from your
-  hand during this turn` (1: swsh10.5-027), `any of your {F} Pokémon were Knocked Out by damage from
-  an attack during your opponent's last turn` (1: Lucario `sv01-114`). The first and third are
-  current loud witnesses — mapping them means re-pointing those cases.
+mean. The clause count is the one that costs work, and **21 of 26 are now mapped**). The whole
+per-turn-state cluster is promoted to item 1 above; what remains here:
 - **The 26-printing COIN-FLIP family is a DIFFERENT mechanism** (`Flip a coin. If heads, this attack
   does N more damage.`). `coinFlipGate` exists as an op, but this is a pre-W/R damage fold, not a
   post-damage program — the single biggest remaining count in the whole family and it deserves its
@@ -112,6 +123,8 @@ are promoted to item 1 above; what remains:
 - **Do NOT build a `you have at least N {X} Energy in play` TEMPLATE** (D121's census): `at least` and
   `Energy in play` are each a HAPAX in 978 cards. There is no family to generalise over — the row is
   the right shape until a second threshold prints.
+- **Do NOT anticipate a `for each Pokémon Tool` scaling shape** (D122's census): it occurs **zero**
+  times in 978 cards, which is why `yourActiveHasToolAttached` is a bare tag and not a count.
 
 **3. A SEPARATE SEAM this census surfaced — the counter-SPREAD shape, 3 printings, unbuilt on BOTH
 paths.** `Put N damage counters on each of your opponent's [Benched] Pokémon that has any damage
@@ -179,7 +192,23 @@ identically. If you want these, the slice is a **P1 ingest** one: add the tag co
   beside the provision code so "an Energy that can pay a {R} cost" and "an Energy a {R} clause
   counts" stay one question — a wildcard Luminous satisfies `{R}` until a second Special demotes it.
 - **Rank the backlog by distinct CLAUSES, not printings or sentences.** 43 printings / 32 sentences /
-  **26 clauses**, of which **19 are mapped** — the clause is the unit of work.
+  **26 clauses**, of which **21 are mapped** — the clause is the unit of work.
+- **A rule enforced at a GATE is not an invariant of the state the gate writes into** (D122). §7.4
+  caps a Pokémon at one Tool *at the attach gate*; Revavroom ex `sv03-156`'s "Tune-Up" raises it to 4,
+  so `active.tools.length > 0`, never `=== 1`. Read the state, not the rule — the same shape recurs
+  anywhere a §-rule is checked on the way in rather than held true on the way out.
+- **Ask whether a printed noun even HAS a reading question before reaching for a helper** (D122).
+  D118's Energy clauses needed continuous.ts because an Energy card can pay for a type it is not
+  named after. `tools` has no such gap: every uid in it passed a `trainerType === "Tool"` check on
+  the way in, so the predicate is a length test and the slice touched no continuous.ts at all.
+- **`attachTool` REFUSES unauthored Tools** (`TRAINER_NOT_SIMULATED`), so **no Tool in the pool
+  attaches successfully while doing nothing** — `fix-tool` cannot arm anything through the real
+  action. A suite needing an armed Tool must pick a real one and then prove the Tool's own passive is
+  not what it is measuring (D122 uses Bravery Charm on a **Stage 1**, where `basicHpBonus` is inert,
+  paired with Vitality Band, whose +10 lands in the same pre-W/R step).
+- **`git stash` WITHOUT `-u` leaves untracked files on disk** — a before/after formatter-churn
+  comparison that adds a new test file is meaningless without it (D122; the numbers in earlier
+  headers taken this way should be read with that in mind).
 - **A COUNT over a hidden zone is usually PUBLIC** (D119). `BoardCondition`'s invariant forbids
   reading a hand's CONTENTS; its SIZE is on the other side of that line and is already on the wire
   (`hiddenHand(side.hand.length)`). Ask "the zone, or a count over it?" before ruling a clause out.
@@ -223,7 +252,8 @@ identically. If you want these, the slice is a **P1 ingest** one: add the tag co
   including every sv01/sv02/sv03 card). Pick slices by **mechanism**.
 - **Check what is seed-pinned before touching an existing deck.** Every retreat-cost, retreat-lock,
   `BLOCK_DECK`, `PUNK_OUT_DECK`, `CONDITIONAL_DAMAGE_DECK`, `CONDITION_CLAUSE_DECK` and now
-  `CLAUSE_TABLE_DECK`, `ENERGY_CLAUSE_DECK`, `PUBLIC_COUNT_DECK` and now `TYPE_NAME_DECK` deck is.
+  `CLAUSE_TABLE_DECK`, `ENERGY_CLAUSE_DECK`, `PUBLIC_COUNT_DECK`, `TYPE_NAME_DECK`,
+  `ENERGY_IN_PLAY_DECK` and now `TOOL_CLAUSE_DECK` deck is.
 - **Size a dedicated deck for what the BOARD has to pull, not for what the test names.** A seat's
   opening hand + Prize row hold 13 of its 60 cards, so a 2-copy fixture is routinely unreachable
   from the deck at some seeds (`attachFromDeck`/`setActiveFromDeck` throw). Go three copies deep on
@@ -231,7 +261,7 @@ identically. If you want these, the slice is a **P1 ingest** one: add the tag co
 - **Fixture docstrings drift too** (D117 found one claiming an unbuilt sentence was built). If a
   docstring asserts a card's sentence derives, assert it in the suite as well.
 
-**FIRST, if you want it: `/code-review`** — D96–D120 have had NO independent reviewer (a new op, an
+**FIRST, if you want it: `/code-review`** — D96–D122 have had NO independent reviewer (a new op, an
 EffectSlot, a DiscardScope, the `cap` field, the index-keyed attack seam, the `damageAttacker` passive
 + its Tool member, the `onDamagedByAttack` TriggerTiming + `damagedTrigger` stage, a cross-board
 ability-lock aura, a `useStadiumAbility` action + `StadiumEffects.ability` + `noRuleBox`/`toolCard`
@@ -244,8 +274,9 @@ event flag, `noRetreatCostAura` + `hasFreeRetreatAura` + the set-to-zero orderin
 `opposingRetreatBlocked`, `noRetreatCostSelf` + `hasFreeRetreatSelf`, the `boardCondition` indicator
 count + the attacker-seat parameter, the union's first PARAMETERISED member +
 `boardConditionForClause`'s second resolution pass + `hasAttachedEnergy`, `POKEMON_TYPES` + a third
-resolution pass, and now **fourteen** `BoardCondition` members across six slices incl. three that read
-counts rather than Pokémon and one that reads a card NAME).
+resolution pass, and now **sixteen** `BoardCondition` members across eight slices incl. three that read
+counts rather than Pokémon, one that reads a card NAME, one board-wide Energy fold and one that reads
+an attached Tool).
 USER-triggered — cannot be launched from the loop.
 
 Older named long-tail candidates (both still need genuinely NEW machinery):

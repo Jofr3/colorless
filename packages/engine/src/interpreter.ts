@@ -1207,6 +1207,17 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // Active + Bench, cards rather than units, `>=` because the printed word is
       // "at least" (a threshold, unlike the sibling above's "exactly").
       return countEnergyInPlay(state, seat, cond.energy) >= cond.count;
+    case "yourActiveHasToolAttached": {
+      // D116's pronoun rule again — "this Pokémon" was resolved to your Active by
+      // the clause table, not here. `tools` is a uid array on the model and every
+      // uid in it got there through `attachTool`, which has already refused
+      // anything that is not a Trainer of trainerType "Tool"; so the predicate is
+      // a length test and nothing more. `> 0` rather than `=== 1` on purpose:
+      // §7.4's one-Tool cap is an attach-gate rule, and Revavroom ex's "Tune-Up"
+      // raises it to 4. False with an empty Active Spot.
+      const active = state.players[seat].active;
+      return active !== null && active.tools.length > 0;
+    }
   }
 }
 
@@ -1281,6 +1292,11 @@ export function conditionNote(cond: BoardCondition): string {
       return cond.energy === "special"
         ? `you have at least ${cond.count} Special Energy in play`
         : `you have at least ${cond.count} ${cond.energy} Energy in play`;
+    case "yourActiveHasToolAttached":
+      // Back to a round-trip: this clause names no timing word and no energy
+      // glyph, so only the pronoun is dropped (D116) and the rest is the printed
+      // sentence.
+      return "your Active Pokémon has a Pokémon Tool attached";
   }
 }
 

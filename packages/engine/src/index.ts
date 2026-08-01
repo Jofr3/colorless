@@ -837,8 +837,44 @@ import type { GameState, Seat } from "./types";
     Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 table
     row, 1 continuous.ts helper. The note is the family's first that does NOT
     round-trip to the printed clause byte for byte: it renders "{D}" as "Darkness"
-    (D118's rule — a reject message is read off the board by a person). */
-export const engineVersion = "0.72.0";
+    (D118's rule — a reject message is read off the board by a person).
+
+    0.72.0 → 0.73.0 — the POKÉMON TOOL clause (D122). Greedent sv01-152 "Enhanced
+    Fang", "If this Pokémon has a Pokémon Tool attached, this attack does 80 more
+    damage." (+80): one printing, one card, one clause, no reprint — and the LAST
+    clause in this family that reads a field the model already carries. The table
+    goes 16 → 17 literal rows + 2 templates, covering 21 of the pool's 26 distinct
+    clauses / 37 of its 43 printings; every clause left needs new per-turn state,
+    an ingest change, or the coin-flip mechanism.
+
+    `yourActiveHasToolAttached` is a BARE TAG on a LITERAL row, and the cheapest
+    member the vocabulary has: `InPlayPokemon.tools` is already a uid array, and
+    every uid in it reached it through `attachTool`, which refused anything whose
+    `trainerType` is not "Tool" before it could land. So — unlike D118's Energy
+    clauses, where an Energy card can pay for a type it is not named after and the
+    predicate must therefore be PROVISION — there is no reading question here at
+    all, and no continuous.ts helper: a Tool is a Tool, and the predicate is a
+    length test.
+
+    The one real decision is `> 0` rather than `=== 1`. §7.4 caps a Pokémon at one
+    Tool, but that cap is enforced at the ATTACH GATE, and Revavroom ex sv03-156's
+    "Tune-Up" Ability raises it to 4 — so a predicate written to the cap would
+    answer FALSE on a board the printed sentence plainly describes.
+
+    D116's pronoun rule, FOURTH use: the member is named for the board fact it
+    READS (your Active) and the clause table resolves the printed "this Pokémon".
+    That matters more here than usual, because two OTHER cards print this clause's
+    exact words under a different consequent — Genesect sv06.5-040's "ACE
+    Nullifier" is byte-identical through the comma, and Stunfisk sv03-112's
+    "Custom Trap" carries the same words as a middle conjunct. Both are ABILITIES;
+    the whole-sentence anchor is the only thing keeping a damage bonus off them.
+
+    Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 table
+    row, 1 test-surgery helper. No new op, event, error code, registry row, wire
+    field or fold change; no continuous.ts diff; no web/API/DB/`@luminous/schema`
+    diff. The note ROUND-TRIPS to the printed clause with only the pronoun swapped
+    — this sentence carries no timing word and no card-face glyph. */
+export const engineVersion = "0.73.0";
 
 export type {
   ApplyResult,

@@ -245,15 +245,19 @@ describe("deriveAttackDamageBonus — the anchor guards (everything else stays L
       "Draw a card. If you have a Stadium in play, this attack does 80 more damage.",
       // A printed 0 adds nothing — the guard every arm in this family carries.
       "If you have a Stadium in play, this attack does 0 more damage.",
-      // A well-formed sentence whose CLAUSE is not in the table: Greedent
-      // sv01-152 "Enhanced Fang", the pool's only printing of it. A deliberate
-      // future one-row extension — until it is mapped it stays LOUD rather than
-      // silently scoring its bonus at 0. (This witness was Venoshock's "is
-      // Poisoned" until D116 mapped that clause, then Ceruledge's "ex or V" until
-      // D117 mapped that one; if you map this one too, re-point the witness again
-      // rather than deleting the case — it is the only thing pinning the
-      // fall-through.)
-      "If this Pokémon has a Pokémon Tool attached, this attack does 80 more damage.",
+      // A well-formed sentence whose CLAUSE is not in the table: Pikachu
+      // swsh10.5-027 "Buddy Bolt", the pool's only printing of it. Until it is
+      // mapped it stays LOUD rather than silently scoring its bonus at 0. (This
+      // witness was Venoshock's "is Poisoned" until D116 mapped that clause, then
+      // Ceruledge's "ex or V" until D117, then Greedent's Pokémon Tool until D122;
+      // if you map this one too, re-point the witness again rather than deleting
+      // the case — it is the only thing pinning the fall-through.)
+      //
+      // It is deliberately a clause that needs NEW PER-TURN STATE — "you played a
+      // Supporter card from your hand during this turn" is not a board fact any
+      // field on the model carries today — so no one-row table extension can map
+      // it out from under this case the way the last three were.
+      "If you played a Supporter card from your hand during this turn, this attack does 30 more damage.",
     ]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }

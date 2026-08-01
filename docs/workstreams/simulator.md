@@ -5283,3 +5283,112 @@ this turn` (3 — **needs new per-turn state**, the biggest printing count left 
 Supporter … during this turn`, `any of your {F} Pokémon were Knocked Out … last turn`) · `your
 opponent has any Future Pokémon in play` (blocked on an ingest change) · and the 26-printing
 coin-flip family, a different mechanism that deserves its own costed slice.
+
+## D122 — the POKÉMON TOOL clause (engine 0.73.0)
+
+Greedent `sv01-152` "Enhanced Fang" — "If this Pokémon has a Pokémon Tool
+attached, this attack does 80 more damage." One printing, one card, one clause,
+no reprint. The table goes **16 → 17 literal rows + 2 templates, 21 of 26
+distinct clauses / 37 of 43 printings**.
+
+### The seam this closes
+
+**Every clause in this family that reads a field the model already carries is now
+mapped.** The five left are not table rows:
+
+- `this Pokémon evolved from Nymble during this turn` (Lokix `sv02-021`)
+- `you played a Supporter card from your hand during this turn` (Pikachu
+  `swsh10.5-027`)
+- `this Pokémon moved from your Bench to the Active Spot this turn` (Revavroom ex
+  `sv06.5-015`/`-081`, Golisopod `swsh10.5-026` — **3 printings, the best
+  printings-per-clause left**)
+- `any of your {F} Pokémon were Knocked Out … during your opponent's last turn`
+  (Lucario `sv01-114`)
+- `your opponent has any Future Pokémon in play` (Slither Wing `sv06.5-026`) —
+  blocked on an INGEST change, not engine work
+
+The first four all want the same kind of thing: **per-turn / cross-turn state that
+the engine does not record today.** They are one design slice, not four rows, and
+the right move is probably to cost them together.
+
+### Why this member was the cheapest in the vocabulary
+
+`InPlayPokemon.tools` is already a uid array beside `energy` and `stack`, and
+**every uid in it reached it through `attachTool` (cardplay.ts), which refuses
+anything whose `trainerType` is not `"Tool"` before it can land.** So there is no
+reading question of the kind D118's Energy clauses have — an Energy card can pay
+for a type it is not named after, which is why that predicate had to be PROVISION
+and had to live in continuous.ts. A Tool is a Tool. The predicate is
+`active.tools.length > 0` and this slice adds **no continuous.ts diff at all**.
+
+### The one real call: `> 0`, never `=== 1`
+
+§7.4 caps a Pokémon at one Tool. That cap is enforced **at the attach gate** — and
+Revavroom ex `sv03-156`'s "Tune-Up" Ability raises it to 4. A predicate written to
+the printed singular ("a Pokémon Tool") would answer FALSE on a board the sentence
+plainly describes.
+
+> **A rule enforced at a GATE is not an invariant of the state the gate writes
+> into. Read the state, not the rule.**
+
+Worth carrying: the same shape will recur wherever a §-rule is checked on the way
+in rather than held true on the way out.
+
+### The near-misses, and why the whole-sentence anchor earns its keep here
+
+Two other cards print this clause's exact words under a different consequent:
+
+- **Genesect `sv06.5-040` "ACE Nullifier"** — *byte-identical through the comma*
+  ("If this Pokémon has a Pokémon Tool attached, your opponent can't play any ACE
+  SPEC cards from their hand.")
+- **Stunfisk `sv03-112` "Custom Trap"** — the same words as a **middle conjunct**
+
+Both are Abilities. A `.includes` matcher would have scored a damage bonus off two
+Abilities; the anchored whole-effect match does not. This is the sharpest instance
+so far of the rule the table has carried since D115.
+
+### Census facts (local D1, 2026-08-01)
+
+- `43 / 32 / 26` re-confirmed **row by row** (printings / distinct (clause, N)
+  pairs / distinct clauses).
+- `sv01-152` is a **singleton**: the only card named "Greedent", and its
+  `attacks_json` is unique in the catalog.
+- The effect string is **77 code points / 79 UTF-8 bytes**, two é, **no apostrophe
+  of either kind**.
+- **`for each Pokémon Tool` occurs ZERO times in 978 cards** — there is no
+  per-Tool scaling family waiting to land, so the bare tag needs no parameter.
+- Pool-wide byte fact worth keeping: the ENTIRE text corpus (attacks + abilities +
+  effect across 978 rows) holds exactly **two** distinct non-ASCII code points,
+  **U+00D7 `×`** and **U+00E9 `é`**. **No U+2019 anywhere** — every possessive is
+  ASCII. Confirms D113's finding at the whole-corpus level.
+
+### A harness fact that shaped the whole suite
+
+**`attachTool` refuses UNAUTHORED Tools with `TRAINER_NOT_SIMULATED`, so there is
+no Tool in the pool that attaches successfully while doing nothing.** `fix-tool`
+cannot arm this clause through a real action. That is why the deck carries two
+*real* Tools, chosen so the pair separates the clause from the Tool:
+
+| Tool | Passive | Role |
+|---|---|---|
+| Bravery Charm `sv02-173` | `basicHpBonus: 50` | **SILENT arm** — Greedent is a **Stage 1**, so the +50 does not apply (`effectiveMaxHp` still 120) and the whole 80-point swing is the clause's |
+| Vitality Band `sv01-197` | `damageBonusBeforeWR: 10` | **LOUD arm** — arms the clause *and* adds its own +10 in the same pre-W/R step: **170** against the Charm's **160** |
+
+A fold that mistook the Tool's own passive for the clause would score those two
+identically. That pair is the suite's best case.
+
+### New harness helper
+
+**`attachToolFromDeck(state, seat, target, cardId)`** — the harness's first Tool
+surgery (`target` is `"active"` or a bench index). The real action is turn-gated
+and hand-scoped, so it cannot put a Tool on the OPPONENT's board, which is exactly
+what a seat-asymmetry case needs. It deliberately does **not** enforce the §7.4
+one-Tool cap, because the predicate must be testable above one.
+
+### The loud-witness bookkeeping
+
+`conditionalDamage.test.ts`'s "unmapped stays LOUD" witness was **re-pointed, not
+deleted** → **Pikachu `swsh10.5-027`** ("you played a Supporter card from your hand
+during this turn"). It has now been Venoshock (→D116), Ceruledge (→D117), Greedent
+(→D122); this time it was deliberately pointed at a clause that **needs new
+per-turn state**, so no one-row table extension can map it out from under the case.

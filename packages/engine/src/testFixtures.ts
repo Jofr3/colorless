@@ -2880,6 +2880,56 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Darkness", value: "×2" }],
   }),
+
+  // — M5 clause slice: the POKÉMON TOOL clause (D122). Greedent sv01-152
+  //   "Enhanced Fang" — the pool's only Tool-conditional damage sentence, read
+  //   verbatim off the local D1 2026-08-01.
+  /** Greedent sv01-152 "Enhanced Fang" (+80) — a Colorless STAGE 1 from Skwovet,
+      120 HP, retreat 2, ×2 Fighting, NO Resistance, NO Ability (`abilities_json`
+      is NULL on the row), reg mark G, Uncommon, and a singleton: no other card in
+      the catalog is named "Greedent" or carries this attack text.
+
+      TWO attacks, which is what makes the index-keyed negative real: index 0
+      "Bite" ({C}{C} for a flat 50) carries NO `effect` key at all, so it derives
+      to null on every path, and index 1 is the whole slice. The clause reads the
+      attacker's OWN Tool, so the deck below arms it two ways — by surgery and by
+      the real §7.4 `attachTool` action — and the Tool it uses must be one whose
+      own passive cannot be mistaken for the bonus.
+
+      Verbatim off the local D1 — the effect string is 77 code points / 79 UTF-8
+      bytes, the two extra being the é in each "Pokémon"; it carries no apostrophe
+      of either kind. */
+  "sv01-152": battler("sv01-152", {
+    name: "Greedent",
+    stage: "Stage1",
+    evolveFrom: "Skwovet",
+    types: ["Colorless"],
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Bite", damage: 50 },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Enhanced Fang",
+        effect: "If this Pokémon has a Pokémon Tool attached, this attack does 80 more damage.",
+        damage: "80+",
+      },
+    ],
+  }),
+  /** FIXTURE (synthetic) — a 200 HP ×2 Colorless body with no attacks, for the
+      §8.5 fold-order pair, on the fix-darkness-weak / fix-fighting-weak
+      precedent and for the same reason: no faithful ×2 Colorless row in this file
+      is inert. Greedent is a Colorless Pokémon and its clause is
+      DEFENDER-INDEPENDENT — the Tool sits on the ATTACKER — so the Weakness
+      doubles a bonus the defender had no part in arming: (80 + 80) × 2 = 320
+      against the un-armed control's 80 × 2 = 160. A Basic, no rule box (1 Prize),
+      and 200 HP so neither number KOs it. */
+  "fix-colorless-weak": battler("fix-colorless-weak", {
+    hp: 200,
+    retreat: 1,
+    weaknesses: [{ type: "Colorless", value: "×2" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -4009,6 +4059,46 @@ export const ENERGY_IN_PLAY_DECK = deckOf({
   "fix-bigbody": 31, // 200 HP neutral Colorless Basic — DOMINANT pinned starter + the Bench holders
 });
 
+/** 0.72.0 → 0.73.0: the POKÉMON TOOL clause (D122) — Greedent sv01-152 "Enhanced
+    Fang", "If this Pokémon has a Pokémon Tool attached, this attack does 80 more
+    damage." One card, one clause, one printing, no reprint.
+
+    A DEDICATED deck, and the reason is the Tools: every other suite's deck either
+    carries no Tool at all or carries Vitality Band for its own damage arithmetic,
+    and a Tool line is exactly what arms or disarms this clause as a side effect.
+
+    THE TOOL CHOICE IS THE WHOLE DESIGN OF THIS DECK. `attachTool` refuses an
+    UNAUTHORED Tool (`TRAINER_NOT_SIMULATED`), so there is no Tool in the pool
+    that attaches successfully while doing nothing — fix-tool cannot be used to
+    arm the clause through a real action. Two real Tools are carried instead, and
+    they separate the two things that could be confused:
+
+    - **Bravery Charm sv02-173** (`basicHpBonus: 50`) is the SILENT arm. Greedent
+      is a STAGE 1, so the +50 HP does not apply to it and the Tool contributes
+      exactly nothing to the board except its own presence — the clean case where
+      every point of the swing is the clause's.
+    - **Vitality Band sv01-197** (`damageBonusBeforeWR: 10`) is the LOUD arm. It
+      arms the clause AND adds its own +10 in the SAME pre-W/R step, so the pair
+      pins that the two bonuses are independent and stack rather than one masking
+      the other: 80 + 80 + 10 = 170 where the Charm gives 160.
+
+    fix-colorless-weak (200 HP, ×2 Colorless, no attacks) is the §8.5 fold-order
+    defender: (80 + 80) × 2 = 320 against the control's 80 × 2 = 160 — and the
+    Tool sits on the ATTACKER, so the defender has no part in arming what its own
+    Weakness then doubles. fix-energy pays Enhanced Fang's three {C}; there is no
+    typed Energy line at all, because this clause reads no Energy and a typed one
+    would only invite the confusion. fix-bigbody is 35 of 60 — the DOMINANT
+    mulligan-free starter (Greedent is a Stage 1 and can never open) and the Bench
+    body the "a Tool on your BENCH arms nothing" case hangs its Tool on. */
+export const TOOL_CLAUSE_DECK = deckOf({
+  "sv01-152": 4, // Greedent — "Enhanced Fang" (80+) at index 1: yourActiveHasToolAttached, +80
+  "sv02-173": 6, // Bravery Charm — the SILENT arm (basicHpBonus, inert on a Stage 1)
+  "sv01-197": 3, // Vitality Band — the LOUD arm (+10 in the same pre-W/R step)
+  "fix-energy": 9, // Basic {C} — pays Enhanced Fang's {C}{C}{C}
+  "fix-colorless-weak": 3, // 200 HP, ×2 Colorless — the Weakness defender for the fold-order pair
+  "fix-bigbody": 35, // 200 HP neutral Colorless Basic — DOMINANT pinned starter + the Bench holder
+});
+
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
     "Scorching Armor", D99). A DEDICATED deck (the DAMAGE_ATTACKER_DECK is
     seed-pinned; growing it to hold Armarouge would reshuffle that suite): the
@@ -4629,6 +4719,54 @@ export function attachFromDeck(
         ...side,
         deck: side.deck.filter((uid) => !taken.has(uid)),
         active: { ...side.active, energy: [...side.active.energy, ...uids] },
+      },
+    },
+  };
+}
+
+/** TEST SURGERY: attach one copy of `cardId` from the seat's deck onto their
+    Active (`target: "active"`) or bench[index] as a POKÉMON TOOL.
+
+    The real §7.4 path is the `attachTool` action, and the suites that can use it
+    should — but it is turn-gated and hand-scoped, so it cannot put a Tool on the
+    OPPONENT's board, which is exactly what a seat-asymmetry case needs. It also
+    refuses unauthored Tools (`TRAINER_NOT_SIMULATED`), so a test wanting an inert
+    Tool has no action to reach for.
+
+    Deliberately does NOT enforce §7.4's one-Tool-per-Pokémon cap: this is
+    surgery, and Revavroom ex's "Tune-Up" raises that cap in the real game, so a
+    predicate reading `tools` must be testable above one. Legal-shaped otherwise
+    (every uid in exactly one zone). */
+export function attachToolFromDeck(
+  state: GameState,
+  seat: Seat,
+  target: "active" | number,
+  cardId: string,
+): GameState {
+  const side = state.players[seat];
+  const uid = side.deck.find((u) => state.cardIdByUid[u] === cardId);
+  if (uid === undefined) throw new Error(`${seat} deck has no ${cardId}`);
+  if (target === "active" && side.active === null) throw new Error(`${seat} has no Active Pokémon`);
+  if (target !== "active" && side.bench[target] === undefined) {
+    throw new Error(`${seat} has no benched Pokémon at ${target}`);
+  }
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        deck: side.deck.filter((u) => u !== uid),
+        active:
+          target === "active" && side.active !== null
+            ? { ...side.active, tools: [...side.active.tools, uid] }
+            : side.active,
+        bench:
+          target === "active"
+            ? side.bench
+            : side.bench.map((pokemon, i) =>
+                i === target ? { ...pokemon, tools: [...pokemon.tools, uid] } : pokemon,
+              ),
       },
     },
   };
