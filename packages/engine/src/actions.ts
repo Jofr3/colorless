@@ -290,6 +290,11 @@ export type ErrorCode =
   | "STATUS_PREVENTS_ATTACK"
   /** §11/§12 — an Asleep or Paralyzed Active cannot retreat. */
   | "STATUS_PREVENTS_RETREAT"
+  /** §11 — an attack effect is holding the Active in place ("During your
+      opponent's next turn, the Defending Pokémon can't retreat."). Distinct
+      from STATUS_PREVENTS_RETREAT: not a §12 condition, and it clears at the
+      Checkup ending this player's own turn rather than by a flip. */
+  | "RETREAT_PREVENTED"
   | "BAD_PRIZE_COUNT"
   | "BAD_PRIZE_INDEX"
   /** A parked ko:* phase that disagrees with the head pending stage —

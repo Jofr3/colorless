@@ -478,7 +478,7 @@ function benchN(state: GameState, seat: Seat, n: number): GameState {
       [seat]: {
         ...side,
         deck: side.deck.filter((u) => !taken.has(u)),
-        bench: [...side.bench, ...uids.map((u) => ({ stack: [u], energy: [], tools: [], damage: 0, conditions: { rotation: "none" as const, poisonDamage: 0, burned: false }, markers: [], turnPlayed: 0 }))],
+        bench: [...side.bench, ...uids.map((u) => ({ stack: [u], energy: [], tools: [], damage: 0, conditions: { rotation: "none" as const, poisonDamage: 0, burned: false }, retreatBlocked: false, markers: [], turnPlayed: 0 }))],
       },
     },
   };

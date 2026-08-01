@@ -541,7 +541,23 @@ import type { GameState, Seat } from "./types";
     this aura is stage-agnostic and must still reach a Stage 1/2 Active. Spidops
     ex's own "Wire Hang" READS the cost it raises (D110), so the reader/modifier
     composition lands on one card. No web/API/DB/schema change. */
-export const engineVersion = "0.62.0";
+    /* 0.63.0 — the retreat-LOCK seam: "During your opponent's next turn, the
+    Defending Pokémon can't retreat." now SIMULATES on 16 printings / 14 names
+    (P3-M5 long tail, D112) — a CONDITION on the Pokémon, not a cost modifier, so
+    it shares nothing with the D108–D111 cost seam but the word "retreat". New
+    `InPlayPokemon.retreatBlocked` (deliberately NOT a member of
+    `SpecialConditions`: no Checkup tick, no status chip, no attack gate, and the
+    §12 shape is pinned field-by-field by `RedactedConditions`/`BattleConditions`),
+    a new bare `preventRetreat` EffectOp, two anchored deriver regexes (the plain
+    rider + Paldean Clodsire's two-clause "Poison Ring"), a `RETREAT_PREVENTED`
+    error code at the turn.ts gate, one `&&` in redact.ts's `can` and one in the
+    web HUD, and `RETREAT_BLOCKED`/`RETREAT_BLOCK_ENDED` events. The LIFETIME is
+    §13.4's paralysis clock reused verbatim — cleared in `runCheckup` for
+    `endedSeat` only — plus the early clears wherever an effect of an attack ends
+    (leaving the Active Spot, evolving). ZERO registry rows: every print derives
+    off its printed text. No API/DB/`@luminous/schema` change; the web diff is the
+    one `&&`. */
+export const engineVersion = "0.63.0";
 
 export type {
   ApplyResult,

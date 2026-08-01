@@ -258,6 +258,7 @@ describe("placement", () => {
       tools: [],
       damage: 0,
       conditions: { rotation: "none", poisonDamage: 0, burned: false },
+      retreatBlocked: false,
       markers: [],
       turnPlayed: 0,
     });

@@ -823,9 +823,10 @@ describe("deriveAttackEffect (effects.ts)", () => {
 
   it("returns null for anything but the exact sentences", () => {
     for (const text of [
-      // Real prints whose EXTRA mechanics are M4 — deriving just the poison
-      // would silently drop the rest, so nothing derives.
-      "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat.",
+      // Real prints whose EXTRA mechanics are unbuilt — deriving just the poison
+      // would silently drop the rest, so nothing derives. (Paldean Clodsire's
+      // "…that Pokémon can't retreat" USED to sit here; D112 built its second
+      // clause, so it now derives to poison + preventRetreat — retreatLock.test.)
       "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned.", // sv03-010
       "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010
       "The Defending Pokémon is now Asleep.", // old-era phrasing

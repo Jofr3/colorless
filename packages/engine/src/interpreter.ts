@@ -594,6 +594,8 @@ function stepOp(
   switch (op.op) {
     case "applyStatus":
       return { done: applyStatus(state, op, ctx, events) };
+    case "preventRetreat":
+      return { done: preventRetreat(state, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
@@ -1292,6 +1294,22 @@ function applyStatus(
     ...active,
     conditions: { ...active.conditions, rotation: op.status },
   });
+}
+
+/** §11 — hold the Defending Pokémon in place ("During your opponent's next
+    turn, the Defending Pokémon can't retreat."). Always the opponent's Active,
+    like the `applyStatus` "defender" arm, and idempotent: re-locking an already
+    locked Pokémon changes nothing and stays silent (the block has no stacking
+    depth — one lock reads the same as two). No Active is a no-op, exactly as
+    every other defender-relative op treats it. */
+function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const seat = otherSeat(ctx.seat);
+  const active = state.players[seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined || active.retreatBlocked) return state;
+  events.push({ type: "RETREAT_BLOCKED", seat, uid });
+  return withActive(state, seat, { ...active, retreatBlocked: true });
 }
 
 /** Spread damage: place `amount` HP on EACH of the opponent's Benched Pokémon
@@ -2097,7 +2115,10 @@ export function switchInto(
   const nowActive = topUid(incoming);
   if (wasActive === undefined || nowActive === undefined) return state;
   const cleared = presentStatuses(active.conditions);
-  const benched = { ...active, conditions: noConditions() };
+  // Leaving the Active Spot ends the conditions AND the §11 retreat block —
+  // the one path where that clear is observable (a forced switch can move a
+  // Pokémon the block itself would never let retreat).
+  const benched = { ...active, conditions: noConditions(), retreatBlocked: false };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({
     type: "POKEMON_SWITCHED",

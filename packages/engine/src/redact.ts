@@ -344,7 +344,9 @@ function redactedAttacksOf(
     opponent (only the turn owner retreats). Mirrors GameHud's TurnPanel
     `canRetreat` on the full state the wire withholds: the CONTINUOUS retreat cost
     (§7.3 — Beach Court discounts Basics), and a `can` folding the §12 immobilize
-    gate (asleep/paralyzed blocks retreating), the once-per-turn `retreated`
+    gate (asleep/paralyzed blocks retreating), the §11 attack-applied retreat block
+    (which rides `can` rather than a new wire field — the client needs to know it
+    cannot retreat, not why), the once-per-turn `retreated`
     allowance, a non-empty Bench (something to promote to) and enough attached
     energy to pay the cost. The energies to discard and the Bench are already on
     the public board, so nothing hidden leaves the DO. */
@@ -359,6 +361,7 @@ function redactedRetreatOf(
   const cost = effectiveRetreatCost(state, active);
   const can =
     !isImmobilized(active.conditions) &&
+    !active.retreatBlocked &&
     !state.allowances.retreated &&
     state.players[viewerSeat].bench.length > 0 &&
     active.energy.length >= cost;

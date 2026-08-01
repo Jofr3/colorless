@@ -221,6 +221,14 @@ export type EffectOp =
       /** Only for "poisoned": HP placed per Checkup when raised above 10. */
       poisonDamage?: number;
     }
+  /** §11 — hold the Defending Pokémon in place for the opponent's next turn
+      ("During your opponent's next turn, the Defending Pokémon can't retreat.").
+      No `target` field: every print of this clause in the pool locks the
+      DEFENDER, so the shape stays bare until a self-locking one exists (D104).
+      Not an `applyStatus` variant — `StatusName` is a closed five-value union
+      pinned by two exhaustive `Record`s, the wire condition schema and the
+      playmat's status chips; the block is none of those things. */
+  | { op: "preventRetreat" }
   | { op: "heal"; target: "self"; amount: number }
   /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
       (Garganacl "Blessed Salt" — a between-turns triggered Ability). No target
@@ -1145,6 +1153,18 @@ const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
 const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
+// §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
+// so both are anchored here rather than matched loosely: the bare rider (15
+// printings / 13 names — Espathra, Bombirdier ×2, Tarountula, Talonflame,
+// Corvisquire, Trevenant, Wugtrio, Houndstone ex, Stunfisk, Inkay, Sneasel,
+// Dusknoir ×2, Onix), and Paldean Clodsire's two-clause "Poison Ring", whose
+// "that Pokémon" is bound by the preceding sentence to the same Defending
+// Pokémon. Matching the lock clause alone would silently swallow Clodsire's
+// Poison, which is why the compound gets its own anchored pattern.
+const DEFENDER_CANT_RETREAT =
+  /^During your opponent['’]s next turn, the Defending Pokémon can['’]t retreat\.$/;
+const DEFENDER_POISON_CANT_RETREAT =
+  /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
 // Spread damage — the whole effect sentence, with the era's optional
 // "(Don't apply Weakness and Resistance for Benched Pokémon.)" clarifier
 // (§8.5 makes it true regardless). The main numeric damage rides the attack's
@@ -1361,7 +1381,7 @@ const TYPED_SELF_DISCARD = new RegExp(
 );
 
 /** Parse printed attack text into executable ops, or null when the text is
-    ANYTHING but one of the fourteen recognized whole sentences (leading/trailing
+    ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
 export function deriveAttackEffect(text: string): EffectOp[] | null {
   const effect = text.trim();
@@ -1413,6 +1433,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         poisonDamage: Number(match[1]) * 10,
       },
     ];
+  }
+
+  // 5b. "During your opponent's next turn, the Defending Pokémon can't
+  //     retreat." — the whole effect on 15 printings, none of which needs a
+  //     registry row.
+  match = DEFENDER_CANT_RETREAT.exec(effect);
+  if (match !== null) {
+    return [{ op: "preventRetreat" }];
+  }
+
+  // 5c. "Your opponent's Active Pokémon is now Poisoned. During your opponent's
+  //     next turn, that Pokémon can't retreat." (Paldean Clodsire "Poison
+  //     Ring") — the same lock behind a Poison clause; ops in printed order.
+  match = DEFENDER_POISON_CANT_RETREAT.exec(effect);
+  if (match !== null) {
+    return [{ op: "applyStatus", target: "defender", status: "poisoned" }, { op: "preventRetreat" }];
   }
 
   // 6. "This attack (also) does {N} damage to each of your opponent's Benched

@@ -747,6 +747,63 @@ export const FIXTURE_POOL: Record<string, Card> = {
       it pays 2 bare, 0 once it holds {P} beside a Clefable ex. */
   "fix-retreat2": battler("fix-retreat2", { name: "fix-retreat2", hp: 120, retreat: 2 }),
 
+  // — the retreat-LOCK seam (D112): "During your opponent's next turn, the
+  //   Defending Pokémon can't retreat." A CONDITION on the Pokémon, not a cost
+  //   modifier — nothing to do with the D108–D111 cost seam above. Both cards
+  //   DERIVE off their sentence (no registry row at all), so the effect text is
+  //   LOAD-BEARING and must stay char-for-char with the D1 rows. —
+  /** Tarountula sv02-016 — "Bind Down" ({G}, 10): the bare rider, and the
+      cheapest carrier of the 15-printing wording. A Basic, so it fields without
+      surgery. Its ONLY attack, so index 0 is the lock and there is no second
+      attack to confuse the index-keyed assertions. */
+  "sv02-016": battler("sv02-016", {
+    name: "Tarountula",
+    types: ["Grass"],
+    hp: 50,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Grass"],
+        name: "Bind Down",
+        damage: 10,
+        effect: "During your opponent's next turn, the Defending Pokémon can't retreat.",
+      },
+    ],
+  }),
+  /** Paldean Clodsire sv03-128 — "Poison Ring" ({D}, 20): the TWO-CLAUSE
+      printing, where the lock hides behind a Poison and the second sentence says
+      "that Pokémon" rather than "the Defending Pokémon". A Stage 1 (from Paldean
+      Wooper), surgeried straight onto the Active in tests. Its second attack is
+      unsimulated on purpose — the "one card, one derived attack" control. */
+  "sv03-128": {
+    ...blank,
+    id: "sv03-128",
+    name: "Paldean Clodsire",
+    category: "Pokemon",
+    stage: "Stage1",
+    evolveFrom: "Paldean Wooper",
+    hp: 140,
+    types: ["Darkness"],
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness"],
+        name: "Poison Ring",
+        damage: 20,
+        effect:
+          "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat.",
+      },
+      {
+        cost: ["Darkness", "Colorless", "Colorless"],
+        name: "Muddy Hammer",
+        damage: 100,
+        effect: "Discard the top card of your opponent's deck.",
+      },
+    ],
+  } satisfies Card,
+
   // — the retreat-cost READERS (D110): the two arithmetic shapes of "for each {C}
   //   in your opponent's Active Pokémon's Retreat Cost". Faithful to the D1 rows;
   //   the effect text is LOAD-BEARING here (both cards derive from the sentence —
@@ -2706,6 +2763,35 @@ export const TRAP_TERRITORY_DECK = deckOf({
   "fix-grass-energy": 6, // Basic {G} — pays Wire Hang's {G}
   "fix-energy": 8, // Basic {C} — pays Wire Hang's {C} and the surcharged retreat
   "fix-bigbody": 21, // 200 HP neutral Basic — DOMINANT starter + bench body
+});
+
+/** 0.62.0 → 0.63.0: the retreat-LOCK seam (D112) — "During your opponent's next
+    turn, the Defending Pokémon can't retreat." A DEDICATED deck (every retreat-COST
+    deck above is seed-pinned, and this suite needs BOTH lockers plus a defender
+    that could otherwise retreat). Tarountula (sv02-016) is the bare rider and a
+    Basic, so it fields with one surgery; Paldean Clodsire (sv03-128) is the
+    two-clause "Poison Ring" printing and a Stage 1, always surgeried in.
+    fix-retreat2 is the LOCKED body — 120 HP so it survives both attacks and the
+    Poison ticks, retreat 2 so a paid retreat is a real, otherwise-legal action the
+    block is the only thing refusing. The two EARLY-clear paths (an effect of an
+    attack ends when the Pokémon leaves the Active Spot or evolves) need their own
+    bodies: fix-basic-1 → fix-stage1 is the evolution pair, and Switch (sv01-194)
+    moves a locked Active to the Bench — which the rules allow, since the block
+    refuses RETREATING, not being switched. Grass pays Bind Down's {G}, Darkness
+    pays Poison Ring's {D}, and plain {C} pays the locked body's retreat.
+    fix-bigbody is the DOMINANT mulligan-free starter. BOTH seats run it so a
+    locker can be fielded on either board. */
+export const RETREAT_LOCK_DECK = deckOf({
+  "sv02-016": 4, // Tarountula — "Bind Down": the bare 15-printing rider
+  "sv03-128": 3, // Paldean Clodsire — "Poison Ring": the two-clause printing
+  "fix-retreat2": 4, // retreat-2 Basic — the locked body (a retreat it could pay)
+  "fix-basic-1": 4, // retreat-1 Basic — the locked body on the EVOLVE clear path
+  "fix-stage1": 3, // evolves from fix-basic-1 — §10 sheds the block
+  "sv01-194": 3, // Switch — the leaving-the-Active-Spot clear
+  "fix-grass-energy": 6, // Basic {G} — pays Bind Down
+  "fix-dark-energy": 6, // Basic {D} — pays Poison Ring
+  "fix-energy": 10, // Basic {C} — pays the locked body's retreat cost
+  "fix-bigbody": 17, // 200 HP neutral Basic — DOMINANT starter + bench body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

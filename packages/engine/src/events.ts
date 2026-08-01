@@ -147,6 +147,18 @@ export type GameEvent =
       statuses: StatusName[];
       reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded";
     }
+  /** §11 — an attack effect locked `seat`'s Active in place ("During your
+      opponent's next turn, the Defending Pokémon can't retreat."). Deliberately
+      NOT a STATUS_APPLIED: the block is not one of the five §12 conditions, so it
+      carries no `StatusName`, shows no status chip and does not gate attacking. */
+  | { type: "RETREAT_BLOCKED"; seat: Seat; uid: string }
+  /** The §11 retreat block expiring, at the Checkup that ends the blocked
+      player's OWN next turn — the §13.4 paralysis lifetime, `seat` being the
+      seat whose turn just ended. The block also ends early whenever an effect of
+      an attack ends (the Pokémon leaves the Active Spot or evolves); those paths
+      stay SILENT, announced by their own POKEMON_SWITCHED/RETREATED/
+      POKEMON_EVOLVED row rather than a second one here. */
+  | { type: "RETREAT_BLOCK_ENDED"; seat: Seat; uid: string }
   /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
       Checkup ticks, the confusion self-hit, an attack's own "does N damage to
       itself" recoil clause) — `amount` is HP of damage, and weakness/resistance

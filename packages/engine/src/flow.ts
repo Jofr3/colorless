@@ -590,6 +590,23 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
     }
   }
 
+  // §11 — the retreat block ("During your opponent's next turn, the Defending
+  // Pokémon can't retreat.") expires on exactly the paralysis clock above: it
+  // is applied during the ATTACKER's turn, has to survive the Checkup that
+  // follows it (endedSeat is then the attacker, not the locked player), holds
+  // through the locked player's whole next turn, and lifts at the Checkup that
+  // ends it. So the same `endedSeat`-only clear gives the printed duration —
+  // and the same caveat applies: a block applied by the ended seat's OWN attack
+  // would lift a turn early, which no print in the pool can do (the deriver's
+  // only two shapes both target the DEFENDER).
+  {
+    const spot = activeTop(next, endedSeat);
+    if (spot?.active.retreatBlocked) {
+      next = withActive(next, endedSeat, { ...spot.active, retreatBlocked: false });
+      events.push({ type: "RETREAT_BLOCK_ENDED", seat: endedSeat, uid: spot.uid });
+    }
+  }
+
   // §9/§13 — between-turns triggered Abilities fire during the Checkup, after
   // the condition ticks and before the KO sweep: a heal-each (Garganacl's
   // Blessed Salt) and a fixed counter placement (Trevenant's Forest Miasma,

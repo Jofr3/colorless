@@ -328,6 +328,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
       }
     }
+    // §11 — the retreat block. Its own rows, not STATUS_* ones: it is not a
+    // Special Condition, so the "is now …"/"recovered from …" phrasings (which
+    // name a §12 status) would read wrong.
+    case "RETREAT_BLOCKED":
+      return row(event.seat, [strong(cardName(state, event.uid)), plain(" can't retreat next turn")]);
+    case "RETREAT_BLOCK_ENDED":
+      return row(event.seat, [strong(cardName(state, event.uid)), plain(" can retreat again")]);
     case "COUNTERS_PLACED": {
       // Checkup ticks and the confusion self-hit are the game's doing, not a
       // player action — system rows, like the coin toss.

@@ -292,6 +292,8 @@ export function placeEvolution(
     ...from,
     stack: [...from.stack, evolutionUid],
     conditions: noConditions(),
+    // §10 — evolving sheds the effects of attacks too, not just conditions.
+    retreatBlocked: false,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -321,10 +323,13 @@ export function placeEvolution(
   return runBoardTrigger(next, seat, target, "onEvolve", events);
 }
 
-/** Leaving the Active spot removes Special Conditions (§11/§12) — M4 adds
-    dropping active-only markers here too. */
+/** Leaving the Active spot removes Special Conditions (§11/§12) and every other
+    effect of an attack still on the Pokémon — the §11 retreat block included
+    (unreachable down THIS path, which is a retreat the block would have already
+    refused, but the rule belongs with the concept, not with one caller) — M4
+    adds dropping active-only markers here too. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
-  return { ...pokemon, conditions: noConditions() };
+  return { ...pokemon, conditions: noConditions(), retreatBlocked: false };
 }
 
 /** §11 — once per turn: the player names WHICH attached energies pay the
@@ -351,6 +356,12 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       "STATUS_PREVENTS_RETREAT",
       `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot retreat (§11)`,
     );
+  }
+  // §11 — an attack held it in place ("the Defending Pokémon can't retreat").
+  // Its own code, not STATUS_PREVENTS_RETREAT: nothing about it is a §12
+  // condition, and a client showing "Asleep/Paralyzed" here would be lying.
+  if (active.retreatBlocked) {
+    return err("RETREAT_PREVENTED", "an attack effect prevents this Pokémon from retreating (§11)");
   }
   if (side.bench.length === 0) {
     return err("BENCH_EMPTY", "cannot retreat with an empty bench (§11)");

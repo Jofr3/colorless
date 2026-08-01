@@ -76,6 +76,16 @@ export interface InPlayPokemon {
   /** HP of damage taken (counters × 10). Placed by attacks from M2 on. */
   damage: number;
   conditions: SpecialConditions;
+  /** §11 — an attack effect is holding this Pokémon in place ("During your
+      opponent's next turn, the Defending Pokémon can't retreat."). NOT a §12
+      Special Condition, which is why it does not live in `conditions`: it has
+      no Checkup tick, renders no status chip, does not block ATTACKING, and
+      never crosses the wire (`RedactedConditions`/`BattleConditions` pin that
+      shape field-by-field — redact.ts `copyConditions`). It shares only the
+      §13.4 paralysis LIFETIME: set by the attacker, cleared at the Checkup that
+      ends the blocked player's own next turn (flow.ts), and dropped early
+      wherever an effect of an attack ends — leaving the Active Spot or evolving. */
+  retreatBlocked: boolean;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -91,6 +101,7 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     tools: [],
     damage: 0,
     conditions: noConditions(),
+    retreatBlocked: false,
     markers: [],
     turnPlayed,
   };

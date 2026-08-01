@@ -459,6 +459,10 @@ function TurnPanel(props: GameHudProps) {
   const retreatCost = effectiveRetreatCost(game, active);
   const canRetreat =
     !immobilized &&
+    // §11 — an attack effect holding it in place ("the Defending Pokémon can't
+    // retreat"). Read off raw GameState: it is not a §12 condition, so it is
+    // deliberately absent from the projected/wire `conditions` shape.
+    !active.retreatBlocked &&
     !game.allowances.retreated &&
     side.bench.length > 0 &&
     active.energy.length >= retreatCost;

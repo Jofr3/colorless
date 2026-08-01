@@ -4446,8 +4446,16 @@ its own "Trap Territory" raises, so an Active Spidops ex hits for +30 off its ow
 (90 → 150 against a printed-retreat-1 body). Nothing special was needed to make that work —
 it falls out of the single derivation point — but it is the test that proves the loop closes.
 
-Do **not** confuse this with the 15-card lowercase-"retreat" **retreat-LOCK** seam
-("the Defending Pokémon can't retreat") — a different mechanic, still unbuilt.
+Do **not** confuse this with the **retreat-LOCK** seam ("the Defending Pokémon can't
+retreat") — a different mechanic, built separately in D112 (next section).
+
+**⚠️ Scope correction (D112, 2026-08-01):** the "9/9 closed" above is scoped to the
+**Standard-legal** ingested pool. The local D1 also holds `swsh10.5` (see the pool note
+below), which contains a **10th** cost-seam print: **Wimpod `swsh10.5-025`** "Punk Out" —
+*"If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost."* A
+conditional **self** `noRetreatCost` keyed on the OPPONENT's board — structurally close to
+Clefable ex's aura but with the condition on the wrong side of the table for
+`hasFreeRetreatAura` as written. Unbuilt; `legal_standard=0`.
 
 **The one derivation point held.** `effectiveRetreatCost(state, pokemon)` (continuous.ts)
 is the only place the rule lives, and it now has **four** readers — turn.ts's retreat
@@ -4482,14 +4490,67 @@ only in reach and return type. When the next aura lands, copy the nearest of the
 | `hasFreeRetreatAura` | own board, per TARGET | `boolean` | yes |
 | `opposingRetreatSurcharge` | **cross-board**, per TARGET | **`number` (summed)** | yes |
 
-**Next seam (unbuilt, and the biggest single family left): the retreat LOCK.** Do not confuse
-it with the above — it is 15 cards of lowercase-"retreat" text ("the Defending Pokémon can't
-retreat during your opponent's next turn"), a *condition on the Pokémon*, not a cost modifier:
-`sv01-103` Espathra, `sv01-138`/`-219` Bombirdier, `sv02-016` Tarountula, `sv02-030` Talonflame,
-`sv02-165` Corvisquire, `sv03-012` Trevenant, `sv03-059` Wugtrio, `sv03-102` Houndstone ex,
-`sv03-112` Stunfisk, `sv03-128` Paldean Clodsire, `sv03-137` Inkay, `sv06.5-013` Sneasel,
-`sv06.5-020`/`-070` Dusknoir. The read site almost certainly already exists — `redact.ts` and
-`turn.ts` both gate retreat on `isImmobilized(active.conditions)` (Paralyzed/Asleep), so an
-attack-applied "can't retreat" flag with an until-end-of-next-turn lifetime should ride the
-same check. Census it against the live D1 first: the wordings above are a grep summary, not
-verbatim, and every prior print corrected the shorthand.
+### The retreat-LOCK seam — L1 + L2 built, L3 open (D112, engine 0.63.0)
+
+A *condition on the Pokémon*, not a cost modifier — it shares nothing with the seam above
+but the word "retreat". The census (local D1, D112) puts it at **three sentence shapes,
+17 printings / 15 names**:
+
+| | shape | where | state |
+|---|---|---|---|
+| **L1** | `"During your opponent's next turn, the Defending Pokémon can't retreat."` | attack rider, the WHOLE effect | **built** — 15 printings / 13 names: `sv01-103` Espathra, `sv01-138`/`-219` Bombirdier, `sv02-016` Tarountula, `sv02-030` Talonflame, `sv02-165` Corvisquire, `sv03-012` Trevenant, `sv03-059` Wugtrio, `sv03-102` Houndstone ex, `sv03-112` Stunfisk, `sv03-137` Inkay, `sv06.5-013` Sneasel, `sv06.5-020`/`-070` Dusknoir, **`swsh10.5-036` Onix** |
+| **L2** | `"Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat."` | attack rider, ONE of two clauses | **built** — `sv03-128` Paldean Clodsire "Poison Ring" |
+| **L3** | `"As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat."` | **Ability**, continuous, no turn duration | **unbuilt** — `swsh10.5-055` Snorlax "Block". A cross-board aura gated on the HOLDER being Active; a 5th member of the aura-scan family, read at the retreat gate rather than in `effectiveRetreatCost` |
+
+Alternate wordings were swept and are empty: `cannot retreat`, `can't be retreated`,
+`unable to retreat`, `must stay`, `may not retreat`, `can't switch`, `retreating`, and the
+U+2019 twins of all of them — **zero** hits. `switch this` returns 15, every one a benign
+own-side self-switch. All apostrophes in the pool's retreat text are **ASCII**.
+
+**Where the flag lives, and why not in `SpecialConditions`.** `InPlayPokemon.retreatBlocked`,
+a sibling of `conditions`, not a member of it. `SpecialConditions` is pinned field-by-field by
+`RedactedConditions` (`@luminous/schema`) and `BattleConditions` (the playmat), and its members
+render as status chips, tick at the Checkup and gate ATTACKING — a retreat block does none of
+those, and adding a field there would have dragged the wire + playmat into an engine-only
+slice. **The reusable rule: a struct something else pins field-by-field is not a free place to
+put a new field.** The price is that the three "an effect of an attack ends here" sites clear
+one more field by hand (`clearOnLeavingActive` in turn.ts, the evolve literal, the
+interpreter's switch); each has a test.
+
+**The lifetime was already in the engine, wearing a different name.** §13.4's paralysis clear
+in `runCheckup` — the `endedSeat`-only block — **is** "until the end of your opponent's next
+turn"; follow the seats and it lands exactly right. Applied during the ATTACKER's turn, the
+block survives the Checkup that immediately follows (`endedSeat` is the attacker there), holds
+through the locked player's whole next turn, and lifts at the Checkup ending it. Any future
+"during your opponent's next turn" effect copies those four lines. It inherits paralysis's one
+caveat — a SELF-applied instance would lift a turn early — unreachable here because both
+derived shapes target the defender.
+
+**The read sites were three `&&` terms.** A new `RETREAT_PREVENTED` error code at turn.ts's
+retreat gate (its own code, not `STATUS_PREVENTS_RETREAT` — a client rendering
+"Asleep/Paralyzed" there would be lying), one term in redact.ts's `can` (**no new wire
+field**), one in the web `GameHud.tsx`. New `RETREAT_BLOCKED`/`RETREAT_BLOCK_ENDED` events;
+the early clears stay silent, told by their own POKEMON_SWITCHED/POKEMON_EVOLVED row.
+
+**A Switch dodges the lock, and that is correct** — the print refuses *retreating*, not being
+moved. So does evolving. Both are tested, because both are the kind of rule a future
+refactor silently breaks.
+
+### ⚠️ The ingested pool is SIX sets / 978 cards — re-derive it, never quote it
+
+Every census in this file written before 2026-08-01 says five sets / ~890 cards. That is
+**wrong**: the local mirror also holds **`swsh10.5`** (Pokémon GO — 88 cards, reg-mark F,
+`legal_standard=0`, `legal_expanded=1`), which no earlier sweep looked at. Per-set counts:
+`sv01=258, sv02=279, sv03=230, sv06.5=99, sve=24, swsh10.5=88`.
+
+- The mirror lives at `apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite` —
+  query it with `sqlite3` directly.
+- **COALESCE or you will lose most rows**: `abilities_json || attacks_json` is NULL whenever
+  either column is NULL, so a `LIKE` over the raw concatenation silently drops them. Use
+  `LOWER(COALESCE(abilities_json,'') || COALESCE(attacks_json,'') || COALESCE(effect,''))`.
+- The **live remote D1 holds 3698 cards** through `sv10.5b` + `svp`
+  (`bunx wrangler d1 execute luminous --remote --command "…"`). Every seam here is
+  ingested-pool-scoped and **reopens the moment a new set is ingested**.
+- When a census claims a seam is "N/N closed", say **which** scope: raw local pool, or the
+  Standard-legal subset. The retreat-COST seam is 9/9 Standard-legal but 9/10 raw
+  (Wimpod `swsh10.5-025`).
