@@ -742,8 +742,21 @@ export type EffectOp =
       controller's Pokémon, damaged or not: the printed choose clause has no
       damaged restriction, and picking an undamaged one heals 0 and emits
       nothing (the single-arm rule). `amount` stays per-Pokémon ("from EACH of
-      them"), clamped to each pick's damage. */
-  | { op: "healChosen"; amount: number | "all"; upTo?: number }
+      them"), clamped to each pick's damage.
+
+      `zone` is the printed word "Benched" and NOTHING ELSE (D135). Absent — the
+      unmarked printing — the candidates are ALL the controller's Pokémon, Active
+      included, because §1.1 says the Active is one of your Pokémon; `"bench"` is
+      the printed "1 of your BENCHED Pokémon" and drops the Active from the
+      candidate set, which is the whole content of the word (D120: honour the
+      printed zone word, and only that word). It is a FIELD rather than a second
+      op member because everything downstream of picking the candidate set is
+      byte-identical — the same park, the same choice shape, the same heal, the
+      same HEALED event (D131's widen-don't-add rule, applied to the op that
+      already carries `upTo` the same way). An EMPTY Bench is not an error: zero
+      candidates is `parkOrForce`'s silent no-op, the same ending an undamaged
+      pick takes. */
+  | { op: "healChosen"; amount: number | "all"; zone?: "bench"; upTo?: number }
   /** Attach ONE Basic Energy from a SOURCE zone (the controller's hand or
       discard pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration
       Ability family (Quaquaval "Energy Carnival" from hand; Baxcalibur "Super
@@ -1615,6 +1628,50 @@ const SELF_HEAL = /^Heal (\d+) damage from this Pokémon\.$/;
 // this path. (That one is a Supporter and never reaches this reader anyway, but
 // the guard should not depend on which reader a card happens to route through.)
 const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
+// The CHOSEN heal (D135) — "Heal {N|all} damage from 1 of your [Benched]
+// Pokémon.", the whole printed effect, 10 printings across 7 distinct clauses
+// and the third heal shape the pool prints. Census run 2026-08-01 against the
+// local D1 over the WHOLE effect string (978 cards); NOT ONE of the ten carries
+// a printed `damage` field, so the heal is the entire visible result every time:
+//   • ANY-ZONE, 5 printings / 3 clauses — Nacli sv02-121/-220 "Salt Coating"
+//     (20), Smoliv sv01-021 "Nutrients" (30), Vespiquen ex sv03-096/-212
+//     "Healing Pheromone" (60).
+//   • BENCH-ONLY, 5 printings / 4 clauses — Combee sv03-008 "Share" (20),
+//     Chansey swsh10.5-051 "Delicious Egg" (30), Tropius sv01-007
+//     "Fresh-Picked Fruit" (60), Blissey swsh10.5-052 "Enriching Egg" and
+//     Arboliva sv03-021 "Healing Fruit" (both "all").
+//
+// ONE REGEX, TWO CAPTURES, ONE OP — the D131 shape exactly. Both varying tokens
+// land in FIELDS of a single `healChosen` (`amount`, `zone`), not in rows of a
+// lookup table, so D119 does not govern and the two readings differ downstream
+// by exactly which refs the park offers. That is also why this is NOT a D120
+// template: a template needs a varying token with a CLOSED reading and a table
+// to look it up in; here there is no table, and "Benched " is a one-bit presence.
+//
+// "ALL" IS A SPELLING OF THE AMOUNT, NOT A SEPARATE SENTENCE. `healChosen.amount`
+// has taken `number | "all"` since 0.x (Arboliva's "Enriching Oil" Ability prints
+// it), so the two Blissey/Arboliva printings cost this arm one alternation branch
+// and nothing else. The cross product is deliberately UNFILTERED: "Heal all
+// damage from 1 of your Pokémon." is unprinted today and this anchor accepts it,
+// because it is unambiguous and the op expresses it exactly — the same call
+// `DECK_TOP_MILL` makes for the unprinted "the top 1 cards" (D131). A refusal
+// would be a claim about the ingest, not about the game.
+//
+// THE ONLY NEW VOCABULARY IS THE ZONE FIELD, and the interpreter diff is one
+// ternary over `ownBenchRefs` — a helper `switchActive` and `gust` have used
+// since 0.x. The PARK is not new either: an attack tail has parked on a
+// choosePokemon since the derived snipes (`damageChosen`) and the derived
+// self-discard cost, through the same `settleProgram(..., {resumeTail: true})`
+// that trainers use minus the flag. So the "first parking op the ATTACK deriver
+// emits" this slice was priced as is nothing of the sort — see D135.
+//
+// No /i, for the standing reason (see TYPED_SELF_DISCARD): the capitalised first
+// word plus `^…$` is the WHOLE guard. It is what keeps Floette sv01-092's
+// "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage
+// from this Pokémon." and Saguaro sv02-187's "Choose up to 2 of your Pokémon and
+// heal 50 damage from each of them." off this path — both print the mapped words
+// mid-sentence behind something this arm cannot express.
+const CHOSEN_HEAL = /^Heal (\d+|all) damage from 1 of your (Benched )?Pokémon\.$/;
 // ── The FLIP-GATED OP family (D134) ──────────────────────────────────────────
 // "Flip a coin. If heads, <an action this reader already performs>." — 3
 // printings / 2 distinct clauses, and the two are taken TOGETHER on purpose:
@@ -3099,6 +3156,45 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
       },
     ];
+  }
+
+  // 20. "Heal {N|all} damage from 1 of your [Benched] Pokémon." — D135's CHOSEN
+  //     heal, 10 printings across 7 clauses and the heal family's third and last
+  //     shape. The op (`healChosen`) has existed since 0.x behind Potion; what is
+  //     new is ONE FIELD on it (`zone`) for the printed word "Benched", and one
+  //     reader. The two captures land in two fields of one op (D131's shape), so
+  //     the Bench and any-zone readings share every line downstream of the park.
+  //
+  //     THIS IS THE FIRST DERIVED ATTACK EFFECT THAT PARKS ON A HEAL, but not the
+  //     first that parks: `damageChosen` (the snipes) and `discardEnergy` (the
+  //     printed self-discard cost) have parked from an attack tail for many
+  //     slices, through the same `settleProgram(..., { resumeTail: true })` that
+  //     keeps `attackEpilogue` on `state.pending` until the choice lands. So the
+  //     KO sweep, the prizes and §5.3's turn end all still happen AFTER the heal,
+  //     in that order, with no attack.ts diff.
+  match = CHOSEN_HEAL.exec(effect);
+  if (match !== null) {
+    const raw = match[1] as string;
+    const amount = raw === "all" ? "all" : Number(raw);
+    // `amount >= 1` is the guard every arm here carries: a printed "Heal 0
+    // damage" would derive to a PROMPT that heals nothing — worse than an unread
+    // sentence, because parking a player on a decision with no possible outcome
+    // is a lie the loud path never tells. "all" is exempt by construction: it is
+    // not a number and cannot be zero, and it whiffs only on an undamaged pick,
+    // silently (the single-arm rule). No CEILING, same as the two heal arms
+    // above — the interpreter clamps to the damage actually present.
+    if (amount === "all" || amount >= 1) {
+      // The zone field is OMITTED rather than set to undefined when the printing
+      // does not carry the word: the derived op is compared by value against
+      // hand-authored registry rows (Potion's `{ op: "healChosen", amount: 30 }`),
+      // and an explicit `zone: undefined` key is not `toEqual`-identical to an
+      // absent one under the suite's stricter comparisons.
+      return [
+        match[2] === undefined
+          ? { op: "healChosen", amount }
+          : { op: "healChosen", amount, zone: "bench" },
+      ];
+    }
   }
 
   return null;

@@ -74,13 +74,15 @@ const CLAUSES = [
 /** The real catalog rows this anchor must refuse, verbatim off the local D1. Every
     one contains the mapped words; not one is the mapped sentence:
       • Nacli sv02-121 / -220 "Salt Coating" — a CHOSEN target rather than the board.
-        `healChosen` exists as an op; the sentence has no reader, so the row stays
-        loud.
-      • Tropius sv01-007 "Fresh-Picked Fruit" — a chosen BENCHED target. Two things
-        unmapped: the choice and the zone filter `healChosen` does not have.
+        (SIMULATED SINCE 0.86.0 by `CHOSEN_HEAL` — D135. It keeps its case: the claim
+        here never was "unmapped", it is that a chosen target is not the board.)
+      • Tropius sv01-007 "Fresh-Picked Fruit" — a chosen BENCHED target. (SAME, 0.86.0:
+        the zone filter `healEach` still does not have is now a FIELD on the op that
+        does the choosing, which is the whole difference between the two sentences.)
       • Blissey swsh10.5-052 / Arboliva sv03-021 — a chosen Benched target healed for
         "all". THE AMOUNT IS NOT A NUMBER, which is the half this arm could not carry
-        even if the target matched: `healEach`'s `amount` is a number.
+        even if the target matched: `healEach`'s `amount` is a number, and that is
+        still true at 0.86.0 — `healChosen`'s has taken `number | "all"` since 0.x.
       • Fuecoco sv02-035 / -201 — a SELF heal gated behind a flip. Neighbouring
         family, SIMULATED SINCE 0.85.0 by `FLIP_SELF_HEAL` (D134) — so it is refused
         here for TWO reasons at once (wrong target, wrong anchor) and its case moves
@@ -259,11 +261,18 @@ describe("the anchor — 7 printings, 2 clauses, one sentence", () => {
 
   it("refuses the SEVEN real catalog rows that share its words", () => {
     for (const [index, text] of REAL_NEAR_MISSES.entries()) {
-      // Index 3 (Fuecoco's gated self-heal) has been simulated since 0.85.0 by
+      // Indices 0–2 (the CHOSEN heals, mapped at 0.86.0 by `CHOSEN_HEAL` — D135) and
+      // index 3 (Fuecoco's gated self-heal, 0.85.0 — D134) are all simulated by
       // ANOTHER arm of this same reader, so "derives to nothing" is no longer the
-      // right claim for it — "does not derive to a BOARD heal" is, and it is the
-      // claim this file always meant. Every other row is unmapped everywhere.
-      if (index === 3) {
+      // right claim for them — "does not derive to a BOARD heal" is, and it is the
+      // claim this file always meant. Rows 4–6 are unmapped everywhere.
+      //
+      // FOUR OF SEVEN ROWS NOW LAND ON A NEIGHBOUR, which is what a family being
+      // finished looks like from the inside. Per the standing note above they were
+      // RE-POINTED rather than deleted, and each now makes a stronger claim than its
+      // null did: a build where this arm's `each of your` loosened to `1 of your`
+      // would fail here whether or not any other reader existed.
+      if (index <= 3) {
         expect(deriveAttackEffect(text)).not.toContainEqual(
           expect.objectContaining({ op: "healEach" }),
         );

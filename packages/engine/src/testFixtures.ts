@@ -4116,6 +4116,113 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Colorless", "Colorless"], name: "Ram", damage: 20 },
     ],
   }),
+  /** Nacli sv02-121 — D135's ANY-ZONE chosen heal, and 2 of that reading's 5
+      printings (-121 and -220 are one attack in two rarities). "Salt Coating"
+      ({F}, index 0) is "Heal 20 damage from 1 of your Pokémon." with NO `damage`
+      field, so the PARK is the entire visible result of the declaration: the
+      attack stops, asks, and everything else on the board stays where it was.
+
+      IT IS THE ONE PRINTING WHOSE CANDIDATE SET INCLUDES THE ATTACKER. "1 of your
+      Pokémon" is §1.1's reading — the Active AND the Bench — and from an attack
+      the Active is the body that just declared, so a build that quietly excluded
+      "this Pokémon" (a plausible reading of a heal printed on an attacker) passes
+      every bench assertion in the suite and fails only on the Active pick. It was
+      a NEAR-MISS witness in boardHeal.test.ts from 0.84.0 until this slice mapped
+      it, for the neighbouring reason: a chosen target is not "each of your".
+
+      Its index-1 "Tackle" ({F}{F}, 30, no effect text) is the control the family
+      always fields: real printed damage on the SAME card, which must park nothing.
+
+      Verbatim off the local D1 (2026-08-01): 70 HP, Fighting, BASIC (no evolution
+      surgery — it can be dealt straight into the Active Spot), retreat 3, ×2
+      Grass, no Resistance, no Ability. The 70 HP is load-bearing in the suite:
+      every damage figure the attacker carries has to stay under it or the attack
+      epilogue's KO sweep takes the body out from under the assertion. */
+  "sv02-121": battler("sv02-121", {
+    name: "Nacli",
+    types: ["Fighting"],
+    stage: "Basic",
+    hp: 70,
+    retreat: 3,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Salt Coating",
+        effect: "Heal 20 damage from 1 of your Pokémon.",
+      },
+      { cost: ["Fighting", "Fighting"], name: "Tackle", damage: 30 },
+    ],
+  }),
+  /** Tropius sv01-007 — D135's BENCH-ONLY chosen heal, one of that reading's 5
+      printings and the sharpest claim of the slice. "Fresh-Picked Fruit" ({G},
+      index 0) is "Heal 60 damage from 1 of your Benched Pokémon." — again with NO
+      `damage` field.
+
+      THE PRINTED WORD "Benched" IS THE WHOLE DIFFERENCE from Nacli, and it is one
+      optional capture in one regex that lands in one FIELD of the same op. What
+      it must do downstream is drop the Active from the candidate set and change
+      the prompt's heading to match; what it must NOT do is anything else. So the
+      board that tests it keeps the ACTIVE DAMAGED throughout: an implementation
+      that read the zone for the heading and not for the candidates, or the other
+      way round, produces a prompt that lies about what it is offering, and only a
+      damaged Active makes the two failures visible.
+
+      Its 100 HP is chosen the same way Nacli's 70 is — the attacker carries
+      damage in most of these cases and must stay well under its own HP.
+
+      "Razor Leaf" at index 1 ({G}{C}, 50, no effect text) is the control.
+
+      Verbatim off the local D1 (2026-08-01): 100 HP, Grass, BASIC, retreat 1, ×2
+      Fire, no Resistance, no Ability. */
+  "sv01-007": battler("sv01-007", {
+    name: "Tropius",
+    types: ["Grass"],
+    stage: "Basic",
+    hp: 100,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Grass"],
+        name: "Fresh-Picked Fruit",
+        effect: "Heal 60 damage from 1 of your Benched Pokémon.",
+      },
+      { cost: ["Grass", "Colorless"], name: "Razor Leaf", damage: 50 },
+    ],
+  }),
+  /** fix-allheal — FIXTURE, and the invention is precisely and only the BODY.
+      THE EFFECT STRING IS REAL AND VERBATIM: "Heal all damage from 1 of your
+      Benched Pokémon." is printed by Blissey swsh10.5-052 ("Enriching Egg") and
+      by Arboliva sv03-021 ("Healing Fruit") — 2 of D135's 10 printings, and the
+      only clause of the family whose `amount` is not a number.
+
+      WHY IT IS NOT SIMPLY BLISSEY. Both printings are EVOLUTIONS (Blissey is a
+      Stage 1 off Chansey, Arboliva a Stage 2 off Dolliv), so driving either one
+      end to end means either scripting a chain or reaching for
+      `setActiveFromDeck` surgery on a card that could never legally arrive that
+      way. The "all" amount is a property of the SENTENCE, not of the evolution
+      line, and the file's standing convention (fix-titan, fix-condgate,
+      fix-flip-filter) is to construct the body when the body is not the claim.
+      Both REAL ids are still fielded — in FIXTURE_POOL nowhere, but in the
+      suite's derivation table and its zero-registry-row sweep, which is where a
+      printing's identity actually matters.
+
+      120 HP and retreat 1 are ordinary; the {C} cost is the cheapest thing that
+      can be paid out of one line so a board is a setup plus one attach. Index 1
+      ("Blunt Hit", {C}{C}, 30, no effect text) is the control. */
+  "fix-allheal": battler("fix-allheal", {
+    hp: 120,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Whole Heal",
+        effect: "Heal all damage from 1 of your Benched Pokémon.",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Blunt Hit", damage: 30 },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -5883,6 +5990,55 @@ export const FLIP_GATED_OP_DECK = deckOf({
   "fix-energy": 10, // Basic {C} — pays both gated attacks' {C} and Ram's {C}{C}
   "fix-fire-energy": 4, // Basic {R} — pays Flare's Fire, and nothing else
   "fix-titan": 38, // 340 HP neutral Basic, NO attacks — the pinned Active both sides, and the mill's fodder
+});
+
+/** 0.85.0 → 0.86.0: the CHOSEN HEAL (D135) — "Heal {N|all} damage from 1 of your
+    [Benched] Pokémon." A DEDICATED deck, on the house rule that a new family gets
+    its own 60, and with two reasons of its own. First, this is the first HEAL suite
+    whose claim is about a PROMPT rather than about a board: every case reads
+    `prompt.candidates`, so the exact contents of the Bench are load-bearing in a way
+    they are not even in BOARD_HEAL_DECK's file, and a shared deck would make a
+    candidate list something another suite could reshuffle. Second, nothing here
+    takes a COIN, so the whole account fits on one deterministic seed-free board —
+    a property worth keeping separable from FLIP_GATED_OP_DECK's sweeps.
+
+    THE THREE CARDS ARE THE THREE READINGS the one regex produces:
+      • Nacli sv02-121 "Salt Coating" (idx 0, {F}, heal 20, NO `damage`) — the
+        ANY-ZONE arm, where the candidate set is the Active AND the Bench and the
+        ATTACKER ITSELF is a legal pick. 2 of the 5 any-zone printings (-121/-220).
+        Its idx-1 "Tackle" ({F}{F}, 30) is the effect-less control.
+      • Tropius sv01-007 "Fresh-Picked Fruit" (idx 0, {G}, heal 60, NO `damage`) —
+        the BENCH-ONLY arm, on a DIFFERENT N so a hardcoded 20 downstream cannot
+        satisfy both. Its idx-1 "Razor Leaf" ({G}{C}, 50) is the second control.
+      • fix-allheal (idx 0, {C}) — the "all" amount, carrying Blissey/Arboliva's
+        REAL printed sentence on an INVENTED Basic body, purely so the amount can
+        be driven end to end without an evolution chain. See its FIXTURE_POOL doc.
+
+    THREE ENERGY LINES, because all three attacks print a different single cost
+    ({F}, {G}, {C}) and none of them can pay another's. Five/five/four is generous:
+    a case declares the same attack from a freshly built board a dozen times over,
+    and an Energy-starved deck would fail as an attach error rather than as an
+    assertion. The {C} line doubles as Razor Leaf's second symbol.
+
+    BOTH SEATS RUN IT — any of the three can be surgeried onto either side, which
+    is what lets the `seat` on every HEALED row be asserted rather than assumed.
+
+    fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) does the same double
+    duty it does in BOARD_HEAL_DECK and both jobs matter more here. It is the pinned
+    Active on the DEFENDING side (neither heal attack prints damage at all, so
+    nothing can KO it and no promotion can park mid-flight to compete with the heal's
+    own park), AND it is every BENCHED body the prompt offers — 340 HP carries any
+    damage figure a case wants, including the 300 the "all" case needs, without the
+    epilogue's KO sweep removing a candidate from under the assertion. 34 copies
+    keeps it the DOMINANT (mulligan-free) Basic through setup. */
+export const CHOSEN_HEAL_DECK = deckOf({
+  "sv02-121": 4, // Nacli — "Salt Coating" at idx 0: heal 20, ANY zone; "Tackle" at idx 1: {F}{F} for 30
+  "sv01-007": 4, // Tropius — "Fresh-Picked Fruit" at idx 0: heal 60, BENCH only; "Razor Leaf" at idx 1
+  "fix-allheal": 4, // FIXTURE — Blissey/Arboliva's real "all" sentence on an invented Basic body
+  "fix-fighting-energy": 5, // Basic {F} — pays Salt Coating's single Fighting (and Tackle's two)
+  "fix-grass-energy": 5, // Basic {G} — pays Fresh-Picked Fruit's single Grass (and Razor Leaf's first)
+  "fix-energy": 4, // Basic {C} — pays fix-allheal's {C}{C} line and Razor Leaf's second symbol
+  "fix-titan": 34, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + every candidate body
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

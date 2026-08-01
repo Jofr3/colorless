@@ -1585,7 +1585,74 @@ import type { GameState, Seat } from "./types";
     `discardDeckTop` were all already correct. No rng.ts / continuous.ts / attack.ts /
     events.ts diff. NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState` shape
     and no event shape changed. No web/API/DB/`@luminous/schema` diff. */
-export const engineVersion = "0.85.0";
+/** 0.86.0 — P3-M5: the CHOSEN HEAL (D135). "Heal {N|all} damage from 1 of your
+    [Benched] Pokémon." now SIMULATES — **10 printings across 7 distinct clauses** on
+    ONE anchored regex, ONE deriver arm and ONE NEW FIELD, and it closes the heal
+    family: every "Heal …" sentence the pool prints as an attack now has a reader
+    except Iron Moth sv06.5-009's damage-echo and Floette sv01-092's compound gate.
+    Censused against the local D1 (2026-08-01) over the WHOLE effect string —
+    ANY-ZONE: Nacli sv02-121/-220 "Salt Coating" (20), Smoliv sv01-021 "Nutrients"
+    (30), Vespiquen ex sv03-096/-212 "Healing Pheromone" (60); BENCH-ONLY: Combee
+    sv03-008 "Share" (20), Chansey swsh10.5-051 "Delicious Egg" (30), Tropius sv01-007
+    "Fresh-Picked Fruit" (60), Blissey swsh10.5-052 "Enriching Egg" + Arboliva
+    sv03-021 "Healing Fruit" ("all"). NOT ONE of the ten carries a printed `damage`
+    field, so the heal is the entire visible result every time.
+
+    THE MECHANISM QUESTION THIS SLICE WAS PRICED ON DOES NOT EXIST. Three slices of
+    notes called it "the first PARKING op the ATTACK deriver emits" and asked how
+    D125's tail placement interacts with a park. It interacts perfectly, and has since
+    long before: `damageChosen` (the derived snipes) and `discardEnergy` (the derived
+    self-discard cost) already park from an attack tail, through the same
+    `settleProgram(..., { resumeTail: true })` trainers use minus the flag. The park
+    writes an `effect:choose` phase and LEAVES `attackEpilogue` on `state.pending`, so
+    the KO sweep, the prizes and §5.3's turn end all wait for the choice and then run
+    in order. ZERO attack.ts / flow.ts / cardplay.ts diff. The generalisation is about
+    the NOTE rather than the code: A FORECAST OF COST IS NOT A MEASUREMENT OF IT — the
+    note was written by a slice that never looked, carried forward verbatim three
+    times, and the check took one read. Verify a forecast before letting it re-rank a
+    list.
+
+    THE ONLY NEW VOCABULARY IS `healChosen.zone?: "bench"` — the printed word
+    "Benched" and nothing else (§1.1: absent, the Active is one of your Pokémon and is
+    offered; present, it is not). A FIELD rather than a second op member, because
+    everything downstream of picking the candidate set is byte-identical: same park,
+    same choice shape, same heal, same HEALED event (D131's widen-don't-add rule).
+    The interpreter diff is one ternary over `ownBenchRefs` — a helper `switchActive`
+    and `gust` have used since 0.x — plus the prompt heading, which is zone-aware in
+    BOTH arms on purpose: a field that silently meant nothing on the `upTo` arm would
+    be a trap for the first author who combines them, and a heading that disagreed
+    with its candidates would lie about what it is offering.
+
+    ONE REGEX, TWO CAPTURES, ONE OP — D131's shape exactly, and NOT a D120 template:
+    both varying tokens land in FIELDS of a single op rather than rows of a lookup
+    table, so D119 does not govern and there is no table to look anything up in.
+    "all" cost one alternation branch and nothing else, because `healChosen.amount`
+    has taken `number | "all"` since 0.x (Arboliva's "Enriching Oil" Ability prints
+    it — a DIFFERENT printing on the same card as one of the ten, and its registry row
+    is untouched). The cross product is deliberately UNFILTERED: "Heal all damage from
+    1 of your Pokémon." is unprinted and this anchor accepts it, the same call D131
+    made for the unprinted "the top 1 cards" — a refusal would be a claim about the
+    ingest rather than about the game.
+
+    AN EMPTY BENCH IS A WHIFF, NOT A SKIP, and that is the reading worth testing.
+    `parkOrForce` has three endings and all three are real: zero candidates resolves
+    SILENTLY, exactly one is applied INLINE with no prompt, and two or more park. So a
+    lone-Active Tropius reads its sentence, finds nobody to heal and ends the turn in
+    one action — with NO `ATTACK_EFFECT_SKIPPED`, because the sentence WAS read (the
+    D134 three-state distinction, on a different axis).
+
+    Cost: 1 regex, 1 deriver arm, 1 `EffectOp` FIELD, 1 interpreter ternary + 1 note
+    parameter, 3 test fixtures, 1 test deck, 1 test file, 2 re-pointed witnesses
+    (selfHeal, boardHeal — 5 of selfHeal's 7 near-misses now land on a neighbour,
+    which is what a family being finished looks like from the inside). ZERO new
+    events, ops, `EffectOp`/`AttackCoinFlip`/`AttackFlipCount`/`BoardCondition`/
+    `DamageCountSource` members, clause-table rows, state fields, PROMPTS, error
+    codes, registry rows, redact arms or log arms. No rng.ts / continuous.ts /
+    attack.ts / flow.ts / cardplay.ts / events.ts diff. NO MATCH_RECORD_VERSION BUMP —
+    the same widening-not-a-missing-field distinction D125 recorded, and an absent
+    optional field reads identically in every older record. No web/API/DB/
+    `@luminous/schema` diff. */
+export const engineVersion = "0.86.0";
 
 export type {
   ApplyResult,

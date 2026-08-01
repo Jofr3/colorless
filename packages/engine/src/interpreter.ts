@@ -1079,13 +1079,22 @@ function stepOp(
     case "gust":
       return parkOrForce(state, oppBenchRefs(state, ctx.seat), (ref) => gust(state, ref, ctx, events), "Gust up which of the opponent's Benched Pokémon?");
     case "healChosen": {
+      // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
+      // it drops the Active from the candidate set and changes NOTHING else —
+      // same park, same choice shape, same heal, same HEALED event. The zone is
+      // applied to BOTH arms from one place on purpose: a field that silently
+      // meant nothing on the `upTo` arm would be a trap for the first author who
+      // combines them (no printing does today), and the heading has to agree
+      // with the candidates or the prompt lies about what it is offering.
+      const candidates =
+        op.zone === "bench" ? ownBenchRefs(state, ctx.seat) : ownInPlayRefs(state, ctx.seat);
+      const zoneWord = op.zone === "bench" ? "Benched " : "";
       if (op.upTo !== undefined) {
         // The printed "up to N … each" (Saguaro). §8.6 clamps the ASK to the
         // board; min is 0 because "up to" legalizes taking fewer — including
         // none — so unlike the mandatory single arm below this parks at every
         // non-empty board: the take-fewer right is the same decision over one
         // candidate as over six (the declinable-snipe rule, D47).
-        const candidates = ownInPlayRefs(state, ctx.seat);
         if (candidates.length === 0) return { done: state };
         const max = Math.min(op.upTo, candidates.length);
         return {
@@ -1095,11 +1104,11 @@ function stepOp(
             min: 0,
             max,
             declinable: false,
-            note: healUpToNote(op.amount, max),
+            note: healUpToNote(op.amount, max, zoneWord),
           },
         };
       }
-      return parkOrForce(state, ownInPlayRefs(state, ctx.seat), (ref) => healChosen(state, ref, op.amount, ctx, events), "Heal which of your Pokémon?");
+      return parkOrForce(state, candidates, (ref) => healChosen(state, ref, op.amount, ctx, events), `Heal which of your ${zoneWord}Pokémon?`);
     }
     case "attachEnergyFrom": {
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
@@ -1849,10 +1858,13 @@ function snipeNote(
     with `max` already §8.6-clamped to the board — one Pokémon in play asks
     "up to 1", because doing as much as you can is about the number, not the
     whether. `"all"` has no printed consumer with `upTo` yet; the phrase is
-    ready so an author can never park a heading that lies about the amount. */
-function healUpToNote(amount: number | "all", max: number): string {
+    ready so an author can never park a heading that lies about the amount, and
+    `zoneWord` ("Benched " or "") is there for the same reason — no printing
+    combines "up to N" with the Bench filter either, and the heading must still
+    describe the candidates it was built from (D135). */
+function healUpToNote(amount: number | "all", max: number, zoneWord: string): string {
   const what = amount === "all" ? "all damage" : `${amount} damage`;
-  return `Choose up to ${max} of your Pokémon and heal ${what} from each of them.`;
+  return `Choose up to ${max} of your ${zoneWord}Pokémon and heal ${what} from each of them.`;
 }
 
 /** Heal `amount` HP from EACH of the controller's own in-play Pokémon

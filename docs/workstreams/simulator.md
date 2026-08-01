@@ -7133,3 +7133,182 @@ The heal census stays CLOSED (D133); the gated census above is now the live map.
 - **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132/D133: a channel from the
   §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt
   `sv03-032`. Do it last or not at all, and do it *with* Camerupt.
+
+## D135 — the CHOSEN HEAL: `Heal {N|all} damage from 1 of your [Benched] Pokémon.` (engine 0.86.0)
+
+The heal family's third and last printed shape now SIMULATES on **ONE anchored regex,
+ONE `deriveAttackEffect` arm and ONE NEW FIELD** — **10 printings across 7 distinct
+clauses**, the family's largest single mapping. Taken as the top item of D134's
+remainder list, which had ranked it first *and priced it wrong* (see below).
+
+After this slice, every `Heal …` sentence the pool prints as an attack has a reader
+except two: Iron Moth `sv06.5-009`'s damage-echo and Floette `sv01-092`'s compound
+gate. **The heal neighbourhood is closed.**
+
+### The census (local D1, 2026-08-01, whole effect string, 978 cards)
+
+`json_extract(attacks_json, '$[*].effect') LIKE '%Heal%'` over `json_each`, read in
+full rather than sampled. Ten printings match this sentence, and **not one of them
+carries a printed `damage` field** — the heal is the entire visible result every time,
+which is why this slice needed no D125 tail-order reasoning at all.
+
+| Clause | Printings | Cards |
+|---|---|---|
+| `Heal 20 damage from 1 of your Pokémon.` | 2 | Nacli `sv02-121`/`-220` "Salt Coating" |
+| `Heal 30 damage from 1 of your Pokémon.` | 1 | Smoliv `sv01-021` "Nutrients" |
+| `Heal 60 damage from 1 of your Pokémon.` | 2 | Vespiquen ex `sv03-096`/`-212` "Healing Pheromone" |
+| `Heal 20 damage from 1 of your Benched Pokémon.` | 1 | Combee `sv03-008` "Share" |
+| `Heal 30 damage from 1 of your Benched Pokémon.` | 1 | Chansey `swsh10.5-051` "Delicious Egg" |
+| `Heal 60 damage from 1 of your Benched Pokémon.` | 1 | Tropius `sv01-007` "Fresh-Picked Fruit" |
+| `Heal all damage from 1 of your Benched Pokémon.` | 2 | Blissey `swsh10.5-052` "Enriching Egg", Arboliva `sv03-021` "Healing Fruit" |
+
+**A correction to D134's remainder list**, which had the Bench half at *4 printings /
+4 clauses*: it is **5 / 4**. Arboliva `sv03-021` prints the "all" clause as its
+**attack** ("Healing Fruit"), and the `ARBOLIVA` registry row is a *different printing
+on the same card* — its `onEvolve` triggered Ability "Enriching Oil", which heals **1
+of your Pokémon** with no zone word. Two sentences, one card, and only the ability had
+a row. The row is untouched; the attack now derives.
+
+### ⚠️ The mechanism question this slice was priced on does not exist
+
+D132, D133 and D134 each carried this item forward with the same note: *"`healChosen`
+exists but PARKS on a choice, so this would be **the first parking op the ATTACK
+deriver emits** — check how D125's tail placement interacts with a park before pricing
+it."* That note made it the expensive item on three consecutive lists.
+
+**It is false, and had been for many slices.** `damageChosen` (the derived snipes) and
+`discardEnergy` (the derived self-discard cost) already park from an attack tail. The
+tail runs through the *same* `runProgram` + `settleProgram` a Trainer does, differing
+only by `{ resumeTail: true }`; a park writes an `effect:choose` phase, emits
+`EFFECT_PENDING`, and **leaves `attackEpilogue` on `state.pending`** — so the KO sweep,
+the prizes and §5.3's turn end all wait for the choice and then run in printed order.
+**ZERO `attack.ts` / `flow.ts` / `cardplay.ts` diff.**
+
+**THE GENERALISATION IS ABOUT THE NOTE, NOT THE CODE: A FORECAST OF COST IS NOT A
+MEASUREMENT OF IT.** The note was written by a slice that never looked, was copied
+forward verbatim three times, and gained authority from repetition alone. Checking it
+took one read of `attack.ts`'s tail. **Verify a forecast before you let it re-rank a
+list** — a wrong one is worse than no estimate, because it *moves* work rather than
+merely leaving it unsized.
+
+### ⚠️ The only new vocabulary is `healChosen.zone?: "bench"`
+
+The printed word "Benched" and nothing else (D120). Absent — the unmarked printing —
+the candidates are ALL the controller's Pokémon, Active included, because §1.1 says the
+Active is one of your Pokémon. Present, the Active is dropped. That is the entire
+content of the word.
+
+**A FIELD, NOT A SECOND OP MEMBER** (D131's widen-don't-add rule, applied to the op
+that already carries `upTo` the same way): everything downstream of picking the
+candidate set is byte-identical — same park, same choice shape, same heal, same
+`HEALED` event. The interpreter diff is **one ternary** over `ownBenchRefs`, a helper
+`switchActive` and `gust` have used since 0.x.
+
+**The zone is applied to BOTH arms from one place**, including `upTo`, which no
+printing combines with it today. A field that silently meant nothing on one arm is a
+trap for the first author who combines them; and `healUpToNote` takes the zone word for
+the same reason — a heading that disagreed with its candidates would lie about what it
+is offering. (`healUpToNote`'s existing callers pass `""`, so Saguaro's heading is
+byte-identical.)
+
+### ⚠️ One regex, two captures, one op — and why that is not a D120 template
+
+`/^Heal (\d+|all) damage from 1 of your (Benched )?Pokémon\.$/`. Both varying tokens
+land in **fields of a single op** (`amount`, `zone`) rather than rows of a lookup
+table, so D119 does not govern — that is D131's `discardDeckTop { whose, count }` shape
+exactly. And it is **not** a D120 template, because a template needs a varying token
+with a CLOSED reading *and a table to look it up in*; here there is no table, and
+`Benched ` is a one-bit presence.
+
+**"all" is a spelling of the amount, not a separate sentence.** `healChosen.amount` has
+taken `number | "all"` since 0.x, so the two Blissey/Arboliva printings cost one
+alternation branch and nothing else.
+
+**The cross product is deliberately UNFILTERED.** `Heal all damage from 1 of your
+Pokémon.` is unprinted today and this anchor accepts it — the same call D131 made for
+the unprinted "the top 1 cards". It is unambiguous and the op expresses it exactly; a
+refusal would be a claim about the *ingest*, not about the game.
+
+### ⚠️ An empty Bench is a WHIFF, not a SKIP
+
+`parkOrForce` has three endings and every one of them is reachable from these ten
+printings:
+
+1. **zero candidates** — resolves SILENTLY, no prompt, no event (a lone-Active Tropius:
+   there is nobody benched to heal);
+2. **exactly one** — applied INLINE, no prompt at all (the M1 no-choice doctrine);
+3. **two or more** — parks on a `choosePokemon`.
+
+None of the three emits `ATTACK_EFFECT_SKIPPED`, and that is not an accident of the
+code: `attack.ts`'s `effectSimulated` is `program !== null || …`, so a derived program
+means the sentence WAS read whatever it then did. This is D134's three-state
+distinction on a different axis — **read-and-whiffed is not unread** — and the
+empty-Bench case is the one a build that treated "no candidates" as a parse failure
+would get wrong.
+
+### ⚠️ The witnesses this slice re-pointed
+
+`selfHeal.test.ts` and `boardHeal.test.ts` each listed all three chosen-heal clauses as
+"stays LOUD" near-misses. All three are now mapped, so per the standing note they were
+**re-pointed, never deleted**, and each now makes a stronger claim than its null did:
+`not.toContainEqual({ op: "heal" })` / `not.toContainEqual({ op: "healEach" })` plus a
+positive assertion of the `healChosen` shape the neighbouring anchor must NOT produce.
+
+**Five of `selfHeal`'s seven near-misses now land on a neighbouring anchor** — which is
+what a family being finished looks like from the inside. The suite's claim needs a live
+unmapped witness to keep being about anything, so **Floette `sv01-092` "Magical Leaf"
+was ADDED**: *"Flip a coin. If heads, this attack does 30 more damage, and heal 30
+damage from this Pokémon."* — this anchor's exact action, lowercase, at the tail of a
+gated sentence that also carries a pre-damage bonus the same op cannot ride. Genuinely
+unmapped, and the sharpest live guard on `^` the file has left.
+
+### The suite
+
+`chosenHeal.test.ts` — **25 tests**, seed-free (this family takes no coin, pinned by an
+unchanged `rngState` across a whole resolution). Full `bun run check` green exit 0,
+**178 files / 2857 tests** (was 177 / 2831).
+
+Derivation: all seven clauses table-driven; the `zone` key asserted **ABSENT** rather
+than `undefined` on the any-zone derivations (an explicit-undefined key is not
+`toEqual`-identical to an absent one against a hand-authored registry row); op identity
+against Potion's authored `{ op: "healChosen", amount: 30 }`; zero registry rows for all
+eight cards (Arboliva keeps its `triggered` Ability row); whitespace tolerance and an
+NBSP case spelled as an escape; the mid-sentence refusals (Saguaro, Floette) and the
+neighbouring-anchor shape claims.
+
+End to end: all three `parkOrForce` endings, a **damaged Active excluded** from a
+bench-only `prompt.candidates`, the `resumeTail` park→`resolveEffect`→epilogue round
+trip with `TURN_ENDED` strictly after `HEALED`, the per-target clamp, the silent whiff,
+and the illegal-choice rejection.
+
+Fixtures: Nacli `sv02-121` (70 HP Fighting Basic — "Salt Coating" idx 0, "Tackle"
+`{F}{F}`/30 idx 1), Tropius `sv01-007` (100 HP Grass Basic — "Fresh-Picked Fruit" idx 0,
+"Razor Leaf" `{G}{C}`/50 idx 1) and **`fix-allheal`**, an INVENTED Basic carrying
+Blissey/Arboliva's real "all" sentence — invented because both real printings are
+evolutions and an evolution chain is not what that case is about. Own deck
+(`CHOSEN_HEAL_DECK`), per the house convention.
+
+Two traps that did not bite because they were carried forward: `setActiveFromDeck`
+**displaces** the Active it replaces onto the Bench (use `clearBench` — D133), and
+own-board damage figures must be read against the FIXTURE's printed HP rather than
+copied from the heal suites' 340 HP defender boards (D134).
+
+### Still unmapped after D135 — ranked by cost
+
+The heal census is CLOSED (D133, extended by D135); the gated census in the D134
+section above is still the live map for anything in the "Flip a coin. If heads, …"
+neighbourhood — do not re-run it.
+
+- **`Move all damage counters from 1 of your Benched Pokémon to your opponent's Active
+  Pokémon.` — 2 printings**, Dedenne ex `sv02-093`/`-239` "Dedechange". Found while
+  censusing this slice. D121's warrant met. **The CHOICE half is now free** —
+  `healChosen`'s bench-filtered park is exactly this candidate set — but the move half
+  is new: it is a heal on your side AND a counter placement on theirs, in one op, and
+  the amount is "however many were there". Read D135's zone field before pricing it.
+- **The gated PREVENT clause — 13 printings / 2 spellings**, still the biggest single
+  un-taken count in the gated census. "…during your opponent's next turn, prevent all
+  damage from and effects of attacks done to this Pokémon." A §11 block with a
+  DURATION, so the cost is a CONTINUOUS-EFFECT mechanism rather than a reader.
+- **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132/D133/D134: a channel from
+  the §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt
+  `sv03-032`. Do it last or not at all, and do it *with* Camerupt.

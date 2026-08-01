@@ -93,11 +93,13 @@ const CLAUSES = [
     file's "stays LOUD" witnesses, and better ones than invented strings would be —
     each names a real card that is genuinely unsimulated today (except the last,
     which is simulated by the OTHER anchor and is pinned as such):
-      • Nacli sv02-121 / -220 "Salt Coating" — a CHOSEN target. `healChosen` exists
-        as an op; the sentence has no reader, so the row stays loud.
+      • Nacli sv02-121 / -220 "Salt Coating" — a CHOSEN target.
+        (SIMULATED SINCE 0.86.0 by `CHOSEN_HEAL` — D135. Like Fuecoco below it keeps
+        its case: the claim was never "unmapped", it is that THIS anchor's target is
+        "this Pokémon" and a chosen one is a different op.)
       • Tropius sv01-007 "Fresh-Picked Fruit" — a chosen BENCHED target for a printed
-        amount. `healChosen` exists as an op but has no Bench FILTER, so both halves
-        of the sentence are unread and the row stays loud.
+        amount. (SAME, 0.86.0: `healChosen` grew the Bench FILTER it lacked, as a
+        FIELD rather than a second op.)
         (RE-POINTED at 0.84.0. This slot held Steenee sv03-017 "Aromatherapy" / the
         Skeledirge ex "Vitality Song" clause — "Heal {N} damage from each of your
         Pokémon." — until D133 mapped it onto `healEach`. Per the standing note below
@@ -105,6 +107,8 @@ const CLAUSES = [
         live in boardHeal.test.ts.)
       • Blissey swsh10.5-052 / Arboliva sv03-021 — a chosen BENCHED target, healed
         for "all". Two things unmapped at once: the zone and the amount.
+        (SIMULATED SINCE 0.86.0 — D135 took both halves in one arm, because
+        `healChosen.amount` had taken `number | "all"` since 0.x.)
       • Fuecoco sv02-035 / -201 — THE SAME ACTION, THE SAME TARGET, GATED BEHIND A
         FLIP. The dangerous one: a reader without `^` would take the tail of this
         sentence and heal unconditionally, turning a coin into a certainty.
@@ -117,6 +121,14 @@ const CLAUSES = [
         number at all but a read of the damage this attack just dealt.
       • Slowpoke sv01-042 / -204 "Rest" — the COMPOUND form, refused by THIS anchor
         and simulated by SELF_SLEEP_HEAL. Its presence here is the boundary case.
+      • Floette sv01-092 "Magical Leaf" — ADDED at 0.86.0, and the file's sharpest
+        live witness now that D135 mapped three of the six above. It prints THIS
+        anchor's exact action, in lowercase, at the tail of a gated sentence that
+        ALSO carries a damage bonus: "Flip a coin. If heads, this attack does 30 more
+        damage, and heal 30 damage from this Pokémon." Genuinely unmapped everywhere
+        — `coinFlipGate` could carry the heal, but the bonus is pre-damage math and
+        the two cannot ride one op — so the row stays loud, and a reader that dropped
+        `^` or added /i would half-resolve it and silently forget the 30.
 
     STANDING NOTE: when a later slice maps one of these, RE-POINT the case at another
     still-unmapped clause — never delete it. The suite's claim is that an unread
@@ -129,21 +141,24 @@ const REAL_NEAR_MISSES = [
   "Flip a coin. If heads, heal 30 damage from this Pokémon.",
   "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
   "This Pokémon is now Asleep. Heal 30 damage from it.",
+  "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage from this Pokémon.",
 ] as const;
 
 /** The rows that are unmapped EVERYWHERE — the ones that must derive to nothing on
     this reader because they derive to nothing on any reader. Split out rather than
     sliced inline, because the excluded rows' exclusion is a CLAIM and not a loop
-    bound: index 3 (Fuecoco, gated) is simulated by `FLIP_SELF_HEAL` since 0.85.0 and
-    index 5 (the compound Sleep form) by `SELF_SLEEP_HEAL` since 0.x. Both keep their
-    own cases below — a loop over all six would be asserting that a simulated card is
-    unsimulated. */
-const UNMAPPED_NEAR_MISSES = [
-  REAL_NEAR_MISSES[0],
-  REAL_NEAR_MISSES[1],
-  REAL_NEAR_MISSES[2],
-  REAL_NEAR_MISSES[4],
-] as const;
+    bound: indices 0–2 (the CHOSEN heals) are simulated by `CHOSEN_HEAL` since 0.86.0,
+    index 3 (Fuecoco, gated) by `FLIP_SELF_HEAL` since 0.85.0, and index 5 (the
+    compound Sleep form) by `SELF_SLEEP_HEAL` since 0.x. Each keeps its own case
+    below — a loop over all seven would be asserting that a simulated card is
+    unsimulated.
+
+    IT IS DOWN TO TWO, and that is the honest state of this neighbourhood rather than
+    a gap: after D135 the only real catalog rows sharing these words that NOTHING
+    reads are Iron Moth's damage-echo and Floette's compound gate. Both were kept
+    (and Floette added) because the suite's claim — an unread sentence stays LOUD —
+    needs a live witness to keep being about anything. */
+const UNMAPPED_NEAR_MISSES = [REAL_NEAR_MISSES[4], REAL_NEAR_MISSES[6]] as const;
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII
     space and INVISIBLE in a diff, which is exactly why the case names it instead of
@@ -274,16 +289,44 @@ describe("the anchor — 18 printings, 4 clauses, one sentence", () => {
     ]);
   });
 
-  it("refuses the FOUR unmapped catalog rows that share its words", () => {
-    // Four of the six are unmapped everywhere and must derive to nothing at all. The
-    // other two — Fuecoco's gated form and the compound Sleep form — are refused by
-    // THIS anchor and claimed by ANOTHER, which is a different statement and gets its
-    // own case below; a loop over all six would be asserting that a simulated card is
-    // unsimulated.
+  it("refuses the TWO unmapped catalog rows that share its words", () => {
+    // Two of the seven are unmapped everywhere and must derive to nothing at all. The
+    // other five — the three CHOSEN heals, Fuecoco's gated form and the compound
+    // Sleep form — are refused by THIS anchor and claimed by ANOTHER, which is a
+    // different statement and gets its own case below; a loop over all seven would be
+    // asserting that a simulated card is unsimulated.
     for (const text of UNMAPPED_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 2);
+    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 5);
+  });
+
+  it("hands the CHOSEN forms to their own anchor — and none of them is a self-heal", () => {
+    // RE-POINTED AT 0.86.0 (D135). These three rows were this file's oldest live
+    // witnesses; `CHOSEN_HEAL` mapped all three in one arm, so per the standing note
+    // they were re-pointed rather than deleted and now make a SHAPE claim instead of
+    // a null. The claim that matters is the one this anchor always meant: "this
+    // Pokémon" is the ATTACKER and nobody else, so no rewrite of the target may ever
+    // derive to `{ op: "heal", target: "self" }`.
+    for (const text of [REAL_NEAR_MISSES[0], REAL_NEAR_MISSES[1], REAL_NEAR_MISSES[2]]) {
+      const ops = deriveAttackEffect(text);
+      expect(ops).not.toBeNull();
+      expect(ops).not.toContainEqual(expect.objectContaining({ op: "heal" }));
+      expect(ops).toEqual([expect.objectContaining({ op: "healChosen" })]);
+    }
+    // AND THE ZONE WORD IS LOAD-BEARING, asserted here rather than only next door:
+    // the two Benched rows carry it and the bare one does not, which is the entire
+    // difference between healing the attacker's own board and healing everything but
+    // the attacker.
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toEqual([
+      { op: "healChosen", amount: 20 },
+    ]);
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[1])).toEqual([
+      { op: "healChosen", amount: 60, zone: "bench" },
+    ]);
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[2])).toEqual([
+      { op: "healChosen", amount: "all", zone: "bench" },
+    ]);
   });
 
   it("hands the GATED form to the flip anchor — and the heal inside it is THIS one", () => {
@@ -363,14 +406,15 @@ describe("the anchor — 18 printings, 4 clauses, one sentence", () => {
       // OTHER TARGETS, spelled the way the pool spells them. Each is a different op
       // (healChosen / healEach / healEachAll) or no op at all — and the point of the
       // list is that THIS anchor refuses all of them, whether or not some other
-      // anchor claims them. "each of your Pokémon" used to sit here and no longer
-      // does: 0.84.0 (D133) gave it a reader of its own, so asserting it derives to
-      // null would now be false. Chansey swsh10.5-051's Benched clause replaced it —
-      // same neighbourhood, still unread by anything.
+      // anchor claims them. The list has SHRUNK TWICE for the same reason: "each of
+      // your Pokémon" left at 0.84.0 (D133) and both "1 of your [Benched] Pokémon"
+      // spellings at 0.86.0 (D135), because asserting a null for a sentence that now
+      // derives would be false. What replaces them are targets nothing reads —
+      // "your Active Pokémon" (the pool never spells the Active that way in a heal)
+      // and the opponent's, which no printing heals at all.
       "Heal 30 damage from your Active Pokémon.",
-      "Heal 30 damage from 1 of your Benched Pokémon.",
-      "Heal 30 damage from 1 of your Pokémon.",
       "Heal 30 damage from your opponent's Active Pokémon.",
+      "Heal 30 damage from your opponent's Benched Pokémon.",
       // COUNTERS, not HP. "Remove N damage counters" is the older wording for the
       // same idea and a different arithmetic (§12: one counter = 10 HP); nothing in
       // this pool prints it, and a reader that guessed would be off by a factor of 10.
