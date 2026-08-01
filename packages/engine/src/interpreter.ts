@@ -1166,6 +1166,21 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && hasAttachedEnergy(state, active, cond.energy);
     }
+    case "opponentPrizesRemaining":
+      // §3.8 — what is still face down on their side, the same read
+      // `morePrizesThanOpponent` makes and the complement of `takenPrizes`. The
+      // printed "exactly" makes this set MEMBERSHIP: on `[2, 4]` a 3-Prize board
+      // is FALSE, sitting between two true values.
+      return cond.counts.includes(state.players[otherSeat(seat)].prizes.length);
+    case "opponentHandAtMost":
+      // The SIZE of their hand, never its contents — the line the union's
+      // public-state invariant draws, and the reason this survives P4 redaction
+      // (the wire ships face-down backs with a real length).
+      return state.players[otherSeat(seat)].hand.length <= cond.count;
+    case "handSizesEqual":
+      // The vocabulary's one SEAT-SYMMETRIC member: equality commutes, so this
+      // reads the same for p1 and p2 on any board. Sizes only, as above.
+      return state.players[seat].hand.length === state.players[otherSeat(seat)].hand.length;
   }
 }
 
@@ -1211,7 +1226,28 @@ export function conditionNote(cond: BoardCondition): string {
       return cond.energy === "special"
         ? "your Active Pokémon has a Special Energy attached"
         : `your Active Pokémon has ${cond.energy} Energy attached`;
+    case "opponentPrizesRemaining":
+      // Built from the parameter, agreement and all: the printed sentences read
+      // "exactly 1 Prize card" and "exactly 2 or 4 Prize cards", so the noun is
+      // singular exactly when the only admitted count is 1. `printedList` spells
+      // the list the way the pool does, Oxford comma included.
+      return `your opponent has exactly ${printedList(cond.counts)} Prize card${
+        cond.counts.length === 1 && cond.counts[0] === 1 ? "" : "s"
+      } remaining`;
+    case "opponentHandAtMost":
+      return `your opponent has ${cond.count} or fewer cards in their hand`;
+    case "handSizesEqual":
+      return "you have the same number of cards in your hand as your opponent";
   }
+}
+
+/** "1", "2 or 4", "2, 4, or 6" — the pool's own way of printing a count list
+    (all three arities appear in it), used by `conditionNote` so a generated
+    fragment reads like the card it came from. */
+function printedList(values: readonly number[]): string {
+  if (values.length <= 1) return String(values[0] ?? 0);
+  if (values.length === 2) return `${values[0]} or ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, or ${values[values.length - 1]}`;
 }
 
 /** §8.5 — the attacker's total pre-W/R damage bonus for a hit landing on the

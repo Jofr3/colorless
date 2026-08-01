@@ -4958,3 +4958,115 @@ The family's registry claim is **"zero registry ATTACK rows"**, not "zero regist
 payFromHand slice) on a key the attack path never consults. The suite asserts it both ways — four
 ids with no row at all, Tinkaton's row named and explained — rather than tolerating a claim that is
 almost true. Check `programFor(id)?.attack`, not `programFor(id)`, when making this claim again.
+
+## D119 (engine 0.70.0) — the PUBLIC-COUNT cluster: clauses that read no Pokémon at all
+
+The clause family's fifth wave. 5 printings / 4 cards / 4 clauses on **zero registry rows**, with no
+change to the fold, the ops, the events or the wire. `publicCount.test.ts` (44) on a dedicated
+`PUBLIC_COUNT_DECK`.
+
+| printed clause | `BoardCondition` | card | printings |
+|---|---|---|---|
+| `your opponent has exactly 1 Prize card remaining` | `opponentPrizesRemaining` `{counts:[1]}` | Krokorok `sv01-116` "Payback" (+90) | 1 |
+| `your opponent has exactly 2 or 4 Prize cards remaining` | … `{counts:[2,4]}` | Houndstone `sv03-101` "Two Four-ocious" (+120) | 1 |
+| `your opponent has 3 or fewer cards in their hand` | `opponentHandAtMost` `{count:3}` | Absol ex `sv03-135`/`-214` "Cursed Slug" (+120) | 2 |
+| `you have the same number of cards in your hand as your opponent` | `handSizesEqual` | Bronzong `sv03-145` "Extrasensory" (+90) | 1 |
+
+### The rules call: a COUNT is public even when the cards are not
+
+`BoardCondition`'s standing invariant says every member reads only public state, and it names **"a
+hand's CONTENTS"** as the thing that would break it. A hand's **SIZE** is on the other side of that
+line: both players watched every draw, play and discard that set it. redact.ts already agrees — the
+opponent's hand ships as `hiddenHand(side.hand.length)`, face-down backs with a real length — so
+these three members are *more* online-evaluable than `yourStadiumInPlay`, which the wire withholds.
+None of them widens the P4 gap.
+
+> **Reusable form:** when a printed clause reads a hidden zone, ask whether it reads the zone or a
+> COUNT over it. A count is usually public and usually already on the wire.
+
+### `exactly` is set MEMBERSHIP, never a range
+
+`counts: readonly number[]`, matched with `.includes`. `[2, 4]` is **not** "2 to 4" — the case that
+catches the confusion is a 3-Prize board reading FALSE between two true values, and the suite sweeps
+0-6 rather than sampling. The single-valued `[1]` is the degenerate case of the same member, which
+also makes **0 Prizes FALSE** — the thing a "1 or fewer" reading would get wrong.
+
+### Two values, one member — and still two LITERAL rows
+
+The two Prize sentences share a shape, so they share a member (D118's rule). They do **not** share a
+template, and the reason is the rule's own wording — "one TOKEN varying":
+
+- **Two things vary**, the count LIST and the grammatical number agreeing with it ("1 Prize **card**"
+  vs "2 or 4 Prize **cards**"). A pattern spanning both needs `cards?`, which would then accept
+  "exactly 2 Prize card remaining" — text the game does not print.
+- **The printed space is bounded and tiny.** A Prize count is 0-6, and the whole 978-card pool holds
+  three distinct lists across every use of the word "exactly". D118's template paid because the
+  energy space was nine tokens × two notations × forever.
+- **It is reversible by construction.** `boardConditionForClause` runs literals FIRST, so a template
+  added later cannot re-interpret either row. Choosing the cheap form costs nothing later.
+
+The two HAND sentences stay **two members** for a different reason: a threshold against a printed
+constant and an equality between the two hands are different comparisons over different operands.
+They share a noun and nothing else. `handSizesEqual` is the vocabulary's first **seat-symmetric**
+member (equality commutes) — asserted from both seats rather than assumed.
+
+### `conditionNote` round-trips here, and only here
+
+All four notes are **character-for-character the printed clause**. Every earlier note in the family
+had to drop something: a pronoun with no referent on the board (D116/D117) or the timing word
+"already" (D115). These clauses name no Pokémon and no timing, so nothing needs dropping — and the
+Prize note builds its own grammatical agreement from the parameter (`printedList` spells `1`,
+`2 or 4`, `2, 4, or 6` the way the pool does). The suite asserts the round-trip against the clause
+table's own keys.
+
+### Census corrections (local D1, 2026-08-01) — three, all load-bearing
+
+1. **The skeleton is bigger than the docs' number.** `^If (.+), this attack does (\d+) more damage\.$`
+   matches **71 printings / 45 sentences / 32 clauses**. The long-quoted **43 / 32 / 26** is that set
+   **minus the 26-printing coin-flip family minus one anaphoric `you do`** (Cresselia `sv06.5-021`/
+   `-071`, "You may turn 1 of your face-down Prize cards face up. If you do, …"). Both numbers are
+   right; 43/32/26 is the backlog, 71/45/32 is what the regex sees. Say which one you mean.
+2. **One attack can carry three skeleton sentences.** Bisharp `sv03-149` "Fury Cutter" prints the
+   shape three times (20/60/120) in a single `effect`, which is why printings (71) exceed distinct
+   ids (69). A per-card census undercounts.
+3. **`exactly` is a Prize-only word in this pool** — 5 sentences, zero hand-count, in three
+   grammatical forms (`exactly 1`, `exactly 2 or 4`, `exactly 2, 4, or 6`). And **`or fewer` occurs
+   twice in 978 cards, both the same Absol ex string**; there is no `N or more cards in hand` shape
+   anywhere yet.
+
+### The near-misses, and the one that matters
+
+- **Bronzor `sv03-144` "Mirror Draw"** — Bronzong's own **pre-evolution** — prints Extrasensory's
+  entire clause word for word inside a DRAW effect ("Draw cards until you have the same number of
+  cards in your hand as your opponent."). A substring matcher scores a damage bonus off it; the
+  whole-sentence anchor refuses it. This is the sharpest real near-miss the family has found.
+- **Slowbro `swsh10.5-020`** prints Payback's clause in a USABILITY frame ("You can use this attack
+  only if …") — a real future slice (an attack-level `playableIf`), not a bonus.
+- **Slaking V `swsh10.5-058`/`-077`** prints the three-value list on an **Ability**, own-seat: it
+  would want a `yourPrizesRemaining` sibling. Unbuilt, and loud.
+- ~20 rows print "cards in your hand" as a **draw target** and one (Xerosic's Machinations) as a
+  discard target. None is a condition.
+
+### Board facts this slice pinned down
+
+- **With mulligan compensation declined (`extraDraw: 0`), both hands are exactly 7** at P1's turn 2
+  (7 dealt − 1 placed as the Active + 1 drawn). So `handSizesEqual` is TRUE on the untouched board —
+  the family's first clause that the real setup arms by itself. **One more `endTurn` makes it 7 and
+  8**, because the draws alternate: the equality is a property of *where in the turn cycle you look*.
+  Declining compensation is what makes a hand-size suite seed-independent at all.
+- **A two-Prize knockout moves the row 6 → 4 in one swing**, which is exactly one of Houndstone's two
+  printed values — so the clause can be armed through the real §8.1 path (damage surgery on the
+  doomed body, then a genuine attack, `takePrizes` with **both** indices in one action, `promote`).
+  `takePrizes` requires exactly `count` indices per call; after `promote` the phase is already
+  `turn:action` for the KO'd player, because attacking ended the attacker's turn.
+- `fix-bigbody` carries **no attacks** (`battler` defaults them to null), so any case that needs the
+  far seat to swing must field a real attacker there.
+
+### Still unmapped after this slice (13 → 17 of 26 clauses mapped)
+
+`this Pokémon moved from your Bench to the Active Spot this turn` (3, needs per-turn state) ·
+`this Pokémon has a Pokémon Tool attached` (1, a loud witness) · `you have at least 3 {D} Energy in
+play` (1, the other loud witness) · `your opponent's Active Pokémon is a Dragon Pokémon` (1, cheap) ·
+`Falinks is on your Bench` (1, needs a name field) · three that need new per-turn/cross-turn state ·
+`your opponent has any Future Pokémon in play` (blocked on an ingest change) · and the 26-printing
+coin-flip family, which is a different mechanism and deserves its own costed slice.

@@ -267,7 +267,52 @@ export type BoardCondition =
       Active) and the CLAUSE TABLE resolves the printed "this Pokémon". Attached
       Energy sits face up, so the union's public-state invariant holds. False with
       an empty Active Spot. */
-  | { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" };
+  | { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
+  /** §3.8 — your opponent's REMAINING Prize count is one of `counts`: Krokorok
+      sv01-116 "Payback" (+90, `[1]`) and Houndstone sv03-101 "Two Four-ocious"
+      (+120, `[2, 4]`). The printed word is "exactly", so this is set MEMBERSHIP,
+      never a threshold — `[2, 4]` is deliberately not "2 to 4" and the case that
+      catches the confusion is 3 Prizes reading FALSE between two true values.
+
+      The parameter is a LIST rather than a number because the pool prints the
+      clause with one value and with two, and (on an Ability, Slaking V
+      swsh10.5-058/-077) with three; one member covers every arity, and a
+      single-valued list is the degenerate case rather than a second member.
+
+      Remaining, not taken: `prizes.length` is what is still face down, exactly as
+      `morePrizesThanOpponent` reads it and the opposite of `takenPrizes`. Prize
+      COUNTS are public and survive redaction as counts, so — unlike
+      `yourStadiumInPlay` — this member does not widen the P4 gap. */
+  | { kind: "opponentPrizesRemaining"; counts: readonly number[] }
+  /** Your opponent is holding AT MOST `count` cards — Absol ex sv03-135/-214
+      "Cursed Slug" (+120, `3`), the pool's only "or fewer" clause of any kind.
+
+      **The sharpest test of the union's public-state invariant so far, and it
+      passes:** a hand's SIZE is public (both players watched every draw, play and
+      discard that set it) while a hand's CONTENTS are not — which is the exact
+      line the invariant above already draws when it names "a hand's CONTENTS" as
+      the thing a condition may not depend on. redact.ts backs that reading: the
+      opponent's hand ships as `hiddenHand(side.hand.length)`, face-down backs with
+      a real length, so this member is evaluable online in a way a contents-reading
+      one could never be.
+
+      The threshold is a parameter for the same reason D118's energy is: it is the
+      only axis the sentence varies on, and burying the 3 in the member's NAME
+      would make the second printing a second member. */
+  | { kind: "opponentHandAtMost"; count: number }
+  /** Both players are holding the same NUMBER of cards — Bronzong sv03-145
+      "Extrasensory" (+90), the pool's only printing.
+
+      Deliberately NOT folded into `opponentHandAtMost` with a comparison mode: a
+      threshold against a printed constant and an equality between the two hands
+      are different comparisons over different operands, and D118's rule is "one
+      TOKEN varying", not "these look similar". The two clauses share a noun and
+      nothing else.
+
+      The one member of this whole vocabulary that is SEAT-SYMMETRIC — equality
+      commutes, so it reads the same from either seat, and that is asserted rather
+      than assumed. Sizes only, contents never (see the sibling above). */
+  | { kind: "handSizesEqual" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,
@@ -1523,6 +1568,35 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "your opponent's Active Pokémon is a Pokémon ex or Pokémon V",
     { kind: "opponentActiveIsExOrV" },
   ],
+  // Krokorok sv01-116 "Payback" (+90) and Houndstone sv03-101 "Two Four-ocious"
+  // (+120) — ONE member at two values, and still two LITERAL rows rather than a
+  // D118 template. Two things vary between these sentences, not one: the count
+  // LIST and the grammatical number that agrees with it ("1 Prize card" vs
+  // "2 or 4 Prize cards"), and a pattern loose enough to span both would also
+  // accept "exactly 2 Prize card remaining", text the game does not print. The
+  // printed space is bounded and tiny besides (a Prize count is 0-6, and the
+  // whole pool holds three distinct lists across every use of "exactly"). Rows
+  // are matched FIRST, so a template can still be added later without
+  // re-interpreting either of these.
+  [
+    "your opponent has exactly 1 Prize card remaining",
+    { kind: "opponentPrizesRemaining", counts: [1] },
+  ],
+  [
+    "your opponent has exactly 2 or 4 Prize cards remaining",
+    { kind: "opponentPrizesRemaining", counts: [2, 4] },
+  ],
+  // Absol ex sv03-135/-214 "Cursed Slug" (+120) — the two printings are
+  // byte-identical in rules text, so one fixture serves both ids. "their hand",
+  // possessive, is the cross-board half of the pair; the own-hand clause below
+  // reads BOTH hands and neither reads a hand's contents.
+  ["your opponent has 3 or fewer cards in their hand", { kind: "opponentHandAtMost", count: 3 }],
+  // Bronzong sv03-145 "Extrasensory" (+90). Bronzor sv03-144 "Mirror Draw"
+  // prints this clause's exact words ("Draw cards until you have the same number
+  // of cards in your hand as your opponent.") as a DRAW effect — a substring
+  // matcher would score a damage bonus off the pre-evolution; the whole-sentence
+  // anchor is what keeps it off this path.
+  ["you have the same number of cards in your hand as your opponent", { kind: "handSizesEqual" }],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
 // ("Discard a {L} Energy" — Kilowattrel, Arcanine ex) and the spelled-out name

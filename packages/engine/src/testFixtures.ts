@@ -1999,6 +1999,10 @@ export const FIXTURE_POOL: Record<string, Card> = {
       filter admits. Provision comes off the NAME (cards.ts energyProvidesOf), so
       "Darkness Energy" is what makes this a {D}. */
   "fix-dark-energy": typedEnergy("fix-dark-energy", "Darkness"),
+  /** FIXTURE — Basic Metal Energy, the last basic type the pool had no fixture
+      for. Added for D119's Bronzong ({M}{M} "Extrasensory"); provision comes off
+      the NAME exactly as its siblings' does. */
+  "fix-metal-energy": typedEnergy("fix-metal-energy", "Metal"),
   /** FIXTURE — a SECOND catalog print of Basic Darkness Energy (the
       fix-fire-energy-alt shape). The real catalog prints this card under four ids
       (sve-007/-015/-023, sv06.5-098), and the interchangeable collapse keys a
@@ -2583,6 +2587,135 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Special Horn",
         effect:
           "If this Pokémon has any Special Energy attached, this attack does 140 more damage.",
+        damage: "80+",
+      },
+    ],
+  }),
+
+  /** D119 — the PUBLIC-COUNT cluster: four clauses that read a COUNT nobody has
+      to be shown (a hand's size, a Prize row's length) rather than anything on a
+      Pokémon. Four faithful catalog rows, no registry attack rows between them.
+
+      Absol ex sv03-135 (= sv03-214, byte-identical in rules text, one fixture for
+      two ids): a Darkness Basic, 210 HP, ×2 Grass. "Cursed Slug" (+120) is the
+      pool's ONLY "or fewer" clause of any kind.
+
+      It is also faithfully awkward in two ways the suite leans on. Its index-0
+      "Future Sight" is a REAL unbuilt sentence — a look-at-the-top-3 on EITHER
+      player's deck, which no deriver owns — so that index stays loud while index
+      1 does not, and the contrast rides on one card. And being an "… ex" it is
+      itself a two-Prize body, so a KO on it MOVES the very count the cluster's
+      Prize clauses read. */
+  "sv03-135": battler("sv03-135", {
+    name: "Absol ex",
+    types: ["Darkness"],
+    hp: 210,
+    retreat: 1,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness"],
+        name: "Future Sight",
+        effect: "Look at the top 3 cards of either player's deck and put them back in any order.",
+      },
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Cursed Slug",
+        effect:
+          "If your opponent has 3 or fewer cards in their hand, this attack does 120 more damage.",
+        damage: "100+",
+      },
+    ],
+  }),
+
+  /** Bronzong sv03-145 — the EQUALITY clause ("Extrasensory", +90), the pool's
+      only printing, and the only clause in the whole vocabulary that reads the
+      same from either seat. A Metal Stage 1 from Bronzor, 140 HP, ×2 Fire, with a
+      real Grass resistance.
+
+      Its index-0 "Oracle Press" is kept verbatim and is a real unbuilt sentence
+      too (a next-turn effect-prevention rider); it derives to nothing and stays
+      loud, which is the index-keyed negative for this card. Note that its
+      PRE-EVOLUTION, Bronzor sv03-144 "Mirror Draw", prints this card's clause
+      word for word inside a DRAW effect — the near-miss the whole-sentence anchor
+      exists to refuse. */
+  "sv03-145": battler("sv03-145", {
+    name: "Bronzong",
+    types: ["Metal"],
+    stage: "Stage1",
+    evolveFrom: "Bronzor",
+    hp: 140,
+    retreat: 3,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    resistances: [{ type: "Grass", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Metal"],
+        name: "Oracle Press",
+        effect:
+          "During your opponent's next turn, prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)",
+        damage: 20,
+      },
+      {
+        cost: ["Metal", "Metal"],
+        name: "Extrasensory",
+        effect:
+          "If you have the same number of cards in your hand as your opponent, this attack does 90 more damage.",
+        damage: "70+",
+      },
+    ],
+  }),
+
+  /** Krokorok sv01-116 "Payback" (+90) — the single-valued Prize clause
+      ("exactly 1"), and the cluster's only clause printed in the SINGULAR ("Prize
+      card", not "Prize cards"), which is why the note builds its agreement from
+      the parameter. A Fighting Stage 1 from Sandile, 100 HP, ×2 Grass.
+
+      The clause sits at index 0 here and the plain attack at index 1 — the
+      opposite order to the rest of the cluster, so an index the suite hard-codes
+      cannot be right by accident. "Corkscrew Punch" carries NO `effect` key at
+      all (not an empty string — the catalog row omits it). */
+  "sv01-116": battler("sv01-116", {
+    name: "Krokorok",
+    types: ["Fighting"],
+    stage: "Stage1",
+    evolveFrom: "Sandile",
+    hp: 100,
+    retreat: 2,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Payback",
+        effect:
+          "If your opponent has exactly 1 Prize card remaining, this attack does 90 more damage.",
+        damage: "30+",
+      },
+      { cost: ["Fighting", "Fighting"], name: "Corkscrew Punch", damage: 60 },
+    ],
+  }),
+
+  /** Houndstone sv03-101 "Two Four-ocious" (+120) — the SAME member as Krokorok
+      at a two-value list, and the card that makes "exactly" mean set membership
+      rather than a range: on `[2, 4]` a 3-Prize board reads FALSE between two
+      true ones. A Psychic Stage 1 from Greavard, 140 HP, ×2 Darkness, Fighting
+      resistance; "Rear Kick" at index 0 again omits `effect` entirely. */
+  "sv03-101": battler("sv03-101", {
+    name: "Houndstone",
+    types: ["Psychic"],
+    stage: "Stage1",
+    evolveFrom: "Greavard",
+    hp: 140,
+    retreat: 3,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Rear Kick", damage: 30 },
+      {
+        cost: ["Psychic", "Colorless", "Colorless"],
+        name: "Two Four-ocious",
+        effect:
+          "If your opponent has exactly 2 or 4 Prize cards remaining, this attack does 120 more damage.",
         damage: "80+",
       },
     ],
@@ -3556,6 +3689,49 @@ export const ENERGY_CLAUSE_DECK = deckOf({
   "sv02-191": 4, // Luminous Energy — the WILDCARD Special: provides every type, alone
   "sv02-190": 4, // Jet Energy — the second Special that DEMOTES Luminous to {C}
   "fix-bigbody": 17, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the bench body
+});
+
+/** 0.69.0 → 0.70.0: the PUBLIC-COUNT cluster (D119) — four clauses reading a
+    COUNT rather than anything on a Pokémon: Absol ex sv03-135/-214 "Cursed Slug"
+    (their hand ≤ 3, +120), Bronzong sv03-145 "Extrasensory" (the two hands equal,
+    +90), Krokorok sv01-116 "Payback" (their Prizes exactly 1, +90) and Houndstone
+    sv03-101 "Two Four-ocious" (exactly 2 or 4, +120).
+
+    A DEDICATED deck for the usual reason (every existing deck is seed-pinned) and
+    one specific to this slice: HAND SIZE is a thing the clauses read, so a suite
+    that shared a deck would be asserting on numbers another suite's draws move.
+
+    THE DECK IS SIZED BY THE COUNTS IT HAS TO MOVE. fix-bigbody is 30 of the 60 —
+    the DOMINANT mulligan-free starter, both pinned Actives, and the arithmetically
+    clean 200 HP defender every unweighted number is measured against; it carries
+    NO attacks, which is why the one board that needs P2 to swing fields a real
+    Krokorok there instead. Basics are 35 of 60 so the opening hand reliably holds
+    the three spare Basics the ORGANIC hand-shedding case benches to get P2 down to
+    exactly 3 cards. fix-psychic-weak (200 HP, ×2 Psychic) is the §8.5 fold-order
+    defender — Houndstone is Psychic, so (80 + 120) × 2 = 400 against the un-armed
+    control's 160.
+
+    Energy is one line per printed COST and no plain {C} at all: the Colorless
+    symbols in Cursed Slug's {D}{D}{C} and Two Four-ocious's {P}{C}{C} are paid
+    with the attacker's own typed Energy, which is legal (§8.2) and keeps the deck
+    down to four Energy lines. Counts are generous rather than exact because a
+    seat's opening hand and Prize row hold 13 of its 60 cards, and every board here
+    pulls its Energy out of what is LEFT — three copies deep on the two attacks
+    that want three. No Energy in this cast ARMS anything; unlike D118's, every
+    clause here reads a count no Energy can touch. Both seats run the whole deck,
+    since three of the four clauses are seat-asymmetric and the asymmetry is only
+    assertable if the same body can be fielded on either side. */
+export const PUBLIC_COUNT_DECK = deckOf({
+  "sv03-135": 4, // Absol ex — "Cursed Slug" (100+): opponentHandAtMost 3, +120. A 2-PRIZE body.
+  "sv03-145": 4, // Bronzong — "Extrasensory" (70+): handSizesEqual, +90
+  "sv01-116": 4, // Krokorok — "Payback" (30+): opponentPrizesRemaining [1], +90; and the KO swing
+  "sv03-101": 4, // Houndstone — "Two Four-ocious" (80+): opponentPrizesRemaining [2, 4], +120
+  "fix-psychic-weak": 4, // 200 HP, ×2 Psychic — the Weakness defender for the fold-order pair
+  "fix-dark-energy": 6, // Basic {D} — pays Cursed Slug's {D}{D}{C} on its own
+  "fix-metal-energy": 5, // Basic {M} — pays Extrasensory
+  "fix-fighting-energy": 5, // Basic {F} — pays Payback and Corkscrew Punch
+  "fix-psychic-energy": 6, // Basic {P} — pays Two Four-ocious's {P}{C}{C} on its own
+  "fix-bigbody": 18, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the control
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

@@ -756,7 +756,34 @@ import type { GameState, Seat } from "./types";
     union member, 1 `conditionHolds` arm, 1 `conditionNote` arm (the family's
     first built from a parameter rather than returned as a literal), 1 clause
     pattern, 1 token map, 1 continuous.ts predicate. */
-export const engineVersion = "0.69.0";
+
+    /* 0.70.0 — the PUBLIC-COUNT cluster (D119): the conditional-damage family's
+    first clauses that read NOTHING ON A POKÉMON. Krokorok sv01-116 "Payback"
+    (their Prizes exactly 1, +90), Houndstone sv03-101 "Two Four-ocious" (exactly
+    2 or 4, +120), Absol ex sv03-135/-214 "Cursed Slug" (their hand 3 or fewer,
+    +120) and Bronzong sv03-145 "Extrasensory" (the two hands equal, +90). 5
+    printings / 4 cards / 4 clauses, ZERO registry rows, no new op, event, error
+    code or wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+
+    Three `BoardCondition` members: `opponentPrizesRemaining { counts }` (ONE
+    member at two values — the printed "exactly" is set MEMBERSHIP, so `[2, 4]` is
+    not the range 2..4 and a 3-Prize board reads FALSE between two true ones),
+    `opponentHandAtMost { count }` and `handSizesEqual`, the vocabulary's first
+    SEAT-SYMMETRIC member. A hand's SIZE is PUBLIC where its CONTENTS are not,
+    which is exactly the line the union's standing invariant already drew; the
+    wire agrees (redact.ts ships the opponent's hand as `hiddenHand(length)`), so
+    none of the three widens the P4 gap.
+
+    The two Prize sentences share a member but stay TWO LITERAL ROWS rather than a
+    D118 template: two things vary between them, the count LIST and the
+    grammatical number agreeing with it ("1 Prize card" / "2 or 4 Prize cards"),
+    and a pattern loose enough for both would accept text the game never prints.
+    The two HAND sentences stay two members for the same kind of reason — a
+    threshold against a constant and an equality between two hands are different
+    comparisons over different operands. Cost: 3 union members, 3 `conditionHolds`
+    arms, 3 `conditionNote` arms (one built from its parameter, agreement and all),
+    4 table rows. */
+export const engineVersion = "0.70.0";
 
 export type {
   ApplyResult,
