@@ -179,10 +179,18 @@ export type GameEvent =
   /** The §8 step-3 confusion flip for the declared attack — tails is
       followed by ATTACK_FAILED, heads by the normal resolution. */
   | { type: "CONFUSION_CHECK"; seat: Seat; uid: string; result: CoinFace }
-  /** The declared attack did NOT resolve (confusion tails, §12): no damage
-      to the defender, no effects — the 30 self-damage follows as
-      COUNTERS_PLACED and the turn still ends. */
-  | { type: "ATTACK_FAILED"; seat: Seat; uid: string; reason: "confusion" }
+  /** The declared attack did NOT resolve: no damage to the defender, no
+      effects — and the turn still ends either way. Two reasons, and they differ
+      only in what follows:
+        • "confusion" — §12, the step-3 flip came up tails; the 30 self-damage
+          follows as COUNTERS_PLACED.
+        • "requirement" — D125, the attack's printed "If <clause>, this attack
+          does nothing." and the clause held (Palafin "Justice Kick" without the
+          promotion, Lycanroc "Finishing Fang" into an undamaged Active). Nothing
+          follows; the attacker is untouched.
+      A WIDENING of the reason enum, not a shape change — no
+      MATCH_RECORD_VERSION bump (see match.ts's own doc block). */
+  | { type: "ATTACK_FAILED"; seat: Seat; uid: string; reason: "confusion" | "requirement" }
   /** Damage removed from `seat`'s Active by an attack effect; `amount` is
       what actually healed (clamped at the damage present — never 0). */
   | { type: "HEALED"; seat: Seat; uid: string; amount: number }

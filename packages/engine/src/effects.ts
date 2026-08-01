@@ -1865,12 +1865,15 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // three printings. Nothing varies inside the clause; there is nothing to
   // parameterise (D118's rule read from the other end).
   //
-  // The NEGATIVE twin stays LOUD and is not a near-miss of this row: Palafin
-  // sv03-062/-200 "Justice Kick" prints "If this Pokémon didn't move from the
-  // Bench to the Active Spot this turn, this attack does nothing." — a different
-  // CONSEQUENT (so the outer anchor refuses it before this table is consulted),
-  // a different verb form, and "the Bench" without the possessive. Same state
-  // underneath; a `conditionGate`-shaped slice, not a row here.
+  // The NEGATIVE twin is not a near-miss of this row and never reaches it:
+  // Palafin sv03-062/-200 "Justice Kick" prints "If this Pokémon didn't move
+  // from the Bench to the Active Spot this turn, this attack does nothing." — a
+  // different CONSEQUENT (so the outer anchor refuses it before this table is
+  // consulted), a different verb form, and "the Bench" without the possessive.
+  // Same state underneath, and since D125 it SIMULATES, off its own skeleton and
+  // its own table (ATTACK_REQUIREMENT_CLAUSES below) — deliberately not off this
+  // one, so a positive clause and its negative can never be confused for each
+  // other by a lookup that lost track of which consequent it came from.
   [
     "this Pokémon moved from your Bench to the Active Spot this turn",
     { kind: "yourActivePromotedThisTurn" },
@@ -2007,6 +2010,95 @@ function boardConditionForClause(clause: string): BoardCondition | null {
     if (type !== undefined) return { kind: "opponentActiveHasType", type };
   }
   return null;
+}
+
+// The REQUIREMENT skeleton (D125) — "If <clause>, this attack does nothing." The
+// clause family's second consequent, and the first that is not a damage bonus at
+// all: nothing is added, the whole attack is CANCELLED when the clause holds.
+//
+// THE POLARITY LIVES HERE, IN THE SKELETON, NOT IN THE VOCABULARY. Every one of
+// the pool's six distinct "does nothing" clauses is a NEGATIVE sentence —
+// "didn't move", "has no damage counters", "you can't", "If tails", "you didn't
+// play", "you can't shuffle" — and that is the GRAMMAR OF THE MECHANIC rather
+// than an accident of this pool: a card prints "does nothing" precisely to state
+// a REQUIREMENT, and English states a requirement by naming its failure. So the
+// table below reads the printed NEGATIVE clause and hands back the POSITIVE
+// board fact the attack requires, and `attack.ts` cancels when that fact is
+// ABSENT. `BoardCondition` gains no `{ kind: "not", cond }` member: it would make
+// the vocabulary recursive — five consumers (`conditionHolds`, `conditionNote`,
+// `redact.ts`, `cardplay.ts`'s playability descent, `registry.ts`) each owing a
+// recursion arm, and `conditionNote` owing a readable negated phrasing English
+// does not supply — to buy a spelling nothing in 978 cards asks for. If a card
+// ever prints a POSITIVE clause under this consequent ("If your opponent's
+// Active Pokémon is a Basic Pokémon, this attack does nothing"), THAT is the
+// warrant, and the cheap answer then is a second table of positive-sense rows,
+// still without touching the union (D121: a shape being spellable never warrants
+// spelling it; a second printing does).
+//
+// Anchored whole-sentence with the required trailing period, no /i, exactly like
+// CONDITIONAL_DAMAGE_BONUS — and the anchor is doing the same load-bearing work.
+// It admits the three sentences below and refuses the rest of the family's 19
+// printings on the CLAUSE (they reach the table and miss), never on the shape:
+//   • "Flip a coin. If tails, this attack does nothing." (12 printings) — the
+//     coin-flip mechanism, and the flip sentence in front already denies it `^If`;
+//   • "If you can't, this attack does nothing." (3 printings) — ANAPHORIC, its
+//     "can't" pointing back at a cost sentence this reader cannot see;
+//   • Sharpedo sv06.5-034's "If you didn't play Xerosic's Machinations from your
+//     hand during this turn, …" — a specific NAMED card, and multi-sentence, so
+//     the anchor refuses it twice over.
+const ATTACK_DOES_NOTHING = /^If (.+), this attack does nothing\.$/;
+/** The printed NEGATIVE clauses this family understands → the POSITIVE board
+    fact the attack REQUIRES. Keyed char-for-char on the text between the leading
+    "If " and the ", this attack does", and a Map for CONDITIONAL_DAMAGE_CLAUSES'
+    reason: arbitrary printed text must not reach `Object.prototype`.
+
+    Two rows, two cards, three printings — and note that BOTH reuse a
+    `BoardCondition` member that already existed, so this slice buys no new
+    vocabulary at all. Every remaining "does nothing" clause in the pool stays
+    UNMAPPED and therefore LOUD.
+
+    ⚠️ The keys are the printed negatives and their traps are real: Palafin says
+    "the Bench", NOT "your Bench" (no possessive — its positive twin one table up
+    DOES carry it), and "didn't" with an ASCII apostrophe (the whole 978-card
+    pool holds zero U+2019). `Pokémon` carries a real U+00E9. */
+const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
+  // Palafin sv03-062/-200 "Justice Kick" ({W}{W}, 210) — the exact NEGATIVE twin
+  // of D124's promoted-this-turn row, reading the same `InPlayPokemon.promotedTurn`
+  // stamp that slice bought. D116's pronoun rule: "this Pokémon" on an attack is
+  // the attacking Active, so the member is `yourActivePromotedThisTurn`.
+  [
+    "this Pokémon didn't move from the Bench to the Active Spot this turn",
+    { kind: "yourActivePromotedThisTurn" },
+  ],
+  // Lycanroc sv03-117 "Finishing Fang" ({F}, 90) — a HAPAX, and the row where the
+  // requirement reading pays for itself: the printed trailing qualifier "before
+  // this attack does damage" is DISCHARGED BY THE SITE, not by the predicate.
+  // `opponentActiveDamaged`'s own doc block already commits it to being read at
+  // declaration, before this attack's damage lands (that is what "already" means
+  // for the D115 bonus family), and the requirement gate sits in front of the
+  // §8.5 pipeline — so the qualifier is true by where the check runs, and there
+  // is nothing extra to model. An undamaged defender cannot be bootstrapped into
+  // satisfying the clause by the very hit the clause gates.
+  [
+    "your opponent's Active Pokémon has no damage counters on it before this attack does damage",
+    { kind: "opponentActiveDamaged" },
+  ],
+]);
+
+/** The board fact an attack REQUIRES in order to do anything, or null when the
+    text is not a recognised "does nothing" sentence — null keeps the attack on
+    the loud ATTACK_EFFECT_SKIPPED path, never on a silent cancel.
+
+    Returns the POSITIVE condition: `attack.ts` cancels when it does NOT hold.
+    Deliberately shares no lookup with `boardConditionForClause` — that table's
+    keys are POSITIVE clauses read under a different consequent, and a clause
+    meaning "the attack does 80 more damage if X" must never be reachable from a
+    sentence meaning "the attack does nothing if X". Two consequents, two
+    vocabularies, no crossover. */
+export function deriveAttackRequirement(text: string): BoardCondition | null {
+  const nothing = ATTACK_DOES_NOTHING.exec(text.trim());
+  if (nothing === null) return null;
+  return ATTACK_REQUIREMENT_CLAUSES.get(nothing[1] ?? "") ?? null;
 }
 // The TYPED self-discard: "Discard a|all|{N} {type} Energy from this Pokémon."
 // — the same §8 attack cost as its untyped siblings above, narrowed to one

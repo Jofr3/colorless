@@ -5,6 +5,7 @@ import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
+  deriveAttackRequirement,
   programFor,
 } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -86,8 +87,12 @@ import { makeInPlay } from "./types";
 // Pokémon didn't move from the Bench to the Active Spot this turn, this attack
 // does nothing." It differs three times over (a different CONSEQUENT, so the
 // OUTER anchor refuses it before this table is ever consulted; a different verb
-// form; and no possessive on "the Bench"), and it is a `conditionGate`-shaped
-// slice for whenever somebody wants it. Weavile sv02-134's "Assaulting Hunt"
+// form; and no possessive on "the Bench"). D125 has since simulated it — NOT as
+// the `conditionGate`-shaped slice this comment originally forecast, but off its
+// own skeleton and its own table, because a cancel must be evaluated in FRONT of
+// the §8.5 pipeline and no post-damage op can retract damage already dealt. It
+// resolves to THIS member, bought here, on zero new vocabulary
+// (attackRequirement.test.ts). Weavile sv02-134's "Assaulting Hunt"
 // reads the same transition as a `when` TRIGGER in the present tense — a
 // different mechanism again, not a clause.
 
@@ -105,8 +110,17 @@ const FIRST_IMPRESSION =
   "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 90 more damage.";
 
 /** The REAL negative twin from the same pool — Palafin sv03-062/-200's "Justice
-    Kick", verbatim. It reads the SAME state and is deliberately unmapped. Note
-    the apostrophe: ASCII U+0027. The whole 978-card pool contains exactly two
+    Kick", verbatim. It reads the SAME state through the OTHER consequent, and the
+    three refusals below are refusals BY THE BONUS/EFFECT DERIVERS, at their outer
+    anchors: this sentence never reaches `CONDITIONAL_DAMAGE_CLAUSES` at all.
+
+    Since D125 it is not unmapped in the engine — `deriveAttackRequirement` reads
+    it off its OWN skeleton ("If <clause>, this attack does nothing.") and its own
+    two-row table, and it resolves to this very member,
+    `yourActivePromotedThisTurn`, without either table learning about the other.
+    attackRequirement.test.ts owns that side; what this suite pins is that the
+    three readers HERE still say null. Note the apostrophe: ASCII U+0027. The whole
+    978-card pool contains exactly two
     non-ASCII characters anywhere — é (U+00E9) and × (U+00D7, in weakness values)
     — so there is no U+2019 in the catalog for a matcher to trip over. */
 const JUSTICE_KICK =
@@ -458,6 +472,13 @@ describe("the near-misses stay LOUD", () => {
     expect(deriveAttackDamageBonus(JUSTICE_KICK)).toBeNull();
     expect(deriveAttackDamageMultiplier(JUSTICE_KICK)).toBeNull();
     expect(deriveAttackEffect(JUSTICE_KICK)).toBeNull();
+    // A FOURTH reader claims it (D125) — off its own skeleton and its own table,
+    // and it lands on the member THIS row buys. Asserted here rather than only in
+    // attackRequirement.test.ts so the two suites are bound: the three nulls above
+    // are "wrong consequent", never "nobody wants this sentence", and the day the
+    // requirement table changes hands this line fails alongside that one.
+    expect(deriveAttackRequirement(JUSTICE_KICK)).not.toBeNull();
+    expect(deriveAttackRequirement(JUSTICE_KICK)).toEqual(COND);
   });
 
   it("refuses Weavile's REAL Assaulting Hunt — same transition, wrong mechanism", () => {

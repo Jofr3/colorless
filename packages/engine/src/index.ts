@@ -966,12 +966,12 @@ import type { GameState, Seat } from "./types";
     only conditions/`retreatBlocked`/`markers`, and §10 sheds the effects of
     ATTACKS — having moved is a fact about the turn, not an effect on the card.
 
-    The negative twin stays LOUD and is NOT a near-miss of this row: Palafin
+    The negative twin is NOT a near-miss of this row and never reaches it: Palafin
     sv03-062/-200 "Justice Kick" prints "If this Pokémon didn't move from the Bench
     to the Active Spot this turn, this attack does nothing." — a different
     CONSEQUENT (the outer anchor refuses it before the table is consulted), a
-    different verb form, and no possessive on "the Bench". Same state underneath; a
-    `conditionGate`-shaped slice whenever someone wants it. Weavile sv02-134's
+    different verb form, and no possessive on "the Bench". Same state underneath,
+    and D125 (below) simulates it off its own skeleton. Weavile sv02-134's
     "Assaulting Hunt" reads the same transition as a `when` TRIGGER, not a per-turn
     query, and is a different mechanism again.
 
@@ -983,7 +983,69 @@ import type { GameState, Seat } from "./types";
     1 → 2** (apps/api/src/lobby/match.ts): a record written by the previous deploy
     has in-play Pokémon with NO `promotedTurn` at all, which is a MISSING REQUIRED
     FIELD, not a widening — the one case that doc block says must bump. */
-export const engineVersion = "0.75.0";
+/** 0.76.0 — P3-M5: the REQUIREMENT skeleton (D125), the clause family's SECOND
+    CONSEQUENT. Ten slices of "If <clause>, this attack does N more damage." are
+    joined by "If <clause>, this attack does nothing." — Palafin sv03-062/-200
+    "Justice Kick" ({W}{W}, 210) and Lycanroc sv03-117 "Finishing Fang" ({F}, 90)
+    now SIMULATE. 3 printings / 2 cards / 2 clauses, and — the point of the slice —
+    on ZERO new `BoardCondition` members: both rows reuse a fact the vocabulary
+    already had (`yourActivePromotedThisTurn` from D124, `opponentActiveDamaged`
+    from D115). The literal clause table is untouched at 19 rows + 2 templates.
+
+    A NEW CONSEQUENT IS A NEW SKELETON, NOT A NEW VOCABULARY. The resume point
+    forecast this as "a `conditionGate`-shaped slice" and that reading was wrong
+    in a way worth recording: an effect PROGRAM runs at attack.ts's tail, strictly
+    AFTER the §8.5 damage pipeline, and no op can retract damage already dealt. A
+    cancel must be evaluated in FRONT of the pipeline, so it is not a program at
+    all — it is a gate, and the gate the engine already had for exactly this
+    ("no damage, no effects, the turn still ends") is the §8 step-3 CONFUSION
+    path. D125 is that path minus the self-damage: `ATTACK_FAILED` then
+    `finishAttack`. GENERALISATION: derived-text shapes are separated by WHERE IN
+    RESOLUTION THEY LAND, not by how their sentence reads — a shape that must run
+    before damage can never be spelled as an `EffectOp`, however naturally the
+    sentence maps onto one.
+
+    THE POLARITY LIVES IN THE SKELETON, NOT IN THE VOCABULARY — the slice's one
+    real design call, and it refuses a `{ kind: "not", cond }` member. All SIX of
+    the pool's distinct "does nothing" clauses are NEGATIVE sentences ("didn't
+    move", "has no damage counters", "you can't", "If tails", "you didn't play",
+    "you can't shuffle"), and that is the grammar of the mechanic rather than an
+    accident: a card prints "does nothing" precisely to state a REQUIREMENT, and
+    English states a requirement by naming its failure. So `deriveAttackRequirement`
+    reads the printed NEGATIVE and returns the POSITIVE fact required, and
+    attack.ts cancels on its ABSENCE. A `not` member would make `BoardCondition`
+    recursive — five consumers each owing a recursion arm, and `conditionNote`
+    owing a negated phrasing English does not supply — to buy a spelling nothing in
+    978 cards asks for. If a POSITIVE clause ever appears under this consequent,
+    that is the warrant, and the answer then is a second table of positive-sense
+    rows, still without touching the union (D121's rule).
+
+    LYCANROC'S TRAILING QUALIFIER IS DISCHARGED BY THE SITE, NOT BY THE PREDICATE.
+    "…has no damage counters on it BEFORE THIS ATTACK DOES DAMAGE" needs no
+    modelling: `opponentActiveDamaged` is committed by its own doc block to being
+    read at declaration (that is what "already" means for the D115 bonus family),
+    and the requirement gate sits in front of §8.5 — so the qualifier is true by
+    where the check runs. An undamaged defender cannot bootstrap the clause with
+    the very hit the clause gates.
+
+    Two SEPARATE tables on purpose. `ATTACK_REQUIREMENT_CLAUSES` shares no lookup
+    with `CONDITIONAL_DAMAGE_CLAUSES`: a clause meaning "80 more damage if X" must
+    not be reachable from a sentence meaning "nothing if X". Two consequents, two
+    vocabularies, no crossover. The whole-sentence anchor keeps the family's other
+    16 printings LOUD, and on the CLAUSE rather than on the shape — the 12
+    coin-flip "If tails" prints (a different mechanism, and the flip sentence in
+    front already denies them `^If`), the 3 anaphoric "If you can't" prints, and
+    Sharpedo sv06.5-034's named-card multi-sentence one.
+
+    Cost: 1 new skeleton regex, 1 new 2-row table, 1 exported deriver, 1 reader +
+    1 gate in attack.ts, 1 `effectSimulated` term, 1 ENUM WIDENING on
+    `ATTACK_FAILED.reason` ("confusion" | "requirement") and its log line. ZERO
+    new `BoardCondition` members, `conditionHolds`/`conditionNote` arms, ops,
+    state fields, error codes, registry rows or fold changes; no continuous.ts
+    diff; no web/API/DB/`@luminous/schema` diff. NO MATCH_RECORD_VERSION BUMP:
+    widening an event's reason enum is a widening, not a missing required field —
+    the distinction D124 had to bump for. */
+export const engineVersion = "0.76.0";
 
 export type {
   ApplyResult,
@@ -1050,6 +1112,7 @@ export {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
+  deriveAttackRequirement,
 } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";

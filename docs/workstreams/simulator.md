@@ -5735,3 +5735,124 @@ token.
    not at all.
 3. `your opponent has any Future Pokémon in play` — 1 (Slither Wing `sv06.5-026`
    +120). **Blocked on a P1 INGEST change**, not engine work.
+
+---
+
+## D125 — the REQUIREMENT skeleton (engine 0.76.0)
+
+Palafin `sv03-062`/`-200` "Justice Kick" (`{W}{W}`, **210**) and Lycanroc
+`sv03-117` "Finishing Fang" (`{F}`, **90**) SIMULATE:
+*"If \<clause\>, this attack does nothing."* — the clause family's **SECOND
+CONSEQUENT**, **3 printings / 2 cards / 2 clauses on ZERO registry rows**, and
+**ZERO new `BoardCondition` members**. The damage-bonus table is untouched at 19
+literal rows + 2 templates (23 of 26 clauses / 41 of 43 printings).
+
+### The sweep is what set the slice's size
+D124's resume point named Palafin as the cheapest thing left and asked for a sweep
+first. It paid: `does nothing` occurs in **19 printings across 6 distinct clauses**,
+so the unit of work was the **consequent**, not the card. Two of the six are
+`BoardCondition`-shaped and both are now mapped. The census, so nobody re-runs it:
+
+| clause | prints | why it is (not) mapped |
+|---|---|---|
+| `this Pokémon didn't move from the Bench to the Active Spot this turn` | 2 | ✅ → `yourActivePromotedThisTurn` (D124's state) |
+| `your opponent's Active Pokémon has no damage counters on it before this attack does damage` | 1 | ✅ → `opponentActiveDamaged` (D115's member) |
+| `Flip a coin. If tails, …` | 12 | coin-flip mechanism; the flip sentence in front denies it `^If` |
+| `If you can't, …` | 3 | ANAPHORIC — "can't" points back at a cost sentence the reader cannot see |
+| `If you didn't play Xerosic's Machinations from your hand during this turn, …` | 1 | Sharpedo `sv06.5-034` — a SPECIFIC named card, and multi-sentence |
+
+### A NEW CONSEQUENT IS A NEW SKELETON, NOT A NEW VOCABULARY
+The whole family cost a regex, a two-row `Map` and a gate, because both clauses
+were facts the union already carried. **Before costing a new sentence family, check
+whether the *condition* half is already spelled.** The expensive half is usually the
+consequent, and the two are independent — which is exactly the axis the first ten
+slices of this family never had to think about, having only ever had one consequent.
+
+### THE PLACEMENT RULE: a derived shape is classified by WHERE IN RESOLUTION IT LANDS
+D124's resume point forecast this as *"a `conditionGate`-shaped slice"*. **It cannot
+be one.** An effect PROGRAM runs at `attack.ts`'s tail, strictly **after** the §8.5
+damage pipeline, and no `EffectOp` can retract damage already dealt. A cancel must
+be evaluated **in front of** the pipeline, so it is not a program at all — however
+naturally the sentence maps onto `conditionGate`.
+
+The gate the engine already had for exactly *"no damage, no effects, and the turn
+still ends"* is the **§8 step-3 CONFUSION path**. D125 is that path minus the
+self-damage: push `ATTACK_FAILED` and `return finishAttack(...)`, which keeps the
+§8.1 both-board sweep and the turn end — **a cancelled attack is an attack that was
+USED**. Reuse this ending for any future cancel rather than inventing a second one.
+
+**Ask "before or after damage?" before costing any future shape.** It is the
+difference between a table row and a new seam. The remaining pre-damage candidates
+are the whole coin-flip family and the 3 anaphoric "If you can't" prints.
+
+### THE POLARITY DECISION: it belongs to the SKELETON, not to the vocabulary
+`BoardCondition` gained **no** `{ kind: "not", cond }` member, and should not on
+present evidence. **All six distinct "does nothing" clauses in the pool are NEGATIVE
+sentences**, and that is the *grammar of the mechanic* rather than an accident: a
+card prints "does nothing" precisely to state a **requirement**, and English states
+a requirement by naming its failure. So `deriveAttackRequirement` reads the printed
+NEGATIVE and returns the **POSITIVE** fact required; `attack.ts` cancels on its
+ABSENCE.
+
+A `not` member would make the vocabulary **recursive** — five consumers
+(`conditionHolds`, `conditionNote`, `redact.ts`, `cardplay.ts`'s playability
+descent, `registry.ts`) each owing a recursion arm, and `conditionNote` owing a
+readable negated phrasing English does not supply — to buy a spelling nothing in
+978 cards asks for. If a POSITIVE clause ever appears under this consequent, **that
+is the warrant** (D121's rule), and the cheap answer even then is a second table of
+positive-sense rows, still without touching the union.
+
+### Two consequents get two TABLES, sharing the vocabulary but never a lookup
+`ATTACK_REQUIREMENT_CLAUSES` is deliberately unreachable from
+`boardConditionForClause`. A clause meaning *"80 more damage if X"* must not be
+resolvable from a sentence meaning *"nothing if X"* — a shared Map would make a
+mis-anchored sentence produce a plausible wrong answer instead of staying LOUD,
+which is the one outcome this family refuses.
+
+### A printed TIMING qualifier can be discharged by the SITE
+Lycanroc's trailing *"…before this attack does damage"* needed **no modelling at
+all**. `opponentActiveDamaged`'s own doc block already commits it to a
+declaration-time read (that is what "already" means for the D115 bonus family), and
+the requirement gate sits in front of §8.5 — so the qualifier is true *by where the
+check runs*. An undamaged defender cannot bootstrap the clause with the very hit
+the clause gates, and the suite pins that non-bootstrap explicitly. **Check what the
+evaluation site already guarantees before adding a phase parameter to a predicate.**
+
+### The event: a widening, not a bump
+`ATTACK_FAILED.reason` went `"confusion"` → `"confusion" | "requirement"`. Per
+D124's own distinction, **a widened enum is not a `MATCH_RECORD_VERSION` bump** (the
+bump is for a MISSING REQUIRED FIELD on a record written by an older deploy).
+`log.ts` must branch on the reason, or a cancel renders as a confusion that never
+happened.
+
+### The suite
+`attackRequirement.test.ts` (**34**) on a new `ATTACK_REQUIREMENT_DECK`, with four
+faithful fixtures — Palafin + Finizen, Lycanroc + Rockruff. The byte-identical
+`sv03-200` reprint is **deliberately not fixtured** (one card, one row). Real routes
+throughout: retreat, Switch, Boss's Orders, a real evolve, a real KO+promote chain
+proving §8.1 still cancels on the following turn, and — the case worth copying —
+**Lycanroc's own "Slashing Claw" supplies the damage its "Finishing Fang" reads two
+turns later**, so the arming board is one the game itself produced. The
+zero-new-vocabulary claim is pinned *directly*: `deriveAttackDamageBonus`'s `cond`
+on the real POSITIVE sentences deep-equals `deriveAttackRequirement`'s on the
+negatives.
+
+`promotedClause.test.ts`'s Justice-Kick near-miss case was **kept and BOUND**, not
+deleted: its three refusals (`deriveAttackDamageBonus` / `deriveAttackDamageMultiplier`
+/ `deriveAttackEffect`) still hold and are still the proof the OUTER anchor does the
+work, and two assertions were added that a **fourth** reader now claims the sentence.
+That is the pattern for any future slice that maps a documented near-miss: bind the
+two suites, do not orphan one.
+
+### Still unmapped after this slice
+Unchanged — the three damage-bonus clauses (Lokix `sv02-021`, Lucario `sv01-114`,
+Slither Wing `sv06.5-026`) and their loud witnesses are untouched. On this
+consequent, the four families in the census table above.
+
+**The coin-flip family is now a better-shaped slice than it was.** D125 built the
+pre-damage cancel seam its 12 "If tails" prints need (the gate site,
+`ATTACK_FAILED.reason`, the `effectSimulated` term). What is missing is only the
+announced flip — an event, and `rngState` consumed in front of §8.5, precisely
+where §8 step 3's confusion flip already sits. Take its "If heads, this attack does
+N more damage" half (16 prints across 8 amounts) in the **same** slice; they are one
+mechanism and splitting them builds the fold twice.

@@ -3051,8 +3051,10 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //   Impression" (+90) — THREE printings of ONE byte-identical clause across TWO
   //   distinct cards, read verbatim off the local D1 2026-08-01. The pool sweep:
   //   "Active Spot this turn" occurs in exactly 5 cards (these 3 plus the two
-  //   Palafin prints, which are the NEGATIVE twin and are deliberately unmapped),
-  //   and "moved from" in exactly these 3.
+  //   Palafin prints, which are the NEGATIVE twin — refused by the BONUS deriver
+  //   at its outer anchor, and since D125 simulated off their own REQUIREMENT
+  //   skeleton instead; Palafin sv03-062 is fielded in the D125 block below), and
+  //   "moved from" in exactly these 3.
   /** Revavroom ex sv06.5-015 "Accelerator Flash" (20+, +120) — a STAGE 1 evolving
       from Varoom, 280 HP, retreat 1, ×2 Fighting, NO Resistance, NO Ability
       (`abilities_json` is NULL on the row), reg mark H, "Double rare", Standard
@@ -3193,6 +3195,155 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 320,
     retreat: 1,
     weaknesses: [{ type: "Lightning", value: "×2" }],
+  }),
+
+  // — M5 clause slice: the REQUIREMENT skeleton (D125). "If <clause>, this attack
+  //   does nothing." — the clause family's SECOND CONSEQUENT, and its first that
+  //   cancels rather than adds. Palafin sv03-062/-200 "Justice Kick" ({W}{W}, 210)
+  //   and Lycanroc sv03-117 "Finishing Fang" ({F}, 90), read verbatim off the
+  //   local D1 2026-08-01, plus BOTH printed pre-evolutions (Finizen sv03-061,
+  //   Rockruff sv03-116) so `evolveFrom` names a body this pool actually holds.
+  //
+  //   The pool sweep behind the two rows: 19 printings say "this attack does
+  //   nothing", and exactly these 3 (Palafin twice, Lycanroc once) are whole
+  //   sentences of the form "If <clause>, this attack does nothing." with a clause
+  //   the engine can answer. The other 16 stay LOUD — 12 coin-flip "Flip a coin.
+  //   If tails, …" prints, 3 anaphoric "If you can't, …" prints, and Sharpedo
+  //   sv06.5-034's named-card multi-sentence one — and attackRequirement.test.ts
+  //   carries every one of those strings verbatim as a refusal witness.
+  /** Palafin sv03-062 "Justice Kick" ({W}{W}, 210) — a WATER STAGE 1 evolving from
+      Finizen, 150 HP, retreat 2, ×2 Lightning, NO Resistance, NO Ability
+      (`abilities_json` is NULL on the row), reg mark G, "Rare", illustrator
+      "Souichirou Gunjima", `legal_standard` 0 / `legal_expanded` 1. sv03-200 is
+      the SAME CARD at a different rarity — byte-identical apart from `local_id` —
+      so it is deliberately NOT a fixture, exactly as sv06.5-081 is not: one print
+      is enough to drive a clause that keys on TEXT, and the second is asserted
+      only as a registry-row absence. The Expanded-only legality is faithful and
+      inert here, on the Golisopod precedent: `legal` is not a field any deriver,
+      predicate or action consults, and the synthetic `battler` default (both true)
+      is what the rest of this file carries.
+
+      THE EXACT NEGATIVE TWIN of D124's Revavroom ex row, and the whole reason both
+      cards sit in this file: the two sentences read the SAME `promotedTurn` stamp
+      through two different consequents. The traps are printed, not invented —
+      Palafin says "from the Bench" with NO possessive where Revavroom ex says
+      "from your Bench", and "didn't" with an ASCII U+0027 apostrophe (the 978-card
+      pool holds zero U+2019).
+
+      A Stage 1, so it can NEVER be the dealt starter: every board case either
+      places it by surgery or evolves a Finizen under it, and the deck below pins
+      fix-bigbody as the mulligan-free Active on both sides.
+
+      210 IS THE LARGEST NUMBER ANY CLAUSE SUITE HAS HAD TO LAND, and it is why the
+      deck carries fix-lightning-weak-big (320 HP): fix-bigbody's 200 would be
+      Knocked Out, parking the turn on a PROMOTION — i.e. on the very move Justice
+      Kick's own clause reads — in the middle of the arithmetic being measured.
+
+      Attack 0 ("Jet Punch", {W} 30, with the benched-snipe rider) is carried
+      VERBATIM and is deliberately left to its own (already authored) family — it
+      is here so the clause attack cannot be right merely by being the only attack
+      on the card, and so index 1 has to be named.
+
+      Verbatim off the local D1 — Justice Kick's sentence is 98 code points / 99
+      UTF-8 bytes, the one extra byte being the é in "Pokémon". */
+  "sv03-062": battler("sv03-062", {
+    name: "Palafin",
+    stage: "Stage1",
+    evolveFrom: "Finizen",
+    types: ["Water"],
+    hp: 150,
+    retreat: 2,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Water"],
+        name: "Jet Punch",
+        effect:
+          "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 30,
+      },
+      {
+        cost: ["Water", "Water"],
+        name: "Justice Kick",
+        effect:
+          "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
+        damage: 210,
+      },
+    ],
+  }),
+  /** Finizen sv03-061 — Palafin's PRE-EVOLUTION, and the body the
+      evolution-survival case retreats in and evolves under. A Water BASIC, 90 HP,
+      retreat 2, ×2 Lightning, no Resistance, no Ability, verbatim off the D1.
+
+      Its `name` is what §10 matches against Palafin's `evolveFrom: "Finizen"`, so
+      the name field is load-bearing here in a way a synthetic body's never is. NO
+      ATTACKS are carried: Finizen is a body to be RETREATED IN and evolved, never
+      one to act, and giving it an attack would only invite a case to use the wrong
+      one. It retreats for 2, which is why the deck's plain {C} line is 6 deep. */
+  "sv03-061": battler("sv03-061", {
+    name: "Finizen",
+    types: ["Water"],
+    hp: 90,
+    retreat: 2,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+  }),
+  /** Lycanroc sv03-117 "Finishing Fang" ({F}, 90) — the second card on this
+      skeleton and a HAPAX on its clause: no other card in the 978-card catalog
+      prints "has no damage counters on it before this attack does damage". A
+      FIGHTING STAGE 1 evolving from Rockruff, 130 HP, retreat 2, ×2 Grass, no
+      Resistance, no Ability, reg mark G — verbatim off the D1.
+
+      THE ROW WHERE THE REQUIREMENT READING PAYS FOR ITSELF. The printed trailing
+      qualifier "before this attack does damage" is discharged by the SITE, not by
+      the predicate: `opponentActiveDamaged` is read at declaration and the D125
+      gate sits in front of the §8.5 pipeline, so an undamaged defender cannot be
+      bootstrapped into satisfying the clause by the very hit the clause gates.
+      That case (attackRequirement.test.ts) is the mechanical proof.
+
+      ATTACK 1 IS THE INDEX-KEYED NEGATIVE AND IS LOAD-BEARING TWICE. "Slashing
+      Claw" ({F}{C}{C}, 100) has NO `effect` key AT ALL on the D1 row — not an
+      empty string — so this fixture omits the field rather than spelling it "",
+      and it must resolve as a plain 100 with no requirement and no skipped row.
+      It is ALSO the suite's only honest way to put damage on a defender through a
+      REAL attack before Finishing Fang is declared: Lycanroc damages with its own
+      index 1 on one turn and reads that damage with index 0 two turns later.
+
+      Verbatim off the local D1 — Finishing Fang's sentence is 120 code points /
+      121 UTF-8 bytes, the one extra byte being the é in "Pokémon". */
+  "sv03-117": battler("sv03-117", {
+    name: "Lycanroc",
+    stage: "Stage1",
+    evolveFrom: "Rockruff",
+    types: ["Fighting"],
+    hp: 130,
+    retreat: 2,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Finishing Fang",
+        effect:
+          "If your opponent's Active Pokémon has no damage counters on it before this attack does damage, this attack does nothing.",
+        damage: 90,
+      },
+      { cost: ["Fighting", "Colorless", "Colorless"], name: "Slashing Claw", damage: 100 },
+    ],
+  }),
+  /** Rockruff sv03-116 — Lycanroc's PRE-EVOLUTION. A Fighting BASIC, 60 HP,
+      retreat 1, ×2 Grass, verbatim off the D1.
+
+      POOL-ONLY, and deliberately: it takes ZERO slots in ATTACK_REQUIREMENT_DECK,
+      on the Wimpod precedent from D124. It is here because Lycanroc's `evolveFrom`
+      names it and the by-NAME pool assertion in attackRequirement.test.ts checks
+      that the named body exists — a Rockruff → Lycanroc line would be drivable if
+      a case ever wanted one, but the evolution-survival case uses the Finizen line
+      instead, because that is the one whose clause reads a promotion at all. */
+  "sv03-116": battler("sv03-116", {
+    name: "Rockruff",
+    types: ["Fighting"],
+    hp: 60,
+    retreat: 1,
+    weaknesses: [{ type: "Grass", value: "×2" }],
   }),
 };
 
@@ -4454,6 +4605,76 @@ export const PROMOTED_CLAUSE_DECK = deckOf({
   "fix-energy": 5, // Basic {C} — pays the retreat cost (§11: any Energy) that arms the clause
   "fix-lightning-weak-big": 3, // 320 HP, ×2 Lightning — the Weakness defender for the fold-order pair
   "fix-bigbody": 27, // 200 HP neutral Colorless Basic — DOMINANT pinned starter, the retreater, the promote target
+});
+
+/** 0.75.0 → 0.76.0: the REQUIREMENT skeleton (D125) — "If <clause>, this attack
+    does nothing." Palafin sv03-062 "Justice Kick" ({W}{W}, 210) on
+    `yourActivePromotedThisTurn` and Lycanroc sv03-117 "Finishing Fang" ({F}, 90)
+    on `opponentActiveDamaged`. Two cards, two clauses, ZERO new vocabulary: both
+    rows reuse a `BoardCondition` member an earlier slice already bought.
+
+    A DEDICATED deck, and the reason is the CANCEL. Every predecessor deck in this
+    family is tuned so its clause ADDS a number to a defender chosen to survive it;
+    here the clause SUBTRACTS the whole attack, so each case needs a board on which
+    the un-armed and armed outcomes differ by 210 or by 90 with nothing else moving.
+    PROMOTED_CLAUSE_DECK holds the right STATE (`promotedTurn`) but the wrong cards
+    and the wrong Energy types, and growing it would reshuffle a seed-pinned suite.
+
+    fix-lightning-weak-big (320 HP) IS THE LOAD-BEARING SLOT. Justice Kick's 210 is
+    the largest number any clause suite has had to land, and fix-bigbody's 200 dies
+    to it — which would park the turn on a PROMOTION, i.e. on the very move
+    Palafin's own clause reads, in the middle of the arithmetic. Its ×2 Lightning
+    Weakness is INERT against both attackers here (Palafin is Water, Lycanroc is
+    Fighting), which is exactly what this suite wants: no case in it is about
+    Weakness, and the requirement gate sits in front of the whole §8.5 pipeline. It
+    also absorbs Lycanroc's 100 + 90 = 190 across two turns without a KO, which is
+    what makes the REAL damaged-defender case drivable.
+
+    THE ENERGY LINES ARE SPLIT THREE WAYS. fix-water-energy pays Justice Kick's
+    {W}{W}, fix-fighting-energy pays Finishing Fang's {F} and the first symbol of
+    Slashing Claw's {F}{C}{C}, and fix-energy (the plain Colorless Basic) pays both
+    Slashing Claw's two generic symbols AND the RETREAT that arms Palafin — §11
+    takes any Energy, which is why the Colorless line is load-bearing in a deck
+    whose attackers cost none. No line is ever counted; neither clause reads Energy.
+
+    Finizen sv03-061 is Palafin's printed pre-evolution and earns its 3 slots on one
+    case: retreat into a Finizen (which stamps `promotedTurn`), evolve Palafin on top
+    of it, and Justice Kick still lands 210 — the D124 evolution-survival case run
+    from the CANCEL side. Rockruff sv03-116 is in the POOL but takes ZERO slots here,
+    on D124's Wimpod precedent: nothing needs the Lycanroc line evolved.
+
+    THE TWO TRAINERS ARE THE TWO THINGS A CANCEL CAN GET WRONG, one each:
+
+    - **Switch sv01-194** (Item, `switchActive`) is the second arming ROUTE. The
+      printed verb is "move", not "retreat", so a gate that only lifted on a §11
+      retreat would be wrong in the same way D124's bonus would have been.
+    - **Boss's Orders sv02-172** (Supporter, `gust`) is the SEAT-ASYMMETRY case, and
+      it is the ONLY way to reach the board it needs: it promotes a Pokémon on the
+      OPPONENT's side DURING YOUR OWN TURN, so `yourActivePromotedThisTurn` is TRUE
+      for the seat that is not attacking while the attacker's own Palafin has not
+      budged. Without it that board is unreachable — a KO promotion ends the turn in
+      the same apply, and a retreat only ever moves your own body.
+
+    Both are authored in the registry (an unauthored Trainer is refused outright
+    with TRAINER_NOT_SIMULATED) and both resolve without parking when the target
+    Bench holds exactly one body, which is the shape every case here builds.
+
+    fix-bigbody is 23 of 60 — the DOMINANT mulligan-free starter both Actives pin to
+    (both attackers are Stage 1 and can never open), the body that retreats OUT of
+    the Active Spot to let one in, and the Bench filler a promotion needs a target
+    from. */
+export const ATTACK_REQUIREMENT_DECK = deckOf({
+  "sv03-062": 4, // Palafin — "Justice Kick" (210) at index 1: requires yourActivePromotedThisTurn
+  "sv03-061": 3, // Finizen — the pre-evolution the evolution-SURVIVES-it case retreats in and evolves
+  "sv03-117": 4, // Lycanroc — "Finishing Fang" (90) at index 0: requires opponentActiveDamaged;
+  //                "Slashing Claw" (100) at index 1 is the no-effect-key negative AND the real damage source
+  "sv01-194": 3, // Switch (Item, switchActive) — the SECOND route that arms Justice Kick
+  "sv02-172": 3, // Boss's Orders (Supporter, gust) — promotes on the OPPONENT's board: the seat-asymmetry case
+  "fix-water-energy": 6, // Basic {W} — pays Justice Kick's {W}{W}
+  "fix-fighting-energy": 4, // Basic {F} — pays Finishing Fang's {F} and Slashing Claw's first symbol
+  "fix-energy": 6, // Basic {C} — Slashing Claw's two generic symbols, and the retreat (§11) that arms Palafin
+  "fix-lightning-weak-big": 4, // 320 HP — the only body in the pool that survives 210 (its Weakness is inert here)
+  "fix-bigbody": 23, // 200 HP neutral Colorless Basic — DOMINANT pinned starter, the retreater, the promote target
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

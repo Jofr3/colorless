@@ -29,6 +29,7 @@ import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
+  deriveAttackRequirement,
 } from "./effects";
 import type { AttackDamageBonus } from "./effects";
 import type { GameEvent } from "./events";
@@ -270,6 +271,12 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const scaling = damageBonus ?? damageMultiplier;
   const scaled =
     scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat);
+  // D125 — the printed "If <clause>, this attack does nothing." REQUIREMENT: the
+  // board fact the attack needs, or null when the text is not that sentence. It
+  // is a third reader of the same effect string, disjoint from the two scaling
+  // ones by CONSEQUENT ("nothing" versus "N more damage" / "for each"), so at
+  // most one of the three ever fires on a given attack.
+  const requirement = effect === null || effect === "" ? null : deriveAttackRequirement(effect);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
@@ -286,7 +293,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // program deals the damage; the effect text is simulated iff a program ran it
   // OR a scaling reader did. Only the genuinely-unsimulated remainder is flagged
   // loudly (simulator.md coverage).
-  const effectSimulated = program !== null || scaling !== null;
+  const effectSimulated = program !== null || scaling !== null || requirement !== null;
   const modifierSimulated = scaling !== null || programDamage;
   if (
     (modifier !== null && !modifierSimulated) ||
@@ -300,6 +307,29 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       effect: effectSimulated ? null : effect,
       damageModifier: modifierSimulated ? null : modifier,
     });
+  }
+
+  // D125 — the requirement gate, IN FRONT of the §8.5 pipeline and of the
+  // program: the printed words are "this attack does nothing", so nothing is
+  // exactly what may happen — no damage, no W/R, no effect ops, no triggers.
+  // Structurally the confusion-tails path (§8 step 3) minus the self-damage, and
+  // it reuses that path's ending on purpose: `finishAttack` still sweeps §8.1 and
+  // still ends the turn, because a cancelled attack is an attack that was USED.
+  //
+  // The clause is read against `next`, the board as of declaration — which is
+  // what discharges Lycanroc's printed "before this attack does damage" for
+  // free, and what makes Palafin's promotion read the CURRENT turn's stamp.
+  // Placed AFTER the ATTACK_EFFECT_SKIPPED bookkeeping above so that block stays
+  // the single place any unsimulated remainder is reported; a requirement makes
+  // the sentence SIMULATED, so nothing is flagged on either outcome.
+  if (requirement !== null && !conditionHolds(next, action.seat, requirement)) {
+    events.push({
+      type: "ATTACK_FAILED",
+      seat: action.seat,
+      uid: attackerUid,
+      reason: "requirement",
+    });
+    return finishAttack(next, events, action.seat);
   }
 
   let defended = defender;
