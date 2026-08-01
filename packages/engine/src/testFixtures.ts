@@ -4039,6 +4039,83 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Fuecoco sv02-035 — D134's FLIP-GATED HEAL, and 2 of the family's 3 printings
+      (-035 and -201 are one attack in two rarities). "Spacing Out" ({C}, index 0) is
+      "Flip a coin. If heads, heal 30 damage from this Pokémon." with NO `damage`
+      field at all, so the gated heal is the ENTIRE visible result of the declaration
+      and neither face has a number to hide behind: heads moves damage, tails moves
+      nothing, and the two boards differ only in the thing under test.
+
+      IT IS THE SHARPEST NEAR-MISS THE BARE SELF-HEAL HAS (selfHeal.test.ts pinned it
+      as such from 0.83.0 until this slice mapped it), which is the point of fielding
+      it now: the same action, the same target, one flip in front. A reader without
+      `^` would take the tail and heal unconditionally — turning a 50% effect into a
+      certainty and never saying so — and the end-to-end tails case is what catches
+      that, since a heads-only suite passes either way.
+
+      "Flare" at index 1 ({R}{C}, 30, no effect text) is the control the family always
+      fields: real printed damage on the SAME card, which must take NO coin at all.
+      Its {R} is why FLIP_GATED_OP_DECK carries a Fire line it otherwise would not.
+
+      Verbatim off the local D1 (2026-08-01): 90 HP, Fire, BASIC (no evolution
+      surgery — it can be dealt straight into the Active Spot), retreat 3, ×2 Water,
+      no Resistance, no Ability. */
+  "sv02-035": battler("sv02-035", {
+    name: "Fuecoco",
+    types: ["Fire"],
+    stage: "Basic",
+    hp: 90,
+    retreat: 3,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Spacing Out",
+        effect: "Flip a coin. If heads, heal 30 damage from this Pokémon.",
+      },
+      { cost: ["Fire", "Colorless"], name: "Flare", damage: 30 },
+    ],
+  }),
+  /** Wiglett sv01-056 — D134's FLIP-GATED MILL, the family's third printing and the
+      only one of its clause. "Dig a Little" ({C}, index 0) is "Flip a coin. If heads,
+      discard the top card of your opponent's deck.", again with NO `damage` field.
+
+      ONE PRINTING, SO IT IS NOT DEFENSIBLE ALONE — D121's warrant wants two — and
+      that is exactly why it ships beside Fuecoco rather than on its own: the SHAPE
+      has 3 printings / 2 clauses, and the engine already reads two other instances
+      of it (`FLIP_DEFENDER_NOW`, `FLIP_OPPONENT_ACTIVE_DISCARD`). Its second job is
+      to prove the family is not one regex with a substitutable middle: the two
+      consequents share no vocabulary at all, which is what makes the arms literal
+      rather than a D120 template.
+
+      IT HAS BEEN THIS REPO'S MOST-CITED NEAR-MISS — pinned by perHeadsProgram.test.ts
+      (refused on three separate counts) and by deckTopMill.test.ts (the gated twin of
+      the singular). Those files' claims survive this slice unchanged, because they
+      are about OTHER readers and about the BARE anchor; what changes is only that
+      `deriveAttackEffect` now returns a gated program instead of null.
+
+      "Ram" at index 1 ({C}{C}, 20, no effect text) is the control — and a sharper one
+      than usual, since it is payable out of the very same Colorless line as the gated
+      attack, so nothing but the INDEX tells the two apart.
+
+      Verbatim off the local D1 (2026-08-01): 60 HP, Water, BASIC, retreat 1, ×2
+      Lightning, no Resistance, no Ability. */
+  "sv01-056": battler("sv01-056", {
+    name: "Wiglett",
+    types: ["Water"],
+    stage: "Basic",
+    hp: 60,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Dig a Little",
+        effect: "Flip a coin. If heads, discard the top card of your opponent's deck.",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Ram", damage: 20 },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -5764,6 +5841,48 @@ export const BOARD_HEAL_DECK = deckOf({
   "fix-fire-energy": 6, // Basic {R} — pays Vitality Song's single Fire, and nothing else
   "fix-psychic-energy": 6, // Basic {P} — pays Healing Pirouette's single Psychic, and nothing else
   "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active BOTH sides + every bench body
+});
+
+/** 0.84.0 → 0.85.0: the FLIP-GATED OP family (D134) — "Flip a coin. If heads,
+    <action>." A DEDICATED deck, and here the reason is mechanical rather than
+    stylistic: this is the first heal/mill suite that takes a COIN, so every case
+    runs a SEED SWEEP and both faces must be reachable from one board. Sharing
+    SELF_HEAL_DECK or DECK_TOP_MILL_DECK would have made those files' seed-free
+    determinism a coincidence rather than a property.
+
+    THE TWO CARDS ARE THE TWO CLAUSES, and they were chosen for how little they
+    share — the whole argument of the slice is that the family is two LITERAL arms
+    rather than one template with a substitutable consequent:
+      • Fuecoco sv02-035 "Spacing Out" (idx 0, {C}, gated heal 30) — 2 of the 3
+        printings, and the half whose effect is on the ATTACKER's own board. Its
+        idx-1 "Flare" ({R}{C}, 30) is the effect-less control.
+      • Wiglett sv01-056 "Dig a Little" (idx 0, {C}, gated mill 1 off the OPPONENT's
+        deck) — the third printing, and the half whose effect is in a hidden zone on
+        the other side of the table. Its idx-1 "Ram" ({C}{C}, 20) is the second
+        control, payable out of the same Colorless line.
+
+    NEITHER GATED ATTACK PRINTS `damage`, which is what makes the tails cases sharp:
+    on tails the whole declaration must move NOTHING anywhere, and there is no
+    printed number for a half-simulation to hide behind. The two CONTROLS do print
+    damage (30 and 20), so the file can also assert that an effect-less attack on the
+    same card takes no coin at all.
+
+    BOTH ARE BASICS — no evolution surgery anywhere in the suite — so a board is a
+    setup plus at most a `setActiveFromDeck`, and the seed sweep varies only the coin.
+
+    fix-energy ({C}) is the workhorse: it pays both gated attacks' single {C} and
+    Ram's {C}{C}. fix-fire-energy is here for Flare's {R} and nothing else.
+    fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned Active
+    on the DEFENDING side: neither control's 30 comes near KOing it, so no promotion
+    parks mid-flight and no defender attack interleaves rows. 38 copies keeps it the
+    DOMINANT (mulligan-free) Basic through setup AND leaves the opponent's deck deep
+    enough that a gated mill has something to take on every seed. */
+export const FLIP_GATED_OP_DECK = deckOf({
+  "sv02-035": 4, // Fuecoco — "Spacing Out" at idx 0: gated heal 30; "Flare" at idx 1: {R}{C} for 30
+  "sv01-056": 4, // Wiglett — "Dig a Little" at idx 0: gated mill 1; "Ram" at idx 1: {C}{C} for 20
+  "fix-energy": 10, // Basic {C} — pays both gated attacks' {C} and Ram's {C}{C}
+  "fix-fire-energy": 4, // Basic {R} — pays Flare's Fire, and nothing else
+  "fix-titan": 38, // 340 HP neutral Basic, NO attacks — the pinned Active both sides, and the mill's fodder
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

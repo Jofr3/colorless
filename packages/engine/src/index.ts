@@ -1527,7 +1527,65 @@ import type { GameState, Seat } from "./types";
     its silence and its Active. No rng.ts / continuous.ts / attack.ts / events.ts diff.
     NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState` shape and no event
     shape changed. No web/API/DB/`@luminous/schema` diff. */
-export const engineVersion = "0.84.0";
+/** 0.85.0 — P3-M5: the FLIP-GATED OP family (D134). "Flip a coin. If heads,
+    <action>." now SIMULATES for two more consequents, on TWO anchored regexes and
+    TWO deriver arms — 3 printings / 2 distinct clauses. Censused against the local
+    D1 (2026-08-01) over the WHOLE effect string: Fuecoco sv02-035/-201 "Spacing Out"
+    (gated `heal 30 damage from this Pokémon`, 2 printings) and Wiglett sv01-056 "Dig
+    a Little" (gated `discard the top card of your opponent's deck`, 1). Both print
+    NO `damage` field, so the gated action is the entire visible result and a tails
+    face moves nothing anywhere.
+
+    D132's INVENTORY RULE FOR THE THIRD SLICE RUNNING, and the cheapest form it has
+    taken: BOTH consequents already existed (`heal { target: "self" }` since 0.x,
+    `discardDeckTop` since D130) and so did the gate (`coinFlipGate`, since 0.x, with
+    two members already reading it — `FLIP_DEFENDER_NOW` and
+    `FLIP_OPPONENT_ACTIVE_DISCARD`). What was missing was two readers. So the derived
+    program's `then` is BYTE-IDENTICAL to what the bare anchor derives for the same
+    clause, and that identity is asserted in both directions rather than described.
+    NO INTERPRETER DIFF, for the third slice running.
+
+    THE TWO SHIP TOGETHER, AND THAT IS THE SLICE'S ONE JUDGEMENT CALL. Fuecoco is 2
+    printings and clears D121's warrant alone; Wiglett is ONE and does not. Taken
+    together the SHAPE is 3 printings / 2 clauses and the engine already reads two
+    other instances of it, so Wiglett is a fourth member of a family rather than a
+    bespoke row for one card. The generalisation: WHEN A ONE-PRINTING SENTENCE IS AN
+    INSTANCE OF A SHAPE THE ENGINE ALREADY READS, THE WARRANT IS OWED BY THE SHAPE,
+    NOT BY THE PRINTING — count members of the family, not copies of the card.
+
+    LITERAL ARMS, NOT A D120 TEMPLATE, and this is the precondition failing rather
+    than a preference: the token that varies between the two anchors is the WHOLE
+    CONSEQUENT — an open-ended vocabulary of everything an `EffectOp` can express —
+    where D120 licenses a template only for a token with a CLOSED reading (the five
+    status words, the nine energy codes). The two consequents share not one word
+    after "If heads, ", which the suite asserts as a set intersection. So the gate
+    prefix is spelled out once per consequent and the file now carries four copies of
+    it on purpose.
+
+    THE MILL ARM IS DELIBERATELY NARROWER THAN `DECK_TOP_MILL`, which reads both a
+    plural count and either deck: exactly one gated printing exists and it is the
+    SINGULAR, OPPONENT-side one, so widening would invent three readings the ingest
+    has never produced. Widen it when a printing appears, with the readings in hand.
+
+    THE TAILS FACE IS THE HALF THAT NEEDED TESTING, and every end-to-end claim here
+    is a SEED SWEEP collecting both faces rather than a single board — the first
+    heal-or-mill suite that needs one. Three states are distinguishable and all three
+    are real: tails (the branch never ran), heads-with-nothing-to-do (it ran and
+    whiffed), and skipped (the sentence was never read). A TAILS IS NOT A SKIPPED
+    EFFECT — no ATTACK_EFFECT_SKIPPED on either face — and the coin is TAKEN on both,
+    so `rngState` advances even when nothing happens; a build that checked the face
+    before flipping would desynchronise the next coin in an online match.
+
+    Cost: 2 regexes, 2 deriver arms, 2 test fixtures (Fuecoco sv02-035, Wiglett
+    sv01-056), 1 test deck, 1 test file, 2 widened `EffectOp` doc blocks, 3
+    re-pointed witnesses (selfHeal, boardHeal, deckTopMill). ZERO new events, ops,
+    `EffectOp`/`AttackCoinFlip`/`AttackFlipCount`/`BoardCondition`/`DamageCountSource`
+    members, clause-table rows, state fields, prompts, error codes, registry rows,
+    redact arms or log arms. NO INTERPRETER DIFF — `coinFlipGate`, `heal` and
+    `discardDeckTop` were all already correct. No rng.ts / continuous.ts / attack.ts /
+    events.ts diff. NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState` shape
+    and no event shape changed. No web/API/DB/`@luminous/schema` diff. */
+export const engineVersion = "0.85.0";
 
 export type {
   ApplyResult,

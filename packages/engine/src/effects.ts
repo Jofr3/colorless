@@ -571,9 +571,11 @@ export type EffectOp =
       heals past what is there; a whiff — an undamaged Active, or an `amount`
       the board has no use for — is SILENT, emitting no HEALED row rather than a
       row saying nothing happened. Never parks: "this Pokémon" is not a choice.
-      Two readers produce it: the compound `SELF_SLEEP_HEAL` ("This Pokémon is
-      now Asleep. Heal {N} damage from it.", since 0.x) and — since 0.83.0 —
-      the bare `SELF_HEAL` sentence (D132). */
+      THREE readers produce it: the compound `SELF_SLEEP_HEAL` ("This Pokémon is
+      now Asleep. Heal {N} damage from it.", since 0.x), the bare `SELF_HEAL`
+      sentence (since 0.83.0, D132) and — since 0.85.0 — `FLIP_SELF_HEAL`
+      ("Flip a coin. If heads, heal {N} damage from this Pokémon.", D134), which
+      wraps this very op in a `coinFlipGate` and changes nothing about it. */
   | { op: "heal"; target: "self"; amount: number }
   /** Heal `amount` HP from EACH of the controller's own in-play Pokémon — the
       ACTIVE and the whole Bench, which is what the printed "each of your
@@ -954,7 +956,13 @@ export type EffectOp =
 
       Naming the uids on the event leaks nothing: the discard pile is PUBLIC, so a
       redact.ts arm would hide from the opponent exactly what the opponent can pick
-      up and read. */
+      up and read.
+
+      THREE readers produce it: D130's per-heads expansion (`programPerHeads`, at
+      the flip site), D131's bare `DECK_TOP_MILL` sentence and — since 0.85.0 —
+      `FLIP_DECK_TOP_MILL` ("Flip a coin. If heads, discard the top card of your
+      opponent's deck.", D134), which wraps the singular opponent-side reading in a
+      `coinFlipGate` and changes nothing about the op. */
   | { op: "discardDeckTop"; whose: "self" | "opponent"; count: number }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
@@ -1607,6 +1615,51 @@ const SELF_HEAL = /^Heal (\d+) damage from this Pokémon\.$/;
 // this path. (That one is a Supporter and never reaches this reader anyway, but
 // the guard should not depend on which reader a card happens to route through.)
 const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
+// ── The FLIP-GATED OP family (D134) ──────────────────────────────────────────
+// "Flip a coin. If heads, <an action this reader already performs>." — 3
+// printings / 2 distinct clauses, and the two are taken TOGETHER on purpose:
+//   • Fuecoco sv02-035/-201 "Spacing Out" — `heal 30 damage from this Pokémon`,
+//     the gated twin of `SELF_HEAL` (D132). 2 printings, so D121's warrant is
+//     met on its own.
+//   • Wiglett sv01-056 "Dig a Little" — `discard the top card of your
+//     opponent's deck`, the gated twin of `DECK_TOP_MILL`'s singular
+//     opponent-side branch (D131). ONE printing, so alone it would NOT clear
+//     D121's warrant; beside Fuecoco it is a second member of a shape the
+//     engine already reads a third instance of (`FLIP_DEFENDER_NOW`,
+//     `FLIP_OPPONENT_ACTIVE_DISCARD`), which is what makes it defensible.
+//
+// LITERAL ARMS, NOT A TEMPLATE, and this is the D120 precondition failing
+// rather than a preference. The token that varies between these two anchors is
+// the WHOLE CONSEQUENT — an open-ended vocabulary of everything an `EffectOp`
+// can express — where D120 only licenses a template when the varying token has
+// a CLOSED reading (the five status words, the nine energy codes). So the gate
+// prefix is spelled out once per consequent, exactly as the family's two
+// existing members already spell it, and the file now carries four copies of
+// "Flip a coin. If heads, " on purpose.
+//
+// THE CONSEQUENT IS LOWERCASE, which is the whole reason the standing "no /i"
+// rule (see TYPED_SELF_DISCARD) has teeth here: `SELF_HEAL` starts at `^Heal`
+// and `DECK_TOP_MILL` at `^Discard`, so neither can claim these strings even
+// without the anchor — the capital is a second, independent guard. Adding /i
+// anywhere in this file would collapse both guards to one at once.
+//
+// NEITHER NEEDS A NEW OP. `heal { target: "self" }` and `discardDeckTop` both
+// already exist, and `coinFlipGate` has spliced a branch into the work queue
+// since 0.x — so each of these is a regex and an arm, and the derived program's
+// `then` is BYTE-IDENTICAL to what the bare anchor derives for the same clause.
+// That identity is the family's checkable claim (D132's inventory rule, third
+// slice running), and flipGatedOp.test.ts asserts it in both directions.
+const FLIP_SELF_HEAL = /^Flip a coin\. If heads, heal (\d+) damage from this Pokémon\.$/;
+// DELIBERATELY NARROWER THAN `DECK_TOP_MILL`, whose body reads both a plural
+// count and either deck. Exactly one printing exists and it is the SINGULAR,
+// OPPONENT-side one; widening the gated form to "the top N cards" or to "your
+// deck" would invent three readings the ingest has never produced, which is the
+// same guess this file refuses everywhere else ("all of your Pokémon", "Remove
+// N damage counters"). When a printing of a wider gated mill appears, widen the
+// body then — the bare anchor is the precedent for how (D131), and the singular
+// branch there is likewise a spelling rather than an optional digit.
+const FLIP_DECK_TOP_MILL =
+  /^Flip a coin\. If heads, discard the top card of your opponent['’]s deck\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -3004,6 +3057,48 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // clamps PER POKÉMON to the damage actually present, so a malformed large
     // amount heals the board to full and stops — a legal state.
     if (amount >= 1) return [{ op: "healEach", amount }];
+  }
+
+  // 18/19. "Flip a coin. If heads, <action>." — D134's FLIP-GATED OP family, the
+  //        gated twins of two sentences this reader already reads bare. Both
+  //        consequents existed before the slice (`heal` since 0.x, `discardDeckTop`
+  //        since D130) and so did the gate, so each is a regex and an arm with NO
+  //        interpreter diff — the third slice running on D132's inventory rule.
+  //
+  //        THE GATE IS NOT A MODIFIER ON THE OP, it is an op that OWNS a program:
+  //        `coinFlipGate` flips once, emits ATTACK_EFFECT_COIN_FLIP either way, and
+  //        splices `then` into the work queue only on heads. That is why the derived
+  //        `then` is byte-identical to the bare anchor's whole program — there is one
+  //        action here, printed twice, and the flip is procedure in front of it.
+  //        A tails flip is therefore NOT a skipped effect: the sentence was read, the
+  //        coin decided, and the loud ATTACK_EFFECT_SKIPPED row would be a lie.
+  match = FLIP_SELF_HEAL.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // `amount >= 1` is the guard every arm here carries, and it sits OUTSIDE the
+    // gate on purpose: a printed "heal 0" would derive to an attack that flips a
+    // coin and then does nothing on either face, which is worse than an unread
+    // sentence because the flip makes it look like something happened.
+    if (amount >= 1) {
+      return [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "heal", target: "self", amount }],
+        },
+      ];
+    }
+  }
+  if (FLIP_DECK_TOP_MILL.test(effect)) {
+    // No capture at all — the one printing is the SINGULAR, and the `count: 1` is
+    // invented at the site exactly as `DECK_TOP_MILL`'s singular branch invents it.
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+      },
+    ];
   }
 
   return null;

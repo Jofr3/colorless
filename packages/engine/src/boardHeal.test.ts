@@ -82,7 +82,9 @@ const CLAUSES = [
         "all". THE AMOUNT IS NOT A NUMBER, which is the half this arm could not carry
         even if the target matched: `healEach`'s `amount` is a number.
       • Fuecoco sv02-035 / -201 — a SELF heal gated behind a flip. Neighbouring
-        family, still unmapped on both readers.
+        family, SIMULATED SINCE 0.85.0 by `FLIP_SELF_HEAL` (D134) — so it is refused
+        here for TWO reasons at once (wrong target, wrong anchor) and its case moves
+        out of the null loop below.
       • Iron Moth sv06.5-009 "Suction" — an amount read off the damage just dealt.
       • Saguaro sv02-187 / -255 / -270 — THE DANGEROUS ONE. It prints "…and heal 50
         damage from each of them.": the mapped words, mid-sentence, behind a CHOICE
@@ -256,7 +258,17 @@ describe("the anchor — 7 printings, 2 clauses, one sentence", () => {
   });
 
   it("refuses the SEVEN real catalog rows that share its words", () => {
-    for (const text of REAL_NEAR_MISSES) {
+    for (const [index, text] of REAL_NEAR_MISSES.entries()) {
+      // Index 3 (Fuecoco's gated self-heal) has been simulated since 0.85.0 by
+      // ANOTHER arm of this same reader, so "derives to nothing" is no longer the
+      // right claim for it — "does not derive to a BOARD heal" is, and it is the
+      // claim this file always meant. Every other row is unmapped everywhere.
+      if (index === 3) {
+        expect(deriveAttackEffect(text)).not.toContainEqual(
+          expect.objectContaining({ op: "healEach" }),
+        );
+        continue;
+      }
       expect(deriveAttackEffect(text)).toBeNull();
     }
     // SAGUARO IS THE ONE THAT MATTERS. Its tail — "…and heal 50 damage from each of

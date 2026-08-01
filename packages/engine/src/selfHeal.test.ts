@@ -108,6 +108,11 @@ const CLAUSES = [
       • Fuecoco sv02-035 / -201 — THE SAME ACTION, THE SAME TARGET, GATED BEHIND A
         FLIP. The dangerous one: a reader without `^` would take the tail of this
         sentence and heal unconditionally, turning a coin into a certainty.
+        (SIMULATED SINCE 0.85.0, by `FLIP_SELF_HEAL` — D134. It stays in this list
+        and keeps its case, because the claim about it never was "unmapped": it is
+        that THIS anchor does not reach it. What changed is the shape of the proof —
+        the gated program's `then` is now byte-identical to what this anchor derives
+        for the same N, which is a sharper statement than a null was.)
       • Iron Moth sv06.5-009 "Suction" — the same target, an amount that is not a
         number at all but a read of the damage this attack just dealt.
       • Slowpoke sv01-042 / -204 "Rest" — the COMPOUND form, refused by THIS anchor
@@ -126,11 +131,19 @@ const REAL_NEAR_MISSES = [
   "This Pokémon is now Asleep. Heal 30 damage from it.",
 ] as const;
 
-/** The five of the six that are unmapped EVERYWHERE — the ones that must derive to
-    nothing on this reader because they derive to nothing on any reader. Split out
-    rather than sliced inline, because the sixth row's exclusion is a claim (the
-    compound form IS simulated, by the other anchor) and not a loop bound. */
-const UNMAPPED_NEAR_MISSES = REAL_NEAR_MISSES.slice(0, 5);
+/** The rows that are unmapped EVERYWHERE — the ones that must derive to nothing on
+    this reader because they derive to nothing on any reader. Split out rather than
+    sliced inline, because the excluded rows' exclusion is a CLAIM and not a loop
+    bound: index 3 (Fuecoco, gated) is simulated by `FLIP_SELF_HEAL` since 0.85.0 and
+    index 5 (the compound Sleep form) by `SELF_SLEEP_HEAL` since 0.x. Both keep their
+    own cases below — a loop over all six would be asserting that a simulated card is
+    unsimulated. */
+const UNMAPPED_NEAR_MISSES = [
+  REAL_NEAR_MISSES[0],
+  REAL_NEAR_MISSES[1],
+  REAL_NEAR_MISSES[2],
+  REAL_NEAR_MISSES[4],
+] as const;
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII
     space and INVISIBLE in a diff, which is exactly why the case names it instead of
@@ -261,22 +274,39 @@ describe("the anchor — 18 printings, 4 clauses, one sentence", () => {
     ]);
   });
 
-  it("refuses the FIVE unmapped catalog rows that share its words", () => {
-    // The first FIVE are unmapped everywhere and must derive to nothing at all. The
-    // SIXTH — the compound Sleep form — is refused by THIS anchor and claimed by the
-    // OTHER one, which is a different statement and gets its own case below; a loop
-    // over all six would be asserting that a simulated card is unsimulated.
+  it("refuses the FOUR unmapped catalog rows that share its words", () => {
+    // Four of the six are unmapped everywhere and must derive to nothing at all. The
+    // other two — Fuecoco's gated form and the compound Sleep form — are refused by
+    // THIS anchor and claimed by ANOTHER, which is a different statement and gets its
+    // own case below; a loop over all six would be asserting that a simulated card is
+    // unsimulated.
     for (const text of UNMAPPED_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 1);
-    // FUECOCO STAYS LOUD ON *BOTH* READERS. The bare anchor refuses it (above) and
-    // the coin reader does not claim it either — its gated consequent is a heal,
-    // which no `AttackCoinFlip` shape expresses today. So the row is a genuine gap
-    // rather than a half-simulation, which is the only honest state for it to be in:
-    // a build that read the heal and dropped the flip would turn a 50% effect into a
-    // certainty and never say so.
-    expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[3])).toBeNull();
+    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 2);
+  });
+
+  it("hands the GATED form to the flip anchor — and the heal inside it is THIS one", () => {
+    // RE-POINTED AT 0.85.0 (D134). Fuecoco sv02-035 "Spacing Out" was this file's
+    // sharpest near-miss from 0.83.0 until `FLIP_SELF_HEAL` mapped it; per the
+    // standing note the case was re-pointed rather than deleted, and it now makes a
+    // STRONGER claim than the null did. THIS anchor still refuses the string — it
+    // starts at `^Heal` and the gated printing does not — so the danger it was
+    // guarding against (a reader without `^` taking the tail and healing
+    // unconditionally, turning a coin into a certainty) is still pinned shut.
+    const gated = REAL_NEAR_MISSES[3];
+    expect(gated.startsWith("Heal")).toBe(false);
+    // What the gated sentence derives to is a `coinFlipGate` whose branch is the
+    // program THIS anchor produces for the same N, byte for byte. One action, two
+    // printings, no mechanism between them.
+    expect(deriveAttackEffect(gated)).toEqual([
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "coinFlipGate", then: deriveAttackEffect("Heal 30 damage from this Pokémon.") },
+    ]);
+    // And the COIN reader still does not claim it: a gated heal is not an
+    // `AttackCoinFlip` shape (those fold pre-damage). So exactly one reader answers
+    // for the string, which is this family's standing invariant.
+    expect(deriveAttackCoinFlip(gated)).toBeNull();
   });
 
   it("hands the COMPOUND Sleep form to the OTHER anchor — one reader per string", () => {

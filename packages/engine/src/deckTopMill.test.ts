@@ -113,7 +113,11 @@ const CLAUSES = [
     sentence, and the refusal is the anchors alone in every case. They are this
     file's "stays LOUD" witnesses, and better ones than an invented string would be:
       • Wiglett sv01-056 — the same action on the same zone, GATED behind a flip,
-        printed by a card one evolution below Wugtrio. (Mapped by nothing today.)
+        printed by a card one evolution below Wugtrio. SIMULATED SINCE 0.85.0 by
+        `FLIP_DECK_TOP_MILL` (D134), which is why its case below is a SHAPE claim
+        rather than a null: what this file asserts is that the BARE anchor does not
+        claim it, and the proof is that the derived program is a `coinFlipGate` whose
+        branch is this anchor's own singular reading — not a bare mill.
       • Wugtrio sv01-057 / Gyarados swsh10.5-022 idx 0 — D130's per-heads programs.
         They ARE simulated, by `deriveAttackCoinFlip`; what is pinned here is that
         the BARE reader does not also claim them, because two readers on one string
@@ -288,7 +292,12 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
   });
 
   it("refuses the FIVE real catalog rows that share its words", () => {
-    for (const text of REAL_NEAR_MISSES) {
+    for (const [index, text] of REAL_NEAR_MISSES.entries()) {
+      // Index 0 (Wiglett, gated) has been simulated since 0.85.0 by ANOTHER arm of
+      // this same reader, so a null is no longer the right claim for it — see the
+      // gated case below, which is strictly stronger. Every other row must still
+      // derive to nothing here.
+      if (index === 0) continue;
       expect(deriveAttackEffect(text)).toBeNull();
     }
     // The two that ARE simulated are simulated by the OTHER reader, which is the
@@ -301,6 +310,32 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
     // which nothing counts). So the whole row stays loud on BOTH readers — a genuine
     // gap, not a half-simulation.
     expect(deriveAttackDamageBonus(REAL_NEAR_MISSES[4])).toBeNull();
+  });
+
+  it("leaves Wiglett's GATED printing to the flip anchor — and the mill inside it is THIS one", () => {
+    // RE-POINTED AT 0.85.0 (D134). Wiglett sv01-056 "Dig a Little" was this file's
+    // sharpest near-miss from 0.82.0 until `FLIP_DECK_TOP_MILL` mapped it; per the
+    // standing rule the case was re-pointed rather than deleted, and it now makes a
+    // stronger claim than the null did. THIS anchor still refuses the string — it
+    // starts at `^Discard` and the gated printing does not — so the gate cannot be
+    // dropped by a loosened body, which is the danger the case always guarded.
+    const gated = REAL_NEAR_MISSES[0];
+    expect(gated.startsWith("Discard")).toBe(false);
+    // The proof is the SHAPE: what comes back is a `coinFlipGate` whose branch is
+    // exactly what this anchor derives for the bare singular — including the
+    // `count: 1` it invents rather than reads. A build that let the bare body claim
+    // the gated string would return that inner op at the TOP level, unwrapped.
+    expect(deriveAttackEffect(gated)).toEqual([
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: deriveAttackEffect("Discard the top card of your opponent's deck."),
+      },
+    ]);
+    // And the coin reader still does not claim it either — a gated op is not an
+    // `AttackCoinFlip` shape, which is what keeps exactly one reader answering for
+    // the string.
+    expect(deriveAttackCoinFlip(gated)).toBeNull();
   });
 
   it("refuses the anchor, punctuation and case rewrites — but trims outer space", () => {

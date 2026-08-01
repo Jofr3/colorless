@@ -6974,3 +6974,162 @@ All live "stays LOUD" witnesses in `selfHeal.test.ts` and/or `boardHeal.test.ts`
 **The heal census stays CLOSED** — 42 heal-mentioning attack printings / 18 distinct
 clauses pool-wide; 18 bare self-heal (D132), 2 compound `SELF_SLEEP_HEAL` (0.x), 7
 own-board (D133). Do not re-run it.
+
+---
+
+## D134 — the FLIP-GATED OP family: `Flip a coin. If heads, <action>.` (engine 0.85.0)
+
+Two more consequents of a shape the engine has read since 0.x now SIMULATE, on **TWO
+anchored regexes and TWO `deriveAttackEffect` arms**, with **NO interpreter diff** —
+the third slice running. Read straight off D133's remainder list, which had ranked it
+"the cheapest thing left" and named all three printings.
+
+### The census (local D1, 2026-08-01, whole effect string, 978 cards)
+
+`attacks_json LIKE '%Flip a coin. If heads,%'` returns **76 printings / 29 distinct
+clauses** — the whole gated neighbourhood in one query, and worth keeping because it
+is the map for every future slice in this family. Counted through the derivers
+themselves (not by eye): **45 mapped / 31 unmapped** after this slice.
+
+| Clause | Printings | Status after D134 |
+|---|---|---|
+| `…your opponent's Active Pokémon is now Paralyzed.` / `…Burned.` / `…Poisoned.` | 16 / 1 / 1 | ✅ `FLIP_DEFENDER_NOW` (0.x) |
+| `…this attack does {N} more damage.` (N ∈ {10,20,30,50,60,80,90}) | 20 | ✅ `deriveAttackCoinFlip` (D126) |
+| `…discard an Energy from your opponent's Active Pokémon.` | 4 | ✅ `FLIP_OPPONENT_ACTIVE_DISCARD` (0.x) |
+| **`…heal {N} damage from this Pokémon.`** | **2** | ✅ **`FLIP_SELF_HEAL` (D134)** |
+| **`…discard the top card of your opponent's deck.`** | **1** | ✅ **`FLIP_DECK_TOP_MILL` (D134)** |
+| `…during your opponent's next turn, prevent all damage…` (two spellings) | 11 + 2 | ❌ a §11 block with a DURATION — the biggest un-taken count |
+| `…this attack does 90 more damage, and …is now Confused.` | 3 | ❌ a bonus AND an op on one flip |
+| `…this attack does 30 more damage, and heal 30 damage from this Pokémon.` | 1 | ❌ same shape (Floette `sv01-092`) |
+| `…this attack does 140 more damage. If tails, …can't attack.` | 1 | ❌ has an `otherwise` |
+| `…is now Paralyzed and Poisoned.` | 2 | ❌ a COMPOUND status, not a `StatusName` |
+| `…search your deck for up to 5 Grass Energy cards…` | 2 | ❌ a deck search behind a gate |
+| `…switch in 1 of your opponent's Benched Pokémon…` / `…switch this Pokémon with 1 of your Benched…` | 1 + 1 | ❌ a gust / a self-switch |
+| `…choose a Special Condition…` / `…choose an attack from 1 of your opponent's Pokémon…` / `…choose 1 of your opponent's Benched Pokémon. Shuffle…` | 3 | ❌ three parks |
+| `…put your opponent's Active Pokémon and all attached cards into your opponent's hand.` | 1 | ❌ a scoop |
+| `…they can't play any Item cards…` | 1 | ❌ an Item lock |
+| `…this attack does 10 damage to 1 of your opponent's Pokémon.` | 1 | ❌ a gated snipe |
+| `…search your deck for a card… If tails, discard a card from your hand.` | 1 | ❌ has an `otherwise` |
+
+**The two mapped clauses are the only ones whose consequent this reader already had
+an op for.** That is the whole selection criterion, and it is D132's inventory rule.
+
+### ⚠️ The one judgement call: shipping the two together
+
+Fuecoco `sv02-035`/`-201` "Spacing Out" is **2 printings** and clears D121's warrant
+alone. Wiglett `sv01-056` "Dig a Little" is **ONE** and does not. Taken together the
+SHAPE is 3 printings / 2 clauses, and the engine already reads two other instances of
+it — so Wiglett is a **fourth member of a family** rather than a bespoke row for one
+card.
+
+**THE RULE: when a one-printing sentence is an INSTANCE of a shape the engine already
+reads, the warrant is owed by the SHAPE, not by the printing. Count members of the
+family, not copies of the card.** The converse still holds unchanged: a one-printing
+sentence that *introduces* a shape still owes D121's two.
+
+### ⚠️ Literal arms, not a D120 template — the precondition FAILING
+
+The token that varies between the two anchors is the **whole consequent**: an
+open-ended vocabulary of everything an `EffectOp` can express. D120 licenses a
+template only when the varying token has a **closed** reading (the five status words,
+the nine energy codes). It does not here, and the suite asserts it as a **set
+intersection** — the two consequents share not one word after `"If heads, "`.
+
+So the gate prefix is spelled out once per consequent. `effects.ts` now carries FOUR
+copies of `Flip a coin\. If heads, ` on purpose; that duplication is the shape of the
+argument, not an oversight to be refactored away.
+
+### ⚠️ The mill arm is deliberately narrower than `DECK_TOP_MILL`
+
+The bare anchor reads both a plural count and either deck (D131). Exactly ONE gated
+printing exists and it is the **singular, opponent-side** one, so widening the gated
+body would invent three readings the ingest has never produced. Widen it when a
+printing appears, with the readings in hand — D130→D131 is the precedent for how.
+
+### ⚠️ The tails face is the half that needed testing
+
+This is the first heal-or-mill suite that takes a **seed sweep** (8 seeds per case,
+collecting both faces, asserting both were seen so no pair passes vacuously). Three
+states are distinguishable and all three are real:
+
+1. **tails** — the branch never ran;
+2. **heads with nothing to do** — it ran and whiffed (an undamaged attacker heals
+   nothing, silently);
+3. **skipped** — the sentence was never read.
+
+Only (3) deserves a loud `ATTACK_EFFECT_SKIPPED`. **A tails is not a skipped effect**,
+and **the coin is TAKEN on both faces** — `rngState` advances even when nothing
+happens, because `coinFlipGate` flips first and splices second (interpreter.ts). A
+build that checked the face before flipping would desynchronise the next coin in an
+online match, which is invisible in a local suite that only asserts board deltas.
+
+### ⚠️ A fixture HP trap — the attacker carries its damage BEFORE it declares
+
+The slice's only three failures were all this. Fuecoco is **90 HP**; the first draft
+used a 100-damage board (copied from the heal suites, where 100 sits on a 340 HP
+fix-titan). A self-damage figure at or above the attacker's printed HP is a body the
+attack epilogue sweeps off the board **mid-case**, so every later assertion is about a
+promoted stranger — and it fails as `active?.damage === undefined` or as a stray
+`ko:takePrizes` phase, neither of which reads like an HP problem.
+
+**Own-board damage figures must be read against the FIXTURE's printed HP.** Every
+other suite's figures land on the DEFENDER, which is always a 340 HP titan chosen
+precisely so this never came up.
+
+### Fixture / witness work this slice forced
+
+- **Two new fixtures** — Fuecoco `sv02-035` (90 HP, Fire, Basic; "Spacing Out" idx 0,
+  "Flare" {R}{C}/30 idx 1) and Wiglett `sv01-056` (60 HP, Water, Basic; "Dig a Little"
+  idx 0, "Ram" {C}{C}/20 idx 1). Both controls print real damage and no effect text;
+  Wiglett's is the sharper one, since "Ram" comes off the same Colorless line as the
+  gated attack and only the INDEX tells them apart.
+- **`FLIP_GATED_OP_DECK`** — dedicated for a mechanical reason, not a stylistic one:
+  this family takes a coin, so sharing a deck with the seed-free heal/mill suites
+  would make their determinism a coincidence rather than a property.
+- **THREE witnesses re-pointed, none deleted**, and every one now makes a STRONGER
+  claim than its null did:
+  - `selfHeal.test.ts` — Fuecoco was its sharpest near-miss from 0.83.0. The claim
+    was never "unmapped"; it was "THIS anchor does not reach it". It is now asserted
+    as `[{ op: "coinFlipGate", then: deriveAttackEffect("Heal 30 damage from this
+    Pokémon.") }]` — the gated program's branch is this anchor's own output, byte for
+    byte.
+  - `deckTopMill.test.ts` — same move for Wiglett: a SHAPE claim (the derived op is a
+    gate, not a bare mill) instead of a null. A build where the bare body claimed the
+    gated string would return the inner op **unwrapped**, which is what the assertion
+    catches.
+  - `boardHeal.test.ts` — Fuecoco is refused there for TWO reasons at once (wrong
+    target, wrong anchor), so its row moved out of the null loop into a
+    `not.toContainEqual({ op: "healEach" })`.
+
+### The suite
+
+`flipGatedOp.test.ts` — **24 tests**, every end-to-end case a seed sweep over
+`[1..8]`. Full `bun run check` green exit 0, **177 files / 2831 tests** (was 176 /
+2805).
+
+### Still unmapped after D134 — ranked by cost
+
+The heal census stays CLOSED (D133); the gated census above is now the live map.
+
+- **`Heal {N} damage from 1 of your Pokémon.` — 5 printings / 3 clauses.** Nacli
+  `sv02-121`/`-220` (20), Vespiquen ex `sv03-096`/`-212` (60), Smoliv `sv01-021` (30).
+  `healChosen { amount }` exists (Potion) but **PARKS on a choice**, so this would be
+  the first parking op the *attack* deriver emits — check how D125's tail placement
+  interacts with a park before pricing it. Warrant met. **This is now the top of the
+  list**, and it is the one that opens a real mechanism question rather than adding a
+  reader.
+- **The BENCHED-only heal variants — 4 printings / 4 clauses**, needing a zone filter
+  `healChosen` does not have. Tropius `sv01-007` (60), Chansey `swsh10.5-051` (30),
+  Combee `sv03-008` (20); Blissey `swsh10.5-052` + Arboliva `sv03-021` print "all"
+  (`healChosen` already takes `amount: "all"`, so that half is free). Honour the
+  printed zone word (D120). Best taken *with* the chosen-heal above — the park
+  question is the same one twice.
+- **The gated PREVENT clause — 13 printings / 2 spellings**, and the biggest single
+  un-taken count in the gated census. "…during your opponent's next turn, prevent all
+  damage from and effects of attacks done to this Pokémon." It is a §11 block with a
+  DURATION, not an instant action, so the cost is a continuous-effect mechanism rather
+  than a reader — a genuinely different slice from this one, and the reason it is
+  listed here rather than taken.
+- **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132/D133: a channel from the
+  §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt
+  `sv03-032`. Do it last or not at all, and do it *with* Camerupt.
