@@ -557,7 +557,32 @@ import type { GameState, Seat } from "./types";
     (leaving the Active Spot, evolving). ZERO registry rows: every print derives
     off its printed text. No API/DB/`@luminous/schema` change; the web diff is the
     one `&&`. */
-export const engineVersion = "0.63.0";
+
+    /* 0.64.0 — `preventOpponentActiveRetreat`: Snorlax swsh10.5-055 "Block" ("As
+    long as this Pokémon is in the Active Spot, your opponent's Active Pokémon
+    can't retreat") — the L3 shape of D112's retreat-LOCK seam, and the ONLY
+    continuous-Ability retreat lock in the ingested pool (one printing, no
+    reprint). It shares nothing with D112's two attack riders but the effect: no
+    turn duration, so it rides neither `InPlayPokemon.retreatBlocked` nor the
+    `preventRetreat` op, but a bare passive flag read LIVE through a new
+    continuous.ts scan `opposingRetreatBlocked` — the FIFTH member of the
+    aura-scan family and the boolean cross-board twin of D111's
+    `opposingRetreatSurcharge`, sharing its derived-seat trick and its §9
+    `disabledAbilityUids` gate. The asymmetry is the point: Trap Territory's
+    sentence scopes only the TARGET (a benched Spidops ex still surcharges),
+    while this one opens with "As long as this Pokémon is in the Active Spot", so
+    BOTH ends are Active-gated and the scan enforces the source clause at the read
+    site (the `damageAttacker` precedent, not a new `activeOnly` field). Read at
+    the RETREAT GATE, never folded into `effectiveRetreatCost` — a block is not a
+    cost, so the printed cost stands and there is simply no legal retreat to spend
+    it on. One registry row, one turn.ts guard reusing the existing
+    `RETREAT_PREVENTED` code (a different message: "an attack effect" would be a
+    lie for an Ability), one `&&` in redact.ts's `can` and one in the web HUD. No
+    new events, ops or error codes; no API/DB/`@luminous/schema` change. It is
+    also the family's first §9-POSITIVE: Snorlax is a BASIC, so an Active Klefki's
+    "Mischievous Lock" really does silence it — where Lunar Zone and Trap
+    Territory, both Stage 1 sources, could only assert the negative. */
+export const engineVersion = "0.64.0";
 
 export type {
   ApplyResult,
@@ -611,6 +636,7 @@ export {
   effectiveMaxHp,
   effectiveRetreatCost,
   hasFreeRetreatAura,
+  opposingRetreatBlocked,
   opposingRetreatSurcharge,
   providedEnergy,
   seatRemovesWeakness,

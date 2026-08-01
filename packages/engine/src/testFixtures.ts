@@ -803,6 +803,40 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   } satisfies Card,
+  /** Snorlax swsh10.5-055 — "Block": the L3 shape of the same seam (D113), and
+      the only continuous-Ability retreat lock in the pool. VERBATIM off the local
+      D1 (150 HP, retreat 4, {C}, ×2 {F}, ASCII apostrophes): the Ability text is
+      pinned by the suite even though the card DOES carry a registry row, because
+      the row and the sentence must not drift apart. A Basic, so it fields without
+      surgery — and, being a Basic, it is also the first source in the aura family
+      an Active Klefki's Basic-only "Mischievous Lock" can actually silence. Its
+      one attack "Collapse" is unsimulated (the Asleep rider is a §12 self-status,
+      not this seam) and is carried only so the printed row is complete. The first
+      swsh10.5 card here to carry an ABILITY — the four already in the pool
+      (-009/-010/-018/-031) are all attack casts. */
+  "swsh10.5-055": battler("swsh10.5-055", {
+    name: "Snorlax",
+    types: ["Colorless"],
+    hp: 150,
+    retreat: 4,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Block",
+        effect:
+          "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless", "Colorless"],
+        name: "Collapse",
+        damage: 150,
+        effect: "This Pokémon is now Asleep.",
+      },
+    ],
+  }),
 
   // — the retreat-cost READERS (D110): the two arithmetic shapes of "for each {C}
   //   in your opponent's Active Pokémon's Retreat Cost". Faithful to the D1 rows;
@@ -2792,6 +2826,32 @@ export const RETREAT_LOCK_DECK = deckOf({
   "fix-dark-energy": 6, // Basic {D} — pays Poison Ring
   "fix-energy": 10, // Basic {C} — pays the locked body's retreat cost
   "fix-bigbody": 17, // 200 HP neutral Basic — DOMINANT starter + bench body
+});
+
+/** 0.63.0 → 0.64.0: Snorlax swsh10.5-055 "Block" (D113) — the L3, continuous
+    shape of the retreat-lock seam. A DEDICATED deck: LUNAR_ZONE_DECK,
+    TRAP_TERRITORY_DECK and RETREAT_LOCK_DECK are all seed-pinned, and this suite
+    needs a cast none of them holds. Snorlax is a Basic, so it fields with one
+    surgery onto either Active spot; fix-retreat2 (120 HP, retreat 2) is the
+    BLOCKED body, chosen because its retreat is one a real board can actually pay —
+    so the CONTROL (the same board with no Snorlax across from it) retreats for
+    real and the block is the only thing that ever refuses. fix-energy pays that
+    2, and Klefki (sv01-096) is the §9 witness — the FIRST assertable POSITIVE in
+    the aura family, since its Basic-only "Mischievous Lock" reaches a Basic
+    Snorlax where it could never reach Stage 1 Clefable ex or Spidops ex.
+    fix-attacker is the blocked body for the one case fix-retreat2 cannot carry —
+    a blocked Pokémon still ATTACKS — since its Bite ({C}, 30) leaves Snorlax's
+    150 HP standing. fix-bigbody is the DOMINANT mulligan-free starter, and it is
+    also what BOTH Active spots are pinned to before each test's surgery, so no
+    assertion depends on which Basic the seed happened to start. BOTH seats run
+    the whole cast so either board can host the aura. */
+export const BLOCK_DECK = deckOf({
+  "swsh10.5-055": 4, // Snorlax — "Block": the continuous retreat lock
+  "fix-retreat2": 4, // retreat-2 Basic — the blocked body (a retreat it could pay)
+  "sv01-096": 4, // Klefki — "Mischievous Lock": the §9 gate's POSITIVE witness
+  "fix-attacker": 4, // Bite ({C}, 30) — the blocked body that still attacks
+  "fix-energy": 12, // Basic {C} — pays the blocked body's retreat cost and Bite
+  "fix-bigbody": 32, // 200 HP neutral Basic — DOMINANT starter + both pinned Actives
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

@@ -28,6 +28,7 @@ import {
   effectiveAttackCost,
   effectiveRetreatCost,
   isImmobilized,
+  opposingRetreatBlocked,
   otherSeat,
   programFor,
   programPlayable,
@@ -463,6 +464,9 @@ function TurnPanel(props: GameHudProps) {
     // retreat"). Read off raw GameState: it is not a §12 condition, so it is
     // deliberately absent from the projected/wire `conditions` shape.
     !active.retreatBlocked &&
+    // §11 — the same hold from an opposing CONTINUOUS Ability (Snorlax "Block"),
+    // read live off both Active spots rather than off a flag on this Pokémon.
+    !opposingRetreatBlocked(game, active) &&
     !game.allowances.retreated &&
     side.bench.length > 0 &&
     active.energy.length >= retreatCost;

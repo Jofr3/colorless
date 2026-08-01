@@ -15,7 +15,7 @@ import {
   isEnergyCard,
   topUid,
 } from "./cards";
-import { effectiveRetreatCost } from "./continuous";
+import { effectiveRetreatCost, opposingRetreatBlocked } from "./continuous";
 import type { GameEvent } from "./events";
 import { advance, isLethallyDamaged, resolveMidTurnKnockOuts, turnTail } from "./flow";
 import { switchInto } from "./interpreter";
@@ -362,6 +362,16 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // condition, and a client showing "Asleep/Paralyzed" here would be lying.
   if (active.retreatBlocked) {
     return err("RETREAT_PREVENTED", "an attack effect prevents this Pokémon from retreating (§11)");
+  }
+  // §11 — an opposing CONTINUOUS Ability holding it in place (Snorlax "Block").
+  // Same error code as the attack rider above — the client is told it cannot
+  // retreat, not why (D112) — but its own message: the two differ only in
+  // provenance, and "an attack effect" would be a lie for an Ability aura.
+  if (opposingRetreatBlocked(state, active)) {
+    return err(
+      "RETREAT_PREVENTED",
+      "an opposing Ability prevents this Pokémon from retreating (§11)",
+    );
   }
   if (side.bench.length === 0) {
     return err("BENCH_EMPTY", "cannot retreat with an empty bench (§11)");

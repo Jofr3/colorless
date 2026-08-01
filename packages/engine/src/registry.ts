@@ -258,6 +258,24 @@ export interface PassiveEffects {
       whose Active clause is on the holder). Stage-agnostic, so unlike the
       Stadium ± deltas it also reaches a non-Basic Active. */
   opponentActiveRetreatSurcharge?: number;
+  /** §11 continuous OPPONENT-side aura: while BOTH this Pokémon and the target
+      are in the Active Spot, the opposing side's Active Pokémon CANNOT RETREAT
+      (Snorlax swsh10.5-055 "Block" — "As long as this Pokémon is in the Active
+      Spot, your opponent's Active Pokémon can't retreat"). A bare flag per D104's
+      minimal-shape rule: one print, and unconditional once both ends are Active,
+      so there is nothing left to parameterise. Like its two neighbours it does
+      NOT modify its holder — it reaches across the board — so continuous.ts reads
+      it through a dedicated scan (`opposingRetreatBlocked`) rather than the
+      per-Pokémon `passivesOf` fold, and being a printed Pokémon ABILITY only the
+      TOP card of a stack grants it (never an attached Tool).
+      The point worth recording is where it parts from `opponentActiveRetreatSurcharge`
+      directly above: that print's sentence scopes only the TARGET, so a BENCHED
+      Spidops ex still imposes it — whereas this print opens with "As long as this
+      Pokémon is in the Active Spot", which scopes the SOURCE too. Both ends are
+      therefore Active-gated, and that clause is enforced by the SCAN rather than
+      by a new `activeOnly` field (the `damageAttacker` precedent: an Active clause
+      on the holder is honored at the read site). */
+  preventOpponentActiveRetreat?: true;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -590,6 +608,19 @@ const LUNAR_ZONE: CardProgram = { passive: { noRetreatCostAura: { requiresEnergy
     raises (the `opponentActiveRetreatCost` count source, D110), so a Spidops ex
     in the Active Spot hits for +30 off its own Ability. */
 const TRAP_TERRITORY: CardProgram = { passive: { opponentActiveRetreatSurcharge: 1 } };
+
+/** Snorlax (swsh10.5-055) — "Block": "As long as this Pokémon is in the Active
+    Spot, your opponent's Active Pokémon can't retreat." — the L3 shape of the
+    retreat-LOCK seam, and the only continuous-Ability retreat lock in the pool
+    (no reprint). The seam's two attack-rider shapes were built by D112 as the
+    turn-scoped `InPlayPokemon.retreatBlocked` flag plus a bare `preventRetreat`
+    op; this shares nothing with them but the effect, because it is a CONTINUOUS
+    aura with no turn duration — it rides neither the flag nor an op, but a
+    passive read live at the retreat gate, and it lapses the instant either end
+    leaves the Active Spot. Unlike Trap Territory beside it, BOTH ends are
+    Active-scoped: the opening clause scopes the source, the sentence's object
+    scopes the target. */
+const BLOCK: CardProgram = { passive: { preventOpponentActiveRetreat: true } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -2132,6 +2163,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-019": TRAP_TERRITORY, // Spidops ex — Trap Territory ("Your opponent's Active Pokémon's Retreat Cost is {C} more")
   "sv01-223": TRAP_TERRITORY, // (reprint)
   "sv01-243": TRAP_TERRITORY, // (reprint)
+  // — M5 long-tail: preventOpponentActiveRetreat, the L3 shape of the retreat-lock seam (verified vs the local D1 2026-08-01). —
+  "swsh10.5-055": BLOCK, // Snorlax — Block ("As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat")
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)

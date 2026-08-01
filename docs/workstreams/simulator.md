@@ -4450,12 +4450,22 @@ Do **not** confuse this with the **retreat-LOCK** seam ("the Defending Pokémon 
 retreat") — a different mechanic, built separately in D112 (next section).
 
 **⚠️ Scope correction (D112, 2026-08-01):** the "9/9 closed" above is scoped to the
-**Standard-legal** ingested pool. The local D1 also holds `swsh10.5` (see the pool note
-below), which contains a **10th** cost-seam print: **Wimpod `swsh10.5-025`** "Punk Out" —
-*"If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost."* A
-conditional **self** `noRetreatCost` keyed on the OPPONENT's board — structurally close to
-Clefable ex's aura but with the condition on the wrong side of the table for
-`hasFreeRetreatAura` as written. Unbuilt; `legal_standard=0`.
+**five sv/sve sets**. The local D1 also holds `swsh10.5` (see the pool note below), which
+contains a **10th** cost-seam print: **Wimpod `swsh10.5-025`** "Punk Out" — *"If your
+opponent has any Pokémon V in play, this Pokémon has no Retreat Cost."* A conditional
+**self** `noRetreatCost` keyed on the OPPONENT's board — structurally close to Clefable ex's
+aura but with the condition on the wrong side of the table for `hasFreeRetreatAura` as
+written. **Unbuilt** — and the last known open print on the cost seam.
+
+> **`legal_standard` is NOT a slice-selection criterion — stop treating it as one (D113).**
+> D112's resume point flagged Snorlax and Wimpod's `legal_standard=0` as something to
+> "decide about before spending a slice". The DB settles it: **851 of the 978 ingested cards
+> are `legal_standard=0`, including every single card in `sv01`/`sv02`/`sv03`** (763 reg-mark
+> G + 85 F + 2 D). The flag tracks the post-G rotation, and only `sv06.5`'s 96 reg-mark H
+> cards plus most blank-mark Energies are Standard. The engine has simulated non-Standard
+> cards from D1 onward and has no legality concept anywhere; format legality is a
+> **deck-builder (P2)** concern reading the catalog column, not an engine one. Pick engine
+> slices by *mechanism*, never by `legal_standard`.
 
 **The one derivation point held.** `effectiveRetreatCost(state, pokemon)` (continuous.ts)
 is the only place the rule lives, and it now has **four** readers — turn.ts's retreat
@@ -4480,17 +4490,34 @@ than a new *op*. Two guardrails make it safe:
   behaviour the Prize twins already had) — that is correct, not a bug, and is the case
   that distinguishes the two arms on the board.
 
-**The four continuous-aura scans now form a family** — same derived-seat trick, differing
-only in reach and return type. When the next aura lands, copy the nearest of these:
+**The five continuous-aura scans now form a family** — same derived-seat trick, differing
+only in reach, return type, and which end of the printed sentence is Active-scoped. When the
+next aura lands, copy the nearest of these:
 
-| scan | reach | returns | gated on §9 |
-|---|---|---|---|
-| `disabledAbilityUids` | both boards, predicate-matched targets | `Set<uid>` | no (a lock never disables a lock) |
-| `seatRemovesWeakness` | own board, per SEAT | `boolean` | yes |
-| `hasFreeRetreatAura` | own board, per TARGET | `boolean` | yes |
-| `opposingRetreatSurcharge` | **cross-board**, per TARGET | **`number` (summed)** | yes |
+| scan | reach | returns | gated on §9 | Active-scoped end |
+|---|---|---|---|---|
+| `disabledAbilityUids` | both boards, predicate-matched targets | `Set<uid>` | no (a lock never disables a lock) | source, per-aura via `requiresActive` |
+| `seatRemovesWeakness` | own board, per SEAT | `boolean` | yes | neither |
+| `hasFreeRetreatAura` | own board, per TARGET | `boolean` | yes | neither |
+| `opposingRetreatSurcharge` | **cross-board**, per TARGET | **`number` (summed)** | yes | target only |
+| `opposingRetreatBlocked` | **cross-board**, per TARGET | `boolean` | yes | **both** |
 
-### The retreat-LOCK seam — L1 + L2 built, L3 open (D112, engine 0.63.0)
+**Read the Active clauses off the print, one end at a time** (the D111 lesson, sharpened by
+D113): the last two scans are structurally the same walk and differ *only* here. Trap
+Territory's sentence scopes the TARGET ("your opponent's **Active** Pokémon's Retreat Cost"),
+so a benched Spidops ex still imposes it; Block *opens* with "As long as this Pokémon is in
+the **Active Spot**", which scopes the SOURCE as well, so its source list is the opponent's
+Active alone. An Active clause is enforced in the SCAN, never by a new `activeOnly` field —
+the `damageAttacker` precedent.
+
+**§9 reachability is a function of the source's STAGE.** Klefki `sv01-096` "Mischievous Lock"
+= `{ stage: "Basic", side: "both", requiresActive: true, exemptAbilityNamed: "Mischievous
+Lock" }`, so it silences BASIC sources only. Florges, Clefable ex and Spidops ex are all
+Stage 1/2, which is why their suites could record only the §9 negative; Snorlax is a **Basic**,
+so `blockTest`'s §9 case is the family's **first positive** — an Active Klefki really does
+take Block down, and the freed Pokémon is the Klefki itself.
+
+### The retreat-LOCK seam — CLOSED, all three shapes built (D112 + D113, engine 0.64.0)
 
 A *condition on the Pokémon*, not a cost modifier — it shares nothing with the seam above
 but the word "retreat". The census (local D1, D112) puts it at **three sentence shapes,
@@ -4500,7 +4527,16 @@ but the word "retreat". The census (local D1, D112) puts it at **three sentence 
 |---|---|---|---|
 | **L1** | `"During your opponent's next turn, the Defending Pokémon can't retreat."` | attack rider, the WHOLE effect | **built** — 15 printings / 13 names: `sv01-103` Espathra, `sv01-138`/`-219` Bombirdier, `sv02-016` Tarountula, `sv02-030` Talonflame, `sv02-165` Corvisquire, `sv03-012` Trevenant, `sv03-059` Wugtrio, `sv03-102` Houndstone ex, `sv03-112` Stunfisk, `sv03-137` Inkay, `sv06.5-013` Sneasel, `sv06.5-020`/`-070` Dusknoir, **`swsh10.5-036` Onix** |
 | **L2** | `"Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat."` | attack rider, ONE of two clauses | **built** — `sv03-128` Paldean Clodsire "Poison Ring" |
-| **L3** | `"As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat."` | **Ability**, continuous, no turn duration | **unbuilt** — `swsh10.5-055` Snorlax "Block". A cross-board aura gated on the HOLDER being Active; a 5th member of the aura-scan family, read at the retreat gate rather than in `effectiveRetreatCost` |
+| **L3** | `"As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat."` | **Ability**, continuous, no turn duration | **built** (D113) — `swsh10.5-055` Snorlax "Block", the only continuous-Ability retreat lock in the pool and its only printing. `PassiveEffects.preventOpponentActiveRetreat` read through the 5th aura scan `opposingRetreatBlocked`, at the retreat gate — **not** in `effectiveRetreatCost`: a block is not a cost, so the printed cost stands and there is simply no legal retreat to spend it on |
+
+**L3 rides neither the flag nor an op.** It has no turn duration, so there is nothing to
+apply and nothing to clear: the aura is read LIVE off both Active spots and lapses the
+instant either end leaves. That means the three D112 read sites take one more `&&` term each
+(`turn.ts` gate, `redact.ts` `can`, the web HUD) and nothing else — no new events (a
+continuous aura announces nothing), no new error code (`RETREAT_PREVENTED` is reused; only
+the *message* differs, because "an attack effect" would be a lie for an Ability), no new op,
+no wire field. **The two provenances are two independent guards at the same gate**, which is
+what makes the composition trivial.
 
 Alternate wordings were swept and are empty: `cannot retreat`, `can't be retreated`,
 `unable to retreat`, `must stay`, `may not retreat`, `can't switch`, `retreating`, and the

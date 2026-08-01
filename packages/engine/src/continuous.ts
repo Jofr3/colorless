@@ -392,6 +392,49 @@ export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemo
   return 0;
 }
 
+/** §11 — is `pokemon` currently held in place by an OPPOSING continuous Ability
+    (Snorlax "Block": "As long as this Pokémon is in the Active Spot, your
+    opponent's Active Pokémon can't retreat")? The fifth member of the aura-scan
+    family (`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` /
+    `opposingRetreatSurcharge`) and the BOOLEAN cross-board twin of the last of
+    those: same derived-seat trick — the caller hands us one of a side's own
+    `active`/`bench` entries, so we find that side by top uid and read the OTHER
+    one — and the same §9 gate through `disabledAbilityUids`.
+
+    Where the twins part is the Active clauses, and the printed text is the whole
+    reason. "Your opponent's Active Pokémon's Retreat Cost is {C} more" scopes only
+    the TARGET, so a benched Spidops ex still surcharges; this print OPENS with "As
+    long as this Pokémon is in the Active Spot", which scopes the SOURCE as well.
+    Both ends are Active here, so the source list is the opponent's Active ALONE
+    (a benched Snorlax blocks nothing) and a benched target reads false — which it
+    would anyway, a benched Pokémon having no retreat to refuse.
+
+    Read at the RETREAT GATE (turn.ts, mirrored by redact.ts and the web HUD), NOT
+    folded into `effectiveRetreatCost`: a block is not a cost. The cost of a
+    blocked Active is exactly its printed/modified cost — there is simply no legal
+    retreat to spend it on. */
+export function opposingRetreatBlocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return false;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    // The TARGET clause: only this side's Active is blocked, so a benched holder
+    // of this uid is out even though it belongs to this side.
+    if (side.active === null || topUid(side.active) !== uid) continue;
+    // The SOURCE clause: the opponent's Active Spot and nowhere else.
+    const source = state.players[otherSeat(seat)].active;
+    if (source === null) return false;
+    const top = topCardOf(state, source);
+    if (top === undefined || programFor(top.id)?.passive?.preventOpponentActiveRetreat !== true) {
+      return false;
+    }
+    const sourceUid = topUid(source);
+    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return false;
+    return true;
+  }
+  return false;
+}
+
 /** §11 retreat cost under the continuous effects in play. An own-board "no
     Retreat Cost" aura (Lunar Zone) sets it to zero outright, which is why it is
     read FIRST — a set-to-zero beats every ± delta, and it is stage-agnostic
