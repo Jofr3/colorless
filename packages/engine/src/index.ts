@@ -2283,7 +2283,105 @@ import type { GameState, Seat } from "./types";
     rows, `COUNTERS_PLACED` members or `EffectContext` fields; no
     `rng.ts`/`cardplay.ts`/`registry.ts`/`flow.ts` diff and no DB/
     `@luminous/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
-export const engineVersion = "0.92.0";
+/** 0.93.0 — THE TAILS GATE: *"Flip a coin. If tails, during your next turn, this
+    Pokémon can't attack."* — **5 printings on ONE sentence**, bought with **ONE
+    OPTIONAL FIELD** (`coinFlipGate.onTails`), one regex, one deriver arm and ONE
+    COMPARISON in `runProgram` (D144). Item 1 of D143's remainder list, and the
+    cheapest slice this tail has taken: D132's INVENTORY RULE ON BOTH HALVES AT
+    ONCE — the consequent (`preventAttack`) is D143's, the gate has spliced a
+    branch since 0.x, and the only thing that did not exist is WHICH FACE unshifts
+    it. **No `attack.ts` / `types.ts` / `continuous.ts` / `redact.ts` / `turn.ts` /
+    `events.ts` / `log.ts` / `registry.ts` / `rng.ts` diff, no new op, no new
+    event, no new error code, no new park, no web diff and NO
+    `MATCH_RECORD_VERSION` bump.**
+
+    ⚠️ THE ITEM'S ONE STRUCTURAL CLAIM WAS FALSE, AND IT WAS THE CLAIM THE WHOLE
+    DESIGN CALL WAS PRICED ON. It said *"`attack.ts` reads `coinFlipGate` directly
+    (D130's `programPerHeads` expansion lives there too) so read that code before
+    pricing it — the gate is not purely an interpreter concern."* **`attack.ts`
+    never reads this op.** Its coin family is `deriveAttackCoinFlip`'s OWN union
+    (`bonusOnHeads` / `cancelOnTails` / `perHeads` / `programPerHeads`), read at a
+    different site in FRONT of the §8.5 pipeline because those members retract or
+    fold DAMAGE; `programPerHeads` is a member of THAT union, not of this op. The
+    three mentions of `coinFlipGate` in that file are comments explaining precisely
+    that disjointness. So the op has exactly TWO real readers — `runProgram`'s
+    splice (interpreter.ts) and `programPlayable`'s descent (cardplay.ts) — which
+    is the fact the field-vs-member call turns on. NINTH consecutive list carrying
+    something wrong; the pattern is unchanged (**the CATALOG claims held exactly
+    and the STRUCTURAL one did not**), and this is the first whose miss made the
+    item CHEAPER rather than dearer.
+
+    ⚠️ A FIELD, NOT A SIBLING MEMBER — D131's test applied and PASSING, and the
+    census is the evidence rather than taste. Everything downstream of the face is
+    byte-identical: the coin is taken either way (so `rngState` advances on both
+    faces and an online match cannot desynchronise), the same
+    `ATTACK_EFFECT_COIN_FLIP` row is emitted either way, the branch is spliced by
+    the same `unshift` so an op inside it can still park, and `programPlayable`'s
+    descent is FACE-AGNOSTIC by construction (a coin gate has no `otherwise`, so
+    `then` is the only thing the card can ever do whichever face runs it). A
+    sibling member would have cost a second op in the vocabulary, a duplicate
+    descent, a new row in `preventBlock.test.ts`'s op-classification table, a new
+    arm in the interpreter's unreachable-gate `case` list, and a choice to make
+    every time a future gated sentence is mapped — to say one boolean.
+
+    ⚠️ AND THE TAILS SHAPE GENERALISES, WHICH IS WHAT SETTLES IT. Censused for the
+    FACE as its own question (D142's rule — a census run for one purpose is a floor
+    for every other — applied to D143's own census, which counted these five as
+    refusals of the *"can't attack"* question and therefore says nothing about the
+    face): **28 printings in the pool put a consequent behind a tails, and exactly
+    THREE SENTENCES / 8 PRINTINGS are the bare "Flip a coin. If tails, <one
+    consequent>." shape this field buys.** The other two are *"discard all Energy
+    from this Pokémon"* (2 — Pikachu ex sv02-063, Beartic sv03-054) and *"this
+    Pokémon also does 60 damage to itself"* (1 — Oinkologne sv03-183), **and BOTH
+    of their consequent ops already exist**, so each is now one regex and one arm.
+    The remaining 20 are refused by SHAPE: 11 are D126's `cancelOnTails` (already
+    simulated, by the other reader), 4 are a durated gate that makes the OPPONENT
+    flip on their own turn, and 5 carry TWO consequents on one flip — an
+    `otherwise` this op deliberately does not have, and one the field brings no
+    closer.
+
+    ⚠️ THE INDEX IS NOT CONSTANT ACROSS THE FIVE PRINTINGS, which no list said: **1
+    on Oinkologne sv01-157 "Leg Stomp" and Oinkologne ex sv01-158/-234 "Heavy
+    Stomp", 0 on Paldean Clodsire ex sv02-130/-244 "Needle Bone"**. D139 and D143
+    each found a non-zero index a list had not mentioned; this is the first family
+    that is not internally consistent, so a suite pinned to either number alone
+    would simulate the wrong attack on two of the five. Both fixtures are here for
+    it. Every printing carries a FLAT printed `damage` (130 / 210 / 200) and no
+    "+"/"×" marker, so `modifierSimulated` is untouched.
+
+    ⚠️ THE LOSING FACE IS THE ONE THAT DOES SOMETHING, and that inverts what a test
+    can see. On every other gated sentence in the pool the payout is on heads, so
+    "nothing happened" and "the coin missed" differ by a board delta; here the
+    printed damage lands on BOTH faces and the ONLY witness is the lock row. A
+    build that ignored the field would install the drawback on precisely the
+    declarations that did not earn it, silently, with nothing on the board looking
+    wrong — so both faces are driven end to end across the turn boundary for every
+    claim. **Dropping `onTails` from the deriver fails 14 tests; reverting
+    `runProgram` to compare against "heads" fails 11; dropping the gate and
+    deriving the bare op fails 13; dropping `programPlayable`'s descent fails 3.**
+
+    ⚠️ `MATCH_RECORD_VERSION` STAYS AT 5, asked rather than omitted. An OPTIONAL
+    field is a WIDENING (D125's distinction) — and the question is real, because a
+    `coinFlipGate` sitting behind a parking op DOES ride `EffectContinuation` into
+    a persisted record: an old continuation simply lacks the key, which reads as
+    "heads wins" and reproduces the pre-slice behaviour exactly. That is the
+    opposite of the REQUIRED-field-on-`InPlayPokemon` case D124/D142/D143 bumped
+    three times for, where the type would be a lie. Nothing else persisted moved.
+
+    ⚠️ AND IT OWES NO NEW PROJECTIONS. D143's rule ("a gate on an ACTION owes both
+    payability projections") is satisfied by D143's own lines — this slice adds a
+    PRODUCER of `preventAttack`, not a gate — so `redactedAttacksOf` and
+    `GameHud.tsx` are untouched. What is owed instead is EVIDENCE that the new
+    producer reaches the same line, and the suite sweeps both attacks in both
+    directions on BOTH faces. Cost: 1 optional op field, 1 regex, 1 deriver arm, 1
+    interpreter comparison, 1 amended `cardplay.ts` comment, `tailsGatedOp.test.ts`
+    (24 tests) on its own `TAILS_GATE_DECK`, 2 new fixtures (Oinkologne sv01-157,
+    Paldean Clodsire ex sv02-130), 1 re-pointed stays-LOUD witness
+    (`attackLock.test.ts`, moved from a NULL to a SHAPE claim), 1 moved census
+    (`clauseApostrophe` 40 → 41), 1 corrected catalog count in a D125 comment
+    (the `cancelOnTails` family is 11 printings, not 12 — counted while censusing).
+    `bun run check` GREEN exit 0, **186 files / 3051 tests** (was 185 / 3026). */
+export const engineVersion = "0.93.0";
 
 export type {
   ApplyResult,

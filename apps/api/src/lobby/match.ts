@@ -193,7 +193,20 @@ export interface MatchRecord {
     required-shape change and bumps this once — after which further durated
     effects cost NO bump at all, because they become VALUES in a list rather than
     KEYS in a type. That is a real argument for the generalisation and it belongs
-    here, next to the count it would stop incrementing. */
+    here, next to the count it would stop incrementing.
+
+    ⚠️ NO BUMP AT D144 (engine 0.93.0), asked rather than omitted — and the
+    question was a real one. That slice added `coinFlipGate.onTails?: true`, and a
+    `coinFlipGate` sitting behind a PARKING op genuinely does ride
+    `EffectContinuation` into `phase.cont` and therefore into a persisted record.
+    But it is an OPTIONAL field, i.e. a WIDENING (D125's distinction), and an old
+    continuation simply LACKS the key — which `runProgram` reads as "heads wins",
+    reproducing the pre-slice behaviour exactly, because every gate this engine
+    could have persisted before D144 was heads-gated by construction. That is the
+    opposite of the case bumped three times above: there a REQUIRED field made the
+    old record's TYPE a lie whatever it read back as; here the type still describes
+    the old record, and there is nothing to retire. Nothing else persisted moved —
+    no `InPlayPokemon` field, no `GameState` field, no event and no log wording. */
 export const MATCH_RECORD_VERSION = 5;
 
 /** How a persisted match read back: absent, usable, or written by an

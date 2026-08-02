@@ -598,10 +598,10 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
 export function programPlayable(state: GameState, program: readonly EffectOp[], seat: Seat): boolean {
   for (const op of program) {
     if (op.op === "coinFlipGate") {
-      // DESCEND INTO THE HEADS BRANCH. A coin gate has no `otherwise`, so its
-      // `then` is the only thing the card can ever do — tails does nothing at
-      // all. A heads branch that could only whiff therefore means the whole card
-      // could only whiff, and §7's "you cannot play a card if it has no valid
+      // DESCEND INTO THE WINNING BRANCH. A coin gate has no `otherwise`, so its
+      // `then` is the only thing the card can ever do — the LOSING face does
+      // nothing at all. A branch that could only whiff therefore means the whole
+      // card could only whiff, and §7's "you cannot play a card if it has no valid
       // target" applies: the flip is PROCEDURE, not effect (the rulebook's own
       // attack sequence separates "flip a coin" from applying effects), so it
       // cannot be the effect that makes the card playable. Compendium ruling/906
@@ -614,6 +614,18 @@ export function programPlayable(state: GameState, program: readonly EffectOp[], 
       // in play, not by the board. Reaches Crushing Hammer (no Energy anywhere on
       // the opponent's board) and Pokémon Catcher (an empty opponent Bench);
       // Poké Ball is untouched, since a deck search is always playable enough.
+      //
+      // ⚠️ FACE-AGNOSTIC BY CONSTRUCTION, AND THAT IS NOW ASSERTED (D144). The
+      // argument above never mentions WHICH face splices the branch — only that
+      // exactly one does and there is no `otherwise` — so `onTails` (D144) needs
+      // no code here. That is the kind of claim this engine has three times found
+      // to be an accident of the candidate sets (D139 → D140 → D143's `placeSnipe`
+      // comment), so it is pinned in `tailsGatedOp.test.ts` rather than left in
+      // this comment: a tails-gated whiffable op is refused exactly as a
+      // heads-gated one is. No printed TRAINER carries a tails gate today — the
+      // pool's only tails-gated Trainer, Egg Incubator swsh10.5-066/-087, is a
+      // two-consequent sentence this op cannot express — so the case is a
+      // constructed program, which is the honest shape for a rule with no card.
       //
       // NOT extended to `conditionGate`: no printed sv01–03 card puts a
       // whiff-able op inside one (Falkner and Grusha branch into draws), and

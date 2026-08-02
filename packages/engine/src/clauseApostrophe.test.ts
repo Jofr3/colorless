@@ -90,8 +90,15 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
   }
 
   it("finds the census it is supposed to sweep", () => {
-    // 40 distinct sentences at D143 (38 at D142, 36 at D140/D141, 35 at D139, 33
-    // at D138, 32 at D137). D143 added TWO — Alomomola sv01-048's "Aqua Slash"
+    // 41 distinct sentences at D144 (40 at D143, 38 at D142, 36 at D140/D141, 35
+    // at D139, 33 at D138, 32 at D137). D144 added ONE — the TAILS-gated self-lock
+    // ("Flip a coin. If tails, during your next turn, this Pokémon can't attack."),
+    // carried by BOTH of its new fixtures (Oinkologne sv01-157 and Paldean
+    // Clodsire ex sv02-130) and therefore ONE row on a `sentence` census, exactly
+    // as D140's Land Scoop was. Its exposed slot is the same CONTRACTION D143's
+    // pair introduced, on a regex written a whole slice later — which is precisely
+    // what a DISCOVERED census is for: nobody had this file open.
+    // D143 added TWO — Alomomola sv01-048's "Aqua Slash"
     // ("During your next turn, this Pokémon can't attack.") and Ninetales
     // sv03-029's "Nine-Tailed Dance" (that sentence again, behind a counter PUT) —
     // and they are the first entries here whose apostrophes are CONTRACTIONS
@@ -117,7 +124,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // rather than silently widening the pool it does not cover. If it drops, a
     // reader stopped deriving something and the failure belongs here as much as in
     // the slice suite that owns it.
-    expect(derivable).toHaveLength(40);
+    expect(derivable).toHaveLength(41);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

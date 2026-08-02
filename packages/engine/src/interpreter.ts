@@ -384,7 +384,14 @@ export function runProgram(
       const [face, rngState] = flipCoin(next.rngState);
       next = { ...next, rngState };
       events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: face });
-      if (face === "heads") queue.unshift(...op.then);
+      // D144 — WHICH FACE WINS is the op's only variable, and everything either
+      // side of this comparison is shared: the flip is taken before the branch is
+      // consulted (so `rngState` advances on BOTH faces and an online match cannot
+      // desynchronise), the row is emitted either way, and the branch is spliced
+      // by the same `unshift` so an op inside it can still park. `onTails` is
+      // absent on every heads-gated program in the engine, which is why the
+      // comparison defaults to heads rather than testing for it.
+      if (face === (op.onTails === true ? "tails" : "heads")) queue.unshift(...op.then);
       continue;
     }
     if (op.op === "conditionGate") {

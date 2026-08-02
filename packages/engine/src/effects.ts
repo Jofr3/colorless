@@ -923,9 +923,41 @@ export type EffectOp =
       declaration) — it re-enters the same W/R math from inside the program, after
       the choice is made. */
   | { op: "damageDefender"; per: number; count: EffectSlot }
-  /** "Flip a coin. If heads, …" — `then` runs on heads only. The other gate is
-      `conditionGate` (below, deterministic); both are spliced by runProgram. */
-  | { op: "coinFlipGate"; then: EffectOp[] }
+  /** "Flip a coin. If heads, …" — `then` runs on the winning face only. The other
+      gate is `conditionGate` (below, deterministic); both are spliced by runProgram.
+
+      ⚠️ `onTails` FLIPS WHICH FACE WINS (D144), and it is a FIELD rather than a
+      sibling op because EVERYTHING DOWNSTREAM OF THE FACE IS BYTE-IDENTICAL
+      (D131's test, applied and passing). The coin is taken either way, the same
+      `ATTACK_EFFECT_COIN_FLIP` row is emitted either way, the branch is spliced
+      into the same work queue by the same line, and a parking op inside `then`
+      parks the same. The whole difference is which `CoinFace` unshifts the branch
+      — one comparison in `runProgram`, and there is no second reader of this op to
+      keep in step: `attack.ts` NEVER READS IT (its coin family is
+      `deriveAttackCoinFlip`'s own union — `bonusOnHeads` / `cancelOnTails` /
+      `perHeads` / `programPerHeads` — read at a different site, in FRONT of the
+      §8.5 pipeline, and D130's `programPerHeads` expansion lives with it there;
+      the three mentions of this op in that file are comments explaining the
+      disjointness). `cardplay.ts`'s `programPlayable` descends into `then` and its
+      argument is FACE-AGNOSTIC by construction — a coin gate has no `otherwise`,
+      so `then` is the only thing the card can ever do whichever face runs it —
+      which is asserted rather than left to read (tailsGatedOp.test.ts).
+
+      ABSENT rather than `false` on the heads form (D135's absent-field rule): the
+      derived op is compared by value against hand-authored registry rows
+      (`{ op: "coinFlipGate", then: [{ op: "gust" }] }` — Pokémon Catcher), and an
+      explicit `onTails: undefined` key is not `toEqual`-identical to an absent one.
+
+      An OPTIONAL field is a WIDENING (D125's distinction), so it costs no
+      `MATCH_RECORD_VERSION` bump even though a gate sitting behind a parking op
+      rides `EffectContinuation` into a persisted record: an old continuation
+      simply lacks the key, which reads as "heads wins" and reproduces the
+      pre-slice behaviour exactly.
+
+      THE POOL'S TAILS-GATED SHAPE IS 8 PRINTINGS ACROSS 3 SENTENCES and this arm
+      maps 5 of them — see `FLIP_TAILS_SELF_CANT_ATTACK` for the census and for the
+      two sentences left LOUD, both of whose consequent ops already exist. */
+  | { op: "coinFlipGate"; then: EffectOp[]; onTails?: true }
   // — Trainer / Ability ops (M4), controller-relative. —
   /** Draw `count` from the top of the controller's deck (short-draws when the
       deck is shallower — §14.3 deck-out is a turn-START rule only). */
@@ -2193,6 +2225,75 @@ const SELF_CANT_ATTACK_NEXT_TURN = /^During your next turn, this Pokémon can['�
 // and not the contraction is precisely the half-fix that reads like a whole one.
 const COUNTER_PUT_ANY_THEN_SELF_LOCK =
   /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon\. During your next turn, this Pokémon can['’]t attack\.$/;
+// …and the TAILS-GATED form (D144) — the same rider D143 mapped bare, behind the
+// LOSING face of a coin: 5 printings on ONE sentence, and the third and last
+// self-lock sentence whose consequent this engine already owns.
+//
+//   • Oinkologne sv01-157 "Leg Stomp"  ({C}{C}{C}, INDEX 1, printed 130)
+//   • Oinkologne ex sv01-158/-234 "Heavy Stomp" ({C}{C}{C}, INDEX 1, printed 210)
+//   • Paldean Clodsire ex sv02-130/-244 "Needle Bone" ({D}{C}{C}, INDEX 0, 200)
+//
+// ⚠️ THE INDEX IS NOT CONSTANT ACROSS THE FAMILY — 1 on the three Oinkologne
+// printings and 0 on the two Clodsire ones — which is D139/D143's habit paying
+// off a third time: a suite that assumed either number would simulate the wrong
+// attack on two of the five. Every printing carries a FLAT printed `damage` (130 /
+// 210 / 200) and no "+"/"×" marker, so `modifierSimulated` (attack.ts) is
+// untouched by this arm and the drawback really is the whole effect text.
+//
+// CENSUS — THE TAILS SHAPE AS ITS OWN QUESTION (local D1, 2026-08-02, 978 cards),
+// run because D143's census counted these 5 as REFUSALS of the "can't attack"
+// question and therefore says nothing about how the tails FACE generalises.
+// `attacks_json LIKE '%if tails%'` returns 26 printings / 8 sentences, plus 2 on a
+// Trainer (`effect`) and 0 on any Ability — 28 in all. Of those, exactly THREE
+// sentences are a bare "Flip a coin. If tails, <one consequent>.", the shape this
+// field buys, and they are 8 printings:
+//   • "…during your next turn, this Pokémon can't attack."          (5) ✅ HERE
+//   • "…discard all Energy from this Pokémon."                      (2) ❌ LOUD —
+//     Pikachu ex sv02-063 "Dynamic Bolt" (INDEX 1, 220), Beartic sv03-054 "Frost
+//     Purge" (INDEX 1, 170). Its consequent op EXISTS (`SELF_DISCARD_ALL` →
+//     `discardEnergy { from: "yourActive", filter: anyEnergy, count: "all" }`,
+//     since 0.x), so it is now ONE regex and ONE arm;
+//   • "…this Pokémon also does 60 damage to itself."                (1) ❌ LOUD —
+//     Oinkologne sv03-183 "High-Impact Kick" (INDEX 1, 160) — a THIRD Oinkologne,
+//     and a different card from sv01-157 above. Its consequent op EXISTS too
+//     (`SELF_DAMAGE` → `damageSelf`, D-era 0.x), so it is likewise one regex and
+//     one arm — and it is a ONE-printing sentence, which D134's rule licenses only
+//     because the SHAPE (a tails gate over an op the engine already owns) would by
+//     then have three members and not one.
+// **So the tails gate GENERALISES, and it generalises onto ops that already
+// exist** — which is the argument for the FIELD over a sibling op member, made on
+// the census rather than on taste. The remaining 20 printings are refused by their
+// SHAPE and not by this arm's spelling, and each is a warrant written down:
+//   • "Flip a coin. If tails, this attack does nothing." (11) — already SIMULATED,
+//     and by a different reader: `deriveAttackCoinFlip`'s `cancelOnTails` (D126),
+//     which runs in FRONT of the §8.5 pipeline because it retracts damage. That is
+//     the engine's OTHER tails reading, and the two are disjoint by consequent
+//     exactly as the heads pair is;
+//   • "During your opponent's next turn, if the Defending Pokémon tries to attack,
+//     your opponent flips a coin. If tails, that attack doesn't happen." (4 —
+//     Dolliv sv01-022/-200 "Apply Oil", Quaxly sv02-049/-206 "Apply Gel") — a
+//     DURATED gate that makes the OPPONENT flip on their OWN turn: not a
+//     `coinFlipGate` at all, and the only tails-gated attack LOCK in the pool that
+//     this op could not express even with the field;
+//   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
+//     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159
+//     "Mighty Meteor") and "Flip a coin. If tails, this attack does nothing. If
+//     heads, …prevent all damage…" (1 — Squawkabilly sv01-162 "Fly") — TWO
+//     consequents on ONE flip, which is an `otherwise` this op deliberately does
+//     not have (D142's Squawkabilly refusal, verbatim, and note the field does NOT
+//     bring either card closer: an `onTails` gate still runs one branch);
+//   • "Flip a coin. If heads, search your deck for a card… If tails, discard a card
+//     from your hand." (1 — Slowpoke sv02-085 "Tail-Fishing") and Egg Incubator
+//     swsh10.5-066/-087 (2, a TRAINER) — the same two-consequent shape again.
+//
+// A WHOLE-SENTENCE ANCHOR WITH NO CAPTURE: nothing varies. The consequent is
+// LOWERCASE ("during"), which is what keeps `SELF_CANT_ATTACK_NEXT_TURN`'s `^During`
+// off this string and this pattern off that one — the two are mutually exclusive by
+// the capital alone, before the anchors are considered, and adding /i anywhere in
+// this file would collapse both guards at once. Both apostrophe slots would be one
+// (`can't`), and it carries `['’]` for D136/D137's reason like every sibling.
+const FLIP_TAILS_SELF_CANT_ATTACK =
+  /^Flip a coin\. If tails, during your next turn, this Pokémon can['’]t attack\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -2863,8 +2964,12 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 // CONDITIONAL_DAMAGE_BONUS — and the anchor is doing the same load-bearing work.
 // It admits the three sentences below and refuses the rest of the family's 19
 // printings on the CLAUSE (they reach the table and miss), never on the shape:
-//   • "Flip a coin. If tails, this attack does nothing." (12 printings) — the
-//     coin-flip mechanism, and the flip sentence in front already denies it `^If`;
+//   • "Flip a coin. If tails, this attack does nothing." (11 printings — this said
+//     12 until D144 re-censused the tails face for its own question and counted
+//     them: Tarountula sv01-018, Medicham sv01-111, Lechonk sv01-156, Alolan
+//     Rattata swsh10.5-041, Nymble sv02-020, Shinx sv02-069, Surskit sv03-006,
+//     Darumaka sv03-034, Froakie sv03-056, Houndour sv03-131/-204) — the coin-flip
+//     mechanism, and the flip sentence in front already denies it `^If`;
 //   • "If you can't, this attack does nothing." (3 printings) — ANAPHORIC, its
 //     "can't" pointing back at a cost sentence this reader cannot see;
 //   • Sharpedo sv06.5-034's "If you didn't play Xerosic's Machinations from your
@@ -3992,6 +4097,41 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "preventAttack" },
       ];
     }
+  }
+
+  // 26. "Flip a coin. If tails, during your next turn, this Pokémon can't attack."
+  //     — D144's TAILS GATE, 5 printings on one sentence, and the third form of
+  //     arm 24's rider (bare, behind a counter PUT, and now behind the LOSING face
+  //     of a coin). A `test`, not an `exec`: nothing varies.
+  //
+  //     D132'S INVENTORY RULE ON BOTH HALVES AT ONCE, which is what makes this the
+  //     cheapest arm in the tail. The consequent (`preventAttack`) is D143's, the
+  //     gate (`coinFlipGate`) has spliced a branch since 0.x, and the ONLY thing
+  //     that did not exist is which FACE unshifts the branch. So this is one
+  //     optional field, one regex and this arm — no new op, no new mechanism, no
+  //     new event, no new park, and no `attack.ts` / `continuous.ts` / `redact.ts`
+  //     / `turn.ts` / `types.ts` diff at all.
+  //
+  //     ⚠️ THE `then` IS BYTE-IDENTICAL TO ARM 24's WHOLE PROGRAM, which is the
+  //     family's checkable claim (D134's, on the other face): there is ONE action
+  //     here, printed three ways, and the coin is procedure in front of it. A TAILS
+  //     is therefore a RESOLVED attack and not a skipped effect — and here that
+  //     reading has teeth the heads family's never did, because on this sentence
+  //     the LOSING face is the one that does something: a build that dropped the
+  //     field would install the drawback on exactly the printings that did not earn
+  //     it, silently, on a board where nothing looks wrong.
+  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {
+    return [
+      {
+        op: "coinFlipGate",
+        // The field, ABSENT on every heads sibling and `true` here — never
+        // `false`, so a heads-gated program stays `toEqual`-identical to the
+        // registry rows it is compared against (D135's absent-field rule).
+        onTails: true,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "preventAttack" }],
+      },
+    ];
   }
 
   return null;

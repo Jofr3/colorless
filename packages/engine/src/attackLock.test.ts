@@ -222,16 +222,11 @@ describe("the self-lock — derived, not authored", () => {
     expect(deriveAttackEffect(`\t  ${BARE_TEXT}\n`)).toEqual([{ op: "preventAttack" }]);
   });
 
-  it("refuses the SEVEN self-lock printings it deliberately does not map", () => {
+  it("refuses the TWO self-lock printings it deliberately does not map", () => {
     // Every one is real text from the local D1 (2026-08-02, 978 cards), and each
     // is refused by a different property of the whole-sentence anchor. The list a
     // future slice inherits instead of re-censusing (effects.ts carries it too).
     for (const text of [
-      // A TAILS gate on 5 printings (Oinkologne sv01-157, Oinkologne ex
-      // sv01-158/-234, Paldean Clodsire ex sv02-130/-244). `coinFlipGate` runs its
-      // body on HEADS only, so this is a field or an op the engine has not got —
-      // and the cheapest widening of this slice.
-      "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
       // An OPTIONAL damage bonus whose acceptance installs the lock (Copperajah
       // sv06.5-042) — a player decision in FRONT of the §8.5 pipeline.
       "You may do 100 more damage. If you do, during your next turn, this Pokémon can't attack.",
@@ -241,6 +236,30 @@ describe("the self-lock — derived, not authored", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+  });
+
+  it("…and the THIRD is now MAPPED — the TAILS gate, re-pointed rather than deleted", () => {
+    // ⚠️ RE-POINTED, NOT DELETED (D134's move, D143's habit). This sentence was
+    // this file's sharpest stays-LOUD witness at 0.92.0 — "`coinFlipGate` runs its
+    // body on HEADS only, so this is a field or an op the engine has not got". D144
+    // gave it the field, so the row moves from a NULL to a SHAPE claim, which is a
+    // strictly stronger assertion: the gated program's `then` is THIS anchor's own
+    // output, byte for byte, and the two anchors stay disjoint readings of one
+    // rider printed two ways.
+    const gated = deriveAttackEffect(
+      "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
+    );
+    expect(gated).toEqual([
+      {
+        op: "coinFlipGate",
+        onTails: true,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: deriveAttackEffect(BARE_TEXT),
+      },
+    ]);
+    // …and this anchor does NOT claim the gated string, which is what keeps the
+    // capitalised "During" plus `^…$` load-bearing rather than decorative.
+    expect(gated).not.toEqual(deriveAttackEffect(BARE_TEXT));
   });
 
   it("refuses the OPPONENT-side lock and the PER-ATTACK lock — the two field warrants", () => {

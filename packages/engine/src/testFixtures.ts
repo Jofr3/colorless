@@ -485,6 +485,91 @@ export const FIXTURE_POOL: Record<string, Card> = {
     evolveFrom: "Alomomola",
     attacks: [{ cost: ["Water"], name: "Bubble", damage: 40 }],
   } satisfies Card,
+  /** Oinkologne sv01-157 — "Leg Stomp" ({C}{C}{C}, attack INDEX 1, printed 130):
+      D144's TAILS-GATED self-lock, *"Flip a coin. If tails, during your next turn,
+      this Pokémon can't attack."*, 1 of its 5 printings.
+
+      Chosen out of the five because it is the only one with a SECOND attack the
+      lock must also refuse: index 0 "Ram" ({C}{C}, 50, NO effect text) is the
+      control that proves no program leaks across indices AND the attack a locked
+      Oinkologne is denied — the assertion that separates this family from the
+      eight "can't use {AttackName}" printings, inherited from D143's Alomomola.
+      Its 130 lands alongside the gate, so one declaration exercises D125's tail
+      board on BOTH faces: real §8.5 damage either way, the drawback only on tails.
+
+      A STAGE 1 (from Lechonk), fielded by `setActiveFromDeck` surgery like
+      Ninetales sv03-029 before it. Its whole cost is COLORLESS, which is why the
+      deck below needs no typed line for it at all.
+
+      Verbatim off the local D1 (2026-08-02): 120 HP, Colorless, Stage1 from
+      Lechonk, retreat 2, ×2 Fighting, no Resistance, no Ability. */
+  "sv01-157": battler("sv01-157", {
+    name: "Oinkologne",
+    stage: "Stage1",
+    evolveFrom: "Lechonk",
+    types: ["Colorless"],
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Ram", damage: 50 },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Leg Stomp",
+        damage: 130,
+        effect: "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
+      },
+    ],
+  }),
+  /** Paldean Clodsire ex sv02-130 — "Needle Bone" ({D}{C}{C}, attack **INDEX 0**,
+      printed 200): the SAME D144 sentence on the other half of the family, and the
+      fixture exists for the index.
+
+      ⚠️ THE INDEX IS 0 HERE AND 1 ON ALL THREE OINKOLOGNE PRINTINGS, checked
+      against the local D1 rather than assumed (D139's Pour Tea, D143's Nine-Tailed
+      Dance, and now a family that is not even internally consistent). A suite
+      pinned to either number alone would simulate the wrong attack on two of the
+      five printings, and this fixture is what makes that impossible to write.
+
+      It is its card's ONLY attack, which is the second reason it is here: the
+      "the lock is on the POKÉMON, not the attack" claim is made on Oinkologne,
+      where there is a sibling to refuse — and this card is the one where a reader
+      who confused the two families would be accidentally right, exactly as
+      Munkidori ex is for the per-attack lock (D143).
+
+      ⚠️ IT IS AN `ex`, AND THAT IS KEPT ON PURPOSE (D133's Skeledirge precedent):
+      `prizeValueOf` reads the rule box off the NAME (cards.ts), so a KO of this
+      body takes TWO Prizes. Its printed Ability "Toxic Wetland" is kept verbatim
+      too and is inert on every board here — it needs a Stadium in play AND an
+      explicit `useAbility` action, and the engine has no registry row for it.
+
+      Verbatim off the local D1 (2026-08-02): 280 HP, Darkness, Stage1 from Paldean
+      Wooper, retreat 3, ×2 Fighting, no Resistance. */
+  "sv02-130": battler("sv02-130", {
+    name: "Paldean Clodsire ex",
+    stage: "Stage1",
+    evolveFrom: "Paldean Wooper",
+    types: ["Darkness"],
+    hp: 280,
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Toxic Wetland",
+        effect:
+          "Once during your turn, if a Stadium is in play, you may make your opponent's Active Pokémon Poisoned.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Darkness", "Colorless", "Colorless"],
+        name: "Needle Bone",
+        damage: 200,
+        effect: "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
+      },
+    ],
+  }),
   "fix-attacker-v": battler("fix-attacker-v", {
     name: "Guardmon V",
     types: ["Fire"],
@@ -6978,6 +7063,44 @@ export const ATTACK_LOCK_DECK = deckOf({
   "fix-water-energy": 12, // {W}{W} for Aqua Slash and Bubble; the {C} comes off fix-energy
   "fix-fire-energy": 8, // {R}{R} — two Nine-Tailed Dances' worth
   "fix-energy": 12, // Colorless Basic — pays every {C} in the deck
+  "fix-titan": 5, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+});
+
+/** D144's TAILS-GATE deck (`tailsGatedOp.test.ts`). Its own 60, and for
+    PREVENT_BLOCK_DECK's reason rather than ATTACK_LOCK_DECK's: **this family takes
+    a real coin**, so every end-to-end board is reached by a seed that lands the
+    face the case is about. Sharing a deck with the seed-free `ATTACK_LOCK_DECK`
+    would make that suite's determinism a coincidence of this one's shuffle, which
+    is the exact hazard D143 wrote its unchanged-`rngState` case to pin.
+
+      • sv01-157 Oinkologne — the gated sentence at INDEX 1 ({C}{C}{C}, printed
+        130), with "Ram" ({C}{C}, 50, no effect) at index 0 as the control AND as
+        the sibling attack a locked body is refused;
+      • sv02-130 Paldean Clodsire ex — the same sentence at INDEX **0**
+        ({D}{C}{C}, printed 200), its card's only attack. The two fixtures are the
+        family's two indices, which is the fact no remainder list mentioned;
+      • sv01-048 Alomomola carries D143's BARE sentence and is here purely as the
+        cross-family control: the two anchors must derive DIFFERENT programs off
+        the same rider, and a locked-by-tails body must be refused exactly as a
+        locked-by-nothing one is;
+      • fix-mola-stage1 evolves from Alomomola — the §10 evolve clear, reused;
+      • sv01-194 Switch and sv02-172 Boss's Orders are the other two §10 routes;
+      • fix-attacker supplies Bite ({C}, 30) for the plain hit that KOs a locked
+        body and the costless Yawn for the §12 control;
+      • fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and the
+        body every install is declared into, so no case ends with an assertion
+        about a Pokémon the epilogue swept off the board. */
+export const TAILS_GATE_DECK = deckOf({
+  "sv01-157": 4, // Oinkologne — "Ram" idx 0 (control + refused sibling), "Leg Stomp" idx 1
+  "sv02-130": 4, // Paldean Clodsire ex — "Needle Bone" idx 0, the family's OTHER index
+  "sv01-048": 4, // Alomomola — D143's BARE sentence, the cross-family control
+  "fix-mola-stage1": 2, // evolves from Alomomola — the §10 clear as a played line
+  "sv01-194": 3, // Switch (Item) — retreat out, switch back, attack: the lock is GONE
+  "sv02-172": 2, // Boss's Orders — the opponent dragging a locked body off the spot
+  "fix-attacker": 3, // Bite ({C}, 30) and Yawn (costless, Asleep) — the §12 control
+  "fix-dark-energy": 6, // {D} — Needle Bone's typed third; the rest is Colorless
+  "fix-water-energy": 8, // {W}{W} — Aqua Slash and Bubble
+  "fix-energy": 19, // Colorless Basic — pays every {C}, and Leg Stomp wants three
   "fix-titan": 5, // 340 HP neutral Basic, NO attacks — bench filler and promote target
 });
 
