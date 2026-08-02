@@ -584,6 +584,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Ting-Lu ex — the ability-lock aura since D100, and since D140 the PUT on the
+      opponent's BENCH as well. The printed attack is verbatim off the local D1
+      (2026-08-02): "Land Scoop", {F}{F}{F}, **damage 150** beside the effect
+      sentence, and it is the SAME attack on all four printings (sv02-127/-243/
+      -263/-275). The `damage` field is load-bearing here in a way no earlier
+      counter-family fixture's was — it is what makes this the family's first
+      D125 tail-order board (a §8.5 hit AND a placement in one declaration). The
+      Ability text stays ABBREVIATED: it is cosmetic (the registry keys on the id)
+      and abilityLock.test.ts has read it that way since D100. */
   "sv02-127": battler("sv02-127", {
     name: "Ting-Lu ex",
     types: ["Fighting"],
@@ -594,6 +603,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
         type: "Ability",
         name: "Cursed Land",
         effect: "…your opponent's damaged Pokémon have no Abilities, except for Pokémon ex.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Fighting", "Fighting", "Fighting"],
+        name: "Land Scoop",
+        effect: "Put 2 damage counters on 1 of your opponent's Benched Pokémon.",
+        damage: 150,
       },
     ],
   }),
@@ -6254,6 +6271,55 @@ export const COUNTER_PUT_DECK = deckOf({
   "fix-psychic-weak-big": 3, // 200 HP ×2 Psychic, NO attacks — the flat-placement defender, high side
   "fix-psychic-resist-big": 3, // 200 HP Psychic −30, NO attacks — the flat-placement defender, low side
   "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + the promote target
+});
+
+/** 0.88.0 → 0.89.0: the PUT on the opponent's BENCH (D140) — "Put {N} damage
+    counters on 1 of your opponent's Benched Pokémon." A DEDICATED deck on the
+    house rule that a new reader gets its own 60, and because this one's boards are
+    the OPPOSITE of COUNTER_PUT_DECK's in every way that matters: this sentence
+    PARKS, it reads the OPPONENT's Bench, and its attack carries a printed 150 —
+    so every board here needs a populated enemy Bench AND an Active that survives
+    a real §8.5 hit, which the D139 deck was built never to have.
+
+    ONE ATTACKER, FOUR PRINTINGS OF IT, AND IT IS AN **ex** — which is not a
+    detail. Ting-Lu ex sv02-127 "Land Scoop" (idx 0, {F}{F}{F}, printed **150**,
+    2 counters) is the only card in the pool that prints this sentence, and its ex
+    rule box is what makes Mimikyu's Safeguard a live prevention on the bench body
+    below. Its own "Cursed Land" passive is live throughout (it attacks from the
+    Active Spot), which is why the two Ability-carrying bench bodies are left
+    UNDAMAGED in the cases that read their passives: a damaged non-ex opponent
+    loses its Ability to the aura, and the assertion would then pass for the wrong
+    reason.
+
+    FOUR BENCHED BODIES, and three of them exist for exactly one claim each:
+      • fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned
+        Active on BOTH sides — 340 absorbs the printed 150 without the epilogue
+        sweeping the defender out from under a bench assertion — and it is the
+        DOMINANT (mulligan-free) Basic through setup as well as the ordinary bench
+        candidate the park offers.
+      • fix-fighting-weak (200 HP, ×2 Fighting, inert) — the §8.5 claim: a FIGHTING
+        attacker must place 20 on it, not 40. A build that routed the placement
+        through `snipeActive` doubles it.
+      • sv03-174 Bouffalant ("Bouffer", −20 after W/R) — the REDUCTION claim, and
+        the sharper one, because §8.5 already flattens Weakness on the Bench for
+        both readings while the reduction passive separates them: the placement
+        puts 20 on it, a `deals: true` build puts **0**.
+      • sv02-097 Mimikyu ("Safeguard", prevent all damage from an opponent's ex/V)
+        — the PREVENTION claim, and the sharpest assertion in the slice: the
+        attacker IS an ex, so a `deals: true` build prevents the hit entirely and
+        emits a DAMAGE_DEALT carrying `prevented: true`, where the placement is
+        untouched by it. D139 could not buy this claim at all; it is available here
+        only because this sentence's attacker has a rule box.
+    TWELVE {F} — Land Scoop needs three attached and a case rebuilds the board a
+    dozen times over. BOTH SEATS RUN IT, so the `seat` on every COUNTERS_PLACED row
+    is asserted rather than assumed. */
+export const COUNTER_BENCH_PUT_DECK = deckOf({
+  "sv02-127": 4, // Ting-Lu ex — "Land Scoop" at idx 0 ({F}{F}{F}, 150 damage + 2 counters); Cursed Land is a REGISTRY passive
+  "fix-fighting-energy": 12, // Basic {F} — three pay each Land Scoop
+  "sv03-174": 3, // Bouffalant — "Bouffer" (−20 after W/R): the reduction a placement must SKIP
+  "sv02-097": 3, // Mimikyu — "Safeguard": the ex-prevention a placement must SKIP
+  "fix-fighting-weak": 3, // 200 HP ×2 Fighting, inert — the Weakness a placement must SKIP
+  "fix-titan": 35, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + the plain bench candidate
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge

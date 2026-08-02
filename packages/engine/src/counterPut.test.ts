@@ -93,11 +93,11 @@ function putOp(hp: number): EffectOp {
         board ("in any way you like").
       • Maushold sv02-168/-226 and Yveltal sv06.5-035 — "each of your opponent's
         Pokémon", one of them scaled by a board count and one filtered.
-      • Ting-Lu ex sv02-127 "Land Scoop" — the opponent's BENCH. ⚠️ It is NOT
-        simulated today, which was worth checking rather than assuming: the card's
-        only registry row is the `CURSED_LAND` passive, so `programFor` is defined
-        and `.attack` is not, and the sentence derives to null. That matters
-        beyond this list — see the dedicated case below.
+      • Vespiquen ex sv03-096/-212 "Phantom Queen" — "each of your opponent's
+        Benched Pokémon **that has any damage counters on it**", a per-target
+        FILTER nothing in the vocabulary expresses. ⚠️ RE-POINTED AT D140 from
+        Ting-Lu ex sv02-127 "Land Scoop", which this list used to hold and which
+        D140 MAPPED (see the dedicated case below).
       • Munkidori sv06.5-072 "Adrena-Brain" and Dusknoir sv06.5-020 "Cursed
         Blast" — ABILITIES whose printed "put … damage counters" is lowercase and
         mid-sentence, which is exactly what the capitalised "Put" plus `^…$`
@@ -113,7 +113,7 @@ const NEAR_MISSES = [
   "Put 8 damage counters on your opponent's Pokémon in any way you like.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
-  "Put 2 damage counters on 1 of your opponent's Benched Pokémon.",
+  "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
   "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.",
 ] as const;
@@ -312,31 +312,34 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     expect(deriveAttackEffect(NEAR_MISSES[8])).toBeNull();
   });
 
-  it("⚠️ pins that Ting-Lu ex's Bench PUT is UNSIMULATED — a note this slice got wrong", () => {
-    // THIS CASE EXISTS BECAUSE IT CAUGHT A DOC BUG DURING THE SLICE. The first draft
-    // of D139's "found but not fixed" note claimed `interpreter.ts`'s `placeSnipe`
-    // prints "Ability:" on an ATTACK **today**, on the grounds that Ting-Lu ex
-    // sv02-127 "Land Scoop" derives to a `damageChosen`. It does not — the sentence
-    // is unmapped, and the card's only registry row is the Cursed Land passive. The
-    // near-miss list above disproved the claim in one assertion before it shipped
-    // into three documents.
-    expect(deriveAttackEffect(NEAR_MISSES[6])).toBeNull();
+  it("⚠️ pins how Ting-Lu ex's Bench PUT resolved — the note, then the fix", () => {
+    // THIS CASE EXISTS BECAUSE IT CAUGHT A DOC BUG DURING D139, AND IT IS KEPT
+    // BECAUSE D140 CLOSED WHAT IT FOUND. The first draft of D139's "found but not
+    // fixed" note claimed `placeSnipe` prints "Ability:" on an ATTACK **today**, on
+    // the grounds that Ting-Lu ex sv02-127 "Land Scoop" derives to a `damageChosen`.
+    // It did not — the sentence was unmapped, and the card's only registry row is
+    // the Cursed Land passive. One assertion here disproved the claim before it
+    // shipped into three documents.
+    //
+    // D140 THEN MAPPED THAT SENTENCE, so the two halves of the note swapped truth
+    // values at once, and both are pinned here rather than either being deleted.
+    // The card STILL has no registry ATTACK row — the `.attack` assertion below is
+    // unchanged and is what proves the new derivation is doing the work.
+    expect(deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Benched Pokémon."))
+      .toEqual([
+        { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "attack" },
+      ]);
     expect(programFor("sv02-127")).toBeDefined();
     expect(programFor("sv02-127")?.attack).toBeUndefined();
-    // WHAT IS ACTUALLY TRUE, and the reason the note is still worth keeping:
-    // `placeSnipe`'s non-`deals` path hardcodes `source: "ability"` exactly as
-    // `damageActive` did before this slice, and it is kept honest today only by the
-    // fact that every DERIVED attack snipe sets `deals: true` and routes to
-    // `DAMAGE_DEALT` instead. So the label is CORRECT today and the exposure is
-    // LATENT — guarded by a flag chosen for an unrelated reason. The three Ability
-    // producers that DO take the counter path are registry rows, and this asserts
-    // one of them so the guard is written down somewhere a test can lose.
+    // AND THE LATENT LABEL IS GONE. `placeSnipe` took the provenance as a PARAMETER
+    // at 0.89.0, so the two producers of its counter path say two different things:
+    // the three Ability registry rows carry `source: "ability"` and every derived
+    // arm carries `"attack"`. Asserted from the registry side here, and swept over
+    // the whole fixture pool in counterBenchPut.test.ts.
     expect(programFor("sv02-015")?.abilities?.[0]?.program).toContainEqual(
-      expect.objectContaining({ op: "damageChosen", target: "opponentBench" }),
+      expect.objectContaining({ op: "damageChosen", target: "opponentBench", source: "ability" }),
     );
     expect(programFor("sv02-015")?.abilities?.[0]?.program?.[1]).not.toHaveProperty("deals");
-    // The sentence above is the printing that would trip it, and it is on this
-    // slice's census as item 1 of the next remainder list.
   });
 
   it("stays disjoint from the SIBLING anchor in BOTH directions", () => {

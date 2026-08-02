@@ -114,8 +114,29 @@ export interface MatchRecord {
     read back benignly (`undefined === state.turn` is false, i.e. "did not move
     this turn"), and that is exactly the trap this version exists to refuse: the
     rule is "could the previous deploy's record be misread", and a silently
-    defaulted rules-relevant field is the misreading the doc above names. */
-export const MATCH_RECORD_VERSION = 2;
+    defaulted rules-relevant field is the misreading the doc above names.
+
+    2 → 3 (engine 0.89.0, D140): the engine's `damageChosen` `EffectOp` gained a
+    REQUIRED `source: "ability" | "attack"` field, and that op **PARKS** — so it is
+    embedded in `GameState.phase.cont.pendingOp` whenever a snipe is waiting on its
+    pick, which is a live, reachable, persisted position rather than a type that
+    only exists in memory. A record written by the previous deploy while such a
+    park was open comes back with the field ABSENT; this build reads it, hands
+    `undefined` to `placeSnipe`, and emits `COUNTERS_PLACED` with no `source` — a
+    row that falls off every labelled log arm onto the active-voice default, i.e.
+    it renders under the DAMAGED player's name as though they had done it. That is
+    the D124 case verbatim: a MISSING REQUIRED FIELD, not a widened enum, and one
+    that reads back "fine".
+
+    ⚠️ AND THE CONTRAST WITH D139 IS THE WHOLE REASON THIS ONE BUMPS. D139 added
+    the SAME field, with the same members, to `damageActive` and correctly left
+    this alone — because `damageActive` never parks, so no `EffectContinuation` has
+    ever carried one and nothing persisted moved. The test is not "did an op gain a
+    field" but "can the previous deploy's RECORD hold the old shape", and that
+    turns entirely on whether the op can be sitting in `phase.cont` when the write
+    happens. Two slices, one field, opposite answers — the same shape as D131's
+    widen-don't-add rule being a TEST rather than a default. */
+export const MATCH_RECORD_VERSION = 3;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

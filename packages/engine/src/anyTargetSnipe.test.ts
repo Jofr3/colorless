@@ -73,13 +73,13 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
       deriveAttackEffect(
         "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentAny", amount: 20, count: 1, deals: true }]);
+    ).toEqual([{ op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack", deals: true }]);
   });
 
   it("the W/R clarifier tail is OPTIONAL, and the amount is CAPTURED (100)", () => {
     expect(
       deriveAttackEffect("This attack does 100 damage to 1 of your opponent's Pokémon."),
-    ).toEqual([{ op: "damageChosen", target: "opponentAny", amount: 100, count: 1, deals: true }]);
+    ).toEqual([{ op: "damageChosen", target: "opponentAny", amount: 100, count: 1, source: "attack", deals: true }]);
   });
 
   it("reads Umbreon 'Feint Attack' as an ignoreWR snipe — both the SV and bare wordings", () => {
@@ -91,14 +91,14 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
         "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, deals: true, ignoreWR: true },
+      { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "attack", deals: true, ignoreWR: true },
     ]);
     expect(
       deriveAttackEffect(
         "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, deals: true, ignoreWR: true },
+      { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "attack", deals: true, ignoreWR: true },
     ]);
   });
 
@@ -123,13 +123,13 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
         "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, deals: true, perTakenPrize: true },
+      { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true, perTakenPrize: true },
     ]);
     expect(
       deriveAttackEffect(
         "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, deals: true }]);
+    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true }]);
   });
 });
 

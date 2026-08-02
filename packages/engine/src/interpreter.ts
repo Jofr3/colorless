@@ -688,7 +688,16 @@ function stepOp(
       const take = Math.min(op.count, candidates.length);
       if (!declinable && candidates.length <= op.count) {
         return {
-          done: placeSnipe(state, candidates, amount, op.deals === true, op.ignoreWR === true, ctx, events),
+          done: placeSnipe(
+            state,
+            candidates,
+            amount,
+            op.deals === true,
+            op.ignoreWR === true,
+            op.source,
+            ctx,
+            events,
+          ),
         };
       }
       return {
@@ -1574,6 +1583,9 @@ export function applyChoice(
             snipeAmount(op, state, ctx),
             op.deals === true,
             op.ignoreWR === true,
+            // D140 — the provenance rides the PARKED op, so the row a resumed
+            // pick emits says the same thing an inline one would.
+            op.source,
             ctx,
             events,
           )
@@ -1711,15 +1723,34 @@ function spreadDamage(
     upstream, so only refs that are the opponent's own bench slots land). Flat —
     a counter placement, NOT attack damage, so no Weakness/Resistance and no
     reduction passive (Bouffer reduces "damage from attacks", which a placed
-    counter is not — the damageActive rule). One COUNTERS_PLACED source "ability"
-    per Pokémon actually hit. Only raises damage; the KO check runs in the
-    caller's mid-turn sweep (flow.ts), so this never KOs. */
+    counter is not — the damageActive rule). One COUNTERS_PLACED per Pokémon
+    actually hit. Only raises damage; the KO check runs in the caller's mid-turn
+    sweep (flow.ts), so this never KOs.
+
+    `source` IS PASSED IN, since 0.89.0 (D140). It was the string literal
+    `"ability"` here until then, which was true while all three producers were
+    Abilities and became a LIE the moment an attack printed the same action
+    (Ting-Lu ex sv02-127 "Land Scoop"): the emitted event's `seat` OWNS the
+    DAMAGED Pokémon — the attacker's opponent — rows render after their seat's
+    name, and the `"ability"` log arm prints the literal word Ability. This is
+    D136's finding 1 and the third time it has been refused at the source (D138's
+    "moved", D139's "attack").
+
+    ⚠️ IT IS NOT DERIVED FROM `deals`, AND THAT IS THE POINT. `deals` picks the
+    EVENT (DAMAGE_DEALT vs COUNTERS_PLACED), not the provenance: its false arm is
+    taken by three Abilities AND by one attack, so there is nothing to read the
+    answer off. Before 0.89.0 the label was kept honest only by the accident that
+    every DERIVED snipe happened to set `deals: true` — a flag chosen for an
+    unrelated reason, which nothing asserted. It is asserted now
+    (counterBenchPut.test.ts sweeps the whole fixture pool through the deriver and
+    refuses `"ability"` on every op it produces). */
 function placeSnipe(
   state: GameState,
   refs: readonly PokemonRef[],
   amount: number,
   deals: boolean,
   ignoreWR: boolean,
+  source: "ability" | "attack",
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -1751,9 +1782,11 @@ function placeSnipe(
     const uid = topUid(pokemon);
     if (uid === undefined) return pokemon;
     if (!deals) {
-      // The default put-counter snipe (Hawlucha / Meowscarada): flat, no W/R and
-      // no reduction passive (a placed counter is not "damage from an attack").
-      events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
+      // The default put-counter snipe (Hawlucha / Meowscarada / Radiant Blastoise,
+      // and since 0.89.0 Ting-Lu ex's "Land Scoop"): flat, no W/R and no reduction
+      // passive (a placed counter is not "damage from an attack"). `source` is the
+      // producer's, never this function's — see the doc block.
+      events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
       return { ...pokemon, damage: pokemon.damage + amount };
     }
     // Wo-Chien "Covetous Ivy": ATTACK DAMAGE to a Benched Pokémon — no Weakness/

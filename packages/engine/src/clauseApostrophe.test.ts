@@ -90,10 +90,12 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
   }
 
   it("finds the census it is supposed to sweep", () => {
-    // 35 distinct sentences at D139 (33 at D138, 32 at D137). D138 added one —
-    // Dedenne ex sv02-093's "Tail Swap" — and D139 added TWO at once, Mimikyu
-    // sv02-097's "Ghost Eye" and Polteageist sv03-098's "Pour Tea", which are the
-    // same shape at two different counts and therefore two distinct sentences.
+    // 36 distinct sentences at D140 (35 at D139, 33 at D138, 32 at D137). D138
+    // added one — Dedenne ex sv02-093's "Tail Swap" — D139 added TWO at once,
+    // Mimikyu sv02-097's "Ghost Eye" and Polteageist sv03-098's "Pour Tea" (the
+    // same shape at two different counts, so two distinct sentences), and D140
+    // added ONE, Ting-Lu ex sv02-127's "Land Scoop" — four PRINTINGS of it in the
+    // catalog but only one fixture and, being a `sentence` census, only one row.
     // Each landed here the day its FIXTURE did, which is the whole design.
     // THE NUMBER MOVES WITH THE FIXTURES, not with
     // this file: it is here so that a slice which adds an apostrophe-bearing
@@ -101,7 +103,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // rather than silently widening the pool it does not cover. If it drops, a
     // reader stopped deriving something and the failure belongs here as much as in
     // the slice suite that owns it.
-    expect(derivable).toHaveLength(35);
+    expect(derivable).toHaveLength(36);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

@@ -69,16 +69,16 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to 1
       deriveAttackEffect(
         "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, deals: true }]);
+    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true }]);
   });
 
   it("the W/R clarifier tail is OPTIONAL, and the amount is CAPTURED (10, 60)", () => {
     expect(
       deriveAttackEffect("This attack also does 10 damage to 1 of your opponent's Benched Pokémon."),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 10, count: 1, deals: true }]);
+    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 10, count: 1, source: "attack", deals: true }]);
     expect(
       deriveAttackEffect("This attack also does 60 damage to 1 of your opponent's Benched Pokémon."),
-    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 60, count: 1, deals: true }]);
+    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true }]);
   });
 
   it("REFUSES the near-misses — Flamigo's gate, '2 of', 'YOUR', and a 0", () => {
@@ -117,7 +117,7 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to 1
         "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, deals: true, perTakenPrize: true },
+      { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true, perTakenPrize: true },
     ]);
   });
 });

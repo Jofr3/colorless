@@ -702,7 +702,8 @@ export type EffectOp =
   | { op: "damageSelf"; amount: number }
   /** Put `amount` HP of damage counters on `count` CHOSEN Benched Pokémon of
       the opponent (Hawlucha "Flying Entry" — 2 × 1 counter; Meowscarada ex
-      "Bouquet Magic" — 1 × 3 counters). "Put damage counters" is NOT attack
+      "Bouquet Magic" — 1 × 3 counters; Ting-Lu ex sv02-127 "Land Scoop" — 1 × 2
+      counters, the first ATTACK printing, D140). "Put damage counters" is NOT attack
       damage: no Weakness/Resistance AND no reduction passive — a counter placed
       by an Ability is flat (the same rule damageActive / the poison-burn ticks
       follow), so this is distinct from spreadDamage (an attack's damage, which
@@ -730,7 +731,43 @@ export type EffectOp =
       answers are exactly `count` refs or NONE — never one of two. Meowscarada ex
       and Radiant Blastoise carry no such word on the placement (their "may" is the
       Ability's own activation, spent by choosing to use it, and by then the cost
-      is paid), so their pick is mandatory. */
+      is paid), so their pick is mandatory.
+
+      `source` IS REQUIRED, AND IT IS THE SAME FIELD `damageActive` GREW AT D139,
+      with the same two members and for the same reason. On the placement path this
+      op emits `COUNTERS_PLACED`, whose `seat` OWNS the DAMAGED Pokémon (never the
+      actor) and whose `"ability"` log arm prints the literal word **Ability** — so
+      the row's provenance is something only the PRODUCER knows, and hardcoding it
+      inside `placeSnipe` was D136's finding 1 waiting for a second producer. It
+      had exactly that shape until 0.89.0.
+
+      ⚠️ A FIELD RATHER THAN A DERIVATION OFF `deals`, BECAUSE THAT DERIVATION IS
+      NOT TOTAL. `deals: true` routes to `DAMAGE_DEALT`, which carries no
+      provenance at all; `deals` ABSENT is the counter path — and that path is
+      taken by BOTH the three Ability producers AND, since 0.89.0, by an ATTACK
+      (Ting-Lu ex sv02-127 "Land Scoop"). One flag value, two honest labels: there
+      is nothing there to read the answer off. Nor can it ride `EffectContext`
+      (D139's argument, and STRONGER here): the context is WHO a program runs for,
+      not WHAT invoked it, and unlike `damageActive` this op PARKS — so a
+      provenance field there would be a wire-shape change on every serialized
+      `EffectContinuation`.
+
+      REQUIRED RATHER THAN OPTIONAL-WITH-A-DEFAULT, and that is the whole answer to
+      "an explicit field a producer must remember": the compiler remembers. A
+      `source?: "attack"` defaulting to `"ability"` is precisely the shape D136 and
+      D139 each caught once — a new producer silently inherits a label that is
+      false about it and nothing fails. On the `deals` arm the value is UNREAD but
+      still TRUE (attack damage can only come from an attack), so it is a fact
+      about the op rather than a field that means nothing on one arm — D135's trap,
+      avoided rather than re-entered. The guard is ASSERTED, not relied on:
+      counterBenchPut.test.ts sweeps every op the deriver produces from the whole
+      fixture pool and refuses `"ability"` on any of them.
+
+      ⚠️ AND BECAUSE THIS OP PARKS, THE FIELD IS PERSISTED — it rides
+      `GameState.phase.cont.pendingOp` while the pick is open, so adding it as a
+      REQUIRED field cost `MATCH_RECORD_VERSION` 2 → 3 (match.ts). D139 added the
+      identical field to `damageActive` and correctly bumped nothing, that op never
+      parking. Any future required field on a PARKING op owes the same check. */
   | {
       op: "damageChosen";
       /** `opponentBench` — the chosen target(s) are among the opponent's Bench
@@ -741,6 +778,12 @@ export type EffectOp =
       target: "opponentBench" | "opponentAny";
       amount: number;
       count: number;
+      /** What is placing these counters — the provenance the `COUNTERS_PLACED`
+          row may honestly print (see the block above). `"ability"` for the three
+          registry rows (Hawlucha, Meowscarada ex, Radiant Blastoise), `"attack"`
+          for every derived arm. Read only on the placement path; on the `deals`
+          arm it is unread and still true. */
+      source: "ability" | "attack";
       /** The printed "you may" of an auto-fired trigger: taking NONE is a legal
           answer, but a partial pick still is not (Hawlucha). */
       optional?: true;
@@ -1892,6 +1935,48 @@ const COUNTER_MOVE_TO_DEFENDER =
 // this path.
 const COUNTER_PUT_ON_DEFENDER =
   /^Put (\d+) damage counters on your opponent['’]s Active Pokémon\.$/;
+// "Put {N} damage counters on 1 of your opponent's Benched Pokémon." — the BENCH
+// half of the same printed action, and the ONE clause it has (D140). Ting-Lu ex
+// sv02-127/-243/-263/-275 "Land Scoop" ({F}{F}{F}, 2 counters) — FOUR printings of
+// one card, all four beside a printed `damage` of 150, so this is also the family's
+// first sentence that shares its attack with real §8.5 damage (D125's tail).
+//
+// D132's INVENTORY RULE FOR THE FIFTH TIME: the op is `damageChosen` with
+// `target: "opponentBench"`, `count: 1`, no `deals` — the shape Meowscarada ex
+// sv02-015's "Bouquet Magic" registry row has authored since M4 slice 8, at a
+// different amount (3 counters → 30). What was missing was a READER for the same
+// action printed as an ATTACK, so there is no new op, no new prompt and no new
+// park; the `count: 1` pick over `oppBenchRefs` is the one the two Ability rows
+// already take.
+//
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — D139's PUT census
+// re-read for the BENCH target rather than re-run; that census is CLOSED). Of the
+// 24 printings / 15 clauses whose ACTION is putting counters, the ones aimed at
+// "1 of your opponent's Benched Pokémon" are EXACTLY THESE FOUR, on ONE clause,
+// and they are the whole set an attack-side reader can reach: the pool's other
+// three printings of this noun phrase are the ABILITIES this anchor refuses by
+// case alone (Meowscarada ex ×4 and Radiant Blastoise swsh10.5-018, both
+// lowercase and mid-sentence).
+//
+// THE TARGET IS THE WHOLE DIFFERENCE FROM `COUNTER_PUT_ON_DEFENDER` and the two
+// anchors are one noun phrase apart, so both are whole-sentence `^…$` and each
+// keeps deriving its own op — asserted in both directions rather than reasoned
+// about. The near neighbours a looser pattern would swallow are all real rows:
+// Ninetales sv03-029/-199's any-zone "on 1 of your opponent's Pokémon." (no
+// "Benched", plus a second sentence), Vespiquen ex sv03-096/-212's "each of your
+// opponent's Benched Pokémon that has any damage counters on it.", and the
+// self-aimed "1 of your Benched Pokémon" of the heal family.
+//
+// The count is a bare `(\d+)` for D139's reason — not a D120 template, since a
+// count has no CLOSED vocabulary to be rejected against — and the cross product is
+// unfiltered above zero for D131's. ONE apostrophe slot, not two: the sentence
+// carries TWO possessives ("your" and "opponent's") but only the second one is
+// written with a mark, so `['’]` (D136/D137) belongs in exactly one place and the
+// D137 hazard (classing one slot and not the other) cannot arise here. No /i, for
+// the standing reason: the capitalised "Put" plus `^…$` is the entire mechanism
+// keeping the five lowercase Ability printings of this same sentence off this path.
+const COUNTER_PUT_ON_OPPONENT_BENCH =
+  /^Put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -3195,6 +3280,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           target: "opponentBench",
           amount: per,
           count: 1,
+          // Attack damage, so this never reaches the COUNTERS_PLACED path — but
+          // the field is REQUIRED and the value is true regardless (D140).
+          source: "attack",
           deals: true,
           perTakenPrize: true,
         },
@@ -3212,7 +3300,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const amount = Number(match[1]);
     if (amount >= 1) {
-      return [{ op: "damageChosen", target: "opponentBench", amount, count: 1, deals: true }];
+      return [
+        { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },
+      ];
     }
   }
 
@@ -3228,13 +3318,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = Number(match[1]);
     if (amount >= 1) {
       return match[2] === undefined
-        ? [{ op: "damageChosen", target: "opponentAny", amount, count: 1, deals: true }]
+        ? [
+            {
+              op: "damageChosen",
+              target: "opponentAny",
+              amount,
+              count: 1,
+              source: "attack",
+              deals: true,
+            },
+          ]
         : [
             {
               op: "damageChosen",
               target: "opponentAny",
               amount,
               count: 1,
+              source: "attack",
               deals: true,
               ignoreWR: true,
             },
@@ -3529,6 +3629,57 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // stops, which is a legal board state rather than a runaway.
     if (counters >= 1) {
       return [{ op: "damageActive", amount: counters * 10, source: "attack" }];
+    }
+  }
+
+  // 23. "Put {N} damage counters on 1 of your opponent's Benched Pokémon." —
+  //     D140's PUT on the BENCH, 4 printings across 1 clause (Ting-Lu ex
+  //     sv02-127/-243/-263/-275 "Land Scoop" at 2 counters). D132's INVENTORY RULE
+  //     FOR THE FIFTH TIME: `damageChosen { target: "opponentBench", count: 1 }`
+  //     has been authored since M4 slice 8 by Meowscarada ex sv02-015's "Bouquet
+  //     Magic" registry row at a different amount, so this arm buys a READER and
+  //     nothing else — no new op, no new prompt, no new park, and no
+  //     `attack.ts`/`flow.ts`/`continuous.ts`/`rng.ts` diff.
+  //
+  //     ⚠️ IT MUST NOT SET `deals`. These are PLACED COUNTERS, not attack damage —
+  //     `damageActive`'s rule verbatim (no Weakness/Resistance, no
+  //     `damageReductionAfterWR`), and §8.5 makes Weakness moot on the Bench
+  //     anyway, so the flag would change the EVENT (DAMAGE_DEALT instead of
+  //     COUNTERS_PLACED) and re-admit the reduction passive. That absence is
+  //     exactly what routes this op onto `placeSnipe`'s counter path, which is
+  //     why this is the arm that had to resolve D139's latent label.
+  //
+  //     THE PRINTED 150 RIDES THE ATTACK'S OWN `damage` FIELD, so this is the
+  //     family's first sentence whose declaration produces BOTH a §8.5 hit and a
+  //     placement: D125's tail order is damage → program → epilogue sweep, which
+  //     the suite drives end to end rather than assuming.
+  match = COUNTER_PUT_ON_OPPONENT_BENCH.exec(effect);
+  if (match !== null) {
+    // ⚠️ COUNTERS → HP (one counter = 10, §12), at the PRODUCER — the same place
+    // arm 22 above, Trevenant's registry row and `DEFENDER_POISON_N` all do it,
+    // and the same place Meowscarada's row does it by hand (3 counters → 30). The
+    // interpreter never sees the printed unit and cannot convert twice.
+    const counters = Number(match[1]);
+    // `counters >= 1` is the guard every arm here carries: a printed "Put 0 damage
+    // counters" would PARK the attacker on a choice with no possible outcome,
+    // which is worse than an unread sentence. Leave it loud.
+    if (counters >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentBench",
+          amount: counters * 10,
+          // EXACT, not a ceiling: the printed "1 of" carries no "up to" (the op's
+          // own doc block), so the park asks for one on the nose and §8.6 is the
+          // only thing that softens it — an empty Bench places nothing.
+          count: 1,
+          // D140 — the provenance the COUNTERS_PLACED row may honestly print. It
+          // is the whole reason this arm is not a one-liner: `placeSnipe`
+          // hardcoded "ability", which was true of its three Ability producers and
+          // is false of this one.
+          source: "attack",
+        },
+      ];
     }
   }
 

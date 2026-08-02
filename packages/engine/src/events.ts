@@ -177,7 +177,13 @@ export type GameEvent =
       Tea"). It shares the `damageActive` op and every board effect with
       `"ability"` and differs only in what the row may honestly say, which is
       precisely why the op carries the provenance as a FIELD rather than the two
-      being separate ops.
+      being separate ops. Since D140 it has a SECOND producer, on a second op:
+      `damageChosen`'s counter path, reached by Ting-Lu ex sv02-127/-243/-263/-275
+      "Land Scoop" ("Put {N} damage counters on 1 of your opponent's Benched
+      Pokémon.") — the printing that turned `placeSnipe`'s hardcoded `"ability"`
+      from correct into false. That producer needed NO new member, which is the
+      argument for having made `source` a field rather than minting one op per
+      provenance.
       Each new member is a WIDENING of the source enum, not a shape change — no
       MATCH_RECORD_VERSION bump (the ATTACK_FAILED.reason precedent below); an
       older record stays readable, it simply never carries the newer sources. */

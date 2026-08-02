@@ -311,6 +311,13 @@ describe("readMatchRecord — the persisted-shape gate", () => {
 
   it("refuses a version this build doesn't write (older AND newer)", () => {
     const { record } = freshRecord();
+    // ⚠️ THE ABSOLUTE VALUE IS PINNED HERE, not just the relative refusals. A bump
+    // is a deliberate act with a live cost (every open match is retired and the
+    // players re-ready), so it must never happen as a side effect of an edit.
+    // 1 → 2 was D124's required `promotedTurn`; 2 → 3 is D140's required
+    // `damageChosen.source`, which is persisted because that op PARKS — the
+    // contrast with D139, which added the same field to an op that does not.
+    expect(MATCH_RECORD_VERSION).toBe(3);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

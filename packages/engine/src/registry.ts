@@ -933,7 +933,7 @@ const HAWLUCHA: CardProgram = {
       name: "Flying Entry",
       trigger: "onPlayToBench",
       optional: true,
-      program: [{ op: "damageChosen", target: "opponentBench", amount: 10, count: 2, optional: true }],
+      program: [{ op: "damageChosen", target: "opponentBench", amount: 10, count: 2, source: "ability", optional: true }],
     },
   ],
 };
@@ -958,7 +958,7 @@ const MEOWSCARADA: CardProgram = {
       activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Grass" } },
-        { op: "damageChosen", target: "opponentBench", amount: 30, count: 1 },
+        { op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "ability" },
       ],
     },
   ],
@@ -992,7 +992,7 @@ const RADIANT_BLASTOISE: CardProgram = {
       activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Water" } },
-        { op: "damageChosen", target: "opponentBench", amount: 20, count: 1 },
+        { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "ability" },
       ],
     },
   ],

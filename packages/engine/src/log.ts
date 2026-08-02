@@ -387,6 +387,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           // ATTACK_DECLARED row directly above — the same argument D136's finding
           // 1 used to make the mill row passive rather than to give it an actor
           // field. The verb is the PRINTED one, as "Moved:" is for the move.
+          //
+          // D140 gave this arm a SECOND producer and needed no new wording:
+          // Ting-Lu ex "Land Scoop" puts its counters on a CHOSEN BENCHED body
+          // rather than the Active, and every word here stays true — same printed
+          // verb ("Put"), same seat (the opponent's, who owns the damaged
+          // Pokémon), same reason for the system voice. `name` names WHICH
+          // Pokémon, which is the only thing that differed.
           return row("system", [plain("Put: "), amount, plain(" damage onto "), strong(name)]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);

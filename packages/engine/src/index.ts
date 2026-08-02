@@ -1843,7 +1843,127 @@ import type { GameState, Seat } from "./types";
     Benched Pokémon.", 4 printings, beside a printed 150. The slice that maps it
     inherits the question, and the `"attack"` member added here is the answer
     already built. */
-export const engineVersion = "0.88.0";
+/** 0.89.0 — P3-M5: the PUT on the opponent's BENCH (D140). "Put {N} damage
+    counters on 1 of your opponent's Benched Pokémon." now SIMULATES — **4
+    printings / 1 clause**, Ting-Lu ex sv02-127/-243/-263/-275 "Land Scoop"
+    ({F}{F}{F}, N = 2, attack index 0, beside a printed **150**) — on ONE anchored
+    regex with ONE `(\d+)` capture and ONE deriver arm. The BENCH half of the same
+    printed action D139 mapped on the Active, and the counter-PUT census is now
+    closed on every target a single-Pokémon reader can reach.
+
+    D132's INVENTORY RULE FOR THE FIFTH TIME: `damageChosen { target:
+    "opponentBench", count: 1 }` has been authored since M4 slice 8 by Meowscarada
+    ex sv02-015's "Bouquet Magic" registry row, at a different amount — so the
+    ACTION, the PROMPT (`choosePokemonMulti` over `oppBenchRefs`), the PARK and the
+    resume all existed and only a READER was missing. Zero
+    `attack.ts`/`flow.ts`/`continuous.ts`/`rng.ts` diff.
+
+    ⚠️ AND IT IS THE PRODUCER THAT RESOLVED `placeSnipe`'s LATENT LABEL — the defect
+    D139 found, checked, and deliberately wrote down rather than fixed. `placeSnipe`
+    pushed `COUNTERS_PLACED` source `"ability"` as a STRING LITERAL on its
+    non-`deals` path. That was true while all three producers were Abilities
+    (Hawlucha, Meowscarada ex, Radiant Blastoise) and becomes a LIE the moment an
+    attack reaches the same line: the event's `seat` owns the DAMAGED Pokémon (the
+    attacker's opponent), rows render after their seat's name, and the `"ability"`
+    log arm prints the literal word **Ability**. D136's finding 1, refused at the
+    source for the THIRD time (D138's `"moved"`, D139's `"attack"`, and now the op
+    that carried the hardcoded string).
+
+    ⚠️ THE FIELD, NOT A DERIVATION — AND THE DERIVATION WAS THE PART WORTH
+    CHECKING. `deals` looked like a free discriminator and is not: it picks the
+    EVENT (`DAMAGE_DEALT` vs `COUNTERS_PLACED`), and its FALSE arm is now taken by
+    three Abilities AND one attack. One flag value, two honest labels — the
+    derivation is not total, so there is nothing to read the answer off. `source`
+    therefore became a REQUIRED field on `damageChosen`, the same field with the
+    same two members `damageActive` grew at D139, and `placeSnipe` takes it as a
+    parameter. Required rather than optional-with-a-default is the whole answer to
+    "an explicit field a producer must remember": the compiler remembers, and the
+    six existing producers were updated because they had to be. Nor could it ride
+    `EffectContext` — that argument is STRONGER here than at D139, because unlike
+    `damageActive` this op PARKS, so a provenance field there would be a wire-shape
+    change on every serialized `EffectContinuation`.
+
+    ⚠️ AND THE GUARD IS ASSERTED RATHER THAN RELIED ON, which is the part D139
+    could only write down. The old safety was "every derived attack snipe happens
+    to set `deals: true`" — a flag chosen for an unrelated reason that nothing
+    tested. `counterBenchPut.test.ts` now sweeps EVERY attack effect in the whole
+    fixture pool through the real reader and refuses `"ability"` on every op it
+    produces, and pins the three registry rows still saying `"ability"` from the
+    other side. Total over the pool rather than a list somebody maintains.
+
+    ⚠️ `spreadDamage` AND `damageSelf` DO NOT SHARE THE EXPOSURE, answered with
+    evidence rather than a reading. `spreadDamage` emits `DAMAGE_DEALT`, an event
+    with NO provenance enum at all, so there is no label to be false.
+    `damageSelf` emits `COUNTERS_PLACED` source `"self"`, whose `seat` IS
+    `ctx.seat` — the actor's own — so D136's voice defect is impossible by
+    construction, and `"self"` names the DIRECTION rather than the invoker, so it
+    does not become false when a producer appears. Only `damageChosen` could grow
+    past its hardcoded label, and it has. ⚠️ FOUND AND NOT FIXED (a FOURTH site,
+    on a DIFFERENT axis): `attack.ts`'s §9 reactive recoil pushes
+    `COUNTERS_PLACED` source `"ability"` for the `damageAttacker` passive, which
+    Rocky Helmet sv01-172 — a **Tool** — also produces, so that row prints
+    "Ability:" for a Tool. Pre-existing, live, and pinned as intended by
+    `rockyHelmet.test.ts`; it is a Tool-vs-Ability question, not the
+    attack-vs-Ability one this slice closes, and it is on the remainder list.
+
+    THE COUNTERS ARE HP × 10 AT THE PRODUCER (§12), the placement D139, Trevenant's
+    row, Meowscarada's row and `DEFENDER_POISON_N` all use — refused here in BOTH
+    directions (2 and 200), and shown to be a CONVERSION rather than a constant by
+    the capture itself (1 → 10, 13 → 130), since the pool prints this clause at one
+    count only.
+
+    ⚠️ THE PRINTED 150 MAKES THIS THE COUNTER FAMILY'S FIRST D125 TAIL BOARD.
+    D138's and D139's six printings carried no `damage` field at all, so a
+    placement was their entire visible result; here ONE declaration produces a real
+    §8.5 hit on the Defender AND a flat placement on the Bench, in that order, with
+    the epilogue behind both — driven end to end rather than assumed:
+    `ATTACK_DECLARED` → `DAMAGE_DEALT` (150) → `EFFECT_PENDING`, then the pick →
+    `COUNTERS_PLACED` (20) → `KNOCKED_OUT` → `PRIZES_OWED` to the ATTACKER.
+
+    THE PLACEMENT IS FLAT, AND THE CLAIM IS PINNED BY PASSIVES RATHER THAN BY
+    WEAKNESS. §8.5 already flattens Weakness on the Bench for BOTH readings, so the
+    assertions that actually separate a placement from a `deals: true` hit are the
+    ones a `deals` build would consult: Bouffalant's `damageReductionAfterWR` (20
+    placed, where a `deals` build reads **0**) and Mimikyu's `preventDamageFromExV`
+    (20 placed, where a `deals` build prevents it ENTIRELY) — the latter available
+    only because this sentence's attacker HAS a rule box, which D139's did not.
+
+    CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — D139's PUT
+    census re-read for this target rather than re-run; it is CLOSED). Of the 24
+    printings / 15 clauses whose ACTION is putting counters, the ones aimed at "1 of
+    your opponent's Benched Pokémon" are exactly these FOUR PRINTINGS OF ONE CARD on
+    ONE clause. Every other printing of that noun phrase in the pool is an ABILITY —
+    Meowscarada ex ×4 and Radiant Blastoise swsh10.5-018 — refused on CASE alone,
+    and they are the sharpest refusals available because they already produce this
+    op through the registry.
+
+    Cost: 1 regex, 1 deriver arm, 1 REQUIRED op field, 1 interpreter parameter, 6
+    producers updated (3 registry rows + 3 deriver arms), 1 fixture given its
+    printed attack, 1 test deck, 1 test file, 2 re-pointed witnesses
+    (`counterMove.test.ts` and `counterPut.test.ts` both listed this sentence as
+    stays-LOUD) and 1 re-pinned census (`clauseApostrophe.test.ts`, 35 → 36). ZERO
+    new ops, prompts, parks, events, EVENT-ENUM MEMBERS, log arms, clause-table
+    rows, state fields, error codes, registry rows or redact arms — the `"attack"`
+    member and the "Put:" row D139 built both carried over unchanged, which is the
+    argument for having made `source` a field rather than minting an op per
+    provenance.
+
+    ⚠️ `MATCH_RECORD_VERSION` **2 → 3**, AND IT IS THE FIRST BUMP SINCE D124 — the
+    one structural consequence this slice nearly got wrong by copying D139's note.
+    D139 added the SAME field to `damageActive` and correctly bumped NOTHING,
+    because `damageActive` never parks and no `EffectContinuation` has ever carried
+    one. `damageChosen` DOES park: it is embedded in
+    `GameState.phase.cont.pendingOp` whenever a snipe waits on its pick, which is a
+    live persisted position. A record written by the previous deploy mid-park comes
+    back with the REQUIRED field ABSENT, `undefined` reaches `placeSnipe`, and the
+    emitted `COUNTERS_PLACED` falls off every labelled log arm onto the
+    active-voice default — rendering under the DAMAGED player's name. A missing
+    required field that reads back "fine" is D124's case verbatim. The test is
+    never "did a type change" but "can the PREVIOUS deploy's record hold the old
+    shape", and for an op that turns entirely on whether it can be sitting in
+    `phase.cont` at write time. Two slices, one field, opposite answers.
+    No web/API/DB/`@luminous/schema` diff beyond that one constant. */
+export const engineVersion = "0.89.0";
 
 export type {
   ApplyResult,

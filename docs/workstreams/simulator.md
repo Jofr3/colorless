@@ -8150,3 +8150,253 @@ any of the three.
 - **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132–D138: a channel from the
   §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt `sv03-032`.
   Do it last or not at all, and do it *with* Camerupt.
+
+## D140 — the PUT on the opponent's BENCH: `Put {N} damage counters on 1 of your opponent's Benched Pokémon.` (engine 0.89.0, MATCH_RECORD_VERSION 2 → 3)
+
+**4 printings / 1 distinct clause** — Ting-Lu ex `sv02-127`/`-243`/`-263`/`-275`
+**"Land Scoop"** ({F}{F}{F}, attack index **0**, **2** counters, beside a printed
+**150**) — now SIMULATE on **ONE anchored regex with ONE `(\d+)` capture and ONE
+`deriveAttackEffect` arm**. The BENCH half of the action D139 mapped on the Active,
+taken as the top item of D139's remainder list, and the counter-PUT census is now
+closed on every target a single-Pokémon reader can reach.
+
+This is also **the slice that resolved `placeSnipe`'s latent log label** — the defect
+D139 found, checked, and deliberately wrote down rather than fixed.
+
+### The resume point's claims, checked before anything was designed
+
+Every CATALOG claim held. The STRUCTURAL ones did not all hold, which is exactly the
+pattern the list itself had just named.
+
+| Claim | Verdict |
+|---|---|
+| Ids `sv02-127`/`-243`/`-263`/`-275`, 4 printings / 1 clause | **TRUE.** |
+| Attack name "Land Scoop" | **TRUE** (no D138-style correction needed). |
+| Attack INDEX | **TRUE at 0** — and non-trivially so: the card has exactly ONE attack, which is what makes the index a fact rather than a guess. D139 found Pour Tea at index 1. |
+| 2 counters, printed `damage` **150**, cost {F}{F}{F} | **TRUE**, all three, on all four printings. |
+| "`damageChosen { target: "opponentBench", amount, count: 1 }` is already AUTHORED by Meowscarada ex `sv02-015`" | **TRUE**, at amount 30, and asserted as an op identity rather than by eye. |
+| "`programFor("sv02-127")?.attack` is undefined and the sentence derives to null today" | **TRUE**, and `counterPut.test.ts` had already pinned it. The `.attack` half is STILL true after this slice. |
+| "`placeSnipe` hardcodes `"ability"`; the guard is that every derived attack snipe sets `deals: true`; nothing asserts it" | **TRUE, all three parts.** |
+| "the work is deciding whether `placeSnipe` takes the same FIELD **or reads it off `deals`**" | **⚠️ FALSE — the second option does not exist.** See below. |
+| "two possessives-worth of apostrophe risk" | **⚠️ HALF TRUE.** Two possessives, **ONE apostrophe**. |
+| *(unstated)* the `MATCH_RECORD_VERSION` question | **⚠️ MISSING, and the answer is a BUMP.** See below. |
+
+### ⚠️ The derivation off `deals` is NOT TOTAL, which is why `source` is a field
+
+`deals` picks the **EVENT**, not the provenance:
+
+- `deals: true` → `DAMAGE_DEALT`, an event with **no provenance enum at all**;
+- `deals` absent → `COUNTERS_PLACED`, and that arm is taken by **three Abilities**
+  (Hawlucha `sv01-118`, Meowscarada ex `sv02-015`, Radiant Blastoise
+  `swsh10.5-018`) **and, since this slice, by an ATTACK**.
+
+One flag value, two honest labels. So there is nothing to read the answer off, and
+`source: "ability" | "attack"` became a **REQUIRED field** on `damageChosen` — the
+same field, with the same members, `damageActive` grew at D139 — with `placeSnipe`
+taking it as a parameter.
+
+**REQUIRED rather than optional-with-a-default is the whole answer to "an explicit
+field a producer must remember": the compiler remembers.** All six existing
+producers (three registry rows + three deriver arms) were updated because they had
+to be, and three neighbouring suites went red until they were. On the `deals` arm
+the value is UNREAD but still TRUE — attack damage can only come from an attack — so
+it is a fact about the op rather than D135's field-that-means-nothing-on-one-arm
+trap.
+
+It cannot ride `EffectContext`, and that argument is **stronger** here than at D139:
+the context is WHO a program runs for rather than WHAT invoked it, and unlike
+`damageActive` this op **PARKS**, so a provenance field there would be a wire-shape
+change on every serialized `EffectContinuation`.
+
+### ⚠️ The guard is ASSERTED now, not relied on
+
+D139 could only write the guard down. The old safety was *"every derived attack
+snipe happens to set `deals: true`"* — a flag chosen for an unrelated reason that
+nothing tested.
+
+`counterBenchPut.test.ts` sweeps **every attack effect in the whole `FIXTURE_POOL`
+through the real reader** and refuses `"ability"` on every op it produces. Total
+over the pool rather than a hand-kept list, so an arm added by a later slice is
+swept the day its fixture lands (the `clauseApostrophe.test.ts` design, reused). The
+other side is pinned too — the three registry rows still say `"ability"` — because a
+field is only meaningful if both of its values reach the log.
+
+### ⚠️ `spreadDamage` and `damageSelf` do NOT share the exposure — with evidence
+
+The question the item explicitly left open, answered structurally rather than by
+inspection of a call site:
+
+| Op | Emits | Exposed? | Why |
+|---|---|---|---|
+| `damageChosen` (counter path) | `COUNTERS_PLACED` | **YES — this slice** | `seat` owns the DAMAGED Pokémon, and its producer set grew past the hardcoded label. |
+| `spreadDamage` | `DAMAGE_DEALT` only | **NO** | That event carries **no provenance enum at all**. There is no label to be false, at any number of producers. |
+| `damageSelf` | `COUNTERS_PLACED` source `"self"` | **NO** | `seat` **IS** `ctx.seat` — the actor's own — so D136's voice defect (a row rendering under the non-actor's name) is impossible by construction. And `"self"` names the **DIRECTION**, not the invoker, so it does not go false when a producer appears. |
+
+**⚠️ A FOURTH SITE, FOUND AND NOT FIXED, ON A DIFFERENT AXIS.** `attack.ts`'s §9
+reactive recoil pushes `COUNTERS_PLACED` source `"ability"` for the `damageAttacker`
+passive — and **Rocky Helmet, a TOOL, also produces that passive**, so the row prints
+"Ability:" for a Tool. Pre-existing, **LIVE rather than latent**, and **pinned as
+intended by `rockyHelmet.test.ts:95`** — the D136 "the suite asserts the bug" pattern
+for a third time. It is a Tool-vs-Ability question rather than the attack-vs-Ability
+one this slice closes, so it is written down and ranked rather than folded in.
+
+### ⚠️ `MATCH_RECORD_VERSION` 2 → 3 — the first bump since D124
+
+The claim this slice most nearly got wrong, by copying D139's note.
+
+D139 added the identical field to `damageActive` and correctly bumped nothing:
+**that op never parks**, so no `EffectContinuation` has ever carried one.
+`damageChosen` **does** park — it sits in `GameState.phase.cont.pendingOp` whenever a
+snipe waits on its pick, which is a live, reachable, **persisted** position.
+
+A record written by the previous deploy mid-park comes back with the REQUIRED field
+**ABSENT**; `undefined` reaches `placeSnipe`; the emitted `COUNTERS_PLACED` falls off
+every labelled log arm onto the active-voice **default**, rendering under the DAMAGED
+player's name. **A missing required field that reads back "fine" is D124's case
+verbatim.**
+
+The test is never *"did a type change"* but *"can the PREVIOUS deploy's record hold
+the old shape"* — which for an `EffectOp` turns entirely on **whether it can be
+sitting in `phase.cont` at write time**. Two slices, one field, opposite answers, the
+same way D131's widen-don't-add rule is a TEST rather than a default. The absolute
+value is now PINNED in `match.test.ts`, so a bump can never happen as a side effect
+of an edit (it retires every open match).
+
+### The census (local D1, 2026-08-02, whole effect string, 978 cards)
+
+D139's PUT census **re-read for this target rather than re-run** — it is CLOSED.
+
+| Slice of the census | Printings | Distinct clauses |
+|---|---|---|
+| Attack effects containing "damage counter" | 56 | 31 |
+| …of those, ones whose ACTION is PUTTING counters | 24 | 15 |
+| …of those, aimed at **"1 of your opponent's Benched Pokémon"** | **4** | **1** |
+| …of those, **mapped by this slice** | **4** | **1** |
+
+Every other printing of that noun phrase in the pool is an **ABILITY**, and all are
+refused on **CASE alone**:
+
+| Printed text | Printings | Card | Fate |
+|---|---|---|---|
+| `Put 2 damage counters on 1 of your opponent's Benched Pokémon.` | **4** | Ting-Lu ex `sv02-127`/`-243`/`-263`/`-275` "Land Scoop" | **MAPPED** |
+| `…you may put 3 damage counters on 1 of your opponent's Benched Pokémon.` | 4 | Meowscarada ex `sv02-015`/`-231`/`-256`/`-271` "Bouquet Magic" | REGISTRY (already) |
+| `…you may put 2 damage counters on 1 of your opponent's Benched Pokémon.` | 1 | Radiant Blastoise `swsh10.5-018` "Pump Shot" | REGISTRY (already) |
+
+The two Ability rows are **the sharpest refusals available to this anchor**: they
+already produce this very op through the registry, so a reader that swallowed them
+would double-author the same card.
+
+### ⚠️ The printed 150 — the counter family's first D125 tail board
+
+D138's and D139's six printings carried **no `damage` field at all**, so a placement
+was their entire visible result and there was no ordering question. Here ONE
+declaration produces a real §8.5 hit AND a flat placement, verified end to end:
+
+`ATTACK_DECLARED` → `DAMAGE_DEALT` (150, full pipeline) → `EFFECT_PENDING`
+…then the pick → `COUNTERS_PLACED` (20, flat) → `KNOCKED_OUT` → `PRIZES_OWED` **to
+the ATTACKER**.
+
+Both Knock Outs can land at once (the Defender's from the 150, the pick's from the
+counters) and they land in **ONE sweep** — but the prizes queue **one `takePrizes`
+stage per KO** rather than one summed row, so the batch carries a single
+`PRIZES_OWED` of 1 and the second stage waits behind it. Pinned, because "2 KOs"
+reads like a 2.
+
+### ⚠️ The flat claim is pinned by PASSIVES, not by Weakness
+
+Where D138/D139 pinned Weakness and Resistance, §8.5 already flattens Weakness **on
+the Bench for both readings** — so a ×2 body only pins the ROUTE. The assertions that
+actually separate a placement from a `deals: true` hit are the ones a `deals` build
+would consult:
+
+| Benched target | Placement (correct) | What a `deals: true` build reads |
+|---|---|---|
+| `fix-fighting-weak` (×2 Fighting, inert) | **20** | 20 (route-pinning only) |
+| Bouffalant `sv03-174` (`damageReductionAfterWR: 20`) | **20** | **0** |
+| Mimikyu `sv02-097` (`preventDamageFromExV`) | **20** | **0**, with a `prevented: true` row |
+
+The Safeguard case is the sharpest assertion in the slice and **D139 could not buy
+it**: it needs an attacker with a rule box, and Ting-Lu **ex** has one. Both
+Ability-carrying bench bodies are left UNDAMAGED in the cases that read their
+passives — Ting-Lu's own **Cursed Land** aura strips Abilities from the opponent's
+DAMAGED non-ex Pokémon, so a pre-damaged target would pass for the wrong reason.
+
+### Witnesses and fixtures
+
+**TWO witnesses re-pointed, none deleted.** `counterMove.test.ts` AND
+`counterPut.test.ts` both listed this sentence as a stays-LOUD near-miss; both slots
+moved to **Vespiquen ex `sv03-096`/`-212` "Phantom Queen"** (same Bench, same verb, a
+per-target FILTER nothing in the vocabulary expresses). D139's dedicated *"Ting-Lu is
+UNSIMULATED"* case was **KEPT and inverted** rather than removed, so one file now
+records the note being wrong, then right, then closed.
+
+`clauseApostrophe.test.ts`'s DISCOVERED census moved **35 → 36** — one row, four
+printings, because it is a *sentence* census.
+
+Fixture: **Ting-Lu ex `sv02-127`** gained its printed attack (it was already in the
+pool as D100's ability-lock aura). It is the same kind of witness Mimikyu was at
+D139 — `programFor` is DEFINED (the `CURSED_LAND` passive) while `.attack` is not,
+and all four printings share one program. Own deck (`COUNTER_BENCH_PUT_DECK`).
+
+### The suite — `counterBenchPut.test.ts` (28 tests)
+
+Seed-free, pinned by an unchanged `rngState` across a whole **park-and-resolve**
+(the park is where a reshuffle would hide). Full `bun run check` green exit 0,
+**182 files / 2944 tests** (was 181 / 2916).
+
+Derivation: the clause to HP; the × 10 refused in both directions; `deals`/`ignoreWR`/
+`perTakenPrize`/`optional` asserted **ABSENT**; op identity against Meowscarada's
+authored row rebuilt key-by-key; eight real catalog near-misses; the sibling anchor's
+disjointness in BOTH directions; seventeen anchor/punctuation/case/token rewrites
+including the **seat flip** ("1 of **your** Benched Pokémon" — the catastrophic miss,
+since the op has no seat field to be wrong in); the printed-0 refusal beside the
+ungrammatical-singular acceptance; the curly-apostrophe EQUALITY plus the **one-slot**
+assertion.
+
+The guard: the whole-pool sweep; the three registry rows from the other side; and the
+`spreadDamage`/`damageSelf` non-exposure driven rather than argued.
+
+End to end: the 150-then-park order; the prompt's `min`/`max`/`declinable`/candidates
+/note; the resume; the addition onto existing damage; the forced single-candidate
+auto-take; the empty-Bench **silent whiff** (not an `ATTACK_EFFECT_SKIPPED` — a
+derived program means the sentence was read); the other seat; the rngState pin; seven
+illegal picks including the empty set and the Defender; the three flat-placement
+bodies; the benched KO behind the park, the one-point-short complement, and the
+both-boards sweep; and the log pair — the SYSTEM `"Put:"` row that never says
+**Ability**, and Meowscarada's `"ability"` row that still does.
+
+Mutation-checked **five ways**: dropping the × 10 fails **20** tests, restoring the
+hardcoded `"ability"` fails **6**, setting `deals: true` fails **17**, accepting a
+printed 0 fails 1, dropping the word "opponent's" from the anchor fails 1.
+
+### Still unmapped after D140 — ranked by cost
+
+The heal census is CLOSED (D133/D135), the gated census in the D134 section is the
+live map for "Flip a coin. If heads, …", and the counter-damage neighbourhood is
+CLOSED on both halves (the D138 section for MOVE, the D139 + this section for PUT).
+Do not re-run any of them.
+
+- **The gated PREVENT clause — 13 printings / 2 spellings**, still the biggest
+  un-taken count in the gated census. "…during your opponent's next turn, prevent all
+  damage from and effects of attacks done to this Pokémon." A §11 block with a
+  DURATION, so the cost is a CONTINUOUS-EFFECT mechanism rather than a reader.
+  ⚠️ **This forecast has never been verified** and it is exactly the shape of claim
+  that has now been wrong on five consecutive lists. Read `continuous.ts` for what a
+  duration-scoped defender-side prevention already costs BEFORE ranking it.
+- **`attack.ts`'s §9 recoil row calls a TOOL an Ability** — found by this slice, not
+  fixed (above). Live, one-line, and it needs the same judgement D136's finding 1
+  made: a new `COUNTERS_PLACED.source` member (`"tool"`? `"recoil"`?) or a passive
+  wording, plus a decision about whether Counterattack Quills (a real Ability) and
+  Rocky Helmet (a Tool) should render differently at all. `rockyHelmet.test.ts:95`
+  pins the current label as intended, so that assertion moves with it.
+- **`Put {N} damage counters on 1 of your opponent's Pokémon. During your next turn,
+  this Pokémon can't attack.` — Ninetales `sv03-029`/`-199`, 2 printings / 1 clause.**
+  ⚠️ Priced by its SECOND clause: sentence one is now a **one-token** widening of
+  D140's anchor (an any-zone `damageChosen`, `target: "opponentAny"`, which already
+  exists), so the first half is cheaper than it was before this slice; sentence two
+  is a §11-style SELF-lock with a DURATION that nothing in the vocabulary carries.
+  It shares the gated PREVENT item's mechanism, which is the argument for doing them
+  together or neither.
+- **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132–D139: a channel from the
+  §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt
+  `sv03-032`. Do it last or not at all, and do it *with* Camerupt.

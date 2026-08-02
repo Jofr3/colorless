@@ -109,11 +109,15 @@ const CENSUS_IDS = ["sv02-093", "sv02-239"] as const;
         anchor captures `(\d+)` rather than making the count optional.
       • Drifblim sv01-090 "Curse Spreading" — "in any way you like", a distribution
         across the opponent's whole board.
-      • Ting-Lu ex sv02-127 "Land Scoop" — the opponent's BENCH. ⚠️ CORRECTED AT
-        D139: this comment used to call it "the one on this list the engine already
-        simulates", which is false. The sentence is UNMAPPED and derives to null;
-        the card's only registry row is the Cursed Land passive. See
-        counterPut.test.ts for the case that pins it and for why it matters.
+      • Vespiquen ex sv03-096/-212 "Phantom Queen" — "each of your opponent's
+        BENCHED Pokémon **that has any damage counters on it**": the same zone as
+        D140's anchor with a per-target FILTER on top, which nothing in the
+        vocabulary expresses. ⚠️ RE-POINTED AT D140, and the entry it replaced is
+        the standing note working: this slot held Ting-Lu ex sv02-127 "Land Scoop"
+        (the opponent's Bench, singular target), which D139 CORRECTED from "the one
+        on this list the engine already simulates" to "unmapped, derives to null" —
+        and which D140 then mapped. Two slices, one line, three states; the witness
+        moved rather than being deleted each time.
 
     STANDING NOTE: when a later slice maps one of these, RE-POINT the case at
     another still-unmapped clause — never delete it. The suite's claim is that an
@@ -125,7 +129,7 @@ const REAL_NEAR_MISSES = [
   "Put 9 damage counters on 1 of your opponent's Pokémon. During your next turn, this Pokémon can't attack.",
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
   "Put 8 damage counters on your opponent's Pokémon in any way you like.",
-  "Put 2 damage counters on 1 of your opponent's Benched Pokémon.",
+  "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
 ] as const;
 
 /** U+2019, spelled as an ESCAPE rather than typed — the curly apostrophe a
@@ -308,12 +312,19 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     // Slowbro's text to an op that damages the opponent — the widest possible miss.
     expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toBeNull();
     expect(deriveAttackEffect(REAL_NEAR_MISSES[1])).toBeNull();
-    // TING-LU'S BENCH PUT — unmapped, and its comment above used to claim otherwise
-    // (corrected at D139, which checked it).
+    // VESPIQUEN EX'S FILTERED BENCH SPREAD — unmapped, and the slot Ting-Lu ex's
+    // "Land Scoop" vacated when D140 mapped it. A re-point, never a deletion.
     expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toBeNull();
     expect(
-      deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Benched Pokémon."),
+      deriveAttackEffect(
+        "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
+      ),
     ).toBeNull();
+    // …and the sentence that LEFT this list now derives, which is what makes the
+    // re-point a fact rather than a bookkeeping preference.
+    expect(
+      deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Benched Pokémon."),
+    ).not.toBeNull();
   });
 
   it("refuses the anchor, punctuation and case rewrites — but trims outer space", () => {
