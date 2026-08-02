@@ -1917,12 +1917,20 @@ const OPPONENT_PRIZES_MULTIPLY =
 //   multiply  — Stoutland sv03-172 "Chomp Chomp Panic" (50×): 50 per {C} and
 //               NOTHING else, so a retreat-0 defender takes 0.
 // `{C}` is a literal brace token in the printed text, escaped here; the
-// apostrophes are ASCII (verified against the D1 rows), and `Pokémon` carries
-// the real é — a lookalike would silently fall off the path.
+// apostrophes are ASCII in the catalog (verified against the D1 rows) and both
+// slots carry the `['’]` class anyway, and `Pokémon` carries the real é — a
+// lookalike é would silently fall off the path.
+//
+// ⚠️ THESE TWO WERE THE LAST STRAIGHT-ONLY PATTERNS IN THE FILE, found by D137's
+// census and fixed there. D136's review named three; it did not look for a
+// sentence carrying TWO possessives, and this pair carries the only ones in the
+// pool ("your opponent's Active Pokémon's Retreat Cost"). The class is applied to
+// BOTH slots, because a re-ingest that normalised punctuation would change them
+// together and half a fix reads exactly like the whole one until it does not.
 const RETREAT_COST_SCALE =
-  /^This attack does (\d+) more damage for each \{C\} in your opponent's Active Pokémon's Retreat Cost\.$/;
+  /^This attack does (\d+) more damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
 const RETREAT_COST_MULTIPLY =
-  /^This attack does (\d+) damage for each \{C\} in your opponent's Active Pokémon's Retreat Cost\.$/;
+  /^This attack does (\d+) damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
 // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
 // damage.", the additive family's third arithmetic shape and the first one whose
 // count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
@@ -1973,8 +1981,12 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     printed clauses and never substrings.
 
     `Pokémon` carries a REAL U+00E9 é in every key that spells it and every
-    apostrophe is ASCII, both verified against the local D1 rows; a lookalike
-    character would silently un-map the clause. `Poisoned`, `Special Condition`,
+    apostrophe is ASCII, both verified against the local D1 rows; a lookalike é
+    would silently un-map the clause. A curly apostrophe no longer does — five of
+    these rows spell `opponent's`, and since D137 the lookup retries a miss with
+    U+2019 folded to U+0027 (`literalClauseRow`), which is the literal-table
+    equivalent of the `['’]` class the regexes carry. The KEYS stay ASCII, because
+    they record what the catalog actually prints. `Poisoned`, `Special Condition`,
     `Benched`, `Active` and `Evolution` are CAPITALISED as printed, and the
     matcher has no /i. The remaining printed clauses in the pool stay
     deliberately UNMAPPED and therefore LOUD (an unrecognised clause returns null
@@ -2252,24 +2264,97 @@ const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map(
   POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
 );
 
+/** THE APOSTROPHE FOLD (D137) — the LITERAL-TABLE half of the hardening D136 gave
+    the regexes, and the ONE site every exact lookup on printed text goes through.
+
+    D136 gave three patterns the `['’]` class that every sibling reading the same
+    noun phrase already carried, so a catalog re-ingest normalising straight
+    apostrophes to U+2019 could not silently un-derive their sentences. The
+    LITERAL tables carry the identical exposure — SEVEN of their twenty-one rows
+    spell a possessive or a contraction ("your opponent's Active Pokémon is
+    Poisoned", "this Pokémon didn't move from the Bench to the Active Spot this
+    turn", and five more) — and a Map key CANNOT carry a character class: it is
+    one exact string of bytes or it is nothing. So the hardening has to move off
+    the KEY and onto the LOOKUP, which is this function.
+
+    THE FOLD IS A FALLBACK, NOT A NORMALISATION PASS. The clause as printed is
+    tried FIRST and always wins; only when that misses is U+2019 folded to U+0027
+    and the table asked a second time. That ordering is what makes the change
+    provably conservative — it can turn a MISS into a hit and can never turn a hit
+    into a DIFFERENT hit, so no clause any row already owns is re-interpreted —
+    and it leaves a future row keyed with a curly apostrophe reachable by its own
+    bytes rather than shadowed by the fold.
+
+    IT FOLDS THE APOSTROPHE AND NOTHING ELSE. No lowercasing, no trimming beyond
+    what the readers already do, and emphatically no Unicode normalisation of the
+    é in `Pokémon`: the tables' own doc blocks commit to a REAL U+00E9 and to a
+    matcher with no /i, and those commitments are load-bearing (`Poisoned`,
+    `Special Condition`, `Benched`, `Active` and `Evolution` are CAPITALISED as
+    printed and told apart from ordinary words by nothing else). A wider fold
+    would be a different and much larger design call, because it would owe a
+    row-by-row argument that no two distinct printed clauses COLLIDE under it. The
+    apostrophe needs no such survey: U+2019 and U+0027 are the same punctuation
+    mark in two encodings, no printed clause in the pool is distinguished from
+    another by which one it uses, and the pool holds zero U+2019 today —
+    re-verified against the local D1 at D137, 0 of 978 rows in `effect`,
+    `attacks_json`, `abilities_json` and `name`, against 359 cards carrying the
+    straight form in `attacks_json`.
+
+    THE TEMPLATE PASS IS DELIBERATELY NOT ROUTED THROUGH HERE. The anchored
+    patterns (SELF_ENERGY_ATTACHED_CLAUSE, OPPONENT_ACTIVE_TYPE_CLAUSE and every
+    skeleton above them) carry `['’]` in their own source and match the RAW
+    clause. Folding before them would be harmless but redundant; folding INSTEAD
+    of the class would move a documented, greppable property of each regex into a
+    caller the regex cannot see. Two mechanisms, one per pass, each visible at the
+    site where it applies. What reaches THIS function out of a template is the
+    CAPTURE — an energy token, a type name — which is why the two token maps are
+    routed through it as well even though their closed, schema-derived
+    vocabularies can never hold an apostrophe: the rule is "every exact lookup on
+    printed text", not "every exact lookup that needs it today", so a table added
+    by a later slice INHERITS the hardening instead of having to remember it.
+
+    Four tables, five call sites, and that is the whole census. The only exact
+    lookup on printed text that does not come through here is
+    `deriveAttackEffect`'s ENERGY_TYPE_BY_CODE / ENERGY_TYPE_BY_NAME pair, which
+    are `Record`s rather than Maps and are indexed with a capture from
+    TYPED_SELF_DISCARD — a regex whose alternation IS those two key sets, so an
+    apostrophe cannot reach them by construction. */
+const CURLY_APOSTROPHE = "’";
+const STRAIGHT_APOSTROPHE = "'";
+function literalClauseRow<T>(table: ReadonlyMap<string, T>, clause: string): T | undefined {
+  const exact = table.get(clause);
+  if (exact !== undefined) return exact;
+  // The `includes` guard is not an optimisation: it states that the second lookup
+  // exists ONLY for text carrying a curly apostrophe, so a clause that misses for
+  // any other reason misses exactly once and stays LOUD.
+  return clause.includes(CURLY_APOSTROPHE)
+    ? table.get(clause.replaceAll(CURLY_APOSTROPHE, STRAIGHT_APOSTROPHE))
+    : undefined;
+}
+
 /** The printed clause between the leading "If " and the ", this attack does" →
     a `BoardCondition`, or null when nothing claims it (which keeps the sentence
     on the loud ATTACK_EFFECT_SKIPPED path — never a silent 0).
 
     Two passes, in this order and no other: the LITERAL table first, then the
     parameterised patterns. Literals win by construction, so adding a template
-    can never re-interpret a clause a row already owns. */
+    can never re-interpret a clause a row already owns.
+
+    Every exact lookup below goes through `literalClauseRow` (D137), which retries
+    a miss with U+2019 folded to U+0027 — the literal-table equivalent of the
+    `['’]` class the two patterns carry in their own source. The patterns
+    themselves are handed the RAW clause on purpose; see that function. */
 function boardConditionForClause(clause: string): BoardCondition | null {
-  const literal = CONDITIONAL_DAMAGE_CLAUSES.get(clause);
+  const literal = literalClauseRow(CONDITIONAL_DAMAGE_CLAUSES, clause);
   if (literal !== undefined) return literal;
   const selfEnergy = SELF_ENERGY_ATTACHED_CLAUSE.exec(clause);
   if (selfEnergy !== null) {
-    const energy = CLAUSE_ENERGY_TOKENS.get(selfEnergy[1] ?? "");
+    const energy = literalClauseRow(CLAUSE_ENERGY_TOKENS, selfEnergy[1] ?? "");
     if (energy !== undefined) return { kind: "yourActiveHasEnergyAttached", energy };
   }
   const activeType = OPPONENT_ACTIVE_TYPE_CLAUSE.exec(clause);
   if (activeType !== null) {
-    const type = CLAUSE_POKEMON_TYPES.get(activeType[1] ?? "");
+    const type = literalClauseRow(CLAUSE_POKEMON_TYPES, activeType[1] ?? "");
     if (type !== undefined) return { kind: "opponentActiveHasType", type };
   }
   return null;
@@ -2323,7 +2408,11 @@ const ATTACK_DOES_NOTHING = /^If (.+), this attack does nothing\.$/;
     ⚠️ The keys are the printed negatives and their traps are real: Palafin says
     "the Bench", NOT "your Bench" (no possessive — its positive twin one table up
     DOES carry it), and "didn't" with an ASCII apostrophe (the whole 978-card
-    pool holds zero U+2019). `Pokémon` carries a real U+00E9. */
+    pool holds zero U+2019, re-verified at D137). `Pokémon` carries a real U+00E9.
+    BOTH rows carry an apostrophe — the contraction in one, the possessive in the
+    other — so both are read through `literalClauseRow`, which retries a miss with
+    U+2019 folded to U+0027 (D137). The keys themselves stay ASCII: they record
+    what the catalog prints, not what the lookup will tolerate. */
 const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // Palafin sv03-062/-200 "Justice Kick" ({W}{W}, 210) — the exact NEGATIVE twin
   // of D124's promoted-this-turn row, reading the same `InPlayPokemon.promotedTurn`
@@ -2357,11 +2446,18 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
     keys are POSITIVE clauses read under a different consequent, and a clause
     meaning "the attack does 80 more damage if X" must never be reachable from a
     sentence meaning "the attack does nothing if X". Two consequents, two
-    vocabularies, no crossover. */
+    vocabularies, no crossover.
+
+    It shares the LOOKUP HELPER, though, and that is not a crossover: D137's
+    `literalClauseRow` takes the table as an argument, so the two vocabularies
+    stay disjoint while the U+2019 fold is written once. There is no choke point
+    ABOVE this — the disjointness above is deliberate and each consequent owns its
+    own reader — so "the fold lives in the helper every table is read through" is
+    the only placement that a future third consequent inherits for free. */
 export function deriveAttackRequirement(text: string): BoardCondition | null {
   const nothing = ATTACK_DOES_NOTHING.exec(text.trim());
   if (nothing === null) return null;
-  return ATTACK_REQUIREMENT_CLAUSES.get(nothing[1] ?? "") ?? null;
+  return literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, nothing[1] ?? "") ?? null;
 }
 
 // The PRINTED COIN FLIP (D126) — "Flip a coin. If heads, this attack does N more
@@ -2725,7 +2821,10 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     // of this family carries; there is no flip ceiling here, because the count is
     // read off the board and the board is bounded by the deck.
     if (token !== undefined) {
-      const energy = CLAUSE_ENERGY_TOKENS.get(token);
+      // Through D137's helper like every other exact lookup on printed text, even
+      // though a brace code and a spelled-out energy name can never hold an
+      // apostrophe: the rule is the SITE, not the need.
+      const energy = literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
       return energy !== undefined && per >= 1
         ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy }, per }
         : null;

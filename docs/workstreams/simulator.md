@@ -7458,3 +7458,172 @@ D96–D135; anything from D136 on is again unreviewed.
 blocks, and two entries removed from near-miss loops that were never separate tests).
 **Engine version UNCHANGED** — no behaviour a card can reach moved. No
 `MATCH_RECORD_VERSION` bump, no web/API/DB/`@luminous/schema` diff.
+
+## D137 — the APOSTROPHE FOLD: the literal clause-table half of D136's hardening (engine unchanged, 0.86.0)
+
+D136's one deliberate leftover, and the cheapest item on its resume point. That review
+gave three regexes the `['’]` class every sibling on the same noun phrase already
+carried, and wrote down that the LITERAL clause tables have the identical exposure: a
+catalog re-ingest normalising straight apostrophes to U+2019 would silently un-derive
+them. It stopped there because **a `Map` key cannot carry a character class** — it is one
+exact string of bytes or it is nothing — so the hardening had to move off the KEY and
+onto the LOOKUP, which is a design call rather than a patch.
+
+### The census — four tables, five call sites, SEVEN exposed rows
+
+Run over every literal `Map`/`Record` lookup on printed text in `packages/engine/src`,
+not just the two the resume point named (which estimated "~8 rows" and named symbols that
+do not exist — `ATTACK_CONDITION_CLAUSES`/`conditionFor`; the real ones are below).
+`conventions.md`'s rule applies to its own resume points: **verify a doc reference against
+the code before relying on it.**
+
+| Table | Rows | With an apostrophe | Read from |
+|---|---|---|---|
+| `CONDITIONAL_DAMAGE_CLAUSES` (D115+) | 19 | **5** | `boardConditionForClause` |
+| `ATTACK_REQUIREMENT_CLAUSES` (D125) | 2 | **2 — the whole table** | `deriveAttackRequirement` |
+| `CLAUSE_ENERGY_TOKENS` (D118) | 19 | 0 — closed vocabulary | `boardConditionForClause`, `deriveAttackCoinFlip` |
+| `CLAUSE_POKEMON_TYPES` (D120) | 11 | 0 — closed vocabulary | `boardConditionForClause` |
+
+The five conditional rows are the `your opponent's Active Pokémon …` family — "already
+has any damage counters on it" (Gyarados ex `sv01-045`/`-225`), "is an Evolution Pokémon"
+(Seviper `sv02-137`), "is Poisoned" (Seviper `sv01-128`), "is affected by a Special
+Condition" (Sableye `sv02-136`), "is a Pokémon ex or Pokémon V" (Ceruledge `sv02-098`).
+The requirement table is exposed on **both** rows and on **both grammatical uses the pool
+prints**: a CONTRACTION (Palafin `sv03-062`/`-200`, "didn't") and a POSSESSIVE (Lycanroc
+`sv03-117`).
+
+The one exact lookup on printed text deliberately left outside the fold is
+`deriveAttackEffect`'s `ENERGY_TYPE_BY_CODE` / `ENERGY_TYPE_BY_NAME` pair: they are
+`Record`s rather than `Map`s and are indexed with a capture from `TYPED_SELF_DISCARD`, a
+regex whose alternation **is** those two key sets — an apostrophe cannot reach them by
+construction. Documented in place so the exception is not mistaken for an oversight.
+
+### ⚠️ The census found TWO MORE straight-only regexes D136 had missed
+
+`RETREAT_COST_SCALE` and `RETREAT_COST_MULTIPLY` spell *"your opponent's Active Pokémon's
+Retreat Cost"* — Heracross `sv01-002`, Spidops ex `sv01-019`, Sharpedo `sv03-047`
+(additive) and Stoutland `sv03-172` (multiply). They are **the pool's only sentence
+carrying two possessives**, and D136 found neither: its search was for `opponent's`-shaped
+siblings and these two matched the shape, so they read as already-handled. Both slots now
+carry `['’]`; a fix that classed one and not the other would read exactly like a whole fix
+until a re-ingest landed.
+
+**The lesson: "find every X" is only as good as the QUERY, and a census run for one
+purpose is the cheapest place to re-run the previous one's.** This slice was scoped to Map
+keys and found regexes, because it looked at every apostrophe in the file rather than at
+every table.
+
+After D137 there are **no straight-only apostrophes left in any regex in `effects.ts`**,
+and no exact lookup on printed text outside `literalClauseRow` except the one noted above.
+
+### ⚠️ Where the fold lives, and why not at the clause split
+
+`literalClauseRow(table, clause)` — a seven-line helper that takes the TABLE AS AN
+ARGUMENT and is the single site every exact lookup on printed text goes through.
+
+There is deliberately **no choke point above** the two lookup helpers, and that is not an
+accident to route around: D125 made `boardConditionForClause` and `deriveAttackRequirement`
+share no lookup, because a clause meaning *"the attack does 120 more damage if X"* must
+never be reachable from a sentence meaning *"the attack does nothing if X"*. Two
+consequents, two vocabularies, no crossover. Folding at "the clause split" would have
+meant either one merged table (destroying that) or the same three lines copied into each
+helper (which the next table added would have to remember).
+
+Passing the table keeps both properties at once — **two vocabularies, one fold, written
+once** — and it is the placement a THIRD consequent inherits for free. The two token maps
+are routed through it as well although their closed, schema-derived vocabularies can never
+hold an apostrophe: **the rule is the SITE, not the need** ("every exact lookup on printed
+text", not "every one that needs it today"). That is exactly how a table added by a later
+slice gets the hardening without anyone thinking about it, and it is the one thing a future
+session must not undo: **a bare `.get()` on printed text is the regression.**
+
+### ⚠️ A FALLBACK, not a normalisation pass
+
+The clause AS PRINTED is tried first and always wins. Only on a MISS is U+2019 folded to
+U+0027 and the table asked again, behind an `includes` guard that states the same thing in
+code (a clause missing for any other reason misses exactly once and stays LOUD).
+
+That ordering is the whole safety argument:
+
+- it can turn a **miss into a hit** and can **never** turn a hit into a *different* hit, so
+  no clause any row already owns is re-interpreted — the same property D118 bought by
+  consulting literals before templates;
+- a future row keyed with a curly apostrophe stays reachable by its own bytes rather than
+  being shadowed by the fold.
+
+### ⚠️ Apostrophe only — and the scope-out is part of the decision
+
+No lowercasing, no trimming beyond what the readers already do, and no Unicode
+normalisation of the é in `Pokémon`. The tables commit to a real U+00E9 and to a matcher
+with no `/i`, and both commitments are load-bearing: `Poisoned`, `Special Condition`,
+`Benched`, `Active` and `Evolution` are capitalised as printed and told from ordinary words
+by nothing else.
+
+A wider fold would owe a **row-by-row argument that no two distinct printed clauses COLLIDE
+under it**, and nobody has made one. The apostrophe needs no such survey: U+2019 and U+0027
+are the same punctuation mark in two encodings, and no printed clause in the pool is
+distinguished from another by which one it uses. `clauseApostrophe.test.ts`'s negative
+block exists to stop a later session "improving" this into a general normaliser — widening
+it is a separate decision, not a tidy-up.
+
+### ⚠️ The template/regex pass is deliberately NOT routed through the fold
+
+Every anchored pattern carries `['’]` in its own source and matches the RAW clause.
+Folding before them would be harmless but redundant; folding *instead* of the class would
+move a documented, greppable property of each regex into a caller the regex cannot see.
+**Two mechanisms, one per pass, each visible at the site where it applies.** The suite pins
+the separation, so a session that deletes a class on the grounds that "the fold handles it"
+goes red rather than shipping.
+
+What reaches `literalClauseRow` out of a template is the CAPTURE — an energy token, a type
+name — which is why the token maps are routed through it even though they need nothing.
+
+### The pool claim, re-verified
+
+`effects.ts` asserts in two doc blocks that the pool holds zero U+2019. Re-checked against
+the local D1 (`apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`, 978
+cards):
+
+- `effect`, `attacks_json`, `abilities_json`, `name` — **0 rows containing U+2019**;
+- `attacks_json` — **359 rows containing U+0027**.
+
+So the claim holds and the KEYS stay ASCII on purpose: they record what the catalog prints,
+not what the lookup will tolerate. Re-verify this cheaply rather than re-deriving it.
+
+### The suite — `clauseApostrophe.test.ts` (13 tests)
+
+Reader-level on purpose: the fold is a property of five pure functions, and every row it
+protects is already driven end-to-end by the slice suite that bought it. Re-driving a match
+here would re-assert those slices, not this one.
+
+**The census is DISCOVERED, not listed**, and that is the shape worth copying. The suite
+sweeps `FIXTURE_POOL` for every distinct printed effect carrying an apostrophe that ANY of
+the five readers resolves (**32 sentences at D137**, pinned), rewrites each to U+2019 and
+asserts **equality with the straight form on all five readers** — D136's shape, never
+merely "the curly one is non-null", because a non-null check passes on a reader that folded
+the clause into some other row. A row, regex or template added by a later slice is therefore
+swept the day its FIXTURE lands rather than the day somebody remembers this file. **The
+pinned 32 moves with the fixtures**: a slice adding an apostrophe-bearing printing has to
+look here once and confirm the new sentence folds. That is the point, not a chore.
+
+On top of the sweep: the seven literal rows listed explicitly and asserted individually;
+the two consequents' disjointness re-asserted **in the curly spelling** (a fold written as
+one merged table instead of one function taking a table would have quietly joined them);
+three apostrophe-free rows asserted unchanged; the scope guards (é not folded, case not
+folded, inner whitespace not collapsed, an unmapped clause still LOUD in both spellings);
+and the template pass asserted still reading through its own class.
+
+Mutation-checked both ways: disabling the retry fails **3** tests, reverting the
+retreat-cost class fails **2**.
+
+### Verification
+
+`bun run check` green, exit 0 — **179 files / 2872 tests** (was 178 / 2859).
+**Engine version UNCHANGED and no `MATCH_RECORD_VERSION` bump** — no behaviour a card in
+today's catalog can reach moved, because today's catalog has no U+2019 to fold. This is a
+property of the READER, bought against an ingest that has not happened yet, which is
+exactly the case where a version bump would be noise. No web/API/DB/`@luminous/schema`
+diff; no interpreter, `attack.ts`, `rng.ts` or `continuous.ts` diff.
+
+Cost: **1 helper (7 lines) + 2 constants, 5 call sites re-pointed, 2 regexes classed, 3
+doc blocks amended, 1 new test file.**
