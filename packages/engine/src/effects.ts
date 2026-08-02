@@ -1373,9 +1373,13 @@ export type EffectOp =
     }
   /** MILL: move the top `count` cards of `whose` deck into that same player's
       discard pile, in deck order (top first — the order the pile gains them, §2).
-      D130's op, widened by D131; the third producer of `DECK_TOP_DISCARDED` (the
-      others are `attachFromTop`'s `discardRest` above and, since D131, this op on
-      either side); the event's `seat` is the deck's OWNER on all of them.
+      D130's op, widened by D131; the SECOND of the event's two push sites (the
+      other is `attachFromTop`'s `discardRest` above), and the one that supplies two
+      of its THREE paths — `whose` is a fork, not a parameter. The event's `seat` is
+      the deck's OWNER on all three; its `actor` is the player whose card did it
+      (D153), so `whose: "self"` sits with Tri Howl on `actor === seat` and only
+      `whose: "opponent"` is the case where the two differ. That comparison, not the
+      op boundary, is what log.ts's voice hangs off.
 
       Deterministic in the strongest sense the op vocabulary has: it consumes NO
       `rngState` (the cards are taken in the order they already sit in), it never

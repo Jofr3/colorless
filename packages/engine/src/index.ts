@@ -1335,6 +1335,10 @@ import type { GameState, Seat } from "./types";
     LOOKED-AT cards", true of Hydreigon "Tri Howl" and a flat lie about a mill, so
     the wording is now provenance-neutral. redact.ts needs no arm and still has none:
     it redacts STATE, and a discard pile is public in any case.
+    (Provenance-neutral was necessary and not sufficient — D136 then fixed the VOICE,
+    and D153 found that no single voice can be true of all three paths and gave the
+    event an `actor`. The reuse claim above still holds: the event was never joined
+    by a sibling. See 0.101.0.)
 
     Cost: 2 skeleton regexes, 1 `AttackCoinFlip` member (`programPerHeads`), 1
     `EffectOp` member (`discardOpponentDeckTop`, since renamed) + its interpreter arm, 1 new arm and
@@ -3177,7 +3181,67 @@ import type { GameState, Seat } from "./types";
     diff. 1 fixture ADDED (Lycanroc ex, verbatim vs the D1), 1 new deck
     (`INSTALLED_RECOIL_DECK`), `installedRecoil.test.ts`, 1 re-pointed stays-LOUD
     witness in `counterattack.test.ts` (none deleted). */
-export const engineVersion = "0.100.0";
+/** 0.101.0 — REVIEW FIX, NOT A SLICE (**D153**): `DECK_TOP_DISCARDED` gains an
+    `actor: Seat`, and log.ts picks its VOICE by `actor === seat`. From
+    `/code-review` over `origin/backend...HEAD` (D136–D152), finding 1 of 3 — and it
+    is **D136's own fix mirroring D136's own defect**.
+
+    D136 found the mill row in the ACTIVE voice under an owner-keyed seat ("**P2**
+    discarded 2 cards from the top of their deck" credits the milling to the player
+    who lost the cards) and made the one wording PASSIVE. Passive is right for the
+    mill and wrong for the two SELF paths, which the review caught on Tri Howl and
+    which DRIVING the log showed is worse than reported: `interpreter.ts`'s mill
+    site with `whose: "self"` (Gyarados swsh10.5-022 "Wild Splash") printed
+    "**Ember** had 5 cards discarded from the top of their deck" for a cost that
+    player paid off their own deck. **TWO push sites, THREE paths, splitting 2–1 on
+    agency and NOT along the op boundary** — so neither "one wording" nor "one
+    wording per op" can be right, and the sweep found no third site.
+
+    ⚠️ **THE ARGUMENT D136 GOT WRONG, NAMED SO THE NEXT SLICE INHERITS IT RATHER
+    THAN THE VERDICT.** D136 priced ENERGY_DISCARDED's `actor` field and declined it
+    because "this row never names the actor anyway". That is the wrong test. **A
+    row's VOICE asserts an actor whether or not any segment names one** — every row
+    renders after its seat's name, so active means "this seat did it" and passive
+    means "it was done to them". Both are agency claims; there is no third wording
+    that abstains, because the row is grammatically a predicate on a named player.
+    Once the assertion is unavoidable, its truth value varies per path, and a fact
+    that varies per path is a DATUM, not a constant. D113's rule is untouched: the
+    event is still REUSED rather than joined by a sibling, and its game fact is
+    unchanged — what grew is the provenance the message needs in order not to lie.
+
+    ⚠️ **AND THE COMPARISON IS NOT AVAILABLE TO THE RENDERER WITHOUT THE FIELD**,
+    which is why "compare `event.seat` against the acting seat" was never an option:
+    `formatEvent` sees ONE event plus `{ names, state, elapsed }` and has no notion
+    of whose turn it is. The self-mill is also what makes `actor === seat` the honest
+    key rather than a per-op flag — same op as the mill, opposite side of the line.
+
+    ⚠️ **PARK? N/A — no op changed. MRV UNCHANGED AT 8, and the persistence question
+    asked properly rather than waved at.** `MatchRecord` persists the RENDERED
+    `SeatLogEntry[]` and `GameState`, never events (D141); `GameEvent` appears in NO
+    file outside `packages/engine/src`, so it crosses no wire and no park
+    continuation carries one. A wording change therefore does NOT retroactively alter
+    stored rows: an in-flight match keeps its old passive backlog and mints the new
+    text from here on, which is the same cosmetic seam D141 accepted. **VOICE?** The
+    general rule this slice leaves behind, which subsumes all six earlier answers:
+    **a row's voice is fixed by the relation between `event.seat` and the CAUSER —
+    causer === seat → ACTIVE (D141's `preventDamage`, D147), causer is always the
+    other seat → VICTIM-side/PASSIVE (D149), causer is the RULES → SYSTEM (D141's
+    recoil) — and when one event type has paths where that relation DIFFERS, the
+    relation is a field the event must carry, never a constant the wording encodes.**
+    That fourth case had no representative until now, and this defect is what it
+    looks like when it is mistaken for one of the first three. **GUARD ASSERTED?**
+    It was not — only the mill's row was pinned, which is exactly how D136's fix
+    broke D136's other producer with nothing red. Now `log.test.ts` pins the
+    renderer over **all four `Seat × Seat` pairs** AND drives **all three real
+    producer paths** end to end, reading the finished rows back with their seat
+    labels. Swapping the renderer's arms fails 2 tests; flipping either producer's
+    `actor` fails 1 each.
+
+    Cost: **1 event field, 1 ternary in log.ts, 2 producer lines** — no op, no state
+    field, no regex, no deriver arm, no error code, no prompt, no redact arm, no
+    projection, no registry row, no fixture and no web/API/DB/`@luminous/schema`
+    diff. `log.test.ts` +1 case, its DECK_TOP_DISCARDED block rewritten. */
+export const engineVersion = "0.101.0";
 
 export type {
   ApplyResult,

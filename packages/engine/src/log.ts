@@ -802,17 +802,21 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     }
     case "DECK_TOP_DISCARDED": {
-      // THREE producers, and the wording is PROVENANCE-NEUTRAL because of it (D113's
-      // rule: reuse the event, fix the message so it cannot lie):
+      // TWO push sites, THREE paths, and the paths — not the sites — are what the
+      // wording has to survive (D113's rule: reuse the event, fix the message so it
+      // cannot lie). The old copy here said "THREE producers" and then listed two,
+      // which is the miscount that made a single wording look sufficient:
       //   • Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at
-      //     cards that were NOT attached, off the actor's OWN deck.
+      //     cards that were NOT attached, off the actor's OWN deck. actor === seat.
       //   • the mill (discardDeckTop, D130 + D131) — "Discard the top N cards of
-      //     your [opponent's] deck", off EITHER deck depending on the op's `whose`.
-      // That third case is why the wording had to stay neutral rather than merely
-      // provenance-free: one op now produces rows on both seats, so a message that
-      // named the actor would be wrong half the time from a single call site.
+      //     your [opponent's] deck", and its `whose` field is a FORK, not a
+      //     parameter: `"self"` (Gyarados "Wild Splash") is actor === seat, and
+      //     `"opponent"` (Chi-Yu ex, Skwovet, Wugtrio) is actor !== seat.
+      // So the three paths split 2–1 on agency, and NOT along the op boundary —
+      // which is why "one wording per op" would not have helped either.
+      //
       // The old copy said "discarded N LOOKED-AT cards", which is true of the
-      // first and a flat lie about the second: nobody looked at a milled card.
+      // first and a flat lie about the rest: nobody looked at a milled card.
       // The "looked-at" flavour is not lost — Tri Howl's own DECK_TOP_REVEALED and
       // ENERGY_ATTACHED rows sit directly above this one and carry it, which is
       // exactly why this row never needed to.
@@ -820,22 +824,41 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // Count only, like its DECK_TOP_REVEALED sibling: the pile is public, so a
       // curious player can read the cards themselves, and what the LOG has to
       // carry is that the cards LEFT THE DECK. `event.seat` is the deck's OWNER on
-      // both producers, so the row belongs to the player who lost them — a mill
+      // every path, so the row belongs to the player who lost them — a mill
       // reads as the opponent's row, which is what it is.
       //
-      // Which is exactly why the verb is PASSIVE. Every row here is rendered after
-      // its seat's name, so an active verb asserts that seat DID the thing; on a
-      // mill the owner is the victim, and "P2 discarded 2 cards from the top of
-      // their deck" credits the milling to the player who lost the cards. Neutral
-      // wording was necessary and not sufficient — dropping "looked-at" stopped the
-      // row lying about PROVENANCE, and the voice is what stops it lying about the
-      // ACTOR. The alternative is ENERGY_DISCARDED's: carry a separate `actor` on
-      // the event and read the line off it. Passive costs no event field, and this
-      // row never names the actor anyway — the producing ATTACK_DECLARED /
-      // ABILITY_TRIGGERED row sits directly above and names it.
+      // ⚠️ AND THE VOICE IS THEN FORCED, PATH BY PATH (D153). Every row here renders
+      // after its seat's name, so the voice is an assertion about agency even though
+      // no segment names an actor: ACTIVE says this seat DID it, PASSIVE says it was
+      // done TO them. D136 found active lying about the opponent-mill ("P2 discarded
+      // 2 cards from the top of their deck" credits the milling to the victim) and
+      // made the one wording passive; `/code-review` then found the mirror, because
+      // passive lies about the two SELF paths — a player who looked at their own top
+      // three and discarded the leftovers, or who paid Wild Splash's own-deck cost,
+      // DID that, and "Ember had 5 cards discarded from the top of their deck" reads
+      // as though an opponent had done it to them. There is no third wording that is
+      // true of both: "the cards left the deck" is a fact both paths share, but the
+      // row is grammatically a predicate on a named player and English has no voice
+      // that declines to say whether that player acted.
+      //
+      // D136 priced ENERGY_DISCARDED's `actor` field and declined it because "this
+      // row never names the actor anyway". That was the wrong test — the question is
+      // not whether the row NAMES an actor but whether it ASSERTS one, and both
+      // voices do. So the field is taken after all, and the renderer picks by the ONE
+      // comparison the producers know and it does not: `formatEvent` sees a single
+      // event with `names`/`state`/`elapsed` and no notion of whose turn it is, so
+      // "compare against the acting seat" is not available here without the datum
+      // riding the event. The self-mill is what makes the comparison the honest key
+      // rather than a per-op flag: it is the same op as the mill and belongs on the
+      // other side of the line.
       const n = event.uids.length;
+      const cards = `${n} card${n === 1 ? "" : "s"}`;
       return row(event.seat, [
-        plain(`had ${n} card${n === 1 ? "" : "s"} discarded from the top of their deck`),
+        plain(
+          event.actor === event.seat
+            ? `discarded ${cards} from the top of their deck`
+            : `had ${cards} discarded from the top of their deck`,
+        ),
       ]);
     }
     case "ENERGY_MOVED": {

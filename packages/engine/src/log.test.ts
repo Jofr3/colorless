@@ -9,9 +9,11 @@ import { topCardOf } from "./cards";
 import type { GameEvent } from "./events";
 import { formatElapsed, type LogContext, logFromEvents } from "./log";
 import {
+  ATTACH_FROM_TOP_DECK,
   ATTACK_DISCARD_DECK,
   ATTACK_PARK_DECK,
   BOARD_CONDITION_DECK,
+  DECK_TOP_MILL_DECK,
   DISCARD_ENERGY_DECK,
   HAND_REFRESH_DECK,
   MIXED_DECK,
@@ -31,6 +33,7 @@ import {
   setActiveFromDeck,
   setDamage,
   setPrizes,
+  toDeckTop,
   types,
 } from "./testFixtures";
 import type { GameState, Seat } from "./types";
@@ -689,50 +692,155 @@ describe("logFromEvents — lookAtTopN (M5): DECK_TOP_REVEALED", () => {
 });
 
 describe("logFromEvents — attachFromTop + mill (M5): DECK_TOP_DISCARDED", () => {
-  it("logs a count-only, PROVENANCE-NEUTRAL 'discarded from the top' row (singular + plural)", () => {
-    // The sibling of DECK_TOP_REVEALED, and count-only for the same reason — the
-    // discard pile is public, so what the row has to carry is that the cards LEFT
-    // THE DECK (Hydreigon "Tri Howl": "Discard the other cards").
-    //
-    // D130 gave the event a SECOND producer — the mill, "For each heads, discard
-    // the top N cards of your opponent's deck" — and the old copy said "discarded
-    // N LOOKED-AT cards", which is true of Tri Howl and a lie about a mill (nobody
-    // looked at a milled card). D113's rule applies: reuse the event, fix the
-    // MESSAGE so it cannot lie. The "looked-at" flavour is carried by Tri Howl's
-    // own preceding DECK_TOP_REVEALED / ENERGY_ATTACHED rows, so nothing was lost.
-    const { state } = mustCreate(1);
-    const line = (event: GameEvent) => {
-      const entry = logFromEvents([event], ctx(state))[0];
-      if (entry === undefined || entry.kind !== "action") throw new Error("expected an action row");
-      return { text: textOf(entry), who: entry.who };
-    };
-    // The SEAT rides the assertion, not just the text: the row belongs to the
+  // The sibling of DECK_TOP_REVEALED, and count-only for the same reason — the
+  // discard pile is public, so what the row has to carry is that the cards LEFT THE
+  // DECK (Hydreigon "Tri Howl": "Discard the other cards").
+  //
+  // D130 gave the event a SECOND producer — the mill — and the copy of the day said
+  // "discarded N LOOKED-AT cards", which is true of Tri Howl and a lie about a mill
+  // (nobody looked at a milled card). D113's rule applied: reuse the event, fix the
+  // MESSAGE so it cannot lie. D136 then found the wording lying a second way, in the
+  // VOICE, and made it passive. D153 is the mirror of that finding and the reason
+  // this block now pins BOTH voices: one wording could not be true of every path,
+  // and the regression happened because only the mill's row was asserted.
+  const line = (state: GameState, event: GameEvent) => {
+    const entry = logFromEvents([event], ctx(state))[0];
+    if (entry === undefined || entry.kind !== "action") throw new Error("expected an action row");
+    return { text: textOf(entry), who: entry.who };
+  };
+
+  it("VOICE: active when the deck's owner DID it, passive when it was done TO them — all four (seat, actor) pairs", () => {
+    // The SEAT rides every assertion, not just the text: the row belongs to the
     // player whose deck was discarded from, and "infer the actor from the other
     // seat" is a bug this log has already shipped once (see ENERGY_DISCARDED).
-    // Since D130 the seat is load-bearing in a second way — on a MILL the owner is
-    // the NON-actor, so a row credited to the turn-taker would name the wrong
-    // player entirely.
-    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p2", uids: ["p2#0"] })).toEqual({
+    //
+    // THE TABLE IS TOTAL over `Seat × Seat` on purpose. The two diagonal rows are
+    // the self paths (Tri Howl, and the mill's own `whose: "self"`); the two
+    // off-diagonal rows are the mill proper. Swapping the renderer's arms fails
+    // FOUR assertions rather than one, and pinning only one side is exactly how
+    // D136's fix could break D136's other producer without a single red test.
+    const { state } = mustCreate(1);
+    const at = (seat: Seat, actor: Seat, uids: string[]): GameEvent => ({
+      type: "DECK_TOP_DISCARDED",
+      seat,
+      actor,
+      uids,
+    });
+    // actor === seat → ACTIVE. The player looked at their own top cards, or paid
+    // their own attack's own-deck cost; they DID this and the row must say so.
+    expect(line(state, at("p1", "p1", ["p1#0"]))).toEqual({
+      text: "discarded 1 card from the top of their deck",
+      who: "p1",
+    });
+    expect(line(state, at("p2", "p2", ["p2#0", "p2#1"]))).toEqual({
+      text: "discarded 2 cards from the top of their deck",
+      who: "p2",
+    });
+    // actor !== seat → PASSIVE. The mill: the owner is the VICTIM, and an active
+    // verb here credits the milling to the player who lost the cards (D136).
+    expect(line(state, at("p2", "p1", ["p2#0"]))).toEqual({
       text: "had 1 card discarded from the top of their deck",
       who: "p2",
     });
-    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0", "p1#1"] })).toEqual({
+    expect(line(state, at("p1", "p2", ["p1#0", "p1#1"]))).toEqual({
       text: "had 2 cards discarded from the top of their deck",
       who: "p1",
     });
-    // The VOICE is load-bearing, not stylistic. Rows render after their seat's
-    // name, so an active verb would assert that the SEAT did it — and on a mill
-    // the seat is the victim, so "P2 discarded 2 cards" credits the milling to the
-    // player who lost them. Provenance-neutral wording (no "looked-at") does not
-    // fix that; only the passive does.
-    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0"] }).text).not.toMatch(
-      /^discarded/,
-    );
-    // The word the mill made false, named as an ABSENCE: this row must not claim
-    // anybody looked at these cards.
-    expect(line({ type: "DECK_TOP_DISCARDED", seat: "p1", uids: ["p1#0"] }).text).not.toContain(
-      "looked-at",
-    );
+    // Stated once more as SHAPE, so a re-wording that keeps the split but loses the
+    // grammar still fails: the self row leads with the verb, the victim row does not.
+    expect(line(state, at("p1", "p1", ["p1#0"])).text).toMatch(/^discarded /);
+    expect(line(state, at("p1", "p2", ["p1#0"])).text).not.toMatch(/^discarded /);
+    // The word the mill made false, named as an ABSENCE on BOTH voices: neither row
+    // may claim anybody looked at these cards.
+    expect(line(state, at("p1", "p1", ["p1#0"])).text).not.toContain("looked-at");
+    expect(line(state, at("p1", "p2", ["p1#0"])).text).not.toContain("looked-at");
+  });
+
+  it("END TO END: all three real producer paths render the voice their agency earns", () => {
+    // The synthetic table above pins the RENDERER; this pins the PRODUCERS, which is
+    // the other half of the regression D153 fixes. A producer that wrote the wrong
+    // `actor` would pass every assertion above and print the wrong sentence in a real
+    // game, so the three paths are DRIVEN off real cards and the finished rows read
+    // back verbatim, seat label included.
+    const rows = (state: GameState, events: GameEvent[]) =>
+      logFromEvents(events, ctx(state)).map((entry) =>
+        entry.kind === "turn"
+          ? `— turn ${entry.turn} —`
+          : `${entry.who === "system" ? "system" : NAMES[entry.who]}: ${textOf(entry)}`,
+      );
+
+    // Both Actives pinned to fix-titan (340 HP, no attacks) so Wild Splash's 230
+    // cannot KO and park mid-batch — deckTopMill.test.ts's board, and for its reason.
+    const millBoard = (): GameState => {
+      let state = driveSetup(7, { p1: DECK_TOP_MILL_DECK, p2: DECK_TOP_MILL_DECK }, { first: "p2" });
+      state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+      state = setActiveFromDeck(state, "p1", "fix-titan");
+      return setActiveFromDeck(state, "p2", "fix-titan");
+    };
+
+    // 1. THE MILL — Skwovet sv03-178 "Nicked Nibble", `whose: "opponent"`. Ember
+    //    attacks; the row lands under TIDE, who did not do it.
+    {
+      const start = attachFromDeck(
+        setActiveFromDeck(millBoard(), "p1", "sv03-178"),
+        "p1",
+        "fix-energy",
+        1,
+      );
+      const { state, events } = mustApply(start, { type: "attack", seat: "p1", index: 0 });
+      expect(rows(state, events)).toContain(
+        "Tide: had 1 card discarded from the top of their deck",
+      );
+    }
+    // 2. THE SELF-MILL — Gyarados swsh10.5-022 "Wild Splash", the SAME op with
+    //    `whose: "self"`. Ember pays it off their own deck, so the row is ACTIVE and
+    //    lands under Ember. This is the case that makes `actor === seat` the honest
+    //    key rather than a per-op flag: same op, opposite voice.
+    {
+      const water = attachFromDeck(
+        setActiveFromDeck(millBoard(), "p1", "swsh10.5-022"),
+        "p1",
+        "fix-water-energy",
+        2,
+      );
+      const start = attachFromDeck(water, "p1", "fix-energy", 2);
+      const { state, events } = mustApply(start, { type: "attack", seat: "p1", index: 1 });
+      expect(rows(state, events)).toContain("Ember: discarded 5 cards from the top of their deck");
+    }
+    // 3. TRI HOWL — Hydreigon sv02-140's `attachFromTop discardRest`, the producer
+    //    D136's passive wording was wrong about and the one `/code-review` flagged.
+    {
+      let start = driveSetup(
+        8,
+        { p1: ATTACH_FROM_TOP_DECK, p2: ATTACH_FROM_TOP_DECK },
+        { first: "p2" },
+      );
+      start = mustApply(start, { type: "endTurn", seat: "p2" }).state;
+      start = setActiveFromDeck(start, "p1", "fix-basic-1");
+      start = { ...start, players: { ...start.players, p1: { ...start.players.p1, bench: [] } } };
+      start = benchFromDeck(start, "p1", "sv02-140");
+      // Top 3, deepest layer first: an Item (never a candidate, so the leftovers are
+      // never empty), a Special Energy, a Basic {L} Energy.
+      start = toDeckTop(start, "p1", "fix-item", 1);
+      start = toDeckTop(start, "p1", "fix-special", 1);
+      start = toDeckTop(start, "p1", "fix-lightning-energy", 1);
+      const energy = start.players.p1.deck[0] ?? "";
+      const { state: parked } = mustApply(start, {
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "bench", index: 0 },
+        abilityName: "Tri Howl",
+      });
+      const { state, events } = mustApply(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: {
+          kind: "attachCards",
+          assignments: [{ uid: energy, to: { seat: "p1", spot: { spot: "active" } } }],
+        },
+      });
+      expect(rows(state, events)).toContain("Ember: discarded 2 cards from the top of their deck");
+    }
   });
 });
 

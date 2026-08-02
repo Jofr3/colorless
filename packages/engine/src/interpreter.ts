@@ -924,7 +924,12 @@ function stepOp(
       const side = state.players[victim];
       const milled = side.deck.slice(0, Math.max(0, op.count));
       if (milled.length === 0) return { done: state };
-      events.push({ type: "DECK_TOP_DISCARDED", seat: victim, uids: milled });
+      // `seat` is the deck's OWNER and `actor` the player whose card did it, so the
+      // two coincide on `whose: "self"` and diverge on `whose: "opponent"` — the same
+      // one ternary, read a second time. The log's voice hangs off that comparison
+      // (D153): Wild Splash's own-deck cost reads ACTIVE under the attacker's name,
+      // the mill reads PASSIVE under the victim's.
+      events.push({ type: "DECK_TOP_DISCARDED", seat: victim, actor: ctx.seat, uids: milled });
       return {
         done: withSide(state, victim, {
           ...side,
@@ -3676,7 +3681,13 @@ function attachFromTopApply(
   const rest = op.discardRest === true ? window.filter((uid) => !attached.has(uid)) : [];
   if (attached.size === 0 && rest.length === 0) return state;
   const removed = new Set([...attached, ...rest]);
-  if (rest.length > 0) events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, uids: [...rest] });
+  // Own deck, own action: `actor` IS `seat` here and cannot be anything else — this
+  // op only ever looks at `ctx.seat`'s own top. That equality is what makes the row
+  // read in the ACTIVE voice (D153); it is written out rather than left implicit
+  // because a future from-the-top op aimed at the opponent's deck would have to
+  // change it, and a hardcoded `actor: ctx.seat` is a line such a slice must edit.
+  if (rest.length > 0)
+    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...rest] });
   return withSide(state, ctx.seat, {
     ...side,
     active,

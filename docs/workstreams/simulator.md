@@ -11610,3 +11610,176 @@ a channel this slice deliberately did not build.
   field.
 
 Everything else on the remainder list is unchanged by this slice.
+
+## D153 — REVIEW FIX, NOT A SLICE: `DECK_TOP_DISCARDED` gains an `actor`, and the log's VOICE is picked by `actor === seat` (engine 0.100.0 → 0.101.0, MATCH_RECORD_VERSION unchanged at 8)
+
+Finding 1 of 3 from `/code-review` over `git diff origin/backend...HEAD` — **42 commits,
+73 files, ~59.7k lines, D136–D152** — the second review this branch has had and the first
+since D136. **The review returned NO correctness bug.** All three findings are low
+severity; this fixes one, and the other two are recorded on the resume point so they are
+not lost.
+
+**And the finding is D136's own fix creating the mirror of D136's own defect**, which is
+the most interesting thing about it.
+
+### What D136 did, and why it was half right
+
+D136 found `DECK_TOP_DISCARDED` rendering in the **active** voice under an owner-keyed
+seat: P1 attacking with Chi-Yu ex produced *"**P2** discarded 2 cards from the top of
+their deck"*, crediting the milling to the player who lost the cards. It made the one
+wording **passive** (`had {n} cards discarded …`), left `seat` alone, and — crucially for
+this slice — **wrote its argument down**:
+
+> Passive over `ENERGY_DISCARDED`'s separate `actor` field (the file's other solution to
+> exactly this shape) because it costs no event field and this row never names the actor
+> anyway. […] Hydreigon's own-deck Tri Howl row also reads passive now, which is mildly
+> stilted for a self-discard and is the right trade — the alternative is **wrong** on the
+> mill.
+
+The review's finding is that the "mild stilt" is a **lie**: a player who looked at their
+own top three and discarded the leftovers *did* that; it was not done to them.
+
+### ⚠️ Verified before fixed — and the finding was UNDERSTATED
+
+The run's standing rule (nine of sixteen remainder lists carried a wrong claim) applied to
+a review finding for the first time, and it paid out. The review named **one** wrong path,
+`interpreter.ts:3679`. There are **two push sites and THREE paths**, and the other push
+site is wrong on one of its two directions:
+
+| path | push site | `seat` | `actor` | correct voice |
+|---|---|---|---|---|
+| Hydreigon `sv02-140` "Tri Howl" (`attachFromTop.discardRest`) | `interpreter.ts:3679` | `ctx.seat` | `ctx.seat` | **ACTIVE** |
+| Gyarados `swsh10.5-022` "Wild Splash" (`discardDeckTop whose:"self"`) | `interpreter.ts:927` | `ctx.seat` | `ctx.seat` | **ACTIVE** |
+| Skwovet / Chi-Yu ex / Wugtrio (`discardDeckTop whose:"opponent"`) | `interpreter.ts:927` | `otherSeat(ctx.seat)` | `ctx.seat` | **PASSIVE** |
+
+The log was **driven** for all three, through `logFromEvents` with real names, off the
+existing suites' boards (`deckTopMill.test.ts`'s fix-titan board, `attachFromTop.test.ts`'s
+parked Tri Howl):
+
+```
+BEFORE (D136's single passive wording)
+  Tide:  had 1 card  discarded from the top of their deck     ← opponent mill, RIGHT
+  Ember: had 5 cards discarded from the top of their deck     ← SELF-MILL, WRONG
+  Ember: had 2 cards discarded from the top of their deck     ← Tri Howl,  WRONG
+AFTER
+  Tide:  had 1 card  discarded from the top of their deck
+  Ember: discarded 5 cards from the top of their deck
+  Ember: discarded 2 cards from the top of their deck
+```
+
+**So the three paths split 2–1 on AGENCY, and the split does not follow the op boundary.**
+That kills "one wording" and "one wording per op" in the same breath — the self-mill is
+the same op as the mill and belongs on the other side of the line — and it is why the
+answer had to be a comparison rather than a flag.
+
+**No third push site.** `grep` over the whole repo returns exactly two, and `GameEvent`
+appears in **no file outside `packages/engine/src`**.
+
+### ⚠️ The comment claimed THREE producers and was miscounting
+
+`log.ts` said "THREE producers", listed **two** bullets, then referred to "that third
+case"; `effects.ts` called the mill "the third producer of `DECK_TOP_DISCARDED`". The
+count was folding the mill's two DIRECTIONS into the producer count without saying so —
+and that elision is exactly what made one wording look sufficient. Both comments now say
+**two push sites, three paths**, and name `whose` as a **fork**, not a parameter.
+
+### ⚠️ The argument, not the verdict — because that is what let this one be re-opened
+
+D136 asked *"does the row NAME the actor?"* and answered no, correctly. **The right
+question is "does the row ASSERT one?"** Every row in `log.ts` renders after its seat's
+name, so:
+
+- **ACTIVE** = "this seat did it";
+- **PASSIVE** = "it was done to this seat".
+
+Both are claims about agency, made by the grammar rather than by any segment, and **there
+is no third wording that abstains** — the row is a predicate on a named player, and
+English has no agency-neutral voice for one. ("N cards left the top of their deck" is not
+available: the row is not a free-standing sentence.) Once the assertion is unavoidable and
+its truth value **varies per path**, the discriminator is a **datum**, not a constant.
+
+**And the comparison is not available to the renderer without the field.** This was read
+before designing, not assumed: `formatEvent(event, ctx)` is called once per event with
+`ctx = { names, state, elapsed }` and no notion of whose turn it is. "Compare `event.seat`
+against the acting seat" cannot be written inside `log.ts` at all.
+
+**D113's rule is untouched, and the justification is explicit rather than silent.** D113
+says *reuse the event, fix the message so it cannot lie*; what it forbids is a **sibling
+event**, and there is still one event type with one game fact (`uids` went from the top of
+`seat`'s deck to `seat`'s discard, top first, §2 order). What grew is the **provenance the
+message needs in order not to lie** — which is the thing D113 was asking for.
+`ENERGY_DISCARDED` is the in-file precedent, carries `actor` for this exact shape, and its
+doc block already said so.
+
+### The four structural questions
+
+1. **PARK?** N/A — no op changed, nothing new can park. **`MATCH_RECORD_VERSION` stays 8,
+   and the persistence question is asked properly rather than waved at.** `MatchRecord`
+   persists the **RENDERED `SeatLogEntry[]`** and `GameState` (D141), never events;
+   `GameEvent` crosses no wire and no `EffectContinuation` carries one (`types.ts` names
+   `GameEvent` only in a function signature). So **a wording change does NOT retroactively
+   alter stored rows** — an in-flight match keeps its old passive backlog and mints the new
+   text from here on, the same cosmetic seam D141 accepted. The new field is REQUIRED, but
+   **nothing persisted can hold an event lacking it**, so D124's trigger does not fire.
+2. **VOICE?** This slice *is* the voice question, so it leaves a general rule behind rather
+   than a seventh one-off answer:
+   > **A row's voice is fixed by the relation between `event.seat` and the CAUSER.**
+   > causer === seat → **ACTIVE** (D141's `preventDamage`, D147's
+   > `DAMAGE_REDUCTION_APPLIED`); causer is always the other seat → **VICTIM-side /
+   > PASSIVE** (D149's `ATTACK_DEBUFF_APPLIED`); causer is the RULES rather than a player →
+   > **SYSTEM** (D141's recoil row). **And when one event type has paths where that
+   > relation DIFFERS, the relation is a FIELD the event must carry — never a constant the
+   > wording encodes.**
+   The fourth case had no representative until now, and **this defect is what it looks like
+   when a varying relation is mistaken for a fixed one**. It is also why "which producer?"
+   is the wrong key: `whose: "self"` and `whose: "opponent"` are one producer and two
+   relations.
+3. **GUARD ASSERTED?** **It was not** — only the mill's row was pinned, which is exactly
+   how D136's fix could break D136's other producer with nothing red. `log.test.ts`'s
+   `DECK_TOP_DISCARDED` block is rewritten to do both halves:
+   - the **renderer**, over all four `Seat × Seat` pairs (total by construction, so the two
+     self paths and the two mill directions are each named, plus a shape assertion that the
+     self row leads with the verb and the victim row does not, and the "looked-at" absence
+     re-stated on **both** voices);
+   - the **producers**, end to end off real cards — Skwovet `sv03-178` "Nicked Nibble",
+     Gyarados `swsh10.5-022` "Wild Splash" and Hydreigon `sv02-140` "Tri Howl" — with the
+     finished rows read back **seat label included**. A producer writing the wrong `actor`
+     passes every synthetic assertion and still prints the wrong sentence in a real game,
+     which is precisely the gap that let this ship.
+4. **MECHANISM EXISTS?** The renderer was read first, and it is the whole reason the design
+   is a field: see above. Both producers, `events.ts`'s contract and D136's own recorded
+   argument were read before anything was written.
+
+### Mutation table (three, all caught)
+
+| mutation | fails |
+|---|---|
+| swap the renderer's two arms | **2** tests (the `Seat × Seat` table and the end-to-end drive) |
+| `actor: otherSeat(ctx.seat)` at the mill site (`interpreter.ts:927`) | **1** |
+| `actor: otherSeat(ctx.seat)` at the `discardRest` site (`interpreter.ts:3679`) | **1** |
+
+### Cost
+
+**1 event field, 1 ternary in `log.ts`, 2 producer lines.** No op, no state field, no
+regex, no deriver arm, no error code, no prompt, no redact arm, no projection, no registry
+row, no fixture, no new deck, no `MATCH_RECORD_VERSION` bump and no
+web/API/DB/`@luminous/schema` diff. Files: `events.ts`, `interpreter.ts`, `log.ts`,
+`effects.ts`, `index.ts`, `log.test.ts`. engineVersion **0.100.0 → 0.101.0** — a log label
+is behaviour a player sees (D141's precedent), applied here to a slice that changes nothing
+else. `bun run check` **GREEN exit 0 — 193 files / 3270 tests** (was 193 / 3269).
+
+### The other two review findings — NOT fixed here, recorded so they are not lost
+
+- **`interpreter.ts:1007` (low, latent) — the `attackEffectRefused` gate on `discardEnergy`
+  tests the victim's **Active** block but refuses the **WHOLE op**.** For the board-wide
+  arms that would wrongly cancel Bench discards as well. Latent today only because those
+  arms exist exclusively in `trainer:` programs, which never carry `invokedBy: "attack"` —
+  so it is a **trap for the first attack printing of a board-wide discard**, not a bug now.
+- **`attack.ts:200` (low) — `takeFlips` is the engine's only `throw`, and it is on the
+  API's apply path.** Provably unreachable for mulberry32 (D129's scan of the full 2³²
+  cycle: longest heads run 31, `MAX_UNTIL_TAILS_FLIPS = 64`). A standing risk **only if
+  `flipCoin` is ever swapped**, which is the condition to write on any such change.
+
+The review also independently confirmed: the **turn-stamp arithmetic on all five durated
+fields**, the **totality of the §10 clear sites** and of the **four damage sites**, and the
+**requirement-clause polarity**.
