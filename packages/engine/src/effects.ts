@@ -593,12 +593,41 @@ export type EffectOp =
       controller's side. No target choice, so it never parks; one HEALED per
       Pokémon that actually healed, tagged with that Pokémon's OWN seat. */
   | { op: "healEachAll"; amount: number }
-  /** Place `amount` HP of damage on the OPPONENT's Active Pokémon (Trevenant
-      "Forest Miasma" — 1 damage counter between turns). A COUNTER placement,
-      not attack damage: no Weakness/Resistance (§8.5), emitted as
-      COUNTERS_PLACED source "ability". Never parks; can KO — the caller sweeps
-      (the Checkup's KO sweep does, flow.ts). */
-  | { op: "damageActive"; amount: number }
+  /** Place `amount` HP of damage on the OPPONENT's Active Pokémon. A COUNTER
+      placement, not attack damage: no Weakness/Resistance (§8.5) and no
+      `damageReductionAfterWR` passive. Never parks; can KO — the caller sweeps
+      (the Checkup's KO sweep for a triggered Ability, the attack epilogue's
+      two-seat one for an attack, both in flow.ts).
+
+      `amount` IS HP, NOT COUNTERS, and that is the one place a reader of this op
+      can be off by a factor of ten. Every printed sentence that produces it
+      counts COUNTERS ("put 1 damage counter", "Put 7 damage counters"), so the
+      × 10 (§12: one counter = 10 HP) belongs at the PRODUCER — the registry row
+      and the deriver arm each do it once, at the site that reads the number, so
+      the interpreter never has to know which unit it was handed. The same
+      conversion `DEFENDER_POISON_N` makes for `applyStatus.poisonDamage`.
+
+      TWO PRODUCERS AND TWO PROVENANCES, WHICH IS WHY `source` IS A FIELD:
+        • `"ability"` — Trevenant sv03-012 "Forest Miasma", a between-turns
+          triggered Ability placing 1 counter (since 0.x).
+        • `"attack"` — the bare `COUNTER_PUT_ON_DEFENDER` attack sentence
+          "Put {N} damage counters on your opponent's Active Pokémon."
+          (Mimikyu sv02-097 "Ghost Eye" 7, Polteageist sv03-098 "Pour Tea" 5;
+          since 0.88.0, D139).
+      It rides the OP rather than being inferred downstream because the
+      interpreter has no notion of provenance at all: `EffectContext` is WHO the
+      program runs for (seat + the source body), deliberately not WHAT invoked it,
+      and putting the answer there would mean a field on every park's serialized
+      continuation for the benefit of one op.
+
+      D131's WIDEN-DON'T-ADD RULE APPLIED AND PASSING — the contrast with D138,
+      where the same rule was applied and FAILED. It licenses a field when
+      everything downstream of the varying token is byte-identical, and here that
+      is literally everything: same target, same flatness, same raise-only
+      contract, same event, same `seat`. The whole difference is one enum value in
+      the row's provenance, which is exactly what a field is for. A second op
+      would have been two copies of five lines told apart by a log label. */
+  | { op: "damageActive"; amount: number; source: "ability" | "attack" }
   /** "Move all damage counters from 1 of your Benched Pokémon to your opponent's
       Active Pokémon." — Dedenne ex sv02-093/-239 "Tail Swap" (D138). ONE printed
       action with a CHOICE in front of it and two halves behind it:
@@ -1797,10 +1826,12 @@ const FLIP_DECK_TOP_MILL =
 // A WHOLE-SENTENCE ANCHOR, and the near misses it must refuse are all real
 // catalog rows that share its opening noun phrase: "Put N damage counters on your
 // opponent's Active Pokémon." (Mimikyu sv02-097, Polteageist sv03-098) PUTS
-// counters from nowhere rather than moving them off your own board, and
-// "Put damage counters on your opponent's Active Pokémon until its remaining HP
-// is 10." (Alolan Raticate swsh10.5-042) reads a number off the TARGET. None of
-// them starts with "Move", which is the one word that separates the family.
+// counters from nowhere rather than moving them off your own board — read since
+// 0.88.0 by `COUNTER_PUT_ON_DEFENDER` below, a SEPARATE anchor on a separate op —
+// and "Put damage counters on your opponent's Active Pokémon until its remaining
+// HP is 10." (Alolan Raticate swsh10.5-042) reads a number off the TARGET and is
+// still unmapped. None of them starts with "Move", which is the one word that
+// separates the family.
 //
 // The possessive carries the `['’]` class every sibling on this noun phrase does
 // (D136/D137) — "your opponent's Active Pokémon" is the pool's single most
@@ -1811,6 +1842,56 @@ const FLIP_DECK_TOP_MILL =
 // off this path.
 const COUNTER_MOVE_TO_DEFENDER =
   /^Move all damage counters from 1 of your Benched Pokémon to your opponent['’]s Active Pokémon\.$/;
+// The PUT on the defender (D139) — "Put {N} damage counters on your opponent's
+// Active Pokémon.", the whole printed effect. TWO printings / TWO distinct
+// clauses, on two different cards: Mimikyu sv02-097 "Ghost Eye" ({P}{C}, N = 7)
+// and Polteageist sv03-098 "Pour Tea" ({P}, N = 5, attack INDEX 1). D121's
+// second-printing warrant is met by two independent cards rather than by one card
+// in two rarities, which is the stronger form of it. NEITHER carries a printed
+// `damage` field, so the placement is the entire visible result of the
+// declaration and there is no D125 tail-order question to answer.
+//
+// THE SIBLING OF `COUNTER_MOVE_TO_DEFENDER`, ONE WORD APART AT THE FRONT. That
+// anchor's own near-miss list named both of these printings; this is the slice
+// that maps them, and the two anchors stay disjoint by their first word exactly
+// as `SELF_HEAL` and `DECK_TOP_MILL` do.
+//
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards; D138's sweep,
+// re-read for the PUT half rather than re-run). Attack effects containing
+// "damage counter" — 56 printings / 31 distinct clauses. Of those, the ones whose
+// ACTION is putting counters — 24 printings / 15 clauses; the ones aimed at
+// "your opponent's Active Pokémon" — 4 printings / 4 clauses, and this anchor
+// takes 2 of them. The other two read their amount off the TARGET rather than off
+// the text ("…until its remaining HP is 10." — Alolan Raticate swsh10.5-042 bare,
+// Claydol sv03-095 with a self-damage rider), which is a different mechanism and
+// no capture can express it.
+//
+// THE QUANTITY SLOT IS A BARE `(\d+)` AND THEREFORE NOT A D120 TEMPLATE. That
+// rule licenses a lookup TABLE only when the varying token has a CLOSED
+// vocabulary to be rejected against (the five status words, the nine energy
+// codes); a count is an open integer with nothing to reject it with, so the
+// number lands in a FIELD of one op, as D131's two captures and D135's amount do.
+// The cross product it accepts is deliberately UNFILTERED beyond `>= 1`: "Put 1
+// damage counters …" is unprinted and ungrammatical but unambiguous, and the op
+// expresses it exactly. Refusing it would be a claim about the INGEST, not about
+// the GAME — the identical call D131 made for "the top 1 cards" and D135 for the
+// unprinted "Heal all damage from 1 of your Pokémon."
+//
+// AND THE SINGULAR IS NOT A BRANCH, which is where this differs from D131. There
+// the pool printed BOTH spellings ("the top card" / "the top N cards"), so the
+// singular earned its own alternation. Here every ATTACK printing is the plural;
+// the pool's only singular is Trevenant sv03-012's ABILITY ("put 1 damage counter
+// on your opponent's Active Pokémon"), which is lowercase, mid-sentence, behind a
+// Checkup clause, and already carries a registry row producing this very op. A
+// singular branch would therefore invent a reading nothing prints.
+//
+// The possessive carries the `['’]` class (D136/D137), and no /i for the standing
+// reason (see TYPED_SELF_DISCARD): the capitalised "Put" plus `^…$` is what keeps
+// Dusknoir sv06.5-020's and Meowscarada ex sv02-015's lowercase mid-sentence
+// "put … damage counters on 1 of your opponent's Pokémon" — both ABILITIES — off
+// this path.
+const COUNTER_PUT_ON_DEFENDER =
+  /^Put (\d+) damage counters on your opponent['’]s Active Pokémon\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -3415,6 +3496,40 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // counters on it — is a SILENT whiff at run time (the single-arm rule), not
     // a derivation failure, exactly as `CHOSEN_HEAL`'s "all" branch is.
     return [{ op: "moveCountersToDefender" }];
+  }
+
+  // 22. "Put {N} damage counters on your opponent's Active Pokémon." — D139's PUT
+  //     on the defender, 2 printings across 2 clauses (Mimikyu sv02-097 "Ghost
+  //     Eye" at 7, Polteageist sv03-098 "Pour Tea" at 5). D132's INVENTORY RULE
+  //     for the fourth time: `damageActive` has shipped since 0.x behind
+  //     Trevenant's between-turns "Forest Miasma", and what was missing was a
+  //     READER for the same action printed as an ATTACK — so there is no new op,
+  //     no new mechanism and no new park.
+  //
+  //     WHAT IT DID COST is the op's `source` field and one `COUNTERS_PLACED`
+  //     enum member, because the ROW's provenance moved even though the ACTION
+  //     did not: `COUNTERS_PLACED.seat` owns the DAMAGED Pokémon — here the
+  //     attacker's opponent — and the "ability" arm prints the literal word
+  //     Ability, which on an attack is D136's finding 1 written in at the source.
+  //     D138 refused exactly that for the counter MOVE; this arm inherits the
+  //     refusal rather than re-deriving it.
+  match = COUNTER_PUT_ON_DEFENDER.exec(effect);
+  if (match !== null) {
+    // ⚠️ COUNTERS → HP (one counter = 10, §12). `damageActive.amount` is HP and
+    // the printed number is COUNTERS, so this line is the entire factor-of-ten
+    // risk in the slice — the same conversion the `DEFENDER_POISON_N` arm above
+    // makes for `poisonDamage`, and the same one Trevenant's registry row makes
+    // by hand when it writes `amount: 10` for its printed 1 counter.
+    const counters = Number(match[1]);
+    // `counters >= 1` is the guard every arm here carries: a printed "Put 0
+    // damage counters" is not a real card and would derive to a silent no-op —
+    // an attack reporting a simulated effect that moved nothing. Leave it loud.
+    // No CEILING: the op only RAISES damage and the epilogue's sweep resolves
+    // whatever it Knocks Out, so a malformed 999 counters KOs the defender and
+    // stops, which is a legal board state rather than a runaway.
+    if (counters >= 1) {
+      return [{ op: "damageActive", amount: counters * 10, source: "attack" }];
+    }
   }
 
   return null;

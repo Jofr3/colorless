@@ -1737,7 +1737,113 @@ import type { GameState, Seat } from "./types";
     enum value are WIDENINGS, D125's distinction and D130's precedent (which added a
     whole op and did not bump either); an older record stays readable and simply
     never carries them. No web/API/DB/`@luminous/schema` diff. */
-export const engineVersion = "0.87.0";
+/** 0.88.0 — P3-M5: the PUT on the defender (D139). "Put {N} damage counters on
+    your opponent's Active Pokémon." now SIMULATES — **2 printings / 2 distinct
+    clauses**, Mimikyu sv02-097 "Ghost Eye" ({P}{C}, N = 7) and Polteageist
+    sv03-098 "Pour Tea" ({P}, N = 5, attack index 1) — on ONE anchored regex with
+    ONE `(\d+)` capture and ONE deriver arm. TWO DIFFERENT CARDS from two sets
+    rather than one card in two rarities, which is the stronger form of D121's
+    second-printing warrant. Neither carries a printed `damage` field, so the
+    placement is the entire visible result of the declaration and there is no D125
+    tail-order question.
+
+    D132's INVENTORY RULE FOR THE FOURTH TIME: `damageActive` has shipped since 0.x
+    behind Trevenant sv03-012's between-turns "Forest Miasma", and what was missing
+    was a READER for the same action printed as an ATTACK. No new op, no new
+    mechanism, no new park, no `attack.ts`/`flow.ts`/`continuous.ts`/`rng.ts` diff.
+
+    ⚠️ BUT "NO INTERPRETER DIFF" WAS THE ONE RESUME-POINT CLAIM THAT DID NOT HOLD,
+    and finding out why is the slice. `damageActive` hardcoded `COUNTERS_PLACED`
+    source `"ability"`, which was correct while it had exactly one producer and
+    became a LIE the moment an attack produced it: that event's `seat` owns the
+    DAMAGED Pokémon (the attacker's opponent), rows render after their seat's name,
+    and the `"ability"` log arm prints the literal word **Ability** on an attack.
+    That is D136's finding 1, and D138 had already refused it once for the counter
+    MOVE and written the obligation down — *any future producer on the opponent's
+    board owes the same question*. This slice is that producer, and it inherited
+    the refusal rather than re-deriving it.
+
+    SO THE OP GREW A `source: "ability" | "attack"` FIELD, WHICH IS D131's
+    WIDEN-DON'T-ADD RULE APPLIED AND **PASSING** — the exact contrast with D138,
+    where the same rule was applied and FAILED. The rule licenses a field when
+    everything downstream of the varying token is byte-identical; here that is
+    literally everything (same target, same flat placement, same raise-only
+    contract, same event, same `seat`) and the whole difference is one enum value
+    in the row's provenance. A second op would have been two copies of five lines
+    told apart by a log label. `COUNTERS_PLACED.source` gained a SEVENTH member and
+    `log.ts` a system row in the printed verb ("Put: 70 damage onto …"), for the
+    reason D136 gave the mill row rather than an actor field: the ATTACK_DECLARED
+    row directly above already names the actor.
+
+    ⚠️ THE COUNTERS ARE HP × 10 AND THAT CONVERSION LIVES AT THE PRODUCER (§12).
+    `damageActive.amount` is HP; every printed sentence that reaches it counts
+    COUNTERS. So the deriver multiplies once, at the site that reads the number —
+    the same placement Trevenant's registry row uses when it writes `amount: 10`
+    for its printed 1 counter, and the same one `DEFENDER_POISON_N` uses for
+    `poisonDamage`. The interpreter never sees the printed unit and cannot convert
+    twice. Pinned by a table over BOTH printings at two different counts (7 → 70,
+    5 → 50), by an end-to-end board on each, and by explicit refusals of 7 and 700.
+
+    CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — D138's sweep
+    re-read for the PUT half rather than re-run). Attack effects containing
+    "damage counter": **56 printings / 31 clauses**. Of those, the ones whose
+    ACTION is PUTTING counters: **24 / 15**; the ones aimed at "your opponent's
+    Active Pokémon": **4 / 4**, and this anchor takes 2. The other two read the
+    amount off the TARGET ("…until its remaining HP is 10." — Alolan Raticate
+    swsh10.5-042 bare, Claydol sv03-095 with a self-damage rider) and no capture
+    can express that. ZERO printings in the whole PUT family are coin-scaled, and
+    exactly one carries "up to" (Annihilape ex sv02-242, on ITSELF).
+
+    A BARE `(\d+)` IS NOT A D120 TEMPLATE — that rule licenses a lookup table only
+    when the varying token has a CLOSED vocabulary to reject against; a count has
+    none, so the number lands in a FIELD. The cross product is deliberately
+    UNFILTERED beyond `>= 1` ("Put 1 damage counters …" is unprinted, ungrammatical
+    and unambiguous, and the op expresses it exactly): refusing it would be a claim
+    about the INGEST, not about the GAME — D131's call for "the top 1 cards" and
+    D135's for the unprinted "Heal all damage …". And the SINGULAR is NOT a branch,
+    which is where this differs from D131: the pool prints only the plural on
+    attacks, and its one singular is Trevenant's ABILITY, already registered.
+
+    THE PLACEMENT IS FLAT, FROM BOTH SIDES. A placed counter is not attack damage,
+    so §8.5's Weakness and the `damageReductionAfterWR` passive both skip it —
+    driven under a Psychic attacker against a ×2 PSYCHIC defender (70, not 140) AND
+    against a PSYCHIC −30 one (70, not 40), because a build that special-cased only
+    Weakness passes the first. No `DAMAGE_DEALT` row is emitted at all.
+
+    IT CAN KNOCK THE DEFENDER OUT and, unlike D138's, it does so INLINE with no
+    park anywhere: the epilogue's two-seat sweep reads the post-effect board and
+    the whole declaration — placement, Knock Out, prize to the ATTACKER — lands in
+    ONE event batch, stopping at `ko:takePrizes` with no `TURN_ENDED` yet.
+
+    Cost: 1 regex, 1 deriver arm, 1 OP FIELD, 1 event-enum member, 1 log arm, 1
+    registry row amended, 2 test fixtures (Mimikyu's printed attack + a synthetic
+    Psychic-RESISTANT body) + 1 new pool entry (Polteageist sv03-098), 1 test deck,
+    1 test file, 1 re-pointed witness in `counterMove.test.ts` and 1 re-pinned
+    census count in `clauseApostrophe.test.ts` (33 → 35). ZERO new ops, prompts,
+    parks, events, `BoardCondition`/`DamageCountSource` members, clause-table rows,
+    state fields, error codes, registry rows or redact arms. NO
+    MATCH_RECORD_VERSION BUMP — a new enum value is a WIDENING (D125's distinction,
+    D130/D135/D137/D138's precedent), and the op's new field is not persisted at
+    all: `damageActive` never parks, so no `EffectContinuation` has ever carried
+    one. No web/API/DB/`@luminous/schema` diff.
+
+    ⚠️ FOUND AND WRITTEN DOWN RATHER THAN FIXED — `placeSnipe` CARRIES THE SAME
+    HARDCODED LABEL, AND ITS GUARD IS AN ACCIDENT. It pushes `COUNTERS_PLACED`
+    source "ability" on its non-`deals` path exactly as this op did before 0.88.0.
+    ⚠️ CHECKED RATHER THAN ASSUMED, and the first draft of this note was WRONG: it
+    called the label a live defect, and the new suite's own near-miss list
+    disproved it in one assertion. That path is reached TODAY only by Abilities
+    and triggers — Hawlucha sv01-118 "Flying Entry", Meowscarada ex sv02-015
+    "Bouquet Magic", Radiant Blastoise swsh10.5-018 "Pump Shot" — because every
+    DERIVED attack snipe sets `deals: true` and routes to DAMAGE_DEALT instead. So
+    the label is correct today and the exposure is LATENT, guarded by a flag
+    chosen for an unrelated reason that nothing asserts. The printing that would
+    trip it is on this slice's own census and is loud today: Ting-Lu ex sv02-127
+    (+3 reprints) "Land Scoop" — "Put 2 damage counters on 1 of your opponent's
+    Benched Pokémon.", 4 printings, beside a printed 150. The slice that maps it
+    inherits the question, and the `"attack"` member added here is the answer
+    already built. */
+export const engineVersion = "0.88.0";
 
 export type {
   ApplyResult,

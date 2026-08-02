@@ -171,7 +171,13 @@ export type GameEvent =
       `amount`. It is its own member rather than `"ability"` because `seat` here
       owns the DAMAGED Pokémon (the non-actor) while the row's provenance is an
       ATTACK: labelling it "Ability" would be the D136 log-voice defect written
-      in at the source.
+      in at the source. `"attack"` (D139) is the same refusal made a second time,
+      for the ATTACK printing of a plain placement — "Put {N} damage counters on
+      your opponent's Active Pokémon." (Mimikyu "Ghost Eye", Polteageist "Pour
+      Tea"). It shares the `damageActive` op and every board effect with
+      `"ability"` and differs only in what the row may honestly say, which is
+      precisely why the op carries the provenance as a FIELD rather than the two
+      being separate ops.
       Each new member is a WIDENING of the source enum, not a shape change — no
       MATCH_RECORD_VERSION bump (the ATTACK_FAILED.reason precedent below); an
       older record stays readable, it simply never carries the newer sources. */
@@ -180,7 +186,7 @@ export type GameEvent =
       seat: Seat;
       uid: string;
       amount: number;
-      source: "poison" | "burn" | "confusion" | "ability" | "self" | "moved";
+      source: "poison" | "burn" | "confusion" | "ability" | "self" | "moved" | "attack";
     }
   /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
       (§13.2) or asleep's wake flip (§13.3). Heads is followed by the

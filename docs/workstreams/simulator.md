@@ -7846,3 +7846,307 @@ D134 section is still the live map for the "Flip a coin. If heads, …" neighbou
 - **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132–D135: a channel from the
   §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt `sv03-032`.
   Do it last or not at all, and do it *with* Camerupt.
+
+## D139 — the PUT on the defender: `Put {N} damage counters on your opponent's Active Pokémon.` (engine 0.88.0)
+
+**2 printings / 2 distinct clauses** — Mimikyu `sv02-097` **"Ghost Eye"** ({P}{C}, **7**
+counters, attack index **0**) and Polteageist `sv03-098` **"Pour Tea"** ({P}, **5**
+counters, attack index **1**) — now SIMULATE on **ONE anchored regex with ONE `(\d+)`
+capture and ONE `deriveAttackEffect` arm**. Two DIFFERENT cards from two sets, which is
+the stronger form of D121's second-printing warrant than D138's one-card-two-rarities.
+Neither carries a printed `damage` field, so the placement is the entire visible result
+of the declaration and there is no D125 tail-order question. Taken as the top item of
+D138's remainder list, which D138's own census had turned up.
+
+### The resume point's claims, checked before anything was designed
+
+Every catalog claim held; the one structural claim did not.
+
+| Claim | Verdict |
+|---|---|
+| Card ids `sv02-097` / `sv03-098` | **TRUE.** |
+| Attack names "Ghost Eye" / "Pour Tea" | **TRUE** (the D138 correction did not need making twice). |
+| Amounts 7 / 5 and costs {P}{C} / {P} | **TRUE**, all four. |
+| "Neither printing carries a printed `damage` field" | **TRUE** of both — re-verified rather than trusting the date on it. |
+| "`damageActive` is the EXACT op, `amount` is HP, `{N}` counters is `N * 10`" | **TRUE**, and pinned so a factor of ten in either direction fails. |
+| "…so the whole slice is one regex and one arm, **with no interpreter diff**" | **FALSE.** See below — the op's PROVENANCE moved even though its ACTION did not. |
+
+Also newly checked and worth recording: **Pour Tea is at attack INDEX 1**, not 0. That
+is the kind of detail a remainder list carries wrongly, and it would have failed
+silently by simulating "Antique Collecting" instead.
+
+### ⚠️ "No interpreter diff" was false, and finding out why is the slice
+
+`damageActive { amount }` really had shipped since 0.x behind Trevenant `sv03-012`'s
+between-turns "Forest Miasma", and really is the exact op — **D132's inventory rule for
+the fourth time**: no new op, no new mechanism, no new park, and zero
+`attack.ts`/`flow.ts`/`continuous.ts`/`rng.ts` diff.
+
+But it **hardcoded `COUNTERS_PLACED` source `"ability"`**. That was true while it had
+exactly one producer and becomes a **lie on an attack**:
+
+- the event's `seat` OWNS the DAMAGED Pokémon — for an attack, the attacker's OPPONENT —
+  and log rows render after their seat's name;
+- the `"ability"` log arm prints the literal word **Ability**.
+
+This is **D136's finding 1**, and **D138 already refused it once** for the counter MOVE
+and wrote the obligation into its carried-forward notes: *any future producer on the
+opponent's board owes the same question*. This slice is that producer, and it inherited
+the refusal rather than re-deriving it. **That is what a written-down obligation is for**
+— the same shape as D130 declining a widening and naming the condition that would earn
+it, which D131 then executed verbatim.
+
+### ⚠️ `source` is a FIELD — D131's widen-don't-add rule applied and PASSING
+
+`{ op: "damageActive"; amount: number; source: "ability" | "attack" }`.
+
+The rule licenses a FIELD when everything downstream of the varying token is
+byte-identical. Here that is **literally everything**: same target, same flat placement,
+same raise-only contract, same event type, same `seat`. The whole difference is one enum
+value in what the row may honestly say. A second op would have been two copies of five
+lines told apart by a log label.
+
+**The contrast with D138 is the point.** There the same rule was applied and FAILED,
+because the counter move emits a second event on the other seat's board and can end the
+game. Two consecutive slices, one rule, opposite answers: **it is a TEST, not a default**,
+and D138's own carried-forward note said so.
+
+The field rides the OP rather than `EffectContext` because the context is WHO a program
+runs for (seat + the source body), deliberately not WHAT invoked it — and `ctx` is
+serialized into every park's `EffectContinuation`, so a provenance field there would cost
+a wire-shape change for the benefit of one op that never parks.
+
+`COUNTERS_PLACED.source` is now **seven members**, and `log.ts` gained a SYSTEM row in
+the PRINTED verb — **"Put: 70 damage onto …"**, the parallel of D138's "Moved:". The
+actor is named by the `ATTACK_DECLARED` row directly above, which is the same argument
+D136 used to make the mill row passive rather than give it an `actor` field.
+
+### ⚠️ The counters are HP × 10, and the conversion lives at the PRODUCER
+
+`damageActive.amount` is HP; every printed sentence that reaches it counts COUNTERS
+(§12: one counter = 10 HP). So the deriver multiplies **once, at the site that reads the
+number** — the same placement Trevenant's registry row uses when it writes `amount: 10`
+for its printed **1** counter, and the same one `DEFENDER_POISON_N` uses for
+`poisonDamage`. The interpreter never sees the printed unit and therefore cannot convert
+twice.
+
+Pinned so that **a factor of ten in either direction fails**:
+
+- the derivation table asserts `counters * 10` and explicitly refuses both `counters`
+  and `counters * 100` — `toEqual` on the right answer alone would still pass a suite
+  whose expected value was copied from the bug;
+- two different printed counts derive two different amounts in the same ratio, so it is
+  a **conversion rather than a constant**;
+- both printings are driven end to end on real boards, at **70** and **50**.
+
+Mutation-checked: dropping the × 10 fails **17** tests.
+
+### The census (local D1, 2026-08-02, whole effect string, 978 cards)
+
+D138's sweep **re-read for the PUT half rather than re-run** — the counter-damage
+neighbourhood is one census and this is the other half of it.
+
+| Slice of the census | Printings | Distinct clauses |
+|---|---|---|
+| Attack effects containing "damage counter" | **56** | **31** |
+| …of those, ones whose ACTION is PUTTING counters | **24** | **15** |
+| …of those, ones aimed at "your opponent's Active Pokémon" | **4** | **4** |
+| …of those, **mapped by this slice** | **2** | **2** |
+| …of those, ones that MOVE rather than PUT (D138) | 2 | 1 |
+| …the remainder: clauses that READ counters (scaling / conditions) | 30 | 15 |
+
+The four aimed at the defender's Active — the whole set a slightly wider reader would
+touch:
+
+| Clause | Printings | Card | After D139 |
+|---|---|---|---|
+| `Put 7 damage counters on your opponent's Active Pokémon.` | **1** | Mimikyu `sv02-097` "Ghost Eye" | **MAPPED** |
+| `Put 5 damage counters on your opponent's Active Pokémon.` | **1** | Polteageist `sv03-098` "Pour Tea" (index 1) | **MAPPED** |
+| `Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.` | 1 | Alolan Raticate `swsh10.5-042` "Super Fang" | loud |
+| `…until its remaining HP is 10. If you placed any damage counters in this way, this attack also does 120 damage to this Pokémon.` | 1 | Claydol `sv03-095` "Kaboom Doll" | loud |
+
+The two that stay loud read their amount off the **TARGET** rather than off the text,
+which no capture can express — and that is exactly why this anchor CAPTURES the count
+instead of making it optional. A reader that did the latter would map both to a
+placement of nothing at all, silently.
+
+The other PUT targets, none of them near enough to be a hazard: `1 of your opponent's
+Benched Pokémon` (Ting-Lu ex `sv02-127`, 4 — already a `damageChosen` snipe), `1 of your
+opponent's Pokémon` (Ninetales `sv03-029`/`-199`, 2, plus a rider sentence), `your
+opponent's Pokémon in any way you like` (Drifblim `sv01-090`, 1), `each of your
+opponent's Pokémon` (Maushold `sv02-168`/`-226`, 2 — scaled by a board count; Yveltal
+`sv06.5-035`, 1 — filtered), `each of your opponent's Benched Pokémon that has any damage
+counters` (Vespiquen ex `sv03-096`/`-212`, 2), `this Pokémon` (Annihilape ex `sv02-242`,
+1), `the Attacking Pokémon` (Lycanroc ex `sv02-117`/`-241`, 2; Mabosstiff `sv02-143`, 1),
+and the Poison-checkup riders (4).
+
+**Two quantity findings, both negative and both worth having:** **ZERO** printings in the
+whole PUT family are coin-scaled or coin-gated, and exactly **one** carries "up to"
+(Annihilape ex `sv02-242`, aimed at **itself**). So neither of the two neighbours a wider
+reader might have been designed against actually exists on this target.
+
+### ⚠️ A bare `(\d+)` is not a D120 template, and the cross product is unfiltered
+
+D120 licenses a lookup TABLE only when the varying token has a **CLOSED vocabulary to be
+rejected against** — the five status words, the nine energy codes. A count has none, so
+the number lands in a FIELD of one op, exactly as D131's two captures and D135's amount
+do. There is no table, so there is nothing for a template to look a token up in.
+
+The cross product the capture accepts is deliberately **unfiltered above zero**: "Put 1
+damage counters …" is unprinted and ungrammatical, but it is unambiguous and the op
+expresses it exactly, so refusing it would be **a claim about the INGEST, not about the
+GAME** — D131's call for the unprinted "the top 1 cards" and D135's for "Heal all damage
+from 1 of your Pokémon.", the same line for the third time. A printed **0** stays LOUD,
+the `>= 1` guard every arm in this deriver carries.
+
+**And the SINGULAR is not a branch, which is where this differs from D131.** There the
+pool printed BOTH spellings ("the top card" / "the top N cards"), so the singular earned
+its own alternation. Here every ATTACK printing is the plural; the pool's only singular
+is **Trevenant's ABILITY** — lowercase, mid-sentence, behind a Checkup clause, and
+already carrying a registry row producing this very op. A singular branch would invent a
+reading nothing prints.
+
+### ⚠️ The placement is FLAT, pinned from BOTH sides of §8.5
+
+D138 pinned only the doubling direction. Under a **Psychic** attacker (Mimikyu):
+
+- a **×2 Psychic** defender takes **70, not 140**;
+- a **Psychic −30** defender takes **70, not 40**.
+
+A build that special-cased Weakness alone passes the first and fails the second, which is
+why the second fixture (`fix-psychic-resist-big`) exists. No `DAMAGE_DEALT` row is emitted
+at all — the event TYPE is as much the claim as the number, since `DAMAGE_DEALT` carries
+`weakness`/`resistance` fields precisely because it went through the pipeline.
+
+**Being PRINTED on an attack does not make a placed counter attack damage.** That is the
+one thing this producer could have got wrong that D138's could not, since D138's op only
+ever moved counters that were already flat.
+
+### ⚠️ The Knock Out lands INLINE, with no park in front of it
+
+"your opponent's Active Pokémon" is not a choice, so unlike D138 there is no park
+anywhere and the whole declaration is ONE event batch:
+
+`ATTACK_DECLARED` → `COUNTERS_PLACED` → `KNOCKED_OUT` → `PRIZES_OWED` **to the ATTACKER**
+
+…stopping at `{ kind: "ko:takePrizes", seat: "p1", count: 1 }` with **no `TURN_ENDED`
+yet**. The complement is driven too — one point short does **not** KO — which catches a
+counters-vs-HP confusion in the KO check rather than in the reader.
+
+### Witnesses and fixtures
+
+**One witness re-pointed, none deleted.** `counterMove.test.ts` listed Mimikyu's sentence
+as a stays-LOUD near-miss and it now derives; the slot moved to **Ninetales
+`sv03-029`/`-199` "Nine-Tailed Dance"** (the same verb and a bare count, behind an
+any-zone target and a second sentence). That is what a family growing into its
+neighbour's witness list looks like from the inside.
+
+`clauseApostrophe.test.ts`'s DISCOVERED census moved **33 → 35** — two distinct sentences
+at once — the moment the fixtures landed.
+
+Fixtures:
+
+- **Mimikyu `sv02-097`** gained its printed attack (it was already in the pool as the
+  Safeguard defender, D107). It is a **sharper zero-registry-row witness than a card with
+  no row at all**: `programFor("sv02-097")` is DEFINED (the Safeguard passive) while
+  `.attack` is not. **A row on the CARD is not a row on the ATTACK** — the distinction
+  D135 got wrong in the other direction when it read an Arboliva registry row as
+  shadowing a deriver it never met.
+- **Polteageist `sv03-098`** is new to the pool. A Stage 1, surgeried into the Active
+  Spot — D135 invented a Basic only because BOTH of its printings were evolutions; here
+  Mimikyu is the Basic and carries every end-to-end board. Its **index-0 "Antique
+  Collecting" opens with the SAME WORD ("Put …") and stays LOUD**, so one card proves the
+  anchor is a whole sentence rather than a prefix.
+- **`fix-psychic-resist-big`** (200 HP, Psychic −30, no attacks) — the low side of the
+  flat-placement claim.
+
+Own deck (`COUNTER_PUT_DECK`), per the house convention.
+
+### The suite — `counterPut.test.ts` (23 tests)
+
+Seed-free: neither sentence takes a coin, pinned by an unchanged `rngState` across a
+whole declaration. Full `bun run check` green exit 0, **181 files / 2916 tests** (was
+180 / 2893).
+
+Derivation: both clauses table-driven to HP; the × 10 refused in both directions; the
+derived op asserted to be Trevenant's authored op with ONE key flipped; nine real
+catalog near-misses; the sibling anchor's disjointness in BOTH directions; seventeen
+anchor/punctuation/case/token rewrites including the singular noun, the missing count,
+"up to", a signed count and a fractional one; the printed-0 refusal beside the
+ungrammatical-singular acceptance; the curly-apostrophe EQUALITY on both clauses.
+
+End to end: 70 for Mimikyu's 7 and 50 for Polteageist's 5; the addition onto existing
+damage; the same declaration from p2; the rngState pin; both flat-placement bodies; the
+inline KO and the one-point-short complement; and the log pair — the `"attack"` row as
+SYSTEM voice in the printed verb, and **Trevenant's `"ability"` row still rendering as an
+Ability**, because a field is only meaningful if both values reach the log.
+
+Mutation-checked four ways: dropping the × 10 fails **17** tests, reusing
+`source: "ability"` fails **13**, accepting a printed 0 fails 1, accepting the singular
+noun fails 1.
+
+### ⚠️ Found and written down rather than fixed — `placeSnipe`'s guard is an accident
+
+`interpreter.ts`'s `placeSnipe` pushes `COUNTERS_PLACED` source `"ability"` on its
+non-`deals` path, exactly as `damageActive` did before this slice.
+
+**⚠️ Checked rather than assumed, and the first draft of this section was WRONG.** It
+called the label a live defect — "Ting-Lu ex `sv02-127` 'Land Scoop' derives to a
+`damageChosen`, so the engine prints Ability: on an attack today" — and the new suite's
+own near-miss list disproved it in one assertion: that sentence derives to **null**.
+Ting-Lu ex's only registry row is the `CURSED_LAND` passive, and its attack is unmapped.
+
+What is actually true:
+
+- the non-`deals` path is reached TODAY only by **Abilities and triggers** — Hawlucha
+  `sv01-118` "Flying Entry" (`onPlayToBench`), Meowscarada ex `sv02-015` "Bouquet Magic",
+  Radiant Blastoise `swsh10.5-018` "Pump Shot";
+- every **derived attack snipe** sets `deals: true` and routes to `DAMAGE_DEALT` instead;
+- so the label is **correct today**, and the exposure is **LATENT — guarded by a flag
+  chosen for an unrelated reason, which nothing asserts.**
+
+The printing that would trip it is on this slice's own census and is loud today:
+**Ting-Lu ex `sv02-127`/`-243`/`-263`/`-275` "Land Scoop"** — "Put 2 damage counters on 1
+of your opponent's Benched Pokémon.", **4 printings**, beside a printed 150. The slice
+that maps it inherits the question, and D139's `"attack"` member is the answer already
+built.
+
+**The generalisation: a slice that writes down a defect it did not fix owes the same
+check as one that fixes it.** This note nearly shipped an unverified claim into three
+docs — in the very slice whose headline is that unverified claims propagate by repetition.
+D136's leftover (the literal-table apostrophe exposure) was correct because somebody
+censused it; this one was corrected because a test happened to cover it. Only one of
+those is a process.
+
+### Still unmapped after D139 — ranked by cost
+
+The heal census is CLOSED (D133/D135), the gated census in the D134 section is the live
+map for "Flip a coin. If heads, …", and the counter-damage neighbourhood is now closed on
+BOTH halves — the D138 section's table for MOVE, this section's for PUT. Do not re-run
+any of the three.
+
+- **`Put {N} damage counters on 1 of your opponent's Benched Pokémon.` — Ting-Lu ex
+  `sv02-127`/`-243`/`-263`/`-275` "Land Scoop", 4 printings / 1 clause.** Turned up by
+  this slice's census and **the cheapest thing left**. `damageChosen { target:
+  "opponentBench", amount, count: 1 }` is already AUTHORED at a different amount by
+  Meowscarada ex `sv02-015`'s "Bouquet Magic" registry row, so this is D132's inventory
+  rule a fifth time — a regex, one capture and an arm. All four printings also carry a
+  printed **150**, which D125's tail placement resolves for free. ⚠️ **And it is the
+  producer that resolves `placeSnipe`'s latent label** (above): the snipe must NOT set
+  `deals: true` (these are placed counters, not attack damage — the `damageActive` rule),
+  which is exactly what routes it onto the `"ability"` string. D139's `"attack"` member is
+  the answer; the work is deciding whether `placeSnipe` takes the same FIELD or reads it
+  from `deals`.
+- **The gated PREVENT clause — 13 printings / 2 spellings**, still the biggest single
+  un-taken count in the gated census. "…during your opponent's next turn, prevent all
+  damage from and effects of attacks done to this Pokémon." A §11 block with a DURATION,
+  so the cost is a CONTINUOUS-EFFECT mechanism rather than a reader.
+- **`Put {N} damage counters on 1 of your opponent's Pokémon. During your next turn, this
+  Pokémon can't attack.` — Ninetales `sv03-029`/`-199`, 2 printings / 1 clause.** Turned
+  up by this slice's census. A COMPOUND: the first sentence is an any-zone `damageChosen`
+  the engine can already express, the second is a §11-style self-lock with a DURATION
+  that nothing in the vocabulary carries — so it is priced by its SECOND clause, not its
+  first, and it is not the cheap item its first half makes it look.
+- **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132–D138: a channel from the
+  §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt `sv03-032`.
+  Do it last or not at all, and do it *with* Camerupt.

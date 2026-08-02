@@ -842,14 +842,20 @@ const GARGANACL: CardProgram = {
 /** Trevenant — "Forest Miasma": "During Pokémon Checkup, if this Pokémon is in
     the Active Spot, put 1 damage counter on your opponent's Active Pokémon."
     (mandatory; active-only; the placed counter can KO — the Checkup's own KO
-    sweep resolves it) */
+    sweep resolves it)
+
+    The `amount: 10` is the printed ONE COUNTER converted to HP at the site that
+    reads it (§12), which is the same conversion `COUNTER_PUT_ON_DEFENDER`'s
+    deriver arm makes for the attack printings; `source: "ability"` is what the
+    log row may honestly say about a Checkup trigger, and it became a field the
+    day an ATTACK gained the same op (D139). */
 const TREVENANT: CardProgram = {
   triggered: [
     {
       name: "Forest Miasma",
       trigger: "betweenTurns",
       activeOnly: true,
-      program: [{ op: "damageActive", amount: 10 }],
+      program: [{ op: "damageActive", amount: 10, source: "ability" }],
     },
   ],
 };

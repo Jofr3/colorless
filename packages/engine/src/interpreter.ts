@@ -615,7 +615,7 @@ function stepOp(
     case "healEachAll":
       return { done: healEachAll(state, op.amount, events) };
     case "damageActive":
-      return { done: damageActive(state, op.amount, ctx, events) };
+      return { done: damageActive(state, op.amount, op.source, ctx, events) };
     case "moveCountersToDefender":
       // D138 — "Move all damage counters from 1 of your Benched Pokémon to your
       // opponent's Active Pokémon." The CHOICE is `healChosen`'s bench-filtered
@@ -1945,18 +1945,38 @@ function healEachAll(
   return next;
 }
 
-/** PUT `amount` HP of damage counters on the OPPONENT's Active Pokémon
-    (Trevenant "Forest Miasma"). "Put damage counters" is NOT attack damage: no
-    Weakness/Resistance (§8.5) AND no damage-reduction passive — Bouffalant's
-    "Bouffer" reduces "damage from attacks", which a counter placed by an
-    Ability is not (the same reason the poison/burn Checkup ticks place their
-    counters flat). So this is a flat placement, distinct from spreadDamage
-    (an ATTACK's damage, which Bouffer does reduce). Emitted as COUNTERS_PLACED
-    source "ability". Only raises damage; the KO check runs in the caller's
-    sweep (the Checkup's, flow.ts), so this never KOs. */
+/** PUT `amount` HP of damage counters on the OPPONENT's Active Pokémon —
+    Trevenant "Forest Miasma" (a between-turns Ability, 1 counter) and, since
+    0.88.0, the bare attack sentence "Put {N} damage counters on your opponent's
+    Active Pokémon." (Mimikyu "Ghost Eye", Polteageist "Pour Tea" — D139).
+
+    "Put damage counters" is NOT attack damage: no Weakness/Resistance (§8.5) AND
+    no damage-reduction passive — Bouffalant's "Bouffer" reduces "damage from
+    attacks", which a PLACED counter is not, whether an Ability or an attack's own
+    printed sentence placed it (the same reason the poison/burn Checkup ticks
+    place their counters flat). So this is a flat placement, distinct from
+    spreadDamage (an ATTACK's damage, which Bouffer does reduce) — and note that
+    "printed on an attack" does NOT make it attack damage, which is the one thing
+    the 0.88.0 producer could have got wrong.
+
+    `amount` IS ALREADY HP. Both producers count COUNTERS in their printed text
+    and both do the × 10 (§12) at the site that reads the number, so this helper
+    never sees the printed unit and cannot convert twice.
+
+    `source` RIDES THE OP because the row's provenance is not something this
+    function can know: `seat` on the emitted event owns the DAMAGED Pokémon (the
+    non-actor either way), and the "ability" log arm prints the literal word
+    Ability — true of Trevenant, false of Ghost Eye. Hardcoding it here was the
+    shape until 0.88.0 and it was exactly D136's finding 1 waiting for a second
+    producer.
+
+    Only raises damage; the KO check runs in the CALLER's sweep — the Checkup's
+    for the triggered Ability, the attack epilogue's two-seat one for the attack
+    (both flow.ts) — so this never KOs. */
 function damageActive(
   state: GameState,
   amount: number,
+  source: "ability" | "attack",
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -1966,7 +1986,7 @@ function damageActive(
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
-  events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
+  events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
 }
 

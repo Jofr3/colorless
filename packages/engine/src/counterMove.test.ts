@@ -95,14 +95,25 @@ const CENSUS_IDS = ["sv02-093", "sv02-239"] as const;
       • Slowbro sv01-043 "Strange Behavior" — an ABILITY that moves 1 counter to
         YOUR OWN side. The destination reversed, which is the one difference a
         loose matcher on "move … damage counter" would get catastrophically wrong.
-      • Mimikyu sv02-097 "Ghost Eye" — "Put 7 damage counters on your opponent's
-        Active Pokémon." The SAME destination, counters from nowhere.
-      • Alolan Raticate swsh10.5-042 "Super Fang" — the same destination again,
-        with the amount read off the TARGET's remaining HP.
+      • Ninetales sv03-029/-199 "Nine-Tailed Dance" — "Put 9 damage counters on 1
+        of your opponent's Pokémon. During your next turn, this Pokémon can't
+        attack." The same VERB and a bare count, behind an any-zone target and a
+        second sentence. RE-POINTED HERE AT D139, which mapped the previous
+        occupant of this slot (Mimikyu sv02-097 "Ghost Eye" — "Put 7 damage
+        counters on your opponent's Active Pokémon."); the witness moved rather
+        than being deleted, because the claim is that an UNREAD sentence stays
+        loud and that claim needs a still-unread sentence to be about.
+      • Alolan Raticate swsh10.5-042 "Super Fang" — the same destination as the
+        mapped PUT anchor, with the amount read off the TARGET's remaining HP
+        instead of off the text. Still unmapped after D139, and the reason that
+        anchor captures `(\d+)` rather than making the count optional.
       • Drifblim sv01-090 "Curse Spreading" — "in any way you like", a distribution
         across the opponent's whole board.
-      • Ting-Lu ex sv02-127 "Land Scoop" — the opponent's BENCH, the `damageChosen`
-        snipe, and the one on this list the engine already simulates.
+      • Ting-Lu ex sv02-127 "Land Scoop" — the opponent's BENCH. ⚠️ CORRECTED AT
+        D139: this comment used to call it "the one on this list the engine already
+        simulates", which is false. The sentence is UNMAPPED and derives to null;
+        the card's only registry row is the Cursed Land passive. See
+        counterPut.test.ts for the case that pins it and for why it matters.
 
     STANDING NOTE: when a later slice maps one of these, RE-POINT the case at
     another still-unmapped clause — never delete it. The suite's claim is that an
@@ -111,7 +122,7 @@ const CENSUS_IDS = ["sv02-093", "sv02-239"] as const;
 const REAL_NEAR_MISSES = [
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
   "As often as you like during your turn, you may move 1 damage counter from 1 of your other Pokémon to this Pokémon.",
-  "Put 7 damage counters on your opponent's Active Pokémon.",
+  "Put 9 damage counters on 1 of your opponent's Pokémon. During your next turn, this Pokémon can't attack.",
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
   "Put 8 damage counters on your opponent's Pokémon in any way you like.",
   "Put 2 damage counters on 1 of your opponent's Benched Pokémon.",
@@ -297,9 +308,8 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     // Slowbro's text to an op that damages the opponent — the widest possible miss.
     expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toBeNull();
     expect(deriveAttackEffect(REAL_NEAR_MISSES[1])).toBeNull();
-    // TING-LU IS THE ONE THE ENGINE ALREADY READS, which makes it the only row here
-    // where `toBeNull` would be the wrong claim to stop at: it derives a SNIPE, and
-    // the point is that the two never meet.
+    // TING-LU'S BENCH PUT — unmapped, and its comment above used to claim otherwise
+    // (corrected at D139, which checked it).
     expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toBeNull();
     expect(
       deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Benched Pokémon."),

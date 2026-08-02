@@ -377,6 +377,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           // row directly before this one carries the same amount coming OFF the
           // attacker's Bench, which is what makes the pair read as one move.
           return row("system", [plain("Moved: "), amount, plain(" damage onto "), strong(name)]);
+        case "attack":
+          // D139 — an attack's own printed "Put {N} damage counters on your
+          // opponent's Active Pokémon." (Mimikyu "Ghost Eye", Polteageist "Pour
+          // Tea"). A SYSTEM row for the identical reason the two above are:
+          // `seat` owns the DAMAGED Pokémon, which for an attack is the
+          // attacker's OPPONENT, so an active-voice row under this seat would
+          // read as the victim doing it to itself. The ACTOR is named by the
+          // ATTACK_DECLARED row directly above — the same argument D136's finding
+          // 1 used to make the mill row passive rather than to give it an actor
+          // field. The verb is the PRINTED one, as "Moved:" is for the move.
+          return row("system", [plain("Put: "), amount, plain(" damage onto "), strong(name)]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);
       }

@@ -263,12 +263,62 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //   prevented, the VMAX (and the plain fix-attacker) are NOT. Bite ({C} 30) is
   //   the main-hit witness; the ex also carries Spread Shot for the interpreter
   //   spread arm. —
+  //   0.88.0 (D139): it also carries its PRINTED attack now — "Ghost Eye"
+  //   ({P}{C}, "Put 7 damage counters on your opponent's Active Pokémon.", NO
+  //   `damage` field), the first of the two printings the `COUNTER_PUT_ON_DEFENDER`
+  //   anchor reads. Its `abilities` stay null on purpose: Safeguard is authored in
+  //   the REGISTRY, keyed by id, and safeguard.test.ts pins it there — which makes
+  //   this card the sharpest possible zero-registry-row witness, since
+  //   `programFor("sv02-097")` is defined while `.attack` is not. —
   "sv02-097": battler("sv02-097", {
     name: "Mimikyu",
     types: ["Psychic"],
     hp: 70,
     weaknesses: [{ type: "Metal", value: "×2" }],
     retreat: 1,
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Ghost Eye",
+        effect: "Put 7 damage counters on your opponent's Active Pokémon.",
+      },
+    ],
+  }),
+  /** Polteageist sv03-098 — the SECOND printing of the same sentence at a
+      different count (D139), and a different card rather than a second rarity of
+      the same one, which is the stronger form of D121's warrant.
+
+      A STAGE 1 (evolving from Sinistea), fielded by `setActiveFromDeck` surgery
+      like every other non-Basic this suite needs — D135 invented `fix-allheal`
+      only because BOTH of its printings were evolutions and it wanted a legal
+      starter; here Mimikyu is the Basic and carries the end-to-end boards.
+
+      "Pour Tea" is at INDEX 1, and index 0 is the control this fixture exists
+      for as much as the mapped sentence: "Antique Collecting" starts with the
+      SAME WORD ("Put …") and must stay on the loud path, so one card proves the
+      anchor is a whole sentence rather than a prefix. */
+  "sv03-098": battler("sv03-098", {
+    name: "Polteageist",
+    stage: "Stage1",
+    evolveFrom: "Sinistea",
+    types: ["Psychic"],
+    hp: 70,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Psychic"],
+        name: "Antique Collecting",
+        effect:
+          "Put up to 2 in any combination of Item cards and Pokémon Tool cards from your discard pile into your hand.",
+      },
+      {
+        cost: ["Psychic"],
+        name: "Pour Tea",
+        effect: "Put 5 damage counters on your opponent's Active Pokémon.",
+      },
+    ],
   }),
   "fix-attacker-ex": battler("fix-attacker-ex", {
     name: "Fixmon ex",
@@ -4296,6 +4346,17 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Psychic", value: "×2" }],
   }),
+  /** The OTHER side of the flat-placement claim (D139): a 200 HP body with a
+      Psychic RESISTANCE and no Weakness at all. `fix-psychic-weak-big` proves a
+      routed-through-§8.5 build reads too HIGH; this one proves it would read too
+      LOW, and the two errors are different bugs — a build that special-cased
+      Weakness alone passes the first case and fails this one. No attacks, so it
+      never hits back and never truncates an assertion. */
+  "fix-psychic-resist-big": battler("fix-psychic-resist-big", {
+    hp: 200,
+    retreat: 1,
+    resistances: [{ type: "Psychic", value: "-30" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -6150,6 +6211,49 @@ export const COUNTER_MOVE_DECK = deckOf({
   "fix-psychic-energy": 8, // Basic {P} — two pay Tail Swap, three pay Wondrous Shot
   "fix-psychic-weak-big": 4, // 200 HP ×2 Psychic, NO attacks — the flat-placement defender
   "fix-titan": 44, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + every bench candidate
+});
+
+/** 0.87.0 → 0.88.0: the PUT on the defender (D139) — "Put {N} damage counters on
+    your opponent's Active Pokémon." A DEDICATED deck on the house rule that a new
+    reader gets its own 60, and because this one's boards are unlike the counter
+    MOVE's in the way that matters: nothing here parks, nothing here reads the
+    controller's own Bench, and the whole claim is the DEFENDER's damage — so the
+    two suites want opposite boards and neither should reshuffle the other.
+
+    BOTH PRINTINGS ARE IN IT, at two different counts, which is what makes the
+    × 10 conversion checkable rather than assertable:
+      • Mimikyu sv02-097 "Ghost Eye" (idx 0, {P}{C}, 7 counters, NO `damage`) —
+        a BASIC, so it is the attacker for every end-to-end board. It also carries
+        a REGISTRY row (the Safeguard passive, D107) with no `attack` key, which
+        is a sharper zero-row witness than a card with no row at all.
+      • Polteageist sv03-098 "Pour Tea" (idx 1, {P}, 5 counters, NO `damage`) —
+        a STAGE 1, surgeried in, and the proof that 7 → 70 is a conversion rather
+        than a constant. Its idx 0 "Antique Collecting" opens with the SAME WORD
+        and must stay LOUD.
+    Two counts on two cards from two sets: a build that hardcoded either number,
+    or that forgot the × 10 on one arm, cannot pass both.
+
+    SIX {P} — Ghost Eye needs two attached (its {C} takes the second Psychic) and
+    Pour Tea one, and a case rebuilds the board a dozen times over.
+
+    THREE DEFENDING BODIES, and the last two exist for one claim each:
+      • fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned
+        Active on both sides — 340 carries 70 twice over without the epilogue
+        sweeping a body out from under an assertion, and it is the DOMINANT
+        (mulligan-free) Basic through setup.
+      • fix-psychic-weak-big (200 HP, ×2 Psychic) and fix-psychic-resist-big
+        (200 HP, Psychic −30) are the TWO SIDES of the flat-placement claim under
+        a Psychic attacker: a §8.5-routed build reads 140 on one and 40 on the
+        other, and 70 on neither.
+    BOTH SEATS RUN IT, so the `seat` on every COUNTERS_PLACED row is asserted
+    rather than assumed. */
+export const COUNTER_PUT_DECK = deckOf({
+  "sv02-097": 4, // Mimikyu — "Ghost Eye" at idx 0 ({P}{C}, 7 counters, no damage); Safeguard is a REGISTRY passive
+  "sv03-098": 4, // Polteageist — "Antique Collecting" at idx 0 (loud), "Pour Tea" at idx 1 ({P}, 5 counters)
+  "fix-psychic-energy": 6, // Basic {P} — two pay Ghost Eye ({P}{C}), one pays Pour Tea
+  "fix-psychic-weak-big": 3, // 200 HP ×2 Psychic, NO attacks — the flat-placement defender, high side
+  "fix-psychic-resist-big": 3, // 200 HP Psychic −30, NO attacks — the flat-placement defender, low side
+  "fix-titan": 40, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + the promote target
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
