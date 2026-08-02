@@ -15,7 +15,7 @@ import type { BasicEnergyType, Card } from "@luminous/schema";
 import type { BoardCondition } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
-import type { GameState, InPlayPokemon, Seat } from "./types";
+import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
 import { SEATS, otherSeat } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
@@ -221,6 +221,43 @@ export function passivesOf(
     damageAttacker,
     preventDamageFromExV,
   };
+}
+
+/** §11/§15.B — the LIVE attack-installed block on `pokemon`, or null. The ONE
+    read of `InPlayPokemon.attackBlock`, and the whole of what "during your
+    opponent's next turn" means at a read site: the field holds a turn STAMP, so
+    the block is live iff that stamp is the turn now being played, and a block
+    whose window has passed simply stops answering without anyone having cleared
+    it (D124's rule; types.ts `AttackBlock` says why the D112 paralysis clock is
+    the wrong clock for this direction).
+
+    It lives HERE, in the aura-scan family, for the reason the module header
+    gives: `attack.ts`'s §8.5 main hit, three interpreter damage sites and every
+    defender-relative effect op must ask the same question of the same code or
+    they drift — and `passivesOf`'s `preventDamageFromExV` (Mimikyu "Safeguard"),
+    the UNDURATED aura this is the durated twin of, is read at exactly those
+    sites. The difference between the two is worth stating: Safeguard is a printed
+    ABILITY on the holder's card, so it is read out of the CATALOG and is gated on
+    the ATTACKER's rule box; this is an INSTALLATION written onto the board, so it
+    is read out of STATE and is gated on the TURN.
+
+    ⚠️ IT DOES NOT ANSWER "is this effect an ATTACK's?" — that fact belongs to the
+    INVOCATION, not to the target, and it rides `EffectContext.invokedBy`
+    (interpreter.ts). Every call site pairs the two, because a block that stopped
+    an Ability or a Trainer would refuse Crushing Hammer and Boss's Orders on a
+    board where the printed sentence says nothing at all. The turn stamp already
+    kills the largest class of false positives on its own — a block is live only
+    during the holder's OPPONENT's turn, so nothing the HOLDER does can ever be
+    refused by it — but a Trainer the opponent plays on that same turn lands
+    squarely inside the window, which is why the provenance check is real work
+    rather than a belt to the stamp's braces. */
+export function attackBlockOf(state: GameState, pokemon: InPlayPokemon): AttackBlock | null {
+  // No defensive `=== undefined` arm: the field is REQUIRED, and a record
+  // written before it existed is retired by MATCH_RECORD_VERSION rather than
+  // read benignly here — which is the whole reason that constant was bumped
+  // (D124's rule, and its argument against exactly this kind of soft landing).
+  const block = pokemon.attackBlock;
+  return block !== null && block.turn === state.turn ? block : null;
 }
 
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus

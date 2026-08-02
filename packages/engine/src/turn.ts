@@ -292,8 +292,17 @@ export function placeEvolution(
     ...from,
     stack: [...from.stack, evolutionUid],
     conditions: noConditions(),
-    // §10 — evolving sheds the effects of attacks too, not just conditions.
+    // §10 — evolving sheds the effects of attacks too, not just conditions. That
+    // covers the retreat block and, since D142, the attack-installed damage
+    // block. The second one is UNREACHABLE and deliberately written anyway: the
+    // block is installed by an attack, an attack ends the turn (§5.3), and its
+    // window is the opponent's next turn — during which the holder's controller
+    // cannot evolve anything — so no legal sequence puts an evolution between the
+    // install and the expiry. The rule belongs with the concept rather than with
+    // the sequences that can currently reach it (the same call the retreat block
+    // made one line up), and a state surgery pins it.
     retreatBlocked: false,
+    attackBlock: null,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -326,10 +335,14 @@ export function placeEvolution(
 /** Leaving the Active spot removes Special Conditions (§11/§12) and every other
     effect of an attack still on the Pokémon — the §11 retreat block included
     (unreachable down THIS path, which is a retreat the block would have already
-    refused, but the rule belongs with the concept, not with one caller) — M4
-    adds dropping active-only markers here too. */
+    refused, but the rule belongs with the concept, not with one caller) and,
+    since D142, the attack-installed damage block, which is reachable here: a
+    Pokémon that shielded itself and then RETREATS on its own following turn
+    walks away from a block whose window has in any case already closed, but the
+    forced half of the same move (`switchInto`) can do it INSIDE the window —
+    M4 adds dropping active-only markers here too. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
-  return { ...pokemon, conditions: noConditions(), retreatBlocked: false };
+  return { ...pokemon, conditions: noConditions(), retreatBlocked: false, attackBlock: null };
 }
 
 /** §11 — once per turn: the player names WHICH attached energies pay the

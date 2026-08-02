@@ -357,6 +357,29 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     ).toEqual({ text: `Counterattack: 70 damage to ${name}`, who: "system" });
   });
 
+  it("renders the §11 attack-installed block in the ACTOR's own voice (D142)", () => {
+    // The mirror of RETREAT_BLOCKED, whose `seat` owns the VICTIM: here `seat`
+    // owns the shielded Pokémon AND that Pokémon is the actor's own, so an active
+    // row credits the right player — and the two printed spellings get two
+    // phrasings, because the difference is the whole reason the field exists.
+    const { uid, name } = settled;
+    expect(
+      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: true }),
+    ).toEqual({
+      text: `${name} is protected from damage and effects of attacks during your opponent's next turn`,
+      who: "p1",
+    });
+    expect(
+      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false }).text,
+    ).toBe(`${name} is protected from damage from attacks during your opponent's next turn`);
+    // The refusal itself. Filed under the PROTECTED Pokémon's seat, which is also
+    // whose block did the refusing — causer and affected body are one card.
+    expect(line({ type: "ATTACK_EFFECT_PREVENTED", seat: "p1", uid })).toEqual({
+      text: `${name} prevented the effect of the attack`,
+      who: "p1",
+    });
+  });
+
   it("attributes an attack's own recoil to the attacker, not the system", () => {
     // M5 — "This Pokémon also does N damage to itself" (Skeledirge "Blazing
     // Shout"). Unlike the confusion self-hit, the attacker CHOSE this attack, so

@@ -335,6 +335,27 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       return row(event.seat, [strong(cardName(state, event.uid)), plain(" can't retreat next turn")]);
     case "RETREAT_BLOCK_ENDED":
       return row(event.seat, [strong(cardName(state, event.uid)), plain(" can retreat again")]);
+    // §11 — the attack-installed damage block. ACTIVE voice, unlike the §9
+    // counterattack row and unlike RETREAT_BLOCKED's victim-side seat: `seat`
+    // here owns the shielded Pokémon AND that Pokémon is the actor's own, so
+    // rendering it under the actor's name credits the right player. The two
+    // printed spellings get two phrasings because the difference is the whole
+    // reason the field exists — a reader who is told only "protected" cannot
+    // work out whether their Poison is about to land.
+    case "ATTACK_BLOCK_APPLIED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          event.effects
+            ? " is protected from damage and effects of attacks during your opponent's next turn"
+            : " is protected from damage from attacks during your opponent's next turn",
+        ),
+      ]);
+    case "ATTACK_EFFECT_PREVENTED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" prevented the effect of the attack"),
+      ]);
     case "COUNTERS_PLACED": {
       // Checkup ticks and the confusion self-hit are the game's doing, not a
       // player action — system rows, like the coin toss.

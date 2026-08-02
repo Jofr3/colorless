@@ -159,6 +159,36 @@ export type GameEvent =
       stay SILENT, announced by their own POKEMON_SWITCHED/RETREATED/
       POKEMON_EVOLVED row rather than a second one here. */
   | { type: "RETREAT_BLOCK_ENDED"; seat: Seat; uid: string }
+  /** §11 — an attack INSTALLED a damage block on its own Active ("During your
+      opponent's next turn, prevent all damage [from and effects of] attacks done
+      to this Pokémon."). `effects` is the wider of the two printed spellings.
+      `seat` owns the SHIELDED Pokémon, which here is the ACTOR's own — the exact
+      mirror of RETREAT_BLOCKED, where `seat` owns the victim — so this is the one
+      block row that renders honestly in the ACTIVE voice.
+
+      There is deliberately no `…_ENDED` twin. The block is a TURN STAMP, so it
+      expires by arithmetic with nothing to announce and no boundary walk to
+      announce it from (types.ts `AttackBlock`); the EARLY endings — leaving the
+      Active Spot, evolving — are already told by their own POKEMON_SWITCHED /
+      RETREATED / POKEMON_EVOLVED row, which is the same call D112 made for the
+      early half of RETREAT_BLOCK_ENDED. */
+  | { type: "ATTACK_BLOCK_APPLIED"; seat: Seat; uid: string; effects: boolean }
+  /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
+      damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
+      at. One row per refused op, so Poison Ring's two clauses produce two.
+
+      `seat`/`uid` own the PROTECTED Pokémon (the event family's contract), and
+      here that Pokémon is also the one whose own installation did the refusing —
+      the causer and the affected body are the same card — so the row is the
+      shielded player's and reads in the active voice.
+
+      The DAMAGE half needs no event of its own: `DAMAGE_DEALT` has carried
+      `prevented?: true` since Mimikyu "Safeguard" (0.58.0), and that field names
+      the FACT — this damage was prevented — which is identical whichever
+      prevention did it. Announcing WHICH is not something the row has ever
+      claimed, and adding it would owe a member to say what the ATTACK_DECLARED
+      and ATTACK_BLOCK_APPLIED rows above already put in the reader's hands. */
+  | { type: "ATTACK_EFFECT_PREVENTED"; seat: Seat; uid: string }
   /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
       Checkup ticks, the confusion self-hit, an attack's own "does N damage to
       itself" recoil clause) — `amount` is HP of damage, and weakness/resistance

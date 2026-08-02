@@ -135,8 +135,36 @@ export interface MatchRecord {
     field" but "can the previous deploy's RECORD hold the old shape", and that
     turns entirely on whether the op can be sitting in `phase.cont` when the write
     happens. Two slices, one field, opposite answers — the same shape as D131's
-    widen-don't-add rule being a TEST rather than a default. */
-export const MATCH_RECORD_VERSION = 3;
+    widen-don't-add rule being a TEST rather than a default.
+
+    ⚠️ 3 → 4 (D142, engine 0.91.0) — AND THIS ONE IS D124's CASE RATHER THAN
+    D140's, which is why it bumps for a reason the previous paragraph does not
+    cover. Nothing about an `EffectOp` moved: the change is a NEW REQUIRED FIELD ON
+    `InPlayPokemon` — `attackBlock: AttackBlock | null`, the turn-stamped §11
+    installation behind "During your opponent's next turn, prevent all damage
+    [from and effects of] attacks done to this Pokémon." — so EVERY Pokémon in
+    play in a record written by the previous deploy is missing it, exactly as
+    every one of them was missing `promotedTurn` at D124.
+
+    It would read back BENIGNLY, and that is precisely the trap this constant
+    exists to refuse. `attackBlockOf` (continuous.ts) tests `block !== null &&
+    block.turn === state.turn`; an absent field is `undefined`, the first test is
+    true and the second is false, so an old record would resolve to "no block" —
+    which even happens to be CORRECT, since no such block could have been
+    installed by a deploy that had no op to install one. The bump is not because
+    the value would be wrong today; it is because the TYPE would be a lie, and the
+    next slice to add a durated field (Ninetales' self-attack lock, Lycanroc ex's
+    installed counterattack — both stamped the same way) inherits whichever answer
+    this one gave. D124 refused the soft landing on the identical shape; refusing
+    it again keeps the rule a rule.
+
+    The engine's `invokedBy?: "attack"` on `EffectContext` — the other persisted
+    shape D142 touched, since `ctx` rides `EffectContinuation` into
+    `phase.cont` — is an OPTIONAL field and therefore a WIDENING (D125's
+    distinction): an old continuation simply lacks it, which reads as "not an
+    attack" and reproduces the pre-slice behaviour exactly. It would not have
+    bumped anything on its own, and the question was asked rather than folded in. */
+export const MATCH_RECORD_VERSION = 4;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

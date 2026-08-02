@@ -317,7 +317,12 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // 1 → 2 was D124's required `promotedTurn`; 2 → 3 is D140's required
     // `damageChosen.source`, which is persisted because that op PARKS — the
     // contrast with D139, which added the same field to an op that does not.
-    expect(MATCH_RECORD_VERSION).toBe(3);
+    // 3 → 4 is D142's required `InPlayPokemon.attackBlock`, and it is D124's case
+    // rather than D140's: no op moved at all, but every Pokémon in play in an old
+    // record lacks the field — a MISSING REQUIRED FIELD that would read back
+    // benignly (`undefined.turn` is never `state.turn`), which is precisely the
+    // soft landing this constant exists to refuse.
+    expect(MATCH_RECORD_VERSION).toBe(4);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

@@ -90,7 +90,14 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
   }
 
   it("finds the census it is supposed to sweep", () => {
-    // 36 distinct sentences at D140 (35 at D139, 33 at D138, 32 at D137). D138
+    // 38 distinct sentences at D142 (36 at D140/D141, 35 at D139, 33 at D138, 32
+    // at D137). D142 added TWO — Scyther sv03-004's "Agility" and Togedemaru
+    // sv03-151's "Defense Curl", the gated PREVENT clause's two printed
+    // spellings, both carrying "your opponent's" — and they were swept the moment
+    // the fixtures landed, which is exactly what this census is for: neither
+    // regex was written with this file open, and both are now proven to survive a
+    // U+2019 re-ingest by the same assertion that covers the other 36. D141 added
+    // none (it added no apostrophe-bearing fixture). D138
     // added one — Dedenne ex sv02-093's "Tail Swap" — D139 added TWO at once,
     // Mimikyu sv02-097's "Ghost Eye" and Polteageist sv03-098's "Pour Tea" (the
     // same shape at two different counts, so two distinct sentences), and D140
@@ -103,7 +110,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // rather than silently widening the pool it does not cover. If it drops, a
     // reader stopped deriving something and the failure belongs here as much as in
     // the slice suite that owns it.
-    expect(derivable).toHaveLength(36);
+    expect(derivable).toHaveLength(38);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

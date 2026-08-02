@@ -563,6 +563,58 @@ export type EffectOp =
       pinned by two exhaustive `Record`s, the wire condition schema and the
       playmat's status chips; the block is none of those things. */
   | { op: "preventRetreat" }
+  /** §11/§15.B — INSTALL a damage/effect block on the CONTROLLER's own Active for
+      the opponent's next turn:
+
+        "Flip a coin. If heads, during your opponent's next turn, prevent all
+         damage FROM AND EFFECTS OF attacks done to this Pokémon."  (11 printings)
+        "Flip a coin. If heads, during your opponent's next turn, prevent all
+         damage done to this Pokémon by attacks."                   ( 2 printings)
+
+      `preventRetreat`'s mirror image, and deliberately shaped like it: same
+      printed duration, same absent `target` field, same not-a-§12-condition
+      argument. The mirror is the DIRECTION — that one is installed ON THE
+      DEFENDER by the attacker, this one on the ATTACKER's own body — and the
+      direction is why it needed a turn STAMP rather than that op's reuse of the
+      §13.4 paralysis clock (types.ts `AttackBlock` spells the failure out).
+
+      NO `target` FIELD, by D104's minimal shape: every one of the nineteen
+      printings in the pool that installs a block of this family says "this
+      Pokémon", never the Defending one. If one ever says otherwise, that is the
+      warrant for the field, with two readings in hand rather than one guessed at.
+
+      `effects` IS A FIELD, NOT A SECOND MEMBER — D131's widen-don't-add rule
+      applied and PASSING, the D139 case rather than the D138 one. The two printed
+      spellings differ in the words "from and effects of", and EVERYTHING
+      downstream of that phrase is byte-identical: same install site, same holder,
+      same stamp, same event, same expiry, same three early clears. The whole
+      difference is one extra set of read sites consulting one boolean, which is
+      precisely what a field is for; two members would be two copies of one
+      installation told apart by how much they refuse.
+
+      OPTIONAL, AND THE POLARITY IS DELIBERATE (D135's `zone?: "bench"` read from
+      the other end): the printed words WIDEN the block, so the field is present
+      exactly when they are printed, and a producer that forgets it blocks LESS
+      rather than more. An over-blocking default would silently make an opponent's
+      whole attack do nothing; an under-blocking one loses a rider on one body.
+
+      NOT WIDENED TO A `damage` FLAG, and the condition that would warrant it is
+      written down (D130 → D131's precedent). Palafin sv03-145 prints the THIRD
+      reading — "During your opponent's next turn, prevent all EFFECTS of attacks
+      used by your opponent's Pokémon done to this Pokémon. (Damage is not an
+      effect.)" — effects WITHOUT damage, on ONE printing, on a different sentence
+      (no coin, an "used by your opponent's Pokémon" clause, and that parenthetical).
+      Mapping it is what warrants turning `effects?: true` into a two-flag cover;
+      inventing the flag now would be a second axis guessed at from a sentence
+      nothing reads. Its parenthetical is nonetheless the SPEC for both readings
+      here, and it is the reason a placed damage COUNTER falls on the effects side.
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp`, and that placement is
+      free rather than lucky (D125's rule): the block's entire effect is in the
+      FUTURE, so nothing about it needs to precede the §8.5 pipeline the way a
+      cancel or a coin bonus does. Never parks, consumes no rng, and is idempotent
+      — installing twice in one turn writes the same stamp. */
+  | { op: "preventDamage"; effects?: true }
   /** Heal `amount` HP from the CONTROLLER's own Active Pokémon — the printed
       "this Pokémon" / "it" of a self-heal, resolved at `ctx.seat` by the
       interpreter rather than carried in the op (which is why `target` has one
@@ -1839,6 +1891,49 @@ const FLIP_SELF_HEAL = /^Flip a coin\. If heads, heal (\d+) damage from this Pok
 // branch there is likewise a spelling rather than an optional digit.
 const FLIP_DECK_TOP_MILL =
   /^Flip a coin\. If heads, discard the top card of your opponent['’]s deck\.$/;
+// The GATED PREVENT clause (D142) — the biggest un-taken count in D134's gated
+// census, and the pool's TWO printed spellings of one installation:
+//
+//   • 11 printings say "prevent all damage FROM AND EFFECTS OF attacks done to
+//     this Pokémon" — Joltik sv06.5-001 + Hoppip sv02-001 "Splashing Dodge",
+//     Wiglett sv01-055/-206 "Twisting Strike", Aipom swsh10.5-056 "Bustle",
+//     Nymble sv02-019 "Slight Splash", Cufant sv02-109/-219 "Hit and Hide",
+//     Scyther sv03-004 "Agility", Dugtrio sv03-104 "Dig", Barboach sv03-108
+//     "Hide";
+//   • 2 say "prevent all damage done to this Pokémon by attacks" — Glimmet
+//     sv03-121 "Iron Defense", Togedemaru sv03-151 "Defense Curl".
+//
+// TWO SPELLINGS ARE NOT ONE SENTENCE SPELLED TWICE. The census the resume point
+// carried counted them together (11 + 2 = "13 printings / 2 spellings"), which
+// is true as a count and misleading as a description: they are two READINGS, and
+// the words "from and effects of" are the entire difference. That is what the
+// `effects` field carries, and both anchors are written out in full rather than
+// folded into one optional group — the shorter one is not a prefix of the longer
+// (`damage done to this Pokémon by attacks` vs `damage from and effects of
+// attacks done to this Pokémon`), so there is no group to make optional.
+//
+// SIX COPIES OF THE GATE PREFIX NOW, on D134's argument unchanged: the varying
+// token is the whole consequent, an OPEN vocabulary, so D120's template
+// precondition fails and the prefix is spelled per consequent on purpose.
+//
+// THE 6 UNGATED / OTHERWISE-GATED PRINTINGS OF THIS FAMILY STAY LOUD, and each is
+// refused by a property of the WHOLE-SENTENCE anchor rather than by luck:
+//   • "During your opponent's next turn, prevent all damage done to this Pokémon
+//     by attacks from Basic Pokémon." (3 — Fletchling sv01-150 "Tailspin Away",
+//     Bombirdier sv02-153/-246 "Covert Flight") and "…from Ancient Pokémon."
+//     (1 — Iron Moth sv06.5-009 "Anachronism Repulsor") narrow the block by the
+//     ATTACKER's class, which is a field and a predicate this op does not have;
+//   • "If your opponent's Pokémon is Knocked Out by damage from this attack, …"
+//     (1 — Grimmsnarl sv02-148 "Accelerate") gates on the attack's own RESULT,
+//     the §9.2 channel Iron Moth "Suction" and Camerupt want;
+//   • "Flip a coin. If tails, this attack does nothing. If heads, …" (1 —
+//     Squawkabilly sv01-162 "Fly") carries a SECOND consequent on the same flip.
+// Each is a separate warrant, written down here so the next slice inherits the
+// list rather than re-censusing for it.
+const FLIP_PREVENT_DAMAGE_AND_EFFECTS =
+  /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
+const FLIP_PREVENT_DAMAGE =
+  /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\.$/;
 // The COUNTER MOVE (D138) — "Move all damage counters from 1 of your Benched
 // Pokémon to your opponent's Active Pokémon.", the whole printed effect. TWO
 // printings, both Dedenne ex "Tail Swap" (sv02-093 Double rare / sv02-239 Ultra
@@ -3534,6 +3629,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         op: "coinFlipGate",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+      },
+    ];
+  }
+  // 19b. The GATED PREVENT clause (D142) — 13 printings across the family's two
+  //      printed readings, and the largest single mapping left in D134's census.
+  //      Two `test` arms and no capture: nothing in either sentence varies, the
+  //      duration is the printed words "during your opponent's next turn" and the
+  //      holder is the printed words "this Pokémon", so the only token that
+  //      differs between the two anchors — "from and effects of" — lands in a
+  //      FIELD (D131), not a second op and not a table row.
+  //
+  //      Both wrap `preventDamage` in the SAME `coinFlipGate` the two arms above
+  //      use, so the gate is procedure in front of one action here as it is there,
+  //      and a TAILS is a resolved attack rather than a skipped effect.
+  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "preventDamage", effects: true }],
+      },
+    ];
+  }
+  if (FLIP_PREVENT_DAMAGE.test(effect)) {
+    // The `effects` key is ABSENT, not `false`: the printed sentence does not say
+    // "from and effects of", so the narrower reading is what the card prints and
+    // the op carries no claim about the wider one (D135's absent-`zone` rule).
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "preventDamage" }],
       },
     ];
   }

@@ -320,6 +320,66 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Scyther sv03-004 — "Agility" ({C}, 10 damage, index 0): the WIDE spelling of
+      D142's gated PREVENT clause, *"Flip a coin. If heads, during your opponent's
+      next turn, prevent all damage from and effects of attacks done to this
+      Pokémon."*, one of its ELEVEN printings. Chosen out of the eleven for three
+      reasons: it is a BASIC (so it can be surgeried straight onto the Active
+      without an evolution chain, unlike Dugtrio sv03-104), its cost is a single
+      {C} (so any Energy pays it and the seed sweep never stalls on a type), and it
+      carries a printed 10 alongside the install — a D125 tail board, where the
+      declaration both deals real §8.5 damage AND writes the block. Its index-1
+      "Cut" ({C}{C}, 20, no effect text) is the control: the same Colorless line,
+      told apart only by the INDEX, so a program that leaked across indices shows
+      up as a block installed by an attack that does not print one. */
+  "sv03-004": battler("sv03-004", {
+    name: "Scyther",
+    types: ["Grass"],
+    hp: 80,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Agility",
+        damage: 10,
+        effect:
+          "Flip a coin. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Cut", damage: 20 },
+    ],
+  }),
+  /** Togedemaru sv03-151 — "Defense Curl" ({C}, NO printed damage, index 0): the
+      NARROW spelling, *"Flip a coin. If heads, during your opponent's next turn,
+      prevent all damage done to this Pokémon by attacks."*, one of its TWO
+      printings and the whole reason `preventDamage` carries an `effects` field.
+      The install is the entire visible result of the declaration (no `damage`
+      field at all), which is the mirror of Scyther's tail board.
+
+      Its W/R line is not decoration: ×2 Fire weakness AND a −30 Grass resistance,
+      the only fixture in this suite carrying both, so a blocked hit can be shown
+      to be 0 rather than "0 after the pipeline happened to cancel" — the §8.5
+      arithmetic runs in full and the block nulls the result, which is exactly how
+      Mimikyu's Safeguard behaves one line above it in attack.ts. Index-1 "Rolling
+      Tackle" ({M}{C}, 50) is the control and doubles as the real hit a shielded
+      Scyther has to survive. */
+  "sv03-151": battler("sv03-151", {
+    name: "Togedemaru",
+    types: ["Metal"],
+    hp: 80,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    resistances: [{ type: "Grass", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Defense Curl",
+        effect:
+          "Flip a coin. If heads, during your opponent's next turn, prevent all damage done to this Pokémon by attacks.",
+      },
+      { cost: ["Metal", "Colorless"], name: "Rolling Tackle", damage: 50 },
+    ],
+  }),
   "fix-attacker-ex": battler("fix-attacker-ex", {
     name: "Fixmon ex",
     types: ["Fire"],
@@ -6729,6 +6789,61 @@ export const ABILITY_DECK = deckOf({
   "fix-basic-1": 12,
   "fix-water-energy": 24,
   "fix-energy": 16,
+});
+
+/** 0.90.0 → 0.91.0: the GATED PREVENT clause (D142) — "Flip a coin. If heads,
+    during your opponent's next turn, prevent all damage [from and effects of]
+    attacks done to this Pokémon." A DEDICATED deck, and every card on it exists
+    to make ONE claim about the block:
+
+      • sv03-004 Scyther "Agility" ({C}, printed 10) installs the WIDE block, the
+        11-printing spelling — and prints damage alongside it, so the D125 tail
+        board is exercised by the installer itself;
+      • sv03-151 Togedemaru "Defense Curl" ({C}, no printed damage) installs the
+        NARROW one, the 2-printing spelling. The pair is the whole reason
+        `preventDamage` has a field, and every "the narrow block does NOT stop
+        this" assertion is a Togedemaru board;
+      • sv02-072 Pincurchin "Needle Crush" ({L}{L}{L}, 70) is the sharpest single
+        attack in the suite: it deals real damage AND discards an Energy from the
+        defender, so ONE declaration into a wide block shows both halves refused
+        and into a narrow one shows them SPLIT — 0 damage, Energy gone;
+      • sv02-016 Tarountula "Bind Down" ({G}, 10) is the rider-on-the-defender
+        case, and the sharpest instance of the mirror: two durated blocks meeting,
+        one refusing the other;
+      • sv02-097 Mimikyu "Ghost Eye" ({P}{C}, 7 counters, no `damage` field) is
+        the COUNTER PUT — an effect rather than damage, so it is the case that
+        separates the two spellings with nothing else moving. Its own Safeguard
+        passive is on the ATTACKER here, where it is inert;
+      • fix-attacker supplies the plain hits: Bite ({C}, 30) for damage with no
+        effect, and Yawn (NO printed cost — free to declare on any board) for a
+        §12 status with no damage;
+      • fix-titan (340 HP, no attacks, no Weakness) is the DOMINANT mulligan-free
+        Basic, the bench filler and the promote target — big enough that no case
+        in the suite ends with a body swept out from under its assertions.
+
+    THIS FAMILY TAKES A COIN, so the deck is its own 60 rather than shared with a
+    seed-free suite: every install is `coinFlipGate`d, and the boards below are
+    reached by sweeping seeds until the install lands heads. Sharing a deck with a
+    seed-free suite would make that suite's determinism a coincidence. */
+export const PREVENT_BLOCK_DECK = deckOf({
+  "sv03-004": 4, // Scyther — "Agility" idx 0 ({C}, 10 + the WIDE install), "Cut" idx 1 (control)
+  "sv03-151": 4, // Togedemaru — "Defense Curl" idx 0 ({C}, the NARROW install), "Rolling Tackle" idx 1
+  "sv02-072": 4, // Pincurchin — "Needle Crush" ({L}{L}{L}, 70 + an Energy discard off the defender)
+  "sv02-016": 4, // Tarountula — "Bind Down" ({G}, 10 + the retreat-lock rider)
+  "sv02-097": 4, // Mimikyu — "Ghost Eye" ({P}{C}, 7 counters): the PUT, an effect and not damage
+  "fix-attacker": 4, // Bite ({C}, 30) and Yawn (costless, Asleep on the defender)
+  "fix-sniper": 2, // "Spread Shot" ({C}, 30 + 20 to EACH benched) — "done to THIS Pokémon" in one hit
+  "fix-basic-1": 2, // an evolvable Basic — the §10 clear, which no legal sequence can reach
+  "fix-stage1": 2, // …and what it evolves into
+  "sv03-012": 2, // Trevenant — "Forest Miasma": the SAME damageActive op as an ATTACK, as an ABILITY
+  "fix-hammer": 2, // fixture Item — the SAME discardEnergy op as an ATTACK, played as a TRAINER
+  "sv02-172": 2, // Boss's Orders — the gust that drags a shielded body off the Active Spot
+  "fix-energy": 6, // Colorless Basic — pays every {C} in the deck
+  "fix-lightning-energy": 6, // {L}{L}{L} — two Needle Crushes' worth
+  "fix-grass-energy": 3, // {G} — Bind Down
+  "fix-psychic-energy": 4, // {P} — two Ghost Eyes' worth (the {C} half comes off fix-energy)
+  "fix-metal-energy": 2, // {M} — Rolling Tackle's typed half
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — the bench filler and promote target
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

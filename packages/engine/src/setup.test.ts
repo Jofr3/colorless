@@ -259,6 +259,9 @@ describe("placement", () => {
       damage: 0,
       conditions: { rotation: "none", poisonDamage: 0, burned: false },
       retreatBlocked: false,
+      // A card entering play carries no effect of an attack (D142) — the only
+      // installation site is an attack's own effect program.
+      attackBlock: null,
       markers: [],
       turnPlayed: 0,
       // Placed Active from the HAND, which is not a move from the Bench — the

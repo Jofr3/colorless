@@ -63,6 +63,57 @@ export function presentStatuses(conditions: SpecialConditions): StatusName[] {
   return statuses;
 }
 
+/** §11/§15.B — an attack-installed BLOCK on one Pokémon, with the printed
+    DURATION baked in as a turn STAMP. The printed sentences are
+
+      "Flip a coin. If heads, during your opponent's next turn, prevent all
+       damage FROM AND EFFECTS OF attacks done to this Pokémon."   (11 printings)
+      "Flip a coin. If heads, during your opponent's next turn, prevent all
+       damage done to this Pokémon by attacks."                    ( 2 printings)
+
+    and the difference between them is exactly the `effects` flag: BOTH refuse
+    damage, only the first refuses the rest of what an attack does to the body.
+
+    ⚠️ A TURN STAMP, NOT A FLAG — D124's decision, taken again for a reason of its
+    own. `turn` is the ONE turn number on which the block is live: the installing
+    attack runs during turn N and ends it (§5.3), so the opponent's next turn is
+    turn N + 1 and that is what gets stamped. The block then expires BY ARITHMETIC
+    (`turn === state.turn` stops holding) with no turn-boundary clear anywhere —
+    which matters more here than it did at D124, because the §13.4 paralysis clock
+    D112 reused for `retreatBlocked` is the WRONG clock for this shape. That clear
+    fires for the seat whose turn just ENDED, and this block sits on the
+    INSTALLER's own Pokémon rather than on the defender's: the very first Checkup
+    after the attack has `endedSeat === the holder's seat`, so a paralysis-clock
+    clear would lift the block one whole turn early, before its window ever opens.
+    A stamp has no such mirror to get backwards.
+
+    NOT a §12 Special Condition, for `retreatBlocked`'s reasons verbatim: no
+    Checkup tick, no status chip, no `StatusName`, and it never crosses the wire
+    (`RedactedConditions`/`BattleConditions` pin that shape field by field). What
+    it DOES share with `retreatBlocked` is the early ending: it is an effect of an
+    ATTACK, so it ends the moment the Pokémon leaves the Active Spot or evolves
+    (§10) — see `clearOnLeavingActive` (turn.ts), `switchInto` (interpreter.ts)
+    and `placeEvolution` (turn.ts). A Knocked Out holder takes it out of play with
+    the rest of the stack.
+
+    ONE INSTALLATION PER RECORD, and the window is part of the installation:
+    a future durated effect whose window is a DIFFERENT turn (Ninetales
+    sv03-029/-199 "Nine-Tailed Dance" — "During YOUR next turn, this Pokémon can't
+    attack", i.e. turn N + 2) cannot share this `turn` and gets its own stamped
+    field. What it DOES inherit is everything else: the stamp convention, the
+    three early-clear sites, and the read-through-continuous.ts shape. */
+export interface AttackBlock {
+  /** The single turn number this block is live on (the installing turn + 1). */
+  turn: number;
+  /** Whether it also refuses the EFFECTS of attacks and not only their damage —
+      the printed words "from and effects of". The catalog prints the parenthetical
+      that settles the reading on Palafin sv03-145: **"(Damage is not an effect.)"**
+      So the two halves are disjoint, and a placed damage COUNTER — which this
+      engine has ruled is not attack damage since `damageActive` (D138/D139) — falls
+      entirely on the effects side. */
+  effects: boolean;
+}
+
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
     the top uid defines its identity (name, HP, retreat cost, …); damage,
     energy and tools persist through evolution (M4). */
@@ -86,6 +137,12 @@ export interface InPlayPokemon {
       ends the blocked player's own next turn (flow.ts), and dropped early
       wherever an effect of an attack ends — leaving the Active Spot or evolving. */
   retreatBlocked: boolean;
+  /** §11 — the attack-installed damage/effect block on this Pokémon (see
+      `AttackBlock` above), or `null` when none has been installed. Only LIVE
+      while its `turn` is the current one; read through `attackBlockOf`
+      (continuous.ts) rather than by touching this field, so no read site can
+      forget the turn comparison. */
+  attackBlock: AttackBlock | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -122,6 +179,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     damage: 0,
     conditions: noConditions(),
     retreatBlocked: false,
+    // Nothing has attacked with it yet — a card entering play carries no
+    // effect of an attack (§10's carry-over rule read from the other end).
+    attackBlock: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck

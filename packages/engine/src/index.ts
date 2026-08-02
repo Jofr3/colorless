@@ -2044,7 +2044,120 @@ import type { GameState, Seat } from "./types";
     rows, state fields, error codes, registry rows or redact arms; no
     `effects.ts`/`interpreter.ts`/`continuous.ts`/`registry.ts`/`flow.ts` diff and
     no web/API/DB/`@luminous/schema` diff. */
-export const engineVersion = "0.90.0";
+/** 0.91.0 — THE GATED PREVENT CLAUSE: *"Flip a coin. If heads, during your
+    opponent's next turn, prevent all damage [FROM AND EFFECTS OF] attacks done to
+    this Pokémon."* — **13 printings across TWO READINGS** on two anchored
+    regexes, ONE new `EffectOp`, ONE new turn-stamped `InPlayPokemon` field and
+    `MATCH_RECORD_VERSION` **3 → 4** (D142). The biggest un-taken count in D134's
+    gated census, and the family's first CONTINUOUS-EFFECT MECHANISM rather than a
+    reader — every previous slice in this tail bought a sentence; this one buys a
+    LIFETIME, and three other printed shapes are now rows on top of it.
+
+    ⚠️ THE RESUME POINT'S COUNT HELD AND ITS DESCRIPTION DID NOT, which is the
+    seventh list running to carry something wrong and the first time the miss is
+    in the WORDS rather than in the numbers. "13 printings / 2 spellings" is
+    exactly right (11 + 2, verified against the local D1, 2026-08-02, 978 cards)
+    — and they are not two spellings of one sentence, they are **two different
+    READINGS**: eleven say "prevent all damage FROM AND EFFECTS OF attacks done to
+    this Pokémon", two say "prevent all damage done to this Pokémon **by
+    attacks**", and the second stops damage and NOTHING ELSE. A slice that had
+    treated them as one string would have shipped a block that refuses a Poison
+    the card does not refuse. **AND THE COUNT WAS A FLOOR RATHER THAN A TOTAL**:
+    D134's census was `LIKE '%Flip a coin. If heads,%'`, so it structurally could
+    not see the SIX ungated / otherwise-gated printings of the same family (3
+    "…by attacks from Basic Pokémon", 1 "…from Ancient Pokémon", 1 KO-gated, 1
+    two-consequent coin) — 19 printings in all. Each stays LOUD and each is
+    written down with the property that refuses it, so the next slice inherits the
+    list. **A census run for one purpose is a floor for every other purpose.**
+
+    ⚠️ THE §11 READING, AND THE CATALOG PRINTS IT. What splits the two halves is
+    the parenthetical on Palafin sv03-145: **"(Damage is not an effect.)"** — a
+    rule found in the pool rather than reasoned from intuition, and it settles the
+    question the slice turns on. **IN, damage half (both readings):** the §8.5
+    main hit and every attack-dealt damage op, at the four sites Mimikyu
+    "Safeguard" is honoured at. **IN, effects half (the wider reading only):** §12
+    Special Conditions applied to the body, the §11 retreat rider, an Energy
+    discarded off it, and — the sharpest one — damage COUNTERS PUT on it, because
+    this engine has ruled since `damageActive` that a placed counter is not attack
+    damage (it skips Weakness, Resistance and every reduction passive), so it
+    falls entirely on the effects side. **OUT:** anything an attack does to a
+    DIFFERENT Pokémon (the block is per-body — one Spread Shot is prevented on the
+    shielded Active and lands on every benched one in the same declaration);
+    anything done to the PLAYER rather than to a Pokémon (a mill, a hand
+    disruption); the attacker's own recoil; and **everything that is not an
+    ATTACK** — a Trainer, an activated Ability, a triggered one, or a §13 Checkup
+    tick, all of which can land inside the window and none of which the printed
+    sentence mentions.
+
+    ⚠️ THE STATE IS A TURN STAMP, AND THE REASON IS NOT D124's. D124 chose a stamp
+    to avoid a turn-boundary clear it would be easy to forget; here the boundary
+    clear that already exists is actively WRONG. D112's retreat block reuses
+    §13.4's paralysis clock — cleared in `runCheckup` for `endedSeat` — which
+    works because that block sits on the DEFENDER's body. **This one sits on the
+    INSTALLER's own**, so the first Checkup after the attack has `endedSeat` = the
+    holder's seat and that clock lifts the block a full turn EARLY, before its
+    window has opened at all. `InPlayPokemon.attackBlock: { turn, effects } |
+    null` stamps `state.turn + 1` — an attack ENDS the turn (§5.3), so the next
+    turn is the opponent's by construction — and expires by arithmetic with
+    nothing anywhere to clear it. **Measured: reusing the paralysis clock fails 12
+    tests; stamping the installing turn instead of the next one fails the same
+    12.** The stale stamp is deliberately left sitting on the card afterwards; it
+    answers nothing, and not clearing it is the whole point.
+
+    ⚠️ "EFFECTS OF ATTACKS" IS A PROVENANCE THE TARGET CANNOT ANSWER, so it rides
+    `EffectContext.invokedBy?: "attack"` — set by `attack.ts` and by nothing else.
+    **This REFINES D139 rather than reversing it**: that decision put a provenance
+    on the OP (`damageActive`/`damageChosen` still carry `source`) because a LOG
+    LABEL is a property of the row an op emits; what rides on the context is a
+    RULE that SIX ops must answer identically, and the only site that knows the
+    answer is the one that started the program. D139's second objection — that
+    `ctx` is serialized into every park — is exactly what makes it right here: an
+    attack effect that parks and resolves three actions later is still an attack's
+    effect. The two provenances are **pinned to agree** on every producer in the
+    pool. Without the check, Crushing Hammer and Boss's Orders stop working inside
+    the window; the sharpest witness is Trevenant's between-turns Ability reaching
+    the SAME `damageActive` op an attack reaches, at the Checkup that ends the
+    window turn, where the stamp cannot help and only the provenance can.
+
+    ⚠️ `effects` IS A FIELD — D131's widen-don't-add rule applied and PASSING (the
+    D139 case, not the D138 one): same install site, same holder, same stamp, same
+    event, same expiry, same three early clears, and the suite asserts the two
+    derived programs are byte-identical once the one field is stripped. OPTIONAL,
+    and the polarity is deliberate: the printed words WIDEN the block, so a
+    producer that forgets it blocks LESS rather than more. **NOT widened to a
+    `damage` flag**, and the condition that would warrant it is written down —
+    Palafin sv03-145's effects-WITHOUT-damage reading, on one printing and a
+    different sentence.
+
+    ⚠️ THE EARLY CLEARS ARE §10's, AND ONE OF THEM IS FINALLY REACHABLE. Leaving
+    the Active Spot and evolving both end an effect of an attack, so both null the
+    field (`clearOnLeavingActive`, `switchInto`, `placeEvolution`). For the retreat
+    block the switch clear was the observable one and the evolve clear reachable;
+    here the EVOLVE clear is **unreachable by construction** (installing ends the
+    turn, the window is the opponent's, and nobody evolves on someone else's turn)
+    and is written anyway with a surgery pinning it — while the SWITCH clear is
+    reachable in the sharpest possible way: a Boss's Orders played INSIDE the
+    window drags the shielded body off the spot and the protection goes with it,
+    pinned by a following Spread Shot landing 20 on it.
+
+    ⚠️ THE ONLY WAY TO KNOCK OUT A SHIELDED POKÉMON is a counter PUT through the
+    NARROW reading — the wide one refuses the placement and the damage half
+    refuses every hit — which is the "KO'd while blocked" ordering driven end to
+    end. Cost: 1 op member, 1 op impl, 1 state field + its type, 1 continuous.ts
+    reader, 2 events, 2 log arms, 2 regexes, 2 deriver arms, 1 `EffectContext`
+    field, 6 guarded op sites, 4 damage sites, 3 early clears, `preventBlock.test.ts`
+    (32 tests) on its own `PREVENT_BLOCK_DECK`, 2 new fixtures (Scyther sv03-004,
+    Togedemaru sv03-151), 1 moved census (`clauseApostrophe` 36 → 38), 1 added
+    `log.test.ts` arm pin, 1 moved `match.test.ts` version pin. Mutation-checked
+    seven ways: reusing D112's clock fails **12**, stamping the installing turn
+    fails **12**, dropping the main-hit block fails **5**, ignoring `effects`
+    fails **5**, dropping `invokedBy` fails **2**, skipping the leaves-the-Active
+    clear fails **1**, system-voicing the install row fails **1**. `bun run check`
+    GREEN exit 0, **184 files / 2993 tests** (was 183 / 2960). ZERO new prompts,
+    parks, clause-table rows, `BoardCondition` members, error codes, registry rows
+    or redact arms; no `rng.ts`/`cardplay.ts`/`registry.ts` diff and no web/DB/
+    `@luminous/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
+export const engineVersion = "0.91.0";
 
 export type {
   ApplyResult,
@@ -2093,6 +2206,7 @@ export {
 } from "./cards";
 export type { DamageModifier, ParsedDamage, PokemonSuffix } from "./cards";
 export {
+  attackBlockOf,
   countAttachedEnergy,
   countEnergyInPlay,
   disabledAbilityUids,
@@ -2206,6 +2320,7 @@ export {
   otherSeat,
 } from "./types";
 export type {
+  AttackBlock,
   GameOutcome,
   GameOverReason,
   GameState,

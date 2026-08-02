@@ -19,6 +19,7 @@ import {
   weaknessOf,
 } from "./cards";
 import {
+  attackBlockOf,
   countAttachedEnergy,
   effectiveAttackCost,
   effectiveRetreatCost,
@@ -700,7 +701,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
     // ex/V. A full null (not a flat reduction), gated on the ATTACKER's rule-box
     // class, so it supersedes any Bouffer-style reduction.
-    const prevented = defenderPassives.preventDamageFromExV && isExOrV(attacker);
+    //
+    // D142 — its DURATED twin sits beside it on the same `||`, and the pairing is
+    // the point: one is an always-on printed ABILITY read out of the CATALOG and
+    // gated on the attacker's rule box, the other an INSTALLATION written onto
+    // the board by an attack and gated on the TURN ("During your opponent's next
+    // turn, prevent all damage … done to this Pokémon."). Both null the damage
+    // outright rather than reducing it, so both land here, after Weakness,
+    // Resistance and the reduction passive have been computed and before any of
+    // them can matter — which is what makes them supersede rather than stack.
+    // No `invokedBy` check on this arm: this IS the attack.
+    const prevented =
+      (defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
+      attackBlockOf(next, defender) !== null;
     const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
     defended = { ...defender, damage: defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
@@ -801,7 +814,12 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         program,
         // The attacker is "this Pokémon" (§8) — by uid rather than "the Active",
         // which stays truthful if the program itself moves it off the spot.
-        { seat: action.seat, sourceUid: attackerUid },
+        // `invokedBy: "attack"` is set HERE and in no other runProgram call in
+        // the engine: it is what lets a defender's §11 block tell an ATTACK's
+        // effect from a Trainer's or an Ability's (D142, interpreter.ts
+        // EffectContext), and it rides the continuation so an attack effect that
+        // PARKS is still an attack's effect when it resolves.
+        { seat: action.seat, sourceUid: attackerUid, invokedBy: "attack" },
         events,
       ),
       action.seat,

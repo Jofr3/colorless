@@ -16,6 +16,7 @@ import {
   weaknessOf,
 } from "./cards";
 import {
+  attackBlockOf,
   countEnergyInPlay,
   effectiveMaxHp,
   hasAttachedEnergy,
@@ -84,6 +85,35 @@ export interface EffectContext {
       shape lives on `EffectRecord`), and it rides `EffectContinuation` across
       parks: plain JSON, so a parked program still replays identically (D14). */
   sourceUid?: string;
+  /** §11/§15.B — WHAT invoked this program, when the answer changes a RULE.
+      Set to `"attack"` by attack.ts and by nothing else; ABSENT everywhere else
+      (a Trainer, an activated Ability, a trigger, the Checkup), which is why it
+      is optional rather than a two-member union with a default: the fact is
+      "this is an attack's effect", and its negation needs no spelling.
+
+      ⚠️ THIS REFINES D139's RULE RATHER THAN REVERSING IT, and the distinction is
+      worth stating because that decision explicitly declined a context field.
+      D139 was choosing where a LOG LABEL for ONE op should live and answered "on
+      the op" — `damageActive`/`damageChosen` carry `source: "ability" | "attack"`
+      to this day, and they still should, because a label is a property of the row
+      that op emits. What rides HERE is a RULE that SEVERAL ops must answer
+      IDENTICALLY: "prevent all damage from and effects of ATTACKS done to this
+      Pokémon" (D142) asks every defender-relative op the same question, and the
+      only site that knows the answer is the one that started the program. Written
+      per op it would be one fact in six places with six chances to go stale;
+      written here it is stated once by the caller that knows.
+
+      D139's second objection — that `ctx` is serialized into every park — is
+      answered by the field being exactly what a park NEEDS: an attack effect that
+      parks and resolves three actions later is still an attack's effect, and the
+      continuation carries that across the wire for free. An old continuation
+      written before this field simply lacks it, which reads as "not an attack" and
+      is byte-identical to the pre-slice behaviour.
+
+      It is NOT the same axis as `sourceUid` even though both describe the
+      invocation: that one names WHICH BODY the effect belongs to (a target
+      question), this one names WHAT KIND OF THING is doing it (a rules question). */
+  invokedBy?: "attack";
 }
 
 /** A specific in-play Pokémon, addressed by the board it sits on and the spot.
@@ -608,6 +638,8 @@ function stepOp(
       return { done: applyStatus(state, op, ctx, events) };
     case "preventRetreat":
       return { done: preventRetreat(state, ctx, events) };
+    case "preventDamage":
+      return { done: preventDamage(state, op.effects === true, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
@@ -934,6 +966,24 @@ function stepOp(
       // Mawile). Mandatory and exactly one per affected Pokémon, so the only
       // question is WHICH: nothing matching is a no-op, a forced pick
       // auto-resolves (the parkOrForce doctrine), and anything else parks.
+      //
+      // §11 (D142) — an ATTACK's discard aimed at the opponent's Active ("Flip a
+      // coin. If heads, discard an Energy from your opponent's Active Pokémon.")
+      // is an effect done to that Pokémon and the wider block refuses it, WHOLE:
+      // the refusal is taken here, in front of the candidate scan, so a blocked
+      // defender never reaches the prompt and the opponent is not asked to pick
+      // an Energy that will not be discarded. `from: "yourActive"`/`"yours"` — the
+      // attacker's OWN printed cost, six of the eight derived arms — resolve on
+      // `ctx.seat`, whose block can never be live during its own turn, so this
+      // one guard covers both directions without a `from` branch. A TRAINER
+      // reaching the same op is untouched: `invokedBy` is absent for it, which is
+      // exactly why Crushing Hammer still works inside the window.
+      if (op.from !== "yourActive" && op.from !== "yours") {
+        if (attackEffectRefused(state, discardVictimSeat(ctx.seat, op), ctx, events)) {
+          recordMoved(record, op.recordAs, []);
+          return { done: state };
+        }
+      }
       const discardable = discardableEnergies(state, ctx.seat, op);
       if (discardable.length === 0) {
         // A whiff still FILES an empty record, so a downstream reader (Hail
@@ -1638,6 +1688,13 @@ function applyStatus(
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
+  // §11 (D142) — a §12 Special Condition is an EFFECT of the attack, so a body
+  // carrying the wider block takes none. Checked on the RESOLVED seat rather
+  // than on the "defender" arm, so it is total over both targets: the "self"
+  // arm can never be refused in practice (a block is live only during its
+  // holder's OPPONENT's turn, and the self arm runs on the holder's own), and
+  // asking anyway costs one read and removes a case from the reasoning.
+  if (attackEffectRefused(state, seat, ctx, events)) return state;
   if (op.status === "poisoned") {
     const poisonDamage = op.poisonDamage ?? DEFAULT_POISON_DAMAGE;
     events.push({ type: "STATUS_APPLIED", seat, uid, status: "poisoned", poisonDamage });
@@ -1665,9 +1722,113 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
   const active = state.players[seat].active;
   if (active === null) return state;
   const uid = topUid(active);
-  if (uid === undefined || active.retreatBlocked) return state;
+  if (uid === undefined) return state;
+  // §11 (D142) — the DEFENDER's own block refuses this rider, which is the
+  // sharpest instance of the mirror: one durated block installed on the
+  // defender, another installed on the attacker, and the second one refuses the
+  // first. Checked BEFORE the idempotence early-return so a refusal is announced
+  // even on an already locked body.
+  if (attackEffectRefused(state, seat, ctx, events)) return state;
+  if (active.retreatBlocked) return state;
   events.push({ type: "RETREAT_BLOCKED", seat, uid });
   return withActive(state, seat, { ...active, retreatBlocked: true });
+}
+
+/** §11/§15.B — INSTALL the printed damage block on the CONTROLLER's own Active
+    ("During your opponent's next turn, prevent all damage [from and effects of]
+    attacks done to this Pokémon.", 13 printings across two spellings, D142).
+    "This Pokémon" is `ctx.seat`'s Active — the attacker, resolved exactly the way
+    `healSelf` and `damageSelf` resolve their own printed "this Pokémon" — so the
+    op carries no `target` and there is nothing to choose, hence no park.
+
+    THE STAMP IS `state.turn + 1`, AND THAT ARITHMETIC IS THE WHOLE DURATION.
+    Declaring an attack ENDS the turn (§5.3), so the turn after the installing one
+    is by construction the opponent's; the block is therefore live for exactly the
+    window the card prints, is NOT live for the remainder of the installing turn
+    (the printed word is "next"), and is dead again on the holder's following turn
+    with nobody having cleared it. The one place that arithmetic could go wrong is
+    a caller that is not an attack — an Ability installing this mid-turn would
+    stamp its own opponent's turn correctly too, but no such printing exists and
+    the op is refused to the deriver's Ability path by not being derivable there.
+
+    IDEMPOTENT: installing twice in one turn writes the same stamp, and the second
+    row is suppressed only when the second install says nothing new — a NARROW
+    block landing on top of a WIDE one must not silently downgrade it, so the two
+    are merged by OR rather than overwritten. Reachable in principle (a card with
+    two such attacks, or a re-install after a switch), unreachable in this pool. */
+function preventDamage(
+  state: GameState,
+  effects: boolean,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const turn = state.turn + 1;
+  const existing = active.attackBlock;
+  const merged =
+    existing !== null && existing.turn === turn ? existing.effects || effects : effects;
+  if (existing !== null && existing.turn === turn && merged === existing.effects) return state;
+  events.push({ type: "ATTACK_BLOCK_APPLIED", seat: ctx.seat, uid, effects: merged });
+  return withActive(state, ctx.seat, { ...active, attackBlock: { turn, effects: merged } });
+}
+
+/** §11 (D142) — is an ATTACK's effect aimed at `seat`'s Active refused by that
+    Pokémon's own live block, and has the refusal been announced? The ONE gate
+    every defender-relative effect op consults, so the reading is written once.
+
+    BOTH HALVES ARE REQUIRED, and neither is redundant:
+      • `ctx.invokedBy === "attack"` — the block covers "effects of ATTACKS", and
+        the opponent may well play a Trainer or use an Ability during the very
+        turn the window is open. Crushing Hammer discarding an Energy and Boss's
+        Orders dragging a body up are not attacks and are not refused.
+      • `attackBlockOf(...)?.effects` — the LIVE block, and the wider of the two
+        printed spellings. The narrow one ("prevent all damage done to this
+        Pokémon by attacks") stops damage and nothing else, so a Poison, a retreat
+        lock or a placed damage COUNTER all land on a body carrying it. That is
+        the printed difference and it is the slice's sharpest observable claim.
+
+    A refusal is LOUD: one ATTACK_EFFECT_PREVENTED row per refused op, because the
+    alternative is an attack clause that silently does nothing, which reads to a
+    player exactly like a bug. */
+/** §11/§8.5 (D142) — is ATTACK DAMAGE aimed at `pokemon` refused by its own live
+    block? `attackEffectRefused`'s silent twin, and the difference between them is
+    the whole of the two printed spellings: BOTH block damage, so this one does
+    not read `effects`, and it announces nothing because `DAMAGE_DEALT` already
+    carries `prevented: true` for it.
+
+    It takes the POKÉMON rather than a seat because the three interpreter damage
+    sites are per-target (a spread hits five bodies), and it is applied at all
+    three plus `attack.ts`'s main hit for the reason Mimikyu "Safeguard" is: the
+    sites must be TOTAL rather than case-covering. A block can in fact only ever
+    be live on an ACTIVE — installing it needs an attack, and leaving the Active
+    Spot ends it (turn.ts `clearOnLeavingActive`, interpreter `switchInto`) — so
+    the Bench-target arms are unreachable by construction and are guarded anyway,
+    which costs one read and removes a standing assumption. */
+function attackDamageBlocked(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  ctx: EffectContext,
+): boolean {
+  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon) !== null;
+}
+
+function attackEffectRefused(
+  state: GameState,
+  seat: Seat,
+  ctx: EffectContext,
+  events: GameEvent[],
+): boolean {
+  if (ctx.invokedBy !== "attack") return false;
+  const target = state.players[seat].active;
+  if (target === null) return false;
+  if (attackBlockOf(state, target)?.effects !== true) return false;
+  const uid = topUid(target);
+  if (uid === undefined) return false;
+  events.push({ type: "ATTACK_EFFECT_PREVENTED", seat, uid });
+  return true;
 }
 
 /** Spread damage: place `amount` HP on EACH of the opponent's Benched Pokémon
@@ -1697,7 +1858,8 @@ function spreadDamage(
     if (uid === undefined) return pokemon;
     const passives = passivesOf(state, pokemon);
     const prevented =
-      passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard);
+      (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
+      attackDamageBlocked(state, pokemon, ctx);
     const reduction = passives.damageReductionAfterWR;
     const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     const damage = pokemon.damage + dealt;
@@ -1800,9 +1962,10 @@ function placeSnipe(
     // bypasses the prevention just as it bypasses the reduction passive.
     const prevented =
       !ignoreWR &&
-      targetPassives.preventDamageFromExV &&
-      attackerCard !== undefined &&
-      isExOrV(attackerCard);
+      ((targetPassives.preventDamageFromExV &&
+        attackerCard !== undefined &&
+        isExOrV(attackerCard)) ||
+        attackDamageBlocked(next, pokemon, ctx));
     const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
     const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     events.push({
@@ -1861,7 +2024,9 @@ function snipeActive(
   // Mimikyu "Safeguard" on the sniped Active — an ex/V attacker's snipe is
   // prevented, unless `ignoreWR` (Feint Attack) bypasses on-target effects.
   const prevented =
-    !ignoreWR && targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card);
+    !ignoreWR &&
+    ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
+      attackDamageBlocked(state, target.active, ctx));
   const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
   const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
   events.push({
@@ -2019,6 +2184,21 @@ function damageActive(
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
+  // §11 (D142) — A PLACED COUNTER IS NOT DAMAGE, so it is refused by the EFFECTS
+  // half and by nothing else. That is this engine's own long-standing reading of
+  // this very op (the placement skips Weakness, Resistance and every reduction
+  // passive — D138/D139), and the catalog prints the rule that confirms it on
+  // Palafin sv03-145: "(Damage is not an effect.)". So a defender carrying the
+  // NARROW block ("prevent all damage done to this Pokémon by attacks") still
+  // takes these counters in full, which is the sharpest difference between the
+  // family's two printed spellings.
+  //
+  // `source` — D139/D140's field, added for a LOG LABEL — is not what gates this:
+  // the provenance the rule needs is the INVOCATION's, and an Ability that
+  // reached this op inside an attack's program would still be an attack's effect.
+  // The two agree by construction on every producer in the pool, which the suite
+  // asserts rather than assumes.
+  if (attackEffectRefused(state, opponent, ctx, events)) return state;
   events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
 }
@@ -2076,6 +2256,14 @@ function moveCountersToDefender(
   if (defender === null) return state;
   const defenderUid = topUid(defender);
   if (defenderUid === undefined) return state;
+  // §11 (D142) — the destination half is a counter PLACEMENT, an effect rather
+  // than damage (see `damageActive`), so the wider block refuses it. And the
+  // refusal takes the WHOLE printed action with it: the two rows carry ONE
+  // number because the printed verb is "move" (D138), so healing the Bench body
+  // while the counters never arrive would launder damage off the attacker's own
+  // board — the one outcome this op's doc block says two different numbers must
+  // never produce. Checked BEFORE the HEALED row for exactly that reason.
+  if (attackEffectRefused(state, opponent, ctx, events)) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
   const bench = side.bench.map((pokemon, i) => (i === index ? { ...pokemon, damage: 0 } : pokemon));
   const cleared = withSide(state, ctx.seat, { ...side, bench });
@@ -2579,8 +2767,19 @@ export function switchInto(
   const cleared = presentStatuses(active.conditions);
   // Leaving the Active Spot ends the conditions AND the §11 retreat block —
   // the one path where that clear is observable (a forced switch can move a
-  // Pokémon the block itself would never let retreat).
-  const benched = { ...active, conditions: noConditions(), retreatBlocked: false };
+  // Pokémon the block itself would never let retreat) — AND, since D142, the
+  // attack-installed damage block, for which THIS is the reachable clear rather
+  // than an unreachable one: the block is installed on the attacker's own body
+  // and its window is the opponent's turn, so a Boss's Orders played inside that
+  // window drags the shielded Pokémon off the Active Spot and the protection
+  // goes with it. Both are effects of ATTACKS and both end here for that one
+  // reason; nothing here is a §12 condition.
+  const benched = {
+    ...active,
+    conditions: noConditions(),
+    retreatBlocked: false,
+    attackBlock: null,
+  };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({
     type: "POKEMON_SWITCHED",
