@@ -1655,7 +1655,89 @@ import type { GameState, Seat } from "./types";
     the same widening-not-a-missing-field distinction D125 recorded, and an absent
     optional field reads identically in every older record. No web/API/DB/
     `@luminous/schema` diff. */
-export const engineVersion = "0.86.0";
+/** 0.87.0 — P3-M5: the COUNTER MOVE (D138). "Move all damage counters from 1 of
+    your Benched Pokémon to your opponent's Active Pokémon." now SIMULATES —
+    **2 printings** (Dedenne ex sv02-093/-239 "Tail Swap", one attack in two
+    rarities, so D121's warrant is met by the card) on ONE anchored regex with NO
+    CAPTURE, ONE deriver arm and ONE NEW OP with NO FIELDS. Neither printing
+    carries a `damage` field, so the move — and the park in front of it — is the
+    entire visible result of the declaration.
+
+    ⚠️ THE ATTACK IS NAMED "Tail Swap". Three consecutive remainder lists called it
+    "Dedechange" and the local D1 prints no such attack anywhere in its 978 cards.
+    That is D135's lesson landing on D135's own note: a forecast — or a name —
+    copied forward gains authority from repetition alone, and checking it took one
+    query.
+
+    CENSUS (local D1, 2026-08-02, whole effect string). Attack effects containing
+    "damage counter" — **56 printings / 31 distinct clauses**; the ones that MOVE
+    rather than PUT — **2 printings / 1 clause**, this sentence. The whole
+    counter-move neighbourhood in the pool is three clauses and the other two are
+    ABILITIES on a different reader: Munkidori sv06.5-072 "Adrena-Brain" (move UP
+    TO 3, from any of your Pokémon, to a CHOSEN one of your opponent's) and Slowbro
+    sv01-043 "Strange Behavior" (move 1, to YOUR OWN side). They differ on three
+    axes at once, which is what makes a field-less op the honest shape.
+
+    THE RESUME POINT'S TWO CLAIMS, CHECKED BEFORE ANYTHING WAS BUILT (D135's rule).
+    "The CHOICE half is free" — TRUE, and exactly: `ownBenchRefs` through
+    `parkOrForce` is byte-for-byte the candidate set D135 built for
+    `healChosen.zone: "bench"`, so the park, its three endings and the illegal-pick
+    refusal all came for nothing. "The move half is new" — TRUE: no op in the union
+    moves a counter; `damageActive` PLACES on the defender and `healChosen` REMOVES
+    on your side, and this sentence is the first thing in the engine that does both
+    in one action.
+
+    A NEW OP MEMBER, WITH D131's WIDEN-DON'T-ADD RULE APPLIED AND FAILING rather
+    than skipped. That rule licenses a FIELD when everything downstream of the
+    candidate set is byte-identical; here the pick is the only thing shared. The op
+    emits a SECOND event, on the OTHER seat's board, which can end the game — an op
+    named `heal` that placed damage would be the misnaming D128's provenance rule
+    exists to prevent. And it takes NO FIELDS on D104's minimal-shape rule, with
+    D130's `discardOpponentDeckTop` as the precedent for putting the direction in
+    the NAME; the condition that would earn `amount`/`from`/`to` is written into the
+    op's doc block (D131: when you decline a widening, write down what warrants it).
+
+    THE TWO ROWS CARRY THE SAME NUMBER, AND THAT EQUALITY IS THE WORD "MOVE" —
+    `HEALED` for what came off the Bench (the body lands at exactly 0) and
+    `COUNTERS_PLACED` for what went on. The placement is FLAT: a moved counter is
+    not attack damage, so §8.5's Weakness and the `damageReductionAfterWR` passive
+    both skip it (`damageActive`'s rule verbatim), pinned against a ×2 Psychic
+    defender taking 80 rather than 160 from a Psychic attacker.
+
+    `COUNTERS_PLACED.source` GREW A SIXTH MEMBER, `"moved"`, rather than reusing
+    `"ability"` — and that is D136's finding 1 refused at the source. `seat` on this
+    event owns the DAMAGED Pokémon, which here is the attacker's OPPONENT, and log
+    rows render after their seat's name; an "Ability:" label would also be false
+    about the provenance. The new log arm is a SYSTEM row for the same reason.
+
+    IT CAN KNOCK THE DEFENDER OUT, and the pipeline was verified rather than
+    assumed: the op only raises damage, and the attack epilogue's TWO-seat sweep
+    (`finishAttack`) reads the POST-effect board — after a park just as much as
+    inline, because `resumeTail` keeps `attackEpilogue` on `state.pending` until the
+    choice lands. Pinned end to end: KNOCKED_OUT after COUNTERS_PLACED, the prize
+    to the ATTACKER, the promotion prompt, and the turn ending only then.
+
+    AN EMPTY BENCH IS A WHIFF AND SO IS A CLEAN PICK, neither is a SKIP (D135's
+    ending, one slice on). `parkOrForce`'s three endings all mean here what they
+    mean there, and the candidates are EVERY benched body damaged or not — the
+    printed sentence carries no damaged restriction, so filtering would be a rule
+    the card does not print (the Potion doctrine). An undamaged pick moves nothing
+    and announces nothing, and NO `ATTACK_EFFECT_SKIPPED` fires on any of it,
+    because a derived program means the sentence was read.
+
+    Cost: 1 regex, 1 deriver arm, 1 `EffectOp` MEMBER, 1 interpreter case + 1
+    `applyChoice` case + 1 helper, 1 event-enum member, 1 log arm, 2 test fixtures
+    (Dedenne ex sv02-093 + a synthetic ×2 Psychic body), 1 test deck, 1 test file,
+    1 re-pinned census count in `clauseApostrophe.test.ts` (32 → 33 — the sweep is
+    DISCOVERED, so the new fixture's apostrophe landed in it automatically). ZERO
+    new events, prompts, `AttackCoinFlip`/`AttackFlipCount`/`BoardCondition`/
+    `DamageCountSource` members, clause-table rows, state fields, error codes,
+    registry rows or redact arms. No rng.ts / continuous.ts / attack.ts / flow.ts /
+    cardplay.ts diff. NO MATCH_RECORD_VERSION BUMP — a new union member and a new
+    enum value are WIDENINGS, D125's distinction and D130's precedent (which added a
+    whole op and did not bump either); an older record stays readable and simply
+    never carries them. No web/API/DB/`@luminous/schema` diff. */
+export const engineVersion = "0.87.0";
 
 export type {
   ApplyResult,

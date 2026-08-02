@@ -599,6 +599,56 @@ export type EffectOp =
       COUNTERS_PLACED source "ability". Never parks; can KO — the caller sweeps
       (the Checkup's KO sweep does, flow.ts). */
   | { op: "damageActive"; amount: number }
+  /** "Move all damage counters from 1 of your Benched Pokémon to your opponent's
+      Active Pokémon." — Dedenne ex sv02-093/-239 "Tail Swap" (D138). ONE printed
+      action with a CHOICE in front of it and two halves behind it:
+        1. the controller picks 1 of their own BENCHED Pokémon — the park, over
+           `ownBenchRefs` through `parkOrForce`, which is byte-for-byte the
+           candidate set `healChosen`'s `zone: "bench"` offers (D135). Undamaged
+           bodies are OFFERED: the printed sentence carries no damaged
+           restriction, so hiding them would be a rule the card does not print
+           (the Potion doctrine), and picking one whiffs SILENTLY.
+        2. EVERY damage counter on the pick comes off (its damage goes to 0, one
+           HEALED carrying what actually moved) and the SAME number lands on the
+           opponent's Active (one COUNTERS_PLACED source "moved").
+      The two rows carry the same `amount` on purpose — that equality IS the word
+      "move", and it is what a log reader can check.
+
+      A PLACED COUNTER, NOT ATTACK DAMAGE — `damageActive`'s rule verbatim: no
+      Weakness/Resistance (§8.5) and no `damageReductionAfterWR` passive, because
+      Bouffalant's "Bouffer" reduces *damage from attacks* and a moved counter is
+      not that. So a Psychic-weak defender takes exactly what came off the Bench.
+
+      IT CAN KNOCK THE DEFENDER OUT, and like every op it does not do the Knock
+      Out itself: the attack epilogue's TWO-seat sweep (flow.ts `finishAttack`)
+      reads the post-effect board, prizes to the attacker and promotes — whether
+      the op resolved inline or after a park, since `settleProgram(...,
+      { resumeTail: true })` leaves `attackEpilogue` sitting on `state.pending`
+      until the choice lands (D135).
+
+      NO FIELDS, AND THE MINIMAL SHAPE IS DELIBERATE (D104, and D130's
+      `discardOpponentDeckTop` is the precedent for putting the direction in the
+      NAME). Exactly one sentence in the pool has this shape; the neighbouring
+      counter-MOVE text is two ABILITIES, and each differs on a different axis —
+      Munkidori sv06.5-072 "Adrena-Brain" moves *up to 3* counters from 1 of your
+      Pokémon (any zone) to 1 of your opponent's Pokémon (a second choice), and
+      Slowbro sv01-043 "Strange Behavior" moves *1* counter from 1 of your OTHER
+      Pokémon to THIS one (your own side as the destination). Fielding an
+      `amount` / `from` / `to` now would be a three-axis guess made from one
+      printing. **THE CONDITION THAT WARRANTS THE WIDENING** (D131's rule — when
+      you decline a widening, write down what would earn it): a second ATTACK
+      printing of a counter move, at which point the two readings are in hand and
+      this op gains the field they actually differ on, exactly as D131 turned
+      `discardOpponentDeckTop` into `discardDeckTop { whose, count }`.
+
+      NOT A FIELD ON `healChosen`, and that is D131's widen-don't-add rule
+      APPLIED AND FAILING rather than skipped. That rule licenses a field when
+      everything downstream of picking the candidate set is byte-identical; here
+      the pick is the ONLY thing the two share. This op emits a second event, on
+      the OTHER seat's board, which can end the game — an op named `heal` that
+      placed damage would be the misnaming D128's provenance rule exists to
+      prevent. */
+  | { op: "moveCountersToDefender" }
   /** Spread damage (§8.5): place `amount` HP of damage on EACH of the
       opponent's Benched Pokémon. Weakness/Resistance NEVER apply to Benched
       Pokémon, so this is flat. A SECONDARY damage clause, distinct from the
@@ -1717,6 +1767,50 @@ const FLIP_SELF_HEAL = /^Flip a coin\. If heads, heal (\d+) damage from this Pok
 // branch there is likewise a spelling rather than an optional digit.
 const FLIP_DECK_TOP_MILL =
   /^Flip a coin\. If heads, discard the top card of your opponent['’]s deck\.$/;
+// The COUNTER MOVE (D138) — "Move all damage counters from 1 of your Benched
+// Pokémon to your opponent's Active Pokémon.", the whole printed effect. TWO
+// printings, both Dedenne ex "Tail Swap" (sv02-093 Double rare / sv02-239 Ultra
+// Rare — one attack in two rarities), so D121's second-printing warrant is met by
+// the card and not by a family argument. Neither printing carries a `damage`
+// field, so the move is the entire visible result of the declaration.
+//
+// ⚠️ THE ATTACK IS NAMED "Tail Swap". Three remainder lists called it
+// "Dedechange" and no printing of that name exists in this pool at all — checked
+// against the local D1 while censusing (conventions.md: verify a doc reference
+// against the source before relying on it, and D137's own correction of a resume
+// point that named two symbols that did not exist).
+//
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards). Every attack
+// effect containing "damage counter" is 56 printings / 31 distinct clauses; the
+// ones that MOVE rather than PUT are this sentence and nothing else. The whole
+// counter-move neighbourhood in the pool is three clauses, and the other two are
+// ABILITIES on a different reader:
+//   • Munkidori sv06.5-072 "Adrena-Brain" — "…you may move up to 3 damage
+//     counters from 1 of your Pokémon to 1 of your opponent's Pokémon." (1)
+//   • Slowbro sv01-043 "Strange Behavior" — "…you may move 1 damage counter from
+//     1 of your other Pokémon to this Pokémon." (1)
+// Both differ from this anchor on THREE axes at once (a bounded amount, a source
+// zone that includes the Active, and a destination that is chosen or is your own
+// side), which is why the op takes no fields — see its doc block for the
+// condition that would earn them.
+//
+// A WHOLE-SENTENCE ANCHOR, and the near misses it must refuse are all real
+// catalog rows that share its opening noun phrase: "Put N damage counters on your
+// opponent's Active Pokémon." (Mimikyu sv02-097, Polteageist sv03-098) PUTS
+// counters from nowhere rather than moving them off your own board, and
+// "Put damage counters on your opponent's Active Pokémon until its remaining HP
+// is 10." (Alolan Raticate swsh10.5-042) reads a number off the TARGET. None of
+// them starts with "Move", which is the one word that separates the family.
+//
+// The possessive carries the `['’]` class every sibling on this noun phrase does
+// (D136/D137) — "your opponent's Active Pokémon" is the pool's single most
+// re-printed phrase, and a slot classed here cannot be un-derived by a re-ingest
+// that normalises punctuation. No /i, for the standing reason (see
+// TYPED_SELF_DISCARD): the capitalised first word plus `^…$` is the WHOLE guard,
+// and it is what keeps Munkidori's and Slowbro's lowercase mid-sentence "move"
+// off this path.
+const COUNTER_MOVE_TO_DEFENDER =
+  /^Move all damage counters from 1 of your Benched Pokémon to your opponent['’]s Active Pokémon\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -3300,6 +3394,27 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           : { op: "healChosen", amount, zone: "bench" },
       ];
     }
+  }
+
+  // 21. "Move all damage counters from 1 of your Benched Pokémon to your
+  //     opponent's Active Pokémon." — D138's COUNTER MOVE, 2 printings on one
+  //     card (Dedenne ex sv02-093/-239 "Tail Swap"). NO CAPTURE AT ALL: every
+  //     varying part of the neighbouring sentences is fixed here — the amount is
+  //     the printed word "all", the source zone is the printed word "Benched",
+  //     and the destination is spelled out — so the op takes no fields and this
+  //     arm is a `test`, exactly as `FLIP_DECK_TOP_MILL`'s is.
+  //
+  //     THE FIRST DERIVED ATTACK OP THAT HEALS ONE BOARD AND DAMAGES THE OTHER,
+  //     which is why it is a new member rather than a field on `healChosen`
+  //     (D131's rule applied and failing — see the op's doc block). The CHOICE
+  //     half genuinely was free: `ownBenchRefs` + `parkOrForce` is the candidate
+  //     set D135 built for `zone: "bench"`, unchanged.
+  if (COUNTER_MOVE_TO_DEFENDER.test(effect)) {
+    // No `amount >= 1` guard, because there is no printed amount to guard: "all"
+    // is not a number and cannot be zero. The degenerate case — a pick with no
+    // counters on it — is a SILENT whiff at run time (the single-arm rule), not
+    // a derivation failure, exactly as `CHOSEN_HEAL`'s "all" branch is.
+    return [{ op: "moveCountersToDefender" }];
   }
 
   return null;

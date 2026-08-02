@@ -7627,3 +7627,222 @@ diff; no interpreter, `attack.ts`, `rng.ts` or `continuous.ts` diff.
 
 Cost: **1 helper (7 lines) + 2 constants, 5 call sites re-pointed, 2 regexes classed, 3
 doc blocks amended, 1 new test file.**
+
+## D138 — the COUNTER MOVE: `Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.` (engine 0.87.0)
+
+The first derived attack op that touches **both boards in one action**. **2 printings
+/ 1 clause** — Dedenne ex `sv02-093`/`-239` **"Tail Swap"** ({P}{P}, attack index 0) —
+now SIMULATE on **ONE anchored regex with NO CAPTURE, ONE `deriveAttackEffect` arm and
+ONE NEW `EffectOp` MEMBER WITH NO FIELDS**. Neither printing carries a `damage` field,
+so the move (and the park in front of it) is the entire visible result of the
+declaration. Taken as the top item of D135's remainder list, which D137 carried forward
+verbatim.
+
+### ⚠️ The resume point's three claims, checked before anything was designed
+
+D135's own lesson, applied to D135's own note. Two held and one did not:
+
+| Claim | Verdict |
+|---|---|
+| "The CHOICE half is free — `healChosen`'s bench-filtered park is exactly this candidate set" | **TRUE, exactly.** `ownBenchRefs` through `parkOrForce` is byte-for-byte D135's `zone: "bench"` candidate set. The park, its three endings and the illegal-pick refusal all cost nothing. |
+| "The move half is new" | **TRUE.** No op in the union moves a counter — `damageActive` PLACES on the defender, `healChosen` REMOVES on your side, and nothing did both. |
+| "Dedenne ex … **Dedechange**" | **FALSE.** The attack is **"Tail Swap"**, and the local D1 prints no attack named "Dedechange" anywhere in its 978 cards. |
+
+The wrong name rode **three consecutive remainder lists** unchecked, exactly as D135's
+cost forecast did and exactly as D137's resume point named two symbols that do not
+exist. It never reaches the engine — the reader keys on the EFFECT, not the name —
+which is precisely why nothing would ever have caught it. **A doc reference gains
+authority from repetition alone, and checking one costs a single query**
+(`conventions.md`'s own rule, third slice running). Pinned in the suite as
+`expect(tailSwap?.name).not.toBe("Dedechange")`.
+
+### The census (local D1, 2026-08-02, whole effect string, 978 cards)
+
+`json_extract(attacks_json, '$[*].effect') LIKE '%damage counter%'` over `json_each`,
+read in full, then the same sweep over `abilities_json` and the trainer `effect` column
+for the neighbourhood.
+
+| Slice of the census | Printings | Distinct clauses |
+|---|---|---|
+| Attack effects containing "damage counter" | **56** | **31** |
+| …of those, ones that MOVE rather than PUT | **2** | **1** |
+| The whole counter-MOVE neighbourhood (attacks + Abilities) | **4** | **3** |
+
+The one mapped clause and its two live neighbours:
+
+| Clause | Printings | Card / where |
+|---|---|---|
+| `Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.` | **2** | Dedenne ex `sv02-093` (Double rare) / `sv02-239` (Ultra Rare) "Tail Swap" — ATTACK |
+| `…you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.` | 1 | Munkidori `sv06.5-072` "Adrena-Brain" — ABILITY |
+| `…you may move 1 damage counter from 1 of your other Pokémon to this Pokémon.` | 1 | Slowbro `sv01-043` "Strange Behavior" — ABILITY |
+
+The two neighbours differ from the mapped anchor on **three axes at once** — a bounded
+amount ("up to 3" / "1"), a source zone that includes the Active, and a destination that
+is either CHOSEN or is your own side — and both are ABILITIES, which reach a different
+reader entirely. That is the whole argument for a field-less op.
+
+Also censused and refused, because they share the destination noun phrase and PUT
+counters rather than moving them: Mimikyu `sv02-097` and Polteageist `sv03-098` ("Put
+{7|5} damage counters on your opponent's Active Pokémon."), Alolan Raticate
+`swsh10.5-042` and Claydol `sv03-095` ("…until its remaining HP is 10."), Drifblim
+`sv01-090` ("in any way you like") and Ting-Lu ex `sv02-127` (the opponent's Bench —
+the one on the list the engine already reads, as a `damageChosen` snipe).
+
+### ⚠️ A new op member, with D131's widen-don't-add rule APPLIED AND FAILING
+
+`{ op: "moveCountersToDefender" }` — no fields.
+
+D131's rule licenses a FIELD when everything downstream of picking the candidate set is
+byte-identical. Here **the pick is the only thing the two share**: this op emits a
+SECOND event, on the OTHER seat's board, which can end the game. An op named `heal` that
+placed damage would be the misnaming D128's provenance rule exists to prevent. So the
+rule was applied and it FAILED, which is a different thing from not consulting it.
+
+**And it takes no fields at all** (D104's minimal shape, with D130's
+`discardOpponentDeckTop` as the precedent for putting the direction in the NAME). Every
+token that varies among the neighbouring sentences is FIXED in this one — the amount is
+the printed word "all", the source zone is the printed word "Benched", the destination
+is spelled out — so there is no capture in the regex and nothing for a field to carry.
+Fielding `amount` / `from` / `to` now would be a **three-axis guess made from one
+printing**.
+
+**THE CONDITION THAT WARRANTS THE WIDENING IS WRITTEN DOWN** (D131's rule — when you
+decline a widening, record what would earn it): a second **ATTACK** printing of a counter
+move, at which point the two readings are in hand and this op gains the field they
+actually differ on, exactly as D131 turned `discardOpponentDeckTop` into
+`discardDeckTop { whose, count }`.
+
+### ⚠️ The two rows carry ONE number, and that equality is the word "move"
+
+`HEALED` for what came off the Bench — the body lands at exactly 0, since the printed
+word is "all" — and `COUNTERS_PLACED` for what went on, in the printed "from … to …"
+order. That order is also the only one that reads correctly in a log, because the second
+row is the one that can Knock the defender Out.
+
+A build that healed one amount and placed another produces **both rows** and the wrong
+game, which no single-row assertion catches. Every end-to-end case asserts the pair.
+
+**THE PLACEMENT IS FLAT — `damageActive`'s rule verbatim.** A moved counter is not
+attack damage, so §8.5's Weakness and the `damageReductionAfterWR` passive both skip it.
+Driven against a **×2 Psychic** defender under a **Psychic** attacker: **80, not 160**,
+and **no `DAMAGE_DEALT` row at all** (the event type is as much the claim as the number
+is — `DAMAGE_DEALT` carries `weakness`/`resistance` fields precisely because it went
+through the pipeline).
+
+### ⚠️ `COUNTERS_PLACED.source` grew a sixth member, `"moved"` — D136's finding 1, refused at the source
+
+Reusing `"ability"` was the cheap option and it was wrong twice over. That event's `seat`
+OWNS the damaged Pokémon, which here is the attacker's **opponent**, and log rows render
+after their seat's name; and the existing arm prints the literal word **Ability** on an
+**attack**. So the new member gets a **SYSTEM** row ("Moved: 80 damage onto …"), and the
+suite asserts the pair renders as controller-voice removal + system placement carrying
+the same number, with the removal row FIRST.
+
+The enum widening is a **widening, not a shape change** — the `ATTACK_FAILED.reason`
+precedent stated in `events.ts` itself — so **no `MATCH_RECORD_VERSION` bump**. The same
+goes for the new `EffectOp` member: D130 added a whole op and did not bump either.
+
+`HEALED`'s doc block was also corrected in passing — it said "`seat`'s **Active**", which
+has been wrong since D133/D135 taught `healEach` and `healChosen` to reach the Bench.
+
+### ⚠️ The KO pipeline was verified rather than assumed, from BOTH endings
+
+The op only RAISES damage. The sweep that catches the Knock Out is the attack EPILOGUE's
+two-seat one (`flow.ts finishAttack`), reading the POST-effect board — after a park just
+as much as inline, because `settleProgram(..., { resumeTail: true })` keeps
+`attackEpilogue` on `state.pending` until the choice lands (D135).
+
+Both endings are driven end to end and produce the same event order:
+
+`HEALED` → `COUNTERS_PLACED` → `KNOCKED_OUT` → `PRIZES_OWED` **to the ATTACKER**
+
+…and the resolution stops at `{ kind: "ko:takePrizes", seat: "p1", count: 1 }` with **no
+`TURN_ENDED` yet**: which prize card is a decision, and the opponent's promotion is
+behind it, both still in front of §5.3's tail. A build that only wired the sweep into the
+resumed path passes the parked case and loses every forced KO, which is why the forced
+one is driven separately.
+
+### ⚠️ An empty Bench is a WHIFF and so is a clean pick — neither is a SKIP
+
+D135's ending, one slice on, and all three of `parkOrForce`'s endings mean here what they
+mean there:
+
+1. **zero candidates** (a lone-Active Dedenne ex) — resolves SILENTLY, no prompt, no
+   event, and **the defender is untouched**: an empty Bench must not be read as "move
+   nothing, but place something anyway";
+2. **exactly one** — applied INLINE, both halves in one action;
+3. **two or more** — parks on a `choosePokemon`.
+
+The candidates are **every benched body, damaged or not**: the printed sentence carries
+no damaged restriction, so filtering would be a rule the card does not print (the Potion
+doctrine `healChosen` follows for the same reason). An undamaged pick moves nothing and
+announces **neither** row — a `COUNTERS_PLACED` of 0 would read as a hit. No
+`ATTACK_EFFECT_SKIPPED` fires on any of it, because a derived program means the sentence
+WAS read.
+
+A missing DEFENDER moves nothing at all — half a move would launder counters off the
+controller's board — and is unreachable from a §8 attack (the attack gate guarantees a
+Defending Pokémon). Written down because a total helper must still answer it.
+
+### Witnesses
+
+**Nothing needed re-pointing.** No suite had ever listed this sentence as a stays-LOUD
+near-miss, so nothing was deleted and no file was left without a live witness. The new
+suite's six near-misses are all still-live catalog rows (the two counter-move Abilities
+plus four PUT sentences).
+
+`clauseApostrophe.test.ts`'s DISCOVERED census moved **32 → 33** the moment the Dedenne ex
+fixture landed, because "your opponent's Active Pokémon" carries an apostrophe and the
+sweep reads `FIXTURE_POOL`. That is the D137 design working, not a chore.
+
+### The suite — `counterMove.test.ts` (21 tests)
+
+Seed-free: this sentence takes no coin, pinned by an unchanged `rngState` across a whole
+park-and-resolve. Full `bun run check` green exit 0, **180 files / 2893 tests** (was
+179 / 2872).
+
+Derivation: the one clause to the field-less op, with `Object.keys(op)` asserted to be
+exactly `["op"]`; the disjointness from `healChosen` in BOTH directions; the six real
+near-misses; fourteen anchor/punctuation/case/token rewrites including the two that
+would silently invent a reading (a numeric amount, and the dropped word "Benched"); the
+curly-apostrophe EQUALITY.
+
+Fixtures: **Dedenne ex `sv02-093`** (170 HP Psychic Basic, retreat 1, ×2 Metal, no
+Ability) — and its **index-1 "Wondrous Shot"** ({P}{P}{P}, 170, "Discard an Energy from
+this Pokémon.") is a sharper control than the family's usual effect-less second attack,
+because its sentence is read by a DIFFERENT arm of the SAME deriver: one card, two
+attacks, two ops, asserted. Plus a synthetic **`fix-psychic-weak-big`** (200 HP, ×2
+Psychic, no attacks) for the flat-placement claim. Own deck (`COUNTER_MOVE_DECK`), per
+the house convention.
+
+End to end: the park (candidates BENCH-ONLY with the two-Energy attacker excluded, the
+prompt heading, nothing moved on EITHER board, `attackEpilogue` still queued); the move
+itself with the two amounts asserted EQUAL; the forced single-candidate ending; the empty
+Bench; the undamaged pick; five illegal picks; the rngState pin; the JSON round trip; the
+flat placement; the same declaration driven **from p2** so both `seat` fields are claims
+rather than coincidences; both KO endings; and the log pair.
+
+Mutation-checked three ways: not zeroing the source fails **4** tests, reusing
+`source: "ability"` fails **5**, ignoring the printed word "Benched" fails **8**.
+
+### Still unmapped after D138 — ranked by cost
+
+The heal census is CLOSED (D133/D135), the counter-move neighbourhood is now closed for
+ATTACKS (this section's table is its map — do not re-run it), and the gated census in the
+D134 section is still the live map for the "Flip a coin. If heads, …" neighbourhood.
+
+- **The gated PREVENT clause — 13 printings / 2 spellings**, still the biggest single
+  un-taken count in the gated census. "…during your opponent's next turn, prevent all
+  damage from and effects of attacks done to this Pokémon." A §11 block with a DURATION,
+  so the cost is a CONTINUOUS-EFFECT mechanism rather than a reader.
+- **`Put {N} damage counters on your opponent's Active Pokémon.` — 2 printings / 2
+  clauses**, Mimikyu `sv02-097` "Ghost Eye" (7) and Polteageist `sv03-098` "Pour Tea" (5).
+  **Turned up by THIS slice's census, and it is the cheapest thing left.** `damageActive`
+  has shipped since 0.x behind Trevenant's between-turns Ability and is the exact op —
+  D132's inventory rule again, a reader and one capture, with the flat-placement reading
+  already pinned by this slice. NEITHER carries a printed `damage` field (checked, not
+  assumed — the placement is the whole visible result), so there is no D125 tail-order
+  question either.
+- **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132–D135: a channel from the
+  §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt `sv03-032`.
+  Do it last or not at all, and do it *with* Camerupt.

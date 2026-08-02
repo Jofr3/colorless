@@ -164,13 +164,23 @@ export type GameEvent =
       itself" recoil clause) — `amount` is HP of damage, and weakness/resistance
       never apply (§13, §8 recoil). `"self"` is a recoil the attacker DEALS to
       its own Active mid-attack (Skeledirge "Blazing Shout"), so its `seat` owns
-      the damaged Pokémon exactly as the confusion self-hit's does. */
+      the damaged Pokémon exactly as the confusion self-hit's does. `"moved"`
+      (D138) is the destination half of a printed counter MOVE — Dedenne ex
+      "Tail Swap", where the same counters came off one of the attacker's own
+      Benched Pokémon in the HEALED row immediately above, carrying the same
+      `amount`. It is its own member rather than `"ability"` because `seat` here
+      owns the DAMAGED Pokémon (the non-actor) while the row's provenance is an
+      ATTACK: labelling it "Ability" would be the D136 log-voice defect written
+      in at the source.
+      Each new member is a WIDENING of the source enum, not a shape change — no
+      MATCH_RECORD_VERSION bump (the ATTACK_FAILED.reason precedent below); an
+      older record stays readable, it simply never carries the newer sources. */
   | {
       type: "COUNTERS_PLACED";
       seat: Seat;
       uid: string;
       amount: number;
-      source: "poison" | "burn" | "confusion" | "ability" | "self";
+      source: "poison" | "burn" | "confusion" | "ability" | "self" | "moved";
     }
   /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
       (§13.2) or asleep's wake flip (§13.3). Heads is followed by the
@@ -202,8 +212,12 @@ export type GameEvent =
       uid: string;
       reason: "confusion" | "requirement" | "coinFlip";
     }
-  /** Damage removed from `seat`'s Active by an attack effect; `amount` is
-      what actually healed (clamped at the damage present — never 0). */
+  /** Damage removed from one of `seat`'s IN-PLAY Pokémon by an effect; `amount`
+      is what actually came off (clamped at the damage present — never 0), so a
+      whiff on an undamaged body emits nothing at all. The Active is only the
+      commonest `uid`, not the only one: `healEach`, `healChosen` (D135) and the
+      counter move (D138) all reach the Bench. `amount` is what MOVED, never what
+      was printed — the half a log-only implementation gets wrong. */
   | { type: "HEALED"; seat: Seat; uid: string; amount: number }
   /** An attack effect's own "Flip a coin. If heads, …" gate (effects.ts):
       heads runs the gated steps, tails skips them. `seat` is the attacker. */

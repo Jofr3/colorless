@@ -616,6 +616,26 @@ function stepOp(
       return { done: healEachAll(state, op.amount, events) };
     case "damageActive":
       return { done: damageActive(state, op.amount, ctx, events) };
+    case "moveCountersToDefender":
+      // D138 — "Move all damage counters from 1 of your Benched Pokémon to your
+      // opponent's Active Pokémon." The CHOICE is `healChosen`'s bench-filtered
+      // park, unchanged: the same `ownBenchRefs` helper through the same
+      // `parkOrForce`, so all three of its endings are reachable here and mean
+      // the same things they mean there — an EMPTY BENCH resolves silently (no
+      // prompt, no event, and NOT an ATTACK_EFFECT_SKIPPED, since a derived
+      // program means the sentence was read), exactly one benched body is
+      // applied INLINE, and two or more park.
+      //
+      // The candidates are EVERY benched body, damaged or not. The printed
+      // sentence carries no damaged restriction, so filtering would be a rule
+      // the card does not print (the Potion doctrine `healChosen` follows for
+      // the same reason); an undamaged pick whiffs silently in the helper.
+      return parkOrForce(
+        state,
+        ownBenchRefs(state, ctx.seat),
+        (ref) => moveCountersToDefender(state, ref, ctx, events),
+        "Move the damage counters off which of your Benched Pokémon?",
+      );
     case "spreadDamage":
       return { done: spreadDamage(state, op.amount, ctx, events) };
     case "damageSelf":
@@ -1535,6 +1555,14 @@ export function applyChoice(
       return choice.kind === "pokemon"
         ? healChosen(state, choice.ref, op.amount, ctx, events)
         : state;
+    case "moveCountersToDefender":
+      // D138 — the parked half of the counter move. Same shape as `healChosen`'s
+      // single-pick arm above and for the same reason: `validateChoice` matches
+      // the answer against the PARKED prompt, so the wrong choice kind is the
+      // wire belt rather than a case that can fire in a real match.
+      return choice.kind === "pokemon"
+        ? moveCountersToDefender(state, choice.ref, ctx, events)
+        : state;
     case "damageChosen":
       // Recompute the (possibly Prize-scaled) amount from state: no KO has
       // happened between parking and this pick, so the count is unchanged — the
@@ -1940,6 +1968,66 @@ function damageActive(
   if (uid === undefined) return state;
   events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source: "ability" });
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
+}
+
+/** MOVE every damage counter off the controller's chosen BENCHED `ref` and onto
+    the OPPONENT's Active — Dedenne ex sv02-093/-239 "Tail Swap" (D138). One
+    printed action, two halves, and the SAME number in both: `HEALED` for what
+    came off (so the bench body lands at exactly 0) and `COUNTERS_PLACED` source
+    "moved" for what went on. That equality is the word "move"; two different
+    numbers would be a heal and a snipe wearing one sentence.
+
+    THE ORDER IS THE PRINTED ORDER — "from … to …" — and it is also the only
+    order that reads correctly in a log, since the second row is the one that can
+    Knock the defender Out.
+
+    A PLACED COUNTER, NOT ATTACK DAMAGE (`damageActive`'s rule verbatim): no
+    Weakness/Resistance (§8.5) and no `damageReductionAfterWR` passive, because
+    Bouffalant's "Bouffer" reduces *damage from attacks* and a moved counter is
+    not one. So the number on the defender is the number that came off the Bench,
+    whatever the defender is weak to.
+
+    THREE ENDINGS, all silent and all reachable:
+      • the `ref` is not the controller's own Bench — the wire belt (`candidates`
+        is the real legality rule, and it only ever holds own-bench refs);
+      • the pick carries NO damage — a whiff, and the printed sentence offers
+        undamaged bodies on purpose (the Potion doctrine), so this is the single-
+        arm rule: nothing moved, so nothing is announced;
+      • there is no Defending Pokémon — then NOTHING moves, not even the removal.
+        A move needs both ends, and half of one would silently launder counters
+        off the controller's board. Unreachable from a §8 attack (the attack gate
+        guarantees a defender) and written down because a total helper must still
+        answer it.
+
+    Like every op it only RAISES damage and never KOs: the attack epilogue's
+    two-seat sweep (flow.ts `finishAttack`) reads the post-effect board, prizes to
+    the attacker and promotes — after a park just as much as inline, because
+    `resumeTail` keeps `attackEpilogue` queued behind the question (D135). */
+function moveCountersToDefender(
+  state: GameState,
+  ref: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (ref.seat !== ctx.seat || ref.spot.spot !== "bench") return state;
+  const index = ref.spot.index;
+  const side = state.players[ctx.seat];
+  const source = side.bench[index];
+  if (source === undefined) return state;
+  const sourceUid = topUid(source);
+  if (sourceUid === undefined) return state;
+  const moved = source.damage;
+  if (moved <= 0) return state;
+  const opponent = otherSeat(ctx.seat);
+  const defender = state.players[opponent].active;
+  if (defender === null) return state;
+  const defenderUid = topUid(defender);
+  if (defenderUid === undefined) return state;
+  events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
+  const bench = side.bench.map((pokemon, i) => (i === index ? { ...pokemon, damage: 0 } : pokemon));
+  const cleared = withSide(state, ctx.seat, { ...side, bench });
+  events.push({ type: "COUNTERS_PLACED", seat: opponent, uid: defenderUid, amount: moved, source: "moved" });
+  return withActive(cleared, opponent, { ...defender, damage: defender.damage + moved });
 }
 
 /** PLACE `amount` HP of SELF-damage on the controller's OWN Active — the attack

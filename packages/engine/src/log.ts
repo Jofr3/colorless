@@ -366,6 +366,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           // the confusion self-hit it reads in the attacker's own voice (its seat)
           // rather than as a system row; it echoes the printed sentence.
           return row(seat, [strong(name), plain(" did "), amount, plain(" damage to itself")]);
+        case "moved":
+          // D138 — the destination half of a printed counter MOVE (Dedenne ex
+          // "Tail Swap"). A SYSTEM row, like the Ability placement above and for
+          // a sharper version of the same reason: `seat` owns the DAMAGED
+          // Pokémon, which here is the attacker's OPPONENT, and rows render
+          // after their seat's name — so an active-voice row under this seat
+          // would credit the victim with the move (D136's finding 1, verbatim).
+          // The actor is named by the ATTACK_DECLARED row above, and the HEALED
+          // row directly before this one carries the same amount coming OFF the
+          // attacker's Bench, which is what makes the pair read as one move.
+          return row("system", [plain("Moved: "), amount, plain(" damage onto "), strong(name)]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);
       }

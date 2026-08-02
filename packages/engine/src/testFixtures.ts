@@ -4223,6 +4223,79 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Colorless", "Colorless"], name: "Blunt Hit", damage: 30 },
     ],
   }),
+
+  // — M5 op-slice: the COUNTER MOVE (D138). "Move all damage counters from 1 of
+  //   your Benched Pokémon to your opponent's Active Pokémon." —
+  /** Dedenne ex sv02-093 — the pool's ONLY counter-move ATTACK, and 1 of its 2
+      printings (-093 Double rare / -239 Ultra Rare are one card in two rarities,
+      which is what meets D121's second-printing warrant without a family
+      argument).
+
+      ⚠️ THE ATTACK IS "Tail Swap", not "Dedechange". Three remainder lists in a
+      row carried the wrong name; the D1 has no printing of "Dedechange" at all.
+      Pinned in the suite's fixture-bytes case for that reason.
+
+      "Tail Swap" ({P}{P}, index 0) carries NO `damage` field, so the move — and
+      the park in front of it — is the entire visible result of the declaration:
+      there is no number for a half-simulation to hide behind, exactly as in
+      D135's family.
+
+      Index 1 "Wondrous Shot" ({P}{P}{P}, 170, "Discard an Energy from this
+      Pokémon.") is the control, and it is a BETTER one than the family's usual
+      effect-less second attack: its sentence is read by a DIFFERENT arm of the
+      same deriver (the printed self-discard cost, since 0.x), so the suite can
+      assert that one card's two attacks derive two different ops and that
+      neither reaches the other's anchor.
+
+      170 HP is load-bearing in one direction only — the attacker never carries
+      damage in this suite (its own board's counters live on the BENCH) — but the
+      "ex" in the NAME is: `pokemonSuffixOf` reads it, so this body is worth 2
+      Prizes and `isExOrV` is true of it. Neither matters to any case here (it is
+      never Knocked Out, and no fixture in the deck carries a prevention passive),
+      and both are written down so a later case does not discover them.
+
+      Verbatim off the local D1 (2026-08-02): 170 HP, Psychic, BASIC (so no
+      evolution surgery — it can be dealt straight into the Active Spot), retreat
+      1, ×2 Metal, NO Resistance, `abilities_json` NULL, reg mark G. */
+  "sv02-093": battler("sv02-093", {
+    name: "Dedenne ex",
+    types: ["Psychic"],
+    stage: "Basic",
+    hp: 170,
+    retreat: 1,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Psychic"],
+        name: "Tail Swap",
+        effect:
+          "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Psychic", "Psychic", "Psychic"],
+        name: "Wondrous Shot",
+        damage: 170,
+        effect: "Discard an Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** FIXTURE (synthetic) — a 200 HP ×2 PSYCHIC body with no attacks, on the
+      fix-colorless-weak-big / fix-lightning-weak-big precedent and for the same
+      reason: the printed Psychic-weak rows in this file all carry attacks or an
+      HP that a moved counter pile would Knock Out mid-assertion.
+
+      It exists to pin ONE claim, and it is the sharpest thing the destination
+      half asserts: a MOVED counter is not attack damage, so §8.5's Weakness
+      never touches it. Dedenne ex is a Psychic attacker and this defender is ×2
+      Psychic, so a build that routed the placement through the damage pipeline
+      would double the pile — 160 against the 80 that actually came off the
+      Bench — and 200 HP survives BOTH numbers, so the case measures the amount
+      and never a promotion. */
+  "fix-psychic-weak-big": battler("fix-psychic-weak-big", {
+    hp: 200,
+    retreat: 1,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -6039,6 +6112,44 @@ export const CHOSEN_HEAL_DECK = deckOf({
   "fix-grass-energy": 5, // Basic {G} — pays Fresh-Picked Fruit's single Grass (and Razor Leaf's first)
   "fix-energy": 4, // Basic {C} — pays fix-allheal's {C}{C} line and Razor Leaf's second symbol
   "fix-titan": 34, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + every candidate body
+});
+
+/** 0.86.0 → 0.87.0: the COUNTER MOVE (D138) — "Move all damage counters from 1 of
+    your Benched Pokémon to your opponent's Active Pokémon." A DEDICATED deck, on
+    the house rule that a new family gets its own 60, and because this one's boards
+    are unlike every heal suite's in the way that matters: the claim spans BOTH
+    seats at once. Every case reads a bench body's damage, a prompt's candidates
+    AND the opponent's Active, so a shared deck would let another suite reshuffle
+    one end of an equality.
+
+    ONE CARD PRINTS THE SENTENCE, and both of its attacks are in play here:
+      • Dedenne ex sv02-093 "Tail Swap" (idx 0, {P}{P}, NO `damage`) — the whole
+        slice. Its candidate set is the BENCH ONLY, so a lone-Active board is the
+        silent whiff and every other board parks or forces.
+      • "Wondrous Shot" (idx 1, {P}{P}{P}, 170) — the control, and a sharper one
+        than an effect-less second attack: its "Discard an Energy from this
+        Pokémon." is read by a DIFFERENT arm of the same deriver, so the two
+        indices of one card must produce two different ops.
+    EIGHT {P} — Tail Swap needs two attached and Wondrous Shot three, and a case
+    rebuilds a board a dozen times over; an Energy-starved deck fails as an attach
+    error rather than as an assertion.
+
+    TWO DEFENDING BODIES, and the second is the point:
+      • fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned
+        Active on both sides and every BENCHED body the prompt offers — 340 HP
+        carries any damage figure a case wants without the epilogue's KO sweep
+        removing a candidate from under the assertion, and it is the DOMINANT
+        (mulligan-free) Basic through setup.
+      • fix-psychic-weak-big (200 HP, ×2 Psychic, no attacks) is surgeried in as
+        the DEFENDER for exactly one claim — that a MOVED counter skips §8.5 —
+        against a Psychic attacker whose pile would otherwise double.
+    BOTH SEATS RUN IT, so the `seat` on every HEALED and COUNTERS_PLACED row is
+    asserted rather than assumed. */
+export const COUNTER_MOVE_DECK = deckOf({
+  "sv02-093": 4, // Dedenne ex — "Tail Swap" at idx 0 (the move, no damage); "Wondrous Shot" at idx 1 ({P}×3, 170)
+  "fix-psychic-energy": 8, // Basic {P} — two pay Tail Swap, three pay Wondrous Shot
+  "fix-psychic-weak-big": 4, // 200 HP ×2 Psychic, NO attacks — the flat-placement defender
+  "fix-titan": 44, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + every bench candidate
 });
 
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
