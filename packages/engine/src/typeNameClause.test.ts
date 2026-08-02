@@ -379,8 +379,17 @@ describe("the TEMPLATE — eleven type words, and nothing else", () => {
     // opponent's next turn." — the same "is a … Pokémon" reading on another
     // skeleton. An open `(.+)` with no vocabulary behind it would capture `Basic`,
     // build a condition for a type that does not exist, and answer FALSE forever
-    // with no failure anywhere. It resolves to nothing instead, so the sentence
-    // keeps its loud ATTACK_EFFECT_SKIPPED row.
+    // with no failure anywhere. It resolves to nothing instead.
+    //
+    // ⚠️ RE-POINTED AT D148, NOT DELETED, AND THE CLAIM GOT SHARPER RATHER THAN
+    // WEAKER. Until 0.96.0 the note here ended "…so the sentence keeps its loud
+    // ATTACK_EFFECT_SKIPPED row"; D148 MAPPED that sentence, on its own anchor,
+    // to a `conditionGate { cond: { kind: "opponentActiveIsBasic" } }`. So the
+    // failure this line guards against is no longer "an unread card" but the
+    // worse one: TWO readers claiming one printed clause, where the damage family
+    // would silently build `opponentActiveHasType` for a type named "Basic" and
+    // answer false forever beside a lock that works. The token still resolves to
+    // nothing HERE, and that is exactly what keeps the two readings disjoint.
     expect(deriveAttackDamageBonus(typeClause("Basic"))).toBeNull();
     // A bogus token, for the same reason from the other direction: the map is a
     // closed list, not a shape check.

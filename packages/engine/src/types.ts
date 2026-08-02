@@ -257,21 +257,52 @@ export interface InPlayPokemon {
         "During your next turn, this Pokémon can't attack."          (20 printings)
         "Put {N} damage counters on 1 of your opponent's Pokémon.
          During your next turn, this Pokémon can't attack."          ( 2 printings)
+        "Discard an Energy from this Pokémon. During your opponent's
+         next turn, the Defending Pokémon can't attack."             ( 3 printings)
+        "If the Defending Pokémon is a Basic Pokémon, it can't attack
+         during your opponent's next turn."                          ( 1 printing )
 
-      and this field is the whole of both riders. Read through `attackLocked`
+      and this field is the whole of all four riders. Read through `attackLocked`
       (continuous.ts) rather than by touching it, so no read site can forget the
       turn comparison — the same contract `attackBlock` above is under.
 
-      ⚠️ `state.turn + 2`, AND THAT IS WHY IT CANNOT SHARE `attackBlock.turn`.
-      Declaring an attack ENDS the turn (§5.3), so the turn after the installing
-      one is the OPPONENT's and the one after that is the installer's own. D142's
-      block prints "during your OPPONENT's next turn" and stamps N + 1; this one
-      prints "during YOUR next turn" and stamps N + 2. Same body, same install
-      site, same three early clears, two DIFFERENT NUMBERS — so one `turn` field
-      could hold at most one of them, and a `{ turn, effects, cantAttack }` record
-      would be a single window pretending to describe two. The two are stamped and
-      read independently, and a suite case installs both on one Pokémon and drives
-      the pair of windows apart turn by turn (attackLock.test.ts).
+      ⚠️ ONE FIELD FOR BOTH DIRECTIONS, AND THAT IS D148's FINDING RATHER THAN AN
+      ECONOMY. The two OPPONENT-side printings install this on the DEFENDER's body,
+      and they cost the STATE nothing at all: "on which turn may this Pokémon not
+      attack" is one question about one body, and which player's attack wrote the
+      answer is a fact about the OP (`preventAttack.target`), not about the record.
+      So the op grew a field and `InPlayPokemon` did not — which is also why
+      `MATCH_RECORD_VERSION` did not move for the first durated slice in four.
+
+      ⚠️ `state.turn + 2` ON THE SELF ARM AND `+ 1` ON THE DEFENDER ARM, AND THAT
+      IS ONE RULE RATHER THAN TWO. The window is always *the locked Pokémon's
+      controller's NEXT turn*; declaring an attack ENDS the turn (§5.3), so the
+      turn after the installing one is the opponent's and the one after that is the
+      installer's own. The printed wordings differ ("during YOUR next turn" /
+      "during your OPPONENT's next turn") for exactly that reason. The stamp is
+      therefore DERIVED from the op's `target` at the one install site and is never
+      carried beside it.
+
+      ⚠️ IT STILL CANNOT SHARE `attackBlock.turn`. Same body, same install site,
+      same three early clears, two DIFFERENT NUMBERS on the self arm — so one
+      `turn` field could hold at most one of them, and a `{ turn, effects,
+      cantAttack }` record would be a single window pretending to describe two. The
+      two are stamped and read independently, and a suite case installs both on one
+      Pokémon and drives the pair of windows apart turn by turn
+      (attackLock.test.ts). The DEFENDER arm shares D142's number, which is what
+      makes this field's coexistence with `attackBlock` a fact about the QUESTION
+      rather than about the arithmetic (D147's "sharing a site is not sharing a
+      question", read on the other axis).
+
+      ⚠️ TWO INSTALLS ON ONE BODY ARE NOW REACHABLE, AND THE STAMPS ARE MONOTONE.
+      Before D148 a re-install was always at least two turns later by construction;
+      now a Pokémon can lock itself with its own attack AND be locked by the
+      opponent's. Every install writes its holder's next turn measured from the
+      install, and installs are ordered in time, so a later install never writes an
+      EARLIER turn than the one it replaces — which is why the later stamp simply
+      wins and there is nothing to `Math.max`. The sharp case is that a self-lock
+      stamped N + 2 and a defender-lock installed on turn N + 1 are the SAME
+      number, so the second install is silent (D142's idempotence answer).
 
       NOT a §12 Special Condition, for `retreatBlocked`'s and `attackBlock`'s
       reasons verbatim: no Checkup tick, no status chip, no `StatusName`, and it
@@ -280,7 +311,9 @@ export interface InPlayPokemon {
       folded the retreat block into `can`).
 
       ⚠️ ITS LIFETIME TABLE IS D142's WITH THE REACHABILITY INVERTED, because this
-      block gates the HOLDER's own action during the HOLDER's own turn:
+      lock gates the HOLDER's own action during the HOLDER's own turn — and that
+      stays true on the DEFENDER arm, which is the whole point: the window there is
+      the victim's own next turn too:
         • leaving the Active Spot (§10) ends it, and here BOTH halves are
           reachable on the holder's own turn — retreat it, or let the opponent's
           Boss's Orders drag it out — where D142's evolve clear was unreachable by
@@ -289,9 +322,21 @@ export interface InPlayPokemon {
           a written-anyway rule: a locked Pokémon that evolves may attack the same
           turn, because §10 sheds the effects of ATTACKS;
         • a Knocked Out holder takes it out of play with the rest of the stack,
-          and the promoted body is a different Pokémon carrying no lock;
+          and the promoted body is a different Pokémon carrying no lock — which on
+          the defender arm is a LIVE line rather than a corner, since Eiscue ex's
+          printed 160 lands on the very body it locks;
         • installed twice, the later stamp wins — there is nothing to accumulate,
-          and a stale stamp answers nothing rather than being cleared. */
+          the stamps are monotone (above), and a stale stamp answers nothing rather
+          than being cleared.
+
+      ⚠️ AND WHO ENDS IT EARLY IS NOW THE THING THAT DIFFERS BETWEEN THE ARMS.
+      On the self arm all three routes are the holder's OWN escape from a drawback
+      it chose to pay. On the defender arm they are the VICTIM's counterplay
+      against an effect imposed on them — same three sites, same three clears,
+      opposite agency: "the Defending Pokémon" is the body that was Active when the
+      attack resolved (§8 step 5), so retreating it, switching it or evolving it
+      all leave the window with nothing to bite. That is the printed reading and
+      not a leniency: §10 sheds the effects of ATTACKS, and this is one. */
   attackLockedTurn: number | null;
   /** §8.5/§11 (D147) — the attack-installed DAMAGE REDUCTION on this Pokémon
       (see `DamageReduction` above), or `null` when none has been installed. Read

@@ -332,13 +332,20 @@ function redactedAttacksOf(
   const provided = providedEnergy(state, active);
   // §4 — turn 1 is by construction the going-first player's turn (the same
   // check the local TurnPanel makes); §12 asleep/paralyzed blocks attacking; and
-  // §8/§11 (D143) the attack-installed SELF-LOCK does too. That third one rides
+  // §8/§11 (D143) the attack-installed LOCK does too. That third one rides
   // `playable` rather than a new wire field for the reason `redactedRetreatOf`
   // folds the retreat block into `can` (D112): the client needs to know it cannot
   // attack, not why, and the reason is already in the log as an ATTACK_LOCKED row.
   // ⚠️ NOT OPTIONAL — this projection is the ONLY thing standing between a locked
   // player and a button the server will reject with ATTACK_PREVENTED, so every §8
   // gate that refuses a DECLARATION owes this line as well as its own.
+  // ⚠️ AND SINCE D148 THE LOCK CAN HAVE BEEN WRITTEN BY THE OPPONENT'S ATTACK
+  // ("…the Defending Pokémon can't attack.", 4 printings) rather than by the
+  // viewer's own drawback. This line needs NO diff for it — `attackLocked` reads
+  // the same field and the viewer is the locked seat either way — but the case is
+  // the sharper one to get wrong, because the player never chose the lock and has
+  // no card in front of them explaining the greyed-out button. It is swept from
+  // BOTH seats in defenderLock.test.ts rather than inherited from D143's sweep.
   const banned =
     state.turn === 1 || isImmobilized(active.conditions) || attackLocked(state, active);
   return attacksOf(card).map((attack, index) => ({

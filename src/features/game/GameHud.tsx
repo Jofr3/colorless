@@ -454,13 +454,19 @@ function TurnPanel(props: GameHudProps) {
   // rather than comment-enforced; the playmat-typed conditions fit because
   // projection.ts pins BattleConditions ≡ SpecialConditions at compile time.
   const immobilized = conditions !== undefined && isImmobilized(conditions);
-  // §8/§11 (D143) — an attack this Pokémon used LAST turn locked it out of
-  // attacking on THIS one ("During your next turn, this Pokémon can't attack.").
+  // §8/§11 (D143) — an attack locked this Pokémon out of attacking on THIS turn.
   // Read off raw GameState through the engine's own predicate, exactly as
   // `retreatBlocked` is below and for the same reason: it is not a §12 condition,
   // so it is deliberately absent from the projected/wire `conditions` shape. The
   // server-side twin is `redactedAttacksOf`'s `banned` (redact.ts); both exist so
   // that no path offers a button `attack` will reject with ATTACK_PREVENTED.
+  //
+  // D148 — the lock may have been written by the OPPONENT's attack ("…the
+  // Defending Pokémon can't attack.", Eiscue ex sv03-042/-210/-222 and Houndoom ex
+  // sv03-134) as well as by this Pokémon's own drawback. No diff is needed for it
+  // (one field, one predicate, and the viewer is the locked seat either way), and
+  // it is the case where the greyed-out button matters MOST: the player never
+  // chose this one and has no card of their own to read the reason off.
   const attackLockedNow = attackLocked(game, active);
 
   // THE retreat derivation site — RetreatDialog receives these as props. The

@@ -80,7 +80,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     // providesEnergy.test.ts.)
     for (const text of [
       // Whole-sentence anchoring: a rider after the discard is a different card.
-      "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
       // Kyurem sv06.5-047 "Trifrost" — the other still-unmapped COMPOUND printing
       // of the "all" form (D145's consequent census: 10 discard printings, 4 of
@@ -89,6 +88,24 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // ⚠️ RE-POINTED AT D148, NOT DELETED — the THIRD row this list has moved
+    // rather than dropped, and the first on the "an" form rather than the "all"
+    // one. Eiscue ex sv03-042/-210/-222 "Scalding Block" sat here as a NULL
+    // witness for the whole-sentence anchoring claim; D148 mapped it, so the claim
+    // moves from "nothing reads this" to the strictly stronger "THIS anchor does
+    // not reach it, and the anchor that does derives BOTH halves in printed
+    // order". The distinction matters most on exactly this pair, because a build
+    // whose bare `SELF_DISCARD_ONE` swallowed the compound as a PREFIX would
+    // return the discard op ALONE — a card that pays the Energy and installs
+    // nothing — and a `toBeNull` could no longer tell that from a refusal.
+    expect(
+      deriveAttackEffect(
+        "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
+      ),
+    ).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
+      { op: "preventAttack", target: "defender" },
+    ]);
     // ⚠️ RE-POINTED AT D147, NOT DELETED — and this is the SECOND time this list
     // has had to move a row rather than drop one. Eiscue sv02-048/-205 "Frigid
     // Block" sat here as a NULL witness with the note that "Eiscue's rider is a

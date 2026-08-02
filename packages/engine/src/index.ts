@@ -2749,8 +2749,137 @@ import type { GameState, Seat } from "./types";
     `spreadDamage` and `placeSnipe`, merging by `Math.min`, dropping the bare
     anchor's `$`, skipping the leaving-Active clear, skipping the evolve clear and
     dropping the amount from the log row.** `bun run check` GREEN exit 0,
-    **189 files / 3142 tests** (was 188 / 3106). */
-export const engineVersion = "0.96.0";
+    **189 files / 3142 tests** (was 188 / 3106).
+
+    0.96.0 → 0.97.0 — **P3-M5 (long tail): the OPPONENT-SIDE ATTACK LOCK.**
+
+      "Discard an Energy from this Pokémon. During your opponent's next turn,
+       the Defending Pokémon can't attack."                              (3)
+      "If the Defending Pokémon is a Basic Pokémon, it can't attack during
+       your opponent's next turn."                                       (1)
+
+    Item 1 of D147's remainder list, and **THE SLICE THAT ANSWERS A QUESTION D143
+    WROTE DOWN AND REFUSED TO GUESS**: whether `preventAttack` should carry a
+    `target`. It should — and the reason it took two readings is that the
+    objection D143 raised is TRUE IN ITS FACTS AND WRONG IN ITS CONCLUSION.
+
+    ⚠️ **`target` IS ONE AXIS, NOT TWO.** D143 declined the field because "a
+    `target` would have to carry a DIFFERENT STAMP as well as a different holder
+    (the defender-side window is `state.turn + 1`, this one is `+ 2`), so the
+    field is two axes rather than one". Both numbers are real. They are **not
+    independent**: there is exactly ONE rule — *the window is the LOCKED Pokémon's
+    controller's NEXT turn* — and the two numbers are that rule evaluated on the
+    two seats, because DECLARING AN ATTACK ENDS THE TURN (§5.3). The printed
+    wordings differ ("during YOUR next turn" / "during your OPPONENT's next
+    turn") for exactly the same reason, which is the tell. So the stamp is a pure
+    FUNCTION of the holder, one field determines both, and D131's widen-don't-add
+    test passes on the second reading rather than being guessed at from the first.
+    **Stamping `+ 2` on both arms fails 13; `+ 1` on both fails 23; ignoring the
+    field at the install site fails 17.**
+
+    ⚠️ **AND THE STATE COSTS NOTHING — the first durated slice in four to add NO
+    stamped field.** Both printings reuse `InPlayPokemon.attackLockedTurn`
+    unchanged, because "on which turn may this body not attack" is ONE question
+    about ONE body and whose attack wrote the answer is a fact about the OP. So
+    `attackLocked` (continuous.ts), the §8 gate (attack.ts), `redactedAttacksOf`
+    (redact.ts), `GameHud.tsx` and all THREE §10 clear sites take **zero diff** —
+    every one of them DRIVEN anyway, from the seat that had never driven them.
+    **`MATCH_RECORD_VERSION` STAYS AT 6**, and the question is live rather than
+    academic: `preventAttack` never parks, but on Eiscue ex's compound it sits
+    BEHIND one, so the op rides `EffectContinuation.rest` into a persisted record.
+    An OPTIONAL field absent on all 22 self-lock printings is a WIDENING (D125,
+    D144's worked case) — an old `{ op: "preventAttack" }` is a valid inhabitant
+    of the new type and reads back as the self arm, which is what it meant.
+    **This is therefore NOT D147's fifth-stamped-field trigger; it adds none.**
+
+    ⚠️ **THE CLASS PREDICATE COSTS NO FIELD EITHER, AND IT IS D146's MIRROR.**
+    Houndoom ex's "If the Defending Pokémon is a Basic Pokémon" is the SAME
+    `isBasicPokemon` D146 wired — read off the DEFENDER instead of the attacker,
+    and that one word changes WHERE it resolves. D146 had to defer its predicate
+    to the four damage READ SITES because the attacker had not declared yet; the
+    defender is on the board in front of the attack resolving, so this is a
+    `BoardCondition` evaluated at INSTALL time through the `conditionGate` op that
+    has spliced branches since M4. Cost: ONE union member
+    (`opponentActiveIsBasic`, the exact complement of D115's
+    `opponentActiveIsEvolution`) plus its `conditionHolds` and `conditionNote`
+    arms. **Inverting the predicate fails 22; dropping the gated arm fails 24.**
+
+    ⚠️ **TWO REGEXES, AND THE `then` IS THE OTHER ANCHOR'S OWN OP.** One anchored
+    whole-sentence pattern per printed string (D136/D137): the two share four
+    words and differ in the first clause, the gate, the subject's noun phrase and
+    where the duration sits, so an alternation would be two patterns wearing one
+    name. What they share is the ACTION, shared as an OP — the family's checkable
+    claim, asserted byte for byte. There is deliberately **NO BARE ANCHOR**: the
+    "…the Defending Pokémon can't attack." sentence is printed NOWHERE in the pool
+    standalone (censused), exactly as D143's any-zone counter PUT. "Basic" is
+    SPELLED rather than captured, D146's call on the same word.
+
+    ⚠️ **IT IS THE FIRST OP IN THE FAMILY A §11 BLOCK REFUSES, AND THE SWEPT TABLE
+    IS WHAT SAID SO.** `preventBlock.test.ts`'s classification moved
+    `preventAttack` from `untouched` to `blocked` — its old verdict was true of
+    the ops the DERIVER COULD EMIT rather than of the op — so the interpreter owes
+    `attackEffectRefused`, `preventRetreat`'s check verbatim. **Dropping it fails
+    2.** ⚠️ **AND THE SWEEP HAD A HOLE:** its walker descended `coinFlipGate` only,
+    an accident of the candidate sets for six slices (the D139 → D140 → D143 →
+    D146 shape a fifth time), and Houndoom ex is the first printed attack whose
+    whole program is a `conditionGate`. Fixed, hoisted and pinned directly, since
+    the pool sweep cannot see its own blindness. ⚠️ **AND A SECOND, HONEST
+    FINDING: the table asserts that every op HAS a verdict, never that the verdict
+    is TRUE** — flipping `blocked` back to `untouched` fails NOTHING. The
+    behaviour is pinned by the driven case; the table is a forcing function.
+    Written down rather than fixed, and carried forward as a remainder item.
+
+    ⚠️ **THE §10 CLEARS ARE D143's REACHABILITY WITH THE AGENCY INVERTED — a
+    FOURTH story on the same four fields.** Every route off the Active Spot is
+    still a line of play on the locked player's own turn, but that player is the
+    VICTIM, so retreat, Switch and evolve are COUNTERPLAY against an imposed
+    effect rather than an escape from a chosen drawback; the INSTALLER can reach
+    none of them, their turn having ended when they declared. **Skipping the
+    leaving-Active clear fails 4, the evolve clear 3.**
+
+    ⚠️ **ONE LOG ROW, BOTH DIRECTIONS, NO NEW PHRASING — and that is a result
+    rather than a saving.** D143 phrased `ATTACK_LOCKED` from the HOLDER's side
+    "so it reads as RETREAT_BLOCKED's sibling", and RETREAT_BLOCKED is a
+    VICTIM-side row: the wording chosen for an active-voiced row was already the
+    passive-side one, and the direction it was written to flip is the direction
+    this slice added. `seat` owns the locked Pokémon (D136's finding 1) and
+    "<name> can't attack next turn" is true under either seat, because "next turn"
+    is the LOCKED player's in both readings. Contrast D146, which owed a THIRD
+    phrasing the moment its field landed. Driven and read in sequence.
+
+    ⚠️ **THE LIST HELD ON EVERY CATALOG CLAIM AND ITS SHARPEST WARNING PAID.** All
+    4 printings ✅, both indices ✅ (both installs at **INDEX 0**, Hound's Fang at
+    1 as flagged), every name, cost, damage and byte-exact effect string re-queried
+    PER PRINTING. **No misnamed id anywhere** — the first slice in three where the
+    name sweep found nothing, and it was still run. The `FIXTURE_POOL` sweep D147
+    demanded came back EMPTY (neither sentence was already fielded), which is the
+    other half of that rule working. **The census (D142's rule, SEVENTH time) DID
+    pay**: the opponent-side PER-ATTACK lock — Medicham `sv01-111` and Oranguru
+    `sv02-094`, "Choose 1 of your opponent's Active Pokémon's attacks. During your
+    opponent's next turn, that Pokémon can't use that attack." — is on NO earlier
+    list or census, and it makes that refused group 10 printings / 7 sentences
+    rather than 8 / 6.
+
+    Cost: **2 regexes, 2 deriver arms, 1 OPTIONAL op field, 1 `BoardCondition`
+    member, 2 switch arms, 1 interpreter signature** — no new op, no new event, no
+    new error code, no new park, no new prompt, no new state field, no registry
+    row, no `attack.ts` / `continuous.ts` / `redact.ts` / `turn.ts` / `log.ts` /
+    `events.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` / `types.ts` behavioural
+    diff and no web/DB/`@luminous/schema` diff. 2 new fixtures (Eiscue ex
+    `sv03-042`, Houndoom ex `sv03-134`), 1 new deck (`DEFENDER_LOCK_DECK`),
+    `defenderLock.test.ts` (**40 tests, SEED-FREE**), 3 re-pointed stays-LOUD
+    witnesses (`attackLock.test.ts`, `attackPark.test.ts`, `typeNameClause.test.ts`
+    — all moved NULL → SHAPE, none deleted), `clauseApostrophe`'s DISCOVERED census
+    **46 → 48**. **Mutation-checked seventeen ways:** the gated arm 24, the §8 gate
+    22, inverting the predicate 22, `+ 1` on both arms 23, ignoring `target` at the
+    install 17, dropping `target` from the gated arm 16, `+ 2` on both arms 13, the
+    whole compound arm 12, dropping `target` from the compound arm 9, reversing the
+    compound's op order 6, the leaving-Active clear 4, the evolve clear 3, the
+    redact projection 3, `attackEffectRefused` 2, and 1 each for the compound
+    anchor's `^`, the gated anchor's `$`, the idempotence early-return and the
+    sweep's `conditionGate` descent. `bun run check` GREEN exit 0, **190 files /
+    3183 tests** (was 189 / 3142). */
+export const engineVersion = "0.97.0";
 
 export type {
   ApplyResult,

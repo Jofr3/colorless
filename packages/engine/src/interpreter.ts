@@ -656,7 +656,7 @@ function stepOp(
     case "preventDamage":
       return { done: preventDamage(state, op.effects === true, op.fromClass, ctx, events) };
     case "preventAttack":
-      return { done: preventAttack(state, ctx, events) };
+      return { done: preventAttack(state, op, ctx, events) };
     case "reduceDamage":
       return { done: reduceDamage(state, op.amount, ctx, events) };
     case "heal":
@@ -1267,6 +1267,20 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && evolveFromOf(spot.card) !== null;
     }
+    case "opponentActiveIsBasic": {
+      // D148 — "the Defending Pokémon is a Basic Pokémon" (Houndoom ex sv03-134),
+      // and `isBasicPokemon` is reused VERBATIM rather than re-derived from
+      // `evolveFromOf` right above: the two are complements today, and writing
+      // this as `=== null` would be a SECOND reading of "Basic" free to disagree
+      // with §3.6/§5.2 and with D146's identical predicate on the attacker.
+      // Read off the TOP card (§1.2) — an evolved body is a Stage 1 and is not
+      // Basic, which is what makes the §10 evolve clear a real line of play.
+      // An empty Active Spot is FALSE rather than a throw, exactly as the arm
+      // above: the attack gate guarantees a Defending Pokémon at the one live
+      // read site, so this only covers a directly-invoked edge.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && isBasicPokemon(spot.card);
+    }
     case "yourActiveDamaged": {
       // "this Pokémon has any damage counters on it" as printed on Talonflame /
       // Darmanitan — resolved to YOUR ACTIVE by the clause table, not here (D116).
@@ -1436,6 +1450,11 @@ export function conditionNote(cond: BoardCondition): string {
       return "your opponent's Active Pokémon has damage counters on it";
     case "opponentActiveIsEvolution":
       return "your opponent's Active Pokémon is an Evolution Pokémon";
+    case "opponentActiveIsBasic":
+      // The printed pronoun ("the Defending Pokémon") is dropped for
+      // `yourActiveDamaged`'s reason (D116): a reject/tooltip fragment is read off
+      // the BOARD, where no attack is resolving and nothing is "Defending".
+      return "your opponent's Active Pokémon is a Basic Pokémon";
     case "yourActiveDamaged":
       // The printed pronoun is dropped for the same reason "already" is above: a
       // reject/tooltip fragment is read off the BOARD, where "this Pokémon" has
@@ -1821,41 +1840,78 @@ function preventDamage(
   });
 }
 
-/** §8/§11 (D143) — INSTALL the printed SELF-LOCK on the CONTROLLER's own Active
-    ("During your next turn, this Pokémon can't attack.", 22 printings across two
-    sentences). `preventDamage`'s sibling one function up, and written beside it on
-    purpose: same holder resolution ("this Pokémon" is `ctx.seat`'s Active, the
-    attacker), same absence of a `target` field, same no-park, same idempotence.
+/** §8/§11 (D143, widened D148) — INSTALL the printed ATTACK LOCK on the Pokémon
+    the sentence names: the CONTROLLER's own Active with `target` absent ("During
+    your next turn, this Pokémon can't attack.", 22 printings across two
+    sentences), the DEFENDING Pokémon with `target: "defender"` ("…the Defending
+    Pokémon can't attack.", 4 printings across two more). `preventDamage`'s sibling
+    one function up on the self arm and `preventRetreat`'s exact sibling on the
+    defender arm — same holder resolution, same no-park, same idempotence.
 
-    ⚠️ THE STAMP IS `state.turn + 2`, AND THE OFF-BY-ONE AGAINST ITS NEIGHBOUR IS
-    THE WHOLE SLICE. Declaring an attack ENDS the turn (§5.3), so the turn after
-    the installing one belongs to the OPPONENT and the one after THAT is the
-    installer's own. `preventDamage` prints "during your OPPONENT's next turn" and
-    stamps `+ 1`; this prints "during YOUR next turn" and stamps `+ 2`. Every other
-    durated printing in the pool says the opponent's, so `+ 1` is the shape a
-    session copying the neighbour would write — and it fails QUIETLY in play rather
-    than loudly: a `+ 1` lock is live only on a turn its holder could not have
-    acted on anyway, so the card's entire printed drawback silently disappears. The
-    suite drives both windows across real turn boundaries rather than asserting the
-    arithmetic, and the mutation fails 14 tests.
+    ⚠️ THE STAMP IS DERIVED FROM THE HOLDER, AND THAT IS WHY `target` IS ONE AXIS.
+    There is exactly ONE rule here — *the window is the locked Pokémon's
+    controller's NEXT turn* — and the two numbers this function can write are that
+    rule evaluated on the two seats, because DECLARING AN ATTACK ENDS THE TURN
+    (§5.3). The turn after the installing one belongs to the opponent, so the
+    defender's next turn is `+ 1`; the one after THAT is the installer's own, so
+    the self arm is `+ 2`. The printed wordings differ for the identical reason
+    ("during YOUR next turn" / "during your OPPONENT's next turn"), which is the
+    tell that they are one rule and not two. A build that shared one number would
+    be wrong on one arm; a build that carried the number in the op would let a
+    deriver write a window the printed subject contradicts.
 
-    IDEMPOTENT, and here that is by construction rather than by care: installing
-    needs an attack, an attack ends the turn, and a locked Pokémon cannot declare
-    the attack that would re-install — so two installs are always at least two
-    turns apart and the later stamp simply replaces the earlier. The re-install
-    that IS reachable goes through §10 (retreat or switch clears the lock, the
-    Pokémon comes back and attacks again), and it writes a fresh window. The
-    early-return keeps a same-turn re-install silent rather than emitting a second
-    identical row. */
-function preventAttack(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
-  const active = state.players[ctx.seat].active;
+    D143's warning survives on its own arm: `+ 1` on the SELF lock fails quietly in
+    play rather than loudly, because a `+ 1` self-lock is live only on a turn its
+    holder could not have acted on anyway and the card's whole printed drawback
+    silently disappears. The mirror is just as quiet — `+ 2` on the DEFENDER arm
+    would skip the printed window entirely and bite on a turn two later. Both are
+    driven across real turn boundaries rather than asserted as arithmetic.
+
+    ⚠️ THE DEFENDER ARM IS AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON,
+    so a §11 block that refuses "effects of attacks" refuses THIS — `preventRetreat`'s
+    check verbatim, and reachable off printed cards (the defender installs
+    `{ effects: true }` on their turn, its window is the installer's very next
+    turn, and that is the turn this lock would land on). Asked on the RESOLVED seat
+    so the rule is TOTAL over both arms rather than written on one of them: the
+    self arm can never be refused in practice (a block is live only during its
+    holder's OPPONENT's turn, and the self arm runs on the holder's own), and
+    asking anyway costs one read and removes a case from the reasoning — which is
+    the call `applyStatus` already made for its own two arms.
+
+    IDEMPOTENT, and on the self arm that is by construction rather than by care:
+    installing needs an attack, an attack ends the turn, and a locked Pokémon
+    cannot declare the attack that would re-install. The DEFENDER arm makes the
+    question live for the first time — two installers can lock one body — and the
+    answer is that a later stamp is never an EARLIER turn than the one it replaces:
+    every install writes its holder's next turn measured from the install, and
+    installs are ordered in time, so the sequence of stamps on any one body is
+    monotone. That is also why a `Math.max` would be a merge rule with nothing to
+    merge (contrast `reduceDamage`, whose two sources really can disagree). The
+    early-return keeps a re-install that says nothing new SILENT — D142's
+    idempotence answer, and the case is real here: a self-lock stamped `+ 2` and a
+    defender-lock stamped `+ 1` from the opponent's following turn are the SAME
+    number on the same body, so the second install emits no second row. */
+function preventAttack(
+  state: GameState,
+  op: Extract<EffectOp, { op: "preventAttack" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = op.target === "defender" ? otherSeat(ctx.seat) : ctx.seat;
+  const active = state.players[seat].active;
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
-  const turn = state.turn + 2;
+  // §11 (D142) — checked BEFORE the idempotence early-return so a refusal is
+  // announced even on an already-locked body (`preventRetreat`'s ordering).
+  if (attackEffectRefused(state, seat, ctx, events)) return state;
+  // The one rule, on the one seat that matters: the locked body's controller's
+  // next turn. `otherSeat(ctx.seat)` is the seat whose turn comes next (§5.3), so
+  // the defender arm is `+ 1` and the installer's own is one full round later.
+  const turn = state.turn + (op.target === "defender" ? 1 : 2);
   if (active.attackLockedTurn === turn) return state;
-  events.push({ type: "ATTACK_LOCKED", seat: ctx.seat, uid });
-  return withActive(state, ctx.seat, { ...active, attackLockedTurn: turn });
+  events.push({ type: "ATTACK_LOCKED", seat, uid });
+  return withActive(state, seat, { ...active, attackLockedTurn: turn });
 }
 
 /** §8.5/§11 (D147) — INSTALL the printed DAMAGE REDUCTION on the CONTROLLER's own
@@ -2974,6 +3030,14 @@ export function switchInto(
   // played on that very turn drags the shielded Pokémon off the spot and the
   // reduction goes with it, which is the sharpest available witness that the
   // clear is real (the very next hit lands at full price).
+  // …AND, since D148, that same lock installed by the OPPONENT'S attack ("…the
+  // Defending Pokémon can't attack."), which reaches this path from ONE end only
+  // and it is the one D143's story called the holder's: the window is the victim's
+  // own turn, so the victim Switches out of it and attacks with whatever comes up.
+  // The installer cannot use this path at all — their turn ended when they
+  // declared. FOUR durated effects, FOUR reachability stories, one clear, and the
+  // set is swept rather than listed (attackLock.test.ts) precisely because this
+  // literal is one of three that have to agree with nothing making them.
   const benched = {
     ...active,
     conditions: noConditions(),

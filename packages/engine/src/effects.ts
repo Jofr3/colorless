@@ -210,6 +210,33 @@ export type BoardCondition =
       (`evolveFromOf(topCard) !== null`, the exact complement of `basicPokemon`),
       so the two readings can never drift apart. False with no Active. */
   | { kind: "opponentActiveIsEvolution" }
+  /** Your opponent's Active Pokémon is a BASIC Pokémon — Houndoom ex sv03-134
+      "Evil Claw" ("If the Defending Pokémon is a Basic Pokémon, it can't attack
+      during your opponent's next turn."), and the exact COMPLEMENT of the member
+      one line up. `isBasicPokemon` (cards.ts) verbatim, which is the same reuse
+      D146's `attackerMatchesClass` is under and the same claim §3.6/§5.2 make
+      about a card in hand: one reading of "Basic", one implementation (D131).
+      Read off the TOP card (§1.2, its current identity) — a Basic that has
+      EVOLVED is a Stage 1 and no longer satisfies this, which is what the printed
+      word means and is what makes the §10 evolve clear a real line of play rather
+      than a rule written for symmetry.
+
+      ⚠️ NAMED FOR WHAT IT READS, NOT FOR THE PRINTED PRONOUN (D116). The one
+      printing says "the Defending Pokémon", which is §8 step 5's term of art for
+      the opponent's Active — but "Defending" is meaningless on the play-gate path
+      (`trainerPlayableIf` shares this union and no attack is being resolved), so
+      the sentence's noun phrase is resolved by the ANCHOR that reads it and the
+      member names the board fact.
+
+      ⚠️ IT IS EVALUATED AT INSTALL TIME, WHICH IS THE OPPOSITE OF D146. That
+      slice had to defer its identical `isBasicPokemon` predicate to the four
+      damage READ SITES, because the class was a fact about an ATTACKER who had
+      not declared anything yet. Here the class is a fact about the DEFENDER, who
+      is on the board in front of the attack that is resolving — so the question is
+      answerable now, the gate runs now, and nothing about the class is stored.
+      Same predicate, opposite resolution site, and the thing that decides it is
+      WHICH BODY the sentence asks about. False with no Active. */
+  | { kind: "opponentActiveIsBasic" }
   /** YOUR Active Pokémon has any damage counters on it — Talonflame sv02-030
       "Fiery Breeze" (+90) and Darmanitan sv03-035 "Damage Counterpunch" (+60),
       whose printed clause is "If **this Pokémon** has any damage counters on
@@ -674,54 +701,82 @@ export type EffectOp =
       no rng, and is idempotent (installing twice in one turn keeps the larger
       number — see the interpreter for why MAX and not a sum). */
   | { op: "reduceDamage"; amount: number }
-  /** §8/§11 (D143) — LOCK the CONTROLLER's own Active out of attacking on the
-      controller's NEXT turn:
+  /** §8/§11 (D143, widened D148) — LOCK a Pokémon out of attacking on ITS OWN
+      controller's NEXT turn. Four printed sentences, on both sides of the table:
 
         "During your next turn, this Pokémon can't attack."          (20 printings)
         "Put {N} damage counters on 1 of your opponent's Pokémon.
          During your next turn, this Pokémon can't attack."          ( 2 printings)
+        "Discard an Energy from this Pokémon. During your opponent's
+         next turn, the Defending Pokémon can't attack."             ( 3 printings)
+        "If the Defending Pokémon is a Basic Pokémon, it can't attack
+         during your opponent's next turn."                          ( 1 printing )
 
-      The DRAWBACK half of a big-damage attack, and the pool's most re-printed
-      durated rider after D112's retreat lock: Miraidon ex / Koraidon ex ×4 each,
-      Dragonite VSTAR ×2, Alomomola, Clawitzer, Steelix, Kilowattrel, Tinkatuff,
-      Victini ex, Crabominable, Umbreon, Probopass, Golbat — plus Ninetales
-      sv03-029/-199 "Nine-Tailed Dance", where it rides behind a counter PUT.
+      The first two are the DRAWBACK half of a big-damage attack, and the pool's
+      most re-printed durated rider after D112's retreat lock: Miraidon ex /
+      Koraidon ex ×4 each, Dragonite VSTAR ×2, Alomomola, Clawitzer, Steelix,
+      Kilowattrel, Tinkatuff, Victini ex, Crabominable, Umbreon, Probopass, Golbat
+      — plus Ninetales sv03-029/-199 "Nine-Tailed Dance", where it rides behind a
+      counter PUT. The last two are the OFFENSIVE reading, and both are compounds:
+      Eiscue ex sv03-042/-210/-222 "Scalding Block" ({W}{W}{W}, INDEX 0, printed
+      160) buys it with a self-discard, and Houndoom ex sv03-134 "Evil Claw"
+      ({D}{D}, INDEX 0, printed 90) gates it on the defender's STAGE.
 
-      `preventRetreat`'s MIRROR, and shaped like it deliberately: bare, no fields,
-      the holder resolved from `ctx` rather than carried. The mirror is the
-      DIRECTION on both axes at once — that op locks the OPPONENT's Active out of
-      RETREATING during the opponent's next turn; this one locks the CONTROLLER's
-      own Active out of ATTACKING during the controller's next turn.
+      `preventRetreat`'s MIRROR, and shaped like it deliberately — except on the
+      one axis that now varies. That op locks the OPPONENT's Active out of
+      RETREATING; the `target: "defender"` arm here is its exact sibling, and the
+      absent-key arm is that sibling pointed the other way.
 
-      ⚠️ NO `target` FIELD, AND THE WARRANT FOR ONE ALREADY EXISTS — which is why
-      the refusal is written down rather than assumed (D104's minimal shape, D138's
-      no-fields-at-all call, D131's widen-don't-add rule as a TEST). The pool DOES
-      print the defender-side reading: Eiscue ex sv03-042/-210/-222 "Scalding
-      Block" ("Discard an Energy from this Pokémon. During your opponent's next
-      turn, the Defending Pokémon can't attack.") and Houndoom ex sv03-134 "Evil
-      Claw" ("If the Defending Pokémon is a Basic Pokémon, it can't attack during
-      your opponent's next turn.") — 4 printings across 2 sentences, both still
-      LOUD. It is NOT a one-token widening, and that is the finding: a `target`
-      would have to carry a DIFFERENT STAMP as well as a different holder (the
-      defender-side window is `state.turn + 1`, this one is `state.turn + 2`), so
-      the field is two axes rather than one and is worth exactly one printing's
-      guess less than it looks. Map one of those sentences and the field is earned
-      with two readings in hand.
+      ⚠️ `target` IS ONE AXIS AND NOT TWO — WHICH IS THE SLICE'S FINDING, and it
+      overturns what this doc block said at 0.92.0–0.96.0. The refusal written here
+      was that a `target` "would have to carry a DIFFERENT STAMP as well as a
+      different holder (the defender-side window is `state.turn + 1`, this one is
+      `state.turn + 2`), so the field is two axes rather than one". The two numbers
+      are real. They are not INDEPENDENT: there is exactly ONE rule —
+
+          the window is the LOCKED POKÉMON's controller's NEXT turn
+
+      — and the two numbers are that one rule evaluated on the two seats, because
+      DECLARING AN ATTACK ENDS THE TURN (§5.3). The installer's own next turn is
+      `+ 2`; the defender's is `+ 1`. So the stamp is a pure FUNCTION of the
+      holder, the printed wording differs ("your next turn" / "your opponent's next
+      turn") for exactly the same reason, and one field determines both. D131's
+      widen-don't-add test, passed on the second reading rather than guessed at
+      from the first — which is what D143 said to wait for.
+
+      ABSENT means "self" (D135's absent-key rule, and D144's `onTails` shape): the
+      22 self-lock printings derive the bare op unchanged, every registry row and
+      every persisted `EffectContinuation` written before this slice stays a valid
+      inhabitant of the new type, and it reads back as precisely what it meant.
+
+      ⚠️ NO CLASS FIELD, THOUGH ONE PRINTING IS CLASS-GATED. Houndoom ex's "If the
+      Defending Pokémon is a Basic Pokémon" is a BOARD CONDITION, and this engine
+      has had a board-condition branch since M4 — so that printing derives to
+      `conditionGate { cond: { kind: "opponentActiveIsBasic" }, then: [this op] }`
+      and the `then` is byte-identical to the other compound's second op. A field
+      here would be a SECOND way to say something the gate already says generally
+      (D131 again), and it would say it for one op where the gate says it for all.
 
       ⚠️ IT LOCKS THE POKÉMON, NOT THE ATTACK, and the pool prints the other
       reading too: eight printings say "this Pokémon can't use {AttackName}"
       (Munkidori ex ×3 "Dirty Headbutt", Lucario sv01-114, Radiant Charizard
       swsh10.5-011, Radiant Blastoise swsh10.5-018, Skarmory sv03-142, Greedent ex
-      sv03-179). Those name ONE attack and leave the card's other attack legal, so
-      they need a per-attack lock this field cannot express; all eight stay LOUD.
+      sv03-179), and TWO MORE do it to the OPPONENT — Medicham sv01-111
+      "Acu-Punch-Ture" and Oranguru sv02-094 "Plotter's Command", "Choose 1 of your
+      opponent's Active Pokémon's attacks. During your opponent's next turn, that
+      Pokémon can't use that attack." Those name ONE attack and leave the card's
+      other attack legal, so they need a per-attack lock this field cannot express
+      (and the opponent-side pair needs a PARK on top of it); all ten stay LOUD.
       A fixture pins the difference from the inside — Alomomola sv01-048's index-0
-      "Surf" is refused by the lock its index-1 "Aqua Slash" installed.
+      "Surf" is refused by the lock its index-1 "Aqua Slash" installed, and
+      Alomomola refused SURF by a Houndoom ex across the table is the same
+      assertion from the other seat.
 
       Runs at `attack.ts`'s TAIL like every other `EffectOp`, and — as with
       `preventDamage` — that placement is free rather than lucky (D125's rule):
       the lock's entire effect is in the FUTURE. Never parks, consumes no rng, and
-      is idempotent (installing twice in one turn writes the same stamp). */
-  | { op: "preventAttack" }
+      is idempotent (a re-install writing the same stamp is silent). */
+  | { op: "preventAttack"; target?: "defender" }
   /** Heal `amount` HP from the CONTROLLER's own Active Pokémon — the printed
       "this Pokémon" / "it" of a self-heal, resolved at `ctx.seat` by the
       interpreter rather than carried in the op (which is why `target` has one
@@ -2362,11 +2417,15 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 //     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159) —
 //     TWO consequents on ONE flip, D142's Squawkabilly refusal in another family.
 // The neighbouring OPPONENT-side lock is 4 printings across 2 sentences (Eiscue
-// ex sv03-042/-210/-222 "Scalding Block", Houndoom ex sv03-134 "Evil Claw") and
-// is refused on the printed subject; the per-ATTACK lock ("this Pokémon can't use
-// {AttackName}") is 8 printings across 6 sentences and is refused on the verb.
-// Both are written into the op's doc block as the conditions that would earn it
-// fields, rather than guessed at from one printing.
+// ex sv03-042/-210/-222 "Scalding Block", Houndoom ex sv03-134 "Evil Claw") and is
+// refused HERE on the printed subject — ✅ MAPPED at D148 by the two anchors below,
+// which is what earned `preventAttack` its `target` field. The per-ATTACK lock
+// ("… can't use {AttackName}") is refused on the VERB, and D148's census makes
+// that group 10 printings across 7 sentences rather than 8 across 6: Medicham
+// sv01-111 "Acu-Punch-Ture" and Oranguru sv02-094 "Plotter's Command" print the
+// OPPONENT-side twin of it ("Choose 1 of your opponent's Active Pokémon's attacks.
+// During your opponent's next turn, that Pokémon can't use that attack."), which
+// no earlier list or census had — it needs a PARK as well as an attack address.
 //
 // A WHOLE-SENTENCE ANCHOR with NO CAPTURE — nothing in it varies. Both apostrophe
 // slots carry `['’]` (D136/D137): "can't" is a CONTRACTION rather than a
@@ -2469,6 +2528,85 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 // (`can't`), and it carries `['’]` for D136/D137's reason like every sibling.
 const FLIP_TAILS_SELF_CANT_ATTACK =
   /^Flip a coin\. If tails, during your next turn, this Pokémon can['’]t attack\.$/;
+// ── D148: the OPPONENT-side lock, the same rider pointed across the table ──
+//
+// THE ENERGY-COST COMPOUND — Eiscue ex sv03-042 (Double rare) / sv03-210 (Ultra
+// Rare) / sv03-222 (Special illustration rare) "Scalding Block" ({W}{W}{W}, attack
+// INDEX 0, printed 160), 3 printings of ONE attack in three rarities, so D121's
+// second-printing warrant is met by the card rather than by a family argument.
+// Every field re-queried per printing against the local D1 (2026-08-02, 978
+// cards): identical name, cost, index, damage and effect string on all three.
+//
+// ⚠️ THERE IS NO BARE ANCHOR, AND THAT IS A CENSUS RESULT RATHER THAN A CHOICE —
+// exactly as it was for `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s first sentence one
+// slice back. "During your opponent's next turn, the Defending Pokémon can't
+// attack." is printed NOWHERE in the pool as a standalone attack sentence; the
+// compound is the only form it takes. So a bare pattern would map a sentence no
+// card prints (D120), and this anchor is the whole reading.
+//
+// TWO SENTENCES, TWO OPS, IN PRINTED ORDER — `DEFENDER_POISON_CANT_RETREAT` (arm
+// 5c), `COUNTER_PUT_ANY_THEN_SELF_LOCK` (arm 25) and `SELF_DISCARD_ALL_THEN_REDUCTION`
+// (D147) are the precedents, and the reason this is one anchored pattern rather
+// than a prefix match: the family's safety property is that an unrecognised
+// remainder stays LOUD, and a prefix would ship the COST without the effect it
+// buys — an attack the catalog does not print, which is strictly worse than
+// leaving the card unread.
+//
+// ⚠️ THE FIRST HALF IS ALREADY BUILT AND IT PARKS. "Discard an Energy from this
+// Pokémon." has derived to `discardEnergy { from: "yourActive", filter: anyEnergy }`
+// since 0.x (`SELF_DISCARD_ONE`, arm 7) and it is the family's oldest PARKING op —
+// with two different Energy attached, which one goes is a real decision. So this
+// is the second sentence in the tail to put a durated install BEHIND a park
+// (Ninetales was the first), and the first to put an OPPONENT-side one there.
+// `SELF_DISCARD_ONE`'s own `^…$` is what keeps this string off the bare discard
+// path, in the direction D145 said would matter the day this family landed.
+//
+// THREE apostrophe slots, all classed (D136/D137): the possessive "opponent's" and
+// the contraction "can't" — the asymmetry D137 found, and classing one and not the
+// other is precisely the half-fix that reads like a whole one. No /i, for the
+// standing reason (see TYPED_SELF_DISCARD): the capitalised "Discard" plus `^…$`
+// is the whole guard.
+const SELF_DISCARD_ONE_THEN_DEFENDER_LOCK =
+  /^Discard an Energy from this Pokémon\. During your opponent['’]s next turn, the Defending Pokémon can['’]t attack\.$/;
+// …and the CLASS-GATED form — Houndoom ex sv03-134 "Evil Claw" ({D}{D}, attack
+// INDEX 0, printed 90), 1 printing. THE SAME LOCK behind a printed condition, and
+// the family's first sentence whose DURATION sits at the END rather than at the
+// front.
+//
+// ⚠️ TWO REGEXES AND NOT ONE, AND THE DURATION PLACEMENT IS ONLY THE SECOND
+// REASON. The family's rule is ONE anchored whole-sentence regex per PRINTED
+// STRING (D136/D137), and these two strings share four words. There is no shape
+// an alternation could take here that would not be two patterns wearing one name:
+// they differ in the first clause, in whether there is a gate at all, in the
+// subject's noun phrase ("the Defending Pokémon" vs "it") and in where the four
+// duration words sit. What they share is the ACTION, and the action is shared as
+// an OP rather than as a pattern — which is the family's checkable claim (D134's
+// on the heads face, D144/D145's on tails): this anchor's `then` is the OTHER
+// anchor's second op, byte for byte.
+//
+// ⚠️ THE GATE IS AN EXISTING MECHANISM, WHICH IS WHY THE CLASS COSTS NO FIELD.
+// `conditionGate { cond, then }` has spliced a deterministic branch into the work
+// queue since M4, and `BoardCondition` is the union its `cond` comes from — so the
+// printed "If the Defending Pokémon is a Basic Pokémon" is ONE new member
+// (`opponentActiveIsBasic`, the exact complement of `opponentActiveIsEvolution`
+// which has been in that union since D115) and nothing else. D132's inventory rule
+// with the gate, the op and the predicate all pre-existing.
+//
+// "Basic" IS HARD-CODED RATHER THAN CAPTURED, which is D146's call one slice back
+// on the same word: that anchor spells `by attacks from Basic Pokémon` and lets
+// the pool's other class token (Ancient) stay LOUD, and the vocabulary is closed
+// where the READING is (there, the `fromClass` union; here, `BoardCondition`).
+// A `(.+)` here would have to reject "an Evolution Pokémon" and eleven type names
+// through a table nothing in the pool asks for — D120's precondition (does exactly
+// one token VARY across printings?) is answered NO by a one-printing sentence
+// whose sibling readings live on different skeletons entirely.
+//
+// TWO apostrophe slots, both classed: the contraction "can't" and the possessive
+// "opponent's". No /i — the capitalised "If" plus `^…$` is the guard, and it is
+// what keeps this pattern off `deriveAttackRequirement`'s own `^If` sentences,
+// whose consequent is "this attack does nothing" (attack.ts's disjointness note).
+const DEFENDER_BASIC_CANT_ATTACK =
+  /^If the Defending Pokémon is a Basic Pokémon, it can['’]t attack during your opponent['’]s next turn\.$/;
 // …and the LAST TWO members of that shape (D145), which CLOSE the bare
 // tails-gated family: the same gate over the two consequents whose ops this
 // engine has owned since 0.x, so each is ONE regex and ONE arm with no
@@ -4447,6 +4585,58 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         onTails: true,
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventAttack" }],
+      },
+    ];
+  }
+
+  // 26b/26c (D148). The SAME rider pointed at the OTHER side of the table — 4
+  //     printings across 2 sentences, and the two arms that earn `preventAttack`
+  //     its `target` field:
+  //
+  //       "Discard an Energy from this Pokémon. During your opponent's next turn,
+  //        the Defending Pokémon can't attack."   (3 — Eiscue ex sv03-042/-210/-222
+  //                                                "Scalding Block", {W}{W}{W},
+  //                                                INDEX 0, printed 160)
+  //       "If the Defending Pokémon is a Basic Pokémon, it can't attack during
+  //        your opponent's next turn."             (1 — Houndoom ex sv03-134 "Evil
+  //                                                Claw", {D}{D}, INDEX 0, 90)
+  //
+  //     ⚠️ BOTH ARE COMPOUNDS AND NEITHER SECOND OP IS NEW. Sentence one of the
+  //     first is `SELF_DISCARD_ONE`'s own output byte for byte (arm 7), and the
+  //     gate on the second is `conditionGate`, spliced by `runProgram` since M4.
+  //     What this slice added is the `target` field and one `BoardCondition`
+  //     member; the lock itself, its stamp convention, its §8 gate, its three §10
+  //     early clears, its event, its log arm and BOTH payability projections are
+  //     D143's and are reused with no diff at all.
+  //
+  //     ⚠️ THE STAMP IS DERIVED FROM `target`, NOT CARRIED BESIDE IT. See the op's
+  //     doc block: one rule ("the locked Pokémon's controller's next turn") read
+  //     on two seats gives `+ 1` here and `+ 2` on the self arm, because declaring
+  //     an attack ends the turn. That is why this is ONE field and not two.
+  match = SELF_DISCARD_ONE_THEN_DEFENDER_LOCK.exec(effect);
+  if (match !== null) {
+    return [
+      // The PARK, and it comes first because it is printed first: with two
+      // different Energy attached the pick is a real decision, so the lock behind
+      // it installs on the RESUMED tail (Ninetales' compound is the precedent, and
+      // this is the first time an OPPONENT-side install has sat behind a park).
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
+      { op: "preventAttack", target: "defender" },
+    ];
+  }
+  if (DEFENDER_BASIC_CANT_ATTACK.test(effect)) {
+    return [
+      {
+        op: "conditionGate",
+        // "the Defending Pokémon" is §8 step 5's term of art for the opponent's
+        // Active, resolved HERE — the layer that knows the sentence came off an
+        // attack — rather than in the member's name (D116's rule, verbatim).
+        cond: { kind: "opponentActiveIsBasic" },
+        // BYTE-IDENTICAL to the second op of the arm above, which is the family's
+        // checkable claim on this pair: there is ONE action here, printed two ways,
+        // and the gate is a condition in front of it.
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "preventAttack", target: "defender" }],
       },
     ];
   }

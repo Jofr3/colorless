@@ -700,6 +700,91 @@ export const FIXTURE_POOL: Record<string, Card> = {
     evolveFrom: "Alomomola",
     attacks: [{ cost: ["Water"], name: "Bubble", damage: 40 }],
   } satisfies Card,
+  /** Eiscue ex sv03-042 — "Scalding Block" ({W}{W}{W}, attack **INDEX 0**, printed
+      160): D148's ENERGY-COST compound, *"Discard an Energy from this Pokémon.
+      During your opponent's next turn, the Defending Pokémon can't attack."* —
+      3 printings of ONE attack in three rarities (sv03-042 Double rare, sv03-210
+      Ultra Rare, sv03-222 Special illustration rare), so D121's second-printing
+      warrant is met by the card. Every field re-queried PER PRINTING against the
+      local D1 (2026-08-02, 978 cards) and identical on all three.
+
+      It is its card's ONLY attack, which is deliberate on this half of the slice:
+      the "the lock is on the POKÉMON, not the attack" claim is made on the
+      DEFENDER's card (Alomomola, which has two), where the sibling to refuse
+      actually lives — so this fixture carries the install and Alomomola carries
+      the refusal, which is the shape the sentence itself describes.
+
+      TWO things about it are worth stating because they look like mistakes:
+      the printed types are **{R} Fire** while the attack cost is {W}{W}{W}, and
+      the Weakness is ×2 WATER. That is the ingested catalog verbatim; the engine
+      reads that table and so does this fixture, and the mismatch is inert here —
+      the cost is paid from attached Energy (§8.2) and never from the holder's
+      type. And it is an `ex`, kept for D133's Skeledirge reason: `prizeValueOf`
+      reads the rule box off the NAME (cards.ts), so a KO of this body takes TWO
+      Prizes and the suite's KO cases say so.
+
+      Verbatim off the local D1: 210 HP, Basic, retreat 2, ×2 Water, no
+      Resistance, no Ability. */
+  "sv03-042": battler("sv03-042", {
+    name: "Eiscue ex",
+    types: ["Fire"],
+    hp: 210,
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Water", "Water", "Water"],
+        name: "Scalding Block",
+        damage: 160,
+        effect:
+          "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
+      },
+    ],
+  }),
+  /** Houndoom ex sv03-134 — "Evil Claw" ({D}{D}, attack **INDEX 0**, printed 90):
+      D148's CLASS-GATED printing, *"If the Defending Pokémon is a Basic Pokémon,
+      it can't attack during your opponent's next turn."* — 1 printing, and the
+      family's only sentence whose DURATION sits at the end.
+
+      ⚠️ THE INDEX IS 0, CHECKED RATHER THAN ASSUMED, and the check mattered: the
+      remainder list that specced this slice said the card "also prints a BARE
+      recoil at index 1", which is TRUE — index 1 is "Hound's Fang" ({D}{D}{D},
+      220, *"This Pokémon also does 30 damage to itself."*, simulated since 0.x as
+      `damageSelf`) — but nothing said where "Evil Claw" was, and D139/D143/D144
+      have each found a non-zero index a list did not mention. Both attacks are
+      kept verbatim, so index 1 is the control that proves no program leaks across
+      indices AND a live second reader on the same card.
+
+      A STAGE 1 (from Houndour), fielded by `setActiveFromDeck` surgery like
+      Ninetales sv03-029, Oinkologne sv01-157 and D146's two installers next door.
+      It is an `ex` (two Prizes on a KO), kept for D133's reason.
+
+      Verbatim off the local D1 (2026-08-02): 270 HP, Darkness, Stage1 from
+      Houndour, retreat 2, ×2 Grass, no Resistance, no Ability. */
+  "sv03-134": battler("sv03-134", {
+    name: "Houndoom ex",
+    stage: "Stage1",
+    evolveFrom: "Houndour",
+    types: ["Darkness"],
+    hp: 270,
+    retreat: 2,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness", "Darkness"],
+        name: "Evil Claw",
+        damage: 90,
+        effect:
+          "If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.",
+      },
+      {
+        cost: ["Darkness", "Darkness", "Darkness"],
+        name: "Hound's Fang",
+        damage: 220,
+        effect: "This Pokémon also does 30 damage to itself.",
+      },
+    ],
+  }),
   /** Oinkologne sv01-157 — "Leg Stomp" ({C}{C}{C}, attack INDEX 1, printed 130):
       D144's TAILS-GATED self-lock, *"Flip a coin. If tails, during your next turn,
       this Pokémon can't attack."*, 1 of its 5 printings.
@@ -7617,6 +7702,61 @@ export const CLASS_BLOCK_DECK = deckOf({
   "fix-psychic-energy": 5, // {P} — Ghost Eye's typed half, Pour Tea, and Dominating Echo's half
   "fix-dark-energy": 2, // {D} — the other half of Dominating Echo, the LOUD witness's cost
   "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+});
+
+/** D148's DEFENDER-LOCK deck (`defenderLock.test.ts`). Its own 60, for
+    `ATTACK_LOCK_DECK`'s reason rather than `PREVENT_BLOCK_DECK`'s: **neither
+    printed sentence flips anything**, so the suite is SEED-FREE and pins that by
+    an unchanged `rngState` across a whole park-and-resolve. It cannot share
+    `ATTACK_LOCK_DECK` even though it reuses three of its cards — that suite is
+    also seed-free but its own shuffle decides which Basics its `armed()` finds,
+    and adding two cards would move every board in it.
+
+    ⚠️ THE TWO SEATS ARE ASYMMETRIC HERE IN A WAY NO EARLIER DECK IS, because this
+    is the family's first sentence whose effect lands on the OPPONENT: the
+    INSTALLERS matter on P1 and the VICTIMS matter on P2, and a case is only
+    meaningful when the victim is the right STAGE.
+
+      • sv03-042 Eiscue ex — the ENERGY-COST compound at 3 printings. "Scalding
+        Block" ({W}{W}{W}, INDEX 0, printed 160) is its only attack; the discard
+        half PARKS with two different Energy attached, so the defender-side install
+        sits BEHIND a park — the first time in this family that it has;
+      • sv03-134 Houndoom ex — the CLASS-GATED printing at 1. "Evil Claw"
+        ({D}{D}, INDEX 0, printed 90) at index 0 and "Hound's Fang" ({D}{D}{D},
+        220, `damageSelf` since 0.x) at index 1: the index control, and a second
+        live reader on the same card;
+      • sv01-048 Alomomola is the VICTIM and does three jobs at once. It is a
+        BASIC, so Evil Claw's predicate HOLDS on it; it has TWO attacks, so a
+        locked Alomomola refused index-0 "Surf" is the "the lock is on the
+        POKÉMON, not the attack" assertion made from the other seat; and its
+        index-1 "Aqua Slash" installs D143's SELF-lock, which is what makes the
+        two-ops-one-stamp case a drive rather than a surgery;
+      • fix-mola-stage1 evolves from Alomomola and does two jobs: it is the §10
+        EVOLVE clear (the victim's own counterplay, on the victim's own turn) and,
+        once evolved, the body Evil Claw's predicate FAILS on — so the filter's
+        two answers are one printed line of play apart;
+      • sv01-194 Switch (Item) is the victim's other §10 route out of the window;
+      • sv02-172 Boss's Orders is the INSTALLER's setup rather than an escape: drag
+        a Basic up on the installing turn, then lock it, which is what shows the
+        gate reads the Active as of RESOLUTION;
+      • fix-attacker's costless "Yawn" is the §12 control the lock must not be
+        confused with (an Asleep Active is refused by a DIFFERENT error code), and
+        Bite ({C}, 30) is the plain hit that Knocks a locked body out;
+      • fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and the
+        promote target that proves a lock does not travel to its holder's
+        replacement. */
+export const DEFENDER_LOCK_DECK = deckOf({
+  "sv03-042": 4, // Eiscue ex — "Scalding Block" idx 0: the compound, and it PARKS
+  "sv03-134": 4, // Houndoom ex — "Evil Claw" idx 0 (the gate), "Hound's Fang" idx 1 (control)
+  "sv01-048": 4, // Alomomola — the BASIC victim: "Surf" idx 0, "Aqua Slash" idx 1 (self-lock)
+  "fix-mola-stage1": 3, // evolves from Alomomola — the §10 clear AND the non-Basic victim
+  "sv01-194": 3, // Switch (Item) — the victim's other route out of the window
+  "sv02-172": 2, // Boss's Orders — the installer dragging a Basic up before Evil Claw
+  "fix-attacker": 3, // Bite ({C}, 30) and Yawn (costless, Asleep) — the §12 control
+  "fix-titan": 4, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-water-energy": 12, // {W}{W}{W} for Scalding Block; {W} for Surf, Aqua Slash and Bubble
+  "fix-dark-energy": 8, // {D}{D} for Evil Claw, {D}{D}{D} for Hound's Fang
+  "fix-energy": 13, // Colorless Basic — every {C} in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

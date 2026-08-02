@@ -360,13 +360,25 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
               : " is protected from damage from attacks during your opponent's next turn",
         ),
       ]);
-    // §8/§11 — the attack-installed SELF-LOCK. ACTIVE voice for
-    // ATTACK_BLOCK_APPLIED's reason (`seat` owns the locked Pokémon AND that
-    // Pokémon is the actor's own), but the WORDING is the row's whole job: this
-    // is the only one of the three durated rows that reports a cost the player
-    // paid rather than a protection they bought, and it is phrased from the
-    // holder's side ("can't attack next turn") so it reads as RETREAT_BLOCKED's
-    // sibling — which is exactly what it is, with the direction flipped.
+    // §8/§11 — the attack-installed lock. `seat` owns the LOCKED Pokémon (D136's
+    // finding 1), and the WORDING is the row's whole job: this is the only one of
+    // the three durated rows that reports a cost rather than a protection, and it
+    // is phrased from the holder's side ("can't attack next turn") so it reads as
+    // RETREAT_BLOCKED's sibling — which is exactly what it is.
+    //
+    // ⚠️ D148 ADDS THE OTHER DIRECTION AND CHANGES NOTHING HERE, WHICH IS THE
+    // POINT. At 0.92.0 this row was ACTIVE-voiced because `seat` happened to be
+    // the actor's own; the 4 opponent-side printings make it VICTIM-voiced, and
+    // RETREAT_BLOCKED one screen up is that same wording under the same seat rule.
+    // So the phrasing D143 chose against a hypothetical flip is the one the flip
+    // needed: "<name> can't attack next turn" is true under either seat, because
+    // "next turn" is the LOCKED player's next turn in both readings — the printed
+    // wordings differ ("your"/"your opponent's") only because they are spoken from
+    // the installer's chair, and a log row is not. A second phrasing keyed on the
+    // direction would have to say something the row cannot know (whose attack
+    // wrote it) to tell the reader something they already have (whose Pokémon it
+    // is). Contrast the THIRD phrasing D146 had to add above: that field changed
+    // what the rule DOES.
     case "ATTACK_LOCKED":
       return row(event.seat, [strong(cardName(state, event.uid)), plain(" can't attack next turn")]);
     // §8.5/§11 — the attack-installed DAMAGE REDUCTION. ACTIVE voice for

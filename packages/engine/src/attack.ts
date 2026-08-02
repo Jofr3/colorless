@@ -252,11 +252,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot attack (§12)`,
     );
   }
-  // §8/§11 (D143) — an attack this Pokémon used LAST turn locked it out of
-  // attacking on THIS one ("During your next turn, this Pokémon can't attack.").
+  // §8/§11 (D143) — an attack locked this Pokémon out of attacking on THIS turn.
   // Read through `attackLocked`, so the turn comparison lives in one place and
   // this site cannot drift from the HUD's projection of the same fact
   // (`redactedAttacksOf`, redact.ts).
+  //
+  // ⚠️ THE ATTACK THAT WROTE THE LOCK MAY HAVE BEEN THE OPPONENT'S (D148), AND
+  // THIS SITE IS DELIBERATELY BLIND TO WHICH. Four printed sentences reach this
+  // stamp — the holder's own drawback ("During your next turn, this Pokémon can't
+  // attack.", 22 printings) and the opponent's imposition ("…the Defending Pokémon
+  // can't attack.", 4) — and the gate asks the same question of the same field
+  // either way. That is what makes `preventAttack.target` a fact about the OP
+  // rather than about the state: the direction is spent at the install and never
+  // read again, here or in either projection.
   //
   // A REJECTION, NOT AN `ATTACK_FAILED`, and the distinction is §12's: an Asleep
   // Active above cannot declare at all, while a Confused one declares and then

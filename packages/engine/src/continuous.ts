@@ -386,9 +386,18 @@ export function installedReductionOf(state: GameState, pokemon: InPlayPokemon): 
 
     Returns a plain boolean rather than the stamp: there is one fact here and no
     `effects`-shaped rider to carry, so a record would be a field-of-one (D104's
-    minimal shape). A second reading — the pool prints an opponent-side "the
-    Defending Pokémon can't attack" on 4 printings — would earn the op a `target`
-    field, not this reader a return type. */
+    minimal shape).
+
+    ⚠️ AND THE SECOND READING LANDED WITHOUT MOVING THIS FUNCTION AT ALL (D148).
+    D143 forecast it here: "a second reading — the pool prints an opponent-side
+    'the Defending Pokémon can't attack' on 4 printings — would earn the OP a
+    `target` field, not this reader a return type". That is exactly what happened.
+    The field went on `preventAttack`, the stamp is derived from it at the install
+    site, and every read of the fact — this function, `attack.ts`'s §8 gate,
+    `redactedAttacksOf` and GameHud — is byte-identical to what it was at 0.92.0,
+    because the QUESTION ("may this body attack on this turn?") never depended on
+    who wrote the answer. A reader that had carried the direction would have had to
+    ask a second one here, on both sides of the table, forever. */
 export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean {
   // No defensive `=== undefined` arm, for `attackBlockOf`'s reason one function
   // up: the field is REQUIRED and an older record is retired by

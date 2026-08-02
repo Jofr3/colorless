@@ -262,25 +262,32 @@ describe("the self-lock — derived, not authored", () => {
     expect(gated).not.toEqual(deriveAttackEffect(BARE_TEXT));
   });
 
-  it("refuses the OPPONENT-side lock and the PER-ATTACK lock — the two field warrants", () => {
-    // These are the sentences that would EARN `preventAttack` a `target` field and
-    // an attack-name field respectively, and neither is a one-token widening.
+  it("refuses the PER-ATTACK lock — the field warrant this anchor still declines", () => {
+    // ⚠️ RE-POINTED AT D148, NOT DELETED, AND THE TITLE MOVED WITH IT. This case
+    // held BOTH field warrants at 0.92.0–0.96.0: the OPPONENT-side lock (which
+    // would earn `preventAttack` a `target`) and the PER-ATTACK lock (which would
+    // earn it an attack address). D148 took the first, so those two rows move OUT
+    // of the null list and into the shape claim below — where they say something
+    // strictly stronger than "unmapped": that THIS anchor still does not reach
+    // them, and that the anchor which does derives a program pointed at the other
+    // seat. The per-attack rows stay exactly where they were.
     for (const text of [
-      // Eiscue ex sv03-042/-210/-222 "Scalding Block" (3 printings) — the DEFENDER
-      // is locked, and its window is `state.turn + 1` rather than + 2, so a
-      // `target` field is two axes and not one.
-      "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
-      // Houndoom ex sv03-134 "Evil Claw" (1) — the same direction behind a
-      // class predicate, with the duration at the END of the sentence.
-      "If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.",
-      // The PER-ATTACK lock, 8 printings across 6 sentences: it names ONE attack
-      // and leaves the card's other attack legal, which is a fact this field
-      // cannot express. Two samples (Radiant Blastoise swsh10.5-018, Munkidori ex
+      // The PER-ATTACK lock, 10 printings across 7 sentences (8/6 SELF-side plus
+      // the opponent-side pair D148's census found): it names ONE attack and
+      // leaves the card's other attack legal, which is a fact this field cannot
+      // express. Two samples (Radiant Blastoise swsh10.5-018, Munkidori ex
       // sv06.5-037), and the second is the one whose card has no other attack —
       // so a reader tempted to treat it as the whole-Pokémon lock would be right
       // about that ONE card and wrong about the other seven.
       "During your next turn, this Pokémon can't use Torrential Cannon.",
       "During your next turn, this Pokémon can't use Dirty Headbutt.",
+      // …and the OPPONENT-side twin of it (Medicham sv01-111 "Acu-Punch-Ture",
+      // Oranguru sv02-094 "Plotter's Command"), which D148's census turned up and
+      // no earlier list or census had. It is the sentence a reader might think
+      // `target: "defender"` now reaches: it does not, and it is TWO steps away
+      // rather than one — the lock is per-ATTACK, and CHOOSING which attack is a
+      // park nothing in this family has.
+      "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
       // …and the neighbour that is neither a lock nor unmapped-by-accident: a
       // durated BUFF on one named attack (Seismitoad sv03-052 "Echoed Voice").
       "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
@@ -291,6 +298,36 @@ describe("the self-lock — derived, not authored", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // …and the two rows that MOVED (D148). Both now derive, both point at the
+    // DEFENDER, and neither is reachable from this file's anchor — which is the
+    // claim a `toBeNull` used to make weakly and this makes exactly. A build whose
+    // self-lock anchor drifted onto either string would install the drawback on
+    // the WRONG SEAT, and that is a failure no board looks wrong on: the attacker
+    // simply cannot attack next turn and the defender is untouched.
+    expect(
+      deriveAttackEffect(
+        "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
+      ),
+    ).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
+      { op: "preventAttack", target: "defender" },
+    ]);
+    expect(
+      deriveAttackEffect(
+        "If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.",
+      ),
+    ).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveIsBasic" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "preventAttack", target: "defender" }],
+      },
+    ]);
+    // …and NEITHER of them is what THIS file's anchor derives, asserted rather
+    // than reasoned about: the bare self-lock's program carries no `target` at
+    // all, so an absent key and `"defender"` are two different programs.
+    expect(deriveAttackEffect(BARE_TEXT)).toEqual([{ op: "preventAttack" }]);
   });
 
   it("refuses a printed ZERO on the compound but accepts the ungrammatical singular", () => {

@@ -10442,3 +10442,415 @@ INCOMING-DAMAGE-REDUCTION neighbourhood above**.
   last or not at all.
 - **BLOCKED ON INGEST, NOT ON THE ENGINE (D146):** Iron Moth `sv06.5-009`'s Ancient
   filter and Slither Wing `sv06.5-026`'s Future bonus. Not slices.
+
+---
+
+## D148 — the OPPONENT-SIDE ATTACK LOCK: `Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.` + `If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.` (engine 0.97.0, MATCH_RECORD_VERSION unchanged at 6)
+
+Item 1 of D147's remainder list, and **the slice that answers a question D143
+wrote down and refused to guess**: whether `preventAttack` should carry a
+`target`. It should. What makes it worth a decision block is that D143's
+objection is **true in its facts and wrong in its conclusion**, and the reason it
+took two readings to see that is exactly why D143 wrote the warrant down instead
+of building the field.
+
+### The resume point's claims, checked before anything was designed
+
+| Claim | Verdict |
+|---|---|
+| Eiscue ex `sv03-042`/`-210`/`-222`, 3 printings, "Scalding Block" | **TRUE** — one attack in three rarities (Double rare / Ultra Rare / Special illustration rare), byte-identical on all three. D121's second-printing warrant met by the card |
+| Houndoom ex `sv03-134` "Evil Claw", 1 printing | **TRUE** |
+| "4 printings / 2 clauses" | **TRUE** |
+| "its first half is `discardEnergy from: \"yourActive\"`, already built" | **TRUE**, and sharper than it reads — that op PARKS, so this is the first OPPONENT-side install in the family to sit behind a park |
+| "⚠️ Houndoom ex also prints a BARE recoil at index 1 (\"Hound's Fang\", 220 — already simulated)" | **TRUE** on all three facts, and the only index any list has named correctly on first pass |
+| *(UNSTATED)* Evil Claw's own index | **INDEX 0**, checked separately (D144's rule). The list named index 1 and said nothing about index 0 |
+| *(UNSTATED)* Scalding Block's index | **INDEX 0** — Eiscue ex's ONLY attack |
+| every name / cost / printed damage / effect string, per printing | **VERIFIED** — Eiscue ex {W}{W}{W} 160, Houndoom ex {D}{D} 90 and {D}{D}{D} 220 |
+| "⚠️ D146 IS DIRECTLY RELEVANT TO HOUNDOOM ex … the SAME `isBasicPokemon` predicate, read off the DEFENDER" | **TRUE, and it is the SLICE's second finding** — the same predicate on the other body resolves at the opposite SITE. See below |
+| "⚠️ TWO axes, not one … the field carries a holder AND a stamp rule" | **⚠️ FALSE, and this is the headline.** Two NUMBERS, ONE axis: the stamp is a pure function of the holder |
+| "⚠️ SWEEP `FIXTURE_POOL` FOR BOTH SENTENCES FIRST" | **RUN, and it came back EMPTY** — neither sentence was already fielded. D147's rule working from the other end |
+| *(UNSTATED)* any misnamed id | **NONE FOUND.** The first slice in three where the name sweep turned up nothing, and it was still run |
+
+**Thirteen lists in, and this is the first whose only miss is in a STRUCTURAL
+claim it argued for explicitly** rather than in a count, a name, an index or an
+absence. The standing shape holds otherwise: the catalog claims were right to the
+byte, and the one claim that was reasoned rather than queried is the one that
+failed.
+
+### ⚠️ `target` is ONE axis and not two — the finding
+
+D143 declined the field in `preventAttack`'s own doc block:
+
+> a `target` would have to carry a DIFFERENT STAMP as well as a different holder
+> (the defender-side window is `state.turn + 1`, this one is `state.turn + 2`),
+> so the field is two axes rather than one
+
+Both numbers are real. They are not **independent**. There is exactly one rule:
+
+> **the window is the LOCKED POKÉMON's controller's NEXT turn**
+
+and the two numbers are that one rule evaluated on the two seats, because
+**declaring an attack ENDS the turn (§5.3)**. The turn after the installing one
+belongs to the opponent — so the defender's next turn is `+ 1` — and the one after
+that is the installer's own, `+ 2`. The printed wordings differ for exactly the
+same reason:
+
+| Printing | Printed duration | Locked body | Stamp |
+|---|---|---|---|
+| `During your next turn, this Pokémon can't attack.` (22) | *your* next turn | the ACTOR's own Active | `+ 2` |
+| `…the Defending Pokémon can't attack.` (4) | *your opponent's* next turn | the DEFENDER | `+ 1` |
+
+Both sentences are spoken from the installer's chair; the body they lock is a
+different one; the window is the same rule about that body. So the stamp is
+DERIVED from `target` at the one install site, one field determines both, and
+D131's widen-don't-add test passes — **on the second reading rather than guessed
+at from the first, which is what D143's refusal bought.**
+
+**Driven, not argued: `+ 2` on both arms fails 13, `+ 1` on both fails 23,
+ignoring the field at the install site fails 17.**
+
+### ⚠️ The STATE costs nothing — the first durated slice in four with no new field
+
+`InPlayPokemon.attackLockedTurn` is reused unchanged. *"On which turn may this
+body not attack"* is ONE question about ONE body, and **whose attack wrote the
+answer is a fact about the OP, not about the record**. Consequences, all of them
+driven rather than inherited:
+
+| Site | Diff |
+|---|---|
+| `attackLocked` (continuous.ts) | none — D143 forecast this here verbatim ("would earn the OP a `target` field, not this reader a return type") |
+| the §8 attack gate (attack.ts) | none |
+| `redactedAttacksOf` (redact.ts) | none |
+| `GameHud.tsx` | none |
+| the three §10 clear sites | none |
+| `MATCH_RECORD_VERSION` | **unchanged at 6** |
+
+**And that is the answer to D147's generalisation trigger, said explicitly: this
+is NOT a fifth stamped field. It adds none.** The question is not re-opened.
+
+The MRV question is nonetheless live rather than academic. `preventAttack` never
+parks, but on Eiscue ex's compound it sits BEHIND one, so the op rides
+`EffectContinuation.rest` into a persisted record. An OPTIONAL field absent on all
+22 self-lock printings is a WIDENING (D125's distinction, D144's worked case): an
+old `{ op: "preventAttack" }` is a valid inhabitant of the new type and reads back
+as the self arm, which is exactly what it meant. Written into `match.ts`'s own doc
+block as a FOURTH distinct no-bump reason.
+
+### ⚠️ The class predicate is D146's MIRROR — same predicate, opposite site
+
+Houndoom ex's *"If the Defending Pokémon is a Basic Pokémon"* is the same
+`isBasicPokemon` D146 wired one slice earlier. The one word that differs changes
+where it resolves:
+
+| | D146 (`AttackBlock.fromClass`) | D148 (`opponentActiveIsBasic`) |
+|---|---|---|
+| Body the class is asked about | the ATTACKER | the DEFENDER |
+| Known at install time? | **no** — nobody has declared yet | **yes** — it is standing in front of the attack |
+| Where it resolves | the four damage READ SITES | the INSTALL, once |
+| What is stored | the printed TOKEN | **nothing** |
+| Cost | one field inside a persisted record | one `BoardCondition` member |
+
+So the gate is `conditionGate { cond: { kind: "opponentActiveIsBasic" }, then: [
+{ op: "preventAttack", target: "defender" } ] }` — an op that has spliced
+deterministic branches into the work queue since M4 — and the new member is the
+exact complement of D115's `opponentActiveIsEvolution`, **pinned against it on
+every real body** rather than each against a fixture. A field on the op would have
+been a second way to say generally what the gate already says (D131), and it would
+have said it for one op where the gate says it for all.
+
+`conditionGate` also answers two questions for free: it emits **no event** (a
+board condition is a fact both players can read off the table), and it draws **no
+coin**, which is what keeps the suite seed-free.
+
+### ⚠️ Two regexes, and the gated `then` is the other anchor's own op
+
+One anchored whole-sentence regex per PRINTED STRING (D136/D137). The two share
+four words and differ in the first clause, in whether there is a gate at all, in
+the subject's noun phrase (*"the Defending Pokémon"* vs *"it"*) and in **where the
+four duration words sit** — so an alternation would be two patterns wearing one
+name. What they share is the ACTION, and the action is shared as an OP: the gated
+`then` is byte-identical to the compound's second op, asserted rather than argued
+(D134's move on the heads face, D144/D145's on tails).
+
+- **No bare anchor.** *"During your opponent's next turn, the Defending Pokémon
+  can't attack."* is printed NOWHERE in the pool as a standalone attack sentence
+  — the compound is the only form it takes, exactly as D143's any-zone counter PUT.
+- **"Basic" is SPELLED, not captured** — D146's call on the same word one slice
+  back. D120's precondition ("does exactly one TOKEN vary across printings?") is
+  answered NO by a one-printing sentence whose sibling readings live on different
+  skeletons; the vocabulary is closed where the READING is (`BoardCondition`).
+- **The prefix is a LIVE reading, which makes `^…$` sharper than D143's.**
+  *"Discard an Energy from this Pokémon."* has derived since 0.x, so a prefix match
+  would return a program that RUNS — pay the Energy, install nothing — rather than
+  null. Asserted in both directions.
+
+### ⚠️ The first op in this family a §11 block REFUSES — and the swept table found it
+
+`preventBlock.test.ts`'s classification moved `preventAttack` from `untouched` to
+`blocked`. Its old verdict (*"it writes a stamp onto the CONTROLLER's own
+Active"*) was true of **the ops the deriver could emit**, not of the op — so the
+interpreter now owes `attackEffectRefused`, `preventRetreat`'s check verbatim,
+asked on the RESOLVED seat so the rule is total over both arms (`applyStatus`'s
+call; the self arm is provably inert, a block being live only during its holder's
+opponent's turn). **Dropping it fails 2.** Reachable off printed cards, not
+constructed: the defender installs on their turn, the window is the installer's
+very next turn, and that is the turn this lock would land on.
+
+**⚠️ AND THE SWEEP HAD A HOLE — the D139 → D140 → D143 → D146 shape for a FIFTH
+time.** Its walker descended `coinFlipGate` only, which was correct at 0.91.0 and
+became an accident of the candidate sets six slices ago; Houndoom ex is the first
+printed attack whose WHOLE PROGRAM is a `conditionGate`. Fixed, hoisted out of the
+sweep so a case can call it directly, and pinned that way — **because the pool
+sweep cannot see its own blindness**: removing the arm fails nothing off
+`FIXTURE_POOL`, since the gate is discovered at top level and the op inside it is
+also emitted bare by D143's 22 printings.
+
+**⚠️ AND A SECOND FINDING ABOUT THAT TABLE, MEASURED RATHER THAN ASSUMED — it is
+weaker than three slices have described it.** It asserts that every op HAS a
+verdict; it never asserts the verdict is TRUE. Flipping `blocked` back to
+`untouched` fails **nothing**. The behaviour is pinned by the driven case; the
+table is a FORCING FUNCTION (it made the question get asked, which is real and is
+how this slice found the refusal) but not a proof. Proving it means driving every
+`blocked` op under a live block, which is a slice of its own — carried forward
+rather than smuggled in here.
+
+### ⚠️ Who "the Defending Pokémon" is, and the §10 clears with the AGENCY inverted
+
+`ptcg-rules.md` §8 step 5 defines it: *"the Defending (opponent's Active)
+Pokémon"* — the body that was Active **when the attack resolved**, not "whatever
+is Active on their turn". So the lock is written onto that `InPlayPokemon` record
+and §10 sheds it the moment that body leaves the Active Spot or evolves, exactly
+as D112's retreat block is treated. The lifetime table:
+
+| Moment | `state.turn` | Locked? | Why |
+|---|---|---|---|
+| The install resolves (attack tail, turn N) | N | **no** | the printed word is "NEXT" |
+| Checkup ending turn N | N | **no** | nothing clears it here, as D142/D143 |
+| The victim's whole turn N+1 | N+1 | **YES** | the printed window — **BOTH** of their attacks are refused |
+| The installer's turn N+2 | N+2 | **no** | not the locked seat's turn; the installer attacks normally |
+| The victim's turn N+3 onward | ≥ N+3 | **no** | expired by arithmetic; the stale stamp answers nothing |
+| The victim RETREATS inside the window | — | **no** | §10, and the promoted body attacks |
+| The victim SWITCHES it out and back | — | **no** | §10, and it comes back clean |
+| The victim EVOLVES it | — | **no** | §10 — the cheapest counterplay: no Energy, no allowance |
+| Knocked Out by the installing attack | — | — | the stack leaves play; the promoted body carries no lock |
+| Installed twice | — | the later stamp | monotone (below) |
+
+**Every route is D143's reachability with the AGENCY inverted.** All three are
+lines of play on the locked player's own turn — but that player is the VICTIM, so
+they are COUNTERPLAY against an imposed effect rather than an escape from a
+drawback the holder chose. **The INSTALLER can reach none of them**: their turn
+ended when they declared, which is the exact inversion of D142's block, whose only
+in-window clear was the opponent's Boss's Orders. That makes **four durated
+effects with four different reachability stories on the same four fields**, and it
+is why the clear-set is swept rather than listed.
+
+A **lethal install is a LINE rather than a corner** here, unlike anywhere else in
+this family: Eiscue ex's printed 160 into Alomomola's 110 KOs the very body it
+locks. The lock row lands BEFORE the KO — the program runs at `attack.ts`'s tail
+and the §8.1 sweep follows it, exactly as a defender-targeted status lands on a
+lethal hit — and the promoted body carries nothing.
+
+### ⚠️ Two installs on one body are now reachable, and the stamps are MONOTONE
+
+Before D148 a re-install was ≥ 2 turns later by construction. Now a Pokémon can
+lock itself with its own attack AND be locked from across the table. Every install
+writes its holder's next turn measured from the install, and installs are ordered
+in time — so a later stamp is never an EARLIER turn than the one it replaces.
+That is why the later one simply wins and there is nothing to `Math.max` (contrast
+`reduceDamage`, whose two sources really can disagree). Driven: Alomomola's
+self-lock (`+ 2` from turn 3 = **5**) and Houndoom ex's defender-lock (`+ 1` from
+turn 4 = **5**) name the SAME turn, so the second install is **silent** — D142's
+*"when the merge says nothing new the row is suppressed entirely"*, reached for
+the first time by two DIFFERENT printings.
+
+### The census (local D1, 2026-08-02, 978 cards) — D142's rule, SEVENTH time
+
+Run for THIS question — *what printings lock the OPPONENT's Pokémon out of
+attacking, under any duration or gate?* — rather than read off §D143's `can't
+attack` table, per that slice's own rule. The `can't attack` query reproduces
+§D143's numbers exactly (38 printings: 33 attacks, 2 Abilities, 3 Trainer). What
+it **cannot see** is a printing that says `can't USE` — and that is where the
+census paid:
+
+| Sentence | Printings | Kind | Status after D148 |
+|---|---|---|---|
+| `Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.` | **3** | attack | ✅ `discardEnergy` + `preventAttack { target: "defender" }` — Eiscue ex `sv03-042`/`-210`/`-222` idx 0 |
+| `If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.` | **1** | attack | ✅ `conditionGate` → the same op — Houndoom ex `sv03-134` idx 0 |
+| `Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.` | **2** | attack | ❌ **NEW — on no earlier list or census.** Medicham `sv01-111` "Acu-Punch-Ture" idx 0, Oranguru `sv02-094` "Plotter's Command" idx 0. The OPPONENT-side twin of the per-attack lock, and it needs a **PARK** (choosing which attack) on top of the attack address |
+| `During your opponent's next turn, if the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack doesn't happen.` | 4 | attack | ❌ a durated gate making the OPPONENT flip on their OWN turn (Dolliv `sv01-022`/`-200`, Quaxly `sv02-049`/`-206`) — §D145 already refused these on the face question, and they are refused here on the DECIDER |
+| `…is now Paralyzed.` | 25 | attack | ✅ §12, simulated since 0.x — a Special Condition, not this mechanism (no stamp, a Checkup tick, a status chip) |
+| `During this turn, your Pokémon can't attack.` | 3 | **Trainer** | ❌ Geeta `sv03-188`/`-218`/`-226` — a different turn, the actor's OWN board, and not an attack effect |
+
+**So the opponent-side attack-denial neighbourhood is 6 printings / 3 sentences on
+the ATTACK side (4 mapped here, 2 refused), plus 4 coin-gated near-misses, plus
+Paralysis.** Two things the table is worth keeping for:
+
+1. **THE PER-ATTACK LOCK GROUP IS 10 / 7, NOT 8 / 6.** §D143 counted the SELF-side
+   printings (`this Pokémon can't use {AttackName}`, 8 across 6 sentences) and its
+   query could not see a sentence whose subject is the opponent's. The two new
+   printings are strictly harder than the self-side eight: they need the attack
+   address AND a park to choose it, so item 4 of any remainder list is two
+   mechanisms rather than one.
+2. **NO COMPOUND RIDES BEHIND THIS RIDER.** Both mapped printings are compounds
+   whose OTHER half comes first (an Energy cost, a class gate); nothing in the pool
+   prints a sentence AFTER either one, so the `^…$` anchors are under no pressure
+   from a third clause — unlike D145's discard, where four compounds were live.
+
+### The four structural questions
+
+1. **Does the op PARK?** `preventAttack` does not — deterministic, consumes no
+   rng, asks nothing. The op it rides BEHIND (`discardEnergy`) does, and gained no
+   field. **`MATCH_RECORD_VERSION` UNCHANGED at 6**, and the reason is a FOURTH
+   distinct one: no `InPlayPokemon` key moved at all (the state field is reused),
+   and the op's new key is OPTIONAL and absent on every pre-existing producer, so
+   a persisted continuation written by the previous deploy is a valid inhabitant
+   of the new type and reads back as what it meant. **This is also, explicitly,
+   NOT D147's fifth-stamped-field trigger.**
+2. **Whose VOICE?** `seat` owns the LOCKED Pokémon (D136's finding 1) — the
+   actor's own on 22 printings, the actor's OPPONENT's on 4 — and **there is no
+   new phrasing, which is a result rather than a saving**. D143 phrased
+   `ATTACK_LOCKED` from the HOLDER's side *"so it reads as RETREAT_BLOCKED's
+   sibling"*, and RETREAT_BLOCKED is a **victim-side** row: the wording chosen for
+   what was then an active-voiced row was ALREADY the passive-side one, and the
+   direction it was written to flip is the direction this slice added. *"<name>
+   can't attack next turn"* is true under either seat, because *"next turn"* is
+   the LOCKED player's next turn in both readings — the printed wordings differ
+   only because they are spoken from the installer's chair, and a log row is not.
+   Contrast D146, which owed a THIRD phrasing the moment its field landed:
+   `fromClass` changed what the rule DOES, `target` only changes whose name the
+   row already carries. Driven and READ in sequence from both seats. **A gate that
+   DECLINES emits nothing** (D140/D146), asserted on the rendered LOG.
+3. **Is the guard ASSERTED?** Four ways, and two found something. The §11
+   classification table forced the `blocked` verdict; its walker's gate blindness
+   was found, fixed and pinned directly; the table's OWN weakness was measured and
+   written down (a wrong verdict goes green); the turn:action vocabulary is swept
+   from the seat that did not install (attach, Trainer, retreat, endTurn all still
+   legal); and the §12 ordering is pinned — an Asleep AND locked Active reports
+   `STATUS_PREVENTS_ATTACK`, not `ATTACK_PREVENTED`.
+4. **Does the mechanism exist?** Read first, and it existed THREE times over: the
+   lock field, its §8 gate, both projections and its three clears are D143's; the
+   gate op and its `BoardCondition` union are M4's; the predicate is D146's and the
+   discard half is 0.x's. **What this slice added is the DIRECTION.**
+
+### The suite — `defenderLock.test.ts` (40 tests)
+
+Its own `DEFENDER_LOCK_DECK`, for `ATTACK_LOCK_DECK`'s reason rather than
+`PREVENT_BLOCK_DECK`'s: neither sentence flips anything, so the suite is
+**SEED-FREE** and pins that by an unchanged `rngState` across a whole
+park-and-resolve. It cannot SHARE `ATTACK_LOCK_DECK` even though it reuses three
+of its cards — that suite's own shuffle decides which Basics its `armed()` finds.
+
+**⚠️ THE DECK IS THE FIRST IN THIS FAMILY THAT IS ASYMMETRIC BY DESIGN**, because
+it is the first sentence whose effect lands on the opponent: the INSTALLERS matter
+on P1 and the VICTIMS matter on P2, and a case is only meaningful when the victim
+is the right STAGE and survives the right number. Two new fixtures (Eiscue ex
+`sv03-042`, Houndoom ex `sv03-134`); **Alomomola `sv01-048` does three jobs at
+once** — it is BASIC (Evil Claw's predicate holds), it has TWO attacks (so "the
+lock is on the POKÉMON" is asserted from the other seat), and its index-1 "Aqua
+Slash" installs D143's SELF-lock, which is what makes the two-ops-one-stamp case a
+drive rather than a surgery. `fix-mola-stage1` is both the §10 evolve clear and,
+once evolved, the body the predicate FAILS on — **so the filter's two answers are
+one printed line of play apart.**
+
+The one SURGERY is D142's wide block, and the reason is censused rather than
+assumed: **every one of the pool's 13 `effects: true` printings is coin-gated**,
+so driving one would put a coin into a suite whose whole determinism claim is that
+it takes none (D143's own move on this same field).
+
+**Mutation-checked seventeen ways:** dropping the gated arm fails **24**, `+ 1` on
+both arms **23**, dropping the §8 gate **22**, inverting the predicate **22**,
+ignoring `target` at the install site **17**, dropping `target` from the gated arm
+**16**, `+ 2` on both arms **13**, dropping the whole compound arm **12**, dropping
+`target` from the compound arm **9**, reversing the compound's op order **6**,
+skipping the leaving-Active clear **4**, skipping the evolve clear **3**, dropping
+the redact projection line **3**, dropping `attackEffectRefused` **2**, and **1**
+each for the compound anchor's `^`, the gated anchor's `$`, the idempotence
+early-return and the sweep's `conditionGate` descent. Two mutations SURVIVED and
+both are reported rather than buried: reverting the walker (fixed by pinning it
+directly) and flipping the classification verdict (not fixable cheaply — above).
+
+`clauseApostrophe`'s DISCOVERED census moved **46 → 48** — one row per new
+fixture, and both expose BOTH slots at once (the possessive "your opponent's" AND
+the contraction "can't"). Houndoom's is the first entry in that census whose
+derived program is a `conditionGate`, i.e. whose apostrophes sit in a sentence read
+for a BOARD CONDITION as well as for an op.
+
+**Three stays-LOUD witnesses RE-POINTED, none deleted**: `attackLock.test.ts`
+(whose case title moved too — it held BOTH field warrants and now holds one),
+`attackPark.test.ts` (its THIRD moved row, and the first on the "an" form) and
+`typeNameClause.test.ts`, whose claim got SHARPER rather than weaker: the token
+`Basic` must still resolve to nothing THERE, and the failure it now guards against
+is not "an unread card" but the worse one — two readers claiming one printed
+clause.
+
+### Verification
+
+`bun run check` **GREEN exit 0 — 190 files / 3183 tests** (was 189 / 3142).
+engineVersion 0.96.0 → **0.97.0**; `MATCH_RECORD_VERSION` **unchanged at 6**.
+ZERO new ops, events, error codes, prompts, parks, state fields, registry rows or
+redact arms; no behavioural diff in `attack.ts` / `continuous.ts` / `redact.ts` /
+`turn.ts` / `log.ts` / `events.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` /
+`registry.ts` / `triggers.ts`, and no web/DB/`@luminous/schema` diff (the
+`GameHud.tsx` change is a comment).
+
+### Still unmapped after D148 — ranked by cost
+
+Thirteen censuses are CLOSED and must not be re-run: the heal neighbourhood
+(D133/D135), the gated-HEADS neighbourhood (§D134), the counter-MOVE (§D138) and
+counter-PUT (§D139/§D140) neighbourhoods, the §9 RECOIL neighbourhood (§D141), the
+PREVENT + duration neighbourhood (§D142), the `can't attack` neighbourhood
+(§D143), the TAILS-FACE neighbourhood (§D144), the two CONSEQUENT neighbourhoods
+(§D145), the ATTACKER-FILTER neighbourhood (§D146), the INCOMING-DAMAGE-REDUCTION
+neighbourhood (§D147) and **the OPPONENT-SIDE ATTACK-DENIAL neighbourhood above**.
+
+- **The attacker-side `do {N} less damage` family — 6 printings / 4 sentences
+  (§D147's census).** `During your opponent's next turn, attacks used by the
+  Defending Pokémon do {N} less damage (BEFORE applying Weakness and Resistance).`
+  — Houndoom `sv06.5-008`/`-066` (100, **index 1**), Pikachu `sv02-062` + Pidove
+  `swsh10.5-061` (20, index 0), Florges `sv01-093` (30, index 0), plus Entei
+  `sv03-030`'s always-on Ability (20). **A durated stamp on the DEFENDER's body
+  read at the ATTACKER's pre-W/R step** (`attackerPreWRBonus`) — D147's mirror on
+  both axes at once, and it WOULD be the fourth stamped field. ⚠️ Note D148 does
+  NOT make this cheaper: `preventAttack.target` is about which BODY an op writes
+  to, and this family's difficulty is which SITE reads it. The one existing pre-W/R
+  read site is a BONUS, so it needs a signed number or a second term there; the
+  Ability wants a `PassiveEffects` sibling, so 5 of the 6 are one slice and 1 is
+  another.
+- **The §9 recoil FAMILY — 5 printings**, unchanged from §D141/§D142/§D143.
+  Vengeful Punch `sv03-197` (a Tool, KO-conditioned, no duration — cheapest),
+  Lycanroc ex `sv02-117`/`-241` "Scary Fangs" and Mabosstiff `sv02-143`
+  "Comeuppance" (stamped fields summed into `passivesOf`'s `damageAttacker`).
+  ⚠️ Either of the last two would be the **fourth** stamped field, and per §D147
+  the fourth is NOT the generalisation trigger. `installedReductionOf` is the
+  template.
+- **The PER-ATTACK lock — now 10 printings / 7 sentences (was 8 / 6; §D148's
+  census).** `During your next turn, this Pokémon can't use {AttackName}.`
+  (Munkidori ex `sv06.5-037`/`-083`/`-091`, Lucario `sv01-114`, Radiant Charizard
+  `swsh10.5-011`, Radiant Blastoise `swsh10.5-018`, Skarmory `sv03-142`, Greedent
+  ex `sv03-179`) **plus the OPPONENT-side twin — Medicham `sv01-111` and Oranguru
+  `sv02-094`, `Choose 1 of your opponent's Active Pokémon's attacks. During your
+  opponent's next turn, that Pokémon can't use that attack.`** The self-side eight
+  need an attack INDEX (or name) beside the turn and a capture for a PROPER NOUN;
+  the opponent-side two need that **plus a PARK** to choose the attack, and D148's
+  `target` gets them no closer. ⚠️ This is the **FIFTH stamped field**, i.e. one of
+  §D147's three named generalisation triggers — and the one that actually earns it,
+  because a payload-carrying member is the case a union is built for. Seismitoad
+  `sv03-052`'s durated per-attack BUFF wants the SAME addressing.
+- **The §11 CLASSIFICATION TABLE only forces a verdict, it does not check one
+  (NEW, §D148).** `preventBlock.test.ts`'s table is total over the discovered op
+  set and refuses to go green on an unclassified op — which is real and is how
+  D148 found `preventAttack`'s refusal — but flipping a verdict from `blocked` to
+  `untouched` fails NOTHING. Making it a proof means driving every `blocked` op
+  under a live wide block and asserting `ATTACK_EFFECT_PREVENTED`, which is ~7
+  boards and a fixture each. Small, self-contained, and it hardens the guard three
+  slices have leaned on.
+- **The always-on damage reductions — 2 printings / 2 sentences (§D147).** Rock
+  Chestplate `sv01-192` (a **Tool**, {F}-gated on the HOLDER) and Hariyama
+  `sv02-113` "Arm Thrust Practice" (a **seat-wide** aura). Both feed the SAME
+  number D147 summed into; neither is a duration or an `attackBlock` sibling.
+- **The always-on attacker filters — 6 printings / 4 sentences (§D146).**
+  Unchanged: `PassiveEffects` siblings of `preventDamageFromExV`, not stamps.
+- **Iron Moth `sv06.5-009` "Suction" + Camerupt `sv03-032`** — unchanged. Do it
+  last or not at all.
+- **BLOCKED ON INGEST, NOT ON THE ENGINE (§D146):** Iron Moth `sv06.5-009`'s
+  Ancient filter and Slither Wing `sv06.5-026`'s Future bonus. Not slices.

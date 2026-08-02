@@ -701,21 +701,42 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
   /** Every op kind any ATTACK in the fixture pool can produce, discovered from
       the deriver rather than listed — `coinFlipGate` bodies included, since the
       whole family this slice maps hides inside one. */
+  /** THE ONE walker, hoisted out of `attackOpKinds` at D148 so a case can feed it
+      a program of its own — see "the sweep DESCENDS every gate" below, which is
+      what makes the branch arms a GUARD rather than a comment. */
+  function walkKinds(ops: readonly EffectOp[], kinds: Set<string>): Set<string> {
+    for (const op of ops) {
+      kinds.add(op.op);
+      // ⚠️ EVERY GATE, NOT JUST THE COIN (D148). This descent was written for
+      // `coinFlipGate` because that was the only gate an ATTACK could derive at
+      // 0.91.0 — an accident of the candidate sets, exactly the D139 → D140 →
+      // D143 shape, and it went unnoticed for six slices. Houndoom ex sv03-134 is
+      // the first printed attack whose program is a `conditionGate`, and with
+      // this arm missing its `preventAttack` would be invisible to the table
+      // below: the sweep would go green while the one op that most needed
+      // classifying sat a level down inside a branch.
+      if (op.op === "coinFlipGate") walkKinds(op.then, kinds);
+      if (op.op === "conditionGate") {
+        walkKinds(op.then, kinds);
+        if (op.otherwise !== undefined) walkKinds(op.otherwise, kinds);
+      }
+      if (op.op === "recordGate") {
+        walkKinds(op.then, kinds);
+        if (op.otherwise !== undefined) walkKinds(op.otherwise, kinds);
+      }
+    }
+    return kinds;
+  }
+
   function attackOpKinds(): Set<string> {
     const kinds = new Set<string>();
-    const walk = (ops: EffectOp[]) => {
-      for (const op of ops) {
-        kinds.add(op.op);
-        if (op.op === "coinFlipGate") walk(op.then);
-      }
-    };
     for (const card of Object.values(FIXTURE_POOL)) {
       for (const attack of card.attacks ?? []) {
         const derived = attack.effect === undefined ? null : deriveAttackEffect(attack.effect);
-        if (derived !== null) walk(derived);
+        if (derived !== null) walkKinds(derived, kinds);
       }
       const authored = programFor(card.id)?.attack;
-      for (const ops of Object.values(authored ?? {})) walk(ops);
+      for (const ops of Object.values(authored ?? {})) walkKinds(ops, kinds);
     }
     return kinds;
   }
@@ -744,14 +765,23 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     discardDeckTop: "untouched", // the opponent's DECK is not a Pokémon
     bottomFromOpponentHand: "untouched", // …nor is their hand
     coinFlipGate: "untouched", // procedure; its body is classified above
+    conditionGate: "untouched", // a board-condition branch; its body is classified above
     preventDamage: "untouched", // the installer itself, on its own body
     // D143's self-lock, and the first op to be classified by this table rather
     // than by the slice that wrote it — which is exactly what the table is for.
-    // UNTOUCHED: it writes a stamp onto the CONTROLLER's own Active, so there is
-    // no opponent-side body for a §11 block to protect from it. (Note this is
-    // NOT the same claim as "a block cannot stop a lock": a locked Pokémon that
-    // also carries a block simply carries both, on two different turns.)
-    preventAttack: "untouched",
+    //
+    // ⚠️ IT MOVED AT D148, AND THAT IS THIS TABLE EARNING ITS PLACE A SECOND TIME.
+    // It sat at UNTOUCHED for three slices on a reason that was true of the OPS
+    // THE DERIVER COULD EMIT rather than of the op itself: "it writes a stamp onto
+    // the CONTROLLER's own Active, so there is no opponent-side body for a §11
+    // block to protect from it". D148's `target: "defender"` arm writes the stamp
+    // onto the DEFENDER, which is squarely an effect of an attack done to the
+    // Defending Pokémon — so the classification flips and the interpreter owes
+    // `attackEffectRefused`, exactly as `preventRetreat` two lines up does. This
+    // table refused to go green until that was said, which is the whole design.
+    // (Still NOT the same claim as "a block cannot stop a lock": a Pokémon that
+    // carries both simply carries both, on two different turns.)
+    preventAttack: "blocked",
     // D147's durated damage reduction, and the SECOND op classified by this table
     // rather than by the slice that wrote it — the guard doing its job twice.
     // UNTOUCHED for `preventDamage`'s reason verbatim: it writes a stamp onto the
@@ -772,6 +802,50 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // …and nothing in the table is dead weight, so it cannot rot into a list of
     // ops the deriver stopped emitting.
     for (const kind of Object.keys(CLASSIFIED)) expect(kinds).toContain(kind);
+  });
+
+  it("the sweep DESCENDS every gate, not only the coin", () => {
+    // ⚠️ THE DESCENT ABOVE WAS AN ACCIDENT OF THE CANDIDATE SETS FOR SIX SLICES,
+    // and this case is what makes it a guard (D139 → D140 → D143 → D146, the
+    // shape again). `walk` only followed `coinFlipGate` because that was the only
+    // gate an ATTACK could derive at 0.91.0; Houndoom ex sv03-134 "Evil Claw"
+    // (D148) is the first printed attack whose whole program is a `conditionGate`.
+    //
+    // ⚠️ AND IT IS ASSERTED HERE RATHER THAN INSIDE `attackOpKinds`, BECAUSE THE
+    // POOL CANNOT SEE IT. Removing the `conditionGate` arm fails nothing off the
+    // FIXTURE_POOL sweep: the gate is discovered at top level and the op inside
+    // it is also emitted bare by D143's 22 printings, so the classification
+    // stays complete by luck. The day a printing puts an op ONLY inside a gate,
+    // that blindness becomes a missing classification nobody is told about — so
+    // the walker is called DIRECTLY on Houndoom ex's real derived program, where
+    // the gate's body is the only place its op appears.
+    const gated = deriveAttackEffect(
+      "If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.",
+    );
+    expect(gated?.[0]?.op).toBe("conditionGate");
+    expect([...walkKinds(gated ?? [], new Set<string>())].sort()).toEqual([
+      "conditionGate",
+      "preventAttack",
+    ]);
+    // …and both arms of a two-armed gate, which no printing has yet: the printed
+    // "…instead" (Grusha) is a Trainer, so an ATTACK reaching `otherwise` is a
+    // rule with no card — D144's precedent for pinning one anyway.
+    expect([
+      ...walkKinds(
+        [
+          {
+            op: "conditionGate",
+            cond: { kind: "opponentActiveIsBasic" },
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+            then: [{ op: "preventAttack", target: "defender" }],
+            otherwise: [{ op: "preventRetreat" }],
+          },
+        ],
+        new Set<string>(),
+      ),
+    ].sort()).toEqual(["conditionGate", "preventAttack", "preventRetreat"]);
+    // …and the sweep the table actually runs sees the gate off the pool.
+    expect(attackOpKinds().has("conditionGate")).toBe(true);
   });
 
   it("`invokedBy` and D139/D140's `source` agree on every op the deriver emits", () => {

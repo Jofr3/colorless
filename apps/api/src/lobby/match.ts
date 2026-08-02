@@ -267,7 +267,37 @@ export interface MatchRecord {
     never parks (it is deterministic and asks nothing), so no `EffectContinuation`
     carries the new op into `phase.cont` either. The RENDERED `SeatLogEntry[]`
     gains one new row type (`DAMAGE_REDUCTION_APPLIED`), which is text in NEW
-    records only and is D141's already-settled case. */
+    records only and is D141's already-settled case.
+
+    ⚠️ NO BUMP AT D148 (engine 0.97.0), STAYS AT 6 — and this is the first durated
+    slice in four to add NO stamped field at all, which is the whole reason. The
+    OPPONENT-side attack lock ("Discard an Energy from this Pokémon. During your
+    opponent's next turn, the Defending Pokémon can't attack.", 3 printings; "If
+    the Defending Pokémon is a Basic Pokémon, it can't attack during your
+    opponent's next turn.", 1) REUSES `InPlayPokemon.attackLockedTurn` unchanged:
+    "on which turn may this body not attack" is one question about one body, and
+    WHOSE attack wrote the answer is a fact about the op rather than about the
+    record. So there is no new required key, no changed key and nothing on
+    `InPlayPokemon` for an old record to be missing.
+
+    What DID move on a persisted shape is `preventAttack.target?: "defender"`, and
+    the question is live rather than academic — sharper than D144's, in fact.
+    `preventAttack` never parks, but on Eiscue ex's compound it sits BEHIND one:
+    `discardEnergy` parks whenever two different Energy are attached, so the lock
+    op rides `EffectContinuation.rest` into `phase.cont` and into a persisted
+    record. It is nonetheless a WIDENING (D125's distinction, D144's worked case):
+    the field is OPTIONAL and absent on every one of the 22 self-lock printings, so
+    an old continuation's `{ op: "preventAttack" }` is still a valid inhabitant of
+    the new type and reads back as the SELF arm — which is precisely what it meant
+    when it was written, no deploy before this one having had a producer that could
+    write "defender". The old record's TYPE is not a lie, so there is nothing to
+    retire. `BoardCondition` likewise gained a union MEMBER
+    (`opponentActiveIsBasic`), which is a widening in the same sense and in the
+    same place: an old `conditionGate` carries a kind the new union still contains.
+    Nothing else persisted moved — no `GameState` field, no `EffectContext` field,
+    no new event type and NO log wording change at all (the one `ATTACK_LOCKED`
+    phrasing renders honestly under either seat, see log.ts), so even D141's
+    rendered-text case does not arise. */
 export const MATCH_RECORD_VERSION = 6;
 
 /** How a persisted match read back: absent, usable, or written by an

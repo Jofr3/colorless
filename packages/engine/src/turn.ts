@@ -303,12 +303,19 @@ export function placeEvolution(
     // made one line up), and a state surgery pins it.
     retreatBlocked: false,
     attackBlock: null,
-    // …and, since D143, the attack-installed SELF-LOCK ("During your next turn,
-    // this Pokémon can't attack.") — the one §10 clear on this line that is not
-    // only reachable but is a PLAYED LINE: the lock's window is the holder's own
-    // next turn, so evolving the locked Pokémon on that turn frees it to attack
-    // immediately. That is the inverse of the block above, whose window belongs to
-    // the opponent and which therefore no evolution can ever meet.
+    // …and, since D143, the attack-installed LOCK — the one §10 clear on this line
+    // that is not only reachable but is a PLAYED LINE: the lock's window is the
+    // holder's own next turn, so evolving the locked Pokémon on that turn frees it
+    // to attack immediately. That is the inverse of the block above, whose window
+    // belongs to the opponent and which therefore no evolution can ever meet.
+    //
+    // D148 — and since the lock can now be written by the OPPONENT's attack ("…the
+    // Defending Pokémon can't attack."), this line is also the VICTIM's chief
+    // counterplay rather than only the holder's escape from its own drawback. The
+    // reachability is identical (the window is the locked player's own next turn
+    // either way); the AGENCY is not, and evolving out of an imposed lock is the
+    // sharpest of the three routes because it costs no Energy and no allowance.
+    // Driven end to end on a printed line (Alomomola → fix-mola-stage1).
     attackLockedTurn: null,
     // …and, since D147, the attack-installed DAMAGE REDUCTION — the same
     // reachability story as the block two lines up rather than the lock's, and
@@ -362,6 +369,15 @@ export function placeEvolution(
     REDUCTION, which shares the BLOCK's story rather than the lock's (same
     window, same body, so the forced half is the reachable one). FOUR durated
     effects, three different reachability stories, one clear.
+
+    D148 adds a FOURTH story to the same four fields without adding a field: an
+    OPPONENT-installed attack lock reaches this path exactly where D143's does (the
+    window is the locked player's own turn, so a retreat inside it is legal), but
+    the player taking the retreat is the one the effect was done TO. Same site,
+    same clear, opposite agency — which is worth writing down because it is the
+    first durated effect in the engine whose early endings are a COUNTERPLAY rather
+    than an escape, and because "who can reach this line" has been the question
+    every one of these four fields was priced on.
     M4 adds dropping active-only markers here too. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return {

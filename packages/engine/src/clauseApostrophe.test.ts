@@ -154,7 +154,17 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // rather than silently widening the pool it does not cover. If it drops, a
     // reader stopped deriving something and the failure belongs here as much as in
     // the slice suite that owns it.
-    expect(derivable).toHaveLength(46);
+    // D148 added TWO — the OPPONENT-side lock's two sentences, one per new
+    // fixture (Eiscue ex sv03-042's "Scalding Block" and Houndoom ex sv03-134's
+    // "Evil Claw"), which is D143's own pair repeated on the other seat. Both
+    // expose BOTH slots at once — the possessive "your opponent's" AND the
+    // contraction "can't" — and Houndoom's is the first entry in this census whose
+    // derived program is a `conditionGate`, i.e. whose apostrophes sit in a
+    // sentence read for a BOARD CONDITION as well as for an op. That is worth
+    // saying because the fold is applied to the whole printed string before any
+    // reader sees it, so a build that folded per-CLAUSE rather than per-SENTENCE
+    // would pass every earlier row here and fail this one.
+    expect(derivable).toHaveLength(48);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

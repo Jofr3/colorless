@@ -186,14 +186,29 @@ export type GameEvent =
       loudness in this engine is owed to UNREAD TEXT, not to a read rule saying
       no (D140). */
   | { type: "ATTACK_BLOCK_APPLIED"; seat: Seat; uid: string; effects: boolean; fromClass?: "Basic" }
-  /** §8/§11 (D143) — an attack LOCKED its own Active out of attacking on its
-      controller's next turn ("During your next turn, this Pokémon can't
-      attack."). `seat` owns the locked Pokémon, which — as with
-      ATTACK_BLOCK_APPLIED above — is the ACTOR's own, so this too renders
-      honestly in the ACTIVE voice. It is the one row of the three durated
-      families that reports a DRAWBACK rather than a protection, and the wording
-      has to say so: a player who reads "protected" where the card cost them their
-      next attack has been told the opposite of what happened.
+  /** §8/§11 (D143, widened D148) — an attack LOCKED a Pokémon out of attacking on
+      its controller's next turn. `seat` OWNS THE LOCKED POKÉMON, which is D136's
+      finding 1 and the only part of this row's contract that has ever mattered —
+      and since D148 that seat is the ACTOR's own on 22 printings ("During your
+      next turn, this Pokémon can't attack.") and the ACTOR'S OPPONENT's on 4
+      ("…the Defending Pokémon can't attack."). It is the one row of the three
+      durated families that reports a DRAWBACK rather than a protection, and the
+      wording has to say so: a player who reads "protected" where the card cost
+      them their next attack has been told the opposite of what happened.
+
+      ⚠️ ONE ROW, ONE WORDING, BOTH DIRECTIONS — AND THAT IS A RESULT, NOT A
+      SAVING. D143 phrased its copy from the HOLDER's side ("<name> can't attack
+      next turn") deliberately, "so it reads as RETREAT_BLOCKED's sibling — which
+      is exactly what it is, with the direction flipped". RETREAT_BLOCKED is a
+      VICTIM-side row. So the phrasing D143 chose for an active-voiced row was
+      already the passive-side one, and the direction it was written to flip is the
+      direction D148 added: the row renders honestly under either seat with no new
+      arm, no `target` on the event, and nothing for a reader to disambiguate,
+      because "next turn" means the LOCKED player's next turn in both readings.
+      Contrast D146, which needed a THIRD phrasing the moment its field landed —
+      the difference is that `fromClass` changes what the rule DOES and `target`
+      only changes whose name the row already carries. Driven and read in sequence
+      rather than argued (D144's rule), from both seats.
 
       No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
       expires by arithmetic, with no boundary walk to announce it from), and the
