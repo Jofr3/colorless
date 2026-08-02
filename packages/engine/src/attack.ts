@@ -26,6 +26,7 @@ import {
   effectiveRetreatCost,
   installedAttackDebuffOf,
   installedReductionOf,
+  opposingAttackDebuff,
   passivesOf,
   providedEnergy,
   seatRemovesWeakness,
@@ -724,7 +725,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // than folded into `attackerPreWRBonus` because that number is REPORTED as an
     // addition, is `passivesOf`'s §9-suppressible catalog fold, and never needed
     // the clamp this one does (continuous.ts `installedAttackDebuffOf`).
-    const debuff = installedAttackDebuffOf(next, active);
+    //
+    // D151 — and the SAME sentence is printed with no duration on an Ability
+    // (Entei sv03-030 "Pressure"), so the number has two sources and they are
+    // SUMMED here, exactly as the reduction two screens down sums its catalog and
+    // installed halves. The aura half is a cross-board scan gated on BOTH Active
+    // Spots and §9-suppressible; the installed half is a stamp on this body that
+    // no Ability-lock can reach (continuous.ts `opposingAttackDebuff`).
+    const debuff = installedAttackDebuffOf(next, active) + opposingAttackDebuff(next, active);
     // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
     // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
     const weakness = seatRemovesWeakness(next, defenderSeat)

@@ -2522,13 +2522,30 @@ export const FIXTURE_POOL: Record<string, Card> = {
       simulates, so it STAYS on the loud ATTACK_EFFECT_SKIPPED path, keeping the
       deriver-is-narrow witness the two Prize/self-counter readers would otherwise
       leave uncovered. Verbatim vs the local D1 catalog (Basic Fire, 130 HP,
-      {C}{C}{C}, ×2 Water). */
+      {C}{C}{C}, ×2 Water).
+
+      ⚠️ D151 ADDED THE PRINTED ABILITY, which this fixture had been missing since
+      it was fielded — the Florges omission (D149) on the other array. "Pressure"
+      is Entei's only Ability and its effect string is byte-verbatim vs the local
+      D1 (2026-08-02, 978 cards); it is the ALWAYS-ON member of D149's pre-W/R
+      attacker debuff, now read through the registry (`opponentActiveAttackDebuff`)
+      and continuous.ts `opposingAttackDebuff`. The row is carried here rather than
+      abbreviated (contrast Ting-Lu ex above) because pressureAura.test.ts asserts
+      it char-for-char against the sentence the registry row is authored FOR. */
   "sv03-030": battler("sv03-030", {
     name: "Entei",
     hp: 130,
     types: ["Fire"],
     retreat: 2,
     weaknesses: [{ type: "Water", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Pressure",
+        effect:
+          "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance).",
+      },
+    ],
     attacks: [
       {
         cost: ["Colorless", "Colorless", "Colorless"],
@@ -7946,6 +7963,52 @@ export const ATTACK_DEBUFF_DECK = deckOf({
   "fix-water-energy": 4, // {W} — Surf, Aqua Slash and the evolution's Bubble
   "fix-lightning-energy": 3, // {L} — Pika Bolt's typed half
   "fix-psychic-energy": 2, // {P} — Moonblast's typed half
+});
+
+/** D151 — the ALWAYS-ON member of the same family, on its own deck rather than in
+    `ATTACK_DEBUFF_DECK` above: that deck's boards are seeded (`SEED = 7`) and
+    adding a card would reshuffle every one of them, so the new suite gets its own
+    60 and D149's stay byte-identical.
+
+    Entei sv03-030 is the aura SOURCE ("Pressure", 20, both ends Active-scoped).
+    Everything else is a body chosen to reach one of the four sites the number is
+    subtracted at, or to switch it off:
+      • Pikachu sv02-062 — "Pika Bolt" idx 1 ({L}{C}, 30) is the plain MAIN HIT
+        into Entei, and "Growl" idx 0 is D149's INSTALLER, so one deck can put the
+        stamped half and the aura half live on the same exchange and pin the SUM.
+      • Alomomola sv01-048 — "Surf" idx 0 ({W}{C}, 30) is a WATER attacker and
+        Entei is ×2 Water, which is the board where "before applying Weakness" is
+        observable at all (30 − 20 = 10, ×2 = 20; the other placement reads 40).
+      • Ting-Lu ex sv02-127 — "Cursed Land" is the §9 LOCK, Active-scoped on the
+        source and gated on the target carrying damage, so ONE board switches the
+        aura off by damaging Entei and leaves D149's stamp on the same attacker
+        untouched. "Land Scoop" idx 0 ({F}{F}{F}, 150) is its declaration.
+      • Rotom sv01-069 "Linear Attack" ({C}, opponentAny 20) — the `snipeActive`
+        site; fix-sniper "Spread Shot" ({C}, 30 + 20 to each benched) — the
+        `spreadDamage` site; fix-bramble "Bramble" ({C}, 40 per taken Prize to one
+        benched) — `placeSnipe`'s `deals` arm.
+      • fix-feint (the family's synthetic "Feint Attack" witness, {C}, 50, verbatim
+        SV text, `ignoreWR`) — the ONE site where the aura's source and the snipe's
+        target are the same body, plus the Bench pick where they are not.
+    fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and promote
+    target. ⚠️ NO {R} ENERGY IN THE DECK ON PURPOSE: Entei's own "Blaze Ball" is
+    60 + 20 per attached {R}, so with none in the list its declaration is a flat 60
+    and the converse case (an Entei's OWN attack is not weakened by its own aura)
+    needs no arithmetic. */
+export const PRESSURE_DECK = deckOf({
+  "sv03-030": 2, // Entei — "Pressure" (the aura) and "Blaze Ball" idx 0 ({C}{C}{C}, 60+)
+  "sv02-062": 2, // Pikachu — "Pika Bolt" idx 1 (the main hit), "Growl" idx 0 (D149's install)
+  "sv01-048": 2, // Alomomola — "Surf" idx 0 ({W}{C}, 30): the ×2-Water board
+  "sv02-127": 2, // Ting-Lu ex — "Cursed Land" (the §9 lock) + "Land Scoop" idx 0
+  "sv01-069": 2, // Rotom — "Linear Attack" idx 0 ({C}, opponentAny 20): snipeActive
+  "fix-feint": 2, // "Feint Attack" idx 0 ({C}, 50, ignoreWR): the coincident-body site
+  "fix-sniper": 2, // "Spread Shot" ({C}, 30 + 20 to each benched): spreadDamage
+  "fix-bramble": 4, // the per-40 benched `deals` snipe: placeSnipe's damage arm
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-energy": 28, // Colorless — every {C} slot in the deck
+  "fix-fighting-energy": 5, // {F} — Land Scoop's three
+  "fix-lightning-energy": 3, // {L} — Pika Bolt's typed half
+  "fix-water-energy": 3, // {W} — Surf's typed half
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

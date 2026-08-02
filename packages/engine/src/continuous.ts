@@ -762,6 +762,72 @@ export function opposingRetreatBlocked(state: GameState, pokemon: InPlayPokemon)
   return false;
 }
 
+/** §8.5 (D151) — the HP an OPPOSING continuous Ability takes off every damage
+    `pokemon`'s own attack does right now, before Weakness and Resistance (Entei
+    sv03-030 "Pressure": "As long as this Pokémon is in the Active Spot, attacks
+    used by your opponent's Active Pokémon do 20 less damage (before applying
+    Weakness and Resistance)"). The ALWAYS-ON half of D149's attacker-side debuff,
+    SUMMED beside `installedAttackDebuffOf` at the same four sites — same printed
+    sentence, same step, two sources, one number, which is exactly how
+    `passivesOf().damageReductionAfterWR` and `installedReductionOf` already split
+    D147's sentence one screen up.
+
+    ⚠️ IT IS `opposingRetreatBlocked`'s SHAPE AND NOT `passivesOf`'s, and that was
+    the whole reason D149 scoped it out. `passivesOf` reads the HOLDER's own
+    catalog row; this fact belongs to the holder's OPPONENT, so no field on that
+    fold could ever have answered it. So it is the SEVENTH member of the aura-scan
+    family (`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` /
+    `opposingRetreatSurcharge` / `opposingRetreatBlocked` / `hasFreeRetreatSelf`)
+    and it inherits that family's three answers verbatim rather than inventing new
+    ones:
+      • the DERIVED SEAT — the caller hands us one of a side's own `active`/`bench`
+        entries, so we find that side by top uid and read the OTHER one, which is
+        what keeps all four read sites' signatures untouched;
+      • BOTH ACTIVE CLAUSES ENFORCED BY THE SCAN, no `activeOnly` field. "As long
+        as this Pokémon is in the Active Spot" scopes the SOURCE (a benched Entei
+        does nothing — contrast `opposingRetreatSurcharge`, whose print scopes only
+        the target) and "your opponent's ACTIVE Pokémon" scopes the TARGET (a
+        benched attacker reads 0, which it would anyway, a benched Pokémon having
+        no attack to weaken). Both ends are therefore live-read: a Boss's Orders, a
+        retreat, or a KO-and-promotion that moves EITHER body out of the Active
+        Spot ends the aura on the spot, because every read site passes the CURRENT
+        state and nothing is stamped anywhere;
+      • the §9 GATE through `disabledAbilityUids`, like every non-lock Ability
+        surface. This is the sharpest line between the two halves of the number:
+        the aura is an ABILITY and a live Ability-lock silences it, where D149's
+        `attackDamageDebuff` is an attack INSTALLATION written onto a record and no
+        lock can reach it. That asymmetry is DRIVEN on one board in
+        pressureAura.test.ts (a damaged Entei under Ting-Lu ex "Cursed Land" stops
+        reducing while the stamp on the same attacker keeps doing so), and it is
+        the reason this could never have been a `PassiveEffects` field read through
+        the D149 stamp's own reader.
+
+    Returns a NUMBER rather than a boolean, unlike `opposingRetreatBlocked`: the
+    print carries an amount. It does NOT sum over a source list, unlike
+    `opposingRetreatSurcharge` — the source clause is the opponent's Active ALONE,
+    so there is exactly one candidate and a loop would describe a board that cannot
+    exist. */
+export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return 0;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    // The TARGET clause: only this side's Active is weakened, so a benched holder
+    // of this uid is out even though it belongs to this side.
+    if (side.active === null || topUid(side.active) !== uid) continue;
+    // The SOURCE clause: the opponent's Active Spot and nowhere else.
+    const source = state.players[otherSeat(seat)].active;
+    if (source === null) return 0;
+    const top = topCardOf(state, source);
+    const amount = top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveAttackDebuff;
+    if (amount === undefined) return 0;
+    const sourceUid = topUid(source);
+    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return 0; // §9
+    return amount;
+  }
+  return 0;
+}
+
 /** §11 — is `pokemon`'s Retreat Cost zeroed by its OWN printed passive (Wimpod
     swsh10.5-025 "Punk Out": "If your opponent has any Pokémon V in play, this
     Pokémon has no Retreat Cost")? The SIXTH member of the aura-scan family

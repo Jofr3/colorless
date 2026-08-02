@@ -400,10 +400,19 @@ describe("the attacker-side debuff — derived, not authored", () => {
     // NOT this slice: `PassiveEffects` has no shape for an aura with an Active
     // clause on both ends (continuous.ts `opposingRetreatBlocked` is the template).
     expect(deriveAttackEffect(ALWAYS_ON)).toBeNull();
-    expect(programFor("sv03-030")?.passive).toBeUndefined();
-    // …and the fixture's own printed Ability list is empty, so the datum is not
-    // merely unread — it is absent, which is the follow-up item's first cost.
-    expect(FIXTURE_POOL["sv03-030"]?.abilities).toBeNull();
+    // ⚠️ RE-POINTED AT D151, NOT DELETED. The sentence still must not derive — that
+    // half of the witness is the point and is unchanged — but the datum has since
+    // ARRIVED, through the registry rather than through this deriver: Entei's
+    // printed Ability is now on the fixture and `opponentActiveAttackDebuff: 20` is
+    // authored on its `passive`, read by continuous.ts `opposingAttackDebuff` and
+    // SUMMED beside this slice's stamp at all four damage sites (pressureAura.test.ts).
+    // So the assertion that used to say "absent" now says WHERE it landed, which is
+    // the stronger claim: an aura, not an op.
+    expect(programFor("sv03-030")?.passive).toEqual({ opponentActiveAttackDebuff: 20 });
+    expect(programFor("sv03-030")?.attack).toBeUndefined();
+    expect(FIXTURE_POOL["sv03-030"]?.abilities).toEqual([
+      { type: "Ability", name: "Pressure", effect: ALWAYS_ON },
+    ]);
   });
 
   it("costs zero registry rows — all four cards simulate off their printed text", () => {

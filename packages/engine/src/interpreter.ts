@@ -22,6 +22,7 @@ import {
   hasAttachedEnergy,
   installedAttackDebuffOf,
   installedReductionOf,
+  opposingAttackDebuff,
   passivesOf,
   providesEnergyType,
   seatRemovesWeakness,
@@ -2139,7 +2140,17 @@ function spreadDamage(
   // Pokémon's attacks do 20 less damage" comes off every damage the attack does.
   // Hoisted out of the loop: it is a fact about the ATTACKER, identical for every
   // benched target.
-  const attackerDebuff = attackerTop === null ? 0 : installedAttackDebuffOf(state, attackerTop.active);
+  //
+  // D151 — the ALWAYS-ON half (Entei "Pressure") is summed in, and it reaches the
+  // Bench for the SAME reason: its sentence scopes the attacker ("attacks used by
+  // your opponent's Active Pokémon") and says nothing at all about the target. The
+  // aura's own two Active clauses are about the two ACTIVE bodies, not about who
+  // gets hit — so a spread that splashes the Bench is weakened whole.
+  const attackerDebuff =
+    attackerTop === null
+      ? 0
+      : installedAttackDebuffOf(state, attackerTop.active) +
+        opposingAttackDebuff(state, attackerTop.active);
   const spread = Math.max(0, amount - attackerDebuff);
   const bench = side.bench.map((pokemon) => {
     const uid = topUid(pokemon);
@@ -2254,7 +2265,17 @@ function placeSnipe(
   // counter is not damage from an attack (D138/D139), so the sentence "…attacks do
   // {N} less damage" has nothing to take off it, exactly as no reduction passive
   // does. Hoisted for `spreadDamage`'s reason (a fact about the attacker).
-  const attackerDebuff = attackerTop === null ? 0 : installedAttackDebuffOf(next, attackerTop.active);
+  //
+  // D151 — the ALWAYS-ON half is summed in, and `ignoreWR` does NOT null it here
+  // even though it nulls the target's reduction below. Feint Attack's clause
+  // scopes "that Pokémon" — the BENCHED pick — and the aura's source is the
+  // opponent's ACTIVE, a different body entirely. (`snipeActive` is the one arm
+  // where those two coincide, and it answers differently for exactly that reason.)
+  const attackerDebuff =
+    attackerTop === null
+      ? 0
+      : installedAttackDebuffOf(next, attackerTop.active) +
+        opposingAttackDebuff(next, attackerTop.active);
   const bench = side.bench.map((pokemon, index) => {
     if (!targeted.has(index)) return pokemon;
     const uid = topUid(pokemon);
@@ -2341,7 +2362,21 @@ function snipeActive(
   // bypassed by `ignoreWR`: Feint Attack's "not affected by … any effects on that
   // Pokémon" scopes the TARGET, and this is an effect on the ATTACKER — the same
   // reading that already KEEPS the bonus above, applied to the term beneath it.
-  const debuff = attacker === null ? 0 : installedAttackDebuffOf(state, attacker.active);
+  //
+  // D151 — the ALWAYS-ON half is summed in, and this is the ONE site where
+  // `ignoreWR` nulls it. The aura's source is the OPPONENT'S ACTIVE and this arm's
+  // target IS the opponent's Active, so on every board where Pressure is live the
+  // source and "that Pokémon" are the same body — and Feint Attack's "isn't
+  // affected … by any effects on that Pokémon" is precisely a clause about that
+  // body's own printed Ability. The stamped half is untouched by `ignoreWR` on
+  // this same line, for the reason above it: that one lives on the ATTACKER's
+  // record. The two halves of one number answering differently is not an
+  // inconsistency — it is the aura/installation distinction becoming observable.
+  const debuff =
+    attacker === null
+      ? 0
+      : installedAttackDebuffOf(state, attacker.active) +
+        (ignoreWR ? 0 : opposingAttackDebuff(state, attacker.active));
   // Weakness, unless nulled by `ignoreWR` (Feint Attack) OR by a "your Pokémon
   // have no Weakness" aura on the sniped seat (Florges "Blooming Garden");
   // Resistance still applies to a Blooming-Garden-protected Active.

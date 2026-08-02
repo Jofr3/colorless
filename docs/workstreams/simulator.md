@@ -11311,3 +11311,155 @@ someone next touches `placeSnipe`.
 stays **0.98.0** and `MATCH_RECORD_VERSION` stays **7** — said explicitly rather than
 bumped by habit, because nothing persisted moved. `bun run check` **GREEN exit 0 —
 191 files / 3228 tests** (was 191 / 3224).
+
+## D151 — the ALWAYS-ON ATTACKER-SIDE DAMAGE DEBUFF: `As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance).` (engine 0.99.0, MATCH_RECORD_VERSION unchanged at 7)
+
+**The printing.** ONE, and the count is this session's own query rather than D149's.
+Entei `sv03-030` "Pressure", Basic {R}, 130 HP, retreat 2, ×2 Water, one attack
+("Blaze Ball", {C}{C}{C}, `60+`). The local D1 (2026-08-02, 978 cards) prints
+`less damage (before applying Weakness and Resistance)` on **six** rows — Houndoom
+`sv06.5-008`/`-066`, Florges `sv01-093`, Pidove `swsh10.5-061`, Pikachu `sv02-062`
+(all five ATTACK riders, D149's) and this one **ABILITY**. Asked as its own
+question — `in the Active Spot` AND `less damage` — the answer is Entei alone.
+The id's NAME, the Ability's NAME and the effect string were re-queried too, and
+**all three held**: this is the first list on the D137–D151 run whose every
+catalog claim survived re-query.
+
+**The shape, and why it is not `passivesOf`.** `passivesOf` folds the HOLDER's own
+catalog row plus its attached Tools. This number belongs to the holder's OPPONENT,
+so no field on that fold could answer it — which is exactly the reason D149 gave
+for scoping the printing out. It is `opposingRetreatBlocked`'s shape instead: a
+CROSS-BOARD aura with an Active clause on BOTH ends.
+
+| | `opposingRetreatSurcharge` (Spidops ex) | `opposingRetreatBlocked` (Snorlax) | this (Entei) |
+|---|---|---|---|
+| SOURCE clause | none — a benched source works | Active Spot | Active Spot |
+| TARGET clause | opponent's Active | opponent's Active | opponent's Active |
+| Sources summed | YES (a list) | NO (one Active) | NO (one Active) |
+| Returns | a delta | a boolean | a NUMBER |
+| §9-gated | yes | yes | yes |
+
+`opposingAttackDebuff` (continuous.ts) is therefore the SEVENTH member of the
+aura-scan family, and it inherits that family's three answers verbatim rather than
+inventing new ones: the DERIVED SEAT (find the side holding this top uid by
+`topUid`, then read the OTHER side), both Active clauses enforced BY THE SCAN
+rather than by an `activeOnly` field (the `damageAttacker` precedent), and the §9
+gate through `disabledAbilityUids`.
+
+**Mid-turn departures need no code.** Every read site passes the CURRENT state and
+nothing is stamped anywhere, so a Boss's Orders, a retreat or a KO-and-promotion on
+EITHER end ends the aura at the moment it happens. This is where the slice differs
+from D149's stamp, which survives its installer leaving the spot because it lives
+on the victim's record. Nothing in `opposingRetreatBlocked`'s answers had to be
+changed for this print — only the return type.
+
+**The four read sites.** Each gained one `+` term beside `installedAttackDebuffOf`,
+which is exactly what §D149's forecast said it would cost:
+
+| site | file | the term |
+|---|---|---|
+| main §8.5 hit | attack.ts | `installedAttackDebuffOf(next, active) + opposingAttackDebuff(next, active)` |
+| `spreadDamage` | interpreter.ts | same, hoisted out of the bench loop |
+| `placeSnipe` (`deals` arm) | interpreter.ts | same, and NOT nulled by `ignoreWR` |
+| `snipeActive` | interpreter.ts | same, and **nulled by `ignoreWR`** |
+
+The number reaches the BENCH for D149's censused reason applied to the always-on
+member: the printed sentence scopes the ATTACKER (*"attacks used by your
+opponent's Active Pokémon"*) and says nothing whatever about the target.
+
+**⚠️ `ignoreWR` ANSWERS DIFFERENTLY AT THE TWO SNIPE ARMS, AND THAT IS THE ONE NEW
+READING.** Feint Attack's *"isn't affected by Weakness or Resistance, or by any
+effects on that Pokémon"* scopes the TARGET. At `snipeActive` the aura's SOURCE and
+the target are the SAME BODY by construction — both are the opponent's Active — so
+the clause reaches the aura and the 50 lands whole. At `placeSnipe`'s bench arm the
+pick is a benched body and Entei's Ability is not an effect on IT, so the 50 is
+weakened to 30. The STAMPED half is nulled at NEITHER, because it lives on the
+attacker's own record and the clause never reaches across. One number's two halves
+answering one question differently is not an inconsistency — it is the
+aura/installation distinction becoming observable a second time. Driven both ways
+off one printed attack.
+
+**⚠️ THE §9 PAIR, ON ONE BOARD.** The sharpest test the slice can write, and the
+one the resume item asked for. Ting-Lu ex "Cursed Land" locks the Abilities of a
+DAMAGED opposing non-ex while Active; Entei is a damaged non-ex Basic; so ONE
+`damage` field is the whole switch and everything else on the board is identical:
+
+| board | aura | stamp | `debuff` | dealt (Land Scoop 150) |
+|---|---|---|---|---|
+| Entei undamaged, stamp live | LIVE | LIVE | 40 | 110 |
+| Entei damaged (locked), stamp live | **silenced** | LIVE | 20 | 130 |
+| Entei damaged (locked), no stamp | silenced | — | none | 150 |
+
+Row 2 is the whole point: the lock reaches the ABILITY and cannot reach the
+INSTALLATION. Row 3 is the control that stops row 2 passing for the wrong reason.
+
+**Registry, not deriver — and the justification is the family's own rule.**
+`deriveAttackEffect` reads ATTACK text into a one-shot op program. This is a
+printed ABILITY with no duration: deriving it would install a one-turn stamp for a
+permanent aura AND write it onto the wrong body. D149 pinned that refusal; this
+slice keeps it and re-points the witness rather than deleting it — the sentence
+must still stay LOUD, and the assertion now says WHERE the datum landed (a
+`passive`, not an `attack`), which is the stronger claim.
+
+**⚠️ THE FIXTURE SWEEP, WITH A NUMBER THIS TIME.** Entei's fixture has carried no
+`abilities` array since 0.35.0 on a card with exactly one printed Ability —
+Florges's D149 omission on the other array. Diffing the WHOLE `FIXTURE_POOL`
+field-by-field against the D1 finds **40 fixtures missing a printed Ability or
+attack**. Some are deliberate and say so (Pecharunt ex's doc block explains its
+omitted Ability); some are not — **Mimikyu `sv02-097` carries
+`preventDamageFromExV` in the registry and has no "Safeguard" row on its card**,
+i.e. the behaviour is wired and the datum is absent, which is Entei's exact
+failure mode. **No fixture NAME is wrong**, so D149's name sweep holds and the
+hazard is now known to be omission-only. That list is the cheapest possible input
+to a future hardening slice.
+
+**The four structural questions.**
+1. **PARK / PERSIST — NO, said explicitly.** The flag is on the CATALOG
+   (`PassiveEffects`, a registry type), the scan is pure, and NO key moved on
+   `InPlayPokemon`, on any op payload or on any persisted shape. D124's trigger is
+   "a required key appeared on `InPlayPokemon`"; nothing appeared anywhere.
+   `MATCH_RECORD_VERSION` stays **7** — D148's no-bump reason, second occurrence,
+   and the seventh distinct answer on record.
+2. **VOICE — no row moved, and that was DRIVEN.** No new event. The number lands
+   in the existing `DAMAGE_DEALT.debuff`; its crumb (`· weakened −N`) states a
+   subtraction and names neither a turn nor an installer. `DAMAGE_DEALT` renders
+   under the seat that OWNS the damaged Pokémon (D136's finding 1) — here the
+   aura's own holder — where D147's "during your opponent's next turn" would have
+   been false (D149's finding). This crumb is honest under BOTH seats, which is
+   WHY nothing had to change; the log was rendered under that seat and read.
+3. **GUARD ASSERTED — yes.** The §9 gate is driven end to end off a printed
+   Ability, in both directions, with a no-stamp control.
+4. **MECHANISM EXISTS — yes, read first.** `opposingRetreatBlocked` really is the
+   shape, and the "nothing else moves" claim held to the line.
+
+**Mutation-checked eleven ways, all eleven caught.**
+
+| mutation | tests failed |
+|---|---|
+| registry amount 20 → 30 | 11 |
+| main-hit subtraction moved AFTER W/R | 7 |
+| drop the main-hit aura term | 5 |
+| drop the `placeSnipe` aura term | 2 |
+| drop the §9 gate | 2 |
+| drop the fixture's printed Ability | 2 |
+| drop the SOURCE Active clause (scan the whole opposing board) | 1 |
+| drop the TARGET Active clause (allow a benched attacker) | 1 |
+| drop the `spreadDamage` aura term | 1 |
+| `ignoreWR` does NOT null the aura at `snipeActive` | 1 |
+| `ignoreWR` ALSO nulls it at `placeSnipe`'s bench arm | 1 |
+
+**Cost.** 1 `PassiveEffects` flag, 1 registry row, 1 new reader, 4 one-term read
+sites. No new op, field, event, error code, prompt, park, regex, deriver arm,
+redact arm or projection; no web/DB/`@luminous/schema` diff at all. 1 fixture
+COMPLETED (Entei), 1 new deck (`PRESSURE_DECK` — its own 60, so D149's seeded
+boards stay byte-identical), `pressureAura.test.ts` (19 tests), 1 re-pointed
+stays-LOUD witness. engine 0.98.0 → **0.99.0**, `MATCH_RECORD_VERSION` **7
+unchanged**. `bun run check` GREEN exit 0 — **192 files / 3247 tests** (was 191 /
+3228).
+
+**Still unmapped after D151.** The `before applying Weakness and Resistance`
+neighbourhood is now **CLOSED** — all 6 printings of the subtract half are read (5
+riders at D149, 1 Ability here), and the ADD half was censused at D149 (12
+printings, all already read except Seismitoad `sv03-052`'s per-attack buff, which
+wants the attack ADDRESSING of resume item 3). Everything else on the remainder
+list is unchanged by this slice.

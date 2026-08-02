@@ -305,6 +305,29 @@ export interface PassiveEffects {
       is exactly what the printed "Pokémon V" means (Choice Belt's gate draws the
       same line). */
   noRetreatCostSelf?: { requiresOpponentSuffixInPlay?: PokemonSuffix };
+  /** §8.5 continuous OPPONENT-side aura: while BOTH this Pokémon and the attacker
+      are in the Active Spot, every damage the OPPOSING side's Active Pokémon's
+      attacks do is reduced by this much, BEFORE Weakness and Resistance (Entei
+      sv03-030 "Pressure" — "As long as this Pokémon is in the Active Spot, attacks
+      used by your opponent's Active Pokémon do 20 less damage (before applying
+      Weakness and Resistance)"). The ALWAYS-ON member of D149's attacker-side
+      debuff family, and the ONLY printing of it in the pool (censused as its own
+      question against the local D1: 1 of the 6 printings of "…less damage (before
+      applying Weakness and Resistance)" is an Ability, and it is this one).
+      A bare number, not an object (the D104 rule): the print is unconditional once
+      both ends are Active.
+      SHAPE — it is `preventOpponentActiveRetreat`'s twin two fields up rather than
+      a `passivesOf` fold, and for that field's reason verbatim: it does NOT modify
+      its holder, it reaches across the board, so continuous.ts reads it through a
+      dedicated scan (`opposingAttackDebuff`) — `passivesOf` reads the HOLDER and
+      this must be asked of the holder's OPPONENT. Both Active clauses are enforced
+      by the SCAN rather than by an `activeOnly` field, exactly as they are there.
+      Being a printed Pokémon ABILITY only the TOP card of a stack grants it (never
+      an attached Tool), and it is §9-suppressible (`disabledAbilityUids`) — which
+      is the sharpest difference from D149's stamped `InPlayPokemon.attackDamageDebuff`,
+      an attack INSTALLATION that no Ability-lock can reach. Same sentence, same
+      step, two sources: the read sites SUM them. */
+  opponentActiveAttackDebuff?: number;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -661,6 +684,23 @@ const BLOCK: CardProgram = { passive: { preventOpponentActiveRetreat: true } };
 const PUNK_OUT: CardProgram = {
   passive: { noRetreatCostSelf: { requiresOpponentSuffixInPlay: "V" } },
 };
+
+/** Entei (sv03-030) — "Pressure": "As long as this Pokémon is in the Active Spot,
+    attacks used by your opponent's Active Pokémon do 20 less damage (before
+    applying Weakness and Resistance)." — the ALWAYS-ON member of D149's
+    attacker-side pre-W/R debuff family, and the only printing of that mechanism
+    in the pool that is not an attack rider (1 printing, no reprint).
+    AUTHORED HERE RATHER THAN DERIVED, and the reason is the family's own rule:
+    `deriveAttackEffect` reads ATTACK text into a one-shot op program, and this
+    sentence is a printed ABILITY with no duration — deriving it would install a
+    one-turn stamp for a permanent aura AND write it onto the wrong body (the aura
+    is re-read off the source's opponent every turn, where a stamp is written once
+    onto one record). attackDebuff.test.ts pinned exactly that refusal at D149;
+    this row is the other half of it. The sentence therefore stays LOUD as attack
+    text and the datum arrives through the registry, like every other continuous
+    Ability on the aura-scan seam (Blooming Garden, Lunar Zone, Trap Territory,
+    Block, Punk Out). */
+const PRESSURE: CardProgram = { passive: { opponentActiveAttackDebuff: 20 } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -2213,6 +2253,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "swsh10.5-055": BLOCK, // Snorlax — Block ("As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat")
   // — M5 long-tail: noRetreatCostSelf, the LAST print on the retreat-cost seam, closing it at 10/10 (verified vs the local D1 2026-08-01). —
   "swsh10.5-025": PUNK_OUT, // Wimpod — Punk Out ("If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost")
+  // — M5 long-tail: opponentActiveAttackDebuff, the ALWAYS-ON member of D149's pre-W/R debuff family (verified vs the local D1 2026-08-02). —
+  "sv03-030": PRESSURE, // Entei — Pressure ("As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance)")
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)

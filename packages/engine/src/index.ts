@@ -3004,6 +3004,10 @@ import type { GameState, Seat } from "./types";
     (`ATTACK_DEBUFF_DECK`), `attackDebuff.test.ts` (**41 tests, SEED-FREE**), 1
     re-pointed stays-LOUD witness (`damageReduction.test.ts`, NULL → SHAPE, none
     deleted), `clauseApostrophe`'s DISCOVERED census **48 → 51**.
+    ⚠️ **AND IT LANDED AT D151, ONE SLICE LATER, EXACTLY AS COSTED.** Nothing here
+    moved for it: the four read sites each gained one `+` term and this block's
+    forecast is the only thing that had to be true.
+
     **Mutation-checked twenty-two ways:** dropping the possessive anchor fails 26,
     writing onto `ctx.seat` 22, stamping `state.turn` 20, `+ 2` 20, dropping the
     "used by" anchor 13, dropping the main-hit term 9, dropping the row's `debuff`
@@ -3016,7 +3020,88 @@ import type { GameState, Seat } from "./types";
     reported rather than buried: flipping the §11 classification verdict, which is
     D148's own measured weakness and is resume item 4. `bun run check` GREEN exit
     0, **191 files / 3224 tests** (was 190 / 3183). */
-export const engineVersion = "0.98.0";
+/** 0.99.0 — P3-M5 long tail (**D151**): the **ALWAYS-ON ATTACKER-SIDE DAMAGE
+    DEBUFF**, closing the family D149 opened one slice earlier.
+
+      "As long as this Pokémon is in the Active Spot, attacks used by your
+       opponent's Active Pokémon do 20 less damage (before applying Weakness and
+       Resistance)."                                   (Entei sv03-030 "Pressure")
+
+    **1 printing, RE-QUERIED rather than inherited** (the resume item carried an
+    explicit honesty marker saying D150 had re-verified none of it). The local D1
+    (2026-08-02, 978 cards) prints "less damage (before applying Weakness and
+    Resistance)" on SIX rows — five attack riders (D149) and this one Ability —
+    and the sharper query ("in the Active Spot" AND "less damage") returns Entei
+    alone. Id → NAME, Ability name, the byte-exact effect string and the fixture's
+    fields all re-checked: **every inherited CATALOG claim held**, which is the
+    first list in this run where that is true of all of them.
+
+    ⚠️ **IT REALLY WAS `opposingRetreatBlocked`'s SHAPE, AND READING THE CODE FIRST
+    IS WHY THAT IS A FINDING RATHER THAN A CITATION.** `passivesOf` folds the
+    HOLDER's own catalog row; this number belongs to the holder's OPPONENT, so no
+    field on that fold could have answered it. So: one `PassiveEffects` flag
+    (`opponentActiveAttackDebuff`), one cross-board scan (`opposingAttackDebuff` —
+    the SEVENTH member of the aura-scan family), and one `+` term at each of the
+    four sites `installedAttackDebuffOf` was already read at. Same printed
+    sentence, same §8.5 step, two sources, one number and one reported field —
+    which is how `passivesOf().damageReductionAfterWR` and `installedReductionOf`
+    have split D147's sentence since D147.
+
+    ⚠️ **THE §9 PAIR IS THE SHARPEST THING IN THE SLICE, AND IT IS DRIVEN ON ONE
+    BOARD.** The aura is an ABILITY (gated through `disabledAbilityUids`); D149's
+    `attackDamageDebuff` is an attack INSTALLATION on a record that no Ability-lock
+    can reach. Ting-Lu ex "Cursed Land" locks a DAMAGED non-ex, so a single
+    `damage` field switches the aura off and leaves the stamp on the SAME attacker
+    paying — 150 − 40 → 150 − 20 → (no stamp) 150. That asymmetry is precisely the
+    reason D149 kept its stamp out of `passivesOf`, now observable rather than
+    argued. **Dropping the §9 gate fails 2.**
+
+    ⚠️ **`ignoreWR` ANSWERS DIFFERENTLY AT THE TWO SNIPE ARMS, AND THAT IS THE ONE
+    NEW READING.** Feint Attack's "isn't affected … by any effects on that
+    Pokémon" scopes the TARGET. At `snipeActive` the aura's SOURCE and the target
+    are the same body by construction (both are the opponent's Active), so the
+    clause reaches the aura and it is nulled; at `placeSnipe`'s bench arm the pick
+    is a different body entirely and the aura stands. The STAMPED half is nulled at
+    neither — it lives on the attacker's record. The two halves of one number
+    answering differently is the aura/installation distinction becoming observable
+    a second time. Both directions are DRIVEN off one printed attack: **not nulling
+    at `snipeActive` fails 1, nulling at `placeSnipe` fails 1.**
+
+    ⚠️ **THE FIXTURE WAS PARTIAL, AND THE SWEEP FOUND IT IS NOT ALONE.** Entei has
+    sat in `FIXTURE_POOL` since 0.35.0 carrying NO `abilities` array on a card with
+    exactly one printed Ability — Florges's D149 omission on the other array. A
+    field-by-field diff of the WHOLE pool against the D1 (978 rows) finds **40
+    fixtures missing a printed Ability or attack**, several deliberately and
+    documented (Pecharunt ex), several not (Mimikyu carries `preventDamageFromExV`
+    in the registry and no "Safeguard" row on the card). **No fixture NAME is
+    wrong**, so D149's name sweep holds. This is a repo-wide hazard, not a one-off.
+
+    ⚠️ **NO PARK, NO PERSISTED KEY, `MRV` 7 UNCHANGED — SAID EXPLICITLY.** The flag
+    lives on the CATALOG (`PassiveEffects`, a registry type), the scan is pure, and
+    nothing was written to `InPlayPokemon`, to any op payload or to any persisted
+    shape. D124's trigger is "a required key appeared on `InPlayPokemon`" and no
+    key moved at all — D148's no-bump reason, hit a second time. The VOICE question
+    likewise resolves to "no row moved": the number lands in the existing
+    `DAMAGE_DEALT.debuff`, whose crumb ("· weakened −N") states a subtraction and
+    names neither a turn nor an installer, so unlike D147's wording it is honest
+    under the VICTIM's seat — which is the seat this row always renders under
+    (D136's finding 1). Rendered and read, not assumed.
+
+    Cost: **1 `PassiveEffects` flag, 1 registry row, 1 new reader, 4 one-term read
+    sites** — no new op, field, event, error code, prompt, park, regex, deriver
+    arm, redact arm or projection, and no web/DB/`@luminous/schema` diff at all.
+    1 fixture COMPLETED (Entei gained its printed Ability), 1 new deck
+    (`PRESSURE_DECK`), `pressureAura.test.ts` (**19 tests, one SEED**), 1
+    re-pointed stays-LOUD witness (`attackDebuff.test.ts` — "absent" → "landed as
+    an AURA", none deleted).
+    **Mutation-checked eleven ways, all eleven caught:** the registry amount 20 →
+    30 fails 11, moving the main-hit subtraction after W/R fails 7, dropping the
+    main-hit term 5, dropping the `placeSnipe` term 2, dropping the §9 gate 2,
+    dropping the fixture's Ability 2, and 1 each for dropping the SOURCE Active
+    clause, the TARGET Active clause, the `spreadDamage` term, and each direction
+    of the `ignoreWR` reading. `bun run check` GREEN exit 0, **192 files / 3247
+    tests** (was 191 / 3228). */
+export const engineVersion = "0.99.0";
 
 export type {
   ApplyResult,
