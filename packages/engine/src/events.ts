@@ -206,6 +206,33 @@ export type GameEvent =
       player as an `ATTACK_PREVENTED` rejection with a message (actions.ts). The
       action never happened, so there is no history row to write. */
   | { type: "ATTACK_LOCKED"; seat: Seat; uid: string }
+  /** §8.5/§11 (D147) — an attack INSTALLED a durated DAMAGE REDUCTION on its own
+      Active ("During your opponent's next turn, this Pokémon takes {N} less
+      damage from attacks (after applying Weakness and Resistance)."). `amount` is
+      the HP subtracted, and it is on the row because it is the whole content of
+      the rule: unlike ATTACK_BLOCK_APPLIED — where "protected" plus a spelling
+      says everything a reader needs — a reduction that did not say HOW MUCH would
+      leave the reader unable to predict a single number on the very next turn,
+      and the pool prints four different amounts (20/30/50/100) behind one
+      sentence. It is the MERGED number, not the printed one, for the same reason
+      ATTACK_BLOCK_APPLIED reports the merged `effects`: the row must describe the
+      state that now exists.
+
+      `seat` owns the protected Pokémon, which — as with the two rows above — is
+      the ACTOR's own, so this too renders honestly in the ACTIVE voice.
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings are already told by their own POKEMON_SWITCHED / RETREATED /
+      POKEMON_EVOLVED row.
+
+      AND NO ROW WHEN IT FIRES. A reduction that actually bites is already fully
+      reported by `DAMAGE_DEALT.reduction`, which has carried that number since
+      Bouffalant "Bouffer" and names the FACT — this much was taken off — which is
+      identical whichever source supplied it. Announcing WHICH would owe the row a
+      member to say something the install row above already put in the reader's
+      hands (D142's argument for `prevented`, on the number instead of the flag). */
+  | { type: "DAMAGE_REDUCTION_APPLIED"; seat: Seat; uid: string; amount: number }
   /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
       damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
       at. One row per refused op, so Poison Ring's two clauses produce two.

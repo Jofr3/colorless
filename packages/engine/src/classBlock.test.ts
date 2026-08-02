@@ -197,11 +197,11 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     // …and the rest of the family's LOUD list, inherited from D142 rather than
     // re-censused (effects.ts carries the same table).
     for (const text of [
-      // Grimmsnarl sv02-148 "Accelerate" — gated on the attack's own RESULT.
+      // Corviknight sv02-148 "Accelerate" — gated on the attack's own RESULT.
       "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
       // Squawkabilly sv01-162 "Fly" — a SECOND consequent on the same flip.
       "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
-      // Palafin sv03-145 "Oracle Press" — effects WITHOUT damage.
+      // Bronzong sv03-145 "Oracle Press" — effects WITHOUT damage.
       "During your opponent's next turn, prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();

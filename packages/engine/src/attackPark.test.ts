@@ -82,15 +82,30 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       // Whole-sentence anchoring: a rider after the discard is a different card.
       "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
-      // Kyurem sv06.5-047 "Trifrost" and Eiscue sv02-048/-205 "Frigid Block" —
-      // the other two COMPOUND printings of the "all" form (D145's consequent
-      // census: 10 discard printings, 4 of them compound). Eiscue's rider is a
-      // family the engine will map, and the anchor must still refuse the pair.
+      // Kyurem sv06.5-047 "Trifrost" — the other still-unmapped COMPOUND printing
+      // of the "all" form (D145's consequent census: 10 discard printings, 4 of
+      // them compound).
       "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      "Discard all Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // ⚠️ RE-POINTED AT D147, NOT DELETED — and this is the SECOND time this list
+    // has had to move a row rather than drop one. Eiscue sv02-048/-205 "Frigid
+    // Block" sat here as a NULL witness with the note that "Eiscue's rider is a
+    // family the engine will map"; D147 mapped it, so the claim moves from
+    // "nothing reads this" to the strictly stronger "THIS anchor does not reach
+    // it, and the anchor that does derives BOTH halves in printed order". A build
+    // whose bare discard anchor swallowed the compound would return the discard
+    // op ALONE, which a `toBeNull` could no longer distinguish from a correct
+    // refusal — the shape claim can.
+    expect(
+      deriveAttackEffect(
+        "Discard all Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
+      ),
+    ).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "reduceDamage", amount: 100 },
+    ]);
     // ⚠️ RE-POINTED AT D145, NOT DELETED. This list held the TAILS-GATED form of
     // the "all" sentence as a null witness until D145 mapped it; the claim was
     // never "unmapped", it was "THIS anchor does not reach it", so the row moves

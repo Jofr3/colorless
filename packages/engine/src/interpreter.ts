@@ -20,6 +20,7 @@ import {
   countEnergyInPlay,
   effectiveMaxHp,
   hasAttachedEnergy,
+  installedReductionOf,
   passivesOf,
   providesEnergyType,
   seatRemovesWeakness,
@@ -656,6 +657,8 @@ function stepOp(
       return { done: preventDamage(state, op.effects === true, op.fromClass, ctx, events) };
     case "preventAttack":
       return { done: preventAttack(state, ctx, events) };
+    case "reduceDamage":
+      return { done: reduceDamage(state, op.amount, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
@@ -1855,6 +1858,55 @@ function preventAttack(state: GameState, ctx: EffectContext, events: GameEvent[]
   return withActive(state, ctx.seat, { ...active, attackLockedTurn: turn });
 }
 
+/** §8.5/§11 (D147) — INSTALL the printed DAMAGE REDUCTION on the CONTROLLER's own
+    Active ("During your opponent's next turn, this Pokémon takes {N} less damage
+    from attacks (after applying Weakness and Resistance).", 14 printings across
+    two sentences and four amounts). `preventDamage`'s neighbour two functions up,
+    and written beside it on purpose: same holder resolution ("this Pokémon" is
+    `ctx.seat`'s Active, the attacker), same absence of a `target` field, same
+    no-park, same `state.turn + 1` stamp, same idempotence question.
+
+    THE STAMP IS `state.turn + 1` FOR `preventDamage`'s REASON VERBATIM — the
+    sentence prints "during your OPPONENT's next turn", declaring an attack ENDS
+    the turn (§5.3), so the turn after the installing one is the opponent's by
+    construction. It is the same NUMBER `attackBlock.turn` carries, which is why
+    the two windows can be driven apart only by what they DO, never by when.
+
+    ⚠️ IDEMPOTENT BY `Math.max`, WHICH IS D142's `||` WITH THE BOOLEAN REPLACED BY
+    A NUMBER — and the alternative is written down rather than left implicit. The
+    rule both are instances of is *a second installation may never leave the holder
+    with less protection than one of them printed*: for a flag that is OR, for a
+    number that is MAX. A SUM would be the other reading — two continuous effects
+    from two sources do stack, which is exactly why `passivesOf` sums a printed
+    passive with an attached Tool — but this field holds ONE installation with ONE
+    window, so summing would make the stored number depend on how many times the
+    record was written rather than on what was printed. Unreachable off any
+    printing (one attack per turn, and no card prints two of these), so it is
+    constructed and pinned; the day a printing installs this on the DEFENDER, the
+    field becomes a list and the sum becomes the live question.
+
+    The row is suppressed when the merge says nothing new, exactly as
+    `preventDamage`'s is: announcing a re-install that changed no number would be
+    announcing a non-event (D140/D146). */
+function reduceDamage(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const turn = state.turn + 1;
+  const existing = active.damageReduction;
+  const stacking = existing !== null && existing.turn === turn;
+  const merged = stacking ? Math.max(existing.amount, amount) : amount;
+  if (stacking && merged === existing.amount) return state;
+  events.push({ type: "DAMAGE_REDUCTION_APPLIED", seat: ctx.seat, uid, amount: merged });
+  return withActive(state, ctx.seat, { ...active, damageReduction: { turn, amount: merged } });
+}
+
 /** §11 (D142) — is an ATTACK's effect aimed at `seat`'s Active refused by that
     Pokémon's own live block, and has the refusal been announced? The ONE gate
     every defender-relative effect op consults, so the reading is written once.
@@ -1961,7 +2013,12 @@ function spreadDamage(
     const prevented =
       (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
       attackDamageBlocked(state, pokemon, attackerCard, ctx);
-    const reduction = passives.damageReductionAfterWR;
+    // Catalog half + installed half, summed (D147). A durated reduction can in
+    // fact only ever be live on an ACTIVE — installing it needs an attack, and
+    // leaving the Active Spot ends it — so on the Bench this term is 0 by
+    // construction and is read anyway, for the reason `attackDamageBlocked` is
+    // consulted here: these sites must be TOTAL rather than case-covering.
+    const reduction = passives.damageReductionAfterWR + installedReductionOf(state, pokemon);
     const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     const damage = pokemon.damage + dealt;
     events.push({
@@ -2083,7 +2140,13 @@ function placeSnipe(
         attackerCard !== undefined &&
         isExOrV(attackerCard)) ||
         attackDamageBlocked(next, pokemon, attackerCard, ctx));
-    const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
+    // Catalog half + installed half (D147), and `ignoreWR` nulls BOTH: Feint
+    // Attack's "not affected by any effects on that Pokémon" reaches an
+    // attack-installed reduction exactly as it reaches a printed passive — the
+    // installed one is if anything the more literal "effect on that Pokémon".
+    const reduction = ignoreWR
+      ? 0
+      : targetPassives.damageReductionAfterWR + installedReductionOf(next, pokemon);
     const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     events.push({
       type: "DAMAGE_DEALT",
@@ -2144,7 +2207,13 @@ function snipeActive(
     !ignoreWR &&
     ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
       attackDamageBlocked(state, target.active, attacker?.card, ctx));
-  const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
+  // Catalog half + installed half (D147), `ignoreWR` nulling both — the Bench
+  // arm's comment one function up applies verbatim, and this is the site where
+  // the printed parenthetical is observable, since it is the only one of the four
+  // interpreter-side reads that runs Weakness at all.
+  const reduction = ignoreWR
+    ? 0
+    : targetPassives.damageReductionAfterWR + installedReductionOf(state, target.active);
   const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
   events.push({
     type: "DAMAGE_DEALT",
@@ -2305,7 +2374,7 @@ function damageActive(
   // half and by nothing else. That is this engine's own long-standing reading of
   // this very op (the placement skips Weakness, Resistance and every reduction
   // passive — D138/D139), and the catalog prints the rule that confirms it on
-  // Palafin sv03-145: "(Damage is not an effect.)". So a defender carrying the
+  // Bronzong sv03-145: "(Damage is not an effect.)". So a defender carrying the
   // NARROW block ("prevent all damage done to this Pokémon by attacks") still
   // takes these counters in full, which is the sharpest difference between the
   // family's two printed spellings.
@@ -2899,12 +2968,19 @@ export function switchInto(
   // with a Boss's Orders during the window, un-locking a body they were trying to
   // keep off the board. D142's block could only ever be cleared here by the
   // opponent; this one is also the holder's own line of play.
+  // …AND, since D147, the attack-installed DAMAGE REDUCTION, whose reachability
+  // is D142's rather than D143's: the window is the OPPONENT's turn, so the only
+  // player who can move the body inside it is the opponent — a Boss's Orders
+  // played on that very turn drags the shielded Pokémon off the spot and the
+  // reduction goes with it, which is the sharpest available witness that the
+  // clear is real (the very next hit lands at full price).
   const benched = {
     ...active,
     conditions: noConditions(),
     retreatBlocked: false,
     attackBlock: null,
     attackLockedTurn: null,
+    damageReduction: null,
   };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({

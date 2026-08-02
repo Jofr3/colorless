@@ -24,6 +24,7 @@ import {
   countAttachedEnergy,
   effectiveAttackCost,
   effectiveRetreatCost,
+  installedReductionOf,
   passivesOf,
   providedEnergy,
   seatRemovesWeakness,
@@ -720,7 +721,15 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       ),
     );
     const defenderPassives = passivesOf(next, defender);
-    const reduction = defenderPassives.damageReductionAfterWR;
+    // §8.5 step 5, the reduction — the printed "takes {N} less damage from attacks
+    // (after applying Weakness and Resistance)", read from BOTH of the places that
+    // sentence is printed and SUMMED because each source is its own card effect:
+    // the always-on Ability/Tool half off the catalog (Bouffalant "Bouffer",
+    // Copperajah ex "Bronze Body", Rock Chestplate) and, since D147, the DURATED
+    // half installed onto the board by an attack ("During your opponent's next
+    // turn, …"). Same sentence, same step, one number — which is the whole reason
+    // this site's diff is a `+` (continuous.ts `installedReductionOf`).
+    const reduction = defenderPassives.damageReductionAfterWR + installedReductionOf(next, defender);
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
     // ex/V. A full null (not a flat reduction), gated on the ATTACKER's rule-box
     // class, so it supersedes any Bouffer-style reduction.

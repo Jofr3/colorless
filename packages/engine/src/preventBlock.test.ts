@@ -37,7 +37,7 @@ import {
 //     INSTALLER's own body, so that clock lifts it a full turn EARLY;
 //   • both spellings refuse DAMAGE at the four sites Mimikyu's Safeguard is
 //     honoured at; only the wider one refuses an attack's EFFECTS, and the
-//     catalog prints the rule that splits them (Palafin sv03-145: "(Damage is not
+//     catalog prints the rule that splits them (Bronzong sv03-145: "(Damage is not
 //     an effect.)"), which is why a placed damage COUNTER is on the effects side;
 //   • "effects of ATTACKS" is a provenance question the target cannot answer, so
 //     it rides `EffectContext.invokedBy` — a Trainer played inside the window is
@@ -177,11 +177,11 @@ describe("the gated PREVENT clause — derived, not authored", () => {
       // exists in no column of the catalog and no field of tcgdex's own model, so
       // there is no datum a predicate could read. Iron Moth sv06.5-009, index 1.
       "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
-      // Grimmsnarl sv02-148 "Accelerate" — gated on the attack's own RESULT.
+      // Corviknight sv02-148 "Accelerate" — gated on the attack's own RESULT.
       "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
       // Squawkabilly sv01-162 "Fly" — a SECOND consequent on the same flip.
       "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
-      // Palafin sv03-145 "Oracle Press" — the THIRD reading, effects WITHOUT
+      // Bronzong sv03-145 "Oracle Press" — the THIRD reading, effects WITHOUT
       // damage, and the printing whose parenthetical is this slice's spec.
       "During your opponent's next turn, prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)",
     ]) {
@@ -752,6 +752,15 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // NOT the same claim as "a block cannot stop a lock": a locked Pokémon that
     // also carries a block simply carries both, on two different turns.)
     preventAttack: "untouched",
+    // D147's durated damage reduction, and the SECOND op classified by this table
+    // rather than by the slice that wrote it — the guard doing its job twice.
+    // UNTOUCHED for `preventDamage`'s reason verbatim: it writes a stamp onto the
+    // CONTROLLER's own Active, so there is no opponent-side body a §11 block
+    // could be protecting from it. What it does NOT mean is that the two never
+    // meet — a body carrying both takes 0 from a blocked hit and `N` less from a
+    // hit the block does not reach, which is a real board and is driven in
+    // damageReduction.test.ts.
+    reduceDamage: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {

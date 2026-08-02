@@ -310,6 +310,13 @@ export function placeEvolution(
     // immediately. That is the inverse of the block above, whose window belongs to
     // the opponent and which therefore no evolution can ever meet.
     attackLockedTurn: null,
+    // …and, since D147, the attack-installed DAMAGE REDUCTION — the same
+    // reachability story as the block two lines up rather than the lock's, and
+    // for the same arithmetic: its window is the OPPONENT's next turn, during
+    // which the holder's controller cannot evolve anything, so no legal sequence
+    // puts an evolution between the install and the expiry. Written anyway (§10
+    // sheds the effects of ATTACKS and this is one) and pinned by a surgery.
+    damageReduction: null,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -351,8 +358,10 @@ export function placeEvolution(
     reachable one rather than the theoretical one: the lock's window is the
     HOLDER's own turn, so a player can retreat their locked Pokémon on that very
     turn, promote something that can attack, and — with a Switch — bring the now
-    un-locked body back and attack with it. Three durated effects, three different
-    reachability stories, one clear.
+    un-locked body back and attack with it — and, since D147, the durated DAMAGE
+    REDUCTION, which shares the BLOCK's story rather than the lock's (same
+    window, same body, so the forced half is the reachable one). FOUR durated
+    effects, three different reachability stories, one clear.
     M4 adds dropping active-only markers here too. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return {
@@ -361,6 +370,11 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     retreatBlocked: false,
     attackBlock: null,
     attackLockedTurn: null,
+    // D147 — the durated damage reduction, whose story here is D142's block's:
+    // the RETREAT half of this path is unreachable inside the window (the window
+    // is the opponent's turn, and the holder's controller cannot retreat on it),
+    // while the FORCED half (`switchInto`) is exactly where it bites.
+    damageReduction: null,
   };
 }
 

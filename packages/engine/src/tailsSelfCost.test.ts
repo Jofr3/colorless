@@ -320,8 +320,6 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
       // Kyurem sv06.5-047 "Trifrost" — the discard plus a three-target snipe.
       "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      // Eiscue sv02-048/-205 "Frigid Block" — the discard plus a DURATED reduction.
-      "Discard all Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
       // And the MOVE verb, which is a different op entirely (Blissey sv01-145,
       // Tropius sv02-007/-195, Darkrai sv03-136) — four more printings that a
       // reader keying on "all Energy from this Pokémon" would have claimed.
@@ -329,6 +327,21 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+    // ⚠️ RE-POINTED AT D147, NOT DELETED, AND THE FORECAST ONE LINE UP IS WHAT
+    // CAME TRUE. This list said of Eiscue sv02-048/-205 "Frigid Block" that "the
+    // day that family lands both halves derive and this must still not match" —
+    // D147 is that day. The claim moves from NULL to SHAPE (D145's own move,
+    // applied to D145's own witness): the compound derives to the discard op this
+    // very anchor produces PLUS the durated reduction, in printed order, and the
+    // tails-gated anchor above still refuses the whole string.
+    expect(
+      deriveAttackEffect(
+        "Discard all Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
+      ),
+    ).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "reduceDamage", amount: 100 },
+    ]);
     // The BARE recoil family is 47 printings and every one of them still derives
     // — the gated arm took nothing away from it. Three of its printed amounts,
     // none of which is the gated 60 (the 47 print 10/20/30/50/90).

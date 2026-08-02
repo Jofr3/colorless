@@ -185,15 +185,25 @@ export interface MatchRecord {
     "can the PREVIOUS deploy's RECORD hold the new TYPE", and a field that reads
     back plausibly is the one case where getting it wrong is invisible.
 
-    ⚠️ AND THE NEXT ONE IS ALREADY VISIBLE. Two consecutive slices have each added
-    one required stamped field to `InPlayPokemon` and each bumped this constant;
-    the `takes {N} less damage` family (14 printings) would be a third. If those
-    fields are ever generalised into ONE installed-effects record on
-    `InPlayPokemon` (D143's report weighs it), that generalisation is itself a
-    required-shape change and bumps this once — after which further durated
-    effects cost NO bump at all, because they become VALUES in a list rather than
-    KEYS in a type. That is a real argument for the generalisation and it belongs
-    here, next to the count it would stop incrementing.
+    ⚠️ AND THE NEXT ONE WAS ALREADY VISIBLE — it landed at D147, and the
+    generalisation this note argued for was WEIGHED AND DECLINED, so the note now
+    records the verdict rather than the forecast. `InPlayPokemon.damageReduction`
+    is the THIRD required stamped field and it bumps this constant 5 → 6, for
+    D124/D142/D143's reason verbatim (a required key on `InPlayPokemon` makes every
+    body in an old record the wrong TYPE, whatever it reads back as). The
+    generalisation into ONE installed-effects record would ALSO have bumped once,
+    here, and would then have made further durated effects free — that argument is
+    real and it is why the question was asked with three readings in hand. What
+    killed it is that the saving is a one-off ~3 lines at the §10 clear sites plus
+    a bump this slice pays either way, against a permanent cost at every read site:
+    a discriminated union turns `pokemon.attackBlock` (a field tsc checks) into a
+    search tsc cannot check the totality of. And the read path this item was
+    predicted to SHARE turned out not to be shared — the four damage sites ask two
+    independent questions at two different steps of §8.5 (subtract a number vs
+    supersede the result), so a union would have merged the STORAGE and lengthened
+    the LOOKUP. See D147 in decisions.md for the full table and for the NEW trigger
+    it names (the first caller that must ENUMERATE the installed effects rather
+    than ask for one by name — the pool prints no such printing today).
 
     ⚠️ NO BUMP AT D144 (engine 0.93.0), asked rather than omitted — and the
     question was a real one. That slice added `coinFlipGate.onTails?: true`, and a
@@ -238,8 +248,27 @@ export interface MatchRecord {
     field, and `preventDamage` still never parks, so no `EffectContinuation` can
     carry the new op field into `phase.cont` either. The RENDERED `SeatLogEntry[]`
     does gain a third `ATTACK_BLOCK_APPLIED` phrasing, which is text in NEW
+    records only and is D141's already-settled case.
+
+    ⚠️ BUMPED AT D147 (engine 0.96.0), 5 → 6, and it is the FOURTH time on the
+    SAME trigger rather than a fourth distinct one — which is worth saying,
+    because three of the last four slices did NOT bump and the reasons were all
+    different. `InPlayPokemon.damageReduction: DamageReduction | null` is a
+    REQUIRED key on `InPlayPokemon` (the printed "During your opponent's next
+    turn, this Pokémon takes {N} less damage from attacks"), so a record written
+    by the previous deploy has, for every body in play, a shape the new type does
+    not describe. It would read back BENIGNLY — `undefined.turn` is never
+    `state.turn`, and no deploy before this one had an op that could install one —
+    and that soft landing is exactly what D124 refused when it set the rule.
+    Contrast D146 one paragraph up, whose field went INSIDE `AttackBlock`: a
+    record that only exists when the effect was installed can absorb an optional
+    key; `InPlayPokemon` cannot absorb a required one. Nothing else persisted
+    moved — no `GameState` field, no `EffectContext` field, and `reduceDamage`
+    never parks (it is deterministic and asks nothing), so no `EffectContinuation`
+    carries the new op into `phase.cont` either. The RENDERED `SeatLogEntry[]`
+    gains one new row type (`DAMAGE_REDUCTION_APPLIED`), which is text in NEW
     records only and is D141's already-settled case. */
-export const MATCH_RECORD_VERSION = 5;
+export const MATCH_RECORD_VERSION = 6;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

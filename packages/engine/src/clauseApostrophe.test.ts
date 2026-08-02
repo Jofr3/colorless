@@ -107,7 +107,19 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // therefore ONE row, exactly as D144's pair was. Its exposed slot is the
     // POSSESSIVE "your opponent's" its unfiltered siblings already carry, on a
     // regex that is UNGATED where theirs are not — so the fold is proven across
-    // the gate boundary as well as across the two spellings. D145 added NONE, a
+    // the gate boundary as well as across the two spellings.
+    // D147 added FOUR — the largest single jump this census has taken, and the
+    // reason is that its family varies by a NUMBER: "During your opponent's next
+    // turn, this Pokémon takes {20|30|50} less damage from attacks (after applying
+    // Weakness and Resistance)." is THREE distinct sentences on a `sentence`
+    // census even though it is ONE anchor with one capture, and Eiscue
+    // sv02-048's COMPOUND ("Discard all Energy from this Pokémon. …100 less…")
+    // is the fourth. All four expose the same possessive slot ("your opponent's"),
+    // so the fold is now proven across an anchor whose amount varies — the first
+    // time this sweep has covered a capture rather than a fixed string, which is
+    // worth saying because the `['’]` class sits BEFORE the capture and a
+    // template-per-amount build would have had to spell it three times.
+    // D145 added NONE, a
     // result rather than an omission: neither of its mapped sentences carries an
     // apostrophe at all. D144 added ONE — the TAILS-gated self-lock
     // ("Flip a coin. If tails, during your next turn, this Pokémon can't attack."),
@@ -142,7 +154,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // rather than silently widening the pool it does not cover. If it drops, a
     // reader stopped deriving something and the failure belongs here as much as in
     // the slice suite that owns it.
-    expect(derivable).toHaveLength(42);
+    expect(derivable).toHaveLength(46);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

@@ -325,10 +325,16 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // `InPlayPokemon.attackLockedTurn` — THE SAME CASE AGAIN, on a second stamped
     // field, and the repetition is what makes it worth pinning: two consecutive
     // slices have each added one required turn stamp to the same interface, each
-    // would have read back plausibly, and each bumped. A third is already specced
-    // (the `takes {N} less damage` family), which is the strongest argument on
-    // record for folding the stamps into ONE installed-effects value.
-    expect(MATCH_RECORD_VERSION).toBe(5);
+    // would have read back plausibly, and each bumped. 5 → 6 is D147's required
+    // `InPlayPokemon.damageReduction` — THE SAME CASE A THIRD TIME, and the slice
+    // that finally answered the question the repetition raised. It weighed folding
+    // the three stamps into ONE installed-effects value and DECLINED: the saving is
+    // ~3 lines at the §10 clear sites plus a bump this slice pays either way, and
+    // the cost is permanent (a union turns a field the compiler checks into a
+    // search it cannot). The read path the third reading was predicted to SHARE
+    // turned out not to be shared — the four damage sites ask two independent
+    // questions at two different steps of §8.5. See D147.
+    expect(MATCH_RECORD_VERSION).toBe(6);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

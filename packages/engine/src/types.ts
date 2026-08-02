@@ -114,7 +114,7 @@ export interface AttackBlock {
   turn: number;
   /** Whether it also refuses the EFFECTS of attacks and not only their damage —
       the printed words "from and effects of". The catalog prints the parenthetical
-      that settles the reading on Palafin sv03-145: **"(Damage is not an effect.)"**
+      that settles the reading on Bronzong sv03-145: **"(Damage is not an effect.)"**
       So the two halves are disjoint, and a placed damage COUNTER — which this
       engine has ruled is not attack damage since `damageActive` (D138/D139) — falls
       entirely on the effects side. */
@@ -148,6 +148,78 @@ export interface AttackBlock {
       EXHAUSTIVE switch: a second member cannot be added without the compiler
       demanding the predicate that reads it. */
   fromClass?: "Basic";
+}
+
+/** §8.5/§11 (D147) — an attack-installed DAMAGE REDUCTION on one Pokémon, with
+    the printed DURATION baked in as a turn STAMP exactly as `AttackBlock` above
+    bakes its own. The printed sentences are
+
+      "During your opponent's next turn, this Pokémon takes {20|30|50} less
+       damage from attacks (after applying Weakness and Resistance)."  (12)
+      "Discard all Energy from this Pokémon. During your opponent's next turn,
+       this Pokémon takes 100 less damage from attacks (after applying Weakness
+       and Resistance)."                                               ( 2)
+
+    ⚠️ IT IS A THIRD PARALLEL STAMPED FIELD RATHER THAN A GENERALISED RECORD, AND
+    THE VERDICT WAS RE-DERIVED RATHER THAN INHERITED (D143 deferred the call to
+    this slice; D147's entry in decisions.md carries the whole argument). The
+    short form: D143 predicted this reading would be the first to genuinely SHARE
+    a read path with `attackBlock`, which is what a union pays for. It does share
+    the four damage SITES — but sharing a SITE is not sharing a QUESTION. Each
+    site still asks two independent things at two different steps of §8.5 ("by
+    how much is this reduced?" is subtracted; "is it prevented outright?"
+    supersedes), so a discriminated union would not shorten one read; it would
+    replace a field access the compiler checks with a list search it cannot.
+
+    ⚠️ AND THE DECIDING FACT IS THAT THIS IS NOT A NEW READING AT ALL. The pool
+    prints this exact sentence MINUS its four-word duration prefix as an
+    always-on Ability on FOUR printings — Bouffalant sv03-174 "Bouffer" (20),
+    Stonjourner sv01-121 "Exoskeleton" (20), Copperajah ex sv02-150/-245 "Bronze
+    Body" (30) — and all four have been simulated since 0.x as
+    `PassiveEffects.damageReductionAfterWR`, read at the same four damage sites.
+    So this field is a SOURCE feeding a number the engine already computes, not a
+    second channel: the four read sites SUM it into `passivesOf`'s aggregate and
+    nothing else about the pipeline moves. One reading, one implementation
+    (D131), across the catalog/state boundary.
+
+    It is kept OUT of `passivesOf` itself for two reasons, both structural rather
+    than stylistic: that function is documented as the CATALOG scan (printed
+    passives + attached Tools), which is the distinction `attackBlockOf`'s doc
+    block draws between an aura and an installation; and it SUPPRESSES a holder's
+    own printed passive under a §9 Ability-lock aura, which an attack-installed
+    effect must be immune to — an installation is not an Ability. Summing at the
+    sites keeps that immunity structural instead of positional.
+
+    THE WINDOW IS `state.turn + 1` — the same number `AttackBlock.turn` carries
+    (both print "During your OPPONENT's next turn"), and the reason this is still
+    a separate record rather than a field inside `AttackBlock`: that record's
+    whole meaning at five read sites is "damage is PREVENTED", and its filter
+    (`fromClass`) is folded into `attackBlockOf` so a non-matching attacker makes
+    the read return null. A reduction living inside it would either prevent
+    everything or vanish for the attackers the filter refuses. Same window, two
+    different answers.
+
+    Everything else is INHERITED from `AttackBlock` unchanged: the stamp
+    convention, the read-through-continuous.ts shape (`installedReductionOf`),
+    the three §10 early clears, and D124's no-defensive-`undefined` rule at the
+    reader. */
+export interface DamageReduction {
+  /** The single turn number this reduction is live on (the installing turn + 1). */
+  turn: number;
+  /** HP subtracted from attack damage AFTER Weakness and Resistance — the
+      printed parenthetical, and the whole of why the number is stored rather
+      than applied. §8.5's order makes the two placements observably different:
+      Weakness is MULTIPLICATIVE, so a 90 Metal hit into a ×2 Metal body carrying
+      100 of this is `90 × 2 − 100 = 80`, while the same numbers subtracted first
+      clamp to `max(0, 90 − 100) × 2 = 0` — the difference between taking 80 and
+      being immune. (Resistance and this number are both additive and commute, so
+      the parenthetical only ever bites on WEAKNESS; the suite drives that.)
+
+      Four amounts are printed — 20, 30, 50 and 100 — and they are ONE capture in
+      the anchor rather than four rows, because the varying token is a NUMBER and
+      a number is closed by its type (D120's precondition met, unlike the open
+      consequent vocabularies that get one anchor each). */
+  amount: number;
 }
 
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
@@ -221,6 +293,29 @@ export interface InPlayPokemon {
         • installed twice, the later stamp wins — there is nothing to accumulate,
           and a stale stamp answers nothing rather than being cleared. */
   attackLockedTurn: number | null;
+  /** §8.5/§11 (D147) — the attack-installed DAMAGE REDUCTION on this Pokémon
+      (see `DamageReduction` above), or `null` when none has been installed. Read
+      through `installedReductionOf` (continuous.ts) rather than by touching this
+      field, so no read site can forget the turn comparison — the same contract
+      `attackBlock` and `attackLockedTurn` above are under.
+
+      ⚠️ `state.turn + 1`, THE SAME NUMBER `attackBlock` STAMPS — which is what
+      makes it the opposite case to `attackLockedTurn`. That field is a separate
+      one because its window is a DIFFERENT turn (`+ 2`) and one `turn` could
+      hold at most one of them; this one is separate despite sharing the window,
+      because it answers a different question at the same four sites (subtract a
+      number vs supersede the result) and `attackBlockOf` already resolves an
+      attacker-class filter that has no meaning here.
+
+      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with D142's reachability
+      story rather than D143's: leaving the Active Spot is REACHABLE inside the
+      window (a Boss's Orders played by the opponent on the very turn the
+      reduction is live drags the body off the spot and the protection goes with
+      it), while EVOLVING is unreachable by construction (installing ends the
+      turn, the window is the opponent's, and nobody evolves on someone else's
+      turn) and is written anyway, pinned by a surgery. A Knocked Out holder takes
+      it out of play with the rest of the stack. */
+  damageReduction: DamageReduction | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -263,6 +358,10 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // …and no attack of its own has locked it either (D143). Same reading of
     // §10's carry-over rule from the other end as the line above.
     attackLockedTurn: null,
+    // …and no attack has installed a durated damage reduction on it either
+    // (D147). Same reading of §10's carry-over rule from the other end as the
+    // two lines above.
+    damageReduction: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck

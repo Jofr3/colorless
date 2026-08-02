@@ -2071,7 +2071,7 @@ import type { GameState, Seat } from "./types";
     list. **A census run for one purpose is a floor for every other purpose.**
 
     ⚠️ THE §11 READING, AND THE CATALOG PRINTS IT. What splits the two halves is
-    the parenthetical on Palafin sv03-145: **"(Damage is not an effect.)"** — a
+    the parenthetical on Bronzong sv03-145: **"(Damage is not an effect.)"** — a
     rule found in the pool rather than reasoned from intuition, and it settles the
     question the slice turns on. **IN, damage half (both readings):** the §8.5
     main hit and every attack-dealt damage op, at the four sites Mimikyu
@@ -2126,7 +2126,7 @@ import type { GameState, Seat } from "./types";
     and the polarity is deliberate: the printed words WIDEN the block, so a
     producer that forgets it blocks LESS rather than more. **NOT widened to a
     `damage` flag**, and the condition that would warrant it is written down —
-    Palafin sv03-145's effects-WITHOUT-damage reading, on one printing and a
+    Bronzong sv03-145's effects-WITHOUT-damage reading, on one printing and a
     different sentence.
 
     ⚠️ THE EARLY CLEARS ARE §10's, AND ONE OF THEM IS FINALLY REACHABLE. Leaving
@@ -2623,8 +2623,134 @@ import type { GameState, Seat } from "./types";
     1, ignoring the filter at the effects gate fails 1, keeping the filter on a
     merge disagreement fails 1, dropping the class from the install row fails 1,
     dropping it from the log arm fails 1.** `bun run check` GREEN exit 0,
-    **188 files / 3106 tests** (was 187 / 3079). */
-export const engineVersion = "0.95.0";
+    **188 files / 3106 tests** (was 187 / 3079).
+
+    0.95.0 → 0.96.0 — **P3-M5 (long tail): the DURATED DAMAGE REDUCTION.**
+
+      "During your opponent's next turn, this Pokémon takes {20|30|50} less
+       damage from attacks (after applying Weakness and Resistance)."     (12)
+      "Discard all Energy from this Pokémon. During your opponent's next turn,
+       this Pokémon takes 100 less damage from attacks (after applying Weakness
+       and Resistance)."                                                  ( 2)
+
+    The largest un-taken count this tail had left (14 printings / 4 amounts) and
+    the THIRD turn-stamped field on `InPlayPokemon` — which makes it the slice
+    D143 deferred the GENERALISATION question to, "so the decision is made with
+    three readings in hand rather than one guessed at".
+
+    ⚠️ **THE GENERALISATION WAS RE-DERIVED AND DECLINED, AND THE PREMISE IT WAS
+    PARKED ON DID NOT SURVIVE CONTACT.** D143 named the trigger precisely: this
+    would be the first reading to genuinely SHARE a read path with `attackBlock`
+    (the same four damage sites, one line apart), "which is the thing a union pays
+    for". It does share the SITES. It does not share the QUESTION: each site asks
+    two independent things at two different steps of §8.5 — the reduction is
+    SUBTRACTED inside the pipeline, the block SUPERSEDES its result — and D146's
+    filter makes them observably independent, since a `fromClass` block can
+    DECLINE an attacker while the reduction on the same body still bites (driven).
+    A discriminated union merges STORAGE, not lookups; it would have replaced
+    `pokemon.attackBlock` (a field tsc checks) with a search tsc cannot check the
+    totality of, at every read site, forever — to save ~3 lines at the three §10
+    clear sites and a bump this slice pays either way. **A third PARALLEL field,
+    and the NEW trigger is named rather than left to judgement** (decisions.md
+    D147): the first caller that must ENUMERATE the installed effects instead of
+    asking for one by name. The pool prints no such printing today — censused, and
+    the one card that mentions removal (Toedscruel ex sv03-022) says explicitly
+    that existing effects are NOT removed.
+
+    ⚠️ **AND THE DECIDING FACT IS THAT THIS WAS NEVER A NEW READING AT ALL.** The
+    pool prints this exact sentence MINUS its four-word duration prefix as an
+    always-on Ability on FOUR printings — Bouffalant sv03-174 "Bouffer" (20),
+    Stonjourner sv01-121 "Exoskeleton" (20), Copperajah ex sv02-150/-245 "Bronze
+    Body" (30) — and all four have been simulated since 0.x as
+    `PassiveEffects.damageReductionAfterWR`, read at exactly these four sites with
+    exactly this clamp. So the new field is a SOURCE summed into a number the
+    engine already computes (`installedReductionOf`, continuous.ts), the read-site
+    diff is one `+` each, and the clamp, the `ignoreWR` bypass and
+    `DAMAGE_DEALT.reduction` all come for free. **The mechanism existed, the
+    datum existed, and even TWO OF THE FOURTEEN PRINTINGS were already in the
+    fixture pool** as unmapped riders on cards fielded for other slices —
+    Forretress sv01-139's index-1 "Rolling Shell" (D129's multiply fixture) and
+    Varoom sv06.5-043's "Rigidify" (D131's promoted-clause fixture, which the
+    producer SWEEP found and no remainder list ever mentioned).
+
+    ⚠️ **KEPT OUT OF `passivesOf` DELIBERATELY**, for two structural reasons: that
+    function is the CATALOG scan (printed passive + attached Tools), the
+    aura/installation distinction `attackBlockOf`'s doc block draws; and it
+    SUPPRESSES a holder's own printed passive under a §9 Ability-lock aura, which
+    an attack INSTALLATION must be immune to. Summing at the sites makes that
+    immunity structural rather than positional.
+
+    ⚠️ **THE PRINTED PARENTHETICAL IS THE SPEC AND IT IS DRIVEN BOTH WAYS.** Every
+    `DAMAGE_DEALT` row the suite produces is re-derived from its own reported
+    fields in the printed order AND in the reversed one, and the two are asserted
+    to differ wherever a Weakness is present. The headline board is two printed
+    cards with no surgery: Forretress's Metal **90** into Eiscue's ×2 METAL body
+    carrying **100** gives `90 × 2 − 100 = 80` on 110 HP, where subtracting first
+    clamps the whole hit to `max(0, 90 − 100) × 2 = 0` — the wrong order turns a
+    100-point reduction into TOTAL IMMUNITY. Resistance and the reduction are both
+    ADDITIVE and COMMUTE, so the parenthetical can only ever bite on the
+    multiplicative step, which is why the fixtures were chosen for their Weakness
+    lines and why the commuting case is pinned as arithmetic rather than posed as
+    a board.
+
+    ⚠️ **A CLAMPED ZERO IS NOT A PREVENTION.** `Math.max(0, …)` was already there
+    and is inherited, and the row keeps `prevented` ABSENT when a big reduction
+    zeroes a hit: the same number, two different facts about how it got there
+    (the block supersedes the pipeline; this one ran it). Pinned.
+
+    ⚠️ **THE COMPOUND COST ONE REGEX.** Eiscue sv02-048/-205 "Frigid Block"
+    ({W}{W}{W}, INDEX 1, printed 100) prints the rider as a SECOND sentence behind
+    `Discard all Energy from this Pokémon.` — derived since 0.x — so 2 of the 14
+    came free, and they are the ONLY printing of the 100 amount. D145's discard
+    census flagged this exact string as one of the four compounds
+    `SELF_DISCARD_ALL`'s `$` keeps out and said "the day that family lands both
+    halves derive and this must still not match"; both directions are asserted,
+    and the two stays-LOUD witnesses that named it were RE-POINTED (NULL → SHAPE)
+    rather than deleted.
+
+    ⚠️ **THE FOUR STRUCTURAL QUESTIONS.** (1) **PARK?** No — `reduceDamage` is
+    deterministic, consumes no rng and asks nothing, so no `EffectContinuation`
+    can carry it. **`MATCH_RECORD_VERSION` 5 → 6**, for D124/D142/D143's reason
+    verbatim and a FOURTH time on the same trigger: a REQUIRED key on
+    `InPlayPokemon` makes every body in an older record the wrong TYPE, and the
+    fact that it would read back benignly is precisely the soft landing D124
+    refused. (2) **VOICE?** ACTIVE — `seat` owns the protected Pokémon and that
+    Pokémon is the actor's own — and the AMOUNT is in the wording, because four
+    amounts share one sentence and the row sits directly above a `DAMAGE_DEALT`
+    row whose `reduction` field carries the same figure. **A reduction that FIRES
+    emits nothing**: `DAMAGE_DEALT.reduction` has named that fact since Bouffalant
+    "Bouffer", and loudness is owed to unread text (D140/D146). (3) **GUARDS
+    ASSERTED?** Four ways: the producer SET is SWEPT out of the pool rather than
+    listed — **and that is what found the fifth producer nobody had listed**; the
+    §8.5 ordering is asserted against a re-derived oracle on every row rather than
+    against typed numbers; both BENCH read sites are guarded although a live
+    reduction is unreachable there by construction (D146's precedent); and
+    `preventBlock.test.ts`'s swept §11 classification table demanded a verdict on
+    the new op before the suite would go green. (4) **MECHANISM?** Read first, and
+    it existed twice over — see above.
+
+    Cost: **2 regexes, 2 deriver arms, 1 new op, 1 new `InPlayPokemon` field, 1
+    new `continuous.ts` reader, 4 read sites (`+` each), 3 §10 clear sites, 1 new
+    event, 1 log arm** — and no `redact.ts` / `flow.ts` / `cardplay.ts` / `rng.ts`
+    / `registry.ts` / `triggers.ts` diff, no new error code, no new park, no new
+    prompt, no registry row and no web/DB/`@luminous/schema` diff beyond the one
+    constant. 4 new fixtures (Swablu sv03-169, Pineco sv01-001, Eiscue sv02-048,
+    plus Forretress sv01-139 promoted from deriver-only to driven), 1 new deck
+    (`DAMAGE_REDUCTION_DECK`), `damageReduction.test.ts` (**36 tests**, SEED-FREE
+    — no printing of this family carries a coin), **2 re-pointed stays-LOUD
+    witnesses and none deleted** (`attackPark.test.ts`, `tailsSelfCost.test.ts`,
+    both NULL → SHAPE). `clauseApostrophe`'s DISCOVERED census moved **42 → 46**,
+    its largest single jump, and the first time it has swept an anchor whose token
+    is a CAPTURE rather than a fixed string. **Mutation-checked fourteen ways:
+    stamping `state.turn` fails 14 and `+ 2` fails 14, dropping the compound arm
+    fails 12, dropping the main-hit `+` fails 8, dropping the bare anchor's `^`
+    fails 6, flipping the §8.5 order at the main hit fails 3, flipping it at
+    `snipeActive` fails 1, and 1 each for dropping the `+` at `snipeActive`,
+    `spreadDamage` and `placeSnipe`, merging by `Math.min`, dropping the bare
+    anchor's `$`, skipping the leaving-Active clear, skipping the evolve clear and
+    dropping the amount from the log row.** `bun run check` GREEN exit 0,
+    **189 files / 3142 tests** (was 188 / 3106). */
+export const engineVersion = "0.96.0";
 
 export type {
   ApplyResult,
@@ -2684,6 +2810,7 @@ export {
   hasAttachedEnergy,
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
+  installedReductionOf,
   opposingRetreatBlocked,
   opposingRetreatSurcharge,
   providedEnergy,
@@ -2789,6 +2916,7 @@ export {
 } from "./types";
 export type {
   AttackBlock,
+  DamageReduction,
   GameOutcome,
   GameOverReason,
   GameState,

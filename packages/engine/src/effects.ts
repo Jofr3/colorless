@@ -599,7 +599,7 @@ export type EffectOp =
       whole attack do nothing; an under-blocking one loses a rider on one body.
 
       NOT WIDENED TO A `damage` FLAG, and the condition that would warrant it is
-      written down (D130 → D131's precedent). Palafin sv03-145 prints the THIRD
+      written down (D130 → D131's precedent). Bronzong sv03-145 prints the THIRD
       reading — "During your opponent's next turn, prevent all EFFECTS of attacks
       used by your opponent's Pokémon done to this Pokémon. (Damage is not an
       effect.)" — effects WITHOUT damage, on ONE printing, on a different sentence
@@ -634,6 +634,46 @@ export type EffectOp =
       installed; see types.ts `AttackBlock.fromClass` for why the vocabulary has
       exactly one member and why the pool's OTHER class token stays LOUD. */
   | { op: "preventDamage"; effects?: true; fromClass?: "Basic" }
+  /** §8.5/§11 (D147) — INSTALL a durated DAMAGE REDUCTION on the controller's own
+      Active:
+
+        "During your opponent's next turn, this Pokémon takes {N} less damage
+         from attacks (after applying Weakness and Resistance)."       (12 printings)
+        "Discard all Energy from this Pokémon. During your opponent's next turn,
+         this Pokémon takes 100 less damage from attacks (after applying Weakness
+         and Resistance)."                                             ( 2 printings)
+
+      `preventDamage`'s NEIGHBOUR rather than its sibling: same holder resolution
+      ("this Pokémon" is `ctx.seat`'s Active, so no `target` field and no park),
+      same `state.turn + 1` window, same three §10 early clears, same tail
+      placement — and a completely different answer at the read sites. That op
+      NULLS the result and supersedes the pipeline; this one is a NUMBER
+      subtracted inside it, at the step the printed parenthetical names.
+
+      ⚠️ `amount` IS THE PRINTED HP, AND THE MECHANISM FOR SPENDING IT ALREADY
+      EXISTED. Four printings in this pool print this exact sentence without the
+      duration prefix, as an always-on Ability — Bouffalant sv03-174 "Bouffer"
+      (20), Stonjourner sv01-121 "Exoskeleton" (20), Copperajah ex sv02-150/-245
+      "Bronze Body" (30) — and they have been simulated since 0.x as
+      `PassiveEffects.damageReductionAfterWR`, read at four damage sites. So the
+      installed number is SUMMED into that aggregate rather than given a channel
+      of its own (continuous.ts `installedReductionOf`), which is what makes the
+      read-site diff one `+` per site and inherits the clamp and the `ignoreWR`
+      bypass for free.
+
+      FOUR AMOUNTS ON ONE CAPTURE, deliberately (D120/D131). The varying token is
+      a NUMBER, which is closed by its type — unlike the open consequent
+      vocabularies that earn one anchor each — so `(\d+)` in the anchor and one
+      field here is the whole of "four amounts", and four rows would be four
+      copies of one sentence.
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp`, and — as with
+      `preventDamage` and `preventAttack` — that placement is free rather than
+      lucky (D125's rule): the reduction's entire effect is in the FUTURE, so
+      nothing about it needs to precede the §8.5 pipeline. Never parks, consumes
+      no rng, and is idempotent (installing twice in one turn keeps the larger
+      number — see the interpreter for why MAX and not a sum). */
+  | { op: "reduceDamage"; amount: number }
   /** §8/§11 (D143) — LOCK the CONTROLLER's own Active out of attacking on the
       controller's NEXT turn:
 
@@ -2031,7 +2071,8 @@ const FLIP_DECK_TOP_MILL =
 //     the CATALOG DOES NOT CARRY — see `PREVENT_DAMAGE_FROM_BASIC` below, where
 //     its Basic-spelled sibling is mapped and the whole finding is written out;
 //   • "If your opponent's Pokémon is Knocked Out by damage from this attack, …"
-//     (1 — Grimmsnarl sv02-148 "Accelerate") gates on the attack's own RESULT,
+//     (1 — Corviknight sv02-148 "Accelerate", attack INDEX 0) gates on the
+//     attack's own RESULT,
 //     the §9.2 channel Iron Moth "Suction" and Camerupt want;
 //   • "Flip a coin. If tails, this attack does nothing. If heads, …" (1 —
 //     Squawkabilly sv01-162 "Fly") carries a SECOND consequent on the same flip.
@@ -2086,6 +2127,72 @@ const FLIP_PREVENT_DAMAGE =
 // the attempt does not even typecheck (continuous.ts `attackerMatchesClass`).
 const PREVENT_DAMAGE_FROM_BASIC =
   /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon\.$/;
+// The DURATED DAMAGE REDUCTION (D147) — the largest single count left in this
+// tail, and the family's first durated rider that is a NUMBER rather than a flag:
+//
+//   "During your opponent's next turn, this Pokémon takes {N} less damage from
+//    attacks (after applying Weakness and Resistance)."
+//
+// TWELVE printings on ONE anchor across THREE amounts (local D1, 2026-08-02, 978
+// cards, whole effect string, checked PER PRINTING — ids, names, costs, printed
+// damage and INDEX, D144's rule extended to NAMES by D146):
+//
+//   20 — Swablu sv03-169 "Fluffy Guard" ({C}, no printed damage, INDEX 0)
+//   30 — Pineco sv01-001 "Guard Press" ({C}{C}, 10, INDEX 0)
+//        Fidough sv01-098/-213 "Springy" ({P}, no damage, INDEX 0)
+//        Forretress ex sv02-005/-230 "Guard Press" ({G}{G}, 120, INDEX 0)
+//        Shuckle sv03-005 "Guard Press" ({C}{C}, 30, INDEX 1)
+//        Revavroom ex sv03-156/-216/-224 "Wild Drift" ({M}{M}{C}, 170, INDEX 0)
+//        Varoom sv06.5-043 "Rigidify" ({M}, no damage, INDEX 0)
+//   50 — Forretress sv01-139 "Rolling Shell" ({M}{C}{C}, 90, INDEX 1)
+//
+// ⚠️ THE INDEX IS NOT CONSTANT ACROSS THE FAMILY (Shuckle and Forretress print it
+// at 1, the other ten at 0), which is why each was read separately — the same
+// trap D144 found and D146 sharpened.
+//
+// ⚠️ ONE CAPTURE FOR FOUR AMOUNTS, SAID DELIBERATELY (D120's precondition, met).
+// D120 spells a varying token per row when its vocabulary is OPEN, because a
+// template over an open set maps sentences no card prints. A NUMBER is closed by
+// its type: `(\d+)` cannot admit a token the engine has no reading for, and the
+// only guard it owes is the `amount >= 1` every arm here carries. Four rows would
+// be four copies of one sentence with one character changed.
+//
+// ⚠️ THE PARENTHETICAL IS THE SPEC, AND IT IS INSIDE THE ANCHOR. "(after applying
+// Weakness and Resistance)" pins WHERE in §8 step 5 the number lands, and the pool
+// prints the OTHER parenthetical on six printings of a different mechanism —
+// "attacks used by the Defending Pokémon do {N} less damage (BEFORE applying
+// Weakness and Resistance)" (Houndoom sv06.5-008/-066, Pikachu sv02-062, Pidove
+// swsh10.5-061, Florges sv01-093) plus Entei sv03-030's always-on Ability. Those
+// are an ATTACKER-side debuff read at a different step on a different body, so
+// the words are load-bearing rather than decorative and the anchor carries them.
+const SELF_DAMAGE_REDUCTION =
+  /^During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
+// …and the COMPOUND printing, the other 2 of the family's 14 — Eiscue sv02-048
+// (Common) / sv02-205 (Illustration rare) "Frigid Block" ({W}{W}{W}, printed 100,
+// attack INDEX 1), which prints the rider as a SECOND sentence behind a cost:
+//
+//   "Discard all Energy from this Pokémon. During your opponent's next turn,
+//    this Pokémon takes 100 less damage from attacks (after applying Weakness and
+//    Resistance)."
+//
+// TWO SENTENCES, TWO OPS, IN PRINTED ORDER — Ninetales' `COUNTER_PUT_ANY_THEN_SELF_LOCK`
+// (arm 25) and `DEFENDER_POISON_CANT_RETREAT` (arm 5c) are the precedents, and the
+// reason this is one anchored pattern rather than a prefix match: the family's
+// safety property is that an unrecognised remainder stays LOUD, and a prefix would
+// ship the cost without the protection it buys.
+//
+// ⚠️ IT COSTS ONE REGEX AND NOTHING ELSE, WHICH IS WHY IT IS TAKEN HERE. The first
+// half has derived to `discardEnergy { from: "yourActive", filter: anyEnergy,
+// count: "all" }` since 0.x (`SELF_DISCARD_ALL`, arm 9), and D145's discard census
+// flagged this exact printing as one of the four COMPOUNDS that anchor keeps out.
+// It is also the ONLY printing of the 100 amount, so the bare anchor above sees
+// three amounts and this one sees the fourth — and the two are mutually exclusive
+// in BOTH directions by the capitalised first word plus `^…$`, before their bodies
+// are even compared. Both directions are asserted (damageReduction.test.ts), and
+// `SELF_DISCARD_ALL`'s own `$` is what keeps this sentence off the bare discard
+// path — the live guard D145 said would matter the day this family landed.
+const SELF_DISCARD_ALL_THEN_REDUCTION =
+  /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
 // The COUNTER MOVE (D138) — "Move all damage counters from 1 of your Benched
 // Pokémon to your opponent's Active Pokémon.", the whole printed effect. TWO
 // printings, both Dedenne ex "Tail Swap" (sv02-093 Double rare / sv02-239 Ultra
@@ -4060,6 +4167,45 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //      widen-don't-add test (D131) rather than the widen-don't-add habit.
   if (PREVENT_DAMAGE_FROM_BASIC.test(effect)) {
     return [{ op: "preventDamage", fromClass: "Basic" }];
+  }
+  // 19d. The DURATED DAMAGE REDUCTION (D147) — 12 printings on one anchor across
+  //      three amounts, and the largest single count this tail had left. An `exec`
+  //      rather than a `test`, and the ONLY capture is the amount: the duration is
+  //      the printed words "during your opponent's next turn", the holder is the
+  //      printed words "this Pokémon", and the step is the printed parenthetical.
+  //
+  //      UNGATED like arm 19c and for the same reason — no coin is printed on any
+  //      of the fourteen — so the derived program is the bare op.
+  match = SELF_DAMAGE_REDUCTION.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // `amount >= 1` is the guard every arm here carries: a printed "takes 0 less
+    // damage" would install a record that changes no arithmetic anywhere and emit
+    // a row announcing it, which is worse than an unread sentence — it claims a
+    // protection that does not exist. Leave it LOUD.
+    if (amount >= 1) return [{ op: "reduceDamage", amount }];
+  }
+  // 19e. …and its COMPOUND printing — Eiscue sv02-048/-205 "Frigid Block" ({W}{W}{W},
+  //      INDEX 1, printed 100), the other 2 of the family's 14 and the only printing
+  //      of the 100 amount. TWO SENTENCES, TWO OPS, IN PRINTED ORDER, the shape arm
+  //      25 (Ninetales) and arm 5c already carry.
+  //
+  //      THE ORDER IS THE PRINTED ORDER AND IT IS ALSO THE ONLY ONE THAT READS
+  //      RIGHT: the discard is a COST paid now and the reduction is the protection
+  //      it buys for the opponent's turn, so a log that announced the shield before
+  //      the payment would describe the card backwards. Neither op parks, so the two
+  //      resolve inline in sequence.
+  match = SELF_DISCARD_ALL_THEN_REDUCTION.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) {
+      return [
+        // Byte-identical to arm 9's bare `SELF_DISCARD_ALL` program — the inventory
+        // rule (D132) with nothing left over on this half.
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+        { op: "reduceDamage", amount },
+      ];
+    }
   }
 
   // 20. "Heal {N|all} damage from 1 of your [Benched] Pokémon." — D135's CHOSEN

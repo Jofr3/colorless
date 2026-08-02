@@ -266,6 +266,14 @@ describe("placement", () => {
       // way: `attackLocked` compares the stamp to `state.turn`, so `null` is
       // "never locked" rather than "locked on turn 0".
       attackLockedTurn: null,
+      // …and no durated damage reduction (D147), read the same way again:
+      // `installedReductionOf` compares the stamp to `state.turn` and returns 0
+      // for a `null`, so a fresh body reduces nothing rather than reducing on
+      // turn 0. THIS ASSERTION IS THE THIRD STAMPED FIELD'S ONLY STRUCTURAL
+      // GUARD outside its own suite — `toEqual` is exact, so a field added to
+      // `makeInPlay` without a thought about what it means at placement fails
+      // here first.
+      damageReduction: null,
       markers: [],
       turnPlayed: 0,
       // Placed Active from the HAND, which is not a move from the Bench — the

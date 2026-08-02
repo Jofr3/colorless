@@ -369,6 +369,24 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // sibling — which is exactly what it is, with the direction flipped.
     case "ATTACK_LOCKED":
       return row(event.seat, [strong(cardName(state, event.uid)), plain(" can't attack next turn")]);
+    // §8.5/§11 — the attack-installed DAMAGE REDUCTION. ACTIVE voice for
+    // ATTACK_BLOCK_APPLIED's reason (`seat` owns the protected Pokémon AND that
+    // Pokémon is the actor's own), and the NUMBER is in the wording because the
+    // number is the rule: four amounts share one sentence, and this row sits
+    // directly above a DAMAGE_DEALT row on the next turn whose own `reduction`
+    // field carries the same figure. A reader who is told only "takes less
+    // damage" cannot check the arithmetic they are about to be shown.
+    //
+    // The phrasing is the PRINTED one minus its parenthetical — "takes {N} less
+    // damage from attacks" — rather than a paraphrase, so a player who has the
+    // card in front of them reads back the words on it.
+    case "DAMAGE_REDUCTION_APPLIED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` takes ${event.amount} less damage from attacks during your opponent's next turn`,
+        ),
+      ]);
     case "ATTACK_EFFECT_PREVENTED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

@@ -313,6 +313,57 @@ function attackerMatchesClass(
   }
 }
 
+/** §8.5/§11 (D147) — the HP an attack-installed DAMAGE REDUCTION takes off any
+    attack damage aimed at `pokemon` right now, or 0. The ONE read of
+    `InPlayPokemon.damageReduction`, and `attackBlockOf`'s sibling in the one
+    respect that matters: the field holds a turn STAMP, so the reduction is live
+    iff that stamp is the turn now being played, and a reduction whose window has
+    passed simply stops answering without anyone having cleared it.
+
+    ⚠️ IT RETURNS A NUMBER TO BE SUMMED, NOT A RECORD TO BE INSPECTED, and that
+    is the whole shape of the slice. The printed sentence —
+
+      "During your opponent's next turn, this Pokémon takes {N} less damage from
+       attacks (after applying Weakness and Resistance)."
+
+    — is byte-identical to a sentence FOUR printings already print as an always-on
+    Ability, minus the four-word duration prefix: Bouffalant sv03-174 "Bouffer"
+    (20), Stonjourner sv01-121 "Exoskeleton" (20) and Copperajah ex sv02-150/-245
+    "Bronze Body" (30), all simulated since 0.x as
+    `PassiveEffects.damageReductionAfterWR` and aggregated by `passivesOf` one
+    function up. So the four damage sites ADD this to that number rather than
+    consulting a second channel: same step of §8.5, same clamp, same
+    `ignoreWR` bypass. One reading, one implementation (D131), read across the
+    catalog/state boundary rather than within one side of it.
+
+    ⚠️ IT IS NOT FOLDED INTO `passivesOf`, and the two reasons are structural.
+    That function is the CATALOG scan — a printed passive plus attached Tools —
+    which is exactly the aura/installation distinction `attackBlockOf`'s doc block
+    draws one function down; and it SUPPRESSES a holder's own printed passive
+    under a §9 Ability-lock aura, which an attack-installed effect must be immune
+    to, because an installation is not an Ability. Summing at the sites keeps that
+    immunity a property of where the number comes from rather than of where the
+    suppression happens to be written.
+
+    IT NEEDS NO PROVENANCE CHANNEL, for D143's generalisation rather than by
+    accident: a durated effect owes an `EffectContext.invokedBy` only when it
+    gates an OP that a Trainer or an Ability could also reach. This one is summed
+    into a number that the ALWAYS-ON printings already contribute to at the same
+    four sites with no such check — so adding one here would make the SAME printed
+    words mean two different things depending on whether they carry a duration.
+    (Checked rather than assumed: all three interpreter damage sites are
+    attack-only in this pool. `spreadDamage`, `snipeActive` and `placeSnipe`'s
+    `deals` arm have no Ability producer — every registry `damageChosen` is
+    `opponentBench` without `deals`, and `damageActive` places flat counters that
+    no reduction touches at all.) */
+export function installedReductionOf(state: GameState, pokemon: InPlayPokemon): number {
+  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
+  // field is REQUIRED and a record written before it existed is retired by
+  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
+  const installed = pokemon.damageReduction;
+  return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
+}
+
 /** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now
     ("During your next turn, this Pokémon can't attack.")? The ONE read of
     `InPlayPokemon.attackLockedTurn`, and `attackBlockOf`'s sibling in every

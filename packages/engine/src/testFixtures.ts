@@ -480,6 +480,121 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Swablu sv03-169 — "Fluffy Guard" ({C}, NO printed damage, attack INDEX 0):
+      D147's durated DAMAGE REDUCTION at its SMALLEST printed amount, *"During your
+      opponent's next turn, this Pokémon takes 20 less damage from attacks (after
+      applying Weakness and Resistance)."* — 1 printing, the only 20 in the family.
+
+      The costless-ish installer: one {C} and no printed `damage`, so a declaration
+      is the install and nothing else — the control against which the three
+      fixtures below (which all hit as well) show the tail placement.
+
+      50 HP is the smallest body in this deck and it is deliberate: 20 off an
+      incoming hit is the difference between two and three swings, and the KO
+      arithmetic is where a reduction is actually observable to a player. ×2
+      LIGHTNING and −30 FIGHTING are both printed, and both are load-bearing — the
+      Weakness is what makes the printed parenthetical observable at all (it is
+      MULTIPLICATIVE, where the Resistance and the reduction are both additive and
+      commute), and the Resistance is the case that proves the order does NOT
+      matter when nothing multiplies.
+
+      Verbatim off the local D1 (2026-08-02, 978 cards): 50 HP, Colorless, Basic,
+      retreat 1, ×2 Lightning, −30 Fighting, no Ability, index-1 "Flap" ({C}{C}, 20). */
+  "sv03-169": battler("sv03-169", {
+    name: "Swablu",
+    types: ["Colorless"],
+    hp: 50,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Fluffy Guard",
+        effect:
+          "During your opponent's next turn, this Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance).",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Flap", damage: 20 },
+    ],
+  }),
+  /** Pineco sv01-001 — "Guard Press" ({C}{C}, printed 10, attack INDEX 0): the
+      family's most re-printed amount (30, on 10 of the 14 printings) on its
+      cheapest body, and a D125 TAIL BOARD — the 10 lands through the §8.5 pipeline
+      first and the install rides behind it.
+
+      ⚠️ IT IS THE PRE-EVOLUTION OF THE 50-AMOUNT INSTALLER BELOW, which is why
+      these two rather than any other pair: Forretress sv01-139 evolves from Pineco,
+      so the §10 EVOLVE clear can be reached with two real cards from one set
+      instead of a synthetic chain — and the evolution ALSO replaces a 30 with a 50
+      on the same body, which is the sharpest statement that the record belongs to
+      the Pokémon and not to the card.
+
+      ×2 FIRE on 60 HP: `fix-attacker`'s Fire "Flame" (60) doubles to 120 and this
+      body's own 30 takes it to 90, where subtracting first would give 60 — and the
+      two numbers straddle nothing here (both KO), which is exactly why the
+      ordering is ALSO driven on the 120 HP evolution and on Eiscue.
+
+      Verbatim off the local D1: 60 HP, Grass, Basic, retreat 2, ×2 Fire, no
+      Resistance, no Ability, ONE attack. */
+  "sv01-001": battler("sv01-001", {
+    name: "Pineco",
+    types: ["Grass"],
+    hp: 60,
+    retreat: 2,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Guard Press",
+        damage: 10,
+        effect:
+          "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).",
+      },
+    ],
+  }),
+  /** Eiscue sv02-048 — "Frigid Block" ({W}{W}{W}, printed 100, attack INDEX 1):
+      D147's COMPOUND printing and the only printing of the 100 amount —
+
+        "Discard all Energy from this Pokémon. During your opponent's next turn,
+         this Pokémon takes 100 less damage from attacks (after applying Weakness
+         and Resistance)."
+
+      2 printings (sv02-048 Common / sv02-205 Illustration rare — one attack in two
+      rarities, D121's second-printing warrant met by the card), and the FREE COUNT
+      D145's discard census flagged: its first sentence has derived to
+      `discardEnergy { count: "all" }` since 0.x, so the pair costs ONE regex.
+
+      ⚠️ IT IS THE ORDERING PIN, and the numbers are why. ×2 METAL against
+      Forretress's Metal 90: `90 × 2 − 100 = 80` on a 110 HP body — it survives,
+      with 30 to spare. Subtract first and the clamp swallows the whole hit
+      (`max(0, 90 − 100) × 2 = 0`), i.e. the wrong order turns a 100-point reduction
+      into total immunity against a 90-point attack. That is the loudest available
+      statement of what "(after applying Weakness and Resistance)" buys, and it is
+      driven off two printed cards with no surgery in it.
+
+      It is also the SELF-COST case: the discard strips the very Energy that paid
+      for the attack, so the shielded body is left unable to attack again — the
+      printed trade, and the reason the two ops must resolve in printed order.
+
+      Verbatim off the local D1: 110 HP, Water, Basic, retreat 1, ×2 Metal, no
+      Resistance, no Ability, index-0 "Headbutt" ({W}, 20). */
+  "sv02-048": battler("sv02-048", {
+    name: "Eiscue",
+    types: ["Water"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      { cost: ["Water"], name: "Headbutt", damage: 20 },
+      {
+        cost: ["Water", "Water", "Water"],
+        name: "Frigid Block",
+        damage: 100,
+        effect:
+          "Discard all Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
+      },
+    ],
+  }),
   "fix-attacker-ex": battler("fix-attacker-ex", {
     name: "Fixmon ex",
     types: ["Fire"],
@@ -4221,10 +4336,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
   /** Forretress sv01-139 — D129's multiply form, FOURTH printing, at the family's
-      middle per (50). DERIVER-ONLY for Rellor's reason. Verbatim off the local D1:
-      120 HP, Metal, Stage 1 from Pineco, retreat 3, ×2 Fire, −30 Grass Resistance
-      (the family's only printing with one), two attacks — "Continuous Spin" ({M},
-      50×) at index 0 and a flat "Rolling Shell" at index 1. */
+      middle per (50). Verbatim off the local D1: 120 HP, Metal, Stage 1 from Pineco,
+      retreat 3, ×2 Fire, −30 Grass Resistance (the family's only printing with one),
+      two attacks — "Continuous Spin" ({M}, 50×) at index 0 and "Rolling Shell" at
+      index 1.
+
+      ⚠️ NO LONGER DERIVER-ONLY, AND THE REASON IS D147: this fixture was fielded for
+      its INDEX-0 multiply sentence, and its INDEX-1 "Rolling Shell" happened to be
+      carrying a durated damage reduction that nothing read — a real card sitting in
+      the pool with an unmapped rider. That rider is now the 50-amount printing of
+      D147's family, so the card is DRIVEN (`DAMAGE_REDUCTION_DECK`) as well as
+      derived, and the datum this slice needed for its index control and for its
+      §10 evolve line was already here. Its pre-evolution Pineco sv01-001 is the
+      30-amount printing, which is why the pair reaches the evolve clear with two
+      printed cards instead of a synthetic chain. */
   "sv01-139": battler("sv01-139", {
     name: "Forretress",
     stage: "Stage1",
@@ -7410,6 +7535,72 @@ export const TAILS_SELF_COST_DECK = deckOf({
         surgeried exactly as D142 surgeried it;
       • fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and
         promote target, big enough that no case ends with a body swept away. */
+/** D147 — the durated DAMAGE REDUCTION deck (`damageReduction.test.ts`). Its own
+    60 for `CLASS_BLOCK_DECK`'s reason exactly: this family prints no coin either,
+    so the suite is SEED-FREE and pins that by an unchanged `rngState` across a
+    whole install — but sharing another suite's deck would move that suite's own
+    pinned shuffle, and two of the neighbours (`PREVENT_BLOCK_DECK`,
+    `TAILS_SELF_COST_DECK`) are pinned seed by seed.
+
+    ALL FOUR PRINTED AMOUNTS ARE HERE, on four real cards, at two different attack
+    INDICES — which is the point of the fixture set rather than a nicety, because
+    the amount is the only thing that varies in the sentence and the index varies
+    per printing:
+
+      • sv03-169 Swablu — 20, {C}, NO printed damage, INDEX 0. The install alone;
+        50 HP, ×2 Lightning, −30 Fighting;
+      • sv06.5-043 Varoom — 30, {M}, NO printed damage, INDEX 0, and the FIFTH
+        producer: it has been in `FIXTURE_POOL` since D131 as Revavroom ex's
+        pre-evolution, printing this family's rider with nothing reading it. The
+        producer SWEEP found it; no remainder list ever mentioned it;
+      • sv01-001 Pineco — 30 (10 of the 14 printings), {C}{C}, printed 10, INDEX 0.
+        A D125 tail board; 60 HP, ×2 Fire;
+      • sv01-139 Forretress — 50, {M}{C}{C}, printed 90, INDEX 1. The index control
+        AND Pineco's EVOLUTION, so the §10 evolve clear and the "the record belongs
+        to the Pokémon" case are both driven off two printed cards; 120 HP, ×2 Fire,
+        −30 Grass;
+      • sv02-048 Eiscue — 100, {W}{W}{W}, printed 100, INDEX 1, and the COMPOUND
+        (`Discard all Energy from this Pokémon.` first). 110 HP, ×2 METAL — so
+        Forretress's Metal 90 lands at `90×2 − 100 = 80` where the wrong order
+        clamps it to 0, which is the W/R ORDERING PIN of the whole slice.
+
+    The four READ SITES are each driven by their own card, because unlike D146's
+    filter this slice's diff is one `+` per site rather than one folded line, so a
+    site left out would be a site a mutation could delete for free:
+
+      • fix-attacker's Fire "Flame" ({F}{C}, 60) is the main §8.5 hit — and the
+        Fire ×2 on both Pineco and Forretress is what makes the parenthetical
+        observable there;
+      • sv01-069 Rotom's "Linear Attack" ({C}, `opponentAny` 20, `deals`) is
+        `snipeActive` — LIGHTNING into Swablu's ×2, so that site runs Weakness and
+        the reduction in the same declaration;
+      • fix-sniper's "Spread Shot" ({C}, 30 + 20 to each benched) is `spreadDamage`;
+      • fix-bramble's benched `deals` snipe is `placeSnipe`'s damage arm.
+        Both Bench sites are UNREACHABLE with a live reduction off any printing (it
+        can only be installed from the Active Spot and leaving clears it), so they
+        are driven with a constructed record — D146's precedent for guarding a site
+        no card can reach.
+
+    sv02-172 Boss's Orders is the reachable §10 clear (the opponent drags the
+    shielded body off the spot INSIDE the window); fix-titan (340 HP, NO attacks)
+    is the mulligan-free bench filler and promote target. */
+export const DAMAGE_REDUCTION_DECK = deckOf({
+  "sv03-169": 4, // Swablu — "Fluffy Guard" idx 0 ({C}, no damage): the 20
+  "sv06.5-043": 2, // Varoom — "Rigidify" idx 0 ({M}, no damage): a 30 ALREADY in the pool
+  "sv01-001": 4, // Pineco — "Guard Press" idx 0 ({C}{C}, 10): the 30, and Forretress's pre-evolution
+  "sv01-139": 4, // Forretress — "Rolling Shell" idx 1 ({M}{C}{C}, 90): the 50 and the INDEX control
+  "sv02-048": 4, // Eiscue — "Frigid Block" idx 1 ({W}{W}{W}, 100): the 100, COMPOUND
+  "fix-attacker": 3, // Fire — Bite ({C}, 30) and Flame ({F}{C}, 60), the main-hit attacker
+  "sv01-069": 2, // Rotom — "Linear Attack" ({C}, opponentAny 20, deals): the snipeActive site
+  "fix-sniper": 2, // "Spread Shot" ({C}, 30 + 20 to each benched): the spreadDamage site
+  "fix-bramble": 2, // the per-40 benched `deals` snipe: placeSnipe's damage arm
+  "sv02-172": 2, // Boss's Orders — the reachable §10 clear
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-energy": 14, // Colorless — every {C} slot in the deck
+  "fix-fire-energy": 4, // {F} — Flame's typed half
+  "fix-metal-energy": 4, // {M} — Rolling Shell's typed half
+  "fix-water-energy": 6, // {W}{W}{W} — two Frigid Blocks' worth
+});
 export const CLASS_BLOCK_DECK = deckOf({
   "sv01-150": 4, // Staraptor — "Tailspin Away" idx 0 (the filter), "Power Blast" idx 1 (180, Stage 2)
   "sv02-153": 4, // Noivern ex — "Covert Flight" idx 0 (the filter), "Dominating Echo" idx 1 (LOUD)
