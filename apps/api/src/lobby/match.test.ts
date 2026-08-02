@@ -333,8 +333,15 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // the cost is permanent (a union turns a field the compiler checks into a
     // search it cannot). The read path the third reading was predicted to SHARE
     // turned out not to be shared — the four damage sites ask two independent
-    // questions at two different steps of §8.5. See D147.
-    expect(MATCH_RECORD_VERSION).toBe(6);
+    // questions at two different steps of §8.5. See D147. 6 → 7 is D149's required
+    // `InPlayPokemon.attackDamageDebuff` — THE SAME CASE A FOURTH TIME, and worth
+    // recording because the slice in between (D148) did NOT bump: it reused
+    // `attackLockedTurn` and moved no persisted state key at all. So the trigger is
+    // not "a durated slice landed" but literally "a required key appeared on
+    // `InPlayPokemon`", and D148 is the control that shows the difference. D149 is
+    // also the FOURTH stamped field, which per D147's own written trigger is NOT
+    // grounds to re-open the generalisation (the fifth is). See D149.
+    expect(MATCH_RECORD_VERSION).toBe(7);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

@@ -222,6 +222,94 @@ export interface DamageReduction {
   amount: number;
 }
 
+/** §8.5/§11 (D149) — an attack-installed ATTACK-DAMAGE DEBUFF on one Pokémon,
+    with the printed DURATION baked in as a turn STAMP exactly as `AttackBlock`
+    and `DamageReduction` above bake theirs. The printed sentences are
+
+      "During your opponent's next turn, the Defending Pokémon's attacks do
+       {20|30} less damage (before applying Weakness and Resistance)."   (3)
+      "During your opponent's next turn, attacks used by the Defending Pokémon
+       do 100 less damage (before applying Weakness and Resistance)."    (2)
+
+    ⚠️ IT IS `DamageReduction`'s MIRROR ON BOTH AXES AT ONCE, AND THAT IS THE
+    WHOLE SLICE. That record is installed on the ATTACKER's own body and read at
+    the DEFENDER's step (subtracted AFTER Weakness and Resistance, from what the
+    holder TAKES). This one is installed on the DEFENDER's body and read at the
+    ATTACKER's step (subtracted BEFORE Weakness and Resistance, from what the
+    holder DEALS). Same `{ turn, amount }` shape, same window, same three §10
+    clears, opposite body and opposite step — and the printed sentences are told
+    apart by ONE WORD inside the parenthetical.
+
+    ⚠️ SO THE PARENTHETICAL IS NOT DECORATION, IT IS THE TAXONOMY. The pool prints
+    "N less damage" 31 times across two mechanisms (D147's census, re-run for this
+    slice): twenty printings say "(after applying Weakness and Resistance)" and
+    are D147's/`passivesOf`'s incoming reduction, five say "(before …)" and are
+    this. A reader keying on the verb phrase would have shipped five attacks
+    backwards, which is why both anchors carry the parenthetical inside `^…$`.
+
+    ⚠️ IT IS A FOURTH PARALLEL STAMPED FIELD, AND THAT IS D147's ANSWER RE-RUN
+    RATHER THAN INHERITED. §D147 declined the `attackBlock` generalisation and
+    named three triggers for re-opening it: a printing that REMOVES the effects of
+    attacks (the pool has none — re-censused here), a projection that must SHOW
+    the durated riders as a LIST (none crosses the wire; this field does not
+    either), and a FIFTH stamped field. This is the fourth, which §D147 explicitly
+    said is NOT the trigger. And the deciding fact holds here in the same form it
+    held there: the number this field feeds is one the read sites already compute
+    — `attackerPreWRBonus`'s total (interpreter.ts) has been a pre-W/R adjustment
+    to an attacker's output since Vitality Band — so there is no read path to
+    unify, only a term to subtract.
+
+    ⚠️ AND IT IS A SECOND TERM RATHER THAN A SIGNED BONUS. Folding the debuff into
+    `attackerPreWRBonus`'s return would have been one line and zero call-site diff,
+    and it is REFUSED on three grounds that are all observable rather than
+    stylistic: (1) `DAMAGE_DEALT.bonus` is a REPORTED field documented as "flat HP
+    the attacker's continuous effects ADDED", emitted only when positive, so a
+    signed number would silently drop a −100 from the row and from the log a player
+    reads; (2) that function is `passivesOf`'s fold — the CATALOG scan, suppressed
+    under a §9 Ability-lock aura — and an attack INSTALLATION must be immune to
+    that suppression, which is D147's own structural reason for keeping
+    `installedReductionOf` out of `passivesOf`, read on the other side of the
+    table; and (3) the debuff is the only one of the two that can drive the
+    subtotal NEGATIVE, so it owns a clamp the bonus has never needed. Three
+    reasons, and any one of them alone would decide it.
+
+    Everything else is INHERITED from `DamageReduction` unchanged: the stamp
+    convention, the read-through-continuous.ts shape
+    (`installedAttackDebuffOf`), the `Math.max` merge, the three §10 early clears,
+    and D124's no-defensive-`undefined` rule at the reader. */
+export interface AttackDamageDebuff {
+  /** The single turn number this debuff is live on (the installing turn + 1 —
+      the VICTIM's own next turn, since declaring an attack ends the turn). */
+  turn: number;
+  /** HP subtracted from every damage this Pokémon's attacks do, BEFORE Weakness
+      and Resistance — the printed parenthetical, and the whole of why the number
+      is stored rather than applied.
+
+      §8.5's order makes the two placements observably different, and in the
+      OPPOSITE direction from `DamageReduction.amount`: Weakness is
+      MULTIPLICATIVE, so a printed 120 Water hit into a ×2 Water body from an
+      attacker carrying 100 of this is `max(0, 120 − 100) × 2 = 40`, while the
+      same numbers subtracted after the modifiers give `120 × 2 − 100 = 140` —
+      the difference between a chip and a near-lethal. (Resistance and this number
+      are both additive and commute, so the parenthetical only ever bites on
+      WEAKNESS; the suite drives both.)
+
+      ⚠️ NO ACTIVE-SPOT SCOPE, AND THE CENSUS IS THE ARGUMENT. Every pre-W/R
+      printing in the pool that ADDS damage names its target — Vitality Band,
+      Defiance Band, Choice Belt, Practice Studio, Binding Mochi, Kingambit,
+      Galvantula, Okidogi, Moltres/Articuno/Zapdos all say "to your opponent's
+      Active Pokémon" — and NEITHER of the two sentences that SUBTRACT says
+      anything of the kind. So this number comes off every damage the holder's
+      attack does, the Bench included, where `damageBonusBeforeWR` correctly does
+      not reach. Four read sites, the same four `installedReductionOf` is read at.
+
+      Two amounts are printed — 20 and 30 on one anchor, 100 on the other — and
+      each anchor carries ONE capture rather than a row per amount, the varying
+      token being a NUMBER and therefore closed by its type (D120's precondition,
+      met exactly as D147 met it). */
+  amount: number;
+}
+
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
     the top uid defines its identity (name, HP, retreat cost, …); damage,
     energy and tools persist through evolution (M4). */
@@ -361,6 +449,41 @@ export interface InPlayPokemon {
       turn) and is written anyway, pinned by a surgery. A Knocked Out holder takes
       it out of play with the rest of the stack. */
   damageReduction: DamageReduction | null;
+  /** §8.5/§11 (D149) — the attack-installed ATTACK-DAMAGE DEBUFF on this Pokémon
+      (see `AttackDamageDebuff` above), or `null` when none has been installed.
+      Read through `installedAttackDebuffOf` (continuous.ts) rather than by
+      touching this field, so no read site can forget the turn comparison — the
+      same contract the three fields above are under.
+
+      ⚠️ `state.turn + 1`, LIKE `attackBlock` AND `damageReduction` — AND IT IS
+      WRITTEN ONTO THE OPPONENT'S BODY, WHICH IS WHAT MAKES IT THE ONLY ONE OF THE
+      FOUR THE INSTALLER NEVER HOLDS. The printed sentence says "During your
+      opponent's next turn", declaring an attack ENDS the turn (§5.3), so the turn
+      after the installing one is the victim's — and the victim is the holder. So
+      the number is D142's and the HOLDER is D148's `target: "defender"` arm's:
+      this field is the first in the family whose stamp and whose body come from
+      two different precedents.
+
+      ⚠️ IT CANNOT SHARE `damageReduction`, WHICH IS THE SAME `{ turn, amount }`
+      SHAPE ON THE SAME BODY — and saying so is the point of this block, because
+      the two records are structurally identical and semantically opposite. That
+      one is subtracted from what this Pokémon TAKES, after Weakness and
+      Resistance; this one from what it DEALS, before them. The printed sentences
+      differ in exactly one word inside the parenthetical ("after"/"before"), and
+      a single field would be a number whose meaning depended on who wrote it. A
+      body can carry BOTH at once — its own "takes 30 less" and the opponent's
+      "your attacks do 20 less" are two different turns' installs that can be live
+      together — and the suite drives that exchange.
+
+      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, and the reachability story is
+      D148's rather than D147's: the window is the HOLDER's own next turn, so
+      retreating, being Switched out and evolving are all lines of play the holder
+      can take INSIDE it. That makes them COUNTERPLAY against an imposed effect
+      (the agency D148 inverted), and it is the FIFTH distinct reachability story
+      on what are now five §10-cleared fields — which is why the clear-set is
+      swept rather than listed. A Knocked Out holder takes it out of play with the
+      rest of the stack, and the promoted body carries nothing. */
+  attackDamageDebuff: AttackDamageDebuff | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -407,6 +530,10 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // (D147). Same reading of §10's carry-over rule from the other end as the
     // two lines above.
     damageReduction: null,
+    // …and no attack has WEAKENED its own attacks either (D149) — the mirror of
+    // the line above, on the other side of the §8.5 pipeline. Same reading of
+    // §10's carry-over rule from the other end as the three lines above.
+    attackDamageDebuff: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck

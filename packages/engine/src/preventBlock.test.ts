@@ -791,6 +791,22 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // hit the block does not reach, which is a real board and is driven in
     // damageReduction.test.ts.
     reduceDamage: "untouched",
+    // D149's attacker-side debuff, and the THIRD op classified by this table
+    // rather than by the slice that wrote it. BLOCKED, and it is `reduceDamage`'s
+    // verdict INVERTED for the reason its op doc gives: the two are the same
+    // `{ turn, amount }` record on opposite bodies, and this one is written onto
+    // the DEFENDING Pokémon — squarely an effect of an attack done to it, exactly
+    // as `preventRetreat` and D148's `preventAttack { target: "defender" }` are.
+    //
+    // ⚠️ AND THE VERDICT IS DRIVEN, NOT ONLY DECLARED — because D148 measured that
+    // this table forces a verdict without checking one (flipping `blocked` to
+    // `untouched` here fails NOTHING by itself, re-measured at D149 and still
+    // true). The live-block case is in `attackDebuff.test.ts`, where a wide
+    // `{ effects: true }` block on the Defending Pokémon refuses Snarl's install
+    // and the row is `ATTACK_EFFECT_PREVENTED` — so the behaviour this line
+    // describes is pinned somewhere, which is the most the table can offer until
+    // it is hardened.
+    weakenDefenderAttacks: "blocked",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {

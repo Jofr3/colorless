@@ -297,8 +297,29 @@ export interface MatchRecord {
     Nothing else persisted moved — no `GameState` field, no `EffectContext` field,
     no new event type and NO log wording change at all (the one `ATTACK_LOCKED`
     phrasing renders honestly under either seat, see log.ts), so even D141's
-    rendered-text case does not arise. */
-export const MATCH_RECORD_VERSION = 6;
+    rendered-text case does not arise.
+
+    ⚠️ BUMPED AT D149 (engine 0.98.0), 6 → 7, and it is the FIFTH time on D124's
+    SAME trigger. `InPlayPokemon.attackDamageDebuff: AttackDamageDebuff | null` is
+    a REQUIRED key on `InPlayPokemon` — the printed "During your opponent's next
+    turn, the Defending Pokémon's attacks do {N} less damage (before applying
+    Weakness and Resistance)" — so a record written by the previous deploy has, for
+    every body in play, a shape the new type does not describe. It reads back
+    BENIGNLY (`undefined.turn` is never `state.turn`, and no deploy before this one
+    had an op that could install one), and that soft landing is exactly what D124
+    refused when it set the rule. This is D147's paragraph two up with the body
+    swapped from the attacker's to the defender's; the reason to bump is identical
+    because the reason is about the RECORD, not about which seat writes it.
+
+    Nothing else persisted moved. `weakenDefenderAttacks` is a NEW op member rather
+    than a field on an old one (a widening for any old continuation, which cannot
+    contain it), and it never parks — deterministic, consumes no rng, asks nothing
+    — so no `EffectContinuation` carries it into `phase.cont`. No `GameState`
+    field, no `EffectContext` field, no `BoardCondition` member. The RENDERED
+    `SeatLogEntry[]` gains one new row type (`ATTACK_DEBUFF_APPLIED`) and one new
+    breadcrumb on `DAMAGE_DEALT` ("· weakened −N"), both of which are text in NEW
+    records only and are D141's already-settled case. */
+export const MATCH_RECORD_VERSION = 7;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

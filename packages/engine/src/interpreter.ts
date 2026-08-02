@@ -20,6 +20,7 @@ import {
   countEnergyInPlay,
   effectiveMaxHp,
   hasAttachedEnergy,
+  installedAttackDebuffOf,
   installedReductionOf,
   passivesOf,
   providesEnergyType,
@@ -659,6 +660,8 @@ function stepOp(
       return { done: preventAttack(state, op, ctx, events) };
     case "reduceDamage":
       return { done: reduceDamage(state, op.amount, ctx, events) };
+    case "weakenDefenderAttacks":
+      return { done: weakenDefenderAttacks(state, op.amount, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
@@ -1963,6 +1966,70 @@ function reduceDamage(
   return withActive(state, ctx.seat, { ...active, damageReduction: { turn, amount: merged } });
 }
 
+/** §8.5/§11 (D149) — INSTALL the printed ATTACK-DAMAGE DEBUFF on the DEFENDING
+    Pokémon ("During your opponent's next turn, the Defending Pokémon's attacks do
+    {N} less damage (before applying Weakness and Resistance).", 5 printings across
+    two sentences and three amounts). `reduceDamage`'s MIRROR ON BOTH AXES AT
+    ONCE, and written directly beneath it so the pair reads as one design:
+
+    | | `reduceDamage` (D147) | this (D149) |
+    |---|---|---|
+    | Holder   | `ctx.seat`'s Active         | `otherSeat(ctx.seat)`'s Active |
+    | Stamp    | `state.turn + 1`            | `state.turn + 1`               |
+    | Read at  | the DEFENDER's step, after W/R | the ATTACKER's step, before W/R |
+    | Refusable by a §11 block | no (own body) | **YES** (the opponent's body)  |
+
+    THE STAMP IS `state.turn + 1`, AND HERE THE ARITHMETIC AND THE HOLDER COME
+    FROM TWO DIFFERENT PRECEDENTS. The printed words are "during your OPPONENT's
+    next turn" and declaring an attack ENDS the turn (§5.3), so the turn after the
+    installing one is the opponent's — D142's number verbatim. But the body is the
+    OPPONENT's, which is D148's `target: "defender"` arm. The two agree here for
+    the reason D148 wrote down: the window is always the HOLDER's controller's
+    next turn, and on this op the holder is the opponent, so `+ 1` is that one
+    rule and not a coincidence. (Contrast `preventAttack`'s self arm, where the
+    same rule reads `+ 2`.)
+
+    ⚠️ IT IS AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a live §11
+    block refuses it — `preventRetreat`'s and D148's `preventAttack` check
+    verbatim, asked on the DEFENDER's seat because that is the body being written
+    to. Reachable off printed cards rather than constructed: the defender installs
+    a wide block on their own turn, its window is the installer's very next turn,
+    and that is the turn this debuff would land on. The refusal is announced
+    BEFORE the idempotence early-return, so an already-debuffed body still reports
+    it (`preventRetreat`'s ordering).
+
+    ⚠️ IDEMPOTENT BY `Math.max`, WHICH IS `reduceDamage`'s RULE READ FROM THE
+    OTHER SEAT — *a second installation may never leave the INSTALLING side with
+    less than one of them printed*, so for a number that is MAX. A SUM would be
+    the other reading and is refused for the same reason: this field holds ONE
+    installation with ONE window, so summing would make the stored number depend
+    on how many times the record was written rather than on what was printed.
+    Unreachable off any printing (one attack per turn, and the two installs would
+    have to land on the same turn), so it is constructed and pinned. The row is
+    suppressed when the merge says nothing new (D142's idempotence answer). */
+function weakenDefenderAttacks(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = otherSeat(ctx.seat);
+  const active = state.players[seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  // §11 (D142) — checked BEFORE the idempotence early-return, `preventRetreat`'s
+  // ordering, so a refusal is announced even on an already-debuffed body.
+  if (attackEffectRefused(state, seat, ctx, events)) return state;
+  const turn = state.turn + 1;
+  const existing = active.attackDamageDebuff;
+  const stacking = existing !== null && existing.turn === turn;
+  const merged = stacking ? Math.max(existing.amount, amount) : amount;
+  if (stacking && merged === existing.amount) return state;
+  events.push({ type: "ATTACK_DEBUFF_APPLIED", seat, uid, amount: merged });
+  return withActive(state, seat, { ...active, attackDamageDebuff: { turn, amount: merged } });
+}
+
 /** §11 (D142) — is an ATTACK's effect aimed at `seat`'s Active refused by that
     Pokémon's own live block, and has the refusal been announced? The ONE gate
     every defender-relative effect op consults, so the reading is written once.
@@ -2061,7 +2128,19 @@ function spreadDamage(
   if (side.bench.length === 0) return state;
   // Mimikyu "Safeguard" prevents spread damage too (no "Active Spot" clause) when
   // the attacker is an ex/V — the same gate the main hit runs.
-  const attackerCard = activeTop(state, ctx.seat)?.card;
+  const attackerTop = activeTop(state, ctx.seat);
+  const attackerCard = attackerTop?.card;
+  // D149 — the pre-W/R DEBUFF on the ATTACKER reaches the Bench, where the
+  // attacker's pre-W/R BONUS deliberately does not, and the printed text is the
+  // whole reason: every pre-W/R printing in the pool that ADDS damage scopes
+  // itself "to your opponent's Active Pokémon" (Vitality Band, Defiance Band,
+  // Choice Belt, Practice Studio, Binding Mochi, Kingambit, …) and NEITHER
+  // sentence that SUBTRACTS carries an Active clause at all. So "the Defending
+  // Pokémon's attacks do 20 less damage" comes off every damage the attack does.
+  // Hoisted out of the loop: it is a fact about the ATTACKER, identical for every
+  // benched target.
+  const attackerDebuff = attackerTop === null ? 0 : installedAttackDebuffOf(state, attackerTop.active);
+  const spread = Math.max(0, amount - attackerDebuff);
   const bench = side.bench.map((pokemon) => {
     const uid = topUid(pokemon);
     if (uid === undefined) return pokemon;
@@ -2075,13 +2154,14 @@ function spreadDamage(
     // construction and is read anyway, for the reason `attackDamageBlocked` is
     // consulted here: these sites must be TOTAL rather than case-covering.
     const reduction = passives.damageReductionAfterWR + installedReductionOf(state, pokemon);
-    const dealt = prevented ? 0 : Math.max(0, amount - reduction);
+    const dealt = prevented ? 0 : Math.max(0, spread - reduction);
     const damage = pokemon.damage + dealt;
     events.push({
       type: "DAMAGE_DEALT",
       seat: opponent,
       uid,
       base: amount,
+      debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
       weakness: null,
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
@@ -2168,7 +2248,13 @@ function placeSnipe(
   const side = next.players[opponent];
   // Mimikyu "Safeguard" — an ex/V attacker's Benched-target attack damage is
   // prevented too (the deals arm only; a placed counter below is not "damage").
-  const attackerCard = activeTop(next, ctx.seat)?.card;
+  const attackerTop = activeTop(next, ctx.seat);
+  const attackerCard = attackerTop?.card;
+  // D149 — the attacker's pre-W/R debuff, on the `deals` arm below only: a PLACED
+  // counter is not damage from an attack (D138/D139), so the sentence "…attacks do
+  // {N} less damage" has nothing to take off it, exactly as no reduction passive
+  // does. Hoisted for `spreadDamage`'s reason (a fact about the attacker).
+  const attackerDebuff = attackerTop === null ? 0 : installedAttackDebuffOf(next, attackerTop.active);
   const bench = side.bench.map((pokemon, index) => {
     if (!targeted.has(index)) return pokemon;
     const uid = topUid(pokemon);
@@ -2203,12 +2289,17 @@ function placeSnipe(
     const reduction = ignoreWR
       ? 0
       : targetPassives.damageReductionAfterWR + installedReductionOf(next, pokemon);
-    const dealt = prevented ? 0 : Math.max(0, amount - reduction);
+    // D149 — and the DEBUFF is NOT nulled by `ignoreWR`, unlike the reduction one
+    // line up: it is an effect on the ATTACKER, and Feint Attack's clause scopes
+    // "that Pokémon" (the target). Same reading that keeps the attacker's pre-W/R
+    // BONUS alive under `ignoreWR` in `snipeActive`.
+    const dealt = prevented ? 0 : Math.max(0, Math.max(0, amount - attackerDebuff) - reduction);
     events.push({
       type: "DAMAGE_DEALT",
       seat: opponent,
       uid,
       base: amount,
+      debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
       weakness: null,
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
@@ -2246,15 +2337,22 @@ function snipeActive(
   if (target === null) return state;
   const attacker = activeTop(state, ctx.seat);
   const bonus = attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);
+  // D149 — the pre-W/R DEBUFF on the attacker, subtracted beside its bonus. NOT
+  // bypassed by `ignoreWR`: Feint Attack's "not affected by … any effects on that
+  // Pokémon" scopes the TARGET, and this is an effect on the ATTACKER — the same
+  // reading that already KEEPS the bonus above, applied to the term beneath it.
+  const debuff = attacker === null ? 0 : installedAttackDebuffOf(state, attacker.active);
   // Weakness, unless nulled by `ignoreWR` (Feint Attack) OR by a "your Pokémon
   // have no Weakness" aura on the sniped seat (Florges "Blooming Garden");
   // Resistance still applies to a Blooming-Garden-protected Active.
   const noWeakness = ignoreWR || attacker === null || seatRemovesWeakness(state, opponent);
   const weakness = noWeakness ? null : weaknessOf(attacker.card, target.card);
   const resistance = ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
+  // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
+  // do negative damage, and the printed parenthetical puts the subtraction here.
   const afterWR = Math.max(
     0,
-    applyDamageModifier(applyDamageModifier(amount + bonus, weakness), resistance),
+    applyDamageModifier(applyDamageModifier(Math.max(0, amount + bonus - debuff), weakness), resistance),
   );
   const targetPassives = passivesOf(state, target.active);
   // Mimikyu "Safeguard" on the sniped Active — an ex/V attacker's snipe is
@@ -2277,6 +2375,7 @@ function snipeActive(
     uid: target.uid,
     base: amount,
     bonus: bonus > 0 ? bonus : undefined,
+    debuff: debuff > 0 ? debuff : undefined,
     weakness,
     resistance,
     reduction: reduction > 0 ? reduction : undefined,
@@ -3045,6 +3144,11 @@ export function switchInto(
     attackBlock: null,
     attackLockedTurn: null,
     damageReduction: null,
+    // D149 — and this is the FORCED half of the debuff's story: a Boss's Orders
+    // played by the DEBUFFED player on their own turn (the window) pulls the body
+    // off the spot and the debuff with it, and so does the opponent dragging it up
+    // from the Bench. FIVE durated effects, FIVE reachability stories, one clear.
+    attackDamageDebuff: null,
   };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({

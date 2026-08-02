@@ -111,6 +111,24 @@ export type GameEvent =
       /** Flat HP the attacker's continuous effects added BEFORE Weakness/
           Resistance (Vitality Band, §15.B). Present only when it applied. */
       bonus?: number;
+      /** Flat HP an attack-installed DEBUFF took off the ATTACKER's output BEFORE
+          Weakness/Resistance (D149 — Houndoom "Snarl", Pikachu/Pidove "Growl",
+          Florges "Moonblast": "During your opponent's next turn, the Defending
+          Pokémon's attacks do {N} less damage (before applying Weakness and
+          Resistance)."). Present only when it actually took something off.
+
+          ⚠️ IT IS A FIELD OF ITS OWN RATHER THAN A NEGATIVE `bonus`, and the row
+          is where that decision is observable. `bonus` is documented above as
+          what the attacker's continuous effects ADDED and is emitted only when
+          positive, so folding a debuff into it would drop the number from the row
+          and from the log line a player reads — while the same arithmetic
+          reported in two fields lets the reader reconstruct the pipeline in
+          printed order (types.ts `AttackDamageDebuff`).
+
+          It is `reduction`'s MIRROR one field down: that one is the DEFENDER's
+          number applied after the modifiers, this one the ATTACKER's applied
+          before them, and a row can legitimately carry BOTH. */
+      debuff?: number;
       weakness: DamageModifier | null;
       resistance: DamageModifier | null;
       /** Flat HP the defender's continuous effects removed AFTER Weakness/
@@ -248,6 +266,38 @@ export type GameEvent =
       member to say something the install row above already put in the reader's
       hands (D142's argument for `prevented`, on the number instead of the flag). */
   | { type: "DAMAGE_REDUCTION_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** §8.5/§11 (D149) — an attack INSTALLED a durated ATTACK-DAMAGE DEBUFF on the
+      DEFENDING Pokémon ("During your opponent's next turn, the Defending
+      Pokémon's attacks do {N} less damage (before applying Weakness and
+      Resistance)."). `amount` is the HP that will come off every damage that
+      Pokémon's attacks do next turn, and it is on the row for
+      DAMAGE_REDUCTION_APPLIED's reason verbatim: the number IS the rule, and the
+      pool prints three of them (20/30/100) behind two sentences. It is the MERGED
+      number, not the printed one.
+
+      ⚠️ `seat` OWNS THE DEBUFFED POKÉMON — D136's finding 1 — AND HERE THAT IS
+      THE ACTOR'S OPPONENT, WHICH MAKES THIS THE FIRST ROW IN THE DURATED FAMILY
+      THAT IS VICTIM-SIDE BY CONSTRUCTION RATHER THAN BY WHICH PRINTING FIRED.
+      ATTACK_BLOCK_APPLIED and DAMAGE_REDUCTION_APPLIED are always the actor's own
+      (both ops write to `ctx.seat`); ATTACK_LOCKED is the actor's on 22 printings
+      and the victim's on 4 (D148). This op has no self arm at all, so the row is
+      ALWAYS rendered under the victim's name — which is precisely why its wording
+      could not be copied from DAMAGE_REDUCTION_APPLIED's. That row says "…during
+      your opponent's next turn", the printed words, and they are true because it
+      renders under the INSTALLER's name. Under the victim's name the same words
+      would name the wrong turn. See log.ts.
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — retreating, being Switched out, evolving — are already told
+      by their own POKEMON_SWITCHED / RETREATED / POKEMON_EVOLVED row.
+
+      AND NO ROW WHEN IT FIRES. A debuff that actually bites is fully reported by
+      `DAMAGE_DEALT.debuff` on the very hit it shrank, which names the FACT — this
+      much came off before the modifiers — exactly as `reduction` has named its
+      own since Bouffalant "Bouffer" (D140/D146: loudness is owed to UNREAD TEXT,
+      not to a read rule doing its job). */
+  | { type: "ATTACK_DEBUFF_APPLIED"; seat: Seat; uid: string; amount: number }
   /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
       damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
       at. One row per refused op, so Poison Ring's two clauses produce two.

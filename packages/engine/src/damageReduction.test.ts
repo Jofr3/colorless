@@ -73,20 +73,26 @@ const COMPOUND = `Discard all Energy from this Pokémon. ${bare(100)}`;
     effect: the duration is the entire difference between the two readings. */
 const ALWAYS_ON =
   "This Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance).";
-/** The ATTACKER-side family — the OTHER parenthetical, 6 printings / 4 sentences.
-    A debuff on the attacker read at a different step on a different body, and the
-    reason "(after applying …)" is inside the anchor rather than trimmed off it. */
-const BEFORE_WR = [
+/** The ATTACKER-side family — the OTHER parenthetical: 6 printings across TWO
+    attack sentences plus one Ability. A debuff on the attacker read at a different
+    step on a different body, and the reason "(after applying …)" is inside this
+    file's anchor rather than trimmed off it. **The five ATTACK printings became
+    D149**; the list is kept (re-pointed, not deleted) because the claim it makes
+    is now the sharper one — the two families must be told apart by their
+    parenthetical BY TWO LIVE READERS rather than by one reader and a silence. */
+const BEFORE_WR_ATTACKS = [
   // Houndoom sv06.5-008/-066 "Snarl" ({R}{C}{C}, 100, INDEX 1).
   "During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying Weakness and Resistance).",
   // Pikachu sv02-062 / Pidove swsh10.5-061 "Growl" ({C}, no damage, INDEX 0).
   "During your opponent's next turn, the Defending Pokémon's attacks do 20 less damage (before applying Weakness and Resistance).",
   // Florges sv01-093 "Moonblast" ({P}{C}{C}, 120, INDEX 0).
   "During your opponent's next turn, the Defending Pokémon's attacks do 30 less damage (before applying Weakness and Resistance).",
-  // Entei sv03-030 "Pressure" — an ABILITY, and the always-on member of the same
-  // attacker-side family.
-  "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance).",
 ];
+/** Entei sv03-030 "Pressure" — the always-on member, an ABILITY and a CROSS-BOARD
+    aura (Active clause on both ends), deliberately left unread by D149 as well as
+    by this slice. It must stay NULL on the attack reader. */
+const BEFORE_WR_ABILITY =
+  "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance).";
 
 /** One seed for the whole suite. Nothing here flips a coin — no printing of this
     family carries one — so a seed table would describe a shuffle rather than a
@@ -319,14 +325,37 @@ describe("the durated damage reduction — derived, not authored", () => {
   });
 
   it("refuses the ATTACKER-side family — the OTHER parenthetical", () => {
-    // 6 printings / 4 sentences that reduce damage by a flat number BEFORE
-    // Weakness and Resistance, on the ATTACKER's side of the table. Same verb,
-    // same units, a different body and a different step — so a reader keying on
-    // "N less damage" would have shipped five attacks and an Ability backwards.
-    for (const text of BEFORE_WR) expect(deriveAttackEffect(text)).toBeNull();
+    // 6 printings that reduce damage by a flat number BEFORE Weakness and
+    // Resistance, on the ATTACKER's side of the table. Same verb, same units, a
+    // different body and a different step — so a reader keying on "N less damage"
+    // would have shipped five attacks and an Ability backwards.
+    //
+    // ⚠️ RE-POINTED AT D149, NOT DELETED — NULL → SHAPE, D145's rule and the move
+    // D147 itself made on two witnesses. The five ATTACK printings now derive, to
+    // an op of their own on a field of their own, and the claim this case makes
+    // gets SHARPER rather than weaker: the demand is no longer "nothing reads
+    // this" but "the other reader reads it, and this one still does not" — i.e.
+    // two readers must not claim one printed clause (D148's own sharpening of
+    // `typeNameClause`). The ABILITY sentence stays flatly NULL: it is a
+    // cross-board aura with an Active clause on both ends, deliberately out of
+    // D149's scope, and an attack reader that swallowed it would install a
+    // one-turn stamp for a permanent Ability.
+    for (const text of BEFORE_WR_ATTACKS) {
+      expect(deriveAttackEffect(text)).not.toBeNull();
+      expect((deriveAttackEffect(text) as EffectOp[])[0]?.op).toBe("weakenDefenderAttacks");
+      // …and NOT this slice's op, which is the whole point of the parenthetical.
+      expect(deriveAttackEffect(text)).not.toEqual([{ op: "reduceDamage", amount: 100 }]);
+    }
+    expect(deriveAttackEffect(BEFORE_WR_ABILITY)).toBeNull();
     // The two parentheticals differ in ONE WORD; assert that the refusal survives
-    // the minimal rewrite rather than depending on the rest of the sentence.
+    // the minimal rewrite rather than depending on the rest of the sentence — and
+    // now in BOTH directions, since the "before" spelling has a reader.
     expect(deriveAttackEffect(bare(30).replace("after applying", "before applying"))).toBeNull();
+    expect(
+      deriveAttackEffect(
+        (BEFORE_WR_ATTACKS[0] as string).replace("before applying", "after applying"),
+      ),
+    ).toBeNull();
   });
 
   it("derives the COMPOUND to TWO ops in printed order — the free count", () => {

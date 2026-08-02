@@ -164,7 +164,27 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // saying because the fold is applied to the whole printed string before any
     // reader sees it, so a build that folded per-CLAUSE rather than per-SENTENCE
     // would pass every earlier row here and fail this one.
-    expect(derivable).toHaveLength(48);
+    // D149 added THREE — the largest jump since D147's four, and for the same
+    // reason plus one more. The attacker-side debuff is TWO printed sentences
+    // rather than one ("the Defending Pokémon's attacks do {N} less damage" and
+    // "attacks used by the Defending Pokémon do {N} less damage"), and the first
+    // of them varies by a NUMBER, so a `sentence` census sees the 20 and the 30 as
+    // two rows even though they are one anchor with one capture: 20 (Pikachu
+    // sv02-062 + Pidove swsh10.5-061, ONE row with two ids), 30 (Florges
+    // sv01-093) and 100 (Houndoom sv06.5-008). Every one of the three exposes
+    // BOTH slots at once — the possessive "your opponent's" AND, on the first
+    // sentence, a SECOND possessive on "the Defending Pokémon's", which is the
+    // first entry in this census whose sentence carries the same slot TWICE.
+    // A build that folded only the first apostrophe would pass every earlier row
+    // here and fail these.
+    //
+    // ⚠️ AND ONE OF THE THREE IS NOT A NEW FIXTURE. Florges sv01-093 has been in
+    // `FIXTURE_POOL` since D104 as the Blooming Garden aura source, with its ONLY
+    // printed attack missing from the fixture entirely — so its row appears here
+    // the day the fixture was COMPLETED rather than the day a card was added,
+    // which is a failure mode this census had not yet seen (D147's was the
+    // opposite: the sentence was present and unread).
+    expect(derivable).toHaveLength(51);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

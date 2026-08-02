@@ -274,6 +274,7 @@ describe("placement", () => {
       // `makeInPlay` without a thought about what it means at placement fails
       // here first.
       damageReduction: null,
+      attackDamageDebuff: null,
       markers: [],
       turnPlayed: 0,
       // Placed Active from the HAND, which is not a move from the Bench — the

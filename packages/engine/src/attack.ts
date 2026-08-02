@@ -24,6 +24,7 @@ import {
   countAttachedEnergy,
   effectiveAttackCost,
   effectiveRetreatCost,
+  installedAttackDebuffOf,
   installedReductionOf,
   passivesOf,
   providedEnergy,
@@ -715,18 +716,35 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // damage. `scaledBase` is `base` except for a multiply clause, whose printed
     // "N×" base is the per-unit already inside `scaled` — so it is 0 here.
     const bonus = attackerPreWRBonus(next, active, action.seat, defenderCard);
+    // §8.5 step 5, the OTHER pre-W/R term (D149) — the printed "attacks used by
+    // the Defending Pokémon do {N} less damage (before applying Weakness and
+    // Resistance)", installed onto THIS attacker's body by the opponent's
+    // previous attack. Subtracted here, one line below the bonus, because the
+    // printed parenthetical puts it at the same step; kept a SEPARATE TERM rather
+    // than folded into `attackerPreWRBonus` because that number is REPORTED as an
+    // addition, is `passivesOf`'s §9-suppressible catalog fold, and never needed
+    // the clamp this one does (continuous.ts `installedAttackDebuffOf`).
+    const debuff = installedAttackDebuffOf(next, active);
     // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
     // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
     const weakness = seatRemovesWeakness(next, defenderSeat)
       ? null
       : weaknessOf(attacker, defenderCard);
     const resistance = resistanceOf(attacker, defenderCard);
+    // THE CLAMP IS AT THIS STEP AND NOT ONLY AT THE END, because "this attack does
+    // {N} less damage" is a statement about the attack's OUTPUT and an attack does
+    // not do negative damage (§8.5's "damage cannot go below 0", read at the step
+    // the printed parenthetical names). On every board the pool can print the two
+    // placements agree — every catalog Weakness is ×2 and every Resistance −30, so
+    // a negative subtotal is still 0 after them — but the engine's own
+    // `DamageModifier` admits the old-era ADDITIVE weakness, under which
+    // `max(0, −50) + 20 = 20` and `−50 + 20 = −30 → 0` differ. Written at the step
+    // it belongs to rather than left to the final floor (damageReduction.test.ts's
+    // oracle pins the equivalence as arithmetic).
+    const preWR = Math.max(0, scaledBase + scaledTotal + bonus - debuff);
     const afterWR = Math.max(
       0,
-      applyDamageModifier(
-        applyDamageModifier(scaledBase + scaledTotal + bonus, weakness),
-        resistance,
-      ),
+      applyDamageModifier(applyDamageModifier(preWR, weakness), resistance),
     );
     const defenderPassives = passivesOf(next, defender);
     // §8.5 step 5, the reduction — the printed "takes {N} less damage from attacks
@@ -776,6 +794,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       scaled: scaledTotal > 0 ? scaledTotal : undefined,
       // Present only when a continuous effect actually moved the total.
       bonus: bonus > 0 ? bonus : undefined,
+      // …and, since D149, the pre-W/R SUBTRACTION beside it — reported in its own
+      // field rather than as a negative `bonus`, so the row still reconstructs the
+      // pipeline in printed order (events.ts).
+      debuff: debuff > 0 ? debuff : undefined,
       weakness,
       resistance,
       reduction: reduction > 0 ? reduction : undefined,

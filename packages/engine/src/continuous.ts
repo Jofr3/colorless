@@ -364,6 +364,60 @@ export function installedReductionOf(state: GameState, pokemon: InPlayPokemon): 
   return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
 }
 
+/** §8.5/§11 (D149) — the HP an attack-installed ATTACK-DAMAGE DEBUFF takes off
+    every damage `pokemon`'s own attack does right now, or 0. The ONE read of
+    `InPlayPokemon.attackDamageDebuff`, and `installedReductionOf`'s MIRROR ON
+    BOTH AXES AT ONCE — which is the whole shape of the slice:
+
+    | | `installedReductionOf` (D147) | this (D149) |
+    |---|---|---|
+    | Installed on | the ATTACKER's own Active | the DEFENDER's Active |
+    | Asked about  | the body TAKING damage    | the body DEALING it   |
+    | Where in §8.5| AFTER Weakness/Resistance | BEFORE them           |
+    | Printed word | "(after applying …)"      | "(before applying …)" |
+
+    Everything else is identical, deliberately: the field holds a turn STAMP, so
+    the debuff is live iff that stamp is the turn now being played, and one whose
+    window has passed simply stops answering without anyone having cleared it
+    (D124's rule).
+
+    ⚠️ IT IS SUBTRACTED BESIDE `attackerPreWRBonus`, NOT FOLDED INTO IT, and the
+    reasons are the ones types.ts `AttackDamageDebuff` sets out: the bonus is a
+    REPORTED positive field, that function is `passivesOf`'s §9-suppressible
+    CATALOG fold, and only the debuff can drive the pre-W/R subtotal negative. So
+    the read sites spell `preWR = max(0, base + bonus − debuff)` and report the
+    two numbers in two fields of the same `DAMAGE_DEALT` row.
+
+    ⚠️ IT IS KEPT OUT OF `passivesOf` FOR `installedReductionOf`'s TWO REASONS
+    VERBATIM: that function is the CATALOG scan (printed passives + attached
+    Tools), which is the aura/installation distinction `attackBlockOf`'s doc block
+    draws; and it SUPPRESSES a holder's own printed passive under a §9
+    Ability-lock aura, which an attack INSTALLATION must be immune to. Reading it
+    here keeps that immunity a property of where the number comes from.
+
+    IT LEAVES ROOM FOR THE ALWAYS-ON MEMBER RATHER THAN CLOSING OVER IT. The pool
+    prints one Ability on this exact mechanism — Entei sv03-030 "Pressure": "As
+    long as this Pokémon is in the Active Spot, attacks used by your opponent's
+    Active Pokémon do 20 less damage (before applying Weakness and Resistance)."
+    — and it is deliberately NOT this slice, because it is a CROSS-BOARD aura with
+    an Active clause on BOTH ends (`opposingRetreatBlocked`'s shape, one screen
+    up), not a stamp. When it lands it becomes a sibling scan summed beside this
+    call at the same four sites, exactly as `passivesOf`'s catalog half is summed
+    beside `installedReductionOf`. Nothing here has to move for that.
+
+    IT NEEDS NO PROVENANCE CHANNEL, for `installedReductionOf`'s reason: the
+    number is subtracted at damage sites that are attack-only in this pool (D147
+    checked all three interpreter ones and the finding is unchanged), and the
+    always-on printing of the same sentence would contribute at the same sites
+    with no such check. */
+export function installedAttackDebuffOf(state: GameState, pokemon: InPlayPokemon): number {
+  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
+  // field is REQUIRED and a record written before it existed is retired by
+  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
+  const installed = pokemon.attackDamageDebuff;
+  return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
+}
+
 /** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now
     ("During your next turn, this Pokémon can't attack.")? The ONE read of
     `InPlayPokemon.attackLockedTurn`, and `attackBlockOf`'s sibling in every

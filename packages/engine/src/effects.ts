@@ -701,6 +701,48 @@ export type EffectOp =
       no rng, and is idempotent (installing twice in one turn keeps the larger
       number — see the interpreter for why MAX and not a sum). */
   | { op: "reduceDamage"; amount: number }
+  /** §8.5/§11 (D149) — INSTALL a durated ATTACK-DAMAGE DEBUFF on the DEFENDING
+      Pokémon, i.e. weaken what the opponent's Active DEALS on its own next turn:
+
+        "During your opponent's next turn, the Defending Pokémon's attacks do
+         {20|30} less damage (before applying Weakness and Resistance)."    (3)
+        "During your opponent's next turn, attacks used by the Defending Pokémon
+         do 100 less damage (before applying Weakness and Resistance)."     (2)
+
+      `reduceDamage`'s MIRROR ON BOTH AXES AT ONCE, which is the whole slice: that
+      op writes a number onto the CONTROLLER's own Active to be subtracted AFTER
+      Weakness and Resistance from what that body TAKES; this one writes a number
+      onto the OPPONENT's Active to be subtracted BEFORE them from what that body
+      DEALS. Same window (`state.turn + 1`), same `{ turn, amount }` record shape,
+      same three §10 clears, same no-park, same `Math.max` merge — opposite body,
+      opposite step, and the printed sentences differ by ONE WORD inside the
+      parenthetical.
+
+      ⚠️ NO `target` FIELD, AND THAT IS D131 RATHER THAN AN OMISSION. D148 gave
+      `preventAttack` a `target` because the pool prints that op's sentence on
+      BOTH seats and one field determined the stamp for both. This op has no self
+      arm: every one of the five printings installs on the Defending Pokémon, and
+      the always-on member the pool prints (Entei sv03-030 "Pressure") is an
+      Ability that debuffs the opponent's Active too. A field with one reachable
+      value is a second way to say what the op's name already says.
+
+      ⚠️ IT IS AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a §11
+      block that refuses "effects of attacks" refuses THIS — `preventRetreat`'s
+      and D148's `preventAttack` check verbatim, and REACHABLE off printed cards
+      (the defender installs `{ effects: true }` on their turn, its window is the
+      installer's very next turn, and that is the turn this debuff would land on).
+      Classified `blocked` in `preventBlock.test.ts`'s §11 table AND driven under a
+      live wide block, because that table forces a verdict without checking one
+      (D148's own finding, measured there and answered here for this op).
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp`, and — as with
+      `preventDamage`, `preventAttack` and `reduceDamage` — that placement is FREE
+      rather than lucky (D125's rule): the debuff's entire effect is in the future,
+      so nothing about it needs to precede the §8.5 pipeline that hits the very
+      body it is written onto. Never parks, consumes no rng, and is idempotent
+      (installing twice in one turn keeps the LARGER number — the interpreter says
+      why MAX and not a sum, `reduceDamage`'s argument on the other seat). */
+  | { op: "weakenDefenderAttacks"; amount: number }
   /** §8/§11 (D143, widened D148) — LOCK a Pokémon out of attacking on ITS OWN
       controller's NEXT turn. Four printed sentences, on both sides of the table:
 
@@ -2099,7 +2141,7 @@ const FLIP_DECK_TOP_MILL =
 //   • 11 printings say "prevent all damage FROM AND EFFECTS OF attacks done to
 //     this Pokémon" — Joltik sv06.5-001 + Hoppip sv02-001 "Splashing Dodge",
 //     Wiglett sv01-055/-206 "Twisting Strike", Aipom swsh10.5-056 "Bustle",
-//     Nymble sv02-019 "Slight Splash", Cufant sv02-109/-219 "Hit and Hide",
+//     Nymble sv02-019 "Slight Splash", Sudowoodo sv02-109/-219 "Hit and Hide",
 //     Scyther sv03-004 "Agility", Dugtrio sv03-104 "Dig", Barboach sv03-108
 //     "Hide";
 //   • 2 say "prevent all damage done to this Pokémon by attacks" — Glimmet
@@ -2248,6 +2290,49 @@ const SELF_DAMAGE_REDUCTION =
 // path — the live guard D145 said would matter the day this family landed.
 const SELF_DISCARD_ALL_THEN_REDUCTION =
   /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
+// The ATTACKER-SIDE DEBUFF (D149) — the OTHER parenthetical, and D147's mirror on
+// both axes at once: a number installed on the DEFENDER's body and subtracted at
+// the ATTACKER's PRE-Weakness/Resistance step.
+//
+// FIVE printings across TWO SENTENCES (local D1, 2026-08-02, 978 cards, whole
+// effect string, checked PER PRINTING — ids, NAMES, costs, printed damage and
+// INDEX, D144's rule extended to NAMES by D146):
+//
+//   "…the Defending Pokémon's attacks do {N} less damage (before applying …)."
+//     20 — Pikachu sv02-062 "Growl" ({C}, no printed damage, INDEX 0)
+//          Pidove swsh10.5-061 "Growl" ({C}, no printed damage, INDEX 0)
+//     30 — Florges sv01-093 "Moonblast" ({P}{C}{C}, 120, INDEX 0)
+//   "…attacks used by the Defending Pokémon do {N} less damage (before applying …)."
+//    100 — Houndoom sv06.5-008 (Common) / sv06.5-066 (Illustration rare) "Snarl"
+//          ({R}{C}{C}, 100, INDEX 1) — one attack in two rarities, so D121's
+//          second-printing warrant is met by the card
+//
+// ⚠️ TWO SENTENCES, NOT ONE — AND THE RESUME LIST QUOTED ONLY THE SECOND. Three
+// of the five printings say "the Defending Pokémon'S ATTACKS DO", two say
+// "ATTACKS USED BY the Defending Pokémon DO". Same mechanism, same amount slot,
+// same parenthetical, different subject noun phrase — so one anchored
+// whole-sentence pattern per PRINTED STRING (D136/D137), exactly as D148's pair
+// was two patterns rather than an alternation. An `(?:…|…)` here would be two
+// patterns wearing one name, and it would put the majority spelling behind an
+// alternation branch nothing names.
+//
+// ⚠️ THE INDEX IS NOT CONSTANT (Houndoom prints it at 1, the other three at 0),
+// read separately per printing — the trap D144 found, D146 sharpened and D147 hit
+// again on the mirror family.
+//
+// ⚠️ THE PARENTHETICAL IS THE SPEC AND IT IS INSIDE BOTH ANCHORS. "(before
+// applying Weakness and Resistance)" is the ONLY thing separating these five
+// printings from the twenty that say "(after applying …)" and mean the opposite
+// thing on the opposite body (SELF_DAMAGE_REDUCTION above). Trimming it would
+// cross the two families — which is the census's headline, restated on the arm.
+//
+// ⚠️ NO /i AND NO BARE-SUBJECT VARIANT: the capitalised first word plus `^…$` is
+// the whole guard, and the pool prints no compound in front of either sentence
+// (censused — unlike D145's discard, where four compounds were live).
+const DEFENDER_ATTACKS_WEAKENED =
+  /^During your opponent['’]s next turn, the Defending Pokémon['’]s attacks do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
+const ATTACKS_BY_DEFENDER_WEAKENED =
+  /^During your opponent['’]s next turn, attacks used by the Defending Pokémon do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
 // The COUNTER MOVE (D138) — "Move all damage counters from 1 of your Benched
 // Pokémon to your opponent's Active Pokémon.", the whole printed effect. TWO
 // printings, both Dedenne ex "Tail Swap" (sv02-093 Double rare / sv02-239 Ultra
@@ -3376,7 +3461,7 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 //     mechanism, and the flip sentence in front already denies it `^If`;
 //   • "If you can't, this attack does nothing." (3 printings) — ANAPHORIC, its
 //     "can't" pointing back at a cost sentence this reader cannot see;
-//   • Sharpedo sv06.5-034's "If you didn't play Xerosic's Machinations from your
+//   • Malamar sv06.5-034's "If you didn't play Xerosic's Machinations from your
 //     hand during this turn, …" — a specific NAMED card, and multi-sentence, so
 //     the anchor refuses it twice over.
 const ATTACK_DOES_NOTHING = /^If (.+), this attack does nothing\.$/;
@@ -4344,6 +4429,28 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "reduceDamage", amount },
       ];
     }
+  }
+  // 19f. The ATTACKER-SIDE DEBUFF (D149) — 5 printings across TWO anchors, the
+  //      OTHER parenthetical, and D147's mirror on both axes at once. Two `exec`s
+  //      rather than one alternation because they are two printed strings
+  //      (D136/D137): the subject noun phrase differs ("the Defending Pokémon's
+  //      attacks do" / "attacks used by the Defending Pokémon do"), which is a
+  //      different sentence and not a different token.
+  //
+  //      WHAT THEY SHARE IS THE OP, and it is shared as an op rather than as a
+  //      regex — the family's checkable claim (D148's move on its own pair,
+  //      D134's on the heads face). The suite asserts the two programs are
+  //      byte-identical at a common amount.
+  //
+  //      UNGATED like arms 19c–19e and for the same reason: no coin is printed on
+  //      any of the five, so the derived program is the bare op.
+  match = DEFENDER_ATTACKS_WEAKENED.exec(effect) ?? ATTACKS_BY_DEFENDER_WEAKENED.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // `amount >= 1` is the guard every arm here carries: a printed "do 0 less
+    // damage" would install a record that changes no arithmetic anywhere and emit
+    // a row announcing a drawback that does not exist. Leave it LOUD.
+    if (amount >= 1) return [{ op: "weakenDefenderAttacks", amount }];
   }
 
   // 20. "Heal {N|all} damage from 1 of your [Benched] Pokémon." — D135's CHOSEN

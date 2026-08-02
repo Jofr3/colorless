@@ -277,6 +277,12 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // (Bouffalant "Bouffer" / a defending Tool) last.
       if (event.scaled !== undefined) segments.push(plain(` · scaled +${event.scaled}`));
       if (event.bonus !== undefined) segments.push(plain(` · boosted +${event.bonus}`));
+      // D149 — the attack-installed debuff on the ATTACKER, at the same pre-W/R
+      // step as the two breadcrumbs above and therefore printed with them, before
+      // Weakness. Its own crumb rather than a negative `boosted`: the two numbers
+      // are different rules and a reader reconstructing the pipeline needs both
+      // (events.ts `DAMAGE_DEALT.debuff`).
+      if (event.debuff !== undefined) segments.push(plain(` · weakened −${event.debuff}`));
       if (event.weakness !== null) segments.push(plain(modifierText("weakness", event.weakness)));
       if (event.resistance !== null) {
         segments.push(plain(modifierText("resistance", event.resistance)));
@@ -398,6 +404,33 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(
           ` takes ${event.amount} less damage from attacks during your opponent's next turn`,
         ),
+      ]);
+    // §8.5/§11 — the attack-installed ATTACK-DAMAGE DEBUFF (D149). VICTIM voice,
+    // and it is the first row in this family that is victim-side BY CONSTRUCTION:
+    // `seat` owns the debuffed Pokémon (D136's finding 1) and this op has no self
+    // arm, so the row ALWAYS renders under the actor's opponent's name.
+    //
+    // ⚠️ WHICH IS WHY THE WORDING IS NOT DAMAGE_REDUCTION_APPLIED's, AND THAT IS
+    // THE SLICE'S THIRD VOICE ANSWER. That row one screen up ends "…during your
+    // opponent's next turn" — the printed words — and they are honest there
+    // because the row renders under the INSTALLER's name, whose opponent's turn it
+    // really is. Copied here they would render under the VICTIM's name and name
+    // the wrong turn: a player would read that their own Pokémon is weakened
+    // during the OTHER player's turn, which is the one turn it is not. So the
+    // phrasing is D143/`ATTACK_LOCKED`'s instead — "next turn", which under this
+    // event family's seat rule always means the named player's own next turn, and
+    // which is exactly the reading D148 showed makes a row seat-independent. A log
+    // row is never spoken from the installer's chair; the difference from D148 is
+    // that here the sibling wording is installer-voiced and would have LIED.
+    //
+    // The verb keeps the printed shape ("…'s attacks do {N} less damage") minus
+    // the parenthetical, for DAMAGE_REDUCTION_APPLIED's reason: a player with the
+    // card in front of them reads back the words on it, and the number is in the
+    // wording because the number is the rule.
+    case "ATTACK_DEBUFF_APPLIED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(`'s attacks do ${event.amount} less damage next turn`),
       ]);
     case "ATTACK_EFFECT_PREVENTED":
       return row(event.seat, [

@@ -324,6 +324,14 @@ export function placeEvolution(
     // puts an evolution between the install and the expiry. Written anyway (§10
     // sheds the effects of ATTACKS and this is one) and pinned by a surgery.
     damageReduction: null,
+    // …and, since D149, the attack-installed ATTACK-DAMAGE DEBUFF — whose story
+    // here is the LOCK's rather than the reduction's, and that is the whole
+    // difference between the two mirrors: the debuff's window is the HOLDER's own
+    // next turn, so evolving the debuffed Pokémon on that turn frees its attacks
+    // to hit full. A PLAYED LINE, driven end to end, and the victim's cheapest
+    // counterplay against an effect they did not choose (D148's agency, on the
+    // number instead of the lock).
+    attackDamageDebuff: null,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -391,6 +399,12 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // is the opponent's turn, and the holder's controller cannot retreat on it),
     // while the FORCED half (`switchInto`) is exactly where it bites.
     damageReduction: null,
+    // D149 — the attack-damage debuff, whose story here is the LOCK's: the window
+    // is the HOLDER's own next turn, so the RETREAT half is a played line and the
+    // victim's own counterplay (retreat the weakened body, attack with a fresh
+    // one). FIVE durated effects on one clear, and this is the fifth distinct
+    // reachability story — which is why the clear-set is SWEPT and not listed.
+    attackDamageDebuff: null,
   };
 }
 

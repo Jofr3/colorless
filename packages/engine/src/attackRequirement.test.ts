@@ -504,7 +504,7 @@ describe("the rest of the 'does nothing' family stays LOUD", () => {
     // sentence — a referent this reader, which sees one string and no board, could
     // not resolve even if it matched.
     for (const text of [
-      // Sandile sv02-132 "Dirty Throw" — an untyped hand discard.
+      // Honchkrow sv02-132 "Dirty Throw" — an untyped hand discard.
       "Discard a card from your hand. If you can't, this attack does nothing.",
       // sv06.5-005 "Power Shot" — the same anaphor over a TYPED, Basic-only cost.
       "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing.",
@@ -518,7 +518,7 @@ describe("the rest of the 'does nothing' family stays LOUD", () => {
     }
   });
 
-  it("refuses Sharpedo sv06.5-034's 'Colluding Tentacles' — at the ANCHOR, twice over", () => {
+  it("refuses Malamar sv06.5-034's 'Colluding Tentacles' — at the ANCHOR, twice over", () => {
     // The family's hardest near-miss: its LAST sentence is exactly the mapped
     // shape, clause and all. It is refused because the anchor is WHOLE-STRING —
     // two sentences precede it, so `^If` fails — and it would be refused again at

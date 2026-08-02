@@ -1035,7 +1035,7 @@ import type { GameState, Seat } from "./types";
     16 printings LOUD, and on the CLAUSE rather than on the shape — the 12
     coin-flip "If tails" prints (a different mechanism, and the flip sentence in
     front already denies them `^If`), the 3 anaphoric "If you can't" prints, and
-    Sharpedo sv06.5-034's named-card multi-sentence one.
+    Malamar sv06.5-034's named-card multi-sentence one.
 
     Cost: 1 new skeleton regex, 1 new 2-row table, 1 exported deriver, 1 reader +
     1 gate in attack.ts, 1 `effectSimulated` term, 1 ENUM WIDENING on
@@ -2878,8 +2878,145 @@ import type { GameState, Seat } from "./types";
     redact projection 3, `attackEffectRefused` 2, and 1 each for the compound
     anchor's `^`, the gated anchor's `$`, the idempotence early-return and the
     sweep's `conditionGate` descent. `bun run check` GREEN exit 0, **190 files /
-    3183 tests** (was 189 / 3142). */
-export const engineVersion = "0.97.0";
+    3183 tests** (was 189 / 3142).
+
+    0.97.0 → 0.98.0 — **P3-M5 (long tail): the ATTACKER-SIDE DAMAGE DEBUFF.**
+
+      "During your opponent's next turn, the Defending Pokémon's attacks do
+       {20|30} less damage (before applying Weakness and Resistance)."       (3)
+      "During your opponent's next turn, attacks used by the Defending Pokémon
+       do 100 less damage (before applying Weakness and Resistance)."        (2)
+
+    Item 1 of D148's remainder list, and **D147's MIRROR ON BOTH AXES AT ONCE**: a
+    durated stamp installed on the DEFENDER's body and read at the ATTACKER's
+    PRE-Weakness/Resistance step. Same `{ turn, amount }` record, same `+ 1`
+    window, same three §10 clears, same `Math.max` merge — opposite body, opposite
+    step, and the two printed sentences are told apart from D147's twenty by ONE
+    WORD inside the parenthetical.
+
+    ⚠️ **THE LIST QUOTED ONE SENTENCE AND THE POOL PRINTS TWO.** Three of the five
+    printings say "the Defending Pokémon'S ATTACKS DO" (Pikachu `sv02-062`, Pidove
+    `swsh10.5-061`, Florges `sv01-093`); two say "ATTACKS USED BY the Defending
+    Pokémon DO" (Houndoom `sv06.5-008`/`-066`). The list's template matched only
+    the second, i.e. 2 of the 5 printings. So TWO anchors (D136/D137), sharing
+    their OP and asserted to share it byte for byte. **Dropping the possessive
+    anchor fails 26; dropping the "used by" anchor fails 13.**
+
+    ⚠️ **`attackerPreWRBonus` TURNED OUT TO BE A `passivesOf` FOLD, AND THAT IS WHY
+    THE DEBUFF IS A SECOND TERM RATHER THAN A SIGNED NUMBER.** The list warned the
+    one pre-W/R read site is a BONUS and asked for a decision. Read first, per
+    D131, and the argument is written down whichever way it goes (D148's lesson):
+    folding a negative in would have been one line and zero call-site diff, and it
+    is refused on THREE observable grounds. (1) `DAMAGE_DEALT.bonus` is a REPORTED
+    field, emitted only when positive and documented as what continuous effects
+    ADDED — a signed number would drop the debuff from the row and from the log a
+    player reads. (2) That function folds `passivesOf`, the CATALOG scan, which is
+    SUPPRESSED under a §9 Ability-lock aura — and an attack INSTALLATION must be
+    immune to that, which is D147's own structural reason for keeping
+    `installedReductionOf` out of `passivesOf`, read from the other side of the
+    table. (3) Only the debuff can drive the pre-W/R subtotal NEGATIVE, so it owns
+    a clamp the bonus has never needed. So: `installedAttackDebuffOf`
+    (continuous.ts), `installedReductionOf`'s exact mirror, subtracted BESIDE the
+    bonus at the read sites and reported in a `debuff` field of its own. It also
+    leaves the always-on member somewhere to land.
+
+    ⚠️ **FOUR READ SITES, NOT TWO — AND THE CENSUS IS THE ARGUMENT.** The list said
+    "the one existing pre-W/R read site", and there are two (`attack.ts`'s main hit
+    and `snipeActive`). But the debuff reaches all FOUR of D147's sites, including
+    the two BENCH ones the pre-W/R BONUS deliberately does not, because every
+    pre-W/R printing in the pool that ADDS damage scopes itself "to your opponent's
+    Active Pokémon" (Vitality Band, Defiance Band, Choice Belt, Practice Studio,
+    Binding Mochi, Kingambit, Galvantula, Okidogi, the three birds) and **NEITHER
+    sentence that SUBTRACTS carries an Active clause at all**. A printed asymmetry,
+    censused rather than intuited. Dropping the term fails **9** at the main hit and
+    **1** each at `snipeActive`, `spreadDamage` and `placeSnipe`.
+
+    ⚠️ **THE STEP ORDER IS PINNED BY DRIVING IT BOTH WAYS, D147's METHOD INVERTED.**
+    Every `DAMAGE_DEALT` row is re-derived from its own reported fields in both
+    placements through the engine's own `applyDamageModifier`, and the two are
+    asserted to differ wherever a Weakness is present. The headline board is two
+    printed cards: Houndoom's "Snarl" installs 100 on Alomomola `sv01-048`, which
+    answers with "Aqua Slash" (120, Water) into Houndoom's ×2 WATER — `max(0, 120 −
+    100) × 2 = 40` printed against `120 × 2 − 100 = 140` reversed, i.e. a body that
+    lives on one reading and dies on the other. **Moving the subtraction after W/R
+    fails 6 at the main hit and 1 at `snipeActive`.** The CLAMP is written at the
+    pre-W/R step rather than left to the final floor; the two spellings agree on
+    every board this pool can print (every catalog Weakness is ×2, every Resistance
+    −30) and diverge only under the ADDITIVE weakness `DamageModifier` still
+    admits, which is pinned as arithmetic — D147's move on its commuting case.
+
+    ⚠️ **AND FLORGES IS THE FINDING NOBODY WENT LOOKING FOR.** `sv01-093` prints the
+    30 AND carries "Blooming Garden" ("Your Pokémon in play have no Weakness") —
+    and Florges's own side is the side its debuffed victim attacks INTO. So the ONE
+    printing of the 30 is the one printing whose parenthetical CANNOT bite: the
+    multiplicative step is gone and the two placements agree. Driven as a PAIR on
+    one board, ± a benched Florges. ⚠️ **Its fixture had also been carrying NO
+    ATTACKS AT ALL since D104** — the card has exactly one — so D147's
+    sweep-the-pool rule paid in its OTHER form: not a sentence present and unread
+    (D147's case) but a fixture verbatim on everything it carried and silently
+    PARTIAL. Entei `sv03-030`'s fixture is missing its printed Ability the same way.
+
+    ⚠️ **THE LOG ROW IS THE THIRD VOICE ANSWER, AND COPYING THE SIBLING WOULD HAVE
+    LIED.** `seat` owns the debuffed Pokémon (D136's finding 1) and this op has NO
+    self arm, so `ATTACK_DEBUFF_APPLIED` is the family's first row that is
+    victim-side BY CONSTRUCTION. `DAMAGE_REDUCTION_APPLIED` ends "…during your
+    opponent's next turn" — honest there, because it renders under the INSTALLER's
+    name. Under the victim's name those same printed words name the wrong turn. So
+    the phrasing is `ATTACK_LOCKED`'s instead ("next turn", which under this
+    family's seat rule always means the named player's own), which is D148's
+    seat-independence result applied where the sibling was NOT seat-independent.
+    **Copying D147's wording fails 1; rendering the row under the actor fails 1.**
+
+    ⚠️ **BLOCKED BY §11, AND THE VERDICT IS DRIVEN RATHER THAN ONLY DECLARED.** The
+    op writes onto the DEFENDING Pokémon, so a wide `{ effects: true }` block
+    refuses it — `preventRetreat`'s and D148's `preventAttack` check verbatim, and
+    reachable off printed cards. `preventBlock.test.ts`'s table forced the verdict
+    (`blocked`); because D148 measured that the table checks a verdict EXISTS and
+    never that it is TRUE — **re-measured here and still true: flipping it fails
+    NOTHING** — the behaviour is pinned by a live-block board in the slice suite,
+    both directions (a live block refuses, an expired one does not).
+
+    ⚠️ **THE FOURTH STAMPED FIELD, AND D147's REASONING HOLDS UNCHANGED.** Its
+    three named triggers are (a) a printing that REMOVES the effects of attacks —
+    re-censused, the pool still has none; (b) a projection that must SHOW the
+    durated riders as a LIST — this field crosses no wire, changes no
+    `redactedAttacksOf` / `GameHud` projection, and gates no action; (c) a FIFTH
+    stamped field. This is the fourth, which §D147 said explicitly is NOT it. The
+    deciding fact survives too: the number feeds an adjustment the read sites
+    already compute, so there is no read path to unify.
+
+    ⚠️ **SCOPED OUT, AND SAID SO: Entei `sv03-030` "Pressure"** (the always-on
+    member, 20) — a printed ABILITY and a CROSS-BOARD aura with an Active clause on
+    BOTH ends, which is `opposingRetreatBlocked`'s shape and not a stamp's. It
+    wants a `PassiveEffects` sibling plus a scan of its own, summed beside
+    `installedAttackDebuffOf` at the same four sites; nothing here has to move for
+    it. It stays LOUD and is asserted to stay LOUD.
+
+    Cost: **2 regexes, 1 deriver arm, 1 new op, 1 new REQUIRED `InPlayPokemon`
+    field + its interface, 1 new reader, 1 new event, 1 new `DAMAGE_DEALT` field,
+    1 log arm + 1 breadcrumb, 4 one-term read sites, 3 §10 clear lines** — no new
+    prompt, park, error code, registry row, `BoardCondition` member, redact arm or
+    `flow.ts` / `cardplay.ts` / `rng.ts` / `triggers.ts` / `redact.ts` diff, and no
+    web/DB/`@luminous/schema` diff beyond `MATCH_RECORD_VERSION`. **`MRV` 6 → 7**
+    (D124's trigger, the FIFTH time: a required key on `InPlayPokemon`). 3 new
+    fixtures (Houndoom `sv06.5-008`, Pikachu `sv02-062`, Pidove `swsh10.5-061`) and
+    1 COMPLETED (Florges `sv01-093` gained its only printed attack), 1 new deck
+    (`ATTACK_DEBUFF_DECK`), `attackDebuff.test.ts` (**41 tests, SEED-FREE**), 1
+    re-pointed stays-LOUD witness (`damageReduction.test.ts`, NULL → SHAPE, none
+    deleted), `clauseApostrophe`'s DISCOVERED census **48 → 51**.
+    **Mutation-checked twenty-two ways:** dropping the possessive anchor fails 26,
+    writing onto `ctx.seat` 22, stamping `state.turn` 20, `+ 2` 20, dropping the
+    "used by" anchor 13, dropping the main-hit term 9, dropping the row's `debuff`
+    field 9, moving the main-hit subtraction after W/R 6, and 1 each for moving it
+    after W/R at `snipeActive`, dropping the term at `spreadDamage` /
+    `placeSnipe`, dropping `attackEffectRefused`, merging by `Math.min`, ignoring
+    the turn stamp at the reader, the three §10 clears, either anchor's `^`, either
+    anchor's parenthetical (2 each), anchor one's `$`, the `amount >= 1` guard, the
+    log breadcrumb, the log wording and the log seat. ONE mutation SURVIVED and is
+    reported rather than buried: flipping the §11 classification verdict, which is
+    D148's own measured weakness and is resume item 4. `bun run check` GREEN exit
+    0, **191 files / 3224 tests** (was 190 / 3183). */
+export const engineVersion = "0.98.0";
 
 export type {
   ApplyResult,

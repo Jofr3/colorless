@@ -2702,6 +2702,92 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Houndoom (sv06.5-008, D149) — the ATTACKER-SIDE DEBUFF's 100, and the family's
+      SECOND printed sentence: "Snarl" ({R}{C}{C}, printed 100, **INDEX 1**) reads
+      "During your opponent's next turn, attacks used by the Defending Pokémon do
+      100 less damage (before applying Weakness and Resistance)." Index-0 "Bite"
+      ({C}{C}, 50) is the plain hit and the index control on the same card.
+
+      The 100 is the amount that makes the printed parenthetical observable at the
+      MAIN HIT: Snarl leaves the debuff on a body that then swings back into
+      Houndoom's ×2 WATER, where `max(0, 120 − 100) × 2 = 40` and the wrong order
+      gives `120 × 2 − 100 = 140`. Two rarities print this attack byte-identically
+      (sv06.5-066 is the Illustration rare), so D121's second-printing warrant is
+      met by the card; only the Common is fielded, exactly as D148 fielded one of
+      Eiscue ex's three. Verbatim vs the local D1 catalog (Stage 1 from Houndour,
+      120 HP, Fire, retreat 2, ×2 Water, no Resistance, no Ability). */
+  "sv06.5-008": battler("sv06.5-008", {
+    name: "Houndoom",
+    hp: 120,
+    types: ["Fire"],
+    stage: "Stage1",
+    evolveFrom: "Houndour",
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Bite", damage: 50 },
+      {
+        cost: ["Fire", "Colorless", "Colorless"],
+        name: "Snarl",
+        damage: 100,
+        effect:
+          "During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying Weakness and Resistance).",
+      },
+    ],
+  }),
+  /** Pikachu (sv02-062, D149) — the attacker-side debuff's 20 on the family's FIRST
+      sentence: "Growl" ({C}, NO printed damage, INDEX 0) reads "During your
+      opponent's next turn, the Defending Pokémon's attacks do 20 less damage
+      (before applying Weakness and Resistance)." Index-1 "Pika Bolt" ({L}{C}, 30)
+      is a LIGHTNING hit, which makes this card both an INSTALLER and the debuffed
+      ATTACKER a suite needs — swinging into Pidove's ×2 Lightning at
+      `max(0, 30 − 20) × 2 = 20` where the wrong order gives `60 − 20 = 40`.
+      A Basic. Verbatim vs the local D1 catalog (70 HP, Lightning, retreat 1,
+      ×2 Fighting, no Resistance, no Ability). */
+  "sv02-062": battler("sv02-062", {
+    name: "Pikachu",
+    hp: 70,
+    types: ["Lightning"],
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Growl",
+        effect:
+          "During your opponent's next turn, the Defending Pokémon's attacks do 20 less damage (before applying Weakness and Resistance).",
+      },
+      { cost: ["Lightning", "Colorless"], name: "Pika Bolt", damage: 30 },
+    ],
+  }),
+  /** Pidove (swsh10.5-061, D149) — the SECOND printing of the 20 sentence, and the
+      one that carries a RESISTANCE. "Growl" ({C}, no printed damage, INDEX 0) is
+      byte-identical to Pikachu's above (D121's warrant met by a second card rather
+      than a second rarity); index-1 "Flap" ({C}{C}, 20) is the plain hit.
+
+      Its ×2 LIGHTNING is what makes it the DEFENDER a debuffed Pikachu or Rotom
+      swings into, and its −30 FIGHTING is the commuting control: Resistance and
+      the debuff are both additive, so on a Fighting attacker the two placements of
+      the subtraction give the same number and the parenthetical cannot bite —
+      D147's own finding, read on the other side of §8.5. Verbatim vs the local D1
+      catalog (Basic, 60 HP, Colorless, retreat 1). */
+  "swsh10.5-061": battler("swsh10.5-061", {
+    name: "Pidove",
+    hp: 60,
+    types: ["Colorless"],
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Growl",
+        effect:
+          "During your opponent's next turn, the Defending Pokémon's attacks do 20 less damage (before applying Weakness and Resistance).",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Flap", damage: 20 },
+    ],
+  }),
   /** Fezandipiti ex (sv06.5-038) — the any-target family's big twin: "Cruel Arrow"
       ({C}{C}{C}, 100) to 1 of your opponent's Pokémon. A Darkness attacker (so no
       Weakness against the {L}-weak bodies here — a flat 100 either zone), it pins
@@ -2789,6 +2875,28 @@ export const FIXTURE_POOL: Record<string, Card> = {
         type: "Ability",
         name: "Blooming Garden",
         effect: "Your Pokémon in play have no Weakness.",
+      },
+    ],
+    // ⚠️ D149 ADDED THE ATTACK, WHICH THIS FIXTURE HAD BEEN MISSING SINCE D104.
+    // The card has exactly one, "Moonblast" ({P}{C}{C}, printed 120, INDEX 0), and
+    // its effect is the 30 of the attacker-side debuff family — so this printing
+    // sat in `FIXTURE_POOL` for forty-five slices with the sentence absent
+    // entirely rather than present-and-unread. D147's rule ("sweep the pool before
+    // costing the family") found it; the finding is the OTHER failure mode, a
+    // fixture that is verbatim on everything it carries and silently PARTIAL.
+    //
+    // The card is also the reason the family's step order is UNOBSERVABLE on its
+    // own board: Blooming Garden nulls Weakness for every Pokémon on Florges's own
+    // side, and Florges's side is the side its debuffed opponent attacks INTO. So
+    // the one printing that installs 30 is the one printing whose parenthetical
+    // cannot bite, and the suite drives exactly that.
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless", "Colorless"],
+        name: "Moonblast",
+        damage: 120,
+        effect:
+          "During your opponent's next turn, the Defending Pokémon's attacks do 30 less damage (before applying Weakness and Resistance).",
       },
     ],
   }),
@@ -7757,6 +7865,87 @@ export const DEFENDER_LOCK_DECK = deckOf({
   "fix-water-energy": 12, // {W}{W}{W} for Scalding Block; {W} for Surf, Aqua Slash and Bubble
   "fix-dark-energy": 8, // {D}{D} for Evil Claw, {D}{D}{D} for Hound's Fang
   "fix-energy": 13, // Colorless Basic — every {C} in the deck
+});
+
+/** D149's ATTACKER-SIDE DEBUFF deck (`attackDebuff.test.ts`). Its own 60, and
+    **SEED-FREE** for `damageReduction.test.ts`'s reason: no printing of this
+    family carries a coin, so a seed table would describe a shuffle rather than a
+    rule, and the install cases pin that with an unchanged `rngState`.
+
+    ⚠️ IT IS ASYMMETRIC LIKE `DEFENDER_LOCK_DECK` AND FOR THE SAME REASON — the
+    effect lands on the OPPONENT — but with one extra twist this family alone has:
+    the debuffed body is the one that then ATTACKS, so P2's cards must be picked
+    for what they DEAL and for the Weakness lines of P1's INSTALLERS, which are the
+    bodies they deal it into. Every observability claim in the suite is a fact
+    about a pair of cards rather than about one.
+
+    The INSTALLERS (P1), all four printed amounts-and-sentences the pool has:
+
+      • sv02-062 Pikachu — 20, "Growl" {C}, NO damage, INDEX 0, sentence ONE. Also
+        P2's debuffed attacker (index-1 "Pika Bolt" {L}{C}, 30 LIGHTNING), which is
+        what makes the main-hit order pin a two-printing board;
+      • swsh10.5-061 Pidove — 20, "Growl" {C}, NO damage, INDEX 0, sentence ONE,
+        the SECOND printing of that string. ×2 LIGHTNING makes it the defender the
+        pin is observable on, and its −30 FIGHTING is the commuting control;
+      • sv01-093 Florges — 30, "Moonblast" {P}{C}{C}, 120, INDEX 0, sentence ONE.
+        Its OWN Blooming Garden nulls Weakness on its own side, so this is the
+        printing whose parenthetical CANNOT bite — driven as the negative case;
+      • sv06.5-008 Houndoom — 100, "Snarl" {R}{C}{C}, 100, **INDEX 1**, sentence
+        TWO. ×2 WATER, so a debuffed Water attacker swinging back at it is the
+        main-hit order pin at the biggest amount.
+
+    The VICTIMS / debuffed ATTACKERS (P2), one per READ SITE, because the diff is
+    one term per site and a site left out is a site a mutation deletes for free:
+
+      • sv02-062 Pikachu's "Pika Bolt" ({L}{C}, 30) — the §8.5 MAIN HIT;
+      • sv01-069 Rotom's "Linear Attack" ({C}, `opponentAny` 20, `deals`) —
+        `snipeActive`, the only interpreter site that runs Weakness;
+      • fix-sniper's "Spread Shot" ({C}, 30 + 20 to each benched) — `spreadDamage`,
+        where the debuff reaches and the attacker's pre-W/R BONUS deliberately
+        does not (types.ts `AttackDamageDebuff.amount` gives the printed reason);
+      • fix-bramble's per-40 benched `deals` snipe — `placeSnipe`'s damage arm;
+      • sv01-048 Alomomola ({W}, 120 HP) — the 100 board's attacker: "Aqua Slash"
+        ({W}{W}{C}, 120, INDEX 1) survives Snarl's 100 and hits back into
+        Houndoom's ×2 Water, and it installs D143's SELF-lock while it does so, so
+        two durated fields ride one declaration. Index-0 "Surf" ({W}{C}, 30) is the
+        same board's CLAMP case. `fix-mola-stage1` evolves from it — the victim's
+        §10 evolve counterplay, on a printed line;
+      • sv03-030 Entei (130 HP) survives Moonblast's 120 and swings back with
+        "Blaze Ball" ({C}{C}{C}, 60 + 20 per {R}) — and it is ALSO the family's
+        always-on member, whose printed "Pressure" Ability this slice deliberately
+        does not read, so the same board is the stays-LOUD witness.
+
+    sv01-194 Switch is the victim's §10 route out of the window. ⚠️ THERE IS NO
+    BOSS'S ORDERS IN THIS DECK, unlike every earlier durated deck, and the absence
+    is the point: the FORCED half of `switchInto` is UNREACHABLE for this field.
+    The window is the victim's own turn, and the installer's turn ended when they
+    declared, so nobody but the victim can move the debuffed body while it is live.
+
+    sv01-193 Rocky Helmet is the `dealt > 0` boundary (D141/D145): worn by the
+    INSTALLER, it puts 2 counters on whatever damages it — so a debuffed swing that
+    clamps to 0 must draw no recoil and one that gets through must, which is the
+    two-sided pin that a clamped zero is not "an attack that did damage".
+    fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and promote
+    target. */
+export const ATTACK_DEBUFF_DECK = deckOf({
+  "sv02-062": 4, // Pikachu — "Growl" idx 0 (the 20) AND "Pika Bolt" idx 1 (the main-hit attacker)
+  "swsh10.5-061": 4, // Pidove — "Growl" idx 0 (the 20 again), ×2 Lightning / −30 Fighting
+  "sv01-093": 2, // Florges — "Moonblast" idx 0 (the 30), and Blooming Garden
+  "sv06.5-008": 4, // Houndoom — "Snarl" idx 1 (the 100), ×2 Water, "Bite" idx 0
+  "sv01-048": 4, // Alomomola — "Surf" idx 0, "Aqua Slash" idx 1 (120, + D143's self-lock)
+  "fix-mola-stage1": 2, // evolves from Alomomola — the §10 evolve clear as a played line
+  "sv03-030": 2, // Entei — 130 HP, "Blaze Ball", and the always-on member kept LOUD
+  "sv01-069": 2, // Rotom — "Linear Attack": the snipeActive site
+  "fix-sniper": 2, // "Spread Shot" (30 + 20 to each benched): the spreadDamage site
+  "fix-bramble": 2, // the per-40 benched `deals` snipe: placeSnipe's damage arm
+  "sv01-193": 2, // Rocky Helmet (Tool) — the `dealt > 0` boundary, from both sides
+  "sv01-194": 2, // Switch (Item) — the victim's own route out of the window
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-energy": 13, // Colorless — every {C} slot in the deck
+  "fix-fire-energy": 3, // {R} — Snarl's typed half
+  "fix-water-energy": 4, // {W} — Surf, Aqua Slash and the evolution's Bubble
+  "fix-lightning-energy": 3, // {L} — Pika Bolt's typed half
+  "fix-psychic-energy": 2, // {P} — Moonblast's typed half
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)
