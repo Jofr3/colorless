@@ -380,6 +380,106 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Metal", "Colorless"], name: "Rolling Tackle", damage: 50 },
     ],
   }),
+  /** Staraptor sv01-150 — "Tailspin Away" ({C}{C}, printed 60, attack INDEX 0):
+      D146's ATTACKER-CLASS filter, *"During your opponent's next turn, prevent all
+      damage done to this Pokémon by attacks from Basic Pokémon."*, 1 of its THREE
+      printings. UNGATED — no coin is printed, so this fixture (unlike D142's two)
+      installs on every declaration and its suite needs no seed table at all.
+
+      ⚠️ THE CARD IS STARAPTOR, NOT FLETCHLING. Four remainder lists and D142's own
+      effects.ts comment called sv01-150 "Fletchling"; the local D1 (2026-08-02)
+      says Staraptor, a STAGE 2 from Staravia. Fletchling sv02-163 is a real card in
+      this pool and prints none of this text. Checked by query, per printing, with
+      the attack name, the cost, the damage and the INDEX (D144's rule).
+
+      A STAGE 2, fielded by `setActiveFromDeck` surgery like Ninetales sv03-029 and
+      Oinkologne sv01-157 before it — and its stage is doing real work rather than
+      being tolerated: it is the NON-Basic attacker the other installer's block must
+      let through, so the two fixtures are each other's negative case.
+
+      Its W/R line is load-bearing twice over: ×2 LIGHTNING weakness means Pincurchin
+      sv02-072's Lightning 70 doubles to 140 and is then nulled to 0, so a blocked
+      hit is 0 rather than 0 by coincidence; the −30 Fighting resistance is the
+      second half of the same claim. Index-1 "Power Blast" ({C}{C}{C}, 180 + a
+      self-discard) is the control that proves no program leaks across indices AND
+      the big NON-Basic hit that lands in full on a filtered block.
+
+      Verbatim off the local D1: 150 HP, Colorless, Stage2 from Staravia, retreat 1,
+      ×2 Lightning, −30 Fighting, no Ability. */
+  "sv01-150": battler("sv01-150", {
+    name: "Staraptor",
+    stage: "Stage2",
+    evolveFrom: "Staravia",
+    types: ["Colorless"],
+    hp: 150,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Tailspin Away",
+        damage: 60,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Power Blast",
+        damage: 180,
+        effect: "Discard an Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Noivern ex sv02-153 — "Covert Flight" ({C}{C}, printed 70, attack INDEX 0):
+      the SAME sentence as Staraptor above, on a different card from a different
+      SET, which is what makes D121's second-printing warrant a fact of the fixtures
+      rather than a family argument (D139's stronger form).
+
+      ⚠️ THE CARD IS NOIVERN ex, NOT BOMBIRDIER — the same inherited misnaming as
+      sv01-150. Bombirdier sv01-138/-219 and sv02-147 are real cards in this pool
+      and print none of this text.
+
+      A STAGE 1 (from Noibat), so the PAIR of installers spans both evolution
+      stages: each is the other's non-matching attacker, and between them they show
+      that "Basic" is read off the attacker's CURRENT identity at two different
+      distances from a Basic. 260 HP is deliberate — it survives Staraptor's
+      unblocked 180 with room to spare, so the "the filter FAILED and the damage
+      landed" cases end with a body still on the board to assert about.
+
+      NO printed Weakness and NO Resistance at all (verbatim off the D1), which is
+      the other half of Staraptor's ×2: one installer proves a blocked hit survives
+      the full §8.5 pipeline, the other proves the unblocked number is the printed
+      one with nothing done to it. Index-1 "Dominating Echo" ({P}{D}, 140) carries
+      an UNMAPPED sentence and stays LOUD — the live unmapped witness this slice
+      adds to its own deck (D135's move), and the index control at the same time.
+
+      Verbatim off the local D1: 260 HP, Dragon, Stage1 from Noibat, retreat 0, no
+      weakness, no resistance, no Ability. */
+  "sv02-153": battler("sv02-153", {
+    name: "Noivern ex",
+    stage: "Stage1",
+    evolveFrom: "Noibat",
+    types: ["Dragon"],
+    hp: 260,
+    retreat: 0,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Covert Flight",
+        damage: 70,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
+      },
+      {
+        cost: ["Psychic", "Darkness"],
+        name: "Dominating Echo",
+        damage: 140,
+        effect:
+          "During your opponent's next turn, they can't play any Special Energy or Stadium cards from their hand.",
+      },
+    ],
+  }),
   "fix-attacker-ex": battler("fix-attacker-ex", {
     name: "Fixmon ex",
     types: ["Fire"],
@@ -7267,6 +7367,65 @@ export const TAILS_SELF_COST_DECK = deckOf({
   "fix-water-energy": 8, // Basic {W} — Frost Purge's two typed symbols, and Icicle Punch's one
   "fix-energy": 14, // Colorless Basic — every {C}, and High-Impact Kick's whole {C}{C}{C}
   "fix-titan": 12, // 340 HP neutral Basic, NO attacks — the pinned Active both sides
+});
+
+/** D146's ATTACKER-CLASS deck (`classBlock.test.ts`). Its own 60, and for
+    `ATTACK_LOCK_DECK`'s reason rather than `PREVENT_BLOCK_DECK`'s — which is worth
+    stating, because this family is D142's own op and shares neither property with
+    D142's suite: **the sentence is UNGATED**, no printing of it flips anything, so
+    every board here is reached with no seed sweep and no seed table at all, and
+    the suite pins that by an unchanged `rngState` across a whole install (D143's
+    move). Sharing `PREVENT_BLOCK_DECK` would make this suite's determinism a
+    coincidence of that one's shuffle, and adding these cards to it would move all
+    of ITS pinned heads/tails seeds.
+
+      • sv01-150 Staraptor — the filter at attack INDEX 0 ({C}{C}, printed 60),
+        with "Power Blast" ({C}{C}{C}, 180) at index 1 as the index control AND as
+        the biggest NON-Basic hit in the deck. A STAGE 2;
+      • sv02-153 Noivern ex — the SAME sentence on another card from another SET,
+        also at INDEX 0 ({C}{C}, 70). A STAGE 1, 260 HP, and its index-1
+        "Dominating Echo" carries an UNMAPPED sentence that must stay LOUD;
+      • THE TWO INSTALLERS ARE EACH OTHER'S NEGATIVE CASE, which is why there is
+        no bespoke "evolved attacker" fixture: a Stage 1 and a Stage 2 attacking
+        into each other's block is the filter failing, driven off printed cards;
+      • sv02-072 Pincurchin — a BASIC Lightning attacker ({L}{L}{L}, 70 + an Energy
+        discard off the defender). Staraptor is ×2 LIGHTNING, so its 140 is nulled
+        to 0 and the blocked hit is 0 rather than 0 by coincidence; and the discard
+        is the NARROW reading's other half — a filtered block stops the damage and
+        NOT the effect, on one declaration;
+      • sv02-097 Mimikyu — a BASIC attacker whose "Ghost Eye" ({P}{C}) PLACES 7
+        counters. A placed counter is not damage (D138/D139), so it goes straight
+        through a filter that matched, which is the sharpest single statement of
+        what the narrow reading does not cover;
+      • sv03-098 Polteageist — a STAGE 1 whose "Pour Tea" ({P}, index 1) reaches
+        the SAME `damageActive` op as Ghost Eye. The pair is the constructed
+        wide-and-filtered case: same op, same target, two attacker stages;
+      • fix-attacker supplies the plain BASIC hit (Bite, {C}, 30) and the costless
+        Yawn (§12 on the defender);
+      • fix-sniper's "Spread Shot" ({C}, 30 + 20 to EACH benched) is the BASIC
+        spread — the per-body claim, and the witness that the §10 clear really
+        cleared;
+      • sv02-172 Boss's Orders drags a shielded body off the Active Spot;
+      • fix-basic-1 / fix-stage1 are the §10 EVOLVE clear, unreachable in play and
+        surgeried exactly as D142 surgeried it;
+      • fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and
+        promote target, big enough that no case ends with a body swept away. */
+export const CLASS_BLOCK_DECK = deckOf({
+  "sv01-150": 4, // Staraptor — "Tailspin Away" idx 0 (the filter), "Power Blast" idx 1 (180, Stage 2)
+  "sv02-153": 4, // Noivern ex — "Covert Flight" idx 0 (the filter), "Dominating Echo" idx 1 (LOUD)
+  "sv02-072": 3, // Pincurchin — BASIC {L}{L}{L} 70 + the defender-side Energy discard
+  "sv02-097": 3, // Mimikyu — BASIC {P}{C}, 7 counters PLACED (an effect, not damage)
+  "sv03-098": 3, // Polteageist — STAGE 1 {P}, 5 counters on the same op as Ghost Eye
+  "fix-attacker": 3, // BASIC Bite ({C}, 30) and Yawn (costless, Asleep)
+  "fix-sniper": 2, // BASIC "Spread Shot" ({C}, 30 + 20 to each benched)
+  "sv02-172": 2, // Boss's Orders — the reachable §10 clear
+  "fix-basic-1": 2, // a plain evolvable Basic — the §10 evolve clear
+  "fix-stage1": 2, // …what it evolves into
+  "fix-energy": 14, // Colorless Basic — both installs, Power Blast, Bite, Spread Shot, Ghost Eye's {C}
+  "fix-lightning-energy": 8, // {L}{L}{L} — two Needle Crushes' worth
+  "fix-psychic-energy": 5, // {P} — Ghost Eye's typed half, Pour Tea, and Dominating Echo's half
+  "fix-dark-energy": 2, // {D} — the other half of Dominating Echo, the LOUD witness's cost
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

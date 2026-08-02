@@ -218,7 +218,27 @@ export interface MatchRecord {
     new event, no new `InPlayPokemon` key and no log wording change: there is
     nothing a previously written record could fail to describe. Asked rather than
     omitted, because "an arm over an existing field" is exactly the shape a
-    session skips the question on. */
+    session skips the question on.
+
+    ⚠️ NO BUMP AT D146 EITHER (engine 0.95.0), and the reason is a THIRD distinct
+    one — worth stating, because this slice DID add a field to a shape that gets
+    persisted, which is the exact trigger three of the four bumps above fired on.
+    `AttackBlock.fromClass?: "Basic"` (the printed "…by attacks from Basic
+    Pokémon") lands INSIDE `AttackBlock`, not on `InPlayPokemon`. The difference
+    is the whole answer: `attackBlock` itself is a REQUIRED key on every Pokémon,
+    so a record missing it has a wrong TYPE for every body in play; `fromClass` is
+    an OPTIONAL key on a record that only EXISTS when a block was installed, so
+    the old shape `{ turn, effects }` is still a valid inhabitant of the new type
+    and reads back as "refuses every attacker" — which is precisely what it meant
+    when it was written. There is no lie to retire. (It is doubly moot in fact: no
+    deploy before this one had an op that could write a filter, so no persisted
+    block could carry one — but the argument that matters is the TYPE one, since
+    the value argument is the soft landing D124 refused.) Nothing else persisted
+    moved — no `InPlayPokemon` key, no `GameState` field, no `EffectContext`
+    field, and `preventDamage` still never parks, so no `EffectContinuation` can
+    carry the new op field into `phase.cont` either. The RENDERED `SeatLogEntry[]`
+    does gain a third `ATTACK_BLOCK_APPLIED` phrasing, which is text in NEW
+    records only and is D141's already-settled case. */
 export const MATCH_RECORD_VERSION = 5;
 
 /** How a persisted match read back: absent, usable, or written by an

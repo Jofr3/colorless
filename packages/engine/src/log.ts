@@ -342,13 +342,22 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // printed spellings get two phrasings because the difference is the whole
     // reason the field exists — a reader who is told only "protected" cannot
     // work out whether their Poison is about to land.
+    //
+    // D146 adds the THIRD phrasing, and it is the one the reader needs most: a
+    // class-filtered block lets every evolved attacker through at full damage, so
+    // "is protected from damage from attacks" would be an outright lie about the
+    // very next turn. The class is named rather than hinted at, and it is read off
+    // the ROW rather than off the board — `fromClass` is the printed token, so the
+    // wording cannot drift from what `attackBlockOf` will actually enforce.
     case "ATTACK_BLOCK_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
-          event.effects
-            ? " is protected from damage and effects of attacks during your opponent's next turn"
-            : " is protected from damage from attacks during your opponent's next turn",
+          event.fromClass !== undefined
+            ? ` is protected from damage from ${event.fromClass} Pokémon's attacks during your opponent's next turn`
+            : event.effects
+              ? " is protected from damage and effects of attacks during your opponent's next turn"
+              : " is protected from damage from attacks during your opponent's next turn",
         ),
       ]);
     // §8/§11 — the attack-installed SELF-LOCK. ACTIVE voice for

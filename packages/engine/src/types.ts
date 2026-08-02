@@ -70,9 +70,14 @@ export function presentStatuses(conditions: SpecialConditions): StatusName[] {
        damage FROM AND EFFECTS OF attacks done to this Pokémon."   (11 printings)
       "Flip a coin. If heads, during your opponent's next turn, prevent all
        damage done to this Pokémon by attacks."                    ( 2 printings)
+      "During your opponent's next turn, prevent all damage done to this
+       Pokémon by attacks from Basic Pokémon."                     ( 3 printings)
 
-    and the difference between them is exactly the `effects` flag: BOTH refuse
-    damage, only the first refuses the rest of what an attack does to the body.
+    and the differences between them are exactly the two optional fields below:
+    `effects` widens WHAT is refused, `fromClass` narrows WHOSE attacks are
+    refused at all. BOTH of the first two refuse damage; only the first refuses
+    the rest of what an attack does to the body; only the third asks anything
+    about the attacker.
 
     ⚠️ A TURN STAMP, NOT A FLAG — D124's decision, taken again for a reason of its
     own. `turn` is the ONE turn number on which the block is live: the installing
@@ -114,6 +119,35 @@ export interface AttackBlock {
       engine has ruled is not attack damage since `damageActive` (D138/D139) — falls
       entirely on the effects side. */
   effects: boolean;
+  /** §11 (D146) — the printed ATTACKER-CLASS filter: present exactly when the
+      sentence narrows the block to attacks "from {class} Pokémon", ABSENT when
+      the block refuses every attacker (D135's absent-key rule, and the same
+      polarity `effects` is under — the printed words are what ADD the key, and a
+      producer that forgets one blocks differently rather than wrongly).
+
+      ⚠️ IT IS EVALUATED AT THE READ SITES, NOT HERE, and that is the same split
+      `PassiveEffects.preventDamageFromExV` is already under (continuous.ts): the
+      ATTACKER is not knowable at install time — the block is written on the
+      installer's own body during the installer's own turn, and the Pokémon it
+      will refuse has not declared anything yet — so the record stores the printed
+      TOKEN and `attackBlockOf` resolves it against the attacker each read.
+
+      ⚠️ A ONE-MEMBER CLOSED VOCABULARY, AND THE ONE MEMBER IS THE ONE THE POOL
+      PRINTS A READABLE DATUM FOR. The pool prints TWO class tokens on this
+      sentence — "Basic" (3 printings) and "Ancient" (1, Iron Moth sv06.5-009) —
+      and only the first is answerable: `stage` is a catalog column, while the
+      Ancient/Future banner is printed on the card FACE and appears in NO field of
+      the persisted catalog and NONE of tcgdex's own card model (checked upstream
+      against Roaring Moon ex sv04-124, the canonical Ancient print — it serves
+      `suffix: "ex"` for a rule box and nothing at all for the banner). So the
+      Ancient sentence has no reader because it has no DATUM, and it stays LOUD
+      rather than being answered by a hand-authored species list — the species is
+      not even the right key, since the SAME species is printed both with the
+      banner (sv04+) and without it (Great Tusk ex sv01-123). The union is
+      deliberately narrow so `attackerMatchesClass` (continuous.ts) is an
+      EXHAUSTIVE switch: a second member cannot be added without the compiler
+      demanding the predicate that reads it. */
+  fromClass?: "Basic";
 }
 
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):

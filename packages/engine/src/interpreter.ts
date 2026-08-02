@@ -40,7 +40,14 @@ import type { GameEvent } from "./events";
 // (`import type { EffectPrompt }`), so this value import leaves no runtime cycle.
 import { phaseViewOf } from "./phaseView";
 import { flipCoin, shuffle } from "./rng";
-import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
+import type {
+  AttackBlock,
+  GameState,
+  InPlayPokemon,
+  PlayerSide,
+  PokemonTarget,
+  Seat,
+} from "./types";
 import {
   BENCH_MAX,
   DEFAULT_POISON_DAMAGE,
@@ -646,7 +653,7 @@ function stepOp(
     case "preventRetreat":
       return { done: preventRetreat(state, ctx, events) };
     case "preventDamage":
-      return { done: preventDamage(state, op.effects === true, ctx, events) };
+      return { done: preventDamage(state, op.effects === true, op.fromClass, ctx, events) };
     case "preventAttack":
       return { done: preventAttack(state, ctx, events) };
     case "heal":
@@ -1764,10 +1771,22 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
     row is suppressed only when the second install says nothing new — a NARROW
     block landing on top of a WIDE one must not silently downgrade it, so the two
     are merged by OR rather than overwritten. Reachable in principle (a card with
-    two such attacks, or a re-install after a switch), unreachable in this pool. */
+    two such attacks, or a re-install after a switch), unreachable in this pool.
+
+    ⚠️ D146's `fromClass` MERGES ON THE SAME RULE READ ON THE OTHER AXIS. `effects`
+    widens what is refused, so two installs OR it; `fromClass` NARROWS whose
+    attacks are refused at all, so two installs keep the filter only when they
+    AGREE, and any disagreement (including one side having no filter) collapses to
+    the UNFILTERED block. Both rules say the same thing — a second installation
+    may never leave the holder with less protection than one of them printed — and
+    writing them as one comparison rather than one `||` is the only reason they
+    look different. Unreachable in this pool for the same reason as above, and
+    doubly so: no card prints two of these attacks, and the four filtered printings
+    are one attack each. */
 function preventDamage(
   state: GameState,
   effects: boolean,
+  fromClass: AttackBlock["fromClass"],
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -1777,11 +1796,26 @@ function preventDamage(
   if (uid === undefined) return state;
   const turn = state.turn + 1;
   const existing = active.attackBlock;
-  const merged =
-    existing !== null && existing.turn === turn ? existing.effects || effects : effects;
-  if (existing !== null && existing.turn === turn && merged === existing.effects) return state;
-  events.push({ type: "ATTACK_BLOCK_APPLIED", seat: ctx.seat, uid, effects: merged });
-  return withActive(state, ctx.seat, { ...active, attackBlock: { turn, effects: merged } });
+  const stacking = existing !== null && existing.turn === turn;
+  const merged = stacking ? existing.effects || effects : effects;
+  // Agreement keeps the filter; anything else widens to "every attacker".
+  const mergedClass = stacking
+    ? existing.fromClass === fromClass
+      ? fromClass
+      : undefined
+    : fromClass;
+  if (stacking && merged === existing.effects && mergedClass === existing.fromClass) return state;
+  events.push({
+    type: "ATTACK_BLOCK_APPLIED",
+    seat: ctx.seat,
+    uid,
+    effects: merged,
+    fromClass: mergedClass,
+  });
+  return withActive(state, ctx.seat, {
+    ...active,
+    attackBlock: { turn, effects: merged, fromClass: mergedClass },
+  });
 }
 
 /** §8/§11 (D143) — INSTALL the printed SELF-LOCK on the CONTROLLER's own Active
@@ -1852,13 +1886,20 @@ function preventAttack(state: GameState, ctx: EffectContext, events: GameEvent[]
     be live on an ACTIVE — installing it needs an attack, and leaving the Active
     Spot ends it (turn.ts `clearOnLeavingActive`, interpreter `switchInto`) — so
     the Bench-target arms are unreachable by construction and are guarded anyway,
-    which costs one read and removes a standing assumption. */
+    which costs one read and removes a standing assumption.
+
+    It takes the ATTACKING CARD too, since D146: a block may be narrowed to
+    attacks "from Basic Pokémon", and `attackBlockOf` resolves that against the
+    attacker rather than answering it here (continuous.ts). Every caller already
+    had the card in hand for Mimikyu "Safeguard" on the very next line, which is
+    why the two auras still sit on one `||` at all four sites. */
 function attackDamageBlocked(
   state: GameState,
   pokemon: InPlayPokemon,
+  attacker: Card | undefined,
   ctx: EffectContext,
 ): boolean {
-  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon) !== null;
+  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon, attacker) !== null;
 }
 
 function attackEffectRefused(
@@ -1870,7 +1911,21 @@ function attackEffectRefused(
   if (ctx.invokedBy !== "attack") return false;
   const target = state.players[seat].active;
   if (target === null) return false;
-  if (attackBlockOf(state, target)?.effects !== true) return false;
+  // The ATTACKER is `ctx.seat`'s Active by construction — `invokedBy === "attack"`
+  // is set by the one `runProgram` call `attack.ts` makes, and an attack comes
+  // from the Active Spot (§8). Resolved HERE rather than passed in because the
+  // six ops that consult this gate have no reason to know who is attacking; the
+  // gate does, and it is the whole point of the gate being one function.
+  //
+  // ⚠️ UNREACHABLE FROM ANY PRINTING, GUARDED ANYWAY — the Bench-arm argument
+  // above, applied to the other axis. The three `fromClass` printings are all the
+  // NARROW spelling (no "from and effects of"), so a block that carries a filter
+  // never has `effects: true` and this line can only ever see an unfiltered
+  // block off a real card. Ignoring the filter here would make `fromClass` mean
+  // one thing at four sites and another at the fifth, which is exactly the drift
+  // the single-read contract exists to stop; a constructed program pins it.
+  const attacker = activeTop(state, ctx.seat)?.card;
+  if (attackBlockOf(state, target, attacker)?.effects !== true) return false;
   const uid = topUid(target);
   if (uid === undefined) return false;
   events.push({ type: "ATTACK_EFFECT_PREVENTED", seat, uid });
@@ -1905,7 +1960,7 @@ function spreadDamage(
     const passives = passivesOf(state, pokemon);
     const prevented =
       (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
-      attackDamageBlocked(state, pokemon, ctx);
+      attackDamageBlocked(state, pokemon, attackerCard, ctx);
     const reduction = passives.damageReductionAfterWR;
     const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     const damage = pokemon.damage + dealt;
@@ -2027,7 +2082,7 @@ function placeSnipe(
       ((targetPassives.preventDamageFromExV &&
         attackerCard !== undefined &&
         isExOrV(attackerCard)) ||
-        attackDamageBlocked(next, pokemon, ctx));
+        attackDamageBlocked(next, pokemon, attackerCard, ctx));
     const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
     const dealt = prevented ? 0 : Math.max(0, amount - reduction);
     events.push({
@@ -2088,7 +2143,7 @@ function snipeActive(
   const prevented =
     !ignoreWR &&
     ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
-      attackDamageBlocked(state, target.active, ctx));
+      attackDamageBlocked(state, target.active, attacker?.card, ctx));
   const reduction = ignoreWR ? 0 : targetPassives.damageReductionAfterWR;
   const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
   events.push({

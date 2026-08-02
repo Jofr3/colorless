@@ -99,8 +99,17 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // Pokémon is now Confused."), which `fix-statuser` has printed since M2 — so
     // it adds an ID to an existing row and not a row, which is exactly what a
     // `sentence` census is supposed to do.
-    // 41 distinct sentences at D144 (40 at D143, 38 at D142, 36 at D140/D141, 35
-    // at D139, 33 at D138, 32 at D137). D144 added ONE — the TAILS-gated self-lock
+    // 42 distinct sentences at D146 (41 at D144/D145, 40 at D143, 38 at D142, 36
+    // at D140/D141, 35 at D139, 33 at D138, 32 at D137). D146 added ONE — the
+    // attacker-CLASS filter ("During your opponent's next turn, prevent all
+    // damage done to this Pokémon by attacks from Basic Pokémon."), carried by
+    // BOTH of its new fixtures (Staraptor sv01-150 and Noivern ex sv02-153) and
+    // therefore ONE row, exactly as D144's pair was. Its exposed slot is the
+    // POSSESSIVE "your opponent's" its unfiltered siblings already carry, on a
+    // regex that is UNGATED where theirs are not — so the fold is proven across
+    // the gate boundary as well as across the two spellings. D145 added NONE, a
+    // result rather than an omission: neither of its mapped sentences carries an
+    // apostrophe at all. D144 added ONE — the TAILS-gated self-lock
     // ("Flip a coin. If tails, during your next turn, this Pokémon can't attack."),
     // carried by BOTH of its new fixtures (Oinkologne sv01-157 and Paldean
     // Clodsire ex sv02-130) and therefore ONE row on a `sentence` census, exactly
@@ -133,7 +142,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // rather than silently widening the pool it does not cover. If it drops, a
     // reader stopped deriving something and the failure belongs here as much as in
     // the slice suite that owns it.
-    expect(derivable).toHaveLength(41);
+    expect(derivable).toHaveLength(42);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

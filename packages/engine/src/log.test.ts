@@ -372,6 +372,27 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     expect(
       line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false }).text,
     ).toBe(`${name} is protected from damage from attacks during your opponent's next turn`);
+    // D146's THIRD phrasing, and it is the one a reader most needs: a
+    // class-filtered block lets EVERY evolved attacker through at full damage,
+    // so the row above would be an outright lie about the very next turn. The
+    // class is NAMED rather than hinted at, and it is read off the row's own
+    // `fromClass` — the printed token — so the wording cannot drift from what
+    // `attackBlockOf` will actually enforce.
+    expect(
+      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false, fromClass: "Basic" }),
+    ).toEqual({
+      text: `${name} is protected from damage from Basic Pokémon's attacks during your opponent's next turn`,
+      who: "p1",
+    });
+    // The filter WINS over the `effects` phrasing when both are set, which is the
+    // right precedence and unreachable off any printing (all three filtered
+    // printings are the narrow spelling): naming the class is strictly more
+    // information than naming the breadth, and a row that said "damage and
+    // effects" while letting a Stage 1 through unharmed would be the worse lie.
+    expect(
+      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: true, fromClass: "Basic" })
+        .text,
+    ).toContain("Basic Pokémon's attacks");
     // The refusal itself. Filed under the PROTECTED Pokémon's seat, which is also
     // whose block did the refusing — causer and affected body are one card.
     expect(line({ type: "ATTACK_EFFECT_PREVENTED", seat: "p1", uid })).toEqual({

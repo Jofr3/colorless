@@ -9803,3 +9803,319 @@ does not print.
 - **The PER-ATTACK lock — 8 printings / 6 sentences**, unchanged.
 - **Iron Moth `sv06.5-009` "Suction" + Camerupt `sv03-032`** — unchanged. Do it
   last or not at all.
+
+## D146 — the ATTACKER-CLASS filter: `During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.` (engine 0.95.0, MATCH_RECORD_VERSION unchanged at 5)
+
+Item 1 of D145's remainder list. The mechanism was bought whole at D142 — the turn
+stamp, the three early clears, the four damage sites and the effects gate are all
+reused unchanged — so the whole slice is **one regex, one deriver arm, one op
+field, one `AttackBlock` field, one event field, one log arm, one predicate and
+one changed signature**. What it is actually ABOUT is the sentence's OTHER printed
+class token, and the answer there is a data finding rather than an engine one.
+
+### The resume point's claims, checked before anything was designed
+
+| Claim | Verdict |
+|---|---|
+| "4 printings / 2 clauses" | **TRUE** — 3 `Basic` + 1 `Ancient` against the local D1 (2026-08-02, 978 cards) |
+| "Fletchling `sv01-150`" | **FALSE.** `sv01-150` is **STARAPTOR** — Stage 2 from Staravia, 150 HP, Colorless, retreat 1, ×2 Lightning, −30 Fighting. Fletchling is `sv02-163` and prints none of this text. |
+| "Bombirdier `sv02-153`/`-246`" | **FALSE.** Those are **NOIVERN ex** — Stage 1 from Noibat, 260 HP, Dragon, retreat 0, no Weakness, no Resistance. Bombirdier is `sv01-138`/`-219`/`sv02-147`. |
+| "Iron Moth `sv06.5-009` **index 1**" | **TRUE** — and the list said why it is the only index it names: D142 found it *by checking*. |
+| (unstated) the two Basic printings' INDEX | **INDEX 0 on all three**, checked SEPARATELY per printing (D144's rule) |
+| (unstated) their attack names / costs / damage | "Tailspin Away" {C}{C} 60; "Covert Flight" {C}{C} 70 — verified byte-exact, including both printed effect strings |
+| "UNGATED, so no coin" | **TRUE**, and it is load-bearing: the suite is SEED-FREE, the family's first ungated producer of this op |
+| "one optional field on `preventDamage` plus a predicate over the ATTACKER's card" | **TRUE**, exactly |
+| "`Basic` is `isBasicPokemon` verbatim" | **TRUE** |
+| "**`Ancient` has no reader anywhere in the engine** and is the only real work" | **⚠️ TRUE IN LETTER, INVERTED IN SUBSTANCE.** It has no reader because it has **no DATUM** — see below. It is not work; it is an INGEST change. |
+
+**AN ELEVENTH LIST CARRYING SOMETHING WRONG, and the first whose miss is in the
+card NAMES.** The pattern holds in its usual shape with one refinement: the
+CATALOG *counts* were right and the CATALOG *names* were not, which is new. The
+names had ridden four remainder lists, D142's own `effects.ts` comment AND D142's
+own suite — because a card NAME is the one field nobody re-queries, being the
+field a reader thinks they recognise. **D144's per-printing rule extends to names:
+verify by QUERY, never by recognition.**
+
+### ⚠️ `Ancient` HAS NO DATUM — the finding, and the reason the sentence stays LOUD
+
+The Ancient/Future banner is printed on the card FACE and debuted with Paradox
+Rift (sv04). It is:
+
+- **not in the persisted catalog** — the `cards` table has `stage`, `evolve_from`,
+  `regulation_mark`, `rarity`, `types_json` and no tag column of any kind;
+- **not in tcgdex's own card model** — `packages/schema/src/tcgdex/card.ts` is
+  authored against live payloads and has no such field. **Verified upstream**
+  against **Roaring Moon ex `sv04-124`**, the canonical Ancient print: its payload
+  carries `suffix: "ex"` for the rule box and **nothing whatsoever** for the
+  banner. So this is an UPSTREAM gap, not an ingest one this repo dropped;
+- **not in the NAME** either, unlike every other class this engine reads. `ex` /
+  `V` / `VMAX` / `Radiant` are all name-encoded (`pokemonSuffixOf`, `hasRuleBox`),
+  which is precisely why those predicates exist; "Slither Wing" and "Iron Moth"
+  carry no marker at all.
+
+**AND A SPECIES-NAME TABLE WOULD BE WRONG RATHER THAN INCOMPLETE.** The banner is
+a per-PRINTING fact — D135's rule at its sharpest — and this pool contains the
+counter-example: **Great Tusk ex `sv01-123`/`-230`/`-246`** is one of the Ancient
+SPECIES, printed a full year before the mechanic existed, carrying no banner. A
+name-keyed answer is therefore wrong on three real cards **with no failure
+anywhere**, which is the wrong-with-no-failure outcome this family refuses. Same
+for **Iron Treads ex `sv01-143`/`-233`/`-248`** on the Future side.
+
+So the Ancient sentence falls through to `ATTACK_EFFECT_SKIPPED` and stays LOUD,
+the `fromClass` union has exactly **ONE** member, and `attackerMatchesClass`
+(continuous.ts) is an **EXHAUSTIVE `switch`** — the closed vocabulary D120 requires
+of a varying token, enforced by tsc rather than by a comment: a second member
+cannot be added without the compiler demanding the predicate that reads it.
+
+**`Future` obliges NOTHING, and the answer is written down rather than assumed.**
+It is a real class in this pool (4 printings / 2 cards — Iron Moth `sv06.5-009`,
+Iron Treads ex `sv01-143`/`-233`/`-248`) and **one printing already asks a live
+question about it**: Slither Wing `sv06.5-026` "Iron Smasher" — *"If your opponent
+has any Future Pokémon in play, this attack does 120 more damage."* But (a) it is
+unreadable for the identical reason, and (b) it is a **different mechanism** — a
+board-condition damage bonus, not a block — so reading one would not have read the
+other. Both wait on the same ingest change. (A cheap trap the census caught: Absol
+ex `sv03-135`/`-214`'s attack is NAMED "Future Sight", so a text search for
+"Future" returns it. The word in a card's own vocabulary is not the class token.)
+
+### The census (local D1, 2026-08-02, 978 cards) — D142's rule, fifth time
+
+`LIKE '%by attacks from%'` over `attacks_json`, `abilities_json` AND `effect`, so
+the query sees Abilities and Trainers rather than only attacks. **The whole
+attacker-filter neighbourhood is 10 printings across 7 sentences:**
+
+| Sentence | Printings | Kind | Status after D146 |
+|---|---|---|---|
+| `…prevent all damage done to this Pokémon by attacks from Basic Pokémon.` | **3** | attack | ✅ `preventDamage { fromClass: "Basic" }` — Staraptor `sv01-150` idx 0, Noivern ex `sv02-153`/`-246` idx 0 |
+| `…prevent all damage done to this Pokémon by attacks from Ancient Pokémon.` | 1 | attack | ❌ LOUD — Iron Moth `sv06.5-009` idx 1. No datum (above) |
+| `Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex and Pokémon V.` | 1 | **Ability** | ✅ since 0.58.0 — Mimikyu `sv02-097` "Safeguard" (`preventDamageFromExV`, gated on `isExOrV`) |
+| `…by attacks from your opponent's {R} Pokémon.` | 1 | **Ability** | ❌ Dachsbun `sv01-099` "Well-Baked Body" — filters by ENERGY TYPE, and carries a second sentence ("can't be Burned") |
+| `…by attacks from your opponent's {L} Pokémon.` | 2 | **Ability** | ❌ Bellibolt `sv03-078`/`-201` "Insulator" — the same type filter, one printing short of a family with Dachsbun |
+| `As long as this Pokémon is in the Active Spot, prevent all damage done to your BENCHED Pokémon by attacks from your opponent's Pokémon.` | 1 | **Ability** | ❌ Thundurus `sv03-070` "Adverse Weather" — filters by ZONE, and protects a body OTHER than the holder |
+| `Prevent all damage done to Pokémon that don't have a Rule Box … by attacks from the opponent's Pokémon ex and Pokémon V.` | 1 | **Stadium** | ❌ Neutralization Zone `sv06.5-060` — filters the PROTECTED side as well as the attacker, on a shared zone |
+
+Three things the table is worth keeping for:
+
+1. **ONLY 4 OF THE 10 ARE ATTACKS.** Six are always-on (5 Abilities + 1 Stadium),
+   i.e. they need no duration at all and would sit beside `preventDamageFromExV`
+   in `passivesOf` rather than on `attackBlock`. **The durated/undurated split is
+   not the same split as the filtered/unfiltered one**, and a slice pricing "the
+   filter family" off this table must read the KIND column first.
+2. **THE POOL FILTERS ON FIVE CLASSES, NOT TWO** — stage (Basic), banner
+   (Ancient), rule box (ex/V), energy type ({R}/{L}) and zone (Benched). Only the
+   first two are on this op, and only the first is readable. `fromClass` is
+   therefore NOT the general "attacker predicate" field it looks like from one
+   printing; the energy-type pair would want a different vocabulary and the zone
+   one a different holder entirely.
+3. **NO COMPOUND PRINTING EXISTS ON THE ATTACK SIDE.** All 4 attack printings are
+   the whole effect string with nothing following, so the `^…$` anchor is under no
+   pressure here — unlike D145's discard, where four compounds were live. (The
+   Ability side does print one: Dachsbun's two sentences.)
+
+### ⚠️ The predicate is evaluated at the READ SITES, and folded INTO the single read
+
+The attacker is unknowable when the block is installed — it is written on the
+installer's own body during the installer's own turn, and the Pokémon it will
+refuse has not declared anything yet. That is the same split
+`PassiveEffects.preventDamageFromExV` has been under since D107: the aura reports
+itself and the SITES gate it on `isExOrV(attacker)`.
+
+What is new is WHERE the resolution lives. `attackBlockOf(state, pokemon,
+attacker)` now takes the attacking card as a **REQUIRED (nullable) parameter** and
+applies the filter itself, so "the ONE read of `InPlayPokemon.attackBlock`" stays
+true in the strong sense: **a read site cannot honour the turn stamp and forget
+the filter, because there is no way to ask the first question without answering
+the second.** Every one of the four damage sites already had the card in hand for
+Safeguard on the very next line, so the two auras still sit on one `||`.
+
+`undefined` (no resolvable attacking card) fails a FILTERED block and passes an
+unfiltered one — conservative on both: an unfiltered block is the pre-D146
+behaviour byte for byte, and a filtered block whose class cannot be checked
+protects LESS rather than more, which is `effects`' polarity.
+
+**This is also why ignoring the filter fails only 2 tests**, and the number is a
+property of the design rather than of the suite: all four damage sites plus the
+effects gate route through one line, so per-site duplicates would be testing one
+line five times — and the pool prints **no evolved spread or snipe attacker**
+(checked: zero Stage 1/Stage 2 printings of "damage to each of your opponent's
+Benched Pokémon"), so those sites cannot be driven with a non-matching attacker
+off a real card at all.
+
+### ⚠️ What the filter does when it FAILS — and it is strictly the NARROW reading
+
+The attack lands **in full**: `DAMAGE_DEALT` with `prevented` absent and the real
+number in `dealt`, the §8.5 pipeline untouched. `ptcg-rules.md` has no clause for
+a filtered prevention — the family is only §8 step 5's *"prevent all damage"*
+damage MODIFIER and §15.B's *"Prevent all / reduce damage"* — and reading it as a
+modifier is what settles this: a modifier whose condition does not hold simply
+does not apply, and nothing else about the step changes.
+
+**It does not touch the effects half at all, and that is a printed fact rather
+than a simplification.** All three `fromClass` printings are the NARROW spelling
+(no "from and effects of"), so a MATCHED Basic attacker has its damage nulled and
+still lands everything else it prints — driven end to end on Pincurchin
+`sv02-072`'s Energy discard, Mimikyu `sv02-097`'s 7 PLACED counters and
+fix-attacker's Asleep. **This is where D142's decision to ship TWO readings pays**:
+folding them would have refused a discard this card does not refuse.
+
+The effects gate is nonetheless made to honour the filter — the Bench-arm argument
+from D142 applied to the other axis. Ignoring it would make `fromClass` mean one
+thing at four sites and another at the fifth, purely because no printing reaches
+it, which is an ACCIDENT rather than a guard. It is pinned by a CONSTRUCTED
+`{ effects: true, fromClass: "Basic" }` block (D144's precedent for a rule with no
+card) and the sharpest available pair: **Mimikyu (Basic) and Polteageist
+`sv03-098` (Stage 1) reaching the SAME `damageActive` op**, told apart by nothing
+but the attacker's stage.
+
+### ⚠️ Two installers, and they are each other's negative case
+
+No bespoke "evolved attacker" fixture was invented, because the two printings
+already are one: **Staraptor `sv01-150` is a Stage 2 and Noivern ex `sv02-153` is
+a Stage 1**, so a Stage 2 swinging into the Stage 1's block for its whole 180 and
+a Stage 1 swinging into the Stage 2's for its whole 70 is the filter failing,
+driven off printed cards. Their printed lines carry the rest of the suite too:
+
+- Staraptor's **×2 LIGHTNING** weakness means Pincurchin's Basic 70 doubles to 140
+  and is then nulled, so a blocked 0 is 0 rather than 0 by coincidence (the row
+  still REPORTS the Weakness it computed — the block supersedes, it does not skip);
+- Noivern ex's **260 HP** survives the unblocked 180 with room, so the
+  "filter failed" cases end with a body still on the board to assert about;
+- Noivern ex's index-1 "Dominating Echo" carries an **UNMAPPED** sentence (a
+  Special-Energy/Stadium lock) and is the LIVE unmapped witness this slice adds to
+  its own deck (D135's move), driven end to end to `ATTACK_EFFECT_SKIPPED`;
+- Staraptor's index-1 "Power Blast" is the index control AND the big non-Basic hit.
+
+### ⚠️ The merge rule, read on the other axis
+
+`effects` widens, so two installs OR it. `fromClass` NARROWS, so two installs keep
+the filter only when they AGREE, and any disagreement (including one side having
+no filter) collapses to the UNFILTERED block. Both are the same rule — *a second
+installation may never leave the holder with less protection than one of them
+printed* — and when the merge says nothing new the row is suppressed entirely,
+which is D142's idempotence answering on two fields instead of one. Unreachable
+off any printing (no card prints two of these attacks), constructed and pinned.
+
+### The four structural questions
+
+1. **Does the op PARK?** No — `preventDamage` is deterministic, consumes no rng
+   and asks nothing, and this producer is UNGATED so the derived program is a
+   single non-parking op that cannot reach `EffectContinuation` at all.
+   **`MATCH_RECORD_VERSION` STAYS 5, and the reason is a THIRD distinct one.** The
+   field lands INSIDE `AttackBlock` — a record that only exists when a block was
+   installed — rather than on `InPlayPokemon`; it is OPTIONAL; and the old shape
+   `{ turn, effects }` is still a valid inhabitant of the new type, reading back as
+   "refuses every attacker", which is what it meant. Contrast D142/D143, which
+   bumped for a REQUIRED field on `InPlayPokemon` itself where the old record's
+   TYPE became a lie whatever it read back as. Written into `match.ts`'s own doc
+   block, asked rather than omitted, because "one optional field on a persisted
+   sub-record" is exactly the shape a session skips the question on.
+2. **Whose VOICE?** `ATTACK_BLOCK_APPLIED` gains `fromClass` and a THIRD phrasing
+   — *"… is protected from damage from Basic Pokémon's attacks during your
+   opponent's next turn"* — for `effects`' reason made sharper: a filtered block
+   lets EVERY evolved attacker through at full damage, so the two-phrasing wording
+   would be an outright lie about the very next turn. The seat is unchanged
+   (D142's active voice: it owns the shielded Pokémon and that Pokémon is the
+   actor's own). **And a block that FAILS to match emits NOTHING** — asked
+   deliberately, because a silent rule is a real log question. The attack's own
+   `DAMAGE_DEALT` row already carries the whole story, and announcing a rule that
+   DECLINED would be announcing a non-event: loudness in this engine is owed to
+   UNREAD TEXT, not to a read rule saying no (D140).
+3. **Is the guard ASSERTED?** Three ways rather than one. The vocabulary is a
+   COMPILER fact (the exhaustive `switch` over a one-member union). The PRODUCER
+   SET is swept out of the pool rather than listed (D145's move — the sweep walks
+   every attack the deriver can read, asserts every emitted `fromClass` is
+   vocabulary the predicate has an arm for, and pins the set at exactly
+   `["sv01-150", "sv02-153"]`, so a third producer fails loudly). And the effects
+   gate honours the filter despite being unreachable from any printing.
+4. **Does the mechanism exist?** Read first, and yes — D142's duration, stamp,
+   three early clears and four damage sites are reused unchanged, the third slice
+   running where the mechanism already existed. **What did NOT exist is the DATUM**
+   for the second class token, which is a failure mode this question has not hit
+   before: the mechanism was there and the DATA were not.
+
+### The suite — `classBlock.test.ts` (27 tests)
+
+Its own `CLASS_BLOCK_DECK`, and for `ATTACK_LOCK_DECK`'s reason rather than
+`PREVENT_BLOCK_DECK`'s — which is worth stating, because this is D142's own op:
+**the sentence is UNGATED**, no printing of it flips anything, so the suite is
+**SEED-FREE**, has no seed table, runs every board off one seed and pins the fact
+by an **unchanged `rngState` across a whole install** (D143's move). Sharing
+`PREVENT_BLOCK_DECK` would have moved all of ITS pinned heads/tails seeds.
+
+Both installers are evolutions, fielded by `setActiveFromDeck` surgery exactly as
+Ninetales `sv03-029` and Oinkologne `sv01-157` are next door. Every board crosses
+at least one turn boundary through real actions.
+
+**Mutation-checked eight ways:** dropping `fromClass` from the deriver fails **8**,
+inverting the predicate fails **7**, ignoring the field in `attackBlockOf` fails
+**2**, dropping the anchor's `^` fails **1**, ignoring the filter at the effects
+gate fails **1**, keeping the filter on a merge disagreement fails **1**, dropping
+the class from the install row fails **1**, dropping it from the log arm fails
+**1**. (The log arm was UNPINNED when first written — the mutation found it, and
+`log.test.ts` gained the arm pin as a result. That is the mutation check earning
+its place rather than confirming a suite.)
+
+`clauseApostrophe`'s DISCOVERED census moved **41 → 42** — one row, carried by both
+new fixtures, and its exposed slot is the possessive "your opponent's" its
+unfiltered siblings already carry **on a regex that is UNGATED where theirs are
+not**, so the fold is now proven across the gate boundary too.
+
+`preventBlock.test.ts`'s refusal list was **RE-POINTED, NOT SHORTENED**: the Basic
+spelling moved from "expect null" to "expect this exact shape" in the same case,
+and the misnamed cards were corrected in place.
+
+### Verification
+
+`bun run check` **GREEN exit 0 — 188 files / 3106 tests** (was 187 / 3079).
+engineVersion 0.94.0 → **0.95.0**; `MATCH_RECORD_VERSION` **unchanged at 5**. ZERO
+new ops, events, error codes, prompts, parks, clause-table rows, `BoardCondition`
+members, registry rows or redact arms; no `redact.ts` / `turn.ts` / `flow.ts` /
+`cardplay.ts` / `rng.ts` / `registry.ts` diff and no web/DB/`@luminous/schema`
+diff at all.
+
+### Still unmapped after D146 — ranked by cost
+
+The heal census (D133/D135), the gated-HEADS census (§D134), the counter-damage
+censuses (§D138/§D139/§D140), the §9 recoil census (§D141), the PREVENT +
+`During your opponent's next turn` census (§D142), the `can't attack` census
+(§D143), the TAILS-FACE census (§D144), the two CONSEQUENT censuses (§D145) and
+now **the ATTACKER-FILTER census above** are all CLOSED. Do not re-run any of them.
+
+**⚠️ TWO SENTENCES ARE NOW BLOCKED ON INGEST RATHER THAN ON THE ENGINE** — Iron
+Moth `sv06.5-009`'s Ancient filter and Slither Wing `sv06.5-026`'s Future
+board-condition bonus. Neither is a slice; both are one schema/ingest change and
+then a one-line predicate each. **Do not put either on a remainder list as engine
+work**, and do not let a later session "fix" them with a species table.
+
+- **The `takes {N} less damage` family — 14 printings / 4 amounts, now the LARGEST
+  un-taken count in the tail by a wide margin.** A DURATED
+  `damageReductionAfterWR`, read at the same four damage sites **one line below**
+  `attackBlockOf`. **⚠️ TAKE THE `attackBlock` GENERALISATION WITH IT** — §D143's
+  table is unchanged by D144, D145 or D146. D146 added a field INSIDE `AttackBlock`
+  rather than a third stamped field on `InPlayPokemon`, so the count of stamped
+  fields is still TWO and this item is still the third. **What D146 does change is
+  one input to that decision**: the four damage sites now take the attacker, so a
+  generalised installed-effects record would have a uniform read signature to hand
+  — which makes the union slightly cheaper than §D143 priced it, not dearer.
+  **⚠️ AND THE COUPLING STANDS: Eiscue `sv02-048`/`-205` "Frigid Block" prints this
+  rider as the SECOND SENTENCE after `Discard all Energy from this Pokémon.`** —
+  2 of the 14 for one extra `test` arm (D145's census).
+- **The OPPONENT-side attack lock — 4 printings / 2 clauses.** Eiscue ex
+  `sv03-042`/`-210`/`-222` "Scalding Block" and Houndoom ex `sv03-134` "Evil Claw".
+  Earns `preventAttack` its `target` field — **two axes**, since the defender-side
+  window is `+ 1` where the self one is `+ 2`. ⚠️ **D146 IS DIRECTLY RELEVANT TO
+  HOUNDOOM ex**: its clause is *"If the Defending Pokémon is a Basic Pokémon…"* —
+  the SAME `isBasicPokemon` predicate this slice just wired, read off the DEFENDER
+  instead of the attacker. Read `attackerMatchesClass` before pricing it.
+- **The §9 recoil FAMILY — 5 printings**, unchanged from §D141/§D142/§D143.
+- **The PER-ATTACK lock — 8 printings / 6 sentences**, unchanged.
+- **The always-on attacker filters — 6 printings / 4 sentences (NEW, from the
+  census above).** Dachsbun `sv01-099` + Bellibolt `sv03-078`/`-201` filter by
+  ENERGY TYPE (3 printings, 2 sentences, and Dachsbun carries a second clause);
+  Thundurus `sv03-070` filters by ZONE and protects the BENCH rather than the
+  holder; Neutralization Zone `sv06.5-060` is a Stadium filtering the PROTECTED
+  side too. All four want `PassiveEffects` siblings of `preventDamageFromExV`, NOT
+  `attackBlock` — **no duration, no install, no stamp** — so they are a different
+  slice from anything above despite the shared sentence stem.
+- **Iron Moth `sv06.5-009` "Suction" + Camerupt `sv03-032`** — unchanged. Do it
+  last or not at all.

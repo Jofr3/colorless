@@ -250,14 +250,67 @@ export function passivesOf(
     during the holder's OPPONENT's turn, so nothing the HOLDER does can ever be
     refused by it — but a Trainer the opponent plays on that same turn lands
     squarely inside the window, which is why the provenance check is real work
-    rather than a belt to the stamp's braces. */
-export function attackBlockOf(state: GameState, pokemon: InPlayPokemon): AttackBlock | null {
+    rather than a belt to the stamp's braces.
+
+    ⚠️ `attacker` IS REQUIRED RATHER THAN OPTIONAL, AND THAT IS THE WHOLE OF
+    D146's STRUCTURAL CONTRIBUTION. `AttackBlock.fromClass` narrows a block to
+    attacks "from Basic Pokémon", and the class is a fact about the ATTACKER, so
+    the filter can only be resolved where the attacker is known — i.e. at the read
+    sites, exactly as `passivesOf`'s `preventDamageFromExV` is resolved at the
+    same four sites by `isExOrV(attacker)`. Folding it INTO this function rather
+    than beside it is what keeps "the ONE read of `InPlayPokemon.attackBlock`"
+    true: a read site cannot honour the turn stamp and forget the filter, because
+    there is no way to ask the first question without answering the second. A
+    parameter that is REQUIRED but nullable is the enforcement — a new site must
+    produce an attacker or say `undefined` on purpose.
+
+    `undefined` (no resolvable attacking card — structurally impossible for a
+    declared attack, since attacks come from the Active) FAILS a filtered block
+    and passes an unfiltered one. That is the conservative direction on both: an
+    unfiltered block is the pre-D146 behaviour byte for byte, and a filtered block
+    whose class cannot be checked protects LESS rather than more, which is the
+    polarity `effects` was chosen under (types.ts `AttackBlock`). */
+export function attackBlockOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  attacker: Card | undefined,
+): AttackBlock | null {
   // No defensive `=== undefined` arm: the field is REQUIRED, and a record
   // written before it existed is retired by MATCH_RECORD_VERSION rather than
   // read benignly here — which is the whole reason that constant was bumped
   // (D124's rule, and its argument against exactly this kind of soft landing).
   const block = pokemon.attackBlock;
-  return block !== null && block.turn === state.turn ? block : null;
+  if (block === null || block.turn !== state.turn) return null;
+  // The unfiltered reading — every printing D142 mapped, and the ABSENT key that
+  // makes an older persisted block read back as exactly what it used to mean.
+  if (block.fromClass === undefined) return block;
+  return attacker !== undefined && attackerMatchesClass(attacker, block.fromClass) ? block : null;
+}
+
+/** Does `attacker` belong to the printed CLASS a filtered block names? The whole
+    of D146's predicate, and deliberately an EXHAUSTIVE `switch` over a one-member
+    union rather than an `if`: the union (`AttackBlock["fromClass"]`) is the closed
+    vocabulary D120 requires of a token that varies, and this switch is what makes
+    "closed" a compiler fact instead of a comment — widen the union and tsc
+    demands the arm that reads the new member.
+
+    `Basic` is `isBasicPokemon` VERBATIM (cards.ts), the same reuse D107's
+    `isExOrV` is under at the sites beside this one: the printed phrase "attacks
+    from Basic Pokémon" is the same claim the setup placement and the bench play
+    make about a card in hand, and a second reading of "Basic" would be a second
+    chance to disagree with §3.6/§5.2 about what one is. Note it is read off the
+    ATTACKER's TOP card (its current identity, §1.2) — a Basic that has evolved is
+    a Stage 1 and its attacks are no longer refused, which is what the printed
+    word means and is why the call sites pass a resolved top card rather than a
+    stack. */
+function attackerMatchesClass(
+  attacker: Card,
+  cls: NonNullable<AttackBlock["fromClass"]>,
+): boolean {
+  switch (cls) {
+    case "Basic":
+      return isBasicPokemon(attacker);
+  }
 }
 
 /** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now

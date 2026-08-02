@@ -163,15 +163,19 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     ).toBeNull();
   });
 
-  it("refuses the FIVE printings of this family it deliberately does not map", () => {
+  it("refuses the FOUR printings of this family it deliberately does not map", () => {
     // Every one is real text from the local D1, and each is refused by a
     // different property of the whole-sentence anchor — the list a future slice
     // inherits instead of re-censusing (effects.ts carries the same table).
     for (const text of [
-      // The attacker-CLASS narrowings — a field and a predicate this op has not
-      // got. Fletchling sv01-150 / Bombirdier sv02-153/-246, and Iron Moth
-      // sv06.5-009's index-1 "Anachronism Repulsor".
-      "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
+      // ⚠️ RE-POINTED AT D146, NOT DELETED. The BASIC-filtered spelling that used
+      // to head this list is now MAPPED (`preventDamage { fromClass: "Basic" }`,
+      // classBlock.test.ts) — and its two cards were misnamed here as "Fletchling
+      // sv01-150 / Bombirdier sv02-153/-246"; the D1 says Staraptor and Noivern
+      // ex. Its ANCIENT sibling stays, and stays for a HARDER reason than "no
+      // predicate yet": the Ancient/Future banner is printed on the card FACE and
+      // exists in no column of the catalog and no field of tcgdex's own model, so
+      // there is no datum a predicate could read. Iron Moth sv06.5-009, index 1.
       "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
       // Grimmsnarl sv02-148 "Accelerate" — gated on the attack's own RESULT.
       "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
@@ -183,6 +187,14 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // …and the sentence that LEFT this list is asserted to have left it, so the
+    // re-pointing above is a fact rather than a comment (D144's own move applied
+    // to D142's own witness).
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
+      ),
+    ).toEqual([{ op: "preventDamage", fromClass: "Basic" }]);
     // …and the ONE sentence that shares this duration and is NOT refused stays
     // exactly where D112 left it — a different op, on the other side of the
     // table. The two durated riders are told apart by their whole sentence, not

@@ -2512,7 +2512,119 @@ import type { GameState, Seat } from "./types";
     dropping the gated anchors' `$` fails 1, dropping `SELF_DISCARD_ALL`'s `$`
     fails 2.** `bun run check` GREEN exit 0, **187 files / 3079 tests** (was 186 /
     3051). */
-export const engineVersion = "0.94.0";
+/** 0.95.0 — THE ATTACKER-CLASS FILTER: *"During your opponent's next turn,
+    prevent all damage done to this Pokémon by attacks from Basic Pokémon."* —
+    **3 printings on ONE regex and ONE SECOND OPTIONAL FIELD** on D142's own
+    `preventDamage` (D146). Item 1 of D145's remainder list. **No new op, no new
+    event, no new error code, no new park, no new prompt, no registry row, no
+    `redact.ts` / `turn.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` / `registry.ts`
+    diff, no web/DB/`@luminous/schema` diff and NO `MATCH_RECORD_VERSION` bump.**
+
+    ⚠️ **THE ITEM WAS RIGHT ABOUT ITS COUNT AND WRONG ABOUT ITS CARDS, AND ITS
+    ONE STRUCTURAL CLAIM WAS TRUE IN LETTER AND FALSE IN SUBSTANCE.** Four
+    remainder lists (and D142's own `effects.ts` comment, and D142's own suite)
+    named the printings **"Fletchling sv01-150" and "Bombirdier sv02-153/-246"**.
+    The local D1 (2026-08-02, 978 cards) says **STARAPTOR sv01-150** ("Tailspin
+    Away", {C}{C}, 60, attack **INDEX 0**) and **NOIVERN ex sv02-153/-246**
+    ("Covert Flight", {C}{C}, 70, **INDEX 0**). Fletchling sv02-163 and Bombirdier
+    sv01-138/-219/sv02-147 are all real cards in this pool and print none of this
+    text — an error that survived four lists because a card NAME is the one field
+    nobody re-queries. Iron Moth sv06.5-009 and its **index 1** were correct, and
+    the reason is written on the list itself: that index is the one D142 found *by
+    checking*. **The rule that catches this is D144's, applied to names as well as
+    indices: verify per printing, by QUERY, never by recognition.**
+
+    ⚠️ **`Ancient` HAS NO READER BECAUSE IT HAS NO DATUM — AND THAT INVERTS THE
+    ITEM.** The list called Ancient "the only real work". It is not work at all:
+    the Ancient/Future banner is printed on the card FACE from Paradox Rift (sv04)
+    onward and appears in **no column of the persisted catalog and no field of
+    tcgdex's own card model** — verified UPSTREAM against Roaring Moon ex
+    sv04-124, the canonical Ancient print, whose payload carries `suffix: "ex"`
+    for its rule box and nothing whatsoever for the banner. So no honest engine
+    predicate exists to be written, and the fix is an INGEST/schema change.
+    **A species-name table would be WRONG rather than incomplete**: the banner is
+    a per-PRINTING fact (D135's rule at its sharpest), and Great Tusk ex
+    sv01-123/-230/-246 is one of the Ancient SPECIES carrying no banner at all —
+    so any name-keyed answer is wrong on three real cards **with no failure
+    anywhere**, which is the outcome this family refuses. The sentence therefore
+    stays LOUD, the union has exactly ONE member, and `attackerMatchesClass`
+    (continuous.ts) is an EXHAUSTIVE switch so a second member cannot be added
+    without the compiler demanding the predicate that reads it. **`Future` obliges
+    nothing here** and is not in the union: it is a real class in the pool
+    (4 printings across 2 cards, and Slither Wing sv06.5-026's "Iron Smasher" asks
+    a question about it) but it is unreadable for the identical reason and its one
+    printing is a DIFFERENT mechanism — a board-condition damage bonus, not a
+    block. Reading one would not have read the other.
+
+    ⚠️ **A SECOND FIELD ON THE SAME OP, ON THE OTHER AXIS — D131's test applied
+    twice to one op and PASSING BOTH TIMES.** `effects` widens WHAT a block
+    refuses; `fromClass` narrows WHOSE attacks it refuses at all. Strip
+    `fromClass` and the derived program is byte-identical to the body of D142's
+    NARROW gated arm, which is the widen-don't-add test rather than the habit.
+    OPTIONAL and ABSENT-means-unfiltered (D135's rule), so the persisted record's
+    old shape keeps its old meaning exactly.
+
+    ⚠️ **THE PREDICATE IS EVALUATED AT THE READ SITES, AND IT IS FOLDED INTO THE
+    SINGLE READ.** The attacker is unknowable at install time — the block is
+    written on the installer's own body during the installer's own turn — which is
+    the same split `PassiveEffects.preventDamageFromExV` has been under since
+    D107: the aura reports itself, the SITES gate it on the attacker's class. What
+    is new is that the resolution lives INSIDE `attackBlockOf` rather than beside
+    it, with `attacker` a REQUIRED (nullable) parameter: a read site cannot honour
+    the turn stamp and forget the filter, because there is no way to ask the first
+    question without answering the second. That is also why ignoring the filter
+    fails only **2** tests — all four damage sites plus the effects gate route
+    through one line, so per-site duplicates would test one line five times, and
+    the pool prints no evolved spread/snipe attacker to drive them apart with.
+
+    ⚠️ **IT IS THE NARROW READING, AND THAT IS WHY D142 SHIPPED TWO.** The printed
+    sentence never says "from and effects of", so a MATCHED Basic attacker has its
+    damage nulled and still lands everything else it prints — Pincurchin's Energy
+    discard, Mimikyu's 7 placed counters, fix-attacker's Asleep. Folding the two
+    readings at D142 would have refused a discard this card does not refuse, and
+    this slice is where that decision pays.
+
+    ⚠️ **THE FOUR STRUCTURAL QUESTIONS.** (1) **PARK?** No — `preventDamage` is
+    still deterministic and asks nothing, and this producer is UNGATED so its
+    program is a single non-parking op. **`MATCH_RECORD_VERSION` STAYS 5**, and
+    the reason is a THIRD distinct one (match.ts carries it): the new field lands
+    INSIDE `AttackBlock`, a record that only exists when a block was installed, it
+    is OPTIONAL, and an old record's `{ turn, effects }` reads back as "no filter"
+    — which is what it meant. Contrast D142/D143, which bumped for a REQUIRED
+    field on `InPlayPokemon` itself. (2) **VOICE?** The install row gains
+    `fromClass` and a THIRD phrasing, for `effects`' reason made sharper: a
+    filtered block lets every evolved attacker through at full damage, so a row
+    saying "protected from damage from attacks" would be an outright lie about the
+    very next turn. **And a block that FAILS to match emits NOTHING** — the
+    attack's own `DAMAGE_DEALT` (`prevented` absent, the real number in `dealt`)
+    is the whole story, and announcing a rule that declined would be announcing a
+    non-event; loudness is owed to UNREAD TEXT, not to a read rule saying no
+    (D140). (3) **GUARDS ASSERTED?** Yes, three ways: the vocabulary is a compiler
+    fact (the exhaustive switch), the PRODUCER SET is swept out of the pool rather
+    than listed (D145's move — a third producer fails loudly), and the effects
+    gate — unreachable from any printing, since all three filtered printings are
+    the narrow spelling — honours the filter and is pinned by a CONSTRUCTED
+    program (D144's precedent). (4) **DOES THE MECHANISM EXIST?** Read first, and
+    yes: D142's duration, stamp, three early clears and four damage sites are all
+    reused unchanged. What did NOT exist is the DATUM for the second class token,
+    which is the finding above.
+
+    Cost: 1 regex, 1 deriver arm, 1 op field, 1 `AttackBlock` field, 1 event
+    field, 1 log arm, 1 predicate, 1 changed signature (`attackBlockOf`), 2 new
+    fixtures (Staraptor sv01-150, Noivern ex sv02-153), 1 new deck
+    (`CLASS_BLOCK_DECK`), `classBlock.test.ts` (**27 tests**, SEED-FREE — the
+    family's first ungated producer, pinned by an unchanged `rngState`), 1
+    re-pointed stays-LOUD witness (`preventBlock.test.ts`, NULL → SHAPE, none
+    deleted) and 1 added live unmapped witness (Noivern ex's index-1 "Dominating
+    Echo", driven end to end to `ATTACK_EFFECT_SKIPPED`). `clauseApostrophe`'s
+    DISCOVERED census moved **41 → 42**. **Mutation-checked eight ways: dropping
+    `fromClass` from the deriver fails 8, inverting the predicate fails 7,
+    ignoring the field in `attackBlockOf` fails 2, dropping the anchor's `^` fails
+    1, ignoring the filter at the effects gate fails 1, keeping the filter on a
+    merge disagreement fails 1, dropping the class from the install row fails 1,
+    dropping it from the log arm fails 1.** `bun run check` GREEN exit 0,
+    **188 files / 3106 tests** (was 187 / 3079). */
+export const engineVersion = "0.95.0";
 
 export type {
   ApplyResult,

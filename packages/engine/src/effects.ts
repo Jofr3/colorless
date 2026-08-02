@@ -613,8 +613,27 @@ export type EffectOp =
       free rather than lucky (D125's rule): the block's entire effect is in the
       FUTURE, so nothing about it needs to precede the §8.5 pipeline the way a
       cancel or a coin bonus does. Never parks, consumes no rng, and is idempotent
-      — installing twice in one turn writes the same stamp. */
-  | { op: "preventDamage"; effects?: true }
+      — installing twice in one turn writes the same stamp.
+
+      ⚠️ `fromClass` IS THE SECOND FIELD AND THE SECOND AXIS (D146). It narrows
+      WHOSE attacks the block refuses, where `effects` widens WHAT it refuses:
+
+        "During your opponent's next turn, prevent all damage done to this
+         Pokémon by attacks from Basic Pokémon."                     (3 printings)
+
+      UNGATED — no coin is printed on it, so this is the first producer of this op
+      that is not wrapped in a `coinFlipGate`, and the third printed reading of one
+      installation rather than a second mechanism (D131's widen-don't-add rule
+      applied a second time to the same op: strip the field and the derived program
+      is byte-identical to the narrow gated one's body).
+
+      ABSENT means "every attacker", which is what D142's two spellings print and
+      is why the key is optional rather than a `fromClass: "any"` member (D135's
+      absent-key rule). The predicate lives at the READ sites — `attackBlockOf`
+      (continuous.ts) — because the attacker is not knowable when the block is
+      installed; see types.ts `AttackBlock.fromClass` for why the vocabulary has
+      exactly one member and why the pool's OTHER class token stays LOUD. */
+  | { op: "preventDamage"; effects?: true; fromClass?: "Basic" }
   /** §8/§11 (D143) — LOCK the CONTROLLER's own Active out of attacking on the
       controller's NEXT turn:
 
@@ -2004,13 +2023,13 @@ const FLIP_DECK_TOP_MILL =
 // token is the whole consequent, an OPEN vocabulary, so D120's template
 // precondition fails and the prefix is spelled per consequent on purpose.
 //
-// THE 6 UNGATED / OTHERWISE-GATED PRINTINGS OF THIS FAMILY STAY LOUD, and each is
-// refused by a property of the WHOLE-SENTENCE anchor rather than by luck:
-//   • "During your opponent's next turn, prevent all damage done to this Pokémon
-//     by attacks from Basic Pokémon." (3 — Fletchling sv01-150 "Tailspin Away",
-//     Bombirdier sv02-153/-246 "Covert Flight") and "…from Ancient Pokémon."
-//     (1 — Iron Moth sv06.5-009 "Anachronism Repulsor") narrow the block by the
-//     ATTACKER's class, which is a field and a predicate this op does not have;
+// THE 3 REMAINING UNGATED / OTHERWISE-GATED PRINTINGS OF THIS FAMILY STAY LOUD,
+// and each is refused by a property of the WHOLE-SENTENCE anchor rather than by
+// luck:
+//   • "…by attacks from ANCIENT Pokémon." (1 — Iron Moth sv06.5-009
+//     "Anachronism Repulsor", attack INDEX 1) narrows the block by a class token
+//     the CATALOG DOES NOT CARRY — see `PREVENT_DAMAGE_FROM_BASIC` below, where
+//     its Basic-spelled sibling is mapped and the whole finding is written out;
 //   • "If your opponent's Pokémon is Knocked Out by damage from this attack, …"
 //     (1 — Grimmsnarl sv02-148 "Accelerate") gates on the attack's own RESULT,
 //     the §9.2 channel Iron Moth "Suction" and Camerupt want;
@@ -2018,10 +2037,55 @@ const FLIP_DECK_TOP_MILL =
 //     Squawkabilly sv01-162 "Fly") carries a SECOND consequent on the same flip.
 // Each is a separate warrant, written down here so the next slice inherits the
 // list rather than re-censusing for it.
+//
+// ⚠️ THE 3 BASIC-FILTERED PRINTINGS MOVED OFF THAT LIST AT D146, AND THEIR CARD
+// NAMES WERE WRONG ON IT. D142 wrote "Fletchling sv01-150" and "Bombirdier
+// sv02-153/-246"; the local D1 (2026-08-02, 978 cards) says sv01-150 is
+// **STARAPTOR** (Stage 2 from Staravia, "Tailspin Away") and sv02-153/-246 is
+// **NOIVERN ex** (Stage 1 from Noibat, "Covert Flight"). Fletchling sv02-163 and
+// Bombirdier sv01-138/-219/sv02-147 are real cards in this pool and print none of
+// this text — the same class of error D137 and D138 each corrected once, and the
+// reason a slice checks an inherited id by QUERY rather than by recognition.
 const FLIP_PREVENT_DAMAGE_AND_EFFECTS =
   /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
 const FLIP_PREVENT_DAMAGE =
   /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\.$/;
+// The ATTACKER-CLASS filter (D146) — the same installation as `FLIP_PREVENT_DAMAGE`
+// above with two printed differences and no coin:
+//
+//   "During your opponent's next turn, prevent all damage done to this Pokémon by
+//    attacks from Basic Pokémon."
+//
+// THREE printings on TWO cards from TWO sets, so D121's second-printing warrant is
+// met in D139's stronger form: Staraptor sv01-150 "Tailspin Away" ({C}{C}, 60,
+// attack INDEX 0) and Noivern ex sv02-153/-246 "Covert Flight" ({C}{C}, 70, INDEX
+// 0). Verbatim off the local D1, ids/names/costs/damage AND the index checked per
+// printing (D144's rule — an index is a per-printing fact).
+//
+// ⚠️ THE POOL PRINTS A FOURTH PRINTING OF THIS SENTENCE AND IT IS NOT MAPPED —
+// Iron Moth sv06.5-009 "Anachronism Repulsor" ({R}{R}{C}, 120, attack INDEX 1)
+// says "…from ANCIENT Pokémon.". That token is not a stage, a rule box or a name
+// marker: "Ancient" is a BANNER printed on the card face by Paradox Rift (sv04)
+// onward, and it appears in NO column of the persisted catalog and in NO field of
+// tcgdex's own card model — verified upstream against Roaring Moon ex sv04-124,
+// the canonical Ancient print, whose payload carries `suffix: "ex"` for its rule
+// box and nothing whatsoever for the banner. So this is not "a predicate nobody
+// has written yet": there is no datum to write one over, and the fix is an INGEST
+// change, not an engine one.
+//
+// A SPECIES LIST WOULD BE WRONG, WHICH IS WHY THE SENTENCE STAYS LOUD RATHER THAN
+// GETTING A TABLE. The banner is a per-PRINTING fact (D135's rule): Great Tusk ex
+// sv01-123/-230/-246 is the same species as the sv04 Ancient prints and carries no
+// banner at all, so any name-keyed table answers three real cards wrongly with no
+// failure anywhere — the outcome this family refuses. An unreadable class token
+// therefore falls through to ATTACK_EFFECT_SKIPPED, which is the loud answer.
+//
+// ONE ANCHOR PER PRINTED STRING, so this is a THIRD regex rather than an optional
+// `(?:Basic|Ancient)` group: a group would map the Ancient sentence to a token the
+// engine cannot resolve, and the `fromClass` union has exactly one member so that
+// the attempt does not even typecheck (continuous.ts `attackerMatchesClass`).
+const PREVENT_DAMAGE_FROM_BASIC =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon\.$/;
 // The COUNTER MOVE (D138) — "Move all damage counters from 1 of your Benched
 // Pokémon to your opponent's Active Pokémon.", the whole printed effect. TWO
 // printings, both Dedenne ex "Tail Swap" (sv02-093 Double rare / sv02-239 Ultra
@@ -3984,6 +4048,18 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         then: [{ op: "preventDamage" }],
       },
     ];
+  }
+  // 19c. The ATTACKER-CLASS filter (D146) — 3 printings, and the family's first
+  //      UNGATED producer of this op. No `coinFlipGate` wrapper because no coin is
+  //      printed: the sentence installs unconditionally, so the derived program is
+  //      the bare op and the whole gate/consequent shape above simply does not
+  //      apply. `effects` stays ABSENT (the sentence never says "from and effects
+  //      of"), `fromClass` is PRESENT because the sentence names a class — the two
+  //      optional fields read off two different printed phrases, and stripping
+  //      `fromClass` yields the arm one line up byte for byte, which is the
+  //      widen-don't-add test (D131) rather than the widen-don't-add habit.
+  if (PREVENT_DAMAGE_FROM_BASIC.test(effect)) {
+    return [{ op: "preventDamage", fromClass: "Basic" }];
   }
 
   // 20. "Heal {N|all} damage from 1 of your [Benched] Pokémon." — D135's CHOSEN

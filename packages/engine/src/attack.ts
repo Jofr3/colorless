@@ -734,9 +734,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // Resistance and the reduction passive have been computed and before any of
     // them can matter — which is what makes them supersede rather than stack.
     // No `invokedBy` check on this arm: this IS the attack.
+    //
+    // D146 — the durated twin may also be narrowed to attacks FROM a class of
+    // attacker ("…by attacks from Basic Pokémon"), which is why `attacker` is
+    // handed to `attackBlockOf` rather than only to `isExOrV` beside it. The two
+    // now read the SAME card for the same kind of question — one off the printed
+    // rule box, one off the printed stage — and the pairing is tighter than it was
+    // at D142: an installed block gated on the attacker is the catalog aura's
+    // shape with the source of the gate moved from the card to the board.
     const prevented =
       (defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
-      attackBlockOf(next, defender) !== null;
+      attackBlockOf(next, defender, attacker) !== null;
     const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
     defended = { ...defender, damage: defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });

@@ -171,8 +171,21 @@ export type GameEvent =
       announce it from (types.ts `AttackBlock`); the EARLY endings — leaving the
       Active Spot, evolving — are already told by their own POKEMON_SWITCHED /
       RETREATED / POKEMON_EVOLVED row, which is the same call D112 made for the
-      early half of RETREAT_BLOCK_ENDED. */
-  | { type: "ATTACK_BLOCK_APPLIED"; seat: Seat; uid: string; effects: boolean }
+      early half of RETREAT_BLOCK_ENDED.
+
+      `fromClass` (D146) is the printed ATTACKER-CLASS narrowing — present exactly
+      when the sentence says "…by attacks from Basic Pokémon", absent when the
+      block refuses every attacker. It is on the row for `effects`' reason
+      verbatim: a player told only "protected" cannot work out what is about to
+      hit them, and here the gap is wider than the Poison one — a filtered block
+      lets a Stage 1 through for full damage, so a row that omitted the class
+      would read as a bug the moment the next attack landed. There is deliberately
+      NO row for a block that FAILS to match: the attack's own DAMAGE_DEALT
+      (`prevented` absent, the real number in `dealt`) already says the whole
+      thing, and announcing a rule that declined would be announcing a non-event —
+      loudness in this engine is owed to UNREAD TEXT, not to a read rule saying
+      no (D140). */
+  | { type: "ATTACK_BLOCK_APPLIED"; seat: Seat; uid: string; effects: boolean; fromClass?: "Basic" }
   /** §8/§11 (D143) — an attack LOCKED its own Active out of attacking on its
       controller's next turn ("During your next turn, this Pokémon can't
       attack."). `seat` owns the locked Pokémon, which — as with
