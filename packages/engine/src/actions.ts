@@ -288,6 +288,13 @@ export type ErrorCode =
   /** §12 — an Asleep or Paralyzed Active cannot attack. (Confusion does not
       block declaring — it flips at resolution, attack.ts.) */
   | "STATUS_PREVENTS_ATTACK"
+  /** §8/§11 — an attack effect is stopping the Active from attacking ("During
+      your next turn, this Pokémon can't attack."). `RETREAT_PREVENTED`'s exact
+      mirror, and distinct from STATUS_PREVENTS_ATTACK for the same reason that
+      one is distinct from STATUS_PREVENTS_RETREAT: this is not a §12 condition,
+      it shows no status chip, and it expires by a turn STAMP rather than by a
+      Checkup recovery (types.ts `attackLockedTurn`). */
+  | "ATTACK_PREVENTED"
   /** §11/§12 — an Asleep or Paralyzed Active cannot retreat. */
   | "STATUS_PREVENTS_RETREAT"
   /** §11 — an attack effect is holding the Active in place ("During your

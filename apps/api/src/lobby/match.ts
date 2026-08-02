@@ -163,8 +163,38 @@ export interface MatchRecord {
     `phase.cont` — is an OPTIONAL field and therefore a WIDENING (D125's
     distinction): an old continuation simply lacks it, which reads as "not an
     attack" and reproduces the pre-slice behaviour exactly. It would not have
-    bumped anything on its own, and the question was asked rather than folded in. */
-export const MATCH_RECORD_VERSION = 4;
+    bumped anything on its own, and the question was asked rather than folded in.
+
+    ⚠️ 4 → 5 (D143, engine 0.92.0) — D142's case AGAIN, on the SECOND stamped
+    field, and the repeat is the point rather than an embarrassment. Nothing about
+    an `EffectOp` moved (the new `preventAttack` op is a new UNION MEMBER, which is
+    a WIDENING by D125's distinction, and it never parks; `damageChosen` gained no
+    field, so the one parking op this slice touches serializes byte-identically).
+    What moved is, once more, a NEW REQUIRED FIELD ON `InPlayPokemon` —
+    `attackLockedTurn: number | null`, the turn-stamped §8/§11 self-lock behind
+    "During your next turn, this Pokémon can't attack." — so every Pokémon in play
+    in a record written by the previous deploy lacks it.
+
+    And once more it would read back BENIGNLY: `attackLocked` (continuous.ts) tests
+    `pokemon.attackLockedTurn === state.turn`, an absent field is `undefined`, and
+    `undefined === 4` is false — so an old record resolves to "not locked", which
+    is even CORRECT, no such lock having been installable by a deploy with no op to
+    install one. That is precisely the soft landing this constant refuses, for the
+    third time on the identical shape (D124's `promotedTurn`, D142's `attackBlock`,
+    now this). The rule is worth more than the three retired matches: the test is
+    "can the PREVIOUS deploy's RECORD hold the new TYPE", and a field that reads
+    back plausibly is the one case where getting it wrong is invisible.
+
+    ⚠️ AND THE NEXT ONE IS ALREADY VISIBLE. Two consecutive slices have each added
+    one required stamped field to `InPlayPokemon` and each bumped this constant;
+    the `takes {N} less damage` family (14 printings) would be a third. If those
+    fields are ever generalised into ONE installed-effects record on
+    `InPlayPokemon` (D143's report weighs it), that generalisation is itself a
+    required-shape change and bumps this once — after which further durated
+    effects cost NO bump at all, because they become VALUES in a list rather than
+    KEYS in a type. That is a real argument for the generalisation and it belongs
+    here, next to the count it would stop incrementing. */
+export const MATCH_RECORD_VERSION = 5;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

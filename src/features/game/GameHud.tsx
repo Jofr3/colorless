@@ -18,6 +18,7 @@ import type {
   Seat,
 } from "@luminous/engine";
 import {
+  attackLocked,
   attacksOf,
   cardOfUid,
   conditionHolds,
@@ -453,6 +454,14 @@ function TurnPanel(props: GameHudProps) {
   // rather than comment-enforced; the playmat-typed conditions fit because
   // projection.ts pins BattleConditions ≡ SpecialConditions at compile time.
   const immobilized = conditions !== undefined && isImmobilized(conditions);
+  // §8/§11 (D143) — an attack this Pokémon used LAST turn locked it out of
+  // attacking on THIS one ("During your next turn, this Pokémon can't attack.").
+  // Read off raw GameState through the engine's own predicate, exactly as
+  // `retreatBlocked` is below and for the same reason: it is not a §12 condition,
+  // so it is deliberately absent from the projected/wire `conditions` shape. The
+  // server-side twin is `redactedAttacksOf`'s `banned` (redact.ts); both exist so
+  // that no path offers a button `attack` will reject with ATTACK_PREVENTED.
+  const attackLockedNow = attackLocked(game, active);
 
   // THE retreat derivation site — RetreatDialog receives these as props. The
   // cost is the CONTINUOUS one (§7.3 — Beach Court discounts Basics), the
@@ -497,7 +506,7 @@ function TurnPanel(props: GameHudProps) {
             // League HQ's Basic surcharge), exactly as the engine checks it;
             // the dots still show the PRINTED cost.
             const payable = costMet(effectiveAttackCost(game, active, attack.cost ?? []), provided);
-            const disabled = !payable || firstTurnBan || immobilized;
+            const disabled = !payable || firstTurnBan || immobilized || attackLockedNow;
             return (
               <li key={`${attack.name}-${index}`}>
                 <button

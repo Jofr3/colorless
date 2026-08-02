@@ -173,6 +173,26 @@ export type GameEvent =
       RETREATED / POKEMON_EVOLVED row, which is the same call D112 made for the
       early half of RETREAT_BLOCK_ENDED. */
   | { type: "ATTACK_BLOCK_APPLIED"; seat: Seat; uid: string; effects: boolean }
+  /** §8/§11 (D143) — an attack LOCKED its own Active out of attacking on its
+      controller's next turn ("During your next turn, this Pokémon can't
+      attack."). `seat` owns the locked Pokémon, which — as with
+      ATTACK_BLOCK_APPLIED above — is the ACTOR's own, so this too renders
+      honestly in the ACTIVE voice. It is the one row of the three durated
+      families that reports a DRAWBACK rather than a protection, and the wording
+      has to say so: a player who reads "protected" where the card cost them their
+      next attack has been told the opposite of what happened.
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — retreating, being switched out, evolving — are already told
+      by their own POKEMON_SWITCHED / RETREATED / POKEMON_EVOLVED row.
+
+      The REFUSAL needs no event either, and that is where this family differs
+      from D142's `ATTACK_EFFECT_PREVENTED`: a refused attack clause is silent
+      unless something says so, but a refused ATTACK DECLARATION comes back to the
+      player as an `ATTACK_PREVENTED` rejection with a message (actions.ts). The
+      action never happened, so there is no history row to write. */
+  | { type: "ATTACK_LOCKED"; seat: Seat; uid: string }
   /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
       damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
       at. One row per refused op, so Poison Ring's two clauses produce two.

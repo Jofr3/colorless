@@ -380,6 +380,26 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     });
   });
 
+  it("renders the §8/§11 attack SELF-LOCK in the actor's own voice too (D143)", () => {
+    // Same voice argument as the block above — `seat` owns the locked Pokémon and
+    // that Pokémon is the actor's own — but the opposite CONTENT: this is the only
+    // durated row in the engine that reports a cost the player paid rather than a
+    // protection they bought, so the wording is pinned as tightly as the voice.
+    // A row saying "protected" here would tell the reader the opposite of what
+    // the card just did to them.
+    const { uid, name } = settled;
+    expect(line({ type: "ATTACK_LOCKED", seat: "p1", uid })).toEqual({
+      text: `${name} can't attack next turn`,
+      who: "p1",
+    });
+    // Its sibling one direction over (D112), for the same shape on the other
+    // player's body — the pair is what makes each one's `seat` legible.
+    expect(line({ type: "RETREAT_BLOCKED", seat: "p2", uid })).toEqual({
+      text: `${name} can't retreat next turn`,
+      who: "p2",
+    });
+  });
+
   it("attributes an attack's own recoil to the attacker, not the system", () => {
     // M5 — "This Pokémon also does N damage to itself" (Skeledirge "Blazing
     // Shout"). Unlike the confusion self-hit, the attacker CHOSE this attack, so

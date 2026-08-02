@@ -303,6 +303,13 @@ export function placeEvolution(
     // made one line up), and a state surgery pins it.
     retreatBlocked: false,
     attackBlock: null,
+    // …and, since D143, the attack-installed SELF-LOCK ("During your next turn,
+    // this Pokémon can't attack.") — the one §10 clear on this line that is not
+    // only reachable but is a PLAYED LINE: the lock's window is the holder's own
+    // next turn, so evolving the locked Pokémon on that turn frees it to attack
+    // immediately. That is the inverse of the block above, whose window belongs to
+    // the opponent and which therefore no evolution can ever meet.
+    attackLockedTurn: null,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -340,9 +347,21 @@ export function placeEvolution(
     Pokémon that shielded itself and then RETREATS on its own following turn
     walks away from a block whose window has in any case already closed, but the
     forced half of the same move (`switchInto`) can do it INSIDE the window —
+    and, since D143, the attack-installed SELF-LOCK, for which THIS path is the
+    reachable one rather than the theoretical one: the lock's window is the
+    HOLDER's own turn, so a player can retreat their locked Pokémon on that very
+    turn, promote something that can attack, and — with a Switch — bring the now
+    un-locked body back and attack with it. Three durated effects, three different
+    reachability stories, one clear.
     M4 adds dropping active-only markers here too. */
 function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
-  return { ...pokemon, conditions: noConditions(), retreatBlocked: false, attackBlock: null };
+  return {
+    ...pokemon,
+    conditions: noConditions(),
+    retreatBlocked: false,
+    attackBlock: null,
+    attackLockedTurn: null,
+  };
 }
 
 /** §11 — once per turn: the player names WHICH attached energies pay the

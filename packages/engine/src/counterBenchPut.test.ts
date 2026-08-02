@@ -138,7 +138,14 @@ function putOp(hp: number): EffectOp {
     sentence stays LOUD, and that claim needs a live witness to be about. */
 const NEAR_MISSES = [
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
-  "Put 9 damage counters on 1 of your opponent's Pokémon. During your next turn, this Pokémon can't attack.",
+  // ⚠️ RE-POINTED AT D143. This slot held Ninetales sv03-029/-199's "Nine-Tailed
+  // Dance" — "Put 9 damage counters on 1 of your opponent's Pokémon. During your
+  // next turn, this Pokémon can't attack." — which D143 MAPPED, so the witness
+  // moved to Annihilape ex sv02-242 "Wrath of the Ancients" rather than being
+  // deleted (the standing note below). The new row is a SELF put with an "up to"
+  // AND a consequent that scales off what was placed: two axes this op has not
+  // got, and neither of them the ZONE this anchor is about.
+  "Put up to 12 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
   "Put 8 damage counters on your opponent's Pokémon in any way you like.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",

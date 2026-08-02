@@ -20,6 +20,7 @@ import {
 } from "./cards";
 import {
   attackBlockOf,
+  attackLocked,
   countAttachedEnergy,
   effectiveAttackCost,
   effectiveRetreatCost,
@@ -248,6 +249,28 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     return err(
       "STATUS_PREVENTS_ATTACK",
       `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot attack (§12)`,
+    );
+  }
+  // §8/§11 (D143) — an attack this Pokémon used LAST turn locked it out of
+  // attacking on THIS one ("During your next turn, this Pokémon can't attack.").
+  // Read through `attackLocked`, so the turn comparison lives in one place and
+  // this site cannot drift from the HUD's projection of the same fact
+  // (`redactedAttacksOf`, redact.ts).
+  //
+  // A REJECTION, NOT AN `ATTACK_FAILED`, and the distinction is §12's: an Asleep
+  // Active above cannot declare at all, while a Confused one declares and then
+  // flips. This lock says "can't attack", so it belongs with the first group — the
+  // action is illegal, nothing is spent and the turn does NOT end. That is also
+  // the only reading a player can act on: an `ATTACK_FAILED` here would burn their
+  // whole turn on a button the server had already decided to refuse.
+  //
+  // Placed AFTER the §12 gate and BEFORE the index/cost checks so the message a
+  // player gets names the reason nearest the top of the rulebook, and so a locked
+  // Pokémon reports the lock rather than "that attack costs …".
+  if (attackLocked(state, active)) {
+    return err(
+      "ATTACK_PREVENTED",
+      "an attack effect stops this Pokémon attacking this turn (§11)",
     );
   }
   const attackerUid = topUid(active);

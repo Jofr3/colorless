@@ -351,6 +351,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             : " is protected from damage from attacks during your opponent's next turn",
         ),
       ]);
+    // §8/§11 — the attack-installed SELF-LOCK. ACTIVE voice for
+    // ATTACK_BLOCK_APPLIED's reason (`seat` owns the locked Pokémon AND that
+    // Pokémon is the actor's own), but the WORDING is the row's whole job: this
+    // is the only one of the three durated rows that reports a cost the player
+    // paid rather than a protection they bought, and it is phrased from the
+    // holder's side ("can't attack next turn") so it reads as RETREAT_BLOCKED's
+    // sibling — which is exactly what it is, with the direction flipped.
+    case "ATTACK_LOCKED":
+      return row(event.seat, [strong(cardName(state, event.uid)), plain(" can't attack next turn")]);
     case "ATTACK_EFFECT_PREVENTED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

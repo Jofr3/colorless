@@ -90,8 +90,15 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
   }
 
   it("finds the census it is supposed to sweep", () => {
-    // 38 distinct sentences at D142 (36 at D140/D141, 35 at D139, 33 at D138, 32
-    // at D137). D142 added TWO — Scyther sv03-004's "Agility" and Togedemaru
+    // 40 distinct sentences at D143 (38 at D142, 36 at D140/D141, 35 at D139, 33
+    // at D138, 32 at D137). D143 added TWO — Alomomola sv01-048's "Aqua Slash"
+    // ("During your next turn, this Pokémon can't attack.") and Ninetales
+    // sv03-029's "Nine-Tailed Dance" (that sentence again, behind a counter PUT) —
+    // and they are the first entries here whose apostrophes are CONTRACTIONS
+    // rather than possessives on one of them and both kinds on the other, which
+    // is precisely the asymmetry D137 found `ATTACK_REQUIREMENT_CLAUSES` exposed
+    // on. Both regexes class every slot, and this sweep is what proves it.
+    // D142 added TWO — Scyther sv03-004's "Agility" and Togedemaru
     // sv03-151's "Defense Curl", the gated PREVENT clause's two printed
     // spellings, both carrying "your opponent's" — and they were swept the moment
     // the fixtures landed, which is exactly what this census is for: neither
@@ -110,7 +117,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // rather than silently widening the pool it does not cover. If it drops, a
     // reader stopped deriving something and the failure belongs here as much as in
     // the slice suite that owns it.
-    expect(derivable).toHaveLength(38);
+    expect(derivable).toHaveLength(40);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

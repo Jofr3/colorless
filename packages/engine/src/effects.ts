@@ -615,6 +615,54 @@ export type EffectOp =
       cancel or a coin bonus does. Never parks, consumes no rng, and is idempotent
       — installing twice in one turn writes the same stamp. */
   | { op: "preventDamage"; effects?: true }
+  /** §8/§11 (D143) — LOCK the CONTROLLER's own Active out of attacking on the
+      controller's NEXT turn:
+
+        "During your next turn, this Pokémon can't attack."          (20 printings)
+        "Put {N} damage counters on 1 of your opponent's Pokémon.
+         During your next turn, this Pokémon can't attack."          ( 2 printings)
+
+      The DRAWBACK half of a big-damage attack, and the pool's most re-printed
+      durated rider after D112's retreat lock: Miraidon ex / Koraidon ex ×4 each,
+      Dragonite VSTAR ×2, Alomomola, Clawitzer, Steelix, Kilowattrel, Tinkatuff,
+      Victini ex, Crabominable, Umbreon, Probopass, Golbat — plus Ninetales
+      sv03-029/-199 "Nine-Tailed Dance", where it rides behind a counter PUT.
+
+      `preventRetreat`'s MIRROR, and shaped like it deliberately: bare, no fields,
+      the holder resolved from `ctx` rather than carried. The mirror is the
+      DIRECTION on both axes at once — that op locks the OPPONENT's Active out of
+      RETREATING during the opponent's next turn; this one locks the CONTROLLER's
+      own Active out of ATTACKING during the controller's next turn.
+
+      ⚠️ NO `target` FIELD, AND THE WARRANT FOR ONE ALREADY EXISTS — which is why
+      the refusal is written down rather than assumed (D104's minimal shape, D138's
+      no-fields-at-all call, D131's widen-don't-add rule as a TEST). The pool DOES
+      print the defender-side reading: Eiscue ex sv03-042/-210/-222 "Scalding
+      Block" ("Discard an Energy from this Pokémon. During your opponent's next
+      turn, the Defending Pokémon can't attack.") and Houndoom ex sv03-134 "Evil
+      Claw" ("If the Defending Pokémon is a Basic Pokémon, it can't attack during
+      your opponent's next turn.") — 4 printings across 2 sentences, both still
+      LOUD. It is NOT a one-token widening, and that is the finding: a `target`
+      would have to carry a DIFFERENT STAMP as well as a different holder (the
+      defender-side window is `state.turn + 1`, this one is `state.turn + 2`), so
+      the field is two axes rather than one and is worth exactly one printing's
+      guess less than it looks. Map one of those sentences and the field is earned
+      with two readings in hand.
+
+      ⚠️ IT LOCKS THE POKÉMON, NOT THE ATTACK, and the pool prints the other
+      reading too: eight printings say "this Pokémon can't use {AttackName}"
+      (Munkidori ex ×3 "Dirty Headbutt", Lucario sv01-114, Radiant Charizard
+      swsh10.5-011, Radiant Blastoise swsh10.5-018, Skarmory sv03-142, Greedent ex
+      sv03-179). Those name ONE attack and leave the card's other attack legal, so
+      they need a per-attack lock this field cannot express; all eight stay LOUD.
+      A fixture pins the difference from the inside — Alomomola sv01-048's index-0
+      "Surf" is refused by the lock its index-1 "Aqua Slash" installed.
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp`, and — as with
+      `preventDamage` — that placement is free rather than lucky (D125's rule):
+      the lock's entire effect is in the FUTURE. Never parks, consumes no rng, and
+      is idempotent (installing twice in one turn writes the same stamp). */
+  | { op: "preventAttack" }
   /** Heal `amount` HP from the CONTROLLER's own Active Pokémon — the printed
       "this Pokémon" / "it" of a self-heal, resolved at `ctx.seat` by the
       interpreter rather than carried in the op (which is why `target` has one
@@ -2072,6 +2120,79 @@ const COUNTER_PUT_ON_DEFENDER =
 // keeping the five lowercase Ability printings of this same sentence off this path.
 const COUNTER_PUT_ON_OPPONENT_BENCH =
   /^Put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
+// The SELF-LOCK (D143) — "During your next turn, this Pokémon can't attack.", the
+// whole printed effect on TWENTY printings, and the same sentence again as the
+// SECOND half of Ninetales sv03-029/-199 "Nine-Tailed Dance" (the compound anchor
+// below). It is the drawback half of a big-damage attack and the pool's most
+// re-printed durated rider after D112's retreat lock.
+//
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — a NEW census,
+// run for THIS question rather than read off D142's duration table, per that
+// slice's own rule that a census run for one purpose is a FLOOR for every other).
+// "can't attack" appears on 38 printings in all: 33 in `attacks_json`, 2 in
+// `abilities_json` (Slaking V swsh10.5-058/-077 "Kinda Lazy" — a Prize-count
+// CONDITION with no duration at all) and 3 on a TRAINER (Geeta sv03-188/-218/-226
+// — "During THIS turn, YOUR POKÉMON can't attack", a different turn and a whole
+// board). Inside `attacks_json`, the SELF-lock family is 29 printings across FIVE
+// sentences and this anchor takes 20 of them; the compound below takes 2 more.
+// The five, and why the other three sentences stay LOUD:
+//   • "During your next turn, this Pokémon can't attack."                   (20) ✅
+//   • "Put {N} damage counters … . During your next turn, …can't attack."   ( 2) ✅
+//   • "Flip a coin. If tails, during your next turn, this Pokémon can't
+//     attack." (5 — Oinkologne sv01-157, Oinkologne ex sv01-158/-234, Paldean
+//     Clodsire ex sv02-130/-244) — a TAILS gate, and `coinFlipGate` runs its
+//     body on HEADS only, so the gate is a field or an op this engine has not
+//     got. The cheapest widening of THIS slice.
+//   • "You may do 100 more damage. If you do, during your next turn, this
+//     Pokémon can't attack." (1 — Copperajah sv06.5-042) — an OPTIONAL damage
+//     bonus whose acceptance installs the lock: a player decision in front of the
+//     §8.5 pipeline, which is a park the damage fold cannot express today.
+//   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
+//     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159) —
+//     TWO consequents on ONE flip, D142's Squawkabilly refusal in another family.
+// The neighbouring OPPONENT-side lock is 4 printings across 2 sentences (Eiscue
+// ex sv03-042/-210/-222 "Scalding Block", Houndoom ex sv03-134 "Evil Claw") and
+// is refused on the printed subject; the per-ATTACK lock ("this Pokémon can't use
+// {AttackName}") is 8 printings across 6 sentences and is refused on the verb.
+// Both are written into the op's doc block as the conditions that would earn it
+// fields, rather than guessed at from one printing.
+//
+// A WHOLE-SENTENCE ANCHOR with NO CAPTURE — nothing in it varies. Both apostrophe
+// slots carry `['’]` (D136/D137): "can't" is a CONTRACTION rather than a
+// possessive, which is exactly the slot D137 found `ATTACK_REQUIREMENT_CLAUSES`
+// exposed on, so the class belongs here for the same reason. No /i, for the
+// standing reason (see TYPED_SELF_DISCARD): the capitalised "During" plus `^…$`
+// is the whole guard, and it is what keeps the five gated printings — whose
+// "during" is lowercase and mid-sentence — off this path.
+const SELF_CANT_ATTACK_NEXT_TURN = /^During your next turn, this Pokémon can['’]t attack\.$/;
+// …and the COMPOUND (D143) — Ninetales sv03-029/-199 "Nine-Tailed Dance"
+// ({R}{R}, attack INDEX 1, 9 counters, NO printed `damage`), 2 printings of one
+// card in two rarities. TWO SENTENCES IN ONE ANCHOR, which is D125's two-consequent
+// question answered the way `DEFENDER_POISON_CANT_RETREAT` answered it: one
+// whole-string `^…$` pattern deriving TWO ops in PRINTED ORDER. Matching the two
+// halves independently would mean matching a PREFIX, and the family's whole
+// safety property is that an unrecognised remainder stays LOUD — a reader that
+// swallowed sentence one and dropped sentence two would silently ship an attack
+// with no drawback, which is strictly worse than not reading it at all.
+//
+// Sentence one is the ANY-ZONE counter PUT, one noun phrase away from D140's
+// `COUNTER_PUT_ON_OPPONENT_BENCH` ("1 of your opponent's Pokémon" rather than "1
+// of your opponent's BENCHED Pokémon") and thus `damageChosen { target:
+// "opponentAny" }` — the op `CHOSEN_ANY_TARGET` has produced since 0.x, but with
+// `deals` ABSENT, which is the combination nothing had ever produced: see
+// `placeSnipe`'s Active arm (interpreter.ts), which had to be written for it.
+// It is NOT printed as a standalone sentence ANYWHERE in the pool — every other
+// printing of that noun phrase is an ABILITY (Dusclops sv06.5-019/-069 and
+// Dusknoir sv06.5-020/-070 "Cursed Blast"), refused by the capitalised "Put"
+// plus `^…$` exactly as D139/D140's anchors refuse theirs. So the compound is the
+// ONLY form this sentence takes, which is why there is no bare any-zone anchor.
+//
+// THREE apostrophe slots, all classed (D136/D137): the possessive "opponent's"
+// and the contraction "can't", plus the one inside the reused half — and the
+// D137 hazard here is real rather than theoretical, since classing the possessive
+// and not the contraction is precisely the half-fix that reads like a whole one.
+const COUNTER_PUT_ANY_THEN_SELF_LOCK =
+  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon\. During your next turn, this Pokémon can['’]t attack\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -3806,6 +3927,69 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // is false of this one.
           source: "attack",
         },
+      ];
+    }
+  }
+
+  // 24. "During your next turn, this Pokémon can't attack." — D143's SELF-LOCK,
+  //     TWENTY printings on ONE sentence and the largest single count this family
+  //     has mapped in one arm. A `test`, not an `exec`: nothing in the sentence
+  //     varies, the duration is the printed words "during your next turn" and the
+  //     holder is the printed words "this Pokémon", so there is nothing to capture
+  //     and the op takes no fields (D138's shape).
+  //
+  //     THE MIRROR OF ARM 5b, and it lands one op away from it: that one reads
+  //     "During your OPPONENT's next turn, the DEFENDING Pokémon can't RETREAT"
+  //     and this one flips both the holder and the window. What it does NOT flip
+  //     is the mechanism — D142 built the durated stamp, and this rider is one
+  //     more stamped field on the same body read at a different gate.
+  if (SELF_CANT_ATTACK_NEXT_TURN.test(effect)) {
+    return [{ op: "preventAttack" }];
+  }
+
+  // 25. "Put {N} damage counters on 1 of your opponent's Pokémon. During your next
+  //     turn, this Pokémon can't attack." — Ninetales sv03-029/-199 "Nine-Tailed
+  //     Dance" ({R}{R}, INDEX 1, 9 counters, no printed `damage`), 2 printings.
+  //     TWO SENTENCES, TWO OPS, IN PRINTED ORDER — `DEFENDER_POISON_CANT_RETREAT`
+  //     (arm 5c) is the precedent and the reason this is one anchored pattern
+  //     rather than two: the family's safety property is that an unrecognised
+  //     remainder stays LOUD, and a prefix match would ship the counters without
+  //     the drawback.
+  //
+  //     The ORDER is load-bearing twice over. It is the printed order, and it is
+  //     also the only order that reads right in a log — sentence one can Knock the
+  //     target Out, and a lock row wedged in front of a KO would describe the
+  //     attacker's future while the defender's present was still unresolved. It
+  //     also means the counters PARK (the pick is a real decision whenever the
+  //     opponent has a Bench) and the lock installs on the RESUMED tail, which is
+  //     the first time this family has put an op BEHIND a park.
+  match = COUNTER_PUT_ANY_THEN_SELF_LOCK.exec(effect);
+  if (match !== null) {
+    // ⚠️ COUNTERS → HP (one counter = 10, §12), at the PRODUCER — arms 22 and 23
+    // above, Trevenant's registry row and `DEFENDER_POISON_N` all convert here,
+    // and the interpreter never sees the printed unit.
+    const counters = Number(match[1]);
+    // `counters >= 1`, the guard every arm carries: a printed 0 would park the
+    // attacker on a choice with no possible outcome AND install a drawback for
+    // nothing. Leave it loud.
+    if (counters >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          // "1 of your opponent's POKÉMON" — the Active OR a Bench, so the
+          // candidate set is `oppAnyRefs` and never empty during an attack. This
+          // is the first producer of `opponentAny` WITHOUT `deals`, i.e. a chosen
+          // PLACEMENT rather than a chosen hit: the counters stay FLAT even on the
+          // Active, because a placed counter is not attack damage (D138/D139) and
+          // being printed on an attack does not make it one.
+          target: "opponentAny",
+          amount: counters * 10,
+          // EXACT, not a ceiling: no "up to" is printed.
+          count: 1,
+          // D140's field — the provenance the COUNTERS_PLACED row prints.
+          source: "attack",
+        },
+        { op: "preventAttack" },
       ];
     }
   }

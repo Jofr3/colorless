@@ -733,6 +733,13 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     bottomFromOpponentHand: "untouched", // …nor is their hand
     coinFlipGate: "untouched", // procedure; its body is classified above
     preventDamage: "untouched", // the installer itself, on its own body
+    // D143's self-lock, and the first op to be classified by this table rather
+    // than by the slice that wrote it — which is exactly what the table is for.
+    // UNTOUCHED: it writes a stamp onto the CONTROLLER's own Active, so there is
+    // no opponent-side body for a §11 block to protect from it. (Note this is
+    // NOT the same claim as "a block cannot stop a lock": a locked Pokémon that
+    // also carries a block simply carries both, on two different turns.)
+    preventAttack: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {

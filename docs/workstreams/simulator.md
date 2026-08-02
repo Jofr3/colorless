@@ -8934,3 +8934,366 @@ census above** are all CLOSED. Do not re-run any of them.
   line below the block. **The largest un-taken count left in the whole tail**, and the
   first item that would justify generalising `attackBlock` into a record with several
   installed effects rather than a fourth parallel field.
+
+## D143 — the SELF-LOCK: `During your next turn, this Pokémon can't attack.` (engine 0.92.0, MATCH_RECORD_VERSION 4 → 5)
+
+Item 1 of D142's remainder list, and the slice that shows what that list was FOR:
+the duration mechanism D142 bought is reused here with **no new concept at all**,
+and the only genuinely new thinking is **one number**. It is also the slice whose
+item was wrong in the most useful direction yet — it was priced at 2 printings and
+it is **22**.
+
+### The resume point's claims, checked before anything was designed
+
+Every CATALOG claim held, exactly. The count did not, and the one STRUCTURAL claim
+the item made about cost was false.
+
+| Claim | Verdict |
+|---|---|
+| Ids `sv03-029`/`-199`, 2 printings / 1 clause | **TRUE** (Uncommon + Illustration rare, one attack in two rarities — D121's second-printing warrant met by the card) |
+| Attack name "Nine-Tailed Dance" | **TRUE** |
+| Attack INDEX | **TRUE at 1** — checked rather than assumed. Index 0 is "Will-O-Wisp" ({R}, 20, no effect), and a suite that assumed 0 would have simulated the wrong attack (D139's Pour Tea, again) |
+| 9 counters, `{R}{R}`, no printed `damage`, the printed string verbatim | **TRUE**, all four |
+| "sentence two is a SELF-lock with a duration, and D142 built the duration" | **TRUE**, and the only forecast on two lists running that was right about cost |
+| "`state.turn + 2` … which is exactly why it cannot share `attackBlock.turn`" | **TRUE**, and the list was right to flag it. **Verified by a real drive rather than on paper**, as the item demanded |
+| "one read at the §8 attack gate, the same three early-clear sites and one event" | **TRUE**, and complete for the LOCK half |
+| "sentence one is a ONE-TOKEN WIDENING of D140's anchor … which exists" | **⚠️ HALF TRUE, and the half that is false is real work.** The OP exists; the interpreter path does not. See below |
+| *(ABSENT)* the count | **⚠️ 2 → 22.** The bare sentence is 20 more printings |
+| *(ABSENT)* the `MATCH_RECORD_VERSION` question | **⚠️ MISSING, and the answer is a BUMP** — 4 → 5, D142's own case on a second field |
+| *(ABSENT)* the two PROJECTIONS | **⚠️ MISSING, and both are load-bearing.** A §8 gate that refuses a DECLARATION owes `redactedAttacksOf` and GameHud, or a locked player gets a button the server rejects |
+
+**Eight consecutive lists, and this is the first whose miss makes the item TEN
+TIMES BIGGER.** The pattern is otherwise unchanged: the catalog claims are
+reliably right, the structural ones are not, and the most dangerous is the absent
+one.
+
+### The census (local D1, 2026-08-02, 978 cards) — run for THIS question
+
+**D142's rule applied to D142's own census.** The duration table in §D142 was
+built from `attacks_json LIKE '%During your opponent's next turn%'` and is
+perfectly correct for that — which is exactly why it **structurally cannot see
+this sentence**, whose duration says *your*. It lists "an attack lock (4 + 1)" for
+this neighbourhood; that is the OPPONENT-side printing and the Seismitoad buff.
+The self-lock is not on it at all.
+
+`attacks_json LIKE '%can''t attack%'` plus the same query over `abilities_json`
+and `effect` — **38 printings in all**: 33 on attacks, 2 on an Ability (Slaking V
+`swsh10.5-058`/`-077` "Kinda Lazy", a Prize-count CONDITION with **no duration**),
+3 on a Trainer (Geeta `sv03-188`/`-218`/`-226`, *"During THIS turn, YOUR POKÉMON
+can't attack"* — a different turn and a whole board).
+
+Inside the attacks, the **SELF-lock family is 29 printings across FIVE sentences**:
+
+| Sentence | Printings | Status after D143 |
+|---|---|---|
+| `During your next turn, this Pokémon can't attack.` | **20** | ✅ `SELF_CANT_ATTACK_NEXT_TURN` → `preventAttack` |
+| `Put {N} damage counters on 1 of your opponent's Pokémon. During your next turn, this Pokémon can't attack.` | **2** | ✅ `COUNTER_PUT_ANY_THEN_SELF_LOCK` → `damageChosen` + `preventAttack` |
+| `Flip a coin. If tails, during your next turn, this Pokémon can't attack.` | 5 | ❌ a **TAILS** gate — `coinFlipGate` runs its body on HEADS only. **The cheapest widening of this slice** |
+| `You may do 100 more damage. If you do, during your next turn, this Pokémon can't attack.` | 1 | ❌ an OPTIONAL damage bonus whose acceptance installs the lock — a player decision in FRONT of the §8.5 pipeline (Copperajah `sv06.5-042`) |
+| `Flip a coin. If heads, this attack does 140 more damage. If tails, during your next turn, this Pokémon can't attack.` | 1 | ❌ TWO consequents on ONE flip (Dragonite ex `sv03-159`) — D142's Squawkabilly refusal in another family |
+
+The twenty mapped BARE printings: Miraidon ex `sv01-081`/`-227`/`-244`/`-253`
+"Photon Blaster", Koraidon ex `sv01-125`/`-231`/`-247`/`-254` "Wild Impact",
+Dragonite VSTAR `swsh10.5-050`/`-081` "Giga Impact", Alomomola `sv01-048` "Aqua
+Slash", Clawitzer `sv01-050` "Aqua Cannon", Steelix `swsh10.5-044` "Iron Buster",
+Kilowattrel `sv02-082` "Jet Wing", Tinkatuff `sv02-103` "Boundless Power", Victini
+ex `sv03-033` "Victory Flame", Crabominable `sv03-115` "Knuckle Impact", Umbreon
+`sv03-130` "Pitch-Black Blade", Probopass `sv03-146` "Iron Buster", Golbat
+`sv06.5-028` "Pitch-Black Blade". **Every one carries a printed `damage`** (80 to
+250) — the sentence is the DRAWBACK half of a big-damage attack, which is why the
+compound printing (no `damage` at all) is the family's odd one out rather than its
+model.
+
+**Two neighbourhoods refused, and each is a FIELD WARRANT written down:**
+
+| Neighbour | Printings / sentences | What it would cost |
+|---|---|---|
+| The OPPONENT-side lock — `…the Defending Pokémon can't attack.` (Eiscue ex `sv03-042`/`-210`/`-222` "Scalding Block") and `If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.` (Houndoom ex `sv03-134`) | **4 / 2** | a `target` field — **and NOT a one-token one**: the defender-side window is `state.turn + 1` where this is `+ 2`, so it is TWO axes |
+| The PER-ATTACK lock — `During your next turn, this Pokémon can't use {AttackName}.` (Munkidori ex `sv06.5-037`/`-083`/`-091`, Lucario `sv01-114`, Radiant Charizard `swsh10.5-011`, Radiant Blastoise `swsh10.5-018`, Skarmory `sv03-142`, Greedent ex `sv03-179`) | **8 / 6** | a per-ATTACK lock this field cannot express — it names ONE attack and leaves the card's other one legal |
+
+One more sentence shares the duration and is neither: Seismitoad `sv03-052`
+"Echoed Voice", a durated BUFF on one named attack. All 13 refusals are LOUD, each
+written beside the property that refuses it.
+
+### ⚠️ The "+2", verified by DRIVING it
+
+The item flagged this and it was right to. Declaring an attack ENDS the turn
+(§5.3), so the turn after the installing one belongs to the OPPONENT and the one
+after that is the installer's own. D142's block prints *"during your OPPONENT's
+next turn"* and stamps `+ 1`; this prints *"during YOUR next turn"* and stamps
+`+ 2`.
+
+**Every other durated printing in the pool says the opponent's**, which is exactly
+why `+ 1` is the shape a session copying the neighbour writes — and the failure is
+QUIET IN PLAY rather than loud: a `+ 1` lock is live only on a turn its holder
+could not have acted on anyway, so the card's entire printed drawback silently
+disappears and nothing on the board looks wrong.
+
+| Moment | `state.turn` | Locked? | Why |
+|---|---|---|---|
+| The install resolves (attack tail, turn N) | N | **no** | the printed word is "NEXT" |
+| Checkup ending turn N (`endedSeat` = holder) | N | **no** | …and nothing clears it here, exactly as D142 |
+| The opponent's whole turn N+1 | N+1 | **no** | not the holder's turn; the OPPONENT attacks normally |
+| The holder's turn N+2 | N+2 | **YES** | the printed window — **BOTH** of the holder's attacks are refused |
+| The holder's turn N+4 onward | ≥ N+4 | **no** | expired by arithmetic; the stale stamp stays and answers nothing |
+| The holder leaves the Active Spot | — | **no** | §10 — and here BOTH halves are reachable |
+| The holder evolves | — | **no** | §10 — **and this one is a LINE OF PLAY**, not an unreachable rule |
+| The holder is Knocked Out | — | — | the stack leaves play; the promoted body carries no lock |
+| Installed twice | — | the later stamp | two installs are always ≥ 2 turns apart by construction |
+
+Driven, not asserted: install on turn 2 → stamp **4** → turn 3 untouched → turn 4
+refuses index 1 AND index 0 → turn 6 attacks again and stamps 8.
+**`+ 1` fails 14 tests.**
+
+### ⚠️ A SECOND stamped field, not a widening of the first
+
+`InPlayPokemon.attackLockedTurn: number | null`, beside `attackBlock` rather than
+inside it, **because the two windows are different NUMBERS on the same body** —
+one `turn` could hold at most one of them. Asserted on a real board rather than in
+prose: a case installs the lock for real, surgeries D142's block onto the same
+Pokémon, and drives turn 3 (damage prevented, lock inert) and turn 4 (block
+expired by arithmetic, holder refused). **Folding the lock into `attackBlock.turn`
+fails 8 tests.**
+
+Everything else is INHERITED unchanged: the stamp convention, the
+read-through-`continuous.ts` shape (`attackLocked`), the three §10 early clears,
+and D124's no-defensive-`undefined` rule at the reader.
+
+**⚠️ IT NEEDS NO PROVENANCE CHANNEL, AND THAT GENERALISES.** D142 had to invent
+`EffectContext.invokedBy` because *"effects of ATTACKS"* is a claim about what
+INVOKED an effect and the target cannot answer it. This field is read at
+`attack.ts`'s §8 gate and at the two payability projections — **all three by
+construction about declaring an ATTACK** — so there is exactly one kind of thing
+it can refuse and nothing to disambiguate. **A durated effect does not
+automatically owe a provenance; only one that gates an OP does.**
+
+### ⚠️ It gates a DECLARATION, so it is a rejection — and that makes the projections load-bearing
+
+New error code `ATTACK_PREVENTED`, `RETREAT_PREVENTED`'s exact mirror. §12's
+Asleep gate refuses the declaration while §12's Confusion flips at resolution, and
+*"can't attack"* is the first kind: **nothing is spent and the turn does NOT
+end**. An `ATTACK_FAILED` here would burn the player's whole turn on a button the
+server had already decided to refuse.
+
+Which means **two projections owe the same line**, and this is the ABSENT claim
+that cost the slice its "no web diff":
+
+- `redactedAttacksOf`'s `banned` (redact.ts) — the online HUD's `playable`;
+- `GameHud.tsx`'s `disabled` — the local /play path, which computes the same
+  thing off raw `GameState`.
+
+Both are the only thing between a locked player and a rejected button. **Dropping
+the redact line fails 1 test; dropping the §8 gate fails 9.** The suite sweeps
+BOTH attacks in both directions rather than sampling.
+
+The REFUSAL needs no event (the rejection carries a code and a message, and the
+action never happened); the INSTALL gets one — `ATTACK_LOCKED { seat, uid }`, in
+the **ACTIVE** voice for `ATTACK_BLOCK_APPLIED`'s reason (`seat` owns the locked
+Pokémon and that Pokémon is the actor's own). Its WORDING is pinned as tightly as
+its voice, because it is **the only durated row in the engine that reports a cost
+the player paid rather than a protection they bought**. No `…_ENDED` twin, for
+D142's reasons verbatim. **System-voicing it fails 1 test.**
+
+### ⚠️ The §10 early clears are D142's with the REACHABILITY INVERTED
+
+D142's evolve clear was unreachable by construction — its window is the opponent's
+turn, and nobody evolves on someone else's. **This window is the HOLDER's own**,
+so all three routes are lines of play:
+
+- **EVOLVING** frees a locked Pokémon to attack the SAME turn (§10 sheds the
+  effects of attacks). Driven end to end with **no surgery** — which is what the
+  slice's one invented fixture, `fix-mola-stage1`, exists for. D142 could only
+  pin its equivalent with a state surgery.
+- **RETREATING**, then **Switching back in**, then attacking: three legal actions
+  on one turn, and the drawback is gone.
+- **A Boss's Orders** from the opponent un-locks a body they were trying to keep
+  off the board — the gift they did not mean to give.
+
+Each fails **2** tests when skipped. All three stay SILENT (the
+`POKEMON_SWITCHED` / `RETREATED` / `POKEMON_EVOLVED` row already tells the story —
+D112's own call).
+
+**⚠️ AND THE THREE SITES ARE SWEPT RATHER THAN LISTED, WHICH IS ALSO THE
+GENERALISATION EVIDENCE.** They are three hand-written object literals in two
+files (`clearOnLeavingActive` and `placeEvolution` in turn.ts, `switchInto` in
+interpreter.ts) with nothing making them agree. One case encumbers a Pokémon with
+every §10-sheddable field and asserts all three routes shed the SAME set — the
+thing that fails if a fourth stamped field forgets one.
+
+### ⚠️ It locks the POKÉMON, not the ATTACK
+
+Pinned FROM THE INSIDE rather than by a refusal list: Alomomola's index-0 "Surf"
+is refused by the lock its index-1 "Aqua Slash" installed. That is the assertion
+separating this family from the eight `can't use {AttackName}` printings, which
+leave the card's other attack legal and stay LOUD.
+
+### ⚠️ One thing the item called free was NOT — the third "guard that is an accident" in five slices
+
+Sentence one of the compound was priced as *"a one-token widening of D140's anchor
+(`damageChosen { target: "opponentAny" }`, which exists and already carries
+`source`)"*. The OP exists. **The interpreter path did not.**
+
+Every put-counter snipe in the pool was Bench-only, so `placeSnipe`'s Active
+branch was reached only with `deals === true` — and it said so **in a comment,
+asserted nowhere**. That is the D139 → D140 shape for a third time: a guard that is
+an accident of the candidate sets. Ninetales' *"1 of your opponent's POKÉMON"* is
+the first printing to offer the Active to a **PLACEMENT**, and routing it through
+`snipeActive` would run the full §8.5 pipeline over a placed counter — **doubling
+it on a Weakness and cutting it on a Resistance**, against this engine's standing
+ruling since D138/D139 that a placed counter is not attack damage and that being
+printed on an attack does not make it one.
+
+The fix **REUSES `damageActive`** rather than writing a second flat-placement
+path: that function is already *"flat counters onto the opponent's Active,
+D142-guarded, `source` off the op"*, which is this arm to the byte, and the only
+difference is how the target was named. D131's widen-don't-add rule applied to a
+FUNCTION instead of a field. **Routing the placement through `snipeActive` fails 2
+tests; setting `deals: true` fails 4.**
+
+There is deliberately **no bare any-zone anchor**: `Put {N} damage counters on 1 of
+your opponent's Pokémon.` is printed **nowhere** in the pool as a standalone
+attack sentence. Every other printing of that noun phrase is an ABILITY (Dusclops
+`sv06.5-019`/`-069`, Dusknoir `sv06.5-020`/`-070` "Cursed Blast"), refused by the
+capitalised "Put" plus `^…$` exactly as D139/D140's anchors refuse theirs.
+
+### ⚠️ Two sentences, ONE anchor, two ops in printed order
+
+`DEFENDER_POISON_CANT_RETREAT`'s shape (D125's two-consequent question, same
+answer). Matching sentence one as a PREFIX would place the counters and silently
+drop the drawback — **shipping an attack the catalog does not print**, which is
+strictly worse than leaving the card LOUD. The order is also the only one that
+reads right in a log, since sentence one can Knock the target Out; and because the
+counters PARK, this is the family's first op sitting BEHIND a park.
+
+**Dropping the second op fails 6 tests; reversing the order fails 6.**
+
+### The four structural questions
+
+1. **Does the op PARK?** `preventAttack` does not — it is deterministic, consumes
+   no rng and asks nothing; and a new UNION MEMBER is a WIDENING (D125). The other
+   op in the program, `damageChosen`, **does** park, but gained no field, so every
+   serialized `EffectContinuation` is byte-identical. **The bump is D142's case
+   again**: a new REQUIRED field on `InPlayPokemon` that would read back BENIGNLY
+   (`undefined === 4` is false, so an old record resolves to "not locked" — even
+   correctly). **`MATCH_RECORD_VERSION` 4 → 5**, the third bump on the identical
+   shape (D124's `promotedTurn`, D142's `attackBlock`, this).
+2. **Whose VOICE?** `ATTACK_LOCKED` files under the seat owning the locked
+   Pokémon, and that Pokémon is the actor's own — ACTIVE voice, D142's case. What
+   is NEW is the content: it reports a COST rather than a protection, so the
+   wording is pinned as tightly as the seat.
+3. **Is the guard ASSERTED?** Three ways, all swept rather than listed: the three
+   §10 clear sites are shown to shed the same field set; both projections are
+   swept attack-by-attack against the real gate; and the "only attacking is
+   gated" claim is driven over the whole turn:action vocabulary (attach, bench,
+   retreat, trainer, end turn) in both directions. `preventAttack` also had to be
+   classified in D142's own `preventBlock.test.ts` table before it would go green
+   — which is that table working as designed, one slice later.
+4. **Does the mechanism exist?** For the LOCK, yes, and D142 built it — this is
+   the first slice in the tail whose headline mechanism cost nothing. For sentence
+   ONE, **no**: the op existed and its Active PLACEMENT path did not.
+
+### The suite — `attackLock.test.ts` (32 tests)
+
+Its own `ATTACK_LOCK_DECK`, and for the OPPOSITE reason to
+`PREVENT_BLOCK_DECK`'s: that family takes a coin and needed a seed sweep, while
+**this one takes none** — so the suite is **seed-free** and pins that by an
+unchanged `rngState` across a whole park-and-resolve. Three fixtures: **Alomomola
+`sv01-048`** (the bare sentence, printed **120** alongside the lock — a D125 tail
+board — with index-0 "Surf" as the sibling the lock also refuses), **Ninetales
+`sv03-029`** (the compound, INDEX 1, no printed damage, a Stage 1 surgeried in),
+and **`fix-mola-stage1`** (the one invented card, so the §10 evolve clear is a
+drive rather than a surgery).
+
+**Mutation-checked fourteen ways:** `+ 1` instead of `+ 2` fails **14**, dropping
+the §8 gate **9**, sharing `attackBlock.turn` **8**, dropping the compound's
+second op **6**, reversing its op order **6**, `deals: true` on the counter half
+**4**; then **2** each for the three §10 clears, the `snipeActive` misroute, the
+dropped `['’]` class and a lock that never expires; and **1** each for the redact
+projection line and a system-voiced install row.
+
+`clauseApostrophe.test.ts`'s DISCOVERED census moved **38 → 40** the moment the
+fixtures landed — and these are the first entries whose exposed slot is a
+CONTRACTION (`can't`) rather than a possessive, which is precisely the asymmetry
+D137 found two whole tables missing. **Three witnesses re-pointed, none deleted**:
+`counterPut`, `counterBenchPut` and `counterMove` all listed the Ninetales
+sentence as a stays-LOUD near-miss, and all three moved to still-unmapped real
+catalog rows (Kingambit `sv03-150`, Annihilape ex `sv02-242`, Lycanroc ex
+`sv02-117`).
+
+### ⚠️ The generalisation question — answered with three readings in hand
+
+The list asked for this explicitly, and said to take item 1 first *"so the
+decision is made with three readings in hand rather than one guessed at"*. With
+D142's block built, this lock built and the `takes {N} less damage` family
+specced:
+
+**The two BUILT readings share almost nothing beyond the stamp.**
+
+| | `attackBlock` (D142) | `attackLockedTurn` (D143) |
+|---|---|---|
+| Window | `state.turn + 1` | `state.turn + 2` |
+| Gates | what may be done TO the holder | what the holder may DO |
+| Read sites | 4 damage sites + 6 effect ops | 1 action gate + 2 projections |
+| Refusal shape | a nulled RESULT + an event | an ILLEGAL ACTION + an error code |
+| Provenance | needs `EffectContext.invokedBy` | cannot use one, and needs none |
+| Payload | a boolean (`effects`) | nothing |
+
+**So a record of installed effects would buy exactly two things:** the three §10
+clear sites stop being hand-written literals, and the `MATCH_RECORD_VERSION` bump
+happens once instead of once per field. It would cost a discriminated union, a
+lookup at every read site (where today each site names its own field and the
+compiler checks it), and a persisted shape change. **On two readings that is a
+LOSS**, and the one hazard it removes is already covered by the swept clear-set
+test written here.
+
+**The trigger is named rather than left to judgement: a THIRD field makes it a
+win, and item 4 is that third.** The `takes {N} less damage` family (14 printings)
+is a NUMBER rather than a boolean, read at the **same four damage sites** as
+`attackBlock` one line below it — so it is the first reading that would genuinely
+SHARE a read path, which is the thing a union pays for. **Take the generalisation
+WITH item 4, not before it and not instead of it**, and note that the
+generalisation is itself a required-shape change (one more bump) after which
+further durated effects cost none.
+
+### Still unmapped after D143 — ranked by cost
+
+The heal census (D133/D135), the gated census (§D134), the counter-damage censuses
+(§D138/§D139/§D140), the §9 recoil census (§D141), the PREVENT + `During your
+opponent's next turn` census (§D142) and now **the `can't attack` census above**
+are all CLOSED. Do not re-run any of them.
+
+- **The TAILS gate — 5 printings / 1 sentence.** `Flip a coin. If tails, during
+  your next turn, this Pokémon can't attack.` (Oinkologne `sv01-157`, Oinkologne
+  ex `sv01-158`/`-234`, Paldean Clodsire ex `sv02-130`/`-244`). **Now the cheapest
+  item on the list**: `coinFlipGate` runs its body on HEADS only, so this is ONE
+  optional field on that op (`onTails?: true`) or one sibling member, plus one
+  regex, plus the deriver arm. The op it gates is already built.
+- **The attacker-CLASS filter — 4 printings / 2 clauses** (`…prevent all damage
+  done to this Pokémon by attacks from [Basic|Ancient] Pokémon.`). Unchanged from
+  §D142: one optional field on `preventDamage` plus a predicate over the
+  ATTACKER's card. `Basic` is `isBasicPokemon` verbatim; `Ancient` has no reader.
+- **The OPPONENT-side attack lock — 4 printings / 2 clauses.** Eiscue ex
+  `sv03-042`/`-210`/`-222` "Scalding Block" (behind a self Energy discard, so it
+  is a two-sentence anchor like Ninetales') and Houndoom ex `sv03-134` "Evil Claw"
+  (behind a Basic-ness predicate, with the duration at the END of the sentence).
+  Earns `preventAttack` its `target` field — **two axes, not one**, since the
+  defender-side window is `+ 1`.
+- **The `takes {N} less damage` family — 14 printings / 4 amounts, still the
+  LARGEST un-taken count.** A DURATED `damageReductionAfterWR`. **⚠️ TAKE THE
+  `attackBlock` GENERALISATION WITH IT** — see the table above; it is the first
+  reading that shares a read path with an existing stamped field, which is what
+  makes a union pay.
+- **The §9 recoil FAMILY — 5 printings**, unchanged from §D141/§D142. Vengeful
+  Punch `sv03-197` (a Tool, KO-conditioned, no duration — cheapest of the three),
+  Lycanroc ex `sv02-117`/`-241` "Scary Fangs" (a stamped field summed into
+  `passivesOf`'s number), Mabosstiff `sv02-143` "Comeuppance" (the same plus the
+  §9.2 channel).
+- **The PER-ATTACK lock — 8 printings / 6 sentences.** `During your next turn,
+  this Pokémon can't use {AttackName}.` A per-attack lock, so the state is an
+  attack INDEX (or a name) beside a turn — the first durated field that is not a
+  bare stamp. Note Seismitoad `sv03-052`'s durated per-attack BUFF wants the same
+  addressing, so two shapes may be one mechanism.
+- **Iron Moth `sv06.5-009` "Suction" + Camerupt `sv03-032`** — unchanged: a
+  channel from the §8.5 pipeline's RESULT into a tail op, shared with Mabosstiff,
+  Grimmsnarl `sv02-148` and Copperajah `sv06.5-042`'s "if you do". Do it last or
+  not at all.

@@ -109,7 +109,11 @@ function putOp(hp: number): EffectOp {
 const NEAR_MISSES = [
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10. If you placed any damage counters in this way, this attack also does 120 damage to this Pokémon.",
-  "Put 9 damage counters on 1 of your opponent's Pokémon. During your next turn, this Pokémon can't attack.",
+  // ⚠️ RE-POINTED AT D143 — this slot held Ninetales sv03-029/-199's "Nine-Tailed
+  // Dance", which D143 mapped; the witness moved rather than being deleted. Its
+  // replacement is Kingambit sv03-150 "Zamashira": the same opening noun phrase
+  // read as a THRESHOLD rather than an action, so it is refused by the VERB.
+  "If your opponent's Active Pokémon has 4 or more damage counters on it, that Pokémon is Knocked Out.",
   "Put 8 damage counters on your opponent's Pokémon in any way you like.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",

@@ -260,6 +260,38 @@ export function attackBlockOf(state: GameState, pokemon: InPlayPokemon): AttackB
   return block !== null && block.turn === state.turn ? block : null;
 }
 
+/** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now
+    ("During your next turn, this Pokémon can't attack.")? The ONE read of
+    `InPlayPokemon.attackLockedTurn`, and `attackBlockOf`'s sibling in every
+    respect that matters: the field holds a turn STAMP, so the lock is live iff
+    that stamp is the turn now being played, and a lock whose window has passed
+    stops answering without anyone having cleared it.
+
+    ⚠️ IT IS THE OTHER HALF OF THE PAIR, NOT A COPY. `attackBlockOf` answers a
+    question about what may be done TO the holder during the OPPONENT's turn
+    (stamp N + 1); this answers what the holder may do ITSELF during its OWN next
+    turn (stamp N + 2). The two stamps are different numbers written by different
+    ops on the same body, which is exactly why they are two fields (types.ts).
+
+    IT NEEDS NO PROVENANCE CHANNEL, which is the sharpest structural difference
+    from D142. That block had to ask `EffectContext.invokedBy` because "effects of
+    ATTACKS" is a claim about what INVOKED the effect and the target cannot answer
+    it. This one is read from `attack.ts`'s §8 gate and from the HUD's payability
+    projection — both of which are, by construction, about declaring an ATTACK —
+    so there is exactly one kind of thing it can refuse and nothing to disambiguate.
+
+    Returns a plain boolean rather than the stamp: there is one fact here and no
+    `effects`-shaped rider to carry, so a record would be a field-of-one (D104's
+    minimal shape). A second reading — the pool prints an opponent-side "the
+    Defending Pokémon can't attack" on 4 printings — would earn the op a `target`
+    field, not this reader a return type. */
+export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason one function
+  // up: the field is REQUIRED and an older record is retired by
+  // MATCH_RECORD_VERSION rather than read benignly here.
+  return pokemon.attackLockedTurn === state.turn;
+}
+
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus
     any continuous bonus (Bravery Charm). A null printed hp is the catalog
     data gap (cards.ts hpOf) and STAYS null — a bonus on top of unknown HP is

@@ -394,6 +394,97 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Ninetales sv03-029 — "Nine-Tailed Dance" ({R}{R}, attack INDEX 1, NO printed
+      `damage`): D143's COMPOUND printing, *"Put 9 damage counters on 1 of your
+      opponent's Pokémon. During your next turn, this Pokémon can't attack."* —
+      2 printings (sv03-029 Uncommon / sv03-199 Illustration rare, one attack in
+      two rarities, D121's second-printing warrant met by the card).
+
+      A STAGE 1 (evolving from Vulpix), fielded by `setActiveFromDeck` surgery like
+      Polteageist sv03-098 before it — and unlike D142's two Basics, which is why
+      the evolve case in `attackLock.test.ts` uses a synthetic chain rather than
+      this card's own.
+
+      THE INDEX IS 1, checked against the local D1 rather than assumed (D139 found
+      Pour Tea at index 1 the same way). Index 0 is "Will-O-Wisp" ({R}, 20, no
+      effect text) and it earns its place twice: it is the control that proves a
+      program does not leak across indices, AND it is the attack a LOCKED Ninetales
+      is refused when it tries to use it — which is how the suite shows the lock is
+      on the POKÉMON rather than on the attack that installed it.
+
+      No printed `damage` on index 1, so the counters plus the lock are the entire
+      visible result of that declaration. */
+  "sv03-029": battler("sv03-029", {
+    name: "Ninetales",
+    stage: "Stage1",
+    evolveFrom: "Vulpix",
+    types: ["Fire"],
+    hp: 120,
+    retreat: 1,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      { cost: ["Fire"], name: "Will-O-Wisp", damage: 20 },
+      {
+        cost: ["Fire", "Fire"],
+        name: "Nine-Tailed Dance",
+        effect:
+          "Put 9 damage counters on 1 of your opponent's Pokémon. During your next turn, this Pokémon can't attack.",
+      },
+    ],
+  }),
+  /** Alomomola sv01-048 — "Aqua Slash" ({W}{W}{C}, attack INDEX 1, printed 120):
+      the BARE self-lock sentence, *"During your next turn, this Pokémon can't
+      attack."*, one of its TWENTY printings and the reason D143 is a 22-printing
+      slice rather than a 2-printing one.
+
+      Chosen out of the twenty for three reasons. It is a BASIC, so it goes on the
+      Active by surgery with no evolution chain (Miraidon ex / Koraidon ex are also
+      Basics but carry rule boxes and registry rows that would muddy the board).
+      It carries a printed 120 ALONGSIDE the lock — a D125 tail board, where one
+      declaration deals real §8.5 damage AND installs the drawback, which the
+      compound Ninetales printing cannot show (it prints no `damage` at all). And
+      its index-0 "Surf" ({W}{C}, 30, no effect text) is the sharpest control in
+      the slice: it is a DIFFERENT attack on the SAME card, so a locked Alomomola
+      being refused Surf is the assertion that separates this family from the eight
+      printings that say "this Pokémon can't use {AttackName}". */
+  "sv01-048": battler("sv01-048", {
+    name: "Alomomola",
+    types: ["Water"],
+    hp: 110,
+    retreat: 2,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      { cost: ["Water", "Colorless"], name: "Surf", damage: 30 },
+      {
+        cost: ["Water", "Water", "Colorless"],
+        name: "Aqua Slash",
+        damage: 120,
+        effect: "During your next turn, this Pokémon can't attack.",
+      },
+    ],
+  }),
+  /** A synthetic Stage 1 that evolves from **Alomomola** — the one fixture D143
+      invents, and it exists to make the §10 EVOLVE clear a REAL drive rather than
+      a state surgery. D142 could only surgery its equivalent case, because that
+      block's window is the opponent's turn and nobody evolves on someone else's;
+      this lock's window is the HOLDER's own next turn, so evolving out of it is a
+      line a player actually takes, and the assertion is worth the fixture. The
+      catalog prints no Alomomola evolution, which is exactly why this is a `fix-`
+      card and not a catalog id: the CLAIM being pinned is §10's rule, not a
+      card. Its own attack is a plain 40 with no effect text, so an evolved body
+      that attacks proves the lock is gone rather than merely unread. */
+  "fix-mola-stage1": {
+    ...blank,
+    id: "fix-mola-stage1",
+    name: "fix-mola-stage1",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 150,
+    types: ["Water"],
+    retreat: 2,
+    evolveFrom: "Alomomola",
+    attacks: [{ cost: ["Water"], name: "Bubble", damage: 40 }],
+  } satisfies Card,
   "fix-attacker-v": battler("fix-attacker-v", {
     name: "Guardmon V",
     types: ["Fire"],
@@ -6844,6 +6935,50 @@ export const PREVENT_BLOCK_DECK = deckOf({
   "fix-psychic-energy": 4, // {P} — two Ghost Eyes' worth (the {C} half comes off fix-energy)
   "fix-metal-energy": 2, // {M} — Rolling Tackle's typed half
   "fix-titan": 3, // 340 HP neutral Basic, NO attacks — the bench filler and promote target
+});
+
+/** D143's SELF-LOCK deck (`attackLock.test.ts`). Its own 60, and for the OPPOSITE
+    reason to PREVENT_BLOCK_DECK's: that family takes a coin and needed a seed
+    sweep, while this one takes NONE — neither printed sentence flips anything —
+    so the suite is seed-free and pins that fact by an unchanged `rngState` across
+    a whole park-and-resolve. Sharing a deck would let one suite's shuffle decide
+    the other's determinism either way.
+
+      • sv01-048 Alomomola — the BARE sentence at 20 printings. "Aqua Slash"
+        ({W}{W}{C}, printed 120 + the lock) at INDEX 1, "Surf" ({W}{C}, 30, no
+        effect) at index 0. The index-0 control is doing two jobs: no program
+        leaks across indices, AND a locked Alomomola is refused SURF — which is
+        the assertion that separates this family from the eight "can't use
+        {AttackName}" printings that stay LOUD;
+      • sv03-029 Ninetales — the COMPOUND printing at 2. "Nine-Tailed Dance"
+        ({R}{R}, INDEX 1, 9 counters, NO printed damage) is the whole reason the
+        counter PUT and the lock are one anchor, and it is a Stage 1 fielded by
+        surgery. "Will-O-Wisp" ({R}, 20) at index 0 is its control;
+      • fix-mola-stage1 evolves from Alomomola and exists for the §10 EVOLVE
+        clear, which here is a LINE OF PLAY rather than a surgery;
+      • sv01-194 Switch (Item) is the other half of the reachable §10 clear:
+        retreat the locked body out, Switch it back in, attack with it;
+      • sv02-172 Boss's Orders is the OPPONENT's route to the same clear — the
+        one place a durated effect ends because the player it hurts did something;
+      • fix-attacker's costless "Yawn" is the §12 control the lock must not be
+        confused with (an Asleep Active is refused by a DIFFERENT code), and Bite
+        is the plain hit that Knocks a locked body out;
+      • fix-titan (340 HP, no attacks) is the mulligan-free bench filler, the
+        promote target after a KO and the body that proves a lock does not travel
+        to whatever replaces its holder. */
+export const ATTACK_LOCK_DECK = deckOf({
+  "sv01-048": 4, // Alomomola — "Surf" idx 0 (control + the refused sibling), "Aqua Slash" idx 1
+  "sv03-029": 4, // Ninetales — "Will-O-Wisp" idx 0 (control), "Nine-Tailed Dance" idx 1
+  "fix-mola-stage1": 3, // evolves from Alomomola — the §10 clear as a played line
+  "sv01-194": 3, // Switch (Item) — retreat out, switch back, attack: the lock is GONE
+  "sv02-172": 2, // Boss's Orders — the opponent dragging a locked body off the spot
+  "fix-attacker": 3, // Bite ({C}, 30) and Yawn (costless, Asleep) — the §12 control
+  "fix-basic-1": 2, // a plain evolvable Basic — the promote/bench body with a chain
+  "fix-stage1": 2, // …what fix-basic-1 evolves into
+  "fix-water-energy": 12, // {W}{W} for Aqua Slash and Bubble; the {C} comes off fix-energy
+  "fix-fire-energy": 8, // {R}{R} — two Nine-Tailed Dances' worth
+  "fix-energy": 12, // Colorless Basic — pays every {C} in the deck
+  "fix-titan": 5, // 340 HP neutral Basic, NO attacks — bench filler and promote target
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

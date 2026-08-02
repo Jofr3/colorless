@@ -97,11 +97,13 @@ export function presentStatuses(conditions: SpecialConditions): StatusName[] {
     the rest of the stack.
 
     ONE INSTALLATION PER RECORD, and the window is part of the installation:
-    a future durated effect whose window is a DIFFERENT turn (Ninetales
+    a durated effect whose window is a DIFFERENT turn (Ninetales
     sv03-029/-199 "Nine-Tailed Dance" — "During YOUR next turn, this Pokémon can't
     attack", i.e. turn N + 2) cannot share this `turn` and gets its own stamped
     field. What it DOES inherit is everything else: the stamp convention, the
-    three early-clear sites, and the read-through-continuous.ts shape. */
+    three early-clear sites, and the read-through-continuous.ts shape. That field
+    landed at D143 (`InPlayPokemon.attackLockedTurn` below) and the forecast held
+    exactly: nothing here changed, and the two windows coexist on ONE body. */
 export interface AttackBlock {
   /** The single turn number this block is live on (the installing turn + 1). */
   turn: number;
@@ -143,6 +145,48 @@ export interface InPlayPokemon {
       (continuous.ts) rather than by touching this field, so no read site can
       forget the turn comparison. */
   attackBlock: AttackBlock | null;
+  /** §8/§11 — the turn number on which this Pokémon MAY NOT ATTACK, or `null`
+      when no such lock has been installed. The printed sentences are
+
+        "During your next turn, this Pokémon can't attack."          (20 printings)
+        "Put {N} damage counters on 1 of your opponent's Pokémon.
+         During your next turn, this Pokémon can't attack."          ( 2 printings)
+
+      and this field is the whole of both riders. Read through `attackLocked`
+      (continuous.ts) rather than by touching it, so no read site can forget the
+      turn comparison — the same contract `attackBlock` above is under.
+
+      ⚠️ `state.turn + 2`, AND THAT IS WHY IT CANNOT SHARE `attackBlock.turn`.
+      Declaring an attack ENDS the turn (§5.3), so the turn after the installing
+      one is the OPPONENT's and the one after that is the installer's own. D142's
+      block prints "during your OPPONENT's next turn" and stamps N + 1; this one
+      prints "during YOUR next turn" and stamps N + 2. Same body, same install
+      site, same three early clears, two DIFFERENT NUMBERS — so one `turn` field
+      could hold at most one of them, and a `{ turn, effects, cantAttack }` record
+      would be a single window pretending to describe two. The two are stamped and
+      read independently, and a suite case installs both on one Pokémon and drives
+      the pair of windows apart turn by turn (attackLock.test.ts).
+
+      NOT a §12 Special Condition, for `retreatBlocked`'s and `attackBlock`'s
+      reasons verbatim: no Checkup tick, no status chip, no `StatusName`, and it
+      never crosses the wire as a field (`redactedAttacksOf` folds it into the
+      `playable` boolean each attack already carries — redact.ts, exactly as D112
+      folded the retreat block into `can`).
+
+      ⚠️ ITS LIFETIME TABLE IS D142's WITH THE REACHABILITY INVERTED, because this
+      block gates the HOLDER's own action during the HOLDER's own turn:
+        • leaving the Active Spot (§10) ends it, and here BOTH halves are
+          reachable on the holder's own turn — retreat it, or let the opponent's
+          Boss's Orders drag it out — where D142's evolve clear was unreachable by
+          construction;
+        • EVOLVING (§10) ends it, and that is the famous playable line rather than
+          a written-anyway rule: a locked Pokémon that evolves may attack the same
+          turn, because §10 sheds the effects of ATTACKS;
+        • a Knocked Out holder takes it out of play with the rest of the stack,
+          and the promoted body is a different Pokémon carrying no lock;
+        • installed twice, the later stamp wins — there is nothing to accumulate,
+          and a stale stamp answers nothing rather than being cleared. */
+  attackLockedTurn: number | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -182,6 +226,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // Nothing has attacked with it yet — a card entering play carries no
     // effect of an attack (§10's carry-over rule read from the other end).
     attackBlock: null,
+    // …and no attack of its own has locked it either (D143). Same reading of
+    // §10's carry-over rule from the other end as the line above.
+    attackLockedTurn: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck

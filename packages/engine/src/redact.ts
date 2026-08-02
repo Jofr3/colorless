@@ -55,6 +55,7 @@ import { costMet } from "./attack";
 import { programPlayable, rareCandyOptions } from "./cardplay";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import {
+  attackLocked,
   disabledAbilityUids,
   effectiveAttackCost,
   effectiveMaxHp,
@@ -330,8 +331,16 @@ function redactedAttacksOf(
   if (card === undefined) return [];
   const provided = providedEnergy(state, active);
   // §4 — turn 1 is by construction the going-first player's turn (the same
-  // check the local TurnPanel makes); §12 asleep/paralyzed blocks attacking.
-  const banned = state.turn === 1 || isImmobilized(active.conditions);
+  // check the local TurnPanel makes); §12 asleep/paralyzed blocks attacking; and
+  // §8/§11 (D143) the attack-installed SELF-LOCK does too. That third one rides
+  // `playable` rather than a new wire field for the reason `redactedRetreatOf`
+  // folds the retreat block into `can` (D112): the client needs to know it cannot
+  // attack, not why, and the reason is already in the log as an ATTACK_LOCKED row.
+  // ⚠️ NOT OPTIONAL — this projection is the ONLY thing standing between a locked
+  // player and a button the server will reject with ATTACK_PREVENTED, so every §8
+  // gate that refuses a DECLARATION owes this line as well as its own.
+  const banned =
+    state.turn === 1 || isImmobilized(active.conditions) || attackLocked(state, active);
   return attacksOf(card).map((attack, index) => ({
     index,
     name: attack.name,

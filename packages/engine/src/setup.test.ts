@@ -262,6 +262,10 @@ describe("placement", () => {
       // A card entering play carries no effect of an attack (D142) — the only
       // installation site is an attack's own effect program.
       attackBlock: null,
+      // …and no self-lock either (D143), for the same reason and read the same
+      // way: `attackLocked` compares the stamp to `state.turn`, so `null` is
+      // "never locked" rather than "locked on turn 0".
+      attackLockedTurn: null,
       markers: [],
       turnPlayed: 0,
       // Placed Active from the HAND, which is not a move from the Bench — the

@@ -321,8 +321,14 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // rather than D140's: no op moved at all, but every Pokémon in play in an old
     // record lacks the field — a MISSING REQUIRED FIELD that would read back
     // benignly (`undefined.turn` is never `state.turn`), which is precisely the
-    // soft landing this constant exists to refuse.
-    expect(MATCH_RECORD_VERSION).toBe(4);
+    // soft landing this constant exists to refuse. 4 → 5 is D143's required
+    // `InPlayPokemon.attackLockedTurn` — THE SAME CASE AGAIN, on a second stamped
+    // field, and the repetition is what makes it worth pinning: two consecutive
+    // slices have each added one required turn stamp to the same interface, each
+    // would have read back plausibly, and each bumped. A third is already specced
+    // (the `takes {N} less damage` family), which is the strongest argument on
+    // record for folding the stamps into ONE installed-effects value.
+    expect(MATCH_RECORD_VERSION).toBe(5);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

@@ -640,6 +640,8 @@ function stepOp(
       return { done: preventRetreat(state, ctx, events) };
     case "preventDamage":
       return { done: preventDamage(state, op.effects === true, ctx, events) };
+    case "preventAttack":
+      return { done: preventAttack(state, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
@@ -1775,6 +1777,43 @@ function preventDamage(
   return withActive(state, ctx.seat, { ...active, attackBlock: { turn, effects: merged } });
 }
 
+/** §8/§11 (D143) — INSTALL the printed SELF-LOCK on the CONTROLLER's own Active
+    ("During your next turn, this Pokémon can't attack.", 22 printings across two
+    sentences). `preventDamage`'s sibling one function up, and written beside it on
+    purpose: same holder resolution ("this Pokémon" is `ctx.seat`'s Active, the
+    attacker), same absence of a `target` field, same no-park, same idempotence.
+
+    ⚠️ THE STAMP IS `state.turn + 2`, AND THE OFF-BY-ONE AGAINST ITS NEIGHBOUR IS
+    THE WHOLE SLICE. Declaring an attack ENDS the turn (§5.3), so the turn after
+    the installing one belongs to the OPPONENT and the one after THAT is the
+    installer's own. `preventDamage` prints "during your OPPONENT's next turn" and
+    stamps `+ 1`; this prints "during YOUR next turn" and stamps `+ 2`. Every other
+    durated printing in the pool says the opponent's, so `+ 1` is the shape a
+    session copying the neighbour would write — and it fails QUIETLY in play rather
+    than loudly: a `+ 1` lock is live only on a turn its holder could not have
+    acted on anyway, so the card's entire printed drawback silently disappears. The
+    suite drives both windows across real turn boundaries rather than asserting the
+    arithmetic, and the mutation fails 14 tests.
+
+    IDEMPOTENT, and here that is by construction rather than by care: installing
+    needs an attack, an attack ends the turn, and a locked Pokémon cannot declare
+    the attack that would re-install — so two installs are always at least two
+    turns apart and the later stamp simply replaces the earlier. The re-install
+    that IS reachable goes through §10 (retreat or switch clears the lock, the
+    Pokémon comes back and attacks again), and it writes a fresh window. The
+    early-return keeps a same-turn re-install silent rather than emitting a second
+    identical row. */
+function preventAttack(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const turn = state.turn + 2;
+  if (active.attackLockedTurn === turn) return state;
+  events.push({ type: "ATTACK_LOCKED", seat: ctx.seat, uid });
+  return withActive(state, ctx.seat, { ...active, attackLockedTurn: turn });
+}
+
 /** §11 (D142) — is an ATTACK's effect aimed at `seat`'s Active refused by that
     Pokémon's own live block, and has the refusal been announced? The ONE gate
     every defender-relative effect op consults, so the reading is written once.
@@ -1918,15 +1957,31 @@ function placeSnipe(
 ): GameState {
   if (amount <= 0) return state;
   const opponent = otherSeat(ctx.seat);
-  // The Active target — `opponentAny` only (Fezandipiti ex "Cruel Arrow"). §8.5:
-  // Weakness/Resistance apply ONLY to the Active/Defending Pokémon, so a snipe that
-  // lands on the Active goes THROUGH W/R, unlike every Bench target below. A
-  // put-counter snipe never offers the Active (its candidates are Bench-only), so
-  // this branch is reached with deals=true. `ignoreWR` (Umbreon "Feint Attack")
-  // short-circuits that W/R math and the reduction passive — see snipeActive.
+  // The Active target — `opponentAny` only (Fezandipiti ex "Cruel Arrow",
+  // Ninetales sv03-029 "Nine-Tailed Dance"). §8.5: Weakness/Resistance apply ONLY
+  // to the Active/Defending Pokémon, so a chosen HIT that lands on the Active goes
+  // THROUGH W/R, unlike every Bench target below; `ignoreWR` (Umbreon "Feint
+  // Attack") short-circuits that math and the reduction passive — see snipeActive.
+  //
+  // ⚠️ THE `!deals` ARM IS D143's, AND UNTIL THEN IT DID NOT EXIST. Every
+  // put-counter snipe in the pool was Bench-only, so this branch was reached with
+  // `deals === true` and the code said so in a comment — a guard that was an
+  // accident of the candidate sets, exactly the shape D139 → D140 caught twice.
+  // Ninetales' "1 of your opponent's POKÉMON" is the first printing that offers
+  // the Active to a PLACEMENT, and routing it through `snipeActive` would have run
+  // the full §8.5 pipeline over a placed counter — doubling it on a Weakness and
+  // cutting it on a Resistance, against this engine's standing ruling (D138/D139)
+  // that a placed counter is not attack damage. So the placement arm is
+  // `damageActive`, REUSED rather than re-implemented: that function is already
+  // "flat counters onto the opponent's Active, D142-guarded, `source` off the op",
+  // which is this arm to the byte, and the only difference is how the target was
+  // named. One reading, one implementation (D131's rule, applied to a function
+  // rather than to a field).
   let next = state;
   if (refs.some((r) => r.seat === opponent && r.spot.spot === "active")) {
-    next = snipeActive(next, amount, ignoreWR, ctx, events);
+    next = deals
+      ? snipeActive(next, amount, ignoreWR, ctx, events)
+      : damageActive(next, amount, source, ctx, events);
   }
   // Bench targets — flat (no W/R). Batched in one map so a count-N snipe (Hawlucha)
   // still lands as before.
@@ -2774,11 +2829,20 @@ export function switchInto(
   // window drags the shielded Pokémon off the Active Spot and the protection
   // goes with it. Both are effects of ATTACKS and both end here for that one
   // reason; nothing here is a §12 condition.
+  //
+  // …AND, since D143, the attack-installed SELF-LOCK, whose clear is reachable
+  // from BOTH ends of this move: the controller may Switch their own locked
+  // Pokémon out (and back in, on the same turn, with an Item — at which point it
+  // may attack, because §10 shed the effect), and the OPPONENT may drag it out
+  // with a Boss's Orders during the window, un-locking a body they were trying to
+  // keep off the board. D142's block could only ever be cleared here by the
+  // opponent; this one is also the holder's own line of play.
   const benched = {
     ...active,
     conditions: noConditions(),
     retreatBlocked: false,
     attackBlock: null,
+    attackLockedTurn: null,
   };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({

@@ -2157,7 +2157,133 @@ import type { GameState, Seat } from "./types";
     parks, clause-table rows, `BoardCondition` members, error codes, registry rows
     or redact arms; no `rng.ts`/`cardplay.ts`/`registry.ts` diff and no web/DB/
     `@luminous/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
-export const engineVersion = "0.91.0";
+/** 0.92.0 — THE SELF-LOCK: *"During your next turn, this Pokémon can't attack."*
+    — **22 printings across TWO sentences** on two anchored regexes, ONE new bare
+    `EffectOp`, ONE new turn-stamped `InPlayPokemon` field, ONE new error code and
+    `MATCH_RECORD_VERSION` **4 → 5** (D143). Taken as item 1 of D142's remainder
+    list, which is also the slice that shows what that list was for: the mechanism
+    D142 bought is reused here with no new concept at all, and the ONLY new
+    thinking is one number.
+
+    ⚠️ THE LIST SAID "2 PRINTINGS" AND THE ANSWER IS 22 — an EIGHTH consecutive
+    list carrying something wrong, and the first whose miss makes the item TEN
+    TIMES BIGGER rather than smaller. The item named Ninetales sv03-029/-199
+    "Nine-Tailed Dance" and its compound sentence; censusing that sentence's
+    NEIGHBOURHOOD as its own question (D142's own rule — a census run for one
+    purpose is a floor for every other) found that the compound's second half is
+    printed BARE, as the whole effect, on **twenty** more printings: Miraidon ex
+    ×4, Koraidon ex ×4, Dragonite VSTAR ×2, Alomomola, Clawitzer, Steelix,
+    Kilowattrel, Tinkatuff, Victini ex, Crabominable, Umbreon, Probopass, Golbat.
+    One extra `test` arm over one extra regex, and the count went from 2 to 22.
+    **D142's duration table listed "an attack lock (4 + 1)" for this
+    neighbourhood, which is the OPPONENT-side lock and the buff — the self-lock is
+    not on it at all**, because that table was built from
+    `During your opponent's next turn` and this sentence says *your*.
+
+    ⚠️ THE STAMP IS `state.turn + 2`, VERIFIED BY DRIVING IT RATHER THAN BY
+    ARGUING IT, and it is the whole slice. Declaring an attack ENDS the turn
+    (§5.3), so the turn after the installing one belongs to the OPPONENT and the
+    one after that is the installer's own: D142's block prints "during your
+    OPPONENT's next turn" and stamps `+ 1`, this prints "during YOUR next turn"
+    and stamps `+ 2`. **Every other durated printing in the pool says the
+    opponent's**, so `+ 1` is exactly what a session copying the neighbour writes
+    — and it fails QUIETLY in play, since a `+ 1` lock is live only on a turn its
+    holder could not have acted on anyway and the card's entire printed drawback
+    silently disappears. Install on turn 2 → stamp 4 → turn 3 (the opponent's) is
+    untouched → turn 4 refuses BOTH of the holder's attacks → turn 6 attacks
+    again. **Measured: `+ 1` fails 14 tests.**
+
+    ⚠️ A SECOND STAMPED FIELD, NOT A WIDENING OF THE FIRST, and the reason is that
+    the two windows are different NUMBERS on the same body.
+    `InPlayPokemon.attackLockedTurn: number | null` sits beside `attackBlock`
+    because one `turn` could hold at most one of them — asserted on a real board
+    rather than in prose: a case installs the lock for real, surgeries D142's
+    block onto the same Pokémon, and drives turn 3 (damage prevented, lock inert)
+    and turn 4 (block expired, holder refused). **Folding the lock into
+    `attackBlock.turn` fails 8 tests.** Everything ELSE is inherited unchanged:
+    the stamp convention, the read-through-`continuous.ts` shape
+    (`attackLocked`), the three §10 early clears and D124's no-defensive-undefined
+    rule.
+
+    ⚠️ IT NEEDS NO PROVENANCE CHANNEL, WHICH IS THE SHARPEST STRUCTURAL
+    DIFFERENCE FROM D142. That block had to invent `EffectContext.invokedBy`
+    because "effects of ATTACKS" is a claim about what INVOKED an effect and the
+    target cannot answer it. This field is read at `attack.ts`'s §8 gate and at
+    the HUD's payability projection, both of which are by construction about
+    declaring an ATTACK, so there is exactly one kind of thing it can refuse and
+    nothing to disambiguate. A durated effect does not automatically owe a
+    provenance — only one that gates an OP does.
+
+    ⚠️ IT GATES A DECLARATION, SO IT IS A REJECTION AND NOT AN EVENT.
+    `ATTACK_PREVENTED` (actions.ts), `RETREAT_PREVENTED`'s exact mirror: §12's
+    Asleep gate refuses the declaration while §12's Confusion flips at
+    resolution, and "can't attack" is the first kind — nothing is spent and the
+    turn does NOT end, which is the only reading a player can act on. **That in
+    turn makes the HUD projection load-bearing rather than cosmetic**:
+    `redactedAttacksOf`'s `banned` (redact.ts) and GameHud's `disabled` are the
+    only things between a locked player and a button the server refuses, so the
+    slice owes a REDACT ARM and a WEB DIFF that most in this family do not.
+    Dropping the projection line fails 1 test; dropping the gate fails 9.
+
+    ⚠️ THE §10 EARLY CLEARS ARE D142's WITH THE REACHABILITY INVERTED, and every
+    one is now a LINE OF PLAY. D142's evolve clear was unreachable by construction
+    (its window is the opponent's turn); this window is the HOLDER's own, so:
+    **evolving frees a locked Pokémon to attack the same turn** (driven end to
+    end, no surgery — the one fixture this slice invents, `fix-mola-stage1`,
+    exists for it); **retreating out and Switching back in** frees it too, three
+    legal actions on one turn; and a **Boss's Orders** un-locks a body the
+    opponent was trying to keep off the board. Each clear fails 2 tests when
+    skipped, and the three sites are SWEPT rather than listed — one case
+    encumbers a Pokémon with every §10-sheddable field and asserts all three
+    routes shed the same set, which is the thing that fails if a fourth stamped
+    field forgets one.
+
+    ⚠️ IT LOCKS THE POKÉMON, NOT THE ATTACK, and the pool prints the other reading
+    EIGHT times ("this Pokémon can't use {AttackName}" — Munkidori ex ×3, Lucario,
+    Radiant Charizard, Radiant Blastoise, Skarmory, Greedent ex). All eight stay
+    LOUD, and the difference is pinned from the inside: Alomomola's index-0 "Surf"
+    is refused by the lock its index-1 "Aqua Slash" installed.
+
+    ⚠️ AND ONE THING THE ITEM CALLED FREE WAS NOT. Sentence one of the compound —
+    "Put {N} damage counters on 1 of your opponent's Pokémon." — was priced as a
+    one-token widening of D140's anchor, and the op (`damageChosen { target:
+    "opponentAny" }`) really does exist. But **no put-counter snipe had ever
+    offered the ACTIVE**: every previous producer was Bench-only, so
+    `placeSnipe`'s Active branch assumed `deals` and ran the full §8.5 pipeline —
+    an accident of the candidate sets, documented in a comment and asserted
+    nowhere, which is the D139 → D140 shape for a THIRD time. Routing a PLACEMENT
+    through it would double the counters on a Weakness and cut them on a
+    Resistance, against this engine's standing ruling that a placed counter is not
+    attack damage (D138/D139). The fix REUSES `damageActive` rather than writing a
+    second flat-placement path — that function is already this arm to the byte,
+    D142's guard included. **Routing the placement through `snipeActive` fails 2
+    tests; setting `deals` fails 4.**
+
+    ⚠️ TWO SENTENCES, ONE ANCHOR, TWO OPS IN PRINTED ORDER —
+    `DEFENDER_POISON_CANT_RETREAT`'s shape (D125's two-consequent question, and
+    the answer is the same). Matching sentence one as a PREFIX would place the
+    counters and silently drop the drawback, shipping an attack the catalog does
+    not print, which is strictly worse than leaving the card LOUD. **Dropping the
+    second op fails 6 tests; reversing the order fails 6.** The order is also the
+    only one that reads right in a log, since sentence one can Knock the target
+    Out. Cost: 1 op member (no fields — D138's shape, with the two field warrants
+    written into its doc block), 1 op impl, 1 state field + its doc, 1
+    `continuous.ts` reader, 1 error code, 1 event, 1 log arm, 1 redact line, 1
+    GameHud line, 2 regexes, 2 deriver arms, 1 rewritten `placeSnipe` branch, 3
+    early clears, `attackLock.test.ts` (32 tests) on its own `ATTACK_LOCK_DECK`, 3
+    new fixtures (Alomomola sv01-048, Ninetales sv03-029, fix-mola-stage1), 3
+    re-pointed stays-LOUD witnesses (`counterPut`, `counterBenchPut`,
+    `counterMove`), 1 moved census (`clauseApostrophe` 38 → 40), 1 added
+    `log.test.ts` arm pin, 1 added `preventBlock.test.ts` classification row, 1
+    moved `match.test.ts` version pin, 1 moved `setup.test.ts` shape pin.
+    **Mutation-checked fourteen ways** (the three largest: `+ 1` fails 14,
+    dropping the §8 gate fails 9, sharing `attackBlock.turn` fails 8).
+    `bun run check` GREEN exit 0, **185 files / 3026 tests** (was 184 / 2993).
+    ZERO new prompts, parks, clause-table rows, `BoardCondition` members, registry
+    rows, `COUNTERS_PLACED` members or `EffectContext` fields; no
+    `rng.ts`/`cardplay.ts`/`registry.ts`/`flow.ts` diff and no DB/
+    `@luminous/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
+export const engineVersion = "0.92.0";
 
 export type {
   ApplyResult,
@@ -2207,6 +2333,7 @@ export {
 export type { DamageModifier, ParsedDamage, PokemonSuffix } from "./cards";
 export {
   attackBlockOf,
+  attackLocked,
   countAttachedEnergy,
   countEnergyInPlay,
   disabledAbilityUids,
