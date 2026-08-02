@@ -11174,15 +11174,9 @@ query, which covers the ADD half as well as the SUBTRACT half).
   §D147's three named generalisation triggers. Re-read §D147's table before
   choosing a shape; `installedReductionOf` / `installedAttackDebuffOf` are the
   template either way.
-- **The §11 CLASSIFICATION TABLE only forces a verdict, it does not check one
-  (§D148, re-measured at §D149 and STILL TRUE).** `preventBlock.test.ts`'s table is
-  total over the discovered op set and refuses to go green on an unclassified op —
-  which is real, and is how BOTH D148 and D149 got their verdicts asked — but
-  flipping one from `blocked` to `untouched` fails NOTHING. Making it a proof means
-  driving every `blocked` op under a live wide block and asserting
-  `ATTACK_EFFECT_PREVENTED` (~8 boards, most fixtures already in
-  `PREVENT_BLOCK_DECK`). Small, self-contained, and it hardens a guard five slices
-  have now leaned on.
+- ~~**The §11 CLASSIFICATION TABLE only forces a verdict, it does not check one.**~~
+  **DONE at §D150** — every verdict is now DRIVEN under a live wide block, both
+  directions, and flipping one fails. See §D150.
 - **The PER-ATTACK lock — 10 printings / 7 sentences (§D148's census).**
   Unchanged, and it is the FIFTH stamped field with a PAYLOAD, which is the case a
   union is built for. Seismitoad `sv03-052`'s durated per-attack BUFF (**+100
@@ -11209,3 +11203,111 @@ query, which covers the ADD half as well as the SUBTRACT half).
   last or not at all.
 - **BLOCKED ON INGEST, NOT ON THE ENGINE (§D146):** Iron Moth `sv06.5-009`'s
   Ancient filter and Slither Wing `sv06.5-026`'s Future bonus. Not slices.
+
+## D150 — HARDENING, NOT A CARD SLICE: the §11 classification table is a PROOF (engine 0.98.0 UNCHANGED, MATCH_RECORD_VERSION 7 UNCHANGED — TEST-ONLY, 0 engine lines)
+
+**⚠️ THIS APPEARS IN NO CENSUS, AND SAYING SO IS PART OF THE ENTRY.** It maps no
+printed sentence, adds no op, no field, no event, no error code, no registry row,
+no fixture and no deck. A future session sweeping the pool for "what is still
+unmapped" will not see it, and the §"Still unmapped after D149" list above is
+unchanged by it except for the one item it closes.
+
+### What was wrong
+`preventBlock.test.ts`'s `CLASSIFIED` table is total over the op set the deriver
+can emit and refuses to go green on an UNCLASSIFIED op — which is real, and is how
+D148 and D149 both got their verdicts asked. But it asserted only that every op HAS
+a verdict, never that the verdict is TRUE. **§D148 measured that. §D149 re-measured
+it. This slice measured it a THIRD time before touching anything** — flipping
+`weakenDefenderAttacks: "blocked"` to `"untouched"` and running the suite: **37
+tests, all green, nothing failed.** Then fixed it. The lesson is not "the table was
+weak"; it is **if a finding survives two handoffs unfixed, fix it on the third**.
+
+### The shape of the fix
+A `PROBES` table paired **1:1** with `CLASSIFIED`, asserted total in BOTH directions
+(classified-but-undriven fails; driven-but-unclassified fails). Twenty ops, one
+**constructed single-op program** each — D144's precedent, and the right call here
+because the question is per-OP while a printed attack answers for its whole program,
+and several arms have no printing at all. Each is fed straight to `runProgram` from
+P2's chair with `invokedBy: "attack"`, against a P1 Active carrying a live
+`{ turn: 3, effects: true }` block (the same `installed()` board the rest of the
+suite uses), and each carries a `landed` predicate read off the **resulting state**
+rather than off the absence of a refusal — *"nothing was prevented" is not evidence
+that anything happened*.
+
+- `blocked` → the op must NOT land **and** must show POSITIVE evidence: the
+  `ATTACK_EFFECT_PREVENTED` row (asserted whole — `seat` is the VICTIM's and `uid`
+  the shielded body, D136's finding 1) **or** a `DAMAGE_DEALT` row nulled to 0 with
+  `prevented: true`. One or the other, never neither.
+- `untouched` → the op must land in FULL, un-refused and un-nulled.
+
+**A ONE-SIDED PROOF WOULD NOT HAVE BEEN ONE.** A guard that refused EVERYTHING
+passes the `blocked` half and fails only the `untouched` half, which is exactly why
+both are driven.
+
+### The verdict that MOVED — `damageDefender`, `untouched` → `blocked`
+Sharpening the vocabulary from *"who owes the check"* to **"what a live block
+DOES"** moved an op on the spot. Its comment read *"routes into `snipeActive`, which
+IS guarded"* — a true statement about where the guard lives and the wrong answer to
+the table's question, since `snipeActive`'s `attackDamageBlocked` nulls its damage
+to 0 exactly as it nulls the main §8.5 hit. **This is the FOURTH verdict this table
+has settled (`preventAttack` at D148, `reduceDamage` at D147, `weakenDefenderAttacks`
+at D149) and the FIRST settled by a board rather than by an argument.**
+
+### The walker question, RE-ASKED rather than inherited — and D148's blindness one level out
+`walkKinds` IS now genuinely total over EffectOp nesting: `coinFlipGate.then`,
+`conditionGate.then`/`.otherwise` and `recordGate.then`/`.otherwise` are the **only**
+`EffectOp[]` positions the union admits, verified by reading `effects.ts` rather than
+trusting D148's fix. **But the SOURCE sweep was not total.** `attackOpKinds()` read
+`deriveAttackEffect` and the registry only — and **`deriveAttackCoinFlip`'s
+`programPerHeads` member (D130) carries `ops: EffectOp[]` of its own**, expanded once
+per heads by `attack.ts`. That is a whole reader the sweep never opened: D148's
+finding wearing a different hat. It is complete **by luck** today, because both
+printings (Wugtrio `sv01-057`, Gyarados `swsh10.5-022`) expand to `discardDeckTop`,
+which D142's own reading emits bare elsewhere. The arm is added — **and reported
+honestly: removing it fails NOTHING**, precisely as removing D148's `conditionGate`
+arm failed nothing. *A blind traversal cannot be pinned off the pool that hides it.*
+**Ask not only what your walker descends, but how many FUNCTIONS hand an attack a
+program. The answer is two, not one.**
+
+### The two surgeries, and why they are surgeries
+- **`spreadDamage`** needs the block on a **BENCHED** body, which **no printing can
+  produce**: the install writes the stamp onto the installer's own Active and §10
+  sheds it the moment that body leaves the spot (the Boss's Orders case in this same
+  suite drives exactly that). Stamped by hand, and said so.
+- **`damageChosen`** runs on a board whose P1 Bench is **EMPTY**, so the
+  `opponentAny` pick is FORCED onto the Active and the run completes without a park
+  — which is also the arm the §11 guard actually sits on (`damageActive`).
+
+### An engine asymmetry found and DELIBERATELY not fixed
+`placeSnipe` (interpreter.ts, ~line 2261) pushes `COUNTERS_PLACED` for
+`damageChosen`'s put-counter arm at a **BENCH** target with **no
+`attackEffectRefused` check** — where the Active arm has one, and where
+`spreadDamage` and the `deals` arm both consult `attackDamageBlocked` per benched
+body *"for the reason these sites must be TOTAL rather than case-covering"* (the
+interpreter's own words, three lines away). **Unreachable today** — a wide block can
+only ever be live on an Active — so this slice, whose constraint was test-only, left
+it and wrote it down with its line number. One line plus one probe board whenever
+someone next touches `placeSnipe`.
+
+### That the harness is pinned to the ENGINE, not to itself
+- Dropping `attackEffectRefused` from `preventRetreat` (interpreter.ts) **fails 2**.
+- One case re-drives the same board with the block **surgically removed** and asserts
+  `preventRetreat` lands — so the whole harness cannot go vacuous the day the seed
+  table drifts or the stamp arithmetic changes.
+
+### Mutation table (five verdict flips, both directions — ALL now fail)
+| mutation | before D150 | after |
+|---|---|---|
+| `weakenDefenderAttacks` blocked → untouched | 0 fail | **1 fail** |
+| `heal` untouched → blocked | 0 fail | **1 fail** |
+| `damageDefender` blocked → untouched | 0 fail | **1 fail** |
+| `preventAttack` blocked → untouched | 0 fail | **1 fail** |
+| `reduceDamage` untouched → blocked | 0 fail | **1 fail** |
+| drop the new `programPerHeads` sweep arm | — | **0 fail** (reported, not buried) |
+| drop `attackEffectRefused` from `preventRetreat` (engine) | — | **2 fail** |
+
+### Cost
+**0 engine lines.** `preventBlock.test.ts` only: **33 → 37 tests**. `engineVersion`
+stays **0.98.0** and `MATCH_RECORD_VERSION` stays **7** — said explicitly rather than
+bumped by habit, because nothing persisted moved. `bun run check` **GREEN exit 0 —
+191 files / 3228 tests** (was 191 / 3224).

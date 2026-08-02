@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState } from "./index";
+import { runProgram } from "./interpreter";
 import {
   FIXTURE_POOL,
   PREVENT_BLOCK_DECK,
@@ -734,6 +735,18 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       for (const attack of card.attacks ?? []) {
         const derived = attack.effect === undefined ? null : deriveAttackEffect(attack.effect);
         if (derived !== null) walkKinds(derived, kinds);
+        // ⚠️ THE SECOND SOURCE, ADDED AT D150 — and it is D148's finding one level
+        // out. `deriveAttackEffect` is not the only reader that hands an attack a
+        // PROGRAM: `deriveAttackCoinFlip`'s `programPerHeads` member (D130) carries
+        // `ops: EffectOp[]` of its own, run once per heads by attack.ts, and this
+        // sweep never looked at it. It is complete by luck today — both printings
+        // (Wugtrio sv01-057, Gyarados swsh10.5-022) expand to `discardDeckTop`,
+        // which D142's own reading emits bare as well — which is the SAME accident
+        // D148 found in the walker: a sweep total over what it traverses and blind
+        // to a whole traversal. The day a per-heads program carries an op no other
+        // printing emits, the table would have gone green with it unclassified.
+        const coin = attack.effect === undefined ? null : deriveAttackCoinFlip(attack.effect);
+        if (coin !== null && coin.kind === "programPerHeads") walkKinds(coin.ops, kinds);
       }
       const authored = programFor(card.id)?.attack;
       for (const ops of Object.values(authored ?? {})) walkKinds(ops, kinds);
@@ -741,12 +754,19 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     return kinds;
   }
 
-  /** The classification the §11 block owes every one of them. `blocked` = this op
-      can do something TO one of the opponent's Pokémon, so a live block must
-      refuse it (or, for damage, null it); `untouched` = it cannot, so the block
-      has no business near it. TOTAL over the discovered set, which is the point:
-      a slice that teaches the deriver a new op fails HERE until it has said which
-      side of the §11 reading that op falls on. */
+  /** The classification the §11 block owes every one of them. `blocked` = a live
+      `{ effects: true }` block on the body this op reaches STOPS it — by refusing
+      it outright (`ATTACK_EFFECT_PREVENTED`) or by nulling its damage to 0;
+      `untouched` = it lands in full, because the block has no business near it.
+      TOTAL over the discovered set, which is the point: a slice that teaches the
+      deriver a new op fails HERE until it has said which side of the §11 reading
+      that op falls on.
+
+      ⚠️ AND SINCE D150 EVERY VERDICT IS DRIVEN (see the probe table at the foot of
+      this file). Until then this was documentation sitting inside a test —
+      flipping a verdict failed NOTHING, measured at D148, re-measured at D149 and
+      measured a third time at D150 before it was fixed. A verdict here is now a
+      claim about a board, and both directions fail when flipped. */
   const CLASSIFIED: Record<string, "blocked" | "untouched"> = {
     // — reaches one of the opponent's Pokémon —
     applyStatus: "blocked", // §12 condition on the defender (the "self" arm is inert)
@@ -761,7 +781,13 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     healEach: "untouched",
     healChosen: "untouched",
     damageSelf: "untouched",
-    damageDefender: "untouched", // routes into snipeActive, which IS guarded
+    // ⚠️ MOVED AT D150, BY BEING DRIVEN — the FOURTH verdict this table has
+    // settled and the first settled by a board rather than by an argument. It
+    // read "untouched — routes into snipeActive, which IS guarded", which is a
+    // claim about who owes the CHECK; this table is about what a live block
+    // DOES, and a wide block nulls this op's damage to 0 with `prevented: true`
+    // exactly as it nulls the main §8.5 hit. Driven below.
+    damageDefender: "blocked",
     discardDeckTop: "untouched", // the opponent's DECK is not a Pokémon
     bottomFromOpponentHand: "untouched", // …nor is their hand
     coinFlipGate: "untouched", // procedure; its body is classified above
@@ -886,5 +912,314 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       for (const ability of programFor(card.id)?.abilities ?? []) walk(ability.program, "ability");
       for (const trigger of programFor(card.id)?.triggered ?? []) walk(trigger.program, "ability");
     }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // D150 — THE TABLE ABOVE IS A PROOF FROM HERE DOWN.
+  //
+  // D148 measured that the classification FORCES a verdict and never CHECKS
+  // one: flipping `blocked` to `untouched` failed nothing. D149 re-measured it
+  // and it was still true; this slice measured it a THIRD time (flipping
+  // `weakenDefenderAttacks` — 33 tests, all green) and then fixed it. Every op
+  // in the table is now DRIVEN under a live wide block, and both verdicts are
+  // load-bearing: flipping either direction fails here.
+  //
+  // ⚠️ THE VOCABULARY IS BEHAVIOURAL, AND SHARPENING IT MOVED A VERDICT.
+  // `blocked` now means "a live `{ effects: true }` block on the body this op
+  // reaches STOPS it" — either by refusing it outright (the
+  // `ATTACK_EFFECT_PREVENTED` row, seven guarded op sites) or by nulling its
+  // damage to 0 with `prevented: true` (the damage half, which needs no per-op
+  // guard). `untouched` means "it lands in full anyway". Under that reading
+  // `damageDefender` MOVED from untouched to blocked: its old comment
+  // ("routes into snipeActive, which IS guarded") was an argument about who
+  // owes the CHECK, and this table is about what a block DOES. That is the
+  // fourth verdict this table has settled and the first it settled by being
+  // driven rather than by being argued.
+  //
+  // Constructed one-op programs, not printed attacks (D144's precedent): the
+  // question is per-OP and a printed attack answers for its whole program, so
+  // one board per op with the op fed straight to `runProgram` is both sharper
+  // and total — a printing does not exist for every arm, and the arms that
+  // have one are already driven above and in the sibling suites.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** The board every probe runs on: a live WIDE block on P1's Active, P2 to
+      move on turn 3 with an Active of their own (the attacker `invokedBy`
+      resolves through), and P2's own bodies damaged so the heals have work. */
+  function probeBoard(): GameState {
+    let state = installed(HEADS_SEEDS[0], "sv03-004");
+    expect(state.players.p1.active?.attackBlock).toEqual({ turn: 3, effects: true });
+    expect(state.turn).toBe(3);
+    expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    state = setDamage(state, "p2", 30);
+    return state;
+  }
+
+  /** …and the same block stamped on a BENCHED body of P1's. NO PRINTING
+      REACHES THIS — the install writes the stamp onto the installer's own
+      Active and §10 sheds it the moment that body leaves the spot (the Boss's
+      Orders case above drives exactly that) — so the two Bench-reaching ops
+      are driven from a surgery, and said so rather than skipped. */
+  function benchBlockedBoard(): GameState {
+    const state = probeBoard();
+    const bench = state.players.p1.bench;
+    expect(bench.length).toBeGreaterThan(0);
+    return {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...state.players.p1,
+          bench: bench.map((p, i) => (i === 0 ? { ...p, attackBlock: { turn: 3, effects: true } } : p)),
+        },
+      },
+    };
+  }
+
+  type Probe = {
+    /** The op exactly as some reader emits it (or, where no printing reaches an
+        arm, the arm the op's own type admits). */
+    op: EffectOp;
+    /** The board, when the standard one will not do. */
+    board?: () => GameState;
+    /** Did the op LAND? Read off the run, not off the absence of a refusal —
+        "nothing was prevented" is not evidence that anything happened. */
+    landed: (r: { before: GameState; after: GameState; events: GameEvent[]; parked: boolean }) => boolean;
+  };
+
+  const p1Active = (s: GameState) => s.players.p1.active;
+  const p2Active = (s: GameState) => s.players.p2.active;
+
+  const PROBES: Record<string, Probe> = {
+    // — the seven ops that carry an `attackEffectRefused` check of their own —
+    applyStatus: {
+      op: { op: "applyStatus", target: "defender", status: "asleep" },
+      landed: (r) => p1Active(r.after)?.conditions.rotation === "asleep",
+    },
+    preventRetreat: {
+      op: { op: "preventRetreat" },
+      landed: (r) => p1Active(r.after)?.retreatBlocked === true,
+    },
+    damageActive: {
+      op: { op: "damageActive", amount: 30, source: "attack" },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    damageChosen: {
+      // `opponentAny` with an EMPTY opponent Bench, so the pick is forced onto
+      // the Active and the run completes without a park — the placement arm,
+      // which routes into `damageActive` (interpreter) and is therefore the arm
+      // the §11 guard sits on.
+      op: { op: "damageChosen", target: "opponentAny", amount: 30, count: 1, source: "attack" },
+      board: () => {
+        const state = probeBoard();
+        return {
+          ...state,
+          players: { ...state.players, p1: { ...state.players.p1, bench: [] } },
+        };
+      },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    moveCountersToDefender: {
+      op: { op: "moveCountersToDefender" },
+      board: () => {
+        // `setActiveFromDeck` displaces the current Active onto the Bench, which
+        // is how this board gets the benched SOURCE the printed "move" needs.
+        const state = setActiveFromDeck(probeBoard(), "p2", "fix-attacker");
+        const bench = state.players.p2.bench;
+        expect(bench.length).toBeGreaterThan(0);
+        // Exactly ONE damaged benched body, so the source pick is forced.
+        return {
+          ...state,
+          players: {
+            ...state.players,
+            p2: {
+              ...state.players.p2,
+              bench: bench.map((p, i) => (i === 0 ? { ...p, damage: 20 } : { ...p, damage: 0 })),
+            },
+          },
+        };
+      },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    discardEnergy: {
+      op: { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+      landed: (r) => (p1Active(r.after)?.energy.length ?? 0) < (p1Active(r.before)?.energy.length ?? 0),
+    },
+    preventAttack: {
+      op: { op: "preventAttack", target: "defender" },
+      landed: (r) => p1Active(r.after)?.attackLockedTurn != null,
+    },
+    weakenDefenderAttacks: {
+      op: { op: "weakenDefenderAttacks", amount: 20 },
+      landed: (r) => p1Active(r.after)?.attackDamageDebuff != null,
+    },
+    // — the two DAMAGE ops a block stops without any per-op guard: the null is
+    //   taken at the damage site, so the evidence is the row, not a refusal —
+    spreadDamage: {
+      op: { op: "spreadDamage", target: "opponentBench", amount: 20 },
+      board: benchBlockedBoard,
+      landed: (r) => (r.after.players.p1.bench[0]?.damage ?? 0) > (r.before.players.p1.bench[0]?.damage ?? 0),
+    },
+    damageDefender: {
+      // The §9.2 slot count is fed directly — the op multiplies `per` by what an
+      // earlier op recorded, and `runProgram` takes that record as an argument.
+      op: { op: "damageDefender", per: 30, count: "discarded" },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    // — and the ops a live block has no business near: every one LANDS —
+    heal: {
+      op: { op: "heal", target: "self", amount: 10 },
+      landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
+    },
+    healEach: {
+      op: { op: "healEach", amount: 10 },
+      landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
+    },
+    healChosen: {
+      // One damaged own body, so the pick is forced and the run completes.
+      op: { op: "healChosen", amount: 10 },
+      landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0) || r.parked,
+    },
+    damageSelf: {
+      op: { op: "damageSelf", amount: 10 },
+      landed: (r) => (p2Active(r.after)?.damage ?? 0) > (p2Active(r.before)?.damage ?? 0),
+    },
+    discardDeckTop: {
+      op: { op: "discardDeckTop", whose: "opponent", count: 1 },
+      landed: (r) => r.after.players.p1.deck.length < r.before.players.p1.deck.length,
+    },
+    bottomFromOpponentHand: {
+      // The opponent's HAND is not a Pokémon, so the block cannot reach it. The
+      // op parks on the pick when the hand holds a candidate and is inert when
+      // it does not; either way the run is offered rather than refused, and the
+      // PARK is the landing (the block would have to stop it in FRONT of the
+      // scan, which is exactly what `discardEnergy` two blocks up does).
+      op: { op: "bottomFromOpponentHand", filter: { kind: "supporter" } },
+      board: () => handFromDeck(probeBoard(), "p1", "sv02-172", 1),
+      landed: (r) => r.parked || r.after.players.p1.hand.length < r.before.players.p1.hand.length,
+    },
+    coinFlipGate: {
+      // A procedure: the evidence it ran is that the COIN WAS TAKEN. Its body is
+      // classified on its own line, which is what makes this the right witness
+      // rather than a weaker one about the branch.
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+      op: { op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 10 }] },
+      landed: (r) => types(r.events).includes("ATTACK_EFFECT_COIN_FLIP"),
+    },
+    conditionGate: {
+      // Both arms heal, so the branch taken does not decide the witness — the
+      // question here is whether the GATE runs at all under a live block.
+      op: {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveIsBasic" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+        then: [{ op: "heal", target: "self", amount: 10 }],
+        otherwise: [{ op: "heal", target: "self", amount: 10 }],
+      },
+      landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
+    },
+    preventDamage: {
+      op: { op: "preventDamage", effects: true },
+      landed: (r) => p2Active(r.after)?.attackBlock != null,
+    },
+    reduceDamage: {
+      op: { op: "reduceDamage", amount: 20 },
+      landed: (r) => p2Active(r.after)?.damageReduction != null,
+    },
+  };
+
+  /** One probe run: the op fed to the interpreter as an ATTACK's program, from
+      P2's chair, against P1's shielded Active. */
+  function drive(kind: string): {
+    before: GameState;
+    after: GameState;
+    events: GameEvent[];
+    parked: boolean;
+    refused: boolean;
+    nulled: boolean;
+  } {
+    const probe = PROBES[kind] as Probe;
+    const before = (probe.board ?? probeBoard)();
+    const events: GameEvent[] = [];
+    const result = runProgram(before, [probe.op], { seat: "p2", invokedBy: "attack" }, events, {
+      discarded: ["one-card"],
+    });
+    const damage = findAll(events, "DAMAGE_DEALT");
+    return {
+      before,
+      after: result.state,
+      events,
+      parked: result.kind === "parked",
+      refused: types(events).includes("ATTACK_EFFECT_PREVENTED"),
+      nulled: damage.length > 0 && damage.every((row) => row.prevented === true && row.dealt === 0),
+    };
+  }
+
+  it("has a driven probe for EVERY classified op, and no probe for anything else", () => {
+    // The pairing is what stops the hardening from rotting: a slice that teaches
+    // the deriver a new op must now write a BOARD as well as a verdict, and a
+    // probe left behind by an op the deriver stopped emitting fails here too.
+    for (const kind of Object.keys(CLASSIFIED)) {
+      expect(PROBES[kind], `classified but never driven: ${kind}`).toBeDefined();
+    }
+    for (const kind of Object.keys(PROBES)) {
+      expect(CLASSIFIED[kind], `driven but never classified: ${kind}`).toBeDefined();
+    }
+  });
+
+  it("drives every `blocked` op under a live wide block — and the block STOPS it", () => {
+    const blocked = Object.keys(CLASSIFIED).filter((k) => CLASSIFIED[k] === "blocked");
+    expect(blocked.length).toBeGreaterThanOrEqual(9);
+    for (const kind of blocked) {
+      const r = drive(kind);
+      // The op did not land…
+      expect(PROBES[kind]?.landed(r), `${kind} landed under a live wide block`).toBe(false);
+      // …and there is POSITIVE evidence of why: the refusal row, or a damage row
+      // nulled to 0 and flagged. One or the other, never neither.
+      expect(r.refused || r.nulled, `${kind} was silently inert, not blocked`).toBe(true);
+      if (r.refused) {
+        // The row names the VICTIM's seat and the shielded body (D136's finding 1).
+        expect(find(r.events, "ATTACK_EFFECT_PREVENTED")).toEqual({
+          type: "ATTACK_EFFECT_PREVENTED",
+          seat: "p1",
+          uid: activeUid(r.before, "p1"),
+        });
+      }
+    }
+  });
+
+  it("drives every `untouched` op under the SAME live block — and it lands in full", () => {
+    // The other half, and the reason a one-sided proof would not have been one:
+    // a guard that refused EVERYTHING would pass the case above and fail here.
+    const untouched = Object.keys(CLASSIFIED).filter((k) => CLASSIFIED[k] === "untouched");
+    expect(untouched.length).toBeGreaterThanOrEqual(9);
+    for (const kind of untouched) {
+      const r = drive(kind);
+      expect(PROBES[kind]?.landed(r), `${kind} did not land under a live wide block`).toBe(true);
+      expect(r.refused, `${kind} was refused by a block that has no business near it`).toBe(false);
+      expect(r.nulled, `${kind} had its damage nulled`).toBe(false);
+    }
+  });
+
+  it("the probes are driven against a block that is actually LIVE", () => {
+    // The case that stops every assertion above from going vacuous the day the
+    // seed table drifts or the stamp arithmetic changes: the same board, with
+    // the block SURGICALLY REMOVED, must let a `blocked` op through.
+    const bare = (() => {
+      const state = probeBoard();
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          // biome-ignore lint/style/noNonNullAssertion: installed() places the Active.
+          p1: { ...state.players.p1, active: { ...state.players.p1.active!, attackBlock: null } },
+        },
+      };
+    })();
+    const events: GameEvent[] = [];
+    const after = runProgram(bare, [{ op: "preventRetreat" }], { seat: "p2", invokedBy: "attack" }, events);
+    expect(types(events)).toContain("RETREAT_BLOCKED");
+    expect(types(events)).not.toContain("ATTACK_EFFECT_PREVENTED");
+    expect(after.state.players.p1.active?.retreatBlocked).toBe(true);
   });
 });
