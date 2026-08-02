@@ -332,6 +332,13 @@ export function placeEvolution(
     // counterplay against an effect they did not choose (D148's agency, on the
     // number instead of the lock).
     attackDamageDebuff: null,
+    // …and, since D152, the attack-armed RECOIL — the reduction's story two lines
+    // up rather than the debuff's, and for the same arithmetic: its window is the
+    // OPPONENT's next turn, during which the holder's controller cannot evolve
+    // anything, so no legal sequence puts an evolution between the arming and the
+    // expiry. Written anyway (§10 sheds the effects of ATTACKS and this is one)
+    // and pinned by a surgery.
+    installedRecoil: null,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -405,6 +412,13 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // one). FIVE durated effects on one clear, and this is the fifth distinct
     // reachability story — which is why the clear-set is SWEPT and not listed.
     attackDamageDebuff: null,
+    // D152 — the armed recoil, whose story here is the REDUCTION's: the window is
+    // the opponent's turn, so the RETREAT half is unreachable inside it (the
+    // holder's controller cannot retreat on someone else's turn) and the FORCED
+    // half (`switchInto`) is exactly where it bites. SIX durated effects on one
+    // clear, FIVE distinct reachability stories — which is why the clear-set is
+    // SWEPT and not listed.
+    installedRecoil: null,
   };
 }
 

@@ -2566,6 +2566,50 @@ export const FIXTURE_POOL: Record<string, Card> = {
       declares it (this slice exercises only the attack), the same reason the
       attacher fixtures above omit an unexercised printed field rather than claim a
       verbatim card while quietly dropping one. */
+  /** Lycanroc ex (sv02-117 Double rare / sv02-241 Special illustration rare, D152)
+      — the §9 recoil family's attack-INSTALLED member and the only card that arms
+      one. "Scary Fangs" ({F}{C}{C}, printed 140, attack INDEX 1) prints
+
+        "During your opponent's next turn, if this Pokémon is damaged by an attack
+         (even if it is Knocked Out), put 10 damage counters on the Attacking
+         Pokémon."
+
+      — the durated twin of Counterattack Quills / Custom Trap / Rocky Helmet, and
+      the amount is COUNTERS (10 → 100 HP, converted at the deriver).
+
+      Index-0 "Rock Throw" ({F}, 40, no effect) is the plain declaration the suite
+      uses when it needs Lycanroc to attack WITHOUT arming anything — which is the
+      only way to drive the window's expiry off a printed line.
+
+      Fielded by surgery (`setActiveFromDeck`): a Stage 1 from Rockruff, which this
+      pool does not carry, and no test in this family evolves INTO it. Verbatim vs
+      the local D1 catalog (2026-08-02, 978 cards): 260 HP, Stage1 from Rockruff,
+      Fighting, retreat 2, ×2 Grass, NO Resistance and NO printed Ability — checked
+      FIELD BY FIELD against the row rather than only on the fields carried, which
+      is D151's rule after 40 pool fixtures turned out to be missing a printed
+      Ability or attack. Only ONE of the two printings is fielded: the pair is one
+      attack in two rarities, so the second id would be a byte-identical duplicate
+      and the suite asserts the deriver's program is the same for the string
+      instead. */
+  "sv02-117": battler("sv02-117", {
+    name: "Lycanroc ex",
+    hp: 260,
+    stage: "Stage1",
+    evolveFrom: "Rockruff",
+    types: ["Fighting"],
+    retreat: 2,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      { cost: ["Fighting"], name: "Rock Throw", damage: 40 },
+      {
+        cost: ["Fighting", "Colorless", "Colorless"],
+        name: "Scary Fangs",
+        damage: 140,
+        effect:
+          "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put 10 damage counters on the Attacking Pokémon.",
+      },
+    ],
+  }),
   "sv06.5-039": battler("sv06.5-039", {
     name: "Pecharunt ex",
     hp: 190,
@@ -8009,6 +8053,50 @@ export const PRESSURE_DECK = deckOf({
   "fix-fighting-energy": 5, // {F} — Land Scoop's three
   "fix-lightning-energy": 3, // {L} — Pika Bolt's typed half
   "fix-water-energy": 3, // {W} — Surf's typed half
+});
+
+/** D152 — the attack-ARMED §9 recoil, on its own 60 rather than inside
+    `COUNTERATTACK_DECK`: that deck's boards are seeded and adding a card would
+    reshuffle every one of them, so D141's suite stays byte-identical.
+
+    Lycanroc ex sv02-117 is the only ARMER ("Scary Fangs" idx 1, 10 counters;
+    "Rock Throw" idx 0 is its un-arming declaration). Everything else is a body
+    chosen to reach one side of the sum or one end of the lifetime:
+      • fix-attacker — "Bite" ({C}, 30) is the P1 swing the recoil answers, and its
+        120 HP is EXACTLY the armed 100 plus Rocky Helmet's 20, so the summed
+        retaliation is lethal on the nose and the KO/prize half is driven with no
+        arithmetic to arrange.
+      • sv01-193 Rocky Helmet — the CATALOG half of the sum, worn by the armed
+        Lycanroc: one row, two provenances, D141's judgement re-run with an attack
+        in it.
+      • sv01-005 Cacnea — "Counterattack Quills" (3 counters), the always-on
+        control: the same clause with the duration removed, so the suite can show
+        the two halves are the same number at the same site.
+      • sv02-062 Pikachu — "Growl" idx 0 has NO PRINTED DAMAGE, which is the OUTER
+        `dealt > 0` boundary reachable off a printed line (the §8.5 branch is never
+        entered, so no recoil and the stamp survives untouched).
+      • sv02-172 Boss's Orders — the opponent's route into the §10 leave-Active
+        clear, and the ONLY player who can move the armed body inside the window
+        (it is their turn).
+      • sv01-194 Switch — the holder's own route, unreachable INSIDE the window and
+        driven outside it as the control.
+    fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and promote
+    target. ⚠️ NO GRASS ATTACKER IN THE DECK ON PURPOSE: Lycanroc ex is ×2 Grass,
+    and every board here wants the recoil arithmetic isolated from §8.5's. */
+export const INSTALLED_RECOIL_DECK = deckOf({
+  "sv02-117": 3, // Lycanroc ex — "Scary Fangs" idx 1 (the armer), "Rock Throw" idx 0
+  "fix-attacker": 4, // "Bite" ({C}, 30); 120 HP = the armed 100 + Rocky Helmet's 20
+  "sv01-193": 2, // Rocky Helmet (Tool) — the CATALOG half of the §9 sum
+  "sv01-005": 2, // Cacnea — Counterattack Quills (3 counters), the always-on control
+  "sv02-062": 2, // Pikachu — "Growl" idx 0 (no printed damage): the outer gate
+  "sv02-172": 2, // Boss's Orders — the opponent's §10 leave-Active route
+  "sv01-194": 2, // Switch (Item) — the holder's own route, outside the window
+  "sv01-048": 2, // Alomomola — a real pre-evolution, for the §10 EVOLVE clear
+  "fix-mola-stage1": 2, // …and what it evolves into (D148's pair, reused)
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-energy": 28, // Colorless — every {C} slot in the deck
+  "fix-fighting-energy": 6, // {F} — Scary Fangs's and Rock Throw's typed half
+  "fix-lightning-energy": 2, // {L} — Pika Bolt's typed half
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

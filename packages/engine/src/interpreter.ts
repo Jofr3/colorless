@@ -663,6 +663,8 @@ function stepOp(
       return { done: reduceDamage(state, op.amount, ctx, events) };
     case "weakenDefenderAttacks":
       return { done: weakenDefenderAttacks(state, op.amount, ctx, events) };
+    case "installRecoil":
+      return { done: installRecoil(state, op.amount, ctx, events) };
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
@@ -2031,6 +2033,65 @@ function weakenDefenderAttacks(
   return withActive(state, seat, { ...active, attackDamageDebuff: { turn, amount: merged } });
 }
 
+/** §9/§11 (D152) — ARM the printed REACTIVE RECOIL on the CONTROLLER's own Active
+    ("During your opponent's next turn, if this Pokémon is damaged by an attack
+    (even if it is Knocked Out), put 10 damage counters on the Attacking Pokémon.",
+    2 printings of one sentence — Lycanroc ex sv02-117/-241 "Scary Fangs").
+
+    `reduceDamage`'s SIBLING rather than `weakenDefenderAttacks`'s mirror, and
+    written beneath the pair on purpose so all three read as one design:
+
+    | | `reduceDamage` (D147) | `weakenDefenderAttacks` (D149) | this (D152) |
+    |---|---|---|---|
+    | Holder  | `ctx.seat`'s Active | `otherSeat(ctx.seat)`'s Active | `ctx.seat`'s Active |
+    | Stamp   | `state.turn + 1`    | `state.turn + 1`               | `state.turn + 1`    |
+    | Read at | §8.5, subtracted    | §8.5, subtracted               | §9, ADDED           |
+    | §11-refusable | no (own body) | **YES** (opponent's body)      | no (own body)       |
+
+    THE STAMP IS `state.turn + 1` FOR `reduceDamage`'s REASON VERBATIM — the
+    sentence prints "during your OPPONENT's next turn", declaring an attack ENDS
+    the turn (§5.3), so the turn after the installing one is the opponent's by
+    construction. It is the same NUMBER `attackBlock.turn` and `damageReduction.turn`
+    carry, which is why these windows can be driven apart only by what they DO.
+
+    ⚠️ NO `attackEffectRefused` CHECK, AND THAT IS `reduceDamage`'s VERDICT AND NOT
+    AN OMISSION. The record lands on the ACTOR's own Active, so there is no
+    opponent-side body a §11 "prevent all effects of attacks done to this Pokémon"
+    could be protecting from it. The §11 classification table (preventBlock.test.ts)
+    carries the verdict AND a board that drives it, which is D150's rule: a slice
+    that teaches the deriver a new op owes both.
+
+    ⚠️ IDEMPOTENT BY `Math.max`, WHICH IS `reduceDamage`'s RULE ON ITS OWN SEAT —
+    *a second installation may never leave the holder with less than one of them
+    printed*, so for a number that is MAX. A SUM would be the other reading and is
+    refused for the same reason: this field holds ONE installation with ONE window,
+    so summing would make the stored number depend on how many times the record was
+    written rather than on what was printed. (Note the CONTRAST one file over: the
+    §9 read site really does SUM this stamp with `passivesOf`'s catalog fold,
+    because those are two different card effects from two different sources. One
+    field, one installation, MAX; two sources, SUM.) Unreachable off any printing
+    (one attack per turn, and no card prints two of these), so it is constructed
+    and pinned. The row is suppressed when the merge says nothing new, exactly as
+    the two above (D140/D142/D146). */
+function installRecoil(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const turn = state.turn + 1;
+  const existing = active.installedRecoil;
+  const stacking = existing !== null && existing.turn === turn;
+  const merged = stacking ? Math.max(existing.amount, amount) : amount;
+  if (stacking && merged === existing.amount) return state;
+  events.push({ type: "RECOIL_ARMED", seat: ctx.seat, uid, amount: merged });
+  return withActive(state, ctx.seat, { ...active, installedRecoil: { turn, amount: merged } });
+}
+
 /** §11 (D142) — is an ATTACK's effect aimed at `seat`'s Active refused by that
     Pokémon's own live block, and has the refusal been announced? The ONE gate
     every defender-relative effect op consults, so the reading is written once.
@@ -3184,6 +3245,13 @@ export function switchInto(
     // off the spot and the debuff with it, and so does the opponent dragging it up
     // from the Bench. FIVE durated effects, FIVE reachability stories, one clear.
     attackDamageDebuff: null,
+    // D152 — and the armed RECOIL's story here is D147's rather than D149's: the
+    // window is the OPPONENT's turn, so the only player who can move the body
+    // inside it is the opponent — a Boss's Orders played on that very turn drags
+    // the armed Pokémon off the spot and the trap goes with it, which is the
+    // sharpest available witness that the clear is real (the very next hit draws
+    // no counters). SIX durated effects, FIVE reachability stories, one clear.
+    installedRecoil: null,
   };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({

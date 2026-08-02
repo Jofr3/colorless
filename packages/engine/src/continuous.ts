@@ -418,6 +418,59 @@ export function installedAttackDebuffOf(state: GameState, pokemon: InPlayPokemon
   return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
 }
 
+/** §9/§11 (D152) — the HP an attack-installed REACTIVE RECOIL puts on whatever
+    damages `pokemon` right now, or 0. The ONE read of
+    `InPlayPokemon.installedRecoil`, and `installedReductionOf`'s SIBLING on every
+    axis but the read SITE:
+
+    | | `installedReductionOf` (D147) | this (D152) |
+    |---|---|---|
+    | Installed on | the installer's own Active | the installer's own Active |
+    | Window       | `state.turn + 1`           | `state.turn + 1`            |
+    | Read at      | §8.5 step 5, SUBTRACTED    | §9 recoil, ADDED            |
+    | Catalog twin | `damageReductionAfterWR`   | `damageAttacker`            |
+
+    Everything else is identical, deliberately: the field holds a turn STAMP, so
+    the recoil is armed iff that stamp is the turn now being played, and one whose
+    window has passed simply stops answering without anyone having cleared it
+    (D124's rule).
+
+    ⚠️ IT RETURNS A NUMBER TO BE SUMMED, NOT A RECORD TO BE INSPECTED, and the
+    number it is summed into is one FOUR always-on printings already feed. Cacnea
+    sv01-005 / Cacturne sv01-006 "Counterattack Quills" (3 counters), Stunfisk
+    sv03-112 "Custom Trap" (5, `requiresTool`) and Rocky Helmet sv01-193 (2, a
+    TOOL) print this mechanism with the four-word duration prefix removed and the
+    "if this Pokémon is damaged" clause spelled as an Active-Spot condition; all
+    four are `PassiveEffects.damageAttacker`, folded by `passivesOf`. So attack.ts
+    ADDS this to that fold rather than consulting a second channel: same site, same
+    `dealt > 0` gate, same `"counterattack"` label, ONE event.
+
+    ⚠️ IT IS NOT FOLDED INTO `passivesOf`, for `installedReductionOf`'s TWO
+    STRUCTURAL REASONS VERBATIM. That function is the CATALOG scan — a printed
+    passive plus attached Tools — which is the aura/installation distinction
+    `attackBlockOf`'s doc block draws; and it SUPPRESSES a holder's own printed
+    passive under a §9 Ability-lock aura, which an attack-installed effect must be
+    immune to, because an installation is not an Ability. Summing at the site keeps
+    that immunity a property of where the number comes from. ⚠️ AND HERE THAT
+    IMMUNITY IS SHARPER THAN ANYWHERE ELSE IN THE FAMILY, because the fold it is
+    summed with is the ONE `passivesOf` member a lock can zero while leaving a Tool
+    behind: a locked Lycanroc ex wearing Rocky Helmet still retaliates for the
+    installed 100 plus the Tool's 20, and only a printed Ability's share is lost.
+
+    IT NEEDS NO PROVENANCE CHANNEL, for `installedReductionOf`'s reason: the number
+    is summed at a site the ALWAYS-ON printings already contribute to with no such
+    check, so adding one would make the SAME printed words mean two different
+    things depending on whether they carry a duration. (Checked rather than
+    assumed: the §9 recoil site is in `attack.ts` and is reached only by an attack
+    — no Ability or Trainer path damages an Active through it.) */
+export function installedRecoilOf(state: GameState, pokemon: InPlayPokemon): number {
+  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
+  // field is REQUIRED and a record written before it existed is retired by
+  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
+  const installed = pokemon.installedRecoil;
+  return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
+}
+
 /** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now
     ("During your next turn, this Pokémon can't attack.")? The ONE read of
     `InPlayPokemon.attackLockedTurn`, and `attackBlockOf`'s sibling in every

@@ -377,17 +377,19 @@ describe("the family this label must still cover — three printings, none an Ab
     expect(programFor("sv03-197")).toBeUndefined();
   });
 
-  it("Lycanroc ex sv02-117/-241 'Scary Fangs' — an ATTACK-installed recoil, loud", () => {
-    // "During your opponent's next turn, if this Pokémon is damaged by an attack
-    // (even if it is Knocked Out), put 10 damage counters on the Attacking
-    // Pokémon." A §11 block with a DURATION — no reader, and no `damageAttacker`
-    // in sight. Pinned LOUD so the day it derives, this file notices.
-    expect(programFor("sv02-117")).toBeUndefined();
+  it("Lycanroc ex sv02-117/-241 'Scary Fangs' — LANDED at D152, and it joins THIS label", () => {
+    // ⚠️ THE WITNESS RE-POINTED RATHER THAN DELETED, which is what makes it worth
+    // having had. Until D152 this case asserted the sentence derived to NOTHING.
+    // It now derives to `installRecoil` — a stamp on the holder's own body, summed
+    // into `passivesOf().damageAttacker` at the very site above — and the claim the
+    // file is really making is the one D141 staked: a THIRD kind of card
+    // (an ATTACK) now feeds this row and it STILL needs no new `source` member.
+    expect(programFor("sv02-117")).toBeUndefined(); // no registry row: it derives from the TEXT
     expect(
       deriveAttackEffect(
         "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put 10 damage counters on the Attacking Pokémon.",
       ),
-    ).toBeNull();
+    ).toEqual([{ op: "installRecoil", amount: 100 }]);
   });
 
   it("Mabosstiff sv02-143 'Comeuppance' — the same, with the amount read off the hit", () => {

@@ -341,7 +341,18 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // `InPlayPokemon`", and D148 is the control that shows the difference. D149 is
     // also the FOURTH stamped field, which per D147's own written trigger is NOT
     // grounds to re-open the generalisation (the fifth is). See D149.
-    expect(MATCH_RECORD_VERSION).toBe(7);
+    //
+    // 7 → 8 is D152's required `InPlayPokemon.installedRecoil` — THE SAME CASE A
+    // FIFTH TIME, with D151 as a SECOND control in between (its always-on aura put
+    // its flag on the CATALOG and moved no state key, so it did not bump). D152 is
+    // the FIFTH stamped field, so D147's own count trigger FIRES — and the
+    // generalisation was re-derived rather than cited and DECLINED again, on a
+    // ground that retires counting: three of the five fields are SOURCES feeding an
+    // aggregate whose other source is the catalog, so their read sites ADD a term
+    // rather than look an effect up, and a union would group by where the datum is
+    // STORED — the one axis no read site asks about. What earns it is a member the
+    // read site must DISPATCH on. See D152.
+    expect(MATCH_RECORD_VERSION).toBe(8);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

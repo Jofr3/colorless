@@ -3101,7 +3101,83 @@ import type { GameState, Seat } from "./types";
     clause, the TARGET Active clause, the `spreadDamage` term, and each direction
     of the `ignoreWR` reading. `bun run check` GREEN exit 0, **192 files / 3247
     tests** (was 191 / 3228). */
-export const engineVersion = "0.99.0";
+/** 0.100.0 — P3-M5 long tail (**D152**): the **ATTACK-INSTALLED REACTIVE
+    RECOIL**, the §9 family's durated member and the LAST slice of a sixteen-slice
+    one-day run (D137–D152).
+
+      "During your opponent's next turn, if this Pokémon is damaged by an attack
+       (even if it is Knocked Out), put 10 damage counters on the Attacking
+       Pokémon."                        (Lycanroc ex sv02-117/-241 "Scary Fangs")
+
+    ⚠️ **0.100.0 AND NOT 1.0.0.** The series is a slice counter, not a release
+    train; nothing about this slice makes the engine a 1.0, so the minor keeps
+    counting.
+
+    **2 printings, RE-QUERIED rather than inherited.** Every claim on the resume
+    item held to the byte: `sv02-117`/`sv02-241` really are **Lycanroc ex**, the
+    attack really is **"Scary Fangs"** at **INDEX 1** on BOTH printings, {F}{C}{C},
+    printed 140, and the effect string matches the local D1 (2026-08-02, 978 cards)
+    character for character. The §9 census was re-run as its OWN question rather
+    than inherited from §D141: "…damage counters on the Attacking Pokémon" returns
+    **8 rows** — 4 always-on printings already simulated (Cacnea sv01-005 / Cacturne
+    sv01-006 3 counters, Stunfisk sv03-112 5 `requiresTool`, Rocky Helmet sv01-193
+    2), these 2, plus Vengeful Punch sv03-197 and Mabosstiff sv02-143, both
+    deliberately OUT of scope and still LOUD.
+
+    ⚠️ **IT IS `installedReductionOf`'s SIBLING, NOT ITS MIRROR, AND THE READ SITE
+    IS THE ONLY THING THAT DIFFERS.** Same holder (the actor's own Active), same
+    `state.turn + 1` window, same `{ turn, amount }` record, same `Math.max` merge,
+    same three §10 clears, same no-`attackEffectRefused` verdict. What differs is
+    which number the stamp feeds: D147's is subtracted at §8.5 step 5, this one is
+    ADDED at the §9 reactive recoil — the site that has summed
+    `passivesOf().damageAttacker` since 0.x. One `+` term, one line.
+
+    ⚠️ **THE SUM IS D141's JUDGEMENT RE-RUN WITH A THIRD PROVENANCE, AND IT SURVIVES
+    UNCHANGED.** D141 refused a provenance label on `COUNTERS_PLACED` because
+    `passivesOf` folds a holder's Ability and every attached Tool into one number.
+    An attack-installed half now joins that fold: a Lycanroc ex carrying 100 and
+    wearing Rocky Helmet retaliates for **120 in ONE row** labelled
+    `"counterattack"`. **No new `COUNTERS_PLACED` member**, which is the test of
+    whether the mechanism axis was right — and the §9 Ability-lock makes the two
+    halves observably different on one board (a locked holder keeps the installed
+    100 and the Tool's 20 and loses only a printed Ability's share).
+
+    ⚠️ **THE `dealt > 0` BOUNDARY IS D149's AND IT IS DRIVEN FROM BOTH SIDES.** The
+    recoil fires on damage DEALT, not on damage attempted, so a hit clamped to 0 by
+    a debuff, nulled by a §11 block or reduced to 0 draws nothing — and the armed
+    stamp is still there for the next hit that gets through.
+
+    ⚠️ **THE FIFTH STAMPED FIELD, SO §D147's COUNT TRIGGER FIRES — AND THE UNION IS
+    DECLINED AGAIN, ON A GROUND THAT RETIRES COUNTING.** Three of the five fields
+    are now SOURCES feeding an aggregate whose other source is the CATALOG
+    (`damageReduction`→`passivesOf().damageReductionAfterWR`,
+    `attackDamageDebuff`→beside `opposingAttackDebuff`,
+    `installedRecoil`→`passivesOf().damageAttacker`). Their read sites do not look
+    the effect up; they ADD one term. A union over `InPlayPokemon` would group by
+    WHERE THE DATUM IS STORED — the one axis no read site asks about — and would
+    replace five compiler-checked field accesses with five list searches it cannot
+    check. What earns the union is a member the read site must DISPATCH on, which
+    is the per-attack lock's `{ turn, attackIndex }` and not a fifth number. Full
+    argument in decisions.md D152.
+
+    ⚠️ **PARK? NO. MRV 7 → 8, THE SIXTH TIME ON D124's TRIGGER.**
+    `InPlayPokemon.installedRecoil` is a REQUIRED key on a persisted shape.
+    `installRecoil` never parks. **VOICE?** Two answers: `RECOIL_ARMED` is
+    ACTOR-voiced (its op has no defender arm, so `DAMAGE_REDUCTION_APPLIED`'s
+    reason applies and the PRINTED "during your opponent's next turn" is honest
+    under this seat, where D149's row could not carry it); the recoil row itself
+    stays SYSTEM-voiced, D141's answer re-checked and still true — `seat` is the
+    attacker's, the causer is the defender, and an installation does not change
+    who caused what.
+
+    Cost: **1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1
+    deriver arm, 1 reader, 1 event, 1 log row, 3 §10 clears, 1 one-term read
+    site** — no new `COUNTERS_PLACED` member, no park, no error code, no prompt,
+    no redact arm, no projection, no registry row and no web/DB/`@luminous/schema`
+    diff. 1 fixture ADDED (Lycanroc ex, verbatim vs the D1), 1 new deck
+    (`INSTALLED_RECOIL_DECK`), `installedRecoil.test.ts`, 1 re-pointed stays-LOUD
+    witness in `counterattack.test.ts` (none deleted). */
+export const engineVersion = "0.100.0";
 
 export type {
   ApplyResult,

@@ -298,6 +298,35 @@ export type GameEvent =
       own since Bouffalant "Bouffer" (D140/D146: loudness is owed to UNREAD TEXT,
       not to a read rule doing its job). */
   | { type: "ATTACK_DEBUFF_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** §9/§11 (D152) — an attack ARMED a durated REACTIVE RECOIL on the
+      CONTROLLER's own Active ("During your opponent's next turn, if this Pokémon
+      is damaged by an attack (even if it is Knocked Out), put 10 damage counters
+      on the Attacking Pokémon."). `amount` is the HP that will land on whatever
+      damages this Pokémon next turn — HP, not counters, because every consumer
+      downstream speaks HP and the deriver converted once (effects.ts) — and it is
+      on the row for DAMAGE_REDUCTION_APPLIED's reason verbatim: the number IS the
+      rule. It is the MERGED number, not the printed one.
+
+      `seat` OWNS THE ARMED POKÉMON (D136's finding 1) and here that is the
+      ACTOR's own, exactly as ATTACK_BLOCK_APPLIED's and
+      DAMAGE_REDUCTION_APPLIED's are — the op has no defender arm. So the row is
+      ACTIVE-voiced and may safely carry the printed "during your opponent's next
+      turn", which is the wording D149 could NOT copy because its row renders
+      under the victim's name (see log.ts).
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — being Switched out, evolving — are already told by their own
+      POKEMON_SWITCHED / POKEMON_EVOLVED row.
+
+      ⚠️ AND NO ROW OF ITS OWN WHEN IT FIRES, WHICH IS THE STRONGEST CASE THIS
+      FAMILY HAS MADE FOR THE RULE. The recoil that actually lands is reported by
+      COUNTERS_PLACED `source: "counterattack"` — D141's MECHANISM label — and
+      that row CANNOT be split by provenance, because `passivesOf`'s catalog fold
+      and this installation are SUMMED into one number before the site sees it
+      (attack.ts §9). A second row here, or a member on that one, would be a claim
+      about which card supplied HP that no longer exists as a distinction. */
+  | { type: "RECOIL_ARMED"; seat: Seat; uid: string; amount: number }
   /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
       damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
       at. One row per refused op, so Poison Ring's two clauses produce two.

@@ -432,6 +432,31 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(`'s attacks do ${event.amount} less damage next turn`),
       ]);
+    // §9/§11 — the attack-armed REACTIVE RECOIL (D152). ACTIVE voice for
+    // DAMAGE_REDUCTION_APPLIED's reason verbatim: `seat` owns the armed Pokémon
+    // AND that Pokémon is the actor's own (the op has no defender arm), so the
+    // PRINTED "during your opponent's next turn" is honest here in a way it was
+    // not one case up — that row renders under the VICTIM's name and had to say
+    // "next turn" instead. Same family, same words, opposite answer, and the
+    // difference is which seat the row is filed under.
+    //
+    // ⚠️ THE UNIT IS THE ONE THE PLAYER WILL SEE, NOT THE ONE THE CARD PRINTS.
+    // The sentence says "10 damage counters" and this row says 100 damage,
+    // because the COUNTERS_PLACED row it sets up on the next turn says 100 too —
+    // a reader told "10" and then shown "100" cannot check the arithmetic they
+    // are being shown, which is the very reason DAMAGE_REDUCTION_APPLIED puts its
+    // number in the wording at all.
+    //
+    // The verb names the MECHANISM ("counterattack"), matching D141's
+    // COUNTERS_PLACED label, so the arming row and the row it eventually produces
+    // use the same word for the same thing.
+    case "RECOIL_ARMED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` will counterattack for ${event.amount} damage during your opponent's next turn`,
+        ),
+      ]);
     case "ATTACK_EFFECT_PREVENTED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

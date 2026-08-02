@@ -275,6 +275,10 @@ describe("placement", () => {
       // here first.
       damageReduction: null,
       attackDamageDebuff: null,
+      // …and no ARMED recoil (D152), read the same way a fifth time:
+      // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body
+      // retaliates for nothing rather than retaliating on turn 0.
+      installedRecoil: null,
       markers: [],
       turnPlayed: 0,
       // Placed Active from the HAND, which is not a move from the Bench — the

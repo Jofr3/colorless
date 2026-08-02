@@ -743,6 +743,34 @@ export type EffectOp =
       (installing twice in one turn keeps the LARGER number — the interpreter says
       why MAX and not a sum, `reduceDamage`'s argument on the other seat). */
   | { op: "weakenDefenderAttacks"; amount: number }
+  /** §9/§11 (D152) — ARM a durated REACTIVE RECOIL on the controller's own Active
+      ("During your opponent's next turn, if this Pokémon is damaged by an attack
+      (even if it is Knocked Out), put 10 damage counters on the Attacking
+      Pokémon." — 2 printings, Lycanroc ex sv02-117/-241 "Scary Fangs").
+
+      `reduceDamage`'s SIBLING and not its mirror: same holder ("this Pokémon"),
+      same `state.turn + 1` window, same absence of a `target` field, same no-park,
+      same `Math.max` idempotence. The one difference is which number the stamp
+      feeds — that one is subtracted at §8.5 step 5, this one is added at the §9
+      reactive recoil, the site that already sums `passivesOf().damageAttacker`.
+
+      ⚠️ `amount` IS HP, NOT COUNTERS. The printed sentence says "10 damage
+      counters"; the deriver multiplies by 10 once (effects.ts
+      `SELF_INSTALLED_RECOIL`) so this op speaks the same unit as the registry's
+      four always-on printings of the same clause, which is what makes the two
+      halves summable at one read site instead of two.
+
+      ⚠️ IT NEEDS NO CONDITION FIELD FOR "if this Pokémon is damaged by an attack".
+      That clause is not a gate the op evaluates — it is the description of the
+      READ SITE, which fires on `dealt > 0` and has done since 0.x for Counterattack
+      Quills. An op field would be a second spelling of a condition the site owns.
+
+      Placed AFTER the damage like every other durated rider in this family — the
+      whole effect is in the future, so nothing about it needs to precede the §8.5
+      pipeline. Never parks, consumes no rng, refusable by no §11 block (it writes
+      to the actor's own body — `reduceDamage`'s verdict verbatim, and the §11
+      classification table drives it). */
+  | { op: "installRecoil"; amount: number }
   /** §8/§11 (D143, widened D148) — LOCK a Pokémon out of attacking on ITS OWN
       controller's NEXT turn. Four printed sentences, on both sides of the table:
 
@@ -2333,6 +2361,48 @@ const DEFENDER_ATTACKS_WEAKENED =
   /^During your opponent['’]s next turn, the Defending Pokémon['’]s attacks do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
 const ATTACKS_BY_DEFENDER_WEAKENED =
   /^During your opponent['’]s next turn, attacks used by the Defending Pokémon do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
+// The DURATED REACTIVE RECOIL (D152) — the §9 family's attack-INSTALLED member,
+// and `SELF_DAMAGE_REDUCTION`'s sibling on the other side of the damage step:
+//
+//   "During your opponent's next turn, if this Pokémon is damaged by an attack
+//    (even if it is Knocked Out), put 10 damage counters on the Attacking
+//    Pokémon."
+//
+// TWO printings on ONE anchor at ONE amount (local D1, 2026-08-02, 978 cards,
+// whole effect string, checked PER PRINTING — ids, NAMES, costs, printed damage
+// and INDEX, D144's rule extended to NAMES by D146):
+//
+//   10 counters — Lycanroc ex sv02-117 (Double rare) / sv02-241 (Special
+//                 illustration rare) "Scary Fangs" ({F}{C}{C}, 140, INDEX 1)
+//
+// One attack in two rarities, so D121's second-printing warrant is met by the
+// card rather than by a family count.
+//
+// ⚠️ THE CAPTURE IS IN DAMAGE COUNTERS AND THE OP CARRIES HP, converted once here
+// (`× 10`). Every other anchor in this tail captures HP directly because every
+// other printed sentence says "damage"; this family says "damage counters", which
+// is the pool's other unit (§8.5 — a counter is 10 HP). The registry's four
+// always-on printings already store HP for the same printed clause
+// (`damageAttacker: { amount: 30 }` for Cacnea's THREE counters), so converting
+// at the deriver is what makes the two halves summable at all.
+//
+// ⚠️ "(even if it is Knocked Out)" IS INSIDE THE ANCHOR AND NEEDS NO OP FIELD.
+// It is the printed restatement of an ordering the §9 site has had since 0.x —
+// the recoil runs before finishAttack's §8.1 sweep — so a reader that dropped the
+// words would still be right and a reader that captured them would carry a field
+// nothing reads. It stays in the pattern because a whole-sentence anchor is the
+// family's safety property (an unrecognised remainder stays LOUD), not because
+// anything downstream consumes it.
+//
+// ⚠️ AND THE NEIGHBOURING SENTENCE IS DELIBERATELY LEFT LOUD. Mabosstiff sv02-143
+// "Comeuppance" prints this sentence with "10 damage counters" replaced by
+// "damage counters … equal to the damage done to this Pokémon" — the same
+// duration, the same body, the same read site, and an AMOUNT this anchor's
+// `(\d+)` structurally cannot admit, because it is not a number but a channel
+// from the §8.5 result (the resume point's item 5). `^…$` refuses it in both
+// directions and counterattack.test.ts pins it still-null.
+const SELF_INSTALLED_RECOIL =
+  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if it is Knocked Out\), put (\d+) damage counters on the Attacking Pokémon\.$/;
 // The COUNTER MOVE (D138) — "Move all damage counters from 1 of your Benched
 // Pokémon to your opponent's Active Pokémon.", the whole printed effect. TWO
 // printings, both Dedenne ex "Tail Swap" (sv02-093 Double rare / sv02-239 Ultra
@@ -4451,6 +4521,31 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // damage" would install a record that changes no arithmetic anywhere and emit
     // a row announcing a drawback that does not exist. Leave it LOUD.
     if (amount >= 1) return [{ op: "weakenDefenderAttacks", amount }];
+  }
+  // 19g. The DURATED REACTIVE RECOIL (D152) — 2 printings on ONE anchor at ONE
+  //      amount, and the §9 family's first attack-INSTALLED member. An `exec`
+  //      rather than a `test`, and the ONLY capture is the counter count: the
+  //      duration is the printed words "during your opponent's next turn", the
+  //      holder is the printed words "this Pokémon", and the trigger is the
+  //      printed words "if this Pokémon is damaged by an attack" — which is the
+  //      §9 site's own `dealt > 0` gate and therefore needs no field.
+  //
+  //      ⚠️ THE ONLY ARM IN THIS TAIL THAT CONVERTS ITS CAPTURE. The sentence
+  //      counts DAMAGE COUNTERS and every consumer downstream speaks HP, so the
+  //      `× 10` happens once, here, and the op is HP like `damageAttacker`'s four
+  //      always-on printings in the registry. Converting at the read site instead
+  //      would put a unit check on a line whose whole job is a sum.
+  //
+  //      UNGATED like arms 19c–19f and for the same reason — no coin is printed
+  //      on either printing — so the derived program is the bare op.
+  match = SELF_INSTALLED_RECOIL.exec(effect);
+  if (match !== null) {
+    const counters = Number(match[1]);
+    // `counters >= 1` is the guard every arm here carries: a printed "put 0
+    // damage counters" would arm a trap that changes no arithmetic anywhere and
+    // emit a row announcing it, which is worse than an unread sentence — it
+    // claims a threat that does not exist. Leave it LOUD.
+    if (counters >= 1) return [{ op: "installRecoil", amount: counters * 10 }];
   }
 
   // 20. "Heal {N|all} damage from 1 of your [Benched] Pokémon." — D135's CHOSEN

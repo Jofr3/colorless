@@ -310,6 +310,67 @@ export interface AttackDamageDebuff {
   amount: number;
 }
 
+/** §9/§11 (D152) — an attack-installed REACTIVE RECOIL on one Pokémon, with the
+    printed DURATION baked in as a turn STAMP exactly as `AttackBlock`,
+    `DamageReduction` and `AttackDamageDebuff` above bake theirs. One printed
+    sentence, two printings:
+
+      "During your opponent's next turn, if this Pokémon is damaged by an attack
+       (even if it is Knocked Out), put 10 damage counters on the Attacking
+       Pokémon."                                                          (2)
+
+    — Lycanroc ex sv02-117 (Double rare) / sv02-241 (Special illustration rare)
+    "Scary Fangs" ({F}{C}{C}, printed 140, attack INDEX 1), one attack in two
+    rarities, so D121's second-printing warrant is met by the card.
+
+    ⚠️ IT IS `DamageReduction`'s SIBLING ON EVERY AXIS BUT THE READ SITE, and that
+    is the whole shape of the slice. Same holder ("this Pokémon" — the installer's
+    own Active), same `state.turn + 1` window (the sentence prints "During your
+    opponent's next turn" and declaring an attack ENDS the turn, §5.3), same
+    `{ turn, amount }` record, same three §10 clears, same `Math.max` merge. What
+    differs is WHICH number it feeds: that one is subtracted at §8.5 step 5, this
+    one is ADDED at the §9 reactive recoil (attack.ts), the site that already sums
+    `passivesOf().damageAttacker`.
+
+    ⚠️ AND THAT MAKES IT THE THIRD FIELD IN THE FAMILY WHOSE READ IS A SUM ACROSS
+    THE CATALOG/STATE BOUNDARY, which is the fact the generalisation argument turns
+    on (decisions.md D152). The pool prints this exact mechanism MINUS its duration
+    on four always-on printings — Cacnea sv01-005 / Cacturne sv01-006
+    "Counterattack Quills" (3 counters), Stunfisk sv03-112 "Custom Trap" (5,
+    `requiresTool`) and Rocky Helmet sv01-193 (2, a Pokémon TOOL) — all simulated
+    since 0.x as `PassiveEffects.damageAttacker` and folded by `passivesOf`. So
+    this field is a SOURCE feeding a number the engine already computes, not a
+    second channel: the ONE read site sums it into that fold and nothing else about
+    §9 moves. One reading, one implementation (D131).
+
+    It is kept OUT of `passivesOf` for `installedReductionOf`'s TWO REASONS
+    VERBATIM: that function is the CATALOG scan (printed passives + attached
+    Tools), which is the aura/installation distinction `attackBlockOf`'s doc block
+    draws; and it SUPPRESSES a holder's own printed passive under a §9
+    Ability-lock aura, which an attack INSTALLATION must be immune to — an
+    installation is not an Ability. Summing at the site keeps that immunity a
+    property of where the number comes from.
+
+    ⚠️ AND THE SUM IS OBSERVABLE ON A BOARD THE CARDS THEMSELVES BUILD: a Lycanroc
+    ex carrying this 100 and wearing Rocky Helmet retaliates for 120 in ONE
+    `COUNTERS_PLACED` row labelled `"counterattack"` — D141's judgement re-run with
+    a THIRD provenance (an attack) in the sum it said no label could name. No new
+    `COUNTERS_PLACED` member, which is the test of whether D141's axis was right. */
+export interface InstalledRecoil {
+  /** The single turn number this recoil is live on (the installing turn + 1). */
+  turn: number;
+  /** HP put on the Attacking Pokémon when the holder is damaged — the printed
+      COUNTERS × 10, converted once at the deriver (effects.ts) so every reader
+      downstream speaks the engine's one damage unit.
+
+      ⚠️ THE PRINTED CLAUSE "(even if it is Knocked Out)" NEEDS NO FIELD, and
+      saying so is the point: the §9 site already runs BEFORE finishAttack's §8.1
+      both-board sweep, so a lethal retaliation from a body that was itself KO'd
+      is the behaviour the always-on printings have had since 0.x. The duration
+      is the only thing this sentence adds to the four already read. */
+  amount: number;
+}
+
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
     the top uid defines its identity (name, HP, retreat cost, …); damage,
     energy and tools persist through evolution (M4). */
@@ -484,6 +545,34 @@ export interface InPlayPokemon {
       swept rather than listed. A Knocked Out holder takes it out of play with the
       rest of the stack, and the promoted body carries nothing. */
   attackDamageDebuff: AttackDamageDebuff | null;
+  /** §9/§11 (D152) — the attack-installed REACTIVE RECOIL on this Pokémon (see
+      `InstalledRecoil` above), or `null` when none has been installed. Read
+      through `installedRecoilOf` (continuous.ts) rather than by touching this
+      field, so no read site can forget the turn comparison — the same contract
+      the four fields above are under.
+
+      ⚠️ `state.turn + 1` ON THE INSTALLER'S OWN BODY, which is `damageReduction`'s
+      pair of answers exactly and NOT `attackDamageDebuff`'s: the sentence prints
+      "During your opponent's next turn" and "this Pokémon", so the window is the
+      opponent's and the holder is the actor. It is the FIFTH stamped field, and
+      §D147's count trigger for the `attackBlock` union therefore FIRES — the
+      re-derivation is in decisions.md D152 and the verdict is still DECLINE, on a
+      ground that retires counting as a trigger: this field's only read is a
+      SUM into a number the catalog already contributes to, so there is no read
+      path to unify. What earns the union is a member the read site must DISPATCH
+      on (the per-attack lock's `{ turn, attackIndex }`), not a fifth number.
+
+      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `damageReduction`'s
+      reachability story rather than `attackDamageDebuff`'s: leaving the Active
+      Spot is REACHABLE inside the window (a Boss's Orders played by the opponent
+      on the very turn the recoil is armed drags the body off the spot and the
+      trap goes with it), while EVOLVING is unreachable by construction
+      (installing ends the turn, the window is the opponent's, and nobody evolves
+      on someone else's turn) and is written anyway, pinned by a surgery. A
+      Knocked Out holder takes it out of play with the rest of the stack — and
+      that is NOT the printed "(even if it is Knocked Out)", which is about the
+      hit that is being resolved right now and is answered by §9's ordering. */
+  installedRecoil: InstalledRecoil | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -534,6 +623,10 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // the line above, on the other side of the §8.5 pipeline. Same reading of
     // §10's carry-over rule from the other end as the three lines above.
     attackDamageDebuff: null,
+    // …and no attack has armed a durated recoil on it either (D152) — the
+    // reduction's sibling on the §9 side of the pipeline. Same reading of §10's
+    // carry-over rule from the other end as the four lines above.
+    installedRecoil: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck

@@ -25,6 +25,7 @@ import {
   effectiveAttackCost,
   effectiveRetreatCost,
   installedAttackDebuffOf,
+  installedRecoilOf,
   installedReductionOf,
   opposingAttackDebuff,
   passivesOf,
@@ -838,7 +839,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // defender, which is why the log row is SYSTEM-voiced (D136's finding 1); and
     // unlike the `"ability"` placements there is no ABILITY_TRIGGERED row above to
     // name a source, so this label is the whole of what a reader is told.
-    const recoil = defenderPassives.damageAttacker;
+    //
+    // D152 — and the sentence is ALSO printed with a DURATION on an attack
+    // (Lycanroc ex sv02-117/-241 "Scary Fangs", 10 counters), so the number has
+    // two sources and they are SUMMED here, exactly as the reduction two screens
+    // up sums its catalog and installed halves. The installed half is a stamp on
+    // this body that no Ability-lock can reach; the catalog half is the
+    // §9-suppressible fold (continuous.ts `installedRecoilOf`). D141's judgement
+    // survives it unchanged and is in fact strengthened: the row can now be an
+    // Ability's, a Tool's AND an attack's HP in one number, so a provenance label
+    // is wrong on a THIRD axis and the mechanism label needs no new member.
+    const recoil = defenderPassives.damageAttacker + installedRecoilOf(next, defender);
     if (dealt > 0 && recoil > 0) {
       const retaliated = { ...active, damage: active.damage + recoil };
       next = withActive(next, action.seat, retaliated);

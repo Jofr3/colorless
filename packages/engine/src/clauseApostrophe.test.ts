@@ -184,7 +184,15 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // the day the fixture was COMPLETED rather than the day a card was added,
     // which is a failure mode this census had not yet seen (D147's was the
     // opposite: the sentence was present and unread).
-    expect(derivable).toHaveLength(51);
+    //
+    // ⚠️ AND D152 ADDS THE 52nd, WHICH CARRIES THE SLOT TWICE FOR A SECOND REASON.
+    // Lycanroc ex sv02-117's "Scary Fangs" opens with the same "your opponent's"
+    // duration prefix as the three above and closes on "the Attacking Pokémon" —
+    // no second possessive, so it is the FIRST entry whose apostrophe is load
+    // bearing only at the very front of the anchor. A build that folded the
+    // apostrophe anywhere but position 19 still passes it, which is why the count
+    // is a floor and the per-sentence rewrite below is the real assertion.
+    expect(derivable).toHaveLength(52);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

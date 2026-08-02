@@ -833,6 +833,14 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // describes is pinned somewhere, which is the most the table can offer until
     // it is hardened.
     weakenDefenderAttacks: "blocked",
+    // D152's attack-armed §9 recoil, and the FOURTH op classified by this table
+    // rather than by the slice that wrote it. UNTOUCHED for `reduceDamage`'s
+    // verdict verbatim — it writes a stamp onto the CONTROLLER's own Active, so
+    // there is no opponent-side body a §11 block could be protecting from it. What
+    // it does NOT mean is that the two never meet: the armed body's recoil still
+    // wants `dealt > 0`, and a block that nulls the hit to 0 stops the retaliation
+    // without ever touching this record (driven in installedRecoil.test.ts).
+    installRecoil: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1125,6 +1133,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     reduceDamage: {
       op: { op: "reduceDamage", amount: 20 },
       landed: (r) => p2Active(r.after)?.damageReduction != null,
+    },
+    // D152 — the actor's own body again, so `landed` is read off P2 (the chair the
+    // probe runs from) exactly as `reduceDamage`'s is.
+    installRecoil: {
+      op: { op: "installRecoil", amount: 100 },
+      landed: (r) => p2Active(r.after)?.installedRecoil != null,
     },
   };
 

@@ -318,8 +318,36 @@ export interface MatchRecord {
     field, no `EffectContext` field, no `BoardCondition` member. The RENDERED
     `SeatLogEntry[]` gains one new row type (`ATTACK_DEBUFF_APPLIED`) and one new
     breadcrumb on `DAMAGE_DEALT` ("· weakened −N"), both of which are text in NEW
-    records only and are D141's already-settled case. */
-export const MATCH_RECORD_VERSION = 7;
+    records only and are D141's already-settled case.
+
+    ⚠️ NO BUMP AT D151 (engine 0.99.0), STAYS AT 7 — the always-on twin of D149's
+    sentence (Entei sv03-030 "Pressure") put its flag on the CATALOG
+    (`PassiveEffects`, a registry type), read through a pure cross-board scan. No
+    key moved on `InPlayPokemon` at all, which is D148's no-bump reason a second
+    time and the CONTROL that shows D124's trigger is literally "a required key
+    appeared on `InPlayPokemon`" and not "a durated slice landed".
+
+    ⚠️ BUMPED AT D152 (engine 0.100.0), 7 → 8, and it is the SIXTH time on D124's
+    SAME trigger. `InPlayPokemon.installedRecoil: InstalledRecoil | null` is a
+    REQUIRED key on `InPlayPokemon` — the printed "During your opponent's next
+    turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put
+    10 damage counters on the Attacking Pokémon." (Lycanroc ex sv02-117/-241
+    "Scary Fangs") — so a record written by the previous deploy has, for every body
+    in play, a shape the new type does not describe. It reads back BENIGNLY
+    (`undefined.turn` is never `state.turn`, and no deploy before this one had an
+    op that could arm one), and that soft landing is exactly what D124 refused when
+    it set the rule. D147's paragraph with the field renamed: the reason is about
+    the RECORD, not about what the number does once read.
+
+    Nothing else persisted moved. `installRecoil` is a NEW op member rather than a
+    field on an old one (a widening for any old continuation, which cannot contain
+    it), and it never parks — deterministic, consumes no rng, asks nothing — so no
+    `EffectContinuation` carries it into `phase.cont`. No `GameState` field, no
+    `EffectContext` field, no `BoardCondition` member, no `COUNTERS_PLACED` member
+    (the recoil it produces reuses D141's `"counterattack"`). The RENDERED
+    `SeatLogEntry[]` gains one new row type (`RECOIL_ARMED`), which is text in NEW
+    records only and is D141's already-settled case. */
+export const MATCH_RECORD_VERSION = 8;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

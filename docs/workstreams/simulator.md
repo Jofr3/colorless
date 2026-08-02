@@ -11463,3 +11463,150 @@ riders at D149, 1 Ability here), and the ADD half was censused at D149 (12
 printings, all already read except Seismitoad `sv03-052`'s per-attack buff, which
 wants the attack ADDRESSING of resume item 3). Everything else on the remainder
 list is unchanged by this slice.
+
+## D152 — the ATTACK-INSTALLED REACTIVE RECOIL: `During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put 10 damage counters on the Attacking Pokémon.` (engine 0.99.0 → 0.100.0, MATCH_RECORD_VERSION 7 → 8)
+
+Item 1 of D151's remainder list, **scoped to Lycanroc ex alone**, and the
+SIXTEENTH and last slice of the D137–D152 run.
+
+### The census, re-run as its own question (D142's floor rule, tenth payout)
+
+`"…damage counters on the Attacking Pokémon"` over all three text columns of the
+local D1 (2026-08-02, 978 cards) returns **8 rows**:
+
+| id | card | where | counters | status |
+|---|---|---|---|---|
+| `sv01-005` | Cacnea "Counterattack Quills" | Ability | 3 | simulated since 0.x |
+| `sv01-006` | Cacturne "Counterattack Quills" | Ability | 3 | simulated since 0.x |
+| `sv03-112` | Stunfisk "Custom Trap" (`requiresTool`) | Ability | 5 | simulated since 0.x |
+| `sv01-193` | Rocky Helmet | Trainer/**Tool** `effect` | 2 | simulated since 0.57.0 |
+| `sv02-117` | Lycanroc ex "Scary Fangs" idx **1** | attack | 10 | **D152** |
+| `sv02-241` | Lycanroc ex "Scary Fangs" idx **1** | attack | 10 | **D152** |
+| `sv03-197` | Vengeful Punch (Tool, **KO**-conditioned) | Trainer `effect` | 4 | **still LOUD** |
+| `sv02-143` | Mabosstiff "Comeuppance" (amount = damage done) | attack | — | **still LOUD** |
+
+⚠️ **§D141's "5 printings remaining" was arithmetically wrong** — `sv03-197` +
+`sv02-117`/`-241` + `sv02-143` is **four**. A count copied forward is a claim
+nobody has re-queried (D149's rule, confirmed again).
+
+Every catalog claim on the resume item held to the byte: the NAME (**Lycanroc
+ex**), the attack name (**"Scary Fangs"**), the **INDEX 1 on both printings**
+(not 0), the cost `{F}{C}{C}`, the printed damage **140**, and the effect string
+character for character.
+
+### The shape — `installedReductionOf`'s SIBLING, not its mirror
+
+| | `installedReductionOf` (D147) | `installedRecoilOf` (D152) |
+|---|---|---|
+| Installed on | the actor's own Active | the actor's own Active |
+| Window | `state.turn + 1` | `state.turn + 1` |
+| Read at | §8.5 step 5, **subtracted** | §9 recoil, **added** |
+| Catalog twin | `passivesOf().damageReductionAfterWR` | `passivesOf().damageAttacker` |
+| §11-refusable | no (own body) | no (own body) |
+
+The read-site diff is a single `+`. The amount is captured in **damage counters**
+and converted to HP **once, at the deriver** (`counters * 10`) — the only arm in
+this deriver tail that converts its capture, and the reason the two halves are
+summable at one site: the registry's four always-on printings already store HP.
+
+### D141's judgement, re-run with a THIRD provenance — and it survives
+
+`passivesOf` folds a holder's own Ability **and** every attached Tool into one
+seat-free number; D141 refused a provenance label on `COUNTERS_PLACED` because of
+it. An **attack's installation** now joins the same fold, so the row can be an
+Ability's, a Tool's *and* an attack's HP at once. A Lycanroc ex carrying 100 and
+wearing Rocky Helmet retaliates for **120 in ONE row** labelled `"counterattack"`
+— **no new `source` member**, which is the test of whether the mechanism axis was
+right. fix-attacker is 120 HP, so that retaliation is lethal on the nose and the
+prize goes to the armer.
+
+### ⚠️ The generalisation — the trigger FIRES, and the answer is still NO
+
+This is the **FIFTH** stamped field (`attackBlock`, `attackLockedTurn`,
+`damageReduction`, `attackDamageDebuff`, `installedRecoil`), so §D147's third
+trigger fires. All three were re-checked rather than cited:
+
+- **(a) a printing that REMOVES the effects of attacks** — re-censused against the
+  D1: `Remove ` returns **zero rows** in all three text columns; the 15 rows
+  matching "effects of attacks" are all *prevent*. **Does not fire.**
+- **(b) a caller that must ENUMERATE the riders** — this field crosses no wire,
+  changes no `redactedAttacksOf`/`GameHud` projection and gates no ACTION.
+  **Does not fire.**
+- **(c) a fifth stamped field** — **FIRES.**
+
+**Declined anyway, and the count trigger is RETIRED.** The ground is observable:
+**three of the five fields are SOURCES feeding an aggregate whose other source is
+the CATALOG** (`damageReduction` → `damageReductionAfterWR`, `attackDamageDebuff`
+→ beside `opposingAttackDebuff`, `installedRecoil` → `damageAttacker`). Their
+read sites do not *look an effect up*; they **ADD one term**. The grouping the
+code exhibits is "the contributors to one number", and those groups **cross the
+catalog/state boundary** — a union over `InPlayPokemon` would group by *where the
+datum is stored*, the one axis no read site asks about, and would replace five
+compiler-checked field accesses with five list searches it cannot check.
+
+**Replacement trigger (SHAPE, not count):** the union is earned by a member the
+read site must **DISPATCH** on rather than sum — the per-attack lock's
+`{ turn, attackIndex }` (remainder item 1), where "which attack" is not a number
+and cannot be folded. Counting has now mispredicted twice (D149's fourth, this
+fifth), so *do not re-open on a sixth field*.
+
+### The four structural questions
+
+1. **PARK?** No. **PERSIST — yes: MRV 7 → 8**, the sixth time on D124's trigger
+   (a required key on `InPlayPokemon`). D151 is a second control beside D148: a
+   catalog-only flag does not bump.
+2. **VOICE?** Two answers. `RECOIL_ARMED` is **actor-voiced** (no defender arm),
+   so it may carry the PRINTED "during your opponent's next turn" — the wording
+   D149's victim-side row could not copy. The recoil row stays **system-voiced**:
+   D141's reason (seat = attacker, causer = defender) is unchanged by the recoil
+   being installed rather than printed. Rendered and read, not assumed.
+3. **GUARD ASSERTED?** `dealt > 0`, driven from both sides at both gates — the
+   OUTER one off a printed line (Growl has no printed damage; the trap survives
+   unspent), the INNER one constructed (a 200 shield clamps a 30 Bite to 0 and no
+   recoil fires; a 29 shield lets 1 HP through and draws the FULL 100). The §11
+   classification table gained a verdict **and** a probe board (D150's rule):
+   `installRecoil: "untouched"`.
+4. **MECHANISM EXISTS?** Verified by reading `attack.ts` §9 and `passivesOf`
+   first. The summation question was answered on a board, not argued.
+
+### Mutation table (six, all caught)
+
+| mutation | tests failed |
+|---|---|
+| drop the §9 `+ installedRecoilOf(...)` term | 6 |
+| do not convert counters → HP | 18 |
+| stamp `state.turn + 2` instead of `+ 1` | 11 |
+| drop the `switchInto` §10 clear | 1 |
+| drop the evolve §10 clear | 1 |
+| `Math.max` merge → sum | 1 |
+
+**Cost.** 1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1
+deriver arm, 1 reader, 1 event, 1 log row, 3 §10 clears, 1 one-term read site. No
+new `COUNTERS_PLACED` member, no park, no error code, no prompt, no redact arm,
+no projection, no registry row, no web/DB/`@luminous/schema` diff. 1 fixture
+ADDED (Lycanroc ex, verbatim and checked field-by-field including its absences),
+1 new deck (`INSTALLED_RECOIL_DECK` — its own 60 so D141's seeded boards stay
+byte-identical), `installedRecoil.test.ts` (22 tests, one SEED), 2 re-pointed
+stays-LOUD witnesses and none deleted. engine 0.99.0 → **0.100.0** (not 1.0.0 —
+the series is a slice counter), `MATCH_RECORD_VERSION` **7 → 8**. `bun run check`
+GREEN exit 0 — **193 files / 3269 tests** (was 192 / 3247).
+
+### Still unmapped after D152
+
+The §9 recoil neighbourhood is **NOT closed**: two printings remain and both need
+a channel this slice deliberately did not build.
+
+- **Vengeful Punch `sv03-197`** (Tool, 4 counters) — *"If the Pokémon this card is
+  attached to is **Knocked Out** by damage from an attack from your opponent's
+  Pokémon, put 4 damage counters on the Attacking Pokémon."* Needs a **new READ
+  SITE** — the §8.1 KO sweep, not the `dealt > 0` block — plus a `damageAttacker`
+  sibling field on `PassiveEffects`. **No duration**, so no stamped field and no
+  MRV bump. Still the cheapest of the two.
+- **Mabosstiff `sv02-143` "Comeuppance"** — the same sentence as Scary Fangs with
+  the amount read off the damage done to the holder. The regex, the op, the field,
+  the reader, the §10 clears and the read site are ALL now built; what is missing
+  is the **damage-dealt channel** (remainder item 5's `Iron Moth`/`Camerupt`
+  neighbourhood). When that channel lands this printing is one anchor and one op
+  field.
+
+Everything else on the remainder list is unchanged by this slice.
