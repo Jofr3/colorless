@@ -184,6 +184,21 @@ export type GameEvent =
       from correct into false. That producer needed NO new member, which is the
       argument for having made `source` a field rather than minting one op per
       provenance.
+      `"counterattack"` (D141) is the §9 reactive recoil — the `damageAttacker`
+      passive putting counters on the ATTACKING Pokémon when its holder is damaged
+      ("…put N damage counters on the Attacking Pokémon."). It is the first member
+      since `"confusion"` added on the MECHANISM axis rather than the provenance
+      one, and that is FORCED rather than chosen: `passivesOf` SUMS the recoil over
+      the holder's own passive AND every attached Tool into one seat-free number,
+      so a single row can be an Ability's 50 plus a Tool's 20. That board is not
+      hypothetical — Stunfisk sv03-112 "Custom Trap" does not fire AT ALL unless a
+      Tool is attached, and Rocky Helmet sv01-193 is a Tool. No provenance label
+      (`"ability"`, a new `"tool"`, or either of them) can be true of that row: the
+      amount has two provenances and the row has one label. It replaces a hardcoded
+      `"ability"` that has been false for every Rocky Helmet in every match since
+      0.57.0 — D136's finding 1 on a THIRD axis (not the voice, not
+      attack-vs-Ability, but Ability-vs-Tool) and the one instance of it that was
+      LIVE rather than latent.
       Each new member is a WIDENING of the source enum, not a shape change — no
       MATCH_RECORD_VERSION bump (the ATTACK_FAILED.reason precedent below); an
       older record stays readable, it simply never carries the newer sources. */
@@ -192,7 +207,15 @@ export type GameEvent =
       seat: Seat;
       uid: string;
       amount: number;
-      source: "poison" | "burn" | "confusion" | "ability" | "self" | "moved" | "attack";
+      source:
+        | "poison"
+        | "burn"
+        | "confusion"
+        | "ability"
+        | "self"
+        | "moved"
+        | "attack"
+        | "counterattack";
     }
   /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
       (§13.2) or asleep's wake flip (§13.3). Heads is followed by the

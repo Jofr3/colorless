@@ -8400,3 +8400,197 @@ Do not re-run any of them.
 - **Iron Moth `sv06.5-009` "Suction"** — unchanged from D132–D139: a channel from the
   §8.5 pipeline's RESULT into a tail op, structurally identical to Camerupt
   `sv03-032`. Do it last or not at all, and do it *with* Camerupt.
+
+## D141 — the §9 recoil LABEL: `attack.ts` called a TOOL an Ability (engine 0.90.0, MATCH_RECORD_VERSION unchanged at 3)
+
+**Not a card slice — a defect fix**, taken as item 2 of D140's remainder list on
+that list's own instruction (*"do this WITH item 1 or before it — it is the only
+LIVE defect on it"*). `attack.ts`'s §9 reactive recoil pushed `COUNTERS_PLACED`
+source `"ability"` as a **string literal** for the `damageAttacker` passive, so
+**every Rocky Helmet `sv01-193` — a Pokémon TOOL — has rendered "Ability: 20 damage
+to …" in every match since 0.57.0**. Live rather than latent: no card has to be
+added and no clause derived for a player to see it.
+
+D136's finding 1 on a **third axis** — not the row's VOICE (D136), not
+attack-vs-Ability (D138 → D139 → D140), but **Ability-vs-Tool**.
+
+### The resume point's claims, checked before anything was designed
+
+| Claim | Verdict |
+|---|---|
+| The row pushes `"ability"` for `damageAttacker`, and Rocky Helmet (a Tool) produces it | **TRUE.** |
+| The row is reachable in any match with a Rocky Helmet | **TRUE** — driven end to end, no card additions. |
+| `rockyHelmet.test.ts:95` pins the current label as INTENDED | **TRUE**, comment and all ("ability-sourced"). |
+| "…produced by an Ability, a Tool and **an attack-installed trap (Stunfisk's Custom Trap)**" | **⚠️ FALSE.** Custom Trap is a printed **ABILITY** with a `requiresTool` gate. The genuinely attack-installed printings exist — Lycanroc ex `sv02-117`/`-241` "Scary Fangs", Mabosstiff `sv02-143` "Comeuppance" — and are **unsimulated**. |
+| The producer set is "those three" | **⚠️ INCOMPLETE.** The catalog prints this mechanism on **8 printings / 5 sentences / three kinds of card**, including a **SECOND Tool** (Vengeful Punch `sv03-197`) the list did not name. |
+| `rockyHelmet.test.ts:95` is the assertion that moves | **⚠️ INCOMPLETE.** `damageAttacker.test.ts` carried **two more** pins; a fix that moved only the named one goes red. |
+
+Six consecutive lists, six with a wrong or missing structural claim — and this
+time all three misses were **omissions**, which is exactly the failure mode the
+standing note calls the most dangerous.
+
+### ⚠️ The judgement: the SUM makes every provenance label false
+
+`passivesOf` aggregates `damageAttacker` over the holder's **own passive AND every
+attached Tool** into one seat-free number, and `attack.ts` emits **one** event
+carrying it. So a single row can be an **Ability's 50 plus a Tool's 20** — and that
+board is the card's own rather than a contrivance:
+
+> **Stunfisk `sv03-112` "Custom Trap" does not fire at all unless a Tool is
+> attached, and Rocky Helmet is a Tool.** 50 + 20 = **70, in ONE row, with ONE
+> `source` slot**.
+
+| Candidate | What it names | Verdict |
+|---|---|---|
+| keep `"ability"` | provenance | **False for a Tool** — the defect. |
+| add `"tool"` beside it | provenance | **False for the sum**: the number has two provenances and the row has one label. Wrong before it shipped, since the pool already prints the mechanism on three kinds of card. |
+| re-word the shared `"ability"` arm | mechanism, on the wrong arm | Degrades the **five** honest Ability producers (Trevenant, Gardevoir ex, Hawlucha, Meowscarada ex, Radiant Blastoise) to fix one dishonest site. |
+| **add `"counterattack"`** | **mechanism** | **TAKEN.** True of an Ability, a Tool, and the sum of both. |
+
+`COUNTERS_PLACED.source` is now **eight members**, and this is the enum's first
+member on the **MECHANISM** axis since `"confusion"` — `poison`/`burn`/`confusion`
+name mechanisms, `ability`/`moved`/`attack` name provenances, `self` names a
+direction. The enum was always mixed; the §9 recoil joins the older group, where
+"the game did this to you" is the whole content of the row.
+
+**NOT `"recoil"`**: `events.ts` already uses that word for `"self"` — an attacker
+damaging ITSELF with its own printed attack (Skeledirge "Blazing Shout"), the
+opposite direction, rendered in the attacker's own voice. The two are pinned apart
+in the suite rather than left to collide.
+
+### ⚠️ Should a real Ability and a Tool render differently at all? — NO
+
+Answered structurally rather than on cost. **The engine cannot tell them apart at
+the read site by construction**: `passivesOf` hands `attack.ts` a bare `number`,
+and no provenance survives the addition — asserted, not argued (every authored
+`damageAttacker` record is checked to carry nothing but `amount`/`requiresTool`, so
+the day someone adds a `kind` field this test says why that is not the answer).
+
+And the product question separately lands in the same place: what a reader needs
+from this row is **why their attacker suddenly has damage on it**, which is the
+mechanism. *Which slot on which card granted it* is not even well-defined once two
+cards contribute — and the log names no card here in any case, because the recoil
+emits **no `ABILITY_TRIGGERED` row** (it is a passive; a Tool has no Ability to
+trigger). **This row is the entire explanation a player gets**, which raises the bar
+on the label being true rather than lowering it.
+
+### The census (local D1, 2026-08-02, whole effect string, 978 cards)
+
+A **new** census. The counter-PUT one is CLOSED and was not re-run.
+
+| Printed on | Printings | Cards | Fate |
+|---|---|---|---|
+| an **Ability** | 3 | Cacnea `sv01-005`, Cacturne `sv01-006` (Counterattack Quills, 30), Stunfisk `sv03-112` (Custom Trap, 50, `requiresTool`) | **AUTHORED** |
+| a **Pokémon Tool** | 2 | Rocky Helmet `sv01-193` (20) — **AUTHORED**; **Vengeful Punch `sv03-197`** (4 counters, on a **KO** condition rather than a damaged one) — **loud** | 1 of 2 |
+| an **attack** | 3 | Lycanroc ex `sv02-117`/`-241` "Scary Fangs" (10 counters), Mabosstiff `sv02-143` "Comeuppance" (counters **equal to the damage done**) | **loud** — §11 blocks with a DURATION |
+
+**Three kinds of card, one mechanism, one row.** A `"tool"` member would have been
+wrong before it shipped; each of the five unmapped printings joins this label with
+**no new member** when it lands, which is the test of whether the axis was right.
+All five are pinned LOUD in the suite so the day one derives, this file notices.
+
+### ⚠️ The guard is SWEPT, not listed — and its absence is why this lived 3 versions
+
+The old "guard" was the **accident** that whoever wrote the literal was thinking of
+Cacnea, and the suite then pinned the **wrong side** of it as intended — the D136
+"the suite asserts the bug" pattern for a **third** time, in **three** places
+(`rockyHelmet.test.ts:95`, `damageAttacker.test.ts` ×2). All three moved with the
+fix and are POSITIVE about the new intent.
+
+`counterattack.test.ts` reuses D140's shape:
+- it **DISCOVERS** the family by sweeping `FIXTURE_POOL` for the printed sentence
+  "…damage counters on the Attacking Pokémon" (across `effect` **and**
+  `abilities[].effect`) rather than listing ids;
+- it asserts the **text census equals the authored-program census** in both
+  directions (a printing with no program would make the sweep drive nothing; a
+  program with no printing would make it miss a producer);
+- it asserts the family **SPANS both `Pokemon` and `Trainer`** — the fact the
+  hardcoded label denied, and a pool of only Pokémon *could* honestly say
+  "Ability";
+- and it then **DRIVES every member it found**, each wearing Rocky Helmet so a
+  `requiresTool` producer actually fires instead of passing vacuously.
+
+A fifth producer is swept the day its fixture lands.
+
+### ⚠️ The fifth site: swept for, and NOT found
+
+D136 → D139 → D140 found this defect in four places, so the sweep assumed a fifth.
+Every hardcoded `COUNTERS_PLACED` provenance left in the engine:
+
+| Site | Label | Exposed? |
+|---|---|---|
+| `flow.ts` Checkup ticks | `"poison"` / `"burn"` | **NO** — mechanism names, one producer each. |
+| `attack.ts` §8 step 3 | `"confusion"` | **NO** — same. |
+| `interpreter.ts` counter MOVE | `"moved"` | **NO** — mechanism name (D138). |
+| `interpreter.ts` `damageSelf` | `"self"` | **NO** — `seat` IS `ctx.seat`, and it names a DIRECTION (D140). |
+| `damageActive` / `damageChosen` | parameterised | **NO** — D139/D140 made `source` a required field. |
+| **`attachEnergyFrom.bonusCounters`** (Gardevoir ex "Psychic Embrace") | `"ability"`, hardcoded | **NO, today** — ONE producer and it really is an Ability; and its `seat` **IS** `ctx.seat`, so D136's voice defect is impossible by construction. It becomes a question only if a non-Ability ever reaches that op. |
+
+So the answer is *no fifth live site*, with the reasoning written down rather than
+the sweep merely reported — the two triage tests D140 named (does the event carry a
+provenance enum at all; is its `seat` the actor's own) did all the work.
+
+### The four structural questions
+
+1. **Does it PARK?** **No — and it is not an `EffectOp` at all**: an inline event
+   push in `attack.ts`. Nothing is persisted; `source` never reaches `GameState`.
+2. **Whose VOICE?** `seat` is the **ATTACKER's** — it owns the DAMAGED Pokémon, per
+   the event's contract — while the **CAUSER is the DEFENDER**. So an active-voice
+   row would credit the attacker with damaging itself: **the mirror image** of
+   D136's finding 1. The row is SYSTEM-voiced, and the suite fails if it is not.
+3. **Is the guard ASSERTED?** It is now — see above. It was not, which is the
+   whole reason the defect survived 0.57.0 → 0.89.0.
+4. **Does the mechanism exist?** Read, not forecast: `passivesOf`'s summation is
+   the fact the whole judgement turns on, and neither the resume point nor D140
+   had it.
+
+### `MATCH_RECORD_VERSION` — asked, and the answer is NO
+
+D140's obligation, discharged in the negative. Nothing parks on this site, and
+`MatchRecord` persists the **RENDERED** `SeatLogEntry[]` rather than the events —
+so a match in flight keeps its already written "Ability:" rows as TEXT, the record
+stays fully readable, and the enum widening is the `ATTACK_FAILED.reason`
+precedent. Stays at **3**.
+
+### The suite — `counterattack.test.ts` (16 tests)
+
+Seed-free. Own deck (`COUNTERATTACK_DECK` — all four authored producers on ONE
+deck, precisely so the discovery sweep can drive every member it finds).
+Full `bun run check` green exit 0, **183 files / 2960 tests** (was 182 / 2944).
+
+The label on all three shapes (Tool alone, Ability alone, and the **70** sum); the
+sum's arithmetic read off the two registry rows rather than written as a constant;
+the provenance-free passive record; the discovery census + both-categories claim +
+the drive-them-all sweep; the voice and the event order; four log cases (the system
+row that never says "Ability", the one-row sum that cannot name either card, a
+genuine Ability placement still saying "Ability" so both values reach the log, and
+the `"self"` row pinned APART from this one); and the three unmapped printings held
+LOUD.
+
+**Mutation-checked four ways**: restoring the hardcoded `"ability"` fails **9**
+tests across 3 files, wording the new arm "Ability: " fails **3**, turning
+`passivesOf`'s SUM into a MAX fails **3**, rendering the row in ACTIVE voice fails
+**3**.
+
+### Still unmapped after D141 — ranked by cost
+
+Unchanged from D140 apart from this item leaving the list. The heal census
+(D133/D135), the gated census (§D134) and the counter-damage census (§D138/§D139/
+§D140) are all CLOSED — do not re-run any of them.
+
+- **The gated PREVENT clause — 13 printings / 2 spellings.** Still the biggest
+  un-taken count in the gated census, and still the **only unverified cost
+  estimate on the list**. Read `continuous.ts` for what a duration-scoped
+  defender-side prevention actually costs BEFORE ranking it.
+- **`Put {N} damage counters on 1 of your opponent's Pokémon. During your next
+  turn, this Pokémon can't attack.`** — Ninetales `sv03-029`/`-199`, 2 printings /
+  1 clause. Priced by its SECOND clause; shares the PREVENT item's mechanism.
+- **The §9 recoil FAMILY, now mapped and priced by this slice** — 5 printings the
+  label already covers and no reader does: Vengeful Punch `sv03-197` (a
+  KO-conditioned Tool — a new read site, not a new label), and Lycanroc ex ×2 +
+  Mabosstiff (attack-installed, §11 DURATION, so they share the PREVENT item's
+  mechanism and Mabosstiff additionally needs the damage-dealt amount threaded
+  into the block).
+- **Iron Moth `sv06.5-009` "Suction"** — unchanged: a channel from the §8.5
+  pipeline's RESULT into a tail op, structurally identical to Camerupt `sv03-032`.
+  Do it last or not at all, and do it *with* Camerupt.

@@ -346,6 +346,15 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     expect(line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 10, source: "ability" })).toEqual(
       { text: `Ability: 10 damage to ${name}`, who: "system" },
     );
+    // D141 — the §9 reactive recoil. A system row for a reason of its own: `seat`
+    // is the ATTACKER's (it owns the damaged Pokémon) while the CAUSER is the
+    // defender, so an active-voice row would credit the wrong player. It is
+    // labelled by the MECHANISM because the amount is a SUM over the holder's
+    // passive AND its Tools — one row, up to two provenances. `counterattack.test.ts`
+    // owns the argument; this pins the bytes.
+    expect(
+      line({ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 70, source: "counterattack" }),
+    ).toEqual({ text: `Counterattack: 70 damage to ${name}`, who: "system" });
   });
 
   it("attributes an attack's own recoil to the attacker, not the system", () => {

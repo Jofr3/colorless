@@ -733,6 +733,20 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // model. The attacker is this seat's Active (attacks come from the Active,
     // and its own effect program has not run yet); `active` is unchanged in
     // `next`, which only updated the rngState + the defender's side.
+    //
+    // D141 — the row is labelled `"counterattack"` (the MECHANISM), never
+    // `"ability"` (a provenance) and never a `"tool"` beside it. `recoil` here is
+    // the SUM `passivesOf` folded out of the holder's own passive AND every
+    // attached Tool, with no provenance surviving the addition, so this site
+    // CANNOT know which card granted it — and on the one board Stunfisk sv03-112
+    // is designed for (its Ability is gated on having a Tool at all) the number is
+    // an Ability's 50 plus Rocky Helmet sv01-193's 20 in ONE event. Two
+    // provenances, one label: no provenance label can be true of that row, so the
+    // label names what happened instead. `seat` is the ATTACKER's — it owns the
+    // DAMAGED Pokémon, per this event's contract — while the CAUSER is the
+    // defender, which is why the log row is SYSTEM-voiced (D136's finding 1); and
+    // unlike the `"ability"` placements there is no ABILITY_TRIGGERED row above to
+    // name a source, so this label is the whole of what a reader is told.
     const recoil = defenderPassives.damageAttacker;
     if (dealt > 0 && recoil > 0) {
       const retaliated = { ...active, damage: active.damage + recoil };
@@ -742,7 +756,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         seat: action.seat,
         uid: attackerUid,
         amount: recoil,
-        source: "ability",
+        source: "counterattack",
       });
     }
 

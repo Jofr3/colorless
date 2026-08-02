@@ -91,8 +91,17 @@ describe("Rocky Helmet — 2 counters on the attacker when the holder is damaged
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30, damage: 30 });
     expect(done.players.p2.active?.damage).toBe(30);
 
-    // …then the Tool's recoil: 20 flat counters on the ATTACKER, ability-sourced.
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 20, source: "ability" });
+    // …then the Tool's recoil: 20 flat counters on the ATTACKER, labelled by the
+    // MECHANISM. ⚠️ THIS LINE ASSERTED `source: "ability"` UNTIL 0.90.0, on a card
+    // that is a TOOL — the suite pinning the defect as intended, for the third time
+    // in this family (D136's two, then this). It is POSITIVE about the new intent
+    // now: a Tool's recoil is not an Ability, and `counterattack.test.ts` owns the
+    // general form of the claim over the whole pool.
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p1",
+      amount: 20,
+      source: "counterattack",
+    });
     expect(attackerDamage(done)).toBe(20); // 120 HP attacker — survives
 
     // Order: the retaliation is folded immediately behind the damage it reacts to.

@@ -4969,6 +4969,30 @@ export const ROCKY_HELMET_DECK = deckOf({
   "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
 });
 
+/** 0.89.0 → 0.90.0: the §9 recoil LABEL (D141). The one board neither of the two
+    decks above can build — an ABILITY recoil and a TOOL recoil on the SAME holder,
+    so `passivesOf` sums them into ONE number and ONE COUNTERS_PLACED row. Stunfisk
+    sv03-112 "Custom Trap" (50, requiresTool) wearing Rocky Helmet sv01-193 (20) is
+    50 + 20 = 70, and it is the card's OWN intended board rather than a contrivance:
+    Custom Trap does not fire at all unless a Tool is attached. Cacturne sv01-006
+    rides along as the Ability-only control on the same deck (30, no Tool), and
+    fix-bigbody + Rocky Helmet is the Tool-only one. A DEDICATED deck because both
+    older decks are seed-pinned by their own suites. fix-bigbody is the DOMINANT
+    (mulligan-free) Basic + the promote target both sides; fix-energy pays Bite's
+    {C}. BOTH seats run it so the holder can be surgically fielded on P2. */
+export const COUNTERATTACK_DECK = deckOf({
+  "fix-attacker": 8, // the plain-damage attacker (Bite = {C} 30, index 0; Yawn = index 2)
+  "sv03-112": 4, // Stunfisk — Custom Trap (50, ONLY while a Pokémon Tool is attached)
+  "sv01-005": 4, // Cacnea — Counterattack Quills (30, ungated)
+  "sv01-006": 4, // Cacturne — Counterattack Quills (the same 30, 130 HP)
+  "sv01-193": 4, // Rocky Helmet — the recoil TOOL (20), and Custom Trap's own gate
+  // ALL FOUR authored `damageAttacker` producers ride this one deck on purpose:
+  // the suite's guard sweeps the pool for the family and then DRIVES every member
+  // it finds, so a producer that cannot be fielded here would silently skip.
+  "fix-bigbody": 28, // 200 HP neutral Basic — DOMINANT setup + the bare Tool holder + promote target
+  "fix-energy": 8, // Colorless Basic Energy — pays Bite's {C}
+});
+
 /** 0.57.0 → 0.58.0: the Mimikyu "Safeguard" row — a holder-side full-prevention
     passive gated on the ATTACKER's rule-box class (preventDamageFromExV, D107).
     A DEDICATED deck (the others are seed-pinned): P2 fields the Mimikyu defender

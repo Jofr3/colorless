@@ -86,9 +86,12 @@ describe("Counterattack Quills — 3 counters on the attacker when damaged (§9)
     expect(done.players.p2.active?.damage).toBe(30); // 60 HP — survives, no KO
 
     // …then the recoil: 30 flat counters on the ATTACKER (this seat's Active),
-    // emitted as an ability-sourced COUNTERS_PLACED, RIGHT after the hit.
+    // emitted RIGHT after the hit as a COUNTERS_PLACED labelled by the MECHANISM.
+    // ⚠️ `source` was `"ability"` here until 0.90.0 — true of Counterattack Quills
+    // and false of the Tool that shares this exact code path (D141). The label is
+    // the same for BOTH now, which is the whole point: the read site sums them.
     const recoil = find(events, "COUNTERS_PLACED");
-    expect(recoil).toMatchObject({ seat: "p1", amount: 30, source: "ability" });
+    expect(recoil).toMatchObject({ seat: "p1", amount: 30, source: "counterattack" });
     expect(attackerDamage(done)).toBe(30); // 120 HP attacker — survives
 
     // Order: the retaliation is folded immediately behind the damage it reacts to.
@@ -203,7 +206,14 @@ describe("Custom Trap — Stunfisk's recoil is gated on a Pokémon Tool", () => 
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 50, source: "ability" });
+    // 50 and not 70: Vitality Band is an INERT Tool here (it grants no recoil of
+    // its own), so this is the gate firing rather than the D141 sum — the sum has
+    // its own case in `counterattack.test.ts`, on a Tool that DOES grant one.
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p1",
+      amount: 50,
+      source: "counterattack",
+    });
     expect(attackerDamage(done)).toBe(50); // 120 HP attacker — survives
   });
 });

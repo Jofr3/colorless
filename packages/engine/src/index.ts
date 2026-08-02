@@ -1901,10 +1901,12 @@ import type { GameState, Seat } from "./types";
     past its hardcoded label, and it has. ⚠️ FOUND AND NOT FIXED (a FOURTH site,
     on a DIFFERENT axis): `attack.ts`'s §9 reactive recoil pushes
     `COUNTERS_PLACED` source `"ability"` for the `damageAttacker` passive, which
-    Rocky Helmet sv01-172 — a **Tool** — also produces, so that row prints
+    Rocky Helmet **sv01-193** — a **Tool** — also produces, so that row prints
     "Ability:" for a Tool. Pre-existing, live, and pinned as intended by
     `rockyHelmet.test.ts`; it is a Tool-vs-Ability question, not the
     attack-vs-Ability one this slice closes, and it is on the remainder list.
+    (The id read "sv01-172" here until D141 checked it — a doc-only slip, fixed
+    where it was written rather than repeated.)
 
     THE COUNTERS ARE HP × 10 AT THE PRODUCER (§12), the placement D139, Trevenant's
     row, Meowscarada's row and `DEFENDER_POISON_N` all use — refused here in BOTH
@@ -1963,7 +1965,86 @@ import type { GameState, Seat } from "./types";
     shape", and for an op that turns entirely on whether it can be sitting in
     `phase.cont` at write time. Two slices, one field, opposite answers.
     No web/API/DB/`@luminous/schema` diff beyond that one constant. */
-export const engineVersion = "0.89.0";
+/** 0.90.0 — P3-M5: the §9 RECOIL LABEL (D141). `attack.ts`'s reactive recoil
+    pushed `COUNTERS_PLACED` source `"ability"` as a string literal, so **every
+    Rocky Helmet sv01-193 — a Pokémon TOOL — has rendered "Ability: 20 damage to
+    …" in every match since 0.57.0**. Found by D140, ranked rather than folded in,
+    and LIVE rather than latent: no card has to be added and no clause derived for
+    a player to see it. D136's finding 1 on a THIRD axis — not the row's VOICE
+    (D136), not attack-vs-Ability (D138/D139/D140), but **Ability-vs-Tool**.
+
+    ⚠️ THE JUDGEMENT IS THE WHOLE SLICE, AND THE SUM DECIDES IT. `passivesOf`
+    aggregates `damageAttacker` over the holder's own passive AND every attached
+    Tool into ONE seat-free number, and this site emits ONE event carrying it — so
+    a single row can be an **Ability's 50 plus a Tool's 20**. That board is the
+    CARD'S OWN rather than a contrivance: Stunfisk sv03-112 "Custom Trap" carries
+    `requiresTool` and does not fire at all unless a Tool is attached, and Rocky
+    Helmet is a Tool. **A provenance member cannot be true of that row** —
+    `"tool"`, or `"ability"` kept beside it, would each be half of a number with
+    two provenances and one label. So the new member names the **MECHANISM**:
+    `source: "counterattack"`, the enum's first mechanism member since
+    `"confusion"` (poison/burn/confusion are mechanisms; ability/moved/attack are
+    provenances — the enum was always mixed, and this joins the older group).
+
+    ⚠️ SO "SHOULD A REAL ABILITY AND A TOOL RENDER DIFFERENTLY AT ALL" IS ANSWERED
+    **NO**, on structural grounds rather than on cost: the engine's own aggregation
+    makes them INDISTINGUISHABLE at the read site by construction — `passivesOf`
+    hands `attack.ts` a bare `number` with no provenance surviving the addition, so
+    the site could not label by kind even if the product wanted it to. And what the
+    reader needs from this row is why their attacker suddenly has damage on it,
+    which is the mechanism; **which slot on which card granted it is not even
+    well-defined** once two cards contribute.
+
+    ⚠️ AND IT GENERALISES, which is why the axis was worth arguing. The local D1
+    (2026-08-02, 978 cards) prints "…damage counters on the Attacking Pokémon" on
+    **8 printings across 5 sentences and THREE kinds of card**: 3 Ability printings
+    (Cacnea sv01-005, Cacturne sv01-006, Stunfisk sv03-112 — all authored), **2
+    TOOL printings** (Rocky Helmet sv01-193 authored; **Vengeful Punch sv03-197
+    unauthored**, the same mechanism on a KO condition) and **3 ATTACK printings**
+    (Lycanroc ex sv02-117/-241 "Scary Fangs", Mabosstiff sv02-143 "Comeuppance" —
+    §11 blocks with a DURATION, loud today). A `"tool"` member would have been
+    wrong before it shipped; each of those five, when it lands, joins this label
+    with **no new member**, which is the test of whether the axis was right.
+    ⚠️ The resume point called Custom Trap "an attack-installed trap" — it is a
+    printed **Ability** with a Tool gate; the genuinely attack-installed printings
+    are Lycanroc ex's and Mabosstiff's, and they are unsimulated.
+
+    NOT "Recoil": `COUNTERS_PLACED` already uses that word for `"self"` — an
+    attacker damaging ITSELF with its own printed attack (Skeledirge "Blazing
+    Shout") — which is the opposite direction and reads in the attacker's own
+    voice. The two are pinned apart rather than left to collide.
+
+    THE ROW STAYS SYSTEM-VOICED, and for a reason of its own on top of the three
+    above it: `seat` here is the ATTACKER's (it owns the DAMAGED Pokémon, per the
+    event's contract) while the CAUSER is the DEFENDER, so an active-voice row
+    would credit the attacker with damaging itself — the MIRROR IMAGE of D136's
+    finding 1. And unlike every `"ability"` placement there is **no
+    ABILITY_TRIGGERED row above naming a source** (it is a passive, and a Tool has
+    no Ability to trigger), so this row is the entire explanation a reader gets —
+    which raises the bar on the label being true rather than lowering it.
+
+    ⚠️ THE GUARD IS SWEPT, NOT LISTED (D140's move, and the reason this defect
+    lived three versions). The old safety was the ACCIDENT that whoever wrote the
+    literal was thinking of Cacnea, and `rockyHelmet.test.ts:95` then pinned the
+    WRONG SIDE of it as intended — the D136 "the suite asserts the bug" pattern for
+    a third time, plus two more pins in `damageAttacker.test.ts` the resume point
+    did not know about. `counterattack.test.ts` DISCOVERS the family from the
+    printed catalog text in `FIXTURE_POOL`, asserts the text census equals the
+    authored-program census, asserts the family SPANS both `Pokemon` and `Trainer`
+    (the fact the hardcoded label denied), and then DRIVES every member it found.
+
+    NO `MATCH_RECORD_VERSION` BUMP, and the question was asked rather than assumed:
+    this site is not an `EffectOp` at all — it is an inline event push, nothing
+    parks on it, and no `source` value is stored in `GameState`. `MatchRecord`
+    persists the RENDERED `SeatLogEntry[]`, so an in-flight match keeps its already
+    written "Ability:" rows as text and the record stays fully readable; the enum
+    widening is the `ATTACK_FAILED.reason` precedent. Cost: 1 enum member, 1 log
+    arm, 1 literal, 1 test deck, 1 test file (16 tests), 3 moved assertions in 2
+    suites, 1 added log-arm pin. ZERO new ops, prompts, parks, events, clause-table
+    rows, state fields, error codes, registry rows or redact arms; no
+    `effects.ts`/`interpreter.ts`/`continuous.ts`/`registry.ts`/`flow.ts` diff and
+    no web/API/DB/`@luminous/schema` diff. */
+export const engineVersion = "0.90.0";
 
 export type {
   ApplyResult,

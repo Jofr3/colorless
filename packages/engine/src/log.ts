@@ -395,6 +395,33 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           // Pokémon), same reason for the system voice. `name` names WHICH
           // Pokémon, which is the only thing that differed.
           return row("system", [plain("Put: "), amount, plain(" damage onto "), strong(name)]);
+        case "counterattack":
+          // D141 — the §9 reactive recoil (Counterattack Quills, Custom Trap,
+          // Rocky Helmet): counters put on the ATTACKING Pokémon because the body
+          // it just hit strikes back. A SYSTEM row like the three above, and for a
+          // reason of its own on top of theirs: `seat` here is the ATTACKER's (it
+          // owns the DAMAGED Pokémon, which is the attacker) while the CAUSER is
+          // the DEFENDER, so an active-voice row would credit the attacker with
+          // damaging itself — the mirror image of D136's finding 1.
+          //
+          // The label names the MECHANISM, not the provenance, because the amount
+          // is a SUM over the holder's passive and its Tools and can carry both at
+          // once (Stunfisk + Rocky Helmet = 70 in one row). "Ability:" was what
+          // this printed before 0.90.0, and it was simply false for a Tool. It is
+          // deliberately NOT worded as "Recoil", which this event already uses for
+          // `"self"` — an attacker damaging ITSELF with its own printed attack is
+          // the opposite direction, and the two must not read alike.
+          //
+          // Nothing else announces this: the recoil emits no ABILITY_TRIGGERED row
+          // (it is a passive, and for a Tool there is no Ability to trigger), so
+          // unlike the `"ability"` arm above there is no row overhead naming the
+          // source. This row is the entire explanation a reader gets.
+          return row("system", [
+            plain("Counterattack: "),
+            amount,
+            plain(" damage to "),
+            strong(name),
+          ]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);
       }

@@ -1,0 +1,401 @@
+import { describe, expect, it } from "vitest";
+import { deriveAttackEffect, programFor } from "./index";
+import type { GameEvent, GameState } from "./index";
+import { type LogContext, logFromEvents } from "./log";
+import {
+  COUNTERATTACK_DECK,
+  FIXTURE_POOL,
+  activeUid,
+  attachFromDeck,
+  deepFreeze,
+  driveSetup,
+  handFromDeck,
+  handUid,
+  mustApply,
+  setActiveFromDeck,
+  types,
+} from "./testFixtures";
+
+// 0.89.0 → 0.90.0 — the §9 RECOIL LABEL (D141). attack.ts's reactive recoil
+// pushed `COUNTERS_PLACED` source `"ability"` as a string literal, so every Rocky
+// Helmet sv01-193 — a Pokémon TOOL — has rendered "Ability: 20 damage to …" in
+// every match since 0.57.0. Found by D140, checked rather than assumed, and LIVE
+// rather than latent: no card has to be added and no clause derived for a player
+// to see it. D136's finding 1 on a THIRD axis — not the row's VOICE and not
+// attack-vs-Ability, but Ability-vs-TOOL.
+//
+// ⚠️ THE JUDGEMENT IS THE WHOLE SLICE, AND THE SUM DECIDES IT. `passivesOf`
+// aggregates `damageAttacker` over the holder's own passive AND every attached
+// Tool into ONE seat-free number, and attack.ts emits ONE event carrying it. So a
+// row can be an Ability's 50 plus a Tool's 20 at the same time — and that board is
+// the CARD'S OWN, not a contrivance: Stunfisk sv03-112 "Custom Trap" does not fire
+// unless a Tool is attached, and Rocky Helmet is a Tool. A provenance member
+// (`"tool"`, or `"ability"` kept beside it) cannot be true of that row, because the
+// amount has two provenances and the row has one label. So the new member names
+// the MECHANISM — `"counterattack"`, the enum's first mechanism member since
+// `"confusion"` — and the answer to "should a real Ability and a Tool render
+// differently at all" is NO, on the strongest available grounds: the engine's own
+// aggregation makes them indistinguishable at the read site by construction.
+//
+// The label is deliberately not "Recoil": this event already uses that word for
+// `"self"`, an attacker damaging ITSELF with its own printed attack, which is the
+// opposite direction and must not read alike.
+
+const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
+
+/** The printed sentence the whole family shares — the census key, taken from the
+    catalog text rather than from a list of ids. */
+const RECOIL_CLAUSE = "damage counters on the Attacking Pokémon";
+
+/** Rocky Helmet's own contribution, read off the registry so a data change moves
+    every expectation in this file at once. */
+const HELMET = (programFor("sv01-193")?.passive?.damageAttacker?.amount ?? 0) as number;
+
+function find<T extends GameEvent["type"]>(
+  events: GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }> | undefined {
+  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
+}
+
+function all<T extends GameEvent["type"]>(
+  events: GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
+  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
+}
+
+/** Setup with P2 first, so P2 can field + equip its defender before handing the
+    turn to P1. Returns the state mid-P2's-turn. */
+function board(seed: number): GameState {
+  return driveSetup(seed, { p1: COUNTERATTACK_DECK, p2: COUNTERATTACK_DECK }, { first: "p2" });
+}
+
+/** Attach a Tool from P2's deck onto P2's Active. */
+function equip(state: GameState, toolId: string): GameState {
+  const withCard = handFromDeck(state, "p2", toolId, 1);
+  const uid = handUid(withCard, "p2", toolId);
+  const done = mustApply(withCard, {
+    type: "attachTool",
+    seat: "p2",
+    uid,
+    target: { spot: "active" },
+  }).state;
+  expect(done.players.p2.active?.tools).toContain(uid);
+  return done;
+}
+
+/** Hand the turn to P1 and field the plain-damage attacker with its {C}. */
+function armAttacker(state: GameState): GameState {
+  let next = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  next = setActiveFromDeck(next, "p1", "fix-attacker");
+  return attachFromDeck(next, "p1", "fix-energy", 1);
+}
+
+/** P2 fields `defenderId` (Active), optionally wearing `toolId`; then P1 Bites it. */
+function fight(
+  seed: number,
+  defenderId: string,
+  toolId?: string,
+): { state: GameState; events: GameEvent[]; before: GameState } {
+  let state = setActiveFromDeck(board(seed), "p2", defenderId);
+  if (toolId !== undefined) state = equip(state, toolId);
+  state = armAttacker(state);
+  deepFreeze(state);
+  const { state: done, events } = mustApply(state, bite);
+  return { state: done, events, before: state };
+}
+
+describe("the §9 recoil row — the MECHANISM label, whatever card granted it", () => {
+  it("a TOOL's recoil (Rocky Helmet) is no longer called an Ability", () => {
+    // ⚠️ THE DEFECT, DRIVEN. A bare fix-bigbody has no passive of its own, so the
+    // ONLY source of these counters is the Tool — and before 0.90.0 the row said
+    // `"ability"`, which the log renders as the literal word Ability.
+    const { state: done, events } = fight(1, "fix-bigbody", "sv01-193");
+
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(find(events, "COUNTERS_PLACED")).toEqual({
+      type: "COUNTERS_PLACED",
+      seat: "p1",
+      uid: activeUid(done, "p1"),
+      amount: HELMET,
+      source: "counterattack",
+    });
+    expect(done.players.p1.active?.damage).toBe(HELMET);
+  });
+
+  it("and a real ABILITY's recoil (Counterattack Quills) gets the SAME label", () => {
+    // The fix is NOT "Tools get their own member". Cacturne's recoil IS an
+    // Ability's, and it still renders as a counterattack — because the row is
+    // telling the reader what happened, not which slot on the card did it. A
+    // build that split the label by provenance fails HERE, not on the Tool case.
+    const quills = programFor("sv01-006")?.passive?.damageAttacker?.amount;
+    const { state: done, events } = fight(2, "sv01-006");
+
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p1",
+      amount: quills,
+      source: "counterattack",
+    });
+    expect(done.players.p1.active?.damage).toBe(quills);
+  });
+});
+
+describe("⚠️ why no PROVENANCE label can be honest — one row, two provenances", () => {
+  it("Stunfisk (Ability 50) wearing Rocky Helmet (Tool 20) is ONE row of 70", () => {
+    // THE CASE THE WHOLE JUDGEMENT RESTS ON, and it needs no new card: Custom
+    // Trap is gated on `requiresTool`, so a Stunfisk that retaliates at all has a
+    // Tool attached — and the Tool the catalog gives it for that job carries a
+    // recoil of its own. `passivesOf` ADDS them, attack.ts emits ONE event, and
+    // there is exactly one `source` slot for a number that came from two cards.
+    const trap = programFor("sv03-112")?.passive?.damageAttacker?.amount ?? 0;
+    expect(programFor("sv03-112")?.passive?.damageAttacker?.requiresTool).toBe(true);
+
+    const { state: done, events } = fight(3, "sv03-112", "sv01-193");
+
+    const placed = all(events, "COUNTERS_PLACED");
+    expect(placed).toHaveLength(1); // NOT one row per contributing card
+    expect(placed[0]).toMatchObject({
+      seat: "p1",
+      amount: trap + HELMET,
+      source: "counterattack",
+    });
+    // Read from the two authored amounts rather than written as 70, so the
+    // arithmetic is asserted rather than the constant.
+    expect(trap + HELMET).toBe(70);
+    expect(done.players.p1.active?.damage).toBe(70);
+  });
+
+  it("and the read site is handed a bare NUMBER — no provenance survives the sum", () => {
+    // The structural half of the same claim: the passive record itself carries no
+    // kind, so attack.ts could not label by provenance even if it wanted to. This
+    // is the assertion that fails the day somebody adds a `kind: "tool"` field to
+    // `damageAttacker` and reaches for a provenance member again — at which point
+    // the sum above is still two cards and one row, and the answer is still no.
+    for (const id of ["sv01-005", "sv01-006", "sv03-112", "sv01-193"]) {
+      const recoil = programFor(id)?.passive?.damageAttacker;
+      expect(recoil, id).toBeDefined();
+      expect(Object.keys(recoil ?? {}).sort()).not.toContain("source");
+      for (const key of Object.keys(recoil ?? {})) {
+        expect(["amount", "requiresTool"], `${id} carries ${key}`).toContain(key);
+      }
+    }
+  });
+});
+
+describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picked site", () => {
+  // D140's move, reused: the old "guard" here was the ACCIDENT that whoever wrote
+  // the literal was thinking of Cacnea. `rockyHelmet.test.ts:95` then pinned the
+  // wrong side of it as intended — the D136 "the suite asserts the bug" pattern
+  // for a third time. So the family is DISCOVERED from the catalog text and every
+  // member found is driven, rather than a list somebody maintains.
+  const producers = Object.entries(FIXTURE_POOL)
+    .filter(([, card]) =>
+      [card.effect ?? "", ...(card.abilities ?? []).map((a) => a.effect ?? "")].some((text) =>
+        text.includes(RECOIL_CLAUSE),
+      ),
+    )
+    .map(([id, card]) => ({ id, category: card.category, trainerType: card.trainerType }));
+
+  it("discovers the §9 recoil family from the printed text, and it spans BOTH kinds", () => {
+    // The census, pinned so a fixture landing later fails this and gets swept in.
+    expect(producers.map((p) => p.id).sort()).toEqual([
+      "sv01-005", // Cacnea — Counterattack Quills (Ability)
+      "sv01-006", // Cacturne — Counterattack Quills (Ability)
+      "sv01-193", // Rocky Helmet (Pokémon TOOL)
+      "sv03-112", // Stunfisk — Custom Trap (Ability, requiresTool)
+    ]);
+    // ⚠️ AND IT IS MIXED, which is the fact the hardcoded label denied. A build in
+    // which every producer is a Pokémon can honestly say "Ability"; this one
+    // cannot, and the assertion states that rather than leaving it to be noticed.
+    expect(new Set(producers.map((p) => p.category))).toEqual(new Set(["Pokemon", "Trainer"]));
+    expect(producers.find((p) => p.id === "sv01-193")?.trainerType).toBe("Tool");
+  });
+
+  it("every discovered producer is AUTHORED as the same passive — text census = program census", () => {
+    // The two censuses must agree in both directions: a printed sentence with no
+    // program would mean the sweep below drives nothing, and an authored
+    // `damageAttacker` with no printing would mean the sweep misses a producer.
+    const authored = producers.filter(
+      (p) => programFor(p.id)?.passive?.damageAttacker !== undefined,
+    );
+    expect(authored).toHaveLength(producers.length);
+    expect(producers.length).toBeGreaterThan(1);
+  });
+
+  it("and DRIVES every one of them — not one emits a row that says 'ability'", () => {
+    // TOTAL over the discovered set. A Pokémon producer is fielded Active; a Tool
+    // producer is bolted onto a passive-less body. Every Pokémon case wears Rocky
+    // Helmet as well, so a `requiresTool` producer actually fires instead of
+    // passing this vacuously — which also means every one of these rows is a SUM,
+    // and every one of them still carries exactly one label.
+    let seed = 10;
+    for (const producer of producers) {
+      const own = programFor(producer.id)?.passive?.damageAttacker?.amount ?? 0;
+      const { events } =
+        producer.category === "Pokemon"
+          ? fight(seed++, producer.id, "sv01-193")
+          : fight(seed++, "fix-bigbody", producer.id);
+      const placed = all(events, "COUNTERS_PLACED");
+      expect(placed, producer.id).toHaveLength(1);
+      expect(placed[0]?.source, `${producer.id} labelled its recoil`).toBe("counterattack");
+      // The amount is this producer's own plus the Helmet's, except for the
+      // Helmet itself (which is not doubled up).
+      expect(placed[0]?.amount, producer.id).toBe(
+        producer.id === "sv01-193" ? own : own + HELMET,
+      );
+      // …and the row is on the ATTACKER's seat, never the holder's.
+      expect(placed[0]?.seat, producer.id).toBe("p1");
+    }
+  });
+});
+
+describe("the VOICE — `seat` owns the DAMAGED Pokémon, which here is the ATTACKER", () => {
+  it("files the row under the attacker's seat and uid, though the CAUSER is the defender", () => {
+    // The mirror image of D136's finding 1. Everywhere else in this family the
+    // row's seat is the non-actor's; here it is the actor's — and the causer is
+    // the other player, which is why the row must NOT be active-voiced under this
+    // seat (it would read as the attacker damaging itself). Pinned from the state
+    // rather than by eye.
+    const { state: done, events } = fight(4, "fix-bigbody", "sv01-193");
+    const placed = find(events, "COUNTERS_PLACED");
+    expect(placed?.seat).toBe("p1"); // the attacking player
+    expect(placed?.uid).toBe(activeUid(done, "p1")); // …and their own Active
+    expect(done.players.p2.active?.damage).toBe(30); // the holder took only the Bite
+  });
+
+  it("lands immediately behind the hit it reacts to, before any turn end", () => {
+    const { events } = fight(5, "fix-bigbody", "sv01-193");
+    expect(types(events)).toEqual([
+      "ATTACK_DECLARED",
+      "DAMAGE_DEALT",
+      "COUNTERS_PLACED",
+      "TURN_ENDED",
+      "TURN_STARTED",
+      "CARDS_DRAWN",
+    ]);
+  });
+});
+
+describe("the log — the row a player actually reads", () => {
+  function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
+    const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:14" };
+    return logFromEvents(events, ctx).flatMap((entry) =>
+      entry.kind === "turn"
+        ? []
+        : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+    );
+  }
+
+  it("renders a SYSTEM row that never says Ability — the Tool case", () => {
+    const { state: done, events } = fight(6, "fix-bigbody", "sv01-193");
+    const rows = render(events, done);
+
+    const row = rows.find((r) => r.text.startsWith("Counterattack:"));
+    expect(row).toBeDefined();
+    expect(row?.who).toBe("system");
+    expect(row?.text).toBe(`Counterattack: ${HELMET} damage to fix-attacker`);
+    // ⚠️ THE ASSERTION THE OLD SUITE HAD BACKWARDS. This is what a Rocky Helmet
+    // printed for three engine versions, and it is the line that fails if the
+    // literal is restored.
+    expect(row?.text).not.toContain("Ability");
+    // Nothing else announces the recoil — it is a passive, so no
+    // ABILITY_TRIGGERED row names a source above it. This row is the whole
+    // explanation, which is why it has to be true on its own.
+    expect(rows.filter((r) => r.text.includes("damage to fix-attacker"))).toHaveLength(1);
+  });
+
+  it("renders the Ability + Tool SUM as ONE row, and cannot say which card did it", () => {
+    const { state: done, events } = fight(7, "sv03-112", "sv01-193");
+    const rows = render(events, done).filter((r) => r.text.startsWith("Counterattack:"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.text).toBe("Counterattack: 70 damage to fix-attacker");
+    // Neither card's name appears, and neither could: the number is their sum.
+    expect(rows[0]?.text).not.toContain("Stunfisk");
+    expect(rows[0]?.text).not.toContain("Rocky Helmet");
+  });
+
+  it("still renders a genuine ABILITY placement as an Ability row — both values reach the log", () => {
+    // A member is only meaningful if the value it replaced still reaches the log
+    // from its own producers (D140's move). Trevenant's between-turns placement is
+    // an Ability, says so, and is untouched by this slice.
+    const authored = programFor("sv03-012")?.triggered?.[0]?.program?.[0] as { source: string };
+    expect(authored.source).toBe("ability");
+    const { state: done } = fight(8, "fix-bigbody", "sv01-193");
+    const rows = render(
+      [
+        {
+          type: "COUNTERS_PLACED",
+          seat: "p1",
+          uid: activeUid(done, "p1") ?? "",
+          amount: 10,
+          source: "ability",
+        },
+      ],
+      done,
+    );
+    expect(rows[0]).toEqual({ who: "system", text: "Ability: 10 damage to fix-attacker" });
+  });
+
+  it("does NOT read like the attacker's own self-recoil — the word 'Recoil' stays free", () => {
+    // `"self"` is an attacker damaging ITSELF with its own printed attack
+    // (Skeledirge "Blazing Shout") — the OPPOSITE direction, in the attacker's own
+    // voice. Naming this member `"recoil"` would have collided with a meaning the
+    // event's own doc block already uses, so the two are pinned apart here.
+    const { state: done } = fight(9, "fix-bigbody", "sv01-193");
+    const uid = activeUid(done, "p1") ?? "";
+    const [counter] = render(
+      [{ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 20, source: "counterattack" }],
+      done,
+    );
+    const [self] = render(
+      [{ type: "COUNTERS_PLACED", seat: "p1", uid, amount: 20, source: "self" }],
+      done,
+    );
+    expect(counter?.who).toBe("system");
+    expect(self?.who).toBe("p1"); // the attacker's own voice
+    expect(counter?.text).not.toBe(self?.text);
+    expect(self?.text).toContain("to itself");
+    expect(counter?.text).not.toContain("itself");
+  });
+});
+
+describe("the family this label must still cover — three printings, none an Ability", () => {
+  // ⚠️ WHY THE MECHANISM AXIS GENERALISES AND A PROVENANCE ONE DOES NOT. The local
+  // D1 (2026-08-02, 978 cards) prints "…damage counters on the Attacking Pokémon"
+  // on EIGHT printings: three Ability printings (all authored), two TOOL printings
+  // and three ATTACK printings. So the same one row already has to serve three
+  // different kinds of card, and a `"tool"` member would have been wrong before it
+  // shipped. None of the three below is simulated today; when one lands it joins
+  // this label with NO new member — which is the test of whether the axis was right.
+
+  it("Vengeful Punch sv03-197 — a SECOND recoil TOOL, unauthored today", () => {
+    // "If the Pokémon this card is attached to is Knocked Out by damage from an
+    // attack …, put 4 damage counters on the Attacking Pokémon." — the same
+    // mechanism on a KO condition rather than a damaged one, so it needs a read
+    // site rather than a label.
+    expect(programFor("sv03-197")).toBeUndefined();
+  });
+
+  it("Lycanroc ex sv02-117/-241 'Scary Fangs' — an ATTACK-installed recoil, loud", () => {
+    // "During your opponent's next turn, if this Pokémon is damaged by an attack
+    // (even if it is Knocked Out), put 10 damage counters on the Attacking
+    // Pokémon." A §11 block with a DURATION — no reader, and no `damageAttacker`
+    // in sight. Pinned LOUD so the day it derives, this file notices.
+    expect(programFor("sv02-117")).toBeUndefined();
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put 10 damage counters on the Attacking Pokémon.",
+      ),
+    ).toBeNull();
+  });
+
+  it("Mabosstiff sv02-143 'Comeuppance' — the same, with the amount read off the hit", () => {
+    expect(programFor("sv02-143")).toBeUndefined();
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+      ),
+    ).toBeNull();
+  });
+});
