@@ -206,7 +206,19 @@ export interface MatchRecord {
     opposite of the case bumped three times above: there a REQUIRED field made the
     old record's TYPE a lie whatever it read back as; here the type still describes
     the old record, and there is nothing to retire. Nothing else persisted moved —
-    no `InPlayPokemon` field, no `GameState` field, no event and no log wording. */
+    no `InPlayPokemon` field, no `GameState` field, no event and no log wording.
+
+    ⚠️ NO BUMP AT D145 EITHER (engine 0.94.0), and the reason is STRONGER than
+    D144's rather than the same. That slice added two `deriveAttackEffect` arms
+    over the field D144 had already built, and **NEITHER of their ops can PARK** —
+    `discardEnergy { count: "all" }` "asks nothing" and resolves inline, and
+    `damageSelf` places counters with no decision in it — so neither derived
+    program can reach `EffectContinuation` at all, and D144's persistence edge is
+    not merely widened but UNREACHABLE for these two. No new op, no new field, no
+    new event, no new `InPlayPokemon` key and no log wording change: there is
+    nothing a previously written record could fail to describe. Asked rather than
+    omitted, because "an arm over an existing field" is exactly the shape a
+    session skips the question on. */
 export const MATCH_RECORD_VERSION = 5;
 
 /** How a persisted match read back: absent, usable, or written by an

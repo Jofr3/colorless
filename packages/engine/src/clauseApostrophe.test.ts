@@ -90,6 +90,15 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
   }
 
   it("finds the census it is supposed to sweep", () => {
+    // 41 distinct sentences at D145 — UNCHANGED from D144, and that is a result
+    // rather than an omission. D145 added THREE fixtures (Pikachu ex sv02-063,
+    // Beartic sv03-054, Oinkologne sv03-183) and its two mapped sentences carry
+    // NO APOSTROPHE AT ALL — the first pair in the tails family with no D136/D137
+    // exposure to class. The one apostrophe-bearing sentence those fixtures print
+    // is Oinkologne's index-0 "Confounding Cologne" ("Your opponent's Active
+    // Pokémon is now Confused."), which `fix-statuser` has printed since M2 — so
+    // it adds an ID to an existing row and not a row, which is exactly what a
+    // `sentence` census is supposed to do.
     // 41 distinct sentences at D144 (40 at D143, 38 at D142, 36 at D140/D141, 35
     // at D139, 33 at D138, 32 at D137). D144 added ONE — the TAILS-gated self-lock
     // ("Flip a coin. If tails, during your next turn, this Pokémon can't attack."),

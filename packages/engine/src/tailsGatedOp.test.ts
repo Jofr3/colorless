@@ -255,14 +255,17 @@ describe("the tails gate — derived, not authored", () => {
     for (const { where, op } of headsGates) {
       expect(Object.keys(op), `${where} carries an onTails key`).not.toContain("onTails");
     }
-    // …and every tails gate in the whole engine is THIS sentence — the field has
-    // exactly one producer today, and it says so rather than leaving it implied.
-    for (const { where } of tailsGates) {
-      expect(where.startsWith("sv01-157") || where.startsWith("sv02-130")).toBe(true);
-    }
+    // …and every tails gate in the whole engine comes off one of the THREE bare
+    // tails-gated sentences — this one (D144) and the two self-costs D145 added.
+    // Stated as the producer SET rather than as a per-row predicate, so a fourth
+    // producer fails here loudly instead of being quietly absorbed. The family is
+    // CLOSED (8 printings / 3 sentences), so there should never be a fourth
+    // without a new census in front of it.
+    const producers = new Set(tailsGates.map((g) => g.where.split(" ")[0]));
+    expect([...producers].sort()).toEqual(["sv01-157", "sv02-063", "sv02-130", "sv03-054", "sv03-183"]);
   });
 
-  it("refuses the OTHER SEVEN tails-carrying sentences in the pool", () => {
+  it("refuses the OTHER FIVE tails-carrying sentences in the pool", () => {
     // Every one is real text off the local D1 (2026-08-02, 978 cards) — the census
     // this slice ran for the TAILS FACE as its own question, rather than reading
     // D143's conclusion, which had counted these five as refusals of the "can't
@@ -271,21 +274,21 @@ describe("the tails gate — derived, not authored", () => {
     // property of the anchor rather than luck. THE STANDING NOTE: when a later
     // slice maps one of these, RE-POINT the row at another unmapped one — never
     // delete it (D143 re-pointed three and deleted none).
+    //
+    // ⚠️ TWO ROWS LEFT THIS LIST AT D145 AND NEITHER WAS DELETED — the tails
+    // gate's two unmapped siblings (Pikachu ex sv02-063 / Beartic sv03-054's
+    // "discard all Energy", Oinkologne sv03-183's 60 to itself) were exactly ONE
+    // regex and ONE arm away, as this file predicted, and they moved to SHAPE
+    // claims in the case below rather than out of the suite. What remains is
+    // FIVE, four of them unmapped by any reader; the bare tails-gated family is
+    // CLOSED at 3 sentences / 8 printings, so this list can only shrink again
+    // once a MECHANISM arrives (an `otherwise`, or an opponent-side durated flip).
     for (const text of [
       // ALREADY SIMULATED, by a DIFFERENT reader: `deriveAttackCoinFlip`'s
       // `cancelOnTails` (D126, 11 printings), which runs in FRONT of the §8.5
       // pipeline because it retracts damage. The engine's other tails reading, and
       // the two are disjoint by consequent exactly as the heads pair is.
       "Flip a coin. If tails, this attack does nothing.",
-      // The tails gate's TWO unmapped siblings, and the whole reason the field is
-      // a field: each is ONE regex and ONE arm away, because its consequent op
-      // already exists. Pikachu ex sv02-063 "Dynamic Bolt" / Beartic sv03-054
-      // "Frost Purge" (2 printings — `discardEnergy { from: "yourActive",
-      // count: "all" }`)…
-      "Flip a coin. If tails, discard all Energy from this Pokémon.",
-      // …and Oinkologne sv03-183 "High-Impact Kick" (1 — `damageSelf`), a THIRD
-      // Oinkologne and a different card from this file's sv01-157.
-      "Flip a coin. If tails, this Pokémon also does 60 damage to itself.",
       // A DURATED gate that makes the OPPONENT flip on their own turn (4 printings
       // — Dolliv sv01-022/-200 "Apply Oil", Quaxly sv02-049/-206 "Apply Gel"). The
       // only tails-gated attack LOCK in the pool this op could not express even
@@ -713,15 +716,34 @@ describe("the tails gate — the census, asserted as a shape", () => {
       expect(row).toBeDefined();
       expect(FIXTURE_POOL[id]?.attacks?.[row?.index ?? -1]?.effect).toBe(TAILS_TEXT);
     }
-    // ⚠️ THE SHAPE GENERALISES, AND THE OTHER TWO SENTENCES' CONSEQUENT OPS ALREADY
-    // EXIST — which is the evidence for a FIELD over a sibling op member, made on
-    // the census rather than on taste. Both stay LOUD here, and both are one regex
-    // and one arm away.
+    // ⚠️ THE SHAPE GENERALISED, AND IT WAS SPENT ONE SLICE LATER. The evidence for
+    // a FIELD over a sibling op member was that the other two sentences' consequent
+    // ops already existed, so each was one regex and one arm away — D145 wrote both
+    // arms and the family is now CLOSED at 3 sentences / 8 printings. The two rows
+    // that used to make a NULL claim here are RE-POINTED to the strictly stronger
+    // SHAPE claim (D144's own move, applied to D144's own witnesses): each gated
+    // program's `then` is the bare anchor's output, byte for byte.
     expect(deriveAttackEffect("Discard all Energy from this Pokémon.")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
     ]);
     expect(deriveAttackEffect("This Pokémon also does 60 damage to itself.")).toEqual([
       { op: "damageSelf", amount: 60 },
     ]);
+    for (const [gated, bare] of [
+      ["Flip a coin. If tails, discard all Energy from this Pokémon.", "Discard all Energy from this Pokémon."],
+      [
+        "Flip a coin. If tails, this Pokémon also does 60 damage to itself.",
+        "This Pokémon also does 60 damage to itself.",
+      ],
+    ] as const) {
+      expect(deriveAttackEffect(gated), gated).toEqual([
+        {
+          op: "coinFlipGate",
+          onTails: true,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: deriveAttackEffect(bare),
+        },
+      ]);
+    }
   });
 });

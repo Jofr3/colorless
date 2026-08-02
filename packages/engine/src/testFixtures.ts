@@ -570,6 +570,125 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  // — 0.93.0 → 0.94.0 (D145): the TAILS gate's other two consequents, both of
+  //   them an IMMEDIATE cost on the attacker's OWN body rather than D144's
+  //   durated state. Three printings across two sentences, all three at attack
+  //   INDEX 1 — checked printing by printing against the local D1 (2026-08-02),
+  //   because D144 found an index that is not constant WITHIN one family and an
+  //   index is a per-printing fact for good. —
+  /** Pikachu ex sv02-063 — "Dynamic Bolt" ({L}{L}{C}, attack INDEX 1, printed
+      220): *"Flip a coin. If tails, discard all Energy from this Pokémon."*, one
+      of that sentence's TWO printings.
+
+      Three things it is here for. It is a BASIC, so it goes on the Active by
+      surgery with no evolution chain. Its {L}{L}{C} cost is a MIXED attachment —
+      typed and Colorless in one pile — which is what makes "discard ALL" a claim
+      about the `anyEnergy` filter rather than about a single Energy line. And it
+      is an `ex`, which is the whole reason this fixture rather than a second
+      Beartic: `isExOrV` reads the rule box off the NAME (cards.ts), so declaring
+      it into Mimikyu sv02-097's Safeguard is the one board in the pool where the
+      §8.5 pipeline deals ZERO and the effect program runs anyway — the
+      "does the drawback still land when the main hit is prevented?" question,
+      driven rather than reasoned about. (A KO of this body also takes TWO
+      Prizes, which the self-KO cases deliberately do not use it for.)
+
+      Its index-0 "Pika Punch" ({C}, 30, NO effect text) is the control that
+      proves no program leaks across indices AND the attack a stripped body can
+      still afford after the drawback has taken everything.
+
+      Verbatim off the local D1 (2026-08-02): 190 HP, Lightning, Basic, retreat 0,
+      ×2 Fighting, no Resistance, no Ability. */
+  "sv02-063": battler("sv02-063", {
+    name: "Pikachu ex",
+    types: ["Lightning"],
+    hp: 190,
+    retreat: 0,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless"], name: "Pika Punch", damage: 30 },
+      {
+        cost: ["Lightning", "Lightning", "Colorless"],
+        name: "Dynamic Bolt",
+        damage: 220,
+        effect: "Flip a coin. If tails, discard all Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Beartic sv03-054 — "Frost Purge" ({W}{W}{C}, attack INDEX 1, printed 170):
+      the SAME sentence on the other printing, from a DIFFERENT SET and a
+      different Energy line — which is what makes the two-printing warrant
+      (D121, in D139's stronger two-cards-two-sets form) a fact of the fixtures
+      rather than of the docs.
+
+      A STAGE 1 (from Cubchoo), fielded by `setActiveFromDeck` surgery like
+      Ninetales sv03-029 and Oinkologne sv01-157 before it. Its index-0 "Icicle
+      Punch" ({W}, 30, NO effect text) is its control.
+
+      Verbatim off the local D1 (2026-08-02): 150 HP, Water, Stage1 from Cubchoo,
+      retreat 3, ×2 Metal, no Resistance, no Ability. */
+  "sv03-054": battler("sv03-054", {
+    name: "Beartic",
+    stage: "Stage1",
+    evolveFrom: "Cubchoo",
+    types: ["Water"],
+    hp: 150,
+    retreat: 3,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      { cost: ["Water"], name: "Icicle Punch", damage: 30 },
+      {
+        cost: ["Water", "Water", "Colorless"],
+        name: "Frost Purge",
+        damage: 170,
+        effect: "Flip a coin. If tails, discard all Energy from this Pokémon.",
+      },
+    ],
+  }),
+  /** Oinkologne sv03-183 — "High-Impact Kick" ({C}{C}{C}, attack INDEX 1,
+      printed 160): *"Flip a coin. If tails, this Pokémon also does 60 damage to
+      itself."*, the sentence's ONLY printing, and a THIRD Oinkologne — a
+      DIFFERENT CARD from D144's sv01-157, not another rarity of it (D135's
+      Arboliva finding, applied before it could bite again).
+
+      ⚠️ D134's FIXTURE HP TRAP IS THE REASON THE NUMBERS ARE WHAT THEY ARE. 120
+      printed HP against a 60 recoil: a FRESH body survives its own attack twice
+      and a body already carrying 60 does not, so the self-KO is reachable by one
+      `setDamage` and is never reached by accident. Every own-board damage figure
+      in the suite is read against THIS number.
+
+      Its index-0 "Confounding Cologne" ({C}{C}, 30, *"Your opponent's Active
+      Pokémon is now Confused."*) is the control, and a sharper one than an
+      effect-less sibling: it is read by a DIFFERENT arm of the same deriver, so
+      the two indices of one card must produce two different programs and neither
+      may claim the other's string. (Its sentence is already in
+      `clauseApostrophe`'s discovered census via `fix-statuser`, so this fixture
+      adds an id to an existing row rather than a row.)
+
+      Verbatim off the local D1 (2026-08-02): 120 HP, Colorless, Stage1 from
+      Lechonk, retreat 2, ×2 Fighting, no Resistance, no Ability. */
+  "sv03-183": battler("sv03-183", {
+    name: "Oinkologne",
+    stage: "Stage1",
+    evolveFrom: "Lechonk",
+    types: ["Colorless"],
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Confounding Cologne",
+        damage: 30,
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "High-Impact Kick",
+        damage: 160,
+        effect: "Flip a coin. If tails, this Pokémon also does 60 damage to itself.",
+      },
+    ],
+  }),
   "fix-attacker-v": battler("fix-attacker-v", {
     name: "Guardmon V",
     types: ["Fire"],
@@ -7102,6 +7221,52 @@ export const TAILS_GATE_DECK = deckOf({
   "fix-water-energy": 8, // {W}{W} — Aqua Slash and Bubble
   "fix-energy": 19, // Colorless Basic — pays every {C}, and Leg Stomp wants three
   "fix-titan": 5, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+});
+
+/** D145's TAILS-SELF-COST deck (`tailsSelfCost.test.ts`). Its own 60, for
+    `TAILS_GATE_DECK`'s reason and for one more: **this family takes a real coin**,
+    so every end-to-end board is reached by a seed that lands the face the case is
+    about — and D144's seed table is pinned SEED BY SEED against its own shuffle,
+    so adding a card to that deck would move every one of its 40 pins. Two coin
+    families, two decks, two tables, neither able to make the other's determinism
+    a coincidence.
+
+      • sv02-063 Pikachu ex — "Dynamic Bolt" at INDEX 1 ({L}{L}{C}, printed 220),
+        with "Pika Punch" ({C}, 30, no effect) at index 0 as the control and as
+        the attack a stripped body can still afford;
+      • sv03-054 Beartic — the SAME sentence at INDEX 1 ({W}{W}{C}, printed 170),
+        a different set and a different Energy line, which is what makes the
+        two-printing warrant a fact of the fixtures;
+      • sv03-183 Oinkologne — "High-Impact Kick" at INDEX 1 ({C}{C}{C}, printed
+        160), the recoil sentence's only printing, with "Confounding Cologne" at
+        index 0 (a DIFFERENT deriver arm, so the two indices must not collide);
+      • sv02-097 Mimikyu carries the Safeguard passive from the REGISTRY, and is
+        here for exactly one claim: Pikachu ex is an `ex`, so its main hit is
+        NULLED (§8.5) while the effect program at the tail runs regardless —
+        the "is the drawback still paid when the attack did nothing?" board;
+      • fix-colorless-weak-big (200 HP, ×2 Colorless) is the flatness witness for
+        the recoil: it doubles Oinkologne's 160 to 320 and leaves the 60 alone;
+      • fix-titan (340 HP, no Weakness, no Resistance, NO ATTACKS) is the pinned
+        Active on both sides — it carries 220 without the epilogue sweeping a body
+        out from under an assertion, it is the DOMINANT (mulligan-free) Basic
+        through setup, and it never attacks back to interleave rows;
+      • fix-basic-1 is the lone bench body a self-KO force-promotes.
+    THE ENERGY IS SPLIT THREE WAYS on purpose — Lightning pays Dynamic Bolt's two
+    typed symbols, Water pays Frost Purge's, and Colorless pays every {C} plus
+    High-Impact Kick's whole cost. A case attaches MORE than the cost on the
+    discard boards (that is the only way "all" says anything), and rebuilds each
+    board a dozen times over, so every line is deep. */
+export const TAILS_SELF_COST_DECK = deckOf({
+  "sv02-063": 4, // Pikachu ex — "Pika Punch" idx 0 (control), "Dynamic Bolt" idx 1 (the discard)
+  "sv03-054": 4, // Beartic — "Icicle Punch" idx 0 (control), "Frost Purge" idx 1 (the same sentence)
+  "sv03-183": 4, // Oinkologne — "Confounding Cologne" idx 0 (a different arm), "High-Impact Kick" idx 1
+  "sv02-097": 2, // Mimikyu — Safeguard is a REGISTRY passive: the prevented-main-hit defender
+  "fix-colorless-weak-big": 2, // 200 HP ×2 Colorless — the recoil's flatness witness
+  "fix-basic-1": 2, // a plain Basic — the lone bench body a self-KO promotes
+  "fix-lightning-energy": 8, // Basic {L} — Dynamic Bolt's two typed symbols, and the surplus "all" strips
+  "fix-water-energy": 8, // Basic {W} — Frost Purge's two typed symbols, and Icicle Punch's one
+  "fix-energy": 14, // Colorless Basic — every {C}, and High-Impact Kick's whole {C}{C}{C}
+  "fix-titan": 12, // 340 HP neutral Basic, NO attacks — the pinned Active both sides
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

@@ -2381,7 +2381,138 @@ import type { GameState, Seat } from "./types";
     (`clauseApostrophe` 40 → 41), 1 corrected catalog count in a D125 comment
     (the `cancelOnTails` family is 11 printings, not 12 — counted while censusing).
     `bun run check` GREEN exit 0, **186 files / 3051 tests** (was 185 / 3026). */
-export const engineVersion = "0.93.0";
+/** 0.93.0 → 0.94.0 — P3-M5 long tail, **the TAILS-GATED SELF-COSTS**:
+    *"Flip a coin. If tails, discard all Energy from this Pokémon."* (2 printings)
+    and *"Flip a coin. If tails, this Pokémon also does 60 damage to itself."* (1)
+    now SIMULATE on **TWO anchored regexes and TWO `deriveAttackEffect` arms**, and
+    **THE BARE TAILS-GATED FAMILY IS CLOSED** — all 3 sentences / 8 printings of
+    the shape `onTails` buys are read, and the other 20 tails printings in the pool
+    are refused by their SHAPE rather than by any anchor's spelling (D145, engine
+    0.94.0, MATCH_RECORD_VERSION UNCHANGED at 5).
+
+    **Taken as item 1 of D144's remainder list, and the emptiest slice this tail
+    has taken.** D132's INVENTORY RULE with literally nothing left over: the gate
+    (`coinFlipGate`) has spliced a branch since 0.x, the `onTails` field is D144's,
+    and BOTH consequent ops have been read off their BARE printings since 0.x
+    (`SELF_DISCARD_ALL` → `discardEnergy { from: "yourActive", filter: anyEnergy,
+    count: "all" }`, `SELF_DAMAGE` → `damageSelf { amount }`). **No new op, no new
+    field, no new event, no new error code, no new park, no new prompt, no registry
+    row, and no `interpreter.ts` / `attack.ts` / `types.ts` / `continuous.ts` /
+    `flow.ts` / `log.ts` / `events.ts` / `redact.ts` / `registry.ts` / `rng.ts`
+    diff — no web/API diff and NO `MATCH_RECORD_VERSION` bump.**
+
+    ⚠️ **THE LIST WAS RIGHT — THE FIRST IN TEN THAT WAS.** Nine consecutive
+    remainder lists carried something wrong; this one's every claim held. All three
+    CATALOG claims verified printing by printing against the local D1 (2026-08-02,
+    978 cards): the ids, the attack NAMES ("Dynamic Bolt" / "Frost Purge" /
+    "High-Impact Kick"), the costs ({L}{L}{C} / {W}{W}{C} / {C}{C}{C}), the printed
+    damage (220 / 170 / 160), the byte-exact effect strings — **and the INDEX,
+    which is 1 on all three and was checked SEPARATELY for each** because D144
+    found a family whose index is not internally constant. Both STRUCTURAL claims
+    held too ("both consequent ops exist", "no mechanism, no op, no event, no
+    interpreter diff), which is what a list looks like when the previous slice
+    wrote it with the code open. The pattern the standing note names is therefore
+    unbroken rather than refuted: what made this list right is that D144 had
+    already READ the two ops it was pricing.
+
+    ⚠️ **THE CONSEQUENT CENSUSES WERE RUN ANYWAY, AND ONE OF THEM MOVED THE
+    ANCHOR'S JUSTIFICATION** (D142's rule: a census run for one purpose is a FLOOR
+    for every other — D144's was run for the FACE). *Discard all Energy from this
+    Pokémon*: **10 attack printings, 0 Abilities, 0 Trainers** — 4 BARE (Pawmot
+    sv01-076/-209, Raichu sv02-064/-211, already simulated), 2 TAILS-gated (this
+    slice), and **FOUR COMPOUND** printings that add a SECOND SENTENCE after the
+    discard (Weavile sv06.5-014 + a Paralyze, Kyurem sv06.5-047 + a three-target
+    snipe, Eiscue sv02-048/-205 + a durated *takes 100 less damage*). A wider
+    anchor would swallow all four and ship half of each card, **and the hazard is
+    LIVE rather than theoretical — Eiscue's rider is item 4 of D144's own remainder
+    list**, so the day that family lands both halves derive and the compound must
+    still not match. (Four MORE printings say *MOVE* all Energy — Blissey sv01-145,
+    Tropius sv02-007/-195, Darkrai sv03-136 — a different verb and a different op.)
+    *This Pokémon also does N damage to itself*: **48 printings, 47 of them BARE**
+    (the pool's most reprinted recoil rider) and exactly ONE gated. No heads-gated
+    printing of either consequent exists anywhere.
+
+    ⚠️ **D121's WARRANT, VERIFIED RATHER THAN INHERITED — and it clears more
+    easily than the list claimed.** The discard sentence is 2 printings on TWO
+    CARDS FROM TWO SETS, which is D139's stronger form of the warrant and clears on
+    its own. The recoil sentence is ONE printing, and D134's rule covers it —
+    *when a one-printing sentence is an INSTANCE of a shape the engine already
+    reads, the warrant is owed by the SHAPE* — **on BOTH axes at once**: the GATE
+    has been read on 5 printings since D144 and the CONSEQUENT on 47 since 0.x. So
+    it would have cleared even taken alone; the list's "⚠️ TAKE THEM TOGETHER" is
+    right for a different reason (one census, one deck, one suite, one seed table).
+
+    ⚠️ **THE PRINTED "ALSO" IS THE TAIL PLACEMENT, AND IT SETTLES TWO THINGS THE
+    SENTENCE DOES NOT STATE.** An `EffectOp` runs at `attack.ts`'s tail, strictly
+    after the §8.5 pipeline (D125) — which is exactly what *"this Pokémon ALSO does
+    60 damage to itself"* says. **(a) The recoil is FLAT.** `damageSelf` writes
+    `active.damage + amount` and emits `COUNTERS_PLACED` source `"self"`; it never
+    re-enters §8.5, so no Weakness, no Resistance and no reduction touches it —
+    driven by measurement rather than argued, with a ×2 Colorless defender doubling
+    the main hit to **320 while the recoil stays exactly 60**. **(b) It is still
+    paid when the main hit dealt ZERO.** §11 prevention nulls the DAMAGE, not the
+    attack, so the program at the tail runs regardless — Pikachu ex declared into
+    Mimikyu sv02-097's Safeguard deals 0 and, on a tails, still loses every Energy.
+    What does NOT run it is a CANCELLED attack (D125's requirement gate and D126's
+    `cancelOnTails` both return in FRONT of the program), and no printing of either
+    sentence carries either clause — the anchors being whole-string.
+
+    ⚠️ **THE SELF-KO IS REACHABLE, AND IT IS D134's FIXTURE-HP TRAP TURNED INTO A
+    CASE.** Oinkologne sv03-183 is 120 HP against a 60 recoil, so a fresh body
+    survives it twice and a body already carrying 60 does not. Driven: the §8.1
+    sweep that catches it is `finishAttack`'s TWO-seat one (widened for `damageSelf`
+    back in M5 and reached through a GATE here for the first time), the Prize is
+    owed to the DEFENDER, the turn does **not** end early (`pending` is
+    `[takePrizes, promote, endTurn, checkup, startTurn]`), and the HEADS
+    declaration on the identical primed board leaves the body standing.
+
+    ⚠️ **THE WHIFF IS SILENT, ASKED BECAUSE THE FAMILY OWES THE QUESTION.**
+    `count: "all"` on an empty attachment set files an empty record and returns
+    `done` — no `ENERGY_DISCARDED`, no `ATTACK_EFFECT_SKIPPED`, no park (D134's
+    three states; D140's rule that only an UNREAD sentence is loud). It is
+    UNREACHABLE from either printing, since declaring the attack pays a
+    three-symbol cost, so it is driven as a CONSTRUCTED program rather than
+    pretended into a board — D144's precedent for its face-agnostic descent.
+
+    ⚠️ **THE FOUR STRUCTURAL QUESTIONS.** (1) **PARK?** Neither op parks on these
+    programs — `discardEnergy count: "all"` "asks nothing" and resolves inline,
+    `damageSelf` places without a decision — so neither program can ride
+    `EffectContinuation` into a persisted record and **D144's persistence edge is
+    not even reachable here**. Nothing persisted moved at all: `MATCH_RECORD_VERSION`
+    **stays 5**, asked rather than omitted. (2) **VOICE?** Rendered under real names
+    and read in sequence, twice, because the two sentences answer differently:
+    *"Pikachu ex used Dynamic Bolt"* → *"dealt 220 damage to …"* → *"flipped tails
+    for the effect"* → *"discarded Lightning Energy ×2, fix-energy from Ember's
+    Pikachu ex"* (`ENERGY_DISCARDED` reads from its `actor`, the same seat that owns
+    the stripped body, and names the owner outright so a mirror match cannot print
+    two identical rows); and *"Oinkologne did 60 damage to itself"* → *"Oinkologne
+    was Knocked Out"* → the prize row **under the OPPONENT's seat**
+    (`COUNTERS_PLACED` source `"self"` renders in the ACTOR's own active voice
+    because the attacker CHOSE this attack, unlike the confusion self-hit's system
+    row). **No log diff.** (3) **GUARDS ASSERTED?** Three, all swept: each gated
+    anchor is mutually exclusive with its own BARE anchor in BOTH directions (the
+    capital + `^…$`, neither alone sufficient); the four compound discard printings
+    are pinned as refusals in two suites; and `tailsGatedOp.test.ts`'s tails-gate
+    sweep now asserts the producer SET (five ids) rather than a two-id predicate,
+    so a sixth producer fails loudly. (4) **DOES THE MECHANISM EXIST?** Read, and
+    yes — the second slice running where both halves already existed.
+
+    Cost: 2 regexes, 2 deriver arms, 3 new fixtures (Pikachu ex sv02-063, Beartic
+    sv03-054, Oinkologne sv03-183), 1 new deck (`TAILS_SELF_COST_DECK`),
+    `tailsSelfCost.test.ts` (**28 tests**) on its own pinned seed table, and **3
+    re-pointed stays-LOUD witnesses, none deleted** (`attackPark.test.ts` and
+    `tailsGatedOp.test.ts` ×2, all NULL → SHAPE claims, plus 2 more compound
+    refusals added to the first). `clauseApostrophe`'s DISCOVERED census stays at
+    **41** — a result, not an omission: neither mapped sentence carries an
+    apostrophe at all (a first for this family), and the one apostrophe-bearing
+    sentence the new fixtures print is already in the census via `fix-statuser`.
+    **Mutation-checked six ways: dropping `onTails` from the two new arms fails
+    18, reverting `runProgram` to compare against "heads" fails 23, dropping the
+    gates and deriving the bare ops fails 22, hardcoding the recoil at 60 fails 1,
+    dropping the gated anchors' `$` fails 1, dropping `SELF_DISCARD_ALL`'s `$`
+    fails 2.** `bun run check` GREEN exit 0, **187 files / 3079 tests** (was 186 /
+    3051). */
+export const engineVersion = "0.94.0";
 
 export type {
   ApplyResult,

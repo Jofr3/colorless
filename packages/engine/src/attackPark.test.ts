@@ -82,10 +82,32 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       // Whole-sentence anchoring: a rider after the discard is a different card.
       "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
-      "Flip a coin. If tails, discard all Energy from this Pokémon.",
+      // Kyurem sv06.5-047 "Trifrost" and Eiscue sv02-048/-205 "Frigid Block" —
+      // the other two COMPOUND printings of the "all" form (D145's consequent
+      // census: 10 discard printings, 4 of them compound). Eiscue's rider is a
+      // family the engine will map, and the anchor must still refuse the pair.
+      "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Discard all Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // ⚠️ RE-POINTED AT D145, NOT DELETED. This list held the TAILS-GATED form of
+    // the "all" sentence as a null witness until D145 mapped it; the claim was
+    // never "unmapped", it was "THIS anchor does not reach it", so the row moves
+    // from a NULL to a SHAPE claim — strictly stronger, because a build where the
+    // bare body claimed the gated string would return the inner op UNWRAPPED and
+    // a `toBeNull` could no longer say so. The gated program's `then` is this
+    // anchor's own output, byte for byte.
+    expect(deriveAttackEffect("Flip a coin. If tails, discard all Energy from this Pokémon.")).toEqual(
+      [
+        {
+          op: "coinFlipGate",
+          onTails: true,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: deriveAttackEffect("Discard all Energy from this Pokémon."),
+        },
+      ],
+    );
   });
 
   // ── The park itself ──

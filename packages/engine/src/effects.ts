@@ -954,9 +954,17 @@ export type EffectOp =
       simply lacks the key, which reads as "heads wins" and reproduces the
       pre-slice behaviour exactly.
 
-      THE POOL'S TAILS-GATED SHAPE IS 8 PRINTINGS ACROSS 3 SENTENCES and this arm
-      maps 5 of them — see `FLIP_TAILS_SELF_CANT_ATTACK` for the census and for the
-      two sentences left LOUD, both of whose consequent ops already exist. */
+      THE POOL'S TAILS-GATED SHAPE IS 8 PRINTINGS ACROSS 3 SENTENCES, AND SINCE
+      D145 THIS OP READS ALL THREE — `FLIP_TAILS_SELF_CANT_ATTACK` (5),
+      `FLIP_TAILS_SELF_DISCARD_ALL` (2) and `FLIP_TAILS_SELF_DAMAGE` (1). See the
+      first for the face census and the last two for the CONSEQUENT censuses.
+      **The bare tails-gated family is CLOSED**: the remaining 20 tails printings
+      are refused by their SHAPE (11 are `deriveAttackCoinFlip`'s `cancelOnTails`,
+      already simulated by the other reader; 4 make the OPPONENT flip on their own
+      turn; 5 carry TWO consequents on one flip and want an `otherwise` this op
+      deliberately does not have), and NONE of them is brought closer by a face —
+      so the next tails printing this op can express is one this pool does not
+      print. */
   | { op: "coinFlipGate"; then: EffectOp[]; onTails?: true }
   // — Trainer / Ability ops (M4), controller-relative. —
   /** Draw `count` from the top of the controller's deck (short-draws when the
@@ -2248,22 +2256,18 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 // sentences are a bare "Flip a coin. If tails, <one consequent>.", the shape this
 // field buys, and they are 8 printings:
 //   • "…during your next turn, this Pokémon can't attack."          (5) ✅ HERE
-//   • "…discard all Energy from this Pokémon."                      (2) ❌ LOUD —
-//     Pikachu ex sv02-063 "Dynamic Bolt" (INDEX 1, 220), Beartic sv03-054 "Frost
-//     Purge" (INDEX 1, 170). Its consequent op EXISTS (`SELF_DISCARD_ALL` →
-//     `discardEnergy { from: "yourActive", filter: anyEnergy, count: "all" }`,
-//     since 0.x), so it is now ONE regex and ONE arm;
-//   • "…this Pokémon also does 60 damage to itself."                (1) ❌ LOUD —
-//     Oinkologne sv03-183 "High-Impact Kick" (INDEX 1, 160) — a THIRD Oinkologne,
-//     and a different card from sv01-157 above. Its consequent op EXISTS too
-//     (`SELF_DAMAGE` → `damageSelf`, D-era 0.x), so it is likewise one regex and
-//     one arm — and it is a ONE-printing sentence, which D134's rule licenses only
-//     because the SHAPE (a tails gate over an op the engine already owns) would by
-//     then have three members and not one.
-// **So the tails gate GENERALISES, and it generalises onto ops that already
-// exist** — which is the argument for the FIELD over a sibling op member, made on
-// the census rather than on taste. The remaining 20 printings are refused by their
-// SHAPE and not by this arm's spelling, and each is a warrant written down:
+//   • "…discard all Energy from this Pokémon."                      (2) ✅ D145,
+//     `FLIP_TAILS_SELF_DISCARD_ALL` below — Pikachu ex sv02-063 "Dynamic Bolt"
+//     (INDEX 1, 220), Beartic sv03-054 "Frost Purge" (INDEX 1, 170);
+//   • "…this Pokémon also does 60 damage to itself."                (1) ✅ D145,
+//     `FLIP_TAILS_SELF_DAMAGE` below — Oinkologne sv03-183 "High-Impact Kick"
+//     (INDEX 1, 160), a THIRD Oinkologne and a different card from sv01-157.
+// **So the tails gate GENERALISED, and it generalised onto ops that already
+// exist** — which was the argument for the FIELD over a sibling op member, made
+// on the census rather than on taste, and D145 spent it one slice later at one
+// regex and one arm apiece. **THE BARE TAILS-GATED FAMILY IS NOW CLOSED**: all 3
+// sentences / 8 printings are read, and the remaining 20 printings are refused by
+// their SHAPE and not by any arm's spelling. Each is a warrant written down:
 //   • "Flip a coin. If tails, this attack does nothing." (11) — already SIMULATED,
 //     and by a different reader: `deriveAttackCoinFlip`'s `cancelOnTails` (D126),
 //     which runs in FRONT of the §8.5 pipeline because it retracts damage. That is
@@ -2294,6 +2298,83 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 // (`can't`), and it carries `['’]` for D136/D137's reason like every sibling.
 const FLIP_TAILS_SELF_CANT_ATTACK =
   /^Flip a coin\. If tails, during your next turn, this Pokémon can['’]t attack\.$/;
+// …and the LAST TWO members of that shape (D145), which CLOSE the bare
+// tails-gated family: the same gate over the two consequents whose ops this
+// engine has owned since 0.x, so each is ONE regex and ONE arm with no
+// mechanism, no op, no event, no park and no interpreter diff at all.
+//
+//   • "Flip a coin. If tails, discard all Energy from this Pokémon."
+//       Pikachu ex sv02-063 "Dynamic Bolt" (INDEX 1, {L}{L}{C}, printed 220)
+//       Beartic    sv03-054 "Frost Purge"  (INDEX 1, {W}{W}{C}, printed 170)
+//   • "Flip a coin. If tails, this Pokémon also does 60 damage to itself."
+//       Oinkologne sv03-183 "High-Impact Kick" (INDEX 1, {C}{C}{C}, printed 160)
+//
+// ⚠️ ALL THREE ARE AT INDEX 1, verified PRINTING BY PRINTING against the local D1
+// (2026-08-02) rather than once for the family — D144 found an index that is not
+// constant WITHIN one family (1 on the Oinkologne printings, 0 on the Clodsire
+// ones), so an index is a per-printing fact for good. sv03-183 is a THIRD
+// Oinkologne and a DIFFERENT CARD from D144's sv01-157 (D135's Arboliva finding:
+// a registry row for one id is not a second printing of another).
+//
+// CONSEQUENT CENSUS 1 — "discard all Energy from this Pokémon" (local D1,
+// 2026-08-02, 978 cards), run because D144's census was run for the FACE and a
+// census run for one purpose is a FLOOR for every other (D142's rule). The verb
+// matters: `%all Energy from this%` returns 14 attack printings, and FOUR of them
+// say MOVE rather than discard (Blissey sv01-145, Tropius sv02-007/-195, Darkrai
+// sv03-136 — `moveEnergy`, a different op entirely). The ten DISCARD printings
+// split three ways, and the split is what fixes this anchor's width:
+//   • BARE, the whole printed effect (4) — Pawmot sv01-076/-209 "Electro Paws",
+//     Raichu sv02-064/-211 "Thunderbolt". ✅ `SELF_DISCARD_ALL` since 0.x;
+//   • TAILS-GATED (2) — the two printings above. ✅ HERE;
+//   • COMPOUND, a SECOND SENTENCE after the discard (4) ❌ LOUD — Weavile
+//     sv06.5-014 "Hail Claw" (+ a Paralyze), Kyurem sv06.5-047 "Trifrost" (+ a
+//     three-target snipe), Eiscue sv02-048/-205 "Frigid Block" (+ a durated
+//     "takes 100 less damage", which is item 4 of D144's remainder list).
+// ⚠️ SO A WIDER ANCHOR WOULD SWALLOW FOUR REAL CARDS AND SHIP HALF OF EACH. The
+// whole-sentence `^…$` is the entire guard, and the hazard is LIVE rather than
+// theoretical: the day the `takes {N} less damage` family lands, Eiscue's two
+// halves both derive and the compound still must not match here. 0 Abilities and
+// 0 Trainers print this clause at all, so there is no lowercase twin to fear and
+// the capital "Discard" is the family's second guard rather than the first.
+//
+// A `test`, not an `exec`: nothing varies. NO apostrophe slot anywhere in the
+// sentence — the first member of this family with none — so there is no
+// D136/D137 exposure to class, which is stated rather than left to be re-checked.
+const FLIP_TAILS_SELF_DISCARD_ALL =
+  /^Flip a coin\. If tails, discard all Energy from this Pokémon\.$/;
+// CONSEQUENT CENSUS 2 — "This Pokémon also does {N} damage to itself." (same D1,
+// same day). **48 printings, and 47 of them are BARE** — the recoil rider is one
+// of the pool's most reprinted sentences (Skeledirge sv01-038 "Blazing Shout",
+// Magneton, Great Tusk ex, Koraidon ex, Wild Charge/Take Down/Reckless Charge on
+// a dozen lines, …), all ✅ `SELF_DAMAGE` since 0.x. **Exactly ONE is gated**, and
+// it is this one. There is no heads-gated printing, no other gate, no Ability and
+// no Trainer print — so the only reading a wider anchor could invent is one the
+// ingest has never produced.
+//
+// ⚠️ IT IS A ONE-PRINTING SENTENCE, AND D134's RULE IS WHAT LICENSES IT: when a
+// one-printing sentence is an INSTANCE of a shape the engine already reads, the
+// warrant is owed by the SHAPE, not by the printing. It is an instance on BOTH
+// axes at once — the gate has been read on 5 printings since D144, and the
+// consequent on 47 since 0.x — so it is the eighth member of a family rather
+// than a bespoke row for one card. (The neighbouring sentence above clears D121
+// on its own, in D139's stronger form: TWO cards from TWO sets.)
+//
+// THE AMOUNT IS CAPTURED, exactly as `FLIP_SELF_HEAL`'s is, and NOT narrowed to
+// the printed 60 the way `FLIP_DECK_TOP_MILL` was narrowed. The narrowing there
+// was about TWO axes (a plural count AND either deck) where widening would have
+// invented three readings; here one number varies, the bare anchor already reads
+// any N, and the capture is what keeps the derived `then` byte-identical to the
+// bare anchor's own output for every N rather than for one. Worth noting: 60 is
+// an amount NO bare printing carries (the 47 print 10/20/30/50/90), so a literal
+// would have been right today and blind to why.
+//
+// The `(\d+)` and the `>= 1` guard below are the bare arm's, verbatim: a printed
+// 0 is not a real card and would derive to a silent no-op. NO apostrophe slot
+// here either. No /i, for the family's standing reason — the capitalised "Flip"
+// plus `^…$` is the whole guard, and the consequent's lowercase "this" is what
+// keeps `SELF_DAMAGE`'s own `^This` off this string in the other direction.
+const FLIP_TAILS_SELF_DAMAGE =
+  /^Flip a coin\. If tails, this Pokémon also does (\d+) damage to itself\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
@@ -2379,6 +2460,13 @@ const CHOSEN_ANY_TARGET = new RegExp(
 // §8 (only the Active attacks), which is what `from: "yourActive"` encodes.
 const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\.$/;
 const SELF_DISCARD_N = /^Discard (\d+) Energy from this Pokémon\.$/;
+// D145 — the "all" form is also printed BEHIND A TAILS on two more cards, and
+// that anchor (`FLIP_TAILS_SELF_DISCARD_ALL`) derives THIS arm's exact op inside
+// a `coinFlipGate`. The two are mutually exclusive by the capital "Discard" plus
+// `^…$`, before the anchors are even considered. The whole-sentence anchor here
+// is also what keeps FOUR compound printings LOUD (Weavile sv06.5-014, Kyurem
+// sv06.5-047, Eiscue sv02-048/-205), each of which prints a second sentence after
+// the discard — see that anchor's census.
 const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
 // The OPPONENT-side twin of the self-discard, printed on attacks rather than
 // Trainers (Pincurchin "Needle Crush", Gumshoos "Crunch", Dragonite V "Hyper
@@ -2413,6 +2501,13 @@ const REVEAL_BOTTOM_SUPPORTER =
 // damage — none in sv01–03), or a "This attack …" phrasing, stays on the loud
 // skipped path. No /i, for the family's stated reason: capitalisation + the
 // anchors are what keep a mid-sentence clause off the derived path.
+// D145 — CENSUSED: this sentence is printed BARE on 47 of its 48 printings (the
+// pool's most reprinted recoil rider by a distance), and the 48th is behind a
+// TAILS — Oinkologne sv03-183 "High-Impact Kick", read by
+// `FLIP_TAILS_SELF_DAMAGE` into this arm's exact op inside a `coinFlipGate`. The
+// two anchors are mutually exclusive by the capital "This" plus `^…$`; the gated
+// string's "this" is lowercase and mid-sentence, which is the same second guard
+// the rest of this file leans on.
 const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
 // [N cards|card] of your [opponent's] deck." 16 printings / 7 distinct clauses
@@ -4132,6 +4227,65 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         then: [{ op: "preventAttack" }],
       },
     ];
+  }
+
+  // 27/28. "Flip a coin. If tails, discard all Energy from this Pokémon." (2) and
+  //        "Flip a coin. If tails, this Pokémon also does {N} damage to itself."
+  //        (1) — D145, and the arms that CLOSE the bare tails-gated family. Both
+  //        are D132's INVENTORY RULE with nothing left over: the gate is 0.x's,
+  //        the field is D144's, and each consequent op has been read off its BARE
+  //        printing since 0.x (arm 9's `SELF_DISCARD_ALL`, arm 14's `SELF_DAMAGE`).
+  //        No new op, no new field, no new event, no new park, no new error code,
+  //        and no `interpreter.ts` / `attack.ts` / `types.ts` / `continuous.ts` /
+  //        `flow.ts` / `log.ts` / `events.ts` / `redact.ts` / `registry.ts` diff.
+  //
+  //        ⚠️ EACH `then` IS THE BARE ANCHOR'S OWN OUTPUT, BYTE FOR BYTE — the
+  //        family's checkable claim on its third and fourth sentences (D134's on
+  //        the heads face, D144's on this one). There is ONE action per sentence,
+  //        printed two ways, and the coin is procedure in front of it.
+  //
+  //        ⚠️ AND THE TAIL PLACEMENT IS THE WHOLE READING OF THE PRINTED "ALSO".
+  //        An `EffectOp` runs at `attack.ts`'s TAIL, strictly after the §8.5
+  //        pipeline (D125), so the main hit lands FIRST and this is what the
+  //        attack does after it — which is exactly what "this Pokémon ALSO does
+  //        60 damage to itself" says. Two consequences worth writing down because
+  //        neither is obvious from the sentence: the recoil is FLAT (it never
+  //        re-enters §8.5, so no Weakness, no Resistance and no reduction touches
+  //        it — the confusion-self-hit model `damageSelf` was built on), and the
+  //        program runs even when the main hit dealt ZERO because the defender
+  //        PREVENTED it (§11 nulls the damage, not the attack) — so a Pikachu ex
+  //        that hits a Safeguard still pays its Energy on a tails. What does NOT
+  //        run it is a CANCELLED attack: D125's requirement gate and D126's
+  //        `cancelOnTails` both return in FRONT of the program, and neither of
+  //        these three printings carries either sentence (the anchors are
+  //        whole-string, so a card can only print one).
+  if (FLIP_TAILS_SELF_DISCARD_ALL.test(effect)) {
+    return [
+      {
+        op: "coinFlipGate",
+        onTails: true,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+        ],
+      },
+    ];
+  }
+  match = FLIP_TAILS_SELF_DAMAGE.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // The bare arm's guard, verbatim: a printed 0 would derive to a silent no-op,
+    // so it stays on the loud ATTACK_EFFECT_SKIPPED path.
+    if (amount >= 1) {
+      return [
+        {
+          op: "coinFlipGate",
+          onTails: true,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "damageSelf", amount }],
+        },
+      ];
+    }
   }
 
   return null;
