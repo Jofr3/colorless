@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
+import { hasRuleBox, pokemonSuffixOf, prizeValueOf } from "./cards";
 import { lockedAttackIndex } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, redactGame } from "./index";
+import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, logFromEvents } from "./log";
 import {
   FIXTURE_POOL,
   PER_ATTACK_LOCK_DECK,
+  RADIANT_LOCK_DECK,
   activeUid,
   attachFromDeck,
   driveSetup,
@@ -27,18 +29,38 @@ import {
 // Taken as item 1 of D153's remainder list, which had carried it as "the single
 // best next item" for three slices — the largest unread count left in the tail.
 //
-// ⚠️ AND THE COUNT WAS WRONG, IN THE ONE DIRECTION NO EARLIER MISS HAD TAKEN.
+// ⚠️ THE COUNT — AND THIS HEADER IS NOW THE RECORD OF A CORRECTION THAT WAS
+// ITSELF WRONG, WHICH IS THE MOST USEFUL THING ON IT.
+//
 // Every list since §D143 said "8 printings / 6 sentences" on the self side, naming
 // Radiant Charizard swsh10.5-011 and Radiant Blastoise swsh10.5-018 beside six
-// sv-era ids. The local D1 (2026-08-02, 978 cards / 6 sets) holds FIVE SETS — sv01, sv02,
-// sv03, sv06.5, sve — and NO swsh10.5 ROW AT ALL. So the catalogued count is SIX
-// across FOUR names; swsh10.5-011 is in no fixture either, and swsh10.5-018 is in
-// `FIXTURE_POOL` with the sentence on it, which makes it a FIELDED printing of
-// fixture provenance rather than a catalogued one. Every census in this repo that
-// says "run against the local D1, 978 cards / 6 sets" has been structurally blind to that
-// set — D149's own "6 printings" named Pidove swsh10.5-061 the same way — and the
-// lesson is narrower than "counts drift": a query cannot see a set the database
-// does not have, and nothing about its result says so.
+// sv-era ids. D154 queried, found FIVE sets and no `swsh10.5` row at all, and
+// corrected the figure DOWN to "6 printings / 4 names". **That correction was an
+// artefact of a database that had quietly lost a set**: the local D1 had dropped
+// all 88 `swsh10.5` rows to an uncheckpointed WAL between 2026-08-02 and
+// 2026-08-03, D160 re-ingested and checkpointed them, and the census re-run
+// against the restored catalog returns
+//
+//   LIKE '%During your next turn, this Pokémon can''t use %'  (all 3 text columns)
+//     → 8 rows across 6 NAMES  (local D1, 2026-08-03, 978 cards / 6 sets)
+//
+// — Lucario sv01-114, Skarmory sv03-142, Greedent ex sv03-179, Munkidori ex
+// sv06.5-037/-083/-091, Radiant Charizard swsh10.5-011 and Radiant Blastoise
+// swsh10.5-018 — which is §D143's inherited figure EXACTLY. Re-measured at D162
+// and re-confirmed row by row, not inherited back.
+//
+// So D154's lesson stands and gains a second half. The first: **a query cannot see
+// a set the database does not have, and nothing about its result says so — a
+// census owes its SCOPE, not only its count.** The second, which cost three slices
+// to learn: **a query that returns fewer rows than a predecessor is evidence about
+// the DATABASE before it is evidence about the predecessor.** D154 corrected an
+// inherited number downward on good evidence and was wrong; the honest reading is
+// that neither number was ever wrong, they were scopeless.
+//
+// swsh10.5-018 was fielded throughout (a printing of FIXTURE-POOL provenance for
+// as long as its row was missing, and catalogued again since D160); swsh10.5-011
+// was in no fixture until D162, whose whole content is that fixture — see the
+// section at the foot of this file.
 //
 // Four things the slice turns on:
 //
@@ -57,18 +79,26 @@ import {
 //     YOUR next turn", so the window is the holder's own. Driven across real turn
 //     boundaries rather than asserted off the field.
 
-/** The four CATALOGUED sentences, byte-for-byte off the local D1 rows. */
+/** The SIX catalogued sentences, byte-for-byte off the local D1 rows — six names
+    over eight rows (Munkidori ex's three rarities are byte-identical). All six are
+    catalogued as of D160's re-ingest; the last two were the set the database lost,
+    and they are grouped with the rest rather than kept apart because their
+    provenance is now the same as everybody else's. */
 const SLASHING_STEEL = "During your next turn, this Pokémon can't use Slashing Steel.";
 const DIRTY_HEADBUTT = "During your next turn, this Pokémon can't use Dirty Headbutt.";
 const SLIP_N_ROLL = "During your next turn, this Pokémon can't use Slip 'n' Roll.";
 const ACCELERATING_STAB = "During your next turn, this Pokémon can't use Accelerating Stab.";
-/** …and the FIFTH printing, which has no catalog row — see the header. */
 const TORRENTIAL_CANNON = "During your next turn, this Pokémon can't use Torrential Cannon.";
+/** …and the sixth name, fielded at D162 — the last one to have no fixture. */
+const COMBUSTION_BLAST = "During your next turn, this Pokémon can't use Combustion Blast.";
 
 /** Skarmory sv03-142's two attack indices. THE headline pair: the bar lands on
     index 1 and index 0 stays legal, which is the whole difference from D143. */
 const SLASHING_STEEL_INDEX = 1;
 const PECK_INDEX = 0;
+/** Radiant Charizard swsh10.5-011's ONLY attack index — where the bar covers the
+    whole card and the panel, which is the cell D143's lock also produces. */
+const COMBUSTION_BLAST_INDEX = 0;
 
 /** One seed for the whole suite: nothing in this family flips a coin — none of
     the five printings carries one — so a seed table would describe a shuffle
@@ -235,7 +265,7 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
     expect(lucario?.attacks?.[1]?.effect).toBe(ACCELERATING_STAB);
   });
 
-  it("the INDEX is not constant across the family — the trap, on four printings", () => {
+  it("the INDEX is not constant across the family — the trap, on six printings", () => {
     // D144 found it, D146 sharpened it, D147 and D152 each hit it again: a suite
     // that assumed one index would simulate the wrong attack on most of a family.
     // Here it is worse than a test hazard, because the ENGINE stores the index —
@@ -244,12 +274,13 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
       FIXTURE_POOL[id]?.attacks?.findIndex((a) => a.name === name);
     expect(at("sv06.5-037", "Dirty Headbutt")).toBe(0);
     expect(at("swsh10.5-018", "Torrential Cannon")).toBe(0);
+    expect(at("swsh10.5-011", "Combustion Blast")).toBe(0);
     expect(at("sv01-114", "Accelerating Stab")).toBe(1);
     expect(at("sv03-142", "Slashing Steel")).toBe(1);
     expect(at("sv03-179", "Slip 'n' Roll")).toBe(1);
   });
 
-  it("derives ONE op with the printed NAME captured, on all five printings", () => {
+  it("derives ONE op with the printed NAME captured, on all six printings", () => {
     expect(deriveAttackEffect(SLASHING_STEEL)).toEqual([
       { op: "preventAttackUse", attack: "Slashing Steel" },
     ]);
@@ -261,6 +292,11 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
     ]);
     expect(deriveAttackEffect(TORRENTIAL_CANNON)).toEqual([
       { op: "preventAttackUse", attack: "Torrential Cannon" },
+    ]);
+    // …and the sixth name, whose printing this anchor could not be tested against
+    // for the length of the outage. The anchor did not change to admit it.
+    expect(deriveAttackEffect(COMBUSTION_BLAST)).toEqual([
+      { op: "preventAttackUse", attack: "Combustion Blast" },
     ]);
     // …and the apostrophe one, whose captured noun carries TWO of them. The
     // fold's own round trip is `clauseApostrophe.test.ts`'s sweep; what this line
@@ -832,6 +868,265 @@ describe("both payability projections agree with the §8 gate, per INDEX", () =>
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// D162 — THE EIGHTH PRINTING, and the family closes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Radiant Charizard's board. Its OWN deck (`RADIANT_LOCK_DECK`) for the reason
+    written on that deck: `PER_ATTACK_LOCK_DECK`'s 28 cases are dealt off
+    `SEED = 13`, and adding one card to it would move every one of them.
+
+    P2 opens and passes, so P1's turn 2 carries no §4 attack restriction, and P2
+    fields fix-titan (340 HP, NO attacks) so nothing here reaches `ko:takePrizes`.
+    Combustion Blast costs FIVE — {R} plus four {C} — which is the most expensive
+    cost in the family and the reason this helper attaches rather than plays. */
+function readyRadiant(): GameState {
+  let state = must(
+    applyAction(
+      driveSetup(SEED, { p1: RADIANT_LOCK_DECK, p2: RADIANT_LOCK_DECK }, { first: "p2" }),
+      { type: "endTurn", seat: "p2" },
+    ),
+  );
+  state = setActiveFromDeck(state, "p1", "swsh10.5-011");
+  state = setActiveFromDeck(state, "p2", "fix-titan");
+  state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
+  state = attachFromDeck(state, "p1", "fix-energy", 4);
+  return state;
+}
+
+/** `readyRadiant`, then Combustion Blast declared — asserting the bar landed, so
+    no case below can assert "nothing was refused" against nothing. */
+function radiantBarred(): { state: GameState; events: GameEvent[]; row: GameEvent } {
+  const { state, events } = mustApply(readyRadiant(), {
+    type: "attack",
+    seat: "p1",
+    index: COMBUSTION_BLAST_INDEX,
+  });
+  const row = find(events, "ATTACK_LOCKED");
+  if (row === undefined) throw new Error("Radiant Charizard barred nothing");
+  return { state, events, row };
+}
+
+describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until the re-ingest", () => {
+  // ⚠️ WHAT THIS SECTION IS, STATED BEFORE ITS FIRST ASSERTION, BECAUSE IT IS THE
+  // UNUSUAL CASE: it adds a PRINTING and no MECHANISM. D154 built the anchor, the
+  // op, the `lockedAttack` record, `lockedAttackIndex`, the §8 gate, the three §10
+  // clears and both payability projections, and every one of them reads this card
+  // unchanged. The reason it was not fielded then is not a design decision —
+  // D154 QUERIED for it and the database did not have it. The local D1 had lost
+  // the whole `swsh10.5` set to an uncheckpointed WAL, D160 re-ingested and
+  // checkpointed it, and the row prints D154's sentence byte for byte.
+  //
+  // So the value here is a MEASUREMENT of a claim D154 made and could not test:
+  // "the deriver is text-driven and would read it correctly the day a fixture
+  // lands". It does. That claim being paid rather than asserted is the whole
+  // slice, and it is worth saying that a green suite here would ALSO have been the
+  // result if the claim were false in a way this pool cannot print — which is why
+  // the cases below drive the projection and the log row and not only the gate.
+
+  it("carries the row verbatim — every field, including the two it does not have", () => {
+    // D151's rule: the ABSENCES are asserted too, because they are what a later
+    // completion would move. D160 diffed all twelve `swsh10.5` fixtures field by
+    // field against the restored rows and found no wrong VALUE on any of them;
+    // this is the thirteenth, and it is the first written AFTER the catalog could
+    // check it rather than before.
+    const charizard = FIXTURE_POOL["swsh10.5-011"];
+    expect(charizard?.name).toBe("Radiant Charizard");
+    expect(charizard?.hp).toBe(160);
+    expect(charizard?.stage).toBe("Basic");
+    expect(charizard?.types).toEqual(["Fire"]);
+    expect(charizard?.retreat).toBe(3);
+    expect(charizard?.weaknesses).toEqual([{ type: "Water", value: "×2" }]);
+    expect(charizard?.resistances ?? null).toBeNull();
+    expect(charizard?.evolveFrom ?? null).toBeNull();
+    // ONE attack, at index 0 — the datum the install resolves the printed noun to.
+    expect(charizard?.attacks).toHaveLength(1);
+    expect(charizard?.attacks?.[COMBUSTION_BLAST_INDEX]).toEqual({
+      cost: ["Fire", "Colorless", "Colorless", "Colorless", "Colorless"],
+      name: "Combustion Blast",
+      damage: 250,
+      effect: COMBUSTION_BLAST,
+    });
+    // Its printed Ability is CARRIED though nothing reads it (Munkidori ex's rule),
+    // and the inertness is MEASURED rather than assumed: no registry row keys this
+    // id, so `programFor` is undefined and "Excited Heart" is text on a card.
+    expect(charizard?.abilities?.[0]?.name).toBe("Excited Heart");
+    expect(charizard?.abilities?.[0]?.effect).toContain("cost Colorless less");
+    expect(programFor("swsh10.5-011")).toBeUndefined();
+  });
+
+  it("has a RULE BOX by NAME PREFIX and is worth ONE Prize — the family's only such body", () => {
+    // ⚠️ TWO PREDICATES WITH TWO DIFFERENT SOURCES, AND THIS CARD IS WHERE THEY
+    // DISAGREE. `hasRuleBox` is `pokemonSuffixOf` ∪ the literal "Radiant " NAME
+    // PREFIX (D40's vocabulary, cards.ts); `prizeValueOf` reads the SUFFIX alone.
+    // A Radiant Pokémon therefore has a rule box and is still worth one Prize,
+    // which is what the cards print — and it is a combination no other body in
+    // this family carries. Pinned because a predicate fed by two independent
+    // sources drifts silently: nothing about a per-attack lock would have failed
+    // if `hasRuleBox` had quietly stopped matching the prefix.
+    const charizard = FIXTURE_POOL["swsh10.5-011"];
+    if (charizard === undefined) throw new Error("swsh10.5-011 is not in the pool");
+    expect(hasRuleBox(charizard)).toBe(true);
+    expect(pokemonSuffixOf(charizard)).toBeNull();
+    expect(prizeValueOf(charizard)).toBe(1);
+    // The three cells the rest of the family occupies, so the claim is a TABLE and
+    // not one card: a suffix rule box is worth 2, and no rule box is worth 1.
+    const cell = (id: string) => {
+      const card = FIXTURE_POOL[id];
+      if (card === undefined) throw new Error(`${id} is not in the pool`);
+      return { ruleBox: hasRuleBox(card), prizes: prizeValueOf(card) };
+    };
+    expect(cell("sv06.5-037")).toEqual({ ruleBox: true, prizes: 2 }); // Munkidori ex
+    expect(cell("sv03-179")).toEqual({ ruleBox: true, prizes: 2 }); // Greedent ex
+    expect(cell("sv03-142")).toEqual({ ruleBox: false, prizes: 1 }); // Skarmory
+    expect(cell("sv01-114")).toEqual({ ruleBox: false, prizes: 1 }); // Lucario
+    expect(cell("swsh10.5-011")).toEqual({ ruleBox: true, prizes: 1 }); // the new cell
+  });
+
+  it("the family's SIX names are all fielded now — the census closes", () => {
+    // ⚠️ THE COUNT, RE-MEASURED AGAINST THE RESTORED CATALOG AND NOT INHERITED.
+    // `LIKE '%During your next turn, this Pokémon can''t use %'` across all three
+    // text columns returns EIGHT rows across SIX names (Lucario sv01-114, Skarmory
+    // sv03-142, Greedent ex sv03-179, Munkidori ex sv06.5-037/-083/-091, Radiant
+    // Charizard swsh10.5-011, Radiant Blastoise swsh10.5-018) — §D143's inherited
+    // "8 printings / 6 sentences" exactly. D154's correction to "6 rows / 4 names"
+    // was the missing set speaking, not a miscount.
+    //
+    // This case is the FIXTURE-side half of that, and it is a separate population
+    // (D154's standing rule): every one of the six names must be printed by a body
+    // in the pool, so the sweep below reads what the engine can actually drive.
+    // The three Munkidori rarities collapse to one fixture — byte-identical rows —
+    // which is why six names come from five ids.
+    const printed = new Map<string, string[]>();
+    for (const [id, card] of Object.entries(FIXTURE_POOL)) {
+      for (const attack of card.attacks ?? []) {
+        const op = deriveAttackEffect(attack.effect ?? "");
+        if (op?.[0]?.op !== "preventAttackUse") continue;
+        const existing = printed.get(attack.name);
+        if (existing === undefined) printed.set(attack.name, [id]);
+        else existing.push(id);
+      }
+    }
+    // SWEPT rather than listed — a seventh name fielded by a later slice appears
+    // here the day its fixture lands rather than the day somebody remembers.
+    // `fix-curly-barrer` is the U+2019 witness and prints a SIXTH name of its own
+    // ("Slip ’n’ Roll", curly), so the pool holds seven distinct spellings for six
+    // printed names, and that is stated rather than filtered away.
+    expect([...printed.keys()].sort()).toEqual([
+      "Accelerating Stab",
+      "Combustion Blast",
+      "Dirty Headbutt",
+      "Slashing Steel",
+      "Slip 'n' Roll",
+      "Slip ’n’ Roll",
+      "Torrential Cannon",
+    ]);
+    expect(printed.get("Combustion Blast")).toEqual(["swsh10.5-011"]);
+  });
+
+  it("bars its own index 0 across a real turn boundary, and the §8 gate refuses it", () => {
+    const before = readyRadiant();
+    expect(before.turn).toBe(2);
+    const uid = activeUid(before, "p1");
+    const { state, events, row } = radiantBarred();
+    expect(row).toEqual({
+      type: "ATTACK_LOCKED",
+      seat: "p1",
+      uid,
+      attack: "Combustion Blast",
+    });
+    expect(state.players.p1.active?.lockedAttack).toEqual({
+      turn: 2 + 2,
+      attackIndex: COMBUSTION_BLAST_INDEX,
+    });
+    // …and NOT the whole-Pokémon lock, which on a ONE-ATTACK card is the drift no
+    // board can see. This is the assertion doing the work in this whole section.
+    expect(state.players.p1.active?.attackLockedTurn).toBeNull();
+    // The printed 250 landed and fix-titan's 340 survived it, so the window opens
+    // on a live board rather than on a KO.
+    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(250);
+    const window = inWindow(state);
+    expect(window.turn).toBe(4);
+    expect(lockedAttackIndex(window, must0(window.players.p1.active))).toBe(COMBUSTION_BLAST_INDEX);
+    expect(refusal(window, "p1", COMBUSTION_BLAST_INDEX)).toBe("ATTACK_PREVENTED");
+  });
+
+  it("the window CLOSES — the same index is legal again one turn on", () => {
+    // So the refusal above is about the BAR and not about a cost this board could
+    // never pay. The energy is still attached; only the stamp has expired.
+    let later = must(applyAction(inWindow(radiantBarred().state), { type: "endTurn", seat: "p1" }));
+    later = must(applyAction(later, { type: "endTurn", seat: "p2" }));
+    expect(lockedAttackIndex(later, must0(later.players.p1.active))).toBeNull();
+    expect(refusal(later, "p1", COMBUSTION_BLAST_INDEX)).toBeNull();
+  });
+
+  it("the projection greys the ONLY row it renders — D143's picture, a different record", () => {
+    // ⚠️ THE CELL THIS FAMILY HAD NEVER OCCUPIED, AND THE REASON THIS PRINTING
+    // EARNS BOARDS RATHER THAN A `toEqual`. D154's projection case is Skarmory:
+    // exactly ONE row greyed on an otherwise live panel, and its doc block says in
+    // so many words that this is where the projection has "more room to be wrong
+    // than D143's", because a build that missed it renders a normal-looking board
+    // that rejects one press.
+    //
+    // On a ONE-ATTACK card the same record greys 100% of the panel — which is
+    // pixel-for-pixel what D143's whole-Pokémon lock produces. So this is the board
+    // where the two projections are INDISTINGUISHABLE to a player and only the
+    // record tells them apart, and the honest thing to assert is both halves: the
+    // panel is fully dead, AND the field that killed it is `lockedAttack`.
+    const window = inWindow(radiantBarred().state);
+    const view = redactGame(window, "p1").phase;
+    if (view.kind !== "turn:action") throw new Error(`expected turn:action, got ${view.kind}`);
+    expect(view.attacks).toHaveLength(1);
+    expect(view.attacks[COMBUSTION_BLAST_INDEX]?.name).toBe("Combustion Blast");
+    expect(view.attacks[COMBUSTION_BLAST_INDEX]?.playable).toBe(false);
+    // The projection AGREES with the gate — neither offers a button the server
+    // refuses — and the CAUSE is the per-attack record, with D143's field null.
+    expect(refusal(window, "p1", COMBUSTION_BLAST_INDEX)).toBe("ATTACK_PREVENTED");
+    expect(window.players.p1.active?.attackLockedTurn).toBeNull();
+    expect(window.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 0 });
+  });
+
+  it("the log row NAMES the attack — and here the bare wording would have been TRUE", () => {
+    // ⚠️ THE VOICE ANSWER, AND THIS PRINTING IS THE ONE THAT INVERTS D154's.
+    // D154's branch exists because "can't attack next turn" on a Skarmory that may
+    // still declare Peck is not stilted, it is FALSE — false in the direction that
+    // makes a player pass a turn they could have attacked on. Radiant Charizard has
+    // ONE attack, so the bare wording would have been TRUE here, and the specific
+    // wording buys SPECIFICITY rather than correctness.
+    //
+    // That is worth pinning precisely because it is the weaker case: a reader that
+    // drifted onto `preventAttack` would produce a row that is still true, a gate
+    // that still refuses, and a panel that still greys — and the ONLY observable
+    // that separates them on this card is the words in this assertion.
+    const { state, row } = radiantBarred();
+    expect(render([row], state)).toEqual([
+      { who: "p1", text: "Radiant Charizard can't use Combustion Blast next turn" },
+    ]);
+    // …and READ under the OTHER seat's names too, because `seat` owns the BARRED
+    // Pokémon rather than the actor (D136's finding 1) and the renderer takes the
+    // name from the log context. Same row, same seat, the other side's spelling.
+    const swapped: LogContext = {
+      names: { p1: "Tide", p2: "Ember" },
+      state,
+      elapsed: "+00:14",
+    };
+    expect(
+      logFromEvents([row], swapped).flatMap((entry) =>
+        entry.kind === "turn"
+          ? []
+          : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+      ),
+    ).toEqual([{ who: "p1", text: "Radiant Charizard can't use Combustion Blast next turn" }]);
+  });
+
+  it("the OPPONENT's view is unchanged — the bar leaks nothing across the wire", () => {
+    const window = inWindow(radiantBarred().state);
+    const view = redactGame(window, "p2").phase;
+    if (view.kind !== "turn:action") throw new Error(`expected turn:action, got ${view.kind}`);
+    expect(view.attacks).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helpers used above that need the engine's own entry points.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -848,4 +1143,3 @@ function must0(pokemon: InPlayPokemon | null): InPlayPokemon {
   if (pokemon === null) throw new Error("expected an Active Pokémon");
   return pokemon;
 }
-

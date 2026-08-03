@@ -356,6 +356,7 @@ export const CATALOG_MANIFEST = {
     "sv06.5-096": { name: "Earthen Vessel", attacks: [], abilities: [] },
     "swsh10.5-009": { name: "Charmeleon", attacks: ["Scratch","Flamethrower"], abilities: [] },
     "swsh10.5-010": { name: "Charizard", attacks: ["Flare Blitz"], abilities: ["Burn Brightly"] },
+    "swsh10.5-011": { name: "Radiant Charizard", attacks: ["Combustion Blast"], abilities: ["Excited Heart"] },
     "swsh10.5-018": { name: "Radiant Blastoise", attacks: ["Torrential Cannon"], abilities: ["Pump Shot"] },
     "swsh10.5-022": { name: "Gyarados", attacks: ["Wreak Havoc","Wild Splash"], abilities: [] },
     "swsh10.5-025": { name: "Wimpod", attacks: ["Gnaw"], abilities: ["Punk Out"] },

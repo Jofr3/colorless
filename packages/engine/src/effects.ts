@@ -2863,15 +2863,19 @@ const FLIP_TAILS_SELF_CANT_ATTACK =
 // on the VERB for four slices while three remainder lists carried it as the
 // largest unread count in the tail.
 //
-// CENSUS (local D1, 2026-08-02, 978 cards / 6 sets, run as its OWN question rather than
-// inherited from §D148's table — D142's floor rule, eleventh payout). `LIKE
-// '%can''t use%'` across ALL THREE text columns returns 29 rows; exactly SIX are
-// this sentence, and every other match is a different mechanism the `^During`
-// plus `^…$` refuses on sight (13 once-per-turn Ability limiters — "You can't use
+// CENSUS — RE-RUN AT D162 AGAINST THE RESTORED CATALOG (local D1, 2026-08-03,
+// 978 cards / 6 sets; sv01 258, sv02 279, sv03 230, sv06.5 99, sve 24,
+// swsh10.5 88). Run as its OWN question rather than inherited from §D148's table
+// — D142's floor rule, eleventh payout. `LIKE '%can''t use%'` across ALL THREE
+// text columns returns **37 rows**; exactly **EIGHT across SIX NAMES** are this
+// sentence, and every other match is a different mechanism the `^During` plus
+// `^…$` refuses on sight (the once-per-turn Ability limiters — "You can't use
 // more than 1 {Ability} each turn" on Fezandipiti ex / Pecharunt ex / Squawkabilly
-// ex / Pidgeot ex; Gardevoir ex's "on a Pokémon that would be Knocked Out"; Rare
-// Candy's and Dendra's play gates; and the OPPONENT-side twin below). The six,
-// with every field checked PER PRINTING (id, NAME, cost, printed damage and
+// ex / Pidgeot ex; the swsh-era "You can't use more than 1 VSTAR Power in a game"
+// on Mewtwo VSTAR swsh10.5-031/-079/-086 and Dragonite VSTAR swsh10.5-050/-081;
+// Gardevoir ex's "on a Pokémon that would be Knocked Out"; Rare Candy's — in both
+// its printings — and Dendra's play gates; and the OPPONENT-side twin below). The
+// eight, with every field checked PER PRINTING (id, NAME, cost, printed damage and
 // INDEX — D144's rule extended to NAMES by D146):
 //
 //   "Dirty Headbutt"     — Munkidori ex sv06.5-037 (Double rare) / sv06.5-083
@@ -2880,18 +2884,29 @@ const FLIP_TAILS_SELF_CANT_ATTACK =
 //   "Accelerating Stab"  — Lucario sv01-114, {F}{C}{C}, 120, INDEX 1
 //   "Slashing Steel"     — Skarmory sv03-142, {M}{M}{C}, 120, INDEX 1
 //   "Slip 'n' Roll"      — Greedent ex sv03-179, {C}{C}{C}, 210, INDEX 1
+//   "Torrential Cannon"  — Radiant Blastoise swsh10.5-018, {W}{W}{C}, 170, INDEX 0
+//   "Combustion Blast"   — Radiant Charizard swsh10.5-011, {R}{C}{C}{C}{C}, 250,
+//                          INDEX 0 — the card's ONLY attack
 //
-// ⚠️ THE REMAINDER LIST'S EIGHTH PRINTING DOES NOT EXIST IN THE CATALOG, AND
-// NEITHER DOES ITS SET. Three lists and §D143's own table counted "8 printings /
-// 6 sentences", naming Radiant Charizard swsh10.5-011 and Radiant Blastoise
-// swsh10.5-018 alongside these six. The local D1 holds FIVE sets — sv01, sv02,
-// sv03, sv06.5, sve — and NO swsh10.5 row at all, so every census "run against the
-// local D1, 978 cards / 6 sets" in this file has been structurally blind to that set and
-// any count including a swsh10.5 id was never verified by the query it cites.
-// swsh10.5-011 is in no fixture either. swsh10.5-018 IS in `FIXTURE_POOL`
-// ("Torrential Cannon", {W}{W}{C}, 170, INDEX 0), so this anchor reads it and the
-// suite drives it — as a FIELDED printing whose provenance is the fixture pool and
-// not the catalog, which is the honest thing to call it.
+// ⚠️ THE PARAGRAPH THAT USED TO SIT HERE SAID THE EIGHTH PRINTING AND ITS WHOLE
+// SET DID NOT EXIST, AND IT WAS AN ARTEFACT OF A DATABASE OUTAGE. D154 ran this
+// query on 2026-08-03 against a local D1 that had silently dropped all 88
+// `swsh10.5` rows to an uncheckpointed WAL, got 29 rows and 6 printings across 4
+// names, and corrected §D143's inherited "8 printings / 6 sentences" DOWNWARD on
+// what looked like the strongest possible evidence. D160 re-ingested the set and
+// checkpointed it (`PRAGMA wal_checkpoint(TRUNCATE)` → `0|0|0`); the re-run above
+// returns §D143's figure exactly. Both Radiant printings are catalogued and both
+// are fielded — swsh10.5-018 throughout (as a printing of FIXTURE-POOL provenance
+// while its row was missing), swsh10.5-011 since D162.
+//
+// D154's lesson survives and gains a second half. First: **a query cannot see a
+// set the database does not have, and nothing about its result says so — a census
+// owes its SCOPE, not only its count.** Second, which is what the reversal teaches:
+// **a query returning fewer rows than a predecessor is evidence about the DATABASE
+// before it is evidence about the predecessor.** Three slices in a row (D154, D155)
+// corrected an inherited number downward during the outage and all of those
+// corrections are now reversed by measurement; the one slice that refused to
+// correct and built a manifest instead (D156) was right on every count.
 //
 // ⚠️ THE CAPTURE IS A PROPER NOUN, AND IT IS THE FIRST IN THIS FAMILY. Every other
 // anchor in this tail captures a NUMBER, which D120's precondition closes by type.
@@ -2925,36 +2940,34 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 // sentence that sits at the intersection of D154's addressing and D149's read
 // step. One anchor, TWO captures (the NAME and the amount).
 //
-// ⚠️ THE CENSUS NAMES ITS POPULATIONS, WHICH IS D154's LESSON APPLIED AND ALSO
-// THE PLACE IT HAS TO BE CORRECTED. D154 established that the local D1 holds FIVE
-// sets and that `FIXTURE_POOL` fields cards from a sixth the query cannot see. Its
-// row COUNT, repeated in every census comment in this file, is also wrong: the
-// catalog holds **890 rows**, not 978 —
+// ⚠️ THE CENSUS NAMES ITS POPULATIONS, WHICH IS D154's LESSON APPLIED — AND THE
+// EPISODE BELOW IS THE REASON THAT LESSON NEEDED A SECOND HALF. D155 wrote here
+// that "the catalog holds 890 rows, not 978", against a file it had just queried,
+// and corrected §D149's and §D151's counts downward to match. **The 890 was real
+// and the correction was wrong.** The local D1 had silently lost all 88
+// `swsh10.5` rows to a write-ahead log that was never checkpointed, somewhere
+// between 2026-08-02 and 2026-08-03; D156 refused to accept the downward
+// corrections and built a manifest instead; D160 re-ingested the set, checkpointed
+// it (`PRAGMA wal_checkpoint(TRUNCATE)` → `0|0|0`) and re-ran the queries. The
+// catalog is whole again —
 //
 //   select set_id, count(*) from cards group by set_id;
-//   sv01|258  sv02|279  sv03|230  sv06.5|99  sve|24     -- 890 rows, FIVE sets
+//   sv01|258  sv02|279  sv03|230  sv06.5|99  sve|24  swsh10.5|88   -- 978, SIX sets
 //
-// — re-run 2026-08-03 against the same file, which has not been written since
-// 2026-07-27. Nothing behavioural turns on it; what turns on it is that a number
-// copied forward through twenty comments was never the number any of them
-// measured, which is the same failure D154 found one axis out.
+// — and all three downward corrections REVERSE. So the defect was never a wrong
+// number: it was a number with NO SCOPE, which is what let one population's
+// measurement read as another's fiction. 890/5 and 978/6 are both true, of the
+// outage window and of the catalog either side of it.
 //
-// ⚠️ D156 FOUND THE OTHER HALF, AND IT INVERTS THE PARAGRAPH ABOVE: 978 WAS
-// MEASURED. IT IS THIS CATALOG PLUS A SET THAT HAS SINCE VANISHED. D112
-// (2026-08-01) wrote the breakdown into `decisions.md` — *"the local pool is 978
-// cards over SIX sets … sv01/sv02/sv03/sv06.5/sve PLUS swsh10.5 (Pokémon GO, 88
-// cards)"* — and the arithmetic agrees three ways: 890 + 88 = 978, and on
-// `legal_standard = 0` this file's 763 + 88 = the 851 the docs quote, and D147's
-// own census table (2026-08-02) lists Pidove `swsh10.5-061` as a QUERY RESULT, so
-// the rows were still here that day. D154 (2026-08-03) is the first slice to find
-// them gone. No `cards`, `sets` OR `series` row for the set survives, and the
-// .sqlite's mtime never moved — a write-ahead log that was never checkpointed.
+// ⚠️ THE RULE THAT COMES OUT OF IT, AND IT IS THE ONE TO CARRY: **a query that
+// returns fewer rows than a predecessor is evidence about the DATABASE before it
+// is evidence about the predecessor.** Verify by QUERY, never by recognition —
+// and then ask what the query could not see.
 //
-// So the defect was never a wrong number: it was a number with NO SCOPE, which is
-// what let one population's measurement read as another's fiction. Every census
-// comment in this file now says `978 cards / 6 sets`, naming the catalog it
-// actually queried; `catalogManifest.ts` holds BOTH states — today's measured
-// 890/5 and D112's inherited 978/6 — beside the sqlite's mtime; and
+// Every census comment in this file says `978 cards / 6 sets`, naming the catalog
+// it queried; `catalogManifest.ts` records the outage as `history` (the dates,
+// what the restored set contributes to each count, and D156's committed census of
+// the shrunken pool, reconciled by SUBTRACTION on four independent axes); and
 // `catalogManifest.test.ts` FAILS on any three-or-four-digit "N cards" in the
 // engine sources that is neither a measured number nor a listed exception, AND on
 // any catalog row count quoted without its set count. Regenerate the manifest
@@ -2982,7 +2995,8 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 //   LIKE '%more damage (before applying%'                     → 1 row
 //   LIKE '%During your next turn, this Pokémon''s%'           → 1 row
 //
-// Both are the SAME row, and there is exactly one printing:
+// Both are the SAME row, and there is exactly one printing — **unchanged by the
+// restore**, which is the useful half of re-running a census that does not move:
 //
 //   100 — Seismitoad sv03-052 "Echoed Voice" ({W}{W}, printed 120, INDEX 0)
 //
@@ -2997,14 +3011,16 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 // on any attack, so unlike the per-attack LOCK there is no fielded-but-uncatalogued
 // printing here. ONE printing means ONE, in both populations.
 //
-// THE MIRROR FAMILY IS UNCHANGED AND IS WHAT THIS ANCHOR MUST NOT CROSS.
-// `less damage (before applying …)` returns FIVE rows in the same query — four
-// ATTACK riders (Pikachu sv02-062, Florges sv01-093, Houndoom sv06.5-008/-066)
-// and one ABILITY (Entei sv03-030) — i.e. D149's five printings are FOUR in the
-// catalog, the fifth being Pidove swsh10.5-061 of fixture provenance, and §D151's
-// "six rows" was that same overcount. So the parenthetical separates the two
-// directions and the VERB separates this sentence from theirs; both are inside
-// `^…$` for D149's reason verbatim.
+// THE MIRROR FAMILY IS WHAT THIS ANCHOR MUST NOT CROSS, and it is where the
+// reversal is visible. `less damage (before applying …)` returns **SIX rows** in
+// the same query, re-run at D162 against 978 / 6 — five ATTACK riders (Pikachu
+// sv02-062, Florges sv01-093, Houndoom sv06.5-008/-066, **Pidove swsh10.5-061**)
+// and one ABILITY (Entei sv03-030). So §D149's "five printings" is EXACT (arm 19f
+// reads attack effects, and five of the six are attacks) and §D151's "six rows" is
+// EXACT; D155's corrections to four and five were the missing set speaking, and
+// Pidove is a real catalogued card rather than a fixture-only one. The
+// parenthetical separates the two directions and the VERB separates this sentence
+// from theirs; both are inside `^…$` for D149's reason verbatim.
 //
 // ⚠️ TWO CAPTURES, AND THEY ARE CLOSED BY DIFFERENT THINGS. The amount is a NUMBER
 // (D120's precondition, closed by its type) and the name is a PROPER NOUN closed by
@@ -3035,12 +3051,17 @@ const SELF_ATTACK_BOOST =
 // many words that the address does not foreclose this, D155 built the second
 // reader of that address, and what neither built is the PARK that produces one.
 //
-// CENSUS (local D1, 2026-08-03, **890 rows across FIVE sets** — sv01 258, sv02
-// 279, sv03 230, sv06.5 99, sve 24 — across ALL THREE text columns `effect`,
-// `attacks_json` and `abilities_json`; re-run as its OWN question rather than
-// inherited from §D154's table, D142's floor rule):
+// CENSUS — RE-RUN AT D162 AGAINST THE RESTORED CATALOG (local D1, 2026-08-03,
+// **978 cards / 6 sets** — sv01 258, sv02 279, sv03 230, sv06.5 99, sve 24,
+// swsh10.5 88 — across ALL THREE text columns `effect`, `attacks_json` and
+// `abilities_json`; run as its OWN question rather than inherited from §D154's
+// table, D142's floor rule). ⚠️ D157 ran it against the 890 / 5 catalog of the
+// outage window, so its count was a FLOOR; the re-run says the floor was the
+// total. **`can't use that attack` returns 2 rows against the whole six-set
+// catalog — the restored `swsh10.5` contributes NOTHING to this family**, which is
+// the outcome a re-census most often has and the one nobody writes down:
 //
-//   LIKE '%can''t use that attack%'      → 2 rows
+//   LIKE '%can''t use that attack%'      → 2 rows  (unchanged: 2 → 2)
 //   LIKE '%Choose 1 of your opponent%'   → 3 rows (the third is a different card)
 //   LIKE '%Pokémon''s attacks%'          → 6 rows (four are D149's debuff family)
 //
@@ -3059,12 +3080,14 @@ const SELF_ATTACK_BOOST =
 //
 // ⚠️ AND `FIXTURE_POOL` WAS SWEPT SEPARATELY, WHICH IS THE HALF D154's FINDING
 // MAKES MANDATORY AND D156 MADE UNSKIPPABLE: the pool is a DIFFERENT POPULATION
-// from the D1 and still holds twelve `swsh10.5` cards the catalog has lost. No
-// fixture carried this sentence before this slice, so TWO printings means two in
-// both populations — unlike D154, which found a fifth printing fielded and
-// uncatalogued. The two ids are also swept repo-wide for a misnamed comment or
-// test title (D146/D147's rule, D149's habit): nothing found, and that is the
-// FIFTH clean sweep running.
+// from the D1 — thirteen `swsh10.5` fixtures since D162, every one of which now
+// HAS a catalog row again, so the two populations answer different questions
+// rather than the same question at different sizes. No fixture carried this
+// sentence before this slice, so TWO printings means two in both populations —
+// unlike D154, which found a fifth printing fielded and (for the length of the
+// outage) uncatalogued. The two ids are also swept repo-wide for a misnamed
+// comment or test title (D146/D147's rule, D149's habit): nothing found, and that
+// is the FIFTH clean sweep running.
 //
 // ⚠️ THE THIRD `Choose 1 of your opponent` ROW IS THE ONE WORTH NAMING, because it
 // is what the `^…$` anchor is holding off: Sylveon sv06.5-022's "Mystical Return"

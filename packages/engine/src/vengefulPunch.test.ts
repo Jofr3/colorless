@@ -19,7 +19,7 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.103.1 → 0.104.0 — Vengeful Punch sv03-197 (P3-M5 long tail, Dxxx), the §9
+// 0.103.1 → 0.104.0 — Vengeful Punch sv03-197 (P3-M5 long tail, D158), the §9
 // recoil family's LAST always-on printing and its SECOND Pokémon Tool:
 //
 //   "If the Pokémon this card is attached to is Knocked Out by damage from an

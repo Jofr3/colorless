@@ -109,7 +109,7 @@ function fight(
   return { state: done, events, before: state };
 }
 
-/** Dxxx — the same fight for the family's KO-CONDITIONED half, on the board its
+/** D158 — the same fight for the family's KO-CONDITIONED half, on the board its
     condition actually needs: the holder is one hit from lethal, so Bite KNOCKS IT
     OUT instead of merely damaging it. Its own 60 (`VENGEFUL_PUNCH_DECK`) so every
     seeded board built on `COUNTERATTACK_DECK` above stays byte-identical. */
@@ -226,7 +226,7 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
 
   it("discovers the §9 recoil family from the printed text, and it spans BOTH kinds", () => {
     // The census, pinned so a fixture landing later fails this and gets swept in.
-    // ⚠️ AND IT DID EXACTLY THAT AT Dxxx: adding the Vengeful Punch sv03-197
+    // ⚠️ AND IT DID EXACTLY THAT AT D158: adding the Vengeful Punch sv03-197
     // fixture failed this line, this file's authored-census line AND its drive
     // loop, which is the whole reason the family is discovered from TEXT instead
     // of from a maintained list. All three were re-pointed rather than relaxed.
@@ -235,7 +235,7 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
       "sv01-006", // Cacturne — Counterattack Quills (Ability)
       "sv01-193", // Rocky Helmet (Pokémon TOOL) — on DAMAGE
       "sv03-112", // Stunfisk — Custom Trap (Ability, requiresTool)
-      "sv03-197", // Vengeful Punch (Pokémon TOOL) — on the KNOCK OUT (Dxxx)
+      "sv03-197", // Vengeful Punch (Pokémon TOOL) — on the KNOCK OUT (D158)
     ]);
     // ⚠️ AND IT IS MIXED, which is the fact the hardcoded label denied. A build in
     // which every producer is a Pokémon can honestly say "Ability"; this one
@@ -244,7 +244,7 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
     expect(producers.find((p) => p.id === "sv01-193")?.trainerType).toBe("Tool");
   });
 
-  /** The family's two halves, split by the CONDITION each pays on. Since Dxxx the
+  /** The family's two halves, split by the CONDITION each pays on. Since D158 the
       one printed clause is served by two fields read at two sites, so the census
       partitions rather than mapping onto one field. */
   const onDamage = producers.filter(
@@ -259,7 +259,7 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
     // program would mean the sweep below drives nothing, and an authored recoil
     // with no printing would mean the sweep misses a producer.
     //
-    // ⚠️ AND SINCE Dxxx THE PARTITION IS THE CLAIM, not the field. The same printed
+    // ⚠️ AND SINCE D158 THE PARTITION IS THE CLAIM, not the field. The same printed
     // clause is now served by `damageAttacker` (pays on DAMAGE, read at attack.ts's
     // §9) and `damageAttackerOnKo` (pays on the KNOCK OUT, read at flow.ts's §8.1
     // sweep). Asserting the split is TOTAL and DISJOINT is strictly stronger than
@@ -299,7 +299,7 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
   });
 
   it("…and DRIVES the KO-conditioned half too, on the board ITS condition needs", () => {
-    // TOTAL over the other partition (Dxxx). The claim is identical and that is
+    // TOTAL over the other partition (D158). The claim is identical and that is
     // the point: a second read site, a second condition, a second field — and the
     // row it emits is the SAME `"counterattack"` member on the SAME seat, which is
     // the fourth payout on D141's judgement that the axis is the MECHANISM.
@@ -452,17 +452,17 @@ describe("the family this label must still cover — three printings, none an Ab
   // shipped. When one lands it joins this label with NO new member — which is the
   // test of whether the axis was right.
   //
-  // ⚠️ RE-QUERIED AT Dxxx AGAINST THE SHRUNKEN CATALOG (2026-08-03, 890 rows /
+  // ⚠️ RE-QUERIED AT D158 AGAINST THE SHRUNKEN CATALOG (2026-08-03, 890 rows /
   // 5 sets) AND THE EIGHT ROWS ARE THE SAME EIGHT. `FIXTURE_POOL` was swept as its
   // own population beside it (D156's rule) and no `swsh10.5` fixture carries the
   // clause, so the count is not a five-set undercount. Of the three cases below,
   // TWO have now landed and been re-pointed rather than deleted — Scary Fangs at
-  // D152, Vengeful Punch at Dxxx — and each landed with no new `source` member,
+  // D152, Vengeful Punch at D158 — and each landed with no new `source` member,
   // which is the third and fourth payout on D141's judgement.
 
-  it("Vengeful Punch sv03-197 — the SECOND recoil TOOL, LANDED at Dxxx, and it joins THIS label", () => {
+  it("Vengeful Punch sv03-197 — the SECOND recoil TOOL, LANDED at D158, and it joins THIS label", () => {
     // ⚠️ THE WITNESS RE-POINTED RATHER THAN DELETED, which is what makes it worth
-    // having had. Until Dxxx this case asserted the sentence derived to NOTHING.
+    // having had. Until D158 this case asserted the sentence derived to NOTHING.
     //
     // "If the Pokémon this card is attached to is Knocked Out by damage from an
     // attack from your opponent's Pokémon, put 4 damage counters on the Attacking

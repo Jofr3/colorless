@@ -2535,7 +2535,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-173": BRAVERY_CHARM,
   // Rocky Helmet (Tool) — reactive recoil, the Tool twin of Counterattack Quills (D98 damageAttacker)
   "sv01-193": ROCKY_HELMET,
-  // Vengeful Punch (Tool) — the SAME recoil on a KO condition (Dxxx damageAttackerOnKo),
+  // Vengeful Punch (Tool) — the SAME recoil on a KO condition (D158 damageAttackerOnKo),
   // verified vs the local D1 2026-08-03 (890 rows / 5 sets). The family's last always-on
   // printing; it reads at flow.ts's §8.1 sweep, not attack.ts's `dealt > 0` block.
   "sv03-197": VENGEFUL_PUNCH,

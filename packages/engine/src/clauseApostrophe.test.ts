@@ -235,7 +235,25 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // It also has NO CAPTURE, which makes it the census's cleanest row: every
     // apostrophe in it belongs to the PATTERN, so the rewrite below is a pure test
     // of the classes and nothing about a folded value can carry it.
-    expect(derivable).toHaveLength(61);
+    //
+    // ⚠️ AND D162 ADDS **ONE**, WHICH IS THIS CENSUS DOING THE JOB IT WAS BUILT
+    // FOR RATHER THAN A SLICE REMEMBERING TO EDIT IT. Radiant Charizard
+    // swsh10.5-011's "Combustion Blast" prints D154's sentence with a SIXTH attack
+    // name ("During your next turn, this Pokémon **can't** use Combustion Blast."),
+    // so it is one row on a `sentence` census and it appeared here the moment the
+    // fixture landed — nobody had this file open. Its exposed slot is D154's
+    // CONTRACTION, on an anchor whose capture is a PROPER NOUN; the name itself
+    // carries no apostrophe, so like Seismitoad's rows above this one pins the
+    // PATTERN's class rather than the capture's fold (Greedent ex's "Slip 'n' Roll"
+    // remains the only printing where a captured VALUE is folded, and
+    // `fix-curly-barrer` its curly twin).
+    //
+    // ⚠️ IT IS ALSO THE FIRST ROW THIS CENSUS HAS GAINED FROM A **RESTORE** RATHER
+    // THAN FROM A NEW MECHANISM. The card was always printed; the database had
+    // lost its set to an uncheckpointed WAL, D160 re-ingested it, and the sentence
+    // has been derivable by an unchanged anchor the whole time. A sweep that
+    // discovers its own inputs is the only kind that can say that.
+    expect(derivable).toHaveLength(62);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

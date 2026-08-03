@@ -3769,7 +3769,44 @@ import type { GameState, Seat } from "./types";
     web/DB/`@luminous/schema` diff. `MATCH_RECORD_VERSION` stays **10**: both
     fields live on the CATALOG, both readers are pure functions of the current
     state, and the cached-total dodge was priced and REFUSED. */
-export const engineVersion = "0.107.0";
+/** **D162 — the RESTORED-CATALOG RE-CENSUS, and the per-attack lock family
+    CLOSES.** Two halves, both created by D160's re-ingest. (1) **Radiant Charizard
+    `swsh10.5-011`** prints `During your next turn, this Pokémon can't use
+    Combustion Blast.` — the sentence D154 built, on a card D154 concluded was *"in
+    NEITHER the catalog nor `FIXTURE_POOL`"* because at that moment it was in
+    neither. It needed **ZERO engine behaviour lines**: the anchor, `preventAttackUse`,
+    `lockedAttack`, `lockedAttackIndex`, the §8 gate, the three §10 clears and both
+    payability projections were each READ and each takes the printing unchanged.
+    A fixture, its own `RADIANT_LOCK_DECK` (adding to `PER_ATTACK_LOCK_DECK` would
+    reshuffle D154's `SEED = 13` boards) and 8 cases.
+
+    ⚠️ **THE FAMILY IS NOW CLOSED AT 8 ROWS / 6 NAMES — §D143's INHERITED FIGURE,
+    EXACTLY.** All eight are enumerated and classified, and there was no second
+    unread printing: Lucario `sv01-114`, Skarmory `sv03-142`, Greedent ex
+    `sv03-179`, Munkidori ex `sv06.5-037`/`-083`/`-091` (three byte-identical
+    rarities), Radiant Blastoise `swsh10.5-018` — all D154 — plus this one.
+
+    ⚠️ **AND IT INVERTS D154's OWN FINDING.** D154 had to make `ATTACK_LOCKED` NAME
+    the attack, because *"can't attack next turn"* on a Pokémon that can still use
+    its other attack is not stilted, it is FALSE. **Radiant Charizard has no other
+    attack**, so the bare wording would be TRUE here — the branch buys SPECIFICITY,
+    not correctness. Pinned, because the mutation is otherwise invisible. Two more
+    cells the family never had: the projection on a ONE-ATTACK body (it greys 100%
+    of the panel) and a **rule box by NAME PREFIX** worth 1 Prize — `hasRuleBox` is
+    the suffix set ∪ `"Radiant "` while `prizeValueOf` reads the suffix alone.
+
+    (2) **The four owed re-censuses all came back UNCHANGED** — D157's
+    (`can't use that attack`, 2), D158's two (`damage counters on the Attacking
+    Pokémon`, 8; `Knocked Out by damage from an attack`, 6) and D159's
+    (`by attacks from` outside `attacks_json`, 6). **`swsh10.5` contributes ZERO
+    rows to all four**, so none of those slices undercounted and no unread printing
+    was revealed. One neighbourhood did grow: D154's warrant sweep `can't use` went
+    **29 → 37**, the eight new rows being 2 lock sentences and 6 refusals.
+
+    Cost: 0 engine behaviour lines, 1 fixture, 1 deck, 8 cases, and three corrected
+    census scope tags in `effects.ts`. `MATCH_RECORD_VERSION` stays **10** — the
+    eighth control on D124's trigger. 10 mutations run, 10 caught. */
+export const engineVersion = "0.108.0";
 
 export type {
   ApplyResult,

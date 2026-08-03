@@ -140,13 +140,22 @@ export function battler(id: string, overrides: Partial<Card> = {}): Card {
 // the fields it lacks; that hole is closed, and the declarations are a table
 // rather than a habit.
 //
-// ⚠️ TWELVE FIXTURES HAVE NO CATALOG ROW LEFT TO CHECK AGAINST, AND IT IS NOT
-// THEIR FAULT. Every `swsh10.5-*` entry below was transcribed from a real D1 row
-// — the set was in this database until 2026-08-02 and is gone from it now (88
-// cards; `CATALOG_MANIFEST.priorState`). Their "verbatim off the local D1" doc
-// blocks are HONEST; what is true is that nothing can re-check them, and that any
-// census run against today's file is blind to those cards. Do not "fix" one by
-// editing it to match a query that cannot see it.
+// ⚠️ THE `swsh10.5` FIXTURES ARE CHECKABLE AGAIN, AND THE PARAGRAPH THAT USED TO
+// SIT HERE IS NOW HISTORY. Between 2026-08-02 and 2026-08-03 this database lost
+// the whole `swsh10.5` set (88 rows) to a write-ahead log that was never
+// checkpointed, and for the length of that outage the twelve `swsh10.5-*` fixtures
+// below were the ONLY surviving copies of rows nothing in the repo could re-read.
+// D160 re-ingested the set and checkpointed it; the catalog is 978 rows / 6 sets,
+// `CATALOG_MANIFEST.history` records the episode, and all twelve were then diffed
+// field by field against their restored rows — **no wrong VALUE on any field any
+// of them carries.** Their "verbatim off the local D1" doc blocks were telling the
+// truth. Three omissions were found and are declared in `catalogManifest.test.ts`'s
+// `INCOMPLETE` table; D162 adds a thirteenth `swsh10.5` fixture (Radiant Charizard
+// swsh10.5-011), the first written AFTER the catalog could check it.
+//
+// ⚠️ IF A SET IS EVER RE-INGESTED AGAIN, CHECKPOINT THE WAL —
+// `PRAGMA wal_checkpoint(TRUNCATE)` must return `0|0|0`. Its absence is what lost
+// the set the first time, and the main `.sqlite`'s mtime not moving is the symptom.
 export const FIXTURE_POOL: Record<string, Card> = {
   "fix-basic-0": basicPokemon("fix-basic-0", 0),
   "fix-basic-1": basicPokemon("fix-basic-1", 1),
@@ -1385,7 +1394,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "If the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if it is Knocked Out), put 2 damage counters on the Attacking Pokémon.",
   ),
   /** Vengeful Punch — Tool: 4 damage counters on the attacker when the holder is
-      KNOCKED OUT by an opponent's attack (`damageAttackerOnKo`, Dxxx). Rocky
+      KNOCKED OUT by an opponent's attack (`damageAttackerOnKo`, D158). Rocky
       Helmet's twin one step later in the sequence, and note the clause that is
       ABSENT beside its neighbour above: no "is in the Active Spot", so a BENCHED
       holder finished off by a snipe retaliates too.
@@ -5501,6 +5510,77 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  // — D162: the family's EIGHTH catalogued printing and its SIXTH name, landed
+  //   once the re-ingest made it visible. Verbatim off the local D1 (2026-08-03,
+  //   978 cards / 6 sets — the RESTORED catalog), checked field by field including
+  //   the fields the row does not have (D151's rule). —
+  /** Radiant Charizard swsh10.5-011 — "Combustion Blast" ({R}{C}{C}{C}{C}, printed
+      250, attack **INDEX 0**), and the printing D154 could not field because the
+      database had lost its set.
+
+      ⚠️ IT IS THE ONE FIXTURE IN THIS FAMILY WHOSE ABSENCE WAS AN ARTEFACT RATHER
+      THAN A DECISION. D154 checked and wrote down that swsh10.5-011 was "in NEITHER
+      the catalog nor `FIXTURE_POOL`", which was true of the file it queried and
+      false of the card: the set had gone missing to an uncheckpointed WAL between
+      2026-08-02 and 2026-08-03, D160 re-ingested it, and the row prints EXACTLY
+      D154's sentence. Nothing about the mechanism changed to admit it — the anchor,
+      the op, the field, the reader, the §10 clears and both projections all read it
+      the day this fixture lands, which is what "the deriver is text-driven" means
+      when it is paid rather than asserted.
+
+      ⚠️ IT HAS A RULE BOX AND IS WORTH ONE PRIZE, WHICH IS A COMBINATION NOTHING
+      ELSE IN THE FAMILY CARRIES. `cards.ts hasRuleBox` matches it on the NAME
+      PREFIX ("Radiant ") rather than on a suffix — D40's vocabulary, and the one
+      arm of that predicate `pokemonSuffixOf` does not feed — while `prizeValueOf`
+      reads the suffix alone and so returns 1. Munkidori ex and Greedent ex are
+      rule-box/2-Prize; Skarmory and Lucario are neither; this is rule-box/1-Prize,
+      and both halves are printed rather than chosen. Pinned in the slice suite,
+      because a predicate with two independent sources is exactly the shape that
+      drifts silently.
+
+      ⚠️ ITS PRINTED ABILITY IS CARRIED THOUGH NOTHING READS IT — Munkidori ex's
+      rule verbatim, and here the omission would have been the tempting one.
+      "Excited Heart" is a COST MODIFIER keyed on the opponent's Prize count, and
+      `effectiveAttackCost` has no shape for one; carrying it means the fixture
+      states a simplification the engine has, rather than hiding it behind a card
+      that looks fully simulated. So this body always pays the full {R}{C}{C}{C}{C},
+      and the suite pins `programFor` UNDEFINED on the id so the inertness is a
+      measurement rather than a hope.
+
+      THE ONE-ATTACK CONSEQUENCE, which is why this fixture earns boards and not
+      just a `toEqual`: barring index 0 bars the WHOLE CARD, so the payability
+      projection greys every row it renders — visually D143's whole-Pokémon lock,
+      from a different record, on a body where "can't attack next turn" would also
+      have been TRUE. It is the family's first projection case on a one-attack body.
+
+      Verbatim off the D1: 160 HP, Basic, Fire, retreat 3, ×2 Water, NO Resistance
+      and NO `evolveFrom` (both asserted as absences), reg mark F, Radiant Rare,
+      `legal_standard = 0`. `regulationMark`/`legal` follow the pool-wide convention
+      D160 measured (193/193 and 179/193) rather than the row. */
+  "swsh10.5-011": battler("swsh10.5-011", {
+    name: "Radiant Charizard",
+    types: ["Fire"],
+    stage: "Basic",
+    hp: 160,
+    retreat: 3,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Excited Heart",
+        effect:
+          "This Pokémon's attacks cost Colorless less for each Prize card your opponent has taken.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Fire", "Colorless", "Colorless", "Colorless", "Colorless"],
+        name: "Combustion Blast",
+        damage: 250,
+        effect: "During your next turn, this Pokémon can't use Combustion Blast.",
+      },
+    ],
+  }),
   // — D155's PER-ATTACK BUFF: "During your next turn, this Pokémon's {AttackName}
   //   attack does {N} more damage (before applying Weakness and Resistance)."
   //   Verbatim off the local D1 (2026-08-03, **890 rows** across five sets — the
@@ -8940,6 +9020,49 @@ export const PER_ATTACK_LOCK_DECK = deckOf({
   "fix-fighting-energy": 3, // {F} for Accelerating Stab and Avenging Knuckle
   "fix-water-energy": 6, // {W}{W}{W} for Scalding Block, {W}{W} for Torrential Cannon
   "fix-energy": 14, // Colorless Basic — every {C} in the deck
+});
+
+/** D162 — the family's EIGHTH catalogued printing (Radiant Charizard
+    swsh10.5-011, "Combustion Blast" idx 0), on its OWN 60 for
+    `PER_ATTACK_BUFF_DECK`'s and `OPPONENT_LOCK_DECK`'s reason verbatim:
+    `PER_ATTACK_LOCK_DECK` deals every one of its boards off a pinned shuffle
+    (`SEED = 13`), and adding a card to it would move all 28 of D154's cases to
+    prove one new one. The refusal is the cheap direction — a 60-card list costs
+    nothing and a re-verified suite costs a session.
+
+    **SEED-FREE** like every durated deck since D147: the printing carries no coin
+    and no other body in this list has an effect at all, so a seed table would
+    describe a shuffle rather than a rule.
+
+    ⚠️ THE DECK IS DELIBERATELY THE SMALLEST IN THE FAMILY, AND THAT IS THE CLAIM.
+    This slice adds NO mechanism — the anchor, `preventAttackUse`, `lockedAttack`,
+    `lockedAttackIndex`, the §8 gate, the three §10 clears and both projections all
+    predate it — so the bodies it needs are exactly the ones its own printing
+    touches, and every §10/coexistence/apostrophe route is already driven on
+    `PER_ATTACK_LOCK_DECK`'s cast. Fielding Switch, Boss's Orders or an evolution
+    here would re-run D154's cases against a second shuffle and prove nothing new.
+    What is left is four ids:
+      • swsh10.5-011 Radiant Charizard — THE printing. FOUR copies because two
+        boards deal it into the Active Spot off `setActiveFromDeck` and the opening
+        hands take from the same 60;
+      • fix-titan (340 HP, NO attacks) — the mulligan-free bench filler and P2's
+        Active. 340 HP is the number that matters: Combustion Blast's printed 250
+        does NOT knock it out, so no board ends in `ko:takePrizes` before the window
+        opens — and a SECOND declaration (which is exactly what the bar refuses)
+        would have. The bar is therefore what keeps the board alive, which is a
+        nice accident and not something the suite asserts;
+      • fix-fire-energy — the {R} of the cost's first symbol;
+      • fix-energy — the FOUR {C} behind it. Combustion Blast is the most expensive
+        cost in the family by two symbols, which is why this list is mostly Energy:
+        one declaration costs five cards off the deck, and the "Excited Heart"
+        discount that would shorten it in a real game is the simplification this
+        fixture carries LOUD (`effectiveAttackCost` has no shape for a cost keyed
+        on the opponent's Prize count). */
+export const RADIANT_LOCK_DECK = deckOf({
+  "swsh10.5-011": 4, // Radiant Charizard — "Combustion Blast" idx 0: THE printing
+  "fix-titan": 10, // 340 HP neutral Basic, NO attacks — P2's Active and the bench filler
+  "fix-fire-energy": 10, // {R} — Combustion Blast's first symbol
+  "fix-energy": 36, // Colorless Basic — the {C}{C}{C}{C} behind it
 });
 
 /** D155 — the PER-ATTACK BUFF, on its OWN 60 rather than inside
