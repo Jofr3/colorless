@@ -111,8 +111,12 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     additive "+" family) or uses it as the whole damage (the "×"/multiply family).
     `attacker` is the attacking Active; `state` + `defenderSeat` reach the
     opponent's board for the Prize-count source (Charizard ex "Burning Darkness",
-    Pecharunt ex "Irritated Outburst") and for the retreat-cost source (Heracross
-    "Superpowered Throw" and siblings). `attackerSeat` is the OTHER end of the
+    Pecharunt ex "Irritated Outburst"), for the retreat-cost source (Heracross
+    "Superpowered Throw" and siblings) and — since D168 — for the opponent's
+    Active's own DAMAGE COUNTERS (Dedenne "Second Bite", Espeon "Psychic Assault",
+    Bloodmoon Ursaluna "Mad Bite"), which is why that member cost this signature
+    NOTHING: the pair that reaches the defending body was already here.
+    `attackerSeat` is the OTHER end of the
     table and exists only for the `boardCondition` indicator (D115): a
     `BoardCondition` is relative to whose board it reads — "you have a Stadium in
     play" is about the ATTACKER's ownership, "your opponent's Active …" reaches
@@ -148,6 +152,20 @@ function scaledAttackDamage(
       // requires a Defending Pokémon) — 0 keeps the arm total.
       const defenderActive = state.players[defenderSeat].active;
       return defenderActive === null ? 0 : effectiveRetreatCost(state, defenderActive) * bonus.per;
+    }
+    case "damageCountersOnOpponentActive": {
+      // D168 — the MIRROR of the first arm, off the DEFENDING body: one damage
+      // counter = 10 HP (§12), floored for the same safety reason though all
+      // damage lands in tens. Read at DECLARATION like every other member, so this
+      // attack's own hit cannot bootstrap the counters it is priced on — and a
+      // pristine defender contributes 0, which is what makes the printed "30+" /
+      // "100+" base the whole damage on a fresh Active.
+      //
+      // A missing Active can't happen here (the attack gate requires a Defending
+      // Pokémon) — 0 keeps the arm total, the same shape the retreat-cost arm
+      // above uses for the same reason.
+      const defenderActive = state.players[defenderSeat].active;
+      return defenderActive === null ? 0 : Math.floor(defenderActive.damage / 10) * bonus.per;
     }
     case "boardCondition":
       // The 0-or-1 INDICATOR (D115) — "If <clause>, this attack does N more

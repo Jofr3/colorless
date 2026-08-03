@@ -3498,8 +3498,9 @@ const SELF_COUNTER_SCALE =
 //   • a `direction` discriminator ON the shared interface would be paid by
 //     `deriveAttackDamageMultiplier`'s consumers, which have no direction to
 //     declare — a `×` fold is neither more nor less.
-// The `{per, count}` interface and `scaledAttackDamage`'s four-member count
-// evaluator ARE reused, whole and unchanged: only one member is printed with this
+// The `{per, count}` interface and `scaledAttackDamage`'s count evaluator (FOUR
+// members when this was written, five since D168)
+// ARE reused, whole and unchanged: only one member is printed with this
 // sign, and inventing a second answer to "how many counters are on the attacker"
 // is the thing D159's rule forbids.
 //
@@ -3511,8 +3512,11 @@ const SELF_COUNTER_SCALE =
 // where this block predicted it ("one regex away in the multiply reader"). What
 // remains unread (see the census in selfScalingPenalty.test.ts) is the
 // opponent-side count "…for each damage counter on your opponent's Active
-// Pokémon." (Dedenne sv01-095, Espeon sv03-086, Bloodmoon Ursaluna sv06.5-025 — a
-// new `DamageCountSource`), the bench-wide count (Tyranitar swsh10.5-043) and
+// Pokémon." (Dedenne sv01-095, Espeon sv03-086, Bloodmoon Ursaluna sv06.5-025 —
+// ✅ NO LONGER UNREAD: D168 gave it OPPONENT_COUNTER_SCALE below and the fifth
+// `DamageCountSource`, `damageCountersOnOpponentActive`, so the "still unread"
+// above no longer covers this clause), the bench-wide count (Tyranitar
+// swsh10.5-043) and
 // Annihilape ex sv02-242's two-sentence compound. No /i, whole-sentence anchored
 // and a capital `This`, for the family's stated reason.
 const SELF_COUNTER_PENALTY =
@@ -3585,6 +3589,51 @@ const RETREAT_COST_SCALE =
   /^This attack does (\d+) more damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
 const RETREAT_COST_MULTIPLY =
   /^This attack does (\d+) damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
+// D168 — the OPPONENT-SIDE damage-counter count, and the first count source this
+// family reads off the DEFENDING body's own `damage` field. "This attack does
+// {10|30} more damage for each damage counter on your opponent's Active Pokémon."
+// — 3 printings / 2 distinct sentences, measured against the local D1
+// (2026-08-03, 978 cards / 6 sets) across all three text columns, and all three
+// rows are `attacks_json`: Dedenne sv01-095 "Second Bite" (idx 0, {P}{C}, printed
+// "30+", 10 per counter), Espeon sv03-086 "Psychic Assault" (idx 0, {P}, printed
+// "30+", 10 per counter — the SAME sentence on a second printing) and Bloodmoon
+// Ursaluna sv06.5-025 "Mad Bite" (idx 0, {F}{F}{C}, printed "100+", 30 per
+// counter). One `(\d+)` capture spans both amounts.
+//
+// ⚠️ IT IS A `count` MEMBER RATHER THAN A READER, AND THAT IS THE INVERSE OF D163's
+// ANSWER ON A SENTENCE ONE WORD AWAY. The split in this family is by FOLD (D163):
+// `+` keeps the printed base, `×` drops it, `−` keeps it and subtracts. This
+// sentence carries "more", so its fold is the one `deriveAttackDamageBonus`
+// already performs, byte for byte — what is new is only WHICH RESOURCE gets
+// tallied, and that is exactly what `DamageCountSource` is. A fourth reader would
+// have duplicated a fold to vary a count; a fifth member varies the count and
+// reuses the fold, which is the axis the type was built on.
+//
+// ⚠️ AND IT IS DISJOINT FROM BOTH SELF-COUNTER PATTERNS BY THEIR LITERAL TAIL, IN
+// BOTH DIRECTIONS. SELF_COUNTER_SCALE and SELF_COUNTER_PENALTY are the only other
+// patterns in the file carrying the words "damage counter", both are `^…$`-anchored
+// and both end in the LITERAL `on this Pokémon\.` — so neither can match this
+// sentence and this one cannot match theirs, without either side needing a
+// negative lookahead. Asserted rather than argued (opponentCounterScaling.test.ts
+// sweeps the whole pool for a double answer).
+//
+// The possessive carries the `['’]` class per D137's fix, exactly like the
+// RETREAT_COST_* pair two lines up: all three catalog rows print the ASCII `0x27`
+// today (hex-verified on the D1 rows, not eyeballed), and the class is insurance
+// against a re-ingest that normalises punctuation — half a fix reads exactly like
+// the whole one until it does not. `Pokémon` carries the real é (U+00E9, `C3A9` on
+// the wire); a lookalike would fall off the path silently. No /i, whole-sentence
+// anchored with a required trailing period and a capital `This`, for the family's
+// stated reason.
+//
+// The near-miss worth naming is Trevenant sv03-012's Ability "Forest Miasma" —
+// "During Pokémon Checkup, if this Pokémon is in the Active Spot, put 1 damage
+// counter on your opponent's Active Pokémon." — the ONLY other catalog row in any
+// text column carrying this possessive beside a damage counter. It is refused
+// three times over (leading text, a PLACEMENT rather than a scaling clause, and an
+// Ability, which this deriver is never handed).
+const OPPONENT_COUNTER_SCALE =
+  /^This attack does (\d+) more damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
 // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
 // damage.", the additive family's third arithmetic shape and the first one whose
 // count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
@@ -5559,9 +5608,11 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     it the WHOLE damage with no base (Pecharunt ex "Irritated Outburst"), and the
     subtractive one KEEPS the base and takes `per × count` off it at the same
     pre-W/R step (Skeledirge ex "Burning Voice", Cetitan "Sweeping Tackle") — so
-    they share this interface and the `count` evaluator. `count` is a union of two
-    REAL readers — the attacker's own damage counters and, since 0.35.0, the
-    opponent's TAKEN Prizes — a member each, not a second interface.
+    they share this interface and the `count` evaluator. `count` is a union of REAL
+    readers — the attacker's own damage counters, since 0.35.0 the opponent's TAKEN
+    Prizes, since 0.61.0 the opponent's Active RETREAT COST and since 0.113.0 the
+    damage counters on the opponent's ACTIVE — a member each, not a second
+    interface (plus D115's degenerate 0-or-1 `boardCondition` indicator).
 
     ⚠️ AND THE THREE FOLDS ARE NOT THREE PARTITIONS OF THE COUNT SOURCES: D167 put
     the attacker's own damage counters on the MULTIPLY fold too (Drifloon sv01-089
@@ -5581,13 +5632,15 @@ export interface AttackDamageBonus {
   per: number;
   count: DamageCountSource;
 }
-/** The resource an `AttackDamageBonus` counts. Four members: the attacker's OWN
+/** The resource an `AttackDamageBonus` counts. Five members: the attacker's OWN
     damage counters (Paldean Tauros "Raging Horns"), the opponent's TAKEN Prizes
     (Charizard ex "Burning Darkness"), — since 0.61.0 — the {C} in the opponent's
     Active Pokémon's RETREAT COST (Heracross "Superpowered Throw" and its three
-    siblings), and — since 0.66.0 — a `boardCondition` INDICATOR, each read by its
-    own anchored sentence. The third is the first count source that is DERIVED
-    rather than read off a field: attack.ts evaluates it through continuous.ts
+    siblings), — since 0.66.0 — a `boardCondition` INDICATOR, and — since 0.113.0 —
+    the damage counters on the OPPONENT'S ACTIVE (Dedenne "Second Bite", Espeon
+    "Psychic Assault", Bloodmoon Ursaluna "Mad Bite"), each read by its own anchored
+    sentence. The third is the only count source that is DERIVED rather than read
+    off a field: attack.ts evaluates it through continuous.ts
     `effectiveRetreatCost`, so every retreat-cost modifier already in play (Beach
     Court's discount, Calamitous Wasteland's surcharge, Clefable ex's set-to-zero
     aura) is inside the number these attacks read.
@@ -5599,17 +5652,29 @@ export interface AttackDamageBonus {
     what lets it reuse the additive family whole: attack.ts needs no new fold, no
     new branch in the §8.5 pipeline and no new event field, only the ATTACKER's
     seat (a `BoardCondition` is relative to whose board it reads, and `scaledAttackDamage`
-    knew only the defender's). */
+    knew only the defender's).
+
+    ⚠️ THE FIFTH IS THE FIRST MEMBER THAT IS THE MIRROR OF ANOTHER MEMBER (D168).
+    `damageCountersOnSelf` and `damageCountersOnOpponentActive` tally the SAME
+    resource — `InPlayPokemon.damage ÷ 10` — off two different bodies, and they are
+    two members rather than one member with a `side` field because every consumer
+    of this union dispatches on `kind` and nothing else: a `side` would have to be
+    read by `scaledAttackDamage` anyway, and the three members that have no side at
+    all would then carry a field they must ignore. It needs NO new argument —
+    `scaledAttackDamage` already takes `state` and `defenderSeat` for the Prize and
+    retreat-cost members — which is the whole of its evaluator cost. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
   | { kind: "opponentActiveRetreatCost" }
-  | { kind: "boardCondition"; cond: BoardCondition };
+  | { kind: "boardCondition"; cond: BoardCondition }
+  | { kind: "damageCountersOnOpponentActive" };
 
 /** Parse a printed additive damage-scaling sentence into its `per` amount and
-    count source, or null when the text is anything but one of the four anchored
+    count source, or null when the text is anything but one of the five anchored
     sentence shapes this reads (self damage counters, the opponent's taken Prizes,
-    the opponent's Active Retreat Cost, and the leading-`If` conditional flat bonus
+    the opponent's Active Retreat Cost, the damage counters on the opponent's ACTIVE
+    (D168), and the leading-`If` conditional flat bonus
     whose clause is one of `CONDITIONAL_DAMAGE_CLAUSES`) — the "×"/multiply twins
     (no "more", owned by
     `deriveAttackDamageMultiplier`), a lowercased "this", a missing trailing
@@ -5637,6 +5702,14 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     const per = Number(retreatCost[1]);
     if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
+  // D168 — the OPPONENT-SIDE damage-counter count. Same fold, same `per >= 1`
+  // guard, a different body: the only thing that separates this arm from the
+  // first one above is the literal tail of its anchored sentence.
+  const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);
+  if (opponentCounters !== null) {
+    const per = Number(opponentCounters[1]);
+    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
+  }
   // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
   // damage." — last, because its clause capture is the loosest pattern here and
   // the three "for each" arms above are exact. An UNMAPPED clause deliberately
@@ -5660,7 +5733,7 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     carried by which reader answered, or null for anything else. The one sentence
     this family prints with this sign; `count` is therefore always
     `damageCountersOnSelf` today, and the type is the shared one because the count
-    evaluator is shared (`scaledAttackDamage`) rather than because the other three
+    evaluator is shared (`scaledAttackDamage`) rather than because the other four
     members are reachable from here.
 
     THE THIRD FOLD. The additive reader adds `per × count` to the printed base and

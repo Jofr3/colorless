@@ -4005,7 +4005,71 @@ import type { GameState, Seat } from "./types";
     The one pin that went red is `selfScalingPenalty.test.ts`'s *"the UNREAD
     multiply twin … is STILL LOUD"*, RE-POINTED rather than deleted: the absence it
     guarded was the price of this item, so it becomes the presence. */
-export const engineVersion = "0.112.0";
+/** **D168 — the OPPONENT-SIDE DAMAGE-COUNTER COUNT, and the fifth
+    `DamageCountSource`.** `This attack does {10|30} more damage for each damage
+    counter on your opponent's Active Pokémon.` — **3 printings / 2 distinct
+    sentences**, the whole family, measured against the local D1 (2026-08-03, 978
+    cards / 6 sets) across all three text columns: Dedenne `sv01-095` "Second Bite"
+    (idx 0, {P}{C}, `"30+"`, 10 per counter), Espeon `sv03-086` "Psychic Assault"
+    (idx 0, {P}, `"30+"` — **the SAME sentence byte for byte on a second card**) and
+    Bloodmoon Ursaluna `sv06.5-025` "Mad Bite" (idx 0, {F}{F}{C}, `"100+"`, 30 per
+    counter). One `(\d+)` spans both amounts.
+
+    ⚠️ **IT IS A `count` MEMBER WHERE D163's ONE-WORD-DIFFERENT SENTENCE WAS A WHOLE
+    NEW READER, AND THE RULE IS THE SAME RULE.** This family splits by **FOLD** —
+    `+` keeps the printed base, `×` drops it, `−` keeps it and subtracts — over one
+    `{per, count}` interface and one count evaluator. D163's sentence changed the
+    SIGN, so it bought a third reader. This one carries "more", so the fold is
+    byte-identical to the one `deriveAttackDamageBonus` already performs and the only
+    thing that varies is **which resource is tallied**, which is precisely what
+    `DamageCountSource` is. The inverse answer to the inverse question, on sentences
+    that differ by one word each time.
+
+    ⚠️ **AND IT IS THE FIRST MEMBER THAT MIRRORS A MEMBER THE UNION ALREADY HAD.**
+    `damageCountersOnSelf` and `damageCountersOnOpponentActive` read the identical
+    field (`InPlayPokemon.damage ÷ 10`) off two different bodies. Two members rather
+    than one member plus a `side` field, because every consumer dispatches on `kind`
+    and nothing else — a `side` would be read by `scaledAttackDamage` anyway and the
+    three members that have no side would carry a field they must ignore. The
+    mirror is also the sharpest defect available, so the suite drives a board with
+    **9 counters on the attacker and 3 on the defender**: self scores 270, a sum
+    scores 360, the right answer is 90.
+
+    ⚠️ **THE EVALUATOR COST NOTHING BUT ITS ARM.** `scaledAttackDamage` already took
+    `(attacker, bonus, state, defenderSeat, attackerSeat)` for the Prize and
+    retreat-cost members, so the defending body was already in reach — no new
+    argument, no signature change, and the arm is shape-identical to the
+    `opponentActiveRetreatCost` one beside it, null-Active guard included. It is
+    also the repo's ONLY exhaustive switch over the union (nothing in log.ts,
+    redact.ts, phaseView.ts or `apps/web` dispatches on it), so a fifth member is
+    one arm and not five. `scaling !== null` already carried both terms of the
+    `ATTACK_EFFECT_SKIPPED` guard, so attack.ts's flag logic took **zero** lines.
+
+    ⚠️ **AND THE FIRST-MATCH-WINS HAZARD WAS VERIFIED, NOT ASSUMED, IN BOTH
+    DIRECTIONS.** `SELF_COUNTER_SCALE` and `SELF_COUNTER_PENALTY` are the only other
+    patterns in the file carrying the words "damage counter"; all are `^…$`-anchored
+    and the two self ones end in the LITERAL `on this Pokémon.`, so no negative
+    lookahead is needed on either side. The pool-wide "at most one reader answers"
+    sweep is re-run with the three new fixtures in it. The MULTIPLY twin of THIS
+    count source is an **ABSENCE rather than an unread printing** — the D1 sweep
+    returns four rows for `%damage counter on your opponent%`, three attacks all
+    carrying "more" plus Trevenant `sv03-012`'s placement Ability — and is pinned as
+    one, because "it is one regex away" is how a slice invents a card.
+
+    Cost: **1 regex, 1 reader arm, 1 `DamageCountSource` member, 1 evaluator arm** —
+    no new op, event, event field, log crumb, error code, prompt, park, state field,
+    registry row, redact arm or projection, and no web/DB/`@luminous/schema` diff.
+    3 fixtures (all authored fresh — `FIXTURE_POOL` had ZERO coverage of any of the
+    three cards or either sentence), 1 deck (`OPPONENT_COUNTER_DECK`, its own 60,
+    fielding Tyranitar ex `sv03-066` because the defender must arrive PRE-DAMAGED
+    **and survive** `100 + 30n`, which `fix-bigbody` does not),
+    `opponentCounterScaling.test.ts` (**34 tests, SEED-FREE**), manifest regenerated
+    (211 → **214** fixture rows, 0 absent) and `clauseApostrophe.test.ts`'s census
+    62 → **64**. `MATCH_RECORD_VERSION` stays **11** — `DamageCountSource` is a
+    PARSE-TIME type in effects.ts that never reaches `GameState`, which is exactly
+    why a new member of it buys no bump where D165's changed `InPlayPokemon` field
+    did; pinned as an absence over the 16-key set. */
+export const engineVersion = "0.113.0";
 
 export type {
   ApplyResult,

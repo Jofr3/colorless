@@ -6212,6 +6212,144 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
     attacks: [{ cost: ["Fighting", "Colorless", "Colorless"], name: "Rocket Slap", damage: 120 }],
   }),
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // D168 — the OPPONENT-SIDE damage-counter count
+  // (`damageCountersOnOpponentActive`). THE WHOLE FAMILY: 3 printings / 2 distinct
+  // sentences, swept out of the local D1 (2026-08-03, 978 cards / 6 sets) across
+  // all three text columns, all three rows `attacks_json`. `FIXTURE_POOL` had ZERO
+  // coverage of any of them before this slice — no card, no sentence, and no body
+  // whose damage was ever read from the DEFENDING side — so all three are authored
+  // fresh, verbatim off their rows.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /** Dedenne sv01-095 — "Second Bite" (idx 0, {P}{C}, printed "30+"):
+      *"This attack does 10 more damage for each damage counter on your opponent's
+      Active Pokémon."* The family's TEN-per-counter amount, on a body that prints
+      exactly ONE attack, so the fixture cannot be wrong about an index.
+
+      A BASIC and the cheapest attacker in the family ({P}{C}), which makes it the
+      board every unmodified fold number is measured on. Its 70 HP is the smallest
+      in the deck and is deliberate: it is the body that dies to a plain counter-
+      swing, which is how a suite proves the count is read at DECLARATION rather
+      than after the hit lands.
+
+      Verbatim off the local D1: 70 HP, Psychic, Basic, retreat 1, ×2 Metal, no
+      Resistance, no Ability, one attack. The possessive is ASCII `0x27` and the é
+      in `Pokémon` is U+00E9 — both hex-verified on the row, not eyeballed. */
+  "sv01-095": battler("sv01-095", {
+    name: "Dedenne",
+    types: ["Psychic"],
+    hp: 70,
+    retreat: 1,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Second Bite",
+        effect:
+          "This attack does 10 more damage for each damage counter on your opponent's Active Pokémon.",
+        damage: "30+",
+      },
+    ],
+  }),
+
+  /** Espeon sv03-086 — "Psychic Assault" (idx 0, {P}, printed "30+"): the SAME
+      sentence Dedenne prints, byte for byte, on a second card. That is the whole
+      reason both are in the pool rather than one: this family's 3 printings are
+      only 2 distinct sentences, and a reader keyed on anything but the text would
+      still satisfy a one-card suite.
+
+      A **STAGE 1** from Eevee, and the only non-Basic in the family. It reaches the
+      Active Spot by SURGERY (`setActiveFromDeck`), which places a body without
+      evolving it — so no Eevee is needed and the deck below carries none. Stated
+      because the alternative (an Eevee plus a played evolution) would have bought
+      nothing this family tests and would have made every board a turn longer.
+
+      Its index-1 "Psy Bolt" ({P}{C}, 60) is an ALREADY-READ coin-flip paralysis —
+      carried whole, because a fixture that dropped it would renumber nothing here
+      but would be wrong by OMISSION (D156), and because it is this slice's
+      index-keyed negative: a sibling attack on the same card that must NOT inherit
+      index 0's scaling clause.
+
+      Verbatim off the local D1: 110 HP, Psychic, Stage1 from Eevee, retreat 1,
+      ×2 Darkness, −30 Fighting Resistance, no Ability, two attacks. The
+      Resistance is the only one in this family, and it is deliberately NOT the
+      order witness: a `-30` SUBTRACTION commutes with the fold's addition, so
+      `(100 + 30) − 30` and `(100 − 30) + 30` are the same number. What it does
+      buy is a board where the scaled total pushes a defender past a subtractive
+      W/R term it would otherwise have survived. The order is driven on
+      Tyranitar ex's ×2 instead (`OPPONENT_COUNTER_DECK`). */
+  "sv03-086": battler("sv03-086", {
+    name: "Espeon",
+    types: ["Psychic"],
+    stage: "Stage1",
+    evolveFrom: "Eevee",
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Psychic"],
+        name: "Psychic Assault",
+        effect:
+          "This attack does 10 more damage for each damage counter on your opponent's Active Pokémon.",
+        damage: "30+",
+      },
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Psy Bolt",
+        effect: "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
+        damage: 60,
+      },
+    ],
+  }),
+
+  /** Bloodmoon Ursaluna sv06.5-025 — "Mad Bite" (idx 0, {F}{F}{C}, printed
+      "100+"): *"This attack does 30 more damage for each damage counter on your
+      opponent's Active Pokémon."* — the family's THIRTY-per-counter amount and its
+      second distinct sentence. One `(\d+)` capture spans both, so a hardcoded
+      per-unit satisfies Dedenne/Espeon or this card, never all three (D121's
+      second-printing warrant, met by the pool rather than by a synthetic body).
+
+      It is also the reason this deck needed a defender no existing deck fields:
+      `100 + 30 × n` outruns `fix-bigbody`'s 200 HP at four counters, so the
+      arithmetic can only be read off a body that SURVIVES it — see
+      `OPPONENT_COUNTER_DECK`.
+
+      Its Ability "Battle-Hardened" is carried verbatim and is UNSIMULATED: it is an
+      on-play-to-Bench attach the registry has no row for, `programFor` is undefined
+      for this id, and every board below places the body by surgery, so the trigger
+      is never on a path. It is here because a fixture that dropped it would be
+      wrong by OMISSION (D156) and would owe an `INCOMPLETE` declaration.
+
+      Verbatim off the local D1: 150 HP, Fighting, Basic, retreat 4, ×2 Grass, no
+      Resistance, one attack, one Ability. */
+  "sv06.5-025": battler("sv06.5-025", {
+    name: "Bloodmoon Ursaluna",
+    types: ["Fighting"],
+    hp: 150,
+    retreat: 4,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Battle-Hardened",
+        effect:
+          "When you play this Pokémon from your hand onto your Bench during your turn, you may attach up to 2 Basic {F} Energy cards from your hand to this Pokémon.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Fighting", "Fighting", "Colorless"],
+        name: "Mad Bite",
+        effect:
+          "This attack does 30 more damage for each damage counter on your opponent's Active Pokémon.",
+        damage: "100+",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -9630,6 +9768,59 @@ export const SELF_COUNTER_MULTIPLY_DECK = deckOf({
   "fix-fighting-energy": 8, // {F}{F} — Raging Swing's typed symbols
   "fix-water-energy": 4, // {W} — Sweeping Tackle's typed symbol
   "fix-energy": 14, // Colorless Basic — every {C} in the deck
+});
+
+/** D168 — the OPPONENT-SIDE damage-counter count, on its OWN 60 for the reason
+    every deck since D147 has one, plus a requirement no existing deck could meet.
+
+    ⚠️ **THE DEFENDER HAS TO ARRIVE PRE-DAMAGED AND STILL SURVIVE.** Every number
+    in this family is `printed base + per × (defender's counters)`, so the count is
+    only observable on a board where the DEFENDING body already carries damage —
+    and Bloodmoon Ursaluna's `100 + 30n` outruns `fix-bigbody`'s 200 HP at n = 4
+    and `SCALED_DAMAGE_DECK`'s bodies well before that. A defender that dies is a
+    defender whose arithmetic was never read. So this deck fields two tanks:
+    `fix-titan` (340 HP, NO attacks, NO Weakness or Resistance) for the clean
+    numbers, and Tyranitar ex `sv03-066` (340 HP, ×2 FIGHTING, no Ability and no
+    registry row) for the pre-W/R ORDER — the one body in the pool that is BOTH
+    weak to a family member's type AND large enough to survive the right answer
+    while dying to nothing else.
+
+    **SEED-FREE for the scaling boards.** No sentence in this family flips a coin
+    and every Active is placed by surgery (D143's move, D147's inheritance). The
+    ONE flip in the deck is Espeon's index-1 "Psy Bolt", which is driven exactly
+    once — as the index-keyed negative — and whose 60 damage does not depend on the
+    face.
+
+    The three attackers are the WHOLE family; everything else is a body chosen to
+    make exactly one claim observable:
+      • sv01-095 Dedenne — "Second Bite" idx 0 ({P}{C}, "30+"), TEN per counter.
+        A Basic, the cheapest cost in the family, and at 70 HP also the body a
+        counter-swing Knocks Out;
+      • sv03-086 Espeon — "Psychic Assault" idx 0 ({P}, "30+"), the SAME sentence
+        byte for byte on a SECOND card, so a reader keyed on anything but the text
+        would still pass a one-card suite. A Stage 1, placed by surgery. Its idx-1
+        "Psy Bolt" ({P}{C}, 60) is the sibling attack that must NOT inherit the
+        clause, and its −30 FIGHTING Resistance is the family's only one — the
+        board on which the fold coexists with a subtractive W/R term;
+      • sv06.5-025 Bloodmoon Ursaluna — "Mad Bite" idx 0 ({F}{F}{C}, "100+"),
+        THIRTY per counter, so a hardcoded per-unit fails one printing or the
+        other. Fighting, which is what makes Tyranitar ex the order witness;
+      • sv03-066 Tyranitar ex (340 HP, ×2 Fighting) — the ORDER: Ursaluna into it
+        at 2 counters is `(100 + 60) × 2 = 320` and lands it on exactly 340 with
+        the 20 already there, where the reversed `100 × 2 + 60 = 260` leaves it
+        alive. Two observables move together;
+      • fix-titan (340 HP, NO attacks, no W/R) — the mulligan-free starter, the
+        bench filler, and the arithmetically clean defender every unmodified number
+        is measured against. */
+export const OPPONENT_COUNTER_DECK = deckOf({
+  "sv01-095": 4, // Dedenne — "Second Bite" idx 0: the TEN-per-counter printing
+  "sv03-086": 4, // Espeon — "Psychic Assault" idx 0: the SAME sentence, second card
+  "sv06.5-025": 4, // Bloodmoon Ursaluna — "Mad Bite" idx 0: the THIRTY-per-counter one
+  "sv03-066": 3, // Tyranitar ex — 340 HP ×2 Fighting: the pre-W/R ORDER witness
+  "fix-titan": 10, // 340 HP neutral Basic, NO attacks — starter, filler, clean defender
+  "fix-psychic-energy": 8, // {P} — Second Bite, Psychic Assault, Psy Bolt
+  "fix-fighting-energy": 8, // {F}{F} — Mad Bite's typed half
+  "fix-energy": 19, // Colorless Basic — every {C} in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

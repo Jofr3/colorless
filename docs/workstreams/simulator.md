@@ -14153,12 +14153,16 @@ observable** — which is the honest form of "inherits D149's order".
 | `This attack does 10 more damage for each damage counter on this Pokémon.` | 7 — Arcanine ex `sv01-032`/`-224`, Paldean Tauros `sv02-028`/`-041`/`-108`/`-218`, Drampa `sv03-161` | ✅ since M2 |
 | `This attack does {10\|20} less damage for each damage counter on this Pokémon.` | 5 | ✅ **D163** |
 | `This attack does {30\|50} damage for each damage counter on this Pokémon.` (MULTIPLY — no adjective) | 2 — Drifloon `sv01-089` idx 1 "Balloon Blast" (30×), Onix `swsh10.5-036` idx 1 "Raging Swing" (50×) | ✅ **D167** — and the pricing held exactly: **ONE regex in `deriveAttackDamageMultiplier` and ONE `if`**, the count source, the fold and the base-dropping rule all pre-existing |
-| `This attack does {10\|30} more damage for each damage counter on your opponent's Active Pokémon.` | 3 — Dedenne `sv01-095`, Espeon `sv03-086`, Bloodmoon Ursaluna `sv06.5-025` | ❌ a NEW `DamageCountSource` (the defender's counters), one regex + one evaluator arm |
+| `This attack does {10\|30} more damage for each damage counter on your opponent's Active Pokémon.` | 3 — Dedenne `sv01-095`, Espeon `sv03-086`, Bloodmoon Ursaluna `sv06.5-025` | ✅ **D168** — a NEW `DamageCountSource` (the defender's counters), the fifth member. ⚠️ **This cell's own pricing was wrong by TWO edits**: *"one regex + one evaluator arm"* omitted **the reader arm in `deriveAttackDamageBonus`** (a regex with no arm is a dead pattern) **and the union member itself**. It is FOUR edits, not two — see §D168 |
 | `This attack does 10 damage for each damage counter on all of your Benched Pokémon.` | 1 — Tyranitar `swsh10.5-043` | ❌ a new count source over the BENCH |
 | `Put up to 12 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.` | 1 — Annihilape ex `sv02-242` | ❌ a two-sentence COMPOUND whose count is a mid-attack CHOICE, not a board fact at declaration |
 
 All four unbuilt shapes are **pinned as ABSENCES** in `selfScalingPenalty.test.ts`,
 so the day one of them lands this suite says the family moved.
+⚠️ **AS WRITTEN AT D163 — TWO OF THE FOUR HAVE SINCE LANDED and both pins went red
+exactly as designed and were RE-POINTED rather than deleted**: the bare `×` twin at
+**D167** and the opponent-side count at **D168**. **Two unbuilt shapes remain** (the
+bench-wide count, Annihilape ex's compound).
 
 ### Cost
 
@@ -14980,14 +14984,17 @@ engine **0.111.0 → 0.112.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 11**;
 ### Still unmapped on `for each damage counter`, after D167
 
 The neighbourhood is **19 rows / 6 shapes**; **14 read, 5 unread**, and the split is now
-`more` ✅ (7) + `less` ✅ (5) + bare ✅ (2).
+`more` ✅ (7) + `less` ✅ (5) + bare ✅ (2). ⚠️ **SUPERSEDED ONE SLICE LATER: D168 took
+the opponent-side count (3 printings), so the neighbourhood is now 17 read / 2 unread.**
 
 - **The OPPONENT-SIDE count** — *"…for each damage counter on your opponent's Active
   Pokémon."*, all the `more` form: Dedenne `sv01-095` idx 0 `"30+"`, Espeon `sv03-086`
   idx 0 `"30+"`, Bloodmoon Ursaluna `sv06.5-025` idx 0 `"100+"`. **3 printings but only
   2 distinct sentences** (the 10-per string is printed twice). Additive, so it routes
   through `deriveAttackDamageBonus`. **This one DOES buy a new `DamageCountSource`** —
-  price it as D163-shaped, not D167-shaped.
+  price it as D163-shaped, not D167-shaped. ✅ **BUILT AT D168** (§D168), and that
+  reading was right: it bought the **fifth** member. What this bullet still under-priced
+  is the **reader arm in `deriveAttackDamageBonus`** — four edits, not two.
 - **The BENCH-WIDE count** — *"…for each damage counter on all of your Benched
   Pokémon."*, Tyranitar `swsh10.5-043` idx 0 `"10×"`. **1 printing, MULTIPLY**, so it
   routes through `deriveAttackDamageMultiplier` — the body this slice just touched.
@@ -15000,3 +15007,249 @@ The neighbourhood is **19 rows / 6 shapes**; **14 read, 5 unread**, and the spli
   Not a scaling arm at all.
 
 Full pricing for all three is in `progress.md`'s resume point, re-derived at D167.
+
+---
+
+## D168 — the OPPONENT-SIDE damage-counter count (`damageCountersOnOpponentActive`): `This attack does {10|30} more damage for each damage counter on your opponent's Active Pokémon.` — the FIFTH `DamageCountSource`, and the first member that MIRRORS a member the union already had (engine 0.112.0 → 0.113.0, `MATCH_RECORD_VERSION` unchanged at 11)
+
+**Item 2's Family A** of the remainder list, and the twin of D167 on the other axis:
+**D167 was a new FOLD on an old count source; this is a new COUNT SOURCE on an old
+fold.** The two together are the same question asked from both sides, one slice apart.
+
+### Family: 3 printings / 2 distinct sentences — CLOSED
+
+Measured against the local D1 (2026-08-03, **978 cards / 6 sets**) across all three text
+columns; all three rows are `attacks_json`.
+
+| card | idx | attack | cost | printed | per |
+|---|---|---|---|---|---|
+| Dedenne `sv01-095` | 0 | Second Bite | {P}{C} | `30+` | 10 |
+| Espeon `sv03-086` | 0 | Psychic Assault | {P} | `30+` | 10 |
+| Bloodmoon Ursaluna `sv06.5-025` | 0 | Mad Bite | {F}{F}{C} | `100+` | 30 |
+
+**One `(\d+)` capture spans both amounts.** Dedenne and Espeon print the sentence **byte
+for byte** — D144's shape (one sentence, two printings) rather than D121's, met by the
+catalog rather than by an invented string.
+
+**The fourth row the sweep returned, carried as a near-miss:** Trevenant `sv03-012`'s
+Ability *"Forest Miasma"* — *"During Pokémon Checkup, if this Pokémon is in the Active
+Spot, put 1 damage counter on your opponent's Active Pokémon."* — the **only** other
+catalog row in any text column carrying this possessive beside a damage counter. Refused
+three times over: leading text, a **PLACEMENT** rather than a scaling clause, and an
+**Ability**, which this deriver is never handed.
+
+### ⚠️ A `count` member where D163's one-word-different sentence was a whole new READER
+
+The family splits by **FOLD** (D167's finding): `+` keeps the printed base, `×` drops it,
+`−` keeps it and subtracts — three readers over ONE `{per, count}` interface and ONE
+count evaluator. **D163's sentence changed the SIGN, so it bought a third reader. This
+one carries "more", so its fold is byte-identical to the one `deriveAttackDamageBonus`
+already performs**, and the only thing that varies is WHICH RESOURCE is tallied — which
+is precisely what `DamageCountSource` is for.
+
+**A fourth reader would have duplicated a fold to vary a count; a fifth member varies the
+count and reuses the fold.** The inverse answer to the inverse question, on sentences
+that differ by one word each time.
+
+### ⚠️ The FIFTH member is the FIRST that MIRRORS an existing member
+
+`damageCountersOnSelf` and `damageCountersOnOpponentActive` tally the **identical
+resource** — `InPlayPokemon.damage ÷ 10` — off **two different bodies**.
+
+**Two members rather than one member with a `side` field**, because every consumer of
+this union dispatches on `kind` and nothing else: a `side` would have to be read by
+`scaledAttackDamage` anyway, and the three members that have no side at all would then
+carry a field they must ignore.
+
+**The mirror is also the sharpest defect this slice can have**, so it is driven rather
+than argued:
+
+- a board with **9 counters on the ATTACKER and 3 on the DEFENDER** — reading self
+  scores **270**, summing both scores **360**, and the right answer is **90**;
+- **both census sweeps are asserted side by side** (the opponent-side producers and the
+  self-side producers), so a reader that started answering both would collapse two lists
+  into one — which no assertion on a single sentence can see.
+
+### The four edits, and what cost nothing
+
+| edit | where |
+|---|---|
+| `OPPONENT_COUNTER_SCALE` regex + doc block | `effects.ts`, **its own group after the `RETREAT_COST_*` pair** |
+| reader arm | `deriveAttackDamageBonus`, after the retreat-cost arm and BEFORE the loose `CONDITIONAL_DAMAGE_BONUS` arm, with its own `per >= 1` guard |
+| `DamageCountSource` member | `damageCountersOnOpponentActive` |
+| evaluator arm | `scaledAttackDamage` (`attack.ts`) — **no signature change** |
+
+⚠️ **The inherited pricing — *"one regex + one evaluator arm"* — was WRONG ON THE COUNT
+AND RIGHT ON THE SHAPE.** It omitted the reader arm entirely (a regex with no arm is a
+dead pattern) and the union member. What it was right about is that **nothing else
+moves**, and each part of that was verified rather than assumed:
+
+- **the SCOPE half cost the signature NOTHING.** `scaledAttackDamage` already took
+  `(attacker, bonus, state, defenderSeat, attackerSeat)` for the Prize and retreat-cost
+  members, so the defending body was already in reach — the new arm is
+  **shape-identical to the `opponentActiveRetreatCost` one beside it, null-Active guard
+  included**;
+- it is the repo's **only exhaustive switch over the union** — nothing in `log.ts`,
+  `redact.ts`, `phaseView.ts` or `apps/web` dispatches on it — so a fifth member is
+  **one arm, not five**;
+- `scaling !== null` already carried **both** terms of the `ATTACK_EFFECT_SKIPPED` guard
+  (`effectSimulated` and `modifierSimulated`), so `attack.ts`'s flag logic took **zero**
+  lines — driven on all three printings, on damaged AND pristine boards;
+- the number reaches the player through the **existing** `DAMAGE_DEALT.scaled` field and
+  the existing ` · scaled +${n}` crumb. `per` is positive, so **D163's sign hazard** (a
+  negative silently dropped by `scaledTotal > 0`, then rendered "+-40") does not arise.
+
+⚠️ **The placement was NOT where the spec said.** The hint was to put the regex directly
+after `SELF_COUNTER_SCALE` — which would have wedged it between that line and D163's
+block, and **D163's block opens *"THE SIGN-FLIPPED TWIN OF THE LINE ABOVE"***. An
+insertion there makes that sentence silently false. The file groups by **COUNT SOURCE**,
+so the new regex is its own group after the `RETREAT_COST_*` pair.
+
+### ⚠️ First-match-wins verified in BOTH directions
+
+`SELF_COUNTER_SCALE` and `SELF_COUNTER_PENALTY` are the only other patterns in the file
+carrying the words "damage counter"; all are `^…$`-anchored and the two self ones end in
+the LITERAL `on this Pokémon.` — so **neither side needs a negative lookahead**. Driven
+both ways (the self sentences must not reach the new member, the new sentences must not
+reach the self readers), plus the pool-wide *"at most one of the three readers answers
+any attack"* sweep re-run with the three new fixtures in it.
+
+**The MULTIPLY twin of THIS count source is an ABSENCE, not an unread printing.** The D1
+sweep for `%damage counter on your opponent%` returns four rows: three attacks, **all
+carrying "more"**, plus Trevenant's placement Ability. Unlike the SELF-side multiply twin
+(Drifloon `sv01-089`, Onix `swsh10.5-036` — real, printed, unread until D167), there is
+**no no-adjective and no "less" printing of this source anywhere in the pool**. Pinned as
+an absence, because *"it is one regex away"* is how a slice invents a card.
+`selfScalingPenalty.test.ts`'s near-miss comment is re-pointed accordingly; **its
+assertion is unchanged and still correct** — the *"less"* spelling stays refused.
+
+### ⚠️ THE FINDING NOBODY SPECCED: a RESISTANCE cannot witness the pre-W/R fold order
+
+Espeon's **−30 Fighting Resistance** looked like the natural order witness and is not one.
+**Subtraction COMMUTES with the fold's addition:**
+
+```
+(100 + 30) − 30  =  100
+(100 − 30) + 30  =  100
+```
+
+Both placements produce the same number, so that board cannot tell them apart. **Only a
+MULTIPLY W/R separates them**, and the suite says so in its own words rather than
+quietly using a better board.
+
+The order is therefore driven on **Tyranitar ex `sv03-066`** (340 HP, ×2 Fighting).
+Bloodmoon Ursaluna at **2 counters**, into a body already carrying 20:
+
+| placement | arithmetic | result |
+|---|---|---|
+| **correct** (fold, then W/R) | `(100 + 60) × 2 = 320` | 20 + 320 = **exactly 340 — a KO** |
+| reversed (W/R, then fold) | `100 × 2 + 60 = 260` | 20 + 260 = 280, **alive with 60 HP** |
+
+**Two observables move together**, and the second is not a number a reader can talk
+themselves into. A second case re-derives the oracle from the ROW's OWN fields
+(`applyDamageModifier` over `base` and `scaled` in both orders) at one counter fewer, so
+both placements are two live numbers rather than a KO and a number.
+
+Espeon's Resistance is **kept for what it CAN show**: the scaled total carrying a
+defender **past a subtractive term it survived a moment earlier** — 70 at zero counters,
+100 at one, and 110 HP between them.
+
+⚠️ **The transferable form is general and belongs to every ordering claim, not to this
+family: an ordering claim needs a witness that does NOT COMMUTE, and a subtractive W/R
+term can never be one.**
+
+### The fixtures were the real cost, and one requirement no existing deck could meet
+
+`FIXTURE_POOL` had **ZERO** coverage: none of the three cards, neither sentence, and **no
+body whose damage had ever been read from the DEFENDING side**. All three fixtures are
+**authored fresh and whole** — Espeon's idx-1 "Psy Bolt" and Bloodmoon Ursaluna's
+unsimulated "Battle-Hardened" Ability are **carried rather than dropped**, so neither
+owes an `INCOMPLETE` declaration.
+
+And every number in this family is `base + per × (the DEFENDER's counters)`, so **the
+defender must arrive PRE-DAMAGED and still SURVIVE**. Ursaluna's `100 + 30n` outruns
+`fix-bigbody`'s 200 HP at **n = 4**, and `SCALED_DAMAGE_DECK`'s bodies well before that.
+**A defender that dies is a defender whose arithmetic was never read.** Hence
+**`OPPONENT_COUNTER_DECK` on its own 60**, fielding two 340 HP tanks:
+
+- **`fix-titan`** (340 HP, NO attacks, no Weakness or Resistance) — the mulligan-free
+  starter and the clean-number defender;
+- **Tyranitar ex `sv03-066`** (340 HP, ×2 Fighting, no Ability, no registry row) — the
+  ORDER witness above.
+
+Its own 60, so no neighbouring suite's board moves.
+
+### The structural questions
+
+1. **PARK / PERSIST — NEITHER.** The clause is CATALOG text read at declaration by a pure
+   function of the current state. `MATCH_RECORD_VERSION` stays **11**, and this is
+   **derived rather than inherited**: `DamageCountSource` is a **PARSE-TIME type in
+   `effects.ts` that never reaches `GameState`**, so a new member of it cannot make a
+   previously-stored record unreadable — which is exactly why it buys no bump where
+   **D165's CHANGED `InPlayPokemon` field** did. Pinned as an **ABSENCE** over the 16-key
+   set; the **ELEVENTH** control on D124's trigger. `engineVersion` **0.112.0 →
+   0.113.0**; `packages/engine/package.json` stays `0.3.0`.
+2. **VOICE — NO ROW MOVED**, and it was checked rather than assumed: the ` · scaled +N`
+   crumb has rendered this field since 0.35.0, and is driven under **both** seats and
+   READ (`dealt 190 damage to fix-titan · scaled +90`), plus the silent case — a pristine
+   defender emits **no `scaled` at all**, because loudness is owed to UNREAD text (D140)
+   and a fold that added nothing must not speak.
+3. **GUARDS SWEPT, NOT LISTED** — the pool-wide "at most one reader answers any printed
+   attack" sweep still holds, and the two count-source censuses are asserted **side by
+   side** for the mirror reason above.
+4. **MECHANISM EXISTS** — everything except the regex, the arm, the member and the
+   evaluator arm did.
+5. **GATES NO ACTION** — the attack must still be OFFERED against a **pristine** defender
+   where the fold adds 0 (D163's negative form). **§11: nothing owed** — no op added.
+   **No `redact.ts` and no `GameHud.tsx` diff.**
+
+### ⚠️ A GENERATED FILE MUST BE REGENERATED, NEVER TEXT-MERGED
+
+This slice and **D167** ran in **parallel worktrees** and both regenerated
+`catalogManifest.ts` **independently from the same 209-row base**. D167 produced **211**;
+this slice produced **212**. The true merged figure is **214**, and **no textual
+resolution of the two diffs would ever have produced it** — a three-way merge of a
+generated file resolves *cleanly* and is still wrong, because the file is a **FUNCTION of
+inputs neither side had whole**.
+
+The manifest was **regenerated after the merge** (`bun run scripts/catalog-manifest.ts`)
+and this slice's own changelog line corrected from *"209 → 212"* to **"211 → 214"**.
+**When two slices touch a generated file, the merge is a re-run, not a resolution** —
+and the number a worktree handoff quotes for it is a number measured against a base that
+no longer exists.
+
+### Cost
+
+**1 regex, 1 reader arm, 1 `DamageCountSource` member, 1 evaluator arm.** No new op,
+event, event field, log crumb, error code, prompt, park, state field, registry row,
+redact arm or projection, and **no web / DB / `@luminous/schema` diff**.
+
+Plus **3 fixtures** (`sv01-095`, `sv03-086`, `sv06.5-025` — all COMPLETE against the
+manifest), **1 deck** (`OPPONENT_COUNTER_DECK`), `opponentCounterScaling.test.ts`
+(**34 tests, SEED-FREE** — the one flip in the deck is Espeon's idx-1 "Psy Bolt", driven
+deliberately), `catalogManifest.ts` REGENERATED (**211 → 214** fixture rows, 0 absent;
+`FIXTURE_POOL` **293 → 296**), `clauseApostrophe.test.ts`'s discovered census **62 → 64**
+(the sweep found both new sentences on its own — nobody had that file open), and
+`selfScalingPenalty.test.ts`'s near-miss comment re-pointed. `attack.ts` and `index.ts`
+take **comment/doc diffs only** apart from the version string and the new evaluator arm.
+
+engine **0.112.0 → 0.113.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 11**;
+`bun run check` GREEN exit 0 — **205 files / 3642 tests** (was 204 / 3608).
+
+### Still unmapped on `for each damage counter`, after D168
+
+The neighbourhood is **19 rows / 6 shapes**; **17 read, 2 unread**. The split is
+`more`-on-self ✅ (7) + `less`-on-self ✅ (5) + bare-`×`-on-self ✅ (2) +
+`more`-on-opponent ✅ (3).
+
+- **The BENCH-WIDE count** — *"This attack does 10 damage for each damage counter on all
+  of your Benched Pokémon."*, Tyranitar `swsh10.5-043` idx 0 `"10×"`. **1 printing,
+  MULTIPLY**, so its reader arm lands in `deriveAttackDamageMultiplier`, and it is the
+  first count source that tallies over a **ZONE** rather than a body. **UNBLOCKED** — it
+  was sequenced behind the multiply-arm work, which landed at D167. Full pricing in
+  `progress.md`'s resume point.
+- **Annihilape ex `sv02-242`**'s two-sentence compound (*"Put up to 12 damage counters on
+  this Pokémon. This attack does 20 damage for each damage counter you placed in this
+  way."*) — a count that is a **mid-attack CHOICE**, not a board fact at declaration.
+  **Not a scaling arm at all**, and `EffectRecord` records the LENGTH of a uid array
+  rather than an integer 0..12, so it is a Hail-Blade-sized slice.

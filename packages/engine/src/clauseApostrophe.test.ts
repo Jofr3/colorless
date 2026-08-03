@@ -253,7 +253,26 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // lost its set to an uncheckpointed WAL, D160 re-ingested it, and the sentence
     // has been derivable by an unchanged anchor the whole time. A sweep that
     // discovers its own inputs is the only kind that can say that.
-    expect(derivable).toHaveLength(62);
+    //
+    // ⚠️ AND D168 ADDS **TWO**, WHICH IS THE `sentence`-CENSUS RULE PAYING OUT IN
+    // BOTH DIRECTIONS AT ONCE ON A THREE-CARD FAMILY. The opponent-side
+    // damage-counter count prints "This attack does {10|30} more damage for each
+    // damage counter on your **opponent's** Active Pokémon." — TWO rows, because
+    // the amount varies (D147's shape: one anchor, one capture, two distinct
+    // sentences) — and the 10-per row carries TWO ids, because Dedenne sv01-095 and
+    // Espeon sv03-086 print it byte for byte (D144's shape, on the same day). Three
+    // new fixtures, three new printings, two rows.
+    //
+    // Its exposed slot is the possessive "your opponent's" every row above already
+    // carries, so nothing about the CLASS is new here. What is new is that the
+    // possessive now sits in a sentence read for a `DamageCountSource` **member**
+    // rather than for an op, a requirement or a fold direction — the fifth kind of
+    // thing a folded apostrophe has had to survive being read as. Espeon's index-1
+    // "Psy Bolt" adds no row at all: "Flip a coin. If heads, your opponent's Active
+    // Pokémon is now Paralyzed." has been in this census since M3 under another
+    // fixture, so it adds an ID to an existing row, which is exactly what a
+    // `sentence` census is supposed to do.
+    expect(derivable).toHaveLength(64);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

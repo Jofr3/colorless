@@ -338,8 +338,11 @@ describe("deriveAttackDamagePenalty — one regex, two amounts", () => {
       "Flip a coin. This attack does 20 less damage for each damage counter on this Pokémon.",
       // trailing text
       "This attack does 20 less damage for each damage counter on this Pokémon. Discard an Energy from this Pokémon.",
-      // the DEFENDER-side count — a real unread neighbour (Dedenne sv01-095,
-      // Espeon sv03-086, Bloodmoon Ursaluna sv06.5-025 print its "more" form)
+      // the DEFENDER-side count. Its "more" form is NO LONGER unread — D168 gave
+      // Dedenne sv01-095, Espeon sv03-086 and Bloodmoon Ursaluna sv06.5-025 the
+      // fifth `DamageCountSource` — but this "less" spelling is UNPRINTED in the
+      // whole pool and stays refused: the tail is what separates the two count
+      // sources, and it must go on separating them at every sign.
       "This attack does 20 less damage for each damage counter on your opponent's Active Pokémon.",
       // a real Pokémon with a lookalike é would fall off the path silently
       "This attack does 20 less damage for each damage counter on this Pokemon.",
