@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasRuleBox, pokemonSuffixOf, prizeValueOf } from "./cards";
-import { lockedAttackIndex } from "./continuous";
+import { lockedAttackIndexes } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import { applyAction, programFor, redactGame } from "./index";
@@ -172,17 +172,13 @@ function inWindow(state: GameState): GameState {
 /** TEST SURGERY: write a `lockedAttack` record directly, for the two cases no
     printing reaches (an unresolvable name, and a second install landing on a live
     record). Said so rather than skipped, per the family's standing rule. */
-function setLock(
-  state: GameState,
-  seat: Seat,
-  lock: InPlayPokemon["lockedAttack"],
-): GameState {
+function setLock(state: GameState, seat: Seat, lock: InPlayPokemon["lockedAttacks"]): GameState {
   const side = state.players[seat];
   const active = side.active;
   if (active === null) throw new Error(`${seat} has no Active Pokémon`);
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, active: { ...active, lockedAttack: lock } } },
+    players: { ...state.players, [seat]: { ...side, active: { ...active, lockedAttacks: lock } } },
   };
 }
 
@@ -384,10 +380,12 @@ describe("the install — the address is resolved once, at the site that owns th
     // The RECORD, and the two halves of it are two different claims: the stamp is
     // the installing turn + 2 (D143's number, the holder's own next turn), and the
     // index is the resolution of the printed noun.
-    expect(state.players.p1.active?.lockedAttack).toEqual({
-      turn: 2 + 2,
-      attackIndex: SLASHING_STEEL_INDEX,
-    });
+    expect(state.players.p1.active?.lockedAttacks).toEqual([
+      {
+        turn: 2 + 2,
+        attackIndex: SLASHING_STEEL_INDEX,
+      },
+    ]);
     // …and NOT the whole-Pokémon lock, which is the field a widening would have
     // written and the one thing no board can tell apart from the record.
     expect(state.players.p1.active?.attackLockedTurn).toBeNull();
@@ -405,19 +403,19 @@ describe("the install — the address is resolved once, at the site that owns th
     // five printings stamp 1 and two stamp 0, and a build that hardcoded either
     // would be right on part of the family with nothing red.
     const skarmory = barred("sv03-142", SLASHING_STEEL_INDEX).state;
-    expect(skarmory.players.p1.active?.lockedAttack?.attackIndex).toBe(1);
+    expect(skarmory.players.p1.active?.lockedAttacks.at(-1)?.attackIndex).toBe(1);
     const munkidori = barred("sv06.5-037", 0, [
       { id: "fix-dark-energy", count: 2 },
       { id: "fix-energy", count: 1 },
     ]).state;
-    expect(munkidori.players.p1.active?.lockedAttack?.attackIndex).toBe(0);
+    expect(munkidori.players.p1.active?.lockedAttacks.at(-1)?.attackIndex).toBe(0);
     const greedent = barred("sv03-179", 1, [{ id: "fix-energy", count: 3 }]).state;
-    expect(greedent.players.p1.active?.lockedAttack?.attackIndex).toBe(1);
+    expect(greedent.players.p1.active?.lockedAttacks.at(-1)?.attackIndex).toBe(1);
     const lucario = barred("sv01-114", 1, [
       { id: "fix-fighting-energy", count: 1 },
       { id: "fix-energy", count: 2 },
     ]).state;
-    expect(lucario.players.p1.active?.lockedAttack?.attackIndex).toBe(1);
+    expect(lucario.players.p1.active?.lockedAttacks.at(-1)?.attackIndex).toBe(1);
   });
 
   it("carries the APOSTROPHE name end to end, from the sentence to the log row", () => {
@@ -442,7 +440,7 @@ describe("the install — the address is resolved once, at the site that owns th
     // for the §11 table. A punctuation normaliser rewrites the attack ROW as well
     // as the effect string, and `fix-curly-barrer` is that card.
     const { state, row } = barred("fix-curly-barrer", 1, [{ id: "fix-energy", count: 2 }]);
-    expect(state.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 1 });
+    expect(state.players.p1.active?.lockedAttacks).toEqual([{ turn: 4, attackIndex: 1 }]);
     // The op carried the FOLDED noun; the row carries the CARD's own spelling,
     // because a log row is read by a player holding the card.
     expect(row.attack).toBe("Slip ’n’ Roll");
@@ -462,14 +460,14 @@ describe("the install — the address is resolved once, at the site that owns th
       seat: "p1",
       index: SLASHING_STEEL_INDEX,
     });
-    expect(state.players.p1.active?.lockedAttack).not.toBeNull();
+    expect(state.players.p1.active?.lockedAttacks).not.toEqual([]);
     // …now the same op with a name Skarmory does not print, fed through the same
     // deriver so the op is the real shape and only the noun is constructed.
     const bogus = deriveAttackEffect("During your next turn, this Pokémon can't use Hydro Pump.");
     expect(bogus).toEqual([{ op: "preventAttackUse", attack: "Hydro Pump" }]);
     const events2: GameEvent[] = [];
     const after = runOne(before, bogus ?? [], events2);
-    expect(after.players.p1.active?.lockedAttack ?? null).toBeNull();
+    expect(after.players.p1.active?.lockedAttacks ?? []).toEqual([]);
     expect(events2).toEqual([]);
   });
 
@@ -486,21 +484,39 @@ describe("the install — the address is resolved once, at the site that owns th
     expect(state.rngState).toBe(before.rngState);
   });
 
-  it("a re-install that says the SAME thing is silent, a different index wins", () => {
-    // Both cases are CONSTRUCTED: installing needs an attack, an attack ends the
-    // turn, and the window is the holder's own next turn — on which the only
-    // attack that could re-install is the very one this record bars. So a second
-    // install can never land on a LIVE record off any printing, and the surgery
-    // says which of the two rules the early-return implements.
-    const state = setLock(ready("sv03-142"), "p1", { turn: 4, attackIndex: 1 });
+  it("a re-install that says the SAME thing is silent, a different index is ADDED", () => {
+    // Both cases are CONSTRUCTED *for this op*: installing needs an attack, an
+    // attack ends the turn, and the window is the holder's own next turn — on
+    // which the only attack that could re-install is the very one this record
+    // bars. So a second install of THIS op can never land on a live record of
+    // THIS op, and the surgery says which of the two rules `addLockedAttack`
+    // implements.
+    //
+    // ⚠️ D165 CHANGED THE SECOND HALF OF THIS CASE, AND THE CHANGE IS THE FIX.
+    // It used to assert that a differing index REPLACED the record, on the
+    // reasoning that "a later install always stamps a later turn" — true of this
+    // op about itself and false about the FIELD, which `lockDefenderAttack` also
+    // writes at `+ 1`. The played collision is in `lockedAttackMerge.test.ts`;
+    // what is pinned here is that the merge rule is APPENDING at its own site too,
+    // so a reader cannot conclude from this file that the last write wins.
+    const state = setLock(ready("sv03-142"), "p1", [{ turn: 4, attackIndex: 1 }]);
     const same: GameEvent[] = [];
     const unchanged = runOne(state, [{ op: "preventAttackUse", attack: "Slashing Steel" }], same);
     expect(same).toEqual([]);
-    expect(unchanged.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 1 });
+    expect(unchanged.players.p1.active?.lockedAttacks).toEqual([{ turn: 4, attackIndex: 1 }]);
     const moved: GameEvent[] = [];
     const rewritten = runOne(state, [{ op: "preventAttackUse", attack: "Peck" }], moved);
     expect(types(moved)).toEqual(["ATTACK_LOCKED"]);
-    expect(rewritten.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 0 });
+    expect(rewritten.players.p1.active?.lockedAttacks).toEqual([
+      { turn: 4, attackIndex: 1 },
+      { turn: 4, attackIndex: 0 },
+    ]);
+    // …and BOTH are live in the window, which is what "added" means where
+    // "replaced" would have quietly meant "one of them was thrown away".
+    let window = must(applyAction(rewritten, { type: "endTurn", seat: "p1" }));
+    window = must(applyAction(window, { type: "endTurn", seat: "p2" }));
+    expect(window.turn).toBe(4);
+    expect(lockedAttackIndexes(window, must0(window.players.p1.active))).toEqual([1, 0]);
   });
 });
 
@@ -513,27 +529,29 @@ describe("the window is the HOLDER's own next turn — driven, not asserted", ()
     const { state } = barred("sv03-142", SLASHING_STEEL_INDEX);
     // Turn 3 belongs to the OPPONENT: the stamp is 4, so the reader says nothing.
     expect(state.turn).toBe(3);
-    expect(lockedAttackIndex(state, must0(state.players.p1.active))).toBeNull();
+    expect(lockedAttackIndexes(state, must0(state.players.p1.active))).toEqual([]);
     // Turn 4 is the holder's own next turn — the window.
     const window = inWindow(state);
     expect(window.turn).toBe(4);
-    expect(lockedAttackIndex(window, must0(window.players.p1.active))).toBe(SLASHING_STEEL_INDEX);
+    expect(lockedAttackIndexes(window, must0(window.players.p1.active))).toEqual([
+      SLASHING_STEEL_INDEX,
+    ]);
     // …and it expires by arithmetic, with nothing having cleared it: the record is
     // STILL THERE two turns later and simply stops answering.
     let later = must(applyAction(window, { type: "endTurn", seat: "p1" }));
     later = must(applyAction(later, { type: "endTurn", seat: "p2" }));
     expect(later.turn).toBe(6);
-    expect(later.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 1 });
-    expect(lockedAttackIndex(later, must0(later.players.p1.active))).toBeNull();
+    expect(later.players.p1.active?.lockedAttacks).toEqual([{ turn: 4, attackIndex: 1 }]);
+    expect(lockedAttackIndexes(later, must0(later.players.p1.active))).toEqual([]);
   });
 
   it("a `+ 1` stamp would be a drawback that never bites — the failure D143 named", () => {
     // Stated as a board rather than as arithmetic: turn 3 is the opponent's, so a
     // window stamped there is a window its holder could not have acted in anyway.
     const { state } = barred("sv03-142", SLASHING_STEEL_INDEX);
-    const wrong = setLock(state, "p1", { turn: state.turn, attackIndex: 1 });
+    const wrong = setLock(state, "p1", [{ turn: state.turn, attackIndex: 1 }]);
     const window = inWindow(wrong);
-    expect(lockedAttackIndex(window, must0(window.players.p1.active))).toBeNull();
+    expect(lockedAttackIndexes(window, must0(window.players.p1.active))).toEqual([]);
     expect(refusal(window, "p1", SLASHING_STEEL_INDEX)).toBeNull();
   });
 });
@@ -576,7 +594,12 @@ describe("the bar is on the ATTACK — the claim D143's field could not make", (
   });
 
   it("is TOTAL over the family — every printing bars its own name and no other", () => {
-    const cases: { id: string; index: number; other: number | null; energy: { id: string; count: number }[] }[] = [
+    const cases: {
+      id: string;
+      index: number;
+      other: number | null;
+      energy: { id: string; count: number }[];
+    }[] = [
       {
         id: "sv03-142",
         index: 1,
@@ -622,7 +645,7 @@ describe("the bar is on the ATTACK — the claim D143's field could not make", (
     ];
     for (const { id, index, other, energy } of cases) {
       const window = inWindow(barred(id, index, energy).state);
-      expect(lockedAttackIndex(window, must0(window.players.p1.active)), id).toBe(index);
+      expect(lockedAttackIndexes(window, must0(window.players.p1.active)), id).toEqual([index]);
       expect(refusal(window, "p1", index), id).toBe("ATTACK_PREVENTED");
       if (other !== null) {
         // The sibling is legal — and it is asserted as APPLYING rather than as
@@ -680,7 +703,7 @@ describe("one body carries BOTH locks on ONE turn — why the record is not shar
     // it was already carrying is untouched beside it.
     expect(find(events, "ATTACK_LOCKED")?.seat).toBe("p1");
     expect(locked.players.p1.active?.attackLockedTurn).toBe(4);
-    expect(locked.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 1 });
+    expect(locked.players.p1.active?.lockedAttacks).toEqual([{ turn: 4, attackIndex: 1 }]);
     // …and on the shared window BOTH bite: the whole lock refuses EVERY index —
     // including index 0, which the per-attack record leaves alone — and the
     // per-attack record is still there, still live, still naming index 1.
@@ -688,7 +711,7 @@ describe("one body carries BOTH locks on ONE turn — why the record is not shar
     // already — which is the arithmetic the two stamps were chosen to collide on.
     expect(locked.turn).toBe(4);
     expect(refusal(locked, "p1", 0)).toBe("ATTACK_PREVENTED");
-    expect(lockedAttackIndex(locked, must0(locked.players.p1.active))).toBe(1);
+    expect(lockedAttackIndexes(locked, must0(locked.players.p1.active))).toEqual([1]);
   });
 
   it("…and the two rows read differently in the log, under the SAME seat", () => {
@@ -726,7 +749,7 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
     // opponent). And the failure it rules out is not "still barred": the evolved
     // body has ONE attack, so a stale index would point at nothing at all.
     const window = inWindow(barred("sv03-142", SLASHING_STEEL_INDEX).state);
-    expect(window.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 1 });
+    expect(window.players.p1.active?.lockedAttacks).toEqual([{ turn: 4, attackIndex: 1 }]);
     const held = handFromDeck(window, "p1", "fix-skarm-stage1", 1);
     const { state: evolved } = mustApply(held, {
       type: "evolve",
@@ -734,7 +757,7 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
       uid: handUid(held, "p1", "fix-skarm-stage1"),
       target: { spot: "active" },
     });
-    expect(evolved.players.p1.active?.lockedAttack).toBeNull();
+    expect(evolved.players.p1.active?.lockedAttacks).toEqual([]);
     // …and the evolved body attacks the same turn, which is the printed line
     // rather than a leniency: §10 sheds the effects of ATTACKS, and this is one.
     const { events } = mustApply(evolved, { type: "attack", seat: "p1", index: 0 });
@@ -754,7 +777,7 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
     });
     // The barred body is on the Bench now, carrying nothing.
     const wasActive = retreated.players.p1.bench.at(-1);
-    expect(wasActive?.lockedAttack ?? null).toBeNull();
+    expect(wasActive?.lockedAttacks ?? []).toEqual([]);
   });
 
   it("a FORCED switch sheds it too — the opponent's route into the same clear", () => {
@@ -779,7 +802,7 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
     }
     const benched = gusted.players.p1.bench.find((p) => p.stack.includes(barredUid));
     expect(benched).toBeDefined();
-    expect(benched?.lockedAttack ?? null).toBeNull();
+    expect(benched?.lockedAttacks ?? []).toEqual([]);
   });
 
   it("the clear-set is the SAME set every durated field is on — swept, not listed", () => {
@@ -803,7 +826,7 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
       damageReduction: body.damageReduction,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
-      lockedAttack: body.lockedAttack,
+      lockedAttacks: body.lockedAttacks,
       retreatBlocked: body.retreatBlocked,
     }).toEqual({
       attackBlock: null,
@@ -811,7 +834,7 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
       damageReduction: null,
       attackDamageDebuff: null,
       installedRecoil: null,
-      lockedAttack: null,
+      lockedAttacks: [],
       retreatBlocked: false,
     });
   });
@@ -1034,10 +1057,12 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
       uid,
       attack: "Combustion Blast",
     });
-    expect(state.players.p1.active?.lockedAttack).toEqual({
-      turn: 2 + 2,
-      attackIndex: COMBUSTION_BLAST_INDEX,
-    });
+    expect(state.players.p1.active?.lockedAttacks).toEqual([
+      {
+        turn: 2 + 2,
+        attackIndex: COMBUSTION_BLAST_INDEX,
+      },
+    ]);
     // …and NOT the whole-Pokémon lock, which on a ONE-ATTACK card is the drift no
     // board can see. This is the assertion doing the work in this whole section.
     expect(state.players.p1.active?.attackLockedTurn).toBeNull();
@@ -1046,7 +1071,9 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(250);
     const window = inWindow(state);
     expect(window.turn).toBe(4);
-    expect(lockedAttackIndex(window, must0(window.players.p1.active))).toBe(COMBUSTION_BLAST_INDEX);
+    expect(lockedAttackIndexes(window, must0(window.players.p1.active))).toEqual([
+      COMBUSTION_BLAST_INDEX,
+    ]);
     expect(refusal(window, "p1", COMBUSTION_BLAST_INDEX)).toBe("ATTACK_PREVENTED");
   });
 
@@ -1055,7 +1082,7 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
     // never pay. The energy is still attached; only the stamp has expired.
     let later = must(applyAction(inWindow(radiantBarred().state), { type: "endTurn", seat: "p1" }));
     later = must(applyAction(later, { type: "endTurn", seat: "p2" }));
-    expect(lockedAttackIndex(later, must0(later.players.p1.active))).toBeNull();
+    expect(lockedAttackIndexes(later, must0(later.players.p1.active))).toEqual([]);
     expect(refusal(later, "p1", COMBUSTION_BLAST_INDEX)).toBeNull();
   });
 
@@ -1082,7 +1109,7 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
     // refuses — and the CAUSE is the per-attack record, with D143's field null.
     expect(refusal(window, "p1", COMBUSTION_BLAST_INDEX)).toBe("ATTACK_PREVENTED");
     expect(window.players.p1.active?.attackLockedTurn).toBeNull();
-    expect(window.players.p1.active?.lockedAttack).toEqual({ turn: 4, attackIndex: 0 });
+    expect(window.players.p1.active?.lockedAttacks).toEqual([{ turn: 4, attackIndex: 0 }]);
   });
 
   it("the log row NAMES the attack — and here the bare wording would have been TRUE", () => {

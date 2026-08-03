@@ -3917,7 +3917,44 @@ import type { GameState, Seat } from "./types";
     `FIX_ONKO`/`settleProgram`'s `resumeTail` may already cover that park and nobody
     has run the check; note the seam differs (`fix-onko` queues AFTER prizes, this
     must act BEFORE `knockOut`). */
-export const engineVersion = "0.110.0";
+/** **D165 — REVIEW FIX: `lockedAttack` had ONE READER and TWO WRITERS.** The
+    field becomes `InPlayPokemon.lockedAttacks: LockedAttack[]` with one merge rule
+    (`addLockedAttack` — idempotent on the `(turn, index)` pair, APPENDING on a
+    differing index, PRUNING strictly-past entries) and one plural reader
+    (`lockedAttackIndexes`). Both names changed deliberately so every call site is a
+    COMPILE ERROR rather than silent runtime churn.
+
+    `preventAttackUse` (D154, self-side) stamps `state.turn + 2`;
+    `lockDefenderAttack` (D157, opponent-side) stamps `state.turn + 1` — **from
+    adjacent turns those are the SAME turn**, and both wrote the one slot with a
+    bare overwrite, so a differing index DISCARDED a live record and the §8 gate
+    then allowed the very attack a card's own drawback bars.
+
+    ⚠️ **THE IRONY IS THE TRANSFERABLE PART.** D157 shared the field because
+    *"`lockedAttackIndex` is its ONLY READER"* — true, and not the question. **A
+    reader count answers "can these two facts share a CONSUMER"; it says nothing
+    about "can they share a SLOT".** `types.ts`'s own `LockedAttack` block refuses a
+    different merge on exactly this ground, one column to the left.
+
+    ⚠️ **AND IT IS THE ENUMERATING CALLER §D147/§D152/§D154/§D157 EACH FORECAST AND
+    EACH DECLINED — arriving from the direction none of them watched.** All four
+    watched rider KINDS, and that claim is still true (nothing dispatches; every
+    entry means one thing). What stopped being true at D157 is that one body could
+    carry only ONE bar. **A collection is earned by a MULTIPLICITY the read site
+    must ENUMERATE just as much as by a UNION it must DISPATCH on.** The
+    `attackBlock` union stays DECLINED; D155's `boostedAttack` refusal is untouched
+    and sharpened — the list holds only addresses the gate REFUSES.
+
+    `MATCH_RECORD_VERSION` **10 → 11**: the eighth time on D124's trigger and the
+    FIRST that is a CHANGED TYPE rather than a new key, which is where *"can the
+    previous deploy's RECORD hold the new TYPE"* earns its wording. No
+    `@luminous/schema` diff — the wire is byte-identical, only the DO's stored
+    `GameState` moves.
+
+    ⚠️ **COMMITTED WITH AN OUTSTANDING DEBT: the mutation pass was INTERRUPTED at
+    24 run / 22 caught, with TWO SURVIVORS AT THE SAME BOUNDARY and the witness
+    never written.** Finishing it is item 0 on the resume point. */
+export const engineVersion = "0.111.0";
 
 export type {
   ApplyResult,
@@ -3979,7 +4016,7 @@ export {
   hasFreeRetreatSelf,
   boostedAttackDamage,
   installedReductionOf,
-  lockedAttackIndex,
+  lockedAttackIndexes,
   opposingRetreatBlocked,
   opposingRetreatSurcharge,
   providedEnergy,

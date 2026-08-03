@@ -52,6 +52,7 @@ import type {
   AttackBlock,
   GameState,
   InPlayPokemon,
+  LockedAttack,
   PlayerSide,
   PokemonTarget,
   Seat,
@@ -562,7 +563,9 @@ function withConsequence(
   // reading "If you do, it is now Poisoned" over Janine's prompt would take the
   // poison for a certainty of attaching at all, and pick two Benched Pokémon.
   const condition = describeCondition(op, gate);
-  return condition === null ? prompt : { ...prompt, note: `${prompt.note} ${condition}, ${clause}.` };
+  return condition === null
+    ? prompt
+    : { ...prompt, note: `${prompt.note} ${condition}, ${clause}.` };
 }
 
 /** The gate's CONDITION as a printed phrase, or null when there is none to give.
@@ -1100,7 +1103,13 @@ function stepOp(
       // FULL set, not the collapsed one: interchangeability is about which to
       // pick, and here nothing is picked.
       if (op.count === "all") {
-        const done = discardEnergyApply(state, discardable.map((d) => d.uid), op, ctx, events);
+        const done = discardEnergyApply(
+          state,
+          discardable.map((d) => d.uid),
+          op,
+          ctx,
+          events,
+        );
         recordMoved(record, op.recordAs, done.discarded);
         return { done: done.state };
       }
@@ -1188,7 +1197,11 @@ function stepOp(
       // in the apply, so a park tells the story once: the reveal rides the
       // action that parked, the pick rides the resolveEffect that answers.
       const revealed = otherSeat(ctx.seat);
-      events.push({ type: "HAND_REVEALED", seat: revealed, uids: [...state.players[revealed].hand] });
+      events.push({
+        type: "HAND_REVEALED",
+        seat: revealed,
+        uids: [...state.players[revealed].hand],
+      });
       // The offer: the filtered hand, one representative per interchangeable
       // class (see the op's doc for why collapsing is sound here and not in
       // payFromHand). No match is the whiff (files [], Greavard into a
@@ -1236,9 +1249,19 @@ function stepOp(
       // discardHand / shuffleDeck).
       return { done: handRefresh(state, op, ctx, events) };
     case "switchActive":
-      return parkOrForce(state, ownBenchRefs(state, ctx.seat), (ref) => switchOwn(state, ref, ctx, events), "Switch to which Benched Pokémon?");
+      return parkOrForce(
+        state,
+        ownBenchRefs(state, ctx.seat),
+        (ref) => switchOwn(state, ref, ctx, events),
+        "Switch to which Benched Pokémon?",
+      );
     case "gust":
-      return parkOrForce(state, oppBenchRefs(state, ctx.seat), (ref) => gust(state, ref, ctx, events), "Gust up which of the opponent's Benched Pokémon?");
+      return parkOrForce(
+        state,
+        oppBenchRefs(state, ctx.seat),
+        (ref) => gust(state, ref, ctx, events),
+        "Gust up which of the opponent's Benched Pokémon?",
+      );
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -1269,7 +1292,12 @@ function stepOp(
           },
         };
       }
-      return parkOrForce(state, candidates, (ref) => healChosen(state, ref, op.amount, ctx, events), `Heal which of your ${zoneWord}Pokémon?`);
+      return parkOrForce(
+        state,
+        candidates,
+        (ref) => healChosen(state, ref, op.amount, ctx, events),
+        `Heal which of your ${zoneWord}Pokémon?`,
+      );
     }
     case "attachEnergyFrom": {
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
@@ -1659,9 +1687,7 @@ export function applyChoice(
 ): GameState {
   switch (op.op) {
     case "searchDeck":
-      return choice.kind === "cards"
-        ? searchMove(state, choice.uids, op.dest, ctx, events)
-        : state;
+      return choice.kind === "cards" ? searchMove(state, choice.uids, op.dest, ctx, events) : state;
     case "discardPileRetrieval": {
       if (choice.kind !== "cards") return state;
       const retrieved = retrieveMove(state, choice.uids, op.dest, ctx, events);
@@ -1760,7 +1786,9 @@ export function applyChoice(
       return attached.state;
     }
     case "moveEnergy":
-      return choice.kind === "moveEnergy" ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events) : state;
+      return choice.kind === "moveEnergy"
+        ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events)
+        : state;
     case "preventChosenAttack":
       // D157 — the parked half of the opponent-side per-attack lock. Same shape as
       // `healChosen`'s single-pick arm and for the same reason: `validateChoice`
@@ -1807,11 +1835,17 @@ function applyStatus(
   if (op.status === "poisoned") {
     const poisonDamage = op.poisonDamage ?? DEFAULT_POISON_DAMAGE;
     events.push({ type: "STATUS_APPLIED", seat, uid, status: "poisoned", poisonDamage });
-    return withActive(state, seat, { ...active, conditions: { ...active.conditions, poisonDamage } });
+    return withActive(state, seat, {
+      ...active,
+      conditions: { ...active.conditions, poisonDamage },
+    });
   }
   if (op.status === "burned") {
     events.push({ type: "STATUS_APPLIED", seat, uid, status: "burned" });
-    return withActive(state, seat, { ...active, conditions: { ...active.conditions, burned: true } });
+    return withActive(state, seat, {
+      ...active,
+      conditions: { ...active.conditions, burned: true },
+    });
   }
   events.push({ type: "STATUS_APPLIED", seat, uid, status: op.status });
   return withActive(state, seat, {
@@ -2009,6 +2043,52 @@ function printedAttackIndex(printed: readonly Attack[], attack: string): number 
   return printed.findIndex((row) => foldApostrophes(row.name) === attack);
 }
 
+/** §8/§11 (D165) — ADD one per-attack bar to a body's list, or say that it adds
+    nothing. THE ONE MERGE RULE for `InPlayPokemon.lockedAttacks`, shared by both
+    of that field's writers — `preventAttackUse` (D154, self-side, `+ 2`) and
+    `lockDefenderAttack` (D157, opponent-side, `+ 1`).
+
+    ⚠️ IT IS A SHARED HELPER RATHER THAN TWO COPIES BECAUSE TWO COPIES ARE THE
+    DEFECT IT EXISTS TO FIX. Both writers previously did the same bare overwrite,
+    each guarded by the same same-turn-same-index early return, and each was
+    correct about ITSELF: a self-side re-install always stamps a later turn, and
+    §5.3 forbids a second declaration inside one turn. Neither asked what the
+    OTHER one stamps. `+ 2` from turn 3 and `+ 1` from turn 4 are both 5, so the
+    later write silently deleted a live bar and the §8 gate let a Skarmory use the
+    "Slashing Steel" its own card bars. One function means the question "what
+    happens when this lands on a live record" has exactly one answer and exactly
+    one place a mutation can reach it.
+
+    THREE RULES, AND EACH IS DRIVEN (`lockedAttackMerge.test.ts`):
+      • IDEMPOTENT on the pair — the same `turn` AND the same `attackIndex` adds
+        nothing and returns `null`, so the caller suppresses its row (D142's
+        idempotence answer, both writers' early return preserved verbatim);
+      • ADDITIVE on a DIFFERING index — the entry is APPENDED and no live entry is
+        touched, which is the whole of D165. A differing index for a DIFFERENT
+        turn is likewise appended rather than replacing: it names a window the
+        body has not reached, and dropping it would be the same deletion one turn
+        further out;
+      • PRUNED on the PAST — entries whose `turn` is strictly behind `now` can
+        never answer again (the turn counter only rises), so they are dropped on
+        every write. That is what keeps the list bounded by the number of bars
+        stamped for turns not yet played, rather than by the length of the match.
+        It is a garbage rule and NOT an expiry rule: expiry is the reader's turn
+        comparison (`lockedAttackIndexes`), which is what makes a bar stop biting.
+
+    Returns the NEW list, or `null` when the write is a no-op. `null` rather than
+    the old array by identity, because "nothing changed" is a fact the caller acts
+    on (it suppresses an `ATTACK_LOCKED` row) and a reference comparison would
+    make that fact depend on whether the prune happened to allocate. */
+function addLockedAttack(
+  existing: readonly LockedAttack[],
+  now: number,
+  turn: number,
+  attackIndex: number,
+): LockedAttack[] | null {
+  if (existing.some((lock) => lock.turn === turn && lock.attackIndex === attackIndex)) return null;
+  return [...existing.filter((lock) => lock.turn >= now), { turn, attackIndex }];
+}
+
 /** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active ("During
     your next turn, this Pokémon can't use {AttackName}.", 6 catalogued printings
     across 4 names plus 1 fielded uncatalogued printing). `preventAttack`'s
@@ -2050,10 +2130,17 @@ function printedAttackIndex(printed: readonly Attack[], attack: string): number 
     IDEMPOTENT, and here that is by construction exactly as D143's self arm was:
     installing needs an attack, an attack ends the turn, and the window is the
     holder's own next turn — on which the only attack that could re-install is the
-    very one this record bars. So a second install can never land on a LIVE record,
-    and the early-return covers the constructed case (same turn AND same index →
-    silent, D142's idempotence answer) while a differing index simply overwrites,
-    because a later install always stamps a later turn. */
+    very one this record bars. So a second install of THIS op can never land on a
+    live record of THIS op, and `addLockedAttack`'s early return covers the
+    constructed case (same turn AND same index → silent, D142's idempotence
+    answer).
+
+    ⚠️ AND THE SENTENCE THAT USED TO END THAT PARAGRAPH — *"a differing index
+    simply overwrites, because a later install always stamps a later turn"* — WAS
+    THE DEFECT D165 FIXED. It is true of this op about itself and false about the
+    field, which `lockDefenderAttack` also writes with a `+ 1` stamp: from the
+    turn after this one those two land on the SAME number, and the overwrite
+    deleted a live bar. The merge is now `addLockedAttack`'s and is APPENDING. */
 function preventAttackUse(
   state: GameState,
   attack: string,
@@ -2072,10 +2159,8 @@ function preventAttackUse(
   // an attack ENDS the turn (§5.3), so the turn after this one is the opponent's
   // and the one after THAT is the holder's.
   const turn = state.turn + 2;
-  const existing = active.lockedAttack;
-  if (existing !== null && existing.turn === turn && existing.attackIndex === attackIndex) {
-    return state;
-  }
+  const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex);
+  if (locks === null) return state;
   // The RESOLVED row's own name and not the op's token: the two differ only in
   // punctuation (the op's is folded, the card's is as printed), and a log row is
   // read by a player holding the card — so it prints the card's spelling.
@@ -2085,7 +2170,7 @@ function preventAttackUse(
     uid,
     attack: printed[attackIndex]?.name ?? attack,
   });
-  return withActive(state, ctx.seat, { ...active, lockedAttack: { turn, attackIndex } });
+  return withActive(state, ctx.seat, { ...active, lockedAttacks: locks });
 }
 
 /** §8.5/§11 (D155) — BUY ONE NAMED ATTACK a durated pre-W/R DAMAGE BONUS on the
@@ -2272,12 +2357,19 @@ function preventChosenAttack(
     is unreachable today — said rather than assumed). A stale index writes nothing
     and emits no row, `printedAttackIndex`'s no-match contract verbatim.
 
-    IDEMPOTENT by `preventAttackUse`'s EARLY RETURN rather than by `boostAttack`'s
+    IDEMPOTENT by `addLockedAttack`'s EARLY RETURN rather than by `boostAttack`'s
     `Math.max`, because this record carries an address and no number: same turn AND
-    same index is silent, a different index simply overwrites. Unlike its self-side
-    twin the re-install is REACHABLE in principle — two of the controller's own
-    attacks could both bar the defender on the same turn only if one attack
-    declared twice, which §5.3 forbids — so it is pinned as a constructed case. */
+    same index is silent. Unlike its self-side twin the re-install is REACHABLE in
+    principle — two of the controller's own attacks could both bar the defender on
+    the same turn only if one attack declared twice, which §5.3 forbids — so it is
+    pinned as a constructed case.
+
+    ⚠️ A DIFFERING INDEX **APPENDS** SINCE D165, AND THAT IS THE FIX. This op and
+    `preventAttackUse` are the field's TWO writers, they stamp `+ 1` and `+ 2`,
+    and from adjacent turns those are the SAME turn — so the bare overwrite this
+    line used to do deleted the victim's own live self-installed bar and handed
+    them back an attack their card forbids. The merge rule is `addLockedAttack`'s
+    and it is shared with that op, so the collision has one answer written once. */
 function lockDefenderAttack(
   state: GameState,
   attackIndex: number,
@@ -2297,10 +2389,8 @@ function lockDefenderAttack(
   // next turn, and declaring an attack ENDS the turn (§5.3), so the turn after
   // this one is the victim's.
   const turn = state.turn + 1;
-  const existing = active.lockedAttack;
-  if (existing !== null && existing.turn === turn && existing.attackIndex === attackIndex) {
-    return state;
-  }
+  const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex);
+  if (locks === null) return state;
   // `seat` owns the BARRED Pokémon (D136's finding 1) — the ACTOR'S OPPONENT here,
   // which makes this the first ATTACK_LOCKED row that is victim-side AND carries
   // the `attack` narrowing. The wording needs no new arm and that was READ rather
@@ -2308,7 +2398,7 @@ function lockDefenderAttack(
   // family's seat rule, and the named player is the victim, whose next turn is
   // exactly the window this stamp encodes.
   events.push({ type: "ATTACK_LOCKED", seat: victim, uid, attack: row.name });
-  return withActive(state, victim, { ...active, lockedAttack: { turn, attackIndex } });
+  return withActive(state, victim, { ...active, lockedAttacks: locks });
 }
 
 /** §8.5/§11 (D147) — INSTALL the printed DAMAGE REDUCTION on the CONTROLLER's own
@@ -2847,7 +2937,8 @@ function snipeActive(
   const target = activeTop(state, opponent);
   if (target === null) return state;
   const attacker = activeTop(state, ctx.seat);
-  const bonus = attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);
+  const bonus =
+    attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);
   // D149 — the pre-W/R DEBUFF on the attacker, subtracted beside its bonus. NOT
   // bypassed by `ignoreWR`: Feint Attack's "not affected by … any effects on that
   // Pokémon" scopes the TARGET, and this is an effect on the ATTACKER — the same
@@ -2872,12 +2963,16 @@ function snipeActive(
   // Resistance still applies to a Blooming-Garden-protected Active.
   const noWeakness = ignoreWR || attacker === null || seatRemovesWeakness(state, opponent);
   const weakness = noWeakness ? null : weaknessOf(attacker.card, target.card);
-  const resistance = ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
+  const resistance =
+    ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
   // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
   // do negative damage, and the printed parenthetical puts the subtraction here.
   const afterWR = Math.max(
     0,
-    applyDamageModifier(applyDamageModifier(Math.max(0, amount + bonus - debuff), weakness), resistance),
+    applyDamageModifier(
+      applyDamageModifier(Math.max(0, amount + bonus - debuff), weakness),
+      resistance,
+    ),
   );
   const targetPassives = passivesOf(state, target.active);
   // Mimikyu "Safeguard" on the sniped Active — an ex/V attacker's snipe is
@@ -2938,7 +3033,9 @@ function snipeAmount(
   state: GameState,
   ctx: EffectContext,
 ): number {
-  return op.perTakenPrize === true ? op.amount * takenPrizes(state, otherSeat(ctx.seat)) : op.amount;
+  return op.perTakenPrize === true
+    ? op.amount * takenPrizes(state, otherSeat(ctx.seat))
+    : op.amount;
 }
 
 /** The choosePokemonMulti prompt string. For the put-counter snipe, counters are
@@ -3005,11 +3102,7 @@ function healEach(
     and emits its own HEALED tagged with that Pokémon's own seat (an undamaged
     Pokémon heals 0 and emits nothing). Active then bench per seat, p1 then p2.
     Never parks. */
-function healEachAll(
-  state: GameState,
-  amount: number,
-  events: GameEvent[],
-): GameState {
+function healEachAll(state: GameState, amount: number, events: GameEvent[]): GameState {
   let next = state;
   for (const seat of SEATS) {
     const side = next.players[seat];
@@ -3151,7 +3244,13 @@ function moveCountersToDefender(
   events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
   const bench = side.bench.map((pokemon, i) => (i === index ? { ...pokemon, damage: 0 } : pokemon));
   const cleared = withSide(state, ctx.seat, { ...side, bench });
-  events.push({ type: "COUNTERS_PLACED", seat: opponent, uid: defenderUid, amount: moved, source: "moved" });
+  events.push({
+    type: "COUNTERS_PLACED",
+    seat: opponent,
+    uid: defenderUid,
+    amount: moved,
+    source: "moved",
+  });
   return withActive(cleared, opponent, { ...defender, damage: defender.damage + moved });
 }
 
@@ -3165,7 +3264,12 @@ function moveCountersToDefender(
     this runs. Only raises damage; the resulting self-KO is caught by the attack
     epilogue's TWO-seat sweep (flow.ts finishAttack) and prizes to the defender,
     so this — like every op — never KOs or touches the flow tail. */
-function damageSelf(state: GameState, amount: number, ctx: EffectContext, events: GameEvent[]): GameState {
+function damageSelf(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   if (amount <= 0) return state;
   const active = state.players[ctx.seat].active;
   if (active === null) return state;
@@ -3176,7 +3280,12 @@ function damageSelf(state: GameState, amount: number, ctx: EffectContext, events
 }
 
 /** Heal the controller's own Active (attack "heal from it" op). */
-function healSelf(state: GameState, amount: number, ctx: EffectContext, events: GameEvent[]): GameState {
+function healSelf(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   const active = state.players[ctx.seat].active;
   if (active === null) return state;
   const uid = topUid(active);
@@ -3301,7 +3410,11 @@ function searchMove(
   const deck = side.deck.filter((uid) => !picked.has(uid));
   const updated: PlayerSide =
     dest === "bench"
-      ? { ...side, deck, bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))] }
+      ? {
+          ...side,
+          deck,
+          bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],
+        }
       : { ...side, deck, hand: [...side.hand, ...moved] };
   events.push({ type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved] });
   return withSide(state, ctx.seat, updated);
@@ -3619,12 +3732,22 @@ function payFromHandNote(op: Extract<EffectOp, { op: "payFromHand" }>): string {
 
 /** Switch the controller's Active with their benched `ref` (§G). The outgoing
     Active loses its Special Conditions (§12 — it left the Active spot). */
-function switchOwn(state: GameState, ref: PokemonRef, ctx: EffectContext, events: GameEvent[]): GameState {
+function switchOwn(
+  state: GameState,
+  ref: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   return switchInto(state, ctx.seat, ref, events);
 }
 
 /** Gust: switch the OPPONENT's Active with their benched `ref` (Boss's Orders). */
-function gust(state: GameState, ref: PokemonRef, ctx: EffectContext, events: GameEvent[]): GameState {
+function gust(
+  state: GameState,
+  ref: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   return switchInto(state, otherSeat(ctx.seat), ref, events);
 }
 
@@ -3707,8 +3830,10 @@ export function switchInto(
     // window, un-barring an attack they were trying to avoid. SEVEN durated
     // effects, FIVE reachability stories, one clear, and the set is SWEPT rather
     // than listed (perAttackLock.test.ts) precisely because this literal is one of
-    // three that have to agree with nothing making them.
-    lockedAttack: null,
+    // three that have to agree with nothing making them. Since D165 it sheds a
+    // LIST, and the whole list rather than an entry: §10 sheds the effects of
+    // attacks, all of them, and per-entry expiry is the READER's turn comparison.
+    lockedAttacks: [],
     // D155 — and the PER-ATTACK BUFF's story here is the line above it verbatim,
     // because it is the same window on the same body with the opposite verb: the
     // holder may Switch its own boosted Pokémon out and THROW THE BONUS AWAY, and
@@ -3728,7 +3853,13 @@ export function switchInto(
     toBench: bench.length - 1,
   });
   if (cleared.length > 0) {
-    events.push({ type: "STATUS_CLEARED", seat, uid: wasActive, statuses: cleared, reason: "benched" });
+    events.push({
+      type: "STATUS_CLEARED",
+      seat,
+      uid: wasActive,
+      statuses: cleared,
+      reason: "benched",
+    });
   }
   // Stamp the move (types.ts `promotedTurn`). This is the FORCED half of
   // bench→Active and it covers three provenances at once — Switch/Escape Rope
@@ -3736,7 +3867,11 @@ export function switchInto(
   // on-attach switch — because all three land here. A Pokémon dragged out by
   // the opponent really did move to the Active Spot on THAT turn; the stamp is
   // a turn number, so it simply fails to match the controller's next turn.
-  return withSide(state, seat, { ...side, active: { ...incoming, promotedTurn: state.turn }, bench });
+  return withSide(state, seat, {
+    ...side,
+    active: { ...incoming, promotedTurn: state.turn },
+    bench,
+  });
 }
 
 /** Heal from the controller's own in-play `ref`: `amount` HP, or all of its
@@ -3936,8 +4071,7 @@ function attachFromDeckOffer(
   op: Extract<EffectOp, { op: "attachFromDeck" }>,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   const seat = ctx.seat;
-  const targets =
-    op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, seat, op);
+  const targets = op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, seat, op);
   const cap =
     op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);
   const matches = state.players[seat].deck.filter((uid) =>
@@ -4197,7 +4331,9 @@ function moveEnergyApply(
     return kept.length === pokemon.energy.length ? pokemon : { ...pokemon, energy: kept };
   };
   const activeStripped = side.active === null ? null : strip(side.active, { spot: "active" });
-  const benchStripped = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
+  const benchStripped = side.bench.map((pokemon, index) =>
+    strip(pokemon, { spot: "bench", index }),
+  );
   if (moved.length === 0 || from === undefined) return state; // nothing actually moved
   // Re-attach onto the destination, read off the stripped board (the destination
   // was never stripped, so this can't drop a just-moved uid).
@@ -4321,7 +4457,9 @@ function attachedEnergies(
     collect(side.active, { seat, spot: { spot: "active" } });
   }
   if (scope === "active") return out;
-  side.bench.forEach((pokemon, index) => collect(pokemon, { seat, spot: { spot: "bench", index } }));
+  side.bench.forEach((pokemon, index) =>
+    collect(pokemon, { seat, spot: { spot: "bench", index } }),
+  );
   return out;
 }
 
@@ -4361,7 +4499,12 @@ export function discardableEnergies(
   op: Extract<EffectOp, { op: "discardEnergy" }>,
 ): { uid: string; from: PokemonRef }[] {
   const activeOnly = op.from === "opponentActive" || op.from === "yourActive";
-  return attachedEnergies(state, discardVictimSeat(seat, op), op.filter, activeOnly ? "active" : "all");
+  return attachedEnergies(
+    state,
+    discardVictimSeat(seat, op),
+    op.filter,
+    activeOnly ? "active" : "all",
+  );
 }
 
 /** What a card IS, for the purpose of "would taking this one rather than that
@@ -4548,7 +4691,10 @@ function ownBenchRefs(state: GameState, seat: Seat): PokemonRef[] {
 
 function oppBenchRefs(state: GameState, seat: Seat): PokemonRef[] {
   const opp = otherSeat(seat);
-  return state.players[opp].bench.map((_, index) => ({ seat: opp, spot: { spot: "bench", index } }));
+  return state.players[opp].bench.map((_, index) => ({
+    seat: opp,
+    spot: { spot: "bench", index },
+  }));
 }
 
 /** The opponent's Active (if any) PLUS their whole Bench — the candidate set for an
@@ -4784,7 +4930,9 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is
   // precisely why it read "Move a Energy" unnoticed.
   const article = noun === "Energy" ? "an" : "a";
-  return op.max > 1 ? `Move up to ${op.max} ${noun} ${where}.` : `Move ${article} ${noun} ${where}.`;
+  return op.max > 1
+    ? `Move up to ${op.max} ${noun} ${where}.`
+    : `Move ${article} ${noun} ${where}.`;
 }
 
 /** How a filter's Energy reads inside a prompt sentence. Only the filters the
@@ -4848,7 +4996,10 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
     case "supporter":
       return { singular: "a Supporter card", plural: "Supporter cards" };
     case "pokemonOrBasicEnergy":
-      return { singular: "a Pokémon or Basic Energy card", plural: "Pokémon or Basic Energy cards" };
+      return {
+        singular: "a Pokémon or Basic Energy card",
+        plural: "Pokémon or Basic Energy cards",
+      };
     case "anyEnergy":
       return { singular: "an Energy card", plural: "Energy cards" };
     case "specialEnergy":

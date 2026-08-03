@@ -29,7 +29,7 @@ import {
   installedAttackDebuffOf,
   installedRecoilOf,
   installedReductionOf,
-  lockedAttackIndex,
+  lockedAttackIndexes,
   opposingAttackDebuff,
   passivesOf,
   preventsAttackerType,
@@ -287,10 +287,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // player gets names the reason nearest the top of the rulebook, and so a locked
   // Pokémon reports the lock rather than "that attack costs …".
   if (attackLocked(state, active)) {
-    return err(
-      "ATTACK_PREVENTED",
-      "an attack effect stops this Pokémon attacking this turn (§11)",
-    );
+    return err("ATTACK_PREVENTED", "an attack effect stops this Pokémon attacking this turn (§11)");
   }
   const attackerUid = topUid(active);
   const attacker = topCardOf(state, active);
@@ -309,7 +306,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   }
   // §8/§11 (D154) — an attack barred THIS ONE attack on THIS turn ("During your
   // next turn, this Pokémon can't use {AttackName}."). Read through
-  // `lockedAttackIndex`, so the turn comparison lives in one place and this site
+  // `lockedAttackIndexes`, so the turn comparison lives in one place and this site
   // cannot drift from the two payability projections of the same fact
   // (`redactedAttacksOf` in redact.ts, and GameHud's `disabled`).
   //
@@ -329,7 +326,12 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // differs is the message, because what differs is what the player must do next:
   // the whole-Pokémon lock leaves them nothing to declare, while this one leaves
   // the card's OTHER attack legal and the message says so by naming the barred one.
-  if (lockedAttackIndex(state, active) === index) {
+  // ⚠️ AND SINCE D165 IT ASKS MEMBERSHIP OF A SET RATHER THAN EQUALITY WITH ONE
+  // INDEX: the field has two writers (D154's self-side bar and D157's imposed
+  // one) whose stamps collide from adjacent turns, so a body can carry TWO live
+  // bars and this gate must refuse BOTH. As one index it refused whichever was
+  // written last, and let the player use the other.
+  if (lockedAttackIndexes(state, active).includes(index)) {
     return err(
       "ATTACK_PREVENTED",
       `an attack effect stops this Pokémon using ${declared.name} this turn (§11)`,

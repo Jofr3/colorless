@@ -790,7 +790,7 @@ describe("the structural answers", () => {
         "damageReduction",
         "energy",
         "installedRecoil",
-        "lockedAttack",
+        "lockedAttacks",
         "markers",
         "promotedTurn",
         "retreatBlocked",

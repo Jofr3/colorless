@@ -60,7 +60,7 @@ import {
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
-  lockedAttackIndex,
+  lockedAttackIndexes,
   opposingRetreatBlocked,
   providedEnergy,
 } from "./continuous";
@@ -368,14 +368,21 @@ function redactedAttacksOf(
   // attack, not why) but it CANNOT ride `banned` itself: that boolean is computed
   // once and applied to every row, and the whole content of this rule is that the
   // card's OTHER attack stays legal. So it is read once, outside the map, and
-  // compared per index inside it — the shape `lockedAttackIndex` returns an index
-  // for (continuous.ts).
+  // asked per index inside it — the shape `lockedAttackIndexes` returns a set for
+  // (continuous.ts).
+  // ⚠️ AND SINCE D165 IT IS A SET RATHER THAN ONE INDEX, WHICH IS THIS LINE'S
+  // WHOLE REASON FOR EXISTING RESTATED. `lockedAttacks` has TWO writers (D154's
+  // self-side bar and D157's imposed one) whose stamps collide from adjacent
+  // turns, so a body can carry two live bars — and a projection that marked only
+  // one would offer a button the §8 gate rejects, which is the exact failure this
+  // line was added to prevent. THIS IS THE ENUMERATING CALLER: it does not know
+  // which indices are barred until it is handed the set.
   // ⚠️ NOT OPTIONAL, and MORE load-bearing here than `banned` is: a player under a
   // whole-Pokémon lock has every button greyed and cannot mistake the board, while
   // this one greys exactly one row on an otherwise live panel. The server-side
   // gate (attack.ts §8) rejects with ATTACK_PREVENTED naming the attack; this line
   // is what stops the client offering the button at all.
-  const barred = lockedAttackIndex(state, active);
+  const barred = lockedAttackIndexes(state, active);
   return attacksOf(card).map((attack, index) => ({
     index,
     name: attack.name,
@@ -383,7 +390,7 @@ function redactedAttacksOf(
     damage: attack.damage === undefined ? null : String(attack.damage),
     playable:
       !banned &&
-      barred !== index &&
+      !barred.includes(index) &&
       costMet(effectiveAttackCost(state, active, attack.cost ?? []), provided),
   }));
 }

@@ -116,9 +116,7 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     ]);
     // The typographic apostrophe derives identically — a re-ingest that changes
     // only punctuation must not silently un-simulate ELEVEN printings (D136/D137).
-    expect(deriveAttackEffect(WIDE_TEXT.replace(/'/g, "’"))).toEqual(
-      deriveAttackEffect(WIDE_TEXT),
-    );
+    expect(deriveAttackEffect(WIDE_TEXT.replace(/'/g, "’"))).toEqual(deriveAttackEffect(WIDE_TEXT));
   });
 
   it("derives the NARROW spelling with the `effects` key ABSENT, not false", () => {
@@ -430,26 +428,44 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
   }
 
   it("refuses a §12 Special Condition — and the NARROW block does not", () => {
-    const wide = against("sv03-004", HEADS_SEEDS[6], "fix-attacker", { id: "fix-energy", count: 1 }, 2);
+    const wide = against(
+      "sv03-004",
+      HEADS_SEEDS[6],
+      "fix-attacker",
+      { id: "fix-energy", count: 1 },
+      2,
+    );
     expect(types(wide.events)).not.toContain("STATUS_APPLIED");
     expect(find(wide.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p1" });
     expect(wide.state.players.p1.active?.conditions.rotation).toBe("none");
 
-    const narrow = against("sv03-151", HEADS_SEEDS[6], "fix-attacker", { id: "fix-energy", count: 1 }, 2);
+    const narrow = against(
+      "sv03-151",
+      HEADS_SEEDS[6],
+      "fix-attacker",
+      { id: "fix-energy", count: 1 },
+      2,
+    );
     expect(find(narrow.events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "asleep" });
     expect(types(narrow.events)).not.toContain("ATTACK_EFFECT_PREVENTED");
     expect(narrow.state.players.p1.active?.conditions.rotation).toBe("asleep");
   });
 
   it("refuses the §11 RETREAT LOCK — two durated blocks meeting, one refusing the other", () => {
-    const wide = against("sv03-004", HEADS_SEEDS[7], "sv02-016", { id: "fix-grass-energy", count: 1 });
+    const wide = against("sv03-004", HEADS_SEEDS[7], "sv02-016", {
+      id: "fix-grass-energy",
+      count: 1,
+    });
     expect(types(wide.events)).not.toContain("RETREAT_BLOCKED");
     expect(types(wide.events)).toContain("ATTACK_EFFECT_PREVENTED");
     expect(wide.state.players.p1.active?.retreatBlocked).toBe(false);
     // The attack's DAMAGE is refused by the other half of the same block.
     expect(find(wide.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
 
-    const narrow = against("sv03-151", HEADS_SEEDS[7], "sv02-016", { id: "fix-grass-energy", count: 1 });
+    const narrow = against("sv03-151", HEADS_SEEDS[7], "sv02-016", {
+      id: "fix-grass-energy",
+      count: 1,
+    });
     expect(find(narrow.events, "RETREAT_BLOCKED")).toMatchObject({ seat: "p1" });
     expect(narrow.state.players.p1.active?.retreatBlocked).toBe(true);
     // …while the DAMAGE is still refused, because both spellings stop damage.
@@ -461,12 +477,18 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
     // Weakness, Resistance and every reduction passive in this engine (D138/D139)
     // and the catalog prints the rule — "(Damage is not an effect.)" — so it is
     // an EFFECT, refused by the wide block and untouched by the narrow one.
-    const wide = against("sv03-004", HEADS_SEEDS[8], "sv02-097", { id: "fix-psychic-energy", count: 2 });
+    const wide = against("sv03-004", HEADS_SEEDS[8], "sv02-097", {
+      id: "fix-psychic-energy",
+      count: 2,
+    });
     expect(types(wide.events)).not.toContain("COUNTERS_PLACED");
     expect(types(wide.events)).toContain("ATTACK_EFFECT_PREVENTED");
     expect(wide.state.players.p1.active?.damage).toBe(0);
 
-    const narrow = against("sv03-151", HEADS_SEEDS[8], "sv02-097", { id: "fix-psychic-energy", count: 2 });
+    const narrow = against("sv03-151", HEADS_SEEDS[8], "sv02-097", {
+      id: "fix-psychic-energy",
+      count: 2,
+    });
     expect(find(narrow.events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 70,
@@ -478,7 +500,10 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
   it("refuses an Energy discard off the defender — and takes the WHOLE op, not the prompt", () => {
     // Pincurchin "Needle Crush" is 70 damage AND a discard, so ONE declaration
     // shows the two halves together (wide) and SPLIT (narrow).
-    const wide = against("sv03-004", HEADS_SEEDS[9], "sv02-072", { id: "fix-lightning-energy", count: 3 });
+    const wide = against("sv03-004", HEADS_SEEDS[9], "sv02-072", {
+      id: "fix-lightning-energy",
+      count: 3,
+    });
     expect(find(wide.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(types(wide.events)).not.toContain("ENERGY_DISCARDED");
     expect(types(wide.events)).toContain("ATTACK_EFFECT_PREVENTED");
@@ -487,7 +512,10 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
     // never parked on a pick that will not happen.
     expect(wide.state.phase.kind).not.toBe("effect:choose");
 
-    const narrow = against("sv03-151", HEADS_SEEDS[9], "sv02-072", { id: "fix-lightning-energy", count: 3 });
+    const narrow = against("sv03-151", HEADS_SEEDS[9], "sv02-072", {
+      id: "fix-lightning-energy",
+      count: 3,
+    });
     expect(find(narrow.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(types(narrow.events)).toContain("ENERGY_DISCARDED");
     expect(narrow.state.players.p1.active?.energy).toHaveLength(0);
@@ -627,10 +655,12 @@ describe("the gated PREVENT clause — the early clears (an effect of an attack 
     // written because §10 sheds the effects of ATTACKS and this is one; the
     // surgery is what lets the rule be asserted at all.
     // Turn 4 — P1's SECOND turn, since §4/§10 forbid evolving on your first.
-    let state = must(applyAction(installed(HEADS_SEEDS[4], "sv03-004"), {
-      type: "endTurn",
-      seat: "p2",
-    }));
+    let state = must(
+      applyAction(installed(HEADS_SEEDS[4], "sv03-004"), {
+        type: "endTurn",
+        seat: "p2",
+      }),
+    );
     state = setActiveFromDeck(state, "p1", "fix-basic-1");
     state = {
       ...state,
@@ -923,20 +953,22 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // …and both arms of a two-armed gate, which no printing has yet: the printed
     // "…instead" (Grusha) is a Trainer, so an ATTACK reaching `otherwise` is a
     // rule with no card — D144's precedent for pinning one anyway.
-    expect([
-      ...walkKinds(
-        [
-          {
-            op: "conditionGate",
-            cond: { kind: "opponentActiveIsBasic" },
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-            then: [{ op: "preventAttack", target: "defender" }],
-            otherwise: [{ op: "preventRetreat" }],
-          },
-        ],
-        new Set<string>(),
-      ),
-    ].sort()).toEqual(["conditionGate", "preventAttack", "preventRetreat"]);
+    expect(
+      [
+        ...walkKinds(
+          [
+            {
+              op: "conditionGate",
+              cond: { kind: "opponentActiveIsBasic" },
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+              then: [{ op: "preventAttack", target: "defender" }],
+              otherwise: [{ op: "preventRetreat" }],
+            },
+          ],
+          new Set<string>(),
+        ),
+      ].sort(),
+    ).toEqual(["conditionGate", "preventAttack", "preventRetreat"]);
     // …and the sweep the table actually runs sees the gate off the pool.
     expect(attackOpKinds().has("conditionGate")).toBe(true);
   });
@@ -1021,7 +1053,9 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         ...state.players,
         p1: {
           ...state.players.p1,
-          bench: bench.map((p, i) => (i === 0 ? { ...p, attackBlock: { turn: 3, effects: true } } : p)),
+          bench: bench.map((p, i) =>
+            i === 0 ? { ...p, attackBlock: { turn: 3, effects: true } } : p,
+          ),
         },
       },
     };
@@ -1035,7 +1069,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     board?: () => GameState;
     /** Did the op LAND? Read off the run, not off the absence of a refusal —
         "nothing was prevented" is not evidence that anything happened. */
-    landed: (r: { before: GameState; after: GameState; events: GameEvent[]; parked: boolean }) => boolean;
+    landed: (r: {
+      before: GameState;
+      after: GameState;
+      events: GameEvent[];
+      parked: boolean;
+    }) => boolean;
   };
 
   const p1Active = (s: GameState) => s.players.p1.active;
@@ -1094,7 +1133,8 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     },
     discardEnergy: {
       op: { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
-      landed: (r) => (p1Active(r.after)?.energy.length ?? 0) < (p1Active(r.before)?.energy.length ?? 0),
+      landed: (r) =>
+        (p1Active(r.after)?.energy.length ?? 0) < (p1Active(r.before)?.energy.length ?? 0),
     },
     preventAttack: {
       op: { op: "preventAttack", target: "defender" },
@@ -1109,7 +1149,8 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     spreadDamage: {
       op: { op: "spreadDamage", target: "opponentBench", amount: 20 },
       board: benchBlockedBoard,
-      landed: (r) => (r.after.players.p1.bench[0]?.damage ?? 0) > (r.before.players.p1.bench[0]?.damage ?? 0),
+      landed: (r) =>
+        (r.after.players.p1.bench[0]?.damage ?? 0) > (r.before.players.p1.bench[0]?.damage ?? 0),
     },
     damageDefender: {
       // The §9.2 slot count is fed directly — the op multiplies `per` by what an
@@ -1129,7 +1170,8 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     healChosen: {
       // One damaged own body, so the pick is forced and the run completes.
       op: { op: "healChosen", amount: 10 },
-      landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0) || r.parked,
+      landed: (r) =>
+        (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0) || r.parked,
     },
     damageSelf: {
       op: { op: "damageSelf", amount: 10 },
@@ -1192,7 +1234,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     preventAttackUse: {
       op: { op: "preventAttackUse", attack: "Bite" },
       board: () => setActiveFromDeck(probeBoard(), "p2", "fix-attacker"),
-      landed: (r) => p2Active(r.after)?.lockedAttack != null,
+      landed: (r) => (p2Active(r.after)?.lockedAttacks.length ?? 0) > 0,
     },
     // D155 — the actor's own body a fourth time, and it needs a NAMED board for
     // `preventAttackUse`'s reason verbatim: it resolves the printed noun against
@@ -1212,7 +1254,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // attacks, so the unblocked run genuinely reaches the prompt.
     preventChosenAttack: {
       op: { op: "preventChosenAttack" },
-      landed: (r) => r.parked || p1Active(r.after)?.lockedAttack != null,
+      landed: (r) => r.parked || (p1Active(r.after)?.lockedAttacks.length ?? 0) > 0,
     },
   };
 
@@ -1305,7 +1347,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       };
     })();
     const events: GameEvent[] = [];
-    const after = runProgram(bare, [{ op: "preventRetreat" }], { seat: "p2", invokedBy: "attack" }, events);
+    const after = runProgram(
+      bare,
+      [{ op: "preventRetreat" }],
+      { seat: "p2", invokedBy: "attack" },
+      events,
+    );
     expect(types(events)).toContain("RETREAT_BLOCKED");
     expect(types(events)).not.toContain("ATTACK_EFFECT_PREVENTED");
     expect(after.state.players.p1.active?.retreatBlocked).toBe(true);

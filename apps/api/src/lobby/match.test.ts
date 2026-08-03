@@ -370,9 +370,23 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // slices. Its record is `{ turn, attackIndex, amount }`, i.e. D154's with one
     // key added, so D131's widen-don't-add test passes on the SHAPE for the first
     // time in this family and the two are STILL separate fields — refused on what
-    // the readers do, not on what the record looks like: `lockedAttackIndex`'s
+    // the readers do, not on what the record looks like: `lockedAttackIndexes`'s
     // consumer REFUSES the index it returns and this one PAYS it. See D155.
-    expect(MATCH_RECORD_VERSION).toBe(10);
+    //
+    // 10 → 11 is D165's `InPlayPokemon.lockedAttack: LockedAttack | null` becoming
+    // `lockedAttacks: LockedAttack[]` — THE SAME CASE AN EIGHTH TIME, and the FIRST
+    // that is a CHANGED TYPE rather than a NEW KEY, which is where the rule's own
+    // wording earns its keep: the test has never been "did a key appear" but **"can
+    // the PREVIOUS deploy's RECORD hold the new TYPE"**, and a version-10 record
+    // carries `lockedAttack` on every body and no `lockedAttacks` at all. A REVIEW
+    // FIX rather than a slice: the field had ONE reader and TWO writers
+    // (`preventAttackUse` at `+ 2`, `lockDefenderAttack` at `+ 1`), the stamps
+    // collide from adjacent turns, and the single slot deleted a live bar. It is
+    // also the ENUMERATING caller D154 named as the union's earning condition,
+    // arriving as a MULTIPLICITY rather than as a union — and the `attackBlock`
+    // union is still declined. Note D156–D164 in between did NOT bump (nine
+    // consecutive controls). See D165.
+    expect(MATCH_RECORD_VERSION).toBe(11);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

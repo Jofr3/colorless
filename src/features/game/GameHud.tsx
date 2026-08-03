@@ -29,7 +29,7 @@ import {
   effectiveAttackCost,
   effectiveRetreatCost,
   isImmobilized,
-  lockedAttackIndex,
+  lockedAttackIndexes,
   opposingRetreatBlocked,
   otherSeat,
   programFor,
@@ -471,13 +471,19 @@ function TurnPanel(props: GameHudProps) {
   const attackLockedNow = attackLocked(game, active);
   // §8/§11 (D154) — …and the PER-ATTACK bar ("During your next turn, this Pokémon
   // can't use {AttackName}."), read off raw GameState through the engine's own
-  // reader exactly as the whole-Pokémon lock above is. It is an INDEX rather than
-  // a boolean because the whole content of the rule is that the card's OTHER
-  // attack stays legal, so it cannot join `attackLockedNow` — it is compared per
-  // row inside the map below. The server-side twin is `redactedAttacksOf`'s
-  // `barred` (redact.ts); both exist so that no path offers a button `attack` will
-  // reject with ATTACK_PREVENTED.
-  const barredAttackIndex = lockedAttackIndex(game, active);
+  // reader exactly as the whole-Pokémon lock above is. It is a SET OF INDICES
+  // rather than a boolean because the whole content of the rule is that the card's
+  // OTHER attacks stay legal, so it cannot join `attackLockedNow` — membership is
+  // asked per row inside the map below. The server-side twin is
+  // `redactedAttacksOf`'s `barred` (redact.ts); both exist so that no path offers
+  // a button `attack` will reject with ATTACK_PREVENTED.
+  //
+  // D165 — a SET rather than one index, because `lockedAttacks` has TWO writers
+  // (the self-side bar and D157's imposed one) whose stamps collide from adjacent
+  // turns. A panel that greyed only the last-written bar would offer a button the
+  // server rejects, on a board where the player has a card in front of them saying
+  // it should not be there.
+  const barredAttackIndexes = lockedAttackIndexes(game, active);
 
   // THE retreat derivation site — RetreatDialog receives these as props. The
   // cost is the CONTINUOUS one (§7.3 — Beach Court discounts Basics), the
@@ -527,7 +533,7 @@ function TurnPanel(props: GameHudProps) {
               firstTurnBan ||
               immobilized ||
               attackLockedNow ||
-              barredAttackIndex === index;
+              barredAttackIndexes.includes(index);
             return (
               <li key={`${attack.name}-${index}`}>
                 <button

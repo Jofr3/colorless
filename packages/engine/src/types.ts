@@ -392,6 +392,14 @@ export interface InstalledRecoil {
     that can be summed with anything, and its three read sites COMPARE it rather
     than adding it.
 
+    ⚠️ AND SINCE D165 THE BODY HOLDS A **LIST** OF THEM RATHER THAN ONE, BECAUSE
+    THE FIELD HAS TWO WRITERS AND A SLOT HAS ONE SEAT. That is the whole of D165
+    and it is written up at `InPlayPokemon.lockedAttacks` below; the RECORD in this
+    block did not move a byte. What moved is the multiplicity, and the reason is
+    that `preventAttackUse` (D154, `state.turn + 2`) and `lockDefenderAttack`
+    (D157, `state.turn + 1`) can stamp the SAME turn from ADJACENT turns onto the
+    SAME body, and a single slot silently kept the later write.
+
     ⚠️ IT CANNOT SHARE `attackLockedTurn`, WHICH IS THE SAME WINDOW ON THE SAME
     BODY WRITTEN BY THE SAME KIND OF SENTENCE — and saying so is the point of this
     block, because that is the widening a reader will reach for first. Both stamp
@@ -406,6 +414,16 @@ export interface InstalledRecoil {
     about which of two printed sentences was declared last — the exact thing D147
     refused when it kept `damageReduction` out of `AttackBlock.turn`.
 
+    ⚠️ AND D165 IS THAT PARAGRAPH COMING TRUE ONE FIELD TO THE LEFT. The argument
+    above — "REACHABLE TOGETHER … one record could hold only the later write" —
+    was written to refuse a merge ACROSS two fields and was never asked of the
+    field it was written on. `lockedAttack` acquired a SECOND writer at D157 and
+    the identical collision was live from that commit: two per-attack bars, on one
+    body, on one turn, in one slot. The repo had already written down the argument
+    that condemned it, which is the most transferable thing about the defect —
+    **the test is not "do these two records mean the same thing" but "how many
+    writers does this slot have, and can any two of them stamp the same turn".**
+
     THE WINDOW IS `state.turn + 2`, D143's number and not D142's: the sentence
     prints "During YOUR next turn" and declaring an attack ENDS the turn (§5.3),
     so the turn after the installing one is the opponent's and the one after THAT
@@ -414,12 +432,15 @@ export interface InstalledRecoil {
     it deletes the drawback the card is balanced around and nothing looks wrong.
 
     Everything else is INHERITED from `AttackBlock` unchanged: the stamp
-    convention, the read-through-continuous.ts shape (`lockedAttackIndex`), the
+    convention, the read-through-continuous.ts shape (`lockedAttackIndexes`), the
     three §10 early clears, and D124's no-defensive-`undefined` rule at the
     reader. */
 export interface LockedAttack {
-  /** The single turn number this lock is live on (the installing turn + 2 — the
-      HOLDER's own next turn, since declaring an attack ends the turn). */
+  /** The single turn number this lock is live on — the installing turn + 2 when
+      `preventAttackUse` wrote it (the HOLDER's own next turn, since declaring an
+      attack ends the turn) and + 1 when `lockDefenderAttack` did (the VICTIM's
+      next turn, which is the turn immediately after). Two writers, two offsets,
+      one number — which is exactly how two entries come to share it (D165). */
   turn: number;
   /** WHICH attack is barred, as an index into the stack-top card's `attacks`.
 
@@ -721,11 +742,50 @@ export interface InPlayPokemon {
       that is NOT the printed "(even if it is Knocked Out)", which is about the
       hit that is being resolved right now and is answered by §9's ordering. */
   installedRecoil: InstalledRecoil | null;
-  /** §8/§11 (D154) — the attack-installed PER-ATTACK lock on this Pokémon (see
-      `LockedAttack` above), or `null` when none has been installed. Read through
-      `lockedAttackIndex` (continuous.ts) rather than by touching this field, so
-      no read site can forget the turn comparison — the same contract the five
-      fields above are under.
+  /** §8/§11 (D154, MULTIPLICITY at D165) — EVERY attack-installed PER-ATTACK lock
+      on this Pokémon (see `LockedAttack` above), newest last, `[]` when none has
+      been installed. Read through `lockedAttackIndexes` (continuous.ts) rather
+      than by touching this field, so no read site can forget the turn comparison
+      — the same contract the five fields above are under.
+
+      ⚠️ IT IS A LIST BECAUSE IT HAS **TWO WRITERS**, AND THAT IS THE WHOLE OF
+      D165. `preventAttackUse` (D154, self-side, `state.turn + 2`) and
+      `lockDefenderAttack` (D157, opponent-side, `state.turn + 1`) both write this
+      field, and stamping from ADJACENT turns lands them on the SAME number: a
+      Skarmory sv03-142 that bars its own "Slashing Steel" on turn 3 stamps 5, and
+      an Oranguru sv02-094 that bars its "Peck" on turn 4 stamps 5 too. As ONE
+      slot the second write DELETED the first, and the §8 gate then let the holder
+      use the very attack its own card bars — with the `ATTACK_LOCKED` row for it
+      still standing in the log. `/code-review` found it over D154–D164; the board
+      is `lockedAttackMerge.test.ts`'s first case.
+
+      ⚠️ A SECOND FIELD WAS PRICED AND REFUSED, AND THE GROUND IS THAT ITS BOUND
+      IS NOT PROVABLE. "One slot for the self-side bar, one for the imposed one"
+      fixes today's collision and pushes the same defect out by exactly one
+      writer: nothing in the type, the ops or the registry says a per-attack bar
+      may have at most two sources, and the census that looks like a bound (8 rows
+      / 6 names self-side, 2 opponent-side — §D154/§D157, both CLOSED) is a fact
+      about the 2026-08-03 catalog rather than about this shape. D150's rule is
+      that this repo does not accept an assumed bound. A list has no bound to
+      assume, and both fields would have cost the same `MATCH_RECORD_VERSION` bump
+      and the same enumeration at the read sites anyway.
+
+      ⚠️ AND IT IS THE ENUMERATING CALLER §D147/§D152/§D154/§D157 EACH FORECAST,
+      ARRIVING FROM THE DIRECTION NONE OF THEM WATCHED. Those four declined a
+      collection over the durated riders because *every read site knew which rider
+      it wanted before it looked* — which was true, and is still true of the
+      RIDER KINDS. What changed is the MULTIPLICITY of one kind: with two bars
+      live, `redactedAttacksOf` and `GameHud` must grey EVERY barred row and
+      neither knows in advance which, so both now ask MEMBERSHIP of a set they
+      receive whole. That is an enumeration, and it is why this field earns a list
+      while the `attackBlock` union does NOT re-open: nothing here DISPATCHES on a
+      member's kind, because every member of this list means one thing.
+
+      ⚠️ D155's REFUSAL IS UNTOUCHED AND IS SHARPENED BY THE LIST. `boostedAttack`
+      stays its own field because its consumer PAYS the index this one's REFUSES;
+      the list makes that a property of the CONTAINER rather than of a record —
+      every entry here is an address the §8 gate refuses, so an entry that had to
+      be paid would be exactly the defect D155 declined to build.
 
       ⚠️ `state.turn + 2`, WHICH IS `attackLockedTurn`'s SELF-ARM NUMBER AND NO
       OTHER FIELD'S. Four of the five records above stamp `+ 1` (the window is the
@@ -748,8 +808,23 @@ export interface InPlayPokemon {
       lines of play the holder can take INSIDE it, and all three are its own escape
       from a drawback it chose to pay (D148's agency, on the self side). A Knocked
       Out holder takes it out of play with the rest of the stack, and the promoted
-      body carries nothing. */
-  lockedAttack: LockedAttack | null;
+      body carries nothing.
+
+      ⚠️ THE §10 CLEARS SHED THE WHOLE LIST (`[]`) AND NOT ONE ENTRY, because §10
+      sheds *the effects of attacks* — all of them — when a body evolves or leaves
+      the Active Spot. PER-ENTRY expiry is the other axis and it lives at the
+      READER: an entry whose `turn` has passed stops answering without anyone
+      clearing it, and a WRITE prunes entries strictly in the past so the list
+      cannot grow across a long match. Two rules, two places, and they are
+      independent — a body that never leaves the Active Spot still ends every turn
+      with at most the bars stamped for turns it has not reached.
+
+      EMPTY-ARRAY-MEANS-NONE, WHICH IS `markers`'s CONVENTION AND NOT THE SIX
+      SIBLINGS' `=== null` ONE. The sibling convention exists so a reader cannot
+      forget the `undefined` case (D124); an array required to be present answers
+      the same requirement, and `[] | null` would have been two spellings of
+      "none" for one fact. */
+  lockedAttacks: LockedAttack[];
   /** §8.5/§11 (D155) — the attack-installed PER-ATTACK DAMAGE BUFF on this
       Pokémon (see `BoostedAttack` above), or `null` when none has been installed.
       Read through `boostedAttackDamage` (continuous.ts) rather than by touching
@@ -834,10 +909,11 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // reduction's sibling on the §9 side of the pipeline. Same reading of §10's
     // carry-over rule from the other end as the four lines above.
     installedRecoil: null,
-    // …and no attack of its own has barred ONE of its attacks either (D154) —
-    // the self-lock's per-attack sibling. Same reading of §10's carry-over rule
-    // from the other end as the five lines above.
-    lockedAttack: null,
+    // …and NO attack of anybody's has barred one of its attacks either (D154, a
+    // LIST since D165 because the field has two writers). Same reading of §10's
+    // carry-over rule from the other end as the five lines above, in the one
+    // spelling on this list that is `[]` rather than `null`.
+    lockedAttacks: [],
     // …and no attack of its own has BOUGHT one of its attacks a bonus either
     // (D155) — the per-attack bar's opposite verb at the same address. Same
     // reading of §10's carry-over rule from the other end as the six lines above.

@@ -279,13 +279,13 @@ describe("placement", () => {
       // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body
       // retaliates for nothing rather than retaliating on turn 0.
       installedRecoil: null,
-      // …and no PER-ATTACK bar (D154), read the same way a sixth time — and this
-      // is the one where "read the same way" stops being a formality:
-      // `lockedAttackIndex` returns an INDEX, and 0 is a real index, so a `null`
-      // record is the only thing separating a fresh body from one whose attack 0
-      // is barred on turn 0. The field carries a record and not a bare number for
-      // exactly that reason.
-      lockedAttack: null,
+      // …and no PER-ATTACK bar (D154; a LIST since D165), read the same way a
+      // sixth time — and this is the one where "read the same way" stops being a
+      // formality: `lockedAttackIndexes` returns INDICES, and 0 is a real index,
+      // so an EMPTY list is the only thing separating a fresh body from one whose
+      // attack 0 is barred on turn 0. The field carries records and not a bare
+      // number for exactly that reason.
+      lockedAttacks: [],
       // …and no PER-ATTACK BUFF (D155), read the same way a seventh time and for
       // the sixth field's reason exactly: `boostedAttackDamage` compares the stamp
       // to `state.turn` AND the stored index to the declared one, so a `null`
@@ -443,6 +443,13 @@ describe("finishing setup", () => {
     expect(next.turn).toBe(1);
     // The per-turn allowances live on state.allowances, not the phase (M2).
     expect(next.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect(next.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [] });
+    expect(next.allowances).toEqual({
+      energyAttached: false,
+      retreated: false,
+      supporterPlayed: false,
+      stadiumPlayed: false,
+      stadiumAbilityUsed: false,
+      abilitiesUsed: [],
+    });
   });
 });

@@ -105,16 +105,14 @@ describe("TurnPanel — §8/§11 the PER-ATTACK bar (D154)", () => {
       install needs a printed barrer in the deck, and this suite's deck is
       fix-attacker × 30 — the HUD claim is about ONE boolean per row, not about
       which card wrote it, so the record is placed rather than played. */
-  function barAttack(state: GameState, attackIndex: number): GameState {
+  function barAttack(state: GameState, ...attackIndexes: number[]): GameState {
     const side = state.players.p1;
     const active = side.active;
     if (active === null) throw new Error("p1 has no Active Pokémon");
+    const lockedAttacks = attackIndexes.map((attackIndex) => ({ turn: state.turn, attackIndex }));
     return {
       ...state,
-      players: {
-        ...state.players,
-        p1: { ...side, active: { ...active, lockedAttack: { turn: state.turn, attackIndex } } },
-      },
+      players: { ...state.players, p1: { ...side, active: { ...active, lockedAttacks } } },
     };
   }
 
@@ -146,6 +144,30 @@ describe("TurnPanel — §8/§11 the PER-ATTACK bar (D154)", () => {
     expect(attackButton().disabled).toBe(false);
   });
 
+  // D165 — TWO live bars on one body, the cell this panel could not reach before
+  // the field became a list. The engine's `lockedAttacks` has two writers whose
+  // stamps collide from adjacent turns, so this is an ORDINARY board and not a
+  // constructed one (the played line is in lockedAttackMerge.test.ts). What is
+  // pinned here is the projection's half: a HUD that read ONE index would grey
+  // whichever bar was written last and offer the other, which is a button the
+  // server rejects with ATTACK_PREVENTED.
+  it("greys EVERY barred row when two bars are live, not the last one written", () => {
+    renderHud(barAttack(battleReady(), 0, 2));
+    expect(attackButton().disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /Yawn/ }) as HTMLButtonElement).disabled).toBe(true);
+    // …and the CONTROL, on the same board with the bars removed: both rows come
+    // back, so "both disabled" cannot be passing because the panel was unpayable.
+    // (fix-attacker's "Flame" and "Rage" are unpayable on this board either way,
+    // which is exactly why the two BARRED rows are the costless one and the {C}
+    // one — the two whose greying can only be the bar.)
+    cleanup();
+    renderHud(barAttack(battleReady()));
+    expect(attackButton().disabled).toBe(false);
+    expect((screen.getByRole("button", { name: /Yawn/ }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+  });
+
   it("stops mattering once the window has passed — the stamp, not the record", () => {
     // The record is STILL on the body; only its turn has moved on. A HUD that read
     // the field instead of the reader would grey the row forever.
@@ -159,7 +181,10 @@ describe("TurnPanel — §8/§11 the PER-ATTACK bar (D154)", () => {
           active:
             state.players.p1.active === null
               ? null
-              : { ...state.players.p1.active, lockedAttack: { turn: state.turn - 1, attackIndex: 0 } },
+              : {
+                  ...state.players.p1.active,
+                  lockedAttacks: [{ turn: state.turn - 1, attackIndex: 0 }],
+                },
         },
       },
     };
@@ -234,6 +259,6 @@ describe("EffectChooseDialog — §8/§11 the CHOSEN opponent attack (D157)", ()
     // fed to the engine installs the record. A dialog that offered a row the
     // validator rejects is exactly the soft-lock the allowlist invariant is about.
     const applied = mustApply(state, sent[0] as GameAction).state;
-    expect(applied.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: 3 });
+    expect(applied.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: 3 }]);
   });
 });

@@ -14205,3 +14205,234 @@ engine **0.108.0 → 0.109.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
   and its SURCHARGE sibling, one mechanism with opposite signs (see §D162).
 - **The §12 STATUS-IMMUNITY family** (D159's census, 4 printings / 3 sentences).
 - **`attackEffectRefused`'s narrowing + D150's item 6** — ONE slice (D161).
+
+
+---
+
+## D165 — REVIEW FIX, NOT A SLICE: `InPlayPokemon.lockedAttack` has ONE READER and TWO WRITERS, and neither merged (engine 0.110.0 → 0.111.0, `MATCH_RECORD_VERSION` 10 → 11)
+
+The **fourth** `/code-review` this branch has had and the **first to return a
+correctness bug.** Scope `git diff origin/backend...HEAD` — **11 commits, D154–D164**
+— run at D164 on the user's trigger. **Exactly ONE finding.** This is it.
+
+### The defect
+
+| | `preventAttackUse` (D154) | `lockDefenderAttack` (D157) |
+|---|---|---|
+| Holder | `ctx.seat`'s Active | the DEFENDER |
+| Stamp | `state.turn + 2` | `state.turn + 1` |
+| Field | `lockedAttack` | `lockedAttack` |
+| Merge | bare overwrite | bare overwrite |
+| Short-circuits when | `turn === turn && index === index` | `turn === turn && index === index` |
+
+Both were **correct about themselves and silent about each other.** A self-side
+re-install always stamps a later turn (an attack ends the turn, and the window is the
+holder's own next one), and §5.3 forbids a second declaration inside one turn — so
+neither op could ever land on its OWN live record. `preventAttackUse`'s doc block said
+so out loud:
+
+> …a differing index simply overwrites, **because a later install always stamps a
+> later turn**.
+
+True of the OP. **False of the FIELD.** `+ 2` from turn 3 and `+ 1` from turn 4 are
+both **5**.
+
+### The board — ordinary, played end to end, and it was written BEFORE anything moved
+
+The repo's standing verify-before-you-fix rule, applied to a review finding for the
+second time (D153 was the first, and there the review was UNDERSTATED). Here the
+failing test was watched to fail for exactly the stated reason first:
+
+```
+turn 3 (P1) Skarmory sv03-142 uses "Slashing Steel" (idx 1)
+            → lockedAttack = { turn: 5, attackIndex: 1 }
+turn 4 (P2) Oranguru sv02-094 "Plotter's Command" parks chooseAttack on that
+            Skarmory; P2 picks "Peck" (idx 0)
+            → turn = 4 + 1 = 5, index differs → OVERWRITE
+turn 5 (P1) the §8 gate refuses idx 0 … and ALLOWS idx 1
+```
+
+So **Skarmory uses "Slashing Steel" on the very turn its own printed drawback bars
+it**, `redactedAttacksOf` and `GameHud` render the button LIVE, and the
+`ATTACK_LOCKED` row promising otherwise is still standing in the log. Both families
+are catalogued AND fielded and every intervening step is ordinary — the barred body
+only has to stay Active, and retreat/switch/evolve would have cleared the lock under
+§10 anyway.
+
+### ⚠️ The finding is EXACT — the sweep was RUN, not assumed
+
+D153's review account was understated (it named one wrong path and there were three),
+so the writer/reader sweep was made rather than inherited. Result:
+
+| field | writers | readers | collides? |
+|---|---|---|---|
+| `lockedAttack` | **2** — `preventAttackUse` (`+ 2`), `lockDefenderAttack` (`+ 1`) | 1 — `lockedAttackIndex` (3 call sites) | **YES** |
+| `boostedAttack` (D155) | **1** — `boostAttack` (`+ 2`) | 1 — `boostedAttackDamage` | no |
+| `attackLockedTurn` (D143/D148) | 2 | 1 — `attackLocked` | no *address* to collide on |
+
+The four `lockedAttack: null` literals are §10 CLEARS, not writers.
+
+**`boostedAttack` is genuinely single-writer**, and its own "a different index
+replaces" rule is unreachable as a deletion for exactly the reason
+`preventAttackUse`'s was — which is why the premise is now ASSERTED rather than
+assumed, and the trap written down: **the day a second writer of `boostedAttack`
+lands (an opponent-side buff, or any op stamping `+ 1` where this one stamps `+ 2`)
+it inherits this defect verbatim, and the fix is this one.**
+
+### ⚠️ The irony, and the rule it leaves behind
+
+D157 shared the field on the ground that
+
+> `lockedAttackIndex` is the **ONLY READER** of `lockedAttack`, and it REFUSES the
+> index whichever op wrote it.
+
+Every word true, still true, and **not the question.** It never asked how many
+WRITERS the slot has. And `types.ts`'s `LockedAttack` block refuses a *different*
+merge — with D148's `attackLockedTurn` — on exactly this ground:
+
+> It is refused because the two are **REACHABLE TOGETHER** and mean different things
+> … and **one record could hold only the later write**.
+
+**The repo had already written down the argument that condemned its own field, one
+column to the left.** The rule:
+
+> **The test is not "do these two records mean the same thing" but "how many WRITERS
+> does this slot have, and can any two of them stamp the same turn".**
+
+A reader count answers the question *"can these two facts share a consumer"*. It says
+nothing at all about *"can these two facts share a SLOT"*, and D157 used the first as
+though it settled the second.
+
+### The shape: a LIST, and the ground is the READ SITES
+
+`InPlayPokemon.lockedAttacks: LockedAttack[]` — `[]` means none (`markers`'s
+convention rather than the six durated siblings' `=== null` one), newest last. The
+record itself did not move a byte; the MULTIPLICITY did.
+
+- **One shared merge rule**, `addLockedAttack` (interpreter.ts), used by both writers
+  so the collision has exactly one answer in exactly one place a mutation can reach:
+  **idempotent** on the `(turn, index)` pair (returns `null`, the caller suppresses
+  the row), **appending** on a differing index, **pruning** entries whose turn is
+  strictly behind. The prune is a GARBAGE rule and not an expiry rule — expiry is the
+  reader's turn comparison — and it is what bounds the list by *bars stamped for
+  turns not yet played* rather than by the length of the match.
+- **One plural reader**, `lockedAttackIndexes(state, pokemon): number[]`. D154's shape
+  argument survives verbatim: two of its three callers map over the whole `attacks`
+  array, so a `(state, pokemon, index) => boolean` predicate would re-read one field
+  N times. One read of the SET answers all three.
+- **The rename is load-bearing.** `lockedAttack` → `lockedAttacks` and
+  `lockedAttackIndex` → `lockedAttackIndexes` makes every one of the ~70 sites a
+  COMPILE ERROR. Keeping the names would have left `expect(x.lockedAttack).toEqual({…})`
+  compiling and failing at runtime — silent churn where the compiler could do the work.
+
+### ⚠️ A second stamped field was priced and REFUSED, on a bound nothing proves
+
+Option (a) — a `defenderLockedAttack` beside the self-installed one — fixes today's
+collision and **pushes the same defect out by exactly one writer.** Nothing in the
+type, in the op set or in the registry says a per-attack bar may have at most two
+sources. The thing that LOOKS like a bound is a census (§D154's 8 rows / 6 names
+self-side, §D157's 2 opponent-side, both CLOSED), and that is a fact about the
+2026-08-03 catalog rather than about the shape. **D150's whole lesson is that this
+repo does not accept an assumed bound.**
+
+And (a) is not even cheaper where it counts: **both options cost the same
+`MATCH_RECORD_VERSION` bump** (a changed/added required key on `InPlayPokemon`) **and
+the same enumeration at the read sites** (with two fields, the gate and both
+projections must ask BOTH per row). (a) buys a smaller diff and nothing else.
+
+### ⚠️ THE ENUMERATING CALLER, ARRIVING FROM THE DIRECTION NOBODY WATCHED
+
+Four decisions forecast a trigger for a collection over the durated riders and four
+declined it:
+
+| | trigger | verdict | ground |
+|---|---|---|---|
+| §D147 | a fifth stamped field | decline | (counting) |
+| §D152 | a member the read site must **DISPATCH** on | decline | retires counting |
+| §D154 | an **ENUMERATING** caller | decline | *every reader knows which rider it wants before it looks* |
+| §D157 | a prompt that must **LIST** something | decline | it lists a CARD's attacks, not a body's riders |
+
+**All four were watching the rider KINDS, and that claim is still true** — nothing in
+this fix dispatches on a member's kind, because every entry in the list means one
+thing. What stopped being true, from D157's commit onward, is that one body could
+carry only ONE of them. With two bars live, `redactedAttacksOf` and `GameHud` must
+mark **every** barred index and neither knows in advance which, so both now ask
+MEMBERSHIP of a set they receive whole.
+
+> **A collection is earned by a MULTIPLICITY the read site must ENUMERATE just as
+> much as by a UNION it must DISPATCH on — and only the second was ever being watched
+> for.**
+
+**The `attackBlock` union stays DECLINED.** Do not re-open it on this.
+
+### ⚠️ D155's refusal is untouched and is SHARPENED
+
+D155 kept `boostedAttack` out of this record because *its consumer PAYS the index this
+one's REFUSES*. The list makes that a property of the **container**: every entry is an
+address the §8 gate refuses, so an entry that had to be PAID would be exactly the
+defect D155 declined to build. One field, one meaning, N addresses.
+
+### The five structural questions
+
+1. **PARK? NO — PERSIST? YES. `MATCH_RECORD_VERSION` 10 → 11, the EIGHTH time on
+   D124's trigger and the FIRST that is a CHANGED TYPE rather than a NEW KEY.** That
+   is where the rule's own wording earns its keep: the test has never been *"did a
+   required key appear"* but **"can the PREVIOUS deploy's RECORD hold the new TYPE"**
+   — and a version-10 record carries `lockedAttack` on every body and no
+   `lockedAttacks` at all (the reader `.filter`s an absent field and THROWS, so the
+   landing is not even soft). No op was added or removed and neither writer parks;
+   `preventChosenAttack`'s park and its `chooseAttack` prompt/choice shapes are
+   untouched. **D156–D164 in between did NOT bump — nine consecutive controls.** And
+   **no `@luminous/schema` diff**: `redactedAttacksOf` still folds the fact into the
+   per-attack `playable` boolean, so the WIRE is byte-identical across the bump and
+   only the DO's stored `GameState` moves.
+2. **VOICE — NO ROW MOVED, AND THE ROW WAS ALREADY RIGHT WHILE THE ENGINE WAS WRONG.**
+   An inversion this family has not had: D154 made `ATTACK_LOCKED` NAME the attack
+   because *"can't attack next turn"* is FALSE on a body whose other attack is legal,
+   and D162 found the inverse on a one-attack body. Here **both rows were honest and
+   the FIELD threw one of the facts away** — the log promised a bar the state had
+   deleted, so a player reading their own log was told the truth by the row and lied
+   to by the engine. No new arm is owed and that is CHECKED rather than waved at: the
+   two rows are installed on two different TURNS, so no row ever has to say "and
+   also". **Rendered under both seats and READ**, including the both-locks-live case
+   — and it fills **the cell D157 named as UNVERIFIED**, the first board where the
+   actor-is-seat path (p1 barring p1) and the victim-side path (p2 barring p1) render
+   side by side on ONE body. Both file under p1; the whole log is asserted verbatim
+   and re-rendered with the seat NAMES SWAPPED to show it moves nothing.
+3. **GUARD — SWEPT, and the §10 set takes a SHAPE change and NO new site.** All four
+   literals become `[]`, each DRIVEN with TWO bars live (evolve, retreat,
+   `switchInto`), because a list admits a failure a record did not: **a clear written
+   as a FILTER** (shed what this body installed, keep what was imposed) **would leave
+   the evolved card carrying an index off the card it came from** — and the evolve
+   witness (`fix-skarm-stage1`, ONE attack) is the sharpest available shape for it.
+   Three rules in three places, deliberately: §10 sheds the WHOLE list, the READER
+   expires per entry, the WRITER prunes the past. **What the sweep does NOT traverse:
+   it reads a body that has been through ONE clear, so a literal shedding the field on
+   three routes and not the fourth is caught by the three per-route cases and not by
+   the sweep** (D157's own blind spot, unchanged).
+4. **MECHANISM — everything except the merge existed, and the merge is the fix.**
+5. **IT GATES AN ACTION, so it owes BOTH payability projections — and they both take a
+   diff for the first time since D154 built them.** `redactedAttacksOf` reads the set
+   once outside its map and asks membership per row; `GameHud.tsx` the same. Pinned on
+   both sides **with a CONTROL** (the same board with the list emptied offers both
+   rows, so "both greyed" cannot pass because the panel was unpayable), plus a new
+   jsdom case. **§11: NOTHING OWED** — no op added or removed, both verdicts
+   (`preventAttackUse: "untouched"`, `preventChosenAttack: "blocked"`) unchanged and
+   still driven by `preventBlock.test.ts`'s probe table.
+
+### Cost
+
+**1 field TYPE, 1 merge helper, 1 renamed reader, 1 §8 gate line, 2 projection lines,
+4 §10 literals.** No new op, event, event field, log crumb, error code, prompt, park,
+registry row, regex, fixture, deck, `@luminous/schema` diff or DB diff.
+`lockedAttackMerge.test.ts` (**14 tests, SEED-FREE**, on the two predecessors' decks
+one per seat — the collision needs a self-side barrer facing an opponent-side one, and
+mixing them at the seats costs no new 60 and moves no seeded board in either), 1 new
+jsdom case, and **two predecessor cases RE-POINTED rather than deleted**:
+`perAttackLock.test.ts`'s and `opponentAttackLock.test.ts`'s *"a different index
+OVERWRITES"* both now assert APPEND, which is the defect's own pin at its own site.
+
+**Mutation-checked TWENTY-FOUR ways, 22 caught — ⚠️ **THE PASS WAS INTERRUPTED WITH TWO SURVIVORS AT THE SAME BOUNDARY AND THE WITNESS NOT WRITTEN**; this slice is COMMITTED WITH THAT OUTSTANDING, and finishing it is item 0 on the resume point.**
+
+engine **0.110.0 → 0.111.0**; `MATCH_RECORD_VERSION` **10 → 11**; `bun run check`
+GREEN exit 0 — **203 files / 3576 tests** (was 202 / 3561).

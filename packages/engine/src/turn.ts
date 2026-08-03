@@ -8,13 +8,7 @@ import type {
   RetreatAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import {
-  basicFromHandError,
-  cardOfUid,
-  evolveFromOf,
-  isEnergyCard,
-  topUid,
-} from "./cards";
+import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } from "./cards";
 import { effectiveRetreatCost, opposingRetreatBlocked } from "./continuous";
 import type { GameEvent } from "./events";
 import { advance, isLethallyDamaged, resolveMidTurnKnockOuts, turnTail } from "./flow";
@@ -172,7 +166,13 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   // triggered Ability (Flamigo's Insta-Flock) fires now, on the freshly
   // benched Pokémon (the last, dense slot). It may park on effect:choose.
   const benchIndex = next.players[action.seat].bench.length - 1;
-  return runBoardTrigger(next, action.seat, { spot: "bench", index: benchIndex }, "onPlayToBench", events);
+  return runBoardTrigger(
+    next,
+    action.seat,
+    { spot: "bench", index: benchIndex },
+    "onPlayToBench",
+    events,
+  );
 }
 
 /** §10 — place an Evolution card from hand on top of one of your own in-play
@@ -256,8 +256,20 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   // resets turnPlayed, and runs the evolve-below-HP KO check + the on-evolve
   // trigger. Rare Candy (§7.1, cardplay.ts) reuses the SAME placement to skip
   // the Stage 1 — the two card plays differ only in what they validate first.
-  const stateAfterHand = withSide(state, action.seat, { ...side, hand: without(side.hand, action.uid) });
-  return placeEvolution(stateAfterHand, action.seat, action.target, benchIndex, target, targetTopUid, action.uid, []);
+  const stateAfterHand = withSide(state, action.seat, {
+    ...side,
+    hand: without(side.hand, action.uid),
+  });
+  return placeEvolution(
+    stateAfterHand,
+    action.seat,
+    action.target,
+    benchIndex,
+    target,
+    targetTopUid,
+    action.uid,
+    [],
+  );
 }
 
 /** §10/§7.1 — the shared evolution PLACEMENT, used by both `evolve` (adjacent
@@ -345,8 +357,10 @@ export function placeEvolution(
     // evolving the barred Pokémon on that turn frees the barred attack
     // immediately. A PLAYED LINE, driven end to end (Skarmory → fix-skarm-stage1),
     // and the sharpest of the three routes because it costs no Energy and no
-    // allowance.
-    lockedAttack: null,
+    // allowance. Since D165 it sheds a LIST, and the WHOLE list — §10 sheds the
+    // effects of attacks, all of them, and an evolution that freed one bar while
+    // keeping another would be the defect this slice fixed wearing a clear.
+    lockedAttacks: [],
     // …and, since D155, the attack-installed PER-ATTACK BUFF — the same window on
     // the same body as the line above, so the same PLAYED LINE, and the only entry
     // on this list a player must be careful NOT to take: evolving the boosted
@@ -373,7 +387,13 @@ export function placeEvolution(
   // when there was something to remove; `uid` is the NEW top (see events.ts).
   const cleared = presentStatuses(from.conditions);
   if (cleared.length > 0) {
-    events.push({ type: "STATUS_CLEARED", seat, uid: evolutionUid, statuses: cleared, reason: "evolved" });
+    events.push({
+      type: "STATUS_CLEARED",
+      seat,
+      uid: evolutionUid,
+      statuses: cleared,
+      reason: "evolved",
+    });
   }
   const next = withSide(state, seat, updated);
   if (isLethallyDamaged(next, evolved)) {
@@ -439,7 +459,10 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // the bar is live, promote something that can attack, and with a Switch bring
     // the now-unbarred body back. SEVEN durated effects on one clear, FIVE
     // reachability stories — which is why the clear-set is SWEPT and not listed.
-    lockedAttack: null,
+    // Since D165 it sheds a LIST, and the WHOLE list: a retreat that shed the
+    // holder's own bar and kept the one an opponent imposed would invert the
+    // agency §10 gives the retreating player.
+    lockedAttacks: [],
     // D155 — the per-attack BUFF, whose story here is the line above it verbatim
     // (same window, same body): the RETREAT half is the reachable one and it is
     // the holder's own line of play — with the sign flipped, since retreating the

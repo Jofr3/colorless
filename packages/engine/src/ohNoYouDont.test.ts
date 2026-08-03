@@ -738,7 +738,7 @@ describe("the structural questions — answered, not asserted", () => {
         "damageReduction",
         "energy",
         "installedRecoil",
-        "lockedAttack",
+        "lockedAttacks",
         "markers",
         "promotedTurn",
         "retreatBlocked",

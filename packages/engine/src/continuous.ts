@@ -81,7 +81,11 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       const top = topCardOf(state, target);
       const uid = topUid(target);
       if (top === undefined || uid === undefined) continue;
-      if (auras.some(({ aura, sourceSeat }) => auraSuppresses(aura, sourceSeat, targetSeat, target, top)))
+      if (
+        auras.some(({ aura, sourceSeat }) =>
+          auraSuppresses(aura, sourceSeat, targetSeat, target, top),
+        )
+      )
         disabled.add(uid);
     }
   }
@@ -256,7 +260,10 @@ export function passivesOf(
     if (passive.damageBonusBeforeWRIfTarget !== undefined)
       targetConditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIfTarget);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
-    if (passive.damageAttacker !== undefined && (passive.damageAttacker.requiresTool !== true || hasTool))
+    if (
+      passive.damageAttacker !== undefined &&
+      (passive.damageAttacker.requiresTool !== true || hasTool)
+    )
       damageAttacker += passive.damageAttacker.amount;
     // No `requiresTool` twin: the one printing IS a Tool, and an unread gate is
     // the D156 defect. It rides the SAME Ability-lock rule as its sibling by
@@ -394,10 +401,7 @@ export function attackBlockOf(
     a Stage 1 and its attacks are no longer refused, which is what the printed
     word means and is why the call sites pass a resolved top card rather than a
     stack. */
-function attackerMatchesClass(
-  attacker: Card,
-  cls: NonNullable<AttackBlock["fromClass"]>,
-): boolean {
+function attackerMatchesClass(attacker: Card, cls: NonNullable<AttackBlock["fromClass"]>): boolean {
   switch (cls) {
     case "Basic":
       return isBasicPokemon(attacker);
@@ -603,50 +607,55 @@ export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean 
   return pokemon.attackLockedTurn === state.turn;
 }
 
-/** §8/§11 (D154) — WHICH of `pokemon`'s attacks is barred right now ("During your
-    next turn, this Pokémon can't use {AttackName}."), as an index into the
-    stack-top card's `attacks`, or `null` when none is. The ONE read of
-    `InPlayPokemon.lockedAttack`, and `attackLocked`'s sibling one function up in
-    every respect except its return type: the field holds a turn STAMP beside the
-    address, so the bar is live iff that stamp is the turn now being played, and a
+/** §8/§11 (D154; PLURAL since D165) — WHICH of `pokemon`'s attacks are barred
+    right now ("During your next turn, this Pokémon can't use {AttackName}." and
+    its opponent-side twin), as indices into the stack-top card's `attacks`, in
+    install order, EMPTY when none is. The ONE read of
+    `InPlayPokemon.lockedAttacks`, and `attackLocked`'s sibling one function up in
+    every respect except its return type: each entry holds a turn STAMP beside the
+    address, so a bar is live iff that stamp is the turn now being played, and a
     bar whose window has passed stops answering without anyone having cleared it.
 
-    ⚠️ IT RETURNS THE INDEX RATHER THAN A PREDICATE, AND THAT IS THE ONE PLACE
+    ⚠️ IT RETURNS THE INDICES RATHER THAN A PREDICATE, AND THAT IS THE ONE PLACE
     THIS FAMILY'S READER SHAPE HAD TO MOVE. `attackLocked` returns a boolean
     because there is ONE fact and nothing to carry (D104's minimal shape); here the
-    fact IS an address, and every caller has a candidate index in hand and wants to
-    know whether it is the barred one. Returning `boolean` from a
-    `(state, pokemon, index)` signature would have been the other shape and is
-    refused for one observable reason: `redactedAttacksOf` and GameHud both build
-    their rows by mapping over the whole `attacks` array, so a per-index predicate
-    would be called once per attack and re-read the same field N times, while the
-    §8 gate would call it once — three sites, two access patterns, one field. An
-    index answers both in one read.
+    fact IS a set of addresses, and every caller has a candidate index in hand and
+    wants to know whether it is among them. A `(state, pokemon, index) => boolean`
+    signature would have been the other shape and is refused for one observable
+    reason: `redactedAttacksOf` and GameHud both build their rows by mapping over
+    the whole `attacks` array, so a per-index predicate would be called once per
+    attack and re-read the same field N times, while the §8 gate would call it
+    once — three sites, two access patterns, one field. One read of the set
+    answers both.
 
-    ⚠️ AND THIS IS THE FIELD THAT ANSWERS §D152's SHAPE TRIGGER, WITH A "NO".
-    D152 retired the count trigger for the `attackBlock` union and replaced it with
-    *a member the read site must DISPATCH on rather than SUM* — naming this record's
-    `{ turn, attackIndex }` as the case. It is genuinely not a sum: the three
-    callers COMPARE the index. But no site DISPATCHES either, and that is the
-    difference a union would have to pay for. Every read site in this family knows
-    which rider it wants BEFORE it looks — this function is the only reader of this
-    field and it asks for exactly one kind — so a union would turn a checked field
-    access into a `find` over a list whose other members it must then discard. The
-    trigger that would earn it is a caller that receives a rider whose KIND it does
-    not know, i.e. an ENUMERATION; §D147's trigger (a) (a printing that REMOVES the
-    effects of attacks) is still the only forecast producer of one, and the pool
-    still prints none. Full argument in decisions.md D154.
+    ⚠️ THE PLURAL IS D165's, AND IT IS THE ENUMERATING CALLER §D152/§D154/§D157
+    FORECAST — ARRIVING FROM THE DIRECTION NONE OF THEM WATCHED. D152 retired the
+    count trigger for the `attackBlock` union and replaced it with *a member the
+    read site must DISPATCH on rather than SUM*, naming this record; D154 and D157
+    each declined on the ground that no site ENUMERATES, every reader knowing
+    which rider it wanted before it looked. That was true of the rider KINDS and
+    is still true — nothing here dispatches, because every entry in this list
+    means exactly one thing. What was NOT true, from D157's commit onward, is that
+    one body could carry only one of them: the field has TWO writers whose stamps
+    collide from adjacent turns (types.ts `InPlayPokemon.lockedAttacks`), so both
+    payability projections must now mark EVERY barred row and neither knows in
+    advance which. **A collection is earned by a MULTIPLICITY the read site must
+    enumerate just as much as by a UNION it must dispatch on — and only the second
+    of those was ever being watched for.** The `attackBlock` union stays declined.
 
     NO PROVENANCE CHANNEL, for `attackLocked`'s reason verbatim: it is read from
     `attack.ts`'s §8 gate and from the two payability projections, all of which are
     by construction about declaring an ATTACK, so there is exactly one kind of
-    thing it can refuse and nothing to disambiguate. */
-export function lockedAttackIndex(state: GameState, pokemon: InPlayPokemon): number | null {
+    thing it can refuse and nothing to disambiguate. Which OP wrote an entry is
+    likewise absent and stays absent — D157's answer at the address, unchanged by
+    the list: the reader refuses the index whoever wrote it. */
+export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): number[] {
   // No defensive `=== undefined` arm, for `attackBlockOf`'s reason two functions
   // up: the field is REQUIRED and a record written before it existed is retired
   // by MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
-  const locked = pokemon.lockedAttack;
-  return locked === null || locked.turn !== state.turn ? null : locked.attackIndex;
+  return pokemon.lockedAttacks
+    .filter((locked) => locked.turn === state.turn)
+    .map((locked) => locked.attackIndex);
 }
 
 /** §8.5/§11 (D155) — the HP an attack-installed PER-ATTACK BUFF adds to the
@@ -1065,7 +1074,8 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
     const source = state.players[otherSeat(seat)].active;
     if (source === null) return 0;
     const top = topCardOf(state, source);
-    const amount = top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveAttackDebuff;
+    const amount =
+      top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveAttackDebuff;
     if (amount === undefined) return 0;
     const sourceUid = topUid(source);
     if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return 0; // §9

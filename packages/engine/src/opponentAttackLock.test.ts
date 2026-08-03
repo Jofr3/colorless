@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackLocked, lockedAttackIndex } from "./continuous";
+import { attackLocked, lockedAttackIndexes } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, redactGame } from "./index";
 import type { ApplyResult, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
@@ -168,12 +168,12 @@ function barred(
 /** TEST SURGERY: write a `lockedAttack` record directly, for the cases no line of
     play reaches (a stale index, a second install landing on a live record). Said
     so rather than skipped, per the family's standing rule. */
-function setLock(state: GameState, seat: Seat, lock: InPlayPokemon["lockedAttack"]): GameState {
+function setLock(state: GameState, seat: Seat, lock: InPlayPokemon["lockedAttacks"]): GameState {
   const side = state.players[seat];
   const active = must0(side.active);
   return {
     ...state,
-    players: { ...state.players, [seat]: { ...side, active: { ...active, lockedAttack: lock } } },
+    players: { ...state.players, [seat]: { ...side, active: { ...active, lockedAttacks: lock } } },
   };
 }
 
@@ -372,7 +372,7 @@ describe("the park — a new KIND of candidate, and `parkOrForce`'s three ending
       uid: activeUid(opened.state, "p2"),
       attack: "Ripple",
     });
-    expect(opened.state.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: 0 });
+    expect(opened.state.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: 0 }]);
     // …and the forced pick is BYTE-IDENTICAL to an answered one: the inline path
     // and the resolved park call the same function, which is what `parkOrForce`'s
     // contract promises for the prompts whose candidates ARE Pokémon.
@@ -391,7 +391,7 @@ describe("the park — a new KIND of candidate, and `parkOrForce`'s three ending
     });
     expect(opened.state.phase.kind).not.toBe("effect:choose");
     expect(types(opened.events)).not.toContain("ATTACK_LOCKED");
-    expect(opened.state.players.p2.active?.lockedAttack ?? null).toBeNull();
+    expect(opened.state.players.p2.active?.lockedAttacks ?? []).toEqual([]);
     // …and the attack itself still resolved, which is the difference between a
     // silent rider and a cancelled attack (D145's two words for "nothing
     // happened", which resolve oppositely).
@@ -456,12 +456,12 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
     // number, not D143's. Declaring an attack ENDS the turn (§5.3), so the turn
     // after the installing one belongs to the victim, and the window opens the
     // moment the epilogue drains.
-    expect(state.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: BITE });
+    expect(state.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: BITE }]);
     expect(state.turn).toBe(3);
     expect(row).toEqual({ type: "ATTACK_LOCKED", seat: "p2", uid: victimUid, attack: "Bite" });
     // …and the ACTOR's own body carries nothing at all. The two per-attack ops
     // that write `ctx.seat`'s Active are D154's and D155's; this one never does.
-    expect(state.players.p1.active?.lockedAttack ?? null).toBeNull();
+    expect(state.players.p1.active?.lockedAttacks ?? []).toEqual([]);
     expect(state.players.p1.active?.attackLockedTurn ?? null).toBeNull();
   });
 
@@ -484,7 +484,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
     // barred attack: Yawn prints no cost, so what applies it is the gate having
     // stopped answering and never an energy the board happened to hold.
     const { state } = barred(YAWN);
-    expect(lockedAttackIndex(state, must0(state.players.p2.active))).toBe(YAWN);
+    expect(lockedAttackIndexes(state, must0(state.players.p2.active))).toEqual([YAWN]);
     // P2's turn ends, P1's turn 4 passes, and P2's turn 5 is outside the window.
     let later = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     expect(later.turn).toBe(4);
@@ -492,18 +492,23 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
     expect(later.turn).toBe(5);
     // The record is STILL THERE and no longer answers — the family's expiry rule
     // (a turn stamp with no boundary clear).
-    expect(later.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: YAWN });
-    expect(lockedAttackIndex(later, must0(later.players.p2.active))).toBeNull();
+    expect(later.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: YAWN }]);
+    expect(lockedAttackIndexes(later, must0(later.players.p2.active))).toEqual([]);
     expect(refusal(later, "p2", YAWN)).toBeNull();
   });
 
-  it("is IDEMPOTENT on the same address and OVERWRITES a different one", () => {
+  it("is IDEMPOTENT on the same address and ADDS a different one", () => {
     // Unreachable off the two printings on this side too (an attack ends the turn,
     // and the window is the very next one), so it is a surgery — and it is
-    // `preventAttackUse`'s EARLY RETURN rather than `boostAttack`'s `Math.max`,
+    // `addLockedAttack`'s EARLY RETURN rather than `boostAttack`'s `Math.max`,
     // because this record carries an address and no number.
+    //
+    // ⚠️ D165 CHANGED THE SECOND HALF. It used to assert that a differing index
+    // REPLACED the record; the field has TWO writers and that overwrite is
+    // precisely how this op deleted a victim's own live self-installed bar (the
+    // played board is in `lockedAttackMerge.test.ts`). The merge APPENDS.
     const board = ready("sv02-094", "fix-attacker");
-    const same = setLock(board, "p2", { turn: 3, attackIndex: BITE });
+    const same = setLock(board, "p2", [{ turn: 3, attackIndex: BITE }]);
     const events: GameEvent[] = [];
     const again = runProgram(
       same,
@@ -512,19 +517,31 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
       events,
     );
     if (again.kind !== "parked") throw new Error("expected a park");
-    const resolved = mustApply(
-      must(applyAction(same, { type: "attack", seat: "p1", index: 0 })),
-      { type: "resolveEffect", seat: "p1", choice: { kind: "attack", index: BITE } },
-    );
+    const resolved = mustApply(must(applyAction(same, { type: "attack", seat: "p1", index: 0 })), {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attack", index: BITE },
+    });
     expect(types(resolved.events)).not.toContain("ATTACK_LOCKED");
-    expect(resolved.state.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: BITE });
-    // …and a DIFFERENT index simply replaces the record, because the address is
-    // the whole content: there is no "keep the larger of two" to fall back on.
-    const other = mustApply(
-      must(applyAction(same, { type: "attack", seat: "p1", index: 0 })),
-      { type: "resolveEffect", seat: "p1", choice: { kind: "attack", index: FLAME } },
-    );
-    expect(other.state.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: FLAME });
+    expect(resolved.state.players.p2.active?.lockedAttacks).toEqual([
+      { turn: 3, attackIndex: BITE },
+    ]);
+    // …and a DIFFERENT index is ADDED BESIDE the live one, because the address is
+    // the whole content: there is no "keep the larger of two" to fall back on and
+    // — since D165 — no "keep the later one" either.
+    const other = mustApply(must(applyAction(same, { type: "attack", seat: "p1", index: 0 })), {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attack", index: FLAME },
+    });
+    expect(other.state.players.p2.active?.lockedAttacks).toEqual([
+      { turn: 3, attackIndex: BITE },
+      { turn: 3, attackIndex: FLAME },
+    ]);
+    expect(lockedAttackIndexes(other.state, must0(other.state.players.p2.active))).toEqual([
+      BITE,
+      FLAME,
+    ]);
     expect(find(other.events, "ATTACK_LOCKED")?.attack).toBe("Flame");
   });
 
@@ -549,12 +566,12 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
     const events: GameEvent[] = [];
     const resumed = resumeProgram(result.state, result.cont, { kind: "attack", index: 9 }, events);
     expect(events).toEqual([]);
-    expect(resumed.state.players.p2.active?.lockedAttack ?? null).toBeNull();
+    expect(resumed.state.players.p2.active?.lockedAttacks ?? []).toEqual([]);
     // …and the IN-RANGE answer through the same path DOES install, so the case
     // above cannot pass against a resolver that never writes anything.
     const good: GameEvent[] = [];
     const ok = resumeProgram(result.state, result.cont, { kind: "attack", index: 1 }, good);
-    expect(ok.state.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: 1 });
+    expect(ok.state.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: 1 }]);
     expect(find(good, "ATTACK_LOCKED")?.attack).toBe("Echo Chorus");
   });
 });
@@ -575,7 +592,9 @@ describe("the log row — rendered under BOTH seats and READ", () => {
     // rule — and the named player is the victim, whose next turn is exactly the
     // `+ 1` window this stamp encodes. So the row is true as it stands.
     const { state, row } = barred(BITE);
-    expect(render([row], state)).toEqual([{ who: "p2", text: "fix-attacker can't use Bite next turn" }]);
+    expect(render([row], state)).toEqual([
+      { who: "p2", text: "fix-attacker can't use Bite next turn" },
+    ]);
     // …and the MIRROR: the same row under the ACTOR's name, which is what a build
     // that copied D154's `seat: ctx.seat` would print. It is not stilted, it is
     // FALSE — P1's Oranguru is barred from nothing, and a player reading it would
@@ -601,7 +620,9 @@ describe("the log row — rendered under BOTH seats and READ", () => {
       { id: "fix-fighting-energy", count: 1 },
     ]);
     expect(medicham.row.attack).toBe("Bite");
-    expect(medicham.state.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: BITE });
+    expect(medicham.state.players.p2.active?.lockedAttacks).toEqual([
+      { turn: 3, attackIndex: BITE },
+    ]);
   });
 });
 
@@ -625,7 +646,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       discardEnergy: must0(withEnergy.players.p2.active).energy.slice(0, 1),
       promoteBenchIndex: 0,
     });
-    expect(retreated.players.p2.bench.at(-1)?.lockedAttack ?? null).toBeNull();
+    expect(retreated.players.p2.bench.at(-1)?.lockedAttacks ?? []).toEqual([]);
   });
 
   it("EVOLVING inside the window frees the barred attack — and points at NOTHING", () => {
@@ -634,7 +655,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
     // persist, it would bar an index the new body does not have. The failure this
     // rules out is "barred somewhere else", which is the sharper of the two.
     const { state } = barred(1, "fix-echoer");
-    expect(state.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: 1 });
+    expect(state.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: 1 }]);
     const held = handFromDeck(state, "p2", "fix-echoer-stage1", 1);
     const { state: evolved } = mustApply(held, {
       type: "evolve",
@@ -642,7 +663,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       uid: handUid(held, "p2", "fix-echoer-stage1"),
       target: { spot: "active" },
     });
-    expect(evolved.players.p2.active?.lockedAttack).toBeNull();
+    expect(evolved.players.p2.active?.lockedAttacks).toEqual([]);
     const { events } = mustApply(attachFromDeck(evolved, "p2", "fix-water-energy", 1), {
       type: "attack",
       seat: "p2",
@@ -676,7 +697,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
     }
     const benched = gusted.players.p2.bench.find((p) => p.stack.includes(barredUid));
     expect(benched).toBeDefined();
-    expect(benched?.lockedAttack ?? null).toBeNull();
+    expect(benched?.lockedAttacks ?? []).toEqual([]);
   });
 
   it("the clear-set is the SAME set every durated field is on — swept, not listed", () => {
@@ -704,7 +725,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       damageReduction: body.damageReduction,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
-      lockedAttack: body.lockedAttack,
+      lockedAttacks: body.lockedAttacks,
       boostedAttack: body.boostedAttack,
       retreatBlocked: body.retreatBlocked,
     }).toEqual({
@@ -713,7 +734,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       damageReduction: null,
       attackDamageDebuff: null,
       installedRecoil: null,
-      lockedAttack: null,
+      lockedAttacks: [],
       boostedAttack: null,
       retreatBlocked: false,
     });
@@ -740,7 +761,7 @@ describe("§11 — a shielded defender is not even ASKED", () => {
       seat: "p2",
       uid: activeUid(shielded, "p2"),
     });
-    expect(state.players.p2.active?.lockedAttack ?? null).toBeNull();
+    expect(state.players.p2.active?.lockedAttacks ?? []).toEqual([]);
     expect(types(events)).not.toContain("ATTACK_LOCKED");
   });
 
@@ -782,7 +803,7 @@ describe("both payability projections agree with the §8 gate, on the LOCKED sea
     // …and the SAME board with the record removed offers it. This is the control
     // D150's two-sided rule asks for: exactly ONE more row is greyed by the lock
     // than by the board's own payability, and it is the barred one.
-    const bare = redactGame(setLock(state, "p2", null), "p2").phase;
+    const bare = redactGame(setLock(state, "p2", []), "p2").phase;
     if (bare.kind !== "turn:action") throw new Error("expected turn:action");
     expect(bare.attacks[BITE]?.playable).toBe(true);
     const dead = (rows: readonly { playable: boolean }[]) => rows.filter((r) => !r.playable).length;
@@ -804,7 +825,7 @@ describe("both payability projections agree with the §8 gate, on the LOCKED sea
     const { state } = barred(BITE);
     const victim = must0(state.players.p2.active);
     expect(attackLocked(state, victim)).toBe(false);
-    expect(lockedAttackIndex(state, victim)).toBe(BITE);
+    expect(lockedAttackIndexes(state, victim)).toEqual([BITE]);
   });
 
   it("the PROMPT crosses to the attacker alone, with no card identity on it", () => {
@@ -857,9 +878,9 @@ describe("the shared FIELD and the separate OP, driven rather than argued", () =
     // index whichever op wrote it. Two records of the same shape, on two bodies,
     // answered by the same function.
     const { state } = barred(BITE);
-    const selfSide = setLock(state, "p1", { turn: 3, attackIndex: 1 });
-    expect(lockedAttackIndex(selfSide, must0(selfSide.players.p1.active))).toBe(1);
-    expect(lockedAttackIndex(selfSide, must0(selfSide.players.p2.active))).toBe(BITE);
+    const selfSide = setLock(state, "p1", [{ turn: 3, attackIndex: 1 }]);
+    expect(lockedAttackIndexes(selfSide, must0(selfSide.players.p1.active))).toEqual([1]);
+    expect(lockedAttackIndexes(selfSide, must0(selfSide.players.p2.active))).toEqual([BITE]);
   });
 
   it("a Pokémon can carry this bar AND D148's whole lock at once", () => {
@@ -878,7 +899,7 @@ describe("the shared FIELD and the separate OP, driven rather than argued", () =
       },
     };
     expect(attackLocked(both, must0(both.players.p2.active))).toBe(true);
-    expect(lockedAttackIndex(both, must0(both.players.p2.active))).toBe(BITE);
+    expect(lockedAttackIndexes(both, must0(both.players.p2.active))).toEqual([BITE]);
     // …and every declaration is refused, because the WIDER fact wins at the gate.
     expect(refusal(both, "p2", BITE)).toBe("ATTACK_PREVENTED");
     expect(refusal(both, "p2", YAWN)).toBe("ATTACK_PREVENTED");

@@ -241,9 +241,9 @@ describe("the printed datum — re-queried, not inherited", () => {
     // the card's own curly spelling (so a player holding the card reads back the
     // words on it). Three different lines, one board.
     const { events } = boosted("fix-curly-booster", 1, 2);
-    expect(deriveAttackEffect(FIXTURE_POOL["fix-curly-booster"]?.attacks?.[1]?.effect ?? "")).toEqual(
-      [{ op: "boostAttack", attack: "Slip 'n' Roll", amount: 100 }],
-    );
+    expect(
+      deriveAttackEffect(FIXTURE_POOL["fix-curly-booster"]?.attacks?.[1]?.effect ?? ""),
+    ).toEqual([{ op: "boostAttack", attack: "Slip 'n' Roll", amount: 100 }]);
     expect(find(events, "ATTACK_BOOSTED")?.attack).toBe("Slip ’n’ Roll");
   });
 
@@ -326,7 +326,7 @@ describe("the install — the address is resolved once, by the helper D154 wrote
     });
     // …and NOT the per-attack BAR, which is the field a shared record would have
     // written and the one thing no board can tell apart from this one by shape.
-    expect(state.players.p1.active?.lockedAttack).toBeNull();
+    expect(state.players.p1.active?.lockedAttacks).toEqual([]);
   });
 
   it("the ROW ORDER is the printed order — the damage, then the rider", () => {
@@ -380,13 +380,21 @@ describe("the install — the address is resolved once, by the helper D154 wrote
     expect(twice.players.p1.active?.boostedAttack).toEqual(once.players.p1.active?.boostedAttack);
 
     const bigger: GameEvent[] = [];
-    const merged = runOne(once, [{ op: "boostAttack", attack: "Echoed Voice", amount: 150 }], bigger);
+    const merged = runOne(
+      once,
+      [{ op: "boostAttack", attack: "Echoed Voice", amount: 150 }],
+      bigger,
+    );
     expect(find(bigger, "ATTACK_BOOSTED")?.amount).toBe(150);
     expect(merged.players.p1.active?.boostedAttack?.amount).toBe(150);
     // …and a SMALLER one changes nothing and says nothing, which is the half of
     // `Math.max` a `?:` would get wrong in the direction nobody looks at.
     const smaller: GameEvent[] = [];
-    const kept = runOne(merged, [{ op: "boostAttack", attack: "Echoed Voice", amount: 20 }], smaller);
+    const kept = runOne(
+      merged,
+      [{ op: "boostAttack", attack: "Echoed Voice", amount: 20 }],
+      smaller,
+    );
     expect(types(smaller)).toEqual([]);
     expect(kept.players.p1.active?.boostedAttack?.amount).toBe(150);
   });
@@ -502,7 +510,7 @@ describe("the bonus is addressed to ONE index", () => {
     // ⚠️ THE DRIVEN FORM OF D155's DESIGN ANSWER. D131's widen-don't-add test
     // PASSES on the shape here — `{ turn, attackIndex, amount }` minus `amount` is
     // D154's record byte for byte — so the refusal has to be made on the READ, and
-    // this is it: `lockedAttackIndex`'s consumer REFUSES the index it returns and
+    // this is it: `lockedAttackIndexes`'s consumer REFUSES the index it returns and
     // `boostedAttackDamage`'s PAYS it. One field would hand `attack.ts`'s §8 gate
     // the index of the attack the card just bought.
     //
@@ -518,10 +526,9 @@ describe("the bonus is addressed to ONE index", () => {
       attackIndex: ECHO_CHORUS_INDEX,
       amount: 100,
     });
-    expect(must0(armed.players.p1.active).lockedAttack).toEqual({
-      turn: 4,
-      attackIndex: ECHO_TAP_INDEX,
-    });
+    expect(must0(armed.players.p1.active).lockedAttacks).toEqual([
+      { turn: 4, attackIndex: ECHO_TAP_INDEX },
+    ]);
 
     const window = inWindow(must(applyAction(armed, { type: "endTurn", seat: "p1" })));
     expect(window.turn).toBe(4);
@@ -820,7 +827,7 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
       damageReduction: body.damageReduction,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
-      lockedAttack: body.lockedAttack,
+      lockedAttacks: body.lockedAttacks,
       boostedAttack: body.boostedAttack,
       retreatBlocked: body.retreatBlocked,
     }).toEqual({
@@ -829,7 +836,7 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
       damageReduction: null,
       attackDamageDebuff: null,
       installedRecoil: null,
-      lockedAttack: null,
+      lockedAttacks: [],
       boostedAttack: null,
       retreatBlocked: false,
     });

@@ -405,15 +405,39 @@ export interface MatchRecord {
     own scope), no `BoardCondition` member, no `DAMAGE_DEALT` member (the bonus it
     pays is reported in the `bonus` field that has existed since Vitality Band). The
     RENDERED `SeatLogEntry[]` gains one new row type (`ATTACK_BOOSTED`), which is
-    text in NEW records only and is D141's already-settled case. */
-export const MATCH_RECORD_VERSION = 10;
+    text in NEW records only and is D141's already-settled case.
+
+    ⚠️ BUMPED AT D165 (engine 0.111.0), 10 → 11, and it is the NINTH time on
+    D124's SAME trigger — but the FIRST that is a CHANGED type rather than a new
+    key, which is the variant that makes the rule's own wording earn its keep.
+    `InPlayPokemon.lockedAttack: LockedAttack | null` became
+    `InPlayPokemon.lockedAttacks: LockedAttack[]` (a REVIEW FIX — the field has two
+    writers, `preventAttackUse` at `state.turn + 2` and `lockDefenderAttack` at
+    `state.turn + 1`, which collide from adjacent turns, and the single slot
+    silently deleted a live bar). D124's test has never been "did a new key
+    appear" but **"can the PREVIOUS deploy's RECORD hold the new TYPE"**, and it
+    cannot: every body in a version-10 record carries `lockedAttack`, which the
+    new type does not describe, and carries NO `lockedAttacks`, which it requires.
+    The soft landing is not even soft — `lockedAttackIndexes` calls `.filter` on
+    an absent field and THROWS — and the rule does not turn on that either way.
+    NINE bumps, NINE reasons, one test.
+
+    Nothing else persisted moved. No op was added or removed and neither writer
+    parks (`preventChosenAttack`'s park predates this and its `chooseAttack`
+    prompt/choice shapes are untouched), so no `EffectContinuation` and no
+    `phase.cont` inhabitant changed. `ATTACK_LOCKED` is unchanged in shape AND in
+    wording — two live bars are two rows installed on two different turns, each
+    naming its own attack, so no row had to learn to say "and also". No
+    `GameState` field, no `EffectContext` field, no `BoardCondition` member, no
+    new error code (the §8 gate still reuses `ATTACK_PREVENTED`), and no
+    `@luminous/schema` diff: `redactedAttacksOf` still folds the fact into the
+    per-attack `playable` boolean the wire already carries, so the WIRE shape is
+    byte-identical across this bump and only the DO's stored `GameState` moves. */
+export const MATCH_RECORD_VERSION = 11;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
-export type MatchLoad =
-  | { kind: "none" }
-  | { kind: "ok"; record: MatchRecord }
-  | { kind: "stale" };
+export type MatchLoad = { kind: "none" } | { kind: "ok"; record: MatchRecord } | { kind: "stale" };
 
 /** Read a raw storage value back as a `MatchRecord`, or `null` when this deploy
     cannot trust it. PURE — the retirement (deleting it, resetting the lobby,
@@ -525,9 +549,7 @@ export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
     reject returns a `reason` (an unsupported/illegal action changes nothing — the
     client's optimistic gesture already sprang back) so the DO can surface the
     transient rejection pill (P4 2b-iii-d). Pure — no DO/storage. */
-export type MatchActionOutcome =
-  | { ok: true; record: MatchRecord }
-  | { ok: false; reason: string };
+export type MatchActionOutcome = { ok: true; record: MatchRecord } | { ok: false; reason: string };
 
 export function applyMatchAction(
   record: MatchRecord,
