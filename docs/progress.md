@@ -3,7 +3,11 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-03 — build session #150 (**VERIFICATION FIX + DOC-DEBT REPAIR, NOT A CARD SLICE — D165's INTERRUPTED MUTATION PASS FINISHED, and its own report of it was UNDERSTATED: re-derived at 32 run / 32 caught with FIVE survivors rather than two, ALL of them ONE boundary — `addLockedAttack`'s prune, `lock.turn >= now`. WITNESSED rather than deleted, because every one of the five DELETES A BAR THAT IS STILL BITING. Plus D164's missing doc ritual, recovered off `16fa8e8`** (D166, engine **UNCHANGED at 0.111.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 11** — **0 engine behaviour lines**).)
+**Last updated:** 2026-08-03 — build session #151 (**P3-M5 (long tail): THE MULTIPLY TWIN — the THIRD adjective on a count source the engine has read since M2, and it is NO ADJECTIVE AT ALL: *"This attack does {30|50} damage for each damage counter on this Pokémon."* — 2 printings / 2 sentences (Drifloon `sv01-089` idx 1 "Balloon Blast" 30×, Onix `swsh10.5-036` idx 1 "Raging Swing" 50×) on **ONE regex and ONE `if`**. ⚠️ THE FAMILY SPLITS BY FOLD, NOT BY COUNT SOURCE, AND THIS IS THE PRINTING THAT PROVES IT — `damageCountersOnSelf` is now read by ALL THREE readers, told apart by a single word** (D167, engine **0.111.0 → 0.112.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 11**).)
+**Item 1 of the remainder list, carried since D163 measured it, and the cheapest item that page had held in twenty slices — priced at *"one regex, zero other engine lines"* and, unusually, THE PRICING HELD EXACTLY.** **THE CENSUS, RE-RUN RATHER THAN INHERITED.** `LIKE '%for each damage counter%'` over all three text columns of the local D1 (2026-08-03, **978 cards / 6 sets**) is **19 rows / 6 shapes**; subtract the `more` twin (7 printings, read since M2) and the `less` twin (5 printings, D163) and **exactly two rows remain, both `attacks_json`, both at index 1** — Drifloon `sv01-089` "Balloon Blast" ({P}{P}, printed `"30×"`) and Onix `swsh10.5-036` "Raging Swing" ({F}{F}{C}{C}, printed `"50×"`). **2 printings / 2 sentences, one `(\d+)` capture spanning both.** **⚠️ THE FINDING: THIS FAMILY SPLITS BY *FOLD*, NOT BY *COUNT SOURCE*, AND UNTIL THIS PRINTING THAT WAS INDISTINGUISHABLE FROM A COINCIDENCE.** `deriveAttackDamageBonus` (`more` → add `per × count` to the printed base), `deriveAttackDamageMultiplier` (no adjective → `per × count` **IS** the damage, printed base dropped) and `deriveAttackDamagePenalty` (`less` → keep the base and subtract, D163) are **three readers over ONE `{per, count}` interface and ONE count evaluator**. Until now each fold happened to own a **disjoint** set of count sources and it would have been easy to read that accident as the design; **`damageCountersOnSelf` is now read by all three, told apart by a single word.** Because the split was made on the FOLD rather than on the SOURCE, **the third arrival cost one regex and one `if`**: no new `DamageCountSource`, no new evaluator arm, no new reader, no new fold, **no branch in `attack.ts`** (`scaling` is `damageBonus ?? damageMultiplier`, the base-drop rule keys on `damageMultiplier !== null`, and `effectSimulated`/`modifierSimulated` are both written `scaling !== null || …` — all four sites already subsumed the new arm), no op, event, event field, log crumb, error code, prompt, park, field, registry row, redact arm or projection, and **no web/DB/`@luminous/schema` diff**. **The contrast with D163 is the transferable part: D163 needed a WHOLE THIRD READER because its FOLD was new; this one needed NONE because its fold was not. *"Is this a new count source, or a new fold?"* is the question this family is priced by, and the two answers differ by an order of magnitude.** **⚠️ THE PLAN SAID "REUSE A FIXTURE" AND THERE WAS NOTHING TO REUSE — the census that mattered was of `FIXTURE_POOL`, not of the catalog.** FIVE bodies in the pool already print this exact count source (`sv02-028`, `sv03-161`, `fix-attacker`'s "Rage"/"Fury" with `more`; `sv01-060`, `sv02-037` with `less`) and **not one prints the bare form**; neither `sv01-089` nor `swsh10.5-036` was fielded anywhere in the package. **Both fixtures are authored FRESH and transcribed off the catalog**, and the cheap dodge was priced and REFUSED: bending a neighbour's effect string would have made *"one regex spans two REAL printed amounts"* a claim about a string the test file itself wrote (**D146's rule read from the FIXTURE side — the exact inverse of D163's payout**). Both carry their whole printed attack list at its printed index, so **0 new `INCOMPLETE` entries**; `sv01-089` idx 0 "Gust" carries no `effect` key at all (the derives-to-nothing index negative) and `swsh10.5-036` idx 0 "Rock Tomb" is a **live `preventRetreat` op** (the sharper negative — a sibling simulated by a DIFFERENT mechanism). **⚠️ TWO SECOND-ORDER BEHAVIOURS OF THE `×` FOLD ARE INHERITED AND ARE NOW DRIVEN RATHER THAN LEFT TO BE REDISCOVERED AS BUGS.** At ZERO counters `scaledBase` and `scaledTotal` are both 0, so `attack.ts`'s `if (scaledBase + scaledTotal > 0)` skips the whole §8.5 pipeline and **no `DAMAGE_DEALT` is emitted at all** — rules-correct (the attack does 0 damage) — **and the attack is still USED, so the turn ends**, which is the half an early `return` would break; both halves are asserted. And the crumb renders the entire damage as ` · scaled +90` off `base 0`, as every existing member of this fold already does (Pecharunt ex, Annihilape, Stoutland) — **no `log.ts` diff**, verified rather than added. All three folds are driven **off ONE board at ONE counter total** (3 counters → **40 / 90 / 140**), which is the case no per-reader `toEqual` can make. **THE PIN THAT WENT RED WAS THE ONE WRITTEN TO GO RED, AND IT WAS RE-POINTED, NOT DELETED.** `selfScalingPenalty.test.ts`'s *"the UNREAD multiply twin … is STILL LOUD"* asserted `deriveAttackDamageMultiplier(BALLOON_BLAST)` → `null` explicitly so that adding this regex — *"the whole of that item's price"* — would fail there and be noticed. It did; the assertion flips to the PRESENCE and names the reader that now owns the sentence, and its three siblings (the additive reader, the subtractive reader and the op deriver must all still refuse it) are untouched and still true. **⚠️ AND THE REGENERATED MANIFEST CONTRADICTS D160's OWN ACCOUNT OF THE CATALOG** — `source.mtime` `2026-08-03T09:22:30.953Z` → **`2026-07-26T20:43:16.258Z`**, which is what `statSync` reports today (ctime matches, so the file was not rewritten in place; 708,608 bytes, byte-identical; **978 rows / 6 sets** re-queried, so **no census number moves and no test breaks**). D160 recorded the sqlite as re-ingested and WAL-checkpointed on 2026-08-03; the file says it has not been written since 2026-07-26 with the restored set already in it. Likely a **`mv` of a same-filesystem backup** (which preserves mtime AND ctime). **The measurement is kept and the contradiction is written down rather than reconciled silently.** **STRUCTURAL: neither PARK nor PERSIST** — `MATCH_RECORD_VERSION` stays **11**, the TENTH control on D124's trigger, pinned as an absence over the 16-key set; **VOICE: no row moved**; **GATES NO ACTION** (the attack must still be OFFERED where it deals 0); **§11 nothing owed**. Cost: **1 regex, 1 `if`**, 2 fixtures, 1 deck (`SELF_COUNTER_MULTIPLY_DECK`, its own 60), `selfCounterMultiply.test.ts` (**30 tests, SEED-FREE**), the re-pointed pin, and `catalogManifest.ts` REGENERATED (209 → **211** fixture rows, 0 absent). **Mutation-checked NINE ways, 9 caught, 0 survivors** — arm deleted (17/2), `per >= 1` → `per >= 0`, `per` hard-coded to 30 (11/5), `count` → `opponentPrizesTaken` (13/5), regex admitting the `more` twin (5/2), regex unanchored, regex lowercased + `/i`, the SHARED evaluator's `Math.floor(attacker.damage / 10)` → `attacker.damage` (26/4), and the base-drop rule losing its `damageMultiplier !== null` term (17/3). **Not mutated on purpose: the ARM ORDER** — the three regexes are whole-sentence anchored and mutually exclusive so no order is observable, and **the comment says so rather than pretending a test covers it** (D157's rule). `bun run check` GREEN exit 0 — **204 files / 3608 tests** (was 203 / 3578).
+
+**Superseded header (build #150 — the VERIFICATION FIX + D164 DOC RECOVERY, D166):**
+**Last updated (was):** 2026-08-03 — build session #150 (**VERIFICATION FIX + DOC-DEBT REPAIR, NOT A CARD SLICE — D165's INTERRUPTED MUTATION PASS FINISHED, and its own report of it was UNDERSTATED: re-derived at 32 run / 32 caught with FIVE survivors rather than two, ALL of them ONE boundary — `addLockedAttack`'s prune, `lock.turn >= now`. WITNESSED rather than deleted, because every one of the five DELETES A BAR THAT IS STILL BITING. Plus D164's missing doc ritual, recovered off `16fa8e8`** (D166, engine **UNCHANGED at 0.111.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 11** — **0 engine behaviour lines**).)
 **Item 0 of D165's remainder list — the first slice this repo had ever committed with its own verification unfinished, and it was written down in full rather than quietly carried, which is the only reason it was findable.** **⚠️ THE PASS WAS RE-DERIVED RATHER THAN TRUSTED, AND IT MOVED THE WRONG WAY.** D165 recorded *24 run / 22 caught / TWO survivors*. Rebuilding the pass from the D165 DIFF rather than from its list gave **31 run / 26 caught / FIVE survivors**, and all five are the SAME boundary written five ways: `>= now` → `> now`; `>= now` → `>= now + 1`; `>= now` → `>= turn`; and **each writer passing `turn` rather than `state.turn` as `now`**. ⚠️ **THREE OF THE FIVE ARE MUTATIONS D165 NEVER GENERATED, and two of those are CALL-SITE mutations rather than mutations of the helper** — which is why the count went UP rather than down. **Re-running the mutants a predecessor listed is not re-running its pass.** **⚠️ THE VERDICT IS WITNESS, NOT DELETE, AND THE ARGUMENT IS NOT TASTE.** The standing standard is that a guard no test can fail is either witnessed or deleted with its unreachability ASSERTED — **D154 deleted** one, **D159/D161/D163 kept** theirs. Neither applies: an entry stamped for `now` is **LIVE NOW** (`lockedAttackIndexes` answers it this very turn), so every one of the five mutants **deletes a bar that is still biting** — **D165's own defect relocated out of the merge rule and into the garbage rule one line below it**, and reachable on a played line. **⚠️ AND THE TWO WRITERS DO NOT REACH THE EQUAL CASE ALIKE — THE ARGUMENT IS PARITY, WHICH IS WHY THERE ARE TWO WITNESSES.** Both writers stamp the HOLDER's own next turn (`+ 2` from the holder's turn, `+ 1` from the opponent's), so **every entry on a body carries that seat's turn parity**. `preventAttackUse` writes on its OWN Active during its own turn, so `lock.turn === now` is **REACHABLE** — driven as a **PLAYED LINE**: P2's Oranguru `sv02-094` bars Skarmory `sv03-142`'s "Peck" on turn 3 for turn 4, and on turn 4 Skarmory declares the attack still legal to it ("Slashing Steel"), whose own drawback writes `4 + 2 = 6` **while the imposed `{ turn: 4 }` entry is live**. **The KO is deliberate** — 120 into Oranguru's exactly 120, so the board stops at `ko:takePrizes` with `state.turn` STILL 4 and **the READER is asked on the writing turn** rather than the record merely inspected; let the turn roll to 5 and the entry is dead by arithmetic and only the record's SHAPE would be observable. `lockDefenderAttack` writes on the OPPONENT's Active during the actor's turn, so `now` is never one of the victim's turns and the equal case is **UNREACHABLE by parity** — driven by **SURGERY**, said rather than skipped, because `addLockedAttack` is ONE function with ONE contract and the parity it leans on is a fact about **today's two writers** rather than about the shape (D150's rule about assumed bounds, applied to a REACHABILITY claim instead of to a count). **The boundary is now pinned from BOTH sides**: `>= now - 1`, which would keep one already-dead turn, fails the predecessor's own prune case. **32 run, 32 caught.** **⚠️ THE TRANSFERABLE LINE: A SLICE'S OWN REPORT OF ITS OWN MUTATION PASS IS A CLAIM, NOT A RECORD.** The dangerous-claims list already held *a predecessor's own FINDING* (D153 understated, D165 exact) and *a predecessor's own CORRECTION*; this adds a **tenth — a predecessor's own COUNT OF WHAT IT VERIFIED**, the only number on a handoff that **nothing in the repo can contradict**, because no test fails when it is wrong: being wrong is precisely the state of there being no test. **⚠️ AND D164's DOC DEBT IS DISCHARGED IN THE SAME SLICE** — `decisions.md` row, `simulator.md` §D164, a header at build **#148b** and a session-log entry, all reconstructed off `16fa8e8`'s message and diff, the same remedy D163 applied to D162 one slice earlier. **The SECOND worktree slice in three whose ritual a successor had to adopt, which makes it a pattern rather than an accident: a worktree slice's docs are not "deferred", they are UNOWNED until a successor adopts them.** One inherited number was corrected in passing: **`FIXTURE_POOL` is 291** — not D164's 290, not D163's 289 — measured two ways (an object-literal key sweep at `16fa8e8` and at HEAD, and a runtime import); the SECOND number of a two-number census, **wrong three handoffs running**. **VERSIONS: NEITHER MOVED AND BOTH ANSWERS ARE ARGUED.** `engineVersion` stays **0.111.0** on D150's precedent for a TEST-ONLY slice (the only production diff is doc-block prose in `interpreter.ts` and `index.ts`), and **no `index.ts` changelog block is added** because that block is the version string's own record; `MATCH_RECORD_VERSION` stays **11** — no `InPlayPokemon` field added, removed or retyped, no `GameState`/`EffectContext` field moved, no op parks. Cost: **2 tests** (`lockedAttackMerge.test.ts` **14 → 16**) and **3 doc blocks amended**. No op, event, prompt, regex, fixture, deck, registry row, error code, web/DB/`@luminous/schema` diff. `bun run check` GREEN exit 0 — **203 files / 3578 tests** (was 203 / 3576).
 
 **Superseded header (build #149 — the LOCKED-ATTACK LIST, D165):**
@@ -137,12 +141,19 @@
 > own family** (Munkidori ex's Prize reduction). **NEITHER D165 NOR D166 IS A CARD
 > SLICE**: D165 is the **REVIEW FIX** — the first correctness bug this branch's
 > reviews have produced — and **D166 is the VERIFICATION FIX that finished D165's
-> interrupted mutation pass and recovered D164's missing doc ritual**. **D157, D158,
-> D159, D162 and D164 were built in ISOLATED WORKTREES.** Engine **0.89.0 →
-> 0.111.0** (unchanged at D166); `MATCH_RECORD_VERSION` **3 → 11** (unchanged at
-> D166); **six required `InPlayPokemon` fields plus one whose TYPE changed**, all
+> interrupted mutation pass and recovered D164's missing doc ritual**. **⚠️ D167 IS A
+> CARD SLICE AGAIN AND IT IS THE MULTIPLY TWIN** — *"This attack does {30|50} damage
+> for each damage counter on this Pokémon."*, the bare no-adjective `×` fold
+> (Drifloon `sv01-089`, Onix `swsh10.5-036`), **2 printings on ONE regex and ONE
+> `if`**, which took **item 1 off the list below**. Its finding is that **this family
+> splits by FOLD, not by COUNT SOURCE**: `damageCountersOnSelf` is now read by all
+> three readers, told apart by a single word, and that is exactly why the third
+> arrival was free where D163's was not. **D157, D158, D159, D162, D164 and D167 were
+> built in ISOLATED WORKTREES.** Engine **0.89.0 → 0.112.0** (0.112.0 at D167);
+> `MATCH_RECORD_VERSION` **3 → 11** (unchanged at D166 **and D167** — the tenth
+> control); **six required `InPlayPokemon` fields plus one whose TYPE changed**, all
 > turn STAMPS read through a dedicated function in `continuous.ts`. Tests **~2900 →
-> 3578**.
+> 3608** across **204 files**.
 
 **⚠️ `/code-review` RAN AT D164 AND THE BRANCH IS UNREVIEWED FROM D165 ON.**
 
@@ -152,9 +163,13 @@ and two writers. It is the **first correctness bug** any review of this branch h
 produced (D136: three lows on 40 decisions; D153: fixed one, no bug). **Everything
 from D165 onward is unreviewed.** The review is **USER-TRIGGERED — a session cannot
 launch it** — so do not put it on the list below as though it were a slice; the useful
-thing a session CAN do is say in its handoff how many decisions have accrued. **TWO
-(D165 and D166), and BOTH are about the same field**, so a review of them is a review
-of one change: `InPlayPokemon.lockedAttacks` and the three rules that maintain it.
+thing a session CAN do is say in its handoff how many decisions have accrued. **THREE
+have (D165, D166, D167) — and TWO of them, D166 AND D167, have landed since that
+figure was last reported.** They are **two changes, not three**: D165 and D166 are the
+same field (`InPlayPokemon.lockedAttacks` and the three rules that maintain it, the
+second slice finishing the first's verification), and **D167 is an unrelated card slice
+whose whole production diff is one regex and one `if`** in `effects.ts`. A review of the
+accrued work is therefore a review of one field plus one parse arm.
 
 **⚠️ TWO THINGS THE REVIEW CHECKED AND DELIBERATELY DID NOT REPORT. Do not re-find
 them as novel:**
@@ -181,6 +196,25 @@ UNOWNED.** If a future slice is run in a worktree with `docs/` barred, the hando
 that commits it owes an explicit named owner for the ritual, or the next session
 inherits it silently. ⚠️ **And recovering it corrected an inherited number: the
 `FIXTURE_POOL` size below.**
+
+✅ **THE REMEDY WAS APPLIED AT D167 AND IT WORKED — KEEP DOING THIS.** D167 was built
+in a worktree barred from `docs/`, and instead of deferring the ritual it emitted a
+**paste-ready handoff** (the `decisions.md` entry, the `simulator.md` section, the
+version answers, the mutation table and the resume-point carry-forwards, all written
+out) with the **main session named as the owner**. The ritual landed in the same
+session rather than one slice later. **A worktree slice that cannot write docs owes a
+finished draft of them, not a promise.**
+
+⚠️ **AND IT SURFACED A NEW WORKTREE HAZARD THAT COST A RENAME: A WORKTREE BRANCHED
+BEFORE THE PREVIOUS DECISION COMMITTED WILL CLAIM ITS NUMBER.** D167's worktree branched
+while D166 was still unlanded, so it wrote **`D166`** through 18 references across 6
+source files (all comments) for what is actually **D167**; the main session renumbered
+them before committing. Nothing was silently overwritten because the collision was
+mechanical and caught, but the general form is not safe — **two parallel worktrees can
+each pick the same next number, and neither will know.** If a slice is dispatched to a
+worktree, **give it its D-number at dispatch time**, and have it use a distinguishable
+placeholder (D158 left fourteen literal `Dxxx` markers committed; D164 switched to
+`Dyyy` for exactly this reason) rather than guessing the next integer.
 
 **⚠️ AND THE STANDING DESIGN RULE GAINS ITS EIGHTH PAYOUT AND A NEW SECOND HALF: THE
 UNIT OF SHARING IS DECIDED BY THE READ SITE — AND THE UNIT OF *STORAGE* IS DECIDED BY
@@ -216,6 +250,23 @@ earned.** D165's field became a list because ONE kind acquired a MULTIPLICITY th
 sites must enumerate. **The union is still declined — nothing dispatches, because
 every entry means one thing — but "no site enumerates" is now a claim that has to be
 re-checked against MULTIPLICITY as well as against KIND.**
+
+⚠️ **D167 IS THE NINTH PAYOUT, AND IT IS THE FIRST ONE THAT PAID OUT YEARS AFTER THE
+DECISION: THE AXIS YOU SHARE AN INTERFACE ALONG DECIDES WHAT A LATER ARRIVAL COSTS.**
+The damage-scaling family is **one `{per, count}` interface and one count evaluator,
+split into THREE READERS BY FOLD** — `+` keeps the printed base and adds, `×` drops it,
+`−` keeps it and subtracts — rather than split by COUNT SOURCE. Until D167 **every fold
+happened to own a disjoint set of sources**, so the two partitions were
+indistinguishable and it would have been easy to read the accident as the design.
+D167's printing put `damageCountersOnSelf` under **all three readers at once, told apart
+by a single word**, and the bill for that third arrival was **one regex and one `if`** —
+no new source, evaluator arm, reader, fold or branch in `attack.ts`, because every
+consumer was already written against the READER rather than against the `count` member.
+**Compare D163, which paid for a whole third reader because its FOLD was new.** The
+transferable rule: **when a family shares an interface, ask which axis the SPLIT is on,
+and price a new printing by whether it is new ALONG THAT AXIS.** *"Is this a new count
+source, or a new fold?"* is a question with an order-of-magnitude answer, and it is the
+same question in a different coat as D155's *"do the CONSUMERS agree?"*.
 
 **⚠️ THE CATALOG IS WHOLE AND THE HONESTY TABLE IS EMPTY. The census-scope caveat
 that dominated four handoffs is now HISTORY, and it should stop being restated as a
@@ -257,16 +308,43 @@ about the DISTINCT STRINGS rather than about the rows. **Re-derive both.**
 
 The local D1 holds **978 rows / 6 sets** (`sv01` 258, `sv02` 279, `sv03` 230,
 `sv06.5` 99, `sve` 24, `swsh10.5` 88), `sets` **6**, `series` **2**, 708,608 bytes,
-mtime **2026-08-03T09:22:30Z**. So:
+mtime ⚠️ **2026-07-26T20:43:16.258Z — CORRECTED AT D167. This line said
+`2026-08-03T09:22:30Z` for seven slices and the file never said that.**
+
+⚠️ **AND THE CORRECTION CONTRADICTS D160's OWN ACCOUNT, WHICH IS WHY IT IS WRITTEN
+DOWN RATHER THAN QUIETLY FIXED.** D167's manifest regeneration (`bun run
+scripts/catalog-manifest.ts`, which is the only sanctioned writer of that file) emitted
+the real `statSync` value. **ctime matches mtime**, so the sqlite has not been rewritten
+in place; it is still **708,608 bytes** — byte-identical to the committed figure — and a
+re-query still returns **978 rows / 6 sets**, so **NO census number moves, no census
+must be re-run, and no test breaks.** Only the provenance stamp does. But D160 recorded
+the file as re-ingested and WAL-checkpointed **on 2026-08-03**, and the file says it has
+not been written since **2026-07-26 with the restored `swsh10.5` set already in it**.
+**The likely explanation is that the `.wrangler` D1 was replaced by a `mv` of a
+same-filesystem backup** — a `mv` preserves both mtime and ctime, where `cp -p` would
+have preserved only mtime. Two consequences for whoever reads this next: **(1) do not
+"restore" the old stamp** — hand-editing a `DO NOT EDIT BY HAND` generated file to keep
+a stale number is precisely the disease `catalogManifest.ts` exists against (D156);
+**(2) the mtime is provenance, not a census.** It says when the bytes last moved, and
+D160's *content* claims are independently confirmed by the row and set counts, which
+were re-queried and are unchanged. If the swap episode is ever to be recorded properly
+it belongs in `CATALOG_MANIFEST.history`, **via the generator**.
+
+So:
 
 - **`FIXTURE_POOL` must STILL be swept as a SEPARATE POPULATION, every time** — and
   **D163 is the payout that makes this rule earn its line rather than merely be
   true**: the pool sweep found the sentence the slice was about **already in a
   fixture, verbatim, unread since 0.94.0**, so four of five printings needed no
-  fixture at all. It holds **291 entries** — ⚠️ **re-measured at D166 two ways (an
-  object-literal key sweep and a runtime import); D163 said 289 and D164 said 290,
-  and both were one short at their own commits** — of which **209** are real-card ids
-  that all have rows, plus synthetic `fix-*` bodies the catalog will never have.
+  fixture at all. ⚠️ **AND D167 IS THE PAYOUT IN THE OTHER DIRECTION, WHICH IS THE HALF
+  NOBODY PLANS FOR**: the same sweep found **five** pool bodies printing D167's exact
+  count source and **not one printing its sentence**, so both its fixtures had to be
+  authored FRESH and the plan's "reuse a fixture" was worth nothing. **Sweep the pool
+  before you write a fixture AND before you promise to reuse one.** It holds **293
+  entries** (291 at D166 — ⚠️ **re-measured there two ways, an object-literal key sweep
+  and a runtime import; D163 said 289 and D164 said 290, and both were one short at
+  their own commits** — plus D167's two), of which **211** are real-card ids that all
+  have rows, plus synthetic `fix-*` bodies the catalog will never have.
 - **`packages/engine/src/catalogManifest.ts` + `catalogManifest.test.ts` (24 tests)
   pin all of it.** `bun run scripts/catalog-manifest.ts --check` says whether the
   manifest is stale; `bun run scripts/catalog-manifest.ts` regenerates it.
@@ -295,8 +373,13 @@ discriminator on the shared interface would be paid by the multiply reader's
 consumers, which have no direction to declare.
 
 **⚠️ CHECK EVERY CLAIM ON THIS LIST BEFORE YOU COST IT. Nineteen of the last
-TWENTY-SIX lists carried something wrong.** D157's did not, D158's inherited pricing
-held in full, and **D162's was clean on every card and every structural claim**.
+TWENTY-SEVEN lists carried something wrong** — ⚠️ **and D167 is one of the eight that
+did NOT, which is worth as much as a correction: its item was priced at D163 as "one
+regex, zero other engine lines" with the code open, and it landed as one regex and one
+`if`. A pricing made by OPENING THE FILE, on a shape whose mechanism already exists, is
+the one kind of structural claim this repo has never had go wrong.** D157's did not,
+D158's inherited pricing held in full, and **D162's was clean on every card and every
+structural claim**.
 D159's did NOT hold, D161's did not either (the CARDS were right and BOTH SHAPES were
 wrong), and **D163's was wrong in a NEW place: not the cards, not the shape, but a
 COUNT OF SENTENCES nobody had ever re-derived, plus a pricing whose only error was
@@ -320,14 +403,34 @@ because being wrong is precisely the state of there being no test — so **rebui
 pass from the DIFF, never from the predecessor's list.** ⚠️ **AND A REVIEW FINDING IS
 ON THIS LIST TOO**: D153's was UNDERSTATED and D165's was EXACT, so the rule is not
 "reviews exaggerate" — it is **sweep it yourself, in both directions, and report which
-way it went** (D166 did, and it went UP).
+way it went** (D166 did, and it went UP). **⚠️ AND THE ELEVENTH — new at D167 — is A
+PRICING'S OWN LIST OF EDITS**, which is not the same claim as its estimate of the cost:
+item 2's *"one regex + one evaluator arm each"* **omitted a whole reader arm in the
+derive function**, and D164's Exp. Share pricing named a `"you may"` park that turns out
+to be free while missing the actual price entirely (**nothing in this engine runs a
+Tool's `triggered` program**). **An enumerated list of edits reads like a completed
+survey and is usually a partial one — re-enumerate it against the file, not against the
+prose.** The **eighth** entry also took its **FOURTH** hit at D167: item 2's census is
+**3 distinct sentences, not 4** (Family A's 10-per string has two printings), after the
+`FIXTURE_POOL` size was one short three handoffs running. ⚠️ **And a TWELFTH kind
+surfaced at D167 that is not a claim about code at all: A GENERATED FILE'S PROVENANCE
+FIELD.** `catalogManifest.ts`'s `source.mtime` said the sqlite was last written
+2026-08-03 for seven slices; regeneration says **2026-07-26**, contradicting D160's own
+account of its re-ingest (see THE CATALOG FACTS above). **Row and set counts are
+unaffected**, which is exactly why nothing caught it — **a field nothing asserts on
+drifts silently even inside a file that exists to stop numbers drifting.**
 
-**⚠️ `/code-review` LAST RAN AT D164 — see the top of this resume point.** **TWO**
-decisions have accrued since (**D165**, the fix for its single finding, and **D166**,
-which finished D165's own verification), and the two things the review checked and
-deliberately did NOT report are recorded up there so nobody re-finds them as novel. It
-remains **USER-TRIGGERED**: a session cannot launch it, so do not put it on the list
-below.
+**⚠️ `/code-review` LAST RAN AT D164 — see the top of this resume point.** **THREE**
+decisions have accrued since (**D165**, the fix for its single finding; **D166**, which
+finished D165's own verification; and **D167**, the multiply twin) — **TWO of them,
+D166 and D167, since this figure was last reported.** They are **two changes, not
+three**: D165+D166 are one field (`InPlayPokemon.lockedAttacks` and the three rules that
+maintain it), and D167's entire production diff is **one regex and one `if`** in
+`effects.ts`. The two things the review checked and deliberately did NOT report are
+recorded up there so nobody re-finds them as novel. It remains **USER-TRIGGERED: a
+session cannot launch it**, so do not put it on the list below as though it were a
+slice — the useful thing a session can do is report the count, which is what this
+paragraph is for.
 
 ---
 
@@ -343,8 +446,21 @@ D165 never generated**. The verdict was **WITNESS, not delete** — every one of
 five deletes a bar that is STILL BITING, i.e. D165's own defect relocated into the
 garbage rule — with a **PLAYED** self-side line and a **CONSTRUCTED** opponent-side
 one, split by a parity argument (§D166). Boundary now pinned from both sides; **32
-run, 32 caught**. **THE LIST BELOW IS THEREFORE UNBLOCKED: START AT ITEM 1** (0a and
-0b are still open and still not slices).
+run, 32 caught**. (0a and 0b are still open and still not slices.)
+
+**⚠️ AND THE OLD ITEM 1 — THE MULTIPLY TWIN — IS DONE (D167) AND HAS BEEN REMOVED FROM
+THE LIST; EVERYTHING BELOW IS RENUMBERED.** *"This attack does {30|50} damage for each
+damage counter on this Pokémon."* (Drifloon `sv01-089`, Onix `swsh10.5-036`) is read,
+for **one regex and one `if`** — the D163 pricing held to the line. The transferable
+finding is worth carrying even though the work is not: **this family splits by FOLD, not
+by COUNT SOURCE.** `damageCountersOnSelf` is now read by all three readers ("more" adds
+to the printed base, "less" keeps it and subtracts, no adjective makes `per × count` the
+whole damage with the base dropped), told apart by one word — and *because* the split
+was made on the fold, the third arrival needed no new `DamageCountSource`, no evaluator
+arm, no reader, no fold and no branch in `attack.ts`. **When you price anything else in
+this neighbourhood, the question is not "is this count source new?" but "is this FOLD
+new?"** — D163 paid for a whole third reader on the second answer and D167 paid a regex
+on the first. **THE LIST NOW STARTS AT ITEM 1 = EXP. SHARE.**
 
 **⚠️ ITEMS 0a AND 0b ARE THE TWO UNFIXED `/code-review` FINDINGS (D153), CARRIED
 FORWARD UNCHANGED.** Neither is a bug today; both are traps armed for a specific
@@ -377,45 +493,101 @@ future slice, which is exactly what a remainder list exists to carry.
   `flipCoin` is ever swapped** — so the action item is not to remove the throw but
   to write that condition down at the swap site if an rng change is contemplated.
 
-1. **⚠️ THE MULTIPLY TWIN OF THE CLAUSE D163 JUST BUILT — 2 printings, ONE REGEX,
-   ZERO OTHER ENGINE LINES. The cheapest item this page has carried in twenty
-   slices, and it was MEASURED at D163 rather than inherited.** *"This attack does
-   {30|50} damage for each damage counter on this Pokémon."* — **Drifloon `sv01-089`
-   idx 1 "Balloon Blast" (printed `"30×"`)** and **Onix `swsh10.5-036` idx 1
-   "Raging Swing" (printed `"50×"`)`. No adjective at all, so it is the `×` fold:
-   `per × count` is the WHOLE damage and the printed base is dropped, which
-   `deriveAttackDamageMultiplier` + `attack.ts`'s `scaledBase` rule already do for
-   the Prize-count and Retreat-cost members. **The count source
-   (`damageCountersOnSelf`), the evaluator, the fold, the base-dropping rule, the
-   event field and the log crumb ALL EXIST.** The work is one regex in
-   `deriveAttackDamageMultiplier`, two fixtures and a suite.
-   ⚠️ **It is PINNED AS AN ABSENCE in `selfScalingPenalty.test.ts`**, so the day the
-   regex lands that suite goes red and tells you to update it. Do not delete the
-   pin — re-point it.
-2. **⚠️ EXP. SHARE `sv01-174` — the LAST unread member of D158's KO-antecedent
-   census, priced at D164 with the code open.** A Tool: on a KO by an opponent's
-   attack, move a Basic Energy. Munkidori ex's Prize reduction (the item that used to
-   sit here) was **BUILT at D164** and closed the *"same antecedent, different
-   consequent"* group down to this one row. ⚠️ **Its cost is dominated by a `"you
-   may"` choice that must PARK MID-SWEEP**, and D164's note is that
-   **`FIX_ONKO`/`settleProgram`'s `resumeTail` MAY ALREADY COVER THAT PARK and
-   nobody has run the check — run it before pricing anything else.** The seam
-   differs from `fix-onko`'s in one way that matters: that one queues AFTER prizes
-   and this must act BEFORE `knockOut`.
-3. **⚠️ THE OTHER TWO UNREAD COUNT SOURCES ON `for each damage counter` — 4
-   printings, MEASURED at D163.** *"…for each damage counter on your opponent's
-   Active Pokémon."* (Dedenne `sv01-095` idx 0 `"30+"`, Espeon `sv03-086` idx 0
-   `"30+"`, Bloodmoon Ursaluna `sv06.5-025` idx 0 `"100+"` — all the "more" form)
-   and *"…for each damage counter on all of your Benched Pokémon."* (Tyranitar
-   `swsh10.5-043` idx 0 `"10×"`). **A new `DamageCountSource` member each**, both
-   reading a body the evaluator already has in scope (`scaledAttackDamage` takes
-   `state` + `defenderSeat` + `attackerSeat`). One regex + one evaluator arm each.
-   The fifth row of that census — Annihilape ex `sv02-242` idx 0's *"Put up to 12
-   damage counters on this Pokémon. This attack does 20 damage for each damage
-   counter you placed in this way."* — is a **two-sentence COMPOUND whose count is a
-   mid-attack CHOICE, not a board fact at declaration**, and belongs with item 8's
-   channel work rather than here.
-4. **⚠️ "EXCITED HEART" + SEISMITOAD's "QUAKING ZONE" — THE FIRST ATTACK-COST
+1. **⚠️ EXP. SHARE `sv01-174` — the last unread member of D158's KO-antecedent
+   census. ⚠️ D164 PRICED IT AND D164's PRICE IS WRONG, IN THE DIRECTION OF MORE WORK.
+   A recon pass ran the check D164 asked for and nobody had run; the numbers below
+   replace it. ≈1.4–1.7× D164 — a FULL SLICE, not a rider.** A Tool: on a KO by an
+   opponent's attack, *you may* move a Basic Energy from the KO'd Pokémon to one of
+   your Pokémon.
+   - **THE TWO THINGS D164 FEARED ARE BOTH FREE.** `resumeTail` **does** carry the
+     park with **zero widening** (`flow.ts:594-640` — a pure control-return flag that
+     captures no KO state), and the `"you may"` is **also free**
+     (`registry.ts:78-83` + `effects.ts:1786-1788`: `moveEnergy` is already
+     declinable). **D164's *"the cost is dominated by a `you may` choice that must
+     park"* is simply not true.**
+   - **⚠️ BUT `FIX_ONKO`/`koTrigger` IS THE WRONG SEAM, AND NOT FOR THE REASON D164
+     GAVE — IT IS A TEMPORAL IMPOSSIBILITY, NOT A WIDENING PROBLEM.**
+     `collectKnockOuts` queues `koTrigger` at `flow.ts:322`, **AFTER `knockOut` has
+     already run for every ref in the batch**, and `knockOut` discards the whole stack
+     (`flow.ts:88`, `:103`). By the time that trigger fires, **the Energy Exp. Share
+     is supposed to move is already in the discard pile.** No amount of park support
+     fixes that.
+   - **THE SEAM THAT FITS IS `damagedTrigger`** — queued at `attack.ts:1022-1023`
+     ahead of `attackEpilogue` (`:1040-1043`) and run by `runDamagedTrigger`
+     (`flow.ts:687-704`) under the damaged seat, **already folding through
+     `settleProgram(..., { resumeTail: true })`**. Exp. Share needs a **sibling stage
+     of that shape**. One wrinkle: `damagedTrigger` seeds on `dealt > 0` while Exp.
+     Share's antecedent is **LETHALITY**, so the stage owes a run-time re-check —
+     precedent at `triggers.ts:161-168`.
+   - **⚠️ THE REAL COST, WHICH D164 NEVER NAMED: NOTHING IN THIS ENGINE RUNS A TOOL's
+     `triggered` PROGRAM.** The holder is a **SURVIVING** Pokémon and the dying body is
+     only the Energy SOURCE. `onKnockOutTrigger` (`triggers.ts:44-48`) reads the KO'd
+     **top card** only; `triggersOf` reads `topCardOf` only and **misses tools
+     entirely**; and `passivesOf` (`continuous.ts:214-222`) is the **only** site in the
+     repo that walks `pokemon.tools` — and it folds to **NUMBERS**, which is exactly
+     why Vengeful Punch (D158) was cheap and this is not. **A NEW BOARD SCAN is
+     required, the first of its kind here.** That is the item's real price.
+   - **`moveEnergy` exists** (`effects.ts:1800`) with its event and log arm free, **but
+     both endpoints must be uid-pinned** — a **third `route` in `moveEndpoints`**
+     (`interpreter.ts:4676-4692`).
+   - **⚠️ UNPRICED PIN:** `ohNoYouDont.test.ts:242-259` pins Exp. Share as an ABSENCE
+     on **FIVE** assertions including `programFor("sv01-174")?.triggered`. **Re-point
+     it, do not delete it** (D167's precedent).
+   - **THE CENSUS, RE-DERIVED:** **6 printings / 4 distinct sentences** raw; excluding
+     Lucario `sv01-114` (correctly ruled a different antecedent — see item 5)
+     **5 printings / 3 sentences**. *"Last unread member"* is TRUE **for the
+     antecedent family**, but a naive re-run of the query shows **2** unread rows
+     (`sv01-174` and `sv01-114`, the latter deliberately). ⚠️ **AND A SEVENTH ROW THE
+     CENSUS PATTERN CANNOT SEE: `sv02-148` Corviknight** (`attacks_json`, a KO *caused
+     by this attack* — a different antecedent family, but **every run of this census
+     since D158 has been blind to it**). Add it to the query before quoting a total.
+2. **⚠️ THE OTHER TWO UNREAD COUNT SOURCES ON `for each damage counter` — 4 printings,
+   and it is TWO SLICES, NOT ONE. ⚠️ D163's costing OMITTED AN EDIT AND OVERCOUNTED
+   THE REGEXES; both are corrected here.**
+   - **The catalog is CONFIRMED exactly (4 printings) but re-derives to 3 DISTINCT
+     SENTENCES, not 4** — Family A's 10-per sentence has two printings. **So 2
+     regexes, not 4.** (The second number of a two-number census, wrong again; see the
+     dangerous-claims list.)
+   - **FAMILY A — the opponent's Active** (*"…for each damage counter on your
+     opponent's Active Pokémon."*, **additive**): Dedenne `sv01-095` idx 0 `"30+"`,
+     Espeon `sv03-086` idx 0 `"30+"`, Bloodmoon Ursaluna `sv06.5-025` idx 0 `"100+"`.
+     Routes through **`deriveAttackDamageBonus`**.
+   - **FAMILY B — the whole bench** (*"…for each damage counter on all of your Benched
+     Pokémon."*, **multiply**): Tyranitar `swsh10.5-043` idx 0 `"10×"`. Routes through
+     **`deriveAttackDamageMultiplier`**.
+   - **⚠️ DO NOT BUNDLE THEM.** Two folds, two readers, two boards; **they share only
+     the `DamageCountSource` type-declaration line.** Bundling buys nothing and doubles
+     the test surface. **And D167's finding is exactly why they are two slices: the
+     family splits by FOLD.**
+   - **⚠️ "ONE REGEX + ONE EVALUATOR ARM EACH" IS WRONG — IT IS FOUR EDITS EACH:** the
+     regex, **a reader arm in the derive function (omitted entirely from the original
+     costing)**, a new `DamageCountSource` member, and the evaluator arm. **Plus the
+     `DamageCountSource` docblock, which hard-states "Four members" and enumerates
+     them.**
+   - **The SCOPE half is CONFIRMED and is genuinely free:** `scaledAttackDamage`
+     already takes `state` + `defenderSeat` + `attackerSeat`, so **no signature
+     change** — Family A is **shape-identical to the existing `opponentActiveRetreatCost`
+     arm**, null-Active guard included.
+   - **Also genuinely free:** `scaledAttackDamage` is the **only exhaustive switch over
+     `DamageCountSource` in the repo** — no consumer in `log.ts`, `redact.ts`,
+     `phaseView.ts` or `apps/web`. **No new event, field, renderer or presence guard.**
+   - **⚠️ THE FIXTURES ARE THE BULK OF THE COST: `FIXTURE_POOL` has ZERO coverage for
+     all four cards** (D167's lesson, immediately again). And **Family A needs a
+     pre-damaged defender that SURVIVES `100 + 30×n`** — `fix-bigbody` at 200 HP breaks
+     fast against Ursaluna — **so a new deck constant**.
+   - ⚠️ **FAMILY A IS IN FLIGHT RIGHT NOW** in a separate worktree — treat it as taken,
+     not as available work. **Family B must be sequenced AFTER it**, because it edits
+     the same `deriveAttackDamageMultiplier` body D167 just touched.
+   - **Annihilape ex `sv02-242` is correctly EXCLUDED from both.** Its idx 0 *"Put up
+     to 12 damage counters on this Pokémon. This attack does 20 damage for each damage
+     counter you placed in this way."* is a **two-sentence COMPOUND whose count is a
+     mid-attack CHOICE, not a board fact at declaration** — and ⚠️ **the reason it is
+     not merely "one more scaling arm" is a shape fact worth carrying**: `EffectRecord`
+     (`interpreter.ts:389`, slots `paid | moved | discarded`) records the **LENGTH of a
+     uid array**, so even a fourth slot would not hold an integer 0..12. **It is a
+     Hail-Blade-sized slice, not a scaling arm**, and it belongs with item 7's channel
+     work.
+3. **⚠️ "EXCITED HEART" + SEISMITOAD's "QUAKING ZONE" — THE FIRST ATTACK-COST
    DISCOUNT AND ITS SURCHARGE SIBLING: 2 printings, ONE MECHANISM, OPPOSITE SIGNS.
    Priced at D162 with the code open; DO NOT mistake it for a fixture item.**
    - Radiant Charizard `swsh10.5-011`'s Ability, printed verbatim: *"This Pokémon's
@@ -443,7 +615,7 @@ future slice, which is exactly what a remainder list exists to carry.
      SAME seam in the SURCHARGE direction off a Pokémon Ability rather than a
      Stadium, already carried LOUD on its fixture (D155). **Do them together or not
      at all** — exactly the shape D131's widen-don't-add test says yes to.
-5. **⚠️ THE §12 STATUS-IMMUNITY FAMILY: 4 printings / 3 sentences, measured at D159
+4. **⚠️ THE §12 STATUS-IMMUNITY FAMILY: 4 printings / 3 sentences, measured at D159
    rather than inherited.** Dachsbun `sv01-099` (*"This Pokémon can't be Burned."* —
    the second clause of the Ability D159 built the first half of), Pachirisu
    `sv01-068`/`-208` "Electricity Pouches" (*"can't be Paralyzed"*) and Therapeutic
@@ -454,23 +626,23 @@ future slice, which is exactly what a remainder list exists to carry.
    `applyStatus`; **the Energy printing needs an `EnergyProgram` surface that does not
    exist**, so scope it to the two Pokémon or pay for that surface deliberately. All
    four clauses are carried VERBATIM on the fixtures and PINNED.
-6. **The §9 RECOIL family — its ALWAYS-ON half is CLOSED 5/5 at D158. What is left:**
+5. **The §9 RECOIL family — its ALWAYS-ON half is CLOSED 5/5 at D158. What is left:**
    - **Mabosstiff `sv02-143` "Comeuppance"** — the family's LAST printing, and
      **unchanged by D158**: same duration, same body, same §9 site as Scary Fangs,
      with the amount read off the damage done to the holder. The regex, op, field,
      reader, §10 clears and read site are **ALL built** (D152); the only missing
-     piece is the **damage-dealt channel** — item 8's Iron Moth / Camerupt
-     neighbourhood. **Do it AFTER item 8, never before**; if item 8 is skipped this
+     piece is the **damage-dealt channel** — item 7's Iron Moth / Camerupt
+     neighbourhood. **Do it AFTER item 7, never before**; if item 7 is skipped this
      is skipped with it. Still pinned LOUD in `counterattack.test.ts`.
    - The KO census's other rows are now accounted for: **Munkidori ex's Prize
-     reduction is BUILT (D164)**, **Exp. Share `sv01-174` is item 2 above**, and
+     reduction is BUILT (D164)**, **Exp. Share `sv01-174` is item 1 above**, and
      ⚠️ **Lucario `sv01-114` "Avenging Knuckle" IS NOT THIS ANTECEDENT AT ALL** —
      D164 found that every list since D158 said it was. Printed: *"If any of your
      {F} Pokémon were Knocked Out by damage from an attack **during your opponent's
      last turn**…"* — retrospective, board-wide, type-filtered, and carrying NO
      possessive clause. `conditionClause.test.ts` has held the correct account since
      **D115**. Do not re-add it here.
-7. **⚠️ THE WRONG-INDEX FIXTURES — SIX (D160).** Slither Wing `sv06.5-026`, Koraidon
+6. **⚠️ THE WRONG-INDEX FIXTURES — SIX (D160).** Slither Wing `sv06.5-026`, Koraidon
    `sv01-124`, Kilowattrel `sv01-079` and Arcanine ex `sv01-032` each DROP their
    index-0 attack so the discarding one sits at 0; Klefki `sv01-096` substitutes
    `fix-attacker`'s Bite for the printed "Joust"; and **Charmeleon `swsh10.5-009`
@@ -485,7 +657,7 @@ future slice, which is exactly what a remainder list exists to carry.
    hold TWO of at once. ⚠️ **D163 added `sv01-060` as a COMPLETE
    fixture (both attacks, correct order) precisely so its index-1 clause could be
    driven — the seventh entry would have been free to create and was not.**
-8. **Iron Moth `sv06.5-009` "Suction" + Camerupt `sv03-032`** — unchanged since D132
+7. **Iron Moth `sv06.5-009` "Suction" + Camerupt `sv03-032`** — unchanged since D132
    (INHERITED): a channel from the §8.5 pipeline's RESULT into a tail op.
    **Mabosstiff `sv02-143`, Corviknight `sv02-148`** *(the KO-conditioned PREVENT
    printing)*, **Copperajah `sv06.5-042`'s "If you do", Annihilape ex `sv02-242`'s
@@ -497,14 +669,14 @@ future slice, which is exactly what a remainder list exists to carry.
    `coinFlipGate` and the last five tails printings. ⚠️ **Egg Incubator
    `swsh10.5-066`/`-087` IS BACK IN THE LOCAL D1** since D160, so this item's count
    can finally be re-measured against a whole catalog.
-9. **⚠️ DISCARD-PILE RETRIEVAL RESTRICTIONS: 2 printings, and NO READER EXISTS**
+8. **⚠️ DISCARD-PILE RETRIEVAL RESTRICTIONS: 2 printings, and NO READER EXISTS**
    (D159). Neutralization Zone `sv06.5-060` (an **ACE SPEC**) and Poké Vital A
    `sv06.5-062`, both *"This card can't be put into your hand or deck from the
    discard pile."* **No op, no `CardFilter` and no zone rule consults a card's own
    retrievability** — this is a property of a CARD that only becomes meaningful once
    something searches the discard pile for a named card. **Cheap only then; do not
    build the reader speculatively.** Both carried verbatim and pinned.
-10. **CHEAP CLEANUP — TWO NAMED LINES LEFT, and both have an OWNER rather than a
+9. **CHEAP CLEANUP — TWO NAMED LINES LEFT, and both have an OWNER rather than a
     sweep.** D161 rewrote `effects.ts`'s D156 census header and corrected two wrong
     scope tags; D162 re-measured and rewrote three more blocks. **What remains is
     exactly two, both named by D162 so nobody re-sweeps the file:**
@@ -540,10 +712,12 @@ NOWHERE), D156 the sixth (a TEST-ONLY module), **D157 the seventh — a new PROM
 and a new OP MEMBER, both of which DO cross into `MatchRecord` on a parked phase and
 are both union WIDENINGS** — and **D159/D161 the eighth: a new
 `PassiveEffects`/`StadiumEffects` field is CATALOG data read through a pure function
-of the current state. D162 and D163 are the ninth kind and the cheapest: a slice that
-adds NO persisted shape at all** (D162 a fixture and a deck; D163 a regex, a reader
-and two lines of arithmetic). D148, D151, D153, D156, D157, D159, D161, D162 and D163
-sitting between the bumping slices are the CONTROLS that show the trigger is
+of the current state. D162, D163 and D167 are the ninth kind and the cheapest: a slice
+that adds NO persisted shape at all** (D162 a fixture and a deck; D163 a regex, a reader
+and two lines of arithmetic; **D167 a regex and an `if`** — the cheapest instance of the
+cheapest kind). D148, D151, D153, D156, D157, D159, D161, D162, D163, D166 and **D167 —
+the TENTH control** — sitting between the bumping slices are the CONTROLS that show the
+trigger is
 literally "a required key appeared on `InPlayPokemon`". The test is never "did a field
 land in a persisted shape" but **"can the previous deploy's RECORD hold the new
 TYPE"**. **D155 adds the other half: PRICE THE DODGES AND SAY WHY YOU REFUSED THEM.
@@ -664,11 +838,12 @@ compiler-enforced (D157).**
   field, not what they read), the pre-W/R DAMAGE-INCREASE neighbourhood (§D155), the
   CHOSEN-ATTACK neighbourhood (§D157), the ALWAYS-ON POST-W/R REDUCTION
   neighbourhood (§D161) **and the `for each damage counter` neighbourhood (§D163 —
-  19 rows / 6 shapes, 12 read and 7 unread with each priced)**.
+  19 rows / 6 shapes; **14 read and 5 unread** since D167 took the bare `×` twin, with
+  each of the 5 priced in items 1–2 above)**.
 
-Full detail in `docs/workstreams/simulator.md` §"D163", §"D165" and §"Still unmapped
-after D163". ⚠️ **There is NO §"D164" — that is the doc debt named at the top of this
-resume point; `git show 16fa8e8` is the source.**
+Full detail in `docs/workstreams/simulator.md` §"D163", §"D164", §"D165", §"D166",
+§"D167" and §"Still unmapped on `for each damage counter`, after D167". ⚠️ **The
+"there is no §D164" warning is now HISTORY — D166 wrote that section.**
 
 ---
 
@@ -6108,7 +6283,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D166 — VERIFICATION FIX + DOC-DEBT REPAIR, NOT A SLICE**: D165's INTERRUPTED mutation pass is finished, and **its own report of it was UNDERSTATED — re-derived at 32 run / 32 caught with FIVE survivors rather than two**, all of them `addLockedAttack`'s prune boundary (`lock.turn >= now`) written five ways, three of which D165 never generated and two of which are CALL-SITE mutations. **WITNESSED rather than deleted** — every one of the five deletes a bar that is STILL BITING, which is D165's own defect relocated into the garbage rule — with a PLAYED self-side line and a CONSTRUCTED opponent-side one (the split is a PARITY argument: both writers stamp the holder's own next turn, so only `preventAttackUse` can meet `lock.turn === now`). Boundary now pinned from both sides. **D164's missing doc ritual is recovered in the same slice** off `16fa8e8`, and `FIXTURE_POOL` is **291** (not 290, not 289). engine **UNCHANGED at 0.111.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 11**, 0 engine behaviour lines. Before it: **D165 — REVIEW FIX, NOT A SLICE**: `InPlayPokemon.lockedAttack` had ONE reader and TWO writers (`preventAttackUse` at `+ 2`, `lockDefenderAttack` at `+ 1`), the stamps collide from adjacent turns, and the single slot silently DELETED a live bar — so a Skarmory `sv03-142` could use "Slashing Steel" on the very turn its own card bars it. The field is now `lockedAttacks: LockedAttack[]` with ONE shared merge rule and ONE plural reader; `MATCH_RECORD_VERSION` **10 → 11** (the first bump in nine slices, and the first that is a CHANGED TYPE rather than a new key); engine **0.111.0**. It is the FIRST correctness bug `/code-review` has produced on this branch, and the ENUMERATING CALLER four decisions forecast — arriving as a MULTIPLICITY rather than as a union. Before it: **D164** — the KO-CONDITION ANTECEDENT as its own family (Munkidori ex `sv06.5-037`/`-083`/`-091`'s PRIZE REDUCTION), engine **0.110.0**, MRV 10 (docs recovered at D166 — §D164). Before that: **D163** — the SELF-SCALING DAMAGE PENALTY: *"This attack does {10|20} less damage for each damage counter on this Pokémon."* — **5 printings / 2 sentences** (Skeledirge ex `sv02-037`/`-233`/`-258`/`-272` "Burning Voice" idx 1, Cetitan `sv01-060` "Sweeping Tackle" idx 1) on **ONE regex and ONE new reader**, folded into the EXISTING pre-W/R `debuff` term — no new op, event, event field, log crumb, field, registry row or projection, and **`MATCH_RECORD_VERSION` stays 10**. **§D147's thirty-one-printing `less damage` census CLOSES at 31/31.** engine **0.109.0**. Since D157: D158 (KO-conditioned §9 recoil), D159 (always-on attacker filters), D160 (the `swsh10.5` re-ingest), D161 (always-on post-W/R reductions), D162 (the restored-catalog re-census — the per-attack lock family closes at 8/6). Previous latest was (latest: **D157** — the OPPONENT-SIDE PER-ATTACK LOCK: *"Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack."* — 2 catalogued printings (Medicham `sv01-111`, Oranguru `sv02-094`) on ONE anchor with NO capture, a THIRD op, the engine's **EIGHTH PROMPT KIND** (`chooseAttack` — the first whose candidates are neither cards nor Pokémon), and **D154's `lockedAttack` FIELD reused UNCHANGED**, so the reader, the §8 gate, both payability projections and all four §10 clears take ZERO diff and `MATCH_RECORD_VERSION` stays **10**. **The per-attack neighbourhood is CLOSED.** engine **0.104.0**) | |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D167 — THE MULTIPLY TWIN**: *"This attack does {30\|50} damage for each damage counter on this Pokémon."* — the bare, no-adjective `×` fold, **2 printings / 2 sentences** (Drifloon `sv01-089` idx 1 "Balloon Blast" 30×, Onix `swsh10.5-036` idx 1 "Raging Swing" 50×) on **ONE regex and ONE `if`**. ⚠️ **The family splits by FOLD, not by COUNT SOURCE, and this is the printing that proves it**: `damageCountersOnSelf` is now read by ALL THREE readers — "more" adds to the printed base, "less" keeps it and subtracts, and no adjective at all makes `per × count` the whole damage with the base dropped — told apart by a single word. Because the split was made on the fold, the third arrival bought **no new `DamageCountSource`, no evaluator arm, no reader, no fold and no branch in `attack.ts`** (D163's subtractive twin needed a whole third reader because its FOLD was new). Both fixtures authored **fresh** — five pool bodies print this exact count source and not one prints the bare form. Zero counters emits **no `DAMAGE_DEALT` at all** and the attack is still USED; both halves driven. `selfScalingPenalty.test.ts`'s deliberate absence pin **RE-POINTED, not deleted**. **9 mutations run, 9 caught, 0 survivors.** engine **0.111.0 → 0.112.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 11**; manifest 209 → **211** fixture rows. ⚠️ Its manifest regeneration also recorded a **different sqlite mtime (2026-07-26, not 2026-08-03)**, which contradicts D160's re-ingest account — kept as measured, with the contradiction written down (row counts unaffected). Before it: **D166 — VERIFICATION FIX + DOC-DEBT REPAIR, NOT A SLICE**: D165's INTERRUPTED mutation pass is finished, and **its own report of it was UNDERSTATED — re-derived at 32 run / 32 caught with FIVE survivors rather than two**, all of them `addLockedAttack`'s prune boundary (`lock.turn >= now`) written five ways, three of which D165 never generated and two of which are CALL-SITE mutations. **WITNESSED rather than deleted** — every one of the five deletes a bar that is STILL BITING, which is D165's own defect relocated into the garbage rule — with a PLAYED self-side line and a CONSTRUCTED opponent-side one (the split is a PARITY argument: both writers stamp the holder's own next turn, so only `preventAttackUse` can meet `lock.turn === now`). Boundary now pinned from both sides. **D164's missing doc ritual is recovered in the same slice** off `16fa8e8`, and `FIXTURE_POOL` is **291** (not 290, not 289). engine **UNCHANGED at 0.111.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 11**, 0 engine behaviour lines. Before it: **D165 — REVIEW FIX, NOT A SLICE**: `InPlayPokemon.lockedAttack` had ONE reader and TWO writers (`preventAttackUse` at `+ 2`, `lockDefenderAttack` at `+ 1`), the stamps collide from adjacent turns, and the single slot silently DELETED a live bar — so a Skarmory `sv03-142` could use "Slashing Steel" on the very turn its own card bars it. The field is now `lockedAttacks: LockedAttack[]` with ONE shared merge rule and ONE plural reader; `MATCH_RECORD_VERSION` **10 → 11** (the first bump in nine slices, and the first that is a CHANGED TYPE rather than a new key); engine **0.111.0**. It is the FIRST correctness bug `/code-review` has produced on this branch, and the ENUMERATING CALLER four decisions forecast — arriving as a MULTIPLICITY rather than as a union. Before it: **D164** — the KO-CONDITION ANTECEDENT as its own family (Munkidori ex `sv06.5-037`/`-083`/`-091`'s PRIZE REDUCTION), engine **0.110.0**, MRV 10 (docs recovered at D166 — §D164). Before that: **D163** — the SELF-SCALING DAMAGE PENALTY: *"This attack does {10|20} less damage for each damage counter on this Pokémon."* — **5 printings / 2 sentences** (Skeledirge ex `sv02-037`/`-233`/`-258`/`-272` "Burning Voice" idx 1, Cetitan `sv01-060` "Sweeping Tackle" idx 1) on **ONE regex and ONE new reader**, folded into the EXISTING pre-W/R `debuff` term — no new op, event, event field, log crumb, field, registry row or projection, and **`MATCH_RECORD_VERSION` stays 10**. **§D147's thirty-one-printing `less damage` census CLOSES at 31/31.** engine **0.109.0**. Since D157: D158 (KO-conditioned §9 recoil), D159 (always-on attacker filters), D160 (the `swsh10.5` re-ingest), D161 (always-on post-W/R reductions), D162 (the restored-catalog re-census — the per-attack lock family closes at 8/6). Previous latest was (latest: **D157** — the OPPONENT-SIDE PER-ATTACK LOCK: *"Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack."* — 2 catalogued printings (Medicham `sv01-111`, Oranguru `sv02-094`) on ONE anchor with NO capture, a THIRD op, the engine's **EIGHTH PROMPT KIND** (`chooseAttack` — the first whose candidates are neither cards nor Pokémon), and **D154's `lockedAttack` FIELD reused UNCHANGED**, so the reader, the §8 gate, both payability projections and all four §10 clears take ZERO diff and `MATCH_RECORD_VERSION` stays **10**. **The per-attack neighbourhood is CLOSED.** engine **0.104.0**) | |
 | online | P4 | 🚧 **STARTED** (engine broad at 0.40.0). M1 (WS lobby over the DO) already done at P1-M8. **1a: engine wired into `apps/api`** (`startMatch`, host→p1/guest→p2). **1b: the DO seam DONE** — `handoffToMatch()` in `alarm()` loads the D1 pool, mints a seed, persists a `MatchRecord` under `MATCH_KEY` (dropped on `abandonsMatch`). **1c: the redactor + wire + read-only board DONE** — `redactGame`/`RedactedGame` + `{kind:"match"}` + `OnlineMatch` over `PlaymatView`. **2a: the action transport + setup flow DONE** — `{kind:"action"}` frame, seat-bound `applyMatchAction`, redacted `phase`, `OnlineHud` setup panels. **2b-i: the attack + KO loop DONE** — `RedactedPhase.turn:action.attacks` (server-computed payability, turn-owner + own-Active only), `SUPPORTED_MATCH_ACTIONS` += attack/takePrizes/promote, `OnlineHud` AttackPanel + ko:takePrizes/ko:promote dialogs; the match now plays TO A WIN with the fixed basic decks. **2b-ii: retreat DONE** (scoped to retreat ALONE — abilities/trainers deferred to real decks): `RedactedPhase.turn:action.retreat` + `SUPPORTED_MATCH_ACTIONS` += retreat + `OnlineHud` RetreatDialog. **2b-iii-a: the effect:choose prompt SEAM + the mayDraw dialog DONE** — `RedactedEffectPrompt` (mayDraw arm) on `RedactedPhase.effect:choose.prompt` (answerer-only via `redactedPromptOf`), `decisionFromPhase` reconstruction (round-trip now holds for a mayDraw park), `OnlineHud` MayDrawDialog; `resolveEffect` stays OFF the allowlist (2b-iii SPLIT: a=mayDraw seam, b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection pill). **2b-iii-b: the public-ref prompts DONE** — `RedactedEffectPrompt` += choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy arms (+ `RedactedPokemonRef`, absolute-seat), `redactPrompt` maps them (fresh copies, answerer-only, controller-answered so stricter than `phaseViewOf`), `decisionFromPhase` reconstructs full (round-trip holds for the answerer's view), `OnlineHud` += four dialogs via `EffectChooseDialog` (names resolved off the board); `resolveEffect` still OFF the allowlist. **2b-iii-c: the hidden-candidate prompts DONE** — `RedactedEffectPrompt` += chooseCards/attachCards arms carrying a `RedactedCard` per candidate (the deck-card reveal, server-resolved via `redactedCardOf`, answerer-only — the hidden-info barrier, leak-tested); `decisionFromPhase` recovers uids from `c.id`; `OnlineHud` += ChooseCards/AttachCards dialogs + the `effect:choose` render keys on the prompt (stale-pick reset); **`resolveEffect` now ON `SUPPORTED_MATCH_ACTIONS`** (every kind dialoged; soft-lock-safe). 1767→1774 tests. **2b-iii-d SPLIT** into d-i (pill) + d-ii (log). **2b-iii-d-i: the rejection pill DONE** — `{kind:"reject-action", reason}` server frame, `applyMatchAction` returns `{ok,reason}`, the DO sends it on `!ok`, `useLobby.actionError` + `OnlineMatch` `TransientErrorPill`. 1774→1777 tests. **2b-iii-d-ii: the online event log DONE** (D68) — `logFromEvents` + `LogContext` moved into `@luminous/engine`, the wire log types (`SeatLogEntry`/`LogSegment`) into `@luminous/schema`, the `{kind:"match"}` frame grew `log` (seat-keyed + leak-safe, identical to both), `MatchRecord` grew `startedAt`/`names`/`log`, `applyMatchAction` takes `now`; `viewLogEntries` relabels client-side. 1777→1782. **3 SPLIT** (a/a-sec/b/c+). **3a + 3a-sec: real deck selection + seat auth DONE** (D69) — the `/ws` upgrade authenticates the forwarded `session` cookie → a per-socket userId; the handoff loads each player's OWN deck OWNER-SCOPED (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, resets + broadcasts `{kind:"match-error"}` on a load failure; `seatClaimAllowed` + `SEAT_USERS_KEY` bind a seat to its account (closing the bearer-only-seat HAND leak). 1782→1790. **3b: the online ability + non-Stadium trainer HUD DONE** (D70) — `RedactedPhase.turn:action` gained `abilities`/`trainers` (server-folded playability via `redactedAbilitiesOf`/`redactedTrainersOf`, actor-only), `OnlineHud` gained the Abilities + Trainers sections, `SUPPORTED_MATCH_ACTIONS` += `useAbility`; STADIUMS stay the board drag, RARE CANDY deferred. 1790→**1803**. **3b-ii: the online Rare Candy DONE** (D71) — `RedactedTrainer` gained a `rareCandy` FLAG (the one row that opens a dialog instead of dispatching `playTrainer`) and `RedactedPhase.turn:action` a `rareCandy` pairing list (`redactedRareCandyOf` = the engine's `rareCandyOptions` mapped to the wire, actor-only; both computed in one `redactPhase` call, so a lit row always has ≥1 pairing), `OnlineHud` gained the two-step `RareCandyDialog`, `SUPPORTED_MATCH_ACTIONS` += `rareCandy` (soft-lock-safe — the same `placeEvolution` tail `evolve` has reached since 2a, no new park surface). 1803→**1812**. **The online turn HUD is now COMPLETE — every local affordance has an online counterpart.** **BROWSER-VERIFIED** (2026-07-26, two real clients + two D1 decks): the forwarded `session` cookie survives the cross-origin WS upgrade, the event log renders on both, 3b's greying is faithful live, Rare Candy evolves end-to-end and the hidden-info barrier holds. **3c — the match LIFECYCLE** is now landing: **3c-i** `MatchRecord.version` + `readMatchRecord`/`peekMatch`/`retireStaleMatch` + `endMatch` (D72, 1812→**1825**); **3c-ii** the engine `concede` action + `GameOverReason.conceded` + the 90s `ABANDON_GRACE_MS` forfeit for a player who vanishes mid-match (D73, engine 0.41.0, 1825→**1832**, browser-verified by killing a client); **3c-iii** the Concede control in the HUD chrome + neutral `GAME_OVER_DETAIL` copy (D74, 1832→**1835**); **3c-iv** a mid-match LEAVE now forfeits instead of voiding the opponent's game — `concedeSeat` shared with the timeout path, the pure `applyBye` keeping the seat while in-game so the result survives, and a Back confirmation that says leaving forfeits (D75, 1835→**1841**); **3c-v** the forfeit deadline moved onto the WIRE (`PlayerState.forfeitAt` replacing the DO's `ABANDON_KEY`, so the countdown renders the number the alarm fires on), the `connected` ⇒ no-forfeit invariant made structural, `readSnapshot` normalizing the un-versioned snapshot, and the ticking `OpponentAwayBanner` (D76, 1841→**1853**, browser-verified incl. a reconnect that was correctly NOT forfeited). **3c-vi** rematch — a `{kind:"rematch"}` lifecycle FRAME (server-judged: only the DO knows the match reached `gameOver`) running `endMatch` + readying the ASKER, so the existing ready-up flow is the agreement and no new lobby state exists; `commit` drops `MATCH_KEY` so the next handoff mints a fresh game (D77, 1853→**1858**, browser-verified incl. a crafted mid-game frame being dropped). **P4's match lifecycle is now COMPLETE end to end — start → play → resolve → play again, in one lobby.** **3c-vii-a** the SPECTATOR redaction — `redactGame(state, side, spectating)` withholding BOTH hands, both sides' setup placements and every actor affordance through one `actor = null` gate (the threat model is a PLAYER watching their own match, so the sides are symmetric); leak-tested from both sides, engine rules unchanged, **not wired yet** (D78, 1858→**1865**). **3c-vii-b** spectate WIRED — the lobby link is the spectate link (a third socket's `reject-full` becomes a spectator while in-game; no new frame, URL or invite flow), a spectator having no playerId/PlayerState/snapshot presence at all; `useLobby`'s `rejected` became `refusal: full|kicked` and `OnlineMatch` gained `spectating` (D79, 1874 tests, browser-verified with a third profile: both hands face-down to them, no controls, live updates). **Every P4 milestone is now DONE — transport, handoff, hidden info, reconnect/timeouts, concede/rematch, spectate.** **3c-viii** half-open socket liveness — `getWebSocketAutoResponseTimestamp` on a 30s poll closes any socket silent for 15s, funnelling into the grace→disconnect→forfeit machinery a real close already drives (D80, 1878 tests, browser-verified with the offline reproducer that exposed it). **P4 has NO known defects and no planned work left — every milestone is done.** **Next:** a REMOTE deploy + verification (all of P4 is local-only; needs the user's go-ahead + credentials, and P1's remote migrations/ingest first), or P5 polish. See `workstreams/online.md`. |
 | polish | P5 | 🚧 **STARTED** — **P5-1: real player names DONE** (D81): a lobby seat's name is the ACCOUNT's `displayName`, resolved SERVER-SIDE at the hello (`loadDisplayName`) from the /ws session's `userId`, so it is authoritative rather than announced (a client-supplied name was an impersonation vector once names stopped being random); anonymous sockets keep their generated handle, and a BLANK account name never falls back to the email (it is broadcast to the opponent and to spectators). Browser-verified on four clients. **P5-2: generated AVATARS DONE** (D82): `PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient + the account's initial; nothing stored, nothing uploaded, an anonymous seat keeps the generic figure. Cross-client determinism browser-verified (identical gradients for the same accounts on both clients). **P5-3: DECK COVER ART DONE** (D83): a pure `pickCoverCardId` fronts each deck with its highest-HP Pokémon (ties: copies, then card id) — HP being the one number that beats both stage-ranking (wrong for a Basic-ex deck) and count-ranking (wrong for every evolution deck); derived on READ in the list query, null → the card back for an empty deck. Browser-verified, and the run caught the deck NAME being illegible over card art (scrim added, only where there is art). **P5-4: the playmat's pass + history controls DELETED** (D84): the arrows were never wired to anything on any surface, and the ⟶ was enabled exactly when the turn panel covered it — so the repo's oldest defect was two dead controls, not a layout problem; `PlaymatView.onPassTurn` is now optional and only the /simulator sandbox asks for one. Browser-verified with a real `elementFromPoint` hit-test. **P5-5: PROFILES — the account you can EDIT — DONE** (D85): a Profile section on /settings behind `PATCH /auth/me` (`updateProfileRequestSchema`: required `displayName`, trimmed, 1–64; `requireUser` before the validator; no write when unchanged), closing the gap P5-1 opened — a name that is authoritative and broadcast but unchangeable. It shows the account's REAL generated face: `userSchema` gained `avatarSeed` (derived server-side by D82's hash), `avatarSeedFrom` moved to `apps/api/src/auth/avatar.ts` (a property of the ACCOUNT, not a seat) and `PlayerAvatar` to `src/components/`, so /settings and the lobby cannot drift into two similar drawings; deriving the hash client-side was rejected. Browser-verified on two clients — a rename reached the corner control, a reload, and the OPPONENT's panel with a byte-identical gradient. **P5-6: a CHOSEN deck cover DONE** (D86): the follow-up P5-3 named — a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure `effectiveCoverCardId` where the pin wins and everything else falls through to `pickCoverCardId` (now explicitly the DEFAULT). It resolves against the candidates the list query already had, so a choice costs no query and a stale pin falls back rather than drawing a blank; the pin may be a TRAINER, since guessing needs a rule and choosing does not. `DeckSummary.coverCardId` still means the face DRAWN, `Deck.chosenCoverCardId` the stored choice; the `CoverDialog` offers Automatic as an explicit option. PATCH and the client's `toSnapshot` both refuse to let the pin and the card list disagree — load-bearing, since a self-contradicting body would 400 forever on a shared save path. Browser-verified end to end incl. the fallback-after-removal and the 400 gate. **P5-7: a FAVOURITE deck on the profile DONE** (D87): a nullable `users.favourite_deck_id` (migration `0005`, surfaced as `userSchema.favouriteDeckId` — just the id) an account pins to one of its OWN decks via a native `<select>` on /settings riding the SAME `PATCH /auth/me` as the name (optional/nullable `favouriteDeckId`, validated against the caller's decks → 400 `favourite deck not found`); the profile stores only the id and resolves cover/name on read from `GET /decks` (derive-on-read, tolerate stale), the FK is `ON DELETE SET NULL`. Browser-verified end to end (build #71). **P5-8: a card DETAIL VIEW DONE** (D88): a read-only detail modal (`CardDetailDialog.tsx`) opened from the builder grid, hydrating the full `Card` via `GET /cards/:id` — a pure web-UI slice; the inspect affordance is a SIBLING of the add button (corner info button, opens without adding a copy), honest about what the catalog stores, respects `prefers-reduced-motion`. Browser-verified (build #72). **P5-9: a REDUCED-MOTION AUDIT DONE** (D89): carried `prefers-reduced-motion` through the three unguarded P5 surfaces — `CoverDialog.tsx`, `Settings.tsx`, `ProfileSection.tsx` — appending `motion-reduce:transition-none` at each call site per the D88 idiom (the global `index.css` rule only covers `<body>`/`.route-view`, not component Tailwind utilities), plus `motion-reduce:animate-none` on the Save spinner; `PlayerAvatar` was already clean. Pure CSS-class slice; verified via the shipped stylesheet (both guard rules emitted inside `@media (prefers-reduced-motion: reduce)`). **P5-10: the APP-WIDE glass reduced-motion pass DONE** (D90): the root-cause P5-9 deferred — `motion-reduce:transition-none` added INTO the seven `glass.ts` constants that carry a transition (`GLASS_HUD_BUTTON`/`GLASS_GHOST_BUTTON`/`GLASS_DIALOG_GHOST_BUTTON`/`GLASS_ACCENT_BUTTON`/`GLASS_NEUTRAL_BUTTON`/`GLASS_FILTER_TOGGLE` + `GLASS_INPUT`), so EVERY glass control app-wide respects reduced motion from the constant, not each call site; **reverses D88/D89's call-site placement** (blessed by the resume point), and the four now-redundant call-site guards adjacent to a glass constant (CardDetailDialog Retry, Settings Back-to-home, CoverDialog Done, ProfileSection Save) were dropped while every guard protecting an OWN non-constant transition was kept. Pure CSS-class slice, 1941 → 1941 tests, verified via the shipped stylesheet (the guard emitted in the main `index-*.css` bundle inside `@media (prefers-reduced-motion:reduce)`). **P5's autonomous surface is now exhausted. Next:** the only open P5 items both need the USER — uploaded avatars (R2 + CSP + moderation product call) and the remote P4 deploy (migrations 0004 AND 0005 remote). Best next AUTONOMOUS work is the P3 simulator M5 card-effect backlog (`docs/reference/coverage-backlog.md`). |
 

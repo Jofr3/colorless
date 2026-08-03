@@ -22,7 +22,7 @@ export const CATALOG_MANIFEST = {
       does not drift on its own, so the mtime is the honest provenance. */
   source: {
     path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d86672ef67002c76a06d8e29643de1a9c95e9422816cce0e554c6c5b7286.sqlite",
-    mtime: "2026-08-03T09:22:30.953Z",
+    mtime: "2026-07-26T20:43:16.258Z",
     bytes: 708608,
     generated: "2026-08-03",
   },
@@ -185,6 +185,7 @@ export const CATALOG_MANIFEST = {
     "sv01-079": { name: "Kilowattrel", attacks: ["Skill Dive","Thunder Blast"], abilities: [] },
     "sv01-080": { name: "Miraidon", attacks: ["Sharp Fang","Lightning Laser"], abilities: [] },
     "sv01-086": { name: "Gardevoir ex", attacks: ["Miracle Force"], abilities: ["Psychic Embrace"] },
+    "sv01-089": { name: "Drifloon", attacks: ["Gust","Balloon Blast"], abilities: [] },
     "sv01-093": { name: "Florges", attacks: ["Moonblast"], abilities: ["Blooming Garden"] },
     "sv01-096": { name: "Klefki", attacks: ["Joust"], abilities: ["Mischievous Lock"] },
     "sv01-099": { name: "Dachsbun", attacks: ["Headbutt Bounce"], abilities: ["Well-Baked Body"] },
@@ -366,6 +367,7 @@ export const CATALOG_MANIFEST = {
     "swsh10.5-031": { name: "Mewtwo VSTAR", attacks: ["Psy Purge","Star Raid"], abilities: [] },
     "swsh10.5-032": { name: "Natu", attacks: ["Nap","Peck"], abilities: [] },
     "swsh10.5-035": { name: "Sylveon", attacks: ["Souvenir","Wonder Flash"], abilities: [] },
+    "swsh10.5-036": { name: "Onix", attacks: ["Rock Tomb","Raging Swing"], abilities: [] },
     "swsh10.5-055": { name: "Snorlax", attacks: ["Collapse"], abilities: ["Block"] },
     "swsh10.5-061": { name: "Pidove", attacks: ["Growl","Flap"], abilities: [] },
   } as Record<string, { name: string; attacks: string[]; abilities: string[] }>,

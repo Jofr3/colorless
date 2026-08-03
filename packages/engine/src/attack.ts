@@ -128,7 +128,11 @@ function scaledAttackDamage(
   switch (bonus.count.kind) {
     case "damageCountersOnSelf":
       // One damage counter = 10 HP (§12); floor for safety though all damage
-      // lands in tens.
+      // lands in tens. The ONLY source all three folds read (D167): "more" adds it,
+      // "less" subtracts it, and no adjective at all makes it the whole damage —
+      // which is why this arm answers "how many counters, times per" and nothing
+      // about direction. `attacker` is the Active as of DECLARATION, so an attack
+      // can never bootstrap the counters it scales off.
       return Math.floor(attacker.damage / 10) * bonus.per;
     case "opponentPrizesTaken":
       // Prizes the opponent has TAKEN (6 − their remaining pile, §8.1), read at
@@ -422,6 +426,16 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // one fires — each is read only when its predecessors did not, making that
   // explicit. A card carries at most one scaling clause OR a program: the
   // whole-sentence anchor means a scaling sentence never also derives an op.
+  //
+  // D167 — the adjective really is the WHOLE discriminator, and the case that
+  // proves it is the one where all three families read the SAME count source:
+  // "This attack does {N} {more|less|} damage for each damage counter on this
+  // Pokémon." is three real printed sentences (Paldean Tauros sv02-028 / Cetitan
+  // sv01-060 / Drifloon sv01-089) differing in one word, and they take three
+  // different folds out of this block. Nothing here moved to admit the third — the
+  // multiply reader gained an arm, and `scaling`, `scaledBase` and both
+  // simulated-flags below were already written against the READER rather than
+  // against its `count` member.
   const damageBonus = effect === null || effect === "" ? null : deriveAttackDamageBonus(effect);
   const damageMultiplier =
     damageBonus !== null || effect === null || effect === ""

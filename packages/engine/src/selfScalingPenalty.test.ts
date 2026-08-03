@@ -38,7 +38,8 @@ import {
 // sv03 230, sv06.5 99, sve 24, swsh10.5 88) returns FIVE rows for
 // `LIKE '%less damage for each%'` across all three text columns, and all five are
 // `attacks_json`: the four Skeledirge ex rarities and Cetitan. `FIXTURE_POOL` (289
-// entries) is a different population that also fields synthetic `fix-*` bodies the
+// entries AT D163; 293 since D167 added the multiply twin's two bodies) is a
+// different population that also fields synthetic `fix-*` bodies the
 // catalog will never hold; swept for the same string it returned ONE row before
 // this slice — sv02-037's "Burning Voice", carried verbatim by D133's board-heal
 // fixture since 0.94.0 and never read by anything.
@@ -78,10 +79,13 @@ const SWEEPING_TACKLE = "This attack does 20 less damage for each damage counter
 /** The "more" twin, printed on seven catalog rows and read since M2 — the sentence
     this slice's regex must refuse and whose reader must refuse this slice's. */
 const RAGING_HORNS = "This attack does 10 more damage for each damage counter on this Pokémon.";
-/** The UNREAD multiply twin on the SAME count source — no adjective at all
-    (Drifloon sv01-089 idx 1 "Balloon Blast" 30×, Onix swsh10.5-036 idx 1 "Raging
-    Swing" 50×). Two printings, still loud, and pinned here so the day someone adds
-    it to `deriveAttackDamageMultiplier` this suite says the family moved. */
+/** The multiply twin on the SAME count source — no adjective at all (Drifloon
+    sv01-089 idx 1 "Balloon Blast" 30×, Onix swsh10.5-036 idx 1 "Raging Swing" 50×).
+    Two printings, UNREAD when this suite was written and pinned here as an absence
+    so the day someone added them to `deriveAttackDamageMultiplier` this suite would
+    say the family had moved. **D167 is that day** — the pin below is re-pointed to
+    the presence, and `selfCounterMultiply.test.ts` drives the fold. This constant
+    stays because the DISJOINTNESS cases still need it. */
 const BALLOON_BLAST = "This attack does 30 damage for each damage counter on this Pokémon.";
 
 /** One seed for the whole suite: nothing in this family flips a coin and every
@@ -274,7 +278,9 @@ describe("deriveAttackDamagePenalty — one regex, two amounts", () => {
     // for no reason a later slice could reconstruct — and D157's rule says the fix
     // for a guard whose mutation is invisible is to write down WHY, as an
     // assertion rather than a comment. This is that assertion, swept over the whole
-    // pool: 289 fixtures, every attack, no double answer anywhere.
+    // pool: every fixture, every attack, no double answer anywhere (289 fixtures
+    // when this was written; 293 since D167, and the sweep never named a count —
+    // which is why it kept holding).
     for (const [id, card] of Object.entries(FIXTURE_POOL)) {
       for (const attack of card.attacks ?? []) {
         const text = attack.effect ?? "";
@@ -288,14 +294,23 @@ describe("deriveAttackDamagePenalty — one regex, two amounts", () => {
     }
   });
 
-  it("⚠️ the UNREAD multiply twin on the same count source is STILL LOUD", () => {
-    // Drifloon sv01-089 idx 1 "Balloon Blast" (30×) and Onix swsh10.5-036 idx 1
-    // "Raging Swing" (50×) print "This attack does {N} damage for each damage
-    // counter on this Pokémon." — no adjective. `deriveAttackDamageMultiplier`
-    // holds only the Prize-count and Retreat-cost patterns, so both stay on the
-    // loud ATTACK_EFFECT_SKIPPED path. Pinned as an ABSENCE so that adding the
-    // regex (the whole of that item's price) fails HERE and is noticed.
-    expect(deriveAttackDamageMultiplier(BALLOON_BLAST)).toBeNull();
+  it("⚠️ the multiply twin on the same count source is the MULTIPLY reader's (D167)", () => {
+    // ⚠️ RE-POINTED, NOT DELETED — and the re-pointing is the case working. Drifloon
+    // sv01-089 idx 1 "Balloon Blast" (30×) and Onix swsh10.5-036 idx 1 "Raging
+    // Swing" (50×) print "This attack does {N} damage for each damage counter on
+    // this Pokémon." — no adjective. This case was written as an ABSENCE
+    // (`deriveAttackDamageMultiplier(...)` → null) precisely so that adding the
+    // regex — the whole of that item's price — would fail HERE and be noticed. D167
+    // added it; this went red; the assertion flips to the PRESENCE and names the
+    // reader that now owns the sentence. Its three siblings are untouched and still
+    // true: THIS suite's reader, the additive reader and the op deriver must all
+    // still refuse it, which is what keeps "at most one fold per printing" checked
+    // from this side of the family.
+    expect(deriveAttackDamageMultiplier(BALLOON_BLAST)).toEqual({
+      per: 30,
+      count: { kind: "damageCountersOnSelf" },
+    });
+    expect(deriveAttackDamagePenalty(BALLOON_BLAST)).toBeNull();
     expect(deriveAttackDamageBonus(BALLOON_BLAST)).toBeNull();
     expect(deriveAttackEffect(BALLOON_BLAST)).toBeNull();
   });

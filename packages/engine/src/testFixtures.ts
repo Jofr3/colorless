@@ -3743,6 +3743,89 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** D167 — THE MULTIPLY TWIN, and the third adjective on the count source the two
+      fixtures above and `fix-attacker`'s "Rage"/"Fury" already print with the other
+      two. Drifloon sv01-089 "Balloon Blast" (idx 1, {P}{P}, printed "30×") is
+      "This attack does 30 damage for each damage counter on this Pokémon." — NO
+      adjective, so `per × count` is the WHOLE damage and attack.ts drops the
+      printed base.
+
+      ⚠️ NOTHING IN THE POOL COULD BE REUSED FOR THIS, WHICH IS WHY THE FIXTURE IS
+      NEW. Every "for each damage counter" body already fielded carries "more"
+      (sv02-028, sv03-161, fix-attacker) or "less" (sv01-060, sv02-037); the bare
+      form appears on exactly two catalog rows and neither had a fixture. The
+      cheapest-looking dodge — bending an existing body's effect string — is the one
+      D146 forbids: a fixture is a TRANSCRIPTION, and this suite's whole claim is
+      that ONE regex spans two REAL printed amounts.
+
+      Its 70 HP is doing work rather than decoration: it is the smallest body in
+      this family by a wide margin, so the counter ladder the suite drives (1, 3, 6)
+      stays under its own HP while `30 ×` it produces 30 / 90 / 180 — three numbers a
+      hardcoded per cannot fake. Index 0 "Gust" ({C}{C}, 10) carries NO `effect` key
+      at all, which makes it the index-keyed negative: a sibling attack that must not
+      inherit index 1's fold and must stay SILENT on the skipped-effect path.
+
+      Verbatim off the local D1 (2026-08-03, 978 cards / 6 sets): 70 HP, Psychic,
+      Basic, retreat 1, ×2 Darkness, −30 Fighting Resistance, no Ability. The
+      Resistance is carried because it is printed, and it is the reason every board
+      in the suite measures against a defender that has none. */
+  "sv01-089": battler("sv01-089", {
+    name: "Drifloon",
+    types: ["Psychic"],
+    hp: 70,
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Gust", damage: 10 },
+      {
+        cost: ["Psychic", "Psychic"],
+        name: "Balloon Blast",
+        effect: "This attack does 30 damage for each damage counter on this Pokémon.",
+        damage: "30×",
+      },
+    ],
+  }),
+
+  /** D167 — the multiply twin's SECOND printed amount: Onix swsh10.5-036 "Raging
+      Swing" (idx 1, {F}{F}{C}{C}, printed "50×") is the same sentence with 50 where
+      Drifloon prints 30, so a hard-coded per-unit satisfies one printing and fails
+      the other (D121's second-printing warrant, met by the pool rather than by an
+      invented string).
+
+      Its index-0 "Rock Tomb" ({C}{C}{C}, 50) is a REAL `preventRetreat` sentence
+      the deriver has owned since M3 — kept whole, both because the fixture is a
+      transcription and because it makes the sibling-index negative SHARPER than
+      Drifloon's: a card whose other attack is fully simulated by a DIFFERENT
+      mechanism, so "index 1's clause does not leak" is asserted against a live op
+      rather than against silence.
+
+      Verbatim off the local D1 (2026-08-03, 978 cards / 6 sets): 120 HP, Fighting,
+      Basic, retreat 4, ×2 Grass, no Resistance, no Ability. The fourteenth
+      `swsh10.5` fixture, and the second written AFTER the re-ingest made the set
+      checkable (D160/D162). */
+  "swsh10.5-036": battler("swsh10.5-036", {
+    name: "Onix",
+    types: ["Fighting"],
+    hp: 120,
+    retreat: 4,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Rock Tomb",
+        effect: "During your opponent's next turn, the Defending Pokémon can't retreat.",
+        damage: 50,
+      },
+      {
+        cost: ["Fighting", "Fighting", "Colorless", "Colorless"],
+        name: "Raging Swing",
+        effect: "This attack does 50 damage for each damage counter on this Pokémon.",
+        damage: "50×",
+      },
+    ],
+  }),
+
   /** D119 — the PUBLIC-COUNT cluster: four clauses that read a COUNT nobody has
       to be shown (a hand's size, a Prize row's length) rather than anything on a
       Pokémon. Four faithful catalog rows, no registry attack rows between them.
@@ -9503,6 +9586,50 @@ export const SELF_SCALING_PENALTY_DECK = deckOf({
   "fix-water-energy": 8, // {W} — Sweeping Tackle's typed symbol
   "fix-fire-energy": 8, // {R}{R} — Burning Voice
   "fix-energy": 18, // Colorless Basic — every {C} in the deck
+});
+
+/** D167 — the MULTIPLY TWIN of the two families above, on its OWN 60 for the
+    reason every scaling deck since D147 has one: `SELF_SCALING_PENALTY_DECK` and
+    `SCALED_DAMAGE_DECK` are both seed-pinned by suites that have nothing to do
+    with this printing, and neither holds a Psychic or a Fighting line.
+
+    **SEED-FREE.** Neither printing flips a coin, no body on this list carries a
+    `cancelOnTails` or a `perHeads` index any board here declares, and every Active
+    is placed by surgery — so a seed table would describe a shuffle rather than a
+    rule (D143's move, D147/D161/D163's inheritance).
+
+    Both printings are the whole family; everything else is a body chosen to make
+    exactly one claim observable:
+      • sv01-089 Drifloon — "Balloon Blast" idx 1 ({P}{P}, "30×"), THIRTY per
+        counter. 70 HP, so the counter ladder stays under its own HP; its idx-0
+        "Gust" ({C}{C}, 10) carries no `effect` key at all and is the
+        derives-to-nothing index-keyed negative;
+      • swsh10.5-036 Onix — "Raging Swing" idx 1 ({F}{F}{C}{C}, "50×"), FIFTY per
+        counter, so a hardcoded per-unit fails one printing or the other. Its idx-0
+        "Rock Tomb" is a live `preventRetreat` op, which makes the same negative
+        sharper: a sibling attack simulated by a DIFFERENT mechanism;
+      • sv01-060 Cetitan ("Sweeping Tackle", 20 LESS per counter) and fix-attacker
+        ("Rage" idx 3 / "Fury" idx 4, 10 and 20 MORE per counter) — the OTHER TWO
+        ADJECTIVES on the very same count source, so all three folds are driven off
+        one board at one counter total rather than compared as three `toEqual`s;
+      • fix-psychic-weak (200 HP, ×2 Psychic) — the W/R board: a multiply's whole
+        damage is `scaled`, so this is where "the fold happens BEFORE §8.5" is
+        observable at all, and 200 HP survives 90 × 2 so the doubling stands alone;
+      • fix-titan (340 HP, NO attacks, no Weakness) — the mulligan-free starter,
+        the bench filler, and the arithmetically clean defender every unmodified
+        number is measured against. It is also the only Basic here that dominates
+        the opening hand, which is what makes the deck seed-free. */
+export const SELF_COUNTER_MULTIPLY_DECK = deckOf({
+  "sv01-089": 4, // Drifloon — "Balloon Blast" idx 1: the THIRTY-per-counter printing
+  "swsh10.5-036": 4, // Onix — "Raging Swing" idx 1: the FIFTY-per-counter printing
+  "sv01-060": 2, // Cetitan — "Sweeping Tackle": the LESS twin on the same count source
+  "fix-attacker": 2, // "Rage" idx 3 / "Fury" idx 4 — the MORE twin on the same count source
+  "fix-psychic-weak": 2, // 200 HP, ×2 Psychic — the pre-W/R ORDER board for Balloon Blast
+  "fix-titan": 12, // 340 HP neutral Basic, NO attacks — starter, bench filler, clean defender
+  "fix-psychic-energy": 8, // {P}{P} — Balloon Blast
+  "fix-fighting-energy": 8, // {F}{F} — Raging Swing's typed symbols
+  "fix-water-energy": 4, // {W} — Sweeping Tackle's typed symbol
+  "fix-energy": 14, // Colorless Basic — every {C} in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

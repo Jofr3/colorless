@@ -3962,7 +3962,50 @@ import type { GameState, Seat } from "./types";
     from both sides. **A slice's own report of its own mutation pass is on the list
     of claims a successor must re-derive.** No behaviour moved, so this version
     string did not. */
-export const engineVersion = "0.111.0";
+/** **D167 — THE MULTIPLY TWIN: the THIRD adjective on a count source the engine
+    has read since M2.** *"This attack does {30|50} damage for each damage counter
+    on this Pokémon."* — no adjective at all. **2 printings / 2 sentences**,
+    measured against the local D1 (2026-08-03, 978 cards / 6 sets) across all three
+    text columns: Drifloon `sv01-089` "Balloon Blast" (idx 1, {P}{P}, "30×") and
+    Onix `swsh10.5-036` "Raging Swing" (idx 1, {F}{F}{C}{C}, "50×"). One `(\d+)`
+    capture spans both.
+
+    ⚠️ **THE FAMILY SPLITS BY FOLD, NOT BY COUNT SOURCE, AND THIS IS THE PRINTING
+    THAT PROVES IT.** `damageCountersOnSelf` is now read by ALL THREE readers —
+    "more" adds to the printed base, "less" keeps it and subtracts, and NOTHING
+    makes `per × count` the whole damage with the base dropped — told apart by a
+    single word. Because the split was made on the fold rather than on the source,
+    the third arrival cost **one regex and one `if`**: no new `DamageCountSource`,
+    no new evaluator arm, no new reader, no new fold, no branch in `attack.ts`, no
+    op, event, event field, log crumb, error code, prompt, park, field, registry
+    row, redact arm or projection, and no web/DB/`@luminous/schema` diff. D163's
+    subtractive twin needed a whole third reader because its FOLD was new; this one
+    needed none because its fold was not.
+
+    ⚠️ **THE PLAN SAID "REUSE A FIXTURE" AND THERE WAS NOTHING TO REUSE.** Five
+    bodies in `FIXTURE_POOL` already print this exact count source (`sv02-028`,
+    `sv03-161`, `fix-attacker`'s Rage/Fury with "more"; `sv01-060`, `sv02-037` with
+    "less") and **not one prints the bare form**; neither `sv01-089` nor
+    `swsh10.5-036` was fielded anywhere in the package. **Both fixtures are authored
+    fresh**, transcribed off the catalog — bending a neighbour's effect string would
+    have made *"one regex spans two REAL printed amounts"* a claim about a string
+    the test file wrote (D146).
+
+    Two second-order behaviours of the `×` fold are INHERITED and now DRIVEN rather
+    than discovered later: at zero counters `scaledBase + scaledTotal` is 0, so
+    `attack.ts` skips the §8.5 pipeline and **no `DAMAGE_DEALT` is emitted at all**
+    (rules-correct — the attack does 0 damage, and the turn still ends); and the log
+    crumb renders the entire damage as ` · scaled +N` off `base 0`, as every
+    existing member of this fold already does.
+
+    Cost: **1 regex, 1 `if`**. 2 fixtures, 1 deck (`SELF_COUNTER_MULTIPLY_DECK`, its
+    own 60), `selfCounterMultiply.test.ts` (**SEED-FREE**), manifest regenerated
+    (209 → **211** fixture rows, 0 absent). `MATCH_RECORD_VERSION` stays **11** —
+    the TENTH control on D124's trigger, pinned as an absence over the 16-key set.
+    The one pin that went red is `selfScalingPenalty.test.ts`'s *"the UNREAD
+    multiply twin … is STILL LOUD"*, RE-POINTED rather than deleted: the absence it
+    guarded was the price of this item, so it becomes the presence. */
+export const engineVersion = "0.112.0";
 
 export type {
   ApplyResult,

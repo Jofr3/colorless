@@ -3459,9 +3459,12 @@ const DECK_TOP_MILL = /^Discard the top (?:(\d+) cards|card) of your (opponent['
 // `per × count` ONTO a printed base (the reader here). WITHOUT "more" it MULTIPLIES
 // (`×`): the printed N is the PER-unit and `per × count` is the WHOLE damage, no
 // base to add ("This attack does N damage for each Prize card your opponent has
-// taken." — Pecharunt ex sv06.5-039 60×, Annihilape sv01-109 70×). That is a
+// taken." — Pecharunt ex sv06.5-039 60×, Annihilape sv01-109 70×; and, since D167,
+// "… for each damage counter on this Pokémon." — Drifloon sv01-089 30×, Onix
+// swsh10.5-036 50×, the no-adjective twin of the very line below). That is a
 // DISTINCT fold, not a `count` member, so it has its OWN regex + reader
-// (OPPONENT_PRIZES_MULTIPLY / deriveAttackDamageMultiplier below) — the parse is
+// (SELF_COUNTER_MULTIPLY / OPPONENT_PRIZES_MULTIPLY /
+// deriveAttackDamageMultiplier below) — the parse is
 // the same `{per, count}` shape (the count evaluator is reused UNCHANGED), only
 // attack.ts's fold differs. Each additive regex must therefore REFUSE its
 // no-"more" twin (the multiply reader owns it), and vice versa. The anchored
@@ -3500,11 +3503,13 @@ const SELF_COUNTER_SCALE =
 // sign, and inventing a second answer to "how many counters are on the attacker"
 // is the thing D159's rule forbids.
 //
-// The near-misses on the SAME count source are all real catalog rows, all refused
-// by the anchors alone, and all still unread (see the census in
-// selfScalingPenalty.test.ts): the MULTIPLY twin "This attack does {30|50} damage
-// for each damage counter on this Pokémon." (Drifloon sv01-089 idx 1, Onix
-// swsh10.5-036 idx 1 — 2 printings, one regex away in the multiply reader), the
+// The near-misses on the SAME count source are all real catalog rows and all
+// refused by the anchors alone. ⚠️ THE FIRST OF THEM IS NO LONGER UNREAD: D167 put
+// the MULTIPLY twin — "This attack does {30|50} damage for each damage counter on
+// this Pokémon.", no adjective at all (Drifloon sv01-089 idx 1 "Balloon Blast"
+// 30×, Onix swsh10.5-036 idx 1 "Raging Swing" 50×) — on the line below, exactly
+// where this block predicted it ("one regex away in the multiply reader"). What
+// remains unread (see the census in selfScalingPenalty.test.ts) is the
 // opponent-side count "…for each damage counter on your opponent's Active
 // Pokémon." (Dedenne sv01-095, Espeon sv03-086, Bloodmoon Ursaluna sv06.5-025 — a
 // new `DamageCountSource`), the bench-wide count (Tyranitar swsh10.5-043) and
@@ -3512,6 +3517,40 @@ const SELF_COUNTER_SCALE =
 // and a capital `This`, for the family's stated reason.
 const SELF_COUNTER_PENALTY =
   /^This attack does (\d+) less damage for each damage counter on this Pokémon\.$/;
+// D167 — THE THIRD ADJECTIVE, which is NO ADJECTIVE: the `×`/multiply twin of the
+// two lines above, on the very same count source. "This attack does {30|50} damage
+// for each damage counter on this Pokémon." — 2 printings / 2 sentences, measured
+// against the local D1 (2026-08-03, 978 cards / 6 sets) across all three text
+// columns, and both rows are `attacks_json`: Drifloon sv01-089 "Balloon Blast"
+// (idx 1, {P}{P}, printed "30×") and Onix swsh10.5-036 "Raging Swing" (idx 1,
+// {F}{F}{C}{C}, printed "50×"). One `(\d+)` capture spans both, which is the whole
+// of this rule.
+//
+// ⚠️ IT IS A THIRD REGEX AND **NOT** A THIRD READER, AND THAT IS THE POINT: the
+// split in this family is by FOLD, and this sentence's fold ALREADY EXISTS.
+// `deriveAttackDamageMultiplier` is the `×` fold — `per × count` is the whole
+// damage and attack.ts drops the printed "N×" base — and it has held two count
+// sources since 0.35.0 (the opponent's taken Prizes, the defender's effective
+// Retreat Cost). This printing is a THIRD SOURCE on that same fold, and the source
+// it names (`damageCountersOnSelf`) is not new either: the union member and
+// `scaledAttackDamage`'s arm for it have been live since M2 for the ADDITIVE twin.
+// So the price is one regex and one `if` — no new `DamageCountSource`, no new
+// evaluator arm, no new fold, no branch in attack.ts, and D159's rule ("do not
+// invent a second answer to a question the engine already answers") is what makes
+// reuse mandatory rather than merely available.
+//
+// It is placed FIRST in the reader, mirroring `deriveAttackDamageBonus`'s arm order
+// (self counters, then Prizes, then Retreat Cost), so the two readers over one
+// `{per, count}` interface read the same way down the page. The order is not
+// observable — the three regexes are whole-sentence anchored and mutually
+// exclusive — which is exactly why it should be the legible one.
+//
+// Refuses BOTH of its adjectived twins by the missing word (the additive reader
+// owns "more", the subtractive one "less"), and every near-miss the two blocks
+// above enumerate by the anchors. No /i, whole-sentence anchored and a capital
+// `This`, for the family's stated reason.
+const SELF_COUNTER_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on this Pokémon\.$/;
 const OPPONENT_PRIZES_SCALE =
   /^This attack does (\d+) more damage for each Prize card your opponent has taken\.$/;
 // The "×"/multiply twin of OPPONENT_PRIZES_SCALE — the SAME Prize-count source, no
@@ -5524,6 +5563,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     REAL readers — the attacker's own damage counters and, since 0.35.0, the
     opponent's TAKEN Prizes — a member each, not a second interface.
 
+    ⚠️ AND THE THREE FOLDS ARE NOT THREE PARTITIONS OF THE COUNT SOURCES: D167 put
+    the attacker's own damage counters on the MULTIPLY fold too (Drifloon sv01-089
+    "Balloon Blast" 30×, Onix swsh10.5-036 "Raging Swing" 50×), so that one source
+    is now read by all three readers, told apart by the adjective alone — "more",
+    "less", or nothing. That is precisely what an interface shared by fold rather
+    than by source buys: the third arrival cost a regex and an `if`, and no arm of
+    the evaluator below moved.
+
     ⚠️ `per` IS ALWAYS POSITIVE, IN ALL THREE. The direction is carried by WHICH
     READER answered, never by the sign of this number, because the only place a
     direction is observable is `DAMAGE_DEALT` — and that row reports one number per
@@ -5623,10 +5670,11 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     weakener and D151's aura rather than into `scaled`. See SELF_COUNTER_PENALTY
     above for why a negative `per` on the additive reader is refused.
 
-    Refuses its "more" twin (the additive reader owns it), its no-adjective
-    multiply twin (unread — Drifloon sv01-089, Onix swsh10.5-036), a lowercased
-    "this", a missing trailing period and any leading/trailing text: all stay on the
-    loud ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the
+    Refuses its "more" twin (the additive reader owns it) and its no-adjective
+    multiply twin (Drifloon sv01-089, Onix swsh10.5-036 — READ since D167 by
+    `deriveAttackDamageMultiplier`, where this block always said it belonged), a
+    lowercased "this", a missing trailing period and any leading/trailing text: all
+    stay on the loud ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the
     reason both siblings are — the whole-sentence anchor means a scaling sentence
     never also derives an op. */
 export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | null {
@@ -5640,20 +5688,36 @@ export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | nul
 }
 
 /** Parse a printed "×"/multiply damage-scaling sentence — "This attack does N
-    damage for each Prize card your opponent has taken." / "… for each {C} in your
-    opponent's Active Pokémon's Retreat Cost." (NO "more") — into the same
+    damage for each damage counter on this Pokémon." (D167) / "… for each Prize
+    card your opponent has taken." / "… for each {C} in your opponent's Active
+    Pokémon's Retreat Cost." (NO "more", NO "less") — into the same
     `{per, count}` shape as the additive reader, or null for anything else.
     The two share the count evaluator; they differ only in
     attack.ts's fold: the additive reader's `per × count` adds to a printed base,
     THIS family's IS the whole damage (the printed "N×" base is the per-unit, so
-    attack.ts drops it — count 0 → 0 damage). Refuses the additive "more" twin
-    (that reader owns it), Wo-Chien ex's benched-target print and Chien-Pao ex's
+    attack.ts drops it — count 0 → 0 damage, and no DAMAGE_DEALT at all). Refuses
+    the additive "more" twin and the subtractive "less" one (those readers own
+    them), Wo-Chien ex's benched-target print and Chien-Pao ex's
     discarded-Energy count (both a different shape), a lowercased "this", a missing
     trailing period, and any leading/trailing text — all stay on the loud
     ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the same
-    reason the additive reader is (attack.ts owns the fold). */
+    reason the additive reader is (attack.ts owns the fold).
+
+    THREE count sources, ONE fold — and the third arrived (D167) as a regex and an
+    `if`, because both halves of it already existed: the `×` fold here, and
+    `damageCountersOnSelf` in `scaledAttackDamage`, live since M2 for the "more"
+    twin. The arms are ordered to mirror `deriveAttackDamageBonus` rather than by
+    the order they were written; the regexes are mutually exclusive, so the order
+    is legibility, not behaviour. */
 export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | null {
   const effect = text.trim();
+  // A printed 0 does nothing — left loud, the guard every arm in both families
+  // carries.
+  const selfCounters = SELF_COUNTER_MULTIPLY.exec(effect);
+  if (selfCounters !== null) {
+    const per = Number(selfCounters[1]);
+    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+  }
   const opponentPrizes = OPPONENT_PRIZES_MULTIPLY.exec(effect);
   if (opponentPrizes !== null) {
     // A printed 0 does nothing — left loud, the guard the additive rules carry.
