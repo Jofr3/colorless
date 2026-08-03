@@ -16941,15 +16941,19 @@ this figure is 218 and not the 216 the worktree handoff measured against a pre-D
 
 ### What is left in this neighbourhood
 
-- **⚠️ SPIRITOMB `sv02-089`'s TYPE DIVERGENCE — the LAST human-written one, and the only
-  remainder this slice creates.** The fixture says `Darkness`; the card prints `Psychic`.
-  Unlike Klefki's, **this one is not free**: its printed "Fade Out" is declared absent in
-  `INCOMPLETE`, so correcting the type without also carrying the attack would leave a body
-  **right on one axis and wrong on another** — the exact half-landing this slice exists to
-  argue against. Fix the two together or not at all. The other three exceptions
-  (`sv01-023`, `sv02-123`, `sv03-012`) are the `battler` helper's `["Colorless"]` DEFAULT
-  showing through and want a **RULE** (set the type in the helper, or make the helper
-  demand one) rather than three edits.
+- ✅ **SPIRITOMB `sv02-089`'s TYPE DIVERGENCE — the LAST human-written one, and the only
+  remainder this slice created — IS CLOSED AT D175, TOGETHER WITH ITS ATTACK AND WITH THE
+  RULE THE OTHER THREE WANTED. See §D175.** The fixture said `Darkness`; the card prints
+  `Psychic`, and **the value was the card's WEAKNESS column transcribed one field over** —
+  a wrong COLUMN, not a wrong element. Unlike Klefki's, **it was not free**: its printed
+  "Fade Out" was declared absent in `INCOMPLETE`, so correcting the type alone would have
+  left a body **right on one axis and wrong on another**; both halves landed together and
+  the `INCOMPLETE` entry is gone. ⚠️ **AND THE CLASSIFICATION OF THE OTHER THREE ABOVE WAS
+  WRONG.** The rule (`battler` derives an unnamed `types` from `CATALOG_MANIFEST.printed`)
+  reached `sv02-123` and `sv03-012` and **could not reach `sv01-023` Arboliva, which is a
+  RAW LITERAL and never went through the helper** — its `["Colorless"]` was WRITTEN, and it
+  took the one hand-edit after all. The written column was **3 of 5, not 2**.
+  `TYPES_DIVERGE` is now **EMPTY and PINNED empty**.
 - **`FIXTURE_POOL` IS NOW CHECKED ON THREE AXES — NAME, ATTACK/ABILITY NAMES, AND TYPES —
   AND NO OTHERS.** `hp`, `stage`, `evolveFrom`, `retreat`, `weaknesses`, `resistances`,
   `regulationMark` and `legal` are all still unrecorded by the manifest and therefore
@@ -16969,3 +16973,280 @@ this figure is 218 and not the 216 the worktree handoff measured against a pre-D
   producers three ways; they agree today and the agreement is what each of them asserts.
 - **Therapeutic Energy `sv02-193`** (§D172) and **Corviknight `sv02-148`** (§D171) are
   untouched by this slice and remain the open items in their own neighbourhoods.
+
+---
+
+## D175 — SPIRITOMB `sv02-089`'s TYPE DIVERGENCE AND THE `battler`-DEFAULT RULE: the LAST human-written wrong type gets its printed `["Psychic"]` and its printed "Fade Out" in ONE landing, `battler` DERIVES an unnamed `types` from the catalog manifest, and `TYPES_DIVERGE` empties to ZERO and is PINNED empty (engine **UNCHANGED at 0.117.0**, `MATCH_RECORD_VERSION` **unchanged at 11**, **0 engine behaviour lines**)
+
+⚠️ **THE NUMBER IS OUT OF ORDER ON PURPOSE — THIS SECTION LANDS BEFORE §D174.** D-numbers
+were assigned at dispatch, and **D174 (Therapeutic Energy `sv02-193`, §D172's priced
+remainder) is still IN FLIGHT** in a concurrent worktree, taking `engineVersion`
+**0.118.0**. D175 takes neither a version nor any of the three files that slice owns.
+
+D173's thesis — *a declaration is not a fix, and when both cost one line, fix it* —
+applied to the one remainder D173 itself created and could not take.
+
+### ⚠️ The divergence was a wrong COLUMN, not a wrong ELEMENT
+
+The local D1 row for `sv02-089` reads `types_json ["Psychic"]` and `weaknesses_json
+[{"type":"Darkness","value":"×2"}]`. The fixture said `types: ["Darkness"]` — **the
+Weakness value written into the type field, one column over.**
+
+That is a sharper account than *"someone got it wrong"*, and it is **why** it read as
+deliberate for as long as nothing checked the axis: `Darkness` is a real type, a plausible
+one for a ghost, and **it agreed with the card** on the only line of the row anybody had
+ever transcribed it from. It is D173's Klefki finding one turn further: *"Fairy"* survived
+because it is a **retired** type; *"Darkness"* survived because it is **the adjacent
+field's correct value**.
+
+### It was not free, and the two halves landed together
+
+Spiritomb's printed "Fade Out" was declared absent in `catalogManifest.test.ts`'s
+`INCOMPLETE`, so correcting the type alone would have left a body right on one axis and
+wrong on the other — the exact half-landing D173 exists to argue against. The attack is
+carried verbatim off the same row and the `INCOMPLETE` entry is gone:
+
+```json
+{"cost":["Colorless"],"name":"Fade Out","effect":"Put this Pokémon and all attached cards into your hand.","damage":10}
+```
+
+**The declaration's stated reason was a claim about the SUITES, not about the CARD.** It
+read *"the aura is the whole test and the body never attacks"*. Every other entry in that
+cast omits an attack because the body only ever **DEFENDS**; Spiritomb never even did
+that. **A reason that describes what the tests happen to do can never expire, because
+nothing about the card can contradict it. That is the shape to distrust.**
+
+#### "Fade Out" is INERT, and that is MEASURED
+
+All six `derive*` readers — `deriveAttackRequirement`, `deriveAttackCoinFlip`,
+`deriveAttackEffect`, `deriveAttackDamageBonus`, `deriveAttackDamagePenalty`,
+`deriveAttackDamageMultiplier` — return `null` on the sentence, **run directly against
+`effects.ts` rather than inferred**.
+
+⚠️ **AND IT IS NOT A NEAR-MISS ON ANY FAMILY: THIS ENGINE HAS NO RETURN-TO-OWNER'S-HAND
+`EffectOp` AT ALL.** A grep for `returnToHand` / `scoopUp` / *"attached cards into your
+hand"* over `packages/engine/src` is empty outside this fixture. **Fade Out is a
+SELF-BOUNCE — a MECHANISM with no op, rather than a SENTENCE with no regex.** Record the
+distinction: an unread sentence in a built family is a pricing question about a regex; this
+one is a pricing question about a whole op, and it is the useful part for whoever prices
+the bounce family later. It rides as a plain printed 10 that would emit a loud
+`ATTACK_EFFECT_SKIPPED` if anything ever drove it (D170's precedent) — nothing does.
+
+### ⚠️ Breaking "an aura source that never attacks" disturbed NOTHING, and the reason matters
+
+The remainder item warned that giving Spiritomb an attack might make boards reachable that
+were not before. **Zero suites moved.** Every §9 counting argument that names Spiritomb
+turns on the **registry program**, never on the fixture's attack list:
+
+- `statusImmunity.test.ts`'s three-Actives-wanted-two-available proof reads
+  `requiresActive === true` and `{ stage: "Basic", suffix: "V" }`;
+- `abilityLock.test.ts` benches it and asserts the aura scan;
+- D173's Klefki DELTA pair excluded it as an alternative attacker because it **reaches only
+  Basic V** — a property of the program, not a consequence of having no attack.
+
+The phrase *"a `disableAbilities` aura source that never attacks"* existed in exactly the
+two declarations this slice deleted. **Nothing load-bearing ever believed it.**
+
+### The rule: `battler` derives an unnamed `types` from the catalog manifest
+
+```ts
+function printedTypesOf(id: string): string[] {
+  return CATALOG_MANIFEST.printed[id]?.types ?? ["Colorless"];
+}
+```
+
+`battler`'s `types:` reads it, still **ABOVE `...overrides`**, so an explicit value always
+wins. **Three pending edits became one rule**, and the fixture written the same way
+tomorrow carries its print too.
+
+⚠️ **IT DISSOLVES THE "DEFAULTED OR GENUINELY COLORLESS?" QUESTION RATHER THAN ADJUDICATING
+IT.** `["Colorless"]` is a real printed value — Snorlax `swsh10.5-055` prints exactly that,
+and now gets it — so any rule that treated the literal as a marker for *unset* would have to
+tell two identical values apart and could not. **Here it never has to: for any id with a
+catalog row the value IS the print**, so *defaulted* and *genuinely Colorless* produce the
+same correct answer and stop being distinct cases. The literal survives only for the
+SYNTHETIC `fix-*` ids, which make no claim about any printed card — and
+`expect([...M.absent]).toEqual([])` already pins that *"no manifest row"* and *"not a real
+printing"* are the same set.
+
+**Rejected, with reasons:**
+
+| candidate | why not |
+|---|---|
+| make the default **absent** so the sweep sees an omission | It does not shrink the table by **even one row**: `fixture.types ?? []` still fails the printed-types comparison, so all three stay declared — **a wrong VALUE is relabelled a MISSING one and nothing is fixed**. It also silently drops the `["Colorless"]` every synthetic body relies on (**measured: 1 file / 2 tests red**). |
+| require `types` explicitly | **205 `battler` call sites**, nearly all synthetic. A broad reflow of `testFixtures.ts` — a file a concurrent slice is appending to — and it **re-opens hand-transcription at 205 sites, which is the EXACT failure mode that produced Klefki and Spiritomb**, instead of closing it. |
+
+**What the rule does NOT do is make the sweep vacuous.** It removes the *defaulted* class
+from it; every fixture that WRITES a `types` value is still checked against the print in
+both directions, and the written ones were always the dangerous class.
+
+### ⚠️ THE SLICE'S OWN FINDING: D173's CLASSIFICATION WAS WRONG — the rule fixed TWO of three
+
+D173 split its five `TYPES_DIVERGE` rows into *two a human WROTE* and *three the `battler`
+helper's `["Colorless"]` DEFAULT showing through*, and handed the second group forward as
+wanting **a rule, not three edits**. The rule was built. It fixed **two** of them.
+
+**Arboliva `sv01-023` is not a `battler` call.** It is a raw object literal — a Stage 1
+with an `evolveFrom`, so it never went through the helper — and its `["Colorless"]` was
+**WRITTEN**, copied from the helper's shape rather than from the card. It took the one
+hand-edit after all (`["Grass"]`), and **only the sweep going red said so.**
+
+> **A DEFECT FILED UNDER THE WRONG CLASS IS ONE A RULE AIMED AT THAT CLASS WILL MISS.**
+> *"Fixture Colorless, print Grass"* is the **same OBSERVATION** for a defaulted value and
+> for a hand-written one; the two are distinguishable only at the **CONSTRUCTION SITE**,
+> and D173 inferred the cause from the **VALUE**. The written column was **3 of 5, not 2**
+> — and it was the whole population. This is D173's own *"the missing axis was the
+> DIRECTORY, not the card"* recurring one level in: **the missing axis was HOW THE FIXTURE
+> WAS BUILT, not what it holds.** Its companion is the Spiritomb case above: **a wrong
+> COLUMN looks exactly like a wrong ELEMENT.**
+
+`blank` (the raw-literal base) and `battler` are two different construction sites, and only
+one of them is reachable by a change to `battler`.
+
+### `TYPES_DIVERGE` empties to ZERO, and the emptiness is PINNED
+
+| id | fixture (before) | print | how it closed |
+|---|---|---|---|
+| `sv01-096` Klefki | `Fairy` | `Psychic` | ✅ hand-edit at **D173** |
+| `sv02-089` Spiritomb | `Darkness` (the **Weakness** column) | `Psychic` | ✅ hand-edit at **D175**, with "Fade Out" |
+| `sv01-023` Arboliva | `Colorless` (**WRITTEN**, raw literal) | `Grass` | ✅ hand-edit at **D175** — the rule could not reach it |
+| `sv02-123` Garganacl | `Colorless` (the `battler` default) | `Fighting` | ✅ **DISSOLVED** by the rule |
+| `sv03-012` Trevenant | `Colorless` (the `battler` default) | `Grass` | ✅ **DISSOLVED** by the rule |
+
+The table is **KEPT** — `NO_CATALOG_ROW` and `reindexed` are kept empty for the same
+reason, in the same file: *an omission this file cannot NAME is one it cannot count.* But
+an empty table makes its own bidirectional guard **soft in one direction**: with `diverged`
+and `Object.keys(TYPES_DIVERGE)` both empty, a fixture that diverges **and declares
+itself** passes. So, on D173's `shifted` precedent, the emptiness is pinned separately:
+
+```ts
+expect(diverged).toEqual([]);
+```
+
+**A sixth divergence is now a FAILURE rather than a table entry, and the only way to
+satisfy this file is to fix the fixture.** The pin is unkillable while the pool is clean
+(mutant: delete it, **SURVIVED**) and is kept anyway, because the mutant one row up —
+declare-instead-of-fix with the pin KEPT — dies on it and on nothing else.
+
+### The structural questions
+
+1. **`engineVersion` DOES NOT MOVE — IT HOLDS AT 0.117.0, DERIVED.** Two files move and
+   both are **TEST-ONLY**: `testFixtures.ts` (the fixture pool, explicitly *"not exported
+   from the package index"*) and `catalogManifest.test.ts` (a suite). The new import
+   `testFixtures.ts → catalogManifest.ts` joins two modules `index.ts` already does not
+   re-export, so it is **not a public-API edge**. **No op, event, game-state field, registry
+   row, regex, prompt, park, log arm, redact arm or projection**; no `@luminous/schema`,
+   web, API or DB diff. **0 ENGINE BEHAVIOUR LINES.** D150/D166/D173's precedent.
+   `packages/engine/package.json` stays `0.3.0`, and **0.118.0 is left free for the
+   in-flight D174.**
+2. **`MATCH_RECORD_VERSION` UNCHANGED at 11, DERIVED** on D124's DIRECTIONAL test — *can
+   the previous deploy's RECORD hold the shape the new code expects?* Nothing persisted
+   changed: no field on any persisted type, no `PendingStage` kind, no op, no widened enum
+   on anything that can sit in `phase.cont`. **A `MatchRecord` stores card IDs, never `Card`
+   bodies**, so a fixture's `types` and attack list are not in the record at all.
+3. **VOICE — nothing moved.** No new row, no new arm, no prompt text.
+4. **§9 — untouched as a mechanism**, and its counting arguments were **re-READ rather than
+   re-pointed**: none of them ever depended on Spiritomb having no attack.
+5. **NO CENSUS MOVED, AND THAT IS MEASURED.** `clauseApostrophe`'s derivable-sentence
+   census holds at **65** — Fade Out carries no U+2019 **and** no reader resolves it, so it
+   fails **both** halves of the predicate. `selfCounterMultiply`, `selfScalingPenalty`,
+   `opponentCounterScaling` and `benchCounterMultiply` all sweep family sentences the six
+   readers return `null` on. `pokemonWithoutAttacks` is a **CATALOG** census, not a pool
+   one, and is untouched at `["swsh10.5-053"]`.
+6. **GATES NO ACTION; no error code; §11 nothing owed.**
+
+### Mutation pass: 11 run, 7 caught, FOUR survivors — three REPORTED rather than patched
+
+Counts are test FILES failed / TESTS failed.
+
+| mutant | files | tests |
+|---|---|---|
+| move `battler`'s `types` **BELOW `...overrides`** (the rule clobbers explicit values) | **19** | 79 |
+| drop the `?? ["Colorless"]` fallback in `printedTypesOf` | 1 | 2 |
+| revert `battler`'s default to the bare `["Colorless"]` literal | 1 | 1 |
+| revert Arboliva `sv01-023` to `["Colorless"]` | 1 | 1 |
+| revert Spiritomb `sv02-089` to `["Darkness"]` | 1 | 1 |
+| DROP "Fade Out" from Spiritomb | 1 | 1 |
+| **give Spiritomb the wrong type AND declare it, emptiness pin KEPT** | **1** | 1 |
+| …same, emptiness pin DELETED | **SURVIVED** | — |
+| delete the emptiness pin alone, pool clean | **SURVIVED** | — |
+| **DROP "Fade Out" and RE-DECLARE it in `INCOMPLETE`** | **SURVIVED** | — |
+| change Fade Out's `damage` 10 → 30 | **SURVIVED** | — |
+
+The pin's witness is the pair in the middle: **1 file with it, 0 without.** The first two
+survivors are dead by construction once the pin exists.
+
+⚠️ **THE THIRD SURVIVOR IS THE THESIS'S OWN RESIDUE AND IS REPORTED, NOT PATCHED.** *Drop
+"Fade Out" and re-declare it in `INCOMPLETE`* is **green** — precisely the move D173 named
+as the defect, still available on the ATTACK axis. It cannot be closed the way the type
+axis was: **`TYPES_DIVERGE` could be pinned empty because it EMPTIED, and `INCOMPLETE`
+legitimately holds ~30 entries** for bodies that only ever defend. **The type axis got a pin
+because it EARNED one by emptying; the attack axis has no such lever, and the honest
+statement is that `INCOMPLETE` remains a table an omission can still hide in.** That makes
+D173's *"a declaration is not a fix"* **structural rather than a matter of discipline**.
+
+The fourth survivor is the standing scope limit, restated: **`M.printed` records attack
+NAMES**, so Fade Out's `cost`, `damage` and `effect` are transcription **nobody can check**.
+
+### Cost
+
+**0 engine behaviour lines.** 1 corrected `types` value written by a human (`sv02-089`), 1
+more found by the rule failing to reach it (`sv01-023`), 1 carried attack (verbatim off the
+local D1), **1 `INCOMPLETE` entry REMOVED**, **4 `TYPES_DIVERGE` entries REMOVED (table now
+EMPTY)**, 1 new helper (`printedTypesOf`) + 1 new import edge between two test-only modules,
+1 new emptiness pin.
+
+**2 files move**: `packages/engine/src/testFixtures.ts` and
+`packages/engine/src/catalogManifest.test.ts`. ⚠️ `interpreter.ts`, `registry.ts`,
+`continuous.ts` and `catalogManifest.ts` were **NOT touched** — the concurrent D174
+(Therapeutic Energy `sv02-193`) slice owns the first three, and the manifest needed **no
+regeneration** because no fixture id was added or removed.
+
+engine **UNCHANGED at 0.117.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 11**; manifest **218
+fixture rows, 0 absent** (unchanged, NOT regenerated); `bun run check` GREEN exit 0 — **211
+files / 3811 tests**, exactly the baseline.
+
+⚠️ **AND A WORKTREE NOTE THAT COSTS A STEP:** the generator cannot run in a worktree —
+`.wrangler/` state is untracked, so `bun run scripts/catalog-manifest.ts --check` throws
+`SQLITE_CANTOPEN` there and must be run from the main checkout. This slice needed no
+regeneration, so nothing was owed; a slice that adds or removes a fixture id would be.
+
+### What is left in this neighbourhood, after D175
+
+- **THE `TYPES_DIVERGE` TABLE IS EMPTY AND PINNED EMPTY — THE `types` AXIS IS CLOSED.** Five
+  divergences were found at D173: two fixed there and here as hand-edits, **one more
+  hand-edit the rule could not reach**, two dissolved by the rule. The pin means the sixth
+  **cannot be declared** — do not add an entry to that table; fix the fixture.
+- **⚠️ `INCOMPLETE` STILL ABSORBS OMISSIONS AND CANNOT BE PINNED.** The drop-and-re-declare
+  mutant is green. `TYPES_DIVERGE` could be pinned because it emptied; `INCOMPLETE`
+  legitimately holds ~30 entries for bodies that only ever defend, so *"the entry costs one
+  line and the fix costs one line"* is **still live on the ATTACK axis**. **The next slice
+  that empties a cast out of it should ask whether the cast can be PINNED rather than just
+  shrunk.**
+- **⚠️ AND THE MANIFEST RECORDS ATTACK *NAMES* ONLY — `cost`, `damage` AND `effect` ARE
+  UNCHECKED TRANSCRIPTION.** Changing Fade Out's `damage` from 10 to 30 is green. Every
+  carried attack in the pool — all six of D173's, and this one — is name-checked and
+  value-unchecked. This is the standing scope limit of `M.printed`, and it is a **wider**
+  hole than the `types` one D173 closed, because it applies to every fixture that carries a
+  real printing rather than to the handful that name a type.
+- **`FIXTURE_POOL` IS STILL CHECKED ON THREE AXES ONLY — NAME, ATTACK/ABILITY NAMES,
+  TYPES.** D173's list stands verbatim: `hp`, `stage`, `evolveFrom`, `retreat`,
+  `weaknesses`, `resistances`, `regulationMark` and `legal` are unrecorded and uncheckable.
+  **`hp` and `retreat` remain the cheap, high-value ones and nobody has looked** — and D175
+  sharpens the case: the value that was wrong here was the card's **`weaknesses` entry
+  written into `types`**, so the two adjacent unrecorded fields are exactly where the next
+  mis-transcription would hide.
+- **⚠️ AND THE NEXT EXTENSION MUST CLASSIFY BY CONSTRUCTION SITE, NOT BY VALUE.** D173
+  predicted `legal` and `regulationMark` will diverge on almost every fixture and called
+  that *"a helper convention, so they want a RULE not a list"*. **D175 is the warning
+  against acting on that prediction unchecked: three fixtures that looked like one helper's
+  default were two.** Before writing a rule for a class, **grep how many members of the
+  class actually go through the helper.**
+- **Fade Out is the pool's first SELF-BOUNCE sentence, and there is no op for it.** *"Put
+  this Pokémon and all attached cards into your hand."* — no `EffectOp` moves a body out of
+  play into its owner's hand. Whoever builds Scoop Up / Switch Cart / Super Rod-adjacent
+  recovery will find this sentence already sitting inert in the pool with a real fixture
+  behind it.
+- **Therapeutic Energy `sv02-193`** — §D172's priced remainder — is **IN FLIGHT as D174**
+  at the time this section was written; do not start it twice. **Corviknight `sv02-148`**
+  (§D171) is untouched and remains the open item in its own neighbourhood.

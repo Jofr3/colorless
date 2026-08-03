@@ -4,6 +4,7 @@
 // (plain throws) so any suite can use it.
 
 import type { Card } from "@luminous/schema";
+import { CATALOG_MANIFEST } from "./catalogManifest";
 import type {
   ApplyResult,
   ErrorCode,
@@ -114,8 +115,45 @@ export function trainerCard(id: string, trainerType: string, effect: string): Ca
   return { ...blank, id, name: id, category: "Trainer", trainerType, effect };
 }
 
-/** A battle-ready Basic: a 60 HP Colorless body whose combat data (attacks,
-    types, hp, weakness/resistance) each M2 matchup overrides. */
+/** The `types` a `battler` body gets when the caller does not name one — the
+    card's PRINTED types if the id is a real printing, and `["Colorless"]` only
+    when it is not (D175).
+
+    ⚠️ THIS IS A RULE WHERE THERE USED TO BE THREE PENDING EDITS. The default was
+    the literal `["Colorless"]`, and three fixtures whose ids name real cards
+    (Arboliva `sv01-023` Grass, Garganacl `sv02-123` Fighting, Trevenant
+    `sv03-012` Grass) never set the field, so the default showed through as a
+    WRONG VALUE on a card that prints something else. D173 could see them for the
+    first time — it put `types` into `CATALOG_MANIFEST.printed` — and enumerated
+    all three as declared exceptions. **A DECLARATION IS NOT A FIX**, and three
+    hand-edits would not have been one either: nothing would stop the fourth
+    fixture from being written the same way tomorrow.
+
+    ⚠️ AND IT DISSOLVES THE "DEFAULTED OR GENUINELY COLORLESS?" QUESTION RATHER
+    THAN ADJUDICATING IT. `["Colorless"]` is a real printed value — Snorlax
+    `swsh10.5-055` prints exactly that — so a rule that treated the literal as a
+    marker for "unset" would have to tell two identical values apart, and could
+    not. Here it never has to: for any id with a catalog row the value IS the
+    print, so "defaulted" and "genuinely Colorless" produce the same correct
+    answer and are not distinct cases. The literal survives only for the
+    SYNTHETIC ids (`fix-attacker`, `fix-victim`, …), which have no catalog row and
+    make no claim about any printed card — and `CATALOG_MANIFEST.absent` is
+    asserted EMPTY, so "no row" and "not a real printing" are the same set.
+
+    What this does NOT do is make the type sweep vacuous. It removes the
+    defaulted class from it; every fixture that WRITES a `types` value is still
+    checked against the print in both directions, and the written ones were
+    always the dangerous class (D173's Klefki `["Fairy"]`, D175's Spiritomb
+    `["Darkness"]` — the card's WEAKNESS column, transcribed one field over). A
+    mutant that restores the bare literal turns all three back into undeclared
+    divergences and the sweep goes red. */
+function printedTypesOf(id: string): string[] {
+  return CATALOG_MANIFEST.printed[id]?.types ?? ["Colorless"];
+}
+
+/** A battle-ready Basic: a 60 HP body whose combat data (attacks, types, hp,
+    weakness/resistance) each M2 matchup overrides. Its `types` default to the
+    card's PRINTED types when the id is a real printing — see `printedTypesOf`. */
 export function battler(id: string, overrides: Partial<Card> = {}): Card {
   return {
     ...blank,
@@ -124,7 +162,7 @@ export function battler(id: string, overrides: Partial<Card> = {}): Card {
     category: "Pokemon",
     stage: "Basic",
     hp: 60,
-    types: ["Colorless"],
+    types: printedTypesOf(id),
     retreat: 1,
     ...overrides,
   };
@@ -1270,11 +1308,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Spiritomb — the `disableAbilities` aura keyed by id in the registry since
+      D100. ⚠️ THE `types` USED TO SAY `["Darkness"]`, WHICH IS THE CARD'S
+      **WEAKNESS**, NOT ITS TYPE (D175). The print is `["Psychic"]` and the local
+      D1 row (2026-08-03) reads `types_json ["Psychic"]`, `weaknesses_json
+      [{"type":"Darkness","value":"×2"}]` — a human transcribed the wrong column,
+      and it survived because nothing recorded the axis until D173 put `types`
+      into `CATALOG_MANIFEST.printed`. It was the LAST human-written wrong type in
+      the pool.
+
+      Its printed "Fade Out" is carried verbatim off the same row (`{C}`, damage
+      10) and its `INCOMPLETE` entry is gone. The effect sentence is INERT and
+      that is MEASURED, not assumed: all six `derive*` readers return `null` on
+      it, because "put this Pokémon and all attached cards into your hand" is a
+      SELF-BOUNCE and the engine has no return-to-play-owner's-hand op at all —
+      it is not a near-miss on an existing family, it names a mechanism with no
+      `EffectOp`. So the attack rides as a plain printed 10 that emits a loud
+      `ATTACK_EFFECT_SKIPPED` if anything ever drives it (D170's precedent). */
   "sv02-089": battler("sv02-089", {
     name: "Spiritomb",
-    types: ["Darkness"],
+    types: ["Psychic"],
     hp: 60,
     retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Fade Out",
+        damage: 10,
+        effect: "Put this Pokémon and all attached cards into your hand.",
+      },
+    ],
     abilities: [
       {
         type: "Ability",
@@ -1473,7 +1536,17 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "sv02-170": battler("sv02-170", { name: "Flamigo", hp: 110, retreat: 1 }),
   /** Arboliva — Enriching Oil (on-evolve: heal all from 1 of your Pokémon).
       evolveFrom fix-basic-1 (the fixture line) so a fix-basic-1 Active evolves
-      straight into it — the trigger fires on the evolve, not the stage. */
+      straight into it — the trigger fires on the evolve, not the stage.
+
+      ⚠️ NOT A `battler`, WHICH IS WHY ITS TYPE HAD TO BE EDITED BY HAND (D175).
+      D173's exception table filed this under "the `battler` helper's
+      `["Colorless"]` DEFAULT showing through", alongside Garganacl and Trevenant.
+      It is a RAW LITERAL — a Stage 1 with an `evolveFrom`, so it never went
+      through the helper — and its `["Colorless"]` was WRITTEN, copying the
+      helper's shape rather than the card (the print is `["Grass"]`). The rule
+      `printedTypesOf` installs fixed the two that really were defaults and could
+      not reach this one; **a mis-classified defect is one a rule aimed at its
+      class will miss**, and only the sweep going red said so. */
   "sv01-023": {
     ...blank,
     id: "sv01-023",
@@ -1481,7 +1554,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     category: "Pokemon",
     stage: "Stage1",
     hp: 150,
-    types: ["Colorless"],
+    types: ["Grass"],
     retreat: 2,
     evolveFrom: "fix-basic-1",
   } satisfies Card,

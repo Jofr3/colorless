@@ -165,8 +165,13 @@ const INCOMPLETE: Record<
   //   OUT of this file's six `reindexed` entries — it SUBSTITUTED fix-attacker's
   //   Bite for the printed "Joust" rather than dropping anything, which is why it
   //   was the only entry carrying both an `attacks` and an `invented` name. D173
-  //   gave it its own printed attack and the entry is gone.
-  "sv02-089": { attacks: ["Fade Out"], why: "Spiritomb — registry passive 'Fettered in Misfortune'; the aura is the whole test and the body never attacks." },
+  //   gave it its own printed attack and the entry is gone. ⚠️ SPIRITOMB
+  //   sv02-089 IS GONE FOR THE SAME REASON AT D175 — it declared "Fade Out"
+  //   absent with the reason "the body never attacks", which is a statement about
+  //   the SUITES rather than about the CARD, and it was the pin holding a wrong
+  //   `types` value in place (correcting one axis alone would have left the other
+  //   wrong). The whole cast that remains below omits an attack because the body
+  //   only ever DEFENDS; Spiritomb never even did that.
   "sv02-097": { abilities: ["Safeguard"], why: "Mimikyu — declared in its doc block: Safeguard is authored in the REGISTRY, keyed by id, which makes this the sharpest zero-registry-ROW witness (`programFor` is defined, `.attack` is not). D151 called this the LIVE case; it is documented, and its residual cost is that a `FIXTURE_POOL` sweep for the printed sentence cannot see it." },
   // — the always-on damage-reduction / debuff passives: registry rows, tanky bodies
   //   fielded to be HIT.
@@ -419,20 +424,48 @@ describe("(a) no fixture NAME is wrong", () => {
   // abilityLock/attackCostDelta/punkOut/block/lunarZone/trapTerritory and attacks
   // only in abilityLock and expShare, always into a body with no Fire/Psychic W or
   // R), and the ONLY thing that went red was THIS TABLE over-declaring it — which is
-  // the bidirectional assertion below working exactly as designed. FOUR remain, and
-  // Spiritomb sv02-089 is the last written one; it is not free, because its printed
-  // "Fade Out" is declared absent in INCOMPLETE, so correcting the type without the
-  // attack would leave a body that is right on one axis and wrong on another.
-  const TYPES_DIVERGE: Record<string, string> = {
-    "sv01-023":
-      "Arboliva — fixture Colorless (the `battler` default), print Grass. Declared in its slice's section comment ('real ids so `programFor` finds the program, simplified bodies so surgery can place them'): a registry `onEvolve` trigger source, never a defender in a W/R case.",
-    "sv02-089":
-      "Spiritomb — fixture Darkness, print Psychic. Same shape: a `disableAbilities` aura source that never attacks (its printed 'Fade Out' is declared absent in INCOMPLETE) and is never the defender in a W/R case.",
-    "sv02-123":
-      "Garganacl — fixture Colorless (the `battler` default), print Fighting. Declared in its slice's section comment as a simplified stand-in: it is a `betweenTurns` trigger source made a Basic so it sits without an evolution, and the type rides along unset.",
-    "sv03-012":
-      "Trevenant — fixture Colorless (the `battler` default), print Grass. Garganacl's twin, same section comment, same reason.",
-  };
+  // the bidirectional assertion below working exactly as designed.
+  //
+  // ⚠️ AND AT D175 THE TABLE IS **EMPTY**, BY ONE FIX AND ONE RULE. The five
+  // split two ways and each half was closed on its own terms:
+  //
+  //   • the WRITTEN ones — Klefki sv01-096 `["Fairy"]` (D173) and Spiritomb
+  //     sv02-089 `["Darkness"]` (D175) — were FIXED to the print. Spiritomb's was
+  //     not free and that is why D173 did not take it: its printed "Fade Out" was
+  //     declared absent in INCOMPLETE, so correcting one axis alone would have
+  //     left the body right on the type and wrong on the attack list. Both landed
+  //     together. The value was the card's WEAKNESS column (`weaknesses_json`
+  //     `[{"type":"Darkness","value":"×2"}]`) written into `types` — the wrong
+  //     FIELD, not a wrong element, which is why it read as deliberate.
+  //   • the DEFAULTED ones — Garganacl sv02-123 and Trevenant sv03-012 — were not
+  //     fixed at all. `battler` now derives an unnamed `types` from
+  //     `CATALOG_MANIFEST.printed`, so both carry their print by construction and
+  //     the fixture written the same way tomorrow carries it too. PENDING EDITS
+  //     BECAME A RULE.
+  //
+  // ⚠️ AND THE THIRD "DEFAULT" WAS NOT ONE — THE CLASSIFICATION ABOVE WAS WRONG.
+  // Arboliva sv01-023 is a RAW LITERAL, not a `battler` call (it is a Stage 1 with
+  // an `evolveFrom`, so it never went through the helper), and its `["Colorless"]`
+  // was WRITTEN — copied from the helper's shape rather than from the card. The
+  // rule could not reach it and it took the one hand-edit after all. **A DEFECT
+  // FILED UNDER THE WRONG CLASS IS ONE A RULE AIMED AT THAT CLASS WILL MISS**, and
+  // nothing but this sweep going red could say so: "fixture Colorless, print
+  // Grass" is the same OBSERVATION for a default and for a hand-write, and D173
+  // inferred the cause from the value instead of from the construction site. So
+  // the written column is 3 of 5, not 2 — and it was the whole population.
+  //
+  // The table is KEPT, exactly as `NO_CATALOG_ROW` and `reindexed` are kept: the
+  // sweep below is total in BOTH directions, so a dead declaration fails as
+  // loudly as an undeclared divergence whether the table is empty or not, and an
+  // omission this file cannot NAME is one it cannot count.
+  //
+  // ⚠️ AND THE EMPTINESS IS PINNED SEPARATELY (D173's `shifted` precedent). With
+  // the table empty, `diverged` vs its keys is `[] vs []` and would pass for a
+  // fixture that diverges AND declares itself — which is precisely the move this
+  // slice exists to stop. `expect(diverged).toEqual([])` makes a SIXTH divergence
+  // a FAILURE rather than a table entry, so the only way to satisfy this file is
+  // to fix the fixture.
+  const TYPES_DIVERGE: Record<string, string> = {};
 
   it("every fixture with a catalog row carries the printed TYPES, or declares why not", () => {
     const diverged: string[] = [];
@@ -454,6 +487,9 @@ describe("(a) no fixture NAME is wrong", () => {
     // Total in BOTH directions: a declaration for a fixture that no longer
     // diverges is as dead as an undeclared divergence is silent.
     expect(diverged.sort()).toEqual(Object.keys(TYPES_DIVERGE).sort());
+    // …and PINNED EMPTY on top of that, so a sixth divergence cannot be absorbed
+    // by declaring it — the table above is empty and must stay so.
+    expect(diverged).toEqual([]);
     for (const why of Object.values(TYPES_DIVERGE)) expect(why.length).toBeGreaterThan(30);
     // The sweep read a real population — an empty `printed` satisfies the loop.
     expect(Object.values(M.printed).filter((p) => p.types.length > 0).length).toBeGreaterThan(100);
