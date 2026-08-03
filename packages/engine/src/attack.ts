@@ -59,7 +59,7 @@ import { attackerPreWRBonus, conditionHolds, runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS } from "./rng";
 import type { CoinFace } from "./rng";
-import { damagedByAttackAbility } from "./triggers";
+import { damagedByAttackAbility, koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
 import { isImmobilized, otherSeat, takenPrizes, withActive, withSide } from "./types";
@@ -1097,10 +1097,37 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `pending` until resolveEffect finishes it. APPENDED not assigned: turn:action
   // never carries a tail (its three writers all leave it empty), so this equals a
   // fresh queue but stays honest if a stage somehow WERE queued.
-  const epilogue: PendingStage[] =
-    damagedTriggerStage !== null
-      ? [damagedTriggerStage, { kind: "attackEpilogue", seat: action.seat }]
-      : [{ kind: "attackEpilogue", seat: action.seat }];
+  // §8.1 (D171) — a POKÉMON TOOL on the defender's board whose printed sentence
+  // fires on their ACTIVE being Knocked Out by this attack (Exp. Share sv01-174
+  // rescues a Basic Energy off the dying body onto its own holder). Seeded on
+  // PRESENCE alone — "does this board carry such a Tool at all" — and NOT on
+  // `dealt > 0` like the reactive trigger above it, because the printed condition
+  // is the KO rather than the damage: an attack that deals no main-hit damage and
+  // then snipes its own defender lethally through its effect program is still a
+  // Knock Out "by damage from an attack". The whole antecedent is re-derived at run
+  // time (flow.ts runKoToolTrigger re-checks "still the Active" AND "still lethal"),
+  // so this gate is only about keeping the pending queue byte-identical for every
+  // board with no such Tool on it.
+  //
+  // ⚠️ IT MUST SIT AHEAD OF `attackEpilogue`, and that is the only window in the
+  // whole §8.1 sequence: `finishAttack`'s own `koRecoilOf` is earlier but cannot
+  // PARK, and the KO sweep's `koTrigger` stages are all queued AFTER `knockOut` has
+  // discarded the dying stack — Energy included. It sits BEHIND the damagedTrigger
+  // because "damaged" precedes "Knocked Out" in the same instant, and because a
+  // reaction that heals or switches the defender should be able to unmake the KO
+  // this stage is conditioned on.
+  //
+  // The stage carries the SEAT alone: both the dying body and the Tool's bearer are
+  // re-read off the live board when it runs, so nothing measured here can go stale.
+  const koToolStage: PendingStage | null =
+    koToolTriggersOf(next, defenderSeat, defenderUid).length > 0
+      ? { kind: "koToolTrigger", seat: defenderSeat }
+      : null;
+  const epilogue: PendingStage[] = [
+    ...(damagedTriggerStage === null ? [] : [damagedTriggerStage]),
+    ...(koToolStage === null ? [] : [koToolStage]),
+    { kind: "attackEpilogue", seat: action.seat },
+  ];
   if (program !== null) {
     return settleProgram(
       runProgram(
@@ -1122,12 +1149,13 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     );
   }
 
-  // No effect program. When the defender reacts, drain [damagedTrigger, epilogue]
-  // through advance (the trigger may park; the epilogue behind it resumes on
-  // resolve). Otherwise the epilogue alone is exactly finishAttack — its advance
-  // case pops itself and calls it — so keep the direct call for the common
-  // no-reaction path (byte-identical to the pre-slice tail).
-  if (damagedTriggerStage !== null) {
+  // No effect program. When the defender reacts — a §9 onDamagedByAttack Ability or
+  // a D171 on-KO Tool — drain [trigger…, epilogue] through advance (either may park;
+  // the epilogue behind them resumes on resolve). Otherwise the epilogue alone is
+  // exactly finishAttack — its advance case pops itself and calls it — so keep the
+  // direct call for the common no-reaction path (byte-identical to the pre-slice
+  // tail).
+  if (damagedTriggerStage !== null || koToolStage !== null) {
     return advance({ ...next, pending: [...next.pending, ...epilogue] }, events);
   }
 

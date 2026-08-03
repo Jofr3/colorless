@@ -1793,7 +1793,9 @@ layered on this primitive: **Armarouge** "Fire Off" (a {R} Energy from a BENCHED
 Pokémon to the ACTIVE — fixed-endpoint + provided-type-filter riders, an Ability),
 **Mismagius** "Magical Flick" (moves the OPPONENT's Energy on evolve — opponent-side
 targeting + an onEvolve trigger), **Exp. Share** (an on-KO Tool trigger that moves a
-Basic Energy off the KO'd Pokémon — needs Tool triggered-abilities). **Verification:**
+Basic Energy off the KO'd Pokémon — needs Tool triggered-abilities; ⚠️ **✅ D171 built
+exactly that**: a `TriggerTiming` `onAllyActiveKnockOut`, a fourth detection site
+`koToolTriggersOf`, a `koToolTrigger` stage and a third `moveEnergy` route). **Verification:**
 `bun run check` green (tsc + biome + **1146 tests** — 1126 → 1146: 16 engine
 `moveEnergy.test.ts` + 1 `logFromEvents.test.ts` + 3 `GameHud.cardplay.dom.test.tsx`),
 production `vite build` green. Files: effects.ts (op + `anyEnergy` filter),
@@ -12896,9 +12898,16 @@ text columns. Only ONE is a recoil.
 | id | card | consequent | fate |
 |---|---|---|---|
 | `sv03-197` | Vengeful Punch (Tool) | 4 counters on the Attacking Pokémon | **D158** |
-| `sv01-174` | Exp. Share (Tool) | move a Basic Energy | unmapped |
-| `sv01-114` | Lucario "Avenging Knuckle" | +120 damage | unmapped |
-| `sv06.5-037`/`-083`/`-091` | Munkidori ex "Oh No You Don't" | opponent takes 1 fewer Prize | **unmapped — the site's next consumer** |
+| `sv01-174` | Exp. Share (Tool) | move a Basic Energy | **✅ D171** — `triggered.onAllyActiveKnockOut`, a FOURTH detection site |
+| `sv01-114` | Lucario "Avenging Knuckle" | +120 damage | **NOT this antecedent** (D164's correction); deliberately unmapped |
+| `sv06.5-037`/`-083`/`-091` | Munkidori ex "Oh No You Don't" | opponent takes 1 fewer Prize | **✅ D164** — `triggered.onKoPrizeReduction` |
+
+⚠️ **UPDATED AT D171 — THIS CENSUS IS NOW FULLY MAPPED.** Every row above is accounted
+for: D158 (this slice), D164 and D171, with `sv01-114` the one **deliberate** exclusion
+(it is a different antecedent — D164's correction). ⚠️ **And a SEVENTH row this pattern
+cannot see — Corviknight `sv02-148` (*"from THIS attack"*) — is recorded at §D171 and
+PINNED AS A STRING in `expShare.test.ts`**, because prose notes did not stop three
+separate passes from rediscovering it.
 
 Munkidori ex is the structurally closest: the SAME antecedent, a different
 consequent. The §8.1 sweep this slice adds is where that family will read. (This
@@ -13053,6 +13062,9 @@ slices cannot each claim the same delta.
 - **Exp. Share `sv01-174`** (move a Basic Energy) and **Lucario `sv01-114`
   "Avenging Knuckle"** (+120 damage) are the same antecedent with two more
   consequents, both unmapped and both now named rather than left in a census.
+  ⚠️ **UPDATED: Exp. Share is `✅ D171`** (a FOURTH detection site — `koToolTriggersOf`
+  — and a parking `koToolTrigger` stage), and **Lucario is NOT this antecedent at all**
+  (D164's correction), so it stays deliberately unmapped. **The census is CLOSED.**
 
 ## D159 — the ALWAYS-ON ATTACKER FILTERS: `Prevent all damage done to {this Pokémon | your Benched Pokémon | Pokémon that don't have a Rule Box} by attacks from …` — 5 printings / 4 sentences / THREE mechanisms, and `DAMAGE_DEALT.prevented` had been UNRENDERED since 0.58.0 (engine 0.106.0, `MATCH_RECORD_VERSION` unchanged at 10)
 
@@ -14412,7 +14424,7 @@ op, no prompt, no error code, no `@luminous/schema` diff, no DB diff, no web dif
 engine **0.109.0 → 0.110.0**; `MATCH_RECORD_VERSION` **10, unmoved**;
 `bun run check` GREEN — tests **3533 → 3561**; manifest **209 rows, 0 absent**.
 
-### Priced and DEFERRED, in the same slice: Exp. Share `sv01-174`
+### Priced and DEFERRED, in the same slice: Exp. Share `sv01-174` — ✅ BUILT AT D171
 
 The **last unread member** of D158's KO-antecedent census. Its cost is dominated by a
 `"you may"` choice that must **PARK MID-SWEEP** — but ⚠️ **`FIX_ONKO` /
@@ -14420,6 +14432,13 @@ The **last unread member** of D158's KO-antecedent census. Its cost is dominated
 check; run it before pricing anything else.** The seam differs from `fix-onko`'s in
 one way that matters: that one queues **AFTER** prizes, and this must act **BEFORE**
 `knockOut`.
+
+⚠️ **RESOLVED AT D171, AND THIS PRICING WAS WRONG IN BOTH DIRECTIONS — see §D171.** The
+check above was run and `resumeTail` **does** cover the park with **zero widening**, so
+the *"you may"* was **FREE**. But `FIX_ONKO`/`koTrigger` is not a widening problem at
+all — it is a **TEMPORAL IMPOSSIBILITY** (`collectKnockOuts` queues it after `knockOut`
+has discarded the Energy), and the price nobody named was that **nothing in the engine
+ran a TOOL's `triggered` program**, so the slice bought a **FOURTH detection site**.
 
 ### The merge note that made this slice cheap
 
@@ -15878,3 +15897,337 @@ remaining row does not belong to this family at all:
   than an integer 0..12, so it is a Hail-Blade-sized slice on the program/`EffectRecord`
   path. **It needs re-pricing FROM SCRATCH** — pricing it as a scaling arm would be a
   category error.
+
+---
+
+## D171 — the TOOL-BORNE ON-KO TRIGGER: `When your Active Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, you may move a Basic Energy from that Pokémon to the Pokémon this card is attached to.` — Exp. Share `sv01-174`, the KO-antecedent family CLOSES, and the cost was a FOURTH DETECTION SITE nobody had priced (engine 0.115.0 → 0.116.0, `MATCH_RECORD_VERSION` unchanged at 11)
+
+The **last unread member** of D158's census, deferred at D164 with a price that a recon
+pass then overturned **in both directions**. It is also the **first card in this engine
+whose printed sentence is borne by a POKÉMON TOOL on a body OTHER than the one the
+sentence is about** — the subject (*"your Active Pokémon"*) and the bearer (*"the Pokémon
+this card is attached to"*) are two different Pokémon, and only one of them is dying.
+
+### The inherited pricing was wrong in BOTH directions
+
+D164 priced this as *"a `you may` choice that must PARK mid-sweep"*. That half was
+**free**:
+
+- `settleProgram`'s `resumeTail` is a **pure control-return flag that captures no KO
+  state at all** — its whole contract is *"a PendingStage is sitting behind me"* — so the
+  park needed **zero widening**;
+- `TriggeredAbility.optional` **auto-fires**, so the printed *"you MAY"* buys no confirm
+  arm;
+- `moveEnergy` is **already declinable** — an empty pick is a legal answer
+  (`validateChoice`) — so "may" is expressed by the ANSWER rather than by a branch.
+
+**No confirm arm, no new prompt family, no new prompt kind, no new event type, no new log
+arm.** The price was somewhere else entirely.
+
+### ⚠️ THE SLICE'S REAL DECISION: A FOURTH DETECTION SITE
+
+`triggers.ts koToolTriggersOf(state, seat, koedUid)` — *for each of my in-play Pokémon,
+for each attached Tool, is there an `onAllyActiveKnockOut` program keyed on ANOTHER body's
+KO* — with a new `TriggerTiming`, `onAllyActiveKnockOut`. **First of its kind in this
+repo**, and each of the three existing sites fails for its own structural reason:
+
+| site | what it reads | why it cannot see this card |
+|---|---|---|
+| `onKnockOutTrigger` | `cardIdByUid[uid]` of the **KO'd body's top card** | wrong body — the bearer SURVIVES — and it never looks at tools |
+| `triggersOf` | `topCardOf(pokemon)` | a Tool is **never a stack top**, so this misses every Tool for **every** timing |
+| `passivesOf` | **walks `pokemon.tools`** — the only pre-D171 site that does | folds `passive` into **NUMBERS**; no way to express a program, a park or a controller |
+
+That third row is the whole economics of this family: **Vengeful Punch `sv03-197` was a
+DATA ROW because its consequent is a number on a body that survives; this could not be,
+because its consequent moves a CARD THE PLAYER CHOOSES off a body that does not.** Same
+printed antecedent, same instant, opposite prices.
+
+**Two deliberate refusals in the scan, each a line of the printed sentence:**
+
+1. **THE KO'D BODY IS SKIPPED.** *"…move a Basic Energy from THAT Pokémon to THE POKÉMON
+   THIS CARD IS ATTACHED TO"* names **two** Pokémon. A self-attached Exp. Share has no
+   destination distinct from its source and is in the same discard-bound stack as the
+   Energy, so it is not a holder here.
+2. **NO §9 GATE.** `triggersOf` suppresses a locked Pokémon's triggered Abilities; this
+   scan deliberately does not, because **a TOOL IS NOT AN ABILITY** — `passivesOf` states
+   the same exemption for the same reason. A Klefki aura live over the holder leaves Exp.
+   Share working, and **the negative is driven with the lock PROVED LIVE FIRST**
+   (`disabledAbilityUids` really contains the holder's uid), so the positive cannot be
+   vacuous. **An absence measured, not assumed.**
+
+### ⚠️ THE SEAM: `koTrigger` IS A TEMPORAL IMPOSSIBILITY, NOT A WIDENING PROBLEM
+
+`collectKnockOuts` queues its `koTrigger` stages **after** `knockOut` has run for every
+ref in the batch, and `knockOut` does `discardFromStack(side, side.active, "all")`. By the
+time any on-KO stage could look, **the Energy this sentence moves is in the discard
+pile.** No amount of park support fixes that.
+
+`koRecoilOf` **IS** a genuine before-`knockOut` hook — it is why Vengeful Punch works, and
+it is deliberately placed ahead of the sweep — but it is **SYNCHRONOUS and cannot park**,
+and this consequent is a player's choice. **Right point, wrong mechanism.**
+
+The seam that fits is a **SIBLING OF `damagedTrigger`**:
+
+```
+attack.ts:  [ damagedTrigger? , koToolTrigger? , attackEpilogue ]
+                                 ^^^^^^^^^^^^^
+           seeded on TOOL PRESENCE; runs under the DAMAGED, non-turn seat;
+           settleProgram(..., { resumeTail: true })
+```
+
+It sits **BEHIND** `damagedTrigger` because *"damaged"* precedes *"Knocked Out"* in the
+same instant, and because a reaction that heals or switches the defender should be able to
+**unmake the KO this stage is conditioned on**. It sits **AHEAD** of `attackEpilogue`
+because that is the only window that exists at all.
+
+### ⚠️ THE STAGE CARRIES THE SEAT AND NOTHING ELSE
+
+`{ kind: "koToolTrigger"; seat: Seat }` — the one member of `PendingStage` that names
+**neither** the body that acts **nor** the body it is about. Both are re-read off the live
+board when it runs:
+
+- **"your ACTIVE Pokémon"** — whatever is in the spot NOW, which is what the present tense
+  says.
+- **"is Knocked Out"** — `isLethallyDamaged`, **the sweep's OWN predicate**, so "this will
+  die" here cannot drift from what `collectKnockOuts` decides two stages later. That is
+  `koRecoilOf`'s rule read one stage out.
+- **"by damage from an attack from your OPPONENT'S Pokémon"** — discharged by
+  **PLACEMENT**, exactly as D158 discharged it. Only `attack.ts` seeds this stage, and only
+  for the DEFENDER's seat; the Checkup and the mid-turn sweep call `collectKnockOuts`
+  directly and can never reach it.
+
+⚠️ **AND THIS IS A CORRECTION TO THE BRIEF, NOT A SAVING.** The recon specified a PAIR of
+run-time re-checks — *"still lethal"* **and** *"still the same Active"* — with the uid
+carried on the stage to support the second. **The pair collapsed to one**: re-reading the
+subject off the live board is simpler and more honest than validating a remembered uid,
+which would be a **second opinion that can disagree with the sweep**. `attackEpilogue`
+already carries exactly one seat for the same reason. The general form is
+`damagedByAttackAbility`'s *"re-derive the printed clause where it is answerable"* carried
+far enough to **DELETE the remembered uid rather than re-validate it**.
+
+⚠️ **COLLAPSING IT KILLED A FIXTURE THE BRIEF EXPECTED, AND BACKING OUT WAS THE RIGHT
+CALL.** Driving a promotion between seed and run would have needed a `gust` on an attack,
+which drags in an unrelated **§11 `preventBlock` ruling** the slice had no mandate to
+make. The agent **backed out rather than half-land it** — a board that forces an
+out-of-scope classification is not a cheap board.
+
+### ⚠️ THE SEED GATE IS TOOL PRESENCE, NEVER `dealt > 0` — and the mutant that proved it
+
+`damagedTrigger` is seeded inside the damage block on `dealt > 0`. **Copying that is the
+mistake an author would make, and it SURVIVED THE FIRST MUTATION PASS**: every board in
+the suite dealt main damage. The witness is **Mimikyu `sv02-097` "Ghost Eye"** ({P}{C},
+**no printed `damage` field**, 7 damage counters on the opponent's Active) — the one
+attacker in the pool whose §8.5 pipeline is skipped whole and whose **EFFECT PROGRAM still
+kills**. **The printed condition is the KNOCK OUT, not the HIT.** Adding that board turned
+the survivor into a kill.
+
+⚠️ **THE TRANSFERABLE RULE, AND IT IS THE SECOND HALF OF D169's: A MUTANT THAT COPIES A
+SIBLING'S REAL CODE NEEDS A BOARD THE SIBLING NEVER HAS.** D169 said a mutant must be the
+mistake someone would actually make; the corollary is that such a mutant is **only as
+sharp as the board that separates the two siblings**, and the sibling's own coverage will
+never contain it.
+
+### ⚠️ TWO GATES THAT BELONGED TO ONE TERM — D169's lesson, RECURRING ONE SLICE LATER
+
+1. **`attachTool` tested `programFor(id)?.passive !== undefined`** for *"is this Tool
+   simulated"*. Every authored Tool up to Vengeful Punch expressed its sentence as
+   continuous NUMBERS, so *"has a passive"* and *"is simulated"* were the same predicate
+   **by accident**. Exp. Share has a `triggered` program and **no passive**, so under the
+   old gate the engine would have **refused to attach a card it fully simulates**, with
+   *"not simulated yet"*. It is now a disjunction. ⚠️ **This is the SECOND SIGHTING of
+   D169's finding, one slice after it was written down** — which is what turns it from an
+   observation into a checklist item: *when widening a seam that already serves one
+   printing, ENUMERATE ITS EARLY RETURNS AND ASK WHICH TERM EACH BELONGS TO.*
+2. **`ENERGY_MOVED` named its source by SPOT**, under `LogContext`'s own doc guarantee
+   that *"nothing it names has left play when the reduction settles"*. That guarantee held
+   for Energy Switch and Poppy and **stopped holding here**: the source is Knocked Out
+   later in the **same reduction**, and on a board that auto-promotes `{spot:"active"}`
+   renders as the Pokémon that **REPLACED** it — a factually false row, persisted and
+   broadcast. The event gained **`fromUid?`** (emitted always; optional only so the type
+   stays additive) and the log arm prefers it, which is the route `KNOCKED_OUT` already
+   uses and which the same doc block already names: *"KO'd names come off the event's own
+   uid, not the state."* **The lesson: a log guarantee written for IN-PLAY subjects breaks
+   the first time a subject LEAVES PLAY mid-reduction** — any future op that moves a card
+   off a body the same reduction removes owes the same `…Uid` treatment.
+
+### A THIRD `moveEnergy` ROUTE — the first pinned by UID
+
+`koedActiveToToolHolder`: sources are the **ACTIVE alone**; the sole destination is the
+Pokémon carrying `ctx.sourceUid`, which for a Tool-borne program is the **TOOL's own uid**.
+This needed a new **`toolHolderRef`**, **not** `sourceRef`: *"the Pokémon this card is
+attached to"* and *"this Pokémon"* are **two phrases with two readers**, and `sourceRef`
+matches on the TOP card's uid, so it returns **EMPTY** for every Tool-borne program.
+
+One decision survives (WHICH Energy), so the compound prompt, the wire validator and
+`moveEnergyApply` are untouched, and the route is **invisible on the wire** — the client
+sees Energy Switch's decision with a one-entry destination list.
+
+`sourceUid` is **threaded into `moveEndpoints`** rather than read off `ctx`, because
+`moveEnergyPlayable` (the `programPlayable` gate) has no context: it passes none, the route
+then offers no destination, and a top-level Trainer authored with it is refused as a
+would-only-whiff play — which is correct, since the route is reachable only from a Tool's
+on-KO trigger. Pinned as a registry-wide guard.
+
+### VOICE — NO announcement row, and that is the family's existing rule
+
+A Tool emits **no `ABILITY_TRIGGERED`**: `log.ts` already says so at the neighbouring
+recoil arm (*"it is a passive, and for a Tool there is no Ability to trigger"*). The
+**prompt** — *"Move a Basic Energy from that Pokémon to the Pokémon this card is attached
+to."*, the printed second half **verbatim** — and the `ENERGY_MOVED` row are the whole of
+what a reader is told. Driven both ways.
+
+### The structural questions
+
+1. **PARK? YES. PERSIST? NO** — `MATCH_RECORD_VERSION` stays **11**, **DERIVED**, and the
+   recon's reason was **wrong even though its answer was right**. ⚠️ **`GameState.pending`
+   IS persisted** — a park mid-attack is a live, reachable, stored position, so *"a stage
+   kind is transient"* is factually false. The right answer comes from D124's test being
+   **DIRECTIONAL**: *can the PREVIOUS deploy's RECORD hold the shape the new code
+   expects?* An old record **cannot contain a `koToolTrigger`** (nothing wrote one) and
+   every kind it can contain is still handled; the `route` change is a **WIDENED ENUM** on
+   an op that *can* sit in `phase.cont`, which D124 explicitly excludes; **no REQUIRED
+   field was added to anything persisted**; and `fromUid` rides `GameEvent`, which
+   `MatchRecord` does not store (it stores the RENDERED log). ⚠️ **A new REQUIRED FIELD on
+   an EXISTING `PendingStage` kind would NOT pass this test** — the additive kind does.
+   `engineVersion` **0.115.0 → 0.116.0**; `packages/engine/package.json` stays `0.3.0`.
+2. **VOICE** — no row moved except the one that had to: `ENERGY_MOVED` gained a uid so it
+   could keep telling the truth. No new row, no new arm.
+3. **§9: N/A BY DESIGN**, and **the negative is the assertion** (a Tool is not an Ability),
+   driven with the lock proved live first.
+4. **MECHANISM** — everything except the timing, the scan, the stage, the runner, the
+   route, the ref helper, the event field and the widened `attachTool` gate already
+   existed.
+5. **GATES NO ACTION**; **no error code**; **§11: nothing owed** (no op added or removed).
+   The only refusal surface is the pre-existing shared `moveEnergy` validator.
+
+### The pin that went red was the one written to go red — RE-POINTED, not deleted
+
+`ohNoYouDont.test.ts` pinned Exp. Share as an ABSENCE on **five** assertions, including
+`programFor("sv01-174")?.triggered === undefined`. All five went red exactly as designed
+and are **RE-POINTED** at what the slice built — plus **three new** assertions: the timing
+is `onAllyActiveKnockOut` and explicitly **not** `onKnockOut` (an `onKnockOut` row would be
+read by the KO sweep, which runs after `knockOut` has discarded the Energy), and **neither
+Prize field is set**, so the partition test below it stays true. **A pin that goes red on
+the slice it was written for is the pin working**, for the third batch running.
+
+### ⚠️ A GUARD REMOVED BECAUSE A MUTANT COULD NOT KILL IT — and WHICH precedent that is
+
+`moveEndpoints` first carried its own *"the holder must not BE the source"* test beside the
+scan's skip. **Deleting it failed nothing** — the scan's skip means no board can arrive
+there. Two precedents were available and they disagree: **D154 deleted** a guard nothing
+could make fail; **D159 / D161 / D163 kept** theirs with the unreachability asserted.
+**D154's was chosen**, and the reason is that those three kept a guard because it was the
+FILE'S OWN IDIOM (three sibling calls that should read the same way) — here the two sibling
+routes carry no such test, so the guard was an idiom of one. The rule now has exactly two
+owners: the **SEMANTIC** one (`koToolTriggersOf` skips the KO'd body, because the printed
+sentence names two Pokémon) and the **WIRE BELT** (`validateChoice`'s *"cannot move a
+Pokémon's Energy onto itself"*). Removing the third made the scan-skip mutant kill **2**
+tests instead of 1 — **the deletion SHARPENED a neighbouring mutant.**
+
+### Mutation pass: 12 run, 12 caught — two as first-round SURVIVORS
+
+Counts are engine test FILES failed. Every mutant is the neighbouring code's **real text**
+— `damagedTrigger`'s `dealt > 0` gate, `triggersOf`'s §9 line, Energy Switch's `"all"`
+scope, `sourceRef` in place of `toolHolderRef`.
+
+| mutant | tests killed |
+|---|---|
+| queue `koToolTrigger` BEHIND `attackEpilogue` (i.e. the `koTrigger` placement) | **17** |
+| forget to `popStage` before running the stage | **17** |
+| `sourceRef` instead of `toolHolderRef` for the destination | **16** |
+| seed the stage for the ATTACKER's seat (the possessive) | **16** |
+| drop the LETHALITY re-check | 4 |
+| filter `anyEnergy` instead of `basicEnergy` | 3 |
+| don't skip the KO'd body in the scan | **2** (1 before the redundant guard was removed) |
+| copy `triggersOf`'s §9 gate into the scan | 1 |
+| route source `"all"` instead of `"active"` (Energy Switch's real code) | 1 |
+| revert `attachTool`'s gate to `passive` alone | 1 |
+| log falls back to the SPOT (drop `fromUid`) | 1 |
+| **seed on `dealt > 0` inside the damage block** (`damagedTrigger`'s real code) | **SURVIVED — killed only once Mimikyu `sv02-097`'s 0-damage lethal board was added** |
+| **`moveEndpoints`' own self-destination guard** | **UNKILLABLE — the guard was DELETED rather than witnessed (D154's precedent)** |
+
+### The family — re-censused a FOURTH time, and CLOSED
+
+`LIKE '%Knocked Out by damage from an attack%'` over **all three text columns** against the
+local D1 (2026-08-03, **978 rows / 6 sets**) returns **6 printings / 4 distinct sentences**
+— D158's figure, D162's re-run, D164's third confirmation, and now a fourth.
+
+| card | column | verdict |
+|---|---|---|
+| Vengeful Punch `sv03-197` (Tool) | `effect` | D158 — `passive.damageAttackerOnKo` |
+| Munkidori ex `sv06.5-037`/`-083`/`-091` | `abilities_json` | D164 — `triggered.onKoPrizeReduction` |
+| **Exp. Share `sv01-174` (Tool)** | `effect` | **D171 — `triggered.onAllyActiveKnockOut`** |
+| Lucario `sv01-114` | `attacks_json` | **NOT this antecedent** (D164's correction) |
+
+Excluding Lucario the family is **5 printings / 3 sentences**, and it is now **CLOSED at
+3/3 sentences authored**, with the one deliberate abstention (`sv01-114`, the live
+fall-through witness in `conditionClause.test.ts`) intact. **D158's KO-antecedent census is
+fully mapped.**
+
+### ⚠️ A SEVENTH ROW THE CENSUS PATTERN CANNOT SEE — NOW PINNED IN CODE
+
+**Corviknight `sv02-148` "Accelerate"** (`attacks_json`): *"If your opponent's Pokémon is
+Knocked Out by damage from **this attack**, during your opponent's next turn, prevent all
+damage from and effects of attacks done to this Pokémon."* A **different antecedent
+family** — the KO is *caused by* the attack being resolved rather than *suffered by* the
+card's owner, and the consequent is a durated self-prevention. **No registry row, no
+fixture.** Every run of this census since D158 has been blind to it, because the pattern
+says *"from an attack"* and this row says *"from this attack"*.
+
+⚠️ **THE DURABLE FIX, AND IT IS GENERAL: A ROW A CENSUS CANNOT SEE SHOULD BE PINNED IN
+CODE, NOT RE-NOTED IN PROSE EACH TIME.** Corviknight has now been re-discovered by **three
+separate passes**, each of which wrote it into a handoff and none of which stopped the
+next. It is a **string in `expShare.test.ts`** now, asserted alongside `programFor` and
+`FIXTURE_POOL` absences, so a fourth census cannot rediscover it as news.
+
+### Cost
+
+**1 `TriggerTiming` (`onAllyActiveKnockOut`), 1 board scan (`koToolTriggersOf`), 1
+`PendingStage` kind + its `advance` arm, 1 flow runner (`runKoToolTrigger`), 1 `moveEnergy`
+route + 1 ref helper (`toolHolderRef`) + 1 prompt arm, 1 optional event field
+(`ENERGY_MOVED.fromUid`) + 1 log line, 1 widened `attachTool` gate, 1 registry row
+(`EXP_SHARE`), 1 fixture (`sv01-174`, verbatim off the D1), 1 deck (`EXP_SHARE_DECK`,
+**SEED-FREE** — no coin anywhere in the card).** Everything else was reused.
+
+`expShare.test.ts` (**40 tests**, 8 groups: the printed datum, the board scan, the park,
+the antecedent, the seam, the voice, the structural questions, the family after D171), plus
+the re-pointed `ohNoYouDont.test.ts` pin. **No new event type, no new log arm, no error
+code, no op, no prompt kind, no `@luminous/schema` diff, no DB diff, no web diff.**
+
+15 files under `packages/engine/src` move (`registry.ts`, `types.ts`, `triggers.ts`,
+`flow.ts`, `attack.ts`, `interpreter.ts`, `events.ts`, `log.ts`, `cardplay.ts`,
+`effects.ts`, `testFixtures.ts`, `catalogManifest.ts`, `index.ts`, `ohNoYouDont.test.ts`
+and the new `expShare.test.ts`) — **the widest engine diff of this batch by a distance.**
+
+engine **0.115.0 → 0.116.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 11**; manifest
+**215 → 216** fixture rows, 0 absent; `bun run check` GREEN exit 0 — **210 files / 3761
+tests** (was 209 / 3721).
+
+### The KO-antecedent family after D171
+
+**CLOSED at 3/3 sentences.** Three printings, three sites, and the sites differ **because
+the consequents do** — which is this family's whole lesson across D158 / D164 / D171:
+
+| sentence | consequent | site |
+|---|---|---|
+| Vengeful Punch | HP on a surviving body | `flow.ts koRecoilOf` — synchronous, before the sweep |
+| Munkidori ex | a PRIZE | `flow.ts planPrizes` — inside the sweep |
+| Exp. Share | a CARD the player chooses | `flow.ts runKoToolTrigger` — a parking stage before the sweep |
+
+**Placement discharges a condition only for a consequent that can live at the placement**
+(D164) — and D171 adds the other half: **a consequent that needs a DECISION cannot live at
+a SYNCHRONOUS placement at all, however right that placement is.**
+
+### What is left in this neighbourhood
+
+- **`sv02-148` Corviknight is an OPEN, UNPRICED antecedent family of one** — *"Knocked Out
+  by damage from **this** attack"* → a durated self-prevention. It needs a
+  KO-CAUSED-BY-THIS-ATTACK read that nothing in the engine has, plus an `attackBlock`-shaped
+  stamp that D142/D148 already built. **Probably cheap; nobody has looked.**
+- **`onAllyActiveKnockOut` has ONE producer and the scan fires the FIRST match.** A second
+  parking Tool trigger on one board is deferred, exactly as the board triggers defer
+  chaining — same follow-up, now with a second caller wanting it.
+- **The `LogContext` invariant is now CONDITIONAL.** Its doc still says every event it
+  names is safe against the post-state; that is true only because `ENERGY_MOVED` was fixed.
+  **Any future op that moves a card off a body the same reduction removes owes the same
+  `…Uid` treatment.** Worth a sweep.

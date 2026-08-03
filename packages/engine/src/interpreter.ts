@@ -1038,7 +1038,10 @@ function stepOp(
       // needs no movable Energy OR no distinct destination (fewer than two of the
       // controller's Pokémon in play) — the programPlayable gate blocks the play,
       // but stay a no-op here too (a mid-program board could reach it).
-      const { movable, destinations, needed } = moveEndpoints(state, ctx.seat, op);
+      // `ctx.sourceUid` is threaded for the `koedActiveToToolHolder` route alone
+      // (D171): it names the TOOL whose sentence is running, and the route resolves
+      // "the Pokémon this card is attached to" from it. Every other route ignores it.
+      const { movable, destinations, needed } = moveEndpoints(state, ctx.seat, op, ctx.sourceUid);
       if (movable.length === 0 || destinations.length < needed || op.max <= 0) {
         return { done: state };
       }
@@ -4335,6 +4338,9 @@ function moveEnergyApply(
   // The one source target the moved Energy came from (validateChoice guarantees a
   // single source) — recorded as the first non-destination Pokémon a pick sits on.
   let from: PokemonTarget | undefined;
+  // …and its TOP uid, for the event (D171 — the source may be Knocked Out later in
+  // this same reduction, and a spot cannot name a Pokémon that has left play).
+  let fromUid: string | undefined;
   const moved: string[] = [];
   const isDest = (target: PokemonTarget): boolean =>
     destSpot.spot === target.spot &&
@@ -4344,7 +4350,10 @@ function moveEnergyApply(
     const kept = pokemon.energy.filter((uid) => {
       if (picks.has(uid)) {
         moved.push(uid);
-        from ??= target;
+        if (from === undefined) {
+          from = target;
+          fromUid = topUid(pokemon);
+        }
         return false;
       }
       return true;
@@ -4383,7 +4392,14 @@ function moveEnergyApply(
   // of the engine's own value.
   const to: PokemonTarget =
     destSpot.spot === "active" ? { spot: "active" } : { spot: "bench", index: destSpot.index };
-  events.push({ type: "ENERGY_MOVED", seat: ctx.seat, uids: [...moved], from, to });
+  events.push({
+    type: "ENERGY_MOVED",
+    seat: ctx.seat,
+    uids: [...moved],
+    from,
+    ...(fromUid === undefined ? {} : { fromUid }),
+    to,
+  });
   return withSide(state, ctx.seat, { ...side, active, bench });
 }
 
@@ -4672,14 +4688,44 @@ export function moveEnergyPlayable(
     during a `ko:promote` park, where `turnGate` refuses `useAbility` and
     `playTrainer` outright), which is why it is asserted here rather than tested
     from a board — but it is asserted in exactly one place now, so it cannot rot
-    in two of three copies. */
+    in two of three copies.
+
+    `koedActiveToToolHolder` (D171, Exp. Share sv01-174) is the MIRROR of
+    `benchToActive` and the first route to pin its destination by UID: sources are
+    the ACTIVE alone (the body being Knocked Out — "from that Pokémon"), and the
+    sole destination is whichever in-play Pokémon carries `sourceUid`, which for a
+    Tool-borne program is the TOOL's own uid ("the Pokémon this card is attached
+    to"). ONE destination is enough for the same reason it is on `benchToActive` —
+    source and destination are disjoint by construction, here because the holder is
+    explicitly excluded from being the Active. `sourceUid` is threaded rather than
+    read off `ctx` because `moveEnergyPlayable` (the programPlayable gate) has no
+    context: it passes none, this route then offers no destination, and a top-level
+    Trainer authored with it is refused as a would-only-whiff play — which is
+    correct, since the route is only ever reachable from a Tool's on-KO trigger. */
 function moveEndpoints(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "moveEnergy" }>,
+  sourceUid?: string,
 ): { movable: { uid: string; from: PokemonRef }[]; destinations: PokemonRef[]; needed: number } {
   const benchToActive = op.route === "benchToActive";
+  const toToolHolder = op.route === "koedActiveToToolHolder";
   const active = state.players[seat].active;
+  if (toToolHolder) {
+    const holder = sourceUid === undefined ? undefined : toolHolderRef(state, seat, sourceUid);
+    return {
+      movable: attachedEnergies(state, seat, op.filter, "active"),
+      // ⚠️ NO "the holder must not BE the source" TEST HERE, and its absence is
+      // deliberate: that rule already has two owners and a third would be code no
+      // board can reach. `koToolTriggersOf` (triggers.ts) SKIPS the KO'd body, so
+      // a self-attached Exp. Share never seeds the stage that reaches this line —
+      // and `validateChoice`'s "cannot move a Pokémon's Energy onto itself" is the
+      // wire belt underneath. A mutation pass confirmed a guard here to be
+      // unkillable: removing it failed nothing, because nothing can arrive.
+      destinations: holder === undefined ? [] : [holder],
+      needed: 1,
+    };
+  }
   return {
     movable: attachedEnergies(state, seat, op.filter, benchToActive ? "bench" : "all"),
     destinations: benchToActive
@@ -4689,6 +4735,23 @@ function moveEndpoints(
       : ownInPlayRefs(state, seat),
     needed: benchToActive ? 1 : 2,
   };
+}
+
+/** The in-play Pokémon on `seat`'s board carrying the POKÉMON TOOL `toolUid` —
+    the printed "the Pokémon this card is attached to" (D171).
+
+    ⚠️ DELIBERATELY NOT `sourceRef`. That helper answers "this Pokémon" and matches
+    on the TOP CARD's uid, which is right for every program printed ON a Pokémon and
+    wrong for every program printed on a Tool: a Tool is never a stack top, so
+    `sourceRef` would return EMPTY for a Tool-borne program and the sentence's own
+    subject would silently vanish. Two phrases, two readers. */
+function toolHolderRef(state: GameState, seat: Seat, toolUid: string): PokemonRef | undefined {
+  const side = state.players[seat];
+  if (side.active?.tools.includes(toolUid) === true) {
+    return { seat, spot: { spot: "active" } };
+  }
+  const index = side.bench.findIndex((pokemon) => pokemon.tools.includes(toolUid));
+  return index === -1 ? undefined : { seat, spot: { spot: "bench", index } };
 }
 
 /** A discardEnergy op does something iff the victim's board (or, for the two
@@ -4945,7 +5008,12 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
   const where =
     op.route === "benchToActive"
       ? "from 1 of your Benched Pokémon to your Active Pokémon"
-      : "from 1 of your Pokémon to another of your Pokémon";
+      : op.route === "koedActiveToToolHolder"
+        ? // D171 — Exp. Share's printed second half, verbatim. The prompt is the
+          // ONLY thing that names this card to the player (a Tool emits no
+          // ABILITY_TRIGGERED row), so it says what the card says.
+          "from that Pokémon to the Pokémon this card is attached to"
+        : "from 1 of your Pokémon to another of your Pokémon";
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is

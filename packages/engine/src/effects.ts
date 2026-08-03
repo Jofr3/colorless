@@ -1796,8 +1796,19 @@ export type EffectOp =
       know a route exists. Source and destination are disjoint by construction,
       which is why the "two Pokémon in play" rule relaxes here to "an Active and
       a benched source". Still own→own; the OPPONENT-side move (Mismagius's
-      on-evolve flick) layers on later. */
-  | { op: "moveEnergy"; filter: CardFilter; max: number; route?: "benchToActive" }
+      on-evolve flick) layers on later.
+
+      `koedActiveToToolHolder` (D171) is Exp. Share sv01-174's "move a Basic Energy
+      from that Pokémon [your Active, being Knocked Out] to the Pokémon this card is
+      attached to" — the FIRST route whose destination is pinned by UID rather than
+      by SPOT. Sources are the controller's ACTIVE alone; the sole destination is the
+      in-play Pokémon carrying `ctx.sourceUid` (the TOOL's own uid — a Tool's printed
+      subject is "the Pokémon this card is attached to", which is not the `sourceRef`
+      "this Pokémon" every other op means). One decision survives (WHICH Energy), so
+      it parks on the very same compound prompt and the wire validator, the dialog and
+      `moveEnergyApply` all stay untouched. The Active is EXCLUDED as a destination:
+      a self-attached Exp. Share has no second Pokémon to name and moves nothing. */
+  | { op: "moveEnergy"; filter: CardFilter; max: number; route?: "benchToActive" | "koedActiveToToolHolder" }
   /** Put the affected player(s)' whole hand back into their deck, then draw — the
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
       only (Youngster: draw 5; Katy: draw 8; Brassius: draw hand+1); `who: "both"`

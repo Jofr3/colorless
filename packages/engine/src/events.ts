@@ -692,8 +692,26 @@ export type GameEvent =
       Pokémon (`from`) to another (`to`) — the §6 manual Energy movement (Energy
       Switch: a Basic Energy; Poppy: up to 2 any Energy). All moved Energy shares
       the one source; the Pokémon stay put (no bench compaction), so both targets
-      resolve against the post-state. Own-board only — a public table fact. */
-  | { type: "ENERGY_MOVED"; seat: Seat; uids: string[]; from: PokemonTarget; to: PokemonTarget }
+      resolve against the post-state. Own-board only — a public table fact.
+
+      ⚠️ `fromUid` NAMES THE SOURCE POKÉMON BY UID, AND IT EXISTS BECAUSE THE
+      "resolves against the post-state" GUARANTEE ABOVE STOPPED BEING TRUE (D171).
+      Exp. Share sv01-174 moves Energy OFF a body that is Knocked Out later in the
+      very same reduction: by the time `logFromEvents` renders, `{spot:"active"}`
+      either resolves to nothing or — worse, on a board that auto-promotes — to the
+      PROMOTED Pokémon, and the row names a Pokémon that was never involved. The uid
+      is immune to that, since `cardIdByUid` is fixed for the whole game (types.ts),
+      which is the same trick KNOCKED_OUT already uses to name a card after it left
+      play. Emitted on every move (identical rendering for a source that survives);
+      OPTIONAL only so the type stays additive for a record written before it. */
+  | {
+      type: "ENERGY_MOVED";
+      seat: Seat;
+      uids: string[];
+      from: PokemonTarget;
+      fromUid?: string;
+      to: PokemonTarget;
+    }
   /** An effect discarded `uids` (Energy cards) off `seat`'s in-play Pokémon at
       `from`, into `seat`'s OWN discard pile — the §15 energy-removal family
       (Crushing Hammer, Giacomo, Mawile) and the §8 self-discard attack cost

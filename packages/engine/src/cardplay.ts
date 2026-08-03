@@ -216,9 +216,19 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
   if (card.category !== "Trainer" || card.trainerType !== "Tool") {
     return err("NOT_A_TOOL", `${card.name} is not a Pokémon Tool card`);
   }
-  if (programFor(card.id)?.passive === undefined) {
+  const toolProgram = programFor(card.id);
+  if (toolProgram?.passive === undefined && (toolProgram?.triggered ?? []).length === 0) {
     // Coverage strategy: an unauthored Tool would occupy the one Tool slot
     // while doing nothing — reject loudly instead.
+    //
+    // ⚠️ `passive !== undefined` WAS THE WHOLE TEST UNTIL D171, AND IT BELONGED TO
+    // THE TOOLS THAT EXISTED RATHER THAN TO THE QUESTION. Every authored Tool up to
+    // Vengeful Punch expressed its printed sentence as continuous NUMBERS, so "has a
+    // passive" and "is simulated" were the same predicate by accident. Exp. Share
+    // sv01-174 is the first Tool whose sentence is a `triggered` program and NO
+    // passive at all — under the old gate the engine would have refused to attach a
+    // Tool it fully simulates, with "not simulated yet". The test now asks what it
+    // always meant: does this card DO anything while attached?
     return err("TRAINER_NOT_SIMULATED", `${card.name} is not simulated yet`);
   }
   // Wire shape check (types are not validation), then the same indexed

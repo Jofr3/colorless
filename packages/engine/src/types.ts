@@ -1053,6 +1053,35 @@ export type PendingStage =
       free. `uid`'s card is re-looked-up (it is still the Active unless the effect
       program moved it), so the "in the Active Spot" clause holds at run time. */
   | { kind: "damagedTrigger"; seat: Seat; uid: string }
+  /** §8.1 (D171) — run the `onAllyActiveKnockOut` program of a POKÉMON TOOL
+      attached to one of `seat`'s SURVIVING Pokémon, because `seat`'s Active is
+      about to be Knocked Out by the opponent's attack (Exp. Share sv01-174
+      rescues a Basic Energy off the dying body onto the Tool's own holder).
+
+      ⚠️ NO `uid`, AND THAT ABSENCE IS THE DESIGN — the one stage in this union
+      that names NEITHER the body that acts NOR the body it is about. Both are
+      RE-READ at run time off `seat`'s live board (flow.ts `runKoToolTrigger`):
+      the subject is whatever is in the Active Spot then, because the printed
+      sentence is present-tense about the spot ("when your ACTIVE Pokémon is
+      Knocked Out") rather than about a Pokémon someone pointed at earlier; and
+      the bearer is found by scanning every attached Tool (triggers.ts
+      `koToolTriggersOf`). Remembering either would be a second opinion that can
+      disagree with the sweep two stages later — `koRecoilOf`'s rule, one stage
+      out. It is also why the seat is the whole payload: `attackEpilogue` carries
+      exactly one seat for the same reason (it re-reads both boards).
+
+      Seeded by attack.ts BETWEEN the damagedTrigger and the attackEpilogue —
+      which is the only window that exists: `koRecoilOf` is earlier but cannot
+      PARK, and every `koTrigger` is later than `knockOut`, which has already
+      discarded the Energy this sentence moves. Like the two triggers above it
+      runs under `seat` (the DAMAGED, non-turn player, who is the one choosing)
+      and folds through settleProgram with `resumeTail`, so a park resumes the
+      attackEpilogue queued behind it. Seeded on TOOL PRESENCE at damage time but
+      conditioned on LETHALITY, which is knowable only after the attack's own
+      effect program — so the run-time re-check is the `damagedByAttackAbility`
+      idiom ("re-derive the printed clause where it is answerable"), and it is the
+      difference between this stage and a `koTrigger`. */
+  | { kind: "koToolTrigger"; seat: Seat }
   /** §8.1 + §5.3 — the attack's EPILOGUE: sweep BOTH boards for Knock Outs
       (finishAttack owns the [defender, attacker] order + the §14 tie), then end
       `seat`'s (the attacker's) turn through the staged tail. Seeded BEFORE the

@@ -4211,7 +4211,91 @@ import type { GameState, Seat } from "./types";
     effects.ts that never reaches `GameState`, so a new member cannot make a stored
     record unreadable; pinned as an absence over the 16-key set, now on a BENCHED
     body as well as an Active. */
-export const engineVersion = "0.115.0";
+/** 0.116.0 — **D171, EXP. SHARE `sv01-174`: the LAST unread member of D158's
+    KO-antecedent census, and the first card in this engine whose printed sentence
+    is borne by a POKÉMON TOOL on a body OTHER than the one the sentence is about.**
+
+      *"When your Active Pokémon is Knocked Out by damage from an attack from your
+       opponent's Pokémon, you may move a Basic Energy from that Pokémon to the
+       Pokémon this card is attached to."*  (Trainer/Tool, `effect`)
+
+    ⚠️ **THE `koTrigger` SEAM IS A TEMPORAL IMPOSSIBILITY, NOT A WIDENING PROBLEM.**
+    `collectKnockOuts` queues every `koTrigger` AFTER `knockOut` has already run for
+    the whole batch, and `knockOut` does `discardFromStack(side, side.active,
+    "all")` — so by the time any on-KO stage could look, the Energy this sentence
+    moves is in the discard pile. `koRecoilOf` IS a genuine before-`knockOut` hook
+    (it is why Vengeful Punch works) but it is **SYNCHRONOUS and cannot park**, and
+    this consequent is a player's choice. Right point, wrong mechanism.
+
+    **THE SEAM IS A SIBLING OF `damagedTrigger`**: a new `PendingStage`
+    `koToolTrigger`, seeded by attack.ts between the damagedTrigger and the
+    attackEpilogue, run under the **DAMAGED, non-turn seat** (the KO'd player is who
+    chooses), folded through `settleProgram` with `resumeTail` — the park machinery
+    that already existed and needed **zero widening**, since `resumeTail` captures no
+    KO state at all: its whole contract is *"a PendingStage is sitting behind me"*.
+    The printed **"you may"** was free too — optional triggers auto-fire and
+    `moveEnergy` is already declinable (an empty pick is a legal answer).
+
+    ⚠️ **THE REAL COST WAS THAT NOTHING IN THE ENGINE RAN A TOOL'S `triggered`
+    PROGRAM, AND IT NEEDED A FOURTH DETECTION SITE.** All three existing ones fail
+    structurally: `onKnockOutTrigger` reads the KO'd body's TOP CARD (wrong body, and
+    never tools); `triggersOf` reads `topCardOf` (a Tool is not a stack top, for ANY
+    timing); `passivesOf` is the only site that walks `pokemon.tools` and folds
+    `passive` into **numbers** — which is exactly why Vengeful Punch was a data row
+    and this is not. So `triggers.ts koToolTriggersOf` is new: *for each of my
+    in-play Pokémon, for each attached Tool, is there an `onAllyActiveKnockOut`
+    program keyed on ANOTHER body's KO*. It **skips the dying body** (the printed
+    sentence names two Pokémon; a self-attached Exp. Share has no destination
+    distinct from its source) and takes **no §9 gate** (a Tool is not an Ability —
+    `passivesOf` states the same rule, and the Klefki negative is driven).
+
+    ⚠️ **THE ANTECEDENT IS RE-DERIVED AT RUN TIME, NOT AT THE SEED — SO THE STAGE
+    CARRIES THE SEAT AND NOTHING ELSE.** It is seeded at damage time on TOOL PRESENCE
+    alone, but the printed condition is LETHALITY, knowable only after the attack's
+    own effect program. `runKoToolTrigger` re-reads the SUBJECT off the live board
+    (the sentence is present-tense about the Active SPOT) and re-asks
+    `isLethallyDamaged` — the sweep's OWN predicate, so "this will die" here cannot
+    drift from what `collectKnockOuts` decides two stages later, which is
+    `koRecoilOf`'s rule one stage out. That is `damagedByAttackAbility`'s idiom
+    carried far enough to delete the remembered uid rather than re-validate it. The
+    possessive and *"by an attack"* stay free by PLACEMENT, exactly as at D158: only
+    attack.ts seeds this, and only for the defender's seat.
+
+    **A THIRD `moveEnergy` ROUTE, `koedActiveToToolHolder`** — the first to pin its
+    destination by **UID**: sources are the ACTIVE alone, the sole destination is the
+    Pokémon carrying `ctx.sourceUid`, which for a Tool-borne program is the **TOOL's
+    own uid**. That needed `toolHolderRef` rather than `sourceRef`: *"the Pokémon this
+    card is attached to"* and *"this Pokémon"* are two phrases with two readers, and
+    `sourceRef` (a TOP-uid match) returns empty for every Tool. One decision survives
+    (WHICH Energy), so the compound prompt, the wire validator and `moveEnergyApply`
+    are untouched.
+
+    **TWO GATES THAT BELONGED TO ONE TERM, BOTH FOUND AND BOTH WIDENED.**
+    `attachTool` tested `programFor(id)?.passive !== undefined` for *"is this Tool
+    simulated"* — true of every Tool that existed and false of this one, so the engine
+    would have refused to attach a card it fully simulates. And `ENERGY_MOVED` named
+    its source by SPOT under a doc guarantee that *"nothing it names has left play
+    when the reduction settles"*; that stopped being true here, so the event gained
+    `fromUid?` and the log arm prefers it (on an auto-promoting board the spot names
+    the Pokémon that REPLACED the source).
+
+    **`MATCH_RECORD_VERSION` STAYS 11, DERIVED.** `GameState.pending` IS persisted —
+    the recon's "a stage is transient" read is factually wrong — but D124's test is
+    directional: *can the PREVIOUS deploy's record hold the shape the new code
+    expects?* An old record cannot contain a `koToolTrigger` (nothing wrote one) and
+    every kind it CAN contain is still handled; the `route` change is a WIDENED ENUM
+    on an op that can sit in `phase.cont`, which D124 explicitly excludes; and no
+    REQUIRED field was added to anything persisted. `fromUid` rides `GameEvent`, which
+    `MatchRecord` does not store (it stores the RENDERED log).
+
+    Cost: 1 `TriggerTiming`, 1 board scan, 1 `PendingStage` kind + its advance arm, 1
+    flow runner, 1 `moveEnergy` route + 1 ref helper + 1 prompt arm, 1 optional event
+    field + 1 log line, 1 widened `attachTool` gate, 1 registry row (`EXP_SHARE`),
+    1 fixture (`sv01-174`) and 1 deck
+    (`EXP_SHARE_DECK`, **SEED-FREE** — no coin anywhere in the card). No new event,
+    no new log arm, no error code, no `@luminous/schema` diff, no DB diff, no web
+    diff. Manifest **215 → 216** fixture rows. */
+export const engineVersion = "0.116.0";
 
 export type {
   ApplyResult,

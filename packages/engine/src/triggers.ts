@@ -166,3 +166,61 @@ export function damagedByAttackAbility(
   if (active === null || topUid(active) !== uid) return undefined;
   return triggersOf(state, active, "onDamagedByAttack", true)[0];
 }
+
+/** D171 — THE TOOL-BORNE ON-KO SCAN. Every `onAllyActiveKnockOut` program a
+    POKÉMON TOOL on `seat`'s board carries, keyed on the KO of `koedUid` (that
+    seat's Active). Returns, in board order, the Tool's own `uid` (the card whose
+    sentence runs), the `holderUid` it is attached to, and the program.
+
+    ⚠️ THIS IS A FOURTH DETECTION SITE, AND IT HAD TO BE — none of the three that
+    existed can see this card, each for its own structural reason:
+
+      • `onKnockOutTrigger` (above) reads `cardIdByUid[uid]` of the KO'd body's TOP
+        CARD. Exp. Share's holder is a body that SURVIVES; the dying one is only
+        the Energy's source. Wrong body, and it never looks at tools anyway.
+      • `triggersOf` (above) reads `topCardOf(pokemon)`. A Tool is not the top card
+        — it is not in the evolution stack at all — so this misses every Tool by
+        construction, for every timing.
+      • `passivesOf` (continuous.ts) IS the only existing site that walks
+        `pokemon.tools`, and that is exactly why Vengeful Punch was a data row and
+        this is not: it folds `programFor(id)?.passive` into NUMBERS, one seat-free
+        sum per field. It has no way to express a program, a park or a controller.
+
+    Two deliberate refusals, each a line of the printed sentence:
+
+      • THE KO'D BODY IS SKIPPED. "…move a Basic Energy from THAT Pokémon to THE
+        POKÉMON THIS CARD IS ATTACHED TO" names two Pokémon. An Exp. Share on the
+        dying Active names one, has no destination distinct from its source, and is
+        in the same discard-bound stack as the Energy — so it is not a holder here.
+      • NO §9 GATE. `triggersOf` suppresses a locked Pokémon's triggered Abilities;
+        this scan deliberately does not, because a TOOL IS NOT AN ABILITY —
+        `passivesOf` states the same rule for the same reason ("a locked Pokémon's
+        own printed passive is suppressed; its Tools are not Abilities and keep
+        contributing"). A Klefki aura over the holder leaves Exp. Share working,
+        and that negative is driven.
+
+    Read by flow.ts (`runKoToolTrigger`, which fires the first match) and by
+    attack.ts (presence alone, to decide whether to seed the stage at all — so an
+    attack into a board with no such Tool keeps its exact pre-D171 pending queue). */
+export function koToolTriggersOf(
+  state: GameState,
+  seat: Seat,
+  koedUid: string,
+): { toolUid: string; holderUid: string; ability: TriggeredAbility }[] {
+  const side = state.players[seat];
+  const out: { toolUid: string; holderUid: string; ability: TriggeredAbility }[] = [];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  for (const body of bodies) {
+    const holderUid = topUid(body);
+    if (holderUid === undefined || holderUid === koedUid) continue;
+    for (const toolUid of body.tools) {
+      const id = state.cardIdByUid[toolUid];
+      if (id === undefined) continue;
+      for (const ability of programFor(id)?.triggered ?? []) {
+        if (ability.trigger !== "onAllyActiveKnockOut") continue;
+        out.push({ toolUid, holderUid, ability });
+      }
+    }
+  }
+  return out;
+}

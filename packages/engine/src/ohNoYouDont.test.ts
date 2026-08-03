@@ -239,24 +239,38 @@ describe("the printed datum — re-queried, not inherited", () => {
     expect(programFor("sv01-114")?.triggered).toBeUndefined();
   });
 
-  it("⚠️ EXP. SHARE is the same antecedent and stays LOUD — the last one unmapped", () => {
+  it("⚠️ EXP. SHARE is the same antecedent — MAPPED at D171, and these FIVE pins are RE-POINTED", () => {
     // sv01-174, a Tool. It IS this antecedent (same "from your opponent's
-    // Pokémon", read at the KO), and it is deferred for a reason that is about
-    // the CONSEQUENT: "you MAY move a Basic Energy" is an optional effect needing
-    // a PROMPT (four arms, D157) that PARKS mid-sweep, and it must read the DYING
-    // body's attachments before `knockOut` discards them. Nothing here reads it.
+    // Pokémon", read at the KO). D164 deferred it and pinned it here as an ABSENCE
+    // on five assertions so that authoring it could never be a silent behaviour
+    // change. D171 authored it, so all five went red exactly as designed — and
+    // they are RE-POINTED rather than deleted, at what the slice actually built.
     //
-    // ⚠️ IT HAS NO FIXTURE AT ALL — asserted, because "unmapped" and "unfixtured"
-    // are different debts and this card carries BOTH. The string below is off the
-    // local D1 (2026-08-03) and is the only copy of it in the repo, which is why
-    // it is pinned here rather than left in a census the next slice must re-run.
-    expect(FIXTURE_POOL["sv01-174"]).toBeUndefined();
-    expect(CATALOG_MANIFEST.printed["sv01-174"]).toBeUndefined();
+    // The predicted price was wrong in BOTH directions and the corrections are the
+    // point of this pin, not a footnote:
+    //   • the "you may" PROMPT cost NOTHING — optional triggers auto-fire and
+    //     `moveEnergy` is already declinable, so no new prompt arm exists;
+    //   • the real cost was that NOTHING RAN A TOOL'S `triggered` PROGRAM. The
+    //     bearer is a SURVIVING body, so `onKnockOutTrigger` (the KO'd top card),
+    //     `triggersOf` (any top card) and `passivesOf` (tools, folded to NUMBERS)
+    //     all miss it — hence a FOURTH detection site, `koToolTriggersOf`.
+    expect(FIXTURE_POOL["sv01-174"]?.effect).toBe(EXP_SHARE);
+    expect(CATALOG_MANIFEST.printed["sv01-174"]?.name).toBe("Exp. Share");
     expect(EXP_SHARE).toContain("Knocked Out by damage from an attack from your opponent's");
-    expect(EXP_SHARE).toContain("you may"); // ⚠️ the prompt, and the price
+    expect(EXP_SHARE).toContain("you may"); // ⚠️ the "may" — and it was FREE
     expect(EXP_SHARE).toContain("your Active Pokémon"); // ⚠️ a clause THIS card lacks
     expect(OH_NO_YOU_DONT).not.toContain("Active");
-    expect(programFor("sv01-174")?.triggered).toBeUndefined();
+    // The re-pointed absence: it is authored, and on a timing of its OWN. The two
+    // must not collapse — an `onKnockOut` row here would be read by the KO sweep,
+    // which runs after `knockOut` has discarded the Energy this card moves.
+    const triggered = programFor("sv01-174")?.triggered;
+    expect(triggered).toHaveLength(1);
+    expect(triggered?.[0]?.trigger).toBe("onAllyActiveKnockOut");
+    expect(triggered?.[0]?.trigger).not.toBe("onKnockOut");
+    // …and it carries NEITHER Prize field, so the partition test below stays true
+    // of it and the KO sweep never plans a prize off this card.
+    expect(triggered?.[0]?.onKoPrizeGuard).toBeUndefined();
+    expect(triggered?.[0]?.onKoPrizeReduction).toBeUndefined();
   });
 
   it("the two on-KO Prize fields PARTITION the registry — total and disjoint", () => {

@@ -6,7 +6,12 @@ import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { runProgram } from "./interpreter";
 import { flipCoin } from "./rng";
-import { damagedByAttackAbility, onKnockOutTrigger, runCheckupTriggers } from "./triggers";
+import {
+  damagedByAttackAbility,
+  koToolTriggersOf,
+  onKnockOutTrigger,
+  runCheckupTriggers,
+} from "./triggers";
 import type {
   GameOutcome,
   GameOverReason,
@@ -705,6 +710,68 @@ function runDamagedTrigger(
   );
 }
 
+/** D171 — run the `onAllyActiveKnockOut` program of a POKÉMON TOOL on `koedSeat`'s
+    board, because that seat's Active `uid` is about to be Knocked Out by the
+    opponent's attack (Exp. Share sv01-174: "When your Active Pokémon is Knocked Out
+    by damage from an attack from your opponent's Pokémon, you may move a Basic
+    Energy from that Pokémon to the Pokémon this card is attached to"). The third
+    sibling of runKoTrigger / runDamagedTrigger, and the first whose `uid` is NOT the
+    body whose card runs — the bearer is a SURVIVING Pokémon found by re-scanning the
+    board (triggers.ts `koToolTriggersOf`).
+
+    ⚠️ THE PLACEMENT IS THE WHOLE DESIGN, AND IT IS A TEMPORAL FACT RATHER THAN A
+    TASTE. This stage sits AHEAD of `attackEpilogue`, so it runs BEFORE
+    `finishAttack` → `collectKnockOuts` → `knockOut`, which does
+    `discardFromStack(side, side.active, "all")`. Every `koTrigger` is queued by
+    `collectKnockOuts` AFTER that discard has already happened for the whole batch —
+    so the Energy this sentence moves would be in the discard pile by the time a
+    `koTrigger` could look for it. `koRecoilOf` IS a genuine before-`knockOut` hook
+    and is deliberately ahead of the sweep for a related reason, but it is
+    SYNCHRONOUS and cannot park; this consequent is a player's choice. Right point,
+    wrong mechanism — hence a stage of `runDamagedTrigger`'s shape instead.
+
+    ⚠️ AND EVERY CLAUSE OF THE ANTECEDENT IS ANSWERED HERE, NOT AT THE SEED —
+    because the stage is seeded at DAMAGE time and the printed condition is
+    LETHALITY, which is knowable only after the attack's own effect program has run.
+    That is `damagedByAttackAbility`'s idiom ("re-derive the printed clause at the
+    point where it is answerable") carried one step further: this runner remembers
+    NOTHING from the seed except the seat.
+
+      • "your ACTIVE Pokémon" — read off the live board. The subject is whatever is
+        in the spot NOW, which is what the present tense says; carrying a uid from
+        damage time would be a second opinion that can disagree with the sweep.
+      • "is Knocked Out" — `isLethallyDamaged`, the sweep's OWN predicate, so "this
+        will die" here cannot drift from what `collectKnockOuts` decides two stages
+        later (`koRecoilOf`'s rule, read from the other end). An attack that dealt
+        no lethal damage seeds the stage and then does nothing with it.
+      • "by damage from an attack from your OPPONENT'S Pokémon" — discharged by
+        PLACEMENT, exactly as D158 discharged it: only attack.ts seeds this stage,
+        and only for the DEFENDER's seat. The Checkup and the mid-turn sweep call
+        `collectKnockOuts` directly and can never reach here.
+
+    Fires the FIRST match (§7.4 allows one Tool per Pokémon; several holders on one
+    board would each print their own sentence, and chaining a second PARKING trigger
+    behind the first is the same follow-up the board triggers already defer).
+    `sourceUid` is the TOOL's uid, not the holder's — the program's route resolves
+    "the Pokémon this card is attached to" from it, which is the phrase a Tool
+    prints where a Pokémon prints "this Pokémon". No ABILITY_TRIGGERED row: a Tool
+    has no Ability to trigger (log.ts says so at the neighbouring recoil arm), so
+    the prompt and the ENERGY_MOVED row are the whole of what a reader is told. */
+function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[]): ApplyResult {
+  const active = state.players[koedSeat].active;
+  if (active === null || !isLethallyDamaged(state, active)) return advance(state, events);
+  const uid = topUid(active);
+  if (uid === undefined) return advance(state, events);
+  const entry = koToolTriggersOf(state, koedSeat, uid)[0];
+  if (entry === undefined || entry.ability.program.length === 0) return advance(state, events);
+  return settleProgram(
+    runProgram(state, entry.ability.program, { seat: koedSeat, sourceUid: entry.toolUid }, events),
+    koedSeat,
+    events,
+    { resumeTail: true },
+  );
+}
+
 /** The Pokémon Checkup (§13), run whole inside its stage — no player
     decisions happen mid-checkup, so there is no checkup phase: the four
     condition steps tick in their fixed order, THEN the batch's KOs resolve
@@ -1088,6 +1155,13 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // behind it is what resumes if the program parks (resume-the-tail); a done
       // program just keeps draining into the sweep + turn end.
       return runDamagedTrigger(popStage(state), stage.seat, stage.uid, events);
+    case "koToolTrigger":
+      // §8.1 (D171) — a Pokémon TOOL on the DEFENDER's surviving board reacting to
+      // its own Active's imminent Knock Out (Exp. Share's Basic-Energy rescue). Pop
+      // first, for the same resume-the-tail reason as the two stages above: the
+      // attackEpilogue behind it is what drains — and what finally KOs the body this
+      // stage just read the Energy off.
+      return runKoToolTrigger(popStage(state), stage.seat, events);
     case "attackEpilogue":
       // §8 step 4 has finished (the effect program ran to completion, possibly
       // across one or more parks): sweep BOTH boards (a spread that KO'd the

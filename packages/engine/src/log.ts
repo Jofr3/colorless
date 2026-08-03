@@ -971,12 +971,24 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     }
     case "ENERGY_MOVED": {
       // Energy Switch / Poppy (moveEnergy) — moved own-board Energy between two of
-      // the player's Pokémon. Both `from`/`to` name Pokémon on the seat's own
-      // board, which stayed put (no compaction), so targetName resolves them.
+      // the player's Pokémon. `to` names a Pokémon that stayed put (no compaction),
+      // so targetName resolves it off the post-state.
+      //
+      // ⚠️ THE SOURCE IS NAMED BY UID WHEN THE EVENT CARRIES ONE (D171). Exp. Share
+      // moves Energy off a body the same reduction then Knocks Out, so the SPOT is
+      // no longer a way to name it: on a board that auto-promotes, `{spot:"active"}`
+      // resolves to the Pokémon that replaced it and the row credits the wrong
+      // Pokémon. `cardName` reads `cardIdByUid`, which the KO does not touch — the
+      // same route KNOCKED_OUT uses to name a card that has left play. The spot is
+      // kept as the fallback for any producer that predates the uid.
       const n = event.uids.length;
+      const source =
+        event.fromUid === undefined
+          ? targetName(state, event.seat, event.from)
+          : cardName(state, event.fromUid);
       return row(event.seat, [
         plain(`moved ${n} energy from `),
-        strong(targetName(state, event.seat, event.from)),
+        strong(source),
         plain(" to "),
         strong(targetName(state, event.seat, event.to)),
       ]);

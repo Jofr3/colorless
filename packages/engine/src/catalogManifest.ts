@@ -216,6 +216,7 @@ export const CATALOG_MANIFEST = {
     "sv01-171": { name: "Energy Retrieval", attacks: [], abilities: [] },
     "sv01-172": { name: "Energy Search", attacks: [], abilities: [] },
     "sv01-173": { name: "Energy Switch", attacks: [], abilities: [] },
+    "sv01-174": { name: "Exp. Share", attacks: [], abilities: [] },
     "sv01-175": { name: "Jacq", attacks: [], abilities: [] },
     "sv01-176": { name: "Judge", attacks: [], abilities: [] },
     "sv01-177": { name: "Katy", attacks: [], abilities: [] },

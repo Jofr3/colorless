@@ -55,13 +55,32 @@ export interface AbilityProgram {
       opponent's attack (§9, attack.ts main-hit, even if Knocked Out — the scan
       runs BEFORE the §8.1 sweep). Fires a reactive program on the ATTACKING
       Pokémon; NON-PARKING by construction (a Special Condition on the attacker),
-      so it runs inline like `betweenTurns` rather than through settleProgram. */
+      so it runs inline like `betweenTurns` rather than through settleProgram;
+    - `onAllyActiveKnockOut` (D171) — **the controller's ACTIVE Pokémon is about
+      to be Knocked Out by damage from an opponent's attack**, read on a card
+      carried by a DIFFERENT, SURVIVING body (Exp. Share sv01-174, a Pokémon
+      TOOL: "When your Active Pokémon is Knocked Out by damage from an attack
+      from your opponent's Pokémon, you may move a Basic Energy from that Pokémon
+      to the Pokémon this card is attached to").
+
+      ⚠️ IT IS NOT `onKnockOut` WITH A DIFFERENT CONSEQUENT, AND THE DIFFERENCE IS
+      **WHOSE CARD IS READ**. Every other timing above is a property of the body
+      the event happened TO, so all of them are found by looking at that body's
+      top card. This one is printed on a card attached to SOMEONE ELSE — the
+      subject of the sentence ("your Active Pokémon") and the bearer of the
+      sentence (the Tool's holder) are two different Pokémon, and only one of
+      them is dying. That is why it needs its OWN board scan
+      (`koToolTriggersOf`, triggers.ts) and its own stage (`koToolTrigger`,
+      flow.ts) rather than a new arm on the KO sweep: by the time any `koTrigger`
+      runs, `knockOut` has already sent the dying body's whole stack — INCLUDING
+      the Energy this sentence moves — to the discard pile. */
 export type TriggerTiming =
   | "onPlayToBench"
   | "onEvolve"
   | "betweenTurns"
   | "onKnockOut"
-  | "onDamagedByAttack";
+  | "onDamagedByAttack"
+  | "onAllyActiveKnockOut";
 
 /** A card's triggered Ability (§9) — one that FIRES on a game event rather than
     being player-activated. The framework runs `program` through the shared
@@ -746,8 +765,12 @@ export interface CardProgram {
       (played to Bench / evolved / between turns), not player-activated. */
   triggered?: TriggeredAbility[];
   /** Continuous/passive modifiers (a Pokémon's passive Ability, or a Tool's
-      effect on its holder — read while in play). A Tool with this entry is
-      attachable; one without is "not simulated" (coverage strategy). */
+      effect on its holder — read while in play). A Tool is attachable when it
+      carries THIS entry **or** a `triggered` one; a Tool with neither is "not
+      simulated" (coverage strategy). ⚠️ That disjunction is D171's correction:
+      this field alone was the attachability test until Exp. Share sv01-174 became
+      the first Tool whose whole printed sentence is a triggered program (see
+      cardplay.ts `attachTool`). */
   passive?: PassiveEffects;
   /** The Stadium's continuous effects (§7.3). A Stadium with this entry is
       playable; one without is "not simulated" (coverage strategy). */
@@ -1257,6 +1280,48 @@ const ROCKY_HELMET: CardProgram = { passive: { damageAttacker: { amount: 20 } } 
     have stored HP since 0.x, and D152's deriver-side conversion exists only
     because a REGEX capture has no other place to do it. */
 const VENGEFUL_PUNCH: CardProgram = { passive: { damageAttackerOnKo: { amount: 40 } } };
+
+/** Exp. Share — "When your Active Pokémon is Knocked Out by damage from an attack
+    from your opponent's Pokémon, you may move a Basic Energy from that Pokémon to
+    the Pokémon this card is attached to." (Tool) Verbatim off the local D1 row
+    (`sv01-174`, `trainer_type = Tool`, `abilities_json` and `attacks_json` both
+    EMPTY — the sentence is in `effect`), re-queried 2026-08-03 against the
+    restored catalog of 978 rows / 6 sets. D171, and the LAST unread member of
+    D158's KO-antecedent census.
+
+    ⚠️ THE FIRST TOOL IN THIS REGISTRY WHOSE WHOLE PRINTED SENTENCE IS A
+    `triggered` PROGRAM RATHER THAN A `passive` NUMBER, and that is the entire
+    reason it costs more than Vengeful Punch two blocks up. Both read the SAME
+    printed antecedent at the SAME instant; the difference is where the answer has
+    to be written:
+
+      • Vengeful Punch's consequent is a NUMBER put on a body that survives, so
+        `passivesOf` — the one existing site that walks `pokemon.tools` — folds it
+        and flow.ts `koRecoilOf` reads it synchronously. No decision, no park.
+      • This consequent MOVES A CARD off the dying body, and the player CHOOSES
+        which. So it needs the interpreter, a park, and a controller — and its
+        holder is a body the sweep has no reason to look at.
+
+    `optional: true` is the printed "you MAY", and it costs nothing: optional
+    triggers auto-fire (see the field's own doc) and the underlying `moveEnergy`
+    park is DECLINABLE (an empty pick is a legal answer, cardplay.ts
+    validateChoice), so "may" is expressed by the answer rather than by a
+    confirm arm. `route: "koedActiveToToolHolder"` pins BOTH endpoints the printed
+    sentence names — "from that Pokémon" (the dying Active) and "to the Pokémon
+    this card is attached to" (this Tool's holder) — leaving exactly ONE decision,
+    WHICH Basic Energy, which is what the existing compound prompt already asks. */
+const EXP_SHARE: CardProgram = {
+  triggered: [
+    {
+      name: "Exp. Share",
+      trigger: "onAllyActiveKnockOut",
+      optional: true,
+      program: [
+        { op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1, route: "koedActiveToToolHolder" },
+      ],
+    },
+  ],
+};
 
 // ── M4 slice 5: Special Energy (§6.1). ──
 
@@ -2710,6 +2775,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // verified vs the local D1 2026-08-03 (890 rows / 5 sets). The family's last always-on
   // printing; it reads at flow.ts's §8.1 sweep, not attack.ts's `dealt > 0` block.
   "sv03-197": VENGEFUL_PUNCH,
+  // Exp. Share (Tool) — the SAME KO antecedent a THIRD time (D171), and the first Tool
+  // whose sentence is a `triggered` program rather than a `passive` number: it runs on a
+  // new board scan (triggers.ts koToolTriggersOf) at a new stage (flow.ts koToolTrigger),
+  // because its bearer is a SURVIVING body and the dying one is only the Energy's source.
+  "sv01-174": EXP_SHARE,
   // — M4 slice 5: Special Energy (verified vs local D1 2026-07-18). —
   // Jet Energy — {C} + switch-on-bench-attach
   "sv02-190": JET_ENERGY,

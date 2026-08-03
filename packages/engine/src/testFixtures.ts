@@ -1419,6 +1419,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Tool",
     "The {F} Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance).",
   ),
+  /** Exp. Share — Tool: the D158 KO antecedent's THIRD consumer (D171), and the
+      first Tool in this pool whose printed sentence is a `triggered` PROGRAM
+      rather than a `passive` number. Its two neighbours above read the same
+      instant; the difference is that their consequent is HP on a body that
+      survives, while this one MOVES A CARD off the dying body and lets the
+      player choose which — so it needs the interpreter, a park, and a bearer
+      the KO sweep has no reason to look at.
+      Verbatim off the local D1 row (`sv01-174`, `trainer_type = Tool`, with
+      `abilities_json` and `attacks_json` both EMPTY — the sentence lives in
+      `effect`), re-queried 2026-08-03 against the restored 978 rows / 6 sets. */
+  "sv01-174": trainerCard(
+    "sv01-174",
+    "Tool",
+    "When your Active Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, you may move a Basic Energy from that Pokémon to the Pokémon this card is attached to.",
+  ),
 
   // — M4 slice 5: Special Energy (real catalog ids so the registry finds their
   //   EnergyProgram; names are the REAL names, though provision keys on the id). —
@@ -9615,6 +9630,61 @@ export const MUNKIDORI_DECK = deckOf({
   "fix-bigbody": 24, // 200 HP — DOMINANT setup Basic, promote target, spread-proof
   "fix-titan": 4, // 340 HP, no attacks — bench filler a 20 spread cannot KO
   "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
+});
+
+/** D171 — EXP. SHARE `sv01-174`, on its own 60 rather than inside
+    `MUNKIDORI_DECK`: that deck's boards are built off a seeded `driveSetup` and
+    growing it would move every one of them (D152's move, inherited a fourth time).
+    BOTH seats run it, because the printed possessive is driven by putting the Tool
+    on the ATTACKER's own board and watching it pay nothing.
+
+    The cast, and why each card is here:
+      • sv01-174 Exp. Share — THE printing. Four copies, so ONE board can carry two
+        holders (the "first match fires" rule) and another can carry one on the
+        ACTIVE (the self-attached no-op, where the sentence's two Pokémon collapse
+        into one).
+      • sv01-193 Rocky Helmet — a Tool with a `passive` and NO `triggered` entry:
+        the board scan's negative (a Tool that is not this one must not fire it) and
+        the OTHER term of `attachTool`'s widened simulation gate.
+      • fix-victim (30 HP, no attacks) — the DYING ACTIVE, one-shot by Bite (30).
+        The Energy this card rescues sits on it.
+      • fix-bigbody (200 HP) — the DOMINANT mulligan-free Basic, the Tool HOLDER,
+        and the promote target. A spread cannot kill it, so the holder survives the
+        very batch it is being paid out of.
+      • fix-titan (340 HP, no attacks) — bench filler, so a board has exactly the
+        KOs it means to have (and a SECOND holder when two are wanted).
+      • fix-attacker — "Bite" ({C}, 30) at idx 0 and "Yawn" (no damage) at idx 2:
+        the KO and the NON-KO on one card, which is how the LETHALITY re-check is
+        driven without a second attacker.
+      • fix-sniper — "Spread Shot" ({C}, 30 + 20 to each benched): the one attacker
+        that can kill the Active and hurt the HOLDER in the same batch.
+      • sv02-097 Mimikyu — "Ghost Eye" ({P}{C}, **NO printed `damage` field**, 7
+        damage counters on the opponent's Active). ⚠️ THE ONE ATTACKER IN THE POOL
+        WHOSE MAIN HIT DEALS NOTHING AND WHOSE EFFECT PROGRAM STILL KILLS, and it
+        is what makes the SEED PLACEMENT load-bearing: copying `damagedTrigger`'s
+        `dealt > 0` gate would silently switch this whole card off against it, and
+        no other board in the suite can tell the two placements apart.
+      • sv01-096 Klefki "Mischievous Lock" — the §9 aura. It is here for a NEGATIVE
+        that is the point rather than a leftover: a Tool is not an Ability, so a
+        live lock over the holder must leave Exp. Share working.
+      • fix-energy / fix-fire-energy — TWO Basic Energy of different types, so the
+        park is a real WHICH choice rather than a forced pick.
+      • fix-special — a Special Energy on the dying body: the `basicEnergy` filter's
+        negative, and the board where the printed "a Basic Energy" is refused. */
+export const EXP_SHARE_DECK = deckOf({
+  "sv01-174": 4, // Exp. Share — THE printing (Tool, `triggered`, no `passive`)
+  "sv01-193": 2, // Rocky Helmet — a Tool with a `passive` and no trigger: the scan's negative
+  "sv01-096": 2, // Klefki — "Mischievous Lock": a §9 aura that must NOT reach a Tool
+  "fix-victim": 4, // 30 HP, no attacks — the DYING ACTIVE that Bite one-shots
+  "fix-attacker": 4, // "Bite" ({C}, 30) idx 0; "Yawn" idx 2 (no damage) — 120 HP
+  "fix-sniper": 2, // "Spread Shot" ({C}, 30 + 20 each bench) — kills the Active AND hurts the holder
+  "sv02-097": 2, // Mimikyu — "Ghost Eye": NO printed damage, 7 counters. The seed-gate witness
+  "fix-titan": 4, // 340 HP, no attacks — bench filler / a second holder
+  "fix-special": 4, // Special Energy — what the printed "a Basic Energy" refuses
+  "fix-fire-energy": 4, // a SECOND Basic Energy type, so the pick is a real choice
+  "fix-psychic-energy": 4, // {P} — Ghost Eye's typed half
+  "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
+  "fix-bigbody": 12, // 200 HP — DOMINANT setup Basic, the Tool HOLDER, promote target
 });
 
 /** D159 — the ALWAYS-ON ATTACKER FILTERS, on their own 60 rather than inside
