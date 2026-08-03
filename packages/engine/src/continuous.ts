@@ -558,6 +558,62 @@ export function lockedAttackIndex(state: GameState, pokemon: InPlayPokemon): num
   return locked === null || locked.turn !== state.turn ? null : locked.attackIndex;
 }
 
+/** §8.5/§11 (D155) — the HP an attack-installed PER-ATTACK BUFF adds to the
+    damage `pokemon`'s attack at `index` does right now, or 0. The ONE read of
+    `InPlayPokemon.boostedAttack`, and `lockedAttackIndex`'s twin one function up
+    on every axis but the RETURN and the arity:
+
+    | | `lockedAttackIndex` (D154) | this (D155) |
+    |---|---|---|
+    | Record   | `{ turn, attackIndex }`   | `{ turn, attackIndex, amount }` |
+    | Window   | `state.turn + 2`          | `state.turn + 2`               |
+    | Asks     | WHICH attack is barred    | HOW MUCH this attack gains     |
+    | Read by  | the §8 gate + 2 projections | the §8.5 main hit, once      |
+
+    ⚠️ IT TAKES THE INDEX AND RETURNS THE NUMBER, WHICH IS D154's SHAPE ARGUMENT
+    RUN AND ANSWERED THE OTHER WAY — and that inversion is the reason the two
+    readers are two functions rather than one generic. That one returns an INDEX
+    because two of its three callers build rows by mapping over the whole `attacks`
+    array, so a per-index predicate would re-read one field N times. This one has
+    exactly ONE caller, which already holds the declared index and wants a number
+    to add; returning `{ index, amount } | null` would make that caller compare an
+    index the reader could have compared itself. Same field shape, opposite access
+    pattern, opposite signature — decided by the call sites both times.
+
+    ⚠️ ONE READ SITE, AND THE BOUNDARY IS THE ADDRESS RATHER THAN A CHOICE. D149's
+    debuff reaches all FOUR pre-W/R sites because it is a fact about a BODY; this
+    is a fact about a DECLARATION, and only `attack.ts`'s main hit knows which
+    attack was declared — `EffectContext` carries `seat`, `sourceUid` and
+    `invokedBy` and no index, so the interpreter's three damage sites (`snipeActive`,
+    `spreadDamage`, `placeSnipe`'s `deals` arm) structurally cannot ask. Unreachable
+    today rather than merely unbuilt: the one printing's boosted attack does its
+    whole damage through the printed `damage` field and derives no damage-dealing
+    op at all. A printing that boosts an attack whose damage comes from an OP would
+    earn `EffectContext` an attack index — written down here so the next reader
+    does not have to re-derive why the count differs from D149's.
+
+    ⚠️ IT IS SUMMED INTO `attackerPreWRBonus`'s NUMBER AT THE SITE AND NOT FOLDED
+    INTO THAT FUNCTION, which is D149's reason (2) read from the other side of the
+    table: that function folds `passivesOf`, the CATALOG scan, which a §9
+    Ability-lock aura SUPPRESSES — and an attack INSTALLATION must be immune to
+    that suppression. D149's other two grounds are silent here (a buff is
+    positive, so the REPORTED field does not drop it, and it can never drive the
+    subtotal negative), so the immunity is the whole of the argument and the row
+    reports the two sources in ONE field (events.ts `DAMAGE_DEALT.bonus`). */
+export function boostedAttackDamage(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  index: number,
+): number {
+  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
+  // field is REQUIRED and a record written before it existed is retired by
+  // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
+  const boost = pokemon.boostedAttack;
+  return boost === null || boost.turn !== state.turn || boost.attackIndex !== index
+    ? 0
+    : boost.amount;
+}
+
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus
     any continuous bonus (Bravery Charm). A null printed hp is the catalog
     data gap (cards.ts hpOf) and STAYS null — a bonus on top of unknown HP is

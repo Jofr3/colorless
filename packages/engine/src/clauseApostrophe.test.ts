@@ -207,7 +207,22 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // own `name` to match. **This row is what makes that fold load-bearing:**
     // remove either half and this single sentence fails while the other 56 pass,
     // which is the exact shape of the half-fix D137 was written to prevent.
-    expect(derivable).toHaveLength(57);
+    //
+    // ⚠️ AND D155 ADDS TWO, WHOSE EXPOSED SLOT IS A **POSSESSIVE ON "Pokémon"** —
+    // the one noun this file has never had to class. Every possessive row above is
+    // "your opponent's"; the per-attack BUFF prints "this Pokémon'S {AttackName}
+    // attack does {N} more damage (before applying …)", so the apostrophe sits
+    // between an é-bearing word and a CAPTURE. Two rows because two cards print it
+    // (Seismitoad sv03-052's "Echoed Voice" and the constructed two-attack witness
+    // `fix-echoer`), and neither attack NAME carries an apostrophe of its own — so
+    // unlike D154's Greedent ex these rows pin the PATTERN's class and not the
+    // capture's fold, which is pinned by a constructed sentence in the slice suite
+    // instead. The distinction is worth the sentence: this census sweeps what the
+    // FIXTURES print, and a fold that only a hypothetical printing would exercise
+    // has to be pinned somewhere this sweep cannot reach. The THIRD row is
+    // `fix-curly-booster`, the witness a surviving mutation bought (its sentence is
+    // ALREADY curly, so it is the row this sweep rewrites in the other direction).
+    expect(derivable).toHaveLength(60);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Attack, Card } from "@luminous/schema";
 import {
   activeTop,
   applyDamageModifier,
@@ -662,6 +662,8 @@ function stepOp(
       return { done: preventAttack(state, op, ctx, events) };
     case "preventAttackUse":
       return { done: preventAttackUse(state, op.attack, ctx, events) };
+    case "boostAttack":
+      return { done: boostAttack(state, op.attack, op.amount, ctx, events) };
     case "reduceDamage":
       return { done: reduceDamage(state, op.amount, ctx, events) };
     case "weakenDefenderAttacks":
@@ -1928,6 +1930,30 @@ function preventAttack(
   return withActive(state, seat, { ...active, attackLockedTurn: turn });
 }
 
+/** §8/§8.5 (D154, shared D155) — the printed PROPER NOUN → the INDEX every read
+    site in this engine speaks. `findIndex` over the holder's OWN printed attacks,
+    so a sentence naming an attack the card does not have resolves to `-1` and its
+    op writes nothing.
+
+    ⚠️ BOTH SIDES ARE APOSTROPHE-FOLDED (D137's rule, D154's reach). The op's token
+    was folded at the deriver; the card's `name` is folded here, because a
+    punctuation-normalising re-ingest would rewrite BOTH the sentence and the
+    attack row it names — Greedent ex sv03-179's "Slip 'n' Roll" is the printing
+    that makes it visible — and folding one side only is the half-fix that reads
+    like a whole one.
+
+    ⚠️ IT IS A SHARED HELPER RATHER THAN TWO COPIES, AND THE GROUND IS THAT THE
+    FOLD IS INVISIBLE WHEN MISSING. D154 measured exactly that: removing its
+    install-side fold failed NOTHING until a card whose attack name carries U+2019
+    was added to the pool (`fix-curly-barrer`). A second copy of these two lines
+    would be a second place that can silently lose the fold, covered by no witness
+    unless the next slice remembers to field a second curly card. One copy makes
+    that one witness load-bearing for every op that resolves a printed attack name
+    — today `preventAttackUse` (D154) and `boostAttack` (D155). */
+function printedAttackIndex(printed: readonly Attack[], attack: string): number {
+  return printed.findIndex((row) => foldApostrophes(row.name) === attack);
+}
+
 /** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active ("During
     your next turn, this Pokémon can't use {AttackName}.", 6 catalogued printings
     across 4 names plus 1 fielded uncatalogued printing). `preventAttack`'s
@@ -1984,18 +2010,8 @@ function preventAttackUse(
   const uid = topUid(active);
   const card = topCardOf(state, active);
   if (uid === undefined || card === undefined) return state;
-  // The printed noun → the index every read site speaks. `findIndex` over the
-  // holder's OWN printed attacks, so a sentence naming an attack this card does
-  // not have resolves to nothing and writes nothing (above).
-  //
-  // ⚠️ BOTH SIDES ARE APOSTROPHE-FOLDED (D137's rule, D154's reach). The op's
-  // token was folded at the deriver; the card's `name` is folded here, because a
-  // punctuation-normalising re-ingest would rewrite BOTH the sentence and the
-  // attack row it names — Greedent ex sv03-179's "Slip 'n' Roll" is the printing
-  // that makes it visible — and folding one side only is the half-fix that reads
-  // like a whole one.
   const printed = attacksOf(card);
-  const attackIndex = printed.findIndex((row) => foldApostrophes(row.name) === attack);
+  const attackIndex = printedAttackIndex(printed, attack);
   if (attackIndex < 0) return state;
   // The one rule, D143's: the window is the holder's own next turn, and declaring
   // an attack ENDS the turn (§5.3), so the turn after this one is the opponent's
@@ -2015,6 +2031,95 @@ function preventAttackUse(
     attack: printed[attackIndex]?.name ?? attack,
   });
   return withActive(state, ctx.seat, { ...active, lockedAttack: { turn, attackIndex } });
+}
+
+/** §8.5/§11 (D155) — BUY ONE NAMED ATTACK a durated pre-W/R DAMAGE BONUS on the
+    controller's own Active ("During your next turn, this Pokémon's {AttackName}
+    attack does {N} more damage (before applying Weakness and Resistance).", 1
+    printing — Seismitoad sv03-052 "Echoed Voice"). `preventAttackUse`'s OPPOSITE
+    VERB AT THE SAME ADDRESS, and written directly beneath it so the pair reads as
+    one design:
+
+    | | `preventAttackUse` (D154) | this (D155) |
+    |---|---|---|
+    | Holder | `ctx.seat`'s Active     | `ctx.seat`'s Active |
+    | Stamp  | `state.turn + 2`        | `state.turn + 2`    |
+    | State  | `lockedAttack: { turn, attackIndex }` | `boostedAttack: { turn, attackIndex, amount }` |
+    | Read at| the §8 gate (REFUSES it)| §8.5's pre-W/R step (PAYS it) |
+
+    ⚠️ THE TWO RECORDS ARE A KEY APART AND ARE STILL TWO FIELDS, AND THIS TABLE'S
+    LAST ROW IS THE WHOLE REASON. D131's widen-don't-add test passes on the SHAPE
+    here — strip `amount` and you have D154's record byte for byte — which is the
+    first time in this family it has, so the refusal has to be made on the READ.
+    `lockedAttackIndex`'s consumer refuses the declaration whose index it returns;
+    this one's pays it a bonus. One field would hand the §8 gate the index of the
+    attack the card just bought, and a Seismitoad that spent a turn on +100 could
+    not then declare "Echoed Voice". Driven on one board rather than argued
+    (perAttackBuff.test.ts), which is what this repo asks of a design answer.
+
+    ⚠️ THE PRINTED NAME IS RESOLVED HERE BY `preventAttackUse`'s OWN HELPER, and
+    sharing it is the point rather than a tidy-up: the apostrophe fold it carries is
+    invisible when missing (D154 measured that), so one copy makes that slice's one
+    curly-named witness load-bearing for both ops. A name matching nothing on the
+    holder installs NOTHING and emits no row — a bonus on an attack the card does
+    not have is inert, and announcing it would tell a player about a payoff that
+    cannot arrive (D140/D146: a gate that declines emits nothing).
+
+    ⚠️ NO `attackEffectRefused` CHECK, for `reduceDamage`'s, `installRecoil`'s and
+    `preventAttackUse`'s verdict verbatim: the record lands on the ACTOR's own
+    Active, so there is no opponent-side body a §11 "prevent all effects of attacks
+    done to this Pokémon" could be protecting from it. The §11 classification table
+    (preventBlock.test.ts) carries the verdict AND a board that drives it (D150).
+
+    IDEMPOTENT BY `Math.max` ON THE AMOUNT, WHICH IS `reduceDamage`'s RULE AND NOT
+    `preventAttackUse`'s EARLY RETURN — because this record carries a number and
+    that one does not. The rule both are instances of is *a second installation may
+    never leave the holder with less than one of them printed*: for an address that
+    is "the later write wins", for a number that is MAX. The merge is per-ADDRESS,
+    so a second install naming a DIFFERENT attack replaces the record outright
+    rather than keeping the larger of two unrelated bonuses — the amount is a
+    property of the pair, not of the body. Unreachable off the one printing (an
+    attack ends the turn, and the window is the holder's own next turn), so it is
+    constructed and pinned; the row is suppressed when the merge says nothing new
+    (D142's idempotence answer). */
+function boostAttack(
+  state: GameState,
+  attack: string,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  const card = topCardOf(state, active);
+  if (uid === undefined || card === undefined) return state;
+  const printed = attacksOf(card);
+  const attackIndex = printedAttackIndex(printed, attack);
+  if (attackIndex < 0) return state;
+  // The one rule, D143's and D154's: the window is the holder's own next turn, and
+  // declaring an attack ENDS the turn (§5.3), so the turn after this one is the
+  // opponent's and the one after THAT is the holder's.
+  const turn = state.turn + 2;
+  const existing = active.boostedAttack;
+  const stacking =
+    existing !== null && existing.turn === turn && existing.attackIndex === attackIndex;
+  const merged = stacking ? Math.max(existing.amount, amount) : amount;
+  if (stacking && merged === existing.amount) return state;
+  // The RESOLVED row's own name and not the op's token (`preventAttackUse`'s
+  // call): the two differ only in punctuation, and a log row is read by a player
+  // holding the card, so it prints the card's spelling.
+  events.push({
+    type: "ATTACK_BOOSTED",
+    seat: ctx.seat,
+    uid,
+    attack: printed[attackIndex]?.name ?? attack,
+    amount: merged,
+  });
+  return withActive(state, ctx.seat, {
+    ...active,
+    boostedAttack: { turn, attackIndex, amount: merged },
+  });
 }
 
 /** §8.5/§11 (D147) — INSTALL the printed DAMAGE REDUCTION on the CONTROLLER's own
@@ -3359,6 +3464,14 @@ export function switchInto(
     // than listed (perAttackLock.test.ts) precisely because this literal is one of
     // three that have to agree with nothing making them.
     lockedAttack: null,
+    // D155 — and the PER-ATTACK BUFF's story here is the line above it verbatim,
+    // because it is the same window on the same body with the opposite verb: the
+    // holder may Switch its own boosted Pokémon out and THROW THE BONUS AWAY, and
+    // the opponent may drag it out with a Boss's Orders to do the same to them.
+    // That inversion is worth a line of its own — every other field on this list is
+    // shed to somebody's relief, and this is the first one a player loses. EIGHT
+    // durated effects, FIVE reachability stories, one clear.
+    boostedAttack: null,
   };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({

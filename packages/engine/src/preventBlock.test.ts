@@ -855,6 +855,15 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // second arm). Two ops that write the same kind of fact land on opposite sides
     // of this table because the table asks about the BODY, not about the rule.
     preventAttackUse: "untouched",
+    // D155's per-attack damage BUFF, and the SIXTH op classified by this table
+    // rather than by the slice that wrote it. UNTOUCHED for `preventAttackUse`'s
+    // verdict verbatim — same holder, same body, same window — and the pairing is
+    // the useful part: the two ops write OPPOSITE facts to the same address and
+    // land on the SAME side of this table, because the table asks about the BODY
+    // and not about whether the fact helps its holder. A §11 block protects a
+    // Pokémon from what an attack does TO it; there is nothing to protect here in
+    // either direction.
+    boostAttack: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1164,6 +1173,16 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       op: { op: "preventAttackUse", attack: "Bite" },
       board: () => setActiveFromDeck(probeBoard(), "p2", "fix-attacker"),
       landed: (r) => p2Active(r.after)?.lockedAttack != null,
+    },
+    // D155 — the actor's own body a fourth time, and it needs a NAMED board for
+    // `preventAttackUse`'s reason verbatim: it resolves the printed noun against
+    // the HOLDER's printed attacks, so a probe run against whatever body setup
+    // happened to deal would install nothing and the case would read "untouched"
+    // off an op that never ran. Same card, same "Bite", opposite verb.
+    boostAttack: {
+      op: { op: "boostAttack", attack: "Bite", amount: 100 },
+      board: () => setActiveFromDeck(probeBoard(), "p2", "fix-attacker"),
+      landed: (r) => p2Active(r.after)?.boostedAttack != null,
     },
   };
 

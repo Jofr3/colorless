@@ -484,6 +484,30 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           ` will counterattack for ${event.amount} damage during your opponent's next turn`,
         ),
       ]);
+    // §8.5/§11 — the attack-installed PER-ATTACK DAMAGE BUFF (D155). ACTIVE voice
+    // for RECOIL_ARMED's reason verbatim: `seat` owns the boosted Pokémon AND that
+    // Pokémon is the actor's own (the op has no defender arm).
+    //
+    // ⚠️ IT NAMES THE ATTACK BECAUSE THE BARE ROW WOULD BE FALSE, WHICH IS D154's
+    // FINDING INHERITED RATHER THAN RE-DERIVED — and here the field is REQUIRED
+    // where D154's is optional, because this op's single producer cannot print the
+    // sentence without a name (events.ts). "<name> does 100 more damage next turn"
+    // read off a card with two attacks would promise a bonus on both, and false in
+    // the direction that makes a player declare the wrong one.
+    //
+    // "next turn" rather than the printed "During your next turn", for D148's
+    // reason and ATTACK_LOCKED's: under this family's seat rule the phrase always
+    // means the NAMED player's own next turn, which is exactly what the `+ 2` stamp
+    // encodes. The verb keeps the printed shape ("does {N} more damage") minus the
+    // parenthetical, for DAMAGE_REDUCTION_APPLIED's reason — a player with the card
+    // in front of them reads back the words on it — and the number is in the
+    // wording because the number is the rule: the row it sets up on the next turn
+    // reports the same figure in `DAMAGE_DEALT.bonus`.
+    case "ATTACK_BOOSTED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(`'s ${event.attack} does ${event.amount} more damage next turn`),
+      ]);
     case "ATTACK_EFFECT_PREVENTED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

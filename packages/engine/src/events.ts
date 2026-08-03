@@ -108,8 +108,23 @@ export type GameEvent =
           from `bonus`, a CONTINUOUS effect (Vitality Band); both land at the same
           pre-W/R step. */
       scaled?: number;
-      /** Flat HP the attacker's continuous effects added BEFORE Weakness/
-          Resistance (Vitality Band, §15.B). Present only when it applied. */
+      /** Flat HP ADDED to the attacker's output BEFORE Weakness/Resistance, from
+          BOTH of the places the pool prints that: the always-on continuous half
+          off the catalog (Vitality Band, Choice Belt, Defiance Band, Practice
+          Studio, Binding Mochi — §15.B, folded by `attackerPreWRBonus`) and, since
+          D155, the DURATED half installed onto the board by an attack ("During
+          your next turn, this Pokémon's {AttackName} attack does {N} more damage
+          (before applying …)."). Present only when the sum actually applied.
+
+          ⚠️ ONE FIELD FOR TWO SOURCES, AND THAT IS THE ROW's STANDING SHAPE
+          RATHER THAN AN ECONOMY: `reduction` below has summed a catalog half with
+          an attack-installed one since D147, and `debuff` an installed half with
+          an aura since D151. This row reports one number per STEP AND DIRECTION,
+          never one per card — which is why `debuff` is a second field (opposite
+          direction, same step) and this is not (same direction, same step). A
+          reader can still reconstruct §8.5 in printed order from the fields as
+          they stand; what they cannot do is attribute HP to a card, and no row in
+          this family ever could (D141's judgement, third occurrence). */
       bonus?: number;
       /** Flat HP an attack-installed DEBUFF took off the ATTACKER's output BEFORE
           Weakness/Resistance (D149 — Houndoom "Snarl", Pikachu/Pidove "Growl",
@@ -352,6 +367,47 @@ export type GameEvent =
       (attack.ts §9). A second row here, or a member on that one, would be a claim
       about which card supplied HP that no longer exists as a distinction. */
   | { type: "RECOIL_ARMED"; seat: Seat; uid: string; amount: number }
+  /** §8.5/§11 (D155) — an attack INSTALLED a durated PER-ATTACK DAMAGE BUFF on the
+      CONTROLLER's own Active ("During your next turn, this Pokémon's {AttackName}
+      attack does {N} more damage (before applying Weakness and Resistance).").
+      `amount` is the HP that will be added BEFORE the modifiers, and it is on the
+      row for DAMAGE_REDUCTION_APPLIED's reason verbatim: the number IS the rule.
+      It is the MERGED number, not the printed one.
+
+      ⚠️ `attack` IS REQUIRED HERE WHERE ATTACK_LOCKED's IS OPTIONAL, AND THAT IS
+      D153's test answered by the OP rather than by the path. That event has two
+      producers and one of them bars the whole Pokémon, so absence has a meaning
+      ("all of it", D135's absent-key rule). This one has a single producer and the
+      sentence cannot be printed without naming an attack — a row that said
+      "<name> does 100 more damage next turn" would assert something no printing
+      makes true, which is exactly the falsehood D154 found in the bare lock
+      wording. A field whose absence is unreachable is not optional.
+
+      It carries the printed NAME and not the index the state stores, for
+      ATTACK_LOCKED's reason verbatim: a log row is read by a player holding the
+      card, so the index is the engine's addressing and the name is the card's. The
+      install resolves one to the other once (interpreter.ts).
+
+      `seat` OWNS THE BOOSTED POKÉMON (D136's finding 1) and here that is the
+      ACTOR's own — the op has no defender arm — so the row is ACTIVE-voiced, like
+      DAMAGE_REDUCTION_APPLIED's and RECOIL_ARMED's and unlike
+      ATTACK_DEBUFF_APPLIED's. It still says "next turn" rather than the printed
+      "During your next turn", for D148's reason: under this family's seat rule
+      that phrase always means the NAMED player's own next turn, which is what the
+      `+ 2` stamp encodes. Rendered under both seats and read (D155's suite).
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — retreating, being Switched out, evolving — are already told
+      by their own POKEMON_SWITCHED / RETREATED / POKEMON_EVOLVED row.
+
+      AND NO ROW OF ITS OWN WHEN IT FIRES. A buff that actually lands is reported
+      by `DAMAGE_DEALT.bonus` on the very hit it grew — the field that has carried
+      "what the attacker's continuous effects added before the modifiers" since
+      Vitality Band — which names the FACT and not the source, exactly as
+      `reduction` and `debuff` do for the other two directions (D140/D146:
+      loudness is owed to UNREAD TEXT, not to a read rule doing its job). */
+  | { type: "ATTACK_BOOSTED"; seat: Seat; uid: string; attack: string; amount: number }
   /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
       damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
       at. One row per refused op, so Poison Ring's two clauses produce two.

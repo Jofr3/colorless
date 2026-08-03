@@ -364,7 +364,15 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // (an event field, and `GameEvent` is not persisted at all), which is a THIRD
     // control beside D148 and D151 for "a required key appeared on
     // `InPlayPokemon`" being the literal trigger. See D154.
-    expect(MATCH_RECORD_VERSION).toBe(9);
+    //
+    // 9 → 10 is D155's required `InPlayPokemon.boostedAttack` — THE SAME CASE A
+    // SEVENTH TIME, and the first time the trigger fires on two CONSECUTIVE
+    // slices. Its record is `{ turn, attackIndex, amount }`, i.e. D154's with one
+    // key added, so D131's widen-don't-add test passes on the SHAPE for the first
+    // time in this family and the two are STILL separate fields — refused on what
+    // the readers do, not on what the record looks like: `lockedAttackIndex`'s
+    // consumer REFUSES the index it returns and this one PAYS it. See D155.
+    expect(MATCH_RECORD_VERSION).toBe(10);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

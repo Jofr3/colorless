@@ -278,10 +278,6 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
       // the one this slice deliberately did not build: CHOOSING which attack is a
       // park on top of the address, so it is a third op rather than a second arm.
       "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
-      // The durated per-attack BUFF (Seismitoad sv03-052 "Echoed Voice"), which
-      // wants the SAME addressing this slice built and would read at the pre-W/R
-      // sites D149 built — the cheapest remaining widening, and still unread.
-      "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
       // The thirteen once-per-turn ABILITY limiters the census turned up — the
       // largest group matching `can't use` in the pool, refused by the capitalised
       // "During" plus `^…$` before anything else is considered.
@@ -305,6 +301,18 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
     expect(deriveAttackEffect("During your next turn, this Pokémon can't attack.")).toEqual([
       { op: "preventAttack" },
     ]);
+    // …and the row that MOVED AT D155 — the durated per-attack BUFF this suite
+    // carried as a `toBeNull` warrant (Seismitoad sv03-052 "Echoed Voice"). It
+    // took exactly the addressing this slice built and reads at D149's pre-W/R
+    // step, so it now derives, and it is asserted as a DIFFERENT OP for the same
+    // reason the whole-Pokémon lock above is: the two sentences share their first
+    // four words, their holder and their `+ 2` window, and differ only in the
+    // verb — which no board can tell apart if a reader drifts between them.
+    expect(
+      deriveAttackEffect(
+        "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
+      ),
+    ).toEqual([{ op: "boostAttack", attack: "Echoed Voice", amount: 100 }]);
   });
 });
 

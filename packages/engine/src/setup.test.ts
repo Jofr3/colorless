@@ -286,6 +286,13 @@ describe("placement", () => {
       // is barred on turn 0. The field carries a record and not a bare number for
       // exactly that reason.
       lockedAttack: null,
+      // …and no PER-ATTACK BUFF (D155), read the same way a seventh time and for
+      // the sixth field's reason exactly: `boostedAttackDamage` compares the stamp
+      // to `state.turn` AND the stored index to the declared one, so a `null`
+      // record is what keeps a fresh body's attack 0 from being paid +0 on turn 0
+      // — which is a difference of nothing today and of a number the moment the
+      // reader stops returning 0 on the way out.
+      boostedAttack: null,
       markers: [],
       turnPlayed: 0,
       // Placed Active from the HAND, which is not a move from the Bench — the

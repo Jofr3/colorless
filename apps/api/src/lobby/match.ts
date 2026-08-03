@@ -372,8 +372,41 @@ export interface MatchRecord {
     `SeatLogEntry[]`). So the row wording changes for NEW rows only — D141's
     already-settled cosmetic seam. No `GameState` field, no `EffectContext` field,
     no `BoardCondition` member, no new error code (the §8 gate reuses
-    `ATTACK_PREVENTED`). */
-export const MATCH_RECORD_VERSION = 9;
+    `ATTACK_PREVENTED`).
+
+    ⚠️ BUMPED AT D155 (engine 0.103.0), 9 → 10, and it is the EIGHTH time on
+    D124's SAME trigger — two consecutive slices now, which is worth saying because
+    the previous seven were spaced out by no-bump controls (D148, D151, D153).
+    `InPlayPokemon.boostedAttack: BoostedAttack | null` is a REQUIRED key on
+    `InPlayPokemon` — the printed "During your next turn, this Pokémon's
+    {AttackName} attack does {N} more damage (before applying Weakness and
+    Resistance)." (Seismitoad sv03-052 "Echoed Voice") — so a record written by the
+    previous deploy has, for every body in play, a shape the new type does not
+    describe. D154's paragraph with the field renamed, and the same reading of the
+    soft landing: `boostedAttackDamage` tests `boost === null || …`, so an absent
+    field throws rather than lying. The rule does not turn on that either way — the
+    test is "can the PREVIOUS deploy's RECORD hold the new TYPE".
+
+    ⚠️ AND THE OPTION TO DODGE IT WAS PRICED RATHER THAN ASSUMED. Two dodges exist:
+    make the key OPTIONAL (D146's fourth reason), or hang the amount off D154's
+    `lockedAttack` as `{ turn, attackIndex, amount? }`, which passes D131's
+    widen-don't-add test on the SHAPE. Both were refused on grounds that are about
+    the design and not about the bump: the six sibling durated fields are all
+    required and read through a `=== null` reader (D124's no-defensive-`undefined`
+    rule), and a shared record would hand `attack.ts`'s §8 gate the index of the
+    attack the card just BOUGHT (types.ts `BoostedAttack`). A bump avoided by
+    contorting either is a bump paid for twice.
+
+    Nothing else persisted moved. `boostAttack` is a NEW op member rather than a
+    field on an old one (a widening for any old continuation, which cannot contain
+    it), and it never parks — deterministic, consumes no rng, asks nothing — so no
+    `EffectContinuation` carries it into `phase.cont`. No `GameState` field, no
+    `EffectContext` field (the read site takes the declared index from `attack.ts`'s
+    own scope), no `BoardCondition` member, no `DAMAGE_DEALT` member (the bonus it
+    pays is reported in the `bonus` field that has existed since Vitality Band). The
+    RENDERED `SeatLogEntry[]` gains one new row type (`ATTACK_BOOSTED`), which is
+    text in NEW records only and is D141's already-settled case. */
+export const MATCH_RECORD_VERSION = 10;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

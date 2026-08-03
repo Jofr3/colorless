@@ -347,6 +347,12 @@ export function placeEvolution(
     // and the sharpest of the three routes because it costs no Energy and no
     // allowance.
     lockedAttack: null,
+    // …and, since D155, the attack-installed PER-ATTACK BUFF — the same window on
+    // the same body as the line above, so the same PLAYED LINE, and the only entry
+    // on this list a player must be careful NOT to take: evolving the boosted
+    // Pokémon inside the window throws the bonus away. §10 sheds the effects of
+    // ATTACKS whether or not the holder wanted this one shed.
+    boostedAttack: null,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -434,6 +440,12 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // the now-unbarred body back. SEVEN durated effects on one clear, FIVE
     // reachability stories — which is why the clear-set is SWEPT and not listed.
     lockedAttack: null,
+    // D155 — the per-attack BUFF, whose story here is the line above it verbatim
+    // (same window, same body): the RETREAT half is the reachable one and it is
+    // the holder's own line of play — with the sign flipped, since retreating the
+    // boosted Pokémon is how a player LOSES a bonus they spent a turn on. EIGHT
+    // durated effects on one clear, FIVE reachability stories.
+    boostedAttack: null,
   };
 }
 

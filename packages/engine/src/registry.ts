@@ -782,6 +782,18 @@ const TOWN_STORE: CardProgram = {
     and Resistance)." (Tool) */
 const VITALITY_BAND: CardProgram = { passive: { damageBonusBeforeWR: 10 } };
 
+/** FIXTURE (D155) — `fix-booster-ability`'s printed "Resonance": the same flat
+    pre-W/R bonus as Vitality Band above, but as the HOLDER'S OWN PRINTED PASSIVE
+    rather than as a Tool. That distinction is the whole reason the row exists:
+    `passivesOf` suppresses a locked Pokémon's own printed passive and leaves its
+    Tools contributing, so Vitality Band cannot be switched off by a §9
+    Ability-lock aura and this can. It is what makes D155's argument for keeping
+    an attack-INSTALLED buff out of `attackerPreWRBonus` a board rather than a
+    paragraph — the local five sets print `damageBonusBeforeWR` on exactly one
+    card and that card is a Tool (`fix-onko`'s precedent for a fixture program:
+    a rule this engine implements that no printing exercises). */
+const FIX_BOOSTER_ABILITY: CardProgram = { passive: { damageBonusBeforeWR: 30 } };
+
 /** Defiance Band — "If you have more Prize cards remaining than your opponent,
     the attacks of the Pokémon this card is attached to do 30 more damage to
     your opponent's Active Pokémon (before applying Weakness and Resistance)."
@@ -2182,6 +2194,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-196": TOWN_STORE, // Town Store — search a Pokémon Tool → hand
   // Vitality Band (Tool)
   "sv01-197": VITALITY_BAND,
+  "fix-booster-ability": FIX_BOOSTER_ABILITY, // FIXTURE — a §9-SUPPRESSIBLE pre-W/R bonus (D155)
   "sv01-169": DEFIANCE_BAND, // +30 before W/R while behind on Prizes (morePrizesThanOpponent)
   "sv02-176": CHOICE_BELT, // +30 before W/R vs a defending Pokémon V (name-derived suffix)
   // Bravery Charm (Tool)

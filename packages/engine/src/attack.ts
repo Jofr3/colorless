@@ -21,6 +21,7 @@ import {
 import {
   attackBlockOf,
   attackLocked,
+  boostedAttackDamage,
   countAttachedEnergy,
   effectiveAttackCost,
   effectiveRetreatCost,
@@ -746,7 +747,26 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // fires whenever the (multiply-adjusted) base OR the attack's own extra does
     // damage. `scaledBase` is `base` except for a multiply clause, whose printed
     // "N×" base is the per-unit already inside `scaled` — so it is 0 here.
-    const bonus = attackerPreWRBonus(next, active, action.seat, defenderCard);
+    // §8.5 step 5 (D155) — the printed "During your next turn, this Pokémon's
+    // {AttackName} attack does {N} more damage (before applying Weakness and
+    // Resistance)", installed onto THIS attacker's own body by its OWN previous
+    // attack and addressed to ONE index. Summed with the catalog fold rather than
+    // folded into it, for D149's structural reason read from the other direction:
+    // `attackerPreWRBonus` scans `passivesOf`, which a §9 Ability-lock aura
+    // SUPPRESSES, and an attack INSTALLATION must be immune to that. The other two
+    // of D149's three grounds do not apply to a number that only ever ADDS, which
+    // is why this half is reported in the same `bonus` field below where the
+    // debuff needed one of its own (continuous.ts `boostedAttackDamage`).
+    //
+    // ⚠️ THIS IS THE ONLY SITE THAT READS IT, and the boundary is the ADDRESS: the
+    // record names an attack INDEX, and `index` is in scope here and nowhere else
+    // (`EffectContext` carries no attack index, so the interpreter's three damage
+    // sites structurally cannot ask). Unreachable rather than merely unbuilt —
+    // the one printing's boosted attack does its whole damage through the printed
+    // `damage` field and derives no damage-dealing op at all.
+    const bonus =
+      attackerPreWRBonus(next, active, action.seat, defenderCard) +
+      boostedAttackDamage(next, active, index);
     // §8.5 step 5, the OTHER pre-W/R term (D149) — the printed "attacks used by
     // the Defending Pokémon do {N} less damage (before applying Weakness and
     // Resistance)", installed onto THIS attacker's body by the opponent's

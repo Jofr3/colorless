@@ -282,9 +282,6 @@ describe("the self-lock — derived, not authored", () => {
       // per-ATTACK on the far side of the table, and CHOOSING which attack is a
       // park nothing in this family has. THE LAST UNREAD MEMBER OF THE GROUP.
       "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
-      // …and the neighbour that is neither a lock nor unmapped-by-accident: a
-      // durated BUFF on one named attack (Seismitoad sv03-052 "Echoed Voice").
-      "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
       // A TRAINER-scoped lock on a different turn and a whole board (Geeta
       // sv03-188/-218/-226) — not an attack effect at all, and refused here by
       // every property at once.
@@ -331,6 +328,18 @@ describe("the self-lock — derived, not authored", () => {
     expect(deriveAttackEffect("During your next turn, this Pokémon can't use Dirty Headbutt.")).toEqual([
       { op: "preventAttackUse", attack: "Dirty Headbutt" },
     ]);
+    // …and the row that MOVED AT D155, re-pointed for the same reason a third
+    // time. Seismitoad sv03-052's "Echoed Voice" shares this file's four opening
+    // words, its holder and its `+ 2` window, and it is the one neighbour whose
+    // card has ONE attack AND whose op writes a DIFFERENT FIELD — so a reader that
+    // drifted from the bar onto the buff would leave a board on which nothing
+    // looks wrong until a number is 100 too big. Only the derived program can say
+    // so, which is why it is asserted here rather than left as a `toBeNull`.
+    expect(
+      deriveAttackEffect(
+        "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
+      ),
+    ).toEqual([{ op: "boostAttack", attack: "Echoed Voice", amount: 100 }]);
     // …and NONE of them is what THIS file's anchor derives, asserted rather
     // than reasoned about: the bare self-lock's program carries no `target` at
     // all and no `attack`, so an absent key, `"defender"` and a named attack are

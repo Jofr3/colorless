@@ -5417,6 +5417,192 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  // — D155's PER-ATTACK BUFF: "During your next turn, this Pokémon's {AttackName}
+  //   attack does {N} more damage (before applying Weakness and Resistance)."
+  //   Verbatim off the local D1 (2026-08-03, **890 rows** across five sets — see
+  //   effects.ts's anchor, which corrects the 978 every earlier census comment in
+  //   this repo repeated), checked FIELD BY FIELD **including the fields the row
+  //   does not have** (D151's rule). ONE printing, and `FIXTURE_POOL` was swept
+  //   separately: no fixture printed this sentence before this slice, so unlike
+  //   D154 there is no fielded-but-uncatalogued sibling. —
+  /** Seismitoad sv03-052 — "Echoed Voice" ({W}{W}, printed 120, attack **INDEX 0**),
+      the family's ONLY printing and the whole of what the anchor reads.
+
+      ⚠️ ITS CARD HAS EXACTLY ONE ATTACK, WHICH IS WHY THE SUITE ALSO FIELDS
+      `fix-echoer` BELOW. The record addresses an attack by INDEX, and on a
+      one-attack card a per-attack buff and a whole-Pokémon buff are
+      OBSERVATIONALLY IDENTICAL — the same hole D154 named on Munkidori ex, except
+      that there it was the control and here it is the ONLY printing. The printed
+      path is driven on this card; the per-INDEX claim is driven on the constructed
+      one, and both are said out loud rather than one standing in for the other.
+
+      ⚠️ ITS PRINTED ABILITY IS INCLUDED THOUGH NOTHING READS IT. "Quaking Zone"
+      ("As long as this Pokémon is in the Active Spot, attacks used by your
+      opponent's Active Pokémon cost {C} more") is a cross-board COST aura, which
+      this engine has no shape for — `effectiveAttackCost` folds a Stadium's
+      surcharge and no Pokémon's. It stays LOUD: the fixture carries what the card
+      prints, and what the engine reads is a separate question (D151's rule after
+      40 pool fixtures turned out to be missing a printed row).
+
+      Verbatim off the D1: 170 HP, Stage2 from Palpitoad, Water, retreat 3, ×2
+      Lightning, NO Resistance (asserted as an absence), reg mark G, Uncommon. */
+  "sv03-052": battler("sv03-052", {
+    name: "Seismitoad",
+    types: ["Water"],
+    stage: "Stage2",
+    evolveFrom: "Palpitoad",
+    hp: 170,
+    retreat: 3,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Quaking Zone",
+        effect:
+          "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon cost {C} more.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Water", "Water"],
+        name: "Echoed Voice",
+        damage: 120,
+        effect:
+          "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
+      },
+    ],
+  }),
+  /** A synthetic Water BASIC with TWO attacks, the second of which prints D155's
+      sentence naming itself — `fix-skarm-stage1`'s cousin, and the one card this
+      slice invents for a claim the pool cannot make.
+
+      ⚠️ IT EXISTS BECAUSE THE ONE PRINTING HAS ONE ATTACK. "the buff is on the
+      ATTACK" is the whole content of the rule and it is unobservable on Seismitoad:
+      index 0 is the only index there is. This card's index 0 "Echo Tap" is a plain
+      20 with no effect text, so one board shows the named attack paying +100 while
+      its sibling on the same body, on the same turn, does not — which is the
+      assertion a build that keyed the record on the BODY would fail and Seismitoad
+      alone would pass.
+
+      It is also the §10 EVOLVE case's base (`fix-echoer-stage1` below), for a
+      reason Seismitoad structurally cannot serve: Seismitoad is a Stage 2 and the
+      catalog prints nothing that evolves from it, so the only played line into that
+      clear is on a constructed body. Being a BASIC, it can be dealt straight into
+      the Active Spot and evolved inside the window.
+
+      Deliberately NOT weak or resistant to anything: the Weakness board is
+      Skeledirge ex's (×2 Water, 340 HP), and this card's job is the address. */
+  "fix-echoer": battler("fix-echoer", {
+    types: ["Water"],
+    hp: 150,
+    retreat: 1,
+    attacks: [
+      { cost: ["Water"], name: "Echo Tap", damage: 20 },
+      {
+        cost: ["Water", "Water"],
+        name: "Echo Chorus",
+        damage: 100,
+        effect:
+          "During your next turn, this Pokémon's Echo Chorus attack does 100 more damage (before applying Weakness and Resistance).",
+      },
+    ],
+  }),
+  /** A synthetic Stage 1 that evolves from **fix-echoer** — `fix-skarm-stage1`'s
+      twin, invented for the same rule and for the same reason its doc block gives.
+
+      ⚠️ ITS ATTACK LIST IS DELIBERATELY ONE ENTRY LONG, AND THAT IS THE POINT OF
+      THE CASE RATHER THAN A CONVENIENCE. This record addresses an attack by INDEX,
+      so a stale record surviving an evolution would not merely persist — it would
+      pay a bonus to a DIFFERENT attack on a different card, or point at an index
+      the new body does not have. Evolving a fix-echoer whose index 1 was boosted
+      into a body with only an index 0 rules out "boosted somewhere else" and not
+      merely "still boosted", which is the sharper of the two failures. */
+  "fix-echoer-stage1": {
+    ...blank,
+    id: "fix-echoer-stage1",
+    name: "fix-echoer-stage1",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 190,
+    types: ["Water"],
+    retreat: 1,
+    evolveFrom: "fix-echoer",
+    attacks: [{ cost: ["Water"], name: "Ripple", damage: 40 }],
+  } satisfies Card,
+  /** A synthetic Basic whose PRINTED ABILITY adds a flat pre-W/R bonus to its own
+      attacks (`passive.damageBonusBeforeWR: 30` in the registry), invented for ONE
+      claim and it is the load-bearing one in D155's design.
+
+      ⚠️ IT EXISTS BECAUSE THE ARGUMENT FOR KEEPING THE BUFF OUT OF
+      `attackerPreWRBonus` IS OTHERWISE UNOBSERVABLE ON THIS POOL. D149 refused to
+      fold its debuff into that function on three grounds, and exactly ONE of them
+      survives for a number that only ever ADDS: the function folds `passivesOf`,
+      the CATALOG scan, whose holder half is SUPPRESSED under a §9 Ability-lock
+      aura — and an attack INSTALLATION must be immune to that, because an
+      installation is not an Ability. Structurally true, and driveable by nothing
+      the pool prints: `damageBonusBeforeWR` has exactly one producer in the whole
+      registry (Vitality Band sv01-197), and a TOOL is not suppressed by a lock
+      (continuous.ts `passivesOf` suppresses the holder's OWN printed passive and
+      nothing else). So the pool cannot build the board that tells a fold from a
+      second term, and this card can: locked by Ting-Lu ex's "Cursed Land", its 30
+      vanishes and the installed 100 does not.
+
+      ⚠️ A FIXTURE WITH A REGISTRY ROW, WHICH IS THE PART TO BE HONEST ABOUT. The
+      Ability is invented, not printed — the doc block above says which claim it
+      buys, and the suite says so on the case. `fix-onko`, `fix-condgate` and
+      `fix-blend` are the precedent (registry.ts fields fixture programs for
+      exactly this reason: a rule this engine implements that no card in the local
+      five sets exercises).
+
+      Two attacks, so the same body can also show that the CATALOG half applies to
+      BOTH while the installed half applies to one. */
+  "fix-booster-ability": battler("fix-booster-ability", {
+    types: ["Water"],
+    hp: 160,
+    retreat: 1,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Resonance",
+        effect: "This Pokémon's attacks do 30 more damage (before applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [
+      { cost: ["Water"], name: "Hum", damage: 20 },
+      { cost: ["Water", "Water"], name: "Resound", damage: 40 },
+    ],
+  }),
+  /** The U+2019 RE-INGEST, as a card — `fix-curly-barrer`'s twin (D154), invented
+      for the same rule on the other op and for the same measured reason.
+
+      ⚠️ IT EXISTS BECAUSE A MUTATION SURVIVED. D155's install prints the RESOLVED
+      row's own `name` on the log row rather than the op's folded token, exactly as
+      D154's does — and mutating that line to print the token failed NOTHING,
+      because every attack name this anchor can reach in the pool is spelled
+      straight and the two strings are byte-identical. That is the same shape D154
+      found on the fold one line up, and the same fix: a WITNESS rather than a
+      note. A punctuation normaliser rewrites the attack ROW as well as the effect
+      string, which is precisely this card, and on it the folded token and the
+      printed name differ.
+
+      Its attack name borrows Greedent ex's apostrophes for the reason D154's does
+      — that is the printing the hazard is real on — and everything else about the
+      body is deliberately plain. */
+  "fix-curly-booster": battler("fix-curly-booster", {
+    types: ["Water"],
+    hp: 180,
+    retreat: 1,
+    attacks: [
+      { cost: ["Water"], name: "Ripple", damage: 20 },
+      {
+        cost: ["Water"],
+        name: "Slip ’n’ Roll",
+        damage: 40,
+        effect:
+          "During your next turn, this Pokémon's Slip ’n’ Roll attack does 100 more damage (before applying Weakness and Resistance).",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -8365,6 +8551,62 @@ export const PER_ATTACK_LOCK_DECK = deckOf({
   "fix-fighting-energy": 3, // {F} for Accelerating Stab and Avenging Knuckle
   "fix-water-energy": 6, // {W}{W}{W} for Scalding Block, {W}{W} for Torrential Cannon
   "fix-energy": 14, // Colorless Basic — every {C} in the deck
+});
+
+/** D155 — the PER-ATTACK BUFF, on its OWN 60 rather than inside
+    `PER_ATTACK_LOCK_DECK` above: that deck's boards are seeded (`SEED = 13`) and
+    adding a card would reshuffle every one of them, so D154's stay byte-identical.
+
+    sv03-052 Seismitoad is the ONE printing — "Echoed Voice" idx 0 ({W}{W}, 120),
+    its card's only attack. Everything else is a body chosen to make one claim
+    observable:
+      • fix-echoer — the constructed TWO-attack witness ("Echo Tap" idx 0, "Echo
+        Chorus" idx 1, the buff on idx 1 naming itself), because the per-INDEX
+        claim is unreachable on a one-attack card. It is also the body that carries
+        D154's bar and this slice's buff AT ONCE, which is the driven form of the
+        argument for two fields (types.ts `BoostedAttack`);
+      • fix-echoer-stage1 — the §10 EVOLVE route, ONE attack so a stale index would
+        point at nothing (the catalog prints no evolution of Seismitoad, which is
+        why this route needs a constructed body at all);
+      • sv02-037 Skeledirge ex — 340 HP and ×2 WATER, the board where "(before
+        applying Weakness and Resistance)" is observable at all: `(120 + 100) × 2 =
+        440` printed against `120 × 2 + 100 = 340` reversed, and it SURVIVES an
+        unboosted Echoed Voice (240) so the buff is what changes the outcome;
+      • fix-titan (340 HP, NO attacks) — the mulligan-free bench filler and promote
+        target, and the KO BOUNDARY off two printed declarations: 120 then a boosted
+        220 is exactly 340;
+      • sv01-194 Switch — the holder's own §10 leave-Active route, REACHABLE inside
+        the window because the window is the holder's own turn, and the one route on
+        this list a player takes by MISTAKE (retreating throws the bonus away);
+      • sv02-172 Boss's Orders — the opponent's route into the same clear;
+      • sv01-197 Vitality Band (a TOOL, +10 pre-W/R) — the CATALOG half of the very
+        number this buff is summed into, so one row reports 110 in ONE `bonus`
+        field and the "one number per step and direction" decision is a board;
+      • fix-booster-ability + sv02-127 Ting-Lu ex — the pair that makes the
+        fold-vs-second-term argument observable. That fixture's printed Ability
+        adds 30 pre-W/R and "Cursed Land" suppresses it on a DAMAGED non-ex Active,
+        so one board shows the catalog half switched off while the installed half
+        is untouched. Nothing the pool prints can build it (the registry's only
+        `damageBonusBeforeWR` is a Tool, and Tools are not suppressed);
+      • fix-attacker ("Bite" {C} 30) — P2's plain swing, so a window can open with
+        something happening on the other seat, and the damage source Cursed Land's
+        `requiresDamage` gate needs. */
+export const PER_ATTACK_BUFF_DECK = deckOf({
+  "sv03-052": 3, // Seismitoad — "Echoed Voice" idx 0: THE printing
+  "fix-echoer": 3, // the constructed two-attack witness — the per-INDEX claim
+  "fix-echoer-stage1": 2, // evolves from fix-echoer — the §10 EVOLVE clear, on one attack
+  "sv02-037": 4, // Skeledirge ex — 340 HP, ×2 Water: the pre-W/R ORDER board
+  "sv03-142": 2, // Skarmory — D154's barrer, for the two-records-one-body board
+  "sv01-194": 2, // Switch (Item) — the holder's own §10 leave-Active route
+  "sv02-172": 4, // Boss's Orders — the opponent's route into the same clear
+  "sv01-197": 2, // Vitality Band (Tool) — the CATALOG half of the same `bonus` field
+  "fix-booster-ability": 2, // a §9-SUPPRESSIBLE printed +30: the fold-vs-second-term board
+  "sv02-127": 2, // Ting-Lu ex — "Cursed Land", the §9 Ability lock that switches it off
+  "fix-curly-booster": 2, // the U+2019 RE-INGEST, as a card — the log row's name witness
+  "fix-attacker": 3, // "Bite" ({C}, 30) — the opponent's plain swing, and the damage source
+  "fix-titan": 6, // 340 HP neutral Basic, NO attacks — bench filler and KO boundary
+  "fix-water-energy": 16, // {W}{W} for Echoed Voice and Echo Chorus, ×3 for the retreat
+  "fix-energy": 7, // Colorless Basic — every {C} in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

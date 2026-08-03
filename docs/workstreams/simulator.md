@@ -12035,3 +12035,273 @@ cases, and **one stays-LOUD witness RE-POINTED, none deleted**. engine 0.101.0 �
   built**. Now the cheapest item in this neighbourhood, and the first that would put
   a SECOND payload beside an address — i.e. the first genuine candidate for a shared
   record inside this family rather than across it.
+
+---
+
+## D155 — the PER-ATTACK DAMAGE BUFF: `During your next turn, this Pokémon's {AttackName} attack does {N} more damage (before applying Weakness and Resistance).` — 1 printing on ONE anchor with TWO captures, D154's ADDRESS read at D149's STEP, and the family's first separation decided by what the READERS DO (engine 0.102.0 → 0.103.0, `MATCH_RECORD_VERSION` 9 → 10)
+
+Taken as **item 1a of D154's remainder list**, which priced it with the code open
+as "the cheapest item on this page". It was: D154 built the addressing, D149 built
+the read step, and the slice is one anchor, one op, one field, one reader, one term.
+
+### ⚠️ THE CENSUS — and the miss is D154's OWN NUMBER, one level below D154's own finding
+
+D154 established that a census owes its **SCOPE**, because the local D1 holds five
+sets and `FIXTURE_POOL` fields cards from a sixth. Re-running it found the other
+half of the same failure: **the catalog holds 890 rows, not 978.**
+
+```
+select set_id, count(*) from cards group by set_id;
+sv01|258  sv02|279  sv03|230  sv06.5|99  sve|24      -- sums to 890
+select count(*) from cards;                          -- 890
+```
+
+The sqlite file has not been written since 2026-07-27, so this is not drift.
+**Roughly twenty census comments in `effects.ts` say "run against the local D1, 978
+cards", and none of them ever measured it** — 978 matches no table in the file (736
+Pokémon rows, 519 distinct names, 3 deck_cards). It is corrected where D155 writes
+and carried forward as a remainder item; a blanket rewrite of twenty comments is a
+separate, mechanical change and was deliberately not smuggled in here.
+
+**Both populations queried separately** (the half D154's finding makes mandatory).
+Against 890 rows and ALL THREE text columns (`effect`, `attacks_json`,
+`abilities_json`):
+
+| query | rows |
+|---|---|
+| `LIKE '%more damage (before applying%'` | **1** |
+| `LIKE '%During your next turn, this Pokémon''s%'` | **1** (the same row) |
+| `FIXTURE_POOL` sweep for the same substring | **0** |
+
+So **ONE printing means one in both populations** — unlike D154, there is no
+fielded-but-uncatalogued sibling. The row, checked field by field:
+
+- **Seismitoad `sv03-052`** — "Echoed Voice" ({W}{W}, printed **120**, **INDEX 0**),
+  170 HP, Stage 2 from Palpitoad, Water, retreat 3, ×2 Lightning, **no Resistance**,
+  and a printed **"Quaking Zone"** Ability (*"…attacks used by your opponent's
+  Active Pokémon cost {C} more"*) that this engine does not read. Its card has
+  **exactly one attack**, which is the fact that shaped the whole suite.
+
+**The MIRROR family was re-queried too and corrects two more inherited counts.**
+`less damage (before applying` returns **FIVE** rows — four ATTACK riders (Pikachu
+`sv02-062`, Florges `sv01-093`, Houndoom `sv06.5-008`/`-066`) and one **ABILITY**
+(Entei `sv03-030`). So **§D149's "5 printings" is 4 in the catalog** and **§D151's
+"six rows" is 5**: both counted Pidove `swsh10.5-061`, of fixture provenance. Same
+failure, same direction, two more instances.
+
+### The shape: D154's record with one key added — and STILL a second field
+
+`InPlayPokemon.boostedAttack: { turn, attackIndex, amount } | null`, the **seventh**
+stamped field, read through `boostedAttackDamage(state, pokemon, index)`.
+
+**This is the first time in this family that D131's widen-don't-add test PASSES on
+the shape.** Strip `amount` and you have `LockedAttack` byte for byte. And D154's
+own separation ground is *unavailable*: the bar and the buff are printed on
+different cards, and a body installs at most one rider per turn, so the two
+**cannot be live together off any printing**. D154 separated `lockedAttack` from
+`attackLockedTurn` on exactly that reachability.
+
+So the refusal is made on the **READ**, which is the axis this family had not been
+separated on:
+
+| | `lockedAttackIndex` (D154) | `boostedAttackDamage` (D155) |
+|---|---|---|
+| Record | `{ turn, attackIndex }` | `{ turn, attackIndex, amount }` |
+| Window | `state.turn + 2` | `state.turn + 2` |
+| Signature | `(state, pokemon) → index \| null` | `(state, pokemon, index) → number` |
+| Consumer | **REFUSES** the index it returns | **PAYS** the index it is given |
+
+One field would hand `attack.ts`'s §8 gate the index of the attack the card just
+**bought** — a Seismitoad that spent a turn buying +100 on "Echoed Voice" could not
+then declare it. **Driven on one board** (both records installed, the barred index
+refused with `ATTACK_PREVENTED`, the boosted one resolving at +100); merging them
+fails **7**.
+
+The **signature** inverts D154's argument deliberately. That reader returns an
+index because two of its three callers map over the whole `attacks` array; this one
+has exactly ONE caller, which already holds the declared index and wants a number.
+Same field shape, opposite access pattern, opposite signature — decided by the call
+sites both times.
+
+### Fold or second term? A SECOND TERM, on ONE of D149's three grounds
+
+D149 refused to fold its debuff into `attackerPreWRBonus` on three observable
+grounds. Two are **silent** for a number that only ever ADDS:
+
+1. `DAMAGE_DEALT.bonus` is emitted only when positive — a buff does not vanish;
+2. `attackerPreWRBonus` folds `passivesOf`, the **CATALOG** scan, whose holder half
+   is **SUPPRESSED under a §9 Ability-lock aura** — and an attack INSTALLATION must
+   be immune, because an installation is not an Ability. **← this one decides it**;
+3. only the debuff can drive the pre-W/R subtotal negative — a buff owns no clamp.
+
+**⚠️ AND GROUND 2 IS UNOBSERVABLE ON THIS POOL, WHICH IS ITSELF A FINDING.**
+`damageBonusBeforeWR` has exactly **one** producer in the whole registry — Vitality
+Band `sv01-197`, a **TOOL** — and `passivesOf` suppresses only the holder's OWN
+printed passive (Tools keep contributing, D152's reading). So no printing can put a
+suppressible pre-W/R bonus on a body, and the argument that decides the design
+could not be driven by any card.
+
+A **fixture with a registry row** builds it: `fix-booster-ability` prints +30 as an
+ABILITY, Ting-Lu ex `sv02-127`'s "Cursed Land" locks a **damaged non-ex Active**.
+Undamaged the row reports `bonus: 130`; damaged, the Ability is suppressed and it
+reports `bonus: 100` — the installation untouched. Simulating the fold (zeroing the
+buff under the lock) fails **1**.
+
+### The reported field is `DAMAGE_DEALT.bonus` — one number per STEP AND DIRECTION
+
+D149's debuff got a field of its own; this does not, and the difference is an
+invariant rather than a saving:
+
+| field | sources it sums | since |
+|---|---|---|
+| `reduction` | catalog passive/Tool + attack-installed | D147 |
+| `debuff` | attack-installed + always-on aura | D151 |
+| `bonus` | catalog passive/Tool + attack-installed | **D155** |
+
+The row reports **one number per step and direction, never one per card.** A new
+`boost` field would have been the first split by SOURCE; `debuff` is a second field
+because it is the opposite **direction** at the same step. Driven with Vitality Band
+attached: one row, `bonus: 110`, one `· boosted +110` crumb.
+
+### ONE read site, and the boundary is the ADDRESS
+
+D149's debuff reaches all FOUR pre-W/R sites because it is a fact about a **BODY**.
+This is a fact about a **DECLARATION**, and only `attack.ts`'s main hit knows the
+declared index: `EffectContext` carries `seat`, `sourceUid` and `invokedBy` and **no
+index**, so `snipeActive`, `spreadDamage` and `placeSnipe`'s `deals` arm
+structurally cannot ask. **Unreachable rather than merely unbuilt** — the one
+printing's boosted attack does its whole damage through the printed `damage` field
+and derives no damage-dealing op at all. A printing that boosts an attack whose
+damage comes from an OP would earn `EffectContext` an attack index; written down so
+the next reader does not re-derive why the count differs from D149's.
+
+### The five structural questions
+
+1. **PARK? No. PERSIST? Yes — `MATCH_RECORD_VERSION` 9 → 10, the EIGHTH time on
+   D124's trigger and the first on two CONSECUTIVE slices.** `boostAttack` never
+   parks; `ATTACK_BOOSTED` is a new event and `GameEvent` is persisted nowhere
+   (D153). **Both dodges were priced**: an OPTIONAL key breaks the six siblings'
+   `=== null` reader convention (D124's no-defensive-`undefined` rule), and
+   `lockedAttack: { turn, attackIndex, amount? }` is the merge refused above. A bump
+   avoided by contorting either is a bump paid for twice.
+2. **VOICE? ACTIVE — and `attack` is REQUIRED where `ATTACK_LOCKED.attack` is
+   OPTIONAL.** `seat` owns the boosted Pokémon (D136's finding 1) and the op has no
+   defender arm, so the row is always the actor's own, like `RECOIL_ARMED`'s. That
+   event has two producers and one bars the whole Pokémon, so absence means "all of
+   it" (D135); this one has a single producer and the sentence cannot be printed
+   without naming an attack, so **a field whose absence is unreachable is not
+   optional**. The bare wording is not stilted but **FALSE** — a `fix-echoer` whose
+   "Echo Chorus" is boosted still has an "Echo Tap" that is not. The wording keeps
+   "next turn" rather than the printed "During your next turn" (D148's reason:
+   under this family's seat rule the phrase means the NAMED player's own next turn,
+   which is what `+ 2` encodes). **Rendered under BOTH seats and READ**; the
+   mirrored render is constructed, because no printing produces it.
+3. **GUARD? SWEPT — and the sweep found the line that was FREE.** The §10 clear-set
+   is 4 literals (`makeInPlay`, `placeEvolution`, `clearOnLeavingActive`,
+   `switchInto`) and the new field is on all 4, each DRIVEN: evolve (`fix-echoer` →
+   `fix-echoer-stage1`, whose ONE attack makes a stale index point at nothing),
+   retreat, a Boss's Orders `switchInto`, and `makeInPlay` from the other end via a
+   KO'd holder's promotion. **What the sweep does NOT traverse**: it reads seven
+   durated keys off one body, so it cannot see a clear site nobody wrote — the
+   literal count (`grep` shows 4:4 against `lockedAttack`) is the other half.
+   §11 gained a verdict AND a driven probe board (D150): `boostAttack: "untouched"`,
+   `preventAttackUse`'s verdict verbatim — two ops writing OPPOSITE facts to the
+   same address landing on the SAME side of a table that asks about the **body**.
+4. **MECHANISM? Read first, and that is why the read site is ONE and not four**:
+   `attack.ts`'s §8.5 pipeline, `attackerPreWRBonus`, `passivesOf`'s suppression
+   rule and `EffectContext`'s three fields were all opened before anything was
+   designed.
+5. **GATES AN ACTION? NO — checked, not assumed.** `redactedAttacksOf` and
+   `GameHud` publish the attack's PRINTED `damage` string straight off the catalog,
+   which **no** pre-W/R adjustment has ever moved (Vitality Band, Choice Belt,
+   Defiance Band, Practice Studio, Binding Mochi are all invisible there too), so
+   surfacing this one alone would report a single source of a number the panel does
+   not claim to compute. **No `redact.ts` and no `GameHud.tsx` diff**, and the suite
+   pins that every row stays `playable` and both damage strings are unchanged.
+
+### The `attackBlock` union — re-derived, still NO
+
+D154's earning condition is an **ENUMERATING caller**. There is still none: this
+field's only reader asks for exactly one kind, and the slice adds a seventh stamped
+field without adding a site that receives a rider whose kind it does not know. What
+it DOES add is the **first pair of records in the family that are a key apart** —
+the case a union looks most attractive for — and the separation ground above is
+precisely why one would cost rather than save.
+
+### One helper SHARED, on a ground a test can see
+
+`printedAttackIndex` (interpreter.ts) is extracted from D154's `preventAttackUse`
+because the apostrophe fold it carries is **invisible when missing** — D154 measured
+exactly that, and only fixed it by fielding a curly-named card. A second copy would
+be a second place to lose the fold, covered by no witness unless the next slice
+remembers a second curly card. One copy makes D154's card load-bearing for both ops;
+removing the fold now fails **2**.
+
+### Mutation table (twenty run, nineteen caught, the twentieth fixed with a witness)
+
+| # | mutation | fails |
+|---|---|---|
+| 1 | `state.turn + 2` → `+ 1` at the install | **11** |
+| 2 | merge the two records into one field | **7** |
+| 3 | drop the boost term at `attack.ts`'s pre-W/R site | **6** |
+| 4 | reader ignores the ATTACK INDEX | **2** |
+| 5 | reader ignores the TURN stamp | **1** |
+| 6 | boost applied AFTER W/R (reporting preserved) | **1** |
+| 7 | drop the EVOLVE clear | **2** |
+| 8 | drop the leave-Active (retreat) clear | **1** |
+| 9 | drop the `switchInto` clear | **1** |
+| 10 | anchor's possessive `['’]` → straight only | **2** |
+| 11 | drop the deriver's capture fold | **1** |
+| 12 | drop the SHARED resolver's fold (both ops) | **2** |
+| 13 | drop the `amount >= 1` guard | **1** |
+| 14 | drop the unresolvable-name guard (`attackIndex < 0`) | **1** |
+| 15 | `Math.max` → overwrite in the merge | **1** |
+| 16 | drop the idempotence early-return | **1** |
+| 17 | bare log wording (drop the attack name) | **2** |
+| 18 | simulate the `passivesOf` fold (zero under an Ability lock) | **1** |
+| 19 | flip the §11 verdict to `blocked` | **1** |
+| 20 | log row prints the OP token, not the card's `name` | **0 → 1** |
+
+**#20 is the one that survived**, and it is D154's rule paying out on the slice that
+inherited it: every attack name this anchor reaches in the pool is spelled straight,
+so the folded token and the card's `name` are byte-identical. Fixed with a
+**WITNESS** rather than a note — `fix-curly-booster`, a card whose attack NAME and
+effect string are both U+2019, i.e. what a punctuation-normalising re-ingest
+produces.
+
+### Cost
+
+**1 op** (`boostAttack { attack, amount }`), **1 required `InPlayPokemon` field**
+(`boostedAttack`) + its `BoostedAttack` record, **1 regex** (`SELF_ATTACK_BOOST`,
+two captures), **1 deriver arm** (24b), **1 reader** (`boostedAttackDamage`), **1
+shared resolver** (`printedAttackIndex`), **1 new event** (`ATTACK_BOOSTED`), **1
+log arm**, **4 §10 clears**, **1 term at ONE read site**. No park, no error code, no
+prompt, no `DAMAGE_DEALT` member, no `BoardCondition` member, no redact/HUD diff, no
+web/DB/`@luminous/schema` diff beyond `MATCH_RECORD_VERSION`.
+
+4 fixtures ADDED (`sv03-052`, `fix-echoer`, `fix-echoer-stage1`,
+`fix-booster-ability`, `fix-curly-booster` — five entries, one of them a real card)
+and **1 registry row for a fixture** (the third such, after `fix-onko` /
+`fix-condgate`), 1 new deck (`PER_ATTACK_BUFF_DECK`, its own 60 so D154's seeded
+boards stay byte-identical), `perAttackBuff.test.ts` (**29 tests, one SEED**), **2
+re-pointed stays-LOUD witnesses and none deleted** (`attackLock.test.ts` and
+`perAttackLock.test.ts` both carried this sentence as a `toBeNull` warrant and now
+assert it derives a DIFFERENT OP), `clauseApostrophe`'s DISCOVERED census **57 →
+60** — its first rows whose exposed slot is a possessive on **Pokémon** rather than
+on "your opponent".
+
+`bun run check` **GREEN exit 0 — 195 files / 3330 tests** (was 194 / 3301).
+
+### Still unmapped after D155 — the per-attack neighbourhood is now ONE item
+
+- **The OPPONENT-side twin — 2 printings / 1 sentence, unchanged from D154's note
+  above and re-queried here.** Medicham `sv01-111` "Acu-Punch-Ture" ({F}, 30, idx 0)
+  and Oranguru `sv02-094` "Plotter's Command" ({P}{C}, 30, idx 0). It is a THIRD op:
+  the address is CHOSEN rather than printed, so it needs a candidate set, a prompt,
+  a park and a `target`. **D155 buys it nothing D154 did not** — but it also
+  forecloses nothing, and the SHARED `printedAttackIndex` is the site a parked pick
+  would resolve *around* rather than *through* (a park resolves to an index
+  directly, with no printed noun to fold).
+- **The SELF side is CLOSED.** Both readings this family prints — the bar (D154) and
+  the buff (D155) — are read, on the same address, the same window and the same four
+  §10 clears.

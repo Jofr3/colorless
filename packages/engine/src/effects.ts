@@ -899,6 +899,42 @@ export type EffectOp =
       FUTURE. Never parks, consumes no rng, and is idempotent (a re-install writing
       the same turn AND the same index is silent). */
   | { op: "preventAttackUse"; attack: string }
+  /** §8.5/§11 (D155) — BUY ONE NAMED ATTACK on the controller's own Active a flat
+      pre-W/R DAMAGE BONUS for the holder's next turn ("During your next turn, this
+      Pokémon's {AttackName} attack does {N} more damage (before applying Weakness
+      and Resistance).", 1 printing — Seismitoad sv03-052 "Echoed Voice"; the
+      census is on `SELF_ATTACK_BOOST` below). `attack` is the printed PROPER NOUN,
+      verbatim off the sentence; `amount` is HP.
+
+      `preventAttackUse`'s OPPOSITE VERB AT THE SAME ADDRESS, and written directly
+      beneath it so the pair reads as one design: same holder ("this Pokémon"),
+      same `state.turn + 2` window, same printed-noun capture resolved by the same
+      helper at the same site, same three §10 clears, same no-park. What differs is
+      the consequent — that op BARS the named attack, this one PAYS it — and that
+      is the whole reason they are two ops and two fields rather than one of each
+      (types.ts `BoostedAttack`).
+
+      ⚠️ THE AMOUNT IS A SECOND TERM AT THE READ SITE, NOT A SIGNED SIBLING OF
+      D149's. The two are the same step of §8.5 pointed in opposite directions, and
+      only ONE of D149's three grounds for keeping its number out of
+      `attackerPreWRBonus` applies here — the CATALOG fold is §9-suppressible and
+      an attack installation must not be — but one is enough, and the other two
+      failing is what makes this number REPORTABLE in the row's existing `bonus`
+      field where the debuff needed one of its own (events.ts).
+
+      ⚠️ NO `target` FIELD, AND NO PRINTING TO EARN ONE. The sentence names "this
+      Pokémon" on its only printing, and the pool prints no opponent-side buff at
+      all (censused on the anchor). A field with one reachable value is a second
+      way to say what the op's name already says — `weakenDefenderAttacks`'s
+      refusal, on the other seat.
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp`, and that placement is
+      free rather than lucky (D125's rule): the bonus's entire effect is in the
+      FUTURE, so it cannot reach the very hit that installs it. Never parks,
+      consumes no rng, and is idempotent (a re-install writing the same turn, index
+      and amount is silent; a larger amount on the same address wins by `Math.max`
+      — the interpreter says why). */
+  | { op: "boostAttack"; attack: string; amount: number }
   /** Heal `amount` HP from the CONTROLLER's own Active Pokémon — the printed
       "this Pokémon" / "it" of a self-heal, resolved at `ctx.seat` by the
       interpreter rather than carried in the op (which is why `target` has one
@@ -2803,6 +2839,77 @@ const FLIP_TAILS_SELF_CANT_ATTACK =
 // "During" plus `^…$` is the whole guard, and it is what keeps the thirteen
 // lowercase mid-sentence "you can't use…" Ability limiters off this path.
 const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t use (.+?)\.$/;
+// ── D155: the PER-ATTACK BUFF, the same address with the opposite verb ──
+//
+// "During your next turn, this Pokémon's {AttackName} attack does {N} more damage
+// (before applying Weakness and Resistance)." — the whole printed effect, and the
+// sentence that sits at the intersection of D154's addressing and D149's read
+// step. One anchor, TWO captures (the NAME and the amount).
+//
+// ⚠️ THE CENSUS NAMES ITS POPULATIONS, WHICH IS D154's LESSON APPLIED AND ALSO
+// THE PLACE IT HAS TO BE CORRECTED. D154 established that the local D1 holds FIVE
+// sets and that `FIXTURE_POOL` fields cards from a sixth the query cannot see. Its
+// row COUNT, repeated in every census comment in this file, is also wrong: the
+// catalog holds **890 rows**, not 978 —
+//
+//   select set_id, count(*) from cards group by set_id;
+//   sv01|258  sv02|279  sv03|230  sv06.5|99  sve|24     -- 890 rows, FIVE sets
+//
+// — re-run 2026-08-03 against the same file, which has not been written since
+// 2026-07-27. Nothing behavioural turns on it; what turns on it is that a number
+// copied forward through twenty comments was never the number any of them
+// measured, which is the same failure D154 found one axis out.
+//
+// CENSUS (local D1, 2026-08-03, 890 rows across the five sets above, ALL THREE
+// text columns — `effect`, `attacks_json`, `abilities_json`):
+//
+//   LIKE '%more damage (before applying%'                     → 1 row
+//   LIKE '%During your next turn, this Pokémon''s%'           → 1 row
+//
+// Both are the SAME row, and there is exactly one printing:
+//
+//   100 — Seismitoad sv03-052 "Echoed Voice" ({W}{W}, printed 120, INDEX 0)
+//
+// checked field by field off the row (id, NAME, cost, printed damage and INDEX —
+// D144's rule extended to NAMES by D146). It is the card's ONLY attack, and the
+// card also prints a "Quaking Zone" Ability ("As long as this Pokémon is in the
+// Active Spot, attacks used by your opponent's Active Pokémon cost {C} more") that
+// this engine does not read — on the fixture, and LOUD.
+//
+// ⚠️ AND `FIXTURE_POOL` WAS SWEPT SEPARATELY, WHICH IS THE HALF D154's FINDING
+// MAKES MANDATORY: no fixture in the pool carries "more damage (before applying"
+// on any attack, so unlike the per-attack LOCK there is no fielded-but-uncatalogued
+// printing here. ONE printing means ONE, in both populations.
+//
+// THE MIRROR FAMILY IS UNCHANGED AND IS WHAT THIS ANCHOR MUST NOT CROSS.
+// `less damage (before applying …)` returns FIVE rows in the same query — four
+// ATTACK riders (Pikachu sv02-062, Florges sv01-093, Houndoom sv06.5-008/-066)
+// and one ABILITY (Entei sv03-030) — i.e. D149's five printings are FOUR in the
+// catalog, the fifth being Pidove swsh10.5-061 of fixture provenance, and §D151's
+// "six rows" was that same overcount. So the parenthetical separates the two
+// directions and the VERB separates this sentence from theirs; both are inside
+// `^…$` for D149's reason verbatim.
+//
+// ⚠️ TWO CAPTURES, AND THEY ARE CLOSED BY DIFFERENT THINGS. The amount is a NUMBER
+// (D120's precondition, closed by its type) and the name is a PROPER NOUN closed by
+// nothing — so the name is validated where the datum lives: `boostAttack` resolves
+// it against the HOLDER's printed attacks at the install and writes nothing if it
+// matches none (interpreter.ts), which is `preventAttackUse`'s contract verbatim
+// and the reason the two ops share one resolver.
+//
+// `(.+?)` is LAZY so the trailing " attack does" cannot be swallowed by a name.
+// The possessive slot carries `['’]` (D136/D137) — the same class its neighbour
+// spells on a CONTRACTION — and the capture is apostrophe-FOLDED at the arm for
+// D154's reason, so the derived VALUE is stable under a punctuation-normalising
+// re-ingest. No printing exercises that fold (the one attack name is "Echoed
+// Voice"), so it is pinned by a constructed sentence rather than by a card: the
+// install-side half of the same fold already has a card witness (`fix-curly-barrer`,
+// D154) and now reaches this op through the shared resolver.
+//
+// No /i, for the standing reason (see TYPED_SELF_DISCARD): the capitalised
+// "During" plus `^…$` is the whole guard.
+const SELF_ATTACK_BOOST =
+  /^During your next turn, this Pokémon['’]s (.+?) attack does (\d+) more damage \(before applying Weakness and Resistance\)\.$/;
 // ── D148: the OPPONENT-side lock, the same rider pointed across the table ──
 //
 // THE ENERGY-COST COMPOUND — Eiscue ex sv03-042 (Double rare) / sv03-210 (Ultra
@@ -4890,6 +4997,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = SELF_CANT_USE_ATTACK.exec(effect);
   if (match !== null) {
     return [{ op: "preventAttackUse", attack: foldApostrophes(match[1] ?? "") }];
+  }
+
+  // 24b. "During your next turn, this Pokémon's {AttackName} attack does {N} more
+  //      damage (before applying Weakness and Resistance)." — D155's PER-ATTACK
+  //      BUFF, 1 printing (Seismitoad sv03-052 "Echoed Voice"). Arm 24a's address
+  //      with arm 19f's read step, and it sits beneath 24a because the two share
+  //      the capture, the holder, the window and the resolver, and differ in the
+  //      verb alone.
+  //
+  //      AN `exec` WITH TWO CAPTURES — the NAME and the amount — where every
+  //      neighbouring arm has one of either. The duration is the printed words
+  //      "during your next turn", the holder is the printed words "this Pokémon",
+  //      and the STEP is the printed parenthetical, which is the one token
+  //      separating this sentence from the five that SUBTRACT at the same step
+  //      (arm 19f) and from the twenty that subtract at the other one (arm 19d).
+  //
+  //      UNGATED like arms 19c–19g and for the same reason — no coin is printed on
+  //      the one printing — so the derived program is the bare op.
+  match = SELF_ATTACK_BOOST.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[2]);
+    // `amount >= 1` is the guard every arm in this neighbourhood carries: a
+    // printed "does 0 more damage" would install a record that changes no
+    // arithmetic anywhere and emit a row announcing a bonus that does not exist,
+    // which is worse than an unread sentence. Leave it LOUD. (Arm 24a has no
+    // twin guard on its NAME capture, and that absence was measured rather than
+    // assumed — `(.+?)` already cannot match an empty string.)
+    if (amount >= 1) {
+      return [{ op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount }];
+    }
   }
 
   // 25. "Put {N} damage counters on 1 of your opponent's Pokémon. During your next

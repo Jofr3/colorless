@@ -441,6 +441,84 @@ export interface LockedAttack {
   attackIndex: number;
 }
 
+/** §8.5/§11 (D155) — an attack-installed PER-ATTACK DAMAGE BUFF on one Pokémon,
+    with the printed DURATION baked in as a turn STAMP exactly as the five records
+    above bake theirs. One printed sentence, ONE printing in the local D1:
+
+      "During your next turn, this Pokémon's {AttackName} attack does 100 more
+       damage (before applying Weakness and Resistance)."                 (1)
+
+    — Seismitoad sv03-052 "Echoed Voice" ({W}{W}, printed 120, attack INDEX 0,
+    its card's ONLY attack). The census is in effects.ts on the anchor; the
+    populations are named there because D154 found that the local D1 holds five
+    sets and `FIXTURE_POOL` fields cards from a sixth.
+
+    ⚠️ IT IS `LockedAttack`'s RECORD WITH AN AMOUNT BESIDE THE ADDRESS, AND THAT
+    IS EXACTLY WHY IT IS A SECOND FIELD RATHER THAN A KEY ON THE FIRST. D154 built
+    `{ turn, attackIndex }` on the same body with the same `state.turn + 2` stamp
+    and the same three §10 clears; this is `{ turn, attackIndex, amount }`. D131's
+    widen-don't-add test asks whether stripping the new key yields the previous
+    record BYTE FOR BYTE, and here it does — which is why the refusal cannot rest
+    on the SHAPE and has to rest on what the readers do with it:
+
+      • `lockedAttackIndex` is read by `attack.ts`'s §8 gate, which REFUSES the
+        declaration whose index it returns. A shared field would hand that gate an
+        index the holder is being paid to use, so a Seismitoad that bought +100 on
+        "Echoed Voice" could no longer declare it. The two records mean OPPOSITE
+        things at the same address, and the gate cannot tell them apart without a
+        discriminator — which is a union whose read sites would then DISPATCH, the
+        one thing §D152/§D154 declined to buy;
+      • driven rather than argued: the suite installs both records on one board and
+        asserts the barred attack is refused while the boosted one resolves at
+        +100, and a build that merged them fails on the refusal.
+
+    They CANNOT be live together off any printing — the pool prints the bar on four
+    cards and the buff on one, and a body installs at most one per turn — so D154's
+    own reachability ground (two facts, one record, one write) is NOT available
+    here. The ground is the READ, not the write, which is the axis this family had
+    not yet been separated on.
+
+    THE WINDOW IS `state.turn + 2`, `LockedAttack`'s number and D143's: the
+    sentence prints "During YOUR next turn" and declaring an attack ENDS the turn
+    (§5.3), so the turn after the installing one is the opponent's and the one
+    after THAT is the holder's own.
+
+    Everything else is INHERITED unchanged: the stamp convention, the
+    read-through-continuous.ts shape (`boostedAttackDamage`), the three §10 early
+    clears, and D124's no-defensive-`undefined` rule at the reader. */
+export interface BoostedAttack {
+  /** The single turn number this buff is live on (the installing turn + 2 — the
+      HOLDER's own next turn, since declaring an attack ends the turn). */
+  turn: number;
+  /** WHICH attack is boosted, as an index into the stack-top card's `attacks` —
+      `LockedAttack.attackIndex`'s twin, resolved from the printed proper noun at
+      the install by the SAME helper (interpreter.ts `printedAttackIndex`), so the
+      apostrophe fold D137 requires is written once for both ops. */
+  attackIndex: number;
+  /** HP added to that attack's damage BEFORE Weakness and Resistance — the
+      printed parenthetical, and the whole of why the number is stored rather than
+      applied.
+
+      §8.5's order makes the two placements observably different, and in
+      `AttackDamageDebuff.amount`'s direction rather than `DamageReduction`'s:
+      Weakness is MULTIPLICATIVE, so a printed 120 Water hit carrying 100 of this
+      into a ×2 Water body is `(120 + 100) × 2 = 440`, while the same numbers
+      added after the modifiers give `120 × 2 + 100 = 340`. (Resistance and this
+      number are both additive and commute, so the parenthetical only ever bites on
+      WEAKNESS; the suite drives both.)
+
+      ⚠️ NO CLAMP, WHICH IS THE ONE ARITHMETIC DIFFERENCE FROM D149's MIRROR. That
+      number is the only pre-W/R term that can drive the subtotal NEGATIVE and it
+      owns a `Math.max(0, …)` for it; this one only ever adds, so it needs none —
+      and it is REPORTED in the row's existing `bonus` field for that reason among
+      others (events.ts).
+
+      ONE amount is printed and it is still a capture rather than a literal, the
+      varying token being a NUMBER and therefore closed by its type (D120's
+      precondition, met exactly as D147/D149/D152 met it). */
+  amount: number;
+}
+
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
     the top uid defines its identity (name, HP, retreat cost, …); damage,
     energy and tools persist through evolution (M4). */
@@ -672,6 +750,36 @@ export interface InPlayPokemon {
       Out holder takes it out of play with the rest of the stack, and the promoted
       body carries nothing. */
   lockedAttack: LockedAttack | null;
+  /** §8.5/§11 (D155) — the attack-installed PER-ATTACK DAMAGE BUFF on this
+      Pokémon (see `BoostedAttack` above), or `null` when none has been installed.
+      Read through `boostedAttackDamage` (continuous.ts) rather than by touching
+      this field, so no read site can forget the turn comparison — the same
+      contract the six fields above are under.
+
+      ⚠️ `state.turn + 2` AND AN ATTACK INDEX, WHICH IS `lockedAttack`'s PAIR OF
+      ANSWERS EXACTLY — same window, same body, same address, same three clears.
+      It is the SEVENTH stamped field and the first whose separation from an
+      existing one rests on what the READERS do rather than on the record's shape
+      or on two facts colliding: `lockedAttackIndex`'s consumer refuses the index
+      it returns and this one's pays a bonus for it, so one field would make the §8
+      gate bar the very attack the card bought (see `BoostedAttack`).
+
+      IT GATES NO ACTION AND REACHES NO WIRE PROJECTION, and that is checked
+      rather than assumed: `redactedAttacksOf` and `GameHud` publish the attack's
+      PRINTED `damage` string straight off the catalog, which no pre-W/R
+      adjustment has ever moved (Vitality Band, Choice Belt, Defiance Band,
+      Practice Studio and Binding Mochi are all invisible there too). Showing this
+      one alone would report a single source of a number the panel does not claim
+      to compute. So unlike `lockedAttack` it owes neither projection.
+
+      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `lockedAttack`'s
+      reachability story verbatim because it is the same window on the same body:
+      retreating, being Switched out and evolving are all lines of play the holder
+      can take INSIDE it, and all three throw away a bonus it chose to buy rather
+      than escaping a drawback (D148's agency, inverted once more). A Knocked Out
+      holder takes it out of play with the rest of the stack, and the promoted body
+      carries nothing. */
+  boostedAttack: BoostedAttack | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -730,6 +838,10 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // the self-lock's per-attack sibling. Same reading of §10's carry-over rule
     // from the other end as the five lines above.
     lockedAttack: null,
+    // …and no attack of its own has BOUGHT one of its attacks a bonus either
+    // (D155) — the per-attack bar's opposite verb at the same address. Same
+    // reading of §10's carry-over rule from the other end as the six lines above.
+    boostedAttack: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck

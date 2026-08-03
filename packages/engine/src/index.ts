@@ -3301,7 +3301,97 @@ import type { GameState, Seat } from "./types";
     deriver arm, 1 reader, 1 EVENT FIELD (not a new event — D113/D153), 1 log
     branch, 3 §10 clears, 1 §8 gate and BOTH payability projections** — no park, no
     new error code, no prompt, no registry row, no DB/`@luminous/schema` diff. */
-export const engineVersion = "0.102.0";
+/** 0.102.0 → 0.103.0 — **P3-M5 (long tail): the PER-ATTACK DAMAGE BUFF**:
+
+      "During your next turn, this Pokémon's {AttackName} attack does {N} more
+       damage (before applying Weakness and Resistance)."                    (1)
+
+    ONE printing — Seismitoad `sv03-052` "Echoed Voice" ({W}{W}, printed 120,
+    attack **INDEX 0**, its card's ONLY attack). Taken as item 1a of D154's
+    remainder list, and it is D154's ADDRESSING read at D149's STEP: one anchor,
+    one op, one field, one reader, one term.
+
+    ⚠️ **THE CENSUS NAMES ITS POPULATIONS AND CORRECTS THE ONE NUMBER EVERY EARLIER
+    CENSUS IN THIS REPO QUOTED.** D154 found that the local D1 holds FIVE sets and
+    that `FIXTURE_POOL` fields cards from a sixth. Re-running it found the other
+    half: the catalog holds **890 rows, not 978** (`select set_id, count(*)` sums
+    to 890 and `select count(*)` agrees, against a file unwritten since
+    2026-07-27). Roughly twenty census comments in `effects.ts` say 978. Nothing
+    behavioural turns on it; what turns on it is that a number copied forward
+    through twenty comments was never the number any of them measured. Against
+    those 890 rows across all three text columns, `more damage (before applying`
+    returns ONE row, and the `FIXTURE_POOL` sweep — run SEPARATELY, which is the
+    half D154's finding makes mandatory — returns none. The mirror family returns
+    FIVE, which makes §D149's "5 printings" **4** in the catalog and §D151's "six
+    rows" **5**: both counted Pidove `swsh10.5-061`, of fixture provenance.
+
+    ⚠️ **THE FIRST TIME IN THIS FAMILY THAT D131's WIDEN-DON'T-ADD TEST PASSES ON
+    THE SHAPE AND THE ANSWER IS STILL TWO FIELDS.** `InPlayPokemon.boostedAttack:
+    { turn, attackIndex, amount } | null` is D154's record with one key added —
+    strip `amount` and you have `LockedAttack` byte for byte — and D154's own
+    ground (two facts, one record, one write) is unavailable, because the bar and
+    the buff are printed on different cards and CANNOT be live together off any
+    printing. So the refusal is made on the **READ**, which is the axis this family
+    had not been separated on: `lockedAttackIndex`'s consumer REFUSES the index it
+    returns and `boostedAttackDamage`'s PAYS it, so one field would hand
+    `attack.ts`'s §8 gate the index of the attack the card just bought. **Driven on
+    one board** (both records installed, the barred index refused and the boosted
+    one resolving at +100), which is what a design answer owes here.
+    `MATCH_RECORD_VERSION` **9 → 10** — a REQUIRED key on `InPlayPokemon`, D124's
+    trigger for the EIGHTH time and the first on two consecutive slices.
+
+    ⚠️ **A SECOND TERM, NOT A FOLD INTO `attackerPreWRBonus` — ON EXACTLY ONE OF
+    D149's THREE GROUNDS, AND THE POOL CANNOT DRIVE IT.** Two of that slice's three
+    reasons are silent for a number that only ever ADDS (a positive is reported
+    fine, and it can never drive the subtotal negative). The third decides it: that
+    function folds `passivesOf`, the CATALOG scan, whose holder half is SUPPRESSED
+    under a §9 Ability-lock aura — and an attack INSTALLATION must be immune.
+    Structurally true and **unobservable on this pool**, because `damageBonusBeforeWR`
+    has exactly one producer in the registry (Vitality Band, a TOOL) and `passivesOf`
+    suppresses only the holder's OWN printed passive. So a FIXTURE with a registry
+    row makes it a board (`fix-booster-ability` + Ting-Lu ex "Cursed Land"): the 30
+    vanishes on a damaged holder and the installed 100 does not.
+
+    ⚠️ **AND IT REPORTS IN THE EXISTING `DAMAGE_DEALT.bonus`, WHERE D149's DEBUFF
+    NEEDED A FIELD OF ITS OWN.** The row carries **one number per STEP AND
+    DIRECTION, never one per card**: `reduction` has summed a catalog half with an
+    installed one since D147 and `debuff` an installed half with an aura since
+    D151. A new `boost` field would have been the first split by SOURCE, and D149's
+    second field is justified by the opposite DIRECTION rather than by provenance.
+    Driven with Vitality Band attached: one row, `bonus: 110`, one crumb.
+
+    ⚠️ **ONE READ SITE, AND THE BOUNDARY IS THE ADDRESS.** D149's debuff reaches all
+    four pre-W/R sites because it is a fact about a BODY; this is a fact about a
+    DECLARATION, and only `attack.ts`'s main hit knows the declared index —
+    `EffectContext` carries `seat`, `sourceUid` and `invokedBy` and no index.
+    Unreachable rather than unbuilt: the one printing's boosted attack does its
+    whole damage through the printed `damage` field and derives no damage-dealing
+    op. A printing that boosts an attack whose damage comes from an OP would earn
+    `EffectContext` an attack index.
+
+    ⚠️ **IT GATES NO ACTION, CHECKED RATHER THAN ASSUMED** — the question D154 was
+    the first durated field to owe. Both projections publish the attack's PRINTED
+    `damage` string straight off the catalog, which no pre-W/R adjustment has ever
+    moved (Vitality Band, Choice Belt, Defiance Band, Practice Studio and Binding
+    Mochi are invisible there too), so surfacing this one alone would report a
+    single source of a number the panel does not claim to compute. No `redact.ts`
+    and no `GameHud.tsx` diff, and the suite pins that every row stays playable.
+
+    ⚠️ **THE §D147/§D152/§D154 `attackBlock` UNION IS RE-DERIVED AND STILL NO.** The
+    earning condition D154 left is an ENUMERATING caller. There is still none: this
+    field's only reader asks for exactly one kind, and the slice adds a SEVENTH
+    stamped field without adding a site that receives a rider whose kind it does
+    not know. What it does add is the first pair of records in the family that are
+    a key apart — the case a union looks most attractive for — and the separation
+    ground above is precisely why one would cost rather than save.
+
+    Cost: **1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1
+    deriver arm, 1 reader, 1 shared install-side resolver (extracted from D154's op
+    so its one curly-named witness covers both), 1 NEW EVENT, 1 log arm, 4 §10
+    clears and 1 term at ONE read site** — no park, no new error code, no prompt,
+    no `DAMAGE_DEALT` member, no redact/HUD diff, no `@luminous/schema` or DB diff
+    beyond the one constant. */
+export const engineVersion = "0.103.0";
 
 export type {
   ApplyResult,
@@ -3361,6 +3451,7 @@ export {
   hasAttachedEnergy,
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
+  boostedAttackDamage,
   installedReductionOf,
   lockedAttackIndex,
   opposingRetreatBlocked,
@@ -3468,6 +3559,7 @@ export {
 } from "./types";
 export type {
   AttackBlock,
+  BoostedAttack,
   DamageReduction,
   GameOutcome,
   GameOverReason,
