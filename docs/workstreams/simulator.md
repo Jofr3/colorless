@@ -10165,7 +10165,7 @@ sentence, over attacks, Abilities AND Trainer text. `LIKE '%less damage%'` is
 | **AFTER W/R, always-on, TEAM-WIDE** — Hariyama `sv02-113` "Arm Thrust Practice" (`All of your Pokémon take 10 less damage…`) | 1 | 1 | ❌ a seat-wide aura `passivesOf` has no shape for |
 | **BEFORE W/R — a debuff on the ATTACKER** — Houndoom `sv06.5-008`/`-066` "Snarl" (100, idx 1), Pikachu `sv02-062` + Pidove `swsh10.5-061` "Growl" (20, idx 0), Florges `sv01-093` "Moonblast" (30, idx 0) | 5 | 3 | ❌ a different body, a different step |
 | …and its always-on member — Entei `sv03-030` "Pressure" (20) | 1 | 1 | ❌ same mechanism, no duration |
-| **`This attack does {10\|20} less damage for each damage counter on this Pokémon`** — Skeledirge ex ×4, Cetitan `sv01-060` | 5 | 3 | ❌ the ATTACKER's own damage calc; a different mechanism entirely |
+| **`This attack does {10\|20} less damage for each damage counter on this Pokémon`** — Skeledirge ex ×4, Cetitan `sv01-060` | 5 | **2** | ✅ **D163** — the ATTACKER's own damage calc, a third FOLD on the count evaluator (⚠️ *"3 sentences"* stood here until D163 re-queried it; the pool prints TWO) |
 
 `reduce` appears in **ZERO** printings — the pool spells every one of these as
 "less damage", which is why the query is what it is.
@@ -10903,7 +10903,7 @@ Tool?* — rather than read off §D147's table, per that slice's own rule.
 | `During your opponent's next turn, the Defending Pokémon's attacks do {20\|30} less damage (before applying Weakness and Resistance).` | **3** | attack | ✅ `weakenDefenderAttacks` — Pikachu `sv02-062` idx 0 (20), Pidove `swsh10.5-061` idx 0 (20), Florges `sv01-093` idx 0 (30) |
 | `During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying …).` | **2** | attack | ✅ the same op — Houndoom `sv06.5-008`/`-066` idx **1** |
 | `As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying …).` | 1 | **Ability** | ❌ a CROSS-BOARD aura, Active clause on BOTH ends — Entei `sv03-030` "Pressure" |
-| `This attack does {10\|20} less damage for each damage counter on this Pokémon.` | 5 | attack | ❌ the attacker's OWN damage calc off its OWN counters — a different mechanism (Skeledirge ex ×4, Cetitan `sv01-060`) |
+| `This attack does {10\|20} less damage for each damage counter on this Pokémon.` | 5 | attack | ✅ **D163** — the attacker's OWN damage calc off its OWN counters, summed into the SAME `debuff` term this table's other rows feed (Skeledirge ex ×4, Cetitan `sv01-060`; **2** distinct sentences, not 3) |
 
 **And the second query, which is the one that closes the neighbourhood:** every
 printing whose text contains `before applying` — 19 across attacks, Abilities and
@@ -13819,13 +13819,389 @@ engine **0.106.1 → 0.107.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
   census are two other mechanisms: the **BEFORE-W/R** attacker-side debuff (6
   printings, closed by D149 + D151) and *"This attack does {10|20} less damage for
   each damage counter on this Pokémon"* (Skeledirge ex ×4, Cetitan `sv01-060` — **5
-  printings / 3 sentences, STILL UNMAPPED**, a self-scaling clause on the ATTACKER's
-  own damage and a different mechanism entirely). **That last group is the whole of
-  what "less damage" has left.**
+  printings**, a self-scaling clause on the ATTACKER's own damage and a different
+  mechanism entirely). **That last group is the whole of what "less damage" has
+  left.** ⚠️ **Taken at D163, which also found the "3 sentences" written here to be
+  wrong — the pool prints TWO. §D147's census now closes at 31/31.**
 - **Munkidori ex `sv06.5-037`/`-083`/`-091` "Oh No You Don't"** — D158's §8.1 site's
   next consumer, and still the closest thing to a free slice.
-- **RADIANT CHARIZARD `swsh10.5-011`** — a fixture and a case, no mechanism.
+- **RADIANT CHARIZARD `swsh10.5-011`** — a fixture and a case, no mechanism. ⚠️ **DONE at D162.**
 - **The §12 STATUS-IMMUNITY family** (D159's census, 4 printings / 3 sentences).
 - **D158's and D159's censuses STILL OWE A RE-RUN**, and D161's finding sharpens the
   instruction: **read the DATE first.** Both are dated 2026-08-03 and both really did
   run against 890 / 5, so both really are floors — unlike §D147's, which was not.
+  ⚠️ **DONE at D162: all three came back UNCHANGED (8 / 6 / 6), and `swsh10.5`
+  contributes ZERO rows to any of them. The honesty table is now EMPTY.**
+
+---
+
+## D162 — the RESTORED-CATALOG RE-CENSUS: Radiant Charizard `swsh10.5-011`, the per-attack lock family CLOSES at 8/6, and the four owed re-censuses are all UNCHANGED (engine 0.107.0 → 0.108.0, `MATCH_RECORD_VERSION` unchanged at 10, **0 engine behaviour lines**)
+
+> **⚠️ INTEGRATION NOTE.** D162 was built in an ISOLATED WORKTREE and was forbidden
+> to touch `docs/`; its code was committed as `f139173` while its doc-ritual content
+> sat in a scratchpad handoff. **This section, the `decisions.md` row and the
+> `progress.md` entries were integrated at D163**, with the handoff's version and
+> test numbers CORRECTED against the commit (the handoff predated the merge and said
+> `0.106.1 → 0.106.2` / 199 files / 3468 tests / 205 → 206 fixture rows; the true
+> values are `0.107.0 → 0.108.0`, **200 files / 3499 tests**, 207 → **208** fixture
+> rows). Where the handoff and the commit disagreed, the commit won.
+
+### The family, complete
+
+`LIKE '%During your next turn, this Pokémon can''t use %'` across all three text
+columns of the restored local D1 (2026-08-03, **978 cards / 6 sets**) returns
+**8 rows across 6 names**, and every one is now fielded and driven:
+
+| id | card | attack | idx | cost | dmg | status |
+|---|---|---|---|---|---|---|
+| `sv01-114` | Lucario | Accelerating Stab | 1 | {F}{C}{C} | 120 | simulated (D154) |
+| `sv03-142` | Skarmory | Slashing Steel | 1 | {M}{M}{C} | 120 | simulated (D154) — the headline two-attack body |
+| `sv03-179` | Greedent ex | Slip 'n' Roll | 1 | {C}{C}{C} | 210 | simulated (D154) — the apostrophe capture |
+| `sv06.5-037` | Munkidori ex | Dirty Headbutt | 0 | {D}{D}{C} | 190 | simulated (D154) |
+| `sv06.5-083` | Munkidori ex | Dirty Headbutt | 0 | {D}{D}{C} | 190 | same row, Ultra Rare — one fixture serves all three |
+| `sv06.5-091` | Munkidori ex | Dirty Headbutt | 0 | {D}{D}{C} | 190 | same row, Special illustration rare |
+| `swsh10.5-018` | Radiant Blastoise | Torrential Cannon | 0 | {W}{W}{C} | 170 | simulated (D154, as a FIXTURE-provenance printing); catalogued again since D160 |
+| `swsh10.5-011` | **Radiant Charizard** | **Combustion Blast** | **0** | **{R}{C}{C}{C}{C}** | **250** | **NEWLY LANDED at D162** |
+
+**Still unread in this family: NOTHING.** Six names, eight rows, six fixtures. The
+opponent-side twin (`preventChosenAttack`, D157) and the per-attack BUFF
+(`boostAttack`, D155) close the neighbourhood.
+
+### Zero new machinery, and that was the pricing
+
+D154 built the anchor (`SELF_CANT_USE_ATTACK`, arm 24a), the op (`preventAttackUse`
++ `printedAttackIndex`), the field (`InPlayPokemon.lockedAttack`), the reader
+(`lockedAttackIndex`), the §8 gate, the three §10 clears and both payability
+projections. **Every one was READ and every one takes this card unchanged.** What
+the slice adds is a fixture, a 60 and the boards that prove it.
+
+### The two cells this printing occupies that the family had never had
+
+1. **The projection on a ONE-ATTACK body.** Barring index 0 greys **100% of the
+   panel**, which is pixel-for-pixel D143's whole-Pokémon lock produced by a
+   different record. D154's projection case (Skarmory) is the opposite board — one
+   grey row on a live panel, where its doc block says the projection "has more room
+   to be wrong". This is where it has the LEAST room to be *seen* wrong, which is a
+   different hazard, and both halves are asserted at once (`attacks` length 1,
+   `playable` false, `attackLockedTurn` NULL, `lockedAttack` `{ turn: 4,
+   attackIndex: 0 }`).
+2. **A rule box that is NOT a suffix, worth ONE Prize.** `cards.ts hasRuleBox` is
+   `pokemonSuffixOf` ∪ the literal `"Radiant "` **name prefix**; `prizeValueOf`
+   reads the suffix alone. Radiant → rule box **true**, prizes **1**. Pinned as a
+   four-row table beside Munkidori ex / Greedent ex (true, 2) and Skarmory / Lucario
+   (false, 1), because a predicate with two independent sources drifts silently and
+   nothing in this family would have failed if the prefix arm broke.
+   ⚠️ The engine does **not** enforce the one-Radiant-per-deck rule — that lives in
+   `src/features/builder/deckMath.ts` (`isRadiantPokemon`, `RADIANT_LIMIT`), and
+   engine test decks are not deck-legal (`PER_ATTACK_LOCK_DECK` already fields two
+   Radiant Blastoise). Stated so nobody "fixes" a deck that is correct.
+
+### The VOICE finding, which INVERTS D154's
+
+D154's log branch exists because a bare *"can't attack next turn"* on a Skarmory
+that may still declare Peck is not stilted, it is **FALSE** — false in the direction
+that makes a player pass a turn they could have attacked on. **Radiant Charizard has
+one attack, so the bare wording would have been TRUE.** The branch is kept anyway,
+and this is the printing where that is a CHOICE rather than a correction: a reader
+drifting onto `preventAttack` would produce a true row, a gate that still refuses
+and a panel that still greys. Mutation-checked — collapsing the branch fails this
+section's log case and nothing else in it. Rendered under both seats and READ:
+`Radiant Charizard can't use Combustion Blast next turn`.
+
+### Its Ability is carried and LOUD, and PRICED rather than built
+
+**"Excited Heart"** — *"This Pokémon's attacks cost Colorless less for each Prize
+card your opponent has taken."* — is a COST MODIFIER in the **DISCOUNT** direction.
+`continuous.ts effectiveAttackCost` was READ: it only ever APPENDS Colorless from a
+Stadium surcharge, has no discount path and no Pokémon-Ability hook at all.
+`programFor("swsh10.5-011")` is pinned **UNDEFINED** so the inertness is MEASURED,
+and the item went on the remainder list — the explicit refusal to let a one-fixture
+item become a cost-modifier slice.
+
+### The honesty table, CLOSED
+
+All four censuses D160 marked `RE-RUN OWED` were re-run against the restored catalog
+across all three text columns, and **all four returned exactly the count their slice
+claimed**:
+
+| whose | query (all 3 text columns unless noted) | claimed (890/5) | re-run (978/6) | newly visible |
+|---|---|---|---|---|
+| D157 | `LIKE '%can''t use that attack%'` | 2 rows | **2 rows** | none |
+| D158 | `LIKE '%damage counters on the Attacking Pokémon%'` | 8 rows | **8 rows** | none |
+| D158 | `LIKE '%Knocked Out by damage from an attack%'` | 6 rows | **6 rows** | none |
+| D159 | `LIKE '%by attacks from%'` **outside** `attacks_json` | 6 rows (5 built at D159, 1 at 0.58.0) | **6 rows** | none |
+| D154 | `LIKE '%During your next turn, this Pokémon can''t use %'` | 6 rows / 4 names | **8 rows / 6 names** | **Radiant Charizard `swsh10.5-011` — landed here** |
+
+**The restored `swsh10.5` set contributes ZERO rows to the first four.** That is the
+result and it is worth stating as one: the three parallel-worktree slices
+(D157/D158/D159) were built against a shrunken catalog and **none of them
+undercounted.**
+
+⚠️ **The one query whose NEIGHBOURHOOD grew.** `LIKE '%can''t use%'` (D154's warrant
+sweep, the superset the anchor refuses) went **29 → 37 rows**. All eight new rows are
+`swsh10.5`, and only two are the lock sentence; the other six are refused by the
+capitalised `^During` plus `^…$` — **Mewtwo VSTAR `swsh10.5-031`/`-079`/`-086` and
+Dragonite VSTAR `swsh10.5-050`/`-081`** (*"You can't use more than 1 VSTAR Power in a
+game."*, a swsh-era limiter the sv-only catalog never printed) and **Rare Candy
+`swsh10.5-069`**. Recorded because a warrant sweep whose refusals are enumerated is
+the thing that goes stale silently.
+
+### The `Dxxx` merge residue, cleaned
+
+Parallel-worktree slices leave their D-number as `Dxxx` for the merger to assign. The
+D158 merge assigned only the ones in the file it hit a conflict on, leaving
+**FOURTEEN committed** in `counterattack.test.ts`, `installedRecoil.test.ts`,
+`vengefulPunch.test.ts` and `registry.ts`. All were resolved at D162 **FILE BY FILE
+rather than repo-wide** — which is the rule, because two slices' placeholders
+coexisted in `testFixtures.ts` and a global substitution would have mislabelled them.
+**A repo-wide grep for `Dxxx` now returns ZERO** (re-verified at D163).
+
+### Cost
+
+1 fixture, 1 deck (`RADIANT_LOCK_DECK`, its own 60 so D154's `SEED = 13` boards stay
+byte-identical), 8 tests, 1 regenerated manifest (978 rows, 6 sets, **208** fixture
+rows, 0 absent), 3 corrected `effects.ts` census blocks. **0 engine behaviour lines.**
+No op, event, field, registry row, read site, prompt, park, error code, projection or
+web/DB/`@luminous/schema` diff. **10 mutations run, 10 caught.**
+engine **0.107.0 → 0.108.0**; `MATCH_RECORD_VERSION` **10**; `bun run check` GREEN
+exit 0 — **200 files / 3499 tests** (was 200 / 3491).
+
+### Two `effects.ts` census blocks D162 deliberately LEFT
+
+Both still describe the outage-era catalog, and both were left because D162 did not
+MEASURE them (item 10's rule: fix a census comment *with* a re-run, never as a
+find-and-replace):
+
+- **§D147's twelve-printing damage-reduction census** at the `RIDER_REDUCTION`
+  anchor — *"890 cards / 5 sets"*. ⚠️ **Superseded: D161 re-measured §D147's census
+  and corrected the two scope tags beside it**, so this one is now the only
+  survivor of the pair and belongs to whoever next opens that anchor.
+- **D148's Eiscue ex `sv03-042`/`-210`/`-222` per-printing field re-query** —
+  *"(2026-08-02, 890 cards / 5 sets)"*. A FIELD check on three rarities, not a
+  count, and all three rows are `sv03` — unaffected by the restore either way.
+  **One line; take it inside whatever slice next opens
+  `SELF_DISCARD_ALL_THEN_REDUCTION`, not on its own.**
+
+The ~20 other `978 cards / 6 sets` scope tags in that file are **correct again** and
+need no edit. `890` also survives legitimately in `catalogManifest.ts`
+(`history.shrunken`), `catalogManifest.test.ts`, `index.ts`, `registry.ts`,
+`counterattack.test.ts`, `attackerFilter.test.ts`, `vengefulPunch.test.ts`,
+`opponentAttackLock.test.ts`, `perAttackBuff.test.ts` and `testFixtures.ts` — those
+describe the outage window on purpose and **must not be find-and-replaced.**
+
+---
+
+## D163 — the SELF-SCALING DAMAGE PENALTY: `This attack does {10|20} less damage for each damage counter on this Pokémon.` — 5 printings / **2** sentences, ONE regex, and the sign does NOT go where the handoff said (engine 0.108.0 → 0.109.0, `MATCH_RECORD_VERSION` unchanged at 10)
+
+### The census — re-run, and the printing count held while the SENTENCE count did not
+
+`LIKE '%less damage for each%'` over **all three text columns** of the restored local
+D1 (2026-08-03, **978 rows / 6 sets** — sv01 258, sv02 279, sv03 230, sv06.5 99,
+sve 24, swsh10.5 88) returns **FIVE rows, every one on `attacks_json`**:
+
+| id | card | attack | idx | cost | printed dmg | per counter |
+|---|---|---|---|---|---|---|
+| `sv02-037` | Skeledirge ex | Burning Voice | **1** | {R}{R} | `"270-"` | **10** |
+| `sv02-233` | Skeledirge ex (Ultra Rare) | Burning Voice | **1** | {R}{R} | `"270-"` | 10 |
+| `sv02-258` | Skeledirge ex (Special illustration rare) | Burning Voice | **1** | {R}{R} | `"270-"` | 10 |
+| `sv02-272` | Skeledirge ex (Hyper rare) | Burning Voice | **1** | {R}{R} | `"270-"` | 10 |
+| `sv01-060` | Cetitan | Sweeping Tackle | **1** | {W}{C}{C} | `"200-"` | **20** |
+
+**"5 printings" is EXACT. "3 sentences" is WRONG, and it was carried in THREE places**
+— §D147's table, §D149's table and "Still unmapped after D161". The pool prints
+**TWO** distinct sentences (10-less and 20-less), spanned by one `(\d+)`. A count
+copied forward rather than re-queried; the standing shape, on the SENTENCE figure
+this time rather than the printing figure. All five ids re-queried per printing, and
+the repo-wide misnamed-id sweep found **nothing wrong** (the seventh such sweep).
+
+### ⚠️ The pool already carried the sentence, UNREAD, for nine slices
+
+`FIXTURE_POOL` (**289 entries**, swept as a SEPARATE POPULATION per D156's rule)
+returned **ONE** row for the same string before this slice: `sv02-037`'s
+**"Burning Voice"**, carried **verbatim — effect string, `"270-"` marker and all** —
+because D133 fielded that body for the own-board heal at **0.94.0** and kept its
+whole printed attack list, its own doc block calling index 1 *"a scaling clause
+belonging to another family"*. **Four of the five printings therefore needed no
+fixture at all.** This is D159's *"does the thing you need already exist and is it
+simply unread?"* check, run on a FIXTURE rather than on a log field, and the answer
+is yes — which is a second place that check pays, and the cheapest one so far
+(one pool sweep).
+
+### ⚠️ `sv02-055` is a DIFFERENT Cetitan
+
+It agrees with `sv01-060` on **name, HP (180), stage (Stage 1), `evolveFrom`
+(Cetoddle), types (Water), retreat (3) and Weakness (×2 Metal)** and differs **only**
+in its attack list ("Icicle Missile" / "Special Horn" — D118's Special-Energy class
+clause). Six printed fields agree; a slice reaching for *"the Cetitan already in the
+pool"* would have got the wrong card **with every assertion passing**. Both are kept,
+in different decks, and the pair is pinned as a case. The sharpest board this repo
+has for "verify by QUERY, never by recognition" (D146).
+
+### ⚠️ The inherited pricing was RIGHT about the regex and WRONG about where the sign goes
+
+The handoff said *"it may be ONE REGEX AND A SIGN, because `deriveAttackDamageBonus`
+may already express the positive direction of the same shape"*. It does:
+`SELF_COUNTER_SCALE` is this exact clause with `more` for `less`, read since M2, and
+the count evaluator (`scaledAttackDamage`'s `damageCountersOnSelf`), the fold site,
+the clamp and the reported field all pre-existed. **But `per` cannot simply go
+negative, and the reason is a CONSUMER rather than a taste:**
+
+| the dodge | which consumer refuses it |
+|---|---|
+| a negative `per` from `deriveAttackDamageBonus` | `DAMAGE_DEALT.scaled` is emitted only when `scaledTotal > 0` — the number would **vanish from the row** — and `log.ts` renders it `` · scaled +${n}``, so a surviving negative prints **"+-40"**. Direction-committed at BOTH ends |
+| a `direction` field ON the shared `AttackDamageBonus` interface | paid by `deriveAttackDamageMultiplier`'s consumers, which have **no direction to declare** — a `×` fold is neither more nor less |
+
+**So: a THIRD READER, `deriveAttackDamagePenalty`.** Which is how this family already
+splits — **by FOLD**, over one shared `{per, count}` interface and one shared count
+evaluator: `+` keeps the printed base, `×` drops it, `−` keeps it and subtracts. The
+interface and the evaluator are reused **whole and unchanged**, because inventing a
+second answer to "how many counters are on the attacker" is what D159's rule forbids.
+
+**ONE MECHANISM for the two sentences** — they differ in one captured digit run and
+in nothing else (same reader, count source, fold, field, crumb, §9 answer).
+**TWO against the "more" twin** — split by the only consumer that can tell them
+apart. That is D155's test answering both ways in one slice.
+
+### ⚠️ `debuff` gains its THIRD source, and its first NON-INSTALLED one
+
+D149's attack-installed weakener (Snarl / Growl / Moonblast), D151's always-on aura
+(Entei "Pressure"), and now a fact about **the attack being used**. The row reports
+**one number per STEP AND DIRECTION, never one per card** (D155's invariant, seventh
+payout):
+
+- Cetitan at 3 counters into an Entei's Pressure → **one `debuff` of 80**, and
+  `(200 − 80) × 2 = 240` on Entei's ×2 Water. Both halves separated on their own
+  control boards (20 alone, 60 alone), so neither can be produced by an
+  implementation that reported only one source.
+- **What that costs, driven rather than hidden:** no reader of that row can say which
+  card took which 20. D141's judgement unchanged, and the same trade `bonus` makes
+  for a Tool plus an installed boost.
+
+**NO new event field, NO new log crumb, NO new arm.** The existing ` · weakened −N`
+says exactly this, and it survives the widening because it names the **FACT** rather
+than the RULE (D159's ` · prevented` standard) — which it has to, on the one row in
+this family that is FILED under the defender and RENDERED under the attacker.
+
+### §9 gains a FOURTH escape, and `ignoreWR` sits off the axis entirely
+
+| axis | this printing |
+|---|---|
+| §9 Ability-lock | **CANNOT REACH IT** — the clause is printed on the **ATTACK**. D159's axis was "suppresses / suppresses / cannot reach a **Stadium**"; D161 added "cannot reach a **Tool**"; this is "cannot reach **an attack's own text**" |
+| `ignoreWR` | **OFF THE AXIS, STRUCTURALLY.** Feint Attack's clause is honoured at the interpreter's two SNIPE arms; a snipe's amount comes from its OP, while this clause modifies the attack's **printed** damage, which only the main hit reads — and the sentence derives no op whatsoever |
+
+The §9 answer is **driven on a body the lock actually reaches**: Ting-Lu ex "Cursed
+Land" is asserted LIVE on Cetitan's own uid (damaged, non-`ex`, Stage 1) and the
+number stands unchanged. The `ignoreWR` answer is pinned as the ABSENCE of any
+op-carrying route into the fold, which is the only form it can take.
+
+### The ORDER — mutated, not assumed
+
+Cetitan (**Water**) into Skeledirge ex (**340 HP, ×2 Water**) at 3 counters:
+
+```
+correct    (200 − 60) × 2 = 280   → survives with 60 HP left
+reversed    200 × 2  − 60 = 340   → exactly lethal
+```
+
+**Two observables move together**, and the second is not a number a reader can talk
+themselves into. The oracle is re-derived from the ROW'S OWN reported fields in both
+placements (D147's move), so a fold that changed both the number and the reported
+base would still be caught. Flipping the placement in `attack.ts` fails **12** tests.
+
+**AND THE CLAMP IS OVER THE WHOLE SUM RATHER THAN PER TERM.** 15 counters (a 300
+penalty) against a printed 200 plus a Vitality Band's +10 reads **0**; a per-term
+floor would leave `max(0, 200 − 300) + 10 = 10`, doubled into 20 on Skeledirge's ×2
+Water. The board separates the two by 20 HP off two printed cards and one surgery.
+`bonus` and `debuff` are two fields of ONE sum, so **no ordering between them is
+observable** — which is the honest form of "inherits D149's order".
+
+### The five structural questions
+
+1. **PARK/PERSIST — NEITHER, and the dodge was priced.** The clause is CATALOG text
+   read at declaration by a pure function of the current state: no stamp, no op, no
+   event type, no enum value, no union member. A per-attack penalty cached on
+   `InPlayPokemon` would go stale on every heal, every damage counter and every
+   evolution. `MATCH_RECORD_VERSION` stays **10** — the **ninth** control on D124's
+   trigger — pinned as an **ABSENCE** (`InPlayPokemon`'s whole key set asserted).
+2. **VOICE — NO ROW MOVED, rendered under BOTH seats and READ.**
+   *"dealt 240 damage to Entei · weakened −80 · weakness ×2"*, under the ATTACKER's
+   name on either side. D159's "does the row already exist unread?" check was run
+   **twice** — on `log.ts` (it exists and IS read) and on `FIXTURE_POOL` (the
+   sentence was there, unread, since 0.94.0).
+3. **GUARDS SWEPT, NOT LISTED**, in **both** directions — the penalty's two producers
+   AND the "more" twin's four (`fix-attacker[3]`, `fix-attacker[4]`, `sv02-028[0]`,
+   `sv03-161[0]`), so a reader answering both would collapse the two lists.
+   ⚠️ **What the sweep does NOT traverse, said rather than left:** it enumerates
+   `FIXTURE_POOL` and reads **ATTACK text only** — three of the five printings are
+   catalog rows with no fixture (the byte-identical Skeledirge rarities), and an
+   Ability or Trainer printing of the same sentence would be invisible to it. The
+   catalog side is crossed only by `catalogManifest.test.ts`.
+   **§11: NOTHING OWED — no op added.**
+4. **MECHANISM EXISTS — read first, and everything except the reader did.**
+5. **GATES NO ACTION — checked, and the check is the sharp one:** the attack must
+   still be OFFERED on the board where it deals **0**, because refusing there would
+   be the engine inventing a rule the card does not print. Asserted through
+   `redactGame`'s `turn:action.attacks` and through `applyAction`. **No `redact.ts`
+   and no `GameHud.tsx` diff.**
+
+### ⚠️ Four unread neighbours on the SAME count source, PRICED rather than built
+
+`LIKE '%for each damage counter%'` over all three columns is **19 rows / 6 shapes**:
+
+| sentence | printings | status |
+|---|---|---|
+| `This attack does 10 more damage for each damage counter on this Pokémon.` | 7 — Arcanine ex `sv01-032`/`-224`, Paldean Tauros `sv02-028`/`-041`/`-108`/`-218`, Drampa `sv03-161` | ✅ since M2 |
+| `This attack does {10\|20} less damage for each damage counter on this Pokémon.` | 5 | ✅ **D163** |
+| `This attack does {30\|50} damage for each damage counter on this Pokémon.` (MULTIPLY — no adjective) | 2 — Drifloon `sv01-089` idx 1 "Balloon Blast" (30×), Onix `swsh10.5-036` idx 1 "Raging Swing" (50×) | ❌ **ONE regex in `deriveAttackDamageMultiplier` and ZERO other engine lines** — the count source, the fold and the base-dropping rule all exist |
+| `This attack does {10\|30} more damage for each damage counter on your opponent's Active Pokémon.` | 3 — Dedenne `sv01-095`, Espeon `sv03-086`, Bloodmoon Ursaluna `sv06.5-025` | ❌ a NEW `DamageCountSource` (the defender's counters), one regex + one evaluator arm |
+| `This attack does 10 damage for each damage counter on all of your Benched Pokémon.` | 1 — Tyranitar `swsh10.5-043` | ❌ a new count source over the BENCH |
+| `Put up to 12 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.` | 1 — Annihilape ex `sv02-242` | ❌ a two-sentence COMPOUND whose count is a mid-attack CHOICE, not a board fact at declaration |
+
+All four unbuilt shapes are **pinned as ABSENCES** in `selfScalingPenalty.test.ts`,
+so the day one of them lands this suite says the family moved.
+
+### Cost
+
+**1 regex, 1 reader, 2 lines in `attack.ts`'s pipeline** — one `+` on the `debuff`
+term, one term on each of `effectSimulated` / `modifierSimulated`. No new op, event,
+event field, log crumb, error code, prompt, park, field, registry row, redact arm or
+projection, and **no web/DB/`@luminous/schema` diff**. 1 new fixture (`sv01-060`,
+COMPLETE against the manifest — no `INCOMPLETE` declaration owed), 1 new deck
+(`SELF_SCALING_PENALTY_DECK`, its own 60 so `ALWAYS_ON_REDUCTION_DECK`'s and
+`PER_ATTACK_BUFF_DECK`'s boards stay byte-identical), `selfScalingPenalty.test.ts`
+(**34 tests, SEED-FREE**), `catalogManifest.ts` REGENERATED (208 → **209** fixture
+rows, 0 absent).
+
+**Mutation-checked TWENTY-NINE ways, 28 caught, 1 deliberate survivor** — the
+reader's mutual-exclusion guard (`damageBonus !== null || damageMultiplier !== null`
+in front of the third call), free because the three regexes are disjoint by their
+adjective. **KEPT** rather than deleted, because it is the file's own idiom (the
+multiply reader has carried it since 0.35.0) and deleting it would make one of three
+sibling calls read differently for no reason a later slice could reconstruct — with
+the unreachability turned into a **POOL-WIDE ASSERTION** (289 fixtures, every attack,
+at most one reader answers) rather than a comment. D157's rule, D159/D161's move.
+
+⚠️ **AND THE MANIFEST GUARD FIRED ON THIS SLICE'S OWN PROSE AGAIN** — a new
+`effects.ts` census header whose "978 cards" and "6 sets" landed on different comment
+lines went red on D156's row-count-without-set-count check. **Second slice running**,
+which retires any doubt that the check is about the LINE a reader sees.
+
+engine **0.108.0 → 0.109.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
+`bun run check` GREEN exit 0 — **201 files / 3533 tests** (was 200 / 3499).
+
+### Still unmapped after D163 — ranked by cost
+
+- **§D147's `less damage` census is CLOSED at 31/31.** After-W/R 20 (D147 + D161),
+  before-W/R attacker-side 6 (D149 + D151), self-scaling 5 (D163). **Nothing in the
+  `less damage` neighbourhood is unread.**
+- **The MULTIPLY twin on the self-counter source** — Drifloon `sv01-089`, Onix
+  `swsh10.5-036`. **One regex, zero other engine lines**, 2 fixtures. The cheapest
+  item on this page.
+- **Munkidori ex `sv06.5-037`/`-083`/`-091` "Oh No You Don't"** — D158's §8.1 site's
+  next consumer.
+- **The opponent-side / bench-wide damage-counter count sources** (4 printings) — a
+  new `DamageCountSource` member each.
+- **"Excited Heart" + Seismitoad's "Quaking Zone"** — the first attack-cost DISCOUNT
+  and its SURCHARGE sibling, one mechanism with opposite signs (see §D162).
+- **The §12 STATUS-IMMUNITY family** (D159's census, 4 printings / 3 sentences).
+- **`attackEffectRefused`'s narrowing + D150's item 6** — ONE slice (D161).

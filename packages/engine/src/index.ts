@@ -3806,7 +3806,71 @@ import type { GameState, Seat } from "./types";
     Cost: 0 engine behaviour lines, 1 fixture, 1 deck, 8 cases, and three corrected
     census scope tags in `effects.ts`. `MATCH_RECORD_VERSION` stays **10** — the
     eighth control on D124's trigger. 10 mutations run, 10 caught. */
-export const engineVersion = "0.108.0";
+/** **D163 — the SELF-SCALING DAMAGE PENALTY, and the `less damage` census CLOSES.**
+    `This attack does {10|20} less damage for each damage counter on this Pokémon.`
+    — **5 printings / 2 sentences**, the LAST unread rows of §D147's thirty-one
+    printing census: Skeledirge ex `sv02-037`/`-233`/`-258`/`-272` "Burning Voice"
+    (idx 1, {R}{R}, printed `"270-"`, 10 per counter) and Cetitan `sv01-060`
+    "Sweeping Tackle" (idx 1, {W}{C}{C}, printed `"200-"`, 20 per counter).
+
+    ⚠️ **THE INHERITED PRICING — *"it may be ONE REGEX AND A SIGN"* — IS RIGHT ABOUT
+    THE REGEX AND WRONG ABOUT WHERE THE SIGN GOES, AND THAT IS THE WHOLE SLICE.**
+    `deriveAttackDamageBonus` really does express the positive direction of this
+    exact clause (`SELF_COUNTER_SCALE`, read since M2), and the count evaluator, the
+    fold site, the clamp and the reported field all pre-existed. But `per` cannot
+    simply go negative: the field the additive fold reports through
+    (`DAMAGE_DEALT.scaled`) is **DIRECTION-COMMITTED AT BOTH OF ITS CONSUMERS** — it
+    is emitted only when `scaledTotal > 0`, so a negative would VANISH from the row,
+    and `log.ts` renders it ` · scaled +${n}`, so a surviving negative would print
+    "+-40". So the number lands in **`debuff`**, the pre-W/R SUBTRACTION field D149
+    created for exactly this direction at exactly this step, and the reader is a
+    THIRD function (`deriveAttackDamagePenalty`) beside the additive and multiply
+    ones — which is how this family already splits, **by FOLD**, over one shared
+    `{per, count}` interface and one shared count evaluator. `+` keeps the base, `×`
+    drops it, `−` keeps it and subtracts.
+
+    ⚠️ **`debuff` GAINS ITS THIRD SOURCE AND ITS FIRST NON-INSTALLED ONE.** D149's
+    attack-installed weakener, D151's always-on aura, and now a fact about the
+    ATTACK BEING USED. One number per STEP AND DIRECTION, never one per card
+    (D155's invariant, seventh payout) — a Cetitan swinging under an Entei's
+    "Pressure" reports ONE `debuff` of 80 and no reader can attribute the HP to a
+    card, which is D141's judgement unchanged. **No new event field, no new log
+    crumb, no new arm.**
+
+    ⚠️ **§9 GAINS A FOURTH ESCAPE, AND IT IS DRIVEN ON A BODY THE LOCK REACHES.**
+    D159's axis read "suppresses / suppresses / cannot reach a STADIUM"; D161 added
+    "cannot reach a TOOL"; this clause is printed on the **ATTACK**, so Ting-Lu ex
+    "Cursed Land" is asserted LIVE on Cetitan's own uid (damaged, non-ex) and the
+    number stands. `ignoreWR` sits OFF its axis entirely and structurally: a snipe's
+    amount comes from its OP, while this clause modifies the attack's PRINTED
+    damage, which only the main hit reads.
+
+    ⚠️ **THE ORDER WAS MUTATED, NOT ASSUMED.** Cetitan (Water) into Skeledirge ex
+    (340 HP, ×2 Water) at 3 counters is `(200 − 60) × 2 = 280` and survives; the
+    reversed placement is `200 × 2 − 60 = 340`, exactly lethal. And the CLAMP is
+    over the WHOLE sum rather than per term: 15 counters against a printed 200 plus
+    a Vitality Band's 10 reads **0**, where a per-term floor would leave 10 doubled
+    into 20.
+
+    ⚠️ **AND THE INHERITED "3 sentences" IS WRONG IN THREE DOC SITES.** The pool
+    prints exactly TWO, spanned by one `(\d+)`. Also found: `FIXTURE_POOL` had been
+    carrying the Skeledirge sentence verbatim and UNREAD since D133 fielded that
+    body at 0.94.0, so four of the five printings needed no fixture at all; and
+    `sv02-055` is a DIFFERENT Cetitan agreeing with `sv01-060` on name, HP, stage,
+    evolveFrom, types, retreat and Weakness, and differing only in its attack list.
+
+    Cost: **1 regex, 1 reader, 2 lines in `attack.ts`'s pipeline** (one `+` on the
+    `debuff` term, one term on each simulated-flag) — no new op, event, event field,
+    log crumb, error code, prompt, park, field, registry row, redact arm or
+    projection, and no web/DB/`@luminous/schema` diff. 1 fixture, 1 deck
+    (`SELF_SCALING_PENALTY_DECK`, its own 60), `selfScalingPenalty.test.ts` (**34
+    tests, SEED-FREE**), manifest regenerated (208 → **209** fixture rows, 0
+    absent). `MATCH_RECORD_VERSION` stays **10** — the NINTH control on D124's
+    trigger, pinned as an absence. 29 mutations run, 28 caught, 1 deliberate
+    survivor (the reader's mutual-exclusion guard, free because the three regexes
+    are disjoint — KEPT as the file's idiom with the unreachability turned into a
+    pool-wide ASSERTION). */
+export const engineVersion = "0.109.0";
 
 export type {
   ApplyResult,
@@ -3879,6 +3943,7 @@ export {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";

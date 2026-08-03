@@ -3470,6 +3470,48 @@ const DECK_TOP_MILL = /^Discard the top (?:(\d+) cards|card) of your (opponent['
 // keep a mid-sentence clause off this path.
 const SELF_COUNTER_SCALE =
   /^This attack does (\d+) more damage for each damage counter on this Pokémon\.$/;
+// D163 — THE SIGN-FLIPPED TWIN OF THE LINE ABOVE, and the THIRD fold this family
+// has. "This attack does {10|20} less damage for each damage counter on this
+// Pokémon." — 5 printings / 2 sentences, measured against the local D1
+// (2026-08-03, 978 cards / 6 sets) across all three text columns, and all five
+// rows are `attacks_json`: Skeledirge ex sv02-037/-233/-258/-272 "Burning
+// Voice" (idx 1, {R}{R}, printed "270-", 10 per counter — four rarities of ONE
+// attack) and Cetitan sv01-060 "Sweeping Tackle" (idx 1, {W}{C}{C}, printed
+// "200-", 20 per counter). It is the WHOLE of what §D147's `less damage` census
+// (31 printings / 14 sentences) had left unread.
+//
+// ⚠️ IT IS A THIRD READER RATHER THAN A `count` MEMBER OR A NEGATIVE `per`, AND
+// THE GROUND IS THE FOLD, WHICH IS WHAT ALREADY SPLITS THIS FAMILY. The additive
+// and multiply readers are two functions over ONE `{per, count}` interface and one
+// count evaluator, "differing ONLY in attack.ts's fold" — `+` onto a printed base
+// versus `×` with the base dropped. A subtraction is a THIRD fold (keep the base,
+// subtract), so it is a third reader by the rule the file already runs on. The two
+// dodges were priced and both are refused by a CONSUMER (D155's test):
+//   • a NEGATIVE `per` returned from `deriveAttackDamageBonus` would flow into
+//     `DAMAGE_DEALT.scaled`, whose presence guard is `scaledTotal > 0` (so the
+//     number would vanish from the row) and whose log crumb hard-codes the sign
+//     (` · scaled +${n}` — it would render "+-40"). The record is
+//     direction-committed at BOTH consumers; and
+//   • a `direction` discriminator ON the shared interface would be paid by
+//     `deriveAttackDamageMultiplier`'s consumers, which have no direction to
+//     declare — a `×` fold is neither more nor less.
+// The `{per, count}` interface and `scaledAttackDamage`'s four-member count
+// evaluator ARE reused, whole and unchanged: only one member is printed with this
+// sign, and inventing a second answer to "how many counters are on the attacker"
+// is the thing D159's rule forbids.
+//
+// The near-misses on the SAME count source are all real catalog rows, all refused
+// by the anchors alone, and all still unread (see the census in
+// selfScalingPenalty.test.ts): the MULTIPLY twin "This attack does {30|50} damage
+// for each damage counter on this Pokémon." (Drifloon sv01-089 idx 1, Onix
+// swsh10.5-036 idx 1 — 2 printings, one regex away in the multiply reader), the
+// opponent-side count "…for each damage counter on your opponent's Active
+// Pokémon." (Dedenne sv01-095, Espeon sv03-086, Bloodmoon Ursaluna sv06.5-025 — a
+// new `DamageCountSource`), the bench-wide count (Tyranitar swsh10.5-043) and
+// Annihilape ex sv02-242's two-sentence compound. No /i, whole-sentence anchored
+// and a capital `This`, for the family's stated reason.
+const SELF_COUNTER_PENALTY =
+  /^This attack does (\d+) less damage for each damage counter on this Pokémon\.$/;
 const OPPONENT_PRIZES_SCALE =
   /^This attack does (\d+) more damage for each Prize card your opponent has taken\.$/;
 // The "×"/multiply twin of OPPONENT_PRIZES_SCALE — the SAME Prize-count source, no
@@ -5464,19 +5506,30 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
 }
 
 /** A count-scaled damage clause — `per × (a counted resource)`, the parsed shape
-    BOTH scaling families produce (the additive "+" reader `deriveAttackDamageBonus`
-    and the "×"/multiply reader `deriveAttackDamageMultiplier`). Deliberately NOT an
+    ALL THREE scaling families produce (the additive "+" reader
+    `deriveAttackDamageBonus`, the "×"/multiply reader
+    `deriveAttackDamageMultiplier` and — since D163 — the subtractive "−" reader
+    `deriveAttackDamagePenalty`). Deliberately NOT an
     `EffectOp`: it is PRE-damage math the caller computes (attack.ts), NOT a step
     the interpreter runs — every `deriveAttackEffect` op instead reads a sentence
     that runs AFTER damage, so the scaling derivers are disjoint from the op deriver
     and a card carries at most one (the whole-sentence anchor means a scaling
-    sentence never also derives an op). The two families differ ONLY in attack.ts's
-    fold — additive folds `per × count` onto the printed base (Paldean Tauros
-    "Raging Horns" — 10 per damage counter on the attacker), multiply makes it the
-    WHOLE damage with no base (Pecharunt ex "Irritated Outburst") — so they share
-    this interface and the `count` evaluator. `count` is a union of two REAL readers
-    — the attacker's own damage counters and, since 0.35.0, the opponent's TAKEN
-    Prizes — a member each, not a second interface. */
+    sentence never also derives an op). The three families differ ONLY in
+    attack.ts's fold — additive folds `per × count` onto the printed base (Paldean
+    Tauros "Raging Horns" — 10 per damage counter on the attacker), multiply makes
+    it the WHOLE damage with no base (Pecharunt ex "Irritated Outburst"), and the
+    subtractive one KEEPS the base and takes `per × count` off it at the same
+    pre-W/R step (Skeledirge ex "Burning Voice", Cetitan "Sweeping Tackle") — so
+    they share this interface and the `count` evaluator. `count` is a union of two
+    REAL readers — the attacker's own damage counters and, since 0.35.0, the
+    opponent's TAKEN Prizes — a member each, not a second interface.
+
+    ⚠️ `per` IS ALWAYS POSITIVE, IN ALL THREE. The direction is carried by WHICH
+    READER answered, never by the sign of this number, because the only place a
+    direction is observable is `DAMAGE_DEALT` — and that row reports one number per
+    STEP AND DIRECTION (D155), with an ADDING field (`scaled`) whose presence guard
+    and log crumb are both committed to the sign. A negative `per` here would be
+    dropped from the row by `scaledTotal > 0` and rendered "+-40" by log.ts. */
 export interface AttackDamageBonus {
   per: number;
   count: DamageCountSource;
@@ -5552,6 +5605,38 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     }
   }
   return null;
+}
+
+/** Parse a printed SUBTRACTIVE damage-scaling sentence — "This attack does {N}
+    less damage for each damage counter on this Pokémon." (D163) — into the same
+    `{per, count}` shape as its two siblings, `per` POSITIVE and the direction
+    carried by which reader answered, or null for anything else. The one sentence
+    this family prints with this sign; `count` is therefore always
+    `damageCountersOnSelf` today, and the type is the shared one because the count
+    evaluator is shared (`scaledAttackDamage`) rather than because the other three
+    members are reachable from here.
+
+    THE THIRD FOLD. The additive reader adds `per × count` to the printed base and
+    the multiply reader makes it the whole damage; this one KEEPS the printed base
+    (Cetitan's "200-" really is 200 at zero counters) and SUBTRACTS — which is why
+    attack.ts routes it into the pre-W/R `debuff` term beside D149's installed
+    weakener and D151's aura rather than into `scaled`. See SELF_COUNTER_PENALTY
+    above for why a negative `per` on the additive reader is refused.
+
+    Refuses its "more" twin (the additive reader owns it), its no-adjective
+    multiply twin (unread — Drifloon sv01-089, Onix swsh10.5-036), a lowercased
+    "this", a missing trailing period and any leading/trailing text: all stay on the
+    loud ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the
+    reason both siblings are — the whole-sentence anchor means a scaling sentence
+    never also derives an op. */
+export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | null {
+  const selfCounters = SELF_COUNTER_PENALTY.exec(text.trim());
+  if (selfCounters === null) return null;
+  // A printed 0 subtracts nothing — the guard every arm in this family carries,
+  // and it keeps such a printing on the loud ATTACK_EFFECT_SKIPPED path rather
+  // than silently claiming to simulate a sentence that does nothing.
+  const per = Number(selfCounters[1]);
+  return per >= 1 ? { per, count: { kind: "damageCountersOnSelf" } } : null;
 }
 
 /** Parse a printed "×"/multiply damage-scaling sentence — "This attack does N

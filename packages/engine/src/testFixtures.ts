@@ -3686,6 +3686,48 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** Cetitan sv01-060 — D163's TWENTY-per-counter witness for the SELF-SCALING
+      DAMAGE PENALTY, and the second of the family's two printed sentences:
+      "Sweeping Tackle" (idx 1, {W}{C}{C}, printed "200-") is
+      "This attack does 20 less damage for each damage counter on this Pokémon."
+      where Skeledirge ex sv02-037 prints 10. Two amounts on one regex, so a
+      hardcoded per-unit cannot satisfy both.
+
+      ⚠️ IT IS THE **OTHER** CETITAN, AND THAT IS THE WHOLE REASON THIS FIXTURE IS
+      HERE RATHER THAN A RE-USE. `sv02-055` above is also called "Cetitan", is also
+      a 180 HP Water Stage 1 from Cetoddle with retreat 3 and ×2 Metal, and prints
+      COMPLETELY DIFFERENT attacks ("Icicle Missile" 50 / "Special Horn" 80+, the
+      Special-Energy class clause). Every printed field a fixture usually carries is
+      IDENTICAL between the two ids and only the attack list separates them — the
+      exact board on which "verify by QUERY, never by recognition" (D146) has
+      something to catch. Both are kept, in different decks.
+
+      Its index-0 "Hammer In" ({C}{C}, 50) carries NO `effect` key at all — the
+      sv02-055 precedent verbatim — so this card is also the slice's index-keyed
+      negative: a real attack that derives to nothing on every path, must stay
+      SILENT on the skipped-effect path, and must NOT inherit index 1's penalty.
+
+      Verbatim off the local D1 (2026-08-03, 978 cards / 6 sets): 180 HP, Water,
+      Stage1 from Cetoddle, retreat 3, ×2 Metal, no Resistance, no Ability. */
+  "sv01-060": battler("sv01-060", {
+    name: "Cetitan",
+    types: ["Water"],
+    stage: "Stage1",
+    evolveFrom: "Cetoddle",
+    hp: 180,
+    retreat: 3,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless"], name: "Hammer In", damage: 50 },
+      {
+        cost: ["Water", "Colorless", "Colorless"],
+        name: "Sweeping Tackle",
+        effect: "This attack does 20 less damage for each damage counter on this Pokémon.",
+        damage: "200-",
+      },
+    ],
+  }),
+
   /** D119 — the PUBLIC-COUNT cluster: four clauses that read a COUNT nobody has
       to be shown (a hand's size, a Prize row's length) rather than anything on a
       Pokémon. Four faithful catalog rows, no registry attack rows between them.
@@ -9339,6 +9381,59 @@ export const ALWAYS_ON_REDUCTION_DECK = deckOf({
   "fix-fire-energy": 3, // {R} — Flame's typed half
   "fix-metal-energy": 3, // {M} — Rolling Shell's typed half
   "fix-energy": 16, // Colorless Basic — every other cost in the deck
+});
+
+/** D163 — the SELF-SCALING DAMAGE PENALTY, on its OWN 60 for the reason every
+    durated deck since D147 has one: `ALWAYS_ON_REDUCTION_DECK` and
+    `PER_ATTACK_BUFF_DECK` both already field bodies this slice wants (Ting-Lu ex,
+    Vitality Band, Skeledirge ex), and adding a card to either would reshuffle
+    every board those suites deal.
+
+    **SEED-FREE.** Neither printing flips a coin, no body on this list carries a
+    `cancelOnTails` or a `perHeads` index that any board here declares, and every
+    Active is placed by surgery — so a seed table would describe a shuffle rather
+    than a rule (D143's move, D147's inheritance, D161's verbatim).
+
+    Both printings are the whole family; everything else is a body chosen to make
+    exactly one claim observable:
+      • sv01-060 Cetitan — "Sweeping Tackle" idx 1 ({W}{C}{C}, "200-"), TWENTY per
+        counter. Its 180 HP caps the penalty at 340, which is what makes the
+        base-underflow board reachable at all;
+      • sv02-037 Skeledirge ex — "Burning Voice" idx 1 ({R}{R}, "270-"), TEN per
+        counter, so a hardcoded per-unit fails one printing or the other. It is
+        ALSO this deck's ×2 WATER 340 HP defender — the one body on which the
+        pre-W/R ORDER is observable AND survives the right answer while dying to
+        the wrong one (Cetitan at 3 counters: (200 − 60) × 2 = 280 against a
+        reversed 200 × 2 − 60 = 340, and 340 is exactly its HP);
+      • sv03-030 Entei — "Pressure" (−20 pre-W/R, an always-on cross-board aura,
+        both Active spots): the SECOND source of the one `debuff` field, off a
+        printed card rather than a constructed record, and ×2 Water so the same row
+        carries a Weakness too;
+      • sv02-127 Ting-Lu ex — "Cursed Land", the §9 Ability-lock that REACHES
+        Cetitan (damaged, non-ex, Stage 1) and still cannot touch a number printed
+        on an ATTACK. Its 240 HP survives the boards it is Active for;
+      • sv01-197 Vitality Band (a TOOL, +10 pre-W/R) — the ADDING half of the very
+        step this penalty subtracts at, so one board shows the clamp taken over the
+        WHOLE sum rather than per term;
+      • fix-attacker — "Rage" idx 3 (10+, 10 MORE per counter) and "Fury" idx 4
+        (20 MORE per counter, no base): the SIGN-FLIPPED TWIN on the same count
+        source and the same body, so the two readers are separated on one board
+        rather than by two `toEqual`s. Its idx-0 "Bite" ({C}, 30) is P2's plain
+        swing;
+      • fix-titan (340 HP, NO attacks) — the mulligan-free starter, the bench
+        filler, and the arithmetically clean no-Weakness defender every unmodified
+        number is measured against. */
+export const SELF_SCALING_PENALTY_DECK = deckOf({
+  "sv01-060": 4, // Cetitan — "Sweeping Tackle" idx 1: the TWENTY-per-counter printing
+  "sv02-037": 4, // Skeledirge ex — "Burning Voice" idx 1 (TEN), and the ×2 Water 340 HP defender
+  "sv03-030": 2, // Entei — "Pressure": the other source of the same `debuff` field
+  "sv02-127": 2, // Ting-Lu ex — "Cursed Land", the §9 lock an attack's own text escapes
+  "sv01-197": 2, // Vitality Band (Tool) — the ADDING half inside the same clamp
+  "fix-attacker": 2, // "Rage" idx 3 / "Fury" idx 4 — the MORE twin on the same count source
+  "fix-titan": 10, // 340 HP neutral Basic, NO attacks — starter, bench filler, clean defender
+  "fix-water-energy": 8, // {W} — Sweeping Tackle's typed symbol
+  "fix-fire-energy": 8, // {R}{R} — Burning Voice
+  "fix-energy": 18, // Colorless Basic — every {C} in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

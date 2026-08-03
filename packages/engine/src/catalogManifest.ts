@@ -179,6 +179,7 @@ export const CATALOG_MANIFEST = {
     "sv01-054": { name: "Quaquaval", attacks: ["Hydro Kick"], abilities: ["Energy Carnival"] },
     "sv01-056": { name: "Wiglett", attacks: ["Dig a Little","Ram"], abilities: [] },
     "sv01-057": { name: "Wugtrio", attacks: ["Headbutt","Undersea Tunnel"], abilities: [] },
+    "sv01-060": { name: "Cetitan", attacks: ["Hammer In","Sweeping Tackle"], abilities: [] },
     "sv01-069": { name: "Rotom", attacks: ["Linear Attack"], abilities: [] },
     "sv01-076": { name: "Pawmot", attacks: ["Electro Paws"], abilities: ["Electrogenesis"] },
     "sv01-079": { name: "Kilowattrel", attacks: ["Skill Dive","Thunder Blast"], abilities: [] },

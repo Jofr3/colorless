@@ -282,6 +282,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // Weakness. Its own crumb rather than a negative `boosted`: the two numbers
       // are different rules and a reader reconstructing the pipeline needs both
       // (events.ts `DAMAGE_DEALT.debuff`).
+      //
+      // D163 — the SAME crumb now also carries the attack's OWN self-scaling
+      // penalty ("This attack does 20 less damage for each damage counter on this
+      // Pokémon."), and the wording was READ under both seats before it was kept.
+      // It survives because it names the FACT (this attack's damage was reduced
+      // before Weakness) and not the RULE, the standard D159's " · prevented"
+      // crumb was written to: this row is filed under the DEFENDER and rendered
+      // under the ATTACKER, so a crumb naming a source ("Growl") would be false on
+      // three of the four boards that now reach it, and one naming an owner would
+      // be spoken from the wrong chair. NO NEW ARM: a second crumb would have to
+      // be told apart by a member the event deliberately does not carry.
       if (event.debuff !== undefined) segments.push(plain(` · weakened −${event.debuff}`));
       if (event.weakness !== null) segments.push(plain(modifierText("weakness", event.weakness)));
       if (event.resistance !== null) {

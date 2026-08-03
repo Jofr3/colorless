@@ -126,11 +126,24 @@ export type GameEvent =
           they stand; what they cannot do is attribute HP to a card, and no row in
           this family ever could (D141's judgement, third occurrence). */
       bonus?: number;
-      /** Flat HP an attack-installed DEBUFF took off the ATTACKER's output BEFORE
-          Weakness/Resistance (D149 — Houndoom "Snarl", Pikachu/Pidove "Growl",
-          Florges "Moonblast": "During your opponent's next turn, the Defending
-          Pokémon's attacks do {N} less damage (before applying Weakness and
-          Resistance)."). Present only when it actually took something off.
+      /** Flat HP taken off the ATTACKER's output BEFORE Weakness/Resistance, from
+          all THREE of the places the pool prints that: the attack-installed debuff
+          (D149 — Houndoom "Snarl", Pikachu/Pidove "Growl", Florges "Moonblast":
+          "During your opponent's next turn, the Defending Pokémon's attacks do {N}
+          less damage (before applying Weakness and Resistance).") and its always-on
+          aura twin (D151 — Entei "Pressure"), plus, since D163, the attack's OWN
+          printed self-scaling clause ("This attack does {10|20} less damage for
+          each damage counter on this Pokémon." — Skeledirge ex "Burning Voice",
+          Cetitan "Sweeping Tackle"). Present only when it actually took something
+          off.
+
+          ⚠️ D163's SOURCE IS THE FIRST ONE THAT IS NEITHER INSTALLED NOR AIMED AT
+          THE ATTACKER — it is a fact about the attack being used. It still lands
+          here rather than in a field of its own for the reason `bonus` above
+          gives: one number per STEP AND DIRECTION. Its sibling clause with the
+          opposite adjective ("{N} MORE damage for each damage counter") is
+          reported through `scaled`, one field up, which is the same rule seen from
+          the adding side.
 
           ⚠️ IT IS A FIELD OF ITS OWN RATHER THAN A NEGATIVE `bonus`, and the row
           is where that decision is observable. `bonus` is documented above as

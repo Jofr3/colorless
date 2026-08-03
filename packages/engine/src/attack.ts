@@ -42,6 +42,7 @@ import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
@@ -411,21 +412,42 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // Nothing else in this function writes it.
   let program = authored ?? derived;
   // The count-scaling clause reads the SAME effect text but folds into the damage
-  // BEFORE the §8.5 pipeline, unlike a post-damage program. Two sibling families,
-  // told apart by the word "more": ADDITIVE ("+") folds `per × count` onto the
-  // printed base; MULTIPLY ("×", no "more") makes `per × count` the WHOLE damage,
-  // the printed base dropped. Their regexes are mutually exclusive, so at most one
-  // fires — read multiply only when additive did not, making that explicit. A card
-  // carries at most one scaling clause OR a program: the whole-sentence anchor
-  // means a scaling sentence never also derives an op.
+  // BEFORE the §8.5 pipeline, unlike a post-damage program. THREE sibling families,
+  // told apart by ONE adjective: ADDITIVE ("more") folds `per × count` onto the
+  // printed base; MULTIPLY (no adjective) makes `per × count` the WHOLE damage, the
+  // printed base dropped; SUBTRACTIVE ("less", D163) keeps the printed base and
+  // takes `per × count` OFF it. Their regexes are mutually exclusive, so at most
+  // one fires — each is read only when its predecessors did not, making that
+  // explicit. A card carries at most one scaling clause OR a program: the
+  // whole-sentence anchor means a scaling sentence never also derives an op.
   const damageBonus = effect === null || effect === "" ? null : deriveAttackDamageBonus(effect);
   const damageMultiplier =
     damageBonus !== null || effect === null || effect === ""
       ? null
       : deriveAttackDamageMultiplier(effect);
+  // D163 — "This attack does {10|20} less damage for each damage counter on this
+  // Pokémon." (Skeledirge ex sv02-037/-233/-258/-272 "Burning Voice" idx 1,
+  // Cetitan sv01-060 "Sweeping Tackle" idx 1). Deliberately NOT folded into
+  // `scaling` below: that variable feeds `scaled`, which is the ADDING half of the
+  // pre-W/R step and is reported through `DAMAGE_DEALT.scaled`. This number is the
+  // SUBTRACTING half of the same step and is reported through `debuff` beside
+  // D149's installed weakener — see the `debuff` term in the pipeline below, where
+  // the choice is argued.
+  const damagePenalty =
+    damageBonus !== null || damageMultiplier !== null || effect === null || effect === ""
+      ? null
+      : deriveAttackDamagePenalty(effect);
   const scaling = damageBonus ?? damageMultiplier;
   const scaled =
     scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat);
+  // `per × count` off the SAME evaluator the two adding readers use (D159's rule —
+  // no second answer to a question the engine already answers), counted at
+  // DECLARATION like every other member of the family, so this attack's own damage
+  // cannot bootstrap the counters it reads.
+  const selfPenalty =
+    damagePenalty === null
+      ? 0
+      : scaledAttackDamage(active, damagePenalty, next, defenderSeat, action.seat);
   // D125 — the printed "If <clause>, this attack does nothing." REQUIREMENT: the
   // board fact the attack needs, or null when the text is not that sentence. It
   // is a third reader of the same effect string, disjoint from the two scaling
@@ -507,14 +529,26 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `effectSimulated`, by contrast, needs NO new term: `coinFlip !== null` already
   // covers the new member, and it is right to — the sentence IS read, whole, by
   // one reader. Verified rather than duplicated.
+  //
+  // D163 adds a term to BOTH, for the reason D126's note gives: the subtractive
+  // scaling reader consumes a printed "270-"/"200-" damage marker AND the whole
+  // effect sentence, so leaving either term alone would keep five printings loudly
+  // flagged for text the engine now resolves completely. It is a separate term
+  // from `scaling` only because it is a separate variable, not because it is a
+  // separate rule — the three scaling readers are one family here.
   const effectSimulated =
-    program !== null || scaling !== null || requirement !== null || coinFlip !== null;
+    program !== null ||
+    scaling !== null ||
+    damagePenalty !== null ||
+    requirement !== null ||
+    coinFlip !== null;
   // The exception LIST, named rather than inlined: two of the coin union's four
   // members explain a printed damage marker and two do not, and a bare
   // `coinFlip !== null` here would claim the modifier for all four.
   const coinExplainsModifier =
     coinFlip !== null && coinFlip.kind !== "cancelOnTails" && coinFlip.kind !== "programPerHeads";
-  const modifierSimulated = scaling !== null || programDamage || coinExplainsModifier;
+  const modifierSimulated =
+    scaling !== null || damagePenalty !== null || programDamage || coinExplainsModifier;
   if (
     (modifier !== null && !modifierSimulated) ||
     (effect !== null && effect !== "" && !effectSimulated)
@@ -786,7 +820,35 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // installed halves. The aura half is a cross-board scan gated on BOTH Active
     // Spots and §9-suppressible; the installed half is a stamp on this body that
     // no Ability-lock can reach (continuous.ts `opposingAttackDebuff`).
-    const debuff = installedAttackDebuffOf(next, active) + opposingAttackDebuff(next, active);
+    //
+    // D163 — and a THIRD source on the same `−`, which is the FIRST one printed on
+    // the attack being used rather than installed onto or aimed at its body:
+    // "This attack does {10|20} less damage for each damage counter on this
+    // Pokémon." (Skeledirge ex, Cetitan). Summed here for D147's reason, inherited
+    // by arriving at the same step in the same direction:
+    //
+    //   • WHY `debuff` AND NOT `scaled`. `DAMAGE_DEALT` reports one number per STEP
+    //     AND DIRECTION, never one per card (D155's invariant, which `bonus`,
+    //     `reduction` and `debuff` itself already carry two sources each). This
+    //     number is at `scaled`'s step in `debuff`'s direction, and `scaled` is
+    //     direction-committed at both of its consumers — the field is emitted only
+    //     when `scaledTotal > 0` and log.ts renders it as ` · scaled +N`. So a
+    //     negative `scaled` would be silently dropped from the row and, when it did
+    //     survive, rendered with two signs.
+    //   • WHAT THAT COSTS, stated rather than hidden: a Cetitan swinging under a
+    //     Growl reports ONE `debuff`, and no reader can attribute the HP to a card.
+    //     That is D141's judgement, unchanged, and it is the same trade `bonus`
+    //     made for Vitality Band + D155's installed boost.
+    //   • §9 CANNOT REACH IT. The clause is printed on the ATTACK, not on an
+    //     Ability, so an Ability-lock (Ting-Lu ex "Cursed Land") silences the
+    //     holder's Abilities and leaves this number standing — the same escape
+    //     D155's installed boost has, reached from the other end (that one is a
+    //     stamp no lock addresses; this one is text no lock is about).
+    //   • THE CLAMP IS INHERITED, NOT ADDED. `preWR` floors the WHOLE sum at 0, so
+    //     a Cetitan at fifteen counters subtracts its 300 from a base 200 PLUS a
+    //     Vitality Band's 10 and reads 0 — not the 10 a per-term clamp would leave.
+    const debuff =
+      installedAttackDebuffOf(next, active) + opposingAttackDebuff(next, active) + selfPenalty;
     // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
     // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
     const weakness = seatRemovesWeakness(next, defenderSeat)
