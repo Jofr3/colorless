@@ -14209,6 +14209,203 @@ engine **0.108.0 → 0.109.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
 
 ---
 
+## D164 — the KO-CONDITION ANTECEDENT AS ITS OWN FAMILY: the CAUSE-CONDITIONED PRIZE REDUCTION, and PLACEMENT DISCHARGES A CONDITION ONLY FOR A CONSEQUENT THAT CAN LIVE AT THE PLACEMENT (engine 0.109.0 → 0.110.0, `MATCH_RECORD_VERSION` unchanged at 10)
+
+> **⚠️ INTEGRATION NOTE.** D164 was built in an ISOLATED WORKTREE in parallel with
+> D163 and was forbidden to touch `docs/`; its code was committed as `16fa8e8` while
+> its doc-ritual content never landed anywhere at all — `decisions.md` ended at D163,
+> this file's last section was D163, and `progress.md` did not mention it. **This
+> section, the `decisions.md` row and the `progress.md` entries were integrated at
+> D166**, off the commit message and the diff, which is the SAME REMEDY D163 applied
+> to D162 one slice earlier (see §D162's note) — and the second time in three slices
+> that a worktree slice's docs had to be recovered by a successor. Where the commit
+> message and the code disagreed, the code won; **one commit-message number is
+> corrected below** (`FIXTURE_POOL` is **291**, not the 290 the message claims).
+
+### The printing
+
+**Munkidori ex `sv06.5-037` / `-083` / `-091` — "Oh No You Don't"**, an **ABILITY**
+(`abilities_json`, not `attacks_json`), printed verbatim:
+
+> *"If this Pokémon is Knocked Out by damage from an attack from your opponent's
+> Pokémon, and if you have any Pecharunt ex in play, your opponent takes 1 fewer
+> Prize card."*
+
+**Three printings, ONE body.** The D1 rows for `-037` (Double rare), `-083` (Ultra
+Rare) and `-091` (Special illustration rare) are byte-identical on every column but
+`rarity` — **verified by a single `count(distinct …)` over ELEVEN columns** (name, hp,
+stage, types, retreat, abilities, attacks, weaknesses, resistances, reg mark,
+legality) returning **1**, rather than by eye. D162 had already mapped the same three
+ids onto ONE fixture for D154's per-attack lock on "Dirty Headbutt"; this registry row
+**joins that program rather than replacing it**, so the card carries BOTH of its
+printed sentences.
+
+The antecedent census `LIKE '%Knocked Out by damage from an attack%'` returns **6
+rows** — **confirming D158 and D162 a third time**, on the restored catalog (978 rows
+/ 6 sets).
+
+### ⚠️ LUCARIO `sv01-114` IS NOT THIS ANTECEDENT, AND EVERY LIST SINCE D158 SAID IT WAS
+
+Printed: *"If any of your {F} Pokémon were Knocked Out by damage from an attack
+**during your opponent's last turn**…"* — **retrospective** (it looks back at a turn
+that has ended, not at the KO happening now), **board-wide** (any of your Pokémon,
+not "this Pokémon"), **type-filtered** ({F}), and carrying **NO possessive clause** at
+all. It is a different condition on a different reader.
+
+**`conditionClause.test.ts` has held the correct account since D115.** So the OLDER
+artefact was right and the NEWER census table was wrong: **recency is not authority.**
+
+Two more inherited claims were off in the same place:
+
+- **D158's own table renders Munkidori ex in the column Lucario's ATTACK sits in**,
+  where it is an ABILITY on `abilities_json`.
+- **`FIXTURE_POOL` is not 278**, the figure that header had carried for two slices.
+  ⚠️ **And the commit message's correction is itself one short:** it says **290**;
+  the literal counted at `16fa8e8` — and again at `HEAD` — is **291**. Two
+  independent methods agree (a key sweep of the object literal and an import of
+  `FIXTURE_POOL` at runtime), and D163's own "289" was one short in the same
+  direction. **The second number of a two-number census, three handoffs running
+  (§D163's lesson (3), still earning its line).**
+
+### ⚠️ THE FINDING, AND IT IS ABOUT D158's OWN DESIGN: PLACEMENT DISCHARGES A CONDITION ONLY FOR A CONSEQUENT THAT CAN LIVE AT THE PLACEMENT
+
+D158 read the **same printed antecedent** and paid nothing for it. It satisfied *"by
+an attack"* **purely by WHERE it put its line** — `finishAttack`, which exactly ONE
+path reaches; the Checkup and the mid-turn evolve sweep call `collectKnockOuts`
+directly and never get there.
+
+**This consequent modifies a PRIZE, and prizes are planned in `planPrizes` — INSIDE
+`collectKnockOuts` — which ALL THREE paths reach.** So the identical printed clause
+costs this printing a **threaded `attackerSeat?: Seat`** argument on
+`collectKnockOuts` → `planPrizes`, passed at **exactly one call site** (`finishAttack`)
+and deliberately omitted at the other two.
+
+**The possessive is not free either.** `finishAttack` sweeps BOTH seats, so a holder
+that died on the ATTACKER's own board (its own `damageSelf` recoil, its own confusion
+self-hit, a defender's Rocky Helmet) is in the same batch — which makes
+`attackerSeat === ref.seat` **load-bearing rather than decorative**.
+
+The three clauses, each a separate refusal and each driven:
+
+| printed clause | the refusal | what it rejects |
+|---|---|---|
+| *"by damage from an attack"* | `attackerSeat === undefined` | the Checkup KO and the mid-turn evolve/Ability sweep |
+| *"from your OPPONENT'S Pokémon"* | `attackerSeat === ref.seat` | the holder dying on the attacker's own board |
+| *"if you have any Pecharunt ex in play"* | a name scan of the KO'd body's OWN side | Active **and** Bench, by card **NAME** — the card has FOUR printings (`sv06.5-039`/`-085`/`-093`/`-095`) and no id would cover them |
+
+### A SIBLING FIELD, NOT A UNION MEMBER — the standing rule, answered on THREE axes
+
+`onKoPrizeReduction` sits BESIDE `onKoPrizeGuard` (Glimmora `sv02-126`) rather than
+becoming a member of it, and the two **MUTUALLY REFUSE** each other's payment
+(D155's rule, the same shape that forced `damageAttackerOnKo` apart from
+`damageAttacker` at D158):
+
+| | Glimmora's guard | this reduction |
+|---|---|---|
+| cause qualifier | **none** — "When this Pokémon is Knocked Out", so it must still deny the Prize at the Checkup | **named** — refused on every non-attack KO |
+| effect | **ZEROES** ("can't take ANY Prize cards") | **DECREMENTS** ("1 FEWER" — on an ex, 2 → 1 and not 2 → 0) |
+| coin | **flipped** | **none** |
+
+One field carrying both would put an attack gate on Glimmora (breaking the Checkup KO
+it is printed for) and a coin flip on this one. **The merge mutations fail 16 and 2**,
+and both directions are driven on ONE board.
+
+### The four ordering judgements, each pinned
+
+1. **The plan is made on the PRE-KO state** — a Pecharunt ex dying in the SAME batch
+   still counts. That is D158's one-simultaneous-batch model read one function later:
+   the batch is a single instant, so nothing in it has left play while the plan is
+   made.
+2. **AHEAD of the §14 speculation** — reducing only on the real pass **fails 13**.
+3. **PER BODY** — 2 holders give **2** reductions, not 4.
+4. **`ABILITY_TRIGGERED` must precede `PRIZE_REDUCED`**, so the row that names the
+   Ability lands above the row that states its consequence.
+
+### VOICE — SYSTEM, but by a different route than D158's
+
+`PRIZE_REDUCED` is a **new event**, and a **separate row from `PRIZE_PREVENTED`
+although `PRIZE_PREVENTED` exists and is read**: *"no Prize card is taken"* is simply
+**false when one is**, and on an ex this is 2 → 1. The row is SYSTEM-voiced for a
+reason that is derived rather than inherited from its neighbour — this row's `seat`
+owns the DYING Pokémon while the party the sentence acts on is that seat's OPPONENT,
+so an active voice under `seat` describes the wrong player's loss and one under the
+opponent credits them with their own penalty. The `ABILITY_TRIGGERED` row directly
+above already names the Ability and its owner.
+
+It carries **BOTH numbers** (`by` and `count`) because a decrement is only readable
+against the face value: *"1 fewer"* alone leaves a player who does not know the card
+is worth 2 unable to check the prize count they are about to see.
+
+### ⚠️ ONE MUTATION RESULT WORTH THE SPACE: THE CLAMP NEEDED TWO CONSTRUCTED VALUES
+
+`koPrizeReduction` clamps at 0 (`Math.max(0, baseCount - by)`). **A 1-Prize fixture
+alone never reaches it**, because `1 − 1 = 0` whether or not the clamp exists — so
+the guard **SURVIVED BEING "FIXED" ONCE**: a first pass deleted it and nothing failed,
+including on a 1-Prize body.
+
+The clamp fires only when the reduction **EXCEEDS** the face value, so the witness
+pairs a **1-Prize body** with a **constructed `by: 2`** (`fix-koprize` / `FIX_KOPRIZE`
+— 30 HP, no Rule Box, so `prizeValueOf` returns 1): `1 − 2 = −1`, clamped to 0. It is
+the `fix-onko` pattern (a fixture proves machinery the printed cast cannot reach), and
+the guard is KEPT rather than deleted because the field is DATA: the first printing
+that reduces by more than one — or any printing of this Ability on a body without a
+Rule Box — turns a silent negative Prize count into a real one.
+
+**A test can look like it covers a branch and provably not.** That is the transferable
+line, and it is the one D166 re-derived at a different boundary one slice later.
+
+### Mutations — 23 run across three passes (18/21, 21/23, 23/23), including 7 ORDER mutations
+
+**Two survivors, both fixed WITH WITNESSES rather than argued away:**
+
+1. a **mid-turn Ability KO** reaches the opponent's board via
+   `resolveMidTurnKnockOuts(…, SEATS, …)` — witnessed with Hawlucha `sv01-118`
+   "Flying Entry", the only vehicle in the pool for a mid-turn KO on the OPPONENT's
+   board, and without it the *"by an attack"* refusal is driven only for the Checkup;
+2. **the clamp**, above.
+
+### The structural questions
+
+- **PARK? NO. PERSIST? NO** — `MATCH_RECORD_VERSION` stays **10**, pinned as an
+  absence over the 16-key set. **The ninth consecutive control on D124's trigger.**
+  (D165 broke the run one slice later, and for a reason this slice's field does not
+  share: nothing here changes a stored TYPE.)
+- **§11: nothing owed** — no op was added or removed.
+- **Gates no action**; driven on both seats.
+
+### Cost
+
+**1 event (`PRIZE_REDUCED`), 1 log arm, 1 `TriggeredAbility` field
+(`onKoPrizeReduction`), 1 flow helper (`koPrizeReduction`), 1 threaded parameter
+through `collectKnockOuts` → `planPrizes`, 2 registry programs (`MUNKIDORI_EX`,
+`FIX_KOPRIZE`), 1 fixture (`fix-koprize`), 1 deck (`MUNKIDORI_DECK`, **SEED-FREE** —
+this printing carries no coin and every board is built by surgery).**
+`ohNoYouDont.test.ts` (**28 tests**, 6 groups: the re-queried printed datum, the
+reduction, the CAUSE, the ORDER, the VOICE, the structural questions). No regex, no
+op, no prompt, no error code, no `@luminous/schema` diff, no DB diff, no web diff.
+
+engine **0.109.0 → 0.110.0**; `MATCH_RECORD_VERSION` **10, unmoved**;
+`bun run check` GREEN — tests **3533 → 3561**; manifest **209 rows, 0 absent**.
+
+### Priced and DEFERRED, in the same slice: Exp. Share `sv01-174`
+
+The **last unread member** of D158's KO-antecedent census. Its cost is dominated by a
+`"you may"` choice that must **PARK MID-SWEEP** — but ⚠️ **`FIX_ONKO` /
+`settleProgram`'s `resumeTail` MAY ALREADY COVER THAT PARK and nobody has run the
+check; run it before pricing anything else.** The seam differs from `fix-onko`'s in
+one way that matters: that one queues **AFTER** prizes, and this must act **BEFORE**
+`knockOut`.
+
+### The merge note that made this slice cheap
+
+Built in an isolated worktree **in parallel with D163 and merged with ZERO
+conflicts — the first clean parallel merge**, after switching placeholder markers from
+`Dxxx` to **`Dyyy`** so two slices' placeholders can be told apart in one file. That
+is the fix for what left FOURTEEN `Dxxx` markers committed at D158 and cost D162 a
+file-by-file sweep.
+
+---
+
 ## D165 — REVIEW FIX, NOT A SLICE: `InPlayPokemon.lockedAttack` has ONE READER and TWO WRITERS, and neither merged (engine 0.110.0 → 0.111.0, `MATCH_RECORD_VERSION` 10 → 11)
 
 The **fourth** `/code-review` this branch has had and the **first to return a
@@ -14432,7 +14629,138 @@ jsdom case, and **two predecessor cases RE-POINTED rather than deleted**:
 `perAttackLock.test.ts`'s and `opponentAttackLock.test.ts`'s *"a different index
 OVERWRITES"* both now assert APPEND, which is the defect's own pin at its own site.
 
-**Mutation-checked TWENTY-FOUR ways, 22 caught — ⚠️ **THE PASS WAS INTERRUPTED WITH TWO SURVIVORS AT THE SAME BOUNDARY AND THE WITNESS NOT WRITTEN**; this slice is COMMITTED WITH THAT OUTSTANDING, and finishing it is item 0 on the resume point.**
+**Mutation-checked TWENTY-FOUR ways, 22 caught — ⚠️ **THE PASS WAS INTERRUPTED WITH TWO SURVIVORS AT THE SAME BOUNDARY AND THE WITNESS NOT WRITTEN**; this slice is COMMITTED WITH THAT OUTSTANDING, and finishing it is item 0 on the resume point.** ✅ **DISCHARGED AT D166, AND THE COUNT MOVED THE WRONG WAY: re-derived at 32 run / 32 caught, with FIVE survivors rather than two — see §D166.**
 
 engine **0.110.0 → 0.111.0**; `MATCH_RECORD_VERSION` **10 → 11**; `bun run check`
 GREEN exit 0 — **203 files / 3576 tests** (was 202 / 3561).
+
+---
+
+## D166 — VERIFICATION FIX, NOT A SLICE: D165's INTERRUPTED MUTATION PASS FINISHED, and its own report of it was UNDERSTATED — FIVE survivors at ONE boundary, not two (engine UNCHANGED at 0.111.0, `MATCH_RECORD_VERSION` UNCHANGED at 11, **0 engine behaviour lines**)
+
+Item **0** of D165's remainder list, and the first time this repo had committed a
+slice with its own verification unfinished. Two halves: **finish the pass** (below),
+and **recover D164's doc ritual** off `16fa8e8` (§D164 above).
+
+### The pass, re-derived rather than trusted — and it moved the WRONG way
+
+D165 recorded *"mutation-checked TWENTY-FOUR ways, 22 caught, two survivors at the
+same boundary"*. The standing rule is that **a predecessor's own finding is on the
+list of dangerous claims** and that a review is swept **in both directions** rather
+than assumed to exaggerate. So the pass was rebuilt from the D165 diff rather than
+from its list.
+
+**31 mutants over the whole D165 surface** — `addLockedAttack`'s two lines,
+`lockedAttackIndexes`, both writers' stamps AND their `now` arguments, the §8 gate,
+both payability projections, all four §10 clears — against the **full** suite each
+time (203 files), reverting with `git checkout` between runs.
+
+| | claimed (D165) | re-derived (D166) |
+|---|---|---|
+| run | 24 | **31** |
+| caught | 22 | **26** |
+| survived | 2 | **5** |
+
+**All five are the same boundary**, `addLockedAttack`'s prune
+(`existing.filter((lock) => lock.turn >= now)`), written five different ways:
+
+| # | mutation | why it survived |
+|---|---|---|
+| 1 | `>= now` → `> now` | drops entries stamped for the turn being played |
+| 2 | `>= now` → `>= now + 1` | the same off-by-one, written the other way |
+| 3 | `>= now` → `>= turn` | prunes against the NEW stamp instead of the clock |
+| 4 | `preventAttackUse` passes `turn` as `now` | #3 from the CALL SITE |
+| 5 | `lockDefenderAttack` passes `turn` as `now` | #3 from the other CALL SITE |
+
+⚠️ **THREE OF THE FIVE ARE MUTATIONS D165 NEVER GENERATED**, and two of those are
+**call-site** mutations rather than mutations of the helper — which is why the count
+went UP rather than down. **Re-running the mutants a predecessor listed is not
+re-running its pass.**
+
+### The verdict is WITNESS, not DELETE — and the argument is not taste
+
+This repo's standard is that a guard no test can make fail is either witnessed or
+deleted with its unreachability asserted: **D154 DELETED** one (it bought nothing),
+**D159 / D161 / D163 KEPT** theirs (unreachability was assertable). **Neither applies
+here.** An entry stamped for `now` is **LIVE NOW** — `lockedAttackIndexes` answers it
+this very turn — so every one of the five mutants **deletes a bar that is still
+biting**. That is **D165's own defect, relocated out of the merge rule and into the
+garbage rule sitting one line below it**, and it is reachable on a played line. A
+guard whose failure mode is the defect the slice exists to fix does not get argued
+away.
+
+### ⚠️ THE TWO WRITERS DO NOT REACH THE EQUAL CASE ALIKE, AND THE ARGUMENT IS PARITY
+
+Both writers stamp the **holder's own next turn** — `preventAttackUse` `+ 2` from the
+holder's turn, `lockDefenderAttack` `+ 1` from the opponent's — so **every entry on a
+body carries that seat's turn parity**. Therefore:
+
+- **`preventAttackUse` CAN meet `lock.turn === now`**, because it writes on its own
+  Active during its own turn, and an opponent-imposed bar can be live on exactly that
+  turn. **Driven as a PLAYED LINE.**
+- **`lockDefenderAttack` CANNOT**, because it writes on the OPPONENT's Active during
+  the actor's turn, so `now` is never one of the victim's turns. **Driven by
+  SURGERY**, said rather than skipped — `addLockedAttack` is ONE function with ONE
+  contract, and the parity it leans on is a fact about **today's two writers** rather
+  than about the shape (D150's rule about assumed bounds, applied to a *reachability*
+  claim instead of to a count).
+
+### The played-line witness, and why the KO is deliberate
+
+It differs from `collision()` in exactly one step — **P1 installs nothing on turn 2**
+— so the board carries ONE bar rather than two:
+
+| turn | seat | what happens | Skarmory's `lockedAttacks` |
+|---|---|---|---|
+| 3 | P2 | Oranguru `sv02-094` "Plotter's Command" parks and picks **"Peck"** → `3 + 1` | `[{ turn: 4, idx: 0 }]` |
+| 4 | P1 | Skarmory `sv03-142` declares **"Slashing Steel"** (still legal), whose own drawback writes `4 + 2` **while the imposed entry is LIVE** | `[{ turn: 4, idx: 0 }, { turn: 6, idx: 1 }]` |
+
+**"Slashing Steel" deals exactly Oranguru's 120**, so the board stops at
+`ko:takePrizes` with `state.turn` **still 4** — and the **READER** is asked there
+(`lockedAttackIndexes` still returns `[0]`), rather than the record merely inspected.
+Let the turn roll to 5 instead and the entry is dead by arithmetic, and only the
+record's SHAPE would be observable. That choice is what makes this a behaviour pin.
+
+### The boundary is now pinned from BOTH sides
+
+`>= now - 1` — which would keep one already-dead turn — fails the predecessor's own
+prune case. `> now` fails the new one. **32 run, 32 caught.**
+
+### ⚠️ THE TRANSFERABLE LINE: A SLICE'S OWN REPORT OF ITS OWN PASS IS A CLAIM, NOT A RECORD
+
+The dangerous-claims list already carried *a predecessor's own FINDING* (D153
+understated, D165 exact) and *a predecessor's own CORRECTION*. This adds a tenth:
+**a predecessor's own count of what it verified** — the only number on a handoff that
+**nothing in the repo can contradict**, because no test fails when it is wrong; being
+wrong is precisely the state of there being no test.
+
+### The other half: D164's doc debt, and what recovering it corrected
+
+§D164 above, the `decisions.md` row, a `progress.md` header at build **#148b** and a
+session-log entry — all reconstructed off `16fa8e8`'s message and diff, the same
+remedy D163 applied to D162 one slice earlier. **The SECOND worktree slice in three
+whose ritual a successor had to adopt**, which makes it a pattern rather than an
+accident: **a worktree slice's docs are not "deferred", they are UNOWNED until a
+successor adopts them.** One inherited number was corrected in passing:
+**`FIXTURE_POOL` is 291** — not D164's 290, not D163's 289 — measured two ways (an
+object-literal key sweep at `16fa8e8` and at HEAD, and a runtime import). The SECOND
+number of a two-number census, wrong three handoffs running.
+
+### The structural questions
+
+- **PARK? NO. PERSIST? NO** — `MATCH_RECORD_VERSION` stays **11**: no
+  `InPlayPokemon` field added, removed or retyped, no `GameState` / `EffectContext`
+  field moved, no op parks. **`engineVersion` stays 0.111.0** on D150's precedent for
+  a test-only slice — the only production diff is doc-block prose — and no `index.ts`
+  changelog block is added, because that block is the version string's own record.
+- **VOICE? Nothing moved.** **GUARD? The guard IS the subject.** **§11? Nothing
+  owed** — no op added or removed. **Gates no action.**
+
+### Cost
+
+**2 tests** (`lockedAttackMerge.test.ts` **14 → 16**) and **3 doc blocks amended**
+(`addLockedAttack`'s prune bullet, `index.ts`'s D165 changelog entry, and the D165
+mutation lines in `decisions.md` / this file). No op, event, prompt, regex, fixture,
+deck, registry row, error code, web / DB / `@luminous/schema` diff.
+
+`bun run check` GREEN exit 0 — **203 files / 3578 tests** (was 203 / 3576).

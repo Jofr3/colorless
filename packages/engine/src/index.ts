@@ -3953,7 +3953,15 @@ import type { GameState, Seat } from "./types";
 
     ⚠️ **COMMITTED WITH AN OUTSTANDING DEBT: the mutation pass was INTERRUPTED at
     24 run / 22 caught, with TWO SURVIVORS AT THE SAME BOUNDARY and the witness
-    never written.** Finishing it is item 0 on the resume point. */
+    never written.** ✅ **DISCHARGED AT D166** — the pass was re-derived rather than
+    trusted (**32 run, 32 caught**) and the survivor count moved UP: **FIVE**, not
+    two, every one of them the prune's `lock.turn >= now` boundary written a
+    different way. Two witnesses in `lockedAttackMerge.test.ts` (a PLAYED self-side
+    line, a CONSTRUCTED opponent-side one — the parity argument is in
+    `addLockedAttack`'s doc block) kill all five, and the boundary is now pinned
+    from both sides. **A slice's own report of its own mutation pass is on the list
+    of claims a successor must re-derive.** No behaviour moved, so this version
+    string did not. */
 export const engineVersion = "0.111.0";
 
 export type {

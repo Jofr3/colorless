@@ -2075,6 +2075,27 @@ function printedAttackIndex(printed: readonly Attack[], attack: string): number 
         It is a garbage rule and NOT an expiry rule: expiry is the reader's turn
         comparison (`lockedAttackIndexes`), which is what makes a bar stop biting.
 
+    ⚠️ AND THE PRUNE'S `>=` IS THE ONE CHARACTER THIS FUNCTION'S BOUNDARY TURNS ON
+    — D166's finding, and the reason D165 shipped with an unfinished verification.
+    An entry stamped for `now` is LIVE right now, so `> now` would DELETE A BAR THAT
+    IS STILL BITING: D165's own defect relocated out of the merge rule and into the
+    garbage rule. D165's mutation pass was interrupted exactly here; re-run at D166
+    it produced FIVE survivors rather than the two recorded, all of them the same
+    off-by-one (`> now`, `>= now + 1`, `>= turn`, and either writer passing `turn`
+    rather than `state.turn` as `now`). All five are now witnessed and the boundary
+    is pinned from BOTH sides (`>= now - 1`, which keeps one dead turn, fails too).
+
+    THE TWO WRITERS DO NOT REACH THE EQUAL CASE ALIKE, AND THE ARGUMENT IS PARITY.
+    Both stamp the HOLDER's own next turn, so every entry on a body carries that
+    seat's turn parity. `preventAttackUse` writes on its OWN Active during its own
+    turn, so `lock.turn === now` is REACHABLE — an opponent-imposed bar live this
+    turn, plus this turn's own self-install — and is driven as a PLAYED LINE.
+    `lockDefenderAttack` writes on the OPPONENT's Active during the actor's turn, so
+    `now` is never one of the victim's turns and the equal case is UNREACHABLE by
+    parity; it is driven by SURGERY instead, said rather than skipped, because this
+    is ONE function with ONE contract and the parity it leans on is a property of
+    today's two writers rather than of the shape (`lockedAttackMerge.test.ts`).
+
     Returns the NEW list, or `null` when the write is a no-op. `null` rather than
     the old array by identity, because "nothing changed" is a fact the caller acts
     on (it suppresses an `ATTACK_LOCKED` row) and a reference comparison would

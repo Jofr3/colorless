@@ -306,6 +306,117 @@ describe("addLockedAttack — the ONE merge rule both writers share", () => {
     expect(later.turn).toBe(6);
     expect(lockedAttackIndexes(later, must0(later.players.p1.active))).toEqual([SLASHING_STEEL]);
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // D166 — THE PRUNE'S OWN BOUNDARY. `lock.turn >= now`, and the `>=` is the
+  // whole of this pair of cases.
+  //
+  // ⚠️ WHY THEY EXIST. D165's mutation pass was INTERRUPTED here and the slice was
+  // committed with the boundary unwitnessed. Re-running that pass at D166 found
+  // FIVE survivors, not the two the handoff recorded, and every one of them is the
+  // SAME off-by-one written five ways: `>= now` → `> now`; `>= now` → `>= now + 1`;
+  // `>= now` → `>= turn` (prune against the NEW stamp); and each writer passing
+  // `turn` rather than `state.turn` as `now`. All five DELETE A BAR THAT IS STILL
+  // BITING — which is D165's own defect relocated out of the merge rule and into
+  // the garbage rule, and is why the boundary is witnessed rather than argued away.
+  //
+  // ⚠️ THE TWO WRITERS DO NOT REACH IT ALIKE, AND THE ARGUMENT IS PARITY. Both
+  // stamp the HOLDER's own next turn (`+ 2` from the holder's turn, `+ 1` from the
+  // opponent's), so every entry on a body carries that seat's turn parity.
+  // `preventAttackUse` writes on its OWN Active during its own turn, so
+  // `lock.turn === now` is REACHABLE and is driven below as a played line.
+  // `lockDefenderAttack` writes on the OPPONENT's Active during the actor's turn,
+  // so `now` is never one of the victim's turns and the equal case is UNREACHABLE
+  // by parity — driven by SURGERY, said rather than skipped, exactly as the prune
+  // case above is.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("keeps an entry that is LIVE ON THE TURN OF THE WRITE — a PLAYED line, self-side", () => {
+    // The board differs from `collision()` in one step: P1 installs NOTHING on turn
+    // 2, so the only bar is the one P2 imposes on turn 3 for turn 4. On turn 4 P1
+    // then declares the attack that is still legal — "Slashing Steel" — whose own
+    // printed drawback writes `4 + 2 = 6` while the imposed `{ turn: 4 }` entry is
+    // LIVE. The two prune cases above both write on a turn where every existing
+    // entry is strictly PAST or strictly FUTURE, so neither can see the equal case.
+    //
+    // THE KO IS DELIBERATE: "Slashing Steel" deals exactly Oranguru's 120, so the
+    // board stops at `ko:takePrizes` with `state.turn` STILL 4 and the READER can be
+    // asked on the writing turn. Let the turn roll to 5 instead and the entry is
+    // dead by arithmetic, and only the record's shape would be observable.
+    let state = must(
+      applyAction(
+        driveSetup(
+          SEED,
+          { p1: PER_ATTACK_LOCK_DECK, p2: OPPONENT_ATTACK_LOCK_DECK },
+          { first: "p2" },
+        ),
+        { type: "endTurn", seat: "p2" },
+      ),
+    );
+    state = setActiveFromDeck(state, "p1", "sv03-142");
+    state = setActiveFromDeck(state, "p2", "sv02-094");
+    state = attachFromDeck(state, "p1", "fix-metal-energy", 2);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = attachFromDeck(state, "p2", "fix-psychic-energy", 1);
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    // turn 2 (P1) — installs nothing at all.
+    state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
+    // turn 3 (P2) — "Plotter's Command" parks, and P2 picks "Peck": `3 + 1 = 4`.
+    const parked = mustApply(state, { type: "attack", seat: "p2", index: 0 });
+    const imposed = mustApply(parked.state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "attack", index: PECK },
+    });
+    // turn 4 (P1) — ONE bar, live, and it is not the index P1 is about to use.
+    expect(imposed.state.turn).toBe(4);
+    expect(must0(imposed.state.players.p1.active).lockedAttacks).toEqual([
+      { turn: 4, attackIndex: PECK },
+    ]);
+    expect(lockedAttackIndexes(imposed.state, must0(imposed.state.players.p1.active))).toEqual([
+      PECK,
+    ]);
+    const after = mustApply(imposed.state, { type: "attack", seat: "p1", index: SLASHING_STEEL });
+    expect(after.state.turn).toBe(4);
+    expect(after.state.phase.kind).toBe("ko:takePrizes");
+    // The write KEPT the live entry and appended its own…
+    expect(must0(after.state.players.p1.active).lockedAttacks).toEqual([
+      { turn: 4, attackIndex: PECK },
+      { turn: 6, attackIndex: SLASHING_STEEL },
+    ]);
+    // …and the READER still answers it on the very turn the write landed, which is
+    // the fact every one of the five prune mutants throws away.
+    expect(lockedAttackIndexes(after.state, must0(after.state.players.p1.active))).toEqual([PECK]);
+  });
+
+  it("…and the OPPONENT-SIDE writer keeps it too — CONSTRUCTED, because parity bars the played line", () => {
+    // `lockDefenderAttack` writes on the victim's body during the ACTOR's turn, so
+    // `lock.turn === now` would need an entry on P1's body stamped for one of P2's
+    // turns — which neither writer can produce (both stamp the holder's own next
+    // turn). The surgery says so rather than leaving the writer's half of the
+    // boundary unwitnessed, and it is the same allowance `setLocks`' doc block
+    // makes for the prune case above.
+    //
+    // It is not decoration: `addLockedAttack` is ONE function with ONE contract, and
+    // this is the case that fails if a future writer — or a stamp rule that stops
+    // alternating — breaks the parity the paragraph above leans on.
+    const { state } = collision();
+    const surgery = setLocks(state, "p1", [{ turn: 5, attackIndex: PECK }]);
+    const passed = must(applyAction(surgery, { type: "endTurn", seat: "p1" }));
+    expect(passed.turn).toBe(5);
+    // P2's Oranguru is still Active with its energy attached from `collision()`.
+    const parked = mustApply(passed, { type: "attack", seat: "p2", index: 0 });
+    const written = mustApply(parked.state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "attack", index: SLASHING_STEEL },
+    });
+    // `now` is 5 and the entry is stamped 5, so it stays; the new bar is `5 + 1`.
+    expect(must0(written.state.players.p1.active).lockedAttacks).toEqual([
+      { turn: 5, attackIndex: PECK },
+      { turn: 6, attackIndex: SLASHING_STEEL },
+    ]);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
