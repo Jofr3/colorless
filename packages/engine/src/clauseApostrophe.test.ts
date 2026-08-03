@@ -272,6 +272,17 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // Pokémon is now Paralyzed." has been in this census since M3 under another
     // fixture, so it adds an ID to an existing row, which is exactly what a
     // `sentence` census is supposed to do.
+    //
+    // ⚠️ AND D170 ADDS **NONE**, WHICH IS A RESULT RATHER THAN AN OMISSION — the
+    // shape D145 established. Its one printing (Tyranitar swsh10.5-043 "Raging
+    // Crash", the bench-wide damage-counter count) carries NO apostrophe at all:
+    // "on all of your Benched Pokémon" is possessive-free, so there is no slot to
+    // class and nothing for the fold to survive. The fixture's OTHER attack does
+    // carry one — index 1 "Earthquake" prints "(Don't apply Weakness and Resistance
+    // for Benched Pokémon.)" — and it still adds no row, because the sweep admits
+    // only sentences a reader RESOLVES and that self-spread is unsimulated. Both
+    // halves are why this file takes no diff for a slice that added a fixture, a
+    // regex, a union member and an evaluator arm.
     expect(derivable).toHaveLength(64);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.

@@ -4146,7 +4146,72 @@ import type { GameState, Seat } from "./types";
     discharged, and the pin that guarded one of them
     (`programFor("swsh10.5-011") === undefined`) went RED exactly as designed and was
     RE-POINTED at the passive field the new row defines. */
-export const engineVersion = "0.114.0";
+/** **D170 — the BENCH-WIDE DAMAGE-COUNTER COUNT, and the sixth
+    `DamageCountSource`.** `This attack does 10 damage for each damage counter on
+    all of your Benched Pokémon.` — **1 printing / 1 sentence, and the family CLOSES
+    at 1/1**, measured against the local D1 (2026-08-03, 978 cards / 6 sets) across
+    all three text columns: Tyranitar `swsh10.5-043` "Raging Crash" (idx 0, {C}{C},
+    `"10×"`, 10 per counter). The `%for each damage counter%` neighbourhood is 19
+    rows; `%on all of your Benched%` is exactly this one.
+
+    ⚠️ **IT IS A NEW COUNT SOURCE ON AN OLD FOLD — D168's ANSWER, ON THE MULTIPLY
+    READER.** The sentence carries NO adjective, so its fold is the `×` one
+    `deriveAttackDamageMultiplier` has performed since 0.35.0 (the printed "10×"
+    base IS the per-unit and attack.ts drops it); the only thing that varies is
+    WHICH RESOURCE is tallied. D167 was a new fold on an old source, D168 a new
+    source on the ADDITIVE fold, and this is the fourth corner of the same
+    two-by-two: **a new source on the MULTIPLY fold.**
+
+    ⚠️ **AND IT IS THE FIRST MEMBER THAT TALLIES OVER A ZONE RATHER THAN OFF ONE
+    BODY.** `damageCountersOnYourBench` sums `damage ÷ 10` across every Pokémon on
+    the ATTACKER's Bench, so an EMPTY Bench and a pristine one are the same 0 and
+    neither Active is ever consulted. It also cost `scaledAttackDamage` **no
+    signature change**: `attackerSeat` has been in scope since 0.66.0 for the
+    `boardCondition` indicator, and this is the second thing that argument buys.
+
+    ⚠️ **THE SEAT IS THE WHOLE DEFECT SURFACE, SO IT IS DRIVEN FROM EVERY SIDE.**
+    This member counts YOUR OWN Bench while the attack that reads it damages the
+    OPPONENT — count and target at opposite ends of one swing — where D168's fifth
+    member counts the opponent's Active. The suite drives a board with **all four
+    zones damaged and all four differently** (attacker's Active 9 counters,
+    attacker's Bench 3, defender's Active 5, defender's Bench 7): every wrong zone,
+    every pairwise sum and the whole-board total are distinct from the right answer
+    of 30, and the mirror board from p2 makes a `defenderSeat` wiring fail on one
+    side or the other rather than on neither.
+
+    ⚠️ **NO ORDER WITNESS EXISTS IN THIS FAMILY, AND THE SUITE SAYS SO RATHER THAN
+    FUDGING ONE.** D168's transferable finding is that an ordering claim needs a
+    witness that does NOT COMMUTE. With the printed base DROPPED this fold has
+    exactly ONE term, so `(0 + 60) × 2` and `0 × 2 + 60 × 2` agree **by
+    distribution**. The ×2 Darkness board is therefore written as what it really
+    witnesses — the **base drop surviving a multiply** (`(0 + 60) × 2 = 120` against
+    a leaked `(10 + 60) × 2 = 140`) — and the absence of an order witness is pinned
+    as its own assertion.
+
+    **ZERO BENCH COUNTERS EMIT NO `DAMAGE_DEALT` AT ALL**, driven rather than
+    discovered: `scaledBase` and `scaledTotal` are both 0, so attack.ts's
+    `scaledBase + scaledTotal > 0` guard skips the whole §8.5 pipeline. Rules-correct
+    (the attack does 0 damage), **the attack is still USED** so the turn passes, and
+    the printed text is still SIMULATED — exactly how D167's printings and
+    Stoutland's retreat-0 board already behave.
+
+    Cost: **1 regex, 1 reader arm, 1 `DamageCountSource` member, 1 evaluator arm** —
+    the same four-edit shape D168 found, and the same two edits ("one regex + one
+    evaluator arm") the remainder list had again omitted. No new op, event, event
+    field, log crumb, error code, prompt, park, state field, registry row, redact arm
+    or projection, and no web/DB/`@luminous/schema` diff. Plus **1 fixture**
+    (`swsh10.5-043`, authored fresh — `FIXTURE_POOL` had ZERO coverage — COMPLETE
+    against the manifest, carrying its **UNSIMULATED** idx-1 "Earthquake" self-spread
+    as the declared simplification AND as the skipped-sibling witness), **1 deck**
+    (`BENCH_COUNTER_DECK`, its own 60), `benchCounterMultiply.test.ts` (**37 tests,
+    SEED-FREE**) and the manifest REGENERATED (214 → **215** fixture rows, 0 absent).
+    `clauseApostrophe.test.ts`'s census stays **64** — a result, not an omission:
+    this sentence carries no apostrophe at all. `MATCH_RECORD_VERSION` stays **11**,
+    derived rather than inherited — `DamageCountSource` is a PARSE-TIME type in
+    effects.ts that never reaches `GameState`, so a new member cannot make a stored
+    record unreadable; pinned as an absence over the 16-key set, now on a BENCHED
+    body as well as an Active. */
+export const engineVersion = "0.115.0";
 
 export type {
   ApplyResult,

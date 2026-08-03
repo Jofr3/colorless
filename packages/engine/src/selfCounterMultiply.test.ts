@@ -355,7 +355,12 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
       // the DEFENDER-side count — a real unread neighbour (Dedenne sv01-095,
       // Espeon sv03-086, Bloodmoon Ursaluna sv06.5-025 print its "more" form)
       "This attack does 30 damage for each damage counter on your opponent's Active Pokémon.",
-      // the BENCH-wide count — Tyranitar swsh10.5-043's shape, still unread
+      // the BENCH-wide count — ✅ READ SINCE D170 (Tyranitar swsh10.5-043 "Raging
+      // Crash"), but this string is NOT that sentence: the printing says "on ALL OF
+      // your Benched Pokémon" and `BENCH_COUNTER_MULTIPLY`'s literal tail requires
+      // the "all of". So the assertion is unchanged and now SHARPER — it is the
+      // near-miss of a sentence that exists rather than of one that does not, and
+      // it must stay null for BOTH readers rather than merely for this one.
       "This attack does 30 damage for each damage counter on your Benched Pokémon.",
       // a real Pokémon with a lookalike é would fall off the path silently
       "This attack does 30 damage for each damage counter on this Pokemon.",

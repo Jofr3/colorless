@@ -6357,6 +6357,67 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+
+  /** D170 — Tyranitar swsh10.5-043 "Raging Crash" (idx 0, {C}{C}, printed "10×"):
+      *"This attack does 10 damage for each damage counter on all of your Benched
+      Pokémon."* — the WHOLE of the bench-wide count family, ONE printing and ONE
+      sentence, and the first count source in the scaling family that tallies over
+      a ZONE rather than off a single body.
+
+      A **STAGE 2** from Pupitar, and the deepest line any scaling fixture has
+      needed. It reaches the Active Spot by SURGERY (`setActiveFromDeck`), which
+      places a body without evolving it — so no Larvitar and no Pupitar are needed
+      and `BENCH_COUNTER_DECK` carries neither. Stated because the alternative (a
+      Larvitar plus two played evolutions) would have bought nothing this family
+      tests and would have made every board three turns longer; it is D168's
+      precedent for Espeon, one stage deeper.
+
+      ⚠️ **ITS INDEX-1 "Earthquake" IS UNSIMULATED, AND THE FIXTURE SAYS SO RATHER
+      THAN DROPPING IT.** *"This attack also does 20 damage to each of your Benched
+      Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"* is a
+      SELF-SPREAD no regex in `effects.ts` matches — `deriveAttackEffect` returns
+      null for it, so declaring it emits `ATTACK_EFFECT_SKIPPED` carrying the whole
+      sentence. It is carried whole because a fixture that dropped it would be
+      wrong by OMISSION (D156) and would owe an `INCOMPLETE` declaration, and
+      because it is this slice's **skipped-sibling witness**: index 1 is the
+      sibling attack that must NOT inherit index 0's clause, and unlike Espeon's
+      "Psy Bolt" it is a sibling the engine openly does not read — which makes the
+      negative louder rather than weaker. Krookodile sv01-117 prints the same
+      sentence at 30, so this is a family absence rather than a one-card gap.
+
+      The 180 HP is not load-bearing (every board below has Tyranitar attacking,
+      not defending) but the {C}{C} cost is: it is the cheapest attack in any of
+      the four scaling families, so the boards need no typed Energy at all for the
+      printing under test — the Darkness pair exists only for Earthquake.
+
+      Verbatim off the local D1 (2026-08-03, 978 cards / 6 sets): 180 HP, Darkness,
+      Stage2 from Pupitar, retreat 3, ×2 Grass, no Resistance, no Ability, two
+      attacks. The fifteenth `swsh10.5` fixture. */
+  "swsh10.5-043": battler("swsh10.5-043", {
+    name: "Tyranitar",
+    types: ["Darkness"],
+    stage: "Stage2",
+    evolveFrom: "Pupitar",
+    hp: 180,
+    retreat: 3,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Raging Crash",
+        effect:
+          "This attack does 10 damage for each damage counter on all of your Benched Pokémon.",
+        damage: "10×",
+      },
+      {
+        cost: ["Darkness", "Darkness", "Colorless", "Colorless"],
+        name: "Earthquake",
+        effect:
+          "This attack also does 20 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 180,
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -9828,6 +9889,56 @@ export const OPPONENT_COUNTER_DECK = deckOf({
   "fix-psychic-energy": 8, // {P} — Second Bite, Psychic Assault, Psy Bolt
   "fix-fighting-energy": 8, // {F}{F} — Mad Bite's typed half
   "fix-energy": 19, // Colorless Basic — every {C} in the deck
+});
+
+/** D170 — the BENCH-WIDE damage-counter count, on its OWN 60 for the reason every
+    scaling deck since D147 has one, plus a requirement no existing deck could
+    meet.
+
+    ⚠️ **THE COUNT IS ONLY OBSERVABLE ON A BOARD WITH DAMAGED BENCHED BODIES**, and
+    the arithmetic has to survive them. `CONDITION_CLAUSE_DECK` is the closest
+    template — it is the one existing deck that fields a damaged Bench at all (for
+    the `yourBenchDamaged` clause) — but it is SEED-PINNED by a suite with nothing
+    to do with this printing, and a `yourBenchDamaged` board needs only ONE damaged
+    body where this one needs a Bench whose per-slot totals differ. So the fillers
+    are `fix-titan` (340 HP, NO attacks, no Weakness or Resistance): a body that can
+    hold ten counters without being anywhere near a Knock Out, which is what makes
+    "20 / 0 / 50 on three slots" a readable board rather than a dying one.
+
+    ⚠️ **AND THE DEFENDER HAS TO SURVIVE A NUMBER WITH NO PRINTED CEILING.** The `×`
+    fold drops the printed base, so the whole damage is `10 × (counters on your
+    Bench)` — five slots at ten counters each is 500, past every body in the pool.
+    `fix-titan` is the defender for the clean numbers; `fix-darkness-weak` (200 HP,
+    ×2 Darkness — Tyranitar is a DARKNESS Pokémon) is the W/R board, where 6
+    counters land `(0 + 60) × 2 = 120` and the printed "10×" base leaking would
+    read 140 instead.
+
+    **SEED-FREE.** The printing under test flips no coin, no body on this list
+    carries a `cancelOnTails` or a `perHeads` index any board here declares, and
+    every Active is placed by SURGERY — Tyranitar is a Stage 2 and is never
+    evolved into, so no Larvitar/Pupitar line is carried and no board is a shuffle
+    away from being unreachable (D143's move, D147/D161/D163/D167/D168's
+    inheritance).
+
+    One printing is the whole family; everything else is a body chosen to make
+    exactly one claim observable:
+      • swsh10.5-043 Tyranitar — "Raging Crash" idx 0 ({C}{C}, "10×"), TEN per
+        counter on the attacker's OWN Bench. Its idx-1 "Earthquake"
+        ({D}{D}{C}{C}, 180) is the UNSIMULATED skipped-sibling witness, which is
+        the only reason this deck holds Darkness Energy at all;
+      • fix-titan (340 HP, NO attacks, no W/R) — the mulligan-free starter, every
+        damaged BENCH slot, and the arithmetically clean defender every unmodified
+        number is measured against. It is the one body here that is both a Basic
+        and inert, which is what lets the same card play all three parts;
+      • fix-darkness-weak (200 HP, ×2 Darkness, no attacks) — the §8.5 board: the
+        `×` fold's whole damage is `scaled`, so this is where "the base really was
+        dropped" is observable THROUGH a doubling rather than beside it. */
+export const BENCH_COUNTER_DECK = deckOf({
+  "swsh10.5-043": 4, // Tyranitar — "Raging Crash" idx 0: the whole family
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, damaged bench, clean defender
+  "fix-darkness-weak": 3, // 200 HP ×2 Darkness — the base-drop-through-W/R board
+  "fix-darkness-energy": 8, // {D}{D} — Earthquake's typed half, and nothing else
+  "fix-energy": 29, // Colorless Basic — Raging Crash's whole cost, and every other {C}
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

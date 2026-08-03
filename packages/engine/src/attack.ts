@@ -117,11 +117,15 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     Bloodmoon Ursaluna "Mad Bite"), which is why that member cost this signature
     NOTHING: the pair that reaches the defending body was already here.
     `attackerSeat` is the OTHER end of the
-    table and exists only for the `boardCondition` indicator (D115): a
+    table and existed only for the `boardCondition` indicator (D115) until D170
+    gave it a second reader: a
     `BoardCondition` is relative to whose board it reads — "you have a Stadium in
     play" is about the ATTACKER's ownership, "your opponent's Active …" reaches
     across from there — so it cannot be derived from `defenderSeat` alone without
-    quietly hard-coding a two-player table into this fold. */
+    quietly hard-coding a two-player table into this fold. D170's bench-wide count
+    ("… for each damage counter on all of YOUR Benched Pokémon", Tyranitar
+    swsh10.5-043) is the second thing that argument buys, and it cost this
+    signature nothing for exactly that reason. */
 function scaledAttackDamage(
   attacker: InPlayPokemon,
   bonus: AttackDamageBonus,
@@ -166,6 +170,29 @@ function scaledAttackDamage(
       // above uses for the same reason.
       const defenderActive = state.players[defenderSeat].active;
       return defenderActive === null ? 0 : Math.floor(defenderActive.damage / 10) * bonus.per;
+    }
+    case "damageCountersOnYourBench": {
+      // D170 — the first member that tallies over a ZONE rather than off a single
+      // body: every damage counter on the ATTACKER's OWN Bench, summed (Tyranitar
+      // swsh10.5-043 "Raging Crash"). One counter = 10 HP (§12), floored per body
+      // for the same safety reason the two Active arms floor, and summed AFTER the
+      // floor so a stray non-multiple cannot round its way into a neighbour's
+      // slot. Neither Active is consulted — not the attacker's, not the
+      // defender's — which is the whole difference from the two arms above.
+      //
+      // `attackerSeat`, not `defenderSeat`: the printed word is "YOUR Benched
+      // Pokémon", and the attack that reads it damages the opponent, so the two
+      // seats are on opposite ends of the same swing. Bench slots are typed
+      // non-nullable, and the `p !== null` guard mirrors `interpreter.ts`'s
+      // `yourBenchDamaged` walk over the identical list rather than asserting a
+      // second opinion about it. An EMPTY Bench sums to 0 — the same 0 a pristine
+      // one gives, and with the printed "10×" base dropped that means no
+      // DAMAGE_DEALT at all, which is rules-correct.
+      const bench = state.players[attackerSeat].bench;
+      return (
+        bench.reduce((total, p) => total + (p !== null ? Math.floor(p.damage / 10) : 0), 0) *
+        bonus.per
+      );
     }
     case "boardCondition":
       // The 0-or-1 INDICATOR (D115) — "If <clause>, this attack does N more

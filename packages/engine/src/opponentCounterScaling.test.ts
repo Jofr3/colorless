@@ -404,7 +404,10 @@ describe("deriveAttackDamageBonus — one regex, two amounts, a fifth count memb
       // the "less" spelling of THIS count source — unprinted in the pool, and
       // refused here because a sign is a FOLD and this reader owns only one
       SECOND_BITE.replace(" more ", " less "),
-      // the BENCH-wide neighbour (Tyranitar swsh10.5-043's shape), still unread
+      // the BENCH-wide neighbour — ✅ READ SINCE D170, and this string differs from
+      // the real printing (Tyranitar swsh10.5-043) on BOTH axes: it carries "more"
+      // where the printing has no adjective, and it names the OPPONENT's Bench where
+      // the printing says "all of YOUR Benched Pokémon". Unchanged and still null.
       "This attack does 10 more damage for each damage counter on your opponent's Benched Pokémon.",
       // Trevenant sv03-012's Ability, the one other catalog row in any text column
       // carrying this possessive beside a damage counter — a PLACEMENT

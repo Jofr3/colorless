@@ -371,6 +371,7 @@ export const CATALOG_MANIFEST = {
     "swsh10.5-032": { name: "Natu", attacks: ["Nap","Peck"], abilities: [] },
     "swsh10.5-035": { name: "Sylveon", attacks: ["Souvenir","Wonder Flash"], abilities: [] },
     "swsh10.5-036": { name: "Onix", attacks: ["Rock Tomb","Raging Swing"], abilities: [] },
+    "swsh10.5-043": { name: "Tyranitar", attacks: ["Raging Crash","Earthquake"], abilities: [] },
     "swsh10.5-055": { name: "Snorlax", attacks: ["Collapse"], abilities: ["Block"] },
     "swsh10.5-061": { name: "Pidove", attacks: ["Growl","Flap"], abilities: [] },
   } as Record<string, { name: string; attacks: string[]; abilities: string[] }>,

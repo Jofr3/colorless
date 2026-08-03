@@ -3519,8 +3519,10 @@ const SELF_COUNTER_SCALE =
 // ✅ NO LONGER UNREAD: D168 gave it OPPONENT_COUNTER_SCALE below and the fifth
 // `DamageCountSource`, `damageCountersOnOpponentActive`, so the "still unread"
 // above no longer covers this clause), the bench-wide count (Tyranitar
-// swsh10.5-043) and
-// Annihilape ex sv02-242's two-sentence compound. No /i, whole-sentence anchored
+// swsh10.5-043 — ✅ ALSO NO LONGER UNREAD: D170 gave it BENCH_COUNTER_MULTIPLY
+// below and the sixth `DamageCountSource`, `damageCountersOnYourBench`) and
+// Annihilape ex sv02-242's two-sentence compound, which is the ONLY row of this
+// neighbourhood still unread. No /i, whole-sentence anchored
 // and a capital `This`, for the family's stated reason.
 const SELF_COUNTER_PENALTY =
   /^This attack does (\d+) less damage for each damage counter on this Pokémon\.$/;
@@ -3637,6 +3639,49 @@ const RETREAT_COST_MULTIPLY =
 // Ability, which this deriver is never handed).
 const OPPONENT_COUNTER_SCALE =
   /^This attack does (\d+) more damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
+// D170 — the BENCH-WIDE damage-counter count, and the FIRST count source in this
+// family that tallies over a ZONE rather than off a single body. "This attack
+// does 10 damage for each damage counter on all of your Benched Pokémon." — ONE
+// printing / ONE sentence, measured against the local D1
+// (2026-08-03, 978 cards / 6 sets) across all three text columns, and the row is `attacks_json`: Tyranitar
+// swsh10.5-043 "Raging Crash" (idx 0, {C}{C}, printed "10×"). The `(\d+)` capture
+// is spanned by a single printed amount today, which is stated rather than hidden:
+// this family's second-printing warrant (D121) is met by the OTHER members, and
+// the capture is here because every sibling pattern has one, not because two rows
+// exercise it.
+//
+// ⚠️ IT IS A `count` MEMBER ON AN OLD FOLD — D168's answer, on the other seat.
+// The sentence carries NO adjective, so its fold is the `×` one
+// `deriveAttackDamageMultiplier` has performed since 0.35.0 (the printed "10×"
+// base IS the per-unit and attack.ts drops it); what is new is only WHICH
+// RESOURCE is tallied. That buys the SIXTH `DamageCountSource` and one evaluator
+// arm, not a fourth reader.
+//
+// ⚠️ AND IT IS THE FIRST MEMBER WHOSE ZONE IS THE ATTACKER'S OWN BENCH, WHICH IS
+// THE SEAT THE OTHER COUNTER MEMBERS DO NOT READ. `damageCountersOnSelf` reads
+// the attacking Active, `damageCountersOnOpponentActive` (D168) the defending
+// one; this reads neither Active and every body on the ATTACKER's Bench —
+// `scaledAttackDamage` gets there through `attackerSeat`, in scope since 0.66.0
+// for the `boardCondition` indicator, so the signature takes no diff.
+//
+// DISJOINT FROM ALL THREE "damage counter" PATTERNS ABOVE BY THE LITERAL TAIL, IN
+// BOTH DIRECTIONS: the two self ones end in `on this Pokémon\.`, D168's in
+// `Active Pokémon\.`, this one in `on all of your Benched Pokémon\.`, and all four
+// are `^…$`-anchored — so no side needs a negative lookahead. Driven both ways
+// (benchCounterMultiply.test.ts) rather than argued.
+//
+// The near-misses are real catalog rows and all refused by the anchors alone:
+// Oinkologne ex sv01-158/-234 "Maddening Scent" and Tyranitar sv02-135/-222
+// "Rout" both print "This attack does 30 more damage for each of your opponent's
+// Benched Pokémon." — the opponent's Bench, counted as BODIES rather than
+// counters, with a "more"; and Tyranitar swsh10.5-043's OWN index-1 "Earthquake"
+// ("This attack also does 20 damage to each of your Benched Pokémon. (Don't apply
+// Weakness and Resistance for Benched Pokémon.)") names the same zone in the same
+// card and is a SPREAD, not a scaling clause — UNSIMULATED, and deliberately left
+// so. No /i, whole-sentence anchored with a required trailing period and a capital
+// `This`, and `Pokémon` carries the real é (U+00E9) — the family's stated reason.
+const BENCH_COUNTER_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on all of your Benched Pokémon\.$/;
 // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
 // damage.", the additive family's third arithmetic shape and the first one whose
 // count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
@@ -5635,13 +5680,16 @@ export interface AttackDamageBonus {
   per: number;
   count: DamageCountSource;
 }
-/** The resource an `AttackDamageBonus` counts. Five members: the attacker's OWN
+/** The resource an `AttackDamageBonus` counts. Six members: the attacker's OWN
     damage counters (Paldean Tauros "Raging Horns"), the opponent's TAKEN Prizes
     (Charizard ex "Burning Darkness"), — since 0.61.0 — the {C} in the opponent's
     Active Pokémon's RETREAT COST (Heracross "Superpowered Throw" and its three
-    siblings), — since 0.66.0 — a `boardCondition` INDICATOR, and — since 0.113.0 —
+    siblings), — since 0.66.0 — a `boardCondition` INDICATOR, — since 0.113.0 —
     the damage counters on the OPPONENT'S ACTIVE (Dedenne "Second Bite", Espeon
-    "Psychic Assault", Bloodmoon Ursaluna "Mad Bite"), each read by its own anchored
+    "Psychic Assault", Bloodmoon Ursaluna "Mad Bite"), and — since 0.115.0 — the
+    damage counters on ALL OF THE ATTACKER'S OWN BENCHED Pokémon (Tyranitar
+    swsh10.5-043 "Raging Crash"),
+    each read by its own anchored
     sentence. The third is the only count source that is DERIVED rather than read
     off a field: attack.ts evaluates it through continuous.ts
     `effectiveRetreatCost`, so every retreat-cost modifier already in play (Beach
@@ -5665,13 +5713,23 @@ export interface AttackDamageBonus {
     read by `scaledAttackDamage` anyway, and the three members that have no side at
     all would then carry a field they must ignore. It needs NO new argument —
     `scaledAttackDamage` already takes `state` and `defenderSeat` for the Prize and
-    retreat-cost members — which is the whole of its evaluator cost. */
+    retreat-cost members — which is the whole of its evaluator cost.
+
+    ⚠️ THE SIXTH IS THE FIRST THAT TALLIES OVER A ZONE RATHER THAN OFF ONE BODY
+    (D170). `damageCountersOnYourBench` sums `damage ÷ 10` across every Pokémon on
+    the ATTACKER's Bench — the same resource the two Active members read, over a
+    LIST instead of a single body, so an empty Bench and a pristine Bench are the
+    same 0 and neither Active is ever consulted. It is also the first counter
+    member that reads the attacker's seat rather than an Active spot, and it needs
+    no new argument either: `scaledAttackDamage` has taken `attackerSeat` since
+    0.66.0 for the `boardCondition` indicator. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
   | { kind: "opponentActiveRetreatCost" }
   | { kind: "boardCondition"; cond: BoardCondition }
-  | { kind: "damageCountersOnOpponentActive" };
+  | { kind: "damageCountersOnOpponentActive" }
+  | { kind: "damageCountersOnYourBench" };
 
 /** Parse a printed additive damage-scaling sentence into its `per` amount and
     count source, or null when the text is anything but one of the five anchored
@@ -5779,12 +5837,15 @@ export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | nul
     ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the same
     reason the additive reader is (attack.ts owns the fold).
 
-    THREE count sources, ONE fold — and the third arrived (D167) as a regex and an
+    FOUR count sources, ONE fold — and the third arrived (D167) as a regex and an
     `if`, because both halves of it already existed: the `×` fold here, and
     `damageCountersOnSelf` in `scaledAttackDamage`, live since M2 for the "more"
-    twin. The arms are ordered to mirror `deriveAttackDamageBonus` rather than by
-    the order they were written; the regexes are mutually exclusive, so the order
-    is legibility, not behaviour. */
+    twin. The fourth (D170, Tyranitar swsh10.5-043's bench-wide count) cost one
+    more: the fold was here but the SOURCE was not, so it also bought a
+    `DamageCountSource` member and an evaluator arm — the same shape D168 paid on
+    the additive reader. The arms are ordered to mirror `deriveAttackDamageBonus`
+    rather than by the order they were written; the regexes are mutually exclusive,
+    so the order is legibility, not behaviour. */
 export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | null {
   const effect = text.trim();
   // A printed 0 does nothing — left loud, the guard every arm in both families
@@ -5804,6 +5865,14 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   if (retreatCost !== null) {
     const per = Number(retreatCost[1]);
     if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+  }
+  // D170 — the BENCH-WIDE damage-counter count. Same `×` fold, same `per >= 1`
+  // guard, a different ZONE: the only thing separating this arm from the first
+  // one above is the literal tail of its anchored sentence.
+  const benchCounters = BENCH_COUNTER_MULTIPLY.exec(effect);
+  if (benchCounters !== null) {
+    const per = Number(benchCounters[1]);
+    if (per >= 1) return { per, count: { kind: "damageCountersOnYourBench" } };
   }
   return null;
 }
