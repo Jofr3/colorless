@@ -6,116 +6,152 @@
 // because it is `.wrangler/` dev state and may be absent or stale on any other
 // machine (see the script's header for the tradeoff that buys).
 //
-//   select set_id, count(*) from cards group by set_id;   -- sv01|258  sv02|279  sv03|230  sv06.5|99  sve|24
-//   select count(*) from cards;                           -- 890
+//   select set_id, count(*) from cards group by set_id;   -- sv01|258  sv02|279  sv03|230  sv06.5|99  sve|24  swsh10.5|88
+//   select count(*) from cards;                           -- 978
 //
 // TEST-ONLY: not exported from the package index, exactly like `testFixtures.ts`.
 
 /** The catalog census, MEASURED — never copied forward, and never quoted without
-    its SCOPE. Two states live here: `rows`/`sets` describe the file on disk
-    today, and `priorState` describes the SIX-set catalog every census comment
-    dated 2026-08-02 or earlier actually queried. Both are real; what was missing
-    from ~20 comments was which one they meant. */
+    its SCOPE. `rows`/`sets` describe the file on disk today. `history` describes
+    the interval in which it held ONE SET FEWER: a census comment dated 2026-08-03
+    was measuring THAT population, and its counts are floors against this one.
+    Both are real; what was missing from ~20 comments was which one they meant. */
 export const CATALOG_MANIFEST = {
   /** Which file the numbers below describe. `mtime` is the sqlite's last write,
       NOT the day the manifest was generated — the catalog is ingest output and
       does not drift on its own, so the mtime is the honest provenance. */
   source: {
     path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d86672ef67002c76a06d8e29643de1a9c95e9422816cce0e554c6c5b7286.sqlite",
-    mtime: "2026-07-27T07:02:11.316Z",
-    bytes: 651264,
+    mtime: "2026-08-03T09:22:30.953Z",
+    bytes: 708608,
     generated: "2026-08-03",
   },
   /** `select count(*) from cards`. */
-  rows: 890,
-  /** `select set_id, count(*) from cards group by set_id` — THE SCOPE. D154's
-      finding: the local D1 holds these five sets and NOTHING ELSE, while
-      `FIXTURE_POOL` fields cards from `swsh10.5`, which is not here. Any census
-      run against this file is blind to that population by construction. */
+  rows: 978,
+  /** `select set_id, count(*) from cards group by set_id` — THE SCOPE, and the
+      first thing a census owes (D154). Six sets, `swsh10.5` among them
+      again since the re-ingest recorded in `history` below; a census dated
+      2026-08-03 saw the other five ONLY, which is what that block exists to say. */
   sets: {
     "sv01": 258,
     "sv02": 279,
     "sv03": 230,
     "sv06.5": 99,
     "sve": 24,
+    "swsh10.5": 88,
   } as Record<string, number>,
   /** `select category, count(*) from cards group by category`. */
   categories: {
     "Energy": 35,
-    "Pokemon": 736,
-    "Trainer": 119,
+    "Pokemon": 810,
+    "Trainer": 133,
   } as Record<string, number>,
   /** `select count(distinct name) from cards` — a card is a PRINTING, so this
       is well below `rows` (D135/D145: two printings can agree on everything but
       the set and the attacks). */
-  distinctNames: 519,
+  distinctNames: 567,
   /** The THREE text columns a census must search. Every one of them has been
       missed by a census that searched only one, which is why they are counted
       separately here: rows where the column is present and non-empty. */
   textColumns: {
-    effect: 123,
-    attacksJson: 736,
-    abilitiesJson: 143,
+    effect: 137,
+    attacksJson: 809,
+    abilitiesJson: 160,
     /** Rows carrying text in AT LEAST ONE of the three — the real denominator
         for "N printings out of M" claims. */
-    any: 859,
+    any: 947,
   },
   /** Rows whose `attacks_json` contains a STRAIGHT apostrophe (U+0027) — the
       population D137's apostrophe fold is about. */
-  straightApostropheInAttacks: 326,
+  straightApostropheInAttacks: 359,
   /** Rows carrying a CURLY apostrophe (U+2019) in `effect`, `attacks_json`,
       `abilities_json` or `name`. D137's claim is that this is ZERO — the fold
       exists against a future re-ingest, not against today's bytes. */
   curlyApostropheAnywhere: 0,
   /** `select count(*) from cards where legal_standard = 0` — D113's "not a
-      slice-selection criterion" number, and the THIRD corroboration of the set
-      loss below (851 − 88 = 763). */
-  legalStandardZero: 763,
+      slice-selection criterion" number, and one of the four axes on which the
+      restoration reconciles (851 − 88 = 763, the count D156
+      committed for the shrunken catalog). */
+  legalStandardZero: 851,
+  /** Pokémon rows carrying NO attacks at all, by id. ⚠️ D156 ASSERTED THIS WAS
+      EMPTY — `attacksJson` equals the `Pokemon` category count — and that was
+      true of the FIVE-set catalog and is FALSE of this one. The restored set
+      brought the counterexample with it, so the claim is now a measured list
+      rather than an equality: a Pokémon whose Ability borrows its attacks from
+      elsewhere prints none of its own. */
+  pokemonWithoutAttacks: ["swsh10.5-053"] as readonly string[],
   /** Rows in `sets` and `series`. A card's `set_id` FKs to `sets` and a set's
-      `serie_id` to `series`, so a missing SET is a missing row in all three
-      tables — which is what makes the loss below a structural fact rather than a
-      filtered query. */
-  setRows: 5,
-  serieRows: 1,
-  /** ⚠️ THE CATALOG THIS FILE USED TO HOLD — INHERITED, NOT MEASURED BY D156.
-      Every number here is read off the repo's own record, not off a query, and
-      it is marked so because that is the distinction D155 collapsed.
+      `serie_id` to `series`, so a set is a row in all three tables — which is
+      what made the loss recorded below a STRUCTURAL fact rather than a filtered
+      query, and what makes the restoration one too (`serieRows` went 1 → 2: the
+      `swsh` serie had to come back before its set could). */
+  setRows: 6,
+  serieRows: 2,
+  /** ⚠️ THE SET THIS CATALOG LOST AND GOT BACK — HISTORY, NOT A LIVE DIVERGENCE
+      (D160). Read this block as a record of an episode that is OVER: the counts
+      above are the six-set catalog, exactly as ~20 census comments always said.
 
-      D112 (2026-08-01) wrote the breakdown down explicitly: *"The local pool is
-      978 cards over SIX sets, not 890 over five — sv01/sv02/sv03/sv06.5/sve PLUS
-      swsh10.5 (Pokémon GO, 88 cards, reg-mark F, legal_standard=0), which every
-      prior census silently omitted."* Three independent arithmetics agree:
-      890 + 88 = 978 (the count ~20 comments quote), 763 + 88 = 851 (the
-      `legal_standard = 0` count the docs quote), and D147's census table
-      (2026-08-02) lists Pidove `swsh10.5-061` as a QUERY RESULT, so the rows
-      were still there on that date. D154 (2026-08-03) is the first slice to find
-      them gone.
+      WHAT HAPPENED. D112 (2026-08-01) wrote the breakdown down explicitly: *"The
+      local pool is 978 cards over SIX sets, not 890 over five —
+      sv01/sv02/sv03/sv06.5/sve PLUS swsh10.5 (Pokémon GO, 88 cards, reg-mark F,
+      legal_standard=0), which every prior census silently omitted."* D147
+      (2026-08-02) lists Pidove `swsh10.5-061` as a QUERY RESULT, so the rows were
+      still there that day. D154 (2026-08-03) is the first slice to find them gone
+      — no `cards` rows, no `sets` row, no `series` row, and the main .sqlite's
+      mtime unmoved: the ingest had lived in a write-ahead log that was never
+      checkpointed. D155 read the survivors' "978" as fiction; D156 proved by
+      arithmetic that it had been a MEASUREMENT and built this manifest so a
+      scopeless count could never pass again. **D160 re-ingested the set and
+      checkpointed it (`PRAGMA wal_checkpoint(TRUNCATE)`), which is why `rows` is
+      978 and `setRows` is 6 above.**
 
-      So the loss is bounded to 2026-08-02 → 2026-08-03, and the main .sqlite's
-      mtime never moved: the swsh10.5 ingest lived in a write-ahead log that was
-      never checkpointed and has since been discarded. **The catalog SHRANK. 978
-      was a measurement, and D155's "978 matches no table in the file" is true of
-      today's file and false as a claim about who measured what.**
+      ⚠️ WHY THE BLOCK STAYS AFTER THE RESTORE, WHICH IS THE WHOLE POINT. The rows
+      came back; the COMMENTS WRITTEN WHILE THEY WERE GONE did not change. Every
+      census in this repo dated 2026-08-03 — D154's, D155's, D156's own, and
+      D157's, D158's and D159's, which all state "890 rows / 5 sets" in their own
+      headers — queried `shrunken`. **Those counts are FLOORS against this
+      catalog, not totals**, and `censusedInTheGap` names who owes a re-run.
+      D160 settled two of them by measurement: §D149's "5 printings" and §D151's
+      "six rows" are BOTH exact against the restored catalog, and D155's downward
+      corrections of them (to 4 and 5) were the outage speaking.
 
-      The consequence that matters for reading old comments: a census run on or
-      before 2026-08-02 saw 978/6, and its counts are right for THAT population —
-      including §D149's "5 printings" and §D151's "six rows", both of which D155
-      "corrected" downward by counting Pidove as fixture-only. It is a real card;
-      the catalog lost it. */
-  priorState: {
-    rows: 978,
-    setCount: 6,
-    missingSet: "swsh10.5",
-    missingRows: 88,
-    legalStandardZero: 851,
-    /** The two sub-population counts §D129/§D130 and §D137 quote, both measured
-        against the six-set catalog: rows with attacks, and rows whose
-        `attacks_json` carries a straight apostrophe. Today's file gives
-        736 and 326. */
-    rowsWithAttacks: 809,
-    straightApostropheInAttacks: 359,
+      ⚠️ AND THE RECONCILIATION IS BY SUBTRACTION ON FOUR AXES, NOT ONE.
+      `contributes` is measured off today's file; `shrunken` is what D156
+      committed. `live − contributes === shrunken` on rows, `legal_standard = 0`,
+      rows-with-attacks and straight-apostrophe rows. A re-ingest that restored a
+      DIFFERENT 88 rows would reconcile on the row count alone and fail the other
+      three, which is the only check available for a population nothing can query
+      any more. */
+  history: {
+    /** The set that went missing and returned. */
+    set: "swsh10.5",
+    /** Last date a census in this repo saw it (D147's table). */
     lastSeen: "2026-08-02",
+    /** First date a census found it gone (D154). */
     firstMissing: "2026-08-03",
+    /** Date it was re-ingested and the WAL checkpointed (D160). */
+    restored: "2026-08-03",
+    /** MEASURED off today's file: what `swsh10.5` contributes to each
+        count above. The subtrahend of the reconciliation. */
+    contributes: {
+      rows: 88,
+      legalStandardZero: 88,
+      rowsWithAttacks: 73,
+      straightApostropheInAttacks: 33,
+    },
+    /** RECORDED, NOT MEASURED — D156's committed census of the catalog during the
+        outage, which nothing can query now. This is the population every census
+        comment dated 2026-08-03 was actually describing. */
+    shrunken: {
+      rows: 890,
+      setCount: 5,
+      legalStandardZero: 763,
+      rowsWithAttacks: 736,
+      straightApostropheInAttacks: 326,
+    },
+    /** The decisions whose censuses ran against `shrunken` and are therefore
+        FLOORS. A future session re-running any of these should say so. */
+    censusedInTheGap: ["D154", "D155", "D156", "D157", "D158", "D159"] as readonly string[],
   },
   /** Every REAL-card fixture id in `FIXTURE_POOL` that HAS a catalog row, with
       the printed attack and Ability NAMES in printed ORDER. The order is
@@ -316,10 +352,26 @@ export const CATALOG_MANIFEST = {
     "sv06.5-059": { name: "Janine's Secret Art", attacks: [], abilities: [] },
     "sv06.5-060": { name: "Neutralization Zone", attacks: [], abilities: [] },
     "sv06.5-096": { name: "Earthen Vessel", attacks: [], abilities: [] },
+    "swsh10.5-009": { name: "Charmeleon", attacks: ["Scratch","Flamethrower"], abilities: [] },
+    "swsh10.5-010": { name: "Charizard", attacks: ["Flare Blitz"], abilities: ["Burn Brightly"] },
+    "swsh10.5-018": { name: "Radiant Blastoise", attacks: ["Torrential Cannon"], abilities: ["Pump Shot"] },
+    "swsh10.5-022": { name: "Gyarados", attacks: ["Wreak Havoc","Wild Splash"], abilities: [] },
+    "swsh10.5-025": { name: "Wimpod", attacks: ["Gnaw"], abilities: ["Punk Out"] },
+    "swsh10.5-026": { name: "Golisopod", attacks: ["First Impression","Slash"], abilities: [] },
+    "swsh10.5-027": { name: "Pikachu", attacks: ["Buddy Bolt"], abilities: [] },
+    "swsh10.5-031": { name: "Mewtwo VSTAR", attacks: ["Psy Purge","Star Raid"], abilities: [] },
+    "swsh10.5-032": { name: "Natu", attacks: ["Nap","Peck"], abilities: [] },
+    "swsh10.5-035": { name: "Sylveon", attacks: ["Souvenir","Wonder Flash"], abilities: [] },
+    "swsh10.5-055": { name: "Snorlax", attacks: ["Collapse"], abilities: ["Block"] },
+    "swsh10.5-061": { name: "Pidove", attacks: ["Growl","Flap"], abilities: [] },
   } as Record<string, { name: string; attacks: string[]; abilities: string[] }>,
-  /** Real-card fixture ids with NO catalog row at all — the population D154
-      found and nobody had enumerated. Every one is `swsh10.5`, a set this D1
-      does not hold, so NOTHING about these fixtures has ever been checked
-      against a catalog and no census that quotes this file has ever seen them. */
-  absent: ["swsh10.5-009","swsh10.5-010","swsh10.5-018","swsh10.5-022","swsh10.5-025","swsh10.5-026","swsh10.5-027","swsh10.5-031","swsh10.5-032","swsh10.5-035","swsh10.5-055","swsh10.5-061"] as readonly string[],
+  /** Real-card fixture ids with NO catalog row at all — the population D154 found
+      and D156 enumerated at TWELVE, every one `swsh10.5`. **EMPTY since D160's
+      re-ingest**, and the emptiness is the finding: those twelve were the only
+      surviving copies of catalog rows nothing could check, and their "verbatim off
+      the local D1" doc blocks became checkable for the first time. Kept as a field
+      rather than deleted because a fixture id with no row is exactly the defect
+      this manifest exists to surface, and a list that can only ever be empty is
+      one nobody re-reads. */
+  absent: [] as readonly string[],
 } as const;

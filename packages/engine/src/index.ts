@@ -3669,7 +3669,60 @@ import type { GameState, Seat } from "./types";
     functions, 5 registry rows on 4 programs, 4 read sites, 1 log crumb.
     `MATCH_RECORD_VERSION` stays **10** — nothing on `InPlayPokemon`, no op payload
     and no persisted shape moved; the cached-flag dodges were priced and refused. */
-export const engineVersion = "0.106.0";
+/** **D160 — the CATALOG IS WHOLE AGAIN, and three downward corrections reverse.**
+    A HARDENING slice with **0 engine behaviour lines** (D156's precedent for a
+    patch bump). `swsh10.5` was re-ingested into the local D1 and the WAL
+    CHECKPOINTED — the step whose absence lost it in the first place — so the file
+    is **978 rows / 6 sets** again, `serieRows` 1 → 2, and the twelve `swsh10.5`
+    fixtures have catalog rows for the first time in this repo's life.
+
+    ⚠️ **`priorState` HAD BECOME FALSE IN EVERY FIELD IT ASSERTED**
+    (`missingSet`, `missingRows`, `lastSeen`, `firstMissing`), so it is replaced by
+    `history` — the episode recorded as HISTORY rather than as a live divergence:
+    the dates, what the restored set CONTRIBUTES to each count (measured), D156's
+    committed census of the shrunken catalog (recorded), and `censusedInTheGap`.
+    The reconciliation is by SUBTRACTION on **four independent axes** — 978−88=890,
+    851−88=763, 809−73=736, 359−33=326 — because a re-ingest of a DIFFERENT 88 rows
+    reconciles on the row count alone.
+
+    ⚠️ **THE MANIFEST CAUGHT ITS OWN DEFECT CLASS.** D156 asserted
+    `textColumns.attacksJson === categories.Pokemon` — *"every Pokémon row carries
+    attacks and nothing else does"*. True of the five-set catalog, FALSE of the
+    six: **Ditto `swsh10.5-053`** prints no attacks at all (its Ability borrows them
+    from the discard pile). Restated with the exceptions ENUMERATED in a generated
+    `pokemonWithoutAttacks` rather than counted.
+
+    ⚠️ **THE TWELVE FIXTURES, DIFFED FIELD BY FIELD FOR THE FIRST TIME — AND NO
+    FIELD ANY OF THEM CARRIES IS WRONG.** Every attack cost, damage and effect
+    string, every Ability effect, every name matches the restored row. The
+    *"verbatim off the local D1"* doc blocks were telling the truth. Three
+    OMISSIONS, now declared: Charizard `swsh10.5-010`'s "Burn Brightly" (already
+    documented), Radiant Blastoise `swsh10.5-018`'s "Pump Shot" (registry-authored),
+    and **Charmeleon `swsh10.5-009`, the SIXTH reindexed fixture** — it drops the
+    printed index-0 "Scratch", so `providesEnergy.test.ts`'s `index: 0` is the
+    card's index 1. A hazard, not a bug (no registry program and no durated
+    `attackIndex` keys on it), and the first one found BY the manifest table rather
+    than declared into it.
+
+    ⚠️ **THREE DOWNWARD CORRECTIONS MADE DURING THE OUTAGE ALL REVERSE.** Against
+    the restored catalog, `less damage (before applying` returns **6 rows, 5 of them
+    attacks** — so §D149's "5 printings" and §D151's "six rows" were both EXACT and
+    D155's corrections to 4 and 5 were the missing set speaking. And D154's per-
+    attack lock census returns **8 rows across 6 names**, which is §D143's inherited
+    *"8 printings / 6 sentences"* exactly; D154's correction to "six across four
+    names" was the same artefact. **Radiant Charizard `swsh10.5-011` really does
+    print "During your next turn, this Pokémon can't use Combustion Blast."** and is
+    in no fixture — an unread printing of a family the deriver already reads.
+
+    ⚠️ **THE RESIDUE.** Every census in this repo dated 2026-08-03 — D154's, D155's,
+    D156's own, D157's, D158's and D159's — ran against the 890 / 5 catalog and is a
+    **FLOOR**, not a total. `history.censusedInTheGap` names them.
+
+    Cost: the generator, the regenerated manifest, `catalogManifest.test.ts`
+    (22 → 24 tests, including the state-collision guard that replaced a TS1117), one
+    fixture doc block. No op, event, field, registry row or read site.
+    `MATCH_RECORD_VERSION` stays **10** — nothing persisted exists to move. */
+export const engineVersion = "0.106.1";
 
 export type {
   ApplyResult,

@@ -2237,7 +2237,18 @@ export const FIXTURE_POOL: Record<string, Card> = {
   }),
   /** Charmeleon (swsh10.5-009) — "Flamethrower" [R][R][C][C] 100: the SPELLED-OUT
       notation at count 1 ("a Fire Energy"), the swsh-era wording the same rule
-      has to read. */
+      has to read.
+
+      ⚠️ REINDEXED, DECLARED AT D160 AND NOT BEFORE. The card prints TWO attacks and
+      "Scratch" ({R}{C}, 30) is the FIRST, so the Flamethrower carried here sits at
+      the card's index 1 and at this fixture's index 0 — `providesEnergy.test.ts`
+      drives it as `{ type: "attack", index: 0 }`, which is this body's number and
+      not the print's. The drop is deliberate (Scratch exercises no rule this suite
+      reads) and it is a HAZARD rather than a bug, because nothing keys a registry
+      program or a durated `attackIndex` on this id. It went undeclared for the
+      whole life of the fixture because `swsh10.5` had no catalog rows to check it
+      against; the re-ingest made it visible and `catalogManifest.test.ts`'s
+      `INCOMPLETE` table now holds it beside the other five. */
   "swsh10.5-009": battler("swsh10.5-009", {
     name: "Charmeleon",
     hp: 90,

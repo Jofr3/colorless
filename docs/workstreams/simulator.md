@@ -12844,3 +12844,722 @@ THREE apostrophe slots at once. engine 0.103.1 → **0.104.0**,
 - **No `chooseAttack` producer other than this op**, and no printing asks for
   one — the pool prints no "choose 1 of YOUR OWN Pokémon's attacks" sentence
   (censused on the same query: `Choose 1 of your` returns nothing of that shape).
+
+## D158 — the KO-CONDITIONED §9 RECOIL: `If the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, put 4 damage counters on the Attacking Pokémon.` — Vengeful Punch `sv03-197`, ONE registry row and a NEW READ SITE at the §8.1 KO sweep, and the ORDER is the whole slice (engine 0.106.0, `MATCH_RECORD_VERSION` unchanged at 10)
+
+Item 5 of D156's remainder list, **first half only** — Vengeful Punch `sv03-197`.
+Mabosstiff `sv02-143` is explicitly NOT attempted (see the foot of this section).
+
+Built in an ISOLATED WORKTREE in parallel with D157 and D159, which is why its
+census figures below are the ones it actually ran rather than the ones the repo
+holds today — see the FLOOR note under the table.
+
+### The census, re-run over TWO populations (D156's rule)
+
+The D1 and `FIXTURE_POOL` are no longer the same population, so both were swept.
+
+| population | measured | the recoil clause |
+|---|---|---|
+| local D1, 2026-08-03 | **890 rows / 5 sets** (`sv01` 258, `sv02` 279, `sv03` 230, `sv06.5` 99, `sve` 24) | **8 rows** — the same eight D152 found |
+| `FIXTURE_POOL` | **278 entries**, of which **12** are `swsh10.5` | **5**, a subset of the eight; **no `swsh10.5` fixture carries it** |
+
+So the eight is **not** a five-set undercount *of the sets it could see*, and the
+family's always-on half is now closed 5/5.
+
+**⚠️ AND THAT WHOLE TABLE IS A FLOOR, NOT A TOTAL — READ IT WITH D160 BESIDE IT.**
+The **890 / 5** population is the SHRUNKEN catalog: `swsh10.5` had been lost to an
+uncheckpointed WAL and D160 has since re-ingested it, so the local D1 is
+**978 rows / 6 sets** (`sv01` 258, `sv02` 279, `sv03` 230, `sv06.5` 99, `sve` 24,
+`swsh10.5` **88**). The **8 recoil rows** were measured over five sets and are
+therefore a **FLOOR against the restored catalog**; and while the `FIXTURE_POOL`
+half is complete *for the pool*, the pool held only **12** of the 88 rows, so
+nothing here rules out a ninth catalogued printing among the other 76. **The
+recoil census OWES A RE-RUN against 978 / 6.** D160 did not run it — the figure
+above is left as honest provenance rather than quietly replaced by an unmeasured
+one.
+
+`sv03-197` re-queried field by field: name **Vengeful Punch**, `category`
+**Trainer**, `trainer_type` **Tool**, reg-mark **G**, `legal_standard` **0**, and
+the `effect` string byte for byte. The repo-wide id sweep found it named in four
+files and **nothing misnamed**. The GENERATED manifest is an independent second
+reading of the same row (it comes from the sqlite, not from the fixture), and it
+agrees — including the two ABSENCES a Trainer owes (no printed attack, no Ability).
+
+### ⚠️ The KO CONDITION is its own census, and it has three unmapped neighbours
+
+`"Knocked Out by damage from an attack"` returns **SIX** D1 rows across all three
+text columns. Only ONE is a recoil.
+
+| id | card | consequent | fate |
+|---|---|---|---|
+| `sv03-197` | Vengeful Punch (Tool) | 4 counters on the Attacking Pokémon | **D158** |
+| `sv01-174` | Exp. Share (Tool) | move a Basic Energy | unmapped |
+| `sv01-114` | Lucario "Avenging Knuckle" | +120 damage | unmapped |
+| `sv06.5-037`/`-083`/`-091` | Munkidori ex "Oh No You Don't" | opponent takes 1 fewer Prize | **unmapped — the site's next consumer** |
+
+Munkidori ex is the structurally closest: the SAME antecedent, a different
+consequent. The §8.1 sweep this slice adds is where that family will read. (This
+census is a FLOOR on the same grounds as the one above.)
+
+### The shape — Rocky Helmet's SIBLING, and the read sites force it
+
+| | `damageAttacker` (D98/D106) | `damageAttackerOnKo` (D158) |
+|---|---|---|
+| Printed condition | "is **damaged** by an attack" | "is **Knocked Out** by damage from an attack" |
+| Printed location clause | "is in the Active Spot" | **absent** |
+| Pays when | `dealt > 0`, §8.5 main hit (`attack.ts`) | lethal at the §8.1 sweep (`flow.ts`) |
+| Scans | the main-hit **Active** only | the KO'd side's **whole board** |
+| Row | `COUNTERS_PLACED source: "counterattack"` | **the same row, no new member** |
+
+⚠️ **THE TWO CONSUMERS MUTUALLY REFUSE EACH OTHER'S PAYMENT**, which is D155's
+rule in its cleanest form: Rocky Helmet must fire on a hit its holder **survives**,
+and Vengeful Punch must not. One field would fire Rocky Helmet twice on a lethal
+hit and fire Vengeful Punch on every scratch. Both directions are driven on the
+same board with only the Tool swapped.
+
+### ⚠️ THE ORDER — one decision, four consequences
+
+The counters are placed in `finishAttack` **BEFORE** `collectKnockOuts` reads the
+board, off `lethalRefs`' **OWN** ref set rather than a re-derived predicate (so the
+paying set cannot drift from the dying set). Inside the sweep's loop — where the
+printed "if … is Knocked Out" would read in order — the counters would land after
+`lethalRefs` had decided who dies, and then:
+
+1. a **lethal retaliation misses the batch**, leaving a lethally-damaged Pokémon in
+   play — a state this engine may not reach;
+2. the **§14 double-KO tie** becomes unreachable: the guard speculates over ONE
+   batch and could not see a game both players just lost;
+3. the **cascade** question becomes live, needing a second pass that does not exist.
+
+Placing before makes the two KOs **one simultaneous batch**, which is §8.1's own
+model, so **there is no second pass to cascade into**. The cost is that the row is
+announced before the condition it names — which is **already this family's
+narration** (D98's "even if it is Knocked Out", pinned in `rockyHelmet.test.ts`
+since 0.57.0 as `COUNTERS_PLACED` before `KNOCKED_OUT`).
+
+**The four ordering answers, all driven:**
+
+| question | answer |
+|---|---|
+| mutual KO | both KOs in ONE batch; defender's board swept first, so the attacking player prizes first (§8.1) |
+| the recoil's own KO cascading | swept in the SAME pass; no second sweep exists to cascade into |
+| bench-snipe KO of the holder | **fires** — there is no "in the Active Spot" clause. A benched Rocky Helmet on the identical board pays nothing |
+| non-attack damage | **never fires** — the Checkup and the mid-turn evolve KO call `collectKnockOuts` directly and skip `finishAttack` entirely |
+
+### ⚠️ The guard is the SITE, three times over
+
+- **"by an attack"** — `finishAttack` is the attack epilogue and nothing else.
+- **"from your OPPONENT'S"** — only `otherSeat(attackerSeat)` is scanned. A
+  Vengeful Punch on the attacker's own board, Knocked Out during this very attack
+  by the defender's Rocky Helmet recoil, pays nothing.
+- **"by damage"** — a body can only be lethal on the defender's board here because
+  this attack put it there; pre-existing lethal damage would have been swept when
+  it landed.
+
+⚠️ **AND THE ADDRESSING IS AN ACCIDENT, SO IT IS SWEPT.** `finishAttack` addresses
+the Attacking Pokémon as `players[attackerSeat].active`, true only while nothing
+can swap that Active before the epilogue. `switchActive` is the one op that could
+and lives in exactly one `trainer:` program. The sweep mirrors
+`preventBlock.test.ts`'s `attackOpKinds` and **says what it does not traverse**
+(`FIXTURE_POOL` only — the same blind spot that file's TOTAL table has, which makes
+that table a second independent enforcement). **The day it goes red the fix is NOT
+to widen the sweep: it is to give `finishAttack` the attacker's uid, which costs a
+required field on the `attackEpilogue` stage and therefore an MRV bump.**
+
+### The five structural questions
+
+1. **PARK or PERSIST? NEITHER — MRV stays 10.** `PassiveEffects` is catalog-derived,
+   looked up from the card id behind a uid on every read; nothing reaches a match
+   record. No `InPlayPokemon`, `GameState`, `PendingStage` or `EffectContinuation`
+   field. **D152's pricing verified and confirmed.**
+2. **VOICE? SYSTEM**, D141's reason verbatim — `seat` owns the DAMAGED Pokémon (the
+   attacker) while the causer is the dying holder. **Rendered under both seats and
+   READ**: naming either seat is wrong, which is what leaves "system" honest.
+3. **GUARD ASSERTED?** Yes, three ways, all driven; plus the addressing sweep.
+   **No §11 verdict owed — this slice adds no op** (asserted: the registry row's
+   only key is `passive`).
+4. **MECHANISM EXISTS?** Partly. `passivesOf` and the `"counterattack"` row did;
+   the §8.1 read site did not — exactly as D152 priced it.
+5. **GATES AN ACTION? NO, checked.** Read once, in the epilogue; refuses no
+   declaration. `redactedAttacksOf` and `GameHud` take zero diff, driven.
+
+### Mutation table (21 run — 20 caught, then 21/21)
+
+| mutation | tests failed |
+|---|---|
+| **ORDER** place the counters AFTER the sweep | 9 |
+| **ORDER** never place at all | 15 |
+| **ORDER** sweep `[attacker, defender]` instead of `[defender, attacker]` | 1 |
+| **ORDER** emit the row but do not apply the damage | 9 |
+| **ORDER** apply the damage but emit no row | 12 |
+| **ORDER** also scan the attacker's own board | 1 |
+| **GUARD** scan the attacker's board instead of the defender's | 16 |
+| **GUARD** drop the per-body lethal filter | **0 → 1** ⚠️ |
+| **GUARD** scan only the Active (invent the absent clause) | 3 |
+| **GUARD** scan only the Bench | 13 |
+| **VALUE** 4 counters as 30 HP | 12 |
+| **VALUE** store the counters (4) not the HP (40) | 15 |
+| **VALUE** merge the fields — author as `damageAttacker` | 11 |
+| **VALUE** drop the registry map row | 21 |
+| **WIRING** `passivesOf` folds `damageAttacker` into the KO number | 18 |
+| **WIRING** `passivesOf` never folds it | 15 |
+| **WIRING** MAX over holders instead of SUM | 1 |
+| **WIRING** counters land on the defender's Active | 11 |
+| **LABEL** `"counterattack"` → `"ability"` (D141's defect) | 10 |
+| **LABEL** `"counterattack"` → `"attack"` | 10 |
+| **VOICE** render under `seat` instead of system | 7 |
+
+⚠️ **THE SURVIVOR IS THE MOST USEFUL LINE IN THIS SECTION.** Dropping the per-body
+`doomed.has(uid)` check failed **nothing** on the first pass, because
+`koRecoilOf` short-circuits when nothing on the board is lethal — so every board in
+the file either never entered the loop or had **all** its holders dying. The only
+shape that separates them is **two holders, one Knocked Out and one that takes the
+snipe and lives**: the truth is 40 and the mutant says 80. Added as a witness; the
+second pass is **21/21**.
+
+### Cost
+
+**1 `PassiveEffects` field, 1 `passivesOf` term, 1 reader (`koRecoilOf`),
+1 read site, 1 registry row, 1 fixture, 1 deck** (`VENGEFUL_PUNCH_DECK` — its own
+60 so `COUNTERATTACK_DECK`'s and `ROCKY_HELMET_DECK`'s seeded boards stay
+byte-identical). **No op, no event, no `COUNTERS_PLACED` member, no log arm, no
+error code, no park, no prompt, no redact arm, no projection, no persisted shape,
+no web/DB/`@luminous/schema` diff.** `vengefulPunch.test.ts` (**33 tests,
+SEED-FREE**), **three re-pointed pool-wide guard cases and two re-pointed
+stays-LOUD witnesses, none deleted.** engine **0.106.0**, `MATCH_RECORD_VERSION`
+**UNCHANGED at 10**. The slice was GREEN in its own worktree; **the merged test
+total for D157 + D158 + D159 is recorded in `progress.md`** rather than quoted
+per-slice here, because a worktree figure is not a repo figure and three parallel
+slices cannot each claim the same delta.
+
+### Still unmapped after D158
+
+- **The §9 recoil family's ALWAYS-ON half is CLOSED, 5/5** (Cacnea, Cacturne,
+  Stunfisk, Rocky Helmet, Vengeful Punch) — **against the five-set catalog**. See
+  the FLOOR note above: the count owes a re-run against 978 / 6.
+- **Mabosstiff `sv02-143` "Comeuppance" is the family's LAST printing** and is
+  unchanged by this slice: same duration, same body, same §9 site as Scary Fangs,
+  with the amount read off the damage done to the holder. The regex, op, field,
+  reader, §10 clears and read site are ALL built (D152); the **damage-dealt
+  channel** (remainder item 4's Iron Moth `sv06.5-009` / Camerupt `sv03-032`
+  neighbourhood) is not. **Do it AFTER that channel, never before.** Still LOUD.
+- **Munkidori ex `sv06.5-037`/`-083`/`-091` "Oh No You Don't"** is new on the list:
+  the same KO antecedent with a Prize-denying consequent, and the §8.1 sweep is now
+  built for it. It would ride `planPrizes`' existing `onKoPrizeGuard` seam
+  (Glimmora's) rather than the recoil.
+- **Exp. Share `sv01-174`** (move a Basic Energy) and **Lucario `sv01-114`
+  "Avenging Knuckle"** (+120 damage) are the same antecedent with two more
+  consequents, both unmapped and both now named rather than left in a census.
+
+## D159 — the ALWAYS-ON ATTACKER FILTERS: `Prevent all damage done to {this Pokémon | your Benched Pokémon | Pokémon that don't have a Rule Box} by attacks from …` — 5 printings / 4 sentences / THREE mechanisms, and `DAMAGE_DEALT.prevented` had been UNRENDERED since 0.58.0 (engine 0.106.0, `MATCH_RECORD_VERSION` unchanged at 10)
+
+Item 3 of D156's remainder list — the half of §D146's attacker-filter census that
+never reaches an attack. **FIVE printings over FOUR sentences and THREE
+mechanisms.** Built in an ISOLATED WORKTREE in parallel with D157 and D158, and
+authored against a pre-D157 base, so its labels were renumbered to D159 at merge.
+
+### ⚠️ The list said SIX, and six is the census figure, not the remainder
+
+| claim on the list | verdict |
+|---|---|
+| "6 printings" | **RIGHT about the pool and WRONG about the work.** The local D1 returns six rows for "prevent all damage … by attacks from" outside `attacks_json`; the SIXTH is Mimikyu `sv02-097` "Safeguard", simulated since 0.58.0. §D146's own census sentence says so in a parenthesis. **Five was always the remainder.** |
+| "4 sentences" | **EXACT.** |
+| "Dachsbun carries a SECOND clause" | **TRUE, and it is `This Pokémon can't be Burned.`** — a §12 status immunity, 3 more printings in the pool, LEFT LOUD |
+| the four card names / ids | **ALL CORRECT**, re-queried per printing. Nothing misnamed anywhere in the repo. |
+| (absent from every list) | **Neutralization Zone is an ACE SPEC**, and it prints a SECOND sentence too (a discard-pile retrieval restriction, 1 sibling, no reader). Both LOUD. |
+
+This is D142's floor rule paying out again, on a failure mode new to the standing
+shape: **a count that is TRUE of the census and FALSE of the work**, because the
+census counted what the pool prints and four handoffs quoted it as what was left.
+
+### The census, run as its own question (local D1, 890 rows / 5 sets, 2026-08-03)
+
+`abilities_json OR effect LIKE '%by attacks from%'` → **6 rows**, all always-on:
+
+| id | name | printed gate | mechanism |
+|---|---|---|---|
+| `sv02-097` | Mimikyu "Safeguard" | attacker's RULE BOX (ex/V) | **already built** (`preventDamageFromExV`, D107) |
+| `sv01-099` | Dachsbun "Well-Baked Body" | attacker's TYPE `{R}` | `preventDamageFromType` |
+| `sv03-078` | Bellibolt "Insulator" | attacker's TYPE `{L}` | `preventDamageFromType` |
+| `sv03-201` | Bellibolt (Illustration rare) | — | (reprint, same row) |
+| `sv03-070` | Thundurus "Adverse Weather" | **NONE** — the ZONE is narrowed | `preventBenchDamageWhileActive` |
+| `sv06.5-060` | Neutralization Zone (Stadium) | attacker ex/V **and** target no-Rule-Box | `preventDamageToNoRuleBoxFromExV` |
+
+`FIXTURE_POOL` was swept as a **SEPARATE** population (278 entries / 197 real ids /
+12 `swsh10.5`): it prints neither sentence on any fixture and held none of the five
+cards.
+
+**⚠️ AND THE "FLOOR" THIS SLICE WROTE DOWN HAS SINCE BECOME A DEBT — READ IT WITH
+D160 BESIDE IT.** This section originally said *"five is exact against today's D1
+and a FLOOR against the 76 lost `swsh10.5` rows no population can see"*. Those rows
+are **no longer lost**: D160 re-ingested the set and checkpointed it, so the local
+D1 is **978 rows / 6 sets** (`sv01` 258, `sv02` 279, `sv03` 230, `sv06.5` 99,
+`sve` 24, `swsh10.5` **88**) and every one of the 88 is queryable. The **890 / 5**
+figure above is left as honest provenance — it is the population this slice
+actually queried — but **"6 rows" and "five printings" are now FLOORS that OWE A
+RE-RUN against 978 / 6**, and D160 did not run this particular census, so no
+replacement figure is quoted here.
+
+### ⚠️ Three mechanisms, and the READ SITES are the ground
+
+|                    | Dachsbun / Bellibolt | Thundurus | the Stadium |
+|--------------------|----------------------|-----------|-------------|
+| source of the rule | the damaged body     | its side's ACTIVE | **no Pokémon** |
+| rides              | `passivesOf`         | a dedicated scan  | `stadiumEffectsOf` |
+| §9 Ability-lock    | SUPPRESSES it        | SUPPRESSES it     | **cannot reach it** |
+| Feint Attack `ignoreWR` | **NULLS it**    | leaves it standing | leaves it standing |
+| seat derived?      | n/a (the holder)     | the holder's OWN  | **none — both sides** |
+
+The last two rows are what forbid a shared record: a consumer that refuses what
+another pays (D155). Both are DRIVEN, the `ignoreWR` pair off **one** printed
+attack at `placeSnipe`'s bench arm.
+
+**⚠️ THE `ignoreWR` SPLIT IS THE SHARPEST THING IN THE SLICE, AND IT IS DRIVEN
+AGAINST ITSELF ON ONE PRINTED ATTACK.** `fix-feint` is LIGHTNING, so at
+`placeSnipe`'s bench arm it goes **THROUGH** a benched Bellibolt's own `{L}` filter
+(50 lands — the aura is an effect on the very Pokémon the clause names) and is
+**STOPPED DEAD** by Thundurus's shield on the identical declaration (0,
+`prevented: true` — the aura's source is that pick's own side's ACTIVE). A
+no-`ignoreWR` control on the same body (Rotom, also Lightning) nulls the 20, so the
+first case cannot be passing because the filter was never live. That is D151's
+`placeSnipe`/`snipeActive` reading applied to a PREVENTION rather than to a
+subtraction: *"any effects on that Pokémon"* scopes the TARGET, so it nulls the
+holder-side preventions and leaves the two whose source is another body or no body.
+
+### ⚠️ THE RULE BOX WAS NOT ANSWERED TWICE
+
+`cards.ts hasRuleBox` (suffix families ∪ the "Radiant " prefix) is the engine's
+existing answer, already read by Artazon's `basicPokemon.noRuleBox` search filter,
+and this slice **NEGATES** it rather than writing a second one; `isExOrV` (D107,
+narrower — no VMAX/VSTAR/GX) is the attacker end. **The asymmetry is PRINTED, not
+chosen**: the protected side is filtered by rule box and the attacking side by the
+ex/V pair, and a **VMAX attacker under the Stadium is the single board that
+separates the two predicates** (D117's Ceruledge assertion, re-run on the other end
+of the attack). ACE SPEC is a Trainer subtype and reaches no Pokémon-only check —
+`hasRuleBox`'s own doc block already said so.
+
+**THE ATTACKER'S TYPE HAD A READING AND IT WAS REUSED.** `Card.types.includes` is
+what Weakness/Resistance do two lines later and what `opponentActiveHasType`
+(D118's parameterised-on-one-printing clause) does; `preventsAttackerType` is that
+read, not a fourth one. The field is typed `PokemonType` and not `BasicEnergyType`
+**because the READ is `Card.types`** — Colorless and Dragon are real Pokémon types
+with no Basic Energy — and it is PARAMETERISED on the token rather than split into
+two flags, D118's rule where the evidence is thinnest. It is a LIST in the
+`passivesOf` aggregation and an optional SCALAR on the interface,
+`damageBonusBeforeWRIf`'s idiom, because the fold is over the holder's passive PLUS
+every attached Tool and a scalar could only ever be last-wins.
+
+### Thundurus is in this family by census adjacency and filters NO attacker
+
+Its object is "your opponent's Pokémon" — every attacker there is. What it narrows
+is the PROTECTED side, which is why `benchShieldedByActive` takes no `attacker`
+argument at all. It is the aura-scan family's **EIGHTH** member and its **FIRST
+same-seat cross-body** one (`disabledAbilityUids` / `seatRemovesWeakness` /
+`hasFreeRetreatAura` / `opposingRetreatSurcharge` / `opposingRetreatBlocked` /
+`hasFreeRetreatSelf` / `opposingAttackDebuff` / this).
+
+### ⚠️ The VOICE finding — 45 versions old and nothing rendered it
+
+`DAMAGE_DEALT.prevented?: true` has been emitted since **0.58.0**; `log.ts` never
+rendered it, so a fully prevented hit read *"dealt 0 damage to <name>"* —
+indistinguishable from an attack that does nothing, the exact failure mode
+`ATTACK_EFFECT_PREVENTED` exists to avoid, one field away on the same event union.
+This slice takes the ways a hit can be nulled from **two to five**, and **three of
+the five are invisible on the damaged card itself**. Fixed: `" · prevented"`,
+placed **LAST** (prevention is §8.5's last step and SUPERSEDES the reduction the row
+already reports, so `"· reduced 20 · prevented"` reconstructs the pipeline in the
+order the engine ran it).
+
+**The crumb names the FACT and not the RULE, and that is forced twice over:** this
+is the one event in its family whose ROW is filed under `otherSeat(seat)` — the
+ATTACKER — while `seat` owns the damaged Pokémon (D136's finding 1), so a crumb
+naming an owner, a turn or a source would be spoken from the wrong chair; and the
+source is **unknowable at that site anyway**, five rules now setting one flag the
+event deliberately carries no member to discriminate. **Rendered under both seats
+and READ** — the Stadium is the only prevention in the engine that can fire for
+either player, so it is the one that puts the same crumb under both names.
+
+### ⚠️ TWO PRINTED CLAUSES STAY LOUD, EACH WITH ITS NEIGHBOURHOOD MEASURED
+
+Dachsbun's sentence OPENS with *"This Pokémon can't be Burned."* — a §12 status
+IMMUNITY with **3 more printings in the pool** (Pachirisu `sv01-068`/`-208`
+"Electricity Pouches" — *"can't be Paralyzed"*; Therapeutic Energy `sv02-193` —
+*"can't be affected by those Special Conditions"*), gating the status APPLICATION
+path rather than the damage pipeline, with no field on `PassiveEffects` any read
+site would consult. Neutralization Zone's second paragraph — *"This card can't be
+put into your hand or deck from the discard pile."* — restricts DISCARD-PILE
+RETRIEVAL, has **1 sibling** (Poké Vital A `sv06.5-062`) and **no reader
+anywhere**: no op, no `CardFilter` and no zone rule consults a card's own
+retrievability. Both are carried VERBATIM on the fixtures and PINNED by a case, so
+a future census greps a fixture that says what the printing says — D156's omission
+failure mode, applied to a CLAUSE instead of to a whole Ability.
+
+### ⚠️ The §9 pair is driven on ONE board, and one half of it is provably undriveable
+
+Ting-Lu ex `sv02-127` "Cursed Land" is the only lock in the registry whose own
+attack can trigger any of these preventions (it is an **ex**, so the Stadium sees
+it), which makes one board show the lock silencing Dachsbun's own aura —
+`passivesOf(...).preventDamageFromTypes` goes `["Fire"] → []` — while **Land
+Scoop's 150 is still nulled**, because no Ability-lock can reach a Stadium;
+removing the Stadium is the control and the 150 lands.
+
+**What CANNOT be driven end to end by any board this pool prints is the §9 gate on
+Thundurus's shield**, and the reason is structural rather than a gap in effort: the
+shield only shows on BENCH damage, every §9 lock source must occupy its own side's
+ACTIVE spot, and **no locking body in the registry has an attack that deals DAMAGE
+to the opposing Bench** (Land Scoop places COUNTERS, which no prevention touches —
+D138/D139). So that gate is asserted on a real, legal board with the lock live and
+the finding is written down rather than worked around.
+
+### The five structural questions
+
+1. **PARK/PERSIST — NEITHER, and the dodges were priced.** `MATCH_RECORD_VERSION`
+   stays **10**. D124's trigger is *"a required key appeared on `InPlayPokemon`"*
+   and **no key moved at all**: all three fields live on the CATALOG (`registry.ts`
+   types), the two new scans are pure functions of the current state, nothing is
+   stamped, and no op payload, `MatchRecord` field or persisted shape was touched.
+   **The dodges were priced and REFUSED (D155's rule):** a "shielded" flag cached
+   on `InPlayPokemon` and a seat-level "prevention live" cache were both considered
+   and rejected — every read site already passes the CURRENT state, so a cached one
+   could only go stale on a Boss's Orders, a retreat or a promotion, and would have
+   bought a bump for nothing.
+2. **VOICE — a row DID move, for the first time in this family since D153.** See
+   the crumb above.
+3. **GUARDS SWEPT, NOT LISTED.** The producer set is discovered from the registry
+   rather than named, in all three directions, so a sixth row added without a case
+   fails there; §D146's already-built sixth printing is asserted beside them, which
+   is the line that makes the count claim checkable. **What the sweep does NOT
+   traverse: it enumerates `FIXTURE_POOL`, so a registry row for a card with no
+   fixture is invisible to it** — the same blind spot D149's producer sweep had,
+   named rather than left.
+4. **MECHANISM EXISTS — read first, and every part of it did**: the four damage
+   sites, `hasRuleBox`, `isExOrV`, `Card.types.includes`, `stadiumEffectsOf`,
+   `disabledAbilityUids` and the `prevented` field all pre-existed. What did NOT
+   exist was the log crumb, and that was found by RENDERING rather than by reading.
+5. **NO ACTION IS GATED — CHECKED, not assumed.** `redactedAttacksOf` gates on
+   `attackLocked`, `effectiveAttackCost`/`costMet`, the §4 turn-1 rule and
+   immobilising status; none of the three fields touches cost or legality, and the
+   printed sentences never say "can't be used" — a prevented attack is pointless,
+   never illegal. **No `redact.ts` and no `GameHud.tsx` diff.** **§11
+   CLASSIFICATION TABLE: NOTHING OWED** — that table (`preventBlock.test.ts`, D150)
+   is triggered by *an op the deriver can produce*, and this slice adds **no op at
+   all**.
+
+### Mutations — 34 run, 32 caught, 2 deliberate survivors
+
+Caught: the two type tokens; the `passivesOf` collect; `preventsAttackerType`'s
+undefined-attacker arm and its token read; `benchShieldedByActive`'s source seat,
+target clause and §9 gate; `stadiumPreventsDamage`'s two predicates and its
+no-Stadium early return; each of the three new terms dropped at each of the four
+sites (9 distinct); both directions of the `ignoreWR` regrouping at `placeSnipe`;
+the log crumb dropped and the log crumb re-ordered; Dachsbun's unread Burn clause
+dropped from the fixture; the Stadium's unread second paragraph dropped;
+Thundurus's Ability misnamed; the `sv03-201` reprint row dropped; and the reprint
+given its own equal-but-distinct object.
+
+**Survivors (both kept, both argued):** dropping `benchShieldedByActive` at
+`attack.ts`'s main hit and at `snipeActive`. Both targets are ACTIVE bodies and the
+scan's TARGET clause is "benched", so the reads are unreachable **by construction**.
+They are kept under the codebase's own standard for exactly these sites — the
+`attackDamageBlocked` doc block's *"unreachable by construction and are guarded
+anyway, which costs one read and removes a standing assumption"* — and the
+unreachability is turned into an ASSERTION on the scan (`benchShieldedByActive`
+reads FALSE for an Active holder) rather than left as a comment. D154's
+delete-the-free-guard rule is about a free TEST; these are free READS whose absence
+is precisely the trap D150 found at `placeSnipe`.
+
+### Cost
+
+**2 `PassiveEffects` fields, 1 `StadiumEffects` field, 3 new `continuous.ts`
+functions, 5 registry rows on 4 programs, 4 read sites at 2–3 terms each, 1 log
+crumb** — no new op, event, error code, prompt, park, regex, deriver arm, redact
+arm or projection, and **no web/DB/`@luminous/schema` diff at all**. 5 new fixtures
+(all COMPLETE against the manifest — no `INCOMPLETE` declaration owed), 1 new deck
+(`ATTACKER_FILTER_DECK` — its own 60 so `SAFEGUARD_DECK`'s seeded boards stay
+byte-identical, D152's move), `attackerFilter.test.ts` (**43 tests**), 1 re-pointed
+stays-LOUD witness and none deleted (`safeguard.test.ts`), `catalogManifest.ts`
+regenerated. engine **0.106.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 10**. The
+slice was GREEN in its own worktree; **the merged test total for D157 + D158 + D159
+is recorded in `progress.md`** rather than quoted per-slice here.
+
+### Still unmapped after D159 — ranked by cost
+
+- **The always-on damage REDUCTIONS — 2 printings / 2 sentences (§D147's census,
+  INHERITED, and now the LAST item in this neighbourhood).** Rock Chestplate
+  `sv01-192` (a Tool with an energy-type gate on the HOLDER) and Hariyama
+  `sv02-113` "Arm Thrust Practice" (a SEAT-WIDE aura). **This slice buys them more
+  than D151 did:** Rock Chestplate's holder-type gate is `preventsAttackerType`
+  with the ends swapped (read the HOLDER's `Card.types` instead of the attacker's)
+  and Hariyama's seat-wide reading is `benchShieldedByActive` with the Bench clause
+  dropped — both are one scan each, and the §9 / `ignoreWR` answers are already
+  decided by the table above.
+- **The STATUS-IMMUNITY family — 4 printings / 3 sentences, NEW and measured here.**
+  Dachsbun `sv01-099` (*"can't be Burned"*), Pachirisu `sv01-068`/`-208`
+  (*"can't be Paralyzed"*) and Therapeutic Energy `sv02-193` (*"can't be affected
+  by those Special Conditions"* — a Special Energy, and it also RECOVERS). It gates
+  the §12 APPLICATION path (`applyStatus`, interpreter.ts) and the Checkup, not
+  §8.5, so it shares nothing with this slice but the card. One `PassiveEffects`
+  field (a status list) and one gate at `applyStatus`; the Energy printing needs an
+  `EnergyProgram` surface that does not exist.
+- **DISCARD-PILE RETRIEVAL RESTRICTIONS — 2 printings, NEW.** Neutralization Zone
+  `sv06.5-060` and Poké Vital A `sv06.5-062`, both *"This card can't be put into
+  your hand or deck from the discard pile."* **No reader exists**: no op, no
+  `CardFilter` and no zone rule consults a card's own retrievability. Cheap only
+  once something searches the discard pile for a named card.
+- **`preventDamageFromExV` and `preventDamageFromType` are ONE MERGE AWAY and the
+  merge was refused.** Grounds are in `registry.ts`; revisit only if a third
+  attacker-class gate lands, because the discriminator is whether the gate reads a
+  NAME PARSE or a catalog FIELD.
+
+## D160 — HARDENING, NOT A CARD SLICE: the `swsh10.5` RE-INGEST — `priorState` becomes `history`, `CATALOG_STATES` survives its own states coinciding, and the TWELVE fixtures nothing could check are diffed field by field for the first time (engine 0.106.0 → 0.106.1, `MATCH_RECORD_VERSION` UNCHANGED at 10, **0 engine lines**)
+
+Item 7 of D156's remainder list — *"an ingest run, not a slice"*, and the one item
+on that page that was not engine work. It ran. Everything below follows from it,
+and the shape of the slice is **D156's own artefact being paid back by the event it
+was built to survive**: the manifest went red in three separate places the moment
+the catalog changed under it, which is exactly what a pinned claim is for.
+
+### The re-ingest, and the four-axis reconciliation
+
+`swsh10.5` was re-ingested and `PRAGMA wal_checkpoint(TRUNCATE)` returned
+`0|0|0` — the missing half of the original loss, since D156's whole finding was
+that the first ingest had lived in a write-ahead log nobody checkpointed.
+
+| | before (D156's measurement) | after |
+|---|---|---|
+| `select count(*) from cards` | 890 | **978** |
+| `select count(*) from sets` | 5 | **6** |
+| `select count(*) from series` | 1 | **2** |
+| sqlite bytes | 651,264 | **708,608** |
+| sqlite mtime | 2026-07-27T07:02:11Z | **2026-08-03T09:22:30Z** |
+| manifest `printed` rows | 193 | **205** |
+| manifest `absent` | 12 | **0** |
+
+**⚠️ THE RECONCILIATION IS BY SUBTRACTION ON FOUR AXES, NOT ONE, AND THAT IS THE
+WHOLE GUARD AGAINST A RE-INGEST THAT BROUGHT BACK THE WRONG ROWS.** The restored
+set's own contribution is MEASURED off today's file — rows **88**,
+`legal_standard = 0` **88**, rows-with-attacks **73**, straight-apostrophe-in-
+attacks **33** — and subtracted from the live counts:
+
+```
+978 − 88 = 890      rows
+851 − 88 = 763      legal_standard = 0
+809 − 73 = 736      rows with attacks
+359 − 33 = 326      straight apostrophe in attacks_json
+```
+
+**All four match D156's committed shrunken-state numbers EXACTLY.** A re-ingest of
+a *different* 88 rows reconciles on the row count alone and fails the other three;
+this is the only check available for a population nothing can query any more, so it
+is made on every axis the manifest records. `setRows` 5 → **6** and `serieRows`
+1 → **2** complete it structurally: the `swsh` **serie** had to come back before its
+set could, which is the half of the restore that cannot be faked by inserting
+`cards` rows.
+
+### The manifest's two states stopped being two — and the fix is a CHECK, not a deletion
+
+D156 wrote the state table as an object literal with two COMPUTED keys:
+
+```ts
+const CATALOG_STATES: Record<number, number> = {
+  [M.rows]: M.setRows,
+  [M.priorState.rows]: M.priorState.setCount,
+};
+```
+
+The restore made both states **978 → 6** and the file **stopped compiling**
+(**TS1117**, duplicate property). That is the wrong failure: the construct exists so
+that a census comment quoting a row count must also name its set count, and two
+states legitimately naming the same population is now the **EXPECTED** condition.
+
+Reworked into a LIST plus a derived lookup: `CATALOG_STATE_LIST` holds
+`{ rows, sets, population }` per state and `CATALOG_STATES` is a `ReadonlyMap`
+built from it. Coincidence collapses silently, as it should. **What must still go
+RED is two states agreeing on ROWS and disagreeing on SETS** — then the lookup has
+to pick one and the sweep silently stops enforcing the other — and since
+`new Map(...)` would resolve that by LAST-WINS, it is asserted as its own named
+case rather than left to the builder. The two states carried today are **978 / 6**
+(the file on disk, and identically the catalog before the loss) and **890 / 5**
+(the outage window).
+
+### `priorState` → `history`: the episode as HISTORY, not as a live divergence
+
+Every assertion in `priorState` was false the moment the set came back — it named a
+`missingSet`, a `missingRows`, a `lastSeen` and a `firstMissing` for a set that is
+present. The block is REPLACED, in the GENERATOR (`scripts/catalog-manifest.ts`,
+which is the source of truth — a hand edit to `catalogManifest.ts` reverts on the
+next regeneration), by:
+
+```ts
+history: {
+  set, lastSeen, firstMissing, restored,
+  contributes: { …MEASURED off today's file… },
+  shrunken:    { …RECORDED, D156's census of a population nothing can query… },
+  censusedInTheGap: [ … ],
+}
+```
+
+**⚠️ WHY THE BLOCK STAYS AFTER THE RESTORE, WHICH IS THE POINT OF THE REWORK. The
+rows came back; the COMMENTS WRITTEN WHILE THEY WERE GONE did not change.** Every
+census in this repo dated 2026-08-03 — D154's, D155's, D156's own, and D157's,
+D158's and D159's, which state "890 rows / 5 sets" in their own headers — queried
+`shrunken`. **Those counts are FLOORS against this catalog, not totals**, and
+`censusedInTheGap` names who owes a re-run. Regenerating reproduces the block byte
+for byte (`bun run scripts/catalog-manifest.ts` then `--check` reports current).
+
+### ⚠️ A claim D156 ASSERTED that the restored set FALSIFIED
+
+D156's suite asserted `textColumns.attacksJson === categories.Pokemon` — *"every
+Pokémon row carries attacks and nothing else does"*. **True of the FIVE-set catalog
+and FALSE of the six-set one.** The counterexample came back with the set:
+**Ditto `swsh10.5-053`** has `attacks_json` NULL, because its Ability *"Sudden
+Transformation"* borrows its attacks from the discard pile.
+
+Restated as the identity that actually holds —
+`attacksJson + pokemonWithoutAttacks.length === categories.Pokemon` — with the
+exceptions **ENUMERATED rather than counted**, off a new generated
+`pokemonWithoutAttacks` field. This is the file catching its own defect class: an
+equality that was a measurement of one population read as a fact about the schema.
+
+### ⚠️ THE TWELVE FIXTURES, DIFFED FIELD BY FIELD FOR THE FIRST TIME
+
+For the whole life of these fixtures their set had no catalog rows, so nothing in
+this repo could see what they left out — they were the only surviving copies of
+rows the database had lost, and D156 could only file all twelve under
+`NO_CATALOG_ROW`. All twelve were compared against the restored rows on **name,
+category, hp, stage, evolveFrom, types, retreat, weaknesses, resistances,
+trainerType, energyType, effect, legal and regulationMark, plus every attack's and
+every Ability's name, cost, damage and effect string** — including the fields the
+fixture does NOT have, which is the omission failure mode `toEqual` on the fields
+it HAS can never see (D151's rule).
+
+**Three categories, kept apart:**
+
+| category | count | verdict |
+|---|---|---|
+| a field whose VALUE disagrees with the catalog | **ZERO** | the standing doubt is RETIRED |
+| missing a printed Ability or attack | **3** | 1 deliberate + documented, 1 harmless, 1 newly declared |
+| a printed attack at the WRONG INDEX | **1** | the SIXTH such fixture, and the first found BY the table |
+
+**⚠️ WRONG VALUES: NONE. NOT ONE FIELD ON ANY OF THE TWELVE DISAGREES WITH THE
+CATALOG.** Every attack cost, every printed damage, every attack effect string,
+every Ability effect string and every name matches the restored row. **The
+"verbatim off the local D1" doc blocks were telling the truth** — which is what
+D156 argued from arithmetic and could not check, and is now a measurement.
+
+**MISSING A PRINTED ABILITY OR ATTACK — three:**
+
+| id | card | omits | verdict |
+|---|---|---|---|
+| `swsh10.5-009` | Charmeleon | attack **"Scratch"** | see the index finding below |
+| `swsh10.5-010` | Charizard | Ability **"Burn Brightly"** | **DELIBERATE AND DOCUMENTED** — its own doc block declares it as *"A THIRD simplification"* with the reason: Burn Brightly is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides. The declaration predates any catalog that could check it and is EXACT. |
+| `swsh10.5-018` | Radiant Blastoise | Ability **"Pump Shot"** | **HARMLESS** — registry-authored (`RADIANT_BLASTOISE`, keyed by id), the same cast as Mawile `sv03-143` and Armarouge `sv01-041`: `programFor` finds the program, so a printed `abilities` array would be inert. |
+
+**⚠️ WRONG INDEX — ONE, AND IT IS NEW.** Charmeleon `swsh10.5-009` prints
+`["Scratch", "Flamethrower"]`; the fixture carries only `["Flamethrower"]`, so the
+fixture's **index 0 is the card's index 1**, and `providesEnergy.test.ts` drives it
+three times as `{ type: "attack", index: 0 }`. That is the **SIXTH reindexed
+fixture** — D156 found five (`sv06.5-026`, `sv01-124`, `sv01-079`, `sv01-032`,
+`sv01-096`) — and the **first found BY the manifest table rather than declared into
+it**, which is the table doing the job it was built for. It is a **HAZARD, not a
+bug**: nothing keys a registry program or a durated `attackIndex` on this id.
+Declared at BOTH ends — an `INCOMPLETE` entry with `reindexed: true` and a reason,
+and an amended fixture doc block that says the drop rather than only its purpose.
+
+**SYSTEMIC POOL CONVENTIONS — NOT findings, and the control group is what says so.**
+All twelve carry `legal: { standard: true, expanded: true }` where the catalog says
+`legal_standard = 0`, and all twelve have `regulationMark: null` where the catalog
+says `F`. Sweeping the **non-`swsh10.5`** real-card fixtures as a control returns
+the same shape at **179/193** and **193/193**, so these are properties of the
+fixture helpers rather than of these twelve. Three of the twelve omit `weaknesses`
+(**33/193** in the control). One value gap of the same kind: **Mewtwo VSTAR
+`swsh10.5-031`** has `evolveFrom: null` where the catalog says `"Mewtwo V"` — the
+simplified-stand-in convention **13/193** control fixtures use. It is worth naming
+only because `swsh10.5-031` **IS** a registry `attack`-map row keyed by INDEX
+(`MEWTWO_VSTAR`, "Psy Purge" idx 0), so it is the one body on this page where a
+reindex would be a real bug — **checked, and it is CORRECT**: fixture and print
+agree on `["Psy Purge", "Star Raid"]`.
+
+### ⚠️ THE COUNTS TWO SLICES "CORRECTED" DOWNWARD, SETTLED BY MEASUREMENT
+
+Re-run against the restored **978 / 6** catalog, all three text columns:
+
+| census | result |
+|---|---|
+| `less damage (before applying` | **SIX rows** — Florges `sv01-093`, Pikachu `sv02-062`, Entei `sv03-030` (an **Ability**), Houndoom `sv06.5-008`, Houndoom `sv06.5-066`, Pidove `swsh10.5-061` |
+| `more damage (before applying` | **ONE row** — Seismitoad `sv03-052`, unchanged by the restore |
+
+Five of the six are on `attacks_json`; Entei's is the Ability. So **§D149's "5
+printings" is EXACT** (arm 19f reads ATTACK effects, and there are five) and
+**§D151's "six rows" is EXACT** (six rows across all three columns). **D155's
+downward corrections of them to 4 and 5 were the outage speaking, and D156's
+judgement that they were wrong is now confirmed BY QUERY rather than by
+arithmetic.**
+
+### ⚠️ RADIANT CHARIZARD `swsh10.5-011` — the answer is YES, and it is an UNREAD PRINTING
+
+D154 concluded it was *"in NEITHER the catalog nor `FIXTURE_POOL`"*. It is now
+catalogued, and it **does** print D154's sentence: attack **"Combustion Blast"**
+({R}{C}{C}{C}{C}, 250), effect *"During your next turn, this Pokémon can't use
+Combustion Blast."*
+
+Re-running D154's census on the restored catalog returns **EIGHT rows across SIX
+names**: Lucario `sv01-114`, Skarmory `sv03-142`, Greedent ex `sv03-179`,
+Munkidori ex `sv06.5-037`/`-083`/`-091`, Radiant Charizard `swsh10.5-011`, Radiant
+Blastoise `swsh10.5-018`. **That is EXACTLY §D143's inherited "8 printings / 6
+sentences"** — six distinct attack-name sentences: Accelerating Stab, Slashing
+Steel, Slip 'n' Roll, Dirty Headbutt, Combustion Blast, Torrential Cannon. D154
+"corrected" it downward to *"SIX across FOUR names"*; **that correction was the
+outage too, and the inherited count was right all along.**
+
+Radiant Charizard is in **no fixture**, so it goes on the remainder list as the one
+UNFIELDED printing of a family the engine already reads. The deriver is
+text-driven, so it would derive correctly the day a fixture lands; it also carries
+an Ability **"Excited Heart"** (attacks cost {C} less for each Prize card the
+opponent has taken) which the engine does not read, and which is what makes the
+fixture more than a transcription.
+
+### ⚠️ The generalisation, and it is the most useful line on this page
+
+**Three downward corrections, all made during the outage, all now reversed:** D155
+corrected §D149's "5 printings" and §D151's "six rows" downward, and D154 corrected
+§D143's "8 printings / 6 sentences" downward. Every one of them was an artefact of a
+database that had silently lost a set. Meanwhile **D156 — which REFUSED to correct,
+and instead built the manifest — was right on every count**.
+
+> **A count that a query cannot reproduce is not thereby wrong. The QUERY owes its
+> scope.** A census run against a population that has changed under it reports a
+> FLOOR, and nothing in the result says so; only the scope recorded beside it can.
+
+And the residue, stated plainly rather than left to a reader to infer: **every
+census in this repo dated 2026-08-03 — D154, D155, D156, D157, D158 and D159 —
+ran against 890 / 5 and is a FLOOR against today's catalog.** They are named in
+`CATALOG_MANIFEST.history.censusedInTheGap` so the list cannot be quietly dropped
+once the episode stops feeling recent.
+
+### Cost
+
+**0 engine behaviour lines.** `scripts/catalog-manifest.ts` (the GENERATOR — the
+source of truth, and the only place any of this may be edited),
+`packages/engine/src/catalogManifest.ts` (REGENERATED, byte-stable across a second
+run), `packages/engine/src/catalogManifest.test.ts` (**22 → 24 tests**: the state-
+collision case and the `censusedInTheGap` case are new, and four existing
+assertions changed sides), `packages/engine/src/testFixtures.ts` (one doc block).
+No op, event, field, registry row, regex, prompt, park, log arm, redact arm or
+projection; no `@luminous/schema`, web, API or DB diff. engine 0.106.0 →
+**0.106.1** (a patch, on D156's precedent — a hardening slice with 0 engine lines),
+`MATCH_RECORD_VERSION` **UNCHANGED at 10**. `bun run check` GREEN exit 0 —
+**199 files / 3460 tests** (was 199 / 3458).
+
+### Still unmapped after D160
+
+- **RADIANT CHARIZARD `swsh10.5-011` IS THE ONE UNFIELDED PRINTING** of the
+  per-attack lock family (D154). The reader exists; only the fixture does not.
+- **EVERY 2026-08-03 CENSUS OWES A RE-RUN.** Named above and in the manifest. The
+  ones that matter most are the ones that priced remaining work: D158's **8 recoil
+  rows** and D159's **6 attacker-filter rows / 5 printings**, both measured over
+  five sets.
+- **The twelve fixtures are now ORDINARY.** `NO_CATALOG_ROW` is empty and the
+  totality assertions run in both directions, so a future absence on ANY set is a
+  finding rather than a known gap. The table is KEPT rather than deleted: a fixture
+  id with no catalog row is precisely the defect the manifest exists to surface.

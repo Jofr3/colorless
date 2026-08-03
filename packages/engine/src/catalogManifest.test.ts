@@ -30,16 +30,31 @@ import { FIXTURE_POOL } from "./testFixtures";
 // `legal_standard = 0` the docs' 851 is exactly this file's 763 + 88, and D147's
 // census table (2026-08-02) lists Pidove `swsh10.5-061` as a QUERY RESULT.
 // **The catalog SHRANK between 2026-08-02 and 2026-08-03** — no `cards`, `sets`
-// or `series` row for the set survives, and the main .sqlite's mtime never moved,
-// so the ingest lived in a WAL that was never checkpointed. See
-// `CATALOG_MANIFEST.priorState`, which is marked INHERITED because none of it
-// came from a query this session could run.
+// or `series` row for the set survived, and the main .sqlite's mtime never moved,
+// so the ingest had lived in a WAL that was never checkpointed.
 //
-// That reframes the two slices in front of it. D154's `FIXTURE_POOL` cards "from
-// a set the D1 does not hold" were transcribed from rows that WERE there, so the
-// twelve `swsh10.5` fixtures' "verbatim off the local D1" doc blocks are HONEST.
+// ⚠️ D160 RE-INGESTED THE SET AND CHECKPOINTED IT, AND EVERY CLAIM D156 MADE FROM
+// ARITHMETIC IS NOW CONFIRMED BY QUERY. The catalog is 978 / 6 again and
+// `CATALOG_MANIFEST.history` records the episode as HISTORY rather than as a live
+// divergence — the dates, what the restored set contributes to each count, and
+// D156's committed census of the shrunken catalog, reconciled by SUBTRACTION on
+// four independent axes.
+//
+// That settles the two slices in front of it, by measurement rather than by
+// inference. D154's `FIXTURE_POOL` cards "from a set the D1 does not hold" were
+// transcribed from rows that WERE there, and D160 diffed all twelve against the
+// restored rows field by field: **no wrong value on any field either carries**.
 // And D155's downward corrections of §D149's "5 printings" and §D151's "six rows"
-// are wrong: both counted a real catalogued card that this file has since lost.
+// were the outage speaking — re-run against the restored catalog,
+// `less damage (before applying` returns SIX rows across all three columns, FIVE
+// of them on `attacks_json`, so both original figures were exact.
+//
+// ⚠️ THE RESIDUE, AND IT IS THE MOST USEFUL LINE IN THIS FILE. The rows came back;
+// the comments written while they were gone did not change. Every census in this
+// repo dated 2026-08-03 ran against the 890 / 5 catalog and is a FLOOR against
+// this one — D154's, D155's, D156's own, and D157's, D158's and D159's, which
+// state "890 rows / 5 sets" in their own headers. `history.censusedInTheGap` is
+// the list, and `history.shrunken` is the population those numbers describe.
 //
 // Every one of those survived because it lived in a comment. This file is where
 // that stops. It reads `catalogManifest.ts` — a COMMITTED, generated measurement
@@ -88,35 +103,26 @@ const REAL_ID = /^(sv|swsh)/;
 
 const realFixtureIds = Object.keys(FIXTURE_POOL).filter((id) => REAL_ID.test(id)).sort();
 
-/** (c) Real-card fixtures with NO catalog row IN THE FILE AS IT STANDS — D154's
-    population, enumerated here for the first time. All twelve are `swsh10.5`.
+/** (c) Real-card fixtures with NO catalog row IN THE FILE AS IT STANDS. D154 found
+    the population, D156 enumerated it at TWELVE — all `swsh10.5` — and **D160
+    emptied it by re-ingesting the set.**
 
-    ⚠️ AND THE RIGHT READING IS THE OPPOSITE OF THE OBVIOUS ONE. Seven carry a doc
-    block saying the card is "VERBATIM off the local D1", some down to a byte count
-    of the effect string. Those claims are TRUE: the set was in this database when
-    they were written (`CATALOG_MANIFEST.priorState`), and it is gone now. The
-    fixtures are not unverified transcriptions — they are the only surviving copy
-    of eighty-eight catalog rows.
+    ⚠️ THE EMPTY TABLE IS A RESULT, NOT AN ABSENCE OF ONE. Seven of the twelve
+    carried a doc block saying the card was "VERBATIM off the local D1", some down
+    to a byte count of the effect string, and for the length of the outage nothing
+    in this repo could check a single one of them: they were the only surviving
+    copies of rows the database had lost. D160 diffed all twelve against the
+    restored rows field by field — name, hp, stage, evolveFrom, types, retreat,
+    weaknesses, resistances, effect, and every attack's and Ability's cost, damage
+    and effect string — and **found no wrong VALUE on any field any of them
+    carries.** The three real findings are omissions, and they are declared in
+    `INCOMPLETE` below rather than here, because they now have catalog rows.
 
-    What the list therefore enumerates is EXPOSURE, not error: every census run
-    since 2026-08-03 is blind to these twelve cards and to the 76 more that never
-    reached the pool, so a "this is the whole mapped set" claim made against
-    today's file can UNDERCOUNT. Re-ingesting `swsh10.5` is priced on the
-    remainder list; this table is what makes the gap impossible to forget. */
-const NO_CATALOG_ROW: Record<string, string> = {
-  "swsh10.5-009": "Charmeleon — the swsh-era SPELLED-OUT discard notation (D43).",
-  "swsh10.5-010": "Charizard — Charmeleon's twin on the same spelled-out notation.",
-  "swsh10.5-018": "Radiant Blastoise — 'Pump Shot', a registry-authored Ability.",
-  "swsh10.5-022": "Gyarados — 'Wreak Havoc', the second `programPerHeads` printing (D130).",
-  "swsh10.5-025": "Wimpod — 'Punk Out', the tenth retreat-COST printing (D114).",
-  "swsh10.5-026": "Golisopod — the multi-clause requirement witness (D125).",
-  "swsh10.5-027": "Pikachu — 'Buddy Bolt', a conditional-damage clause hapax (D115).",
-  "swsh10.5-031": "Mewtwo VSTAR — 'Psy Purge', the registry's second index-keyed attack (D97).",
-  "swsh10.5-032": "Natu — a conditional-damage clause witness (D120).",
-  "swsh10.5-035": "Sylveon — 'Wonder Flash', a conditional-damage clause witness (D120).",
-  "swsh10.5-055": "Snorlax — 'Block', the only continuous retreat-lock aura in the pool (D113).",
-  "swsh10.5-061": "Pidove — the SECOND printing of D149's 20 debuff, and the row that made §D149's '5 printings' and §D151's 'six rows' overcount the CATALOG (D155).",
-};
+    The table is KEPT rather than deleted. A fixture id with no catalog row is
+    precisely the defect this file exists to surface, the entry cost is one line,
+    and the suite below is total in both directions — so an undeclared absence
+    fails whether the table is empty or not. */
+const NO_CATALOG_ROW: Record<string, string> = {};
 
 /** (b)+(d) Fixtures that do not carry the whole printed card, each with the
     reason it does not. The pool is deliberately a set of SIMPLIFIED stand-ins —
@@ -185,16 +191,59 @@ const INCOMPLETE: Record<
   // — pre-evolutions and one deliberate Ability omission.
   "sv03-061": { attacks: ["Tail Smack"], why: "Finizen — declared: 'NO ATTACKS are carried … giving it an attack would only invite a case to use the wrong one'. It exists to be retreated in and evolved." },
   "sv06.5-039": { abilities: ["Subjugating Chains"], why: "Pecharunt ex — declared in its own doc block, which is also the block that states the standard: omit an unexercised printed field rather than 'claim a verbatim card while quietly dropping one'." },
+  // — ⚠️ THE THREE `swsh10.5` OMISSIONS, CHECKABLE FOR THE FIRST TIME (D160). For
+  //   the whole life of these fixtures their set had no catalog rows, so nothing
+  //   in this repo could see what they left out; D156 could only file all twelve
+  //   under `NO_CATALOG_ROW`. The re-ingest turns that list into this one. The
+  //   other nine are COMPLETE, and no field on any of the twelve carries a wrong
+  //   VALUE — the "verbatim off the local D1" doc blocks were telling the truth.
+  "swsh10.5-009": {
+    attacks: ["Scratch"],
+    reindexed: true,
+    why: "Charmeleon — the SIXTH reindexed fixture and the first found by this table rather than declared into it. The fixture carries only 'Flamethrower', which the card prints at INDEX 1 behind 'Scratch' ({R}{C}, 30), so `providesEnergy.test.ts`'s three `{ type: 'attack', index: 0 }` declarations drive Flamethrower under a number the print does not give it. Its doc block declared the simplification's PURPOSE (the swsh-era spelled-out discard notation) and not the DROP; now declared at both ends. Hazard, not bug: nothing keys a registry program or a durated `attackIndex` on this id.",
+  },
+  "swsh10.5-010": { abilities: ["Burn Brightly"], why: "Charizard — declared in its own doc block as 'A THIRD simplification, beyond the two the header declares', with the reason: 'Burn Brightly' is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides. The declaration predates any catalog that could check it and is exact." },
+  "swsh10.5-018": { abilities: ["Pump Shot"], why: "Radiant Blastoise — the registry-authored-Ability cast (`RADIANT_BLASTOISE`, keyed by id), same shape as Mawile sv03-143 and Armarouge sv01-041: `programFor` finds the program, so the printed `abilities` array would be inert. Its printed attack 'Torrential Cannon' rides along at its PRINTED index 0 and is D154's fifth per-attack-lock printing." },
 };
 
-/** (e) The two catalog STATES, and the set count each one owes. A census comment
-    quoting a row count must say which population it means — that is exactly the
-    information ~20 comments left out, and it is why "978" read as fiction to the
-    slice that only had today's file to check it against. */
-const CATALOG_STATES: Record<number, number> = {
-  [M.rows]: M.setRows,
-  [M.priorState.rows]: M.priorState.setCount,
-};
+/** (e) The catalog STATES a census comment could be quoting, and the set count
+    each one owes. A comment quoting a row count must say which population it
+    means — that is exactly the information ~20 comments left out, and it is why
+    "978" read as fiction to the slice that only had the shrunken file to check it
+    against.
+
+    ⚠️ WHY A LIST AND A `Map` RATHER THAN AN OBJECT LITERAL (D160). D156 wrote this
+    as `{ [M.rows]: M.setRows, [M.priorState.rows]: M.priorState.setCount }`, which
+    stopped COMPILING the moment the catalog was restored: both states became
+    978 → 6 and the computed keys collided (TS1117). Deleting a key would have
+    deleted the check, and hard-coding one would have re-introduced the copied-
+    forward number this whole file exists against. So the states are declared as a
+    LIST — each with the population it names — and the lookup is derived from it.
+
+    Two states coinciding is now the EXPECTED condition and must be silent: the
+    catalog before the loss and the catalog after the restore are the same 978 / 6,
+    and a future re-ingest could make a third agree with them. What must still go
+    RED is two states agreeing on ROWS and disagreeing on SETS, because that is the
+    case where the sweep below would have to pick one answer and would silently
+    stop enforcing the other. A `Map` built by `new Map(...)` would last-wins that
+    away, so it is asserted as its own case rather than left to the builder. */
+const CATALOG_STATE_LIST: readonly { rows: number; sets: number; population: string }[] = [
+  {
+    rows: M.rows,
+    sets: M.setRows,
+    population:
+      "the file on disk today — and, identically, the catalog before the loss: the re-ingest restored the state D112 measured, not a new one",
+  },
+  {
+    rows: M.history.shrunken.rows,
+    sets: M.history.shrunken.setCount,
+    population: `the catalog during the ${M.history.set} outage (${M.history.firstMissing} → ${M.history.restored}), which every census dated 2026-08-03 queried`,
+  },
+];
+
+const CATALOG_STATES: ReadonlyMap<number, number> = new Map(
+  CATALOG_STATE_LIST.map((s) => [s.rows, s.sets]),
+);
 
 /** Numbers that look like a catalog census and are not one. Everything else
     matching `N cards` for a three- or four-digit N must be a MEASURED value from
@@ -229,12 +278,19 @@ describe("the manifest is internally consistent", () => {
   it("the per-set counts sum to the row count — the SCOPE and the TOTAL are one query apart", () => {
     const summed = Object.values(M.sets).reduce((a, b) => a + b, 0);
     expect(summed).toBe(M.rows);
-    // D154's finding restated as an assertion, with D156's correction folded in:
-    // `swsh10.5` is not one of the sets TODAY, so every census against this file
-    // is blind to it — but it WAS one, so this is a live gap rather than a fact
-    // about the pool's design. Re-ingesting the set makes this fail, which is the
-    // day the twelve NO_CATALOG_ROW entries become checkable again.
-    expect(Object.keys(M.sets).sort()).toEqual(["sv01", "sv02", "sv03", "sv06.5", "sve"]);
+    // D154's finding restated as an assertion, and D160 is the day it changed
+    // sides: the list was five sets while `swsh10.5` was missing, and the comment
+    // here said "re-ingesting the set makes this fail, which is the day the twelve
+    // NO_CATALOG_ROW entries become checkable again". That day came. The list is
+    // pinned at SIX so a second silent loss is a failure and not a shrug.
+    expect(Object.keys(M.sets).sort()).toEqual([
+      "sv01",
+      "sv02",
+      "sv03",
+      "sv06.5",
+      "sve",
+      "swsh10.5",
+    ]);
   });
 
   it("the category split sums to the row count, and names all three categories", () => {
@@ -254,10 +310,17 @@ describe("the manifest is internally consistent", () => {
     expect(any).toBeGreaterThanOrEqual(Math.max(effect, attacksJson, abilitiesJson));
     expect(any).toBeLessThanOrEqual(effect + attacksJson + abilitiesJson);
     expect(any).toBeLessThanOrEqual(M.rows);
-    // Every Pokémon row carries attacks and nothing else does — the reason
-    // `attacks_json`-only censuses (D129/D130's "cards with attacks") have a
-    // denominator of their own.
-    expect(attacksJson).toBe(M.categories.Pokemon);
+    // ⚠️ D156 ASSERTED `attacksJson === categories.Pokemon` — "every Pokémon row
+    // carries attacks and nothing else does" — and the restored set brought the
+    // counterexample back with it. Ditto `swsh10.5-053` prints NO attacks at all:
+    // its Ability "Sudden Transformation" borrows them from the discard pile. So
+    // the equality was true of the FIVE-set catalog and is false of the six-set
+    // one, which is the same shape of defect this file was built for, caught by
+    // the file itself. Restated as the identity that actually holds, with the
+    // exceptions ENUMERATED rather than counted — D129/D130's "cards with
+    // attacks" denominator is `attacksJson`, never the category.
+    expect(attacksJson + M.pokemonWithoutAttacks.length).toBe(M.categories.Pokemon);
+    expect([...M.pokemonWithoutAttacks]).toEqual(["swsh10.5-053"]);
   });
 
   it("records WHICH file it measured, and when that file was last written", () => {
@@ -414,12 +477,42 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
     M.textColumns.any,
     ...Object.values(M.sets),
     ...Object.values(M.categories),
-    // Inherited, and marked as such in the manifest: the six-set catalog's own
-    // sub-population counts, which is what §D129/§D130 and §D137 quote.
-    M.priorState.legalStandardZero,
-    M.priorState.rowsWithAttacks,
-    M.priorState.straightApostropheInAttacks,
+    // The shrunken catalog's own sub-population counts, RECORDED in the manifest
+    // rather than measurable now. Kept in the allowlist because a comment written
+    // during the outage may still quote them — and because dropping them would
+    // make a real historical measurement read as an unmeasured number.
+    M.history.shrunken.legalStandardZero,
+    M.history.shrunken.rowsWithAttacks,
+    M.history.shrunken.straightApostropheInAttacks,
   ]);
+
+  it("no two catalog states agree on ROWS and disagree on SETS — the collision the Map would swallow", () => {
+    // ⚠️ THE CHECK THAT REPLACED A COMPILE ERROR (D160). As an object literal this
+    // table stopped compiling the day the two states coincided (TS1117), which is
+    // the wrong failure: two states legitimately naming the same population is the
+    // EXPECTED condition after a restore. What is a real defect is two states
+    // whose row counts match and whose set counts do not — then `CATALOG_STATES`
+    // has to pick one, and the sweep below silently stops enforcing the other.
+    // `new Map` resolves that by last-wins, so it is asserted here instead.
+    const owed = new Map<number, { sets: number; population: string }>();
+    for (const state of CATALOG_STATE_LIST) {
+      const seen = owed.get(state.rows);
+      if (seen === undefined) {
+        owed.set(state.rows, state);
+        continue;
+      }
+      expect(
+        state.sets,
+        `two catalog states claim ${state.rows} rows with different set counts — "${seen.population}" owes ${seen.sets}, "${state.population}" owes ${state.sets}`,
+      ).toBe(seen.sets);
+    }
+    // …and the derived lookup must not have lost a state to that collapse.
+    expect(CATALOG_STATES.size).toBe(owed.size);
+    // Both states are still DISTINCT populations today, which is what keeps the
+    // sweep enforcing two numbers rather than one.
+    expect(CATALOG_STATES.size).toBe(2);
+    for (const sets of CATALOG_STATES.values()) expect(sets).toBeGreaterThan(0);
+  });
 
   it("sweeps every engine source file, not a list of them", () => {
     expect(Object.keys(ENGINE_SOURCES).length).toBeGreaterThan(80);
@@ -432,7 +525,7 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
     for (const [file, source] of Object.entries(ENGINE_SOURCES)) {
       for (const match of source.matchAll(/\b(\d{3,4}) cards\b/g)) {
         const n = Number(match[1]);
-        if (MEASURED.has(n) || n in CATALOG_STATES || n in NOT_A_CATALOG_COUNT) continue;
+        if (MEASURED.has(n) || CATALOG_STATES.has(n) || n in NOT_A_CATALOG_COUNT) continue;
         offenders.push(`${file}: "${match[0]}" — not a measured number`);
       }
     }
@@ -448,7 +541,7 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
       if (file === "./catalogManifest.ts" || file === "./catalogManifest.test.ts") continue;
       for (const match of source.matchAll(/\b(\d{3,4}) cards(?: \/ (\d+) sets)?/g)) {
         const rows = Number(match[1]);
-        const expected = CATALOG_STATES[rows];
+        const expected = CATALOG_STATES.get(rows);
         if (expected === undefined) continue; // a sub-population count, not a state
         if (match[2] !== undefined && Number(match[2]) === expected) continue;
         offenders.push(`${file}: "${match[0]}" — a ${rows}-row catalog has ${expected} sets; say so`);
@@ -469,35 +562,62 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
     // A one-sided proof would not be one (D150): "no unscoped count" passes on a
     // file that quotes no count at all, so the scoped form must be PRESENT.
     const effects = ENGINE_SOURCES["./effects.ts"] ?? "";
-    expect(effects).toContain(`${M.priorState.rows} cards / ${M.priorState.setCount} sets`);
+    expect(effects).toContain(`${M.rows} cards / ${M.setRows} sets`);
     expect(effects.match(/\b\d{3,4} cards \/ \d+ sets/g)?.length ?? 0).toBeGreaterThan(10);
   });
 });
 
-describe("the set the catalog LOST is recorded, not silently absent", () => {
-  // ⚠️ THE FINDING THIS SUITE EXISTS TO CARRY. Everything below is arithmetic over
-  // numbers the repo already wrote down, checked against numbers this session
-  // measured — which is the only kind of evidence available for a population that
-  // no longer exists to be queried.
-  it("the missing set reconciles all three counts the docs quote", () => {
-    expect(M.rows + M.priorState.missingRows).toBe(M.priorState.rows);
-    expect(M.legalStandardZero + M.priorState.missingRows).toBe(M.priorState.legalStandardZero);
-    expect(M.setRows + 1).toBe(M.priorState.setCount);
+describe("the set the catalog LOST AND GOT BACK is recorded as HISTORY", () => {
+  // ⚠️ THE FINDING THIS SUITE EXISTS TO CARRY, AND D160 TURNED IT OVER. D156 could
+  // only do arithmetic over numbers the repo had written down, because the
+  // population it was reasoning about no longer existed to be queried. The
+  // re-ingest makes one side of every one of those sums measurable again — so the
+  // sums are now a RECONCILIATION between a measured present and a recorded past,
+  // and they are what would catch a re-ingest that brought back the wrong rows.
+  it("the restored set reconciles the shrunken catalog on FOUR independent axes", () => {
+    const { contributes, shrunken } = M.history;
+    expect(M.rows - contributes.rows).toBe(shrunken.rows);
+    expect(M.legalStandardZero - contributes.legalStandardZero).toBe(shrunken.legalStandardZero);
+    expect(M.textColumns.attacksJson - contributes.rowsWithAttacks).toBe(shrunken.rowsWithAttacks);
+    expect(M.straightApostropheInAttacks - contributes.straightApostropheInAttacks).toBe(
+      shrunken.straightApostropheInAttacks,
+    );
+    // FOUR and not one: a re-ingest of a DIFFERENT 88 rows reconciles on the row
+    // count alone. This is the only check available for a population nothing can
+    // query any more, so it is made on every axis the manifest records.
+    expect(M.setRows - 1).toBe(shrunken.setCount);
   });
 
-  it("the set is gone from `cards`, `sets` AND `series` — a structural loss, not a filter", () => {
-    expect(M.sets[M.priorState.missingSet]).toBeUndefined();
-    // One serie row (`sv`) for five sets: a `swsh10.5` set would have needed a
-    // `swsh` serie, and the FK chain means its absence is checkable from the
-    // counts alone.
-    expect(M.serieRows).toBe(1);
+  it("the set is back in `cards`, `sets` AND `series` — a structural restore, not a filter", () => {
+    // A card's `set_id` FKs to `sets` and a set's `serie_id` to `series`, so the
+    // loss was a missing row in all three tables and the restore had to be a row
+    // in all three. `serieRows` 1 → 2 is the `swsh` serie coming back: it is the
+    // half of the restore that cannot be faked by inserting `cards` rows.
+    expect(M.sets[M.history.set]).toBe(M.history.contributes.rows);
+    expect(M.serieRows).toBe(2);
     expect(M.setRows).toBe(Object.keys(M.sets).length);
   });
 
-  it("every fixture with no catalog row belongs to exactly that set", () => {
-    // The two facts are one fact. If a future absence appears on a DIFFERENT set,
-    // this is what refuses to let it be filed under the same explanation.
-    for (const id of M.absent) expect(id.startsWith(`${M.priorState.missingSet}-`)).toBe(true);
-    expect(M.absent.length).toBeGreaterThan(0);
+  it("NO fixture is without a catalog row — the twelve became checkable at D160", () => {
+    // The assertion that flipped. While the set was missing this read
+    // `expect(M.absent.length).toBeGreaterThan(0)` and every absent id had to
+    // belong to the lost set; now the population is empty and stays empty, and an
+    // absence on ANY set is a finding rather than a known gap.
+    expect([...M.absent]).toEqual([]);
+    expect(Object.keys(M.printed).length).toBe(
+      Object.keys(FIXTURE_POOL).filter((id) => REAL_ID.test(id)).length,
+    );
+  });
+
+  it("names the decisions whose censuses ran against the SHRUNKEN catalog", () => {
+    // ⚠️ THE RESIDUE OF THE OUTAGE, AND THE ONE THING A FUTURE SESSION MOST NEEDS.
+    // The rows came back; the comments written while they were gone did not
+    // change. Every count in these six decisions is a FLOOR against today's
+    // catalog, and the list is asserted non-empty so it cannot be quietly dropped
+    // once the episode stops feeling recent.
+    expect(M.history.censusedInTheGap.length).toBeGreaterThan(0);
+    expect([...M.history.censusedInTheGap]).toContain("D159");
+    expect(M.history.lastSeen < M.history.firstMissing).toBe(true);
+    expect(M.history.firstMissing <= M.history.restored).toBe(true);
   });
 });
