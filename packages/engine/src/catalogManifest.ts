@@ -303,6 +303,7 @@ export const CATALOG_MANIFEST = {
     "sv02-189": { name: "Superior Energy Retrieval", types: [], attacks: [], abilities: [] },
     "sv02-190": { name: "Jet Energy", types: [], attacks: [], abilities: [] },
     "sv02-191": { name: "Luminous Energy", types: [], attacks: [], abilities: [] },
+    "sv02-193": { name: "Therapeutic Energy", types: [], attacks: [], abilities: [] },
     "sv02-255": { name: "Saguaro", types: [], attacks: [], abilities: [] },
     "sv02-270": { name: "Saguaro", types: [], attacks: [], abilities: [] },
     "sv03-003": { name: "Bellossom", types: ["Grass"], attacks: ["Sleep Powder","Powerful Dance"], abilities: [] },

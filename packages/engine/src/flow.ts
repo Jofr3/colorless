@@ -26,6 +26,7 @@ import {
   drawToHand,
   freshAllowances,
   otherSeat,
+  presentStatuses,
   withActive,
   withSide,
 } from "./types";
@@ -602,6 +603,15 @@ export function settleProgram(
   events: GameEvent[],
   opts: { resumeTail?: boolean; endsTurn?: boolean } = {},
 ): ApplyResult {
+  // §12 (D174) — restore the RECOVERY invariant before anything else looks at the
+  // board. Every op that can put an Energy onto a body (`attachEnergyFrom`,
+  // `attachFromDeck`, `attachFromTop`) or move one between bodies (`moveEnergy`)
+  // runs inside a program, and every program lands here, so this ONE line is total
+  // over the interpreter where five separate call sites would have been a list to
+  // keep up to date (D169's lesson: a seam is cheaper than an enumeration). It runs
+  // ahead of the branch rather than inside it so a program that PARKS after
+  // attaching does not carry the stale condition across the player's decision.
+  const settled = recoverStatuses(result.state, events);
   if (result.kind === "parked") {
     // EFFECT_PENDING's seat is the seat that MUST RESOLVE the decision (its own
     // doc) — the park's decider when one is named (opponentMayDraw: Ortega's
@@ -609,7 +619,7 @@ export function settleProgram(
     events.push({ type: "EFFECT_PENDING", seat: result.decider ?? controller, note: result.prompt.note });
     return ok(
       {
-        ...result.state,
+        ...settled,
         phase: {
           kind: "effect:choose",
           seat: controller,
@@ -636,14 +646,14 @@ export function settleProgram(
   // DONE. A mid-tail program hands control back to the queue behind it — the
   // KO sweep's prize/promotion stages, or an attack's epilogue — so keep
   // draining rather than folding to a turn.
-  if (opts.resumeTail === true) return advance(result.state, events);
+  if (opts.resumeTail === true) return advance(settled, events);
   // An Ability that ends the turn (Koraidon "Dino Cry") seeds the turn tail
   // instead of returning to turn:action. Its program does not damage, so no
   // mid-turn KO sweep is owed — the tail's Checkup handles between-turns KOs.
   if (opts.endsTurn === true) {
-    return advance({ ...result.state, pending: turnTail(controller) }, events);
+    return advance({ ...settled, pending: turnTail(controller) }, events);
   }
-  const resumed: GameState = { ...result.state, phase: { kind: "turn:action", seat: controller } };
+  const resumed: GameState = { ...settled, phase: { kind: "turn:action", seat: controller } };
   return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
 }
 
@@ -770,6 +780,76 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
     events,
     { resumeTail: true },
   );
+}
+
+/** §12 RECOVERY (D174) — restore the invariant *no in-play Pokémon carries a
+    Special Condition that a live continuous effect recovers it from*, clearing
+    whatever it finds and announcing it as STATUS_CLEARED / "recovered". Today the
+    only printing is Therapeutic Energy sv02-193 ("The Pokémon this card is
+    attached to RECOVERS FROM BEING Asleep, Confused, or Paralyzed…"); the function
+    reads `passivesOf().statusRecovery`, so a Tool or an Ability printing the same
+    clause would arrive for free.
+
+    ⚠️ WHY THIS IS NOT SIMPLY ANOTHER `applyStatus` GATE, WHICH IS THE DESIGN
+    DECISION AND NOT AN IMPLEMENTATION DETAIL. The card prints TWO clauses and they
+    run in OPPOSITE DIRECTIONS in time. "…can't be affected by those Special
+    Conditions" is a refusal at the moment of application and is exactly an
+    `applyStatus` gate — it is `statusImmunities`, and it is where D172 left it.
+    "…recovers from being" is about a condition that is ALREADY THERE, which no gate
+    on the writer can ever see: by the time the Energy arrives, the write happened
+    turns ago. A gate answers "may this land"; this answers "what is still true".
+
+    ⚠️ AND IT IS A WRITE RATHER THAN A DERIVED VIEW, WHICH IS THE OTHER TEMPTATION.
+    The engine's idiom for a continuous effect is to DERIVE at the read site
+    (`effectiveMaxHp`, `effectiveRetreatCost`, `effectiveAttackCost`) precisely so a
+    cached value cannot go stale — D172 refused a cached "cannot be Burned" flag on
+    `InPlayPokemon` for that reason. A derived `effectiveConditionsOf` would be
+    WRONG here, and the printed word says why: "recovers" is a ONE-WAY change. A
+    Pokémon that recovered from Sleep is not Asleep again when the Energy is
+    discarded or moved away, but a subtraction at the read sites would bring it
+    straight back. So the condition really is removed, and staleness is impossible
+    for the opposite reason: there is nothing left to go stale.
+
+    ⚠️ THE ACTIVE ONLY, AND THAT IS A CLAIM ABOUT THE ENGINE RATHER THAN A
+    SHORTCUT. `applyStatus` resolves only to `players[seat].active`, and every route
+    OFF the Active Spot (retreat, a forced switch, evolution, a promotion into an
+    empty spot) runs through `noConditions()`. So a benched body's `conditions` is
+    the zero value on every reachable board, and a bench arm here would be a branch
+    no test could witness (D154). Asserted over the board in
+    therapeuticEnergy.test.ts rather than trusted.
+
+    Called at the two moments a recovery source can NEWLY cover a body: the §6.2
+    manual attach (turn.ts `attachEnergy`) and the completion of any effect program
+    (`settleProgram` below, which covers `attachEnergyFrom`, `attachFromDeck`,
+    `attachFromTop` and `moveEnergy`). Naming the moments is §8.1's own arrangement
+    — `collectKnockOuts` is called at three named moments and not globally — and
+    idempotent, so a moment named twice costs nothing but a scan. */
+export function recoverStatuses(state: GameState, events: GameEvent[]): GameState {
+  let next = state;
+  for (const seat of SEATS) {
+    const active = next.players[seat].active;
+    if (active === null) continue;
+    const recovers = passivesOf(next, active).statusRecovery;
+    if (recovers.length === 0) continue;
+    const cleared = presentStatuses(active.conditions).filter((status) =>
+      recovers.includes(status),
+    );
+    if (cleared.length === 0) continue;
+    const uid = topUid(active);
+    if (uid === undefined) continue;
+    // Only the conditions the effect NAMES come off. A Therapeutic Energy on a
+    // Burned, Poisoned, Asleep body wakes it and leaves the other two ticking —
+    // the same per-condition claim `statusImmunities` makes on the other clause.
+    let conditions = active.conditions;
+    for (const status of cleared) {
+      if (status === "burned") conditions = { ...conditions, burned: false };
+      else if (status === "poisoned") conditions = { ...conditions, poisonDamage: 0 };
+      else conditions = { ...conditions, rotation: "none" };
+    }
+    next = withActive(next, seat, { ...active, conditions });
+    events.push({ type: "STATUS_CLEARED", seat, uid, statuses: cleared, reason: "recovered" });
+  }
+  return next;
 }
 
 /** The Pokémon Checkup (§13), run whole inside its stage — no player

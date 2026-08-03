@@ -4362,8 +4362,108 @@ import type { GameState, Seat } from "./types";
     (`STATUS_IMMUNITY_DECK`). No op, no error code, no prompt, no park, no regex, no
     deriver arm, no redact arm, no `@luminous/schema` diff, no DB diff, no web diff.
     2 re-pointed D159 pins (`attackerFilter.test.ts`), `statusImmunity.test.ts`
-    (**49 tests**). Manifest **216 → 218** fixture rows. */
-export const engineVersion = "0.117.0";
+    (**49 tests**). Manifest **216 → 218** fixture rows.
+
+    ⚠️ **THREE OF THIS ENTRY'S CLAIMS WERE OVERTURNED BY D174 BELOW** — the scalar
+    (widened), the "writer that cannot reach the field" (it can now), and the
+    unreachability half of the Checkup argument (it is reachable). Kept as written,
+    with the corrections next door: this log is a record of what each slice believed
+    it had proved, and a silently edited entry is a decision reversed without a
+    trail. */
+
+/** 0.118.0 — **D174, THERAPEUTIC ENERGY `sv02-193`: the §12 family's THIRD SENTENCE,
+    its only SPECIAL ENERGY, and the first CONTINUOUS clause this engine reads off an
+    attached Energy.**
+
+      *"As long as this card is attached to a Pokémon, it provides {C} Energy. /
+        The Pokémon this card is attached to recovers from being Asleep, Confused, or
+        Paralyzed and can't be affected by those Special Conditions."*
+
+    D172 priced this at four edits, three in code the family never touches, and every
+    one of the four landed. The census held on both numbers (**4 printings / 3
+    sentences**, 978 rows / 6 sets, all three text columns, `FIXTURE_POOL` swept
+    separately) — ⚠️ **and widening the pattern by ONE verb found a family nobody had
+    counted**: `%recovers from%` returns **four more printings** (Gardevoir ex
+    `sv01-086`/`-228`/`-245` "Miracle Force", Blissey `sv01-145` "Busybody Nurse"),
+    all *"recovers from ALL Special Conditions"*, all DISCRETE, none built. This card
+    is the catalog's **only CONTINUOUS recovery**, which is exactly why it needed a
+    mechanism instead of a field.
+
+    **THE SCALAR WIDENED — `statusImmunity` → `statusImmunities: StatusName[]`.** The
+    repo's rule applied literally (*the unit of SHARING is decided by the READ site,
+    the unit of STORAGE by the WRITE sites*): D172 counted TWO writers each naming one
+    condition and got a scalar, correctly, on the evidence it had. This is the THIRD
+    writer and it names THREE, so the scalar could no longer SPELL a writer. D172
+    declined the widening only because the writer "cannot reach the field"; the new
+    `EnergyProgram.passive` is what closed that gap, so the reason expired with it.
+
+    ⚠️ **A THIRD SOURCE CLASS IN `passivesOf`, AND THE AUDIT WAS MOST OF THE SLICE.**
+    `sources` had been `[the top card's passive, ...the Tools']` since M4 and had
+    never walked `pokemon.energy`. All **ten** folded fields therefore gained an
+    attached-Energy contributor at once and each was re-read (the field-by-field
+    reading lives beside the `sources` array). Two findings worth the trip:
+    `basicHpBonus` and `damageAttacker.requiresTool` carry gates about the HOLDER and
+    the BOARD, so an Energy writing either would inherit a condition its own text
+    never states; and the twelve fields NOT folded here (`disableAbilities`, the
+    seat-wide reduction, the retreat/attack-cost auras…) are read by their own board
+    scans off `programFor(top.id)?.passive` and are **UNREACHABLE** from an Energy,
+    which is what bounds the audit to ten instead of twenty-two.
+
+    **§9 STATED THE OTHER WAY ROUND.** D172 got suppression free because a Pokémon's
+    printed passive IS an Ability. An Energy is not, so the new source is EXEMPT —
+    and the exemption is DRIVEN rather than assumed, on the one board that shows both
+    signs at once: a Klefki-locked Pachirisu holding this Energy loses its OWN printed
+    immunity and keeps the Energy's, in one `passivesOf` call. Driving it to a LANDED
+    condition is still impossible for D172's counting argument over Active Spots,
+    re-derived rather than inherited.
+
+    ⚠️ **THE RECOVERY IS A WRITE, NOT A GATE AND NOT A DERIVED VIEW.** *"Can't be
+    affected"* is an `applyStatus` gate and D172 built it. *"Recovers from"* is about
+    a condition ALREADY THERE, which no gate on the writer can see. And it is not
+    `effectiveMaxHp`'s derive-at-the-read-site idiom either, because "recovers" is a
+    ONE-WAY change: a body that recovered is not Asleep again when the Energy is
+    discarded, but a subtraction at the read sites would bring it straight back. So
+    flow.ts `recoverStatuses` genuinely REMOVES, restoring the invariant *no in-play
+    body carries a condition a live effect recovers it from* at the **two named
+    moments** a source can newly arrive — the §6.2 manual attach (turn.ts) and the
+    completion of any effect program (`settleProgram`, which covers
+    `attachEnergyFrom` / `attachFromDeck` / `attachFromTop` / `moveEnergy`). Naming
+    the moments is §8.1's own arrangement, not a shortcut.
+
+    ⚠️ **D172's NO-CHECKUP-GATE CONCLUSION SURVIVES; ITS ARGUMENT NARROWS.** Half of
+    that argument — *`applyStatus` is the only WRITER* — is untouched. The other half
+    — *"no legal sequence puts an immunity onto a body that already carries the
+    condition it refuses"* — is **FALSE as of this slice**: attaching this Energy to a
+    Paralyzed Active is exactly that sequence, and it is a printed play. No gate is
+    owed anyway, because the only printing that can open the window also CLOSES it in
+    the same instant. **The condition under which it would fall is named**: a
+    CONTINUOUS immunity with NO recovery clause — an Energy or a Tool saying only
+    "can't be Paralyzed" — and the catalog has no such row (all three
+    immunity-without-recovery printings are Pokémon Abilities, which arrive with the
+    body). ⚠️ **And D172's armed tripwire did NOT go red**, because it was armed in a
+    COMMENT: the assertion (a surgically planted Burn on Dachsbun still ticks) is
+    still TRUE — an immunity alone clears nothing — while the reasoning beside it is
+    now false. **A COMMENT CANNOT GO RED, caught on the slice that rule was written
+    for.**
+
+    **`MATCH_RECORD_VERSION` STAYS 11, DERIVED** on D124's DIRECTIONAL test. Nothing
+    reaches `GameState`: both new fields are CATALOG (registry.ts types), the
+    aggregation is a pure function of the live board and is never stamped, and the
+    recovery WRITES an existing `conditions` field rather than adding one. The one
+    shape that widened is `STATUS_CLEARED.reason` (a sixth value, "recovered"), and
+    it rides `GameEvent`, which `MatchRecord` does not store.
+
+    Cost: **1 `EnergyProgram` field (`passive`), 1 widened + 1 new `PassiveEffects`
+    field, 1 third source class + 1 new entry in `passivesOf`, 1 new flow function at
+    2 call sites, 1 widened event `reason` + 1 shared log arm**, 1 registry row
+    (`THERAPEUTIC_ENERGY`), 1 fixture (`sv02-193`, the pool's first Energy carrying
+    its printed `effect`), 1 optional `specialEnergy` param and 1 deck
+    (`THERAPEUTIC_ENERGY_DECK`). **No op, no error code, no prompt, no park, no
+    `PendingStage`, no regex, no deriver arm, no redact arm, no projection, no
+    `@luminous/schema` diff, no DB diff, no web diff.** 6 re-pointed D172 pins
+    (`statusImmunity.test.ts` ×5, `attackerFilter.test.ts` ×1), new
+    `therapeuticEnergy.test.ts` (**52 tests**). Manifest **218 → 219** fixture rows. */
+export const engineVersion = "0.118.0";
 
 export type {
   ApplyResult,

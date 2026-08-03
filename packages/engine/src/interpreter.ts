@@ -1835,12 +1835,23 @@ function applyStatus(
   // holder's OPPONENT's turn, and the self arm runs on the holder's own), and
   // asking anyway costs one read and removes a case from the reasoning.
   if (attackEffectRefused(state, seat, ctx, events)) return state;
-  // §12 (D172) — the target's own printed IMMUNITY ("This Pokémon can't be
-  // Burned." / "…can't be Paralyzed."). Read through `passivesOf` and not off the
-  // catalog row, which is the whole §9 answer in one call: the fold has already
-  // dropped a locked holder's own printed passive and already kept every attached
-  // Tool's, so a Klefki aura over Pachirisu lets the Paralysis land with nothing
-  // written here to say so.
+  // §12 (D172) — the target's printed IMMUNITY ("This Pokémon can't be Burned." /
+  // "…can't be Paralyzed." / Therapeutic Energy sv02-193's "…can't be affected by
+  // those Special Conditions"). Read through `passivesOf` and not off the catalog
+  // row, which is the whole §9 answer in one call: the fold has already dropped a
+  // locked holder's own printed passive and already kept every attached Tool's, so
+  // a Klefki aura over Pachirisu lets the Paralysis land with nothing written here
+  // to say so.
+  //
+  // ⚠️ NOT NECESSARILY THE BODY'S OWN, SINCE D174. `passivesOf` gained a THIRD
+  // source class — the attached ENERGY — so this line now reads three source
+  // classes with two different §9 verdicts (an Ability is suppressible, a Tool and
+  // an Energy are not), and it took ZERO characters to do it. That is what riding
+  // the fold buys: the whole cost of the family's third printing landed in
+  // continuous.ts and registry.ts, and the gate that decides the rule did not move.
+  // The RECOVERY half of that printing is not here at all and could not be — it is
+  // about a condition that already landed, which no gate on the writer can see
+  // (flow.ts `recoverStatuses`).
   //
   // ⚠️ PLACED AFTER `attackEffectRefused`, AND THE ORDER IS UNOBSERVABLE — SAID
   // RATHER THAN LEFT AS A COINCIDENCE. Both gates refuse the same op and produce

@@ -211,13 +211,23 @@ export type GameEvent =
       clear everything at once — the latter's `uid` is the NEW top card (the
       evolution the conditions vanished under); the remaining reasons are
       single-condition Checkup recoveries (§13) and always carry exactly one
-      entry. */
+      entry.
+
+      ⚠️ "recovered" (D174) IS THE FIRST REASON THAT IS NEITHER A PLACEMENT NOR A
+      CHECKUP STEP — a CONTINUOUS effect clearing what it covers (Therapeutic Energy
+      sv02-193, "The Pokémon this card is attached to recovers from being Asleep,
+      Confused, or Paralyzed"). It carries a SUBSET rather than everything, unlike
+      "benched"/"evolved": the effect names its conditions, so a Burned and Asleep
+      body attached to this Energy reports `["asleep"]` and keeps burning. It is a
+      new REASON and not a new EVENT because nothing about the row differs — same
+      seat/uid contract, same list, same rendering verb — and a second event for one
+      reading is D131's drift. */
   | {
       type: "STATUS_CLEARED";
       seat: Seat;
       uid: string;
       statuses: StatusName[];
-      reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded";
+      reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded" | "recovered";
     }
   /** §11 — an attack effect locked `seat`'s Active in place ("During your
       opponent's next turn, the Defending Pokémon can't retreat."). Deliberately

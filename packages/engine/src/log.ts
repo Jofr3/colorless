@@ -373,8 +373,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         case "paralysisEnded":
           return row(seat, [strong(name), plain("'s Paralysis wore off")]);
         case "benched":
-          // Follows the RETREATED row; benching clears every condition at
-          // once (§11/§12), so the list can name several.
+        case "recovered":
+          // "benched" follows the RETREATED row; benching clears every condition
+          // at once (§11/§12), so the list can name several.
+          //
+          // "recovered" (D174) shares the arm because it shares the SENTENCE:
+          // Therapeutic Energy sv02-193 prints "The Pokémon this card is attached
+          // to RECOVERS FROM BEING Asleep, Confused, or Paralyzed", so "Pachirisu
+          // recovered from Asleep" is the card's own verb with the subject
+          // resolved — D172's voice rule, met by a row that already existed. A
+          // second arm rendering the same words would be a second reading (D131);
+          // what makes the two distinguishable to a consumer is the `reason`, and
+          // what makes the list honest is that this one carries only the
+          // conditions the effect NAMES.
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
         case "evolved":
           // Follows the POKEMON_EVOLVED row; evolving clears every condition

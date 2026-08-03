@@ -103,9 +103,24 @@ export function itemTrainer(id: string): Card {
     M4 slice-5 registry authors (sv02-190 Jet, sv02-191 Luminous) so
     programFor(id) finds the EnergyProgram; the effect text is cosmetic (the
     registry keys on the id). An unauthored one (fix-special) exercises the
-    Colorless fallback. */
-export function specialEnergy(id: string, name: string): Card {
-  return { ...blank, id, name, category: "Energy", energyType: "Special" };
+    Colorless fallback.
+
+    ⚠️ `effect` IS OPTIONAL AND D174 IS THE FIRST CALLER TO PASS IT, which is the
+    D172 lesson written into the helper rather than into a comment: a printed clause
+    a census must be able to SEE has to be a string on the fixture, because a
+    COMMENT CANNOT GO RED. Therapeutic Energy sv02-193 carries both of its printed
+    paragraphs verbatim off the local D1; Jet and Luminous still pass nothing,
+    because their sentences are pinned as strings in specialEnergy.test.ts and the
+    two arrangements are allowed to differ as long as SOME assertion names each. */
+export function specialEnergy(id: string, name: string, effect?: string): Card {
+  return {
+    ...blank,
+    id,
+    name,
+    category: "Energy",
+    energyType: "Special",
+    ...(effect === undefined ? {} : { effect }),
+  };
 }
 
 /** A Trainer of a given type. Used with the REAL catalog ids the M4 registry
@@ -6671,6 +6686,27 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+
+  // — D174: the §12 family's THIRD sentence and its only SPECIAL ENERGY. —
+  /** Therapeutic Energy sv02-193 — the printing D172 priced and refused, VERBATIM
+      off the local D1 (978 rows / 6 sets, 2026-08-03) including the blank line
+      between its two paragraphs:
+
+        "As long as this card is attached to a Pokémon, it provides {C} Energy.
+         <blank>
+         The Pokémon this card is attached to recovers from being Asleep, Confused,
+         or Paralyzed and can't be affected by those Special Conditions."
+
+      ⚠️ THE FIRST FIXTURE IN THIS POOL WHOSE PRINTED CLAUSE LIVES IN `effect`, which
+      is the whole reason D172's census had to sweep three columns: an ENERGY has no
+      `abilities_json` and no `attacks_json`, so every sweep that reads only those two
+      returns the family one member short. Carried as a STRING and pinned by
+      assertion (therapeuticEnergy.test.ts), because a comment cannot go red. */
+  "sv02-193": specialEnergy(
+    "sv02-193",
+    "Therapeutic Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nThe Pokémon this card is attached to recovers from being Asleep, Confused, or Paralyzed and can't be affected by those Special Conditions.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -10313,6 +10349,54 @@ export const STATUS_IMMUNITY_DECK = deckOf({
   "fix-fighting-energy": 5, // {F}{F}{F} — Land Scoop's cost, and nothing else in the deck
   "fix-psychic-energy": 3, // {P} — Dachsbun's own "Headbutt Bounce" ({P}{C}{C}), the Armarouge board
   "fix-energy": 7, // Colorless Basic — Hot Bite, and Headbutt Bounce's two {C}
+});
+
+/** D174's THERAPEUTIC ENERGY deck (`therapeuticEnergy.test.ts`). A SEPARATE 60
+    rather than four more cards in `STATUS_IMMUNITY_DECK` above, for that deck's own
+    stated reason turned on itself: its boards are seeded, `seedFlipping` searches
+    from a fixed base, and adding a card would move every setup in a 49-case suite
+    that this slice already has to re-point. Additive beats disruptive.
+
+    The cast, and why each card is here:
+      • sv02-193 Therapeutic Energy — THE printing. Four copies, because the sharpest
+        boards need two on one body (the fold is a SUM over sources) and one in hand
+        after the setup draw;
+      • fix-statuser — the M3 status cast on one body: "Hypnosis" (idx 0, Asleep),
+        "Confuse Ray" (idx 1, Confused), "Numbing Bolt" (idx 2, flip → Paralyzed),
+        "Toxic" (idx 5, Poisoned). All three NAMED conditions and one the card does
+        NOT name, from one attacker — which is what makes "immune to exactly these
+        three" a claim about one declaration rather than a comparison across four;
+      • sv01-029 Scovillain — "Hot Bite" ({C}, 20 + Burn): the SEED-FREE application
+        of a condition this Energy does NOT name, so the negative needs no coin;
+      • sv01-068 Pachirisu — "can't be Paralyzed", the §9-SUPPRESSIBLE immunity. It
+        is here for exactly one board: under a live Klefki lock its own printed
+        immunity dies while the Energy's survives IN THE SAME CALL, which is the
+        sharpest available statement that the exemption is about the SOURCE CLASS and
+        not about the field;
+      • sv01-096 Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only);
+      • sv02-190 Jet Energy — the OTHER Special Energy with an on-attach clause, so
+        "the recovery runs AFTER the switch" is checkable rather than assumed;
+      • sv03-193 Poppy — "Move up to 2 Energy from 1 of your Pokémon to another of
+        your Pokémon", the pool's ONLY program that can move a SPECIAL Energy
+        (`filter: anyEnergy`; every `attachEnergyFrom` route filters to
+        `energyType === "Normal"`). It is what makes the flow.ts `settleProgram`
+        half of the recovery seam drivable off a printed card instead of surgery;
+      • fix-bigbody (200 HP) — the NON-IMMUNE, no-Energy control under every
+        declaration, and the mulligan-free dominant Basic;
+      • fix-titan (340 HP, no attacks) — bench filler and promote target;
+      • fix-energy — Colorless Basic, for Hot Bite's {C} and as the control ENERGY
+        that attaches without recovering anything. */
+export const THERAPEUTIC_ENERGY_DECK = deckOf({
+  "sv02-193": 4, // Therapeutic Energy — the printing under test
+  "fix-statuser": 4, // Hypnosis / Confuse Ray / Numbing Bolt / Toxic on one body
+  "sv01-029": 3, // Scovillain — "Hot Bite" ({C}, 20 + Burn): the condition NOT named
+  "sv01-068": 3, // Pachirisu — the §9-SUPPRESSIBLE immunity, beside the exempt one
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only)
+  "sv02-190": 2, // Jet Energy — the other on-attach Special, for the ordering claim
+  "sv03-193": 2, // Poppy — the ONLY program that can MOVE a Special Energy (anyEnergy)
+  "fix-titan": 4, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-bigbody": 28, // 200 HP neutral Basic — the control, and the setup starter
+  "fix-energy": 7, // Colorless Basic — Hot Bite's cost, and the control attach
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

@@ -261,8 +261,12 @@ describe("the printed data — re-queried, not inherited", () => {
     );
     // Dachsbun now carries BOTH clauses on two fields — the §12 one is not this
     // suite's and is driven in statusImmunity.test.ts.
+    // ⚠️ RE-POINTED A SECOND TIME AT D174, WHICH IS THE POINT OF A LOUD PIN. The
+    // §12 field WIDENED from a scalar to a list the day a third printing named
+    // three conditions; this line is the neighbouring family noticing, which is
+    // exactly what D159 wrote it to do. The §8.5 half is byte-identical.
     expect(programFor("sv01-099")?.passive).toEqual({
-      statusImmunity: "burned",
+      statusImmunities: ["burned"],
       preventDamageFromType: "Fire",
     });
     // The Stadium's second paragraph is still unread, and still has no field.

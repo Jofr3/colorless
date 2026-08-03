@@ -143,13 +143,15 @@ export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
 }
 
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
-    its TOP card's printed passive (Bouffalant "Bouffer") and every attached
-    Tool (§7.4) — summed, since each source is its own card effect. The
+    its TOP card's printed passive (Bouffalant "Bouffer"), every attached
+    Tool (§7.4) and — since D174 — every attached ENERGY (§6.1, Therapeutic
+    Energy sv02-193) — summed, since each source is its own card effect. The
     Basic-only hpBonus (Bravery Charm) counts only while the top card is a
     Basic: evolving the holder ends it even though the Tool stays attached. A
     Pokémon under an Ability-lock aura (§9 disableAbilities) contributes nothing
     from its own printed passive — that passive IS an Ability — but its attached
-    Tools (not Abilities) keep working. */
+    Tools (not Abilities) and its attached Energy (not Abilities either) keep
+    working. */
 export function passivesOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -212,27 +214,43 @@ export function passivesOf(
   preventDamageFromTypes: PokemonType[];
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
-      Pokémon can't be Paralyzed."). The ONE field this aggregation returns that no
-      damage site reads: its single consumer is interpreter.ts `applyStatus`, which
-      is the engine's only writer of a §12 condition.
+      Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
+      by those Special Conditions" — Asleep, Confused, Paralyzed). The ONE field
+      this aggregation returns that no damage site reads: its single consumer is
+      interpreter.ts `applyStatus`, which is the engine's only writer of a §12
+      condition.
 
       A LIST for `preventDamageFromTypes`' reason one field up, and the reason is
-      the SOURCE SET rather than the printings: each printing names exactly one
-      condition, but this fold runs over the holder's own passive PLUS every
-      attached Tool, so two sources naming two conditions is a shape the
-      aggregation must be able to report even though no Tool prints the sentence
-      today. NOT de-duplicated — the read is `.includes`, which cannot tell a
-      repeated entry from a single one, and a `Set` here would be a second
-      collection type for one membership question (D131).
+      the SOURCE SET rather than the printings: this fold runs over the holder's own
+      passive PLUS every attached Tool PLUS (D174) every attached Energy, so several
+      sources naming several conditions is a shape the aggregation must be able to
+      report. ⚠️ Since D174 the INTERFACE field is a list too — the Energy printing
+      names three — so this is a flat SPREAD rather than a push. NOT de-duplicated —
+      the read is `.includes`, which cannot tell a repeated entry from a single one,
+      and a `Set` here would be a second collection type for one membership question
+      (D131).
 
-      ⚠️ IT RIDES THIS FOLD PRECISELY SO THE §9 ANSWER IS NOT WRITTEN TWICE. Both
-      printings are Pokémon ABILITIES, so a §9 lock over the holder must switch the
-      immunity off and let the status land; that happens HERE, in the `disabled`
-      drop the `sources` array already makes, and not at the read site. A build
-      that read `programFor(top.id)?.passive?.statusImmunity` directly at
-      `applyStatus` would be one line shorter and would survive an Ability lock —
-      this family's sharpest available defect, and the mutation pass drives it. */
+      ⚠️ IT RIDES THIS FOLD PRECISELY SO THE §9 ANSWER IS NOT WRITTEN TWICE, AND
+      SINCE D174 THE ANSWER HAS TWO SIGNS. The two Pokémon printings are ABILITIES,
+      so a §9 lock over the holder must switch their immunity off and let the status
+      land; the Energy printing is NOT an Ability, so a lock must leave it alone.
+      Both happen HERE, in the one `disabled` drop the `sources` array makes on its
+      FIRST element only. A build that read the catalog row directly at `applyStatus`
+      would be one line shorter and would get BOTH signs wrong at once — this
+      family's sharpest available defect, and the mutation pass drives it. */
   statusImmunities: StatusName[];
+  /** §12 RECOVERY (D174) — the Special Conditions a live effect CLEARS from this
+      body ("The Pokémon this card is attached to RECOVERS FROM BEING Asleep,
+      Confused, or Paralyzed…", Therapeutic Energy sv02-193). Its single consumer is
+      flow.ts `recoverStatuses`.
+
+      ⚠️ IT IS THE FIELD THAT MADE THIS FOLD'S ANSWER TIME-DEPENDENT, and it is a
+      separate list from `statusImmunities` above because the printings are separate
+      clauses: the two Pokémon in this family refuse a condition and never clear one.
+      Reported RAW (a list of tokens, not a decision) for the same reason
+      `conditionalDamageBonusBeforeWR` is: the aggregation has no events array and
+      must never write, so the site that owns the board does the clearing. */
+  statusRecovery: StatusName[];
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
@@ -241,11 +259,70 @@ export function passivesOf(
   // recurses (disableAbilities carries no field this aggregation consumes).
   const holderUid = topUid(pokemon);
   const disabled = holderUid !== undefined && disabledAbilityUids(state).has(holderUid);
+  // ⚠️ THREE SOURCE CLASSES SINCE D174, AND THE THIRD IS THE ONE THAT IS NOT AN
+  // ABILITY *AND* NOT A TOOL. `sources` was [the top card's printed passive, ...the
+  // Tools'] from M4 until D174 added [...the attached ENERGY's]. Only the FIRST
+  // element takes the §9 `disabled` drop, so the exemption the Energy needs is the
+  // one the Tools have always had — and it is exempt because an Energy is not an
+  // Ability, which is the same reason with a different noun rather than a new rule.
+  //
+  // ⚠️ EVERY FIELD BELOW SILENTLY GAINED AN ATTACHED-ENERGY CONTRIBUTOR THE DAY
+  // THAT LINE LANDED, SO EVERY ONE WAS RE-READ. The audit, field by field over the
+  // ten this fold returns (D174; the ones NOT folded here — `disableAbilities`,
+  // `seatDamageReductionAfterWR`, `removeWeakness`, `preventBenchDamageWhileActive`,
+  // `noRetreatCostAura`, the three retreat/attack-cost aura fields — are read by
+  // their own board scans off `programFor(top.id)?.passive` and are UNREACHABLE from
+  // an Energy, which is what bounds this audit to ten rather than twenty-two):
+  //
+  //   damageReductionAfterWR       reachable ✔ correct — "the Pokémon this card is
+  //                                attached to takes N less damage" is a real Energy
+  //                                sentence shape; the §8.5 sites sum sources and an
+  //                                Energy is a source. No writer in this pool.
+  //   damageReductionAfterWRIfType reachable ✔ correct — the gate names the HOLDER's
+  //                                types, resolved below off `top.types`, which does
+  //                                not care which card carried the number.
+  //   damageBonusBeforeWR          reachable ✔ correct — same argument, other sign.
+  //   damageBonusBeforeWRIf        reachable ✔ correct — collected RAW and evaluated
+  //                                at the read sites; the source class is invisible
+  //                                to a BoardCondition.
+  //   damageBonusBeforeWRIfTarget  reachable ✔ correct — likewise, gated on the
+  //                                DEFENDER's suffix at the read sites.
+  //   basicHpBonus (→ hpBonus)     reachable ⚠️ AND THE ONE TO SAY OUT LOUD: it is
+  //                                gated on `isBasic`, a fact about the HOLDER, so an
+  //                                Energy-borne +HP would end on evolution exactly as
+  //                                Bravery Charm's does. That is the right reading of
+  //                                "the BASIC Pokémon this card is attached to" and
+  //                                the WRONG one for an Energy printing that said
+  //                                only "this Pokémon" — such a printing must use a
+  //                                stage-free field, not this one. No writer today.
+  //   damageAttacker               reachable ⚠️ its `requiresTool` rider reads
+  //                                `pokemon.tools.length`, which is a fact about the
+  //                                BOARD and not about the source, so an Energy
+  //                                writing it would ask "does this body hold a Tool"
+  //                                — coherent, but a printing meaning "…while this
+  //                                ENERGY is attached" would need its own rider. No
+  //                                writer today; named so it is not discovered later.
+  //   damageAttackerOnKo           reachable ✔ correct — summed, source-blind.
+  //   preventDamageFromExV         reachable ✔ correct — a boolean OR.
+  //   preventDamageFromTypes       reachable ✔ correct — a list, source-blind.
+  //   statusImmunities             reachable ✔ THE POINT — sv02-193 writes it.
+  //   statusRecovery               reachable ✔ THE POINT — sv02-193 writes it.
+  //
+  // ⚠️ THE AUDIT'S ONE REAL BEHAVIOUR CHANGE IS THAT THERE IS NONE, AND THAT IS A
+  // MEASUREMENT RATHER THAN A HOPE: `sv02-193` is the only card in the registry with
+  // an `energy.passive` at all, so every other body's fold is byte-identical. The
+  // claim is asserted over the whole registry in therapeuticEnergy.test.ts rather
+  // than left here, because a second Energy row added without a re-reading is
+  // exactly the drift this comment cannot catch.
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
     ...pokemon.tools.map((uid) => {
       const id = state.cardIdByUid[uid];
       return id === undefined ? undefined : programFor(id)?.passive;
+    }),
+    ...pokemon.energy.map((uid) => {
+      const id = state.cardIdByUid[uid];
+      return id === undefined ? undefined : programFor(id)?.energy?.passive;
     }),
   ];
   const isBasic = top !== undefined && isBasicPokemon(top);
@@ -263,6 +340,7 @@ export function passivesOf(
   let preventDamageFromExV = false;
   const preventDamageFromTypes: PokemonType[] = [];
   const statusImmunities: StatusName[] = [];
+  const statusRecovery: StatusName[] = [];
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
   const targetConditionalDamageBonusBeforeWR: {
     amount: number;
@@ -301,8 +379,14 @@ export function passivesOf(
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
-    // passive if it is locked, and has already kept every Tool's.
-    if (passive.statusImmunity !== undefined) statusImmunities.push(passive.statusImmunity);
+    // passive if it is locked, and has already kept every Tool's — and, since
+    // D174, every attached Energy's. A SPREAD rather than a push since D174: the
+    // interface field became a list the day a printing named three conditions.
+    if (passive.statusImmunities !== undefined) statusImmunities.push(...passive.statusImmunities);
+    // D174 — the §12 RECOVERY, the immunity's printed twin on the one card that
+    // prints both. Same loop, same §9 answer, and deliberately NOT derived from the
+    // line above: two of this family's three sentences refuse without recovering.
+    if (passive.statusRecovery !== undefined) statusRecovery.push(...passive.statusRecovery);
   }
   return {
     damageReductionAfterWR,
@@ -315,6 +399,7 @@ export function passivesOf(
     preventDamageFromExV,
     preventDamageFromTypes,
     statusImmunities,
+    statusRecovery,
   };
 }
 

@@ -239,15 +239,20 @@ describe("THE CENSUS — re-derived against 978 rows / 6 sets, not inherited", (
     }
   });
 
-  it("swept FIXTURE_POOL as a SEPARATE population, and it held only ONE of the four", () => {
+  it("swept FIXTURE_POOL as a SEPARATE population — THREE of four at D172, FOUR at D174", () => {
     // D156's rule: the pool is its own population, queried before anything is
-    // authored. Before this slice it carried Dachsbun's clause and NOTHING else —
-    // Pachirisu was not here at all and Therapeutic Energy still is not.
+    // authored. Before D172 it carried Dachsbun's clause and NOTHING else —
+    // Pachirisu was not here at all and Therapeutic Energy was not either.
     // ⚠️ THIS IS THE INHERITED CLAIM THAT WAS WRONG. "All four clauses are carried
     // VERBATIM on the fixtures and PINNED" was true of one clause in four. The
     // other three were PROSE in comments, which is exactly the shape D156 closed
     // for whole Abilities and D159 closed for clauses — and which came back the
     // moment the pinning was described in a handoff instead of written in code.
+    //
+    // ⚠️ RE-POINTED AT D174, WHICH ADDED THE FOURTH. Note WHERE its text lives: the
+    // `effect` column, because an ENERGY has no abilities and no attacks — the
+    // reason the sweep below has to `.concat(card.effect)` at all, and the reason
+    // D172's three-column rule paid out.
     const withImmunityText = Object.entries(FIXTURE_POOL).filter(([, card]) =>
       [...(card.abilities ?? []), ...(card.attacks ?? [])]
         .map((entry) => entry.effect ?? "")
@@ -258,30 +263,36 @@ describe("THE CENSUS — re-derived against 978 rows / 6 sets, not inherited", (
       "sv01-068",
       "sv01-099",
       "sv01-208",
+      "sv02-193",
     ]);
-    // …and the fourth is STILL ABSENT, on purpose. Pinned so a census that greps
-    // the pool sees the gap rather than concluding the family is complete.
-    expect(FIXTURE_POOL["sv02-193"]).toBeUndefined();
+    // …and the fourth's clause really is in `effect` and in neither of the other
+    // two columns, which is what makes "a single-column census returns at most half
+    // this family" a measurement instead of an anecdote.
+    expect(FIXTURE_POOL["sv02-193"]?.effect).toContain("can't be affected by those");
+    expect(FIXTURE_POOL["sv02-193"]?.abilities ?? []).toEqual([]);
+    expect(FIXTURE_POOL["sv02-193"]?.attacks ?? []).toEqual([]);
   });
 
-  it("⚠️ pins Therapeutic Energy sv02-193 as a DELIBERATE ABSENCE, with its price", () => {
+  it("⚠️ CLOSES Therapeutic Energy sv02-193 — the pin D172 wrote as an ABSENCE", () => {
     // D171's Corviknight rule: a row a build deliberately skips is pinned in CODE,
-    // not re-noted in prose each time, or the next three sessions each rediscover
-    // it as news. This one is skipped for a reason that is checkable — the surface
-    // it needs does not exist:
-    //   • it is an ENERGY, so it has no `passive` and never reaches `passivesOf`,
-    //     whose sources are the TOP CARD and the TOOLS;
-    //   • `EnergyProgram` has three fields and all three are read at attach time
-    //     or at cost time — there is no continuous entry at all;
-    //   • it names THREE conditions where every built printing names one;
-    //   • and it also RECOVERS, which is a second mechanism (a CLEAR of a
-    //     condition already present), not a second field.
-    expect(programFor("sv02-193")).toBeUndefined();
+    // not re-noted in prose each time. D172 pinned this one as an absence with its
+    // price, and D174 PAID the price — so this case is RE-POINTED at what was built
+    // rather than deleted. Each of D172's four bullets, answered:
+    //   • "it is an ENERGY, so it never reaches `passivesOf`" — `EnergyProgram` now
+    //     carries a `passive`, and the fold walks `pokemon.energy` as a THIRD source
+    //     class beside the top card and the Tools;
+    //   • "`EnergyProgram` has three fields, all read at attach or cost time" — it
+    //     has FOUR, and the fourth is read while the card merely sits there;
+    //   • "it names THREE conditions where every built printing names one" — so
+    //     `PassiveEffects.statusImmunity` WIDENED to `statusImmunities`;
+    //   • "it also RECOVERS, a second mechanism and not a second field" — both, as
+    //     it turns out: `statusRecovery` is the field and flow.ts `recoverStatuses`
+    //     is the mechanism.
+    expect(programFor("sv02-193")?.energy).toBeDefined();
     expect(THERAPEUTIC_ENERGY).toContain("recovers from being Asleep, Confused, or Paralyzed");
     expect(THERAPEUTIC_ENERGY).toContain("can't be affected by those Special Conditions");
-    // The recovery half is what makes it more than a third registry row: no field
-    // on `PassiveEffects` clears anything, and nothing in this slice does either.
-    expect(passivesOfKeys()).not.toContain("statusRecovery");
+    // The pin that named the field before it existed, now naming it because it does.
+    expect(passivesOfKeys()).toContain("statusRecovery");
   });
 });
 
@@ -348,7 +359,11 @@ describe("the printed data — re-queried per printing, never recognized", () =>
 
 describe("the registry rows — three printings, two programs, two fields", () => {
   it("AUTHORS both Pachirisu printings on ONE shared program object", () => {
-    expect(programFor("sv01-068")?.passive).toEqual({ statusImmunity: "paralyzed" });
+    // ⚠️ RE-POINTED AT D174: the field is `statusImmunities` and it is a LIST.
+    // D172 chose a scalar by COUNTING ITS WRITERS — two, each naming one condition
+    // — and named the counter-case (an Energy naming three) as a writer that
+    // "cannot reach it". D174 is that writer, and the reason expired with the gap.
+    expect(programFor("sv01-068")?.passive).toEqual({ statusImmunities: ["paralyzed"] });
     // The second printing is the same OBJECT, which is what "keyed by id, not by
     // body" means in practice (D121's warrant, met by the card itself).
     expect(programFor("sv01-208")?.passive).toBe(programFor("sv01-068")?.passive);
@@ -364,7 +379,7 @@ describe("the registry rows — three printings, two programs, two fields", () =
     // immunity is unbuilt" checkable; a pin that goes red on the slice it was
     // written for is the pin working.
     expect(programFor("sv01-099")?.passive).toEqual({
-      statusImmunity: "burned",
+      statusImmunities: ["burned"],
       preventDamageFromType: "Fire",
     });
   });
@@ -376,19 +391,34 @@ describe("the registry rows — three printings, two programs, two fields", () =
     // would have to explain why Bellibolt can be Burned and Dachsbun cannot, off
     // one printed sentence that differs only in its first clause.
     expect(programFor("sv01-068")?.passive?.preventDamageFromType).toBeUndefined();
-    expect(programFor("sv03-078")?.passive?.statusImmunity).toBeUndefined();
+    expect(programFor("sv03-078")?.passive?.statusImmunities).toBeUndefined();
     expect(programFor("sv03-078")?.passive).toEqual({ preventDamageFromType: "Lightning" });
   });
 
-  it("registers NO other status immunity anywhere in the registry", () => {
+  it("registers NO other POKÉMON status immunity anywhere in the registry", () => {
     // The producer set is DISCOVERED from the pool rather than named, in D159's
     // shape: a fourth row added without a case fails here. ⚠️ What this sweep does
     // NOT traverse is a registry row for a card with no fixture — the same blind
     // spot D149's producer sweep had, named rather than left.
+    //
+    // ⚠️ RE-POINTED AT D174 AND NARROWED IN ITS TITLE RATHER THAN ITS PREDICATE.
+    // `CardProgram.passive` is the POKÉMON/TOOL surface; the family's fourth member
+    // writes `CardProgram.energy.passive`, a different field on a different
+    // interface, so this sweep is silent about it BY CONSTRUCTION. The whole-registry
+    // producer sweep that DOES see both lives in therapeuticEnergy.test.ts — said
+    // here so the narrowness is a stated scope and not a hole.
     const immune = Object.keys(FIXTURE_POOL)
-      .filter((id) => programFor(id)?.passive?.statusImmunity !== undefined)
+      .filter((id) => programFor(id)?.passive?.statusImmunities !== undefined)
       .sort();
     expect(immune).toEqual(["sv01-068", "sv01-099", "sv01-208"]);
+    // …and the fourth really is invisible to it, which is the claim above made
+    // checkable rather than asserted in prose.
+    expect(programFor("sv02-193")?.passive).toBeUndefined();
+    expect(programFor("sv02-193")?.energy?.passive?.statusImmunities).toEqual([
+      "asleep",
+      "confused",
+      "paralyzed",
+    ]);
   });
 });
 
@@ -717,25 +747,41 @@ describe("⚠️ THE CHECKUP — NOT gated, and that is DERIVED rather than skip
     expect(findAll(done.events, "CHECKUP_COIN_FLIP")).toHaveLength(1);
   });
 
-  it("⚠️ leaves a SURGICALLY planted condition alone — the deliberate non-rule", () => {
+  it("⚠️ leaves a SURGICALLY planted condition alone — the IMMUNITY does not recover", () => {
     // The one board that separates "the application is gated" from "the immunity
     // is enforced continuously", and it is written to show the SECOND is NOT what
     // was built. A condition placed directly on Dachsbun's `conditions` survives
     // and ticks, because nothing re-checks the immunity after the fact.
     //
-    // ⚠️ THIS IS NOT A GAP THE POOL CAN REACH. Getting here needs a §12 condition
-    // on a body whose immunity was off when it landed and on afterwards, and the
-    // §9 group above proves that costs three Active Spots. Evolution, retreat and
-    // a forced switch all CLEAR conditions outright, so no legal sequence puts an
-    // immunity onto a body that already carries the condition it refuses. Recorded
-    // as an assertion rather than left as a comment, so the day a printing makes it
-    // reachable this case goes red instead of the behaviour going quietly wrong.
+    // ⚠️ THIS CASE WAS ARMED AS A TRIPWIRE AT D172 AND D174 IS THE SLICE IT WAS
+    // AIMED AT — AND IT DID NOT GO RED. That is the finding, so it is written here
+    // rather than quietly enjoyed. D172's reason for the assertion was *"no legal
+    // sequence puts an immunity onto a body that already carries the condition it
+    // refuses"*, and D174 makes exactly that sequence legal: attach Therapeutic
+    // Energy to a Paralyzed Active. What kept this case green is that the sequence
+    // is legal for a card that ALSO prints a recovery clause, and Dachsbun does not
+    // print one. So the ASSERTION is still true and still worth having — an
+    // immunity, on its own, still clears nothing — while the REASON D172 gave for it
+    // is now false.
+    //
+    // ⚠️ AND THAT IS D172's OWN HEADLINE RULE CATCHING D172: the tripwire was armed
+    // in the COMMENT and not in the ASSERTION. A COMMENT CANNOT GO RED. The half
+    // that had to be checkable — "an immunity arriving after the condition changes
+    // nothing unless a recovery clause says so" — is now driven in
+    // therapeuticEnergy.test.ts on both sides of the pair, off a board that is
+    // reachable by legal play rather than by surgery.
     let state = board("hotBite", "sv01-099");
     state = setConditions(state, "p2", { burned: true });
     const done = mustApply(state, { type: "endTurn", seat: "p1" });
     expect(
       findAll(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn"),
     ).toHaveLength(1);
+    // The discriminator, stated where the claim is: Dachsbun refuses a Burn and
+    // recovers from nothing, so the two clauses really are two fields.
+    const dachsbun = done.state.players.p2.active;
+    if (dachsbun === null) throw new Error("no Active");
+    expect(passivesOf(done.state, dachsbun).statusImmunities).toEqual(["burned"]);
+    expect(passivesOf(done.state, dachsbun).statusRecovery).toEqual([]);
   });
 
   it("clears conditions on EVOLUTION, which is why the reachable version does not exist", () => {
@@ -865,16 +911,21 @@ describe("the structural questions", () => {
   });
 });
 
-describe("the family after D172", () => {
-  it("CLOSES at 2 of 3 sentences, with the third an OPEN and PRICED absence", () => {
+describe("the family after D174", () => {
+  it("CLOSES at 3 of 3 sentences and 4 of 4 printings", () => {
     const authored = ["sv01-068", "sv01-099", "sv01-208"].filter(
-      (id) => programFor(id)?.passive?.statusImmunity !== undefined,
+      (id) => programFor(id)?.passive?.statusImmunities !== undefined,
     );
-    expect(authored).toHaveLength(3); // 3 printings…
-    expect(new Set(authored.map((id) => programFor(id)?.passive?.statusImmunity)).size).toBe(2); // …2 sentences
-    // The fourth printing / third sentence is unbuilt and stays that way until the
-    // `EnergyProgram` continuous surface is paid for deliberately.
-    expect(programFor("sv02-193")).toBeUndefined();
+    expect(authored).toHaveLength(3); // 3 POKÉMON printings…
+    expect(
+      new Set(authored.map((id) => programFor(id)?.passive?.statusImmunities?.join(","))).size,
+    ).toBe(2); // …over 2 sentences
+    // ⚠️ RE-POINTED: the fourth printing / third sentence was the OPEN absence D172
+    // priced, and D174 built it. It is the ONE member whose clause hangs off the
+    // ENERGY surface, which is why it is counted separately rather than folded into
+    // the list above — the two surfaces are what the census had to sweep twice.
+    expect(programFor("sv02-193")?.energy?.passive?.statusImmunities).toHaveLength(3);
+    expect(programFor("sv02-193")?.energy?.passive?.statusRecovery).toHaveLength(3);
   });
 
   it("leaves the two DISCARD-PILE RETRIEVAL restrictions exactly where D159 left them", () => {

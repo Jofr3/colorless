@@ -422,16 +422,18 @@ export interface PassiveEffects {
       Active Spot" clause, so it protects a benched holder too.
 
       ⚠️ DACHSBUN'S SENTENCE IS THE SECOND HALF OF ITS PRINTED ABILITY. The first —
-      "This Pokémon can't be Burned." — is `statusImmunity` one field down, built at
-      D172. It gates the §12 APPLICATION path rather than the §8.5 damage pipeline,
+      "This Pokémon can't be Burned." — is `statusImmunities` one field down, built
+      at D172. It gates the §12 APPLICATION path rather than the §8.5 damage pipeline,
       which is why the two clauses of ONE printed Ability are TWO fields on this
       interface and share nothing but the card. */
   preventDamageFromType?: PokemonType;
-  /** §12 STATUS IMMUNITY: the printed Special Condition this Pokémon can never be
+  /** §12 STATUS IMMUNITY: the printed Special Conditions this body can never be
       given (Dachsbun sv01-099 "Well-Baked Body" — "This Pokémon can't be Burned.";
       Pachirisu sv01-068/-208 "Electricity Pouches" — "This Pokémon can't be
-      Paralyzed."). 3 printings / 2 sentences authored here, ONE read site
-      (interpreter.ts `applyStatus`), and NOTHING in the §8.5 pipeline.
+      Paralyzed."; Therapeutic Energy sv02-193 — "…can't be affected by those
+      Special Conditions", meaning Asleep, Confused and Paralyzed). 4 printings /
+      3 sentences authored here, ONE read site (interpreter.ts `applyStatus`), and
+      NOTHING in the §8.5 pipeline.
 
       ⚠️ IT GATES THE APPLICATION AND NOT THE CHECKUP, AND THAT IS A MEASURED
       CLAIM RATHER THAN A SIMPLIFICATION. Every remainder list since D159 priced
@@ -447,26 +449,60 @@ export interface PassiveEffects {
       be a second reading of the same rule that no board could ever disagree with —
       D131's drift, bought for nothing.
 
-      A SCALAR HERE, A LIST IN `passivesOf` — `preventDamageFromType`'s shape one
-      field up, taken for the same two reasons and on the same card: every printing
-      in this family names exactly ONE condition, while the aggregation folds the
-      holder's own passive PLUS every attached Tool and a scalar fold could only
-      ever be last-wins. ⚠️ The counter-case is REAL and is named rather than
-      absorbed: Therapeutic Energy sv02-193 ("…recovers from being Asleep,
-      Confused, or Paralyzed and can't be affected by those Special Conditions.")
-      names THREE. It is a SPECIAL ENERGY and writes no `PassiveEffects` at all —
-      `passivesOf`'s sources are the top card and the tools, and an attached Energy
-      is neither — so widening this field to a list today would pre-pay for a
-      writer that does not exist and cannot reach it. See `EnergyProgram` for what
-      that printing actually costs.
+      ⚠️ A LIST SINCE D174, AND THE WIDENING IS THE RULE APPLIED RATHER THAN A
+      PREFERENCE. D172 made this a SCALAR here and a list in `passivesOf`, which is
+      `preventDamageFromType`'s shape one field up, and it counted its WRITERS to get
+      there: two, each naming exactly one condition, so nothing that existed needed
+      to spell two. The repo's rule is *the unit of SHARING is decided by the READ
+      site, the unit of STORAGE by the WRITE sites* — and D174 adds the THIRD writer,
+      Therapeutic Energy sv02-193, which names THREE. The scalar could no longer
+      SPELL a writer, so it widened. D172 named this exact counter-case and declined
+      it on the ground that the writer "cannot reach it": an Energy is not a top card
+      and not a Tool, so `passivesOf` could not see it. `EnergyProgram.passive` (one
+      interface down) is what closed that gap, so the reason to keep the scalar
+      expired with it. The alternative — a plural field on the ENERGY surface beside
+      a scalar here — would be two shapes for ONE reading feeding ONE fold, which is
+      exactly the drift D131 warns about.
 
-      `StatusName` and not a bespoke union because the READ is `op.status` on
+      `StatusName[]` and not a bespoke union because the READ is `op.status` on
       `applyStatus`, whose vocabulary is the closed five-value union already —
       D159's "type the field with the datum the read site uses" on the other
-      pipeline. §9-SUPPRESSIBLE for free by riding `passivesOf`: this is a printed
-      Pokémon Ability, and the fold already drops a locked holder's own passive
-      while keeping its Tools'. */
-  statusImmunity?: StatusName;
+      pipeline. ⚠️ AND IT IS THE TOKEN LIST RATHER THAN "the rotation slot", even
+      though sv02-193's three names are EXACTLY `SpecialConditions.rotation`'s three
+      non-none values: that coincidence is a fact about one printing, and a build
+      that keyed on the slot would be unable to spell a printing naming two of the
+      three (D118's parameterise-on-the-token rule).
+
+      §9-SUPPRESSIBLE only for the sources that are ABILITIES, which is decided by
+      `passivesOf`'s fold and not here: a locked holder's own printed passive is
+      dropped, an attached Tool's is kept, and an attached ENERGY's is kept (D174 —
+      an Energy is not an Ability). */
+  statusImmunities?: StatusName[];
+  /** §12 RECOVERY (D174): the printed Special Conditions this body is CLEARED of
+      while this effect is live — Therapeutic Energy sv02-193's first clause, "The
+      Pokémon this card is attached to RECOVERS FROM BEING Asleep, Confused, or
+      Paralyzed…". One printing, one read site (flow.ts `recoverStatuses`).
+
+      ⚠️ A SECOND FIELD BESIDE `statusImmunities` AND NOT A FLAG ON IT, because the
+      card prints TWO clauses and the other two printings in the family print only
+      one of them. Dachsbun and Pachirisu say "can't be Burned/Paralyzed" and say
+      NOTHING about recovering, so an immunity that implied a recovery would make
+      those two cards clear a condition their text never mentions. That is D172's own
+      call on Dachsbun's two clauses ("two printed sentences, two fields") pointed at
+      a card whose two clauses happen to name the SAME tokens — and "those Special
+      Conditions" naming the same three is a fact about this printing, not about the
+      mechanism, which is why the two lists are written out twice rather than derived
+      from each other.
+
+      ⚠️ IT IS A WRITE AND NOT A DERIVED VIEW, WHICH IS THE WHOLE REASON IT IS NOT
+      "another `applyStatus` gate". "Recovers from" is a ONE-WAY state change: a
+      Pokémon that has recovered is not Asleep again when the Energy is later
+      discarded. A build that subtracted the list at the condition READ sites would
+      resurrect the condition the moment the source left, which no printing says. So
+      the condition is genuinely REMOVED, and the invariant "no body carries a
+      condition a live effect recovers it from" is restored at the named moments an
+      effect can newly arrive (flow.ts). */
+  statusRecovery?: StatusName[];
   /** §8.5 continuous OWN-SIDE cross-body AURA: while this Pokémon is in the Active
       Spot, every one of its CONTROLLER's BENCHED Pokémon takes no attack damage at
       all (Thundurus sv03-070 "Adverse Weather" — "As long as this Pokémon is in
@@ -764,34 +800,38 @@ export interface EnergyProgram {
   demoteWithOtherSpecial?: string[];
   /** Effect run on attach from hand (Jet's switch). */
   onAttach?: EnergyOnAttach;
-  /* ⚠️ THERE IS NO CONTINUOUS SURFACE HERE, AND D172 PRICED ITS ABSENCE RATHER
-     THAN SMUGGLING ONE IN. Therapeutic Energy `sv02-193` prints *"The Pokémon this
-     card is attached to recovers from being Asleep, Confused, or Paralyzed and
-     can't be affected by those Special Conditions."* — the THIRD sentence of the
-     §12 status-immunity family and the only member this interface would have to
-     carry. The three fields above are all read at ATTACH time or at COST time;
-     nothing here is read while the card merely sits attached, which is why the two
-     Pokémon printings cost one `PassiveEffects` field and this one costs a surface.
+  /** ⚠️ THE CONTINUOUS SURFACE (D174) — the one field on this interface that is
+      read while the card merely SITS ATTACHED. The three above are all read at
+      ATTACH time (`onAttach`) or at COST time (`provides` /
+      `demoteWithOtherSpecial`), which is exactly why D172 could price Therapeutic
+      Energy `sv02-193` as "a surface" rather than "a third registry row":
 
-     What it actually needs, measured rather than guessed:
-       1. a continuous entry here (`passive?: PassiveEffects`, or a narrower
-          `statusImmunities?: StatusName[]` — the printing names THREE conditions,
-          so whichever it is, it is a LIST where `PassiveEffects.statusImmunity` is
-          a scalar);
-       2. a THIRD source class in continuous.ts `passivesOf`, whose `sources` array
-          is the top card's passive plus the tools and has never walked
-          `pokemon.energy`. That is the expensive edit: every field the fold
-          already returns silently gains an attached-Energy contributor, so each
-          one owes a re-reading rather than a free ride;
-       3. the §9 answer stated the OTHER way round from a Pokémon's — an Energy is
-          not an Ability, so the new source must be exempt from the `disabled`
-          drop the holder's own passive takes, exactly as the Tools already are;
-       4. the RECOVERY half, which is a second mechanism and not a second field:
-          "recovers from" must CLEAR a condition already present, at attach time
-          (an `EnergyOnAttach` arm) and, because the immunity is continuous, on any
-          board where the two could disagree.
-     Four edits, three of them in code this family never touches. Scoped OUT of
-     D172 deliberately (statusImmunity.test.ts pins the absence). */
+        "As long as this card is attached to a Pokémon, it provides {C} Energy.
+         The Pokémon this card is attached to recovers from being Asleep, Confused,
+         or Paralyzed and can't be affected by those Special Conditions."
+
+      ⚠️ IT IS `PassiveEffects` AND NOT A NARROWER §12-ONLY FIELD, WHICH IS A
+      DELIBERATE CHOICE WITH A PRICE PAID IN AN AUDIT. The narrow option
+      (`statusImmunities?: StatusName[]` here) would have bought a smaller blast
+      radius and cost a SECOND vocabulary for one reading — continuous.ts
+      `passivesOf` would have to fold two differently-shaped source types into one
+      answer, which is D131's drift with an Energy hat on. Reusing the interface
+      makes the Energy the fold's THIRD SOURCE CLASS on equal terms with the top
+      card and the Tools, and every one of the ten fields that fold returns thereby
+      gains an attached-Energy contributor. **That is not free, and D174 did not
+      take it for free**: each of the ten was re-read against "can an Energy reach
+      it, and is that reading right", and the audit is written out in continuous.ts
+      `passivesOf` beside the `sources` array it widened.
+
+      ⚠️ §9 STATED THE OTHER WAY ROUND FROM A POKÉMON's. A printed passive on a
+      Pokémon IS an Ability and a §9 lock suppresses it; a TOOL is not, and
+      `passivesOf` has always kept Tools under a lock. AN ENERGY IS NOT AN ABILITY
+      EITHER, so this source is EXEMPT from the same drop — by construction (it is
+      appended after the tools, past the `disabled` term) and, because construction
+      is what D172's own three wrong claims were made of, DRIVEN: a lock proved live
+      on the holder's uid first, with the holder's OWN printed immunity dying in the
+      same call while the Energy's survives (therapeuticEnergy.test.ts). */
+  passive?: PassiveEffects;
 }
 
 export interface CardProgram {
@@ -1129,7 +1169,7 @@ const PRESSURE: CardProgram = { passive: { opponentActiveAttackDebuff: 20 } };
     author who queried the row. The STATUS token is the same call on the other
     clause: the printed word is "Burned" and `StatusName` spells it "burned". */
 const WELL_BAKED_BODY: CardProgram = {
-  passive: { statusImmunity: "burned", preventDamageFromType: "Fire" },
+  passive: { statusImmunities: ["burned"], preventDamageFromType: "Fire" },
 };
 
 /** Pachirisu (sv01-068/-208) — "Electricity Pouches": "This Pokémon can't be
@@ -1150,7 +1190,7 @@ const WELL_BAKED_BODY: CardProgram = {
     this slice's sentence; both are carried verbatim on the fixture so a sweep can
     SEE them (D135's rule), and no `attack` entry is authored, so index 0 falls
     through to the deriver and stays unsimulated. */
-const ELECTRICITY_POUCHES: CardProgram = { passive: { statusImmunity: "paralyzed" } };
+const ELECTRICITY_POUCHES: CardProgram = { passive: { statusImmunities: ["paralyzed"] } };
 
 /** Bellibolt (sv03-078/-201) — "Insulator": "Prevent all damage done to this
     Pokémon by attacks from your opponent's {L} Pokémon." — Dachsbun's sentence
@@ -1427,6 +1467,46 @@ const JET_ENERGY: CardProgram = {
     Energy attached, this card provides {C} Energy instead." */
 const LUMINOUS_ENERGY: CardProgram = {
   energy: { provides: [ANY_ENERGY], demoteWithOtherSpecial: ["Colorless"] },
+};
+
+/** Therapeutic Energy (sv02-193, D174) — "As long as this card is attached to a
+    Pokémon, it provides {C} Energy. / The Pokémon this card is attached to recovers
+    from being Asleep, Confused, or Paralyzed and can't be affected by those Special
+    Conditions."
+
+    ⚠️ THE §12 FAMILY'S THIRD SENTENCE AND ITS ONLY ENERGY, and the first Special
+    Energy in this registry with a CONTINUOUS clause: Jet's sentence is read at
+    ATTACH, Luminous's at COST, and this one is read for as long as the card sits
+    there. It is therefore the first writer of `EnergyProgram.passive`, the first
+    non-Pokémon non-Tool contributor `passivesOf` has ever had, and the writer whose
+    existence widened `PassiveEffects.statusImmunity` into a list (see there).
+
+    ⚠️ TWO PRINTED CLAUSES, TWO FIELDS, AND THE SAME THREE TOKENS WRITTEN TWICE.
+    "…recovers from being A, C, or P" is `statusRecovery`; "…and can't be affected by
+    THOSE Special Conditions" is `statusImmunities`, and the word "those" is the only
+    reason the two lists are equal. They are spelled out rather than derived from one
+    another because the OTHER two printings in the family (Dachsbun, Pachirisu) write
+    the immunity and NOT the recovery — an implication in either direction would put
+    a clause on a card that does not print it.
+
+    ⚠️ AND THE THREE TOKENS ARE THE PRINTED WORDS, NOT `SpecialConditions.rotation`.
+    They happen to be exactly that slot's three non-none values; keying on the slot
+    would be one character shorter, behave identically on every board this pool can
+    build, and be unable to spell a printing that named two of the three.
+
+    `provides: ["Colorless"]` is Jet's line for Jet's reason — the printed "{C}
+    Energy" with no rider — so the cost half of this card needs no new mechanism at
+    all. Its `legal_standard` is 0 on the local D1 (regulation mark G); the engine has
+    never gated on legality, and the fixture carries the value rather than the
+    judgement. */
+const THERAPEUTIC_ENERGY: CardProgram = {
+  energy: {
+    provides: ["Colorless"],
+    passive: {
+      statusRecovery: ["asleep", "confused", "paralyzed"],
+      statusImmunities: ["asleep", "confused", "paralyzed"],
+    },
+  },
 };
 
 // ── M4 slice 6: triggered Abilities (§9) — fire on a game event. ──
@@ -2876,6 +2956,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-190": JET_ENERGY,
   // Luminous Energy — wildcard (any 1 type), {C} if another Special attached
   "sv02-191": LUMINOUS_ENERGY,
+  // — D174: the first Special Energy with a CONTINUOUS clause (verified vs local
+  // D1 2026-08-03). Therapeutic Energy — {C} + the §12 recovery/immunity pair.
+  "sv02-193": THERAPEUTIC_ENERGY,
   // — M4 slice 6: triggered Abilities (verified vs local D1 2026-07-18). —
   // Flamigo — Insta-Flock (on-play-to-Bench: search up to 3 Flamigo)
   "sv02-170": FLAMIGO,
@@ -2961,11 +3044,13 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M5 long-tail: the §12 STATUS-IMMUNITY family (D172), re-censused as its own
   //   question against the local D1 (978 rows / 6 sets, 2026-08-03) over ALL THREE
   //   text columns and with FIXTURE_POOL swept as a separate population: FOUR
-  //   printings over THREE sentences. Dachsbun's `statusImmunity` above is the
+  //   printings over THREE sentences. Dachsbun's `statusImmunities` above is the
   //   first; these two are the second; the third (Therapeutic Energy sv02-193, a
-  //   SPECIAL ENERGY that also RECOVERS) is deliberately NOT built — it needs an
-  //   `EnergyProgram` continuous surface that does not exist, and is pinned as an
-  //   ABSENCE in statusImmunity.test.ts rather than half-landed here. —
+  //   SPECIAL ENERGY that also RECOVERS) was deliberately NOT built at D172 —
+  //   ✅ **it is BUILT AT D174** (`THERAPEUTIC_ENERGY` above), which bought
+  //   `EnergyProgram.passive`, `passivesOf`'s third source class, the §9 exemption
+  //   stated the other way round, and flow.ts `recoverStatuses`. THE FAMILY IS
+  //   CLOSED at 4/4 printings and 3/3 sentences. —
   "sv01-068": ELECTRICITY_POUCHES, // Pachirisu — Electricity Pouches ("This Pokémon can't be Paralyzed")
   "sv01-208": ELECTRICITY_POUCHES, // (reprint — Illustration rare)
   // — M5 long-tail: the ATTACK-COST ± family, both signs in one slice. Censused as

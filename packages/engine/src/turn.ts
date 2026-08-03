@@ -11,7 +11,13 @@ import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } from "./cards";
 import { effectiveRetreatCost, opposingRetreatBlocked } from "./continuous";
 import type { GameEvent } from "./events";
-import { advance, isLethallyDamaged, resolveMidTurnKnockOuts, turnTail } from "./flow";
+import {
+  advance,
+  isLethallyDamaged,
+  recoverStatuses,
+  resolveMidTurnKnockOuts,
+  turnTail,
+} from "./flow";
 import { switchInto } from "./interpreter";
 import { programFor } from "./registry";
 import { runBoardTrigger } from "./triggers";
@@ -140,6 +146,22 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       events,
     );
   }
+  // §12 (D174) — the §6.2 attach is the ONE route by which an Energy reaches a body
+  // outside an effect program (flow.ts settleProgram covers every other), and it is
+  // the printed use of Therapeutic Energy sv02-193: attach it to your Paralyzed
+  // Active and it "recovers from being … Paralyzed" on the spot, in time to attack
+  // this turn. Placed at the very END, after the Jet switch: `switchInto` clears
+  // conditions on its own (§11/§12), so a card printing both clauses must not have
+  // this fire first and report a recovery the switch was going to perform anyway.
+  //
+  // ⚠️ THE EARLY-RETURN AUDIT (D169's lesson, FOURTH sighting). Six guards sit ahead
+  // of this line — `turnGate`, the §6.2 allowance, card-in-hand, unknown-card,
+  // not-an-energy and the target checks — and EVERY ONE belongs to the ATTACH term
+  // alone: they are the conditions under which no Energy moves at all, and no Energy
+  // moving is exactly when there is nothing to recover from. There is no guard here
+  // that belongs to one term and is being borrowed by the other, which is the shape
+  // D169 / D171 found and D172 first came up clean on.
+  next = recoverStatuses(next, events);
   return ok(next, events);
 }
 
