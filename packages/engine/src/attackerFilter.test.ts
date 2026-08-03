@@ -238,28 +238,41 @@ describe("the printed data — re-queried, not inherited", () => {
     });
   });
 
-  it("⚠️ keeps the TWO clauses this slice does NOT read, and they stay LOUD", () => {
-    // Dachsbun prints a status IMMUNITY ahead of its prevention and the Stadium
-    // prints a discard-pile retrieval restriction after its. Neither is authored:
-    // the first belongs to the §12 APPLICATION path (Pachirisu sv01-068/-208
-    // "Electricity Pouches" and Therapeutic Energy sv02-193 are its neighbourhood),
-    // the second has one sibling (Poké Vital A sv06.5-062) and no reader anywhere
-    // in the engine. What this case pins is that the TEXT is still on the card, so
-    // a future census greps a fixture that says what the printing says — the
-    // omission failure mode D156 closed, applied to a CLAUSE rather than to a
-    // whole Ability.
+  it("⚠️ ONE of the two LOUD clauses has since been BUILT — RE-POINTED, not deleted", () => {
+    // Dachsbun printed a status IMMUNITY ahead of its prevention and the Stadium
+    // prints a discard-pile retrieval restriction after its. When this case was
+    // written NEITHER was authored, and the pin below read
+    // `{ preventDamageFromType: "Fire" }` on purpose: it was the line that made
+    // "the immunity is unbuilt" checkable rather than a claim in a comment.
+    //
+    // ⚠️ D172 BUILT THE FIRST ONE (`PassiveEffects.statusImmunity`, read once at
+    // interpreter.ts `applyStatus`), so this pin went red exactly as designed and
+    // is RE-POINTED at what exists now. A pin that goes red on the slice it was
+    // written for is the pin working. The Stadium's clause is untouched: it still
+    // has one sibling (Poké Vital A sv06.5-062) and NO reader anywhere in the
+    // engine, so its half of this case is unchanged.
+    //
+    // What the TEXT half pins is unchanged too — that the printed string is still
+    // on the card, so a future census greps a fixture that says what the printing
+    // says (D156's omission failure mode, applied to a CLAUSE).
     expect(FIXTURE_POOL["sv01-099"]?.abilities?.[0]?.effect).toContain("can't be Burned.");
     expect(FIXTURE_POOL["sv06.5-060"]?.effect).toContain(
       "can't be put into your hand or deck from the discard pile.",
     );
-    // …and no field exists on either program to read them with, which is the whole
-    // argument for leaving them out rather than guessing at a mechanism.
-    expect(programFor("sv01-099")?.passive).toEqual({ preventDamageFromType: "Fire" });
+    // Dachsbun now carries BOTH clauses on two fields — the §12 one is not this
+    // suite's and is driven in statusImmunity.test.ts.
+    expect(programFor("sv01-099")?.passive).toEqual({
+      statusImmunity: "burned",
+      preventDamageFromType: "Fire",
+    });
+    // The Stadium's second paragraph is still unread, and still has no field.
     expect(programFor("sv06.5-060")?.stadium).toEqual({ preventDamageToNoRuleBoxFromExV: true });
   });
 
   it("AUTHORS all five printings on THREE programs, and the reprint shares one", () => {
-    expect(programFor("sv01-099")?.passive).toEqual({ preventDamageFromType: "Fire" });
+    // Dachsbun's object gained a §12 field at D172; the §8.5 clause this suite is
+    // about is read through `preventDamageFromType` and is unchanged.
+    expect(programFor("sv01-099")?.passive?.preventDamageFromType).toBe("Fire");
     expect(programFor("sv03-078")?.passive).toEqual({ preventDamageFromType: "Lightning" });
     // The second printing is the same OBJECT, which is what "keyed by id, not by
     // body" means in practice (D121's warrant, met by the card).

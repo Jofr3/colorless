@@ -9891,7 +9891,7 @@ attacker-filter neighbourhood is 10 printings across 7 sentences:**
 | `…prevent all damage done to this Pokémon by attacks from Basic Pokémon.` | **3** | attack | ✅ `preventDamage { fromClass: "Basic" }` — Staraptor `sv01-150` idx 0, Noivern ex `sv02-153`/`-246` idx 0 |
 | `…prevent all damage done to this Pokémon by attacks from Ancient Pokémon.` | 1 | attack | ❌ LOUD — Iron Moth `sv06.5-009` idx 1. No datum (above) |
 | `Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex and Pokémon V.` | 1 | **Ability** | ✅ since 0.58.0 — Mimikyu `sv02-097` "Safeguard" (`preventDamageFromExV`, gated on `isExOrV`) |
-| `…by attacks from your opponent's {R} Pokémon.` | 1 | **Ability** | ❌ Dachsbun `sv01-099` "Well-Baked Body" — filters by ENERGY TYPE, and carries a second sentence ("can't be Burned") |
+| `…by attacks from your opponent's {R} Pokémon.` | 1 | **Ability** | ❌ Dachsbun `sv01-099` "Well-Baked Body" — filters by ENERGY TYPE, and carries a second sentence ("can't be Burned"). ✅ **BOTH clauses are read now — the filter at D159 (`preventDamageFromType`), the §12 immunity at D172 (`statusImmunity`); two fields, two pipelines, one card** |
 | `…by attacks from your opponent's {L} Pokémon.` | 2 | **Ability** | ❌ Bellibolt `sv03-078`/`-201` "Insulator" — the same type filter, one printing short of a family with Dachsbun |
 | `As long as this Pokémon is in the Active Spot, prevent all damage done to your BENCHED Pokémon by attacks from your opponent's Pokémon.` | 1 | **Ability** | ❌ Thundurus `sv03-070` "Adverse Weather" — filters by ZONE, and protects a body OTHER than the holder |
 | `Prevent all damage done to Pokémon that don't have a Rule Box … by attacks from the opponent's Pokémon ex and Pokémon V.` | 1 | **Stadium** | ❌ Neutralization Zone `sv06.5-060` — filters the PROTECTED side as well as the attacker, on a shared zone |
@@ -10113,7 +10113,9 @@ work**, and do not let a later session "fix" them with a species table.
 - **The PER-ATTACK lock — 8 printings / 6 sentences**, unchanged.
 - **The always-on attacker filters — 6 printings / 4 sentences (NEW, from the
   census above).** Dachsbun `sv01-099` + Bellibolt `sv03-078`/`-201` filter by
-  ENERGY TYPE (3 printings, 2 sentences, and Dachsbun carries a second clause);
+  ENERGY TYPE (3 printings, 2 sentences, and Dachsbun carries a second clause —
+  ✅ **that second clause is the §12 immunity, BUILT AT D172**; the filters
+  themselves were built at D159);
   Thundurus `sv03-070` filters by ZONE and protects the BENCH rather than the
   holder; Neutralization Zone `sv06.5-060` is a Stadium filtering the PROTECTED
   side too. All four want `PassiveEffects` siblings of `preventDamageFromExV`, NOT
@@ -13079,7 +13081,7 @@ authored against a pre-D157 base, so its labels were renumbered to D159 at merge
 |---|---|
 | "6 printings" | **RIGHT about the pool and WRONG about the work.** The local D1 returns six rows for "prevent all damage … by attacks from" outside `attacks_json`; the SIXTH is Mimikyu `sv02-097` "Safeguard", simulated since 0.58.0. §D146's own census sentence says so in a parenthesis. **Five was always the remainder.** |
 | "4 sentences" | **EXACT.** |
-| "Dachsbun carries a SECOND clause" | **TRUE, and it is `This Pokémon can't be Burned.`** — a §12 status immunity, 3 more printings in the pool, LEFT LOUD |
+| "Dachsbun carries a SECOND clause" | **TRUE, and it is `This Pokémon can't be Burned.`** — a §12 status immunity, 3 more printings in the pool, LEFT LOUD. ✅ **BUILT AT D172** (`PassiveEffects.statusImmunity`), together with Pachirisu `sv01-068`/`-208`; only the Energy printing `sv02-193` remains, deliberately |
 | the four card names / ids | **ALL CORRECT**, re-queried per printing. Nothing misnamed anywhere in the repo. |
 | (absent from every list) | **Neutralization Zone is an ACE SPEC**, and it prints a SECOND sentence too (a discard-pile retrieval restriction, 1 sibling, no reader). Both LOUD. |
 
@@ -13201,13 +13203,22 @@ IMMUNITY with **3 more printings in the pool** (Pachirisu `sv01-068`/`-208`
 "Electricity Pouches" — *"can't be Paralyzed"*; Therapeutic Energy `sv02-193` —
 *"can't be affected by those Special Conditions"*), gating the status APPLICATION
 path rather than the damage pipeline, with no field on `PassiveEffects` any read
-site would consult. Neutralization Zone's second paragraph — *"This card can't be
+site would consult. ✅ **BUILT AT D172 — `PassiveEffects.statusImmunity`, with
+Pachirisu; only `sv02-193` is still LOUD, and deliberately so (§D172).**
+Neutralization Zone's second paragraph — *"This card can't be
 put into your hand or deck from the discard pile."* — restricts DISCARD-PILE
 RETRIEVAL, has **1 sibling** (Poké Vital A `sv06.5-062`) and **no reader
 anywhere**: no op, no `CardFilter` and no zone rule consults a card's own
-retrievability. Both are carried VERBATIM on the fixtures and PINNED by a case, so
+retrievability. ⚠️ **THIS IS NOW THE ONLY CLAUSE D159 LEFT LOUD THAT IS STILL
+LOUD.** Both are carried VERBATIM on the fixtures and PINNED by a case, so
 a future census greps a fixture that says what the printing says — D156's omission
 failure mode, applied to a CLAUSE instead of to a whole Ability.
+⚠️ **THAT LAST SENTENCE WAS FALSE WHEN IT WAS WRITTEN, AND D172 FOUND IT: of the
+four clauses this slice described as "carried verbatim on the fixtures and
+PINNED", exactly ONE (Dachsbun's) was on a fixture. The other three were PROSE —
+comments in `registry.ts` and `attackerFilter.test.ts`. A COMMENT CANNOT GO RED,
+and a claim that something is pinned must name the ASSERTION.** Two are fixtures
+now; `sv02-193` is a pinned absence.
 
 ### ⚠️ The §9 pair is driven on ONE board, and one half of it is provably undriveable
 
@@ -13309,13 +13320,23 @@ is recorded in `progress.md`** rather than quoted per-slice here.
   dropped — both are one scan each, and the §9 / `ignoreWR` answers are already
   decided by the table above.
 - **The STATUS-IMMUNITY family — 4 printings / 3 sentences, NEW and measured here.**
-  Dachsbun `sv01-099` (*"can't be Burned"*), Pachirisu `sv01-068`/`-208`
-  (*"can't be Paralyzed"*) and Therapeutic Energy `sv02-193` (*"can't be affected
-  by those Special Conditions"* — a Special Energy, and it also RECOVERS). It gates
-  the §12 APPLICATION path (`applyStatus`, interpreter.ts) and the Checkup, not
-  §8.5, so it shares nothing with this slice but the card. One `PassiveEffects`
-  field (a status list) and one gate at `applyStatus`; the Energy printing needs an
-  `EnergyProgram` surface that does not exist.
+  ✅ **CLOSED AT 2/3 SENTENCES (3/4 PRINTINGS) BY D172, with `sv02-193` the
+  DELIBERATE remainder.** Dachsbun `sv01-099` (*"can't be Burned"*) and Pachirisu
+  `sv01-068`/`-208` (*"can't be Paralyzed"*) are **BUILT**; Therapeutic Energy
+  `sv02-193` (*"can't be affected by those Special Conditions"* — a Special Energy,
+  and it also RECOVERS) is **priced and deliberately unbuilt** (§D172). It gates
+  the §12 APPLICATION path (`applyStatus`, interpreter.ts) and **NOT the Checkup**
+  — ⚠️ **that half of this sentence was WRONG and D172 derived it: `applyStatus` is
+  the engine's only WRITER of a §12 condition, so gating it gates everything
+  downstream** — so it shares nothing with this slice but the card. ⚠️ **AND
+  "one `PassiveEffects` field and one gate" was a FLOOR**: the real cost added
+  `STATUS_PREVENTED` and a log arm, because a gate that refuses in silence is
+  D159's own finding wearing a §12 hat. The field is
+  `PassiveEffects.statusImmunity?: StatusName` (a SCALAR; the list lives in
+  `passivesOf().statusImmunities`) — **this bullet's "no field on `PassiveEffects`
+  any read site would consult" is now FALSE.** The Energy printing still needs an
+  `EnergyProgram` continuous surface that does not exist; its four-edit price is in
+  §D172.
 - **DISCARD-PILE RETRIEVAL RESTRICTIONS — 2 printings, NEW.** Neutralization Zone
   `sv06.5-060` and Poké Vital A `sv06.5-062`, both *"This card can't be put into
   your hand or deck from the discard pile."* **No reader exists**: no op, no
@@ -13843,6 +13864,8 @@ engine **0.106.1 → 0.107.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
   next consumer, and still the closest thing to a free slice.
 - **RADIANT CHARIZARD `swsh10.5-011`** — a fixture and a case, no mechanism. ⚠️ **DONE at D162.**
 - **The §12 STATUS-IMMUNITY family** (D159's census, 4 printings / 3 sentences).
+  ⚠️ **DONE at D172 for the two POKÉMON printings — 2/3 sentences, 3/4 printings.
+  Therapeutic Energy `sv02-193` is the deliberate remainder, priced in §D172.**
 - **D158's and D159's censuses STILL OWE A RE-RUN**, and D161's finding sharpens the
   instruction: **read the DATE first.** Both are dated 2026-08-03 and both really did
   run against 890 / 5, so both really are floors — unlike §D147's, which was not.
@@ -14241,6 +14264,11 @@ engine **0.108.0 → 0.109.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
   seam and **not** the one *cost* seam, so the wire and both HUDs were publishing the
   PRINTED cost beside a `playable` computed from the EFFECTIVE one.
 - **The §12 STATUS-IMMUNITY family** (D159's census, 4 printings / 3 sentences).
+  ✅ **BUILT AT D172** (§D172) for the two POKÉMON printings — **2/3 sentences,
+  3/4 printings**. The pricing on this line was wrong in three structural places
+  (no Checkup gate is needed; only ONE of the four clauses was actually pinned;
+  and "one field and one gate" omitted `STATUS_PREVENTED` and its log arm).
+  Therapeutic Energy `sv02-193` is the deliberate remainder, priced in §D172.
 - **`attackEffectRefused`'s narrowing + D150's item 6** — ONE slice (D161).
 
 
@@ -16231,3 +16259,382 @@ a SYNCHRONOUS placement at all, however right that placement is.**
   names is safe against the post-state; that is true only because `ENERGY_MOVED` was fixed.
   **Any future op that moves a card off a body the same reduction removes owes the same
   `…Uid` treatment.** Worth a sweep.
+
+---
+
+## D172 — the §12 STATUS IMMUNITY: `This Pokémon can't be {Burned | Paralyzed}.` — Dachsbun `sv01-099`'s OTHER clause plus Pachirisu `sv01-068`/`-208`, and the family's THIRD sentence deliberately left unbuilt (engine 0.116.0 → 0.117.0, `MATCH_RECORD_VERSION` unchanged at 11)
+
+Item 1 of D159's own remainder list, and the **first slice in this batch whose inherited
+pricing was wrong in THREE separate places, all three STRUCTURAL**. The catalog figure —
+*4 printings / 3 sentences* — was **EXACT** on both numbers when re-derived. Everything
+the item said about the CODE was not.
+
+**Scope decided before the build:** the two POKÉMON printings only. Therapeutic Energy
+`sv02-193` is **deliberately not built** and is pinned as an absence with its price
+written down (below, and on `EnergyProgram` in code).
+
+### The census, re-run as its own question — and both numbers held
+
+Local D1, **978 rows / 6 sets** (`sv01` 258, `sv02` 279, `sv03` 230, `sv06.5` 99,
+`sve` 24, `swsh10.5` 88), 2026-08-03, over **ALL THREE** text columns:
+
+```sql
+WITH t AS (SELECT id, name,
+             COALESCE(effect,'')         AS e,
+             COALESCE(abilities_json,'') AS a,
+             COALESCE(attacks_json,'')   AS k
+           FROM cards)
+SELECT id, name FROM t WHERE
+     e|a|k LIKE '%an''t be Burned%'   OR ... Paralyzed / Asleep / Confused / Poisoned
+  OR e|a|k LIKE '%affected by%Special Condition%';
+```
+
+→ **SIX rows. FOUR are the family; TWO are false positives, and both live in
+`attacks_json`** — the column D159's own sweep (`abilities_json OR effect`) could not see
+at all:
+
+| id | column | verdict |
+|---|---|---|
+| `sv01-099` Dachsbun "Well-Baked Body" | `abilities_json` | **clause 1 of 2** — D172 |
+| `sv01-068` Pachirisu "Electricity Pouches" | `abilities_json` | **the whole Ability** — D172 |
+| `sv01-208` Pachirisu (Illustration rare) | `abilities_json` | reprint, same program object |
+| `sv02-193` Therapeutic Energy | **`effect`** | **NOT BUILT** — a Special Energy |
+| `sv01-010` Vivillon "Miracle Powder" | `attacks_json` | false positive — APPLIES a chosen condition |
+| `sv02-136` Sableye "Unseen Claw" | `attacks_json` | false positive — READS one |
+
+⚠️ **THE THREE-COLUMN RULE PAID OUT TWICE IN OPPOSITE DIRECTIONS, IN ONE SLICE.** The two
+false positives are in the column the old sweep missed, and **the family's own third
+member is in `effect`** because it is an ENERGY and has no `abilities_json` at all. **A
+sweep of any ONE column returns at most TWO of the four.** `FIXTURE_POOL` was swept as a
+**SEPARATE** population (D156's rule) and held **ONE** of the four.
+
+This is the strongest instance this repo has of the three-column rule, and it is worth
+stating as a general one: **a single-column census can return at most half a family, and
+it can return rows the family does not contain.** Read `.schema` before you read a
+census.
+
+### ⚠️ THE THREE INHERITED CLAIMS THAT WERE WRONG
+
+1. **"It gates `applyStatus` AND the Checkup." — it gates `applyStatus` and NOTHING
+   ELSE, and that is DERIVED.** `applyStatus` (interpreter.ts) is the engine's **only
+   WRITER** of a §12 condition; every other site CLEARS (`flow.ts runCheckup`'s three
+   recovery steps, and the three `noConditions()` sites on evolve / retreat / forced
+   switch). **Gating the sole writer gates everything downstream**, so a body that
+   cannot be *given* a status cannot arrive at the Checkup carrying one, and a Checkup
+   gate would be **a second reading of one rule (D131's drift) that no board could ever
+   make disagree with the first.** The one route that could have made it real — a §9
+   lock live when the status lands and dead by the Checkup — is **unreachable**, and the
+   proof is a counting argument over ACTIVE SPOTS (below). **Driven end to end rather
+   than argued:** an immune body swung at with the condition it refuses takes **no burn
+   tick and no cure flip** through a full §13, while the non-immune control on the
+   identical declaration takes both.
+2. **"All four clauses are carried VERBATIM on the fixtures and PINNED." — ONE was.**
+   Dachsbun's. The other three lived in **PROSE**, in `registry.ts` and
+   `attackerFilter.test.ts` comments. That is a failure mode D156 closed for whole
+   Abilities and D159 closed for clauses, and it came back the moment the pinning was
+   *described in a handoff* instead of *written in code*. Two are fixtures now; the
+   third is a pinned absence.
+3. **"One `PassiveEffects` field and one gate." — a FLOOR, exactly as the standing
+   warning says, and short by TWO edits for the third time.** A gate that refuses in
+   **silence** is D159's own headline finding wearing a §12 hat: without a row, a Burn
+   aimed at Dachsbun reads *"Scovillain used Hot Bite · dealt 20 damage"* and nothing
+   else — indistinguishable from an engine that forgot the clause. So the slice also
+   owes **`STATUS_PREVENTED`** and its **log arm**. It is the **fifth** way this engine
+   can null an effect and the **second in a row** to be found by RENDERING the row
+   rather than by reading the code.
+
+### ⚠️ "PINNED" IS A CLAIM ABOUT A TEST FILE, NEVER ABOUT A COMMENT
+
+Three of this family's four clauses were described as *carried verbatim on the fixtures
+and PINNED*. They were **mentioned**. **A COMMENT CANNOT GO RED** — it is not greppable
+by any census that looks for behaviour, no `toEqual` consults it, and nothing fails when
+the code it describes stops being true.
+
+D171 wrote the neighbouring rule for a row a census could not SEE (Corviknight, pinned as
+a string). **D172 found the same failure for rows a census could see perfectly well and
+nothing asserted.** The transferable form: **a claim that something is pinned must name
+the ASSERTION.** If you cannot name the `expect`, the thing is not pinned.
+
+### The shape decision: a SCALAR on the interface, a LIST in the aggregation
+
+`PassiveEffects.statusImmunity?: StatusName`, collected by `passivesOf` into
+`statusImmunities: StatusName[]`. That is `preventDamageFromType` /
+`preventDamageFromTypes`' shape **one field up on the same interface, written by D159 for
+the same card** — and the reasoning is the repo's own rule applied literally (*the unit
+of SHARING is decided by the READ site, the unit of STORAGE by the WRITE sites*):
+
+- **count the WRITERS.** There are **two** — `WELL_BAKED_BODY` and
+  `ELECTRICITY_POUCHES` — and each names exactly **one** condition. Nothing that exists
+  needs to spell two.
+- **the unit of SHARING is the READ site**, and the read site is one `.includes`. But the
+  *aggregation* folds the holder's own passive **PLUS every attached Tool**, so two
+  sources naming two conditions is a shape it must be able to report. A scalar fold could
+  only ever be last-wins. **Hence the list lives there, not on the interface.**
+- the list is **NOT de-duplicated**: the read is `.includes`, which cannot tell a repeated
+  entry from a single one, and a `Set` would be a second collection type for one
+  membership question (D131).
+- ⚠️ **THE COUNTER-CASE IS REAL AND WAS NAMED RATHER THAN ABSORBED.** Therapeutic Energy
+  names **THREE**. It is a SPECIAL ENERGY and writes **no `PassiveEffects` at all** —
+  `passivesOf`'s `sources` are the TOP CARD and the TOOLS, and an attached Energy is
+  neither — so widening this field to a list today would **pre-pay for a writer that
+  cannot reach it**. Two adjacent fields on one interface with different shapes for the
+  same reason would be the drift D131 warns about.
+
+### ⚠️ §9 IS FREE, AND ITS LAST STEP IS UNDRIVEABLE — the ACTIVE-SPOT counting argument
+
+Riding `passivesOf` buys the Ability-lock gate **with no line written**: the fold has
+already dropped a locked holder's own printed passive and already kept every Tool's. The
+mutant that matters is the one-line-shorter build —
+`programFor(top.id)?.passive?.statusImmunity` read directly — which **survives Klefki**.
+It is driven, and it dies.
+
+The lock is DRIVEN LIVE over both printings, with `disabledAbilityUids` **proved to
+contain the uid first** (D171's rule, so the positive cannot be vacuous): Klefki
+"Mischievous Lock" over Pachirisu (Basic), Ting-Lu ex "Cursed Land" over a damaged
+Dachsbun (the only lock in the registry that reaches a Stage 1), and the immunity comes
+straight back when the lock's source leaves the Active Spot.
+
+⚠️ **What CANNOT be driven is the lock letting a refused condition LAND**, and the reason
+is structural rather than a gap in effort — **a counting argument over ACTIVE SPOTS**:
+
+- every §12 status application in this engine comes from an **ATTACK** (the deriver's
+  five arms) or from Armarouge's `activeOnly` Scorching Armor trigger — so the source
+  occupies an Active Spot;
+- every §9 lock in the registry is `requiresActive` **except** Spiritomb's, which narrows
+  to Basic **V** — a suffix neither immune printing has;
+- the immune body must itself be an Active, because `applyStatus` only ever resolves to
+  `players[seat].active`.
+
+**Three Active Spots wanted, two available.** This is D159's Thundurus finding recurring
+on the other pipeline, and the assertion is written **on the pool** (which locks are
+`requiresActive`, which suffix the bench-capable one narrows to) rather than left as a
+comment, so a printing that makes it reachable goes red. **Asserted, not skipped.**
+
+### The one board where the immune body is the ATTACKER
+
+Scorching Armor is the engine's **only** route by which a status reaches a body that is
+not the defender: the trigger runs under the DAMAGED Pokémon's seat, so
+`applyStatus target: "defender"` resolves to the **ATTACKER's** Active. Dachsbun swings
+its own "Headbutt Bounce" into Armarouge and refuses the Burn coming back. That is the
+same gate asked through the **opposite seat resolution** — the one way the two arms of
+`applyStatus` could have been built to disagree — and its control (Scovillain into the
+same Armarouge) ends with **both** bodies Burned in one reduction, which is the sharpest
+available statement that one call resolves two seats from two callers.
+
+### PARALYSIS NEEDS A COIN, AND THE COIN BOUGHT A CLAIM
+
+The local D1 prints **no single-sentence, non-flip Paralysis anywhere**: every plain
+*"…is now Paralyzed."* row is either behind *"Flip a coin. If heads,"* (13 printings) or
+behind a second sentence the deriver refuses (Weavile `sv06.5-014`'s energy discard,
+Dudunsparce `sv02-157`'s self-shuffle, Cryogonal `sv03-055`'s go-second clause). So this
+half can only be driven through a gate, and the suite picks its seeds by asking
+`flipCoin` for the face it wants.
+
+That turned out to buy a claim rather than cost one: **THE FLIP STILL HAPPENS ON AN
+IMMUNE BODY.** The gate is inside `applyStatus`, downstream of `coinFlipGate`, so
+`rngState` advances **identically** whether the target can be Paralyzed or not — asserted
+by running the immune board and the control board off one seed and comparing the
+post-`rngState`. A build that short-circuited earlier would consume a different number of
+steps and **desynchronise every later flip in the match**.
+
+And the tails case is its own claim: a tails flip never reaches `applyStatus`, so there is
+**no** `STATUS_PREVENTED` row. *"Nothing happened"* has two causes here and they stay
+distinguishable.
+
+### VOICE — the row speaks the printed sentence
+
+`STATUS_PREVENTED { seat, uid, status }`, rendered as **`"Dachsbun can't be Burned"`** —
+the card's own text with the subject resolved. Filed under the seat that OWNS the refusing
+Pokémon (the event family's contract), which for an attack-borne status is the
+**DEFENDER's** chair — the opposite chair from `DAMAGE_DEALT`'s on the very same
+declaration, because this row replaces `STATUS_APPLIED`, not the damage row. Both are
+asserted on one swing.
+
+⚠️ **IT CARRIES THE `status` AND NOT THE REASON, WHICH IS THE OPPOSITE CALL FROM
+`ATTACK_EFFECT_PREVENTED`, AND BOTH ARE RIGHT.** That row names no cause because five
+different rules set one flag and it has never claimed to discriminate them. Here there is
+exactly **one** rule, and the thing a reader cannot otherwise recover is **WHICH**
+condition was refused — a body immune to one of several conditions an attack applies would
+emit an uninterpretable row without it.
+
+### The `applyStatus` early-return audit — D169's lesson, THIRD sighting and FIRST clean one
+
+Three early returns sit ahead of the new gate:
+
+| early return | which term it belongs to |
+|---|---|
+| `active === null` | **BOTH** — no body to status and no body to be immune |
+| `uid === undefined` | **BOTH** — same |
+| `attackEffectRefused(...)` | the **§11 ATTACK BLOCK alone** (D142) |
+
+The new gate sits **BEHIND** the third, so a refused ATTACK keeps reporting itself as one.
+⚠️ **The ordering is UNOBSERVABLE, and that is SAID rather than left as a coincidence:**
+`preventDamage` installs only on the ATTACKER's own Active, an attack ends the turn
+(§5.3), and **neither immune printing has an attack that installs a block** — so no legal
+board reaches both gates. **Asserted over the fixtures' printed attack text and over
+`attackBlock` being null on the board**, not left in a comment.
+
+This is D169's lesson's **third** consecutive sighting (D169 `effectiveAttackCost`, D171
+`attachTool`) and the **first time it came up CLEAN** — the shared seam's opening guards
+genuinely belonged to both terms or to a term this slice does not touch. Which is the
+point of a checklist item: **it has to be allowed to answer "nothing here".**
+
+### The structural questions
+
+1. **PARK? NO. PERSIST? NO — `MATCH_RECORD_VERSION` stays 11, DERIVED.** D124's test is
+   DIRECTIONAL (D171). **Nothing this slice adds reaches `GameState` at all:**
+   `statusImmunity` is a **CATALOG** field (registry.ts types), the aggregation is a pure
+   function of the live board and is never stamped, and `STATUS_PREVENTED` rides
+   `GameEvent`, which `MatchRecord` does not store (it stores the RENDERED log). No key
+   moved on `InPlayPokemon`, no `PendingStage` kind was added, no required field landed on
+   anything persisted. **The dodge was priced and REFUSED (D155):** a "cannot be Burned"
+   flag cached on `InPlayPokemon` would go stale on an evolution, a promotion or a lock
+   arriving, and would have bought a bump for nothing. Asserted by reading the in-play
+   object's own keys.
+2. **VOICE — one new event and one new log arm**, argued above.
+3. **§9 — free by construction, DRIVEN live, and its last step proved impossible.**
+4. **MECHANISM EXISTS** — `passivesOf`'s fold, its §9 drop, `applyStatus`'s three arms,
+   `StatusName`, `STATUS_LABELS` and the whole deriver path all pre-existed. What did not
+   exist was **a field for the sentence to land on**, which is precisely what D159
+   declared when it left the clause LOUD.
+5. **GATES NO ACTION** — checked, not assumed. The printed sentences never say "can't be
+   used"; nothing touches cost, legality or the §4 turn-1 rule, and the field is invisible
+   to `redactedAttacksOf`. **No `redact.ts` and no `GameHud.tsx` diff.** **§11
+   CLASSIFICATION TABLE: NOTHING OWED** — that table is triggered by *an op the deriver
+   can produce*, and this slice adds **no op at all**; `applyStatus`'s derived shape is
+   byte-identical.
+
+### The pins that went red were the ones written to go red
+
+`attackerFilter.test.ts` pinned Dachsbun's immunity as an ABSENCE on two assertions
+(`programFor("sv01-099")?.passive` `toEqual({ preventDamageFromType: "Fire" })`). Both went
+red exactly as designed and are **RE-POINTED, not deleted**; the case is renamed to say
+that ONE of its two LOUD clauses has since been built and the Stadium's has not. **A pin
+that goes red on the slice it was written for is the pin working, for the fourth batch
+running.**
+
+### Mutation pass: 15 run, 14 caught, 1 deliberate survivor
+
+Counts are engine test FILES failed. Every mutant is a real mistake an author would make,
+and three are the neighbouring code's actual text.
+
+| mutant | files killed |
+|---|---|
+| **M1** read the catalog row DIRECTLY, bypassing `passivesOf`'s §9 drop (survives Klefki) | 1 |
+| **M2** drop the gate entirely | 1 |
+| **M3** `.length > 0` instead of `.includes(op.status)` (immune to EVERY condition) | 1 |
+| **M4** refuse but WRITE the condition anyway (drop the early return) | 1 |
+| **M5** refuse SILENTLY (drop the `STATUS_PREVENTED` row) | 1 |
+| **M6** file the row under the OTHER seat | 1 |
+| **M7** gate ONLY the `burned` arm (the arm an author would remember) | 1 |
+| **M8** place the gate AHEAD of `attackEffectRefused` | **SURVIVED — kept, unreachability ASSERTED** |
+| **M9** drop the collect from `passivesOf`'s fold | 1 |
+| **M10** Dachsbun's token is `asleep` instead of `burned` | **2** |
+| **M11** drop the `sv01-208` reprint registry row | 1 |
+| **M12** give the reprint an equal-but-DISTINCT object | 1 |
+| **M13** drop the log arm (the event fires, nothing renders) | 1 |
+| **M14** drop Dachsbun's unread-clause text from the fixture | **2** |
+| **M15** drop Pachirisu's two unmapped attack clauses from both fixtures | 1 |
+
+**⚠️ THE SURVIVOR IS AN ORDERING, NOT A GUARD, AND THAT IS WHY IT IS KEPT.** D154's
+delete-the-free-guard precedent does not apply: **there is no redundant test to remove** —
+the gate is required in *both* positions and only its POSITION is free. Both orderings
+produce the identical board on every reachable input; only the log row would differ, and
+the pair can never both be live. So the codebase's other standard applies —
+**D159 / D161 / D163: keep, and turn the unreachability into an ASSERTION** rather than a
+comment. `statusImmunity.test.ts` asserts it over the fixtures' printed attack text and
+over `attackBlock` being null on the board.
+
+**M10 and M14 killing TWO files each is the LOUD-fixture convention paying out**: the
+wrong token and the dropped clause are caught by `attackerFilter.test.ts` as well, which
+is the whole reason D159 wrote a pin it expected to outlive itself.
+
+### Cost
+
+**1 `PassiveEffects` field (`statusImmunity`), 1 `passivesOf` entry (`statusImmunities`),
+1 gate at `applyStatus`, 1 event (`STATUS_PREVENTED`) + 1 log arm**, 1 new registry
+program (`ELECTRICITY_POUCHES`) on 2 rows + 1 field added to `WELL_BAKED_BODY`, 2 fixtures
+(`sv01-068`/`-208`, verbatim off the D1) and 1 deck (`STATUS_IMMUNITY_DECK`). **No op, no
+error code, no prompt, no park, no `PendingStage`, no regex, no deriver arm, no redact
+arm, no projection, no `@luminous/schema` diff, no DB diff, no web diff.**
+
+9 files under `packages/engine/src` move (`registry.ts`, `continuous.ts`,
+`interpreter.ts`, `events.ts`, `log.ts`, `testFixtures.ts`, `catalogManifest.ts`,
+`index.ts`, `attackerFilter.test.ts`) plus the new `statusImmunity.test.ts` (**49 tests**,
+11 groups). ⚠️ The `testFixtures.ts` edits are **APPEND-ONLY** — no neighbouring fixture
+block was reflowed or renumbered, because another agent was concurrently rewriting six
+fixtures' attack indices in the same file.
+
+engine **0.116.0 → 0.117.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 11**;
+`packages/engine/package.json` stays `0.3.0`; manifest **216 → 218** fixture rows, 0
+absent, regenerated from `scripts/catalog-manifest.ts`; `bun run check` GREEN exit 0 —
+**211 files / 3810 tests** (was 210 / 3761).
+
+### The family after D172 — 2 of 3 sentences, 3 of 4 printings
+
+| sentence | printings | state |
+|---|---|---|
+| "This Pokémon can't be Burned." | `sv01-099` | **BUILT (D172)** |
+| "This Pokémon can't be Paralyzed." | `sv01-068`, `sv01-208` | **BUILT (D172)** |
+| "…recovers from being Asleep, Confused, or Paralyzed and can't be affected by those Special Conditions." | `sv02-193` | **OPEN — priced below** |
+
+The two **POKÉMON** printings are done; the one **ENERGY** printing is the whole
+remainder, and it is priced rather than vague.
+
+### ⚠️ THE DEFERRED PRICE — Therapeutic Energy `sv02-193`, FOUR EDITS, THREE OF THEM OUTSIDE THIS FAMILY
+
+*"As long as this card is attached to a Pokémon, it provides {C} Energy. / The Pokémon
+this card is attached to recovers from being Asleep, Confused, or Paralyzed and can't be
+affected by those Special Conditions."*
+
+It is **not** "a third registry row". `EnergyProgram` today has exactly three fields
+(`provides`, `demoteWithOtherSpecial`, `onAttach`) and **all three are read at ATTACH time
+or at COST time** — nothing on it is read while the card merely sits attached.
+
+1. **A continuous entry on `EnergyProgram`** — `passive?: PassiveEffects`, or a narrower
+   `statusImmunities?: StatusName[]`. **Whichever it is, it is a LIST**: the printing names
+   THREE conditions where every built member names one. (This is exactly why
+   `PassiveEffects.statusImmunity` staying a scalar costs nothing — the Energy will not
+   write that field.)
+2. **A THIRD SOURCE CLASS in `continuous.ts passivesOf`.** Its `sources` array is
+   `[the top card's passive, ...tools]` and has **NEVER walked attached Energy**. ⚠️ **This
+   is the expensive edit and the one to price carefully: *every* field the fold already
+   returns (`damageReductionAfterWR`, `hpBonus`, `damageAttacker`,
+   `preventDamageFromTypes`, `statusImmunities`, …) silently gains an attached-Energy
+   contributor, so each one owes a re-reading rather than a free ride. Expect this to be
+   MOST OF THE SLICE.**
+3. **The §9 answer stated the OTHER way round.** An Energy is not an Ability, so the new
+   source must be **EXEMPT** from the `disabled` drop the holder's own passive takes —
+   exactly as Tools already are — and the exemption must be *driven* with a lock proved
+   live (D171's rule), not assumed.
+4. **The RECOVERY half, which is a second MECHANISM and not a second field.** *"recovers
+   from being…"* must **CLEAR** a condition already present: at attach time (a new
+   `EnergyOnAttach` arm) and, because the immunity is continuous, on any board where the
+   two could disagree. ⚠️ **Nothing in this engine currently clears a condition from a
+   continuous effect** — every existing clear is a placement (`noConditions()`) or a
+   Checkup step. **This is the part with NO PRECEDENT.**
+
+⚠️ **AND IT REOPENS D172's CHECKUP FINDING — THE TRIPWIRE IS DELIBERATELY LEFT ARMED.**
+The whole reason no Checkup gate was built is that `applyStatus` is the only WRITER of a
+condition. The recovery half of this card gives an immunity that can arrive on a body
+**AFTER** the condition did (attach an Energy to an already-Paralyzed Pokémon), which is
+precisely the shape §12 immunity has never had here. **Whoever builds this must re-answer
+"does the Checkup need a gate?" FROM SCRATCH** — and `statusImmunity.test.ts`'s
+**surgically-planted-condition case is written to be the FIRST THING THAT GOES RED** when
+it does. That is not an accident of coverage; it is a tripwire, and it is armed.
+
+Rough shape: **1 interface field + 1 source class + 1 §9 exemption + 1 new clear mechanism
++ 1 fixture + 1 registry row + a re-run of the Checkup question.** **Comparable to D172
+itself, not smaller.**
+
+### Still unmapped in this neighbourhood, after D172
+
+- **Therapeutic Energy `sv02-193` — the family's THIRD sentence, 1 printing, PRICED AND
+  REFUSED at D172.** See the price above; it is the only open member of the §12
+  status-immunity family.
+- **DISCARD-PILE RETRIEVAL RESTRICTIONS — 2 printings, unchanged since D159.**
+  Neutralization Zone `sv06.5-060` and Poké Vital A `sv06.5-062`. Re-checked here rather
+  than assumed: still no reader, still no op / `CardFilter` / zone rule that consults a
+  card's own retrievability. ⚠️ **This is now the ONLY clause D159 left LOUD that is still
+  LOUD** — said so the next census does not have to work out which of the two closed.
+- **`sv02-148` Corviknight** remains D171's open antecedent family of one, untouched.

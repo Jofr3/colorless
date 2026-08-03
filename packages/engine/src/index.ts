@@ -4295,7 +4295,72 @@ import type { GameState, Seat } from "./types";
     (`EXP_SHARE_DECK`, **SEED-FREE** — no coin anywhere in the card). No new event,
     no new log arm, no error code, no `@luminous/schema` diff, no DB diff, no web
     diff. Manifest **215 → 216** fixture rows. */
-export const engineVersion = "0.116.0";
+
+/** 0.117.0 — **D172, the §12 STATUS-IMMUNITY family: the OTHER half of the Ability
+    D159 built, plus the printing that is nothing but this sentence.**
+
+      *"This Pokémon can't be Burned."*      (Dachsbun `sv01-099`, clause 1 of 2)
+      *"This Pokémon can't be Paralyzed."*   (Pachirisu `sv01-068`/`-208`)
+
+    ⚠️ **THE FIRST FAMILY IN THIS BATCH WHOSE PRICING WAS WRONG IN THREE PLACES, ALL
+    THREE STRUCTURAL.** The catalog claim was EXACT — the census re-derived to **4
+    printings / 3 sentences** against 978 rows / 6 sets over all three text columns,
+    both numbers, with two `attacks_json` false positives (Vivillon `sv01-010`
+    APPLIES a chosen condition, Sableye `sv02-136` READS one) that a narrower sweep
+    would have turned into phantom members. What was wrong was everything else:
+
+      1. *"All four clauses are carried VERBATIM on the fixtures and PINNED."* **ONE
+         was.** The other three lived in PROSE, in registry.ts and
+         attackerFilter.test.ts comments — which no census greps and no test can go
+         red on. Two are fixtures now; the third is pinned as an ABSENCE.
+      2. *"It gates `applyStatus` AND the Checkup."* **It gates `applyStatus` and
+         nothing else.** That site is the engine's ONLY writer of a §12 condition —
+         `runCheckup` and the three `noConditions()` sites only ever CLEAR — so a
+         body that cannot be given a status cannot arrive at the Checkup carrying
+         one. A Checkup gate would be a second reading of one rule (D131) that no
+         board could make disagree with the first.
+      3. *"One `PassiveEffects` field and one gate."* A **floor**. A gate that
+         refuses in SILENCE is D159's own finding wearing a §12 hat, so the slice
+         also owes `STATUS_PREVENTED` and its log arm — the FIFTH way this engine
+         can null an effect, and the second to be added because someone rendered
+         the row rather than read the code.
+
+    **THE FIELD IS A SCALAR AND THE AGGREGATION IS A LIST**, `preventDamageFromType`'s
+    shape one field up on the same interface and the same card: every printing names
+    ONE condition, while `passivesOf` folds the holder's passive plus every attached
+    Tool. ⚠️ The counter-case is real and NAMED rather than absorbed — Therapeutic
+    Energy `sv02-193` names THREE — but it is a SPECIAL ENERGY and writes no
+    `PassiveEffects` at all, so a list today would pre-pay for a writer that cannot
+    reach the field. **Deliberately NOT built**, with its price written on
+    `EnergyProgram`: a continuous entry, a THIRD source class in `passivesOf`, the
+    §9 exemption stated the other way round, and a RECOVERY mechanism that clears.
+
+    **§9 IS FREE AND UNDRIVEABLE END TO END, AND BOTH HALVES ARE ASSERTED.** Riding
+    `passivesOf` buys the Ability-lock gate with no line written — a build that read
+    `programFor(top.id)?.passive?.statusImmunity` directly would be shorter and would
+    survive Klefki. The lock is DRIVEN live over both printings (with
+    `disabledAbilityUids` proved to contain the uid first, D171's rule). What cannot
+    be driven is the lock letting a refused condition LAND, and the reason is a
+    counting argument over **ACTIVE SPOTS**: every status source is an Active, every
+    §9 lock but Spiritomb's is `requiresActive`, Spiritomb narrows to Basic **V**, and
+    the immune body must itself be an Active. Three wanted, two available — D159's
+    Thundurus finding, recurring on the other pipeline.
+
+    **`MATCH_RECORD_VERSION` STAYS 11, DERIVED.** Nothing reaches `GameState`:
+    `statusImmunity` is a CATALOG field, the aggregation is a pure function of the
+    live board and is never stamped, and `STATUS_PREVENTED` rides `GameEvent`, which
+    `MatchRecord` does not store (it stores the RENDERED log). The dodge was priced
+    and REFUSED (D155): a cached flag on `InPlayPokemon` would go stale on an
+    evolution, a promotion or a lock arriving.
+
+    Cost: **1 `PassiveEffects` field, 1 `passivesOf` entry, 1 gate at `applyStatus`,
+    1 event + 1 log arm**, 2 registry rows on 1 new program (`ELECTRICITY_POUCHES`)
+    + 1 field added to `WELL_BAKED_BODY`, 2 fixtures (`sv01-068`/`-208`) and 1 deck
+    (`STATUS_IMMUNITY_DECK`). No op, no error code, no prompt, no park, no regex, no
+    deriver arm, no redact arm, no `@luminous/schema` diff, no DB diff, no web diff.
+    2 re-pointed D159 pins (`attackerFilter.test.ts`), `statusImmunity.test.ts`
+    (**49 tests**). Manifest **216 → 218** fixture rows. */
+export const engineVersion = "0.117.0";
 
 export type {
   ApplyResult,

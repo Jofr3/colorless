@@ -180,6 +180,32 @@ export type GameEvent =
       REPLACES any previous rotation — no separate cleared event fires for
       the overwritten one. */
   | { type: "STATUS_APPLIED"; seat: Seat; uid: string; status: StatusName; poisonDamage?: number }
+  /** §12 (D172) — a Special Condition was REFUSED by the target's own printed
+      immunity ("This Pokémon can't be Burned." / "…can't be Paralyzed."). The
+      exact negative of the row above it: same `seat`/`uid` contract (they own the
+      Pokémon the condition was aimed at, which here is also the Pokémon whose own
+      Ability did the refusing), same `status` vocabulary, and it fires INSTEAD of
+      STATUS_APPLIED rather than beside it.
+
+      ⚠️ IT EXISTS BECAUSE THE ALTERNATIVE IS SILENCE, WHICH IS THE DEFECT D159
+      SPENT A WHOLE SLICE FIXING ON THE OTHER PIPELINE. Without this row a Burn
+      aimed at Dachsbun reads as "Scovillain used Hot Bite · dealt 20 damage" and
+      nothing else — indistinguishable from an attack whose status clause the
+      engine forgot, on a board where the reader cannot see the difference. Every
+      other way an effect can be nulled already says so (`ATTACK_EFFECT_PREVENTED`,
+      `ATTACK_EFFECT_SKIPPED`, `DAMAGE_DEALT.prevented`); this is the fifth.
+
+      ⚠️ IT CARRIES THE `status` AND NOT THE REASON, WHICH IS THE OPPOSITE CALL
+      FROM `ATTACK_EFFECT_PREVENTED` ONE FAMILY DOWN, AND BOTH ARE RIGHT. That row
+      names no cause because five different rules set one flag and the event has
+      never claimed to discriminate them. Here there is exactly ONE rule and the
+      thing a reader cannot otherwise recover is WHICH condition was refused — a
+      body immune to one of several conditions an attack applies would emit an
+      uninterpretable row without it. NOT reachable from a non-attack caller
+      today (the only Trainer that applies a status poisons its own Active, and
+      nothing in the pool is Poison-immune), so the wording stays about the
+      CONDITION rather than about the attack. */
+  | { type: "STATUS_PREVENTED"; seat: Seat; uid: string; status: StatusName }
   /** Conditions leaving a Pokémon: `statuses` lists every one that was
       actually removed. "benched" (retreat, §11/§12) and "evolved" (§10) both
       clear everything at once — the latter's `uid` is the NEW top card (the

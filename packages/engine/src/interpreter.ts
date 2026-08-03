@@ -1835,6 +1835,33 @@ function applyStatus(
   // holder's OPPONENT's turn, and the self arm runs on the holder's own), and
   // asking anyway costs one read and removes a case from the reasoning.
   if (attackEffectRefused(state, seat, ctx, events)) return state;
+  // §12 (D172) — the target's own printed IMMUNITY ("This Pokémon can't be
+  // Burned." / "…can't be Paralyzed."). Read through `passivesOf` and not off the
+  // catalog row, which is the whole §9 answer in one call: the fold has already
+  // dropped a locked holder's own printed passive and already kept every attached
+  // Tool's, so a Klefki aura over Pachirisu lets the Paralysis land with nothing
+  // written here to say so.
+  //
+  // ⚠️ PLACED AFTER `attackEffectRefused`, AND THE ORDER IS UNOBSERVABLE — SAID
+  // RATHER THAN LEFT AS A COINCIDENCE. Both gates refuse the same op and produce
+  // the same board; only the ROW differs. Reaching both at once would need a body
+  // that carries an immunity AND has installed a §11 "prevent all … effects of
+  // attacks" block on itself, and `preventDamage` only ever installs on the
+  // ATTACKER's own Active (an attack ends the turn, §5.3) — neither immune
+  // printing has such an attack, and no card can install one on another body. So
+  // this sits behind the older, broader gate: when the whole attack has been
+  // refused, the attack-level row is the true one, and the per-condition row would
+  // be a second sentence about one refusal.
+  //
+  // ⚠️ AND IT IS ONE GATE FOR ALL THREE ARMS BELOW, ASKED ON `op.status` BEFORE
+  // ANY OF THEM. Poison's `poisonDamage` and the rotation slot's overwrite are
+  // both consequences of the condition landing; a gate written inside an arm would
+  // be a fourth reading of "which condition is this" and would silently exempt
+  // whichever arm nobody remembered to write it into.
+  if (passivesOf(state, active).statusImmunities.includes(op.status)) {
+    events.push({ type: "STATUS_PREVENTED", seat, uid, status: op.status });
+    return state;
+  }
   if (op.status === "poisoned") {
     const poisonDamage = op.poisonDamage ?? DEFAULT_POISON_DAMAGE;
     events.push({ type: "STATUS_APPLIED", seat, uid, status: "poisoned", poisonDamage });

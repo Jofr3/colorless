@@ -15,6 +15,7 @@ import {
 import type { PokemonSuffix } from "./cards";
 import type { BasicEnergyType, Card } from "@luminous/schema";
 import type { BoardCondition, PokemonType } from "./effects";
+import type { StatusName } from "./events";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
@@ -209,6 +210,29 @@ export function passivesOf(
       the same reason. Empty on every board with no such holder, so the read sites
       pay one `.some` over nothing. */
   preventDamageFromTypes: PokemonType[];
+  /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
+      sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
+      Pokémon can't be Paralyzed."). The ONE field this aggregation returns that no
+      damage site reads: its single consumer is interpreter.ts `applyStatus`, which
+      is the engine's only writer of a §12 condition.
+
+      A LIST for `preventDamageFromTypes`' reason one field up, and the reason is
+      the SOURCE SET rather than the printings: each printing names exactly one
+      condition, but this fold runs over the holder's own passive PLUS every
+      attached Tool, so two sources naming two conditions is a shape the
+      aggregation must be able to report even though no Tool prints the sentence
+      today. NOT de-duplicated — the read is `.includes`, which cannot tell a
+      repeated entry from a single one, and a `Set` here would be a second
+      collection type for one membership question (D131).
+
+      ⚠️ IT RIDES THIS FOLD PRECISELY SO THE §9 ANSWER IS NOT WRITTEN TWICE. Both
+      printings are Pokémon ABILITIES, so a §9 lock over the holder must switch the
+      immunity off and let the status land; that happens HERE, in the `disabled`
+      drop the `sources` array already makes, and not at the read site. A build
+      that read `programFor(top.id)?.passive?.statusImmunity` directly at
+      `applyStatus` would be one line shorter and would survive an Ability lock —
+      this family's sharpest available defect, and the mutation pass drives it. */
+  statusImmunities: StatusName[];
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
@@ -238,6 +262,7 @@ export function passivesOf(
   let damageAttackerOnKo = 0;
   let preventDamageFromExV = false;
   const preventDamageFromTypes: PokemonType[] = [];
+  const statusImmunities: StatusName[] = [];
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
   const targetConditionalDamageBonusBeforeWR: {
     amount: number;
@@ -273,6 +298,11 @@ export function passivesOf(
     if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
     if (passive.preventDamageFromType !== undefined)
       preventDamageFromTypes.push(passive.preventDamageFromType);
+    // D172 — the §12 immunity, collected exactly like the line above it and for
+    // the same reason. It is in THIS loop rather than beside `top` because that
+    // is what buys the §9 gate: `sources` has already dropped the holder's own
+    // passive if it is locked, and has already kept every Tool's.
+    if (passive.statusImmunity !== undefined) statusImmunities.push(passive.statusImmunity);
   }
   return {
     damageReductionAfterWR,
@@ -284,6 +314,7 @@ export function passivesOf(
     damageAttackerOnKo,
     preventDamageFromExV,
     preventDamageFromTypes,
+    statusImmunities,
   };
 }
 

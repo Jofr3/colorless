@@ -346,6 +346,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       }
       return row(event.seat, segments);
     }
+    case "STATUS_PREVENTED":
+      // D172 — the printed sentence, spoken back. "Dachsbun can't be Burned" IS
+      // the card's own text with the subject resolved, which is the shortest row
+      // that tells a reader the difference between a rule and a bug. Filed under
+      // the seat that OWNS the refusing Pokémon (the event family's contract),
+      // which for an attack-borne status is the DEFENDER's chair — the opposite
+      // of `DAMAGE_DEALT`'s and the same as `STATUS_APPLIED`'s, because this row
+      // replaces that one rather than the damage row.
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" can't be "),
+        strong(STATUS_LABELS[event.status]),
+      ]);
     case "STATUS_CLEARED": {
       // Hoisted for the default arm (the CARDS_DRAWN pattern): with every
       // known reason handled, TS narrows `event` to never inside it.

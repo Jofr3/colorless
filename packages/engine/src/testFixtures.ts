@@ -6037,14 +6037,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Prevent all damage done to this Pokémon by attacks from your opponent's {R}
       Pokémon."*
 
-      ⚠️ TWO PRINTED SENTENCES, ONE AUTHORED MECHANISM — and the fixture carries
-      BOTH because the card does. The registry reads only the second (a
-      `preventDamageFromType: "Fire"` passive); "can't be Burned" is a §12 status
-      immunity with its own neighbourhood (Pachirisu sv01-068/-208 "Electricity
-      Pouches", Therapeutic Energy sv02-193) and NO reader anywhere in the engine,
-      so it stays LOUD. Keeping the whole string here is what lets a suite assert
-      that the unread half is still on the card — the omission failure mode D156
-      closed, applied to a clause instead of to a whole Ability.
+      ⚠️ TWO PRINTED SENTENCES, TWO AUTHORED MECHANISMS SINCE D172 — and the
+      fixture carried BOTH from the start because the card does. D159 read only the
+      second (`preventDamageFromType: "Fire"`, four §8.5 damage sites) and left
+      "can't be Burned" LOUD with no field to put it on; D172 gave it one
+      (`statusImmunity`, read once at interpreter.ts `applyStatus`) and added the
+      family's other printings (Pachirisu sv01-068/-208, below). Keeping the whole
+      string here is what let a suite assert the unread half was still on the card
+      for the thirteen slices in between — the omission failure mode D156 closed,
+      applied to a clause instead of to a whole Ability, and the reason the clause
+      was still findable when its turn came.
 
       A Stage 1 from Fidough, and PSYCHIC — which matters twice: its own type is
       not the type it filters (so a suite cannot pass by reading the wrong card's
@@ -6430,6 +6432,97 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "This attack also does 20 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
         damage: 180,
+      },
+    ],
+  }),
+
+  // ── D172, the §12 STATUS-IMMUNITY family. Both fields below are VERBATIM off
+  //    the local D1 (978 rows / 6 sets, queried 2026-08-03, ALL THREE text
+  //    columns swept). `FIXTURE_POOL` was swept as a SEPARATE population first:
+  //    it held NEITHER Pachirisu, and the family's other two clauses were
+  //    already here — Dachsbun sv01-099 (D159, above) carries its immunity in
+  //    the same string as its prevention, and Therapeutic Energy sv02-193 is
+  //    DELIBERATELY ABSENT (it needs an `EnergyProgram` continuous surface this
+  //    slice did not build; the absence is pinned in statusImmunity.test.ts).
+  //
+  //    ⚠️ AND THAT ABSENCE CORRECTS AN INHERITED CLAIM. Every remainder list
+  //    since D159 said all four printings were "carried VERBATIM on the fixtures
+  //    and PINNED". Only ONE was — Dachsbun's. The other three lived in PROSE
+  //    (registry.ts and attackerFilter.test.ts comments), which no census greps
+  //    and no test can go red on. ──
+
+  /** Pachirisu sv01-068 — "Electricity Pouches": *"This Pokémon can't be
+      Paralyzed."*
+
+      ⚠️ THE FAMILY'S ONLY WHOLE-ABILITY PRINTING, which is exactly why it is the
+      member worth having beside Dachsbun. Well-Baked Body puts the immunity in
+      front of a prevention in ONE string, so a build that read the string rather
+      than the card could pass on it by accident; this Ability is the immunity and
+      nothing else, and its holder carries no §8.5 prevention at all. The two
+      together are what separate "this card's immunity works" from "this card's
+      Ability works".
+
+      LIGHTNING and a BASIC — both load-bearing. Basic is what puts it inside
+      Klefki "Mischievous Lock"'s §9 aura (Dachsbun is a Stage 1 and no lock in
+      the pool reaches it while a status source is on the board), and its
+      ×2 Fighting Weakness is off every attacker this family fields, so the
+      immunity is never entangled with §8.5 arithmetic.
+
+      ⚠️ ITS PRINTED ATTACK CARRIES TWO UNMAPPED CLAUSES AND THEY ARE CARRIED
+      ANYWAY (D135's rule): "Everyone Discharge" ({L}{C}, "10+") prints a typed
+      BENCH COUNT the per-type fold has no reader for AND Feint Attack's
+      `ignoreWR` clause with the Resistance half missing. Neither is this slice's
+      sentence; the deriver refuses both, so index 0 stays unsimulated. */
+  "sv01-068": battler("sv01-068", {
+    name: "Pachirisu",
+    stage: "Basic",
+    types: ["Lightning"],
+    hp: 70,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Electricity Pouches",
+        effect: "This Pokémon can't be Paralyzed.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless"],
+        name: "Everyone Discharge",
+        effect:
+          "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.",
+        damage: "10+",
+      },
+    ],
+  }),
+  /** Pachirisu sv01-208 — the SECOND printing (Illustration rare), byte-identical
+      to sv01-068 in every field this engine reads. It is here for the same reason
+      Bellibolt sv03-201 is: the registry is keyed by ID and not by body, so the
+      claim "both printings are simulated" is only checkable against a second
+      fixture that a build keyed on the wrong thing would leave behind. */
+  "sv01-208": battler("sv01-208", {
+    name: "Pachirisu",
+    stage: "Basic",
+    types: ["Lightning"],
+    hp: 70,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Electricity Pouches",
+        effect: "This Pokémon can't be Paralyzed.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless"],
+        name: "Everyone Discharge",
+        effect:
+          "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.",
+        damage: "10+",
       },
     ],
   }),
@@ -10009,6 +10102,72 @@ export const BENCH_COUNTER_DECK = deckOf({
   "fix-darkness-weak": 3, // 200 HP ×2 Darkness — the base-drop-through-W/R board
   "fix-darkness-energy": 8, // {D}{D} — Earthquake's typed half, and nothing else
   "fix-energy": 29, // Colorless Basic — Raging Crash's whole cost, and every other {C}
+});
+
+/** D172's §12 STATUS-IMMUNITY deck (`statusImmunity.test.ts`). Its own 60 for
+    `ATTACKER_FILTER_DECK`'s reason inherited twice over: that deck's boards are
+    seeded and adding four cards would move every one of them, and this suite needs
+    a §9 lock and a status source ON THE SAME BOARD, which no existing deck fields.
+
+    ⚠️ NOT SEED-FREE, AND THE ONE COIN IS THE POOL'S FAULT RATHER THAN A CHOICE.
+    The local D1 prints NO single-sentence, non-flip Paralysis anywhere: every plain
+    "…is now Paralyzed." row is either behind "Flip a coin. If heads," (13 printings)
+    or behind a second sentence the deriver refuses (Weavile sv06.5-014's
+    energy discard, Dudunsparce sv02-157's self-shuffle, Cryogonal sv03-055's
+    go-second clause). So Pachirisu's half of the family can only be driven through
+    a flip, and the suite picks its seeds by asking `flipCoin` for the face it
+    wants — which turns out to buy a claim rather than cost one: THE FLIP STILL
+    HAPPENS ON AN IMMUNE BODY. The immunity gates the APPLICATION, not the coin, so
+    `rngState` advances identically whether the target is Pachirisu or not, and a
+    build that short-circuited earlier would desynchronise every later flip.
+
+    The cast, and why each card is here:
+      • sv01-068 / sv01-208 Pachirisu — THE printing and its Illustration-rare
+        reprint ("can't be Paralyzed"), so "keyed by id, not by body" is checkable;
+      • sv01-099 Dachsbun — the family's OTHER sentence ("can't be Burned"), and
+        the one whose immunity shares a printed Ability with a §8.5 prevention.
+        A Stage 1, which is why no §9 lock in this pool can reach it while a status
+        source holds the opposing Active Spot;
+      • sv01-029 Scovillain — "Hot Bite" (idx 0, {C}, 20): the pool's cheapest
+        SEED-FREE Burn, and a real printed card rather than the synthetic statuser.
+        Its idx-1 "Super Spicy Breath" is never declared;
+      • fix-statuser — the M3 cast on one body: "Hypnosis" (idx 0, Asleep),
+        "Confuse Ray" (idx 1, Confused), "Numbing Bolt" (idx 2, flip → Paralyzed)
+        and "Toxic" (idx 5, Poisoned ×2). It is what makes "immune to ITS OWN
+        condition and to nothing else" a claim about ONE attacker rather than a
+        comparison across four;
+      • sv03-044 Armarouge — "Scorching Armor", the `onDamagedByAttack` trigger
+        that Burns the ATTACKING Pokémon. The ONLY route in the engine by which a
+        status reaches a body that is not the defender, and therefore the only
+        board where the immunity is asked on `applyStatus`'s OTHER seat resolution;
+      • sv01-096 Klefki — "Mischievous Lock" (§9, Basic Pokémon in play, both
+        sides, requires the Active Spot). The lock that reaches Pachirisu;
+      • sv02-127 Ting-Lu ex — "Cursed Land" (§9, the opponent's DAMAGED Pokémon,
+        requires the Active Spot, ex exempt). The only lock that reaches a Stage 1
+        Dachsbun, and the card that proves the §9 half of this family cannot be
+        driven end to end: it needs the Active Spot the status source needs;
+      • fix-bigbody (200 HP) — the NON-IMMUNE CONTROL under every declaration, so
+        "the status did not land" is never confusable with "the attack did nothing",
+        and the mulligan-free dominant Basic;
+      • fix-titan (340 HP, no attacks) — bench filler and promote target.
+    NO {L} ENERGY ON PURPOSE: nothing here declares Pachirisu's own attack, so the
+    deck carries {F} for Land Scoop, {P} for Dachsbun's own Headbutt Bounce (the
+    only board where an IMMUNE body has to be the attacker), and Colorless for
+    everything else — nothing here can accidentally pay a typed cost. */
+export const STATUS_IMMUNITY_DECK = deckOf({
+  "sv01-068": 3, // Pachirisu — "Electricity Pouches" ("can't be Paralyzed")
+  "sv01-208": 2, // Pachirisu (Illustration rare) — the reprint, for the id-keyed claim
+  "sv01-099": 3, // Dachsbun — "Well-Baked Body" ("can't be Burned" + the {R} prevention)
+  "sv01-029": 3, // Scovillain — "Hot Bite" (idx 0, {C}, 20): the SEED-FREE Burn
+  "fix-statuser": 4, // Hypnosis / Confuse Ray / Numbing Bolt / Toxic on one body
+  "sv03-044": 3, // Armarouge — "Scorching Armor": the Burn that lands on the ATTACKER
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only)
+  "sv02-127": 3, // Ting-Lu ex — "Cursed Land" (§9, damaged, opponent, Active-only)
+  "fix-titan": 4, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-bigbody": 17, // 200 HP neutral Basic — the NON-IMMUNE control, and the setup starter
+  "fix-fighting-energy": 5, // {F}{F}{F} — Land Scoop's cost, and nothing else in the deck
+  "fix-psychic-energy": 3, // {P} — Dachsbun's own "Headbutt Bounce" ({P}{C}{C}), the Armarouge board
+  "fix-energy": 7, // Colorless Basic — Hot Bite, and Headbutt Bounce's two {C}
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)
