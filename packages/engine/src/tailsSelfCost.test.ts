@@ -848,7 +848,7 @@ describe("the tails-gated self-costs — the whiff, and purity", () => {
 describe("the tails-gated self-costs — the family, CLOSED", () => {
   it("reads all THREE bare tails-gated sentences and refuses the other FIVE", () => {
     // ⚠️ THE FAMILY IS CLOSED, WHICH IS THE MOST USEFUL THING THIS FILE STATES.
-    // D144's census (local D1, 2026-08-02, 978 cards): `attacks_json LIKE
+    // D144's census (local D1, 2026-08-02, 978 cards / 6 sets): `attacks_json LIKE
     // '%if tails%'` returns 26 printings / 8 sentences, plus 2 on a Trainer and 0
     // on any Ability — 28 in all. Exactly THREE of those sentences are a bare
     // "Flip a coin. If tails, <one consequent>.", the shape `onTails` buys, and

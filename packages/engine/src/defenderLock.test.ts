@@ -286,7 +286,7 @@ describe("the opponent-side lock — derived, not authored", () => {
     ]);
     expect(deriveAttackEffect(EISCUE_TEXT)).not.toEqual(deriveAttackEffect(DISCARD_HALF_ONLY));
     // …and the second sentence ALONE is printed NOWHERE in the pool as an attack
-    // effect (censused, 978 cards), which is why there is no bare anchor for it
+    // effect (censused, 978 cards / 6 sets), which is why there is no bare anchor for it
     // and why it must stay LOUD.
     expect(
       deriveAttackEffect(
@@ -824,7 +824,7 @@ describe("the opponent-side lock — §10 ends it, and every route is the VICTIM
 describe("the opponent-side lock — a §11 effects block REFUSES it", () => {
   /** D142's WIDE block, surgeried onto the defender for the installing turn.
       Every one of the pool's 13 `effects: true` printings is COIN-GATED (censused,
-      978 cards), so driving one would put a coin into a suite whose whole
+      978 cards / 6 sets), so driving one would put a coin into a suite whose whole
       determinism claim is that it takes none — D143's own move on this same
       field, and D144's precedent for pinning a rule with no ungated card. */
   function shielded(state: GameState): GameState {

@@ -56,7 +56,7 @@ import {
 
 /** The seven distinct clauses of the pool, verbatim, and the op each derives to.
     Censused against the local D1 (2026-08-01) over the WHOLE effect string, 16
-    printings in all: this is the whole mapped set and nothing else in 978 cards
+    printings in all: this is the whole mapped set and nothing else in 978 cards / 6 sets
     prints the shape. Named here rather than inlined so a table-driven case and the
     end-to-end cases below cannot drift apart. */
 const CLAUSES = [

@@ -29,7 +29,7 @@ import {
 //    Resistance)."                                    (Entei sv03-030 "Pressure")
 //
 // ⚠️ ONE PRINTING, AND THE COUNT IS THIS SESSION'S OWN QUERY, not D149's. The
-// local D1 (2026-08-02, 978 cards) prints "less damage (before applying Weakness
+// local D1 (2026-08-02, 978 cards / 6 sets) prints "less damage (before applying Weakness
 // and Resistance)" on SIX rows — Houndoom sv06.5-008/-066, Florges sv01-093,
 // Pidove swsh10.5-061, Pikachu sv02-062 and this one — and exactly one of the six
 // is an ABILITY. Asked as its own question ("in the Active Spot" AND "less

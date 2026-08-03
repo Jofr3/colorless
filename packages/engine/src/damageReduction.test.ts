@@ -404,7 +404,7 @@ describe("the durated damage reduction — derived, not authored", () => {
 
   it("keeps the fixtures' NAME, text, cost, damage and INDEX verbatim", () => {
     // Ids, NAMES, costs, printed damage and the INDEX all checked against the local
-    // D1 (2026-08-02, 978 cards) PER PRINTING — D144's rule, extended to names by
+    // D1 (2026-08-02, 978 cards / 6 sets) PER PRINTING — D144's rule, extended to names by
     // D146 after four consecutive lists carried two wrong ones.
     expect(FIXTURE_POOL["sv03-169"]?.name).toBe("Swablu");
     expect(FIXTURE_POOL["sv03-169"]?.attacks?.[0]).toEqual({

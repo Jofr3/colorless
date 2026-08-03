@@ -130,6 +130,23 @@ export function battler(id: string, overrides: Partial<Card> = {}): Card {
   };
 }
 
+// ⚠️ THE POOL IS DIFFED AGAINST THE CATALOG BY A TEST NOW (D156). Every id here
+// that names a real printing is checked against `catalogManifest.ts` — a
+// committed, generated measurement of the local D1 — by `catalogManifest.test.ts`:
+// the NAME must match, every printed attack and Ability must be present unless the
+// omission is declared THERE with a reason, and every attack the fixture carries
+// must sit at its PRINTED index. D149's Florges and D151's Entei sat here partial
+// for dozens of slices because `toEqual` on the fields a fixture HAS can never see
+// the fields it lacks; that hole is closed, and the declarations are a table
+// rather than a habit.
+//
+// ⚠️ TWELVE FIXTURES HAVE NO CATALOG ROW LEFT TO CHECK AGAINST, AND IT IS NOT
+// THEIR FAULT. Every `swsh10.5-*` entry below was transcribed from a real D1 row
+// — the set was in this database until 2026-08-02 and is gone from it now (88
+// cards; `CATALOG_MANIFEST.priorState`). Their "verbatim off the local D1" doc
+// blocks are HONEST; what is true is that nothing can re-check them, and that any
+// census run against today's file is blind to those cards. Do not "fix" one by
+// editing it to match a query that cannot see it.
 export const FIXTURE_POOL: Record<string, Card> = {
   "fix-basic-0": basicPokemon("fix-basic-0", 0),
   "fix-basic-1": basicPokemon("fix-basic-1", 1),
@@ -498,7 +515,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       commute), and the Resistance is the case that proves the order does NOT
       matter when nothing multiplies.
 
-      Verbatim off the local D1 (2026-08-02, 978 cards): 50 HP, Colorless, Basic,
+      Verbatim off the local D1 (2026-08-02, 978 cards / 6 sets): 50 HP, Colorless, Basic,
       retreat 1, ×2 Lightning, −30 Fighting, no Ability, index-1 "Flap" ({C}{C}, 20). */
   "sv03-169": battler("sv03-169", {
     name: "Swablu",
@@ -706,7 +723,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       3 printings of ONE attack in three rarities (sv03-042 Double rare, sv03-210
       Ultra Rare, sv03-222 Special illustration rare), so D121's second-printing
       warrant is met by the card. Every field re-queried PER PRINTING against the
-      local D1 (2026-08-02, 978 cards) and identical on all three.
+      local D1 (2026-08-02, 978 cards / 6 sets) and identical on all three.
 
       It is its card's ONLY attack, which is deliberate on this half of the slice:
       the "the lock is on the POKÉMON, not the attack" claim is made on the
@@ -2527,7 +2544,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       ⚠️ D151 ADDED THE PRINTED ABILITY, which this fixture had been missing since
       it was fielded — the Florges omission (D149) on the other array. "Pressure"
       is Entei's only Ability and its effect string is byte-verbatim vs the local
-      D1 (2026-08-02, 978 cards); it is the ALWAYS-ON member of D149's pre-W/R
+      D1 (2026-08-02, 978 cards / 6 sets); it is the ALWAYS-ON member of D149's pre-W/R
       attacker debuff, now read through the registry (`opponentActiveAttackDebuff`)
       and continuous.ts `opposingAttackDebuff`. The row is carried here rather than
       abbreviated (contrast Ting-Lu ex above) because pressureAura.test.ts asserts
@@ -2555,17 +2572,6 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** Pecharunt ex (sv06.5-039) — the "×"/multiply Prize family (0.36.0): "Irritated
-      Outburst" (60×, "This attack does 60 damage for each Prize card your opponent
-      has taken.", NO "more") does 60 × (the opponent's TAKEN Prizes) as the WHOLE
-      damage, its printed "60×" base dropped (deriveAttackDamageMultiplier). A Basic,
-      so it reaches the Active straight out of setup; force-placed by surgery here to
-      control the board. The printed STATS and the attack row are verbatim vs the
-      local D1 catalog (Basic Darkness, 190 HP, retreat 1, ×2 Fighting, {D}{D}); its
-      "Subjugating Chains" Ability is OMITTED — it has no registry row and no test
-      declares it (this slice exercises only the attack), the same reason the
-      attacher fixtures above omit an unexercised printed field rather than claim a
-      verbatim card while quietly dropping one. */
   /** Lycanroc ex (sv02-117 Double rare / sv02-241 Special illustration rare, D152)
       — the §9 recoil family's attack-INSTALLED member and the only card that arms
       one. "Scary Fangs" ({F}{C}{C}, printed 140, attack INDEX 1) prints
@@ -2583,7 +2589,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
 
       Fielded by surgery (`setActiveFromDeck`): a Stage 1 from Rockruff, which this
       pool does not carry, and no test in this family evolves INTO it. Verbatim vs
-      the local D1 catalog (2026-08-02, 978 cards): 260 HP, Stage1 from Rockruff,
+      the local D1 catalog (2026-08-02, 978 cards / 6 sets): 260 HP, Stage1 from Rockruff,
       Fighting, retreat 2, ×2 Grass, NO Resistance and NO printed Ability — checked
       FIELD BY FIELD against the row rather than only on the fields carried, which
       is D151's rule after 40 pool fixtures turned out to be missing a printed
@@ -2610,6 +2616,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** Pecharunt ex (sv06.5-039) — the "×"/multiply Prize family (0.36.0): "Irritated
+      Outburst" (60×, "This attack does 60 damage for each Prize card your opponent
+      has taken.", NO "more") does 60 × (the opponent's TAKEN Prizes) as the WHOLE
+      damage, its printed "60×" base dropped (deriveAttackDamageMultiplier). A Basic,
+      so it reaches the Active straight out of setup; force-placed by surgery here to
+      control the board. The printed STATS and the attack row are verbatim vs the
+      local D1 catalog (Basic Darkness, 190 HP, retreat 1, ×2 Fighting, {D}{D}); its
+      "Subjugating Chains" Ability is OMITTED — it has no registry row and no test
+      declares it (this slice exercises only the attack), the same reason the
+      attacher fixtures above omit an unexercised printed field rather than claim a
+      verbatim card while quietly dropping one.
+      ⚠️ **D156 moved this doc block down onto its fixture.** It had drifted above
+      Lycanroc ex's (D152 inserted a card between a comment and the entry it
+      documents), so the one omission on this page that WAS declared read as the
+      one fixture with no doc at all. */
   "sv06.5-039": battler("sv06.5-039", {
     name: "Pecharunt ex",
     hp: 190,
@@ -2854,13 +2875,30 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Weakness against the {L}-weak bodies here — a flat 100 either zone), it pins
       the amount ≠ Rotom's 20 and an auto-take on an all-but-Active-empty board. A
       Basic. Verbatim vs the local D1 catalog (210 HP, Darkness, retreat 1, ×2
-      Fighting). */
+      Fighting, no Resistance).
+
+      ⚠️ **D156 added the printed `abilities` row.** The doc block claimed
+      "verbatim" while silently dropping "Flip the Script" — the exact false-banner
+      defect Charizard ex's own block names two hundred lines below, and the reason
+      the fixture↔catalog diff is a TEST now rather than a claim. The Ability has
+      no registry row, so nothing in the engine can use it (an unauthored Ability
+      is loudly unusable, D8) and the datum is inert; what it buys is that a
+      `FIXTURE_POOL` sweep for a printed sentence can now SEE it, which is the
+      surface D147's rule tells every census to search. */
   "sv06.5-038": battler("sv06.5-038", {
     name: "Fezandipiti ex",
     hp: 210,
     types: ["Darkness"],
     retreat: 1,
     weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Flip the Script",
+        effect:
+          "Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn.",
+      },
+    ],
     attacks: [
       {
         cost: ["Colorless", "Colorless", "Colorless"],
@@ -4269,13 +4307,22 @@ export const FIXTURE_POOL: Record<string, Card> = {
       names it and the by-NAME pool assertion in attackRequirement.test.ts checks
       that the named body exists — a Rockruff → Lycanroc line would be drivable if
       a case ever wanted one, but the evolution-survival case uses the Finizen line
-      instead, because that is the one whose clause reads a promotion at all. */
+      instead, because that is the one whose clause reads a promotion at all.
+
+      ⚠️ **D156 added the printed attack.** "verbatim off the D1" was written over
+      a card carrying none, where Finizen's block two entries up DECLARES its
+      omission ("NO ATTACKS are carried … giving it an attack would only invite a
+      case to use the wrong one"). Two neighbouring fixtures, one honest and one
+      not, and nothing could see the difference. "Bite" ({F}, 20, INDEX 0) is the
+      card's only attack, it takes zero deck slots either way, and it makes the
+      banner true. */
   "sv03-116": battler("sv03-116", {
     name: "Rockruff",
     types: ["Fighting"],
     hp: 60,
     retreat: 1,
     weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [{ cost: ["Fighting"], name: "Bite", damage: 20 }],
   }),
   /** Tarountula sv01-018 — the PRINTED COIN FLIP's cancel end (D126). "Surprise
       Attack" ({G}, 30): "Flip a coin. If tails, this attack does nothing."
@@ -5209,7 +5256,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     resistances: [{ type: "Psychic", value: "-30" }],
   }),
   // — D154's PER-ATTACK LOCK: "During your next turn, this Pokémon can't use
-  //   {AttackName}." Every row verbatim off the local D1 (2026-08-02, 978 cards),
+  //   {AttackName}." Every row verbatim off the local D1 (2026-08-02, 978 cards / 6 sets),
   //   checked FIELD BY FIELD **including the fields the row does not have** (D151's
   //   rule after 40 pool fixtures turned out to be missing a printed Ability or
   //   attack). None of the four cards was in the pool before this slice. —
@@ -5419,9 +5466,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
   }),
   // — D155's PER-ATTACK BUFF: "During your next turn, this Pokémon's {AttackName}
   //   attack does {N} more damage (before applying Weakness and Resistance)."
-  //   Verbatim off the local D1 (2026-08-03, **890 rows** across five sets — see
-  //   effects.ts's anchor, which corrects the 978 every earlier census comment in
-  //   this repo repeated), checked FIELD BY FIELD **including the fields the row
+  //   Verbatim off the local D1 (2026-08-03, **890 rows** across five sets — the
+  //   catalog AFTER it lost `swsh10.5`; D156 found that the 978 every earlier
+  //   census quotes was the same file with that set still in it, so this census
+  //   and theirs ran against different populations and both said so only after
+  //   D156), checked FIELD BY FIELD **including the fields the row
   //   does not have** (D151's rule). ONE printing, and `FIXTURE_POOL` was swept
   //   separately: no fixture printed this sentence before this slice, so unlike
   //   D154 there is no fielded-but-uncatalogued sibling. —
@@ -6708,7 +6757,7 @@ export const TYPE_NAME_DECK = deckOf({
 /** 0.71.0 → 0.72.0: the BOARD-WIDE Energy count (D121) — Absol sv06.5-030
     "Darkfall", "If you have at least 3 {D} Energy in play, this attack does 50
     more damage." One card, one clause, and the whole census: "at least" and
-    "Energy in play" are each a hapax in 978 cards.
+    "Energy in play" are each a hapax in 978 cards / 6 sets.
 
     A DEDICATED deck, and here the reason is unusually literal: this is the ONLY
     clause in the family whose truth is decided by how much ENERGY is on the

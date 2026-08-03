@@ -64,7 +64,7 @@ import {
 
 /** The seven distinct clauses of the pool, verbatim, and the op each derives to.
     Censused against the local D1 (2026-08-01) over the WHOLE effect string (978
-    cards): 10 printings in all, and this is the whole mapped set. Every printing is
+    cards / 6 sets): 10 printings in all, and this is the whole mapped set. Every printing is
     a STANDALONE single sentence, and NOT ONE of the ten carries a printed `damage`
     field — the compound check D131 established was run and came back clean.
 

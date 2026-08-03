@@ -60,7 +60,7 @@ import {
 
 /** The pool's TWO clauses of this shape, verbatim, with the HP each derives to.
     Censused against the local D1 (2026-08-02) over the WHOLE effect string (978
-    cards): every attack effect containing "damage counter" is 56 printings / 31
+    cards / 6 sets): every attack effect containing "damage counter" is 56 printings / 31
     distinct clauses; the ones whose ACTION is putting counters are 24 / 15; the
     ones aimed at "your opponent's Active Pokémon" are 4 / 4, and these are two of
     them. The other two read their amount off the TARGET (see NEAR_MISSES). */

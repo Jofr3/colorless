@@ -49,7 +49,7 @@ import {
 
 /** The two distinct clauses of the family, verbatim, and the program each derives
     to. Censused against the local D1 (2026-08-01) over the WHOLE effect string
-    (`attacks_json LIKE '%Flip a coin. If heads,%'`, 978 cards): 3 printings in all,
+    (`attacks_json LIKE '%Flip a coin. If heads,%'`, 978 cards / 6 sets): 3 printings in all,
     and this is the whole mapped set. Both are STANDALONE single sentences. */
 const CLAUSES = [
   {

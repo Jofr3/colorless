@@ -29,7 +29,7 @@ import {
 //    Pokémon."                          (Lycanroc ex sv02-117/-241 "Scary Fangs")
 //
 // ⚠️ TWO PRINTINGS, AND THE CENSUS IS THIS SESSION'S OWN QUERY rather than §D141's
-// count. The local D1 (2026-08-02, 978 cards) prints "…damage counters on the
+// count. The local D1 (2026-08-02, 978 cards / 6 sets) prints "…damage counters on the
 // Attacking Pokémon" on EIGHT rows: four ALWAYS-ON printings already simulated
 // since 0.x (Cacnea sv01-005 / Cacturne sv01-006 "Counterattack Quills", 3
 // counters; Stunfisk sv03-112 "Custom Trap", 5, `requiresTool`; Rocky Helmet

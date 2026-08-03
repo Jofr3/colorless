@@ -215,7 +215,7 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
 
   it("keeps the fixtures' printed text, cost, damage and INDEX verbatim", () => {
     // Ids, names, costs, printed damage and the INDEX all checked against the
-    // local D1 (2026-08-02, 978 cards) PER PRINTING — D144's rule, and the reason
+    // local D1 (2026-08-02, 978 cards / 6 sets) PER PRINTING — D144's rule, and the reason
     // this slice found that four remainder lists had the two cards misnamed.
     expect(FIXTURE_POOL["sv01-150"]?.name).toBe("Staraptor");
     expect(FIXTURE_POOL["sv01-150"]?.attacks?.[0]).toEqual({

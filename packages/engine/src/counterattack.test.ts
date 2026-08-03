@@ -362,7 +362,7 @@ describe("the log — the row a player actually reads", () => {
 
 describe("the family this label must still cover — three printings, none an Ability", () => {
   // ⚠️ WHY THE MECHANISM AXIS GENERALISES AND A PROVENANCE ONE DOES NOT. The local
-  // D1 (2026-08-02, 978 cards) prints "…damage counters on the Attacking Pokémon"
+  // D1 (2026-08-02, 978 cards / 6 sets) prints "…damage counters on the Attacking Pokémon"
   // on EIGHT printings: three Ability printings (all authored), two TOOL printings
   // and three ATTACK printings. So the same one row already has to serve three
   // different kinds of card, and a `"tool"` member would have been wrong before it

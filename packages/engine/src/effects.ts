@@ -358,7 +358,7 @@ export type BoardCondition =
   | { kind: "handSizesEqual" }
   /** Your opponent's Active Pokémon is a `type` Pokémon — Sylveon swsh10.5-035
       "Wonder Flash" (+90, `Dragon`), the pool's only printing of a TYPE clause
-      and the only sentence in 978 cards that contains the word "Dragon" at all.
+      and the only sentence in 978 cards / 6 sets that contains the word "Dragon" at all.
 
       PARAMETERISED on one printing (D118's rule, applied where the evidence is
       thinnest): the sentence varies on exactly ONE token, that token is
@@ -397,7 +397,7 @@ export type BoardCondition =
       the union's public-state invariant holds. */
   | { kind: "yourBenchHasNamed"; name: string }
   /** You have AT LEAST `count` Energy of `energy` in play — Absol sv06.5-030
-      "Darkfall" (+50, `3` × `Darkness`), and in 978 cards that is the entire
+      "Darkfall" (+50, `3` × `Darkness`), and in 978 cards / 6 sets that is the entire
       census: "at least" and "Energy in play" are each a HAPAX, occurring in this
       one sentence and nowhere else.
 
@@ -457,7 +457,7 @@ export type BoardCondition =
   /** §7.2 — YOU have already played a Supporter card from your hand THIS TURN:
       Pikachu swsh10.5-027 "Buddy Bolt" (+30), whose printed clause is "If you
       played a Supporter card from your hand during this turn". A HAPAX in the
-      ingested 978 cards — one printing, one card, no reprint, and the pool's only
+      ingested 978 cards / 6 sets — one printing, one card, no reprint, and the pool's only
       other "you played" sentence is Crobat sv06.5-029's "Shadowy Envoy" Ability,
       which names a SPECIFIC card ("if you played Janine's Secret Art from your
       hand this turn") and is a different question entirely.
@@ -2169,7 +2169,7 @@ const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
 // The CHOSEN heal (D135) — "Heal {N|all} damage from 1 of your [Benched]
 // Pokémon.", the whole printed effect, 10 printings across 7 distinct clauses
 // and the third heal shape the pool prints. Census run 2026-08-01 against the
-// local D1 over the WHOLE effect string (978 cards); NOT ONE of the ten carries
+// local D1 over the WHOLE effect string (978 cards / 6 sets); NOT ONE of the ten carries
 // a printed `damage` field, so the heal is the entire visible result every time:
 //   • ANY-ZONE, 5 printings / 3 clauses — Nacli sv02-121/-220 "Salt Coating"
 //     (20), Smoliv sv01-021 "Nutrients" (30), Vespiquen ex sv03-096/-212
@@ -2298,7 +2298,7 @@ const FLIP_DECK_TOP_MILL =
 //
 // ⚠️ THE 3 BASIC-FILTERED PRINTINGS MOVED OFF THAT LIST AT D146, AND THEIR CARD
 // NAMES WERE WRONG ON IT. D142 wrote "Fletchling sv01-150" and "Bombirdier
-// sv02-153/-246"; the local D1 (2026-08-02, 978 cards) says sv01-150 is
+// sv02-153/-246"; the local D1 (2026-08-02, 978 cards / 6 sets) says sv01-150 is
 // **STARAPTOR** (Stage 2 from Staravia, "Tailspin Away") and sv02-153/-246 is
 // **NOIVERN ex** (Stage 1 from Noibat, "Covert Flight"). Fletchling sv02-163 and
 // Bombirdier sv01-138/-219/sv02-147 are real cards in this pool and print none of
@@ -2350,8 +2350,8 @@ const PREVENT_DAMAGE_FROM_BASIC =
 //   "During your opponent's next turn, this Pokémon takes {N} less damage from
 //    attacks (after applying Weakness and Resistance)."
 //
-// TWELVE printings on ONE anchor across THREE amounts (local D1, 2026-08-02, 978
-// cards, whole effect string, checked PER PRINTING — ids, names, costs, printed
+// TWELVE printings on ONE anchor across THREE amounts (local D1, 2026-08-02, 890
+// cards / 5 sets, whole effect string, checked PER PRINTING — ids, names, costs, printed
 // damage and INDEX, D144's rule extended to NAMES by D146):
 //
 //   20 — Swablu sv03-169 "Fluffy Guard" ({C}, no printed damage, INDEX 0)
@@ -2414,7 +2414,7 @@ const SELF_DISCARD_ALL_THEN_REDUCTION =
 // both axes at once: a number installed on the DEFENDER's body and subtracted at
 // the ATTACKER's PRE-Weakness/Resistance step.
 //
-// FIVE printings across TWO SENTENCES (local D1, 2026-08-02, 978 cards, whole
+// FIVE printings across TWO SENTENCES (local D1, 2026-08-02, 978 cards / 6 sets, whole
 // effect string, checked PER PRINTING — ids, NAMES, costs, printed damage and
 // INDEX, D144's rule extended to NAMES by D146):
 //
@@ -2460,7 +2460,7 @@ const ATTACKS_BY_DEFENDER_WEAKENED =
 //    (even if it is Knocked Out), put 10 damage counters on the Attacking
 //    Pokémon."
 //
-// TWO printings on ONE anchor at ONE amount (local D1, 2026-08-02, 978 cards,
+// TWO printings on ONE anchor at ONE amount (local D1, 2026-08-02, 978 cards / 6 sets,
 // whole effect string, checked PER PRINTING — ids, NAMES, costs, printed damage
 // and INDEX, D144's rule extended to NAMES by D146):
 //
@@ -2508,7 +2508,7 @@ const SELF_INSTALLED_RECOIL =
 // against the source before relying on it, and D137's own correction of a resume
 // point that named two symbols that did not exist).
 //
-// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards). Every attack
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards / 6 sets). Every attack
 // effect containing "damage counter" is 56 printings / 31 distinct clauses; the
 // ones that MOVE rather than PUT are this sentence and nothing else. The whole
 // counter-move neighbourhood in the pool is three clauses, and the other two are
@@ -2555,7 +2555,7 @@ const COUNTER_MOVE_TO_DEFENDER =
 // that maps them, and the two anchors stay disjoint by their first word exactly
 // as `SELF_HEAL` and `DECK_TOP_MILL` do.
 //
-// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards; D138's sweep,
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards / 6 sets; D138's sweep,
 // re-read for the PUT half rather than re-run). Attack effects containing
 // "damage counter" — 56 printings / 31 distinct clauses. Of those, the ones whose
 // ACTION is putting counters — 24 printings / 15 clauses; the ones aimed at
@@ -2605,7 +2605,7 @@ const COUNTER_PUT_ON_DEFENDER =
 // park; the `count: 1` pick over `oppBenchRefs` is the one the two Ability rows
 // already take.
 //
-// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — D139's PUT census
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards / 6 sets — D139's PUT census
 // re-read for the BENCH target rather than re-run; that census is CLOSED). Of the
 // 24 printings / 15 clauses whose ACTION is putting counters, the ones aimed at
 // "1 of your opponent's Benched Pokémon" are EXACTLY THESE FOUR, on ONE clause,
@@ -2639,7 +2639,7 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // below). It is the drawback half of a big-damage attack and the pool's most
 // re-printed durated rider after D112's retreat lock.
 //
-// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — a NEW census,
+// CENSUS (local D1, 2026-08-02, whole effect string, 978 cards / 6 sets — a NEW census,
 // run for THIS question rather than read off D142's duration table, per that
 // slice's own rule that a census run for one purpose is a FLOOR for every other).
 // "can't attack" appears on 38 printings in all: 33 in `attacks_json`, 2 in
@@ -2727,7 +2727,7 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 // 210 / 200) and no "+"/"×" marker, so `modifierSimulated` (attack.ts) is
 // untouched by this arm and the drawback really is the whole effect text.
 //
-// CENSUS — THE TAILS SHAPE AS ITS OWN QUESTION (local D1, 2026-08-02, 978 cards),
+// CENSUS — THE TAILS SHAPE AS ITS OWN QUESTION (local D1, 2026-08-02, 978 cards / 6 sets),
 // run because D143's census counted these 5 as REFUSALS of the "can't attack"
 // question and therefore says nothing about how the tails FACE generalises.
 // `attacks_json LIKE '%if tails%'` returns 26 printings / 8 sentences, plus 2 on a
@@ -2784,7 +2784,7 @@ const FLIP_TAILS_SELF_CANT_ATTACK =
 // on the VERB for four slices while three remainder lists carried it as the
 // largest unread count in the tail.
 //
-// CENSUS (local D1, 2026-08-02, 978 cards, run as its OWN question rather than
+// CENSUS (local D1, 2026-08-02, 978 cards / 6 sets, run as its OWN question rather than
 // inherited from §D148's table — D142's floor rule, eleventh payout). `LIKE
 // '%can''t use%'` across ALL THREE text columns returns 29 rows; exactly SIX are
 // this sentence, and every other match is a different mechanism the `^During`
@@ -2807,7 +2807,7 @@ const FLIP_TAILS_SELF_CANT_ATTACK =
 // 6 sentences", naming Radiant Charizard swsh10.5-011 and Radiant Blastoise
 // swsh10.5-018 alongside these six. The local D1 holds FIVE sets — sv01, sv02,
 // sv03, sv06.5, sve — and NO swsh10.5 row at all, so every census "run against the
-// local D1, 978 cards" in this file has been structurally blind to that set and
+// local D1, 978 cards / 6 sets" in this file has been structurally blind to that set and
 // any count including a swsh10.5 id was never verified by the query it cites.
 // swsh10.5-011 is in no fixture either. swsh10.5-018 IS in `FIXTURE_POOL`
 // ("Torrential Cannon", {W}{W}{C}, 170, INDEX 0), so this anchor reads it and the
@@ -2859,6 +2859,34 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 // 2026-07-27. Nothing behavioural turns on it; what turns on it is that a number
 // copied forward through twenty comments was never the number any of them
 // measured, which is the same failure D154 found one axis out.
+//
+// ⚠️ D156 FOUND THE OTHER HALF, AND IT INVERTS THE PARAGRAPH ABOVE: 978 WAS
+// MEASURED. IT IS THIS CATALOG PLUS A SET THAT HAS SINCE VANISHED. D112
+// (2026-08-01) wrote the breakdown into `decisions.md` — *"the local pool is 978
+// cards over SIX sets … sv01/sv02/sv03/sv06.5/sve PLUS swsh10.5 (Pokémon GO, 88
+// cards)"* — and the arithmetic agrees three ways: 890 + 88 = 978, and on
+// `legal_standard = 0` this file's 763 + 88 = the 851 the docs quote, and D147's
+// own census table (2026-08-02) lists Pidove `swsh10.5-061` as a QUERY RESULT, so
+// the rows were still here that day. D154 (2026-08-03) is the first slice to find
+// them gone. No `cards`, `sets` OR `series` row for the set survives, and the
+// .sqlite's mtime never moved — a write-ahead log that was never checkpointed.
+//
+// So the defect was never a wrong number: it was a number with NO SCOPE, which is
+// what let one population's measurement read as another's fiction. Every census
+// comment in this file now says `978 cards / 6 sets`, naming the catalog it
+// actually queried; `catalogManifest.ts` holds BOTH states — today's measured
+// 890/5 and D112's inherited 978/6 — beside the sqlite's mtime; and
+// `catalogManifest.test.ts` FAILS on any three-or-four-digit "N cards" in the
+// engine sources that is neither a measured number nor a listed exception, AND on
+// any catalog row count quoted without its set count. Regenerate the manifest
+// with `bun run scripts/catalog-manifest.ts`.
+//
+// ⚠️ THE LIVE CONSEQUENCE, WRITTEN DOWN SO NO SLICE INHERITS IT SILENTLY: every
+// census run from 2026-08-03 onward is blind to 88 real cards, so a "this is the
+// whole mapped set" claim made against today's file can UNDERCOUNT. D155's
+// downward corrections of §D149's "5 printings" and §D151's "six rows" are that
+// error: Pidove is a real catalogued card, not a fixture-only one. Re-ingesting
+// `swsh10.5` is priced on the remainder list.
 //
 // CENSUS (local D1, 2026-08-03, 890 rows across the five sets above, ALL THREE
 // text columns — `effect`, `attacks_json`, `abilities_json`):
@@ -2916,8 +2944,8 @@ const SELF_ATTACK_BOOST =
 // Rare) / sv03-222 (Special illustration rare) "Scalding Block" ({W}{W}{W}, attack
 // INDEX 0, printed 160), 3 printings of ONE attack in three rarities, so D121's
 // second-printing warrant is met by the card rather than by a family argument.
-// Every field re-queried per printing against the local D1 (2026-08-02, 978
-// cards): identical name, cost, index, damage and effect string on all three.
+// Every field re-queried per printing against the local D1 (2026-08-02, 890
+// cards / 5 sets): identical name, cost, index, damage and effect string on all three.
 //
 // ⚠️ THERE IS NO BARE ANCHOR, AND THAT IS A CENSUS RESULT RATHER THAN A CHOICE —
 // exactly as it was for `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s first sentence one
@@ -3008,7 +3036,7 @@ const DEFENDER_BASIC_CANT_ATTACK =
 // a registry row for one id is not a second printing of another).
 //
 // CONSEQUENT CENSUS 1 — "discard all Energy from this Pokémon" (local D1,
-// 2026-08-02, 978 cards), run because D144's census was run for the FACE and a
+// 2026-08-02, 978 cards / 6 sets), run because D144's census was run for the FACE and a
 // census run for one purpose is a FLOOR for every other (D142's rule). The verb
 // matters: `%all Energy from this%` returns 14 attack printings, and FOUR of them
 // say MOVE rather than discard (Blissey sv01-145, Tropius sv02-007/-195, Darkrai
@@ -3457,7 +3485,7 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // parameterised, which is D119's corollary rather than a departure from D118:
   // TWO tokens vary here in principle, the threshold and the energy, so there is
   // no single-token pattern to write. And there is nothing to generalise FROM —
-  // "at least" and "Energy in play" are each a hapax in 978 cards, so a template
+  // "at least" and "Energy in play" are each a hapax in 978 cards / 6 sets, so a template
   // would be parameterising over a pool of one on both axes at once. The nearest
   // real family is the "has any <energy> Energy attached" template above, which
   // varies on one token and reads a different board. Rows are matched FIRST, so
@@ -3765,7 +3793,7 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 // the vocabulary recursive — five consumers (`conditionHolds`, `conditionNote`,
 // `redact.ts`, `cardplay.ts`'s playability descent, `registry.ts`) each owing a
 // recursion arm, and `conditionNote` owing a readable negated phrasing English
-// does not supply — to buy a spelling nothing in 978 cards asks for. If a card
+// does not supply — to buy a spelling nothing in 978 cards / 6 sets asks for. If a card
 // ever prints a POSITIVE clause under this consequent ("If your opponent's
 // Active Pokémon is a Basic Pokémon, this attack does nothing"), THAT is the
 // warrant, and the cheap answer then is a second table of positive-sense rows,
@@ -3930,7 +3958,7 @@ const ATTACK_COIN_MULTI = /^Flip (\d+) coins\. This attack does (\d+) damage for
 // The BOARD-COUNTED FLIP COUNT (D128) — "Flip a coin for each [{X}] Energy attached
 // to this Pokémon. This attack does D damage for each heads." — 3 printings, and
 // the shape where the board vocabulary finally earns its place in the coin family.
-// Census (2026-08-01, `attacks_json`, 978 cards): Torkoal sv01-035 "Concentrated
+// Census (2026-08-01, `attacks_json`, 978 cards / 6 sets): Torkoal sv01-035 "Concentrated
 // Fire" (`80×`, the TYPED `{R}` reading and the pool's ONLY coin effect containing
 // a brace token), Ambipom swsh10.5-057 "Full Tilt Fling" (`60×`) and Bellossom
 // sv03-003 "Powerful Dance" (`90×`) — the UNTYPED reading, two printings, so D121's

@@ -30,12 +30,12 @@ import {
 // ⚠️ AND THE COUNT WAS WRONG, IN THE ONE DIRECTION NO EARLIER MISS HAD TAKEN.
 // Every list since §D143 said "8 printings / 6 sentences" on the self side, naming
 // Radiant Charizard swsh10.5-011 and Radiant Blastoise swsh10.5-018 beside six
-// sv-era ids. The local D1 (2026-08-02, 978 cards) holds FIVE SETS — sv01, sv02,
+// sv-era ids. The local D1 (2026-08-02, 978 cards / 6 sets) holds FIVE SETS — sv01, sv02,
 // sv03, sv06.5, sve — and NO swsh10.5 ROW AT ALL. So the catalogued count is SIX
 // across FOUR names; swsh10.5-011 is in no fixture either, and swsh10.5-018 is in
 // `FIXTURE_POOL` with the sentence on it, which makes it a FIELDED printing of
 // fixture provenance rather than a catalogued one. Every census in this repo that
-// says "run against the local D1, 978 cards" has been structurally blind to that
+// says "run against the local D1, 978 cards / 6 sets" has been structurally blind to that
 // set — D149's own "6 printings" named Pidove swsh10.5-061 the same way — and the
 // lesson is narrower than "counts drift": a query cannot see a set the database
 // does not have, and nothing about its result says so.

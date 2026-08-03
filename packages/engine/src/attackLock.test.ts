@@ -223,7 +223,7 @@ describe("the self-lock — derived, not authored", () => {
   });
 
   it("refuses the TWO self-lock printings it deliberately does not map", () => {
-    // Every one is real text from the local D1 (2026-08-02, 978 cards), and each
+    // Every one is real text from the local D1 (2026-08-02, 978 cards / 6 sets), and each
     // is refused by a different property of the whole-sentence anchor. The list a
     // future slice inherits instead of re-censusing (effects.ts carries it too).
     for (const text of [

@@ -50,7 +50,7 @@ import {
 //
 // The threshold and the energy could both move, and there is nothing to
 // generalise FROM: "at least" and "Energy in play" are each a HAPAX in the
-// ingested 978 cards — this sentence and nowhere else. A template would be
+// ingested 978 cards / 6 sets — this sentence and nowhere else. A template would be
 // parameterising over a pool of one on both axes at once. The member is still
 // parameterised, because `conditionHolds` genuinely compares a count against a
 // threshold; what is literal is the TABLE KEY. Both halves are asserted below:

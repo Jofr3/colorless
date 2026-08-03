@@ -266,7 +266,7 @@ describe("the tails gate — derived, not authored", () => {
   });
 
   it("refuses the OTHER FIVE tails-carrying sentences in the pool", () => {
-    // Every one is real text off the local D1 (2026-08-02, 978 cards) — the census
+    // Every one is real text off the local D1 (2026-08-02, 978 cards / 6 sets) — the census
     // this slice ran for the TAILS FACE as its own question, rather than reading
     // D143's conclusion, which had counted these five as refusals of the "can't
     // attack" question and therefore says nothing about the face. 28 printings
@@ -695,7 +695,7 @@ describe("the tails gate — `programPlayable` is FACE-AGNOSTIC, asserted", () =
 describe("the tails gate — the census, asserted as a shape", () => {
   it("pins 5 printings on ONE sentence, and the tails SHAPE at 8 across 3", () => {
     // The numbers the slice claims and the numbers a re-census has to reproduce
-    // (local D1, 2026-08-02, 978 cards). `attacks_json LIKE '%if tails%'` returns
+    // (local D1, 2026-08-02, 978 cards / 6 sets). `attacks_json LIKE '%if tails%'` returns
     // 26 printings / 8 sentences, plus 2 on a Trainer and 0 on any Ability = 28.
     // Exactly THREE of those sentences are a bare "Flip a coin. If tails, <one
     // consequent>." — the shape the FIELD buys — and they are 8 printings.

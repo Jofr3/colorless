@@ -68,7 +68,7 @@ import {
 
 /** The pool's ONE clause of this shape, verbatim, and the op it derives to.
     Censused against the local D1 (2026-08-02) over the WHOLE effect string (978
-    cards): every attack effect containing "damage counter" is 56 printings / 31
+    cards / 6 sets): every attack effect containing "damage counter" is 56 printings / 31
     distinct clauses, and exactly one of them MOVES counters rather than PUTTING
     them. Both printings are the same attack on the same card in two rarities. */
 const CLAUSE = "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.";

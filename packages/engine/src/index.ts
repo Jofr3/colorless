@@ -828,7 +828,7 @@ import type { GameState, Seat } from "./types";
     A LITERAL ROW although the member is parameterised — D119's corollary, second
     use. Two tokens could vary here (the threshold and the energy), so D118's
     one-token test fails; and there is nothing to generalise from, since "at least"
-    and "Energy in play" are each a HAPAX in the ingested 978 cards. A template
+    and "Energy in play" are each a HAPAX in the ingested 978 cards / 6 sets. A template
     would parameterise over a pool of one on both axes at once. The parameters are
     real all the same: `conditionHolds` compares a count against a threshold, and
     the printed "at least" makes it `>=` — a threshold, not D119's set membership.
@@ -1016,7 +1016,7 @@ import type { GameState, Seat } from "./types";
     attack.ts cancels on its ABSENCE. A `not` member would make `BoardCondition`
     recursive — five consumers each owing a recursion arm, and `conditionNote`
     owing a negated phrasing English does not supply — to buy a spelling nothing in
-    978 cards asks for. If a POSITIVE clause ever appears under this consequent,
+    978 cards / 6 sets asks for. If a POSITIVE clause ever appears under this consequent,
     that is the warrant, and the answer then is a second table of positive-sense
     rows, still without touching the union (D121's rule).
 
@@ -1668,7 +1668,7 @@ import type { GameState, Seat } from "./types";
     entire visible result of the declaration.
 
     ⚠️ THE ATTACK IS NAMED "Tail Swap". Three consecutive remainder lists called it
-    "Dedechange" and the local D1 prints no such attack anywhere in its 978 cards.
+    "Dedechange" and the local D1 prints no such attack anywhere in its 978 cards / 6 sets.
     That is D135's lesson landing on D135's own note: a forecast — or a name —
     copied forward gains authority from repetition alone, and checking it took one
     query.
@@ -1788,7 +1788,7 @@ import type { GameState, Seat } from "./types";
     twice. Pinned by a table over BOTH printings at two different counts (7 → 70,
     5 → 50), by an end-to-end board on each, and by explicit refusals of 7 and 700.
 
-    CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — D138's sweep
+    CENSUS (local D1, 2026-08-02, whole effect string, 978 cards / 6 sets — D138's sweep
     re-read for the PUT half rather than re-run). Attack effects containing
     "damage counter": **56 printings / 31 clauses**. Of those, the ones whose
     ACTION is PUTTING counters: **24 / 15**; the ones aimed at "your opponent's
@@ -1934,7 +1934,7 @@ import type { GameState, Seat } from "./types";
     (20 placed, where a `deals` build prevents it ENTIRELY) — the latter available
     only because this sentence's attacker HAS a rule box, which D139's did not.
 
-    CENSUS (local D1, 2026-08-02, whole effect string, 978 cards — D139's PUT
+    CENSUS (local D1, 2026-08-02, whole effect string, 978 cards / 6 sets — D139's PUT
     census re-read for this target rather than re-run; it is CLOSED). Of the 24
     printings / 15 clauses whose ACTION is putting counters, the ones aimed at "1 of
     your opponent's Benched Pokémon" are exactly these FOUR PRINTINGS OF ONE CARD on
@@ -2000,7 +2000,7 @@ import type { GameState, Seat } from "./types";
     well-defined** once two cards contribute.
 
     ⚠️ AND IT GENERALISES, which is why the axis was worth arguing. The local D1
-    (2026-08-02, 978 cards) prints "…damage counters on the Attacking Pokémon" on
+    (2026-08-02, 978 cards / 6 sets) prints "…damage counters on the Attacking Pokémon" on
     **8 printings across 5 sentences and THREE kinds of card**: 3 Ability printings
     (Cacnea sv01-005, Cacturne sv01-006, Stunfisk sv03-112 — all authored), **2
     TOOL printings** (Rocky Helmet sv01-193 authored; **Vengeful Punch sv03-197
@@ -2060,7 +2060,7 @@ import type { GameState, Seat } from "./types";
     ⚠️ THE RESUME POINT'S COUNT HELD AND ITS DESCRIPTION DID NOT, which is the
     seventh list running to carry something wrong and the first time the miss is
     in the WORDS rather than in the numbers. "13 printings / 2 spellings" is
-    exactly right (11 + 2, verified against the local D1, 2026-08-02, 978 cards)
+    exactly right (11 + 2, verified against the local D1, 2026-08-02, 978 cards / 6 sets)
     — and they are not two spellings of one sentence, they are **two different
     READINGS**: eleven say "prevent all damage FROM AND EFFECTS OF attacks done to
     this Pokémon", two say "prevent all damage done to this Pokémon **by
@@ -2408,7 +2408,7 @@ import type { GameState, Seat } from "./types";
     ⚠️ **THE LIST WAS RIGHT — THE FIRST IN TEN THAT WAS.** Nine consecutive
     remainder lists carried something wrong; this one's every claim held. All three
     CATALOG claims verified printing by printing against the local D1 (2026-08-02,
-    978 cards): the ids, the attack NAMES ("Dynamic Bolt" / "Frost Purge" /
+    978 cards / 6 sets): the ids, the attack NAMES ("Dynamic Bolt" / "Frost Purge" /
     "High-Impact Kick"), the costs ({L}{L}{C} / {W}{W}{C} / {C}{C}{C}), the printed
     damage (220 / 170 / 160), the byte-exact effect strings — **and the INDEX,
     which is 1 on all three and was checked SEPARATELY for each** because D144
@@ -2528,7 +2528,7 @@ import type { GameState, Seat } from "./types";
     ONE STRUCTURAL CLAIM WAS TRUE IN LETTER AND FALSE IN SUBSTANCE.** Four
     remainder lists (and D142's own `effects.ts` comment, and D142's own suite)
     named the printings **"Fletchling sv01-150" and "Bombirdier sv02-153/-246"**.
-    The local D1 (2026-08-02, 978 cards) says **STARAPTOR sv01-150** ("Tailspin
+    The local D1 (2026-08-02, 978 cards / 6 sets) says **STARAPTOR sv01-150** ("Tailspin
     Away", {C}{C}, 60, attack **INDEX 0**) and **NOIVERN ex sv02-153/-246**
     ("Covert Flight", {C}{C}, 70, **INDEX 0**). Fletchling sv02-163 and Bombirdier
     sv01-138/-219/sv02-147 are all real cards in this pool and print none of this
@@ -3033,7 +3033,7 @@ import type { GameState, Seat } from "./types";
 
     **1 printing, RE-QUERIED rather than inherited** (the resume item carried an
     explicit honesty marker saying D150 had re-verified none of it). The local D1
-    (2026-08-02, 978 cards) prints "less damage (before applying Weakness and
+    (2026-08-02, 978 cards / 6 sets) prints "less damage (before applying Weakness and
     Resistance)" on SIX rows — five attack riders (D149) and this one Ability —
     and the sharper query ("in the Active Spot" AND "less damage") returns Entei
     alone. Id → NAME, Ability name, the byte-exact effect string and the fixture's
@@ -3074,11 +3074,16 @@ import type { GameState, Seat } from "./types";
     ⚠️ **THE FIXTURE WAS PARTIAL, AND THE SWEEP FOUND IT IS NOT ALONE.** Entei has
     sat in `FIXTURE_POOL` since 0.35.0 carrying NO `abilities` array on a card with
     exactly one printed Ability — Florges's D149 omission on the other array. A
-    field-by-field diff of the WHOLE pool against the D1 (978 rows) finds **40
-    fixtures missing a printed Ability or attack**, several deliberately and
-    documented (Pecharunt ex), several not (Mimikyu carries `preventDamageFromExV`
-    in the registry and no "Safeguard" row on the card). **No fixture NAME is
-    wrong**, so D149's name sweep holds. This is a repo-wide hazard, not a one-off.
+    field-by-field diff of the WHOLE pool against the D1 (978 rows) finds fixtures
+    missing a printed Ability or attack, several deliberately and documented
+    (Pecharunt ex), several not (Mimikyu carries `preventDamageFromExV` in the
+    registry and no "Safeguard" row on the card). **No fixture NAME is wrong**, so
+    D149's name sweep holds. This is a repo-wide hazard, not a one-off. ⚠️ **D151's
+    "40" was never re-queried: D156 re-ran the diff against today's five-set file
+    and the number is 34, plus 12 fixtures whose catalog row the file has lost.**
+    Both populations are now PINNED rather than counted in prose, each entry with
+    its REASON — see `catalogManifest.test.ts`, and note that the 34 is measured
+    against a catalog missing `swsh10.5`, so it is a floor for the six-set one.
 
     ⚠️ **NO PARK, NO PERSISTED KEY, `MRV` 7 UNCHANGED — SAID EXPLICITLY.** The flag
     lives on the CATALOG (`PassiveEffects`, a registry type), the scan is pure, and
@@ -3120,7 +3125,7 @@ import type { GameState, Seat } from "./types";
     **2 printings, RE-QUERIED rather than inherited.** Every claim on the resume
     item held to the byte: `sv02-117`/`sv02-241` really are **Lycanroc ex**, the
     attack really is **"Scary Fangs"** at **INDEX 1** on BOTH printings, {F}{C}{C},
-    printed 140, and the effect string matches the local D1 (2026-08-02, 978 cards)
+    printed 140, and the effect string matches the local D1 (2026-08-02, 978 cards / 6 sets)
     character for character. The §9 census was re-run as its OWN question rather
     than inherited from §D141: "…damage counters on the Attacking Pokémon" returns
     **8 rows** — 4 always-on printings already simulated (Cacnea sv01-005 / Cacturne
@@ -3255,7 +3260,7 @@ import type { GameState, Seat } from "./types";
     naming Radiant Charizard `swsh10.5-011` and Radiant Blastoise `swsh10.5-018`.
     The local D1 holds **five sets — sv01, sv02, sv03, sv06.5, sve — and NO
     swsh10.5 row at all**, so every census in this repo "run against the local D1,
-    978 cards" has been structurally blind to that set, and any count including a
+    978 cards / 6 sets" has been structurally blind to that set, and any count including a
     swsh10.5 id was never verified by the query it cites (D149's "6 printings"
     named Pidove `swsh10.5-061` the same way). `swsh10.5-011` is in no fixture
     either; `swsh10.5-018` is, so this anchor reads it and the suite drives it as a
@@ -3316,14 +3321,32 @@ import type { GameState, Seat } from "./types";
     that `FIXTURE_POOL` fields cards from a sixth. Re-running it found the other
     half: the catalog holds **890 rows, not 978** (`select set_id, count(*)` sums
     to 890 and `select count(*)` agrees, against a file unwritten since
-    2026-07-27). Roughly twenty census comments in `effects.ts` say 978. Nothing
-    behavioural turns on it; what turns on it is that a number copied forward
-    through twenty comments was never the number any of them measured. Against
-    those 890 rows across all three text columns, `more damage (before applying`
-    returns ONE row, and the `FIXTURE_POOL` sweep — run SEPARATELY, which is the
-    half D154's finding makes mandatory — returns none. The mirror family returns
-    FIVE, which makes §D149's "5 printings" **4** in the catalog and §D151's "six
-    rows" **5**: both counted Pidove `swsh10.5-061`, of fixture provenance.
+    2026-07-27). Against those 890 rows across all three text columns, `more
+    damage (before applying` returns ONE row, and the `FIXTURE_POOL` sweep — run
+    SEPARATELY, which is the half D154's finding makes mandatory — returns none.
+
+    ⚠️ **D156 CORRECTS THE INFERENCE, NOT THE MEASUREMENT — AND IT IS THIS SLICE'S
+    OWN DEFECT ONE LEVEL DOWN.** "978 matches no table in the file" is true of the
+    file today and does not license "none of those comments ever measured it".
+    D112 (2026-08-01) recorded the breakdown in `decisions.md`:
+    **978 cards / 6 sets** — `sv01`/`sv02`/`sv03`/`sv06.5`/`sve` PLUS
+    `swsh10.5` (88 rows). And
+    890 + 88 = 978, while on `legal_standard = 0` this file's 763 + 88 = the 851
+    the docs quote, and D147's census table (2026-08-02) lists Pidove
+    `swsh10.5-061` as a query RESULT. **The catalog SHRANK between 2026-08-02 and
+    2026-08-03**; no `cards`, `sets` or `series` row for the set survives and the
+    .sqlite's mtime never moved, so the ingest lived in an unwritten WAL. The
+    defect was a number with no SCOPE, not a number nobody measured — so the ~20
+    comments now read `978 cards / 6 sets`, both states live in
+    `catalogManifest.ts`, and `catalogManifest.test.ts` fails on a row count
+    quoted without its set count. **Consequently the corrections below are
+    THEMSELVES wrong**: §D149's "5 printings" and §D151's "six rows" counted
+    Pidove, which is a real catalogued card this file has since lost — kept here,
+    struck through rather than deleted, because the reasoning is the artefact.
+
+    ~~The mirror family returns FIVE, which makes §D149's "5 printings" **4** in
+    the catalog and §D151's "six rows" **5**: both counted Pidove `swsh10.5-061`,
+    of fixture provenance.~~
 
     ⚠️ **THE FIRST TIME IN THIS FAMILY THAT D131's WIDEN-DON'T-ADD TEST PASSES ON
     THE SHAPE AND THE ANSWER IS STILL TWO FIELDS.** `InPlayPokemon.boostedAttack:
@@ -3390,8 +3413,76 @@ import type { GameState, Seat } from "./types";
     so its one curly-named witness covers both), 1 NEW EVENT, 1 log arm, 4 §10
     clears and 1 term at ONE read site** — no park, no new error code, no prompt,
     no `DAMAGE_DEALT` member, no redact/HUD diff, no `@luminous/schema` or DB diff
-    beyond the one constant. */
-export const engineVersion = "0.103.0";
+    beyond the one constant.
+
+    ---
+
+    **0.103.1 (D156) — HARDENING, NOT A CARD SLICE: THE CATALOG CLAIMS BECOME
+    CHECKABLE.** D150 is the model — a slice whose whole value is turning an
+    unchecked claim into a driven proof — and this is that one level out, for the
+    claims the engine makes about the CATALOG rather than about its own ops. Item
+    7 of D155's remainder list, all three halves.
+
+    ⚠️ **THE HEADLINE IS THAT D155's FINDING WAS ITSELF A CLAIM NOBODY RE-QUERIED,
+    AND THE FOURTH INSTANCE OF THE DEFECT IT NAMED.** "978 matches no table in the
+    file" is true of the file today; "none of those ~20 comments ever measured it"
+    does not follow, and is false. **D112 (2026-08-01) recorded the breakdown in
+    `decisions.md`: 978 cards / 6 sets — the five sets here PLUS `swsh10.5` (88
+    rows).** Three arithmetics corroborate it: 890 + 88 = 978; on
+    `legal_standard = 0` this file's 763 + 88 = the 851 the docs quote; and D147's
+    census table (2026-08-02) lists Pidove `swsh10.5-061` as a query RESULT, so
+    the rows were there that day. **The catalog SHRANK between 2026-08-02 and
+    2026-08-03** — no `cards`, `sets` or `series` row for the set survives, and
+    the .sqlite's mtime never moved, so the ingest lived in a write-ahead log that
+    was never checkpointed. The defect was never a wrong number; it was a
+    SCOPELESS one, which is exactly what D154 said and one level below where D155
+    looked.
+
+    ⚠️ **THE PIN, AND IT IS ONE MECHANISM RATHER THAN A SCATTERING.**
+    `catalogManifest.ts` is a COMMITTED, generated measurement of the local D1
+    (`bun run scripts/catalog-manifest.ts`, `--check` to diff): row count, set
+    list, category split, distinct names, per-text-column counts,
+    `legal_standard`, apostrophe populations, the sqlite's mtime and size, the
+    printed attack/Ability NAMES of every real-card fixture, and `priorState` —
+    D112's six-set catalog, marked INHERITED because no query this session could
+    run produces it. `catalogManifest.test.ts` (22 tests) then fails on: a fixture
+    NAME that disagrees; a MISSING printed attack or Ability; a fixture with no
+    catalog row; an attack at the wrong PRINTED INDEX; and any three-or-four-digit
+    "N cards" in the engine sources that is not a measured number — or that IS a
+    catalog row count and does not carry its SET COUNT. Every allowlist is total in
+    BOTH directions (D150's rule) and every entry carries a REASON.
+
+    ⚠️ **THE SQLITE IS NOT A BUILD INPUT, AND THE TRADEOFF IS STATED RATHER THAN
+    HIDDEN.** It lives under `apps/api/.wrangler/state/` — dev state, absent on a
+    fresh clone and in CI — so a vitest case that opened it would be flaky by
+    construction and, worse, VACUOUSLY green where it is missing. Hence: read once
+    by a script, committed as data, checked as consequences. The manifest can go
+    stale against the sqlite and no test can see that; `--check` is the one command
+    that answers it for anyone who has the file.
+
+    **Found by the diff and FIXED, both small and both false "verbatim" banners:**
+    Fezandipiti ex `sv06.5-038` was missing its printed "Flip the Script" Ability
+    under a doc block claiming verbatim, and Rockruff `sv03-116` was missing its
+    printed "Bite" while its neighbour Finizen DECLARES the same omission. Also
+    moved Pecharunt ex's doc block back onto its fixture (it had drifted above
+    Lycanroc ex's at D152), so the one declared omission on that page stopped
+    reading as the one fixture with no doc at all.
+
+    **Measured, not inherited:** 890 rows / 5 sets (sv01 258, sv02 279, sv03 230,
+    sv06.5 99, sve 24); Pokémon 736 / Trainer 119 / Energy 35; 519 distinct names;
+    `effect` 123, `attacks_json` 736, `abilities_json` 143, union 859;
+    `legal_standard = 0` 763; ZERO U+2019 anywhere; sqlite mtime 2026-07-27.
+    34 fixtures omit a printed attack or Ability (D151's "40", never re-queried,
+    against a catalog that has since shrunk); 12 have no catalog row left.
+
+    Cost: **0 engine lines.** No op, field, event, error code, park, prompt,
+    registry row, deck, projection or persisted shape moved, and
+    `MATCH_RECORD_VERSION` stays **10** — nothing `MatchRecord`, `GameState` or any
+    event embeds was touched, said explicitly rather than left to inference. The
+    PATCH bump rather than D150's no-bump is the one difference from that
+    precedent: D150 touched only a test file, and this adds a committed module to
+    the package and rewrites ~57 provenance comments in shipped sources. */
+export const engineVersion = "0.103.1";
 
 export type {
   ApplyResult,

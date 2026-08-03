@@ -12305,3 +12305,225 @@ on "your opponent".
 - **The SELF side is CLOSED.** Both readings this family prints — the bar (D154) and
   the buff (D155) — are read, on the same address, the same window and the same four
   §10 clears.
+
+## D156 — HARDENING, NOT A CARD SLICE: the catalog claims become CHECKABLE — a committed, generated manifest of the local D1 and ONE suite over it (engine 0.103.0 → 0.103.1, `MATCH_RECORD_VERSION` UNCHANGED at 10, **0 engine lines**)
+
+Item 7 of D155's remainder list, all three halves. **D150 is the model** — a slice
+whose whole value is turning an unchecked claim into a driven proof — and this is
+that one level out: for the claims the engine makes about the CATALOG rather than
+about its own ops.
+
+### ⚠️ The headline: D155's finding was itself a claim nobody re-queried
+
+D155 wrote *"978 matches no table in the file … none of them ever measured it"*.
+The first half is true of the file as it stands. **The second is false, and it is
+the fourth instance of the defect D155 named.**
+
+D112 (2026-08-01) recorded the breakdown in `decisions.md`:
+
+> *"The local pool is **978 cards over SIX sets**, not 890 over five — `sv01` /
+> `sv02` / `sv03` / `sv06.5` / `sve` **plus `swsh10.5`** (Pokémon GO, 88 cards,
+> reg-mark F, `legal_standard=0`), which every prior census silently omitted."*
+
+Three independent arithmetics corroborate it, each checked against a live query:
+
+| corroboration | today (measured) | + `swsh10.5` | what the docs quote |
+|---|---|---|---|
+| `select count(*) from cards` | **890** | + 88 | **978** |
+| `where legal_standard = 0` | **763** | + 88 | **851** |
+| `select count(*) from sets` | **5** | + 1 | **6** |
+
+and a fourth that is not arithmetic at all: **§D147's census table (2026-08-02)
+lists Pidove `swsh10.5-061` as a QUERY RESULT**, so the rows were still there that
+day. D154 (2026-08-03) is the first slice to find them gone.
+
+**THE CATALOG SHRANK BETWEEN 2026-08-02 AND 2026-08-03.** No `cards`, no `sets`
+and no `series` row for the set survives — and because `cards.set_id` FKs to
+`sets` and `sets.serie_id` to `series`, that is a structural fact rather than a
+filtered query (`series` holds exactly one row, `sv`). The main `.sqlite`'s mtime
+never moved from **2026-07-27 09:02:11**, so the ingest lived in a write-ahead log
+that was never checkpointed into the file and has since been discarded.
+
+**So the defect was never a wrong number. It was a SCOPELESS one** — which is
+exactly what D154 said, one level below where D155 looked. Two inherited readings
+are re-priced rather than carried forward:
+
+- D154's *"`FIXTURE_POOL` fields cards from a set the D1 does not hold"* is better
+  read as *"the D1 lost a set the pool still remembers"*. The twelve `swsh10.5`
+  fixtures' *"verbatim off the local D1"* doc blocks are **HONEST**, and they are
+  now the only surviving copy of those rows. **Do not "fix" one to match a query
+  that cannot see it.**
+- D155's downward corrections of §D149's *"5 printings"* and §D151's *"six rows"*
+  are **wrong**: both counted Pidove, a real catalogued card.
+
+### Part 1 — the measurement, taken once and properly
+
+File: `apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437…86.sqlite`,
+**651,264 bytes, mtime 2026-07-27 09:02:11 +0200**, migrations `0000`–`0005`
+applied (the last three on 2026-07-27).
+
+| | |
+|---|---|
+| rows / sets | **890 / 5** — `sv01` 258, `sv02` 279, `sv03` 230, `sv06.5` 99, `sve` 24 |
+| categories | Pokémon **736**, Trainer **119**, Energy **35** |
+| distinct names | **519** (a card is a PRINTING) |
+| the THREE text columns | `effect` **123**, `attacks_json` **736**, `abilities_json` **143**, union **859** |
+| `legal_standard` | 0 → **763**, 1 → **127** |
+| regulation marks | G **763**, H **96**, null **31** |
+| `sets` / `series` rows | **5** / **1** (`sv` only) |
+| U+2019 in `effect`/`attacks_json`/`abilities_json`/`name` | **0** (D137's premise, measured) |
+| straight apostrophe in `attacks_json` | **326** |
+
+Two more inherited sub-counts belong to the SIX-set catalog and are recorded as
+such rather than "corrected": §D129/§D130's *"809 cards with attacks"* (today
+**736**) and §D137's *"359 cards carrying the straight form"* (today **326**).
+Both differences are the missing set.
+
+### Part 2 — the fixture↔catalog diff, three categories kept apart
+
+197 real-card ids out of 278 `FIXTURE_POOL` entries.
+
+- **(a) DISAGREEMENTS — none that is an error.** No Pokémon fixture's NAME is
+  wrong; D151's claim is now an ASSERTION. The 46 Trainer fixtures named by their
+  own id are the `trainerCard`/`itemTrainer` helper's ONE systemic rule (the
+  registry keys on the id and no Trainer rule reads a name), and the suite pins
+  that the exception may never reach a **Pokémon**, whose name IS read — evolution
+  matching, `byName` search, and the aura's `exemptAbilityNamed`, which is the only
+  site in the engine that reads `Card.abilities` at all.
+- **(b) OMISSIONS — 34** fixtures omit a printed attack or Ability. D151's "40" was
+  never re-queried; and the 34 is itself a **FLOOR**, measured against a catalog
+  missing 88 rows. Nearly all are declared in place ("the registry keys on the id,
+  not the stage"); the two that were not are fixed below.
+- **(c) NO CATALOG ROW — 12**, every one `swsh10.5`, enumerated for the first time.
+
+**⚠️ FIVE FIXTURES CARRY A PRINTED ATTACK AT THE WRONG INDEX — the sharpest thing
+the diff found.** Slither Wing `sv06.5-026`, Koraidon `sv01-124`, Kilowattrel
+`sv01-079` and Arcanine ex `sv01-032` each drop their **index-0** attack so the
+discarding one sits at 0; Klefki `sv01-096` substitutes fix-attacker's Bite for the
+printed "Joust". **All five are declared in their section comments** — and an INDEX
+is what the `attack` action carries, what the registry's `attack` map is keyed by,
+and what D154's `lockedAttackIndex` and D155's `boostedAttack.attackIndex` store.
+A suite pinning "index 0" on such a body pins the wrong index while staying green
+— D144's index trap living in the fixture pool rather than in a comment. The suite
+now also asserts that **no registry-authored attack index can land on one**.
+
+### Part 3 — the pin: ONE mechanism, and the sqlite dependency solved by not pretending it isn't one
+
+`packages/engine/src/catalogManifest.ts` is a **GENERATED, COMMITTED** measurement
+— `bun run scripts/catalog-manifest.ts`, and `--check` diffs it — holding every
+number above, the sqlite's mtime and size, the printed attack/Ability NAMES of all
+185 fixture ids that have a row, the 12 absent ids, and **`priorState`**: D112's
+six-set catalog, marked **INHERITED** because no query this session could run
+produces it.
+
+`packages/engine/src/catalogManifest.test.ts` (**22 tests**) then fails on:
+
+| | |
+|---|---|
+| (a) | a fixture NAME that disagrees with the catalog |
+| (b) | a MISSING printed attack or Ability, unless declared with a REASON |
+| (c) | a fixture id with no catalog row, unless declared with a REASON |
+| (d) | an attack sitting at the wrong PRINTED INDEX, unless declared |
+| (e) | a 3–4 digit `N cards` in ANY engine source that is not a measured number |
+| (e′) | a catalog **row count** quoted without its **set count** |
+
+(e′) **is the whole lesson mechanised.** Both 890 and 978 are true, of different
+populations; the ~20 repetitions were unreadable not because the number was wrong
+but because it was scopeless.
+
+**Every allowlist is total in BOTH directions (D150's rule), and every entry
+carries a REASON.** A declared omission that no longer exists fails exactly as an
+undeclared one does; a `why` shorter than a sentence fails too — a suppression
+without a reason is the same disease as a claim nobody re-measures.
+
+**⚠️ WHY NOT A TEST THAT OPENS THE SQLITE.** The D1 lives under
+`apps/api/.wrangler/state/` — dev state, not a build input. It is absent on a fresh
+clone and in CI, and its contents depend on when someone last ran the ingest, as
+this slice's own finding proves. A vitest case that opened it would be flaky by
+construction and, far worse, **vacuously green** wherever the file is missing. So
+it is read exactly ONCE, by a script that lives outside `tsc`/`biome`/`vitest`, and
+the suite checks the CONSEQUENCES of the committed numbers.
+
+**THE TRADEOFF, STATED:** the manifest can go stale against the sqlite and no test
+can see that. `--check` is the one command that answers "is it current?" for
+anyone who has the file — and the manifest records the sqlite's **mtime**, so a
+reader always knows which population the numbers describe.
+
+The source sweep uses `import.meta.glob("./*.ts", { query: "?raw", eager: true })`
+with a **local cast** rather than widening the package's `types`: `["node"]` would
+put Node globals in scope for a package that runs in a Worker and in the browser,
+`["vite/client"]` would put `import.meta.env` there, and a `.d.ts` merging onto
+`ImportMeta` reads to biome as an unused interface. A GLOB rather than a list,
+because a sweep that names its inputs cannot see the file nobody added to it
+(D148's lesson, D150's second payout).
+
+### The mechanical correction is a SCOPE addition, not a rewrite
+
+All **57** `978 cards` in `packages/engine/src` now read **`978 cards / 6 sets`**,
+naming the catalog those censuses actually queried. The two 2026-08-03 censuses
+keep `890 rows` and now say which population that is. `docs/decisions.md`,
+`docs/progress.md` and this file are **deliberately NOT bulk-rewritten** (101
+occurrences before D156 — 31 / 34 / 36): those numbers are not false, they are
+unscoped, and all three files are the append-only record of what each session
+believed. Correcting them once, here, is the honest edit.
+
+### Small fixes — both were false "verbatim" banners
+
+- **Fezandipiti ex `sv06.5-038`** gained its printed **"Flip the Script"** Ability.
+  Its doc block said *"Verbatim vs the local D1 catalog"* while dropping it — the
+  exact defect Charizard ex's own block names two hundred lines away (*"a 'verified
+  verbatim' banner over a quietly invented Fire type is exactly the kind of false
+  claim this repo treats as a defect"*).
+- **Rockruff `sv03-116`** gained its printed **"Bite"** ({F}, 20, index 0), where
+  its neighbour Finizen DECLARES the same omission and gives a reason.
+
+Both are inert — neither card has a registry row, and an unauthored Ability is
+loudly unusable (D8) — so nothing behavioural moved. What they buy is that a
+`FIXTURE_POOL` sweep for a printed sentence can now SEE those cards, which is the
+surface D147's rule tells every census to search.
+
+**Pecharunt ex's doc block was moved back onto its fixture.** It had drifted above
+Lycanroc ex's block when D152 inserted a card between a comment and the entry it
+documents, so the ONE declared omission on that page read as the one fixture with
+no doc at all — while Fezandipiti ex and Rockruff, whose omissions were not
+declared, sat under banners claiming verbatim.
+
+### Mutation table (thirteen run, all thirteen caught)
+
+| mutation | fails |
+|---|---|
+| drop Fezandipiti ex's printed Ability | 1 |
+| misname a Pokémon fixture | 1 |
+| a census count with NO scope | 1 |
+| the WRONG (rows, sets) pair | 1 |
+| delete one `INCOMPLETE` declaration | 1 |
+| a DEAD declaration (a complete fixture listed as incomplete) | 1 |
+| drop an id from `NO_CATALOG_ROW` | 1 |
+| blank a REASON | 1 |
+| silently drop a LEADING printed attack | **2** |
+| add a real-card fixture the manifest has never seen | 1 |
+| break the `priorState` arithmetic (88 → 87) | 1 |
+| hand-edit the manifest's row count (890 → 891) | **3** |
+| a stale count in a comment (the D155 defect, re-armed) | 1 |
+
+### Cost
+
+**0 engine lines.** No op, field, event, error code, park, prompt, registry row,
+deck, projection or persisted shape moved. `MATCH_RECORD_VERSION` stays **10**,
+said explicitly. `engineVersion` **0.103.0 → 0.103.1** — a PATCH rather than
+D150's no-bump, because D150 touched only a test file while this adds a committed
+module to the package and rewrites 57 provenance comments in shipped sources.
+`bun run check` **GREEN exit 0 — 196 files / 3352 tests** (was 195 / 3330).
+
+### Still unmapped after D156
+
+- **`swsh10.5` IS NOT RE-INGESTED.** Every census run from 2026-08-03 onward is
+  blind to 88 real cards, so a *"this is the whole mapped set"* claim made against
+  today's file can UNDERCOUNT. The fix is an ingest run, not a slice; until then,
+  the manifest's `priorState` and the 12-entry absent list are what keep the gap
+  visible.
+- **The twelve `swsh10.5` fixtures cannot be re-verified against anything.** They
+  are the surviving copy. Re-ingesting is what makes them checkable again.
+- **`docs/` still carries 101 unscoped counts** (31 `decisions.md` / 34
+  `progress.md` / 36 here). Corrected once, in D156, rather than rewritten in
+  three append-only logs.
