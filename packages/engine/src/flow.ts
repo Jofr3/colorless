@@ -166,6 +166,61 @@ function koRecoilOf(state: GameState, seat: Seat): number {
   return total;
 }
 
+/** §8.1 CAUSE-CONDITIONED PRIZE REDUCTION — Munkidori ex sv06.5-037/-083/-091
+    "Oh No You Don't": "If this Pokémon is Knocked Out by damage from an attack
+    from your opponent's Pokémon, and if you have any Pecharunt ex in play, your
+    opponent takes 1 fewer Prize card." Returns the REDUCED prize count, or null
+    when any clause of the antecedent fails (the caller then plans face value).
+
+    ⚠️ THE CAUSE IS A PARAMETER HERE, NOT A PLACEMENT — and that is the whole
+    difference from D158, which read the SAME printed antecedent. D158's line sits
+    in `finishAttack`, so "by an attack" is discharged by WHERE it sits: the
+    Checkup and the mid-turn evolve path call `collectKnockOuts` directly and
+    never reach it. This consequent modifies a PRIZE, and prizes are planned in
+    `planPrizes` — INSIDE `collectKnockOuts` — which all three paths reach. So the
+    same clause that cost D158 nothing costs this printing a threaded argument:
+    `attackerSeat` is undefined on the Checkup and mid-turn paths, and the clause
+    is refused there. **Placement discharges a condition only for a consequent
+    that can live at the placement.**
+
+    The three clauses, each a separate refusal and each driven:
+
+      • "by damage from an attack" — `attackerSeat === undefined` means this batch
+        was not swept by the attack epilogue. Refused.
+      • "from your OPPONENT'S Pokémon" — `attackerSeat === ref.seat` means the
+        holder died on the ATTACKER's own board (its own `damageSelf` recoil, its
+        own confusion self-hit, or a defender's Rocky Helmet), which `finishAttack`
+        sweeps too because it passes BOTH seats. The possessive refuses it.
+      • "if you have any Pecharunt ex in play" — scanned on the KO'd body's OWN
+        side ("you" is this Ability's controller), Active and Bench, by card NAME
+        because the sentence names a card with FOUR printings
+        (sv06.5-039/-085/-093/-095) and no id would cover them.
+
+    ⚠️ "IN PLAY" IS READ BEFORE THE BATCH RESOLVES, which is a judgement and is
+    pinned: `planPrizes` runs on the pre-KO state, so a Pecharunt ex dying in the
+    SAME batch still counts. That is D158's one-simultaneous-batch model read one
+    function later — the batch is a single instant, so nothing in it has left play
+    while the plan is made.
+
+    The reduction is CLAMPED at 0: "1 fewer" than a 1-Prize Pokémon is 0, not −1.
+    Munkidori ex is itself worth 2 (it has a Rule Box), so its own printing is
+    2 → 1 and never reaches the clamp — the clamp is total-function hygiene with a
+    constructed witness rather than a live rule. */
+function koPrizeReduction(
+  state: GameState,
+  ref: { seat: Seat; uid: string },
+  reduction: { by: number; requiresInPlay: string },
+  attackerSeat: Seat | undefined,
+  baseCount: number,
+): number | null {
+  if (attackerSeat === undefined || attackerSeat === ref.seat) return null;
+  const side = state.players[ref.seat];
+  const inPlay = side.active === null ? side.bench : [side.active, ...side.bench];
+  const has = inPlay.some((body) => topCardOf(state, body)?.name === reduction.requiresInPlay);
+  if (!has) return null;
+  return Math.max(0, baseCount - reduction.by);
+}
+
 /** The post-damage Knock Out sweep (§8.1), generalized off the Active (M4):
     resolve EVERY lethally-damaged in-play Pokémon on `seats` at once — Active
     and Bench — prizes to each KO'd side's opponent. The decision stages come
@@ -198,6 +253,7 @@ export function collectKnockOuts(
   state: GameState,
   seats: readonly Seat[],
   events: GameEvent[],
+  attackerSeat?: Seat,
 ): KnockOutBatch {
   const refs = lethalRefs(state, seats);
   if (refs.length === 0) return { done: null, state, stages: [] };
@@ -206,7 +262,7 @@ export function collectKnockOuts(
   // advance and its post-flip Prize `count` are then shared by the tie-guard
   // speculation and the real KO alike (so §14 stays exact). The guard's own
   // events fire in the real KO loop, after that KO's KNOCKED_OUT.
-  const plan = planPrizes(state, refs);
+  const plan = planPrizes(state, refs, attackerSeat);
   const startState = plan.state;
 
   const bothSeatsHit = new Set(refs.map((ref) => ref.seat)).size === 2;
@@ -285,6 +341,7 @@ interface KoPrizePlan {
 function planPrizes(
   state: GameState,
   refs: readonly { seat: Seat; uid: string }[],
+  attackerSeat?: Seat,
 ): { state: GameState; entries: KoPrizePlan[] } {
   let next = state;
   const entries: KoPrizePlan[] = [];
@@ -293,6 +350,34 @@ function planPrizes(
     const baseCount = card === undefined ? 1 : prizeValueOf(card);
     const ability = onKnockOutTrigger(next, ref.uid);
     const hasProgram = ability !== undefined && ability.program.length > 0;
+    // §8.1 — the CAUSE-CONDITIONED Prize REDUCTION (Munkidori ex "Oh No You
+    // Don't", D164). Checked BEFORE the coin-flip guard because the two are
+    // mutually exclusive by construction (an on-KO Ability carries at most one),
+    // and its refusal path is the common one, so nothing below sees it.
+    const reduction = ability === undefined ? undefined : ability.onKoPrizeReduction;
+    if (ability !== undefined && reduction !== undefined) {
+      const count = koPrizeReduction(next, ref, reduction, attackerSeat, baseCount);
+      if (count === null) {
+        entries.push({ ref, count: baseCount, guardEvents: [], hasProgram });
+      } else {
+        entries.push({
+          ref,
+          count,
+          guardEvents: [
+            { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: ref.uid, ability: ability.name },
+            {
+              type: "PRIZE_REDUCED",
+              seat: ref.seat,
+              uid: ref.uid,
+              by: baseCount - count,
+              count,
+            },
+          ],
+          hasProgram,
+        });
+      }
+      continue;
+    }
     if (ability?.onKoPrizeGuard !== "coinFlipPrevent") {
       entries.push({ ref, count: baseCount, guardEvents: [], hasProgram });
       continue;
@@ -442,7 +527,17 @@ export function finishAttack(state: GameState, events: GameEvent[], attackerSeat
     });
   }
 
-  const batch = collectKnockOuts(next, [otherSeat(attackerSeat), attackerSeat], events);
+  // ⚠️ `attackerSeat` is passed ONLY here. It is what makes the attack epilogue
+  // distinguishable from the Checkup and the mid-turn evolve sweep INSIDE
+  // `collectKnockOuts` — the discrimination D158 got for free from placement and
+  // Munkidori ex's Prize reduction (D164) cannot, because a prize is planned in
+  // there rather than out here. The other two call sites deliberately omit it.
+  const batch = collectKnockOuts(
+    next,
+    [otherSeat(attackerSeat), attackerSeat],
+    events,
+    attackerSeat,
+  );
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
   // COMPOSES with whatever is still queued rather than overwriting it: both

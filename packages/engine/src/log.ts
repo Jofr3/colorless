@@ -758,6 +758,26 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(event.result),
         plain(` for ${event.ability}`),
       ]);
+    case "PRIZE_REDUCED":
+      // §8.1 — an on-KO Ability (Munkidori ex "Oh No You Don't") cut, rather than
+      // denied, the Prize for the Knocked Out Pokémon. SYSTEM-voiced, and the
+      // reason is NOT inherited from PRIZE_PREVENTED above even though the answer
+      // matches: this row's `seat` owns the DYING Pokémon while the party the
+      // sentence acts on is that seat's OPPONENT (they are the one taking fewer),
+      // so an active voice under `seat` describes the wrong player's loss and one
+      // under the opponent credits them with their own penalty. The ABILITY_TRIGGERED
+      // row immediately above already names the Ability and its owner, so nothing
+      // is lost by leaving the consequence unattributed.
+      //
+      // It states BOTH numbers because a decrement is only readable against the
+      // face value — "1 fewer" alone leaves a player who does not know the card is
+      // worth 2 unable to check the prize count they are about to see.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` — your opponent takes ${event.by} fewer Prize card${event.by === 1 ? "" : "s"} for it (${event.count} instead of ${event.count + event.by})`,
+        ),
+      ]);
     case "PRIZE_PREVENTED":
       // §8.1 — an on-KO Ability (Glimmora heads) denied the opponent the Prize
       // for the Knocked Out Pokémon; a system row, the flip above named it.

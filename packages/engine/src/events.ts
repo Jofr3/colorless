@@ -608,6 +608,15 @@ export type GameEvent =
       prize for that Pokémon. Follows the ABILITY_COIN_FLIP row; the takePrizes
       stage for that KO is simply never queued. */
   | { type: "PRIZE_PREVENTED"; seat: Seat; uid: string }
+  /** §8.1 — an on-KO Ability REDUCED (rather than denied) the Prize card(s) for
+      `seat`'s Knocked Out `uid` (Munkidori ex "Oh No You Don't": "your opponent
+      takes 1 fewer Prize card"). `by` is how many fewer and `count` is what the
+      opponent still takes, so the row can state both without the reader doing the
+      subtraction. A SEPARATE row from PRIZE_PREVENTED because a decrement is not a
+      denial: on an ex this is 2 → 1, and telling a player "no Prize card is taken"
+      while they take one is simply false. Follows the ABILITY_TRIGGERED row that
+      names the Ability; the takePrizes stage is queued with the reduced count. */
+  | { type: "PRIZE_REDUCED"; seat: Seat; uid: string; by: number; count: number }
   /** The controller's whole hand went to the discard (Professor's Research). */
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
   /** A deck search resolved: `uids` moved deck → `dest` (revealed, §15.E). */

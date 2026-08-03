@@ -1537,6 +1537,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
       sweep (the resume-the-tail path no real SV on-KO Ability exercises). 30 HP
       for a one-Bite KO. */
   "fix-onko": battler("fix-onko", { name: "fix-onko", hp: 30 }),
+  /** fix-koprize — the FIXTURE on-KO PRIZE-REDUCER (registry FIX_KOPRIZE, D164):
+      Munkidori ex's "Oh No You Don't" on a body worth ONE Prize instead of two.
+
+      It exists for one line the printed cast cannot reach, and reaching it took
+      TWO constructed values rather than one. Munkidori ex has a Rule Box, so its
+      Prize is 2 and "1 fewer" is always 2 → 1. Dropping to a 1-Prize body is NOT
+      enough: 1 − 1 is 0 with or without the `Math.max`, which is why a first
+      mutation pass deleted the clamp and nothing failed. The clamp fires only when
+      the reduction EXCEEDS the face value, so this body pairs 1 Prize with a
+      constructed `by: 2` (registry FIX_KOPRIZE) — 1 − 2 = −1, clamped to 0.
+
+      30 HP for a one-Bite KO, and NO Rule Box (the name carries no "ex" suffix),
+      which is what makes `prizeValueOf` return 1. It shares the real card's board
+      condition verbatim so nothing about the mechanism is special-cased for it. */
+  "fix-koprize": battler("fix-koprize", { name: "fix-koprize", hp: 30 }),
 
   // — M5 coverage pass #1: cards authored from existing ops (real catalog ids so
   //   the registry finds the programs; the effect/ability text is cosmetic). —
@@ -9256,6 +9271,60 @@ export const VENGEFUL_PUNCH_DECK = deckOf({
   "fix-wall": 6, // 120 HP, no attacks — the holder, on the Active spot or the bench
   "fix-bigbody": 26, // 200 HP — DOMINANT setup Basic, the surviving holder, promote target
   "fix-titan": 3, // 340 HP, no attacks — bench filler a 20 spread cannot KO
+  "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
+});
+
+/** D164 — the CAUSE-CONDITIONED on-KO PRIZE REDUCTION (Munkidori ex
+    sv06.5-037/-083/-091 "Oh No You Don't"), on its own 60 for
+    `VENGEFUL_PUNCH_DECK`'s reason verbatim: `ON_KNOCKOUT_DECK` is seed-pinned by
+    `onKnockOut.test.ts` (Glimmora's coin flip), and adding a card would reshuffle
+    every board in it.
+
+    **SEED-FREE** — this printing carries no coin, and every board is built by
+    surgery. The ONE case that needs a flip is Glimmora's, and it drives that
+    card's OWN seeded suite rather than re-seeding here.
+
+    Each entry is here for a property no other one has:
+      • sv06.5-037 Munkidori ex — THE printing. 210 HP, a Rule Box, so it is worth
+        TWO Prizes and its own sentence is 2 → 1: the only body in the pool where
+        the decrement is observable WITHOUT hitting the clamp at 0.
+      • sv06.5-039 Pecharunt ex — the printed BOARD CONDITION, by NAME. Nothing
+        else in this deck is named "Pecharunt ex", so its presence and absence are
+        the same board minus one bench slot.
+      • sv02-126 Glimmora — the MUTUAL-REFUSAL control, and the reason the two
+        fields cannot be one: 30 HP, and its clause has NO cause qualifier, so it
+        must still deny its Prize when it dies to poison at the Checkup — exactly
+        where Munkidori ex's must be refused. Both directions drive on one board.
+      • fix-attacker — "Bite" ({C}, 30) at idx 0 for the ordinary main-hit KO and
+        "Yawn" at idx 2 (no damage) for the no-KO control. 120 HP.
+      • fix-sniper — "Spread Shot" ({C}, 30 Active + 20 to EACH benched) at idx 0.
+        The BENCH KO vehicle: this clause prints no "in the Active Spot", so a
+        benched Munkidori ex finished by a snipe reduces the Prize too.
+      • fix-bigbody — 200 HP: the DOMINANT (mulligan-free) Basic and the promote
+        target, and the body a 20 spread cannot KO.
+      • fix-titan — 340 HP, no attacks: bench filler, so a board has exactly the
+        KOs it means to have.
+      • sv01-118 Hawlucha — "Flying Entry" (on-play-to-Bench: 1 counter on each of
+        2 of the opponent's Benched Pokémon). The ONLY vehicle in the pool for a
+        MID-TURN KO on the OPPONENT'S board — `resolveMidTurnKnockOuts` is called
+        with BOTH seats from the Ability path (flow.ts) — which is the one live
+        route by which a NON-ATTACK KO can reach a body this clause names.
+        Without it the "by an attack" refusal is only driven for the Checkup.
+      • fix-koprize — the FIXTURE 1-Prize body carrying the same reduction: the
+        only way to reach the clamp, since every printed holder is worth two.
+    BOTH seats run it so a holder can be surgically fielded on either side — which
+    is load-bearing here, because "from your OPPONENT'S Pokémon" is driven by
+    putting Munkidori ex on the ATTACKER'S board and watching it pay nothing. */
+export const MUNKIDORI_DECK = deckOf({
+  "sv06.5-037": 4, // Munkidori ex — THE printing (2 Prizes, so the decrement is 2 → 1)
+  "sv06.5-039": 3, // Pecharunt ex — the printed board condition, matched by NAME
+  "sv02-126": 2, // Glimmora — the on-KO sibling that must NOT acquire the cause gate
+  "sv01-118": 2, // Hawlucha — "Flying Entry": the MID-TURN, NON-ATTACK KO vehicle
+  "fix-koprize": 2, // FIXTURE — the same reduction on a 1-Prize body (the clamp)
+  "fix-attacker": 4, // "Bite" ({C}, 30) idx 0; "Yawn" idx 2 (no damage) — 120 HP
+  "fix-sniper": 3, // "Spread Shot" ({C}, 30 + 20 to each bench) idx 0 — the BENCH KO
+  "fix-bigbody": 24, // 200 HP — DOMINANT setup Basic, promote target, spread-proof
+  "fix-titan": 4, // 340 HP, no attacks — bench filler a 20 spread cannot KO
   "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
 });
 

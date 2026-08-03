@@ -3870,7 +3870,54 @@ import type { GameState, Seat } from "./types";
     survivor (the reader's mutual-exclusion guard, free because the three regexes
     are disjoint — KEPT as the file's idiom with the unreachability turned into a
     pool-wide ASSERTION). */
-export const engineVersion = "0.109.0";
+/** **D164 — the KO-CONDITION ANTECEDENT AS ITS OWN FAMILY, and the PRIZE
+    REDUCTION.** Munkidori ex `sv06.5-037`/`-083`/`-091` — *"…take 1 fewer Prize
+    card"* on a KO by an opponent's attack — an **Ability**, byte-identical across
+    all three printings (verified by `count(distinct …)` over 11 columns, not by
+    eye). The antecedent census confirms **6 rows** a third time.
+
+    ⚠️ **LUCARIO `sv01-114` IS NOT THIS ANTECEDENT, AND EVERY LIST SINCE D158 SAID
+    IT WAS.** Printed: *"If any of your {F} Pokémon were Knocked Out by damage from
+    an attack **during your opponent's last turn**…"* — retrospective, board-wide,
+    type-filtered, and carrying **no possessive clause**. `conditionClause.test.ts`
+    has held the correct account since **D115**, so the OLDER artefact was right and
+    the NEWER census table was wrong: recency is not authority. D158's table also
+    renders Munkidori ex in the column Lucario's *attack* sits in, when it is an
+    Ability on `abilities_json`. And `FIXTURE_POOL` is **290**, not the 278 that
+    header claimed for two slices.
+
+    ⚠️ **THE FINDING, AND IT IS ABOUT D158's OWN DESIGN: PLACEMENT DISCHARGES A
+    CONDITION ONLY FOR A CONSEQUENT THAT CAN LIVE AT THE PLACEMENT.** D158 satisfied
+    *"by an attack"* purely by WHERE it put its line — `finishAttack`, which exactly
+    one path reaches. A Prize is planned in `planPrizes`, **inside**
+    `collectKnockOuts`, which **all three** paths reach. So the identical printed
+    clause costs a threaded `attackerSeat?: Seat` here. The possessive is not free
+    either: `finishAttack` passes BOTH seats, so `attackerSeat === ref.seat` is
+    load-bearing rather than decorative.
+
+    A SIBLING field, not a union member: Glimmora's guard and this reduction
+    mutually refuse on THREE axes (cause qualifier, zero-vs-decrement, coin flip),
+    and the merge mutations fail 16 and 2. The plan is made on the **pre-KO** state
+    (a Pecharunt ex dying in the same batch still counts), **ahead of the §14
+    speculation** (reducing only on the real pass fails 13), **per body** (2 holders
+    give 2 reductions, not 4), and `ABILITY_TRIGGERED` must precede `PRIZE_REDUCED`.
+    VOICE is SYSTEM, but by a different route than D158's: `PRIZE_PREVENTED` exists
+    and is read, but *"no Prize card is taken"* is false when one is.
+
+    ⚠️ **AND ONE MUTATION RESULT WORTH THE SPACE: THE CLAMP NEEDED TWO CONSTRUCTED
+    VALUES.** A 1-Prize fixture alone never reaches it, because `1 - 1 = 0` whether
+    or not the clamp exists — so the guard SURVIVED BEING "FIXED" ONCE before a
+    second witness exposed it. A test can look like it covers a branch and provably
+    not.
+
+    Neither park nor persist; `MATCH_RECORD_VERSION` stays **10**, pinned as an
+    absence over the 16-key set. No §11 verdict owed (no op). Gates no action,
+    driven on both seats. **Exp. Share `sv01-174` is priced and deferred** — it
+    needs a `"you may"` choice parking mid-sweep, which dominates its cost, but
+    `FIX_ONKO`/`settleProgram`'s `resumeTail` may already cover that park and nobody
+    has run the check; note the seam differs (`fix-onko` queues AFTER prizes, this
+    must act BEFORE `knockOut`). */
+export const engineVersion = "0.110.0";
 
 export type {
   ApplyResult,

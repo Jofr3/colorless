@@ -94,6 +94,35 @@ export interface TriggeredAbility {
       `program` (a general on-KO effect run as a koTrigger stage) — an on-KO
       Ability carries at most one of the two in the representative set. */
   onKoPrizeGuard?: "coinFlipPrevent";
+  /** `onKnockOut` only — a CAUSE-CONDITIONED Prize REDUCTION (Munkidori ex
+      sv06.5-037/-083/-091 "Oh No You Don't": "If this Pokémon is Knocked Out by
+      damage from an attack from your opponent's Pokémon, and if you have any
+      Pecharunt ex in play, your opponent takes 1 fewer Prize card."). Like
+      `onKoPrizeGuard` it is resolved by the KO sweep (flow.ts planPrizes) rather
+      than the interpreter, because it modifies the KO's Prize.
+
+      ⚠️ A SIBLING OF `onKoPrizeGuard`, NOT A SECOND MEMBER OF ITS UNION — the two
+      read sites MUTUALLY REFUSE each other's payment (D155's rule, the same shape
+      that forced `damageAttackerOnKo` apart from `damageAttacker` at D164's
+      predecessor D158):
+
+        • Glimmora's clause is "When this Pokémon is Knocked Out" with NO cause
+          qualifier, so it MUST still deny the Prize when its holder dies to
+          poison at the Checkup or to an evolve. This field must NOT.
+        • This clause names its cause ("by damage from an attack from your
+          opponent's Pokémon"), so it must be REFUSED on every non-attack KO —
+          and it has no coin flip, where Glimmora's is unconditional-but-flipped.
+        • Glimmora ZEROES the Prize ("can't take ANY Prize cards"); this one
+          DECREMENTS it ("1 FEWER"), which on an ex is 2 → 1 and not 2 → 0.
+
+      One field carrying both would put an attack gate on Glimmora (breaking the
+      Checkup KO it is printed for) and a coin flip on this one. Driven both ways.
+
+      `requiresInPlay` is the printed board condition, matched on the card NAME
+      because that is what the sentence names and the card has FOUR printings
+      (Pecharunt ex sv06.5-039/-085/-093/-095). Read against the KO'd body's OWN
+      side, "you" being this Ability's controller. */
+  onKoPrizeReduction?: { by: number; requiresInPlay: string };
 }
 
 /** Continuous modifiers read by the pipeline while the Pokémon is in play.
@@ -1534,6 +1563,64 @@ const GLIMMORA: CardProgram = {
   ],
 };
 
+/** Munkidori ex sv06.5-037/-083/-091 — "Oh No You Don't" (D164): "If this Pokémon
+    is Knocked Out by damage from an attack from your opponent's Pokémon, and if
+    you have any Pecharunt ex in play, your opponent takes 1 fewer Prize card."
+
+    THE SECOND consumer of the KO antecedent D158 censused, and the FIRST that
+    could not use D158's read site. D158 discharged "by an attack" by PLACEMENT —
+    its line sits in `finishAttack`, which only the attack epilogue reaches. This
+    consequent modifies a PRIZE, and prizes are planned inside `collectKnockOuts`
+    (planPrizes), which the Checkup and the mid-turn evolve path ALSO reach. So the
+    cause cannot be discharged by placement here and is threaded as a parameter
+    instead — see flow.ts `collectKnockOuts`' `attackerSeat`.
+
+    Three printings, ONE body: the D1 rows for -037 (Double rare), -083 (Ultra
+    Rare) and -091 (Special illustration rare) are byte-identical on every column
+    but `rarity` (re-queried D164 — a single `count(distinct …)` over name, hp,
+    stage, types, retreat, abilities, attacks, weaknesses, resistances, reg mark
+    and legality returns 1). D162 mapped the same three ids onto ONE fixture for
+    the per-attack lock on "Dirty Headbutt"; this row joins that program rather
+    than replacing it, so the card carries BOTH of its printed sentences. */
+const MUNKIDORI_EX: CardProgram = {
+  triggered: [
+    {
+      name: "Oh No You Don't",
+      trigger: "onKnockOut",
+      program: [],
+      onKoPrizeReduction: { by: 1, requiresInPlay: "Pecharunt ex" },
+    },
+  ],
+};
+
+/** FIXTURE-ONLY demonstrator (id `fix-koprize`, D164) for the CLAMP in
+    `koPrizeReduction` (flow.ts), and it takes TWO constructed values to reach it,
+    which is the finding rather than an accident of the fixture.
+
+    The clamp fires only when `by` EXCEEDS the body's face-value Prize. Munkidori
+    ex prints `by: 1` and has a Rule Box (2 Prizes), so the printed card is always
+    2 → 1; and no body in the game is worth less than 1, so `by: 1` can never
+    exceed it either. **The clamp is therefore unreachable from ANY board the
+    catalog can build** — a first mutation pass deleted it and nothing failed,
+    including a 1-Prize body, because 1 − 1 is 0 with or without the `Math.max`.
+
+    So this demonstrator carries `by: 2` on a 1-Prize body: 1 − 2 = −1, clamped to
+    0. It is the `fix-onko` pattern (a fixture proves machinery the printed cast
+    cannot reach) and the clamp is kept rather than deleted for the reason that
+    makes it cheap: the field is data, and the FIRST printing that reduces by more
+    than one — or any printing of this Ability on a no-Rule-Box body — turns a
+    silent negative Prize count into a real one. */
+const FIX_KOPRIZE: CardProgram = {
+  triggered: [
+    {
+      name: "Oh No You Don't",
+      trigger: "onKnockOut",
+      program: [],
+      onKoPrizeReduction: { by: 2, requiresInPlay: "Pecharunt ex" },
+    },
+  ],
+};
+
 /** FIXTURE-ONLY demonstrator (id `fix-onko`) for the resume-the-tail on-KO
     PARKING path: an on-KO Ability whose program needs a DECISION, so it parks
     mid-KO-sweep on effect:choose (the KO'd player searches their deck) and the
@@ -2571,6 +2658,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-126": GLIMMORA,
   // fix-onko — FIXTURE demonstrator: an on-KO Ability that PARKS (resume-the-tail)
   "fix-onko": FIX_ONKO,
+  // Munkidori ex — Oh No You Don't (on-KO, ATTACK-CONDITIONED: 1 fewer Prize while a
+  // Pecharunt ex is in play). D164, verified vs the local D1 2026-08-03 (978 rows / 6
+  // sets). THREE printings, one byte-identical body; the same three ids also carry
+  // D154's per-attack lock on "Dirty Headbutt", which is TEXT-derived and untouched.
+  "sv06.5-037": MUNKIDORI_EX,
+  "sv06.5-083": MUNKIDORI_EX,
+  "sv06.5-091": MUNKIDORI_EX,
+  // fix-koprize — FIXTURE demonstrator: the same reduction on a ONE-Prize body,
+  // the only way to reach the clamp (Munkidori ex is worth two). D164.
+  "fix-koprize": FIX_KOPRIZE,
   // — M5 coverage pass #1: existing-op cards (verified vs the local catalog 2026-07-19). —
   "sv01-185": POKE_BALL, // Poké Ball — coin-gated search a Pokémon → hand
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
