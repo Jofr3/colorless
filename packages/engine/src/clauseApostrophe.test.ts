@@ -283,7 +283,21 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // only sentences a reader RESOLVES and that self-spread is unsimulated. Both
     // halves are why this file takes no diff for a slice that added a fixture, a
     // regex, a union member and an evaluator arm.
-    expect(derivable).toHaveLength(64);
+    //
+    // ⚠️ AND D173 ADDS **ONE**, FROM A SOURCE NO EARLIER ENTRY ON THIS LIST HAS:
+    // not a new mechanism, not a new fixture, not a restore — a fixture that was
+    // always in the pool being made to carry the attack it had DROPPED. Kilowattrel
+    // sv01-079's index-0 "Skill Dive" ("This attack does 50 damage to 1 of your
+    // opponent's Pokémon. (Don't apply Weakness and Resistance for Benched
+    // Pokémon.)") is the `anyTargetSnipe` sentence, derivable by an anchor that has
+    // not moved since M3, and it was invisible to this sweep for the whole life of
+    // the fixture because the fixture carried only its SECOND attack. The other
+    // three re-indexed siblings add nothing: Koraidon's "Claw Slash" has no effect
+    // string at all, Slither Wing's "Iron Smasher" and Arcanine ex's "Raging Claws"
+    // carry no apostrophe. ⚠️ **A CENSUS THAT SWEEPS FIXTURES CAN ONLY SEE WHAT THE
+    // FIXTURES CARRY** — an omitted attack is a silent hole in every population
+    // measured off the pool, and it does not announce itself as one.
+    expect(derivable).toHaveLength(65);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

@@ -68,6 +68,7 @@ interface Row {
   set_id: string;
   name: string;
   category: string;
+  types_json: string | null;
   attacks_json: string | null;
   abilities_json: string | null;
 }
@@ -140,7 +141,10 @@ const catalog = new Map(q<Row>("select * from cards").map((r) => [r.id, r]));
 const names = (json: string | null): string[] =>
   json === null ? [] : (JSON.parse(json) as { name: string }[]).map((a) => a.name);
 
-const printed: Record<string, { name: string; attacks: string[]; abilities: string[] }> = {};
+const printed: Record<
+  string,
+  { name: string; types: string[]; attacks: string[]; abilities: string[] }
+> = {};
 const absent: string[] = [];
 for (const id of Object.keys(FIXTURE_POOL).sort()) {
   if (!REAL_ID.test(id)) continue;
@@ -149,7 +153,12 @@ for (const id of Object.keys(FIXTURE_POOL).sort()) {
     absent.push(id);
     continue;
   }
-  printed[id] = { name: row.name, attacks: names(row.attacks_json), abilities: names(row.abilities_json) };
+  printed[id] = {
+    name: row.name,
+    types: row.types_json === null ? [] : (JSON.parse(row.types_json) as string[]),
+    attacks: names(row.attacks_json),
+    abilities: names(row.abilities_json),
+  };
 }
 
 const j = (v: unknown) => JSON.stringify(v);
@@ -307,15 +316,23 @@ ${perCategory.map((c) => `    ${j(c.category)}: ${c.n},`).join("\n")}
       the printed attack and Ability NAMES in printed ORDER. The order is
       load-bearing: an attack's INDEX is what the \`attack\` action, the registry's
       \`attack\` map and D154/D155's \`attackIndex\` all key on, and a fixture that
-      drops a LEADING attack silently renumbers every one after it. */
+      drops a LEADING attack silently renumbers every one after it.
+
+      \`types\` is here since D173, and it is the first field on this row that is
+      NOT a list of names. It was added because the wrong-index sweep turned up a
+      fixture (Klefki sv01-096) carrying a type the card does not print, and
+      NOTHING in this repo could see it: the manifest only ever recorded names, so
+      \`catalogManifest.test.ts\` could prove a fixture carried the right ATTACKS
+      while it carried the wrong ELEMENT. A value no census records is a value no
+      census can contradict. */
   printed: {
 ${Object.entries(printed)
   .map(
     ([id, p]) =>
-      `    ${j(id)}: { name: ${j(p.name)}, attacks: ${j(p.attacks)}, abilities: ${j(p.abilities)} },`,
+      `    ${j(id)}: { name: ${j(p.name)}, types: ${j(p.types)}, attacks: ${j(p.attacks)}, abilities: ${j(p.abilities)} },`,
   )
   .join("\n")}
-  } as Record<string, { name: string; attacks: string[]; abilities: string[] }>,
+  } as Record<string, { name: string; types: string[]; attacks: string[]; abilities: string[] }>,
   /** Real-card fixture ids with NO catalog row at all — the population D154 found
       and D156 enumerated at TWELVE, every one \`swsh10.5\`. **EMPTY since D160's
       re-ingest**, and the emptiness is the finding: those twelve were the only

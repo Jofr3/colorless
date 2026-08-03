@@ -3140,8 +3140,16 @@ const OPPONENT_CHOSEN_ATTACK_LOCK =
 // second-printing warrant is met by the card rather than by a family argument.
 // Every field re-queried per printing against the local D1 (2026-08-02,
 // 978 cards / 6 sets — the same mis-scoped tag D161 corrected on the D147 census
-// above; this query also predates the outage): identical name, cost, index, damage
-// and effect string on all three.
+// above; this query also predates the outage, `history.lastSeen` being 2026-08-02):
+// identical name, cost, index, damage and effect string on all three.
+// ⚠️ RE-RUN AND CLOSED AT D173 against the restored 978 / 6 catalog, and it moved
+// in NEITHER direction: still exactly THREE printings of "Scalding Block", still
+// {W}{W}{W} / index 0 / 160 / one byte-identical effect string on all three, and
+// the sentence returns those same three rows across all three text columns. The
+// tag was the only thing ever wrong here and D161 had already fixed it — so this
+// re-run is a CONFIRMATION, which is the outcome D161 named when it said the way
+// to tell a floor from a total is to read the DATE before the number. It is
+// recorded rather than left implicit so a fifth pass does not re-own it.
 //
 // ⚠️ THERE IS NO BARE ANCHOR, AND THAT IS A CENSUS RESULT RATHER THAN A CHOICE —
 // exactly as it was for `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s first sentence one

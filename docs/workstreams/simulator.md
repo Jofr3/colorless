@@ -13473,9 +13473,9 @@ it HAS can never see (D151's rule).
 
 | category | count | verdict |
 |---|---|---|
-| a field whose VALUE disagrees with the catalog | **ZERO** | the standing doubt is RETIRED |
-| missing a printed Ability or attack | **3** | 1 deliberate + documented, 1 harmless, 1 newly declared |
-| a printed attack at the WRONG INDEX | **1** | the SIXTH such fixture, and the first found BY the table |
+| a field whose VALUE disagrees with the catalog | **ZERO** | the standing doubt is RETIRED — ⚠️ **and this row is the one §D173 OVERTURNS: it was a MEASUREMENT over TWELVE rows, not a guard, and five wrong `types` values were outside its scope the whole time** |
+| missing a printed Ability or attack | **3** | 1 deliberate + documented, 1 harmless, 1 newly declared — ✅ **the newly-declared one (`swsh10.5-009`) is FIXED at D173, so it is TWO** |
+| a printed attack at the WRONG INDEX | **1** | the SIXTH such fixture, and the first found BY the table — ✅ **FIXED at D173 with the other five; the `reindexed` column is now EMPTY and PINNED empty** |
 
 **⚠️ WRONG VALUES: NONE. NOT ONE FIELD ON ANY OF THE TWELVE DISAGREES WITH THE
 CATALOG.** Every attack cost, every printed damage, every attack effect string,
@@ -13487,7 +13487,7 @@ D156 argued from arithmetic and could not check, and is now a measurement.
 
 | id | card | omits | verdict |
 |---|---|---|---|
-| `swsh10.5-009` | Charmeleon | attack **"Scratch"** | see the index finding below |
+| `swsh10.5-009` | Charmeleon | attack **"Scratch"** | see the index finding below — ✅ **FIXED at D173; the fixture now carries `["Scratch", "Flamethrower"]` and this row is history** |
 | `swsh10.5-010` | Charizard | Ability **"Burn Brightly"** | **DELIBERATE AND DOCUMENTED** — its own doc block declares it as *"A THIRD simplification"* with the reason: Burn Brightly is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides. The declaration predates any catalog that could check it and is EXACT. |
 | `swsh10.5-018` | Radiant Blastoise | Ability **"Pump Shot"** | **HARMLESS** — registry-authored (`RADIANT_BLASTOISE`, keyed by id), the same cast as Mawile `sv03-143` and Armarouge `sv01-041`: `programFor` finds the program, so a printed `abilities` array would be inert. |
 
@@ -13501,6 +13501,17 @@ it**, which is the table doing the job it was built for. It is a **HAZARD, not a
 bug**: nothing keys a registry program or a durated `attackIndex` on this id.
 Declared at BOTH ends — an `INCOMPLETE` entry with `reindexed: true` and a reason,
 and an amended fixture doc block that says the drop rather than only its purpose.
+
+✅ **ALL SIX ARE FIXED AT D173 — SEE §D173.** Every one of D160's six claims was
+re-verified against the fixture source before any edit and **all six were
+CONFIRMED**; none had been fixed incidentally. All six fixtures now carry their
+whole printed attack list at PRINTED indices, **nineteen `{ index }` declarations
+were re-pointed** (three of them in `src/features/game/`, outside `packages/`
+entirely), all six `INCOMPLETE` entries are **GONE**, and the `reindexed` column is
+**EMPTY and PINNED empty** (`expect(shifted).toEqual([])`). ⚠️ **And the paragraph
+above is the exact mechanism D173 names as the problem: this declaration was
+CORRECT, COMPLETE and LEGIBLE for four slices, and it is why nothing was fixed. A
+DECLARATION IS NOT A FIX — when both cost one line, fix it.**
 
 **SYSTEMIC POOL CONVENTIONS — NOT findings, and the control group is what says so.**
 All twelve carry `legal: { standard: true, expanded: true }` where the catalog says
@@ -16638,3 +16649,323 @@ itself, not smaller.**
   card's own retrievability. ⚠️ **This is now the ONLY clause D159 left LOUD that is still
   LOUD** — said so the next census does not have to work out which of the two closed.
 - **`sv02-148` Corviknight** remains D171's open antecedent family of one, untouched.
+
+## D173 — THE SIX WRONG-INDEX FIXTURES, FIXED RATHER THAN DECLARED: all six carry their whole printed attack list at PRINTED indices, `reindexed` empties and is PINNED empty, and the sweep that transcribed them turned up a WRONG VALUE on an axis no census recorded (engine **UNCHANGED at 0.117.0**, `MATCH_RECORD_VERSION` **unchanged at 11**, **0 engine behaviour lines**)
+
+The item every remainder list has carried since D156 first counted five of them, and
+the one D160 sharpened by finding the sixth **with the table it had just built**. It is
+also the first item on that list whose whole content was **removing a declaration
+rather than adding one**.
+
+### What was wrong, and why it stayed green
+
+Five fixtures (`sv06.5-026`, `sv01-124`, `sv01-079`, `sv01-032`, `swsh10.5-009`) each
+dropped their printed **index-0** attack so the one their suite drives sat at 0; a sixth
+(`sv01-096`) **substituted** another card's attack for the only one it prints. Nineteen
+`{ type: "attack", index: 0 }` declarations across three files therefore named the
+FIXTURE's number and not the CARD's.
+
+⚠️ **AND ALL SIX WERE DECLARED, WHICH IS THE FINDING RATHER THAN THE MITIGATION.** Two
+section comments in `testFixtures.ts` said, in as many words, *"a fixture's `index: 0` is
+Slither Wing's and Koraidon's SECOND printed attack"*, and `catalogManifest.test.ts` held
+six `reindexed: true` rows with reasons. The declaration is what let it live: it made a
+wrong index **legible without making it wrong**, and a suite pinning `index: 0` stayed
+green because the fixture had been bent to fit the pin. A declaration converts a defect
+into a documented condition, and a documented condition has no pressure on it.
+
+> **A DECLARATION IS NOT A FIX, AND THE TABLE THAT HOLDS ONE HAS TO BE ABLE TO EMPTY.**
+> `catalogManifest.test.ts` did its job perfectly for four slices — it named the six, it
+> proved no registry program keyed on one, it caught the sixth by measurement. What it
+> could not do was make anybody remove one. **The cost of the entry was one line and the
+> cost of the fix was one attack row, and the entry won for four slices running.**
+> **When both are one line, fix it.**
+
+### D160's six claims — all six CONFIRMED, none fixed incidentally
+
+Verified against the fixture source before any edit. `sv06.5-026`, `sv01-124`,
+`sv01-079`, `sv01-032` and `swsh10.5-009` each carried exactly one attack; `sv01-096`
+carried `"Bite"`, a name the card does not print. **No seventh exists — and that is a
+MEASUREMENT, not a sweep**: `(d)`'s `shifted` computation is total over `M.printed` and
+now asserts `[]`, so a seventh would have gone red the moment the sixth was fixed.
+
+### The wrong-index family after D173 — CLOSED at 6/6, table EMPTY and PINNED EMPTY
+
+| card | before | after |
+|---|---|---|
+| Slither Wing `sv06.5-026` | `["Smashing Wing"]` | `["Iron Smasher", "Smashing Wing"]` |
+| Koraidon `sv01-124` | `["Rampaging Fang"]` | `["Claw Slash", "Rampaging Fang"]` |
+| Kilowattrel `sv01-079` | `["Thunder Blast"]` | `["Skill Dive", "Thunder Blast"]` |
+| Arcanine ex `sv01-032` | `["Bright Flame"]` | `["Raging Claws", "Bright Flame"]` |
+| Klefki `sv01-096` | `["Bite"]` (INVENTED) | `["Joust"]` (printed) |
+| Charmeleon `swsh10.5-009` | `["Flamethrower"]` | `["Scratch", "Flamethrower"]` |
+
+**All six `INCOMPLETE` entries DISAPPEAR, and none remains with `reindexed: false`** —
+no card has a genuinely unsimulated sibling that had to be carried and declared, because
+an unread effect string is carried inert and costs nothing.
+
+D163's note that `sv01-060` was authored COMPLETE *"precisely so its index-1 clause could
+be driven"* is now the pool's rule rather than one card's exception: **a fixture carries
+the whole printed attack list, and an omission is a failure rather than a table row.**
+
+### The transcription was free; the SUBSTITUTION was the slice
+
+Four of the six are pure transcription off the local D1 — a bare damage row (Koraidon's
+"Claw Slash" `{C}{C}{C}` 70, Charmeleon's "Scratch" `{R}{C}` 30) or an effect string with
+no reader (Slither Wing's "Iron Smasher" `{F}{C}` 20+, whose Future banner has no datum
+anywhere — D146). Two carry sentences the engine **already reads**, so making the fixture
+complete handed the pool two live programs it had been one attack short of:
+
+- **Kilowattrel `sv01-079` index 0 "Skill Dive"** — the `anyTargetSnipe` sentence,
+  derivable by an anchor unmoved since M3;
+- **Arcanine ex `sv01-032` index 0 "Raging Claws"** — D163/D167's `+`-fold on the
+  attacker's own damage counters.
+
+### ⚠️ THE DECLARATION SITE NOBODY GREPPED — AND THE RULE IT COSTS
+
+The nineteen re-pointed declarations split **`attackDiscards.test.ts` ×4**,
+**`providesEnergy.test.ts` ×12** and **`src/features/game/GameHud.cardplay.dom.test.tsx`
+×3** — and the third file is **outside `packages/` entirely**. An engine-scoped grep
+found sixteen; the seventeenth through nineteenth were found by the suite going **RED**
+on the first `bun run check` after the first card.
+
+> **A FIXTURE LIVES IN THE ENGINE AND ITS INDICES ARE READ FROM THE WEB.** `FIXTURE_POOL`
+> is imported by the HUD's DOM tests to build real boards, so any sweep for *"who names
+> an index for this card"* that stops at `packages/engine/src` is short by construction.
+> The brief for this slice said *"there may be more; grep per card rather than trusting
+> the list"* and that was still not enough — **the missing axis was the DIRECTORY, not
+> the card. A FIXTURE'S BLAST RADIUS CROSSES THE PACKAGE BOUNDARY.**
+
+### ⚠️ FOUR POPULATION CENSUSES WENT RED, WHICH IS THE SLICE'S REAL PAYOUT
+
+`selfCounterMultiply`, `selfScalingPenalty` and `opponentCounterScaling` each discover
+their producers *from the population rather than from a list* — the design D167 and D168
+were built on — and **all three had been sweeping a body that PRINTS their family's
+sentence and seeing NOTHING**, because the fixture carried only its second attack. Each
+gained **`sv01-032[0]`**. `clauseApostrophe`'s derivable-sentence census goes **64 → 65**
+for the same reason (Kilowattrel's "Skill Dive"; the other three re-indexed siblings add
+nothing — Koraidon's "Claw Slash" has no effect string at all, and neither "Iron Smasher"
+nor "Raging Claws" carries an apostrophe). Every one was re-pointed, none deleted.
+
+> **A TRUNCATED FIXTURE SILENTLY SHRINKS EVERY CENSUS THAT SWEEPS THE POOL.**
+> *"Discovered from the population, not enumerated"* is the right design and it is **not
+> self-validating**: its inputs were short, not its predicate, and nothing in the result
+> said so. This is D156's scope rule pointed at the **FIXTURE POOL** instead of at the
+> catalog.
+
+### ⚠️ KLEFKI `sv01-096` WAS THE ODD ONE OUT, AND ITS SUBSTITUTION WAS LOAD-BEARING
+
+Klefki prints **one** attack. The fixture carried `fix-attacker`'s Bite (`{C}`, 30) in
+place of the printed "Joust" (`{C}`, 10) — the only entry in the table needing both an
+`attacks` and an `invented` name — and the reason was stated: Klefki must be **Active** to
+emit its aura, so it must be the attacker, and the lock-ON / lock-OFF pairs in
+`abilityLock.test.ts` compared *"the SAME printed 30"* with Klefki in one arm and
+`fix-attacker` in the other.
+
+The substitution is gone and **the pairs are re-pointed rather than broken**. There is no
+third board: no aura on either side can lock Bouffalant while something other than Klefki
+attacks (Spiritomb reaches only Basic **V**; Ting-Lu ex and Klefki both require the Active
+Spot, and the Active Spot is where the attacker is). So the shared literal is replaced by
+a **DELTA**: each attacker carries its own no-passive baseline against `fix-bigbody`, and
+what is asserted is what Bouffer **COSTS** each of them — **0** with the lock live, **20**
+without it.
+
+⚠️ **THE DELTA IS STRICTLY STRONGER THAN THE LITERAL IT REPLACES, AND THAT IS THE GENERAL
+POINT.** *"The same printed 30"* looked confound-free and was not: it fixed the number by
+bending the FIXTURE, so the pair's premise was an artefact of the thing under test. Two
+arms that each carry their own baseline need **no shared literal at all**. The mutant that
+drops `passivesOf`'s §9 gate still dies here (`abilityLock` + 2 neighbours, **3 files**).
+
+Joust's rider — *"Before doing damage, discard all Pokémon Tools from your opponent's
+Active Pokémon."* — is unsimulated, **MEASURED and not assumed**: all six `derive*`
+readers return `null` on it. It rides as an inert string on a plain printed 10.
+
+`expShare.test.ts`'s §9 negative needed the victim **pre-damaged to 20**: Bite's 30 used
+to Knock Out a 30 HP `fix-victim` outright and Joust's 10 does not. 20 + 10 = 30 = HP
+satisfies `isLethallyDamaged`, which is the predicate the stage re-reads.
+
+### ⚠️ THE TABLE CAN NOW EMPTY, AND AN EMPTY TABLE MAKES ITS OWN GUARDS VACUOUS
+
+With `reindexed` at zero, both cases in `(d)` would pass whatever the engine did — a
+`for` over an empty table and a `toEqual` of two empty arrays. So:
+
+1. the first case **pins the emptiness explicitly** (`expect(shifted).toEqual([])`), so a
+   seventh shifted fixture is a FAILURE rather than a table entry;
+2. the second is **widened from "the reindexed ones" to EVERY registry-authored attack
+   index in the pool** — the invariant the narrow version was a proxy for, and one that
+   only became checkable once nothing was allowed to be shifted.
+
+⚠️ **THE EMPTINESS PIN IS UNKILLABLE ON ITS OWN AND IS KEPT ANYWAY** — nothing in the
+pool is shifted, so deleting it fails nothing. It is **WITNESSED** instead of deleted: a
+mutant that drops "Iron Smasher" *and re-declares it in the table* is caught by that line
+and by nothing else (**3 files with the pin, 2 without**). This is D159/D161/D163's
+precedent over D154's, and the discriminator is the one D171 named: **D154 deleted a guard
+that was an idiom of one; this one is the file's own idiom** — `NO_CATALOG_ROW` is kept
+empty for exactly the same reason, in exactly the same file, two hundred lines up. The
+`reindexed` FIELD is kept for the same reason: **an omission this file cannot NAME is one
+it cannot count.**
+
+### ⚠️ THE SLICE'S OWN FINDING: A WRONG VALUE ON AN AXIS NO CENSUS RECORDED
+
+Reading Klefki's catalog row to transcribe "Joust" turned up `types: ["Fairy"]` on a card
+that prints `["Psychic"]`. **Nothing in this repo could see it.** `CATALOG_MANIFEST.printed`
+recorded NAMES only, so every assertion in `catalogManifest.test.ts` could pass on a
+fixture carrying the wrong ELEMENT — and type is not cosmetic: **it is what Weakness and
+Resistance match on and what an Energy cost is paid in**, so a divergence is a live
+damage-math difference wherever the fixture is a DEFENDER.
+
+**PINNED, NOT NOTED** (D171's rule). The generator gained a `types` field, the manifest
+was regenerated, and a new total **BIDIRECTIONAL** sweep declares the exceptions
+**enumerated with the value each side holds** (D160's `pokemonWithoutAttacks`
+restatement) — *a declaration for a fixture that no longer diverges is as dead as an
+undeclared divergence is silent.* The population found was **FIVE**, and the split was the
+finding:
+
+| id | fixture | print | class |
+|---|---|---|---|
+| `sv01-023` Arboliva | `Colorless` | `Grass` | the `battler` DEFAULT showing through |
+| `sv02-123` Garganacl | `Colorless` | `Fighting` | the DEFAULT |
+| `sv03-012` Trevenant | `Colorless` | `Grass` | the DEFAULT |
+| `sv01-096` Klefki | **`Fairy`** | `Psychic` | a value a human WROTE — ✅ **FIXED, not declared** |
+| `sv02-089` Spiritomb | **`Darkness`** | `Psychic` | a value a human WROTE — **the last one, and NOT free** |
+
+**THE WRITTEN ONES ARE THE DANGEROUS CLASS.** A default is visible in the fixture as an
+ABSENCE; "Fairy" is a retired type this catalog folds into Psychic, so it reads as
+**deliberate** and survived for as long as the type was never checked.
+
+⚠️ **AND KLEFKI WAS FIXED AT THE MERGE RATHER THAN LEFT DECLARED — THE SLICE'S OWN THESIS
+APPLIED TO THE SLICE.** The slice's first draft enumerated all five as declared
+exceptions; that is exactly the move the entry above calls the defect. `sv01-096` was
+corrected to its printed `["Psychic"]`. **The fix was FREE**: nothing reads the element —
+Klefki is the aura SOURCE in `abilityLock` / `attackCostDelta` / `punkOut` / `block` /
+`lunarZone` / `trapTerritory`, and it attacks only in `abilityLock` and `expShare`, always
+into a body with no Fire or Psychic Weakness or Resistance. **The ONLY thing that went red
+was the exception table OVER-DECLARING it — the bidirectional assertion working exactly as
+designed**, which is the whole reason the sweep was written both ways.
+
+**FOUR exceptions remain, and `sv02-089` Spiritomb is the LAST human-written one. It is
+NOT free**: its printed "Fade Out" is declared absent in `INCOMPLETE`, so correcting the
+type without the attack would leave a body **right on one axis and wrong on another**. It
+is carried forward as a named remainder item rather than absorbed.
+
+> **D160 DIFFED TWELVE FIXTURES FIELD BY FIELD AND REPORTED ZERO WRONG VALUES. THAT WAS A
+> MEASUREMENT, NOT A GUARD** — one pass, by hand, over one set, and the number went into
+> prose. Five wrong values were sitting outside its scope the whole time. The lesson is
+> not that D160 was wrong; it is that **a field-by-field diff that does not leave an
+> assertion behind expires the moment it is written.**
+
+### The Eiscue re-query — CLOSED, and it moved in NEITHER direction
+
+D148's per-printing field check on Eiscue ex `sv03-042`/`-210`/`-222`, re-run against the
+restored **978 / 6** catalog: still exactly **THREE** printings of "Scalding Block", still
+`{W}{W}{W}` / index 0 / 160 / one byte-identical effect string on all three, and the
+sentence still returns those same three rows across all three text columns. The **SCOPE
+TAG** had **already** moved **UP** (890 / 5 → 978 / 6) at D161's mechanical pass; the
+**FIELD VALUES** moved **neither way**. Recorded in the `effects.ts` block itself so a
+fifth pass cannot re-own it — D161's own rule, that the way to tell a floor from a total
+is to read the DATE before the number, and `history.lastSeen` is 2026-08-02.
+
+### The structural questions
+
+1. **`engineVersion` DOES NOT MOVE — IT HOLDS AT 0.117.0 (D172's bump), DERIVED.** Every
+   production-file edit is a **COMMENT** (`effects.ts`, `index.ts`); `catalogManifest.ts`
+   is a generated **MEASUREMENT** whose only consumers are two test files and which
+   **`index.ts` does not re-export**, so the `types` field is not a public-API change;
+   `testFixtures.ts` is the fixture pool. **No op, event, game-state field, registry row,
+   regex, prompt, park, log arm, redact arm or projection**; no `@luminous/schema`, web,
+   API or DB diff. **0 ENGINE BEHAVIOUR LINES.** D150/D166's precedent.
+   `packages/engine/package.json` stays `0.3.0`.
+2. **`MATCH_RECORD_VERSION` UNCHANGED at 11, DERIVED** on D124's DIRECTIONAL test — *can
+   the previous deploy's RECORD hold the shape the new code expects?* Nothing persisted
+   changed: no field added to any persisted type, no `PendingStage` kind, no op, no
+   widened enum on anything that can sit in `phase.cont`. The one shape that did change,
+   `CATALOG_MANIFEST.printed`, is a compile-time constant `MatchRecord` neither stores nor
+   references.
+3. **VOICE — nothing moved.** No new row, no new arm, no prompt text.
+4. **§9 — untouched as a mechanism**, but its `passivesOf` witness was re-pointed from a
+   shared literal to a delta, and the gate-removal mutant still dies.
+5. **GATES NO ACTION; no error code; §11 nothing owed.**
+
+### Mutation pass: 18 run, 17 caught — one SURVIVOR, deliberate and witnessed
+
+Counts are test FILES failed / TESTS failed.
+
+| mutant | files | tests |
+|---|---|---|
+| DROP "Raging Claws" from Arcanine ex (the pre-D173 fixture) | **5** | 8 |
+| DROP "Skill Dive" from Kilowattrel | **4** | 11 |
+| DROP "Iron Smasher" from Slither Wing | **3** | 6 |
+| …drop it and RE-DECLARE it in the table, emptiness pin KEPT | **3** | 5 |
+| drop `passivesOf`'s §9 gate (the re-pointed `abilityLock` DELTA pair) | **3** | 3 |
+| DROP "Claw Slash" from Koraidon | 2 | 3 |
+| DROP "Scratch" from Charmeleon (D160's own finding, restored) | 2 | 5 |
+| SUBSTITUTE fix-attacker's Bite for Klefki's printed Joust | 2 | 4 |
+| …drop it and re-declare it, emptiness pin DELETED | 2 | 4 |
+| give Pincurchin a type the card does not print (UNDECLARED divergence) | 2 | 2 |
+| re-point the `providesEnergy` sites back to `index: 0` | 1 | 11 |
+| re-point the HUD's two dialogs back to `index: 0` | 1 | 5 |
+| re-point both `attackDiscards` sites back to `index: 0` | 1 | 3 |
+| SWAP Mewtwo VSTAR `swsh10.5-031`'s two attacks (the WIDENED registry-index check) | 1 | 3 |
+| SILENTLY FIX Klefki's types to the print (a now-DEAD declaration) | 1 | 1 |
+| drop the `types: []` line from `expShare`'s whole-manifest-row read | 1 | 1 |
+| drop the `expShare` victim's pre-damage, so Joust no longer Knocks Out | 1 | 1 |
+| **delete `expect(shifted).toEqual([])`, the emptiness pin** | **SURVIVED** | — |
+
+The survivor is the pin that cannot fail while the pool is clean; the row above it
+(re-declare + pin KEPT, **3** files) is its witness, and the row below (same, pin DELETED,
+**2** files) is the difference the pin makes.
+
+### Cost
+
+**0 engine behaviour lines.** 6 fixture attack lists (verbatim off the local D1) + 1
+corrected `types` value, 19 re-pointed `{ index }` declarations across 3 files, **6
+`INCOMPLETE` entries REMOVED**, 4 population censuses re-pointed, 1 new manifest field
+(`types`, in the **GENERATOR** — the source of truth), 1 new total bidirectional assertion
++ 4 enumerated exceptions, 2 hardened `(d)` cases, 1 pre-damaged board, 1 comment-only
+re-query note in `effects.ts` and 1 amended D160 doc block in `index.ts`.
+
+15 files move: `testFixtures.ts`, `catalogManifest.test.ts`, `catalogManifest.ts`
+(REGENERATED), `attackDiscards.test.ts`, `providesEnergy.test.ts`, `abilityLock.test.ts`,
+`expShare.test.ts`, `clauseApostrophe.test.ts`, `selfCounterMultiply.test.ts`,
+`selfScalingPenalty.test.ts`, `opponentCounterScaling.test.ts`, `effects.ts`, `index.ts`
+and `scripts/catalog-manifest.ts`, plus
+`src/features/game/GameHud.cardplay.dom.test.tsx`.
+
+⚠️ **`interpreter.ts`, `registry.ts` and `continuous.ts` were NOT touched** — D172's
+concurrent §12 status-immunity slice owned them, which is also why D172's `testFixtures.ts`
+edits were kept APPEND-ONLY.
+
+engine **UNCHANGED at 0.117.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 11**; manifest
+**218 fixture rows, 0 absent** (unchanged by this slice — the two rows D172 added are why
+this figure is 218 and not the 216 the worktree handoff measured against a pre-D172 base);
+`bun run check` GREEN exit 0 — **211 files / 3811 tests**.
+
+### What is left in this neighbourhood
+
+- **⚠️ SPIRITOMB `sv02-089`'s TYPE DIVERGENCE — the LAST human-written one, and the only
+  remainder this slice creates.** The fixture says `Darkness`; the card prints `Psychic`.
+  Unlike Klefki's, **this one is not free**: its printed "Fade Out" is declared absent in
+  `INCOMPLETE`, so correcting the type without also carrying the attack would leave a body
+  **right on one axis and wrong on another** — the exact half-landing this slice exists to
+  argue against. Fix the two together or not at all. The other three exceptions
+  (`sv01-023`, `sv02-123`, `sv03-012`) are the `battler` helper's `["Colorless"]` DEFAULT
+  showing through and want a **RULE** (set the type in the helper, or make the helper
+  demand one) rather than three edits.
+- **`FIXTURE_POOL` IS NOW CHECKED ON THREE AXES — NAME, ATTACK/ABILITY NAMES, AND TYPES —
+  AND NO OTHERS.** `hp`, `stage`, `evolveFrom`, `retreat`, `weaknesses`, `resistances`,
+  `regulationMark` and `legal` are all still unrecorded by the manifest and therefore
+  uncheckable. D160 measured them once by hand over twelve rows; **five wrong `types`
+  values were outside that scope and survived.** Extending `printed` is one line in the
+  generator per field plus an enumerated exception table, and D160's own systemic-pool
+  findings say what to expect: `legal` and `regulationMark` will diverge on **almost
+  every** fixture (a helper convention, so they want a RULE not a list), `weaknesses` on
+  ~33/193, and `evolveFrom` on ~13/193. **`hp` and `retreat` are the cheap, high-value
+  ones and nobody has looked.**
+- **`clauseApostrophe`'s census has a new entry class.** D173's row came from neither a
+  new mechanism nor a new fixture nor a restore, but from a fixture that was always in the
+  pool being made to carry what it had dropped. **Any future completeness fix owes that
+  census a re-run.**
+- **Four population censuses now include `sv01-032[0]`.** `selfCounterMultiply`,
+  `selfScalingPenalty` and `opponentCounterScaling` sweep the same `damageCountersOnSelf`
+  producers three ways; they agree today and the agreement is what each of them asserts.
+- **Therapeutic Energy `sv02-193`** (§D172) and **Corviknight `sv02-148`** (§D171) are
+  untouched by this slice and remain the open items in their own neighbourhoods.

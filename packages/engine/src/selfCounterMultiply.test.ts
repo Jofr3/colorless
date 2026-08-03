@@ -219,6 +219,13 @@ describe("the printed data — re-queried, not recognised", () => {
     // bare-form fixture to reuse and no `damage for each damage counter` sentence
     // any reader could have read. The sweep is over the pool rather than a list,
     // so a sixth adjectived printing added later joins the left-hand set on its own.
+    //
+    // ⚠️ AND ONE DID — `sv01-032[0]`, Arcanine ex's "Raging Claws", added by D173
+    // and NOT by a new card. The printing was in the pool the whole time; the
+    // FIXTURE dropped it, carrying only index-1 "Bright Flame", so this sweep read
+    // a body that prints this family's sentence and saw nothing. That is the exact
+    // failure mode a discovered-from-the-population census is built to avoid, and
+    // it survived one anyway: the sweep's inputs were short, not its predicate.
     const bare: string[] = [];
     const adjectived: string[] = [];
     for (const [id, card] of Object.entries(FIXTURE_POOL)) {
@@ -234,6 +241,7 @@ describe("the printed data — re-queried, not recognised", () => {
     expect(adjectived.sort()).toEqual([
       "fix-attacker[3]",
       "fix-attacker[4]",
+      "sv01-032[0]", // Arcanine ex "Raging Claws" — carried since D173
       "sv01-060[1]",
       "sv02-037[1]",
       "sv02-028[0]",
@@ -416,6 +424,7 @@ describe("the census — discovered from the population, not enumerated", () => 
     expect(by(deriveAttackDamageBonus)).toEqual([
       "fix-attacker[3]",
       "fix-attacker[4]",
+      "sv01-032[0]", // Arcanine ex "Raging Claws" — carried since D173
       "sv02-028[0]",
       "sv03-161[0]",
     ]);

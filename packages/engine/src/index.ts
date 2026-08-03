@@ -3698,11 +3698,14 @@ import type { GameState, Seat } from "./types";
     *"verbatim off the local D1"* doc blocks were telling the truth. Three
     OMISSIONS, now declared: Charizard `swsh10.5-010`'s "Burn Brightly" (already
     documented), Radiant Blastoise `swsh10.5-018`'s "Pump Shot" (registry-authored),
-    and **Charmeleon `swsh10.5-009`, the SIXTH reindexed fixture** — it drops the
-    printed index-0 "Scratch", so `providesEnergy.test.ts`'s `index: 0` is the
+    and **Charmeleon `swsh10.5-009`, the SIXTH reindexed fixture** — it dropped the
+    printed index-0 "Scratch", so `providesEnergy.test.ts`'s `index: 0` was the
     card's index 1. A hazard, not a bug (no registry program and no durated
     `attackIndex` keys on it), and the first one found BY the manifest table rather
-    than declared into it.
+    than declared into it. ✅ **FIXED AT D173**, with the other five: all six carry
+    their whole printed attack list at printed indices and every declaration names
+    the printed number, so the `reindexed` column of the `INCOMPLETE` table is now
+    EMPTY. The column is kept — it is what says so.
 
     ⚠️ **THREE DOWNWARD CORRECTIONS MADE DURING THE OUTAGE ALL REVERSE.** Against
     the restored catalog, `less damage (before applying` returns **6 rows, 5 of them

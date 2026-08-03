@@ -476,6 +476,7 @@ describe("the census — discovered from the population, not enumerated", () => 
     expect(found.sort()).toEqual([
       "fix-attacker[3]",
       "fix-attacker[4]",
+      "sv01-032[0]", // Arcanine ex "Raging Claws" — carried since D173
       "sv02-028[0]",
       "sv03-161[0]",
     ]);

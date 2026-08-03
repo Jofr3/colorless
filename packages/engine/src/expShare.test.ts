@@ -256,6 +256,10 @@ describe("the printed datum — re-queried, not inherited", () => {
     // path that cannot inherit a typo from the fixture.
     expect(CATALOG_MANIFEST.printed["sv01-174"]).toEqual({
       name: "Exp. Share",
+      // `types` joined this row at D173. A Trainer prints none, and the empty
+      // array is asserted rather than skipped: this is the one manifest row this
+      // file reads WHOLE, so a field added to it must be answered for here.
+      types: [],
       attacks: [],
       abilities: [],
     });
@@ -648,7 +652,12 @@ describe("the seam", () => {
     // aura is live over the whole board. `triggersOf` would suppress a triggered
     // Ability here; `koToolTriggersOf` deliberately has no such gate, for
     // `passivesOf`'s stated reason. The Tool still fires.
-    const state = field(43, { attacker: "sv01-096" });
+    // ⚠️ THE VICTIM IS PRE-DAMAGED TO 20 SINCE D173, and the reason is the fixture
+    // fix rather than this card: Klefki used to carry a SUBSTITUTED Bite ({C}, 30)
+    // that Knocked Out a 30 HP fix-victim outright. It now carries its own printed
+    // "Joust" ({C}, 10), so the 20 is what makes the hit lethal. `isLethallyDamaged`
+    // is what the stage re-reads, and 20 + 10 = 30 = HP satisfies it exactly.
+    const state = setDamage(field(43, { attacker: "sv01-096" }), "p2", 20);
     const koed = state.players.p2.active?.stack.at(-1) as string;
     const holderUid = state.players.p2.bench[0]?.stack.at(-1) as string;
     // ⚠️ THE LOCK IS PROVED LIVE FIRST, so the positive below cannot be vacuous:
@@ -659,8 +668,8 @@ describe("the seam", () => {
     // …and the Tool fires anyway.
     expect(koToolTriggersOf(state, "p2", koed)).toHaveLength(1);
     const [energy] = victimEnergy(state);
-    // Klefki's own "Bite" ({C}, 30) is what does the Knocking Out, so the aura is
-    // live at the very instant the Tool reads.
+    // Klefki's own printed "Joust" ({C}, 10) is what does the Knocking Out, so the
+    // aura is live at the very instant the Tool reads.
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(parked.phase.kind).toBe("effect:choose");
     const { state: after } = answer(parked, [energy as string]);

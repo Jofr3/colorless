@@ -39,7 +39,15 @@ import {
 // lock-ON / lock-OFF pair below, because the only honest proof that a lock did
 // something is the same board doing the other thing without it.
 
-const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
+/** Index 0 on BOTH attackers this file fields, and deliberately the same action
+    object for both — but NOT the same printed attack, and since D173 not the same
+    printed damage either. On fix-attacker it is "Bite" ({C}, 30); on Klefki
+    sv01-096 it is the card's own printed "Joust" ({C}, 10, whose Tool-discard
+    rider no deriver reads). Until D173 the Klefki fixture SUBSTITUTED Bite so the
+    two arms of each pair could quote one number; the substitution is gone, so the
+    pairs below prove a lock by the DELTA the defender's passive costs each
+    attacker rather than by a shared literal. */
+const attack0 = { type: "attack", seat: "p1", index: 0 } as const;
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -261,24 +269,44 @@ describe("the ACTIVATED read site (§9 useAbility)", () => {
 });
 
 describe("the PASSIVE read site (continuous.ts passivesOf)", () => {
-  it("suppresses the defender's Bouffer — the full 30 lands", () => {
+  // ⚠️ THE PAIR IS A DELTA SINCE D173, NOT A SHARED LITERAL. Klefki carries its own
+  // printed "Joust" ({C}, 10) rather than a borrowed Bite ({C}, 30), so the two
+  // arms no longer quote one number — and each arm therefore carries its OWN
+  // no-passive baseline against fix-bigbody. What is asserted is what Bouffer
+  // COSTS each attacker: 0 while the lock is live, 20 while it is not. That is the
+  // claim the shared literal was standing in for, and it is the one a swapped
+  // attacker or a defender-side change cannot quietly satisfy.
+  it("suppresses the defender's Bouffer — the whole printed 10 lands", () => {
     let state = setActiveFromDeck(board(35), "p1", "sv01-096"); // Klefki attacks…
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     state = setActiveFromDeck(state, "p2", "sv03-174"); // …a Basic whose passive is off
 
-    const { events } = mustApply(state, bite);
+    const { events } = mustApply(state, attack0);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
+
+    // Joust's own baseline, so "10" above is the FULL printed number and not a
+    // reduced one that happens to land on it.
+    let plain = setActiveFromDeck(board(35), "p1", "sv01-096");
+    plain = attachFromDeck(plain, "p1", "fix-energy", 1);
+    plain = setActiveFromDeck(plain, "p2", "fix-bigbody"); // no passive at all
+    expect(find(mustApply(plain, attack0).events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
   });
 
-  it("…while the same printed 30 is Bouffered to 10 with no lock in play", () => {
-    let state = setActiveFromDeck(board(35), "p1", "fix-attacker"); // same Bite, no aura
+  it("…while the SAME Bouffalant takes 20 off an attacker with no lock in play", () => {
+    let state = setActiveFromDeck(board(35), "p1", "fix-attacker"); // Bite ({C}, 30), no aura
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     state = setActiveFromDeck(state, "p2", "sv03-174");
 
-    const { events } = mustApply(state, bite);
+    const { events } = mustApply(state, attack0);
 
+    // 30 − 20: the reduction the arm above measured at ZERO.
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
+
+    let plain = setActiveFromDeck(board(35), "p1", "fix-attacker");
+    plain = attachFromDeck(plain, "p1", "fix-energy", 1);
+    plain = setActiveFromDeck(plain, "p2", "fix-bigbody");
+    expect(find(mustApply(plain, attack0).events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
   });
 
   it("leaves a locked Pokémon's attached TOOL working (a Tool is not an Ability)", () => {
@@ -299,7 +327,7 @@ describe("the PASSIVE read site (continuous.ts passivesOf)", () => {
 
     expect(disabledAbilityUids(state).has(activeUid(state, "p1"))).toBe(true);
 
-    const { events } = mustApply(state, bite);
+    const { events } = mustApply(state, attack0);
 
     // Bite's 30 + Vitality Band's 10: the attacker is locked, its Tool is not.
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 40 });
@@ -312,21 +340,24 @@ describe("the TRIGGERED read site (triggers.ts triggersOf)", () => {
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     state = setActiveFromDeck(state, "p2", "sv03-044");
 
-    const { state: done, events } = mustApply(state, bite);
+    const { state: done, events } = mustApply(state, attack0);
 
-    // The damage still lands (Scorching Armor is what is off, not the attack)…
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    // The damage still lands (Scorching Armor is what is off, not the attack) —
+    // Joust's printed 10 here, Bite's 30 in the control below. Armarouge carries
+    // no reduction, so unlike the Bouffer pair the NUMBER is incidental to this
+    // claim and only the trigger is being compared.
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
     // …and the reaction never fires.
     expect(types(events)).not.toContain("ABILITY_TRIGGERED");
     expect(done.players.p1.active?.conditions.burned).toBeFalsy();
   });
 
-  it("…while the same hit Burns the attacker with no lock in play", () => {
+  it("…while an unlocked Armarouge Burns the attacker that hit it", () => {
     let state = setActiveFromDeck(board(57), "p1", "fix-attacker");
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     state = setActiveFromDeck(state, "p2", "sv03-044");
 
-    const { events } = mustApply(state, bite);
+    const { events } = mustApply(state, attack0);
 
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
     expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({

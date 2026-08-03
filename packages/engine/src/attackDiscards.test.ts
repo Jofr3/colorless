@@ -352,7 +352,8 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       { id: "fix-fighting-energy", count: 2 },
       { id: "fix-energy", count: 1 },
     ]);
-    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    // ⚠️ INDEX 1 — Smashing Wing's PRINTED number, behind "Iron Smasher" (D173).
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     const prompt = discardPrompt(parked);
     expect(prompt.note).toBe("Discard 2 Energy from this Pokémon.");
     expect(prompt.scope).toEqual({ kind: "total", count: 2 });
@@ -386,7 +387,8 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       { id: "fix-fighting-energy", count: 3 },
       { id: "fix-energy", count: 1 },
     ]);
-    const { state: parked } = mustApply(choice, { type: "attack", seat: "p1", index: 0 });
+    // ⚠️ INDEX 1 — Rampaging Fang's PRINTED number, behind "Claw Slash" (D173).
+    const { state: parked } = mustApply(choice, { type: "attack", seat: "p1", index: 1 });
     const prompt = discardPrompt(parked);
     expect(prompt.note).toBe("Discard 3 Energy from this Pokémon.");
     expect(prompt.scope).toEqual({ kind: "total", count: 3 });
@@ -399,7 +401,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       { id: "fix-fighting-energy", count: 4 },
     ]);
     const before = activeEnergy(forced, "p1");
-    const { state: after, events } = mustApply(forced, { type: "attack", seat: "p1", index: 0 });
+    const { state: after, events } = mustApply(forced, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(find(events, "ENERGY_DISCARDED")?.uids).toEqual(before.slice(0, 3));
     expect(activeEnergy(after, "p1")).toEqual([before[3]]);
@@ -429,7 +431,8 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       { id: "fix-fighting-energy", count: 2 },
       { id: "fix-energy", count: 1 },
     ]);
-    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    // ⚠️ INDEX 1 — Smashing Wing's PRINTED number (D173).
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     const offered = discardPrompt(parked).discardable.map((d) => d.uid);
     const [first, second, third] = offered as [string, string, string];
     deepFreeze(parked);

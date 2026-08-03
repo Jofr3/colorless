@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG_MANIFEST as M } from "./catalogManifest";
+import { programFor } from "./registry";
 import { FIXTURE_POOL } from "./testFixtures";
 
 // D156 — HARDENING, NOT A CARD SLICE: THE CATALOG CLAIMS BECOME CHECKABLE.
@@ -132,10 +133,21 @@ const NO_CATALOG_ROW: Record<string, string> = {};
 
     `attacks` / `abilities` are the printed NAMES the fixture omits, `invented` a
     name the fixture carries that the card does not print, and `reindexed: true`
-    marks the five fixtures where dropping a LEADING attack moved every attack
-    after it — the sharpest entry in the table, because an index is exactly what
-    the `attack` action and the registry's `attack` map key on, and a suite
-    pinning "index 0" on such a body is pinning the wrong index while green. */
+    marks a fixture where dropping (or substituting) a LEADING attack moved every
+    attack after it — the sharpest entry in the table, because an index is exactly
+    what the `attack` action and the registry's `attack` map key on, and a suite
+    pinning "index 0" on such a body is pinning the wrong index while green.
+
+    ⚠️ `reindexed` IS NOW UNUSED, AND THAT IS THE RESULT RATHER THAN A DEAD FIELD
+    (D173). It carried SIX entries — `sv06.5-026`, `sv01-124`, `sv01-079`,
+    `sv01-032`, `sv01-096` (D156's five) and `swsh10.5-009` (D160's, the only one
+    found BY this table rather than declared into it). All six now carry their
+    whole printed attack list at printed indices and every declaration that named
+    the old number has been re-pointed. The field is KEPT, exactly as
+    `NO_CATALOG_ROW` is kept empty: `(d)` below asserts the set is EMPTY in both
+    directions, so the next fixture that drops a leading attack has to declare
+    itself here rather than being absorbed by a table that no longer has a column
+    for it. An omission this file cannot NAME is one it cannot count. */
 const INCOMPLETE: Record<
   string,
   { attacks?: string[]; abilities?: string[]; invented?: string[]; reindexed?: true; why: string }
@@ -149,13 +161,11 @@ const INCOMPLETE: Record<
   "sv03-120": { attacks: ["Falling Press"], why: "Klawf ex — registry `onDamagedByAttack` trigger 'Counterattacking Pincer'; declared in its doc block ('No `attacks`: it is always the DEFENDER')." },
   // — the Ability-lock aura cast: the printed `abilities` NAME is load-bearing here
   //   (Mischievous Lock's `exemptAbilityNamed` matches against it), so these carry
-  //   the Ability and drop the attack.
-  "sv01-096": {
-    attacks: ["Joust"],
-    invented: ["Bite"],
-    reindexed: true,
-    why: "Klefki — ONE DECLARED DEVIATION in its doc block: the real 'Joust' carries an unsimulated Tool-discard rider, so it borrows fix-attacker's plain Bite ({C}, 30) to let the lock-ON / lock-OFF pair compare the SAME printed 30.",
-  },
+  //   the Ability and drop the attack. ⚠️ Klefki sv01-096 USED TO BE THE ODD ONE
+  //   OUT of this file's six `reindexed` entries — it SUBSTITUTED fix-attacker's
+  //   Bite for the printed "Joust" rather than dropping anything, which is why it
+  //   was the only entry carrying both an `attacks` and an `invented` name. D173
+  //   gave it its own printed attack and the entry is gone.
   "sv02-089": { attacks: ["Fade Out"], why: "Spiritomb — registry passive 'Fettered in Misfortune'; the aura is the whole test and the body never attacks." },
   "sv02-097": { abilities: ["Safeguard"], why: "Mimikyu — declared in its doc block: Safeguard is authored in the REGISTRY, keyed by id, which makes this the sharpest zero-registry-ROW witness (`programFor` is defined, `.attack` is not). D151 called this the LIVE case; it is documented, and its residual cost is that a `FIXTURE_POOL` sweep for the printed sentence cannot see it." },
   // — the always-on damage-reduction / debuff passives: registry rows, tanky bodies
@@ -182,26 +192,24 @@ const INCOMPLETE: Record<
   "sv01-142": { abilities: ["Rumbling Engine"], why: "Revavroom — registry activated Ability (the payment-ORDER witness)." },
   "sv01-151": { abilities: ["Nest Stash"], why: "Skwovet — registry activated Ability; its printed attack is a plain 20 kept so an Active Skwovet cannot put an unrelated effect into an Ability test." },
   "sv03-125": { abilities: ["Infernal Reign"], why: "Charizard ex — registry `onEvolve` trigger; its doc block declares `evolveFrom` as the ONE deviation and is the block that names a false verbatim banner as a defect." },
-  // — the exact-N / typed discardEnergy cast (D43): TWO SIMPLIFICATIONS DECLARED IN
-  //   THE SECTION COMMENTS, and the second is why these four are `reindexed`.
-  "sv06.5-026": { attacks: ["Iron Smasher"], reindexed: true, why: "Slither Wing — declared: 'the cards with two printed attacks carry only the discarding one — so a fixture's `index: 0` is Slither Wing's and Koraidon's SECOND printed attack'. (Its 'Iron Smasher' also asks about the Future banner, which has no datum anywhere — D146.)" },
-  "sv01-124": { attacks: ["Claw Slash"], reindexed: true, why: "Koraidon — the same declaration, same section comment." },
-  "sv01-079": { attacks: ["Skill Dive"], reindexed: true, why: "Kilowattrel — declared: 'so Kilowattrel's `index: 0` is its SECOND printed attack'." },
-  "sv01-032": { attacks: ["Raging Claws"], reindexed: true, why: "Arcanine ex — the same declaration, same section comment." },
+  // — ⚠️ THE EXACT-N / TYPED `discardEnergy` CAST (D43) HAD FOUR ENTRIES HERE and
+  //   has NONE. Slither Wing sv06.5-026, Koraidon sv01-124, Kilowattrel sv01-079
+  //   and Arcanine ex sv01-032 each carried only their DISCARDING attack, which the
+  //   card prints at index 1 — declared in their two section comments, which is
+  //   what made a wrong index legible without making it wrong. D173 gave all four
+  //   their whole printed attack list and re-pointed every `{ index: 0 }` that
+  //   named the fixture's number instead of the card's.
   // — pre-evolutions and one deliberate Ability omission.
   "sv03-061": { attacks: ["Tail Smack"], why: "Finizen — declared: 'NO ATTACKS are carried … giving it an attack would only invite a case to use the wrong one'. It exists to be retreated in and evolved." },
   "sv06.5-039": { abilities: ["Subjugating Chains"], why: "Pecharunt ex — declared in its own doc block, which is also the block that states the standard: omit an unexercised printed field rather than 'claim a verbatim card while quietly dropping one'." },
-  // — ⚠️ THE THREE `swsh10.5` OMISSIONS, CHECKABLE FOR THE FIRST TIME (D160). For
-  //   the whole life of these fixtures their set had no catalog rows, so nothing
-  //   in this repo could see what they left out; D156 could only file all twelve
-  //   under `NO_CATALOG_ROW`. The re-ingest turns that list into this one. The
-  //   other nine are COMPLETE, and no field on any of the twelve carries a wrong
-  //   VALUE — the "verbatim off the local D1" doc blocks were telling the truth.
-  "swsh10.5-009": {
-    attacks: ["Scratch"],
-    reindexed: true,
-    why: "Charmeleon — the SIXTH reindexed fixture and the first found by this table rather than declared into it. The fixture carries only 'Flamethrower', which the card prints at INDEX 1 behind 'Scratch' ({R}{C}, 30), so `providesEnergy.test.ts`'s three `{ type: 'attack', index: 0 }` declarations drive Flamethrower under a number the print does not give it. Its doc block declared the simplification's PURPOSE (the swsh-era spelled-out discard notation) and not the DROP; now declared at both ends. Hazard, not bug: nothing keys a registry program or a durated `attackIndex` on this id.",
-  },
+  // — ⚠️ THE `swsh10.5` OMISSIONS, CHECKABLE FOR THE FIRST TIME (D160). For the
+  //   whole life of these fixtures their set had no catalog rows, so nothing in
+  //   this repo could see what they left out; D156 could only file all twelve
+  //   under `NO_CATALOG_ROW`. The re-ingest turned that list into this one. It was
+  //   THREE; D173 made Charmeleon `swsh10.5-009` complete (it dropped its printed
+  //   index-0 "Scratch") and it is TWO. The other ten are COMPLETE, and no field
+  //   on any of the twelve carries a wrong VALUE — the "verbatim off the local D1"
+  //   doc blocks were telling the truth.
   "swsh10.5-010": { abilities: ["Burn Brightly"], why: "Charizard — declared in its own doc block as 'A THIRD simplification, beyond the two the header declares', with the reason: 'Burn Brightly' is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides. The declaration predates any catalog that could check it and is exact." },
   "swsh10.5-018": { abilities: ["Pump Shot"], why: "Radiant Blastoise — the registry-authored-Ability cast (`RADIANT_BLASTOISE`, keyed by id), same shape as Mawile sv03-143 and Armarouge sv01-041: `programFor` finds the program, so the printed `abilities` array would be inert. Its printed attack 'Torrential Cannon' rides along at its PRINTED index 0 and is D154's fifth per-attack-lock printing." },
 };
@@ -376,6 +384,80 @@ describe("(a) no fixture NAME is wrong", () => {
     for (const id of idNamed) expect(FIXTURE_POOL[id]?.category).toBe("Trainer");
     expect(idNamed.length).toBeGreaterThan(0);
   });
+
+  // ⚠️ D173 — THE FIRST NON-NAME FIELD THIS FILE CHECKS, AND IT WAS FOUND BY
+  // ACCIDENT. The wrong-index slice read Klefki sv01-096's catalog row to transcribe
+  // its attack and noticed the fixture says `types: ["Fairy"]` where the card prints
+  // `["Psychic"]` — a wrong VALUE, not an omission, on a body this repo has fielded
+  // since D100. Nothing could see it: `M.printed` recorded NAMES only, so every
+  // assertion in this file could pass on a fixture carrying the wrong ELEMENT.
+  //
+  // ⚠️ AND IT IS A DIFFERENT DEFECT CLASS FROM EVERYTHING ABOVE. `(b)`/`(d)` catch
+  // what a fixture LACKS; D160's field-by-field diff of the twelve `swsh10.5` rows
+  // caught wrong values but ran ONCE, by hand, over one set, and reported ZERO —
+  // a measurement, not a guard. This is that measurement turned into a standing
+  // assertion over the WHOLE pool, which is D150's move and this file's own reason
+  // for existing: a claim nobody records is a claim nobody can contradict.
+  //
+  // The exceptions are ENUMERATED with the value each side holds, never counted —
+  // D160's rule from the `pokemonWithoutAttacks` restatement. Type is not cosmetic
+  // here: it is what Weakness/Resistance match on and what an Energy cost is paid
+  // in, so a divergence is a live damage-math difference wherever the fixture is a
+  // DEFENDER. The sweep found FIVE, and the split was the finding: THREE were the
+  // `battler` helper's `["Colorless"]` DEFAULT showing through on a fixture that
+  // never set the field, and TWO were values a human WROTE and got wrong. The
+  // default is the cheaper defect — it is visible in the fixture as an absence —
+  // and the written ones are the dangerous class, because "Fairy" is a retired type
+  // this catalog folds into Psychic and so reads as DELIBERATE rather than stale.
+  //
+  // ⚠️ AND ONE OF THE TWO WRITTEN ONES IS NOW FIXED RATHER THAN DECLARED. Klefki
+  // sv01-096 was corrected to its printed `["Psychic"]` at the merge, on the slice's
+  // own finding that A DECLARATION IS NOT A FIX: an enumerated exception costs one
+  // line and a corrected fixture costs one line, and the entry wins every time it is
+  // offered — which is exactly how six wrong-index fixtures survived four slices.
+  // The fix was free (nothing read the element: Klefki is the aura source in
+  // abilityLock/attackCostDelta/punkOut/block/lunarZone/trapTerritory and attacks
+  // only in abilityLock and expShare, always into a body with no Fire/Psychic W or
+  // R), and the ONLY thing that went red was THIS TABLE over-declaring it — which is
+  // the bidirectional assertion below working exactly as designed. FOUR remain, and
+  // Spiritomb sv02-089 is the last written one; it is not free, because its printed
+  // "Fade Out" is declared absent in INCOMPLETE, so correcting the type without the
+  // attack would leave a body that is right on one axis and wrong on another.
+  const TYPES_DIVERGE: Record<string, string> = {
+    "sv01-023":
+      "Arboliva — fixture Colorless (the `battler` default), print Grass. Declared in its slice's section comment ('real ids so `programFor` finds the program, simplified bodies so surgery can place them'): a registry `onEvolve` trigger source, never a defender in a W/R case.",
+    "sv02-089":
+      "Spiritomb — fixture Darkness, print Psychic. Same shape: a `disableAbilities` aura source that never attacks (its printed 'Fade Out' is declared absent in INCOMPLETE) and is never the defender in a W/R case.",
+    "sv02-123":
+      "Garganacl — fixture Colorless (the `battler` default), print Fighting. Declared in its slice's section comment as a simplified stand-in: it is a `betweenTurns` trigger source made a Basic so it sits without an evolution, and the type rides along unset.",
+    "sv03-012":
+      "Trevenant — fixture Colorless (the `battler` default), print Grass. Garganacl's twin, same section comment, same reason.",
+  };
+
+  it("every fixture with a catalog row carries the printed TYPES, or declares why not", () => {
+    const diverged: string[] = [];
+    for (const [id, printed] of Object.entries(M.printed)) {
+      const fixture = FIXTURE_POOL[id];
+      if (fixture === undefined) throw new Error(`manifest row with no fixture: ${id}`);
+      // Trainers and Energy print no types and the helpers give them none.
+      if (printed.types.length === 0) {
+        expect(fixture.types ?? [], `${id} prints no types`).toEqual([]);
+        continue;
+      }
+      if (JSON.stringify(fixture.types ?? []) === JSON.stringify(printed.types)) continue;
+      diverged.push(id);
+      expect(
+        TYPES_DIVERGE[id],
+        `${id} (${printed.name}) carries ${JSON.stringify(fixture.types)} where the card prints ${JSON.stringify(printed.types)} — declare it or fix it`,
+      ).toBeDefined();
+    }
+    // Total in BOTH directions: a declaration for a fixture that no longer
+    // diverges is as dead as an undeclared divergence is silent.
+    expect(diverged.sort()).toEqual(Object.keys(TYPES_DIVERGE).sort());
+    for (const why of Object.values(TYPES_DIVERGE)) expect(why.length).toBeGreaterThan(30);
+    // The sweep read a real population — an empty `printed` satisfies the loop.
+    expect(Object.values(M.printed).filter((p) => p.types.length > 0).length).toBeGreaterThan(100);
+  });
 });
 
 describe("(b) a fixture may omit a printed attack or Ability only with a stated reason", () => {
@@ -435,7 +517,17 @@ describe("(d) a fixture attack sits at its PRINTED index unless the shift is dec
   // fixture that drops a LEADING attack renumbers every reader on that body, and
   // a suite pinning "index 0" on it pins the wrong index while staying green.
   // D144's index trap, living in the fixture pool rather than in a comment.
-  it("names every reindexed fixture, and no other", () => {
+  //
+  // ⚠️ AND SINCE D173 THE SET IS EMPTY, which changes what this block has to do.
+  // While six fixtures were shifted, both cases below were about CONTAINING the
+  // hazard; with none left they would both be VACUOUS — a `for` over an empty
+  // table and an `toEqual` of two empty arrays pass whatever the engine does. So
+  // the first case pins the emptiness EXPLICITLY (a shifted fixture is now a
+  // failure, not a table entry), and the second is widened from "the reindexed
+  // ones" to EVERY registry-authored attack index in the pool, which is the
+  // invariant the narrow version was a proxy for and which only became checkable
+  // once nothing was allowed to be shifted.
+  it("no fixture is reindexed, and the table agrees", () => {
     const shifted = Object.keys(M.printed).filter((id) => {
       const names = (FIXTURE_POOL[id]?.attacks ?? []).map((a) => a.name);
       return names.some((n, i) => M.printed[id]?.attacks[i] !== n);
@@ -444,19 +536,35 @@ describe("(d) a fixture attack sits at its PRINTED index unless the shift is dec
       .filter(([, e]) => e.reindexed === true)
       .map(([id]) => id);
     expect(shifted.sort()).toEqual(declared.sort());
+    // …and the value both sides hold. D156 found five of these, D160 a sixth, and
+    // D173 fixed all six; a seventh must go RED here rather than be absorbed.
+    expect(shifted).toEqual([]);
   });
 
   it("a registry-authored attack index always points at the attack the card prints there", () => {
     // The consequence that would actually be a BUG rather than a hazard: the
-    // registry authors programs BY INDEX, so a reindexed fixture with a registry
-    // `attack` row would run the wrong program. None exists today — asserted, not
-    // assumed, so the day one lands this is what says so.
-    for (const [id, entry] of Object.entries(INCOMPLETE)) {
-      if (entry.reindexed !== true) continue;
+    // registry authors programs BY INDEX (`CardProgram.attack` is keyed by
+    // attackIndex), so a body whose fixture attack list disagrees with the print
+    // would run the wrong program. Swept over the WHOLE pool, both ways: the
+    // fixture must carry an attack at that index, and the catalog must print the
+    // SAME NAME there.
+    let checked = 0;
+    for (const id of Object.keys(M.printed)) {
+      const authored = programFor(id)?.attack;
+      if (authored === undefined) continue;
       const fixture = FIXTURE_POOL[id];
-      expect(fixture, id).toBeDefined();
-      expect((fixture?.attacks ?? []).length, `${id} carries more than one attack`).toBeLessThanOrEqual(1);
+      const printed = M.printed[id];
+      for (const key of Object.keys(authored)) {
+        const index = Number(key);
+        const carried = (fixture?.attacks ?? [])[index];
+        expect(carried, `${id} authors attack ${index} and the fixture has none there`).toBeDefined();
+        expect(printed?.attacks[index], `${id} authors attack ${index} and the card prints none there`).toBeDefined();
+        expect(carried?.name, `${id} attack ${index}`).toBe(printed?.attacks[index]);
+        checked++;
+      }
     }
+    // The sweep read something — an empty registry would satisfy the loop above.
+    expect(checked).toBeGreaterThan(0);
   });
 });
 

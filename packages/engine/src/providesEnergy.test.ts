@@ -198,7 +198,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     ]);
     const [lightning, fire, colorless] = activeEnergy(state, "p1");
 
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(activeEnergy(done, "p1")).toEqual([fire, colorless]);
     expect(done.players.p1.discard).toEqual([lightning]);
@@ -215,7 +215,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
       { id: "fix-energy", count: 1 }, // the third Energy Thunder Blast's [L][C][C] needs
     ]);
 
-    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(offered(parked)).toEqual(["fix-lightning-energy", "sv02-191"]);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
@@ -246,7 +246,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     ]);
     const [lightning, luminous, jet] = activeEnergy(state, "p1");
 
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(activeEnergy(done, "p1")).toEqual([luminous, jet]);
     expect(done.players.p1.discard).toEqual([lightning]);
@@ -263,7 +263,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     ]);
     const [lightning, special, colorless] = activeEnergy(state, "p1");
 
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(activeEnergy(done, "p1")).toEqual([special, colorless]);
     expect(done.players.p1.discard).toEqual([lightning]);
@@ -283,7 +283,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     ]);
     const [luminous, c1, c2] = activeEnergy(state, "p1");
 
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).toContain("DAMAGE_DEALT"); // the cost was met
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.players.p1.discard).toEqual([luminous]);
@@ -308,7 +308,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     ]);
     const [fire, fire2, luminous, water] = activeEnergy(state, "p1");
 
-    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(offered(parked)).toEqual(["fix-fire-energy", "fix-fire-energy", "sv02-191"]);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
@@ -341,7 +341,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     ]);
     const attached = activeEnergy(state, "p1");
 
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.players.p1.discard).toEqual([attached[0], attached[1]]);
     expect(activeEnergy(done, "p1")).toEqual([attached[2], attached[3]]);
@@ -377,7 +377,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     ]);
     const attached = activeEnergy(state, "p1");
 
-    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     // Two identical Fire prints are ONE class and the count is 1, so the collapse
     // leaves a single candidate: forced, and the Water is never in the running.
     expect(types(events)).not.toContain("EFFECT_PENDING");
@@ -419,7 +419,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
     state = attachBenchFromDeck(state, "p1", benchIndex, "fix-fire-energy", 2);
     const benched = benchEnergy(state, "p1", benchIndex);
 
-    const { state: done } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: done } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(benchEnergy(done, "p1", benchIndex)).toEqual(benched);
     expect(done.players.p1.discard).toHaveLength(1);
   });
@@ -435,7 +435,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
       { id: "sv02-191", count: 1 },
       { id: "fix-fire-energy", count: 1 },
     ]);
-    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     const fire = activeEnergy(parked, "p1").find(
       (uid) => parked.cardIdByUid[uid] === "fix-fire-energy",
     ) as string;
@@ -461,7 +461,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
       { id: "fix-energy", count: 2 },
     ]);
     // A Fire discard sees BOTH the Basic Fire and the blend → a real question.
-    const { state: parkedFire } = mustApply(fire, { type: "attack", seat: "p1", index: 0 });
+    const { state: parkedFire } = mustApply(fire, { type: "attack", seat: "p1", index: 1 });
     expect(offered(parkedFire)).toEqual(["fix-blend", "fix-fire-energy"]);
 
     // The SAME card answers a {W} discard, on a fixture whose type its cost does
@@ -513,7 +513,7 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
       { id: "sv02-191", count: 1 },
       { id: "fix-energy", count: 1 },
     ]);
-    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
     const pick = parked.phase.prompt.discardable[0]?.uid as string;

@@ -1686,7 +1686,8 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
     state = setActiveFromDeck(state, "p2", "fix-bigbody"); // survives, so no KO tail
     state = attachFromDeck(state, "p1", "fix-fighting-energy", 2);
     state = attachFromDeck(state, "p1", "fix-energy", 1);
-    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    // ⚠️ INDEX 1 — Smashing Wing's PRINTED number, behind "Iron Smasher" (D173).
+    state = mustApply(state, { type: "attack", seat: "p1", index: 1 }).state;
     if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
 
     const dispatch = vi.fn();
@@ -1731,7 +1732,8 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
     state = attachFromDeck(state, "p1", "fix-fighting-energy", 2);
     state = attachFromDeck(state, "p1", "fix-energy", 1);
-    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    // ⚠️ INDEX 1 — Smashing Wing's PRINTED number (D173).
+    state = mustApply(state, { type: "attack", seat: "p1", index: 1 }).state;
     if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const attached = [...(state.players.p1.active?.energy ?? [])];
 
@@ -1847,7 +1849,8 @@ describe("the providesEnergy filter (M5) — the typed discard and Fire Off", ()
     state = attachFromDeck(state, "p1", "fix-lightning-energy", 1);
     state = attachFromDeck(state, "p1", "sv02-191", 1); // Luminous — the wildcard
     state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // never a candidate
-    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    // ⚠️ INDEX 1 — Thunder Blast's PRINTED number, behind "Skill Dive" (D173).
+    state = mustApply(state, { type: "attack", seat: "p1", index: 1 }).state;
     if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
 
     const dispatch = vi.fn();

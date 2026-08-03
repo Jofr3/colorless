@@ -1232,18 +1232,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //   `abilities` NAME matters mechanically — it is what Mischievous Lock's
   //   "except for Mischievous Lock" matches against, so a mirror-match Klefki
   //   keeps its own lock on.
-  //   ONE DELIBERATE DEVIATION: Klefki's real attack is "Joust" ({C}, 10, "Before
-  //   doing damage, discard all Pokémon Tools from your opponent's Active
-  //   Pokémon" — an unsimulated effect). It carries fix-attacker's plain
-  //   Bite ({C}, 30) instead so the lock-ON / lock-OFF pairs can compare the SAME
-  //   printed 30 with Klefki attacking in one arm and fix-attacker in the other
-  //   (Klefki must be the Active to emit its aura, so it has to be the attacker). —
+  //   ⚠️ D173 RETIRED THE ONE DELIBERATE DEVIATION, and it was the odd one out of
+  //   the six wrong-index fixtures: Klefki does not DROP an attack, it prints
+  //   exactly one and the fixture SUBSTITUTED another card's. It carried
+  //   fix-attacker's plain Bite ({C}, 30) in place of the printed "Joust" ({C}, 10)
+  //   so the lock-ON / lock-OFF pairs could compare the SAME printed 30 with Klefki
+  //   attacking in one arm and fix-attacker in the other — Klefki must be the
+  //   Active to emit its aura, so it has to be the attacker, and no other body on
+  //   either board can hold the lock for it.
+  //   The substitution is gone and the pairs are re-pointed rather than broken: a
+  //   lock is now proved by the DELTA the defender's passive costs each attacker
+  //   (0 to Klefki, 20 to fix-attacker), with each attacker carrying its own
+  //   no-passive baseline, which is confound-free where "the same printed 30" only
+  //   looked it. "Joust"'s rider ("Before doing damage, discard all Pokémon Tools
+  //   from your opponent's Active Pokémon") is unsimulated — MEASURED, not assumed:
+  //   all six `derive*` readers return null on it — so it rides as an inert string
+  //   on a plain printed 10. —
   "sv01-096": battler("sv01-096", {
     name: "Klefki",
-    types: ["Fairy"],
+    types: ["Psychic"],
     hp: 70,
     retreat: 1,
-    attacks: [{ cost: ["Colorless"], name: "Bite", damage: 30 }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Joust",
+        damage: 10,
+        effect:
+          "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
+      },
+    ],
     abilities: [
       {
         type: "Ability",
@@ -2145,12 +2163,17 @@ export const FIXTURE_POOL: Record<string, Card> = {
   // — M5 op-slice: the discardEnergy ATTACK arms (name / stage / hp / retreat /
   //   type and the WHOLE attack row verified verbatim against the local catalog
   //   2026-07-21 — the printed effect text IS the program here, since attacks
-  //   derive rather than read a registry row). Two deliberate simplifications,
+  //   derive rather than read a registry row). ONE deliberate simplification,
   //   declared so a later reader does not trust more than is here: printed
   //   WEAKNESS is omitted (these cards only ever ATTACK in these suites, and a
-  //   defender's weakness is what damage math reads), and the cards with two
-  //   printed attacks carry only the discarding one — so a fixture's
-  //   `index: 0` is Slither Wing's and Koraidon's SECOND printed attack. —
+  //   defender's weakness is what damage math reads).
+  //   ⚠️ D173 RETIRED THE SECOND ONE. This section used to say "the cards with two
+  //   printed attacks carry only the discarding one — so a fixture's `index: 0` is
+  //   Slither Wing's and Koraidon's SECOND printed attack", and that declaration
+  //   was the whole defect: it made a WRONG INDEX legible without making it wrong,
+  //   so every suite below pinned `index: 0` on an attack the card prints at 1.
+  //   Both cards now carry their WHOLE printed attack list at PRINTED indices and
+  //   the suites name the printed number. —
   /** Pincurchin (sv02-072) — "Needle Crush" [L][L][L] 70: the bare
       opponent-side twin, on a Basic body. */
   "sv02-072": battler("sv02-072", {
@@ -2184,14 +2207,28 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** Slither Wing (sv06.5-026) — "Smashing Wing" [F][F][C] 130: the exact-N
-      self-discard at N=2, on a Basic body. */
+  /** Slither Wing (sv06.5-026) — "Smashing Wing" [F][F][C] 130 at INDEX 1: the
+      exact-N self-discard at N=2, on a Basic body.
+
+      ⚠️ BOTH printed attacks are carried, at their PRINTED indices (D173). Until
+      then the fixture dropped "Iron Smasher" and Smashing Wing sat at index 0, so
+      `attackDiscards.test.ts` drove the discard under a number the card does not
+      give it. "Iron Smasher" ({F}{C}, 20+) asks about the FUTURE banner, which has
+      no datum anywhere in this engine (D146) and no deriver arm — `energyClause`
+      pins its OUTER shape as a near-miss the clause refuses — so it is carried as
+      a plain 20 that no suite drives. Carrying it is what makes the index honest. */
   "sv06.5-026": battler("sv06.5-026", {
     name: "Slither Wing",
     hp: 140,
     types: ["Fighting"],
     retreat: 3,
     attacks: [
+      {
+        cost: ["Fighting", "Colorless"],
+        name: "Iron Smasher",
+        damage: "20+",
+        effect: "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
+      },
       {
         cost: ["Fighting", "Fighting", "Colorless"],
         name: "Smashing Wing",
@@ -2200,14 +2237,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** Koraidon (sv01-124, the non-ex Basic) — "Rampaging Fang" [F][F][F][C] 190:
-      the exact-N self-discard at N=3, the biggest printed count in the family. */
+  /** Koraidon (sv01-124, the non-ex Basic) — "Rampaging Fang" [F][F][F][C] 190 at
+      INDEX 1: the exact-N self-discard at N=3, the biggest printed count in the
+      family.
+
+      ⚠️ BOTH printed attacks are carried, at their PRINTED indices (D173). The
+      dropped one was "Claw Slash" ({C}{C}{C}, 70) — a bare damage row with no
+      effect string at all, which is why carrying it is pure transcription and
+      changes nothing but the number Rampaging Fang answers to. */
   "sv01-124": battler("sv01-124", {
     name: "Koraidon",
     hp: 130,
     types: ["Fighting"],
     retreat: 2,
     attacks: [
+      { cost: ["Colorless", "Colorless", "Colorless"], name: "Claw Slash", damage: 70 },
       {
         cost: ["Fighting", "Fighting", "Fighting", "Colorless"],
         name: "Rampaging Fang",
@@ -2245,15 +2289,25 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //   local catalog 2026-07-21). Unlike the slice above, these keep their REAL
   //   stages — every one of them is an Evolution, and the suites place them by
   //   surgery rather than by evolving, which reads the stack top and not the
-  //   stage. Two declared simplifications, the same two as above: printed
-  //   WEAKNESS is omitted (these cards only ATTACK here), and a card with two
+  //   stage. ONE declared simplification, the same one as above: printed WEAKNESS
+  //   is omitted (these cards only ATTACK here).
+  //   ⚠️ D173 RETIRED THE SECOND ONE here too — it used to read "a card with two
   //   printed attacks carries only the discarding one — so Kilowattrel's
-  //   `index: 0` is its SECOND printed attack. —
-  /** Kilowattrel (sv01-079) — "Thunder Blast" [L][C][C] 140: the typed
+  //   `index: 0` is its SECOND printed attack", and both cards below now carry
+  //   their WHOLE printed attack list at PRINTED indices. —
+  /** Kilowattrel (sv01-079) — "Thunder Blast" [L][C][C] 140 at INDEX 1: the typed
       self-discard at count 1, in the modern brace notation. Its {L} cost is what
       makes the Luminous case sharp — the same wildcard Energy can PAY the cost
       and then be taken by the discard, which is the whole point of reading
-      provision rather than the print. */
+      provision rather than the print.
+
+      ⚠️ BOTH printed attacks are carried, at their PRINTED indices (D173). The
+      dropped one was "Skill Dive" ({C}{C}) — and it is the one of the four whose
+      sibling the engine ALREADY READS: its sentence is the `anyTargetSnipe`
+      family's, so index 0 is a live, derived program rather than an inert row.
+      That is why the drop mattered here more than anywhere else on this page:
+      the fixture was one attack short of a body that answers to two real
+      programs under two different numbers. */
   "sv01-079": battler("sv01-079", {
     name: "Kilowattrel",
     hp: 120,
@@ -2263,6 +2317,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     attacks: [
       {
+        cost: ["Colorless", "Colorless"],
+        name: "Skill Dive",
+        effect:
+          "This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
         cost: ["Lightning", "Colorless", "Colorless"],
         name: "Thunder Blast",
         damage: 140,
@@ -2270,8 +2330,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** Arcanine ex (sv01-032) — "Bright Flame" [R][R][R] 250: the typed discard at
-      an exact N (2), so the count and the type constrain the same pick. */
+  /** Arcanine ex (sv01-032) — "Bright Flame" [R][R][R] 250 at INDEX 1: the typed
+      discard at an exact N (2), so the count and the type constrain the same pick.
+
+      ⚠️ BOTH printed attacks are carried, at their PRINTED indices (D173). The
+      dropped one was "Raging Claws" ({R}{R}, 30+, "This attack does 10 more damage
+      for each damage counter on this Pokémon.") — D167's `×`/`+` fold on the
+      attacker's own counters, which the engine reads, so index 0 is a live
+      program here as well. */
   "sv01-032": battler("sv01-032", {
     name: "Arcanine ex",
     hp: 280,
@@ -2281,6 +2347,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 3,
     attacks: [
       {
+        cost: ["Fire", "Fire"],
+        name: "Raging Claws",
+        damage: "30+",
+        effect: "This attack does 10 more damage for each damage counter on this Pokémon.",
+      },
+      {
         cost: ["Fire", "Fire", "Fire"],
         name: "Bright Flame",
         damage: 250,
@@ -2288,20 +2360,19 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** Charmeleon (swsh10.5-009) — "Flamethrower" [R][R][C][C] 100: the SPELLED-OUT
-      notation at count 1 ("a Fire Energy"), the swsh-era wording the same rule
-      has to read.
+  /** Charmeleon (swsh10.5-009) — "Flamethrower" [R][R][C][C] 100 at INDEX 1: the
+      SPELLED-OUT notation at count 1 ("a Fire Energy"), the swsh-era wording the
+      same rule has to read.
 
-      ⚠️ REINDEXED, DECLARED AT D160 AND NOT BEFORE. The card prints TWO attacks and
-      "Scratch" ({R}{C}, 30) is the FIRST, so the Flamethrower carried here sits at
-      the card's index 1 and at this fixture's index 0 — `providesEnergy.test.ts`
-      drives it as `{ type: "attack", index: 0 }`, which is this body's number and
-      not the print's. The drop is deliberate (Scratch exercises no rule this suite
-      reads) and it is a HAZARD rather than a bug, because nothing keys a registry
-      program or a durated `attackIndex` on this id. It went undeclared for the
-      whole life of the fixture because `swsh10.5` had no catalog rows to check it
-      against; the re-ingest made it visible and `catalogManifest.test.ts`'s
-      `INCOMPLETE` table now holds it beside the other five. */
+      ⚠️ BOTH printed attacks are carried, at their PRINTED indices (D173). D160
+      found this fixture's reindex — the SIXTH, and the first found BY
+      `catalogManifest.test.ts`'s table rather than declared into it — and declared
+      it at both ends; D173 removes the condition instead of describing it. The
+      dropped attack was index-0 "Scratch" ({R}{C}, 30), a bare damage row with no
+      effect string, so carrying it is pure transcription; what it buys is that
+      `providesEnergy.test.ts`'s three declarations now name the number the CARD
+      gives Flamethrower. It went undeclared for the whole life of the fixture
+      because `swsh10.5` had no catalog rows to check it against. */
   "swsh10.5-009": battler("swsh10.5-009", {
     name: "Charmeleon",
     hp: 90,
@@ -2310,6 +2381,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     types: ["Fire"],
     retreat: 2,
     attacks: [
+      { cost: ["Fire", "Colorless"], name: "Scratch", damage: 30 },
       {
         cost: ["Fire", "Fire", "Colorless", "Colorless"],
         name: "Flamethrower",
