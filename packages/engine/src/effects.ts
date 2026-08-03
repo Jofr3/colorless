@@ -2419,9 +2419,19 @@ const PREVENT_DAMAGE_FROM_BASIC =
 //   "During your opponent's next turn, this Pokémon takes {N} less damage from
 //    attacks (after applying Weakness and Resistance)."
 //
-// TWELVE printings on ONE anchor across THREE amounts (local D1, 2026-08-02, 890
-// cards / 5 sets, whole effect string, checked PER PRINTING — ids, names, costs, printed
+// TWELVE printings on ONE anchor across THREE amounts (local D1, 2026-08-02,
+// 978 cards / 6 sets, whole effect string, checked PER PRINTING — ids, names, costs, printed
 // damage and INDEX, D144's rule extended to NAMES by D146):
+//
+// ⚠️ THAT SCOPE WAS WRONG IN THIS FILE UNTIL D161, AND THE COMMENT CONTRADICTED
+// ITSELF THREE LINES DOWN. D156's mechanical pass tagged this census
+// "890 cards / 5 sets" — the population it measured that day — but this census is dated
+// 2026-08-02, BEFORE the outage, and its own attacker-side list below names Pidove
+// `swsh10.5-061`, a card the five-set catalog does not hold. D156's own
+// reconstruction uses exactly that fact as its proof that the set was present on
+// 2026-08-02. So the scope tag, not the count, was the defect: **a census owes its
+// scope, and a scope tag owes the DATE of the query it labels.** D161 re-ran the
+// whole neighbourhood against the restored 978 / 6 and every number below held.
 //
 //   20 — Swablu sv03-169 "Fluffy Guard" ({C}, no printed damage, INDEX 0)
 //   30 — Pineco sv01-001 "Guard Press" ({C}{C}, 10, INDEX 0)
@@ -2950,15 +2960,24 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 // any catalog row count quoted without its set count. Regenerate the manifest
 // with `bun run scripts/catalog-manifest.ts`.
 //
-// ⚠️ THE LIVE CONSEQUENCE, WRITTEN DOWN SO NO SLICE INHERITS IT SILENTLY: every
-// census run from 2026-08-03 onward is blind to 88 real cards, so a "this is the
-// whole mapped set" claim made against today's file can UNDERCOUNT. D155's
-// downward corrections of §D149's "5 printings" and §D151's "six rows" are that
-// error: Pidove is a real catalogued card, not a fixture-only one. Re-ingesting
-// `swsh10.5` is priced on the remainder list.
+// ⚠️ AND D160 CLOSED IT — THE PARAGRAPHS ABOVE ARE HISTORY, NOT THE CURRENT
+// STATE, AND THIS NOTE IS WHAT KEEPS THEM FROM READING AS THE LATTER. `swsh10.5`
+// was re-ingested on 2026-08-03 and the WAL CHECKPOINTED (the step whose absence
+// lost it), so the local D1 is **978 cards / 6 sets** again — sv01 258, sv02 279,
+// sv03 230, sv06.5 99, sve 24, swsh10.5 88 — and every `978 cards / 6 sets` scope
+// tag in this file is correct once more. What does NOT self-correct is a comment
+// written while the rows were gone: every census dated 2026-08-03 ran against the
+// shrunken population and is a FLOOR until re-run. D160 re-ran three of them and
+// ALL THREE downward corrections REVERSED — §D149's "5 printings" and §D151's "six
+// rows" were EXACT (Pidove `swsh10.5-061` is a real catalogued card), and D154's
+// per-attack lock census is 8 rows across 6 names. **The generalisation: a count a
+// query cannot reproduce is not thereby WRONG — the query owes its SCOPE, and a
+// query that returns fewer rows than a predecessor is evidence about the DATABASE
+// before it is evidence about the predecessor.**
 //
-// CENSUS (local D1, 2026-08-03, 890 rows across the five sets above, ALL THREE
-// text columns — `effect`, `attacks_json`, `abilities_json`):
+// CENSUS (local D1, 2026-08-03, ALL THREE text columns — `effect`, `attacks_json`,
+// `abilities_json`) — run against the shrunken 890 rows / 5 sets, and RE-RUN by
+// D160 against the restored 978 cards / 6 sets with the SAME answer:
 //
 //   LIKE '%more damage (before applying%'                     → 1 row
 //   LIKE '%During your next turn, this Pokémon''s%'           → 1 row
@@ -3082,8 +3101,10 @@ const OPPONENT_CHOSEN_ATTACK_LOCK =
 // Rare) / sv03-222 (Special illustration rare) "Scalding Block" ({W}{W}{W}, attack
 // INDEX 0, printed 160), 3 printings of ONE attack in three rarities, so D121's
 // second-printing warrant is met by the card rather than by a family argument.
-// Every field re-queried per printing against the local D1 (2026-08-02, 890
-// cards / 5 sets): identical name, cost, index, damage and effect string on all three.
+// Every field re-queried per printing against the local D1 (2026-08-02,
+// 978 cards / 6 sets — the same mis-scoped tag D161 corrected on the D147 census
+// above; this query also predates the outage): identical name, cost, index, damage
+// and effect string on all three.
 //
 // ⚠️ THERE IS NO BARE ANCHOR, AND THAT IS A CENSUS RESULT RATHER THAN A CHOICE —
 // exactly as it was for `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s first sentence one

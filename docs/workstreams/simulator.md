@@ -13563,3 +13563,269 @@ projection; no `@luminous/schema`, web, API or DB diff. engine 0.106.0 →
   totality assertions run in both directions, so a future absence on ANY set is a
   finding rather than a known gap. The table is KEPT rather than deleted: a fixture
   id with no catalog row is precisely the defect the manifest exists to surface.
+
+## D161 — the ALWAYS-ON POST-W/R DAMAGE REDUCTIONS: `The {F} Pokémon this card is attached to takes 30 less damage…` / `All of your Pokémon take 10 less damage…` — 2 printings / 2 sentences / TWO mechanisms, and the census that did NOT go up (engine 0.106.1 → 0.107.0, `MATCH_RECORD_VERSION` unchanged at 10)
+
+Item 2 of D160's remainder list — the item every list since D147 has carried, and
+the one D160 marked *"the least-checked number on this page"*. It closes §D147's
+twenty-printing **after applying Weakness and Resistance** group at **20/20**.
+
+### ⚠️ The re-run was owed, it happened, and the count did NOT move
+
+D160's handoff scheduled §D147's census for a re-run **before costing this item**,
+on the rule that every 2026-08-03 census is a FLOOR against the restored catalog
+and the three re-run so far all corrected upward. This one does not, and the reason
+is the date:
+
+| the query (all three text columns) | §D147 (2026-08-02) | D161 (2026-08-03, restored) |
+|---|---|---|
+| `LIKE '%less damage%'` | 31 printings / 14 sentences | **31** |
+| …of which `%after applying Weakness and Resistance%` | 20 | **20** |
+| `LIKE '%from attacks from your opponent''s Pokémon%'` | *(not run)* | **2 — and only these two** |
+
+**§D147's census predates the outage.** D156's own reconstruction uses exactly that
+fact as its proof that `swsh10.5` was present on 2026-08-02 (§D147's table lists
+Pidove `swsh10.5-061` as a query result), so this family's numbers were always
+six-set numbers and the restore returns the population they were measured against.
+
+**THE GENERALISATION, which is the other half of D156's rule: a floor and a total
+can coincide, and what makes the difference sayable is the DATE of the query rather
+than its result.** "Re-run every 2026-08-03 census" is right; "expect every re-run
+to go up" is not, and the way to tell them apart is to read the date before the
+number.
+
+`from attacks from your opponent's Pokémon` is worth recording as a discriminator
+in its own right: it is what separates these two printings from the other eighteen
+in the group (which say only *"takes N less damage from attacks"*), and it returns
+**exactly these two rows in the whole 978-row catalog**.
+
+`FIXTURE_POOL` was swept SEPARATELY (D156's rule): it printed **neither** sentence
+on any fixture and held neither card. Repo-wide misnamed-id sweep on both ids:
+**clean**, the sixth running.
+
+### ⚠️ The miss is a SCOPE TAG, on a comment that contradicted itself three lines down
+
+D156's mechanical pass tagged **two 2026-08-02 censuses** in `effects.ts` as
+*"890 cards / 5 sets"* — the population D156 measured, not the population those
+queries ran against — and the first of them lists Pidove `swsh10.5-061` in its own
+attacker-side table. Both corrected in place.
+
+**A census owes its SCOPE (D154/D156); a SCOPE TAG owes the DATE of the query it
+labels (D161).** A mechanical pass that attaches today's population to yesterday's
+measurement is the same defect one level up, and it is invisible precisely because
+the number it decorates was never wrong.
+
+### ⚠️ The inherited pricing was right on the CARDS and wrong on BOTH shapes
+
+| claim on the list | verdict |
+|---|---|
+| "2 printings / 2 sentences" | **EXACT**, against 978 / 6 |
+| Rock Chestplate `sv01-192`, a Tool, {F}-gated, 30 | **ALL CORRECT** — `trainer_type = Tool`, effect string byte-identical |
+| Hariyama `sv02-113` "Arm Thrust Practice", seat-wide, 10 | **ALL CORRECT** — and it is a **FIGHTING Stage 1** from Makuhita, 140 HP, ×2 Psychic, one attack ("Rocket Slap", {F}{C}{C}, 120) |
+| "Rock Chestplate's holder-type gate is `preventsAttackerType` with the ends swapped" (D159) | **HALF WRONG, and the half that is wrong is the SHAPE.** Same DATUM, different PLACEMENT — see below |
+| "Hariyama's seat-wide reading is `benchShieldedByActive` with the Bench clause dropped" (D159) | **WRONG.** Dropping only the target clause leaves an ACTIVE-ONLY SOURCE |
+| "the §9 and `ignoreWR` answers are already decided by D159's table" (D159) | **WRONG on both.** §9 gains a THIRD value and `ignoreWR` gains its first PER-BOARD answer |
+| *(absent from every list)* | the two BENCH read sites become REACHABLE for the first time since 0.96.0 |
+
+**(a) THE HOLDER'S GATE IS NOT THE ATTACKER'S GATE MIRRORED — IT IS A DIFFERENT
+PLACEMENT.** D159 moved a gate *"from the printed NAME to the `Card.types`
+datum"* and then had to resolve it at the four READ SITES, because the body it
+names is the ATTACKER and `passivesOf` has no attacker. Rock Chestplate's gate
+names the **HOLDER — the very body `passivesOf` is folding** — so it is resolved
+INSIDE that fold against `topCardOf(...)?.types`, which is **`basicHpBonus`'s**
+placement (Bravery Charm's *"The Basic Pokémon this card is attached to"*).
+Consequence: **the four §8.5 read sites take a ZERO diff.** The number arrives
+inside `damageReductionAfterWR` itself, which is what D131's one-reading-one-
+implementation buys when the new source feeds a number the sites already read.
+
+It is a SCALAR that SUMS where `preventDamageFromType` had to COLLECT into a list:
+two sources contributing two AMOUNTS fold with nothing lost, two TYPES cannot.
+Reuse, not invention: `PokemonType`, `Card.types.includes`, and `passivesOf`'s own
+`+=`.
+
+**(b) THE SEAT AURA IS `hasFreeRetreatAura`'s SCAN, NOT THUNDURUS'S.** Thundurus
+scopes its SOURCE (*"As long as this Pokémon is in the Active Spot"*) and its
+TARGET (*"your BENCHED Pokémon"*). Hariyama's sentence scopes **neither**. What is
+left once BOTH clauses go is the own-board per-target scan whose own printing opens
+with the same three words (*"All of your Pokémon that have {P} Energy attached…"*),
+with **`opposingRetreatSurcharge`'s SUM over sources**: two Hariyama in play are two
+printed effects on a board a four-copy deck reaches, where D151 refused the loop
+only because ITS source clause named a single spot. The aura-scan family's **NINTH**
+member.
+
+### ⚠️ Two mechanisms, and the READ SITES are the ground (D155's rule, sixth payout)
+
+|                     | Rock Chestplate `sv01-192` | Hariyama `sv02-113` |
+|---------------------|----------------------------|---------------------|
+| source of the rule  | the damaged body's own TOOL | ANY Pokémon on its side |
+| rides               | `passivesOf`               | `seatDamageReduction` |
+| §9 Ability-lock     | **CANNOT reach it** (a Tool is not an Ability) | SUPPRESSES it |
+| Feint Attack `ignoreWR` | NULLS it outright      | nulls only the **SELF** part |
+| seat derived?       | n/a (the holder)           | the holder's OWN side |
+
+**§9 GAINS A THIRD VALUE.** D159's table reads *"suppresses / suppresses / cannot
+reach (a Stadium)"*. A **TOOL** is the third way a rule escapes an Ability-lock, and
+it comes free from `passivesOf`'s existing loop (a lock suppresses the holder's own
+printed passive and never an attached Tool's). Driven on **ONE board with ONE field
+flipped**: a Hariyama wearing Rock Chestplate under Ting-Lu ex "Cursed Land" reads
+reduction **40** undamaged and **30** with 10 damage on it — the Ability silenced,
+the Tool still paying. Ting-Lu is the only lock that can reach a **Stage 1**
+(Klefki/Spiritomb are Basic-only), which is why Hariyama's stage is load-bearing.
+
+### ⚠️ `ignoreWR` is decided PER BOARD, and that is new in kind
+
+D151 settled the reading — *"any effects on THAT Pokémon"* nulls an aura whose
+SOURCE is the damaged body and leaves one whose source is another body — and every
+member since has answered **constantly per SITE**, because its source could never
+BE its target (Entei sits in the opponent's Active Spot; Thundurus shields only the
+Bench it is not on).
+
+**Hariyama's aura is SELF-INCLUSIVE, so its source set CONTAINS its target set.**
+One `fix-feint` declaration, one board, two picks:
+
+| pick | reduction | dealt | why |
+|---|---|---|---|
+| the benched **Hariyama** | *(none)* | **50** | the only source IS the pick — the clause reaches all of it |
+| the benched **fix-titan** | 10 | **40** | the source is a different body — the clause does not reach it |
+| control: Rotom (no `ignoreWR`) at the Hariyama | 10 | 10 | so the first row is not passing because the aura was never live |
+
+…and at `snipeActive` an **Active** Hariyama sniped by Feint Attack still keeps a
+**benched** Hariyama's 10 (reduction 10, dealt 40), which is the case that shows the
+answer is *"the target's own contribution"* rather than *"the whole aura"*.
+
+`seatDamageReduction(state, pokemon, scope)` takes `scope: "all" | "othersOnly"` as
+a **REQUIRED** parameter, D146's enforcement verbatim: a new read site must SAY
+which it means rather than inherit whichever answer was cheaper to write.
+
+### ⚠️ Two guarded-but-unreachable read sites become LIVE
+
+D147's installed half can only ever be live on an ACTIVE — installing it needs an
+attack and leaving the spot clears it — so `spreadDamage` and `placeSnipe`'s bench
+arm have carried its term **unreachably by construction** since 0.96.0 and were
+guarded *"for the reason `attackDamageBlocked` is consulted here: these sites must
+be TOTAL rather than case-covering."* *"All of your Pokémon"* carries no zone
+clause, so a spread into a shielded bench makes both guards live rules, driven off
+printed cards rather than a constructed record. **A guard kept for totality earned
+its keep four slices later**, which is the concrete answer to "is a free read worth
+one line".
+
+### The ORDER — D147's question, and the new sources inherit its answer
+
+All three sources are ADDITIVE into ONE number at ONE step, so they commute among
+themselves; the only observable ordering is reduction-versus-W/R. Re-driven through
+D147's own oracle (each row re-derived from its OWN reported fields in both
+placements, through the engine's `applyDamageModifier`):
+
+| board (printed cards) | printed order | reversed | what the difference IS |
+|---|---|---|---|
+| fix-attacker Fire **60** → Forretress `sv01-139` (×2 Fire) with a benched Hariyama | `60×2 − 10` = **110** | `(60−10)×2` = **100** | the seat aura at D147's step |
+| any hit into a −30 Resistance carrying a reduction | *equal* | *equal* | additive terms COMMUTE — the parenthetical can only bite on the MULTIPLICATIVE step |
+
+Flipping the order fails **5** at the main hit and **1** at `snipeActive`. **A
+clamped zero is still not a prevention** (D147's rule, inherited by summing into
+the number it guarded, and pinned: three sources totalling 90 against a 60 hit
+report `dealt: 0` with `prevented` ABSENT).
+
+### The five structural questions
+
+1. **PARK/PERSIST — NEITHER, and the dodge was priced.** Both fields live on the
+   CATALOG (`registry.ts` `PassiveEffects`), both readers are pure functions of the
+   current state, nothing is stamped. A seat-total cached on `InPlayPokemon` was
+   considered and **refused**: it could only go stale on a Boss's Orders, a retreat,
+   a promotion or a KO of the source, and would have bought a bump for nothing.
+   `MATCH_RECORD_VERSION` stays **10**, pinned as an ABSENCE (the whole key set of
+   `InPlayPokemon` is asserted, so a later slice adding a key here goes red).
+2. **VOICE — NO ROW MOVED, and it was RENDERED UNDER BOTH SEATS AND READ.** The
+   number lands in the existing `DAMAGE_DEALT.reduction`, whose invariant (D155) is
+   **one number per STEP AND DIRECTION, never one per card**: that field has summed
+   catalog + installed since D147 and now sums a third source, where a field of its
+   own would have been this family's first split by SOURCE. An always-on reduction
+   that FIRES emits no event of its own — Bouffalant's rule verbatim (loudness is
+   owed to UNREAD text, and this text is now read). Both seats read
+   `"dealt 20 damage to Hariyama · reduced 40"` under the **attacker's** name, the
+   row being filed under the defender and rendered under the attacker (D136's
+   finding 1), so the crumb had to be true from that chair — and it is, because it
+   names the damage rather than the rule. **D159's "does the row already exist
+   unread?" check was run: it exists and IS read.**
+3. **GUARDS SWEPT, NOT LISTED**, in both directions, with §D147's other sixteen
+   after-W/R rows asserted beside them so the GROUP claim is checkable. **What the
+   sweep does NOT traverse: it enumerates `FIXTURE_POOL`, so a registry row for a
+   card with no fixture is invisible to it** — D149's blind spot, still open.
+   **§11: NOTHING OWED — this slice adds no op at all.**
+4. **MECHANISM EXISTS — read first, and every part of it did**: the four sites, the
+   clamp, `Card.types`, `topCardOf`, `disabledAbilityUids`, `DAMAGE_DEALT.reduction`
+   and its log crumb. What did NOT exist was a correct description of either shape,
+   and that was found by READING `passivesOf` and `hasFreeRetreatAura` rather than
+   by trusting the handoff.
+5. **NO ACTION IS GATED — CHECKED, not assumed.** Neither sentence says "can't be
+   used"; a reduced attack is weaker, never illegal, and neither field touches cost
+   or legality. The HUD projection (`redactGame` → `turn:action.attacks`) is
+   asserted to offer the shielded body's own attack as `playable`. **No `redact.ts`
+   and no `GameHud.tsx` diff.**
+
+### ⚠️ D150's item 6 was OPENED and DECLINED with a reason
+
+The handoff's standing instruction is *"the next slice that opens `placeSnipe`
+should take it or say why not"* (D159 passed it over once). This slice opened it.
+
+**It cannot be fixed without D153's item 0a, because they are the same defect.**
+`attackEffectRefused` takes a **SEAT** and reads that seat's **ACTIVE**;
+`placeSnipe`'s put-counter arm targets a **BENCHED** body. Adding the call there
+would refuse a bench counter on the strength of the Active's block — which is 0a's
+finding (*"tests the victim's ACTIVE block but refuses the WHOLE op"*) widened
+rather than item 6 fixed. **Take them together or not at all**; the narrowing 0a
+asks for is the precondition.
+
+### Cost
+
+**2 `PassiveEffects` fields, 1 gate inside `passivesOf`, 1 new `continuous.ts`
+function, 2 registry rows, 4 read sites** — no new op, event, error code, prompt,
+park, regex, deriver arm, redact arm, projection or log arm, and **no
+web/DB/`@luminous/schema` diff at all**. 2 new fixtures (both COMPLETE against the
+manifest), 1 new deck (`ALWAYS_ON_REDUCTION_DECK` — its own 60 so
+`DAMAGE_REDUCTION_DECK`'s seeded boards stay byte-identical, D151's move),
+`alwaysOnReduction.test.ts` (**31 tests, SEED-FREE**), `catalogManifest.ts`
+REGENERATED (205 → **207** fixture rows, 0 absent), two corrected scope tags in
+`effects.ts` and one corrected `attack.ts` doc block (it had named Rock Chestplate
+as an already-read producer since 0.96.0 — **the claim is true only now**).
+
+**Mutation-checked THIRTY-TWO ways, 31 caught, 1 deliberate survivor.** Caught: both
+registry amounts and the registry type token; the holder gate dropped, inverted and
+its `types` read emptied; the typed `+=` made an assignment; the seat scan's §9
+gate, its SUM, its target-membership clause; both directions of the `scope`
+parameter at both `ignoreWR` sites and at both non-`ignoreWR` sites; each of the
+four read-site terms dropped; **both ORDER mutations**; Hariyama's Ability, types
+and printed attack dropped from the fixture; Rock Chestplate's printed text
+corrupted; and each registry row deleted. **Survivor (kept, argued):** the seat
+scan's own-side early `return` cannot be made to differ, because a top uid is in
+exactly ONE zone of ONE side and the membership clause above has already picked the
+only seat that could match. It is `hasFreeRetreatAura`'s identical line and is KEPT,
+with the unreachability turned into an **ASSERTION** (no uid appears on two sides;
+two sources on one side and one on the other read 20 and 10 with no leak) rather
+than left as a comment — D159's move on its two survivors.
+
+⚠️ **AND THE MANIFEST GUARD FIRED ON THIS SLICE'S OWN PROSE.** A corrected scope tag
+whose *"890 cards"* and *"5 sets"* landed on different comment lines went red on
+D156's row-count-without-set-count check — the first time that guard has caught a
+sentence written to satisfy it, and the cheapest possible demonstration that the
+check is about the LINE a reader sees rather than about the author's intent.
+
+engine **0.106.1 → 0.107.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
+`bun run check` GREEN exit 0 — **200 files / 3491 tests** (was 199 / 3460).
+
+### Still unmapped after D161 — ranked by cost
+
+- **§D147's after-W/R group is CLOSED at 20/20.** The remaining eleven rows of that
+  census are two other mechanisms: the **BEFORE-W/R** attacker-side debuff (6
+  printings, closed by D149 + D151) and *"This attack does {10|20} less damage for
+  each damage counter on this Pokémon"* (Skeledirge ex ×4, Cetitan `sv01-060` — **5
+  printings / 3 sentences, STILL UNMAPPED**, a self-scaling clause on the ATTACKER's
+  own damage and a different mechanism entirely). **That last group is the whole of
+  what "less damage" has left.**
+- **Munkidori ex `sv06.5-037`/`-083`/`-091` "Oh No You Don't"** — D158's §8.1 site's
+  next consumer, and still the closest thing to a free slice.
+- **RADIANT CHARIZARD `swsh10.5-011`** — a fixture and a case, no mechanism.
+- **The §12 STATUS-IMMUNITY family** (D159's census, 4 printings / 3 sentences).
+- **D158's and D159's censuses STILL OWE A RE-RUN**, and D161's finding sharpens the
+  instruction: **read the DATE first.** Both are dated 2026-08-03 and both really did
+  run against 890 / 5, so both really are floors — unlike §D147's, which was not.

@@ -3722,7 +3722,54 @@ import type { GameState, Seat } from "./types";
     (22 → 24 tests, including the state-collision guard that replaced a TS1117), one
     fixture doc block. No op, event, field, registry row or read site.
     `MATCH_RECORD_VERSION` stays **10** — nothing persisted exists to move. */
-export const engineVersion = "0.106.1";
+/** **D161 — the ALWAYS-ON POST-W/R DAMAGE REDUCTIONS.** The last two unread rows
+    of §D147's twenty-printing *"after applying Weakness and Resistance"* group,
+    and **TWO mechanisms rather than one field with a gate**.
+    `PassiveEffects.damageReductionAfterWRIfType` (Rock Chestplate `sv01-192`, a
+    Pokémon TOOL: *"The {F} Pokémon this card is attached to takes 30 less
+    damage…"*) is resolved **INSIDE `passivesOf`** against the holder's own
+    `Card.types`, so all four §8.5 read sites take a **ZERO diff** — the number
+    arrives inside `damageReductionAfterWR` itself.
+    `PassiveEffects.seatDamageReductionAfterWR` (Hariyama `sv02-113` "Arm Thrust
+    Practice": *"All of your Pokémon take 10 less damage…"*) is the aura-scan
+    family's **NINTH** member, summed at the four sites beside the catalog and
+    installed halves — one printed sentence, one step, now three sources and still
+    ONE number.
+
+    ⚠️ **THE INHERITED PRICING WAS RIGHT ON THE CARDS AND WRONG ON BOTH SHAPES.**
+    D159 priced Rock Chestplate as *"`preventsAttackerType` with the ends
+    swapped"*: the DATUM is the same, the PLACEMENT is not — that gate names the
+    ATTACKER, a body `passivesOf` has no access to, and this one names the body
+    being folded, so it is `basicHpBonus`'s placement (Bravery Charm) and not a
+    read-site predicate. And it priced Hariyama as *"`benchShieldedByActive` with
+    the Bench clause dropped"*: dropping only the target clause leaves an
+    ACTIVE-ONLY SOURCE, which this sentence does not print either. What is left
+    once both clauses go is **`hasFreeRetreatAura`'s** own-board per-target scan,
+    with `opposingRetreatSurcharge`'s SUM over sources.
+
+    ⚠️ **AND THE `ignoreWR` ANSWER IS DECIDED PER BOARD, WHICH IS NEW IN KIND.**
+    Every earlier member of this family answers Feint Attack the same way at every
+    SITE because its source could never BE its target. This aura is
+    SELF-INCLUSIVE, so its source set CONTAINS its target set: a sniped Hariyama
+    loses its own 10 and keeps a teammate's, off one declaration of one printed
+    attack. `seatDamageReduction`'s `scope` is REQUIRED (D146's enforcement) so a
+    new read site must say which it means.
+
+    ⚠️ **AND THE CENSUS DID NOT MOVE, WHICH IS ITSELF THE FINDING.** §D147's census
+    is dated **2026-08-02** — before the outage — so it always measured six sets,
+    and re-running it against the restored 978 / 6 returns 31 / 20 / 2 unchanged.
+    Two scope tags in `effects.ts` were nevertheless wrong: D156's mechanical pass
+    labelled two **2026-08-02** censuses *"890 cards / 5 sets"*, and the first of
+    them lists Pidove `swsh10.5-061` three lines below. **A scope tag owes the DATE
+    of the query it labels.** Corrected in place.
+
+    Cost: 2 `PassiveEffects` fields, 1 `continuous.ts` function, 1 gate inside
+    `passivesOf`, 2 registry rows, 4 read sites — no new op, event, error code,
+    prompt, park, regex, deriver arm, redact arm or projection, and no
+    web/DB/`@luminous/schema` diff. `MATCH_RECORD_VERSION` stays **10**: both
+    fields live on the CATALOG, both readers are pure functions of the current
+    state, and the cached-total dodge was priced and REFUSED. */
+export const engineVersion = "0.107.0";
 
 export type {
   ApplyResult,

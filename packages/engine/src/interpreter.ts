@@ -28,6 +28,7 @@ import {
   passivesOf,
   preventsAttackerType,
   providesEnergyType,
+  seatDamageReduction,
   seatRemovesWeakness,
   stadiumPreventsDamage,
 } from "./continuous";
@@ -2622,7 +2623,16 @@ function spreadDamage(
     // leaving the Active Spot ends it — so on the Bench this term is 0 by
     // construction and is read anyway, for the reason `attackDamageBlocked` is
     // consulted here: these sites must be TOTAL rather than case-covering.
-    const reduction = passives.damageReductionAfterWR + installedReductionOf(state, pokemon);
+    //
+    // D161 — …and the THIRD source is the one that makes this site REACHABLE at
+    // last. "All of your Pokémon take 10 less damage…" (Hariyama sv02-113) carries
+    // no zone clause, so a spread into a shielded bench is the first board on
+    // which a post-W/R reduction bites off a printed card here rather than off a
+    // constructed record. `"all"`: a spread has no `ignoreWR`.
+    const reduction =
+      passives.damageReductionAfterWR +
+      installedReductionOf(state, pokemon) +
+      seatDamageReduction(state, pokemon, "all");
     const dealt = prevented ? 0 : Math.max(0, spread - reduction);
     const damage = pokemon.damage + dealt;
     events.push({
@@ -2777,9 +2787,19 @@ function placeSnipe(
     // Attack's "not affected by any effects on that Pokémon" reaches an
     // attack-installed reduction exactly as it reaches a printed passive — the
     // installed one is if anything the more literal "effect on that Pokémon".
+    //
+    // D161 — …but the SEAT-WIDE aura is not nulled outright, and this is the site
+    // where that becomes observable. Its source set CONTAINS its target set, so
+    // "any effects on that Pokémon" reaches exactly the part of it the damaged
+    // body is granting ITSELF: a sniped Hariyama loses its own 10, a sniped
+    // TEAMMATE keeps it, off one declaration of one printed attack. The two
+    // earlier answers in this family were constant per SITE (D151/D159) only
+    // because no aura before this one could be its own target.
     const reduction = ignoreWR
-      ? 0
-      : targetPassives.damageReductionAfterWR + installedReductionOf(next, pokemon);
+      ? seatDamageReduction(next, pokemon, "othersOnly")
+      : targetPassives.damageReductionAfterWR +
+        installedReductionOf(next, pokemon) +
+        seatDamageReduction(next, pokemon, "all");
     // D149 — and the DEBUFF is NOT nulled by `ignoreWR`, unlike the reduction one
     // line up: it is an effect on the ATTACKER, and Feint Attack's clause scopes
     // "that Pokémon" (the target). Same reading that keeps the attacker's pre-W/R
@@ -2881,9 +2901,16 @@ function snipeActive(
   // arm's comment one function up applies verbatim, and this is the site where
   // the printed parenthetical is observable, since it is the only one of the four
   // interpreter-side reads that runs Weakness at all.
+  //
+  // D161 — the seat-wide aura's `ignoreWR` answer is the bench arm's verbatim and
+  // is reached differently here: this arm's target is the opponent's ACTIVE, so a
+  // Feint Attack into an ACTIVE Hariyama nulls its own 10 while a benched second
+  // Hariyama keeps shielding it.
   const reduction = ignoreWR
-    ? 0
-    : targetPassives.damageReductionAfterWR + installedReductionOf(state, target.active);
+    ? seatDamageReduction(state, target.active, "othersOnly")
+    : targetPassives.damageReductionAfterWR +
+      installedReductionOf(state, target.active) +
+      seatDamageReduction(state, target.active, "all");
   const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
   events.push({
     type: "DAMAGE_DEALT",

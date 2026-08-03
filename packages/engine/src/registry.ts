@@ -104,6 +104,82 @@ export interface PassiveEffects {
   /** Flat HP subtracted from the attack damage this Pokémon TAKES, applied
       AFTER Weakness and Resistance (Bouffalant "Bouffer", §8.5/§15.B). */
   damageReductionAfterWR?: number;
+  /** `damageReductionAfterWR` GATED on the HOLDER's own printed TYPE (Rock
+      Chestplate sv01-192, a Pokémon TOOL: "The {F} Pokémon this card is attached
+      to takes 30 less damage from attacks from your opponent's Pokémon (after
+      applying Weakness and Resistance)."). 1 printing, and the local D1's ONLY
+      Tool whose gate is an energy type on the body it is attached to.
+
+      ⚠️ IT IS `basicHpBonus`'s PLACEMENT AND NOT `preventDamageFromType`'s, AND
+      THE DIFFERENCE IS WHOSE BODY THE GATE NAMES. D159 moved a gate "from the
+      printed NAME to the `Card.types` datum" and then had to resolve it at the
+      READ SITES, because the body it names is the ATTACKER and `passivesOf` has
+      no attacker. This gate names the HOLDER — the very body `passivesOf` is
+      folding — so it is resolved INSIDE that fold against `topCardOf(...)?.types`,
+      exactly as `basicHpBonus` resolves "The Basic Pokémon this card is attached
+      to" against `isBasicPokemon(top)`. The DATUM is reused from D159
+      (`Card.types`, `PokemonType`); the PLACEMENT is Bravery Charm's. Consequence:
+      the four §8.5 read sites take a ZERO diff — the number simply arrives inside
+      `damageReductionAfterWR`, which is what "one reading, one implementation"
+      (D131) buys when the new source feeds a number the sites already read.
+
+      PARAMETERISED ON THE TOKEN (D118's rule, D159's precedent): `PokemonType`
+      and not `BasicEnergyType`, because the READ is `Card.types` and Colorless
+      and Dragon are real Pokémon types with no Basic Energy.
+
+      A SCALAR that SUMS, where `preventDamageFromType` had to COLLECT: two
+      sources contributing two TYPES cannot be folded to one type, but two sources
+      contributing two AMOUNTS fold to their sum with nothing lost — which is
+      `damageReductionAfterWR`'s own idiom one field up, not a new one.
+
+      LIVE-READ like every gate in that fold: evolving a {F} Basic into a
+      non-{F} Stage 1 ends the reduction with the Tool still attached, which is
+      `basicHpBonus`'s documented behaviour on the same axis. And because a Tool
+      is not an Ability, a §9 Ability-lock CANNOT reach it (`passivesOf` suppresses
+      only the holder's own printed passive) — the third value on the axis D159's
+      table has "SUPPRESSES / SUPPRESSES / cannot reach (a Stadium)" in. */
+  damageReductionAfterWRIfType?: { amount: number; type: PokemonType };
+  /** §8.5 continuous OWN-SIDE seat-wide AURA: while this Pokémon is in play,
+      EVERY one of its controller's in-play Pokémon takes this many HP less attack
+      damage, after Weakness and Resistance (Hariyama sv02-113 "Arm Thrust
+      Practice": "All of your Pokémon take 10 less damage from attacks from your
+      opponent's Pokémon (after applying Weakness and Resistance)."). 1 printing.
+
+      SHAPE — `noRetreatCostAura`'s, NOT `preventBenchDamageWhileActive`'s, and the
+      printed clauses are the whole reason. Thundurus's aura scopes its SOURCE ("As
+      long as this Pokémon is in the Active Spot") and its TARGET ("your BENCHED
+      Pokémon"); this sentence scopes NEITHER. So the scan is `hasFreeRetreatAura`'s
+      — any of the seat's own in-play Pokémon is a source, Active or Bench, and every
+      one of the seat's Pokémon is a target, the source INCLUDED — with
+      `opposingRetreatSurcharge`'s SUM over sources, because two Hariyama in play are
+      two printed effects and a first-match scan would silently drop one. It is the
+      aura-scan family's NINTH member (continuous.ts `seatDamageReduction`).
+
+      §9-SUPPRESSIBLE through `disabledAbilityUids` like every non-lock Ability
+      surface, and only a TOP card grants it (this is a printed Pokémon Ability, not
+      a Tool). Hariyama is a STAGE 1, which is what decides WHICH lock can drive
+      that gate: Klefki/Spiritomb reach Basics only, so the assertable lock is
+      Ting-Lu ex "Cursed Land" ("your opponent's Pokémon in play that have any
+      damage counters on them", any stage, except ex).
+
+      ⚠️ FEINT ATTACK's `ignoreWR` ANSWERS PER BOARD RATHER THAN PER SITE, WHICH IS
+      NEW. D151 settled the reading — "any effects on THAT Pokémon" nulls an aura
+      whose SOURCE is the damaged body and leaves one whose source is another body —
+      and every member since has had a constant answer because its source could never
+      BE its target (Entei is the opponent's Active; Thundurus is Active and shields
+      only the Bench). This aura is SELF-INCLUSIVE, so its source set CONTAINS its
+      target set: a sniped Hariyama has the effect on itself and is nulled, a sniped
+      TEAMMATE does not and stands. The scan therefore takes an explicit scope
+      argument at the two `ignoreWR` sites rather than answering the same way at
+      both (D146's required-parameter enforcement: a new site must say which).
+
+      REACHABLE ON THE BENCH, unlike every reduction the engine has had so far.
+      D147's installed half can only be live on an ACTIVE (installing needs an attack
+      and leaving the spot clears it), so `spreadDamage` and `placeSnipe`'s bench arm
+      have carried its term unreachably since 0.96.0. "All of your Pokémon" reaches
+      them for the first time, which is why those two sites are DRIVEN here off
+      printed cards rather than off a constructed record. */
+  seatDamageReductionAfterWR?: number;
   /** Flat HP added to the attack damage this Pokémon DEALS to the opponent's
       Active, applied BEFORE Weakness and Resistance (Vitality Band). Only
       attacks that already do damage get it (a 0-damage attack stays 0). */
@@ -1529,6 +1605,24 @@ const COPPERAJAH_EX: CardProgram = { passive: { damageReductionAfterWR: 30 } };
     (after applying Weakness and Resistance)." (passive) */
 const STONJOURNER: CardProgram = { passive: { damageReductionAfterWR: 20 } };
 
+/** Rock Chestplate (sv01-192) — a Pokémon TOOL: "The {F} Pokémon this card is
+    attached to takes 30 less damage from attacks from your opponent's Pokémon
+    (after applying Weakness and Resistance)." The always-on, HOLDER-TYPE-GATED
+    member of the family Bouffalant/Stonjourner/Copperajah ex open and D147
+    durated — the gate is resolved inside `passivesOf` against the holder's own
+    `Card.types`, so the four §8.5 read sites take no diff at all. */
+const ROCK_CHESTPLATE: CardProgram = {
+  passive: { damageReductionAfterWRIfType: { amount: 30, type: "Fighting" } },
+};
+
+/** Hariyama (sv02-113) — "Arm Thrust Practice": "All of your Pokémon take 10 less
+    damage from attacks from your opponent's Pokémon (after applying Weakness and
+    Resistance)." The SEAT-WIDE member of the same family: no Active clause on the
+    source, no zone clause on the target, self-inclusive, read through the
+    dedicated own-side scan `seatDamageReduction` (continuous.ts) because it does
+    not modify its holder alone. */
+const HARIYAMA: CardProgram = { passive: { seatDamageReductionAfterWR: 10 } };
+
 // ── M5 op-slice: attachEnergyFrom (§6 energy acceleration) — the top backlog
 //    unlock; this slice covers the clean single-attach-from-hand core, the
 //    discard/deck/multi/rider variants layer later ops on top. ──
@@ -2638,6 +2732,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-187": SAGUARO, // Saguaro — heal 50 from up to 2 of your Pokémon
   "sv02-255": SAGUARO, // Saguaro (reprint)
   "sv02-270": SAGUARO, // Saguaro (reprint)
+  // — P3-M5 long tail: the ALWAYS-ON post-W/R DAMAGE REDUCTIONS (D161), the last
+  //   two rows of §D147's 20-printing "after applying Weakness and Resistance"
+  //   group. Re-queried against the RESTORED local D1 (2026-08-03, 978 rows /
+  //   6 sets) and both are still exactly ONE printing: `from attacks from your
+  //   opponent's Pokémon` returns these two rows and nothing else in the catalog. —
+  "sv01-192": ROCK_CHESTPLATE, // Rock Chestplate (Tool) — 30 less, gated on the HOLDER's {F}
+  "sv02-113": HARIYAMA, // Hariyama — Arm Thrust Practice (10 less, SEAT-WIDE)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

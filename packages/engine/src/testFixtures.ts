@@ -1396,6 +1396,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Tool",
     "If the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, put 4 damage counters on the Attacking Pokémon.",
   ),
+  /** Rock Chestplate — Tool: the holder takes 30 less damage AFTER Weakness and
+      Resistance, but only while the holder is a {F} Pokémon
+      (`damageReductionAfterWRIfType`, D161). The always-on, TYPE-GATED member of
+      Bouffalant "Bouffer"'s family, and the local D1's ONLY Tool whose gate is an
+      energy type on the body it is attached to — its sibling gates are a STAGE
+      (Bravery Charm "The Basic Pokémon…"), a STATUS (Binding Mochi "the Poisoned
+      Pokémon…") and a ZONE (Patrol Cap / Powerglass "in the Active Spot").
+      Verbatim off the local D1 row (`sv01-192`, `trainer_type = Tool`), re-queried
+      2026-08-03 against the RESTORED catalog of 978 rows / 6 sets. */
+  "sv01-192": trainerCard(
+    "sv01-192",
+    "Tool",
+    "The {F} Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance).",
+  ),
 
   // — M4 slice 5: Special Energy (real catalog ids so the registry finds their
   //   EnergyProgram; names are the REAL names, though provision keys on the id). —
@@ -5936,6 +5950,48 @@ export const FIXTURE_POOL: Record<string, Card> = {
     effect:
       "Prevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile.",
   } satisfies Card,
+  /** Hariyama sv02-113 — "Arm Thrust Practice": *"All of your Pokémon take 10 less
+      damage from attacks from your opponent's Pokémon (after applying Weakness and
+      Resistance)."* — the SEAT-WIDE member of the post-W/R reduction family
+      (`seatDamageReductionAfterWR`, D161), and the pool's only reduction that
+      reaches a body other than its own holder.
+
+      A STAGE 1, which is load-bearing rather than incidental in exactly D159's
+      way: the §9 gate this scan relies on is only assertable through a lock whose
+      target predicate the SOURCE satisfies, and Klefki/Spiritomb reach Basics
+      only — so Ting-Lu ex "Cursed Land" (any stage, damaged, non-ex) is the one
+      lock in the registry that can silence it, and it is an ex, so the same body
+      is also a legal attacker.
+
+      A {F} (Fighting) body, which is the OTHER thing that makes it the right
+      fixture: it is the only card in this suite that can legally WEAR Rock
+      Chestplate and satisfy its `{F}` gate, so both of this slice's mechanisms can
+      be live on one Pokémon and separated by removing either one.
+
+      ×2 Psychic, so its Weakness is what makes the printed parenthetical
+      ("after applying…") observable at the main hit — the ordering pin D147 built
+      its oracle for, re-run with the two new sources in the sum.
+
+      Its printed "Rocket Slap" ({F}{C}{C}, 120) carries no effect at all, so this
+      body can attack without installing or clearing anything. */
+  "sv02-113": battler("sv02-113", {
+    name: "Hariyama",
+    stage: "Stage1",
+    evolveFrom: "Makuhita",
+    types: ["Fighting"],
+    hp: 140,
+    retreat: 3,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Arm Thrust Practice",
+        effect:
+          "All of your Pokémon take 10 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [{ cost: ["Fighting", "Colorless", "Colorless"], name: "Rocket Slap", damage: 120 }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -9101,6 +9157,65 @@ export const ATTACKER_FILTER_DECK = deckOf({
   "fix-bigbody": 4, // 200 HP neutral Basic — the no-Rule-Box body the Stadium protects
   "fix-fighting-energy": 5, // {F}{F}{F} — Land Scoop's cost, and nothing else in the deck
   "fix-energy": 7, // Colorless Basic — every other cost here
+});
+
+/** D161's ALWAYS-ON POST-W/R REDUCTION deck (`alwaysOnReduction.test.ts`). Its own
+    60, `ATTACKER_FILTER_DECK`'s reason: `DAMAGE_REDUCTION_DECK`'s boards are seeded
+    and adding two cards would move every one of them, and this suite needs bodies
+    that deck has no room for. SEED-FREE — nothing here flips a coin, which is why
+    Forretress is only ever declared at INDEX 1 (its index-0 "Continuous Spin" is an
+    until-tails multiply) and why `rngState` is pinned unchanged across a swing.
+
+    ⚠️ THE TWO PRINTINGS, AND THE ONE BODY THAT CARRIES BOTH:
+      • sv02-113 Hariyama — "Arm Thrust Practice" (10, SEAT-WIDE). A STAGE 1, so
+        Ting-Lu ex is the only registry lock that can reach it; {F}, so it is also
+        the only body in the deck that satisfies Rock Chestplate's printed gate;
+        ×2 Psychic, so it is not accidentally doubled by the Fire attackers below;
+      • sv01-192 Rock Chestplate — the {F}-gated Tool (30). Four copies, because
+        two on ONE holder is the board that pins the fold SUMS rather than
+        last-wins, and a third goes on a non-{F} body as the gate's negative.
+
+    THE FOUR READ SITES, each driven by its own printed attacker, for D147's reason
+    (the diff is one `+` per site, so a site left out is a site a mutation deletes
+    for free) — and for the first time in this family ALL FOUR are reachable off a
+    real card, because "All of your Pokémon" carries no zone clause where D147's
+    installed half can only ever be live on an Active:
+      • fix-attacker's Fire "Flame" (idx 1, {R}{C}, 60) is the §8.5 main hit, and
+        the Fire ×2 on Forretress is what makes the printed parenthetical
+        observable there;
+      • fix-sniper's "Spread Shot" (idx 0, {C}, 30 + 20 to each benched) is
+        `spreadDamage` — the site the seat-wide aura reaches on the BENCH;
+      • sv01-069 Rotom's "Linear Attack" (idx 0, {C}, `opponentAny` 20, `deals`) is
+        `snipeActive` and `placeSnipe`'s damage arm, chosen by where it is aimed;
+      • fix-feint's "Feint Attack" (idx 0, {C}, `opponentAny` 50, `ignoreWR`) is the
+        one attacker that can hit a source and a non-source with the SAME
+        declaration, which is what makes the per-board `ignoreWR` answer driveable.
+
+    sv01-139 Forretress is three things at once: the INSTALLED half of the number
+    (its idx-1 "Rolling Shell" installs 50 on itself, so catalog + installed + seat
+    can be summed on one body), a ×2 Fire / −30 Grass body for the ordering oracle,
+    and a METAL Rock Chestplate holder — the type gate's negative on a PRINTED card
+    rather than on a synthetic one. sv02-127 Ting-Lu ex is the §9 lock AND an ex AND
+    a {F} attacker (Land Scoop, idx 0, 150): the only way this pool can put an
+    Ability-lock and a live aura on one board, since every lock in the registry is
+    Active-gated on its source. fix-titan (340 HP, NO attacks) and fix-bigbody
+    (200 HP) are the mulligan-free bench filler and the Colorless bodies the seat
+    aura protects without any card of their own. */
+export const ALWAYS_ON_REDUCTION_DECK = deckOf({
+  "sv02-113": 4, // Hariyama — "Arm Thrust Practice" (10 seat-wide); {F}, Stage 1, ×2 Psychic
+  "sv01-192": 4, // Rock Chestplate (Tool) — 30, gated on the HOLDER's {F}
+  "sv01-139": 3, // Forretress — "Rolling Shell" idx 1 ({M}{C}{C}, 90): the INSTALLED 50, ×2 Fire, METAL
+  "fix-attacker": 3, // FIRE — Bite idx 0 ({C}, 30) and Flame idx 1 ({R}{C}, 60): the main hit
+  "fix-sniper": 3, // "Spread Shot" idx 0 ({C}, 30 + 20 each benched): the spreadDamage site
+  "sv01-069": 3, // Rotom — "Linear Attack" idx 0 ({C}, opponentAny 20, deals): both snipe arms
+  "fix-feint": 3, // "Feint Attack" idx 0 ({C}, opponentAny 50, ignoreWR): the per-board split
+  "sv02-127": 3, // Ting-Lu ex — "Cursed Land" (§9) and "Land Scoop" idx 0 ({F}{F}{F}, 150)
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-bigbody": 3, // 200 HP neutral Basic — a Colorless body the seat aura still protects
+  "fix-fighting-energy": 6, // {F}{F}{F} — Land Scoop, and Rocket Slap's typed half
+  "fix-fire-energy": 3, // {R} — Flame's typed half
+  "fix-metal-energy": 3, // {M} — Rolling Shell's typed half
+  "fix-energy": 16, // Colorless Basic — every other cost in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

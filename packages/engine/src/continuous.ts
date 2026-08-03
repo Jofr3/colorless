@@ -149,6 +149,14 @@ export function passivesOf(
   state: GameState,
   pokemon: InPlayPokemon,
 ): {
+  /** §8.5 post-W/R reduction, summed over the holder's own printed passive and
+      every attached Tool — and, since D161, over the TYPE-GATED Tool printing
+      beside them (Rock Chestplate `sv01-192`, "The {F} Pokémon this card is
+      attached to takes 30 less damage…"). That gate names the HOLDER, which is
+      the body this fold already has, so it is resolved HERE against
+      `top.types` — `basicHpBonus`'s placement — and the four read sites take a
+      ZERO diff. Contrast `preventDamageFromTypes` below, whose gate names the
+      ATTACKER and therefore cannot be resolved anywhere but a read site. */
   damageReductionAfterWR: number;
   damageBonusBeforeWR: number;
   /** Pre-W/R bonuses gated on a board condition (Defiance Band), collected RAW
@@ -213,6 +221,11 @@ export function passivesOf(
     }),
   ];
   const isBasic = top !== undefined && isBasicPokemon(top);
+  // D161 — the HOLDER's printed types, for Rock Chestplate's "{F} Pokémon this
+  // card is attached to" gate. Read from the TOP card, so an evolution that
+  // changes the line's type ends the reduction with the Tool still attached —
+  // `isBasic` one line up, on the other axis of the same printed idiom.
+  const holderTypes = top?.types ?? [];
   const hasTool = pokemon.tools.length > 0;
   let damageReductionAfterWR = 0;
   let damageBonusBeforeWR = 0;
@@ -229,6 +242,14 @@ export function passivesOf(
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
+    // D161 — the same number, gated on the holder's own printed type. SUMMED into
+    // the ungated total rather than reported separately: it is the identical
+    // sentence at the identical §8.5 step, so splitting it would give the read
+    // sites two channels for one reading (D131).
+    const typed = passive.damageReductionAfterWRIfType;
+    if (typed !== undefined && holderTypes.includes(typed.type)) {
+      damageReductionAfterWR += typed.amount;
+    }
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
@@ -1112,6 +1133,84 @@ export function benchShieldedByActive(state: GameState, pokemon: InPlayPokemon):
     return true;
   }
   return false;
+}
+
+/** §8.5 (D161) — the HP an OWN-SIDE seat-wide continuous Ability takes off any
+    attack damage aimed at `pokemon` right now, AFTER Weakness and Resistance
+    (Hariyama sv02-113 "Arm Thrust Practice": "All of your Pokémon take 10 less
+    damage from attacks from your opponent's Pokémon (after applying Weakness and
+    Resistance)"). SUMMED at the four damage sites beside
+    `passivesOf().damageReductionAfterWR` and `installedReductionOf` — one printed
+    sentence, one §8.5 step, now THREE sources and still one number, which is the
+    split D147 made across the catalog/state boundary widened by one more source
+    rather than a fourth channel.
+
+    ⚠️ IT IS `hasFreeRetreatAura`'s SHAPE AND NOT `benchShieldedByActive`'s, AND
+    THE PRINTED CLAUSES ARE THE WHOLE REASON. Thundurus scopes its SOURCE ("As long
+    as this Pokémon is in the Active Spot") and its TARGET ("your BENCHED
+    Pokémon"). This sentence scopes NEITHER: a benched Hariyama grants the aura and
+    an Active one does, and every one of the seat's Pokémon receives it INCLUDING
+    Hariyama itself. Drop the Bench clause from `benchShieldedByActive` and you
+    still have an Active-only source; what is left once BOTH clauses go is
+    `hasFreeRetreatAura` — the per-target own-board scan whose printing ("All of
+    your Pokémon that have {P} Energy attached…") opens with the same three words.
+    The NINTH member of the aura-scan family (`disabledAbilityUids` /
+    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
+    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
+    `benchShieldedByActive` / this), inheriting its three answers verbatim: the
+    DERIVED SEAT (find the side holding this top uid and look for sources only
+    there, which keeps all four read sites' signatures untouched), BOTH clauses
+    ENFORCED BY THE SCAN rather than by an `activeOnly` field, and the §9 gate
+    through `disabledAbilityUids` — this is a printed Pokémon Ability, so only a
+    TOP card grants it and a lock silences it.
+
+    SOURCES ARE SUMMED, `opposingRetreatSurcharge`'s answer and not
+    `opposingAttackDebuff`'s: two Hariyama in play are two printed effects on a
+    board this pool can actually reach (a deck may run four), where D151's source
+    clause named the opponent's Active ALONE and a loop would have described a
+    board that cannot exist. A first-match scan would silently drop the second.
+
+    ⚠️ `scope` IS REQUIRED, AND IT IS THE ONE THING IN THIS FAMILY THAT ANSWERS PER
+    BOARD RATHER THAN PER SITE. Feint Attack's "not affected … by any effects on
+    that Pokémon" nulls an aura whose SOURCE is the damaged body and leaves one
+    whose source is another body (D151's reading, D159's re-run). Every earlier
+    member answered the same way at every site because its source could never BE
+    its target — Entei sits in the opponent's Active Spot, Thundurus shields only
+    the Bench it is not on. This aura is SELF-INCLUSIVE, so its source set CONTAINS
+    its target set, and one printed attack can hit either: a sniped Hariyama has
+    the effect on itself and is nulled ("othersOnly"), a sniped TEAMMATE does not
+    and the 10 stands ("all"). The parameter is required rather than defaulted for
+    D146's reason — a new read site must say which it means instead of inheriting
+    whichever answer happened to be cheaper to write. */
+export function seatDamageReduction(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  scope: "all" | "othersOnly",
+): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return 0;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    // The TARGET clause: "ALL of your Pokémon" — every body on this side, Active
+    // and Bench alike, so membership is the whole of it.
+    if (!holders.some((holder) => topUid(holder) === uid)) continue;
+    let taken = 0;
+    for (const holder of holders) {
+      const sourceUid = topUid(holder);
+      // Feint Attack: the damaged body's OWN contribution is an effect on that
+      // Pokémon and is the only part of this aura the clause reaches.
+      if (scope === "othersOnly" && sourceUid === uid) continue;
+      const top = topCardOf(state, holder);
+      const amount =
+        top === undefined ? undefined : programFor(top.id)?.passive?.seatDamageReductionAfterWR;
+      if (amount === undefined) continue;
+      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
+      taken += amount;
+    }
+    return taken; // this is the Pokémon's own side — no other side can shield it
+  }
+  return 0;
 }
 
 /** §7.3/§8.5 (D159) — does the in-play STADIUM prevent all attack damage from

@@ -34,6 +34,7 @@ import {
   passivesOf,
   preventsAttackerType,
   providedEnergy,
+  seatDamageReduction,
   seatRemovesWeakness,
   stadiumPreventsDamage,
 } from "./continuous";
@@ -812,11 +813,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // (after applying Weakness and Resistance)", read from BOTH of the places that
     // sentence is printed and SUMMED because each source is its own card effect:
     // the always-on Ability/Tool half off the catalog (Bouffalant "Bouffer",
-    // Copperajah ex "Bronze Body", Rock Chestplate) and, since D147, the DURATED
-    // half installed onto the board by an attack ("During your opponent's next
-    // turn, …"). Same sentence, same step, one number — which is the whole reason
-    // this site's diff is a `+` (continuous.ts `installedReductionOf`).
-    const reduction = defenderPassives.damageReductionAfterWR + installedReductionOf(next, defender);
+    // Copperajah ex "Bronze Body", and — since D161 and NOT before it, though this
+    // comment claimed otherwise from 0.96.0 — Rock Chestplate sv01-192) and, since
+    // D147, the DURATED half installed onto the board by an attack ("During your
+    // opponent's next turn, …"). Same sentence, same step, one number — which is
+    // the whole reason this site's diff is a `+` (continuous.ts
+    // `installedReductionOf`).
+    //
+    // D161 — and a THIRD source on the same `+`: the OWN-SIDE seat-wide aura
+    // ("All of your Pokémon take 10 less damage…", Hariyama sv02-113), which rides
+    // neither of the first two because it is not a fact about the holder's own
+    // card and is not stamped on the board. `"all"` here: this site has no
+    // `ignoreWR`, so every source counts (continuous.ts `seatDamageReduction`).
+    const reduction =
+      defenderPassives.damageReductionAfterWR +
+      installedReductionOf(next, defender) +
+      seatDamageReduction(next, defender, "all");
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
     // ex/V. A full null (not a flat reduction), gated on the ATTACKER's rule-box
     // class, so it supersedes any Bouffer-style reduction.
