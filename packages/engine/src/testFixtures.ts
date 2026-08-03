@@ -5681,11 +5681,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
       ⚠️ ITS PRINTED ABILITY IS CARRIED THOUGH NOTHING READS IT — Munkidori ex's
       rule verbatim, and here the omission would have been the tempting one.
       "Excited Heart" is a COST MODIFIER keyed on the opponent's Prize count, and
-      `effectiveAttackCost` has no shape for one; carrying it means the fixture
+      `effectiveAttackCost` had no shape for one; carrying it means the fixture
       states a simplification the engine has, rather than hiding it behind a card
-      that looks fully simulated. So this body always pays the full {R}{C}{C}{C}{C},
-      and the suite pins `programFor` UNDEFINED on the id so the inertness is a
-      measurement rather than a hope.
+      that looks fully simulated. ✅ THAT SIMPLIFICATION IS GONE — the attack-cost ±
+      slice authored it (`attackCostDiscountPerOpponentPrize`, read by continuous.ts
+      `selfAttackCostDiscount`), so this body pays {R}{C}{C}{C}{C} MINUS one {C} per
+      Prize its opponent has taken. The pin that guarded the omission
+      (`programFor` UNDEFINED on the id) went red on that slice exactly as intended
+      and is RE-POINTED at the passive field rather than deleted.
 
       THE ONE-ATTACK CONSEQUENCE, which is why this fixture earns boards and not
       just a `toEqual`: barring index 0 bars the WHOLE CARD, so the payability
@@ -5742,13 +5745,17 @@ export const FIXTURE_POOL: Record<string, Card> = {
       path is driven on this card; the per-INDEX claim is driven on the constructed
       one, and both are said out loud rather than one standing in for the other.
 
-      ⚠️ ITS PRINTED ABILITY IS INCLUDED THOUGH NOTHING READS IT. "Quaking Zone"
+      ⚠️ ITS PRINTED ABILITY WAS INCLUDED WHILE NOTHING READ IT. "Quaking Zone"
       ("As long as this Pokémon is in the Active Spot, attacks used by your
       opponent's Active Pokémon cost {C} more") is a cross-board COST aura, which
-      this engine has no shape for — `effectiveAttackCost` folds a Stadium's
-      surcharge and no Pokémon's. It stays LOUD: the fixture carries what the card
+      this engine had no shape for — `effectiveAttackCost` folded a Stadium's
+      surcharge and no Pokémon's. It stayed LOUD: the fixture carries what the card
       prints, and what the engine reads is a separate question (D151's rule after
-      40 pool fixtures turned out to be missing a printed row).
+      40 pool fixtures turned out to be missing a printed row). ✅ AUTHORED by the
+      attack-cost ± slice (`opponentActiveAttackCostSurcharge`, read by continuous.ts
+      `opposingAttackCostSurcharge`) — and note the card's own STAGE is why that
+      scan is stage-agnostic: a fold keeping League HQ's Basic gate would have
+      switched this Stage 2's aura off against every Stage 1/2 Active.
 
       Verbatim off the D1: 170 HP, Stage2 from Palpitoad, Water, retreat 3, ×2
       Lightning, NO Resistance (asserted as an absence), reg mark G, Uncommon. */
@@ -9332,10 +9339,10 @@ export const PER_ATTACK_LOCK_DECK = deckOf({
       • fix-fire-energy — the {R} of the cost's first symbol;
       • fix-energy — the FOUR {C} behind it. Combustion Blast is the most expensive
         cost in the family by two symbols, which is why this list is mostly Energy:
-        one declaration costs five cards off the deck, and the "Excited Heart"
-        discount that would shorten it in a real game is the simplification this
-        fixture carries LOUD (`effectiveAttackCost` has no shape for a cost keyed
-        on the opponent's Prize count). */
+        one declaration costs five cards off the deck. The "Excited Heart" discount
+        that shortens it is now REAL (`attackCostDiscountPerOpponentPrize`), but it
+        pays nothing back here — this deck's boards are dealt at 6 Prizes apiece, so
+        the discount is 0 on every one of them and the counts below stand. */
 export const RADIANT_LOCK_DECK = deckOf({
   "swsh10.5-011": 4, // Radiant Charizard — "Combustion Blast" idx 0: THE printing
   "fix-titan": 10, // 340 HP neutral Basic, NO attacks — P2's Active and the bench filler

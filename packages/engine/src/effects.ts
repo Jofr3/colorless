@@ -3003,8 +3003,11 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 // checked field by field off the row (id, NAME, cost, printed damage and INDEX —
 // D144's rule extended to NAMES by D146). It is the card's ONLY attack, and the
 // card also prints a "Quaking Zone" Ability ("As long as this Pokémon is in the
-// Active Spot, attacks used by your opponent's Active Pokémon cost {C} more") that
-// this engine does not read — on the fixture, and LOUD.
+// Active Spot, attacks used by your opponent's Active Pokémon cost {C} more") —
+// which the attack-cost ± slice AUTHORED as a registry passive
+// (`opponentActiveAttackCostSurcharge`, read by continuous.ts
+// `opposingAttackCostSurcharge`). It reaches no arm of this file: it is an ABILITY,
+// and no Ability string ever reaches `deriveAttackEffect`.
 //
 // ⚠️ AND `FIXTURE_POOL` WAS SWEPT SEPARATELY, WHICH IS THE HALF D154's FINDING
 // MAKES MANDATORY: no fixture in the pool carries "more damage (before applying"

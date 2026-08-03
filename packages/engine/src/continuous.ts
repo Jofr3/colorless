@@ -18,7 +18,7 @@ import type { BoardCondition, PokemonType } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
-import { SEATS, otherSeat } from "./types";
+import { SEATS, otherSeat, takenPrizes } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -1363,18 +1363,171 @@ function stadiumRetreatDelta(state: GameState, top: Card): number {
   return added - discount;
 }
 
-/** §8.2 attack cost under the in-play Stadium's continuous effects: Pokémon
-    League Headquarters adds {C} per surcharge point to every Basic's attacks
-    (a Colorless slot — any energy pays it, §6.4). Returns the printed cost
-    array itself when nothing applies, a fresh copy when something does. */
+/** §8.2 — the {C} ADDED to every attack `pokemon` uses by an OPPOSING continuous
+    Ability (Seismitoad sv03-052 "Quaking Zone": "As long as this Pokémon is in the
+    Active Spot, attacks used by your opponent's Active Pokémon cost {C} more").
+    The TENTH member of the aura-scan family and `opposingAttackDebuff`'s twin four
+    functions up — the printed sentences differ in exactly one predicate ("do 20
+    less damage" / "cost {C} more"), so this is that scan with one field name
+    changed, and every one of its three answers is inherited rather than reinvented:
+      • the DERIVED SEAT — `effectiveAttackCost` takes no seat, so we find the side
+        holding this top uid and read the OTHER one. That is what keeps that
+        function's signature, and all THREE of its readers (attack.ts's §8.2
+        payability gate, redact.ts's `playable` projection, the web HUD's
+        `costMet`), untouched;
+      • BOTH ACTIVE CLAUSES ENFORCED BY THE SCAN, no `activeOnly` field. "As long as
+        this Pokémon is in the Active Spot" scopes the SOURCE (a benched Seismitoad
+        surcharges nothing — contrast `opposingRetreatSurcharge`, whose print scopes
+        only the target) and "your opponent's ACTIVE Pokémon" scopes the TARGET.
+        Both ends are live-read: a Boss's Orders, a retreat or a KO-and-promotion
+        that moves EITHER body out of the Active Spot ends the surcharge on the
+        spot, because every read site passes the CURRENT state and nothing is
+        stamped;
+      • the §9 GATE through `disabledAbilityUids`. Seismitoad is a STAGE 2, so the
+        family's usual Klefki witness cannot reach it (D113's rule — the
+        reachability follows the SOURCE's stage) and the assertable lock is Ting-Lu
+        ex "Cursed Land" against a DAMAGED Seismitoad.
+
+    Does NOT sum over a source list, for `opposingAttackDebuff`'s reason verbatim:
+    the source clause is the opponent's Active ALONE, so there is exactly one
+    candidate and a loop would describe a board that cannot exist.
+
+    ⚠️ STAGE-AGNOSTIC ON BOTH ENDS, and that is the one line this scan does NOT
+    share with the Stadium sitting on the same seam. League HQ prints "each BASIC
+    Pokémon in play"; this prints no stage at all — and its own holder is a Stage 2,
+    so a fold that kept the Basic test as an early return would have switched this
+    aura off for every non-Basic Active it is aimed at. See `effectiveAttackCost`. */
+export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPokemon): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return 0;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    // The TARGET clause: only this side's Active is surcharged, so a benched holder
+    // of this uid is out even though it belongs to this side.
+    if (side.active === null || topUid(side.active) !== uid) continue;
+    // The SOURCE clause: the opponent's Active Spot and nowhere else.
+    const source = state.players[otherSeat(seat)].active;
+    if (source === null) return 0;
+    const top = topCardOf(state, source);
+    const amount =
+      top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveAttackCostSurcharge;
+    if (amount === undefined) return 0;
+    const sourceUid = topUid(source);
+    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return 0; // §9
+    return amount;
+  }
+  return 0;
+}
+
+/** §8.2 — the {C} SUBTRACTED from every attack `pokemon` uses by its OWN printed
+    passive (Radiant Charizard swsh10.5-011 "Excited Heart": "This Pokémon's attacks
+    cost Colorless less for each Prize card your opponent has taken"). The
+    ELEVENTH member of the aura-scan family, and the SECOND that is SELF-ONLY: like
+    `hasFreeRetreatSelf` it reads the HOLDER's own passive and merely LOOKS across
+    the table to evaluate its count, so unlike the surcharge above it never touches
+    another Pokémon's cost. The seat is DERIVED exactly as its ten siblings derive
+    theirs — find the side holding this top uid — purely so "your opponent" can be
+    resolved, which is what keeps `effectiveAttackCost`'s signature and all THREE of
+    its readers untouched.
+
+    THE COUNT IS `takenPrizes` ON THE HOLDER'S OPPONENT, the function attack.ts
+    already calls for the identical printed phrase ("for each Prize card your
+    opponent has taken" — the `opponentPrizesTaken` damage-bonus count kind). Six
+    minus their remaining pile, read live: it grows the moment they take a Prize and
+    it is never stamped anywhere.
+
+    THERE IS NO ACTIVE CLAUSE IN THE SENTENCE, on either end, so the scan enforces
+    none — a benched Radiant Charizard's attacks would cost less too, if a benched
+    Pokémon could attack. (Contrast the two Active clauses one function up, both of
+    which are printed.)
+
+    The §9 gate is a POSITIVE here: Radiant Charizard is a BASIC, so an Active
+    Klefki sv01-096 "Mischievous Lock" really does silence Excited Heart and the
+    printed {R}{C}{C}{C}{C} snaps back — the family's third assertable §9 positive
+    after D113's Snorlax and D114's Wimpod. Reads only the TOP CARD's passive and
+    not attached Tools, `hasFreeRetreatSelf`'s reading: no Tool in the pool discounts
+    an attack cost, and a future one would fold in HERE, un-§9-gated. */
+export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
+  const top = topCardOf(state, pokemon);
+  const uid = topUid(pokemon);
+  if (top === undefined || uid === undefined) return 0;
+  const per = programFor(top.id)?.passive?.attackCostDiscountPerOpponentPrize;
+  if (per === undefined) return 0;
+  if (disabledAbilityUids(state).has(uid)) return 0; // §9
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    if (!holders.some((holder) => topUid(holder) === uid)) continue;
+    return per * takenPrizes(state, otherSeat(seat));
+  }
+  return 0;
+}
+
+/** §8.2 attack cost under every continuous cost effect in play. THREE sources,
+    TWO SIGNS, one array:
+      • the in-play STADIUM's `basicAttackCostSurcharge` (Pokémon League
+        Headquarters), which adds {C} per surcharge point to every BASIC's attacks;
+      • the OPPOSING side's `opposingAttackCostSurcharge` aura (Seismitoad "Quaking
+        Zone"), which adds {C} to the attacks of the Active it faces, at any stage;
+      • the holder's OWN `selfAttackCostDiscount` (Radiant Charizard "Excited
+        Heart"), which SUBTRACTS {C} per Prize its opponent has taken.
+    Every symbol moved is a COLORLESS slot — any energy pays it, §6.4 — which is
+    what lets one array carry both signs: `costMet` (attack.ts) buckets the literal
+    string "Colorless" separately from every typed symbol, so appending one adds a
+    generic slot and removing one takes a generic slot away. A discount never
+    touches a typed symbol; the print says "cost Colorless less" and means it.
+
+    ⚠️ THE TWO DIRECTIONS ARE SUMMED INTO ONE NET DELTA AND ARE NEVER ONE FIELD.
+    `stadiumRetreatDelta`'s `added - discount` idiom, one seam over, and the reason
+    is the same trap D163 hit: a `<= 0` early return on a field that must also carry
+    a discount reads a real discount as "nothing applies". The netting is EXACT
+    rather than convenient — appending N Colorless and then removing M of them
+    leaves `max(0, printedColorless + N - M)` generic slots, which is what applying
+    the net delta directly produces — so no board separates the two orders.
+
+    ⚠️ NO FLOOR IS OWED, and this is the sharpest structural difference from
+    `effectiveRetreatCost`, which needs its `Math.max(0, …)`. That seam's cost is a
+    NUMBER and can be driven negative; this seam's cost is an ARRAY OF SYMBOLS, and
+    a removal loop can only remove symbols that are present. A 6-Prize discount
+    against a printed {W}{W} leaves {W}{W} — the structure floors itself.
+
+    ⚠️ THE BASIC TEST IS A PER-TERM GATE, NOT THIS FUNCTION'S EARLY RETURN, and that
+    is a behaviour change to the Stadium's own neighbourhood rather than a
+    refactor. Only League HQ's sentence prints "each Basic Pokémon in play"; the two
+    Ability sources print no stage at all, and Seismitoad is itself a Stage 2 — a
+    surviving `!isBasicPokemon(top)` early return would have silently switched the
+    surcharge off for every Stage 1/2 Active it is aimed at. `stadiumRetreatDelta`
+    made exactly this move when the first stage-agnostic aura reached the retreat
+    seam ("a zero TERM, not the early return it used to be").
+
+    Returns the printed cost array ITSELF when the net delta is zero, a fresh copy
+    when it is not — `redactedAttacksOf` and the HUDs rely on the cheap identity on
+    the overwhelmingly common board with no cost modifier in play. */
 export function effectiveAttackCost(
   state: GameState,
   pokemon: InPlayPokemon,
   cost: readonly string[],
 ): readonly string[] {
   const top = topCardOf(state, pokemon);
-  if (top === undefined || !isBasicPokemon(top)) return cost;
-  const surcharge = stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0;
-  if (surcharge <= 0) return cost;
-  return [...cost, ...Array.from({ length: surcharge }, () => "Colorless")];
+  if (top === undefined) return cost;
+  const stadium = isBasicPokemon(top)
+    ? (stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0)
+    : 0;
+  const added = stadium + opposingAttackCostSurcharge(state, pokemon);
+  const net = added - selfAttackCostDiscount(state, pokemon);
+  if (net === 0) return cost;
+  if (net > 0) return [...cost, ...Array.from({ length: net }, () => "Colorless")];
+  // The discount, applied from the END of the printed cost so the symbols the
+  // player still owes read left-to-right as the card prints them. Self-flooring:
+  // `remaining` simply runs out of Colorless to spend itself on.
+  let remaining = -net;
+  const kept: string[] = [];
+  for (const symbol of [...cost].reverse()) {
+    if (remaining > 0 && symbol === "Colorless") {
+      remaining--;
+      continue;
+    }
+    kept.push(symbol);
+  }
+  return kept.reverse();
 }

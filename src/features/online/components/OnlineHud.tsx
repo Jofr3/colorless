@@ -1106,7 +1106,14 @@ function AttackPanel({
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">{attack.name}</span>
-                  <EnergyDots cost={attack.cost} />
+                  {/* The EFFECTIVE cost when the wire carries one (a Stadium
+                      surcharge, an opposing cost aura, or the holder's own
+                      discount is in play), else the printed cost — the local HUD
+                      renders `effectiveAttackCost` here and this is the same
+                      number, server-computed. `playable` beside it is derived from
+                      exactly this array, which is the divergence the sibling field
+                      closes. */}
+                  <EnergyDots cost={attack.effectiveCost ?? attack.cost} />
                 </span>
                 {attack.damage !== null && (
                   <span className="shrink-0 text-sm font-bold tabular-nums">{attack.damage}</span>

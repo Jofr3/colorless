@@ -4069,7 +4069,84 @@ import type { GameState, Seat } from "./types";
     PARSE-TIME type in effects.ts that never reaches `GameState`, which is exactly
     why a new member of it buys no bump where D165's changed `InPlayPokemon` field
     did; pinned as an absence over the 16-key set. */
-export const engineVersion = "0.113.0";
+/** **D169 — THE FIRST ATTACK-COST DISCOUNT AND ITS SURCHARGE SIBLING.** One
+    mechanism, opposite signs, two printings, and the family CLOSES at 3/3:
+    Seismitoad `sv03-052` "Quaking Zone" (*"As long as this Pokémon is in the Active
+    Spot, attacks used by your opponent's Active Pokémon cost {C} more"*) and
+    Radiant Charizard `swsh10.5-011` "Excited Heart" (*"This Pokémon's attacks cost
+    Colorless less for each Prize card your opponent has taken"*), beside Pokémon
+    League Headquarters `sv03-192`, built since M4. Two `PassiveEffects` fields, two
+    registry rows, two continuous scans (`opposingAttackCostSurcharge` —
+    `opposingAttackDebuff`'s scan with one field renamed — and
+    `selfAttackCostDiscount`, `hasFreeRetreatSelf`'s shape), and one reworked fold.
+
+    ⚠️ **BOTH SIGNS WERE ALREADY EXPRESSIBLE AND NEITHER NEEDED A TYPE CHANGE.** The
+    seam returns `readonly string[]` of literal energy symbols with `"Colorless"` a
+    distinguished member — `costMet` buckets it by exactly that string compare — so
+    a surcharge APPENDS and a discount REMOVES. **The array floors itself**: a
+    6-Prize discount against a printed `{W}{W}` leaves `{W}{W}`, because a removal
+    loop can only remove what is present. That is the sharpest structural difference
+    from `effectiveRetreatCost`, whose cost is a NUMBER and which must clamp at
+    `Math.max(0, …)`.
+
+    ⚠️ **THE TWO DIRECTIONS ARE SEPARATE FIELDS SUMMED AS ONE NET DELTA — the
+    D163 trap, refused by construction.** The old body early-returned on
+    `surcharge <= 0`; a field carrying both signs would have read a real discount as
+    "nothing applies". `stadiumRetreatDelta`'s `added - discount` idiom, one seam
+    over. The netting is EXACT, not convenient: append-N-then-remove-M and
+    apply-the-net produce the same `max(0, printedColorless + N − M)`.
+
+    ⚠️ **AND THE REWORK'S REAL BEHAVIOUR CHANGE IS THE `!isBasicPokemon` EARLY
+    RETURN BECOMING A PER-TERM GATE.** Only League HQ's sentence prints "each BASIC
+    Pokémon in play"; both new sentences print no stage — and **Seismitoad is itself
+    a Stage 2**, so the surviving gate would have switched the aura off for every
+    non-Basic Active it aims at. `stadiumRetreatDelta` made this exact move when the
+    first stage-agnostic aura reached the retreat seam.
+
+    ⚠️ **THE ITEM'S TRUE COST WAS NOT ON THE COST SEAM AT ALL — IT WAS THE RENDER
+    BYPASS.** `effectiveAttackCost` is the one *payability* seam and **not** the one
+    *cost* seam: the wire and both HUDs published the **PRINTED** cost while
+    `playable`/`disabled` beside it was computed from the **EFFECTIVE** one. A
+    shipped divergence, invisible while the pool's only modifier was a SURCHARGE
+    (the button greys and the dots do not say why) and **wrong in the worse
+    direction** the moment a DISCOUNT exists (the button lights up while the dots
+    show a cost the player has not paid). Fixed by a **SIBLING** field
+    `RedactedAttack.effectiveCost?: string[]` — *not* by widening `cost`, whose
+    meaning as PRINTED is documented in `@luminous/schema` and depended on by two
+    HUDs. A sibling is additive, reversible, and strictly more informative (a client
+    can render "was 5, now 3"); it is emitted **only when the two differ**, so every
+    board without a cost modifier puts a byte-identical frame on the wire, mirroring
+    `effectiveAttackCost`'s own return-the-same-array contract. The local HUD needs
+    no wire field and simply draws the array it already computed.
+
+    **NO `MATCH_RECORD_VERSION` BUMP — 11 stands, and the answer is derived rather
+    than inherited.** D124's test is *"can the PREVIOUS deploy's RECORD hold the new
+    TYPE"*, and `MatchRecord` persists exactly `{version, seed, startedAt, names,
+    state: GameState, log: SeatLogEntry[]}`. `RedactedAttack` is a **wire
+    projection**, rebuilt from `GameState` on every frame and persisted nowhere — so
+    an added field on it cannot make an old record unreadable, and the field is
+    optional besides. Nothing was stamped onto `InPlayPokemon`: both prints are
+    continuous ABILITIES re-read live off the current board, which is also why both
+    are §9-suppressible where a stamp would not be. No `GameState` field, no
+    `EffectContext` field, no `BoardCondition` member, no op, no event, no error
+    code, no `EffectContinuation` inhabitant.
+
+    **§9 CAME FREE, AND THE TWO CARDS TAKE DIFFERENT LOCKS.** Radiant Charizard is a
+    **Basic**, so Klefki `sv01-096` "Mischievous Lock" silences Excited Heart and the
+    printed `{R}{C}{C}{C}{C}` snaps back — the family's third assertable §9 positive
+    after D113's Snorlax and D114's Wimpod. Seismitoad is a **Stage 2**, which no
+    Klefki can reach (D113's rule: reachability follows the SOURCE's stage), so its
+    lock is Ting-Lu ex "Cursed Land" against a DAMAGED holder. Both boards are
+    driven.
+
+    **ZERO FIXTURE CARDS.** Both printings were already fielded verbatim WITH their
+    Abilities and with the simplification stated out loud beside each — *"carrying it
+    means the fixture states a simplification the engine has, rather than hiding it
+    behind a card that looks fully simulated"*. This slice is those two admissions
+    discharged, and the pin that guarded one of them
+    (`programFor("swsh10.5-011") === undefined`) went RED exactly as designed and was
+    RE-POINTED at the passive field the new row defines. */
+export const engineVersion = "0.114.0";
 
 export type {
   ApplyResult,

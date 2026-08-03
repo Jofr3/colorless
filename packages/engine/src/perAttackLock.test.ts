@@ -969,12 +969,22 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
       damage: 250,
       effect: COMBUSTION_BLAST,
     });
-    // Its printed Ability is CARRIED though nothing reads it (Munkidori ex's rule),
-    // and the inertness is MEASURED rather than assumed: no registry row keys this
-    // id, so `programFor` is undefined and "Excited Heart" is text on a card.
+    // Its printed Ability is CARRIED, and the two text pins below are unchanged
+    // since D162.
     expect(charizard?.abilities?.[0]?.name).toBe("Excited Heart");
     expect(charizard?.abilities?.[0]?.effect).toContain("cost Colorless less");
-    expect(programFor("swsh10.5-011")).toBeUndefined();
+    // ⚠️ RE-POINTED, NOT DELETED. This line read `toBeUndefined()` from D162 until
+    // the attack-cost ± slice authored "Excited Heart" — and going RED there was the
+    // whole point of writing it: the pin existed so that the id could not gain a
+    // program without a test saying WHICH. It now says which. The claim it protects
+    // is unchanged in kind — this id's program is a PASSIVE and nothing else, so the
+    // per-attack lock this file is about still arrives by TEXT DERIVATION off
+    // "Combustion Blast" and not from a registry `attack` map (which would silently
+    // take over the very seam every board below drives).
+    expect(programFor("swsh10.5-011")).toEqual({
+      passive: { attackCostDiscountPerOpponentPrize: 1 },
+    });
+    expect(programFor("swsh10.5-011")?.attack).toBeUndefined();
   });
 
   it("has a RULE BOX by NAME PREFIX and is worth ONE Prize — the family's only such body", () => {

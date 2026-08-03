@@ -328,11 +328,17 @@ function redactedScopeOf(scope: DiscardScope): RedactedDiscardScope {
 /** The acting viewer's Active's attacks with server-computed payability, for the
     online turn HUD — the opponent's view of the same turn gets [] (only the turn
     owner may attack). Mirrors GameHud's TurnPanel `disabled` on the full state
-    the wire deliberately withholds: §8.2 payability under the Stadium's
-    continuous cost effects (effectiveAttackCost + providedEnergy), the §4
+    the wire deliberately withholds: §8.2 payability under every continuous cost
+    effect in play (effectiveAttackCost + providedEnergy — the Stadium's Basic
+    surcharge, the opposing Ability aura and the holder's own discount), the §4
     first-turn ban, and the §12 immobilize gate — folded into one `playable`
     boolean so the client needs no engine logic. Own Active only (public), so no
-    hidden information leaves the DO. */
+    hidden information leaves the DO.
+
+    ⚠️ AND SINCE THE COST SEAM GAINED A DISCOUNT IT ALSO PUBLISHES THE COST ITSELF.
+    `cost` is still the PRINTED cost; `effectiveCost` is the one the gate charges,
+    emitted only when the two differ. The pair exists because `playable` and `cost`
+    were derived from different numbers — see the comment at the map below. */
 function redactedAttacksOf(
   state: GameState,
   viewerSeat: Seat,
@@ -383,16 +389,33 @@ function redactedAttacksOf(
   // gate (attack.ts §8) rejects with ATTACK_PREVENTED naming the attack; this line
   // is what stops the client offering the button at all.
   const barred = lockedAttackIndexes(state, active);
-  return attacksOf(card).map((attack, index) => ({
-    index,
-    name: attack.name,
-    cost: [...(attack.cost ?? [])],
-    damage: attack.damage === undefined ? null : String(attack.damage),
-    playable:
-      !banned &&
-      !barred.includes(index) &&
-      costMet(effectiveAttackCost(state, active, attack.cost ?? []), provided),
-  }));
+  return attacksOf(card).map((attack, index) => {
+    const printed = attack.cost ?? [];
+    // §8.2/§7.3 — the cost the gate CHARGES, folding the Stadium's Basic surcharge,
+    // the opposing "Quaking Zone" aura and the holder's own "Excited Heart"
+    // discount. Computed ONCE and used twice: for `playable` (as it always was) and
+    // for the `effectiveCost` sibling below.
+    // ⚠️ THE SIBLING EXISTS BECAUSE THESE TWO LINES USED TO DISAGREE. `playable`
+    // has folded the EFFECTIVE cost since this projection was written while `cost`
+    // published the PRINTED one, and no field carried the difference — harmless
+    // while the only modifier in the pool was a surcharge (a greyed button with no
+    // explanation), actively wrong once a DISCOUNT can light the button up while
+    // the dots still show a cost the player has not paid. `cost` keeps meaning
+    // PRINTED (schema `redactedAttackSchema`); the effective number arrives beside
+    // it, and ONLY when the two actually differ, so every board with no cost
+    // modifier in play puts a byte-identical frame on the wire.
+    const effective = effectiveAttackCost(state, active, printed);
+    const modified =
+      effective.length !== printed.length || effective.some((s, i) => s !== printed[i]);
+    return {
+      index,
+      name: attack.name,
+      cost: [...printed],
+      ...(modified ? { effectiveCost: [...effective] } : {}),
+      damage: attack.damage === undefined ? null : String(attack.damage),
+      playable: !banned && !barred.includes(index) && costMet(effective, provided),
+    };
+  });
 }
 
 /** The acting viewer's retreat option for the online turn HUD — null for the

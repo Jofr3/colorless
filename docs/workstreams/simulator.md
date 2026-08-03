@@ -12029,7 +12029,8 @@ cases, and **one stays-LOUD witness RE-POINTED, none deleted**. engine 0.101.0 �
 - **Seismitoad `sv03-052` "Echoed Voice" — 1 printing, a durated per-attack BUFF.**
   *"During your next turn, this Pokémon's Echoed Voice attack does 100 more damage
   (before applying Weakness and Resistance)."* ({W}{W}, 120, idx 0 — its card's only
-  attack; it also prints a "Quaking Zone" Ability this engine does not read.) It
+  attack; it also prints a "Quaking Zone" Ability this engine does not read — ✅ **it
+  does since D169**, §D169.) It
   wants **the same addressing** (a `{ turn, attackIndex, amount }` record on the
   holder's own body, `+ 2`) and it would read at the pre-W/R sites **D149 already
   built**. Now the cheapest item in this neighbourhood, and the first that would put
@@ -12079,7 +12080,9 @@ fielded-but-uncatalogued sibling. The row, checked field by field:
 - **Seismitoad `sv03-052`** — "Echoed Voice" ({W}{W}, printed **120**, **INDEX 0**),
   170 HP, Stage 2 from Palpitoad, Water, retreat 3, ×2 Lightning, **no Resistance**,
   and a printed **"Quaking Zone"** Ability (*"…attacks used by your opponent's
-  Active Pokémon cost {C} more"*) that this engine does not read. Its card has
+  Active Pokémon cost {C} more"*) that this engine does not read — ✅ **it does since
+  D169** (§D169), where the **Stage 2** on this line is the fact that exposed the
+  attack-cost seam's inherited Basic gate. Its card has
   **exactly one attack**, which is the fact that shaped the whole suite.
 
 **The MIRROR family was re-queried too and corrects two more inherited counts.**
@@ -13517,7 +13520,8 @@ UNFIELDED printing of a family the engine already reads. The deriver is
 text-driven, so it would derive correctly the day a fixture lands; it also carries
 an Ability **"Excited Heart"** (attacks cost {C} less for each Prize card the
 opponent has taken) which the engine does not read, and which is what makes the
-fixture more than a transcription.
+fixture more than a transcription. ✅ **THE ENGINE READS IT SINCE D169** (§D169) —
+the DISCOUNT half of the attack-cost ± family, which CLOSES at 3/3 there.
 
 ### ⚠️ The generalisation, and it is the most useful line on this page
 
@@ -13908,7 +13912,13 @@ and a panel that still greys. Mutation-checked — collapsing the branch fails t
 section's log case and nothing else in it. Rendered under both seats and READ:
 `Radiant Charizard can't use Combustion Blast next turn`.
 
-### Its Ability is carried and LOUD, and PRICED rather than built
+### Its Ability is carried and LOUD, and PRICED rather than built ✅ **BUILT AT D169**
+
+> ✅ **BUILT AT D169** (§D169) — `attackCostDiscountPerOpponentPrize`, read by
+> `continuous.ts selfAttackCostDiscount`. The pin below **went red on that slice
+> exactly as designed and was RE-POINTED, not deleted**, at the passive field the new
+> row defines (plus a `?.attack === undefined` assertion). Everything after this line
+> is the state as of D162.
 
 **"Excited Heart"** — *"This Pokémon's attacks cost Colorless less for each Prize
 card your opponent has taken."* — is a COST MODIFIER in the **DISCOUNT** direction.
@@ -14209,6 +14219,11 @@ engine **0.108.0 → 0.109.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 10**;
   new `DamageCountSource` member each.
 - **"Excited Heart" + Seismitoad's "Quaking Zone"** — the first attack-cost DISCOUNT
   and its SURCHARGE sibling, one mechanism with opposite signs (see §D162).
+  ✅ **BUILT AT D169** (§D169), and the **attack-cost ± family CLOSES at 3/3** beside
+  League HQ `sv03-192`. This pricing was right about the three things that did not
+  exist and **missed the item's true cost entirely**: the seam was the one *payability*
+  seam and **not** the one *cost* seam, so the wire and both HUDs were publishing the
+  PRINTED cost beside a `playable` computed from the EFFECTIVE one.
 - **The §12 STATUS-IMMUNITY family** (D159's census, 4 printings / 3 sentences).
 - **`attackEffectRefused`'s narrowing + D150's item 6** — ONE slice (D161).
 
@@ -15253,3 +15268,273 @@ The neighbourhood is **19 rows / 6 shapes**; **17 read, 2 unread**. The split is
   way."*) — a count that is a **mid-attack CHOICE**, not a board fact at declaration.
   **Not a scaling arm at all**, and `EffectRecord` records the LENGTH of a uid array
   rather than an integer 0..12, so it is a Hail-Blade-sized slice.
+
+---
+
+## D169 — the FIRST ATTACK-COST DISCOUNT and its SURCHARGE sibling: `This Pokémon's attacks cost Colorless less for each Prize card your opponent has taken.` / `As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon cost {C} more.` — one mechanism, opposite signs, and an item whose real cost was the RENDER BYPASS (engine 0.113.0 → 0.114.0, `MATCH_RECORD_VERSION` unchanged at 11)
+
+**Item 3 of the remainder list**, priced at D162 with the code open — and **the first slice
+of this batch that reaches outside `packages/engine`**: `packages/schema`,
+`src/features/game` and `src/features/online` all move.
+
+### Family: 3 printings / 3 distinct sentences — CLOSED at 3/3
+
+Censused as its own question against the local D1 (**978 cards / 6 sets**, 2026-08-03,
+all three text columns). `attacks_json` contributes nothing — **no attack in the pool
+modifies a cost** — so both new rows are **Abilities**.
+
+| card | sentence | shape |
+|---|---|---|
+| Pokémon League Headquarters `sv03-192` (Stadium) | "Attacks used by each **Basic** Pokémon in play (both yours and your opponent's) cost {C} more." | `StadiumEffects.basicAttackCostSurcharge` — **built since M4**, this slice's PRECEDENT rather than its work |
+| Seismitoad `sv03-052` "Quaking Zone" | "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon cost {C} more." | `PassiveEffects.opponentActiveAttackCostSurcharge` → `continuous.ts opposingAttackCostSurcharge` |
+| Radiant Charizard `swsh10.5-011` "Excited Heart" | "This Pokémon's attacks cost Colorless less for each Prize card your opponent has taken." | `PassiveEffects.attackCostDiscountPerOpponentPrize` → `continuous.ts selfAttackCostDiscount` |
+
+Taken as **ONE slice rather than two**, on the ground that splitting would ship a seam
+that handles one sign: **the discount forces the fold's SHAPE and the surcharge forces
+the fold's STAGE answer.**
+
+### The seam, and the fold restated
+
+`continuous.ts effectiveAttackCost(state, pokemon, cost)` — still the one **payability**
+derivation point, still with **three** consumers and no bypass: `attack.ts` §8.2 (its
+only `attack.cost` read), `redact.ts redactedAttacksOf` (`playable`), `GameHud.tsx`
+(`costMet`). **Its signature and all three call sites are UNTOUCHED**; both new sources
+derive their seat internally, the aura-scan family's standard trick.
+
+```
+stadium = isBasic(top) ? stadium.basicAttackCostSurcharge : 0     // a per-TERM gate
+added   = stadium + opposingAttackCostSurcharge(state, pokemon)   // stage-agnostic
+net     = added - selfAttackCostDiscount(state, pokemon)
+net === 0 → the caller's own array;  net > 0 → append net "Colorless";
+net < 0   → remove up to -net "Colorless" FROM THE END (self-flooring)
+```
+
+**⚠️ THE ONE REAL ENGINE NOVELTY IS THE DISCOUNT DIRECTION, AND IT IS ABOUT TEN LINES.**
+Everything the surcharge needs already existed, and so did the count: `takenPrizes` is
+the function `attack.ts` already calls for the identical printed phrase (D144's
+`opponentPrizesTaken` count kind).
+
+**Both signs were expressible with NO type change.** The seam returns
+`readonly string[]` of literal energy symbols with `"Colorless"` a distinguished member
+— `costMet` buckets it by exactly that string compare (§6.4: any energy pays a Colorless
+slot) — so a surcharge **appends** and a discount **removes**. A discount never touches
+a typed symbol; the print says *"cost Colorless less"* and means it.
+
+**⚠️ NO `Math.max(0, …)` IS OWED, AND THE REASON IS THE DATA STRUCTURE.** The array
+**floors itself**: a removal loop can only remove symbols that are present, so a 6-Prize
+discount against a printed `{W}{W}` leaves `{W}{W}`. Contrast `effectiveRetreatCost` one
+screen up, whose cost is a **NUMBER** and which must clamp. **This seam owes no floor
+because of its shape, not because someone remembered to write a check.**
+
+**⚠️ THE TWO DIRECTIONS ARE SEPARATE FIELDS SUMMED INTO ONE NET DELTA — D163's trap,
+named in advance and refused by construction.** The old body early-returned on
+`surcharge <= 0`; a single field carrying both signs would have read a real discount as
+*"nothing applies"*. The retreat seam already set the precedent with distinct
+discount/surcharge fields (`stadiumRetreatDelta`'s `added - discount`). The netting is
+**exact rather than convenient**: appending N Colorless and then removing M of them
+leaves `max(0, printedColorless + N − M)`, which is what applying the net delta directly
+produces — **no board separates the two orders**, and `effectiveAttackCost` returns the
+**caller's own array** at net zero, which is both the cheap common path and the assertion
+that `+1` and `−1` really cancelled.
+
+### ⚠️ The defect NEITHER the recon NOR the brief found — a gate that belonged to ONE term
+
+The body opened:
+
+```ts
+if (top === undefined || !isBasicPokemon(top)) return cost;
+```
+
+**That Basic gate belongs to League HQ's printed *"each BASIC Pokémon in play"* and to
+NOTHING else.** Neither new sentence prints a stage, and **Seismitoad is itself a Stage
+2** — so a surviving early return would have silently switched the new aura off against
+**every Stage 1/2 Active it aims at**, on the one card whose own stage guarantees the
+case comes up. The Basic test is now a **per-TERM gate**, `stadiumRetreatDelta`'s
+precedent (*"a zero TERM, not the early return it used to be"*, made when the first
+stage-agnostic aura reached the RETREAT seam). **This is the second time a Stadium's
+stage clause has been mistaken for the seam's, and both times a cross-board Ability
+exposed it.** It is also the mutant that kills **4** tests.
+
+> **⚠️ THE GENERAL LESSON, WHICH BELONGS TO EVERY WIDENING AND NOT TO THIS SEAM: A
+> SHARED SEAM'S OPENING GUARD CAN BELONG TO ONLY ONE OF ITS TERMS, AND THE SECOND TERM
+> INHERITS IT INVISIBLY.** When you widen a function that already serves one printing,
+> read its EARLY RETURNS as the OLD term's preconditions rather than as the function's.
+> Nothing in the type, the name or the existing tests says which.
+
+### ⚠️ A better precedent than the one the brief supplied
+
+The brief named **`opposingRetreatSurcharge`** (Spidops ex "Trap Territory") as
+Seismitoad's near-verbatim twin. The truth is **`opposingAttackDebuff` (D151, Entei
+"Pressure")**, which prints the *identical sentence* with exactly one predicate changed:
+
+| | sentence |
+|---|---|
+| Entei `sv03-030` "Pressure" (D151) | "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon **do 20 less damage** (before applying Weakness and Resistance)." |
+| Seismitoad `sv03-052` "Quaking Zone" (D169) | "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon **cost {C} more**." |
+
+So **both Active clauses came free in one scan** — the SOURCE clause scoping the holder
+to the Active Spot (a benched Seismitoad surcharges nothing; contrast
+`opposingRetreatSurcharge`, whose print scopes only the TARGET) and the TARGET clause
+scoping the victim to the opposing Active — and **nothing needed borrowing from
+`opposingRetreatBlocked`**. `opposingAttackCostSurcharge` is `opposingAttackDebuff`'s
+scan with one field name renamed: derived seat, both Active clauses enforced by the scan
+rather than by an `activeOnly` field, the §9 gate through `disabledAbilityUids`, and
+**no source loop** (the source clause is the opponent's Active ALONE, so a loop would
+describe a board that cannot exist).
+
+**The aura-scan family is now ELEVEN members**, in `continuous.ts` order:
+`disabledAbilityUids` / `seatRemovesWeakness` / `hasFreeRetreatAura` /
+`opposingRetreatSurcharge` / `opposingRetreatBlocked` / `hasFreeRetreatSelf` /
+`opposingAttackDebuff` / `benchShieldedByActive` / the `installedAttackDebuffOf`-adjacent
+scans / **`opposingAttackCostSurcharge`** (#10, cross-board, both Active clauses) /
+**`selfAttackCostDiscount`** (#11, SELF-only but looks across the table —
+`hasFreeRetreatSelf`'s shape, second instance).
+
+### §9 suppression is FREE on both cards, and the two take DIFFERENT locks
+
+`passivesOf` already suppresses the holder's own Ability, so the discount's §9 answer
+cost nothing; Seismitoad gets its gate from the sibling scan's existing
+`disabledAbilityUids` line.
+
+- **Radiant Charizard is a BASIC**, so Klefki `sv01-096` "Mischievous Lock" really does
+  silence Excited Heart and the printed `{R}{C}{C}{C}{C}` snaps back — **the family's
+  third assertable §9 positive after D113's Snorlax and D114's Wimpod**.
+- **Seismitoad is a STAGE 2, which no Klefki can reach** (D113's rule: reachability
+  follows the SOURCE's stage), so its lock is **Ting-Lu ex `sv02-127` "Cursed Land"**
+  against a **damaged** holder.
+
+**Both boards are driven**, and the Klefki-cannot-reach-Seismitoad **negative** is driven
+too, because it is the line that explains why the second lock is a different card.
+
+### ⚠️ THE RENDER BYPASS — the item's true cost, which its original pricing missed entirely
+
+`effectiveAttackCost` was the one **payability** seam and **not** the one **cost** seam:
+
+- `redact.ts` published `cost: [...(attack.cost ?? [])]` — the **PRINTED** cost — on the
+  line immediately above the one computing `playable` from the **EFFECTIVE** cost;
+- `packages/schema/src/match/redacted.ts` pinned that deliberately (*"`cost` is the
+  PRINTED cost (for the energy dots)"*);
+- both HUDs drew `<EnergyDots cost={attack.cost} />`, the local one with a comment saying
+  so out loud.
+
+**A shipped divergence.** **League HQ's surcharge has been invisible to players since it
+shipped** — the button greys out and the dots do not say why — and a **discount** makes
+it wrong in the **worse direction**: the attack button goes LIVE while the dots still
+show the full cost the player has not paid.
+
+### ⚠️ THE DECISION, AND IT IS THE SLICE'S REAL ONE: a SIBLING field, not a widened `cost`
+
+`RedactedAttack` gains **`effectiveCost?: string[]`**, and **`cost` still means
+PRINTED**. Four reasons, in the order they decided it:
+
+1. **`cost`'s meaning as PRINTED is documented and depended on.** It is stated in the
+   schema doc block and read by several call sites. Silently changing what an existing
+   wire field means is the kind of reversal `conventions.md` requires a trail for —
+   *"the only hard rule is don't reverse one silently"*. **A sibling is additive and
+   reversible; a widened `cost` is neither.**
+2. **The pair is strictly more informative than either field alone.** A client can render
+   *"was 5, now 3"*, or tint the modified dots — which no single field can express, and
+   which is exactly what a player staring at a greyed button needs.
+3. **⚠️ The one candidate counter-argument was CHECKED and REJECTED.**
+   `RedactedRetreat.cost` **does** publish the CONTINUOUS number under a plain name,
+   which looks like an argument for widening — **but the printed retreat cost is not on
+   the wire at all, so there was no second reading to preserve. Attacks carry BOTH
+   readings; retreat carries one. The asymmetry is in the DATA, not in the taste.**
+4. **Optional, and emitted ONLY when it differs from the print.** That mirrors
+   `effectiveAttackCost`'s own contract (it returns the printed array itself when nothing
+   applies) and keeps the frame byte-identical on every board with no cost modifier in
+   play, so its *presence* MEANS *"this cost is modified"* — a fact a renderer could not
+   otherwise derive. ⚠️ **The field means "DIFFERS FROM THE PRINT", not "a modifier
+   exists": a `+1/−1` board and a discount with nothing left to remove both OMIT it, and
+   both are pinned.**
+
+**Render `effectiveCost ?? cost` wherever a player sees energy dots.** The online HUD does
+exactly that; the local HUD needs no wire field at all and simply draws the array it
+already computed (`EnergyDots`'s comment is re-pointed to say the cost handed in is the
+EFFECTIVE one).
+
+**No `MATCH_RECORD_VERSION` consequence — 11 stands, DERIVED not inherited.** D124's test
+is *"can the PREVIOUS deploy's RECORD hold the new TYPE"*, and `MatchRecord` persists
+exactly `{version, seed, startedAt, names, state: GameState, log: SeatLogEntry[]}`.
+**`RedactedAttack` is a wire projection, rebuilt every frame and persisted nowhere.**
+Nothing was stamped onto `InPlayPokemon`: both prints are continuous ABILITIES re-read
+live off the current board, which is also *why* both are §9-suppressible where a stamp
+would not be (D151's asymmetry, inherited). No `GameState` field, no `EffectContext`
+field, no `BoardCondition` member, no op, no event, no error code (the §8 gate still
+reuses `ATTACK_COST_UNMET`), no `EffectContinuation` inhabitant. `engineVersion`
+**0.113.0 → 0.114.0**; `packages/engine/package.json` stays `0.3.0`.
+
+### ZERO fixture cards — the LOUD-fixture convention paying for itself a second time
+
+Both printings were **already fielded verbatim WITH their printed Abilities**, each with
+its simplification stated out loud beside it — *"the fixture states a simplification the
+engine has, rather than hiding it behind a card that looks fully simulated"*. **This
+slice is those two admissions discharged**, and after D162's restored-catalog re-census
+it is the second payout: **the work was one registry row per card because the card was
+already on the board.**
+
+⚠️ **AND THE PIN THAT GUARDED ONE OF THEM WENT RED EXACTLY AS DESIGNED.**
+`perAttackLock.test.ts:977` asserted `programFor("swsh10.5-011") === undefined` so that
+authoring the id could not be a silent behaviour change. It is **RE-POINTED, NOT
+DELETED**, at the passive field the new row defines — **plus a new
+`?.attack === undefined` assertion**, because the claim that file actually needs is that
+this id's per-attack lock still arrives by **TEXT DERIVATION** off "Combustion Blast"
+rather than from a registry `attack` map that would quietly take the seam over. **A pin
+that goes red on the slice it was written for is the pin working.**
+
+### Mutation pass: 6 run, 6 caught — with one recorded as a first-round SURVIVOR
+
+| mutant | tests killed |
+|---|---|
+| restore the `!isBasicPokemon` early return | **4** |
+| drop the discount's §9 gate | 2 |
+| restore a `net <= 0` early return | 10 |
+| let the discount eat TYPED symbols | 2 |
+| always emit `effectiveCost` | 2 |
+| **drop the surcharge's SOURCE Active clause** | **SURVIVED as first written; caught once REWRITTEN** |
+
+The sixth was first written as `foes.active ?? foes.bench[0]`, **which never reaches the
+bench on a board that has an Active** — so it was not a mutation at all. It bit only when
+re-written as the **realistic** wrong implementation: `opposingRetreatSurcharge`'s
+Active+Bench source loop, which is exactly the sibling scan a future author would copy.
+
+> **⚠️ A MUTANT MUST BE THE MISTAKE SOMEONE WOULD ACTUALLY MAKE.** A mutation no author
+> would write proves nothing about the suite. The mutation has to be the **neighbouring
+> scan's real code**.
+
+### Cost
+
+**2 `PassiveEffects` fields, 2 registry rows, 2 continuous scans, 1 reworked fold, 1
+optional `@luminous/schema` field, 1 `redact.ts` arm and 2 HUD lines.** No op, event,
+event field, log crumb, error code, prompt, park, state field, `BoardCondition` member or
+`EffectContinuation` inhabitant; **no fixture card and no DB diff**. `effects.ts` and
+`testFixtures.ts` take **comment-only** diffs (the two LOUD simplifications discharged).
+
+Plus `attackCostDelta.test.ts` (**36 tests**), `GameHud.attackCost.dom.test.tsx` (3) and
+`OnlineHud.attackCost.dom.test.tsx` (3), and the re-pointed `perAttackLock.test.ts` pin.
+
+engine **0.113.0 → 0.114.0**; `MATCH_RECORD_VERSION` **UNCHANGED at 11**;
+`bun run check` GREEN exit 0 — **208 files / 3684 tests** (was 205 / 3642).
+
+### Deviation worth reviewing
+
+The new suite's 60 (`ATTACK_COST_DECK`) is built with the exported `deckOf` **inside the
+test file** rather than exported from `testFixtures.ts`. Precedent:
+`src/features/game/GameHud.dom.test.tsx` already builds its 60 this way, so the idiom is
+not new. The reason is that the cast this slice needs — **both printings + League HQ + a
+§9 lock each** — exists in no current deck and spans **three** of them
+(`RADIANT_LOCK_DECK`, `PER_ATTACK_BUFF_DECK`, `STADIUM_TOOL_DECK`), every one of which is
+dealt off a **pinned shuffle** that growing it would move. If the project prefers all
+decks centralised, moving it is a mechanical follow-up.
+
+### Known adjacent gap (not this slice, and it is small)
+
+Both HUDs now DRAW the effective cost, but neither **explains** it — there is no
+*"−2 (Excited Heart)"* crumb and no styling on the modified dots. That is a **P5 polish**
+item, and **the sibling field is what makes it possible without another engine change**.
+
+### The attack-cost ± seam after D169
+
+**CLOSED at 3/3.** No unbuilt printing in the pool modifies an attack cost, in either
+direction, from any zone. Next long-tail candidates should be **re-censused rather than
+inherited from any list** (D162's lesson).

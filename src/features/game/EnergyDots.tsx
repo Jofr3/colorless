@@ -1,10 +1,18 @@
 import type { BasicEnergyType } from "@luminous/schema";
 import { ENERGY_COLORS } from "../../lib/energyPalette";
 
-// The printed energy-cost pips shown on an attack row — shared by the local
-// hot-seat HUD (GameHud) and the online turn HUD (features/online), both of
-// which render a card's `attack.cost` the same way. One source so the two
+// The energy-cost pips shown on an attack row — shared by the local hot-seat HUD
+// (GameHud) and the online turn HUD (features/online). One source so the two
 // surfaces can't drift.
+//
+// ⚠️ THE COST HANDED IN IS THE EFFECTIVE ONE, NOT THE PRINTED ONE, and the two
+// callers reach it differently: GameHud has the full state and computes
+// `effectiveAttackCost` itself; the online panel has only the wire snapshot and
+// reads `attack.effectiveCost ?? attack.cost`. Both are the array the §8.2
+// payability gate charged, which is the point — the button's enabled/disabled
+// state is derived from exactly these symbols, and drawing the PRINTED cost beside
+// it (as both surfaces did until the seam gained a discount) means the dots and
+// the button can disagree.
 
 type CostSymbol = BasicEnergyType | "Colorless";
 const ENERGY_DOT_COLORS: Record<CostSymbol, string> = {

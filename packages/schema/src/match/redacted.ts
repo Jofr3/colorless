@@ -141,15 +141,52 @@ export type RedactedBoard = z.infer<typeof redactedBoardSchema>;
     the Stadium's continuous cost effects), the §4 first-turn attack ban and the
     §12 immobilize gate exactly as the local TurnPanel's `disabled` — so the
     client needs no engine logic to know what it may attack with. `cost` is the
-    PRINTED cost (for the energy dots); `damage` the printed display string (a
-    number or a "60+"/"20×" modifier), null when the attack prints no damage.
+    PRINTED cost, `effectiveCost` the cost the §8.2 gate actually charges when the
+    two DIFFER (see below); `damage` the printed display string (a number or a
+    "60+"/"20×" modifier), null when the attack prints no damage.
     Only the viewer's OWN Active's attacks ever appear (their own public table
     facts), and only while it is their `turn:action`. */
 export const redactedAttackSchema = z.object({
   /** Index into the Active's printed attacks — the `attack` action's discriminant. */
   index: z.number(),
   name: z.string(),
+  /** The PRINTED cost — the symbols on the card face, unchanged since increment 2b
+      and deliberately still meaning exactly that. See `effectiveCost` below. */
   cost: z.array(z.string()),
+  /** The cost the §8.2 gate ACTUALLY charges under every continuous cost effect in
+      play (engine `effectiveAttackCost`), present ONLY when it differs from the
+      printed `cost` above. Render this in preference to `cost` wherever the player
+      sees energy dots: `effectiveCost ?? cost`.
+
+      ⚠️ IT EXISTS BECAUSE `playable` AND `cost` WERE COMPUTED FROM DIFFERENT
+      NUMBERS. `playable` has folded the EFFECTIVE cost since the seam was built,
+      while the dots have always drawn the PRINTED one — a divergence that shipped
+      unnoticed for as long as the only cost modifier in the pool was a SURCHARGE
+      (Pokémon League Headquarters), where the failure is merely invisible: the
+      button greys out and the dots do not say why. The first DISCOUNT (Radiant
+      Charizard swsh10.5-011 "Excited Heart") inverts that into the worse direction
+      — the button goes LIVE while the dots still show a cost the player has not
+      paid — so the wire owes the effective number.
+
+      ⚠️ A SIBLING FIELD RATHER THAN A WIDENED `cost`, WHICH IS THE DECISION AND NOT
+      AN IMPLEMENTATION DETAIL. `cost`'s meaning as PRINTED is documented here,
+      depended on by both HUDs and is the only thing on the wire that still says
+      what the CARD says; silently changing what an existing field means is the kind
+      of reversal this project requires a trail for. A sibling is additive,
+      reversible, and strictly more informative — a client can render "was 5, now 3"
+      from the pair, which no single field can express. (Contrast
+      `RedactedRetreat.cost` below, which publishes the CONTINUOUS number under the
+      plain name: there the printed retreat cost is not on the wire at all, so
+      there was no second reading to preserve.)
+
+      OPTIONAL, and emitted only on a board where a cost modifier is actually in
+      play — which mirrors `effectiveAttackCost`'s own contract (it returns the
+      printed array itself when nothing applies) and keeps the frame byte-identical
+      on every board without one. Its presence therefore MEANS "this cost is
+      modified", which is a fact a renderer may want and could not otherwise derive.
+      No `MATCH_RECORD_VERSION` consequence: this is a wire projection rebuilt from
+      `GameState` on every frame and is persisted nowhere. */
+  effectiveCost: z.array(z.string()).optional(),
   damage: z.string().nullable(),
   playable: z.boolean(),
 });

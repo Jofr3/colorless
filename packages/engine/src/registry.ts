@@ -547,6 +547,57 @@ export interface PassiveEffects {
       an attack INSTALLATION that no Ability-lock can reach. Same sentence, same
       step, two sources: the read sites SUM them. */
   opponentActiveAttackDebuff?: number;
+  /** §8.2 continuous OPPONENT-side aura: while BOTH this Pokémon and the attacker
+      are in the Active Spot, every attack the OPPOSING side's Active Pokémon uses
+      costs this many {C} MORE (Seismitoad sv03-052 "Quaking Zone" — "As long as
+      this Pokémon is in the Active Spot, attacks used by your opponent's Active
+      Pokémon cost {C} more"). `opponentActiveAttackDebuff`'s twin one field up,
+      printed sentence for printed sentence — same opening clause, same
+      "attacks used by your opponent's Active Pokémon" subject — with the predicate
+      moved from the DAMAGE step to the COST step. So it is read through a dedicated
+      scan (`opposingAttackCostSurcharge`) with that field's scan copied verbatim:
+      the derived seat, BOTH Active clauses enforced by the scan rather than by an
+      `activeOnly` field, the §9 gate through `disabledAbilityUids`, and no source
+      loop (the source clause is the opponent's Active ALONE, so a loop would
+      describe a board that cannot exist).
+      A bare number, not an object (the D104 rule): the print is unconditional once
+      both ends are Active.
+      ⚠️ STAGE-AGNOSTIC ON BOTH ENDS, which is the one thing it does NOT share with
+      the Stadium already on this seam. `StadiumEffects.basicAttackCostSurcharge`
+      (League HQ) prints "each BASIC Pokémon in play"; this sentence prints no stage
+      at all — and Seismitoad is itself a Stage 2, so a scan inheriting the
+      Stadium's Basic gate would have been silently switched off by its own holder.
+      That is why `effectiveAttackCost`'s Basic test became a per-TERM gate rather
+      than the function's early return (`stadiumRetreatDelta`'s move, one seam
+      over). */
+  opponentActiveAttackCostSurcharge?: number;
+  /** §8.2 continuous SELF-only cost DISCOUNT: THIS Pokémon's attacks cost this many
+      {C} less FOR EACH Prize card its owner's opponent has already taken (Radiant
+      Charizard swsh10.5-011 "Excited Heart" — "This Pokémon's attacks cost Colorless
+      less for each Prize card your opponent has taken"). The engine's FIRST cost
+      discount on the attack seam, and the sign-flipped mirror of the two surcharges
+      that share it.
+      A PER-UNIT rate, not a total: the printed sentence is "for each", so the field
+      is what ONE taken Prize is worth and the read site multiplies by
+      `takenPrizes(state, opponentSeat)`. Naming the count source in the field name
+      is deliberate — the count is not implied by "discount", and this is the same
+      vocabulary `AttackDamageBonus`'s `opponentPrizesTaken` count kind already
+      uses for the identical reading of "your opponent has taken" (attack.ts).
+      SHAPE — `noRetreatCostSelf`'s, not `passivesOf`'s, and for that field's reason
+      verbatim: it modifies ONLY its holder yet must LOOK ACROSS THE TABLE to
+      evaluate its count, and `passivesOf` has no seat to resolve "your opponent"
+      with. So it gets its own scan (continuous.ts `selfAttackCostDiscount`) which
+      derives the seat the way all nine of its aura-scan siblings do. Being a printed
+      Pokémon ABILITY only the TOP card of a stack grants it (never an attached
+      Tool), and it is §9-suppressible — Radiant Charizard is a BASIC, so an Active
+      Klefki sv01-096 "Mischievous Lock" really does silence it and the printed cost
+      snaps back (D113's rule: the reachability follows the SOURCE's stage).
+      NO FLOOR IS OWED, unlike every ± field on the retreat seam. That seam's cost is
+      a NUMBER and `effectiveRetreatCost` must clamp it at `Math.max(0, …)`; this
+      seam's cost is an ARRAY OF SYMBOLS, and a discount can only remove symbols that
+      are there. The structure floors itself, which is the one asymmetry between the
+      two seams worth stating out loud. */
+  attackCostDiscountPerOpponentPrize?: number;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -1003,6 +1054,39 @@ const INSULATOR: CardProgram = { passive: { preventDamageFromType: "Lightning" }
     attacker there is, so unlike the two rows above it the narrowing is entirely on
     the PROTECTED side. Read through continuous.ts `benchShieldedByActive`. */
 const ADVERSE_WEATHER: CardProgram = { passive: { preventBenchDamageWhileActive: true } };
+
+/** Seismitoad (sv03-052) — "Quaking Zone": "As long as this Pokémon is in the
+    Active Spot, attacks used by your opponent's Active Pokémon cost {C} more." —
+    PRESSURE's sentence with the predicate moved from the damage step to the COST
+    step, and therefore its scan with one field changed.
+
+    ⚠️ THE CARD ALREADY HAD A ROW'S WORTH OF ENGINE IN IT AND NO ROW. Its attack
+    ("Echoed Voice", idx 0) is D155's per-attack damage BUFF, derived from the
+    printed text by `deriveAttackEffect` and needing no registry entry; the fixture
+    has carried this Ability verbatim since then with `effectiveAttackCost has no
+    shape for a cross-board cost aura` stated out loud beside it. This row is that
+    admission discharged, and it is passive-ONLY: the derived attack is untouched,
+    because the attack seam reads `programFor(id)?.attack?.[index]` and this program
+    authors no `attack` map. */
+const QUAKING_ZONE: CardProgram = { passive: { opponentActiveAttackCostSurcharge: 1 } };
+
+/** Radiant Charizard (swsh10.5-011) — "Excited Heart": "This Pokémon's attacks
+    cost Colorless less for each Prize card your opponent has taken." — the FIRST
+    cost DISCOUNT anywhere on the attack seam, and QUAKING_ZONE's opposite sign.
+
+    ⚠️ THIS ID'S INERTNESS WAS PINNED, NOT ASSUMED, AND THE PIN IS WHY THE ROW IS
+    CHEAP. `perAttackLock.test.ts` has asserted `programFor("swsh10.5-011")`
+    UNDEFINED since D162 precisely so that authoring it would be a RED test rather
+    than a silent behaviour change on every board this card is on — and it went red
+    on this slice, exactly as designed. It is re-pointed at the passive field this
+    row defines, so the id still cannot gain a program without a test saying which.
+
+    THE RATE IS 1 AND THE COUNT IS THE OPPONENT'S TAKEN PRIZES, both printed. The
+    holder's OTHER printed clause is D154's per-attack lock ("During your next turn,
+    this Pokémon can't use Combustion Blast."), which is ATTACK text derived by
+    `deriveAttackEffect` — so like QUAKING_ZONE this program is passive-only and the
+    two halves of the card do not meet in the registry at all. */
+const EXCITED_HEART: CardProgram = { passive: { attackCostDiscountPerOpponentPrize: 1 } };
 
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
@@ -2713,6 +2797,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-078": INSULATOR, // Bellibolt — Insulator ("Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon")
   "sv03-201": INSULATOR, // (reprint — Illustration rare)
   "sv03-070": ADVERSE_WEATHER, // Thundurus — Adverse Weather (the Active shields the BENCH; no attacker filter at all)
+  // — M5 long-tail: the ATTACK-COST ± family, both signs in one slice. Censused as
+  //   its own question against the local D1 (978 cards / 6 sets, 2026-08-03, all
+  //   three text columns): "cost {C} more"/"cost Colorless less" prints on THREE
+  //   rows over THREE distinct sentences — Pokémon League Headquarters sv03-192
+  //   (a Stadium, `StadiumEffects.basicAttackCostSurcharge`, built since M4) and
+  //   these two. `attacks_json` contributes nothing; both of these are ABILITIES. —
+  "sv03-052": QUAKING_ZONE, // Seismitoad — Quaking Zone ("As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon cost {C} more")
+  "swsh10.5-011": EXCITED_HEART, // Radiant Charizard — Excited Heart ("This Pokémon's attacks cost Colorless less for each Prize card your opponent has taken")
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)

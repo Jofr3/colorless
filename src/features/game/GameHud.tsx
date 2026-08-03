@@ -524,10 +524,15 @@ function TurnPanel(props: GameHudProps) {
             <li className="text-xs text-white/45">This Pokémon has no attacks.</li>
           )}
           {attacks.map((attack: Attack, index: number) => {
-            // Payability under the Stadium's continuous cost effects (§7.3 —
-            // League HQ's Basic surcharge), exactly as the engine checks it;
-            // the dots still show the PRINTED cost.
-            const payable = costMet(effectiveAttackCost(game, active, attack.cost ?? []), provided);
+            // §8.2 payability under EVERY continuous cost effect in play — the
+            // Stadium's Basic surcharge (§7.3, League HQ), the opposing "Quaking
+            // Zone" aura and the holder's own "Excited Heart" discount — exactly as
+            // the engine checks it. The dots below render THIS array rather than
+            // the printed one: a discount lights the button up, and dots still
+            // showing the full cost would tell the player they cannot afford an
+            // attack the engine will happily let them declare.
+            const effectiveCost = effectiveAttackCost(game, active, attack.cost ?? []);
+            const payable = costMet(effectiveCost, provided);
             const disabled =
               !payable ||
               firstTurnBan ||
@@ -548,7 +553,7 @@ function TurnPanel(props: GameHudProps) {
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">{attack.name}</span>
-                    <EnergyDots cost={attack.cost ?? []} />
+                    <EnergyDots cost={effectiveCost} />
                   </span>
                   {attack.damage !== undefined && (
                     <span className="shrink-0 text-sm font-bold tabular-nums">
