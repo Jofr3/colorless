@@ -295,6 +295,7 @@ export const CATALOG_MANIFEST = {
     "sv03-192": { name: "Pokémon League Headquarters", attacks: [], abilities: [] },
     "sv03-193": { name: "Poppy", attacks: [], abilities: [] },
     "sv03-196": { name: "Town Store", attacks: [], abilities: [] },
+    "sv03-197": { name: "Vengeful Punch", attacks: [], abilities: [] },
     "sv03-219": { name: "Ortega", attacks: [], abilities: [] },
     "sv06.5-002": { name: "Galvantula", attacks: ["Shocking Web"], abilities: ["Compound Eyes"] },
     "sv06.5-008": { name: "Houndoom", attacks: ["Bite","Snarl"], abilities: [] },

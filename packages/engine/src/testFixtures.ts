@@ -1384,6 +1384,18 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Tool",
     "If the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if it is Knocked Out), put 2 damage counters on the Attacking Pokémon.",
   ),
+  /** Vengeful Punch — Tool: 4 damage counters on the attacker when the holder is
+      KNOCKED OUT by an opponent's attack (`damageAttackerOnKo`, Dxxx). Rocky
+      Helmet's twin one step later in the sequence, and note the clause that is
+      ABSENT beside its neighbour above: no "is in the Active Spot", so a BENCHED
+      holder finished off by a snipe retaliates too.
+      Verbatim off the local D1 row (`sv03-197`, `trainer_type = Tool`), re-queried
+      2026-08-03 against a catalog of 890 rows / 5 sets. */
+  "sv03-197": trainerCard(
+    "sv03-197",
+    "Tool",
+    "If the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, put 4 damage counters on the Attacking Pokémon.",
+  ),
 
   // — M4 slice 5: Special Energy (real catalog ids so the registry finds their
   //   EnergyProgram; names are the REAL names, though provision keys on the id). —
@@ -8807,6 +8819,44 @@ export const OPPONENT_ATTACK_LOCK_DECK = deckOf({
   "fix-fighting-energy": 4, // {F} for Acu-Punch-Ture
   "fix-water-energy": 8, // {W}{W} for Echo Tap / Echo Chorus / Ripple
   "fix-energy": 14, // Colorless Basic — every {C} in the deck
+});
+
+/** D158 — the KO-CONDITIONED §9 recoil (Vengeful Punch sv03-197), on its own 60
+    for `INSTALLED_RECOIL_DECK`'s reason verbatim: `ROCKY_HELMET_DECK` and
+    `COUNTERATTACK_DECK` are both seed-pinned by their own suites, and adding a
+    card would reshuffle every board in them.
+
+    **SEED-FREE** — no printing in this family carries a coin, and every board
+    below is built by surgery rather than by a shuffle.
+
+    Each entry is here for a property no other one has:
+      • sv03-197 Vengeful Punch — THE printing. 4 counters = 40 HP, on a KO.
+      • sv01-193 Rocky Helmet — the SIBLING Tool, and the control that matters
+        most: it pays on DAMAGE where this one refuses, so a board carrying both
+        (on two different bodies — §7.4 allows one Tool each) produces TWO
+        `COUNTERS_PLACED` rows from TWO read sites under ONE `source` member.
+      • fix-attacker — "Bite" ({C}, 30) at idx 0 for the main-hit KO, "Yawn" at
+        idx 2 for the 0-damage control. 120 HP, so ONE 40-HP recoil leaves it at
+        40 and a body pre-damaged to 90 dies to it — the mutual-KO board.
+      • fix-sniper — "Spread Shot" ({C}, 30 Active + 20 to EACH benched) at idx 0.
+        The only vehicle for the BENCHED KO, which is the clause Rocky Helmet
+        prints and this card does not.
+      • fix-wall — 120 HP, no attacks: the holder that can be surgically dropped
+        to one hit of lethal on either spot.
+      • fix-bigbody — 200 HP: the DOMINANT (mulligan-free) Basic, the Rocky Helmet
+        holder that SURVIVES the hit it retaliates for, and the promote target.
+      • fix-titan — 340 HP, no attacks: bench filler that a 20 spread cannot KO,
+        so a board can have exactly the KOs it means to have.
+    BOTH seats run it so a holder can be surgically fielded on either side. */
+export const VENGEFUL_PUNCH_DECK = deckOf({
+  "sv03-197": 4, // Vengeful Punch — THE printing (4 counters = 40 HP, on a KO)
+  "sv01-193": 2, // Rocky Helmet — the DAMAGE-conditioned sibling, at the other read site
+  "fix-attacker": 4, // "Bite" ({C}, 30) idx 0; "Yawn" idx 2 (no damage) — 120 HP
+  "fix-sniper": 3, // "Spread Shot" ({C}, 30 + 20 to each bench) idx 0 — the BENCH KO
+  "fix-wall": 6, // 120 HP, no attacks — the holder, on the Active spot or the bench
+  "fix-bigbody": 26, // 200 HP — DOMINANT setup Basic, the surviving holder, promote target
+  "fix-titan": 3, // 340 HP, no attacks — bench filler a 20 spread cannot KO
+  "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

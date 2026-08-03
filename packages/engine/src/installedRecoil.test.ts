@@ -39,6 +39,15 @@ import {
 // amount read off the damage done, wanting the §8.5-result channel). Both stay
 // LOUD, and counterattack.test.ts still pins them.
 //
+// ⚠️ UPDATE (Dxxx): VENGEFUL PUNCH sv03-197 HAS LANDED, on exactly the read site
+// this block predicted — flow.ts's §8.1 sweep, a `damageAttackerOnKo` sibling on
+// `PassiveEffects`, one registry row, NO duration and NO MATCH_RECORD_VERSION
+// bump. The pricing D152 wrote here was verified rather than inherited and it
+// held. `vengefulPunch.test.ts` owns the printing; the case below is re-pointed
+// to the claim that survived (a Trainer's `effect` never derives as an ATTACK
+// effect). Mabosstiff sv02-143 is the family's LAST printing and is still blocked
+// on the damage-dealt channel.
+//
 // ⚠️ IT IS `installedReductionOf`'s SIBLING, NOT ITS MIRROR. Same holder ("this
 // Pokémon" — the installer's own Active), same `state.turn + 1` window, same
 // `{ turn, amount }` record, same `Math.max` merge, same three §10 clears, same
@@ -255,8 +264,19 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
     // shipped a 0-HP trap under a card that prints a real one.
     expect(deriveAttackEffect(COMEUPPANCE)).toBeNull();
     expect(programFor("sv02-143")).toBeUndefined();
-    // …and Vengeful Punch sv03-197, the KO-conditioned TOOL, likewise.
-    expect(programFor("sv03-197")).toBeUndefined();
+    // …and Vengeful Punch sv03-197, the KO-conditioned TOOL, likewise — but the
+    // reason has CHANGED and the witness is re-pointed rather than deleted. It
+    // LANDED at Dxxx, so it is no longer unmapped; what stays true, and is the
+    // only thing this deriver case was ever about, is that its sentence is a
+    // TRAINER's `effect` and must never derive as an ATTACK effect. It is read out
+    // of the registry like Rocky Helmet, at a read site of its own.
+    expect(
+      deriveAttackEffect(
+        "If the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, put 4 damage counters on the Attacking Pokémon.",
+      ),
+    ).toBeNull();
+    expect(programFor("sv03-197")?.attack).toBeUndefined();
+    expect(programFor("sv03-197")?.passive).toEqual({ damageAttackerOnKo: { amount: 40 } });
   });
 
   it("does NOT derive the always-on spelling — the duration is the whole difference", () => {

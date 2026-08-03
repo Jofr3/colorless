@@ -167,6 +167,13 @@ export function passivesOf(
       `requiresTool` is evaluated HERE against the holder's board (this function
       has the Pokémon), so the attack.ts read site stays a plain number. */
   damageAttacker: number;
+  /** §8.1 recoil placed on the ATTACKER when this Pokémon is KNOCKED OUT by
+      damage from an opponent's attack (Vengeful Punch sv03-197) — summed HP, and
+      a SECOND number rather than a term of the one above because the two read
+      sites refuse each other's condition (registry.ts `damageAttackerOnKo`).
+      Read once per sweep by flow.ts `koRecoilOf`, which supplies the "is Knocked
+      Out" half; this aggregation only answers "what would this body pay". */
+  damageAttackerOnKo: number;
   /** §8.5 full damage PREVENTION when the attacker is an ex/V (Mimikyu
       "Safeguard"). The attacker's rule-box class is known only at the read sites,
       so this aggregation just reports whether the holder carries the aura; the
@@ -193,6 +200,7 @@ export function passivesOf(
   let damageBonusBeforeWR = 0;
   let hpBonus = 0;
   let damageAttacker = 0;
+  let damageAttackerOnKo = 0;
   let preventDamageFromExV = false;
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
   const targetConditionalDamageBonusBeforeWR: {
@@ -210,6 +218,11 @@ export function passivesOf(
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
     if (passive.damageAttacker !== undefined && (passive.damageAttacker.requiresTool !== true || hasTool))
       damageAttacker += passive.damageAttacker.amount;
+    // No `requiresTool` twin: the one printing IS a Tool, and an unread gate is
+    // the D156 defect. It rides the SAME Ability-lock rule as its sibling by
+    // sitting in this loop — a §9 lock suppresses a holder's own printed passive
+    // and never an attached Tool's, so Vengeful Punch keeps working under Klefki.
+    damageAttackerOnKo += passive.damageAttackerOnKo?.amount ?? 0;
     if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
   }
   return {
@@ -219,6 +232,7 @@ export function passivesOf(
     targetConditionalDamageBonusBeforeWR,
     hpBonus,
     damageAttacker,
+    damageAttackerOnKo,
     preventDamageFromExV,
   };
 }

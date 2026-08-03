@@ -1,7 +1,7 @@
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
-import { effectiveMaxHp } from "./continuous";
+import { effectiveMaxHp, passivesOf } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -130,6 +130,40 @@ function lethalRefs(state: GameState, seats: readonly Seat[]): { seat: Seat; uid
     }
   }
   return refs;
+}
+
+/** §8.1 KO-CONDITIONED RECOIL — the HP `seat`'s about-to-be-Knocked-Out bodies
+    owe the Attacking Pokémon (Vengeful Punch sv03-197: "If the Pokémon this card
+    is attached to is Knocked Out by damage from an attack from your opponent's
+    Pokémon, put 4 damage counters on the Attacking Pokémon"). SUMMED, because two
+    holders can die to one spread and each Tool prints its own sentence — and one
+    row carrying the sum is D141's judgement, not a shortcut: the amount already
+    has no surviving provenance.
+
+    ⚠️ THE LETHAL SET IS `lethalRefs`' OWN, NOT A SECOND OPINION. The refs are
+    taken from the very function `collectKnockOuts` is about to call on the same
+    state, so "the bodies this sweep will Knock Out" cannot drift from "the bodies
+    that pay" — the alternative (re-deriving the predicate here) is the D141
+    accident waiting to happen. It is exact rather than approximate because
+    nothing between the two calls can save a lethal body: `collectKnockOuts` has
+    no KO-prevention at all, and the only guard it does own (Glimmora's
+    "Shattering Crystal") denies the PRIZE while the KO still happens for real.
+    So "lethally damaged here" ≡ "is Knocked Out", which is the printed condition.
+
+    Scans the WHOLE board, Active and Bench, because this printing — unlike Rocky
+    Helmet sv01-193 — does NOT print "is in the Active Spot": a benched holder
+    finished off by a snipe retaliates. That is the read-site difference between
+    the two Tools and it is the reason for the second field. */
+function koRecoilOf(state: GameState, seat: Seat): number {
+  const doomed = new Set(lethalRefs(state, [seat]).map((ref) => ref.uid));
+  if (doomed.size === 0) return 0;
+  const side = state.players[seat];
+  let total = 0;
+  for (const body of side.active === null ? side.bench : [side.active, ...side.bench]) {
+    const uid = topUid(body);
+    if (uid !== undefined && doomed.has(uid)) total += passivesOf(state, body).damageAttackerOnKo;
+  }
+  return total;
 }
 
 /** The post-damage Knock Out sweep (§8.1), generalized off the Active (M4):
@@ -343,7 +377,72 @@ export function resolveMidTurnKnockOuts(
     attack.ts already imports flow, so the epilogue stage's handler cannot sit on
     the other side of that edge. */
 export function finishAttack(state: GameState, events: GameEvent[], attackerSeat: Seat): ApplyResult {
-  const batch = collectKnockOuts(state, [otherSeat(attackerSeat), attackerSeat], events);
+  // §8.1 KO-conditioned recoil (Vengeful Punch sv03-197), placed BEFORE the sweep
+  // reads the board — the new READ SITE this printing needed, and the one thing
+  // about it that is a judgement rather than a lookup.
+  //
+  // ⚠️ WHY BEFORE THE SWEEP AND NOT INSIDE IT. Placing it in `collectKnockOuts`'
+  // loop — right after the holder's own KNOCKED_OUT, where the printed sentence's
+  // "if … is Knocked Out" reads in order — would put the counters down AFTER
+  // `lethalRefs` had already decided who dies. A lethal retaliation would then
+  // miss this batch entirely: the attacker would stand until some later sweep,
+  // and worse, `collectKnockOuts`' §14 double-KO tie guard (which speculates over
+  // ONE batch) could not see a game that both players just lost. Placing it here
+  // makes the holder's KO and the attacker's KO ONE simultaneous batch — which is
+  // §8.1's own model ("If multiple Pokémon are KO'd simultaneously … the
+  // attacking player takes prizes for the opponent's KO'd Pokémon") — so the
+  // cascade question has no second pass to ask about, the prizes go to the
+  // holder's side through the ordinary `otherSeat` rule, and the tie is reachable.
+  //
+  // It is also D98's OWN model one step later. attack.ts's §9 recoil places
+  // before this sweep for the same reason ("even if it is Knocked Out" is FREE),
+  // and the row order it produces — COUNTERS_PLACED, then KNOCKED_OUT — is
+  // already what this family narrates and what rockyHelmet.test.ts pins. So the
+  // condition being announced after its consequence is the family's existing
+  // reading order, not a wart this slice introduces.
+  //
+  // ⚠️ THE GUARD IS THE SITE. "Knocked Out by damage from an attack from your
+  // OPPONENT'S Pokémon" is three conditions, and each is discharged by WHERE this
+  // line sits rather than by a flag:
+  //   • "by an attack" — `finishAttack` is the attack epilogue and nothing else.
+  //     The Checkup's poison/burn KO and the mid-turn evolve KO call
+  //     `collectKnockOuts` directly and never come through here, so a KO this
+  //     Tool must ignore cannot reach the line.
+  //   • "from your opponent's" — only `otherSeat(attackerSeat)` is scanned. A
+  //     Vengeful Punch on the ATTACKER's own board, killed by its own confusion
+  //     self-hit or by a `damageSelf` recoil, pays nothing, which is exactly what
+  //     the possessive says.
+  //   • "by damage" — a body can only be lethal on the defender's board here
+  //     because this attack put it there; pre-existing damage that was already
+  //     lethal would have been swept when it landed.
+  // Every one of the three is DRIVEN in vengefulPunch.test.ts rather than argued.
+  //
+  // The Attacking Pokémon is `attackerSeat`'s Active. That addressing is true
+  // today and is SWEPT rather than assumed (the suite asserts no `attack:` program
+  // in the registry can move its own actor off the spot before the epilogue); the
+  // day one can, this is the line that must take a uid instead.
+  let next = state;
+  const koRecoil = koRecoilOf(next, otherSeat(attackerSeat));
+  const attacker = next.players[attackerSeat].active;
+  const attackerUid = attacker === null ? undefined : topUid(attacker);
+  if (koRecoil > 0 && attacker !== null && attackerUid !== undefined) {
+    next = withActive(next, attackerSeat, { ...attacker, damage: attacker.damage + koRecoil });
+    // The SAME row as the §9 recoil, with no new `source` member — D141's
+    // mechanism axis paying out for the third kind of producer and the FIFTH
+    // printing. `seat` is the ATTACKER's (it owns the damaged Pokémon, per this
+    // event's contract) while the causer is the dying holder, so log.ts renders it
+    // SYSTEM-voiced for D141's reason verbatim; an active-voice row under this
+    // seat would credit the attacker with damaging itself.
+    events.push({
+      type: "COUNTERS_PLACED",
+      seat: attackerSeat,
+      uid: attackerUid,
+      amount: koRecoil,
+      source: "counterattack",
+    });
+  }
+
+  const batch = collectKnockOuts(next, [otherSeat(attackerSeat), attackerSeat], events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
   // COMPOSES with whatever is still queued rather than overwriting it: both

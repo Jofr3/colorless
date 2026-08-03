@@ -3602,7 +3602,37 @@ import type { GameState, Seat } from "./types";
     of body and only the derived program can tell a drifted reader apart).
     `clauseApostrophe`'s DISCOVERED census **60 → 61** — its first row exposing all
     THREE apostrophe slots at once (two possessives and a contraction). */
-export const engineVersion = "0.104.0";
+/** **D158 — the KO-CONDITIONED §9 recoil** (Vengeful Punch `sv03-197`, a Tool, 4
+    counters): *"If the Pokémon this card is attached to is Knocked Out by damage
+    from an attack from your opponent's Pokémon, put 4 damage counters on the
+    Attacking Pokémon."* One registry row, a `damageAttackerOnKo` SIBLING on
+    `PassiveEffects`, and a **NEW READ SITE** — `flow.ts`'s `finishAttack`, ahead of
+    `collectKnockOuts` — because the condition is a **KO** rather than damage, which
+    is the whole reason D152's `dealt > 0` block could not host it.
+
+    ⚠️ **THE ORDERING IS THE SLICE, AND IT IS "BEFORE" RATHER THAN PRINTED ORDER.**
+    The counters land off `lethalRefs`' OWN ref set, ahead of the sweep. Placing
+    them inside the sweep loop — which is what the printed sentence reads like —
+    would land them AFTER `lethalRefs` decided who dies, and then three things
+    break: a lethal retaliation misses the batch and leaves a lethally-damaged
+    Pokémon in play; the **§14 tie guard**, which speculates over ONE batch, could
+    not see a game both players just lost; and cascade becomes live. Placed before,
+    it is **ONE SIMULTANEOUS BATCH** — §8.1's own model — so there is no second
+    pass to cascade into.
+
+    The sibling field is grounded on the READ SITES, D155's standard: the two
+    consumers **MUTUALLY REFUSE** each other. Rocky Helmet must fire on a hit its
+    holder SURVIVES; this must not fire on one. A single shared field fires Rocky
+    Helmet twice on a lethal hit.
+
+    Driven: mutual KO (one batch, defender's board first, attacking player prizes
+    first, tie included); the **BENCH** KO, which FIRES because this card does not
+    print *"in the Active Spot"* — where a benched Rocky Helmet on the identical
+    board pays nothing; and non-attack damage, which never fires because Checkup
+    and evolve KOs call `collectKnockOuts` DIRECTLY, skipping `finishAttack`.
+    **VOICE is SYSTEM** — rendered under both seats and read, and naming EITHER
+    seat is wrong. No §11 verdict owed: no op was added. */
+export const engineVersion = "0.105.0";
 
 export type {
   ApplyResult,

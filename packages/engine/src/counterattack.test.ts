@@ -5,14 +5,17 @@ import { type LogContext, logFromEvents } from "./log";
 import {
   COUNTERATTACK_DECK,
   FIXTURE_POOL,
+  VENGEFUL_PUNCH_DECK,
   activeUid,
   attachFromDeck,
+  attachToolFromDeck,
   deepFreeze,
   driveSetup,
   handFromDeck,
   handUid,
   mustApply,
   setActiveFromDeck,
+  setDamage,
   types,
 } from "./testFixtures";
 
@@ -104,6 +107,30 @@ function fight(
   deepFreeze(state);
   const { state: done, events } = mustApply(state, bite);
   return { state: done, events, before: state };
+}
+
+/** Dxxx — the same fight for the family's KO-CONDITIONED half, on the board its
+    condition actually needs: the holder is one hit from lethal, so Bite KNOCKS IT
+    OUT instead of merely damaging it. Its own 60 (`VENGEFUL_PUNCH_DECK`) so every
+    seeded board built on `COUNTERATTACK_DECK` above stays byte-identical. */
+function koFight(
+  seed: number,
+  toolId: string,
+  holderDamage = 100,
+): { state: GameState; events: GameEvent[] } {
+  let state = driveSetup(
+    seed,
+    { p1: VENGEFUL_PUNCH_DECK, p2: VENGEFUL_PUNCH_DECK },
+    { first: "p2" },
+  );
+  state = setActiveFromDeck(state, "p2", "fix-wall"); // 120 HP, no passive of its own
+  state = attachToolFromDeck(state, "p2", "active", toolId);
+  state = setDamage(state, "p2", holderDamage); // 100 → Bite's 30 makes 130 ≥ 120
+  state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  state = setActiveFromDeck(state, "p1", "fix-attacker");
+  state = attachFromDeck(state, "p1", "fix-energy", 1);
+  deepFreeze(state);
+  return mustApply(state, bite);
 }
 
 describe("the §9 recoil row — the MECHANISM label, whatever card granted it", () => {
@@ -199,11 +226,16 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
 
   it("discovers the §9 recoil family from the printed text, and it spans BOTH kinds", () => {
     // The census, pinned so a fixture landing later fails this and gets swept in.
+    // ⚠️ AND IT DID EXACTLY THAT AT Dxxx: adding the Vengeful Punch sv03-197
+    // fixture failed this line, this file's authored-census line AND its drive
+    // loop, which is the whole reason the family is discovered from TEXT instead
+    // of from a maintained list. All three were re-pointed rather than relaxed.
     expect(producers.map((p) => p.id).sort()).toEqual([
       "sv01-005", // Cacnea — Counterattack Quills (Ability)
       "sv01-006", // Cacturne — Counterattack Quills (Ability)
-      "sv01-193", // Rocky Helmet (Pokémon TOOL)
+      "sv01-193", // Rocky Helmet (Pokémon TOOL) — on DAMAGE
       "sv03-112", // Stunfisk — Custom Trap (Ability, requiresTool)
+      "sv03-197", // Vengeful Punch (Pokémon TOOL) — on the KNOCK OUT (Dxxx)
     ]);
     // ⚠️ AND IT IS MIXED, which is the fact the hardcoded label denied. A build in
     // which every producer is a Pokémon can honestly say "Ability"; this one
@@ -212,15 +244,32 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
     expect(producers.find((p) => p.id === "sv01-193")?.trainerType).toBe("Tool");
   });
 
-  it("every discovered producer is AUTHORED as the same passive — text census = program census", () => {
+  /** The family's two halves, split by the CONDITION each pays on. Since Dxxx the
+      one printed clause is served by two fields read at two sites, so the census
+      partitions rather than mapping onto one field. */
+  const onDamage = producers.filter(
+    (p) => programFor(p.id)?.passive?.damageAttacker !== undefined,
+  );
+  const onKo = producers.filter(
+    (p) => programFor(p.id)?.passive?.damageAttackerOnKo !== undefined,
+  );
+
+  it("every discovered producer is AUTHORED — text census = program census", () => {
     // The two censuses must agree in both directions: a printed sentence with no
-    // program would mean the sweep below drives nothing, and an authored
-    // `damageAttacker` with no printing would mean the sweep misses a producer.
-    const authored = producers.filter(
-      (p) => programFor(p.id)?.passive?.damageAttacker !== undefined,
-    );
-    expect(authored).toHaveLength(producers.length);
-    expect(producers.length).toBeGreaterThan(1);
+    // program would mean the sweep below drives nothing, and an authored recoil
+    // with no printing would mean the sweep misses a producer.
+    //
+    // ⚠️ AND SINCE Dxxx THE PARTITION IS THE CLAIM, not the field. The same printed
+    // clause is now served by `damageAttacker` (pays on DAMAGE, read at attack.ts's
+    // §9) and `damageAttackerOnKo` (pays on the KNOCK OUT, read at flow.ts's §8.1
+    // sweep). Asserting the split is TOTAL and DISJOINT is strictly stronger than
+    // the old single-field check: a producer authored on neither field fails, and
+    // so does one authored on BOTH — which would fire twice on a lethal hit and is
+    // precisely the merge D155's rule refused.
+    expect([...onDamage, ...onKo]).toHaveLength(producers.length);
+    expect(onDamage.filter((p) => onKo.includes(p))).toEqual([]);
+    expect(onDamage.length).toBeGreaterThan(1);
+    expect(onKo.length).toBeGreaterThan(0);
   });
 
   it("and DRIVES every one of them — not one emits a row that says 'ability'", () => {
@@ -230,7 +279,7 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
     // passing this vacuously — which also means every one of these rows is a SUM,
     // and every one of them still carries exactly one label.
     let seed = 10;
-    for (const producer of producers) {
+    for (const producer of onDamage) {
       const own = programFor(producer.id)?.passive?.damageAttacker?.amount ?? 0;
       const { events } =
         producer.category === "Pokemon"
@@ -246,6 +295,40 @@ describe("⚠️ the guard, ASSERTED over the POOL rather than at one hand-picke
       );
       // …and the row is on the ATTACKER's seat, never the holder's.
       expect(placed[0]?.seat, producer.id).toBe("p1");
+    }
+  });
+
+  it("…and DRIVES the KO-conditioned half too, on the board ITS condition needs", () => {
+    // TOTAL over the other partition (Dxxx). The claim is identical and that is
+    // the point: a second read site, a second condition, a second field — and the
+    // row it emits is the SAME `"counterattack"` member on the SAME seat, which is
+    // the fourth payout on D141's judgement that the axis is the MECHANISM.
+    let seed = 40;
+    for (const producer of onKo) {
+      const own = programFor(producer.id)?.passive?.damageAttackerOnKo?.amount ?? 0;
+      const { events } = koFight(seed++, producer.id);
+      const placed = all(events, "COUNTERS_PLACED");
+      expect(placed, producer.id).toHaveLength(1);
+      expect(placed[0]?.source, `${producer.id} labelled its recoil`).toBe("counterattack");
+      expect(placed[0]?.amount, producer.id).toBe(own);
+      expect(placed[0]?.seat, producer.id).toBe("p1");
+      // …and the KO really happened, so this is not passing vacuously on a board
+      // where the condition was never met.
+      expect(types(events), producer.id).toContain("KNOCKED_OUT");
+    }
+  });
+
+  it("the KO half pays NOTHING on a hit its holder survives — the partition, driven", () => {
+    // The partition asserted above is a claim about BEHAVIOUR, not about which
+    // key a record happens to carry. On the ordinary damage board every `onKo`
+    // producer is silent, and that is what makes it a different effect rather than
+    // a differently-spelled one.
+    let seed = 60;
+    for (const producer of onKo) {
+      const { events } = koFight(seed++, producer.id, 0); // an UNDAMAGED holder
+      expect(types(events), producer.id).toContain("DAMAGE_DEALT"); // it WAS hit…
+      expect(types(events), producer.id).not.toContain("KNOCKED_OUT"); // …and lived
+      expect(all(events, "COUNTERS_PLACED"), producer.id).toEqual([]);
     }
   });
 });
@@ -366,15 +449,33 @@ describe("the family this label must still cover — three printings, none an Ab
   // on EIGHT printings: three Ability printings (all authored), two TOOL printings
   // and three ATTACK printings. So the same one row already has to serve three
   // different kinds of card, and a `"tool"` member would have been wrong before it
-  // shipped. None of the three below is simulated today; when one lands it joins
-  // this label with NO new member — which is the test of whether the axis was right.
+  // shipped. When one lands it joins this label with NO new member — which is the
+  // test of whether the axis was right.
+  //
+  // ⚠️ RE-QUERIED AT Dxxx AGAINST THE SHRUNKEN CATALOG (2026-08-03, 890 rows /
+  // 5 sets) AND THE EIGHT ROWS ARE THE SAME EIGHT. `FIXTURE_POOL` was swept as its
+  // own population beside it (D156's rule) and no `swsh10.5` fixture carries the
+  // clause, so the count is not a five-set undercount. Of the three cases below,
+  // TWO have now landed and been re-pointed rather than deleted — Scary Fangs at
+  // D152, Vengeful Punch at Dxxx — and each landed with no new `source` member,
+  // which is the third and fourth payout on D141's judgement.
 
-  it("Vengeful Punch sv03-197 — a SECOND recoil TOOL, unauthored today", () => {
+  it("Vengeful Punch sv03-197 — the SECOND recoil TOOL, LANDED at Dxxx, and it joins THIS label", () => {
+    // ⚠️ THE WITNESS RE-POINTED RATHER THAN DELETED, which is what makes it worth
+    // having had. Until Dxxx this case asserted the sentence derived to NOTHING.
+    //
     // "If the Pokémon this card is attached to is Knocked Out by damage from an
-    // attack …, put 4 damage counters on the Attacking Pokémon." — the same
-    // mechanism on a KO condition rather than a damaged one, so it needs a read
-    // site rather than a label.
-    expect(programFor("sv03-197")).toBeUndefined();
+    // attack from your opponent's Pokémon, put 4 damage counters on the Attacking
+    // Pokémon." — the same mechanism on a KO condition rather than a damaged one,
+    // so it needed a READ SITE (flow.ts's §8.1 sweep) rather than a label. And the
+    // claim this file is really making is D141's own: a SECOND read site now feeds
+    // this row and it STILL needs no new `source` member. A board carrying both
+    // Tools produces two `"counterattack"` rows from two sites — driven in
+    // vengefulPunch.test.ts, which owns the rest of the printing.
+    expect(programFor("sv03-197")?.passive).toEqual({ damageAttackerOnKo: { amount: 40 } });
+    // …and it is a SIBLING field, not this one: the two consumers refuse each
+    // other's condition, so nothing here changed shape.
+    expect(programFor("sv03-197")?.passive?.damageAttacker).toBeUndefined();
   });
 
   it("Lycanroc ex sv02-117/-241 'Scary Fangs' — LANDED at D152, and it joins THIS label", () => {

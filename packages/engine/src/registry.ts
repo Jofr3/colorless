@@ -153,6 +153,39 @@ export interface PassiveEffects {
       a plain summed number. (Snipe/spread hits on the Active are a follow-up: the
       recoil is folded only at the §8.5 main hit for now.) */
   damageAttacker?: { amount: number; requiresTool?: boolean };
+  /** §8.1 KO-conditioned recoil — the SIBLING of `damageAttacker` above, and a
+      sibling rather than an arm of it because the two consumers MUTUALLY REFUSE
+      each other's payment (D155's rule, grounded in the READ sites):
+
+        • `damageAttacker` pays on `dealt > 0` at the §8.5 main hit and REFUSES a
+          KO that its own damage did not cause. Vengeful Punch must not fire when
+          its holder is merely damaged.
+        • this one pays on "lethal at the §8.1 sweep" and REFUSES mere damage.
+          Rocky Helmet must fire on a hit its holder SURVIVES.
+
+      Folding them into one field would fire Rocky Helmet twice on a lethal hit
+      (once at §9, once at the sweep) and fire Vengeful Punch on every scratch. So
+      it is a second field with a second read site, not a flag on the first.
+
+      The one printing is Vengeful Punch sv03-197, a Pokémon TOOL: "If the Pokémon
+      this card is attached to is Knocked Out by damage from an attack from your
+      opponent's Pokémon, put 4 damage counters on the Attacking Pokémon." Stored
+      in HP like all four of `damageAttacker`'s printings (4 printed counters =
+      `amount: 40`), so the two numbers stay summable in the units the read sites
+      already speak.
+
+      ⚠️ AND NOTE THE CLAUSE THAT IS NOT PRINTED HERE. Rocky Helmet says "is in
+      the Active Spot"; this card does not. So a BENCHED holder finished off by a
+      snipe or a spread retaliates just as an Active one does — which is why the
+      read site scans the KO'd side's WHOLE board (flow.ts `koRecoilOf`) where
+      `damageAttacker`'s reads only the main-hit Active. The absent clause is the
+      whole difference between the two scans, and it is asserted in
+      vengefulPunch.test.ts rather than left to the reader.
+
+      No `requiresTool` arm: the Tool IS the source (the Rocky Helmet precedent),
+      and no printing gates this shape on a second Tool. A field nothing reads is
+      the D156 defect, so it is not speculatively added. */
+  damageAttackerOnKo?: { amount: number };
   /** §9 continuous Ability-lock AURA: while this Pokémon is in play (and, when
       `requiresActive`, in the Active Spot), every in-play Pokémon matching the
       target predicate "has no Abilities" — the engine suppresses its activated /
@@ -829,6 +862,26 @@ const BRAVERY_CHARM: CardProgram = { passive: { basicHpBonus: 50 } };
     HP; unconditional once attached (the Tool IS the source, so no `requiresTool`,
     unlike Custom Trap). */
 const ROCKY_HELMET: CardProgram = { passive: { damageAttacker: { amount: 20 } } };
+
+/** Vengeful Punch — "If the Pokémon this card is attached to is Knocked Out by
+    damage from an attack from your opponent's Pokémon, put 4 damage counters on
+    the Attacking Pokémon." (Tool) Verbatim off the local D1 row (`sv03-197`,
+    `trainer_type = Tool`, reg-mark G, `legal_standard = 0`), re-queried
+    2026-08-03 against a catalog of 890 rows / 5 sets.
+
+    The §9 recoil family's SECOND Tool and the last of its always-on printings.
+    Rocky Helmet's twin one step later in the sequence: same mechanism, same
+    `COUNTERS_PLACED source: "counterattack"` row, same "the Tool IS the source"
+    (no `requiresTool`) — and a DIFFERENT condition, which is the whole slice. It
+    pays on the KO rather than on the damage, so it reads at flow.ts's §8.1 sweep
+    rather than attack.ts's `dealt > 0` block, through the sibling field
+    `damageAttackerOnKo` (see its doc block for why the two cannot share one).
+
+    4 printed counters = 40 HP, converted HERE at the authoring site exactly as
+    Rocky Helmet's 2 and Counterattack Quills' 3 are — this family's registry rows
+    have stored HP since 0.x, and D152's deriver-side conversion exists only
+    because a REGEX capture has no other place to do it. */
+const VENGEFUL_PUNCH: CardProgram = { passive: { damageAttackerOnKo: { amount: 40 } } };
 
 // ── M4 slice 5: Special Energy (§6.1). ──
 
@@ -2201,6 +2254,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-173": BRAVERY_CHARM,
   // Rocky Helmet (Tool) — reactive recoil, the Tool twin of Counterattack Quills (D98 damageAttacker)
   "sv01-193": ROCKY_HELMET,
+  // Vengeful Punch (Tool) — the SAME recoil on a KO condition (Dxxx damageAttackerOnKo),
+  // verified vs the local D1 2026-08-03 (890 rows / 5 sets). The family's last always-on
+  // printing; it reads at flow.ts's §8.1 sweep, not attack.ts's `dealt > 0` block.
+  "sv03-197": VENGEFUL_PUNCH,
   // — M4 slice 5: Special Energy (verified vs local D1 2026-07-18). —
   // Jet Energy — {C} + switch-on-bench-attach
   "sv02-190": JET_ENERGY,
