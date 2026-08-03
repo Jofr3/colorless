@@ -5757,6 +5757,174 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Psychic", "Colorless", "Colorless"], name: "Super Psy Bolt", damage: 80 },
     ],
   }),
+
+  // ── D159 — the ALWAYS-ON ATTACKER FILTERS: the five printings §D146's census
+  //    found outside an attack, minus Mimikyu's Safeguard (sv02-097, above, since
+  //    0.58.0). Every field below is VERBATIM off the local D1 (890 rows / 5 sets,
+  //    queried 2026-08-03) — name, stage, evolveFrom, hp, types, retreat, Weakness,
+  //    the printed Ability string and the printed attack list at its printed index.
+  //    `FIXTURE_POOL` was swept as a SEPARATE population first: none of the five
+  //    was here, and no `swsh10.5` fixture prints either sentence. ──
+
+  /** Dachsbun sv01-099 — "Well-Baked Body": *"This Pokémon can't be Burned.
+      Prevent all damage done to this Pokémon by attacks from your opponent's {R}
+      Pokémon."*
+
+      ⚠️ TWO PRINTED SENTENCES, ONE AUTHORED MECHANISM — and the fixture carries
+      BOTH because the card does. The registry reads only the second (a
+      `preventDamageFromType: "Fire"` passive); "can't be Burned" is a §12 status
+      immunity with its own neighbourhood (Pachirisu sv01-068/-208 "Electricity
+      Pouches", Therapeutic Energy sv02-193) and NO reader anywhere in the engine,
+      so it stays LOUD. Keeping the whole string here is what lets a suite assert
+      that the unread half is still on the card — the omission failure mode D156
+      closed, applied to a clause instead of to a whole Ability.
+
+      A Stage 1 from Fidough, and PSYCHIC — which matters twice: its own type is
+      not the type it filters (so a suite cannot pass by reading the wrong card's
+      `types`), and its ×2 Metal Weakness is off every attacker this family fields,
+      so the prevention arithmetic is never entangled with §8.5's. */
+  "sv01-099": battler("sv01-099", {
+    name: "Dachsbun",
+    stage: "Stage1",
+    evolveFrom: "Fidough",
+    types: ["Psychic"],
+    hp: 90,
+    retreat: 1,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Well-Baked Body",
+        effect:
+          "This Pokémon can't be Burned. Prevent all damage done to this Pokémon by attacks from your opponent's {R} Pokémon.",
+      },
+    ],
+    attacks: [{ cost: ["Psychic", "Colorless", "Colorless"], name: "Headbutt Bounce", damage: 100 }],
+  }),
+  /** Bellibolt sv03-078 — "Insulator": *"Prevent all damage done to this Pokémon
+      by attacks from your opponent's {L} Pokémon."* — Dachsbun's sentence with the
+      status clause removed and the token changed, which is what makes the two a
+      family rather than two cards.
+
+      ⚠️ ITS PRINTED ATTACK CARRIES AN UNMAPPED CLAUSE AND THAT IS DELIBERATE:
+      "Thunderous Edge" ({L}{C}{C}, 100) prints *"This attack's damage isn't
+      affected by any effects on your opponent's Active Pokémon."* — Feint Attack's
+      `ignoreWR` clause with the Weakness/Resistance half missing, which the
+      deriver refuses. Carried verbatim rather than dropped so a sweep can SEE it
+      (D135's rule), and it is a live question this slice deliberately does not
+      answer: it would null the very preventions this card's own Ability is. */
+  "sv03-078": battler("sv03-078", {
+    name: "Bellibolt",
+    stage: "Stage1",
+    evolveFrom: "Tadbulb",
+    types: ["Lightning"],
+    hp: 140,
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Insulator",
+        effect:
+          "Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless", "Colorless"],
+        name: "Thunderous Edge",
+        damage: 100,
+        effect:
+          "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.",
+      },
+    ],
+  }),
+  /** Bellibolt sv03-201 — the SECOND printing (Illustration rare), byte-identical
+      to sv03-078 on every field the D1 carries and pointed at the same registry
+      row. Here for D121's second-printing warrant: the reprint is what proves the
+      program is keyed by ID rather than by the body it happens to sit on. */
+  "sv03-201": battler("sv03-201", {
+    name: "Bellibolt",
+    stage: "Stage1",
+    evolveFrom: "Tadbulb",
+    types: ["Lightning"],
+    hp: 140,
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Insulator",
+        effect:
+          "Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Lightning", "Colorless", "Colorless"],
+        name: "Thunderous Edge",
+        damage: 100,
+        effect:
+          "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.",
+      },
+    ],
+  }),
+  /** Thundurus sv03-070 — "Adverse Weather": *"As long as this Pokémon is in the
+      Active Spot, prevent all damage done to your Benched Pokémon by attacks from
+      your opponent's Pokémon."* — the pool's only ZONE-scoped prevention, and the
+      one member of this family that filters NO ATTACKER: "your opponent's Pokémon"
+      is every attacker there is.
+
+      A BASIC, which is load-bearing rather than incidental: the §9 gate this scan
+      relies on is only assertable through a lock whose target predicate the source
+      satisfies, and Klefki "Mischievous Lock" reaches Basics (D113's rule — the
+      reachability follows the SOURCE's stage).
+
+      Its printed "Gigantic Bolt" ({L}{L}, 140) carries the self-damage rider
+      *"This Pokémon also does 90 damage to itself."*, which the deriver DOES map —
+      so this body can attack out of the Active Spot and end the very shield it is
+      granting, which is the cheapest possible drive of "both ends are live-read". */
+  "sv03-070": battler("sv03-070", {
+    name: "Thundurus",
+    types: ["Lightning"],
+    hp: 110,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Adverse Weather",
+        effect:
+          "As long as this Pokémon is in the Active Spot, prevent all damage done to your Benched Pokémon by attacks from your opponent's Pokémon.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Lightning", "Lightning"],
+        name: "Gigantic Bolt",
+        damage: 140,
+        effect: "This Pokémon also does 90 damage to itself.",
+      },
+    ],
+  }),
+  /** Neutralization Zone sv06.5-060 — Stadium (ACE SPEC), and the first Stadium in
+      the pool to reach the §8.5 DAMAGE pipeline rather than a cost seam.
+
+      The `effect` is verbatim off the local D1 including the BLANK LINE between
+      its two paragraphs — the second (*"This card can't be put into your hand or
+      deck from the discard pile."*) is a discard-pile retrieval restriction with
+      one sibling in the pool (Poké Vital A sv06.5-062) and no reader anywhere, so
+      it stays LOUD and is carried here so a sweep can see it. `programFor` keys on
+      the id and reads neither paragraph; the text is what a future slice greps. */
+  "sv06.5-060": {
+    ...blank,
+    id: "sv06.5-060",
+    name: "Neutralization Zone",
+    category: "Trainer",
+    trainerType: "Stadium",
+    effect:
+      "Prevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile.",
+  } satisfies Card,
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -8857,6 +9025,71 @@ export const VENGEFUL_PUNCH_DECK = deckOf({
   "fix-bigbody": 26, // 200 HP — DOMINANT setup Basic, the surviving holder, promote target
   "fix-titan": 3, // 340 HP, no attacks — bench filler a 20 spread cannot KO
   "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
+});
+
+/** D159 — the ALWAYS-ON ATTACKER FILTERS, on their own 60 rather than inside
+    `SAFEGUARD_DECK`: that deck's boards are seeded and adding a card would
+    reshuffle every one of them, so D107's suite stays byte-identical (D152's
+    move, inherited).
+
+    The three PROTECTORS are the whole point and everything else is a body chosen
+    to sit on one side of one predicate:
+      • sv01-099 Dachsbun ({R}) and sv03-078/-201 Bellibolt ({L}) — the type
+        filter's two tokens, and each other's NEGATIVE CASE. Every attacker below
+        matches at most one of them, so "the filter declined" is driven off a
+        printed card rather than off a bespoke fixture (D146's move);
+      • sv03-070 Thundurus — the Active that shields its own Bench;
+      • sv06.5-060 Neutralization Zone — the Stadium, which protects BOTH sides and
+        therefore needs bodies on each.
+    The ATTACKERS are picked so that the two ends of every printed clause can be
+    moved independently:
+      • fix-attacker ("Bite" {C} 30) — FIRE and no rule box: Dachsbun's match,
+        Bellibolt's miss, and the Stadium's miss;
+      • sv02-063 Pikachu ex ("Pika Punch" {C} 30, idx 0) — LIGHTNING *and* an ex:
+        Bellibolt's match, Dachsbun's miss, and the Stadium's attacker in one card;
+      • fix-attacker-ex — FIRE and an ex, with "Spread Shot" at idx 1, so one swing
+        reaches the Active and every benched body under the same two filters;
+      • fix-attacker-vmax — the ONE board that separates `hasRuleBox` from
+        `isExOrV`: it has a rule box and is neither an ex nor a V, so the Stadium
+        must let it through;
+      • fix-sniper ("Spread Shot" {C}, 30 + 20 each benched) — FIRE, NO rule box:
+        the spread that drives Thundurus's shield with an attacker the Stadium
+        cannot see;
+      • sv06.5-038 Fezandipiti ex ("Cruel Arrow" {C}{C}{C}, `opponentAny` 100) —
+        the pool's only ex/V body with a CHOSEN target, and therefore the only card
+        that can drive the Stadium at `snipeActive` and at `placeSnipe`'s bench arm;
+      • sv01-069 Rotom ("Linear Attack" {C}, `opponentAny` 20) — Fezandipiti's
+        LIGHTNING, no-rule-box counterpart on the same two arms;
+      • fix-feint ("Feint Attack" {C}, 50, `ignoreWR`) — LIGHTNING: the one attacker
+        that can put an ON-TARGET prevention and an OFF-TARGET one on the same
+        board and show the clause reaching only the first;
+      • sv02-127 Ting-Lu ex ("Land Scoop" {F}{F}{F}, 150) — the §9 lock AND an ex,
+        which is the only way this pool can put an Ability-lock and a prevention
+        live at once: every lock in the registry is Active-gated on its SOURCE, so
+        the locking body has to be the attacking body too.
+    fix-titan (340 HP, NO attacks) and fix-bigbody (200 HP) are the mulligan-free
+    bench filler / no-Rule-Box targets. NO {L} ENERGY ON PURPOSE: every attack the
+    suite declares is Colorless-costed except Land Scoop, so the deck carries {F}
+    for that alone and nothing here can accidentally pay a typed cost. */
+export const ATTACKER_FILTER_DECK = deckOf({
+  "sv01-099": 3, // Dachsbun — "Well-Baked Body" ({R}); its Burn-immunity clause stays LOUD
+  "sv03-078": 3, // Bellibolt — "Insulator" ({L})
+  "sv03-201": 2, // Bellibolt (Illustration rare) — the reprint, for the id-keyed claim
+  "sv03-070": 3, // Thundurus — "Adverse Weather" (Active shields the BENCH)
+  "sv06.5-060": 4, // Neutralization Zone (Stadium, ACE SPEC) — both boards, no Rule Box, ex/V
+  "fix-attacker": 3, // FIRE, no rule box — Dachsbun's match / Bellibolt's + the Stadium's miss
+  "sv02-063": 3, // Pikachu ex — LIGHTNING *and* an ex: Bellibolt's match + the Stadium's attacker
+  "fix-attacker-ex": 3, // FIRE ex — "Spread Shot" idx 1 reaches the whole opposing board
+  "fix-attacker-vmax": 2, // a rule box that is NOT ex/V — the predicate-separating board
+  "fix-sniper": 3, // FIRE, no rule box — the spread Thundurus's shield answers
+  "fix-feint": 3, // LIGHTNING, `ignoreWR` — the on-target / off-target pair, one attack
+  "sv06.5-038": 3, // Fezandipiti ex — the only ex with an `opponentAny` snipe
+  "sv01-069": 3, // Rotom — its LIGHTNING, no-rule-box counterpart
+  "sv02-127": 3, // Ting-Lu ex — "Cursed Land" (§9) and an ex, on one body
+  "fix-titan": 3, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-bigbody": 4, // 200 HP neutral Basic — the no-Rule-Box body the Stadium protects
+  "fix-fighting-energy": 5, // {F}{F}{F} — Land Scoop's cost, and nothing else in the deck
+  "fix-energy": 7, // Colorless Basic — every other cost here
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

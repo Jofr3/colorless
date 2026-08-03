@@ -21,6 +21,7 @@ import {
 import {
   attackBlockOf,
   attackLocked,
+  benchShieldedByActive,
   boostedAttackDamage,
   countAttachedEnergy,
   effectiveAttackCost,
@@ -31,8 +32,10 @@ import {
   lockedAttackIndex,
   opposingAttackDebuff,
   passivesOf,
+  preventsAttackerType,
   providedEnergy,
   seatRemovesWeakness,
+  stadiumPreventsDamage,
 } from "./continuous";
 import {
   deriveAttackCoinFlip,
@@ -835,9 +838,27 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // rule box, one off the printed stage — and the pairing is tighter than it was
     // at D142: an installed block gated on the attacker is the catalog aura's
     // shape with the source of the gate moved from the card to the board.
+    //
+    // D159 — and the ALWAYS-ON half of the attacker-filter family widens the same
+    // `||` from two terms to five, in two groups the printed text draws apart:
+    //   • ON-TARGET — an effect on the damaged Pokémon itself. `preventDamageFromExV`
+    //     and the type filter beside it are catalog auras on the HOLDER (so both
+    //     are §9-suppressible through `passivesOf`); the block is an installation
+    //     on the holder's own record. At the two snipe arms `ignoreWR` nulls all
+    //     three, which is where the grouping becomes observable.
+    //   • OFF-TARGET — a rule whose SOURCE is some other body or no body at all:
+    //     the shielding Active on the target's own side, and the shared Stadium.
+    //     `ignoreWR` reaches neither.
+    // Both off-target reads are FALSE by construction here — the main hit's
+    // defender is an Active, which is neither benched nor able to hold a §9 lock's
+    // answer — and are made anyway, for the reason `attackDamageBlocked`'s Bench
+    // arms are guarded: these sites must be TOTAL rather than case-covering.
     const prevented =
       (defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
-      attackBlockOf(next, defender, attacker) !== null;
+      preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
+      attackBlockOf(next, defender, attacker) !== null ||
+      benchShieldedByActive(next, defender) ||
+      stadiumPreventsDamage(next, defender, attacker);
     const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
     defended = { ...defender, damage: defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });

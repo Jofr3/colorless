@@ -3632,7 +3632,44 @@ import type { GameState, Seat } from "./types";
     and evolve KOs call `collectKnockOuts` DIRECTLY, skipping `finishAttack`.
     **VOICE is SYSTEM** — rendered under both seats and read, and naming EITHER
     seat is wrong. No §11 verdict owed: no op was added. */
-export const engineVersion = "0.105.0";
+/** **D159 — the ALWAYS-ON ATTACKER FILTERS.** The half of §D146's census that
+    never reaches an attack: five printings over four sentences, and **three
+    mechanisms rather than one predicate with a parameter**.
+    `PassiveEffects.preventDamageFromType` (Dachsbun `sv01-099` {R}, Bellibolt
+    `sv03-078`/`-201` {L}) is `preventDamageFromExV`'s sibling on `passivesOf` with
+    the gate moved from the printed NAME to the `Card.types` datum, resolved at the
+    read sites by `preventsAttackerType`. `PassiveEffects.preventBenchDamageWhileActive`
+    (Thundurus `sv03-070`) is the aura-scan family's EIGHTH member and its FIRST
+    same-seat cross-body one — the Active shields its own Bench — and it filters NO
+    ATTACKER at all. `StadiumEffects.preventDamageToNoRuleBoxFromExV` (Neutralization
+    Zone `sv06.5-060`, an **ACE SPEC**) is the first Stadium in the pool on the §8.5
+    DAMAGE seam: `hasRuleBox` NEGATED on the body being hit, `isExOrV` on the body
+    hitting it, both boards, no seat to derive and no §9 gate.
+
+    ⚠️ **THE LIST'S "6 PRINTINGS" WAS THE CENSUS FIGURE, NOT THE REMAINDER** — the
+    sixth is Mimikyu's Safeguard, built at 0.58.0, and §D146's own parenthesis says
+    so. Four handoffs quoted it as work left. "4 sentences" was exact.
+
+    ⚠️ **THE SPLIT IS `ignoreWR`, AND IT IS DRIVEN OFF ONE PRINTED ATTACK.** Feint
+    Attack's *"any effects on that Pokémon"* scopes the TARGET, so it nulls the
+    holder-side preventions and leaves the two whose source is another body or no
+    body — the same reading D151 made for a subtraction. The three mechanisms are
+    grounded on the read sites, not on style: they differ in SOURCE (damaged body /
+    its side's Active / no Pokémon), in whether a §9 lock can reach them
+    (suppresses / suppresses / **cannot reach**) and in `ignoreWR` (nulls /
+    standing / standing). A shared record would be paid by a consumer that refuses
+    it — D155's test.
+
+    ⚠️ **AND `DAMAGE_DEALT.prevented` HAS EXISTED SINCE 0.58.0 WITH NOTHING
+    RENDERING IT.** A fully prevented hit logged *"dealt 0 damage to <name>"*. One
+    crumb, `" · prevented"`, placed after the reduction it supersedes and naming the
+    FACT rather than the rule.
+
+    Cost: 2 `PassiveEffects` fields, 1 `StadiumEffects` field, 3 `continuous.ts`
+    functions, 5 registry rows on 4 programs, 4 read sites, 1 log crumb.
+    `MATCH_RECORD_VERSION` stays **10** — nothing on `InPlayPokemon`, no op payload
+    and no persisted shape moved; the cached-flag dodges were priced and refused. */
+export const engineVersion = "0.106.0";
 
 export type {
   ApplyResult,

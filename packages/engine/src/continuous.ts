@@ -2,8 +2,10 @@ import {
   ANY_ENERGY,
   cardOfUid,
   energyProvidesOf,
+  hasRuleBox,
   hpOf,
   isBasicPokemon,
+  isExOrV,
   isSpecialEnergy,
   pokemonSuffixOf,
   retreatCostOf,
@@ -12,7 +14,7 @@ import {
 } from "./cards";
 import type { PokemonSuffix } from "./cards";
 import type { BasicEnergyType, Card } from "@luminous/schema";
-import type { BoardCondition } from "./effects";
+import type { BoardCondition, PokemonType } from "./effects";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
@@ -179,6 +181,22 @@ export function passivesOf(
       so this aggregation just reports whether the holder carries the aura; the
       sites gate it on `isExOrV(attacker)`. */
   preventDamageFromExV: boolean;
+  /** §8.5 full damage PREVENTION when the ATTACKER is a Pokémon of one of these
+      printed types (Dachsbun sv01-099 "Well-Baked Body" `{R}`, Bellibolt
+      sv03-078/-201 "Insulator" `{L}`) — `preventDamageFromExV`'s twin one field
+      up, with the gate reading `Card.types` instead of the rule-box name parse.
+
+      A LIST rather than a scalar, and that is the one shape decision this field
+      makes. Every source in the fold above (the holder's own passive plus each
+      attached Tool) contributes independently, so a scalar could only be
+      last-wins — silently dropping a real prevention on a board with two sources.
+      No such board exists in the pool today (no Tool prints the sentence and no
+      card prints two), which is precisely why it has to be the aggregation's
+      shape rather than a fact anyone remembers: `conditionalDamageBonusBeforeWR`
+      three fields up is the same optional-scalar-collected-to-a-list idiom for
+      the same reason. Empty on every board with no such holder, so the read sites
+      pay one `.some` over nothing. */
+  preventDamageFromTypes: PokemonType[];
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
@@ -202,6 +220,7 @@ export function passivesOf(
   let damageAttacker = 0;
   let damageAttackerOnKo = 0;
   let preventDamageFromExV = false;
+  const preventDamageFromTypes: PokemonType[] = [];
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
   const targetConditionalDamageBonusBeforeWR: {
     amount: number;
@@ -224,6 +243,8 @@ export function passivesOf(
     // and never an attached Tool's, so Vengeful Punch keeps working under Klefki.
     damageAttackerOnKo += passive.damageAttackerOnKo?.amount ?? 0;
     if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
+    if (passive.preventDamageFromType !== undefined)
+      preventDamageFromTypes.push(passive.preventDamageFromType);
   }
   return {
     damageReductionAfterWR,
@@ -234,7 +255,42 @@ export function passivesOf(
     damageAttacker,
     damageAttackerOnKo,
     preventDamageFromExV,
+    preventDamageFromTypes,
   };
+}
+
+/** §8.5 (D159) — does `attacker` belong to one of the printed TYPES a holder's
+    prevention aura names? The resolution half of `passivesOf`'s
+    `preventDamageFromTypes`, and `attackerMatchesClass`'s sibling two functions
+    down: the same "the gate is a fact about the ATTACKER, so it can only be
+    answered where the attacker is known" split D146 made for `AttackBlock`, and
+    D107's `isExOrV` made before that.
+
+    The read is `Card.types.includes`, the SAME reading Weakness and Resistance
+    make two lines later in the pipeline and the same one `opponentActiveHasType`
+    makes (interpreter.ts `conditionHolds`) — reused rather than restated, so
+    "your opponent's {R} Pokémon" cannot come to mean something different from
+    what the §8.5 modifiers mean by a Fire Pokémon. `types` is an ARRAY and dual
+    types are a real printing, so the two lists are intersected rather than
+    compared; every Pokémon row in the local pool carries exactly one.
+
+    NOT an exhaustive switch, unlike `attackerMatchesClass` — that predicate's
+    vocabulary is an ENGINE union whose members each need a hand-written reading,
+    where this one's is a CATALOG value that reads itself. There is nothing tsc
+    could demand of a new member.
+
+    `undefined` (no resolvable attacking card) is FALSE, the conservative direction
+    `attackBlockOf` chose for a filtered block: an unreadable attacker protects
+    LESS rather than more. It is structurally unreachable for a declared attack
+    (attacks come from the Active) and answered anyway, for the reason the Bench
+    arms of the damage sites are guarded — these reads must be TOTAL. */
+export function preventsAttackerType(
+  types: readonly PokemonType[],
+  attacker: Card | undefined,
+): boolean {
+  if (types.length === 0 || attacker === undefined) return false;
+  const printed = attacker.types ?? [];
+  return types.some((type) => printed.includes(type));
 }
 
 /** §11/§15.B — the LIVE attack-installed block on `pokemon`, or null. The ONE
@@ -995,6 +1051,115 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
     return amount;
   }
   return 0;
+}
+
+/** §8.5 (D159) — is `pokemon` a BENCHED body shielded from all attack damage by
+    its OWN side's Active Pokémon (Thundurus sv03-070 "Adverse Weather": "As long
+    as this Pokémon is in the Active Spot, prevent all damage done to your Benched
+    Pokémon by attacks from your opponent's Pokémon")? The EIGHTH member of the
+    aura-scan family, and the FIRST that is SAME-SEAT CROSS-BODY: `passivesOf`
+    folds the holder's own row, `opposingAttackDebuff` and `opposingRetreatBlocked`
+    reach across the table — this one reaches from a side's Active to that same
+    side's Bench, which is a body `passivesOf` could never have been asked about.
+
+    It inherits the family's three answers verbatim rather than inventing new ones:
+      • the DERIVED SEAT — the caller hands us one of a side's own `active`/`bench`
+        entries, so we find that side by top uid and read ITS Active (not the other
+        one, which is the single line that makes this member same-seat). That is
+        what keeps all four damage sites' signatures untouched;
+      • BOTH CLAUSES ENFORCED BY THE SCAN, no `activeOnly` field. "As long as this
+        Pokémon is in the Active Spot" scopes the SOURCE and "your Benched Pokémon"
+        scopes the TARGET, so a benched Thundurus shields nothing and an ACTIVE
+        holder shields everything except itself. Both ends are live-read: a Boss's
+        Orders, a retreat or a KO-and-promotion that moves either body ends the
+        shield on the spot, because nothing is stamped and every site passes the
+        CURRENT state;
+      • the §9 GATE through `disabledAbilityUids`, like every non-lock Ability
+        surface. Thundurus is a BASIC, so an Active Klefki "Mischievous Lock"
+        really does silence it and the Bench is exposed again (D113's rule: the
+        reachability follows the SOURCE's stage).
+
+    ⚠️ IT FILTERS NO ATTACKER, WHICH IS WHY IT IS A SCAN AND NOT A
+    `preventDamageFrom…` REFINEMENT. §D146's census grouped this sentence with
+    Dachsbun's and Bellibolt's on the shared string "by attacks from"; its object
+    is "your opponent's Pokémon" — every attacker there is. The narrowing is
+    entirely on the PROTECTED side, so it takes no `attacker` argument at all, and
+    a signature that took one would be documenting a filter this card does not
+    print.
+
+    NOT nulled by Feint Attack's `ignoreWR` at the two snipe arms, unlike the
+    holder-side preventions: that clause scopes "any effects on THAT Pokémon" and
+    this aura's source is a different body — the pick's own side's Active. D151's
+    `placeSnipe` reading, applied to a prevention rather than to a subtraction, and
+    the two are driven against each other on one board in attackerFilter.test.ts. */
+export function benchShieldedByActive(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return false;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    // The TARGET clause: "your BENCHED Pokémon" — an Active holder of this uid is
+    // out, which also makes the source immune to its own shield.
+    if (!side.bench.some((benched) => topUid(benched) === uid)) continue;
+    // The SOURCE clause: this side's OWN Active Spot and nowhere else.
+    const source = side.active;
+    if (source === null) return false;
+    const top = topCardOf(state, source);
+    if (top === undefined || programFor(top.id)?.passive?.preventBenchDamageWhileActive !== true) {
+      return false;
+    }
+    const sourceUid = topUid(source);
+    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return false; // §9
+    return true;
+  }
+  return false;
+}
+
+/** §7.3/§8.5 (D159) — does the in-play STADIUM prevent all attack damage from
+    `attacker` to `pokemon` (Neutralization Zone sv06.5-060: "Prevent all damage
+    done to Pokémon that don't have a Rule Box (both yours and your opponent's) by
+    attacks from the opponent's Pokémon ex and Pokémon V")? The first Stadium read
+    on the damage pipeline — `stadiumRetreatDelta` and `effectiveAttackCost` are
+    its only siblings and both sit on a COST seam.
+
+    ⚠️ IT IS THE ONE MEMBER OF THIS SLICE THAT IS NOT AN ABILITY, AND THREE THINGS
+    FOLLOW FROM THAT ALONE:
+      • NO SEAT IS DERIVED. Every aura scan above finds the side holding a uid so
+        "your opponent" can be resolved; this print says "both yours and your
+        opponent's", so there is no side to find. It is the only prevention in the
+        engine that can fire for the player who played the card AND against them
+        on the same board;
+      • NO §9 GATE. `disabledAbilityUids` suppresses ABILITIES, and a Stadium is
+        not one. A Klefki that silences Thundurus one function up leaves this
+        untouched, which is the sharpest observable difference between the two;
+      • NOT NULLED BY `ignoreWR`. Feint Attack's clause scopes "any effects on that
+        Pokémon" — a Stadium is an effect on the shared zone and on no Pokémon at
+        all, so it survives where the holder-side preventions do not.
+
+    THE TWO FILTERS ARE THE ENGINE'S EXISTING PREDICATES, on opposite ends of the
+    attack: `hasRuleBox` NEGATED on the body being hit (the suffix families ∪ the
+    "Radiant " prefix — Artazon's `noRuleBox` search filter, and what the card's own
+    reminder text describes) and `isExOrV` on the body hitting it (D107's, narrower
+    than `hasRuleBox`: no VMAX/VSTAR/GX). The asymmetry is PRINTED, not chosen — the
+    protected side is filtered by rule box, the attacking side by the ex/V pair —
+    and a VMAX attacker under this Stadium is the single board that separates the
+    two predicates.
+
+    "THE OPPONENT'S Pokémon ex and Pokémon V" needs no seat check: all four callers
+    are attack-damage sites aimed at the DEFENDING side, so the attacker is always
+    the protected Pokémon's opponent by construction. A `damageSelf` recoil, the one
+    way a Pokémon damages its own side, routes through none of them.
+
+    `undefined` (no resolvable attacking card) is FALSE, `preventsAttackerType`'s
+    conservative direction verbatim. */
+export function stadiumPreventsDamage(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  attacker: Card | undefined,
+): boolean {
+  if (stadiumEffectsOf(state)?.preventDamageToNoRuleBoxFromExV !== true) return false;
+  if (attacker === undefined || !isExOrV(attacker)) return false;
+  const top = topCardOf(state, pokemon);
+  return top !== undefined && !hasRuleBox(top);
 }
 
 /** §11 — is `pokemon`'s Retreat Cost zeroed by its OWN printed passive (Wimpod

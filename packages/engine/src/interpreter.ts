@@ -18,6 +18,7 @@ import {
 } from "./cards";
 import {
   attackBlockOf,
+  benchShieldedByActive,
   countEnergyInPlay,
   effectiveMaxHp,
   hasAttachedEnergy,
@@ -25,8 +26,10 @@ import {
   installedReductionOf,
   opposingAttackDebuff,
   passivesOf,
+  preventsAttackerType,
   providesEnergyType,
   seatRemovesWeakness,
+  stadiumPreventsDamage,
 } from "./continuous";
 import { STATUS_WORD_OF, foldApostrophes } from "./effects";
 import type {
@@ -2604,9 +2607,16 @@ function spreadDamage(
     const uid = topUid(pokemon);
     if (uid === undefined) return pokemon;
     const passives = passivesOf(state, pokemon);
+    // D159 — five terms in two printed groups (attack.ts's main hit says why).
+    // This is the site where the OFF-TARGET pair is most reachable: a spread hits
+    // the Bench, which is exactly the zone Thundurus "Adverse Weather" shields and
+    // exactly where a no-Rule-Box body sits under Neutralization Zone.
     const prevented =
       (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
-      attackDamageBlocked(state, pokemon, attackerCard, ctx);
+      preventsAttackerType(passives.preventDamageFromTypes, attackerCard) ||
+      attackDamageBlocked(state, pokemon, attackerCard, ctx) ||
+      benchShieldedByActive(state, pokemon) ||
+      stadiumPreventsDamage(state, pokemon, attackerCard);
     // Catalog half + installed half, summed (D147). A durated reduction can in
     // fact only ever be live on an ACTIVE — installing it needs an attack, and
     // leaving the Active Spot ends it — so on the Bench this term is 0 by
@@ -2745,12 +2755,24 @@ function placeSnipe(
     const targetPassives = passivesOf(next, pokemon);
     // `ignoreWR` (Feint Attack — "not affected by any effects on that Pokémon")
     // bypasses the prevention just as it bypasses the reduction passive.
+    //
+    // D159 — …and this is the ONE site where the printed grouping is observable in
+    // BOTH directions on one board. The three ON-TARGET preventions are effects on
+    // the benched pick and `ignoreWR` nulls them; the two OFF-TARGET ones are not
+    // — Thundurus's source is that pick's own side's ACTIVE, and a Stadium is an
+    // effect on no Pokémon whatever — so they survive Feint Attack and the pick
+    // takes 0 anyway. That is D151's `placeSnipe`/`snipeActive` reading (the aura
+    // whose source and "that Pokémon" are different bodies is out of the clause's
+    // scope) applied to a PREVENTION instead of to a subtraction.
     const prevented =
-      !ignoreWR &&
-      ((targetPassives.preventDamageFromExV &&
-        attackerCard !== undefined &&
-        isExOrV(attackerCard)) ||
-        attackDamageBlocked(next, pokemon, attackerCard, ctx));
+      (!ignoreWR &&
+        ((targetPassives.preventDamageFromExV &&
+          attackerCard !== undefined &&
+          isExOrV(attackerCard)) ||
+          preventsAttackerType(targetPassives.preventDamageFromTypes, attackerCard) ||
+          attackDamageBlocked(next, pokemon, attackerCard, ctx))) ||
+      benchShieldedByActive(next, pokemon) ||
+      stadiumPreventsDamage(next, pokemon, attackerCard);
     // Catalog half + installed half (D147), and `ignoreWR` nulls BOTH: Feint
     // Attack's "not affected by any effects on that Pokémon" reaches an
     // attack-installed reduction exactly as it reaches a printed passive — the
@@ -2840,10 +2862,21 @@ function snipeActive(
   const targetPassives = passivesOf(state, target.active);
   // Mimikyu "Safeguard" on the sniped Active — an ex/V attacker's snipe is
   // prevented, unless `ignoreWR` (Feint Attack) bypasses on-target effects.
+  //
+  // D159 — the OFF-TARGET pair sits outside the `ignoreWR` guard for the reason
+  // `placeSnipe`'s bench arm gives, and here one of the two is FALSE by
+  // construction (this arm's target is the opponent's ACTIVE, never a benched
+  // body) while the other is fully live: Neutralization Zone protects an Active
+  // without a Rule Box exactly as it protects a benched one, and Feint Attack's
+  // "effects on that Pokémon" does not reach the shared Stadium zone. Read anyway,
+  // for `attackDamageBlocked`'s totality reason.
   const prevented =
-    !ignoreWR &&
-    ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
-      attackDamageBlocked(state, target.active, attacker?.card, ctx));
+    (!ignoreWR &&
+      ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
+        preventsAttackerType(targetPassives.preventDamageFromTypes, attacker?.card) ||
+        attackDamageBlocked(state, target.active, attacker?.card, ctx))) ||
+    benchShieldedByActive(state, target.active) ||
+    stadiumPreventsDamage(state, target.active, attacker?.card);
   // Catalog half + installed half (D147), `ignoreWR` nulling both — the Bench
   // arm's comment one function up applies verbatim, and this is the site where
   // the printed parenthetical is observable, since it is the only one of the four

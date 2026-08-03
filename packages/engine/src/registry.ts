@@ -1,7 +1,7 @@
 import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY } from "./cards";
 import type { PokemonSuffix } from "./cards";
-import type { BoardCondition, EffectOp } from "./effects";
+import type { BoardCondition, EffectOp, PokemonType } from "./effects";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
 // It sits ABOVE the text deriver: attacks resolve `programFor(id)?.attack ??
@@ -252,9 +252,90 @@ export interface PassiveEffects {
       Safeguard has NO "in the Active Spot" clause, so it protects the holder on
       the Bench too. The only ex/V-gated total-prevention print in the sv01–03
       pool — the type-gated Dachsbun/Bellibolt "prevent all damage from {R}/{L}"
-      are a separate family needing an energy-type gate, not this one. A bare
-      flag: unconditional once the holder is in play. */
+      are a separate family needing an energy-type gate, not this one (they landed
+      at D159 as `preventDamageFromType` directly below, and this sentence is why
+      they are a SIBLING field rather than a widening of this one). A bare flag:
+      unconditional once the holder is in play. */
   preventDamageFromExV?: true;
+  /** §8.5 continuous holder-modifying PREVENTION, gated on the ATTACKER's printed
+      TYPE: prevent ALL attack damage this Pokémon TAKES from an opponent's
+      Pokémon of `type` (Dachsbun sv01-099 "Well-Baked Body" — `{R}`; Bellibolt
+      sv03-078/-201 "Insulator" — `{L}`; 3 printings / 2 sentences, censused
+      against the local D1 as its own question).
+
+      `preventDamageFromExV`'s TWIN one field up on every axis but the gate, and
+      deliberately a SIBLING rather than a widening of it. Three grounds, all
+      structural rather than stylistic:
+        • the two gates read DIFFERENT CATALOG COLUMNS. The rule box is derived
+          from the printed NAME (`pokemonSuffixOf`, and D146's `Ancient` finding is
+          precisely about what happens when a class has no column at all); a type
+          is the `Card.types` datum Weakness and Resistance already read. One is a
+          name parse, the other a field;
+        • the two FOLD differently. The ex/V flag ORs to a boolean over
+          `passivesOf`'s sources; a type must COLLECT, because two sources can name
+          two types and a scalar fold would silently be last-wins (the shape
+          `damageBonusBeforeWRIf` is already under — an optional scalar HERE, a
+          list in the aggregation);
+        • merging them would change the return type `passivesOf` hands three read
+          sites that have nothing to do with this printing, for no printed gain.
+
+      PARAMETERISED ON THE TOKEN rather than split into `preventDamageFromFire` /
+      `preventDamageFromLightning`, which is D118's rule applied where the evidence
+      is thinnest and `opponentActiveHasType` (effects.ts) is the direct precedent:
+      exactly one token varies, it is byte-identical to a value in `Card.types`,
+      and the vocabulary is CLOSED at eleven names. `PokemonType` and not
+      `BasicEnergyType` because the READ is `Card.types.includes` — Colorless and
+      Dragon are real Pokémon types with no Basic Energy, so typing the field with
+      the energy vocabulary would make a `{C}`/Dragon printing unspellable while
+      buying nothing.
+
+      Like the ex/V flag it modifies only its HOLDER, so it rides `passivesOf`
+      (and is therefore §9-suppressible, and nulled by Feint Attack's `ignoreWR`
+      at the two snipe arms — both are effects ON the damaged Pokémon), and the
+      attacker is known only at the read SITES, which resolve it through
+      continuous.ts `preventsAttackerType`. Neither printing carries an "in the
+      Active Spot" clause, so it protects a benched holder too.
+
+      ⚠️ DACHSBUN'S SENTENCE IS THE SECOND HALF OF ITS PRINTED ABILITY. The first —
+      "This Pokémon can't be Burned." — is a STATUS IMMUNITY and stays LOUD: it is
+      its own neighbourhood (Pachirisu sv01-068/-208 "Electricity Pouches" — "can't
+      be Paralyzed"; Therapeutic Energy sv02-193 — "can't be affected by those
+      Special Conditions"), it gates the §12 APPLICATION path rather than the §8.5
+      damage pipeline, and there is no field on this interface any read site would
+      consult for it. Authoring it here would be inventing a mechanism; leaving it
+      out is the declared omission the pool's other partial cards already are. */
+  preventDamageFromType?: PokemonType;
+  /** §8.5 continuous OWN-SIDE cross-body AURA: while this Pokémon is in the Active
+      Spot, every one of its CONTROLLER's BENCHED Pokémon takes no attack damage at
+      all (Thundurus sv03-070 "Adverse Weather" — "As long as this Pokémon is in
+      the Active Spot, prevent all damage done to your Benched Pokémon by attacks
+      from your opponent's Pokémon"). One printing, and the pool's only zone-scoped
+      prevention.
+
+      ⚠️ IT IS IN THE ATTACKER-FILTER FAMILY BY CENSUS ADJACENCY AND FILTERS NO
+      ATTACKER AT ALL. §D146 grouped it with Dachsbun/Bellibolt because the four
+      sentences share the string "by attacks from"; this one's object is "your
+      opponent's Pokémon", i.e. every attacker there is. What it narrows is the
+      PROTECTED body — the Bench — which is why it cannot be a `preventDamageFrom…`
+      refinement and is a scan instead.
+
+      SHAPE — `seatRemovesWeakness`'s, not `passivesOf`'s, and for that field's
+      reason verbatim: it does NOT modify its holder (the holder is the ACTIVE and
+      the protection lands on the BENCH), so continuous.ts reads it through a
+      dedicated own-side scan (`benchShieldedByActive`). It is the EIGHTH member of
+      the aura-scan family and inherits its three answers: the DERIVED SEAT (find
+      the side holding this top uid — here the side is the holder's OWN, which is
+      what makes it the family's first same-seat cross-body member), BOTH clauses
+      ENFORCED BY THE SCAN rather than by an `activeOnly` field (the SOURCE must be
+      Active, the TARGET must be Benched), and the §9 gate through
+      `disabledAbilityUids`, this being a printed Pokémon Ability that only a TOP
+      card grants.
+
+      NOT nulled by Feint Attack's `ignoreWR`, unlike every field above it: that
+      clause scopes "any effects on THAT Pokémon" and this aura's source is a
+      different body entirely — the holder's own Active. D151's reading at
+      `placeSnipe`'s bench arm, applied to a prevention instead of a subtraction. */
+  preventBenchDamageWhileActive?: true;
   /** §11 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon that satisfies `requiresEnergyType` has NO
       Retreat Cost. Like `removeWeakness` it reaches OTHER Pokémon rather than
@@ -397,6 +478,52 @@ export interface StadiumEffects {
   /** Attacks of every Basic Pokémon in play cost this many {C} more
       (Pokémon League Headquarters). */
   basicAttackCostSurcharge?: number;
+  /** §8.5 — prevent ALL attack damage done to any Pokémon WITHOUT a Rule Box, on
+      BOTH boards, when the attacker is a Pokémon ex or a Pokémon V (Neutralization
+      Zone sv06.5-060 — "Prevent all damage done to Pokémon that don't have a Rule
+      Box (both yours and your opponent's) by attacks from the opponent's Pokémon
+      ex and Pokémon V."). The pool's only Stadium on the damage pipeline, and the
+      first `StadiumEffects` field read by anything other than the retreat/attack
+      COST seam.
+
+      A BARE FLAG per D104's minimal-shape rule: both filters are printed
+      constants of the one printing, so there is nothing left to parameterise. The
+      NAME carries both, deliberately — a `preventDamage: {...}` record would
+      invite the next Stadium to reuse a shape whose two halves are this card's
+      alone.
+
+      THE TWO PREDICATES ARE THE ENGINE'S EXISTING ONES, NOT A SECOND ANSWER:
+        • "don't have a Rule Box" is `cards.ts hasRuleBox` NEGATED — the suffix
+          families ∪ the "Radiant " prefix, i.e. exactly the predicate Artazon's
+          `basicPokemon.noRuleBox` search filter already reads, and exactly what
+          this card's own reminder text ("Pokémon ex, Pokémon V, etc. have Rule
+          Boxes.") describes. Note the card is itself an ACE SPEC, which is a
+          TRAINER subtype and reaches no Pokémon-only check;
+        • "the opponent's Pokémon ex and Pokémon V" is `cards.ts isExOrV` — D107's
+          predicate reused verbatim, narrower than `hasRuleBox` (no VMAX/VSTAR/GX),
+          which is the asymmetry the sentence itself prints: the PROTECTED side is
+          filtered by rule box, the ATTACKING side by the ex/V pair.
+      Reading either a second time would be a second chance to disagree with §8.1's
+      prize-value work about what a Rule Box is.
+
+      "THE OPPONENT'S" IS SATISFIED BY CONSTRUCTION rather than by a check: all
+      four attack-damage sites damage the DEFENDING side, so the attacker is always
+      the protected Pokémon's opponent. A Pokémon's own `damageSelf` recoil never
+      routes through them, which is what keeps the possessive honest without a seat
+      argument.
+
+      NOT §9-suppressible (a Stadium is not an Ability, so `disabledAbilityUids`
+      has nothing to say about it) and NOT nulled by Feint Attack's `ignoreWR`,
+      which scopes "any effects on that Pokémon" — a Stadium is an effect on the
+      shared zone and on no Pokémon at all. Both are the sharpest lines between
+      this field and the two `PassiveEffects` preventions it sits beside.
+
+      ⚠️ THE CARD'S SECOND SENTENCE STAYS LOUD. "This card can't be put into your
+      hand or deck from the discard pile." is a DISCARD-PILE RETRIEVAL restriction
+      with one sibling in the pool (Poké Vital A sv06.5-062) and no reader anywhere
+      in the engine: no op, no filter and no search path consults a card's own
+      retrievability. Naming it here would be inventing a mechanism. */
+  preventDamageToNoRuleBoxFromExV?: true;
   /** The "once during each player's turn" activated ability (Artazon / Mesagoza
       / Town Store). A Stadium WITH this can be activated; the continuous-only
       Stadiums (Beach Court / League HQ) leave it undefined. */
@@ -735,6 +862,43 @@ const PUNK_OUT: CardProgram = {
     Block, Punk Out). */
 const PRESSURE: CardProgram = { passive: { opponentActiveAttackDebuff: 20 } };
 
+/** Dachsbun (sv01-099) — "Well-Baked Body": "This Pokémon can't be Burned.
+    Prevent all damage done to this Pokémon by attacks from your opponent's {R}
+    Pokémon." — SAFEGUARD's twin with the gate moved from the printed NAME to the
+    `Card.types` datum.
+
+    ⚠️ ONE OF THE TWO PRINTED SENTENCES IS AUTHORED AND THE OTHER STAYS LOUD, WHICH
+    IS THE ROW'S WHOLE JUDGEMENT. "can't be Burned" is a §12 status IMMUNITY: a
+    different pipeline, a different neighbourhood (Pachirisu sv01-068/-208, and
+    Therapeutic Energy sv02-193's "can't be affected by those Special Conditions")
+    and no field on `PassiveEffects` any read site would consult. Half a card
+    authored beats a whole card guessed at — and the omission is DECLARED here
+    rather than left to a reader to notice the fixture is complete while the
+    behaviour is not.
+
+    The type token is `{R}`, which the printed sentence spells as a brace code and
+    `Card.types` spells as "Fire". Nothing parses it: an ABILITY string never
+    reaches `deriveAttackEffect`, so the decode happens exactly once, HERE, by an
+    author who queried the row. */
+const WELL_BAKED_BODY: CardProgram = { passive: { preventDamageFromType: "Fire" } };
+
+/** Bellibolt (sv03-078/-201) — "Insulator": "Prevent all damage done to this
+    Pokémon by attacks from your opponent's {L} Pokémon." — Dachsbun's sentence
+    minus the status clause, which is what makes the two of them a FAMILY rather
+    than two cards: strip Well-Baked Body's first sentence and the remainder is
+    this one with a different token. Two printings (Uncommon / Illustration rare),
+    one program, D121's second-printing warrant met by the card itself. */
+const INSULATOR: CardProgram = { passive: { preventDamageFromType: "Lightning" } };
+
+/** Thundurus (sv03-070) — "Adverse Weather": "As long as this Pokémon is in the
+    Active Spot, prevent all damage done to your Benched Pokémon by attacks from
+    your opponent's Pokémon." — the pool's only ZONE-scoped prevention, and the
+    aura-scan family's first SAME-SEAT cross-body member (the Active protects the
+    Bench). It filters no attacker at all: "your opponent's Pokémon" is every
+    attacker there is, so unlike the two rows above it the narrowing is entirely on
+    the PROTECTED side. Read through continuous.ts `benchShieldedByActive`. */
+const ADVERSE_WEATHER: CardProgram = { passive: { preventBenchDamageWhileActive: true } };
+
 // ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
 /** Beach Court — "The Retreat Cost of each Basic Pokémon in play (both yours
@@ -752,6 +916,28 @@ const POKEMON_LEAGUE_HQ: CardProgram = { stadium: { basicAttackCostSurcharge: 1 
     the ATTACK-cost seam, not this one. */
 const CALAMITOUS_WASTELAND: CardProgram = {
   stadium: { basicRetreatSurcharge: { amount: 1, excludesType: "Fighting" } },
+};
+
+/** Neutralization Zone (sv06.5-060) — "Prevent all damage done to Pokémon that
+    don't have a Rule Box (both yours and your opponent's) by attacks from the
+    opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule
+    Boxes.)" (Stadium, ACE SPEC) — the first Stadium in the pool to reach the §8.5
+    DAMAGE pipeline; every other one bites a cost seam.
+
+    Beach Court's both-boards shape with the filters moved onto the two ENDS of an
+    attack: `hasRuleBox` negated on the body being hit, `isExOrV` on the body
+    hitting it. Both are `cards.ts` predicates already in service (Artazon's search
+    filter and Mimikyu's Safeguard), so this row introduces no new reading of what
+    a Rule Box is.
+
+    ⚠️ ITS SECOND SENTENCE STAYS LOUD, exactly as Dachsbun's first does. "This card
+    can't be put into your hand or deck from the discard pile." restricts DISCARD-
+    PILE RETRIEVAL — one sibling in the pool (Poké Vital A sv06.5-062) and no
+    reader anywhere: no search filter, no op and no zone rule consults a card's own
+    retrievability, so authoring it would be inventing a mechanism rather than
+    reading one. */
+const NEUTRALIZATION_ZONE: CardProgram = {
+  stadium: { preventDamageToNoRuleBoxFromExV: true },
 };
 
 /** Artazon — "Once during each player's turn, that player may search their deck
@@ -2241,6 +2427,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // Calamitous Wasteland (Stadium) — D109, verified vs local D1 2026-07-31
   "sv02-175": CALAMITOUS_WASTELAND,
   // — Stadium activated abilities (D102, verified vs local D1 2026-07-28). —
+  "sv06.5-060": NEUTRALIZATION_ZONE, // Neutralization Zone — the only Stadium on the §8.5 DAMAGE seam (ACE SPEC)
   "sv02-171": ARTAZON, // Artazon — search a no-Rule-Box Basic → Bench
   "sv03-229": ARTAZON, // Artazon (reprint)
   "sv01-178": MESAGOZA, // Mesagoza — coin-gated search a Pokémon → hand
@@ -2325,6 +2512,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "swsh10.5-025": PUNK_OUT, // Wimpod — Punk Out ("If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost")
   // — M5 long-tail: opponentActiveAttackDebuff, the ALWAYS-ON member of D149's pre-W/R debuff family (verified vs the local D1 2026-08-02). —
   "sv03-030": PRESSURE, // Entei — Pressure ("As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance)")
+  // — M5 long-tail: the ALWAYS-ON ATTACKER FILTERS — the always-on half of §D146's
+  //   census, re-queried as its own question against the local D1 (890 rows / 5
+  //   sets, 2026-08-03) plus FIXTURE_POOL swept SEPARATELY. Six rows print
+  //   "prevent all damage … by attacks from" outside an attack; one of the six is
+  //   Mimikyu's SAFEGUARD above, already simulated since 0.58.0, so this batch is
+  //   FIVE printings over FOUR sentences and three distinct mechanisms. —
+  "sv01-099": WELL_BAKED_BODY, // Dachsbun — Well-Baked Body (the {R} half; the Burn-immunity half stays LOUD)
+  "sv03-078": INSULATOR, // Bellibolt — Insulator ("Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon")
+  "sv03-201": INSULATOR, // (reprint — Illustration rare)
+  "sv03-070": ADVERSE_WEATHER, // Thundurus — Adverse Weather (the Active shields the BENCH; no attacker filter at all)
   // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
   "sv01-236": JACQ, // (reprint)

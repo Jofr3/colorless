@@ -288,6 +288,32 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         segments.push(plain(modifierText("resistance", event.resistance)));
       }
       if (event.reduction !== undefined) segments.push(plain(` · reduced ${event.reduction}`));
+      // D159 — THE FLAG HAS EXISTED SINCE 0.58.0 AND NOTHING HAS EVER RENDERED IT.
+      // A full prevention is the largest thing that can happen to a damage number
+      // and the row said only "dealt 0 damage to <name>", which reads to a player
+      // exactly like an attack that does nothing — the failure mode D142's
+      // ATTACK_EFFECT_PREVENTED row exists to avoid, one field away. Found by
+      // rendering the row rather than by reading the code: this slice takes the
+      // ways a hit can be nulled from two to five, and three of the five are
+      // invisible on the board (a benched shield's source is a different card; a
+      // Stadium's is no card at all).
+      //
+      // LAST, because prevention is the last step of §8.5 and SUPERSEDES the
+      // reduction above rather than replacing it — a row reading
+      // "· reduced 20 · prevented" reconstructs the pipeline exactly as the
+      // engine ran it (attack.ts computes both and lets the null win).
+      //
+      // ⚠️ IT NAMES THE FACT AND NOT THE RULE, WHICH IS THE VOICE ANSWER. This row
+      // renders under the ATTACKER's name (`otherSeat(event.seat)`, the line below)
+      // while `event.seat` owns the DAMAGED Pokémon — the one event in this family
+      // whose row is filed under the opposite seat from its own contract. So a
+      // crumb naming an owner ("your Pokémon is protected"), a turn, or a source
+      // ("Safeguard") would be spoken from the wrong chair, and the last of those
+      // is unknowable here anyway: five rules set this flag and the event carries
+      // no member saying which (events.ts, deliberately). A bare past-tense
+      // statement about the damage is true under both seats, which is why the
+      // wording is one word. Rendered under both and read, not assumed.
+      if (event.prevented === true) segments.push(plain(" · prevented"));
       return row(otherSeat(event.seat), segments);
     }
     // — M3 special conditions (§12) + the Pokémon Checkup (§13). Card names
