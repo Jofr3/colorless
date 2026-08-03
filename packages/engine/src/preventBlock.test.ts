@@ -841,6 +841,20 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // wants `dealt > 0`, and a block that nulls the hit to 0 stops the retaliation
     // without ever touching this record (driven in installedRecoil.test.ts).
     installRecoil: "untouched",
+    // D154's per-attack lock, and the FIFTH op classified by this table rather
+    // than by the slice that wrote it. UNTOUCHED for `reduceDamage`'s and
+    // `installRecoil`'s verdict verbatim — it writes a record onto the
+    // CONTROLLER's own Active, so there is no opponent-side body a §11 block could
+    // be protecting from it.
+    //
+    // ⚠️ AND IT IS THE ONE PLACE IN THIS TABLE WHERE `preventAttack` AND ITS
+    // SIBLING DISAGREE, which is worth saying because they read as one mechanism.
+    // That op is `blocked` ONLY because D148 gave it a DEFENDER arm; this one has
+    // no such arm and cannot acquire one from the pool (the opponent-side twin
+    // needs a park to choose the attack, so it would be a third op, not this one's
+    // second arm). Two ops that write the same kind of fact land on opposite sides
+    // of this table because the table asks about the BODY, not about the rule.
+    preventAttackUse: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1139,6 +1153,17 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     installRecoil: {
       op: { op: "installRecoil", amount: 100 },
       landed: (r) => p2Active(r.after)?.installedRecoil != null,
+    },
+    // D154 — the actor's own body a third time. It needs a NAMED board rather than
+    // the standard one, and that is a property of the op rather than a convenience:
+    // it resolves the printed noun against the HOLDER's printed attacks, so a probe
+    // run against whatever body setup happened to deal would install nothing and
+    // the case would read "untouched" off an op that never ran. `fix-attacker`'s
+    // index-0 "Bite" is the name, dealt onto P2's Active explicitly.
+    preventAttackUse: {
+      op: { op: "preventAttackUse", attack: "Bite" },
+      board: () => setActiveFromDeck(probeBoard(), "p2", "fix-attacker"),
+      landed: (r) => p2Active(r.after)?.lockedAttack != null,
     },
   };
 

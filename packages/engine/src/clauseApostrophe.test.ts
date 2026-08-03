@@ -192,7 +192,22 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // bearing only at the very front of the anchor. A build that folded the
     // apostrophe anywhere but position 19 still passes it, which is why the count
     // is a floor and the per-sentence rewrite below is the real assertion.
-    expect(derivable).toHaveLength(52);
+    //
+    // ⚠️ AND D154 ADDS FIVE — THE LARGEST JUMP THIS CENSUS HAS SEEN, AND THE FIRST
+    // WHOSE APOSTROPHE REACHES A DERIVED VALUE RATHER THAN A PATTERN OR A TABLE
+    // KEY. The per-attack lock's five sentences all carry the contraction "can't"
+    // (Skarmory sv03-142, Munkidori ex sv06.5-037, Greedent ex sv03-179, Lucario
+    // sv01-114 and Radiant Blastoise swsh10.5-018), which by itself would be four
+    // more rows of the shape D143 already established. What is new is **Greedent
+    // ex's "Slip 'n' Roll"**: the anchor CAPTURES the attack's name, and that name
+    // carries TWO MORE apostrophes — so the rewrite below changes the derived op's
+    // own field, not merely the string it was read from. D137's contract is that
+    // the two spellings produce the SAME VALUE, so `deriveAttackEffect` folds the
+    // capture (`foldApostrophes`, effects.ts) and the install site folds the card's
+    // own `name` to match. **This row is what makes that fold load-bearing:**
+    // remove either half and this single sentence fails while the other 56 pass,
+    // which is the exact shape of the half-fix D137 was written to prevent.
+    expect(derivable).toHaveLength(57);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

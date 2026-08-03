@@ -263,30 +263,24 @@ describe("the self-lock — derived, not authored", () => {
   });
 
   it("refuses the PER-ATTACK lock — the field warrant this anchor still declines", () => {
-    // ⚠️ RE-POINTED AT D148, NOT DELETED, AND THE TITLE MOVED WITH IT. This case
-    // held BOTH field warrants at 0.92.0–0.96.0: the OPPONENT-side lock (which
-    // would earn `preventAttack` a `target`) and the PER-ATTACK lock (which would
-    // earn it an attack address). D148 took the first, so those two rows move OUT
-    // of the null list and into the shape claim below — where they say something
-    // strictly stronger than "unmapped": that THIS anchor still does not reach
-    // them, and that the anchor which does derives a program pointed at the other
-    // seat. The per-attack rows stay exactly where they were.
+    // ⚠️ RE-POINTED TWICE, NEVER DELETED, AND THE TITLE HAS OUTLIVED BOTH MOVES.
+    // This case held BOTH field warrants at 0.92.0–0.96.0: the OPPONENT-side lock
+    // (which would earn `preventAttack` a `target`) and the PER-ATTACK lock (which
+    // would earn it an attack address). D148 took the first, so those rows moved
+    // OUT of the null list and into the shape claim below. D154 took the SELF side
+    // of the second — as a SEPARATE op rather than a field, D131's widen-don't-add
+    // test having FAILED on it — so those two rows move the same way, and what
+    // stays LOUD here is the OPPONENT-side twin alone. The claim this file makes
+    // is now the strongest it has ever made: not "unmapped", but that THIS anchor
+    // reaches none of the four programs below, each of which is a different op.
     for (const text of [
-      // The PER-ATTACK lock, 10 printings across 7 sentences (8/6 SELF-side plus
-      // the opponent-side pair D148's census found): it names ONE attack and
-      // leaves the card's other attack legal, which is a fact this field cannot
-      // express. Two samples (Radiant Blastoise swsh10.5-018, Munkidori ex
-      // sv06.5-037), and the second is the one whose card has no other attack —
-      // so a reader tempted to treat it as the whole-Pokémon lock would be right
-      // about that ONE card and wrong about the other seven.
-      "During your next turn, this Pokémon can't use Torrential Cannon.",
-      "During your next turn, this Pokémon can't use Dirty Headbutt.",
-      // …and the OPPONENT-side twin of it (Medicham sv01-111 "Acu-Punch-Ture",
-      // Oranguru sv02-094 "Plotter's Command"), which D148's census turned up and
-      // no earlier list or census had. It is the sentence a reader might think
-      // `target: "defender"` now reaches: it does not, and it is TWO steps away
-      // rather than one — the lock is per-ATTACK, and CHOOSING which attack is a
-      // park nothing in this family has.
+      // The OPPONENT-side twin of the per-attack lock (Medicham sv01-111
+      // "Acu-Punch-Ture", Oranguru sv02-094 "Plotter's Command"), which D148's
+      // census turned up and no earlier list or census had. It is the sentence a
+      // reader might think `target: "defender"` or D154's `preventAttackUse` now
+      // reaches: NEITHER does, and it is two steps from each — the lock is
+      // per-ATTACK on the far side of the table, and CHOOSING which attack is a
+      // park nothing in this family has. THE LAST UNREAD MEMBER OF THE GROUP.
       "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
       // …and the neighbour that is neither a lock nor unmapped-by-accident: a
       // durated BUFF on one named attack (Seismitoad sv03-052 "Echoed Voice").
@@ -324,9 +318,23 @@ describe("the self-lock — derived, not authored", () => {
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
-    // …and NEITHER of them is what THIS file's anchor derives, asserted rather
+    // …and the two rows that MOVED AT D154, on the same principle: both now
+    // derive, both derive a DIFFERENT OP, and neither is reachable from this
+    // file's anchor. Radiant Blastoise swsh10.5-018's card has ONE attack and
+    // Munkidori ex sv06.5-037's has ONE attack, which is precisely why they are
+    // the pair to assert here — on a one-attack card a per-attack bar and a
+    // whole-Pokémon lock are observationally identical on the board, so ONLY the
+    // derived program can tell a reader that drifted between them apart.
+    expect(deriveAttackEffect("During your next turn, this Pokémon can't use Torrential Cannon.")).toEqual([
+      { op: "preventAttackUse", attack: "Torrential Cannon" },
+    ]);
+    expect(deriveAttackEffect("During your next turn, this Pokémon can't use Dirty Headbutt.")).toEqual([
+      { op: "preventAttackUse", attack: "Dirty Headbutt" },
+    ]);
+    // …and NONE of them is what THIS file's anchor derives, asserted rather
     // than reasoned about: the bare self-lock's program carries no `target` at
-    // all, so an absent key and `"defender"` are two different programs.
+    // all and no `attack`, so an absent key, `"defender"` and a named attack are
+    // three different programs from three different sentences.
     expect(deriveAttackEffect(BARE_TEXT)).toEqual([{ op: "preventAttack" }]);
   });
 

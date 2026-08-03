@@ -512,6 +512,52 @@ export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean 
   return pokemon.attackLockedTurn === state.turn;
 }
 
+/** §8/§11 (D154) — WHICH of `pokemon`'s attacks is barred right now ("During your
+    next turn, this Pokémon can't use {AttackName}."), as an index into the
+    stack-top card's `attacks`, or `null` when none is. The ONE read of
+    `InPlayPokemon.lockedAttack`, and `attackLocked`'s sibling one function up in
+    every respect except its return type: the field holds a turn STAMP beside the
+    address, so the bar is live iff that stamp is the turn now being played, and a
+    bar whose window has passed stops answering without anyone having cleared it.
+
+    ⚠️ IT RETURNS THE INDEX RATHER THAN A PREDICATE, AND THAT IS THE ONE PLACE
+    THIS FAMILY'S READER SHAPE HAD TO MOVE. `attackLocked` returns a boolean
+    because there is ONE fact and nothing to carry (D104's minimal shape); here the
+    fact IS an address, and every caller has a candidate index in hand and wants to
+    know whether it is the barred one. Returning `boolean` from a
+    `(state, pokemon, index)` signature would have been the other shape and is
+    refused for one observable reason: `redactedAttacksOf` and GameHud both build
+    their rows by mapping over the whole `attacks` array, so a per-index predicate
+    would be called once per attack and re-read the same field N times, while the
+    §8 gate would call it once — three sites, two access patterns, one field. An
+    index answers both in one read.
+
+    ⚠️ AND THIS IS THE FIELD THAT ANSWERS §D152's SHAPE TRIGGER, WITH A "NO".
+    D152 retired the count trigger for the `attackBlock` union and replaced it with
+    *a member the read site must DISPATCH on rather than SUM* — naming this record's
+    `{ turn, attackIndex }` as the case. It is genuinely not a sum: the three
+    callers COMPARE the index. But no site DISPATCHES either, and that is the
+    difference a union would have to pay for. Every read site in this family knows
+    which rider it wants BEFORE it looks — this function is the only reader of this
+    field and it asks for exactly one kind — so a union would turn a checked field
+    access into a `find` over a list whose other members it must then discard. The
+    trigger that would earn it is a caller that receives a rider whose KIND it does
+    not know, i.e. an ENUMERATION; §D147's trigger (a) (a printing that REMOVES the
+    effects of attacks) is still the only forecast producer of one, and the pool
+    still prints none. Full argument in decisions.md D154.
+
+    NO PROVENANCE CHANNEL, for `attackLocked`'s reason verbatim: it is read from
+    `attack.ts`'s §8 gate and from the two payability projections, all of which are
+    by construction about declaring an ATTACK, so there is exactly one kind of
+    thing it can refuse and nothing to disambiguate. */
+export function lockedAttackIndex(state: GameState, pokemon: InPlayPokemon): number | null {
+  // No defensive `=== undefined` arm, for `attackBlockOf`'s reason two functions
+  // up: the field is REQUIRED and a record written before it existed is retired
+  // by MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
+  const locked = pokemon.lockedAttack;
+  return locked === null || locked.turn !== state.turn ? null : locked.attackIndex;
+}
+
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus
     any continuous bonus (Bravery Charm). A null printed hp is the catalog
     data gap (cards.ts hpOf) and STAYS null — a bonus on top of unknown HP is

@@ -339,6 +339,14 @@ export function placeEvolution(
     // expiry. Written anyway (§10 sheds the effects of ATTACKS and this is one)
     // and pinned by a surgery.
     installedRecoil: null,
+    // …and, since D154, the attack-installed PER-ATTACK lock — whose story here is
+    // the LOCK's two lines up and not the reduction's, for the same reason it
+    // shares that lock's number: the window is the HOLDER's own next turn, so
+    // evolving the barred Pokémon on that turn frees the barred attack
+    // immediately. A PLAYED LINE, driven end to end (Skarmory → fix-skarm-stage1),
+    // and the sharpest of the three routes because it costs no Energy and no
+    // allowance.
+    lockedAttack: null,
     markers: [],
     turnPlayed: state.turn,
   };
@@ -419,6 +427,13 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // clear, FIVE distinct reachability stories — which is why the clear-set is
     // SWEPT and not listed.
     installedRecoil: null,
+    // D154 — the per-attack lock, whose story here is the SELF-LOCK's four fields
+    // up (same window, same body): the RETREAT half is the reachable one and it is
+    // the holder's own line of play — retreat the barred Pokémon on the very turn
+    // the bar is live, promote something that can attack, and with a Switch bring
+    // the now-unbarred body back. SEVEN durated effects on one clear, FIVE
+    // reachability stories — which is why the clear-set is SWEPT and not listed.
+    lockedAttack: null,
   };
 }
 

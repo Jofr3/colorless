@@ -2,6 +2,7 @@ import type { Card } from "@luminous/schema";
 import {
   activeTop,
   applyDamageModifier,
+  attacksOf,
   energyProvidesOf,
   evolveFromOf,
   hasRuleBox,
@@ -27,7 +28,7 @@ import {
   providesEnergyType,
   seatRemovesWeakness,
 } from "./continuous";
-import { STATUS_WORD_OF } from "./effects";
+import { STATUS_WORD_OF, foldApostrophes } from "./effects";
 import type {
   AttachTargetRiders,
   BoardCondition,
@@ -659,6 +660,8 @@ function stepOp(
       return { done: preventDamage(state, op.effects === true, op.fromClass, ctx, events) };
     case "preventAttack":
       return { done: preventAttack(state, op, ctx, events) };
+    case "preventAttackUse":
+      return { done: preventAttackUse(state, op.attack, ctx, events) };
     case "reduceDamage":
       return { done: reduceDamage(state, op.amount, ctx, events) };
     case "weakenDefenderAttacks":
@@ -1923,6 +1926,95 @@ function preventAttack(
   if (active.attackLockedTurn === turn) return state;
   events.push({ type: "ATTACK_LOCKED", seat, uid });
   return withActive(state, seat, { ...active, attackLockedTurn: turn });
+}
+
+/** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active ("During
+    your next turn, this Pokémon can't use {AttackName}.", 6 catalogued printings
+    across 4 names plus 1 fielded uncatalogued printing). `preventAttack`'s
+    sibling one function up, and written beneath it so the pair reads as one
+    design:
+
+    | | `preventAttack` (D143/D148) | this (D154) |
+    |---|---|---|
+    | Holder | `ctx.seat`'s Active, or the defender's | `ctx.seat`'s Active |
+    | Stamp  | `+ 2` self / `+ 1` defender            | `+ 2`               |
+    | State  | `attackLockedTurn: number`             | `lockedAttack: { turn, attackIndex }` |
+    | Gate   | the whole DECLARATION                  | ONE index of it     |
+
+    ⚠️ THE PRINTED NAME IS RESOLVED HERE, AND THIS IS THE ONLY SITE THAT KNOWS IT.
+    The deriver captures a PROPER NOUN because that is what the sentence contains;
+    every consumer of the record addresses attacks by INDEX (attack.ts's §8 gate
+    compares `action.index`, and both payability projections map over
+    `attacksOf(card)`). So the lookup happens once, at the install, against the
+    HOLDER's own stack-top card — the same call D152's deriver made converting
+    counters to HP, in the same direction: translate at the site that owns the
+    printed token, so nothing downstream has to know a sentence named anything.
+
+    ⚠️ A NAME THAT MATCHES NOTHING INSTALLS NOTHING, AND SILENTLY. Unreachable off
+    every printing in the pool — all six name their own attack — so it is a
+    CONSTRUCTED case and it is pinned as one. The alternative (stamping an index
+    of −1, or the printed name itself) would put a value into a persisted record
+    that no read site can act on, and the alternative to THAT (emitting a row
+    anyway) would tell a player about a drawback that cannot bite. A lock on an
+    attack the card does not have is inert; the honest representation of inert is
+    absence (D140/D146: a gate that declines emits nothing).
+
+    ⚠️ NO `attackEffectRefused` CHECK, AND THAT IS `reduceDamage`'s AND
+    `installRecoil`'s VERDICT AND NOT AN OMISSION. The record lands on the ACTOR's
+    own Active, so there is no opponent-side body a §11 "prevent all effects of
+    attacks done to this Pokémon" could be protecting from it. The §11
+    classification table (preventBlock.test.ts) carries the verdict AND a board
+    that drives it, which is D150's rule.
+
+    IDEMPOTENT, and here that is by construction exactly as D143's self arm was:
+    installing needs an attack, an attack ends the turn, and the window is the
+    holder's own next turn — on which the only attack that could re-install is the
+    very one this record bars. So a second install can never land on a LIVE record,
+    and the early-return covers the constructed case (same turn AND same index →
+    silent, D142's idempotence answer) while a differing index simply overwrites,
+    because a later install always stamps a later turn. */
+function preventAttackUse(
+  state: GameState,
+  attack: string,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  const card = topCardOf(state, active);
+  if (uid === undefined || card === undefined) return state;
+  // The printed noun → the index every read site speaks. `findIndex` over the
+  // holder's OWN printed attacks, so a sentence naming an attack this card does
+  // not have resolves to nothing and writes nothing (above).
+  //
+  // ⚠️ BOTH SIDES ARE APOSTROPHE-FOLDED (D137's rule, D154's reach). The op's
+  // token was folded at the deriver; the card's `name` is folded here, because a
+  // punctuation-normalising re-ingest would rewrite BOTH the sentence and the
+  // attack row it names — Greedent ex sv03-179's "Slip 'n' Roll" is the printing
+  // that makes it visible — and folding one side only is the half-fix that reads
+  // like a whole one.
+  const printed = attacksOf(card);
+  const attackIndex = printed.findIndex((row) => foldApostrophes(row.name) === attack);
+  if (attackIndex < 0) return state;
+  // The one rule, D143's: the window is the holder's own next turn, and declaring
+  // an attack ENDS the turn (§5.3), so the turn after this one is the opponent's
+  // and the one after THAT is the holder's.
+  const turn = state.turn + 2;
+  const existing = active.lockedAttack;
+  if (existing !== null && existing.turn === turn && existing.attackIndex === attackIndex) {
+    return state;
+  }
+  // The RESOLVED row's own name and not the op's token: the two differ only in
+  // punctuation (the op's is folded, the card's is as printed), and a log row is
+  // read by a player holding the card — so it prints the card's spelling.
+  events.push({
+    type: "ATTACK_LOCKED",
+    seat: ctx.seat,
+    uid,
+    attack: printed[attackIndex]?.name ?? attack,
+  });
+  return withActive(state, ctx.seat, { ...active, lockedAttack: { turn, attackIndex } });
 }
 
 /** §8.5/§11 (D147) — INSTALL the printed DAMAGE REDUCTION on the CONTROLLER's own
@@ -3257,6 +3349,16 @@ export function switchInto(
     // sharpest available witness that the clear is real (the very next hit draws
     // no counters). SIX durated effects, FIVE reachability stories, one clear.
     installedRecoil: null,
+    // D154 — and the PER-ATTACK lock's story here is D143's `attackLockedTurn`
+    // verbatim, because it is the same window on the same body: the holder may
+    // Switch their own barred Pokémon out (and back in, on the same turn, with an
+    // Item — at which point it may use the barred attack, because §10 shed the
+    // effect), and the OPPONENT may drag it out with a Boss's Orders during the
+    // window, un-barring an attack they were trying to avoid. SEVEN durated
+    // effects, FIVE reachability stories, one clear, and the set is SWEPT rather
+    // than listed (perAttackLock.test.ts) precisely because this literal is one of
+    // three that have to agree with nothing making them.
+    lockedAttack: null,
   };
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1), benched];
   events.push({

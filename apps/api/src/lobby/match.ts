@@ -346,8 +346,34 @@ export interface MatchRecord {
     `EffectContext` field, no `BoardCondition` member, no `COUNTERS_PLACED` member
     (the recoil it produces reuses D141's `"counterattack"`). The RENDERED
     `SeatLogEntry[]` gains one new row type (`RECOIL_ARMED`), which is text in NEW
-    records only and is D141's already-settled case. */
-export const MATCH_RECORD_VERSION = 8;
+    records only and is D141's already-settled case.
+
+    ⚠️ BUMPED AT D154 (engine 0.102.0), 8 → 9, and it is the SEVENTH time on
+    D124's SAME trigger. `InPlayPokemon.lockedAttack: LockedAttack | null` is a
+    REQUIRED key on `InPlayPokemon` — the printed "During your next turn, this
+    Pokémon can't use {AttackName}." (Munkidori ex sv06.5-037/-083/-091, Lucario
+    sv01-114, Skarmory sv03-142, Greedent ex sv03-179) — so a record written by the
+    previous deploy has, for every body in play, a shape the new type does not
+    describe. It reads back BENIGNLY (`lockedAttackIndex` tests
+    `locked === null || locked.turn !== state.turn`, and an absent field is
+    `undefined`, so an old record throws rather than lying — which is worse than
+    D142's silent `false` and is the one variant of this trigger where the soft
+    landing is not even soft). The rule does not turn on that: the test is "can the
+    PREVIOUS deploy's RECORD hold the new TYPE", and it cannot.
+
+    ⚠️ AND THE OTHER TWO PERSISTED SHAPES THIS SLICE TOUCHES DO **NOT** BUMP IT,
+    which is worth stating because both are new keys. `preventAttackUse` is a NEW
+    op member rather than a field on an old one (a widening for any old
+    continuation, which cannot contain it), and it never parks — deterministic,
+    consumes no rng, asks nothing — so no `EffectContinuation` carries it into
+    `phase.cont`. `ATTACK_LOCKED.attack?: string` is an OPTIONAL field on a
+    `GameEvent`, and `GameEvent` is not persisted at all (D153 swept it: it appears
+    in no file outside `packages/engine/src`; `MatchRecord` persists the RENDERED
+    `SeatLogEntry[]`). So the row wording changes for NEW rows only — D141's
+    already-settled cosmetic seam. No `GameState` field, no `EffectContext` field,
+    no `BoardCondition` member, no new error code (the §8 gate reuses
+    `ATTACK_PREVENTED`). */
+export const MATCH_RECORD_VERSION = 9;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

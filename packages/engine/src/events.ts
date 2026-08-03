@@ -237,8 +237,33 @@ export type GameEvent =
       from D142's `ATTACK_EFFECT_PREVENTED`: a refused attack clause is silent
       unless something says so, but a refused ATTACK DECLARATION comes back to the
       player as an `ATTACK_PREVENTED` rejection with a message (actions.ts). The
-      action never happened, so there is no history row to write. */
-  | { type: "ATTACK_LOCKED"; seat: Seat; uid: string }
+      action never happened, so there is no history row to write.
+
+      ⚠️ `attack` IS D154's PER-ATTACK NARROWING, AND IT IS A FIELD ON THIS EVENT
+      RATHER THAN A SIBLING EVENT — D113's rule, and D153's application of it three
+      weeks running. The game fact is one fact ("this body has been barred from
+      attacking next turn"); what the printed sentence adds is HOW MUCH of it is
+      barred, and ABSENT means "all of it" (D135's absent-key rule, the polarity
+      `AttackBlock.fromClass` and `preventAttack.target` are already under). The
+      renderer branches on presence, and the branch is REQUIRED rather than
+      cosmetic: "<name> can't attack next turn" printed for a Skarmory that may
+      still declare "Peck" is not stilted, it is FALSE — which is the test D153
+      left behind (does the row ASSERT something the path makes untrue?).
+
+      It carries the printed NAME and not the index the state stores, because a log
+      row is read by a player holding the card: the index is the engine's
+      addressing and the name is the card's. The install resolves one to the other
+      once (interpreter.ts) and puts both where they are read.
+
+      The row is still emitted by ONE op each — `preventAttack` writes it bare,
+      `preventAttackUse` writes it with the name — and the VOICE rule is unchanged
+      in both: `seat` owns the LOCKED Pokémon (D136's finding 1). D154's op has no
+      defender arm, so its rows are always the actor's own; D148's remain the
+      actor's on 22 printings and the victim's on 4. "next turn" means the NAMED
+      player's next turn under either, which is what makes one wording carry all
+      three paths (D148's finding, re-checked by rendering the new row under both
+      seats rather than by citing it). */
+  | { type: "ATTACK_LOCKED"; seat: Seat; uid: string; attack?: string }
   /** §8.5/§11 (D147) — an attack INSTALLED a durated DAMAGE REDUCTION on its own
       Active ("During your opponent's next turn, this Pokémon takes {N} less
       damage from attacks (after applying Weakness and Resistance)."). `amount` is

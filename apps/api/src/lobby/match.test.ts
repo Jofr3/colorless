@@ -352,7 +352,19 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // rather than look an effect up, and a union would group by where the datum is
     // STORED — the one axis no read site asks about. What earns it is a member the
     // read site must DISPATCH on. See D152.
-    expect(MATCH_RECORD_VERSION).toBe(8);
+    //
+    // 8 → 9 is D154's required `InPlayPokemon.lockedAttack` — THE SAME CASE A
+    // SIXTH TIME, and the SHAPE trigger D152 forecast: the record is
+    // `{ turn, attackIndex }`, so the read is a COMPARISON rather than a sum. It
+    // was re-derived and DECLINED again, on a ground that refines the trigger
+    // rather than retiring it — no read site DISPATCHES, because every reader in
+    // this family knows which rider it wants before it looks, so a union would
+    // swap a checked field access for a `find` over members the caller discards.
+    // What earns it is an ENUMERATING caller. Note D153 in between did NOT bump
+    // (an event field, and `GameEvent` is not persisted at all), which is a THIRD
+    // control beside D148 and D151 for "a required key appeared on
+    // `InPlayPokemon`" being the literal trigger. See D154.
+    expect(MATCH_RECORD_VERSION).toBe(9);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

@@ -385,8 +385,35 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // wrote it) to tell the reader something they already have (whose Pokémon it
     // is). Contrast the THIRD phrasing D146 had to add above: that field changed
     // what the rule DOES.
+    //
+    // ⚠️ D154 ADDS THE ONE BRANCH THIS ROW DOES NEED, AND THE CONTRAST WITH D148
+    // IS THE ARGUMENT. That slice flipped whose Pokémon the row names and needed
+    // no new wording, because "can't attack next turn" is true of a locked body
+    // under either seat. This slice changes WHAT IS TRUE: a Skarmory whose
+    // "Slashing Steel" is barred may still declare "Peck", so the bare wording
+    // would not read stilted — it would be FALSE, and false in the direction that
+    // makes a player pass a turn they could have attacked on. D153's test applied:
+    // the question is not "does the row NAME the attack?" but "does it ASSERT
+    // something this path makes untrue?". So the narrowing rides the event
+    // (`attack`, the printed name) and the branch is on its presence, ABSENT
+    // meaning the whole Pokémon (D135's absent-key rule).
+    //
+    // The narrow wording keeps the printed verb ("can't use {Name}") so a player
+    // with the card in front of them reads back the words on it —
+    // DAMAGE_REDUCTION_APPLIED's rule — and keeps "next turn" rather than the
+    // printed "During your next turn", for D148's reason: under this event
+    // family's seat rule "next turn" always means the NAMED player's own, which is
+    // what lets one phrasing serve every path. Rendered under BOTH seats and read
+    // before it was chosen (perAttackLock.test.ts), not assumed.
     case "ATTACK_LOCKED":
-      return row(event.seat, [strong(cardName(state, event.uid)), plain(" can't attack next turn")]);
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          event.attack === undefined
+            ? " can't attack next turn"
+            : ` can't use ${event.attack} next turn`,
+        ),
+      ]);
     // §8.5/§11 — the attack-installed DAMAGE REDUCTION. ACTIVE voice for
     // ATTACK_BLOCK_APPLIED's reason (`seat` owns the protected Pokémon AND that
     // Pokémon is the actor's own), and the NUMBER is in the wording because the

@@ -27,6 +27,7 @@ import {
   installedAttackDebuffOf,
   installedRecoilOf,
   installedReductionOf,
+  lockedAttackIndex,
   opposingAttackDebuff,
   passivesOf,
   providedEnergy,
@@ -299,6 +300,34 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const declared = Number.isInteger(index) ? attacks[index] : undefined;
   if (declared === undefined) {
     return err("BAD_ATTACK_INDEX", `${attacker.name} has no attack at index ${String(index)}`);
+  }
+  // §8/§11 (D154) — an attack barred THIS ONE attack on THIS turn ("During your
+  // next turn, this Pokémon can't use {AttackName}."). Read through
+  // `lockedAttackIndex`, so the turn comparison lives in one place and this site
+  // cannot drift from the two payability projections of the same fact
+  // (`redactedAttacksOf` in redact.ts, and GameHud's `disabled`).
+  //
+  // ⚠️ IT SITS AFTER THE INDEX CHECK AND THE WHOLE-POKÉMON LOCK SITS BEFORE IT,
+  // AND THAT ORDER IS THE WHOLE DIFFERENCE BETWEEN THE TWO GATES. D143's lock is a
+  // fact about the BODY, so it can be asked before anything about the declaration
+  // is known and reports the reason nearest the top of the rulebook. This one is a
+  // fact about the DECLARATION, so it cannot be asked until `index` has been
+  // proved to name a real attack — otherwise a bogus index on a barred Pokémon
+  // would report the bar instead of the index, which is the wrong complaint. It is
+  // still placed BEFORE the cost check, for D143's reason verbatim: a player whose
+  // attack is barred should be told that, not "that attack costs …".
+  //
+  // A REJECTION, NOT AN `ATTACK_FAILED`, and NO NEW ERROR CODE: the printed words
+  // are "can't use", the action is illegal, nothing is spent and the turn does NOT
+  // end — which is exactly what `ATTACK_PREVENTED` already means one gate up. What
+  // differs is the message, because what differs is what the player must do next:
+  // the whole-Pokémon lock leaves them nothing to declare, while this one leaves
+  // the card's OTHER attack legal and the message says so by naming the barred one.
+  if (lockedAttackIndex(state, active) === index) {
+    return err(
+      "ATTACK_PREVENTED",
+      `an attack effect stops this Pokémon using ${declared.name} this turn (§11)`,
+    );
   }
   // §8.2 cost check against what the attached energies provide (basic types,
   // special-energy units incl. wildcards — continuous.ts providedEnergy),

@@ -5208,6 +5208,215 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 1,
     resistances: [{ type: "Psychic", value: "-30" }],
   }),
+  // — D154's PER-ATTACK LOCK: "During your next turn, this Pokémon can't use
+  //   {AttackName}." Every row verbatim off the local D1 (2026-08-02, 978 cards),
+  //   checked FIELD BY FIELD **including the fields the row does not have** (D151's
+  //   rule after 40 pool fixtures turned out to be missing a printed Ability or
+  //   attack). None of the four cards was in the pool before this slice. —
+  /** Skarmory sv03-142 — "Slashing Steel" ({M}{M}{C}, printed 120, attack **INDEX
+      1**), and the family's HEADLINE fixture because its card carries a SECOND
+      attack the lock leaves legal. Index 0 "Peck" ({C}, 20, no effect text) is the
+      whole difference between this slice and D143's: a Skarmory barred from
+      Slashing Steel may still declare Peck, and a build that reused
+      `attackLockedTurn` would refuse both while looking completely correct.
+
+      It is also the §10 EVOLVE case's base (`fix-skarm-stage1` below) — Skarmory
+      is a BASIC, so it can be dealt straight into the Active Spot and then evolved
+      inside the window, which is the line D143 could drive and D142 could not.
+
+      Verbatim off the D1: 120 HP, Basic, Metal, retreat 1, ×2 Lightning, −30
+      Fighting Resistance, `abilities_json` NULL (asserted as an absence), reg mark
+      G, Uncommon. */
+  "sv03-142": battler("sv03-142", {
+    name: "Skarmory",
+    types: ["Metal"],
+    stage: "Basic",
+    hp: 120,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      { cost: ["Colorless"], name: "Peck", damage: 20 },
+      {
+        cost: ["Metal", "Metal", "Colorless"],
+        name: "Slashing Steel",
+        damage: 120,
+        effect: "During your next turn, this Pokémon can't use Slashing Steel.",
+      },
+    ],
+  }),
+  /** A synthetic Stage 1 that evolves from **Skarmory** — `fix-mola-stage1`'s twin
+      (D143 invented that one for the same rule) and the one fixture D154 invents.
+      It makes the §10 EVOLVE clear a REAL drive rather than a state surgery: the
+      window is the HOLDER's own next turn, so evolving out of it is a line a player
+      takes. The catalog prints no Skarmory evolution, which is exactly why this is
+      a `fix-` card — the CLAIM is §10's rule, not a card.
+
+      ⚠️ ITS ATTACK LIST IS DELIBERATELY ONE ENTRY LONG, AND THAT IS THE POINT OF
+      THE CASE RATHER THAN A CONVENIENCE. This family's record addresses an attack
+      by INDEX, so a stale record surviving an evolution would not merely persist —
+      it would point at a DIFFERENT attack on a different card, or at an index the
+      new card does not have. Evolving a Skarmory whose index-1 was barred into a
+      body with only an index 0 is the sharpest available witness that the clear
+      is real, because the failure it rules out is not "still locked" but "locked
+      somewhere else". */
+  "fix-skarm-stage1": {
+    ...blank,
+    id: "fix-skarm-stage1",
+    name: "fix-skarm-stage1",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 160,
+    types: ["Metal"],
+    retreat: 2,
+    evolveFrom: "Skarmory",
+    attacks: [{ cost: ["Metal"], name: "Wing Cut", damage: 50 }],
+  } satisfies Card,
+  /** Munkidori ex sv06.5-037 — "Dirty Headbutt" ({D}{D}{C}, printed 190, attack
+      **INDEX 0**), the family's THREE-PRINTING member (sv06.5-037 Double rare /
+      -083 Ultra Rare / -091 Special illustration rare, byte-identical on every
+      column) and the printing whose card has NO OTHER ATTACK.
+
+      That makes it the control Skarmory cannot be: on this card the per-attack
+      lock and a whole-Pokémon lock are OBSERVATIONALLY IDENTICAL, so a reader that
+      confused the two would be right here and wrong on the other three names. The
+      suite drives both cards for exactly that reason.
+
+      ⚠️ ITS PRINTED ABILITY IS INCLUDED THOUGH NOTHING READS IT. "Oh No You Don't"
+      is a Prize-count effect gated on having a Pecharunt ex in play, which this
+      engine does not simulate — and D151 counted 40 pool fixtures missing a
+      printed Ability or attack, with Mimikyu sv02-097 the live case (a wired
+      behaviour with no printed row). The rule that avoids both failure modes is
+      the same: the fixture carries what the card prints, and what the engine reads
+      is a separate question.
+
+      Verbatim off the D1: 210 HP, Basic, Darkness, retreat 1, ×2 Fighting, NO
+      Resistance (asserted as an absence), reg mark H. */
+  "sv06.5-037": battler("sv06.5-037", {
+    name: "Munkidori ex",
+    types: ["Darkness"],
+    stage: "Basic",
+    hp: 210,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Oh No You Don't",
+        effect:
+          "If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, and if you have any Pecharunt ex in play, your opponent takes 1 fewer Prize card.",
+      },
+    ],
+    attacks: [
+      {
+        cost: ["Darkness", "Darkness", "Colorless"],
+        name: "Dirty Headbutt",
+        damage: 190,
+        effect: "During your next turn, this Pokémon can't use Dirty Headbutt.",
+      },
+    ],
+  }),
+  /** Greedent ex sv03-179 — "Slip 'n' Roll" ({C}{C}{C}, printed 210, attack
+      **INDEX 1**), and the printing this slice could not have done without: its
+      attack's NAME carries TWO APOSTROPHES, which is the only place in the pool
+      where D137's fold reaches a captured VALUE rather than a pattern or a table
+      key. `clauseApostrophe.test.ts` sweeps it automatically the day this fixture
+      lands, which is what that census is for.
+
+      Index 0 "Never Ever Enough" is a `lookAtTopN`-shaped sentence this engine
+      does not read, so it is a SECOND attack that stays LOUD — a different control
+      from Skarmory's (whose index 0 derives nothing because it prints nothing).
+
+      Verbatim off the D1: 260 HP, Stage1 from Skwovet, Colorless, retreat 2, ×2
+      Fighting, NO Resistance and NO printed Ability (both asserted as absences),
+      reg mark G, Double rare. */
+  "sv03-179": battler("sv03-179", {
+    name: "Greedent ex",
+    types: ["Colorless"],
+    stage: "Stage1",
+    evolveFrom: "Skwovet",
+    hp: 260,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Never Ever Enough",
+        effect:
+          "Look at the top 3 cards of your deck. You may put those cards into your hand. If you don't, discard those cards and draw 3 cards.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Slip 'n' Roll",
+        damage: 210,
+        effect: "During your next turn, this Pokémon can't use Slip 'n' Roll.",
+      },
+    ],
+  }),
+  /** A synthetic barrer whose attack NAME and effect sentence are both spelled
+      with U+2019 — the RE-INGEST, as a card rather than as an argument.
+
+      ⚠️ IT EXISTS BECAUSE THE INSTALL-SIDE FOLD WAS MEASURED AND FOUND FREE. D154
+      folds the apostrophe twice (the deriver's capture, and the install's match
+      against the holder's printed `name`), and mutation-checking found that
+      removing the SECOND fold failed nothing: every catalogued printing spells
+      both halves straight, and `clauseApostrophe.test.ts` rewrites the SENTENCE
+      only, so no board in the suite could tell. That is D148 → D149 → D150's
+      lesson in miniature — a test that forces a question is not a test that checks
+      the answer — and the fix is a witness rather than a note. A punctuation
+      normaliser would rewrite the attack ROW as well as the effect string, which
+      is exactly this card. Removing either fold now fails on it.
+
+      Its name is Greedent ex's, because that is the printing the hazard is real
+      on; everything else about the body is deliberately plain. */
+  "fix-curly-barrer": battler("fix-curly-barrer", {
+    hp: 200,
+    retreat: 1,
+    attacks: [
+      { cost: ["Colorless"], name: "Tackle", damage: 20 },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Slip ’n’ Roll",
+        damage: 60,
+        effect: "During your next turn, this Pokémon can’t use Slip ’n’ Roll.",
+      },
+    ],
+  }),
+  /** Lucario sv01-114 — "Accelerating Stab" ({F}{C}{C}, printed 120, attack **INDEX
+      1**), the fourth name and the printing whose OTHER attack is already read by a
+      different reader: index 0 "Avenging Knuckle" ({F}, 30+) carries D115's
+      cross-turn KO clause, which `deriveAttackDamageBonus` resolves. So one card's
+      two attacks are read by two different readers, and the suite asserts that
+      barring one leaves the other's bonus arithmetic untouched — the sharpest
+      version of "the lock is on the ATTACK" this pool can print.
+
+      Verbatim off the D1: 130 HP, Stage1 from Riolu, Fighting, retreat 2, ×2
+      Psychic, NO Resistance and NO printed Ability (both asserted as absences),
+      reg mark G, Uncommon. */
+  "sv01-114": battler("sv01-114", {
+    name: "Lucario",
+    types: ["Fighting"],
+    stage: "Stage1",
+    evolveFrom: "Riolu",
+    hp: 130,
+    retreat: 2,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Avenging Knuckle",
+        damage: "30+",
+        effect:
+          "If any of your {F} Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 120 more damage.",
+      },
+      {
+        cost: ["Fighting", "Colorless", "Colorless"],
+        name: "Accelerating Stab",
+        damage: 120,
+        effect: "During your next turn, this Pokémon can't use Accelerating Stab.",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -8097,6 +8306,65 @@ export const INSTALLED_RECOIL_DECK = deckOf({
   "fix-energy": 28, // Colorless — every {C} slot in the deck
   "fix-fighting-energy": 6, // {F} — Scary Fangs's and Rock Throw's typed half
   "fix-lightning-energy": 2, // {L} — Pika Bolt's typed half
+});
+
+/** D154 — the PER-ATTACK lock, on its own 60 for `INSTALLED_RECOIL_DECK`'s reason
+    verbatim: `ATTACK_LOCK_DECK`'s boards are seeded, and adding a card would
+    reshuffle every one of them, so D143's suite stays byte-identical.
+
+    **SEED-FREE** like every durated deck since D147: no printing of this family
+    carries a coin, so a seed table would describe a shuffle rather than a rule.
+
+    The four BARRERS are the four printed names, and each is in the deck for a
+    property no other one has:
+      • sv03-142 Skarmory — "Slashing Steel" idx 1 (the bar) beside "Peck" idx 0
+        (a plain 20 with no effect text). THE headline board: the barred card's
+        OTHER attack stays legal, which is the whole difference from D143's lock.
+        A BASIC, so it deals straight into the Active Spot;
+      • sv06.5-037 Munkidori ex — "Dirty Headbutt" idx 0, the card with NO other
+        attack, where a per-attack bar and a whole-Pokémon lock are observationally
+        identical. The control that proves the suite is not measuring the easy case;
+      • sv03-179 Greedent ex — "Slip 'n' Roll" idx 1, the APOSTROPHE case (two of
+        them inside the captured proper noun), and an idx-0 sentence this engine
+        does not read, so its second attack stays LOUD for a different reason than
+        Skarmory's;
+      • sv01-114 Lucario — "Accelerating Stab" idx 1, whose idx-0 "Avenging Knuckle"
+        is read by a DIFFERENT reader (D115's cross-turn KO bonus), so barring one
+        attack is shown not to disturb the other's arithmetic.
+    `swsh10.5-018` Radiant Blastoise — "Torrential Cannon" idx 0 — is the FIFTH
+    printing and the one with no catalog row at all (the local D1 holds no swsh10.5
+    set; see effects.ts's census). It is in the deck precisely so the suite names
+    the provenance rather than quietly counting it with the other four.
+
+    fix-skarm-stage1 is the §10 EVOLVE route (it evolves from Skarmory and has ONE
+    attack, so a stale index would point at nothing); sv01-194 Switch is the
+    holder's own §10 leave-Active route, REACHABLE inside the window because the
+    window is the holder's own turn; sv02-172 Boss's Orders is the OPPONENT's route
+    into the same clear. sv03-042 Eiscue ex is the coexistence board — its
+    "Scalding Block" writes D148's whole-Pokémon lock onto the barred body, so one
+    Pokémon carries BOTH durated locks on ONE turn, which is the reachability
+    argument for two fields (types.ts `LockedAttack`) driven rather than asserted.
+    fix-titan (340 HP, NO attacks) is the mulligan-free bench filler and promote
+    target, and it is what every barrer's big printed damage is aimed at so no
+    board ends in `ko:takePrizes` before the window opens. */
+export const PER_ATTACK_LOCK_DECK = deckOf({
+  "sv03-142": 3, // Skarmory — "Slashing Steel" idx 1 (the bar), "Peck" idx 0 (still legal)
+  "sv06.5-037": 2, // Munkidori ex — "Dirty Headbutt" idx 0: the ONE-attack control
+  "sv03-179": 2, // Greedent ex — "Slip 'n' Roll" idx 1: the apostrophe capture
+  "sv01-114": 2, // Lucario — "Accelerating Stab" idx 1, beside D115's bonus at idx 0
+  "swsh10.5-018": 2, // Radiant Blastoise — "Torrential Cannon" idx 0: the uncatalogued one
+  "fix-skarm-stage1": 2, // evolves from Skarmory — the §10 EVOLVE clear, on one attack
+  "sv03-042": 2, // Eiscue ex — "Scalding Block": D148's whole lock, for the coexistence board
+  "sv01-194": 2, // Switch (Item) — the holder's own §10 leave-Active route
+  "sv02-172": 2, // Boss's Orders — the opponent's route into the same clear
+  "fix-attacker": 2, // "Bite" ({C}, 30) — the opponent's plain swing
+  "fix-curly-barrer": 2, // the U+2019 RE-INGEST, as a card — the install-side fold's witness
+  "fix-titan": 4, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-metal-energy": 6, // {M}{M} for Slashing Steel
+  "fix-dark-energy": 4, // {D}{D} for Dirty Headbutt
+  "fix-fighting-energy": 3, // {F} for Accelerating Stab and Avenging Knuckle
+  "fix-water-energy": 6, // {W}{W}{W} for Scalding Block, {W}{W} for Torrential Cannon
+  "fix-energy": 14, // Colorless Basic — every {C} in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

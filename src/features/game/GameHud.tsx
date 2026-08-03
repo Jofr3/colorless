@@ -29,6 +29,7 @@ import {
   effectiveAttackCost,
   effectiveRetreatCost,
   isImmobilized,
+  lockedAttackIndex,
   opposingRetreatBlocked,
   otherSeat,
   programFor,
@@ -468,6 +469,15 @@ function TurnPanel(props: GameHudProps) {
   // it is the case where the greyed-out button matters MOST: the player never
   // chose this one and has no card of their own to read the reason off.
   const attackLockedNow = attackLocked(game, active);
+  // §8/§11 (D154) — …and the PER-ATTACK bar ("During your next turn, this Pokémon
+  // can't use {AttackName}."), read off raw GameState through the engine's own
+  // reader exactly as the whole-Pokémon lock above is. It is an INDEX rather than
+  // a boolean because the whole content of the rule is that the card's OTHER
+  // attack stays legal, so it cannot join `attackLockedNow` — it is compared per
+  // row inside the map below. The server-side twin is `redactedAttacksOf`'s
+  // `barred` (redact.ts); both exist so that no path offers a button `attack` will
+  // reject with ATTACK_PREVENTED.
+  const barredAttackIndex = lockedAttackIndex(game, active);
 
   // THE retreat derivation site — RetreatDialog receives these as props. The
   // cost is the CONTINUOUS one (§7.3 — Beach Court discounts Basics), the
@@ -512,7 +522,12 @@ function TurnPanel(props: GameHudProps) {
             // League HQ's Basic surcharge), exactly as the engine checks it;
             // the dots still show the PRINTED cost.
             const payable = costMet(effectiveAttackCost(game, active, attack.cost ?? []), provided);
-            const disabled = !payable || firstTurnBan || immobilized || attackLockedNow;
+            const disabled =
+              !payable ||
+              firstTurnBan ||
+              immobilized ||
+              attackLockedNow ||
+              barredAttackIndex === index;
             return (
               <li key={`${attack.name}-${index}`}>
                 <button

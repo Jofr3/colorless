@@ -3241,7 +3241,67 @@ import type { GameState, Seat } from "./types";
     field, no regex, no deriver arm, no error code, no prompt, no redact arm, no
     projection, no registry row, no fixture and no web/API/DB/`@luminous/schema`
     diff. `log.test.ts` +1 case, its DECK_TOP_DISCARDED block rewritten. */
-export const engineVersion = "0.101.0";
+/** 0.102.0 — P3-M5 long tail (**D154**): the **PER-ATTACK LOCK** — *"During your
+    next turn, this Pokémon can't use {AttackName}."* **6 catalogued printings
+    across 4 names on ONE anchor with ONE capture, plus 1 fielded printing the
+    catalog cannot see** — Munkidori ex `sv06.5-037`/`-083`/`-091` "Dirty Headbutt"
+    (idx 0), Lucario `sv01-114` "Accelerating Stab" (idx 1), Skarmory `sv03-142`
+    "Slashing Steel" (idx 1), Greedent ex `sv03-179` "Slip 'n' Roll" (idx 1), and
+    Radiant Blastoise `swsh10.5-018` "Torrential Cannon" (idx 0), which is in
+    `FIXTURE_POOL` and in NO catalog row.
+
+    ⚠️ **THE REMAINDER LIST'S EIGHTH PRINTING DOES NOT EXIST, AND NEITHER DOES ITS
+    SET.** Three lists and §D143's own table said "8 printings / 6 sentences",
+    naming Radiant Charizard `swsh10.5-011` and Radiant Blastoise `swsh10.5-018`.
+    The local D1 holds **five sets — sv01, sv02, sv03, sv06.5, sve — and NO
+    swsh10.5 row at all**, so every census in this repo "run against the local D1,
+    978 cards" has been structurally blind to that set, and any count including a
+    swsh10.5 id was never verified by the query it cites (D149's "6 printings"
+    named Pidove `swsh10.5-061` the same way). `swsh10.5-011` is in no fixture
+    either; `swsh10.5-018` is, so this anchor reads it and the suite drives it as a
+    FIELDED printing of fixture provenance.
+
+    ⚠️ **THE FIRST DURATED RECORD THAT IS NOT A BARE NUMBER**, and the first that
+    carries an ADDRESS: `InPlayPokemon.lockedAttack: { turn, attackIndex } | null`,
+    the SIXTH stamped field, read through `lockedAttackIndex` (continuous.ts).
+    `MATCH_RECORD_VERSION` **8 → 9** — a REQUIRED key on `InPlayPokemon`, D124's
+    trigger for the SEVENTH time.
+
+    ⚠️ **A SEPARATE OP AND A SEPARATE FIELD, AND BOTH REFUSALS ARE D131's
+    WIDEN-DON'T-ADD TEST RUN IN THE DIRECTION THAT SAYS NO.** Folding it into
+    `preventAttack { attack? }` fails the test: stripping the key does not yield
+    the previous arm, it yields a different rule writing a different field
+    (contrast D148's `target`, which passes exactly). Folding the STATE into
+    `attackLockedTurn` as `{ turn, attackIndex? }` fails on REACHABILITY: a
+    Skarmory that self-bars "Slashing Steel" on turn 3 (stamp 5) and is then locked
+    WHOLE by an Eiscue ex on turn 4 (stamp 5, D148's defender arm) carries both
+    facts on turn 5, and one record holds only the later write.
+
+    ⚠️ **§D152's SHAPE TRIGGER FIRES ON THE PAYLOAD AND IS ANSWERED "NO", WITH A
+    REPLACEMENT — the second trigger in three slices to fire and be declined, and
+    the reason is the same both times: a trigger phrased on the RECORD is a proxy
+    for a fact about the READ SITE.** D152 retired counting and named *a member the
+    read site must DISPATCH on rather than SUM*, citing this record. The index
+    genuinely is not summed — the three read sites COMPARE it. But **no site
+    dispatches either**: every reader in this family knows which rider it wants
+    before it looks, so a union would replace a compiler-checked field access with
+    a `find` whose other members the caller must then discard. What earns it is a
+    caller that receives a rider whose KIND it does not know — an ENUMERATION — and
+    §D147's trigger (a) is still its only forecast producer (the pool prints none).
+
+    ⚠️ **AND TRIGGER (b)'s PREMISE FIRES FOR THE FIRST TIME, WHICH IS THE OTHER
+    HALF OF THE ANSWER.** D149 and D152 both recorded "crosses no wire, changes no
+    projection, gates no ACTION". This field gates the `attack` ACTION and changes
+    `redactedAttacksOf`. It still does not earn the union, because what crosses is
+    the per-attack `playable` BOOLEAN the wire already carries (D143's `banned`,
+    D112's `can`), not a rider. **So the projection question and the union question
+    are independent, and (b) conflated them.**
+
+    Cost: **1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1
+    deriver arm, 1 reader, 1 EVENT FIELD (not a new event — D113/D153), 1 log
+    branch, 3 §10 clears, 1 §8 gate and BOTH payability projections** — no park, no
+    new error code, no prompt, no registry row, no DB/`@luminous/schema` diff. */
+export const engineVersion = "0.102.0";
 
 export type {
   ApplyResult,
@@ -3302,6 +3362,7 @@ export {
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
   installedReductionOf,
+  lockedAttackIndex,
   opposingRetreatBlocked,
   opposingRetreatSurcharge,
   providedEnergy,
@@ -3412,6 +3473,7 @@ export type {
   GameOverReason,
   GameState,
   InPlayPokemon,
+  LockedAttack,
   PendingStage,
   Phase,
   PlayerSide,

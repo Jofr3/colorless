@@ -828,15 +828,20 @@ export type EffectOp =
       (D131 again), and it would say it for one op where the gate says it for all.
 
       ⚠️ IT LOCKS THE POKÉMON, NOT THE ATTACK, and the pool prints the other
-      reading too: eight printings say "this Pokémon can't use {AttackName}"
-      (Munkidori ex ×3 "Dirty Headbutt", Lucario sv01-114, Radiant Charizard
-      swsh10.5-011, Radiant Blastoise swsh10.5-018, Skarmory sv03-142, Greedent ex
-      sv03-179), and TWO MORE do it to the OPPONENT — Medicham sv01-111
+      reading too — ✅ MAPPED at D154 by `preventAttackUse`, a SEPARATE op for the
+      reason its own doc block gives (D131's widen-don't-add test, run and FAILED).
+      Six catalogued printings say "this Pokémon can't use {AttackName}" (Munkidori
+      ex sv06.5-037/-083/-091 "Dirty Headbutt", Lucario sv01-114 "Accelerating
+      Stab", Skarmory sv03-142 "Slashing Steel", Greedent ex sv03-179 "Slip 'n'
+      Roll"), plus Radiant Blastoise swsh10.5-018 "Torrential Cannon", which is
+      FIELDED but has no catalog row at all — the local D1 holds no swsh10.5 SET
+      (D154's census; the older "eight printings" count named it and Radiant
+      Charizard swsh10.5-011, which is in neither the catalog nor the pool).
+      TWO MORE do it to the OPPONENT and STAY LOUD — Medicham sv01-111
       "Acu-Punch-Ture" and Oranguru sv02-094 "Plotter's Command", "Choose 1 of your
       opponent's Active Pokémon's attacks. During your opponent's next turn, that
-      Pokémon can't use that attack." Those name ONE attack and leave the card's
-      other attack legal, so they need a per-attack lock this field cannot express
-      (and the opponent-side pair needs a PARK on top of it); all ten stay LOUD.
+      Pokémon can't use that attack." — because CHOOSING the attack is a park on
+      top of the address, which is the one thing D154 did not build.
       A fixture pins the difference from the inside — Alomomola sv01-048's index-0
       "Surf" is refused by the lock its index-1 "Aqua Slash" installed, and
       Alomomola refused SURF by a Houndoom ex across the table is the same
@@ -847,6 +852,53 @@ export type EffectOp =
       the lock's entire effect is in the FUTURE. Never parks, consumes no rng, and
       is idempotent (a re-install writing the same stamp is silent). */
   | { op: "preventAttack"; target?: "defender" }
+  /** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active for the
+      holder's next turn ("During your next turn, this Pokémon can't use
+      {AttackName}.", 6 catalogued printings across 4 names plus 1 fielded
+      uncatalogued printing — see `SELF_CANT_USE_ATTACK` below for the census).
+      `attack` is the printed PROPER NOUN, verbatim off the sentence.
+
+      ⚠️ A SEPARATE OP RATHER THAN A FIELD ON `preventAttack`, AND D131's
+      WIDEN-DON'T-ADD TEST IS WHAT DECIDES IT — run in the direction that says no,
+      which is the point of running it. That test asks whether stripping the new
+      key yields the previous arm BYTE FOR BYTE. It does not: `preventAttack`
+      writes `attackLockedTurn` and bars the Pokémon; strip `attack` from a
+      hypothetical `preventAttack { attack }` and you get a DIFFERENT rule writing
+      a DIFFERENT field. Contrast D148's `target`, which passes the test exactly —
+      same field, same rule, the other seat. A key that selects a different
+      behaviour is a different op, and the compiler is what makes that checkable:
+      two ops mean two `stepOp` arms and two §11 verdicts, where one op with an
+      optional key would admit `{ target: "defender", attack: "…" }` — an
+      inhabitant no printing produces and no site reads.
+
+      ⚠️ THE NAME IS RESOLVED AT THE INSTALL, NOT HERE AND NOT AT THE READ SITES.
+      The op carries the printed token because that is what the sentence says; the
+      interpreter looks it up in the holder's `attacks` and stamps an INDEX
+      (`InPlayPokemon.lockedAttack`), because all three read sites — attack.ts's
+      §8 gate, `redactedAttacksOf` and GameHud — address attacks by index. A name
+      that matches nothing on the holder installs NOTHING and emits no row: a lock
+      on an attack the card does not have is inert, and announcing it would tell a
+      player about a drawback that cannot bite.
+
+      THE STAMP IS `state.turn + 2` — D143's number, not D142's. The sentence
+      prints "During YOUR next turn", declaring an attack ENDS the turn (§5.3), so
+      the holder's own next turn is two away. See `LockedAttack` (types.ts) for why
+      this is a second field beside `attackLockedTurn` rather than a key on it.
+
+      NO `target` FIELD, and the pool's reason is written down rather than assumed:
+      the OPPONENT-side twin of this sentence exists (Medicham sv01-111
+      "Acu-Punch-Ture" and Oranguru sv02-094 "Plotter's Command" — "Choose 1 of
+      your opponent's Active Pokémon's attacks. During your opponent's next turn,
+      that Pokémon can't use that attack.") and is NOT reachable by adding one,
+      because it CHOOSES the attack: the address is a park, not a printed noun, so
+      the op would need a candidate set and a prompt as well as a seat. It stays
+      LOUD (attackLock.test.ts).
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp`, and that placement is
+      free rather than lucky (D125's rule): the lock's entire effect is in the
+      FUTURE. Never parks, consumes no rng, and is idempotent (a re-install writing
+      the same turn AND the same index is silent). */
+  | { op: "preventAttackUse"; attack: string }
   /** Heal `amount` HP from the CONTROLLER's own Active Pokémon — the printed
       "this Pokémon" / "it" of a self-heal, resolved at `ctx.seat` by the
       interpreter rather than carried in the op (which is why `target` has one
@@ -2579,12 +2631,14 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // ex sv03-042/-210/-222 "Scalding Block", Houndoom ex sv03-134 "Evil Claw") and is
 // refused HERE on the printed subject — ✅ MAPPED at D148 by the two anchors below,
 // which is what earned `preventAttack` its `target` field. The per-ATTACK lock
-// ("… can't use {AttackName}") is refused on the VERB, and D148's census makes
-// that group 10 printings across 7 sentences rather than 8 across 6: Medicham
-// sv01-111 "Acu-Punch-Ture" and Oranguru sv02-094 "Plotter's Command" print the
-// OPPONENT-side twin of it ("Choose 1 of your opponent's Active Pokémon's attacks.
-// During your opponent's next turn, that Pokémon can't use that attack."), which
-// no earlier list or census had — it needs a PARK as well as an attack address.
+// ("… can't use {AttackName}") is refused on the VERB — ✅ MAPPED at D154 by
+// `SELF_CANT_USE_ATTACK` below, whose census puts the SELF side at 6 catalogued
+// printings across 4 names (the older "8 across 6" counted two swsh10.5 ids, a set
+// the local D1 does not contain). The OPPONENT-side twin stays LOUD: Medicham
+// sv01-111 "Acu-Punch-Ture" and Oranguru sv02-094 "Plotter's Command" print
+// "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's
+// next turn, that Pokémon can't use that attack." — it needs a PARK as well as an
+// attack address, and D154 built the address only.
 //
 // A WHOLE-SENTENCE ANCHOR with NO CAPTURE — nothing in it varies. Both apostrophe
 // slots carry `['’]` (D136/D137): "can't" is a CONTRACTION rather than a
@@ -2687,6 +2741,68 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 // (`can't`), and it carries `['’]` for D136/D137's reason like every sibling.
 const FLIP_TAILS_SELF_CANT_ATTACK =
   /^Flip a coin\. If tails, during your next turn, this Pokémon can['’]t attack\.$/;
+// ── D154: the PER-ATTACK lock, the same rider narrowed to ONE named attack ──
+//
+// "During your next turn, this Pokémon can't use {AttackName}." — the whole
+// printed effect, and the sentence `SELF_CANT_ATTACK_NEXT_TURN` above has refused
+// on the VERB for four slices while three remainder lists carried it as the
+// largest unread count in the tail.
+//
+// CENSUS (local D1, 2026-08-02, 978 cards, run as its OWN question rather than
+// inherited from §D148's table — D142's floor rule, eleventh payout). `LIKE
+// '%can''t use%'` across ALL THREE text columns returns 29 rows; exactly SIX are
+// this sentence, and every other match is a different mechanism the `^During`
+// plus `^…$` refuses on sight (13 once-per-turn Ability limiters — "You can't use
+// more than 1 {Ability} each turn" on Fezandipiti ex / Pecharunt ex / Squawkabilly
+// ex / Pidgeot ex; Gardevoir ex's "on a Pokémon that would be Knocked Out"; Rare
+// Candy's and Dendra's play gates; and the OPPONENT-side twin below). The six,
+// with every field checked PER PRINTING (id, NAME, cost, printed damage and
+// INDEX — D144's rule extended to NAMES by D146):
+//
+//   "Dirty Headbutt"     — Munkidori ex sv06.5-037 (Double rare) / sv06.5-083
+//                          (Ultra Rare) / sv06.5-091 (Special illustration rare),
+//                          {D}{D}{C}, 190, INDEX 0 — one attack in three rarities
+//   "Accelerating Stab"  — Lucario sv01-114, {F}{C}{C}, 120, INDEX 1
+//   "Slashing Steel"     — Skarmory sv03-142, {M}{M}{C}, 120, INDEX 1
+//   "Slip 'n' Roll"      — Greedent ex sv03-179, {C}{C}{C}, 210, INDEX 1
+//
+// ⚠️ THE REMAINDER LIST'S EIGHTH PRINTING DOES NOT EXIST IN THE CATALOG, AND
+// NEITHER DOES ITS SET. Three lists and §D143's own table counted "8 printings /
+// 6 sentences", naming Radiant Charizard swsh10.5-011 and Radiant Blastoise
+// swsh10.5-018 alongside these six. The local D1 holds FIVE sets — sv01, sv02,
+// sv03, sv06.5, sve — and NO swsh10.5 row at all, so every census "run against the
+// local D1, 978 cards" in this file has been structurally blind to that set and
+// any count including a swsh10.5 id was never verified by the query it cites.
+// swsh10.5-011 is in no fixture either. swsh10.5-018 IS in `FIXTURE_POOL`
+// ("Torrential Cannon", {W}{W}{C}, 170, INDEX 0), so this anchor reads it and the
+// suite drives it — as a FIELDED printing whose provenance is the fixture pool and
+// not the catalog, which is the honest thing to call it.
+//
+// ⚠️ THE CAPTURE IS A PROPER NOUN, AND IT IS THE FIRST IN THIS FAMILY. Every other
+// anchor in this tail captures a NUMBER, which D120's precondition closes by type.
+// A name is closed by nothing — so the capture is validated where the datum lives:
+// `preventAttackUse` resolves it against the HOLDER's printed attacks at the
+// install and writes NOTHING if it does not match one (interpreter.ts). D120's
+// "does exactly one token VARY?" is answered YES by four distinct names across the
+// six printings, so it is one anchor with one capture rather than four rows — and
+// the alternative (an op meaning "the attack being declared", with no capture at
+// all) is refused because it would read a sentence the pool does not print: it
+// happens to be true that all six name their OWN attack, and an anchor that could
+// not tell the difference would silently mis-map the first printing that does not.
+//
+// `(.+?)` is LAZY so the trailing `\.$` cannot be swallowed by a name; the anchors
+// do the rest. Greedent ex's "Slip 'n' Roll" carries TWO apostrophes INSIDE the
+// captured name, which is why the capture is a free class rather than a word
+// pattern — and why `['’]` (D136/D137) is spelled only on the sentence's own
+// contraction ("can't"), the one slot the PATTERN owns. Every printing in the D1
+// uses the STRAIGHT apostrophe (checked: the pool contains no U+2019 at all in any
+// text column), so the class is D136/D137's standing insurance rather than a
+// reading of this data.
+//
+// No /i, for the standing reason (see TYPED_SELF_DISCARD): the capitalised
+// "During" plus `^…$` is the whole guard, and it is what keeps the thirteen
+// lowercase mid-sentence "you can't use…" Ability limiters off this path.
+const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t use (.+?)\.$/;
 // ── D148: the OPPONENT-side lock, the same rider pointed across the table ──
 //
 // THE ENERGY-COST COMPOUND — Eiscue ex sv03-042 (Double rare) / sv03-210 (Ultra
@@ -3461,6 +3577,32 @@ const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map(
     apostrophe cannot reach them by construction. */
 const CURLY_APOSTROPHE = "’";
 const STRAIGHT_APOSTROPHE = "'";
+/** D154 — the SAME fold, applied to a CAPTURE rather than to a table lookup, and
+    exported because the site that consumes the capture is in another file.
+
+    ⚠️ THE THIRD PLACE THE APOSTHROPE RULE LIVES, AND THE FIRST WHERE THE PRINTED
+    TEXT IS THE VALUE RATHER THAN THE KEY. D136/D137 built two mechanisms: `['’]`
+    inside every anchored pattern (the sentence's own punctuation) and
+    `literalClauseRow` below (an exact lookup in a table). `preventAttackUse`
+    (D154) captures an attack's NAME out of the sentence and carries it in the op —
+    so the punctuation now travels INTO a derived value, and D137's contract ("the
+    two spellings must produce the SAME value, never merely a non-null one") is
+    only true if the capture is normalised. Greedent ex sv03-179's "Slip 'n' Roll"
+    is the one printing in the pool that makes the difference visible: under a
+    punctuation-normalising re-ingest the sentence and the attack's own `name`
+    would BOTH curl, so the op must fold and so must the site that matches it
+    against the card (interpreter.ts). Folding one and not the other is the
+    half-fix D137 warned about, wearing a proper noun.
+
+    The catalog prints ZERO curly apostrophes today (re-verified at D154 against
+    the local D1: 0 of 978 rows across `effect`, `attacks_json` and
+    `abilities_json`), so this is the same standing insurance the class is — and
+    `clauseApostrophe.test.ts` drives it on the one sentence that can show it. */
+export function foldApostrophes(text: string): string {
+  return text.includes(CURLY_APOSTROPHE)
+    ? text.replaceAll(CURLY_APOSTROPHE, STRAIGHT_APOSTROPHE)
+    : text;
+}
 function literalClauseRow<T>(table: ReadonlyMap<string, T>, clause: string): T | undefined {
   const exact = table.get(clause);
   if (exact !== undefined) return exact;
@@ -4711,6 +4853,43 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     more stamped field on the same body read at a different gate.
   if (SELF_CANT_ATTACK_NEXT_TURN.test(effect)) {
     return [{ op: "preventAttack" }];
+  }
+
+  // 24a. "During your next turn, this Pokémon can't use {AttackName}." — D154's
+  //      PER-ATTACK lock, 6 catalogued printings across 4 names (plus Radiant
+  //      Blastoise swsh10.5-018, fielded but uncatalogued — see the anchor). Arm
+  //      24's sentence narrowed from the POKÉMON to ONE of its attacks, and it
+  //      sits directly beneath it because the two are told apart by the verb
+  //      alone.
+  //
+  //      AN `exec`, AND THE FIRST CAPTURE IN THIS TAIL THAT IS NOT A NUMBER. The
+  //      duration is the printed words "during your next turn" and the holder is
+  //      the printed words "this Pokémon"; what varies is the attack's NAME, so
+  //      the op carries the proper noun verbatim and the INTERPRETER resolves it
+  //      against the holder's printed attacks (a lock naming nothing installs
+  //      nothing). D152's `× 10` made the same call from the other side: the
+  //      translation belongs at the site that owns the printed token.
+  //
+  //      ⚠️ THERE IS NO `amount >= 1`-STYLE GUARD, AND THE ABSENCE WAS MEASURED
+  //      RATHER THAN ASSUMED. Every neighbouring arm refuses a degenerate capture
+  //      (a printed 0), and one was written here for the empty name — then
+  //      mutation-checking showed removing it failed NOTHING, because `(.+?)`
+  //      already cannot match an empty string and `^…$` leaves nowhere for one to
+  //      hide. A guard that cannot fire is worse than no guard: it reads like a
+  //      refusal somebody checked. The refusal is the QUANTIFIER, and the suite
+  //      asserts the empty sentence returns null so the claim stays pinned where
+  //      it actually lives.
+  //
+  //      ⚠️ AND THE CAPTURE IS FOLDED (`foldApostrophes`), WHICH IS D137's RULE
+  //      REACHING A VALUE FOR THE FIRST TIME. Greedent ex sv03-179's attack is
+  //      named "Slip 'n' Roll" — two apostrophes INSIDE the captured noun — so a
+  //      punctuation-normalising re-ingest would change the derived op and not
+  //      only the sentence that produced it. D137's contract is that the two
+  //      spellings produce the SAME VALUE, so the fold belongs here as well as on
+  //      the pattern, and the install site folds the card's own `name` to match.
+  match = SELF_CANT_USE_ATTACK.exec(effect);
+  if (match !== null) {
+    return [{ op: "preventAttackUse", attack: foldApostrophes(match[1] ?? "") }];
   }
 
   // 25. "Put {N} damage counters on 1 of your opponent's Pokémon. During your next

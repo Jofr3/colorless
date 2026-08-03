@@ -60,6 +60,7 @@ import {
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
+  lockedAttackIndex,
   opposingRetreatBlocked,
   providedEnergy,
 } from "./continuous";
@@ -348,12 +349,29 @@ function redactedAttacksOf(
   // BOTH seats in defenderLock.test.ts rather than inherited from D143's sweep.
   const banned =
     state.turn === 1 || isImmobilized(active.conditions) || attackLocked(state, active);
+  // §8/§11 (D154) — …and the PER-ATTACK bar, which is the first thing on this line
+  // that is not a property of the whole DECLARATION. It rides `playable` for
+  // `banned`'s reason verbatim (the client needs to know it cannot use this
+  // attack, not why) but it CANNOT ride `banned` itself: that boolean is computed
+  // once and applied to every row, and the whole content of this rule is that the
+  // card's OTHER attack stays legal. So it is read once, outside the map, and
+  // compared per index inside it — the shape `lockedAttackIndex` returns an index
+  // for (continuous.ts).
+  // ⚠️ NOT OPTIONAL, and MORE load-bearing here than `banned` is: a player under a
+  // whole-Pokémon lock has every button greyed and cannot mistake the board, while
+  // this one greys exactly one row on an otherwise live panel. The server-side
+  // gate (attack.ts §8) rejects with ATTACK_PREVENTED naming the attack; this line
+  // is what stops the client offering the button at all.
+  const barred = lockedAttackIndex(state, active);
   return attacksOf(card).map((attack, index) => ({
     index,
     name: attack.name,
     cost: [...(attack.cost ?? [])],
     damage: attack.damage === undefined ? null : String(attack.damage),
-    playable: !banned && costMet(effectiveAttackCost(state, active, attack.cost ?? []), provided),
+    playable:
+      !banned &&
+      barred !== index &&
+      costMet(effectiveAttackCost(state, active, attack.cost ?? []), provided),
   }));
 }
 

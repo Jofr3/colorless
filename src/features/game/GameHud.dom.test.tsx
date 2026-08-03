@@ -92,3 +92,71 @@ describe("TurnPanel — §12 status gating", () => {
     expect(screen.queryByText(/cannot attack or retreat/)).toBeNull();
   });
 });
+
+describe("TurnPanel — §8/§11 the PER-ATTACK bar (D154)", () => {
+  /** TEST SURGERY: write the durated record straight onto p1's Active. The real
+      install needs a printed barrer in the deck, and this suite's deck is
+      fix-attacker × 30 — the HUD claim is about ONE boolean per row, not about
+      which card wrote it, so the record is placed rather than played. */
+  function barAttack(state: GameState, attackIndex: number): GameState {
+    const side = state.players.p1;
+    const active = side.active;
+    if (active === null) throw new Error("p1 has no Active Pokémon");
+    return {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...side, active: { ...active, lockedAttack: { turn: state.turn, attackIndex } } },
+      },
+    };
+  }
+
+  // ⚠️ THIS IS THE PROJECTION WITH THE MOST ROOM TO BE WRONG, AND THE REASON IS
+  // VISUAL. D143's whole-Pokémon lock greys EVERY row, so a build that missed it
+  // shows a panel of dead controls and someone notices. This one greys exactly one
+  // row on an otherwise live panel — so a build that folded it into the
+  // whole-declaration `attackLockedNow` boolean, or forgot it, renders a board
+  // that looks completely normal and rejects one press with ATTACK_PREVENTED. The
+  // server-side twin is `redactedAttacksOf`'s `barred` (redact.ts), pinned in
+  // perAttackLock.test.ts; this is the local HUD's half of the same claim.
+  it("disables ONLY the barred row and leaves the card's other attacks alone", () => {
+    renderHud(barAttack(battleReady(), 0));
+    expect(attackButton().disabled).toBe(true);
+    // fix-attacker's index-2 "Yawn" is costless, so it is payable on any board —
+    // which makes it the row that proves the bar is per-INDEX rather than a panel
+    // that happens to be unpayable.
+    expect((screen.getByRole("button", { name: /Yawn/ }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+    // …and retreating is untouched: this is not a §12 condition and says nothing
+    // about moving (the same separation `retreatBlocked` is under).
+    expect(retreatButton().disabled).toBe(false);
+  });
+
+  it("bars whichever index the record names, not a constant", () => {
+    renderHud(barAttack(battleReady(), 2));
+    expect((screen.getByRole("button", { name: /Yawn/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(attackButton().disabled).toBe(false);
+  });
+
+  it("stops mattering once the window has passed — the stamp, not the record", () => {
+    // The record is STILL on the body; only its turn has moved on. A HUD that read
+    // the field instead of the reader would grey the row forever.
+    const state = battleReady();
+    const stale = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...state.players.p1,
+          active:
+            state.players.p1.active === null
+              ? null
+              : { ...state.players.p1.active, lockedAttack: { turn: state.turn - 1, attackIndex: 0 } },
+        },
+      },
+    };
+    renderHud(stale);
+    expect(attackButton().disabled).toBe(false);
+  });
+});

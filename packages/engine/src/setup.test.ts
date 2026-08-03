@@ -279,6 +279,13 @@ describe("placement", () => {
       // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body
       // retaliates for nothing rather than retaliating on turn 0.
       installedRecoil: null,
+      // …and no PER-ATTACK bar (D154), read the same way a sixth time — and this
+      // is the one where "read the same way" stops being a formality:
+      // `lockedAttackIndex` returns an INDEX, and 0 is a real index, so a `null`
+      // record is the only thing separating a fresh body from one whose attack 0
+      // is barred on turn 0. The field carries a record and not a bare number for
+      // exactly that reason.
+      lockedAttack: null,
       markers: [],
       turnPlayed: 0,
       // Placed Active from the HAND, which is not a move from the Bench — the

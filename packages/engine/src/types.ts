@@ -371,6 +371,76 @@ export interface InstalledRecoil {
   amount: number;
 }
 
+/** §8/§11 (D154) — an attack-installed PER-ATTACK lock on one Pokémon, with the
+    printed DURATION baked in as a turn STAMP exactly as the four records above
+    bake theirs. One printed sentence, six printings in the local D1:
+
+      "During your next turn, this Pokémon can't use {AttackName}."      (6)
+
+    — Munkidori ex sv06.5-037/-083/-091 "Dirty Headbutt" (INDEX 0), Lucario
+    sv01-114 "Accelerating Stab" (INDEX 1), Skarmory sv03-142 "Slashing Steel"
+    (INDEX 1) and Greedent ex sv03-179 "Slip 'n' Roll" (INDEX 1). ONE MORE
+    printing is fielded but uncatalogued — Radiant Blastoise swsh10.5-018
+    "Torrential Cannon" (INDEX 0) is in `FIXTURE_POOL` and the local D1 holds no
+    swsh10.5 SET AT ALL (see the census in effects.ts), so it is read by this
+    anchor and cannot be verified by query.
+
+    ⚠️ IT IS THE FIRST DURATED RECORD IN THE FAMILY THAT IS NOT A BARE NUMBER,
+    AND THAT IS THE WHOLE SLICE. `AttackBlock` carries flags, the other three
+    carry an AMOUNT — a quantity every read site folds into arithmetic it was
+    already doing. This one carries an ADDRESS: "which attack" is not a number
+    that can be summed with anything, and its three read sites COMPARE it rather
+    than adding it.
+
+    ⚠️ IT CANNOT SHARE `attackLockedTurn`, WHICH IS THE SAME WINDOW ON THE SAME
+    BODY WRITTEN BY THE SAME KIND OF SENTENCE — and saying so is the point of this
+    block, because that is the widening a reader will reach for first. Both stamp
+    the HOLDER's own next turn (`state.turn + 2`, D143's number), both are shed by
+    the same three §10 clears, and one `{ turn, attackIndex? }` record with the key
+    ABSENT meaning "the whole Pokémon" is exactly D135's absent-key shape. It is
+    refused because the two are REACHABLE TOGETHER and mean different things: a
+    Skarmory that self-locks "Slashing Steel" on turn 3 (stamp 5) and is then
+    locked WHOLE by an opponent's Eiscue ex on turn 4 (stamp 5, D148's defender
+    arm) carries both facts on turn 5, and one record could hold only the later
+    write. A merge rule ("absent wins, it is strictly stronger") would be a rule
+    about which of two printed sentences was declared last — the exact thing D147
+    refused when it kept `damageReduction` out of `AttackBlock.turn`.
+
+    THE WINDOW IS `state.turn + 2`, D143's number and not D142's: the sentence
+    prints "During YOUR next turn" and declaring an attack ENDS the turn (§5.3),
+    so the turn after the installing one is the opponent's and the one after THAT
+    is the holder's own. A `+ 1` stamp would be live only on a turn the holder
+    could not have acted on anyway, which is the failure mode D143 wrote down —
+    it deletes the drawback the card is balanced around and nothing looks wrong.
+
+    Everything else is INHERITED from `AttackBlock` unchanged: the stamp
+    convention, the read-through-continuous.ts shape (`lockedAttackIndex`), the
+    three §10 early clears, and D124's no-defensive-`undefined` rule at the
+    reader. */
+export interface LockedAttack {
+  /** The single turn number this lock is live on (the installing turn + 2 — the
+      HOLDER's own next turn, since declaring an attack ends the turn). */
+  turn: number;
+  /** WHICH attack is barred, as an index into the stack-top card's `attacks`.
+
+      ⚠️ AN INDEX RATHER THAN THE PRINTED NAME, AND THE TWO READ SITES DECIDE IT.
+      The printed sentence names a PROPER NOUN and the op carries that noun
+      verbatim (effects.ts) — but every consumer of this record asks the question
+      per INDEX: `attack.ts`'s §8 gate compares it against `action.index`, and
+      both payability projections (`redactedAttacksOf`, GameHud) build their rows
+      by `attacks.map((attack, index) => …)`. Resolving the name ONCE, at the
+      install, is the same call D152's deriver made for its unit conversion: the
+      translation happens at the site that reads the printed token, so no consumer
+      downstream has to know the sentence named anything.
+
+      ⚠️ THE INDEX IS NOT CONSTANT ACROSS THE FAMILY — 0 on the three Munkidori ex
+      printings (whose card has ONE attack) and 1 on Lucario, Skarmory and Greedent
+      ex — which is why the resolution is a lookup and not a literal. A build that
+      assumed either number would bar the wrong attack on four of the six
+      printings, and on Munkidori ex it would be right for the wrong reason. */
+  attackIndex: number;
+}
+
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
     the top uid defines its identity (name, HP, retreat cost, …); damage,
     energy and tools persist through evolution (M4). */
@@ -573,6 +643,35 @@ export interface InPlayPokemon {
       that is NOT the printed "(even if it is Knocked Out)", which is about the
       hit that is being resolved right now and is answered by §9's ordering. */
   installedRecoil: InstalledRecoil | null;
+  /** §8/§11 (D154) — the attack-installed PER-ATTACK lock on this Pokémon (see
+      `LockedAttack` above), or `null` when none has been installed. Read through
+      `lockedAttackIndex` (continuous.ts) rather than by touching this field, so
+      no read site can forget the turn comparison — the same contract the five
+      fields above are under.
+
+      ⚠️ `state.turn + 2`, WHICH IS `attackLockedTurn`'s SELF-ARM NUMBER AND NO
+      OTHER FIELD'S. Four of the five records above stamp `+ 1` (the window is the
+      opponent's); this sentence prints "During YOUR next turn", so the window is
+      the holder's own and the number is D143's. That the two lock fields agree on
+      the number is exactly why they cannot share a record — see `LockedAttack`.
+
+      ⚠️ AND IT IS THE FIRST DURATED FIELD IN THE FAMILY THAT GATES AN ACTION AND
+      REACHES A WIRE PROJECTION, which is a premise §D147's trigger (b) had never
+      met (D149 and D152 both recorded "crosses no wire, changes no projection,
+      gates no ACTION"). What crosses is still not a RECORD: `redactedAttacksOf`
+      folds this fact into the per-attack `playable` boolean the wire already
+      carries, exactly as D143 folded the whole-Pokémon lock into `banned` and
+      D112 folded the retreat block into `can`. So the premise fires and the
+      trigger does not — the argument is in decisions.md D154.
+
+      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `attackLockedTurn`'s
+      reachability story rather than `damageReduction`'s, because the window is the
+      HOLDER's own next turn: retreating, being Switched out and evolving are all
+      lines of play the holder can take INSIDE it, and all three are its own escape
+      from a drawback it chose to pay (D148's agency, on the self side). A Knocked
+      Out holder takes it out of play with the rest of the stack, and the promoted
+      body carries nothing. */
+  lockedAttack: LockedAttack | null;
   /** Effect markers ("can't attack next turn", …) — M3+. */
   markers: string[];
   /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
@@ -627,6 +726,10 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // reduction's sibling on the §9 side of the pipeline. Same reading of §10's
     // carry-over rule from the other end as the four lines above.
     installedRecoil: null,
+    // …and no attack of its own has barred ONE of its attacks either (D154) —
+    // the self-lock's per-attack sibling. Same reading of §10's carry-over rule
+    // from the other end as the five lines above.
+    lockedAttack: null,
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck

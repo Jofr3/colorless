@@ -11783,3 +11783,255 @@ else. `bun run check` **GREEN exit 0 — 193 files / 3270 tests** (was 193 / 326
 The review also independently confirmed: the **turn-stamp arithmetic on all five durated
 fields**, the **totality of the §10 clear sites** and of the **four damage sites**, and the
 **requirement-clause polarity**.
+
+
+## D154 — the PER-ATTACK LOCK: `During your next turn, this Pokémon can't use {AttackName}.` — 6 catalogued printings / 4 names on ONE anchor with ONE PROPER-NOUN capture, a SEPARATE op and a SEPARATE field, and §D152's SHAPE trigger fires, is re-derived and is REFINED (engine 0.101.0 → 0.102.0, `MATCH_RECORD_VERSION` 8 → 9)
+
+Item 1 of D153's remainder list, and the item three lists had called "the single
+best next item".
+
+### ⚠️ THE CENSUS — AND THE MISS IS THAT THE QUERY WAS BLIND TO A WHOLE SET
+
+Run for THIS question against the local D1 (2026-08-03, 978 cards), across all
+three text columns, rather than read off §D148's table. `LIKE '%can''t use%'`
+returns **29 rows**. Exactly **SIX** are this sentence:
+
+| Name | Printings | Cost / damage / INDEX |
+|---|---|---|
+| "Dirty Headbutt" | 3 — Munkidori ex `sv06.5-037` (Double rare) / `-083` (Ultra Rare) / `-091` (Special illustration rare) | {D}{D}{C}, 190, **idx 0** — byte-identical on every column |
+| "Accelerating Stab" | 1 — Lucario `sv01-114` | {F}{C}{C}, 120, **idx 1** |
+| "Slashing Steel" | 1 — Skarmory `sv03-142` | {M}{M}{C}, 120, **idx 1** |
+| "Slip 'n' Roll" | 1 — Greedent ex `sv03-179` | {C}{C}{C}, 210, **idx 1** |
+
+The other 23 rows are refused by the capitalised `During` plus `^…$` before
+anything else: **13 once-per-turn Ability limiters** ("You can't use more than 1
+{Ability} each turn" — Fezandipiti ex ×3, Pecharunt ex ×4, Squawkabilly ex ×3,
+Pidgeot ex ×3), Gardevoir ex ×3 ("on a Pokémon that would be Knocked Out"), Rare
+Candy ×2 and Dendra ×3 (Trainer play gates), and the **2 opponent-side printings**
+below.
+
+**⚠️ AND THE INHERITED COUNT WAS `8 / 6`, WHICH IS THE FIRST MISS OF THIS KIND.**
+Every list since §D143 — and §D143's own refusal table — named **Radiant Charizard
+`swsh10.5-011`** and **Radiant Blastoise `swsh10.5-018`** beside those six ids. The
+local D1 holds **five sets and no `swsh10.5` row at all**:
+
+```
+select set_id, count(*) from cards group by set_id;
+sv01|258   sv02|279   sv03|230   sv06.5|99   sve|24      -- 978
+```
+
+So:
+
+- `swsh10.5-011` is in **no catalog row and no fixture** — it is unverifiable from
+  inside this repo, and nothing in it depends on the card;
+- `swsh10.5-018` **is** in `FIXTURE_POOL` carrying "Torrential Cannon" ({W}{W}{C},
+  170, idx 0) with this sentence, so it is a **FIELDED printing of fixture
+  provenance**. D154 reads it and drives it, and labels it that way in the anchor,
+  the deck, the suite and the type.
+
+**THE STANDING LESSON, WHICH IS BIGGER THAN THIS SLICE.** Many `swsh10.5` cards
+are fielded and none is catalogued, so **every census in this repo that says "run
+against the local D1, 978 cards" has been structurally blind to that set** — D149's
+own "6 printings" of the pre-W/R family counted Pidove `swsh10.5-061` (the D1
+returns **4** attack rows for that query, not 5). None of those slices is wrong in
+its BEHAVIOUR; their COUNTS are counts of two different populations added together.
+**A query cannot see a set the database does not have, and nothing about its result
+says so — so a census owes its SCOPE and not only its number.** The cheap hardening
+is one line in every future census: name the set list the query ran over.
+
+The repo-wide misnamed-id sweep was run over every id this slice touches
+(`sv06.5-037`/`-083`/`-091`, `sv01-114`, `sv03-142`, `sv03-179`, `sv01-111`,
+`sv02-094`, `sv03-052`, `swsh10.5-018`) and found **nothing new** — clean for the
+second slice running.
+
+### The shape: an ADDRESS, not a number
+
+`InPlayPokemon.lockedAttack: { turn, attackIndex } | null` — the **sixth** stamped
+field and the first that is not a bare stamp or an amount. Read through
+`lockedAttackIndex` (continuous.ts), which returns **an index, not a boolean**:
+`attackLocked`'s reader shape had to move, and the ground is observable rather than
+stylistic — both projections build their rows by mapping over `attacksOf(card)`, so
+a `(state, pokemon, index)` predicate would re-read one field N times where the §8
+gate reads it once. An index answers all three sites in one read.
+
+The op (`preventAttackUse { attack }`) carries the **printed proper noun**; the
+INTERPRETER resolves it against the holder's own `attacks` and stamps the index.
+That is D152's `× 10` decision made from the other side: translate at the site that
+owns the printed token, so nothing downstream has to know a sentence named
+anything. **A name matching nothing installs nothing and emits no row** —
+unreachable off all five printings, constructed and pinned.
+
+**The stamp is `state.turn + 2`** — D143's number, not D142's, because the sentence
+prints "During YOUR next turn" and declaring an attack ends the turn (§5.3).
+
+### Two separations, both D131's widen-don't-add test run in the direction that says NO
+
+Three slices in a row have used that test to say *yes*; this is what it looks like
+when it says *no*, and writing that down is the point.
+
+| | The widening a reader reaches for | Why it fails |
+|---|---|---|
+| **The op** | `preventAttack { target?, attack? }` | Stripping `attack` does not yield the previous arm — it yields a **different rule writing a different field**. (D148's `target` passes exactly: same field, same rule, other seat.) One op would also admit `{ target: "defender", attack }`, an inhabitant no printing produces and no site reads. |
+| **The field** | `attackLockedTurn` widened to `{ turn, attackIndex? }`, absent = the whole Pokémon (D135's absent-key shape) | **REACHABILITY, and it is DRIVEN.** A Greedent ex that self-bars "Slip 'n' Roll" on turn 2 (stamp 4) and is then locked WHOLE by an Eiscue ex "Scalding Block" on turn 3 (stamp 4, D148's defender arm) carries **both facts on turn 4**. One record holds only the later write, and a merge rule ("absent wins") would be a rule about which printed sentence was declared last — exactly what D147 refused when it kept `damageReduction` out of `AttackBlock.turn`. |
+
+(The coexistence board uses Greedent ex rather than Skarmory for a card reason
+worth recording: "Scalding Block" deals a printed 160 and Skarmory has 120 HP, so
+the only printing in the family that survives being locked is the 260.)
+
+### ⚠️ §D152's SHAPE TRIGGER: FIRES, RE-DERIVED, DECLINED — and REFINED rather than retired
+
+§D147 declined the `attackBlock` union and named three triggers. §D152 retired the
+COUNT trigger (five fields fired it, the answer was still no) and replaced it with
+a SHAPE one — *a member the read site must **DISPATCH** on rather than SUM* —
+naming **this record's `{ turn, attackIndex }`** as the case, and forecasting that
+this slice "is likely to answer YES".
+
+**It answers NO, and the re-derivation is from the code rather than the citation.**
+The five existing stamped fields' read sites were opened and asked whether they SUM
+or DISPATCH:
+
+| field | reader | what the read site does |
+|---|---|---|
+| `attackBlock` | `attackBlockOf` | **supersedes** — the damage sites null the hit |
+| `attackLockedTurn` | `attackLocked` | **predicate** — a boolean at one gate + two projections |
+| `damageReduction` | `installedReductionOf` | **SUMS** into `passivesOf().damageReductionAfterWR` |
+| `attackDamageDebuff` | `installedAttackDebuffOf` | **subtracts** a second term at 4 sites |
+| `installedRecoil` | `installedRecoilOf` | **SUMS** into `passivesOf().damageAttacker` |
+| `lockedAttack` (D154) | `lockedAttackIndex` | **COMPARES** — the first non-arithmetic read |
+
+So the trigger's premise is met: this is genuinely not a sum. **But no site
+DISPATCHES either, and that is what the union would have to be paid for.** Every
+reader in this family knows which rider it wants BEFORE it looks — `lockedAttackIndex`
+is the only reader of this field and asks for exactly one kind — so a union over
+`InPlayPokemon` would replace a compiler-checked field access with a `find` over a
+list whose other members the caller discards on the next line. **A payload consumed
+by its own dedicated reader is a field access either way.**
+
+**THE REFINED TRIGGER: a caller that receives a rider whose KIND it does not know —
+an ENUMERATION.** §D147's trigger (a) (a printing that REMOVES the effects of
+attacks) is still its only forecast producer, and the pool prints none (re-censused
+at D152). A P5 UI that must LIST the durated riders on a Pokémon would be the other.
+
+**⚠️ AND TRIGGER (b)'s PREMISE FIRES FOR THE FIRST TIME, WHICH IS THE OTHER HALF OF
+THE ANSWER.** D149 and D152 each recorded "crosses no wire, changes no projection,
+gates no ACTION". **This field gates the `attack` ACTION and changes
+`redactedAttacksOf`.** It still does not earn the union, because what crosses the
+wire is the per-attack `playable` BOOLEAN that was already there (D143's `banned`,
+D112's `can`) and not a rider. **So the projection question and the union question
+are INDEPENDENT, and (b) conflated them.** That is a correction a later slice can
+check rather than re-derive.
+
+### The five structural questions
+
+1. **PARK?** No — deterministic, consumes no rng, asks nothing, so no
+   `EffectContinuation` carries it. **PERSIST — yes: MRV 8 → 9**, the SEVENTH time
+   on D124's trigger (a required key on `InPlayPokemon`). The other two new keys do
+   NOT bump: `preventAttackUse` is a new op MEMBER (a widening for any old
+   continuation, which cannot contain it), and `ATTACK_LOCKED.attack?` is optional
+   on a `GameEvent`, which is persisted **nowhere** (D153's sweep) — so the wording
+   changes for NEW rows only, D141's settled seam. **D153 in between did not bump**,
+   a third control beside D148 and D151.
+2. **VOICE?** `seat` owns the BARRED Pokémon (D136's finding 1), and the op has no
+   defender arm, so every row is the actor's own. **The row needed a BRANCH where
+   D148's did not, and that is D153's test applied:** D148 flipped whose name the
+   row carries and needed no new wording, because *"can't attack next turn"* is true
+   of a locked body under either seat. This slice changes **what is true** — a
+   Skarmory whose "Slashing Steel" is barred may still declare "Peck" — so the bare
+   wording is not *stilted*, it is **FALSE**, and false in the direction that makes
+   a player pass a turn they could have attacked on. The narrowing therefore rides
+   the EVENT as a field (D113/D153: a field, never a sibling event), ABSENT meaning
+   the whole Pokémon. **Rendered under both seats and READ**, side by side on one
+   body: `Greedent ex can't use Slip 'n' Roll next turn` / `Greedent ex can't attack
+   next turn`. The row prints the CARD's spelling of the name, not the op's folded
+   token.
+3. **GUARD ASSERTED?** SWEPT, and the sweep found something. The §10 clear-set is
+   **4 literals** and the new field is on all four (`grep` gives 4:4 against
+   `attackLockedTurn`), each DRIVEN: **evolve** (Skarmory → `fix-skarm-stage1`,
+   whose ONE attack makes a stale index point at **nothing** — the sharpest witness
+   this family has had, because the failure it rules out is not "still barred" but
+   "barred somewhere else"), **retreat**, and a Boss's Orders **`switchInto`**. The
+   §11 classification table gained a verdict **and** a driven probe board (D150's
+   rule): `preventAttackUse: "untouched"` — and it is the one place `preventAttack`
+   and its sibling **disagree**, that op being `blocked` only for its D148 defender
+   arm. **⚠️ AND MUTATION-CHECKING FOUND A FOLD THAT WAS FREE.** D137's apostrophe
+   rule reaches a derived VALUE for the first time here (Greedent ex's "Slip 'n'
+   Roll" carries two apostrophes INSIDE the captured noun), so the deriver folds its
+   capture and the install folds the card's `name`. Removing the second fold was
+   **green** — every printing spells both halves straight, and
+   `clauseApostrophe.test.ts` rewrites the SENTENCE only. Fixed with a **witness**
+   rather than a note: `fix-curly-barrer`, a card whose attack NAME *and* effect
+   string are both U+2019, which is what a punctuation-normalising re-ingest
+   actually produces. A guard that was written and then measured free was also
+   **removed** (`attack.length > 0` cannot fire — `(.+?)` already refuses an empty
+   capture, and a guard that cannot fire reads like a refusal somebody checked).
+4. **MECHANISM EXISTS?** Yes — `attack.ts`'s §8 gate, `redactedAttacksOf`,
+   `GameHud`'s attack map and all four §10 clear literals were **read before
+   anything was designed**, which is why both projections are per-INDEX by
+   construction rather than by retrofit.
+5. **GATES AN ACTION — so it owes BOTH payability projections, and it is the FIRST
+   durated field that does.** `redactedAttacksOf` gains a `barred` index compared
+   per row (it cannot join `banned`, whose whole shape is one boolean applied to
+   every row), and `GameHud.tsx` the same. **This projection has more room to be
+   wrong than D143's, and the reason is visual:** that lock greys EVERY row, so a
+   build that missed it shows a panel of dead controls and someone notices; this one
+   greys exactly ONE row on an otherwise live panel, so a build that missed it
+   renders a board that looks completely normal and rejects one press. Pinned on
+   both sides — `redactGame` in `perAttackLock.test.ts`, and a new **jsdom block in
+   `GameHud.dom.test.tsx`**, the first HUD case this family has ever had (D143 added
+   none).
+
+### Mutation table (twelve run, eleven caught, the twelfth deleted)
+
+| mutation | tests failed |
+|---|---|
+| hardcode the resolved index to 0 | **13** |
+| stamp `state.turn + 1` instead of `+ 2` | 9 |
+| drop the §8 gate in `attack.ts` | 4 |
+| drop the evolve §10 clear | 2 |
+| render the bare wording regardless of `attack` | 2 |
+| drop the deriver's apostrophe fold | 2 |
+| drop the `redactedAttacksOf` per-index arm | 1 |
+| drop the retreat (`clearOnLeavingActive`) §10 clear | 1 |
+| drop the `switchInto` §10 clear | 1 |
+| drop the install-site apostrophe fold | 1 *(**0** before `fix-curly-barrer`)* |
+| flip the §11 verdict to `blocked` | 1 |
+| drop the idempotence early-return | 1 |
+| ~~drop the empty-name guard~~ | **0 — the guard was removed instead** |
+
+**Cost.** 1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1 deriver
+arm, 1 reader, 1 exported fold helper (`foldApostrophes`), 1 EVENT FIELD (not a new
+event), 1 log branch, 3 §10 clears, 1 §8 gate, 2 payability projections. No park,
+no new error code (`ATTACK_PREVENTED` reused with a message that **names** the
+barred attack, because what differs is what the player must do next), no prompt, no
+registry row, no DB/`@luminous/schema` diff. **6 fixtures ADDED** — Skarmory
+`sv03-142`, Munkidori ex `sv06.5-037`, Greedent ex `sv03-179`, Lucario `sv01-114`
+(each verbatim off the D1 and checked field by field **including its absences**),
+plus `fix-skarm-stage1` (the evolve route) and `fix-curly-barrer` (the re-ingest
+witness). 1 new deck (`PER_ATTACK_LOCK_DECK` — its own 60 so D143's seeded boards
+stay byte-identical), `perAttackLock.test.ts` (**28 tests, one SEED**), 3 new jsdom
+cases, and **one stays-LOUD witness RE-POINTED, none deleted**. engine 0.101.0 →
+**0.102.0**, `MATCH_RECORD_VERSION` **8 → 9**. `bun run check` GREEN exit 0 —
+**194 files / 3301 tests** (was 193 / 3270).
+
+### Still unmapped after D154 — the per-attack neighbourhood is NOT closed
+
+- **The OPPONENT-side twin — 2 printings / 1 sentence.** Medicham `sv01-111`
+  "Acu-Punch-Ture" ({F}, 30, idx 0) and Oranguru `sv02-094` "Plotter's Command"
+  ({P}{C}, 30, idx 0): *"Choose 1 of your opponent's Active Pokémon's attacks.
+  During your opponent's next turn, that Pokémon can't use that attack."* Both
+  re-queried at D154 and correct. **It is a THIRD op, not a second arm of
+  `preventAttackUse`** — the address is CHOSEN rather than printed, so it needs a
+  candidate set (the defender's `attacks`), a prompt, a park and a `target`. **The
+  addressing D154 built does not foreclose it**: the state record is already an
+  index, which is exactly what a park would resolve to, and the stamp on that side
+  is `state.turn + 1` (D148's defender arm) rather than `+ 2`. The reader, the three
+  §10 clears, the §8 gate and both projections take **zero diff**.
+- **Seismitoad `sv03-052` "Echoed Voice" — 1 printing, a durated per-attack BUFF.**
+  *"During your next turn, this Pokémon's Echoed Voice attack does 100 more damage
+  (before applying Weakness and Resistance)."* ({W}{W}, 120, idx 0 — its card's only
+  attack; it also prints a "Quaking Zone" Ability this engine does not read.) It
+  wants **the same addressing** (a `{ turn, attackIndex, amount }` record on the
+  holder's own body, `+ 2`) and it would read at the pre-W/R sites **D149 already
+  built**. Now the cheapest item in this neighbourhood, and the first that would put
+  a SECOND payload beside an address — i.e. the first genuine candidate for a shared
+  record inside this family rather than across it.
