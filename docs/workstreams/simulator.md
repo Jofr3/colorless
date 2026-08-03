@@ -12527,3 +12527,320 @@ module to the package and rewrites 57 provenance comments in shipped sources.
 - **`docs/` still carries 101 unscoped counts** (31 `decisions.md` / 34
   `progress.md` / 36 here). Corrected once, in D156, rather than rewritten in
   three append-only logs.
+
+---
+
+## D157 — the OPPONENT-SIDE PER-ATTACK LOCK: `Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.` — 2 printings on ONE anchor with NO capture, a THIRD op, a NEW PROMPT KIND, and D154's FIELD reused unchanged (engine 0.103.1 → 0.104.0, `MATCH_RECORD_VERSION` UNCHANGED at 10)
+
+Item 1b of D156's remainder list, and the **last unread member of the per-attack
+neighbourhood**: D154 read the self-side bar, D155 the self-side buff, and each
+named this one out of scope in its own doc block because the address here is
+CHOSEN rather than printed.
+
+### ⚠️ THE CENSUS — and nothing on the inherited list was wrong
+
+Run for THIS question against the local D1 (2026-08-03, **890 rows across five
+sets** — `sv01` 258, `sv02` 279, `sv03` 230, `sv06.5` 99, `sve` 24; D156's
+measured population, and the scope is stated because D154/D155/D156 spent three
+slices establishing that a count without one is unreadable). All three text
+columns:
+
+```
+LIKE '%can''t use that attack%'     → 2 rows   (both this sentence)
+LIKE '%Choose 1 of your opponent%'  → 3 rows   (the third is Sylveon sv06.5-022)
+LIKE '%Pokémon''s attacks%'         → 6 rows   (four are D149's debuff family)
+```
+
+| Name | Printing | Cost / damage / INDEX |
+|---|---|---|
+| "Acu-Punch-Ture" | Medicham `sv01-111` | {F}, 30, **idx 0** — Stage 1 off Meditite, 90 HP, ×2 Psychic, no Resistance |
+| "Plotter's Command" | Oranguru `sv02-094` | {P}{C}, 30, **idx 0** — Basic, 120 HP, ×2 Darkness, −30 Fighting |
+
+and the **two effect strings are BYTE-IDENTICAL**, asserted by the database
+itself (`json_extract(attacks_json,'$[0].effect')` compares equal across the two
+rows) rather than by eye — which is why this is ONE anchor for two printings and
+D121's second-printing warrant is met by the cards.
+
+**`FIXTURE_POOL` was swept SEPARATELY** — the half D154's finding makes mandatory
+and D156 made unskippable, since the pool is a different population from the D1
+and still holds twelve `swsh10.5` cards the catalog has lost. Neither sentence
+was fielded before this slice, so **two printings means two in both
+populations**, unlike D154 (which found a fifth printing fielded and
+uncatalogued). The repo-wide misnamed-id sweep over both ids found **nothing**.
+
+**⚠️ SO THIS IS THE FIRST INHERITED LIST SINCE D154's ITEM 1a WITH NOTHING WRONG
+ON IT, AND THAT IS WORTH STATING RATHER THAN PASSING OVER.** Every claim D154
+wrote down about this sentence — the two ids, the two attack names, both costs,
+both damages, both indices, the printed string, "a third op rather than a second
+arm", "the stamp on that side is `+ 1`", "the reader / the four §10 clears / the
+§8 gate / both projections take zero diff" — held. The lists with nothing wrong
+share the property D156 named: **they were written by a session that had READ the
+code it was pricing.** D154 had.
+
+### The shape: a shared FIELD and a separate OP, decided at two different sites
+
+| | `preventAttackUse` (D154) | `boostAttack` (D155) | `preventChosenAttack` (D157) |
+|---|---|---|---|
+| Holder | `ctx.seat`'s Active | `ctx.seat`'s Active | **the DEFENDER** |
+| Address | a printed PROPER NOUN | a printed PROPER NOUN | **a PARK** |
+| Stamp | `+ 2` | `+ 2` | **`+ 1`** |
+| Field | `lockedAttack` | `boostedAttack` | **`lockedAttack`** |
+| Install | synchronous | synchronous | **parks** |
+| §11 | `untouched` | `untouched` | **`blocked`** |
+
+**THE FIELD IS SHARED — D148's answer reached at the address.** *"Which of this
+body's attacks is barred, and on which turn"* is ONE question about ONE body, and
+whose attack wrote the answer is a fact about the OP. `lockedAttackIndex` is the
+field's ONE reader and it **REFUSES** the index whichever op wrote it, so
+`attack.ts`'s §8 gate, `redactedAttacksOf`, `GameHud` and all FOUR §10 clear
+literals take **zero diff**, and no required key appears on `InPlayPokemon`.
+
+**⚠️ AND D155 RAN THAT EXACT TEST ON THE SAME RECORD AND ANSWERED THE OTHER WAY,
+WHICH IS THE PAIR WORTH KEEPING.** It refused to merge `boostedAttack` into
+`lockedAttack` because *"`lockedAttackIndex`'s consumer REFUSES the index it
+returns and `boostedAttackDamage`'s PAYS it"*. That is precisely why this one
+shares: both writers here feed the SAME consumer, which refuses. **The unit of
+sharing is decided by the READ SITE both times, and the two decisions are
+consistent rather than in tension** — a merge is right when the consumers agree
+and wrong when they disagree, and "the records are the same shape" was never the
+question.
+
+**THE OP IS SEPARATE**, on two grounds:
+
+| | The widening a reader reaches for | Why it fails |
+|---|---|---|
+| **D131's test** | `preventAttackUse { attack?, target? }` | Stripping `target` does not yield the previous arm: that op **REQUIRES** its printed noun, so `{ target: "defender" }` with no `attack` is not it minus a key, it is a different rule with an empty payload. (D148's `target` on `preventAttack` passes exactly — same field, same rule, other seat.) It would also admit `{ target: "defender", attack: "…" }` and `{ attack: undefined }`, two inhabitants no printing produces. |
+| **The CONTROL FLOW** | one op, one `stepOp` arm | This op returns a `park` where that one returns a `done`. One op would make *"does this install ask a question?"* a runtime property of a field rather than a fact about the case — and the compiler is what makes the difference checkable. |
+
+### The park: a new KIND of candidate, and `parkOrForce`'s three endings
+
+`chooseAttack { candidates: { index, name }[], note }`, answered with
+`{ kind: "attack", index }`. **The first prompt in this engine whose candidates
+are neither CARDS nor POKÉMON but ROWS of one Pokémon's printed attack list.** An
+attack has no uid, and the only thing the answer can be is an INDEX — the same
+value the `attack` action carries, the registry's `attack` map is keyed by and
+`InPlayPokemon.lockedAttack.attackIndex` stores.
+
+The three endings are `parkOrForce`'s, spelled out rather than routed through it
+(its candidates are `PokemonRef`s), and **all three are reachable off the two
+printings** — a one-attack or attackless defender is an ordinary board:
+
+| Defender's printed attacks | Ending | Driven on |
+|---|---|---|
+| 0 | **SILENT** — no record, no row, no prompt (a lock with nothing to lock is inert; D140/D146: a gate that declines emits nothing) | `fix-titan` |
+| 1 | **FORCED** — applied inline, no prompt (the M1 doctrine). The board on which this op and D148's whole-Pokémon lock are observationally identical | `fix-echoer-stage1` |
+| ≥ 2 | **PARK** | `fix-attacker` (6 attacks), `fix-echoer` (2) |
+
+### ⚠️ Public-ref or hidden-candidate? BOTH, and the two axes are INDEPENDENT
+
+P4 organised `RedactedEffectPrompt` into two families: the **public-ref** one
+(`choosePokemon`/`choosePokemonMulti`/`moveEnergy`/`discardEnergy` — candidates
+already on the redacted board, no card resolution) and the **hidden-candidate**
+one (`chooseCards`/`attachCards` — the controller's own deck cards, resolved to a
+`RedactedCard` each, where the answerer gate IS the hidden-information barrier).
+
+This prompt is **public-ref by its hidden-information reading**: the printed
+attacks of a face-up Active are on the table for both players, and an Active is
+face-up for both viewers the moment setup ends (`inSetup`, redact.ts), which an
+attack's tail is always after. `redactPrompt` resolves no card identity and the
+answerer gate is a convenience — only one seat answers — rather than a barrier.
+
+**But it carries a server-resolved `name`, which no public-ref arm does, and the
+reason is a HOLE IN THE WIRE rather than a reveal.** A `PokemonRef` and an
+attached-Energy uid both resolve against the redacted board the client already
+holds. An attack INDEX resolves against **nothing**: `RedactedCard` carries
+`id`/`cardId`/`name` and no attack rows, and `RedactedAttack[]` is published for
+the viewer's OWN Active only. Without the label the dialog renders numbered
+buttons.
+
+> **The finding: *is the answerer gate load-bearing?* and *must the server
+> resolve a label?* are independent questions.** The two families conflated them
+> because until now every prompt answered them the same way. This is the first
+> that answers NO to the first and YES to the second.
+
+**⚠️ AND THE `resolveEffect` ALLOWLIST INVARIANT FIRES FOR THE FIRST TIME.**
+`apps/api/src/lobby/match.ts` records that `resolveEffect` is on the DO's action
+set **exactly while every prompt kind has an online dialog** — a ninth kind added
+without one re-arms a soft-lock. This is the first slice to add an eighth, so the
+schema arm, the redactor arm, the projection arm and `ChooseAttackDialog` land
+together, and the note now says which of the four the compiler catches: three.
+`EffectChooseDialog`'s chain ends in an `else`, so a missing dialog is a type
+error at the FALL-THROUGH arm rather than at the chain.
+
+### The five structural questions
+
+1. **PARK? YES — the first in this family. PERSIST? NO: `MATCH_RECORD_VERSION`
+   stays 10, and a parked-op shape crossing the wire is its own question.** The
+   continuation (`EffectContinuation.pendingOp`) and the prompt both ride
+   `GameState.phase` into `MatchRecord`, so both DO cross the persisted boundary —
+   and both are **UNION WIDENINGS** (D125's distinction, D144's worked case on the
+   sharp edge): a previous deploy's record holds one of the seven existing prompt
+   kinds and one of the existing ops, every one of them still a valid inhabitant
+   of the new type. `EffectChoice` is not persisted at all (an action payload).
+   **No required key appeared on `InPlayPokemon`, so D124's trigger does not
+   fire** — the SEVENTH distinct no-bump reason, and the first that is a new
+   PROMPT member. No dodge was priced because none was needed: the field genuinely
+   answers the same question.
+2. **VOICE? VICTIM-SIDE *AND* NARROWED — the cell of the cross-product nobody had
+   filled.** `ATTACK_LOCKED`'s `seat` owns the BARRED Pokémon (D136's finding 1),
+   which here is the ACTOR's OPPONENT. That event has been victim-side since D148
+   (which added no `attack` field) and has carried the `attack` narrowing since
+   D154 (whose op has no defender arm); **this is the first path that is both**,
+   so the wording was RE-READ rather than inherited from either. It needs no new
+   arm, and the reason is checkable: "next turn" means the NAMED player's own next
+   turn under this family's seat rule, the named player is the victim, and the
+   victim's next turn IS the `+ 1` window this stamp encodes. **Rendered under
+   both seats and read**: `fix-attacker can't use Bite next turn` under P2 is
+   true; the identical words under P1 are FALSE (P1's Oranguru is barred from
+   nothing), and D148's bare wording is false in the OTHER direction (three of the
+   victim's attacks stay legal).
+3. **GUARD? SWEPT, AND THE SWEEP'S ANSWER IS THAT THIS SLICE ADDS NO CLEAR.** The
+   §10 clear-set is 4 hand-written literals in two files (`clearOnLeavingActive`
+   and `placeEvolution` in turn.ts, `switchInto` in interpreter.ts, `makeInPlay`
+   in types.ts) and `lockedAttack` is already on all four. The sweep is structural
+   — every §10-sheddable key read off ONE body that has been through a clear — and
+   what it proves here is that **pointing an existing field at the OTHER seat's
+   body needs no fifth site**, because the clears are written on `InPlayPokemon`
+   and know nothing about who installed what. Each route is DRIVEN with **the
+   agency inverted** (D148's finding): retreat and evolve are the VICTIM's
+   counterplay against an effect they never chose, and the Boss's Orders route is
+   the INSTALLER undoing their own lock — driven precisely because it looks like a
+   play nobody would make and is the same literal. **What the sweep does NOT
+   traverse:** it reads a body that has been through ONE clear (the evolve), so a
+   literal that shed the field on three routes and not the fourth is caught by the
+   three per-route cases and not by the sweep; and it cannot see a clear site that
+   does not exist yet. The §11 classification table gained a verdict **and** a
+   driven probe (D150's rule).
+4. **MECHANISM EXISTS? YES — and reading it first is what made the field shared
+   rather than added.** `runProgram`'s park protocol, `EffectPrompt`'s seven arms,
+   `validateChoice`, `applyChoice`, `redactPrompt`'s two families,
+   `effectDecisionFromPrompt`, `EffectChooseDialog`'s chain, `lockedAttackIndex`,
+   the §8 gate and all four §10 literals were READ before anything was designed.
+5. **IT GATES AN ACTION, SO IT OWES BOTH PAYABILITY PROJECTIONS — AND THEY TAKE
+   ZERO DIFF, WHICH WAS DRIVEN RATHER THAN ASSUMED.** `redactedAttacksOf` returns
+   rows only for `viewerSeat === turnSeat` and reads that viewer's OWN Active's
+   `lockedAttack`; **the locked seat here is the one that did NOT act**, and it is
+   the turn owner exactly during the window, so the same line answers. What
+   changes is who is looking at the greyed button — a player who never chose the
+   lock and has no card of their own to read the reason off, which is the case
+   D148 called the sharper one to get wrong. Pinned from the VICTIM's chair on
+   both sides, with a control: the same board with the record removed offers the
+   row, so exactly ONE more row is greyed by the lock than by the board's own
+   payability.
+
+### ⚠️ §11 — the first op in this family a wide block STOPS
+
+`preventAttackUse` and `boostAttack` are `untouched` because they write onto the
+CONTROLLER's own Active; this one writes onto the **DEFENDING Pokémon**, which is
+squarely an effect of an attack done to it — `preventRetreat`'s,
+`weakenDefenderAttacks`'s and D148's `preventAttack { target: "defender" }`'s
+verdict verbatim. So the per-attack family now straddles this table exactly as
+`preventAttack` and `preventAttackUse` do, and for the same reason: **the table
+asks about the BODY, not about the rule.** Three ops write the same
+`{ turn, attackIndex }`-shaped fact and land on two different sides of it.
+
+**The guard sits IN FRONT OF the candidate scan** — `discardEnergy`'s placement
+and its reason: a shielded defender must never reach the prompt, because asking
+a player to pick an attack that will not be barred is worse than not asking. That
+also makes this the first `blocked` op that would otherwise have PARKED, so the
+probe returns `parked: false` and the placement is visible rather than stylistic.
+
+### The `attackBlock` union — re-derived a FOURTH time, still NO, and this is the closest call yet
+
+D154's earning condition is **an ENUMERATING caller** — one that receives a rider
+whose KIND it does not know. **A prompt that must LIST something is the nearest
+thing to one that has come up**, which is why it was re-derived rather than
+cited. It is not one: this prompt enumerates the DEFENDER's printed **attacks**,
+which is a fact about a CARD (`attacksOf`) and not about the durated riders on a
+body. Nothing in the engine asks "what effects are on this Pokémon?". And the
+slice adds **no stamped field at all** — the first durated slice since D148 that
+does not — so the count trigger D152 retired does not even move. **Do not
+re-open this on a ninth field or on a second prompt.**
+
+### Mutation table (twenty-two run, twenty-one caught, the twenty-second is not a guard)
+
+| mutation | tests failed |
+|---|---|
+| drop the deriver arm entirely | **27** |
+| install onto the ACTOR's own Active | **14** |
+| stamp `state.turn + 2` instead of `+ 1` | **13** |
+| scan the ACTOR's own Active for candidates | 9 |
+| hardcode the applied index to 0 | 6 |
+| drop the attack NAME from the row (D148's bare wording) | 6 |
+| name the attack by INDEX rather than the card's spelling | 6 |
+| drop the prompt's resolved NAMES (indices only) | 4 |
+| render the row under the ACTOR's seat | 3 |
+| drop the §11 `attackEffectRefused` guard | 2 |
+| take the §11 refusal AFTER the park instead of in front of it | 2 |
+| drop the FORCED one-attack arm (always park) | 1 |
+| drop the SILENT no-attacks arm | 1 |
+| drop the idempotence early return | 1 |
+| drop the out-of-range index guard at the apply | 1 |
+| drop the possessive apostrophe classes from the anchor | 1 |
+| drop the whole-sentence anchors (prefix match) | 1 |
+| drop the candidate-membership check in `validateChoice` | 1 |
+| flip the §11 verdict to `untouched` | 1 |
+| drop the projection's `chooseAttack` rebuild | 1 |
+| the dialog dispatches a constant index | 1 |
+| `Number.isInteger` in `validateChoice` | **0 — see below** |
+
+**⚠️ TWO NUMBERS IN THAT TABLE ARE WORTH READING RATHER THAN COUNTING.** *"Install
+onto the ACTOR's own Active"* (**14**) and *"scan the ACTOR's own Active for
+candidates"* (**9**) are the same seat error at the two halves of the op, and they
+fail DIFFERENT sets — the first takes the log row and every record assertion with
+it, the second takes the prompt's candidate list. A slice that had written only one
+of the two boards would have caught only one of the two mistakes. And *"drop the
+whole-sentence anchors"* fails only **1**, which is the anchor's job being done by
+the ONE case that feeds it the first sentence alone: the pool prints nothing else
+this prefix reaches, so the guard is worth exactly the constructed refusal that
+pins it — the shape D145 named when it called `SELF_DISCARD_ALL`'s `$`
+load-bearing against a family nobody had built yet.
+
+**⚠️ THE FREE ONE, AND IT IS KEPT RATHER THAN DELETED — WHICH IS THE OPPOSITE OF
+D154's CALL AND THE REASON IS THE OPPOSITE TOO.** D154 removed its free guard
+because it *could not fire*: `(.+?)` already refuses an empty capture, so the
+check read like a refusal somebody had checked. This one **can** fire — a wire
+frame carrying `"0"` or `1.5` reaches it — and the reason it catches nothing today
+is that the membership test one line below rejects the same values. The mutation
+therefore measures the SECOND check, not the first. It is kept, and the comment
+now says exactly that: the two are one fact stated once, and the day this prompt
+offers a computed subset the membership test stops being a superset of it.
+(Deleting it would also make `attack.ts`'s §8 wire check the only place in the
+engine that says an index must be an integer, on a value that reaches the same
+comparison.)
+
+### Cost
+
+**1 op (no fields), 1 regex, 1 deriver arm, 1 install, 1 shared apply, 1 PROMPT
+kind, 1 CHOICE kind, 1 wire schema arm, 1 redactor arm, 1 projection arm, 1 HUD
+dialog, 1 validator arm.** No new state field, no new event, no new error code,
+no new §10 clear, no new reader, no registry row, no `attack.ts` /
+`continuous.ts` / `turn.ts` / `log.ts` / `events.ts` / `flow.ts` diff, no DB diff.
+**2 fixtures ADDED** (Medicham `sv01-111`, Oranguru `sv02-094` — both real cards,
+both verbatim off the D1 and both now pinned by `catalogManifest.ts`, which was
+REGENERATED), 1 new deck (`OPPONENT_ATTACK_LOCK_DECK` — its own 60 so D154's and
+D155's seeded boards stay byte-identical), `opponentAttackLock.test.ts`
+(**26 tests, SEED-FREE**), 2 new jsdom cases, 1 new `projection.test.ts` round-trip
+arm, and **two stays-LOUD witnesses RE-POINTED, none deleted**
+(`attackLock.test.ts` and `perAttackLock.test.ts` both carried this sentence as a
+`toBeNull` warrant and now assert it derives a DIFFERENT OP — which matters more
+here than in either predecessor, because this op writes the SAME record onto the
+SAME kind of body, so only the derived program can tell a drifted reader apart).
+`clauseApostrophe`'s DISCOVERED census **60 → 61**, its first row exposing all
+THREE apostrophe slots at once. engine 0.103.1 → **0.104.0**,
+`MATCH_RECORD_VERSION` **UNCHANGED at 10**. `bun run check` GREEN exit 0 —
+**197 files / 3380 tests** (was 196 / 3352).
+
+### Still unmapped after D157 — the per-attack neighbourhood is CLOSED
+
+- **THE WHOLE PER-ATTACK NEIGHBOURHOOD IS READ.** The self-side bar (D154), the
+  self-side buff (D155) and the opponent-side chosen bar (D157) are the three
+  sentences the `can't use` / `{AttackName}` censuses turned up, and nothing in
+  the local D1 is left in it. Do not re-census it without a NEW INGEST in front
+  of you — which for `swsh10.5` is a live gap, not a hypothetical.
+- **`EffectContext` still carries no attack INDEX**, so D155's forecast stands
+  unchanged: a printing that boosts an attack whose damage comes from an OP would
+  earn it one. This slice adds no pressure on that.
+- **No `chooseAttack` producer other than this op**, and no printing asks for
+  one — the pool prints no "choose 1 of YOUR OWN Pokémon's attacks" sentence
+  (censused on the same query: `Choose 1 of your` returns nothing of that shape).

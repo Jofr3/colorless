@@ -222,7 +222,20 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // has to be pinned somewhere this sweep cannot reach. The THIRD row is
     // `fix-curly-booster`, the witness a surviving mutation bought (its sentence is
     // ALREADY curly, so it is the row this sweep rewrites in the other direction).
-    expect(derivable).toHaveLength(60);
+    //
+    // ⚠️ AND D157 ADDS **ONE** ROW WHOSE THREE APOSTROPHE SLOTS ARE ALL EXPOSED AT
+    // ONCE — the first in this census. The opponent-side per-attack lock prints
+    // "Choose 1 of your **opponent's** Active **Pokémon's** attacks. During your
+    // opponent's next turn, that Pokémon **can't** use that attack.", so one
+    // sentence carries two POSSESSIVES (on the two nouns D143 and D155 each
+    // exposed separately) and a CONTRACTION (D154's slot). One row and not two,
+    // because both printings — Medicham sv01-111 and Oranguru sv02-094 — print the
+    // string byte for byte, which this census collapses by SENTENCE.
+    //
+    // It also has NO CAPTURE, which makes it the census's cleanest row: every
+    // apostrophe in it belongs to the PATTERN, so the rewrite below is a pure test
+    // of the classes and nothing about a folded value can carry it.
+    expect(derivable).toHaveLength(61);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

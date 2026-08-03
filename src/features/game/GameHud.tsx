@@ -1050,8 +1050,55 @@ function EffectChooseDialog(props: GameHudProps) {
     <AttachCardsDialog {...props} prompt={prompt} />
   ) : prompt.kind === "mayDraw" ? (
     <MayDrawDialog {...props} prompt={prompt} />
+  ) : prompt.kind === "chooseAttack" ? (
+    <ChooseAttackDialog {...props} prompt={prompt} />
   ) : (
     <ChoosePokemonDialog {...props} prompt={prompt} />
+  );
+}
+
+/** §8/§11 (D157) — pick ONE of the opposing Active's printed attacks to bar for
+    its controller's next turn ("Choose 1 of your opponent's Active Pokémon's
+    attacks…" — Medicham sv01-111, Oranguru sv02-094). ChoosePokemonDialog's shape,
+    on a candidate that is not a Pokémon: no local state and no Confirm, because
+    picking IS the whole decision (the "a list of one is not a decision" rule at
+    its other limit — the engine never parks this prompt below two candidates).
+
+    The rows carry the attack's own printed NAME straight off the prompt rather
+    than being looked up in `game`, and that is the one difference from every
+    sibling dialog here worth stating: this component runs on a projection whose
+    online form is a wire payload, and the wire has no attack rows for the
+    OPPONENT's board at all (`RedactedAttack[]` is the viewer's own Active only).
+    The engine resolves the label at the park for exactly that reason, so both
+    origins render from the same field. */
+function ChooseAttackDialog({
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "chooseAttack" }> }) {
+  return (
+    <HudDialog label="Choose an attack">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {prompt.candidates.map((attack) => (
+          <li key={attack.index}>
+            <button
+              type="button"
+              onClick={() =>
+                dispatch({
+                  type: "resolveEffect",
+                  seat: viewerSeat,
+                  choice: { kind: "attack", index: attack.index },
+                })
+              }
+              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+            >
+              <span className="truncate">{attack.name}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </HudDialog>
   );
 }
 

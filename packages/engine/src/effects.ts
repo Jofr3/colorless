@@ -935,6 +935,75 @@ export type EffectOp =
       and amount is silent; a larger amount on the same address wins by `Math.max`
       — the interpreter says why). */
   | { op: "boostAttack"; attack: string; amount: number }
+  /** §8/§11 (D157) — BAR ONE **CHOSEN** ATTACK on the OPPONENT's Active for that
+      Pokémon's next turn ("Choose 1 of your opponent's Active Pokémon's attacks.
+      During your opponent's next turn, that Pokémon can't use that attack.", 2
+      catalogued printings — Medicham sv01-111 "Acu-Punch-Ture" and Oranguru
+      sv02-094 "Plotter's Command"; the census is on `OPPONENT_CHOSEN_ATTACK_LOCK`
+      below). `preventAttackUse`'s twin ACROSS THE TABLE, and the whole of what
+      differs is where the ADDRESS comes from:
+
+      | | `preventAttackUse` (D154) | this (D157) |
+      |---|---|---|
+      | Holder  | `ctx.seat`'s Active     | the DEFENDER            |
+      | Address | a printed PROPER NOUN   | a PLAYER's CHOICE       |
+      | Stamp   | `state.turn + 2`        | `state.turn + 1`        |
+      | Install | synchronous             | **PARKS** on a prompt   |
+      | State   | `lockedAttack`          | `lockedAttack`          |
+
+      ⚠️ NO FIELDS AT ALL, WHICH IS THE SHAPE THE ADDRESS FORCES. Every sibling in
+      this family carries the thing it addresses (`attack`, `amount`); this one
+      addresses nothing until a player answers, so the op is a bare tag and the
+      INDEX arrives on the `EffectChoice`. A `target` field would be the second way
+      to say what the op's name already says — `weakenDefenderAttacks`'s refusal
+      (D149), on the other seat — because the SELF direction of this sentence is
+      not this op's other arm, it is `preventAttackUse`, a different reading of a
+      different printed string.
+
+      ⚠️ A THIRD OP RATHER THAN A `target` ON `preventAttackUse`, AND D131's
+      WIDEN-DON'T-ADD TEST SAYS SO IN THE DIRECTION THAT MATTERS. That test asks
+      whether stripping the new key yields the previous arm BYTE FOR BYTE. It does
+      not, and it cannot: `preventAttackUse` REQUIRES its printed noun, so
+      `{ target: "defender" }` with no `attack` is not that op minus a key — it is
+      a different rule with a different (empty) payload. D148's `target` on
+      `preventAttack` passes the same test exactly, and the contrast is the point:
+      there the two arms were one rule about two bodies, here they are two ways of
+      LEARNING an address. One op would also admit `{ target: "defender", attack:
+      "…" }` and `{ attack: undefined }`, two inhabitants no printing produces.
+      **And the compiler could not tell them apart where it matters most**: this op
+      returns a `park` from `stepOp` where that one returns a `done`, so a single
+      op would make "does this install ask a question?" a runtime property of a
+      field rather than a fact about the case.
+
+      ⚠️ THE FIELD *IS* SHARED, THOUGH, AND THAT IS D148's ANSWER RE-RUN AT THE
+      ADDRESS. `InPlayPokemon.lockedAttack` is reused UNCHANGED — no new stamped
+      field, no `MATCH_RECORD_VERSION` bump — because "which of this body's attacks
+      is barred, and on which turn" is ONE question about ONE body, and whose
+      attack wrote the answer is a fact about the OP. The ground is the READ, which
+      is the axis D155 separated its own record on: `lockedAttackIndex` is the ONE
+      reader, and it REFUSES the index it returns whichever op wrote it. D155
+      refused a shared record because its two consumers disagreed about the index;
+      this one shares it because they are the SAME consumer.
+
+      THE STAMP IS `state.turn + 1` — D142/D148's number, not D143's. The sentence
+      prints "During your OPPONENT's next turn", and declaring an attack ENDS the
+      turn (§5.3), so the very next turn belongs to the locked seat. One rule (the
+      window is the LOCKED Pokémon's controller's next turn) evaluated on the other
+      seat, exactly as D148 established.
+
+      ⚠️ IT PARKS, AND THE CANDIDATES ARE A NEW KIND OF THING. The prompt is
+      `chooseAttack` (interpreter.ts) — the first whose candidates are neither
+      cards nor Pokémon but ROWS OF A POKÉMON's printed attack list. The M1
+      doctrine still governs the endings: an Active with NO attacks is a silent
+      no-op, exactly ONE attack auto-resolves without a prompt, and two or more
+      park. Both degenerate endings are REACHABLE off the printed cards (a
+      one-attack defender is an ordinary board), so neither is constructed.
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp` (D125's placement
+      rule): the lock's entire effect is in the FUTURE. Consumes no rng, and is
+      idempotent — a re-install writing the same turn AND the same index is
+      silent, `preventAttackUse`'s early return verbatim. */
+  | { op: "preventChosenAttack" }
   /** Heal `amount` HP from the CONTROLLER's own Active Pokémon — the printed
       "this Pokémon" / "it" of a self-heal, resolved at `ctx.seat` by the
       interpreter rather than carried in the op (which is why `target` has one
@@ -2938,6 +3007,75 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 // "During" plus `^…$` is the whole guard.
 const SELF_ATTACK_BOOST =
   /^During your next turn, this Pokémon['’]s (.+?) attack does (\d+) more damage \(before applying Weakness and Resistance\)\.$/;
+// ── D157: the PER-ATTACK lock pointed ACROSS THE TABLE, with the address CHOSEN ──
+//
+// "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's
+// next turn, that Pokémon can't use that attack." — the whole printed effect, and
+// the last unread member of the per-attack neighbourhood. Three remainder lists
+// carried it; D154 built the ADDRESS (an index on `InPlayPokemon`) and said in so
+// many words that the address does not foreclose this, D155 built the second
+// reader of that address, and what neither built is the PARK that produces one.
+//
+// CENSUS (local D1, 2026-08-03, **890 rows across FIVE sets** — sv01 258, sv02
+// 279, sv03 230, sv06.5 99, sve 24 — across ALL THREE text columns `effect`,
+// `attacks_json` and `abilities_json`; re-run as its OWN question rather than
+// inherited from §D154's table, D142's floor rule):
+//
+//   LIKE '%can''t use that attack%'      → 2 rows
+//   LIKE '%Choose 1 of your opponent%'   → 3 rows (the third is a different card)
+//   LIKE '%Pokémon''s attacks%'          → 6 rows (four are D149's debuff family)
+//
+// The two, with every field checked PER PRINTING (id, NAME, cost, printed damage
+// and INDEX — D144's rule extended to NAMES by D146):
+//
+//   "Acu-Punch-Ture"    — Medicham sv01-111, {F}, 30, INDEX 0 (Stage 1 off
+//                         Meditite, 90 HP, ×2 Psychic, no Resistance)
+//   "Plotter's Command" — Oranguru sv02-094, {P}{C}, 30, INDEX 0 (Basic, 120 HP,
+//                         ×2 Darkness, −30 Fighting)
+//
+// and the two effect strings are BYTE-IDENTICAL (asserted by the D1 itself:
+// `json_extract(attacks_json,'$[0].effect')` compares equal across the two rows),
+// which is why this is ONE anchor for two printings rather than D121's
+// second-printing warrant being met by two similar sentences.
+//
+// ⚠️ AND `FIXTURE_POOL` WAS SWEPT SEPARATELY, WHICH IS THE HALF D154's FINDING
+// MAKES MANDATORY AND D156 MADE UNSKIPPABLE: the pool is a DIFFERENT POPULATION
+// from the D1 and still holds twelve `swsh10.5` cards the catalog has lost. No
+// fixture carried this sentence before this slice, so TWO printings means two in
+// both populations — unlike D154, which found a fifth printing fielded and
+// uncatalogued. The two ids are also swept repo-wide for a misnamed comment or
+// test title (D146/D147's rule, D149's habit): nothing found, and that is the
+// FIFTH clean sweep running.
+//
+// ⚠️ THE THIRD `Choose 1 of your opponent` ROW IS THE ONE WORTH NAMING, because it
+// is what the `^…$` anchor is holding off: Sylveon sv06.5-022's "Mystical Return"
+// prints "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon…" —
+// a lowercase mid-sentence "choose", a different noun ("Benched Pokémon") and a
+// coin in front of it. The capitalised `^Choose` plus the whole-sentence anchor
+// refuses it before any of that is considered.
+//
+// A WHOLE-SENTENCE ANCHOR WITH **NO CAPTURE**, and the absence is the finding
+// rather than a saving. Its two siblings above capture the attack's printed NAME
+// because the card names it; this sentence names nothing — "that attack" is
+// ANAPHORIC, pointing at a choice the player has not made yet — so there is no
+// token to capture and D120's "does exactly one token VARY?" is answered by a
+// sentence in which nothing varies at all. The address is produced by the PARK
+// and arrives as an INDEX on the answer, which is exactly the value D154's record
+// already stores.
+//
+// THREE apostrophe slots, all carrying `['’]` (D136/D137): two POSSESSIVES
+// ("opponent's", "Pokémon's") and one CONTRACTION ("can't"). It is the first
+// sentence in this file to expose all three at once — D154's exposes the
+// contraction, D155's the possessive on "Pokémon" — so it is the row that fails
+// hardest if the class is dropped anywhere, and `clauseApostrophe.test.ts` sweeps
+// it off the two fixtures.
+//
+// No /i, for the standing reason (see TYPED_SELF_DISCARD): the capitalised
+// "Choose" plus `^…$` is the whole guard, and it is what keeps Sylveon's
+// heads-gated sentence and the thirteen lowercase "you can't use…" Ability
+// limiters (D154's census) off this path.
+const OPPONENT_CHOSEN_ATTACK_LOCK =
+  /^Choose 1 of your opponent['’]s Active Pokémon['’]s attacks\. During your opponent['’]s next turn, that Pokémon can['’]t use that attack\.$/;
 // ── D148: the OPPONENT-side lock, the same rider pointed across the table ──
 //
 // THE ENERGY-COST COMPOUND — Eiscue ex sv03-042 (Double rare) / sv03-210 (Ultra
@@ -5055,6 +5193,34 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (amount >= 1) {
       return [{ op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount }];
     }
+  }
+
+  // 24c. "Choose 1 of your opponent's Active Pokémon's attacks. During your
+  //      opponent's next turn, that Pokémon can't use that attack." — D157's
+  //      OPPONENT-side per-attack lock, 2 printings (Medicham sv01-111
+  //      "Acu-Punch-Ture", Oranguru sv02-094 "Plotter's Command"). Arm 24a's rule
+  //      pointed across the table, and it sits beneath 24a/24b because the three
+  //      share a state field, a reader and a §10 clear set, and differ in WHERE
+  //      the address comes from.
+  //
+  //      A `test` RATHER THAN AN `exec`, AND IT IS THE ONLY ONE IN THIS
+  //      NEIGHBOURHOOD. Both siblings capture a printed proper noun; this sentence
+  //      has none to capture — "that attack" points at a decision the player has
+  //      not taken yet — so the whole sentence is the reading and the ADDRESS is
+  //      produced by the park (interpreter.ts `preventChosenAttack`).
+  //
+  //      TWO SENTENCES IN ONE ANCHOR, and it is NOT the two-op shape arm 25 and
+  //      `DEFENDER_POISON_CANT_RETREAT` use. Those anchors read two INDEPENDENT
+  //      consequents and derive one op each; here sentence one is the ANTECEDENT
+  //      of sentence two — "that attack" has no referent without "Choose 1 …" — so
+  //      the pair is one rule spelled over two full stops and derives ONE op. A
+  //      prefix reader that took the first sentence alone would offer a choice
+  //      that bought nothing, which is strictly worse than leaving the card LOUD.
+  //
+  //      UNGATED like arms 19c–19g and 24a/24b: no coin is printed on either
+  //      printing, so the derived program is the bare op.
+  if (OPPONENT_CHOSEN_ATTACK_LOCK.test(effect)) {
+    return [{ op: "preventChosenAttack" }];
   }
 
   // 25. "Put {N} damage counters on 1 of your opponent's Pokémon. During your next

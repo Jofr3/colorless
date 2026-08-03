@@ -423,6 +423,39 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     maxPerTarget: z.number().optional(),
     note: z.string(),
   }),
+  /** Pick exactly ONE of another Pokémon's printed ATTACKS, to bar it for that
+      Pokémon's next turn (D157 — Medicham sv01-111 "Acu-Punch-Ture", Oranguru
+      sv02-094 "Plotter's Command"). The eighth prompt kind, and the one that does
+      not sit cleanly on either side of the split above.
+
+      It belongs to the **PUBLIC-REF** family by its hidden-information reading:
+      the candidates are the printed attacks of a FACE-UP opposing Active, which
+      both players can read off the table, so the answerer gate is a convenience
+      here (only one seat answers) and not the barrier it is for a deck search.
+      Nothing is resolved out of a private zone.
+
+      But unlike every other public-ref arm it carries a resolved **`name`**, and
+      the reason is a gap in the wire rather than a reveal: a `PokemonRef` or an
+      attached-Energy uid resolves against the redacted board the client already
+      holds, and an attack INDEX resolves against nothing — `RedactedCard` carries
+      no attack rows, and `RedactedAttack[]` is published for the viewer's OWN
+      Active only. Without the label the dialog would render numbered buttons. So
+      the two questions this union is organised by — *is the answerer gate
+      load-bearing?* and *must the server resolve a label?* — are independent, and
+      this is the first arm that answers NO to the first and YES to the second.
+
+      `index` is the answer's whole content and is the engine's own addressing
+      (the `attack` action's discriminant, the registry's `attack` key,
+      `InPlayPokemon.lockedAttack.attackIndex`); the answer dispatches it back
+      verbatim and `validateChoice` checks it against this offer. MANDATORY — the
+      printed sentence is "Choose 1", with no "you may", so there is no decline
+      and no bounds pair to carry. Never empty and never a singleton: the engine
+      resolves both degenerate boards inline rather than parking. */
+  z.object({
+    kind: z.literal("chooseAttack"),
+    candidates: z.array(z.object({ index: z.number(), name: z.string() })),
+    note: z.string(),
+  }),
 ]);
 export type RedactedEffectPrompt = z.infer<typeof redactedEffectPromptSchema>;
 

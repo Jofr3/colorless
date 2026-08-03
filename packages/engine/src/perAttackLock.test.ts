@@ -273,11 +273,6 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
 
   it("the anchor refuses the whole neighbourhood, and each refusal is a warrant", () => {
     for (const text of [
-      // The OPPONENT-side twin (Medicham sv01-111 "Acu-Punch-Ture", Oranguru
-      // sv02-094 "Plotter's Command") — the LAST unread member of the group, and
-      // the one this slice deliberately did not build: CHOOSING which attack is a
-      // park on top of the address, so it is a third op rather than a second arm.
-      "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
       // The thirteen once-per-turn ABILITY limiters the census turned up — the
       // largest group matching `can't use` in the pool, refused by the capitalised
       // "During" plus `^…$` before anything else is considered.
@@ -313,6 +308,20 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
         "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
       ),
     ).toEqual([{ op: "boostAttack", attack: "Echoed Voice", amount: 100 }]);
+    // …and the row that MOVED AT D157, which is the one this slice's own doc block
+    // named as explicitly out of scope: the OPPONENT-side twin (Medicham sv01-111
+    // "Acu-Punch-Ture", Oranguru sv02-094 "Plotter's Command"). It derives a THIRD
+    // op with NO capture — the address is a PARK — and it is asserted here rather
+    // than deleted because it is the sharpest warrant this file has: that op
+    // writes the SAME `lockedAttack` record this one does, so a reader that
+    // drifted between the two anchors would produce a board where the right
+    // durated fact sits on the WRONG SEAT, which no assertion about the record's
+    // shape can see.
+    expect(
+      deriveAttackEffect(
+        "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
+      ),
+    ).toEqual([{ op: "preventChosenAttack" }]);
   });
 });
 

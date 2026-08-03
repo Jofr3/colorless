@@ -5,19 +5,26 @@
 // the HUD drifts from what the engine will accept. Real engine states via
 // the fixtures; the HUD reads conditions off the PROJECTED board.
 
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
-import type { GameState } from "@luminous/engine";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { GameAction, GameState } from "@luminous/engine";
 import {
+  OPPONENT_ATTACK_LOCK_DECK,
   attachFromDeck,
   deckOf,
   driveSetup,
   mustApply,
+  setActiveFromDeck,
   setConditions,
 } from "../../../packages/engine/src/testFixtures";
+import { installDomShims } from "../../test/domShims";
 import { GameHud } from "./GameHud";
 import { projectGameState } from "./projection";
 
+// The <dialog> shims the effect-choose dialog needs (showModal/close), shared
+// with every other dialog suite in this folder. Harmless for the TurnPanel
+// cases above, which mount no dialog at all.
+beforeAll(installDomShims);
 afterEach(cleanup);
 
 const NAMES = { p1: "Ember", p2: "Tide" } as const;
@@ -158,5 +165,75 @@ describe("TurnPanel — §8/§11 the PER-ATTACK bar (D154)", () => {
     };
     renderHud(stale);
     expect(attackButton().disabled).toBe(false);
+  });
+});
+
+describe("EffectChooseDialog — §8/§11 the CHOSEN opponent attack (D157)", () => {
+  // The eighth prompt kind, and the first whose candidates are neither cards nor
+  // Pokémon. What is pinned here is the half the engine suite cannot see: that the
+  // dialog renders the ROWS the engine offered, dispatches the INDEX the engine
+  // will accept, and reads its labels off the PROMPT rather than off the board —
+  // which is what makes it work identically on the wire, where the opponent's
+  // attack rows do not cross at all.
+  //
+  // ⚠️ AND IT IS THE INVARIANT `apps/api/src/lobby/match.ts` NAMES: `resolveEffect`
+  // is on the DO's allowlist exactly while EVERY prompt kind has an online dialog.
+  // A ninth kind added without one re-arms a soft-lock, so this case is the shape
+  // that obligation is discharged in.
+  function parkedOnAttackChoice(): { state: GameState; sent: GameAction[] } {
+    let state = driveSetup(
+      21,
+      { p1: OPPONENT_ATTACK_LOCK_DECK, p2: OPPONENT_ATTACK_LOCK_DECK },
+      { first: "p2" },
+    );
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    state = setActiveFromDeck(state, "p1", "sv02-094");
+    state = setActiveFromDeck(state, "p2", "fix-attacker");
+    state = attachFromDeck(state, "p1", "fix-psychic-energy", 1);
+    state = attachFromDeck(state, "p1", "fix-energy", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    return { state, sent: [] };
+  }
+
+  it("offers one row per printed attack of the DEFENDER, in printed order", () => {
+    const { state, sent } = parkedOnAttackChoice();
+    render(
+      <GameHud
+        game={state}
+        projection={projectGameState(state, "p1")}
+        viewerSeat="p1"
+        names={NAMES}
+        dispatch={(action) => sent.push(action)}
+        onPlayAgain={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Choose 1 of fix-attacker's attacks/)).toBeTruthy();
+    for (const name of ["Bite", "Flame", "Yawn", "Rage", "Fury", "Bounty"]) {
+      expect(screen.getByRole("button", { name }), name).toBeTruthy();
+    }
+  });
+
+  it("dispatches the picked INDEX, and the engine accepts it", () => {
+    const { state, sent } = parkedOnAttackChoice();
+    render(
+      <GameHud
+        game={state}
+        projection={projectGameState(state, "p1")}
+        viewerSeat="p1"
+        names={NAMES}
+        dispatch={(action) => sent.push(action)}
+        onPlayAgain={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Rage" }));
+    expect(sent).toEqual([
+      { type: "resolveEffect", seat: "p1", choice: { kind: "attack", index: 3 } },
+    ]);
+    // …and the dispatch is not merely well-shaped, it is LEGAL: the same action
+    // fed to the engine installs the record. A dialog that offered a row the
+    // validator rejects is exactly the soft-lock the allowlist invariant is about.
+    const applied = mustApply(state, sent[0] as GameAction).state;
+    expect(applied.players.p2.active?.lockedAttack).toEqual({ turn: 3, attackIndex: 3 });
   });
 });

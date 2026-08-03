@@ -274,14 +274,6 @@ describe("the self-lock — derived, not authored", () => {
     // is now the strongest it has ever made: not "unmapped", but that THIS anchor
     // reaches none of the four programs below, each of which is a different op.
     for (const text of [
-      // The OPPONENT-side twin of the per-attack lock (Medicham sv01-111
-      // "Acu-Punch-Ture", Oranguru sv02-094 "Plotter's Command"), which D148's
-      // census turned up and no earlier list or census had. It is the sentence a
-      // reader might think `target: "defender"` or D154's `preventAttackUse` now
-      // reaches: NEITHER does, and it is two steps from each — the lock is
-      // per-ATTACK on the far side of the table, and CHOOSING which attack is a
-      // park nothing in this family has. THE LAST UNREAD MEMBER OF THE GROUP.
-      "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
       // A TRAINER-scoped lock on a different turn and a whole board (Geeta
       // sv03-188/-218/-226) — not an attack effect at all, and refused here by
       // every property at once.
@@ -340,6 +332,21 @@ describe("the self-lock — derived, not authored", () => {
         "During your next turn, this Pokémon's Echoed Voice attack does 100 more damage (before applying Weakness and Resistance).",
       ),
     ).toEqual([{ op: "boostAttack", attack: "Echoed Voice", amount: 100 }]);
+    // …and the LAST row this file carried as a `toBeNull`, RE-POINTED at D157 (a
+    // fourth time, and this file's warrant list is now empty of per-attack
+    // sentences). Medicham sv01-111 "Acu-Punch-Ture" and Oranguru sv02-094
+    // "Plotter's Command" print the OPPONENT-side twin, and it derives a THIRD op:
+    // no capture at all, because "that attack" is anaphoric and the address is a
+    // PARK. It is the sentence a reader might think `target: "defender"` or D154's
+    // `preventAttackUse` reaches — neither does, and the op comparison is the only
+    // thing that can say so, because on the board this op writes the SAME FIELD
+    // D154's does onto the SAME kind of body. A drifted reader would install the
+    // right record on the wrong seat, which is a board nothing looks wrong on.
+    expect(
+      deriveAttackEffect(
+        "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
+      ),
+    ).toEqual([{ op: "preventChosenAttack" }]);
     // …and NONE of them is what THIS file's anchor derives, asserted rather
     // than reasoned about: the bare self-lock's program carries no `target` at
     // all and no `attack`, so an absent key, `"defender"` and a named attack are

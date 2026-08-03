@@ -977,6 +977,26 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       return null;
     }
+    case "chooseAttack": {
+      // D157 — exactly ONE of the OFFERED attack indices. Mandatory: the printed
+      // sentence is "Choose 1", with no "you may", so an absent answer is not a
+      // decline and there is nothing to floor against — the whole check is that
+      // the number is one the prompt named.
+      //
+      // ⚠️ `Number.isInteger` RATHER THAN `typeof === "number"`, and the reason is
+      // attack.ts's §8 wire check verbatim: an index is used as an INDEX, so a
+      // string "0" or a 1.5 would sail through a type test and corrupt everything
+      // downstream that compares it to `lockedAttack.attackIndex`. The membership
+      // test alone would catch both here — but it is the same fact stated once,
+      // and the day this prompt offers a computed subset it stops being.
+      if (choice.kind !== "attack" || !Number.isInteger(choice.index)) {
+        return err("BAD_EFFECT_CHOICE", "expected an attack choice");
+      }
+      if (!prompt.candidates.some((c) => c.index === choice.index)) {
+        return err("BAD_EFFECT_CHOICE", `${String(choice.index)} is not a legal attack for this choice`);
+      }
+      return null;
+    }
   }
 }
 

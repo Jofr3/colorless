@@ -994,6 +994,23 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         scope: { kind: "total", count: 1 },
         note: "Discard an Energy.",
       },
+      // D157 — `chooseAttack` joins this family and not the hidden-candidate one,
+      // because its candidates are the printed attacks of a FACE-UP Active: public
+      // to both players, so the redactor resolves nothing out of a private zone
+      // and the answerer gate is a convenience rather than the barrier it is for a
+      // deck search. It is nonetheless the ONE arm here that carries a
+      // server-resolved LABEL, and that is a gap in the wire rather than a reveal:
+      // an attack INDEX resolves against nothing the client holds (`RedactedCard`
+      // has no attack rows, and `RedactedAttack[]` is the viewer's OWN Active
+      // only). The round trip is therefore a rebuild, not a recovery.
+      {
+        kind: "chooseAttack",
+        candidates: [
+          { index: 0, name: "Bite" },
+          { index: 1, name: "Flame" },
+        ],
+        note: "Choose 1 of fix-attacker's attacks — it can't use that attack next turn.",
+      },
     ];
     for (const prompt of prompts) {
       const state: GameState = {

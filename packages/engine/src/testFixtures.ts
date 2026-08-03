@@ -5652,6 +5652,99 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  // — D157's OPPONENT-SIDE PER-ATTACK LOCK: "Choose 1 of your opponent's Active
+  //   Pokémon's attacks. During your opponent's next turn, that Pokémon can't use
+  //   that attack." Both rows verbatim off the local D1 (2026-08-03, **890 rows /
+  //   5 sets** — the population D156 measured and pinned), checked FIELD BY FIELD
+  //   **including the fields the row does not have** (D151's rule). TWO printings,
+  //   byte-identical effect strings, and `FIXTURE_POOL` was swept SEPARATELY: no
+  //   fixture printed this sentence before this slice, so — unlike D154 — there is
+  //   no fielded-but-uncatalogued sibling. Neither id appeared anywhere in the repo
+  //   except as LOUD prose, and the repo-wide misnamed-id sweep found nothing. —
+  /** Medicham sv01-111 — "Acu-Punch-Ture" ({F}, printed 30, attack **INDEX 0**),
+      one of the family's two printings and the awkward one to field, which is
+      exactly why it is here rather than left to its Basic sibling.
+
+      ⚠️ IT IS A STAGE 1 AND ITS PRE-EVOLUTION IS NOT IN THE POOL, so every board
+      that wants it Active reaches it through `setActiveFromDeck` — the same
+      surgery D154's suite uses, and honest about being one. The claim on this card
+      is that the SECOND printing derives the same op off the same anchor (D121's
+      warrant, met by two real rows rather than by an argument), not that a Medicham
+      can be evolved into.
+
+      ⚠️ ITS INDEX-1 ATTACK IS READ BY A DIFFERENT READER AND IS CARRIED ANYWAY.
+      "Kick Shot" ({F}, 90) prints *"Flip a coin. If tails, this attack does
+      nothing."* — D126's `cancelOnTails`, one of the eleven printings D144
+      counted — so this fixture is a body whose two attacks derive two unrelated
+      programs. That is worth having in the pool for its own sake (the per-attack
+      lock's whole content is that the card's OTHER attack is untouched) and it is
+      also why no board in this family's suite declares index 1: it would need a
+      seed table, and this deck is seed-free.
+
+      Verbatim off the D1: 90 HP, Stage1 from Meditite, Fighting, retreat 1, ×2
+      Psychic, NO Resistance (asserted as an absence), `abilities_json` NULL, reg
+      mark G, Uncommon. */
+  "sv01-111": battler("sv01-111", {
+    name: "Medicham",
+    types: ["Fighting"],
+    stage: "Stage1",
+    evolveFrom: "Meditite",
+    hp: 90,
+    retreat: 1,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Acu-Punch-Ture",
+        damage: 30,
+        effect:
+          "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
+      },
+      {
+        cost: ["Fighting"],
+        name: "Kick Shot",
+        damage: 90,
+        effect: "Flip a coin. If tails, this attack does nothing.",
+      },
+    ],
+  }),
+  /** Oranguru sv02-094 — "Plotter's Command" ({P}{C}, printed 30, attack **INDEX
+      0**), the family's other printing and the one every board in the suite
+      actually attacks with: a BASIC, so it deals straight into the Active Spot and
+      the surgery above is never in the way of the rule being tested.
+
+      Its index-1 "Super Psy Bolt" ({P}{C}{C}, 80) prints NO effect text at all,
+      which makes this the cleanest possible control for "the other attack stays
+      legal" — nothing else can be moving underneath it.
+
+      ⚠️ ITS ATTACK NAME CARRIES AN APOSTROPHE AND THE SENTENCE CARRIES THREE MORE.
+      The name is not captured by this anchor (there is nothing to capture — "that
+      attack" is anaphoric), so unlike D154's Greedent ex the possessive here is
+      load-bearing on the PATTERN only. What the sentence exposes is all three
+      apostrophe slots at once — "opponent's", "Pokémon's", "can't" — the first row
+      in `clauseApostrophe.test.ts`'s census to do so.
+
+      Verbatim off the D1: 120 HP, Basic, Psychic, retreat 2, ×2 Darkness, −30
+      Fighting Resistance, `abilities_json` NULL, reg mark G, Uncommon. */
+  "sv02-094": battler("sv02-094", {
+    name: "Oranguru",
+    types: ["Psychic"],
+    stage: "Basic",
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    resistances: [{ type: "Fighting", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Plotter's Command",
+        damage: 30,
+        effect:
+          "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
+      },
+      { cost: ["Psychic", "Colorless", "Colorless"], name: "Super Psy Bolt", damage: 80 },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -8656,6 +8749,64 @@ export const PER_ATTACK_BUFF_DECK = deckOf({
   "fix-titan": 6, // 340 HP neutral Basic, NO attacks — bench filler and KO boundary
   "fix-water-energy": 16, // {W}{W} for Echoed Voice and Echo Chorus, ×3 for the retreat
   "fix-energy": 7, // Colorless Basic — every {C} in the deck
+});
+
+/** D157 — the OPPONENT-side per-attack lock, on its OWN 60 for
+    `PER_ATTACK_BUFF_DECK`'s reason verbatim: both neighbours' boards are dealt off
+    pinned shuffles, and adding a card to either would move every one of them.
+
+    **SEED-FREE** like every durated deck since D147: neither printing carries a
+    coin, and no board in the suite declares Medicham's index-1 "Kick Shot" (which
+    does — D126's `cancelOnTails`), so a seed table would describe a shuffle rather
+    than a rule.
+
+    ⚠️ THE DECK IS BUILT AROUND THE **DEFENDER'S ATTACK COUNT**, WHICH IS THE ONE
+    AXIS THIS SLICE VARIES AND ITS TWO NEIGHBOURS DO NOT. D154/D155 addressed the
+    installer's own body, where the count is a property of the card being played;
+    here it is a property of whatever is standing across the table, and it decides
+    which of `preventChosenAttack`'s THREE endings runs. So the pool holds one body
+    per ending:
+      • fix-attacker — FOUR printed attacks ("Bite" / "Flame" / "Yawn" / "Rage"),
+        the PARK, and the body every headline board bars. Barring "Bite" leaves
+        three legal declarations, which is the difference from D148's whole-Pokémon
+        lock stated as a board rather than as a sentence;
+      • fix-echoer — TWO attacks, the park at its floor, and the §10 EVOLVE route's
+        base (into `fix-echoer-stage1`, whose ONE attack makes a stale index point
+        at NOTHING — D154/D155's sharpest witness shape, reused because the failure
+        it rules out is "barred somewhere else" rather than "still barred");
+      • fix-echoer-stage1 — ONE attack, the FORCED ending: no prompt, no park, and
+        the board on which this op and D148's are observationally identical. The
+        control that proves the suite is not measuring the easy case;
+      • fix-titan — 340 HP and NO attacks at all, the SILENT ending (nothing to
+        bar, so nothing is written and no row is emitted), and the mulligan-free
+        bench filler / promote target besides.
+    Every one of the three is REACHABLE off the two printings — a one-attack or
+    attackless defender is an ordinary board — so none is a constructed case.
+
+    The two BARRERS are the two printed rows: sv02-094 Oranguru is the BASIC and
+    does the work (its "Super Psy Bolt" at index 1 prints no effect text, the
+    cleanest possible control), sv01-111 Medicham is the STAGE 1 and is here so the
+    second printing derives the same op off the same anchor rather than off an
+    argument. sv01-194 Switch is the VICTIM's own §10 leave-Active route — and note
+    the AGENCY is inverted from D154's deck: there those routes were the holder's
+    own counterplay against their card's drawback, here they are the victim's
+    counterplay against an imposed effect (D148's finding). sv02-172 Boss's Orders
+    is the INSTALLER's route into the same clear, which on this side is a play that
+    UNDOES the installer's own lock — worth driving precisely because it looks like
+    a mistake and is the same §10 line. */
+export const OPPONENT_ATTACK_LOCK_DECK = deckOf({
+  "sv02-094": 3, // Oranguru — "Plotter's Command" idx 0 (the barrer), "Super Psy Bolt" idx 1
+  "sv01-111": 2, // Medicham — "Acu-Punch-Ture" idx 0: the SECOND printing, a Stage 1
+  "fix-attacker": 4, // FOUR attacks — the park, and the body the headline boards bar
+  "fix-echoer": 3, // TWO attacks — the park's floor, and the §10 EVOLVE route's base
+  "fix-echoer-stage1": 2, // evolves from fix-echoer — ONE attack: the FORCED ending
+  "sv01-194": 3, // Switch (Item) — the VICTIM's own §10 leave-Active route
+  "sv02-172": 3, // Boss's Orders — the INSTALLER's route into the same clear
+  "fix-titan": 6, // 340 HP, NO attacks — the SILENT ending, bench filler, promote target
+  "fix-psychic-energy": 8, // {P} for Plotter's Command and Super Psy Bolt
+  "fix-fighting-energy": 4, // {F} for Acu-Punch-Ture
+  "fix-water-energy": 8, // {W}{W} for Echo Tap / Echo Chorus / Ripple
+  "fix-energy": 14, // Colorless Basic — every {C} in the deck
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

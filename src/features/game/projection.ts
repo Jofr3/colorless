@@ -559,6 +559,19 @@ function effectDecisionFromPrompt(
           note: prompt.note,
         },
       };
+    // D157 — the opponent-side per-attack lock's pick. The wire arm is the engine
+    // arm field-for-field (an index and a server-resolved label, both public), so
+    // the round trip is a rebuild rather than a recovery: nothing here has to
+    // recover a uid from a `RedactedCard` the way the two hidden-candidate arms do.
+    case "chooseAttack":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "chooseAttack",
+          candidates: prompt.candidates.map((c) => ({ index: c.index, name: c.name })),
+          note: prompt.note,
+        },
+      };
   }
 }
 

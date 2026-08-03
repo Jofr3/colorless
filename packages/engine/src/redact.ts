@@ -280,6 +280,19 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         maxPerTarget: prompt.maxPerTarget,
         note: prompt.note,
       };
+    case "chooseAttack":
+      // D157 — the PUBLIC-REF family's reading (no card resolution, no private
+      // zone: a face-up Active's printed attacks are on the table for both
+      // players) with the HIDDEN family's mechanics (a server-resolved label),
+      // because the wire has no board projection of an attack ROW to resolve an
+      // index against. FRESH objects per candidate, like every branch above — the
+      // redactor's no-alias purity contract, and here it also stops the wire
+      // holding a reference into the engine's own prompt.
+      return {
+        kind: "chooseAttack",
+        candidates: prompt.candidates.map((c) => ({ index: c.index, name: c.name })),
+        note: prompt.note,
+      };
   }
 }
 

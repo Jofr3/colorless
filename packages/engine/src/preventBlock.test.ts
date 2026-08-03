@@ -864,6 +864,26 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // Pokémon from what an attack does TO it; there is nothing to protect here in
     // either direction.
     boostAttack: "untouched",
+    // D157's OPPONENT-side per-attack lock, and the SEVENTH op classified by this
+    // table rather than by the slice that wrote it. **BLOCKED**, and it is the
+    // first op in the per-attack family a wide block stops — the two lines above
+    // are `untouched` because they write onto the CONTROLLER's own Active, and
+    // this one writes onto the DEFENDING Pokémon, which is squarely an effect of
+    // an attack done to it (`preventRetreat`'s, `weakenDefenderAttacks`'s and
+    // D148's `preventAttack { target: "defender" }`'s verdict verbatim).
+    //
+    // ⚠️ SO THE PER-ATTACK FAMILY NOW STRADDLES THIS TABLE EXACTLY AS
+    // `preventAttack` AND `preventAttackUse` DO, AND FOR THE SAME REASON: the
+    // table asks about the BODY, not about the rule. Three ops write the same
+    // `{ turn, attackIndex }`-shaped fact and land on two different sides of it.
+    //
+    // ⚠️ AND IT IS THE FIRST `blocked` OP THAT WOULD OTHERWISE HAVE **PARKED**,
+    // which is what makes the placement of its guard visible rather than
+    // stylistic: the refusal is taken IN FRONT OF the candidate scan
+    // (`discardEnergy`'s rule), so the probe below returns `parked: false` and a
+    // build that checked afterwards would ask the attacker to pick an attack it
+    // was never going to bar.
+    preventChosenAttack: "blocked",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1183,6 +1203,16 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       op: { op: "boostAttack", attack: "Bite", amount: 100 },
       board: () => setActiveFromDeck(probeBoard(), "p2", "fix-attacker"),
       landed: (r) => p2Active(r.after)?.boostedAttack != null,
+    },
+    // D157 — the first probe in this table whose op would PARK on the standard
+    // board, and `landed` says so explicitly rather than reading the record alone:
+    // a park is not a landing (nothing has been written yet), but it IS evidence
+    // the block did not stop the op, which is the distinction the `blocked` case
+    // below turns on. P1's shielded Active is Scyther sv03-004, which prints TWO
+    // attacks, so the unblocked run genuinely reaches the prompt.
+    preventChosenAttack: {
+      op: { op: "preventChosenAttack" },
+      landed: (r) => r.parked || p1Active(r.after)?.lockedAttack != null,
     },
   };
 

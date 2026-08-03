@@ -287,7 +287,39 @@ export type EffectPrompt =
       validator both read. Only ever parked when the draw could actually move a
       card (an empty deck auto-resolves — the M1 no-choice rule), so "yes" is
       never a no-op. */
-  | { kind: "mayDraw"; count: number; note: string };
+  | { kind: "mayDraw"; count: number; note: string }
+  /** §8/§11 (D157) — pick exactly one of ANOTHER Pokémon's printed ATTACKS, to
+      bar it for that Pokémon's next turn ("Choose 1 of your opponent's Active
+      Pokémon's attacks…" — Medicham sv01-111, Oranguru sv02-094). The first
+      prompt in this engine whose candidates are neither CARDS nor POKÉMON but
+      ROWS of one Pokémon's printed attack list, which is why it carries a shape of
+      its own rather than reusing `chooseCards`: an attack has no uid, and the only
+      thing the answer can be is an INDEX into `attacksOf(card)` — the same value
+      the `attack` action carries, the registry's `attack` map is keyed by and
+      `InPlayPokemon.lockedAttack` stores.
+
+      ⚠️ PUBLIC INFORMATION, AND THE ANSWERER GATE IS A CONVENIENCE HERE RATHER
+      THAN A BARRIER — the `choosePokemon` end of the split (2b-iii-b), not the
+      `chooseCards` end (2b-iii-c). Both players can read the printed attacks off a
+      face-up Active, and an Active is face-up for both viewers the moment setup
+      ends (redact.ts's `inSetup` gate), which an attack's tail is always after. So
+      nothing here needs hiding, and `redactPrompt` resolves no card identity.
+
+      ⚠️ IT NONETHELESS CARRIES THE `name`, WHICH THE PUBLIC-REF FAMILY DOES NOT,
+      AND THE REASON IS A HOLE IN THE WIRE RATHER THAN A REVEAL. A `PokemonRef` and
+      an attached-Energy uid both resolve against the redacted BOARD the client
+      already holds; an attack INDEX resolves against nothing — `RedactedCard`
+      carries `id`/`cardId`/`name` and no attack rows, and `RedactedAttack[]` is
+      published for the viewer's OWN Active only. So the wire must carry the label
+      or the dialog would offer numbered buttons. **The two axes are independent**:
+      "is the answerer gate load-bearing?" and "must the wire carry a resolved
+      label?" — this prompt is the first case that answers NO to the first and YES
+      to the second, and saying so is cheaper than the next reader re-deriving it.
+
+      `candidates` is never empty and never a singleton: the op resolves both
+      degenerate boards inline (no attacks → silent no-op, one attack → forced),
+      the M1 doctrine every parking op in this file follows. */
+  | { kind: "chooseAttack"; candidates: { index: number; name: string }[]; note: string };
 
 /** How many Energy a parked `discardEnergy` is asking for — a total across the
     whole offer, or one from each Pokémon it offered. Named (rather than inlined)
@@ -326,7 +358,16 @@ export type EffectChoice =
   /** The mayDraw answer — `draw: true` takes the cards, `false` is the printed
       decline. A plain boolean (wire-checked to be one: a P4 client's truthy
       string must not read as consent), answered by the phase's `answerer`. */
-  | { kind: "mayDraw"; draw: boolean };
+  | { kind: "mayDraw"; draw: boolean }
+  /** The chooseAttack answer (D157): the INDEX of the barred attack, into the
+      chosen Pokémon's printed `attacks`. A bare number rather than a ref or a uid
+      because an attack is not an addressable object in this engine — the index IS
+      its identity everywhere else (the `attack` action, the registry's `attack`
+      map, `InPlayPokemon.lockedAttack.attackIndex`), and inventing a second
+      addressing here would be a second thing to keep in step. Wire-checked to be
+      one of the OFFERED indices (validateChoice), which is also what keeps a
+      crafted frame off an index the defender does not have. */
+  | { kind: "attack"; index: number };
 
 /** What the ops ALREADY RUN in this program left behind for the ops still to
     come — each recording op's moved uids under its printed `EffectSlot` (§9.2:
@@ -664,6 +705,8 @@ function stepOp(
       return { done: preventAttackUse(state, op.attack, ctx, events) };
     case "boostAttack":
       return { done: boostAttack(state, op.attack, op.amount, ctx, events) };
+    case "preventChosenAttack":
+      return preventChosenAttack(state, ctx, events);
     case "reduceDamage":
       return { done: reduceDamage(state, op.amount, ctx, events) };
     case "weakenDefenderAttacks":
@@ -1714,6 +1757,14 @@ export function applyChoice(
     }
     case "moveEnergy":
       return choice.kind === "moveEnergy" ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events) : state;
+    case "preventChosenAttack":
+      // D157 — the parked half of the opponent-side per-attack lock. Same shape as
+      // `healChosen`'s single-pick arm and for the same reason: `validateChoice`
+      // matches the answer against the PARKED prompt, so the wrong choice kind is
+      // the wire belt rather than a case that can fire in a real match.
+      return choice.kind === "attack"
+        ? lockDefenderAttack(state, choice.index, ctx, events)
+        : state;
     case "discardEnergy": {
       if (choice.kind !== "discardEnergy") return state;
       const done = discardEnergyApply(state, choice.uids, op, ctx, events);
@@ -2120,6 +2171,140 @@ function boostAttack(
     ...active,
     boostedAttack: { turn, attackIndex, amount: merged },
   });
+}
+
+/** §8/§11 (D157) — BAR ONE CHOSEN ATTACK on the OPPONENT's Active ("Choose 1 of
+    your opponent's Active Pokémon's attacks. During your opponent's next turn,
+    that Pokémon can't use that attack.", 2 printings — Medicham sv01-111
+    "Acu-Punch-Ture", Oranguru sv02-094 "Plotter's Command"). `preventAttackUse`'s
+    twin two functions up, and written beneath the pair so all three read as one
+    design:
+
+    | | `preventAttackUse` (D154) | `boostAttack` (D155) | this (D157) |
+    |---|---|---|---|
+    | Holder  | `ctx.seat`'s Active | `ctx.seat`'s Active | the DEFENDER   |
+    | Address | printed NOUN        | printed NOUN        | a PARK         |
+    | Stamp   | `+ 2`               | `+ 2`               | `+ 1`          |
+    | Field   | `lockedAttack`      | `boostedAttack`     | `lockedAttack` |
+    | §11     | `untouched`         | `untouched`         | **`blocked`**  |
+
+    ⚠️ THE FIELD IS SHARED AND THE OP IS NOT, WHICH IS D148's ANSWER AND D155's
+    ANSWER RUN AT THE SAME TIME. D148 gave `preventAttack` a `target` because "on
+    which turn may this body not attack" is ONE question about ONE body; the same
+    argument reaches the address unchanged — `lockedAttackIndex` is the ONLY reader
+    of `lockedAttack`, and it REFUSES the index it returns whichever op wrote it,
+    so the §8 gate, both payability projections and all four §10 clears take ZERO
+    diff. D155 refused to merge `boostedAttack` into that record on exactly this
+    axis and reached the opposite answer, because ITS consumer PAYS the index the
+    other refuses. Same test, two results, decided by the read site both times.
+
+    ⚠️ AND IT IS `blocked` BY §11, WHERE ITS TWO SIBLINGS ARE `untouched` — the
+    first op in the per-attack family that a wide block stops. Those write onto the
+    CONTROLLER's own Active, so there is no opponent-side body a "prevent all
+    effects of attacks done to this Pokémon" could be protecting from them; this
+    one writes onto the DEFENDING Pokémon, which is squarely an effect of an attack
+    done to it — `preventRetreat`'s, `weakenDefenderAttacks`'s and D148's
+    `preventAttack { target: "defender" }`'s verdict verbatim. The refusal is taken
+    IN FRONT OF the candidate scan, `discardEnergy`'s placement and for its reason:
+    a shielded defender must never reach the prompt, because asking a player to
+    pick an attack that will not be barred is worse than not asking.
+
+    THE STAMP IS `state.turn + 1` — D142/D148's number. One rule (the window is
+    the LOCKED Pokémon's controller's next turn) on the other seat: declaring an
+    attack ENDS the turn (§5.3), so the turn after this one belongs to the victim.
+
+    ⚠️ THE ENDINGS ARE `parkOrForce`'s THREE, ON A CANDIDATE SET THAT IS NOT A
+    LIST OF POKÉMON — which is why they are spelled here rather than routed
+    through that helper. No Active, or an Active whose card cannot be resolved, or
+    an Active with NO printed attacks (fix-titan is one, and so is any body the
+    catalog gives no `attacks_json`): a silent no-op, because a lock on a Pokémon
+    with nothing to lock is inert and the honest representation of inert is absence
+    (D140/D146 — a gate that declines emits nothing). EXACTLY ONE printed attack:
+    forced, applied inline with no prompt (the M1 doctrine — a choice with no
+    choice in it is not a choice), and this is the board on which this op and
+    D148's whole-Pokémon lock become observationally identical. Two or more: park.
+    **All three are reachable off the two printings** — a one-attack defender is an
+    ordinary board — so none of them is a constructed case. */
+function preventChosenAttack(
+  state: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+): { done: GameState } | { park: EffectPrompt } {
+  const victim = otherSeat(ctx.seat);
+  // §11 (D142) — in FRONT of the candidate scan, `discardEnergy`'s placement.
+  if (attackEffectRefused(state, victim, ctx, events)) return { done: state };
+  const active = state.players[victim].active;
+  if (active === null) return { done: state };
+  const card = topCardOf(state, active);
+  if (card === undefined) return { done: state };
+  const printed = attacksOf(card);
+  if (printed.length === 0) return { done: state };
+  if (printed.length === 1) return { done: lockDefenderAttack(state, 0, ctx, events) };
+  return {
+    park: {
+      kind: "chooseAttack",
+      candidates: printed.map((attack, index) => ({ index, name: attack.name })),
+      // The prompt addresses the seat that ANSWERS it, like every other note in
+      // this file — and that seat is the ATTACKER, so the possessive is the
+      // printed one ("your opponent's") and the body is named so a hot-seat device
+      // cannot be misread. The printed verb is kept ("can't use") for
+      // DAMAGE_REDUCTION_APPLIED's rule: a player holding the card reads back the
+      // words on it.
+      note: `Choose 1 of ${card.name}'s attacks — it can't use that attack next turn.`,
+    },
+  };
+}
+
+/** Apply the chosen (or forced) index: the durated bar written onto the
+    OPPONENT's Active. Shared by the inline one-attack path and the resolved park,
+    so a forced pick and an answered one are byte-identical — `parkOrForce`'s
+    contract, restated for a candidate set that is not a list of Pokémon.
+
+    ⚠️ THE INDEX IS RE-VALIDATED AGAINST THE LIVE BOARD, WHICH THE POKÉMON PROMPTS
+    DO NOT HAVE TO DO. A `PokemonRef` answer is checked against the prompt AND
+    resolved against the board on the way in; an index is a plain number, and the
+    board it indexes could in principle have moved between the park and the answer
+    (nothing in this engine promotes or evolves the DEFENDER mid-attack-tail, so it
+    is unreachable today — said rather than assumed). A stale index writes nothing
+    and emits no row, `printedAttackIndex`'s no-match contract verbatim.
+
+    IDEMPOTENT by `preventAttackUse`'s EARLY RETURN rather than by `boostAttack`'s
+    `Math.max`, because this record carries an address and no number: same turn AND
+    same index is silent, a different index simply overwrites. Unlike its self-side
+    twin the re-install is REACHABLE in principle — two of the controller's own
+    attacks could both bar the defender on the same turn only if one attack
+    declared twice, which §5.3 forbids — so it is pinned as a constructed case. */
+function lockDefenderAttack(
+  state: GameState,
+  attackIndex: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const victim = otherSeat(ctx.seat);
+  const active = state.players[victim].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  const card = topCardOf(state, active);
+  if (uid === undefined || card === undefined) return state;
+  const printed = attacksOf(card);
+  const row = printed[attackIndex];
+  if (row === undefined) return state;
+  // The one rule, D142/D148's: the window is the LOCKED Pokémon's controller's
+  // next turn, and declaring an attack ENDS the turn (§5.3), so the turn after
+  // this one is the victim's.
+  const turn = state.turn + 1;
+  const existing = active.lockedAttack;
+  if (existing !== null && existing.turn === turn && existing.attackIndex === attackIndex) {
+    return state;
+  }
+  // `seat` owns the BARRED Pokémon (D136's finding 1) — the ACTOR'S OPPONENT here,
+  // which makes this the first ATTACK_LOCKED row that is victim-side AND carries
+  // the `attack` narrowing. The wording needs no new arm and that was READ rather
+  // than assumed: "next turn" means the NAMED player's own next turn under this
+  // family's seat rule, and the named player is the victim, whose next turn is
+  // exactly the window this stamp encodes.
+  events.push({ type: "ATTACK_LOCKED", seat: victim, uid, attack: row.name });
+  return withActive(state, victim, { ...active, lockedAttack: { turn, attackIndex } });
 }
 
 /** §8.5/§11 (D147) — INSTALL the printed DAMAGE REDUCTION on the CONTROLLER's own

@@ -473,7 +473,19 @@ export function readMatchRecord(raw: unknown): MatchRecord | null {
     this set ⟺ EVERY effect prompt kind has an online dialog." 2b-iii dialoged all
     seven kinds (a/b/c), so `resolveEffect` is ON and a real-deck effect play that
     parks at effect:choose drives to completion — the precondition real deck
-    selection (3a) relied on, now MET. (`retreat` never carried the caveat — it only
+    selection (3a) relied on, now MET. ⚠️ **AND THAT INVARIANT IS A LIVE
+    OBLIGATION, NOT A CLOSED ONE — D157 IS THE FIRST SLICE TO ADD AN EIGHTH KIND**
+    (`chooseAttack`: pick one of the opposing Active's printed attacks to bar —
+    Medicham sv01-111, Oranguru sv02-094). It landed with its schema arm
+    (`redactedEffectPromptSchema`), its redactor arm (`redactPrompt`), its
+    projection arm (`effectDecisionFromPrompt`) and its dialog (`ChooseAttackDialog`)
+    in the same slice, which is what keeps this set safe. **A future slice that adds
+    a NINTH prompt kind and stops before the dialog re-arms the soft-lock this line
+    is about**, and the compiler catches only three of those four steps — the
+    engine's `EffectPrompt` switch, the redactor's and the projection's are all
+    exhaustive, but `EffectChooseDialog`'s chain ends in an `else`, so the missing
+    dialog is a TYPE error at the fall-through arm rather than at the chain. Say so
+    rather than trusting the reader to notice. (`retreat` never carried the caveat — it only
     discards energy + promotes a Bench Pokémon, never parking at a decision, so it
     is soft-lock-safe with ANY deck; `useAbility`/`playTrainer`/`rareCandy` DO park,
     which is exactly why they wait for the dialoged effect layer.) `resolveEffect` is
