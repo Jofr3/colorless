@@ -6,6 +6,8 @@
 // the real execution path is covered by the ingest run against local D1.
 
 import { tcgdexCardSchema, tcgdexSerieSchema, tcgdexSetSchema } from "@luminous/schema";
+import { getTableColumns } from "drizzle-orm";
+import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import { describe, expect, it } from "vitest";
 import cardEnergyBasic from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-basic-sve-002.json";
 import cardEnergySpecial from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-special-sv02-191.json";
@@ -16,6 +18,7 @@ import cardPokemonAttacks from "../../../../packages/schema/src/tcgdex/__fixture
 import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-sv01-181.json";
 import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
 import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
+import { cards, series, sets } from "../db/schema";
 import { type CardRow, mapCard, mapSerie, mapSet } from "./map";
 import type { SqlColumnSpec } from "./sql";
 import {
@@ -171,6 +174,35 @@ describe("generated upsert SQL round-trips through the escaping rules", () => {
     const setRow = mapSet(tcgdexSetSchema.parse(setFull));
     const setSql = setsUpsertSql([setRow]);
     expect(parseValuesTuples(setSql)).toEqual([expectedTuple(SETS_COLUMNS, setRow)]);
+  });
+
+  // D203 — the one link in this file that was asserted in a comment and checked
+  // by nothing: the hand-written specs vs the Drizzle table they claim to
+  // mirror. A column added to ../db/catalog.ts and forgotten in the spec is
+  // otherwise SILENT — the generated INSERT omits it, and the next ingest
+  // leaves it NULL for good (`cards.suffix` is the live example of a column
+  // that arrived late). Derived from `getTableColumns`, so it cannot be kept
+  // green by editing it alongside the spec.
+  it("every spec covers its whole table, in table order", () => {
+    const specNames = (columns: readonly SqlColumnSpec<never>[]) => columns.map((c) => c.name);
+    const tableNames = (table: SQLiteTable) =>
+      Object.values(getTableColumns(table)).map((column) => column.name);
+    expect(specNames(SERIES_COLUMNS as readonly SqlColumnSpec<never>[])).toEqual(
+      tableNames(series),
+    );
+    expect(specNames(SETS_COLUMNS as readonly SqlColumnSpec<never>[])).toEqual(tableNames(sets));
+    expect(specNames(CARDS_COLUMNS as readonly SqlColumnSpec<never>[])).toEqual(tableNames(cards));
+    // The spec's `kind` drives the SQL literal, so a wrong one corrupts the
+    // value rather than dropping it: pin the JSON columns, the only kind whose
+    // mismatch would round-trip through `parseValuesTuples` looking plausible.
+    expect(CARDS_COLUMNS.filter((c) => c.kind === "json").map((c) => c.name)).toEqual([
+      "types_json",
+      "abilities_json",
+      "attacks_json",
+      "weaknesses_json",
+      "resistances_json",
+      "variants_json",
+    ]);
   });
 
   it("targets the right tables and conflict action", () => {

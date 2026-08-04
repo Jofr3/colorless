@@ -236,7 +236,9 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
     // through the same guard — sorted here rather than by SQL. Routed through
     // it anyway (the sweep measured zero sentinel elements and zero empty
     // arrays) so the invariant "no facet list can contain a sentinel" holds
-    // for ALL seven vocabularies, not six of them.
+    // for ALL EIGHT vocabularies, not seven of them. (Seven when this was
+    // written; D198's `suffixes` made it eight and the count was not updated —
+    // D203.)
     types: facetVocabulary(typeRows.flatMap((row) => row.value ?? [])).sort(),
     stages: facetValues(stageRows),
     trainerTypes: facetValues(trainerRows),

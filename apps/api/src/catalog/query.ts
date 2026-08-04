@@ -127,10 +127,14 @@ function likeEscaped(column: AnyColumn, pattern: string): SQL {
  * - `text` LIKEs over the raw abilities/attacks JSON blobs (names and effect
  *   text live inside) AND the plain-text `effect` column. The JSON halves are
  *   imprecise on purpose — a term can brush a JSON KEY or a cost value rather
- *   than prose, and the catalog says how much: `?text=effect` matches 2,816 of
- *   3,786 rows and `?text=damage` matches 3,175, almost entirely on the
- *   `{cost,name,effect,damage}` keys of attacks_json. Still plenty for catalog
- *   search at ~3.7k rows, and cheaper than a search index.
+ *   than prose, and the catalog says how much: over the JSON PAIR ALONE,
+ *   `?text=effect` matches 2,816 of 3,786 rows and `?text=damage` matches 3,175,
+ *   almost entirely on the `{cost,name,effect,damage}` keys of attacks_json.
+ *   Whole-filter totals today are 2,826 and 3,267 — the `effect` column adds 10
+ *   and 92 rows respectively, and adds them for genuine PROSE matches (measured
+ *   on production 2026-08-04; D203 re-attributed these figures, which were
+ *   presented as the whole filter's after D197 widened it under them). Still
+ *   plenty for catalog search at ~3.7k rows, and cheaper than a search index.
  *
  *   `effect` (D197) does NOT inherit that hazard — it is prose, not a
  *   serialized object, so there are no key names in it to brush. It was worth

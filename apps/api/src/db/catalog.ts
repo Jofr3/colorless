@@ -82,9 +82,16 @@ export const cards = sqliteTable(
         cards.ts), which is why an EX/Mega selection cannot be a server param
         and mixed selections page badly: the API pages a set the client then
         thins, so a 60-card page can render nearly empty while `total` claims
-        hundreds. Added in D197 so the next ingest populates it; NULL on every
-        row until then — nothing filters on it yet, on purpose (see the
-        commit). */
+        hundreds. Added in D197 so the next ingest populates it. **STILL NULL ON
+        EVERY PRODUCTION ROW** (re-verified 2026-08-04) — and stronger than that:
+        migration `0006`, which ADDS the column, has never been applied to the
+        remote database, so production has no `suffix` column at all. D198 then
+        shipped `?suffix=` and the `/facets` `suffixes` vocabulary over it, which
+        is why the deploy ORDER now matters — `/facets` selects this column inside
+        its shared `db.batch`, so deploying ahead of the migration fails the whole
+        endpoint. Runbook: docs/workstreams/backend-data.md §3.7. (D197's "nothing
+        filters on it yet, on purpose" was true for exactly one slice; D198 made
+        it false and D203 corrected it.) */
     suffix: text("suffix"),
     evolveFrom: text("evolve_from"),
     /** Energy types, e.g. ["Grass"]. */

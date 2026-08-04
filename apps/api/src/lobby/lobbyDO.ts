@@ -11,17 +11,20 @@
 // (attachment.ts), and the keepalive is answered by `setWebSocketAutoResponse`
 // without waking the instance at all.
 //
-// One alarm, five duties (earliest deadline wins; alarm() re-derives all):
-//   0. liveness — every LIVENESS_SWEEP_MS while sockets are connected, a socket
+// One alarm, five duties (earliest deadline wins; alarm() re-derives all). The
+// labels below are the ones `alarm()` carries in its own body, so a reader can
+// jump between the two — 2 and 2b are numbered as a pair because the forfeit
+// check lives inside the same in-game branch as the countdown:
+//   0) liveness — every LIVENESS_SWEEP_MS while sockets are connected, a socket
 //      that stopped answering keepalives is closed (3c-viii); the auto-response
 //      below is precisely why nothing else could notice;
-//   1. disconnect graces — a dropped socket only marks its seat disconnected
+//   1) disconnect graces — a dropped socket only marks its seat disconnected
 //      after DISCONNECT_GRACE_MS without a reconnect (logic.ts);
-//   2. the countdown — countdown → in-game after COUNTDOWN_MS, unless a seat's
+//   2) the countdown — countdown → in-game after COUNTDOWN_MS, unless a seat's
 //      player vanished, who is demoted instead (the old host did the same);
-//   3. match forfeits — a seat's ABANDON_GRACE_MS deadline (3c-ii/3c-v, on the
+//   2b) match forfeits — a seat's ABANDON_GRACE_MS deadline (3c-ii/3c-v, on the
 //      snapshot) ends the running match for a player who never came back;
-//   4. empty-lobby expiry — EMPTY_LOBBY_TTL_MS after the last socket goes,
+//   3) empty-lobby expiry — EMPTY_LOBBY_TTL_MS after the last socket goes,
 //      storage is wiped, freeing the code.
 //
 // This class deliberately does NOT extend cloudflare:workers' DurableObject:

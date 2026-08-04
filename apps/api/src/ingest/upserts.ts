@@ -1,9 +1,20 @@
 // Per-table upsert builders: the column specs that tie the ./map.ts rows to
-// the SQL column names of migration 0000 (+ the 0001/0002 asset-URL rename),
+// the SQL column names of the CURRENT catalog schema (../db/catalog.ts —
+// migration 0000, the 0001/0002 asset-URL rename, and 0006's `cards.suffix`),
 // and thin wrappers over ./sql.ts's generic builder.
 //
 // Apply order matters — series → sets → cards (FKs) — but that is the CLI's
 // job (apps/api/scripts/ingest.ts); these builders only produce statements.
+//
+// ⚠️ THE LISTS BELOW ARE HAND-MAINTAINED AGAINST A SCHEMA THAT MOVES, so the
+// naming above is a fact that ROTS (it did: it said "migration 0000 (+ the
+// 0001/0002 rename)" for three slices after 0006 added `suffix`). `SqlColumnSpec<Row>`
+// makes a mistyped `key` a build error, but a column ADDED to ../db/catalog.ts
+// and forgotten here is silent — the generated INSERT simply never writes it,
+// and the next ingest leaves it NULL forever. ./upserts.test.ts derives the
+// expected column NAMES from Drizzle's own `getTableColumns` and asserts each
+// list is complete and in table order, so that gap is now a red test rather
+// than a comment (D203).
 
 import type { CardRow, SeriesRow, SetRow } from "./map";
 import { buildUpsertSql, type SqlColumnSpec } from "./sql";

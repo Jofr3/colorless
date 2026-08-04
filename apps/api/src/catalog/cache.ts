@@ -18,6 +18,16 @@ const CACHE_TTL_SECONDS = 3600;
 /** Bump when a cached response SHAPE — or its VALUES for already-ingested
     rows — changes, so stale KV entries from the previous deploy can't serve
     the old answer for up to a TTL; old-version keys just expire.
+
+    THE TRIGGER IS A DEPLOY, NOT THE DATA. A pure data change — a re-ingest
+    rewriting rows, the pending `cards.suffix` backfill — does NOT bump this:
+    the code that reads the rows is unchanged, so the only cost is the TTL,
+    which is what `CACHE_TTL_SECONDS` above exists to bound. The bumps that are
+    easy to MISS are the two below that changed no shape at all — v3→v4 and
+    v4→v5, where the same rows kept serving under the same key while the code
+    reading them changed meaning underneath. A TTL cannot help there, because
+    both deploys agree the key is correct. The prefix is also mirrored in
+    docs/workstreams/backend-data.md §6 — move both.
     v2→v3: CardBrief grew `legal` for the P2 deck builder.
     v3→v4: the read path started normalising "None" sentinels to null
     (../sentinel.ts, D194). Same shape, different bytes: without a bump the
