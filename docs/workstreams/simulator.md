@@ -18021,3 +18021,24 @@ an unmeasured legal count is `null` rather than zero.
   the two attributions is wrong. Not resolved here.
 - **`clauseApostrophe.test.ts`** — the U+2019 census moved 65 → 67, from a source no earlier
   entry on its list had: not a fixture, not a restore, but a **regex**.
+
+### D180 follow-up — provenance discharged, and the legality footnote
+
+All four D180 aliases were **measured** against the remote D1 (the six sets the local D1 holds
+total exactly 978 rows) and **all four hold** byte-identically against their twins. The
+as-shipped "asserted from a doc" paragraph is kept in `index.ts` rather than rewritten: how a
+claim was warranted at the time is the thing this repo keeps losing (D178's rule).
+
+⚠️ **All four ids are rotated out of Standard** — `swsh10.5` is regulation mark F (0 of 88
+Standard-legal), `sv02` is mark G — so **D180 serves zero Standard-legal printings.** The four
+map rows are correct and cost four lines; the lesson is the pricing rule they make visible:
+
+> **A registry row and a deriver arm must never be priced on the same scale.** An arm is a TEXT
+> PARSER and its sentences transfer across sets (D181's four anchors: 34 Standard-legal
+> printings against 19 at six-set scope). A registry row is keyed by CARD ID and serves exactly
+> the printings it names — so a row against a rotated set serves nobody in Standard.
+
+⚠️ **The emptiness is still not pinned, and the reason changed from "could not" to "was not."**
+The four rows are measured individually; the *sweep* that says there are no others has never
+been re-run by anyone. `reprintAlias.test.ts` now carries the exact scoped SQL for it rather
+than an assertion nobody earned.

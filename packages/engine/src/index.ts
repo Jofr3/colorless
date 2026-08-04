@@ -4628,8 +4628,21 @@ import type { GameState, Seat } from "./types";
     EXISTING `CardProgram` objects, using the reprint idiom the map has carried
     since M4 — no new op, field, program, event, park, fixture or deck.
 
-    ⚠️⚠️ **THE BYTE-IDENTITY IS ASSERTED FROM A DOC, NOT MEASURED, AND THAT IS
-    THE MOST IMPORTANT LINE IN THIS ENTRY.** `apps/api/.wrangler/` is gitignored
+    ⚠️ **AMENDED AFTER THE FACT (same decision, D180's follow-up): ALL FOUR
+    PRINTINGS ARE NOW MEASURED AND ALL FOUR HOLD**, byte-identical to their twins
+    against the 978-row / 6-set catalog reached through the remote D1 — `sv02-245`
+    on "Bronze Body", `swsh10.5-069` on Rare Candy's paragraph,
+    `swsh10.5-078`/`-084` on "Discard your hand and draw 7 cards." ⚠️ **AND ALL
+    FOUR IDS ARE ROTATED OUT OF STANDARD** (`swsh10.5` is mark F, 0 of 88 legal;
+    `sv02` is mark G), so this slice serves **zero Standard-legal printings** —
+    which is not a reason to revert four correct map rows, but IS the reason a
+    registry row and a deriver arm must never be priced on the same scale: an arm
+    is a text parser whose sentences transfer across sets (D181's four serve 34
+    Standard-legal printings), a row is keyed by CARD ID. The paragraph below is
+    kept as the record of how it SHIPPED, because how a claim was warranted at the
+    time is the thing this repo keeps losing.
+
+    ⚠️⚠️ **AS SHIPPED, THE BYTE-IDENTITY WAS ASSERTED FROM A DOC, NOT MEASURED.** `apps/api/.wrangler/` is gitignored
     dev state and DOES NOT EXIST in a fresh clone; this slice ran in one
     (`find / -name '*.sqlite'` → zero rows, and `scripts/catalog-manifest.ts
     --check` dies SQLITE_CANTOPEN rather than reporting staleness). It could not
@@ -4637,10 +4650,10 @@ import type { GameState, Seat } from "./types";
     and the environment's network policy answers **403 to the CONNECT**. So the
     text-equality sweep of unbuilt-against-built over all three columns — the
     sweep that produced the backlog's "3 sentences / 4 printings and nothing
-    else" — **was NOT re-run.** It is carried from
-    `docs/reference/coverage-backlog.md` (2026-08-04) and is the sole warrant for
-    these four rows, which is recorded on the rows themselves and at the top of
-    `reprintAlias.test.ts` rather than left for a reader to infer.
+    else" — **was NOT re-run.** ⚠️ **AND IT STILL HAS NOT BEEN**, by anyone: the
+    four rows are measured individually, the SWEEP that says there are no OTHERS
+    is not. It is runnable now; nobody has run it. `reprintAlias.test.ts` carries
+    the exact query the next session should run rather than a pin nobody earned.
 
     ⚠️ **AND NO "THE SWEEP IS EMPTY" ASSERTION WAS WRITTEN, DELIBERATELY.** The
     repo prefers pinning an emptiness to enumerating exceptions — but a pin that

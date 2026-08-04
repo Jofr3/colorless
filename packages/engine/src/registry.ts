@@ -2938,11 +2938,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-190": PROFESSORS_RESEARCH,
   "sv01-240": PROFESSORS_RESEARCH,
   "sv01-241": PROFESSORS_RESEARCH,
-  // …and its two swsh10.5 prints (D180). ⚠️ ASSERTED FROM THE BACKLOG CENSUS,
-  // NOT MEASURED HERE — see the D180 block in reprintAlias.test.ts. The local D1
-  // is absent from a fresh clone and could not be re-queried this session, so the
-  // byte-identity of these ids' printed text against `sv01-189`'s is carried from
-  // `docs/reference/coverage-backlog.md`'s 2026-08-04 sweep rather than re-derived.
+  // …and its two swsh10.5 prints (D180). ⚠️ MEASURED, not carried: both
+  // `abilities`-free Supporter rows read "Discard your hand and draw 7 cards."
+  // byte-identically to sv01-189/-190/-240/-241, queried against the 978-row /
+  // 6-set catalog on 2026-08-04. ⚠️ AND BOTH ARE ROTATED OUT OF STANDARD —
+  // `swsh10.5` is regulation mark F, 0 of its 88 rows Standard-legal — so this
+  // row is playable-catalog completeness, not Standard coverage.
   "swsh10.5-078": PROFESSORS_RESEARCH,
   "swsh10.5-084": PROFESSORS_RESEARCH,
   // Nest Ball
@@ -3025,8 +3026,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // Rare Candy — Basic→Stage 2 evolve-skip Item
   "sv01-191": RARE_CANDY,
   "sv01-256": RARE_CANDY,
-  // …and its swsh10.5 print (D180) — same ASSERTED-FROM-DOC provenance as the
-  // two Professor's Research rows above.
+  // …and its swsh10.5 print (D180) — MEASURED byte-identical to sv01-191/-256
+  // ("Choose 1 of your Basic Pokémon in play. …"), same 2026-08-04 query, and
+  // rotated out of Standard for the same reason as the two rows above.
   "swsh10.5-069": RARE_CANDY,
   // — M4 slice 8: the mid-turn-damage snipe (verified vs the live api 2026-07-19). —
   // Hawlucha — Flying Entry (onPlayToBench: choose 2 opp Benched, 1 counter each)
@@ -3056,7 +3058,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
   "sv02-150": COPPERAJAH_EX, // Copperajah ex — Bronze Body (−30 after W/R)
-  "sv02-245": COPPERAJAH_EX, // (reprint — D180, ASSERTED FROM DOC, see above)
+  // (reprint — D180). MEASURED: both `abilities_json` rows carry exactly
+  // [{"type":"Ability","name":"Bronze Body","effect":"This Pokémon takes 30 less
+  // damage from attacks (after applying Weakness and Resistance)."}]. Mark G,
+  // i.e. rotated out of Standard like the other three D180 ids.
+  "sv02-245": COPPERAJAH_EX,
   "sv01-121": STONJOURNER, // Stonjourner — Exoskeleton (−20 after W/R)
   // — M5 op-slice: damageAttacker reactive recoil (verified vs the live D1 2026-07-27). —
   "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)

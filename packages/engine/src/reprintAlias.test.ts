@@ -17,45 +17,77 @@ import { FIXTURE_POOL } from "./testFixtures";
 // existing `CardProgram` objects, using the reprint idiom the map has carried
 // since M4 (`sv01-189`/`-190`/`-240`/`-241` share ONE `PROFESSORS_RESEARCH`).
 //
-// ⚠️⚠️ READ THIS BEFORE TRUSTING THE FOUR ROWS. THE CATALOG WAS NOT AVAILABLE
-// TO THIS SLICE AND THE BYTE-IDENTITY IS **ASSERTED FROM A DOC, NOT MEASURED**.
+// ⚠️ THE PROVENANCE, AND ITS HISTORY, BECAUSE BOTH ARE THE POINT OF THIS FILE.
 //
-//   • `apps/api/.wrangler/` is gitignored dev state. It DOES NOT EXIST in a
-//     fresh clone, and this slice ran in one: `find / -name '*.sqlite'` returned
-//     zero rows, and `bun run scripts/catalog-manifest.ts --check` dies with
-//     SQLITE_CANTOPEN rather than reporting staleness.
-//   • It cannot be rebuilt either. `apps/api/scripts/ingest.ts` fetches
-//     `api.tcgdex.net`, and this environment's network policy answers 403 to the
-//     CONNECT — so neither the sqlite NOR the live API can be reached.
+// D180 SHIPPED WITH THE BYTE-IDENTITY ASSERTED FROM A DOC. The slice ran in a
+// fresh clone, where `apps/api/.wrangler/` — gitignored dev state — does not
+// exist (`find / -name '*.sqlite'` → zero rows; `scripts/catalog-manifest.ts
+// --check` dies SQLITE_CANTOPEN rather than reporting staleness), and
+// `api.tcgdex.net` was refused by the egress policy, so neither the local sqlite
+// nor the live API was reachable. The four rows were landed on the backlog's
+// 2026-08-04 census and SAID SO, on the rows and here.
 //
-// The consequence, stated plainly because the repo's whole method is that a
-// claim carries its provenance: **the text-equality sweep of unbuilt-against-
-// built over all three catalog columns — the sweep that produced the backlog's
-// "3 sentences / 4 printings and nothing else" — COULD NOT BE RE-RUN.** It is
-// carried from `docs/reference/coverage-backlog.md` (census dated 2026-08-04)
-// and is the sole warrant for these four rows. It is NOT independent evidence:
-// this file cannot see `sv02-245`, `swsh10.5-069`, `swsh10.5-078` or
-// `swsh10.5-084` at all — none of the four is in `FIXTURE_POOL`, none has a
-// `CATALOG_MANIFEST.printed` row, and nothing else in the repo names them.
+// ⚠️ ALL FOUR ARE NOW **MEASURED**, against the 978-row / 6-set catalog reached
+// through the remote D1 (`luminous`), and all four HOLD:
+//   • `sv02-245` — `abilities_json` byte-identical to `sv02-150`'s, both exactly
+//     [{"type":"Ability","name":"Bronze Body","effect":"This Pokémon takes 30
+//     less damage from attacks (after applying Weakness and Resistance)."}];
+//   • `swsh10.5-069` — "Choose 1 of your Basic Pokémon in play. …", byte-identical
+//     to `sv01-191` / `sv01-256`;
+//   • `swsh10.5-078` and `swsh10.5-084` — "Discard your hand and draw 7 cards.",
+//     byte-identical to `sv01-189` / `-190` / `-240` / `-241`.
 //
-// WHAT THIS FILE PINS INSTEAD, AND WHY EACH PIN IS WORTH ITS LINES:
+// ⚠️⚠️ AND THE HONEST FOOTNOTE, WHICH IS WORTH MORE THAN THE FOUR ROWS: **ALL
+// FOUR IDS ARE ROTATED OUT OF STANDARD.** Legality tracks the regulation mark
+// exactly — Standard is marks H and I, plus Basic Energy — and `swsh10.5` is
+// mark F (0 of its 88 rows legal) while `sv02` is mark G. So this slice serves
+// **zero Standard-legal printings**. That is not a reason to revert it (the
+// aliases are correct, cost four map rows, and a rotated card is still playable
+// in Expanded and still simulable), but it IS the reason a REGISTRY row and a
+// DERIVER ARM must never be priced on the same scale: an arm is a text parser
+// and its sentences transfer across sets (D181's four served 34 Standard-legal
+// printings), while a row is keyed by CARD ID and serves exactly the ids it
+// names. `docs/reference/coverage-backlog.md` now carries that rule.
+//
+// ⚠️ THERE IS STILL NO "THE CATALOG SWEEP IS EMPTY" ASSERTION IN THIS FILE, AND
+// THE REASON HAS CHANGED FROM "COULD NOT" TO "WAS NOT". The full text-equality
+// sweep of unbuilt-against-built over all three columns — the sweep behind the
+// backlog's "3 sentences / 4 printings and nothing else" — has still never been
+// re-run by this repo. It is runnable now; nobody has run it. A pin claiming a
+// measurement nobody made is worse than no pin: it goes green forever while
+// asserting something no session checked (D155's rule, read backwards). The
+// query the next session should run, scoped and stated so it cannot be
+// misremembered, is:
+//
+//   WITH t AS (
+//     SELECT id, set_id, 'effect' AS col, effect AS txt FROM cards
+//      WHERE effect IS NOT NULL AND effect <> ''
+//     UNION ALL SELECT id, set_id, 'attack', j.value ->> 'effect'
+//       FROM cards, json_each(cards.attacks_json) j
+//      WHERE j.value ->> 'effect' IS NOT NULL
+//     UNION ALL SELECT id, set_id, 'ability', j.value ->> 'effect'
+//       FROM cards, json_each(cards.abilities_json) j
+//      WHERE j.value ->> 'effect' IS NOT NULL
+//   )
+//   SELECT txt, group_concat(DISTINCT id) FROM t
+//    WHERE set_id IN ('sv01','sv02','sv03','sv06.5','sve','swsh10.5')
+//    GROUP BY txt HAVING count(DISTINCT id) > 1;
+//
+// …then diff each group's ids against `REGISTRY`'s keys: a group where some ids
+// are registered and some are not IS the D180 defect. Until someone does that
+// and reports the result, this file pins what it can actually see.
+//
+// WHAT IT PINS:
 //   (1) the ALIAS RELATION — each new id resolves to the SAME PROGRAM OBJECT as
 //       its twin (`toBe`, not `toEqual`). That is the reprint idiom itself, and
 //       it is what a future author breaks by copy-pasting a second program
 //       literal instead of sharing the one;
-//   (2) the TWINS' PRINTED TEXT, char-for-char off `FIXTURE_POOL` — the anchor
-//       the aliases are asserted against. If a re-ingest ever moves the twin's
+//   (2) the TWINS' printed text, char-for-char off `FIXTURE_POOL` — the anchor
+//       the aliases were measured against. If a re-ingest ever moves the twin's
 //       own text, this goes red and the alias's warrant is void;
-//   (3) the FIXTURE-POOL TEXT-EQUALITY SWEEP, which IS runnable here and IS
-//       EMPTY — see its own describe block for exactly what population it
-//       covers and what it therefore cannot say.
-//
-// ⚠️ THERE IS DELIBERATELY NO "THE CATALOG SWEEP IS EMPTY" ASSERTION IN THIS
-// FILE. A pin that claims a measurement nobody made is worse than no pin: it
-// would go green forever while saying something this session never checked.
-// D155's rule ("a number nothing reads is the one that never gets re-measured")
-// has a converse, and this is it — an assertion nothing measured is one nobody
-// can ever contradict.
+//   (3) the text-equality sweep RESTRICTED to `FIXTURE_POOL`, which IS runnable
+//       here and IS EMPTY — see its own describe block for exactly what
+//       population it covers and what it therefore cannot say.
 
 /** The four rows this slice added, each with the already-authored id whose
     program it now shares. The right-hand id is the WARRANT; the left-hand one
@@ -109,14 +141,15 @@ describe("D180 — the four reprint aliases", () => {
     ]);
   });
 
-  it("has NO catalog row and NO fixture for any of the four — the reason there is no text pin", () => {
-    // The load-bearing negative. This is not a gap to be closed later by adding
-    // fixtures: a fixture id that names a real printing must appear in
+  it("has NO catalog row and NO fixture for any of the four — the reason there is no text pin HERE", () => {
+    // The load-bearing negative, and it survives the four rows becoming measured.
+    // A fixture id that names a real printing must appear in
     // `CATALOG_MANIFEST.printed` or `.absent` (catalogManifest.test.ts (c)), and
-    // regenerating that manifest needs the sqlite this session does not have. So
-    // the four CANNOT be fielded until someone with the catalog does it, and
-    // this assertion is what will go red on the day they are — at which point
-    // the byte-identity above stops being carried and starts being measured.
+    // regenerating that manifest reads the LOCAL sqlite — which a clone does not
+    // have, whatever the remote can answer. So the four cannot be fielded here,
+    // their printed bytes live in the registry's comments and in the decision
+    // record rather than in a fixture, and this assertion goes red on the day
+    // someone with the local file changes that.
     for (const { reprint } of ALIASES) {
       expect(FIXTURE_POOL[reprint], `${reprint} is now a fixture — pin its TEXT`).toBeUndefined();
       expect(M.printed[reprint]).toBeUndefined();
@@ -127,10 +160,10 @@ describe("D180 — the four reprint aliases", () => {
 
 describe("the TWINS' printed text — the anchor the aliases are asserted against", () => {
   it("Professor's Research sv01-189 prints exactly what PROFESSORS_RESEARCH implements", () => {
-    // Verbatim off `FIXTURE_POOL`, which is the highest-authority text source
-    // available in-repo. The claim the two swsh10.5 rows make is that THIS
-    // string is what they print too; that half is unmeasurable here, but the
-    // half that is measurable is measured.
+    // Verbatim off `FIXTURE_POOL`, the highest-authority text source in-repo. The
+    // claim the two swsh10.5 rows make is that THIS string is what they print
+    // too — measured true against the catalog, and re-checkable here only on this
+    // side, which is why the twin's bytes are the thing pinned.
     expect(FIXTURE_POOL["sv01-189"]?.effect).toBe("Discard your hand and draw 7 cards.");
     expect(FIXTURE_POOL["sv01-189"]?.trainerType).toBe("Supporter");
   });

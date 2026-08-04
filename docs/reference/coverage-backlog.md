@@ -407,13 +407,21 @@ distinct-string count inside the family; "printings" is the text-unit count.
 This is the whole of it: a full text-equality sweep of unbuilt against built over
 all three columns returns **3 sentences / 4 printings** and nothing else.
 
-⚠️ **D180 COULD NOT RE-RUN THAT SWEEP** (see the catalog-availability warning at
-the top of this section's rankings, below). The four rows were landed with the
-byte-identity **asserted from this table, not measured**, and the provenance is
-recorded on the registry rows themselves and at the top of
-`packages/engine/src/reprintAlias.test.ts`. **Whoever next has the catalog owes
-this sweep a re-run** — it is the one claim in Tier 0 that nothing in the suite
-can check.
+✅ **All four printings are MEASURED byte-identical to their twins** against the
+978-row / 6-set catalog (2026-08-04, remote D1). ⚠️ **But the SWEEP that says
+there are no OTHERS has still never been re-run by anyone** — D180 shipped
+without a reachable catalog and nobody has run it since. The exact scoped SQL is
+in `packages/engine/src/reprintAlias.test.ts`; the emptiness is deliberately NOT
+pinned, because a pin claiming a measurement nobody made goes green forever.
+
+⚠️⚠️ **AND ALL FOUR IDS ARE ROTATED OUT OF STANDARD** (`swsh10.5` mark F, `sv02`
+mark G), so **Tier 0 served ZERO Standard-legal printings.** Correct rows, four
+lines, no coverage. **This is the standing rule for reading every tier below:** a
+REGISTRY ROW is keyed by CARD ID and serves exactly the printings it names, while
+a DERIVER ARM is a TEXT PARSER whose sentences transfer across sets — D181's four
+anchors serve 34 Standard-legal printings against 19 at six-set scope. **Never
+price the two on the same scale, and never rank a tier by its six-set count
+alone.**
 
 ### Tier 1 — ONE DERIVER ARM on an op that already exists. Zero new ops, zero registry rows.
 Attack text is derived, so every one of these is a regex + a `return` in
