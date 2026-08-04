@@ -740,18 +740,24 @@ function carriedRecord(record: EffectRecord): { record?: EffectRecord } {
     because they must produce the identical continuation or a Bench of one and a
     Bench of two would resolve the same printed sentence differently.
 
-    ⚠️ The `spot` test is the WIRE BELT and not a legality rule, exactly as the
-    identical line in `moveCountersToDefender` has been since D138: the candidate
-    set is the real gate (it holds own-bench refs only, and `validateChoice`
-    matches the answer against the PROMPT), so a non-bench ref cannot arrive from
-    a real match. It degrades to NO continuation — the sentence does nothing —
-    which is the same silent ending an empty Bench already takes. */
+    ⚠️ **IT TESTS THE ZONE AND NOT THE SEAT, AND THE SEAT TEST WAS REMOVED RATHER
+    THAN TESTED AROUND.** `moveCountersToDefender` carries both as its wire belt;
+    here the second one was worse than redundant — it was MASKING a mutant. With a
+    seat test in place, `continuationOps`' own `fromBench === undefined` guard
+    could be deleted and nothing failed, because the destination answer (an
+    OPPONENT ref) fell out of this function anyway. Two guards each covering for
+    the other's absence is two lines neither of which can be proved. The state
+    test in `continuationOps` is the meaningful one — *only the FIRST answer buys
+    a continuation* — so it stays and this one goes; the seat is guaranteed
+    downstream regardless, since the mover reads `state.players[ctx.seat].bench`.
+    The `spot` test survives because TypeScript needs the narrowing and because a
+    non-bench ref degrades to NO continuation, which is the silent ending an empty
+    Bench already takes. */
 function counterSourceAnswered(
   op: Extract<EffectOp, { op: "moveCountersChosen" }>,
   ref: PokemonRef,
-  ctx: EffectContext,
 ): EffectOp[] {
-  if (ref.seat !== ctx.seat || ref.spot.spot !== "bench") return [];
+  if (ref.spot.spot !== "bench") return [];
   return [{ ...op, fromBench: ref.spot.index }];
 }
 
@@ -776,7 +782,7 @@ function continuationOps(cont: EffectContinuation, choice: EffectChoice): Effect
   const op = cont.pendingOp;
   if (op.op === "optional") return choice.kind === "confirm" && choice.yes ? [...op.then] : [];
   if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
-    return choice.kind === "pokemon" ? counterSourceAnswered(op, choice.ref, cont.ctx) : [];
+    return choice.kind === "pokemon" ? counterSourceAnswered(op, choice.ref) : [];
   }
   return [];
 }
@@ -912,8 +918,13 @@ function stepOp(
         // narrowing is the one D205's printing bought, and no chosen-destination
         // printing carries a possessive (the anchor's census).
         const sources = ownBenchRefs(state, ctx.seat);
-        const forced = sources.length === 1 ? sources[0] : undefined;
         if (sources.length === 0) return { done: state };
+        // `parkOrForce`'s own ordering, deliberately — nothing / one / many, in
+        // that order. ⚠️ It makes `=== 1` and `<= 1` EQUIVALENT here (the empty
+        // set has already returned), which is a property this arm inherits from
+        // that helper rather than one it invents; recorded as an equivalent
+        // mutant rather than passed off as a tested comparison.
+        const forced = sources.length === 1 ? sources[0] : undefined;
         // ⚠️ NOT `parkOrForce`, and this is the whole reason `then` exists. Its
         // forced arm applies a `(ref) => GameState`, which is precisely the shape
         // that cannot ask a second question; here the single candidate is
@@ -922,7 +933,7 @@ function stepOp(
         // sentence are one code path with two entrances. The M1 no-choice
         // doctrine is unchanged: one Benched body prompts for nothing.
         if (forced !== undefined)
-          return { done: state, schedule: counterSourceAnswered(op, forced, ctx) };
+          return { done: state, schedule: counterSourceAnswered(op, forced) };
         return {
           park: {
             kind: "choosePokemon",

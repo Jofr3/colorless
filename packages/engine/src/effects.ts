@@ -6203,6 +6203,32 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
+  // 21b. "Move all damage counters from 1 of your Benched Pokémon to 1 of your
+  //      opponent's Pokémon." — D216's CHOSEN-DESTINATION counter move,
+  //      Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus", **2 legal**.
+  //      Numbered as a sibling of 21 rather than appended, because it is the SAME
+  //      printed action reading its destination out of a decision instead of out
+  //      of the text. Both anchors open `^Move all damage counters from 1 of your
+  //      Benched …` and part only at the TAIL, and as written they are mutually
+  //      exclusive — no string matches both.
+  //
+  //      ⚠️ **IT IS TRIED BEFORE 21, AND THAT ORDER IS LOAD-BEARING IN EXACTLY ONE
+  //      DIRECTION — CHOSEN BY MUTATION RATHER THAN BY TASTE.** With 21 first, a
+  //      LOOSENED tail here (`to (?:1 of )?your opponent's (?:Active )?Pokémon`)
+  //      is unobservable: arm 21 has already returned for D138's sentence, so the
+  //      slop never shows. Running this arm first makes that mutant fatal — the
+  //      fixed-destination sentence would derive `moveCountersChosen` and three
+  //      assertions go red. The mirror hazard is real and is stated rather than
+  //      hidden: a loosened tail on 21 is now the masked one, and 21 is the older
+  //      anchor with its own refusal suite (ownerTargetOps.test.ts) around it.
+  //
+  //      `fromBench` is deliberately ABSENT from the derived op: the deriver
+  //      emits the question, not its answer (see the op's doc block). With no
+  //      owner capture either (the anchor's own block says why), the arm has
+  //      nothing to branch on and the op is FIELD-LESS — which is what D138's arm
+  //      looked like before a printing bought it a rider.
+  if (COUNTER_MOVE_TO_CHOSEN.test(effect)) return [{ op: "moveCountersChosen" }];
+
   // 21. "Move all damage counters from 1 of your Benched Pokémon to your
   //     opponent's Active Pokémon." — D138's COUNTER MOVE, 2 printings on one
   //     card (Dedenne ex sv02-093/-239 "Tail Swap"). NO CAPTURE AT ALL: every
@@ -6236,24 +6262,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     ];
   }
 
-  // 21b. "Move all damage counters from 1 of your Benched Pokémon to 1 of your
-  //      opponent's Pokémon." — D216's CHOSEN-DESTINATION counter move,
-  //      Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus", **2 legal**.
-  //      Numbered as a sibling of 21 rather than appended, because it is the SAME
-  //      printed action reading its destination out of a decision instead of out
-  //      of the text — and it must be tried AFTER 21, since the two anchors are
-  //      both `^Move all damage counters from 1 of your Benched …$` and only
-  //      their tails part. (They are mutually exclusive as written — "to your
-  //      opponent's Active Pokémon" and "to 1 of your opponent's Pokémon" cannot
-  //      both match one string — so the order is documentation, not a
-  //      dependency; stated because the NEXT tail added here might not be.)
-  //
-  //      `fromBench` is deliberately ABSENT from the derived op: the deriver
-  //      emits the question, not its answer (see the op's doc block). With no
-  //      owner capture either (the anchor's own block says why), the arm has
-  //      nothing to branch on and the op is FIELD-LESS — which is what D138's arm
-  //      looked like before a printing bought it a rider.
-  if (COUNTER_MOVE_TO_CHOSEN.test(effect)) return [{ op: "moveCountersChosen" }];
 
   // 22. "Put {N} damage counters on your opponent's Active Pokémon." — D139's PUT
   //     on the defender, 2 printings across 2 clauses (Mimikyu sv02-097 "Ghost
