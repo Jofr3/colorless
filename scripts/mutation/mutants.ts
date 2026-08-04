@@ -64,6 +64,15 @@ export type Mutant = {
   expectKilledBy: string[];
   /** Optional `vitest -t` substring, to narrow further within a large file. */
   nameFilter?: string;
+  /**
+   * D215 — the killer is NOT a vitest suite. Some of this repo's guards are
+   * scripts (`bun run lint:coverage`), and their decision rows publish mutation
+   * tallies exactly like the engine rows do. An argv array, spawned at the repo
+   * root with no shell; a non-zero exit is a KILL. When present it replaces
+   * `expectKilledBy` entirely (which should then be `[]`) and `--full` is
+   * ignored, because there is no wider suite for such a row to widen to.
+   */
+  killedByCommand?: string[];
   /** Present ⇒ this mutant is EXPECTED to survive, for the reason given. */
   survives?: { kind: SurvivalKind; reason: string };
 };
@@ -256,6 +265,328 @@ export const MUTANTS: Mutant[] = [
       kind: "unreachable-shape",
       reason:
         "`count: 1` is never spelled — D104's minimal-shape rule omits a field that means what its absence means — so no authored row can reach the comparison at all. D205 REMOVED the comparison rather than testing around it; this row is what keeps that removal honest: if it is ever KILLED, some row now spells `count: 1` and D104's rule has been broken.",
+    },
+  },
+
+  // ══ D215's transcription — the six-plus-one slices that landed after D211 ══
+  //
+  // ⚠️ EVERY `find` BELOW IS ANCHORED ON TEXT THAT NAMES ITS SITE. D207's
+  // first-round "survivor" was an unanchored regex that mutated a BYTE-IDENTICAL
+  // arm 1,400 lines away, and that wrong-row failure has now cost three slices.
+  // Where a line is genuinely repeated (D207's two `counts` rows, D210's actor
+  // gate, D208's four clamp call sites) the `find` carries a NEIGHBOURING line
+  // that differs — the runner's uniqueness check then proves the anchoring
+  // rather than leaving it to the author's eye.
+
+  // ── D206 · the "Switch … If you do" seam ───────────────────────────────────
+  // "34 mutants across three rounds, 33 killed, all four survivors reported."
+  {
+    id: "D206-active-subgroup",
+    decision: "D206",
+    what: "switchActiveTargets stops reading the printed sentence's FIRST noun — an Active outside the owner subgroup hands over a free Boss's Orders instead of refusing the play",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return activeInSubgroup ? bench : [];",
+    replace: "  return bench;",
+    expectKilledBy: ["packages/engine/src/switchSeam.test.ts"],
+  },
+  {
+    id: "D206-bench-subgroup",
+    decision: "D206",
+    what: "the BENCH end of the same printed owner stops narrowing — `ownerPokemon` is D200's predicate at its fourth read site, and this drops one of its two reads",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const bench = subgroupRefs(state, ownBenchRefs(state, seat), op.ownerPokemon);",
+    replace: "  const bench = ownBenchRefs(state, seat);",
+    expectKilledBy: ["packages/engine/src/switchSeam.test.ts"],
+  },
+  {
+    id: "D206-files-every-row",
+    decision: "D206",
+    what: "the §9.2 filing takes EVERY emitted row rather than the POKEMON_SWITCHED one — D206's second real test gap, invisible until a Poisoned+Burned body switches AND a card parks again, because recordGateHolds asks LENGTH not contents",
+    file: "packages/engine/src/interpreter.ts",
+    find: '    emitted.flatMap((event) => (event.type === "POKEMON_SWITCHED" ? [event.nowActive] : [])),',
+    replace:
+      '    emitted.flatMap((event) =>\n      "nowActive" in event ? [event.nowActive] : "uid" in event ? [event.uid] : [],\n    ),',
+    expectKilledBy: ["packages/engine/src/switchSeam.test.ts"],
+  },
+
+  // ── D207 · the opponent's remaining-Prize gate ─────────────────────────────
+  // "11 mutants, 11 killed — after a first-round 'survivor' turned out to be an
+  //  unanchored regex that mutated Falkner's byte-identical bonus arm."
+  {
+    id: "D207-lacey-counts",
+    decision: "D207",
+    what: 'Lacey\'s "3 or fewer" enumeration loses its top member — [0,1,2] instead of [0,1,2,3], the off-by-one at the boundary the printed word names',
+    file: "packages/engine/src/registry.ts",
+    find:
+      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n' +
+      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
+      '      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],',
+    replace:
+      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },\n' +
+      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
+      '      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],',
+    expectKilledBy: ["packages/engine/src/opponentPrizeGate.test.ts"],
+  },
+  {
+    id: "D207-hype-counts",
+    decision: "D207",
+    what: "the SAME off-by-one on Emcee's Hype — the byte-identical `cond` line one card over, which is exactly the row D207's unanchored first draft mutated by mistake",
+    file: "packages/engine/src/registry.ts",
+    find:
+      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n' +
+      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
+      '      then: [{ op: "drawCards", count: 2 }],',
+    replace:
+      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },\n' +
+      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
+      '      then: [{ op: "drawCards", count: 2 }],',
+    expectKilledBy: ["packages/engine/src/opponentPrizeGate.test.ts"],
+  },
+  {
+    id: "D207-seats-crossed",
+    decision: "D207",
+    what: "the two seats crossed — the gate reads the CONTROLLER's remaining Prizes instead of the opponent's",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return cond.counts.includes(state.players[otherSeat(seat)].prizes.length);",
+    replace: "      return cond.counts.includes(state.players[seat].prizes.length);",
+    expectKilledBy: ["packages/engine/src/opponentPrizeGate.test.ts"],
+  },
+  {
+    id: "D207-remaining-vs-taken",
+    decision: "D207",
+    what: "REMAINING confused with TAKEN (6 − remaining, `opponentPrizesTaken`'s reading) — the two agree at remaining = 3 and NOWHERE else, so this mutant is only killable on a board at remaining 2 or 4",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return cond.counts.includes(state.players[otherSeat(seat)].prizes.length);",
+    replace: "      return cond.counts.includes(6 - state.players[otherSeat(seat)].prizes.length);",
+    expectKilledBy: ["packages/engine/src/opponentPrizeGate.test.ts"],
+  },
+
+  // ── D208 · the §8.1 KO-survival clamp ──────────────────────────────────────
+  // "Twelve mutants, ELEVEN killed. The twelfth — a `dealt <= 0` guard — was
+  //  PROVABLY DEAD and REMOVED rather than tested around, so it is deliberately
+  //  NOT transcribed here: there is no branch left for a `survives` row to be
+  //  about, and declaring one would assert the existence of code that is gone."
+  {
+    id: "D208-drop-passive",
+    decision: "D208",
+    what: "the clamp stops reading the passive — every full-HP body in the game survives its first KO (D208's loudest mutant: 72 tests red on the full suite)",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (!passivesOf(state, pokemon).survivesKoAtFullHp) return null;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-drop-antecedent",
+    decision: "D208",
+    what: 'the printed antecedent "has FULL HP" is forgotten — a holder with a damage counter on it survives too',
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (pokemon.damage !== 0) return null;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-lethality-strict",
+    decision: "D208",
+    what: "the lethality test goes STRICT (`>` for `>=`) — an EXACTLY lethal hit stops being survived, which is the common case and the whole point of the card",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (pokemon.damage + dealt < hp) return null;",
+    replace: "  if (pokemon.damage + dealt <= hp) return null;",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-remaining-hp",
+    decision: "D208",
+    what: '"its remaining HP becomes 10" becomes 20 — the clamped TOTAL, the one number the printed sentence states outright',
+    file: "packages/engine/src/continuous.ts",
+    find: "  return Math.max(0, hp - KO_SURVIVAL_REMAINING_HP);",
+    replace: "  return Math.max(0, hp - 20);",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-printed-hp",
+    decision: "D208",
+    what: "the clamp reads the PRINTED hp instead of `effectiveMaxHp` — a Bravery Charm on the holder raises both the bar and the HP left standing, and this gets both wrong on one board",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const hp = effectiveMaxHp(state, pokemon);",
+    replace: "  const hp = topCardOf(state, pokemon)?.hp ?? null;",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-site-mainhit",
+    decision: "D208",
+    what: "the clamp is dropped at the FIRST of its four DAMAGE_DEALT emitters — attack.ts's main hit",
+    file: "packages/engine/src/attack.ts",
+    find: "    const clamped = koSurvivalClamp(next, defender, dealt);",
+    replace: "    const clamped = null;",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-site-spread",
+    decision: "D208",
+    what: "the clamp is dropped at `spreadDamage` — the site that reaches the BENCH, where these printings actually live",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const clamped = koSurvivalClamp(state, pokemon, dealt);",
+    replace: "    const clamped = null;",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-site-placeSnipe",
+    decision: "D208",
+    what: "the clamp is dropped at `placeSnipe`'s `deals` arm — the arm whose sibling one screen up PLACES COUNTERS and must NOT clamp",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const clamped = koSurvivalClamp(next, pokemon, dealt);",
+    replace: "    const clamped = null;",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-site-snipeActive",
+    decision: "D208",
+    what: "the clamp is dropped at `snipeActive` — the fourth and last emitter",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const clamped = koSurvivalClamp(state, target.active, dealt);",
+    replace: "  const clamped = null;",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+  {
+    id: "D208-survived-flag",
+    decision: "D208",
+    what: "DAMAGE_DEALT stops carrying `survived: true` on the main hit — the one persisted shape change of the slice, and the only way a log reader can tell a clamped row from a strange one",
+    file: "packages/engine/src/attack.ts",
+    find: "      survived: clamped === null ? undefined : true,",
+    replace: "      survived: undefined,",
+    expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
+  },
+
+  // ── D209 · the derived allowlist ⟺ the wire offer ──────────────────────────
+  // D209 asserted the refusal in two links; D210 then flipped the entry to
+  // `supported` and kept both biconditionals "verbatim in form, changed only in
+  // value". This is the flip back, which must now go RED for the other reason.
+  {
+    id: "D209-disposition-flip",
+    decision: "D209 (as flipped by D210)",
+    what: "useStadiumAbility goes back to `withheld` while the wire still carries a `stadiumAbility` key — D209's biconditional, driven from the value D210 left it at",
+    file: "apps/api/src/lobby/match.ts",
+    find: '  useStadiumAbility: "supported",',
+    replace: '  useStadiumAbility: "withheld",',
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
+  },
+
+  // ── D210 · the shared Stadium's activation on the wire ─────────────────────
+  // "Mutants measured, not asserted: drop the actor gate → 5 red; drop
+  //  allowances.stadiumAbilityUsed → 3 red; gate on stadium.owner → 3 red."
+  {
+    id: "D210-actor-gate",
+    decision: "D210",
+    what: "the redaction drops the actor gate — the affordance leaks to the viewer whose turn it is not (D210: 5 red)",
+    file: "packages/engine/src/redact.ts",
+    find: "  if (viewerSeat !== turnSeat) return null;\n  const stadium = state.stadium;",
+    replace: "  const stadium = state.stadium;",
+    expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
+  },
+  {
+    id: "D210-owner-gate",
+    decision: "D210",
+    what: "the discriminant becomes OWNERSHIP instead of the TURN — `stadium.owner`, which is wrong for exactly the board D210's leak test drives (p1's Stadium, p2's turn) (D210: 3 red)",
+    file: "packages/engine/src/redact.ts",
+    find: "  if (viewerSeat !== turnSeat) return null;\n  const stadium = state.stadium;",
+    replace:
+      "  const stadium = state.stadium;\n  if (stadium !== null && viewerSeat !== stadium.owner) return null;",
+    expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
+  },
+  {
+    id: "D210-used-flag",
+    decision: "D210",
+    what: "the per-turn `allowances.stadiumAbilityUsed` flag is dropped from the wire's `disabled` — a second activation is offered (D210: 3 red)",
+    file: "packages/engine/src/redact.ts",
+    find: "    disabled: state.allowances.stadiumAbilityUsed || noTarget,",
+    replace: "    disabled: noTarget,",
+    expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
+  },
+  {
+    id: "D210-programPlayable",
+    decision: "D210",
+    what: "the wire's `!programPlayable` whiff gate is dropped — D210's ONE survivor, PINNED as vacuity rather than shipped as a fifth vacuous guard",
+    file: "packages/engine/src/redact.ts",
+    // ⚠️ ANCHORED PAST `redactedAbilitiesOf`, which spells a BYTE-IDENTICAL
+    // `const noTarget = !programPlayable(state, ability.program, viewerSeat);`
+    // 216 lines up at a deeper indent — D207's exact trap, and the reason this
+    // `find` carries the three lines that follow it.
+    find:
+      "  const noTarget = !programPlayable(state, ability.program, viewerSeat);\n" +
+      "  return {\n    label: ability.label,\n" +
+      "    disabled: state.allowances.stadiumAbilityUsed || noTarget,",
+    replace:
+      "  const noTarget = false;\n" +
+      "  return {\n    label: ability.label,\n" +
+      "    disabled: state.allowances.stadiumAbilityUsed || noTarget,",
+    expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        '⚠️ THIS ROW IS THE PIN, AND DECLARING IT IS THE POINT. Every implemented Stadium ability searches a deck or retrieves from a discard, and `programPlayable` gates neither — so no printed Stadium ability whiff-gates and `"No legal target"` is unreachable from any authored card. D210 kept the term anyway because the engine gate has it. THE DAY A WHIFF-GATED STADIUM PROGRAM LANDS, this row reports STALE-SURVIVOR and someone re-reads the pin. Omitting it would silently lose that.',
+    },
+  },
+
+  // ── D212 · the lint-coverage guard ─────────────────────────────────────────
+  // "Mutation-tested three ways (drop scripts/** → RED on 7 files, drop
+  //  vite.config.ts → RED on 1, drop src/** → RED on 98)." ⚠️ The killer is a
+  // SCRIPT, not a suite — see `killedByCommand`. Mutating `biome.json` is also
+  // the corpus's first mutant outside a TypeScript source file.
+  {
+    id: "D212-drop-scripts",
+    decision: "D212",
+    what: "`scripts/**` falls back out of Biome's include set — the exact hole D212 found, where `biome lint scripts` exits 0 on zero files processed",
+    file: "biome.json",
+    find: '    "include": ["src/**", "apps/**", "packages/**", "scripts/**", "vite.config.ts"],',
+    replace: '    "include": ["src/**", "apps/**", "packages/**", "vite.config.ts"],',
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/lint-coverage.ts"],
+  },
+  {
+    id: "D212-drop-vite-config",
+    decision: "D212",
+    what: "the repo-root `vite.config.ts` falls back out — the one-file version of the same hole, which is what makes the guard's arithmetic and not just its existence load-bearing",
+    file: "biome.json",
+    find: '    "include": ["src/**", "apps/**", "packages/**", "scripts/**", "vite.config.ts"],',
+    replace: '    "include": ["src/**", "apps/**", "packages/**", "scripts/**"],',
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/lint-coverage.ts"],
+  },
+
+  // ── D213 · the same activation on the LOCAL hot-seat HUD ───────────────────
+  // "7 of 8 mutants die; `!programPlayable` SURVIVES and is PINNED AS VACUITY."
+  // ⚠️ Both rows live under `src/**`, which at D215's commit is a live agent's
+  // working tree — so they are expected to report SKIPPED-DIRTY until it lands.
+  // That is the harness working: a skip is a stated non-answer, not a pass.
+  {
+    id: "D213-used-flag",
+    decision: "D213",
+    what: "the local HUD's Stadium row drops the per-turn used flag — `disabled={false}` on a second activation, D210's mutant at the other surface",
+    file: "src/features/game/GameHud.tsx",
+    find: "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
+    replace: "    disabled: noTarget,",
+    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
+  },
+  {
+    id: "D213-programPlayable",
+    decision: "D213",
+    what: "the local fold's `!programPlayable` whiff gate is dropped — D213's ONE survivor, pinned as vacuity on D210's precedent",
+    file: "src/features/game/GameHud.tsx",
+    // ⚠️ Anchored past `usableAbilities`, which spells the same line at a deeper
+    // indent 90 lines up — the same trap as D210-programPlayable, one file over.
+    find:
+      "  const noTarget = !programPlayable(game, ability.program, seat);\n" +
+      "  return {\n    label: ability.label,\n" +
+      "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
+    replace:
+      "  const noTarget = false;\n" +
+      "  return {\n    label: ability.label,\n" +
+      "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
+    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        '⚠️ THE SECOND PIN, and the same fact as D210-programPlayable one surface over: no printed Stadium ability whiff-gates, so "No legal target" is unreachable from any authored card and D213 asserted all seven printings playable under the most adverse board, beside a `gust` control that IS false there. Kept because the engine gate has it. If this is ever KILLED, a whiff-gated Stadium program has landed and BOTH pins need re-reading.',
     },
   },
 ];

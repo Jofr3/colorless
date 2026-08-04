@@ -61,7 +61,8 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   expiry date: *a line number rots silently, a unique string rots loudly.*
 - `bun run mutants` applies each one to the real file, runs only
   `expectKilledBy` (≈2 s, versus ≈70 s for the full suite), and restores. Whole
-  seeded set: **≈50 s**. `--only` / `--decision` / `--full` / `--list`.
+  corpus at D215: **42 mutants / 138 s**. `--only` / `--decision` / `--full` /
+  `--list` / `--allow-dirty`.
 - **A green baseline is a precondition.** If the target suites are already red,
   the harness reports ERROR rather than a verdict — because "the suite went red"
   would otherwise mean nothing. This fires for real when a sibling agent is
@@ -81,6 +82,29 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   `tmp/mutation-journal.json` written *before* the file changes — the only net
   that survives `kill -9`, and the next invocation restores from it and refuses
   to run.
+- 🛑 **THE HARNESS WILL NOT WRITE TO A DIRTY FILE (D215).** *A tool that can eat
+  a colleague's uncommitted work is worse than no tool*, and this checkout runs
+  two or three agents at once. So immediately before each write — and again after
+  the baseline run, because that takes a minute and a sibling can start inside it
+  — `git status --porcelain <file>` must be **empty**. Otherwise the row reports
+  **`SKIPPED-DIRTY`** and is never mutated. ⚠️ The gate is **per file, not
+  per tree**: a whole-tree refusal would make the tool unusable in the only repo
+  it exists for, and would be a *weaker* guarantee anyway (clean at startup says
+  nothing about minute four). A failed `git status` counts as dirty — the gate's
+  failure mode is refusal.
+- 🛑 **A mid-window write is a `CLOBBER` verdict, not a warning.** If the bytes on
+  disk after the run are not the ones the harness wrote, the interloping version
+  is preserved beside the journal **and the mutant's verdict becomes `CLOBBER`**,
+  because its answer is untrustworthy and somebody has to go look. D211 only
+  printed to stderr, so a run that overwrote a save still ended *"0 gaps"* and
+  exited 0.
+- **Skips and clobbers count against the exit code.** A mutant the harness
+  declined to check is not a mutant that passed, and the exit code is the only
+  part of the output a CI step reads. `--allow-dirty` overrides the refusal, for
+  the one honest case: an author iterating on their **own** uncommitted change.
+- **`killedByCommand`** names a non-vitest killer as an argv array (no shell) for
+  guards that are scripts rather than suites — D212's lint-coverage guard, whose
+  mutants are on `biome.json`. `--full` is ignored for such a row.
 
 ⚠️ **WHAT THE HARNESS DOES NOT PROVE.** It is not coverage, and a green table is
 not *"the suite is good"*: it says these specific defects on these specific lines
@@ -90,8 +114,10 @@ made, never find the defect nobody thought of. A KILLED verdict reads the **exit
 code**, not the failure message, so it proves the suite goes red and not that it
 goes red for the right reason. `expectKilledBy` is an author's judgement, and
 narrowing it wrongly makes a mutant "survive" a suite that never loaded the line
-(`--full` answers that when it matters). And it says nothing about the ~25
-decision rows whose tallies are still only prose.
+(`--full` answers that when it matters). It says nothing about the ~18 decision
+rows whose tallies are still only prose (D211 seeded 6 decisions, D215 added 7).
+And ⚠️ **it says nothing at all about a row reported `SKIPPED-DIRTY`** — a run in
+a busy checkout answers for a *subset* of the corpus, and names which.
 
 ### Where dev scripts sit
 `scripts/**`, `apps/api/scripts/ingest.ts` and `packages/schema/scripts/
