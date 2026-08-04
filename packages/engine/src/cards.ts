@@ -182,6 +182,26 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `evolveFromOf` returns null for non-Pokémon and for a Basic, so a
       // non-null result is the exact complement of `basicPokemon`.
       return evolveFromOf(card) !== null;
+    case "ownerPokemon":
+      // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call").
+      // THREE conjuncts, and each one is load-bearing:
+      //   • `category === "Pokemon"` — `Team Rocket's Energy` (sv10-182) carries
+      //     the prefix and is not one, and the sentence that names the subgroup is
+      //     printed on that very card;
+      //   • the NAME PREFIX with its trailing space, matched exact-case (the
+      //     `hasRuleBox` "Radiant " read, one field over);
+      //   • the printed stage word when there is one — re-read here rather than
+      //     delegated to the `basicPokemon` / `evolutionPokemon` members, which
+      //     answer a different question about a different noun phrase.
+      // `evolveFromOf(card) !== null` is `evolutionPokemon`'s own discriminant,
+      // so "Evolution X's Pokémon" and "an Evolution Pokémon" agree by
+      // construction on every card in the catalog.
+      return (
+        card.category === "Pokemon" &&
+        card.name.startsWith(`${filter.owner}'s `) &&
+        (filter.stage === undefined ||
+          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null))
+      );
     case "toolCard":
       // A Pokémon Tool card (Town Store) — the attachTool discriminant.
       return card.category === "Trainer" && card.trainerType === "Tool";

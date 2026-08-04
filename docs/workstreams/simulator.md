@@ -19307,3 +19307,154 @@ derivable census cannot change. Checked, not assumed.
 
 Suite: **+34 tests in 3 new files**. Repo: **225 files / 4204 tests** at `e34c254` →
 **228 files / 4238 tests** green, `bun run check` clean.
+
+---
+
+## D200 — the OWNER-PREFIX SUBGROUP FILTER (`CardFilter.ownerPokemon`): the dimension two censuses called the largest gap in the project, and the measured finding that it is **SIX printings wide from this side** (engine 0.127.0 → **0.128.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+`apps/api` untouched, `src/**` untouched. Files touched:
+`packages/engine/src/{effects,cards,interpreter,registry,index}.ts`,
+`packages/engine/package.json`, plus one new test file (`ownerPrefix.test.ts`).
+
+### The census, re-derived — and the prior one was wrong three ways
+
+Swept over **all three text columns** (`effect`, `attacks_json`, `abilities_json` via
+`json_each` + `json_extract(value,'$.effect')`) of the remote D1 `luminous`
+(3,786 rows / 20 sets, 2,021 Standard-legal) on 2026-08-04.
+
+| Owner | effect | attack | ability | legal total | | Owner | effect | attack | ability | legal total |
+|---|--:|--:|--:|--:|---|---|--:|--:|--:|--:|
+| `Team Rocket's` | 12 | 9 | 10 | **31** | | `Misty's` | 0 | 4 | 0 | **4** |
+| `Ethan's` | 3 | 3 | 5 | **11** | | `Arven's` | 1 | 0 | 2 | **3** |
+| `Iono's` | 0 | 1 | 5 | **6** | | `Steven's` | 1 | 1 | 1 | **3** |
+| `N's` | 2 | 4 | 0 | **6** | | `Lillie's` | 1 | 1 | 0 | **2** |
+| `Cynthia's` | 1 | 1 | 3 | **5** | | `Marnie's` | 1 | 0 | 1 | **2** |
+| `Hop's` | 3 | 0 | 2 | **5** | | `Janine's` | 0 | 0 | 1 | **1** |
+| | | | | | | `Xerosic's` | 0 | 1 | 0 | **1** |
+
+**80 legal text units, 13 owners, 46 distinct sentences.** (`Erika's` 2 and `Giovanni's` 2
+exist in the catalog at zero legal printings and are excluded.)
+
+1. ⚠️ **SQLite's `LIKE` is ASCII case-insensitive**, so `'%N''s %'` matches "Pokémon's"
+   and reports `N's` at **95** text units where `GLOB` with a non-letter guard reports
+   **6**. Every prior count on a short owner name is suspect for this reason alone.
+2. ⚠️ **D187's "67 legal ATTACK text units" was never an attack-only count** — its own
+   table totals all three columns (`Team Rocket's` is 9 attack + 10 ability + 12 effect).
+   Legal ATTACK units across every owner come to **25**.
+3. ⚠️ **The prefix list was short by five owners and thirteen units**: `Hop's`, `Arven's`,
+   `Marnie's`, `Janine's`, `Xerosic's`. The legal total is **80, not 67**.
+
+The sweep's own negative results: **no printing names a subgroup without the possessive**
+(the non-possessive family is the different, already-known *"has \"Team Rocket\" in its
+name"* substring predicate, 2 legal), and the catalog holds **zero U+2019** in any text
+column — so no apostrophe fold is owed, and `clauseApostrophe.test.ts` **does not move:
+78 → 78** (it enumerates `FIXTURE_POOL` attacks a *deriver* resolves; this slice adds no
+deriver arm and no fixture).
+
+### What the predicate reads, and the one card that breaks the rule
+
+**The card NAME**, because the catalog carries nothing else — the ingested row has
+`name`, `category`, `stage`, `evolveFrom`, `trainerType`, `energyType` and no owner,
+subgroup or family column. Read exactly as `hasRuleBox` reads `"Radiant "` and
+`pokemonSuffixOf` reads `" ex"` off the same field.
+
+⚠️ **`Team Rocket's Energy` (sv10-182)** breaks a name-only rule: a Special Energy
+carrying the prefix, and the card that prints *"This card can only be attached to a Team
+Rocket's Pokémon."* — so a name-only predicate makes it a legal target for itself.
+`category === "Pokemon"` is a **conjunct**, not a tidy-up: 32 of the 214 prefixed
+printings across the eleven owners with Pokémon are a Trainer or that Energy. The only
+two apostrophe-bearing non-possessive names in the catalog are `Farfetch'd` and
+`Billy & O'Nare`; neither can collide with a `'s ` prefix.
+
+### One member, two riders — the standing rule DECIDED it rather than being waived
+
+`{ kind: "ownerPokemon"; owner: string; stage?: "basic" | "evolution" }`.
+
+* **`owner` is a parameter, not a member per owner** — the set is open (zero owners
+  through `sv08`, eleven with Pokémon by `sv10`, one more most sets) and every read site's
+  code is byte-identical across them. A bare `string` is safe here where
+  `basicEnergy.energyType`'s is a hole: no misspelling can match a Pokémon it does not
+  name, so a typo whiffs loudly instead of taking a wrong print.
+* **`stage` is a rider, not three members** — and the precondition of *"when they cost the
+  read site the same, the members win"* **fails**. Both read sites branch on `owner`
+  regardless, and `retrieveNoun` owes ONE noun phrase, *"a Basic Hop's Pokémon"*, which is
+  not the concatenation of *"a Basic Pokémon"* and *"a Hop's Pokémon"*. Three members cost
+  two exhaustive switches six arms with the owner logic copied three times; the rider
+  costs two.
+* **Composition IS needed** (four of the six landed printings print a second axis) and the
+  vocabulary has **no conjunction** to compose with — no `allOf`; `pokemonOrBasicEnergy` is
+  a bespoke disjunction and `basicPokemon.noRuleBox` a bespoke rider. So the filter carries
+  the second axis itself, which is the house pattern.
+
+### Which read sites learned it — and the one that could not
+
+**Two**, both forced by an exhaustive switch: `matchesFilter` (cards.ts — the
+deck/hand/discard scanner behind `searchDeck`, `lookAtTopN`, `discardPileRetrieval`, and
+via `matchesAttached` the in-play Energy scanner) and `retrieveNoun` (interpreter.ts — the
+prompt captions).
+
+⚠️ **The in-play TARGET paths did not, and could not.** `CardFilter` is the CARD
+vocabulary; a Pokémon target is picked by op-specific `targetType` (an energy-type
+string), `basicOnly` and `zone`, and **no op takes a `CardFilter` for a target**. So
+*"1 of your Benched Iono's Pokémon"* is out of this member's reach by construction. That
+is the whole reason the yield is 6: **the sentences that SEARCH A DECK are finished; the
+sentences that POINT AT THE BOARD are not.**
+
+### What landed — 5 programs / 6 Standard-legal printings
+
+| Program | ids | legal | ops |
+|---|---|--:|---|
+| Champion's Call (Cynthia's Gabite) | `sv10-103` | 1 | `searchDeck{ownerPokemon Cynthia, hand, 1}` + `shuffleDeck` |
+| Swim Together (Misty's Lapras) | `sv10-050`, `sv10-194` | 2 | the same two ops at max 3, on the ATTACK path |
+| Hop's Bag | `sv09-147` | 1 | `searchDeck{+ stage basic, bench, 2}` — the first writer of `stage` |
+| Summoning Sign (Steven's Baltoy) | `sv10-083` | 1 | Hop's Bag's program one owner over, a **separate const** |
+| Inviting Flowers (Lillie's Comfey) | `sv09-068` | 1 | the printed *"any number"* at `BENCH_MAX` |
+
+*"Any number"* is **exact, not an approximation**: a bench-bound search is clamped to
+`benchSpace` in two places, so `BENCH_MAX` is the largest value the sentence can ever mean
+and every smaller board clamps below it. And the printed *"You may search"* needs no
+`optional` wrapper — D186's own census puts this sentence in the 34 it calls **already
+free**, because `searchDeck` parks with `min: 0`.
+
+### What was flagged, with the exact missing piece (10 sentences / 23 legal printings)
+
+Every id asserted **unbuilt** in `ownerPrefix.test.ts`.
+
+| Sentence | legal | needs |
+|---|--:|---|
+| Iono's / Ethan's *"attach … to 1 of your \[Benched\] X's Pokémon"* | 5 + 4 | **an in-play TARGET filter** on `attachEnergyFrom`. D199 called this the highest-value item in its census; **this member does not deliver it.** One field on one op finishes both rows. |
+| *"Switch your Active Team Rocket's Pokémon with 1 of your Benched Team Rocket's Pokémon…"* | 3 | target filter on **both ends** of `switchActive` (which takes no parameters at all) + an "If you do" seam |
+| *"Discard a Team Rocket's Energy … discard your opponent's Active Pokémon and all attached cards."* | 3 | an owner-prefixed **ENERGY** predicate, **plus** an effect that removes a body from the board outside the §8.1 KO sweep |
+| *"…30 damage for each of your Team Rocket's Pokémon in play."* | 2 | a `DamageCountSource` counting **filtered** own bodies (D193 measured a new source at 4–7 edits) |
+| Team Rocket's Proton (the search half is now expressible) | 2 | ⚠️ the **first-turn-Supporter exemption flag** — D199's Carmine finding arriving a second time |
+| Team Rocket's Great Ball | 1 | `coinFlipGate`'s missing **`otherwise`** branch (D142's Squawkabilly refusal, verbatim) |
+| *"N's Pokémon in play (both yours and your opponent's) have no Retreat Cost."* | 1 | a **subgroup scope** on `noRetreatCostAura`; same shape as the Steven's / Hop's Stadiums |
+| Arven's Pokéblock | 1 | a `BoardCondition` on card **identity** + a replacement ("instead") heal |
+| **Spikemuth Gym `sv10-169`** | 1 | ⚠️ **NOTHING NEW** — Champion's Call verbatim on `StadiumAbility.program`. Held back for scope only. **Take it first.** |
+
+### Verification
+
+Eleven mutants, **all killed first round**, each copied from a neighbouring arm's real
+code: the name-only predicate (`category` conjunct dropped), the prefix without its
+trailing space, the stage arms swapped, a case-insensitive "robustness" compare,
+`retrieveNoun` copying the `anyPokemon` arm, `retrieveNoun` dropping the stage word, Hop's
+Bag written as Nest Ball's line, *"any number"* read as 1, Summoning Sign merged onto
+Hop's Bag's object, Swim Together searching to the Bench, and Champion's Call taking Swim
+Together's max.
+
+`FIXTURE_POOL` was swept as its own population **before** anything was written: it holds
+**no owner-prefixed name at all**, so nothing there could be reused, nothing there changes
+behaviour under the new member, and no negative fixture was retired. The demonstrator
+bodies are synthetic `fix-*` cards declared inside the suite against
+`createGame({cardPool})` (D190/D199's idiom) — the catalog manifest cannot be regenerated
+here, so no real-card fixture was added.
+
+`MATCH_RECORD_VERSION` **stays 12**, and the park question was asked rather than assumed:
+all five programs park, and a parked program IS persisted (`EffectContinuation` carries
+the ops themselves), so an `ownerPokemon` filter does reach storage. It still does not
+bump, for D186's own stated reason — `kind` is a persisted literal, so **renaming** one
+would owe a bump where **adding an inhabitant** does not, and no record written before
+this deploy can contain a filter this deploy invented.
+
+Suite: **+24 tests in 1 new file**. Repo: **229 files / 4253 tests** at `7c9cc33` →
+**230 files / 4277 tests** green, `bun run check` clean.

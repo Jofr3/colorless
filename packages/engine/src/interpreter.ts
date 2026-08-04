@@ -5229,6 +5229,19 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
         : { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
     case "evolutionPokemon":
       return { singular: "an Evolution Pokémon", plural: "Evolution Pokémon" };
+    case "ownerPokemon": {
+      // The printed noun phrase, whole: "a Cynthia's Pokémon", "up to 2 Basic
+      // Hop's Pokémon", "an Evolution Team Rocket's Pokémon". The stage word sits
+      // INSIDE the phrase, before the owner, which is the concrete reason the
+      // stage rides on this filter instead of composing with `basicPokemon`:
+      // there is no way to build this string out of two independent nouns.
+      const noun = `${filter.stage === undefined ? "" : filter.stage === "basic" ? "Basic " : "Evolution "}${filter.owner}'s Pokémon`;
+      // "an Ethan's Pokémon" / "an Evolution …" — the printed article (Arven's
+      // Pokéblock prints "is an Arven's Pokémon"). With a stage word the article
+      // is decided by THAT word, not by the owner: "a Basic Ethan's Pokémon".
+      const article = /^[AEIOU]/.test(noun) ? "an" : "a";
+      return { singular: `${article} ${noun}`, plural: noun };
+    }
     case "toolCard":
       return { singular: "a Pokémon Tool card", plural: "Pokémon Tool cards" };
     case "basicEnergy": {

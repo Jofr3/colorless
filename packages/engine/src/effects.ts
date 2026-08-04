@@ -33,6 +33,71 @@ export type CardFilter =
       for non-Pokémon, so this is the exact complement of `basicPokemon` inside
       `anyPokemon`. */
   | { kind: "evolutionPokemon" }
+  /** A Pokémon in a printed OWNER-PREFIXED SUBGROUP — the SV-era mechanic whose
+      whole vocabulary is a name prefix: *"a Cynthia's Pokémon"*, *"up to 2 Basic
+      Hop's Pokémon"*, *"an Evolution Team Rocket's Pokémon"*. `sv01`–`sv08` print
+      none of it; `sv09`/`sv10` print it across abilities, attacks, Items,
+      Supporters, Tools, Stadiums and one Special Energy.
+
+      **THE PREDICATE READS THE CARD NAME, AND THERE IS NO OTHER FIELD TO READ.**
+      The catalog carries no owner/subgroup column — the ingested row has `name`,
+      `category`, `stage`, `evolveFrom` and nothing else that could mark
+      membership — so the datum is the printed prefix, exactly as `hasRuleBox`
+      reads `"Radiant "` and `pokemonSuffixOf` reads `" ex"` off the same field.
+      Measured against the live D1 (3,786 rows / 20 sets, 2026-08-04): every
+      Pokémon named in one of these sentences has a name beginning `<owner>'s `,
+      the match is EXACT-CASE and the trailing space is load-bearing, and the only
+      two apostrophe-bearing names in the whole catalog that are NOT a possessive
+      prefix — `Farfetch'd` and `Billy & O'Nare` — carry `'d` / `'N`, so neither
+      can collide with any `'s ` prefix.
+
+      **`category` IS PART OF THE PREDICATE, NOT A REDUNDANT GUARD, AND ONE REAL
+      CARD PROVES IT.** `Team Rocket's Energy` (sv10-182) is a Special Energy
+      whose name begins `Team Rocket's `, and the sentence printed ON IT is *"This
+      card can only be attached to a Team Rocket's Pokémon."* — so a name-only
+      predicate would make that Energy a legal target for itself. The prefix names
+      a FAMILY; the class word after it ("Pokémon") is the other half of the noun
+      phrase, and every one of the 46 distinct legal sentences spells one. Across
+      the eleven owners that have Pokémon at all, 32 of the 214 prefixed printings
+      are a Trainer or that Energy, so this is a wide near-miss, not a corner.
+
+      **`stage` IS THE SECOND PRINTED AXIS AND IT RIDES HERE RATHER THAN
+      COMPOSING**, because there is no conjunction in this union to compose with:
+      `pokemonOrBasicEnergy` is a bespoke DISJUNCTION member, `basicPokemon`'s
+      `noRuleBox` and `basicEnergy`'s `energyType` are bespoke RIDERS, and nothing
+      is an `allOf`. Absent = the unmarked printing, "a Cynthia's Pokémon", any
+      stage. `"basic"` is the printed word (Hop's Bag "up to 2 Basic Hop's
+      Pokémon"), `"evolution"` its complement (Team Rocket's Great Ball "an
+      Evolution Team Rocket's Pokémon") — the same two predicates the sibling
+      members `basicPokemon` / `evolutionPokemon` carry, deliberately re-read here
+      rather than referenced, because THE READ SITES WOULD NOT SHARE ANYTHING IF
+      THEY WERE SPLIT. Both of them (`matchesFilter` and interpreter.ts
+      `retrieveNoun`) must branch on `owner` regardless, and `retrieveNoun` owes
+      ONE noun phrase — "a Basic Hop's Pokémon" — which is not the concatenation
+      of "a Basic Pokémon" and "a Hop's Pokémon". Three members would cost those
+      two switches six arms with the owner logic copied three times, where the
+      rider costs two; the standing "when they cost the read site the same, the
+      members win" test is therefore NOT met, and the rider wins on its own terms.
+
+      **`owner` IS A PARAMETER AND NOT A MEMBER PER OWNER** for the mirror reason:
+      the owner set is OPEN (0 owners through `sv08`, 11 with Pokémon by `sv10`,
+      one more every set) and every read site's code is byte-identical across
+      them, so members would be N copies of one line that grows with the catalog.
+      It is a bare `string` — and unlike `basicEnergy.energyType`'s bare string
+      (which `providesEnergy` above calls a hole) that is SAFE here rather than
+      merely untidy: a misspelled owner matches the empty set, which is a loud
+      no-op (`searchDeck` whiffs and shuffles), never a wrong card. No string can
+      match a Pokémon it does not name.
+
+      **IT IS A CARD PREDICATE, SO IT REACHES ZONES AND NOT THE BOARD.** Every
+      consumer of `CardFilter` scans a deck / hand / discard pile, or an Energy
+      attached to a named host (`matchesAttached`). The IN-PLAY target sentences —
+      "1 of your Benched Iono's Pokémon" (5 printings), "1 of your Benched N's
+      Pokémon", "your Active Team Rocket's Pokémon" — are selected by the
+      op-specific `targetType` / `benchOnly` / `zone` riders, which take a type
+      name and a boolean and no filter at all. This member cannot reach them, and
+      widening those ops is a separate piece (D199 flagged it first). */
+  | { kind: "ownerPokemon"; owner: string; stage?: "basic" | "evolution" }
   /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
       catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
   | { kind: "toolCard" }

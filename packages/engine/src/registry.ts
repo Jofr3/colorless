@@ -3,6 +3,7 @@ import { ANY_ENERGY } from "./cards";
 import type { PokemonSuffix } from "./cards";
 import type { BoardCondition, EffectOp, PokemonType } from "./effects";
 import type { StatusName } from "./events";
+import { BENCH_MAX } from "./types";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
 // It sits ABOVE the text deriver: attacks resolve `programFor(id)?.attack ??
@@ -3643,6 +3644,148 @@ const SPIKY_ENERGY: CardProgram = {
   energy: { provides: ["Colorless"], passive: { damageAttacker: { amount: 20 } } },
 };
 
+// ── D200 — THE OWNER-PREFIX SUBGROUP FILTER's own rows. Five programs / SIX
+//    Standard-legal printings, every one a `searchDeck` whose only new datum is
+//    the `ownerPokemon` filter. Counts measured against the remote D1 `luminous`
+//    (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021 of them
+//    `legal_standard = 1`) on 2026-08-04; each row's `ids` is the COMPLETE set of
+//    catalog printings carrying that exact sentence, legal or not.
+//
+//    ⚠️ AND SIX IS THE FINDING. The censuses that named this filter the largest
+//    gap in the project counted 80 legal TEXT UNITS across the three columns —
+//    and the filter alone finishes six printings, because almost every other
+//    sentence needs a SECOND piece that does not exist: an in-play TARGET filter
+//    on `attachEnergyFrom` / `switchActive` / `counterMove` (no op takes one), a
+//    `coinFlipGate` `otherwise` branch, the first-turn-Supporter exemption flag
+//    D199 flagged for Carmine, a passive scoped to a subgroup, or an owner-prefix
+//    ENERGY predicate. `ownerPrefix.test.ts` names each with its missing piece
+//    and asserts the id still unbuilt. This is D186's shape repeating: a gate
+//    priced at 78 whose true yield was 12.
+
+/** Cynthia's Gabite sv10-103 — "Champion's Call": "Once during your turn, you
+    may search your deck for a Cynthia's Pokémon, reveal it, and put it into your
+    hand. Then, shuffle your deck." (Ability)
+
+    THE MINIMAL ROW OF THIS SLICE, and the one that shows the filter is the whole
+    difference: strip the owner off the noun and this is Mesagoza's line. `max: 1`
+    is the printed singular; `dest: "hand"` the printed destination; the trailing
+    `shuffleDeck` the Nest Ball pattern, which runs on the whiff and on the
+    decline exactly as every search in this vocabulary does. "Reveal it" needs no
+    op — a search that ends in the hand is public by construction here (D42).
+    No `activeOnly`: the printed sentence carries no Active clause, and Gabite is
+    a Stage 1 that plays from the Bench. 1 legal printing of 1. */
+const CHAMPIONS_CALL: CardProgram = {
+  abilities: [
+    {
+      name: "Champion's Call",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "searchDeck", filter: { kind: "ownerPokemon", owner: "Cynthia" }, dest: "hand", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Misty's Lapras sv10-050 / sv10-194 — "Swim Together" (attack index 0):
+    "Search your deck for up to 3 Misty's Pokémon, reveal them, and put them into
+    your hand. Then, shuffle your deck."
+
+    The same two ops at the printed `max: 3`, on the ATTACK path rather than the
+    Ability one — which is what makes this row worth having beside Gabite's: the
+    deriver has no "Search your deck …" anchor at all (every deck search in the
+    engine is registry-authored), so an attack carrying this sentence is
+    unsimulated until a row names it. INDEX-KEYED, so index 1 "Surf" (60, no
+    effect text) still falls through to the plain damage path — authoring `{0:…}`
+    must not adopt it. 2 legal printings of 2. */
+const SWIM_TOGETHER: CardProgram = {
+  attack: {
+    0: [
+      { op: "searchDeck", filter: { kind: "ownerPokemon", owner: "Misty" }, dest: "hand", max: 3 },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
+/** Hop's Bag sv09-147 — "Search your deck for up to 2 Basic Hop's Pokémon and
+    put them onto your Bench. Then, shuffle your deck." (Item)
+
+    THE FIRST WRITER OF `stage: "basic"`, and Nest Ball's own program with the
+    noun narrowed twice. `dest: "bench"` is the printed destination, and the
+    interpreter already clamps a bench-bound search to `benchSpace` before
+    anything leaves the deck, so a full Bench makes this a no-op that still
+    shuffles rather than a card-destroying overflow. 1 legal printing of 1. */
+const HOPS_BAG: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },
+      dest: "bench",
+      max: 2,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Steven's Baltoy sv10-083 — "Summoning Sign" (attack index 0): "Search your
+    deck for up to 2 Basic Steven's Pokémon and put them onto your Bench. Then,
+    shuffle your deck."
+
+    Hop's Bag's program on an attack — the two are byte-identical apart from the
+    owner, and are DELIBERATELY separate consts rather than one shared object:
+    they are near-twins printed on different cards, and sharing would let a later
+    edit to one silently move the other (D199's rule for its own near-twins).
+    Index 1 "Psychic Sphere" (20) stays on the plain damage path. 1 legal
+    printing of 1. */
+const SUMMONING_SIGN: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "searchDeck",
+        filter: { kind: "ownerPokemon", owner: "Steven", stage: "basic" },
+        dest: "bench",
+        max: 2,
+      },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
+/** Lillie's Comfey sv09-068 — "Inviting Flowers" (attack index 0): "You may
+    search your deck for any number of Basic Lillie's Pokémon and put them onto
+    your Bench. Then, shuffle your deck."
+
+    ⚠️ TWO PRINTED WORDINGS THAT LOOK LIKE MISSING MECHANISMS AND ARE NOT.
+
+    "**You may** search" is D186's fourth gate — and D186's own census puts this
+    sentence in the 34 printings it calls ALREADY FREE: `searchDeck` parks with
+    `min: 0`, so the decline the wrapper grants is one the op's own prompt already
+    offers, and wrapping it in an `optional` would ask the same question twice.
+
+    "**Any number**" has no cap of its own, and `searchDeck.max` is a number — but
+    the destination supplies the only cap that exists. A bench-bound search is
+    clamped to `benchSpace` in TWO places (the park's `max` and `searchMove`'s
+    slice), so `BENCH_MAX` is not an approximation of "any number": it is the
+    largest value the printed sentence can ever mean, and every smaller board
+    clamps below it anyway. (effects.ts's `attachFromDeck` note says "no printed
+    search says 'any number'" — true of ENERGY searches, which is the population
+    it was written about; this is the Pokémon one, and it does.) Index 1 "Fade
+    Out" is left unauthored. 1 legal printing of 1. */
+const INVITING_FLOWERS: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "searchDeck",
+        filter: { kind: "ownerPokemon", owner: "Lillie", stage: "basic" },
+        dest: "bench",
+        max: BENCH_MAX,
+      },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -4168,6 +4311,19 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-bindingmochi": BINDING_MOCHI,
   "fix-levincia": LEVINCIA,
   "fix-spikyenergy": SPIKY_ENERGY,
+  // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
+  // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
+  "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)
+  "sv10-050": SWIM_TOGETHER, // Misty's Lapras — "Swim Together" (attack 0, mark I)
+  "sv10-194": SWIM_TOGETHER, // Misty's Lapras (illustration rare) — same sentence
+  "sv09-147": HOPS_BAG, // Hop's Bag (Item, mark I)
+  "sv10-083": SUMMONING_SIGN, // Steven's Baltoy — "Summoning Sign" (attack 0, mark I)
+  "sv09-068": INVITING_FLOWERS, // Lillie's Comfey — "Inviting Flowers" (attack 0, mark I)
+  "fix-championscall": CHAMPIONS_CALL,
+  "fix-swimtogether": SWIM_TOGETHER,
+  "fix-hopsbag": HOPS_BAG,
+  "fix-summoningsign": SUMMONING_SIGN,
+  "fix-invitingflowers": INVITING_FLOWERS,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

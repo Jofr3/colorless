@@ -5412,7 +5412,94 @@ import type { GameState, Seat } from "./types";
     conditions, state fields or `apps/api` diff. Repo: **225 files / 4204 tests**
     at `e34c254` (D199's landing) → **228 files / 4238 tests** green. */
 
-export const engineVersion = "0.127.0";
+/** 0.128.0 — **D200, THE OWNER-PREFIX SUBGROUP FILTER — `CardFilter.ownerPokemon`,
+    AND THE MEASURED FINDING THAT THE PROJECT'S "LARGEST NAMED GAP" IS SIX
+    PRINTINGS WIDE FROM THIS SIDE.**
+
+    One `CardFilter` member — `{ kind: "ownerPokemon"; owner: string; stage?:
+    "basic" | "evolution" }` — two read-site arms, five registry programs and six
+    Standard-legal printings. `ownerPrefix.test.ts` (24 tests) drives every one
+    through the real engine on synthetic `fix-*` bodies declared inside the suite
+    against `createGame({cardPool})`, D190/D199's idiom.
+
+    **THE CENSUS WAS RE-DERIVED AND THE PRIOR ONE WAS WRONG THREE WAYS.** Swept
+    over all three text columns of the remote D1 (3,786 rows / 20 sets, 2,021
+    Standard-legal) on 2026-08-04. (1) SQLite's `LIKE` is ASCII case-insensitive,
+    so `'%N''s %'` matches "Pokémon's" and reports `N's` at 95 text units where
+    `GLOB` reports 6 — every prior count on a short owner name is suspect for this
+    reason alone. (2) D187's "67" was never attack-only: its own table totals all
+    three columns, and legal ATTACK units across every owner come to 25. (3) The
+    prefix list was short by five owners — `Hop's` 5, `Arven's` 3, `Marnie's` 2,
+    `Janine's` 1, `Xerosic's` 1 — so the legal total is **80 text units, not 67**.
+    The sweep also answers its own widest question NEGATIVELY: no printing names a
+    subgroup without the possessive, and the catalog holds ZERO U+2019 in any text
+    column, so no apostrophe fold is owed and `clauseApostrophe.test.ts`'s census
+    does not move (it enumerates `FIXTURE_POOL` attacks a DERIVER resolves; this
+    slice adds no deriver arm and no fixture).
+
+    **THE PREDICATE READS THE CARD NAME, BECAUSE THERE IS NOTHING ELSE TO READ** —
+    the ingested row carries no owner, subgroup or family column, so membership is
+    the printed `<owner>'s ` prefix, exactly as `hasRuleBox` reads "Radiant " and
+    `pokemonSuffixOf` reads " ex" off the same field. ⚠️ AND ONE CARD BREAKS THE
+    NAME-ONLY RULE: **`Team Rocket's Energy` sv10-182**, a Special Energy carrying
+    the prefix — and the card that prints *"This card can only be attached to a
+    Team Rocket's Pokémon."*, so a name-only predicate makes it a legal target for
+    itself. `category === "Pokemon"` is a CONJUNCT, not a tidy-up: 32 of the 214
+    prefixed printings across the eleven owners with Pokémon are a Trainer or that
+    Energy.
+
+    **ONE MEMBER, TWO RIDERS, AND THE STANDING RULE DECIDED IT RATHER THAN BEING
+    WAIVED.** `owner` is a PARAMETER because the set is open (zero owners through
+    `sv08`, eleven by `sv10`) and every read site's code is identical across them.
+    `stage` is a RIDER rather than three members because the rule's PRECONDITION
+    fails: both read sites must branch on `owner` regardless, and `retrieveNoun`
+    owes ONE noun phrase — "a Basic Hop's Pokémon" — that is not the concatenation
+    of "a Basic Pokémon" and "a Hop's Pokémon". Three members would cost two
+    exhaustive switches six arms with the owner logic copied three times; the
+    rider costs two. COMPOSITION IS NEEDED (four of the six printings print a
+    second axis) and the vocabulary has NO conjunction to compose with — no
+    `allOf`; `pokemonOrBasicEnergy` is a bespoke disjunction and
+    `basicPokemon.noRuleBox` a bespoke rider — so the filter carries it.
+
+    ⚠️ **THE YIELD IS 6, AND THAT IS THE PRODUCT.** 80 legal text units name this
+    dimension; the filter finishes six printings — Champion's Call (Cynthia's
+    Gabite sv10-103), Swim Together (Misty's Lapras sv10-050/-194), Hop's Bag
+    sv09-147, Summoning Sign (Steven's Baltoy sv10-083) and Inviting Flowers
+    (Lillie's Comfey sv09-068). The reason is structural rather than incidental:
+    **`CardFilter` is the CARD vocabulary and in-play TARGETS are not chosen with
+    one.** Every consumer scans a deck, hand, discard pile or an Energy on a named
+    host; a Pokémon target is picked by `targetType` (an energy-type string),
+    `basicOnly` and `zone`, and no op takes a filter for it. So the sentences that
+    SEARCH A DECK are finished and the sentences that POINT AT THE BOARD are not —
+    including the five-printing Iono attach that D199 called the single
+    highest-value missing piece in its census, which this member does NOT deliver.
+    Ten more sentences / 23 legal printings are in `DROPPED` with the exact second
+    piece each needs, every id asserted unbuilt: the in-play target filter (9),
+    `switchActive` parameters (3), a filtered body-count `DamageCountSource` (2),
+    D199's first-turn-Supporter exemption flag arriving a second time (2),
+    `coinFlipGate`'s missing `otherwise` (1), a subgroup-scoped aura (1), an
+    owner-prefixed ENERGY predicate (3), a `BoardCondition` on card identity (1).
+    ⚠️ One of the ten needs NOTHING NEW — Spikemuth Gym sv10-169 is Champion's
+    Call verbatim on `StadiumAbility.program` — and is held back for scope only;
+    it is named as free so the next slice takes it first.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 12, AND THE PARK QUESTION WAS ASKED RATHER
+    THAN ASSUMED.** All five programs PARK (`searchDeck` always does), and a
+    parked program is persisted: `EffectContinuation` carries `{pendingOp, rest,
+    ctx, record}` — the OPS themselves — so a `{kind:"ownerPokemon"}` filter does
+    reach storage. It still does not bump, for D186's own stated reason one line
+    over: `kind` is a persisted literal, so RENAMING one would owe a bump where
+    ADDING AN INHABITANT does not. The gate protects old records against a new
+    build, and no record written before this deploy can contain a filter this
+    deploy invented. No `apps/api` diff.
+
+    Cost: 1 union member, 1 `matchesFilter` arm, 1 `retrieveNoun` arm, 5 registry
+    programs, 11 registry keys = **19**, plus 1 test file (24 tests). ZERO new
+    ops, events, error codes, prompts, board conditions, state fields, `src/**`
+    or `apps/**` diff. Repo: **229 files / 4253 tests** at `7c9cc33` →
+    **230 files / 4277 tests** green. */
+
+export const engineVersion = "0.128.0";
 
 export type {
   ApplyResult,
