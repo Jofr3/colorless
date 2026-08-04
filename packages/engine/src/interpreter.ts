@@ -514,6 +514,10 @@ export function runProgram(
       };
     }
     next = stepped.done;
+    // D216 — a synchronous step may schedule more ops (see `stepOp`'s doc). The
+    // same `unshift` the three gates use, so an op the step scheduled can park
+    // like any other, and `rest` on that park is the queue as it stands here.
+    if (stepped.schedule !== undefined) queue.unshift(...stepped.schedule);
   }
   return { kind: "done", state: next };
 }
@@ -727,6 +731,56 @@ function carriedRecord(record: EffectRecord): { record?: EffectRecord } {
   return Object.keys(record).length === 0 ? {} : { record: { ...record } };
 }
 
+/** D216 — the chosen-destination counter move's FIRST answer, carried on the op
+    itself so its SECOND question can be asked. Returns the ops to schedule, which
+    is one rewritten copy of the same op with the source now known.
+
+    ONE helper for both endings of that first question — the forced one (`stepOp`,
+    via its `then`) and the parked one (`resumeProgram`, via the splice below) —
+    because they must produce the identical continuation or a Bench of one and a
+    Bench of two would resolve the same printed sentence differently.
+
+    ⚠️ The `spot` test is the WIRE BELT and not a legality rule, exactly as the
+    identical line in `moveCountersToDefender` has been since D138: the candidate
+    set is the real gate (it holds own-bench refs only, and `validateChoice`
+    matches the answer against the PROMPT), so a non-bench ref cannot arrive from
+    a real match. It degrades to NO continuation — the sentence does nothing —
+    which is the same silent ending an empty Bench already takes. */
+function counterSourceAnswered(
+  op: Extract<EffectOp, { op: "moveCountersChosen" }>,
+  ref: PokemonRef,
+  ctx: EffectContext,
+): EffectOp[] {
+  if (ref.seat !== ctx.seat || ref.spot.spot !== "bench") return [];
+  return [{ ...op, fromBench: ref.spot.index }];
+}
+
+/** What a resolved park schedules AHEAD of the program's remaining ops — the
+    seam D186 opened for `optional` and D216 widened by one member.
+
+    `applyChoice` returns a `GameState` and so cannot reach the work queue;
+    `resumeProgram` is the one place that holds BOTH the applied state and the ops
+    still to run, which is why an answer that buys OPS rather than board changes is
+    spliced here. The two members buy different things and neither is a gate: a
+    `confirm` yes buys the printed "you may" branch, and a counter move's source
+    pick buys the op that asks where the counters go.
+
+    ⚠️ **THIS IS WHY "AN OP THAT HAS PARKED ONCE CANNOT PARK AGAIN" IS THE WRONG
+    STATEMENT OF THE BLOCKER** (D206's phrasing, corrected at D216). A PROGRAM has
+    parked twice since D186 and does so on a shipped card — Koraidon "Dino Cry"
+    attaches across two parks — because `runProgram(rest)` parks again the moment
+    an op in `rest` needs a decision. What is true is narrower and is about ONE
+    op: a single op gets one park, so a two-question sentence needs a SECOND op,
+    and the only thing missing was a channel from the first answer to it. */
+function continuationOps(cont: EffectContinuation, choice: EffectChoice): EffectOp[] {
+  const op = cont.pendingOp;
+  if (op.op === "optional") return choice.kind === "confirm" && choice.yes ? [...op.then] : [];
+  if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
+    return choice.kind === "pokemon" ? counterSourceAnswered(op, choice.ref, cont.ctx) : [];
+  }
+  return [];
+}
+
 /** Resume a parked effect: apply the awaited op with the (already validated)
     choice, then run the rest of the program. */
 export function resumeProgram(
@@ -751,25 +805,38 @@ export function resumeProgram(
   // one place that holds both halves — the applied state AND the ops still to run
   // — so it is the only place the splice can live without widening applyChoice's
   // signature or its return type. A "no" splices nothing, which is the whole of
-  // the decline.
-  const rest =
-    cont.pendingOp.op === "optional" && choice.kind === "confirm" && choice.yes
-      ? [...cont.pendingOp.then, ...cont.rest]
-      : cont.rest;
+  // the decline. D216 gave that reasoning a second member and a name of its own
+  // (`continuationOps`); an answer that buys nothing splices nothing, as before.
+  const rest = [...continuationOps(cont, choice), ...cont.rest];
   return runProgram(applied, rest, cont.ctx, events, record);
 }
 
 /** One synchronous step, or a park request. Parking ops compute their
     candidates: an empty candidate set is a no-op (nothing to choose), a single
     forced candidate auto-resolves (except searchDeck, which is "up to" and
-    always lets the player decline, so it parks whenever ≥1 candidate). */
+    always lets the player decline, so it parks whenever ≥1 candidate).
+
+    ⚠️ **`schedule` — D216'S SEAM, AND IT IS THE FORCED-PATH TWIN OF D186's
+    SPLICE** (named `schedule` rather than `then`, which biome bans on an object
+    literal — a thenable-shaped result returned into an `await` is exactly the
+    confusion the rule exists to stop, and the gates' own `op.then` is a field of
+    a typed union rather than a returned bag).
+    A synchronous step may also schedule further ops, which `runProgram` unshifts
+    onto its queue exactly as the three gates unshift `op.then`. It exists because
+    a two-question printed sentence has TWO endings on its first question — the
+    parked one, where `resumeProgram` can splice (D186's `optional`), and the
+    FORCED one (`parkOrForce` at a single candidate), where nothing could: the
+    auto-resolve path calls a helper returning a bare `GameState`, so an answer it
+    computed had nowhere to go. Both endings now hand the same rewritten op to the
+    same queue, which is what makes the forced and parked resolutions of one
+    sentence provably the same run. */
 function stepOp(
   state: GameState,
   op: EffectOp,
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
-): { done: GameState } | { park: EffectPrompt; decider?: Seat } {
+): { done: GameState; schedule?: EffectOp[] } | { park: EffectPrompt; decider?: Seat } {
   switch (op.op) {
     case "applyStatus":
       return { done: applyStatus(state, op, ctx, events) };
@@ -833,6 +900,61 @@ function stepOp(
         (ref) => moveCountersToDefender(state, ref, ctx, events),
         `Move the damage counters off which of your Benched ${ownerNoun(op.ownerPokemon)}Pokémon?`,
       );
+    case "moveCountersChosen": {
+      // D216 — Cofagrigus "Extended Damagriiigus": D138's move with a CHOSEN
+      // destination. ONE op, TWO questions, one park each, and `fromBench` is
+      // which of the two this step is asking.
+      const chosen = op.fromBench;
+      if (chosen === undefined) {
+        // QUESTION 1 — the SOURCE. `ownBenchRefs` is `moveCountersToDefender`'s
+        // own candidate helper, unchanged, so the two sentences cannot come to
+        // offer different Benches. It is NOT wrapped in `subgroupRefs`: that
+        // narrowing is the one D205's printing bought, and no chosen-destination
+        // printing carries a possessive (the anchor's census).
+        const sources = ownBenchRefs(state, ctx.seat);
+        const forced = sources.length === 1 ? sources[0] : undefined;
+        if (sources.length === 0) return { done: state };
+        // ⚠️ NOT `parkOrForce`, and this is the whole reason `then` exists. Its
+        // forced arm applies a `(ref) => GameState`, which is precisely the shape
+        // that cannot ask a second question; here the single candidate is
+        // ANSWERED rather than applied, and the answer is handed on — through the
+        // SAME helper the parked ending uses, so the two resolutions of this
+        // sentence are one code path with two entrances. The M1 no-choice
+        // doctrine is unchanged: one Benched body prompts for nothing.
+        if (forced !== undefined)
+          return { done: state, schedule: counterSourceAnswered(op, forced, ctx) };
+        return {
+          park: {
+            kind: "choosePokemon",
+            candidates: sources,
+            // THE PROMPT SAYS WHAT THE ANSWER BUYS (the §9.2 note doctrine, owed
+            // here for a reason of this slice's own making): the answer buys a
+            // SECOND prompt, and a player told only "which Bench body?" would
+            // read this as the whole decision and pick for a destination the
+            // engine has not offered yet.
+            note: "Move the damage counters off which of your Benched Pokémon? You will then choose where they go.",
+          },
+        };
+      }
+      // QUESTION 2 — the DESTINATION. A source carrying no counters is the
+      // printed sentence's SILENT WHIFF (the single-arm rule `healChosen` and
+      // `moveCountersToDefender` both follow), and it is answered HERE rather
+      // than in the mover so the whiff costs no prompt: asking "where do these
+      // counters go?" about zero counters is a question with no answer.
+      const source = state.players[ctx.seat].bench[chosen];
+      if (source === undefined || source.damage <= 0) return { done: state };
+      // "1 of your opponent's Pokémon" — the Active TOO, not just the Bench, so
+      // this set is never empty during a §8 attack and the empty-set ending is
+      // the wire belt rather than a board. A lone Active FORCES the destination,
+      // which is `parkOrForce`'s own doctrine and needs nothing new: this half
+      // applies its answer instead of passing it on.
+      return parkOrForce(
+        state,
+        oppAnyRefs(state, ctx.seat),
+        (ref) => moveCountersFromBench(state, chosen, ref, ctx, events),
+        "Move the damage counters onto which of your opponent's Pokémon?",
+      );
+    }
     case "spreadDamage":
       return { done: spreadDamage(state, op.amount, ctx, events) };
     case "damageSelf":
@@ -1920,6 +2042,16 @@ export function applyChoice(
       return choice.kind === "pokemon"
         ? moveCountersToDefender(state, choice.ref, ctx, events)
         : state;
+    case "moveCountersChosen": {
+      // D216 — the two parks of one sentence, told apart by the same field
+      // `stepOp` branches on. The SOURCE answer moves nothing at all: what it
+      // buys is the op that asks question two, and an op cannot reach the queue
+      // from here (`optional`'s arm above states the reason) — `continuationOps`
+      // owns that half. The DESTINATION answer is the whole move.
+      const chosen = op.fromBench;
+      if (choice.kind !== "pokemon" || chosen === undefined) return state;
+      return moveCountersFromBench(state, chosen, choice.ref, ctx, events);
+    }
     case "damageChosen":
       // Recompute the (possibly Prize-scaled) amount from state: no KO has
       // happened between parking and this pick, so the count is unchanged — the
@@ -3544,7 +3676,41 @@ function moveCountersToDefender(
   events: GameEvent[],
 ): GameState {
   if (ref.seat !== ctx.seat || ref.spot.spot !== "bench") return state;
-  const index = ref.spot.index;
+  // No "is there a defender" pre-check: the shared helper answers it (its
+  // destination read is `null` on an empty Active Spot) and a second one here
+  // would be a guard nothing can turn red.
+  const dest: PokemonRef = { seat: otherSeat(ctx.seat), spot: { spot: "active" } };
+  return moveCountersFromBench(state, ref.spot.index, dest, ctx, events);
+}
+
+/** D216 — the same printed action with the destination given as a REF rather
+    than as the printed words "your opponent's Active Pokémon". The whole body of
+    `moveCountersToDefender` lives here, and that function is now the fixed-
+    destination caller: the two rows MUST carry one number and the §11 refusal
+    MUST take both or neither, and one write site is the only way those two
+    invariants can stay true of both sentences at once.
+
+    THE §11 GATE IS CONDITIONAL HERE AND UNCONDITIONAL AT THE CALLER, WHICH IS
+    NOT A SOFTENING. `attackEffectRefused` asks one question — *is a wide
+    `{effects: true}` block live on this seat's **ACTIVE**?* — and a §11 block is
+    an Active-Spot fact by construction (`clearOnLeavingActive`). So asking it
+    about a BENCHED destination is asking about a body it does not describe, and
+    answering "refused" there would refuse a move the printed block never
+    touched, on the evidence of a completely different Pokémon. The gate is
+    therefore consulted exactly when the destination IS an Active — which for
+    `moveCountersToDefender` is always, so its behaviour is byte-identical.
+
+    The seat handed to the gate is the DESTINATION's, not `otherSeat(ctx.seat)`.
+    Both printings aim at the opponent, so the two are the same value today;
+    reading it off the destination is what keeps the gate describing the body
+    being written to rather than a seat the caller happened to know. */
+function moveCountersFromBench(
+  state: GameState,
+  index: number,
+  dest: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   const side = state.players[ctx.seat];
   const source = side.bench[index];
   if (source === undefined) return state;
@@ -3552,11 +3718,13 @@ function moveCountersToDefender(
   if (sourceUid === undefined) return state;
   const moved = source.damage;
   if (moved <= 0) return state;
-  const opponent = otherSeat(ctx.seat);
-  const defender = state.players[opponent].active;
-  if (defender === null) return state;
-  const defenderUid = topUid(defender);
-  if (defenderUid === undefined) return state;
+  const destSide = state.players[dest.seat];
+  const target = dest.spot.spot === "active" ? destSide.active : destSide.bench[dest.spot.index];
+  // A move needs both ends, and half of one would silently launder counters off
+  // the controller's board — see the doc block above.
+  if (target === undefined || target === null) return state;
+  const targetUid = topUid(target);
+  if (targetUid === undefined) return state;
   // §11 (D142) — the destination half is a counter PLACEMENT, an effect rather
   // than damage (see `damageActive`), so the wider block refuses it. And the
   // refusal takes the WHOLE printed action with it: the two rows carry ONE
@@ -3564,18 +3732,35 @@ function moveCountersToDefender(
   // while the counters never arrive would launder damage off the attacker's own
   // board — the one outcome this op's doc block says two different numbers must
   // never produce. Checked BEFORE the HEALED row for exactly that reason.
-  if (attackEffectRefused(state, opponent, ctx, events)) return state;
+  if (dest.spot.spot === "active" && attackEffectRefused(state, dest.seat, ctx, events)) {
+    return state;
+  }
   events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
   const bench = side.bench.map((pokemon, i) => (i === index ? { ...pokemon, damage: 0 } : pokemon));
   const cleared = withSide(state, ctx.seat, { ...side, bench });
   events.push({
     type: "COUNTERS_PLACED",
-    seat: opponent,
-    uid: defenderUid,
+    seat: dest.seat,
+    uid: targetUid,
     amount: moved,
     source: "moved",
   });
-  return withActive(cleared, opponent, { ...defender, damage: defender.damage + moved });
+  const damaged: InPlayPokemon = { ...target, damage: target.damage + moved };
+  // Re-read the destination side off `cleared` rather than reusing `destSide`.
+  // ⚠️ EQUIVALENT TODAY and recorded as such: the two differ only when the
+  // destination sits on the CONTROLLER's own side, which no printing and neither
+  // candidate helper (`oppAnyRefs`, the opponent's Active) can produce — but a
+  // stale side there would silently undo the clearing above, which is the one
+  // failure this whole function is shaped to prevent.
+  const written = cleared.players[dest.seat];
+  if (dest.spot.spot === "active") {
+    return withSide(cleared, dest.seat, { ...written, active: damaged });
+  }
+  const destIndex = dest.spot.index;
+  return withSide(cleared, dest.seat, {
+    ...written,
+    bench: written.bench.map((pokemon, i) => (i === destIndex ? damaged : pokemon)),
+  });
 }
 
 /** PLACE `amount` HP of SELF-damage on the controller's OWN Active — the attack

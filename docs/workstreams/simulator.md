@@ -20491,3 +20491,117 @@ tests**. ⚠️ 34 failures across 6 files were present at the end of the run an
 `stadiumAbility` field in `redact.ts` / `OnlineHud.tsx` / `packages/schema`, files
 this slice never touched — `npx vitest run packages apps` isolates them to
 `redact.test.ts` alone, and every file this slice edits or guards is green.
+
+## D216 — the CHOSEN-DESTINATION COUNTER MOVE (`moveCountersChosen`): **one printed sentence, TWO questions**, and D206's blocker restated correctly — a PROGRAM has parked twice since D186, so what was missing was a **CHANNEL**, not a park (engine 0.135.0 → **0.136.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+**Landed:** Cofagrigus `sv10.5w-040`/`-123` "Extended Damagriiigus" — *"Move all
+damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon."*
+**2 Standard-legal printings**, built entirely in the deriver with **no registry
+row**. `apps/api`, `packages/schema`, `src/**` and `apps/**` untouched.
+
+### The census, re-derived rather than inherited
+
+Remote D1 `735f0fb5-cdc3-494d-8b97-74a8ade0124a` — 3,786 rows / 20 sets, 2,021
+`legal_standard = 1`, 2026-08-04, **all three text columns through `json_each`**
+(`attacks_json`, `abilities_json`, `effect`), `GLOB` and never `LIKE`. Surfaces
+whose sentence MOVES damage counters: **12, over 24 printings**. The
+chosen-DESTINATION family, per SURFACE (D205's rule — the unit is the surface, not
+the card id), Standard first / Expanded second:
+
+| surface | ids | Std | Exp | verdict |
+| --- | --- | --- | --- | --- |
+| attack **Extended Damagriiigus** (Cofagrigus) | `sv10.5w-040`, `-123` | 2 | 2 | ✅ **BUILT** |
+| ability **Adrena-Brain** (Munkidori) | `sv06-095`, `sv06.5-072`, `sv08.5-044` | 3 | 3 | ⏹️ *"up to 3"* — a THIRD decision, and **no `EffectPrompt` kind can ask "how many"**. A WIRE change. |
+| ability **Rocket Brain** (Team Rocket's Orbeetle) | `sv10-089`, `-198` | 2 | 2 | ⏹️ *"as often as you like"* — an unbounded repeat the phase model has no shape for; destination is the controller's OWN board. |
+| attack **Strange Hacking** (Alakazam) | `sv06-082` | 1 | 1 | ⏹️ *"any number … in any way you like"* — `attachCards`' many-to-many assignment, both ends on the opponent's board. |
+
+**8, not D205's 2 and not D206's 7.** Both are floors: D205 read `attacks_json`
+alone; D206 added the two ABILITY surfaces but **missed Alakazam**, which is on the
+ATTACK surface its own sweep covered. The adjacent fixed-destination rows are
+unmoved — Wobbuffet `sv10-082`/`svp-203` (2, built at D205), Flutter Mane
+`sv08-096` (1, **unbuildable**: "Ancient" has no ingested datum), Sableye
+`sv05-107` (1, destination fixed to *their* Active, source is a multi-pick),
+Dedenne ex `sv02-093`/`-239` + Liepard `sv04-115` (0 Standard, byte-identical
+sentences).
+
+### D206's blocker: right observation, wrong statement
+
+> *"`applyChoice` returns a `GameState`, so an op that has parked ONCE cannot park
+> AGAIN … `moveEnergy` dodges it with a compound prompt kind, i.e. a WIRE change."*
+
+The first clause is true **of one op** and was silently generalised to a
+**program**, where it is false and was already false: `runProgram(rest)` parks
+again the instant an op in `rest` wants a decision, and Koraidon "Dino Cry" has
+attached across two parks since D186 (`dinoCry.test.ts`). The conclusion is what
+that cost — a compound prompt is `packages/schema` + the HUD, and this slice
+needed neither. **The narrower true statement:** one op gets one park, so a
+two-question sentence needs a second op — and the only missing piece was a channel
+to it.
+
+**The piece that was actually missing is the FORCED path.** Question one has two
+endings. The parked one could always splice (D186's `optional`). The forced one
+could not: `parkOrForce` auto-resolves through a `(ref) => GameState`, and
+`stepOp` returned `{ done: GameState }`, so a single-candidate answer had nowhere
+to go. The seam is one optional key — `stepOp` may now return `{ done, schedule }`
+and `runProgram` `unshift`s it exactly as the three gates `unshift` `op.then`.
+
+### The design, decided by the standing rule
+
+*The unit of SHARING is decided by the READ SITE, the unit of STORAGE by the WRITE
+SITES.* One reader (this op's own second question), one writer (its own first
+answer) — nothing is shared, so the answer rides on the **op**, as a rewritten copy
+carrying `fromBench`. `EffectRecord` was the other candidate and is refused on
+**meaning**: it holds *what MOVED*, and `recordGate` (the printed "if you do")
+reads it, so filing a source that has been NAMED but not emptied would answer that
+gate true for an action that has not happened — the "half of a printed action"
+failure `moveCountersToDefender`'s own doc names.
+
+A NEW OP rather than a `to` rider on `moveCountersToDefender`: everything after the
+shared source pick differs, and renaming the existing op so one could honestly
+carry both is unavailable at a slice's price — `pendingOp.op` is a **persisted
+literal**, so a rename owes a `MATCH_RECORD_VERSION` bump.
+
+### The §11 gate is now CONDITIONAL — a correction, not a softening
+
+`attackEffectRefused` asks one question: *is a wide `{effects: true}` block live on
+this seat's **ACTIVE**?* A §11 block is an Active-Spot fact by construction, so on
+a BENCHED destination it is the wrong question, and answering it would refuse a
+move the printed block never touched on the evidence of a different Pokémon.
+Driven in **both** directions on ONE board. `moveCountersToDefender` is
+byte-identical (its destination is always an Active), and both ops now share ONE
+write site (`moveCountersFromBench`) — which is the only way "two rows, one number"
+and "the refusal takes both halves or neither" stay true of both sentences at once.
+
+### `MATCH_RECORD_VERSION` — 12, derived rather than assumed
+
+The op PARKS twice and `EffectContinuation.pendingOp` is persisted, so `fromBench`
+**does** reach storage. It is a **new union inhabitant**, which is what `optional`
+was at D186 — also required-field, also persisted, also no bump — so no existing
+record can contain it and no earlier record changes meaning. D140's bump was for a
+REQUIRED field on an op that already had records; that is the case this is not.
+The `schedule` key never reaches storage at all: it is a return value of `stepOp`,
+consumed by `runProgram` before any park.
+
+### Census movement — attributed, never bumped
+
+* `clauseApostrophe.test.ts` **82 → 83**, by exactly one: `fix-cofagrigus`' idx 0
+  is a NEW STRING. Its idx 1 carries D138's sentence, which the pool already prints
+  on Dedenne ex, so that adds an **id to a standing row** and not a row; idx 2
+  prints no effect.
+* `switchSeam.test.ts`'s flag **7 → 6 ids** — Cofagrigus paid, Alakazam added.
+* `preventBlock.test.ts` gains a verdict **and** a driven probe: D150's gate biting
+  on a new op, exactly as designed.
+* `ownerTargetOps.test.ts`'s two refusal cases now assert the sharper claim — the
+  D205 anchor still does not reach the sentence, and the op it produces is still
+  the fixed-destination one.
+
+### Suite
+
+Baseline **re-measured, never inherited**: at `9f44b72`, `npx vitest run
+packages/engine` gives **135 files / 3325 tests** → **136 files / 3346 tests**
+green (**+1 file / +21 tests**). ⚠️ The first baseline run showed one failure in
+`attachEnergyFrom.test.ts` that did **not** reproduce: D215's mutation harness was
+live in `packages/engine/src` with `continuous.ts` mutated at that instant.
+Recorded rather than smoothed over. `bun run check` cannot be run green from this
+tree for an unrelated reason — `src/lib/reducedMotionSweep.test.ts` (D214's
+in-flight file, not this slice's) fails `tsc -b` on missing `@types/node`.

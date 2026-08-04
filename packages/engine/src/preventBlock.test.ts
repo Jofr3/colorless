@@ -10,6 +10,7 @@ import {
   activeUid,
   attachFromDeck,
   benchFromDeck,
+  clearBench,
   deepFreeze,
   driveSetup,
   handFromDeck,
@@ -805,6 +806,19 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     damageActive: "blocked", // a PLACED counter — an effect, not damage
     damageChosen: "blocked", // put-counter arm an effect; `deals` arm damage
     moveCountersToDefender: "blocked", // the destination half of a printed MOVE
+    // ⚠️ D216 — THE FIRST VERDICT IN THIS TABLE THAT IS TRUE OF A DESTINATION THE
+    // PLAYER CHOOSES, WHICH MAKES "blocked" A CLAIM ABOUT A REACHABLE BOARD
+    // RATHER THAN ABOUT EVERY BOARD. The op's destination is "1 of your
+    // opponent's Pokémon"; when that is the shielded ACTIVE the block refuses the
+    // WHOLE printed move (both rows or neither — the probe below drives exactly
+    // that board, with the opponent's Bench emptied so the pick is forced onto
+    // it), and when the player picks a BENCHED body the block is not in the path
+    // at all and the move lands. That second half is driven in
+    // counterMoveChosen.test.ts rather than here, because this table's contract
+    // is ONE board per op — and it is named here so the verdict is not read as
+    // "this op is refused on every board", which is the misreading this whole
+    // table exists to prevent.
+    moveCountersChosen: "blocked",
     spreadDamage: "blocked", // attack damage, on the Bench (nulled by the damage half)
     discardEnergy: "blocked", // the `opponentActive` arm; `yourActive` is the cost
     // — cannot touch the opponent's board at all —
@@ -1200,6 +1214,32 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
             },
           },
         };
+      },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    moveCountersChosen: {
+      // D216's twin of the row above, and its board differs in ONE way that is the
+      // whole point: P1's BENCH IS EMPTIED, so "1 of your opponent's Pokémon" has
+      // exactly one candidate and the destination pick is FORCED onto the shielded
+      // Active. Without that, the op parks on a destination prompt and the probe
+      // would report "did not land" for a reason that has nothing to do with §11 —
+      // the silent-inertness failure this harness's `refused || nulled` assertion
+      // exists to catch.
+      op: { op: "moveCountersChosen" },
+      board: () => {
+        const state = setActiveFromDeck(probeBoard(), "p2", "fix-attacker");
+        const bench = state.players.p2.bench;
+        expect(bench.length).toBe(1); // the displaced Active — the forced SOURCE
+        return clearBench(
+          {
+            ...state,
+            players: {
+              ...state.players,
+              p2: { ...state.players.p2, bench: bench.map((p) => ({ ...p, damage: 20 })) },
+            },
+          },
+          "p1",
+        );
       },
       landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
     },

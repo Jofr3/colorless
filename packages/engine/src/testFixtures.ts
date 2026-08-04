@@ -7372,6 +7372,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** `fix-cofagrigus` — D216's attacker for the CHOSEN-DESTINATION counter move,
+      carrying Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus"'s printed
+      sentence VERBATIM at idx 0 and D138's fixed-destination sentence at idx 1.
+
+      SYNTHETIC RATHER THAN THE REAL PRINTING, and the reason is the catalog, not
+      taste: `sv10.5w` is a set the LOCAL D1 does not hold, so a real-card fixture
+      could not be diffed against `catalogManifest.ts` and would be exactly the
+      un-checkable fixture D151/D156 exist to stop. The sentence is quoted off the
+      REMOTE D1 (2026-08-04) instead, and the id is a `fix-*` one so
+      `catalogManifest.test.ts`'s real-id sweep correctly ignores it.
+
+      BOTH SENTENCES ON ONE BODY IS THE POINT. The two anchors differ only in
+      their tail, and a build that let either one match the other's string is the
+      single most likely mistake here; one attack declaration apart, on one card,
+      is what makes that a driven difference instead of a regex read.
+
+      idx 2 "Ping" is 10 flat damage with NO effect — the control that proves an
+      attack on this body can resolve without parking at all, which is what tells
+      "the program did nothing" apart from "the attack was refused".
+
+      340 HP so nothing this file does KOs the attacker; every attack costs one
+      {C} so a board is never short of Energy mid-case. */
+  "fix-cofagrigus": battler("fix-cofagrigus", {
+    name: "Coffinmon",
+    hp: 340,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Extended Damagriiigus",
+        effect: "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Tail Swap",
+        effect:
+          "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.",
+      },
+      { cost: ["Colorless"], name: "Ping", damage: 10 },
+    ],
+  }),
   /** `fix-suppresswall` — ×2 FIRE **and** a −30 post-W/R reduction (its registry
       row). The ORDER WITNESS's body, and the reason it had to be synthetic: no
       card in the pool prints a Weakness alongside a reduction Ability, and giving
@@ -11333,6 +11373,36 @@ export const KO_SURVIVAL_DECK = deckOf({
   "fix-titan": 3, // 340 HP, no attacks — bench filler
   "fix-bigbody": 22, // 200 HP — the dominant Basic, promote target, no-Ability control
   "fix-energy": 13, // Colorless Basic — every fix-koblast attack costs one {C}
+});
+
+/** 0.134.0 → 0.135.0: the CHOSEN-DESTINATION counter move (D216). Its own 60 for
+    the house reason — adding a card to an existing deck reshuffles every board in
+    it — and because this suite wants a board no other deck can give: the
+    controller's OWN Bench damaged and populated (the source half) AND the
+    opponent's Bench populated and distinguishable (the destination half), at the
+    same time. The counter-MOVE deck (D138) fields the first and pins the second
+    to a single Active, which is exactly the board that cannot tell a chosen
+    destination from a hard-coded one.
+
+      • fix-cofagrigus — THE attacker: both counter-move sentences one attack
+        index apart, plus a no-effect control. Four copies;
+      • fix-titan — 340 HP, NO attacks: the interchangeable filler for both
+        Benches. Nothing it does can KO or park, so a board has exactly the
+        decisions it means to have. Twenty-eight copies, because every case in the
+        file fields three to five of them at once across two seats;
+      • fix-bigbody — 200 HP, no Ability: the DESTINATION whose damage is read.
+        Distinct from the filler so "the counters landed on the body I picked" is
+        an assertion about a NAMED body rather than about an index;
+      • fix-victim — 30 HP: the destination that a moved stack can actually KO, so
+        the epilogue's two-seat sweep is driven off a chosen BENCHED body rather
+        than off the Active every earlier suite uses;
+      • fix-energy — Colorless Basic: every fix-cofagrigus attack costs one {C}. */
+export const COUNTER_MOVE_CHOSEN_DECK = deckOf({
+  "fix-cofagrigus": 4, // THE attacker — both sentences, one index apart
+  "fix-titan": 28, // 340 HP, no attacks — interchangeable bench filler, both seats
+  "fix-bigbody": 8, // 200 HP — the NAMED destination whose damage is read
+  "fix-victim": 4, // 60 HP — the destination a moved stack can KO
+  "fix-energy": 16, // Colorless Basic — every fix-cofagrigus attack costs one {C}
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

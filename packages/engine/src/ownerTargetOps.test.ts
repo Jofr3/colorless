@@ -613,8 +613,16 @@ describe("`COUNTER_MOVE_TO_DEFENDER` — one optional capture, three refusals", 
     expect(deriveAttackEffect(PERPLEXING_TRANSFER)).toBeNull();
   });
 
-  it("⚠️ REFUSES the CHOSEN destination — D138's other axis, still unbuilt", () => {
-    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toBeNull();
+  it("⚠️ REFUSES the CHOSEN destination — D138's other axis, now a DIFFERENT op", () => {
+    // Still refused BY THIS ANCHOR, which is the claim: D216 built the sentence
+    // behind `COUNTER_MOVE_TO_CHOSEN`, so the two tails stay disjoint and no
+    // widening of this regex ever happened. Asserting `toBeNull` here would now
+    // be asserting that the sentence is unbuilt, which is a different and false
+    // thing — so the case asserts the OP instead.
+    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).not.toContainEqual(
+      expect.objectContaining({ op: "moveCountersToDefender" }),
+    );
+    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toEqual([{ op: "moveCountersChosen" }]);
   });
 
   it("refuses a lowercase owner, and a possessive that is not a subgroup", () => {
@@ -950,10 +958,21 @@ describe("FLAGGED — N's Zoroark ex sv09-098/-175/-185/-189 (4 legal)", () => {
 });
 
 describe("FLAGGED — the two counter-move sentences the widened anchor refuses", () => {
-  it("⚠️ Cofagrigus sv10.5w-040/-123 (2 legal) — a CHOSEN destination", () => {
-    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toBeNull();
+  it("⚠️ Cofagrigus sv10.5w-040/-123 (2 legal) — BUILT AT D216, and still not by THIS anchor", () => {
+    // ⚠️ THE FLAG WAS PAID, AND THE REFUSAL IT ASSERTED IS UNCHANGED. D205 called
+    // this "a second CHOICE (a second park, on the opponent's board), not a
+    // predicate on the first" and refused it HERE for that reason. D216 built it
+    // — as `moveCountersChosen`, behind its own anchor — so the claim this case
+    // makes is now the sharper one: `COUNTER_MOVE_TO_DEFENDER` still does not
+    // reach the sentence, and the op it produces is still the fixed-destination
+    // one. A build that widened this anchor instead would fail both lines.
+    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toEqual([{ op: "moveCountersChosen" }]);
+    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).not.toContainEqual(
+      expect.objectContaining({ op: "moveCountersToDefender" }),
+    );
+    // …and STILL no registry row: both printings simulate off their printed text.
     for (const id of ["sv10.5w-040", "sv10.5w-123"]) {
-      expect(programFor(id)?.attack, `${id} was half-built`).toBeUndefined();
+      expect(programFor(id)?.attack, `${id} grew a registry row`).toBeUndefined();
     }
   });
 

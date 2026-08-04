@@ -140,7 +140,9 @@ const INTERJET =
 /** ⚠️ Vikavolt `sv07-053` "Volt Switch" — one WORD from the row taken, and a
     different narrowing axis entirely. */
 const VOLT_SWITCH = "Switch this Pokémon with 1 of your Benched {L} Pokémon.";
-/** ⏹️ Cofagrigus `sv10.5w-040/-123` — the chosen DESTINATION, on an attack. */
+/** ✅ Cofagrigus `sv10.5w-040/-123` — the chosen DESTINATION, on an attack.
+    BUILT AT D216 (`moveCountersChosen`); kept here as the witness that this
+    file's flag was paid rather than deleted. */
 const EXTENDED_DAMAGRIIIGUS =
   "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.";
 /** ⏹️ ⚠️ Munkidori `sv06-095`/`sv06.5-072`/`sv08.5-044` — the SAME axis on the
@@ -802,11 +804,14 @@ describe("the landed census, re-derived", () => {
 // unbuilt — that assertion passed for D200 on ids naming the WRONG CARDS — so it
 // is never the whole of a flag here.
 
-describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (7 legal printings)", () => {
-  // D205 sized this at 2 (Cofagrigus). ⚠️ It is 7: its sweep was over
-  // `attacks_json`, and Munkidori's 3 legal printings put the same axis on the
-  // ABILITY surface, with Orbeetle's 2 a third member (own → own).
-  const IDS = ["sv10.5w-040", "sv10.5w-123", "sv06-095", "sv06.5-072", "sv08.5-044", "sv10-089", "sv10-198"];
+describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 landed)", () => {
+  // D205 sized this at 2 (Cofagrigus). D206 re-measured it at 7. ⚠️ **D216 makes
+  // it 8** — Alakazam sv06-082 "Strange Hacking" prints the same axis on an
+  // ATTACK, with BOTH ends on the opponent's board, and neither earlier sweep
+  // named it. D216 BUILT the Cofagrigus surface (2 legal, `moveCountersChosen`)
+  // and left the other three refused on a MECHANISM each; the ids below are the
+  // ones that are still flagged, which is what keeps this block a flag.
+  const IDS = ["sv06-095", "sv06.5-072", "sv08.5-044", "sv10-089", "sv10-198", "sv06-082"];
 
   it("⚠️ the ONE counter move in the union ALWAYS lands on the defender, and NEVER asks — driven", () => {
     // The missing piece is not a predicate and not a field: it is a SECOND
@@ -814,11 +819,18 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (7 legal printi
     // board where the source is a real choice, and asserting that answering it
     // ENDS the program — there is nowhere for a destination prompt to go.
     //
-    // ⚠️ AND THE STRUCTURAL REASON IS ASSERTABLE FROM THE TYPES, WHICH IS WHY
-    // THIS IS ONE PIECE AND NOT THREE: `applyChoice` returns a `GameState`, so an
-    // op that has already parked has no way to request another park. `moveEnergy`
-    // is the engine's only two-ended decision and it dodges this by answering
-    // BOTH ends in ONE compound choice — a prompt kind, i.e. a WIRE change.
+    // ⚠️ **AND THE STRUCTURAL REASON D206 GAVE HERE WAS THE WRONG ONE — CORRECTED
+    // AT D216, IN PLACE.** It read: "`applyChoice` returns a `GameState`, so an op
+    // that has already parked has no way to request another park … `moveEnergy`
+    // dodges this with a compound prompt kind, i.e. a WIRE change." The first
+    // clause is true of ONE OP and was silently generalised to a PROGRAM, which is
+    // false and was already false: `runProgram(rest)` parks again the moment an op
+    // in `rest` wants a decision, and Koraidon "Dino Cry" has shipped two parks in
+    // one program since D186 (dinoCry.test.ts). What was actually missing was a
+    // CHANNEL from the first answer to a second op — which D216 built with no wire
+    // change at all, as a second `choosePokemon` park. The gap this case drives is
+    // therefore about THIS OP, and stays real: `moveCountersToDefender` has one
+    // question and one destination, and always will.
     let state = stage(41, "fix-tailswap", ["fix-tr-nidorino", "fix-tr-meowth"], ["fix-plain"]);
     state = attachFromDeck(state, "p1", "fix-psychic-energy", 2);
     state = setBenchDamage(state, "p1", 0, 30);
@@ -838,19 +850,21 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (7 legal printi
     expect(done.players.p2.bench[0]?.damage).toBe(0);
   });
 
-  it("⚠️ and none of the three sentences resolves on EITHER route", () => {
+  it("⚠️ and the SIX still-flagged printings resolve on NEITHER route", () => {
     // Per surface AND through both routes — D205's repair of D204's vacuous arm,
-    // applied here rather than cited. Cofagrigus is an ATTACK (deriver + registry),
-    // Munkidori and Orbeetle are ABILITIES (`abilities` + `triggered`).
-    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toBeNull();
-    for (const id of ["sv10.5w-040", "sv10.5w-123"]) {
-      expect(programFor(id)?.attack, `${id} was half-built`).toBeUndefined();
-    }
+    // applied here rather than cited. Munkidori and Orbeetle are ABILITIES
+    // (`abilities` + `triggered`); Alakazam is an ATTACK (deriver + registry).
+    //
+    // ⚠️ COFAGRIGUS HAS LEFT THIS LIST BECAUSE IT IS BUILT, and the line that
+    // replaces it says so rather than being deleted — the witness moves, it is
+    // never quietly dropped (D139/D140's precedent on the neighbouring anchor).
+    expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toEqual([{ op: "moveCountersChosen" }]);
     for (const id of ["sv06-095", "sv06.5-072", "sv08.5-044", "sv10-089", "sv10-198"]) {
       expect(programFor(id)?.abilities, `${id} was half-built`).toBeUndefined();
       expect(programFor(id)?.triggered, `${id} was half-built as a trigger`).toBeUndefined();
     }
-    expect(IDS).toHaveLength(7);
+    expect(programFor("sv06-082")?.attack, "sv06-082 was half-built").toBeUndefined();
+    expect(IDS).toHaveLength(6);
     // The three sentences share ONE axis and differ on the others, which is what
     // makes them one flag rather than three: bounded amounts (Munkidori "up to 3",
     // Orbeetle "1") and repetition ("as often as you like") are SECOND pieces.

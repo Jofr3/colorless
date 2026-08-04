@@ -419,7 +419,16 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // attack, it is not Knocked Out, and its remaining HP becomes 10." — which is
     // an ABILITY, is enumerated by nothing here, AND CARRIES NO APOSTROPHE AT ALL.
     // Two independent reasons it cannot appear; the sweep is unmoved by either.
-    expect(derivable).toHaveLength(82);
+    // ⚠️ D216 MOVED IT 82 → 83, BY EXACTLY ONE, AND THE ROW IS NAMED. The delta
+    // is `fix-cofagrigus`' idx 0 — "Move all damage counters from 1 of your
+    // Benched Pokémon to **1 of your opponent's** Pokémon." — a NEW STRING rather
+    // than a new id on an existing row, because no fixture printed this tail
+    // before. Its idx 1 carries D138's sentence, which the pool ALREADY prints on
+    // Dedenne ex sv02-093/-239, so that one adds an id to a standing row and not a
+    // row; and its idx 2 ("Ping") prints no effect at all. One new fixture, three
+    // attacks, ONE row — which is this sweep behaving exactly as its own doc says
+    // (it enumerates `card.attacks` and admits only sentences a reader RESOLVES).
+    expect(derivable).toHaveLength(83);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

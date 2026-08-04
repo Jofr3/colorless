@@ -6068,7 +6068,116 @@ import type { GameState, Seat } from "./types";
     run` throughout; `bun test` is the wrong harness and `bun run test:run`
     SIGKILLs its worker in this container. */
 
-export const engineVersion = "0.135.0";
+/** 0.136.0 — **D216, THE CHOSEN-DESTINATION COUNTER MOVE.** One new op, one new
+    deriver anchor, one shared mover, and **one new seam in `runProgram`** — **2
+    Standard-legal printings**, `MATCH_RECORD_VERSION` **unchanged at 12**.
+    `apps/api`, `packages/schema`, `src/**` and `apps/**` untouched.
+
+    ⚠️ **D206's BLOCKER WAS THE RIGHT OBSERVATION AND THE WRONG STATEMENT, AND
+    THE CORRECTION IS THE SLICE.** It read: *"`applyChoice` returns a
+    `GameState`, so an op that has parked ONCE cannot park AGAIN"* — true of ONE
+    OP, silently generalised to a PROGRAM, and false there. `runProgram(rest)`
+    parks again the instant an op in `rest` wants a decision, and a shipped card
+    has done exactly that since D186: Koraidon "Dino Cry" attaches across two
+    parks (`dinoCry.test.ts`). So a second park was never missing. What was
+    missing was a **CHANNEL** from the first answer to the second question — and
+    the conclusion D206 drew from its own statement (*"`moveEnergy` dodges it with
+    a compound prompt kind, i.e. a WIRE change"*) is what that error cost, because
+    a compound prompt is `packages/schema` + the HUD and this needed neither.
+
+    **THE DESIGN, DECIDED BY THE STANDING RULE.** *The unit of SHARING is decided
+    by the READ SITE, the unit of STORAGE by the WRITE SITES.* There is exactly
+    ONE reader (this op's own second question) and ONE writer (its own first
+    answer), so nothing is shared and the answer rides on the OP — a rewritten
+    copy of itself carrying `fromBench`, spliced by `resumeProgram` exactly where
+    D186 splices `optional`'s `then`. `EffectRecord` was the other candidate and
+    is refused on MEANING rather than on cost: it holds *what MOVED*, and
+    `recordGate` — the printed "if you do" — reads it, so filing a source that has
+    been NAMED but not yet emptied would answer that gate true for an action that
+    has not happened. That is the "half of a printed action" failure
+    `moveCountersToDefender`'s own doc names on the other side of the engine.
+
+    **THE PIECE THAT WAS ACTUALLY MISSING IS NARROWER THAN EITHER STATEMENT, AND
+    IT IS THE FORCED PATH.** The first question has TWO endings. The parked one
+    could always splice (D186). The FORCED one could not: `parkOrForce`
+    auto-resolves through a `(ref) => GameState`, and `stepOp` returned
+    `{ done: GameState }`, so a single-candidate answer had nowhere to go. The
+    seam is one optional key — `stepOp` may now return `{ done, schedule }`, and
+    `runProgram` `unshift`s it exactly as the three gates `unshift` `op.then`. Both
+    endings of question one now hand the same rewritten op to the same queue,
+    which is what makes a Bench of one and a Bench of two resolve one printed
+    sentence the same way.
+
+    **THE CENSUS, RE-DERIVED RATHER THAN INHERITED** (remote D1
+    `735f0fb5-…-74a8ade0124a`, 3,786 rows / 20 sets, 2,021 legal, 2026-08-04, ALL
+    THREE text columns through `json_each`, `GLOB` and never `LIKE`). Surfaces
+    whose sentence MOVES damage counters: **12, over 24 printings**. The
+    chosen-DESTINATION family is **4 surfaces / 8 Standard-legal printings** —
+    ⚠️ **not D205's 2 and not D206's 7**, both of which are floors of it:
+      • ✅ **Cofagrigus `sv10.5w-040`/`-123` "Extended Damagriiigus" (2 legal)** —
+        BUILT, entirely in the deriver, no registry row.
+      • ⏹️ Munkidori `sv06-095`/`sv06.5-072`/`sv08.5-044` "Adrena-Brain" (3) —
+        *"move **up to 3**"* is a THIRD decision and no `EffectPrompt` kind can
+        ask "how many". A WIRE change, which is what D206 priced this whole family
+        at and is true of THIS surface only.
+      • ⏹️ Team Rocket's Orbeetle `sv10-089`/`-198` "Rocket Brain" (2) — *"**as
+        often as you like** during your turn"*, an unbounded repeat the phase model
+        has no shape for; its destination is the controller's OWN board.
+      • ⏹️ **Alakazam `sv06-082` "Strange Hacking" (1) — NEITHER EARLIER SWEEP
+        NAMED IT.** *"any number … **in any way you like**"*, both ends on the
+        opponent's board: `attachCards`' many-to-many assignment shape, not this
+        one.
+    ⚠️ And the anchor carries **NO owner capture**, where D205's sibling does: no
+    chosen-destination printing prints a possessive in either scope, so a capture
+    would derive a reading no card has — D138's own rule (take the width the
+    printing measures), pointing the other way for once.
+
+    ⚠️ **THE §11 GATE IS CONDITIONAL HERE AND THAT IS A CORRECTION, NOT A
+    SOFTENING.** `attackEffectRefused` asks one question — *is a wide
+    `{effects: true}` block live on this seat's **ACTIVE**?* — and a §11 block is
+    an Active-Spot fact by construction. On a BENCHED destination it is the wrong
+    question, and answering it would refuse a move the printed block never
+    touched, on the evidence of a different Pokémon. Driven in BOTH directions on
+    ONE board. `moveCountersToDefender` is byte-identical, because its destination
+    is always an Active.
+
+    **`MATCH_RECORD_VERSION` STAYS 12**, derived rather than assumed. The op PARKS
+    twice and `EffectContinuation.pendingOp` is persisted, so `fromBench` DOES
+    reach storage — but the op is a **NEW UNION INHABITANT**, which is what
+    `optional` was at D186 (also with a required `then`, also persisted, also no
+    bump): no existing record can contain it, so no earlier record changes meaning.
+    D140's bump was for a REQUIRED field on an op that ALREADY had records, which
+    is the case this is not. The `schedule` key never reaches storage at all — it
+    is a return value of `stepOp`, consumed by `runProgram` before any park.
+
+    Cost: 1 new op (2 read-site arms) + 1 new anchor + 1 generalised mover
+    (`moveCountersFromBench`, now the ONE write site for both counter moves) + 2
+    small shared helpers (`counterSourceAnswered`, `continuationOps`) + 1 optional
+    key on `stepOp`'s result, plus 1 new fixture, 1 new deck and 1 new test file
+    (21 tests), and 4 re-pointed guards.
+
+    ⚠️ **CENSUS MOVEMENT, ATTRIBUTED RATHER THAN BUMPED**:
+    `clauseApostrophe.test.ts` **82 → 83**, by exactly one — `fix-cofagrigus`'
+    idx 0, a NEW STRING no fixture printed before. Its idx 1 carries D138's
+    sentence, which the pool already prints on Dedenne ex, so that adds an ID to a
+    standing row and not a row; its idx 2 prints no effect. `switchSeam.test.ts`'s
+    flag moves 7 → 6 ids (Cofagrigus paid, Alakazam added), and
+    `preventBlock.test.ts` gains a verdict AND a driven probe — the D150 gate
+    biting on a new op, exactly as designed.
+
+    ⚠️ **SUITE BASELINE RE-MEASURED, NEVER INHERITED, AND UNDER A LIVE SIBLING.**
+    At `9f44b72` the engine package is **135 files / 3325 tests** under
+    `npx vitest run packages/engine` → **136 files / 3346 tests** green, a delta of
+    exactly **+1 file / +21 tests**. ⚠️ The first baseline run showed one failure
+    in `attachEnergyFrom.test.ts` that did NOT reproduce on a re-run: D215's
+    mutation harness was live in `packages/engine/src` and had `continuous.ts`
+    mutated at that moment. Recorded rather than smoothed over — a transient red in
+    this checkout is a sibling's mutant, not a flake. `bun run check` cannot be run
+    green from this tree for an unrelated reason: `src/lib/reducedMotionSweep.test.ts`
+    (D214's in-flight work, not this slice's file) fails `tsc -b` on missing
+    `@types/node`. */
+
+export const engineVersion = "0.136.0";
 
 export type {
   ApplyResult,

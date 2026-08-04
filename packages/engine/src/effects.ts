@@ -1324,6 +1324,92 @@ export type EffectOp =
           take, because all three go into the one predicate. */
       ownerPokemon?: string;
     }
+  /** The counter move whose DESTINATION is a second decision — *"Move all damage
+      counters from 1 of your Benched Pokémon to **1 of your opponent's
+      Pokémon**."* (Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus", **2
+      legal**). D138's sentence with its fixed destination replaced by a choice,
+      and the axis `moveCountersToDefender`'s doc block above refused to guess at
+      three separate slices (D138, D205, D206).
+
+      **A SECOND OP RATHER THAN A `to` RIDER ON `moveCountersToDefender`, AND
+      D131's WIDEN-DON'T-ADD RULE IS WHAT DECIDES IT — TWICE OVER.** That rule
+      licenses a field when everything downstream of the shared part is
+      byte-identical. Here the SOURCE pick is byte-identical (the same
+      `subgroupRefs(ownBenchRefs(...))` candidate set), and everything after it
+      is not: this op asks a whole second question, parks a second time, and its
+      §11 gate is CONDITIONAL on where the counters land, where the fixed-
+      destination op's is unconditional. And the alternative — renaming
+      `moveCountersToDefender` so one op could honestly carry both — is not
+      available at any price a slice can pay: `pendingOp.op` is a PERSISTED
+      literal riding `GameState.phase.cont` into the match record, so renaming it
+      would owe a `MATCH_RECORD_VERSION` bump. A name that lies or a bump that is
+      not this slice's to take; the third door is a new inhabitant, which is what
+      `optional` was at D186 and costs neither.
+
+      **`fromBench` IS THE ANSWER TO THE FIRST QUESTION, CARRIED ON THE OP
+      ITSELF, AND IT IS NEVER AUTHORED.** The deriver emits this op WITHOUT it;
+      the interpreter re-emits it WITH it once the source is known (inline when
+      the Bench forces the pick, spliced by `resumeProgram` when it parks — see
+      `continuationOps` there). Absent = "the source is still unknown, ask for
+      it"; present = "the source is that Bench index, ask where the counters go".
+      One op, two questions, one park each.
+
+      ⚠️ **THE CHANNEL IS THE OP AND DELIBERATELY NOT `EffectRecord`, WHICH IS
+      THE OTHER MECHANISM THAT COULD CARRY IT.** The standing rule — the unit of
+      SHARING is decided by the READ SITE, the unit of STORAGE by the WRITE SITES
+      — answers this cleanly: there is exactly ONE reader (this op's own second
+      question) and exactly ONE writer (its own first answer), so nothing is
+      being shared and a shared bus is the wrong home. And the record would be
+      the wrong home even if it were free, on MEANING: `EffectRecord` holds *what
+      MOVED* (`paid` / `moved` / `discarded`), and `recordGate` — the printed "if
+      you do" / "in this way" — reads it. Filing a source that has been NAMED but
+      not yet emptied would make that gate answer true for an action that has not
+      happened, which is precisely the "half of a printed action" failure
+      `moveCountersToDefender`'s own doc block names on the other side of the
+      engine.
+
+      **`fromBench` IS AN INDEX AND NOT A `PokemonRef`, D104's minimal shape.**
+      The printed source is *"1 of your **Benched** Pokémon"* — the seat is
+      `ctx.seat` and the zone is the printed word, so a ref would be two thirds
+      constant. A printing whose source could be the Active (Munkidori's *"1 of
+      your Pokémon"*) is what would widen this to a `PokemonTarget`, and that
+      printing is not reachable for a second reason anyway (below).
+
+      **WHAT THE FAMILY COSTS BEYOND THIS OP, MEASURED RATHER THAN GUESSED**
+      (remote D1, 2026-08-04, all three text columns via `json_each`, `GLOB`).
+      The chosen-destination counter move is **8** Standard-legal printings over
+      4 surfaces, not D206's 7 — and this op reaches 2 of them:
+        • ✅ Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus" (attack, 2).
+        • ⏹️ Munkidori sv06-095/sv06.5-072/sv08.5-044 "Adrena-Brain" (ability, 3)
+          — *"move **up to 3** damage counters"* is a THIRD decision, and a
+          how-many prompt is a shape no `EffectPrompt` kind has. That is a WIRE
+          change (`packages/schema` + the HUD dialog), not an engine one.
+        • ⏹️ Team Rocket's Orbeetle sv10-089/-198 "Rocket Brain" (ability, 2) —
+          *"**As often as you like** during your turn"* is an unbounded repeat the
+          phase model has no shape for, and its destination is the controller's
+          OWN board.
+        • ⏹️ Alakazam sv06-082 "Strange Hacking" (attack, 1) — *"any number …
+          **in any way you like**"* is a many-to-many assignment, `attachCards`'
+          shape rather than this one, and both ends sit on the opponent's board.
+      The three refused rows are refused on a MECHANISM each, none of which this
+      op could approximate — the D138 rule (take the width the printing measures)
+      pointed the other way. */
+  | {
+      op: "moveCountersChosen";
+      /** The Bench index the counters come OFF, once the first question has been
+          answered. Never authored — see the doc block above.
+
+          ⚠️ **THE OP HAS NO `ownerPokemon` RIDER AND THAT IS A MEASUREMENT.**
+          `moveCountersToDefender` grew one at D205 because a printing measured
+          it; the sweep above says NO chosen-destination printing carries a
+          possessive, in either scope, so a rider here would be a reading nothing
+          prints — D138's own rule (take the width the printing measures), which
+          this op's whole family is built on. The two ops still share the SOURCE
+          candidate helper (`ownBenchRefs`), which is the part that could drift;
+          `subgroupRefs` is the narrowing D205's printing bought and this one did
+          not. */
+      fromBench?: number;
+    }
   /** Spread damage (§8.5): place `amount` HP of damage on EACH of the
       opponent's Benched Pokémon. Weakness/Resistance NEVER apply to Benched
       Pokémon, so this is flat. A SECONDARY damage clause, distinct from the
@@ -3001,11 +3087,16 @@ const SELF_INSTALLED_RECOIL =
 //      "Rocket Mirror", **2 legal**. Dedenne ex's sentence with one possessive
 //      inserted: same amount ("all"), same source zone ("Benched"), same fixed
 //      destination. The optional capture below is the whole diff.
-//   ⏹️ REFUSED — "…from 1 of your Benched Pokémon **to 1 of your opponent's
+//   ✅ NO LONGER REFUSED, AND IT IS THE SIBLING ANCHOR BELOW RATHER THAN A
+//      CAPTURE HERE — "…from 1 of your Benched Pokémon **to 1 of your opponent's
 //      Pokémon**." Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus",
-//      **2 legal**. This is D138's DESTINATION axis, and it is a second CHOICE
-//      (a second park, on the opponent's board) rather than a predicate on the
-//      first — a different op shape, not a rider. Flagged with that piece.
+//      **2 legal**. D205 called this "a second CHOICE (a second park, on the
+//      opponent's board) rather than a predicate on the first — a different op
+//      shape, not a rider", and that reading held: D216 built the op
+//      (`moveCountersChosen`) and left this anchor untouched, because an
+//      alternation here would put two op SHAPES behind one regex. The two
+//      anchors stay disjoint on their TAIL, exactly as `COUNTER_MOVE_TO_DEFENDER`
+//      and `COUNTER_PUT_ON_DEFENDER` stay disjoint on their first word.
 //   ⏹️ REFUSED, AND IT CANNOT BE TAKEN AT ALL — "…from 1 of your Benched
 //      **Ancient** Pokémon to your opponent's Active Pokémon." Flutter Mane
 //      sv08-096 "Perplexing Transfer", **1 legal**. It is one adjective away
@@ -3028,6 +3119,28 @@ const SELF_INSTALLED_RECOIL =
 // drops out, leaving D138's exact literal.
 const COUNTER_MOVE_TO_DEFENDER =
   /^Move all damage counters from 1 of your Benched (?:([A-Z][A-Za-z ]*)['’]s )?Pokémon to your opponent['’]s Active Pokémon\.$/;
+// D216 — THE SAME SENTENCE WITH A CHOSEN DESTINATION. "Move all damage counters
+// from 1 of your Benched Pokémon to 1 of your opponent's Pokémon." Cofagrigus
+// sv10.5w-040/-123 "Extended Damagriiigus", **2 legal**, and the ONLY printing
+// of this tail in either scope (remote D1, 2026-08-04, all three text columns
+// through `json_each`, GLOB and never LIKE).
+//
+// A SEPARATE ANCHOR AND NOT AN ALTERNATION IN THE ONE ABOVE, because the two
+// tails select different OP SHAPES rather than different field values. Every
+// capture this file grows lands in a field of ONE op (D131's rule); a tail that
+// picks the op is a different anchor, which is why `COUNTER_MOVE_TO_DEFENDER`
+// and `COUNTER_PUT_ON_DEFENDER` are two regexes over one printed noun phrase.
+//
+// ⚠️ AND IT CARRIES NO OWNER CAPTURE, WHICH IS THE MEASUREMENT AND NOT AN
+// OVERSIGHT. The sweep above ran over all three text columns in BOTH scopes and
+// found no chosen-destination printing with a possessive: D205's capture exists
+// because Team Rocket's Wobbuffet prints one, and copying it here would derive a
+// reading no card has — the same call D139's anchor made about a singular "1
+// damage counter" and D131 made about "the top 1 cards", one field over. The day
+// such a printing exists, this anchor gains the group and the op gains the
+// rider, together, and the census line above is what says so.
+const COUNTER_MOVE_TO_CHOSEN =
+  /^Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent['’]s Pokémon\.$/;
 // The PUT on the defender (D139) — "Put {N} damage counters on your opponent's
 // Active Pokémon.", the whole printed effect. TWO printings / TWO distinct
 // clauses, on two different cards: Mimikyu sv02-097 "Ghost Eye" ({P}{C}, N = 7)
@@ -6122,6 +6235,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         : { op: "moveCountersToDefender", ownerPokemon: match[1] },
     ];
   }
+
+  // 21b. "Move all damage counters from 1 of your Benched Pokémon to 1 of your
+  //      opponent's Pokémon." — D216's CHOSEN-DESTINATION counter move,
+  //      Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus", **2 legal**.
+  //      Numbered as a sibling of 21 rather than appended, because it is the SAME
+  //      printed action reading its destination out of a decision instead of out
+  //      of the text — and it must be tried AFTER 21, since the two anchors are
+  //      both `^Move all damage counters from 1 of your Benched …$` and only
+  //      their tails part. (They are mutually exclusive as written — "to your
+  //      opponent's Active Pokémon" and "to 1 of your opponent's Pokémon" cannot
+  //      both match one string — so the order is documentation, not a
+  //      dependency; stated because the NEXT tail added here might not be.)
+  //
+  //      `fromBench` is deliberately ABSENT from the derived op: the deriver
+  //      emits the question, not its answer (see the op's doc block). With no
+  //      owner capture either (the anchor's own block says why), the arm has
+  //      nothing to branch on and the op is FIELD-LESS — which is what D138's arm
+  //      looked like before a printing bought it a rider.
+  if (COUNTER_MOVE_TO_CHOSEN.test(effect)) return [{ op: "moveCountersChosen" }];
 
   // 22. "Put {N} damage counters on your opponent's Active Pokémon." — D139's PUT
   //     on the defender, 2 printings across 2 clauses (Mimikyu sv02-097 "Ghost
