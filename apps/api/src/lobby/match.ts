@@ -544,19 +544,39 @@ export function readMatchRecord(raw: unknown): MatchRecord | null {
     this set ⟺ EVERY effect prompt kind has an online dialog." 2b-iii dialoged all
     seven kinds (a/b/c), so `resolveEffect` is ON and a real-deck effect play that
     parks at effect:choose drives to completion — the precondition real deck
-    selection (3a) relied on, now MET. ⚠️ **AND THAT INVARIANT IS A LIVE
-    OBLIGATION, NOT A CLOSED ONE — D157 IS THE FIRST SLICE TO ADD AN EIGHTH KIND**
-    (`chooseAttack`: pick one of the opposing Active's printed attacks to bar —
-    Medicham sv01-111, Oranguru sv02-094). It landed with its schema arm
-    (`redactedEffectPromptSchema`), its redactor arm (`redactPrompt`), its
-    projection arm (`effectDecisionFromPrompt`) and its dialog (`ChooseAttackDialog`)
-    in the same slice, which is what keeps this set safe. **A future slice that adds
-    a NINTH prompt kind and stops before the dialog re-arms the soft-lock this line
-    is about**, and the compiler catches only three of those four steps — the
-    engine's `EffectPrompt` switch, the redactor's and the projection's are all
-    exhaustive, but `EffectChooseDialog`'s chain ends in an `else`, so the missing
-    dialog is a TYPE error at the fall-through arm rather than at the chain. Say so
-    rather than trusting the reader to notice. (`retreat` never carried the caveat — it only
+    selection (3a) relied on, now MET.
+
+    🛑 **THIS PARAGRAPH USED TO ASSERT THAT INVARIANT HELD, AND IT WAS FALSE FOR
+    FORTY-FOUR DECISIONS. D201 CORRECTED IT.** The old text said D157's EIGHTH kind
+    (`chooseAttack`: bar one of the opposing Active's printed attacks — Medicham
+    sv01-111, Oranguru sv02-094) *"landed with its schema arm, its redactor arm, its
+    projection arm and its dialog (`ChooseAttackDialog`) in the same slice, which is
+    what keeps this set safe."* **Three of those four are true. The dialog it named
+    is the LOCAL one (`GameHud`); `OnlineHud`'s `EffectChooseDialog` never got an
+    arm**, so from D157 until D201 an online `chooseAttack` park rendered `undefined`
+    — no dialog, no decline, Escape swallowed by the phase, **match stuck** — while
+    this comment said it could not happen. ⚠️ **THE COMMENT WAS NOT MERELY STALE: IT
+    IS WHY NOBODY LOOKED.** An invariant asserted in prose is not checked by anything,
+    and it reads exactly like one that is.
+
+    ⚠️ **AND THE REASON IT GAVE FOR BEING SAFE WAS ALSO WRONG.** It claimed the
+    compiler catches three of the four steps because *"`EffectChooseDialog`'s chain
+    ends in an `else`, so the missing dialog is a TYPE error at the fall-through arm."*
+    That described the LOCAL chain, which was safe only ACCIDENTALLY (a sibling
+    dialog's prop is an `Extract<…>`, so widening the union broke the build); the
+    ONLINE router had **no declared return type at all**, so an unmatched kind fell
+    off the end as `undefined` and the compiler said nothing.
+
+    ✅ **NOW IT IS A CHECK RATHER THAN A CLAIM, AND THIS COMMENT IS NO LONGER LOAD-
+    BEARING.** D186 made the local router an annotated exhaustive `switch`; D201 gave
+    the online one a declared `ReactElement` return type **and** a `const unhandled:
+    never = prompt` floor. **A TENTH prompt kind that stops before either dialog now
+    FAILS THE BUILD**, and two runtime pins back it up (a `Record` keyed by the
+    prompt-kind union, and a table test rendering every kind read off
+    `redactedEffectPromptSchema.options`). The union is **NINE** kinds today —
+    mayDraw, choosePokemon, choosePokemonMulti, moveEnergy, discardEnergy,
+    chooseCards, attachCards, chooseAttack, and D186's `confirm` — not the seven
+    this paragraph counted. (`retreat` never carried the caveat — it only
     discards energy + promotes a Bench Pokémon, never parking at a decision, so it
     is soft-lock-safe with ANY deck; `useAbility`/`playTrainer`/`rareCandy` DO park,
     which is exactly why they wait for the dialoged effect layer.) `resolveEffect` is
