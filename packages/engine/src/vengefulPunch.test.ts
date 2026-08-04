@@ -47,6 +47,13 @@ import {
 // same antecedent, a different consequent — so the sweep this slice adds is the
 // site that family will read at when it lands.
 //
+// ⚠️ AND SEE D160/D162 — BOTH OF THE ABOVE. The 890 / 5 is the OUTAGE-WINDOW
+// catalog and is left standing as the population this slice actually queried; D160
+// re-ingested `swsh10.5` (978 rows / 6 sets) and D162 re-ran BOTH censuses against
+// the restored catalog — the recoil needle still returns EIGHT rows and the KO
+// antecedent still SIX, the restored set contributing ZERO to either. Both floors
+// above are also TOTALS.
+//
 // ⚠️ IT IS ROCKY HELMET'S SIBLING, NOT ITS MIRROR, AND THE READ SITES ARE WHY.
 // Same mechanism, same `COUNTERS_PLACED source: "counterattack"` row, same
 // "the Tool IS the source" (no `requiresTool`). The differences are two, and each

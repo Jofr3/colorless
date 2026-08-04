@@ -459,6 +459,12 @@ describe("the family this label must still cover — three printings, none an Ab
   // TWO have now landed and been re-pointed rather than deleted — Scary Fangs at
   // D152, Vengeful Punch at D158 — and each landed with no new `source` member,
   // which is the third and fourth payout on D141's judgement.
+  //
+  // ⚠️ AND SEE D160/D162. The 890 / 5 above is the OUTAGE-WINDOW catalog and is
+  // left standing as the population D158 actually queried; D160 re-ingested
+  // `swsh10.5` (978 rows / 6 sets) and D162 re-ran this census against the
+  // restored catalog — the needle still returns the SAME EIGHT rows, the restored
+  // set contributing ZERO. The floor above is also the TOTAL.
 
   it("Vengeful Punch sv03-197 — the SECOND recoil TOOL, LANDED at D158, and it joins THIS label", () => {
     // ⚠️ THE WITNESS RE-POINTED RATHER THAN DELETED, which is what makes it worth

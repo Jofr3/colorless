@@ -56,6 +56,12 @@ import {
 // exact against today's D1 and a FLOOR against the 76 lost rows no population can
 // see — said rather than left to a reader to infer.
 //
+// ⚠️ AND SEE D160/D162. The 890 / 5 above is the OUTAGE-WINDOW catalog and is left
+// standing as the population this slice actually queried; D160 re-ingested
+// `swsh10.5` (978 rows / 6 sets) and D162 re-ran this census against the restored
+// catalog — `LIKE '%by attacks from%'` outside `attacks_json` still returns SIX
+// rows, the restored set contributing ZERO. The floor above is also the TOTAL.
+//
 // ⚠️ THREE MECHANISMS, NOT ONE PREDICATE WITH A PARAMETER, AND THE READ SITES ARE
 // THE GROUND (D155's rule: "it reads better" is never one). All four sentences
 // prevent damage; what they do NOT share is who the rule belongs to, which decides

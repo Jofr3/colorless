@@ -40,6 +40,12 @@ import {
 // slice, so unlike D154 there is no fielded-but-uncatalogued third printing. Both
 // ids were swept repo-wide for a misnamed comment or test title and were clean.
 //
+// ⚠️ AND SEE D160/D162. The 890 / 5 above is the OUTAGE-WINDOW catalog and is left
+// standing as the population this slice actually queried; D160 re-ingested
+// `swsh10.5` (978 rows / 6 sets) and D162 re-ran this census against the restored
+// catalog — `LIKE '%can''t use that attack%'` still returns exactly TWO rows, the
+// restored set contributing ZERO. The floor above is also the TOTAL.
+//
 // FOUR things this slice turns on, and every one of them is a question the two
 // slices in front of it did NOT have to answer:
 //

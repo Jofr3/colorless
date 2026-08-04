@@ -51,6 +51,20 @@ import {
 // "5 printings" FOUR in the catalog and §D151's "six rows" FIVE: both counted
 // Pidove swsh10.5-061, of fixture provenance. Same failure, same direction.
 //
+// ⚠️ AND SEE D160/D162 — THIS IS THE ONE HEADER IN THE FAMILY WHOSE CENSUS DID NOT
+// SURVIVE THE RE-RUN INTACT, SO READ THE PARAGRAPH ABOVE AS PROVENANCE AND NOT AS
+// A COUNT. The 890 / 5 is the OUTAGE-WINDOW catalog: the local D1 had silently
+// dropped all 88 `swsh10.5` rows to an uncheckpointed WAL, D160 re-ingested them
+// (978 rows / 6 sets) and re-ran this census against the restored catalog. This
+// slice's OWN anchor is untouched — `more damage (before applying` still returns
+// exactly ONE row (Seismitoad sv03-052). But BOTH downward corrections above
+// REVERSE: `less damage (before applying` returns SIX rows and not five (Pidove
+// swsh10.5-061 is CATALOGUED, not of fixture provenance), so §D149's "5 printings"
+// and §D151's "six rows" were EXACT all along and the corrections to FOUR and FIVE
+// were the missing set speaking. D160's generalisation, and this paragraph is its
+// worked example: a count a query cannot reproduce is not thereby WRONG — the
+// query owes its SCOPE.
+//
 // Four things the slice turns on:
 //
 //   • THE RECORD IS D154's WITH ONE KEY ADDED, AND IS STILL A SECOND FIELD. This
