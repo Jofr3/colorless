@@ -146,6 +146,18 @@ describe("FilterRail", () => {
     expect(retry).toHaveBeenCalledTimes(1);
   });
 
+  it("degrades per dimension when only SOME options failed", () => {
+    // The catalog vocabularies load per resource (catalogOptions.ts), so a
+    // dead /sets + /series leaves the facet-fed sections fully usable — only
+    // the set/serie selects go, alongside the one retry notice.
+    renderRail(DEFAULT_FILTERS, { ...READY, status: "error", sets: [], series: [] });
+    expect(screen.getByText("Some filter options couldn't load.")).toBeTruthy();
+    expect(screen.queryByLabelText("Set")).toBeNull();
+    expect(screen.queryByLabelText("Serie")).toBeNull();
+    expect(screen.getByRole("button", { name: "Common" })).toBeTruthy();
+    expect(screen.getByLabelText("Illustrator")).toBeTruthy();
+  });
+
   it("hides a dimension whose facet list is empty", () => {
     renderRail(DEFAULT_FILTERS, { ...READY, facets: { ...FACETS, illustrators: [] } });
     expect(screen.queryByLabelText("Illustrator")).toBeNull();
