@@ -166,7 +166,7 @@ const facetValues = (rows: { value: string | null }[]): string[] =>
   facetVocabulary(rows.map((row) => row.value));
 
 // GET /facets — the filter vocabularies actually present in the catalog (P2
-// task 10), feeding the web's selects instead of hardcoded constants. Seven
+// task 10), feeding the web's selects instead of hardcoded constants. Eight
 // DISTINCTs in one D1 round trip; `types` holds ARRAYS per row, so its
 // distinct rows flatten + dedupe + sort in memory (the vocabulary is tiny).
 //
@@ -174,10 +174,25 @@ const facetValues = (rows: { value: string | null }[]): string[] =>
 // rendered one chip per value in the builder's FilterRail, so the 34 rarity
 // rows and 2 regulation-mark rows spelling absence as "None" put two dead
 // chips in the rail (D194).
+//
+// It is ALSO the mechanism that lets `?suffix=` exist before any row carries
+// a suffix (D198). `cards.suffix` is NULL catalog-wide until an ingest fills
+// it, so this DISTINCT returns nothing, `suffixes` serves `[]`, and the rail
+// renders no chip — the filter is unreachable rather than broken. That is the
+// whole degradation story; there is no second guard anywhere, which is why
+// this list must keep coming from the DATA and never from a constant.
 catalogRoutes.get("/facets", catalogCache, async (c) => {
   const db = drizzle(c.env.DB);
-  const [rarityRows, typeRows, stageRows, trainerRows, energyRows, illustratorRows, markRows] =
-    await db.batch([
+  const [
+    rarityRows,
+    typeRows,
+    stageRows,
+    trainerRows,
+    energyRows,
+    illustratorRows,
+    markRows,
+    suffixRows,
+  ] = await db.batch([
       db
         .selectDistinct({ value: cards.rarity })
         .from(cards)
@@ -209,6 +224,11 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
         .from(cards)
         .where(isNotNull(cards.regulationMark))
         .orderBy(asc(cards.regulationMark)),
+      db
+        .selectDistinct({ value: cards.suffix })
+        .from(cards)
+        .where(isNotNull(cards.suffix))
+        .orderBy(asc(cards.suffix)),
     ]);
   const payload: CatalogFacets = {
     rarities: facetValues(rarityRows),
@@ -223,6 +243,14 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
     energyTypes: facetValues(energyRows),
     illustrators: facetValues(illustratorRows),
     regulationMarks: facetValues(markRows),
+    // Through the same sentinel guard as the rest, deliberately and in
+    // advance: nothing has been ingested into this column yet, so unlike the
+    // other seven there is no sweep behind it — a "None" suffix cannot be
+    // ruled out until the first run, and this is the one place where letting
+    // one through would put a dead chip in the rail (the ingest mapper
+    // normalises the same value on the way IN, D197; neither guard is
+    // redundant — see ./map.ts).
+    suffixes: facetValues(suffixRows),
   };
   return c.json(catalogFacetsSchema.parse(payload));
 });

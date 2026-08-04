@@ -151,9 +151,10 @@ describe("catalogFacetsSchema", () => {
     energyTypes: ["Normal", "Special"],
     illustrators: ["5ban Graphics", "Naoyo Kimura"],
     regulationMarks: ["G", "H"],
+    suffixes: ["MEGA", "V", "ex"],
   };
 
-  it("parses the seven vocabularies (empty lists included)", () => {
+  it("parses the eight vocabularies (empty lists included)", () => {
     expect(catalogFacetsSchema.parse(facets)).toEqual(facets);
     expect(catalogFacetsSchema.safeParse({ ...facets, illustrators: [] }).success).toBe(true);
   });
@@ -162,6 +163,19 @@ describe("catalogFacetsSchema", () => {
     const { stages: _stages, ...withoutStages } = facets;
     expect(catalogFacetsSchema.safeParse(withoutStages).success).toBe(false);
     expect(catalogFacetsSchema.safeParse({ ...facets, rarities: [null] }).success).toBe(false);
+    // `suffixes` is REQUIRED like the other seven, not optional-with-default —
+    // that is what makes a pre-D198 cached /facets body fail loudly here
+    // instead of reaching the rail as `undefined` (the cache prefix moved to
+    // v6 for exactly this reason; apps/api/src/catalog/cache.ts).
+    const { suffixes: _suffixes, ...withoutSuffixes } = facets;
+    expect(catalogFacetsSchema.safeParse(withoutSuffixes).success).toBe(false);
+  });
+
+  it("accepts an EMPTY suffix vocabulary — the state production is in today", () => {
+    // `cards.suffix` is NULL on every row until an ingest fills it, so the
+    // live payload carries `suffixes: []`. It must parse: the empty list IS
+    // the signal the rail reads to hide the section.
+    expect(catalogFacetsSchema.parse({ ...facets, suffixes: [] }).suffixes).toEqual([]);
   });
 });
 

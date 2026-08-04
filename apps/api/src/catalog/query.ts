@@ -57,6 +57,12 @@ export const cardsQuerySchema = z.object({
   rarity: multiParam.optional(),
   /** Pokémon stage(s), e.g. "Basic" (repeatable, vocabulary: GET /facets). */
   stage: multiParam.optional(),
+  /** Printed rule-box marker(s), e.g. "ex" / "VMAX" (repeatable, vocabulary:
+      GET /facets `suffixes`). Pokémon-only by construction — the ingest
+      writes NULL for Trainer and Energy rows (../ingest/map.ts) — so it never
+      needs a category guard: `?suffix=ex&category=Trainer` is empty because
+      no such row exists, not because the filter refused. */
+  suffix: multiParam.optional(),
   /** Trainer subtype(s), e.g. "Item" (repeatable, vocabulary: GET /facets). */
   trainerType: multiParam.optional(),
   /** Energy subtype(s): "Normal" / "Special" (repeatable). */
@@ -182,6 +188,15 @@ export function buildCardsWhere(query: CardsQuery): SQL | undefined {
   }
   if (query.stage !== undefined) {
     conditions.push(inArray(cards.stage, query.stage));
+  }
+  if (query.suffix !== undefined) {
+    // Exact stored values, like every other vocabulary dimension — the chips
+    // come from /facets, which serves the stored spellings verbatim, so the
+    // case of "ex" vs "EX" (tcgdex prints both across eras) is DATA rather
+    // than something to fold here. Folding it would also make the filter
+    // disagree with its own vocabulary list, which is exactly the trap the
+    // rarity sentinel note below warns about.
+    conditions.push(inArray(cards.suffix, query.suffix));
   }
   if (query.trainerType !== undefined) {
     conditions.push(inArray(cards.trainerType, query.trainerType));

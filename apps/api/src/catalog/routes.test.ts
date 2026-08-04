@@ -49,6 +49,7 @@ describe("GET /cards param validation", () => {
       "serie=",
       "illustrator=",
       "text=",
+      "suffix=",
     ]) {
       const res = await app.request(`/cards?${query}`, {}, envWith(kv));
       expect(res.status).toBe(400);
@@ -78,7 +79,7 @@ describe("GET /cards param validation", () => {
 describe("catalog KV cache middleware", () => {
   it("serves a seeded key as a hit without touching D1", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
-    const { kv } = fakeKv({ "catalog:v5:/cards?page=1&set=nope": cachedBody });
+    const { kv } = fakeKv({ "catalog:v6:/cards?page=1&set=nope": cachedBody });
     // Param order differs from the stored key — normalization must line up.
     const res = await app.request("/cards?set=nope&page=1", {}, envWith(kv));
     expect(res.status).toBe(200);
@@ -90,7 +91,7 @@ describe("catalog KV cache middleware", () => {
   it("normalizes repeated params into one key — reordered repeats share it", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
     const { kv } = fakeKv({
-      "catalog:v5:/cards?rarity=Common&type=Fire&type=Water": cachedBody,
+      "catalog:v6:/cards?rarity=Common&type=Fire&type=Water": cachedBody,
     });
     const res = await app.request("/cards?type=Water&type=Fire&rarity=Common", {}, envWith(kv));
     expect(res.status).toBe(200);
@@ -112,6 +113,8 @@ describe("catalog KV cache middleware", () => {
       "nameExact=Joltik",
       "stage=Basic&stage=Stage1&trainerType=Item&energyType=Special",
       "serie=sv&illustrator=Naoyo%20Kimura&text=Poison",
+      // D198: repeatable like the other vocabulary dimensions.
+      "suffix=ex&suffix=VMAX",
     ]) {
       const res = await app.request(`/cards?${query}`, {}, envWith(kv));
       expect(res.status).not.toBe(400); // dies at the absent D1, not validation
@@ -149,8 +152,9 @@ describe("catalog KV cache middleware", () => {
       energyTypes: ["Normal"],
       illustrators: ["Naoyo Kimura"],
       regulationMarks: ["H"],
+      suffixes: ["ex"],
     };
-    const { kv } = fakeKv({ "catalog:v5:/facets": JSON.stringify(facets) });
+    const { kv } = fakeKv({ "catalog:v6:/facets": JSON.stringify(facets) });
     const res = await app.request("/facets", {}, envWith(kv));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-luminous-cache")).toBe("hit");

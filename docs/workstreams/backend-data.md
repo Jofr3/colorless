@@ -588,9 +588,7 @@ claims hundreds). The column is added, `mapCard` writes it (sentinel-normalised
 like the other facet vocabularies — see §5.3.1), and `CARDS_COLUMNS` emits it,
 so the next ingest populates it.
 
-⚠️ **Unproven until a re-ingest: the column is NULL on all 3,786 production
-rows.** No filter, no facet and no wire field reads it yet — deliberately, so
-an unpopulated column cannot silently empty a result page. Discharge with:
+⚠️ **Unproven until a re-ingest: the column has no values.** Discharge with:
 
 ```sh
 cd apps/api && bun scripts/ingest.ts --remote     # then re-check the census below
@@ -601,12 +599,46 @@ SELECT suffix, COUNT(*) FROM cards WHERE suffix IS NOT NULL GROUP BY suffix;
 ```
 
 `api.tcgdex.net` is blocked by the network policy in this session too (as it
-was for D188 and D194), so the ingest half remains outstanding. Landing the
-`?suffix=` filter is a follow-up and needs `CatalogFacets` to grow a
-`suffixes` vocabulary first (`packages/schema`) — that facet list is what makes
-the filter degrade correctly, because the FilterRail already hides a section
-whose vocabulary is empty, so the chip simply will not exist until the column
-has values.
+was for D188, D194 and D197), so the ingest half remains outstanding.
+
+⚠️ **AND THE COLUMN IS NOT IN PRODUCTION AT ALL.** D197 recorded it as "NULL on
+all 3,786 rows"; it is stronger than that — migration `0006` was generated and
+proven against a fresh LOCAL D1, but **never applied to the remote database**
+(`PRAGMA table_info(cards)` on production has no `suffix`; `wrangler d1
+migrations apply` is a manual step and `deploy` does not run it). That is a
+deploy ORDERING constraint for D198, not a code problem, and it is sharp: the
+`/facets` handler now selects `cards.suffix` inside the same `db.batch()` as
+the other seven vocabularies, so deploying the Worker against an unmigrated
+database fails the WHOLE endpoint, not just the new field. **Apply the
+migration first:**
+
+```sh
+cd apps/api && bun run db:migrate:remote        # 0006 — before deploying D198
+```
+
+### 5.3.3 `?suffix=` and `CatalogFacets.suffixes` (D198)
+
+The filter D197 deferred, landed with the mechanism that makes it safe. The
+vocabulary comes from the DATA (`SELECT DISTINCT suffix … WHERE suffix IS NOT
+NULL`, through the same `facetVocabulary` sentinel guard as the other seven),
+and the rail renders one chip per value — so an empty column yields an empty
+list, no chip, and no way to reach the filter from the UI. Verified end to end
+against a real local D1 rather than argued: with every `suffix` NULL, `/facets`
+serves `"suffixes":[]` while the other seven stay populated and
+`GET /cards?suffix=ex` returns `total: 0` (reachable only by hand-writing the
+URL); with one row set to `ex`, the value appears in `suffixes` and the filter
+returns exactly that row. A literal `"None"` is dropped from the vocabulary by
+the same guard.
+
+`suffix` is its own filter DIMENSION, not extra chips in the kind dimension:
+`buildCardsWhere` ANDs dimensions and ORs within one, so `?stage=Basic&suffix=ex`
+means "a Basic that is also an ex" — which is what the rail's two sections say.
+It is Pokémon-only by construction (the ingest writes NULL for Trainer and
+Energy rows, §3.4), so the builder offers the section only under Pokémon/All.
+
+KV prefix `v5`→`v6`, derived: the web client is types-only (no runtime
+validation), so a cached v5 `/facets` body reaches the rail as a `CatalogFacets`
+whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 
 ---
 
@@ -616,13 +648,14 @@ has values.
 GET    /health
 
 # Catalog (public; KV cache-aside on every 200, 1h TTL, `x-luminous-cache: hit|miss`,
-# key = `catalog:v5:` + normalized path+sorted-query — bump the version prefix
+# key = `catalog:v6:` + normalized path+sorted-query — bump the version prefix
 # whenever a cached shape — or its values for already-ingested rows — changes;
 # invalid query params → terse 400 JSON)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
                          #   name (substring, case-insensitive), nameExact, category,
-                         #   type, rarity, stage, trainerType, energyType, set, serie,
-                         #   illustrator, text, regulationMark, hpMin/hpMax (inclusive),
+                         #   type, rarity, stage, suffix, trainerType, energyType, set,
+                         #   serie, illustrator, text, regulationMark, hpMin/hpMax
+                         #   (inclusive),
                          #   legal=standard|expanded; type & rarity are REPEATABLE
                          #   (?type=Fire&type=Water — OR within the dimension, M9);
                          #   id is REPEATABLE too (≤100, deck hydration) and is now an
@@ -633,12 +666,25 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   text = substring over abilities_json + attacks_json + the
                          #   plain-text `effect` column (D197 — before that it reached
                          #   NO Trainer or Energy row at all, §5.3.2);
+                         #   suffix (printed rule box: ex/V/VMAX/MEGA/…) is REPEATABLE
+                         #   too and ANDs with stage; its vocabulary is /facets
+                         #   `suffixes`, EMPTY until an ingest fills the column, which
+                         #   is what keeps an unreachable filter unreachable (D198,
+                         #   §5.3.3);
                          #   sort=name|hp-desc|set (default set); page (1-based,
                          #   default 1), pageSize (default 50, max 100)
 GET    /cards/:id        # full canonical Card; 404 JSON if absent
 GET    /sets             # SetBrief[] (optional ?serie=), ordered by releaseDate
 GET    /sets/:id         # full Set + cards: CardBrief[] (ordered by local_id)
 GET    /series           # Serie[] = SerieBrief + nested SetBrief[]
+GET    /facets           # CatalogFacets — the EIGHT filter vocabularies actually
+                         #   present: rarities, types, stages, trainerTypes,
+                         #   energyTypes, illustrators, regulationMarks, suffixes.
+                         #   One db.batch of DISTINCTs, each through the sentinel
+                         #   guard (D194); a list is EMPTY when the column has no
+                         #   values, and the builder's rail hides the section it
+                         #   feeds — the only thing standing between an unpopulated
+                         #   column and a filter that empties a page (D198, §5.3.3)
 
 # Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists, else 404
 GET    /assets/cards/:cardId/:file   # high|low . webp|png|jpg (e.g. high.webp)

@@ -77,6 +77,16 @@ describe("cardsQuerySchema", () => {
     expect(result.success && result.data.energyType).toEqual(["Special"]);
   });
 
+  it("normalizes suffix to an array too — repeatable like the kind params", () => {
+    expect(parseCards({ suffix: "ex" }).success && parseCards({ suffix: "ex" }).data).toMatchObject(
+      { suffix: ["ex"] },
+    );
+    const repeated = parseCards({ suffix: ["ex", "VMAX"] });
+    expect(repeated.success && repeated.data.suffix).toEqual(["ex", "VMAX"]);
+    // Empty is a 400, like every other vocabulary param.
+    expect(parseCards({ suffix: "" }).success).toBe(false);
+  });
+
   it("accepts the P2 scalar params (nameExact/serie/illustrator/text)", () => {
     const result = parseCards({
       nameExact: "Fezandipiti ex",
@@ -223,6 +233,26 @@ describe("buildCardsWhere", () => {
     expect(sql).toContain('"cards"."trainer_type" in (?)');
     expect(sql).toContain('"cards"."energy_type" in (?)');
     expect(params).toEqual(["Basic", "Stage1", "Item", "Special"]);
+  });
+
+  it("matches suffix with IN, and ANDs it with the stage dimension", () => {
+    const { sql, params } = render(defaults({ suffix: ["ex", "MEGA"], stage: ["Basic"] }));
+    expect(sql).toContain('"cards"."suffix" in (?, ?)');
+    // Two dimensions, so they AND: "a Basic Pokémon that is also an ex".
+    // Within `suffix` the repeats OR. This is the split the rail relies on —
+    // stage chips and suffix chips are separate sections precisely because
+    // the server can only AND across them.
+    expect(sql).toContain('"cards"."stage" in (?)');
+    expect(sql).toContain(" and ");
+    expect(params).toEqual(["Basic", "ex", "MEGA"]);
+  });
+
+  it("passes suffix values through verbatim — no case folding against /facets", () => {
+    // The chips carry the STORED spelling (tcgdex prints "ex" in the SV era
+    // and "EX" in the XY era); folding here would make the filter disagree
+    // with the vocabulary it is driven by.
+    const { params } = render(defaults({ suffix: ["EX"] }));
+    expect(params).toEqual(["EX"]);
   });
 
   it("filters serie through a set-membership subquery", () => {

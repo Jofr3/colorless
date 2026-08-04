@@ -30,8 +30,21 @@ const CACHE_TTL_SECONDS = 3600;
     query was widened to find. Only `?text=` bodies actually change; the
     prefix is catalog-wide, so this costs one cold hour on every catalog key,
     which is the cheaper side of the trade against serving a hot search term's
-    old, narrow answer past the deploy. */
-const CACHE_VERSION = "v5";
+    old, narrow answer past the deploy.
+    v5→v6: /facets grew `suffixes` (D198). This is the first bump for a real
+    SHAPE change since v3, and the shape is what makes a stale body WRONG in
+    the strongest sense available here: the web client is types-only (no
+    runtime validation — src/lib/api.ts says so on purpose), so a v5 body
+    reaches the rail as a `CatalogFacets` whose required `suffixes` is
+    `undefined` at runtime while TypeScript swears it is a `string[]`. That is
+    a crash in the filter rail, not a stale chip list. The second, independent
+    reason: `?suffix=` was an UNKNOWN param before this deploy and zod strips
+    unknowns, so any `catalog:v5:/cards?suffix=…` entry holds the UNFILTERED
+    page under a key that now means something narrower. Nothing in the app
+    could have written one (no client sent the param — D197 refused to ship
+    it), but the key space genuinely changed meaning, and a cache that can
+    serve the wrong answer for an hour is not worth being clever about. */
+const CACHE_VERSION = "v6";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys
