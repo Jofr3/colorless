@@ -3098,6 +3098,551 @@ const METAL_BRIDGE: CardProgram = {
   passive: { noRetreatCostAura: { requiresEnergyType: "Metal" } },
 };
 
+// ── D199 — THE SECOND REGISTRY-ONLY SWEEP, AND THE FIRST ONE WHOSE CANDIDATE
+//    LIST WAS DERIVED RATHER THAN INHERITED. D190 worked the seven candidates
+//    `docs/reference/coverage-backlog-legal.md` had already named and exhausted
+//    them (3 built / 4 dropped). This slice re-censused **all 651 Standard-legal
+//    non-attack printings** against the remote D1 `luminous`
+//    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, 2,021 legal)
+//    on 2026-08-04 — every distinct sentence in `abilities_json` and in `effect`,
+//    grouped by text and ranked by legal printings — and asked ONE question of
+//    each: does it map onto ops that ALREADY EXIST, with no new op, no new field,
+//    no new `CardFilter` kind and no change to any file outside this one?
+//
+//    ANSWER: **28 programs / 47 legal printings** — 7.2 % of the 651. The other
+//    ~604 are OP-BOUND, not authoring-bound, and the twenty-odd cheapest of them
+//    are named with their exact missing piece in `legalNonAttackPrograms.test.ts`
+//    (`DROPPED`), which is this slice's real output: a ranked work order for the
+//    engine changes that would unlock the next tranche.
+//
+//    ⚠️ THE DOCTRINE IS STILL *EXACT MAP OR FLAG* (D190). Nothing here is close;
+//    a sentence that was close was dropped. Every row below is either a pure DATA
+//    re-parameterisation of a program already in this file, or a two-op sequence
+//    whose ops are each already driven by a shipped card.
+//
+//    ⚠️ AND EVERY COUNT IS A **LEGAL** COUNT. A registry row is keyed by CARD ID,
+//    so it serves exactly the ids it names and legality is a hard filter — D190's
+//    correction to D180, applied from the start here. ──
+
+/** Team Rocket's Crobat ex sv10-122/-217/-234/-242 — "Biting Spree": "When you
+    play this Pokémon from your hand to evolve 1 of your Pokémon during your
+    turn, you may choose 2 of your opponent's Pokémon and put 2 damage counters
+    on each of them."
+
+    Hawlucha's `FLYING_ENTRY` (sv01-118) with TWO tokens changed and a third
+    deliberately NOT changed. The amount is 20 HP (the printed 2 counters × 10,
+    converted at the producer as every registry row does); the trigger is
+    `onEvolve` where Hawlucha's is `onPlayToBench`; and the target is
+    **`opponentAny`**, not `opponentBench` — the printed noun is "your opponent's
+    Pokémon" with no zone word, so the Active is a candidate too (the Ninetales /
+    Fezandipiti reading, D143). `optional: true` on BOTH the trigger and the op is
+    Hawlucha's shape verbatim: the framework auto-fires the trigger, so the
+    printed "you may" has nowhere to live but the pick, and the pick is
+    all-or-nothing (2 refs or none, never one). 4 legal printings of 4 in the
+    catalog — the biggest single row in this slice. */
+const BITING_SPREE: CardProgram = {
+  triggered: [
+    {
+      name: "Biting Spree",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: 20,
+          count: 2,
+          source: "ability",
+          optional: true,
+        },
+      ],
+    },
+  ],
+};
+
+/** Team Rocket's Golbat sv10-121 — "Sneaky Bite": the SAME sentence one line up
+    with `count: 1` ("put 2 damage counters on 1 of your opponent's Pokémon").
+    A separate const rather than a shared object because the sentences are not
+    byte-identical — D190's rule, and the pre-evolution of the very card above,
+    so a shared object would be the easiest wrong edit in the file. 1 legal
+    printing. */
+const SNEAKY_BITE: CardProgram = {
+  triggered: [
+    {
+      name: "Sneaky Bite",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: 20,
+          count: 1,
+          source: "ability",
+          optional: true,
+        },
+      ],
+    },
+  ],
+};
+
+/** Tatsugiri svp-118 / sv06-131 / sv06-186 — "Attract Customers": "Once during
+    your turn, if this Pokémon is in the Active Spot, you may look at the top 6
+    cards of your deck, reveal a Supporter card you find there, and put it into
+    your hand. Shuffle the other cards back into your deck."
+
+    Pokégear 3.0's program (`sv01-186`) with `n: 6` for 7, lifted onto the
+    ABILITY surface — the first `lookAtTopN` consumer that is not a Trainer. Every
+    clause maps: "if this Pokémon is in the Active Spot" → `activeOnly`, "Once
+    during your turn" → `oncePerTurn`, "a Supporter card" → `max: 1` with the
+    `supporter` filter, "Shuffle the other cards back" → the trailing
+    `shuffleDeck` op (the Nest Ball pattern: a whiff still shuffles).
+    3 legal printings of 3 in the catalog. */
+const ATTRACT_CUSTOMERS: CardProgram = {
+  abilities: [
+    {
+      name: "Attract Customers",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [
+        { op: "lookAtTopN", n: 6, filter: { kind: "supporter" }, max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Volcanion ex sv09-031/-171/-182 — "Scalding Steam": "Once during your turn,
+    if this Pokémon is in the Active Spot, you may make your opponent's Active
+    Pokémon Burned."
+
+    ⚠️ THE FIRST ACTIVATED ABILITY IN THIS REGISTRY THAT APPLIES A §12 CONDITION,
+    and it needs nothing: `applyStatus`'s `"defender"` arm resolves to
+    `otherSeat(ctx.seat)`'s Active (interpreter.ts), which in a Trainer/Ability
+    program IS "your opponent's Active Pokémon". The arm has been controller-
+    relative since M4 — Armarouge's `SCORCHING_ARMOR` already drives it from a
+    TRIGGERED Ability — so the only new thing here is which surface authors it.
+    3 legal printings of 3 in the catalog. */
+const SCALDING_STEAM: CardProgram = {
+  abilities: [
+    {
+      name: "Scalding Steam",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [{ op: "applyStatus", target: "defender", status: "burned" }],
+    },
+  ],
+};
+
+/** Shiinotic sv08-009/-194 — "Calming Light": the sentence directly above with
+    **Asleep** for Burned. Separate const, D190's rule (not byte-identical), and
+    the token difference is load-bearing in a way the Burn one is not: Asleep is
+    the §12 ROTATION slot and Burned is its own flag, so a copy-paste that kept
+    `"burned"` would leave the rotation slot untouched and the test would see it.
+    2 legal printings of 2 in the catalog. */
+const CALMING_LIGHT: CardProgram = {
+  abilities: [
+    {
+      name: "Calming Light",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [{ op: "applyStatus", target: "defender", status: "asleep" }],
+    },
+  ],
+};
+
+/** Durant ex sv08-004/-215/-236 — "Sudden Shearing": "When you play this Pokémon
+    from your hand onto your Bench during your turn, you may discard the top card
+    of your opponent's deck."
+
+    Flamigo's `onPlayToBench` trigger carrying D130's `discardDeckTop` — two
+    shipped mechanisms meeting for the first time. `whose: "opponent"` is the
+    printed possessive; `count: 1` is the printed singular; `optional: true` is
+    the printed "you may" (auto-fired, and the op has no decline of its own — it
+    never parks — so the "may" is honoured by the trigger flag alone, which is the
+    same reading `optional` gets on every non-parking trigger). 3 legal printings
+    of 3 in the catalog. */
+const SUDDEN_SHEARING: CardProgram = {
+  triggered: [
+    {
+      name: "Sudden Shearing",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+    },
+  ],
+};
+
+/** Hop's Dubwool sv09-136 — "Defiant Horn": "When you play this Pokémon from
+    your hand to evolve 1 of your Pokémon during your turn, you may switch in 1
+    of your opponent's Benched Pokémon to the Active Spot."
+
+    A bare `gust` on the `onEvolve` trigger — Boss's Orders' one op, fired by
+    Arboliva's timing. 1 legal printing. */
+const DEFIANT_HORN: CardProgram = {
+  triggered: [
+    { name: "Defiant Horn", trigger: "onEvolve", optional: true, program: [{ op: "gust" }] },
+  ],
+};
+
+/** Emboar sv10.5w-013/-098 — "Inferno Fandango": "As often as you like during
+    your turn, you may attach a Basic {R} Energy card from your hand to 1 of your
+    Pokémon."
+
+    Baxcalibur's `SUPER_COLD` (sv02-060) with `"Fire"` for `"Water"` — the printed
+    sentence is otherwise byte-identical, including "As often as you like" →
+    `oncePerTurn: false` (so it never locks out) and "1 of your Pokémon" → no
+    target rider at all. A PURE DATA ROW. 2 legal printings of 2 in the catalog. */
+const INFERNO_FANDANGO: CardProgram = {
+  abilities: [
+    {
+      name: "Inferno Fandango",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Fire" }],
+    },
+  ],
+};
+
+/** Blaziken ex sv09-024 — "Seething Spirit": "Once during your turn, you may
+    attach a Basic Energy card from your discard pile to 1 of your Pokémon."
+
+    ⚠️ THE REAL CARD `fix-attacher` WAS STANDING IN FOR. That fixture was invented
+    at the `attachEnergyFrom` slice because the local catalog held no printed
+    discard-source attach with no riders; this is exactly that sentence, one type
+    filter LOOSER (the fixture attaches a Basic Fire), and it is Standard-legal.
+    1 legal printing. */
+const SEETHING_SPIRIT: CardProgram = {
+  abilities: [
+    {
+      name: "Seething Spirit",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "attachEnergyFrom", source: "discard" }],
+    },
+  ],
+};
+
+/** Alcremie ex sv09-075 — "Confectionary Gift": "Once during your turn, you may
+    heal 30 damage from 1 of your Pokémon."
+
+    Potion's op (`healChosen`, amount 30, no `zone`, no `upTo` — the printed exact
+    "1 of your Pokémon") on the Ability surface. 1 legal printing. */
+const CONFECTIONARY_GIFT: CardProgram = {
+  abilities: [
+    {
+      name: "Confectionary Gift",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "healChosen", amount: 30 }],
+    },
+  ],
+};
+
+/** Hoothoot sv08.5-077 — "Insomnia": "This Pokémon can't be Asleep."
+
+    Pachirisu's `ELECTRICITY_POUCHES` with one `StatusName` changed. ⚠️ IT IS THE
+    §12 IMMUNITY FAMILY'S FOURTH SENTENCE, and D174 closed that family "at 3 of 3
+    sentences and 4 of 4 printings" — a claim measured over the LOCAL 978-row /
+    6-set catalog, which holds no `sv08.5`. The claim is true of that population
+    and false of the Standard-legal one; `statusImmunity.test.ts` sweeps
+    `FIXTURE_POOL`, so it does not go red, and saying so here is the alternative
+    to letting a stale "CLOSED" read as a measurement of the legal pool.
+    1 legal printing. */
+const INSOMNIA: CardProgram = { passive: { statusImmunities: ["asleep"] } };
+
+/** Team Rocket's Porygon-Z sv10-155 — "Reconstitute": "You must discard 2 cards
+    from your hand in order to use this Ability. Once during your turn, you may
+    draw a card."
+
+    N's Zoroark ex's `TRADE` (D190) with the two numbers swapped — pay 2, draw 1.
+    The cost is the program's first op and `useAbility` refuses the use when it
+    cannot be paid (cardplay.ts `handCostUnmet`). 1 legal printing. */
+const RECONSTITUTE: CardProgram = {
+  abilities: [
+    {
+      name: "Reconstitute",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "payFromHand", count: 2, to: "discard" },
+        { op: "drawCards", count: 1 },
+      ],
+    },
+  ],
+};
+
+/** Quaquaval sv08-052 — "Up-Tempo": "You must put a card from your hand on the
+    bottom of your deck in order to use this Ability. Once during your turn, you
+    may draw cards until you have 5 cards in your hand."
+
+    ⚠️ THE FIRST ABILITY IN THIS REGISTRY WHOSE HAND COST IS NOT A DISCARD.
+    `payFromHand.to` has carried `"deckBottom"` since Dendra (a SUPPORTER), and
+    `useAbility`'s refusal message was already written to read the destination
+    rather than hard-code the word "discard" — cardplay.ts says so in a comment
+    that ends "no printed Ability pays anywhere but the discard today". This is
+    that card, and the generality it was written for is now exercised.
+    Note the ORDER: the payment happens first, so `drawUntilHandSize` measures the
+    hand AFTER it shrank, which is what the printed sentence order means.
+    1 legal printing. (The id collides in NAME only with `sv01-054` Quaquaval
+    "Energy Carnival" — a different printing with a different Ability, and the
+    registry is keyed by id.) */
+const UP_TEMPO: CardProgram = {
+  abilities: [
+    {
+      name: "Up-Tempo",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "payFromHand", count: 1, to: "deckBottom" },
+        { op: "drawUntilHandSize", size: 5 },
+      ],
+    },
+  ],
+};
+
+/** Enhanced Hammer sv06-148/-224 — "Discard a Special Energy from 1 of your
+    opponent's Pokémon." (Item)
+
+    `fix-hammer`'s program — the `opponentChosen` discard with NO coin gate — with
+    Giacomo's `specialEnergy` filter for `anyEnergy`. The fixture was invented at
+    the `discardEnergy` slice precisely because the local catalog held no printed
+    ungated `opponentChosen` discard; this is one, it is Standard-legal, and it
+    NARROWS to Special Energy. `count` absent = the printed singular "a".
+    `discardEnergyPlayable` refuses the play into a board with no Special Energy —
+    Crushing Hammer's gate, reached without the coin. 2 legal printings of 2. */
+const ENHANCED_HAMMER: CardProgram = {
+  trainer: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "specialEnergy" } }],
+};
+
+/** Fennel sv10.5b-082/-162 — "Heal 40 damage from each of your Pokémon."
+    (Supporter)
+
+    Garganacl's `healEach` at 40 — the CONTROLLER's Active and whole Bench, each
+    heal clamped independently. Deliberately NOT `healEachAll` (Picnic Basket),
+    whose sentence prints "(both yours and your opponent's)": the absent
+    parenthetical is the entire difference between the two ops, and it is the one
+    thing a plausible mis-authoring gets wrong. 2 legal printings of 2. */
+const FENNEL: CardProgram = { trainer: [{ op: "healEach", amount: 40 }] };
+
+/** Night Stretcher sv06.5-061 / sv08-251 — "Put a Pokémon or a Basic Energy card
+    from your discard pile into your hand." (Item)
+
+    Super Rod's `pokemonOrBasicEnergy` filter — the "any combination" predicate —
+    pointed at the HAND with `max: 1` (the printed singular "a"), and with NO
+    trailing shuffle, because nothing goes back to the deck. 2 legal printings. */
+const NIGHT_STRETCHER: CardProgram = {
+  trainer: [
+    { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "hand", max: 1 },
+  ],
+};
+
+/** Max Rod sv08.5-116 — "Put up to 5 in any combination of Pokémon and Basic
+    Energy cards from your discard pile into your hand." (Item) — Night
+    Stretcher's op with the printed "up to 5". 1 legal printing. */
+const MAX_ROD: CardProgram = {
+  trainer: [
+    { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "hand", max: 5 },
+  ],
+};
+
+/** Miracle Headset sv08-183 — "Put up to 2 Supporter cards from your discard
+    pile into your hand." (Item) — Pal Pad's filter with Energy Retrieval's
+    destination: to HAND, so no shuffle. Safe on the op's own authoring note (a
+    card whose filter matches its own category would offer ITSELF): this is an
+    ITEM retrieving SUPPORTERS. 1 legal printing. */
+const MIRACLE_HEADSET: CardProgram = {
+  trainer: [{ op: "discardPileRetrieval", filter: { kind: "supporter" }, dest: "hand", max: 2 }],
+};
+
+/** Energy Recycler sv10-164 — "Shuffle up to 5 Basic Energy cards from your
+    discard pile into your deck." (Item) — Energy Retrieval's filter with Pal
+    Pad's destination and shuffle. 1 legal printing. */
+const ENERGY_RECYCLER: CardProgram = {
+  trainer: [
+    { op: "discardPileRetrieval", filter: { kind: "basicEnergy" }, dest: "deck", max: 5 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Sacred Ash sv10-168 — "Shuffle up to 5 Pokémon from your discard pile into
+    your deck." (Item)
+
+    ⚠️ MIRIAM's FIRST SENTENCE, BYTE FOR BYTE — and NOT a Tier-0 alias of it,
+    because Miriam prints a SECOND sentence ("If you shuffled any cards into your
+    deck in this way, draw 3 cards.") that this card does not. Sharing the object
+    would give an Item a Supporter's draw. The `recordAs: "moved"` and the
+    `recordGate` are therefore absent here, which is the whole diff. 1 legal
+    printing. */
+const SACRED_ASH: CardProgram = {
+  trainer: [
+    { op: "discardPileRetrieval", filter: { kind: "anyPokemon" }, dest: "deck", max: 5 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Master Ball sv05-153 — "Search your deck for a Pokémon, reveal it, and put it
+    into your hand. Then, shuffle your deck." (Item) — Poké Ball's program with
+    the coin gate REMOVED, i.e. Mesagoza's gated pair lifted to the top level.
+    1 legal printing. */
+const MASTER_BALL: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Treasure Tracker sv08.5-131 — "Search your deck for up to 5 Pokémon Tool
+    cards, reveal them, and put them into your hand. Then, shuffle your deck."
+    (Item) — Town Store's `toolCard` filter searched to HAND at `max: 5`.
+    1 legal printing. */
+const TREASURE_TRACKER: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 5 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Dangerous Laser sv06.5-058 — "Your opponent's Active Pokémon is now Burned
+    and Confused." (Item)
+
+    TWO `applyStatus` ops, not one with a list: the op's `status` is a single
+    `StatusName` and the printed conjunction is two applications. They land in two
+    different places on the model — Burn is its own flag, Confusion is the
+    ROTATION slot — so neither overwrites the other, and both are asserted.
+    1 legal printing. */
+const DANGEROUS_LASER: CardProgram = {
+  trainer: [
+    { op: "applyStatus", target: "defender", status: "burned" },
+    { op: "applyStatus", target: "defender", status: "confused" },
+  ],
+};
+
+/** Kofu sv07-138/-165 — "Put 2 cards from your hand on the bottom of your deck
+    in any order. If you put 2 cards on the bottom of your deck in this way, draw
+    4 cards. (If you can't put 2 cards from your hand on the bottom of your deck,
+    you can't use this card.)" (Supporter)
+
+    Dendra's shape at 2-for-4: `payFromHand` to the deck BOTTOM filing under the
+    §9.2 `paid` slot, then a `recordGate` on it. The parenthetical is not a
+    separate mechanism — it is `handCostUnmet`, which playTrainer already checks
+    BEFORE the card leaves hand and with the played uid excluded (the printed
+    "from your hand" cannot mean Kofu itself). Because the play is refused unless
+    both cards can be paid, the gate is true on every path it is reached on; it is
+    authored anyway, since that is what the sentence says and Dendra's precedent
+    is the same. 2 legal printings of 2. */
+const KOFU: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 2, to: "deckBottom", recordAs: "paid" },
+    {
+      op: "recordGate",
+      slot: "paid",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [{ op: "drawCards", count: 4 }],
+    },
+  ],
+};
+
+/** Maximum Belt sv05-154 / sv08.5-117 — "Attacks used by the Pokémon this card
+    is attached to do 50 more damage to your opponent's Active Pokémon ex (before
+    applying Weakness and Resistance)." (Tool)
+
+    Choice Belt's `damageBonusBeforeWRIfTarget` with `"ex"` for `"V"` and 50 for
+    30 — a PURE DATA ROW on the defender-suffix seam, and the field's second
+    printing (D107's `pokemonSuffixOf` reused, so "ex" here means the same thing
+    it means to Mimikyu's Safeguard and to §8.1's prize value). 2 legal printings
+    of 2 — and note the SUFFIX is what makes this row worth more than Choice
+    Belt's: `"V"` names a class with **zero** Standard-legal printings. */
+const MAXIMUM_BELT: CardProgram = {
+  passive: { damageBonusBeforeWRIfTarget: { amount: 50, targetSuffix: "ex" } },
+};
+
+/** Binding Mochi sv06.5-055 / sv08.5-095 — "Attacks used by the **Poisoned**
+    Pokémon this card is attached to do 40 more damage to your opponent's Active
+    Pokémon (before applying Weakness and Resistance)." (Tool)
+
+    Defiance Band's `damageBonusBeforeWRIf` with the `yourActivePoisoned` board
+    condition (D116's member, printed on Okidogi ex's "Chain-Crazed").
+
+    ⚠️ THE GATE THE CARD PRINTS IS ABOUT THE **HOLDER**, AND THE MEMBER READS THE
+    SEAT'S **ACTIVE** — AND THE TWO CANNOT DISAGREE AT THIS FIELD'S READ SITES.
+    `damageBonusBeforeWRIf` is folded by `attackerPreWRBonus` out of
+    `passivesOf(attacker)`, so the contribution exists only when the HOLDER is the
+    body attacking; and a body attacking is the seat's Active by definition (§8).
+    Both read sites (attack.ts's main hit, interpreter.ts's `snipeActive`) resolve
+    the attacker that way, so "the holder is Poisoned" and "your Active is
+    Poisoned" are the same proposition wherever this number is read. A Tool on a
+    BENCHED body contributes nothing at all — not because the condition is false,
+    but because that body never reaches the fold — which is exactly what the
+    printed sentence means and is asserted rather than left to this note. D116's
+    own rule licenses the naming: a member is named for what it READS, and the
+    printed pronoun is resolved by the anchor. 2 legal printings of 2. */
+const BINDING_MOCHI: CardProgram = {
+  passive: { damageBonusBeforeWRIf: { amount: 40, cond: { kind: "yourActivePoisoned" } } },
+};
+
+/** Levincia sv09-150 / sv10-244 — "Once during each player's turn, that player
+    may put up to 2 Basic {L} Energy cards from their discard pile into their
+    hand." (Stadium)
+
+    ⚠️ THE FIRST STADIUM ABILITY THAT IS NOT A DECK SEARCH. Artazon / Mesagoza /
+    Town Store all run `searchDeck`; this one runs `discardPileRetrieval`, and it
+    needed nothing — `StadiumAbility.program` is a plain `EffectOp[]` and the
+    per-player turn flag (`TurnAllowances.stadiumAbilityUsed`) already carries
+    "once during EACH player's turn", so the opponent activates the same Stadium
+    on their own turn with no non-active-seat routing. Everything else is
+    Energy Retrieval's row with the `energyType` refinement: `basicEnergy` and NOT
+    `providesEnergy`, because the cards are sitting in a PILE attached to nothing
+    and the printed noun is "Basic {L} Energy CARDS" (Electric Generator's reading
+    of the same choice, one zone over). No trailing shuffle — the destination is a
+    hand. 2 legal printings of 2. */
+const LEVINCIA: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Levincia",
+      program: [
+        {
+          op: "discardPileRetrieval",
+          filter: { kind: "basicEnergy", energyType: "Lightning" },
+          dest: "hand",
+          max: 2,
+        },
+      ],
+    },
+  },
+};
+
+/** Spiky Energy sv09-159/-190 — "As long as this card is attached to a Pokémon,
+    it provides {C} Energy. / If the Pokémon this card is attached to is in the
+    Active Spot and is damaged by an attack from your opponent's Pokémon (even if
+    this Pokémon is Knocked Out), put 2 damage counters on the Attacking Pokémon."
+
+    ⚠️ THE SECOND WRITER OF `EnergyProgram.passive` EVER, AND THE FIRST FROM A
+    FIELD OTHER THAN §12. D174 bought that surface for Therapeutic Energy and
+    AUDITED all twelve `passivesOf` fields for reachability from an Energy source;
+    `damageAttacker` was marked *reachable ⚠️* with exactly one caveat — its
+    `requiresTool` rider would ask a question about the BOARD rather than about
+    the source — and this printing does not carry that rider, so the caveat is
+    not reached. The audit's "No writer today; named so it is not discovered
+    later" is now spent as intended.
+
+    Both clauses are shipped mechanisms: `provides: ["Colorless"]` is Jet
+    Energy's line for Jet Energy's reason, and the second sentence's antecedent is
+    BYTE-IDENTICAL to Cacnea/Cacturne's "Counterattack Quills" — the "in the
+    Active Spot" clause is enforced by the READ SITE (attack.ts's main hit only),
+    which is why no `activeOnly` flag exists or is needed. `amount: 20` is the
+    printed 2 counters in HP, the unit every `damageAttacker` printing is stored
+    in.
+
+    ⚠️ AND ITS §9 ANSWER IS THE OPPOSITE OF THE POKÉMON PRINTING'S, FOR FREE. An
+    Energy is not an Ability, so `passivesOf` never drops this source under a lock
+    — a Klefki aura silences Cacturne's identical sentence and cannot touch this
+    one. That falls out of where the source sits in the fold; it is asserted
+    rather than assumed. 2 legal printings of 2. */
+const SPIKY_ENERGY: CardProgram = {
+  energy: { provides: ["Colorless"], passive: { damageAttacker: { amount: 20 } } },
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -3524,6 +4069,105 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-poisonpoint": POISON_POINT,
   "fix-trade": NS_ZOROARK_EX,
   "fix-metalbridge": METAL_BRIDGE,
+  // ── D199 — THE DERIVED REGISTRY-ONLY SWEEP. 28 programs / 47 Standard-legal
+  //    printings, every id below verified against the remote D1 `luminous`
+  //    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows / 20 sets) on
+  //    2026-08-04: each group returned `legal_standard = 1` on EVERY id, exactly
+  //    ONE distinct printed sentence and exactly ONE card name, so no group below
+  //    is silently two cards sharing an object. Marks H and I only.
+  //
+  //    Ranked by legal printings, largest first — the order the census produced
+  //    and the order they were built in. ──
+  // — 4 printings: the biggest row in the slice. —
+  "sv10-122": BITING_SPREE, // Team Rocket's Crobat ex — "Biting Spree" (mark I)
+  "sv10-217": BITING_SPREE, // (reprint)
+  "sv10-234": BITING_SPREE, // (reprint)
+  "sv10-242": BITING_SPREE, // (reprint)
+  // — 3 printings each. —
+  "svp-118": ATTRACT_CUSTOMERS, // Tatsugiri — "Attract Customers" (promo, mark H)
+  "sv06-131": ATTRACT_CUSTOMERS, // (reprint)
+  "sv06-186": ATTRACT_CUSTOMERS, // (reprint)
+  "sv09-031": SCALDING_STEAM, // Volcanion ex — "Scalding Steam" (mark I)
+  "sv09-171": SCALDING_STEAM, // (reprint)
+  "sv09-182": SCALDING_STEAM, // (reprint)
+  "sv08-004": SUDDEN_SHEARING, // Durant ex — "Sudden Shearing" (mark H)
+  "sv08-215": SUDDEN_SHEARING, // (reprint)
+  "sv08-236": SUDDEN_SHEARING, // (reprint)
+  // — 2 printings each. —
+  "sv08-009": CALMING_LIGHT, // Shiinotic — "Calming Light" (mark H)
+  "sv08-194": CALMING_LIGHT, // (reprint)
+  "sv10.5w-013": INFERNO_FANDANGO, // Emboar — "Inferno Fandango" (mark I)
+  "sv10.5w-098": INFERNO_FANDANGO, // (reprint)
+  "sv06-148": ENHANCED_HAMMER, // Enhanced Hammer (Item, mark H)
+  "sv06-224": ENHANCED_HAMMER, // (reprint)
+  "sv10.5b-082": FENNEL, // Fennel (Supporter, mark I)
+  "sv10.5b-162": FENNEL, // (reprint)
+  "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
+  "sv08-251": NIGHT_STRETCHER, // (reprint)
+  "sv07-138": KOFU, // Kofu (Supporter, mark H)
+  "sv07-165": KOFU, // (reprint)
+  "sv05-154": MAXIMUM_BELT, // Maximum Belt (Tool, mark H)
+  "sv08.5-117": MAXIMUM_BELT, // (reprint)
+  "sv06.5-055": BINDING_MOCHI, // Binding Mochi (Tool, mark H)
+  "sv08.5-095": BINDING_MOCHI, // (reprint)
+  "sv09-150": LEVINCIA, // Levincia (Stadium, mark I)
+  "sv10-244": LEVINCIA, // (reprint)
+  "sv09-159": SPIKY_ENERGY, // Spiky Energy (Special Energy, mark I)
+  "sv09-190": SPIKY_ENERGY, // (reprint)
+  // — 1 printing each. Cheap because each is a re-parameterisation of a program
+  //   already above; kept because a registry row is keyed by id and a printing
+  //   nobody names stays unsimulated forever. —
+  "sv10-121": SNEAKY_BITE, // Team Rocket's Golbat — "Sneaky Bite" (mark I)
+  "sv09-136": DEFIANT_HORN, // Hop's Dubwool — "Defiant Horn" (mark I)
+  "sv09-024": SEETHING_SPIRIT, // Blaziken ex — "Seething Spirit" (mark H)
+  "sv09-075": CONFECTIONARY_GIFT, // Alcremie ex — "Confectionary Gift" (mark H)
+  "sv08.5-077": INSOMNIA, // Hoothoot — "Insomnia" (mark H)
+  "sv10-155": RECONSTITUTE, // Team Rocket's Porygon-Z — "Reconstitute" (mark I)
+  "sv08-052": UP_TEMPO, // Quaquaval — "Up-Tempo" (mark H)
+  "sv08.5-116": MAX_ROD, // Max Rod (Item, mark H)
+  "sv08-183": MIRACLE_HEADSET, // Miracle Headset (Item, mark H)
+  "sv10-164": ENERGY_RECYCLER, // Energy Recycler (Item, mark I)
+  "sv10-168": SACRED_ASH, // Sacred Ash (Item, mark I)
+  "sv05-153": MASTER_BALL, // Master Ball (Item, mark H)
+  "sv08.5-131": TREASURE_TRACKER, // Treasure Tracker (Item, mark H)
+  "sv06.5-058": DANGEROUS_LASER, // Dangerous Laser (Item, mark H)
+  // FIXTURE demonstrators — synthetic `fix-*` bodies (never catalog rows) that
+  // carry the 28 programs so `legalNonAttackPrograms.test.ts` can DRIVE each one
+  // through the real engine. D190's idiom and D190's reason: a fixture id naming
+  // a real printing must appear in `catalogManifest.ts`, which is generated off
+  // the LOCAL sqlite — absent in this clone (`SQLITE_CANTOPEN`) and measuring a
+  // 978-row / 6-set catalog that holds none of sv05 / sv07 / sv08 / sv08.5 /
+  // sv09 / sv10 / sv10.5b / sv10.5w / svp anyway. `createGame` takes its
+  // `cardPool` as a PARAMETER, so the demonstrator pool stays local to the suite
+  // and `FIXTURE_POOL` is not touched.
+  "fix-bitingspree": BITING_SPREE,
+  "fix-sneakybite": SNEAKY_BITE,
+  "fix-attractcustomers": ATTRACT_CUSTOMERS,
+  "fix-scaldingsteam": SCALDING_STEAM,
+  "fix-calminglight": CALMING_LIGHT,
+  "fix-suddenshearing": SUDDEN_SHEARING,
+  "fix-defianthorn": DEFIANT_HORN,
+  "fix-infernofandango": INFERNO_FANDANGO,
+  "fix-seethingspirit": SEETHING_SPIRIT,
+  "fix-confectionarygift": CONFECTIONARY_GIFT,
+  "fix-insomnia": INSOMNIA,
+  "fix-reconstitute": RECONSTITUTE,
+  "fix-uptempo": UP_TEMPO,
+  "fix-enhancedhammer": ENHANCED_HAMMER,
+  "fix-fennel": FENNEL,
+  "fix-nightstretcher": NIGHT_STRETCHER,
+  "fix-maxrod": MAX_ROD,
+  "fix-miracleheadset": MIRACLE_HEADSET,
+  "fix-energyrecycler": ENERGY_RECYCLER,
+  "fix-sacredash": SACRED_ASH,
+  "fix-masterball": MASTER_BALL,
+  "fix-treasuretracker": TREASURE_TRACKER,
+  "fix-dangerouslaser": DANGEROUS_LASER,
+  "fix-kofu": KOFU,
+  "fix-maximumbelt": MAXIMUM_BELT,
+  "fix-bindingmochi": BINDING_MOCHI,
+  "fix-levincia": LEVINCIA,
+  "fix-spikyenergy": SPIKY_ENERGY,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
