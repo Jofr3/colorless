@@ -191,16 +191,18 @@ const DROPPED = [
   // rule once for all three attach ops — rather than as a `CardFilter` on the op.
   // Removed rather than annotated: the UNBUILT assertion below is what keeps this
   // work order from rotting, and it would fail on a built row.
-  {
-    sentence: "Once during your turn, you may attach up to 2 Basic {R} Energy cards from your hand to 1 of your Benched Ethan's Pokémon.",
-    // ⚠️ CORRECTED BY D204. This row shipped as `["sv10-025","sv10-172","sv10-206","sv10-249"]`,
-    // which are Rabsca ex, Team Rocket's Bother-Bot, Yanmega ex and a non-existent
-    // id — NOT Ethan's Ho-Oh ex. The count 4 was right; the ids were not.
-    ids: ["sv10-039", "sv10-209", "sv10-230", "sv10-239"],
-    legal: 4,
-    needs:
-      "the SAME in-play target filter, plus nothing else — `attachEnergyFrom` already has `benchOnly` for the printed zone word and a count of 2. One field on one op finishes this row and the Iono row together (9 legal printings), which makes it the cheapest next slice in this dimension by a wide margin.",
-  },
+  // ✅ D205 BUILT THIS ROW — Ethan's Ho-Oh ex "Golden Flame"
+  // (sv10-039/-209/-230/-239, 4 legal). ⚠️ AND ITS `needs` WAS FALSE AS WRITTEN,
+  // which is worth recording because D204 corrected this row's IDS and left the
+  // sentence beside them standing. It said the rider "plus nothing else —
+  // `attachEnergyFrom` already has `benchOnly` for the printed zone word **and a
+  // count of 2**". There was no count field of any kind: the engine's only
+  // multi-attach was N separate ops, each parking on its own free choice of
+  // target, which for this print would have let a player split the two Energy
+  // across two bodies. D204 measured that and flagged the row; D205 built
+  // `attachEnergyFrom.count`. Removed rather than annotated in place — the
+  // UNBUILT assertion below is what keeps this work order from rotting, and it
+  // fails on a built row.
   {
     sentence: "Switch your Active Team Rocket's Pokémon with 1 of your Benched Team Rocket's Pokémon. If you do, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
     // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Petrel / Crustle / Team
@@ -484,14 +486,15 @@ describe("D200 — the census, as data", () => {
     // The gap between the census and the yield is the whole finding, so it is
     // asserted rather than described: everything else is in DROPPED with a piece.
     //
-    // ⚠️ 23 AT D200, **17 AFTER D204** — the Iono's attach (5) and Spikemuth Gym
-    // (1) were built, so they left this list. The remainder is NOT the whole
-    // backlog: D204's own census found FIVE MORE SENTENCES / TEN LEGAL PRINTINGS
-    // this table never had (N's PP Up 1 and Marnie's Grimmsnarl ex 1, both now
-    // built; Team Rocket's Wobbuffet 2, Team Rocket's Orbeetle 2 and N's Zoroark
-    // ex 4, all flagged in `inPlayTarget.test.ts`). This table is D200's scope;
-    // that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(17);
+    // ⚠️ 23 AT D200, **17 AFTER D204**, **13 AFTER D205** — the Iono's attach (5)
+    // and Spikemuth Gym (1) left at D204, Ethan's Ho-Oh ex (4) at D205. The
+    // remainder is NOT the whole backlog: D204's own census found FIVE MORE
+    // SENTENCES / TEN LEGAL PRINTINGS this table never had (N's PP Up 1 and
+    // Marnie's Grimmsnarl ex 1, built by D204; Team Rocket's Wobbuffet 2, built by
+    // D205; Team Rocket's Orbeetle 2 and N's Zoroark ex 4, still flagged in
+    // `inPlayTarget.test.ts`). This table is D200's scope; that one is the current
+    // work order.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(13);
   });
 });
 

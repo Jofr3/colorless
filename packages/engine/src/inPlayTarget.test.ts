@@ -1,6 +1,6 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, programFor, topCardOf } from "./index";
+import { applyAction, createGame, deriveAttackEffect, programFor, topCardOf } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 // `attachEnergyTargets` is not re-exported from index.ts (it is an engine-internal
 // read site cardplay.ts imports directly); the attach test files reach it the same
@@ -88,6 +88,19 @@ import {
 // surface at all. This slice LANDS 7 of those 22 (Iono's 5, N's PP Up 1,
 // Marnie's 1) and FLAGS 15; adding Spikemuth Gym, it lands **8 of the 33** and
 // leaves 25 flagged.
+//
+// ── D205's ADDENDUM ─────────────────────────────────────────────────────────
+// D205 re-derived every id and every count in this file against the live D1 and
+// **nothing moved**: all 22 ids resolve to the cards D204 named, all 22 are
+// `legal_standard = 1`, and the per-owner table below still totals 80. It then
+// built two of the five flagged rows — Ethan's Ho-Oh ex (4) with a same-target
+// `count` on `attachEnergyFrom`, and Team Rocket's Wobbuffet (2) with an
+// `ownerPokemon` on `moveCountersToDefender` — so this table now lands **13 of
+// 22** and flags 9, and the whole backlog is **19 of the 33** flagged with
+// Spikemuth Gym counted. ⚠️ It also found ONE defect in the flag SHAPE above:
+// `programFor(id)?.attack` reads the registry only, and an attack sentence the
+// DERIVER resolves is fully built with `programFor(id)` still undefined — which
+// is precisely how Wobbuffet landed. See `attackIsBuilt` below.
 //
 // ── THE DESIGN QUESTION, AND THE REPO'S OWN RULE ANSWERING IT ────────────────
 // *Reuse `CardFilter`, or a new `TargetFilter`?* The standing rule is that **the
@@ -189,9 +202,14 @@ const IN_PLAY_TARGET_CENSUS = [
     card: "Ethan's Ho-Oh ex",
     surface: "ability",
     ids: ["sv10-039", "sv10-209", "sv10-230", "sv10-239"],
-    landed: false,
+    // ✅ D205 BUILT THIS ROW. The piece this `needs` named — "a same-target count
+    // on `attachEnergyFrom`" — is `count?: number`, and D204's reading of the gap
+    // is confirmed rather than corrected: the rider alone WOULD have split the
+    // batch across two bodies. `landed` flipped rather than the row deleted, so
+    // the 22-printing denominator this census measures stays checkable.
+    landed: true,
     needs:
-      "⚠️ THE RIDER IS NOT ENOUGH, contra D200's 'one field on one op finishes both rows'. The print pins BOTH Energy to ONE Pokémon ('to 1 of your Benched Ethan's Pokémon'), and the engine's multi-attach model is N independent `attachEnergyFrom` ops each parking on its OWN target — so two ops here would legally split across two bodies. Needs a same-target count on `attachEnergyFrom` (or a park that answers once for N).",
+      "D204's flag was right and D205 built the piece: `attachEnergyFrom.count`, ONE decision pinning `min(count, available)` Energy to the ONE body chosen — distinct from the N-ops-in-sequence model, which is Koraidon 'Dino Cry''s printed 'in any way you like' and would let a player split these two.",
   },
   {
     sentence:
@@ -209,9 +227,13 @@ const IN_PLAY_TARGET_CENSUS = [
     card: "Team Rocket's Wobbuffet",
     surface: "attack",
     ids: ["sv10-082", "svp-203"],
-    landed: false,
+    // ✅ D205 BUILT THIS ROW — and NOT through the registry. The sentence is read
+    // by the widened `COUNTER_MOVE_TO_DEFENDER` deriver anchor, so `programFor`
+    // stays undefined for both ids: see the landed assertion below, which is the
+    // reason that assertion had to grow a deriver arm.
+    landed: true,
     needs:
-      "⚠️ ABSENT FROM D200's FLAG TABLE. `moveCountersToDefender` takes NO parameters — no source choice, no zone, no predicate; it is a fixed self→defender move.",
+      "D204's flag was right about the shape (the op took no parameters) and D205 took the widening at the width the second ATTACK printing measures: one optional `ownerPokemon` on the SOURCE candidate set — D138's own stated condition for widening this op, arriving with a printing that differs on that axis and no other.",
   },
   {
     sentence:
@@ -808,23 +830,62 @@ describe("Spikemuth Gym sv10-169 — the row held back for scope only", () => {
 
 // ── 6. The census, and every flagged id asserted UNBUILT ─────────────────────
 
+// ⚠️⚠️ D205 — **THE PER-SURFACE FLAG D204 WROTE WAS STILL VACUOUS ON THE ATTACK
+// SURFACE, AND D205's OWN WORK IS WHAT PROVED IT.** D204 correctly replaced
+// D200's whole-id `programFor(id) === undefined` with a per-surface read, on the
+// ground that N's Zoroark ex already carries a program on a DIFFERENT surface.
+// But the attack arm it wrote is `programFor(id)?.attack`, and that reads the
+// REGISTRY ONLY: attack programs resolve `programFor(id)?.attack?.[index] ??
+// deriveAttackEffect(text)`, so a sentence the DERIVER picks up is fully built
+// with `programFor(id)` still undefined. Team Rocket's Wobbuffet is exactly that
+// card — D205 built it by widening one anchor, wrote no registry row, and D204's
+// flag for it would have stayed GREEN. Same class as the failure D204 caught in
+// D200, one level down: an assertion that is well-formed, runs, is green, and
+// cannot fail for the reason it exists. Both arms below now ask BOTH halves.
+function attackIsBuilt(id: string, sentence: string): boolean {
+  return programFor(id)?.attack !== undefined || deriveAttackEffect(sentence) !== null;
+}
+
+/** ⚠️ AND THE ABILITY SURFACE HAS THE SAME HOLE, ONE FIELD OVER (D205). A
+    printed Ability is `abilities` when the player activates it and `triggered`
+    when the board fires it, and D204's arm read only the first — which was
+    already wrong for a row in its OWN landed list: Marnie's Grimmsnarl ex's
+    "Punk Up" is an `onEvolve` trigger, so `programFor("sv10-136")?.abilities` is
+    undefined on a card D204 built. The printed surface is what the census names,
+    so both fields answer for it, on the flag arm as much as the landed one. */
+function abilitySurface(id: string): unknown {
+  return programFor(id)?.abilities ?? programFor(id)?.triggered;
+}
+
 describe("the re-derived census — what landed, and what is still owed a piece", () => {
-  it("lands 7 in-play-target printings across TWO ops, plus Spikemuth Gym", () => {
+  it("lands 13 in-play-target printings across THREE ops, plus Spikemuth Gym", () => {
     const landed = IN_PLAY_TARGET_CENSUS.filter((row) => row.landed);
-    // 7 = Iono's Bellibolt ex 5 + N's PP Up 1 + Marnie's Grimmsnarl ex 1, out of
-    // the 22 in-play-target printings the re-derived census finds.
-    expect(landed.flatMap((row) => row.ids)).toHaveLength(7);
+    // 13 = D204's 7 (Iono's Bellibolt ex 5 + N's PP Up 1 + Marnie's Grimmsnarl ex
+    // 1) + D205's 6 (Ethan's Ho-Oh ex 4 + Team Rocket's Wobbuffet 2), out of the
+    // 22 in-play-target printings the re-derived census finds. The denominator is
+    // unmoved: D205 re-derived every id in this table against the live catalog and
+    // every one resolves to the card D204 named.
+    expect(landed.flatMap((row) => row.ids)).toHaveLength(13);
     expect(IN_PLAY_TARGET_CENSUS.flatMap((row) => row.ids)).toHaveLength(22);
     for (const row of landed) {
-      for (const id of row.ids) expect(programFor(id)).toBeDefined();
+      for (const id of row.ids) {
+        const why = `${id} (${row.card}) is listed as LANDED on its ${row.surface}`;
+        // The landed check is per-surface and deriver-aware for the same reason
+        // the flag below is: Wobbuffet's row is built ENTIRELY in the deriver, so
+        // a bare `programFor(id)` here would have failed on a card that works.
+        if (row.surface === "attack") expect(attackIsBuilt(id, row.sentence), why).toBe(true);
+        else if (row.surface === "ability") expect(abilitySurface(id), why).toBeDefined();
+        else expect(programFor(id)?.trainer, why).toBeDefined();
+      }
     }
     expect(programFor(SPIKEMUTH.id)).toBeDefined();
   });
 
   it("⚠️ every FLAGGED SURFACE is still UNBUILT — exact map or flag, never a plausible one", () => {
     const flagged = IN_PLAY_TARGET_CENSUS.filter((row) => !row.landed);
-    // 15 = Ethan's 4 + Giovanni 3 + Wobbuffet 2 + Orbeetle 2 + Zoroark ex 4.
-    expect(flagged.flatMap((row) => row.ids)).toHaveLength(15);
+    // 9 = Giovanni 3 + Orbeetle 2 + Zoroark ex 4 (15 at D204 — Ethan's 4 and
+    // Wobbuffet's 2 were built by D205).
+    expect(flagged.flatMap((row) => row.ids)).toHaveLength(9);
     for (const row of flagged) {
       for (const id of row.ids) {
         const program = programFor(id);
@@ -836,8 +897,12 @@ describe("the re-derived census — what landed, and what is still owed a piece"
         // is the surface the flagged sentence lives on. A whole-id assertion —
         // the shape D200's flag list used — would have read that card as built
         // and quietly dropped it from the backlog.
-        if (row.surface === "attack") expect(program?.attack, why).toBeUndefined();
-        else if (row.surface === "ability") expect(program?.abilities, why).toBeUndefined();
+        //
+        // ⚠️ AND PER SURFACE IS NOT ENOUGH BY ITSELF (D205, above): the attack arm
+        // asks the DERIVER too, so a widened anchor cannot silently build a
+        // flagged sentence while this stays green.
+        if (row.surface === "attack") expect(attackIsBuilt(id, row.sentence), why).toBe(false);
+        else if (row.surface === "ability") expect(abilitySurface(id), why).toBeUndefined();
         else expect(program?.trainer, why).toBeUndefined();
       }
     }
@@ -847,14 +912,6 @@ describe("the re-derived census — what landed, and what is still owed a piece"
     expect(programFor("sv09-098")?.attack).toBeUndefined();
   });
 
-  it("⚠️ Ethan's Ho-Oh ex is NOT unlocked by the rider — D200's 'one field' claim was wrong", () => {
-    // The print pins BOTH Energy to ONE Pokémon; two `attachEnergyFrom` ops park
-    // on their own target each, so the rider alone would let a player split them.
-    // Named here so the refusal is a decision on the record, not an omission.
-    for (const id of ["sv10-039", "sv10-209", "sv10-230", "sv10-239"]) {
-      expect(programFor(id)).toBeUndefined();
-    }
-  });
 
   it("holds the census shape D200 measured (80 units / 13 owners / 46 sentences)", () => {
     // Re-derived with GLOB (case-sensitive) on 2026-08-04 and reproduced EXACTLY;

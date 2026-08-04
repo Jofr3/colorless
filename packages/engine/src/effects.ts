@@ -1266,20 +1266,32 @@ export type EffectOp =
       { resumeTail: true })` leaves `attackEpilogue` sitting on `state.pending`
       until the choice lands (D135).
 
-      NO FIELDS, AND THE MINIMAL SHAPE IS DELIBERATE (D104, and D130's
-      `discardOpponentDeckTop` is the precedent for putting the direction in the
-      NAME). Exactly one sentence in the pool has this shape; the neighbouring
-      counter-MOVE text is two ABILITIES, and each differs on a different axis —
-      Munkidori sv06.5-072 "Adrena-Brain" moves *up to 3* counters from 1 of your
-      Pokémon (any zone) to 1 of your opponent's Pokémon (a second choice), and
-      Slowbro sv01-043 "Strange Behavior" moves *1* counter from 1 of your OTHER
-      Pokémon to THIS one (your own side as the destination). Fielding an
-      `amount` / `from` / `to` now would be a three-axis guess made from one
-      printing. **THE CONDITION THAT WARRANTS THE WIDENING** (D131's rule — when
-      you decline a widening, write down what would earn it): a second ATTACK
-      printing of a counter move, at which point the two readings are in hand and
-      this op gains the field they actually differ on, exactly as D131 turned
-      `discardOpponentDeckTop` into `discardDeckTop { whose, count }`.
+      THE DIRECTION IS IN THE NAME (D104's minimal shape, and D130's
+      `discardOpponentDeckTop` is the precedent), and it STAYS there. D138 wrote
+      down what would earn a widening — *"a second ATTACK printing of a counter
+      move, at which point the two readings are in hand and this op gains the
+      field they actually differ on"* — and named the two ABILITY near-misses it
+      refused to guess from: Munkidori sv06.5-072 "Adrena-Brain" moves *up to 3*
+      counters from 1 of your Pokémon (any zone) to 1 of your OPPONENT's Pokémon
+      (a second choice), and Slowbro sv01-043 "Strange Behavior" moves *1*
+      counter from 1 of your OTHER Pokémon to THIS one (your own side as the
+      destination).
+
+      ⚠️ **D205 IS THAT SECOND ATTACK PRINTING, AND IT DIFFERS ON EXACTLY ONE
+      AXIS — THE SOURCE'S SUBGROUP, NOT THE AMOUNT AND NOT THE DESTINATION.**
+      Team Rocket's Wobbuffet sv10-082/svp-203 "Rocket Mirror" prints *"Move all
+      damage counters from 1 of your Benched **Team Rocket's** Pokémon to your
+      opponent's Active Pokémon."* — Dedenne ex "Tail Swap" word for word with
+      one possessive inserted. So the widening D138 licensed is taken at exactly
+      the width the second printing measures: ONE optional rider on the SOURCE
+      candidate set. `amount` and `from`-zone and `to` are STILL not fielded,
+      because both attack printings agree on all three, and the two Abilities
+      above still differ on axes no attack has printed.
+
+      `ownerPokemon` is answered by `matchesFilter(topCard, { kind:
+      "ownerPokemon", owner })` — D200's arm, D204's board-side reuse, a THIRD
+      read site for one predicate — so "a Team Rocket's Pokémon" cannot come to
+      mean one thing to a deck search and another to a counter move.
 
       NOT A FIELD ON `healChosen`, and that is D131's widen-don't-add rule
       APPLIED AND FAILING rather than skipped. That rule licenses a field when
@@ -1288,7 +1300,17 @@ export type EffectOp =
       the OTHER seat's board, which can end the game — an op named `heal` that
       placed damage would be the misnaming D128's provenance rule exists to
       prevent. */
-  | { op: "moveCountersToDefender" }
+  | {
+      op: "moveCountersToDefender";
+      /** Only Benched Pokémon in the printed owner-prefixed subgroup may be the
+          SOURCE — Team Rocket's Wobbuffet's *"1 of your Benched **Team
+          Rocket's** Pokémon"* (D205). Absent = every Benched body, which is
+          Dedenne ex's unmarked print and what this op meant before D205. The
+          value is the BARE owner name (`"Team Rocket"`), the same string
+          `CardFilter.ownerPokemon.owner` and `AttachTargetRiders.ownerPokemon`
+          take, because all three go into the one predicate. */
+      ownerPokemon?: string;
+    }
   /** Spread damage (§8.5): place `amount` HP of damage on EACH of the
       opponent's Benched Pokémon. Weakness/Resistance NEVER apply to Benched
       Pokémon, so this is flat. A SECONDARY damage clause, distinct from the
@@ -1530,20 +1552,35 @@ export type EffectOp =
       candidates is `parkOrForce`'s silent no-op, the same ending an undamaged
       pick takes. */
   | { op: "healChosen"; amount: number | "all"; zone?: "bench"; upTo?: number }
-  /** Attach ONE Basic Energy from a SOURCE zone (the controller's hand or
-      discard pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration
-      Ability family (Quaquaval "Energy Carnival" from hand; Baxcalibur "Super
-      Cold" a {W} from hand). `energyType` restricts it to a Basic Energy of that
-      type (undefined = any Basic Energy). Same-type Basic Energy cards are
-      fungible, so the ONLY decision is the TARGET: this PARKS on a choosePokemon
-      unless exactly one Pokémon is in play, and a source holding no matching
-      Energy is a no-op (programPlayable also blocks activating an Ability that
-      could only whiff). Single-energy — MULTI-attach ("attach up to N in any way
-      you like", Koraidon "Dino Cry") is just N of these ops in one program: the
-      interpreter parks on each attach's target in turn, and an op finding no more
-      matching Energy no-ops, so the program attaches min(N, available) — the
-      "may attach fewer" is auto-maxed (pure-upside, the auto-take doctrine). The
-      deck-search / look-at-top-N sources layer later ops on this primitive.
+  /** Attach Basic Energy from a SOURCE zone (the controller's hand or discard
+      pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration Ability
+      family (Quaquaval "Energy Carnival" from hand; Baxcalibur "Super Cold" a
+      {W} from hand). `energyType` restricts it to a Basic Energy of that type
+      (undefined = any Basic Energy). Same-type Basic Energy cards are fungible,
+      so the ONLY decision is the TARGET: this PARKS on a choosePokemon unless
+      exactly one Pokémon is in play, and a source holding no matching Energy is
+      a no-op (programPlayable also blocks activating an Ability that could only
+      whiff). The deck-search / look-at-top-N sources layer later ops on this
+      primitive.
+
+      ⚠️ **`count` IS THE DIFFERENCE BETWEEN "N ENERGY" AND "N ENERGY ONTO ONE
+      BODY", AND UNTIL D205 THE ENGINE COULD ONLY SPELL THE FIRST.** The doc here
+      used to say multi-attach "is just N of these ops in one program" — true for
+      Koraidon "Dino Cry"'s printed *"in any way you like"*, where each Energy is
+      an independent decision and N ops each parking on their OWN target is the
+      exact reading. It is FALSE for a print that pins the whole batch to one
+      Pokémon: Ethan's Ho-Oh ex "Golden Flame" says *"attach up to 2 Basic {R}
+      Energy cards from your hand to **1 of** your Benched Ethan's Pokémon"*, and
+      two ops there let a player split them across two bodies — a legal-looking
+      program that plays a rule the card does not print. So the ops-in-sequence
+      model stays for the "in any way you like" family and `count` is the
+      SAME-TARGET one: ONE decision, `min(count, available)` Energy onto the body
+      it named. Absent = 1, which is every pre-D205 program's meaning unchanged.
+
+      "up to N" is AUTO-MAXED in both models and for one reason — attaching is
+      pure upside, so the take-fewer right is not a decision worth a prompt (the
+      auto-take doctrine; a source holding fewer than `count` simply attaches
+      what it has, exactly as a later op in the sequential model no-ops).
 
       Riders: `targetType` restricts the eligible targets to the controller's own
       Pokémon whose top card is that type ({P}/{F}); `basicOnly` further requires
@@ -1556,6 +1593,22 @@ export type EffectOp =
       op: "attachEnergyFrom";
       source: "hand" | "discard";
       energyType?: string;
+      /** How many matching Basic Energy this ONE decision attaches to the ONE
+          chosen body — the printed *"attach up to 2 … to **1 of** your Benched
+          Ethan's Pokémon"* (Ethan's Ho-Oh ex "Golden Flame", D205). Absent = 1,
+          the single-attach every program before D205 meant, so the field is
+          OMITTED rather than written as 1 on those rows.
+
+          ⚠️ NOT the same field as "N of these ops in a program", and the
+          difference is the whole reason it exists: N ops park N times and may
+          land on N different bodies (Koraidon "Dino Cry"'s printed *"in any way
+          you like"*), where `count` parks ONCE and pins the batch. A print is
+          one or the other, never both — `maxPerTarget` on `attachFromDeck` is
+          the same distinction already drawn on the deck-search side.
+
+          `min(count, available)` is what actually lands: a hand holding one {R}
+          attaches one, silently, because the print says "UP TO". */
+      count?: number;
       targetType?: string;
       basicOnly?: true;
       /** The owner-prefixed subgroup the attach may land on — Iono's Bellibolt
@@ -2873,8 +2926,47 @@ const SELF_INSTALLED_RECOIL =
 // TYPED_SELF_DISCARD): the capitalised first word plus `^…$` is the WHOLE guard,
 // and it is what keeps Munkidori's and Slowbro's lowercase mid-sentence "move"
 // off this path.
+//
+// ⚠️ **D205 WIDENED THIS ANCHOR BY EXACTLY ONE OPTIONAL CAPTURE — THE SOURCE'S
+// OWNER-PREFIXED SUBGROUP — AND THE CENSUS THAT SIZED IT ALSO FOUND THE TWO
+// SENTENCES IT MUST REFUSE.** Remote D1 (735f0fb5-cdc3-494d-8b97-74a8ade0124a;
+// 3,786 rows / 20 sets, 2,021 `legal_standard = 1`), swept 2026-08-04 with GLOB
+// and never LIKE over `attacks_json` for `'Move all damage counters*'`. EIGHT
+// printings / FIVE distinct clauses, and D138's own two printings are BOTH
+// rotated out:
+//
+//   ✅ TAKEN — "…from 1 of your Benched **Team Rocket's** Pokémon to your
+//      opponent's Active Pokémon." Team Rocket's Wobbuffet sv10-082 / svp-203
+//      "Rocket Mirror", **2 legal**. Dedenne ex's sentence with one possessive
+//      inserted: same amount ("all"), same source zone ("Benched"), same fixed
+//      destination. The optional capture below is the whole diff.
+//   ⏹️ REFUSED — "…from 1 of your Benched Pokémon **to 1 of your opponent's
+//      Pokémon**." Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus",
+//      **2 legal**. This is D138's DESTINATION axis, and it is a second CHOICE
+//      (a second park, on the opponent's board) rather than a predicate on the
+//      first — a different op shape, not a rider. Flagged with that piece.
+//   ⏹️ REFUSED, AND IT CANNOT BE TAKEN AT ALL — "…from 1 of your Benched
+//      **Ancient** Pokémon to your opponent's Active Pokémon." Flutter Mane
+//      sv08-096 "Perplexing Transfer", **1 legal**. It is one adjective away
+//      from the row above and it has **no datum**: the Ancient/Future banner is
+//      printed on the card FACE and appears in NO ingested column (D146's
+//      finding, re-checked here against Roaring Moon ex sv04-124). A subgroup
+//      the catalog cannot answer is not a rider this anchor can grow — which is
+//      exactly why the capture below requires the POSSESSIVE `'s` rather than
+//      any capitalised word, and why "Ancient Pokémon" falls through it.
+//   ⏹️ Out of scope for legality — Dedenne ex sv02-093/-239 (the printings that
+//      bought this anchor) and Liepard sv04-115 are all `legal_standard = 0`.
+//      The anchor's own printings are rotated OUT; Wobbuffet is the reason it
+//      has legal work at all.
+//
+// The capture is `([A-Z][A-Za-z ]*)['’]s ` — a capitalised first letter, letters
+// and spaces only ("Team Rocket" has one), then the POSSESSIVE, matched
+// case-sensitively like every conjunct of the predicate it feeds. `Pokémon`'s
+// `é` is outside `[A-Za-z]`, so the unmarked Dedenne sentence cannot be misread
+// as an owner named "Pok" — the group simply does not match and, being optional,
+// drops out, leaving D138's exact literal.
 const COUNTER_MOVE_TO_DEFENDER =
-  /^Move all damage counters from 1 of your Benched Pokémon to your opponent['’]s Active Pokémon\.$/;
+  /^Move all damage counters from 1 of your Benched (?:([A-Z][A-Za-z ]*)['’]s )?Pokémon to your opponent['’]s Active Pokémon\.$/;
 // The PUT on the defender (D139) — "Put {N} damage counters on your opponent's
 // Active Pokémon.", the whole printed effect. TWO printings / TWO distinct
 // clauses, on two different cards: Mimikyu sv02-097 "Ghost Eye" ({P}{C}, N = 7)
@@ -5950,12 +6042,24 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     (D131's rule applied and failing — see the op's doc block). The CHOICE
   //     half genuinely was free: `ownBenchRefs` + `parkOrForce` is the candidate
   //     set D135 built for `zone: "bench"`, unchanged.
-  if (COUNTER_MOVE_TO_DEFENDER.test(effect)) {
+  match = COUNTER_MOVE_TO_DEFENDER.exec(effect);
+  if (match !== null) {
     // No `amount >= 1` guard, because there is no printed amount to guard: "all"
     // is not a number and cannot be zero. The degenerate case — a pick with no
     // counters on it — is a SILENT whiff at run time (the single-arm rule), not
     // a derivation failure, exactly as `CHOSEN_HEAL`'s "all" branch is.
-    return [{ op: "moveCountersToDefender" }];
+    //
+    // ⚠️ D205 — the owner key is OMITTED rather than set to `undefined` when the
+    // printing carries no possessive. `CHOSEN_HEAL`'s `zone` arm above states the
+    // reason and it is the same one: derived ops are compared BY VALUE against
+    // hand-authored registry rows, and `{ ownerPokemon: undefined }` is not
+    // `toEqual`-identical to an absent key under this suite's comparisons. So
+    // Dedenne ex's sentence still derives to the byte-identical op D138 shipped.
+    return [
+      match[1] === undefined
+        ? { op: "moveCountersToDefender" }
+        : { op: "moveCountersToDefender", ownerPokemon: match[1] },
+    ];
   }
 
   // 22. "Put {N} damage counters on your opponent's Active Pokémon." — D139's PUT

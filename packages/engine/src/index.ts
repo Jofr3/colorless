@@ -5715,7 +5715,83 @@ import type { GameState, Seat } from "./types";
     guards in D199's / D200's suites. Repo: **231 files / 4302 tests** at
     `20670d0` → **232 files / 4328 tests** green. */
 
-export const engineVersion = "0.130.0";
+/** 0.131.0 — **D205, THE SAME-TARGET ATTACH COUNT and THE COUNTER-MOVE SOURCE
+    SUBGROUP.** Two parameters on two existing ops, **six Standard-legal
+    printings**, `MATCH_RECORD_VERSION` **unchanged at 12**. `apps/api`, `src/**`
+    and `apps/**` untouched.
+
+    **`attachEnergyFrom.count` — the slice's ONE new primitive, and the field
+    D200 said already existed.** D200's flag table priced Ethan's Ho-Oh ex at the
+    in-play target rider "plus nothing else — `attachEnergyFrom` already has
+    `benchOnly` … **and a count of 2**". ⚠️ There was no count field of any kind.
+    The engine's only multi-attach was N separate ops in one program — the op's
+    own doc said so — which is the EXACT reading of Koraidon "Dino Cry"'s printed
+    *"in any way you like"* and the WRONG reading of *"attach up to 2 Basic {R}
+    Energy cards from your hand to **1 of** your Benched Ethan's Pokémon"*: two
+    ops park twice and let a player split the batch across two bodies. D204
+    measured that and flagged the row rather than forcing it; this slice builds
+    the piece. `count` parks ONCE and attaches `min(count, available)` to the ONE
+    body chosen. Absent = 1, so no pre-D205 program changes byte for byte, and
+    the two models now coexist explicitly — the same distinction `maxPerTarget`
+    already draws on the deck-search side. **Ethan's Ho-Oh ex
+    sv10-039/-209/-230/-239, 4 legal printings.**
+
+    **`moveCountersToDefender.ownerPokemon` — a widening D138 licensed in
+    advance, taken at the width the printing measures.** D138 shipped the op
+    field-less and wrote down what would earn it fields: *"a second ATTACK
+    printing of a counter move, at which point … this op gains the field they
+    actually differ on."* Team Rocket's Wobbuffet "Rocket Mirror" is that
+    printing and differs on ONE axis — the source's subgroup. The sweep that
+    sized it also found the two sentences the widened anchor must REFUSE, which
+    is what makes the width a measurement rather than a guess: Cofagrigus
+    sv10.5w-040/-123 (2 legal) prints D138's DESTINATION axis, which is a second
+    CHOICE and not a predicate; and ⚠️ **Flutter Mane sv08-096 (1 legal) is one
+    ADJECTIVE away — "1 of your Benched **Ancient** Pokémon" — and cannot be
+    built at all**, because the Ancient/Future banner is printed on the card FACE
+    and exists in no ingested column (D146). That is why the capture demands the
+    POSSESSIVE rather than any capitalised word. **Wobbuffet sv10-082/svp-203,
+    2 legal printings**, built ENTIRELY in the deriver with no registry row.
+    ⚠️ And D138's own printings (Dedenne ex sv02-093/-239) are `legal_standard =
+    0`: this op had NO legal work until Wobbuffet.
+
+    ⚠️ **D204's PER-SURFACE FLAG WAS STILL VACUOUS ON THE ATTACK SURFACE, AND
+    THIS SLICE'S OWN WORK IS WHAT PROVED IT.** D204 correctly replaced D200's
+    whole-id `programFor(id) === undefined` with a per-surface read — but wrote
+    the attack arm as `programFor(id)?.attack`, which reads the REGISTRY ONLY.
+    Attack programs resolve `programFor(id)?.attack?.[index] ??
+    deriveAttackEffect(text)`, so a sentence the DERIVER picks up is fully built
+    with `programFor(id)` still undefined. Wobbuffet is exactly that card, and
+    D204's flag for it would have stayed GREEN on a finished printing — the same
+    class of defect D204 caught in D200, one level down. Its ABILITY arm had the
+    twin hole one field over (`abilities` only, where `triggered` is the other
+    printed-Ability surface), and that one was **already false about Marnie's
+    Grimmsnarl ex, a card D204 itself landed**. Both arms now ask both halves.
+
+    **THE CENSUS, RE-DERIVED RATHER THAN INHERITED** (remote D1, 3,786 rows /
+    20 sets, 2,021 legal, 2026-08-04, `GLOB` and never `LIKE`): **D204's table
+    holds id by id.** All 23 ids resolve to the cards D204 names, all are legal,
+    the five flagged rows reproduce as complete legal sets when queried by name,
+    and the printed sentences match verbatim. Nothing of D204's data moved.
+
+    **`MATCH_RECORD_VERSION` STAYS 12**, derived rather than assumed: both
+    parameters DO reach storage (both ops park, `EffectContinuation.pendingOp` is
+    persisted), but both are OPTIONAL and their absence means exactly what every
+    earlier program meant — no `count` is the single attach, no `ownerPokemon` is
+    every benched body. D186's / D204's shape, not D136's, which bumped for a
+    REQUIRED field on a parking op.
+
+    Eighteen mutants, seventeen killed first round. ⚠️ ONE SURVIVOR, REPORTED AND
+    THEN REMOVED RATHER THAN TESTED AROUND: the attach caption's `count <= 1`
+    versus `count < 1` — a live difference **no authored row can reach**, because
+    D104's minimal-shape rule means `count: 1` is never spelled. The caption now
+    branches on the field's PRESENCE, which deletes the unkillable comparison.
+
+    Cost: 2 op parameters + 1 widened deriver anchor + 2 read-site arms + 2 small
+    shared helpers (`ownerNoun`, `subgroupRefs`) + 1 registry program, plus 1 new
+    test file (40 tests) and 3 re-pointed guards in D200's / D204's suites. Repo:
+    **232 files / 4328 tests** at `b91b5f9` → **233 files / 4367 tests** green. */
+
+export const engineVersion = "0.131.0";
 
 export type {
   ApplyResult,

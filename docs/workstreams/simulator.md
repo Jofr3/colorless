@@ -19828,3 +19828,205 @@ Suite: **+26 tests in 1 new file**. Repo: **231 files / 4302 tests** at `20670d0
 → **232 files / 4328 tests** green; `tsc -b` and
 `biome lint --error-on-warnings` clean. (Against the pre-D202 base `5abb5e4` the
 repo was 230 files / 4277 tests.)
+
+## D205 — the SAME-TARGET ATTACH COUNT (`attachEnergyFrom.count`) and the COUNTER-MOVE SOURCE SUBGROUP (`moveCountersToDefender.ownerPokemon`): two parameters, six Standard-legal printings, and **D204's per-surface flag was still vacuous on the ATTACK surface** (engine 0.130.0 → **0.131.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+`apps/api` untouched, `src/**` and `apps/**` untouched. Files touched:
+`packages/engine/src/{effects,interpreter,registry,index,inPlayTarget.test,ownerPrefix.test}.ts`
+and `packages/engine/package.json`, plus one new test file
+(`ownerTargetOps.test.ts`, 40 tests).
+
+### The census, re-derived — **D204's table holds, id by id**
+
+D205 was ordered to VERIFY D204's flag list rather than inherit it, because
+D200's list named entirely different cards on six of ten rows and its *"every id
+asserted unbuilt"* guard passed anyway. Re-run against the remote D1
+(`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, 2,021
+`legal_standard = 1`) on 2026-08-04, **with `GLOB` and never `LIKE`**:
+
+* All **23 ids** in `inPlayTarget.test.ts` (15 flagged + 8 landed) resolved by
+  `SELECT id, name, legal_standard`. **Every one names the card D204 says it
+  names, and every one is legal.**
+* The five flagged rows reproduce as **complete legal sets** when queried the
+  other way round, by name: Ethan's Ho-Oh ex 4, N's Zoroark ex 4, Team Rocket's
+  Giovanni 3, Team Rocket's Orbeetle 2, Team Rocket's Wobbuffet 2 — **15**.
+* The printed sentences in the table match `attacks_json` / `abilities_json` /
+  `effect` **verbatim**.
+
+**Nothing of D204's data moved.** What did move is one thing in its *shape*.
+
+### ⚠️ D204's per-surface flag was still VACUOUS on the ATTACK surface
+
+D204's central correction of D200 was that `programFor(id) === undefined` is the
+wrong question — N's Zoroark ex already carries a *"Trade"* Ability and is unbuilt
+only on its ATTACK — so it flagged **per surface**. That was right. But the arm it
+wrote for the attack surface is `programFor(id)?.attack`, **which reads the
+REGISTRY ONLY**. Attack programs resolve
+`programFor(id)?.attack?.[index] ?? deriveAttackEffect(text)`, so a sentence the
+**DERIVER** picks up is fully built with `programFor(id)` still `undefined`.
+
+Team Rocket's Wobbuffet is exactly that card. D205 built it by widening one
+regex, wrote no registry row, and **D204's flag for it would have stayed
+GREEN on a finished printing**. That is the same class of defect D204 caught in
+D200 — an assertion that is well-formed, runs, is green, and cannot fail for the
+reason it exists — one level down.
+
+Its ABILITY arm had the twin hole one field over: `abilities` only, where
+`triggered` is the other printed-Ability surface — and **that one was already
+false about a card D204 itself had landed**, Marnie's Grimmsnarl ex, whose "Punk
+Up" is an `onEvolve` trigger. Both arms now ask both halves (`attackIsBuilt`,
+`abilitySurface`), on the LANDED assertions as well as the flagged ones.
+
+### `attachEnergyFrom.count` — the one new primitive, and the field D200 said existed
+
+D200's flag row for Ethan's Ho-Oh ex priced it at the in-play target rider *"plus
+nothing else — `attachEnergyFrom` already has `benchOnly` for the printed zone
+word **and a count of 2**"*. ⚠️ **There was no count field of any kind**, and D204
+proved it while correcting that row's ids — but left the false sentence standing
+beside them. It is removed with the row here.
+
+The engine's only multi-attach was **N separate `attachEnergyFrom` ops in one
+program**, and the op's own doc said so. That is the EXACT reading of Koraidon
+"Dino Cry"'s printed *"in any way you like"*, where each Energy is an independent
+decision. It is the WRONG reading of *"attach up to 2 Basic {R} Energy cards from
+your hand to **1 of** your Benched Ethan's Pokémon"*, which pins the batch: two
+ops park twice and let a player put one Energy on each of two bodies — a
+legal-looking program playing a rule the card does not print.
+
+So the two models now coexist and the field is what tells them apart —
+`maxPerTarget` on `attachFromDeck` is the same distinction already drawn on the
+deck-search side. `count` **parks ONCE** and attaches `min(count, available)` to
+the ONE body chosen; **absent = 1**, which is what every pre-D205 program meant,
+so nothing existing changes byte for byte. "Up to" stays AUTO-MAXED in both
+models for one reason: attaching is pure upside, so the take-fewer right is not a
+decision worth a prompt (the auto-take doctrine the sequential model already
+used). **Ethan's Ho-Oh ex `sv10-039/-209/-230/-239` — 4 legal printings.**
+
+⚠️ The `programPlayable` gate is deliberately NOT written against `count`:
+"up to 2" with one {R} in hand is **not a whiff** — it attaches one, exactly as
+printed — so a gate on the count would refuse the card on a board where it works,
+which is the louder failure of the two. Driven, not argued.
+
+### `moveCountersToDefender.ownerPokemon` — a widening D138 licensed in advance
+
+D138 shipped the op field-less and wrote down the condition that would earn it
+fields: *"a second ATTACK printing of a counter move, at which point the two
+readings are in hand and this op gains the field they actually differ on."*
+Team Rocket's Wobbuffet "Rocket Mirror" is that printing and differs on **one**
+axis — the SOURCE's subgroup. Same amount ("all"), same source zone ("Benched"),
+same fixed destination.
+
+The sweep that sized it also found the sentences the widened anchor must REFUSE,
+which is what makes the width a measurement. `attacks_json` `GLOB 'Move all
+damage counters*'` over the whole D1 — **8 printings / 5 distinct clauses**:
+
+| clause | printings | verdict |
+|---|---|---|
+| "…from 1 of your Benched **Team Rocket's** Pokémon to your opponent's Active Pokémon." | `sv10-082`, `svp-203` — **2 legal** | ✅ **TAKEN** |
+| "…from 1 of your Benched Pokémon **to 1 of your opponent's Pokémon**." (Cofagrigus) | `sv10.5w-040/-123` — **2 legal** | ⏹️ REFUSED — D138's DESTINATION axis, a second CHOICE and not a predicate |
+| "…from 1 of your Benched **Ancient** Pokémon to your opponent's Active Pokémon." (Flutter Mane) | `sv08-096` — **1 legal** | ⏹️ ⚠️ REFUSED **AND UNBUILDABLE** |
+| "…from 1 of your Benched Pokémon to your opponent's Active Pokémon." (Dedenne ex, Liepard) | `sv02-093/-239`, `sv04-115` | `legal_standard = 0` |
+
+⚠️ **Flutter Mane is one ADJECTIVE away from the row that was taken and cannot be
+built at all.** The Ancient/Future banner is printed on the card FACE and appears
+in **no ingested column** — `Card` is a closed schema whose only mark-like field
+is `regulationMark`, the block letter that decides legality. The engine's only
+subgroup predicate is NAME-based, and the banner is not in the name either. So a
+rider for it would be an op with a permanently empty candidate set: a silent dead
+attack. **That is why the capture demands the POSSESSIVE rather than any
+capitalised word**, and it is asserted both ways in the suite.
+
+⚠️ And a finding no earlier slice had cause to notice: **D138's own printings are
+rotated OUT of Standard.** Dedenne ex `sv02-093/-239` and Liepard `sv04-115` are
+all `legal_standard = 0`, so this op had **zero legal work** until Wobbuffet.
+
+The capture is `([A-Z][A-Za-z ]*)['’]s ` — capitalised initial, letters and
+spaces ("Team Rocket" has one), then the possessive, matched case-sensitively
+like every conjunct of the predicate it feeds. `Pokémon`'s `é` is outside
+`[A-Za-z]`, so the unmarked Dedenne sentence cannot be misread as an owner named
+"Pok": the group simply does not match and, being optional, drops out, leaving
+D138's exact literal and its **byte-identical** op (the key is OMITTED, never
+`undefined` — `CHOSEN_HEAL`'s `zone` trap).
+
+Wobbuffet needs **no registry row**: it is built entirely in `effects.ts`.
+
+### Read sites, and the predicate shared for the third time
+
+`ownerPokemon` is answered by `matchesFilter(topCard, { kind: "ownerPokemon",
+owner })` — D200's arm, D204's board-side reuse, now a **third** read site and the
+first outside the attach family. What is shared is the PREDICATE, not the type,
+so "a Team Rocket's Pokémon" cannot come to mean one thing to a deck search, a
+second to an attach target and a third to a counter-move source. Two small
+helpers carry it: `subgroupRefs` (the ref-list filter) and `ownerNoun` (the
+possessive caption fragment, now spelled once for four prompts).
+
+**Validation needed no arm, for D204's structural reason holding at a new op:**
+`validateChoice` matches a wire answer against `prompt.candidates`, never against
+the op, so a body the rider excluded is unreachable from a crafted online frame
+**by construction**. Asserted on both new paths rather than assumed.
+
+### The flags — DRIVEN, because that is the whole lesson of D200
+
+Three rows stay flagged (**9 legal printings**), and each flag asserts the
+**missing MECHANISM by running it** rather than asserting that a program is
+absent — the assertion D200 made over a catalog that is overwhelmingly unbuilt,
+on ids naming the wrong cards, which passed:
+
+* **Team Rocket's Giovanni** `sv10-174/-225/-238` (3) — the real Switch
+  `sv01-194` is played into a mixed Bench and the **prompt is asserted to offer
+  the bodies Giovanni's print excludes**, including `Team Rocketeer`. The gap is
+  not "no program exists"; it is that the only authorable program plays a
+  different rule. Second piece: an *"If you do"* seam — `switchActive` files
+  nothing, so the consequent cannot read whether the antecedent happened.
+* **Team Rocket's Orbeetle** `sv10-089/-198` (2) — the counter move is **driven**
+  and the counters are asserted to land on the OPPONENT's Active while the
+  controller's other body stays at zero. Orbeetle needs them on the controller's
+  own board, and no op can put them there. Second axis: a BOUNDED amount, where
+  the anchor's only amount is the whole pile.
+* **N's Zoroark ex** `sv09-098/-175/-185/-189` (4) — unbuilt on the attack
+  surface through **both** routes (registry AND deriver), with the *"Trade"*
+  Ability asserted still present so the per-surface claim cannot rot.
+
+Plus the two counter-move near-misses above (Cofagrigus 2, Flutter Mane 1).
+
+### Mutants, and one removed rather than tested around
+
+**Eighteen mutants, seventeen killed first round.** ⚠️ **ONE SURVIVOR, REPORTED:**
+the attach caption's `count <= 1` versus `count < 1` — a live difference **no
+authored row can reach**, because D104's minimal-shape rule means `count: 1` is
+never spelled (the field is omitted when it means 1). It was **removed rather
+than worked around**: the caption now branches on the field's PRESENCE, which
+deletes the unkillable comparison, and the inverted-presence mutant that replaces
+it dies. D204's own survivor shape — `startsWith(owner)` without the possessive —
+was fielded on **both** new read sites with negative fixtures (`Ethanite`,
+`Team Rocketeer`, `ethan's Cyndaquil`) and killed.
+
+`FIXTURE_POOL` swept as its own population first: **no owner-prefixed name**, and
+— the sweep a widened deriver owes — **no pooled attack the widened anchor newly
+resolves**, asked of the DERIVER rather than of a shadow regex. So
+`clauseApostrophe.test.ts`'s census does not move (78 → 78) and owes no
+attribution.
+
+### Guards that fired — three, all correct, all fixed at the claim
+
+* `inPlayTarget.test.ts` — "every FLAGGED SURFACE is still UNBUILT" and "Ethan's
+  Ho-Oh ex is NOT unlocked" both went red because this slice built what D204
+  pinned. Flag total **15 → 9**, landed **7 → 13**, and the file's LANDED arm
+  grew the deriver/trigger awareness it was missing.
+* `ownerPrefix.test.ts` — "every DROPPED printing is still UNBUILT". D200's
+  Ethan's row removed; the list's own arithmetic **17 → 13**.
+
+### `MATCH_RECORD_VERSION` — 12, derived
+
+Both parameters **do** reach storage: both ops PARK and
+`EffectContinuation.pendingOp` is persisted. It is **D186's / D204's shape and not
+D136's** — D136 bumped for a **REQUIRED** field on a parking op, where a record
+written before it cannot be replayed; both of these are **OPTIONAL** and their
+absence means exactly what every earlier program meant (no `count` is the single
+attach, no `ownerPokemon` is every benched body), so an old record replays to the
+same board. The candidate sets are additionally materialised in
+`phase.prompt.candidates` rather than recomputed from the op on resume. Asserted
+as behaviour, not prose.
+
+Suite: **+40 tests in 1 new file, −1 retired**. Repo: **232 files / 4328 tests**
+at `b91b5f9` → **233 files / 4367 tests** green; `bun run check` clean.

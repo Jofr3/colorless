@@ -3951,6 +3951,76 @@ const MARNIES_GRIMMSNARL_EX: CardProgram = {
   ],
 };
 
+// ── D205 — the SAME-TARGET ATTACH COUNT (`attachEnergyFrom.count`) ────────────
+//
+//    D204 landed the in-play target rider and measured, correctly, that it does
+//    NOT finish this row: the print pins BOTH Energy to ONE body, where the
+//    engine's multi-attach model was N independent ops each parking on their own
+//    target. That model is right for Koraidon "Dino Cry"'s printed "in any way
+//    you like" and wrong here, and the gap is exactly one field wide.
+//
+//    Re-derived against the live D1 (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786
+//    rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-04 with GLOB, never
+//    LIKE. D204's ids for this row are CONFIRMED id-by-id against the catalog —
+//    all four resolve to `Ethan's Ho-Oh ex` and all four are legal.
+
+/** Ethan's Ho-Oh ex sv10-039/-209/-230/-239 — "Golden Flame": "Once during your
+    turn, you may attach up to 2 Basic {R} Energy cards from your hand to 1 of
+    your Benched Ethan's Pokémon." (Ability)
+
+    ⚠️ **THE ROW D200 PRICED AT ZERO NEW PIECES AND D204 PROVED NEEDED ONE.**
+    D200's flag table said the in-play target rider "plus nothing else —
+    `attachEnergyFrom` already has `benchOnly` for the printed zone word **and a
+    count of 2**". It does not and never did: `count` did not exist, and the only
+    multi-attach the engine could spell was N separate ops, each with its own
+    park and its own free choice of target. Authored that way this Ability would
+    have let a player put one Energy on each of two different Ethan's Pokémon —
+    a legal-looking program playing a rule the card does not print, which is the
+    exact-map-or-flag doctrine's own failure case. D204 flagged it with the piece
+    named; this slice builds the piece.
+
+    Every setting is straight off the print:
+    - "Once during your turn, you may" → `oncePerTurn: true`, and NOT `endsTurn`
+      (that is Dino Cry's separate printed sentence, absent here);
+    - "attach **up to 2**" → `count: 2`, ONE decision pinning the batch;
+    - "**Basic {R} Energy** cards" → `energyType: "Fire"`, the PRINT and never
+      `providesEnergy` (§6.5 — a card in hand provides nothing);
+    - "from your **hand**" → `source: "hand"`;
+    - "to 1 of your **Benched**" → `benchOnly: true`, so this Ho-Oh cannot feed
+      the Active and cannot feed itself while Active;
+    - "**Ethan's** Pokémon" → D204's `ownerPokemon` rider, unchanged.
+
+    `activeOnly: false` because the print names no spot for the USER — Ho-Oh may
+    be Benched itself and still use this. Note the two riders then interact
+    exactly as printed: a Benched Ho-Oh is an "Ethan's Pokémon" on its own Bench,
+    so it is a legal target for its own Ability, and the card says nothing that
+    excludes it ("1 of your Benched Ethan's Pokémon" — no "other").
+
+    ⚠️ GATED BY `programPlayable` ONLY ON THE ONE-CARD QUESTION, and that is
+    deliberate: "up to 2" with a single {R} in hand attaches one, exactly as
+    printed, so the gate that would refuse the Ability unless TWO were available
+    is the wrong gate — see `firstAttachableEnergy` (interpreter.ts).
+    4 legal printings of 4. */
+const ETHANS_HO_OH_EX: CardProgram = {
+  abilities: [
+    {
+      name: "Golden Flame",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Fire",
+          count: 2,
+          ownerPokemon: "Ethan",
+          benchOnly: true,
+        },
+      ],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -4504,6 +4574,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-electricstreamer": IONOS_BELLIBOLT_EX,
   "fix-nsppup": NS_PP_UP,
   "fix-punkup": MARNIES_GRIMMSNARL_EX,
+  // D205 — the SAME-TARGET attach count (1 program / 4 Standard-legal printings).
+  // Team Rocket's Wobbuffet's counter move, the slice's other landed row, needs
+  // NO registry entry: its sentence is read by the widened
+  // `COUNTER_MOVE_TO_DEFENDER` anchor (effects.ts), which is the deriver path and
+  // not this one.
+  "sv10-039": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex — "Golden Flame"
+  "sv10-209": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
+  "sv10-230": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
+  "sv10-239": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
+  "fix-goldenflame": ETHANS_HO_OH_EX,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

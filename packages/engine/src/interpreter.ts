@@ -785,11 +785,23 @@ function stepOp(
       // sentence carries no damaged restriction, so filtering would be a rule
       // the card does not print (the Potion doctrine `healChosen` follows for
       // the same reason); an undamaged pick whiffs silently in the helper.
+      //
+      // ⚠️ D205 — `ownerPokemon` NARROWS THAT SET AND IS THE ONLY GATE ON IT.
+      // Team Rocket's Wobbuffet "Rocket Mirror" prints "1 of your Benched **Team
+      // Rocket's** Pokémon", so a non-subgroup benched body is not a candidate,
+      // never reaches `prompt.candidates`, and is therefore unreachable from a
+      // crafted online frame — `validateChoice` (cardplay.ts) matches the wire
+      // answer against the PROMPT, never against the op. That is D204's
+      // structural finding on the attach side, holding here for the same reason
+      // rather than by a second copy of the rule. The empty-subgroup board is
+      // `parkOrForce`'s existing silent no-op, the ending an empty Bench already
+      // takes — an attack that resolves and moves nothing, which is what the
+      // sentence does on that board.
       return parkOrForce(
         state,
-        ownBenchRefs(state, ctx.seat),
+        subgroupRefs(state, ownBenchRefs(state, ctx.seat), op.ownerPokemon),
         (ref) => moveCountersToDefender(state, ref, ctx, events),
-        "Move the damage counters off which of your Benched Pokémon?",
+        `Move the damage counters off which of your Benched ${ownerNoun(op.ownerPokemon)}Pokémon?`,
       );
     case "spreadDamage":
       return { done: spreadDamage(state, op.amount, ctx, events) };
@@ -1370,11 +1382,26 @@ function stepOp(
       // a prompt saying "your Pokémon" reads as a bug rather than as the printed
       // "1 of your Iono's Pokémon". Shares `attachTargetNoun` with the two
       // attachCards captions so the three cannot drift.
+      // ⚠️ AND SINCE D205 IT NAMES THE COUNT TOO. "Attach the Energy" is a
+      // singular the print contradicts when `count` is 2 — and the count is the
+      // one thing about this park a player cannot see from the offered rows,
+      // because the batch lands on whichever ONE they pick. The printed hedge is
+      // carried verbatim ("up to"), since the hand may hold fewer.
       return parkOrForce(
         state,
         attachEnergyTargets(state, ctx.seat, op),
         (ref) => attachEnergyFrom(state, op, ref, ctx, events),
-        `Attach the Energy to which of your ${attachTargetNoun(op)}?`,
+        // ⚠️ BRANCHES ON THE FIELD'S PRESENCE, NOT ON ITS VALUE, and that is a
+        // mutation result rather than a preference. Written as `count <= 1 ? …`
+        // it carries a comparison NO AUTHORED ROW CAN REACH — `count: 1` is
+        // never spelled, because D104's minimal-shape rule omits a field that
+        // means what its absence means — so `<= 1` versus `< 1` is a live
+        // difference no test can see and no card can produce. Removing the
+        // comparison removes the unkillable mutant with it: the absent field is
+        // the singular caption, and any count a card DOES spell is quoted.
+        `Attach ${
+          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`
+        } to which of your ${attachTargetNoun(op)}?`,
       );
     }
     // All three gates are spliced by runProgram's queue loop (never reach here).
@@ -4110,28 +4137,58 @@ function healChosen(
   return withSide(state, ctx.seat, { ...side, bench });
 }
 
-/** The first Basic Energy uid in `seat`'s `source` zone (hand or discard)
-    matching `energyType` (any Basic Energy when undefined) — what
-    attachEnergyFrom moves onto a Pokémon. Same-type Basic Energy cards are
-    fungible, so the first match is as good as any (no WHICH-card choice).
-    Exported for programPlayable (cardplay.ts): an Ability whose attach could only
-    whiff can't be activated — the gust/snipe "no legal target" precedent. */
+/** The first `max` Basic Energy uids in `seat`'s `source` zone (hand or discard)
+    matching `energyType` (any Basic Energy when undefined), in zone order — what
+    `attachEnergyFrom` moves onto a Pokémon. Same-type Basic Energy cards are
+    fungible, so WHICH ones is not a decision and the leading matches are as good
+    as any (the whole reason the op's only park is on the TARGET).
+
+    ⚠️ FEWER THAN `max` IS NORMAL, NOT A FAILURE (D205). The printed clause is
+    "attach UP TO N", so a hand holding one {R} against a `count: 2` op attaches
+    one and says nothing — the same silent shortfall the older N-ops-in-sequence
+    model produced when a later op found the zone empty. Callers must read the
+    LENGTH rather than assume `max`. */
+function attachableEnergies(
+  state: GameState,
+  seat: Seat,
+  source: "hand" | "discard",
+  energyType: string | undefined,
+  max: number,
+): string[] {
+  if (max <= 0) return [];
+  const zone = source === "hand" ? state.players[seat].hand : state.players[seat].discard;
+  const found: string[] = [];
+  for (const uid of zone) {
+    const card = cardOf(state, uid);
+    if (
+      card !== undefined &&
+      isEnergyCard(card) &&
+      card.energyType === "Normal" && // "Normal" = a BASIC energy (Special is a special energy)
+      (energyType === undefined || energyProvidesOf(card) === energyType)
+    ) {
+      found.push(uid);
+      if (found.length === max) break;
+    }
+  }
+  return found;
+}
+
+/** The first matching Basic Energy uid, or undefined — `attachableEnergies` at
+    max 1, and the shape both the park guard and `programPlayable` want.
+
+    ⚠️ IT STAYS A ONE-CARD QUESTION EVEN UNDER `count` (D205), and that is a
+    finding rather than an oversight. `programPlayable` (cardplay.ts) refuses an
+    Ability whose attach could only whiff — the gust/snipe "no legal target"
+    precedent — and "up to 2" with ONE Energy in hand is not a whiff: it attaches
+    one, exactly as printed. Gating on `count` matches instead would refuse the
+    card on a board where it works, which is the louder failure of the two. */
 export function firstAttachableEnergy(
   state: GameState,
   seat: Seat,
   source: "hand" | "discard",
   energyType: string | undefined,
 ): string | undefined {
-  const zone = source === "hand" ? state.players[seat].hand : state.players[seat].discard;
-  return zone.find((uid) => {
-    const card = cardOf(state, uid);
-    return (
-      card !== undefined &&
-      isEnergyCard(card) &&
-      card.energyType === "Normal" && // "Normal" = a BASIC energy (Special is a special energy)
-      (energyType === undefined || energyProvidesOf(card) === energyType)
-    );
-  });
+  return attachableEnergies(state, seat, source, energyType, 1)[0];
 }
 
 /** The controller's own in-play Pokémon an ATTACH may target, as refs (Active
@@ -4405,16 +4462,33 @@ function attachFromDeckApply(
   };
 }
 
-/** Attach the first matching Basic Energy from `op.source` (hand/discard) onto
-    the chosen own Pokémon `ref` (§6 energy acceleration). Re-finds the energy at
-    apply time — fungible, so the parked decision was only the TARGET. Moves the
-    card OUT of its source zone and onto the Pokémon's energy, emitting
-    ENERGY_ATTACHED (its host resolves by the energy uid, robust to any same-batch
-    move). This is not the §6.3 one-per-turn manual attach — no allowance is
-    touched; it is the Ability's own effect. The `bonusCounters` rider then puts
-    that many HP of damage counters on the same Pokémon (Gardevoir's 2) — always
-    non-lethal, because attachEnergyTargets already excluded would-be-KO'd targets
-    (notIfKO), so this op never KOs and never touches the flow tail. */
+/** Attach the first matching Basic Energy cards from `op.source` (hand/discard)
+    onto the chosen own Pokémon `ref` (§6 energy acceleration) — ONE by default,
+    `op.count` of them onto that SAME body when the print pins a batch. Re-finds
+    the energy at apply time — fungible, so the parked decision was only the
+    TARGET. Moves the cards OUT of their source zone and onto the Pokémon's
+    energy, emitting one ENERGY_ATTACHED each (each host resolves by its own
+    energy uid, robust to any same-batch move). This is not the §6.3 one-per-turn
+    manual attach — no allowance is touched; it is the Ability's own effect. The
+    `bonusCounters` rider then puts that many HP of damage counters on the same
+    Pokémon (Gardevoir's 2) — always non-lethal, because attachEnergyTargets
+    already excluded would-be-KO'd targets (notIfKO), so this op never KOs and
+    never touches the flow tail.
+
+    ⚠️ `count` ATTACHES TO THE ONE `ref` AND NEVER RE-ASKS (D205). That is the
+    entire difference from the older model of "N of these ops in a program",
+    which parks N times and may land on N different bodies: Ethan's Ho-Oh ex
+    "Golden Flame" prints *"attach up to 2 … to **1 of** your Benched Ethan's
+    Pokémon"*, and a split across two bodies is a rule the card does not print.
+    Fewer than `count` matching Energy attaches what there is, silently — the
+    printed "up to", and the same shortfall the sequential model produced when a
+    later op found nothing left.
+
+    ⚠️ `bonusCounters` FIRES ONCE PER OP, NOT ONCE PER CARD, and the two riders
+    do not co-occur on any printing in the catalog (asserted in the slice suite,
+    not assumed here). Once-per-op is the reading that leaves every pre-D205
+    program byte-identical, which is the only one this change is entitled to
+    make; a printing that combines them would owe its own argument. */
 function attachEnergyFrom(
   state: GameState,
   op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
@@ -4423,20 +4497,35 @@ function attachEnergyFrom(
   events: GameEvent[],
 ): GameState {
   if (ref.seat !== ctx.seat) return state;
-  const energyUid = firstAttachableEnergy(state, ctx.seat, op.source, op.energyType);
-  if (energyUid === undefined) return state;
+  const energyUids = attachableEnergies(
+    state,
+    ctx.seat,
+    op.source,
+    op.energyType,
+    op.count ?? 1, // absent = the single attach every pre-D205 program meant
+  );
+  if (energyUids.length === 0) return state;
   const side = state.players[ctx.seat];
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
   if (pokemon === undefined || pokemon === null) return state;
   const targetUid = topUid(pokemon);
   if (targetUid === undefined) return state;
-  let updated: InPlayPokemon = { ...pokemon, energy: [...pokemon.energy, energyUid] };
+  let updated: InPlayPokemon = { ...pokemon, energy: [...pokemon.energy, ...energyUids] };
   // Remove the Energy from its source zone (hand or the public discard pile).
+  const drop = (zone: readonly string[]): string[] =>
+    energyUids.reduce<string[]>((rest, uid) => without(rest, uid), [...zone]);
   const base: PlayerSide =
     op.source === "hand"
-      ? { ...side, hand: without(side.hand, energyUid) }
-      : { ...side, discard: without(side.discard, energyUid) };
-  events.push({ type: "ENERGY_ATTACHED", seat: ctx.seat, uid: energyUid, target: { ...ref.spot } });
+      ? { ...side, hand: drop(side.hand) }
+      : { ...side, discard: drop(side.discard) };
+  for (const energyUid of energyUids) {
+    events.push({
+      type: "ENERGY_ATTACHED",
+      seat: ctx.seat,
+      uid: energyUid,
+      target: { ...ref.spot },
+    });
+  }
   if (op.bonusCounters !== undefined && op.bonusCounters > 0) {
     updated = { ...updated, damage: updated.damage + op.bonusCounters };
     events.push({
@@ -5131,7 +5220,47 @@ function lookNote(filter: CardFilter, n: number, max: number): string {
 function attachTargetNoun(riders: AttachTargetRiders): string {
   return `${riders.benchOnly === true ? "Benched " : ""}${
     riders.targetType === undefined ? "" : `${riders.targetType} `
-  }${riders.ownerPokemon === undefined ? "" : `${riders.ownerPokemon}'s `}Pokémon`;
+  }${ownerNoun(riders.ownerPokemon)}Pokémon`;
+}
+
+/** The printed possessive fragment of an owner-prefixed subgroup noun — `"Team
+    Rocket"` → `"Team Rocket's "`, absent → `""` — so `${ownerNoun(o)}Pokémon`
+    reads as the card does. ONE spelling for every prompt that names a subgroup
+    (D205): the three attach captions through `attachTargetNoun`, and the counter
+    move's own "off which of your Benched Team Rocket's Pokémon?".
+
+    Small enough to inline and factored out anyway, for the reason the predicate
+    itself is shared: the possessive is the load-bearing character. D204's one
+    surviving mutant was `startsWith(owner)` WITHOUT it, and a caption that
+    dropped it would say "your Benched Team Rocket Pokémon" — naming a subgroup
+    no card prints, in a prompt whose whole job is to say which bodies are
+    offered. Two copies of that string is two places for it to go missing. */
+function ownerNoun(owner: string | undefined): string {
+  return owner === undefined ? "" : `${owner}'s `;
+}
+
+/** Narrow a candidate ref list to the bodies whose TOP card is in the printed
+    owner-prefixed subgroup, or return it unchanged when no owner is printed.
+
+    ⚠️ THE PREDICATE IS SHARED, NOT RE-IMPLEMENTED — `matchesFilter`'s own
+    `ownerPokemon` arm (D200), which `attachEnergyTargets` already calls on the
+    attach side (D204). This is that call's THIRD read site and its first outside
+    the attach family, and sharing it is the whole point: "a Team Rocket's
+    Pokémon" must mean the same three conjuncts to a deck search, to an attach
+    target and to a counter-move source, or a player learns one rule and the
+    engine enforces two. */
+function subgroupRefs(
+  state: GameState,
+  refs: PokemonRef[],
+  owner: string | undefined,
+): PokemonRef[] {
+  if (owner === undefined) return refs;
+  return refs.filter((ref) => {
+    const side = state.players[ref.seat];
+    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+    if (body === undefined || body === null) return false;
+    return matchesFilter(topCardOf(state, body), { kind: "ownerPokemon", owner });
+  });
 }
 
 function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
