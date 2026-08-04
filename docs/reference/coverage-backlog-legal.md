@@ -544,3 +544,50 @@ useful thing this census establishes, and it is why the **0.9 % coverage of the 
 Standard-legal Ability/Trainer/Energy printings** is the real finding here, not the
 1,571 total. Attack text is derivable and has 806 of 1,732 built; the non-attack surface
 has **6 of 651** and no deriver exists for it at all.
+
+---
+
+## ⚠️ THE DEAD-DATUM CLASS — a sentence can be UNBUILDABLE, not merely unbuilt
+
+Three slices have now independently hit the same wall, and it is not a vocabulary gap:
+**the printed predicate names a card property that exists on the CARD but in NO INGESTED
+COLUMN.** `PRAGMA table_info(cards)` is the whole surface — id, set, local_id, name,
+category, illustrator, rarity, regulation_mark, hp, stage, evolve_from, types_json,
+retreat, abilities_json, attacks_json, weaknesses_json, resistances_json, trainer_type,
+energy_type, effect, legal_standard, legal_expanded, variants, updated, image_url, suffix.
+**Nothing else about a card is knowable to this engine.**
+
+| Banner | Printing that needs it | Found by |
+|---|---|---|
+| **"Ancient"** | Flutter Mane `sv08-096` — *"1 of your Benched **Ancient** Pokémon"* | D205 |
+| **"Future"** | Iron Crown ex family (6 legal) — *"Attacks used by your **Future** Pokémon…"* | this recon |
+| **"Tera"** | `sv10-087`, and `sv07-132`/`-163`/`-171`/`sv08.5-100` (4 legal) — *"Active **Tera** Pokémon"* | this recon |
+
+⚠️ **WHY IT MATTERS MORE THAN "UNBUILT": AN OP AUTHORED OVER AN ABSENT DATUM HAS A
+PERMANENTLY EMPTY CANDIDATE SET, WHICH `programPlayable` TURNS INTO A CARD THAT CAN NEVER
+BE PLAYED.** That is strictly worse than leaving the printing unbuilt — it is a *silent dead
+print* rather than a loud absence, and it will pass every test written against it, because
+the tests are written by whoever believed the datum existed.
+
+**THE RULE, for any future census or slice brief: BEFORE YOU DESIGN A PREDICATE, NAME THE
+FIELD IT READS AND CONFIRM IT IS IN THAT COLUMN LIST.** A predicate over a banner, a
+subtype, or any adjective printed on the card face is a dead datum until an ingest column
+carries it. **These 11 legal printings are not backlog — they are blocked on the INGEST,
+not on the engine**, and they should be priced as such (a schema column + a re-ingest,
+which today also needs `api.tcgdex.net` unblocked).
+
+## ⚠️ AND A FLAG CAN BE WRONG IN THE *CHEAP* DIRECTION TOO
+
+D199's `DROPPED` table flagged the opponent-remaining-prize threshold as needing a new
+`BoardCondition` member. **It does not: `opponentPrizesRemaining` already existed in
+`effects.ts` at D199's own commit** (`{ kind: "opponentPrizesRemaining"; counts: readonly
+number[] }`, folded by `conditionHolds`), and D199's `needs` string names only
+`morePrizesThanOpponent` — it missed its own sibling. **7 Standard-legal printings were
+sitting behind a flag that said "new union member" and meant "two registry rows".**
+⚠️ **Note both spellings occur and are NOT the same number**: `prizes.length` is REMAINING,
+while `opponentPrizesTaken` (a `DamageCountSource`, 26 legal printings) is `6 − remaining`.
+**Do not cross them.**
+
+So the vacuous-guard lesson has a mirror: **a flag can overstate a cost as easily as it can
+understate a gap, and nothing in the suite objects either way.** Re-derive the *needs*
+column, not only the ids and counts.
