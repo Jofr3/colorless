@@ -3254,6 +3254,68 @@ const REGISTRY: Record<string, CardProgram> = {
   //   opponent's Pokémon` returns these two rows and nothing else in the catalog. —
   "sv01-192": ROCK_CHESTPLATE, // Rock Chestplate (Tool) — 30 less, gated on the HOLDER's {F}
   "sv02-113": HARIYAMA, // Hariyama — Arm Thrust Practice (10 less, SEAT-WIDE)
+  // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
+  //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
+  //    ZERO new code: every row below prints a sentence that is already authored
+  //    on a registered id, byte-for-byte.
+  //
+  //    ⚠️ MEASURED, NOT CARRIED. The text-equality sweep of unbuilt-against-built
+  //    was RE-RUN against the REMOTE D1 `luminous`
+  //    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows / 20 sets) on
+  //    2026-08-04, PER COLUMN — `abilities_json` and `effect` each joined against
+  //    the built texts of the ids whose program reads THAT column, which is
+  //    D180's per-column read predicate rather than a bare `programFor(id)`
+  //    exists. It reproduced the census exactly: 9 sentences, 22 legal printings,
+  //    and NOTHING ELSE across all three columns (`attacks_json` returns one
+  //    group — Hail Blade's text on two rotated rows — and **zero** legal ones).
+  //
+  //    ⚠️ AND THE POINT D180 MISSED: EVERY ROW HERE CARRIES A MEASURED **LEGAL**
+  //    PRINTING COUNT. D180's four aliases are all rotated (`sv02`/`swsh10.5`,
+  //    marks G/F) and serve zero Standard-legal printings; a registry row is
+  //    keyed by CARD ID and serves exactly the ids it names, so legality is a
+  //    HARD filter here in a way it never is for a deriver arm. Candidate
+  //    sentences whose legal count measured **0** were SKIPPED — see
+  //    `reprintAliasLegal.test.ts` for the four that were.
+  // — "This Pokémon takes 30 less damage from attacks (after applying Weakness
+  //   and Resistance)." — 8 legal printings (14 in the whole catalog). —
+  "sv06-002": COPPERAJAH_EX, // Tangrowth — "Thicket Body" (mark H)
+  "sv07-125": COPPERAJAH_EX, // Dubwool — "Soft Wool" (mark H)
+  "sv08-054": COPPERAJAH_EX, // Cetitan — "Solid Body" (mark H)
+  "sv08-201": COPPERAJAH_EX, // Cetitan (reprint)
+  "sv10-108": COPPERAJAH_EX, // Mudsdale — "Mud Coat" (mark I)
+  "sv10.5w-077": COPPERAJAH_EX, // Bouffalant ex — "Bouffer" (mark I)
+  "sv10.5w-162": COPPERAJAH_EX, // Bouffalant ex (reprint)
+  "sv10.5w-170": COPPERAJAH_EX, // Bouffalant ex (reprint)
+  // — "This Pokémon takes 20 less damage …" — 2 legal printings (2 in the
+  //   catalog). Both `sv01-121` Stonjourner and `sv03-174` Bouffalant already
+  //   carry this text; STONJOURNER is the anchor named by the census. —
+  "sv05-010": STONJOURNER, // Turtwig — "Solid Shell" (mark H)
+  "sv08.5-088": STONJOURNER, // Furfrou — "Fur Coat" (mark H)
+  // — "If this Pokémon is in the Active Spot and is damaged by an attack from
+  //   your opponent's Pokémon (even if this Pokémon is Knocked Out), put 3 damage
+  //   counters on the Attacking Pokémon." — 3 legal printings (4 in the catalog). —
+  "sv05-139": COUNTERATTACK_QUILLS, // Iron Jugulis — "Automated Combat" (mark H)
+  "sv08-049": COUNTERATTACK_QUILLS, // Bruxish — "Counterattack" (mark H)
+  "sv08-200": COUNTERATTACK_QUILLS, // Bruxish (reprint)
+  // — the same antecedent with a BURN consequent — 1 legal printing (1 in the
+  //   catalog); the trigger, not the passive. —
+  "sv06-123": SCORCHING_ARMOR, // Heatran — "Incandescent Body" (mark H)
+  // — "All of your Pokémon take 10 less damage from attacks from your opponent's
+  //   Pokémon (after applying Weakness and Resistance)." — 1 legal printing. —
+  "sv08.5-067": HARIYAMA, // Bronzong — "Protective Bell" (mark H)
+  // — Trainers. "Draw 3 cards." — 3 legal printings (6 in the catalog), on two
+  //   card NAMES that are neither of them Nemona: the sentence is the key, not
+  //   the name. —
+  "sv08.5-109": NEMONA, // Friends in Paldea (Supporter, mark H)
+  "sv08.5-137": NEMONA, // Friends in Paldea (reprint)
+  "sv10.5w-081": NEMONA, // Cheren (Supporter, mark I)
+  // — Janine's Secret Art — 2 legal printings beyond the two already authored. —
+  "sv08.5-112": JANINES_SECRET_ART, // Janine's Secret Art (mark H)
+  "sv08.5-173": JANINES_SECRET_ART, // Janine's Secret Art (reprint)
+  // — Energy Retrieval — 1 legal printing. —
+  "sv10.5w-082": ENERGY_RETRIEVAL, // Energy Retrieval (Item, mark I)
+  // — Pokégear 3.0 — 1 legal printing. —
+  "sv10.5b-084": POKEGEAR, // Pokégear 3.0 (Item, mark I)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

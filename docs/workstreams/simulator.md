@@ -18165,3 +18165,120 @@ build, and re-rooted onto the work branch before any edit. The documented worktr
 hazard is about claiming a stale D-number; the sharper failure mode is a worktree whose
 base is not an ancestor of the work at all, where every "file not found" reads as a
 rotted structural claim rather than a wrong base.
+
+## D190a — the STANDARD-LEGAL reprint-alias map (Tier 0): 22 printings for 9 map rows and no code
+
+Tier 0 of `docs/reference/coverage-backlog-legal.md`, landed in `registry.ts` as 22
+id→program rows onto **nine already-authored programs**, using the reprint idiom the
+map has carried since M4 (`sv01-189`/`-190`/`-240`/`-241` share ONE
+`PROFESSORS_RESEARCH`). No new op, no new field, no new program.
+
+| Sentence | Anchor | Legal printings landed | Catalog printings |
+|---|---|---:|---:|
+| "…takes 30 less damage… (after applying W/R)" | `sv02-150` Copperajah ex | **8** | 14 |
+| "…put 3 damage counters on the Attacking Pokémon." | `sv01-005` Cacnea | **3** | 4 |
+| "Draw 3 cards." (Supporter) | `sv01-180` Nemona | **3** | 6 |
+| "…takes 20 less damage…" | `sv01-121` Stonjourner | **2** | 2 |
+| Janine's Secret Art | `sv06.5-059` | **2** | 2 |
+| "…the Attacking Pokémon is now Burned." | `sv03-044` Armarouge | **1** | 1 |
+| "All of your Pokémon take 10 less damage…" | `sv02-113` Hariyama | **1** | 1 |
+| Energy Retrieval | `sv01-171` | **1** | 1 |
+| Pokégear 3.0 | `sv01-186` | **1** | 1 |
+| **total** | — | **22** | **32** |
+
+Two of the nine are the interesting ones. **"Draw 3 cards." lands on two card NAMES
+that are neither of them Nemona** — Friends in Paldea (`sv08.5-109`/`-137`) and Cheren
+(`sv10.5w-081`): the SENTENCE is the key, not the name, which is the whole content of
+the reprint idiom stated at its limit. And **`sv06-123` Heatran** shares Armarouge's
+`onDamagedByAttack` trigger, whose antecedent is byte-identical to Counterattack
+Quills' — a passive — so the two are one skim apart and the only thing separating them
+is the consequent.
+
+### The sweep was RE-RUN, which is what `reprintAlias.test.ts` asked for by name
+
+D180 shipped its byte-identity **asserted from a doc**, and its test file left the
+exact query for the next session with the note that *"a pin claiming a measurement
+nobody made is worse than no pin"*. That sweep ran here, against the **REMOTE D1
+`luminous`** (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), on **3,786 rows / 20 sets**, of
+which **2,021 carry `legal_standard = 1`**.
+
+**The read predicate is PER COLUMN**, which is D180's own correction applied to the
+catalog rather than to `FIXTURE_POOL`: the `abilities_json` join runs only against the
+texts of ids whose program carries `abilities`/`passive`/`triggered`, and the `effect`
+join only against ids carrying `trainer`/`stadium`/`rareCandy`/`energy`/`passive`/
+`triggered`. Asking the cheaper question — *does `programFor(id)` exist* — is exactly
+what produced D180's two false positives, where the shared sentence was an ATTACK the
+deriver reads while the registry program belonged to an Ability.
+
+**IT MATCHED THE CENSUS EXACTLY.** Nine sentences, 22 legal printings, and nothing else
+in any of the three columns. The `attacks_json` sweep returns exactly **one** group —
+Hail Blade's text on two `swsh10.5` rows — with **zero** legal printings, so the
+census's "zero attack aliases exist" holds as well.
+
+### ⚠️ Four correct aliases were SKIPPED for measuring ZERO legal printings
+
+This is the part D180 could not have written, and it is the reason a registry row and a
+deriver arm must never be priced on the same scale. Each of these is a real,
+byte-identical, unbuilt reprint-alias gap in the playable catalog — and each buys
+nothing in Standard:
+
+* **`"Discard your hand and draw 7 cards."` — 11 unbuilt catalog printings, 0 legal.**
+  The census's QUALIFIED addendum made concrete: the modern Professor's Research
+  reprints sitting in **`sv08.5`, `sv09` and `sv10.5b`** all carry regulation mark
+  **G**. The biggest alias group in the catalog is worth nothing here.
+* **Mimikyu's Safeguard sentence** — 6 printings, 0 legal.
+* **The very −30 sentence whose 8 legal printings landed above** — 6 MORE printings
+  (`sv03.5-009`/`-184`/`-200`, `sv04-128`/`-209`, `sv07-030`), all mark G. One
+  sentence, 14 catalog printings, 8 legal: the split runs *through* a family, not
+  between families.
+* **Tinkaton's "Gather Materials"** — 2 printings, 0 legal.
+
+All four are asserted **as unbuilt** in `reprintAliasLegal.test.ts`, with their ids and
+counts, so the decision is checkable and reversible rather than remembered. If a
+re-ingest ever makes one legal, that test is where the call gets revisited.
+
+### What is pinned, and the one thing it cannot pin
+
+The 22 reprints **cannot be fielded**: a fixture id naming a real printing must appear
+in `catalogManifest.ts` (`catalogManifest.test.ts` case (c)), that manifest is
+GENERATED off the local sqlite — `bun run scripts/catalog-manifest.ts` dies
+`SQLITE_CANTOPEN` in this clone — and the manifest it holds measures a **978-row /
+6-set** catalog containing none of `sv05`…`sv10.5w`. So no real-card fixture was added
+(it would only make the manifest stale), and the file pins instead:
+
+1. the **alias relation** — every new id resolves to the SAME PROGRAM OBJECT as its
+   twin (`toBe`, not `toEqual`), which is what a copy-pasted second literal breaks;
+2. the **nine targets' shapes**, named, since a change to one now moves up to eight
+   more cards than its author may have in mind;
+3. **group membership including D180's four rows**, so an addition cannot silently
+   become a re-pointing;
+4. the **nine programs DRIVEN through the real engine** via their fixtured twins —
+   damage reduction at 30 and at 20, the recoil, the Burn trigger, the seat-wide aura,
+   the draw, and the three parking Trainers (`chooseCards` ×2, `attachCards`).
+
+### Mutation check — four mutants, all killed
+
+Each is the mistake an author actually makes in a 22-row block of near-identical lines,
+written by copying a neighbouring row's real code: `sv06-002` pointed at `STONJOURNER`
+(20 instead of 30) → **3 failures**; Cheren pointed at `PROFESSORS_RESEARCH` ("it's a
+draw Supporter") → **2**; Heatran pointed at `COUNTERATTACK_QUILLS` (byte-identical
+antecedent) → **3**; and landing one of the zero-legal skips → **1**. No survivors.
+
+### Version and `MATCH_RECORD_VERSION`
+
+**`MATCH_RECORD_VERSION` stays where D189 leaves it — derived, not declared.** A
+`MatchRecord` persists `{version, seed, startedAt, state, log, names}`, so the gate
+moves when a persisted **shape** moves. A registry row is a map lookup keyed by card
+id: no `GameState` field, no `EffectOp` inhabitant, no `EffectPrompt`/`EffectChoice`/
+`EffectContinuation`, no event, no error code, no wire, no `@luminous/schema` diff.
+Three of the nine programs **do** park, and a parked program lives in `GameState.phase`
+— so that was checked rather than waved past: `EffectContinuation` is
+`{pendingOp, rest, ctx, record}`, i.e. **the OPS themselves and never a card id**, and
+every op involved has shipped for many versions. A record written by either deploy
+replays identically under the other.
+
+**No engine version bump, for a mechanical reason rather than a doctrinal one.**
+`packages/engine/src/index.ts` and `packages/engine/package.json` were both being
+edited by a concurrent slice (D189, the attack tail) while this landed, and the two must
+move in step. The ascending changelog block for this slice is **owed at merge**, not
+skipped.
