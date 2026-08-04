@@ -65,6 +65,7 @@ export function mapCard(card: TcgdexCard): CardRow {
     regulationMark: normalizeSentinel(card.regulationMark),
     hp: null,
     stage: null,
+    suffix: null,
     evolveFrom: null,
     typesJson: null,
     retreat: null,
@@ -87,6 +88,11 @@ export function mapCard(card: TcgdexCard): CardRow {
         ...base,
         hp: card.hp ?? null,
         stage: normalizeSentinel(card.stage),
+        // Sentinel-normalised like the other nullable VOCABULARY columns:
+        // `suffix` is a small closed set ("ex"/"V"/"VMAX"/"MEGA"/…) destined
+        // for a facet list, so a literal "None" would become a dead chip
+        // exactly as it did for rarity/regulation_mark (D194).
+        suffix: normalizeSentinel(card.suffix),
         evolveFrom: normalizeSentinel(card.evolveFrom),
         typesJson: card.types ?? null,
         retreat: card.retreat ?? null,

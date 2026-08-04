@@ -44,6 +44,7 @@ export const CARDS_COLUMNS: readonly SqlColumnSpec<CardRow>[] = [
   { name: "regulation_mark", key: "regulationMark", kind: "text" },
   { name: "hp", key: "hp", kind: "number" },
   { name: "stage", key: "stage", kind: "text" },
+  { name: "suffix", key: "suffix", kind: "text" },
   { name: "evolve_from", key: "evolveFrom", kind: "text" },
   { name: "types_json", key: "typesJson", kind: "json" },
   { name: "retreat", key: "retreat", kind: "number" },

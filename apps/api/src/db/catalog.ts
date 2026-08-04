@@ -19,10 +19,10 @@
 //   irrelevant to the app today (we keep the 5-flag `variants_json`).
 // - `pricing` — volatile market aggregates, not catalog data.
 // - `boosters` — documented upstream, never observed on live `en` payloads.
-// - dp/neo-era Pokémon extras (`level`, `item`, `suffix`, `description`,
-//   `dexId`) — no app feature reads them; the schema stays full-history
-//   *capable* (nothing breaks when old sets are ingested, these fields are
-//   simply not persisted).
+// - dp/neo-era Pokémon extras (`level`, `item`, `description`, `dexId`) — no
+//   app feature reads them; the schema stays full-history *capable* (nothing
+//   breaks when old sets are ingested, these fields are simply not persisted).
+//   `suffix` used to sit in this list and left it in D197 — see the column.
 
 import type { TcgdexAbility, TcgdexAttack, TcgdexVariants, TcgdexWeakRes } from "@luminous/schema";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -76,6 +76,16 @@ export const cards = sqliteTable(
     // Pokémon-only fields (null on Trainer/Energy).
     hp: integer("hp"),
     stage: text("stage"),
+    /** tcgdex's PRINT-KIND marker on a Pokémon's name line — "ex", "V",
+        "VMAX", "MEGA", … (absent on ordinary Pokémon). The web currently
+        re-derives this by reading the card NAME (src/features/builder/
+        cards.ts), which is why an EX/Mega selection cannot be a server param
+        and mixed selections page badly: the API pages a set the client then
+        thins, so a 60-card page can render nearly empty while `total` claims
+        hundreds. Added in D197 so the next ingest populates it; NULL on every
+        row until then — nothing filters on it yet, on purpose (see the
+        commit). */
+    suffix: text("suffix"),
     evolveFrom: text("evolve_from"),
     /** Energy types, e.g. ["Grass"]. */
     typesJson: text("types_json", { mode: "json" }).$type<string[]>(),

@@ -67,6 +67,11 @@ describe("mapCard", () => {
       regulationMark: "G",
       hp: 220,
       stage: "Basic",
+      // D197 — this fixture is a "Miraidon ex", and the payload has carried
+      // `"suffix":"ex"` all along; ingest simply dropped it. Persisting it is
+      // what lets an EX/Mega selection become a server param instead of a
+      // client-side re-derivation off the card NAME.
+      suffix: "ex",
       evolveFrom: null,
       typesJson: ["Lightning"],
       retreat: 1,
@@ -115,6 +120,7 @@ describe("mapCard", () => {
     expect(row.hp).toBeNull();
     expect(row.typesJson).toBeNull();
     expect(row.attacksJson).toBeNull();
+    expect(row.suffix).toBeNull(); // Pokémon-only, like stage/hp
     expect(row.imageUrl).toBe("https://assets.tcgdex.net/en/sv/sv01/181");
   });
 
@@ -160,6 +166,20 @@ describe("mapCard", () => {
     // Untouched: the sentinel guard is not a general string filter.
     expect(row.trainerType).toBe("Item");
     expect(row.illustrator).not.toBeNull();
+  });
+
+  // D197 — `suffix` joins the sentinel-normalised VOCABULARY columns rather
+  // than the prose ones: it is a small closed set destined for a facet list,
+  // so a literal "None" would land in the rail as a dead chip exactly the way
+  // rarity's did (D194). Cheaper to guard at ingest than to discover later.
+  it("normalises a 'None' suffix to NULL, and an absent one too", () => {
+    const sentinel = mapCard(
+      tcgdexCardSchema.parse({ ...(cardPokemonAbility as Record<string, unknown>), suffix: "None" }),
+    );
+    expect(sentinel.suffix).toBeNull();
+
+    const { suffix: _suffix, ...withoutSuffix } = cardPokemonAbility as Record<string, unknown>;
+    expect(mapCard(tcgdexCardSchema.parse(withoutSuffix)).suffix).toBeNull();
   });
 
   it("defaults a missing upstream `legal` block to false/false", () => {

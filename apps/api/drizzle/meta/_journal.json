@@ -43,6 +43,13 @@
       "when": 1785132199385,
       "tag": "0005_friendly_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1785839286623,
+      "tag": "0006_clumsy_fat_cobra",
+      "breakpoints": true
     }
   ]
 }

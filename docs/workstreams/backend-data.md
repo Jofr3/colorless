@@ -463,7 +463,7 @@ sets(id PK, serie_id FK, name, logo_url, symbol_url,
      tcg_online)
 cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Energy
       illustrator, rarity, regulation_mark,
-      hp, stage, evolve_from, types_json, retreat,       -- Pokémon fields (nullable)
+      hp, stage, suffix, evolve_from, types_json, retreat, -- Pokémon fields (nullable)
       abilities_json, attacks_json, weaknesses_json, resistances_json,
       trainer_type, energy_type, effect,                 -- Trainer/Energy fields
       legal_standard, legal_expanded,
@@ -532,6 +532,82 @@ mapping now emits NULL for those two columns.) It could not be run in the
 session that landed the fix: `api.tcgdex.net` is blocked by the network
 policy there.
 
+#### 5.3.2 Catalog query census (D197) — three measurements, one migration
+
+Measured against the production catalog on 2026-08-04: **3,786 cards / 20
+sets**, 3,233 Pokémon + 499 Trainer + 54 Energy.
+
+**`text` reached none of the Trainer/Energy rules text.** The predicate LIKEd
+`abilities_json` and `attacks_json` only, and those two columns are NULL on
+**every** row that carries `effect`, while `effect` is NULL on every Pokémon —
+the sets are exactly disjoint. So `?text=` was structurally incapable of
+returning a Trainer or a Special Energy for ANY term:
+
+| | rows | with `effect` | of those, Standard-legal |
+| --- | --- | --- | --- |
+| Trainer | 499 | 499 | **264** |
+| Energy | 54 | 18 (15 Special + 3 Normal) | **11** (8 Special + 3 Normal) |
+| Pokémon | 3,233 | 0 | 0 |
+
+D197 added `effect` as a third LIKE disjunct (same `escapeLike` + `ESCAPE '\'`
+treatment, pinned per-disjunct by a test). Standard-legal result deltas:
+`Search your deck` 135→193, `discard` 329→405, `draw` 89→138, `Switch` 60→79,
+`Supporter` 22→32, `Poison` 46→53.
+
+The documented **JSON-key over-match** hazard is real and now quantified —
+`?text=effect` matches **2,816** of 3,786 rows and `?text=damage` **3,175**,
+almost all of it hitting the `{cost,name,effect,damage}` KEY names inside
+`attacks_json`, not prose. It does **not** extend to the new disjunct:
+`cards.effect` is plain text with no serialized keys in it, which is precisely
+why widening into it is safe. KV prefix `v4`→`v5` (a cached `?text=…` body is
+now wrong, not merely stale).
+
+**The `/cards` sort had a JS twin.** `compareCardRows` mirrored the SQL
+`cardsOrder` by hand, because `?id=` hydration fanned its ≤100 ids across a
+chunked `db.batch` (D1 caps bound parameters at 100, and LIMIT/OFFSET bind
+too) and so had no single statement to order. The two agreed — the only
+divergence class is SQLite BINARY collation (UTF-8 memcmp) vs JS `<` (UTF-16
+code units), which differ only where an astral code point meets a BMP one, and
+the catalog has **13** rows with a non-ASCII `name` (11 distinct: `Flabébé`,
+`Nidoran♀`, `Nidoran♂`, the `Poké*` family), all BMP, zero astral; `set_id` /
+`local_id` are pure ASCII; no `cards` column carries a `COLLATE` clause. D197
+removed the twin's *reason* instead of syncing it: the id list now binds as one
+JSON array expanded by `json_each`, so `id` is an ordinary clause in
+`buildCardsWhere` and `/cards` is a single ordered, paged SQL statement.
+Verified against production D1 with the real bound parameter — duplicate ids
+dedupe (`IN` is set membership), unknown ids drop, a full 100-id list is still
+ONE bind.
+
+**`suffix` is now a column (migration `0006_clumsy_fat_cobra`).** tcgdex's
+print-kind marker on a Pokémon's name line — `"ex"`, `"V"`, `"VMAX"`,
+`"MEGA"`, … — was parsed by `packages/schema` and dropped by ingest. Without
+it an EX/Mega selection cannot be a server param, so the web re-derives the
+kind from the card NAME and thins each page client-side; a mixed selection
+therefore pages badly (a 60-card page can render nearly empty while `total`
+claims hundreds). The column is added, `mapCard` writes it (sentinel-normalised
+like the other facet vocabularies — see §5.3.1), and `CARDS_COLUMNS` emits it,
+so the next ingest populates it.
+
+⚠️ **Unproven until a re-ingest: the column is NULL on all 3,786 production
+rows.** No filter, no facet and no wire field reads it yet — deliberately, so
+an unpopulated column cannot silently empty a result page. Discharge with:
+
+```sh
+cd apps/api && bun scripts/ingest.ts --remote     # then re-check the census below
+```
+
+```sql
+SELECT suffix, COUNT(*) FROM cards WHERE suffix IS NOT NULL GROUP BY suffix;
+```
+
+`api.tcgdex.net` is blocked by the network policy in this session too (as it
+was for D188 and D194), so the ingest half remains outstanding. Landing the
+`?suffix=` filter is a follow-up and needs `CatalogFacets` to grow a
+`suffixes` vocabulary first (`packages/schema`) — that facet list is what makes
+the filter degrade correctly, because the FilterRail already hides a section
+whose vocabulary is empty, so the chip simply will not exist until the column
+has values.
+
 ---
 
 ## 6. API surface (v1)
@@ -540,14 +616,23 @@ policy there.
 GET    /health
 
 # Catalog (public; KV cache-aside on every 200, 1h TTL, `x-luminous-cache: hit|miss`,
-# key = `catalog:v4:` + normalized path+sorted-query — bump the version prefix
+# key = `catalog:v5:` + normalized path+sorted-query — bump the version prefix
 # whenever a cached shape — or its values for already-ingested rows — changes;
 # invalid query params → terse 400 JSON)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
-                         #   name (substring, case-insensitive), category, type,
-                         #   rarity, set, regulationMark, hpMin/hpMax (inclusive),
+                         #   name (substring, case-insensitive), nameExact, category,
+                         #   type, rarity, stage, trainerType, energyType, set, serie,
+                         #   illustrator, text, regulationMark, hpMin/hpMax (inclusive),
                          #   legal=standard|expanded; type & rarity are REPEATABLE
                          #   (?type=Fire&type=Water — OR within the dimension, M9);
+                         #   id is REPEATABLE too (≤100, deck hydration) and is now an
+                         #   ORDINARY where clause — one JSON bind expanded by
+                         #   json_each — so it orders and pages in SQL like any other
+                         #   query (D197 deleted the JS sort twin that path used to
+                         #   need; §5.3.2);
+                         #   text = substring over abilities_json + attacks_json + the
+                         #   plain-text `effect` column (D197 — before that it reached
+                         #   NO Trainer or Energy row at all, §5.3.2);
                          #   sort=name|hp-desc|set (default set); page (1-based,
                          #   default 1), pageSize (default 50, max 100)
 GET    /cards/:id        # full canonical Card; 404 JSON if absent

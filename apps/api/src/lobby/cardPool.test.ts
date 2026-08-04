@@ -21,6 +21,7 @@ function row(id: string, name: string): CardRow {
     regulationMark: null,
     hp: null,
     stage: null,
+    suffix: null,
     evolveFrom: null,
     typesJson: null,
     retreat: null,

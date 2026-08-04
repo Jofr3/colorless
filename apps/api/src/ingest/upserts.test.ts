@@ -124,6 +124,7 @@ const hostileCard: CardRow = {
   regulationMark: null,
   hp: 0,
   stage: null,
+  suffix: "ex' ◇",
   evolveFrom: "Mime Jr.',(",
   typesJson: ["Grass", "it's"],
   retreat: 3,
