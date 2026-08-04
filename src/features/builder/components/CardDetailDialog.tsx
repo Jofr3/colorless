@@ -4,7 +4,7 @@ import { CardImage } from "../../../components/CardImage";
 import { XIcon } from "../../../components/icons";
 import { ScrollArea } from "../../../components/ScrollArea";
 import { cardImageUrl, getCard } from "../../../lib/api";
-import { FOCUS_RING_INSET, GLASS_DIALOG_PANEL, GLASS_GHOST_BUTTON } from "../../../lib/glass";
+import { GHOST_ICON_BUTTON, GLASS_DIALOG_PANEL, GLASS_GHOST_BUTTON } from "../../../lib/glass";
 import { type BuilderCard, type EnergyType, ENERGY_TYPE_META, ENERGY_TYPES } from "../cards";
 import { EnergyGlyph } from "./EnergyGlyph";
 
@@ -108,7 +108,7 @@ export function CardDetailDialog({ open, card, onClose }: CardDetailDialogProps)
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white motion-reduce:transition-none ${FOCUS_RING_INSET}`}
+            className={`flex h-8 w-8 shrink-0 ${GHOST_ICON_BUTTON}`}
           >
             <XIcon className="h-4 w-4" />
           </button>

@@ -19,8 +19,9 @@ import { ScrollArea } from "../../components/ScrollArea";
 import { StatusPanel, StatusSpinner } from "../../components/StatusPanel";
 import { ApiError, getDeck, patchDeck, unknownCardIdsOf } from "../../lib/api";
 import {
+  BACK_ARROW_ICON,
   FOCUS_RING,
-  FOCUS_RING_INSET,
+  GHOST_ICON_BUTTON,
   GLASS_ACCENT_BUTTON,
   GLASS_FILTER_TOGGLE,
   GLASS_GHOST_BUTTON,
@@ -82,7 +83,7 @@ function BuilderScreen({ children }: { children: ReactNode }) {
     <AppBackdrop>
       <HomeButton />
       <Link to="/decks" className={BACK_PILL_CLASS}>
-        <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+        <ArrowLeftIcon className={BACK_ARROW_ICON} />
         Decks
       </Link>
       <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center px-6 py-16">
@@ -473,7 +474,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
       {/* Back-to-decks pill, mirroring the fixed home button in the opposite
           corner. pt-16 below clears both. */}
       <Link to="/decks" className={BACK_PILL_CLASS}>
-        <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+        <ArrowLeftIcon className={BACK_ARROW_ICON} />
         Decks
       </Link>
 
@@ -547,7 +548,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
               type="button"
               onClick={() => setRailOpen(true)}
               aria-label="Filters"
-              className={`inline-flex shrink-0 items-center justify-center rounded-full p-2.5 ring-1 ring-inset bg-white/[0.045] text-white/70 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 min-[1380px]:hidden ${FOCUS_RING}`}
+              className={`inline-flex shrink-0 items-center justify-center rounded-full p-2.5 ring-1 ring-inset bg-white/[0.045] text-white/70 ring-white/10 backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-white/[0.08] hover:text-white/90 active:scale-95 min-[1380px]:hidden ${FOCUS_RING}`}
             >
               <FilterIcon className="h-5 w-5" />
             </button>
@@ -555,7 +556,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
             <button
               type="button"
               onClick={() => setDeckOpen(true)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2.5 text-sm font-semibold ring-1 ring-inset bg-white/[0.045] text-white/80 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 min-[1600px]:hidden ${FOCUS_RING}`}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2.5 text-sm font-semibold ring-1 ring-inset bg-white/[0.045] text-white/80 ring-white/10 backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-white/[0.08] hover:text-white active:scale-95 min-[1600px]:hidden ${FOCUS_RING}`}
             >
               <DecksIcon className="h-4 w-4" />
               <span className="tabular-nums">{total}</span>
@@ -683,7 +684,7 @@ function Drawer({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`}
+            className={`flex h-8 w-8 ${GHOST_ICON_BUTTON}`}
           >
             <XIcon className="h-4 w-4" />
           </button>

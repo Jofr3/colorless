@@ -1,6 +1,18 @@
-// Shared "glass" Tailwind class fragments. Each exported constant holds ONLY
-// the classes common to every site that uses it; per-site layout (size, shape,
-// position, padding) stays at the call site, composed via a template literal.
+// The app's APP-WIDE shared Tailwind class fragments. The "glass" paint family
+// is the largest but not the only one — `FOCUS_RING`, `ERROR_TEXT` and the
+// `CORNER_*` constants have never been glass, and D217 added three more
+// non-glass families (see the bottom of this file). Each exported constant holds
+// ONLY the classes common to every site that uses it; per-site layout (size,
+// shape, position, padding) stays at the call site, composed via a template
+// literal.
+//
+// WHAT BELONGS HERE. The unit of sharing is decided by the READ SITE. This
+// module is imported by ~34 modules across seven features, so a string earns a
+// place here only when its readers really are spread that wide. D214 kept the
+// two-reader match-HUD row classes OUT of this file for exactly that reason
+// (they live in `features/game/hudRows.ts`); D217's three additions have SEVEN,
+// FIVE and THREE readers across five, three and three features respectively,
+// with no narrower module containing them all.
 //
 // Constants are deliberately split where the originals genuinely differ — e.g.
 // the HUD glass buttons use ring-white/9 while the page ghost buttons use
@@ -91,3 +103,35 @@ export const CORNER_SETTINGS_POSITION = "fixed bottom-3 right-3 z-50";
 
 /** Fixed position of the control stacked above it (AccountButton). */
 export const CORNER_ACCOUNT_POSITION = "fixed bottom-[3.75rem] right-3 z-50";
+
+// ---- Non-glass control paint (D217) -----------------------------------------
+// Three families that were restated verbatim across the app. They carry no
+// glass paint (no backdrop-blur, no inset shadow, no ring-white/N glass ring),
+// which is why their names do not say GLASS — but their READ SITES are as wide
+// as this module's audience, which is what decides the home. Each carries the
+// D90 guard so the read sites do not.
+
+/** The back/up arrow that slides left on hover, inside a `group` back
+    affordance. SEVEN read sites: `components/PlaceholderPage`,
+    `builder/DeckBuilder` (×2), `decks/Decks`, `online/DeckPickerDialog`,
+    `online/MatchPlaceholder`, `settings/Settings` — byte-identical at all of
+    them, so the size travels with the paint rather than staying at the call
+    site. */
+export const BACK_ARROW_ICON =
+  "h-4 w-4 transition-transform group-hover:-translate-x-0.5 motion-reduce:transition-none";
+
+/** The round ghost icon-button — a dialog/drawer close X or a pill's dismiss.
+    Paint only: `flex`, the size (h-8 w-8 vs h-7 w-7), `shrink-0` and any
+    `disabled:` states stay at the call site, since those are the only things
+    its FIVE readers disagree about (`builder/CardDetailDialog`,
+    `builder/CoverDialog`, `builder/ImportExportDialog`, `builder/DeckBuilder`,
+    `components/TransientErrorPill`). */
+export const GHOST_ICON_BUTTON = `cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors motion-reduce:transition-none hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`;
+
+/** The solid-white primary action — the one "do this" button on a surface that
+    is otherwise glass (a confirm dialog's confirm, the result panel's Rematch).
+    Padding stays at the call site: the dialogs use px-4, the wider Rematch px-5.
+    THREE readers: `online/ConfirmDialog`, `playmat/BackToMenu`,
+    `online/OnlineMatch` — whose own comment already called it "the leave
+    dialog's confirm styling", i.e. a copy. */
+export const SOLID_PRIMARY_BUTTON = `cursor-pointer rounded-full bg-white text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all motion-reduce:transition-none hover:bg-white/90 active:scale-95 ${FOCUS_RING}`;

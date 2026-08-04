@@ -56,7 +56,7 @@ function Chip({
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${FOCUS_RING} ${
+      className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition-colors motion-reduce:transition-none ${FOCUS_RING} ${
         selected
           ? "bg-accent text-zinc-950 ring-accent"
           : "bg-white/[0.05] text-white/70 ring-white/10 hover:bg-white/[0.09] hover:text-white/90"
@@ -85,7 +85,7 @@ function TypePip({
       title={meta.type}
       onClick={onToggle}
       style={{ backgroundColor: meta.color }}
-      className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] transition ${FOCUS_RING} ${
+      className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] transition motion-reduce:transition-none ${FOCUS_RING} ${
         selected
           ? "ring-2 ring-white ring-offset-2 ring-offset-[#15151d]"
           : "opacity-60 ring-1 ring-inset ring-black/30 hover:opacity-100"
@@ -100,7 +100,7 @@ function TypePip({
 // <select> (searchable by typing) in the Settings page's select styling,
 // full-width for the rail.
 const SELECT_CLASS =
-  "w-full cursor-pointer rounded-lg bg-white/[0.06] px-2.5 py-1.5 text-sm text-white/80 outline-none ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.09] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/50";
+  "w-full cursor-pointer rounded-lg bg-white/[0.06] px-2.5 py-1.5 text-sm text-white/80 outline-none ring-1 ring-inset ring-white/10 transition-colors motion-reduce:transition-none hover:bg-white/[0.09] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/50";
 
 function RailSelect({
   label,
@@ -138,7 +138,7 @@ function RailSelect({
 // Glass text/number input for the rail's small free-text fields (HP bounds,
 // ability/attack text) — GLASS_INPUT's paint at chip scale, spinners hidden.
 const RAIL_INPUT_CLASS =
-  "w-full rounded-lg bg-white/[0.045] px-2.5 py-1.5 text-sm text-white/90 ring-1 ring-inset ring-white/10 transition-colors placeholder:text-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  "w-full rounded-lg bg-white/[0.045] px-2.5 py-1.5 text-sm text-white/90 ring-1 ring-inset ring-white/10 transition-colors motion-reduce:transition-none placeholder:text-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
 /** The deck builder's left rail: format, card type, energy type, kind,
     rarity, regulation mark, HP range, set/serie, illustrator, ability/attack
@@ -255,17 +255,17 @@ export function FilterRail({
             role="switch"
             aria-checked={filters.legalOnly}
             onClick={() => set({ legalOnly: !filters.legalOnly })}
-            className={`mt-2.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-1 py-1 text-sm text-white/70 transition-colors hover:text-white/90 ${FOCUS_RING}`}
+            className={`mt-2.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-1 py-1 text-sm text-white/70 transition-colors motion-reduce:transition-none hover:text-white/90 ${FOCUS_RING}`}
           >
             <span>{format.name}-legal only</span>
             <span
               aria-hidden
-              className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+              className={`relative h-5 w-9 shrink-0 rounded-full transition-colors motion-reduce:transition-none ${
                 filters.legalOnly ? "bg-accent" : "bg-white/15"
               }`}
             >
               <span
-                className={`absolute top-0.5 h-4 w-4 rounded-full transition-all ${
+                className={`absolute top-0.5 h-4 w-4 rounded-full transition-all motion-reduce:transition-none ${
                   filters.legalOnly ? "left-4 bg-zinc-900" : "left-0.5 bg-white/70"
                 }`}
               />
@@ -352,7 +352,7 @@ export function FilterRail({
           <button
             type="button"
             onClick={options.retry}
-            className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium bg-white/[0.05] text-white/70 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.09] hover:text-white/90 ${FOCUS_RING}`}
+            className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium bg-white/[0.05] text-white/70 ring-1 ring-inset ring-white/10 transition-colors motion-reduce:transition-none hover:bg-white/[0.09] hover:text-white/90 ${FOCUS_RING}`}
           >
             Retry
           </button>
@@ -499,7 +499,7 @@ export function FilterRail({
           <button
             type="button"
             onClick={onReset}
-            className={`w-full cursor-pointer rounded-lg px-2.5 py-1.5 text-left text-sm text-white/55 transition-colors hover:bg-white/[0.07] hover:text-white/85 ${FOCUS_RING}`}
+            className={`w-full cursor-pointer rounded-lg px-2.5 py-1.5 text-left text-sm text-white/55 transition-colors motion-reduce:transition-none hover:bg-white/[0.07] hover:text-white/85 ${FOCUS_RING}`}
           >
             Reset filters
           </button>

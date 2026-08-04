@@ -7,7 +7,7 @@ export function NotFound() {
       <h1 className="text-xl font-medium">This page doesn&apos;t exist</h1>
       <Link
         to="/"
-        className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg transition-colors hover:border-accent hover:text-accent"
+        className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg transition-colors motion-reduce:transition-none hover:border-accent hover:text-accent"
       >
         Back to home
       </Link>

@@ -9,7 +9,12 @@ import {
 } from "../../../components/icons";
 import { ScrollArea } from "../../../components/ScrollArea";
 import { StatusPanel, StatusSpinner } from "../../../components/StatusPanel";
-import { FOCUS_RING_INSET, GLASS_ACCENT_BUTTON, GLASS_DIALOG_PANEL } from "../../../lib/glass";
+import {
+  BACK_ARROW_ICON,
+  FOCUS_RING_INSET,
+  GLASS_ACCENT_BUTTON,
+  GLASS_DIALOG_PANEL,
+} from "../../../lib/glass";
 import { useAuth } from "../../auth/AuthProvider";
 import { CardBackStack } from "../../decks/CardBackStack";
 import type { Deck } from "../../decks/data";
@@ -41,7 +46,7 @@ function FolderTile({
     <button
       type="button"
       onClick={onOpen}
-      className={`group flex items-center gap-3 rounded-2xl bg-white/[0.045] p-4 text-left ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-white/[0.07] hover:ring-white/20 ${FOCUS_RING_INSET}`}
+      className={`group flex items-center gap-3 rounded-2xl bg-white/[0.045] p-4 text-left ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors motion-reduce:transition-none hover:bg-white/[0.07] hover:ring-white/20 ${FOCUS_RING_INSET}`}
     >
       <FolderIcon className="h-9 w-9 shrink-0 text-accent" fill="currentColor" />
       <div className="min-w-0">
@@ -209,7 +214,7 @@ export function DeckPickerDialog({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search decks and folders"
               aria-label="Search decks and folders"
-              className="w-full rounded-full bg-white/[0.06] py-2.5 pl-10 pr-4 text-sm text-white/90 ring-1 ring-inset ring-white/10 outline-none transition-colors placeholder:text-white/35 focus-visible:ring-2 focus-visible:ring-white/50"
+              className="w-full rounded-full bg-white/[0.06] py-2.5 pl-10 pr-4 text-sm text-white/90 ring-1 ring-inset ring-white/10 outline-none transition-colors motion-reduce:transition-none placeholder:text-white/35 focus-visible:ring-2 focus-visible:ring-white/50"
             />
           </div>
         )}
@@ -261,14 +266,14 @@ export function DeckPickerDialog({
                   type="button"
                   onClick={() => setOpenFolderId(openFolder.parentId)}
                   aria-label="Up one level"
-                  className={`group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.07] hover:text-white/90 ${FOCUS_RING_INSET}`}
+                  className={`group inline-flex cursor-pointer items-center rounded-full bg-white/[0.04] p-1.5 text-white/70 ring-1 ring-inset ring-white/10 transition-colors motion-reduce:transition-none hover:bg-white/[0.07] hover:text-white/90 ${FOCUS_RING_INSET}`}
                 >
-                  <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                  <ArrowLeftIcon className={BACK_ARROW_ICON} />
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpenFolderId(null)}
-                  className="cursor-pointer rounded px-1 text-white/55 transition-colors hover:text-white/85"
+                  className="cursor-pointer rounded px-1 text-white/55 transition-colors motion-reduce:transition-none hover:text-white/85"
                 >
                   All decks
                 </button>
@@ -290,7 +295,7 @@ export function DeckPickerDialog({
                         <button
                           type="button"
                           onClick={() => setOpenFolderId(folder.id)}
-                          className="max-w-[12rem] cursor-pointer truncate rounded px-1 text-white/55 transition-colors hover:text-white/85"
+                          className="max-w-[12rem] cursor-pointer truncate rounded px-1 text-white/55 transition-colors motion-reduce:transition-none hover:text-white/85"
                         >
                           {folder.name}
                         </button>

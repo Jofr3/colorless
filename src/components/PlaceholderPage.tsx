@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 import { Link } from "react-router-dom";
-import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../lib/glass";
+import { BACK_ARROW_ICON, GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../lib/glass";
 import { AppBackdrop } from "./AppBackdrop";
 import { ArrowLeftIcon } from "./icons";
 
@@ -26,7 +26,7 @@ export function PlaceholderPage({
           to="/"
           className={`group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`}
         >
-          <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          <ArrowLeftIcon className={BACK_ARROW_ICON} />
           Back to home
         </Link>
       </main>

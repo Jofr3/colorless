@@ -227,20 +227,82 @@ P2–P4; tracked here so nothing is forgotten.
   presence proves nothing: a build in which `hudRows.ts` alone used
   `motion-reduce:transition-[none]` emitted that rule inside `@media
   (prefers-reduced-motion:reduce)`, and a build with the variant typo'd emitted
-  nothing at all. 677 → 682 tests. **STILL OPEN: 54 unguarded class contexts
-  remain across 26 files** (decks, builder, dialogs, auth, playmat) — the real
-  scope of what D90 believed it had finished.
+  nothing at all. 677 → 682 tests. ~~**STILL OPEN: 54 unguarded class contexts
+  remain across 26 files**~~ — **CLOSED by P5-12 below, and the number was 58,
+  not 54.**
+- **The rest of the reduced-motion sweep — DONE 2026-08-04 (P5-12, D217).** The
+  54 D214 filed, plus **four it could not see**: D214's regex matched
+  `transition-<property>` only, and Tailwind also has a BARE `transition`
+  utility. Those four were in `DeckPanel` (a tooltip whose bare `transition`
+  drives a `scale-95 → scale-100` hover animation — the most motion-y thing in
+  the whole set), `Decks`, `FilterRail` and `Home`. **58 → 0.**
+  **12 of the 58 were the same string written more than once**, so they became
+  three constants in `lib/glass.ts` rather than twelve more copies of the guard:
+  **`BACK_ARROW_ICON`** (the back/up arrow's hover slide — SEVEN read sites
+  across five features, byte-identical at all of them), **`GHOST_ICON_BUTTON`**
+  (the round ghost close/dismiss X — five read sites; size, `shrink-0` and
+  `disabled:` states stay at the call site, which is all its readers disagreed
+  about) and **`SOLID_PRIMARY_BUTTON`** (the solid-white primary — three read
+  sites, one of which already had a comment calling it a copy of another).
+  `glass.ts` is the right home HERE where D214 rightly refused it: D214's strings
+  had two readers and a narrower module (`features/game`) that held both; these
+  have seven / five / three across five / three / three features and no narrower
+  module containing them. The other 46 are one-reader strings and just took the
+  guard in place, per D90's rule. Every remaining duplicate-ish pair is named in
+  the D217 commit message with the reason it was left alone.
+  **`transition-[z-index]` (CardGrid, DeckPanel) IS guarded**, deliberately: it
+  is not motion, but D90's invariant is "an instant state change", and a
+  z-index that flips 75ms late is a delayed one. Guarding costs nothing (no
+  pixel moves either way, and `useTiltJuice` has already disabled that card's
+  tilt for the same user) and keeps the rule mechanical — "every `transition-*`
+  carries the guard" — with no property allowlist for the next author to
+  misjudge.
+  **THE SWEEP IS NOW COMMITTED**, as `src/lib/reducedMotionSweep.test.ts` — D214's
+  was a throwaway script, so its numbers could not be re-derived by anyone. It
+  runs in `bun run check`, so the NEXT unguarded transition fails CI instead of
+  waiting for a fourth audit. 682 → 692 tests.
+  ⚠️ **AND THE SHIPPED-STYLESHEET CHECK IS WORSE THAN D214 THOUGHT.** D214
+  identified `glass.ts` as the confound. The real confound is **this file**:
+  Tailwind v4's automatic content detection scans the repo's MARKDOWN, so the
+  prose in `polish.md` / `decisions.md` / `progress.md` that *describes*
+  `motion-reduce:transition-none` is enough to emit the rule. Proved twice: a
+  build with **every** `src/**` file's variant typo'd still shipped
+  `.motion-reduce\:transition-none`, and a marker class placed only inside an
+  HTML comment in this file was emitted into `dist`. So the only sound form of
+  the check is a **unique marker**: 22/22 files carrying a literal guard were
+  attributed individually via a per-file `motion-reduce:transition-[fxN]`, and
+  the same marker behind a typo'd variant emitted nothing. **A future slice
+  should look at narrowing Tailwind's `@source` — the docs are inflating the
+  shipped CSS with classes no element uses.**
 - **Uploaded avatars (still open — USER-gated).** Same as the item above:
   upload/choose an avatar → stored in R2, served from our domain, CSP updated. The
   settings surface exists (Profile section); what's left is the R2 + CSP +
   **moderation** half — moderation is an unresolved product call, so this needs
   the user before it can be built.
 
-**P5-11 (D214) reopened autonomous P5 work that P5-10 had declared finished.**
-The remaining **54 unguarded `transition-*` class contexts** are a real, sized,
-autonomous slice — run the sweep in `D214`'s commit message to reproduce the list,
-and note that a per-file eyeball is exactly how the count was under-reported
-twice. The two long-standing items (uploaded avatars, the remote P4 deploy) are
+**P5-11 (D214) reopened autonomous P5 work that P5-10 had declared finished;
+P5-12 (D217) finished it, and this time the claim is a command** — `bun run
+check` runs `src/lib/reducedMotionSweep.test.ts`, which fails on the next
+unguarded transition. Do NOT re-declare it "complete" in prose; the test is the
+statement. **Three adjacent gaps it deliberately does not cover, all real:**
+1. **`animate-*` needs `motion-reduce:animate-none`, not `transition-none`** —
+   D89 guarded exactly one spinner (`ProfileSection`); **15 `animate-spin` /
+   `animate-pulse` sites app-wide are still unguarded** (`StatusPanel`,
+   `AccountButton`, `AuthPage` ×2, `Decks` ×2, `PlayerPanel` ×2, `LobbyRoom` ×2,
+   `OnlineHub` ×2, `CardGrid`, `DeckPanel`, `StartCountdown`). Two more already
+   use the `motion-safe:` form and are correct. This is the same shape of slice
+   as P5-12 and the sweep test is one regex away from measuring it.
+2. **JS-set transitions are invisible to any class sweep** —
+   `components/useTiltJuice.ts`'s `TILT_STYLE` sets
+   `transition: "transform 140ms …"` as an inline style, so the card hover
+   scale still animates for a reduced-motion user even though the hook honours
+   the query for the tilt and juice. The other JS motion sources
+   (`glowRenderer`, `CardSheen`, `useFlip`, `AnimatedCardsLayer`) DO check
+   `matchMedia` — this one is the outlier.
+3. **Tailwind scans the docs** (see P5-12) — the shipped CSS carries classes
+   that exist only in these write-ups.
+
+The two long-standing items (uploaded avatars, the remote P4 deploy) are
 still USER-gated. The P3 simulator M5 card-effect backlog
 (`docs/reference/coverage-backlog.md`, `workstreams/simulator.md`) is still the
 deepest alternative.

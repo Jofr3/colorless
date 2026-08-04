@@ -5,6 +5,7 @@ import { ScrollArea } from "../../../components/ScrollArea";
 import { cardImageUrl } from "../../../lib/api";
 import {
   FOCUS_RING_INSET,
+  GHOST_ICON_BUTTON,
   GLASS_DIALOG_GHOST_BUTTON,
   GLASS_DIALOG_PANEL,
 } from "../../../lib/glass";
@@ -81,7 +82,7 @@ export function CoverDialog({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white motion-reduce:transition-none ${FOCUS_RING_INSET}`}
+            className={`flex h-8 w-8 ${GHOST_ICON_BUTTON}`}
           >
             <XIcon className="h-4 w-4" />
           </button>

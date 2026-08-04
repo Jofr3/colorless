@@ -2,7 +2,7 @@ import type { GameAction } from "@luminous/engine";
 import type { RedactedGame, SeatLogEntry } from "@luminous/schema";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TransientErrorPill } from "../../../components/TransientErrorPill";
-import { GLASS_HUD_BUTTON } from "../../../lib/glass";
+import { GLASS_HUD_BUTTON, SOLID_PRIMARY_BUTTON } from "../../../lib/glass";
 import { moveToAction } from "../../game/moveToAction";
 import { placementPredicateFor } from "../../game/placement";
 import { GAME_OVER_DETAIL, projectionFromRedacted } from "../../game/projection";
@@ -69,8 +69,7 @@ const LEAVE_CONFIRM_WATCHING: LeaveConfirmCopy = {
 // The one primary action on the board — the result panel's Rematch. Solid white
 // (the leave dialog's confirm styling) rather than the HUD's glass, because it is
 // the thing to do next rather than another piece of chrome.
-const REMATCH_BUTTON_CLASS =
-  "cursor-pointer rounded-full bg-white px-5 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+const REMATCH_BUTTON_CLASS = `px-5 py-2 ${SOLID_PRIMARY_BUTTON}`;
 
 export function OnlineMatch({
   game,

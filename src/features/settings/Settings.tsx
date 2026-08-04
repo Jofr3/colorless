@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { ArrowLeftIcon, SettingsIcon } from "../../components/icons";
-import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE, GLASS_PANEL } from "../../lib/glass";
+import { BACK_ARROW_ICON, GLASS_GHOST_BUTTON, GLASS_ICON_TILE, GLASS_PANEL } from "../../lib/glass";
 import { useFont } from "./FontProvider";
 import { FONT_OPTIONS, fontFamilyValue } from "./fonts";
 import { ProfileSection } from "./ProfileSection";
@@ -56,7 +56,7 @@ export function Settings() {
           to="/"
           className={`group inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`}
         >
-          <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5 motion-reduce:transition-none" />
+          <ArrowLeftIcon className={BACK_ARROW_ICON} />
           Back to home
         </Link>
       </main>

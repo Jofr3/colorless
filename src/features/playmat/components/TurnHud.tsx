@@ -122,7 +122,7 @@ function PlayerChip({
     >
       <div
         key={animateIndicator ? passAnimationKey : "idle"}
-        className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold transition-all ${PLAYER_DOT_CLASSES[tone]} ${playerChipRing(tone, active)} ${animateIndicator ? "turn-chip-pass" : ""}`}
+        className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold transition-all motion-reduce:transition-none ${PLAYER_DOT_CLASSES[tone]} ${playerChipRing(tone, active)} ${animateIndicator ? "turn-chip-pass" : ""}`}
       >
         {name[0]}
       </div>

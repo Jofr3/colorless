@@ -24,6 +24,7 @@ import {
   reorderFolders,
 } from "../../lib/api";
 import {
+  BACK_ARROW_ICON,
   FOCUS_RING_INSET,
   GLASS_ACCENT_BUTTON,
   GLASS_FILTER_TOGGLE,
@@ -70,7 +71,7 @@ const NAME_INPUT_CLASS =
   "pointer-events-auto block w-full min-w-0 select-text truncate rounded-md bg-white/10 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-inset ring-white/50";
 
 // Shared circular glass surface for a tile's top-right action buttons.
-const ICON_BUTTON_CLASS = `flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors hover:bg-black/45 hover:text-white ${FOCUS_RING_INSET}`;
+const ICON_BUTTON_CLASS = `flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white/70 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors motion-reduce:transition-none hover:bg-black/45 hover:text-white ${FOCUS_RING_INSET}`;
 
 /** Which kinds of library entries the grid shows. */
 type ShowFilter = "all" | "decks" | "folders";
@@ -218,7 +219,7 @@ function CardShell({
       <div className="relative">{children}</div>
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition group-hover:ring-white/20"
+        className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition motion-reduce:transition-none group-hover:ring-white/20"
       />
     </div>
   );
@@ -263,7 +264,7 @@ function FilterRow({
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
-      className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-white/[0.07] focus:outline-none focus-visible:bg-white/[0.07] ${selected ? "text-white" : "text-white/70 hover:text-white/90"}`}
+      className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors motion-reduce:transition-none hover:bg-white/[0.07] focus:outline-none focus-visible:bg-white/[0.07] ${selected ? "text-white" : "text-white/70 hover:text-white/90"}`}
     >
       {label}
       {selected && <CheckIcon className="h-4 w-4 shrink-0" />}
@@ -323,7 +324,7 @@ function FilterSection({
           <button
             type="button"
             onClick={onReset}
-            className="w-full cursor-pointer rounded-lg px-2.5 py-1.5 text-left text-sm text-white/55 transition-colors hover:bg-white/[0.07] hover:text-white/85 focus:outline-none focus-visible:bg-white/[0.07]"
+            className="w-full cursor-pointer rounded-lg px-2.5 py-1.5 text-left text-sm text-white/55 transition-colors motion-reduce:transition-none hover:bg-white/[0.07] hover:text-white/85 focus:outline-none focus-visible:bg-white/[0.07]"
           >
             Reset filters
           </button>
@@ -354,7 +355,7 @@ function CardActions({
   return (
     <div
       data-card-actions
-      className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100"
+      className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition-opacity motion-reduce:transition-none duration-150 focus-within:opacity-100 group-hover:opacity-100"
     >
       {onMove && (
         <button
@@ -578,7 +579,7 @@ function FolderCard({
           via opacity so it never nudges the card's layout. */}
       <span
         aria-hidden
-        className={`pointer-events-none absolute inset-0 z-20 rounded-2xl bg-accent/10 ring-2 ring-inset ring-accent transition-opacity duration-150 ${
+        className={`pointer-events-none absolute inset-0 z-20 rounded-2xl bg-accent/10 ring-2 ring-inset ring-accent transition-opacity motion-reduce:transition-none duration-150 ${
           isDropTarget || isMoving ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -1217,19 +1218,19 @@ export function Decks() {
                     onClick={() => setOpenFolderId(openFolder.parentId)}
                     aria-label="Up one level"
                     {...dropAttrs("@up", openFolder.parentId)}
-                    className={`group inline-flex cursor-pointer items-center rounded-full p-1.5 ring-1 ring-inset transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                    className={`group inline-flex cursor-pointer items-center rounded-full p-1.5 ring-1 ring-inset transition-all motion-reduce:transition-none active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
                       dropTarget === "@up"
                         ? "bg-accent/20 text-white ring-accent"
                         : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.07] hover:text-white/90"
                     }`}
                   >
-                    <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    <ArrowLeftIcon className={BACK_ARROW_ICON} />
                   </button>
                   <button
                     type="button"
                     onClick={() => setOpenFolderId(null)}
                     {...dropAttrs(ROOT_DROP, null)}
-                    className={`cursor-pointer rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                    className={`cursor-pointer rounded px-1 transition-colors motion-reduce:transition-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
                       dropTarget === ROOT_DROP
                         ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
                         : "text-white/55 hover:text-white/85"
@@ -1256,7 +1257,7 @@ export function Decks() {
                             type="button"
                             onClick={() => setOpenFolderId(folder.id)}
                             {...dropAttrs(`bc:${folder.id}`, folder.id)}
-                            className={`max-w-[12rem] cursor-pointer truncate rounded px-1 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
+                            className={`max-w-[12rem] cursor-pointer truncate rounded px-1 transition-colors motion-reduce:transition-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 ${
                               dropTarget === `bc:${folder.id}`
                                 ? "bg-accent/20 text-white ring-1 ring-inset ring-accent"
                                 : "text-white/55 hover:text-white/85"

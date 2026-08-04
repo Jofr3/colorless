@@ -185,7 +185,7 @@ export function ScrollArea({
           content; a single thumb fills it, starting flush at the top. */}
       <div
         style={{ top: trackTop, bottom: trackBottom }}
-        className={`pointer-events-none absolute -right-5 w-3 transition-opacity duration-150 ${
+        className={`pointer-events-none absolute -right-5 w-3 transition-opacity motion-reduce:transition-none duration-150 ${
           thumb.shown ? "opacity-100" : "opacity-0"
         }`}
       >
@@ -193,7 +193,7 @@ export function ScrollArea({
           aria-hidden
           onPointerDown={startDrag}
           style={{ height: thumb.height, transform: `translate(-50%, ${thumb.top}px)` }}
-          className="pointer-events-auto absolute left-1/2 top-0 w-1.5 cursor-grab rounded-full bg-white/20 transition-colors duration-150 hover:bg-white/30 active:cursor-grabbing active:bg-white/40"
+          className="pointer-events-auto absolute left-1/2 top-0 w-1.5 cursor-grab rounded-full bg-white/20 transition-colors motion-reduce:transition-none duration-150 hover:bg-white/30 active:cursor-grabbing active:bg-white/40"
         />
       </div>
     </div>

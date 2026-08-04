@@ -84,7 +84,7 @@ function CardTile({
     });
 
   return (
-    <li className="group relative transition-[z-index] hover:z-10">
+    <li className="group relative transition-[z-index] motion-reduce:transition-none hover:z-10">
       {/* Pile — the copies still available to add, peeking out the bottom as
           card-back edges. */}
       {Array.from({ length: pile }, (_, i) => (

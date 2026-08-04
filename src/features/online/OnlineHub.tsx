@@ -174,7 +174,7 @@ export function OnlineHub() {
             aria-label="Lobby code"
             aria-invalid={error !== null}
             maxLength={LOBBY_CODE_LENGTH}
-            className={`w-full rounded-2xl bg-white/[0.06] px-4 py-3 text-center font-mono text-2xl font-bold uppercase tracking-[0.3em] text-white placeholder:text-white/25 placeholder:tracking-[0.3em] ring-1 ring-inset ring-white/10 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-white/50 disabled:opacity-60 ${
+            className={`w-full rounded-2xl bg-white/[0.06] px-4 py-3 text-center font-mono text-2xl font-bold uppercase tracking-[0.3em] text-white placeholder:text-white/25 placeholder:tracking-[0.3em] ring-1 ring-inset ring-white/10 outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:opacity-60 ${
               error ? ERROR_RING : ""
             }`}
           />

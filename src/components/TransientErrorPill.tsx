@@ -4,7 +4,7 @@
 // caller owns its trigger state and its expiry timer (the TTLs differ) and
 // passes positioning through `className`.
 
-import { ERROR_TEXT, FOCUS_RING_INSET } from "../lib/glass";
+import { ERROR_TEXT, GHOST_ICON_BUTTON } from "../lib/glass";
 import { XIcon } from "./icons";
 
 export function TransientErrorPill({
@@ -35,7 +35,7 @@ export function TransientErrorPill({
         type="button"
         aria-label="Dismiss"
         onClick={onDismiss}
-        className={`flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`}
+        className={`flex h-7 w-7 shrink-0 ${GHOST_ICON_BUTTON}`}
       >
         <XIcon className="h-3.5 w-3.5" />
       </button>

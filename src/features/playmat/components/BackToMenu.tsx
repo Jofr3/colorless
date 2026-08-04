@@ -5,6 +5,7 @@ import {
   GLASS_DIALOG_GHOST_BUTTON,
   GLASS_DIALOG_PANEL,
   GLASS_HUD_BUTTON,
+  SOLID_PRIMARY_BUTTON,
 } from "../../../lib/glass";
 
 const HOME_PATH = "/";
@@ -15,8 +16,7 @@ const BACK_BUTTON_CLASS = `absolute z-20 flex h-9 cursor-pointer items-center ga
 
 const DIALOG_GHOST_BUTTON_CLASS = GLASS_DIALOG_GHOST_BUTTON;
 
-const DIALOG_PRIMARY_BUTTON_CLASS =
-  "cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+const DIALOG_PRIMARY_BUTTON_CLASS = `px-4 py-2 ${SOLID_PRIMARY_BUTTON}`;
 
 /** What the Back button asks before it leaves. Overridable because the same
     control sits on two boards with different stakes: on the local /play page

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ClipboardIcon, XIcon } from "../../../components/icons";
 import {
-  FOCUS_RING_INSET,
+  GHOST_ICON_BUTTON,
   GLASS_DIALOG_GHOST_BUTTON,
   GLASS_DIALOG_PANEL,
 } from "../../../lib/glass";
@@ -19,7 +19,7 @@ export interface ImportExportDialogProps {
 }
 
 const PRIMARY =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 /** Import/export the decklist as plain text. The textarea starts with the
     current deck (for export/copy); editing + Import replaces the deck and
@@ -115,7 +115,7 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
             aria-label="Close"
             onClick={onClose}
             disabled={importing}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-default disabled:opacity-60 ${FOCUS_RING_INSET}`}
+            className={`flex h-8 w-8 disabled:cursor-default disabled:opacity-60 ${GHOST_ICON_BUTTON}`}
           >
             <XIcon className="h-4 w-4" />
           </button>

@@ -285,7 +285,7 @@ function AuthPage({ mode }: { mode: Mode }) {
           <Link
             to={mode === "login" ? "/register" : "/login"}
             state={location.state}
-            className="rounded font-medium text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+            className="rounded font-medium text-white/80 underline-offset-4 transition-colors motion-reduce:transition-none hover:text-white hover:underline focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
           >
             {mode === "login" ? "Create one" : "Sign in"}
           </Link>

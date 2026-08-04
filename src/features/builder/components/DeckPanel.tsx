@@ -115,7 +115,10 @@ function DeckCardTile({
       pulse,
     });
   return (
-    <li data-flip-id={card.cardId} className="relative transition-[z-index] hover:z-10">
+    <li
+      data-flip-id={card.cardId}
+      className="relative transition-[z-index] motion-reduce:transition-none hover:z-10"
+    >
       {/* Pile — one card-back edge per extra copy, peeking out the bottom; the
           back-most sits lowest. */}
       {Array.from({ length: pile }, (_, i) => (
@@ -225,7 +228,7 @@ function UnknownCardTile({
           type="button"
           aria-label={`Remove unavailable card ${cardId}`}
           onClick={onRemove}
-          className={`inline-flex cursor-pointer items-center gap-1 rounded-full bg-white/[0.06] px-2 py-1 text-[10px] font-medium text-white/70 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.1] hover:text-white ${FOCUS_RING}`}
+          className={`inline-flex cursor-pointer items-center gap-1 rounded-full bg-white/[0.06] px-2 py-1 text-[10px] font-medium text-white/70 ring-1 ring-inset ring-white/10 transition-colors motion-reduce:transition-none hover:bg-white/[0.1] hover:text-white ${FOCUS_RING}`}
         >
           <XIcon className="h-2.5 w-2.5" />
           Remove
@@ -252,7 +255,7 @@ function DeckStatusBadge({ validation, format }: { validation: DeckValidation; f
             ? `Legal ${format.name} deck`
             : `Deck issues: ${validation.issues.map((i) => i.message).join("; ")}`
         }
-        className={`flex h-6 w-6 shrink-0 cursor-help items-center justify-center rounded-full transition-colors hover:bg-white/10 ${FOCUS_RING}`}
+        className={`flex h-6 w-6 shrink-0 cursor-help items-center justify-center rounded-full transition-colors motion-reduce:transition-none hover:bg-white/10 ${FOCUS_RING}`}
         style={{ color }}
       >
         <Icon className="h-4 w-4" />
@@ -262,7 +265,7 @@ function DeckStatusBadge({ validation, format }: { validation: DeckValidation; f
           the panel from the name-side badge instead of spilling past the edge. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[15rem] origin-top-left scale-95 rounded-lg bg-[#14141c]/95 p-2.5 text-xs opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition duration-150 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[15rem] origin-top-left scale-95 rounded-lg bg-[#14141c]/95 p-2.5 text-xs opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition motion-reduce:transition-none duration-150 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100"
       >
         {validation.legal ? (
           <p className="flex items-center gap-1.5 font-medium text-[#7fe39c]">
@@ -341,7 +344,7 @@ function DeckStats({ deck }: { deck: Deck }) {
 const PANEL_BUTTON = `inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`;
 /** The footer's square icon actions (cover, clear) — same glass as PANEL_BUTTON
     without the label, and dimmed rather than hidden when they'd do nothing. */
-const ICON_BUTTON = `inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/[0.05] text-white/65 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.09] hover:text-white/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS_RING}`;
+const ICON_BUTTON = `inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/[0.05] text-white/65 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-white/[0.09] hover:text-white/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS_RING}`;
 
 /** The right pane: deck title, completeness, stats, validation, the grouped
     decklist, and the import/export + clear actions. */
@@ -392,7 +395,7 @@ export function DeckPanel({
             aria-label="Deck name"
             placeholder="Untitled Deck"
             maxLength={100}
-            className={`min-w-0 max-w-full truncate rounded-md bg-transparent text-lg font-semibold text-white outline-none transition-colors [field-sizing:content] placeholder:text-white/30 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-inset focus:ring-white/30 ${FOCUS_RING}`}
+            className={`min-w-0 max-w-full truncate rounded-md bg-transparent text-lg font-semibold text-white outline-none transition-colors motion-reduce:transition-none [field-sizing:content] placeholder:text-white/30 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-inset focus:ring-white/30 ${FOCUS_RING}`}
           />
           <DeckStatusBadge validation={validation} format={format} />
         </div>

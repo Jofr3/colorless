@@ -6,7 +6,7 @@ import type { NestTarget } from "./useKeyboardMove";
 // Compact pills for the keyboard move-mode banner (Drop / Cancel / nest targets).
 const MOVE_ACTION_CLASS = `inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${GLASS_GHOST_BUTTON}`;
 const MOVE_PRIMARY_CLASS =
-  "inline-flex cursor-pointer items-center gap-1 rounded-full bg-accent/80 px-2.5 py-1 text-xs font-semibold text-zinc-950 ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+  "inline-flex cursor-pointer items-center gap-1 rounded-full bg-accent/80 px-2.5 py-1 text-xs font-semibold text-zinc-950 ring-1 ring-inset ring-white backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 /** The keyboard move-mode toolbar: names the tile being moved, hints the reorder
     keys, and offers Drop / Cancel plus nest targets (up a level + each valid

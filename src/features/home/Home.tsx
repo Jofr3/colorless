@@ -88,8 +88,8 @@ function MenuCard({ item }: { item: MenuItem }) {
         {/* Icon + label brighten and pick up a soft glow on hover. The base
             state carries a zero-radius shadow so the blur grows in smoothly
             rather than snapping on. */}
-        <Icon className="h-8 w-8 opacity-80 drop-shadow-[0_0_0_rgba(255,255,255,0)] transition duration-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.30)]" />
-        <span className="text-base font-semibold text-white/60 [text-shadow:0_0_0_rgba(255,255,255,0)] transition-all duration-100 group-hover:text-white/90 group-hover:[text-shadow:0_0_6px_rgba(255,255,255,0.22)]">
+        <Icon className="h-8 w-8 opacity-80 drop-shadow-[0_0_0_rgba(255,255,255,0)] transition motion-reduce:transition-none duration-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.30)]" />
+        <span className="text-base font-semibold text-white/60 [text-shadow:0_0_0_rgba(255,255,255,0)] transition-all motion-reduce:transition-none duration-100 group-hover:text-white/90 group-hover:[text-shadow:0_0_6px_rgba(255,255,255,0.22)]">
           {label}
         </span>
         {/* Edge highlight + inner ring, painted above the frost so the blur

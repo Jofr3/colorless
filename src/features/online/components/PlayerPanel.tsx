@@ -23,7 +23,7 @@ const UNREADY_BUTTON_CLASS = `${BUTTON_LAYOUT} ${GLASS_NEUTRAL_BUTTON}`;
 function DeckCover({ deckName, placeholder }: { deckName: string | null; placeholder: string }) {
   if (!deckName) {
     return (
-      <div className="flex aspect-[5/7] w-36 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/[0.02] p-3 text-center text-sm font-medium text-white/70 transition-colors hover:border-white/40 hover:text-white/90">
+      <div className="flex aspect-[5/7] w-36 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/[0.02] p-3 text-center text-sm font-medium text-white/70 transition-colors motion-reduce:transition-none hover:border-white/40 hover:text-white/90">
         {placeholder}
       </div>
     );
@@ -116,7 +116,7 @@ export function PlayerPanel({
             onClick={onKick}
             aria-haspopup="dialog"
             aria-label={`Remove ${player.name} from the lobby`}
-            className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-white/45 ring-1 ring-inset ring-white/10 transition-colors hover:bg-[#ff3456]/10 hover:text-[#ff9aad] hover:ring-[#ff4d6a]/40 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+            className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-white/45 ring-1 ring-inset ring-white/10 transition-colors motion-reduce:transition-none hover:bg-[#ff3456]/10 hover:text-[#ff9aad] hover:ring-[#ff4d6a]/40 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
           >
             <XIcon className="h-3.5 w-3.5" />
             Kick
