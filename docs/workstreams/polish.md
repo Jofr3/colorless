@@ -206,18 +206,44 @@ P2–P4; tracked here so nothing is forgotten.
   buttons live. A browser drive was low-value: additive + reduced-motion-only
   (can't regress the default render), the mechanism is browser-verified from P5-8,
   and constant-vs-call-site placement is invisible in the compiled CSS (cascade is
-  by stylesheet order, not class-attribute order). **The reduced-motion story is
-  now complete app-wide.**
+  by stylesheet order, not class-attribute order). ~~**The reduced-motion story is
+  now complete app-wide.**~~ **WRONG — see P5-11 below: it was complete for the
+  glass constants only, and 66 class contexts app-wide were still unguarded.**
+- **The HUD row buttons — DONE 2026-08-04 (P5-11, D214).** D213 flagged
+  `ROW_BUTTON_BASE` as a local constant restated in `OnlineHud.tsx` carrying
+  `transition-all` with no guard. The sweep that verified it found the finding
+  UNDERSTATED twice over: **three** constants were restated byte for byte (BASE,
+  ENABLED, DISABLED), plus **six more row strings inlined identically at the call
+  sites of both HUDs** (attack row, energy picker, bench picker, prize tile,
+  promote row, and the selected/unselected tints) — twelve duplicated strings in
+  all. They now live in **`src/features/game/hudRows.ts`**, read by both HUDs
+  (`OnlineHud` already imports `EnergyDots` from `features/game`), carrying the
+  guard **in the constant** per D90's placement rather than D89's call sites.
+  `lib/glass.ts` was rejected as the home: 33 importers vs. these two read sites,
+  and the rows are not glass paint. Zero visual change for anyone who has not
+  asked for reduced motion — every substitution is the same class set plus the
+  guard. Verified against the SHIPPED stylesheet **with an attribution control**,
+  since `glass.ts` already emitted `.motion-reduce\:transition-none` and its mere
+  presence proves nothing: a build in which `hudRows.ts` alone used
+  `motion-reduce:transition-[none]` emitted that rule inside `@media
+  (prefers-reduced-motion:reduce)`, and a build with the variant typo'd emitted
+  nothing at all. 677 → 682 tests. **STILL OPEN: 54 unguarded class contexts
+  remain across 26 files** (decks, builder, dialogs, auth, playmat) — the real
+  scope of what D90 believed it had finished.
 - **Uploaded avatars (still open — USER-gated).** Same as the item above:
   upload/choose an avatar → stored in R2, served from our domain, CSP updated. The
   settings surface exists (Profile section); what's left is the R2 + CSP +
   **moderation** half — moderation is an unresolved product call, so this needs
   the user before it can be built.
 
-**With P5-10 done and the two remaining items (uploaded avatars, the remote P4
-deploy) both USER-gated, P5 has no autonomous work left.** The next autonomous
-slice belongs to another workstream — the P3 simulator M5 card-effect backlog
-(`docs/reference/coverage-backlog.md`, `workstreams/simulator.md`) is the deepest.
+**P5-11 (D214) reopened autonomous P5 work that P5-10 had declared finished.**
+The remaining **54 unguarded `transition-*` class contexts** are a real, sized,
+autonomous slice — run the sweep in `D214`'s commit message to reproduce the list,
+and note that a per-file eyeball is exactly how the count was under-reported
+twice. The two long-standing items (uploaded avatars, the remote P4 deploy) are
+still USER-gated. The P3 simulator M5 card-effect backlog
+(`docs/reference/coverage-backlog.md`, `workstreams/simulator.md`) is still the
+deepest alternative.
 
 Pull items into an active phase as they become relevant; don't build them ahead
 of the data they need.

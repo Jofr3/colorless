@@ -17,6 +17,20 @@ import type {
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { EnergyDots } from "../../game/EnergyDots";
 import {
+  ATTACK_ROW_BASE,
+  PICK_ROW_BASE,
+  PICK_ROW_SPLIT_BASE,
+  PRIZE_CARD_BASE,
+  PRIZE_CARD_IDLE,
+  PRIZE_CARD_PICKED,
+  PROMOTE_ROW,
+  ROW_BUTTON_BASE,
+  ROW_BUTTON_DISABLED,
+  ROW_BUTTON_ENABLED,
+  ROW_BUTTON_SELECTED,
+  ROW_BUTTON_UNSELECTED,
+} from "../../game/hudRows";
+import {
   GLASS_ACCENT_BUTTON,
   GLASS_DIALOG_GHOST_BUTTON,
   GLASS_DIALOG_PANEL,
@@ -70,15 +84,11 @@ const TOP_PANEL_CLASS = "left-1/2 top-16 w-[min(24rem,calc(100vw-2rem))] -transl
 const PANEL_CLASS = `pointer-events-auto absolute z-[75] rounded-2xl p-4 ${GLASS_PANEL} ${TOP_PANEL_CLASS}`;
 const ACCENT_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-40 ${GLASS_ACCENT_BUTTON}`;
 const NEUTRAL_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-medium ${GLASS_NEUTRAL_BUTTON}`;
-// The compact left-aligned row buttons the effect-prompt dialogs share — the
-// same look as the local GameHud's ROW_BUTTON_* (restated here over the redacted
-// wire shape, the D62/D63 restate-per-surface choice).
-const ROW_BUTTON_BASE =
-  "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all";
-const ROW_BUTTON_ENABLED =
-  "cursor-pointer bg-white/[0.06] text-white/90 ring-white/15 hover:bg-white/[0.1] active:scale-[0.98]";
-const ROW_BUTTON_DISABLED = "cursor-default bg-white/[0.03] text-white/40 ring-white/8";
-const ROW_BUTTON_SELECTED = "bg-white/[0.12] text-white ring-white/40";
+// The compact left-aligned row buttons the effect-prompt dialogs share now come
+// from `features/game/hudRows` — they were restated here byte for byte (D62/D63's
+// restate-per-surface choice is about the WIRE SHAPE; a string of Tailwind
+// classes has no wire shape to restate, so the restatement was a plain duplicate
+// and it kept both HUDs outside D90's reduced-motion guard). See D214.
 
 export function OnlineHud({
   game,
@@ -1272,10 +1282,8 @@ function AttackPanel({
                 type="button"
                 disabled={!attack.playable}
                 onClick={() => onAction({ type: "attack", seat, index: attack.index })}
-                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left ring-1 ring-inset transition-all ${
-                  attack.playable
-                    ? "cursor-pointer bg-white/[0.06] text-white/90 ring-white/15 hover:bg-white/[0.1] active:scale-[0.98]"
-                    : "cursor-default bg-white/[0.03] text-white/40 ring-white/8"
+                className={`${ATTACK_ROW_BASE} ${
+                  attack.playable ? ROW_BUTTON_ENABLED : ROW_BUTTON_DISABLED
                 }`}
               >
                 <span className="min-w-0">
@@ -1611,10 +1619,8 @@ function RetreatDialog({
                     type="button"
                     aria-pressed={selected}
                     onClick={() => toggleEnergy(energy.id)}
-                    className={`w-full cursor-pointer rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all ${
-                      selected
-                        ? "bg-white/[0.12] text-white ring-white/40"
-                        : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.08]"
+                    className={`${PICK_ROW_BASE} ${
+                      selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_UNSELECTED
                     }`}
                   >
                     {energy.name}
@@ -1635,10 +1641,8 @@ function RetreatDialog({
                 type="button"
                 aria-pressed={selected}
                 onClick={() => setBenchIndex(index)}
-                className={`flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all ${
-                  selected
-                    ? "bg-white/[0.12] text-white ring-white/40"
-                    : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.08]"
+                className={`${PICK_ROW_SPLIT_BASE} ${
+                  selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_UNSELECTED
                 }`}
               >
                 <span className="truncate">{pokemon.name}</span>
@@ -1721,11 +1725,7 @@ function TakePrizesDialog({
               aria-pressed={selected}
               aria-label={`Prize ${index + 1}`}
               onClick={() => toggle(index)}
-              className={`h-16 w-11 cursor-pointer rounded-md bg-gradient-to-br from-sky-800 to-indigo-950 ring-2 transition-all ${
-                selected
-                  ? "ring-white/80 shadow-[0_0_14px_rgba(255,255,255,0.35)]"
-                  : "ring-white/15 hover:ring-white/40"
-              }`}
+              className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
             />
           );
         })}
@@ -1768,7 +1768,7 @@ function PromoteDialog({
             <button
               type="button"
               onClick={() => onAction({ type: "promote", seat, benchIndex: index })}
-              className="flex w-full cursor-pointer items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-left text-sm text-white/90 ring-1 ring-inset ring-white/15 transition-all hover:bg-white/[0.1] active:scale-[0.98]"
+              className={PROMOTE_ROW}
             >
               <span className="truncate">{pokemon.name}</span>
               {pokemon.battle !== undefined && pokemon.battle.damage > 0 && (

@@ -48,6 +48,20 @@ import {
   GLASS_PANEL,
 } from "../../lib/glass";
 import { EnergyDots } from "./EnergyDots";
+import {
+  ATTACK_ROW_BASE,
+  PICK_ROW_BASE,
+  PICK_ROW_SPLIT_BASE,
+  PRIZE_CARD_BASE,
+  PRIZE_CARD_IDLE,
+  PRIZE_CARD_PICKED,
+  PROMOTE_ROW,
+  ROW_BUTTON_BASE,
+  ROW_BUTTON_DISABLED,
+  ROW_BUTTON_ENABLED,
+  ROW_BUTTON_SELECTED,
+  ROW_BUTTON_UNSELECTED,
+} from "./hudRows";
 import { GAME_OVER_DETAIL, type GameProjection } from "./projection";
 
 export interface GameHudProps {
@@ -61,13 +75,6 @@ export interface GameHudProps {
 
 const ACCENT_BUTTON_CLASS = `cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-40 ${GLASS_ACCENT_BUTTON}`;
 const NEUTRAL_BUTTON_CLASS = `cursor-pointer rounded-full px-4 py-2 text-sm font-medium disabled:cursor-default disabled:opacity-40 ${GLASS_NEUTRAL_BUTTON}`;
-/** Compact left-aligned row button — the Trainer/Ability lists and the effect
-    picker share it (the same look as the attack rows). */
-const ROW_BUTTON_ENABLED =
-  "cursor-pointer bg-white/[0.06] text-white/90 ring-white/15 hover:bg-white/[0.1] active:scale-[0.98]";
-const ROW_BUTTON_DISABLED = "cursor-default bg-white/[0.03] text-white/40 ring-white/8";
-const ROW_BUTTON_BASE =
-  "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all";
 
 /** A Trainer playable from `seat`'s hand (an Item/Supporter with a registry
     program, or an authored Stadium — Tools are drag gestures, not buttons),
@@ -622,10 +629,8 @@ function TurnPanel(props: GameHudProps) {
                   type="button"
                   disabled={disabled}
                   onClick={() => dispatch({ type: "attack", seat: viewerSeat, index })}
-                  className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left ring-1 ring-inset transition-all ${
-                    disabled
-                      ? "cursor-default bg-white/[0.03] text-white/40 ring-white/8"
-                      : "cursor-pointer bg-white/[0.06] text-white/90 ring-white/15 hover:bg-white/[0.1] active:scale-[0.98]"
+                  className={`${ATTACK_ROW_BASE} ${
+                    disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED
                   }`}
                 >
                   <span className="min-w-0">
@@ -980,10 +985,8 @@ function RetreatDialog({
                     type="button"
                     aria-pressed={selected}
                     onClick={() => toggleEnergy(uid)}
-                    className={`w-full cursor-pointer rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all ${
-                      selected
-                        ? "bg-white/[0.12] text-white ring-white/40"
-                        : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.08]"
+                    className={`${PICK_ROW_BASE} ${
+                      selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_UNSELECTED
                     }`}
                   >
                     {cardOfUid(game, uid)?.name ?? uid}
@@ -1005,10 +1008,8 @@ function RetreatDialog({
                 type="button"
                 aria-pressed={selected}
                 onClick={() => setBenchIndex(index)}
-                className={`flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm ring-1 ring-inset transition-all ${
-                  selected
-                    ? "bg-white/[0.12] text-white ring-white/40"
-                    : "bg-white/[0.04] text-white/70 ring-white/10 hover:bg-white/[0.08]"
+                className={`${PICK_ROW_SPLIT_BASE} ${
+                  selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_UNSELECTED
                 }`}
               >
                 <span className="truncate">{name}</span>
@@ -1091,11 +1092,7 @@ function PrizeDialog({ game, projection, viewerSeat, dispatch }: GameHudProps) {
               aria-pressed={selected}
               aria-label={`Prize ${index + 1}`}
               onClick={() => toggle(index)}
-              className={`h-16 w-11 cursor-pointer rounded-md bg-gradient-to-br from-sky-800 to-indigo-950 ring-2 transition-all ${
-                selected
-                  ? "ring-white/80 shadow-[0_0_14px_rgba(255,255,255,0.35)]"
-                  : "ring-white/15 hover:ring-white/40"
-              }`}
+              className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
             />
           );
         })}
@@ -1134,7 +1131,7 @@ function PromoteDialog({ game, viewerSeat, names, dispatch }: GameHudProps) {
               <button
                 type="button"
                 onClick={() => dispatch({ type: "promote", seat: viewerSeat, benchIndex: index })}
-                className="flex w-full cursor-pointer items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-left text-sm text-white/90 ring-1 ring-inset ring-white/15 transition-all hover:bg-white/[0.1] active:scale-[0.98]"
+                className={PROMOTE_ROW}
               >
                 <span className="truncate">{name}</span>
                 {pokemon.damage > 0 && (
