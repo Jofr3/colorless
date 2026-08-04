@@ -566,6 +566,17 @@ column a predicate can *read* to decide whether a given card carries the banner.
 `name`/`effect`/`attacks_json`/`abilities_json` finds the word; it cannot answer *"is THIS card
 Ancient?"* for the card in front of the engine.
 
+⚠️ **THE SHARPEST FRAMING, FROM D207, AND THE ONE TO QUOTE: EVERY OCCURRENCE IS *DEMAND*, AND
+THE *SUPPLY* SIDE IS ABSENT.** `Tera` appears in **22 rows** — 10 names, 12 effect texts — and
+every single one is a card **ASKING** for the property (the Terapagos species; five Trainers
+whose text names it). **Not one is a card DECLARING that it has the property.** The proof is a
+single card: **Charizard ex `sv03-125` IS a Tera Pokémon, and its catalog row is
+field-for-field indistinguishable from a non-Tera Stage 2.** So the predicate has readers and
+no writers. **That is why a string sweep "finds" these banners and a build over them still
+yields a permanently empty candidate set** — the sweep is counting the demand.
+⚠️ **This corrects the wording D205 and this section originally shipped** (*"in NO ingested
+column"*), which was false as stated and true as meant.
+
 | Banner | Printing that needs it | Found by |
 |---|---|---|
 | **"Ancient"** | Flutter Mane `sv08-096` — *"1 of your Benched **Ancient** Pokémon"* | D205 |
