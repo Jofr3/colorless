@@ -4756,7 +4756,57 @@ import type { GameState, Seat } from "./types";
     prompt and `EffectContinuation` shape are byte-identical to the ones Boss's
     Orders has parked since M4, so a record written by the previous deploy reads
     back unchanged. It stays **11**. */
-export const engineVersion = "0.122.0";
+/** 0.122.1 — **D184, `matchesFilter` LIFTED TO `cards.ts` — A MOVE AND AN
+    `export`, NOTHING ELSE.** The pure card predicate behind every pile scan
+    (searchDeck / lookAtTopN / discardPileRetrieval) was a bare unexported
+    function in `interpreter.ts`. Its body is now in `cards.ts` beside
+    `energyProvidesOf` **byte-for-byte** (verified by diffing the extracted old
+    and new bodies — the only delta is the `export` keyword), its six
+    dependencies were already exported from `cards.ts`, and `interpreter.ts`
+    imports it from there. `matchesAttached` **STAYS** in `interpreter.ts`: it
+    takes `GameState` + `InPlayPokemon` and answers a different question (§6.5).
+
+    **Enabling work, zero behaviour change.** A coming slice adds a
+    damage-scaling count source that tallies discard-pile cards matching a
+    `CardFilter`; that consumer lives in `attack.ts`, which must not import
+    `interpreter.ts` to ask a pure question about a card, and the repo forbids a
+    second answer to an answered question. This is the precondition, taken alone
+    so the behaviour slice lands against an unmoved predicate.
+
+    **NO CYCLE — CHECKED, NOT ASSUMED.** `cards.ts` gains
+    `import type { CardFilter } from "./effects"`. That closes a ring in the TYPE
+    graph — cards → effects → events → cards, since `events.ts` imports
+    `type { DamageModifier }` back from here — but **every edge of it is
+    `import type` and is erased**, so the ring does not exist at runtime. Walked
+    the whole 21-module engine graph with the TypeScript compiler API, counting
+    only imports that survive erasure (dropping `import type` and all-`type`
+    named clauses): `cards`'s sole runtime dep is `actions`, and `effects` and
+    `events` have **none**. The one runtime SCC in the package is the
+    pre-existing `flow ↔ triggers` pair, untouched here.
+
+    **PATCH, not minor, and not nothing.** D150's no-bump precedent covers a
+    TEST-ONLY slice, and the 0.117.0 holds covered slices whose every
+    production edit was a COMMENT. This is neither — real code moves between two
+    shipped modules and the package's internal export surface grows — so it
+    takes the 0.103.0 → 0.103.1 precedent, which chose a PATCH precisely because
+    that slice touched shipped sources rather than only a test file.
+    **NOT re-exported from `index.ts`**, deliberately: the sole future consumer
+    (`attack.ts`) is inside the package, nothing outside it references
+    `matchesFilter`, and the public API is not widened on speculation.
+
+    **NO `MATCH_RECORD_VERSION` BUMP — DERIVED.** A `MatchRecord` persists
+    `{version, seed, startedAt, state: GameState, log, names}`, so the version
+    moves when a persisted SHAPE moves: a `GameState` field, an `EffectOp`
+    inhabitant (a parked program lives in `GameState.phase`), an
+    `EffectPrompt`/`EffectChoice`/`EffectContinuation`, an event or the wire.
+    This slice moves a FUNCTION between modules. No `CardFilter` arm changed, no
+    op was added or removed, nothing parks, no `GameState` field, no event, no
+    error code, no `@luminous/schema` diff — and a predicate is code, never
+    serialized into a record. Because the body is byte-identical, a record
+    written by the previous deploy replays identically under this one. It stays
+    **11**. */
+
+export const engineVersion = "0.122.1";
 
 export type {
   ApplyResult,
