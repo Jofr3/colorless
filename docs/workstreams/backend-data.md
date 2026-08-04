@@ -329,6 +329,64 @@ data loss rather than a validation failure.
 - Web: Cloudflare Pages / Workers static assets, calling the API over HTTPS.
 - Images: R2 bound to a custom domain / Worker route.
 
+#### 3.7.1 The deploy runbook — RUN IN THIS ORDER (D203)
+
+Four slices (D188, D194, D197, D198) each ended with a piece of this owed, and
+each left it in a commit message. It is written down once, here, because the
+first step is a **PREREQUISITE**: skipping it does not degrade the API, it
+**500s an endpoint outright**.
+
+Verified against production D1 (`735f0fb5-…`) on **2026-08-04**: the applied
+migration list is `0000, 0001, 0002, 0003` — so **three migrations are pending,
+not one**. `0004` (`decks.cover_card_id`), `0005` (`users.favourite_deck_id`)
+and `0006` (`cards.suffix`) have all NEVER been applied remotely, and the code
+on `main` reads all three columns. `wrangler d1 migrations apply` applies them
+in order, so this is still one command — but "only 0006 is missing" is wrong,
+and the blast radius is `/decks`, `/auth/me` **and** `/facets`, not `/facets`
+alone.
+
+```sh
+# 1. PREREQUISITE — apply pending migrations to the REMOTE database.
+#    Must precede the deploy: `/facets` selects `cards.suffix` inside the same
+#    db.batch() as the other seven vocabularies, so an unmigrated database
+#    fails the WHOLE endpoint, not just the new field. Likewise `/decks`
+#    (0004) and `GET /auth/me` (0005). `wrangler deploy` does NOT run this.
+cd apps/api && bun run db:migrate:remote
+
+# 2. Deploy the Worker.
+cd apps/api && bun run deploy          # or, from the repo root: bun run api:deploy
+
+# 3. Backfill the catalog (needs network access to api.tcgdex.net — see below).
+#    Populates `cards.suffix` (NULL on all 3,786 rows today) and rewrites the
+#    "None" sentinels in D1 itself: 34 `mfb` rows in `rarity`, 2 of them also in
+#    `regulation_mark` (36 values / 34 rows). Until it runs, `/facets` serves
+#    `"suffixes": []` and the builder's rail hides the section — the filter is
+#    unreachable rather than broken (§5.3.3) — and the read-side normaliser in
+#    `apps/api/src/sentinel.ts` hides the sentinels from the API while leaving
+#    them in the rows.
+cd apps/api && bun scripts/ingest.ts --serie sv --remote
+
+# 4. The KV catalog cache is NOT invalidated by step 3 (a data-only change does
+#    not bump `CACHE_VERSION`, by design — see apps/api/src/catalog/cache.ts).
+#    Cached `/facets` and `/cards` bodies keep the pre-ingest answer for up to
+#    the 1h TTL. Nothing to run; just do not treat the first hour as a failure.
+```
+
+**Command check (against `package.json` and `apps/api/package.json`):**
+
+| Command | Exists? |
+| --- | --- |
+| `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
+| `cd apps/api && bun run db:migrate:remote` | ✅ `wrangler d1 migrations apply luminous --remote` |
+| `cd apps/api && bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
+| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `wrangler deploy` |
+| `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
+
+**Why step 3 has never run here.** `api.tcgdex.net` is refused by this
+environment's network policy — the same wall D188, D194, D197 and D198 hit. The
+ingest is the only step that needs the public internet; steps 1, 2 and 4 do not,
+and step 1 is therefore unblocked TODAY and should not wait for the backfill.
+
 ---
 
 ## 4. tcgdex.dev integration reference
@@ -615,6 +673,13 @@ migration first:**
 ```sh
 cd apps/api && bun run db:migrate:remote        # 0006 — before deploying D198
 ```
+
+⚠️ **AND IT IS NOT ONLY `0006` (D203).** Production's `d1_migrations` table lists
+`0000`–`0003` only, checked 2026-08-04: `0004` (`decks.cover_card_id`) and `0005`
+(`users.favourite_deck_id`) are pending too, and `/decks` and `GET /auth/me`
+already read those columns. The command above is unchanged — it applies all
+three in order — but the ordering constraint is wider than this section said.
+**Full runbook: §3.7.1.**
 
 ### 5.3.3 `?suffix=` and `CatalogFacets.suffixes` (D198)
 
