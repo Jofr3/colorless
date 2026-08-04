@@ -6,11 +6,9 @@ import { describe, expect, it } from "vitest";
 import { cards } from "../db/schema";
 import {
   buildCardsWhere,
-  type CardOrderFields,
   type CardsQuery,
   cardsOrder,
   cardsQuerySchema,
-  compareCardRows,
   MAX_ID_VALUES,
   setsQuerySchema,
 } from "./query";
@@ -176,7 +174,7 @@ describe("buildCardsWhere", () => {
   it("ORs repeated types within the dimension", () => {
     const { sql, params } = render(defaults({ type: ["Fire", "Water"] }));
     expect(sql).toContain(
-      "\"cards\".\"types_json\" like ? escape '\\' or \"cards\".\"types_json\" like ? escape '\\'",
+      '"cards"."types_json" like ? escape \'\\\' or "cards"."types_json" like ? escape \'\\\'',
     );
     expect(params).toEqual(['%"Fire"%', '%"Water"%']);
   });
@@ -244,7 +242,7 @@ describe("buildCardsWhere", () => {
   it("ORs text as substring LIKEs over the abilities and attacks JSON", () => {
     const { sql, params } = render(defaults({ text: "Poison" }));
     expect(sql).toContain(
-      "\"cards\".\"abilities_json\" like ? escape '\\' or \"cards\".\"attacks_json\" like ? escape '\\'",
+      '"cards"."abilities_json" like ? escape \'\\\' or "cards"."attacks_json" like ? escape \'\\\'',
     );
     expect(params).toEqual(["%Poison%", "%Poison%"]);
   });
@@ -253,7 +251,7 @@ describe("buildCardsWhere", () => {
     // "50%" must not over-match everything containing 50 — the pattern
     // escapes the wildcards and the LIKE carries an ESCAPE '\' clause.
     const name = render(defaults({ name: "50%_off" }));
-    expect(name.sql).toContain("\"cards\".\"name\" like ? escape '\\'");
+    expect(name.sql).toContain('"cards"."name" like ? escape \'\\\'');
     expect(name.params).toEqual(["%50\\%\\_off%"]);
 
     const text = render(defaults({ text: "100% chance" }));
@@ -266,8 +264,27 @@ describe("buildCardsWhere", () => {
     expect(params).toEqual(['%"Fi\\%re"%', '%"Wa\\\\ter"%']);
   });
 
-  it("ignores id — the hydration path in routes.ts ANDs the chunked IN itself", () => {
-    expect(buildCardsWhere(defaults({ id: ["sv06.5-001"] }))).toBeUndefined();
+  // D197: `id` moved INTO the where. The shape that matters is "one bind for
+  // the whole list" — that is what keeps a 100-id hydration under D1's
+  // 100-parameter cap on the same statement as ORDER BY + LIMIT/OFFSET, and
+  // therefore what let the JS sort twin go (see the cardsOrder block below).
+  it("expands the id list from ONE JSON bind, not N placeholders", () => {
+    const { sql, params } = render(defaults({ id: ["sv06.5-001", "sv01-196"] }));
+    expect(sql).toContain('"cards"."id" in (select "value" from json_each(?))');
+    expect(params).toEqual(['["sv06.5-001","sv01-196"]']);
+  });
+
+  it("stays ONE bind at the MAX_ID_VALUES cap — the whole point of the JSON form", () => {
+    const ids = Array.from({ length: MAX_ID_VALUES }, (_, i) => `sv01-${i}`);
+    const { params } = render(defaults({ id: ids }));
+    expect(params).toHaveLength(1);
+  });
+
+  it("composes id with the other filters instead of replacing them", () => {
+    const { sql, params } = render(defaults({ id: ["sv01-196"], legal: "standard" }));
+    expect(sql).toContain("json_each(?)");
+    expect(sql).toContain('"cards"."legal_standard" = ?');
+    expect(params).toEqual(['["sv01-196"]', 1]); // drizzle binds the boolean as 1
   });
 });
 
@@ -292,27 +309,55 @@ describe("cardsOrder", () => {
   });
 });
 
-describe("compareCardRows", () => {
-  // Deliberately shuffled; fields mirror the real ingested vocabulary.
-  const rows: CardOrderFields[] = [
-    { name: "Ultra Ball", hp: null, setId: "sv01", localId: "196" },
-    { name: "Joltik", hp: 40, setId: "sv06.5", localId: "001" },
-    { name: "Fezandipiti ex", hp: 210, setId: "sv06.5", localId: "038" },
-    { name: "Fire Energy", hp: null, setId: "sve", localId: "002" },
-    { name: "Joltik", hp: 30, setId: "sv01", localId: "066" },
-  ];
-  const sorted = (sort: CardsQuery["sort"]) =>
-    [...rows].sort((a, b) => compareCardRows(sort, a, b)).map((row) => row.localId);
+// D197 — the unification, pinned. `cardsOrder` used to have a JS twin
+// (`compareCardRows`) that sorted the id-hydration path's ≤100 rows in memory,
+// because that path fanned out into a chunked db.batch with no single
+// statement to order. Two specs, one order, nothing keeping them in step.
+//
+// They DID agree at the time of removal, and the argument is finite: the key
+// tuples are identical, `hp` is an integer on both sides, and the only way the
+// string keys could disagree is SQLite's BINARY collation (UTF-8 memcmp) vs
+// JS `<` (UTF-16 code units), which differ only when an astral code point
+// (≥ U+10000) meets a BMP one — surrogates sort BELOW U+E000..U+FFFF in
+// UTF-16 and ABOVE it in UTF-8. Measured against the production catalog
+// (3,786 rows): 13 rows carry a non-ASCII `name` (11 distinct — `Flabébé`,
+// `Nidoran♀`, `Nidoran♂`, the `Poké*` family), every character BMP, zero
+// astral; `set_id` and `local_id` are pure ASCII; and `cards` has no COLLATE
+// clause on any column, so BINARY it is. So the twin was latent, not live.
+//
+// It is gone now, and these cases pin the property that replaced it: the id
+// path and the plain path are the SAME statement shape, so there is nothing
+// left to keep in step.
+describe("one sort spec — the id path orders in SQL like every other query", () => {
+  /** The /cards page statement as routes.ts builds it: where + order + page. */
+  function renderPage(query: CardsQuery) {
+    const db = drizzle({} as D1Database);
+    return db
+      .select({ id: cards.id })
+      .from(cards)
+      .where(buildCardsWhere(query))
+      .orderBy(...cardsOrder(query.sort))
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize)
+      .toSQL().sql;
+  }
 
-  it('mirrors SQL collector order for "set" — (set_id, local_id) ascending', () => {
-    expect(sorted("set")).toEqual(["066", "196", "001", "038", "002"]);
-  });
+  const orderBy = (sql: string) => sql.slice(sql.indexOf("order by"));
 
-  it('mirrors SQL "name" order with the collector tiebreak on equal names', () => {
-    expect(sorted("name")).toEqual(["038", "002", "066", "001", "196"]);
-  });
+  it.each(["set", "name", "hp-desc"] as const)(
+    'orders a "%s" id-hydration exactly like the unfiltered page',
+    (sort) => {
+      const ids = ["sv06.5-001", "sv01-196", "sve-002"];
+      expect(orderBy(renderPage(defaults({ sort, id: ids })))).toEqual(
+        orderBy(renderPage(defaults({ sort }))),
+      );
+    },
+  );
 
-  it('mirrors SQL "hp-desc" — NULL hp last, collector tiebreak among NULLs', () => {
-    expect(sorted("hp-desc")).toEqual(["038", "001", "066", "196", "002"]);
+  it("pages the id set in SQL — LIMIT/OFFSET, not a JS slice", () => {
+    const sql = renderPage(defaults({ id: ["sv01-196"], page: 3, pageSize: 20 }));
+    expect(sql).toContain("json_each(?)");
+    expect(sql).toContain("limit ?");
+    expect(sql).toContain("offset ?");
   });
 });

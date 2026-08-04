@@ -20,33 +20,23 @@ import {
   setBriefSchema,
   setWithCardsSchema,
 } from "@luminous/schema";
-import { and, asc, count, eq, inArray, isNotNull, type SQL } from "drizzle-orm";
-import type { BatchItem } from "drizzle-orm/batch";
-import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
+import { asc, count, eq, isNotNull } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { cards, series, sets } from "../db/schema";
-import { chunk, D1_MAX_BOUND_PARAMS } from "../decks/validate";
 import type { Env } from "../env";
 import { facetVocabulary } from "../sentinel";
 import { catalogCache } from "./cache";
 import {
   cardBriefColumns,
-  type CardBriefRow,
   mapCardBriefRow,
   mapCardRow,
   mapSerieRow,
   mapSetBriefRow,
   mapSetRow,
 } from "./map";
-import {
-  buildCardsWhere,
-  type CardsQuery,
-  cardsOrder,
-  cardsQuerySchema,
-  compareCardRows,
-  setsQuerySchema,
-} from "./query";
+import { buildCardsWhere, cardsOrder, cardsQuerySchema, setsQuerySchema } from "./query";
 
 export const catalogRoutes = new Hono<{ Bindings: Env }>();
 
@@ -64,57 +54,21 @@ function invalidQuery(c: Context, error: z.core.$ZodError) {
   return c.json({ error: "invalid query", issues }, 400);
 }
 
-/** Ids per hydration statement — half the D1 cap, so each chunk's statement
-    keeps generous headroom for the other composable filters' binds. */
-const ID_CHUNK_SIZE = D1_MAX_BOUND_PARAMS / 2;
-
-/** db.batch demands a non-empty tuple (the decks routes' shape). */
-type Batch = [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]];
-
-/**
- * The id-hydration path of GET /cards (repeatable `id`): one logical
- * `id IN (…)` AND-ed with the regular filters. Chunked into a single
- * db.batch because LIMIT/OFFSET bind parameters too — a lone 100-id
- * statement would already brush D1's cap. The ≤ MAX_ID_VALUES matches are
- * then ordered and paged in memory, mirroring the SQL path's semantics
- * (compareCardRows is cardsOrder's JS twin).
- */
-async function cardsByIds(
-  db: DrizzleD1Database,
-  query: CardsQuery,
-  ids: string[],
-  where: SQL | undefined,
-): Promise<Paginated<CardBrief>> {
-  const selects: BatchItem<"sqlite">[] = chunk([...new Set(ids)], ID_CHUNK_SIZE).map((group) =>
-    db
-      .select(cardBriefColumns)
-      .from(cards)
-      .where(and(where, inArray(cards.id, group))),
-  );
-  const rows = ((await db.batch(selects as Batch)) as CardBriefRow[][]).flat();
-  rows.sort((a, b) => compareCardRows(query.sort, a, b));
-  const start = (query.page - 1) * query.pageSize;
-  return {
-    items: rows.slice(start, start + query.pageSize).map(mapCardBriefRow),
-    page: query.page,
-    pageSize: query.pageSize,
-    total: rows.length,
-  };
-}
-
 catalogRoutes.get(
   "/cards",
   catalogCache,
   zValidator("query", cardsQuerySchema, (result, c) =>
     result.success ? undefined : invalidQuery(c, result.error),
   ),
+  // ONE path for every query, id-hydration (`?id=…&id=…`) included: the id
+  // set is a single JSON bind inside the where (../catalog/query.ts), so it
+  // pages and orders in SQL like any other filter. It used to fork into a
+  // chunked db.batch sorted by a JS twin of `cardsOrder` — see that function
+  // for why the twin is gone (D197).
   async (c) => {
     const query = c.req.valid("query");
     const db = drizzle(c.env.DB);
     const where = buildCardsWhere(query);
-    if (query.id !== undefined) {
-      return c.json(cardsResponseSchema.parse(await cardsByIds(db, query, query.id, where)));
-    }
     const [rows, totals] = await db.batch([
       db
         .select(cardBriefColumns)

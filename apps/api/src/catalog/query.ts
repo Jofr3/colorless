@@ -31,10 +31,10 @@ const multiParam = z
   .transform((value) => (Array.isArray(value) ? value : [value]));
 
 /** Cap on repeatable `id` values. A deck holds ≤60 unique cards, so 100 is
-    generous headroom for the hydration use case; excess 400s. The cap bounds
-    the in-memory hydration path in routes.ts, which chunks the IN list under
-    D1's bound-parameter limit (a single 100-id statement plus LIMIT/OFFSET
-    binds would already exceed it). */
+    generous headroom for the hydration use case; excess 400s. The cap is no
+    longer about D1's 100-bound-parameter limit — the id set rides in as ONE
+    JSON parameter (see `buildCardsWhere`) — it just bounds the query string
+    and the id scan. */
 export const MAX_ID_VALUES = 100;
 
 /**
@@ -121,8 +121,13 @@ function likeEscaped(column: AnyColumn, pattern: string): SQL {
  *   text live inside). Imprecise on purpose — it can also brush JSON keys or
  *   cost values — but plenty for catalog search at ~3.7k rows. Trainer/Energy
  *   rules text lives in `effect`, deliberately out of scope here.
- * - `id` is NOT built here: the hydration path in routes.ts chunks the IN
- *   list itself (D1 bound-parameter cap) and ANDs it with this where.
+ * - `id` binds the WHOLE list as one JSON array and expands it with
+ *   `json_each` instead of an N-placeholder `IN (?, ?, …)`. One bind, not
+ *   ≤100, so D1's 100-bound-parameter cap is out of the picture even with
+ *   LIMIT/OFFSET and every other filter's binds on the same statement — which
+ *   is what lets the hydration path stay a single ordered, paged SQL query
+ *   instead of a chunked batch sorted in JS (D197; see `cardsOrder`).
+ *   `IN (subquery)` is set membership, so a repeated id can't duplicate a row.
  * - sentinel normalisation (../sentinel.ts, D194) deliberately does NOT reach
  *   in here. The where clause matches STORED values; the normaliser runs on
  *   the way out. So a hand-crafted `?rarity=None` still matches the 34 `mfb`
@@ -135,6 +140,11 @@ function likeEscaped(column: AnyColumn, pattern: string): SQL {
  */
 export function buildCardsWhere(query: CardsQuery): SQL | undefined {
   const conditions: SQL[] = [];
+  if (query.id !== undefined) {
+    conditions.push(
+      sql`${cards.id} in (select "value" from json_each(${JSON.stringify(query.id)}))`,
+    );
+  }
   if (query.name !== undefined) {
     conditions.push(likeEscaped(cards.name, `%${escapeLike(query.name)}%`));
   }
@@ -212,51 +222,27 @@ export function buildCardsWhere(query: CardsQuery): SQL | undefined {
 const collectorOrder = [asc(cards.setId), asc(cards.localId)];
 
 /**
- * The ORDER BY for a validated /cards query. Every sort ends on collector
- * order so pages stay deterministic across equal keys. `hp-desc` relies on
- * SQLite treating NULL as smaller than every value — `hp DESC` puts the
- * hp-less Trainers/Energy last (verified against SQLite directly).
+ * The ORDER BY for a validated /cards query — the ONE sort spec in the API.
+ * Every sort ends on collector order so pages stay deterministic across equal
+ * keys. `hp-desc` relies on SQLite treating NULL as smaller than every value —
+ * `hp DESC` puts the hp-less Trainers/Energy last (verified against SQLite
+ * directly).
+ *
+ * It used to have a JS TWIN (`compareCardRows`), because the id-hydration
+ * path chunked its `IN` list across a db.batch and so had no single statement
+ * to hang an ORDER BY on; it sorted the ≤ MAX_ID_VALUES matched rows in
+ * memory instead. Two hand-maintained specs for one order — they agreed
+ * (measured: the divergence classes are SQLite's BINARY collation vs JS
+ * UTF-16 `<`, which differ only above the BMP, and the catalog's 13
+ * non-ASCII names are all BMP — `é`, `♀`, `♂`), but nothing MADE them agree,
+ * and the note that deferred this asked for the unification BEFORE any sort
+ * option is added. D197 removed the twin instead of syncing it: the JSON-bound
+ * id list (see `buildCardsWhere`) collapsed hydration back onto the ordinary
+ * single-statement path, so a new sort key is now one edit here and there is
+ * no second evaluator left to disagree with SQLite.
  */
 export function cardsOrder(sort: CardsQuery["sort"]): SQL[] {
   if (sort === "name") return [asc(cards.name), ...collectorOrder];
   if (sort === "hp-desc") return [desc(cards.hp), ...collectorOrder];
   return collectorOrder;
-}
-
-/** The row fields the in-memory comparator reads — the id-hydration path
-    sorts its ≤ MAX_ID_VALUES rows in JS instead of paging in SQL. */
-export type CardOrderFields = {
-  name: string;
-  hp: number | null;
-  setId: string;
-  localId: string;
-};
-
-/**
- * JS twin of `cardsOrder` for the id-hydration path: same keys, same
- * directions, same NULL-hp-last rule, so both /cards paths page identically.
- * `<` on JS strings (UTF-16 code units) matches SQLite's BINARY collation
- * (UTF-8 bytes) for all BMP text — code-point order either way — which
- * covers every card name and id in the catalog.
- */
-export function compareCardRows(
-  sort: CardsQuery["sort"],
-  a: CardOrderFields,
-  b: CardOrderFields,
-): number {
-  if (sort === "name" && a.name !== b.name) {
-    return a.name < b.name ? -1 : 1;
-  }
-  if (sort === "hp-desc" && a.hp !== b.hp) {
-    if (a.hp === null) return 1;
-    if (b.hp === null) return -1;
-    return b.hp - a.hp;
-  }
-  if (a.setId !== b.setId) {
-    return a.setId < b.setId ? -1 : 1;
-  }
-  if (a.localId !== b.localId) {
-    return a.localId < b.localId ? -1 : 1;
-  }
-  return 0;
 }
