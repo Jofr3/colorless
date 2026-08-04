@@ -3,7 +3,7 @@ import { ok } from "./actions";
 import { topCardOf, topUid } from "./cards";
 import { disabledAbilityUids } from "./continuous";
 import type { GameEvent } from "./events";
-import { settleProgram } from "./flow";
+import { recoverStatuses, settleProgram } from "./flow";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import type { TriggeredAbility, TriggerTiming } from "./registry";
@@ -136,7 +136,28 @@ export function runCheckupTriggers(
         events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
         // Non-parking by construction — a betweenTurns program returns done, so
         // taking .state loses nothing (parking mid-Checkup is deferred).
-        next = runProgram(next, ability.program, { seat, sourceUid: uid }, events).state;
+        //
+        // ⚠️ §12 (D176) — AND `recoverStatuses` IS EXACTLY WHAT TAKING `.state`
+        // *DID* LOSE. This is the ONE runProgram site in the engine that does not
+        // fold through flow.ts `settleProgram`, so D174's "every program lands
+        // there" was true of eight call sites and false of this one. The fix is the
+        // call rather than a route through settleProgram: that function returns an
+        // ApplyResult and owns parking, the KO tail and the phase, none of which a
+        // Checkup trigger may touch (the comment above is why). So the seam is
+        // restored by naming the same moment here — the completion of an effect
+        // program — and `recoverStatuses` is idempotent, so a Checkup with no
+        // Energy op pays one scan of two Active spots and changes nothing.
+        //
+        // INSIDE the loop rather than after it, which is the whole point: the
+        // invariant is per-PROGRAM, so a trigger that attaches an Energy cannot
+        // leave a stale condition for the NEXT trigger in the same Checkup to read.
+        // No betweenTurns program in the registry moves Energy today (Garganacl
+        // heals, Trevenant places a counter), so this is latent — but `program` is
+        // a plain EffectOp[] and nothing stops the next one from doing so.
+        next = recoverStatuses(
+          runProgram(next, ability.program, { seat, sourceUid: uid }, events).state,
+          events,
+        );
       }
     }
   }

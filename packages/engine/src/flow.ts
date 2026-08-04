@@ -606,9 +606,18 @@ export function settleProgram(
   // §12 (D174) — restore the RECOVERY invariant before anything else looks at the
   // board. Every op that can put an Energy onto a body (`attachEnergyFrom`,
   // `attachFromDeck`, `attachFromTop`) or move one between bodies (`moveEnergy`)
-  // runs inside a program, and every program lands here, so this ONE line is total
-  // over the interpreter where five separate call sites would have been a list to
-  // keep up to date (D169's lesson: a seam is cheaper than an enumeration). It runs
+  // runs inside a program, so this ONE line is total over the interpreter where four
+  // separate call sites would have been a list to keep up to date (D169's lesson: a
+  // seam is cheaper than an enumeration). The op list IS complete — `discardEnergy`
+  // is the only other Energy op and it REMOVES, which can never create a condition a
+  // live source should have cleared.
+  //
+  // ⚠️ "AND EVERY PROGRAM LANDS HERE" WAS THE HALF THAT WAS NOT TRUE, AND D176 MADE
+  // IT SO RATHER THAN RESTATING IT. Eight of the nine `runProgram` call sites fold
+  // through this function; triggers.ts `runCheckupTriggers` is the ninth and takes
+  // `.state` inline, deliberately, because a betweenTurns program may not park. It
+  // now calls `recoverStatuses` itself at the same moment, so the invariant is a
+  // property of PROGRAM COMPLETION and not of which runner happened to be used. It runs
   // ahead of the branch rather than inside it so a program that PARKS after
   // attaching does not carry the stale condition across the player's decision.
   const settled = recoverStatuses(result.state, events);
@@ -787,8 +796,20 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
     whatever it finds and announcing it as STATUS_CLEARED / "recovered". Today the
     only printing is Therapeutic Energy sv02-193 ("The Pokémon this card is
     attached to RECOVERS FROM BEING Asleep, Confused, or Paralyzed…"); the function
-    reads `passivesOf().statusRecovery`, so a Tool or an Ability printing the same
-    clause would arrive for free.
+    reads `passivesOf().statusRecovery`, which folds the top card's own passive and
+    every attached Tool's as well as the Energy's, so a Tool or an Ability printing
+    the same clause is READ for free.
+
+    ⚠️ THE READ WAS FREE AND THE MOMENT WAS NOT — D174 SAID "FOR FREE" FLAT AND WAS
+    WRONG ABOUT TOOLS. A recovery source has to be swept at the moment it NEWLY
+    covers a body, and a Tool arrives through cardplay.ts `attachTool`, which returns
+    `ok` without running a program. D176 added the call there (see the moments below).
+    The ABILITY half survived unaided, for a reason worth stating rather than
+    trusting: every route by which a body comes to carry its own printed passive —
+    evolution (turn.ts), a promotion, a switch (interpreter.ts `switchInto`) — runs
+    through `noConditions()`, so there is nothing left to recover from. The one
+    uncovered Ability moment is a §9 LOCK ENDING over a holder that acquired a
+    condition while suppressed, which no card in the pool can reach.
 
     ⚠️ WHY THIS IS NOT SIMPLY ANOTHER `applyStatus` GATE, WHICH IS THE DESIGN
     DECISION AND NOT AN IMPLEMENTATION DETAIL. The card prints TWO clauses and they
@@ -818,12 +839,18 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
     no test could witness (D154). Asserted over the board in
     therapeuticEnergy.test.ts rather than trusted.
 
-    Called at the two moments a recovery source can NEWLY cover a body: the §6.2
-    manual attach (turn.ts `attachEnergy`) and the completion of any effect program
-    (`settleProgram` below, which covers `attachEnergyFrom`, `attachFromDeck`,
-    `attachFromTop` and `moveEnergy`). Naming the moments is §8.1's own arrangement
-    — `collectKnockOuts` is called at three named moments and not globally — and
-    idempotent, so a moment named twice costs nothing but a scan. */
+    Called at the FOUR moments a recovery source can NEWLY cover a body:
+      • the §6.2 manual Energy attach (turn.ts `attachEnergy`);
+      • the §7.4 TOOL attach (cardplay.ts `attachTool`, D176) — no program runs, so
+        it cannot arrive by either seam below;
+      • the completion of any effect program through `settleProgram` below (which
+        covers `attachEnergyFrom`, `attachFromDeck`, `attachFromTop`, `moveEnergy`);
+      • the completion of a betweenTurns program (triggers.ts `runCheckupTriggers`,
+        D176) — the one program runner that cannot fold through `settleProgram`,
+        because a Checkup trigger may not park.
+    Naming the moments is §8.1's own arrangement — `collectKnockOuts` is called at
+    three named moments and not globally — and idempotent, so a moment named twice
+    costs nothing but a scan. */
 export function recoverStatuses(state: GameState, events: GameEvent[]): GameState {
   let next = state;
   for (const seat of SEATS) {

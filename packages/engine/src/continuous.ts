@@ -268,11 +268,15 @@ export function passivesOf(
   //
   // ⚠️ EVERY FIELD BELOW SILENTLY GAINED AN ATTACHED-ENERGY CONTRIBUTOR THE DAY
   // THAT LINE LANDED, SO EVERY ONE WAS RE-READ. The audit, field by field over the
-  // ten this fold returns (D174; the ones NOT folded here — `disableAbilities`,
-  // `seatDamageReductionAfterWR`, `removeWeakness`, `preventBenchDamageWhileActive`,
-  // `noRetreatCostAura`, the three retreat/attack-cost aura fields — are read by
-  // their own board scans off `programFor(top.id)?.passive` and are UNREACHABLE from
-  // an Energy, which is what bounds this audit to ten rather than twenty-two):
+  // TWELVE `PassiveEffects` fields this loop READS (D174; they fold to the ELEVEN
+  // keys the `return` below carries — `damageReductionAfterWRIfType` sums into
+  // `damageReductionAfterWR` and `basicHpBonus` into `hpBonus`, so the two counts
+  // are different questions and this one is "what can an Energy write". The eleven
+  // fields NOT folded here — `disableAbilities`, `seatDamageReductionAfterWR`,
+  // `removeWeakness`, `preventBenchDamageWhileActive`, `noRetreatCostAura`, the six
+  // retreat/attack-cost aura fields — are read by their own board scans off
+  // `programFor(top.id)?.passive` and are UNREACHABLE from an Energy, which is what
+  // bounds this audit to twelve rather than the interface's full twenty-three):
   //
   //   damageReductionAfterWR       reachable ✔ correct — "the Pokémon this card is
   //                                attached to takes N less damage" is a real Energy

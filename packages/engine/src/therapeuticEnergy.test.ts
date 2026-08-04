@@ -31,6 +31,9 @@ import {
 } from "./testFixtures";
 
 // 0.117.0 → 0.118.0 — THERAPEUTIC ENERGY sv02-193 (P3-M5 long tail, D174).
+// 0.118.0 → 0.119.0 — D176 added MOMENTS 3 and 4 to the call-site group below: the
+// §7.4 Tool attach and the Checkup's betweenTurns programs, the two routes D174
+// claimed were covered for free and were not.
 //
 //   "As long as this card is attached to a Pokémon, it provides {C} Energy.
 //
@@ -46,7 +49,7 @@ import {
 // WHAT IS ACTUALLY NEW, and why this is not statusImmunity.test.ts with an Energy:
 //   • A THIRD SOURCE CLASS. `passivesOf`'s `sources` has been [the top card's
 //     passive, ...the Tools'] since M4 and had NEVER walked `pokemon.energy`. Every
-//     one of the ten fields that fold returns gained an attached-Energy contributor
+//     one of the twelve fields that fold READS gained an attached-Energy contributor
 //     the day the line landed, which is why the audit is the biggest single item in
 //     this slice and is asserted here rather than described in a comment.
 //   • THE §9 ANSWER HAS TWO SIGNS NOW. D172 got suppression FREE by riding the
@@ -466,8 +469,9 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
   });
 
   it("⚠️ leaves EVERY OTHER FIELD of the fold at its zero — the audit's measurement", () => {
-    // THE AUDIT. Ten fields silently gained an attached-Energy contributor. Nine of
-    // them have NO writer on any Energy in this catalog, so every body's fold is
+    // THE AUDIT. Twelve `PassiveEffects` fields silently gained an attached-Energy
+    // contributor, and they fold to the ELEVEN keys asserted below. Nine of those
+    // have NO writer on any Energy in this catalog, so every body's fold is
     // byte-identical to what D173 shipped — and that is asserted rather than
     // reasoned, because "no card writes it" is exactly the kind of claim that stops
     // being true without anybody noticing. The field-by-field reading of WHETHER an
@@ -484,7 +488,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     expect(fold.damageAttackerOnKo).toBe(0);
     expect(fold.preventDamageFromExV).toBe(false);
     expect(fold.preventDamageFromTypes).toEqual([]);
-    // The fold returns exactly twelve keys — a new one added without a re-reading
+    // The fold returns exactly eleven keys — a new one added without a re-reading
     // of this audit fails here (D160's "a diff that leaves no assertion expires").
     expect(Object.keys(fold).sort()).toEqual(
       [
@@ -504,8 +508,8 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
   });
 
   it("⚠️ does NOT let an Energy reach the fields read by their own board scans", () => {
-    // The audit's OTHER half, and the thing that bounds it to ten fields instead of
-    // twenty-two. `disableAbilities` (§9), the seat-wide reduction, the retreat and
+    // The audit's OTHER half, and the thing that bounds it to twelve fields instead
+    // of twenty-three. `disableAbilities` (§9), the seat-wide reduction, the retreat and
     // attack-cost auras and the bench shield are read by dedicated scans off
     // `programFor(top.id)?.passive` on each in-play body — they never consult this
     // fold, so no Energy can ever contribute to them however the interface is
@@ -880,10 +884,13 @@ describe("⚠️ THE RECOVERY — a condition already present, cleared by a cont
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// THE TWO NAMED MOMENTS — where the invariant is restored, and why those two.
+// THE FOUR NAMED MOMENTS — where the invariant is restored, and why those four.
+// D174 shipped two and CLAIMED the other two were covered; D176 found they were
+// not and wired them, so every route by which a recovery source can newly cover a
+// body is a call site with a case underneath it.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ the recovery's TWO CALL SITES, both driven off printed cards", () => {
+describe("⚠️ the recovery's FOUR CALL SITES, all driven off printed cards", () => {
   it("MOMENT 1 — the §6.2 manual attach (turn.ts)", () => {
     // Driven exhaustively above; asserted here as the seam rather than the rule, so
     // a build that moved the call out of `attachEnergy` fails in a case that names
@@ -932,6 +939,85 @@ describe("⚠️ the recovery's TWO CALL SITES, both driven off printed cards", 
       statuses: ["paralyzed"],
       reason: "recovered",
     });
+  });
+
+  it("⚠️ MOMENT 3 — the §7.4 TOOL attach (cardplay.ts attachTool, D176)", () => {
+    // D174 wrote "a Tool or an Ability printing the same clause would arrive for
+    // free" and it was true of the READ and false of the MOMENT: `passivesOf` has
+    // always folded every attached Tool's passive, but a Tool arrives through
+    // `attachTool`, which writes `tools: [...]` and returns `ok` WITHOUT running a
+    // program — so it reaches neither `settleProgram` nor turn.ts's §6.2 attach.
+    // The §7.4 attach is the third route and now carries the call.
+    //
+    // ⚠️ THE TOOL IS EXP. SHARE PRECISELY BECAUSE IT HAS NO PASSIVE. Its printed
+    // sentence is a `triggered` program (D171), so it contributes NOTHING to the
+    // fold — which means the recovery this case sees can only have come from the
+    // Energy already on the body, and the case therefore measures the MOMENT rather
+    // than a second source. A Tool that printed `statusRecovery` itself would prove
+    // the same line twice over and would need a registry row this catalog has no
+    // reason to carry.
+    expect(programFor("sv01-174")?.passive).toBeUndefined();
+    let state = myTurnWith();
+    state = attachFromDeck(state, "p2", "sv02-193", 1);
+    // Surgery, and it has to be: the §6.2 attach above would have cleared the
+    // condition on arrival, and the card's OTHER clause refuses it afterwards, so
+    // "a recovery source on a body that still carries a named condition" is a board
+    // no legal sequence can build (which is the invariant, stated from the inside).
+    // It stands in for the printing this seam exists for — a Tool or an Ability
+    // whose recovery clause arrives at a moment the Energy's never can.
+    state = setConditions(state, "p2", { rotation: "confused" });
+    state = handFromDeck(state, "p2", "sv01-174", 1);
+    const done = mustApply(state, {
+      type: "attachTool",
+      seat: "p2",
+      uid: handUid(state, "p2", "sv01-174"),
+      target: ACTIVE,
+    });
+    expect(types(done.events)).toContain("TOOL_ATTACHED");
+    expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
+    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+      seat: "p2",
+      statuses: ["confused"],
+      reason: "recovered",
+    });
+  });
+
+  it("⚠️ MOMENT 4 — the completion of a betweenTurns program (triggers.ts, D176)", () => {
+    // The ninth `runProgram` call site, and the ONE that does not fold through
+    // `settleProgram`: `runCheckupTriggers` takes `.state` off the result inline,
+    // deliberately, because a Checkup trigger may not park. D174's "every program
+    // lands there" was true of the other eight and false of this one, so the same
+    // moment is now named inside that loop.
+    //
+    // Garganacl's "Blessed Salt" is the vehicle — a real betweenTurns program, on
+    // the BENCH (the Ability is not active-only), doing something the recovery does
+    // not care about. What is being measured is that a program completing INSIDE the
+    // Checkup restores the invariant, which is the property a future betweenTurns
+    // ability that attaches an Energy would depend on.
+    const build = (withTrigger: boolean): GameState => {
+      let state = myTurnWith();
+      state = clearBench(state, "p2");
+      if (withTrigger) state = benchFromDeck(state, "p2", "sv02-123");
+      state = attachFromDeck(state, "p2", "sv02-193", 1);
+      return setConditions(state, "p2", { rotation: "confused" });
+    };
+    const done = mustApply(build(true), { type: "endTurn", seat: "p2" });
+    expect(types(done.events)).toContain("ABILITY_TRIGGERED");
+    expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
+    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+      seat: "p2",
+      statuses: ["confused"],
+      reason: "recovered",
+    });
+    // ⚠️ THE NON-VACUOUS CONTROL, and it is what makes this case about the TRIGGER
+    // LOOP rather than about §13 in general. The same board with no betweenTurns
+    // Ability in play runs the same Checkup and the Confusion SURVIVES it — §13
+    // clears Sleep on a flip and Paralysis for the ended seat, and never touches
+    // Confusion. So the clear above came from the program-completion seam and from
+    // nowhere else in the phase.
+    const control = mustApply(build(false), { type: "endTurn", seat: "p2" });
+    expect(types(control.events)).not.toContain("ABILITY_TRIGGERED");
+    expect(control.state.players.p2.active?.conditions.rotation).toBe("confused");
   });
 
   it("⚠️ runs AFTER Jet Energy's on-attach switch — and the ORDER IS UNOBSERVABLE, said not assumed", () => {

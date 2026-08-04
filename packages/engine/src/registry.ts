@@ -55,8 +55,10 @@ export interface AbilityProgram {
     - `onDamagedByAttack` — this Pokémon, in the Active Spot, was DAMAGED by the
       opponent's attack (§9, attack.ts main-hit, even if Knocked Out — the scan
       runs BEFORE the §8.1 sweep). Fires a reactive program on the ATTACKING
-      Pokémon; NON-PARKING by construction (a Special Condition on the attacker),
-      so it runs inline like `betweenTurns` rather than through settleProgram;
+      Pokémon. It ran INLINE at D99, when it was non-parking by construction (a
+      Special Condition on the attacker); since Klawf ex's parking discard it goes
+      through flow.ts `runDamagedTrigger` → settleProgram like the rest, which
+      leaves `betweenTurns` as the ENGINE'S ONLY inline program runner (D176);
     - `onAllyActiveKnockOut` (D171) — **the controller's ACTIVE Pokémon is about
       to be Knocked Out by damage from an opponent's attack**, read on a card
       carried by a DIFFERENT, SURVIVING body (Exp. Share sv01-174, a Pokémon
@@ -817,9 +819,9 @@ export interface EnergyProgram {
       `passivesOf` would have to fold two differently-shaped source types into one
       answer, which is D131's drift with an Energy hat on. Reusing the interface
       makes the Energy the fold's THIRD SOURCE CLASS on equal terms with the top
-      card and the Tools, and every one of the ten fields that fold returns thereby
+      card and the Tools, and every one of the twelve fields that fold READS thereby
       gains an attached-Energy contributor. **That is not free, and D174 did not
-      take it for free**: each of the ten was re-read against "can an Energy reach
+      take it for free**: each of the twelve was re-read against "can an Energy reach
       it, and is that reading right", and the audit is written out in continuous.ts
       `passivesOf` beside the `sources` array it widened.
 

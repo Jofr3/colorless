@@ -10385,7 +10385,19 @@ export const STATUS_IMMUNITY_DECK = deckOf({
         declaration, and the mulligan-free dominant Basic;
       • fix-titan (340 HP, no attacks) — bench filler and promote target;
       • fix-energy — Colorless Basic, for Hot Bite's {C} and as the control ENERGY
-        that attaches without recovering anything. */
+        that attaches without recovering anything;
+      • sv01-174 Exp. Share (D176) — a TOOL, and deliberately the one Tool in the
+        pool with NO passive at all (its sentence is a `triggered` program). It
+        contributes NOTHING to the fold, which is exactly what makes it the right
+        card for the §7.4 call site: the recovery the test sees can only have come
+        from the Energy already on the body, so the case measures the MOMENT
+        (`attachTool` sweeps) and not a second source;
+      • sv02-123 Garganacl (D176) — "Blessed Salt", one of the registry's only two
+        `betweenTurns` programs, and the card that makes the CHECKUP call site
+        witnessable at all: `runCheckupTriggers` runs its programs inline and the
+        recovery now rides that loop, so a board with no such Ability in play is the
+        control that proves the sweep came from the trigger and not from elsewhere in
+        §13. */
 export const THERAPEUTIC_ENERGY_DECK = deckOf({
   "sv02-193": 4, // Therapeutic Energy — the printing under test
   "fix-statuser": 4, // Hypnosis / Confuse Ray / Numbing Bolt / Toxic on one body
@@ -10394,8 +10406,10 @@ export const THERAPEUTIC_ENERGY_DECK = deckOf({
   "sv01-096": 3, // Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only)
   "sv02-190": 2, // Jet Energy — the other on-attach Special, for the ordering claim
   "sv03-193": 2, // Poppy — the ONLY program that can MOVE a Special Energy (anyEnergy)
+  "sv01-174": 2, // Exp. Share — a Tool with NO passive: the §7.4 moment, isolated
+  "sv02-123": 2, // Garganacl "Blessed Salt" — a betweenTurns program, for the Checkup moment
   "fix-titan": 4, // 340 HP neutral Basic, NO attacks — bench filler and promote target
-  "fix-bigbody": 28, // 200 HP neutral Basic — the control, and the setup starter
+  "fix-bigbody": 24, // 200 HP neutral Basic — the control, and the setup starter
   "fix-energy": 7, // Colorless Basic — Hot Bite's cost, and the control attach
 });
 

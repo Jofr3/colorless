@@ -13,7 +13,7 @@ import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import { disabledAbilityUids } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { settleProgram } from "./flow";
+import { recoverStatuses, settleProgram } from "./flow";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import {
   attachEnergyTargets,
@@ -265,10 +265,34 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
     );
     updated = { ...side, hand, bench };
   }
-  return ok(withSide(state, action.seat, updated), [
+  const events: GameEvent[] = [
     // The target is copied: the action object belongs to the caller (events.ts).
     { type: "TOOL_ATTACHED", seat: action.seat, uid: action.uid, target: { ...action.target } },
-  ]);
+  ];
+  // §12 (D176) — the THIRD route by which a recovery source can NEWLY cover a body,
+  // and the one D174's seam MISSED. `recoverStatuses` reads `passivesOf`, which has
+  // always folded every attached Tool's passive, so the READ was free from the day
+  // the field landed; what was not free is the MOMENT. D174 named two of them (the
+  // §6.2 attach in turn.ts, the completion of any effect program in settleProgram)
+  // and its own comment claimed "a Tool printing the same clause would arrive for
+  // free" — false, because a Tool arrives HERE, and this function returns `ok`
+  // straight out without ever running a program or reaching settleProgram.
+  //
+  // ⚠️ NO CARD PRINTS `statusRecovery` ON A TOOL TODAY, so this line changes no
+  // board in the current catalog — it is here so the invariant is a property of the
+  // ENGINE rather than of what the registry happens to contain, which is the same
+  // reason D174 put the sweep behind a seam instead of at five call sites.
+  //
+  // The early-return audit turn.ts made at its own attach holds here unchanged and
+  // for the same reason: all six guards above (`turnGate`, hand, unknown-card,
+  // not-a-Tool, not-simulated, the target/slot checks) belong to the ATTACH term
+  // alone, and a Tool that does not attach covers nothing new.
+  //
+  // Placed AFTER `withSide` because the fold reads `pokemon.tools`: the Tool must
+  // already be on the body for its own clause to be one of the sources. A BENCH
+  // target sweeps nothing (the sweep is Active-only, §12) — correct rather than
+  // incomplete, since a benched body carries no conditions to recover from.
+  return ok(recoverStatuses(withSide(state, action.seat, updated), events), events);
 }
 
 /** §7.1 — Rare Candy: evolve one of the actor's own Basic Pokémon straight to a

@@ -4399,15 +4399,15 @@ import type { GameState, Seat } from "./types";
 
     ⚠️ **A THIRD SOURCE CLASS IN `passivesOf`, AND THE AUDIT WAS MOST OF THE SLICE.**
     `sources` had been `[the top card's passive, ...the Tools']` since M4 and had
-    never walked `pokemon.energy`. All **ten** folded fields therefore gained an
+    never walked `pokemon.energy`. All **twelve** folded fields therefore gained an
     attached-Energy contributor at once and each was re-read (the field-by-field
     reading lives beside the `sources` array). Two findings worth the trip:
     `basicHpBonus` and `damageAttacker.requiresTool` carry gates about the HOLDER and
     the BOARD, so an Energy writing either would inherit a condition its own text
-    never states; and the twelve fields NOT folded here (`disableAbilities`, the
+    never states; and the **eleven** fields NOT folded here (`disableAbilities`, the
     seat-wide reduction, the retreat/attack-cost auras…) are read by their own board
     scans off `programFor(top.id)?.passive` and are **UNREACHABLE** from an Energy,
-    which is what bounds the audit to ten instead of twenty-two.
+    which is what bounds the audit to twelve instead of the interface's twenty-three.
 
     **§9 STATED THE OTHER WAY ROUND.** D172 got suppression free because a Pokémon's
     printed passive IS an Ability. An Energy is not, so the new source is EXEMPT —
@@ -4428,7 +4428,8 @@ import type { GameState, Seat } from "./types";
     moments** a source can newly arrive — the §6.2 manual attach (turn.ts) and the
     completion of any effect program (`settleProgram`, which covers
     `attachEnergyFrom` / `attachFromDeck` / `attachFromTop` / `moveEnergy`). Naming
-    the moments is §8.1's own arrangement, not a shortcut.
+    the moments is §8.1's own arrangement, not a shortcut. ⚠️ **AND TWO IS THE WRONG
+    NUMBER — D176 (0.119.0 below) found the other two and wired them.**
 
     ⚠️ **D172's NO-CHECKUP-GATE CONCLUSION SURVIVES; ITS ARGUMENT NARROWS.** Half of
     that argument — *`applyStatus` is the only WRITER* — is untouched. The other half
@@ -4463,7 +4464,81 @@ import type { GameState, Seat } from "./types";
     `@luminous/schema` diff, no DB diff, no web diff.** 6 re-pointed D172 pins
     (`statusImmunity.test.ts` ×5, `attackerFilter.test.ts` ×1), new
     `therapeuticEnergy.test.ts` (**52 tests**). Manifest **218 → 219** fixture rows. */
-export const engineVersion = "0.118.0";
+
+/** 0.119.0 — **D176, THE RECOVERY SEAM WAS TWO CALL SITES SHORT OF ITS OWN CLAIM.**
+    A review slice with no new card, no new field and no new op: D174 shipped
+    `recoverStatuses` behind a seam and wrote down *why* a seam beats an enumeration
+    (D169's lesson). The seam was right and the enumeration of its MOMENTS was
+    incomplete, in the one direction a comment cannot catch — **it claimed coverage
+    the code did not have.**
+
+    ⚠️ **"A TOOL OR AN ABILITY WOULD ARRIVE FOR FREE" — TRUE OF THE READ, FALSE OF THE
+    MOMENT.** `passivesOf` has folded every attached Tool's passive since M4, so a
+    Tool printing `statusRecovery` really is READ for free. But a Tool ARRIVES through
+    cardplay.ts `attachTool`, which writes `tools: [...]` and returns `ok` straight
+    out — no interpreter program, so neither `settleProgram` nor turn.ts's §6.2 attach
+    can see it. The §7.4 attach is the THIRD moment and now carries the call. **The
+    ABILITY half of the claim survived, and its reason is now written down instead of
+    assumed**: every route by which a body comes to carry its own printed passive
+    (evolution, promotion, `switchInto`) runs through `noConditions()`, so there is
+    nothing left to recover from. The one uncovered Ability moment is a **§9 lock
+    ENDING** over a holder that acquired a condition while suppressed — unreachable in
+    this pool, and named rather than left.
+
+    ⚠️ **"EVERY PROGRAM LANDS HERE" WAS TRUE OF EIGHT CALL SITES AND FALSE OF THE
+    NINTH.** triggers.ts `runCheckupTriggers` takes `.state` off `runProgram` inline —
+    deliberately, because a betweenTurns program may not park — and is the engine's
+    ONLY inline program runner. Taking `.state` is exactly what dropped the recovery.
+    Fixed by naming the same moment there rather than by routing through
+    `settleProgram`, which returns an `ApplyResult` and owns parking, the KO tail and
+    the phase: none of them a Checkup trigger may touch. **INSIDE the trigger loop and
+    not after it**, so the invariant stays per-PROGRAM and a trigger that attaches an
+    Energy cannot leave a stale condition for the next trigger in the same Checkup.
+
+    **NEITHER CHANGES A BOARD IN THIS CATALOG, WHICH IS THE POINT.** No card prints
+    `statusRecovery` on a Tool, and the registry's only two betweenTurns programs heal
+    (Garganacl) and place a counter (Trevenant). Both fixes make the invariant a
+    property of the ENGINE rather than of what the registry happens to contain — the
+    same argument D174 used for the seam, applied to the seam's own edges.
+
+    ⚠️ **AND BOTH ARE WITNESSED, BECAUSE A DIFF THAT LEAVES NO ASSERTION EXPIRES
+    (D160).** MOMENT 3 attaches **Exp. Share** — chosen precisely because it has NO
+    passive (its sentence is a `triggered` program, D171), so it contributes nothing
+    to the fold and the recovery observed can only have come from the Energy already
+    on the body: the case measures the MOMENT, not a second source. MOMENT 4 runs
+    **Garganacl's "Blessed Salt"** from the bench with a NON-VACUOUS CONTROL — the
+    same board with no betweenTurns Ability runs the same Checkup and the Confusion
+    SURVIVES it (§13 clears Sleep on a flip and Paralysis for the ended seat, never
+    Confusion), so the clear came from the program-completion seam and nowhere else in
+    the phase. Both boards need `setConditions` surgery and that is UNAVOIDABLE rather
+    than lazy: a recovery source on a body still carrying a named condition is exactly
+    what the invariant forbids, so no legal sequence builds it. **Mutation-driven:**
+    dropping either call turns its case red.
+
+    **THE FOLD'S ARITHMETIC WAS STALE BY ONE IN BOTH DIRECTIONS, AND `statusRecovery`
+    IS WHAT INVALIDATED IT.** `PassiveEffects` has **23** fields; `passivesOf` READS
+    **12** of them and RETURNS **11** keys (`damageReductionAfterWRIfType` sums into
+    `damageReductionAfterWR`, `basicHpBonus` into `hpBonus`); **11** are left to their
+    own board scans. The audit said "10 folded / 12 not folded / 22 total" — correct
+    BEFORE D174's own new field, and index.ts had folded and not-folded INVERTED on
+    top of that. Re-stated at all four sites (continuous.ts, index.ts ×2,
+    registry.ts) plus the four in `therapeuticEnergy.test.ts`, each now saying WHICH
+    of the two counts it means. **These numbers are the checklist a future slice uses
+    to decide which fields need re-reading, so an off-by-one here is a field that gets
+    skipped.**
+
+    Also corrected: registry.ts's `onDamagedByAttack` note still said it "runs inline
+    like `betweenTurns` rather than through settleProgram" — true at D99, false since
+    Klawf ex's parking discard moved it to `runDamagedTrigger` → `settleProgram`.
+
+    Cost: **2 `recoverStatuses` call sites** (cardplay.ts `attachTool`, triggers.ts
+    `runCheckupTriggers`), **0 new fields, ops, events, error codes or registry
+    rows**; 2 cards into `THERAPEUTIC_ENERGY_DECK` (`sv01-174` Exp. Share, `sv02-123`
+    Garganacl, out of `fix-bigbody` 28 → 24 — no seeded case shifted), **+2 tests**
+    (`therapeuticEnergy.test.ts` 52 → 54). **No op, no field, no schema diff, no DB
+    diff, no web diff, no `MATCH_RECORD_VERSION` bump** — nothing this slice touches
+    reaches `GameState`. */
+export const engineVersion = "0.119.0";
 
 export type {
   ApplyResult,
