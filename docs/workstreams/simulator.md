@@ -17868,3 +17868,69 @@ checkpoint showing up as a measurement rather than a claim.
 - **Blissey is a Basic in the pool and a Stage 1 in print.** The §9 Klefki case on the ABILITY
   half rests on that simplification and **says so in the test**; the Gardevoir case above it
   needs no such caveat, which is why it is the primary witness.
+
+## D180 — the reprint-alias gaps (Tier 0), and the catalog that was not there
+
+**Engine 0.120.0 → 0.121.0. `MATCH_RECORD_VERSION` unchanged at 11.**
+
+Four printings whose byte-identical twin was already authored, on card ids the registry map
+did not name — the backlog's whole Tier 0:
+
+| Reprint | → program | Already-registered twin |
+|---|---|---|
+| `sv02-245` Copperajah ex "Bronze Body" | `COPPERAJAH_EX` | `sv02-150` |
+| `swsh10.5-069` Rare Candy | `RARE_CANDY` | `sv01-191` / `sv01-256` |
+| `swsh10.5-078` Professor's Research | `PROFESSORS_RESEARCH` | `sv01-189`/`-190`/`-240`/`-241` |
+| `swsh10.5-084` Professor's Research | `PROFESSORS_RESEARCH` | (same) |
+
+Four map rows onto three EXISTING `CardProgram` objects, in the idiom the map has used since
+M4. No new op, field, program, event, park, fixture or deck.
+
+### ⚠️ THE CATALOG IS ABSENT IN A FRESH CLONE, AND THIS SLICE RAN IN ONE
+
+This is the durable finding and it outlives the four rows. `apps/api/.wrangler/` is
+**gitignored dev state**. It is not in the repository, so a clone has no local D1 at all —
+`find / -name '*.sqlite'` returned **zero rows**, and `bun run scripts/catalog-manifest.ts
+--check` dies with `SQLITE_CANTOPEN` rather than reporting staleness. It cannot be rebuilt
+either: `apps/api/scripts/ingest.ts` fetches `api.tcgdex.net`, and this environment's network
+policy answers **403 to the CONNECT**, so neither the sqlite nor the live API is reachable.
+
+**Consequence: no census in `docs/reference/coverage-backlog.md` can be re-derived without
+either the `.wrangler` state or network access to tcgdex.** The text-equality sweep behind the
+Tier-0 claim was therefore *not re-run*; it is carried from the 2026-08-04 census and is the
+sole warrant for these four rows. That provenance is recorded on the rows themselves, at the
+top of `reprintAlias.test.ts`, and in the backlog doc.
+
+The in-repo substitutes, in the order of authority this session used them: `FIXTURE_POOL`
+(real fixtures carry verbatim printed text) → existing `*.test.ts` string literals →
+`catalogManifest.ts` (names, types, attack/ability NAMES — **no effect text**) → the docs'
+prose, which is exactly the class of claim the repo's own warnings say rots.
+
+### What is pinned instead, and why no emptiness assertion was written
+
+The repo prefers "pin the emptiness" to "enumerate the exceptions" — but an emptiness pin over
+a population nobody measured is the worse failure: it goes green forever while asserting
+something this session never checked. So `reprintAlias.test.ts` pins:
+
+1. **the alias relation**, `toBe` on the SHARED program object rather than `toEqual` on a copy
+   — the thing a future author breaks by pasting a second literal;
+2. **the twins' printed text**, char-for-char off `FIXTURE_POOL`, so a re-ingest that moves the
+   anchor voids the alias loudly rather than silently;
+3. **the text-equality sweep RESTRICTED to `FIXTURE_POOL`** — which *is* runnable, *is* empty,
+   and **states its own scope**: ~200 of the catalog's 978 rows, i.e. a FLOOR. It is blind to
+   all four aliased ids, and must stay so: a fixture id naming a real printing needs a
+   `CATALOG_MANIFEST.printed` row, and regenerating the manifest needs the sqlite.
+
+⚠️ **The sweep's read predicate had to be made PER-COLUMN.** The first draft asked only "does
+`programFor(id)` exist" and reported **two false positives** — Heracross `sv01-002` against
+Spidops ex `sv01-019` (identical retreat-cost scaling attack text) and Scovillain `sv01-029`
+against Armarouge `sv01-041` ("Your opponent's Active Pokémon is now Burned.") — because both
+"authored" ids carry a registry program for their *Ability* while the shared sentence is an
+*attack* the deriver reads on both sides. The right question is not "is this id registered"
+but "is THIS COLUMN of this id read".
+
+### Side finding
+
+`packages/engine/package.json` carried `"version": "0.3.0"` — drifted since D132 while
+`engineVersion` in `index.ts` moved to 0.120.0. Nothing reads either the file's version or
+`engineVersion` outside `index.ts`, which is why it survived ~48 slices. Re-synced to 0.121.0.

@@ -4619,7 +4619,57 @@ import type { GameState, Seat } from "./types";
     neither producer wraps it in anything that parks — so no record written by the
     previous deploy can hold it and none this deploy writes can either. It stays
     **11**. */
-export const engineVersion = "0.120.0";
+/** 0.121.0 — **D180, THE REPRINT-ALIAS GAPS — AND THE SESSION THAT COULD NOT
+    RE-MEASURE ITS OWN WARRANT.** Four printings whose byte-identical twin was
+    already authored, on card ids the registry map did not name: `sv02-245`
+    Copperajah ex (`sv02-150` was registered), `swsh10.5-069` Rare Candy
+    (`sv01-191`/`-256` were) and `swsh10.5-078` + `swsh10.5-084` Professor's
+    Research (`sv01-189`/`-190`/`-240`/`-241` were). Four map rows onto three
+    EXISTING `CardProgram` objects, using the reprint idiom the map has carried
+    since M4 — no new op, field, program, event, park, fixture or deck.
+
+    ⚠️⚠️ **THE BYTE-IDENTITY IS ASSERTED FROM A DOC, NOT MEASURED, AND THAT IS
+    THE MOST IMPORTANT LINE IN THIS ENTRY.** `apps/api/.wrangler/` is gitignored
+    dev state and DOES NOT EXIST in a fresh clone; this slice ran in one
+    (`find / -name '*.sqlite'` → zero rows, and `scripts/catalog-manifest.ts
+    --check` dies SQLITE_CANTOPEN rather than reporting staleness). It could not
+    be rebuilt either — `apps/api/scripts/ingest.ts` fetches `api.tcgdex.net`,
+    and the environment's network policy answers **403 to the CONNECT**. So the
+    text-equality sweep of unbuilt-against-built over all three columns — the
+    sweep that produced the backlog's "3 sentences / 4 printings and nothing
+    else" — **was NOT re-run.** It is carried from
+    `docs/reference/coverage-backlog.md` (2026-08-04) and is the sole warrant for
+    these four rows, which is recorded on the rows themselves and at the top of
+    `reprintAlias.test.ts` rather than left for a reader to infer.
+
+    ⚠️ **AND NO "THE SWEEP IS EMPTY" ASSERTION WAS WRITTEN, DELIBERATELY.** The
+    repo prefers pinning an emptiness to enumerating exceptions — but a pin that
+    claims a measurement nobody made is worse than no pin at all: it goes green
+    forever while asserting something this session never checked. D155's rule
+    has a converse and this is it. What IS pinned is (1) the ALIAS RELATION,
+    `toBe` on the shared program object rather than `toEqual` on a copy; (2) the
+    TWINS' printed text char-for-char off `FIXTURE_POOL`, so a re-ingest that
+    moves the anchor voids the alias loudly; (3) the text-equality sweep
+    RESTRICTED to `FIXTURE_POOL`, which IS runnable, IS empty, and STATES ITS OWN
+    SCOPE — ~200 of the catalog's 978 rows, i.e. a FLOOR that says nothing about
+    the other three quarters, and one that cannot see any of the four aliased ids
+    (none is a fixture, and none can become one until the manifest is
+    regenerable). ⚠️ Its read predicate is PER-COLUMN, not per-id: the first draft
+    asked only "does `programFor(id)` exist" and reported two FALSE POSITIVES
+    (Heracross `sv01-002` vs Spidops ex `sv01-019`; Scovillain `sv01-029` vs
+    Armarouge `sv01-041`) where the shared sentence is an attack the DERIVER
+    reads on both sides and the registry program belongs to an Ability.
+
+    Cost: **4 registry map rows**, new `reprintAlias.test.ts` (**9 tests**). No
+    fixture added → manifest untouched (and unregenerable). **NO
+    `MATCH_RECORD_VERSION` BUMP**, derived rather than assumed: a registry row is
+    a lookup keyed by card id, not a persisted shape. Nothing here adds or
+    removes an op, so no `EffectOp` inhabitant moved; nothing parks, so no
+    `EffectPrompt`, `EffectChoice` or `EffectContinuation` shape moved; no
+    `GameState` field, no event, no error code, no `@luminous/schema` diff. What
+    changed is which ids the map ANSWERS FOR — a value question, not a shape one.
+    It stays **11**. */
+export const engineVersion = "0.121.0";
 
 export type {
   ApplyResult,

@@ -330,13 +330,61 @@ against HEAD.
 A **family = one printed SENTENCE SHAPE**, not one card. "Sentences" is the
 distinct-string count inside the family; "printings" is the text-unit count.
 
-### Tier 0 — a REGISTRY MAP ENTRY. No new code at all.
+> ## ⚠️⚠️ NOTHING IN THIS FILE CAN BE RE-DERIVED IN A FRESH CLONE (added 2026-08-04, D180/D181)
+>
+> **The catalog sqlite is NOT in the repository.** It lives under
+> `apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`, and
+> `.wrangler/` is in `.gitignore` — it is dev state written by `wrangler dev`,
+> not a build input. A fresh clone therefore has **no local D1 at all**:
+> `find / -name '*.sqlite'` returns zero rows, and
+> `bun run scripts/catalog-manifest.ts --check` dies with `SQLITE_CANTOPEN`
+> rather than reporting staleness (so it cannot even tell you the manifest is
+> unverifiable — it just crashes).
+>
+> **And it cannot always be rebuilt.** `apps/api/scripts/ingest.ts` fetches
+> `https://api.tcgdex.net/v2/en`. In a network-restricted environment that host
+> may be blocked outright — D180/D181's session got **403 to the CONNECT** from
+> the egress proxy, so neither the sqlite nor the live API was reachable.
+>
+> **So every census number in this file — and in `progress.md`, and in the
+> engine's own comments — is UNVERIFIABLE without either the `.wrangler` state
+> or network access to tcgdex.** They are not wrong; they are simply unre-runnable
+> from a clone, which is a different and less obvious failure than being stale.
+>
+> **The in-repo substitutes, in descending order of authority:**
+> 1. `packages/engine/src/testFixtures.ts` — `FIXTURE_POOL` real-card fixtures
+>    carry **verbatim printed effect text**. This is the best source there is.
+> 2. Existing `packages/engine/src/*.test.ts` — many pin printed sentences as
+>    string literals, often with the catalog id in a comment.
+> 3. `packages/engine/src/catalogManifest.ts` — the committed measurement:
+>    row/set/category counts, and per-fixture names, types, attack NAMES and
+>    ability NAMES. ⚠️ **It carries no effect text at all.**
+> 4. This file and `docs/workstreams/simulator.md` — prose, and therefore exactly
+>    the class of claim this repo's own standing warnings say rots.
+>
+> ⚠️ **The failure mode to fear is a SILENTLY DEAD REGEX.** `deriveAttackEffect`'s
+> anchors are `^…$` with a required trailing period, so a sentence paraphrased
+> out of prose produces a regex that matches no real card, passes a test written
+> against the same paraphrase, and is invisible. **Do not land a regex for a
+> sentence you could not source from (1) or (2)** unless you record the weaker
+> provenance explicitly — which is what D181 did, and why it left one of its four
+> families unbuilt.
+
+### Tier 0 — a REGISTRY MAP ENTRY. No new code at all. ✅ **BUILT — D180.**
 | Family | Printings | Sentences | The rows |
 |---|---:|---:|---|
-| **Reprint-alias gaps** — a printing whose byte-identical twin is already authored, on a card id the registry map does not name | **4** | 3 | **`sv02-245` Copperajah ex** "Bronze Body" (`sv02-150` IS registered; this reprint is not) · **`swsh10.5-069` Rare Candy** (`sv01-191`/`-256` are) · **`swsh10.5-078` + `swsh10.5-084` Professor's Research** (`sv01-189`/`-190`/`-240`/`-241` are) |
+| ~~**Reprint-alias gaps**~~ ✅ **BUILT (D180)** | **4** | 3 | **`sv02-245` Copperajah ex** "Bronze Body" → `COPPERAJAH_EX` · **`swsh10.5-069` Rare Candy** → `RARE_CANDY` · **`swsh10.5-078` + `swsh10.5-084` Professor's Research** → `PROFESSORS_RESEARCH` |
 
 This is the whole of it: a full text-equality sweep of unbuilt against built over
 all three columns returns **3 sentences / 4 printings** and nothing else.
+
+⚠️ **D180 COULD NOT RE-RUN THAT SWEEP** (see the catalog-availability warning at
+the top of this section's rankings, below). The four rows were landed with the
+byte-identity **asserted from this table, not measured**, and the provenance is
+recorded on the registry rows themselves and at the top of
+`packages/engine/src/reprintAlias.test.ts`. **Whoever next has the catalog owes
+this sweep a re-run** — it is the one claim in Tier 0 that nothing in the suite
+can check.
 
 ### Tier 1 — ONE DERIVER ARM on an op that already exists. Zero new ops, zero registry rows.
 Attack text is derived, so every one of these is a regex + a `return` in

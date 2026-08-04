@@ -2938,6 +2938,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-190": PROFESSORS_RESEARCH,
   "sv01-240": PROFESSORS_RESEARCH,
   "sv01-241": PROFESSORS_RESEARCH,
+  // …and its two swsh10.5 prints (D180). ⚠️ ASSERTED FROM THE BACKLOG CENSUS,
+  // NOT MEASURED HERE — see the D180 block in reprintAlias.test.ts. The local D1
+  // is absent from a fresh clone and could not be re-queried this session, so the
+  // byte-identity of these ids' printed text against `sv01-189`'s is carried from
+  // `docs/reference/coverage-backlog.md`'s 2026-08-04 sweep rather than re-derived.
+  "swsh10.5-078": PROFESSORS_RESEARCH,
+  "swsh10.5-084": PROFESSORS_RESEARCH,
   // Nest Ball
   "sv01-181": NEST_BALL,
   "sv01-255": NEST_BALL,
@@ -3018,6 +3025,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // Rare Candy — Basic→Stage 2 evolve-skip Item
   "sv01-191": RARE_CANDY,
   "sv01-256": RARE_CANDY,
+  // …and its swsh10.5 print (D180) — same ASSERTED-FROM-DOC provenance as the
+  // two Professor's Research rows above.
+  "swsh10.5-069": RARE_CANDY,
   // — M4 slice 8: the mid-turn-damage snipe (verified vs the live api 2026-07-19). —
   // Hawlucha — Flying Entry (onPlayToBench: choose 2 opp Benched, 1 counter each)
   "sv01-118": HAWLUCHA,
@@ -3046,6 +3056,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
   "sv02-150": COPPERAJAH_EX, // Copperajah ex — Bronze Body (−30 after W/R)
+  "sv02-245": COPPERAJAH_EX, // (reprint — D180, ASSERTED FROM DOC, see above)
   "sv01-121": STONJOURNER, // Stonjourner — Exoskeleton (−20 after W/R)
   // — M5 op-slice: damageAttacker reactive recoil (verified vs the live D1 2026-07-27). —
   "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)
