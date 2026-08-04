@@ -5499,7 +5499,128 @@ import type { GameState, Seat } from "./types";
     or `apps/**` diff. Repo: **229 files / 4253 tests** at `7c9cc33` →
     **230 files / 4277 tests** green. */
 
-export const engineVersion = "0.128.0";
+/** 0.129.0 — **D202, THE PRODUCER: the printed "You may …" finally ASKS.**
+    Slice 2 of 2 of D186.
+
+    TWO REGEXES AND TWO `deriveAttackEffect` ARMS, worth **12 legal printings**.
+    D186 landed the fourth gate — the `optional {note, then}` op, the `confirm`
+    prompt kind, the choice kind, the wire check, the redact arm, the projection
+    arm and BOTH dialogs — with deliberately NOTHING that constructs one, because
+    a park of a prompt kind a surface cannot render is a soft-lock and the honest
+    ordering is surfaces first. Both surfaces answer it now (D201 also gave the
+    online router its `never` floor), so this is the asking. ZERO new ops,
+    prompts, choice kinds, events, error codes, park machinery, dialogs, registry
+    rows, state fields, `src/**`, `apps/**` or `@luminous/schema` diff.
+
+    **THE CENSUS WAS RE-DERIVED AND BOTH OF D186's FIGURES HELD EXACT.** Swept
+    2026-08-04 over `json_each(attacks_json)` on the remote D1 (3,786 rows / 20
+    sets, 2,021 Standard-legal): *"You may draw cards until you have 6 cards in
+    your hand."* **10 printings, 10 legal** (Blissey ex sv06-134/-201, Lumineon
+    sv07-036, Cynthia's Garchomp ex sv10-104/-215/-232/-241 + svp-204, Audino
+    sv10.5b-074/-151) and *"You may draw 5 cards."* **2 / 2 legal** (Cyclizar ex
+    sv08-159/-228). ⚠️ Run with `GLOB '*[Yy]ou may draw*'` (CASE-SENSITIVE —
+    SQLite's `LIKE` is ASCII case-insensitive, the verb that cost D200 a census)
+    and then deliberately re-run the wrong way with `LIKE '%you may draw%'`: THE
+    SAME TWO ROWS, so no case variant exists and that is measured rather than
+    assumed. Both sentences are pure ASCII (`hex()` on the rows) — no apostrophe,
+    no `é` — so no character class and no fold is owed on either anchor.
+
+    ⚠️ **AND THE SWEEP'S NEGATIVE RESULT IS THE OTHER HALF OF THE WARRANT: those
+    two ARE the whole "you may draw" attack column.** No third sentence, no
+    trailing-clause variant, and no singular "You may draw a card." — so the
+    alternation `ATTACK_DRAW` carries is deliberately NOT copied onto the wrapper,
+    which would be a branch no printing can reach.
+
+    **THE NOTE IS THE MATCHED STRING, NOT A REBUILD.** `note: effect` — the whole
+    thing the `^…$` anchor just consumed — so the sentence the player reads is
+    byte-identical to the catalog by CONSTRUCTION rather than by care. Both HUDs
+    render the note as the dialog's only prose (`<h2>{prompt.note}</h2>` over Yes
+    and No; the "You may" on `HudDialog` / `Dialog` is an `aria-label`, not
+    visible text), so the printed sentence IS the question and this slice invents
+    no wording for any card. The op's own doc already required exactly that.
+
+    **FOUR ANCHORS, NOT ONE WITH AN OPTIONAL GROUP.** A `/^(?:You may )?[Dd]raw …/`
+    would be shorter and wrong in the way this repo cares about: it would park a
+    question on the BARE printings, which print none — a mandatory draw turned
+    into a prompt is the soft-lock-shaped defect on the other side. The `then` each
+    wrapper produces is asserted BYTE-IDENTICAL to its bare sibling's whole program
+    (D134/D181's inventory equality), which is what the shared group would have
+    bought by construction and this buys by test instead.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 12 — DERIVED FRESHLY, BECAUSE D186's SECOND
+    LEG HAS RETIRED.** D186 argued two things: (1) an INHABITANT added to two
+    unions, no required field on an existing one — D125's widening; and (2) *"no
+    v12 build could construct an `optional` op, so no v12 record can be parked on
+    one."* **(2) IS FALSE FROM THIS COMMIT ONWARDS** and had to be re-asked rather
+    than inherited. (1) still holds, and holds more simply: this slice adds no
+    inhabitant at all, no `GameState` field, no `EffectContinuation` shape, no
+    prompt/choice kind, no event and no wire member — it adds two REGEXES, and
+    what widened is which op values are REACHABLE from the deriver seam, which is
+    the exact ground on which D181 derived four ops and stayed at 11 (`apps/api/
+    src/lobby/match.ts` states that precedent verbatim). What replaces (2) is
+    STRONGER than it was: **the READER for this park shipped in v12 already, in
+    the same version as the op**, so every v12 build — including every one that
+    predates this slice and cannot produce the park — has the `stepOp` arm, the
+    `applyChoice` arm, the `resumeProgram` splice, the `validateChoice` arm, the
+    redact arm, the projection arm and both dialogs. A record this build writes is
+    completely legible to a build that cannot write it, which is precisely what
+    D186's ordering bought. Driven, not argued: the DERIVED park round-trips
+    through JSON and its `phase.prompt` / `cont.pendingOp` are asserted equal to
+    the hand-built shapes `optionalConfirm.test.ts` drives. `apps/api` UNTOUCHED;
+    the derivation never pointed there.
+
+    ⚠️ **THE DECLINE IS THE HALF THAT CAN BE SILENTLY WRONG, AND THE ATTACK PATH
+    HAS A FAILURE THE HAND-BUILT SUITE CANNOT SEE.** An attack is USED whether or
+    not its optional rider fires, so a decline that dropped the queued
+    `attackEpilogue` would leave a live board on a turn that can never end — no
+    §8.1 Knock Out sweep, no §5.3 turn end, damage already dealt. Every accept case
+    has a decline twin, and the twins check the deck ELEMENT BY ELEMENT (a
+    draw-and-put-back keeps the length and moves the order), check that the only
+    `CARDS_DRAWN` in the batch is P2's `turnStart` one, check the damage stayed on
+    the board, and check the KO the damage caused resolved anyway.
+
+    **D186's PINS WERE RE-POINTED, NOT DELETED** — D181's rule, and
+    `attackPark.test.ts` has moved four rows this way. The three cases that
+    asserted `deriveAttackEffect(<sentence>) === null` now assert WHICH READER owns
+    each sentence and that what comes back is the WRAPPER: strictly stronger,
+    because a `toBeNull()` that is simply deleted takes its witness with it, while
+    a shape claim still tells a correct wrapper from a build that returned the
+    inner op unwrapped — the one regression that would draw the cards without
+    asking. D186's safety property is kept and narrowed rather than dropped: the
+    engine still produces no `optional` where no card prints one.
+
+    **11 mutants, ONE FIRST-ROUND SURVIVOR, honestly reported and closed.**
+    Dropping the wrapper on either arm (the bare arm's real code, copied);
+    crossing the two adjacent arms' inner ops; rebuilding the note from the
+    capture instead of using the matched string; dropping the `>= 1` guards;
+    dropping `$`; adding `/i`; collapsing all four anchors into one with an
+    optional `(?:You may )?` group; an EMPTY `then`; and quietly dropping the
+    draw-5 anchor — all killed. ⚠️ **Dropping the leading `^` SURVIVED THE FIRST
+    ROUND**, and the reason is a real property of the population rather than a
+    slip: `NEAR_MISSES` is entirely real printed text and every entry carries its
+    clause at the START, because the catalog holds NO sentence with either anchor
+    at the END. Closed with two CONSTRUCTED trailing witnesses (a real first
+    clause bolted in front of the real anchor, capital `Y` intact) and the
+    construction is labelled as such — a lowercased variant would have passed for
+    the WRONG reason, since the readers' case commitment refuses it independently.
+    **ONE EQUIVALENT MUTANT recorded as such**: `note: match[0]` in place of `note:
+    effect` changes nothing, because a `^…$` match IS the whole trimmed string —
+    which is the anchoring paying for the note's correctness a second time.
+
+    ⚠️ `clauseApostrophe.test.ts` **does not move: 78 → 78.** Checked, not assumed,
+    and the reason is now two-fold: that census enumerates `FIXTURE_POOL` attacks a
+    DERIVER resolves, and (a) neither new sentence carries an apostrophe, so no
+    reader can newly resolve an apostrophe-bearing row, and (b) `FIXTURE_POOL` is
+    UNTOUCHED — the three demonstrator bodies are synthetic `fix-*` cards declared
+    inside the test file and handed to `createGame({cardPool})` (D190/D199/D200's
+    idiom), because the catalog manifest cannot be regenerated (`SQLITE_CANTOPEN`)
+    and it measures a 6-set catalog holding none of the twelve printings.
+
+    Cost: 2 regex consts + 2 reader arms = **4**, plus 1 new test file (25 tests)
+    and 3 re-pointed assertions in D186's suite. Repo: **230 files / 4277 tests**
+    at `5abb5e4` → **231 files / 4302 tests** green. */
+
+export const engineVersion = "0.129.0";
 
 export type {
   ApplyResult,

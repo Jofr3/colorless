@@ -19458,3 +19458,173 @@ this deploy can contain a filter this deploy invented.
 
 Suite: **+24 tests in 1 new file**. Repo: **229 files / 4253 tests** at `7c9cc33` →
 **230 files / 4277 tests** green, `bun run check` clean.
+
+---
+
+## D202 — the PRODUCER: the printed **"You may …"** finally ASKS (engine 0.128.0 → **0.129.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+Slice 2 of 2 of D186. `apps/api` untouched, `src/**` untouched, `registry.ts` untouched.
+Files touched: `packages/engine/src/{effects,index}.ts`, `packages/engine/package.json`,
+`packages/engine/src/optionalConfirm.test.ts` (three assertions re-pointed), plus one new
+test file (`optionalDraw.test.ts`).
+
+### Two regexes and two arms
+
+D186 landed the fourth gate — the `optional {note, then}` op, the `confirm` prompt kind,
+the choice kind, the wire check, the redact arm, the projection arm and BOTH dialogs —
+with deliberately **nothing that constructs one**, because a park of a prompt kind a
+surface cannot render is a soft-lock and the honest ordering is surfaces first. Both
+surfaces answer it now (D201 also gave the online router its `never` floor). This is the
+asking, and it is the whole slice: **zero** new ops, prompts, choice kinds, events, error
+codes, park machinery, dialogs, registry rows, state fields, `src/**`, `apps/**` or
+`@luminous/schema` diff.
+
+* `^You may draw (\d+) cards\.$` → `optional{ note, then:[drawCards N] }` — **2 legal**
+* `^You may draw cards until you have (\d+) cards in your hand\.$` →
+  `optional{ note, then:[drawUntilHandSize N] }` — **10 legal**
+
+### The census, re-derived — and both of D186's figures held EXACT
+
+Swept 2026-08-04 over `json_each(attacks_json)` + `json_extract(value,'$.effect')` on the
+remote D1 `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`).
+
+| sentence | printings | legal | ids |
+|---|--:|--:|---|
+| `You may draw cards until you have 6 cards in your hand.` | 10 | **10** | Blissey ex `sv06-134`/`-201` · Lumineon `sv07-036` · Cynthia's Garchomp ex `sv10-104`/`-215`/`-232`/`-241` + `svp-204` · Audino `sv10.5b-074`/`-151` |
+| `You may draw 5 cards.` | 2 | **2** | Cyclizar ex `sv08-159`/`-228` |
+
+⚠️ **Run CASE-SENSITIVELY and then deliberately run the wrong way.** `GLOB
+'*[Yy]ou may draw*'` and `LIKE '%you may draw%'` (SQLite's `LIKE` is ASCII
+case-insensitive — the verb that cost D200 a census, 95 rows where the truth was 6)
+return **the same two rows**. So no case variant exists, and that is measured rather than
+assumed. Both sentences are pure ASCII (`hex()` on the rows): no apostrophe, no `é`, no
+U+2019, so neither anchor carries a character class and no fold is owed.
+
+⚠️ **The sweep's negative result is the other half of the warrant: those two ARE the whole
+"you may draw" attack column.** No third sentence, no trailing-clause variant, and no
+singular *"You may draw a card."* — so the alternation `ATTACK_DRAW` carries
+(`(?:(\d+) cards|a card)`) is deliberately **not** copied onto the wrapper, because it
+would be a branch no printing can reach.
+
+### The note is the MATCHED STRING
+
+`note: effect` — the whole thing the `^…$` anchor just consumed — not a rebuilt template.
+Both HUDs render the note as the dialog's **only** prose (`<h2>{prompt.note}</h2>` above a
+Yes and a No; the `"You may"` on `HudDialog` / `Dialog` is an `aria-label`, not visible
+text), so the printed sentence **is** the question, it reads correctly in both, and this
+slice invents no wording for any card. The note is byte-identical to the catalog by
+construction rather than by care — which the op's own doc already required.
+
+### Four anchors, not one with an optional group
+
+A `/^(?:You may )?[Dd]raw …/` would be shorter and wrong in the way this repo cares about:
+it would park a question on the **bare** printings, which print none — a mandatory draw
+turned into a prompt, the soft-lock-shaped defect on the other side. The printed `d` is
+also lowercase in one spelling and capital in the other, so the "shared" body is not
+shared bytes. The `then` each wrapper produces is asserted **byte-identical to its bare
+sibling's whole program** (D134/D181's inventory equality) — what the shared group would
+have bought by construction, bought by test instead.
+
+### ⚠️ The decline is the half that can be silently wrong
+
+An attack is **USED** whether or not its optional rider fires, so a decline that dropped
+the queued `attackEpilogue` would leave a live board on a turn that can never end — no
+§8.1 Knock Out sweep, no §5.3 turn end, damage already dealt. That failure is invisible to
+`optionalConfirm.test.ts`, which drives the mechanism hand-built. Every accept case here
+has a decline twin, and the twins check the deck **element by element** (a
+draw-and-put-back keeps the length and moves the order), check that the only `CARDS_DRAWN`
+in the batch is P2's `turnStart` one, check the damage stayed on the board, and check the
+KO the damage caused resolved anyway (Zircon Road's 180 into a 30 HP body).
+
+### D186's pins were RE-POINTED, not deleted
+
+D181's rule; `attackPark.test.ts` has moved four rows this way. The three cases asserting
+`deriveAttackEffect(<sentence>) === null` now assert **which reader owns each sentence**
+and that what comes back is the **wrapper** — strictly stronger, because a `toBeNull()`
+that is simply deleted takes its witness with it, while a shape claim still tells a correct
+wrapper from a build that returned the inner op unwrapped (the one regression that would
+draw the cards without asking). D186's safety property is kept and narrowed rather than
+dropped: the engine still produces no `optional` where no card prints one.
+
+### `MATCH_RECORD_VERSION` stays 12 — derived freshly, because D186's second leg retired
+
+D186 argued two things: **(1)** an inhabitant added to two unions, no required field on an
+existing one (D125's widening); **(2)** *"no v12 build could construct an `optional` op, so
+no v12 record can be parked on one."* **(2) is FALSE from this commit onwards**, and had to
+be re-asked rather than inherited.
+
+**(1) still holds, more simply:** this slice adds no inhabitant at all — no `GameState`
+field, no `EffectContinuation` shape, no prompt/choice kind, no event, no wire member. It
+adds two **regexes**. What widened is which op values are REACHABLE from the deriver seam,
+which is the exact ground on which D181 derived four ops and stayed at 11
+(`apps/api/src/lobby/match.ts` states that precedent verbatim).
+
+**What replaces (2) is stronger than it was:** the **reader** for this park shipped in v12
+already, in the same version as the op. Every v12 build — including every one that predates
+this slice and cannot produce the park — has the `stepOp` arm, the `applyChoice` arm, the
+`resumeProgram` splice, the `validateChoice` arm, the redact arm, the projection arm and
+both dialogs. A record this build writes is completely legible to a build that cannot write
+it, which is precisely what D186's ordering bought. Driven, not argued: the DERIVED park
+round-trips through JSON and its `phase.prompt` / `cont.pendingOp` are asserted equal to
+the hand-built shapes `optionalConfirm.test.ts` drives. `apps/api` untouched; the derivation
+never pointed there.
+
+### Mutants — 11, ONE first-round survivor, reported and closed
+
+Killed: dropping the wrapper on either arm (the bare arm's real code, copied); crossing the
+two adjacent arms' inner ops; rebuilding the note from the capture instead of the matched
+string; dropping the `>= 1` guards; dropping `$`; adding `/i`; collapsing all four anchors
+into one with an optional `(?:You may )?` group; an EMPTY `then`; quietly dropping the
+draw-5 anchor.
+
+⚠️ **Dropping the leading `^` SURVIVED the first round**, and the reason is a property of
+the population rather than a slip: `NEAR_MISSES` is entirely real printed text and every
+entry carries its clause at the **start**, because the catalog holds **no** sentence with
+either anchor at the **end**. Closed with two CONSTRUCTED trailing witnesses (a real first
+clause bolted in front of the real anchor, capital `Y` intact), labelled as constructed —
+a lowercased variant would have passed for the *wrong* reason, since the readers' case
+commitment refuses it independently.
+
+**One EQUIVALENT mutant recorded as such**: `note: match[0]` for `note: effect` changes
+nothing, because a `^…$` match IS the whole trimmed string — the anchoring paying for the
+note's correctness a second time.
+
+### The demonstrators are synthetic, and `FIXTURE_POOL` is untouched
+
+D190/D199/D200's idiom and their reason: the catalog manifest cannot be regenerated
+(`SQLITE_CANTOPEN`) and measures a 978-row / 6-set catalog holding **none** of the twelve
+printings (no `sv06`/`sv07`/`sv08`/`sv10`/`sv10.5b`/`svp`). Three `fix-*` bodies are
+declared inside the test file and handed to `createGame({…, cardPool})`: Audino's printed
+`Return` row (1 {C}, 30 damage, the draw-until sentence), Cyclizar ex's `Zircon Road` (180
+damage, the draw-5 sentence, cost flattened to three {C} and **stated** as the one printed
+field diverged), and a BARE control with the "You may" stripped.
+
+`clauseApostrophe.test.ts` **does not move: 78 → 78** — checked, not assumed, and now
+two-fold: that census enumerates `FIXTURE_POOL` attacks a **deriver** resolves, and (a)
+neither new sentence carries an apostrophe so no reader can newly resolve an
+apostrophe-bearing row, and (b) `FIXTURE_POOL` is untouched.
+
+### ⚠️ Observed and NOT touched: a concurrent slice's in-progress `registry.ts` / `interpreter.ts`
+
+At the time of this commit the working tree carried another agent's uncommitted
+`ownerPokemon` attach-rider work in `packages/engine/src/{interpreter,registry}.ts`, which
+does not typecheck yet (its `AttachTargetRiders` member is not in `effects.ts`). `tsc -b`
+is therefore red at HEAD+worktree for reasons entirely outside this slice. **This slice was
+verified in an isolated `git worktree` at `5abb5e4` carrying only its own three files**:
+`bun run check` clean there, 231 files / 4302 tests. Nothing was touched to make it pass.
+
+### Work order left behind
+
+1. ⚠️ **`OnlineHud`'s `chooseAttack` dialog** — D186's item 1, still open; D201 gave the
+   router a `never` floor, which turns the missing arm from a silent blank into a compile
+   error rather than into a dialog.
+2. **The other 32 "you may" printings** are op-bound, unchanged by this slice — and the
+   three self-switch printings behind the same wrapper are now blocked on **nothing but a
+   third anchor**, since the mechanism has a producer and `switchActive` derives from
+   attack text (D189). That is the cheapest remaining row in the family.
+3. **`TriggeredAbility.optional`'s doc comment** — D186's item 3, still owed; still in
+   `registry.ts`, still held by a concurrent slice.
+
+Suite: **+25 tests in 1 new file**. Repo: **230 files / 4277 tests** at `5abb5e4` →
+**231 files / 4302 tests** green, `bun run check` clean (in the isolated worktree — see
+above).

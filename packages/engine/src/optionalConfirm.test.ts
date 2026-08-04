@@ -20,6 +20,15 @@ import { benchFromDeck, driveSetup, expectErr, mustApply } from "./testFixtures"
 // ask it. The two deriver anchors that WILL ask it are pinned ABSENT at the
 // bottom of this file, as the red line the producer slice turns green.
 //
+// ── 0.128.0 → 0.129.0 — D202 IS THAT PRODUCER, AND THE PINS WERE RE-POINTED. ──
+// `deriveAttackEffect` anchors 33–34 read the two printed sentences (12 legal
+// printings), and the block at the foot of this file no longer asserts absence:
+// it asserts WHICH READER owns each sentence and that the wrapper is what comes
+// back. Everything above is untouched and stays hand-built on purpose — this file
+// is about the MECHANISM, and driving it off a card would make it a test of the
+// deriver instead. The end-to-end drive through a real attack lives in
+// `optionalDraw.test.ts`, beside the anchors that produce it.
+//
 // WHAT IS ACTUALLY NEW, and why this is not another parking op:
 //   • THE ANSWER MOVES NOTHING. Every other `applyChoice` arm turns a choice into
 //     a board change; this one returns the state untouched on BOTH answers, and
@@ -418,39 +427,64 @@ describe("the wire", () => {
   });
 });
 
-describe("PINNED ABSENT for the producer slice (slice 2 of 2)", () => {
-  // These two sentences are the whole buildable prize behind the printed "You
-  // may" wrapper: 12 legal printings, 10 of the first and 2 of the second. The
-  // deriver reads NEITHER today, deliberately — landing a producer before both
-  // surfaces could render its park is the soft-lock this slice exists to
-  // prevent. Turning these two assertions from `toBeNull()` into the derived
-  // programs IS slice 2.
+describe("RE-POINTED at D202 — the pins that were written to go red, and did", () => {
+  // ⚠️ THESE THREE CASES WERE D186'S RED LINE AND ARE NOT DELETED. They pinned
+  // `deriveAttackEffect(<sentence>) === null` for the two sentences behind the
+  // printed "You may" wrapper — 12 legal printings, 10 of the first and 2 of the
+  // second — because landing a producer before both surfaces could render its
+  // park was the soft-lock D186 existed to prevent. D202 built the producer, so
+  // the claim MOVES rather than vanishing: from "nothing reads this" to the
+  // strictly stronger "THIS READER reads it, and reads it to exactly the wrapped
+  // program". That is D181's shape (`attackPark.test.ts` has re-pointed four
+  // rows this way) and it matters here for the usual reason: a `toBeNull()` that
+  // is simply deleted takes its witness with it, while a shape claim can still
+  // tell a correct wrapper from a build that returned the INNER op unwrapped —
+  // which is the one regression that would silently un-ask a printed question
+  // and draw the cards without consent.
   const ANCHORS = [
-    "You may draw cards until you have 6 cards in your hand.",
-    "You may draw 5 cards.",
+    {
+      text: "You may draw cards until you have 6 cards in your hand.",
+      inner: "Draw cards until you have 6 cards in your hand.",
+      legalPrintings: 10,
+    },
+    { text: "You may draw 5 cards.", inner: "Draw 5 cards.", legalPrintings: 2 },
   ] as const;
 
-  for (const text of ANCHORS) {
-    it(`does not yet derive ${JSON.stringify(text)}`, () => {
-      expect(deriveAttackEffect(text)).toBeNull();
+  for (const { text, inner } of ANCHORS) {
+    it(`derives ${JSON.stringify(text)} — through the OPTIONAL wrapper, not bare`, () => {
+      const derived = deriveAttackEffect(text);
+      // The wrapper, not the inner op: exactly one op, and it is the gate.
+      expect(derived).toHaveLength(1);
+      const op = derived?.[0];
+      expect(op?.op).toBe("optional");
+      // The note is the printed sentence VERBATIM — the whole string the regex
+      // consumed, not a rebuild of it, because both HUDs render it as the
+      // dialog's only prose.
+      expect(op?.op === "optional" ? op.note : undefined).toBe(text);
+      // …and `then` is BYTE-IDENTICAL to the bare sibling's whole program. Read
+      // apart rather than re-typed, so a copy-paste cannot pass it (D134/D181's
+      // inventory equality — one action, two printed sentences).
+      expect(op?.op === "optional" ? op.then : undefined).toEqual(deriveAttackEffect(inner));
     });
   }
 
-  it("the BARE forms still derive — the only thing missing is the wrapper's anchor", () => {
-    // Both inner ops exist and are read off their unwrapped sentences today, so
-    // slice 2 owes two regexes and two arms that wrap what these already return
-    // — not an op, not a prompt, not a dialog.
+  it("the BARE forms still derive UNWRAPPED — the wrapper reaches neither", () => {
+    // The other half of the re-point. The two anchors are whole-string, so the
+    // sentences WITHOUT the printed "You may" stay exactly where D181 put them:
+    // no gate, no park, no question. A build with one shared optional-group regex
+    // would wrap these too, and every assertion above would still pass.
     expect(deriveAttackEffect("Draw cards until you have 6 cards in your hand.")).toEqual([
       { op: "drawUntilHandSize", size: 6 },
     ]);
     expect(deriveAttackEffect("Draw 5 cards.")).toEqual([{ op: "drawCards", count: 5 }]);
   });
 
-  it("nothing in the engine produces an `optional` op at all", () => {
-    // The slice's safety property, asserted rather than asserted-in-prose: with
-    // no producer, no park of the `confirm` kind can exist, so the mechanism
-    // cannot strand a player even if a surface had been missed. `applyAction` is
-    // the only door into the engine and none of its paths can reach the op.
+  it("the engine STILL produces no `optional` op where no card prints one", () => {
+    // D186's safety property, kept and narrowed rather than dropped. It used to
+    // say "nothing reaches this op at all"; the honest claim now is that only the
+    // printed sentence does — an ordinary turn on a board of ordinary fixtures
+    // never constructs one, so the mechanism cannot strand a player who is not
+    // holding one of the 12 printings.
     const state = board();
     const result = applyAction(state, { type: "endTurn", seat: "p1" });
     expect(result.ok).toBe(true);

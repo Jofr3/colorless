@@ -2294,11 +2294,14 @@ export type EffectOp =
       `optional` arm therefore returns the state UNCHANGED on both answers, and
       the yes/no difference is entirely the splice.
 
-      ⚠️ **NO PRODUCER YET, BY DESIGN.** This landed as the mechanism plus both
-      dialogs and no deriver anchor: a park of a prompt kind one surface cannot
-      render is a soft-lock, so the surfaces answer the question before anything
-      can ask it. The two anchors that will produce it are pinned ABSENT in
-      `optionalConfirm.test.ts`. */
+      ⚠️ **NO PRODUCER AT D186, BY DESIGN — AND TWO SINCE D202.** The mechanism and
+      both dialogs landed first and alone, because a park of a prompt kind one
+      surface cannot render is a soft-lock; the surfaces answered the question
+      before anything could ask it. **D202 is the asking**: `deriveAttackEffect`
+      anchors 33–34 read "You may draw (N) cards." and "You may draw cards until
+      you have (N) cards in your hand." — 12 legal printings — and wrap the two
+      draw ops the bare anchors above them already produce. `optionalConfirm.test.ts`'s
+      pinned absences were RE-POINTED to name those readers, not deleted. */
   | { op: "optional"; note: string; then: EffectOp[] };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
@@ -5258,6 +5261,48 @@ const ATTACK_FLIP_GUST =
 const ATTACK_SELF_SWITCH = /^Switch this Pokémon with 1 of your Benched Pokémon\.$/;
 const ATTACK_FLIP_SELF_SWITCH =
   /^Flip a coin\. If heads, switch this Pokémon with 1 of your Benched Pokémon\.$/;
+// ⚠️⚠️ D202 — THE FIRST TWO PRODUCERS OF `optional`, AND THE `You may` PREFIX IS
+// THE WHOLE DIFFERENCE FROM THE TWO BARE DRAW ANCHORS 70 LINES ABOVE. D186 landed
+// the op, the `confirm` prompt, the wire arm, the redact arm, the projection arm
+// and BOTH dialogs with deliberately NOTHING that constructs one — a park of a
+// prompt kind a surface cannot render is a soft-lock, so the surfaces answered the
+// question before anything could ask it. These two lines are the asking.
+//
+// THE CENSUS, RE-DERIVED against the remote D1 (3,786 rows / 20 sets, 2,021
+// `legal_standard = 1`) on 2026-08-04, over `json_each(attacks_json)` +
+// `json_extract(value,'$.effect')`, and BOTH figures held EXACT:
+//   • "You may draw cards until you have 6 cards in your hand." — 10 printings,
+//     10 legal (Blissey ex sv06-134/-201, Lumineon sv07-036, Cynthia's Garchomp ex
+//     sv10-104/-215/-232/-241 + svp-204, Audino sv10.5b-074/-151).
+//   • "You may draw 5 cards." — 2 printings, 2 legal (Cyclizar ex sv08-159/-228).
+// Twelve legal printings, and the sweep's own NEGATIVE result: those are the ONLY
+// two "you may draw" sentences in the catalog's whole attack column. ⚠️ The sweep
+// was run with `GLOB '*[Yy]ou may draw*'` (CASE-SENSITIVE — SQLite's `LIKE` is
+// ASCII case-insensitive and cost D200 a census) and re-run with the
+// case-insensitive `LIKE '%you may draw%'`: SAME TWO ROWS, so no case variant
+// exists and the anchors need no `/i` they could not afford anyway.
+//
+// ⚠️ THE NUMBER IS CAPTURED, NOT LITERAL, ON BOTH — the opposite call from the two
+// self-switch anchors directly above, and for the reason those state in reverse.
+// There, `1 of` is literal because a printed 2 would be a DIFFERENT OP (a
+// single-pick park cannot take two). Here the number is the inner op's own
+// parameter: `drawUntilHandSize 6` and `drawCards 5` differ from their built
+// siblings (`7`, `1`, `2`, `3`) by nothing but that integer, and the TRAINER path
+// already prints others through the same ops. An anchor keyed to today's constant
+// is an anchor that breaks on the next print.
+//
+// ⚠️ AND THE `You may` PREFIX IS THE ONLY DIFFERENCE FROM THE BARE ANCHORS, WHICH
+// IS WHY THESE ARE FOUR SEPARATE WHOLE-STRING REGEXES RATHER THAN ONE OPTIONAL
+// GROUP. A `/^(?:You may )?Draw …/` would be shorter and WRONG in the way this
+// repo cares about: the printed sentences are "You may draw" (lowercase d) and
+// "Draw" (capital), so the shared body is not shared bytes, and folding them would
+// need an /i the anchors deliberately do not have (`clauseApostrophe.test.ts` pins
+// that the readers commit to case). Four anchors, four arms, and the `then` each
+// produces is asserted BYTE-IDENTICAL to its bare sibling's whole program —
+// D134/D181's inventory equality, which is what a shared group would have bought
+// by construction and this buys by test instead.
+const ATTACK_MAY_DRAW = /^You may draw (\d+) cards\.$/;
+const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in your hand\.$/;
 
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
@@ -6260,6 +6305,49 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // admitting it would file an effect that is a no-op by construction.
     if (size >= 1) return [{ op: "drawUntilHandSize", size }];
   }
+
+  // 33–34 (D202). THE PRINTED "**You may** …", AND THE FIRST TWO PRODUCERS OF THE
+  //     `optional` OP. D186 built the fourth gate — the op, the `confirm` prompt,
+  //     the choice kind, the wire check, the redact arm, the projection arm and
+  //     both dialogs — and deliberately shipped NO PRODUCER, so that no park of a
+  //     kind a surface could not render could exist. Both surfaces answer it now
+  //     (and D201 gave the online router a `never` floor), so these two arms are
+  //     the asking. **12 legal printings**, the whole buildable prize behind the
+  //     wrapper today; the anchors' block above carries the re-derived census.
+  //
+  //     ⚠️ THE `note` IS THE MATCHED STRING, NOT A REBUILT ONE. `effect` is what
+  //     the regex just consumed whole (`^…$`), so the note the player reads is
+  //     BYTE-IDENTICAL to the printed sentence by construction rather than by a
+  //     template that could drift from it — and the op's doc requires exactly
+  //     that ("`note` is the WHOLE printed sentence"). Both HUDs render it as the
+  //     dialog's only prose (`<h2>{prompt.note}</h2>` over Yes / No), so the
+  //     printed sentence IS the question, and a paraphrase would be this slice
+  //     inventing wording for a card.
+  //
+  //     ⚠️ THE `>= 1` GUARD IS THE BARE ARMS' GUARD, VERBATIM, AND IT MATTERS
+  //     MORE HERE. A "You may draw 0 cards." would park a real decision whose YES
+  //     branch moves nothing — the player is asked a question, answers it, and the
+  //     board is identical either way, which is exactly the prompt the M1
+  //     no-choice rule exists to refuse. `drawUntilHandSize 0` is worse still (the
+  //     op NEVER TRIMS, so it is a no-op at that size by construction).
+  //     Unwrapped, those two strings derive to null; wrapped, they must too.
+  match = ATTACK_MAY_DRAW.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    if (count >= 1) {
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      return [{ op: "optional", note: effect, then: [{ op: "drawCards", count }] }];
+    }
+  }
+  match = ATTACK_MAY_DRAW_UNTIL.exec(effect);
+  if (match !== null) {
+    const size = Number(match[1]);
+    if (size >= 1) {
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      return [{ op: "optional", note: effect, then: [{ op: "drawUntilHandSize", size }] }];
+    }
+  }
+
   // No capture in either gust arm — nothing in either sentence varies. The gated
   // program's `then` is BYTE-IDENTICAL to the bare arm's whole program, which is
   // this family's checkable claim (D134's shape, and here it reaches further:
