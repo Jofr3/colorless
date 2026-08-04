@@ -556,6 +556,252 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
       expect(entry.why.length, `${id} needs a real reason`).toBeGreaterThan(30);
     }
   });
+
+  // ⚠️ D185 — THE TABLE AN OMISSION CAN HIDE IN, AND WHY ITS SIBLINGS COULD NOT
+  // BE COPIED. `NO_CATALOG_ROW`, `TYPES_DIVERGE` and `reindexed` were each emptied
+  // and then PINNED empty, which is what converts the next defect from a table
+  // entry into a FAILURE. `INCOMPLETE` legitimately holds entries, so it has no
+  // emptiness lever — and the repo's own standing finding is the consequence:
+  // **A DECLARATION IS NOT A FIX.** A declaration turns a defect into a documented
+  // condition and a documented condition has no pressure on it; the entry costs
+  // about one line and the fix costs about one attack row, so the entry won every
+  // time it was offered, four slices running.
+  //
+  // The three cases below are what a table that cannot empty can be given instead.
+  // None of them needs the sqlite (which cannot be re-read this session), and all
+  // three numbers are MEASURED here rather than recalled — D180's rule: a pin
+  // claiming a measurement nobody made goes green forever while asserting nothing.
+
+  /** The DERIVED omission budget — the lever with no table side, and the only one
+      that touches the proven mutant head-on.
+
+      The mutant this file could not kill was a TWO-SITE edit: drop a fixture's
+      attack AND add its name to the row. Every existing check is satisfied by it,
+      because every existing check compares the table against the derivation
+      (`declared.attacks` vs `d.attacks`) and the mutant moves BOTH sides. These
+      numbers are computed off `FIXTURE_POOL` + `M.printed` ALONE and never read
+      `INCOMPLETE`, so editing the table cannot pay for them: dropping one more
+      printed attack anywhere in the pool takes `attackNames` 19 → 20 and goes RED
+      no matter which row absorbs it.
+
+      ⚠️ EXACT AND NOT `toBeLessThanOrEqual`, WHICH IS THE ONE PLACE THIS DEPARTS
+      FROM A RATCHET. A ratchet that is never re-tightened re-opens: fix one
+      fixture (19 → 18) and the allowance is silently slack by one, which is a free
+      undeclared drop for the next slice. Exact makes a FIX go red too, with a
+      message saying to lower the number — the same "total in both directions"
+      rule the rest of this file already runs on (a dead declaration must fail as
+      loudly as an undeclared omission). Going DOWN is the cheap failure; going UP
+      is the one this exists for.
+
+      MEASURED 2026-08-04 over the 222 `M.printed` rows: 33 incomplete fixtures,
+      19 omitted attack names, 25 omitted Ability names, 0 invented, 0 reindexed. */
+  const OMISSION_BUDGET = { rows: 33, attackNames: 19, abilityNames: 25 } as const;
+
+  /** (2) The key set, PINNED — `toEqual([])`'s precedent applied to a table that
+      cannot be empty. It does not PREVENT a 34th row; it makes adding one a
+      two-site edit that shows up in a review as a new id in a frozen list, rather
+      than as one more line in a 33-line table nobody re-reads.
+
+      ⚠️ AND IT SUBSUMES THE ROW-COUNT RATCHET, which is why there is no separate
+      `expect(Object.keys(INCOMPLETE).length).toBeLessThanOrEqual(33)` below. An
+      exact key set pins the length and the identities; the length alone would add
+      nothing. The ratchet is spent instead on the axis this list does NOT cover —
+      an EXISTING row widening from no omitted attack to one, which changes no key. */
+  const FROZEN: readonly string[] = [
+    "sv01-005", "sv01-006", "sv01-023", "sv01-041", "sv01-054", "sv01-086", "sv01-118",
+    "sv01-121", "sv01-125", "sv01-142", "sv01-145", "sv01-151", "sv01-228", "sv01-245",
+    "sv02-015", "sv02-060", "sv02-097", "sv02-123", "sv02-126", "sv02-140", "sv02-150",
+    "sv02-170", "sv03-012", "sv03-044", "sv03-061", "sv03-082", "sv03-112", "sv03-120",
+    "sv03-125", "sv03-143", "sv06.5-039", "swsh10.5-010", "swsh10.5-018",
+  ];
+
+  /** (1) The omitted Ability names the registry does NOT author under that name,
+      each with the reason no name is available to check against. TOTAL in both
+      directions, like every table in this file.
+
+      20 of the 25 omitted Ability names ARE authored by a named registry program
+      (`AbilityProgram.name` or `TriggeredAbility.name`), which turns those 20 rows'
+      justification from PROSE into a checkable claim: "the fixture drops the
+      printed Ability because the registry authors it" is now the thing asserted,
+      not the thing said. These five are the residue, and the split is the finding:
+
+        • THREE are `passive` programs, and `PassiveEffects` HAS NO `name` FIELD.
+          A passive is a bag of numbers (`damageReductionAfterWR`, the aura shapes)
+          folded by `passivesOf`; nothing in the registry ever spells "Exoskeleton".
+          So the claim is downgraded to the strongest one the datum supports —
+          the card carries a registry `passive` at all — rather than faked.
+        • TWO have NO registry program of any kind, and they are the two rows whose
+          `why` is about the ENGINE's reach rather than about the registry:
+          `swsh10.5-010` (a provision modifier `continuous.ts unitsOf` has no hook
+          for) and `sv06.5-039` (unbuilt). Those are the honest ones to leave
+          unchecked, and naming them here is what stops a SIXTH being added
+          silently under the same cover. */
+  const ABILITY_NOT_NAMED_IN_REGISTRY: Record<string, string> = {
+    "sv01-121": "Stonjourner 'Exoskeleton' — a registry `passive` (damageReductionAfterWR 20), and PassiveEffects carries no name. Checked one level weaker below: the program exists and is a passive.",
+    "sv02-097": "Mimikyu 'Safeguard' — a registry `passive` (the ex/V damage prevention). Same reason: the passive shape has no name field to match the print against.",
+    "sv02-150": "Copperajah ex 'Bronze Body' — a registry `passive` (damageReductionAfterWR 30). Same reason as Stonjourner, and the two are each other's twin.",
+    "sv06.5-039": "Pecharunt ex 'Subjugating Chains' — NO registry program at all. The Ability is unbuilt (a self-switch + Poison with a once-per-turn-per-NAME clause), so there is nothing to name; the fixture exists for the printed attack's scaling.",
+    "swsh10.5-010": "Charizard 'Burn Brightly' — NO registry program at all, and the fixture's own doc block says why: it is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides.",
+  };
+
+  /** (1, attack side) The attack-omitting rows whose card carries NO registry
+      program at all — the one place "the fixture drops its attack because the
+      REGISTRY is the subject of the body" is not a checkable claim. */
+  const ATTACK_OMITTED_WITH_NO_PROGRAM: Record<string, string> = {
+    "sv03-061": "Finizen — a pre-evolution with no registry row by design. Its declaration is the one in the table that is honestly about the SUITES ('it exists to be retreated in and evolved'), and it is the single row this case cannot justify from the registry.",
+  };
+
+  it("(2) the table's KEY SET is pinned — a 34th row is a two-site edit a reviewer sees", () => {
+    expect(Object.keys(INCOMPLETE).sort()).toEqual([...FROZEN].sort());
+    // The list is the measured population and not a copied number (D155's defect).
+    expect(FROZEN.length).toBe(OMISSION_BUDGET.rows);
+  });
+
+  it("(3) the pool's TOTAL omissions are budgeted, and the budget is DERIVED — the table cannot pay for it", () => {
+    const ids = Object.keys(M.printed);
+    let rows = 0;
+    let attackNames = 0;
+    let abilityNames = 0;
+    const invented: string[] = [];
+    for (const id of ids) {
+      const d = diffOf(id);
+      if (!d.attacks.length && !d.abilities.length && !d.invented.length && !d.reindexed) continue;
+      rows++;
+      attackNames += d.attacks.length;
+      abilityNames += d.abilities.length;
+      if (d.invented.length) invented.push(id);
+    }
+    expect(rows, `INCOMPLETE rows moved from ${OMISSION_BUDGET.rows} to ${rows}`).toBe(OMISSION_BUDGET.rows);
+    expect(
+      attackNames,
+      `the pool now omits ${attackNames} printed attack names, not ${OMISSION_BUDGET.attackNames}. UP means a fixture dropped an attack — declaring it does not pay for this number, only carrying the attack does. DOWN means a fixture was FIXED: lower the budget.`,
+    ).toBe(OMISSION_BUDGET.attackNames);
+    expect(
+      abilityNames,
+      `the pool now omits ${abilityNames} printed Ability names, not ${OMISSION_BUDGET.abilityNames} — same rule.`,
+    ).toBe(OMISSION_BUDGET.abilityNames);
+    // `invented` has never had an entry and, unlike `reindexed`, nothing pinned it
+    // empty. MEASURED at zero here, so a fixture that starts carrying an attack the
+    // card does not print is a failure rather than a new column in the table.
+    expect(invented).toEqual([]);
+    // The sweep read a real population — an empty `M.printed` satisfies every line
+    // above, including the zeroes.
+    expect(ids.length).toBeGreaterThan(100);
+  });
+
+  it("(1) every omitted ABILITY name is one the REGISTRY authors under that name", () => {
+    // The row's justification stops being PROSE. Every one of these entries says,
+    // in words, "the Ability is authored in the registry, keyed by id, so an
+    // `abilities` array on the fixture would be inert" — and until now nothing
+    // checked that the registry authors ANYTHING, let alone under the printed
+    // name. This kills "declare an Ability omission on a card the registry has no
+    // Ability for", which is the cheapest way to widen this table.
+    const unauthored: string[] = [];
+    let checked = 0;
+    for (const id of Object.keys(M.printed)) {
+      const d = diffOf(id);
+      if (d.abilities.length === 0) continue;
+      const program = programFor(id);
+      const authored = [
+        ...(program?.abilities ?? []).map((a) => a.name),
+        ...(program?.triggered ?? []).map((a) => a.name),
+      ];
+      for (const name of d.abilities) {
+        if (authored.includes(name)) {
+          checked++;
+          continue;
+        }
+        unauthored.push(id);
+        expect(
+          ABILITY_NOT_NAMED_IN_REGISTRY[id],
+          `${id} (${M.printed[id]?.name}) omits printed Ability "${name}" and the registry authors no program under that name — carry the Ability or say why it cannot be checked`,
+        ).toBeDefined();
+      }
+    }
+    // Total in both directions: an exception for a row whose Ability the registry
+    // now DOES author by name is as dead as an unchecked omission is silent.
+    expect([...new Set(unauthored)].sort()).toEqual(Object.keys(ABILITY_NOT_NAMED_IN_REGISTRY).sort());
+    // 20 of 25 (measured). Anti-vacuity: an empty registry satisfies the loop by
+    // sending every name into the exception table, and the equality above would
+    // then be the only thing left standing.
+    expect(checked).toBeGreaterThan(0);
+    for (const [id, why] of Object.entries(ABILITY_NOT_NAMED_IN_REGISTRY)) {
+      expect(why.length, `${id} needs a real reason`).toBeGreaterThan(30);
+    }
+    // …and the three `passive` ones are checked one level weaker rather than not
+    // at all: the card must carry a registry passive, which is the datum that
+    // exists. The two with no program are named above and excluded here.
+    for (const id of Object.keys(ABILITY_NOT_NAMED_IN_REGISTRY)) {
+      const program = programFor(id);
+      if (program === undefined) {
+        expect(
+          ABILITY_NOT_NAMED_IN_REGISTRY[id],
+          `${id} has no registry program and must say so`,
+        ).toContain("NO registry program");
+        continue;
+      }
+      expect(program.passive, `${id} declares an unnameable Ability but carries no passive`).toBeDefined();
+    }
+  });
+
+  it("(1, attack side) an omitted ATTACK is a WHOLLY attackless body on a card the registry drives", () => {
+    // ⚠️ THE RECON'S PROPOSAL FOR THIS SIDE WAS "assert the registry authors NO
+    // program at the omitted attack's printed index", AND IT IS WORTH ~NOTHING
+    // HERE — measured, not guessed. Exactly TWO of the 222 pooled printings carry a
+    // registry `attack` program at all (Chien-Pao ex and Mewtwo VSTAR), neither is
+    // in this table, so the claim is 0-of-19 discriminating. Worse, it is already
+    // SUBSUMED: `(d)`'s "a registry-authored attack index always points at the
+    // attack the card prints there" sweeps the whole pool and fails on a fixture
+    // that omits an attack the registry authors, whichever way the omission is
+    // declared. Rebuilding it would have been a green line asserting a thing
+    // another line already asserts.
+    //
+    // What DOES have content on this side are the two claims below, both measured:
+    //   • all 19 attack omissions are WHOLLY attackless bodies (each of the 19
+    //     cards prints exactly one attack and the fixture carries none). So the
+    //     proven mutant's most natural form — drop ONE of a multi-attack card's
+    //     attacks and declare it — has no precedent to hide behind and goes red
+    //     here as well as on the budget above;
+    //   • 18 of the 19 are cards the registry drives by an Ability / passive /
+    //     trigger, which is what every one of their `why` strings claims. The 19th
+    //     is enumerated.
+    const partial: string[] = [];
+    const noProgram: string[] = [];
+    let checked = 0;
+    for (const id of Object.keys(M.printed)) {
+      const d = diffOf(id);
+      if (d.attacks.length === 0) continue;
+      const carried = (FIXTURE_POOL[id]?.attacks ?? []).length;
+      if (carried > 0) partial.push(`${id} carries ${carried} of its printed attacks and drops ${JSON.stringify(d.attacks)}`);
+      const program = programFor(id);
+      if (program === undefined) {
+        noProgram.push(id);
+        expect(
+          ATTACK_OMITTED_WITH_NO_PROGRAM[id],
+          `${id} (${M.printed[id]?.name}) drops a printed attack and the registry drives nothing on it — carry the attack or say why`,
+        ).toBeDefined();
+        continue;
+      }
+      // The body's subject must be the registry row its reason names, and an
+      // `attack` program is exactly what it may NOT be: a card whose registry
+      // entry is an attack program has no case for dropping that attack.
+      const drives =
+        (program.abilities?.length ?? 0) > 0 ||
+        (program.triggered?.length ?? 0) > 0 ||
+        program.passive !== undefined;
+      expect(drives, `${id} has a registry program that authors no Ability, trigger or passive`).toBe(true);
+      checked++;
+    }
+    // A fixture may drop ALL of a card's attacks or NONE of them. Never some.
+    expect(partial).toEqual([]);
+    expect(noProgram.sort()).toEqual(Object.keys(ATTACK_OMITTED_WITH_NO_PROGRAM).sort());
+    for (const [id, why] of Object.entries(ATTACK_OMITTED_WITH_NO_PROGRAM)) {
+      expect(why.length, `${id} needs a real reason`).toBeGreaterThan(30);
+    }
+    // 18 of 19 (measured) — and the guard that keeps `partial`/`noProgram` being
+    // empty from meaning "the loop never ran".
+    expect(checked).toBeGreaterThan(0);
+  });
 });
 
 describe("(d) a fixture attack sits at its PRINTED index unless the shift is declared", () => {
