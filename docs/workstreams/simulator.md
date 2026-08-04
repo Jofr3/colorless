@@ -19001,3 +19001,192 @@ file. Both reproduce at `git stash` with this slice's work removed, and neither 
 this slice's owned list, so nothing was reached for. The 224 / 4161 above is measured with
 that one in-progress file excluded; every other suite in the repo, including all five this
 slice edited, is green.
+
+---
+
+## D199 — THE DERIVED REGISTRY-ONLY SWEEP: 28 programs / 47 Standard-legal printings, and the finding that the 0.9 % is **OP-BOUND**, not authoring-bound (engine 0.126.0 → **0.127.0 owed**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+`apps/api` untouched. Files touched: `packages/engine/src/registry.ts` and one new
+`packages/engine/src/legalNonAttackPrograms.test.ts`. `index.ts`, `package.json`,
+`effects.ts`, `attack.ts`, `continuous.ts`, `interpreter.ts`, `cardplay.ts`, `flow.ts`
+and `testFixtures.ts` were held by a concurrent slice and are **untouched** — the
+version bump and changelog block are **owed at merge**.
+
+### Why this slice exists, and what makes it different from D190
+
+`docs/reference/coverage-backlog-legal.md` (D187): of the **651 Standard-legal
+Ability / Trainer / Special-Energy printings**, exactly **6 were built — 0.9 %**.
+D190 worked the census's seven named candidates, built 3 and dropped 4, and **exhausted
+the list**. This slice did not inherit a list: it re-censused **all 651** against the
+remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets,
+2,021 legal) on 2026-08-04 — every distinct sentence in `abilities_json` and in
+`effect`, grouped by text, ranked by legal printings — and asked one question of each:
+**does it map onto ops that already exist**, with no new op, no new field, no new
+`CardFilter` kind, and no change to any engine file but `registry.ts`?
+
+### ⚠️ THE ANSWER IS THE FINDING: **28 of the 651 are authorable — 7.2 %**
+
+Not 60 %, not 30 %. Twenty-eight sentences, forty-seven printings. The remaining ~604
+are **op-bound**, and that is a measurement rather than an impression: the twenty
+cheapest of them are enumerated in `legalNonAttackPrograms.test.ts`'s `DROPPED` table
+with the exact missing piece, and **every id in it is asserted to still have no
+program**, so the table cannot rot into prose. Coverage of the non-attack surface goes
+**6 → 53 printings, 0.9 % → 8.1 %.**
+
+### What landed — ranked by legal printings
+
+| Program | Legal printings | Ops, all pre-existing |
+|---|---:|---|
+| **Biting Spree** — TR Crobat ex `sv10-122`/`-217`/`-234`/`-242` | **4** | `onEvolve` + `damageChosen{opponentAny, 20, count 2, optional}` |
+| **Attract Customers** — Tatsugiri `svp-118`, `sv06-131`/`-186` | **3** | `lookAtTopN{6, supporter, 1}` + `shuffleDeck`, `activeOnly` |
+| **Scalding Steam** — Volcanion ex `sv09-031`/`-171`/`-182` | **3** | `applyStatus{defender, burned}` from an ACTIVATED Ability |
+| **Sudden Shearing** — Durant ex `sv08-004`/`-215`/`-236` | **3** | `onPlayToBench` + `discardDeckTop{opponent, 1}` |
+| **Calming Light** — Shiinotic `sv08-009`/`-194` | **2** | `applyStatus{defender, asleep}` |
+| **Inferno Fandango** — Emboar `sv10.5w-013`/`-098` | **2** | `attachEnergyFrom{hand, Fire}`, `oncePerTurn:false` |
+| **Enhanced Hammer** `sv06-148`/`-224` | **2** | `discardEnergy{opponentChosen, specialEnergy}` |
+| **Fennel** `sv10.5b-082`/`-162` | **2** | `healEach 40` |
+| **Night Stretcher** `sv06.5-061`, `sv08-251` | **2** | `discardPileRetrieval{pokemonOrBasicEnergy, hand, 1}` |
+| **Kofu** `sv07-138`/`-165` | **2** | `payFromHand{2, deckBottom, recordAs}` + `recordGate` → `drawCards 4` |
+| **Maximum Belt** `sv05-154`, `sv08.5-117` | **2** | `damageBonusBeforeWRIfTarget{50, ex}` |
+| **Binding Mochi** `sv06.5-055`, `sv08.5-095` | **2** | `damageBonusBeforeWRIf{40, yourActivePoisoned}` |
+| **Levincia** `sv09-150`, `sv10-244` | **2** | `stadium.ability` → `discardPileRetrieval{basicEnergy Lightning, hand, 2}` |
+| **Spiky Energy** `sv09-159`/`-190` | **2** | `energy{provides C, passive damageAttacker 20}` |
+| Sneaky Bite `sv10-121` · Defiant Horn `sv09-136` · Seething Spirit `sv09-024` · Confectionary Gift `sv09-075` · Insomnia `sv08.5-077` · Reconstitute `sv10-155` · Up-Tempo `sv08-052` · Max Rod `sv08.5-116` · Miracle Headset `sv08-183` · Energy Recycler `sv10-164` · Sacred Ash `sv10-168` · Master Ball `sv05-153` · Treasure Tracker `sv08.5-131` · Dangerous Laser `sv06.5-058` | **1** each | re-parameterisations of the rows above |
+| **TOTAL** | **47** | |
+
+Every group was re-queried on 2026-08-04 and returned `legal_standard = 1` on **every**
+id, **one** distinct printed sentence and **one** card name — so no row is two cards
+quietly sharing an object.
+
+### Four rows worth their own line
+
+* **Levincia** is the first Stadium activated ability that is **not** a deck search
+  (Artazon / Mesagoza / Town Store are all `searchDeck`). It needed nothing:
+  `StadiumAbility.program` is a plain `EffectOp[]` and `TurnAllowances.stadiumAbilityUsed`
+  already carries "once during **each player's** turn".
+* **Spiky Energy** is the **second writer of `EnergyProgram.passive` ever**, and the
+  first from a field other than §12. D174 bought that surface and AUDITED all twelve
+  `passivesOf` fields for reachability from an Energy source; `damageAttacker` was marked
+  *reachable ⚠️* with one caveat (`requiresTool` would ask a board question), which this
+  printing does not carry. Its §9 answer is the **opposite** of the Pokémon printing of
+  the same sentence — a Klefki aura silences Cacturne's "Counterattack Quills" and cannot
+  touch this one — and that falls out of where the source sits in the fold.
+* **Up-Tempo** is the **first Ability in the registry paying anywhere but the discard**.
+  `cardplay.ts` wrote its refusal message to read `payFromHand.to` rather than hard-code
+  the word, with a comment ending "no printed Ability pays anywhere but the discard
+  today". This is that card; the test asserts the message says *bottom of your deck* and
+  does **not** say *discard*.
+* **Binding Mochi** is the one row where the printed subject and the field's reading are
+  different sentences that **cannot disagree at the read sites**. The card gates on "the
+  **Poisoned** Pokémon this card is attached to"; `damageBonusBeforeWRIf` evaluates a
+  seat-relative `BoardCondition`, and the only one available is `yourActivePoisoned`.
+  They coincide because the field is folded out of `passivesOf(attacker)` and a body
+  attacking **is** the seat's Active (§8). A benched holder contributes nothing at all —
+  not because the condition is false but because that body never reaches the fold — and
+  that is asserted rather than argued.
+
+### The work order — 20 sentences that are NOT authorable, with the missing piece
+
+Full text in `DROPPED`. The five that gate the most legal printings:
+
+1. **An OWNER-PREFIX target filter** — "your **Iono's** Pokémon" (5), and the same
+   mechanic across Ethan's / Team Rocket's / Cynthia's / Hop's / Marnie's / N's /
+   Steven's / Lillie's / Arven's, spanning abilities, Trainers, Tools **and** Stadiums.
+   ⚠️ **The single highest-value missing piece in the whole census.**
+2. **A seat-wide pre-W/R damage AURA** — "Attacks used by your Pokémon do 20 more
+   damage…" (3 bare, 6 more behind a subtype gate). `damageBonusBeforeWR` and both its
+   gated siblings modify their HOLDER only; this needs `seatDamageReductionAfterWR`'s
+   scan shape pointed at the bonus seam.
+3. **A §8.1 KO-SURVIVAL hook on `PassiveEffects`** — "…it is not Knocked Out, and its
+   remaining HP becomes 10." (7). Every prevention the interface has bites in the §8.5
+   pipeline; this one lets the damage land and refuses the KO, which is flow.ts's sweep.
+4. **An attack-NAME gate on `attackCostDiscountPerOpponentPrize`** — "**Blood Moon** used
+   by this Pokémon costs {C} less for each Prize card your opponent has taken" (6). The
+   arithmetic already exists; the ungated field would discount the card's *other* attack.
+5. **A `BoardCondition` member for the opponent's remaining PRIZE COUNT** (5 + 2 + 4).
+   `morePrizesThanOpponent` is a comparison, not a threshold. One union member.
+
+Also named: an **ex-only** prevention gate (3 — `preventDamageFromExV` is ex **or** V and
+would prevent damage from a body the card does not mention), a **stage** refinement on
+`noRetreatCostAura` (3), a **type** gate on `healEach` (3) and on the Pokémon
+`CardFilter` kinds (3), `gust` with a **filter and a `recordAs`** (3), `handRefresh.who:
+"opponent"` (2), `attachEnergyFrom`'s **self target** a second time (2 — D190's Teal
+Dance finding, on the discard source), `discardPileRetrieval.dest: "bench"` + an HP
+threshold (2), two filters on one `lookAtTopN` window and a `trainer` filter kind (4+2),
+and an attack-again mechanism (7).
+
+### Doctrine and mutation check
+
+*Exact map or flag*, unchanged from D190. A sentence that was **close** was dropped, not
+approximated — the ex-only prevention is the sharpest case: no Pokémon V is
+Standard-legal, so the difference is unobservable in a legal game and **not** in this
+engine, whose fixture pool holds three.
+
+**36 mutants, one or two per program, each written the way an author would actually get
+it wrong — by copying the neighbouring program's real code.** Hawlucha's
+`opponentBench`; Hawlucha's one-counter `amount: 10`; Pokégear's `n: 7`; Great Ball's
+`anyPokemon`; the two status tokens swapped between Scalding Steam and Calming Light;
+`target: "self"`; `whose: "self"`; `switchActive` for `gust`; Baxcalibur's `"Water"` and
+`oncePerTurn: true`; Quaquaval's `source: "hand"`; Arboliva's `amount: "all"`;
+Pachirisu's `"paralyzed"`; Trade's pay-1-draw-2; `to: "discard"`; fix-hammer's
+`anyEnergy`; Picnic Basket's `healEachAll`; Max Rod's `max: 5` on Night Stretcher; four
+`dest` swaps between hand and deck; **Miriam's second sentence bolted onto Sacred Ash**;
+**Poké Ball's coin gate wrapped round Master Ball**; Town Store's `max: 1`; a dropped
+`applyStatus`; Dendra's `count: 1`; Choice Belt's `"V"` **and** its 30; the
+`opponentActivePoisoned` sibling; an ungated `damageBonusBeforeWR`; Energy Retrieval's
+untyped filter; Counterattack Quills' `amount: 30`; and Spiky Energy's passive dropped
+altogether. **All 36 killed. No first-round survivors.**
+
+### The demonstrators live in the TEST FILE, and `testFixtures.ts` is untouched
+
+D190's idiom and D190's reason, at 28× the size: a fixture id naming a real printing must
+appear in `catalogManifest.ts`, that manifest is generated off the LOCAL sqlite
+(`SQLITE_CANTOPEN` here) and it measures a 978-row / 6-set catalog holding **none** of
+`sv05` / `sv07` / `sv08` / `sv08.5` / `sv09` / `sv10` / `sv10.5b` / `sv10.5w` / `svp`. So
+28 synthetic `fix-*` bodies are declared **inside the test file**, each carrying its
+printed sentence verbatim off the D1, and handed to `createGame({…, cardPool})`.
+`FIXTURE_POOL` is not touched; `driveSetup` is re-scripted locally because it closes over
+the shared pool.
+
+### ⚠️ TWO STANDING CLAIMS ELSEWHERE ARE NOW CATALOG-SCOPED RATHER THAN POOL-SCOPED
+
+Neither goes red — both sweeps are `FIXTURE_POOL`-scoped and name that blind spot
+themselves — but both would read as measurements of the Standard-legal pool if left:
+
+* `statusImmunity.test.ts` — *"the family CLOSES at 3 of 3 sentences and 4 of 4
+  printings"*. **Insomnia (Hoothoot `sv08.5-077`, "This Pokémon can't be Asleep.") is a
+  fourth sentence and a fifth printing**, outside the 978-row catalog D172/D174 measured.
+* `therapeuticEnergy.test.ts` — *"is the ONLY card in the pool with a continuous ENERGY
+  surface — measured"*. **Spiky Energy `sv09-159`/`-190` is a second**, same reason.
+
+Both files are outside this slice's owned set. The correction owed is a scope word
+("in the local catalog"), not a behaviour change.
+
+### One engine narrowing observed and NOT touched
+
+`cardplay.ts programPlayable` gates `damageChosen` on the OPPONENT'S BENCH being
+non-empty — written when every consumer was `opponentBench`, and now reachable by
+`opponentAny`, whose candidate set includes the Active and is therefore never empty. It
+does not bite this slice (both new consumers are TRIGGERED abilities, and triggers never
+consult `programPlayable`), so it is reported rather than fixed: the file is not owned
+here, and the fix wants its own witness.
+
+### Version and `MATCH_RECORD_VERSION`
+
+`MATCH_RECORD_VERSION` **stays 12**, derived rather than assumed. A registry row is a map
+lookup keyed by card id: no `GameState` field, no new `EffectOp` inhabitant, no
+prompt/choice/`EffectContinuation` shape, no event, no wire, no `@luminous/schema` diff.
+**The PARK check was made explicitly**, since D189's stated bump condition is that a
+parked program lives in `GameState.phase` and is persisted: **eleven of the 28 park** —
+`lookAtTopN`, `payFromHand` ×3, `damageChosen`, `gust`, `healChosen`, `discardEnergy`,
+`discardPileRetrieval` ×5, `searchDeck` ×2 — and every one of those ops, prompts and
+choice kinds has shipped since M5. `EffectContinuation` carries `{pendingOp, rest, ctx,
+record}` — the ops themselves, never a card id — so a record saved before this slice
+replays identically after it. `apps/api` untouched; the derivation never pointed there.
+
+Engine version bump to **0.127.0** and its changelog block are **OWED AT MERGE**:
+`index.ts` and `packages/engine/package.json` were held by the concurrent slice
+(D190's precedent, which worked).
+
+Suite: **+43 tests in 1 new file**. Repo: **224 files / 4161 tests** at `a3e4d39` →
+**225 files / 4204 tests** green, `bun run check` clean.
