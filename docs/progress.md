@@ -197,14 +197,105 @@ RATHER THAN READ IT.**
   A FACT** (the second axis this repo's SCOPE discipline, D154, never had).
   ⚠️ **The manifest generator still cannot run** (`SQLITE_CANTOPEN`), so **no real-card
   fixture may be added** — use synthetic `fix-*` bodies, which the generator skips.
-- **engine `0.122.1`** · **`MATCH_RECORD_VERSION` 11** · manifest **222 rows, 0 absent** ·
-  **`bun run check` GREEN — 217 files / 3976 tests.**
-- ⚠️ **`/code-review` STILL HAS NOT RUN SINCE D164 — now TWENTY-SEVEN decisions ago
-  (D165–D191).** It is USER-TRIGGERED and a session CANNOT launch it. The surface now spans
-  `packages/engine`, `packages/schema`, `apps/api` and `src/`. The two newest things a
-  reviewer has not seen are **D189 (the ATTACK TAIL — `finishAttack` takes a uid, and the
-  `attackEpilogue` `PendingStage` is PERSISTED)** and **D188 (`@tcgdex/sdk` on the ingest
-  wire)**.
+- **engine `0.131.0`** · **`MATCH_RECORD_VERSION` 12** (D189 moved it 11→12 — the FIRST bump
+  that is not an `InPlayPokemon` field) · manifest **222 rows, 0 absent, UNREGENERABLE** ·
+  **`bun run check` GREEN — 233 files / 4367 tests** (was 213 / 3901 at session start).
+- ⚠️ **`/code-review` STILL HAS NOT RUN SINCE D164 — now FORTY-ONE decisions ago
+  (D165–D205).** It is USER-TRIGGERED and a session CANNOT launch it; saying so in the
+  handoff is the only move a session has. The surface spans `packages/engine`,
+  `packages/schema`, `apps/api` and `src/`. **The four a reviewer should read FIRST, by
+  blast radius rather than by recency:** **D189** (the ATTACK TAIL — `finishAttack` takes a
+  uid and the `attackEpilogue` `PendingStage` is PERSISTED; the one bump), **D201** (a LIVE
+  P4 soft-lock fixed — `chooseAttack` had no online dialog from D157 until it), **D186 +
+  D202** (a new PARKING op, the fourth gate, reaching `GameState.phase` and both HUDs), and
+  **D188** (`@tcgdex/sdk` on the ingest wire).
+
+🛑 **#161 DID NOT STOP AT D191 — IT RAN TO D206. THE BLOCK BELOW COVERS D180–D191; THE
+BLOCK IMMEDIATELY AFTER THIS ONE COVERS D192–D206 AND IS WHERE THE WORK LIST NOW LIVES.**
+
+**⚠️ WHAT #161 LANDED AFTER D191 (D192–D206), AND THE ONE DEFECT CLASS IT KEPT REDISCOVERING.**
+
+🛑 **THE FINDING THAT OUTRANKS EVERY FEATURE IN THIS BATCH: A GUARD THAT RUNS, IS GREEN, AND
+DOES NOT DISCRIMINATE. IT RECURRED THREE TIMES, EACH ONE LEVEL DEEPER, AND EVERY TIME THE
+NEXT SLICE FOUND IT USING ITS OWN WORK AS THE PROOF.**
+**(1) D200** flagged ten sentences as unbuilt and **six of its ten id-sets named ENTIRELY
+DIFFERENT CARDS** (Ethan's Ho-Oh ex pinned as Rabsca ex, Yanmega ex, **and an id that does
+not exist**). Its *"every id asserted unbuilt"* guard **passed**, because the wrong cards
+were also unbuilt. **Its COUNTS were all correct**, which is why nothing caught it.
+**(2) D204** corrected all six and rebuilt the guard to flag per **SURFACE** — **still
+vacuous**: `programFor(id)?.attack` reads the **REGISTRY ONLY**, while attack programs
+resolve `registry ?? deriveAttackEffect(text)`, so a printing built **in the deriver** keeps
+its "unbuilt" flag GREEN after it is finished. Its ability arm had the twin hole one field
+over (`abilities` only, where `triggered` is the other printed surface) — **and that arm was
+already FALSE about a card D204 itself landed in the same commit.**
+**(3) D205** repaired both arms and made every flag **DRIVE the missing mechanism**:
+Giovanni's flag plays the real Switch `sv01-194` into a mixed Bench and asserts the prompt
+**offers the bodies the print excludes**.
+⚠️ **THE RULE: A FLAG THAT ONLY ASSERTS ABSENCE CANNOT FAIL IN A CATALOG THAT IS ~92 %
+ABSENT. A GUARD IS ONLY WORTH ITS FALSE-NEGATIVE RATE — before you trust one, say what
+change would turn it RED, and if the answer is "only deleting the card", it is vacuous.**
+This is a different class from the three warnings already on this page (verb width, scope
+date, case-insensitive `LIKE`): those are about a query being too narrow, **this is about an
+assertion being too easy to satisfy.**
+
+⚠️ **AND A FOURTH CENSUS-ERROR CLASS, MEASURED: SQLite's `LIKE` IS CASE-INSENSITIVE.** D200
+read `N's` as **95** printings where the truth is **6** — the pattern matched every `n's` in
+the catalog. **Use `GLOB` whenever case carries meaning, and say which you used.** D202 then
+did the right thing with it: it ran its sweep case-sensitively AND deliberately re-ran it
+with `LIKE`, got the same two rows, and used that **negative result** to license four
+whole-string anchors instead of one with an optional `(?:You may )?` group.
+
+**THE SLICES.** **D192** main-hit damage suppression — 3 booleans, one shared read site, two
+stores, 34+6 legal printings; ⚠️ its brief's central argument was **half wrong** (Resistance
+occurs alone and is built; **Weakness alone lives entirely in the deferred riders**), and the
+clause reached a **fourth read site nobody had enumerated** (the pre-W/R `opposingAttackDebuff`,
+because its source IS the opponent's Active — D151's split arriving at the main hit).
+**D193** three count sources — and it **BUILT A FOURTH, MEASURED IT AGAINST THE SUITE, AND
+REVERTED**: Entei `sv03-030` had been the engine's canonical *unsimulated-`+`* witness since
+0.35.0 and its sentence is a member of that family. **D196** did it properly: **re-homed the
+witness FIRST** onto Pachirisu `sv01-068`, then landed both members at D193's predicted price
+exactly. ⚠️ **The `FIXTURE_POOL` sweep found its FIRST reuse in six slices and it was the
+load-bearing negative itself** — the whole argument for sweeping BEFORE writing.
+**D194** the `"None"` sentinel — in **TWO** columns, and the unreported half (`rarity`, 34
+rows) was **17× larger** than the reported one. **D195** the deferred web backlogs re-triaged:
+⚠️ the facets note **named a remedy rather than the defect**, and the M9 list's *"all
+resolved"* was **wrong by one**. **D197** `/cards` sort twin deleted + `text` search — ⚠️ **it
+was not partially blind to Trainers, it was TOTALLY blind** (the 517 rows with `effect` have
+both JSON columns NULL; exactly disjoint), 275 of them legal. **D198** `?suffix=` + its facet
+vocabulary — ⚠️ **the fallback it replaced was ALREADY broken the way its replacement was
+refused for**: `/\bmega\b/i` matched **ZERO of 3,786** rows. **D199** the registry-only
+sweep — **28 of 651 legal non-attack sentences (7.2 %) are authorable today**, so **the 0.9 %
+is OP-BOUND, not authoring-bound**, and its **twenty flagged gaps are the roadmap**.
+**D186 + D202** the printed *"You may"* as a **FOURTH GATE** (`optional` beside
+`coinFlipGate`/`conditionGate`/`recordGate`), mechanism and BOTH dialogs first with **NO
+PRODUCER**, then the two anchors. ⚠️ **D186's own version argument expired on D202, the commit
+that made it false** (*"no v12 build could construct the op"*) — replaced by a stronger one:
+**the READER shipped in v12 alongside the op.** **D201** a **LIVE P4 SOFT-LOCK** fixed —
+`chooseAttack` had no arm in `OnlineHud` from D157; ⚠️ **the missing arm is one bug, the
+missing GUARD is nine**, and `SUPPORTED_MATCH_ACTIONS`'s comment **asserted the very invariant
+that was false**. **D200 → D204 → D205** the owner-prefix family, three slices to reach one
+sentence: ⚠️ **`CardFilter` is the CARD vocabulary and NO op takes a filter for an IN-PLAY
+TARGET**, which is why D200's yield was **6 printings, not 80**; D204 added the target rider
+and finally landed the five-printing Iono attach D199 ranked highest-value; D205 added
+`attachEnergyFrom.count` (**the piece D200 asserted already existed and D204 proved did
+not**). ⚠️ **A sentence can be UNBUILDABLE rather than unbuilt** — Flutter Mane `sv08-096`
+needs an *"Ancient"* banner that exists in **NO ingested column**; a rider for it would be an
+op with a permanently empty candidate set. **Check a datum EXISTS before designing a
+predicate over it.**
+
+**⚠️ WHERE TO GO NEXT.** The work list is **D205's flag table** (`simulator.md`, driven flags)
+and **D199's twenty named gaps**. Highest-value named pieces still unbuilt: an **own→own
+damage-counter route** (Orbeetle), **`switchActive` parameters + an "If you do" consequent**
+(Giovanni), an **attack-copy op** (N's Zoroark ex, ATTACK surface only — all four already
+carry "Trade"), a **seat-wide pre-W/R damage aura**, a **§8.1 KO-survival hook**, and a
+**`BoardCondition` for an opponent remaining-prize threshold**.
+🛑 **AND TWO THINGS ONLY A HUMAN CAN DO.** (a) **`bun run db:migrate:remote` BEFORE ANY
+DEPLOY** — migration `0006` (`cards.suffix`) has **never been applied to production**,
+`wrangler deploy` does **not** apply migrations, and `/facets` now selects that column inside
+its shared `db.batch`, so deploying first **fails the WHOLE endpoint**, taking every filter
+vocabulary down with it. (b) **`cd apps/api && bun scripts/ingest.ts --remote`** — populates
+`cards.suffix` (absent today) and clears the `"None"` sentinel from the 34 `mfb` rows.
+**Four slices ended at that wall: `api.tcgdex.net` is refused by the network policy.**
 
 **⚠️ WHAT #161 LANDED (D180–D191), AND THE FINDINGS WORTH MORE THAN THE CODE.**
 
