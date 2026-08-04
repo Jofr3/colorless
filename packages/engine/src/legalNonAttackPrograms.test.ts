@@ -277,14 +277,29 @@ const DROPPED = [
     needs:
       "an ATTACK-AGAIN mechanism. §5.3 makes an attack end the turn unconditionally (turn.ts seeds the turn tail from attack.ts's epilogue); there is no state for 'this seat may declare a second attack', no `CardProgram` field to request one, and the printed gate is a named STADIUM in play, which no `BoardCondition` member expresses either. Two absences, and the bigger one is the turn machine.",
   },
-  {
-    sentence:
-      "If this Pokémon has full HP and would be Knocked Out by damage from an attack, it is not Knocked Out, and its remaining HP becomes 10.",
-    ids: ["sv08-057", "sv08-219", "sv08-238", "sv08-247", "sv08.5-179", "sv10.5b-052", "sv10.5b-130"],
-    legal: 7,
-    needs:
-      "a §8.1 KO-SURVIVAL hook on `PassiveEffects`. Every prevention the interface has (`preventDamageFromExV`, `preventDamageFromType`, `damageReductionAfterWR`) bites in the §8.5 DAMAGE pipeline, before the number lands; this one lets the damage land and then refuses the KO, which is the sweep's business (flow.ts `collectKnockOuts`) and not the pipeline's. `onKoPrizeGuard` is the only field that reaches that sweep and it modifies the PRIZE, not the survival.",
-  },
+  // ✅ D208 BUILT THIS ROW — "If this Pokémon has full HP and would be Knocked Out
+  // by damage from an attack, it is not Knocked Out, and its remaining HP becomes
+  // 10." (Pikachu ex "Resolute Heart" sv08-057/-219/-238/-247, sv08.5-179; Crustle
+  // "Sturdy" sv10.5b-052/-130 — 7 printings, 7 Standard-legal, ONE sentence under
+  // TWO Ability names). The row is REMOVED rather than annotated in place, because
+  // the assertion below is what keeps this list honest and a built row would make
+  // it fail — D204's and D207's precedent. `DROPPED` is now 17.
+  //
+  // ⚠️ THE `needs` STRING WAS HALF RIGHT AND THE WRONG HALF WAS THE PLACEMENT, which
+  // is the part worth keeping. It correctly said no existing prevention fits: every
+  // one of them bites INSIDE the §8.5 pipeline, before the number lands, and this
+  // sentence lets the damage land. It then concluded the hook belonged on the KO
+  // SWEEP (flow.ts `collectKnockOuts`), and that is exactly where it cannot go. The
+  // antecedent is "has FULL HP" — a fact about the PRE-damage board — and
+  // `isLethallyDamaged`, the sweep's own and only lethality test, reads
+  // `pokemon.damage` AFTER the hit is already in it. By the time any sweep, any of
+  // the four KO/post-KO detection sites, or `onKoPrizeGuard` runs, the datum the
+  // sentence turns on has been destroyed. So it is neither a pipeline prevention nor
+  // a sweep hook: it is a CLAMP AT THE DAMAGE WRITE (continuous.ts
+  // `koSurvivalClamp`, called from the four sites that emit DAMAGE_DEALT), which is
+  // the one place the pre-hit value is still in scope. It cost ONE `PassiveEffects`
+  // flag, one shared helper and four call sites, and NO new detection site — D171
+  // bought the fourth at a high price and this slice deliberately bought none.
   {
     sentence:
       "Attacks used by your Future Pokémon, except any Iron Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
@@ -294,7 +309,8 @@ const DROPPED = [
       "a SEAT-WIDE pre-W/R damage AURA. `damageBonusBeforeWR` and both its gated siblings are folded by `passivesOf(attacker)` — they modify their HOLDER only. This sentence's source is one body and its beneficiaries are every 'Future Pokémon' the seat owns, i.e. `seatDamageReductionAfterWR`'s scan shape pointed at the bonus seam. It ALSO needs a subtype predicate ('Future') and a by-name exemption, neither of which any filter or field carries. The bare version of the same shape — 'Attacks used by your Pokémon do 20 more damage…' (sv10.5b-003/-156/-164, 3 legal) — needs only the aura, and is the cheapest entry point.",
   },
   {
-    sentence: "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
+    sentence:
+      "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
     ids: ["svp-177", "sv06-141", "sv06-202", "sv06-216", "sv06-222", "sv08.5-168"],
     legal: 6,
     needs:
@@ -309,7 +325,8 @@ const DROPPED = [
       "THREE pieces. (1) A SELF-promote: `switchActive` parks on 'which of your Benched', and this sentence names the body the trigger fired on (`ctx.sourceUid`). (2) `moveEnergy` relaxed off its single-source coupling — D190's N's Plan finding, printed here as 'your other POKÉMON', plural. (3) A destination pinned to the source uid, which `moveEnergy.route` spells only for the two hard-coded routes it has.",
   },
   {
-    sentence: "Prevent all damage from attacks done to this Pokémon by your opponent's Pokémon that have an Ability.",
+    sentence:
+      "Prevent all damage from attacks done to this Pokémon by your opponent's Pokémon that have an Ability.",
     ids: ["sv06-112", "sv06-199", "sv06-215", "sv08.5-058", "sv08.5-160"],
     legal: 5,
     needs:
@@ -340,7 +357,8 @@ const DROPPED = [
       "`attachEnergyFrom.recordAs` (D190 named it for Teal Dance) AND a heal that reads the recorded TARGET rather than a slot's cards. `recordGate` answers 'did anything move'; 'heal that Pokémon' needs the POKÉMON the op picked, and `EffectRecord` files card uids, not board refs.",
   },
   {
-    sentence: "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon.",
+    sentence:
+      "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon.",
     ids: ["sv06.5-045", "sv06.5-077", "sv10-065", "sv10-210"],
     legal: 4,
     needs:
@@ -364,7 +382,8 @@ const DROPPED = [
   // registry rows — it was two registry rows, and seven Standard-legal printings
   // waited on a sentence in a `needs` string. `DROPPED` is now 18.
   {
-    sentence: "Once during your turn, you may search your deck for up to 2 Evolution {M} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+    sentence:
+      "Once during your turn, you may search your deck for up to 2 Evolution {M} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
     ids: ["sv10.5b-067", "sv10.5b-161", "sv10.5b-169"],
     legal: 3,
     needs:
@@ -385,7 +404,8 @@ const DROPPED = [
       "a STAGE refinement on `noRetreatCostAura`. The field carries `requiresEnergyType` only; this printing gates on Basic-ness instead. One optional field beside the existing one, and the read site (`hasFreeRetreatAura`) already has the Pokémon.",
   },
   {
-    sentence: "Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused.",
+    sentence:
+      "Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused.",
     ids: ["sv08-179", "sv08-234", "sv08-246"],
     legal: 3,
     needs:
@@ -399,28 +419,32 @@ const DROPPED = [
       "a TYPE gate on `healEach`. The op heals every one of the controller's Pokémon unconditionally; this sentence heals a typed subset. `Card.types` is the datum and the op already has the seat, so it is one optional field — but it is a field, and Fennel (built above) is the ungated printing that shows the op is otherwise right.",
   },
   {
-    sentence: "Look at the top 7 cards of your deck. You may reveal a Pokémon AND a Trainer card you find there and put them into your hand.",
+    sentence:
+      "Look at the top 7 cards of your deck. You may reveal a Pokémon AND a Trainer card you find there and put them into your hand.",
     ids: ["sv08-174", "sv08-232", "sv08-244", "sv08.5-172"],
     legal: 4,
     needs:
       "TWO filters on one `lookAtTopN` window. The op takes one `filter` and one `max`; this sentence takes one of each of two kinds out of a SHARED window, which two sequential ops cannot express (the second would re-look at a window the first did not consume). It also needs a `trainer` `CardFilter` kind — `supporter` and `toolCard` exist, the supertype does not (which alone drops Team Rocket's Petrel, 2 legal).",
   },
   {
-    sentence: "Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards.",
+    sentence:
+      "Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards.",
     ids: ["svp-211", "sv10.5w-043"],
     legal: 2,
     needs:
       "`handRefresh.who: 'opponent'`. The union is `'you' | 'both'` — the OPPONENT-only arm is the one reading nothing prints in the sv01–03 pool and two cards print here. A one-member widening with a real read site behind it already (Iono/Judge drive `both`).",
   },
   {
-    sentence: "Once during your turn, you may attach a Basic Energy card from your discard pile to this Pokémon.",
+    sentence:
+      "Once during your turn, you may attach a Basic Energy card from your discard pile to this Pokémon.",
     ids: ["sv10-020", "sv10-187"],
     legal: 2,
     needs:
       "`attachEnergyFrom`'s SELF target — D190's Teal Dance finding, printed a second time on the DISCARD source. Blaziken ex's 'to 1 of your Pokémon' (built above) is the same op with the target rule the engine CAN spell, which is what makes the gap exactly one field wide.",
   },
   {
-    sentence: "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
+    sentence:
+      "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
     ids: ["sv10.5b-024", "sv10.5b-108"],
     legal: 2,
     needs:
@@ -446,7 +470,12 @@ const DROPPED = [
 //    Every fixture carries its printed sentence VERBATIM off the remote D1, so a
 //    later census can SEE the text (D174's rule: a comment cannot go red). ──
 
-function abilityBody(id: string, name: string, effect: string, overrides: Partial<Card> = {}): Card {
+function abilityBody(
+  id: string,
+  name: string,
+  effect: string,
+  overrides: Partial<Card> = {},
+): Card {
   return battler(id, {
     name: id,
     hp: 140,
@@ -676,7 +705,9 @@ function localSetup(seed: number, first: Seat, deck: string[]): GameState {
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+  );
   while (state.phase.kind === "setup:drawExtra") {
     const phase = state.phase;
     const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
@@ -684,7 +715,9 @@ function localSetup(seed: number, first: Seat, deck: string[]): GameState {
     state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
   }
   for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
   }
   for (const seat of ["p1", "p2"] as const) {
     state = must(applyAction(state, { type: "setupReady", seat }));
@@ -755,8 +788,10 @@ function trimHand(state: GameState, size: number): GameState {
 }
 
 function cardsPrompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose") throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  if (state.phase.prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${state.phase.prompt.kind}`);
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.prompt.kind !== "chooseCards")
+    throw new Error(`expected chooseCards, got ${state.phase.prompt.kind}`);
   return state.phase.prompt;
 }
 
@@ -765,7 +800,9 @@ function cardsPrompt(state: GameState) {
 describe("D199 — the registry map", () => {
   it("registers all 47 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
-      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
+      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
+        legal,
+      );
       const first = programFor(ids[0] as string);
       expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
@@ -816,12 +853,26 @@ describe("D199 — the registry map", () => {
         trigger: "onEvolve",
         optional: true,
         program: [
-          { op: "damageChosen", target: "opponentAny", amount: 20, count: 2, source: "ability", optional: true },
+          {
+            op: "damageChosen",
+            target: "opponentAny",
+            amount: 20,
+            count: 2,
+            source: "ability",
+            optional: true,
+          },
         ],
       },
     ]);
     expect(programFor("sv10-121")?.triggered?.[0]?.program).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "ability", optional: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 20,
+        count: 1,
+        source: "ability",
+        optional: true,
+      },
     ]);
     expect(programFor("svp-118")?.abilities).toEqual([
       {
@@ -875,10 +926,20 @@ describe("D199 — the registry map", () => {
       { op: "discardEnergy", from: "opponentChosen", filter: { kind: "specialEnergy" } },
     ]);
     expect(programFor("sv06.5-061")?.trainer).toEqual([
-      { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "hand", max: 1 },
+      {
+        op: "discardPileRetrieval",
+        filter: { kind: "pokemonOrBasicEnergy" },
+        dest: "hand",
+        max: 1,
+      },
     ]);
     expect(programFor("sv08.5-116")?.trainer).toEqual([
-      { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "hand", max: 5 },
+      {
+        op: "discardPileRetrieval",
+        filter: { kind: "pokemonOrBasicEnergy" },
+        dest: "hand",
+        max: 5,
+      },
     ]);
     expect(programFor("sv08-183")?.trainer).toEqual([
       { op: "discardPileRetrieval", filter: { kind: "supporter" }, dest: "hand", max: 2 },
@@ -939,10 +1000,10 @@ describe("D199 — the registry map", () => {
         expect(programFor(id), `${id} (${sentence.slice(0, 40)}…) was half-built`).toBeUndefined();
       }
     }
-    // The list's own arithmetic: 18 sentences (20 at D199 — the Iono's attach
-    // was built by D204, Lacey's prize gate by D207), and every one of them names
-    // its missing piece rather than shrugging.
-    expect(DROPPED).toHaveLength(18);
+    // The list's own arithmetic: 17 sentences (20 at D199 — the Iono's attach was
+    // built by D204, Lacey's prize gate by D207, the §8.1 KO-survival clamp by
+    // D208), and every one of them names its missing piece rather than shrugging.
+    expect(DROPPED).toHaveLength(17);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
@@ -965,14 +1026,20 @@ describe("Biting Spree / Sneaky Bite — driven through the real engine", () => 
   }
 
   const evolveActive = (state: GameState, evo: string) =>
-    ({ type: "evolve", seat: "p1", uid: handUid(state, "p1", evo), target: { spot: "active" } }) as const;
+    ({
+      type: "evolve",
+      seat: "p1",
+      uid: handUid(state, "p1", evo),
+      target: { spot: "active" },
+    }) as const;
 
   it("offers the opponent's ACTIVE as a target — `opponentAny`, not `opponentBench`", () => {
     const state = deepFreeze(evolveBoard(1, "fix-bitingspree"));
     const { state: parked } = mustApply(state, evolveActive(state, "fix-bitingspree"));
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    if (parked.phase.prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
+    if (parked.phase.prompt.kind !== "choosePokemonMulti")
+      throw new Error("expected choosePokemonMulti");
     const prompt = parked.phase.prompt;
     // ⚠️ THE MUTANT THIS KILLS: `target: "opponentBench"` (Hawlucha's value, and
     // the value a copy of Hawlucha's program would carry). The printed noun is
@@ -990,7 +1057,8 @@ describe("Biting Spree / Sneaky Bite — driven through the real engine", () => 
     const state = evolveBoard(2, "fix-bitingspree");
     const { state: parked } = mustApply(state, evolveActive(state, "fix-bitingspree"));
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    if (parked.phase.prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
+    if (parked.phase.prompt.kind !== "choosePokemonMulti")
+      throw new Error("expected choosePokemonMulti");
     const refs = parked.phase.prompt.candidates;
     const active = refs.find((r) => r.spot.spot === "active");
     const bench0 = refs.find((r) => r.spot.spot === "bench");
@@ -1016,7 +1084,8 @@ describe("Biting Spree / Sneaky Bite — driven through the real engine", () => 
     const state = evolveBoard(3, "fix-sneakybite");
     const { state: parked } = mustApply(state, evolveActive(state, "fix-sneakybite"));
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    if (parked.phase.prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
+    if (parked.phase.prompt.kind !== "choosePokemonMulti")
+      throw new Error("expected choosePokemonMulti");
     expect(parked.phase.prompt.min).toBe(1);
     expect(parked.phase.prompt.max).toBe(1);
   });
@@ -1051,7 +1120,10 @@ describe("Sudden Shearing — driven through the real engine", () => {
     const ownDiscardBefore = state.players.p1.discard.length;
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({ seat: "p1", ability: "Sudden Shearing" });
+    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+      seat: "p1",
+      ability: "Sudden Shearing",
+    });
     // ⚠️ THE MUTANT THIS KILLS: `whose: "self"`. Both halves are asserted, because
     // one of them alone is satisfied by a program that mills nobody.
     expect(done.players.p2.discard).toContain(oppTop);
@@ -1193,7 +1265,11 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
       ...state,
       players: {
         ...state.players,
-        p1: { ...side, hand: side.hand.filter((u) => !fires.includes(u)), deck: [...side.deck, ...fires] },
+        p1: {
+          ...side,
+          hand: side.hand.filter((u) => !fires.includes(u)),
+          deck: [...side.deck, ...fires],
+        },
       },
     };
     const rejected = applyAction(state, useOn("Inferno Fandango"));
@@ -1282,7 +1358,11 @@ describe("Reconstitute / Up-Tempo — the hand-cost rows", () => {
       ...state,
       players: {
         ...state.players,
-        p1: { ...state.players.p1, hand: [], deck: [...state.players.p1.deck, ...state.players.p1.hand] },
+        p1: {
+          ...state.players.p1,
+          hand: [],
+          deck: [...state.players.p1.deck, ...state.players.p1.hand],
+        },
       },
     };
     const rejected = applyAction(emptied, useOn("Up-Tempo"));
@@ -1321,7 +1401,11 @@ describe("Enhanced Hammer — driven through the real engine", () => {
               ? null
               : {
                   ...state.players.p2.active,
-                  energy: [state.players.p2.deck.find((u) => state.cardIdByUid[u] === "fix-energy") as string],
+                  energy: [
+                    state.players.p2.deck.find(
+                      (u) => state.cardIdByUid[u] === "fix-energy",
+                    ) as string,
+                  ],
                 },
           deck: state.players.p2.deck.filter((u) => state.cardIdByUid[u] !== "fix-energy"),
         },
@@ -1360,7 +1444,11 @@ describe("Enhanced Hammer — driven through the real engine", () => {
               ? null
               : {
                   ...state.players.p2.active,
-                  energy: [state.players.p2.deck.find((u) => state.cardIdByUid[u] === "fix-special-2") as string],
+                  energy: [
+                    state.players.p2.deck.find(
+                      (u) => state.cardIdByUid[u] === "fix-special-2",
+                    ) as string,
+                  ],
                 },
           deck: state.players.p2.deck.filter((u) => state.cardIdByUid[u] !== "fix-special-2"),
         },
@@ -1584,7 +1672,10 @@ describe("Kofu — driven through the real engine", () => {
         p1: {
           ...state.players.p1,
           hand: [kofu, spare],
-          deck: [...state.players.p1.deck, ...state.players.p1.hand.filter((u) => u !== kofu && u !== spare)],
+          deck: [
+            ...state.players.p1.deck,
+            ...state.players.p1.hand.filter((u) => u !== kofu && u !== spare),
+          ],
         },
       },
     };
@@ -1603,7 +1694,8 @@ describe("Maximum Belt — driven through the real engine", () => {
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     state = clearBench(state, "p1");
     state = attachFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
-    if (tool !== undefined) state = attachToolFromDeck(stocked(state, "p1", tool), "p1", "active", tool);
+    if (tool !== undefined)
+      state = attachToolFromDeck(stocked(state, "p1", tool), "p1", "active", tool);
     state = setActiveFromDeck(state, "p2", defender);
     return clearBench(state, "p2");
   }
@@ -1629,7 +1721,12 @@ describe("Binding Mochi — driven through the real engine", () => {
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     state = clearBench(state, "p1");
     state = attachFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
-    state = attachToolFromDeck(stocked(state, "p1", "fix-bindingmochi"), "p1", "active", "fix-bindingmochi");
+    state = attachToolFromDeck(
+      stocked(state, "p1", "fix-bindingmochi"),
+      "p1",
+      "active",
+      "fix-bindingmochi",
+    );
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
     state = clearBench(state, "p2");
     if (poison === "holder") state = setConditions(state, "p1", { poisonDamage: 10 });
@@ -1662,7 +1759,12 @@ describe("Binding Mochi — driven through the real engine", () => {
     state = clearBench(state, "p1");
     state = attachFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
     state = benchFromDeck(state, "p1", "fix-bigbody");
-    state = attachToolFromDeck(stocked(state, "p1", "fix-bindingmochi"), "p1", 0, "fix-bindingmochi");
+    state = attachToolFromDeck(
+      stocked(state, "p1", "fix-bindingmochi"),
+      "p1",
+      0,
+      "fix-bindingmochi",
+    );
     state = setConditions(state, "p1", { poisonDamage: 10 });
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
     state = clearBench(state, "p2");
@@ -1676,12 +1778,19 @@ describe("Binding Mochi — driven through the real engine", () => {
 describe("Levincia — the first Stadium ability that is not a deck search", () => {
   it("retrieves up to 2 Basic {L} Energy from the activating player's discard", () => {
     let state = board(40, TRN_DECK);
-    state = discardFromDeck(stocked(state, "p1", "fix-lightning-energy"), "p1", "fix-lightning-energy", 2);
+    state = discardFromDeck(
+      stocked(state, "p1", "fix-lightning-energy"),
+      "p1",
+      "fix-lightning-energy",
+      2,
+    );
     state = discardFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
     const lightning = state.players.p1.discard.filter(
       (u) => state.cardIdByUid[u] === "fix-lightning-energy",
     );
-    const plain = state.players.p1.discard.find((u) => state.cardIdByUid[u] === "fix-energy") as string;
+    const plain = state.players.p1.discard.find(
+      (u) => state.cardIdByUid[u] === "fix-energy",
+    ) as string;
     state = playFromHand(state, "fix-levincia").state;
     const { state: parked } = mustApply(state, { type: "useStadiumAbility", seat: "p1" });
     const prompt = cardsPrompt(parked);
@@ -1698,10 +1807,17 @@ describe("Levincia — the first Stadium ability that is not a deck search", () 
 
   it("is once per PLAYER TURN — refused twice on one turn, live again next turn", () => {
     let state = board(41, TRN_DECK);
-    state = discardFromDeck(stocked(state, "p1", "fix-lightning-energy"), "p1", "fix-lightning-energy", 3);
+    state = discardFromDeck(
+      stocked(state, "p1", "fix-lightning-energy"),
+      "p1",
+      "fix-lightning-energy",
+      3,
+    );
     state = playFromHand(state, "fix-levincia").state;
     const first = mustApply(state, { type: "useStadiumAbility", seat: "p1" });
-    const settled = chooseCards(first.state, [cardsPrompt(first.state).candidates[0] as string]).state;
+    const settled = chooseCards(first.state, [
+      cardsPrompt(first.state).candidates[0] as string,
+    ]).state;
     const again = applyAction(settled, { type: "useStadiumAbility", seat: "p1" });
     expect(again.ok).toBe(false);
     if (!again.ok) expect(again.error.code).toBe("STADIUM_ABILITY_ALREADY_USED");
@@ -1735,7 +1851,11 @@ describe("Spiky Energy — the second writer of EnergyProgram.passive", () => {
               ? null
               : {
                   ...state.players.p2.active,
-                  energy: [state.players.p2.deck.find((u) => state.cardIdByUid[u] === "fix-spikyenergy") as string],
+                  energy: [
+                    state.players.p2.deck.find(
+                      (u) => state.cardIdByUid[u] === "fix-spikyenergy",
+                    ) as string,
+                  ],
                 },
           deck: state.players.p2.deck.filter((u) => state.cardIdByUid[u] !== "fix-spikyenergy"),
         },
@@ -1757,14 +1877,17 @@ describe("Spiky Energy — the second writer of EnergyProgram.passive", () => {
     // Attach it to P1's own Active instead, so the SAME card both pays a cost and
     // contributes a passive off one uid.
     state = stocked(state, "p1", "fix-spikyenergy");
-    const uid = state.players.p1.deck.find((u) => state.cardIdByUid[u] === "fix-spikyenergy") as string;
+    const uid = state.players.p1.deck.find(
+      (u) => state.cardIdByUid[u] === "fix-spikyenergy",
+    ) as string;
     state = {
       ...state,
       players: {
         ...state.players,
         p1: {
           ...state.players.p1,
-          active: state.players.p1.active === null ? null : { ...state.players.p1.active, energy: [uid] },
+          active:
+            state.players.p1.active === null ? null : { ...state.players.p1.active, energy: [uid] },
           deck: state.players.p1.deck.filter((u) => u !== uid),
         },
       },

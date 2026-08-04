@@ -314,6 +314,50 @@ export interface PassiveEffects {
       and no printing gates this shape on a second Tool. A field nothing reads is
       the D156 defect, so it is not speculatively added. */
   damageAttackerOnKo?: { amount: number };
+  /** §8.1 KO SURVIVAL — "If this Pokémon has full HP and would be Knocked Out by
+      damage from an attack, it is not Knocked Out, and its remaining HP becomes
+      10." (Pikachu ex "Resolute Heart" sv08-057/-219/-238/-247, sv08.5-179;
+      Crustle "Sturdy" sv10.5b-052/-130 — 7 printings, 7 Standard-legal, TWO
+      Ability names for ONE byte-identical sentence.)
+
+      ⚠️ THIS IS A CLAMP AT THE DAMAGE WRITE, NOT A FIFTH KO-DETECTION SITE, AND
+      THE ANTECEDENT IS THE WHOLE REASON. "has full HP" is a fact about the
+      PRE-damage board. The engine's four KO/post-KO detection sites
+      (`onKnockOutTrigger`, `triggersOf`, `passivesOf`'s sweep readers,
+      `koToolTriggersOf`) and flow.ts's ONE lethality test `isLethallyDamaged` all
+      read `pokemon.damage` AFTER the hit has been added, so by the time any of
+      them runs the pre-hit value is GONE and "did this body have full HP" is
+      unanswerable. D199's remainder row filed this as a hook on the KO sweep for
+      exactly that reason and the placement is wrong: the sweep cannot see the
+      antecedent. It is read instead at the four sites where the pre-damage value
+      is still in scope — the §8.5 damage WRITES (continuous.ts `koSurvivalClamp`,
+      called from attack.ts's main hit and interpreter.ts's `spreadDamage`,
+      `placeSnipe`'s `deals` arm and `snipeActive`) — which needs no new detection
+      site at all. D171 bought the FOURTH at a high price; this slice buys none.
+
+      A BARE FLAG in this fold rather than a read off `top`, and that buys the §9
+      answer: both printings are ABILITIES, so an Ability-lock must switch the
+      clamp off — which the `disabled` drop on `sources[0]` already does. That is
+      `suppressTargetEffectsOnAttack`'s reasoning (D192) verbatim.
+
+      ⚠️ "damage from an attack" IS THE ENGINE'S EXISTING BOUNDARY, NOT A NEW ONE.
+      A PLACED COUNTER IS NOT DAMAGE (D138/D139/D142, and the catalog prints the
+      rule on Bronzong sv03-145: "(Damage is not an effect.)"), so every
+      `COUNTERS_PLACED` write — the put-counter snipe, `counterPut`, the counter
+      MOVE, `damageSelf`'s recoil, and the Checkup's poison and burn (flow.ts) —
+      is correctly OUT of this clamp's reach and gets no call. The clamp rides the
+      four `DAMAGE_DEALT` emitters and nothing else, which is the same line the
+      §8.5 pipeline already draws for Weakness, Resistance and every reduction
+      passive.
+
+      ⚠️ THE TOOL TWIN IS A SEPARATE SLICE AND IS DELIBERATELY NOT BUILT. Survival
+      Brace sv06-164 (1 Standard-legal) prints this sentence with "from your
+      opponent's Pokémon" narrowing the attacker AND a second sentence — "Then,
+      discard this card." — that this field cannot express: a passive fold has no
+      way to consume its own source, and the discard is a STATE WRITE that would
+      have to happen at the clamp site with the Tool's uid in hand. It needs a
+      self-discard rider; flagged, priced, not taken. */
+  survivesKoAtFullHp?: true;
   /** §9 continuous Ability-lock AURA: while this Pokémon is in play (and, when
       `requiresActive`, in the Active Spot), every in-play Pokémon matching the
       target predicate "has no Abilities" — the engine suppresses its activated /
@@ -1208,6 +1252,37 @@ const BLOOMING_GARDEN: CardProgram = { passive: { removeWeakness: true } };
     VMAX/VSTAR/GX). Honored at every attack-damage read site (no "Active Spot"
     clause). The only ex/V-gated total-prevention print in the sv01–03 pool. */
 const SAFEGUARD: CardProgram = { passive: { preventDamageFromExV: true } };
+
+/** §8.1 KO SURVIVAL — ONE printed sentence, TWO Ability names, SEVEN printings,
+    all seven Standard-legal:
+
+      "If this Pokémon has full HP and would be Knocked Out by damage from an
+       attack, it is not Knocked Out, and its remaining HP becomes 10."
+
+    Pikachu ex "Resolute Heart" (sv08-057, sv08-219, sv08-238, sv08-247,
+    sv08.5-179) and Crustle "Sturdy" (sv10.5b-052, sv10.5b-130), measured against
+    the remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
+    20 sets, 2,021 legal) on 2026-08-04 with `json_each(abilities_json)` and an
+    EQUALITY on the effect string — not `LIKE`, which is case-insensitive here,
+    and not a grouped `attacks_json` scan, which is how D206 and D207 each
+    attributed a sentence to the wrong row.
+
+    ⚠️ TWO NAMES, ONE PROGRAM, AND THE PROGRAM IS NAMED FOR NEITHER. The rows are
+    byte-identical through the full stop, so a single `CardProgram` is the honest
+    shape and naming it after either Ability would make the other one's row read
+    as a reprint of a card it has nothing to do with. `KO_SURVIVAL` names the
+    MECHANISM, which is D141's judgement applied to a registry constant.
+
+    ⚠️ THE SWEEP ALSO SURFACED TWO NEIGHBOURS THIS PROGRAM MUST REFUSE, and both
+    are refusals rather than omissions:
+      • Machamp sv03.5-068 "Guts" — the same consequent with NO "full HP"
+        antecedent and a COIN FLIP in front of it ("…flip a coin. If heads, this
+        Pokémon is not Knocked Out…"). Mark G, `legal_standard = 0`. A flag cannot
+        carry a flip, and authoring it here would make a 50% effect unconditional.
+      • Survival Brace sv06-164 — the TOOL twin, 1 Standard-legal, which adds
+        "Then, discard this card." See `survivesKoAtFullHp`'s doc block: it needs
+        a self-discard rider this field does not have. Flagged, not built. */
+const KO_SURVIVAL: CardProgram = { passive: { survivesKoAtFullHp: true } };
 
 /** Clefable ex (sv03-082) — "Lunar Zone": "All of your Pokémon that have {P}
     Energy attached have no Retreat Cost." — a continuous own-board aura, gated
@@ -3762,7 +3837,12 @@ const CHAMPIONS_CALL: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "searchDeck", filter: { kind: "ownerPokemon", owner: "Cynthia" }, dest: "hand", max: 1 },
+        {
+          op: "searchDeck",
+          filter: { kind: "ownerPokemon", owner: "Cynthia" },
+          dest: "hand",
+          max: 1,
+        },
         { op: "shuffleDeck" },
       ],
     },
@@ -3908,7 +3988,12 @@ const SPIKEMUTH_GYM: CardProgram = {
     ability: {
       label: "Spikemuth Gym",
       program: [
-        { op: "searchDeck", filter: { kind: "ownerPokemon", owner: "Marnie" }, dest: "hand", max: 1 },
+        {
+          op: "searchDeck",
+          filter: { kind: "ownerPokemon", owner: "Marnie" },
+          dest: "hand",
+          max: 1,
+        },
         { op: "shuffleDeck" },
       ],
     },
@@ -4400,6 +4485,25 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-178": AZURE_SEAS, // (reprint)
   "svp-127": AZURE_SEAS, // (reprint — promo)
   "fix-azureseas": AZURE_SEAS, // FIXTURE — the synthetic demonstrator that DRIVES the row
+  // — P3-M5 (D208): the §8.1 KO-SURVIVAL clamp. ONE sentence, TWO Ability names,
+  //   7 printings, all 7 Standard-legal — the whole population of "…has full HP
+  //   and would be Knocked Out by damage from an attack…" over `abilities_json`,
+  //   measured against the remote D1 `luminous`
+  //   (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021 legal)
+  //   on 2026-08-04 by `json_each` + an EQUALITY on the effect string. No fixture
+  //   for the real ids: all seven are outside the local 6-set manifest, which
+  //   CANNOT be regenerated (SQLITE_CANTOPEN), so the behaviour is driven on
+  //   synthetic bodies carrying the identical program (D190's Tier-1 idiom,
+  //   D192's `fix-azureseas` two lines up). —
+  "sv08-057": KO_SURVIVAL, // Pikachu ex — Resolute Heart
+  "sv08-219": KO_SURVIVAL, // (reprint)
+  "sv08-238": KO_SURVIVAL, // (reprint)
+  "sv08-247": KO_SURVIVAL, // (reprint)
+  "sv08.5-179": KO_SURVIVAL, // (reprint)
+  "sv10.5b-052": KO_SURVIVAL, // Crustle — Sturdy (a DIFFERENT Ability name, the SAME sentence)
+  "sv10.5b-130": KO_SURVIVAL, // (reprint)
+  "fix-sturdy": KO_SURVIVAL, // FIXTURE — 120 HP Basic, the demonstrator that DRIVES the row
+  "fix-sturdytiny": KO_SURVIVAL, // FIXTURE — 20 HP Basic: the CHECKUP-boundary witness
   "fix-suppresswall": FIX_SUPPRESS_WALL, // FIXTURE — ×2 Fire AND −30 after W/R: the order witness
   "fix-resistwall": FIX_SUPPRESS_WALL, // FIXTURE — −30 Fire Resistance AND −30 after W/R
   // — M5 long-tail: the ALWAYS-ON ATTACKER FILTERS — the always-on half of §D146's

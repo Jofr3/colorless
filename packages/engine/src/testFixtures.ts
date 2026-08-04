@@ -5304,8 +5304,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Colorless"],
         name: "Twin Surge",
-        effect:
-          "This attack does 30 more damage for each Energy attached to both Active Pokémon.",
+        effect: "This attack does 30 more damage for each Energy attached to both Active Pokémon.",
         damage: "30+",
       },
       {
@@ -7264,6 +7263,114 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
     attacks: [{ cost: ["Colorless"], name: "Surge", damage: 60 }],
+  }),
+  /** `fix-sturdy` — D208's §8.1 KO-SURVIVAL demonstrator: the printed sentence of
+      Pikachu ex "Resolute Heart" / Crustle "Sturdy" (7 printings, 7 legal) on a
+      body the local pool can actually field. All seven real ids are outside the
+      6-set catalog manifest — which CANNOT be regenerated (SQLITE_CANTOPEN) —
+      so the registry rows are asserted as DATA against the D1 census and the
+      BEHAVIOUR is driven here, `fix-azureseas`'s idiom two entries up.
+
+      ⚠️ **BASIC, AND THAT IS CHOSEN FOR THE TEST RATHER THAN FOR THE CARD.** The
+      clamp reads `effectiveMaxHp`, not the printed hp, and the ONE thing that can
+      separate those two on a Pokémon is Bravery Charm's `basicHpBonus` — which is
+      gated on `isBasic`. A Stage-1 body (Crustle really is one) would make the
+      raw-`hp` mutant UNKILLABLE, so the demonstrator is a Basic and the Charm
+      board is the assertion that kills it. Stated rather than quietly relied on.
+
+      **120 HP** — divisible by the attacker's exactly-lethal 120 and comfortably
+      above the 10 the clamp leaves standing, so `damage: 110` is unambiguous. NO
+      ATTACKS: it is a pure defender, so nothing it does can be confused for
+      something the Ability did. */
+  "fix-sturdy": battler("fix-sturdy", {
+    name: "Sturdymon",
+    hp: 120,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Sturdy",
+        effect:
+          "If this Pokémon has full HP and would be Knocked Out by damage from an attack, it is not Knocked Out, and its remaining HP becomes 10.",
+      },
+    ],
+  }),
+  /** `fix-sturdytiny` — the SAME Ability on a **20 HP** body, and it exists for
+      exactly one job: making the CHECKUP BOUNDARY reachable. "damage from an
+      attack" excludes a placed counter (D138/D139/D142), so §13's poison and burn
+      must Knock a full-HP holder Out for real — but on a 120 HP body no Checkup
+      tick is remotely lethal, and the refusal could only be asserted by reading
+      code. At 20 HP a single burn tick (20) or a doubled poison counter is exactly
+      lethal on a FULL-HP body, so the boundary is DRIVEN on both sides: the
+      identical antecedent that saves this body from an attack does not save it
+      here. Non-degenerate on purpose — `hp - 10` is 10, not 0, so a leak would
+      show up as a survivor rather than as a body still on full HP. */
+  "fix-sturdytiny": battler("fix-sturdytiny", {
+    name: "Sturdymon Jr",
+    hp: 20,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Sturdy",
+        effect:
+          "If this Pokémon has full HP and would be Knocked Out by damage from an attack, it is not Knocked Out, and its remaining HP becomes 10.",
+      },
+    ],
+  }),
+  /** `fix-koblast` — D208's attacker, carrying ONE attack per damage WRITE SITE so
+      the clamp can be driven at all four and refused at the fifth. Every attack
+      costs a single {C} and the damage numbers are all 120 or 300, chosen against
+      `fix-sturdy`'s 120 HP so "exactly lethal" and "far past lethal" are both
+      reachable and visibly different:
+
+        idx 0 "Blast"     — 120 flat: attack.ts's MAIN HIT, EXACTLY lethal. The
+                            `>=`-vs-`>` mutant dies here and nowhere else.
+        idx 1 "Overkill"  — 300 flat: the main hit far past lethal, so the clamp is
+                            shown to be a floor on the RESULT and not a subtraction.
+        idx 2 "Shockwave" — interpreter.ts `spreadDamage`, 120 to EACH benched body.
+        idx 3 "Pinpoint"  — `placeSnipe`'s `deals` arm, 120 to ONE chosen benched.
+        idx 4 "Arrow"     — the `opponentAny` snipe: on an ACTIVE pick this is
+                            `snipeActive`, the fourth write site.
+        idx 5 "Sting"     — ⚠️ THE CONTROL, AND THE ONLY ONE THAT MUST NOT CLAMP:
+                            12 damage COUNTERS, the same 120 HP by a route that is
+                            not "damage from an attack". It shares `placeSnipe`
+                            with idx 3 and takes the other branch, which is what
+                            makes the boundary a driven difference rather than a
+                            claim about two different functions.
+
+      340 HP so the recoil boards (Rocky Helmet + Vengeful Punch, 60 in total)
+      never KO the attacker and truncate the arithmetic under measurement. */
+  "fix-koblast": battler("fix-koblast", {
+    name: "Blastmon",
+    hp: 340,
+    attacks: [
+      { cost: ["Colorless"], name: "Blast", damage: 120 },
+      { cost: ["Colorless"], name: "Overkill", damage: 300 },
+      {
+        cost: ["Colorless"],
+        name: "Shockwave",
+        damage: 10,
+        effect: "This attack does 120 damage to each of your opponent's Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Pinpoint",
+        damage: 10,
+        effect:
+          "This attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Arrow",
+        effect:
+          "This attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Sting",
+        damage: 10,
+        effect: "Put 12 damage counters on 1 of your opponent's Benched Pokémon.",
+      },
+    ],
   }),
   /** `fix-suppresswall` — ×2 FIRE **and** a −30 post-W/R reduction (its registry
       row). The ORDER WITNESS's body, and the reason it had to be synthetic: no
@@ -11176,6 +11283,56 @@ export const CLEAR_STATUS_DECK = deckOf({
   "fix-bigbody": 22, // 200 HP neutral Basic — the control, and the setup starter
   "fix-psychic-energy": 10, // Basic {P} — Miracle Force's {P}{P}
   "fix-energy": 8, // Colorless Basic — Miracle Force's {C}
+});
+
+/** D208 — the §8.1 KO-SURVIVAL clamp's board. **SEED-FREE**: the printed sentence
+    carries no coin and every board below is built by surgery, so no case here is
+    seed-pinned. Its own deck rather than a guest in `VENGEFUL_PUNCH_DECK`, for
+    that deck's own stated reason — adding a card reshuffles every board in it.
+
+    Each entry earns its place:
+      • fix-sturdy — THE demonstrator. 120 HP Basic carrying the printed sentence,
+        fielded Active (main hit, `snipeActive`) and Benched (`spreadDamage`,
+        `placeSnipe`). Six copies, because the three-way order witness needs the
+        SAME body on one board at two different damage totals and the bench boards
+        want two of them side by side;
+      • fix-sturdytiny — the 20 HP twin, and the ONLY route to the CHECKUP
+        boundary: at that HP one burn tick is exactly lethal on a full-HP body;
+      • fix-koblast — the attacker, one attack per damage write site plus the
+        counter-snipe control (see its `FIXTURE_POOL` block);
+      • sv03-197 Vengeful Punch — `damageAttackerOnKo`. THE collision that must go
+        SILENT when the clamp fires: no KO occurred, so nothing is owed. It is
+        also live on the very next board, which is what makes the silence a
+        measurement rather than an absence;
+      • sv01-193 Rocky Helmet — `damageAttacker`, the sibling that must STILL FIRE
+        on the same clamped hit: the attack really did deal its damage, and the
+        gate is `dealt > 0`, which the clamp deliberately does not touch. The two
+        Tools ride ONE body so both answers come off one attack declaration;
+      • sv06.5-021 Bravery Charm — +50 HP on a BASIC, the one effect in the pool
+        that separates `effectiveMaxHp` from the printed hp. The board that kills
+        the raw-`hp` mutant, in BOTH directions (the bar moves to 170 AND the
+        survivor is left on 160);
+      • sv01-096 Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only).
+        Both printings of this sentence are ABILITIES, so a lock MUST switch the
+        survival off; without a lock in the deck that claim could only be read off
+        the fold rather than driven;
+      • fix-titan — 340 HP, no attacks: bench filler, so a board has exactly the
+        KOs it means to have and a spread cannot quietly cause a second one;
+      • fix-bigbody — 200 HP, the mulligan-free dominant Basic, the promote target
+        after a real KO, and the control body with NO Ability that must die where
+        fix-sturdy lives;
+      • fix-energy — Colorless Basic: every fix-koblast attack costs one {C}. */
+export const KO_SURVIVAL_DECK = deckOf({
+  "fix-sturdy": 6, // THE demonstrator — 120 HP Basic, the printed sentence
+  "fix-sturdytiny": 2, // 20 HP twin — the CHECKUP-boundary witness
+  "fix-koblast": 4, // the attacker: one attack per write site + the counter control
+  "sv03-197": 3, // Vengeful Punch — damageAttackerOnKo: must go SILENT on a clamp
+  "sv01-193": 3, // Rocky Helmet — damageAttacker: must STILL FIRE on the same hit
+  "sv02-173": 2, // Bravery Charm — +50 HP on a Basic: the effectiveMaxHp witness
+  "sv01-096": 2, // Klefki — Mischievous Lock: the §9 answer, driven not read
+  "fix-titan": 3, // 340 HP, no attacks — bench filler
+  "fix-bigbody": 22, // 200 HP — the dominant Basic, promote target, no-Ability control
+  "fix-energy": 13, // Colorless Basic — every fix-koblast attack costs one {C}
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

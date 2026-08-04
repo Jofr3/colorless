@@ -23,6 +23,7 @@ import {
   hasAttachedEnergy,
   installedAttackDebuffOf,
   installedReductionOf,
+  koSurvivalClamp,
   opposingAttackDebuff,
   passivesOf,
   preventsAttackerType,
@@ -3023,7 +3024,14 @@ function spreadDamage(
       installedReductionOf(state, pokemon) +
       seatDamageReduction(state, pokemon, "all");
     const dealt = prevented ? 0 : Math.max(0, spread - reduction);
-    const damage = pokemon.damage + dealt;
+    // §8.1 (D208) — the KO-survival clamp, at the third of its four write sites.
+    // A spread is "damage from an attack" (it emits DAMAGE_DEALT, not
+    // COUNTERS_PLACED), and it reaches the BENCH — which is exactly where these
+    // printings live in practice, since neither sentence carries an "Active Spot"
+    // clause. `pokemon` is still the pre-hit body, which is the only reason the
+    // "has full HP" antecedent is answerable at all.
+    const clamped = koSurvivalClamp(state, pokemon, dealt);
+    const damage = clamped ?? pokemon.damage + dealt;
     events.push({
       type: "DAMAGE_DEALT",
       seat: opponent,
@@ -3034,6 +3042,7 @@ function spreadDamage(
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
       prevented: prevented ? true : undefined,
+      survived: clamped === null ? undefined : true,
       dealt,
       damage,
     });
@@ -3194,6 +3203,15 @@ function placeSnipe(
     // "that Pokémon" (the target). Same reading that keeps the attacker's pre-W/R
     // BONUS alive under `ignoreWR` in `snipeActive`.
     const dealt = prevented ? 0 : Math.max(0, Math.max(0, amount - attackerDebuff) - reduction);
+    // §8.1 (D208) — the KO-survival clamp. THIS ARM AND NOT THE ONE ABOVE IT, and
+    // the branch these two share is the boundary itself: the `deals` arm is attack
+    // DAMAGE (Wo-Chien "Covetous Ivy", Umbreon "Feint Attack") and the default arm
+    // one screen up PLACES COUNTERS, which "is not damage from an attack" — this
+    // engine's own long-standing reading (D138/D139/D142), the same line that
+    // already denies that arm Weakness, Resistance and every reduction passive.
+    // So the clamp goes exactly where the pipeline goes and no further.
+    const clamped = koSurvivalClamp(next, pokemon, dealt);
+    const damage = clamped ?? pokemon.damage + dealt;
     events.push({
       type: "DAMAGE_DEALT",
       seat: opponent,
@@ -3204,10 +3222,11 @@ function placeSnipe(
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
       prevented: prevented ? true : undefined,
+      survived: clamped === null ? undefined : true,
       dealt,
-      damage: pokemon.damage + dealt,
+      damage,
     });
-    return { ...pokemon, damage: pokemon.damage + dealt };
+    return { ...pokemon, damage };
   });
   return withSide(next, opponent, { ...side, bench });
 }
@@ -3306,6 +3325,11 @@ function snipeActive(
       installedReductionOf(state, target.active) +
       seatDamageReduction(state, target.active, "all");
   const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
+  // §8.1 (D208) — the KO-survival clamp, at the fourth and last of its write
+  // sites. `target.active` is the pre-hit body; this arm runs the FULL §8.5
+  // pipeline, so it is unambiguously "damage from an attack".
+  const clamped = koSurvivalClamp(state, target.active, dealt);
+  const damage = clamped ?? target.active.damage + dealt;
   events.push({
     type: "DAMAGE_DEALT",
     seat: opponent,
@@ -3317,10 +3341,11 @@ function snipeActive(
     resistance,
     reduction: reduction > 0 ? reduction : undefined,
     prevented: prevented ? true : undefined,
+    survived: clamped === null ? undefined : true,
     dealt,
-    damage: target.active.damage + dealt,
+    damage,
   });
-  return withActive(state, opponent, { ...target.active, damage: target.active.damage + dealt });
+  return withActive(state, opponent, { ...target.active, damage });
 }
 
 /** The effective snipe amount — `amount`, or `amount × the opponent's TAKEN

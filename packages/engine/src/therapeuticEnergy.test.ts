@@ -501,10 +501,10 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     expect(fold.damageAttackerOnKo).toBe(0);
     expect(fold.preventDamageFromExV).toBe(false);
     expect(fold.preventDamageFromTypes).toEqual([]);
-    // The fold returns exactly TWELVE keys — a new one added without a re-reading
+    // The fold returns exactly THIRTEEN keys — a new one added without a re-reading
     // of this audit fails here (D160's "a diff that leaves no assertion expires"),
-    // and it did exactly that: D192 added the twelfth and re-read the audit rather
-    // than bumping the number.
+    // and it has now done exactly that TWICE: D192 added the twelfth and D208 the
+    // thirteenth, and each re-read the audit rather than bumping the number.
     //
     // ⚠️ THE TWELFTH IS THE FIRST KEY OF THIS FOLD THAT IS READ OFF THE **ATTACKER**
     // (`suppressTargetEffectsOnAttack` — Walking Wake ex "Azure Seas": "Damage from
@@ -516,6 +516,27 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // field, because the one live writer is an Ability on a body this board has
     // never held (continuous.ts's `sources` note carries the field-by-field read).
     expect(fold.suppressTargetEffectsOnAttack).toBe(false);
+    // ⚠️ D208 ADDS THE THIRTEENTH, AND THE AUDIT IS RE-READ RATHER THAN THE NUMBER
+    // BUMPED — this guard's whole purpose, honoured for the second time (D192 was
+    // the first). `survivesKoAtFullHp` is the §8.1 KO-survival flag (Pikachu ex
+    // "Resolute Heart" / Crustle "Sturdy", 7 printings / 7 Standard-legal).
+    //
+    // ITS ENERGY READING: **reachable ✔ correct** — a boolean OR, source-blind,
+    // `preventDamageFromExV`'s shape exactly, and it would be RIGHT for an Energy
+    // that ever printed the sentence (an attached source is not an Ability, so it
+    // would correctly survive a §9 lock, which is the same exemption the Tools
+    // have always had). There is no Energy writer today, and the one live
+    // non-Ability printing of this sentence is a TOOL — Survival Brace sv06-164 —
+    // which is unauthored for a reason that has nothing to do with this fold: its
+    // second sentence, "Then, discard this card.", needs a self-discard rider.
+    //
+    // ⚠️ AND IT IS THE FIRST KEY OF THIS FOLD READ AT A DAMAGE **WRITE** RATHER
+    // THAN INSIDE THE §8.5 PIPELINE. Every other number here changes `dealt`
+    // before it lands; this one clamps the TOTAL after it does. The Energy answer
+    // is unaffected by that — the fold does not know where its readers stand — but
+    // it is the axis on which a future reader would most easily assume wrong.
+    // FALSE here, like every other field, because no body on this board carries it.
+    expect(fold.survivesKoAtFullHp).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "conditionalDamageBonusBeforeWR",
@@ -529,6 +550,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "statusImmunities",
         "statusRecovery",
         "suppressTargetEffectsOnAttack",
+        "survivesKoAtFullHp",
         "targetConditionalDamageBonusBeforeWR",
       ].sort(),
     );

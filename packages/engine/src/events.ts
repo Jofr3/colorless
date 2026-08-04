@@ -168,6 +168,26 @@ export type GameEvent =
           0 for that reason rather than because the attack does no damage. Present
           only when a prevention actually fired. */
       prevented?: true;
+      /** True when the §8.1 KO-SURVIVAL clamp fired on this write — the defender
+          had FULL HP, `dealt` would have Knocked it Out, and its printed Ability
+          left it standing on 10 HP instead (Pikachu ex "Resolute Heart", Crustle
+          "Sturdy" — continuous.ts `koSurvivalClamp`). Present only when it
+          actually fired.
+
+          ⚠️ THIS IS THE ONE ROW WHERE `damage` IS NOT `the previous total + dealt`,
+          AND THE FLAG EXISTS TO SAY SO RATHER THAN TO LET A READER GUESS. `dealt`
+          stays the §8.5 pipeline's real output — what the attack did, and what the
+          `dealt > 0` gates on `damageAttacker` and the `onDamagedByAttack` trigger
+          correctly still read — while `damage` reports the CLAMPED total the board
+          now carries. A row saying `dealt: 200, damage: 110, survived: true` on a
+          120 HP body reconstructs the whole event in printed order; the same row
+          without the flag would look like an arithmetic bug.
+
+          `prevented`'s shape one field up, and its widening rule: an OPTIONAL new
+          field on an existing event is a WIDENING and does not move
+          `MATCH_RECORD_VERSION` — every record written before this slice means
+          exactly what it meant, namely that no clamp fired. */
+      survived?: true;
       dealt: number;
       damage: number;
     }

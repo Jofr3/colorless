@@ -5906,7 +5906,169 @@ import type { GameState, Seat } from "./types";
     `vitest run` (D205's commit says 233 / 4367 and it does not reproduce), →
     **235 files / 4411 tests** green, a delta of exactly +1 file / +38 tests. */
 
-export const engineVersion = "0.132.0";
+/** 0.133.0 — **D207, THE OPPONENT'S REMAINING-PRIZE GATE.** Two registry rows,
+    seven Standard-legal printings, ZERO new engine code — the union member D199
+    priced as new was already in the tree at D199's own commit.
+    `MATCH_RECORD_VERSION` unchanged at 12.
+
+    ⚠️ **THIS BLOCK IS BACKFILLED (D208).** D207 landed at `e11e1ac` holding
+    neither `index.ts` nor `packages/engine/package.json`, so its version bump was
+    never written and `engineVersion` sat at 0.132.0 while its work was in the
+    tree. Transcribed here from the commit rather than re-derived, by the slice
+    that next owned both files. */
+
+/** 0.134.0 — **D210, THE SHARED STADIUM'S ACTIVATION REACHES A CLIENT.** One new
+    redactor fold (`redactedStadiumAbilityOf`) on the `turn:action` arm, actor-only
+    like its four siblings; no new op, no new action, no rules change — the engine
+    has driven `useStadiumAbility` since 0.53.0 and only the PROJECTION was missing.
+    `MATCH_RECORD_VERSION` unchanged at 12.
+
+    ⚠️ **ALSO BACKFILLED (D208), AND RENUMBERED.** D210 landed at `eb8cde8`, again
+    without `index.ts` or `package.json`; it authored this block headed
+    `0.132.0 → 0.133.0`, but D207's own backfill has that number, so the
+    coordinator arbitrated it to 0.134.0. The renumbering is an ordering decision
+    taken above both slices, not an error of D210's. */
+
+/** 0.135.0 — **D208, THE §8.1 KO-SURVIVAL CLAMP.** One `PassiveEffects` flag, one
+    shared helper, four call sites, **seven Standard-legal printings**, and — the
+    number that matters — **ZERO new KO-detection sites**. `MATCH_RECORD_VERSION`
+    **unchanged at 12**. `apps/api`, `src/**` and `apps/**` untouched.
+
+      "If this Pokémon has full HP and would be Knocked Out by damage from an
+       attack, it is not Knocked Out, and its remaining HP becomes 10."
+
+    Pikachu ex "Resolute Heart" (sv08-057, sv08-219, sv08-238, sv08-247,
+    sv08.5-179) and Crustle "Sturdy" (sv10.5b-052, sv10.5b-130): **7 printings, 7
+    legal, TWO Ability names, ONE byte-identical sentence** — so ONE `CardProgram`
+    (`KO_SURVIVAL`), named for the MECHANISM because naming it after either Ability
+    would make the other's row read as a reprint of a card it has nothing to do
+    with (D141's judgement, at a registry constant).
+
+    🛑 **D199 FILED THIS AS A HOOK AT THE KO SWEEP AND THAT PLACEMENT IS THE ONE
+    THING THIS SLICE HAD TO GET RIGHT.** Its `needs` string was half correct: no
+    existing prevention fits, because every one of them (`preventDamageFromExV`,
+    `preventDamageFromType`, `damageReductionAfterWR`) bites INSIDE the §8.5
+    pipeline, before the number lands, and this sentence lets the damage land. It
+    then concluded the hook belonged beside `onKoPrizeGuard` on the KO sweep. **The
+    sweep is precisely where the datum has been destroyed.** The antecedent is
+    *"has FULL HP"* — a fact about the PRE-damage board — and `isLethallyDamaged`,
+    the engine's ONE lethality test, reads `pokemon.damage`, which by then already
+    includes the hit. Every call site of that predicate (`lethalRefs`,
+    `collectKnockOuts`, `koRecoilOf`, turn.ts's post-evolution check) is
+    post-damage, and all four KO/post-KO detection sites (`onKnockOutTrigger`,
+    `triggersOf`, `passivesOf`'s sweep readers, `koToolTriggersOf`) are post-KO.
+
+    So it is neither a pipeline prevention nor a sweep hook: it is a **CLAMP AT THE
+    DAMAGE WRITE** — `continuous.ts koSurvivalClamp`, called from the four sites
+    that emit `DAMAGE_DEALT` (attack.ts's main hit; interpreter.ts's
+    `spreadDamage`, `placeSnipe`'s `deals` arm and `snipeActive`), each of which
+    still holds the pre-hit body. **NO detection site was added or touched.** D171
+    bought the fourth at a high price; this slice buys none, and the placement is
+    driven rather than argued: a test constructs two post-hit bodies at the same
+    total, one that HAD full HP and one that did not, and shows `isLethallyDamaged`
+    cannot tell them apart while the clamp can.
+
+    ⚠️ **AND THAT PLACEMENT IS WHY EVERY COLLISION ANSWERS ITSELF.** Once the
+    clamped total is on the board the survivor simply IS NOT lethally damaged, so
+    `lethalRefs` skips it, no `KNOCKED_OUT` fires, no Prize is staged, no `ko:`
+    park is entered, and `koRecoilOf`'s `doomed` set — taken from `lethalRefs`
+    itself — excludes it, so **Vengeful Punch's `damageAttackerOnKo` goes silent
+    because no Knock Out occurred**. What still fires is **`damageAttacker`** (Rocky
+    Helmet), gated on `dealt > 0`, which is why the helper clamps the STORED TOTAL
+    and never `dealt`. Both answers come off ONE attack declaration on ONE board:
+    the survivor wears both Tools, and the recoil rows are `[20]` at full HP and
+    `[20, 40]` with a single damage counter on the same body.
+
+    ⚠️ **THE "DAMAGE FROM AN ATTACK" BOUNDARY IS INHERITED, NOT REDRAWN, AND IT IS
+    ASSERTED RATHER THAN ASSUMED.** A PLACED COUNTER IS NOT DAMAGE (D138/D139/D142;
+    the catalog prints the rule on Bronzong sv03-145), so no `COUNTERS_PLACED`
+    writer calls the clamp — not the put-counter snipe, not `counterPut`, not the
+    counter MOVE, not `damageSelf`, and **not the Checkup's poison and burn**. The
+    sharpest form of that is one board: `Sting` and `Pinpoint` are the SAME op
+    (`damageChosen`, count 1, opponent's Bench) reaching the SAME `placeSnipe` with
+    the same 120 HP, differing only on `deals` — and the full-HP holder that
+    survives the damage arm DIES to the counter arm. §13 gets its own two cases on
+    a 20 HP twin, because that is the only HP at which a Checkup tick is lethal at
+    all.
+
+    **`MATCH_RECORD_VERSION` STAYS 12**, derived rather than assumed. The slice's
+    one persisted-shape change is `DAMAGE_DEALT.survived?: true` — an OPTIONAL new
+    field on an EXISTING event, i.e. a **WIDENING**, `prevented?: true`'s shape and
+    events.ts's own stated rule for `COUNTERS_PLACED.source` / `ATTACK_FAILED.reason`.
+    Every record written before this slice means exactly what it meant: no clamp
+    fired. The bump precedent that does NOT apply is **D140** (`MRV` 2 → 3, a
+    REQUIRED field on an op that can be sitting in `phase.cont.pendingOp` at write
+    time) — ⚠️ my brief cited D136 for that and **D136 is the wrong number**; D203
+    had already caught it. `PassiveEffects.survivesKoAtFullHp` is registry DATA and
+    is never serialized at all.
+
+    ⚠️ **THE TOOL TWIN IS PRICED AND REFUSED.** Survival Brace sv06-164 (1
+    Standard-legal) prints this sentence with the attacker narrowed to "your
+    opponent's Pokémon" **and a second sentence — "Then, discard this card."** A
+    passive fold has no way to consume its own source, and the discard is a STATE
+    WRITE that would have to happen at the clamp site with the Tool's uid in hand.
+    It needs a self-discard rider; flagged, not built. The census also surfaced
+    Machamp sv03.5-068 "Guts" — the same consequent with NO full-HP antecedent and
+    a COIN FLIP in front of it, mark G and `legal_standard = 0` — and both refusals
+    are asserted, so folding either in for a bigger printing count fails.
+
+    **THE CENSUS, RE-DERIVED RATHER THAN INHERITED** (remote D1, 3,786 rows / 20
+    sets, 2,021 legal, 2026-08-04): `json_each(abilities_json)` with an **EQUALITY**
+    on the effect string — **7 rows, 7 legal, 2 distinct Ability names** — never
+    `LIKE` (case-insensitive here) and never a grouped `attacks_json` scan, which is
+    the exact shape that made D206 and D207 each attribute a sentence to the wrong
+    row. The brief's id list reproduced exactly.
+
+    ⚠️ **THREE PINNED CENSUSES MOVED AND ALL THREE WERE RE-READ RATHER THAN
+    BUMPED.** `legalNonAttackPrograms`' `DROPPED` 18 → **17** (the row is REMOVED
+    with a note naming this slice — D204's / D207's precedent — and the note keeps
+    the half of D199's `needs` string that was right). `therapeuticEnergy`'s
+    `passivesOf` fold census 12 → **13 keys**, with the Energy-reachability audit
+    re-read field by field (**reachable ✔ correct**: an attached source is not an
+    Ability, so it would rightly survive a §9 lock — which is exactly the shape the
+    unbuilt Survival Brace would need). `clauseApostrophe` 78 → **82**, attributed
+    to the exact four apostrophe-bearing attack effects `fix-koblast` fields, and
+    the Ability itself contributes **nothing** — twice over, since the sweep reads
+    `card.attacks` only AND the sentence carries no apostrophe at all.
+
+    ⚠️ **MY BRIEF'S SUITE-STATE CLAIM WAS FALSE AND THE BASELINE WAS RE-MEASURED.**
+    It said `bun run check` was RED with ~34 failures in ~6 files from a sibling's
+    in-flight work. At `d289001` the suite was **238 files / 4447 tests, ALL
+    GREEN** under `npx vitest run`. Bravery Charm's id was also asserted from
+    memory as `sv06.5-021` and is **`sv02-173`** — caught by a failing test, which
+    is the only reason it is a footnote rather than a silent no-op board.
+
+    Cost: 1 `PassiveEffects` flag + 1 fold arm + 1 shared helper
+    (`koSurvivalClamp`) + 4 call sites + 1 optional event field + 1 registry
+    program over 9 ids, plus 3 new fixtures, 1 new deck and 1 new test file (25
+    tests), and 3 re-pointed censuses.
+
+    **Twelve mutants, ELEVEN killed first round.** ⚠️ The twelfth SURVIVED and was
+    REMOVED rather than tested around, which is D205's precedent and the second
+    time this session it has been the right call: the helper carried a `dealt <= 0`
+    early return, and no input can distinguish its presence — reaching the
+    lethality test requires `pokemon.damage === 0`, and `effectiveMaxHp` never
+    returns a non-positive number (the data gap returns `null` first), so
+    `0 + dealt >= hp >= 1` can only hold for `dealt >= 1`. The comparison already
+    refuses a prevented or zero hit, on the better ground. The behaviour is still
+    driven; the dead branch is gone. The other eleven each go RED on the assertion
+    named beside them, and the loudest is worth recording: dropping the passive
+    read fails **72** tests, because a clamp that fires for every full-HP body in
+    the game rewrites most of the suite's KOs.
+
+    ⚠️ **SUITE BASELINE RE-MEASURED TWICE, BECAUSE THE BASE MOVED UNDER THE SLICE**
+    — and never inherited, which is what caught the brief's false claim. The brief
+    said `bun run check` was RED with ~34 failures in ~6 files from a sibling's
+    in-flight work; at `d289001` the suite was **238 files / 4447 tests, ALL
+    GREEN** under `npx vitest run`. D210 (`eb8cde8`) and D212 (`93d3faa`) then
+    landed, moving the base to `6866eab`, where the baseline is **239 files /
+    4455 tests** (measured with this slice's sources in place and its own test
+    file excluded, so the figure is the tree's and not the slice's) → **240 files
+    / 4480 tests** green, a delta of exactly **+1 file / +25 tests**. `npx vitest
+    run` throughout; `bun test` is the wrong harness and `bun run test:run`
+    SIGKILLs its worker in this container. */
+
+export const engineVersion = "0.135.0";
 
 export type {
   ApplyResult,

@@ -395,7 +395,31 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // `fix-azureseas`' "Azure Seas" is an ABILITY carrying the same possessive.
     // `fix-azureseas`' one ATTACK prints no effect at all. A slice that fields a
     // fifth apostrophe-bearing printed sentence can move this census by four.
-    expect(derivable).toHaveLength(78);
+    //
+    // ⚠️ D208 MOVED IT 78 → 82, AND THE MOVEMENT IS ATTRIBUTED RATHER THAN
+    // ABSORBED — the whole point of pinning it. The delta is EXACTLY the four
+    // apostrophe-bearing attack effects `fix-koblast` fields, one per §8.1
+    // KO-survival write site plus the counter control:
+    //   • "This attack does 120 damage to each of your opponent's Benched
+    //      Pokémon."                                         (`spreadDamage`)
+    //   • "This attack also does 120 damage to 1 of your opponent's Benched
+    //      Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+    //                                            (`placeSnipe`'s `deals` arm)
+    //   • "This attack does 120 damage to 1 of your opponent's Pokémon. (Don't
+    //      apply Weakness and Resistance for Benched Pokémon.)" (`snipeActive`)
+    //   • "Put 12 damage counters on 1 of your opponent's Benched Pokémon."
+    //                              (the COUNTER control, which must NOT clamp)
+    // All four are NEW STRINGS rather than new ids on existing rows, because the
+    // amounts (120 / 12) are chosen against `fix-sturdy`'s 120 HP and no fixture
+    // printed those numbers before.
+    //
+    // ⚠️ AND D208's ABILITY ADDS **NOTHING**, for the reason stated two paragraphs
+    // up and now confirmed a second time: `fix-sturdy` and `fix-sturdytiny` carry
+    // "If this Pokémon has full HP and would be Knocked Out by damage from an
+    // attack, it is not Knocked Out, and its remaining HP becomes 10." — which is
+    // an ABILITY, is enumerated by nothing here, AND CARRIES NO APOSTROPHE AT ALL.
+    // Two independent reasons it cannot appear; the sweep is unmoved by either.
+    expect(derivable).toHaveLength(82);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

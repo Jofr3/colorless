@@ -31,6 +31,7 @@ import {
   installedAttackDebuffOf,
   installedRecoilOf,
   installedReductionOf,
+  koSurvivalClamp,
   lockedAttackIndexes,
   opposingAttackDebuff,
   passivesOf,
@@ -1197,7 +1198,15 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       benchShieldedByActive(next, defender) ||
       stadiumPreventsDamage(next, defender, attacker);
     const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
-    defended = { ...defender, damage: defender.damage + dealt };
+    // §8.1 (D208) — THE KO-SURVIVAL CLAMP, read HERE and not at the KO sweep. The
+    // printed antecedent is "has full HP", a fact about the PRE-damage board, and
+    // `defender` is the last binding in the whole §8 sequence that still holds it:
+    // one line down the pre-hit total is gone and no downstream site can recover
+    // it. `dealt` is deliberately NOT clamped — the attack really did deal it, and
+    // the `dealt > 0` gates below (Rocky Helmet's `damageAttacker`, the
+    // `onDamagedByAttack` trigger) must still see the damage that happened.
+    const clamped = koSurvivalClamp(next, defender, dealt);
+    defended = { ...defender, damage: clamped ?? defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
     events.push({
       type: "DAMAGE_DEALT",
@@ -1218,6 +1227,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       resistance,
       reduction: reduction > 0 ? reduction : undefined,
       prevented: prevented ? true : undefined,
+      survived: clamped === null ? undefined : true,
       dealt,
       damage: defended.damage,
     });

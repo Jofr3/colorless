@@ -265,6 +265,25 @@ export function passivesOf(
       load-bearing rather than incidental: "Azure Seas" is an Ability, and an
       Ability-lock must switch it off. */
   suppressTargetEffectsOnAttack: boolean;
+  /** §8.1 (D208) — does this Pokémon refuse a Knock Out that would land on it at
+      FULL HP, surviving on 10 HP instead? (Pikachu ex "Resolute Heart", Crustle
+      "Sturdy" — 7 printings / 7 Standard-legal.)
+
+      ⚠️ THE ONLY FIELD THIS FOLD RETURNS THAT IS NOT READ INSIDE THE §8.5 DAMAGE
+      PIPELINE — it is read at the WRITE that ends it. Every prevention and
+      reduction beside it bites BEFORE the number lands (they change `dealt`);
+      this one lets the full number be computed and then clamps the TOTAL the
+      board stores, because the printed sentence is about the resulting HP and not
+      about the damage. It rides this fold rather than a direct read off `top` for
+      `suppressTargetEffectsOnAttack`'s reason one field up, and the reason is
+      just as load-bearing: both printings are ABILITIES, so a §9 lock must switch
+      the survival off — which the `disabled` drop already does.
+
+      Consumed ONLY by `koSurvivalClamp` below, which is the single read site;
+      the four damage writers call that helper and never this flag, so "has full
+      HP", "would be Knocked Out" and "becomes 10" cannot drift apart across
+      them. */
+  survivesKoAtFullHp: boolean;
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
@@ -374,6 +393,7 @@ export function passivesOf(
   let damageAttackerOnKo = 0;
   let preventDamageFromExV = false;
   let suppressTargetEffectsOnAttack = false;
+  let survivesKoAtFullHp = false;
   const preventDamageFromTypes: PokemonType[] = [];
   const statusImmunities: StatusName[] = [];
   const statusRecovery: StatusName[] = [];
@@ -430,6 +450,20 @@ export function passivesOf(
     // catalog row directly at the attack.ts site would be shorter and would get
     // that wrong silently.
     if (passive.suppressTargetEffectsOnAttack === true) suppressTargetEffectsOnAttack = true;
+    // D208 — the §8.1 KO-survival flag, a boolean OR exactly like the line above
+    // it and `preventDamageFromExV` before that. In this loop for BOTH of that
+    // field's reasons: the §9 drop on `sources[0]` is what makes an Ability-lock
+    // silence "Resolute Heart" / "Sturdy" (both printings ARE Abilities), and a
+    // build that read the catalog row straight off `top` at the four damage-write
+    // sites would be shorter and would get that wrong silently.
+    //
+    // ⚠️ ITS TOOL AND ENERGY REACHABILITY IS THE AUDIT'S ANSWER, NOT AN ACCIDENT.
+    // An attached source correctly SURVIVES a lock (a Tool is not an Ability), and
+    // Survival Brace sv06-164 is a real printing of exactly this sentence on a
+    // TOOL — so the field is already shaped for the twin. What stops that card
+    // being authored today is its SECOND sentence ("Then, discard this card."),
+    // not this fold. No Tool or Energy writer in the registry today.
+    if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
   }
   return {
     damageReductionAfterWR,
@@ -444,7 +478,104 @@ export function passivesOf(
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,
+    survivesKoAtFullHp,
   };
+}
+
+/** §8.1 KO SURVIVAL — the HP `remaining` a clamped body is left with. The printed
+    number, converted once, here, where the family's other printed constants are
+    (`damageAttackerOnKo`'s counters are converted at the registry row for the same
+    reason): "its remaining HP becomes 10". */
+const KO_SURVIVAL_REMAINING_HP = 10;
+
+/** §8.1 THE KO-SURVIVAL CLAMP — the new `damage` total for `pokemon` when it has
+    FULL HP, carries the survival passive, and `dealt` HP of ATTACK DAMAGE would
+    Knock it Out; `null` when the clamp does not fire and the caller must write its
+    ordinary `pokemon.damage + dealt`.
+
+    "If this Pokémon has full HP and would be Knocked Out by damage from an attack,
+    it is not Knocked Out, and its remaining HP becomes 10." — Pikachu ex "Resolute
+    Heart", Crustle "Sturdy" (7 printings, 7 Standard-legal; registry.ts
+    `KO_SURVIVAL`).
+
+    ⚠️ IT IS A CLAMP AT THE DAMAGE WRITE AND NOT A FIFTH KO-DETECTION SITE, WHICH
+    IS THE WHOLE SLICE. The antecedent "has full HP" is a fact about the PRE-damage
+    board, and it is unanswerable anywhere downstream: flow.ts's ONE lethality test
+    `isLethallyDamaged` reads `pokemon.damage`, which by then ALREADY INCLUDES the
+    hit, and every one of its call sites — `lethalRefs`, `collectKnockOuts`,
+    `koRecoilOf`, turn.ts's post-evolution check — is post-damage, as are all four
+    of the engine's KO/post-KO detection sites (`onKnockOutTrigger`, `triggersOf`,
+    `passivesOf`'s sweep readers, `koToolTriggersOf`). D199's remainder row filed
+    this as a hook on that sweep; the sweep is precisely where the datum has been
+    destroyed. Read instead at the four §8.5 DAMAGE WRITES — attack.ts's main hit
+    and interpreter.ts's `spreadDamage`, `placeSnipe`'s `deals` arm and
+    `snipeActive` — where the pre-hit value is still in scope, this needs NO new
+    detection site. D171 bought the fourth at a high price; this slice buys none.
+
+    ⚠️ AND THAT PLACEMENT IS WHAT MAKES EVERY DOWNSTREAM COLLISION ANSWER ITSELF.
+    Once the clamped total is on the board, the survivor simply IS NOT lethally
+    damaged, so: `lethalRefs` does not list it, `collectKnockOuts` emits no
+    `KNOCKED_OUT` and stages no `takePrizes`, no `ko:` park is queued, and
+    `koRecoilOf`'s `doomed` set — taken from `lethalRefs` itself — excludes it, so a
+    Vengeful Punch on the survivor stays silent because NO KO OCCURRED. None of
+    those four sites is touched by this slice; they are correct by construction.
+    What deliberately still fires is `damageAttacker` (Rocky Helmet / Counterattack
+    Quills), gated on `dealt > 0` — the attack really did deal its damage — which is
+    why this helper clamps the STORED TOTAL and never `dealt` itself.
+
+    ⚠️ "DAMAGE FROM AN ATTACK" IS THE ENGINE'S STANDING BOUNDARY, INHERITED RATHER
+    THAN REDRAWN. A PLACED COUNTER IS NOT DAMAGE (D138/D139/D142; the catalog prints
+    the rule on Bronzong sv03-145), so no `COUNTERS_PLACED` writer calls this: not
+    the put-counter snipe, not `counterPut`, not the counter MOVE, not `damageSelf`,
+    and NOT the Checkup's poison and burn (flow.ts). A full-HP survivor finished by
+    poison at the Checkup dies for real, and the suite drives that rather than
+    assuming it.
+
+    THE THREE REFUSALS, in the order they are checked and each for its own reason:
+      • `pokemon.damage !== 0` — THE PRINTED ANTECEDENT. Full HP means no damage
+        counters at all; one counter and the body dies normally.
+      • no `survivesKoAtFullHp` — read through `passivesOf`, so a §9 Ability-lock
+        over the holder switches it off (both printings are Abilities).
+      • `hp === null` — the catalog data gap, which `effectiveMaxHp` owns and which
+        NEVER KOs (flow.ts `isLethallyDamaged` says the same), so again there is no
+        KO to refuse.
+    The lethality test itself is `damage + dealt >= hp`, `isLethallyDamaged`'s
+    comparison verbatim — `>=` and not `>`, because an EXACTLY lethal hit is the
+    common case and the whole point of the card. The two predicates cannot be
+    shared as code (flow.ts imports this module, so the arrow cannot reverse), so
+    the suite asserts they agree instead.
+
+    `effectiveMaxHp` and NOT the printed `hpOf`: a Bravery Charm on the holder
+    raises both the bar it must clear AND the HP it is left holding, and reading the
+    raw printed number would get both wrong on the same board.
+
+    ⚠️ THERE IS DELIBERATELY NO `dealt <= 0` GUARD, AND ITS ABSENCE IS A MEASUREMENT
+    RATHER THAN AN OVERSIGHT. One was written, and mutation testing found it
+    UNKILLABLE — because it is provably dead: reaching the lethality test at all
+    requires `pokemon.damage === 0`, and `effectiveMaxHp` never returns a non-positive
+    number (a non-positive printed hp is the data gap and returns `null` one line
+    up), so `0 + dealt >= hp >= 1` can only hold for `dealt >= 1`. A prevented or
+    zero hit is therefore already refused by the comparison below, on exactly the
+    right ground — "this would not have Knocked anything Out" — rather than by a
+    second rule saying the same thing less precisely. Removed rather than tested
+    around, which is D205's precedent for an unreachable branch. The BEHAVIOUR is
+    still asserted (koSurvival.test.ts drives `dealt` of 0 and −10); what is gone is
+    a comparison no input could distinguish. */
+export function koSurvivalClamp(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  dealt: number,
+): number | null {
+  if (pokemon.damage !== 0) return null;
+  if (!passivesOf(state, pokemon).survivesKoAtFullHp) return null;
+  const hp = effectiveMaxHp(state, pokemon);
+  if (hp === null) return null;
+  if (pokemon.damage + dealt < hp) return null;
+  // "its remaining HP becomes 10" — the damage total that leaves exactly that much
+  // standing. Floored, so a printing with 10 HP or less lands at 0 rather than
+  // negative damage; no such body exists in the pool and the floor is not load-
+  // bearing, it is `Math.max(0, …)` for the reason every other write site has one.
+  return Math.max(0, hp - KO_SURVIVAL_REMAINING_HP);
 }
 
 /** §8.5 (D159) — does `attacker` belong to one of the printed TYPES a holder's
