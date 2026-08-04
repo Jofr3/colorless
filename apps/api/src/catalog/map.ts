@@ -4,6 +4,15 @@
 // come back out as the domain shapes in @luminous/schema/catalog. Pure —
 // routes.ts owns the queries — so every branch unit-tests as a plain function.
 //
+// The mappers ALSO normalise "no value" sentinels (the literal "None") to
+// null — ../sentinel.ts documents the sweep and the argument. The mirror of
+// the same guard in ../ingest/map.ts, and not redundant with it: ingest fixes
+// what gets WRITTEN and can only take effect on the next re-ingest, whereas
+// 34 rows (36 sentinel values across two columns) are already in production
+// carrying it TODAY, and no deploy can rewrite them. Read-side
+// normalisation is what makes the live API and the deck builder's facet rail
+// clean now; the write-side guard is what stops it coming back.
+//
 // Asset rewriting is the one real transform: rows store tcgdex ORIGIN base
 // URLs (extensionless, §4.4), the domain stores OUR asset base paths
 // (`/assets/cards/{id}`, `/assets/sets/{id}`) served by the lazy R2 mirror.
@@ -21,6 +30,7 @@ import type {
   SetBrief,
 } from "@luminous/schema";
 import { cards, type series, type sets } from "../db/schema";
+import { normalizeSentinel } from "../sentinel";
 
 export type CardRow = typeof cards.$inferSelect;
 export type SetRow = typeof sets.$inferSelect;
@@ -65,16 +75,16 @@ export function mapCardBriefRow(row: CardBriefRow): CardBrief {
     id: row.id,
     name: row.name,
     category: row.category,
-    rarity: row.rarity,
+    rarity: normalizeSentinel(row.rarity),
     image: row.imageUrl !== null ? cardImagePath(row.id) : null,
     setId: row.setId,
     localId: row.localId,
     types: row.typesJson,
     hp: row.hp,
-    regulationMark: row.regulationMark,
-    stage: row.stage,
-    trainerType: row.trainerType,
-    energyType: row.energyType,
+    regulationMark: normalizeSentinel(row.regulationMark),
+    stage: normalizeSentinel(row.stage),
+    trainerType: normalizeSentinel(row.trainerType),
+    energyType: normalizeSentinel(row.energyType),
     legal: { standard: row.legalStandard, expanded: row.legalExpanded },
   };
 }
@@ -87,20 +97,20 @@ export function mapCardRow(row: CardRow): Card {
     name: row.name,
     category: row.category,
     image: row.imageUrl !== null ? cardImagePath(row.id) : null,
-    illustrator: row.illustrator,
-    rarity: row.rarity,
-    regulationMark: row.regulationMark,
+    illustrator: normalizeSentinel(row.illustrator),
+    rarity: normalizeSentinel(row.rarity),
+    regulationMark: normalizeSentinel(row.regulationMark),
     hp: row.hp,
-    stage: row.stage,
-    evolveFrom: row.evolveFrom,
+    stage: normalizeSentinel(row.stage),
+    evolveFrom: normalizeSentinel(row.evolveFrom),
     types: row.typesJson,
     retreat: row.retreat,
     abilities: row.abilitiesJson,
     attacks: row.attacksJson,
     weaknesses: row.weaknessesJson,
     resistances: row.resistancesJson,
-    trainerType: row.trainerType,
-    energyType: row.energyType,
+    trainerType: normalizeSentinel(row.trainerType),
+    energyType: normalizeSentinel(row.energyType),
     effect: row.effect,
     legal: { standard: row.legalStandard, expanded: row.legalExpanded },
     variants: row.variantsJson,

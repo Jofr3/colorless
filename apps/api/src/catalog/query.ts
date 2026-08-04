@@ -123,6 +123,15 @@ function likeEscaped(column: AnyColumn, pattern: string): SQL {
  *   rules text lives in `effect`, deliberately out of scope here.
  * - `id` is NOT built here: the hydration path in routes.ts chunks the IN
  *   list itself (D1 bound-parameter cap) and ANDs it with this where.
+ * - sentinel normalisation (../sentinel.ts, D194) deliberately does NOT reach
+ *   in here. The where clause matches STORED values; the normaliser runs on
+ *   the way out. So a hand-crafted `?rarity=None` still matches the 34 `mfb`
+ *   rows while their payloads report `rarity: null` — inconsistent, but
+ *   unreachable from the UI (the value is gone from /facets, which is where
+ *   every filter value in the rail comes from) and self-healing on the next
+ *   `mfb` re-ingest. Teaching the where clause to rewrite user input would
+ *   be the over-reach: it would make `?rarity=None` silently mean "rarity IS
+ *   NULL", a filter the API otherwise does not offer for ANY column.
  */
 export function buildCardsWhere(query: CardsQuery): SQL | undefined {
   const conditions: SQL[] = [];

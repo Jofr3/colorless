@@ -489,6 +489,49 @@ added; `sets.updated` dropped (tcgdex sets carry no `updated`);
 `apps/api/src/db/catalog.ts`. Catalog dates/timestamps are ISO text verbatim
 from tcgdex; user-data timestamps are integer epoch ms.
 
+#### 5.3.1 "No value" sentinels — the `mfb` set (D194)
+
+Upstream is inconsistent about absence. Almost everywhere a missing value is a
+missing KEY (→ SQL NULL, which is what the app means by "no rarity" / "no
+regulation mark" — 66 cards legitimately carry no mark: 36 Basic Energy, 29
+pre-mark Pokémon, 1 Trainer). But the `mfb` set ("My First Battle", 34 cards)
+ships the literal STRING `"None"`, which is not NULL: it survives `?? null`,
+becomes its own `GROUP BY` bucket, and — because rarity and regulation mark
+are both `GET /facets` vocabularies — renders as a dead chip in the deck
+builder's FilterRail.
+
+Swept against the production catalog (3,786 cards, 2026-08-04) over every
+nullable text column the ingest path writes, for `""`/whitespace/`none`/
+`null`/`nil`/`n/a`/`-`/`unknown`/`undefined`/… case-insensitively:
+
+| column | sentinel rows |
+| --- | --- |
+| `cards.rarity` | **34** = `"None"` (all of `mfb`) |
+| `cards.regulation_mark` | **2** = `"None"` (`mfb-33` Potion, `mfb-34` Switch) |
+| `cards.illustrator`, `.category`, `.stage`, `.trainer_type`, `.energy_type`, `.evolve_from`, `.name`, `.local_id`, `.effect`, `.image_url`, `.updated` | 0 |
+| `sets.name`, `sets.tcg_online`, `series.name` | 0 |
+| `cards.types_json` (the other facet vocabulary — an array per row) | 0 — no `"None"`/`""` element, no `[]` |
+
+`"None"` is therefore the only sentinel in the catalog — but it is in **two**
+columns, not the one first reported, and `rarity` is the larger leak.
+`apps/api/src/sentinel.ts` normalises it to NULL at **both** boundaries:
+`src/ingest/map.ts` on WRITE (so it never re-enters) and `src/catalog/map.ts`
++ the `/facets` handler on READ (so today's 34 already-stored rows are clean
+without a re-ingest). The KV cache prefix went `v3`→`v4` so the stale facet
+body can't outlive the deploy by up to a TTL.
+
+The write-side guard only takes effect on the next ingest of `mfb`; the rows
+in D1 still hold `"None"` until then. To discharge it at the source:
+
+```sh
+cd apps/api && bun scripts/ingest.ts --sets mfb --remote
+```
+
+(Idempotent — every statement is an `ON CONFLICT DO UPDATE` upsert, and
+mapping now emits NULL for those two columns.) It could not be run in the
+session that landed the fix: `api.tcgdex.net` is blocked by the network
+policy there.
+
 ---
 
 ## 6. API surface (v1)
@@ -497,8 +540,9 @@ from tcgdex; user-data timestamps are integer epoch ms.
 GET    /health
 
 # Catalog (public; KV cache-aside on every 200, 1h TTL, `x-luminous-cache: hit|miss`,
-# key = `catalog:v2:` + normalized path+sorted-query — bump the version prefix
-# whenever a cached shape changes; invalid query params → terse 400 JSON)
+# key = `catalog:v4:` + normalized path+sorted-query — bump the version prefix
+# whenever a cached shape — or its values for already-ingested rows — changes;
+# invalid query params → terse 400 JSON)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
                          #   name (substring, case-insensitive), category, type,
                          #   rarity, set, regulationMark, hpMin/hpMax (inclusive),

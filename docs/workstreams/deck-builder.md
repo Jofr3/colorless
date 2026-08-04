@@ -140,10 +140,17 @@ panel/legality) closed most of what M9 left open. As-built:
   (`src/test/fixtures.ts`) for hand-built fixtures. A rotation is now zero
   production sites (it arrives as data) and one fixture site, pinned by the
   measured census in `src/test/legality.test.ts`.
-- **Ingest: `regulation_mark` can be the literal string `"None"`** (measured
-  2026-08-04 — `mfb-33` Potion, `mfb-34` Switch), distinct from SQL NULL, so
-  `GET /facets` offers a bogus "None" regulation-mark chip in the rail. Found
-  while re-measuring the D191 census; the fix is ingest-side (api), not here.
+- ~~**Ingest: `regulation_mark` can be the literal string `"None"`**~~ — FIXED
+  api-side (D194), and the scope was BIGGER than reported: the sweep found the
+  same sentinel in `cards.rarity` too, on all **34** rows of the `mfb` set
+  (`regulation_mark` was only 2 of them), so the rail had **two** dead chips,
+  not one. `apps/api/src/sentinel.ts` normalises `"None"`/`""` → NULL on both
+  the ingest write and the catalog read, and the KV cache prefix bumped
+  `v3`→`v4` so the stale `/facets` body can't outlive the deploy. Nothing to do
+  here: the rail already hides a section whose facet list is empty and renders
+  one chip per value, so dropping the value drops the chip. See
+  `docs/workstreams/backend-data.md` §5.3.1 for the sweep table and the
+  re-ingest command that clears the sentinel from D1 itself.
 - **401-recovery is gated by a `/auth/` path-prefix exclusion** (api.ts);
   per-request opt-out would express intent at the call site.
 - **`text` search** covers ability/attack JSON only (Trainer/Energy `effect`

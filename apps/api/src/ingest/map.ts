@@ -7,6 +7,13 @@
 //
 // Rules (docs/workstreams/backend-data.md §5.3 + the M3 session notes):
 // - missing upstream `legal` → false/false;
+// - "no value" SENTINELS (the literal string "None", "") normalise to NULL on
+//   the nullable VOCABULARY columns — ../sentinel.ts documents the sweep.
+//   Upstream is inconsistent about absence and `?? null` alone doesn't catch
+//   a string; prose (`effect`) and required columns are deliberately left
+//   alone. This is the SOURCE fix: it stops the sentinel entering the
+//   catalog, but does NOT repair rows already written — that needs a
+//   re-ingest (docs/workstreams/backend-data.md §5.3);
 // - Pokémon-only fields are NULL on Trainer/Energy (and vice versa);
 // - `*_url` columns keep the tcgdex ORIGIN base URLs (extensionless, §4.4);
 // - `*Json` fields stay raw objects here — ./sql.ts JSON.stringifies them
@@ -14,6 +21,7 @@
 
 import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@luminous/schema";
 import type { cards, series, sets } from "../db/schema";
+import { normalizeSentinel } from "../sentinel";
 
 export type SeriesRow = Required<typeof series.$inferInsert>;
 export type SetRow = Required<typeof sets.$inferInsert>;
@@ -52,9 +60,9 @@ export function mapCard(card: TcgdexCard): CardRow {
     localId: card.localId,
     name: card.name,
     category: card.category,
-    illustrator: card.illustrator ?? null,
-    rarity: card.rarity ?? null,
-    regulationMark: card.regulationMark ?? null,
+    illustrator: normalizeSentinel(card.illustrator),
+    rarity: normalizeSentinel(card.rarity),
+    regulationMark: normalizeSentinel(card.regulationMark),
     hp: null,
     stage: null,
     evolveFrom: null,
@@ -78,8 +86,8 @@ export function mapCard(card: TcgdexCard): CardRow {
       return {
         ...base,
         hp: card.hp ?? null,
-        stage: card.stage ?? null,
-        evolveFrom: card.evolveFrom ?? null,
+        stage: normalizeSentinel(card.stage),
+        evolveFrom: normalizeSentinel(card.evolveFrom),
         typesJson: card.types ?? null,
         retreat: card.retreat ?? null,
         abilitiesJson: card.abilities ?? null,
@@ -90,13 +98,13 @@ export function mapCard(card: TcgdexCard): CardRow {
     case "Trainer":
       return {
         ...base,
-        trainerType: card.trainerType ?? null,
+        trainerType: normalizeSentinel(card.trainerType),
         effect: card.effect ?? null,
       };
     case "Energy":
       return {
         ...base,
-        energyType: card.energyType ?? null,
+        energyType: normalizeSentinel(card.energyType),
         effect: card.effect ?? null,
       };
   }

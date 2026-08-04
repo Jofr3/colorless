@@ -28,6 +28,7 @@ import { z } from "zod";
 import { cards, series, sets } from "../db/schema";
 import { chunk, D1_MAX_BOUND_PARAMS } from "../decks/validate";
 import type { Env } from "../env";
+import { facetVocabulary } from "../sentinel";
 import { catalogCache } from "./cache";
 import {
   cardBriefColumns,
@@ -200,14 +201,25 @@ catalogRoutes.get("/series", catalogCache, async (c) => {
   return c.json(seriesResponseSchema.parse(payload));
 });
 
-/** Non-null scalar facet rows → the string list (SQL already sorted them). */
+/** Scalar facet rows → the string list, nulls and "no value" SENTINELS
+    dropped (../sentinel.ts). SQL already sorted them and the DISTINCT
+    already deduped, so order survives; the extra dedupe in
+    `facetVocabulary` only matters when normalisation collapses two stored
+    spellings onto the same absence. The SQL keeps its `isNotNull` guard —
+    it is what makes the round trip cheap — and this catches what a string
+    sentinel slips past it. */
 const facetValues = (rows: { value: string | null }[]): string[] =>
-  rows.flatMap((row) => (row.value !== null ? [row.value] : []));
+  facetVocabulary(rows.map((row) => row.value));
 
 // GET /facets — the filter vocabularies actually present in the catalog (P2
 // task 10), feeding the web's selects instead of hardcoded constants. Seven
 // DISTINCTs in one D1 round trip; `types` holds ARRAYS per row, so its
 // distinct rows flatten + dedupe + sort in memory (the vocabulary is tiny).
+//
+// This is the endpoint where the sentinel was USER-VISIBLE: a facet list is
+// rendered one chip per value in the builder's FilterRail, so the 34 rarity
+// rows and 2 regulation-mark rows spelling absence as "None" put two dead
+// chips in the rail (D194).
 catalogRoutes.get("/facets", catalogCache, async (c) => {
   const db = drizzle(c.env.DB);
   const [rarityRows, typeRows, stageRows, trainerRows, energyRows, illustratorRows, markRows] =
@@ -246,7 +258,12 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
     ]);
   const payload: CatalogFacets = {
     rarities: facetValues(rarityRows),
-    types: [...new Set(typeRows.flatMap((row) => row.value ?? []))].sort(),
+    // `types` is the one ARRAY-valued facet, so it flattens before it can go
+    // through the same guard — sorted here rather than by SQL. Routed through
+    // it anyway (the sweep measured zero sentinel elements and zero empty
+    // arrays) so the invariant "no facet list can contain a sentinel" holds
+    // for ALL seven vocabularies, not six of them.
+    types: facetVocabulary(typeRows.flatMap((row) => row.value ?? [])).sort(),
     stages: facetValues(stageRows),
     trainerTypes: facetValues(trainerRows),
     energyTypes: facetValues(energyRows),

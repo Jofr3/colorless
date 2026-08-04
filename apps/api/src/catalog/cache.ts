@@ -15,10 +15,15 @@ import type { Env } from "../env";
     shows up without a manual purge. */
 const CACHE_TTL_SECONDS = 3600;
 
-/** Bump when a cached response SHAPE changes (v2→v3: CardBrief grew `legal`
-    for the P2 deck builder) so stale KV entries from the previous deploy
-    can't serve the old shape for up to a TTL; old-version keys just expire. */
-const CACHE_VERSION = "v3";
+/** Bump when a cached response SHAPE — or its VALUES for already-ingested
+    rows — changes, so stale KV entries from the previous deploy can't serve
+    the old answer for up to a TTL; old-version keys just expire.
+    v2→v3: CardBrief grew `legal` for the P2 deck builder.
+    v3→v4: the read path started normalising "None" sentinels to null
+    (../sentinel.ts, D194). Same shape, different bytes: without a bump the
+    already-cached /facets body would keep serving the dead "None" chip for
+    up to an hour after deploy, which is the exact symptom being fixed. */
+const CACHE_VERSION = "v4";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys

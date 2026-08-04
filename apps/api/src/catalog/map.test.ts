@@ -73,6 +73,39 @@ const fireEnergyRow: CardRow = {
   updated: "2025-01-04T15:52:24+01:00",
 };
 
+// mfb-33 Potion, copied VERBATIM from the production catalog — the row that
+// spells absence as the literal string "None" in BOTH rarity and
+// regulation_mark (D194; its 33 siblings in the `mfb` set do it in rarity
+// alone). The read path must hand these back as null, because 34 such rows
+// are already in the database and only a re-ingest can rewrite them.
+const potionSentinelRow: CardRow = {
+  id: "mfb-33",
+  setId: "mfb",
+  localId: "33",
+  name: "Potion",
+  category: "Trainer",
+  illustrator: "Ayaka Yoshida",
+  rarity: "None",
+  regulationMark: "None",
+  hp: null,
+  stage: null,
+  evolveFrom: null,
+  typesJson: null,
+  retreat: null,
+  abilitiesJson: null,
+  attacksJson: null,
+  weaknessesJson: null,
+  resistancesJson: null,
+  trainerType: "Item",
+  energyType: null,
+  effect: "Heal 30 damage from 1 of your Pokémon.",
+  legalStandard: false,
+  legalExpanded: true,
+  variantsJson: { normal: true, reverse: false, holo: false, firstEdition: false, wPromo: false },
+  imageUrl: null,
+  updated: "2026-04-14T22:39:39+01:00",
+};
+
 const shroudedFableRow: SetRow = {
   id: "sv06.5",
   serieId: "sv",
@@ -106,6 +139,10 @@ describe("mapCardRow", () => {
       trainerType: null,
     });
     expect(card.attacks?.[0]?.name).toBe("Splashing Dodge");
+    // A real mark stays a real mark — nothing about the sentinel guard
+    // touches the 3,718 rows that carry one.
+    expect(card.regulationMark).toBe("H");
+    expect(card.rarity).toBe("Common");
     // `updated` is ingest bookkeeping, not domain vocabulary.
     expect("updated" in card).toBe(false);
   });
@@ -115,6 +152,14 @@ describe("mapCardRow", () => {
     expect(card.image).toBeNull();
     expect(card.energyType).toBe("Normal");
     expect(card.hp).toBeNull();
+  });
+
+  it("normalises the stored 'None' sentinel to null (mfb-33 Potion)", () => {
+    const card = cardSchema.parse(mapCardRow(potionSentinelRow));
+    expect(card.rarity).toBeNull();
+    expect(card.regulationMark).toBeNull();
+    expect(card.illustrator).toBe("Ayaka Yoshida");
+    expect(card.effect).toBe("Heal 30 damage from 1 of your Pokémon.");
   });
 });
 
@@ -147,6 +192,21 @@ describe("mapCardBriefRow", () => {
       stage: null,
       trainerType: null,
       energyType: "Normal",
+    });
+  });
+
+  it("normalises the stored 'None' sentinel to null (mfb-33 Potion)", () => {
+    const brief = cardBriefSchema.parse(mapCardBriefRow(potionSentinelRow));
+    expect(brief.rarity).toBeNull();
+    expect(brief.regulationMark).toBeNull();
+    // The guard touches ONLY the sentinel columns — the row's real values,
+    // including a genuinely absent one, come through unchanged.
+    expect(brief).toMatchObject({
+      name: "Potion",
+      category: "Trainer",
+      trainerType: "Item",
+      energyType: null,
+      legal: { standard: false, expanded: true },
     });
   });
 

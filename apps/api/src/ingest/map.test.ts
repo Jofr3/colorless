@@ -144,6 +144,24 @@ describe("mapCard", () => {
     expect(row.effect).not.toBeNull();
   });
 
+  it("normalises upstream 'None' sentinels to NULL instead of storing them", () => {
+    // The `mfb` set's payload shape (D194): upstream spells "this card has
+    // no rarity / no regulation mark" as the literal STRING "None", which
+    // `?? null` happily writes through. Overlaid on the real sv01-181
+    // Trainer fixture so the rest of the mapping stays honest.
+    const card = tcgdexCardSchema.parse({
+      ...(cardTrainer as Record<string, unknown>),
+      rarity: "None",
+      regulationMark: "None",
+    });
+    const row = mapCard(card);
+    expect(row.rarity).toBeNull();
+    expect(row.regulationMark).toBeNull();
+    // Untouched: the sentinel guard is not a general string filter.
+    expect(row.trainerType).toBe("Item");
+    expect(row.illustrator).not.toBeNull();
+  });
+
   it("defaults a missing upstream `legal` block to false/false", () => {
     const { legal: _legal, ...withoutLegal } = tcgdexCardSchema.parse(cardEnergyBasic);
     const card = tcgdexCardSchema.parse(withoutLegal);
