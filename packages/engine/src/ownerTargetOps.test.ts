@@ -823,10 +823,17 @@ describe("what this slice landed, in LEGAL printings", () => {
 // the op the row would need is run, and the wrong behaviour it produces today is
 // the assertion. A slice that builds the piece cannot leave these green.
 
-describe("FLAGGED — Team Rocket's Giovanni sv10-174/-225/-238 (3 legal)", () => {
+// ✅ D206 BUILT D205's GIOVANNI ROW, and this describe is what a flag looks like
+// when the slice after it pays the bill. D205's two assertions were DRIVEN, so
+// exactly one of them went red on the build (the "no program exists" half) and
+// the other one — what the UNMARKED `switchActive` program offers — is still true
+// and is now the REGRESSION witness for `ownerPokemon` being absent-means-every-
+// body. Both are kept, re-pointed rather than deleted: a flag that is erased on
+// the day it is paid leaves nothing pinning the row it used to describe.
+describe("✅ LANDED BY D206 — Team Rocket's Giovanni sv10-174/-225/-238 (3 legal)", () => {
   const IDS = ["sv10-174", "sv10-225", "sv10-238"] as const;
 
-  it("⚠️ `switchActive` CANNOT narrow either end — driven, not asserted", () => {
+  it("the UNMARKED `switchActive` still offers EVERY benched body — the regression half", () => {
     let state = withActive(61, "fix-plain");
     for (const id of ["fix-tr-nidorino", "fix-plain", "fix-rocketeer"]) {
       state = benchFromDeck(state, "p1", id);
@@ -836,10 +843,14 @@ describe("FLAGGED — Team Rocket's Giovanni sv10-174/-225/-238 (3 legal)", () =
     const uid = state.players.p1.hand.find((u) => state.cardIdByUid[u] === "sv01-194");
     if (uid === undefined) throw new Error("no fix-switch in hand");
     const { state: parked } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-    // THE FLAG. Giovanni prints "1 of your Benched **Team Rocket's** Pokémon";
-    // the op offers all three, including Pikachu and Team Rocketeer. The gap is
-    // not "no program exists" — it is that the only program that could be
-    // authored plays a different rule.
+    // D205 WROTE THIS AS THE FLAG — "the op offers all three, including Pikachu
+    // and Team Rocketeer, so the only authorable program plays a different rule".
+    // D206 gave the op the rider, and this same board is now the proof that the
+    // rider's ABSENCE means what it always meant: `sv01-194` carries no
+    // `ownerPokemon`, so all three are still offered and the note is still
+    // subgroup-free. Byte-for-byte unchanged behaviour on the unmarked print is
+    // the widening's own precondition; the NARROWED board is driven in
+    // `switchSeam.test.ts`.
     expect(refNames(parked, choosePrompt(parked).candidates).sort()).toEqual([
       "Pikachu",
       "Team Rocket's Nidorino",
@@ -848,21 +859,29 @@ describe("FLAGGED — Team Rocket's Giovanni sv10-174/-225/-238 (3 legal)", () =
     expect(choosePrompt(parked).note).not.toContain("Team Rocket's");
   });
 
-  it("⚠️ and the SECOND clause needs an 'If you do' seam the first has no answer for", () => {
-    // "Switch your Active … . **If you do,** switch in 1 of your opponent's
-    // Benched Pokémon." `recordGate` gates on an `EffectSlot` filled by an
-    // earlier op, and `switchActive` files nothing — it has no `recordAs`. So
-    // even with both ends narrowed the consequent could not read whether the
-    // antecedent happened, and on an empty own Bench the switch is a no-op the
-    // gust would still follow. TWO pieces, which is why the row is flagged whole.
+  it("✅ the 'If you do' seam D205 priced is §9.2's `recordGate`, and it SHIPPED", () => {
+    // D205: "`recordGate` gates on an `EffectSlot` filled by an earlier op, and
+    // `switchActive` files nothing — it has no `recordAs`. So even with both ends
+    // narrowed the consequent could not read whether the antecedent happened."
+    // Right on both counts, and both are now paid. The unmarked Switch row is
+    // asserted UNCHANGED — no `recordAs`, no `ownerPokemon`, the same one-op
+    // program `toEqual` compared by value — because a widening that quietly wrote
+    // defaults onto the existing row is the failure this pair of assertions
+    // exists to catch.
     const switchOp = programFor("sv01-194")?.trainer?.[0];
     expect(switchOp).toEqual({ op: "switchActive" });
     expect(switchOp).not.toHaveProperty("recordAs");
     expect(switchOp).not.toHaveProperty("ownerPokemon");
-    for (const id of IDS) expect(programFor(id)?.trainer, `${id} was half-built`).toBeUndefined();
+    for (const id of IDS) {
+      expect(programFor(id)?.trainer, `${id} lost its D206 program`).toEqual([
+        { op: "switchActive", ownerPokemon: "Team Rocket", recordAs: "moved" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+        { op: "recordGate", slot: "moved", then: [{ op: "gust" }] },
+      ]);
+    }
   });
 
-  it("names the printed sentence, so the flag cannot drift onto another card", () => {
+  it("names the printed sentence, so the row cannot drift onto another card", () => {
     expect(GIOVANNI).toContain("Team Rocket's Pokémon");
     expect(GIOVANNI).toContain("If you do");
   });

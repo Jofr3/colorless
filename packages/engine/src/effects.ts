@@ -1519,11 +1519,59 @@ export type EffectOp =
       this PARKS on a card choice unless the deck holds no candidate. */
   | { op: "searchDeck"; filter: CardFilter; dest: "bench" | "hand"; max: number }
   /** Switch the controller's Active with one of their Benched Pokémon (§G).
-      PARKS on the bench choice unless exactly one is benched. */
-  | { op: "switchActive" }
+      PARKS on the bench choice unless exactly one is benched.
+
+      ⚠️ **D206 — THE TWO RIDERS ARE THE TWO HALVES OF "SWITCH … . IF YOU DO, …",
+      AND NEITHER IS NEW VOCABULARY.** The catalog prints that sentence on five
+      Standard-legal TRAINERS and two attacks; three of the Trainer printings put
+      an owner-prefixed subgroup on BOTH ends of the switch. `ownerPokemon` is
+      D200's predicate at its FOURTH read site (deck search → attach target →
+      counter-move source → here) and `recordAs` is §9.2's existing slot at a new
+      op: no slot name, no gate and no prompt kind is invented.
+
+      `ownerPokemon` NARROWS BOTH ENDS WITH ONE FIELD, because the printing spells
+      one owner twice: *"Switch your Active **Team Rocket's** Pokémon with 1 of
+      your Benched **Team Rocket's** Pokémon"* (Team Rocket's Giovanni
+      `sv10-174/-225/-238`). A board whose Active is not in the subgroup has no
+      "your Active <owner>'s Pokémon" to switch, so the whole op is a no-op there
+      — the candidate set is emptied rather than the Active being swapped out of
+      turn, which is `parkOrForce`'s existing silent ending. Taking it at ONE
+      field is D138's rule (take the width the printing measures): no printed card
+      narrows the two ends differently, and a card that did would be asking for
+      two fields, not for this one read twice.
+
+      ⚠️ **A SECOND NARROWING AXIS EXISTS AND THIS FIELD IS NOT IT.** Vikavolt
+      `sv07-053` "Volt Switch" prints *"1 of your Benched **{L}** Pokémon"* — an
+      ENERGY-TYPE subgroup, on the attack surface, which `ownerPokemon` must
+      refuse rather than approximate (asserted in `switchSeam.test.ts`).
+
+      `recordAs` files the uid of the Pokémon that ACTUALLY BECAME ACTIVE, and
+      files `[]` when the switch did not happen — which is exactly what the
+      printed *"If you do"* asks, so `recordGate` needs no arm. The empty filing
+      matters more here than on the ops that already record: `switchInto` returns
+      the state UNCHANGED on a board it refuses (no Active, an empty subgroup, a
+      bench index that is not there), and a slot filled from the CHOSEN ref rather
+      than from the RESULT would let Giovanni's gust fire off a switch that never
+      occurred — the "half of a printed action" failure `moveCountersToDefender`'s
+      doc names on the other side of the engine. */
+  | { op: "switchActive"; ownerPokemon?: string; recordAs?: EffectSlot }
   /** Gust: switch one of the OPPONENT's Benched Pokémon into their Active spot
-      (Boss's Orders). PARKS on the opponent-bench choice unless forced. */
-  | { op: "gust" }
+      (Boss's Orders). PARKS on the opponent-bench choice unless forced.
+
+      ⚠️ **D206 — `recordAs` IS THE MIRROR OF `switchActive`'s, AND THE CATALOG
+      PRINTS THE SEAM BOTH WAYS ROUND.** Team Rocket's Giovanni switches and THEN
+      gusts; Prime Catcher `sv05-157`/`sv08.5-119` (2 legal, ACE SPEC Item) gusts
+      and THEN switches — *"Switch in 1 of your opponent's Benched Pokémon to the
+      Active Spot. **If you do,** switch your Active Pokémon with 1 of your
+      Benched Pokémon."* — which is Giovanni's two ops in the opposite order with
+      neither end narrowed. The two ops are ONE move (`switchInto`) on two seats
+      and share one recording helper, so a §9.2 seam on one and not the other
+      would be an asymmetry no printing asks for.
+
+      The filed uid is the OPPONENT's newly promoted body, which is not a novelty
+      of this op: `bottomFromOpponentHand` already files uids off the opponent's
+      side into the same three slots. */
+  | { op: "gust"; recordAs?: EffectSlot }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a

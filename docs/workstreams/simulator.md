@@ -20030,3 +20030,264 @@ as behaviour, not prose.
 
 Suite: **+40 tests in 1 new file, −1 retired**. Repo: **232 files / 4328 tests**
 at `b91b5f9` → **233 files / 4367 tests** green; `bun run check` clean.
+
+## D206 — the "SWITCH … . IF YOU DO, …" SEAM (`switchActive.ownerPokemon` + `switchActive.recordAs` + `gust.recordAs`): three optional parameters on TWO MIRROR ops, **seven Standard-legal printings**, **zero new vocabulary** — and **two of D205's flags grew when re-derived, plus one of this slice's own counts was wrong** (engine 0.131.0 → **0.132.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+D205 flagged Team Rocket's Giovanni at exactly two pieces — *"a target predicate
+on BOTH ends of `switchActive` … plus an 'If you do' seam"* — and drove the flag
+rather than declaring it. Both pieces are paid here, and neither is new
+vocabulary: `ownerPokemon` is D200's predicate at its **fourth** read site, and
+`recordAs` is §9.2's existing `recordGate` reaching a **sixth** recording op. No
+new op, no new `EffectSlot`, no new gate, no new prompt kind.
+
+### The census, re-derived — **D205's data holds row by row; two of its SIZES do not**
+
+Re-run against the remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`;
+3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-04, ⚠️ **with `GLOB`
+and never `LIKE`**. Giovanni 3, Orbeetle 2, N's Zoroark ex 4, Cofagrigus
+`sv10.5w-040/-123` 2, Flutter Mane `sv08-096` 1 — every id resolves to the card
+D205 names, every one is legal, and every printed sentence matches its constant
+byte for byte. The `attacks_json GLOB 'Move all damage counters*'` sweep
+reproduces at **exactly 8 printings / 5 clauses**.
+
+⚠️ **What moved is the SIZE of two flags, and both grew, because D205's sweep read
+`attacks_json` and not `abilities_json`.**
+
+* The **chosen-DESTINATION counter move is not 2 printings but 7**. Munkidori
+  `sv06-095` / `sv06.5-072` / `sv08.5-044` (**3 legal**) prints *"move up to 3
+  damage counters from 1 of your Pokémon **to 1 of your opponent's Pokémon**"* on
+  the **Ability** surface — Cofagrigus's axis exactly — and Team Rocket's
+  Orbeetle's own row (2 legal) is a third member of it, own → own. One missing
+  piece, three cards, seven legal printings.
+* The switch-antecedent **"If you do" family is 15 legal printings / 9
+  sentences** — 11/5 on the Trainer surface, 4/4 on the attack surface — of which
+  this slice takes **7**. ⚠️⚠️ **And this slice's own first TWO counts of it were
+  WRONG, both in D200's way.** `effect GLOB '*Switch your Active*'` gave 8/5 and
+  misses every sentence whose ANTECEDENT is a gust — there are two, Prime Catcher
+  (2 legal, taken) and Lisia's Appeal (3 legal, flagged). Then the attack side,
+  read off a GROUPED `attacks_json` query, **named Yanmega `svp-187` for
+  "Interjet" — a sentence Iron Bundle `sv06-062` prints, where Yanmega prints the
+  BARE self-switch** — and missed two rows entirely (Malamar `sv06.5-034`,
+  Grimmsnarl `sv07-096`). Re-run over `json_each(attacks_json)`. Both are recorded
+  rather than quietly fixed: a mis-attributed id in a flag table is exactly the
+  defect D204 found in D200, and a slice that hides its own is asking the next one
+  to re-derive from scratch.
+
+### The family, as the catalog prints it
+
+| sentence | printings | verdict |
+|---|---|---|
+| "Switch your Active **Team Rocket's** Pokémon with 1 of your Benched Team Rocket's Pokémon. If you do, switch in 1 of your opponent's Benched Pokémon to the Active Spot." | `sv10-174/-225/-238` — **3 legal** | ✅ **TAKEN** |
+| "Switch your Active Pokémon with 1 of your Benched Pokémon. If you do, draw cards until you have 5 cards in your hand." (Surfer) | `sv08-187/-235` — **2 legal** | ✅ **TAKEN** — prices `recordAs` ALONE |
+| "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, switch your Active Pokémon with 1 of your Benched Pokémon." (Prime Catcher) | `sv05-157`, `sv08.5-119` — **2 legal** | ✅ **TAKEN** — the same two ops, the other way round |
+| "Switch in 1 of your opponent's Benched **Basic** Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused." (Lisia's Appeal) | `sv08-179/-234/-246` — 3 legal | ⏹️ REFUSED — a stage filter AND a status on the promoted body |
+| "…If you do, you may move any amount of Energy from **the Pokémon you moved to your Bench** to the new Active Pokémon." (Scramble Switch) | `sv08-186` — 1 legal | ⏹️ REFUSED — the OTHER end of the switch |
+| the four ATTACK-surface rows — Kilowattrel ex `sv08-068`, Iron Bundle `sv06-062`, Grimmsnarl `sv07-096`, Malamar `sv06.5-034` | **4 legal** | ⏹️ REFUSED — a self-target on `attachEnergyFrom`; an OPPONENT-DECIDED promotion (`gust` is the controller choosing); a cards-played-this-turn history no board keeps |
+| "Switch this Pokémon with 1 of your Benched **{L}** Pokémon." (Vikavolt) | `sv07-053` — 1 legal | ⏹️ ⚠️ REFUSED — a SECOND narrowing axis |
+| "Switch your Active Pokémon with 1 of your Benched Pokémon." (bare) | `sv01-194`, `sv03.5-206`, `mfb-34` | `legal_standard = 0` |
+
+⚠️ **Vikavolt is one WORD from the row taken and is a different axis entirely.**
+`ownerPokemon` is a possessive-prefix predicate over the card **name**; the energy
+type is a `types` column. Pointing this field at `"{L}"` produces a filter that
+answers FALSE for every {L} body in the catalog — D205's Flutter Mane failure in a
+different costume, and the reason the field is named for the OWNER rather than for
+"a subgroup". Driven on a real {L} body rather than argued.
+
+⚠️ **And `switchActive`'s TRAINER seam had no legal card behind it.** All three
+printings of the bare sentence are rotated out. Unlike D205's Dedenne finding the
+**op was not idle** — D189's `ATTACK_SELF_SWITCH` reads 7 Standard-legal attack
+printings — so the claim is the narrower one and is stated narrowly. Surfer, for
+its part, appears in **no earlier table in this repo**: not D199's 651-printing
+census of legal Ability/Trainer text, not D200's or D204's owner-prefix work (it
+has no owner). It is found by sweeping the ANTECEDENT rather than the subgroup.
+
+### `switchActive.ownerPokemon` — ONE field, TWO printed nouns
+
+Giovanni spells one owner twice, so one field narrows the Bench candidates **and**
+answers the Active precondition, through the same `subgroupRefs` call rather than
+a second copy of the rule. A board whose Active is outside the subgroup has no
+*"your Active Team Rocket's Pokémon"* to switch: the candidate set is EMPTIED —
+`parkOrForce`'s existing silent ending, the one an empty Bench already took — and
+`programPlayable` refuses the Supporter outright.
+
+⚠️ **That precondition is the sharpest assertion in the slice.** A rider read on
+the BENCH end only — the obvious build, and the one `attachEnergyFrom`'s shape
+invites — passes every other case and fails exactly one: with Pikachu Active it
+would switch in a Team Rocket's Pokémon and hand over a free Boss's Orders on the
+board the card is printed to do nothing on. Taking the field at ONE parameter is
+D138's rule (the width the printing measures): no printed card narrows the two
+ends differently.
+
+The play gate now asks the op's own question — `switchActiveTargets` is exported
+for `cardplay.ts`, the `attachEnergyTargets` precedent — so the refusal and the
+offer cannot drift apart. On an unmarked op it is `bench.length` by construction,
+which is what keeps every pre-D206 board identical.
+
+### `gust.recordAs` — the mirror, and why the seam is symmetric
+
+Prime Catcher `sv05-157`/`sv08.5-119` (ACE SPEC Item, **2 legal**) prints
+Giovanni's two ops in the **opposite order** with neither end narrowed. `gust` and
+`switchActive` are ONE move — `switchInto` on two different seats — so a §9.2 seam
+on one and not the other would be an asymmetry no printing asks for; both go
+through one shared recording helper. Its play gate lands the right way round with
+no new code: `programPlayable` refuses a `gust` into an empty opponent Bench (the
+ANTECEDENT is the whole card) and does not scan a `recordGate` branch, so an empty
+OWN Bench leaves the card doing the half it prints — the exact inverse of
+Giovanni's pair, and driven as such. ACE SPEC is a deckbuilding rule this engine
+does not model and has already authored around (Neutralization Zone `sv06.5-060`).
+
+### `switchActive.recordAs` — the "If you do" seam, and where the uid comes from
+
+`recordAs` files the uid of the body that **actually became Active**, taken off
+the RESULT and not off the chosen ref. `switchInto` returns the state UNCHANGED on
+every board it refuses, and a slot filled from the ref would let Giovanni's gust —
+a real, irreversible effect on the opponent's board — fire off a switch that never
+happened: the "half of a printed action" failure `moveCountersToDefender`'s own doc
+names on the other side of the engine.
+
+`recordSlotOf` learns the op as well, so the park says what the answer buys:
+Surfer's prompt reads *"Switch to which Benched Pokémon? If you do, draw cards
+until you have 5 cards in your hand."* — and `describeBranch` gains one case, for
+`gust`, in the words Boss's Orders prints for it.
+
+⚠️ **Two lines were written and then REMOVED rather than tested around** (D205's
+precedent).
+
+* The explicit `recordMoved(record, op.recordAs, [])` on the zero-candidate path:
+  (a) unreachable from any authored row — `programPlayable` refuses a Trainer
+  whose targets are empty, and all three rows are Trainers — and (b) behaviourally
+  identical to omitting it even if reached, because `recorded()` answers `[]` for
+  a missing key and `recordGateHolds` asks the LENGTH.
+* ⚠️ **The slice's ONE surviving mutant, found by trying to kill it.** The
+  recording helper's first draft compared `switchInto`'s returned state to its
+  argument, so a refused switch filed nothing. That was CORRECT and **unkillable**:
+  all three of `switchInto`'s refusals are unreachable from an authored row
+  (`validateChoice` matches the wire answer against the PROMPT; a Trainer play
+  always has an Active). The filed uid now comes from the `POKEMON_SWITCHED` row
+  `switchInto` emits **exactly when the move happened**, which deletes the branch
+  instead of testing around it — the filing IS the announcement, every piece runs
+  on every reachable board, and record and log can never disagree.
+
+**34 mutants across three rounds. 33 killed; FOUR survived at some point and every
+one is reported here.** ⚠️ The first — the recording helper's state-identity guard
+— was **restructured away rather than tested around** (D205's precedent): it was
+CORRECT and unkillable, because all three of `switchInto`'s refusals are
+unreachable from an authored row, so the filed uid now comes from the
+`POKEMON_SWITCHED` row the move itself emits and the branch is gone. Two more were
+**real test gaps, closed rather than allowlisted**:
+
+* **the FORCED gust path did not record.** `parkOrForce` auto-applies a single
+  candidate without going through `resolveEffect`, so the forced filing is a
+  different call site from the parked one — and every opponent Bench in the file
+  had two bodies. Closed by a one-body board where Prime Catcher's gust is forced
+  and the gate must still fire.
+* **a filing that took EVERY emitted row looked identical.** A switch emits more
+  than one event when the outgoing Active carries Special Conditions: §12 clears
+  them and a `STATUS_CLEARED` row goes out beside the `POKEMON_SWITCHED`. Every
+  board in the file switched a clean body. Closed by a Poisoned + Burned outgoing
+  Active.
+⚠️ The second of those took TWO attempts: a board that only asserted the DRAW ran
+still could not see it, because `recordGateHolds` asks the slot's LENGTH and a
+longer wrong list is still non-empty. It takes a card that PARKS AGAIN (Giovanni's
+gust) for the slot's exact CONTENTS to be readable off the live continuation —
+which is worth writing down, because "the consequent fired" is the assertion this
+whole seam invites and it is the weaker of the two.
+
+The ONE remaining survivor is a deliberate equivalent mutant, kept and recorded
+rather than passed off as a tested line: `describeBranch`'s
+`op.ownerPokemon !== undefined` refusal for
+  a NARROWED switch inside a gate branch. No printed card writes one, and
+  describing it in the broad words is exactly the lie `describeCondition`'s own
+  doc refuses — so the repo's existing precedent one function up is followed
+  rather than D205's removal rule.
+
+### ⚠️ Where the gate is observable, stated honestly
+
+The gate fires in **one direction only** on these two cards. Because
+`programPlayable` refuses exactly the boards where the switch would whiff, no
+reachable Trainer board reaches `recordGateHolds === false` — so *"gate true →
+consequent runs"* is driven (Giovanni's gust is the gate firing, and a program
+without `recordAs`, or with the wrong slot name, produces no gust at all), while
+*"gate false → nothing runs"* is unreachable from an authored row. It is not
+decoration: from an **attack** the play gate does not apply — D189 says so
+explicitly about this very op — which is the surface Kilowattrel ex prints the
+seam on, and the row that will make the false arm reachable.
+
+### The flags — driven, never declared
+
+* **The chosen-DESTINATION counter move (7 legal)** — Cofagrigus 2, Munkidori 3,
+  Orbeetle 2. The op D138 shipped and D205 widened is **run**: it asks ONE
+  question, the counters land on the opponent's ACTIVE, and the program is over.
+  The missing piece is named structurally rather than by card — `applyChoice`
+  returns a `GameState`, so **an op that has parked once cannot park again**, and
+  the engine's only two-ended decision (`moveEnergy`) dodges that with a compound
+  prompt kind, i.e. a WIRE change. Bounded amounts and "as often as you like" are
+  second pieces on top.
+* **Scramble Switch `sv08-186` (1 legal)** — driven through the seam this slice
+  SHIPPED: the filed uid is asserted to be the PROMOTED body, and the demoted one
+  — the card's printed source — is asserted to be on the Bench and **absent from
+  the record**. The flag doubles as the mutant-killer for a `recordAs` that filed
+  the wrong end.
+* **The ATTACK-surface seam (2 legal)** — both sentences refused by D189's fully
+  anchored regex, asserted in BOTH directions so a broken anchor cannot pass as a
+  refusal, with each missing piece driven off a real op (`attachEnergyFrom` has
+  `count` since D205 and still no self-target; `gust` is the controller choosing).
+* **N's Zoroark ex (4 legal)** — unbuilt on both routes, plus the assertion that
+  makes it more than "it is unbuilt": strip the subgroup word, the only part of the
+  sentence this slice's rider could touch, and it is **still** unreadable. The 4
+  printings are not a price signal for `ownerPokemon`.
+
+### Guards that fired — three, all correct, all fixed at the claim
+
+* `inPlayTarget.test.ts` — the flag/landed split. Landed **13 → 16**, flagged
+  **9 → 6**; Giovanni's row flipped rather than being deleted, so the 22-printing
+  denominator stays checkable.
+* `ownerPrefix.test.ts` — "every DROPPED printing is still UNBUILT". D200's
+  Giovanni row removed; the list's own arithmetic **13 → 10**. ⚠️ Worth recording
+  after D205's Ethan's finding: that row's `needs` was **right in both halves**.
+* `ownerTargetOps.test.ts` — D205's own Giovanni flag. Exactly one of its two
+  driven assertions went red (the "no program exists" half); the other — what the
+  UNMARKED program offers — is still true and is now the regression witness for
+  absent-means-every-body. Both kept, re-pointed rather than deleted.
+
+### `MATCH_RECORD_VERSION` — 12, derived
+
+The op **parks** and `EffectContinuation.pendingOp` is persisted, so both keys DO
+reach storage. Both are **OPTIONAL** and their absence means exactly what every
+earlier program meant — no `ownerPokemon` is every benched body; no `recordAs`
+files nothing, so every §9.2 gate over the program reads false — so an old record
+replays to the same board. D186's / D204's / D205's shape, not D136's, which
+bumped for a REQUIRED field on a parking op. Asserted as behaviour: the pre-D206
+park carries an **absent** record (not an empty object), its `pendingOp` is the
+bare `{ op: "switchActive" }`, and its candidate set is materialised in
+`phase.prompt.candidates`.
+
+### Flags added by the corrected sweep
+
+* **Lisia's Appeal `sv08-179/-234/-246` (3 legal)** — TWO pieces, neither of them
+  this seam. Driven on the seam that SHIPPED: Prime Catcher's gust is shown
+  offering an Evolution body (so `gust` has no stage filter — its one rider is
+  `recordAs`), and the second clause wants a status on *"the new Active Pokémon"*
+  the gust just promoted, which `applyStatus`'s `self` / `defender` cannot name
+  and `recordGate` cannot pass on (it splices ops, it does not hand them its uid).
+* **The four ATTACK-surface rows (4 legal)** — Kilowattrel ex `sv08-068`, Iron
+  Bundle `sv06-062`, Grimmsnarl `sv07-096`, Malamar `sv06.5-034`. All four are
+  refused by D189's fully anchored `ATTACK_SELF_SWITCH`, asserted in BOTH
+  directions so a broken anchor cannot pass as a refusal, and each further piece
+  is driven off a real op. ⚠️ Malamar additionally wants *"if you didn't play
+  **Xerosic's Machinations** from your hand during this turn"* — driven by playing
+  a Supporter and reading `allowances`, which records a BOOLEAN that one was
+  played and never WHICH: D205's rule (check the datum exists before designing a
+  predicate over it), applied to a history rather than to a banner.
+
+Suite: **+38 tests in 1 new file**, nothing else moved. ⚠️ **The baseline had to
+be re-measured rather than inherited.** D205's commit and this slice's work order
+both state **233 files / 4367 tests** at `525c487`; a `git stash -u` of this
+slice's whole tree and a re-run of `vitest run` on that exact commit gives
+**234 files / 4373 tests**, and every run since — under both `vitest run` and
+`bun run check` — agrees. The delta to this slice's tree is then exactly
+**+1 file / +38 tests**, all of it `switchSeam.test.ts`. Only the FIRST
+`bun run check` of this session reported the 233/4367 pair, so one 6-test file
+appears not to have been collected on a cold run; recorded rather than silently
+adopted, because "the number moved and I do not know why" is the shape this repo
+has been bitten by. **235 files / 4411 tests** green; `bun run check` clean.

@@ -5791,7 +5791,122 @@ import type { GameState, Seat } from "./types";
     test file (40 tests) and 3 re-pointed guards in D200's / D204's suites. Repo:
     **232 files / 4328 tests** at `b91b5f9` → **233 files / 4367 tests** green. */
 
-export const engineVersion = "0.131.0";
+/** 0.132.0 — **D206, THE "SWITCH … . IF YOU DO, …" SEAM.** Three OPTIONAL
+    parameters on TWO MIRROR ops (`switchActive.ownerPokemon`,
+    `switchActive.recordAs`, `gust.recordAs`), **seven Standard-legal printings**,
+    **ZERO new vocabulary** — no new op, no new slot, no new gate, no new prompt kind —
+    `MATCH_RECORD_VERSION` **unchanged at 12**. `apps/api`, `src/**` and `apps/**`
+    untouched.
+
+    **`switchActive.ownerPokemon` — D200's predicate at its FOURTH read site, and
+    the first that reads it TWICE.** Team Rocket's Giovanni prints one owner on
+    both nouns — *"Switch your Active **Team Rocket's** Pokémon with 1 of your
+    Benched **Team Rocket's** Pokémon"* — so one field narrows the Bench
+    candidates AND answers the Active precondition, through the same
+    `subgroupRefs` call rather than a second copy of the rule. A board whose
+    Active is outside the subgroup has no such Active to switch, so the candidate
+    set is EMPTIED (`parkOrForce`'s existing silent ending) and `programPlayable`
+    refuses the Supporter outright — where a rider read on the BENCH end only,
+    which is the obvious build, would hand over a free Boss's Orders on the one
+    board the card is printed to do nothing on.
+
+    **`switchActive.recordAs` — §9.2's existing `recordGate` reaching a SIXTH
+    recording op**, which is the whole of the *"If you do"* seam D205 flagged and
+    priced exactly. It files the uid of the body that ACTUALLY BECAME ACTIVE,
+    taken off the RESULT and not off the chosen ref: `switchInto` returns the
+    state unchanged on every board it refuses, and a slot filled from the ref
+    would let Giovanni's gust fire off a switch that never happened.
+    ⚠️ `recordSlotOf` learns the op too, so the park says what the answer buys —
+    Surfer's prompt reads *"Switch to which Benched Pokémon? If you do, draw cards
+    until you have 5 cards in your hand."*
+
+**Surfer sv08-187/-235 (2 legal)** prices `recordAs` ALONE — both ops in its
+    consequent already existed — **Team Rocket's Giovanni sv10-174/-225/-238
+    (3 legal)** lays the subgroup rider over it (its consequent being
+    `BOSSS_ORDERS`' whole program byte for byte), and **Prime Catcher
+    sv05-157/sv08.5-119 (2 legal)** is Giovanni's two ops in the OPPOSITE ORDER
+    with neither end narrowed — which is why `gust` gains the same `recordAs` from
+    the same shared helper: the two ops are ONE move (`switchInto`) on two seats,
+    and a §9.2 seam on one and not the other is an asymmetry no printing asks for.
+
+    ⚠️ **THE FAMILY, SWEPT — AND THIS SLICE'S OWN FIRST COUNT OF IT WAS WRONG.**
+    Sweeping `effect GLOB '*Switch your Active*'` gave 8 legal printings / 5
+    sentences and MISSES every sentence whose ANTECEDENT is a gust. The corrected
+    sweep (`effect GLOB '*Switch*' AND effect GLOB '*If you do*'`, plus the attack
+    column, re-run over `json_each(attacks_json)`) is **15 Standard-legal printings
+    / 9 sentences** — 11/5 on the Trainer surface, 4/4 on the attack surface — of
+    which **7 are taken** and the rest are refused with the piece named: Scramble
+    Switch
+    sv08-186 wants *"the Pokémon you moved to your **Bench**"* — the OTHER end of
+    the same switch, which `recordAs` does not file; ⚠️ **Lisia's Appeal
+    sv08-179/-234/-246 (3 legal)** wants a STAGE filter on the gust's candidates
+    AND a status applied to "the new Active Pokémon" the gust just promoted, which
+    `applyStatus`'s `self`/`defender` cannot name and `recordGate` cannot pass on;
+    and the four ATTACK-surface rows (Kilowattrel ex sv08-068, Iron Bundle
+    sv06-062, Grimmsnarl sv07-096, Malamar sv06.5-034) each want a further piece —
+    a self-target on `attachEnergyFrom`, an OPPONENT-DECIDED promotion (which
+    `gust` is not), or a cards-played-this-turn history the state does not keep.
+    ⚠️ **Both of this slice's own first counts of that family were WRONG in D200's
+    way** — a sweep anchored on the wrong half of the sentence, and an id read off
+    a grouped query that named Yanmega `svp-187` for a sentence Iron Bundle prints
+    — and both are recorded rather than quietly fixed. ⚠️ And **Vikavolt sv07-053 prints "1 of your Benched
+    **{L}** Pokémon"** — a SECOND narrowing axis one word from the row taken, which
+    `ownerPokemon` must refuse rather than approximate: it is a possessive-prefix
+    predicate over the card NAME, and pointing it at an energy type produces the
+    permanently empty candidate set D205 found for "Ancient".
+
+    ⚠️ **TWO OF D205's FLAGS GREW WHEN RE-DERIVED, BECAUSE ITS SWEEP WAS OVER
+    `attacks_json` ONLY.** The chosen-DESTINATION counter move is not 2 printings
+    but **7**: Munkidori sv06-095/sv06.5-072/sv08.5-044 (3 legal) prints
+    Cofagrigus's axis on the ABILITY surface, and Team Rocket's Orbeetle's own row
+    (2 legal) is a third member of it. The missing piece is named structurally
+    rather than by card: `applyChoice` returns a `GameState`, so **an op that has
+    parked once cannot park again** — a chosen destination is a SECOND QUESTION,
+    and the engine's only two-ended decision (`moveEnergy`) dodges it with a
+    compound prompt kind, i.e. a WIRE change. D205's data itself HOLDS row by row.
+
+    ⚠️ **`switchActive`'s TRAINER seam had no legal card behind it**: all three
+    printings of the bare sentence (Switch sv01-194 / sv03.5-206 / mfb-34) are
+    `legal_standard = 0`. Unlike D205's Dedenne finding the OP was not idle —
+    D189's `ATTACK_SELF_SWITCH` reads 7 Standard-legal attack printings — so this
+    is the narrower fact, stated narrowly.
+
+    **`MATCH_RECORD_VERSION` STAYS 12**, derived rather than assumed: the op PARKS
+    and `EffectContinuation.pendingOp` is persisted, so both keys DO reach storage
+    — but both are OPTIONAL and their absence means exactly what every earlier
+    program meant (no `ownerPokemon` is every benched body; no `recordAs` files
+    nothing, so every §9.2 gate over the program reads false). D186's / D204's /
+    D205's shape, not D136's, which bumped for a REQUIRED field on a parking op.
+
+    **34 mutants across three rounds; 33 killed. FOUR survived at some point and
+    every one is reported.**
+    ⚠️ The first was **RESTRUCTURED AWAY rather than tested around** (D205's
+    precedent): the recording helper's first draft compared `switchInto`'s
+    returned state to its argument, to avoid filing a switch that was refused —
+    correct, and **unkillable**, because all three of that function's refusals are
+    unreachable from an authored row. The filed uid now comes from the
+    `POKEMON_SWITCHED` row `switchInto` emits exactly when the move happened,
+    which deletes the branch: the filing IS the announcement. ⚠️ Two more were
+    REAL TEST GAPS and were closed — `parkOrForce`'s FORCED single-candidate path
+    files from a different call site than the parked one (every opponent Bench in
+    the file had two bodies), and a filing that took EVERY emitted row looked
+    identical because no board switched a body carrying Special Conditions, whose
+    §12 clear emits a second row. The fourth is a deliberate EQUIVALENT MUTANT,
+    kept and recorded: `describeBranch`'s refusal to describe a NARROWED switch in
+    the unmarked words, which no printed card can reach — the precedent one
+    function up (`describeCondition`'s own unreachable conjunct), not D205's
+    removal rule, because deleting it restores exactly the lie that doc warns of.
+
+    Cost: 3 op parameters + 1 shared candidate helper (`switchActiveTargets`,
+    exported for the play gate so the refusal and the offer cannot disagree) + 1
+    shared recording helper across both ops + 4 read-site arms + 2 `describeBranch`
+    cases + 3 registry programs, plus 1 new test file (38 tests) and 3 re-pointed
+    guards in D200's / D204's / D205's suites. ⚠️ Suite baseline RE-MEASURED
+    rather than inherited: `525c487` is **234 files / 4373 tests** under
+    `vitest run` (D205's commit says 233 / 4367 and it does not reproduce), →
+    **235 files / 4411 tests** green, a delta of exactly +1 file / +38 tests. */
+
+export const engineVersion = "0.132.0";
 
 export type {
   ApplyResult,

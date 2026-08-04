@@ -217,9 +217,15 @@ const IN_PLAY_TARGET_CENSUS = [
     card: "Team Rocket's Giovanni",
     surface: "trainer",
     ids: ["sv10-174", "sv10-225", "sv10-238"],
-    landed: false,
+    // ✅ D206 BUILT THIS ROW, and D204's `needs` was right about BOTH pieces.
+    // `switchActive.ownerPokemon` is one field read at both printed nouns (the
+    // Active precondition and the Bench candidates), and the "If you do" seam is
+    // §9.2's existing `recordGate` reached by a new `switchActive.recordAs` — no
+    // new slot, no new gate, no new prompt kind. `landed` flipped rather than the
+    // row deleted, so the 22-printing denominator stays checkable.
+    landed: true,
     needs:
-      "a target predicate on BOTH ends of `switchActive`, which takes no parameters at all — plus an 'If you do' seam.",
+      "D204's flag named both pieces and D206 paid both from existing vocabulary: `switchActive.ownerPokemon` (D200's predicate at its FOURTH read site, narrowing the Active precondition and the Bench candidates from ONE field, because the print spells one owner twice) plus `switchActive.recordAs`, which lets §9.2's `recordGate` read whether the switch happened.",
   },
   {
     sentence:
@@ -858,14 +864,15 @@ function abilitySurface(id: string): unknown {
 }
 
 describe("the re-derived census — what landed, and what is still owed a piece", () => {
-  it("lands 13 in-play-target printings across THREE ops, plus Spikemuth Gym", () => {
+  it("lands 16 in-play-target printings across FOUR ops, plus Spikemuth Gym", () => {
     const landed = IN_PLAY_TARGET_CENSUS.filter((row) => row.landed);
-    // 13 = D204's 7 (Iono's Bellibolt ex 5 + N's PP Up 1 + Marnie's Grimmsnarl ex
-    // 1) + D205's 6 (Ethan's Ho-Oh ex 4 + Team Rocket's Wobbuffet 2), out of the
-    // 22 in-play-target printings the re-derived census finds. The denominator is
-    // unmoved: D205 re-derived every id in this table against the live catalog and
-    // every one resolves to the card D204 named.
-    expect(landed.flatMap((row) => row.ids)).toHaveLength(13);
+    // 16 = D204's 7 (Iono's Bellibolt ex 5 + N's PP Up 1 + Marnie's Grimmsnarl ex
+    // 1) + D205's 6 (Ethan's Ho-Oh ex 4 + Team Rocket's Wobbuffet 2) + D206's 3
+    // (Team Rocket's Giovanni), out of the 22 in-play-target printings the
+    // re-derived census finds. The denominator is unmoved: D205 re-derived every
+    // id in this table against the live catalog and every one resolves to the
+    // card D204 named; D206 re-resolved the three rows it touches the same way.
+    expect(landed.flatMap((row) => row.ids)).toHaveLength(16);
     expect(IN_PLAY_TARGET_CENSUS.flatMap((row) => row.ids)).toHaveLength(22);
     for (const row of landed) {
       for (const id of row.ids) {
@@ -883,9 +890,9 @@ describe("the re-derived census — what landed, and what is still owed a piece"
 
   it("⚠️ every FLAGGED SURFACE is still UNBUILT — exact map or flag, never a plausible one", () => {
     const flagged = IN_PLAY_TARGET_CENSUS.filter((row) => !row.landed);
-    // 9 = Giovanni 3 + Orbeetle 2 + Zoroark ex 4 (15 at D204 — Ethan's 4 and
-    // Wobbuffet's 2 were built by D205).
-    expect(flagged.flatMap((row) => row.ids)).toHaveLength(9);
+    // 6 = Orbeetle 2 + Zoroark ex 4 (15 at D204 — Ethan's 4 and Wobbuffet's 2
+    // were built by D205, Giovanni's 3 by D206).
+    expect(flagged.flatMap((row) => row.ids)).toHaveLength(6);
     for (const row of flagged) {
       for (const id of row.ids) {
         const program = programFor(id);

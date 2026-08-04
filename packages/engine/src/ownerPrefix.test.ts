@@ -203,15 +203,17 @@ const DROPPED = [
   // `attachEnergyFrom.count`. Removed rather than annotated in place — the
   // UNBUILT assertion below is what keeps this work order from rotting, and it
   // fails on a built row.
-  {
-    sentence: "Switch your Active Team Rocket's Pokémon with 1 of your Benched Team Rocket's Pokémon. If you do, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
-    // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Petrel / Crustle / Team
-    // Rocket's Mewtwo ex).
-    ids: ["sv10-174", "sv10-225", "sv10-238"],
-    legal: 3,
-    needs:
-      "an in-play target filter on `switchActive` — which today takes NO parameters at all — applied to BOTH ends of the switch, plus a `recordAs`/gate seam so the second sentence's 'If you do' can read whether the first happened. `gust` exists for the second clause; the first has no expressible form.",
-  },
+  // ✅ D206 BUILT THIS ROW — Team Rocket's Giovanni sv10-174/-225/-238, 3 legal.
+  // ⚠️ AND ITS `needs` WAS RIGHT IN BOTH HALVES, which is worth recording after
+  // Ethan's row above: it named "an in-play target filter on `switchActive` …
+  // applied to BOTH ends of the switch, plus a `recordAs`/gate seam so the second
+  // sentence's 'If you do' can read whether the first happened", and that is
+  // exactly what shipped — one `ownerPokemon` read at both printed nouns, plus
+  // `recordAs` feeding §9.2's existing `recordGate`. The clause "`gust` exists
+  // for the second clause" held too: `TEAM_ROCKETS_GIOVANNI`'s consequent is
+  // `BOSSS_ORDERS`' whole program byte-for-byte. Removed rather than annotated in
+  // place — the UNBUILT assertion below is what keeps this work order from
+  // rotting, and it fails on a built row.
   {
     sentence: "This attack does 30 damage for each of your Team Rocket's Pokémon in play.",
     // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Nidorino / Team Rocket's Ariana).
@@ -486,15 +488,15 @@ describe("D200 — the census, as data", () => {
     // The gap between the census and the yield is the whole finding, so it is
     // asserted rather than described: everything else is in DROPPED with a piece.
     //
-    // ⚠️ 23 AT D200, **17 AFTER D204**, **13 AFTER D205** — the Iono's attach (5)
-    // and Spikemuth Gym (1) left at D204, Ethan's Ho-Oh ex (4) at D205. The
-    // remainder is NOT the whole backlog: D204's own census found FIVE MORE
-    // SENTENCES / TEN LEGAL PRINTINGS this table never had (N's PP Up 1 and
-    // Marnie's Grimmsnarl ex 1, built by D204; Team Rocket's Wobbuffet 2, built by
-    // D205; Team Rocket's Orbeetle 2 and N's Zoroark ex 4, still flagged in
-    // `inPlayTarget.test.ts`). This table is D200's scope; that one is the current
-    // work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(13);
+    // ⚠️ 23 AT D200, **17 AFTER D204**, **13 AFTER D205**, **10 AFTER D206** —
+    // the Iono's attach (5) and Spikemuth Gym (1) left at D204, Ethan's Ho-Oh ex
+    // (4) at D205, Team Rocket's Giovanni (3) at D206. The remainder is NOT the
+    // whole backlog: D204's own census found FIVE MORE SENTENCES / TEN LEGAL
+    // PRINTINGS this table never had (N's PP Up 1 and Marnie's Grimmsnarl ex 1,
+    // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
+    // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
+    // This table is D200's scope; that one is the current work order.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(10);
   });
 });
 

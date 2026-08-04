@@ -528,7 +528,15 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
     op.op === "discardPileRetrieval" ||
     op.op === "attachFromDeck" ||
     op.op === "bottomFromOpponentHand" ||
-    op.op === "discardEnergy"
+    op.op === "discardEnergy" ||
+    // D206 — `switchActive` is the SIXTH recorder and the first that is not a
+    // card movement: Surfer / Team Rocket's Giovanni print "Switch … . If you do,
+    // …", and the switch's park has to say what the answer buys exactly as
+    // Miriam's does. Listed here rather than left out, because the omission is
+    // silent — `withConsequence` would simply drop the clause and the dialog
+    // would describe half the card.
+    op.op === "switchActive" ||
+    op.op === "gust"
     ? op.recordAs
     : undefined;
 }
@@ -651,6 +659,27 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         break;
       case "drawUntilHandSize":
         parts.push(`draw cards until you have ${op.size} cards in your hand`);
+        break;
+      case "switchActive":
+        // D206 — Prime Catcher's consequent, in Switch `sv01-194`'s own printed
+        // words. ⚠️ ONLY THE UNMARKED OP: a subgroup-narrowed switch inside a gate
+        // branch would need the owner spelled, and saying it in the broad words is
+        // exactly the lie this function's doc refuses. No printed card writes one,
+        // so — like `describeCondition`'s `contains === undefined` half one
+        // function up — this conjunct is an EQUIVALENT MUTANT today, recorded as
+        // such rather than passed off as a tested line.
+        if (op.ownerPokemon !== undefined) return null;
+        parts.push("switch your Active Pokémon with 1 of your Benched Pokémon");
+        break;
+      case "gust":
+        // D206 — Team Rocket's Giovanni's consequent, in the words the OTHER
+        // card that prints this op uses for it (Boss's Orders `sv02-172`), which
+        // is also Giovanni's own second sentence verbatim minus its capital. The
+        // one op in this switch whose branch is a DECISION rather than an
+        // automatic step: the player is being told a second prompt is coming, so
+        // "switch in 1 of your opponent's Benched Pokémon" is the whole promise —
+        // WHICH one is the next park's business, not this clause's.
+        parts.push("switch in 1 of your opponent's Benched Pokémon to the Active Spot");
         break;
       case "opponentMayDraw":
         // Ortega's consequence, addressed to the CONTROLLER reading the pick
@@ -1317,18 +1346,43 @@ function stepOp(
       // Fully automatic — no decision, so it never parks (like drawCards /
       // discardHand / shuffleDeck).
       return { done: handRefresh(state, op, ctx, events) };
-    case "switchActive":
+    case "switchActive": {
+      // D206 — `ownerPokemon` narrows the candidates through the SHARED
+      // predicate (`subgroupRefs`, D205's helper over D200's `matchesFilter`
+      // arm), and the printed sentence's OTHER end is the emptying below: an
+      // Active outside the subgroup means there is no "your Active <owner>'s
+      // Pokémon" to switch, so nothing is offered and `parkOrForce`'s silent
+      // zero-candidate ending resolves the op — the same ending an empty Bench
+      // already took. Computed by `switchActiveTargets` so `programPlayable`
+      // (cardplay.ts) asks the op's OWN question rather than a second copy of it.
+      const candidates = switchActiveTargets(state, ctx.seat, op);
+      // ⚠️ NO EXPLICIT EMPTY FILING ON THE ZERO-CANDIDATE PATH, and it was
+      // written and then REMOVED rather than tested around (D205's precedent).
+      // The other recording ops spell `recordMoved(record, op.recordAs, [])` on
+      // their whiffs; here that line is (a) UNREACHABLE from either authored row
+      // — `programPlayable` refuses a Trainer whose `switchActiveTargets` is
+      // empty, and both rows are Trainers — and (b) BEHAVIOURALLY IDENTICAL to
+      // omitting it even if it were reached, because `recorded()` answers `[]`
+      // for a missing key and `recordGateHolds` asks the LENGTH. A line that
+      // cannot run and could not matter is a line whose mutant no test can kill.
       return parkOrForce(
         state,
-        ownBenchRefs(state, ctx.seat),
-        (ref) => switchOwn(state, ref, ctx, events),
-        "Switch to which Benched Pokémon?",
+        candidates,
+        (ref) => switchRecording(op, (into) => switchOwn(state, ref, ctx, into), events, record),
+        `Switch to which Benched ${ownerNoun(op.ownerPokemon)}Pokémon?`,
       );
+    }
     case "gust":
+      // D206 — the MIRROR of the case above, and the catalog prints the seam both
+      // ways round: Team Rocket's Giovanni switches and THEN gusts, Prime Catcher
+      // `sv05-157`/`sv08.5-119` gusts and THEN switches. `gust` and `switchActive`
+      // are one move on two seats, so a §9.2 seam on one and not the other would
+      // be an asymmetry no printing asks for — the same `switchRecording`, with
+      // `switchInto` pointed at the opponent's board.
       return parkOrForce(
         state,
         oppBenchRefs(state, ctx.seat),
-        (ref) => gust(state, ref, ctx, events),
+        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
         "Gust up which of the opponent's Benched Pokémon?",
       );
     case "healChosen": {
@@ -1831,9 +1885,17 @@ export function applyChoice(
       // equivalent mutant rather than passed off as a tested line.
       return state;
     case "switchActive":
-      return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
+      // D206 — the resumed half records exactly as the forced half does, and for
+      // `attachFromDeck`'s stated reason: what MOVED, never what was offered or
+      // picked. A wire answer that named a body `switchInto` then refused would
+      // otherwise file a switch that did not happen.
+      return choice.kind === "pokemon"
+        ? switchRecording(op, (into) => switchOwn(state, choice.ref, ctx, into), events, record)
+        : state;
     case "gust":
-      return choice.kind === "pokemon" ? gust(state, choice.ref, ctx, events) : state;
+      return choice.kind === "pokemon"
+        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
+        : state;
     case "healChosen":
       // The "up to N" arm answers with a SET (each ref healed `amount`,
       // clamped per Pokémon; the empty set is the legal "none" of §9.1's
@@ -3976,6 +4038,66 @@ function switchOwn(
   events: GameEvent[],
 ): GameState {
   return switchInto(state, ctx.seat, ref, events);
+}
+
+/** D206 — a switch (`switchActive`) or a gust plus the §9.2 filing the printed
+    *"If you do"* reads. ONE helper for BOTH ops because it is one move:
+    `switchInto` on two different seats, which is the whole of the difference.
+
+    ⚠️ THE FILED UID IS THE ONE `switchInto` ANNOUNCED, AND THAT IS A DELIBERATE
+    RESTRUCTURE RATHER THAN A STYLE. The first draft compared the returned state
+    to the argument — `switchInto` has three guards that return it UNCHANGED (a
+    non-bench ref, a missing incoming body, a missing top uid), each a board on
+    which the printed switch DID NOT HAPPEN, and filing off the CHOSEN REF would
+    read all three as successes and let Giovanni's gust fire off an antecedent
+    that never occurred. That identity check was correct and **UNKILLABLE**: all
+    three refusals are unreachable from an authored row (`validateChoice` matches
+    the wire answer against the PROMPT, and a Trainer play always has an Active),
+    so no test could distinguish it from its own inversion. D205's precedent is to
+    REMOVE such a line rather than test around it, so the value now comes from the
+    `POKEMON_SWITCHED` row, which `switchInto` emits exactly when the move
+    happened. The filing IS the announcement: there is no branch of our own left
+    on top of its three refusals, every piece here runs on every reachable board,
+    and the record and the event log can never disagree about whether a switch
+    occurred. */
+function switchRecording(
+  op: { recordAs?: EffectSlot },
+  move: (into: GameEvent[]) => GameState,
+  events: GameEvent[],
+  record: EffectRecord,
+): GameState {
+  const emitted: GameEvent[] = [];
+  const next = move(emitted);
+  events.push(...emitted);
+  recordMoved(
+    record,
+    op.recordAs,
+    emitted.flatMap((event) => (event.type === "POKEMON_SWITCHED" ? [event.nowActive] : [])),
+  );
+  return next;
+}
+
+/** The bodies a `switchActive` may switch TO on `seat`'s board — every Benched
+    Pokémon, narrowed to the printed owner-prefixed subgroup, and EMPTY when the
+    printing names a subgroup the controller's own Active is not in.
+
+    Exported for `programPlayable` (cardplay.ts), which must refuse a Trainer
+    whose only effect can whiff — `attachEnergyTargets`' precedent and its
+    reason: a gate that recomputed the candidate set would be a second copy of
+    the printed rule, free to drift from the op it is meant to be about. */
+export function switchActiveTargets(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "switchActive" }>,
+): PokemonRef[] {
+  const bench = subgroupRefs(state, ownBenchRefs(state, seat), op.ownerPokemon);
+  if (op.ownerPokemon === undefined) return bench;
+  // The printed sentence's FIRST noun — "Switch your Active <owner>'s Pokémon".
+  // Asked through the SAME `subgroupRefs` call the Bench end uses, so the two
+  // halves of one printed owner cannot come to mean two different things.
+  const activeInSubgroup =
+    subgroupRefs(state, [{ seat, spot: { spot: "active" } }], op.ownerPokemon).length > 0;
+  return activeInSubgroup ? bench : [];
 }
 
 /** Gust: switch the OPPONENT's Active with their benched `ref` (Boss's Orders). */

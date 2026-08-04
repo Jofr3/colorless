@@ -961,8 +961,89 @@ const NEST_BALL: CardProgram = {
     (Supporter — the gust archetype) */
 const BOSSS_ORDERS: CardProgram = { trainer: [{ op: "gust" }] };
 
-/** "Switch your Active Pokémon with 1 of your Benched Pokémon." (Item) */
+/** "Switch your Active Pokémon with 1 of your Benched Pokémon." (Item)
+
+    ⚠️ D206 — ALL THREE PRINTINGS OF THIS SENTENCE ARE `legal_standard = 0`
+    (`sv01-194`, `sv03.5-206`, `mfb-34`, re-queried 2026-08-04). The op is NOT
+    idle — D189's `ATTACK_SELF_SWITCH` deriver reads "Switch this Pokémon with 1
+    of your Benched Pokémon." on 7 Standard-legal attack printings — but the
+    TRAINER seam this row is, and which D205's Giovanni flag drove, had no legal
+    card behind it until the two rows below. */
 const SWITCH: CardProgram = { trainer: [{ op: "switchActive" }] };
+
+/** D206 — Surfer `sv08-187/-235` (Supporter, 2 legal): "Switch your Active
+    Pokémon with 1 of your Benched Pokémon. **If you do,** draw cards until you
+    have 5 cards in your hand."
+
+    THE WHOLE ROW IS `SWITCH` PLUS §9.2. Both ops in the consequent already
+    existed and the gate is Miriam's, unchanged; the only new thing in the engine
+    is that `switchActive` may now say which slot it files. That is why this row
+    rather than Giovanni's is the one that prices the `recordAs` rider: it needs
+    NOTHING else, so the seam is measured on its own before a second field is
+    laid over it.
+
+    ⚠️ `drawUntilHandSize` NEVER TRIMS, so a hand already holding 5 or more draws
+    nothing — and the card is still PLAYABLE there, because the switch is a
+    printed effect that happens. The would-whiff gate is `switchActive`'s alone
+    (cardplay.ts), which is the same division `coinFlipGate`'s doc draws. */
+const SURFER: CardProgram = {
+  trainer: [
+    { op: "switchActive", recordAs: "moved" },
+    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+    { op: "recordGate", slot: "moved", then: [{ op: "drawUntilHandSize", size: 5 }] },
+  ],
+};
+
+/** D206 — Team Rocket's Giovanni `sv10-174/-225/-238` (Supporter, 3 legal):
+    "Switch your Active **Team Rocket's** Pokémon with 1 of your Benched **Team
+    Rocket's** Pokémon. **If you do,** switch in 1 of your opponent's Benched
+    Pokémon to the Active Spot."
+
+    The SECOND sentence is `BOSSS_ORDERS`' whole program, byte-identical — this
+    row is that Supporter bought with a narrowed self-switch — and the *"If you
+    do"* is load-bearing rather than decorative: on a board whose Active is not a
+    Team Rocket's Pokémon (or whose Bench holds none), Giovanni must NOT gust.
+    D205 flagged this row at exactly those two pieces and both are paid here from
+    existing vocabulary.
+
+    ⚠️ ONE `ownerPokemon` FOR TWO PRINTED NOUNS — see the op's doc. The narrowing
+    is what makes the gate real: without it the program would be `SWITCH` plus a
+    free Boss's Orders, the wrong-but-plausible build the exact-map-or-flag
+    doctrine forbids, and it would look right on every board where the controller
+    happens to be playing a Team Rocket's deck. */
+/** D206 — Prime Catcher `sv05-157`/`sv08.5-119` (Item, ACE SPEC, 2 legal):
+    "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. **If you
+    do,** switch your Active Pokémon with 1 of your Benched Pokémon."
+
+    ⚠️ **GIOVANNI'S TWO OPS IN THE OPPOSITE ORDER, WITH NEITHER END NARROWED** —
+    which is what makes the §9.2 seam SYMMETRIC rather than a `switchActive`
+    peculiarity, and why `gust` gains the same optional `recordAs` from the same
+    shared helper. Both ops are `switchInto` on two different seats.
+
+    The consequent is `SWITCH`'s whole program byte for byte, exactly as
+    Giovanni's is `BOSSS_ORDERS`'. ⚠️ And its play gate is the RIGHT way round
+    without a line of new code: `programPlayable` refuses a `gust` into an empty
+    opponent Bench (the whole card whiffs), and does NOT scan a `recordGate`
+    branch — so Prime Catcher with an empty OWN Bench is playable and does the
+    half it prints, which is what the card does.
+
+    ACE SPEC is a deckbuilding rule this engine does not model and has already
+    authored around (Neutralization Zone `sv06.5-060`, D-era Stadium). */
+const PRIME_CATCHER: CardProgram = {
+  trainer: [
+    { op: "gust", recordAs: "moved" },
+    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+    { op: "recordGate", slot: "moved", then: [{ op: "switchActive" }] },
+  ],
+};
+
+const TEAM_ROCKETS_GIOVANNI: CardProgram = {
+  trainer: [
+    { op: "switchActive", ownerPokemon: "Team Rocket", recordAs: "moved" },
+    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+    { op: "recordGate", slot: "moved", then: [{ op: "gust" }] },
+  ],
+};
 
 /** "Heal 30 damage from 1 of your Pokémon." (Item) */
 const POTION: CardProgram = { trainer: [{ op: "healChosen", amount: 30 }] };
@@ -4045,8 +4126,20 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-172": BOSSS_ORDERS,
   "sv02-248": BOSSS_ORDERS,
   "sv02-265": BOSSS_ORDERS,
-  // Switch
+  // Switch — ⚠️ rotated OUT of Standard (see the program's doc).
   "sv01-194": SWITCH,
+  // D206 — the "Switch … . If you do, …" seam. Surfer (Supporter, 2 legal) and
+  // Team Rocket's Giovanni (Supporter, 3 legal), ids re-queried against the live
+  // D1 on 2026-08-04 with GLOB and never LIKE; both effect strings match the
+  // programs above verbatim.
+  "sv08-187": SURFER,
+  "sv08-235": SURFER,
+  "sv10-174": TEAM_ROCKETS_GIOVANNI,
+  "sv10-225": TEAM_ROCKETS_GIOVANNI,
+  "sv10-238": TEAM_ROCKETS_GIOVANNI,
+  // …and the seam's MIRROR — the same two ops, the other way round.
+  "sv05-157": PRIME_CATCHER,
+  "sv08.5-119": PRIME_CATCHER,
   // Potion
   "sv01-188": POTION,
   // Picnic Basket

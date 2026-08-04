@@ -26,6 +26,7 @@ import {
   moveEnergyPlayable,
   resumeProgram,
   runProgram,
+  switchActiveTargets,
 } from "./interpreter";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
@@ -688,7 +689,20 @@ export function programPlayable(state: GameState, program: readonly EffectOp[], 
       // card working as printed (the reveal happens; the pick whiffs).
       return false;
     }
-    if (op.op === "switchActive" && state.players[seat].bench.length === 0) return false;
+    // D206 — was `bench.length === 0`, which is `switchActiveTargets` on an
+    // unmarked printing and WRONG on a subgroup one: Team Rocket's Giovanni into
+    // a full Bench of ordinary Pokémon can do nothing at all (neither the switch
+    // nor its gated gust), and a length test would spend the turn's one Supporter
+    // on it. The op's own candidate function answers instead — the
+    // `attachEnergyTargets` shape one op over — so the refusal and the offer can
+    // never disagree.
+    //
+    // ⚠️ THE GATE STAYS OFF THE CONSEQUENT, and that is not an oversight: a
+    // `recordGate` branch is not scanned here (only `coinFlipGate.then` is), and
+    // Giovanni with an EMPTY OPPONENT BENCH still switches — the card does the
+    // first half of what it prints, so it is playable, exactly as the `gust` gate
+    // three lines up refuses only a program whose gust is the WHOLE card.
+    if (op.op === "switchActive" && switchActiveTargets(state, seat, op).length === 0) return false;
     if (
       op.op === "attachEnergyFrom" &&
       (firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined ||
