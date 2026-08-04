@@ -17,11 +17,14 @@ to your task.
 
 1. Read **`progress.md`** — the single source of truth for *what's done, what's
    in flight, and where to pick up* (the **Resume point**).
-2. Skim **`roadmap.md`** for the big picture (the five phases).
-3. Open only the **`workstreams/<area>.md`** you're working on, plus any
+2. Read **`conventions.md`** — it now carries the **operating rules** distilled
+   from the decision log, not just the doc ritual: what makes a guard vacuous,
+   how to count the catalog, how to price a slice, and how to work in a checkout
+   two other agents are editing. Each rule cites its D-number, so the full
+   account is one grep of `decisions.md` away.
+3. Skim **`roadmap.md`** for the big picture (the five phases).
+4. Open only the **`workstreams/<area>.md`** you're working on, plus any
    **`reference/`** file it points to. Do **not** read the other workstreams.
-4. Follow **`conventions.md`** — especially the sub-agent policy and the
-   end-of-session doc-update ritual.
 
 ## File map
 
@@ -30,7 +33,7 @@ to your task.
 | `progress.md` | Living status + session log + the current **resume point**. Update every session. |
 | `roadmap.md` | The phased plan (P1→P5) and dependencies. |
 | `decisions.md` | Decision log (why we chose what) + locked assumptions. |
-| `conventions.md` | How we work: sub-agents, doc ritual, code/test/commit rules. |
+| `conventions.md` | How we work: sub-agents, doc ritual, code/test/commit rules, **and the transferable lessons** (vacuous guards, census scoping, pricing, concurrency, mutation discipline). |
 | `workstreams/backend-data.md` | **P1** — Bun+Hono API, tcgdex→D1 ingest, R2 images, auth, deck API, lobby DO. Contains the tcgdex API reference. |
 | `workstreams/deck-builder.md` | **P2** — real cards in the builder, richer filters, editor + decks list. |
 | `workstreams/simulator.md` | **P3** — the rules-driven game engine. |

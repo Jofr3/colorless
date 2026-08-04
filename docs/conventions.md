@@ -42,6 +42,114 @@ only the conclusion.
   ⚠️ `check` **lints but never checks FORMATTING** — see "The format gap" below.
 - Pure logic gets unit tests (see the many `*.test.ts` in the repo); DOM tests
   opt into jsdom per-file (`// @vitest-environment jsdom`).
+- **Never inherit a suite figure from prose — six were stale in one session**
+  (D206 found the recorded baseline of 233 files / 4367 tests was really
+  234 / 4373). Measure with `bunx vitest run --pool=forks --maxWorkers=2`;
+  `bun run test:run` SIGKILLs its worker in this container and `bun test` is the
+  wrong harness entirely (`check` uses vitest).
+
+## A guard must be able to go RED (D200 → D214)
+
+🛑 **Before you trust a check, say what change would turn it RED. If the answer
+is "only deleting the card", it is vacuous.** One session shipped **eight** guards
+that ran, were green, and could not fail — D212 counts itself the sixth, D213 and
+D214 came after. Three were caught by their own author, which is the only reason
+the trend improved.
+
+- ⚠️ **It bites verification PROCEDURES as hard as tests.** D214: three prior
+  reduced-motion slices "verified" by grepping the built CSS for
+  `.motion-reduce\:transition-none` — `glass.ts` already emitted that rule, so
+  the check was green before the work started. What rescued it was an
+  **attribution control**: a build with the variant deliberately typo'd emits
+  nothing anywhere. Any check whose subject is a shared artifact needs one.
+- **Assert the thing, not a proxy for it.** `biome lint <path>` exits 0 on a path
+  it processed **zero** files for — count files, not exit codes (D212). A doc
+  comment spelling an action as a double-quoted literal **by itself satisfied a
+  source-scan guard** (D210). A name-based DOM query passed on a board with **no
+  Stadium section**, because a second copy in hand rendered a same-named row
+  elsewhere (D213).
+- **"These ids are unbuilt" is nearly always true**, so a flag that only asserts
+  absence cannot fail. D200's table named six entirely wrong cards and passed
+  because the wrong cards were also unbuilt; D204's per-surface rebuild was
+  **still** vacuous (`programFor(id)?.attack` reads the REGISTRY only, while
+  attack programs resolve `registry ?? deriveAttackEffect`). D205's repair:
+  every flag **drives** the missing mechanism on a real board.
+- **Declining to write one is a result.** D203 refused an api-side
+  prompt⟺dialog assertion — the api has no React, so it could not go red for
+  the reason that mattered — and recorded the refusal instead of shipping green.
+- Cousin defect: an arm written from a **paraphrased** sentence passes a test
+  written against the same paraphrase and matches no real card (D183). Author
+  and assert against the printed bytes.
+
+## Counting the catalog
+
+- **Every count carries a POPULATION and a LEGALITY.** Six-set local (978),
+  remote D1 (3,786) and Standard-legal (2,021) are three denominators; a figure
+  without one is a floor (D183, D187).
+- ⚠️ **SQLite's `LIKE` is CASE-INSENSITIVE — use `GLOB`.** It cost D200 a count
+  of **95** where the truth was **6**. D202 ran both deliberately, to prove no
+  case variant exists rather than to assume it.
+- **`json_each`, never a grouped query.** A grouped `attacks_json` query
+  attributed a sentence to Yanmega `svp-187` that Iron Bundle `sv06-062` prints
+  (D206); D208 re-derived with `json_each` + equality.
+- **Sweep all three text columns** (`attacks_json`, `abilities_json`, `effect`).
+  D205's sweep read attacks only, and undersized one flag 2 → 7 printings (D206).
+- **A census is only as wide as its verbs.** `effect GLOB '*Switch your Active*'`
+  missed every gust-antecedent printing of the same family — including one the
+  slice then landed (D206).
+- ⚠️ **Name the field before you design the predicate.** A predicate over a
+  banner no column CLASSIFIES yields a permanently empty candidate set, which
+  `programPlayable` turns into a card that can never be played. The sharp form
+  (D207): `Tera` is on 22 rows and **every occurrence is DEMAND — the SUPPLY
+  side is absent**. Same for `Ancient` / `Future` (D205, D204).
+
+## Pricing a slice
+
+- **Establishing a true price is a full result, and refusing to build is a valid
+  outcome.** Two "large" items collapsed on contact: D186's 78-printing gate is
+  **12** buildable; D200's 80-printing filter yields **6**. D193 built
+  `energyOnSelf`, measured five assertions across four files going red, and
+  **reverted** — D196 landed it later, once the witness it collided with was
+  re-homed.
+- ⚠️ **Re-derive the `needs` column, not just the ids and counts.** A flag can
+  overstate a cost as easily as understate a gap: D199 priced
+  `opponentPrizesRemaining` as missing when it was already in the union **at
+  D199's own commit**, hiding 7 legal printings behind a word (D207 then landed
+  them as two registry rows and zero new engine code).
+- **An arm transfers across sets; a registry row does not.** A deriver arm is a
+  text parser and serves every reprint of its sentence; a row is keyed by card id
+  and legality is a hard filter on it — D180's four *correct* alias rows serve
+  **zero** Standard-legal printings (D187, D180 follow-up).
+- **Exact map or flag.** A registry row has no deriver behind it to refuse what
+  it cannot parse, so whatever is authored is what the card does forever: a
+  wrong-but-plausible program is strictly worse than an unbuilt one, which at
+  least fails loudly (D190b, D199).
+- **Re-triage a deferred list against the code, item by item — do not read it.**
+  D195: an old list's *"every item was fixed"* was one item too generous, and a
+  deferred note **named a remedy rather than the defect** (the real fix touched
+  neither thing the note pointed at).
+
+## Working beside other agents
+
+Two or three agents share this checkout. Work like it:
+
+- 🛑 **Never mutate the working tree wholesale** — no `git stash`, no
+  `git checkout -- <path>`, no `git reset --hard`. Uncommitted work has been
+  destroyed that way; the mutation harness was rebuilt around exactly this rule
+  (D215 — it holds the original bytes rather than asking git). Read history with
+  **`git show <rev>:<path>`**.
+- **Commit with EXPLICIT PATHS.** Never `git add -A`, never `git commit -a`.
+- ⚠️ **`decisions.md` and the engine version are SERIALISATION POINTS.**
+  `decisions.md` lost three rows to concurrent writes (D177's and D187's had to
+  be reconstructed after the fact — D176, D187), and three pairs of slices claimed
+  the same engine version from the same base (D186/D199 both took 0.127.0;
+  D202/D204; D207/D210/D208 all took 0.133.0). Every collision needed hand
+  arbitration, and two engine-behaviour commits reached HEAD with **no version
+  block at all** (D208 paid it). If you cannot hold `index.ts`, declare the bump
+  **OWED** in the commit body.
+- **Annotate provenance; never overwrite it.** How a claim was warranted at the
+  time is what this repo keeps losing (D178; D180's follow-up kept the
+  asserted-from-doc paragraph and added the measurement beside it).
 
 ## Mutants are DECLARED, not narrated (D211)
 Roughly thirty `decisions.md` rows publish a mutant tally — *"13 mutants, 3
@@ -67,6 +175,17 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   the harness reports ERROR rather than a verdict — because "the suite went red"
   would otherwise mean nothing. This fires for real when a sibling agent is
   mid-slice in the same tree.
+- **A mutant must be the mistake an author would actually make** — in practice, a
+  neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
+  onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
+  nothing about a real defect.
+- ⚠️ **Anchor every pattern.** An unanchored regex mutated a byte-identical arm
+  in a different card's program and reported a **phantom survivor** — the
+  wrong-row failure, which has now cost three slices (D207). The exactly-once
+  `find` rule above is what catches it mechanically (D215).
+- **An unreachable survivor is REMOVED, not tested around** (D205's `count <= 1`
+  caption, D206's unkillable state-identity guard, D208's provably-dead
+  `dealt <= 0`) — a test written to kill it would be the next vacuous guard.
 - ⚠️ **A SURVIVOR IS THE INTERESTING OUTPUT, and a legitimate one is declared.**
   Add `survives: {kind, reason}` for the correct-and-unreachable cases this repo
   keeps finding — `equivalent` (D196's declaration snapshot),
@@ -175,6 +294,8 @@ never run `bun run format` on a shared tree.
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
+- **Explicit paths only, and never touch the tree wholesale** — see "Working
+  beside other agents" above. It is the rule this branch pays for most often.
 
 ## End-of-session ritual (do not skip)
 1. Update `progress.md`: status table + session-log entry + **new resume point**.
